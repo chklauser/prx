@@ -1,0 +1,207 @@
+/*
+ * Prexonite, a scripting engine (Scripting Language -> Bytecode -> Virtual Machine)
+ *  Copyright (C) 2007  Christian "SealedSun" Klauser
+ *  E-mail  sealedsun a.t gmail d.ot com
+ *  Web     http://www.sealedsun.ch/
+ *
+ *  This program is free software; you can redistribute it and/or modify
+ *  it under the terms of the GNU General Public License as published by
+ *  the Free Software Foundation; either version 2 of the License, or
+ *  (at your option) any later version.
+ *
+ *  Please contact me (sealedsun a.t gmail do.t com) if you need a different license.
+ * 
+ *  This program is distributed in the hope that it will be useful,
+ *  but WITHOUT ANY WARRANTY; without even the implied warranty of
+ *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ *  GNU General Public License for more details.
+ *
+ *  You should have received a copy of the GNU General Public License along
+ *  with this program; if not, write to the Free Software Foundation, Inc.,
+ *  51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
+ */
+
+build
+{
+	require("prx_lib.pxs");
+}
+
+Name prx\interactive;
+Description "Provides interactive command line for prx";
+Author SealedSun;
+
+Import { System, System::Text, Prexonite, Prexonite::Compiler};
+
+var engine;
+
+declare function reboot;
+
+function \init does
+{
+	engine = new Prexonite::Engine;
+	var thisE;
+	asm
+	{
+		ldr.eng
+		stloc thisE
+	}
+	foreach(var alias in ~List.Create(
+			@"timer\start",
+			@"timer\stop",
+			@"timer\elapsed",
+			@"timer\reset"))
+		engine.Commands.AddUserCommand(alias, thisE.Commands[alias]);
+}
+
+var app;
+var ldr;
+
+var evalStep = 1;
+
+function prx\interactive()
+{
+    println("Entering Prexonite INTERACTIVE MODE.\nType :quit to quit.\n\"=<expr>\" evaluates an expression.\n\":<GlobalStatement>\" inserts global code.");
+    
+    if(app == null)
+        app = new Prexonite::Application("Interactive_Scripting");
+    else
+        println("Using compiled application ($(app.Id))");
+    
+    if(ldr == null)
+        ldr = new ::Loader(engine, app);
+        
+    prompt\color = ::ConsoleColor.Red;
+    var buffer = new ::StringBuilder;
+    buffer.AppendLine("var prompt = null;");
+    if(Not app.Functions.Contains("exit"))
+        buffer.AppendLine("function exit(c) does System::Environment.Exit(c is Null ? 0 : c);");
+    buffer.AppendLine("declare exit as quit;");
+    ldr.LoadFromString(buffer.ToString);
+    buffer.Length = 0;
+    
+    var errors;
+    var lastCode;
+    function tryLoad()
+    {
+        try 
+        {
+            lastCode = buffer.ToString;
+            ldr.LoadFromString(lastCode);            
+        } 
+        catch(var exc)
+        {
+            runInDifferentColor(()=>
+			{
+    			println(exc);
+				foreach(var err in errors)
+					println(err);
+			}, ::ConsoleColor.Green);
+			return false;
+        }
+        finally
+        {
+            buffer.Length = 0;
+            errors = ~List.CreateFromList(ldr.Errors);
+            ldr.Errors.Clear;
+            return errors.Count == 0;
+        }
+    }
+    
+    function printErrors(otherErrors) does runInDifferentColor(() =>
+    {
+        if(otherErrors is Null)
+            otherErrors = errors;
+        foreach(var err in otherErrors);
+            println(err);
+    }, ::ConsoleColor.Red);
+    
+    function nextFuncId = "eval\\" + evalStep++;
+    
+    var shortenTo = 20;
+    function shortened(s) = s.Length <= shortenTo ? s : (s.Substring(0,shortenTo-3) + "...");
+    
+    for(var     raw; do raw = showPrompt(app.Variables["prompt"].Value.Self); until raw.ToLower == ":quit")
+    {        
+        var funcId = nextFuncId;
+        var cmd = "g";
+        if(raw.ToLower == ":reload")
+        {
+            reboot;
+            break;          
+        }
+        else if(raw.StartsWith("="))
+        {
+            raw = raw.Substring(1);
+            buffer.Append = "function " + funcId + " does println(\"" + shortened(raw).Escape + " = \") = \n" + raw + "\n;";
+            if(Not tryLoad)
+            {
+                printErrors;
+                continue;   
+            }
+            cmd = "r";
+        }
+        else if(raw.StartsWith("::"))
+            goto executeStatement;
+        else if(raw.StartsWith(":"))
+        {
+            buffer.Append = raw.Substring(1);
+executeGlobal:
+            if(Not tryLoad)
+            {
+                printErrors;
+                continue;
+            }            
+        }
+        else if(raw.StartsWith("global "))
+        {
+            buffer.Append = raw.Substring(7);
+            goto executeGlobal;
+        }
+        else
+        {
+executeStatement:
+            //First try expression, then statement
+            buffer.AppendFormat(" function {0} does println = \"{1} = \" + ( {2} ); ", funcId, shortened(raw).Escape, raw);
+            if(Not tryLoad)
+            {
+                var evalErrors = errors;
+                var evalCode = lastCode;
+
+                funcId = nextFuncId;
+                buffer.AppendFormat(" function {0} does {1} ;", funcId, raw);
+
+                if(Not tryLoad)
+                {
+                    println("(" + raw + ") is not an expression:");
+                        println(evalCode);
+                    printErrors(evalErrors);
+
+                    println;
+                    println("{" + shortened(raw) + "; } is also not a statement:");
+                        println(lastCode);
+                    printErrors(errors);
+
+                    continue;
+                }
+            }
+                println(lastCode);
+            cmd = "r";
+        }             
+        
+        if(cmd == "r")
+        {
+            try
+            {
+                app.Functions[funcId].Run(engine);
+            }
+            catch(var exc)
+            {
+               runInDifferentColor( () => println(exc) , System::ConsoleColor.Green); 
+            }
+            finally
+            {
+                app.Functions.Remove(app.Functions[funcId]);
+            }
+        }
+    }
+}

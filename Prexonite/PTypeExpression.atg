@@ -1,0 +1,163 @@
+/*
+ * Prexonite, a scripting engine (Scripting Language -> Bytecode -> Virtual Machine)
+ *  Copyright (C) 2007  Christian "SealedSun" Klauser
+ *  E-mail  sealedsun a.t gmail d.ot com
+ *  Web     http://www.sealedsun.ch/
+ *
+ *  This program is free software; you can redistribute it and/or modify
+ *  it under the terms of the GNU General Public License as published by
+ *  the Free Software Foundation; either version 2 of the License, or
+ *  (at your option) any later version.
+ *
+ *  Please contact me (sealedsun a.t gmail do.t com) if you need a different license.
+ * 
+ *  This program is distributed in the hope that it will be useful,
+ *  but WITHOUT ANY WARRANTY; without even the implied warranty of
+ *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ *  GNU General Public License for more details.
+ *
+ *  You should have received a copy of the GNU General Public License along
+ *  with this program; if not, write to the Free Software Foundation, Inc.,
+ *  51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
+ */
+
+using Prexonite;
+using Prexonite.Types;
+using FatalError = Prexonite.Compiler.FatalCompilerException;
+COMPILER PTypeExpression
+
+/*-- Global scope --*/
+
+
+
+/*------------------*/
+/*--- SCANNER ------*/
+
+IGNORECASE
+
+CHARACTERS
+	cr			        = '\r'.
+	lf			        = '\n'.
+	tab			        = '\t'.
+	colon               = ':'.
+	ws                  = " " + tab + '\u000b' + '\u000c'. /* Any character with Unicode class Zs */
+	letter		        = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnoprstuvwxyz\\_".
+	digit		        = "0123456789".
+	natDigit	        = digit - "0".
+	hexDigit	        = digit + "ABCDEFabcdef".
+	notDigit            = ANY - digit.
+
+	char                = ANY - "'" - '\\' - lf.
+	verbatimStringChar  = ANY - '"'.
+	regularStringChar   = ANY - '"' - '\\' - lf.
+	notNewLine          = ANY - lf .
+
+	
+	
+TOKENS
+		//Basic token
+    id			= letter { letter | digit }.
+    tilde       = "~".
+
+	true		= "true".
+	false		= "false".
+		
+  /*--------------------------------------------------------------------------------*/
+        integer =
+	        ( digit {digit} | digit {digit} CONTEXT ("." notDigit)
+	        | ("0x") hexDigit {hexDigit}
+	        )
+        .
+  /*--------------------------------------------------------------------------------*/
+        real =
+	        "." digit {digit} 
+	        [("e" ) ["+" | "-"] digit {digit}] 
+        | digit {digit} 
+	        ( "." digit {digit} 
+		        [("e" ) ["+" | "-"] digit {digit} ] 
+	        | ("e") ["+" | "-"] digit {digit} 
+	        )
+	    .
+  /*--------------------------------------------------------------------------------*/
+    string =
+	    "\""	{ regularStringChar
+				    | "\\\'" | "\\\"" | "\\\\" | "\\0" | "\\a" | "\\b" | "\\f" | "\\n" | "\\r" | "\\t" | "\\v"
+				    | "\\x" hexDigit [hexDigit] [hexDigit] [hexDigit]
+				    | "\\u" hexDigit hexDigit hexDigit hexDigit
+				    | "\\UL" hexDigit hexDigit hexDigit hexDigit hexDigit hexDigit hexDigit hexDigit
+				    } 
+	    "\""
+    | "@\"" {verbatimStringChar | "\"\""} "\""
+    .
+
+IGNORE cr + lf + tab
+
+/*------------------------------*/
+/*---- Parser ------------------*/
+PRODUCTIONS
+
+PTypeExpression
+=
+    Type<out _lastType>
+.
+
+Expr<out PValue value>          (.  PType vt; value = null; .)
+=	
+	Boolean<out value>             
+|	Integer<out value>             
+|	Real<out value>                
+|   String<out value>              
+|   Type<out vt>                (.  value = PType.Object.CreatePValue(vt); .)
+.
+
+Boolean<out PValue value>         (.  value = true;  .)
+=                               
+	"true"                      
+|	"false"                     (.  value = false; .)
+.
+
+Integer<out PValue value>
+=
+	integer                     (.  value = Int32.Parse(t.val); .)
+.
+
+Real<out PValue value>          
+=
+	real                        (.  value = Double.Parse(t.val); .)                       
+.
+
+String<out PValue value>
+=
+    string                      (.  value = StringPType.Unescape(t.val.Substring(1,t.val.Length-2));
+                                .)
+.
+
+Type<out PType value>           (.  string id; 
+                                    System.Collections.Generic.List<PValue> args = new System.Collections.Generic.List<PValue>();
+                                .)
+=
+    [ "~" ]
+    id                          (.  id = t.val; 
+                                    if(!_sctx.ParentEngine.PTypeRegistry.Contains(id))
+                                    {
+                                        SemErr("Cannot find PType " + id + " referenced in PTypeExpression.");
+                                        id = null;
+                                    }                                    
+                                .)
+    [   '('                     (.  PValue obj; .)
+        [   Expr<out obj>       (.  args.Add(obj); .)
+            {   WEAK ','
+                Expr<out obj>   (.  args.Add(obj); .)
+            }
+        ]
+        ')'
+    ]
+                                (.  if(id == null) //Error recovery.
+                                        value = PType.Object[typeof(object)];
+                                    else //Normal case
+                                        value = _sctx.ConstructPType(id, args.ToArray());
+                                .)                        
+    
+.
+
+END PTypeExpression.

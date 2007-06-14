@@ -1,0 +1,361 @@
+/*
+ * Prexonite, a scripting engine (Scripting Language -> Bytecode -> Virtual Machine)
+ *  Copyright (C) 2007  Christian "SealedSun" Klauser
+ *  E-mail  sealedsun a.t gmail d.ot com
+ *  Web     http://www.sealedsun.ch/
+ *
+ *  This program is free software; you can redistribute it and/or modify
+ *  it under the terms of the GNU General Public License as published by
+ *  the Free Software Foundation; either version 2 of the License, or
+ *  (at your option) any later version.
+ *
+ *  Please contact me (sealedsun a.t gmail do.t com) if you need a different license.
+ * 
+ *  This program is distributed in the hope that it will be useful,
+ *  but WITHOUT ANY WARRANTY; without even the implied warranty of
+ *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ *  GNU General Public License for more details.
+ *
+ *  You should have received a copy of the GNU General Public License along
+ *  with this program; if not, write to the Free Software Foundation, Inc.,
+ *  51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
+ */
+
+Prexonite	
+                            (.  PFunction func; .)				
+=
+    {	[   GlobalVariableDefinition
+        |   Declaration
+        |   MetaAssignment<TargetApplication>
+        ]   SYNC semicolon
+    |   BuildBlock
+    |	FunctionDefinition<out func>
+    }
+    EOF
+.
+
+/*---- Meta information ----*/
+
+MetaAssignment<IHasMetaTable target>	(. string key = null; MetaEntry entry = null; .)
+=
+(	is  					(. entry = true; .)
+	[not					(. entry = false; .)
+	]
+	GlobalId<out key>
+|
+	GlobalId<out key>
+	( enabled				(. entry = true; .)
+	| disabled  			(. entry = false; .)
+	| MetaExpr<out entry>
+	)
+|   add                     (. MetaEntry subEntry; .)
+    MetaExpr<out subEntry>  (. if(!subEntry.IsList) subEntry = (MetaEntry) subEntry.List; .)
+    to
+    GlobalId<out key>       (.  if(target.Meta.ContainsKey(key))
+                                {
+                                    entry = target.Meta[key];
+                                    entry.AddToList(subEntry.List);
+                                }else
+                                    entry = subEntry;
+                            .)
+)							(. if(entry == null || key == null) SemErr("Meta assignment did not generate an entry."); else target.Meta[key] = entry; .)	
+.
+
+MetaExpr<out MetaEntry entry>
+							(. bool sw; int i; double r; entry = null; string str; .)
+=							
+	Boolean<out sw>			(. entry = sw; .)
+|	Integer<out i>			(. entry = i.ToString(); .)
+|	Real<out r>				(. entry = r.ToString(); .)
+|   String<out str>         (. entry = str; .)
+|   GlobalQualifiedId<out str>       (. entry = str; .)
+|   lbrace                  (. List<MetaEntry> lst = new List<MetaEntry>(); MetaEntry subEntry; .)
+    [   MetaExpr<out subEntry> (.  lst.Add(subEntry); .)
+        {   WEAK comma
+            MetaExpr<out subEntry> (. lst.Add(subEntry); .)
+        }
+    ]
+    rbrace                  (. entry = (MetaEntry) lst.ToArray(); .)
+.
+
+/* ---- Global variable definition --- */
+
+GlobalVariableDefinition	(.  string id; PVariable vari; SymbolInterpretations type = SymbolInterpretations.GlobalObjectVariable;; .)
+=
+SYNC
+	(   var                 
+	|   ref                 (.  type = SymbolInterpretations.GlobalReferenceVariable; .)
+	)
+	
+	GlobalId<out id>        (.
+	                            Symbols[id] = new SymbolEntry(type, id);
+	                            if(TargetApplication.Variables.ContainsKey(id))
+	                                vari = TargetApplication.Variables[id];
+	                            else
+	                            {
+	                                vari = new PVariable(id);
+	                                TargetApplication.Variables[id] = vari;
+	                            }
+	                        .)
+	[	lbrack  		    //Meta block for variables
+		{	MetaAssignment<vari> SYNC semicolon
+		}
+		rbrack
+	]
+	[	                    (.  _pushLexerState(Lexer.Local); .)
+	    assign              (.  CompilerTarget lastTarget = target;
+                                target=FunctionTargets[Application.InitializationId];
+                                IAstExpression expr;
+                            .)
+		Expr<out expr>
+		                    (.  _popLexerState();
+		                        AstGetSet complex = new AstGetSetSymbol(this, PCall.Set, id, InterpretAsObjectVariable(type));
+		                        complex.Arguments.Add(expr);
+		                        target.Ast.Add(complex);
+		                        vari.Meta[Application.InitializationId] = TargetApplication._RegisterInitializationUpdate().ToString();
+		                        target = lastTarget;
+		                    .)
+	]
+.
+
+/* ---- Global declaration ---- */
+
+Declaration
+                            (. SymbolInterpretations type = SymbolInterpretations.Undefined; .)
+=
+SYNC
+	declare
+	[	var 		        (. type = SymbolInterpretations.GlobalObjectVariable; .)
+	|   ref                 (. type = SymbolInterpretations.GlobalReferenceVariable; .)
+	|	function			(. type = SymbolInterpretations.Function; .)
+	|   command             (. type = SymbolInterpretations.Command; .)
+	]
+	DeclarationInstance<type>
+	{WEAK comma DeclarationInstance<type>}
+.
+	
+DeclarationInstance<SymbolInterpretations type>
+                            (.  string id; string aId; .)
+=			
+	Id<out id>              (.  aId = id; .)
+	[ as Id<out aId> ]
+	                        (.  SymbolEntry inferredType;
+	                            if(target == null) //global symbol
+	                            {
+	                                if(type == SymbolInterpretations.Undefined)
+	                                    if(Symbols.TryGetValue(id, out inferredType))
+	                                        type = inferredType.Interpretation;
+	                                    else if(Symbols.TryGetValue(aId, out inferredType))
+	                                        type = inferredType.Interpretation;
+	                                    else
+	                                        SemErr("Interpretation of symbol " + id + " as " + aId + " cannot be inferred.");
+	                                Symbols[aId] = new SymbolEntry(type, id);
+	                            }
+	                            else
+	                            {
+	                                if(type == SymbolInterpretations.Undefined)
+	                                    if(target.Symbols.TryGetValue(id, out inferredType))
+	                                        type = inferredType.Interpretation;
+	                                    else if(target.Symbols.TryGetValue(aId, out inferredType))
+	                                        type = inferredType.Interpretation;
+	                                    else
+	                                        SemErr("Interpretation of symbol " + id + " as " + aId + " cannot be inferred.");
+	                                target.Symbols[aId] = new SymbolEntry(type, id);
+	                            }
+	                        .)
+.
+
+/* ---- Build Block ---- */
+
+BuildBlock
+=
+	SYNC build                  (.  PFunction func = new PFunction(TargetApplication);
+                                    CompilerTarget lastTarget = target; 
+                                    target = Loader.CreateFunctionTarget(func, new AstBlock(this));
+                                    target.Declare(SymbolInterpretations.Command, "Add", Loader.BuildAddCommand);
+                                    target.Declare(SymbolInterpretations.Command, "Require", Loader.BuildRequireCommand);
+                                    target.Declare(SymbolInterpretations.Command, "Default", Loader.BuildDefaultCommand);
+                                    _pushLexerState(Lexer.Local);                                
+                                .)
+	
+	[ does ]	
+	StatementBlock<target.Ast>
+	
+                                (.  
+	                                _popLexerState();
+                                    if(errors.count > 0)
+                                    {
+                                        SemErr("Cannot execute build block. Errors detected");
+                                        return;
+                                    }
+                                    target.Ast.EmitCode(target);
+                                    target.FinishTarget();	                                
+                                    target = lastTarget;
+                                    //Run the build block 
+                                    FunctionContext fctx = func.CreateFunctionContext(ParentEngine, new PValue[] {}, new PVariable[] {}, true);
+                                    
+                                    try
+                                    {
+                                        TargetApplication._SuppressInitialization = true;
+                                        Loader.BuildCommandsEnabled = true;
+                                        ParentEngine.Process(fctx);
+                                    }
+                                    finally
+                                    {
+                                        Loader.BuildCommandsEnabled = false;
+                                        TargetApplication._SuppressInitialization = false;
+                                    }
+	                            .)
+.
+
+/* ---- Function definition ---- */
+
+FunctionDefinition<out PFunction func>
+                                    (.  
+                                        func = null; 
+                                        string id;     
+                                        string funcId; 
+                                        func = null; 
+                                        bool isNested = target != null; 
+                                        bool isCoroutine = false;
+                                        PFunction corBody = null;
+                                        PFunction corStub = null;
+                                        string corId = null;
+                                        CompilerTarget ct = null;
+                                        CompilerTarget cst = null;
+                                    .)         
+=	
+	(   function
+	|   coroutine                   (.  isCoroutine = true;
+	                                .)
+	)
+	Id<out id>                      (.  funcId = id;
+                                        if(Engine.StringsAreEqual(id, @"\init"))
+                                        {
+                                            func = TargetApplication._InitializationFunction;
+                                            if(isNested)
+                                                SemErr("Cannot define initialization code inside another function.");
+                                            if(isCoroutine)
+                                                SemErr("Cannot define initialization code as a coroutine.");
+                                        }
+                                        else
+                                        {
+                                            if(isNested)
+                                                funcId = generateNestedFunctionId(id);
+                                            func = new PFunction(TargetApplication, funcId);
+                                            
+                                            if(isNested)
+                                                 func.Meta["LogicalId"] = id;
+                                            
+                                            Loader.CreateFunctionTarget(func, new AstBlock(this));
+                                            TargetApplication.Functions.Add(func);
+                                        }
+                                        CompilerTarget ft = FunctionTargets[func];
+                                        if(isCoroutine)
+                                        {
+                                            corStub = func;
+                                            
+                                            //Create coroutine body function
+                                            corId = generateNestedFunctionId(ft);                                            
+                                            corBody = new PFunction(TargetApplication, corId);
+                                            Loader.CreateFunctionTarget(corBody, new AstBlock(this));
+                                            TargetApplication.Functions.Add(corBody);
+                                            corBody.Meta["LogicalId"] = id;
+
+                                            //Get compiler target references
+                                            ct = FunctionTargets[corBody];
+                                            cst = ft;
+                                            ct.ParentTarget = cst;
+                                        }
+                                        if(target != null) //Link to parent in case of a nested function
+                                            ft.ParentTarget = target;	                                           
+	                                    
+	                                .)
+	[	lpar
+		[	FormalArg<ft> 
+			{	comma
+				FormalArg<ft>
+			}
+		]
+		rpar
+	]	                            (.  if(target == null && 
+	                                        (!object.ReferenceEquals(func, TargetApplication._InitializationFunction)))
+	                                    {
+	                                            //Add the name to the symboltable
+	                                            Symbols[func.Id] = new SymbolEntry(SymbolInterpretations.Function, func.Id);
+	                                    }
+	                                    //Target the coroutine body instead of the stub
+                                        if(isCoroutine)
+                                            func = corBody;
+	                                .)
+    [                               (.  _pushLexerState(Lexer.YYINITIAL); .)
+        lbrack
+        {   MetaAssignment<func> SYNC semicolon
+        }
+                                    (.  _popLexerState(); .)
+        rbrack
+    ]
+                                    (.  CompilerTarget lastTarget = target;
+                                        target = FunctionTargets[func]; 
+                                        _pushLexerState(Lexer.Local);
+                                    .)
+    (   does
+        StatementBlock<target.Ast>
+    |   lbrace { Statement<target.Ast> } rbrace
+    |   assign                      (.  AstReturn ret = new AstReturn(this, ReturnVariant.Exit); .)
+        Expr<out ret.Expression>    (.  target.Ast.Add(ret); .)
+        semicolon
+    )                               (.  _popLexerState();
+                                        target = lastTarget; 
+                                        //Compile AST
+                                        if(errors.count == 0)
+                                            if(Engine.StringsAreEqual(func.Id, @"\init"))
+                                            {
+                                                TargetApplication._RequireInitialization();
+                                            }
+                                            else
+                                            {
+                                                Ast[func].EmitCode(FunctionTargets[func]);
+                                                FunctionTargets[func].FinishTarget();
+                                            }
+                                            
+                                        if(isCoroutine)
+                                        {
+                                            //Stub has to be returned
+                                            func = corStub;
+                                            //Generate code for the stub
+                                            AstCreateCoroutine crcor = new AstCreateCoroutine(this);                                            
+                                            crcor.Expression = new AstCreateClosure(this,corBody.Id);
+                                            AstReturn retst = new AstReturn(this, ReturnVariant.Exit);
+                                            retst.Expression = crcor;
+                                            cst.Ast.Add(retst);
+                                            cst.Ast.EmitCode(cst);
+                                            cst.FinishTarget();
+                                        }
+                                    .)
+.
+
+FormalArg<CompilerTarget ft>        (.  string id; SymbolInterpretations kind = SymbolInterpretations.LocalObjectVariable; .)
+=
+	[ var | ref                     (.  kind = SymbolInterpretations.LocalReferenceVariable; .)
+	]
+	Id<out id>                      (.  ft.Function.Parameters.Add(id); 
+	                                    ft.Symbols.Add(id, new SymbolEntry(kind, id));
+	                                .)
+.
+
+GlobalId<out string id>             (.  id = "...no freaking id..."; .)
+=
+    id                              (.  id = cache(t.val); .)
+|   anyId                           (.  id = cache(t.val.Substring(1)); .)
+.
+
+GlobalQualifiedId<out string id>    (. id = "\\NoId\\"; .)  
+=
+    GlobalId<out id>
+|   Ns<out id>                      (.  StringBuilder buffer = new StringBuilder(id); buffer.Append('.'); .)
+    {   Ns<out id>                 (.  buffer.Append(id); buffer.Append('.'); .)
+    }
+    GlobalId<out id>                (.  buffer.Append(id); .)
+                                    (.  id = buffer.ToString(); .)
+.

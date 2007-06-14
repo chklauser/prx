@@ -1,0 +1,207 @@
+/*
+ * Prexonite, a scripting engine (Scripting Language -> Bytecode -> Virtual Machine)
+ *  Copyright (C) 2007  Christian "SealedSun" Klauser
+ *  E-mail  sealedsun a.t gmail d.ot com
+ *  Web     http://www.sealedsun.ch/
+ *
+ *  This program is free software; you can redistribute it and/or modify
+ *  it under the terms of the GNU General Public License as published by
+ *  the Free Software Foundation; either version 2 of the License, or
+ *  (at your option) any later version.
+ *
+ *  Please contact me (sealedsun a.t gmail do.t com) if you need a different license.
+ * 
+ *  This program is distributed in the hope that it will be useful,
+ *  but WITHOUT ANY WARRANTY; without even the implied warranty of
+ *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ *  GNU General Public License for more details.
+ *
+ *  You should have received a copy of the GNU General Public License along
+ *  with this program; if not, write to the Free Software Foundation, Inc.,
+ *  51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
+ */
+
+build does require("prx_interactive.pxs", "prx_lib.pxs");
+
+Name prx\main;
+Description "prx main logic.";
+Author SealedSun;
+Version "v.beta-preview-1";
+
+Entry prx\main;
+
+declare function 
+	displayHelp,
+	prx\interactive;
+    
+Add Prexonite::Compiler to Import;
+    
+var targetPath;
+var sourceFiles;
+
+declare var app, ldr;
+	
+function printHead does println("** PREXONITE $(meta("Version")) **");
+
+var originalArgs;
+
+function prx\main(args)
+{
+    originalArgs = args;
+    
+	if(args == null or args.Length == 0)
+	{
+    	printHead;
+		println("NO ARGUMENTS DETECTED.");
+		displayHelp;		
+		break;
+	}
+	
+	var state\compile = 3;
+	var state\target = 4;
+	var state\run = 5;
+	var state\interactive = 6;
+	var state\arg = 7;
+	var state = state\run;
+	var sourceFiles = new List;
+	var verbose = false;
+	var headerOnly = false;
+	
+	var scriptArgs = [];
+	
+	foreach(var current in args)
+	{
+		if(current == null or current.Length == 0)
+			continue;
+		else if(state == state\arg)
+			scriptArgs[] = current;
+		else if(current.StartsWith("-"))
+			if(current == "-c")
+				state = state\compile;
+			else if(current == "-t")
+				state = state\target;
+			else if(current == "-i")
+				state = state\interactive;
+			else if(current == "-r")
+				state = state\run;
+			else if(current == "-v")
+			    verbose = true;
+			else if(current == "-h")
+			    headerOnly = true;
+			else if(current == "-a")
+				state = state\arg;
+			else if(current == "-?")
+			{
+				displayHelp;
+				return;
+			}
+			else
+				println("Unknown option " + current + ".");
+		else if(state == state\compile Or state == state\run Or state == state\interactive)
+			if(not System::IO::File.Exists(current))
+				println("The source file \"" + current.Escape + "\" can not be found.");
+			else
+				sourceFiles.Add = current;
+		else if(state == state\target)
+			targetPath = current;
+	}
+	
+	if(sourceFiles.Count == 0)
+	{
+		printHead;
+    	if(state == state\interactive)
+		    prx\interactive;
+		else
+    	    println("No source files specified.");
+		return;	
+	}
+	if(targetPath == null or targetPath.Length == 0)
+		targetPath = System::IO::Path.GetFileNameWithoutExtension(sourceFiles[0]) + ".c.pxs";
+		
+	//Report
+	if(verbose)
+	{
+    	printHead;
+	    println("Target:\t" + targetPath + "\n\nSources:");
+    }
+	app = new ::Application(System::IO::Path.GetFileNameWithoutExtension(sourceFiles[0]));
+	var options = new ::LoaderOptions(thisEngine, app);
+	ldr = new ::Loader(options);
+	var exc = null;
+	try
+	{
+		foreach(var sourceFile in sourceFiles)
+		{
+	    	if(verbose) println("\t* " + sourceFile);
+			ldr.LoadFromFile(sourceFile);
+		}
+		if(verbose) println("Compilation done!");
+	}
+	catch(var exc)
+	{
+        runInDifferentColor(()=> println(exc), ::ConsoleColor.Green);
+	}
+	
+	if(ldr.Errors.Count != 0 Or not (exc is null))
+	{
+		println("Errors detected. Aborting...");
+		var originalColor = ::Console.ForegroundColor;
+		::Console.ForegroundColor = ::ConsoleColor.Red;
+		foreach(var err in ldr.Errors)
+			println(err);
+		::Console.ForegroundColor = originalColor;    	
+    	return;
+	}
+	
+	if(state == state\interactive)
+	{
+runInteractive:
+        prx\interactive;
+    }
+	else if(state == state\run)
+	{
+    	if(app.Meta["interactive"].Switch)
+    	{
+            //The application requires to be run in interactive mode.
+            var intMainId = 
+                app.Meta.ContainsKey("entry\\interactive") ? 
+                    app.Meta["entry\\interactive"].Text 
+                :
+                    "main\\interactive";
+            if(app.Functions.Contains(intMainId))
+                var intMain = app.Functions[intMainId].Run(thisEngine);
+            
+            goto runInteractive;
+    	}
+    	else
+    	{
+	        app.Run(thisEngine, scriptArgs~Object<"Prexonite.PValue[]">);
+        }
+    }
+	else
+	{
+    	var writer = new System::IO::StreamWriter(targetPath, false);
+    	if(headerOnly)
+    	    ldr.StoreSymbols(writer);
+    	else
+	        ldr.Store(writer);
+	    writer.Close();
+    }
+}
+
+function reboot() = __replace_call(@"prx\main", originalArgs);
+
+function displayHelp does print = 
+	"Usage:\n" + 
+	"\tprx -c {sources...} (-t {target...} | -r | -i) [-nv]\n" +
+	"\tprx -i\n" +
+	"\tprx -?\n" +
+	"\n" + 
+	"List the required source files (*.pxs) after the -c switch.\n" + 
+	"Define the name of the output file using -t.\n"+
+	"\n"+
+	"The default action is storing the compiled application in the target file.\n"+
+	"Run the application instead by using the -r switch.\n"+
+	"Enter interactive mode (with or without a compiled application) using the -i switch.\n"+
+	"-v enables additional output.\n"+
+	"-h extracts declarations.\n\n";

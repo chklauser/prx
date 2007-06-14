@@ -1,0 +1,224 @@
+﻿<Project DefaultTargets="Build" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <PropertyGroup>
+    <Configuration Condition=" '$(Configuration)' == '' ">Debug</Configuration>
+    <Platform Condition=" '$(Platform)' == '' ">AnyCPU</Platform>
+    <ProductVersion>8.0.50727</ProductVersion>
+    <SchemaVersion>2.0</SchemaVersion>
+    <ProjectGuid>{2FE722CA-B671-4EE8-9BF1-9F3ACFACD24D}</ProjectGuid>
+    <OutputType>Library</OutputType>
+    <AppDesignerFolder>Properties</AppDesignerFolder>
+    <RootNamespace>Prexonite</RootNamespace>
+    <AssemblyName>Prexonite</AssemblyName>
+    <SignAssembly>true</SignAssembly>
+    <AssemblyOriginatorKeyFile>Prexonite.snk</AssemblyOriginatorKeyFile>
+    <RunPostBuildEvent>OnBuildSuccess</RunPostBuildEvent>
+  </PropertyGroup>
+  <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Debug|AnyCPU' ">
+    <DebugSymbols>true</DebugSymbols>
+    <DebugType>full</DebugType>
+    <Optimize>false</Optimize>
+    <OutputPath>bin\</OutputPath>
+    <DefineConstants>TRACE;DEBUG</DefineConstants>
+    <ErrorReport>prompt</ErrorReport>
+    <WarningLevel>4</WarningLevel>
+    <DocumentationFile>
+    </DocumentationFile>
+  </PropertyGroup>
+  <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Release|AnyCPU' ">
+    <DebugType>none</DebugType>
+    <Optimize>true</Optimize>
+    <OutputPath>bin\</OutputPath>
+    <DefineConstants>TRACE</DefineConstants>
+    <ErrorReport>prompt</ErrorReport>
+    <WarningLevel>4</WarningLevel>
+    <PlatformTarget>AnyCPU</PlatformTarget>
+    <DocumentationFile>bin\Prexonite.xml</DocumentationFile>
+  </PropertyGroup>
+  <ItemGroup>
+    <Reference Include="System" />
+    <Reference Include="System.Data" />
+    <Reference Include="System.Drawing" />
+    <Reference Include="System.Windows.Forms" />
+    <Reference Include="System.Xml" />
+  </ItemGroup>
+  <ItemGroup>
+    <Compile Include="Closure.cs" />
+    <Compile Include="Commands\Call.cs" />
+    <Compile Include="Commands\Concatenate.cs" />
+    <Compile Include="Commands\DelegatePCommand.cs" />
+    <Compile Include="Commands\Dispose.cs" />
+    <Compile Include="Commands\FoldL.cs" />
+    <Compile Include="Commands\FoldR.cs" />
+    <Compile Include="Commands\MapAll.cs" />
+    <Compile Include="Commands\NestedPCommand.cs" />
+    <Compile Include="Commands\Pair.cs" />
+    <Compile Include="Commands\Print.cs" />
+    <Compile Include="Commands\PrintLine.cs" />
+    <Compile Include="Compiler\Ast\AstActionBlock.cs" />
+    <Compile Include="Compiler\Ast\AstAsmInstruction.cs" />
+    <Compile Include="Compiler\Ast\AstCondition.cs" />
+    <Compile Include="Compiler\Ast\AstConditionalExpression.cs" />
+    <Compile Include="Compiler\Ast\AstConstantTypeExpression.cs" />
+    <Compile Include="Compiler\Ast\AstCreateClosure.cs" />
+    <Compile Include="Compiler\Ast\AstCreateCoroutine.cs" />
+    <Compile Include="Compiler\Ast\AstExplicitGoTo.cs" />
+    <Compile Include="Compiler\Ast\AstExplicitLabel.cs" />
+    <Compile Include="Compiler\Ast\AstConstant.cs" />
+    <Compile Include="Compiler\Ast\AstForLoop.cs" />
+    <Compile Include="Compiler\Ast\AstGetException.cs" />
+    <Compile Include="Compiler\Ast\AstGetSet.cs" />
+    <Compile Include="Compiler\Ast\AstBinaryOperator.cs" />
+    <Compile Include="Compiler\Ast\AstGetSetMemberAccess.cs" />
+    <Compile Include="Compiler\Ast\AstGetSetReference.cs" />
+    <Compile Include="Compiler\Ast\AstHashLiteral.cs" />
+    <Compile Include="Compiler\Ast\AstIndirectCall.cs" />
+    <Compile Include="Compiler\Ast\AstKeyValuePair.cs" />
+    <Compile Include="Compiler\Ast\AstLazyLogical.cs" />
+    <Compile Include="Compiler\Ast\AstListLiteral.cs" />
+    <Compile Include="Compiler\Ast\AstLogicalAnd.cs" />
+    <Compile Include="Compiler\Ast\AstLogicalOr.cs" />
+    <Compile Include="Compiler\Ast\AstDynamicTypeExpression.cs" />
+    <Compile Include="Compiler\Ast\AstNull.cs" />
+    <Compile Include="Compiler\Ast\AstObjectCreation.cs" />
+    <Compile Include="Compiler\Ast\AstReturn.cs" />
+    <Compile Include="Compiler\Ast\AstStringConcatenation.cs" />
+    <Compile Include="Compiler\Ast\AstThrow.cs" />
+    <Compile Include="Compiler\Ast\AstTryCatchFinally.cs" />
+    <Compile Include="Compiler\Ast\AstTypecast.cs" />
+    <Compile Include="Compiler\Ast\AstTypecheck.cs" />
+    <Compile Include="Compiler\Ast\AstUnaryOperator.cs" />
+    <Compile Include="Compiler\Ast\AstGetSetStatic.cs" />
+    <Compile Include="Compiler\Ast\AstUsing.cs" />
+    <Compile Include="Compiler\Ast\AstWhileLoop.cs" />
+    <Compile Include="Compiler\Ast\AstForeachLoop.cs" />
+    <Compile Include="Compiler\Ast\IAstEffect.cs" />
+    <Compile Include="Compiler\Ast\IAstExpression.cs" />
+    <Compile Include="Compiler\Ast\AstBlock.cs" />
+    <Compile Include="Compiler\Ast\AstGetSetSymbol.cs" />
+    <Compile Include="Compiler\Ast\AstNode.cs" />
+    <Compile Include="Compiler\Ast\IAstType.cs" />
+    <Compile Include="Compiler\BlockLabels.cs" />
+    <Compile Include="Compiler\CompilerTarget.cs" />
+    <Compile Include="Compiler\Lexer.Code.cs" />
+    <Compile Include="Compiler\Lexer.cs" />
+    <Compile Include="Compiler\Parser.cs" />
+    <Compile Include="Application.cs" />
+    <Compile Include="Compiler\Loader.cs" />
+    <Compile Include="Compiler\LoaderOptions.cs" />
+    <Compile Include="Compiler\Parser.Code.cs" />
+    <Compile Include="Compiler\Token.cs" />
+    <Compile Include="Coroutine.cs" />
+    <Compile Include="FunctionContext.cs" />
+    <Compile Include="Helper\LineCatcher.cs" />
+    <Compile Include="Helper\MetaEntry.cs" />
+    <Compile Include="Helper\RandomAccessQueue.cs" />
+    <Compile Include="Helper\SymbolEntry.cs" />
+    <Compile Include="IIndirectCall.cs" />
+    <Compile Include="Instruction.cs" />
+    <Compile Include="Internal\Parser.Code.cs" />
+    <Compile Include="Internal\Parser.cs" />
+    <Compile Include="Internal\Scanner.cs" />
+    <Compile Include="IStackAware.cs" />
+    <Compile Include="PCommand.cs" />
+    <Compile Include="PFunction.cs" />
+    <Compile Include="Helper\PFunctionTable.cs" />
+    <Compile Include="Helper\SymbolCollection.cs" />
+    <Compile Include="PTypeLiteralAttribute.cs" />
+    <Compile Include="TryCatchFinallyBlock.cs" />
+    <Compile Include="Types\BoolPType.cs" />
+    <Compile Include="Types\HashPType.cs" />
+    <Compile Include="Types\IntPType.cs" />
+    <Compile Include="Types\IObject.cs" />
+    <Compile Include="Types\ListPType.cs" />
+    <Compile Include="Types\ObjectPType.cs" />
+    <Compile Include="Engine.cs" />
+    <Compile Include="Helper\Exceptions.cs" />
+    <Compile Include="Helper\Metatable.cs" />
+    <Compile Include="Properties\AssemblyInfo.cs" />
+    <Compile Include="PType.cs" />
+    <Compile Include="PValue.cs" />
+    <Compile Include="PVariable.cs" />
+    <Compile Include="StackContext.cs" />
+    <Compile Include="Helper\SymbolTable.cs" />
+    <Compile Include="Types\NullPType.cs" />
+    <Compile Include="Types\PValueEnumerator.cs" />
+    <Compile Include="Types\PValueHashtable.cs" />
+    <Compile Include="Types\PValueKeyValuePair.cs" />
+    <Compile Include="Types\RealPType.cs" />
+    <Compile Include="Types\StringPType.cs" />
+    <Compile Include="Types\StructurePType.cs" />
+    <Compile Include="VM.cs" />
+    <Content Include="Compiler\Prexonite.lex" />
+    <None Include="Documents\prototype1.pxs" />
+    <None Include="ObjectModel.cd" />
+    <None Include="Prexonite.snk" />
+    <Content Include="Compiler\Grammar\Grammar.Readme.txt" />
+    <Content Include="Documents\Pxs.BNF.txt" />
+  </ItemGroup>
+  <ItemGroup>
+    <GrammarFragment Include="Compiler\Grammar\Header.atg" />
+    <GrammarFragment Include="Compiler\Grammar\Scanner.atg" />
+    <GrammarFragment Include="Compiler\Grammar\Parser*.atg" />
+    <GrammarFragment Include="Compiler\Grammar\Footer.atg" />
+  </ItemGroup>
+  <ItemGroup>
+    <Grammar Include="PTypeExpression.atg" />
+  </ItemGroup>
+  <!-- CUSTOM TASKS -->
+  <PropertyGroup>
+    <PxCoco>$(ProjectDir)..\Tools\PxCoco.exe</PxCoco>
+  </PropertyGroup>
+  <UsingTask AssemblyFile="$(PxCoco)" TaskName="Merge" />
+  <UsingTask AssemblyFile="$(PxCoco)" TaskName="PxCoco" />
+  <Import Project="$(MSBuildBinPath)\Microsoft.CSharp.targets" />
+  <!-- BUILD CUSTOMIZATION -->
+  <PropertyGroup>
+    <!--<UseHostCompilerIfAvailable>False</UseHostCompilerIfAvailable> -->
+    <BuildDependsOn>
+	    ExpressionParser;
+	    PrexoniteScanner;
+	    PrexoniteParser;
+	    $(BuildDependsOn);
+	</BuildDependsOn>
+    <ToolsDirectory>$(ProjectDir)..\Tools</ToolsDirectory>
+    <FramesDirectory>$(ToolsDirectory)</FramesDirectory>
+    <PrexoniteScannerDefinition>Prexonite.lex</PrexoniteScannerDefinition>
+    <PrexoniteGrammarDefinition>Prexonite__gen.atg</PrexoniteGrammarDefinition>
+    <PTypeExpressionGrammarDefinition>PTypeExpression.atg</PTypeExpressionGrammarDefinition>
+    <PrexoniteParserOutputFiles>Parser.cs</PrexoniteParserOutputFiles>
+    <PTypeExpressionParserOutputFiles>Parser.cs;Scanner.cs</PTypeExpressionParserOutputFiles>
+    <PrexoniteParserFiles>$(PxCocoOutputFiles)</PrexoniteParserFiles>
+    <PTypeExpressionParserFiles>$(PxCocoOutputFiles)</PTypeExpressionParserFiles>
+    <DirectDebug>False</DirectDebug>
+  </PropertyGroup>
+  <!-- PType Expression Parser Target -->
+  <Target Name="ExpressionParser">
+    <PxCoco Grammar="$(PTypeExpressionGrammarDefinition)" Namespace="Prexonite.Internal" FramesDirectory="$(FramesDirectory)" DirectDebug="$(DirectDebug)">
+      <Output TaskParameter="OutputFiles" ItemName="PTypeExpressionParserFiles" />
+    </PxCoco>
+    <Message Text="Hell:$(PTypeExpressionParserFiles):0" />
+    <Copy SourceFiles="$(ProjectDir)Parser.cs;$(ProjectDir)Scanner.cs" DestinationFolder="$(ProjectDir)Internal" />
+    <Delete Files="$(PTypeExpressionParserFiles)" DeletedFiles="$(ProjectDir)Parser.cs;$(ProjectDir)Scanner.cs" />
+  </Target>
+  <!-- Prexonite Parser Target -->
+  <Target Name="PrexoniteParser" DependsOnTargets="PrexoniteGrammar">
+    <PxCoco Grammar="$(PrexoniteGrammarDefinition)" Namespace="Prexonite.Compiler" FramesDirectory="$(FramesDirectory)" DirectDebug="$(DirectDebug)">
+      <Output TaskParameter="OutputFiles" ItemName="PrexoniteParserFiles" />
+    </PxCoco>
+    <Copy SourceFiles="$(ProjectDir)Parser.cs;$(ProjectDir)Scanner.cs" DestinationFolder="$(ProjectDir)Compiler" />
+    <Delete Files="$(PrexoniteParserFiles)" DeletedFiles="$(ProjectDir)Parser.cs;$(ProjectDir)Scanner.cs" />
+  </Target>
+  <!-- Prexonite Grammar Merging Target -->
+  <Target Name="PrexoniteGrammar">
+    <Merge InputFiles="@(GrammarFragment->'%(FullPath)')" OutputFile="$(ProjectDir)Prexonite__gen.atg">
+    </Merge>
+    <Message Text="$(PrexoniteGrammarDefinition) is now ready." />
+  </Target>
+  <Target Name="PrexoniteScanner">
+    <Exec Command="$(ToolsDirectory)\csflex.exe --csharp --nested-default-skeleton --nobak $(PrexoniteScannerDefinition)" WorkingDirectory="$(ProjectDir)\Compiler" />
+  </Target>
+  <!-- PxCoco Tool Target -->
+  <Target Name="PxCocoTool" Condition="!Exists('$(PxCoco)')">
+    <MSBuild Projects="$(ProjectDir)..\PxCoco\PxCoco.csproj" Targets="Build" />
+  </Target>
+</Project>

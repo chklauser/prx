@@ -1,0 +1,235 @@
+/*
+ * Prexonite, a scripting engine (Scripting Language -> Bytecode -> Virtual Machine)
+ *  Copyright (C) 2007  Christian "SealedSun" Klauser
+ *  E-mail  sealedsun a.t gmail d.ot com
+ *  Web     http://www.sealedsun.ch/
+ *
+ *  This program is free software; you can redistribute it and/or modify
+ *  it under the terms of the GNU General Public License as published by
+ *  the Free Software Foundation; either version 2 of the License, or
+ *  (at your option) any later version.
+ *
+ *  Please contact me (sealedsun a.t gmail do.t com) if you need a different license.
+ * 
+ *  This program is distributed in the hope that it will be useful,
+ *  but WITHOUT ANY WARRANTY; without even the implied warranty of
+ *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ *  GNU General Public License for more details.
+ *
+ *  You should have received a copy of the GNU General Public License along
+ *  with this program; if not, write to the Free Software Foundation, Inc.,
+ *  51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
+ */
+
+/* ---- Assembler Language ---- */
+
+AsmStatementBlock<AstBlock block>
+=
+	lbrace
+	{
+	    AsmInstruction<block>        
+	}
+	rbrace
+|   AsmInstruction<block> semicolon     
+.
+
+AsmInstruction<AstBlock block>          (.  int arguments = 0;
+                                            string id = null;
+                                            int SecArg = 0;
+                                            double dblArg = 0.0;
+                                            string insbase = null; string detail = null;
+                                            bool bolArg = false;
+                                            OpCode code;
+                                            bool justEffect = false;
+                                        .)
+=
+    //VARIABLE DECLARATION              
+                                        (. SymbolInterpretations kind = SymbolInterpretations.LocalObjectVariable; .)
+    ( var | ref                         (. kind = SymbolInterpretations.LocalReferenceVariable; .)
+    )
+    AsmId<out id>
+                                        
+                                        (.  //Store variable
+                                            target.Function.Variables.Add(id);
+                                            target.Symbols.Add(id, new SymbolEntry(kind, id));
+                                        .)
+    {   comma
+        AsmId<out id>                                        
+                                        (.  //Store variable
+                                            target.Function.Variables.Add(id);
+                                            target.Symbols.Add(id, new SymbolEntry(kind, id));
+                                        .)
+    }
+|   //NULL INSTRUCTIONS
+    IF(isInNullGroup())
+    AsmId<out insbase>
+    [ dot AsmId<out detail> ]
+                                        (.  code = getOpCode(insbase, detail);
+                                            addInstruction(block, new Instruction(code));
+                                        .)
+                                        
+|   //LABEL
+    IF( isAsmInstruction("label",null) )
+    AsmId<out insbase>
+    
+    //Enter label
+    AsmId<out id>
+                                        (. addLabel(block, id); .)
+|   //NOP/DATA INSTRUCTION
+    IF(isAsmInstruction("nop", null))
+    AsmId<out insbase>                  (.  Instruction ins = new Instruction(OpCode.nop); .)
+    [  plus AsmId<out id>               (.  ins.Id = id; .)
+    ]
+                                        (.  addInstruction(block, ins); .)
+    
+|   //ROTATE INSTRUCTION
+    IF(isAsmInstruction("rot", null))
+    AsmId<out insbase>
+    dot Integer<out arguments>
+    comma Integer<out SecArg>    
+                                        //Create rot instruction
+                                        (.  addInstruction(block, Instruction.CreateRotate(arguments, SecArg)); .)
+   
+    
+|   //EXCHANGE INSTRUCTION
+    IF(isAsmInstruction("swap", null))
+    AsmId<out insbase>
+                                        (.  addInstruction(block, Instruction.CreateExchange()); .)
+   
+    
+|   //LOAD CONSTANT . REAL
+    IF(isAsmInstruction("ldc", "real"))
+    AsmId<out insbase>
+    dot
+    AsmId<out detail>    
+    SignedReal<out dblArg>                    
+                                        (.  addInstruction(block, Instruction.CreateConstant(dblArg)); .)
+    
+
+|   //LOAD CONSTANT . BOOL    
+    IF(isAsmInstruction("ldc", "bool"))
+    AsmId<out insbase>
+    dot
+    AsmId<out detail>
+    Boolean<out bolArg>     
+                                        (.  addInstruction(block, Instruction.CreateConstant(bolArg)); .)
+    
+    
+|   //INTEGER INSTRUCTIONS
+    IF(isInIntegerGroup())
+    AsmId<out insbase>
+    [ dot AsmId<out detail> ]
+    SignedInteger<out arguments>
+                                        (.  code = getOpCode(insbase, detail);
+                                            addInstruction(block, new Instruction(code, arguments));
+                                        .)
+                                        
+|   //JUMP INSTRUCTIONS
+    IF(isInJumpGroup())
+    AsmId<out insbase>
+    [ dot AsmId<out detail> ]
+                                        (.  Instruction ins = null;
+                                            code = getOpCode(insbase, detail);
+                                        .)
+    //Symbolic:
+    (   AsmId<out id>
+                                        (.  
+                                            ins = new Instruction(code, -1, id);
+                                        .)
+    |   Integer<out arguments>          (.  ins = new Instruction(code, arguments); .)
+    )                                   (.  addInstruction(block, ins); .)
+    
+
+|   //ID INSTRUCTIONS
+    IF(isInIdGroup())
+    AsmId<out insbase>
+    [ dot AsmId<out detail> ]
+    AsmId<out id>
+                                        (.  code = getOpCode(insbase, detail);
+                                            addInstruction(block, new Instruction(code, id));
+                                        .)
+    
+
+|   //ID+ARG INSTRUCTIONS
+    IF(isInIdArgGroup())
+    [ at                                (.  justEffect = true; .)
+    ]
+    AsmId<out insbase>
+    (   dot Integer<out arguments>
+    |                                   (.  arguments = 0; .)
+    )
+    AsmId<out id>
+                                        (.  code = getOpCode(insbase, detail);
+                                            addInstruction(block, new Instruction(code, arguments, id, justEffect));
+                                        .)
+ 
+ |   //ARG INSTRUCTIONS
+    IF(isInArgGroup())
+    [ at                                (.  justEffect = true; .)
+    ]
+    AsmId<out insbase>
+    (   dot Integer<out arguments>
+    |                                   (.  arguments = 0; .)
+    )
+                                        (.  code = getOpCode(insbase, detail);
+                                            addInstruction(block, new Instruction(code, arguments, null, justEffect));
+                                        .)   
+
+|   //QUALID+ARG INSTRUCTIONS
+    IF(isInQualidArgGroup())
+    [ at                                (.  justEffect = true; .)
+    ]
+    AsmId<out insbase>
+    (   dot Integer<out arguments>
+    |                                   (.  arguments = 0; .)
+    )
+    AsmQualid<out id>
+                                        (.  code = getOpCode(insbase, detail);
+                                            addInstruction(block, new Instruction(code, arguments, id, justEffect));
+                                        .)
+
+|   //ERROR PRODUCTION: INVALID INSTRUCTION
+    AsmId<out insbase>                  (.  SemErr("Invalid assembler instruction \"" + insbase + "\" (" + t + ")."); .)
+        
+.
+
+AsmId<out string id>        (.  id = "\\NoId\\"; .)
+=
+    String<out id>
+|   Id<out id>
+|   (   mod
+    |   is
+    |   not
+    //  enabled
+    //  disabled
+    //  build
+    |   return
+    |   in
+    |   to
+    //  add
+    |   continue
+    |   break
+    |   or
+    |   and
+    |   xor
+    |   goto
+    |   null
+    |   else
+    |   if
+    |   unless
+    |   new
+    |   while
+    |   until
+    |   for
+    //   in
+    |   foreach
+    |   command
+    |   as
+    )                       (.  id = cache(t.val); .)
+.
+
+AsmQualid<out string qualid>
+                            (.   .)
+=
+    AsmId<out qualid>
+.

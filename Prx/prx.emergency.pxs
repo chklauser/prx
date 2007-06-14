@@ -1,0 +1,117 @@
+Name Prx;
+Description "Prexonite command line";
+Author SealedSun;
+
+Entry Main;
+
+declare function 
+	prompt, 
+	displayHelp,
+	thisEngine,
+	thisApplication;
+	
+declare command
+    print,
+    println,
+    echo as println;
+    
+Import { System, Prexonite, Prexonite::Compiler };
+    
+var targetPath;
+var sourceFiles;
+	
+function main(args)
+{
+	println("** PREXONITE v.pre-alpha **");
+	if(args == null or args.Length == 0)
+	{
+		println("NO ARGUMENTS DETECTED.");
+		displayHelp;		
+		break;
+	}
+	
+	var state\compile = 3;
+	var state\target = 4;
+	var state\run = 5;
+	var state\interactive = 6;
+	var state = 0;
+	var sourceFiles = new System::Collections::ArrayList;
+	var enumerator = args.GetEnumerator;
+	while enumerator.MoveNext do
+	{
+		var current = enumerator.Current;
+		if(current == null or current.Length == 0)
+			continue;
+		else if(current.StartsWith("-"))
+			if(current == "-c")
+				state = state\compile;
+			else if(current == "-t")
+				state = state\target;
+			else if(current == "-i")
+				println = "Interactive mode is not supported yet.";
+			else if(current == "-r")
+				state = state\run;
+			else if(current == "-?")
+			{
+				displayHelp;
+				return;
+			}
+			else
+				println("Unknown option " + current + ".");
+		else if(state == state\compile)
+			if(!System::IO::File.Exists(current))
+				println("The source file \"" + current.Escape + "\" can not be found.");
+			else
+				sourceFiles.Add = current;
+		else if(state == state\target)
+			targetPath = current;
+		else if(state == state\run)
+			println("-r does not accept the argument " + current + ".");
+		else if(state == state\interactive)
+			println("-i does not accept the argument " + current + ".");
+	}
+	
+	if(sourceFiles.Count == 0)
+	{
+		println("No source files specified.");
+		return;	
+	}
+	if(targetPath == null or targetPath.Length == 0)
+		targetPath = System::IO::Path.GetFileNameWithoutExtension(sourceFiles[0]) + ".c.pxs";
+		
+	//Report
+	println("Target:\t" + targetPath + "\n\nSources:");
+	var app = new ::Application(System::IO::Path.GetFileNameWithoutExtension(sourceFiles[0]));
+	var options = new ::LoaderOptions(thisEngine, app);
+	var ldr = new ::Loader(options);
+	for var i = 0; until i == sourceFiles.Count do i++;
+	{
+		var sourceFile = sourceFiles[i];
+    	println("\t* " + sourceFile);
+		ldr.LoadFromFile(sourceFile);
+	}
+	println("Compilation done!");
+	app.StoreInFile(targetPath);
+}
+
+function displayHelp => print = 
+	"Usage:\n" + 
+	"\tprx -c {sources...} (-t {target...} | -r | -i)\n" +
+	"\tprx -i\n" +
+	"\tprx -?\n" +
+	"\n" + 
+	"List the required source files (*.pxs) after the -c switch.\n" + 
+	"Define the name of the output file using -t.\n"+
+	"\n"+
+	"The default action is storing the compiled application in the target file.\n"+
+	"Run the application instead by using the -r switch.\n"+
+	"Enter interactive mode (with or without a compiled application) using the -i switch.\n\n";
+
+function prompt(question) =>
+{
+	print = question;
+	return ::Console.ReadLine;
+}
+
+asm function thisEngine do { ldr.eng ret.value }
+asm function thisApplication do { ldr.app ret.value }

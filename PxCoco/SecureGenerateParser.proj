@@ -1,0 +1,11 @@
+<Project DefaultTargets="CocoParser" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+	<PropertyGroup>
+		<PxCoco>$(ProjectDir)..\Tools\PxCoco0.exe</PxCoco>
+	</PropertyGroup>
+	<UsingTask AssemblyFile="$(PxCoco)" TaskName="Merge" />
+	<UsingTask AssemblyFile="$(PxCoco)" TaskName="PxCoco" />
+	<Target Name="CocoParser">
+		<PxCoco Grammar="Coco.atg" Namespace="at.jku.ssw.Coco" FramesDirectory="$(ProjectDirectory)">
+		</PxCoco>
+	</Target>
+</Project>

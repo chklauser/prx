@@ -1,0 +1,535 @@
+/*
+ * Prexonite, a scripting engine (Scripting Language -> Bytecode -> Virtual Machine)
+ *  Copyright (C) 2007  Christian "SealedSun" Klauser
+ *  E-mail  sealedsun a.t gmail d.ot com
+ *  Web     http://www.sealedsun.ch/
+ *
+ *  This program is free software; you can redistribute it and/or modify
+ *  it under the terms of the GNU General Public License as published by
+ *  the Free Software Foundation; either version 2 of the License, or
+ *  (at your option) any later version.
+ *
+ *  Please contact me (sealedsun a.t gmail do.t com) if you need a different license.
+ * 
+ *  This program is distributed in the hope that it will be useful,
+ *  but WITHOUT ANY WARRANTY; without even the implied warranty of
+ *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ *  GNU General Public License for more details.
+ *
+ *  You should have received a copy of the GNU General Public License along
+ *  with this program; if not, write to the Free Software Foundation, Inc.,
+ *  51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
+ */
+
+StatementBlock<AstBlock block>
+=
+	lbrace
+	{	Statement<block>
+	}
+	rbrace
+|	Statement<block>
+.
+
+Statement<AstBlock block>
+=
+    IF( isLabel() )
+        ExplicitLabel<block>  
+|   [ SimpleStatement<block> ] semicolon
+|   StructureStatement<block>
+.
+
+SimpleStatement<AstBlock block>
+=
+	ExplicitGoTo<block>
+|   Declaration
+|   IF ( isVariableDeclaration() ) 
+        VariableDeclarationStatement
+|   GetSetComplex<block>
+|   Return<block>
+|   Throw<block>
+.
+
+StructureStatement<AstBlock block>
+=
+    (.  _pushLexerState(Lexer.Asm); .)
+    asm AsmStatementBlock<block>
+    (.  _popLexerState(); .)
+|   Condition<block>
+|   WhileLoop<block>
+|   ForLoop<block>
+|   ForeachLoop<block>
+|   NestedFunction<block>
+|   TryCatchFinally<block>
+|   Using<block>
+.
+
+GetSetComplex<AstBlock block>
+                                        (.  AstGetSet complex = null; 
+                                            AstGetSetSymbol symbol = null;
+                                            bool isDeclaration = false;
+                                            IAstExpression expr;
+                                        .)
+=
+//GetSet Initiator
+(   GetInitiator<out complex, out isDeclaration>
+|   lpar Expr<out expr> rpar
+    GetSetExtension<expr, out complex>
+)
+//GetSet Extensions
+    {   GetSetExtension<complex, out complex>
+    }
+//GetSet Terminator
+(
+|   inc                                 (.  block.Add(new AstUnaryOperator(this, UnaryOperator.PostIncrement, complex));
+                                            complex = null;
+                                        .)
+|   dec                                 (.  block.Add(new AstUnaryOperator(this, UnaryOperator.PostDecrement, complex));
+                                            complex = null;
+                                        .)
+|   Assignment<complex>                 (.  symbol = complex as AstGetSetSymbol;
+                                            if(symbol != null && InterpretationIsVariable(symbol.Interpretation) && isDeclaration)
+                                                symbol.Interpretation = InterpretAsObjectVariable(symbol.Interpretation);
+                                        .)
+)
+                                        (.  //Add the complex to the block
+                                            if(complex != null)
+                                                block.Add(complex);
+                                        .)
+.
+
+GetSetExtension<IAstExpression subject, out AstGetSet extension>
+                                        (.  extension = null; string id; List<IAstExpression> args = null; 
+											if(subject == null)
+											{
+												SemErr("Member access not preceded by a proper expression.");
+												subject = new AstConstant(this,null);
+											}
+                                        .)
+                                        
+=
+    IF( isIndirectCall() )
+    dot                                 (.  extension = new AstIndirectCall(this, PCall.Get, subject); .)
+    Arguments<out args>                 (.  extension.Arguments.AddRange(args); .)
+|   dot
+    Id<out id>                          (.  extension = new AstGetSetMemberAccess(this, PCall.Get, subject, id); .)
+    [   Arguments<out args> 
+                                        (.  extension.Arguments.AddRange(args); .)
+    ]
+|                                       (.  
+                                            IAstExpression expr; 
+                                            extension = new AstGetSetMemberAccess(this, PCall.Get, subject, ""); 
+                                        .)
+    lbrack [
+            Expr<out expr>              (.  extension.Arguments.Add(expr); .)  
+            { WEAK comma Expr<out expr>   (.  extension.Arguments.Add(expr); .)
+            }
+        ]                                             
+    rbrack                                                                      
+.
+
+GetInitiator<out AstGetSet complex, out bool isDeclaration>
+                                        (.  complex = null; 
+                                            AstGetSetSymbol symbol = null;
+                                            AstGetSetStatic staticCall = null;
+                                            isDeclaration = false;
+                                            string id;
+                                        .)
+=
+    //Actual value
+    (   IF( isLikeFunction(la.val) ) 
+        Function<out symbol>
+    |   Variable<out symbol, out isDeclaration>
+    |   StaticCall<out staticCall>
+    )
+                                            (.  complex = (AstGetSet)symbol ?? (AstGetSet)staticCall; .)
+    //Reference
+|   IF( isDeDereference() )
+    pointer pointer Id<out id>                    (.  SymbolEntry s = target.Symbols[id];
+                                                SymbolInterpretations kind;
+                                                if(s == null)
+                                                {   
+                                                    SemErr("The symbol " + id + " is not defined"); 
+                                                    s = new SymbolEntry(SymbolInterpretations.LocalObjectVariable, id);
+                                                    kind = s.Interpretation;
+                                                }
+                                                else
+                                                {
+                                                    kind = s.Interpretation;
+                                                    if(s.Interpretation == SymbolInterpretations.LocalReferenceVariable)
+                                                        kind = SymbolInterpretations.LocalObjectVariable;
+                                                    else if(s.Interpretation == SymbolInterpretations.GlobalReferenceVariable)
+                                                        kind = SymbolInterpretations.GlobalObjectVariable;
+                                                    else
+                                                        SemErr("Only reference variables can be dereferenced twice.");
+                                                }
+                                                complex = new AstGetSetReference(this, s.Id, kind);
+                                            .)
+|   pointer Id<out id>                      (.  SymbolEntry s = target.Symbols[id];
+                                                if(s == null)
+                                                {   
+                                                    SemErr("The symbol " + id + " is not defined"); 
+                                                    s = new SymbolEntry(SymbolInterpretations.LocalObjectVariable, id);
+                                                }
+                                                else if(InterpretationIsVariable(s.Interpretation))
+                                                {
+                                                    if(isOuterVariable(id))
+                                                        target.RequireOuterVariable(id);
+                                                }
+                                                complex = new AstGetSetReference(this, s.Id, s.Interpretation);
+                                            .)
+.
+
+VariableDeclaration<out AstGetSetSymbol variable>
+                                        (.  variable = null; string staticId = null; .)
+=                                       (.  string id = null; SymbolInterpretations kind = SymbolInterpretations.Undefined; .)
+(   (  var                              (.  kind = SymbolInterpretations.LocalObjectVariable; .)
+    |  ref                              (.  kind = SymbolInterpretations.LocalReferenceVariable; .)
+    )
+    
+    Id<out id>                          (.  
+                                            SmartDeclareLocal(id, kind);
+                                            staticId = id; 
+                                        .)
+|   static                              (.  kind = SymbolInterpretations.GlobalObjectVariable; .)
+    [   var
+    |   ref                             (.  kind = SymbolInterpretations.GlobalReferenceVariable; .)
+    ]
+    Id<out id>                          (.  staticId = target.Function.Id + "\\static\\" + id;
+                                            target.Declare(kind, id, staticId);
+                                            if(!target.Loader.Options.TargetApplication.Variables.ContainsKey(staticId))
+                                                target.Loader.Options.TargetApplication.Variables.Add(staticId, new PVariable(staticId));
+                                        .)
+)                                       (.  variable = new AstGetSetSymbol(this, PCall.Get, staticId, kind); .)
+.
+
+Variable<out AstGetSetSymbol variable, out bool isDeclared>
+                                        (.  variable = null; string id; isDeclared = false; .)
+=
+    VariableDeclaration<out variable>   (. isDeclared = true; .)
+|   Id<out id>                          (.  if(target.Symbols.ContainsKey(id))
+                                            {
+                                                SymbolEntry varSym = target.Symbols[id];
+                                                if(InterpretationIsVariable(varSym.Interpretation))
+                                                {
+                                                    if(isOuterVariable(id))
+                                                        target.RequireOuterVariable(id);
+                                                    variable = new AstGetSetSymbol(this, varSym.Id, varSym.Interpretation);
+                                                }
+                                                else
+                                                    SemErr(t.line, t.col, "Variable name expected");
+                                            }
+                                            else
+                                            {
+                                                SemErr(t.line, t.col, "Unkown symbol \"" + id + "\". Variable name expected.");
+                                            }
+                                        .)
+.
+
+VariableDeclarationStatement
+=                                       (.  AstGetSetSymbol variable; .)
+    VariableDeclaration<out variable>
+                                        //No additional action is required. This is just a platform
+                                        //  for variable declarations without assignment.
+.
+
+Function<out AstGetSetSymbol function>
+                                (.  function = null; string id; .)
+=
+    Id<out id>                  (.  if(!target.Symbols.ContainsKey(id))
+                                    {
+                                        SemErr("There is no function-like symbol named " + id + ".");
+                                        function = new AstGetSetSymbol(this, id, SymbolInterpretations.Function);
+                                    }
+                                    else
+                                    {
+                                        if(isOuterVariable(id))
+                                            target.RequireOuterVariable(id);
+                                        SymbolEntry sym = target.Symbols[id];
+                                        function = new AstGetSetSymbol(this, sym.Id, sym.Interpretation);
+                                    }
+                                    List<IAstExpression> args; .)
+    [   Arguments<out args>     (.  function.Arguments.AddRange(args); .)
+    ]
+.
+
+StaticCall<out AstGetSetStatic staticCall>
+                                (.  IAstType typeExpr;
+                                    string memberId;
+                                    staticCall = null;
+                                    List<IAstExpression> args;
+                                .)
+=
+    ExplicitTypeExpr<out typeExpr>
+    dot Id<out memberId>        (.  staticCall = new AstGetSetStatic(this, PCall.Get, typeExpr, memberId); .)
+    [   Arguments<out args>     (.  staticCall.Arguments.AddRange(args); .)
+    ]
+.
+
+/*
+StaticCall<out AstGetSetStatic staticCall>
+                                (.  string id = "";
+                                    System.Text.StringBuilder idBuilder = new System.Text.StringBuilder();
+                                    bool staticPrefix = false;
+                                    List<IAstExpression> args;
+                                .)
+=
+
+    [   doublecolon             (.  staticPrefix = true; .)
+    ]   Ns<out id>              (.  idBuilder.Append(id); .)
+    {   Ns<out id>              (.  idBuilder.Append("."+id); .)
+    }
+    Id<out id>                  (.  staticCall = createStaticCall(idBuilder.ToString(), id, staticPrefix); .)
+    [   Arguments<out args> 
+                                (.  staticCall.Arguments.AddRange(args); .)
+    ]
+. // */
+                                    //Fallback in case of a syntax error to avoid NullReferenceExceptions
+ExplicitLabel<AstBlock block>   (.  string id = "--\\NotAnId\\--"; .)
+=
+    (   Id<out id> colon
+    |   lid                     (.  id = cache(t.val.Substring(0,t.val.Length-1)); .)
+    )                           (.  block.Statements.Add(new AstExplicitLabel(this, id)); .)
+.
+
+ExplicitGoTo<AstBlock block>    (.  string id; .)
+=
+    goto
+    Id<out id>                  (.  block.Statements.Add(new AstExplicitGoTo(this, id)); .)
+.
+
+Assignment<AstGetSet lvalue>
+                                (.  IAstExpression expr; BinaryOperator setModifier = BinaryOperator.None; .)
+=
+(   assign                      (.  setModifier = BinaryOperator.None; .)
+|   plus assign                 (.  setModifier = BinaryOperator.Addition; .)
+|   minus assign                (.  setModifier = BinaryOperator.Subtraction; .)
+|   times assign                (.  setModifier = BinaryOperator.Multiply; .)
+|   div assign                  (.  setModifier = BinaryOperator.Division; .)
+|   bitAnd assign               (.  setModifier = BinaryOperator.BitwiseAnd; .)
+|   bitOr assign                (.  setModifier = BinaryOperator.BitwiseOr; .)
+)   Expr<out expr>              (.  lvalue.Arguments.Add(expr);
+                                    lvalue.Call = PCall.Set; 
+                                    lvalue.SetModifier = setModifier;
+                                .)
+.
+
+Condition<AstBlock block>
+                                (. IAstExpression expr = null; bool isNegative = false; .)
+=
+    (   if                      (.  isNegative = false; .)
+    |   unless                  (.  isNegative = true; .)
+    )
+    
+    lpar Expr<out expr> rpar
+                                (.  AstCondition cond = new AstCondition(this, expr, isNegative); .)
+    
+    StatementBlock<cond.IfBlock> 
+
+    
+    [   else StatementBlock<cond.ElseBlock> 
+
+    ]                           (.  block.Add(cond); .)
+.
+
+WhileLoop<AstBlock block>
+                                (.  AstWhileLoop loop = null;
+                                    bool isPositive = true; 
+                                .)
+=
+(   (   while  | until          (.  isPositive = false; .)    
+    )                           (.  loop = new AstWhileLoop(this, true, isPositive); .)
+    lpar Expr<out loop.Condition> rpar
+                                (.  target.BeginBlock(loop.Labels); .)
+    StatementBlock<loop.Block> 
+|   do                          (.  AstBlock loopBody = new AstBlock(this); 
+                                    BlockLabels labels = AstWhileLoop.CreateBlockLabels();
+                                    target.BeginBlock(labels);
+                                .)
+    StatementBlock<loopBody>
+    (   while  | until          (.  isPositive = false; .)    
+    )                           (.  loop = new AstWhileLoop(this, false, isPositive); 
+                                    loop.Labels = labels;
+                                    loop.Block = loopBody;
+                                .)
+    lpar Expr<out loop.Condition> rpar
+)                               (.  target.EndBlock(); block.Add(loop); .)
+.
+
+ForLoop<AstBlock block>         (.  AstForLoop loop;
+                                .)
+=
+    for                         (.  loop = new AstForLoop(this); target.BeginBlock(loop.Labels); .)
+    lpar StatementBlock<loop.Initialize>
+    (
+        [   while
+        |   until               (.  loop.IsPositive = false; .)
+        ]       
+        Expr<out loop.Condition> 
+        semicolon
+        SimpleStatement<loop.NextIteration>
+    |   do StatementBlock<loop.NextIteration> 
+                                (.  loop.IsPrecondition = false; .)
+        [   while
+        |   until               (.  loop.IsPositive = false; .)
+        ]
+        Expr<out loop.Condition>
+    )
+    rpar
+    StatementBlock<loop.Block>  (.  target.EndBlock(); block.Add(loop); .) // */
+.
+
+ForeachLoop<AstBlock block>
+=
+    foreach                      (.  AstForeachLoop loop = new AstForeachLoop(this); .)
+    lpar
+    GetCall<out loop.Element> 
+    in 
+    Expr<out loop.List> 
+    rpar
+                                (.  target.BeginBlock(loop.Labels); .)
+    StatementBlock<loop.Block>
+                                (.  target.EndBlock(); .)
+    
+    
+                                (.  block.Add(loop); .) 
+.
+
+GetCall<out AstGetSet complex>
+                                (.  AstGetSet getMember = null; bool isDeclaration; .)
+=
+    GetInitiator<out complex, out isDeclaration>
+    { GetSetExtension<complex, out getMember> }
+    
+                                (.  if(getMember != null) 
+                                    {
+                                        complex = getMember; 
+                                    }
+                                    else
+                                    {
+                                        AstGetSetSymbol symbol = complex as AstGetSetSymbol;
+                                        if(symbol != null && InterpretationIsVariable(symbol.Interpretation) && isDeclaration)
+                                        {
+                                            symbol.Interpretation = InterpretAsObjectVariable(symbol.Interpretation);
+                                            complex = symbol;
+                                        }                                        
+                                    } .)
+.
+
+Return<AstBlock block>          (.  AstReturn ret = null; 
+                                    AstExplicitGoTo jump = null; 
+                                    IAstExpression expr = null; 
+                                    BlockLabels bl = target.CurrentBlock;
+                                .)
+=
+(   
+    (
+        return                  (.  ret = new AstReturn(this, ReturnVariant.Exit); .)
+    |   yield                   (.  ret = new AstReturn(this, ReturnVariant.Continue); .)
+    )
+    [   Expr<out expr>          (.  ret.Expression = expr; .)
+    |   assign                  (.  ret.ReturnVariant = ReturnVariant.Set; .)
+        Expr<out expr>          (.  ret.Expression = expr; .)
+    ]
+|   break                       (.  if(bl == null)
+                                        ret = new AstReturn(this, ReturnVariant.Break); 
+                                    else
+                                        jump = new AstExplicitGoTo(this, bl.BreakLabel);
+                                .)
+|   continue                    (.  if(bl == null)
+                                        ret = new AstReturn(this, ReturnVariant.Continue); 
+                                    else
+                                        jump = new AstExplicitGoTo(this, bl.ContinueLabel);
+                                .)
+)                               (.  block.Add((AstNode)ret ?? (AstNode)jump); .)
+.
+
+NestedFunction<AstBlock block>
+                                (.  PFunction func; .)
+=
+    FunctionDefinition<out func>
+                                (.  
+                                    string logicalId = func.Meta["LogicalId"];
+                                    string physicalId = func.Id;
+                                    
+                                    SmartDeclareLocal(logicalId, SymbolInterpretations.LocalReferenceVariable);
+                                    AstGetSetSymbol setVar = new AstGetSetSymbol(this, PCall.Set, logicalId, SymbolInterpretations.LocalObjectVariable);
+                                    setVar.Arguments.Add( new AstCreateClosure(this, physicalId) );
+                                    block.Add(setVar);
+                                .)
+.
+
+TryCatchFinally<AstBlock block>
+                                (.  AstTryCatchFinally a = new AstTryCatchFinally(this); .)
+=
+    try
+    lbrace
+    {   Statement<a.TryBlock>
+    }
+    rbrace
+    [	catch
+		[   lpar
+			GetCall<out a.ExceptionVar>
+			rpar
+		]
+		lbrace
+		{   Statement<a.CatchBlock>
+		}
+		rbrace		
+	    
+		[
+			finally
+			lbrace
+			{   Statement<a.FinallyBlock>
+			}
+			rbrace
+		]
+		
+	|	finally
+		lbrace
+		{   Statement<a.FinallyBlock>
+		}
+		rbrace
+		
+		[	catch
+			[   lpar
+				GetCall<out a.ExceptionVar>
+				rpar
+			]
+			lbrace
+			{   Statement<a.CatchBlock>
+			}
+			rbrace
+		]
+	]                       
+                                (.  block.Add(a); .)
+.
+
+Throw<AstBlock block>
+                                (.  AstThrow th = new AstThrow(this); .)
+=
+    throw
+    Expr<out th.Expression>
+                                (.  block.Add(th); .)
+.                                
+
+Using<AstBlock block>
+                                (.  AstUsing use = new AstUsing(this); .)
+=
+    uusing lpar GetCall<out use.Container> assign Expr<out use.Expression> rpar
+    StatementBlock<use.Block>
+                                (.  block.Add(use); .)
+.
+
+Arguments<.out List<IAstExpression> args.>
+                                    (.  args = new List<IAstExpression>();
+                                        IAstExpression expr;
+                                    .)
+=
+	lpar
+	[	Expr<out expr>              (.  args.Add(expr); .)
+		{	WEAK comma
+			Expr<out expr>          (.  args.Add(expr); .)
+		}
+	]
+	rpar
+.
