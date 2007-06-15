@@ -480,7 +480,6 @@ function func3(param1, param2)
             Assert.AreEqual("param2", target.Functions["func3"].Parameters[1]);
             Assert.AreEqual(1, target.Functions["func3"].ImportedNamespaces.Count);
 
-            target.StoreInFile(@"F:\TMP\gen2.pxs");
         }
 
         [Test()]
