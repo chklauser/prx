@@ -29,15 +29,19 @@ Expr<out IAstExpression expr>
 	]
 .
 
-AtomicExpr<out IAstExpression expr>
+AtomicExpr<out IAstExpression expr>		(.	AstConditionalExpression cexpr = null; expr = null; .)
 =	
 	OrExpr<out expr>
     {
-        question                        (.  AstConditionalExpression cexpr = new AstConditionalExpression(this, expr); .)
+        question                        (.  cexpr = new AstConditionalExpression(this, expr); .)
         AtomicExpr<out cexpr.IfExpression>
         colon
         AtomicExpr<out cexpr.ElseExpression>  (.  expr = cexpr; .)
     }
+|	if lpar OrExpr<out expr> rpar		(.	cexpr = new AstConditionalExpression(this, expr); .)
+	AtomicExpr<out cexpr.IfExpression>
+    else
+    AtomicExpr<out cexpr.ElseExpression>  (.  expr = cexpr; .)
 .
 
 OrExpr<out IAstExpression expr>

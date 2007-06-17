@@ -48,12 +48,13 @@ function soi\openOutfile(path)
         path = ::Console.ReadLine;   
     }
     
-    infile = new ::StreamWriter(path);
+    outfile = new ::StreamWriter(path);
 }
 
 function soi\readln = infile.ReadLine;
 function soi\read = infile.Read~String;
-function soi\write does foreach(outfile.Write in var args);
+function soi\write does foreach(var arg in var args) 
+    outfile.write = arg;
 function soi\writeln does
 {
     foreach(outfile.Write in var args);

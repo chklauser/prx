@@ -30,48 +30,55 @@ Name prx\interactive;
 Description "Provides interactive command line for prx";
 Author SealedSun;
 
-Import { System, System::Text, Prexonite, Prexonite::Compiler};
+Import { System, System::Text, Prexonite, Prexonite::Compiler };
 
 var engine;
 
 declare function reboot;
 
+//functions called '\init' are not compiled into runtime functions but executed 
+// as part of the initialization of the application.
+// Global variable assignments too are part of the '\init' function.
 function \init does
 {
 	engine = new Prexonite::Engine;
-	var thisE;
-	asm
-	{
-		ldr.eng
-		stloc thisE
-	}
-	foreach(var alias in ~List.Create(
+	//The interactive prompt uses a second, isolated engine for execution.
+	var thisE = thisEngine;
+	
+	//Copy those 4 timing commands from the current engine to the 
+	// interactive engine
+	foreach(var alias in [
 			@"timer\start",
 			@"timer\stop",
 			@"timer\elapsed",
-			@"timer\reset"))
+			@"timer\reset"])
 		engine.Commands.AddUserCommand(alias, thisE.Commands[alias]);
 }
 
-var app;
-var ldr;
+var app; //<-- the compiled application
+var ldr; //<-- the loader used to compile 'app'
 
-var evalStep = 1;
+var evalStep = 1; //<-- helps to make identifiers unique
 
 function prx\interactive()
 {
     println("Entering Prexonite INTERACTIVE MODE.\nType :quit to quit.\n\"=<expr>\" evaluates an expression.\n\":<GlobalStatement>\" inserts global code.");
     
+    //Either create a new application or use the one compiled in 'prx\main'.
     if(app == null)
         app = new Prexonite::Application("Interactive_Scripting");
     else
         println("Using compiled application ($(app.Id))");
     
+    //Create a new loader (='compiler') if necessary
     if(ldr == null)
         ldr = new ::Loader(engine, app);
-        
+    
+    //Define a default prompt color
     prompt\color = ::ConsoleColor.Red;
+    
     var buffer = new ::StringBuilder;
+    //Compile some standard code into the interactive application
     buffer.AppendLine("var prompt = null;");
     if(Not app.Functions.Contains("exit"))
         buffer.AppendLine("function exit(c) does System::Environment.Exit(c is Null ? 0 : c);");
@@ -79,27 +86,33 @@ function prx\interactive()
     ldr.LoadFromString(buffer.ToString);
     buffer.Length = 0;
     
+    
     var errors;
     var lastCode;
+    
+    //This function tries to load code from the buffer
     function tryLoad()
     {
         try 
         {
-            lastCode = buffer.ToString;
+            lastCode = buffer.ToString; //Save the code for error reporting
             ldr.LoadFromString(lastCode);            
         } 
         catch(var exc)
         {
-            runInDifferentColor(()=>
+            //Exceptions are truly exceptional, so they should be printed
+            // out right away.
+            green = ()=>
 			{
     			println(exc);
 				foreach(var err in errors)
 					println(err);
-			}, ::ConsoleColor.Green);
+			};
 			return false;
         }
         finally
         {
+            //Save errors for review and clean up.
             buffer.Length = 0;
             errors = ~List.CreateFromList(ldr.Errors);
             ldr.Errors.Clear;
@@ -107,42 +120,53 @@ function prx\interactive()
         }
     }
     
-    function printErrors(otherErrors) does runInDifferentColor(() =>
+    //Print errors (if 'otherErrors' is null, 'errors' is used)
+    function printErrors(otherErrors) does red = () =>
     {
         if(otherErrors is Null)
             otherErrors = errors;
         foreach(var err in otherErrors);
             println(err);
-    }, ::ConsoleColor.Red);
+    };
     
+    //Generate the next unique function id
     function nextFuncId = "eval\\" + evalStep++;
     
+    //Function that shortens a string
     var shortenTo = 20;
     function shortened(s) = s.Length <= shortenTo ? s : (s.Substring(0,shortenTo-3) + "...");
     
-    for(var     raw; do raw = showPrompt(app.Variables["prompt"].Value.Self); until raw.ToLower == ":quit")
+    //Get 'raw' using showPrompt (passing the value of the variable 'prompt' 
+    // from inside 'app') until that 'raw' is ":quit".
+    //This 'for' syntax might look stupid at first but it manages to separate
+    // more complex iteration logic from the loop body.
+    // One only needs to look at the header to know under what conditions
+    // the loop runs. In addition, the body code can use the traditional
+    // 'continue' statement to skip an iteration.
+    for(var raw; do raw = showPrompt(app.Variables["prompt"].Value.Self); until raw.ToLower == ":quit")
     {        
-        var funcId = nextFuncId;
-        var cmd = "g";
-        if(raw.ToLower == ":reload")
+        var funcId = nextFuncId; //<-- get the first unique function id
+        var cmd = "g"; //<-- assume global code
+        
+        if(raw.ToLower == ":reload") //this directive restarts prx\main with the same arguments. See 'prx_main.pxs' for details.
         {
             reboot;
             break;          
         }
-        else if(raw.StartsWith("="))
+        else if(raw.StartsWith("=")) //force compilation as an expression
         {
             raw = raw.Substring(1);
-            buffer.Append = "function " + funcId + " does println(\"" + shortened(raw).Escape + " = \") = \n" + raw + "\n;";
+            buffer.Append = "function $(funcId) does println(\"$(shortened(raw).Escape) = \") = \n$(raw)\n;";
             if(Not tryLoad)
             {
                 printErrors;
                 continue;   
             }
-            cmd = "r";
+            cmd = "r"; //Make sure the compiled function is executed
         }
-        else if(raw.StartsWith("::"))
+        else if(raw.StartsWith("::")) //Must be a static get/set
             goto executeStatement;
-        else if(raw.StartsWith(":"))
+        else if(raw.StartsWith(":")) //Global code
         {
             buffer.Append = raw.Substring(1);
 executeGlobal:
@@ -152,7 +176,7 @@ executeGlobal:
                 continue;
             }            
         }
-        else if(raw.StartsWith("global "))
+        else if(raw.StartsWith("global ")) //Global code too
         {
             buffer.Append = raw.Substring(7);
             goto executeGlobal;
@@ -160,22 +184,26 @@ executeGlobal:
         else
         {
 executeStatement:
-            //First try expression, then statement
-            buffer.AppendFormat(" function {0} does println = \"{1} = \" + ( {2} ); ", funcId, shortened(raw).Escape, raw);
+            //First, try to compile the code as an expression
+            buffer.AppendFormat(" function {0} does println = \"{1} = \" + ( {2} ) ; ", funcId, shortened(raw).Escape, raw);
             if(Not tryLoad)
             {
+                //should that fail, try to compile the code as a statement
                 var evalErrors = errors;
                 var evalCode = lastCode;
 
                 funcId = nextFuncId;
-                buffer.AppendFormat(" function {0} does {1} ;", funcId, raw);
+                buffer.AppendFormat(" function {0} {{ {1} ; }} ", funcId, raw);
 
                 if(Not tryLoad)
                 {
+                    //if both fails, the code must be wrong.
+                    // show why it can't be an expression
                     println("(" + raw + ") is not an expression:");
                         println(evalCode);
                     printErrors(evalErrors);
 
+                    // shwo why it can't be a statement
                     println;
                     println("{" + shortened(raw) + "; } is also not a statement:");
                         println(lastCode);
@@ -184,22 +212,23 @@ executeStatement:
                     continue;
                 }
             }
-                println(lastCode);
             cmd = "r";
         }             
         
         if(cmd == "r")
         {
+            //A function needs to be run
             try
             {
                 app.Functions[funcId].Run(engine);
             }
             catch(var exc)
             {
-               runInDifferentColor( () => println(exc) , System::ConsoleColor.Green); 
+               green = () => println(exc);
             }
             finally
             {
+                //remove the temporary function afterwards 
                 app.Functions.Remove(app.Functions[funcId]);
             }
         }

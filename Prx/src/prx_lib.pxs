@@ -24,17 +24,45 @@
 Name prx\lib;
 Description "Provides common routines for prx.";
 Author SealedSun;
-
-declare function 
-	prompt, 
-	thisEngine,
-	thisApplication;
 	
-declare command
-    print,
-    println,
-    println as echo;
-   
+declare println as echo;
+
+//Not all environments may support colors...
+var supportsColors = supportsColors is null ? true : supportsColors;
+
+//Run 'f' in a context where console output has the color 'color'.
+function runInDifferentColor(ref f, color)
+{
+    if(supportsColors)
+    {
+    	var orig = ::Console.ForegroundColor;
+    	::Console.ForegroundColor = color;
+    	f();
+    	::Console.ForegroundColor = orig;
+    }
+    else
+    {
+        f();   
+    }
+}
+
+//Shortcuts for commonly used colorations
+ref red = 
+    if(supportsColors)
+        f => runInDifferentColor(f, ::ConsoleColor.Red)
+    else
+        f => f.()
+    ;
+ref green = 
+    if(supportsColors)
+        f => runInDifferentColor(f, ::ConsoleColor.Green)
+    else
+        f => f.()
+    ;
+
+function readline = ::Console.ReadLine;
+    
+//Show prompt and read line
 var prompt\color; 
 function showPrompt(q) does
 {
@@ -42,23 +70,13 @@ function showPrompt(q) does
 	var originalColor;
     if(q == null)
         q = "PRX> ";
-    originalColor = ::Console.ForegroundColor;
-    if(color != null)
-        ::Console.ForegroundColor = color;
-	::Console.Write(q);
-	::Console.ForegroundColor = originalColor;
-	return ::Console.ReadLine;
+    runInDifferentColor( () => print(q), 
+        color != null ? color : ::Console.ForegroundColor);
+	return readline;
 }
 
 var prompt = null;
 
-function runInDifferentColor(ref f, color)
-{
-	var orig = ::Console.ForegroundColor;
-	::Console.ForegroundColor = color;
-	f();
-	::Console.ForegroundColor = orig;
-}
-
+//Functions that provide access to the currently executing engine and application.
 function thisEngine does asm { ldr.eng ret.value }
 function thisApplication does asm { ldr.app ret.value }

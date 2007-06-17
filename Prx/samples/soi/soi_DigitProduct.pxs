@@ -17,14 +17,12 @@ function soi\DigitProduct\main(input)
         input = ::Console.ReadLine()~Int;
     }
     
-    
-    
     //BEGIN OF ALGORITHM
     //Split the number up into factors
     //  Note: numbers that contain prime factors greater than 9 (two digits) cannot be represented 
     //  using the digit product.
     var rest = input;
-    var factors = ~List.Create(0,0,0,0,0,0,0,0,0,0);
+    var factors = [0,0,0,0,0,0,0,0,0,0];
     until(rest == 1)
     {
         for(var i = 9; until i == 1; i--)

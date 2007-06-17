@@ -1703,14 +1703,39 @@ cmd.3       concat
         {
             _compile(@"
 function max(a,b) = a > b ? a : b;
+function maxv(a,b) = 
+    if(a > b) 
+        a 
+    else 
+        b;
 
 function main(x)
 {
     x = x mod 2 == 0 ? (x > 0 ? x : -x) : max(x,2);
     return x is Null ? 0 : x == """" ? -1 : x.Length;
 }
+
+function mainv(x)
+{
+    x = 
+        if(x mod 2 == 0) 
+            if(x > 0) 
+                x 
+            else 
+                -x 
+        else 
+            max(x,2);
+    return 
+        if(x is Null) 
+            0 
+        else if(x == """") 
+            -1 
+        else 
+            x.Length;
+}
 ");
-            _expect("max",@"
+            const string emax =
+                @"
                 ldloc   a
                 ldloc   b
                 cgt
@@ -1719,8 +1744,12 @@ function main(x)
                 jump    endif
 label else      ldloc   b
 label endif     ret.value
-");
-            _expect(@"
+";
+            _expect("max", emax);
+            _expect("maxv", emax);
+
+            const string emain =
+                @"
                 ldloc   x
                 ldc.int 2
                 mod
@@ -1759,7 +1788,10 @@ label else4     ldloc           x
                 get.0           Length
 label endif4    //optimized://  jump            endif3
 label endif3    ret.value
-");
+";
+
+            _expect("main", emain);
+            _expect("mainv", emain);
         }
 
         [Test]

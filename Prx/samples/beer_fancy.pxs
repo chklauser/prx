@@ -34,11 +34,11 @@ function song(n)
     function cap(s) = s.Substring(0,1).ToUpper + s.Substring(1);
     while(n > -1)
     {
-        println( cap(noun(n)), " on the wall, ",noun(n),".");
+        println( "$(cap(noun(n))) on the wall, $(noun(n)).");
         if(n-- == 0)
-            println("Go to the store and buy some more, " + noun(99) + " on the wall.");
+            println("Go to the store and buy some more, $(noun(99)) on the wall.");
         else
-            println("Take one down and pass it around, ", noun(n), " of beer on the wall.");
+            println("Take one down and pass it around, $(noun(n)) of beer on the wall.");
         println;
     }
 }
@@ -53,13 +53,13 @@ function noun(n)
     {
         function number
         {
-            declare var unitsDigit, tensStrings, tensColumn;
+            declare var unitsDigit, tensString, tensColumn;
             var tens = n / 10;
             var units = n mod 10;
             if(n < 10)
                 return unitsDigit[n];
             else if(n < 20)
-                return tensStrings[n-10];
+                return tensString[n-10];
             else if(units == 0)
                 return tensColumn[tens];
             else
@@ -71,7 +71,7 @@ function noun(n)
     return r + " of beer";
 }
 
-var unitsDigit = ~List.Create(
+var unitsDigit = [
     "zero",
     "one",
     "two",
@@ -82,9 +82,9 @@ var unitsDigit = ~List.Create(
     "seven",
     "eight",
     "nine"
-);
+];
 
-var tensStrings = ~List.Create(
+var tensString = [
     "ten",
     "eleven",
     "twelve",
@@ -95,9 +95,9 @@ var tensStrings = ~List.Create(
     unitsDigit[7] + "teen",
     "eighteen",
     unitsDigit[9] + "teen"
-);
+];
 
-var tensColumn = ~List.Create(
+var tensColumn = [
     "",
     "ten",
     "twenty",
@@ -108,4 +108,4 @@ var tensColumn = ~List.Create(
     "seventy",
     "eighty",
     "ninety"
-);
+];

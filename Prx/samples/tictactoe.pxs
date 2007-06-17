@@ -10,9 +10,10 @@ var O = "O";
 var _ = " ";
 
 //The Fields
-var fields = ~List.Create(  _, _, _,
-                            _, _, _,
-                            _, _, _ );
+var fields = [  _, _, _,
+                _, _, _,
+                _, _, _ 
+             ];
 
 //Counts the number of empty fields
 function emptyFields
@@ -59,18 +60,16 @@ ref a2 = accessor(1); ref b2 = accessor(4); ref c2 = accessor(7);
 ref a3 = accessor(2); ref b3 = accessor(5); ref c3 = accessor(8);
 
 //Draw the fields
-function draw_fields
-{
-    print(
-        "    --- --- --- \n"+
-        " a | $a1 | $a2 | $a3 |\n"+
-        "    --- --- --- \n"+
-        " b | $b1 | $b2 | $b3 |\n"+
-        "    --- --- --- \n"+
-        " c | $c1 | $c2 | $c3 |\n"+
-        "    --- --- --- \n"
-    );   
-}
+function draw_fields does print =
+    "     1   2   3\n" +
+    "    --- --- --- \n"+
+    " a | $a1 | $a2 | $a3 |\n"+
+    "    --- --- --- \n"+
+    " b | $b1 | $b2 | $b3 |\n"+
+    "    --- --- --- \n"+
+    " c | $c1 | $c2 | $c3 |\n"+
+    "    --- --- --- \n";   
+
 
 var rnd = new System::Random;
 function randomAddress
@@ -126,7 +125,7 @@ function main
            line(c1,c2,c3) || line(a3,b3,c3) || line(a3,b2,c1) ) 
                 winner = isPlayer1 ? 1 : 2;
         
-        //Game is draw if no player won and there are no fields left.
+        //Game is drawn if no player won and there are no fields left.
         if(winner == -1 && emptyFields == 0)
             winner = 0;
     }until(winner >= 0)

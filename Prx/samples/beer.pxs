@@ -22,7 +22,7 @@
  */
 
 Name beer;
-Description "Prints the lyrics to the 99-n-of-beer-song.";
+Description "Prints the lyrics to the 99-bottles-of-beer-song.";
 Author SealedSun;
 Entry song;
 
@@ -33,11 +33,11 @@ function song
     var n = 99;
     while(n > -1)
     {
-        println(noun(n, true), " on the wall, ",noun(n),".");
+        println("$(noun(n, true)) on the wall, $(noun(n)).");
         if(n-- == 0)
             println("Go to the store and buy some more, 99 bottles of beer on the wall.");
         else
-            println("Take one down and pass it around, ", noun(n), " of beer on the wall.");
+            println("Take one down and pass it around, $(noun(n)) of beer on the wall.");
         println;
     }
 }
@@ -51,4 +51,4 @@ function noun(n, capitalize) does
         else
             return "no more bottles of beer";
     else
-        return n + " bottles of beer";
+        return "$n bottles of beer";
