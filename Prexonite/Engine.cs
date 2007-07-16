@@ -966,6 +966,8 @@ namespace Prexonite
             Commands.AddEngineCommand(CallCommand, new Call());
 
             Commands.AddEngineCommand(PairCommand, new Pair());
+
+            Commands.AddEngineCommand(UnbindCommand, new Unbind());
         }
 
         /// <summary>
@@ -1017,6 +1019,11 @@ namespace Prexonite
         /// Alias used for the "pair" command.
         /// </summary>
         public const string PairCommand = "pair";
+
+        /// <summary>
+        /// Alias used for the "unbind" command.
+        /// </summary>
+        public const string UnbindCommand = "unbind";
 
         #endregion
     }

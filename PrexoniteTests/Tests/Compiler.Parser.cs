@@ -2350,5 +2350,67 @@ sget.2  ""Hash::Create""
 stloc   people
 ");
         }
+
+        [Test]
+        public void KeyValuePairArrayLiteral()
+        {
+            _compile(@"
+function main()
+{
+    var lst = 
+    [
+        ""apple"": 5,
+        ""orange"": 6,
+        ""apple"": 8
+    ];
+}
+");
+            _expect(@"
+var lst
+
+ldc.string  ""apple""
+ldc.int 5
+cmd.2   pair
+
+ldc.string  ""orange""
+ldc.int 6
+cmd.2   pair
+
+ldc.string  ""apple""
+ldc.int 8
+cmd.2   pair
+
+sget.3  ""List::Create""
+
+stloc lst
+");
+        }
+
+        [Test]
+        public void ReferenceDeclarationLiteral()
+        {
+            _compile(@"
+function main does print = ref h;
+");
+
+            _expect(@"
+var h
+ldr.loc h
+@cmd.1  print
+");
+            
+        }
+
+        [Test]
+        public void GlobalCode()
+        {
+            _compile(@"
+var g;
+
+{ g = 4; }
+
+function main does println = g;
+");
+        }
     }
 }

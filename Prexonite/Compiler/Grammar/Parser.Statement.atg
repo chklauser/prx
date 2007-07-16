@@ -199,7 +199,10 @@ VariableDeclaration<out AstGetSetSymbol variable>
                                             if(!target.Loader.Options.TargetApplication.Variables.ContainsKey(staticId))
                                                 target.Loader.Options.TargetApplication.Variables.Add(staticId, new PVariable(staticId));
                                         .)
-)                                       (.  variable = new AstGetSetSymbol(this, PCall.Get, staticId, kind); .)
+)                                       (.  variable = InterpretationIsObjectVariable(kind) ?
+												new AstGetSetSymbol(this, PCall.Get, staticId, kind)
+											:
+												new AstGetSetReference(this, PCall.Get, staticId, InterpretAsObjectVariable(kind)); .)
 .
 
 Variable<out AstGetSetSymbol variable, out bool isDeclared>

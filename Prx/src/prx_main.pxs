@@ -53,7 +53,7 @@ function prx\main(args)
 	{
     	printHead;
 		println("NO ARGUMENTS DETECTED.");
-		displayHelp;		
+		displayHelp;	
 		break;
 	}
 	

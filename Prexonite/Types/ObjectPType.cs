@@ -657,7 +657,7 @@ namespace Prexonite.Types
             result = null;
             IIndirectCall icall = subject.Value as IIndirectCall;
             if (icall != null)
-                result = icall.IndirectCall(sctx, args);
+                result = icall.IndirectCall(sctx, args) ?? PType.Null.CreatePValue();
 
             return result != null;
         }

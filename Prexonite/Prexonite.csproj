@@ -12,6 +12,7 @@
     <SignAssembly>true</SignAssembly>
     <AssemblyOriginatorKeyFile>Prexonite.snk</AssemblyOriginatorKeyFile>
     <RunPostBuildEvent>OnBuildSuccess</RunPostBuildEvent>
+    <ApplicationIcon>Prx.ico</ApplicationIcon>
   </PropertyGroup>
   <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Debug|AnyCPU' ">
     <DebugSymbols>true</DebugSymbols>
@@ -54,6 +55,7 @@
     <Compile Include="Commands\Pair.cs" />
     <Compile Include="Commands\Print.cs" />
     <Compile Include="Commands\PrintLine.cs" />
+    <Compile Include="Commands\Unbind.cs" />
     <Compile Include="Compiler\Ast\AstActionBlock.cs" />
     <Compile Include="Compiler\Ast\AstAsmInstruction.cs" />
     <Compile Include="Compiler\Ast\AstCondition.cs" />
@@ -154,6 +156,7 @@
     <None Include="Prexonite.snk" />
     <Content Include="Compiler\Grammar\Grammar.Readme.txt" />
     <Content Include="Documents\Pxs.BNF.txt" />
+    <Content Include="Prx.ico" />
   </ItemGroup>
   <ItemGroup>
     <GrammarFragment Include="Compiler\Grammar\Header.atg" />

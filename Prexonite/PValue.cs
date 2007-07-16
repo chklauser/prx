@@ -1406,6 +1406,17 @@ namespace Prexonite
             return PType.List.CreatePValue(list);
         }
 
+        /// <summary>
+        /// Encapsulates a key-value pair of PValues as a PValue object.
+        /// </summary>
+        /// <param name="pair">A key-value pair of PValues</param>
+        /// <returns>A PValue object containing the supplied key-value pair.</returns>
+        [NoDebug]
+        public static implicit operator PValue(PValueKeyValuePair pair)
+        {
+            return PType.Object.CreatePValue(pair);
+        }
+
         #endregion
 
         #region IObject Members

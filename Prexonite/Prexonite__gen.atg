@@ -793,6 +793,7 @@ Prexonite
         |   Declaration
         |   MetaAssignment<TargetApplication>
         ]   SYNC semicolon
+    |	GlobalCode
     |   BuildBlock
     |	FunctionDefinition<out func>
     }
@@ -971,6 +972,28 @@ BuildBlock
                                         TargetApplication._SuppressInitialization = false;
                                     }
 	                            .)
+.
+
+/* ---- Global Code ---- */
+
+GlobalCode							(.
+										PFunction func = TargetApplication._InitializationFunction;
+										CompilerTarget ft = FunctionTargets[func];
+									.)
+=
+									(.	
+										target = ft; 
+                                        _pushLexerState(Lexer.Local);
+                                    .)
+	lbrace 
+	{ Statement<target.Ast> } 
+	rbrace
+									(.
+										if(errors.count == 0)
+											TargetApplication._RequireInitialization();
+										target = null;
+										_popLexerState();
+									.)
 .
 
 /* ---- Function definition ---- */
@@ -1417,7 +1440,10 @@ VariableDeclaration<out AstGetSetSymbol variable>
                                             if(!target.Loader.Options.TargetApplication.Variables.ContainsKey(staticId))
                                                 target.Loader.Options.TargetApplication.Variables.Add(staticId, new PVariable(staticId));
                                         .)
-)                                       (.  variable = new AstGetSetSymbol(this, PCall.Get, staticId, kind); .)
+)                                       (.  variable = InterpretationIsObjectVariable(kind) ?
+												new AstGetSetSymbol(this, PCall.Get, staticId, kind)
+											:
+												new AstGetSetReference(this, PCall.Get, staticId, InterpretAsObjectVariable(kind)); .)
 .
 
 Variable<out AstGetSetSymbol variable, out bool isDeclared>

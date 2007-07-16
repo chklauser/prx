@@ -91,7 +91,7 @@ namespace Prexonite
         private void _bindArguments(PValue[] args)
         {
             //Create args variable
-            string argVId = "args"; //Make sure the variable does not override any parameter or existing variable
+            string argVId = PFunction.ArgumentListId; //Make sure the variable does not override any parameter or existing variable
             while (_implementation.Parameters.Contains(argVId))
                 argVId = "\\" + argVId;
 

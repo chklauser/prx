@@ -237,6 +237,7 @@ namespace Prexonite.Types
                     }
                     if(pvht.Count > 0)
                         sb.Length -= 2;
+                    sb.Append(" }");
                     result = sb.ToString();
                     break;
 

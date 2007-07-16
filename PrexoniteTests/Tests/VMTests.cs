@@ -2312,6 +2312,68 @@ function main(x)
             _expect("xzzxy","xzzxy");
         }
 
+        [Test]
+        public void UnbindCommandImplementation()
+        {
+            _compile(@"
+function main()
+{
+    var buffer = new System::Text::StringBuilder;
+    function print(s) does buffer.Append(s);
+    var xs = [ 5,7,9,11,13,15 ];
+    var fs = [];
+    foreach(var x in xs)
+    {
+        fs[] = y => ""($(x)->$(y))"";
+        unbind(->x);
+        print(""$(x)."");
+    }
+
+    var i = 19;
+    foreach(var f in fs)
+        print(f.(i--));
+    return buffer.ToString;
+}
+");
+
+            const string expected = "5.7.9.11.13.15.(5->19)(7->18)(9->17)(11->16)(13->15)(15->14)";
+            _expect(expected);
+        }
+
+        [Test]
+        public void GlobalCode()
+        {
+            _compile(@"
+var price = {};
+
+{
+    price[""apple""] = 3;
+    price[""juice""] = 4;
+    price[""pencil""] = 1;
+}
+
+//In a different file for example
+{
+    price[""apple""] *= 2;
+}
+
+function main(var lst)
+{
+    var sum = 0;
+    foreach(var item in lst)
+        sum += price[item.Key] * item.Value;
+    return sum;
+}
+");
+            List<PValue> lst = new List<PValue>(4);
+            lst.Add(new PValueKeyValuePair("apple",1));
+            lst.Add(new PValueKeyValuePair("pencil", 5));
+            lst.Add(new PValueKeyValuePair("juice",2));
+            lst.Add(new PValueKeyValuePair("apple",2));
+
+            _expect(3*3*2+5*1+2*4,PType.List.CreatePValue(lst));
+        }
+
         #region Helper
 
         private static string _generateRandomString(int length)

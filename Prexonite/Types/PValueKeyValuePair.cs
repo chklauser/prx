@@ -120,6 +120,9 @@ namespace Prexonite.Types
                         }
                     }
                     break;
+                case "tostring":
+                    result = String.Concat(_key.CallToString(sctx), ": ", _value.CallToString(sctx));
+                    break;
                 default:
                     if(!_objectType.TryDynamicCall(sctx, sctx.CreateNativePValue(this),args, PCall.Get,id, out result))
                         result = null;

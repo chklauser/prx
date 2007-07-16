@@ -28,6 +28,7 @@ Prexonite
         |   Declaration
         |   MetaAssignment<TargetApplication>
         ]   SYNC semicolon
+    |	GlobalCode
     |   BuildBlock
     |	FunctionDefinition<out func>
     }
@@ -206,6 +207,28 @@ BuildBlock
                                         TargetApplication._SuppressInitialization = false;
                                     }
 	                            .)
+.
+
+/* ---- Global Code ---- */
+
+GlobalCode							(.
+										PFunction func = TargetApplication._InitializationFunction;
+										CompilerTarget ft = FunctionTargets[func];
+									.)
+=
+									(.	
+										target = ft; 
+                                        _pushLexerState(Lexer.Local);
+                                    .)
+	lbrace 
+	{ Statement<target.Ast> } 
+	rbrace
+									(.
+										if(errors.count == 0)
+											TargetApplication._RequireInitialization();
+										target = null;
+										_popLexerState();
+									.)
 .
 
 /* ---- Function definition ---- */

@@ -38,6 +38,7 @@ namespace Prexonite
     {
         public const string IdKey = "id";
         public const string SharedNamesKey = @"\sharedNames";
+        public const string ArgumentListId = "args";
 
         #region Construction
 

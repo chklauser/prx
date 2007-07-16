@@ -102,7 +102,7 @@ function prx\interactive()
         {
             //Exceptions are truly exceptional, so they should be printed
             // out right away.
-            green = ()=>
+            green = () =>
 			{
     			println(exc);
 				foreach(var err in errors)
