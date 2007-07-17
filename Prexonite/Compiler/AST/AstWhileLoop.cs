@@ -26,7 +26,7 @@ using NoDebug = System.Diagnostics.DebuggerNonUserCodeAttribute;
 
 namespace Prexonite.Compiler.Ast
 {
-    public class AstWhileLoop : AstNode
+    public class AstWhileLoop : AstLoop
     {
         [NoDebug]
         public AstWhileLoop(string file, int line, int column, bool isPrecondition, bool isNegative)
@@ -62,11 +62,9 @@ namespace Prexonite.Compiler.Ast
         {
         }
 
-        public AstBlock Block;
         public IAstExpression Condition;
         public bool IsPrecondition;
         public bool IsPositive;
-        public BlockLabels Labels;
 
         public bool IsInitialized
         {

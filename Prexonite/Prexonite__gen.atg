@@ -614,6 +614,7 @@ Primary<out IAstExpression expr>
 |   ObjectCreation<out expr>
 |   ListLiteral<out expr>
 |	HashLiteral<out expr>
+|	LoopExpr<out expr>
 |   IF(isLambdaExpression())
     LambdaExpression<out expr>
 |
@@ -631,44 +632,55 @@ Primary<out IAstExpression expr>
 .
 
 Constant<out IAstExpression expr>
-                                            (.  expr = null; int vi; double vr; bool vb; string vs; .)
+                                        (.  expr = null; int vi; double vr; bool vb; string vs; .)
 =
-        Integer<out vi>                     (.  expr = new AstConstant(this, vi); .)
-    |   Real<out vr>                        (.  expr = new AstConstant(this, vr); .)
-    |   Boolean<out vb>                     (.  expr = new AstConstant(this, vb); .)
-    |   String<out vs>                      (.  expr = new AstConstant(this, vs); .)
-    |   Null                                (.  expr = new AstConstant(this, null); .)
+        Integer<out vi>                 (.  expr = new AstConstant(this, vi); .)
+    |   Real<out vr>                    (.  expr = new AstConstant(this, vr); .)
+    |   Boolean<out vb>                 (.  expr = new AstConstant(this, vb); .)
+    |   String<out vs>                  (.  expr = new AstConstant(this, vs); .)
+    |   Null							(.  expr = new AstConstant(this, null); .)
 .
 
 ListLiteral<out IAstExpression expr>
-                                            (.  IAstExpression iexpr = null; 
-                                                AstListLiteral lst = new AstListLiteral(this);
-                                                expr = lst;
-                                            .)
+                                        (.  IAstExpression iexpr = null; 
+                                            AstListLiteral lst = new AstListLiteral(this);
+                                            expr = lst;
+                                        .)
 =
     lbrack
-    [   Expr<out iexpr>                     (.  lst.Elements.Add(iexpr); .)
+    [   Expr<out iexpr>                 (.  lst.Elements.Add(iexpr); .)
         {   comma
-            Expr<out iexpr>                 (.  lst.Elements.Add(iexpr); .)
+            Expr<out iexpr>             (.  lst.Elements.Add(iexpr); .)
         }
     ]
     rbrack
 .
 
 HashLiteral<out IAstExpression expr>
-											(.	IAstExpression iexpr = null; 
-												AstHashLiteral hash = new AstHashLiteral(this);
-												expr = hash;
-											.)
+										(.	IAstExpression iexpr = null; 
+											AstHashLiteral hash = new AstHashLiteral(this);
+											expr = hash;
+										.)
 =
 	lbrace
-	[	Expr<out iexpr>						(.	hash.Elements.Add(iexpr); .)
+	[	Expr<out iexpr>					(.	hash.Elements.Add(iexpr); .)
 		{	comma
-			Expr<out iexpr>					(.	hash.Elements.Add(iexpr); .)
+			Expr<out iexpr>				(.	hash.Elements.Add(iexpr); .)
 		}
 	]
 	rbrace
 .
+
+LoopExpr<out IAstExpression expr>
+										(.	AstBlock dummyBlock = new AstBlock(this);
+										.)
+=
+	(	WhileLoop<dummyBlock>
+	|	ForLoop<dummyBlock>
+	|	ForeachLoop<dummyBlock>
+	)									(.	expr = new AstLoopExpression(this, (AstLoop) dummyBlock.Statements[0]); .)
+.										
+											
 
 ObjectCreation<out IAstExpression expr>
                                         (.  IAstType type; expr = null; .)

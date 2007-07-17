@@ -21,12 +21,13 @@
  *  51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
  */
 
+using System.Collections.Generic;
 using Prexonite.Types;
 using NoDebug = System.Diagnostics.DebuggerNonUserCodeAttribute;
 
 namespace Prexonite.Compiler.Ast
 {
-    public class AstForLoop : AstNode
+    public class AstForLoop : AstLoop
     {
         [NoDebug]
         public AstForLoop(string file, int line, int column)
@@ -51,12 +52,10 @@ namespace Prexonite.Compiler.Ast
         }
 
         public IAstExpression Condition;
-        public AstBlock Block;
         public AstBlock Initialize;
         public AstBlock NextIteration;
         public bool IsPositive = true;
         public bool IsPrecondition = true;
-        public BlockLabels Labels;
 
         public bool IsInitialized
         {
@@ -160,12 +159,24 @@ namespace Prexonite.Compiler.Ast
                     target.EmitJump(Labels.ContinueLabel);
                 target.EmitLabel(Labels.BeginLabel);
                 AstLazyLogical.EmitJumpCondition(target, Condition, Labels.BreakLabel, !IsPositive);
-                target.EmitLabel(Labels.ContinueLabel);
+                if(IsPrecondition)
+                    target.EmitLabel(Labels.ContinueLabel);
                 NextIteration.EmitCode(target);
                 target.EmitJump(Labels.BeginLabel);
             }
 
             target.EmitLabel(Labels.BreakLabel);
+        }
+
+        public override AstBlock[] Blocks
+        {
+            get
+            {
+                List<AstBlock> blocks = new List<AstBlock>(base.Blocks);
+                blocks.Add(Initialize);
+                blocks.Add(NextIteration);
+                return blocks.ToArray();
+            }
         }
     }
 }

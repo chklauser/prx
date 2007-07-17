@@ -26,7 +26,7 @@ using NoDebug = System.Diagnostics.DebuggerNonUserCodeAttribute;
 
 namespace Prexonite.Compiler.Ast
 {
-    public class AstForeachLoop : AstNode
+    public class AstForeachLoop : AstLoop, IAstHasBlocks
     {
         [NoDebug]
         public AstForeachLoop(string file, int line, int column)
@@ -49,10 +49,8 @@ namespace Prexonite.Compiler.Ast
         }
 
         public IAstExpression List;
-        public AstBlock Block;
         public AstGetSet Element;
         public bool IsPositive = true;
-        public BlockLabels Labels;
 
         public bool IsInitialized
         {
@@ -121,5 +119,6 @@ namespace Prexonite.Compiler.Ast
 
             _try.EmitCode(target);
         }
+
     }
 }

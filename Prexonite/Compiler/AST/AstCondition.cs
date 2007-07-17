@@ -26,7 +26,7 @@ using Prexonite.Types;
 
 namespace Prexonite.Compiler.Ast
 {
-    public class AstCondition : AstNode
+    public class AstCondition : AstNode, IAstHasBlocks
     {
         public AstCondition(string file, int line, int column, IAstExpression condition, bool isNegative)
             : base(file, line, column)
@@ -59,6 +59,15 @@ namespace Prexonite.Compiler.Ast
         public IAstExpression Condition;
         public bool IsNegative;
         private static int depth = 0;
+
+        #region IAstHasBlocks Members
+
+        public AstBlock[] Blocks
+        {
+            get { return new AstBlock[] {IfBlock,ElseBlock}; }
+        }
+
+        #endregion
 
         public override void EmitCode(CompilerTarget target)
         {

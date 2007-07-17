@@ -36,10 +36,9 @@ var engine;
 
 declare function reboot;
 
-//functions called '\init' are not compiled into runtime functions but executed 
+//The follwing code block is compiled
 // as part of the initialization of the application.
 // Global variable assignments too are part of the '\init' function.
-function \init does
 {
 	engine = new Prexonite::Engine;
 	//The interactive prompt uses a second, isolated engine for execution.
@@ -86,7 +85,6 @@ function prx\interactive()
     ldr.LoadFromString(buffer.ToString);
     buffer.Length = 0;
     
-    
     var errors;
     var lastCode;
     
@@ -123,8 +121,7 @@ function prx\interactive()
     //Print errors (if 'otherErrors' is null, 'errors' is used)
     function printErrors(otherErrors) does red = () =>
     {
-        if(otherErrors is Null)
-            otherErrors = errors;
+        otherErrors ??= errors;
         foreach(var err in otherErrors);
             println(err);
     };
@@ -146,12 +143,18 @@ function prx\interactive()
     for(var raw; do raw = showPrompt(app.Variables["prompt"].Value.Self); until raw.ToLower == ":quit")
     {        
         var funcId = nextFuncId; //<-- get the first unique function id
-        var cmd = "g"; //<-- assume global code
+        var cmd = "r"; //<-- assume execution of code
         
         if(raw.ToLower == ":reload") //this directive restarts prx\main with the same arguments. See 'prx_main.pxs' for details.
         {
             reboot;
             break;          
+        }
+        else if(raw.ToLower.StartsWith(":compile "))
+        {
+            cmd = "c";
+            raw = raw.Substring(9);
+            goto executeStatement;
         }
         else if(raw.StartsWith("=")) //force compilation as an expression
         {
@@ -162,7 +165,6 @@ function prx\interactive()
                 printErrors;
                 continue;   
             }
-            cmd = "r"; //Make sure the compiled function is executed
         }
         else if(raw.StartsWith("::")) //Must be a static get/set
             goto executeStatement;
@@ -174,9 +176,10 @@ executeGlobal:
             {
                 printErrors;
                 continue;
-            }            
+            }  
+            cmd = "g"; //do not execute anything          
         }
-        else if(raw.StartsWith("global ")) //Global code too
+        else if(raw.ToLower.StartsWith("global ")) //Global code too
         {
             buffer.Append = raw.Substring(7);
             goto executeGlobal;
@@ -212,25 +215,38 @@ executeStatement:
                     continue;
                 }
             }
-            cmd = "r";
         }             
         
-        if(cmd == "r")
+        try
         {
-            //A function needs to be run
-            try
+            if(cmd == "r")
             {
+                //A function needs to be run
                 app.Functions[funcId].Run(engine);
             }
-            catch(var exc)
+            else if(cmd == "c")
             {
-               green = () => println(exc);
-            }
-            finally
-            {
-                //remove the temporary function afterwards 
-                app.Functions.Remove(app.Functions[funcId]);
+                var codeSB = new System::Text::StringBuilder;
+                unless(app.Functions[funcId] == null)
+                    app.Functions[funcId].Store(codeSB);
+                println(codeSB);
             }
         }
-    }
+        catch(var exc)
+        {
+           green = () => println(exc);
+        }
+        finally
+        {
+            var toRemove = [];
+            foreach(var func in app.Functions)
+                if(func.Id.StartsWith("eval\\"))
+                    toRemove[] = func;
+            foreach(var func in toRemove)
+            {
+                app.Functions.Remove(func);
+            }
+            evalStep = 1;
+        } //end finally
+    } //end for -> next prompt
 }

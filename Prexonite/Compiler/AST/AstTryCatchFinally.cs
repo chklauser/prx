@@ -3,7 +3,7 @@ using Prexonite.Types;
 
 namespace Prexonite.Compiler.Ast
 {
-    public class AstTryCatchFinally : AstNode
+    public class AstTryCatchFinally : AstNode, IAstHasBlocks
     {
         public AstBlock TryBlock;
         public AstBlock CatchBlock;
@@ -25,6 +25,18 @@ namespace Prexonite.Compiler.Ast
             CatchBlock = new AstBlock(p);
             FinallyBlock = new AstBlock(p);
         }
+
+        #region IAstHasBlocks Members
+
+        public AstBlock[] Blocks
+        {
+            get
+            {
+                return new AstBlock[] {TryBlock, CatchBlock, FinallyBlock};
+            }
+        }
+
+        #endregion
 
         public override void EmitCode(CompilerTarget target)
         {

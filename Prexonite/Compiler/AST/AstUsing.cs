@@ -5,7 +5,7 @@ using Prexonite.Types;
 
 namespace Prexonite.Compiler.Ast
 {
-    public class AstUsing : AstNode
+    public class AstUsing : AstNode, IAstHasBlocks
     {
         internal AstUsing(Parser p)
             : base(p)
@@ -38,6 +38,15 @@ namespace Prexonite.Compiler.Ast
         public AstGetSet Container;
         public IAstExpression Expression;
         public AstBlock Block;
+
+        #region IAstHasBlocks Members
+
+        public AstBlock[] Blocks
+        {
+            get { return new AstBlock[] {Block}; }
+        }
+
+        #endregion
 
         public override void EmitCode(CompilerTarget target)
         {

@@ -82,6 +82,8 @@
     <Compile Include="Compiler\Ast\AstLogicalAnd.cs" />
     <Compile Include="Compiler\Ast\AstLogicalOr.cs" />
     <Compile Include="Compiler\Ast\AstDynamicTypeExpression.cs" />
+    <Compile Include="Compiler\Ast\AstLoop.cs" />
+    <Compile Include="Compiler\Ast\AstLoopExpression.cs" />
     <Compile Include="Compiler\Ast\AstNull.cs" />
     <Compile Include="Compiler\Ast\AstObjectCreation.cs" />
     <Compile Include="Compiler\Ast\AstReturn.cs" />
@@ -100,6 +102,7 @@
     <Compile Include="Compiler\Ast\AstBlock.cs" />
     <Compile Include="Compiler\Ast\AstGetSetSymbol.cs" />
     <Compile Include="Compiler\Ast\AstNode.cs" />
+    <Compile Include="Compiler\Ast\IAstHasBlocks.cs" />
     <Compile Include="Compiler\Ast\IAstType.cs" />
     <Compile Include="Compiler\BlockLabels.cs" />
     <Compile Include="Compiler\CompilerTarget.cs" />

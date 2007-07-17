@@ -2550,8 +2550,10 @@ function main()
 var a,b,c,x,y
 
 ldloc   a
+dup     1
 check.const Null
 jump.f  endc0
+pop     1
 ldloc   b
 label   endc0
 stloc   x
@@ -2559,19 +2561,25 @@ stloc   x
                 ldloc   a
                 ldloc   b
                 add
+                dup     1
                 check.const Null
                 jump.f  endc1
+                pop     1
                 ldloc   a
                 jump.f  else
                 ldloc   b
+                dup     1
                 check.const Null
                 jump.f  endc2
+                pop     1
                 ldloc   c
                 jump    endif
 label   else    ldloc   c                
 label   endif
-label   endc2   check.const Null
+label   endc2   dup     1
+                check.const Null
                 jump.f  endc1
+                pop     1
                 ldloc   c
                 
 label   endc1   stloc   y
@@ -2612,6 +2620,82 @@ ldloc   b
 stloc   c
 label   endif1
 ");
+        }
+
+        [Test]
+        public void LoopExpressions()
+        {
+
+            _compile(@"
+
+function main()
+{
+    var a = for(var i = 5; i < 10; i++)
+            {
+                yield 7*i;
+            };
+
+    var j = 7;
+    var b = until( j == 100) 
+            {
+                yield = j/2;
+                j*=4;
+                yield;
+            };
+}
+");
+
+            List<Instruction> code = target.Functions["main"].Code;
+            Assert.IsTrue(code.Count > 3, "Resulting must be longer than 3 instructions");
+            string lst1Var = code[1].Id ?? "No_ID_at_1";
+            string lst2Var = code[20].Id ?? "No_ID_at_20";
+            string tmp2Var = code[25].Id ?? "No_ID_at_25";
+            _expect(String.Format(@"
+var a,i,{0},b,j,{1},{2}
+                    sget.0  ""List::Create""
+                    stloc   {0}
+                    ldc.int 5
+                    stloc   i
+                    jump    condition0
+label begin0        ldloc   {0}
+                    ldc.int 7
+                    ldloc   i
+                    mul
+                    set.1   """"
+label continue0     inc     i
+label condition0    ldloc   i
+                    ldc.int 10
+                    clt
+                    jump.t  begin0
+label end0          ldloc   {0}
+                    stloc   a 
+
+                    ldc.int 7
+                    stloc   j
+                    sget.0  ""List::Create""
+                    stloc   {1}
+                    jump    continue1
+label begin1        ldloc   j
+                    ldc.int 2
+                    div
+                    stloc   {2}
+                    ldloc   j
+                    ldc.int 4
+                    mul
+                    stloc   j
+                    ldloc   {1}
+                    ldloc   {2}
+                    set.1   """"
+label continue1     ldloc   j
+                    ldc.int 100
+                    ceq
+                    jump.f  begin1
+label end1          ldloc   {1}
+                    stloc   b
+                    
+", lst1Var,lst2Var,tmp2Var));
+
+
         }
     }
 }

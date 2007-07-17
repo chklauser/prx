@@ -2399,6 +2399,30 @@ function main()
             _expect(".6.2.4.4.?.1");
         }
 
+        [Test]
+        public void LoopExpressions()
+        {
+            _compile(
+                @"
+function main(s)
+{
+    var words = for(var i = 0; i < s.Length; i += 2)
+                {
+                    if(i == s.Length - 1)
+                        yield s.Substring(i,1);
+                    else
+                        yield s.Substring(i,2);
+                };
+    
+    return foldl    ( (l,r) => l + ""-"" + r, words.Count,  foreach(var word in words) 
+                                                                yield word[0].ToUpper + word[1].ToLower;
+                    );
+}
+");
+
+            _expect("5-Bl-Oo-Dh-Ou-Nd","BloodHound");
+        }
+
         #region Helper
 
         private static string _generateRandomString(int length)

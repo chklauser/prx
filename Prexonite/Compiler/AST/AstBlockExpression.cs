@@ -19,7 +19,7 @@ namespace Prexonite.Compiler.Ast
 
         #region IAstExpression Members
 
-        public bool TryOptimize(CompilerTarget target, out IAstExpression expr)
+        public virtual bool TryOptimize(CompilerTarget target, out IAstExpression expr)
         {
             //Will be optimized after code generation, hopefully
             expr = null;
