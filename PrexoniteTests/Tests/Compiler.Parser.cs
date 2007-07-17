@@ -1795,6 +1795,72 @@ label endif3    ret.value
         }
 
         [Test]
+        public void ConditionalExpressionInverted()
+        {
+            _compile(@"
+declare var a,b,c;
+
+function main
+{
+    var x = 
+        if(not a) 
+            b 
+        else
+            c;
+
+    var y = 
+        unless(b) 
+            a 
+        else 
+            a+b;
+
+    var z = 
+        unless(not (a and b))
+            c 
+        else 
+            a-b;
+}
+");
+
+            _expect(@"
+var x,y,z
+
+ldglob  a
+jump.t  xe
+ldglob  b
+jump    sx
+label   xe
+ldglob  c
+label   sx
+stloc   x
+
+ldglob  b
+jump.t  ye
+ldglob  a
+jump    sy
+label   ye
+ldglob  a
+ldglob  b
+add
+label   sy
+stloc   y
+
+ldglob  a
+jump.f  ze
+ldglob  b
+jump.f  ze
+ldglob  c
+jump    sz
+label   ze
+ldglob  a
+ldglob  b
+sub
+label   sz
+stloc   z
+");
+        }
+
+        [Test]
         public void StringInterpolationWithStrings()
         {
             _compile(@"
@@ -2410,6 +2476,141 @@ var g;
 { g = 4; }
 
 function main does println = g;
+");
+        }
+
+        [Test]
+        public void StatementConcatenation()
+        {
+            _compile(@"
+declare var a, b, c;
+
+function main does
+    declare var g; and
+    g = a or b and c; and
+    println(g);
+");
+
+            _expect(@"
+            ldglob      a
+            jump.t      tr
+            ldglob      b
+            jump.f      fa
+            ldglob      c
+            jump.t      tr
+label fa    ldc.bool    false
+            jump        set
+label tr    ldc.bool    true
+label set   stglob      g
+            ldglob      g
+            @cmd.1      println
+");
+        }
+
+        [Test]
+        public void AssemblerExpressions()
+        {
+            //Now this really *IS* Vodoo magic
+            _compile(@"
+function main
+{
+    var eng = asm ( ldc.int 6 ldc.int 8 add );
+    var funcs = asm ( ldr.app get.0 Functions );
+}
+");
+
+            _expect(@"
+var eng, funcs
+
+ldc.int 6 
+ldc.int 8 
+add
+stloc eng
+
+ldr.app
+get.0 Functions
+stloc funcs
+");
+        }
+
+        [Test]
+        public void CoalescenceOperator()
+        {
+            _compile(@"
+function main()
+{
+    var a; var b; var c;
+
+    var x = a ?? b;
+    var y = a + b ?? (a ? b ?? c : c ) ?? null ?? c;
+}
+");
+
+            _expect(@"
+var a,b,c,x,y
+
+ldloc   a
+check.const Null
+jump.f  endc0
+ldloc   b
+label   endc0
+stloc   x
+
+                ldloc   a
+                ldloc   b
+                add
+                check.const Null
+                jump.f  endc1
+                ldloc   a
+                jump.f  else
+                ldloc   b
+                check.const Null
+                jump.f  endc2
+                ldloc   c
+                jump    endif
+label   else    ldloc   c                
+label   endif
+label   endc2   check.const Null
+                jump.f  endc1
+                ldloc   c
+                
+label   endc1   stloc   y
+");
+        }
+
+        [Test]
+        public void CoalescenceAssignment()
+        {
+            _compile(@"
+function main()
+{
+    var a;
+    var b;
+    var c;
+
+    if(a is Null)
+        a = b;
+
+    c ??= b;
+}
+");
+
+            _expect(@"
+var a,b,c
+
+ldloc   a
+check.const Null
+jump.f  endif0
+ldloc   b
+stloc   a
+label   endif0
+
+ldloc   c
+check.const Null
+jump.f  endif1
+ldloc   b
+stloc   c
+label   endif1
 ");
         }
     }

@@ -91,7 +91,29 @@ namespace Prexonite.Compiler.Ast
                     EmitGetCode(target, justEffect);
                     break;
                 case PCall.Set:
-                    if (SetModifier != BinaryOperator.None)
+                    if (SetModifier == BinaryOperator.Coalescence)
+                    {
+                        AstGetSet assignment = GetCopy();
+                        assignment.SetModifier = BinaryOperator.None;
+
+                        AstGetSet getVariation = GetCopy();
+                        getVariation.Call = PCall.Get;
+                        getVariation.Arguments.RemoveAt(getVariation.Arguments.Count - 1);
+
+                        AstTypecheck check =
+                            new AstTypecheck(
+                                File,
+                                Line,
+                                Column,
+                                getVariation,
+                                new AstConstantTypeExpression(File, Line, Column, "Null"));
+
+                        AstCondition cond = new AstCondition(File, Line, Column, check);
+                        cond.IfBlock.Add(assignment);
+
+                        cond.EmitCode(target);
+                    }
+                    else if (SetModifier != BinaryOperator.None)
                     {
                         //Without more detailed information, a Set call with a set modifier has to be expressed using 
                         //  conventional set call and binary operator nodes.

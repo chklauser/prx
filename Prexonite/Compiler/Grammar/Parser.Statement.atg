@@ -32,10 +32,14 @@ StatementBlock<AstBlock block>
 
 Statement<AstBlock block>
 =
-    IF( isLabel() )
-        ExplicitLabel<block>  
-|   [ SimpleStatement<block> ] semicolon
-|   StructureStatement<block>
+(
+		IF( isLabel() )
+			ExplicitLabel<block>  
+	|   [ SimpleStatement<block> ] semicolon
+	|   StructureStatement<block>
+)
+{	and Statement<block> 
+}
 .
 
 SimpleStatement<AstBlock block>
@@ -310,6 +314,7 @@ Assignment<AstGetSet lvalue>
 |   div assign                  (.  setModifier = BinaryOperator.Division; .)
 |   bitAnd assign               (.  setModifier = BinaryOperator.BitwiseAnd; .)
 |   bitOr assign                (.  setModifier = BinaryOperator.BitwiseOr; .)
+|	coalescence assign			(.	setModifier = BinaryOperator.Coalescence; .)
 )   Expr<out expr>              (.  lvalue.Arguments.Add(expr);
                                     lvalue.Call = PCall.Set; 
                                     lvalue.SetModifier = setModifier;

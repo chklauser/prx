@@ -140,6 +140,7 @@ Noise               = "/*" ~"*/" | "//" {NotLineBreak}* {LineBreak} | {WhiteSpac
     "--"    { return tok(Parser._dec); }
     "~"     { return tok(Parser._tilde); }
     "::"    { return tok(Parser._doublecolon); }
+    "??"	{ return tok(Parser._coalescence); }
     "?"     { return tok(Parser._question); }
     "->"    { return tok(Parser._pointer); }
     "=>"    { return tok(Parser._implementation); }

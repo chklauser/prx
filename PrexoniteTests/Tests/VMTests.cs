@@ -2374,6 +2374,31 @@ function main(var lst)
             _expect(3*3*2+5*1+2*4,PType.List.CreatePValue(lst));
         }
 
+        [Test]
+        public void CoalescenceOperator()
+        {
+            _compile(@"
+coroutine fetch(xs) does 
+    foreach(var x in xs)
+        yield x;
+
+coroutine blit(xs, ys) does
+    ref nextY = fetch(ys); and
+    foreach(var x in xs)
+        var y = nextY; and
+        yield x ?? y ?? ""?"";
+
+function main()
+{
+    var xs = [6,null,4,null,null,1];
+    var ys = [1,2   ,3,4   ,null,6];
+    return foldl((l,r) => l + ""."" + r, """", blit(xs,ys));
+}        
+");
+
+            _expect(".6.2.4.4.?.1");
+        }
+
         #region Helper
 
         private static string _generateRandomString(int length)

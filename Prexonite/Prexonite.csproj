@@ -58,6 +58,8 @@
     <Compile Include="Commands\Unbind.cs" />
     <Compile Include="Compiler\Ast\AstActionBlock.cs" />
     <Compile Include="Compiler\Ast\AstAsmInstruction.cs" />
+    <Compile Include="Compiler\Ast\AstBlockExpression.cs" />
+    <Compile Include="Compiler\Ast\AstCoalescence.cs" />
     <Compile Include="Compiler\Ast\AstCondition.cs" />
     <Compile Include="Compiler\Ast\AstConditionalExpression.cs" />
     <Compile Include="Compiler\Ast\AstConstantTypeExpression.cs" />

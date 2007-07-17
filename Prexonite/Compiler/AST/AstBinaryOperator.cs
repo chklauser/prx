@@ -159,6 +159,17 @@ namespace Prexonite.Compiler.Ast
         /// </remarks>
         public bool TryOptimize(CompilerTarget target, out IAstExpression expr)
         {
+            //The coalecence operator is handled separately.
+            if(Operator == BinaryOperator.Coalescence)
+            {
+                AstCoalescence coal = new AstCoalescence(File, Line, Column);
+                coal.Expressions.Add(LeftOperand);
+                coal.Expressions.Add(RightOperand);
+                expr = coal;
+                OptimizeNode(target, ref expr);
+                return true;
+            }
+
             expr = null;
 
             //Let children do optimization
@@ -529,5 +540,10 @@ namespace Prexonite.Compiler.Ast
         /// The less than or equal operator
         /// </summary>
         LessThanOrEqual,
+
+        /// <summary>
+        /// The ??-operator.
+        /// </summary>
+        Coalescence
     }
 }

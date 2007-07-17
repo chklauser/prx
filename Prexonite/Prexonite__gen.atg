@@ -112,10 +112,12 @@ TOKENS
     semicolon // ;
 	colon  // :
 	doublecolon // ::
+	coalescence	//??
 	question // ?
 	pointer// ->
 	implementation // =>
-	at     // @	
+	at     // @
+	
 
     //Handled by the scanner:
     var
@@ -453,11 +455,15 @@ AtomicExpr<out IAstExpression expr>		(.	AstConditionalExpression cexpr = null; e
         AtomicExpr<out cexpr.IfExpression>
         colon
         AtomicExpr<out cexpr.ElseExpression>  (.  expr = cexpr; .)
-    }
-|	if lpar OrExpr<out expr> rpar		(.	cexpr = new AstConditionalExpression(this, expr); .)
+    }    
+|										(.	bool isNegated = false; .)
+	(	if
+	|	unless							(.	isNegated = true; .)
+	)
+	lpar OrExpr<out expr> rpar			(.	cexpr = new AstConditionalExpression(this, expr, isNegated); .)
 	AtomicExpr<out cexpr.IfExpression>
     else
-    AtomicExpr<out cexpr.ElseExpression>  (.  expr = cexpr; .)
+    AtomicExpr<out cexpr.ElseExpression>(.  expr = cexpr; .)
 .
 
 OrExpr<out IAstExpression expr>
@@ -524,14 +530,24 @@ EqlExpr<out IAstExpression expr>
 RelExpr<out IAstExpression expr>
                                         (.  IAstExpression lhs, rhs; BinaryOperator op = BinaryOperator.None;  .)
 =
-    AddExpr<out lhs>                    (.  expr = lhs; .)
+    CoalExpr<out lhs>                   (.  expr = lhs; .)
     {   (   lt                          (.  op = BinaryOperator.LessThan;              .)
         |   le                          (.  op = BinaryOperator.LessThanOrEqual;       .)
         |   gt                          (.  op = BinaryOperator.GreaterThan;           .)
         |   ge                          (.  op = BinaryOperator.GreaterThanOrEqual;    .)
-        ) AddExpr<out rhs>              (.  expr = new AstBinaryOperator(this, expr, op, rhs); .)
+        ) CoalExpr<out rhs>             (.  expr = new AstBinaryOperator(this, expr, op, rhs); .)
     }
 .
+
+CoalExpr<out IAstExpression expr>
+										(.	IAstExpression lhs, rhs; AstCoalescence coal = new AstCoalescence(this); .)
+=
+	AddExpr<out lhs>					(.	expr = lhs; coal.Expressions.Add(lhs); .)
+	{
+		coalescence
+		AddExpr<out rhs>				(.	expr = coal; coal.Expressions.Add(rhs); .)
+	}
+.										
 
 AddExpr<out IAstExpression expr>
                                         (.  IAstExpression lhs,rhs; BinaryOperator op = BinaryOperator.None; .)
@@ -590,7 +606,10 @@ Primary<out IAstExpression expr>
                                         (.  expr = null;
                                             AstGetSet complex = null; bool declared; .)
 =
-    Constant<out expr>
+	(.  _pushLexerState(Lexer.Asm); .)	(.	AstBlockExpression blockExpr = new AstBlockExpression(this); .)
+    asm lpar { AsmInstruction<blockExpr> } rpar
+    (.  _popLexerState(); .)			(.	expr = blockExpr; .)
+|   Constant<out expr>
 |   CoroutineCreation<out expr>
 |   ObjectCreation<out expr>
 |   ListLiteral<out expr>
@@ -1273,10 +1292,14 @@ StatementBlock<AstBlock block>
 
 Statement<AstBlock block>
 =
-    IF( isLabel() )
-        ExplicitLabel<block>  
-|   [ SimpleStatement<block> ] semicolon
-|   StructureStatement<block>
+(
+		IF( isLabel() )
+			ExplicitLabel<block>  
+	|   [ SimpleStatement<block> ] semicolon
+	|   StructureStatement<block>
+)
+{	and Statement<block> 
+}
 .
 
 SimpleStatement<AstBlock block>
@@ -1551,6 +1574,7 @@ Assignment<AstGetSet lvalue>
 |   div assign                  (.  setModifier = BinaryOperator.Division; .)
 |   bitAnd assign               (.  setModifier = BinaryOperator.BitwiseAnd; .)
 |   bitOr assign                (.  setModifier = BinaryOperator.BitwiseOr; .)
+|	coalescence assign			(.	setModifier = BinaryOperator.Coalescence; .)
 )   Expr<out expr>              (.  lvalue.Arguments.Add(expr);
                                     lvalue.Call = PCall.Set; 
                                     lvalue.SetModifier = setModifier;
