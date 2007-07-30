@@ -149,6 +149,8 @@ Noise               = "/*" ~"*/" | "//" {NotLineBreak}* {LineBreak} | {WhiteSpac
     ","     { return tok(Parser._comma); }
     "."     { return tok(Parser._dot); }
     "@"     { return tok(Parser._at); }
+    ">>"	{ return tok(Parser._appendright); }
+    "<<"	{ return tok(Parser._appendleft); }
     
     .|\n    { Console.WriteLine("Rouge Character: \"{0}\"", yytext()); }
 }

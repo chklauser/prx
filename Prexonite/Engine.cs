@@ -965,6 +965,8 @@ namespace Prexonite
 
             Commands.AddEngineCommand(CallCommand, new Call());
 
+            Commands.AddEngineCommand(CallerCommand, new Caller());
+
             Commands.AddEngineCommand(PairCommand, new Pair());
 
             Commands.AddEngineCommand(UnbindCommand, new Unbind());
@@ -1014,6 +1016,11 @@ namespace Prexonite
         /// Alias used for the <c>call</c> command.
         /// </summary>
         public const string CallCommand = "call";
+
+        /// <summary>
+        /// Alias used for the <c>caller</c> command.
+        /// </summary>
+        public const string CallerCommand = "caller";
 
         /// <summary>
         /// Alias used for the "pair" command.

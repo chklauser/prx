@@ -74,6 +74,8 @@ TOKENS
 	pointer// ->
 	implementation // =>
 	at     // @
+	appendleft // <<
+	appendright // >>
 	
 
     //Handled by the scanner:

@@ -114,7 +114,9 @@ namespace Prexonite
                     catch(Exception exc)
                     {
                         //Original exception can no longer be handled
-                        currentException = PrexoniteRuntimeException.CreateRuntimeException(sctx,exc);
+                        currentException =
+                            PrexoniteRuntimeException.UnpackException(
+                                PrexoniteRuntimeException.CreateRuntimeException(sctx, exc));
                         continue;
                     }
                 }

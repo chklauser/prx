@@ -21,12 +21,11 @@
  *  51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
  */
 
-using System;
 #if Verbose
 using System.Text;
 #endif
+using System;
 using System.Collections.Generic;
-using System.Diagnostics;
 using System.Reflection;
 using System.Runtime.Serialization;
 using Prexonite.Commands;
@@ -236,7 +235,7 @@ namespace Prexonite
                 case PType.BuiltIn.Null:            
                     return NullPType.Literal;
                 case PType.BuiltIn.Object:
-                    return "{" + val.Value.ToString() + "}";
+                    return "{" + val.Value + "}";
                 case PType.BuiltIn.List:
                     StringBuilder buffer = new StringBuilder("List(");
                     List<PValue> lst = val.Value as List<PValue>;
@@ -252,7 +251,7 @@ namespace Prexonite
                     buffer.Append(")");
                     return buffer.ToString();
                 default:
-                    return "#" + val.ToString() +"#";
+                    return "#" + val +"#";
             }
         }
 #endif
@@ -281,7 +280,7 @@ namespace Prexonite
                 Instruction ins = codeBase[_pointer++];
 
 #if Verbose
-            Console.Write("/* " + (_pointer-1).ToString().PadLeft(4, '0') + " */ " + ins.ToString());
+            Console.Write("/* " + (_pointer-1).ToString().PadLeft(4, '0') + " */ " + ins);
             PValue val;
 #endif
 
@@ -375,8 +374,7 @@ namespace Prexonite
                             throw new PrexoniteException(
                                 string.Format(
                                     "Cannot load reference to command {0}.",
-                                    id,
-                                    ParentApplication.Id));
+                                    id));
                         break;
                     case OpCode.ldr_app:
                         push(CreateNativePValue(ParentApplication));
@@ -894,11 +892,20 @@ namespace Prexonite
 
                     case OpCode.func:
                         fillArgs(argc, out argv);
-                        needToReturn = true;
-                        func = ParentEngine.CacheFunctions ? ins.GenericArgument as PFunction : null;
+                        if(ParentEngine.CacheFunctions)
+                        {
+                            func = (ins.GenericArgument as PFunction) ??
+                                   ParentApplication.Functions[id];
+                            ins.GenericArgument = func;
+                        }
+                        else
+                        {
+                            func = ParentApplication.Functions[id];
+                        }
                         _lastContext =
                             new FunctionContext(
-                                ParentEngine, func ?? ParentApplication.Functions[id], argv);
+                                ParentEngine, func, argv);
+                        
                         _lastJustEffectFlag = justEffect;
                         ParentEngine.Stack.AddLast(_lastContext);
 #if Verbose
@@ -912,23 +919,30 @@ namespace Prexonite
                     case OpCode.cmd:
                         fillArgs(argc, out argv);
                         needToReturn = true;
-                        PCommand cmd = ParentEngine.CacheCommands
-                                           ? ins.GenericArgument as PCommand
-                                           : ParentEngine.Commands[id];
+                        PCommand cmd;
+                        if(ParentEngine.CacheCommands)
+                        {
+                            cmd = (ins.GenericArgument as PCommand) ?? ParentEngine.Commands[id];
+                            ins.GenericArgument = cmd;
+                        }
+                        else
+                        {
+                            cmd = ParentEngine.Commands[id];
+                        }
                         if (cmd == null)
                             throw new PrexoniteException("Cannot find command " + id + "!");
                         if (justEffect)
                             cmd.Run(this, argv);
                         else
+                        {
 #if Verbose
-                    {
-                        val = cmd.Run(this, argv);
-                        Console.Write(" =" + toDebug(val));
-                        push(val);
-                    }
+                            val = cmd.Run(this, argv);
+                            Console.Write(" =" + toDebug(val));
+                            push(val);
 #else
                             push(cmd.Run(this, argv));
 #endif
+                        }
                         break;
 
                         #endregion
@@ -1034,8 +1048,12 @@ namespace Prexonite
 
                         #region LEAVE
 
+                    case OpCode.@try:
+                        _isHandlingException.Push(false);
+                        break;
+
                     case OpCode.leave:
-                        if (!_isHandlingException)
+                        if (!_isHandlingException.Pop())
                         {
                             _pointer = argc;
 #if Verbose
@@ -1043,14 +1061,12 @@ namespace Prexonite
 #endif
                         }
 #if Verbose
-                    else
-                    {
-                        Console.Write(" => execute catch({0}:{1})", 
-                            _currentException.GetType().Name, _currentException.Message);
-                    }
+                        else
+                        {
+                            Console.Write(" => execute catch({0}:{1})", 
+                                _currentException.GetType().Name, _currentException.Message);
+                        }
 #endif
-                        _isHandlingException = false;
-
                         break;
 
                         #endregion
@@ -1117,7 +1133,7 @@ namespace Prexonite
 
         private Exception _currentException = null;
 
-        private bool _isHandlingException = false;
+        private Stack<bool> _isHandlingException = new Stack<bool>();
 
         /// <summary>
         /// Indicates whether the function context is currently handling an exception or not.
@@ -1126,7 +1142,7 @@ namespace Prexonite
         /// False, if the function runs normally.</value>
         public bool IsHandlingException
         {
-            get { return _isHandlingException; }
+            get { return _isHandlingException.Peek(); }
         }
 
         public override bool HandleException(Exception exc)
@@ -1141,20 +1157,19 @@ namespace Prexonite
 
             _currentException = exc;
 
-            
-
             if (block.HasFinally)
             {
 #if Verbose
-                Console.WriteLine("Exception handled by finally-catch.");
+                Console.WriteLine("Exception handled by finally-catch. " + block);
 #endif
-                _isHandlingException = true;
+                _isHandlingException.Pop();
+                _isHandlingException.Push(true);
                 _pointer = block.BeginFinally;
             }
             else if (block.HasCatch)
             {
 #if Verbose
-                Console.WriteLine("Exception handled by catch.");
+                Console.WriteLine("Exception handled by catch." + block);
 #endif
                 _pointer = block.BeginCatch;
             }

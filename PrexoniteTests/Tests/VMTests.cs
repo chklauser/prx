@@ -2423,6 +2423,147 @@ function main(s)
             _expect("5-Bl-Oo-Dh-Ou-Nd","BloodHound");
         }
 
+        [Test]
+        public void HarmlessTryFinally()
+        {
+            _compile(@"
+function main
+{
+    var r;
+    try
+    {
+        r = ""NO_ERROR"";
+    }
+    finally
+    {
+        r += "", REALLY"";
+    }
+    return r;
+}
+");
+            _expect("NO_ERROR, REALLY");
+        }
+
+        [Test]
+        public void TryCatchInFinally()
+        {
+            _compile(@"
+function mightFail(x)
+{
+    throw ""I don't like $x."";
+}
+
+var sb = new System::Text::StringBuilder;
+
+function print does foreach(sb.Append in var args);
+function println does foreach(sb.AppendLine in var args);
+
+function main()
+{
+    
+    try
+    {
+        var xs = 
+            foreach(var a in var args) 
+                yield mightFail(a);
+            ;
+    }
+    finally
+    {
+        xs = 
+            foreach(var a in var args)
+                yield ""NP($a)"";
+            ;
+    }
+    catch(var exc)
+    {
+        print = ""EXC($(exc.Message))"";
+    }
+
+    print(foldl((l,r) => l + "" "" + r, "" BEGIN"", xs)); 
+    return sb.ToString;
+}
+");
+
+            List<PValue> xs = new List<PValue>();
+            xs.Add(4);
+            xs.Add("Hello");
+            xs.Add(3.4);
+
+            _expect("EXC(I don't like 4.) BEGIN NP(4) NP(Hello) NP(3.4)",xs.ToArray());
+        }
+
+        [Test]
+        public void LeftAppendArgument()
+        {
+            _compile(@"
+coroutine where(ref f, xs) does foreach(var x in xs)
+    if(f(x))
+        yield x;
+
+coroutine limit(max, xs) does
+    var i = 0; and
+    foreach(var x in xs)
+        if(i++ >= max)
+            break;
+        else
+            yield x;
+
+coroutine skip(cnt, xs) does
+    var i = 0; and
+    foreach(var x in xs)
+        if(i++ >= cnt)
+            yield x;
+
+coroutine map(ref f, xs) does
+    foreach(var x in xs)
+        yield f(x);
+
+function main(sep) = foldl( (l,r) => $l + "" "" + $r, ""BEGIN"")
+    << limit(3) << map( x => x.Length + sep + x ) << where( x => x.Length >= 3 ) << skip(1) << var args;
+");
+
+            _expect("BEGIN 3:abc 5:hello 3:123", ":", "ab", "abc", "hello", "12", "123", "8965");
+        }
+
+        [Test]
+        public void RightAppendArgument()
+        {
+            _compile(@"
+coroutine where(ref f, xs) does foreach(var x in xs)
+    if(f(x))
+        yield x;
+
+coroutine limit(max, xs) does
+    var i = 0; and
+    foreach(var x in xs)
+        if(i++ >= max)
+            break;
+        else
+            yield x;
+
+coroutine skip(cnt, xs) does
+    var i = 0; and
+    foreach(var x in xs)
+        if(i++ >= cnt)
+            yield x;
+
+coroutine map(ref f, xs) does
+    foreach(var x in xs)
+        yield f(x);
+
+function main(sep) = 
+    var args >> 
+    skip(1) >> 
+    where( x => x.Length >= 3 ) >> 
+    map( x => x.Length + sep + x ) >> 
+    limit(3) >>
+    foldl( (l,r) => $l + "" "" + $r, ""BEGIN"");
+");
+
+            _expect("BEGIN 3:abc 5:hello 3:123", ":", "ab", "abc", "hello", "12", "123", "8965");
+        }
+
         #region Helper
 
         private static string _generateRandomString(int length)

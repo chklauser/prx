@@ -222,12 +222,13 @@ executeStatement:
             if(cmd == "r")
             {
                 //A function needs to be run
-                app.Functions[funcId].Run(engine);
+                unless(app.Functions[funcId] is Null)
+                    app.Functions[funcId].Run(engine);
             }
             else if(cmd == "c")
             {
                 var codeSB = new System::Text::StringBuilder;
-                unless(app.Functions[funcId] == null)
+                unless(app.Functions[funcId] is null)
                     app.Functions[funcId].Store(codeSB);
                 println(codeSB);
             }
@@ -238,15 +239,19 @@ executeStatement:
         }
         finally
         {
-            var toRemove = [];
-            foreach(var func in app.Functions)
-                if(func.Id.StartsWith("eval\\"))
-                    toRemove[] = func;
-            foreach(var func in toRemove)
+            function removeEvalFunctions()
             {
-                app.Functions.Remove(func);
+                var toRemove =  foreach(var func in app.Functions)
+                                    if(func.Id.StartsWith("eval\\"))
+                                        yield func;
+                                ;
+                                        
+                foreach(var func in toRemove)
+                {
+                    app.Functions.Remove(func);
+                }
             }
-            evalStep = 1;
+            removeEvalFunctions();
         } //end finally
     } //end for -> next prompt
 }

@@ -48,11 +48,14 @@ namespace Prx.Tests
             Application app = new Application("getInstructions");
             Loader ldr = new Loader(engine, app);
             ldr.LoadFromString("function MyAssemblerFunction does asm {" + assemblerCode + "\n}");
-            if(ldr.ErrorCount != 0)
+            if (ldr.ErrorCount != 0)
+            {
+                Console.WriteLine("--------------- Assembler Code --------------------");
+                Console.WriteLine(assemblerCode);
+                Console.WriteLine("---------------- End Asm Code ---------------------");
                 foreach (string error in ldr.Errors)
-                {
-                    Console.WriteLine(error);
-                }
+                    Assert.Fail(string.Format("Error in the expected assembler code: {0}", error));
+            }
             return app.Functions["MyAssemblerFunction"].Code;
         }
 

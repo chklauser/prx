@@ -47,13 +47,17 @@ namespace Prexonite.Compiler.Ast
             string endTry = prefix + "endTry";
 
             if(TryBlock.IsEmpty)
-                if(FinallyBlock.IsEmpty)
+                if (FinallyBlock.IsEmpty)
                     return;
                 else
-                    FinallyBlock.EmitCode(target);            
+                {
+                    target.Emit(OpCode.@try);
+                    FinallyBlock.EmitCode(target);
+                }
 
             //Try block
             target.EmitLabel(beginTryLabel);
+            target.Emit(OpCode.@try);
             TryBlock.EmitCode(target);
 
             //Finally block

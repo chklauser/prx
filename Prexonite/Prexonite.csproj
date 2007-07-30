@@ -45,6 +45,7 @@
   <ItemGroup>
     <Compile Include="Closure.cs" />
     <Compile Include="Commands\Call.cs" />
+    <Compile Include="Commands\Caller.cs" />
     <Compile Include="Commands\Concatenate.cs" />
     <Compile Include="Commands\DelegatePCommand.cs" />
     <Compile Include="Commands\Dispose.cs" />

@@ -239,9 +239,7 @@ function func0
         {
             const string input1 =
                 @"
-declare function func1;
-
-function func0
+function main
 {
     var x;
     var y;
@@ -250,13 +248,9 @@ function func0
     x += 0 + y * 1;
 }";
 
-            Loader ldr = new Loader(engine, target);
-            ldr.LoadFromString(input1);
-            Assert.AreEqual(0, ldr.ErrorCount, "Errors during compilation.");
+            _compile(@input1);
 
-            List<Instruction> actual = target.Functions["func0"].Code;
-            List<Instruction> expected =
-                getInstructions(
+            _expect(
                     @"
 ldc.int  1
 stloc    x
@@ -271,15 +265,6 @@ ldloc    y
 add
 stloc    x"
                     );
-
-            Console.Write(target.StoreInString());
-
-            Assert.AreEqual(expected.Count, actual.Count, "Expected and actual instruction count missmatch.");
-
-            for (int i = 0; i < actual.Count; i++)
-                Assert.AreEqual(expected[i], actual[i],
-                                String.Format("Instructions at address {0} do not match ({1} != {2})", i,
-                                              expected[i], actual[i]));
         }
 
         [Test]
@@ -1206,10 +1191,10 @@ function main
 ");
             List<Instruction> code = target.Functions["main"].Code;
             Assert.IsTrue(code.Count > 18, "Resulting must be longer than 18 instructions");
-            string enum1 = code[3].Id ?? "No_ID_at_2";
-            string enum2 = code[25].Id ?? "No_ID_at_18";
+            string enum1 = code[3].Id ?? "No_ID_at_3";
+            string enum2 = code[26].Id ?? "No_ID_at_26";
             _expect(
-                @"
+                string.Format(@"
 var lst
 var buffer
 var enum1
@@ -1218,24 +1203,21 @@ var enum2
                         ldloc   lst
                         get.0   GetEnumerator
                         cast.const  ""Object(\""System.Collections.IEnumerator\"")""
-                        stloc   " +
-                enum1 + @"
+                        stloc   {0}
+                        try
                         jump    enum1\continue
 
-label enum1\begin       ldloc   " + enum1 +
-                @"
+label enum1\begin       ldloc   {0}
                         get.0   Current
                         stloc   e
 
                         ldloc   e
                         @cmd.1  println
 
-label enum1\continue    ldloc   " +
-                enum1 +
-                @"
+label enum1\continue    ldloc   {0}
                         get.0   MoveNext
                         jump.t  enum1\begin
-label enum1\break       ldloc   "+enum1+@"
+label enum1\break       ldloc   {0}
                        @cmd.1   dispose
                         leave   endTry
                         exception
@@ -1249,27 +1231,24 @@ label endTry            nop+COMPLICATED
                         
                         get.0   GetEnumerator
                         cast.const  ""Object(\""System.Collections.IEnumerator\"")""
-                        stloc   " +
-                enum2 + @"
+                        stloc   {1}
+                        try
                         jump    enum2\continue
 
 label enum2\begin       ldloc   buffer
-                        ldloc   " +
-                enum2 +
-                @"
+                        ldloc   {1}
                         get.0   Current
                         set.1   Append
-label enum2\continue    ldloc   " +
-                enum2 + @"
+label enum2\continue    ldloc   {1}
                         get.0   MoveNext
                         jump.t  enum2\begin
-                        ldloc   " + enum2 + @"
+                        ldloc   {1}
                        @cmd.1   dispose
                         leave   endTry2
                         exception
                         throw
 label endTry2
-");
+", enum1, enum2));
         }
 
         [Test]
@@ -2102,7 +2081,8 @@ var
     handle,
     exc
 
-label beginTry      func.0  createHandle
+label beginTry      try
+                    func.0  createHandle
                     stloc   handle
 //...work
                    @func.0  fail
@@ -2160,11 +2140,13 @@ var
     handle,
     exc
 
-label beginTry      func.0  open
+label beginTry      try
+                    func.0  open
                     stloc   handle
                    @func.0  fail
 label beginFinally  
-label beginTry2     ldloc   handle
+label beginTry2     try
+                    ldloc   handle
                    @func.1  close
 
 label beginFinally2 leave   endTry2
@@ -2211,7 +2193,8 @@ var
     handle,
     exc
 
-label beginTry      func.0  createHandle
+label beginTry      try
+                    func.0  createHandle
                     stloc   handle
 //...work
                    @func.0  fail
@@ -2268,7 +2251,8 @@ function main
 ");
             _expect(@"
 var h
-label beginTry  ldr.loc h
+label beginTry  try
+                ldr.loc h
                 func.0  createHandle
                @func.2  handle
                 ldloc   h
@@ -2696,6 +2680,93 @@ label end1          ldloc   {1}
 ", lst1Var,lst2Var,tmp2Var));
 
 
+        }
+
+        [Test]
+        public void AppendLeftArguments()
+        {
+            _compile(@"
+function main()
+{
+    print << 4;
+    println << (6,9);
+    call << (concat << (3,7), 15);
+}
+");
+
+            _expect(@"
+ldc.int 4
+@cmd.1  print
+ldc.int 6
+ldc.int 9
+@cmd.2  println
+ldc.int 3
+ldc.int 7
+cmd.2   concat
+ldc.int 15
+@cmd.2  call  
+");
+        }
+
+        [Test]
+        public void AppendRightArguments()
+        {
+            _compile(@"
+function main()
+{
+    var a; var b; var c;
+    (4) >> print;
+    (6,9) >> println;
+    ( 3 >> concat(7), 15 ) >> call;
+    println = 5 >> call;
+}   
+");
+
+            _expect(@"
+ldc.int 4
+@cmd.1  print
+ldc.int 6
+ldc.int 9
+@cmd.2  println
+ldc.int 3
+ldc.int 7
+cmd.2   concat
+ldc.int 15
+@cmd.2  call
+ldc.int 5
+cmd.1   call
+@cmd.1  println
+");
+        }
+
+        [Test]
+        public void AppendBothArguments()
+        {
+            _compile(@"
+function main(x)
+{
+    var r;
+    r = x >> call << 5;
+    r = x * 8 >> call << 5: x;
+}
+");
+
+            _expect(@"
+var r
+ldloc   x
+ldc.int 5
+cmd.2   call
+stloc   r
+
+ldloc   x
+ldc.int 8
+mul
+ldc.int 5
+ldloc   x
+cmd.2   pair
+cmd.2   call
+stloc   r
+");
         }
     }
 }

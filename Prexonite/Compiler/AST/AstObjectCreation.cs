@@ -31,7 +31,16 @@ namespace Prexonite.Compiler.Ast
                                      IAstExpression
     {
         public IAstType TypeExpr;
-        public List<IAstExpression> Arguments;
+        private AstGetSet.ArgumentsProxy _proxy;
+
+        public AstGetSet.ArgumentsProxy Arguments
+        {
+            get
+            {
+                return _proxy;
+            }
+        }
+        private List<IAstExpression> _arguments = new List<IAstExpression>();
 
         [NoDebug]
         public AstObjectCreation(string file, int line, int col, IAstType type)
@@ -40,7 +49,7 @@ namespace Prexonite.Compiler.Ast
             if (type == null)
                 throw new ArgumentNullException("type");
             TypeExpr = type;
-            Arguments = new List<IAstExpression>();
+            _proxy = new AstGetSet.ArgumentsProxy(_arguments);
         }
 
         [NoDebug]
@@ -59,13 +68,13 @@ namespace Prexonite.Compiler.Ast
 
             //Optimize arguments
             IAstExpression oArg;
-            foreach (IAstExpression arg in Arguments.ToArray())
+            foreach (IAstExpression arg in _arguments.ToArray())
             {
                 oArg = GetOptimizedNode(target, arg);
                 if (!ReferenceEquals(oArg, arg))
                 {
-                    Arguments.Remove(arg);
-                    Arguments.Add(oArg);
+                    _arguments.Remove(arg);
+                    _arguments.Add(oArg);
                 }
             }
 
@@ -78,17 +87,17 @@ namespace Prexonite.Compiler.Ast
 
             if (constType != null)
             {
-                foreach (IAstExpression arg in Arguments)
+                foreach (IAstExpression arg in _arguments)
                     arg.EmitCode(target);
-                target.Emit(OpCode.newobj, Arguments.Count, constType.TypeExpression);
+                target.Emit(OpCode.newobj, _arguments.Count, constType.TypeExpression);
             }
             else
             {
 //Load type and call construct on it
                 TypeExpr.EmitCode(target);
-                foreach (IAstExpression arg in Arguments)
+                foreach (IAstExpression arg in _arguments)
                     arg.EmitCode(target);
-                target.EmitGetCall(Arguments.Count, "Construct\\FromStack");
+                target.EmitGetCall(_arguments.Count, "Construct\\FromStack");
             }
         }
 

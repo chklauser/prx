@@ -75,10 +75,8 @@ GetSetComplex<AstBlock block>
                                         .)
 =
 //GetSet Initiator
-(   GetInitiator<out complex, out isDeclaration>
-|   lpar Expr<out expr> rpar
-    GetSetExtension<expr, out complex>
-)
+GetInitiator<out complex, out isDeclaration>
+
 //GetSet Extensions
     {   GetSetExtension<complex, out complex>
     }
@@ -102,7 +100,7 @@ GetSetComplex<AstBlock block>
 .
 
 GetSetExtension<IAstExpression subject, out AstGetSet extension>
-                                        (.  extension = null; string id; List<IAstExpression> args = null; 
+                                        (.  extension = null; string id;
 											if(subject == null)
 											{
 												SemErr("Member access not preceded by a proper expression.");
@@ -113,12 +111,10 @@ GetSetExtension<IAstExpression subject, out AstGetSet extension>
 =
     IF( isIndirectCall() )
     dot                                 (.  extension = new AstIndirectCall(this, PCall.Get, subject); .)
-    Arguments<out args>                 (.  extension.Arguments.AddRange(args); .)
+    Arguments<extension.Arguments>
 |   dot
     Id<out id>                          (.  extension = new AstGetSetMemberAccess(this, PCall.Get, subject, id); .)
-    [   Arguments<out args> 
-                                        (.  extension.Arguments.AddRange(args); .)
-    ]
+    Arguments<extension.Arguments> 
 |                                       (.  
                                             IAstExpression expr; 
                                             extension = new AstGetSetMemberAccess(this, PCall.Get, subject, ""); 
@@ -135,7 +131,10 @@ GetInitiator<out AstGetSet complex, out bool isDeclaration>
                                         (.  complex = null; 
                                             AstGetSetSymbol symbol = null;
                                             AstGetSetStatic staticCall = null;
-                                            isDeclaration = false;
+                                            AstGetSet member = null;
+                                            IAstExpression expr = null;
+                                            List<IAstExpression> args = new List<IAstExpression>();
+                                            isDeclaration = false;                                            
                                             string id;
                                         .)
 =
@@ -144,43 +143,61 @@ GetInitiator<out AstGetSet complex, out bool isDeclaration>
         Function<out symbol>
     |   Variable<out symbol, out isDeclaration>
     |   StaticCall<out staticCall>
+    |	lpar Expr<out expr>				(.	args.Add(expr); .)
+		{	comma Expr<out expr>		(.	args.Add(expr); .)
+		}
+		rpar
+		(	GetSetExtension<expr, out member>
+										(.	if(args.Count > 1)
+												SemErr("A member access cannot have multiple subjects. (Did you mean '>>'?)");
+										.)
+		|	appendright
+			GetCall<out complex>		(.	complex.Arguments.RightAppend(args);
+											complex.Arguments.ReleaseRightAppend();
+											member = complex;
+										.)
+		)
     )
-                                            (.  complex = (AstGetSet)symbol ?? (AstGetSet)staticCall; .)
+                                        (.  complex = 
+												(AstGetSet)symbol ?? 
+												(AstGetSet)staticCall ?? 
+												(AstGetSet)member; 
+										.)
     //Reference
 |   IF( isDeDereference() )
-    pointer pointer Id<out id>                    (.  SymbolEntry s = target.Symbols[id];
-                                                SymbolInterpretations kind;
-                                                if(s == null)
-                                                {   
-                                                    SemErr("The symbol " + id + " is not defined"); 
-                                                    s = new SymbolEntry(SymbolInterpretations.LocalObjectVariable, id);
-                                                    kind = s.Interpretation;
-                                                }
+    pointer pointer Id<out id>          (.  SymbolEntry s = target.Symbols[id];
+                                            SymbolInterpretations kind;
+                                            if(s == null)
+                                            {   
+                                                SemErr("The symbol " + id + " is not defined"); 
+                                                s = new SymbolEntry(SymbolInterpretations.LocalObjectVariable, id);
+                                                kind = s.Interpretation;
+                                            }
+                                            else
+                                            {
+                                                kind = s.Interpretation;
+                                                if(s.Interpretation == SymbolInterpretations.LocalReferenceVariable)
+                                                    kind = SymbolInterpretations.LocalObjectVariable;
+                                                else if(s.Interpretation == SymbolInterpretations.GlobalReferenceVariable)
+                                                    kind = SymbolInterpretations.GlobalObjectVariable;
                                                 else
-                                                {
-                                                    kind = s.Interpretation;
-                                                    if(s.Interpretation == SymbolInterpretations.LocalReferenceVariable)
-                                                        kind = SymbolInterpretations.LocalObjectVariable;
-                                                    else if(s.Interpretation == SymbolInterpretations.GlobalReferenceVariable)
-                                                        kind = SymbolInterpretations.GlobalObjectVariable;
-                                                    else
-                                                        SemErr("Only reference variables can be dereferenced twice.");
-                                                }
-                                                complex = new AstGetSetReference(this, s.Id, kind);
-                                            .)
-|   pointer Id<out id>                      (.  SymbolEntry s = target.Symbols[id];
-                                                if(s == null)
-                                                {   
-                                                    SemErr("The symbol " + id + " is not defined"); 
-                                                    s = new SymbolEntry(SymbolInterpretations.LocalObjectVariable, id);
-                                                }
-                                                else if(InterpretationIsVariable(s.Interpretation))
-                                                {
-                                                    if(isOuterVariable(id))
-                                                        target.RequireOuterVariable(id);
-                                                }
-                                                complex = new AstGetSetReference(this, s.Id, s.Interpretation);
-                                            .)
+                                                    SemErr("Only reference variables can be dereferenced twice.");
+                                            }
+                                            complex = new AstGetSetReference(this, s.Id, kind);
+                                        .)
+|   pointer Id<out id>                  (.  SymbolEntry s = target.Symbols[id];
+                                            if(s == null)
+                                            {   
+                                                SemErr("The symbol " + id + " is not defined"); 
+                                                s = new SymbolEntry(SymbolInterpretations.LocalObjectVariable, id);
+                                            }
+                                            else if(InterpretationIsVariable(s.Interpretation))
+                                            {
+                                                if(isOuterVariable(id))
+                                                    target.RequireOuterVariable(id);
+                                            }
+                                            complex = new AstGetSetReference(this, s.Id, s.Interpretation);
+                                        .)
 .
 
 VariableDeclaration<out AstGetSetSymbol variable>
@@ -254,22 +271,20 @@ Function<out AstGetSetSymbol function>
                                         SymbolEntry sym = target.Symbols[id];
                                         function = new AstGetSetSymbol(this, sym.Id, sym.Interpretation);
                                     }
-                                    List<IAstExpression> args; .)
-    [   Arguments<out args>     (.  function.Arguments.AddRange(args); .)
-    ]
+                                .)
+    Arguments<function.Arguments>
+    
 .
 
 StaticCall<out AstGetSetStatic staticCall>
                                 (.  IAstType typeExpr;
                                     string memberId;
                                     staticCall = null;
-                                    List<IAstExpression> args;
                                 .)
 =
     ExplicitTypeExpr<out typeExpr>
     dot Id<out memberId>        (.  staticCall = new AstGetSetStatic(this, PCall.Get, typeExpr, memberId); .)
-    [   Arguments<out args>     (.  staticCall.Arguments.AddRange(args); .)
-    ]
+    Arguments<staticCall.Arguments>
 .
 
 /*
@@ -277,7 +292,6 @@ StaticCall<out AstGetSetStatic staticCall>
                                 (.  string id = "";
                                     System.Text.StringBuilder idBuilder = new System.Text.StringBuilder();
                                     bool staticPrefix = false;
-                                    List<IAstExpression> args;
                                 .)
 =
 
@@ -286,9 +300,7 @@ StaticCall<out AstGetSetStatic staticCall>
     {   Ns<out id>              (.  idBuilder.Append("."+id); .)
     }
     Id<out id>                  (.  staticCall = createStaticCall(idBuilder.ToString(), id, staticPrefix); .)
-    [   Arguments<out args> 
-                                (.  staticCall.Arguments.AddRange(args); .)
-    ]
+    Arguments<staticCall.Arguments> 
 . // */
                                     //Fallback in case of a syntax error to avoid NullReferenceExceptions
 ExplicitLabel<AstBlock block>   (.  string id = "--\\NotAnId\\--"; .)
@@ -369,18 +381,18 @@ ForLoop<AstBlock block>         (.  AstForLoop loop;
     for                         (.  loop = new AstForLoop(this); target.BeginBlock(loop.Labels); .)
     lpar StatementBlock<loop.Initialize>
     (
-        [   while
-        |   until               (.  loop.IsPositive = false; .)
-        ]       
-        Expr<out loop.Condition> 
-        semicolon
-        SimpleStatement<loop.NextIteration>
-    |   do StatementBlock<loop.NextIteration> 
+		do StatementBlock<loop.NextIteration> 
                                 (.  loop.IsPrecondition = false; .)
         [   while
         |   until               (.  loop.IsPositive = false; .)
         ]
         Expr<out loop.Condition>
+    |   [   while
+        |   until               (.  loop.IsPositive = false; .)
+        ]       
+        Expr<out loop.Condition> 
+        semicolon
+        SimpleStatement<loop.NextIteration>
     )
     rpar
     StatementBlock<loop.Block>  (.  target.EndBlock(); block.Add(loop); .) // */
@@ -528,16 +540,33 @@ Using<AstBlock block>
                                 (.  block.Add(use); .)
 .
 
-Arguments<.out List<IAstExpression> args.>
-                                    (.  args = new List<IAstExpression>();
-                                        IAstExpression expr;
-                                    .)
+Arguments<AstGetSet.ArgumentsProxy args>
+                                (.  
+									IAstExpression expr;
+                                .)
 =
-	lpar
-	[	Expr<out expr>              (.  args.Add(expr); .)
-		{	WEAK comma
-			Expr<out expr>          (.  args.Add(expr); .)
-		}
+	[
+		lpar
+		[	Expr<out expr>      (.  args.Add(expr); .)
+			{	WEAK comma
+				Expr<out expr>  (.  args.Add(expr); .)
+			}
+		]
+		rpar
 	]
-	rpar
+								(.	args.RemeberRightAppendPosition(); .)
+	[
+		appendleft
+		(
+			lpar
+			[	Expr<out expr>	(.  args.Add(expr); .)
+				{	comma
+					Expr<out expr>	
+								(.  args.Add(expr); .)
+				}
+			]
+			rpar
+		|	Expr<out expr>		(.  args.Add(expr); .)
+		)
+	]
 .

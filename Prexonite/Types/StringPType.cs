@@ -376,6 +376,12 @@ namespace Prexonite.Types
                 case "unescape":
                     result = Unescape((string)subject.Value);
                     break;
+                case "format":
+                    string[] objs = new string[args.Length];
+                    for (int i = 0; i < args.Length; i++)
+                        objs[i] = args[i].CallToString(sctx);
+                    result = System.String.Format((string) subject.Value, objs);
+                    break;
                 case "escape":
                     result = Escape((string)subject.Value);
                     break;

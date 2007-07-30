@@ -21,7 +21,22 @@
  *  51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
  */
 
+
+
 Expr<out IAstExpression expr>
+										(.	AstGetSet complex = null; .)
+=
+	KeyValuePairExpr<out expr>
+	{	
+		appendright
+		GetCall<out complex>			(.	complex.Arguments.RightAppend(expr); 
+											complex.Arguments.ReleaseRightAppend();
+											expr = complex;
+										.)
+	}
+.
+
+KeyValuePairExpr<out IAstExpression expr>
 =
 	AtomicExpr<out expr>
 	[	colon							(.	IAstExpression value; .)
@@ -267,9 +282,8 @@ LoopExpr<out IAstExpression expr>
 ObjectCreation<out IAstExpression expr>
                                         (.  IAstType type; expr = null; .)
 =
-    new TypeExpr<out type>              (.  AstObjectCreation creation = new AstObjectCreation(this, type);
-                                            List<IAstExpression> args; .)
-    [   Arguments<out args>             (.  creation.Arguments.AddRange(args); .)
+    new TypeExpr<out type>              (.  AstObjectCreation creation = new AstObjectCreation(this, type); .)
+    [   Arguments<creation.Arguments>  
     ]                                   (.  expr = creation; .)
 .
 
@@ -281,7 +295,7 @@ CoroutineCreation<out IAstExpression expr>
                                         .)
 =
     coroutine Expr<out iexpr>           (.  cor.Expression = iexpr; .)
-    [ for Arguments<out cor.Arguments> ]
+    [ for Arguments<cor.Arguments> ]
 .
 
 LambdaExpression<out IAstExpression expr>

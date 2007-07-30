@@ -821,9 +821,19 @@ namespace Prexonite.Types
         }
     }
 
-    public enum PCall : int
+    /// <summary>
+    /// Defines whether a call is a "set-call" or a "get-call"
+    /// </summary>
+    public enum PCall
     {
+        /// <summary>
+        /// A "get-call". Has a return value.
+        /// </summary>
         Get = 0,
+
+        /// <summary>
+        /// A "set-call". Has at least one argument and no return value;
+        /// </summary>
         Set = 1
     }
 }

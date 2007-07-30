@@ -489,6 +489,7 @@ namespace Prexonite
                         case OpCode.ret_continue:
                         case OpCode.ret_break:
                         case OpCode.@throw:
+                        case OpCode.@try:
                         case OpCode.exc:
                         case OpCode.tail:
                             return;
@@ -641,6 +642,7 @@ namespace Prexonite
                     case OpCode.@throw:
                     case OpCode.exc:
                     case OpCode.tail:
+                    case OpCode.@try:
                         return true;
                         //LOAD CONSTANT . REAL
                     case OpCode.ldc_real:
@@ -820,7 +822,8 @@ namespace Prexonite
         ret_continue, //ret.continue  exits the function in continue mode
         ret_set, //ret.set       grabs the return value from the stack and stores it
         @throw, //throw         Throws one argument (string or exception) from the stack as an exception.
-        @leave, //leave         jumps depending on whether the context is currently in exception handling mode or not.
+        @try, //try            Initializes a try-finally-[catch] block
+        leave, //leave         jumps depending on whether the context is currently in exception handling mode or not.
         exc, //exc              Pushes the current exception on top of the stack.
         tail, //tail            Prevents function from yielding until it has reached an exit point
         //Stack manipulation

@@ -720,6 +720,7 @@ namespace Prexonite.Compiler
                 {"continue", null},
                 {"yield", null},
                 {"exit", null},
+                {"try",null},
                 {"throw",null},
                 {"exc",null},
                 {"exception",null}

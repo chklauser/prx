@@ -287,15 +287,19 @@ namespace Prexonite
                             _initializationFunction.CreateFunctionContext(targetEngine, new PValue[] {},
                                                                           new PVariable[] {}, true);
                         if (
-                            (!(context.Meta.TryGetValue(InitializationId, out init) &&
+                            (!(_initializationFunction.Meta.TryGetValue(InitializationId, out init) &&
                                int.TryParse(init.Text, out offset))) || offset < 0)
                             offset = 0;
                         fctx.Pointer = offset;
 #if Verbose
-                        Console.WriteLine("#Initialization for generation " + generation.ToString() + " required by " + context.ToString());
+                        Console.WriteLine("#Initialization for generation {0} (offset = {1}) required by {2}.", generation, offset, context);
 #endif
+
+                        //Execute the part of the initialize function that is missing
                         targetEngine.Stack.AddLast(fctx);
                         targetEngine.Process();
+
+                        //Save the current initialization state
                         _initializationFunction.Meta[InitializationId] = _initializationFunction.Code.Count.ToString();
                         _initializationGeneration = generation;
                         _initalizationState = ApplicationInitializationState.Complete;

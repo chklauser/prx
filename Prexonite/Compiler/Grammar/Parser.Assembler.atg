@@ -225,6 +225,8 @@ AsmId<out string id>        (.  id = "\\NoId\\"; .)
     |   foreach
     |   command
     |   as
+    |	try
+    |	throw
     )                       (.  id = cache(t.val); .)
 .
 

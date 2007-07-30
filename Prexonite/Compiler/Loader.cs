@@ -272,7 +272,8 @@ namespace Prexonite.Compiler
 
         public string CombineWithLoadPath(string path)
         {
-            if (path == null) throw new ArgumentNullException("path");
+            if (path == null) 
+                throw new ArgumentNullException("path");
             return Path.Combine(_loadPath, path);
         }
 

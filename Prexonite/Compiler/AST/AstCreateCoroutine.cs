@@ -7,16 +7,28 @@ namespace Prexonite.Compiler.Ast
     public class AstCreateCoroutine : AstNode, IAstExpression
     {
         public IAstExpression Expression;
-        public List<IAstExpression> Arguments = new List<IAstExpression>();
+
+        private AstGetSet.ArgumentsProxy _proxy;
+
+        public AstGetSet.ArgumentsProxy Arguments
+        {
+            get
+            {
+                 return _proxy;
+            }
+        }
+        private List<IAstExpression> _arguments = new List<IAstExpression>();
 
         public AstCreateCoroutine(string file, int line, int col)
             : base(file, line,col)
         {
+            _proxy = new AstGetSet.ArgumentsProxy(_arguments);
         }
 
         internal AstCreateCoroutine(Parser p)
             : base(p)
         {
+            _proxy = new AstGetSet.ArgumentsProxy(_arguments);
         }
 
         public override void EmitCode(CompilerTarget target)
@@ -25,10 +37,10 @@ namespace Prexonite.Compiler.Ast
                 throw new PrexoniteException("CreateCoroutine node requires an Expression.");
 
             Expression.EmitCode(target);
-            foreach (IAstExpression argument in Arguments)
+            foreach (IAstExpression argument in _arguments)
                 argument.EmitCode(target);
 
-            target.Emit(OpCode.newcor,Arguments.Count);
+            target.Emit(OpCode.newcor,_arguments.Count);
         }
 
         #region IAstExpression Members
@@ -39,17 +51,17 @@ namespace Prexonite.Compiler.Ast
             
             //Optimize arguments
             IAstExpression oArg;
-            foreach (IAstExpression arg in Arguments.ToArray())
+            foreach (IAstExpression arg in _arguments.ToArray())
             {
                 if (arg == null)
                     throw new PrexoniteException("Invalid (null) argument in CreateCoroutine node (" + ToString() +
-                                                 ") detected at position " + Arguments.IndexOf(arg) + ".");
+                                                 ") detected at position " + _arguments.IndexOf(arg) + ".");
                 oArg = GetOptimizedNode(target, arg);
                 if (!ReferenceEquals(oArg, arg))
                 {
-                    int idx = Arguments.IndexOf(arg);
-                    Arguments.Insert(idx, oArg);
-                    Arguments.RemoveAt(idx + 1);
+                    int idx = _arguments.IndexOf(arg);
+                    _arguments.Insert(idx, oArg);
+                    _arguments.RemoveAt(idx + 1);
                 }
             }
             expr = null;

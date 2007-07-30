@@ -86,13 +86,13 @@ namespace Prexonite.Compiler.Ast
             target.EmitGetCall(0, "GetEnumerator");
             target.Emit(new Instruction(OpCode.cast_const, "Object(\"System.Collections.IEnumerator\")"));
             target.EmitStoreLocal(enumVar);
-            target.EmitJump(Labels.ContinueLabel);
-
 
             AstTryCatchFinally _try = new AstTryCatchFinally(File, Line, Column);
             _try.TryBlock = new AstActionBlock(this, 
                 delegate
                 {
+                    target.EmitJump(Labels.ContinueLabel);
+
                     //Assignment (begin)
                     target.EmitLabel(Labels.BeginLabel);
                     element.EmitCode(target);
