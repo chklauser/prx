@@ -190,6 +190,46 @@ namespace Prexonite.Types
                             lst.Insert(index, args[i]);
                         result = Null.CreatePValue();
                         break;
+                    case "sort":
+                        if(args.Length < 1)
+                        {
+                            lst.Sort(new PValueComparer(sctx));
+                            break;
+                        }
+                        if(args.Length == 1 && args[0].Type is ObjectPType)
+                        { //Maybe: comparison using IComparer or Comparison
+                            IComparer<PValue> icmp = args[0].Value as IComparer<PValue>;
+                            if (icmp != null)
+                            {
+                                lst.Sort(icmp);
+                                result = Null.CreatePValue();
+                                break;
+                            }
+                            Comparer<PValue> cmp = args[0].Value as Comparer<PValue>;
+                            if(cmp != null)
+                            {
+                                lst.Sort(icmp);
+                                result = Null.CreatePValue();
+                                break;
+                            }
+                        }
+                        //else
+                        //Comparison using lambda expressions
+                        lst.Sort(delegate(PValue a, PValue b)
+                        {
+                            foreach(PValue f in args)
+                            {
+                                PValue pdec = f.IndirectCall(sctx, new PValue[] {a, b});
+                                if (!(pdec.Type is IntPType))
+                                    pdec = pdec.ConvertTo(sctx, Int);
+                                int dec = (int) pdec.Value;
+                                if(dec != 0)
+                                    return dec;
+                            }
+                            return 0;
+                        });
+                        result = Null.CreatePValue();
+                        break;
                     case "tostring":
                         StringBuilder sb = new StringBuilder("[ ");
                         foreach (PValue v in lst)

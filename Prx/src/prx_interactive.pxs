@@ -52,6 +52,12 @@ declare function reboot;
 			@"timer\elapsed",
 			@"timer\reset"])
 		engine.Commands.AddUserCommand(alias, thisE.Commands[alias]);
+		
+	//Set up the console
+	__console.OutColor = ::ConsoleColor.White;
+	__console.PromptColor = ::ConsoleColor.Red;
+	__console.ErrorColor = ::ConsoleColor.Green;
+	__console.DoBeep = false;
 }
 
 var app; //<-- the compiled application
@@ -59,8 +65,69 @@ var ldr; //<-- the loader used to compile 'app'
 
 var evalStep = 1; //<-- helps to make identifiers unique
 
+coroutine tabHook(prefix, root)
+{
+    var hideKeys = [ "hidden" ];
+    function isHidden(func)
+    {
+        if(func is Null)
+            return true;
+            
+        foreach(var hideKey in hideKeys)
+            if(func.Meta[hideKey].Switch)
+                return true;
+        
+        return false;   
+    }
+    
+    //Add hide keys defined by the user
+    foreach(var key in app.Meta["hideKeys"].List)
+        if(key.Text.Length > 0)
+            hideKeys[] = key.Text;
+    
+    //Add symbols (the declarations, not the physical names)
+    foreach(var symbol in ldr.Symbols)
+    if( symbol.Value.Interpretation~Int == ::SymbolInterpretations.$Command~Int ||
+        symbol.Value.Interpretation~Int == ::SymbolInterpretations.$GlobalObjectVariable~Int ||
+        symbol.Value.Interpretation~Int == ::SymbolInterpretations.$GlobalReferenceVariable~Int )
+    {
+        
+        yield symbol.Key;
+    }
+    else if(symbol.Value.Interpretation~Int == ::SymbolInterpretations.$Function~Int)
+    {
+        //Functions may be explicitly hidden
+        unless(isHidden(app.Functions[symbol.Value.Id]))
+            yield symbol.Key;   
+    }
+    
+    //A collection of common usages
+    yield "ToString";
+    yield "foreach";
+    yield "function";
+    yield "StringBuilder";
+    yield "System";
+    yield "Text";
+    yield "Prexonite";
+    yield "Null";
+    yield "String";
+    yield "List";
+    yield "Hash";
+    yield "Int";
+    yield "Real";
+    yield "Bool";
+    yield "Structure";
+    
+    //User supplied entries
+    foreach(var e in app.Meta["Tab"].List)
+        if(e.Text.Length > 0)
+            yield e.Text;
+}
+
 function prx\interactive()
 {
+    __console.Tab = ->tabHook;
+    
     println("Entering Prexonite INTERACTIVE MODE.\nType :quit to quit.\n\"=<expr>\" evaluates an expression.\n\":<GlobalStatement>\" inserts global code.");
     
     //Either create a new application or use the one compiled in 'prx\main'.
@@ -140,7 +207,7 @@ function prx\interactive()
     // One only needs to look at the header to know under what conditions
     // the loop runs. In addition, the body code can use the traditional
     // 'continue' statement to skip an iteration.
-    for(var raw; do raw = showPrompt(app.Variables["prompt"].Value.Self); until raw.ToLower == ":quit")
+    for(var raw; do raw = showPrompt(app.Variables["prompt"].Value.self); until raw.ToLower == ":quit")
     {        
         var funcId = nextFuncId; //<-- get the first unique function id
         var cmd = "r"; //<-- assume execution of code

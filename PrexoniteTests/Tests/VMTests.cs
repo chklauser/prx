@@ -2564,6 +2564,25 @@ function main(sep) =
             _expect("BEGIN 3:abc 5:hello 3:123", ":", "ab", "abc", "hello", "12", "123", "8965");
         }
 
+        [Test]
+        public void List_Sort()
+        {
+            _compile(@"
+function main() = 
+    [ ""f"", ""A"", ""x"", ""a"", ""h"", ""g"", ""H"", ""A"", ""f"", ""X"", ""F"", ""G"" ] >>
+    sort
+    ( 
+        (a,b) =>
+            a.ToLower.CompareTo(b.ToLower),
+        (a,b) =>
+            -(a.CompareTo(b))
+    ) >>
+    foldl( (l,r) => l + "","" + r, """");
+");
+
+            _expect(",A,A,a,F,f,f,G,g,H,h,X,x");
+        }
+
         #region Helper
 
         private static string _generateRandomString(int length)

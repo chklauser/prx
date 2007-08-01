@@ -970,6 +970,8 @@ namespace Prexonite
             Commands.AddEngineCommand(PairCommand, new Pair());
 
             Commands.AddEngineCommand(UnbindCommand, new Unbind());
+
+            Commands.AddEngineCommand(SortCommand, new Sort());
         }
 
         /// <summary>
@@ -1031,6 +1033,11 @@ namespace Prexonite
         /// Alias used for the "unbind" command.
         /// </summary>
         public const string UnbindCommand = "unbind";
+
+        /// <summary>
+        /// Alias used for the "sort" command.
+        /// </summary>
+        public const string SortCommand = "sort";
 
         #endregion
     }

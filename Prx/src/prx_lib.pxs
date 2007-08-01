@@ -60,7 +60,7 @@ ref green =
         f => f.()
     ;
 
-function readline = ::Console.ReadLine;
+function readline = __console.ReadLine;
     
 //Show prompt and read line
 var prompt\color; 

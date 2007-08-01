@@ -74,7 +74,7 @@ namespace Prexonite.Types
         /// <returns>True, if the call succeeded, false otherwise.</returns>
         /// <remarks><paramref name="result"/> is not defined if the function returns false.</remarks>
         /// <exception cref="ArgumentNullException"><paramref name="sctx"/> is null.</exception>
-        public bool TryDynamicCall(StackContext sctx, PValue[] args, string id, out PValue result)
+        public bool TryDynamicCall(StackContext sctx, PValue[] args, PCall call, string id, out PValue result)
         {
             if (sctx == null)
                 throw new ArgumentNullException("sctx");

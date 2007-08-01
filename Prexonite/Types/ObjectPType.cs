@@ -190,7 +190,7 @@ namespace Prexonite.Types
             }
 
             IObject iobj = subject.Value as IObject;
-            if (iobj != null && iobj.TryDynamicCall(sctx, args, id, out result))
+            if (iobj != null && iobj.TryDynamicCall(sctx, args, call, id, out result))
                 return true;
 
             //Get public member candidates            
@@ -337,6 +337,7 @@ namespace Prexonite.Types
                             }
                             cargs[i] = arg.Value;
                         }
+
                         //All conversions were succesful, ready to call the method
                         if (method is ConstructorInfo)
                         {

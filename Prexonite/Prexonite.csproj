@@ -56,6 +56,7 @@
     <Compile Include="Commands\Pair.cs" />
     <Compile Include="Commands\Print.cs" />
     <Compile Include="Commands\PrintLine.cs" />
+    <Compile Include="Commands\Sort.cs" />
     <Compile Include="Commands\Unbind.cs" />
     <Compile Include="Compiler\Ast\AstActionBlock.cs" />
     <Compile Include="Compiler\Ast\AstAsmInstruction.cs" />
@@ -132,6 +133,7 @@
     <Compile Include="Helper\PFunctionTable.cs" />
     <Compile Include="Helper\SymbolCollection.cs" />
     <Compile Include="PTypeLiteralAttribute.cs" />
+    <Compile Include="PValueComparer.cs" />
     <Compile Include="TryCatchFinallyBlock.cs" />
     <Compile Include="Types\BoolPType.cs" />
     <Compile Include="Types\HashPType.cs" />

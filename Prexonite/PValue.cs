@@ -1421,7 +1421,7 @@ namespace Prexonite
 
         #region IObject Members
 
-        bool IObject.TryDynamicCall(StackContext sctx, PValue[] args, string id, out PValue result)
+        bool IObject.TryDynamicCall(StackContext sctx, PValue[] args, PCall call, string id, out PValue result)
         {
             if (Engine.StringsAreEqual(id, "self"))
                 result = this;

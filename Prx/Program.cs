@@ -27,7 +27,6 @@ using System.Collections.Generic;
 using System.Diagnostics;
 using System.IO;
 using System.Reflection;
-using System.Security.AccessControl;
 using Prexonite;
 using Prexonite.Commands;
 using Prexonite.Compiler;
@@ -52,6 +51,8 @@ namespace Prx
 
         private static void Main(string[] args)
         {
+            PrexoniteConsole pc = new PrexoniteConsole(true);
+
 #if !DEBUG //Let the exceptions surface so they can more easily be debugged
             try
             {
@@ -155,6 +156,12 @@ namespace Prx
 
             #endregion
 
+            #region Prexonite Console constant
+
+            engine.Commands.AddHostCommand("__console", pc);
+
+            #endregion
+
             //Create an empty application
             Application app = new Application("prx");
             //Create a loader for that application and...
@@ -197,7 +204,6 @@ namespace Prx
 
             //Report errors
             _reportErrors(ldr);
-            ldr = null; //Free up the space used by the compiler
 
             //Run the applications main function.
             app.Run(engine, new PValue[] {engine.CreateNativePValue(args)});
@@ -205,7 +211,7 @@ namespace Prx
             }
             catch (Exception ex)
             {
-                Console.WriteLine(ex.ToString());
+                Console.WriteLine(ex);
             }
 #endif
         }
