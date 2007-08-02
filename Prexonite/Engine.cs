@@ -452,7 +452,8 @@ namespace Prexonite
         ///     to a <see cref="PType"/> instance.
         /// </para>
         /// <para>
-        ///     You are advised to stick with the other overloads unless you get such an expression from a third source (e.g., a configuration file or an <see cref="Instruction"/>).
+        ///     You are advised to stick with the other overloads unless you get such 
+        /// an expression from a third source (e.g., a configuration file or an <see cref="Instruction"/>).
         /// </para>
         /// </remarks>
         public PType CreatePType(StackContext sctx, string expression)

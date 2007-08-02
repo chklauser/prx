@@ -176,6 +176,7 @@ BuildBlock
                                     target.Declare(SymbolInterpretations.Command, "Add", Loader.BuildAddCommand);
                                     target.Declare(SymbolInterpretations.Command, "Require", Loader.BuildRequireCommand);
                                     target.Declare(SymbolInterpretations.Command, "Default", Loader.BuildDefaultCommand);
+                                    target.Declare(SymbolInterpretations.Command, "Hook", Loader.BuildHookCommand);
                                     _pushLexerState(Lexer.Local);                                
                                 .)
 	
@@ -189,6 +190,7 @@ BuildBlock
                                         SemErr("Cannot execute build block. Errors detected");
                                         return;
                                     }
+                                    
                                     target.Ast.EmitCode(target);
                                     target.FinishTarget();	                                
                                     target = lastTarget;
@@ -264,7 +266,11 @@ FunctionDefinition<out PFunction func>
                                         else
                                         {
                                             if(isNested)
+                                            {
                                                 funcId = generateNestedFunctionId(id);
+                                                SmartDeclareLocal(id, SymbolInterpretations.LocalReferenceVariable);
+                                            }
+                                            
                                             func = new PFunction(TargetApplication, funcId);
                                             
                                             if(isNested)
@@ -338,6 +344,7 @@ FunctionDefinition<out PFunction func>
                                             }
                                             else
                                             {
+												FunctionTargets[func].ExecuteCompilerHooks();
                                                 Ast[func].EmitCode(FunctionTargets[func]);
                                                 FunctionTargets[func].FinishTarget();
                                             }

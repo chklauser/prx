@@ -2583,6 +2583,112 @@ function main() =
             _expect(",A,A,a,F,f,f,G,g,H,h,X,x");
         }
 
+        [Test]
+        public void CompilerHook()
+        {
+            _compile(@"
+//In some library
+declare function debug;
+
+Import
+{
+    System,
+    Prexonite,
+    Prexonite::Types,
+    Prexonite::Compiler,
+    Prexonite::Compiler::Ast
+};
+
+function ast(type) [is hidden;]
+{
+    var args;
+    var targs = [];
+    for(var i = 1; i < args.Count; i++)
+        targs[] = args[i];
+
+    return 
+        asm(ldr.eng)
+        .CreatePType(""Object(\""Prexonite.Compiler.Ast.Ast$(type)\"")"")
+        .Construct((["""",-1,-1]+targs)~Object<""Prexonite.PValue[]"">)
+        .self;
+}
+
+build does hook (t => 
+{
+    var body = t.Ast;
+    if(t.$Function.Id == ""main"")
+    {
+        //Append a return statement
+        var ret = ast(""Return"", ::ReturnVariant.Exit);
+        ret.Expression = ast(""GetSetMemberAccess"", ::PCall.Get, 
+            ast(""GetSetSymbol"", ::PCall.Get, ""sb"", ::SymbolInterpretations.GlobalObjectVariable), ""ToString"");
+        t.Ast.Add(ret);
+    }
+
+    function replace_debug(block)
+    {
+        for(var i = 0; i < block.Count; i++)
+        {
+            var stmt = block[i];
+            if( stmt is ::AstGetSetSymbol && 
+                stmt.Interpretation~Int == ::SymbolInterpretations.$Function~Int &&
+                stmt.Id == ""debug"")
+            {
+                //Found a call to debug
+                block[i] = ast(""AsmInstruction"", new ::Instruction(::OpCode.nop));
+                for(var j = 0; j < stmt.Arguments.Count; j++)
+                {
+                    var arg = stmt.Arguments[j];
+                    if(arg is ::AstGetSetSymbol)
+                    {
+                        var printlnCall = ast(""GetSetSymbol"", ::PCall.Get, ""println"", ::SymbolInterpretations.$Function);
+                        var concatCall  = ast(""GetSetSymbol"", ::PCall.Get, ""concat"", ::SymbolInterpretations.$Command);
+                        concatCall.Arguments.Add(ast(""Constant"",""DEBUG $(arg.Id) = ""));
+                        concatCall.Arguments.Add(arg);
+                        printlnCall.Arguments.Add(concatCall);
+
+                        block.Insert(i,printlnCall);
+                        i += 1;
+                    }//end if                    
+                }//end for
+
+                //Recursively replace 'debug' in nested blocks.
+                try
+                {
+                    foreach(var subBlock in stmt.Blocks)
+                        replace_debug(subBlock);
+                }
+                catch(var exc)
+                {
+                    //ignore
+                }//end catch
+            }//end if
+        }//end for
+    }
+
+    replace_debug(t.Ast);
+});
+
+//Emulation
+var sb = new System::Text::StringBuilder;
+function print(s)   does sb.Append(s);
+function println(s) does sb.AppendLine(s);
+
+//The main program
+function main(a)
+{
+    var x = 3;
+    var y = a;
+    var z = 5*y+x;
+
+    debug(x,y);
+    debug(z);
+}
+");
+
+            _expect("DEBUG x = 3\r\nDEBUG y = 4\r\nDEBUG z = 23\r\n",4);
+        }
+
         #region Helper
 
         private static string _generateRandomString(int length)
@@ -2597,10 +2703,16 @@ function main() =
 
         private static void _compile(Loader ldr, string input)
         {
-            ldr.LoadFromString(input);
-            foreach (string s in ldr.Errors)
+            try
             {
-                Console.Error.WriteLine(s);
+                ldr.LoadFromString(input);
+            }
+            finally
+            {
+                foreach (string s in ldr.Errors)
+                {
+                    Console.Error.WriteLine(s);
+                }
             }
             Assert.AreEqual(0, ldr.ErrorCount, "Errors detected during compilation.");
             Console.WriteLine(ldr.StoreInString());

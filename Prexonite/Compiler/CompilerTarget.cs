@@ -367,6 +367,16 @@ namespace Prexonite.Compiler
 
         #endregion
 
+        #region Compiler Hooks
+
+        public void ExecuteCompilerHooks()
+        {
+            foreach (CompilerHook hook in _loader.CompilerHooks)
+                hook.Execute(this);
+        }
+
+        #endregion
+
         #region Manipulation
 
         #region Symbols
@@ -1061,6 +1071,11 @@ namespace Prexonite.Compiler
             _removeJumpsToNextInstruction();
 
             _removeUnconditionalJumpSequences();
+
+#if !DEBUG
+            _removeNop();
+#endif
+
         }
 
         #region Check unresolved Instructions
@@ -1167,6 +1182,7 @@ namespace Prexonite.Compiler
 
                 if (count > 0)
                     RemoveInstructionRange(i + 1, count);
+                i -= count;
             }
         }
 
@@ -1185,7 +1201,7 @@ namespace Prexonite.Compiler
                 {
                     if (ins.IsUnconditionalJump)
                     {
-                        RemoveInstructionAt(i);
+                        RemoveInstructionAt(i--);
                         optimized = true;
                     }
                     else if (ins.IsConditionalJump)
@@ -1241,6 +1257,23 @@ namespace Prexonite.Compiler
 
             return optimized;
         }
+
+        #endregion
+
+        #region Removal of nop's (only RELEASE)
+
+#if !DEBUG
+        private void _removeNop()
+        {
+            List<Instruction> code = Code;
+            for (int i = 0; i < code.Count; i++)
+            {
+                Instruction instruction = code[i];
+                if(instruction.OpCode == OpCode.nop)
+                    RemoveInstructionAt(i--);
+            }
+        }
+#endif
 
         #endregion
 

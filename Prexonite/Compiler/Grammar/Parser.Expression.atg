@@ -302,6 +302,7 @@ LambdaExpression<out IAstExpression expr>
                                         (.  expr = null;
                                             PFunction func = new PFunction(TargetApplication, generateNestedFunctionId());                                             
                                             func.Meta[Application.ImportKey] = target.Function.Meta[Application.ImportKey];
+                                            func.Meta["ParentFunction"] = target.Function.Id;
                                             TargetApplication.Functions.Add(func);
                                             Loader.CreateFunctionTarget(func, new AstBlock(this));
                                             CompilerTarget ft = FunctionTargets[func];

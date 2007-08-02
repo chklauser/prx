@@ -107,6 +107,7 @@
     <Compile Include="Compiler\Ast\IAstHasBlocks.cs" />
     <Compile Include="Compiler\Ast\IAstType.cs" />
     <Compile Include="Compiler\BlockLabels.cs" />
+    <Compile Include="Compiler\CompilerHook.cs" />
     <Compile Include="Compiler\CompilerTarget.cs" />
     <Compile Include="Compiler\Lexer.Code.cs" />
     <Compile Include="Compiler\Lexer.cs" />

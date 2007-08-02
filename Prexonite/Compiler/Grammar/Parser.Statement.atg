@@ -71,7 +71,6 @@ GetSetComplex<AstBlock block>
                                         (.  AstGetSet complex = null; 
                                             AstGetSetSymbol symbol = null;
                                             bool isDeclaration = false;
-                                            IAstExpression expr;
                                         .)
 =
 //GetSet Initiator
@@ -469,9 +468,9 @@ NestedFunction<AstBlock block>
     FunctionDefinition<out func>
                                 (.  
                                     string logicalId = func.Meta["LogicalId"];
+                                    func.Meta["ParentFunction"] = target.Function.Id;
                                     string physicalId = func.Id;
                                     
-                                    SmartDeclareLocal(logicalId, SymbolInterpretations.LocalReferenceVariable);
                                     AstGetSetSymbol setVar = new AstGetSetSymbol(this, PCall.Set, logicalId, SymbolInterpretations.LocalObjectVariable);
                                     setVar.Arguments.Add( new AstCreateClosure(this, physicalId) );
                                     block.Add(setVar);
