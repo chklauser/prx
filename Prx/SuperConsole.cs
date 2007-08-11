@@ -453,6 +453,7 @@ namespace Prx
             if (c <= 26) return "^" + ((char)(c + 'A' - 1));
 
             return "^?";
+            //return c.ToString();
         }
 
         private static int GetCharacterSize(char c)

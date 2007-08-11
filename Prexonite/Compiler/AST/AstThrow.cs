@@ -20,9 +20,10 @@
  *  with this program; if not, write to the Free Software Foundation, Inc.,
  *  51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
  */
+
 namespace Prexonite.Compiler.Ast
 {
-    public class AstThrow : AstNode
+    public class AstThrow : AstNode, IAstExpression
     {
         public IAstExpression Expression;
 
@@ -35,6 +36,16 @@ namespace Prexonite.Compiler.Ast
             : this(p.scanner.File, p.t.line, p.t.col)
         {
         }
+
+        #region IAstExpression Members
+
+        public bool TryOptimize(CompilerTarget target, out IAstExpression expr)
+        {
+            expr = null;
+            return false;
+        }
+
+        #endregion
 
         public override void EmitCode(CompilerTarget target)
         {

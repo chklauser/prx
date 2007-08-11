@@ -28,7 +28,7 @@ Author SealedSun;
 declare println as echo;
 
 //Not all environments may support colors...
-var supportsColors = supportsColors is null ? true : supportsColors;
+var supportsColors = (supportsColors ?? true)~Bool;
 
 //Run 'f' in a context where console output has the color 'color'.
 function runInDifferentColor(ref f, color)
@@ -60,7 +60,13 @@ ref green =
         f => f.()
     ;
 
-function readline = __console.ReadLine;
+var supportsTabs = (supportsTabs ?? false)~Bool;
+    
+function readline = 
+    if(supportsTabs)
+        __console.ReadLine
+    else
+        System::Console.ReadLine;
     
 //Show prompt and read line
 var prompt\color; 

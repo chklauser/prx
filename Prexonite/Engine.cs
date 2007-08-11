@@ -907,50 +907,51 @@ namespace Prexonite
 
             Commands.AddEngineCommand(MetaCommand,
             #region Meta command implementation
- new DelegatePCommand(delegate(StackContext sctx, PValue[] args)
-                                                           {
-                                                               if (args.Length == 0)
-                                                                   return
-                                                                       sctx.CreateNativePValue(
-                                                                           sctx.Implementation.
-                                                                               Meta);
-                                                               else
-                                                               {
-                                                                   List<PValue> lst =
-                                                                       new List<PValue>(
-                                                                           args.Length);
-                                                                   MetaTable funcMT =
-                                                                       sctx.Implementation.Meta;
-                                                                   MetaTable appMP =
-                                                                       sctx.ParentApplication.
-                                                                           Meta;
-                                                                   MetaTable engMT = sctx.ParentEngine.Meta;
-                                                                   foreach (PValue arg in args)
-                                                                   {
-                                                                       string key =
-                                                                           arg.CallToString(sctx);
-                                                                       MetaEntry entry;
-                                                                       if (
-                                                                           funcMT.TryGetValue(
-                                                                               key, out entry) ||
-                                                                           appMP.TryGetValue(
-                                                                               key, out entry) ||
-                                                                           engMT.TryGetValue(
-                                                                                key, out entry)
-                                                                           )
-                                                                           lst.Add(entry);
-                                                                       else
-                                                                           lst.Add(
-                                                                               PType.Null.
-                                                                                   CreatePValue());
-                                                                   }
+ new DelegatePCommand(
+ delegate(StackContext sctx, PValue[] args)
+    {
+       if (args.Length == 0)
+           return
+               sctx.CreateNativePValue(
+                   sctx.Implementation.
+                       Meta);
+       else
+       {
+           List<PValue> lst =
+               new List<PValue>(
+                   args.Length);
+           MetaTable funcMT =
+               sctx.Implementation.Meta;
+           MetaTable appMP =
+               sctx.ParentApplication.
+                   Meta;
+           MetaTable engMT = sctx.ParentEngine.Meta;
+           foreach (PValue arg in args)
+           {
+               string key =
+                   arg.CallToString(sctx);
+               MetaEntry entry;
+               if (
+                   funcMT.TryGetValue(
+                       key, out entry) ||
+                   appMP.TryGetValue(
+                       key, out entry) ||
+                   engMT.TryGetValue(
+                        key, out entry)
+                   )
+                   lst.Add(entry);
+               else
+                   lst.Add(
+                       PType.Null.
+                           CreatePValue());
+           }
 
-                                                                   if (lst.Count == 1)
-                                                                       return lst[0];
-                                                                   else
-                                                                       return
-                                                                           (PValue)lst;
-                                                               }
+           if (lst.Count == 1)
+               return lst[0];
+           else
+               return
+                   (PValue)lst;
+       }
             #endregion
                 }));
 
@@ -973,6 +974,8 @@ namespace Prexonite
             Commands.AddEngineCommand(UnbindCommand, new Unbind());
 
             Commands.AddEngineCommand(SortCommand, new Sort());
+
+            Commands.AddEngineCommand(LoadAssemblyCommand, new LoadAssembly());
         }
 
         /// <summary>
@@ -1039,6 +1042,11 @@ namespace Prexonite
         /// Alias used for the "sort" command.
         /// </summary>
         public const string SortCommand = "sort";
+
+        /// <summary>
+        /// Alias used for the "loadAssembly" command.
+        /// </summary>
+        public const string LoadAssemblyCommand = "LoadAssembly";
 
         #endregion
     }

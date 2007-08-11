@@ -107,10 +107,16 @@ namespace Prexonite
             get
             {
                 key = Filter.GetTransform(key);
+                MetaEntry ret;
                 if (key == null)
-                    return new MetaEntry("");
+                    ret = new MetaEntry("");
                 else
-                    return base[key] ?? new MetaEntry("");
+                    ret = base[key] ?? new MetaEntry("");
+
+                if(!base.ContainsKey(key))
+                    base.Add(key, ret);
+
+                return ret;
             }
             set
             {

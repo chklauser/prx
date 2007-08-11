@@ -212,6 +212,8 @@ Primary<out IAstExpression expr>
 |   ListLiteral<out expr>
 |	HashLiteral<out expr>
 |	LoopExpr<out expr>
+|	(. AstThrow th; .)
+	ThrowExpression<out th>				(. expr = th; .)
 |   IF(isLambdaExpression())
     LambdaExpression<out expr>
 |
@@ -339,6 +341,12 @@ implementation
                                             
                                             expr = new AstCreateClosure(this, func.Id);                                         
                                         .)
+.
+
+ThrowExpression<out AstThrow th>		(.  th = new AstThrow(this); .)
+=
+    throw
+    Expr<out th.Expression>
 .
 
 ExplicitTypeExpr<out IAstType type>     (.  type = null; .)

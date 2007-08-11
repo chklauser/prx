@@ -51,6 +51,7 @@
     <Compile Include="Commands\Dispose.cs" />
     <Compile Include="Commands\FoldL.cs" />
     <Compile Include="Commands\FoldR.cs" />
+    <Compile Include="Commands\LoadAssembly.cs" />
     <Compile Include="Commands\MapAll.cs" />
     <Compile Include="Commands\NestedPCommand.cs" />
     <Compile Include="Commands\Pair.cs" />
@@ -160,11 +161,9 @@
     <Compile Include="Types\StructurePType.cs" />
     <Compile Include="VM.cs" />
     <Content Include="Compiler\Prexonite.lex" />
-    <None Include="Documents\prototype1.pxs" />
     <None Include="ObjectModel.cd" />
     <None Include="Prexonite.snk" />
     <Content Include="Compiler\Grammar\Grammar.Readme.txt" />
-    <Content Include="Documents\Pxs.BNF.txt" />
     <Content Include="Prx.ico" />
   </ItemGroup>
   <ItemGroup>

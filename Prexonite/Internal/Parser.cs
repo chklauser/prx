@@ -262,7 +262,7 @@ internal partial class Parser {
 internal class Errors {
 	internal int count = 0;                                    // number of errors detected
 	internal System.IO.TextWriter errorStream = Console.Out;   // error messages go to this stream
-    internal string errMsgFormat = "-- line {0} col {1}: {2}"; // 0=line, 1=column, 2=text
+    internal string errMsgFormat = "-- ({3}) line {0} col {1}: {2}"; // 0=line, 1=column, 2=text, 3=file
     internal Parser parentParser;
   
 	internal void SynErr (int line, int col, int n) {
@@ -294,12 +294,12 @@ internal class Errors {
 		    s += " and not \"" + parentParser.t.ToString(false) + " " + parentParser.la.ToString(false) + "\"";
 		else if(s.StartsWith("this symbol "))
 		    s = "\"" + parentParser.t.val + "\"" + s.Substring(12);
-		errorStream.WriteLine(errMsgFormat, line, col, s);
+		errorStream.WriteLine(errMsgFormat, line, col, s, parentParser.scanner.File);
 		count++;
 	}
 
 	internal void SemErr (int line, int col, string s) {
-		errorStream.WriteLine(errMsgFormat, line, col, s);
+		errorStream.WriteLine(errMsgFormat, line, col, s, parentParser.scanner.File);
 		count++;
 	}
 	
@@ -309,7 +309,7 @@ internal class Errors {
 	}
 	
 	internal void Warning (int line, int col, string s) {
-		errorStream.WriteLine(errMsgFormat, line, col, s);
+		errorStream.WriteLine(errMsgFormat, line, col, s, parentParser.scanner.File);
 	}
 	
 	internal void Warning(string s) {

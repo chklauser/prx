@@ -110,10 +110,14 @@ SYNC
                             .)
 		Expr<out expr>
 		                    (.  _popLexerState();
-		                        AstGetSet complex = new AstGetSetSymbol(this, PCall.Set, id, InterpretAsObjectVariable(type));
-		                        complex.Arguments.Add(expr);
-		                        target.Ast.Add(complex);
-		                        vari.Meta[Application.InitializationId] = TargetApplication._RegisterInitializationUpdate().ToString();
+								if(errors.count == 0)
+								{
+									AstGetSet complex = new AstGetSetSymbol(this, PCall.Set, id, InterpretAsObjectVariable(type));
+									complex.Arguments.Add(expr);
+									target.Ast.Add(complex);
+									vari.Meta[Application.InitializationId] = TargetApplication._RegisterInitializationUpdate().ToString();
+									Loader._EmitPartialInitializationCode();
+		                        }
 		                        target = lastTarget;
 		                    .)
 	]
@@ -227,7 +231,10 @@ GlobalCode							(.
 	rbrace
 									(.
 										if(errors.count == 0)
+										{
 											TargetApplication._RequireInitialization();
+											Loader._EmitPartialInitializationCode();
+										}
 										target = null;
 										_popLexerState();
 									.)
@@ -341,6 +348,8 @@ FunctionDefinition<out PFunction func>
                                             if(Engine.StringsAreEqual(func.Id, @"\init"))
                                             {
                                                 TargetApplication._RequireInitialization();
+                                                Loader._EmitPartialInitializationCode();
+                                                //Initialize function gets finished at the end of Loader.Load
                                             }
                                             else
                                             {

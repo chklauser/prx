@@ -634,6 +634,8 @@ Primary<out IAstExpression expr>
 |   ListLiteral<out expr>
 |	HashLiteral<out expr>
 |	LoopExpr<out expr>
+|	(. AstThrow th; .)
+	ThrowExpression<out th>				(. expr = th; .)
 |   IF(isLambdaExpression())
     LambdaExpression<out expr>
 |
@@ -761,6 +763,12 @@ implementation
                                             
                                             expr = new AstCreateClosure(this, func.Id);                                         
                                         .)
+.
+
+ThrowExpression<out AstThrow th>		(.  th = new AstThrow(this); .)
+=
+    throw
+    Expr<out th.Expression>
 .
 
 ExplicitTypeExpr<out IAstType type>     (.  type = null; .)
@@ -925,10 +933,14 @@ SYNC
                             .)
 		Expr<out expr>
 		                    (.  _popLexerState();
-		                        AstGetSet complex = new AstGetSetSymbol(this, PCall.Set, id, InterpretAsObjectVariable(type));
-		                        complex.Arguments.Add(expr);
-		                        target.Ast.Add(complex);
-		                        vari.Meta[Application.InitializationId] = TargetApplication._RegisterInitializationUpdate().ToString();
+								if(errors.count == 0)
+								{
+									AstGetSet complex = new AstGetSetSymbol(this, PCall.Set, id, InterpretAsObjectVariable(type));
+									complex.Arguments.Add(expr);
+									target.Ast.Add(complex);
+									vari.Meta[Application.InitializationId] = TargetApplication._RegisterInitializationUpdate().ToString();
+									Loader._EmitPartialInitializationCode();
+		                        }
 		                        target = lastTarget;
 		                    .)
 	]
@@ -1042,7 +1054,10 @@ GlobalCode							(.
 	rbrace
 									(.
 										if(errors.count == 0)
+										{
 											TargetApplication._RequireInitialization();
+											Loader._EmitPartialInitializationCode();
+										}
 										target = null;
 										_popLexerState();
 									.)
@@ -1156,6 +1171,8 @@ FunctionDefinition<out PFunction func>
                                             if(Engine.StringsAreEqual(func.Id, @"\init"))
                                             {
                                                 TargetApplication._RequireInitialization();
+                                                Loader._EmitPartialInitializationCode();
+                                                //Initialize function gets finished at the end of Loader.Load
                                             }
                                             else
                                             {
@@ -1822,10 +1839,9 @@ TryCatchFinally<AstBlock block>
 .
 
 Throw<AstBlock block>
-                                (.  AstThrow th = new AstThrow(this); .)
+                                (.  AstThrow th; .)
 =
-    throw
-    Expr<out th.Expression>
+	ThrowExpression<out th>
                                 (.  block.Add(th); .)
 .                                
 

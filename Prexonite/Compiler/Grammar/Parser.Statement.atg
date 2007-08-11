@@ -524,10 +524,9 @@ TryCatchFinally<AstBlock block>
 .
 
 Throw<AstBlock block>
-                                (.  AstThrow th = new AstThrow(this); .)
+                                (.  AstThrow th; .)
 =
-    throw
-    Expr<out th.Expression>
+	ThrowExpression<out th>
                                 (.  block.Add(th); .)
 .                                
 

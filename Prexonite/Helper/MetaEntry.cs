@@ -402,6 +402,24 @@ namespace Prexonite
 
         #endregion
 
+        public static MetaEntry[] CreateArray(StackContext sctx, List<PValue> elements)
+        {
+            List<MetaEntry> proto = new List<MetaEntry>(elements.Count);
+            foreach (PValue pv in elements)
+            {
+                PValue pventry;
+                if (pv.TryConvertTo(sctx, typeof(MetaEntry), out pventry))
+                    proto.Add((MetaEntry) pventry.Value);
+                else if (pv.Type is ListPType)
+                    proto.Add((MetaEntry) CreateArray(sctx, (List<PValue>) pv.Value));
+                else if (pv.Type is BoolPType)
+                    proto.Add((bool) pv.Value);
+                else
+                    proto.Add(pv.CallToString(sctx));
+            }
+            return proto.ToArray();
+        }
+
         [DebuggerNonUserCode]
         public override string ToString()
         {
@@ -434,5 +452,6 @@ namespace Prexonite
                     break;
             }
         }
+
     }
 }

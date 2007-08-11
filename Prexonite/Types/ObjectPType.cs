@@ -159,6 +159,33 @@ namespace Prexonite.Types
             if (id == null)
                 id = "";
 
+            IObject iobj = subject.Value as IObject;
+            if (iobj != null && iobj.TryDynamicCall(sctx, args, call, id, out result))
+                return true;
+
+            //Special interop members
+            switch(id.ToLowerInvariant())
+            {
+                case @"\implements":
+                    foreach (PValue arg in args)
+                    {
+                        Type T;
+                        if (arg.Type is ObjectPType &&
+                            typeof(Type).IsAssignableFrom(((ObjectPType) arg.Type).ClrType))
+                            T = (Type) arg.Value;
+                        else
+                            T = GetType(sctx, arg.CallToString(sctx));
+
+                        if(!T.IsAssignableFrom(ClrType))
+                        {
+                            result = false;
+                            return true;
+                        }
+                    }
+                    result = true;
+                    return true;
+            }
+
             call_conditions cond = new call_conditions(sctx, args, call, id);
             MemberTypes mtypes;
             MemberFilter filter;
@@ -188,10 +215,6 @@ namespace Prexonite.Types
                             Type.FilterName, cond.Call == PCall.Get ? "Get" : "Set"));
                 }
             }
-
-            IObject iobj = subject.Value as IObject;
-            if (iobj != null && iobj.TryDynamicCall(sctx, args, call, id, out result))
-                return true;
 
             //Get public member candidates            
             Stack<MemberInfo> candidates = new Stack<MemberInfo>(_clrType.FindMembers(

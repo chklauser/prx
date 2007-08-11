@@ -63,7 +63,7 @@ namespace Prexonite
         /// <summary>
         /// Id for the initialization function.
         /// </summary>
-        internal const string InitializationId = @"\init";
+        public const string InitializationId = @"\init";
 
         /// <summary>
         /// Metatable key used as an alias for <see cref="Application.IdKey"/>

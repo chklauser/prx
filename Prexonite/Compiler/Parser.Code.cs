@@ -237,7 +237,7 @@ namespace Prexonite.Compiler
 
         #endregion //General
 
-        #region Command Script 5
+        #region Prexonite Script
 
         public CompilerTarget target;
 

@@ -26,7 +26,7 @@ build does require("prx_interactive.pxs", "prx_lib.pxs");
 Name prx\main;
 Description "prx main logic.";
 Author SealedSun;
-Version "v.beta-preview-2";
+Version "v.beta-preview-4";
 
 Entry prx\main;
 
@@ -94,6 +94,8 @@ function prx\main(args)
 			    headerOnly = true;
 			else if(current == "-a")
 				state = state\arg;
+		    else if(current == "-b")
+		        supportsTabs = true;
 			else if(current == "-?")
 			{
 				displayHelp;
@@ -226,7 +228,7 @@ function reboot does __replace_call(@"prx\main", originalArgs);
 
 function displayHelp does print = 
 	"Usage:\n" + 
-	"\tprx -c {sources...} (-t {target...} [-h] | -r | -i) [-v]\n" +
+	"\tprx -c {sources...} (-t {target...} [-h] | -r | -i) [-v | -a <arguments...> | -b]\n" +
 	"\tprx -i\n" +
 	"\tprx -?\n" +
 	"\n" + 
@@ -237,4 +239,6 @@ function displayHelp does print =
 	"Run the application instead by using the -r switch.\n"+
 	"Enter interactive mode (with or without a compiled application) using the -i switch.\n"+
 	"-v enables additional output.\n"+
-	"-h extracts declarations.\n\n";
+	"-h extracts declarations.\n"+
+	"-b enables tab completion (accepts only ASCII characters)."+
+	"-a forwards the rest of the arguments to the executed script.\n";

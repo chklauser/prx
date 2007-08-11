@@ -180,9 +180,9 @@ function prx\interactive()
             //Save errors for review and clean up.
             buffer.Length = 0;
             errors = ~List.CreateFromList(ldr.Errors);
-            ldr.Errors.Clear;
-            return errors.Count == 0;
+            ldr.Errors.Clear;            
         }
+        return errors.Count == 0;
     }
     
     //Print errors (if 'otherErrors' is null, 'errors' is used)

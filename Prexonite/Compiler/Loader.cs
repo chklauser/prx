@@ -382,6 +382,11 @@ namespace Prexonite.Compiler
             LoadFromStream(str,null);
         }
 
+
+#if DEBUG
+        private int _load_indent = 0;
+#endif
+
         [NoDebug()]
         public void LoadFromFile(string path)
         {
@@ -403,7 +408,18 @@ namespace Prexonite.Compiler
             _loadedFiles.Add(Path.GetFullPath(finalPath));
             _loadPath = Path.GetDirectoryName(finalPath);
             using (Stream str = new FileStream(finalPath, FileMode.Open))
+            {
+#if DEBUG
+                StringBuilder indent = new StringBuilder(_load_indent);
+                indent.Append(' ',2*(_load_indent++));
+                Console.WriteLine("{1}begin compiling {0}", Path.GetFileName(finalPath), indent);
+#endif
                 LoadFromStream(str, Path.GetFileName(finalPath));
+#if DEBUG
+                Console.WriteLine("{1}end   compiling {0}", Path.GetFileName(finalPath), indent);
+                _load_indent--;
+#endif
+            }
 
             _loadPath = oldPath;
         }
@@ -428,11 +444,18 @@ namespace Prexonite.Compiler
 
             //Compile initialization function
             CompilerTarget target = FunctionTargets[Application.InitializationId];
-            target.Ast.EmitCode(target);
-            target.Ast.Clear();
+            _EmitPartialInitializationCode();
             target.FinishTarget();
         }
 
+        [NoDebug]
+        internal void _EmitPartialInitializationCode()
+        {
+            CompilerTarget target = FunctionTargets[Application.InitializationId];
+            target.ExecuteCompilerHooks();
+            target.Ast.EmitCode(target);
+            target.Ast.Clear();
+        }
         
         public int ErrorCount
         {

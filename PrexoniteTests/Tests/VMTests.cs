@@ -2689,6 +2689,131 @@ function main(a)
             _expect("DEBUG x = 3\r\nDEBUG y = 4\r\nDEBUG z = 23\r\n",4);
         }
 
+        [Test]
+        public void InitializationCodeHook()
+        {
+            _compile(@"
+Imports { System, Prexonite, Prexonite::Types, Prexonite::Compiler, Prexonite::Compiler::Ast };
+
+function ast(type) [is compiler;]
+{
+    var args;
+    var targs = [];
+    for(var i = 1; i < args.Count; i++)
+        targs[] = args[i];
+
+    return 
+        asm(ldr.eng)
+        .CreatePType(""Object(\""Prexonite.Compiler.Ast.Ast$(type)\"")"")
+        .Construct((["""",-1,-1]+targs)~Object<""Prexonite.PValue[]"">)
+        .self;
+}
+
+var SI [is compiler;] = null;
+build {
+    SI = new Structure<""var"", ""ref"", ""gvar"", ""gref"", ""func"", ""cmd"", 
+        ""r"", ""eq"",
+        ""r"", ""is_lvar"",
+        ""r"", ""is_lref"",
+        ""r"", ""is_gvar"",
+        ""r"", ""is_gref"",
+        ""r"", ""is_func"",
+        ""r"", ""is_cmd"">;
+    SI.$var = ::SymbolInterpretations.LocalObjectVariable;
+    SI.$ref = ::SymbolInterpretations.LocalReferenceVariable;
+    SI.$gvar = ::SymbolInterpretations.GlobalObjectVariable;
+    SI.$gref = ::SymbolInterpretations.GlobalReferenceVariable;
+    SI.$func = ::SymbolInterpretations.$Function;
+    SI.$cmd = ::SymbolInterpretations.$Command;
+    SI.\(""eq"", true) = (this, l, r) => l~Int == r~Int;
+    SI.\(""is_lvar"", true) = (this, s) => s~Int == this.$var~Int;
+    SI.\(""is_lref"", true) = (this, s) => s~Int == this.$ref~Int;
+    SI.\(""is_gvar"", true) = (this, s) => s~Int == this.$gvar~Int;
+    SI.\(""is_gref"", true) = (this, s) => s~Int == this.$gref~Int;
+    SI.\(""is_func"", true) = (this, s) => s~Int == this.$func~Int;
+    SI.\(""is_cmd"", true) = (this, s) => s~Int == this.$cmd~Int;
+    SI.\(""is_obj"", true) = (this, s) => this.is_lvar(s) || this.is_gvar(s);
+    SI.\(""is_ref"", true) = (this, s) => this.is_lref(s) || this.is_gref(s);
+    SI.\(""is_global"", true) = (this, s) => this.is_gvar(s) || this.is_gref(s);
+    SI.\(""is_local"", true) = (this, s) => this.is_lvar(s) || this.is_lref(s);
+    SI.\(""make_global"", true) = (this, s) => 
+        if(this.is_obj(s))
+            this.gvar
+        else if(this.is_ref(s))
+            this.gref
+        else
+            throw ""$s cannot be made global."";            
+    SI.\(""make_local"", true) = (this, s) => 
+        if(this.is_obj(s))
+            this.lvar
+        else if(this.is_ref(s))
+            this.lref
+        else
+            throw ""$s cannot be made local."";
+    SI.\(""make_obj"", true) = (this, s) =>
+        if(this.is_local(s))
+            this.lvar
+        else if(this.is_global(s))
+            this.gvar
+        else
+            throw ""$s cannot be made object."";
+    SI.\(""make_ref"", true) = (this, s) =>
+        if(this.is_local(s))
+            this.lref
+        else if(this.is_global(s))
+            this.gref
+        else
+            throw ""$s cannot be made reference."";
+}
+
+build does hook(t => 
+{
+    //Promote local to global variables
+    var init = t.$Function;
+
+    if(init.Id != Prexonite::Application.InitializationId)
+        return;
+
+    var alreadyPromoted = foreach(var entry in init.Meta[""alreadyPromoted""].List)
+                            yield entry.Text;
+                          ;
+    
+    var toPromote = foreach(var loc in init.Variables)
+                        unless(alreadyPromoted.Contains(loc))
+                            yield loc;
+                    ;
+    
+    foreach(var loc in toPromote)
+    {
+        loc = t.Symbols[loc];
+        var glob = new ::SymbolEntry(SI.make_global(loc.Interpretation), loc.Id);
+        t.Loader.Symbols[loc.Id] = glob;
+        t.Loader.Options.TargetApplication.Variables[loc.Id] = new ::PVariable(loc.Id);
+        var assignment = ast(""GetSetSymbol"", ::PCall.Set, glob.Id, glob.Interpretation);
+        assignment.Arguments.Add(ast(""GetSetSymbol"", ::PCall.Get, loc.Id, loc.Interpretation));
+        t.Ast.Add(assignment);        
+        println(""Declared $glob"");
+    }
+
+    init.Meta[""alreadyPromoted""].AddToList(::MetaEntry.CreateArray(toPromote));
+});
+
+{
+    var goo = 600;
+}
+
+{
+    var goo2 = 780;
+}
+
+function main()
+{
+    return ""goo = $goo; goo2 = $goo2;"";
+}
+");
+            _expect("goo = 600; goo2 = 780;");
+        }
+
         #region Helper
 
         private static string _generateRandomString(int length)
