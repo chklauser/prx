@@ -143,8 +143,18 @@ namespace Prexonite
         public void StoreCode(TextWriter writer)
         {
             StringBuilder buffer = new StringBuilder();
-            foreach (string variable in Variables)
-                buffer.AppendLine("var " + variable + ";");
+            if (Variables.Count > 0)
+            {
+                buffer.Append("var ");
+                foreach (string variable in Variables)
+                {
+                    buffer.Append(variable);
+                    buffer.Append(',');
+                }
+                buffer.Length -= 1;
+                writer.WriteLine(buffer.ToString());
+                buffer.Length = 0;
+            }
 
 #if DEBUG || Verbose
             int idx = 0;

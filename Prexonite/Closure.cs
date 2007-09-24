@@ -127,9 +127,9 @@ namespace Prexonite
         /// <returns>True, if the two closures use to the same function and the same shared variables; false otherwise.</returns>
         public static bool operator ==(Closure a, Closure b)
         {
-            if (a == null && b == null)
+            if ((object)a == null && (object)b == null)
                 return true;
-            else if (a == null || b == null)
+            else if ((object)a == null || (object)b == null)
                 return false;
             else if (ReferenceEquals(a, b))
                 return true;

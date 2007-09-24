@@ -141,7 +141,7 @@ function prx\main(args)
     //Create a new application. The id extracted from the first source file's name is just decoration
 	app = new ::Application(System::IO::Path.GetFileNameWithoutExtension(sourceFiles[0]));
 	//Create the loader (the compiler) for this application
-	var options = new ::LoaderOptions(thisEngine, app);
+	var options = new ::LoaderOptions(engine, app);
 	ldr = new ::Loader(options);
 	var exc = null; //<--- holds exceptions
 
@@ -189,14 +189,14 @@ runInteractive:
             //Extract the id of the interactive entry function from the 
             // applications metadata...
             var intMainId = 
-                app.Meta.ContainsKey("entry\\interactive") ? 
+                if(app.Meta.ContainsKey("entry\\interactive"))
                     app.Meta["entry\\interactive"].Text 
-                :
+                else
                     "main\\interactive"; //... or use a default name.
                     
             //If that function exists, execute it first
             if(app.Functions.Contains(intMainId))
-                var intMain = app.Functions[intMainId].Run(thisEngine);
+                var intMain = app.Functions[intMainId].Run(engine);
             
             //before going into interactive mode.
             goto runInteractive;
@@ -205,7 +205,7 @@ runInteractive:
     	{
         	//Run the application (run it's entry function).
         	// the script arguments have to be converted to a Prexonite.PValue[] first.
-	        app.Run(thisEngine, scriptArgs~Object<"Prexonite.PValue[]">);
+	        app.Run(engine, scriptArgs~Object<"Prexonite.PValue[]">);
         }
     }
 	else

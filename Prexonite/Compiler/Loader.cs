@@ -543,18 +543,20 @@ namespace Prexonite.Compiler
 
         private void _enableBuildCommands()
         {
-            ParentEngine.Commands.AddCompilerCommand(BuildAddCommand, 
-                delegate(StackContext sctx, PValue[] args)
-                  {
-                      foreach (PValue arg in args)
+            if(!ParentEngine.Commands.Contains(BuildAddCommand))
+                ParentEngine.Commands.AddCompilerCommand(BuildAddCommand, 
+                    delegate(StackContext sctx, PValue[] args)
                       {
-                          string path = arg.CallToString(sctx);
-                          LoadFromFile(path);
-                      }
-                      return null;
-                  });
+                          foreach (PValue arg in args)
+                          {
+                              string path = arg.CallToString(sctx);
+                              LoadFromFile(path);
+                          }
+                          return null;
+                      });
 
-            ParentEngine.Commands.AddCompilerCommand(BuildRequireCommand, 
+            if (!ParentEngine.Commands.Contains(BuildRequireCommand))
+                ParentEngine.Commands.AddCompilerCommand(BuildRequireCommand, 
                 delegate(StackContext sctx, PValue[] args)
                   {
                       bool allLoaded = true;
@@ -572,12 +574,15 @@ namespace Prexonite.Compiler
                       return
                           PType.Bool.CreatePValue(allLoaded);
                   });
-            ParentEngine.Commands.AddCompilerCommand(BuildDefaultCommand, 
+
+            if (!ParentEngine.Commands.Contains(BuildDefaultCommand))
+                ParentEngine.Commands.AddCompilerCommand(BuildDefaultCommand, 
                 delegate {
                       return CombineWithLoadPath(DefaultScriptName);
                   });
 
-            ParentEngine.Commands.AddCompilerCommand(BuildHookCommand,
+            if (!ParentEngine.Commands.Contains(BuildHookCommand))
+                ParentEngine.Commands.AddCompilerCommand(BuildHookCommand,
                 delegate(StackContext sctx, PValue[] args)
                 {
                     foreach (PValue arg in args)
