@@ -78,7 +78,6 @@ namespace Prexonite
 
             while (_stack.Count >= level)
             {
-                
                 StackContext sctx = _stack.Last.Value;
 
                 bool keepOnStack = false;

@@ -902,6 +902,9 @@ namespace Prexonite
                         {
                             func = ParentApplication.Functions[id];
                         }
+                        if (func == null)
+                            throw PrexoniteRuntimeException.CreateRuntimeException(
+                                this, "No function with the physical name " + id + " exists.");
                         _lastContext =
                             new FunctionContext(
                                 ParentEngine, func, argv);

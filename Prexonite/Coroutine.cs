@@ -115,6 +115,7 @@ namespace Prexonite
         /// </summary>
         /// <param name="sctx">The stack context in which to perform the call.</param>
         /// <param name="args">The arguments to be passed to the call.</param>
+        /// <param name="call">Indicates whether the call is a get or a set call.</param>
         /// <param name="id">The id of the memeber to be called.</param>
         /// <param name="result">The result returned by the member call.</param>
         /// <returns>True if a member has been called; false otherwise.</returns>
