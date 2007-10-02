@@ -270,7 +270,7 @@ namespace Prexonite.Types
             if (IndirectCall(sctx, subject, args, out ret))
                 return ret;
             else
-                throw new InvalidCallException("PType " + GetType().Name + " does not support indirect calls.");
+                throw new InvalidCallException("PType " + GetType().Name + " (" + ToString() + ") does not support indirect calls.");
         }
 
         #endregion

@@ -297,12 +297,18 @@ namespace Prexonite
 
                         //Execute the part of the initialize function that is missing
                         targetEngine.Stack.AddLast(fctx);
-                        targetEngine.Process();
-
-                        //Save the current initialization state
-                        _initializationFunction.Meta[InitializationId] = _initializationFunction.Code.Count.ToString();
-                        _initializationGeneration = generation;
-                        _initalizationState = ApplicationInitializationState.Complete;
+                        try
+                        {
+                            targetEngine.Process();
+                        }
+                        finally
+                        {
+                            //Save the current initialization state
+                            _initializationFunction.Meta[InitializationId] =
+                                _initializationFunction.Code.Count.ToString();
+                            _initializationGeneration = generation;
+                            _initalizationState = ApplicationInitializationState.Complete;
+                        }
                     }
                     finally
                     {

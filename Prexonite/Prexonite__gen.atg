@@ -1338,11 +1338,7 @@ Null = null .
 
 StatementBlock<AstBlock block>
 =
-	lbrace
-	{	Statement<block>
-	}
-	rbrace
-|	Statement<block>
+	Statement<block>
 .
 
 Statement<AstBlock block>
@@ -1380,6 +1376,11 @@ StructureStatement<AstBlock block>
 |   NestedFunction<block>
 |   TryCatchFinally<block>
 |   Using<block>
+|	lbrace
+	{
+		Statement<block>
+	}
+	rbrace
 .
 
 GetSetComplex<AstBlock block>

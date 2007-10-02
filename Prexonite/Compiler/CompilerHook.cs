@@ -18,7 +18,7 @@ namespace Prexonite.Compiler
     /// Union class for both managed as well as interpreted compiler hooks.
     /// </summary>
     [System.Diagnostics.DebuggerNonUserCode]
-    public class CompilerHook
+    public sealed class CompilerHook
     {
         private AstTransformation _managed;
         private PValue _interpreted;

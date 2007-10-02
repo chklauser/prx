@@ -160,16 +160,18 @@ function prx\interactive()
     {
         try 
         {
+            var exc = null;
             lastCode = buffer.ToString; //Save the code for error reporting
             ldr.LoadFromString(lastCode);            
         } 
-        catch(var exc)
+        catch(exc)
         {
             //Exceptions are truly exceptional, so they should be printed
             // out right away.
             green = () =>
 			{
     			println(exc);
+    			exc = null;
 				foreach(var err in errors)
 					println(err);
 			};

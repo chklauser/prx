@@ -69,6 +69,7 @@ function prx\main(args)
 	var sourceFiles = [];
 	var verbose = false;
 	var headerOnly = false;
+	var debugging = false;
 	
 	var scriptArgs = [];
 	
@@ -96,6 +97,8 @@ function prx\main(args)
 				state = state\arg;
 		    else if(current == "-b")
 		        supportsTabs = true;
+		    else if(current == "-d")
+		        debugging = true;
 			else if(current == "-?")
 			{
 				displayHelp;
@@ -165,13 +168,18 @@ function prx\main(args)
 	
 	//Compilation errors are not thrown as exceptions but held in 'ldr.Errors'
 	if(ldr.Errors.Count != 0 Or not (exc is null)) 
+	{
 	    red = () =>
         	{    	
         		println("Errors detected. Aborting...");
         		foreach(var err in ldr.Errors)
         			println(err);
-            	return;
         	};
+        exc = null; 
+    	if(debugging)
+    	    prx\interactive;
+        return;
+	}
 	
     //Decide what to do with the just compiled application
 	if(state == state\interactive)

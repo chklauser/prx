@@ -207,7 +207,11 @@ namespace Prexonite.Compiler
             /// <param name="transformation">An interpreted transformation.</param>
             public void Add(PValue transformation)
             {
-                lst.Add(new CompilerHook(transformation));
+                if (transformation.Type.ToBuiltIn() == PType.BuiltIn.Object &&
+                    transformation.Value is AstTransformation)
+                    lst.Add(new CompilerHook((AstTransformation) transformation.Value));
+                else
+                    lst.Add(new CompilerHook(transformation));
             }
 
             ///<summary>

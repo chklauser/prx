@@ -138,5 +138,10 @@ namespace Prexonite
         }
 
         #endregion
+
+        public override bool Equals(object obj)
+        {
+            return ReferenceEquals(this, obj);
+        }
     }
 }
