@@ -143,5 +143,10 @@ namespace Prexonite
         {
             return ReferenceEquals(this, obj);
         }
+
+        public override int GetHashCode()
+        {
+            return value.GetHashCode() ^ 6537;
+        } 
     }
 }
