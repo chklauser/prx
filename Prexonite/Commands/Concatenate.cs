@@ -31,7 +31,6 @@ namespace Prexonite.Commands
     /// </summary>
     public class Concatenate : PCommand
     {
-        
         /// <summary>
         /// Creates a new instance of the <c>concat</c> command.
         /// </summary>
@@ -53,7 +52,7 @@ namespace Prexonite.Commands
             for (int i = 0; i < args.Length; i++)
             {
                 PValue arg = args[i];
-                buffer.Append(arg.Type is StringPType ? (string)arg.Value : arg.CallToString(sctx));
+                buffer.Append(arg.Type is StringPType ? (string) arg.Value : arg.CallToString(sctx));
             }
 
             return buffer.ToString();
@@ -71,7 +70,7 @@ namespace Prexonite.Commands
             for (int i = 0; i < args.Length; i++)
             {
                 PValue arg = args[i];
-                buffer.Append(arg.Type is StringPType ? (string)arg.Value : arg.CallToString(sctx));
+                buffer.Append(arg.Type is StringPType ? (string) arg.Value : arg.CallToString(sctx));
             }
 
             return buffer.ToString();

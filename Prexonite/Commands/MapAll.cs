@@ -4,7 +4,6 @@ using Prexonite.Types;
 
 namespace Prexonite.Commands
 {
-
     /// <summary>
     /// Implementation of the map function. Applies a supplied function (#1) to every 
     /// value in the supplied list (#2) and returns a list with the result values.
@@ -22,9 +21,9 @@ namespace Prexonite.Commands
     {
         internal static IEnumerable<PValue> _ToEnumerable(PValue psource)
         {
-            if( psource.Type is ListPType || 
+            if (psource.Type is ListPType ||
                 psource.Type is ObjectPType && psource.Value is IEnumerable<PValue>)
-                    return (IEnumerable<PValue>) psource.Value;
+                return (IEnumerable<PValue>) psource.Value;
             else
                 return null;
         }
@@ -40,8 +39,8 @@ namespace Prexonite.Commands
         public PValue Run(StackContext sctx, IIndirectCall f, IEnumerable<PValue> source)
         {
             List<PValue> nlst = new List<PValue>();
-            foreach(PValue x in source)
-                nlst.Add( f != null ? f.IndirectCall(sctx,new PValue[] {x}) : x);
+            foreach (PValue x in source)
+                nlst.Add(f != null ? f.IndirectCall(sctx, new PValue[] {x}) : x);
 
             return PType.List.CreatePValue(nlst);
         }
@@ -57,18 +56,18 @@ namespace Prexonite.Commands
             if (sctx == null)
                 throw new ArgumentNullException("sctx");
             if (args == null)
-                throw new ArgumentNullException("args"); 
+                throw new ArgumentNullException("args");
 
             //Get f
             IIndirectCall f;
-            if(args.Length < 1)
+            if (args.Length < 1)
                 f = null;
             else
                 f = args[0];
 
             //Get the source
             IEnumerable<PValue> source;
-            if(args.Length == 2)
+            if (args.Length == 2)
             {
                 PValue psource = args[1];
                 source = _ToEnumerable(psource) ?? new PValue[] {psource};
@@ -76,15 +75,15 @@ namespace Prexonite.Commands
             else
             {
                 List<PValue> lstsource = new List<PValue>();
-                for(int i = 1; i < args.Length ; i++)
+                for (int i = 1; i < args.Length; i++)
                 {
                     IEnumerable<PValue> multiple = _ToEnumerable(args[i]);
-                    if(multiple != null)
+                    if (multiple != null)
                         lstsource.AddRange(multiple);
-                    else 
+                    else
                         lstsource.Add(args[i]);
                 }
-                source = lstsource; 
+                source = lstsource;
             }
 
             return Run(sctx, f, source);

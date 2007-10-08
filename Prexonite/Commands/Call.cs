@@ -1,7 +1,5 @@
 using System;
 using System.Collections.Generic;
-using System.Text;
-using Prexonite;
 using Prexonite.Types;
 
 namespace Prexonite.Commands
@@ -20,7 +18,6 @@ namespace Prexonite.Commands
     /// <seealso cref="IIndirectCall"/>
     public class Call : PCommand
     {
-
         /// <summary>
         /// Implementation of (ref f, arg1, arg2, arg3, ..., argn) => f(arg1, arg2, arg3, ..., argn);
         /// </summary>
@@ -61,7 +58,7 @@ namespace Prexonite.Commands
             {
                 PValue arg = args[i];
                 IEnumerable<PValue> folded = MapAll._ToEnumerable(arg);
-                if(folded == null)
+                if (folded == null)
                     iargs.Add(arg);
                 else
                     iargs.AddRange(folded);
@@ -94,7 +91,7 @@ namespace Prexonite.Commands
                 return PType.Null.CreatePValue();
             if (sctx == null)
                 throw new ArgumentNullException("sctx");
-            if(args == null)
+            if (args == null)
                 args = new PValue[] {};
 
             List<PValue> iargs = new List<PValue>();
@@ -108,7 +105,7 @@ namespace Prexonite.Commands
                     iargs.AddRange(folded);
             }
 
-            return callable.IndirectCall(sctx,iargs.ToArray());
+            return callable.IndirectCall(sctx, iargs.ToArray());
         }
     }
 }

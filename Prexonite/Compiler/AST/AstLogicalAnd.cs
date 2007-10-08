@@ -29,12 +29,18 @@ namespace Prexonite.Compiler.Ast
     public class AstLogicalAnd : AstLazyLogical,
                                  IAstExpression
     {
-        public AstLogicalAnd(string file, int line, int col, IAstExpression leftCondition, IAstExpression rightCondition)
+        public AstLogicalAnd(
+            string file,
+            int line,
+            int col,
+            IAstExpression leftCondition,
+            IAstExpression rightCondition)
             : base(file, line, col, leftCondition, rightCondition)
         {
         }
 
-        internal AstLogicalAnd(Parser p, IAstExpression leftCondition, IAstExpression rightCondition)
+        internal AstLogicalAnd(
+            Parser p, IAstExpression leftCondition, IAstExpression rightCondition)
             : base(p, leftCondition, rightCondition)
         {
         }

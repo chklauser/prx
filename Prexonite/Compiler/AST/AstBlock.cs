@@ -64,7 +64,7 @@ namespace Prexonite.Compiler.Ast
             }
         }
 
-        public virtual  bool IsEmpty
+        public virtual bool IsEmpty
         {
             get { return Count == 0; }
         }

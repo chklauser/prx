@@ -32,7 +32,8 @@ namespace Prexonite.Compiler.Ast
         public IAstExpression Operand;
         public UnaryOperator Operator;
 
-        public AstUnaryOperator(string file, int line, int column, UnaryOperator op, IAstExpression operand)
+        public AstUnaryOperator(
+            string file, int line, int column, UnaryOperator op, IAstExpression operand)
             : base(file, line, column)
         {
             if (operand == null)
@@ -133,7 +134,8 @@ namespace Prexonite.Compiler.Ast
                     if (isVariable) //The easy way
                     {
                         OpCode opc;
-                        if (Operator == UnaryOperator.PostIncrement || Operator == UnaryOperator.PreIncrement)
+                        if (Operator == UnaryOperator.PostIncrement ||
+                            Operator == UnaryOperator.PreIncrement)
                             if (symbol.Interpretation == SymbolInterpretations.GlobalObjectVariable)
                                 opc = OpCode.incglob;
                             else
@@ -149,20 +151,23 @@ namespace Prexonite.Compiler.Ast
                         //The get/set fallback
                         complex = complex.GetCopy();
                         complex.SetModifier = Operator ==
-                                              UnaryOperator.PostIncrement || Operator == UnaryOperator.PreIncrement
+                                              UnaryOperator.PostIncrement ||
+                                              Operator == UnaryOperator.PreIncrement
                                                   ?
                                               BinaryOperator.Addition
                                                   : BinaryOperator.Subtraction;
                         if (complex.Call == PCall.Get)
                             complex.Arguments.Add(new AstConstant(File, Line, Column, 1));
                         else
-                            complex.Arguments[complex.Arguments.Count - 1] = new AstConstant(File, Line, Column, 1);
+                            complex.Arguments[complex.Arguments.Count - 1] =
+                                new AstConstant(File, Line, Column, 1);
                         complex.Call = PCall.Set;
                         complex.EmitCode(target);
                     }
                     else
-                        throw new PrexoniteException("Node of type " + Operand.GetType() +
-                                                     " does not support decrement operators.");
+                        throw new PrexoniteException(
+                            "Node of type " + Operand.GetType() +
+                            " does not support decrement operators.");
                     break;
                 case UnaryOperator.UnaryNegation:
                 case UnaryOperator.LogicalNot:

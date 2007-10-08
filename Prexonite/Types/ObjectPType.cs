@@ -45,21 +45,24 @@ namespace Prexonite.Types
         public ObjectPType(StackContext sctx, PValue[] args)
         {
             if (args == null)
-                throw new ArgumentNullException("args"); 
-            if(args.Length < 1)
-                throw new PrexoniteException("The Object type requires exactly one parameter: the type or name of the type to represent.");
+                throw new ArgumentNullException("args");
+            if (args.Length < 1)
+                throw new PrexoniteException(
+                    "The Object type requires exactly one parameter: the type or name of the type to represent.");
 
             PValue arg = args[0];
             PValue sarg;
             ObjectPType oT = arg.Type as ObjectPType;
-            if(arg.IsNull)
+            if (arg.IsNull)
                 _clrType = typeof(object);
-            else if(oT != null && typeof(Type).IsAssignableFrom(oT.ClrType))
+            else if (oT != null && typeof(Type).IsAssignableFrom(oT.ClrType))
                 _clrType = (Type) arg.Value;
-            else if(arg.TryConvertTo(sctx, String,false,out sarg))
+            else if (arg.TryConvertTo(sctx, String, false, out sarg))
                 _clrType = GetType(sctx, (string) sarg.Value);
             else
-                throw new PrexoniteException("The supplied argument parameter (" + arg + ") cannot be used to create an Object<T> type.");
+                throw new PrexoniteException(
+                    "The supplied argument parameter (" + arg +
+                    ") cannot be used to create an Object<T> type.");
         }
 
         public ObjectPType(StackContext sctx, string clrTypeName)
@@ -164,7 +167,7 @@ namespace Prexonite.Types
                 return true;
 
             //Special interop members
-            switch(id.ToLowerInvariant())
+            switch (id.ToLowerInvariant())
             {
                 case @"\implements":
                     foreach (PValue arg in args)
@@ -176,7 +179,7 @@ namespace Prexonite.Types
                         else
                             T = GetType(sctx, arg.CallToString(sctx));
 
-                        if(!T.IsAssignableFrom(ClrType))
+                        if (!T.IsAssignableFrom(ClrType))
                         {
                             result = false;
                             return true;
@@ -195,7 +198,8 @@ namespace Prexonite.Types
 
                 if (id.LastIndexOf('\\') == 0)
                     return false; //Default index accessors do not accept calling directives
-                mtypes = MemberTypes.Event | MemberTypes.Field | MemberTypes.Method | MemberTypes.Property;
+                mtypes = MemberTypes.Event | MemberTypes.Field | MemberTypes.Method |
+                         MemberTypes.Property;
             }
             else
             {
@@ -207,21 +211,28 @@ namespace Prexonite.Types
                 {
                     cond.memberRestriction.AddRange(
                         _clrType.FindMembers(
-                            MemberTypes.Method, BindingFlags.Public | BindingFlags.Instance,
-                            Type.FilterName, cond.Call == PCall.Get ? "GetValue" : "SetValue"));
+                            MemberTypes.Method,
+                            BindingFlags.Public | BindingFlags.Instance,
+                            Type.FilterName,
+                            cond.Call == PCall.Get ? "GetValue" : "SetValue"));
                     cond.memberRestriction.AddRange(
                         _clrType.FindMembers(
-                            MemberTypes.Method, BindingFlags.Public | BindingFlags.Instance,
-                            Type.FilterName, cond.Call == PCall.Get ? "Get" : "Set"));
+                            MemberTypes.Method,
+                            BindingFlags.Public | BindingFlags.Instance,
+                            Type.FilterName,
+                            cond.Call == PCall.Get ? "Get" : "Set"));
                 }
             }
 
             //Get public member candidates            
-            Stack<MemberInfo> candidates = new Stack<MemberInfo>(_clrType.FindMembers(
-                                                                     mtypes, //Member types
-                                                                     BindingFlags.Instance | BindingFlags.Public,
-                                                                     //Search domain
-                                                                     filter, cond)); //Filter
+            Stack<MemberInfo> candidates = new Stack<MemberInfo>(
+                _clrType.FindMembers(
+                    mtypes,
+                    //Member types
+                    BindingFlags.Instance | BindingFlags.Public,
+                    //Search domain
+                    filter,
+                    cond)); //Filter
 
             if (candidates.Count == 1)
                 resolvedMember = candidates.Peek();
@@ -266,7 +277,8 @@ namespace Prexonite.Types
                 filter = _member_filter;
                 if (id.LastIndexOf('\\') == 0)
                     return false; //Default index accessors do not accept calling directives
-                mtypes = MemberTypes.Event | MemberTypes.Field | MemberTypes.Method | MemberTypes.Property;
+                mtypes = MemberTypes.Event | MemberTypes.Field | MemberTypes.Method |
+                         MemberTypes.Property;
             }
             else
             {
@@ -277,11 +289,14 @@ namespace Prexonite.Types
             }
 
             //Get member candidates            
-            Stack<MemberInfo> candidates = new Stack<MemberInfo>(_clrType.FindMembers(
-                                                                     mtypes, //Member types
-                                                                     BindingFlags.Static | BindingFlags.Public,
-                                                                     //Search domain
-                                                                     filter, cond)); //Filter
+            Stack<MemberInfo> candidates = new Stack<MemberInfo>(
+                _clrType.FindMembers(
+                    mtypes,
+                    //Member types
+                    BindingFlags.Static | BindingFlags.Public,
+                    //Search domain
+                    filter,
+                    cond)); //Filter
 
             if (candidates.Count == 1)
                 resolvedMember = candidates.Peek();
@@ -309,17 +324,23 @@ namespace Prexonite.Types
             cond.returnType = targetType;
 
             //Get member candidates            
-            Stack<MemberInfo> candidates = new Stack<MemberInfo>(_clrType.FindMembers(
-                                                                     MemberTypes.Method, //Member types
-                                                                     BindingFlags.Static | BindingFlags.Public,
-                                                                     //Search domain
-                                                                     _member_filter, cond)); //Filter
+            Stack<MemberInfo> candidates = new Stack<MemberInfo>(
+                _clrType.FindMembers(
+                    MemberTypes.Method,
+                    //Member types
+                    BindingFlags.Static | BindingFlags.Public,
+                    //Search domain
+                    _member_filter,
+                    cond)); //Filter
 
             return _try_execute(candidates, cond, null, out result);
         }
 
-        private static bool _try_execute(Stack<MemberInfo> candidates, call_conditions cond, PValue subject,
-                                         out PValue ret)
+        private static bool _try_execute(
+            Stack<MemberInfo> candidates,
+            call_conditions cond,
+            PValue subject,
+            out PValue ret)
         {
             ret = null;
             object result;
@@ -354,8 +375,10 @@ namespace Prexonite.Types
                                 Type A = arg.ClrType;
                                 if (!(P.Equals(A) || P.IsAssignableFrom(A))) //Is conversion needed?
                                 {
-                                    if (!arg.TryConvertTo(cond.Sctx, P, false, out arg)) //Try to convert
-                                        goto failed; //can't use break; because of the surrounding for-loop
+                                    if (!arg.TryConvertTo(cond.Sctx, P, false, out arg))
+                                        //Try to convert
+                                        goto failed;
+                                            //can't use break; because of the surrounding for-loop
                                 }
                             }
                             cargs[i] = arg.Value;
@@ -394,7 +417,8 @@ namespace Prexonite.Types
                                 Type A = arg.ClrType;
                                 if (!(P.Equals(A) || P.IsAssignableFrom(A))) //Is conversion needed?
                                 {
-                                    if (!arg.TryConvertTo(cond.Sctx, P, false, out arg)) //Try to convert
+                                    if (!arg.TryConvertTo(cond.Sctx, P, false, out arg))
+                                        //Try to convert
                                         break;
                                 }
                             }
@@ -416,7 +440,8 @@ namespace Prexonite.Types
                     case MemberTypes.Event:
                         //Push requested method
                         EventInfo info = (EventInfo) candidate;
-                        if (cond.Directive == "" || Engine.DefaultStringComparer.Compare(cond.Directive, "Raise") == 0)
+                        if (cond.Directive == "" ||
+                            Engine.DefaultStringComparer.Compare(cond.Directive, "Raise") == 0)
                         {
                             candidates.Push(info.GetRaiseMethod());
                         }
@@ -443,13 +468,20 @@ namespace Prexonite.Types
             return true;
         }
 
-        internal static PValue _execute(StackContext sctx, MemberInfo candidate, PValue[] args, PCall call, string id,
-                                        PValue subject)
+        internal static PValue _execute(
+            StackContext sctx,
+            MemberInfo candidate,
+            PValue[] args,
+            PCall call,
+            string id,
+            PValue subject)
         {
             Stack<MemberInfo> candidates = new Stack<MemberInfo>();
             candidates.Push(candidate);
             PValue ret;
-            if (!_try_execute(candidates, new call_conditions(sctx, args, call, id), subject, out ret))
+            if (
+                !_try_execute(
+                     candidates, new call_conditions(sctx, args, call, id), subject, out ret))
                 throw new InvalidCallException("Cannot call resolved member " + candidate);
             return ret;
         }
@@ -532,7 +564,9 @@ namespace Prexonite.Types
         {
             call_conditions cond = (call_conditions) arg;
             //Criteria No.1: The members name (may be supressed)
-            if (!(cond.IgnoreId || candidate.Name.Equals(cond.Id, StringComparison.OrdinalIgnoreCase)))
+            if (
+                !(cond.IgnoreId ||
+                  candidate.Name.Equals(cond.Id, StringComparison.OrdinalIgnoreCase)))
                 return false;
 
             //Criteria No.2: The number of formal parameters
@@ -558,7 +592,8 @@ namespace Prexonite.Types
                         {
                             Type P = (candidate as FieldInfo).FieldType;
                             Type A = cond.Args[0].ClrType;
-                            if (!(P.Equals(A) || P.IsAssignableFrom(A))) //Neiter Equal nor assignable
+                            if (!(P.Equals(A) || P.IsAssignableFrom(A)))
+                                //Neiter Equal nor assignable
                                 return false;
                         }
 
@@ -593,7 +628,8 @@ namespace Prexonite.Types
             else if (candidate is EventInfo)
             {
                 EventInfo info = candidate as EventInfo;
-                if (cond.Directive == "" || Engine.DefaultStringComparer.Compare(cond.Directive, "Raise") == 0)
+                if (cond.Directive == "" ||
+                    Engine.DefaultStringComparer.Compare(cond.Directive, "Raise") == 0)
                 {
                     return _method_filter(info.GetRaiseMethod(), cond);
                 }
@@ -676,12 +712,13 @@ namespace Prexonite.Types
             return true;
         }
 
-        public override bool IndirectCall(StackContext sctx, PValue subject, PValue[] args, out PValue result)
+        public override bool IndirectCall(
+            StackContext sctx, PValue subject, PValue[] args, out PValue result)
         {
             result = null;
             IIndirectCall icall = subject.Value as IIndirectCall;
             if (icall != null)
-                result = icall.IndirectCall(sctx, args) ?? PType.Null.CreatePValue();
+                result = icall.IndirectCall(sctx, args) ?? Null.CreatePValue();
 
             return result != null;
         }
@@ -690,8 +727,13 @@ namespace Prexonite.Types
 
         #region Calls
 
-        public PValue DynamicCall(StackContext sctx, PValue subject, PValue[] args, PCall call, string id,
-                                  out MemberInfo resolvedMember)
+        public PValue DynamicCall(
+            StackContext sctx,
+            PValue subject,
+            PValue[] args,
+            PCall call,
+            string id,
+            out MemberInfo resolvedMember)
         {
             PValue result;
             if (!TryDynamicCall(sctx, subject, args, call, id, out result, out resolvedMember))
@@ -701,13 +743,15 @@ namespace Prexonite.Types
             return result;
         }
 
-        public override PValue DynamicCall(StackContext sctx, PValue subject, PValue[] args, PCall call, string id)
+        public override PValue DynamicCall(
+            StackContext sctx, PValue subject, PValue[] args, PCall call, string id)
         {
             MemberInfo dummy;
             return DynamicCall(sctx, subject, args, call, id, out dummy);
         }
 
-        public PValue StaticCall(StackContext sctx, PValue[] args, PCall call, string id, out MemberInfo resolvedMember)
+        public PValue StaticCall(
+            StackContext sctx, PValue[] args, PCall call, string id, out MemberInfo resolvedMember)
         {
             PValue result;
             if (!TryStaticCall(sctx, args, call, id, out result, out resolvedMember))
@@ -728,7 +772,8 @@ namespace Prexonite.Types
             return TryContruct(sctx, args, out result, out dummy);
         }
 
-        public bool TryContruct(StackContext sctx, PValue[] args, out PValue result, out MemberInfo resolvedMember)
+        public bool TryContruct(
+            StackContext sctx, PValue[] args, out PValue result, out MemberInfo resolvedMember)
         {
             call_conditions cond = new call_conditions(sctx, args, PCall.Get, "");
             cond.IgnoreId = true;
@@ -756,153 +801,306 @@ namespace Prexonite.Types
 
         #region Operators
 
-        public override bool Addition(StackContext sctx, PValue leftOperand, PValue rightOperand, out PValue result)
+        public override bool Addition(
+            StackContext sctx, PValue leftOperand, PValue rightOperand, out PValue result)
         {
             return
-                TryStaticCall(sctx, new PValue[] {leftOperand, rightOperand}, PCall.Get, "op_Addition", out result) ||
-                rightOperand.Type.TryStaticCall(sctx, new PValue[] {rightOperand, leftOperand}, PCall.Get, "op_Addition",
-                                                out result);
+                TryStaticCall(
+                    sctx,
+                    new PValue[] {leftOperand, rightOperand},
+                    PCall.Get,
+                    "op_Addition",
+                    out result) ||
+                rightOperand.Type.TryStaticCall(
+                    sctx,
+                    new PValue[] {rightOperand, leftOperand},
+                    PCall.Get,
+                    "op_Addition",
+                    out result);
         }
 
-        public override bool Subtraction(StackContext sctx, PValue leftOperand, PValue rightOperand, out PValue result)
+        public override bool Subtraction(
+            StackContext sctx, PValue leftOperand, PValue rightOperand, out PValue result)
         {
             return
-                TryStaticCall(sctx, new PValue[] {leftOperand, rightOperand}, PCall.Get, "op_Subtraction", out result) ||
-                rightOperand.Type.TryStaticCall(sctx, new PValue[] {rightOperand, leftOperand}, PCall.Get,
-                                                "op_Subtraction", out result);
+                TryStaticCall(
+                    sctx,
+                    new PValue[] {leftOperand, rightOperand},
+                    PCall.Get,
+                    "op_Subtraction",
+                    out result) ||
+                rightOperand.Type.TryStaticCall(
+                    sctx,
+                    new PValue[] {rightOperand, leftOperand},
+                    PCall.Get,
+                    "op_Subtraction",
+                    out result);
         }
 
-        public override bool Multiply(StackContext sctx, PValue leftOperand, PValue rightOperand, out PValue result)
+        public override bool Multiply(
+            StackContext sctx, PValue leftOperand, PValue rightOperand, out PValue result)
         {
             return
-                TryStaticCall(sctx, new PValue[] {leftOperand, rightOperand}, PCall.Get, "op_Multiply", out result) ||
-                rightOperand.Type.TryStaticCall(sctx, new PValue[] {rightOperand, leftOperand}, PCall.Get, "op_Multiply",
-                                                out result);
+                TryStaticCall(
+                    sctx,
+                    new PValue[] {leftOperand, rightOperand},
+                    PCall.Get,
+                    "op_Multiply",
+                    out result) ||
+                rightOperand.Type.TryStaticCall(
+                    sctx,
+                    new PValue[] {rightOperand, leftOperand},
+                    PCall.Get,
+                    "op_Multiply",
+                    out result);
         }
 
-        public override bool Division(StackContext sctx, PValue leftOperand, PValue rightOperand, out PValue result)
+        public override bool Division(
+            StackContext sctx, PValue leftOperand, PValue rightOperand, out PValue result)
         {
             return
-                TryStaticCall(sctx, new PValue[] {leftOperand, rightOperand}, PCall.Get, "op_Division", out result) ||
-                rightOperand.Type.TryStaticCall(sctx, new PValue[] {rightOperand, leftOperand}, PCall.Get, "op_Division",
-                                                out result);
+                TryStaticCall(
+                    sctx,
+                    new PValue[] {leftOperand, rightOperand},
+                    PCall.Get,
+                    "op_Division",
+                    out result) ||
+                rightOperand.Type.TryStaticCall(
+                    sctx,
+                    new PValue[] {rightOperand, leftOperand},
+                    PCall.Get,
+                    "op_Division",
+                    out result);
         }
 
-        public override bool Modulus(StackContext sctx, PValue leftOperand, PValue rightOperand, out PValue result)
+        public override bool Modulus(
+            StackContext sctx, PValue leftOperand, PValue rightOperand, out PValue result)
         {
             return
-                TryStaticCall(sctx, new PValue[] {leftOperand, rightOperand}, PCall.Get, "op_Modulus", out result) ||
-                rightOperand.Type.TryStaticCall(sctx, new PValue[] {rightOperand, leftOperand}, PCall.Get, "op_Modulus",
-                                                out result);
+                TryStaticCall(
+                    sctx,
+                    new PValue[] {leftOperand, rightOperand},
+                    PCall.Get,
+                    "op_Modulus",
+                    out result) ||
+                rightOperand.Type.TryStaticCall(
+                    sctx,
+                    new PValue[] {rightOperand, leftOperand},
+                    PCall.Get,
+                    "op_Modulus",
+                    out result);
         }
 
-        public override bool BitwiseAnd(StackContext sctx, PValue leftOperand, PValue rightOperand, out PValue result)
+        public override bool BitwiseAnd(
+            StackContext sctx, PValue leftOperand, PValue rightOperand, out PValue result)
         {
             return
-                TryStaticCall(sctx, new PValue[] {leftOperand, rightOperand}, PCall.Get, "op_BitwiseAnd", out result) ||
-                rightOperand.Type.TryStaticCall(sctx, new PValue[] {rightOperand, leftOperand}, PCall.Get,
-                                                "op_BitwiseAnd", out result);
+                TryStaticCall(
+                    sctx,
+                    new PValue[] {leftOperand, rightOperand},
+                    PCall.Get,
+                    "op_BitwiseAnd",
+                    out result) ||
+                rightOperand.Type.TryStaticCall(
+                    sctx,
+                    new PValue[] {rightOperand, leftOperand},
+                    PCall.Get,
+                    "op_BitwiseAnd",
+                    out result);
         }
 
-        public override bool BitwiseOr(StackContext sctx, PValue leftOperand, PValue rightOperand, out PValue result)
+        public override bool BitwiseOr(
+            StackContext sctx, PValue leftOperand, PValue rightOperand, out PValue result)
         {
             return
-                TryStaticCall(sctx, new PValue[] {leftOperand, rightOperand}, PCall.Get, "op_BitwiseOr", out result) ||
-                rightOperand.Type.TryStaticCall(sctx, new PValue[] {rightOperand, leftOperand}, PCall.Get,
-                                                "op_BitwiseOr", out result);
+                TryStaticCall(
+                    sctx,
+                    new PValue[] {leftOperand, rightOperand},
+                    PCall.Get,
+                    "op_BitwiseOr",
+                    out result) ||
+                rightOperand.Type.TryStaticCall(
+                    sctx,
+                    new PValue[] {rightOperand, leftOperand},
+                    PCall.Get,
+                    "op_BitwiseOr",
+                    out result);
         }
 
-        public override bool ExclusiveOr(StackContext sctx, PValue leftOperand, PValue rightOperand, out PValue result)
+        public override bool ExclusiveOr(
+            StackContext sctx, PValue leftOperand, PValue rightOperand, out PValue result)
         {
             return
-                TryStaticCall(sctx, new PValue[] {leftOperand, rightOperand}, PCall.Get, "op_ExclusiveOr", out result) ||
-                rightOperand.Type.TryStaticCall(sctx, new PValue[] {rightOperand, leftOperand}, PCall.Get,
-                                                "op_ExclusiveOr", out result);
+                TryStaticCall(
+                    sctx,
+                    new PValue[] {leftOperand, rightOperand},
+                    PCall.Get,
+                    "op_ExclusiveOr",
+                    out result) ||
+                rightOperand.Type.TryStaticCall(
+                    sctx,
+                    new PValue[] {rightOperand, leftOperand},
+                    PCall.Get,
+                    "op_ExclusiveOr",
+                    out result);
         }
 
-        public override bool Equality(StackContext sctx, PValue leftOperand, PValue rightOperand, out PValue result)
+        public override bool Equality(
+            StackContext sctx, PValue leftOperand, PValue rightOperand, out PValue result)
         {
             return
-                TryStaticCall(sctx, new PValue[] {leftOperand, rightOperand}, PCall.Get, "op_Equality", out result) ||
-                rightOperand.Type.TryStaticCall(sctx, new PValue[] {rightOperand, leftOperand}, PCall.Get, "op_Equality",
-                                                out result);
+                TryStaticCall(
+                    sctx,
+                    new PValue[] {leftOperand, rightOperand},
+                    PCall.Get,
+                    "op_Equality",
+                    out result) ||
+                rightOperand.Type.TryStaticCall(
+                    sctx,
+                    new PValue[] {rightOperand, leftOperand},
+                    PCall.Get,
+                    "op_Equality",
+                    out result);
         }
 
-        public override bool Inequality(StackContext sctx, PValue leftOperand, PValue rightOperand, out PValue result)
+        public override bool Inequality(
+            StackContext sctx, PValue leftOperand, PValue rightOperand, out PValue result)
         {
             return
-                TryStaticCall(sctx, new PValue[] {leftOperand, rightOperand}, PCall.Get, "op_Inequality", out result) ||
-                rightOperand.Type.TryStaticCall(sctx, new PValue[] {rightOperand, leftOperand}, PCall.Get,
-                                                "op_Inequality", out result);
+                TryStaticCall(
+                    sctx,
+                    new PValue[] {leftOperand, rightOperand},
+                    PCall.Get,
+                    "op_Inequality",
+                    out result) ||
+                rightOperand.Type.TryStaticCall(
+                    sctx,
+                    new PValue[] {rightOperand, leftOperand},
+                    PCall.Get,
+                    "op_Inequality",
+                    out result);
         }
 
-        public override bool GreaterThan(StackContext sctx, PValue leftOperand, PValue rightOperand, out PValue result)
+        public override bool GreaterThan(
+            StackContext sctx, PValue leftOperand, PValue rightOperand, out PValue result)
         {
             return
-                TryStaticCall(sctx, new PValue[] {leftOperand, rightOperand}, PCall.Get, "op_GreaterThan", out result) ||
-                rightOperand.Type.TryStaticCall(sctx, new PValue[] {rightOperand, leftOperand}, PCall.Get,
-                                                "op_GreaterThan", out result);
+                TryStaticCall(
+                    sctx,
+                    new PValue[] {leftOperand, rightOperand},
+                    PCall.Get,
+                    "op_GreaterThan",
+                    out result) ||
+                rightOperand.Type.TryStaticCall(
+                    sctx,
+                    new PValue[] {rightOperand, leftOperand},
+                    PCall.Get,
+                    "op_GreaterThan",
+                    out result);
         }
 
-        public override bool GreaterThanOrEqual(StackContext sctx, PValue leftOperand, PValue rightOperand,
-                                                out PValue result)
+        public override bool GreaterThanOrEqual(
+            StackContext sctx,
+            PValue leftOperand,
+            PValue rightOperand,
+            out PValue result)
         {
             return
-                TryStaticCall(sctx, new PValue[] {leftOperand, rightOperand}, PCall.Get, "op_GreaterThanOrEqual",
-                              out result) ||
-                rightOperand.Type.TryStaticCall(sctx, new PValue[] {rightOperand, leftOperand}, PCall.Get,
-                                                "op_GreaterThanOrEqual", out result);
+                TryStaticCall(
+                    sctx,
+                    new PValue[] {leftOperand, rightOperand},
+                    PCall.Get,
+                    "op_GreaterThanOrEqual",
+                    out result) ||
+                rightOperand.Type.TryStaticCall(
+                    sctx,
+                    new PValue[] {rightOperand, leftOperand},
+                    PCall.Get,
+                    "op_GreaterThanOrEqual",
+                    out result);
         }
 
-        public override bool LessThan(StackContext sctx, PValue leftOperand, PValue rightOperand, out PValue result)
+        public override bool LessThan(
+            StackContext sctx, PValue leftOperand, PValue rightOperand, out PValue result)
         {
             return
-                TryStaticCall(sctx, new PValue[] {leftOperand, rightOperand}, PCall.Get, "op_LessThan", out result) ||
-                rightOperand.Type.TryStaticCall(sctx, new PValue[] {rightOperand, leftOperand}, PCall.Get, "op_LessThan",
-                                                out result);
+                TryStaticCall(
+                    sctx,
+                    new PValue[] {leftOperand, rightOperand},
+                    PCall.Get,
+                    "op_LessThan",
+                    out result) ||
+                rightOperand.Type.TryStaticCall(
+                    sctx,
+                    new PValue[] {rightOperand, leftOperand},
+                    PCall.Get,
+                    "op_LessThan",
+                    out result);
         }
 
-        public override bool LessThanOrEqual(StackContext sctx, PValue leftOperand, PValue rightOperand,
-                                             out PValue result)
+        public override bool LessThanOrEqual(
+            StackContext sctx,
+            PValue leftOperand,
+            PValue rightOperand,
+            out PValue result)
         {
             return
-                TryStaticCall(sctx, new PValue[] {leftOperand, rightOperand}, PCall.Get, "op_LessThanOrEqual",
-                              out result) ||
-                rightOperand.Type.TryStaticCall(sctx, new PValue[] {rightOperand, leftOperand}, PCall.Get,
-                                                "op_LessThanOrEqual", out result);
+                TryStaticCall(
+                    sctx,
+                    new PValue[] {leftOperand, rightOperand},
+                    PCall.Get,
+                    "op_LessThanOrEqual",
+                    out result) ||
+                rightOperand.Type.TryStaticCall(
+                    sctx,
+                    new PValue[] {rightOperand, leftOperand},
+                    PCall.Get,
+                    "op_LessThanOrEqual",
+                    out result);
         }
 
         public override bool UnaryNegation(StackContext sctx, PValue operand, out PValue result)
         {
-            return TryStaticCall(sctx, new PValue[] {operand}, PCall.Get, "op_UnaryNegation", out result);
+            return
+                TryStaticCall(
+                    sctx, new PValue[] {operand}, PCall.Get, "op_UnaryNegation", out result);
         }
 
         public override bool LogicalNot(StackContext sctx, PValue operand, out PValue result)
         {
-            return TryStaticCall(sctx, new PValue[] {operand}, PCall.Get, "op_LogicalNot", out result);
+            return
+                TryStaticCall(sctx, new PValue[] {operand}, PCall.Get, "op_LogicalNot", out result);
         }
 
         public override bool OnesComplement(StackContext sctx, PValue operand, out PValue result)
         {
-            return TryStaticCall(sctx, new PValue[] {operand}, PCall.Get, "op_OnesComplement", out result);
+            return
+                TryStaticCall(
+                    sctx, new PValue[] {operand}, PCall.Get, "op_OnesComplement", out result);
         }
 
         public override bool Increment(StackContext sctx, PValue operand, out PValue result)
         {
-            return TryStaticCall(sctx, new PValue[] {operand}, PCall.Get, "op_Increment", out result);
+            return
+                TryStaticCall(sctx, new PValue[] {operand}, PCall.Get, "op_Increment", out result);
         }
 
         public override bool Decrement(StackContext sctx, PValue operand, out PValue result)
         {
-            return TryStaticCall(sctx, new PValue[] {operand}, PCall.Get, "op_Decrement", out result);
+            return
+                TryStaticCall(sctx, new PValue[] {operand}, PCall.Get, "op_Decrement", out result);
         }
 
         #endregion
 
         #region Conversion
 
-        protected override bool InternalConvertTo(StackContext sctx, PValue subject, PType target, bool useExplicit,
-                                                  out PValue result)
+        protected override bool InternalConvertTo(
+            StackContext sctx,
+            PValue subject,
+            PType target,
+            bool useExplicit,
+            out PValue result)
         {
             PValue[] arg = new PValue[] {subject};
             ObjectPType objT = target as ObjectPType;
@@ -968,8 +1166,9 @@ namespace Prexonite.Types
             else if (objT != null)
             {
                 if (objT.ClrType.IsInterface &&
-                    ClrType.FindInterfaces(delegate(Type T, object o) { return T.Name == o as string; },
-                                           objT.ClrType.Name).Length == 1)
+                    ClrType.FindInterfaces(
+                        delegate(Type T, object o) { return T.Name == o as string; },
+                        objT.ClrType.Name).Length == 1)
                 {
                     result = objT.CreatePValue(subject.Value);
                     return result != null && !(result.Type == Null);
@@ -981,19 +1180,30 @@ namespace Prexonite.Types
                 return false;
         }
 
-        private bool _try_clr_convert_to(StackContext sctx, PValue subject, Type target, bool useExplicit,
-                                         out PValue result)
+        private bool _try_clr_convert_to(
+            StackContext sctx,
+            PValue subject,
+            Type target,
+            bool useExplicit,
+            out PValue result)
         {
             PValue[] arg = new PValue[] {subject};
-            if (_try_call_conversion_operator(sctx, arg, PCall.Get, "op_Implicit", target, out result) ||
-                (useExplicit && _try_call_conversion_operator(sctx, arg, PCall.Get, "op_Explicit", target, out result)))
+            if (
+                _try_call_conversion_operator(
+                    sctx, arg, PCall.Get, "op_Implicit", target, out result) ||
+                (useExplicit &&
+                 _try_call_conversion_operator(
+                     sctx, arg, PCall.Get, "op_Explicit", target, out result)))
                 return true;
             else
                 return false;
         }
 
-        protected override bool InternalConvertFrom(StackContext sctx, PValue subject, bool useExplicit,
-                                                    out PValue result)
+        protected override bool InternalConvertFrom(
+            StackContext sctx,
+            PValue subject,
+            bool useExplicit,
+            out PValue result)
         {
             return _try_clr_convert_to(sctx, subject, ClrType, useExplicit, out result);
         }

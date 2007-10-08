@@ -173,7 +173,8 @@ namespace Prexonite
 
         #region Initialization
 
-        private ApplicationInitializationState _initalizationState = ApplicationInitializationState.None;
+        private ApplicationInitializationState _initalizationState =
+            ApplicationInitializationState.None;
 
         /// <summary>
         /// Provides readonly access to the application's <see cref="ApplicationInitializationState">initialization state</see>.
@@ -284,8 +285,11 @@ namespace Prexonite
                     {
                         _suppressInitialization = true;
                         FunctionContext fctx =
-                            _initializationFunction.CreateFunctionContext(targetEngine, new PValue[] {},
-                                                                          new PVariable[] {}, true);
+                            _initializationFunction.CreateFunctionContext(
+                                targetEngine,
+                                new PValue[] {},
+                                new PVariable[] {},
+                                true);
                         if (
                             (!(_initializationFunction.Meta.TryGetValue(InitializationId, out init) &&
                                int.TryParse(init.Text, out offset))) || offset < 0)
@@ -321,12 +325,14 @@ namespace Prexonite
                     if (context.Meta.TryGetValue(InitializationId, out init))
                     {
                         context.Meta.Remove(InitializationId); //Entry no longer required
-                        if (int.TryParse(init.Text, out generation) && generation > _initializationGeneration)
+                        if (int.TryParse(init.Text, out generation) &&
+                            generation > _initializationGeneration)
                             goto case ApplicationInitializationState.None;
                     }
                     break;
                 default:
-                    throw new PrexoniteException("Invalid InitializationState " + _initalizationState);
+                    throw new PrexoniteException(
+                        "Invalid InitializationState " + _initalizationState);
             }
         }
 
@@ -344,7 +350,8 @@ namespace Prexonite
         {
             string entryName = Meta[EntryKey];
             if (!Functions.Contains(entryName))
-                throw new PrexoniteException("Cannot find an entry function named \"" + entryName + "\"");
+                throw new PrexoniteException(
+                    "Cannot find an entry function named \"" + entryName + "\"");
             FunctionContext fctx = Functions[entryName].CreateFunctionContext(parentEngine, args);
             parentEngine.Stack.AddLast(fctx);
             parentEngine.Process();
@@ -452,7 +459,8 @@ namespace Prexonite
         }
 
         [NoDebug]
-        KeyValuePair<string, MetaEntry>? IMetaFilter.SetTransform(KeyValuePair<string, MetaEntry> item)
+        KeyValuePair<string, MetaEntry>? IMetaFilter.SetTransform(
+            KeyValuePair<string, MetaEntry> item)
         {
             //Unlike the function, the application allows name changes
             if (Engine.StringsAreEqual(item.Key, "name"))

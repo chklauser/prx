@@ -1,10 +1,9 @@
-using System;
 using System.Collections.Generic;
-using System.Text;
 
 namespace Prexonite.Compiler.Ast
 {
-    public class AstCreateCoroutine : AstNode, IAstExpression
+    public class AstCreateCoroutine : AstNode,
+                                      IAstExpression
     {
         public IAstExpression Expression;
 
@@ -12,15 +11,13 @@ namespace Prexonite.Compiler.Ast
 
         public AstGetSet.ArgumentsProxy Arguments
         {
-            get
-            {
-                 return _proxy;
-            }
+            get { return _proxy; }
         }
+
         private List<IAstExpression> _arguments = new List<IAstExpression>();
 
         public AstCreateCoroutine(string file, int line, int col)
-            : base(file, line,col)
+            : base(file, line, col)
         {
             _proxy = new AstGetSet.ArgumentsProxy(_arguments);
         }
@@ -33,14 +30,14 @@ namespace Prexonite.Compiler.Ast
 
         public override void EmitCode(CompilerTarget target)
         {
-            if(Expression == null)
+            if (Expression == null)
                 throw new PrexoniteException("CreateCoroutine node requires an Expression.");
 
             Expression.EmitCode(target);
             foreach (IAstExpression argument in _arguments)
                 argument.EmitCode(target);
 
-            target.Emit(OpCode.newcor,_arguments.Count);
+            target.Emit(OpCode.newcor, _arguments.Count);
         }
 
         #region IAstExpression Members
@@ -48,14 +45,15 @@ namespace Prexonite.Compiler.Ast
         public bool TryOptimize(CompilerTarget target, out IAstExpression expr)
         {
             OptimizeNode(target, ref Expression);
-            
+
             //Optimize arguments
             IAstExpression oArg;
             foreach (IAstExpression arg in _arguments.ToArray())
             {
                 if (arg == null)
-                    throw new PrexoniteException("Invalid (null) argument in CreateCoroutine node (" + ToString() +
-                                                 ") detected at position " + _arguments.IndexOf(arg) + ".");
+                    throw new PrexoniteException(
+                        "Invalid (null) argument in CreateCoroutine node (" + ToString() +
+                        ") detected at position " + _arguments.IndexOf(arg) + ".");
                 oArg = GetOptimizedNode(target, arg);
                 if (!ReferenceEquals(oArg, arg))
                 {

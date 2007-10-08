@@ -38,18 +38,30 @@ namespace Prexonite
     {
         #region Creation
 
-        public FunctionContext(Engine parentEngine, PFunction implementation, PValue[] args, PVariable[] sharedVariables)
+        public FunctionContext(
+            Engine parentEngine,
+            PFunction implementation,
+            PValue[] args,
+            PVariable[] sharedVariables)
             : this(parentEngine, implementation, args, sharedVariables, false)
         {
         }
 
-        internal FunctionContext(Engine parentEngine, PFunction implementation, PValue[] args,
-                                 PVariable[] sharedVariables, bool suppressInitialization)
+        internal FunctionContext(
+            Engine parentEngine,
+            PFunction implementation,
+            PValue[] args,
+            PVariable[] sharedVariables,
+            bool suppressInitialization)
         {
-            if (parentEngine == null) throw new ArgumentNullException("parentEngine");
-            if (implementation == null) throw new ArgumentNullException("implementation");
-            if (sharedVariables == null) sharedVariables = new PVariable[] {};
-            if (args == null) args = new PValue[] {};
+            if (parentEngine == null)
+                throw new ArgumentNullException("parentEngine");
+            if (implementation == null)
+                throw new ArgumentNullException("implementation");
+            if (sharedVariables == null)
+                sharedVariables = new PVariable[] {};
+            if (args == null)
+                args = new PValue[] {};
 
             if (!suppressInitialization)
                 implementation.ParentApplication.EnsureInitialization(parentEngine, implementation);
@@ -62,13 +74,15 @@ namespace Prexonite
             {
                 MetaEntry[] sharedNames = _implementation.Meta[PFunction.SharedNamesKey].List;
                 if (sharedNames.Length > sharedVariables.Length)
-                    throw new ArgumentException("The function " + _implementation.Id + " requires " +
-                                                sharedNames.Length + " variables to be shared.");
+                    throw new ArgumentException(
+                        "The function " + _implementation.Id + " requires " +
+                        sharedNames.Length + " variables to be shared.");
                 for (int i = 0; i < sharedNames.Length; i++)
                 {
                     if (sharedVariables[i] == null)
-                        throw new ArgumentNullException("sharedVariables",
-                                                        "One of the elements passed in sharedVariables is null.");
+                        throw new ArgumentNullException(
+                            "sharedVariables",
+                            "One of the elements passed in sharedVariables is null.");
 
                     if (_localVariables.ContainsKey(sharedNames[i]))
                         continue; //Arguments are redeclarations.
@@ -90,7 +104,8 @@ namespace Prexonite
         private void _bindArguments(PValue[] args)
         {
             //Create args variable
-            string argVId = PFunction.ArgumentListId; //Make sure the variable does not override any parameter or existing variable
+            string argVId = PFunction.ArgumentListId;
+                //Make sure the variable does not override any parameter or existing variable
             while (_implementation.Parameters.Contains(argVId))
                 argVId = "\\" + argVId;
 
@@ -130,7 +145,8 @@ namespace Prexonite
         public override PValue ReturnValue
         {
             [NoDebug]
-            get { return _returnValue ?? NullPType.CreateValue(); } //Returns PValue(null) instead of just null.
+            get { return _returnValue ?? NullPType.CreateValue(); }
+            //Returns PValue(null) instead of just null.
         }
 
         private Engine _parentEngine;
@@ -203,8 +219,9 @@ namespace Prexonite
 
         private void throwInvalidStackException(int argc)
         {
-            throw new PrexoniteInvalidStackException("Code expects " + argc +
-                                                     " values on the stack but finds " + _stack.Count);
+            throw new PrexoniteInvalidStackException(
+                "Code expects " + argc +
+                " values on the stack but finds " + _stack.Count);
         }
 
         [NoDebug]
@@ -892,7 +909,7 @@ namespace Prexonite
 
                     case OpCode.func:
                         fillArgs(argc, out argv);
-                        if(ParentEngine.CacheFunctions)
+                        if (ParentEngine.CacheFunctions)
                         {
                             func = (ins.GenericArgument as PFunction) ??
                                    ParentApplication.Functions[id];
@@ -908,7 +925,7 @@ namespace Prexonite
                         _lastContext =
                             new FunctionContext(
                                 ParentEngine, func, argv);
-                        
+
                         _lastJustEffectFlag = justEffect;
                         ParentEngine.Stack.AddLast(_lastContext);
 #if Verbose
@@ -918,12 +935,12 @@ namespace Prexonite
                     Console.WriteLine(")");
 #endif
                         return true;
-                            //Force the engine to keep this context on the stack for another cycle
+                        //Force the engine to keep this context on the stack for another cycle
                     case OpCode.cmd:
                         fillArgs(argc, out argv);
                         needToReturn = true;
                         PCommand cmd;
-                        if(ParentEngine.CacheCommands)
+                        if (ParentEngine.CacheCommands)
                         {
                             cmd = (ins.GenericArgument as PCommand) ?? ParentEngine.Commands[id];
                             ins.GenericArgument = cmd;
@@ -1092,9 +1109,9 @@ namespace Prexonite
 
                         #endregion
 
-                    #region STACK MANIPULATION
+                        #region STACK MANIPULATION
 
-                    //STACK MANIPULATION
+                        //STACK MANIPULATION
                     case OpCode.pop:
                         if (_stack.Count < argc)
                             throwInvalidStackException(argc);
@@ -1125,7 +1142,7 @@ namespace Prexonite
 #if Verbose
             Console.Write("\n");
 #endif
-                if(_pointer >= codeLength)
+                if (_pointer >= codeLength)
                     return false;
             }
 
@@ -1153,9 +1170,10 @@ namespace Prexonite
             //Pointer has already been incremented.
             int address = _pointer - 1;
 
-            TryCatchFinallyBlock block = TryCatchFinallyBlock.Closest(address, _implementation.TryCatchFinallyBlocks);
+            TryCatchFinallyBlock block =
+                TryCatchFinallyBlock.Closest(address, _implementation.TryCatchFinallyBlocks);
 
-            if(block == null) //No try-catch-finally block handles exceptions at the given address.
+            if (block == null) //No try-catch-finally block handles exceptions at the given address.
                 return false;
 
             _currentException = exc;

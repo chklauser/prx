@@ -90,8 +90,13 @@ namespace Prexonite.Types
                 return args[0].TryConvertTo(sctx, Int, out result);
         }
 
-        public override bool TryDynamicCall(StackContext sctx, PValue subject, PValue[] args, PCall call, string id,
-                                            out PValue result)
+        public override bool TryDynamicCall(
+            StackContext sctx,
+            PValue subject,
+            PValue[] args,
+            PCall call,
+            string id,
+            out PValue result)
         {
             //Try CLR dynamic call
             ObjectPType clrint = Object[subject.ClrType];
@@ -101,7 +106,8 @@ namespace Prexonite.Types
             return false;
         }
 
-        public override bool TryStaticCall(StackContext sctx, PValue[] args, PCall call, string id, out PValue result)
+        public override bool TryStaticCall(
+            StackContext sctx, PValue[] args, PCall call, string id, out PValue result)
         {
             //Try CLR static call
             ObjectPType clrint = Object[typeof(int)];
@@ -111,8 +117,12 @@ namespace Prexonite.Types
             return false;
         }
 
-        protected override bool InternalConvertTo(StackContext sctx, PValue subject, PType target, bool useExplicit,
-                                                  out PValue result)
+        protected override bool InternalConvertTo(
+            StackContext sctx,
+            PValue subject,
+            PType target,
+            bool useExplicit,
+            out PValue result)
         {
             result = null;
 
@@ -164,8 +174,11 @@ namespace Prexonite.Types
             return result != null;
         }
 
-        protected override bool InternalConvertFrom(StackContext sctx, PValue subject, bool useExplicit,
-                                                    out PValue result)
+        protected override bool InternalConvertFrom(
+            StackContext sctx,
+            PValue subject,
+            bool useExplicit,
+            out PValue result)
         {
             result = null;
             PType subjectType = subject.Type;
@@ -228,7 +241,8 @@ namespace Prexonite.Types
             return _tryConvertToInt(sctx, operand, out value, true);
         }
 
-        private static bool _tryConvertToInt(StackContext sctx, PValue operand, out int value, bool allowNull)
+        private static bool _tryConvertToInt(
+            StackContext sctx, PValue operand, out int value, bool allowNull)
         {
             value = -1337; //should never surface as value is only used if the method returns true
 
@@ -261,171 +275,203 @@ namespace Prexonite.Types
             return false;
         }
 
-        public override bool Addition(StackContext sctx, PValue leftOperand, PValue rightOperand, out PValue result)
+        public override bool Addition(
+            StackContext sctx, PValue leftOperand, PValue rightOperand, out PValue result)
         {
             result = null;
             int left;
             int right;
 
-            if (_tryConvertToInt(sctx, leftOperand, out left) && _tryConvertToInt(sctx, rightOperand, out right))
+            if (_tryConvertToInt(sctx, leftOperand, out left) &&
+                _tryConvertToInt(sctx, rightOperand, out right))
                 result = left + right;
 
             return result != null;
         }
 
-        public override bool Subtraction(StackContext sctx, PValue leftOperand, PValue rightOperand, out PValue result)
+        public override bool Subtraction(
+            StackContext sctx, PValue leftOperand, PValue rightOperand, out PValue result)
         {
             result = null;
             int left;
             int right;
 
-            if (_tryConvertToInt(sctx, leftOperand, out left) && _tryConvertToInt(sctx, rightOperand, out right))
+            if (_tryConvertToInt(sctx, leftOperand, out left) &&
+                _tryConvertToInt(sctx, rightOperand, out right))
                 result = left - right;
 
             return result != null;
         }
 
-        public override bool Multiply(StackContext sctx, PValue leftOperand, PValue rightOperand, out PValue result)
+        public override bool Multiply(
+            StackContext sctx, PValue leftOperand, PValue rightOperand, out PValue result)
         {
             result = null;
             int left;
             int right;
 
-            if (_tryConvertToInt(sctx, leftOperand, out left) && _tryConvertToInt(sctx, rightOperand, out right))
+            if (_tryConvertToInt(sctx, leftOperand, out left) &&
+                _tryConvertToInt(sctx, rightOperand, out right))
                 result = left*right;
 
             return result != null;
         }
 
-        public override bool Division(StackContext sctx, PValue leftOperand, PValue rightOperand, out PValue result)
+        public override bool Division(
+            StackContext sctx, PValue leftOperand, PValue rightOperand, out PValue result)
         {
             result = null;
             int left;
             int right;
 
-            if (_tryConvertToInt(sctx, leftOperand, out left) && _tryConvertToInt(sctx, rightOperand, out right))
+            if (_tryConvertToInt(sctx, leftOperand, out left) &&
+                _tryConvertToInt(sctx, rightOperand, out right))
                 result = left/right;
 
             return result != null;
         }
 
-        public override bool Modulus(StackContext sctx, PValue leftOperand, PValue rightOperand, out PValue result)
+        public override bool Modulus(
+            StackContext sctx, PValue leftOperand, PValue rightOperand, out PValue result)
         {
             result = null;
             int left;
             int right;
 
-            if (_tryConvertToInt(sctx, leftOperand, out left) && _tryConvertToInt(sctx, rightOperand, out right))
+            if (_tryConvertToInt(sctx, leftOperand, out left) &&
+                _tryConvertToInt(sctx, rightOperand, out right))
                 result = left%right;
 
             return result != null;
         }
 
-        public override bool BitwiseAnd(StackContext sctx, PValue leftOperand, PValue rightOperand, out PValue result)
+        public override bool BitwiseAnd(
+            StackContext sctx, PValue leftOperand, PValue rightOperand, out PValue result)
         {
             result = null;
             int left;
             int right;
 
-            if (_tryConvertToInt(sctx, leftOperand, out left) && _tryConvertToInt(sctx, rightOperand, out right))
+            if (_tryConvertToInt(sctx, leftOperand, out left) &&
+                _tryConvertToInt(sctx, rightOperand, out right))
                 result = left & right;
 
             return result != null;
         }
 
-        public override bool BitwiseOr(StackContext sctx, PValue leftOperand, PValue rightOperand, out PValue result)
+        public override bool BitwiseOr(
+            StackContext sctx, PValue leftOperand, PValue rightOperand, out PValue result)
         {
             result = null;
             int left;
             int right;
 
-            if (_tryConvertToInt(sctx, leftOperand, out left) && _tryConvertToInt(sctx, rightOperand, out right))
+            if (_tryConvertToInt(sctx, leftOperand, out left) &&
+                _tryConvertToInt(sctx, rightOperand, out right))
                 result = left | right;
 
             return result != null;
         }
 
-        public override bool ExclusiveOr(StackContext sctx, PValue leftOperand, PValue rightOperand, out PValue result)
+        public override bool ExclusiveOr(
+            StackContext sctx, PValue leftOperand, PValue rightOperand, out PValue result)
         {
             result = null;
             int left;
             int right;
 
-            if (_tryConvertToInt(sctx, leftOperand, out left) && _tryConvertToInt(sctx, rightOperand, out right))
+            if (_tryConvertToInt(sctx, leftOperand, out left) &&
+                _tryConvertToInt(sctx, rightOperand, out right))
                 result = left ^ right;
 
             return result != null;
         }
 
-        public override bool Equality(StackContext sctx, PValue leftOperand, PValue rightOperand, out PValue result)
+        public override bool Equality(
+            StackContext sctx, PValue leftOperand, PValue rightOperand, out PValue result)
         {
             result = null;
             int left;
             int right;
 
-            if (_tryConvertToInt(sctx, leftOperand, out left,false) && _tryConvertToInt(sctx, rightOperand, out right,false))
+            if (_tryConvertToInt(sctx, leftOperand, out left, false) &&
+                _tryConvertToInt(sctx, rightOperand, out right, false))
                 result = left == right;
 
             return result != null;
         }
 
-        public override bool Inequality(StackContext sctx, PValue leftOperand, PValue rightOperand, out PValue result)
+        public override bool Inequality(
+            StackContext sctx, PValue leftOperand, PValue rightOperand, out PValue result)
         {
             result = null;
             int left;
             int right;
 
-            if (_tryConvertToInt(sctx, leftOperand, out left,false) && _tryConvertToInt(sctx, rightOperand, out right,false))
+            if (_tryConvertToInt(sctx, leftOperand, out left, false) &&
+                _tryConvertToInt(sctx, rightOperand, out right, false))
                 result = left != right;
 
             return result != null;
         }
 
-        public override bool GreaterThan(StackContext sctx, PValue leftOperand, PValue rightOperand, out PValue result)
+        public override bool GreaterThan(
+            StackContext sctx, PValue leftOperand, PValue rightOperand, out PValue result)
         {
             result = null;
             int left;
             int right;
 
-            if (_tryConvertToInt(sctx, leftOperand, out left) && _tryConvertToInt(sctx, rightOperand, out right))
+            if (_tryConvertToInt(sctx, leftOperand, out left) &&
+                _tryConvertToInt(sctx, rightOperand, out right))
                 result = left > right;
 
             return result != null;
         }
 
-        public override bool GreaterThanOrEqual(StackContext sctx, PValue leftOperand, PValue rightOperand,
-                                                out PValue result)
+        public override bool GreaterThanOrEqual(
+            StackContext sctx,
+            PValue leftOperand,
+            PValue rightOperand,
+            out PValue result)
         {
             result = null;
             int left;
             int right;
 
-            if (_tryConvertToInt(sctx, leftOperand, out left) && _tryConvertToInt(sctx, rightOperand, out right))
+            if (_tryConvertToInt(sctx, leftOperand, out left) &&
+                _tryConvertToInt(sctx, rightOperand, out right))
                 result = left >= right;
 
             return result != null;
         }
 
-        public override bool LessThan(StackContext sctx, PValue leftOperand, PValue rightOperand, out PValue result)
+        public override bool LessThan(
+            StackContext sctx, PValue leftOperand, PValue rightOperand, out PValue result)
         {
             result = null;
             int left;
             int right;
 
-            if (_tryConvertToInt(sctx, leftOperand, out left) && _tryConvertToInt(sctx, rightOperand, out right))
+            if (_tryConvertToInt(sctx, leftOperand, out left) &&
+                _tryConvertToInt(sctx, rightOperand, out right))
                 result = left < right;
 
             return result != null;
         }
 
-        public override bool LessThanOrEqual(StackContext sctx, PValue leftOperand, PValue rightOperand,
-                                             out PValue result)
+        public override bool LessThanOrEqual(
+            StackContext sctx,
+            PValue leftOperand,
+            PValue rightOperand,
+            out PValue result)
         {
             result = null;
             int left;
             int right;
 
-            if (_tryConvertToInt(sctx, leftOperand, out left) && _tryConvertToInt(sctx, rightOperand, out right))
+            if (_tryConvertToInt(sctx, leftOperand, out left) &&
+                _tryConvertToInt(sctx, rightOperand, out right))
                 result = left <= right;
 
             return result != null;

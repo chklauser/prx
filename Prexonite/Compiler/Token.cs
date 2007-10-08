@@ -22,8 +22,6 @@
  */
 
 using System;
-using System.Collections.Generic;
-using System.Text;
 
 namespace Prexonite.Compiler
 {
@@ -37,7 +35,8 @@ namespace Prexonite.Compiler
         internal Token next;
 
         public Token()
-        {}
+        {
+        }
 
         public Token(Token next)
         {
@@ -51,7 +50,13 @@ namespace Prexonite.Compiler
 
         public string ToString(bool includePosition)
         {
-            return String.Format("({0})~{1}" + (includePosition ? "/line:{2}/col:{3}" : ""), val, Enum.GetName(typeof(Parser.Terminals), (Parser.Terminals) kind), line, col);
+            return
+                String.Format(
+                    "({0})~{1}" + (includePosition ? "/line:{2}/col:{3}" : ""),
+                    val,
+                    Enum.GetName(typeof(Parser.Terminals), (Parser.Terminals) kind),
+                    line,
+                    col);
         }
     }
 }

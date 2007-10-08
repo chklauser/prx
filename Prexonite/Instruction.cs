@@ -221,7 +221,8 @@ namespace Prexonite
             return new Instruction(OpCode.set, arguments, id);
         }
 
-        public static Instruction CreateStaticGetCall(int args, string typeId, string memberId, bool justEffect)
+        public static Instruction CreateStaticGetCall(
+            int args, string typeId, string memberId, bool justEffect)
         {
             return CreateStaticGetCall(args, typeId + "::" + memberId, justEffect);
         }
@@ -231,7 +232,8 @@ namespace Prexonite
             return CreateStaticGetCall(arguments, typeId, memberId, false);
         }
 
-        public static Instruction CreateStaticGetCall(int arguments, string callExpr, bool justEffect)
+        public static Instruction CreateStaticGetCall(
+            int arguments, string callExpr, bool justEffect)
         {
             return new Instruction(OpCode.sget, arguments, callExpr, justEffect);
         }
@@ -276,7 +278,8 @@ namespace Prexonite
             return CreateLocalIndirectCall(arguments, id, false);
         }
 
-        public static Instruction CreateGlobalIndirectCall(int arguments, string id, bool justEffect)
+        public static Instruction CreateGlobalIndirectCall(
+            int arguments, string id, bool justEffect)
         {
             return new Instruction(OpCode.indglob, arguments, id, justEffect);
         }
@@ -821,9 +824,11 @@ namespace Prexonite
         ret_break, //ret.break     exits the function in break mode
         ret_continue, //ret.continue  exits the function in continue mode
         ret_set, //ret.set       grabs the return value from the stack and stores it
-        @throw, //throw         Throws one argument (string or exception) from the stack as an exception.
+        @throw,
+        //throw         Throws one argument (string or exception) from the stack as an exception.
         @try, //try            Initializes a try-finally-[catch] block
-        leave, //leave         jumps depending on whether the context is currently in exception handling mode or not.
+        leave,
+        //leave         jumps depending on whether the context is currently in exception handling mode or not.
         exc, //exc              Pushes the current exception on top of the stack.
         tail, //tail            Prevents function from yielding until it has reached an exit point
         //Stack manipulation

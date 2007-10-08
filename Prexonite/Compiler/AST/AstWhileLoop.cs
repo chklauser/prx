@@ -93,7 +93,9 @@ namespace Prexonite.Compiler.Ast
             {
                 AstConstant constCond = (AstConstant) Condition;
                 PValue condValue;
-                if (!constCond.ToPValue(target).TryConvertTo(target.Loader, PType.Bool, out condValue))
+                if (
+                    !constCond.ToPValue(target).TryConvertTo(
+                         target.Loader, PType.Bool, out condValue))
                     goto continueFull;
                 else if ((bool) condValue.Value == IsPositive)
                     conditionIsConstant = true;

@@ -1,10 +1,7 @@
-using System;
-using System.Collections.Generic;
-using System.Text;
-
 namespace Prexonite.Compiler.Ast
 {
-    public class AstGetException : AstNode, IAstExpression
+    public class AstGetException : AstNode,
+                                   IAstExpression
     {
         internal AstGetException(Parser p)
             : base(p)

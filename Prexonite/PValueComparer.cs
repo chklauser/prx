@@ -1,6 +1,6 @@
 using System;
 using System.Collections.Generic;
-using System.Text;
+using System.Diagnostics;
 using Prexonite.Types;
 
 namespace Prexonite
@@ -8,7 +8,7 @@ namespace Prexonite
     /// <summary>
     /// Compares PValueswith respect to a stack context.
     /// </summary>
-    [System.Diagnostics.DebuggerNonUserCode]
+    [DebuggerNonUserCode]
     public class PValueComparer : IComparer<PValue>
     {
         private StackContext sctx;
@@ -16,7 +16,7 @@ namespace Prexonite
         public PValueComparer(StackContext sctx)
         {
             if (sctx == null)
-                throw new ArgumentNullException("sctx"); 
+                throw new ArgumentNullException("sctx");
             this.sctx = sctx;
         }
 
@@ -38,22 +38,22 @@ namespace Prexonite
                 return 0;
             else if (x == null)
                 return -1;
-            else if(y == null)
+            else if (y == null)
                 return 1;
             else
             {
                 PValue pr;
-                if (x.TryDynamicCall(sctx, new PValue[] { }, PCall.Get, "CompareTo", out pr))
+                if (x.TryDynamicCall(sctx, new PValue[] {}, PCall.Get, "CompareTo", out pr))
                 {
                     if (!(pr.Type is IntPType))
                         pr.ConvertTo(sctx, PType.Int);
                     return (int) pr.Value;
                 }
-                else if (y.TryDynamicCall(sctx, new PValue[] { }, PCall.Get, "CompareTo", out pr))
+                else if (y.TryDynamicCall(sctx, new PValue[] {}, PCall.Get, "CompareTo", out pr))
                 {
                     if (!(pr.Type is IntPType))
                         pr.ConvertTo(sctx, PType.Int);
-                    return (int)pr.Value;
+                    return (int) pr.Value;
                 }
                 else
                 {

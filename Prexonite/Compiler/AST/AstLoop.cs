@@ -1,7 +1,3 @@
-using System;
-using System.Collections.Generic;
-using System.Text;
-
 namespace Prexonite.Compiler.Ast
 {
     public abstract class AstLoop : AstNode
@@ -33,10 +29,7 @@ namespace Prexonite.Compiler.Ast
 
         public virtual AstBlock[] Blocks
         {
-            get
-            {
-                return new AstBlock[] { Block };
-            }
+            get { return new AstBlock[] {Block}; }
         }
 
         #endregion

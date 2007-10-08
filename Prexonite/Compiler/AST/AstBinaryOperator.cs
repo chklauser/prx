@@ -36,7 +36,8 @@ namespace Prexonite.Compiler.Ast
         public IAstExpression RightOperand;
         public BinaryOperator Operator;
 
-        internal AstBinaryOperator(Parser p, IAstExpression leftOperand, BinaryOperator op, IAstExpression rightOperand)
+        internal AstBinaryOperator(
+            Parser p, IAstExpression leftOperand, BinaryOperator op, IAstExpression rightOperand)
             : this(p.scanner.File, p.t.line, p.t.col, leftOperand, op, rightOperand)
         {
         }
@@ -52,8 +53,13 @@ namespace Prexonite.Compiler.Ast
         /// <param name="rightOperand">The right operand of the expression.</param>
         /// <seealso cref="BinaryOperator"/>
         /// <seealso cref="IAstExpression"/>
-        public AstBinaryOperator(string file, int line, int column, IAstExpression leftOperand, BinaryOperator op,
-                                 IAstExpression rightOperand)
+        public AstBinaryOperator(
+            string file,
+            int line,
+            int column,
+            IAstExpression leftOperand,
+            BinaryOperator op,
+            IAstExpression rightOperand)
             : base(file, line, column)
         {
             LeftOperand = leftOperand;
@@ -160,7 +166,7 @@ namespace Prexonite.Compiler.Ast
         public bool TryOptimize(CompilerTarget target, out IAstExpression expr)
         {
             //The coalecence operator is handled separately.
-            if(Operator == BinaryOperator.Coalescence)
+            if (Operator == BinaryOperator.Coalescence)
             {
                 AstCoalescence coal = new AstCoalescence(File, Line, Column);
                 coal.Expressions.Add(LeftOperand);
@@ -198,7 +204,8 @@ namespace Prexonite.Compiler.Ast
                     if (right != null)
                     {
                         //DO NOT CHECK FOR THE EMPTY STRING! It can change the type of an expression -> handled by StringConcat
-                        if ((right.Equality(target.Loader, new PValue(0, PType.Int), out neutral) && (bool) neutral.Value))
+                        if ((right.Equality(target.Loader, new PValue(0, PType.Int), out neutral) &&
+                             (bool) neutral.Value))
                         {
                             //right operand is the neutral element 0 => left + 0 = left
                             expr = leftConstant == null ? LeftOperand : leftConstant;
@@ -207,51 +214,61 @@ namespace Prexonite.Compiler.Ast
                     }
                     else if (left != null)
                     {
-                        if ((left.Equality(target.Loader, new PValue(0, PType.Int), out neutral) && (bool)neutral.Value))
+                        if ((left.Equality(target.Loader, new PValue(0, PType.Int), out neutral) &&
+                             (bool) neutral.Value))
                         {
                             //left operand is the neutral element 0 => 0 + right = right
                             expr = rightConstant == null ? RightOperand : rightConstant;
                             return true;
                         }
                     }
-                    
+
                     //Check for already existing concat nodes.
                     AstStringConcatenation concat;
                     //left is concat?
                     if ((concat = LeftOperand as AstStringConcatenation) != null)
                     {
                         concat.Arguments.Add(RightOperand);
-                        expr = GetOptimizedNode(target,concat);
+                        expr = GetOptimizedNode(target, concat);
                         return true;
-                    }//right is concat?
-                    else if((concat = RightOperand as AstStringConcatenation) != null)
+                    } //right is concat?
+                    else if ((concat = RightOperand as AstStringConcatenation) != null)
                     {
-                        concat.Arguments.Insert(0,LeftOperand);
+                        concat.Arguments.Insert(0, LeftOperand);
                         expr = GetOptimizedNode(target, concat);
                         return true;
                     }
-                    
+
                     //Check if a new concat can be created
-                    if(left != null && left.Type is StringPType)
+                    if (left != null && left.Type is StringPType)
                     {
                         //Can create concat
-                        expr = GetOptimizedNode(target,
-                            new AstStringConcatenation(File, Line, Column,
-                                                       leftConstant,
-                                                       rightConstant == null ? RightOperand : rightConstant));
+                        expr = GetOptimizedNode(
+                            target,
+                            new AstStringConcatenation(
+                                File,
+                                Line,
+                                Column,
+                                leftConstant,
+                                rightConstant == null ? RightOperand : rightConstant));
 
                         return true;
                     }
                     else if (right != null && right.Type is StringPType)
                     {
                         //Can create concat
-                        expr = GetOptimizedNode(target,
-                            new AstStringConcatenation(File, Line, Column,
-                                                       leftConstant == null ? LeftOperand : leftConstant,
-                                                       rightConstant));
+                        expr = GetOptimizedNode(
+                            target,
+                            new AstStringConcatenation(
+                                File,
+                                Line,
+                                Column,
+                                leftConstant == null ? LeftOperand : leftConstant,
+                                rightConstant));
                         return true;
                     }
-                    else goto emitFull;
+                    else
+                        goto emitFull;
 
                 case BinaryOperator.Subtraction:
                     //Constant folding
@@ -269,7 +286,9 @@ namespace Prexonite.Compiler.Ast
                     if (right != null)
                     {
                         neutral = new PValue(1, PType.Int);
-                        if (!(right.Equality(target.Loader, neutral, out neutral) && (bool) neutral.Value))
+                        if (
+                            !(right.Equality(target.Loader, neutral, out neutral) &&
+                              (bool) neutral.Value))
                             goto emitFull;
                         //right operand is the neutral element 1 => left * 1 = left
                         expr = leftConstant == null ? LeftOperand : leftConstant;
@@ -278,7 +297,9 @@ namespace Prexonite.Compiler.Ast
                     else if (left != null)
                     {
                         neutral = new PValue(1, PType.Int);
-                        if (!(left.Equality(target.Loader, neutral, out neutral) && (bool) neutral.Value))
+                        if (
+                            !(left.Equality(target.Loader, neutral, out neutral) &&
+                              (bool) neutral.Value))
                             goto emitFull;
                         //left operand is the neutral element 1 => 1 * right = right
                         expr = rightConstant == null ? RightOperand : rightConstant;
@@ -297,7 +318,9 @@ namespace Prexonite.Compiler.Ast
                     if (right != null)
                     {
                         neutral = new PValue(1, PType.Int);
-                        if (!(right.Equality(target.Loader, neutral, out neutral) && (bool)neutral.Value))
+                        if (
+                            !(right.Equality(target.Loader, neutral, out neutral) &&
+                              (bool) neutral.Value))
                             goto emitFull;
                         //right operand is the neutral element 1 => left * 1 = left
                         expr = leftConstant == null ? LeftOperand : leftConstant;
@@ -326,7 +349,9 @@ namespace Prexonite.Compiler.Ast
                     if (right != null)
                     {
                         neutral = new PValue(1, PType.Int);
-                        if (!(right.Equality(target.Loader, neutral, out neutral) && (bool) neutral.Value))
+                        if (
+                            !(right.Equality(target.Loader, neutral, out neutral) &&
+                              (bool) neutral.Value))
                             goto emitFull;
                         //right operand is the neutral element 1 => left ^ 1 = left
                         expr = leftConstant == null ? LeftOperand : leftConstant;
@@ -335,7 +360,9 @@ namespace Prexonite.Compiler.Ast
                     else if (left != null)
                     {
                         neutral = new PValue(1, PType.Int);
-                        if (!(left.Equality(target.Loader, neutral, out neutral) && (bool) neutral.Value))
+                        if (
+                            !(left.Equality(target.Loader, neutral, out neutral) &&
+                              (bool) neutral.Value))
                             goto emitFull;
                         //left operand is the neutral element 1 => 1 ^ right = 1
                         expr = leftConstant;
@@ -446,8 +473,11 @@ namespace Prexonite.Compiler.Ast
         public override string ToString()
         {
             return
-                String.Format("({0}) {1} ({2})", LeftOperand, Enum.GetName(typeof(BinaryOperator), Operator),
-                              RightOperand);
+                String.Format(
+                    "({0}) {1} ({2})",
+                    LeftOperand,
+                    Enum.GetName(typeof(BinaryOperator), Operator),
+                    RightOperand);
         }
     }
 

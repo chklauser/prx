@@ -23,12 +23,10 @@
 
 using System;
 using System.Collections.Generic;
-using System.Runtime.Serialization;
 using NoDebug = System.Diagnostics.DebuggerNonUserCodeAttribute;
 
 namespace Prexonite.Types
 {
-
     public abstract class PType
     {
         #region Built-In Types
@@ -69,7 +67,7 @@ namespace Prexonite.Types
                 return BuiltIn.Object;
             if (thisType == typeof(ListPType))
                 return BuiltIn.List;
-            if(thisType == typeof(HashPType))
+            if (thisType == typeof(HashPType))
                 return BuiltIn.Hash;
 
             return BuiltIn.Null;
@@ -240,10 +238,17 @@ namespace Prexonite.Types
 
         #region Type interface
 
-        public abstract bool TryDynamicCall(StackContext sctx, PValue subject, PValue[] args, PCall call, string id,
-                                            out PValue result);
+        public abstract bool TryDynamicCall(
+            StackContext sctx,
+            PValue subject,
+            PValue[] args,
+            PCall call,
+            string id,
+            out PValue result);
 
-        public abstract bool TryStaticCall(StackContext sctx, PValue[] args, PCall call, string id, out PValue result);
+        public abstract bool TryStaticCall(
+            StackContext sctx, PValue[] args, PCall call, string id, out PValue result);
+
         public abstract bool TryContruct(StackContext sctx, PValue[] args, out PValue result);
 
         [NoDebug()]
@@ -253,12 +258,14 @@ namespace Prexonite.Types
             if (TryContruct(sctx, args, out result))
                 return result;
             else
-                throw new InvalidCallException("Cannot construct a " + ToString() + " with the supplied arguments.");
+                throw new InvalidCallException(
+                    "Cannot construct a " + ToString() + " with the supplied arguments.");
         }
 
         #region Indirect Call
 
-        public virtual bool IndirectCall(StackContext sctx, PValue subject, PValue[] args, out PValue result)
+        public virtual bool IndirectCall(
+            StackContext sctx, PValue subject, PValue[] args, out PValue result)
         {
             result = null;
             return false;
@@ -270,7 +277,9 @@ namespace Prexonite.Types
             if (IndirectCall(sctx, subject, args, out ret))
                 return ret;
             else
-                throw new InvalidCallException("PType " + GetType().Name + " (" + ToString() + ") does not support indirect calls.");
+                throw new InvalidCallException(
+                    "PType " + GetType().Name + " (" + ToString() +
+                    ") does not support indirect calls.");
         }
 
         #endregion
@@ -285,8 +294,9 @@ namespace Prexonite.Types
             if (UnaryNegation(sctx, operand, out ret))
                 return ret;
             else
-                throw new InvalidCallException("PType " + GetType().Name +
-                                               " does not support the UnaryNegation operator.");
+                throw new InvalidCallException(
+                    "PType " + GetType().Name +
+                    " does not support the UnaryNegation operator.");
         }
 
         public PValue LogicalNot(StackContext sctx, PValue operand)
@@ -295,7 +305,8 @@ namespace Prexonite.Types
             if (LogicalNot(sctx, operand, out ret))
                 return ret;
             else
-                throw new InvalidCallException("PType " + GetType().Name + " does not support the LogicalNot operator.");
+                throw new InvalidCallException(
+                    "PType " + GetType().Name + " does not support the LogicalNot operator.");
         }
 
         public PValue OnesComplement(StackContext sctx, PValue operand)
@@ -304,8 +315,9 @@ namespace Prexonite.Types
             if (OnesComplement(sctx, operand, out ret))
                 return ret;
             else
-                throw new InvalidCallException("PType " + GetType().Name +
-                                               " does not support the OnesComplement operator.");
+                throw new InvalidCallException(
+                    "PType " + GetType().Name +
+                    " does not support the OnesComplement operator.");
         }
 
         public PValue Increment(StackContext sctx, PValue operand)
@@ -314,7 +326,8 @@ namespace Prexonite.Types
             if (Increment(sctx, operand, out ret))
                 return ret;
             else
-                throw new InvalidCallException("PType " + GetType().Name + " does not support the Increment operator.");
+                throw new InvalidCallException(
+                    "PType " + GetType().Name + " does not support the Increment operator.");
         }
 
         public PValue Decrement(StackContext sctx, PValue operand)
@@ -323,7 +336,8 @@ namespace Prexonite.Types
             if (Decrement(sctx, operand, out ret))
                 return ret;
             else
-                throw new InvalidCallException("PType " + GetType().Name + " does not support the Decrement operator.");
+                throw new InvalidCallException(
+                    "PType " + GetType().Name + " does not support the Decrement operator.");
         }
 
         //Binary
@@ -333,7 +347,8 @@ namespace Prexonite.Types
             if (Addition(sctx, leftOperand, rightOperand, out ret))
                 return ret;
             else
-                throw new InvalidCallException("PType " + GetType().Name + " does not support the Addition operator.");
+                throw new InvalidCallException(
+                    "PType " + GetType().Name + " does not support the Addition operator.");
         }
 
         public PValue Subtraction(StackContext sctx, PValue leftOperand, PValue rightOperand)
@@ -342,7 +357,8 @@ namespace Prexonite.Types
             if (Subtraction(sctx, leftOperand, rightOperand, out ret))
                 return ret;
             else
-                throw new InvalidCallException("PType " + GetType().Name + " does not support the Subtraction operator.");
+                throw new InvalidCallException(
+                    "PType " + GetType().Name + " does not support the Subtraction operator.");
         }
 
         public PValue Multiply(StackContext sctx, PValue leftOperand, PValue rightOperand)
@@ -351,7 +367,8 @@ namespace Prexonite.Types
             if (Multiply(sctx, leftOperand, rightOperand, out ret))
                 return ret;
             else
-                throw new InvalidCallException("PType " + GetType().Name + " does not support the Multiply operator.");
+                throw new InvalidCallException(
+                    "PType " + GetType().Name + " does not support the Multiply operator.");
         }
 
         public PValue Division(StackContext sctx, PValue leftOperand, PValue rightOperand)
@@ -360,7 +377,8 @@ namespace Prexonite.Types
             if (Division(sctx, leftOperand, rightOperand, out ret))
                 return ret;
             else
-                throw new InvalidCallException("PType " + GetType().Name + " does not support the Division operator.");
+                throw new InvalidCallException(
+                    "PType " + GetType().Name + " does not support the Division operator.");
         }
 
         public PValue Modulus(StackContext sctx, PValue leftOperand, PValue rightOperand)
@@ -369,7 +387,8 @@ namespace Prexonite.Types
             if (Modulus(sctx, leftOperand, rightOperand, out ret))
                 return ret;
             else
-                throw new InvalidCallException("PType " + GetType().Name + " does not support the Modulus operator.");
+                throw new InvalidCallException(
+                    "PType " + GetType().Name + " does not support the Modulus operator.");
         }
 
         public PValue BitwiseAnd(StackContext sctx, PValue leftOperand, PValue rightOperand)
@@ -378,7 +397,8 @@ namespace Prexonite.Types
             if (BitwiseAnd(sctx, leftOperand, rightOperand, out ret))
                 return ret;
             else
-                throw new InvalidCallException("PType " + GetType().Name + " does not support the BitwiseAnd operator.");
+                throw new InvalidCallException(
+                    "PType " + GetType().Name + " does not support the BitwiseAnd operator.");
         }
 
         public PValue BitwiseOr(StackContext sctx, PValue leftOperand, PValue rightOperand)
@@ -387,7 +407,8 @@ namespace Prexonite.Types
             if (BitwiseOr(sctx, leftOperand, rightOperand, out ret))
                 return ret;
             else
-                throw new InvalidCallException("PType " + GetType().Name + " does not support the BitwiseOr operator.");
+                throw new InvalidCallException(
+                    "PType " + GetType().Name + " does not support the BitwiseOr operator.");
         }
 
         public PValue ExclusiveOr(StackContext sctx, PValue leftOperand, PValue rightOperand)
@@ -396,7 +417,8 @@ namespace Prexonite.Types
             if (ExclusiveOr(sctx, leftOperand, rightOperand, out ret))
                 return ret;
             else
-                throw new InvalidCallException("PType " + GetType().Name + " does not support the ExclusiveOr operator.");
+                throw new InvalidCallException(
+                    "PType " + GetType().Name + " does not support the ExclusiveOr operator.");
         }
 
         public PValue Equality(StackContext sctx, PValue leftOperand, PValue rightOperand)
@@ -405,7 +427,8 @@ namespace Prexonite.Types
             if (Equality(sctx, leftOperand, rightOperand, out ret))
                 return ret;
             else
-                throw new InvalidCallException("PType " + GetType().Name + " does not support the Equality operator.");
+                throw new InvalidCallException(
+                    "PType " + GetType().Name + " does not support the Equality operator.");
         }
 
         public PValue Inequality(StackContext sctx, PValue leftOperand, PValue rightOperand)
@@ -414,7 +437,8 @@ namespace Prexonite.Types
             if (Inequality(sctx, leftOperand, rightOperand, out ret))
                 return ret;
             else
-                throw new InvalidCallException("PType " + GetType().Name + " does not support the Inequality operator.");
+                throw new InvalidCallException(
+                    "PType " + GetType().Name + " does not support the Inequality operator.");
         }
 
         public PValue GreaterThan(StackContext sctx, PValue leftOperand, PValue rightOperand)
@@ -423,7 +447,8 @@ namespace Prexonite.Types
             if (GreaterThan(sctx, leftOperand, rightOperand, out ret))
                 return ret;
             else
-                throw new InvalidCallException("PType " + GetType().Name + " does not support the GreaterThan operator.");
+                throw new InvalidCallException(
+                    "PType " + GetType().Name + " does not support the GreaterThan operator.");
         }
 
         public PValue GreaterThanOrEqual(StackContext sctx, PValue leftOperand, PValue rightOperand)
@@ -432,8 +457,9 @@ namespace Prexonite.Types
             if (GreaterThanOrEqual(sctx, leftOperand, rightOperand, out ret))
                 return ret;
             else
-                throw new InvalidCallException("PType " + GetType().Name +
-                                               " does not support the GreaterThanOrEqual operator.");
+                throw new InvalidCallException(
+                    "PType " + GetType().Name +
+                    " does not support the GreaterThanOrEqual operator.");
         }
 
         public PValue LessThan(StackContext sctx, PValue leftOperand, PValue rightOperand)
@@ -442,7 +468,8 @@ namespace Prexonite.Types
             if (LessThan(sctx, leftOperand, rightOperand, out ret))
                 return ret;
             else
-                throw new InvalidCallException("PType " + GetType().Name + " does not support the LessThan operator.");
+                throw new InvalidCallException(
+                    "PType " + GetType().Name + " does not support the LessThan operator.");
         }
 
         public PValue LessThanOrEqual(StackContext sctx, PValue leftOperand, PValue rightOperand)
@@ -451,8 +478,9 @@ namespace Prexonite.Types
             if (LessThanOrEqual(sctx, leftOperand, rightOperand, out ret))
                 return ret;
             else
-                throw new InvalidCallException("PType " + GetType().Name +
-                                               " does not support the LessThanOrEqual operator.");
+                throw new InvalidCallException(
+                    "PType " + GetType().Name +
+                    " does not support the LessThanOrEqual operator.");
         }
 
         #endregion //Failing-Variantions
@@ -498,89 +526,107 @@ namespace Prexonite.Types
         //Binary
         //
         //Arithmetic
-        public virtual bool Addition(StackContext sctx, PValue leftOperand, PValue rightOperand, out PValue result)
+        public virtual bool Addition(
+            StackContext sctx, PValue leftOperand, PValue rightOperand, out PValue result)
         {
             result = null;
             return false;
         }
 
-        public virtual bool Subtraction(StackContext sctx, PValue leftOperand, PValue rightOperand, out PValue result)
+        public virtual bool Subtraction(
+            StackContext sctx, PValue leftOperand, PValue rightOperand, out PValue result)
         {
             result = null;
             return false;
         }
 
-        public virtual bool Multiply(StackContext sctx, PValue leftOperand, PValue rightOperand, out PValue result)
+        public virtual bool Multiply(
+            StackContext sctx, PValue leftOperand, PValue rightOperand, out PValue result)
         {
             result = null;
             return false;
         }
 
-        public virtual bool Division(StackContext sctx, PValue leftOperand, PValue rightOperand, out PValue result)
+        public virtual bool Division(
+            StackContext sctx, PValue leftOperand, PValue rightOperand, out PValue result)
         {
             result = null;
             return false;
         }
 
-        public virtual bool Modulus(StackContext sctx, PValue leftOperand, PValue rightOperand, out PValue result)
+        public virtual bool Modulus(
+            StackContext sctx, PValue leftOperand, PValue rightOperand, out PValue result)
         {
             result = null;
             return false;
         }
 
         //Bitwise
-        public virtual bool BitwiseAnd(StackContext sctx, PValue leftOperand, PValue rightOperand, out PValue result)
+        public virtual bool BitwiseAnd(
+            StackContext sctx, PValue leftOperand, PValue rightOperand, out PValue result)
         {
             result = null;
             return false;
         }
 
-        public virtual bool BitwiseOr(StackContext sctx, PValue leftOperand, PValue rightOperand, out PValue result)
+        public virtual bool BitwiseOr(
+            StackContext sctx, PValue leftOperand, PValue rightOperand, out PValue result)
         {
             result = null;
             return false;
         }
 
-        public virtual bool ExclusiveOr(StackContext sctx, PValue leftOperand, PValue rightOperand, out PValue result)
+        public virtual bool ExclusiveOr(
+            StackContext sctx, PValue leftOperand, PValue rightOperand, out PValue result)
         {
             result = null;
             return false;
         }
 
         //Comparision
-        public virtual bool Equality(StackContext sctx, PValue leftOperand, PValue rightOperand, out PValue result)
+        public virtual bool Equality(
+            StackContext sctx, PValue leftOperand, PValue rightOperand, out PValue result)
         {
             result = null;
             return false;
         }
 
-        public virtual bool Inequality(StackContext sctx, PValue leftOperand, PValue rightOperand, out PValue result)
+        public virtual bool Inequality(
+            StackContext sctx, PValue leftOperand, PValue rightOperand, out PValue result)
         {
             result = null;
             return false;
         }
 
-        public virtual bool GreaterThan(StackContext sctx, PValue leftOperand, PValue rightOperand, out PValue result)
+        public virtual bool GreaterThan(
+            StackContext sctx, PValue leftOperand, PValue rightOperand, out PValue result)
         {
             result = null;
             return false;
         }
 
-        public virtual bool GreaterThanOrEqual(StackContext sctx, PValue leftOperand, PValue rightOperand,
-                                               out PValue result)
+        public virtual bool GreaterThanOrEqual(
+            StackContext sctx,
+            PValue leftOperand,
+            PValue rightOperand,
+            out PValue result)
         {
             result = null;
             return false;
         }
 
-        public virtual bool LessThan(StackContext sctx, PValue leftOperand, PValue rightOperand, out PValue result)
+        public virtual bool LessThan(
+            StackContext sctx, PValue leftOperand, PValue rightOperand, out PValue result)
         {
             result = null;
             return false;
         }
 
-        public virtual bool LessThanOrEqual(StackContext sctx, PValue leftOperand, PValue rightOperand,
-                                            out PValue result)
+        public virtual bool LessThanOrEqual(
+            StackContext sctx,
+            PValue leftOperand,
+            PValue rightOperand,
+            out PValue result)
         {
             result = null;
             return false;
@@ -591,13 +637,15 @@ namespace Prexonite.Types
         #endregion //Operators
 
         [NoDebug()]
-        public virtual PValue DynamicCall(StackContext sctx, PValue subject, PValue[] args, PCall call, string id)
+        public virtual PValue DynamicCall(
+            StackContext sctx, PValue subject, PValue[] args, PCall call, string id)
         {
             PValue result;
             if (TryDynamicCall(sctx, subject, args, call, id, out result))
                 return result;
             else
-                throw new InvalidCallException("Cannot call '" + id + "' on object of PType " + ToString() + ".");
+                throw new InvalidCallException(
+                    "Cannot call '" + id + "' on object of PType " + ToString() + ".");
         }
 
         [NoDebug()]
@@ -607,7 +655,8 @@ namespace Prexonite.Types
             if (TryStaticCall(sctx, args, call, id, out result))
                 return result;
             else
-                throw new InvalidCallException("Cannot call '" + id + "' on PType " + ToString() + ".");
+                throw new InvalidCallException(
+                    "Cannot call '" + id + "' on PType " + ToString() + ".");
         }
 
         #endregion //Type Interface
@@ -621,9 +670,10 @@ namespace Prexonite.Types
             if (TryConvertTo(sctx, subject, target, useExplicit, out result))
                 return result;
             else
-                throw new InvalidConversionException("Cannot" + (useExplicit ? "explicitly" : "implicitly") +
-                                                     " convert " + subject.Type + " to " + target +
-                                                     ".");
+                throw new InvalidConversionException(
+                    "Cannot" + (useExplicit ? "explicitly" : "implicitly") +
+                    " convert " + subject.Type + " to " + target +
+                    ".");
         }
 
         [NoDebug()]
@@ -659,7 +709,8 @@ namespace Prexonite.Types
         }
 
         [NoDebug()]
-        public bool TryConvertTo(StackContext sctx, PValue subject, PType target, bool useExplicit, out PValue result)
+        public bool TryConvertTo(
+            StackContext sctx, PValue subject, PType target, bool useExplicit, out PValue result)
         {
             //Check if a conversion is needed
             if (subject.Type.IsEqual(target))
@@ -680,7 +731,8 @@ namespace Prexonite.Types
         }
 
         [NoDebug()]
-        public bool TryConvertTo(StackContext sctx, PValue subject, Type clrTarget, bool useExplicit, out PValue result)
+        public bool TryConvertTo(
+            StackContext sctx, PValue subject, Type clrTarget, bool useExplicit, out PValue result)
         {
             if (clrTarget == null)
                 throw new ArgumentNullException("clrTarget");
@@ -688,16 +740,24 @@ namespace Prexonite.Types
         }
 
         [NoDebug()]
-        public bool TryConvertTo(StackContext sctx, PValue subject, Type clrTarget, out PValue result)
+        public bool TryConvertTo(
+            StackContext sctx, PValue subject, Type clrTarget, out PValue result)
         {
             return TryConvertTo(sctx, subject, clrTarget, false, out result);
         }
 
-        protected abstract bool InternalConvertTo(StackContext sctx, PValue subject, PType target, bool useExplicit,
-                                                  out PValue result);
+        protected abstract bool InternalConvertTo(
+            StackContext sctx,
+            PValue subject,
+            PType target,
+            bool useExplicit,
+            out PValue result);
 
-        protected abstract bool InternalConvertFrom(StackContext sctx, PValue subject, bool useExplicit,
-                                                    out PValue result);
+        protected abstract bool InternalConvertFrom(
+            StackContext sctx,
+            PValue subject,
+            bool useExplicit,
+            out PValue result);
 
         #endregion
 
@@ -791,7 +851,8 @@ namespace Prexonite.Types
             return output;
         }
 
-        protected internal static bool PTypeToClrType<T>(PValue subject, PType target, out PValue result)
+        protected internal static bool PTypeToClrType<T>(
+            PValue subject, PType target, out PValue result)
         {
             result = null;
             if (target is ObjectPType && ((ObjectPType) target).ClrType == typeof(T))
@@ -810,11 +871,11 @@ namespace Prexonite.Types
             return Object[typeof(T)].CreatePValue(value);
         }
 
-        static internal int _CombineHashes(int a, int b)
+        internal static int _CombineHashes(int a, int b)
         {
             long h = Math.BigMul(a, b);
             bool isNegative = h < 0;
-            if(isNegative)
+            if (isNegative)
                 h = -h;
             h = h%Int32.MaxValue;
             return (int) (isNegative ? -h : h);

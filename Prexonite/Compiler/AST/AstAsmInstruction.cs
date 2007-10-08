@@ -49,7 +49,7 @@ namespace Prexonite.Compiler.Ast
 
             if (Instruction.Arguments == -1)
             {
-                switch(Instruction.OpCode)
+                switch (Instruction.OpCode)
                 {
                     case OpCode.jump:
                         target.EmitJump(Instruction.Id);
@@ -70,7 +70,7 @@ namespace Prexonite.Compiler.Ast
             else
                 goto emitNormally;
 
-            return;    
+            return;
             emitNormally:
             target.Emit(Instruction);
         }

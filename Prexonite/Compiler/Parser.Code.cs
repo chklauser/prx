@@ -151,7 +151,9 @@ namespace Prexonite.Compiler
         [NoDebug]
         public static bool InterpretationIsVariable(SymbolInterpretations interpretation)
         {
-            return InterpretationIsGlobalVariable(interpretation) || InterpretationIsLocalVariable(interpretation);
+            return
+                InterpretationIsGlobalVariable(interpretation) ||
+                InterpretationIsLocalVariable(interpretation);
         }
 
         [NoDebug]
@@ -179,7 +181,8 @@ namespace Prexonite.Compiler
         }
 
         [NoDebug]
-        public static SymbolInterpretations InterpretAsObjectVariable(SymbolInterpretations interpretation)
+        public static SymbolInterpretations InterpretAsObjectVariable(
+            SymbolInterpretations interpretation)
         {
             if (InterpretationIsLocalVariable(interpretation))
                 return SymbolInterpretations.LocalObjectVariable;
@@ -278,7 +281,8 @@ namespace Prexonite.Compiler
                 return true;
 
             c = scanner.Peek();
-            if (interpretation.kind == _ref && (c.kind == _semicolon || c.kind == _comma)) //is "static ref"
+            if (interpretation.kind == _ref && (c.kind == _semicolon || c.kind == _comma))
+                //is "static ref"
                 return true;
 
             return false; //something else, a GetSetComplex maybe?
@@ -344,7 +348,7 @@ namespace Prexonite.Compiler
             scanner.ResetPeek();
 
             Token c = la;
-            if(!(c.kind == _lpar || isId(c)))
+            if (!(c.kind == _lpar || isId(c)))
                 return false;
             Token cla = scanner.Peek();
 
@@ -353,7 +357,7 @@ namespace Prexonite.Compiler
             {
                 requirePar = true;
                 c = cla;
-               cla = scanner.Peek();
+                cla = scanner.Peek();
 
                 //Check for lambda expression without arguments
                 if (c.kind == _rpar && cla.kind == _implementation)
@@ -363,7 +367,9 @@ namespace Prexonite.Compiler
             if (isId(c))
             {
                 //break if lookahead is not valid to save tokens
-                if(!(cla.kind == _comma || cla.kind == _implementation || (cla.kind == _rpar && requirePar)))
+                if (
+                    !(cla.kind == _comma || cla.kind == _implementation ||
+                      (cla.kind == _rpar && requirePar)))
                     return false;
                 //Consume 1
                 c = cla;
@@ -374,9 +380,11 @@ namespace Prexonite.Compiler
                 //Consume 2
                 c = scanner.Peek();
                 //break if lookahead is not valid to save tokens
-                if(!(c.kind == _comma || c.kind == _implementation || (c.kind == _rpar && requirePar)))
+                if (
+                    !(c.kind == _comma || c.kind == _implementation ||
+                      (c.kind == _rpar && requirePar)))
                     return false;
-               cla = scanner.Peek();
+                cla = scanner.Peek();
             }
             else
             {
@@ -434,7 +442,9 @@ namespace Prexonite.Compiler
         [NoDebug]
         private bool isOuterVariable(string id) //context
         {
-            for (CompilerTarget parent = target.ParentTarget; parent != null; parent = parent.ParentTarget)
+            for (CompilerTarget parent = target.ParentTarget;
+                 parent != null;
+                 parent = parent.ParentTarget)
             {
                 PFunction func = parent.Function;
                 if (func.Variables.Contains(id) || func.Parameters.Contains(id))
@@ -459,14 +469,15 @@ namespace Prexonite.Compiler
             return generateNestedFunctionId(thisTarget, "");
         }
 
-
         private static string generateNestedFunctionId(CompilerTarget thisTarget, string prefix)
         {
             if (thisTarget == null)
-                throw new ArgumentNullException("thisTarget"); 
-            if(prefix == null)
+                throw new ArgumentNullException("thisTarget");
+            if (prefix == null)
                 prefix = "";
-            return thisTarget.Function.Id + "\\nested\\" + prefix + (thisTarget.NestedFunctionCounter++);
+            return
+                thisTarget.Function.Id + "\\nested\\" + prefix +
+                (thisTarget.NestedFunctionCounter++);
         }
 
         private void SmartDeclareLocal(string id, SymbolInterpretations kind)
@@ -562,16 +573,16 @@ namespace Prexonite.Compiler
             return checkAsmInstruction(la1, la2, la3, insBase, detail);
         }
 
-        
-        private static bool checkAsmInstruction(Token la1, Token la2, Token la3, string insBase, string detail)
+        private static bool checkAsmInstruction(
+            Token la1, Token la2, Token la3, string insBase, string detail)
         {
             return
                 la1.kind != _string && Engine.StringsAreEqual(la1.val, insBase) &&
                 (detail == null
                      ?
-                    (la2.kind == _dot ? la3.kind == _integer : true)
+                 (la2.kind == _dot ? la3.kind == _integer : true)
                      :
-                    (la2.kind == _dot && la3.kind != _string && Engine.StringsAreEqual(la3.val, detail))
+                 (la2.kind == _dot && la3.kind != _string && Engine.StringsAreEqual(la3.val, detail))
                 );
         }
 
@@ -682,7 +693,7 @@ namespace Prexonite.Compiler
                 {"jump", "f"},
                 {"jump", "true"},
                 {"jump", "false"},
-                {"leave",null}
+                {"leave", null}
             };
 
         private readonly string[,] asmNullGroup =
@@ -720,11 +731,11 @@ namespace Prexonite.Compiler
                 {"continue", null},
                 {"yield", null},
                 {"exit", null},
-                {"try",null},
-                {"throw",null},
-                {"exc",null},
-                {"exception",null}
-    };
+                {"try", null},
+                {"throw", null},
+                {"exc", null},
+                {"exception", null}
+            };
 
         private readonly string[,] asmIdGroup =
             {

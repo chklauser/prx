@@ -24,6 +24,7 @@
 using System;
 using System.Collections;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.Text;
 using Prexonite.Types;
 
@@ -40,21 +41,19 @@ namespace Prexonite.Compiler.Ast
 
         public ArgumentsProxy Arguments
         {
-            [System.Diagnostics.DebuggerNonUserCode()]
-            get
-            {
-                return _proxy;
-            }
+            [DebuggerNonUserCode()]
+            get { return _proxy; }
         }
 
-        [System.Diagnostics.DebuggerNonUserCode()]
+        [DebuggerNonUserCode()]
         public class ArgumentsProxy : IList<IAstExpression>
         {
             private List<IAstExpression> _arguments;
+
             internal ArgumentsProxy(List<IAstExpression> arguments)
             {
                 if (arguments == null)
-                    throw new ArgumentNullException("arguments");   
+                    throw new ArgumentNullException("arguments");
                 _arguments = arguments;
             }
 
@@ -67,7 +66,7 @@ namespace Prexonite.Compiler.Ast
 
             private List<IAstExpression> rightAppends = new List<IAstExpression>();
 
-            public int  RightAppendPosition
+            public int RightAppendPosition
             {
                 get { return _rightAppendPosition; }
             }
@@ -151,14 +150,8 @@ namespace Prexonite.Compiler.Ast
             ///<exception cref="T:System.NotSupportedException">The property is set and the <see cref="T:System.Collections.Generic.IList`1"></see> is read-only.</exception>
             public IAstExpression this[int index]
             {
-                get
-                {
-                    return _arguments[index];
-                }
-                set
-                {
-                    _arguments[index] = value;
-                }
+                get { return _arguments[index]; }
+                set { _arguments[index] = value; }
             }
 
             #endregion
@@ -175,7 +168,6 @@ namespace Prexonite.Compiler.Ast
             {
                 _arguments.Add(item);
             }
-
 
             /// <summary>
             /// Adds a number of items to the list of arguments.
@@ -249,10 +241,7 @@ namespace Prexonite.Compiler.Ast
             ///
             public int Count
             {
-                get
-                {
-                    return _arguments.Count;
-                }
+                get { return _arguments.Count; }
             }
 
             ///<summary>
@@ -265,10 +254,7 @@ namespace Prexonite.Compiler.Ast
             ///
             public bool IsReadOnly
             {
-                get
-                {
-                    return ((ICollection<IAstExpression>) _arguments).IsReadOnly;
-                }
+                get { return ((ICollection<IAstExpression>) _arguments).IsReadOnly; }
             }
 
             #endregion
@@ -327,7 +313,6 @@ namespace Prexonite.Compiler.Ast
 
         public virtual bool TryOptimize(CompilerTarget target, out IAstExpression expr)
         {
-
             expr = null;
 
             //Optimize arguments
@@ -335,8 +320,9 @@ namespace Prexonite.Compiler.Ast
             foreach (IAstExpression arg in _arguments.ToArray())
             {
                 if (arg == null)
-                    throw new PrexoniteException("Invalid (null) argument in GetSet node (" + ToString() +
-                                                 ") detected at position " + _arguments.IndexOf(arg) + ".");
+                    throw new PrexoniteException(
+                        "Invalid (null) argument in GetSet node (" + ToString() +
+                        ") detected at position " + _arguments.IndexOf(arg) + ".");
                 oArg = GetOptimizedNode(target, arg);
                 if (!ReferenceEquals(oArg, arg))
                 {
@@ -402,8 +388,13 @@ namespace Prexonite.Compiler.Ast
                         getVariation.Call = PCall.Get;
                         getVariation._arguments.RemoveAt(getVariation._arguments.Count - 1);
                         assignment._arguments[assignment._arguments.Count - 1] =
-                            new AstBinaryOperator(File, Line, Column,
-                                                  getVariation, SetModifier, _arguments[_arguments.Count - 1]);
+                            new AstBinaryOperator(
+                                File,
+                                Line,
+                                Column,
+                                getVariation,
+                                SetModifier,
+                                _arguments[_arguments.Count - 1]);
                         assignment.EmitCode(target);
                     }
                     else
@@ -434,7 +425,7 @@ namespace Prexonite.Compiler.Ast
             Call = PCall.Get;
             try
             {
-                EmitCode(target, false);    
+                EmitCode(target, false);
             }
             finally
             {
@@ -449,12 +440,15 @@ namespace Prexonite.Compiler.Ast
         public override string ToString()
         {
             string typeName;
-            return String.Format("{0}{2}: {1}",
-                                 Enum.GetName(typeof(PCall), Call).ToLowerInvariant(),
-                                 (typeName = GetType().Name).StartsWith("AstGetSet") ? typeName.Substring(9) : typeName,
-                                 SetModifier != BinaryOperator.None
-                                     ? "(" + Enum.GetName(typeof(BinaryOperator), SetModifier) + ")"
-                                     : "");
+            return String.Format(
+                "{0}{2}: {1}",
+                Enum.GetName(typeof(PCall), Call).ToLowerInvariant(),
+                (typeName = GetType().Name).StartsWith("AstGetSet")
+                    ? typeName.Substring(9)
+                    : typeName,
+                SetModifier != BinaryOperator.None
+                    ? "(" + Enum.GetName(typeof(BinaryOperator), SetModifier) + ")"
+                    : "");
         }
 
         public string ArgumentsToString()

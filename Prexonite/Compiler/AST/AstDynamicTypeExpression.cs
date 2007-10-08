@@ -80,7 +80,9 @@ namespace Prexonite.Compiler.Ast
                     if (constValue != null)
                     {
                         buffer.Append('"');
-                        buffer.Append(StringPType.Escape(constValue.ToPValue(target).CallToString(target.Loader)));
+                        buffer.Append(
+                            StringPType.Escape(
+                                constValue.ToPValue(target).CallToString(target.Loader)));
                         buffer.Append('"');
                     }
                     else //if(constType != null)

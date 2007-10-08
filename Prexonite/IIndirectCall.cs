@@ -25,7 +25,6 @@ using System;
 
 namespace Prexonite
 {
-
     /// <summary>
     /// Classes implementing this interface can react to indirect calls from Prexonite Script Code.
     /// </summary>

@@ -1,6 +1,4 @@
 using System;
-using System.Collections.Generic;
-using System.Text;
 using Prexonite.Types;
 
 namespace Prexonite.Commands
@@ -28,7 +26,7 @@ namespace Prexonite.Commands
             if (args == null)
                 throw new ArgumentNullException("args");
             foreach (PValue arg in args)
-                if(arg != null && arg.Type is ObjectPType)
+                if (arg != null && arg.Type is ObjectPType)
                 {
                     IDisposable toDispose = arg.Value as IDisposable;
                     if (toDispose != null)

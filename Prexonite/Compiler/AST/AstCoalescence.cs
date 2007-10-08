@@ -1,17 +1,19 @@
-using System;
 using System.Collections.Generic;
-using System.Text;
 
 namespace Prexonite.Compiler.Ast
 {
-    public class AstCoalescence : AstNode, IAstExpression
+    public class AstCoalescence : AstNode,
+                                  IAstExpression
     {
         public AstCoalescence(string file, int line, int column)
-            :base(file, line, column)
-        {}
+            : base(file, line, column)
+        {
+        }
 
-        internal  AstCoalescence(Parser p) : base(p)
-        {}
+        internal AstCoalescence(Parser p)
+            : base(p)
+        {
+        }
 
         public readonly List<IAstExpression> Expressions = new List<IAstExpression>(2);
 
@@ -26,8 +28,9 @@ namespace Prexonite.Compiler.Ast
             foreach (IAstExpression arg in Expressions.ToArray())
             {
                 if (arg == null)
-                    throw new PrexoniteException("Invalid (null) argument in GetSet node (" + ToString() +
-                                                 ") detected at position " + Expressions.IndexOf(arg) + ".");
+                    throw new PrexoniteException(
+                        "Invalid (null) argument in GetSet node (" + ToString() +
+                        ") detected at position " + Expressions.IndexOf(arg) + ".");
                 oArg = GetOptimizedNode(target, arg);
                 if (!ReferenceEquals(oArg, arg))
                 {
@@ -36,19 +39,20 @@ namespace Prexonite.Compiler.Ast
                     Expressions.RemoveAt(idx + 1);
                 }
             }
-            
+
             foreach (IAstExpression iexpr in Expressions.ToArray())
             {
-                if (iexpr is AstNull || (iexpr is AstConstant && ((AstConstant)iexpr).Constant == null))
+                if (iexpr is AstNull ||
+                    (iexpr is AstConstant && ((AstConstant) iexpr).Constant == null))
                     Expressions.Remove(iexpr);
             }
 
-            if(Expressions.Count == 1)
+            if (Expressions.Count == 1)
             {
                 expr = Expressions[0];
                 return true;
             }
-            else if(Expressions.Count == 0)
+            else if (Expressions.Count == 0)
             {
                 expr = new AstNull(File, Line, Column);
                 return true;

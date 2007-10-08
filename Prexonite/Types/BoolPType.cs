@@ -78,8 +78,13 @@ namespace Prexonite.Types
             }
         }
 
-        public override bool TryDynamicCall(StackContext sctx, PValue subject, PValue[] args, PCall call, string id,
-                                            out PValue result)
+        public override bool TryDynamicCall(
+            StackContext sctx,
+            PValue subject,
+            PValue[] args,
+            PCall call,
+            string id,
+            out PValue result)
         {
             if (subject.ToObject().TryDynamicCall(sctx, args, call, id, out result))
                 return true;
@@ -87,7 +92,8 @@ namespace Prexonite.Types
             return false;
         }
 
-        public override bool TryStaticCall(StackContext sctx, PValue[] args, PCall call, string id, out PValue result)
+        public override bool TryStaticCall(
+            StackContext sctx, PValue[] args, PCall call, string id, out PValue result)
         {
             if (Object[typeof(bool)].TryStaticCall(sctx, args, call, id, out result))
                 return true;
@@ -95,11 +101,17 @@ namespace Prexonite.Types
             return false;
         }
 
-        protected override bool InternalConvertTo(StackContext sctx, PValue subject, PType target, bool useExplicit,
-                                                  out PValue result)
+        protected override bool InternalConvertTo(
+            StackContext sctx,
+            PValue subject,
+            PType target,
+            bool useExplicit,
+            out PValue result)
         {
             if (target is ObjectPType)
-                return Object[typeof(bool)].TryConvertTo(sctx, subject, target, useExplicit, out result);
+                return
+                    Object[typeof(bool)].TryConvertTo(
+                        sctx, subject, target, useExplicit, out result);
 
             result = null;
 
@@ -117,8 +129,11 @@ namespace Prexonite.Types
             return true;
         }
 
-        protected override bool InternalConvertFrom(StackContext sctx, PValue subject, bool useExplicit,
-                                                    out PValue result)
+        protected override bool InternalConvertFrom(
+            StackContext sctx,
+            PValue subject,
+            bool useExplicit,
+            out PValue result)
         {
             bool parsed;
             result = null;
@@ -139,8 +154,6 @@ namespace Prexonite.Types
         {
             return otherType is BoolPType;
         }
-
-
 
         #endregion
 
@@ -180,52 +193,62 @@ namespace Prexonite.Types
             return false;
         }
 
-        public override bool BitwiseAnd(StackContext sctx, PValue leftOperand, PValue rightOperand, out PValue result)
+        public override bool BitwiseAnd(
+            StackContext sctx, PValue leftOperand, PValue rightOperand, out PValue result)
         {
             result = null;
             bool left,
                  right;
-            if (_tryConvertToBool(sctx, leftOperand, out left) && _tryConvertToBool(sctx, rightOperand, out right))
+            if (_tryConvertToBool(sctx, leftOperand, out left) &&
+                _tryConvertToBool(sctx, rightOperand, out right))
                 result = left & right;
             return result != null;
         }
 
-        public override bool BitwiseOr(StackContext sctx, PValue leftOperand, PValue rightOperand, out PValue result)
+        public override bool BitwiseOr(
+            StackContext sctx, PValue leftOperand, PValue rightOperand, out PValue result)
         {
             result = null;
             bool left,
                  right;
-            if (_tryConvertToBool(sctx, leftOperand, out left) && _tryConvertToBool(sctx, rightOperand, out right))
+            if (_tryConvertToBool(sctx, leftOperand, out left) &&
+                _tryConvertToBool(sctx, rightOperand, out right))
                 result = left | right;
             return result != null;
         }
 
-        public override bool Equality(StackContext sctx, PValue leftOperand, PValue rightOperand, out PValue result)
+        public override bool Equality(
+            StackContext sctx, PValue leftOperand, PValue rightOperand, out PValue result)
         {
             result = null;
             bool left,
                  right;
-            if (_tryConvertToBool(sctx, leftOperand, out left) && _tryConvertToBool(sctx, rightOperand, out right))
+            if (_tryConvertToBool(sctx, leftOperand, out left) &&
+                _tryConvertToBool(sctx, rightOperand, out right))
                 result = left == right;
             return result != null;
         }
 
-        public override bool Inequality(StackContext sctx, PValue leftOperand, PValue rightOperand, out PValue result)
+        public override bool Inequality(
+            StackContext sctx, PValue leftOperand, PValue rightOperand, out PValue result)
         {
             result = null;
             bool left,
                  right;
-            if (_tryConvertToBool(sctx, leftOperand, out left) && _tryConvertToBool(sctx, rightOperand, out right))
+            if (_tryConvertToBool(sctx, leftOperand, out left) &&
+                _tryConvertToBool(sctx, rightOperand, out right))
                 result = left != right;
             return result != null;
         }
 
-        public override bool ExclusiveOr(StackContext sctx, PValue leftOperand, PValue rightOperand, out PValue result)
+        public override bool ExclusiveOr(
+            StackContext sctx, PValue leftOperand, PValue rightOperand, out PValue result)
         {
             result = null;
             bool left,
                  right;
-            if (_tryConvertToBool(sctx, leftOperand, out left) && _tryConvertToBool(sctx, rightOperand, out right))
+            if (_tryConvertToBool(sctx, leftOperand, out left) &&
+                _tryConvertToBool(sctx, rightOperand, out right))
                 result = left ^ right;
             return result != null;
         }

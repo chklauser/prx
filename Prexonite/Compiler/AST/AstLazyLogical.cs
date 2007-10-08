@@ -31,13 +31,18 @@ namespace Prexonite.Compiler.Ast
     {
         public LinkedList<IAstExpression> Conditions = new LinkedList<IAstExpression>();
 
-        internal AstLazyLogical(Parser p, IAstExpression leftExpression, IAstExpression rightExpression)
+        internal AstLazyLogical(
+            Parser p, IAstExpression leftExpression, IAstExpression rightExpression)
             : this(p.scanner.File, p.t.line, p.t.col, leftExpression, rightExpression)
         {
         }
 
-        protected AstLazyLogical(string file, int line, int column, IAstExpression leftExpression,
-                                 IAstExpression rightExpression)
+        protected AstLazyLogical(
+            string file,
+            int line,
+            int column,
+            IAstExpression leftExpression,
+            IAstExpression rightExpression)
             : base(file, line, column)
         {
             AddExpression(leftExpression);
@@ -62,14 +67,16 @@ namespace Prexonite.Compiler.Ast
         public abstract void EmitCode(CompilerTarget target, string trueLabel, string falseLabel);
         public abstract bool TryOptimize(CompilerTarget target, out IAstExpression expr);
 
-        public static void EmitJumpIfCondition(CompilerTarget target, IAstExpression cond, string targetLabel)
+        public static void EmitJumpIfCondition(
+            CompilerTarget target, IAstExpression cond, string targetLabel)
         {
             if (cond == null)
                 throw new ArgumentNullException("cond", "Condition may not be null.");
             if (target == null)
                 throw new ArgumentNullException("target", "Compiler target may not be null.");
             if (String.IsNullOrEmpty(targetLabel))
-                throw new ArgumentException("targetLabel may neither be null nor empty.", "targetLabel");
+                throw new ArgumentException(
+                    "targetLabel may neither be null nor empty.", "targetLabel");
             AstLazyLogical logical = cond as AstLazyLogical;
             if (logical != null)
             {
@@ -84,8 +91,11 @@ namespace Prexonite.Compiler.Ast
             }
         }
 
-        public static void EmitJumpCondition(CompilerTarget target, IAstExpression cond, string targetLabel,
-                                             bool isPositive)
+        public static void EmitJumpCondition(
+            CompilerTarget target,
+            IAstExpression cond,
+            string targetLabel,
+            bool isPositive)
         {
             if (isPositive)
                 EmitJumpIfCondition(target, cond, targetLabel);
@@ -93,17 +103,23 @@ namespace Prexonite.Compiler.Ast
                 EmitJumpUnlessCondition(target, cond, targetLabel);
         }
 
-        public static void EmitJumpCondition(CompilerTarget target, IAstExpression cond, string targetLabel,
-                                             string alternativeLabel, bool isPositive)
+        public static void EmitJumpCondition(
+            CompilerTarget target,
+            IAstExpression cond,
+            string targetLabel,
+            string alternativeLabel,
+            bool isPositive)
         {
             if (cond == null)
                 throw new ArgumentNullException("cond", "Condition may not be null.");
             if (target == null)
                 throw new ArgumentNullException("target", "Compiler target may not be null.");
             if (String.IsNullOrEmpty(targetLabel))
-                throw new ArgumentException("targetLabel may neither be null nor empty.", "targetLabel");
+                throw new ArgumentException(
+                    "targetLabel may neither be null nor empty.", "targetLabel");
             if (String.IsNullOrEmpty(alternativeLabel))
-                throw new ArgumentException("alternativeLabel may neither be null nor empty.", "alternativeLabel");
+                throw new ArgumentException(
+                    "alternativeLabel may neither be null nor empty.", "alternativeLabel");
             AstLazyLogical logical = cond as AstLazyLogical;
             if (!isPositive)
             {
@@ -124,20 +140,25 @@ namespace Prexonite.Compiler.Ast
             }
         }
 
-        public static void EmitJumpCondition(CompilerTarget target, IAstExpression cond, string targetLabel,
-                                             string alternativeLabel)
+        public static void EmitJumpCondition(
+            CompilerTarget target,
+            IAstExpression cond,
+            string targetLabel,
+            string alternativeLabel)
         {
             EmitJumpCondition(target, cond, targetLabel, alternativeLabel, true);
         }
 
-        public static void EmitJumpUnlessCondition(CompilerTarget target, IAstExpression cond, string targetLabel)
+        public static void EmitJumpUnlessCondition(
+            CompilerTarget target, IAstExpression cond, string targetLabel)
         {
             if (cond == null)
                 throw new ArgumentNullException("cond", "Condition may not be null.");
             if (target == null)
                 throw new ArgumentNullException("target", "Compiler target may not be null.");
             if (String.IsNullOrEmpty(targetLabel))
-                throw new ArgumentException("targetLabel may neither be null nor empty.", "targetLabel");
+                throw new ArgumentException(
+                    "targetLabel may neither be null nor empty.", "targetLabel");
             AstLazyLogical logical = cond as AstLazyLogical;
             if (logical != null)
             {

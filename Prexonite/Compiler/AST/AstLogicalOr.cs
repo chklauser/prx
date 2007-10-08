@@ -29,8 +29,12 @@ namespace Prexonite.Compiler.Ast
     public class AstLogicalOr : AstLazyLogical,
                                 IAstExpression
     {
-        public AstLogicalOr(string file, int line, int column, IAstExpression leftCondition,
-                            IAstExpression rightCondition)
+        public AstLogicalOr(
+            string file,
+            int line,
+            int column,
+            IAstExpression leftCondition,
+            IAstExpression rightCondition)
             : base(file, line, column, leftCondition, rightCondition)
         {
         }
@@ -68,9 +72,11 @@ namespace Prexonite.Compiler.Ast
                 }
             } while ((node = node.Next) != null);
 
-            if (Conditions.Count == 0) //All conditions have been reduced because they evaluated to false
+            if (Conditions.Count == 0)
+                //All conditions have been reduced because they evaluated to false
                 expr = new AstConstant(File, Line, Column, false);
-            else if (Conditions.Count == 1) //There is no need for a LazyOr structure with only one condition
+            else if (Conditions.Count == 1)
+                //There is no need for a LazyOr structure with only one condition
                 expr = Conditions.First.Value;
             else
                 return false;

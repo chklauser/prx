@@ -50,7 +50,8 @@ namespace Prexonite.Commands
 
         public bool IsInGroup(PCommandGroups groups)
         {
-            return (_groups & groups) == _groups; //If _groups contains groups, an AND operation won't alter it
+            return (_groups & groups) == _groups;
+                //If _groups contains groups, an AND operation won't alter it
         }
 
         public void AddToGroup(PCommandGroups additionalGroups)

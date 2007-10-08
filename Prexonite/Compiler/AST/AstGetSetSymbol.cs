@@ -32,20 +32,27 @@ namespace Prexonite.Compiler.Ast
         public SymbolInterpretations Interpretation;
         public string Id;
 
-        public AstGetSetSymbol(string file, int line, int column, PCall call, string id,
-                               SymbolInterpretations interpretation)
+        public AstGetSetSymbol(
+            string file,
+            int line,
+            int column,
+            PCall call,
+            string id,
+            SymbolInterpretations interpretation)
             : base(file, line, column, call)
         {
             Interpretation = interpretation;
             Id = id;
         }
 
-        public AstGetSetSymbol(string file, int line, int column, string id, SymbolInterpretations interpretation)
+        public AstGetSetSymbol(
+            string file, int line, int column, string id, SymbolInterpretations interpretation)
             : this(file, line, column, PCall.Get, id, interpretation)
         {
         }
 
-        internal AstGetSetSymbol(Parser p, PCall call, string id, SymbolInterpretations interpretation)
+        internal AstGetSetSymbol(
+            Parser p, PCall call, string id, SymbolInterpretations interpretation)
             : this(p.scanner.File, p.t.line, p.t.col, call, id, interpretation)
         {
         }
@@ -74,15 +81,18 @@ namespace Prexonite.Compiler.Ast
                         target.EmitLoadLocal(Id);
                     break;
                 case SymbolInterpretations.LocalReferenceVariable:
-                    target.Emit(Instruction.CreateLocalIndirectCall(Arguments.Count, Id, justEffect));
+                    target.Emit(
+                        Instruction.CreateLocalIndirectCall(Arguments.Count, Id, justEffect));
                     break;
                 case SymbolInterpretations.GlobalReferenceVariable:
-                    target.Emit(Instruction.CreateGlobalIndirectCall(Arguments.Count, Id, justEffect));
+                    target.Emit(
+                        Instruction.CreateGlobalIndirectCall(Arguments.Count, Id, justEffect));
                     break;
                 default:
-                    throw new PrexoniteException("Invalid symbol " +
-                                                 Enum.GetName(typeof(SymbolInterpretations), Interpretation) +
-                                                 " in AST.");
+                    throw new PrexoniteException(
+                        "Invalid symbol " +
+                        Enum.GetName(typeof(SymbolInterpretations), Interpretation) +
+                        " in AST.");
             }
         }
 
@@ -109,9 +119,10 @@ namespace Prexonite.Compiler.Ast
                     target.EmitStoreLocal(Id);
                     break;
                 default:
-                    throw new PrexoniteException("Invalid symbol " +
-                                                 Enum.GetName(typeof(SymbolInterpretations), Interpretation) +
-                                                 " in AST.");
+                    throw new PrexoniteException(
+                        "Invalid symbol " +
+                        Enum.GetName(typeof(SymbolInterpretations), Interpretation) +
+                        " in AST.");
             }
         }
 
@@ -148,8 +159,11 @@ namespace Prexonite.Compiler.Ast
         {
             return
                 base.ToString() +
-                String.Format(" {0}-{1} {2}", Enum.GetName(typeof(SymbolInterpretations), Interpretation), Id,
-                              ArgumentsToString());
+                String.Format(
+                    " {0}-{1} {2}",
+                    Enum.GetName(typeof(SymbolInterpretations), Interpretation),
+                    Id,
+                    ArgumentsToString());
         }
     }
 }

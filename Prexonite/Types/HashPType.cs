@@ -1,13 +1,13 @@
 using System;
+using System.Collections;
 using System.Collections.Generic;
 using System.Text;
 
 namespace Prexonite.Types
 {
-    [PTypeLiteral(HashPType.Literal)]
+    [PTypeLiteral(Literal)]
     public class HashPType : PType
     {
-
         #region Singleton
 
         private HashPType()
@@ -25,7 +25,8 @@ namespace Prexonite.Types
 
         #region PType Interface
 
-        private static bool _tryConvertToPair(StackContext sctx, PValue inpv, out PValueKeyValuePair result)
+        private static bool _tryConvertToPair(
+            StackContext sctx, PValue inpv, out PValueKeyValuePair result)
         {
             PValue res;
             result = null;
@@ -36,13 +37,14 @@ namespace Prexonite.Types
             return true;
         }
 
-        public override bool IndirectCall(StackContext sctx, PValue subject, PValue[] args, out PValue result)
+        public override bool IndirectCall(
+            StackContext sctx, PValue subject, PValue[] args, out PValue result)
         {
             if (sctx == null)
                 throw new ArgumentNullException("sctx");
             if (subject == null)
-                throw new ArgumentNullException("subject"); 
-            if(args == null)
+                throw new ArgumentNullException("subject");
+            if (args == null)
                 args = new PValue[] {};
 
             result = null;
@@ -51,13 +53,13 @@ namespace Prexonite.Types
 
             PValueHashtable pvht = (PValueHashtable) subject.Value;
 
-            if(argc == 0)
+            if (argc == 0)
             {
                 result = sctx.CreateNativePValue(new PValueEnumerator(pvht.GetPValueEnumerator()));
             }
-            else if(argc == 1)
+            else if (argc == 1)
             {
-                if(!pvht.TryGetValue(args[0], out result))
+                if (!pvht.TryGetValue(args[0], out result))
                     result = false;
             }
             else
@@ -79,8 +81,8 @@ namespace Prexonite.Types
             if (sctx == null)
                 throw new ArgumentNullException("sctx");
             if (subject == null)
-                throw new ArgumentNullException("subject"); 
-            if(args == null)
+                throw new ArgumentNullException("subject");
+            if (args == null)
                 args = new PValue[] {};
             if (id == null)
                 id = "";
@@ -98,28 +100,27 @@ namespace Prexonite.Types
                     args[i] = Null.CreatePValue();
             }
 
-
             int argc = args.Length;
 
-            switch(id.ToLowerInvariant())
+            switch (id.ToLowerInvariant())
             {
                 case "":
-                    if(call == PCall.Get && argc > 0)
+                    if (call == PCall.Get && argc > 0)
                     {
                         PValue key = args[0];
-                        if(pvht.ContainsKey(key))
+                        if (pvht.ContainsKey(key))
                             result = pvht[key];
                         else
                             result = Null.CreatePValue();
                     }
-                    else if(call == PCall.Set)
+                    else if (call == PCall.Set)
                     {
                         if (argc > 1)
                         {
                             pvht.AddOverride(args[0], args[1]);
                             result = Null.CreatePValue();
                         }
-                        else if(argc == 1)
+                        else if (argc == 1)
                         {
                             goto case "add";
                         }
@@ -127,18 +128,19 @@ namespace Prexonite.Types
                     break;
 
                 case "add":
-                    if(argc == 1)
+                    if (argc == 1)
                     {
                         PValueKeyValuePair pair;
 
                         result = Null.CreatePValue();
 
-                        if(args[0].IsNull)
-                        {} //Ignore this one
-                        else if(_tryConvertToPair(sctx, args[0],out pair))
+                        if (args[0].IsNull)
+                        {
+                        } //Ignore this one
+                        else if (_tryConvertToPair(sctx, args[0], out pair))
                             pvht.AddOverride(pair);
                     }
-                    else if(argc > 1)
+                    else if (argc > 1)
                     {
                         pvht.AddOverride(args[0], args[1]);
                         result = Null.CreatePValue();
@@ -151,16 +153,16 @@ namespace Prexonite.Types
                     break;
 
                 case "containskey":
-                    if(argc == 1)
+                    if (argc == 1)
                     {
                         result = pvht.ContainsKey(args[0]);
                     }
-                    else if(argc > 1)
+                    else if (argc > 1)
                     {
                         bool found = true;
                         foreach (PValue arg in args)
                         {
-                            if(!pvht.ContainsKey(arg))
+                            if (!pvht.ContainsKey(arg))
                             {
                                 found = false;
                                 break;
@@ -171,16 +173,16 @@ namespace Prexonite.Types
                     break;
 
                 case "containsvalue":
-                    if(argc == 1)
+                    if (argc == 1)
                     {
                         result = pvht.ContainsValue(args[0]);
                     }
-                    else if(argc > 1)
+                    else if (argc > 1)
                     {
                         bool found = true;
                         foreach (PValue arg in args)
                         {
-                            if(!pvht.ContainsValue(arg))
+                            if (!pvht.ContainsValue(arg))
                             {
                                 found = false;
                                 break;
@@ -212,11 +214,11 @@ namespace Prexonite.Types
                     break;
 
                 case "remove":
-                    if(argc == 1)
+                    if (argc == 1)
                     {
                         result = pvht.Remove(args[0]);
                     }
-                    else if(argc > 1)
+                    else if (argc > 1)
                     {
                         List<PValue> removed = new List<PValue>(pvht.Count);
                         foreach (PValue arg in args)
@@ -235,17 +237,17 @@ namespace Prexonite.Types
                         sb.Append(pair.Value.CallToString(sctx));
                         sb.Append(", ");
                     }
-                    if(pvht.Count > 0)
+                    if (pvht.Count > 0)
                         sb.Length -= 2;
                     sb.Append(" }");
                     result = sb.ToString();
                     break;
 
                 case "trygetvalue":
-                    if(argc >= 2)
+                    if (argc >= 2)
                     {
                         PValue value;
-                        if(pvht.TryGetValue(args[0], out value))
+                        if (pvht.TryGetValue(args[0], out value))
                         {
                             args[1].IndirectCall(sctx, new PValue[] {value});
                             result = true;
@@ -261,7 +263,9 @@ namespace Prexonite.Types
                     break;
 
                 default:
-                    return PValueHashtable.ObjectType.TryDynamicCall(sctx, subject, args, call, id, out result);
+                    return
+                        PValueHashtable.ObjectType.TryDynamicCall(
+                            sctx, subject, args, call, id, out result);
             }
 
             return result != null;
@@ -273,7 +277,7 @@ namespace Prexonite.Types
             if (sctx == null)
                 throw new ArgumentNullException("sctx");
             if (args == null)
-                args = new PValue[] { };
+                args = new PValue[] {};
             if (id == null)
                 id = "";
 
@@ -295,14 +299,14 @@ namespace Prexonite.Types
                     foreach (PValue arg in args)
                     {
                         PValueKeyValuePair pairArg;
-                        if(_tryConvertToPair(sctx, arg, out pairArg))
+                        if (_tryConvertToPair(sctx, arg, out pairArg))
                             pvht.AddOverride(pairArg);
                     }
                     result = new PValue(pvht, this);
                     break;
 
                 case "createFromArgs":
-                    if(args.Length % 2 != 0)
+                    if (args.Length%2 != 0)
                         break;
                     pvht = new PValueHashtable(args.Length/2);
                     for (int i = 0; i < args.Length; i += 2)
@@ -311,10 +315,11 @@ namespace Prexonite.Types
                     break;
 
                 default:
-                    return PValueHashtable.ObjectType.TryStaticCall(sctx, args, call, id, out result);
+                    return
+                        PValueHashtable.ObjectType.TryStaticCall(sctx, args, call, id, out result);
             }
 
-           return result != null; 
+            return result != null;
         }
 
         public override bool TryContruct(StackContext sctx, PValue[] args, out PValue result)
@@ -322,7 +327,7 @@ namespace Prexonite.Types
             if (sctx == null)
                 throw new ArgumentNullException("sctx");
             if (args == null)
-                args = new PValue[] { };
+                args = new PValue[] {};
 
             result = null;
 
@@ -335,29 +340,29 @@ namespace Prexonite.Types
             int argc = args.Length;
             PValueHashtable pvht = null;
 
-
             if (argc == 0)
             {
                 pvht = new PValueHashtable();
             }
-            else if(args[0].IsNull)
+            else if (args[0].IsNull)
             {
                 pvht = new PValueHashtable();
             }
             else if (argc > 0)
             {
                 PValue arg0 = args[0];
-                if (arg0.Type == Hash || (arg0.Type is ObjectPType && arg0.Value is IDictionary<PValue, PValue>))
+                if (arg0.Type == Hash ||
+                    (arg0.Type is ObjectPType && arg0.Value is IDictionary<PValue, PValue>))
                 {
                     pvht = new PValueHashtable((IDictionary<PValue, PValue>) arg0.Value);
                 }
-                else if(arg0.Type == Int)
+                else if (arg0.Type == Int)
                 {
                     pvht = new PValueHashtable((int) arg0.Value);
                 }
             }
 
-            if(pvht != null)
+            if (pvht != null)
                 result = new PValue(pvht, this);
 
             return result != null;
@@ -371,7 +376,7 @@ namespace Prexonite.Types
             if (subject == null)
                 throw new ArgumentNullException("subject");
             if (target == null)
-                throw new ArgumentNullException("target"); 
+                throw new ArgumentNullException("target");
 
             PValueHashtable pvht = subject.Value as PValueHashtable;
 
@@ -380,21 +385,21 @@ namespace Prexonite.Types
 
             result = null;
 
-            if(target is ObjectPType)
+            if (target is ObjectPType)
             {
                 Type tT = ((ObjectPType) target).ClrType;
-                if(tT == typeof(IDictionary<PValue, PValue>) ||
-                   tT == typeof(Dictionary<PValue, PValue>) ||
-                   tT == typeof(System.Collections.IDictionary) ||
-                   tT == typeof(IEnumerable<KeyValuePair<PValue, PValue>>) ||
-                   tT == typeof(System.Collections.IEnumerable) ||
-                   tT == typeof(ICollection<KeyValuePair<PValue, PValue>>) ||
-                   tT == typeof(System.Collections.ICollection))
+                if (tT == typeof(IDictionary<PValue, PValue>) ||
+                    tT == typeof(Dictionary<PValue, PValue>) ||
+                    tT == typeof(IDictionary) ||
+                    tT == typeof(IEnumerable<KeyValuePair<PValue, PValue>>) ||
+                    tT == typeof(IEnumerable) ||
+                    tT == typeof(ICollection<KeyValuePair<PValue, PValue>>) ||
+                    tT == typeof(ICollection))
                 {
                     result = new PValue(pvht, target);
                 }
             }
-            else if(target is ListPType)
+            else if (target is ListPType)
             {
                 List<PValue> lst = new List<PValue>(pvht.Count);
                 foreach (KeyValuePair<PValue, PValue> pair in pvht)
@@ -418,7 +423,7 @@ namespace Prexonite.Types
 
             PType sT = subject.Type;
 
-            if(sT is ObjectPType)
+            if (sT is ObjectPType)
             {
                 object os = subject.Value;
                 PValueHashtable o_pvht = os as PValueHashtable;
@@ -437,7 +442,7 @@ namespace Prexonite.Types
                             pvht = new PValueHashtable(1);
                             pvht.Add(pvkvp);
                         }
-                        else if(os is KeyValuePair<PValue, PValue>)
+                        else if (os is KeyValuePair<PValue, PValue>)
                         {
                             pvht = new PValueHashtable(1);
                             pvht.Add((KeyValuePair<PValue, PValue>) os);
@@ -445,7 +450,7 @@ namespace Prexonite.Types
                     }
                 }
             }
-            else if(sT == Null)
+            else if (sT == Null)
                 pvht = new PValueHashtable();
 
             if (pvht != null)
@@ -474,6 +479,5 @@ namespace Prexonite.Types
         }
 
         #endregion
-
     }
 }

@@ -23,7 +23,8 @@
 
 namespace Prexonite.Compiler.Ast
 {
-    public class AstThrow : AstNode, IAstExpression
+    public class AstThrow : AstNode,
+                            IAstExpression
     {
         public IAstExpression Expression;
 
@@ -61,5 +62,4 @@ namespace Prexonite.Compiler.Ast
             return "throw " + (Expression.ToString() ?? "");
         }
     }
-
 }

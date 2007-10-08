@@ -10,7 +10,7 @@ namespace Prexonite.Types
     public class PValueHashtable : Dictionary<PValue, PValue>
     {
         private static readonly ObjectPType _objectType = new ObjectPType(typeof(PValueHashtable));
-        
+
         /// <summary>
         /// Adds a new key-value pair to the hashtable.
         /// </summary>
@@ -36,7 +36,7 @@ namespace Prexonite.Types
         /// <param name="value">The value of the key-value pair to add.</param>
         public void AddOverride(PValue key, PValue value)
         {
-            if(ContainsKey(key))
+            if (ContainsKey(key))
                 this[key] = value;
             else
                 Add(key, value);
@@ -49,7 +49,6 @@ namespace Prexonite.Types
         {
             get { return _objectType; }
         }
-
 
         /// <summary>
         /// Creates a new instance of PValueHashTable.

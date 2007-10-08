@@ -1,6 +1,4 @@
 using System;
-using System.Collections.Generic;
-using System.Text;
 
 namespace Prexonite.Compiler.Ast
 {
@@ -19,7 +17,7 @@ namespace Prexonite.Compiler.Ast
         }
 
         public AstActionBlock(AstNode parent, AstAction action)
-            :this(parent.File, parent.Line, parent.Column, action)
+            : this(parent.File, parent.Line, parent.Column, action)
         {
         }
 
@@ -31,19 +29,12 @@ namespace Prexonite.Compiler.Ast
 
         public override bool IsEmpty
         {
-            get
-            {
-                return false;
-            }
+            get { return false; }
         }
 
         public override bool IsSingleStatement
         {
-            get
-            {
-                return false;
-            }
+            get { return false; }
         }
-
     }
 }

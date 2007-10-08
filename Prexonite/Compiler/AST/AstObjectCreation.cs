@@ -35,11 +35,9 @@ namespace Prexonite.Compiler.Ast
 
         public AstGetSet.ArgumentsProxy Arguments
         {
-            get
-            {
-                return _proxy;
-            }
+            get { return _proxy; }
         }
+
         private List<IAstExpression> _arguments = new List<IAstExpression>();
 
         [NoDebug]

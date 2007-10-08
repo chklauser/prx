@@ -34,7 +34,8 @@ namespace Prexonite.Compiler.Ast
         public string MemberId;
 
         [NoDebug]
-        public AstGetSetStatic(string file, int line, int col, PCall call, IAstType typeExpr, string memberId)
+        public AstGetSetStatic(
+            string file, int line, int col, PCall call, IAstType typeExpr, string memberId)
             : base(file, line, col, call)
         {
             if (typeExpr == null)
@@ -63,7 +64,8 @@ namespace Prexonite.Compiler.Ast
 
             if (constType != null)
             {
-                target.EmitStaticGetCall(Arguments.Count, constType.TypeExpression, MemberId, justEffect);
+                target.EmitStaticGetCall(
+                    Arguments.Count, constType.TypeExpression, MemberId, justEffect);
             }
             else
             {
@@ -79,7 +81,8 @@ namespace Prexonite.Compiler.Ast
             AstConstantTypeExpression constType = TypeExpr as AstConstantTypeExpression;
 
             if (constType != null)
-                target.EmitStaticSetCall(Arguments.Count, constType.TypeExpression + "::" + MemberId);
+                target.EmitStaticSetCall(
+                    Arguments.Count, constType.TypeExpression + "::" + MemberId);
             else
             {
                 TypeExpr.EmitCode(target);

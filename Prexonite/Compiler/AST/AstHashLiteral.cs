@@ -23,11 +23,11 @@
 
 using System;
 using System.Collections.Generic;
-using System.Text;
 
 namespace Prexonite.Compiler.Ast
 {
-    public class AstHashLiteral : AstNode, IAstExpression
+    public class AstHashLiteral : AstNode,
+                                  IAstExpression
     {
         public List<IAstExpression> Elements = new List<IAstExpression>();
 
@@ -49,8 +49,9 @@ namespace Prexonite.Compiler.Ast
             foreach (IAstExpression arg in Elements.ToArray())
             {
                 if (arg == null)
-                    throw new PrexoniteException("Invalid (null) argument in HashLiteral node (" + ToString() +
-                                                 ") detected at position " + Elements.IndexOf(arg) + ".");
+                    throw new PrexoniteException(
+                        "Invalid (null) argument in HashLiteral node (" + ToString() +
+                        ") detected at position " + Elements.IndexOf(arg) + ".");
                 oArg = GetOptimizedNode(target, arg);
                 if (!ReferenceEquals(oArg, arg))
                 {

@@ -26,9 +26,11 @@ using Prexonite.Types;
 
 namespace Prexonite.Compiler.Ast
 {
-    public class AstCondition : AstNode, IAstHasBlocks
+    public class AstCondition : AstNode,
+                                IAstHasBlocks
     {
-        public AstCondition(string file, int line, int column, IAstExpression condition, bool isNegative)
+        public AstCondition(
+            string file, int line, int column, IAstExpression condition, bool isNegative)
             : base(file, line, column)
         {
             IfBlock = new AstBlock(file, line, column);
@@ -64,7 +66,7 @@ namespace Prexonite.Compiler.Ast
 
         public AstBlock[] Blocks
         {
-            get { return new AstBlock[] {IfBlock,ElseBlock}; }
+            get { return new AstBlock[] {IfBlock, ElseBlock}; }
         }
 
         #endregion
@@ -86,7 +88,9 @@ namespace Prexonite.Compiler.Ast
             {
                 AstConstant constCond = (AstConstant) Condition;
                 PValue condValue;
-                if (!constCond.ToPValue(target).TryConvertTo(target.Loader, PType.Bool, out condValue))
+                if (
+                    !constCond.ToPValue(target).TryConvertTo(
+                         target.Loader, PType.Bool, out condValue))
                     goto continueFull;
                 else if ((bool) condValue.Value)
                     IfBlock.EmitCode(target);
@@ -124,8 +128,12 @@ namespace Prexonite.Compiler.Ast
             depth++;
 
             //Emit
-            AstExplicitGoTo ifGoto = IfBlock.IsSingleStatement? IfBlock[0] as AstExplicitGoTo : null;
-            AstExplicitGoTo elseGoto = ElseBlock.IsSingleStatement ? ElseBlock[0] as AstExplicitGoTo : null;
+            AstExplicitGoTo ifGoto = IfBlock.IsSingleStatement
+                                         ? IfBlock[0] as AstExplicitGoTo
+                                         : null;
+            AstExplicitGoTo elseGoto = ElseBlock.IsSingleStatement
+                                           ? ElseBlock[0] as AstExplicitGoTo
+                                           : null;
             ;
 
             bool ifIsGoto = ifGoto != null;
@@ -134,8 +142,12 @@ namespace Prexonite.Compiler.Ast
             if (ifIsGoto && elseIsGoto)
             {
                 //only jumps
-                AstLazyLogical.EmitJumpCondition(target, Condition, ifGoto.Destination, elseGoto.Destination,
-                                                 !IsNegative);
+                AstLazyLogical.EmitJumpCondition(
+                    target,
+                    Condition,
+                    ifGoto.Destination,
+                    elseGoto.Destination,
+                    !IsNegative);
             }
             else if (ifIsGoto)
             {
@@ -146,7 +158,8 @@ namespace Prexonite.Compiler.Ast
             else if (elseIsGoto)
             {
                 //if => block / else => jump
-                AstLazyLogical.EmitJumpCondition(target, Condition, elseGoto.Destination, IsNegative); //inverted
+                AstLazyLogical.EmitJumpCondition(
+                    target, Condition, elseGoto.Destination, IsNegative); //inverted
                 IfBlock.EmitCode(target);
             }
             else

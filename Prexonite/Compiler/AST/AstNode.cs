@@ -52,9 +52,10 @@ namespace Prexonite.Compiler.Ast
             if (target == null)
                 throw new ArgumentNullException("target", "Compiler target cannot be null.");
             if (expr == null)
-                throw new ArgumentNullException("expr", "Expression to be optimized can not be null.");
+                throw new ArgumentNullException(
+                    "expr", "Expression to be optimized can not be null.");
             IAstExpression opt;
-            return  expr.TryOptimize(target, out opt) ? opt : expr;
+            return expr.TryOptimize(target, out opt) ? opt : expr;
         }
 
         protected static void OptimizeNode(CompilerTarget target, ref IAstExpression expr)
@@ -62,7 +63,8 @@ namespace Prexonite.Compiler.Ast
             if (target == null)
                 throw new ArgumentNullException("target", "Compiler target cannot be null.");
             if (expr == null)
-                throw new ArgumentNullException("expr", "Expression to be optimized can not be null.");
+                throw new ArgumentNullException(
+                    "expr", "Expression to be optimized can not be null.");
             expr = GetOptimizedNode(target, expr);
         }
     }

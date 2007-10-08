@@ -31,7 +31,6 @@ namespace Prexonite
 {
     namespace Compiler
     {
-
         /// <summary>
         /// Thrown when the compiler detected an invalid state. 
         /// You must consider both the <see cref="Loader"/> and the <see cref="Application"/> to be corrupt.
@@ -61,7 +60,6 @@ namespace Prexonite
                 : base(message)
             {
             }
-
 
             /// <summary>
             /// Creates a new instance of <see cref="FatalCompilerException"/> with a custom message and and an inner exception.
@@ -94,14 +92,12 @@ namespace Prexonite
     [Serializable]
     public class PrexoniteException : Exception
     {
-
         /// <summary>
         /// Creates a new instance of <see cref="PrexoniteException"/>.
         /// </summary>
         public PrexoniteException()
         {
         }
-
 
         /// <summary>
         /// Creates a new instance of <see cref="PrexoniteException"/> with a custom message.
@@ -111,7 +107,6 @@ namespace Prexonite
             : base(message)
         {
         }
-
 
         /// <summary>
         /// Creates a new instance of <see cref="PrexoniteException"/> with a custom message as well as an inner exception.
@@ -144,7 +139,6 @@ namespace Prexonite
     [Serializable]
     public class PrexoniteRuntimeException : PrexoniteException
     {
-
         /// <summary>
         /// Creates a new instance of PrexoniteRuntimeException without a stack trace and a custom message.
         /// </summary>
@@ -172,12 +166,14 @@ namespace Prexonite
         {
             get { return _prexoniteStackTrace; }
         }
+
         private string _prexoniteStackTrace;
 
-        private PrexoniteRuntimeException(string message, Exception innerException, string prexoniteStackTrace)
-            : base (message, innerException)
+        private PrexoniteRuntimeException(
+            string message, Exception innerException, string prexoniteStackTrace)
+            : base(message, innerException)
         {
-            _prexoniteStackTrace = prexoniteStackTrace;   
+            _prexoniteStackTrace = prexoniteStackTrace;
         }
 
         /// <summary>
@@ -187,7 +183,8 @@ namespace Prexonite
         /// <param name="message">The custom message to be displayed.</param>
         /// <param name="innerException">The inner exception.</param>
         /// <returns>An instance of <see cref="PrexoniteRuntimeException"/> with a stack trace.</returns>
-        public static PrexoniteRuntimeException CreateRuntimeException(StackContext esctx, string message, Exception innerException)
+        public static PrexoniteRuntimeException CreateRuntimeException(
+            StackContext esctx, string message, Exception innerException)
         {
             if (esctx == null)
                 throw new ArgumentNullException("esctx");
@@ -204,7 +201,7 @@ namespace Prexonite
                 builder.Append("\n");
             }
 
-            return new PrexoniteRuntimeException(message,innerException,builder.ToString());
+            return new PrexoniteRuntimeException(message, innerException, builder.ToString());
         }
 
         /// <summary>
@@ -213,7 +210,8 @@ namespace Prexonite
         /// <param name="sctx">The stack context that caused the exception.</param>
         /// <param name="message">The custom message to be displayed.</param>
         /// <returns>An instance of <see cref="PrexoniteRuntimeException"/> with a stack trace.</returns>
-        public static PrexoniteRuntimeException CreateRuntimeException(StackContext sctx, string message)
+        public static PrexoniteRuntimeException CreateRuntimeException(
+            StackContext sctx, string message)
         {
             return CreateRuntimeException(sctx, message, null);
         }
@@ -224,7 +222,8 @@ namespace Prexonite
         /// <param name="sctx">The stack context that caused the exception.</param>
         /// <param name="innerException">The inner exception.</param>
         /// <returns>An instance of <see cref="PrexoniteRuntimeException"/> with a stack trace.</returns>
-        public static PrexoniteRuntimeException CreateRuntimeException(StackContext sctx, Exception innerException)
+        public static PrexoniteRuntimeException CreateRuntimeException(
+            StackContext sctx, Exception innerException)
         {
             return CreateRuntimeException(sctx, innerException.Message, innerException);
         }
@@ -235,7 +234,7 @@ namespace Prexonite
         /// <returns></returns>
         public override string ToString()
         {
-            return String.Concat(base.ToString() , "\n:: Prexonite Stack:\n" , _prexoniteStackTrace);
+            return String.Concat(base.ToString(), "\n:: Prexonite Stack:\n", _prexoniteStackTrace);
         }
 
         /// <summary>
@@ -250,7 +249,7 @@ namespace Prexonite
         public static PrexoniteRuntimeException UnpackException(PrexoniteRuntimeException pExc)
         {
             if (pExc == null)
-                throw new ArgumentNullException("exc"); 
+                throw new ArgumentNullException("exc");
             Exception exc = pExc;
             PrexoniteRuntimeException lastpExc = pExc;
             Exception lastExc = pExc;
@@ -265,14 +264,15 @@ namespace Prexonite
                 exc = exc.InnerException;
             }
 
-            if(ReferenceEquals(exc,pExc))
+            if (ReferenceEquals(exc, pExc))
                 return pExc; //No unpacking needed
 
             if (ReferenceEquals(lastExc, lastpExc))
                 return lastpExc; //Use lowest prexonite runtime exception
             else 
                 //Construct new runtime exception
-                return new PrexoniteRuntimeException(exc.Message, exc, lastpExc._prexoniteStackTrace);
+                return
+                    new PrexoniteRuntimeException(exc.Message, exc, lastpExc._prexoniteStackTrace);
         }
 
         public PrexoniteRuntimeException(

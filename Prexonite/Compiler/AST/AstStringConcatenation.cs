@@ -27,7 +27,6 @@ using System.Text;
 
 namespace Prexonite.Compiler.Ast
 {
-
     /// <summary>
     /// An AST expression node for optimized string concatenation.
     /// </summary>
@@ -51,7 +50,8 @@ namespace Prexonite.Compiler.Ast
         /// <param name="column">The column that caused this node to be created.</param>
         /// <param name="arguments">A list of expressions to be added to the <see cref="Arguments"/> list.</param>
         [DebuggerNonUserCode]
-        public AstStringConcatenation(string file, int line, int column, params IAstExpression[] arguments)
+        public AstStringConcatenation(
+            string file, int line, int column, params IAstExpression[] arguments)
             : base(file, line, column)
         {
             if (arguments == null)
@@ -108,17 +108,18 @@ namespace Prexonite.Compiler.Ast
             foreach (IAstExpression arg in Arguments)
                 arg.EmitCode(target);
 
-            if(Arguments.Count > 2)
-                target.EmitCommandCall(Arguments.Count,Engine.ConcatenateCommand);
-            else if(Arguments.Count == 2)
+            if (Arguments.Count > 2)
+                target.EmitCommandCall(Arguments.Count, Engine.ConcatenateCommand);
+            else if (Arguments.Count == 2)
                 AstBinaryOperator.EmitOperator(target, BinaryOperator.Addition);
-            else if(Arguments.Count == 1)
+            else if (Arguments.Count == 1)
             {
                 AstConstant constant;
-                if ((constant = Arguments[0] as AstConstant) != null && !(constant.Constant is string))
+                if ((constant = Arguments[0] as AstConstant) != null &&
+                    !(constant.Constant is string))
                     target.EmitGetCall(1, "ToString");
             }
-            else if(Arguments.Count == 0)
+            else if (Arguments.Count == 0)
                 target.EmitConstant("");
         }
 
@@ -147,8 +148,9 @@ namespace Prexonite.Compiler.Ast
             foreach (IAstExpression arg in Arguments.ToArray())
             {
                 if (arg == null)
-                    throw new PrexoniteException("Invalid (null) argument in StringConcat node (" + ToString() +
-                                                 ") detected at position " + Arguments.IndexOf(arg) + ".");
+                    throw new PrexoniteException(
+                        "Invalid (null) argument in StringConcat node (" + ToString() +
+                        ") detected at position " + Arguments.IndexOf(arg) + ".");
                 oArg = GetOptimizedNode(target, arg);
                 if (!ReferenceEquals(oArg, arg))
                 {
@@ -162,7 +164,7 @@ namespace Prexonite.Compiler.Ast
 
             //Expand embedded concats argument list
             IAstExpression[] argumentArray = Arguments.ToArray();
-            for (int i = 0; i < argumentArray.Length; i++ )
+            for (int i = 0; i < argumentArray.Length; i++)
             {
                 IAstExpression argument = argumentArray[i];
                 AstStringConcatenation concat = argument as AstStringConcatenation;
@@ -170,7 +172,7 @@ namespace Prexonite.Compiler.Ast
                 if (concat != null)
                 {
                     Arguments.RemoveAt(i); //Remove embedded concat
-                    Arguments.InsertRange(i,concat.Arguments); //insert it's arguments instead
+                    Arguments.InsertRange(i, concat.Arguments); //insert it's arguments instead
                 }
             }
 
@@ -190,7 +192,7 @@ namespace Prexonite.Compiler.Ast
                 if (current != null)
                 {
                     //Drop empty strings
-                    if(current.Length == 0)
+                    if (current.Length == 0)
                         continue;
 
                     buffer.Append(current);

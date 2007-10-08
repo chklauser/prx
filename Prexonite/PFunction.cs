@@ -22,8 +22,8 @@
  */
 
 using System;
-using System.Collections;
 using System.Collections.Generic;
+using System.Collections.ObjectModel;
 using System.IO;
 using System.Text;
 using Prexonite.Types;
@@ -67,7 +67,6 @@ namespace Prexonite
             _meta.SetDirect(IdKey, id);
 
             Meta[Application.ImportKey] = parentApplication.Meta[Application.ImportKey];
-
         }
 
         #endregion
@@ -81,6 +80,7 @@ namespace Prexonite
         }
 
         private Application _parentApplication;
+
         public Application ParentApplication
         {
             [NoDebug()]
@@ -88,6 +88,7 @@ namespace Prexonite
         }
 
         private SymbolCollection _importedNamesapces = new SymbolCollection();
+
         public SymbolCollection ImportedNamespaces
         {
             [NoDebug()]
@@ -95,6 +96,7 @@ namespace Prexonite
         }
 
         private List<Instruction> _code = new List<Instruction>();
+
         public List<Instruction> Code
         {
             [NoDebug()]
@@ -102,6 +104,7 @@ namespace Prexonite
         }
 
         private List<string> _parameters = new List<string>();
+
         public List<string> Parameters
         {
             [NoDebug()]
@@ -109,6 +112,7 @@ namespace Prexonite
         }
 
         private SymbolCollection _variables = new SymbolCollection();
+
         public SymbolCollection Variables
         {
             [NoDebug()]
@@ -152,7 +156,7 @@ namespace Prexonite
                     buffer.Append(',');
                 }
                 buffer.Length -= 1;
-                writer.WriteLine(buffer.ToString());
+                writer.WriteLine(buffer);
                 buffer.Length = 0;
             }
 
@@ -261,7 +265,7 @@ namespace Prexonite
                     _importedNamesapces.Add(entry.Text);
                 return item;
             }
-            else if(Engine.StringsAreEqual(item.Key, TryCatchFinallyBlock.MetaKey))
+            else if (Engine.StringsAreEqual(item.Key, TryCatchFinallyBlock.MetaKey))
             {
                 //Make sure the list of blocks is refreshed.
                 InvalidateTryCatchFinallyBlocks();
@@ -275,13 +279,19 @@ namespace Prexonite
 
         #region Invocation
 
-        internal FunctionContext CreateFunctionContext(Engine parentEngine, PValue[] args, PVariable[] sharedVariable,
-                                                       bool suppressInitialization)
+        internal FunctionContext CreateFunctionContext(
+            Engine parentEngine,
+            PValue[] args,
+            PVariable[] sharedVariable,
+            bool suppressInitialization)
         {
-            return new FunctionContext(parentEngine, this, args, sharedVariable, suppressInitialization);
+            return
+                new FunctionContext(
+                    parentEngine, this, args, sharedVariable, suppressInitialization);
         }
 
-        public FunctionContext CreateFunctionContext(Engine parentEngine, PValue[] args, PVariable[] sharedVariables)
+        public FunctionContext CreateFunctionContext(
+            Engine parentEngine, PValue[] args, PVariable[] sharedVariables)
         {
             return new FunctionContext(parentEngine, this, args, sharedVariables);
         }
@@ -345,15 +355,16 @@ namespace Prexonite
         }
 
         private List<TryCatchFinallyBlock> _tryCatchFinallyBlocks = null;
-        public System.Collections.ObjectModel.ReadOnlyCollection<TryCatchFinallyBlock> TryCatchFinallyBlocks
+
+        public ReadOnlyCollection<TryCatchFinallyBlock> TryCatchFinallyBlocks
         {
             get
             {
-                if(_tryCatchFinallyBlocks == null)
+                if (_tryCatchFinallyBlocks == null)
                 {
                     _tryCatchFinallyBlocks = new List<TryCatchFinallyBlock>();
                     MetaEntry tcfe;
-                    if(Meta.TryGetValue(TryCatchFinallyBlock.MetaKey,out tcfe))
+                    if (Meta.TryGetValue(TryCatchFinallyBlock.MetaKey, out tcfe))
                     {
                         foreach (MetaEntry blockEntry in tcfe.List)
                         {
@@ -363,18 +374,17 @@ namespace Prexonite
                                 endTry;
 
                             MetaEntry[] blockLst = blockEntry.List;
-                            if(blockLst.Length != 5)
+                            if (blockLst.Length != 5)
                                 continue;
 
-                            if(!int.TryParse(blockLst[0], out beginTry))
+                            if (!int.TryParse(blockLst[0], out beginTry))
                                 continue;
                             if (!int.TryParse(blockLst[1], out beginFinally))
                                 beginFinally = -1;
                             if (!int.TryParse(blockLst[2], out beginCatch))
                                 beginCatch = -1;
-                            if (!int.TryParse(blockLst[3],out endTry))
+                            if (!int.TryParse(blockLst[3], out endTry))
                                 continue;
-
 
                             TryCatchFinallyBlock block = new TryCatchFinallyBlock(beginTry, endTry);
                             block.BeginFinally = beginFinally;

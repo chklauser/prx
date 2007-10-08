@@ -3,13 +3,14 @@ using Prexonite.Types;
 
 namespace Prexonite.Compiler.Ast
 {
-    public class AstTryCatchFinally : AstNode, IAstHasBlocks
+    public class AstTryCatchFinally : AstNode,
+                                      IAstHasBlocks
     {
         public AstBlock TryBlock;
         public AstBlock CatchBlock;
         public AstBlock FinallyBlock;
-        public AstGetSet ExceptionVar = null;        
-        
+        public AstGetSet ExceptionVar = null;
+
         public AstTryCatchFinally(string file, int line, int column)
             : base(file, line, column)
         {
@@ -18,7 +19,7 @@ namespace Prexonite.Compiler.Ast
             FinallyBlock = new AstBlock(file, line, column);
         }
 
-        internal  AstTryCatchFinally(Parser p)
+        internal AstTryCatchFinally(Parser p)
             : base(p)
         {
             TryBlock = new AstBlock(p);
@@ -30,23 +31,20 @@ namespace Prexonite.Compiler.Ast
 
         public AstBlock[] Blocks
         {
-            get
-            {
-                return new AstBlock[] {TryBlock, CatchBlock, FinallyBlock};
-            }
+            get { return new AstBlock[] {TryBlock, CatchBlock, FinallyBlock}; }
         }
 
         #endregion
 
         public override void EmitCode(CompilerTarget target)
         {
-            string prefix = "try\\" + Guid.NewGuid().ToString("N")+  "\\";
+            string prefix = "try\\" + Guid.NewGuid().ToString("N") + "\\";
             string beginTryLabel = prefix + "beginTry";
             string beginFinallyLabel = prefix + "beginFinally";
             string beginCatchLabel = prefix + "beginCatch";
             string endTry = prefix + "endTry";
 
-            if(TryBlock.IsEmpty)
+            if (TryBlock.IsEmpty)
                 if (FinallyBlock.IsEmpty)
                     return;
                 else
@@ -68,7 +66,8 @@ namespace Prexonite.Compiler.Ast
             //Catch block
             target.EmitLabel(beginCatchLabel);
             if (ExceptionVar != null)
-            {   //Assign exception
+            {
+                //Assign exception
                 ExceptionVar = GetOptimizedNode(target, ExceptionVar) as AstGetSet ?? ExceptionVar;
                 ExceptionVar.Arguments.Add(new AstGetException(File, Line, Column));
                 ExceptionVar.Call = PCall.Set;
@@ -76,11 +75,13 @@ namespace Prexonite.Compiler.Ast
             }
 
             if ((!CatchBlock.IsEmpty) || ExceptionVar != null)
-            {   //Exception handled
+            {
+                //Exception handled
                 CatchBlock.EmitCode(target);
             }
             else
-            {   //Exception not handled => rethrow.
+            {
+                //Exception not handled => rethrow.
                 AstThrow th = new AstThrow(File, Line, Column);
                 th.Expression = new AstGetException(File, Line, Column);
                 th.EmitCode(target);
@@ -89,7 +90,8 @@ namespace Prexonite.Compiler.Ast
             target.EmitLabel(endTry);
 
             TryCatchFinallyBlock block =
-                new TryCatchFinallyBlock(_getAddress(target, beginTryLabel), _getAddress(target, endTry));
+                new TryCatchFinallyBlock(
+                    _getAddress(target, beginTryLabel), _getAddress(target, endTry));
 
             block.BeginFinally = !FinallyBlock.IsEmpty ? _getAddress(target, beginFinallyLabel) : -1;
             block.BeginCatch = !CatchBlock.IsEmpty ? _getAddress(target, beginCatchLabel) : -1;

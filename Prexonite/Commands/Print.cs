@@ -31,9 +31,9 @@ namespace Prexonite.Commands
     /// <summary>
     /// Implementation of the <c>print</c> command.
     /// </summary>
-    public class Print :PCommand
+    public class Print : PCommand
     {
-                private TextWriter _writer;
+        private TextWriter _writer;
 
         /// <summary>
         /// Creates a new <c>println</c> command, that prints to the supplied <see cref="TextWriter"/>.
@@ -47,7 +47,7 @@ namespace Prexonite.Commands
         /// <summary>
         /// Creates a new <c>println</c> command that prints to <see cref="Console.Out"/>.
         /// </summary>
-        public  Print()
+        public Print()
         {
             _writer = Console.Out;
         }
@@ -64,7 +64,7 @@ namespace Prexonite.Commands
             for (int i = 0; i < args.Length; i++)
             {
                 PValue arg = args[i];
-                buffer.Append(arg.Type is StringPType ? (string)arg.Value : arg.CallToString(sctx));
+                buffer.Append(arg.Type is StringPType ? (string) arg.Value : arg.CallToString(sctx));
             }
 
             _writer.Write(buffer);

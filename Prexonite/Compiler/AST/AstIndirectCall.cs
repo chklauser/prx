@@ -31,7 +31,8 @@ namespace Prexonite.Compiler.Ast
     {
         public IAstExpression Subject;
 
-        public AstIndirectCall(string file, int line, int column, PCall call, IAstExpression subject)
+        public AstIndirectCall(
+            string file, int line, int column, PCall call, IAstExpression subject)
             : base(file, line, column, call)
         {
             if (subject == null)
@@ -105,7 +106,8 @@ namespace Prexonite.Compiler.Ast
                     SymbolInterpretations.GlobalReferenceVariable
                         :
                     SymbolInterpretations.LocalReferenceVariable;
-                AstGetSetSymbol refcall = new AstGetSetSymbol(File, Line, Column, Call, symbol.Id, kind);
+                AstGetSetSymbol refcall =
+                    new AstGetSetSymbol(File, Line, Column, Call, symbol.Id, kind);
                 refcall.Arguments.AddRange(Arguments);
                 expr = refcall;
                 return true;

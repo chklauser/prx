@@ -265,7 +265,8 @@ namespace Prexonite.Compiler
 
             public void CopyTo(KeyValuePair<string, SymbolEntry>[] array, int arrayIndex)
             {
-                List<KeyValuePair<string, SymbolEntry>> lst = new List<KeyValuePair<string, SymbolEntry>>(symbols);
+                List<KeyValuePair<string, SymbolEntry>> lst =
+                    new List<KeyValuePair<string, SymbolEntry>>(symbols);
                 if (parent != null)
                 {
                     foreach (KeyValuePair<string, SymbolEntry> kvp in parent)
@@ -300,7 +301,8 @@ namespace Prexonite.Compiler
 
             #region IEnumerable<KeyValuePair<string,SymbolEntry>> Members
 
-            IEnumerator<KeyValuePair<string, SymbolEntry>> IEnumerable<KeyValuePair<string, SymbolEntry>>.GetEnumerator()
+            IEnumerator<KeyValuePair<string, SymbolEntry>>
+                IEnumerable<KeyValuePair<string, SymbolEntry>>.GetEnumerator()
             {
                 foreach (KeyValuePair<string, SymbolEntry> kvp in symbols)
                     yield return kvp;
@@ -390,7 +392,7 @@ namespace Prexonite.Compiler
         [NoDebug]
         public void Declare(SymbolInterpretations kind, string id, string translatedId)
         {
-            if(Symbols.IsKeyDefinedLocally(id))
+            if (Symbols.IsKeyDefinedLocally(id))
             {
                 SymbolEntry entry = Symbols[id];
                 entry.Interpretation = kind;
@@ -510,7 +512,7 @@ namespace Prexonite.Compiler
             //Correct jump targets by...
             foreach (Instruction ins in code)
             {
-                if ((ins.IsJump || ins.OpCode == OpCode.leave) 
+                if ((ins.IsJump || ins.OpCode == OpCode.leave)
                     && ins.Arguments > index) //decrementing target addresses pointing 
                     //behind the removed instruction
                     ins.Arguments -= count;
@@ -521,11 +523,11 @@ namespace Prexonite.Compiler
             int i = 0;
             foreach (TryCatchFinallyBlock block in _function.TryCatchFinallyBlocks)
             {
-                if(block.BeginTry > index)
+                if (block.BeginTry > index)
                     block.BeginTry -= count;
-                if(block.BeginFinally > index)
+                if (block.BeginFinally > index)
                     block.BeginFinally -= count;
-                if(block.BeginCatch > index)
+                if (block.BeginCatch > index)
                     block.BeginCatch -= count;
                 if (block.EndTry > index)
                     block.EndTry -= count;
@@ -821,7 +823,7 @@ namespace Prexonite.Compiler
 
         public void EmitLeave(int address, string label)
         {
-            Instruction ins = new Instruction(OpCode.leave, address,label);
+            Instruction ins = new Instruction(OpCode.leave, address, label);
             Emit(ins);
         }
 
@@ -854,7 +856,7 @@ namespace Prexonite.Compiler
         public void EmitLeave(string label)
         {
             int address;
-            if(TryResolveLabel(label, out address))
+            if (TryResolveLabel(label, out address))
             {
                 EmitLeave(address, label);
             }
@@ -993,7 +995,8 @@ namespace Prexonite.Compiler
             }
 
             //Add the label to the symbol table
-            Symbols[label + LabelSymbolPostfix] = new SymbolEntry(SymbolInterpretations.JumpLabel, address);
+            Symbols[label + LabelSymbolPostfix] =
+                new SymbolEntry(SymbolInterpretations.JumpLabel, address);
 
             //resolve any unresolved jumps
             foreach (Instruction ins in _unresolvedInstructions.ToArray())
@@ -1075,7 +1078,6 @@ namespace Prexonite.Compiler
 #if !DEBUG
             _removeNop();
 #endif
-
         }
 
         #region Check unresolved Instructions
@@ -1084,8 +1086,9 @@ namespace Prexonite.Compiler
         {
             //Check for unresolved instructions
             if (_unresolvedInstructions.Count > 0)
-                throw new PrexoniteException("The instruction [ " + _unresolvedInstructions[0] +
-                                             " ] has not been resolved.");
+                throw new PrexoniteException(
+                    "The instruction [ " + _unresolvedInstructions[0] +
+                    " ] has not been resolved.");
         }
 
         #endregion
@@ -1118,7 +1121,8 @@ namespace Prexonite.Compiler
                     addresses[current.Arguments] = true;
                     //Check for loop (uncond. jump targets another unconditional jump already visited
                     if (addresses[target.Arguments])
-                        throw new PrexoniteException("Infinite loop in unconditional jump sequence detected.");
+                        throw new PrexoniteException(
+                            "Infinite loop in unconditional jump sequence detected.");
                     //Propagate address
                     current.Arguments = target.Arguments;
                     current.Id = target.Id;
@@ -1206,8 +1210,9 @@ namespace Prexonite.Compiler
                     }
                     else if (ins.IsConditionalJump)
                     {
-                        throw new PrexoniteException("Redundant conditional jump to following instruction at address " +
-                                                     i);
+                        throw new PrexoniteException(
+                            "Redundant conditional jump to following instruction at address " +
+                            i);
                     }
                 }
             }
@@ -1269,7 +1274,7 @@ namespace Prexonite.Compiler
             for (int i = 0; i < code.Count; i++)
             {
                 Instruction instruction = code[i];
-                if(instruction.OpCode == OpCode.nop)
+                if (instruction.OpCode == OpCode.nop)
                     RemoveInstructionAt(i--);
             }
         }

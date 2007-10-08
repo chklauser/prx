@@ -32,7 +32,8 @@ namespace Prexonite.Compiler.Ast
         public IAstExpression Subject;
         public IAstType Type;
 
-        public AstTypecheck(string file, int line, int column, IAstExpression subject, IAstType type)
+        public AstTypecheck(
+            string file, int line, int column, IAstExpression subject, IAstType type)
             : base(file, line, column)
         {
             if (subject == null)
@@ -82,7 +83,8 @@ namespace Prexonite.Compiler.Ast
                 //ignore, cast failed. cannot be optimized
                 return false;
             }
-            expr = new AstConstant(File, Line, Column, constSubject.ToPValue(target).Type.Equals(type));
+            expr =
+                new AstConstant(File, Line, Column, constSubject.ToPValue(target).Type.Equals(type));
             return true;
         }
     }

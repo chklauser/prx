@@ -1,9 +1,5 @@
 using System;
-using System.Collections.Generic;
-using System.Text;
-using Prexonite;
-using Prexonite.Types;
-using Prexonite.Compiler.Ast;
+using System.Diagnostics;
 
 namespace Prexonite.Compiler
 {
@@ -17,7 +13,7 @@ namespace Prexonite.Compiler
     /// <summary>
     /// Union class for both managed as well as interpreted compiler hooks.
     /// </summary>
-    [System.Diagnostics.DebuggerNonUserCode]
+    [DebuggerNonUserCode]
     public sealed class CompilerHook
     {
         private AstTransformation _managed;
@@ -30,7 +26,7 @@ namespace Prexonite.Compiler
         public CompilerHook(AstTransformation transformation)
         {
             if (transformation == null)
-                throw new ArgumentNullException("transformation"); 
+                throw new ArgumentNullException("transformation");
             _managed = transformation;
         }
 
@@ -41,7 +37,7 @@ namespace Prexonite.Compiler
         public CompilerHook(PValue transformation)
         {
             if (transformation == null)
-                throw new ArgumentNullException("transformation"); 
+                throw new ArgumentNullException("transformation");
             _interpreted = transformation;
         }
 
@@ -50,10 +46,7 @@ namespace Prexonite.Compiler
         /// </summary>
         public bool IsManaged
         {
-            get
-            {
-                return _managed != null;
-            }
+            get { return _managed != null; }
         }
 
         /// <summary>
@@ -61,10 +54,7 @@ namespace Prexonite.Compiler
         /// </summary>
         public bool IsInterpreted
         {
-            get
-            {
-                return _interpreted != null;
-            }
+            get { return _interpreted != null; }
         }
 
         /// <summary>

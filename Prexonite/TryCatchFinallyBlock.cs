@@ -1,6 +1,5 @@
 using System;
 using System.Collections.Generic;
-using System.Diagnostics;
 
 namespace Prexonite
 {
@@ -18,7 +17,6 @@ namespace Prexonite
         ///  <see cref="EndTry"/> to appropriate values.</remarks>
         public TryCatchFinallyBlock()
         {
-            
         }
 
         /// <summary>
@@ -32,7 +30,6 @@ namespace Prexonite
             EndTry = endTry;
         }
 
-
         /// <summary>
         /// Used to store and retrieve try-catch-finally blocks from metadata.
         /// </summary>
@@ -41,82 +38,99 @@ namespace Prexonite
         /// <summary>
         /// The address of the first instruction inside the try-block.
         /// </summary>
-        public int  BeginTry
+        public int BeginTry
         {
             get { return _beginTry; }
             set
             {
-                if((_endTry > 0 ? value >= _endTry : false) || (HasFinally ? value >= _beginFinally : false) || (HasCatch ? value >= _beginCatch : false))
-                    throw new ArgumentOutOfRangeException("value","BeginTry("+value+") has to be less than BeginFinally,BeginCatch and EndTry.");
+                if ((_endTry > 0 ? value >= _endTry : false) ||
+                    (HasFinally ? value >= _beginFinally : false) ||
+                    (HasCatch ? value >= _beginCatch : false))
+                    throw new ArgumentOutOfRangeException(
+                        "value",
+                        "BeginTry(" + value +
+                        ") has to be less than BeginFinally,BeginCatch and EndTry.");
                 _beginTry = value;
             }
         }
-        private int  _beginTry = -1;
+
+        private int _beginTry = -1;
 
         /// <summary>
         /// The address of the first instruction inside the finally-block.
         /// </summary>
         /// <remarks>This property can have the value -1 if no finally-block has been specified.</remarks>
-        public int  BeginFinally
+        public int BeginFinally
         {
             get { return _beginFinally; }
             set
             {
-                if(value > 0  && 
-                    ((_beginTry > 0 ? value <= _beginTry : false) || 
-                     (_endTry > 0 ? value >= _endTry : false) || 
+                if (value > 0 &&
+                    ((_beginTry > 0 ? value <= _beginTry : false) ||
+                     (_endTry > 0 ? value >= _endTry : false) ||
                      (HasCatch ? value >= _beginCatch : false)))
-                    throw new ArgumentOutOfRangeException("value",
-                                                          "BeginFinally(" + value +
-                                                          ") has to be within the whole try-catch-finally structure but before a catch-clause.");
+                    throw new ArgumentOutOfRangeException(
+                        "value",
+                        "BeginFinally(" + value +
+                        ") has to be within the whole try-catch-finally structure but before a catch-clause.");
                 _beginFinally = value;
             }
         }
-        private int  _beginFinally = -1;
+
+        private int _beginFinally = -1;
 
         /// <summary>
         /// The address of the first instruction inside the catch-block.
         /// </summary>
         /// <remarks>This property can have the value -1 if no catch-block has been specified.</remarks>
-        public int  BeginCatch
+        public int BeginCatch
         {
             get { return _beginCatch; }
             set
             {
-                if(value > 0 && 
-                    ((_beginTry > 0 ? value <= _beginTry : false) || 
-                     (_endTry > 0 ? value >= _endTry : false) || 
+                if (value > 0 &&
+                    ((_beginTry > 0 ? value <= _beginTry : false) ||
+                     (_endTry > 0 ? value >= _endTry : false) ||
                      (HasFinally ? value <= _beginFinally : false)))
-                    throw new ArgumentOutOfRangeException("value",
-                                                          "BeginCatch("+value+") has to be within whole try-catch-finally structure but after a finally-clause.");
+                    throw new ArgumentOutOfRangeException(
+                        "value",
+                        "BeginCatch(" + value +
+                        ") has to be within whole try-catch-finally structure but after a finally-clause.");
                 _beginCatch = value;
             }
         }
-        private int  _beginCatch = -1;
+
+        private int _beginCatch = -1;
 
         /// <summary>
         /// The address of the first instruction after the try-catch-finally construct.
         /// </summary>
         /// <remarks>This property might point to an invalid address after the last instruction of a function.</remarks>
-        public int  EndTry
+        public int EndTry
         {
             get { return _endTry; }
             set
             {
-                if((_beginTry > 0 ? value <= _beginTry : false) || (HasCatch ? value <= _beginCatch : false) || (HasFinally ? value <= _beginFinally : false))
-                    throw new ArgumentOutOfRangeException("value", "EndTry("+value+") has to be greater than BeginTry, BeginFinally and BeginCatch.");
+                if ((_beginTry > 0 ? value <= _beginTry : false) ||
+                    (HasCatch ? value <= _beginCatch : false) ||
+                    (HasFinally ? value <= _beginFinally : false))
+                    throw new ArgumentOutOfRangeException(
+                        "value",
+                        "EndTry(" + value +
+                        ") has to be greater than BeginTry, BeginFinally and BeginCatch.");
                 _endTry = value;
             }
         }
-        private int  _endTry = -1;
 
-        public bool  UsesException
+        private int _endTry = -1;
+
+        public bool UsesException
         {
             get { return _usesException; }
             set { _usesException = value; }
         }
-        private bool  _usesException = false;
 
+        private bool _usesException = false;
 
         /// <summary>
         /// Indicates whether this instance has correctly been initialized.
@@ -154,7 +168,9 @@ namespace Prexonite
                 if (!IsValid)
                     return -1;
                 else
-                    return (HasFinally ? _beginFinally : HasCatch ? _beginCatch : _endTry) - _beginTry - 1;
+                    return
+                        (HasFinally ? _beginFinally : HasCatch ? _beginCatch : _endTry) - _beginTry -
+                        1;
             }
         }
 
@@ -165,7 +181,9 @@ namespace Prexonite
         /// <returns>True if the block handles exceptions at the supplied address, false otherwise.</returns>
         public bool Handles(int address)
         {
-            return address >= _beginTry && address < (HasFinally ? _beginFinally : HasCatch ? _beginCatch : _endTry);
+            return
+                address >= _beginTry &&
+                address < (HasFinally ? _beginFinally : HasCatch ? _beginCatch : _endTry);
         }
 
         /// <summary>
@@ -175,7 +193,8 @@ namespace Prexonite
         /// <param name="address">The address where the excpetion has been caught.</param>
         /// <param name="blocks">An collection of try-catch-finally candidates.</param>
         /// <returns>The block closest to the address or null if none of the blocks handles that specific address.</returns>
-        public static TryCatchFinallyBlock Closest(int address, ICollection<TryCatchFinallyBlock> blocks)
+        public static TryCatchFinallyBlock Closest(
+            int address, ICollection<TryCatchFinallyBlock> blocks)
         {
             if (blocks == null)
                 throw new ArgumentNullException("blocks");
@@ -186,7 +205,7 @@ namespace Prexonite
 
             foreach (TryCatchFinallyBlock block in blocks)
             {
-                if(!block.Handles(address))
+                if (!block.Handles(address))
                     continue;
 
                 if (closest == null)
@@ -205,7 +224,8 @@ namespace Prexonite
         /// <param name="address">The address where the excpetion has been caught.</param>
         /// <param name="blocks">An array of try-catch-finally candidates.</param>
         /// <returns>The block closest to the address or null if none of the blocks handles that specific address.</returns>
-        public static TryCatchFinallyBlock Closest(int address, params TryCatchFinallyBlock[] blocks)
+        public static TryCatchFinallyBlock Closest(
+            int address, params TryCatchFinallyBlock[] blocks)
         {
             return Closest(address, (ICollection<TryCatchFinallyBlock>) blocks);
         }
@@ -218,7 +238,8 @@ namespace Prexonite
         /// <param name="b">A try-catch-finally block that handles the address.</param>
         /// <returns>The try-catch-finally block that is closer to the address.
         /// If neither <paramref name="a"/> nor <paramref name="b"/> handle the supplied address, null is returned.</returns>
-        public static TryCatchFinallyBlock Closer(int address, TryCatchFinallyBlock a, TryCatchFinallyBlock b)
+        public static TryCatchFinallyBlock Closer(
+            int address, TryCatchFinallyBlock a, TryCatchFinallyBlock b)
         {
             if (a == null)
                 throw new ArgumentNullException("a");
@@ -227,7 +248,7 @@ namespace Prexonite
             if (address < 0)
                 throw new ArgumentOutOfRangeException("address must be positive.");
 
-            if(ReferenceEquals(a,b) || a == b)
+            if (ReferenceEquals(a, b) || a == b)
                 return a;
 
             if ((!a.IsValid) || (!b.IsValid))
@@ -261,28 +282,32 @@ namespace Prexonite
         /// <returns>A human-readable representation of the try-catch-finally construct.</returns>
         public override string ToString()
         {
-            return "try{" + _beginTry + (!(HasFinally || HasCatch) ? ", " + (_beginTry + Range) : "") + "}" +
-                   (HasFinally ? "finally{" + _beginCatch + (!HasCatch ? ", " + _endTry : "") + "}" : "") +
-                   (HasCatch ? "catch{" + _beginCatch + ", " + _endTry + "}" : "");
+            return
+                "try{" + _beginTry + (!(HasFinally || HasCatch) ? ", " + (_beginTry + Range) : "") +
+                "}" +
+                (HasFinally
+                     ? "finally{" + _beginCatch + (!HasCatch ? ", " + _endTry : "") + "}"
+                     : "") +
+                (HasCatch ? "catch{" + _beginCatch + ", " + _endTry + "}" : "");
         }
 
         public MetaEntry ToMetaEntry()
         {
             return (MetaEntry) new MetaEntry[]
-                {
-                    BeginTry.ToString(),
-                    BeginFinally.ToString(),
-                    BeginCatch.ToString(),
-                    EndTry.ToString(),
-                    UsesException
-                };
+                                   {
+                                       BeginTry.ToString(),
+                                       BeginFinally.ToString(),
+                                       BeginCatch.ToString(),
+                                       EndTry.ToString(),
+                                       UsesException
+                                   };
         }
 
         public static implicit operator MetaEntry(TryCatchFinallyBlock block)
         {
             if (block == null)
                 return (MetaEntry) new MetaEntry[] {};
-            else 
+            else
                 return block.ToMetaEntry();
         }
 
@@ -290,7 +315,7 @@ namespace Prexonite
 
         public override bool Equals(object obj)
         {
-            if(obj == null)
+            if (obj == null)
                 return false;
             TryCatchFinallyBlock block = obj as TryCatchFinallyBlock;
 
@@ -314,9 +339,9 @@ namespace Prexonite
 
         public static bool operator ==(TryCatchFinallyBlock a, TryCatchFinallyBlock b)
         {
-            if (((object)a) == null && ((object)b) == null)
+            if (((object) a) == null && ((object) b) == null)
                 return true;
-            else if (((object)a) == null || ((object)b) == null)
+            else if (((object) a) == null || ((object) b) == null)
                 return false;
             else
                 return a.Equals(b);

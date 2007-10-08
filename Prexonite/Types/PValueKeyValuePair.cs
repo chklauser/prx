@@ -3,14 +3,14 @@ using System.Collections.Generic;
 
 namespace Prexonite.Types
 {
-
     /// <summary>
     /// Pair or PValues
     /// </summary>
     //[System.Diagnostics.DebuggerNonUserCode()]
     public class PValueKeyValuePair : IObject
     {
-        private static readonly ObjectPType _objectType = new ObjectPType(typeof(PValueKeyValuePair));
+        private static readonly ObjectPType _objectType =
+            new ObjectPType(typeof(PValueKeyValuePair));
 
         /// <summary>
         /// A static reference to the object type of this class.
@@ -20,13 +20,12 @@ namespace Prexonite.Types
             get { return _objectType; }
         }
 
-
         private PValue _key;
 
         /// <summary>
         /// Provides access to the value stored as the "Key".
         /// </summary>
-        public  PValue Key
+        public PValue Key
         {
             get { return _key; }
         }
@@ -40,7 +39,6 @@ namespace Prexonite.Types
         {
             get { return _value; }
         }
-
 
         /// <summary>
         /// Creates a new PValueKeyValuePair.
@@ -74,7 +72,8 @@ namespace Prexonite.Types
         /// <returns>True, if the call succeeded, false otherwise.</returns>
         /// <remarks><paramref name="result"/> is not defined if the function returns false.</remarks>
         /// <exception cref="ArgumentNullException"><paramref name="sctx"/> is null.</exception>
-        public bool TryDynamicCall(StackContext sctx, PValue[] args, PCall call, string id, out PValue result)
+        public bool TryDynamicCall(
+            StackContext sctx, PValue[] args, PCall call, string id, out PValue result)
         {
             if (sctx == null)
                 throw new ArgumentNullException("sctx");
@@ -87,12 +86,12 @@ namespace Prexonite.Types
 
             PValue arg0;
 
-            switch(id.ToLowerInvariant())
+            switch (id.ToLowerInvariant())
             {
                 case "":
-                    if(args.Length == 1)
+                    if (args.Length == 1)
                     {
-                        if(args[0].TryConvertTo(sctx, PType.Int, out arg0))
+                        if (args[0].TryConvertTo(sctx, PType.Int, out arg0))
                         {
                             int i = (int) arg0.Value;
                             if (i == 0)
@@ -111,9 +110,9 @@ namespace Prexonite.Types
                     result = _value;
                     break;
                 case "equals":
-                    if(args.Length == 1)
+                    if (args.Length == 1)
                     {
-                        if(args[0].TryConvertTo(sctx, _objectType, out arg0))
+                        if (args[0].TryConvertTo(sctx, _objectType, out arg0))
                         {
                             PValueKeyValuePair pair = (PValueKeyValuePair) arg0.Value;
                             result = _key.Equals(pair._key) && _value.Equals(pair._value);
@@ -124,7 +123,9 @@ namespace Prexonite.Types
                     result = String.Concat(_key.CallToString(sctx), ": ", _value.CallToString(sctx));
                     break;
                 default:
-                    if(!_objectType.TryDynamicCall(sctx, sctx.CreateNativePValue(this),args, PCall.Get,id, out result))
+                    if (
+                        !_objectType.TryDynamicCall(
+                             sctx, sctx.CreateNativePValue(this), args, PCall.Get, id, out result))
                         result = null;
                     break;
             }
@@ -141,19 +142,19 @@ namespace Prexonite.Types
         /// <returns>True if the two object are equal, False otherwise.</returns>
         public override bool Equals(object obj)
         {
-            if(obj == null)
+            if (obj == null)
                 return false;
 
             PValue okey;
             PValue ovalue;
 
-            if(obj is PValueKeyValuePair)
+            if (obj is PValueKeyValuePair)
             {
                 PValueKeyValuePair pvkvp = (PValueKeyValuePair) obj;
                 okey = pvkvp.Key;
                 ovalue = pvkvp.Value;
             }
-            else if(obj is KeyValuePair<PValue, PValue>)
+            else if (obj is KeyValuePair<PValue, PValue>)
             {
                 KeyValuePair<PValue, PValue> kvp = (KeyValuePair<PValue, PValue>) obj;
                 okey = kvp.Key;

@@ -26,7 +26,8 @@ using NoDebug = System.Diagnostics.DebuggerNonUserCodeAttribute;
 
 namespace Prexonite.Compiler.Ast
 {
-    public class AstForeachLoop : AstLoop, IAstHasBlocks
+    public class AstForeachLoop : AstLoop,
+                                  IAstHasBlocks
     {
         [NoDebug]
         public AstForeachLoop(string file, int line, int column)
@@ -73,7 +74,8 @@ namespace Prexonite.Compiler.Ast
             //Create the element assignment statement
             AstGetSet element = Element.GetCopy();
             AstGetSetSymbol ldEnumVar =
-                new AstGetSetSymbol(File, Line, Column, enumVar, SymbolInterpretations.LocalObjectVariable);
+                new AstGetSetSymbol(
+                    File, Line, Column, enumVar, SymbolInterpretations.LocalObjectVariable);
             AstGetSetMemberAccess getCurrent =
                 new AstGetSetMemberAccess(File, Line, Column, ldEnumVar, "Current");
             element.Arguments.Add(getCurrent);
@@ -84,11 +86,13 @@ namespace Prexonite.Compiler.Ast
             //Get the enumerator
             List.EmitCode(target);
             target.EmitGetCall(0, "GetEnumerator");
-            target.Emit(new Instruction(OpCode.cast_const, "Object(\"System.Collections.IEnumerator\")"));
+            target.Emit(
+                new Instruction(OpCode.cast_const, "Object(\"System.Collections.IEnumerator\")"));
             target.EmitStoreLocal(enumVar);
 
             AstTryCatchFinally _try = new AstTryCatchFinally(File, Line, Column);
-            _try.TryBlock = new AstActionBlock(this, 
+            _try.TryBlock = new AstActionBlock(
+                this,
                 delegate
                 {
                     target.EmitJump(Labels.ContinueLabel);
@@ -110,15 +114,15 @@ namespace Prexonite.Compiler.Ast
                     target.EmitLabel(Labels.BreakLabel);
                 });
 
-            _try.FinallyBlock = new AstActionBlock(this,
+            _try.FinallyBlock = new AstActionBlock(
+                this,
                 delegate
                 {
                     target.EmitLoadLocal(enumVar);
-                    target.EmitCommandCall(1,Engine.DisposeCommand,true);
+                    target.EmitCommandCall(1, Engine.DisposeCommand, true);
                 });
 
             _try.EmitCode(target);
         }
-
     }
 }

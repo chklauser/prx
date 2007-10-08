@@ -26,9 +26,11 @@ using Prexonite.Types;
 
 namespace Prexonite.Compiler.Ast
 {
-    public class AstConditionalExpression : AstNode, IAstExpression
+    public class AstConditionalExpression : AstNode,
+                                            IAstExpression
     {
-        public AstConditionalExpression(string file, int line, int column, IAstExpression condition, bool isNegative)
+        public AstConditionalExpression(
+            string file, int line, int column, IAstExpression condition, bool isNegative)
             : base(file, line, column)
         {
             if (condition == null)
@@ -77,7 +79,9 @@ namespace Prexonite.Compiler.Ast
             {
                 AstConstant constCond = (AstConstant) Condition;
                 PValue condValue;
-                if (!constCond.ToPValue(target).TryConvertTo(target.Loader, PType.Bool, out condValue))
+                if (
+                    !constCond.ToPValue(target).TryConvertTo(
+                         target.Loader, PType.Bool, out condValue))
                     expr = null;
                 else if ((bool) condValue.Value)
                     expr = IfExpression;

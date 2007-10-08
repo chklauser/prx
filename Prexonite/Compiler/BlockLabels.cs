@@ -54,7 +54,7 @@ namespace Prexonite.Compiler
 
         public string Prefix
         {
-            get { return _prefix.Substring(0,_prefix.Length-1); }
+            get { return _prefix.Substring(0, _prefix.Length - 1); }
         }
 
         private string _uid;
@@ -70,7 +70,7 @@ namespace Prexonite.Compiler
         public const string DefaultPrefix = "_";
 
         public BlockLabels(string prefix)
-            : this(prefix, "\\"+Guid.NewGuid().ToString("N"))
+            : this(prefix, "\\" + Guid.NewGuid().ToString("N"))
         {
         }
 
@@ -92,7 +92,7 @@ namespace Prexonite.Compiler
 
         public string CreateLabel(string verb)
         {
-            return String.Concat(_prefix,verb,_uid);
+            return String.Concat(_prefix, verb, _uid);
         }
 
         public BlockLabels()

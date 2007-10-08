@@ -82,7 +82,8 @@ namespace Prexonite
 
                 bool keepOnStack = false;
                 if (currentException == null)
-                {   //Execute code
+                {
+                    //Execute code
                     try
                     {
                         keepOnStack = sctx.NextCylce();
@@ -94,7 +95,8 @@ namespace Prexonite
                     }
                     catch (Exception exc)
                     {
-                        currentException = PrexoniteRuntimeException.CreateRuntimeException(sctx, exc);
+                        currentException =
+                            PrexoniteRuntimeException.CreateRuntimeException(sctx, exc);
                         continue;
                     }
                 }
@@ -106,11 +108,11 @@ namespace Prexonite
                         if (keepOnStack) //Exception has been handled
                             currentException = null;
                     }
-                    catch(PrexoniteRuntimeException exc)
+                    catch (PrexoniteRuntimeException exc)
                     {
                         currentException = PrexoniteRuntimeException.UnpackException(exc);
                     }
-                    catch(Exception exc)
+                    catch (Exception exc)
                     {
                         //Original exception can no longer be handled
                         currentException =
@@ -141,7 +143,7 @@ namespace Prexonite
         public void Process(StackContext sctx)
         {
             if (sctx == null)
-                throw new ArgumentNullException("sctx"); 
+                throw new ArgumentNullException("sctx");
             _stack.AddLast(sctx);
 #if Verbose
                     Console.WriteLine("\n#PSH: " + sctx.Implementation.Id + "(?)");

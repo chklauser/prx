@@ -102,15 +102,16 @@ namespace Prexonite.Types
         /// <param name="result">The PValue returned by the member call.</param>
         /// <returns>True if the call was successful; false otherwise.</returns>
         /// <remarks>Since none of the instance members take any arguments, <paramref name="args"/> must have length 0.</remarks>
-        public bool TryDynamicCall(StackContext sctx, PValue[] args, PCall call, string id, out PValue result)
+        public bool TryDynamicCall(
+            StackContext sctx, PValue[] args, PCall call, string id, out PValue result)
         {
             result = null;
             if (args == null)
-                throw new ArgumentNullException("args"); 
+                throw new ArgumentNullException("args");
             if (args.Length != 0)
                 return false;
 
-            switch(id.ToLower())
+            switch (id.ToLower())
             {
                 case "movenext":
                     result = MoveNext();

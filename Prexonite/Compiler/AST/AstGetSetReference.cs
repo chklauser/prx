@@ -28,18 +28,25 @@ namespace Prexonite.Compiler.Ast
 {
     public class AstGetSetReference : AstGetSetSymbol
     {
-        public AstGetSetReference(string file, int line, int column, PCall call, string id,
-                                  SymbolInterpretations interpretation)
+        public AstGetSetReference(
+            string file,
+            int line,
+            int column,
+            PCall call,
+            string id,
+            SymbolInterpretations interpretation)
             : base(file, line, column, call, id, interpretation)
         {
         }
 
-        public AstGetSetReference(string file, int line, int column, string id, SymbolInterpretations interpretation)
+        public AstGetSetReference(
+            string file, int line, int column, string id, SymbolInterpretations interpretation)
             : base(file, line, column, PCall.Get, id, interpretation)
         {
         }
 
-        internal AstGetSetReference(Parser p, PCall call, string id, SymbolInterpretations interpretation)
+        internal AstGetSetReference(
+            Parser p, PCall call, string id, SymbolInterpretations interpretation)
             : base(p.scanner.File, p.t.line, p.t.col, call, id, interpretation)
         {
         }
@@ -85,8 +92,9 @@ namespace Prexonite.Compiler.Ast
                 case SymbolInterpretations.Function:
                 case SymbolInterpretations.JumpLabel:
                 case SymbolInterpretations.KnownType:
-                    throw new PrexoniteException("Cannot assign to a reference to a " +
-                                                 Enum.GetName(typeof(SymbolInterpretations), Interpretation).ToLower());
+                    throw new PrexoniteException(
+                        "Cannot assign to a reference to a " +
+                        Enum.GetName(typeof(SymbolInterpretations), Interpretation).ToLower());
 
                     //Variables are not automatically dereferenced
                 case SymbolInterpretations.GlobalObjectVariable:

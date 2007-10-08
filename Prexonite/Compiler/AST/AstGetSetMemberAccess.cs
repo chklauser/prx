@@ -32,7 +32,8 @@ namespace Prexonite.Compiler.Ast
         public string Id;
         public IAstExpression Subject;
 
-        public AstGetSetMemberAccess(string file, int line, int column, PCall call, IAstExpression subject, string id)
+        public AstGetSetMemberAccess(
+            string file, int line, int column, PCall call, IAstExpression subject, string id)
             : base(file, line, column, call)
         {
             if (subject == null)
@@ -68,7 +69,8 @@ namespace Prexonite.Compiler.Ast
         {
         }
 
-        public AstGetSetMemberAccess(string file, int line, int column, IAstExpression subject, string id)
+        public AstGetSetMemberAccess(
+            string file, int line, int column, IAstExpression subject, string id)
             : this(file, line, column, PCall.Get, subject, id)
         {
         }

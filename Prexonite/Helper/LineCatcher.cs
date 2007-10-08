@@ -4,7 +4,6 @@ using System.Text;
 
 namespace Prexonite.Helper
 {
-
     /// <summary>
     /// Carries the line caugth by the <see cref="LineCatcher"/>.
     /// </summary>
@@ -13,12 +12,13 @@ namespace Prexonite.Helper
         /// <summary>
         /// The line caught by the <see cref="LineCatcher"/>.
         /// </summary>
-        public string  Line
+        public string Line
         {
             get { return _line; }
             set { _line = value; }
         }
-        private string  _line;
+
+        private string _line;
 
         /// <summary>
         /// Creates a new instance of the LineCaughtEventArgs.
@@ -64,7 +64,7 @@ namespace Prexonite.Helper
         /// <param name="value">The character to write.</param>
         public override void Write(char value)
         {
-            if(value == '\n')
+            if (value == '\n')
             {
                 LineCaught(this, new LineCaughtEventArgs(buffer.ToString().Trim()));
                 buffer.Length = 0;

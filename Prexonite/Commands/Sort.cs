@@ -1,6 +1,5 @@
 using System;
 using System.Collections.Generic;
-using System.Text;
 using Prexonite.Types;
 
 namespace Prexonite.Commands
@@ -23,36 +22,37 @@ namespace Prexonite.Commands
             if (sctx == null)
                 throw new ArgumentNullException("sctx");
             if (args == null)
-                args = new PValue[] { } ;
+                args = new PValue[] {};
             List<PValue> lst = new List<PValue>();
             if (args.Length == 0)
                 return PType.Null.CreatePValue();
-            else if(args.Length == 1)
+            else if (args.Length == 1)
             {
-                foreach(PValue x in MapAll._ToEnumerable(args[0]))
+                foreach (PValue x in MapAll._ToEnumerable(args[0]))
                     lst.Add(x);
                 return (PValue) lst;
             }
             else
             {
                 List<PValue> clauses = new List<PValue>();
-                for (int i = 0; i +1 < args.Length; i++)
+                for (int i = 0; i + 1 < args.Length; i++)
                     clauses.Add(args[i]);
-                foreach (PValue x in MapAll._ToEnumerable(args[args.Length-1]))
+                foreach (PValue x in MapAll._ToEnumerable(args[args.Length - 1]))
                     lst.Add(x);
-                lst.Sort(delegate(PValue a, PValue b)
-                {
-                    foreach (PValue f in clauses)
+                lst.Sort(
+                    delegate(PValue a, PValue b)
                     {
-                        PValue pdec = f.IndirectCall(sctx, new PValue[] { a, b });
-                        if (!(pdec.Type is IntPType))
-                            pdec = pdec.ConvertTo(sctx, PType.Int);
-                        int dec = (int)pdec.Value;
-                        if (dec != 0)
-                            return dec;
-                    }
-                    return 0;
-                });
+                        foreach (PValue f in clauses)
+                        {
+                            PValue pdec = f.IndirectCall(sctx, new PValue[] {a, b});
+                            if (!(pdec.Type is IntPType))
+                                pdec = pdec.ConvertTo(sctx, PType.Int);
+                            int dec = (int) pdec.Value;
+                            if (dec != 0)
+                                return dec;
+                        }
+                        return 0;
+                    });
                 return (PValue) lst;
             }
         }

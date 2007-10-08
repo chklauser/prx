@@ -258,15 +258,16 @@ namespace Prexonite
                         lst.Add(entry);
                     return PType.List.CreatePValue(lst);
                 default:
-                    throw new PrexoniteException("Meta entry type " + item.EntryType + " is not supported.");
+                    throw new PrexoniteException(
+                        "Meta entry type " + item.EntryType + " is not supported.");
             }
         }
 
-        public static bool operator  ==(MetaEntry a, MetaEntry b)
+        public static bool operator ==(MetaEntry a, MetaEntry b)
         {
-            if((object)a == null && (object)b == null)
+            if ((object) a == null && (object) b == null)
                 return true;
-            else if((object)a == null || (object)b == null)
+            else if ((object) a == null || (object) b == null)
                 return false;
             else
             {
@@ -277,16 +278,15 @@ namespace Prexonite
                  *   L | T  L   L
                  */
 
-                
-                if(a.IsText || b.IsText)
+                if (a.IsText || b.IsText)
                 {
                     return Engine.StringsAreEqual(a.Text, b.Text);
                 }
-                else if(b.IsList || b.IsList)
+                else if (b.IsList || b.IsList)
                 {
                     MetaEntry[] ar = a.List,
                                 br = b.List;
-                    if(ar.Length != br.Length)
+                    if (ar.Length != br.Length)
                         return false;
 
                     int i;
@@ -301,7 +301,7 @@ namespace Prexonite
             }
         }
 
-        public static bool operator  !=(MetaEntry a, MetaEntry b)
+        public static bool operator !=(MetaEntry a, MetaEntry b)
         {
             return !(a == b);
         }
@@ -386,10 +386,11 @@ namespace Prexonite
                 _mtype = Type.List;
             }
             if (index + length > _list.Length - 1 || index < 0 || length < 0)
-                throw new ArgumentOutOfRangeException("index",
-                                                      "The supplied index and length " + index +
-                                                      " are out of the range of 0.." + (_list.Length - 1) +
-                                                      ".");
+                throw new ArgumentOutOfRangeException(
+                    "index",
+                    "The supplied index and length " + index +
+                    " are out of the range of 0.." + (_list.Length - 1) +
+                    ".");
             MetaEntry[] newList = new MetaEntry[_list.Length - 1];
             //Copy the elements before the ones to remove
             if (index > 0)
@@ -452,6 +453,5 @@ namespace Prexonite
                     break;
             }
         }
-
     }
 }

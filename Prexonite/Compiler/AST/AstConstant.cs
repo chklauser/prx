@@ -42,8 +42,11 @@ namespace Prexonite.Compiler.Ast
             Constant = constant;
         }
 
-        public static bool TryCreateConstant(CompilerTarget target, AstNode position, PValue value,
-                                             out IAstExpression expr)
+        public static bool TryCreateConstant(
+            CompilerTarget target,
+            AstNode position,
+            PValue value,
+            out IAstExpression expr)
         {
             expr = null;
             if (value.Type is ObjectPType)
@@ -58,8 +61,6 @@ namespace Prexonite.Compiler.Ast
                 return false;
             return expr != null;
         }
-
-
 
         public PValue ToPValue(CompilerTarget target)
         {
@@ -91,8 +92,9 @@ namespace Prexonite.Compiler.Ast
                         target.EmitConstant((string) Constant);
                         break;
                     default:
-                        throw new PrexoniteException("Prexonite does not support constants of type " +
-                                                     Constant.GetType().Name + ".");
+                        throw new PrexoniteException(
+                            "Prexonite does not support constants of type " +
+                            Constant.GetType().Name + ".");
                 }
         }
 

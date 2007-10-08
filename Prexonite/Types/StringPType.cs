@@ -118,7 +118,7 @@ namespace Prexonite.Types
                         default:
                             UInt32 utf32 = curr;
                             UInt16 utf16 = curr;
-                            UInt8 utf8 = (UInt8)curr;
+                            UInt8 utf8 = (UInt8) curr;
                             if (utf32 > UInt16.MaxValue)
                                 //Use \U notation
                                 buffer.AppendFormat("\\U{0:00000000}", utf32.ToString("X"));
@@ -145,7 +145,8 @@ namespace Prexonite.Types
                 {
                     i++;
                     if (i >= esc.Length)
-                        throw new ArgumentException("Incomplete escape sequence at the end of the string");
+                        throw new ArgumentException(
+                            "Incomplete escape sequence at the end of the string");
                     StringBuilder hex;
                     int utf32;
                     switch (esc[i])
@@ -198,7 +199,8 @@ namespace Prexonite.Types
                                 char curr = esc[i];
                                 if (
                                     !(char.IsDigit(curr) ||
-                                      (char.IsLetter(curr) && ((char.IsLower(curr) && curr < 'g') || curr < 'G'))))
+                                      (char.IsLetter(curr) &&
+                                       ((char.IsLower(curr) && curr < 'g') || curr < 'G'))))
                                 {
                                     i--;
                                     break;
@@ -206,10 +208,14 @@ namespace Prexonite.Types
                                 hex.Append(esc[i]);
                             }
                             if (
-                                !int.TryParse(hex.ToString(), NumberStyles.HexNumber,
-                                              CultureInfo.InvariantCulture, out utf32))
-                                throw new ArgumentException("Invalid escape character sequence. (\"\\x" +
-                                                            hex.ToString().Substring(2) + "\")");
+                                !int.TryParse(
+                                     hex.ToString(),
+                                     NumberStyles.HexNumber,
+                                     CultureInfo.InvariantCulture,
+                                     out utf32))
+                                throw new ArgumentException(
+                                    "Invalid escape character sequence. (\"\\x" +
+                                    hex.ToString().Substring(2) + "\")");
                             buffer.Append(char.ConvertFromUtf32(utf32));
                             break;
                         case 'u':
@@ -222,10 +228,14 @@ namespace Prexonite.Types
                                 hex.Append(esc[i]);
                             }
                             if (
-                                !int.TryParse(hex.ToString(), NumberStyles.HexNumber,
-                                              CultureInfo.InvariantCulture, out utf32))
-                                throw new ArgumentException("Invalid escape character sequence. (\"\\u" +
-                                                            hex.ToString().Substring(2) + "\")");
+                                !int.TryParse(
+                                     hex.ToString(),
+                                     NumberStyles.HexNumber,
+                                     CultureInfo.InvariantCulture,
+                                     out utf32))
+                                throw new ArgumentException(
+                                    "Invalid escape character sequence. (\"\\u" +
+                                    hex.ToString().Substring(2) + "\")");
                             buffer.Append(char.ConvertFromUtf32(utf32));
                             break;
                         case 'U':
@@ -238,10 +248,14 @@ namespace Prexonite.Types
                                 hex.Append(esc[i]);
                             }
                             if (
-                                !int.TryParse(hex.ToString(), NumberStyles.HexNumber,
-                                              CultureInfo.InvariantCulture, out utf32))
-                                throw new ArgumentException("Invalid escape character sequence. (\"\\U" +
-                                                            hex.ToString().Substring(2) + "\")");
+                                !int.TryParse(
+                                     hex.ToString(),
+                                     NumberStyles.HexNumber,
+                                     CultureInfo.InvariantCulture,
+                                     out utf32))
+                                throw new ArgumentException(
+                                    "Invalid escape character sequence. (\"\\U" +
+                                    hex.ToString().Substring(2) + "\")");
                             buffer.Append(char.ConvertFromUtf32(utf32));
                             break;
                     }
@@ -358,15 +372,20 @@ namespace Prexonite.Types
             return true;
         }
 
-        public override bool TryDynamicCall(StackContext sctx, PValue subject, PValue[] args, PCall call, string id,
-                                            out PValue result)
+        public override bool TryDynamicCall(
+            StackContext sctx,
+            PValue subject,
+            PValue[] args,
+            PCall call,
+            string id,
+            out PValue result)
         {
             result = null;
             switch ((id == null) ? "" : id.ToLowerInvariant())
             {
                 case "":
                     if (args.Length < 1)
-                    return false;
+                        return false;
                     PValue nArg = args[0];
                     PValue rArg;
                     if (!nArg.TryConvertTo(sctx, Int, out rArg))
@@ -374,7 +393,7 @@ namespace Prexonite.Types
                     result = ((string) subject.Value)[(int) rArg.Value].ToString();
                     break;
                 case "unescape":
-                    result = Unescape((string)subject.Value);
+                    result = Unescape((string) subject.Value);
                     break;
                 case "format":
                     string[] objs = new string[args.Length];
@@ -383,13 +402,13 @@ namespace Prexonite.Types
                     result = System.String.Format((string) subject.Value, objs);
                     break;
                 case "escape":
-                    result = Escape((string)subject.Value);
+                    result = Escape((string) subject.Value);
                     break;
                 case "isreservedword":
-                    result = IsReservedWord((string)subject.Value);
+                    result = IsReservedWord((string) subject.Value);
                     break;
                 case "toidorliteral":
-                    result = ToIdOrLiteral((string)subject.Value);
+                    result = ToIdOrLiteral((string) subject.Value);
                     break;
                 case "tostring":
                     result = subject;
@@ -398,23 +417,31 @@ namespace Prexonite.Types
                     result = ((string) subject.Value).ToLower();
                     break;
                 case "toupper":
-                    result = ((string)subject.Value).ToUpper();
+                    result = ((string) subject.Value).ToUpper();
                     break;
                 case "substring":
-                    if(args.Length == 0)
+                    if (args.Length == 0)
                         return false;
-                    else if(args.Length == 1)
-                        result = ((string) subject.Value).Substring((int) args[0].ConvertTo(sctx, Int).Value);
+                    else if (args.Length == 1)
+                        result =
+                            ((string) subject.Value).Substring(
+                                (int) args[0].ConvertTo(sctx, Int).Value);
                     else
-                        result = ((string)subject.Value).Substring((int)args[0].ConvertTo(sctx, Int).Value, (int)args[1].ConvertTo(sctx, Int).Value);
+                        result =
+                            ((string) subject.Value).Substring(
+                                (int) args[0].ConvertTo(sctx, Int).Value,
+                                (int) args[1].ConvertTo(sctx, Int).Value);
                     break;
                 default:
-                    return Object[typeof(string)].TryDynamicCall(sctx, subject, args, call, id, out result);
+                    return
+                        Object[typeof(string)].TryDynamicCall(
+                            sctx, subject, args, call, id, out result);
             }
             return result != null;
         }
 
-        public override bool TryStaticCall(StackContext sctx, PValue[] args, PCall call, string id, out PValue result)
+        public override bool TryStaticCall(
+            StackContext sctx, PValue[] args, PCall call, string id, out PValue result)
         {
             if (args.Length >= 1 && Engine.StringsAreEqual(id, "unescape"))
             {
@@ -441,7 +468,8 @@ namespace Prexonite.Types
             }
         }
 
-        public override bool IndirectCall(StackContext sctx, PValue subject, PValue[] args, out PValue result)
+        public override bool IndirectCall(
+            StackContext sctx, PValue subject, PValue[] args, out PValue result)
         {
             result = null;
             string str = subject.Value as string;
@@ -487,7 +515,8 @@ namespace Prexonite.Types
             return true;
         }
 
-        public override bool Addition(StackContext sctx, PValue leftOperand, PValue rightOperand, out PValue result)
+        public override bool Addition(
+            StackContext sctx, PValue leftOperand, PValue rightOperand, out PValue result)
         {
             String left = leftOperand.CallToString(sctx);
             String right = rightOperand.CallToString(sctx);
@@ -495,7 +524,8 @@ namespace Prexonite.Types
             return true;
         }
 
-        public override bool Multiply(StackContext sctx, PValue leftOperand, PValue rightOperand, out PValue result)
+        public override bool Multiply(
+            StackContext sctx, PValue leftOperand, PValue rightOperand, out PValue result)
         {
             result = null;
             String left;
@@ -514,7 +544,8 @@ namespace Prexonite.Types
                 return false;
 
             if (left == null)
-                throw new PrexoniteException("~String.Multiply requires one operand to be a string.");
+                throw new PrexoniteException(
+                    "~String.Multiply requires one operand to be a string.");
 
             if (left.Length == 0)
             {
@@ -533,52 +564,72 @@ namespace Prexonite.Types
                 return false;
         }
 
-        public override bool Equality(StackContext sctx, PValue leftOperand, PValue rightOperand, out PValue result)
+        public override bool Equality(
+            StackContext sctx, PValue leftOperand, PValue rightOperand, out PValue result)
         {
             result =
-                StringComparer.Ordinal.Compare(leftOperand.CallToString(sctx), rightOperand.CallToString(sctx)) == 0;
+                StringComparer.Ordinal.Compare(
+                    leftOperand.CallToString(sctx), rightOperand.CallToString(sctx)) == 0;
             return true;
         }
 
-        public override bool Inequality(StackContext sctx, PValue leftOperand, PValue rightOperand, out PValue result)
+        public override bool Inequality(
+            StackContext sctx, PValue leftOperand, PValue rightOperand, out PValue result)
         {
             result =
-                StringComparer.Ordinal.Compare(leftOperand.CallToString(sctx), rightOperand.CallToString(sctx)) != 0;
+                StringComparer.Ordinal.Compare(
+                    leftOperand.CallToString(sctx), rightOperand.CallToString(sctx)) != 0;
             return true;
         }
 
-        public override bool GreaterThan(StackContext sctx, PValue leftOperand, PValue rightOperand, out PValue result)
+        public override bool GreaterThan(
+            StackContext sctx, PValue leftOperand, PValue rightOperand, out PValue result)
         {
             result =
-                StringComparer.Ordinal.Compare(leftOperand.CallToString(sctx), rightOperand.CallToString(sctx)) > 0;
+                StringComparer.Ordinal.Compare(
+                    leftOperand.CallToString(sctx), rightOperand.CallToString(sctx)) > 0;
             return true;
         }
 
-        public override bool GreaterThanOrEqual(StackContext sctx, PValue leftOperand, PValue rightOperand,
-                                                out PValue result)
+        public override bool GreaterThanOrEqual(
+            StackContext sctx,
+            PValue leftOperand,
+            PValue rightOperand,
+            out PValue result)
         {
             result =
-                StringComparer.Ordinal.Compare(leftOperand.CallToString(sctx), rightOperand.CallToString(sctx)) >= 0;
+                StringComparer.Ordinal.Compare(
+                    leftOperand.CallToString(sctx), rightOperand.CallToString(sctx)) >= 0;
             return true;
         }
 
-        public override bool LessThan(StackContext sctx, PValue leftOperand, PValue rightOperand, out PValue result)
+        public override bool LessThan(
+            StackContext sctx, PValue leftOperand, PValue rightOperand, out PValue result)
         {
             result =
-                StringComparer.Ordinal.Compare(leftOperand.CallToString(sctx), rightOperand.CallToString(sctx)) < 0;
+                StringComparer.Ordinal.Compare(
+                    leftOperand.CallToString(sctx), rightOperand.CallToString(sctx)) < 0;
             return true;
         }
 
-        public override bool LessThanOrEqual(StackContext sctx, PValue leftOperand, PValue rightOperand,
-                                             out PValue result)
+        public override bool LessThanOrEqual(
+            StackContext sctx,
+            PValue leftOperand,
+            PValue rightOperand,
+            out PValue result)
         {
             result =
-                StringComparer.Ordinal.Compare(leftOperand.CallToString(sctx), rightOperand.CallToString(sctx)) <= 0;
+                StringComparer.Ordinal.Compare(
+                    leftOperand.CallToString(sctx), rightOperand.CallToString(sctx)) <= 0;
             return true;
         }
 
-        protected override bool InternalConvertTo(StackContext sctx, PValue subject, PType target, bool useExplicit,
-                                                  out PValue result)
+        protected override bool InternalConvertTo(
+            StackContext sctx,
+            PValue subject,
+            PType target,
+            bool useExplicit,
+            out PValue result)
         {
             result = null;
             if (target is ObjectPType)
@@ -595,8 +646,11 @@ namespace Prexonite.Types
             return result != null;
         }
 
-        protected override bool InternalConvertFrom(StackContext sctx, PValue subject, bool useExplicit,
-                                                    out PValue result)
+        protected override bool InternalConvertFrom(
+            StackContext sctx,
+            PValue subject,
+            bool useExplicit,
+            out PValue result)
         {
             result = null;
             ObjectPType subjT = subject.Type as ObjectPType;

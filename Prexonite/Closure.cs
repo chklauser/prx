@@ -30,7 +30,8 @@ namespace Prexonite
     /// Represents a closure, a nested function bound to a set of shared variables.
     /// </summary>
     [NoDebug]
-    public class Closure : IIndirectCall, IStackAware
+    public class Closure : IIndirectCall,
+                           IStackAware
     {
         #region Properties
 
@@ -127,9 +128,9 @@ namespace Prexonite
         /// <returns>True, if the two closures use to the same function and the same shared variables; false otherwise.</returns>
         public static bool operator ==(Closure a, Closure b)
         {
-            if ((object)a == null && (object)b == null)
+            if ((object) a == null && (object) b == null)
                 return true;
-            else if ((object)a == null || (object)b == null)
+            else if ((object) a == null || (object) b == null)
                 return false;
             else if (ReferenceEquals(a, b))
                 return true;

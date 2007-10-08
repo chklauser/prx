@@ -83,7 +83,8 @@ namespace Prexonite
         public void Add(PFunction item)
         {
             if (_table.ContainsKey(item.Id))
-                throw new ArgumentException("The function table already contains a function named " + item.Id);
+                throw new ArgumentException(
+                    "The function table already contains a function named " + item.Id);
             _table.Add(item.Id, item);
         }
 
@@ -132,9 +133,9 @@ namespace Prexonite
                 return false;
         }
 
-        public bool  Remove(string id)
+        public bool Remove(string id)
         {
-            if(_table.ContainsKey(id))
+            if (_table.ContainsKey(id))
             {
                 return _table.Remove(id);
             }

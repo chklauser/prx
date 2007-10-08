@@ -1,11 +1,9 @@
-using System;
-using System.Collections.Generic;
-using System.Text;
 using Prexonite.Types;
 
 namespace Prexonite.Compiler.Ast
 {
-    public class AstUsing : AstNode, IAstHasBlocks
+    public class AstUsing : AstNode,
+                            IAstHasBlocks
     {
         internal AstUsing(Parser p)
             : base(p)
@@ -55,7 +53,6 @@ namespace Prexonite.Compiler.Ast
             if (Expression == null)
                 throw new PrexoniteException("AstUsing requires Expression to be initialized.");
 
-
             AstTryCatchFinally _try = new AstTryCatchFinally(File, Line, Column);
             //Try block => {Container} = {Expression}; {Block};
             AstGetSet setContainer = Container.GetCopy();
@@ -68,7 +65,13 @@ namespace Prexonite.Compiler.Ast
 
             //Finally block => dispose( {Container} );
             AstGetSetSymbol dispose =
-                new AstGetSetSymbol(File, Line, Column, PCall.Get, Engine.DisposeCommand, SymbolInterpretations.Command);
+                new AstGetSetSymbol(
+                    File,
+                    Line,
+                    Column,
+                    PCall.Get,
+                    Engine.DisposeCommand,
+                    SymbolInterpretations.Command);
             dispose.Arguments.Add(Container);
 
             _try.FinallyBlock.Add(dispose);

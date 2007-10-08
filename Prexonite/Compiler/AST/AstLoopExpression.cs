@@ -1,10 +1,10 @@
-
-using System;
 using Prexonite.Types;
 
 namespace Prexonite.Compiler.Ast
 {
-    public class AstLoopExpression : AstNode, IAstExpression, IAstHasBlocks
+    public class AstLoopExpression : AstNode,
+                                     IAstExpression,
+                                     IAstHasBlocks
     {
         public AstLoopExpression(string file, int line, int column, AstLoop loop)
             : base(file, line, column)
@@ -27,10 +27,7 @@ namespace Prexonite.Compiler.Ast
 
         public AstBlock[] Blocks
         {
-            get
-            {
-                return Loop.Blocks;
-            }
+            get { return Loop.Blocks; }
         }
 
         #endregion
@@ -41,9 +38,9 @@ namespace Prexonite.Compiler.Ast
             for (int i = 0; i < block.Count; i++)
             {
                 AstReturn ret = block[i] as AstReturn;
-                if(ret != null)
+                if (ret != null)
                 {
-                    if((ret.ReturnVariant == ReturnVariant.Continue && ret.Expression == null) 
+                    if ((ret.ReturnVariant == ReturnVariant.Continue && ret.Expression == null)
                         || ret.ReturnVariant == ReturnVariant.Set)
                         return true;
                 }
@@ -71,7 +68,7 @@ namespace Prexonite.Compiler.Ast
                 AstReturn ret = block[i] as AstReturn;
                 if (ret != null)
                 {
-                    if(ret.ReturnVariant == ReturnVariant.Continue)
+                    if (ret.ReturnVariant == ReturnVariant.Continue)
                     {
                         if (ret.Expression == null)
                         {
@@ -165,10 +162,10 @@ namespace Prexonite.Compiler.Ast
                             }
                         }
                     }
-                    else if(ret.ReturnVariant == ReturnVariant.Set)
+                    else if (ret.ReturnVariant == ReturnVariant.Set)
                     {
                         //Replace {return = expr;} and {yield = expr;} by {tmp = expr;}.
-                        AstGetSet setTmp = 
+                        AstGetSet setTmp =
                             new AstGetSetSymbol(
                                 ret.File,
                                 ret.Line,
@@ -180,6 +177,7 @@ namespace Prexonite.Compiler.Ast
                         block[i] = setTmp;
                     }
                 }
+
                 #endregion
 
                 #region Recursive Descent
@@ -200,7 +198,7 @@ namespace Prexonite.Compiler.Ast
 
         public bool TryOptimize(CompilerTarget target, out IAstExpression expr)
         {
-            if(lstVar != null)
+            if (lstVar != null)
                 goto leave;
 
             //Perform statement to expression transformation
@@ -218,14 +216,14 @@ namespace Prexonite.Compiler.Ast
                 _transformBlock(block);
             }
 
-leave:      //Optimization occurs during code generation
+            leave: //Optimization occurs during code generation
             expr = null;
             return false;
         }
 
         public override void EmitCode(CompilerTarget target)
         {
-            if(lstVar == null)
+            if (lstVar == null)
             {
                 IAstExpression dummy; //Won't return anything anyway...
                 TryOptimize(target, out dummy);
@@ -233,11 +231,11 @@ leave:      //Optimization occurs during code generation
 
             //Register variables
             target.Function.Variables.Add(lstVar);
-            if(useTmpVar)
+            if (useTmpVar)
                 target.Function.Variables.Add(tmpVar);
-            
+
             //Initialize the list
-            target.EmitStaticGetCall(0,"List","Create");
+            target.EmitStaticGetCall(0, "List", "Create");
             target.EmitStoreLocal(lstVar);
 
             //Emit the modified loop

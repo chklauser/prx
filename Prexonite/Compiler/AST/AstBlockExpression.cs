@@ -1,12 +1,8 @@
-using System;
-using System.Collections.Generic;
-using System.Text;
-
 namespace Prexonite.Compiler.Ast
 {
-    public class AstBlockExpression : AstBlock, IAstExpression
+    public class AstBlockExpression : AstBlock,
+                                      IAstExpression
     {
-
         public AstBlockExpression(string file, int line, int column)
             : base(file, line, column)
         {

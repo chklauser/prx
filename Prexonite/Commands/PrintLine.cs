@@ -47,7 +47,7 @@ namespace Prexonite.Commands
         /// <summary>
         /// Creates a new <c>println</c> command that prints to <see cref="Console.Out"/>.
         /// </summary>
-        public  PrintLine()
+        public PrintLine()
         {
             _writer = Console.Out;
         }
@@ -64,7 +64,7 @@ namespace Prexonite.Commands
             for (int i = 0; i < args.Length; i++)
             {
                 PValue arg = args[i];
-                buffer.Append(arg.Type is StringPType ? (string)arg.Value : arg.CallToString(sctx));
+                buffer.Append(arg.Type is StringPType ? (string) arg.Value : arg.CallToString(sctx));
             }
 
             _writer.WriteLine(buffer);

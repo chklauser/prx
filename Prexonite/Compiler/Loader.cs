@@ -21,13 +21,13 @@
  *  51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
  */
 
+#if Compress
+using System.IO.Compression;
+#endif
 using System;
 using System.Collections;
 using System.Collections.Generic;
 using System.IO;
-#if Compress
-using System.IO.Compression;
-#endif
 using System.Text;
 using Prexonite.Commands;
 using Prexonite.Compiler.Ast;
@@ -63,7 +63,8 @@ namespace Prexonite.Compiler
             _functionTargets = new SymbolTable<CompilerTarget>();
             _functionTargetsIterator = new FunctionTargetsIterator(this);
 
-            CreateFunctionTarget(ParentApplication._InitializationFunction, new AstBlock("~NoFile", -1, -1));
+            CreateFunctionTarget(
+                ParentApplication._InitializationFunction, new AstBlock("~NoFile", -1, -1));
 
             if (options.RegisterCommands)
                 RegisterCommands();
@@ -143,9 +144,11 @@ namespace Prexonite.Compiler
         [NoDebug()]
         public CompilerTarget CreateFunctionTarget(PFunction func, AstBlock block)
         {
-            if (func == null) throw new ArgumentNullException("func");
+            if (func == null)
+                throw new ArgumentNullException("func");
             if (_functionTargets.ContainsKey(func.Id))
-                throw new ArgumentException("A symbol table for the function " + func.Id + " has already been created");
+                throw new ArgumentException(
+                    "A symbol table for the function " + func.Id + " has already been created");
             CompilerTarget target = new CompilerTarget(this, func, block);
             _functionTargets.Add(func.Id, target);
             return target;
@@ -156,13 +159,11 @@ namespace Prexonite.Compiler
         #region Compiler Hooks
 
         private CompilerHooksIterator _compilerHooksIterator;
+
         public CompilerHooksIterator CompilerHooks
         {
             [NoDebug]
-            get
-            {
-                return _compilerHooksIterator;
-            }
+            get { return _compilerHooksIterator; }
         }
 
         private readonly List<CompilerHook> _compilerHooks = new List<CompilerHook>();
@@ -170,7 +171,7 @@ namespace Prexonite.Compiler
         [NoDebug]
         public class CompilerHooksIterator : ICollection<CompilerHook>
         {
-            readonly List<CompilerHook> lst;
+            private readonly List<CompilerHook> lst;
 
             internal CompilerHooksIterator(Loader outer)
             {
@@ -297,10 +298,7 @@ namespace Prexonite.Compiler
             ///
             public bool IsReadOnly
             {
-                get
-                {
-                    return ((ICollection<CompilerHook>) lst).IsReadOnly;
-                }
+                get { return ((ICollection<CompilerHook>) lst).IsReadOnly; }
             }
 
             #endregion
@@ -374,7 +372,7 @@ namespace Prexonite.Compiler
             compile:
 #endif
             Lexer lex = new Lexer(new StreamReader(str, Encoding.UTF8));
-            if(filePath != null)
+            if (filePath != null)
                 lex._file = filePath;
 
             _load(lex);
@@ -383,9 +381,8 @@ namespace Prexonite.Compiler
         [NoDebug]
         public void LoadFromStream(Stream str)
         {
-            LoadFromStream(str,null);
+            LoadFromStream(str, null);
         }
-
 
 #if DEBUG
         private int _load_indent = 0;
@@ -396,18 +393,19 @@ namespace Prexonite.Compiler
         {
             string oldPath = _loadPath;
             string finalPath = CombineWithLoadPath(path);
-            if(!File.Exists(finalPath))
+            if (!File.Exists(finalPath))
             {
                 IList<string> paths = ParentEngine.Paths;
                 int i;
                 for (i = 0; i < paths.Count; i++)
                 {
                     finalPath = Path.Combine(paths[i], path);
-                    if(File.Exists(finalPath))
+                    if (File.Exists(finalPath))
                         break;
                 }
-                if(i >= paths.Count)
-                    throw new FileNotFoundException("Cannot find script file \"" + path + "\".", path);
+                if (i >= paths.Count)
+                    throw new FileNotFoundException(
+                        "Cannot find script file \"" + path + "\".", path);
             }
             _loadedFiles.Add(Path.GetFullPath(finalPath));
             _loadPath = Path.GetDirectoryName(finalPath);
@@ -439,10 +437,9 @@ namespace Prexonite.Compiler
         {
             Parser parser = new Parser(lexer, this);
             LineCatcher lc = new LineCatcher();
-            lc.LineCaught += new LineCaughtEventHandler(delegate (object sender, LineCaughtEventArgs o)
-                                                        {
-                                                            _errors.Add(o.Line);
-                                                        });
+            lc.LineCaught +=
+                new LineCaughtEventHandler(
+                    delegate(object sender, LineCaughtEventArgs o) { _errors.Add(o.Line); });
             parser.errors.errorStream = lc;
             parser.Parse();
 
@@ -460,7 +457,7 @@ namespace Prexonite.Compiler
             target.Ast.EmitCode(target);
             target.Ast.Clear();
         }
-        
+
         public int ErrorCount
         {
             [NoDebug]
@@ -471,6 +468,7 @@ namespace Prexonite.Compiler
         {
             get { return _errors; }
         }
+
         private List<string> _errors = new List<string>();
 
         #endregion
@@ -487,7 +485,7 @@ namespace Prexonite.Compiler
 
         public string CombineWithLoadPath(string path)
         {
-            if (path == null) 
+            if (path == null)
                 throw new ArgumentNullException("path");
             return Path.Combine(_loadPath, path);
         }
@@ -547,55 +545,57 @@ namespace Prexonite.Compiler
 
         private void _enableBuildCommands()
         {
-            if(!ParentEngine.Commands.Contains(BuildAddCommand))
-                ParentEngine.Commands.AddCompilerCommand(BuildAddCommand, 
+            if (!ParentEngine.Commands.Contains(BuildAddCommand))
+                ParentEngine.Commands.AddCompilerCommand(
+                    BuildAddCommand,
                     delegate(StackContext sctx, PValue[] args)
-                      {
-                          foreach (PValue arg in args)
-                          {
-                              string path = arg.CallToString(sctx);
-                              LoadFromFile(path);
-                          }
-                          return null;
-                      });
+                    {
+                        foreach (PValue arg in args)
+                        {
+                            string path = arg.CallToString(sctx);
+                            LoadFromFile(path);
+                        }
+                        return null;
+                    });
 
             if (!ParentEngine.Commands.Contains(BuildRequireCommand))
-                ParentEngine.Commands.AddCompilerCommand(BuildRequireCommand, 
-                delegate(StackContext sctx, PValue[] args)
-                  {
-                      bool allLoaded = true;
-                      foreach (PValue arg in args)
-                      {
-                          string path =
-                              Path.GetFullPath(
-                                  CombineWithLoadPath(
-                                      arg.CallToString(sctx)));
-                          if (_loadedFiles.Contains(path))
-                              allLoaded = false;
-                          else
-                              LoadFromFile(path);
-                      }
-                      return
-                          PType.Bool.CreatePValue(allLoaded);
-                  });
+                ParentEngine.Commands.AddCompilerCommand(
+                    BuildRequireCommand,
+                    delegate(StackContext sctx, PValue[] args)
+                    {
+                        bool allLoaded = true;
+                        foreach (PValue arg in args)
+                        {
+                            string path =
+                                Path.GetFullPath(
+                                    CombineWithLoadPath(
+                                        arg.CallToString(sctx)));
+                            if (_loadedFiles.Contains(path))
+                                allLoaded = false;
+                            else
+                                LoadFromFile(path);
+                        }
+                        return
+                            PType.Bool.CreatePValue(allLoaded);
+                    });
 
             if (!ParentEngine.Commands.Contains(BuildDefaultCommand))
-                ParentEngine.Commands.AddCompilerCommand(BuildDefaultCommand, 
-                delegate {
-                      return CombineWithLoadPath(DefaultScriptName);
-                  });
+                ParentEngine.Commands.AddCompilerCommand(
+                    BuildDefaultCommand,
+                    delegate { return CombineWithLoadPath(DefaultScriptName); });
 
             if (!ParentEngine.Commands.Contains(BuildHookCommand))
-                ParentEngine.Commands.AddCompilerCommand(BuildHookCommand,
-                delegate(StackContext sctx, PValue[] args)
-                {
-                    foreach (PValue arg in args)
+                ParentEngine.Commands.AddCompilerCommand(
+                    BuildHookCommand,
+                    delegate(StackContext sctx, PValue[] args)
                     {
-                        if (arg != null && !arg.IsNull)
-                            CompilerHooks.Add(arg);
-                    }
-                    return PType.Null.CreatePValue();
-                });
+                        foreach (PValue arg in args)
+                        {
+                            if (arg != null && !arg.IsNull)
+                                CompilerHooks.Add(arg);
+                        }
+                        return PType.Null.CreatePValue();
+                    });
         }
 
         private void _disableBuildBlockCommands()
@@ -615,8 +615,8 @@ namespace Prexonite.Compiler
                     StoreCompressed(fstr);
             else
 #endif
-                using (StreamWriter writer = new StreamWriter(path, false))
-                    Store(writer);
+            using (StreamWriter writer = new StreamWriter(path, false))
+                Store(writer);
         }
 
         public string StoreInString()
@@ -678,7 +678,7 @@ namespace Prexonite.Compiler
             writer.WriteLine("\n//--FUNCTIONS");
             app.Functions.Store(writer);
 
-            if(app._InitializationFunction.Code.Count > 0)
+            if (app._InitializationFunction.Code.Count > 0)
                 app._InitializationFunction.Store(writer);
 
             //Symbols
@@ -693,9 +693,12 @@ namespace Prexonite.Compiler
         public void StoreSymbols(TextWriter writer)
         {
             writer.WriteLine("\n//--SYMBOLS");
-            List<KeyValuePair<string, SymbolEntry>> functions = new List<KeyValuePair<string, SymbolEntry>>();
-            List<KeyValuePair<string, SymbolEntry>> commands = new List<KeyValuePair<string, SymbolEntry>>();
-            List<KeyValuePair<string, SymbolEntry>> objectVariables = new List<KeyValuePair<string, SymbolEntry>>();
+            List<KeyValuePair<string, SymbolEntry>> functions =
+                new List<KeyValuePair<string, SymbolEntry>>();
+            List<KeyValuePair<string, SymbolEntry>> commands =
+                new List<KeyValuePair<string, SymbolEntry>>();
+            List<KeyValuePair<string, SymbolEntry>> objectVariables =
+                new List<KeyValuePair<string, SymbolEntry>>();
             List<KeyValuePair<string, SymbolEntry>> referenceVariables =
                 new List<KeyValuePair<string, SymbolEntry>>();
 
@@ -732,8 +735,10 @@ namespace Prexonite.Compiler
             ParentApplication.Meta.Store(writer);
         }
 
-        private static void _writeSymbolKind(TextWriter writer, string kind,
-                                             List<KeyValuePair<string, SymbolEntry>> entries)
+        private static void _writeSymbolKind(
+            TextWriter writer,
+            string kind,
+            List<KeyValuePair<string, SymbolEntry>> entries)
         {
             if (entries.Count > 0)
             {

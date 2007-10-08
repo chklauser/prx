@@ -67,11 +67,17 @@ namespace Prexonite.Types
                 return new PValue(lst, this);
             }
             else
-                throw new PrexoniteException("Cannot create a PValue from the supplied " + value + ".");
+                throw new PrexoniteException(
+                    "Cannot create a PValue from the supplied " + value + ".");
         }
 
-        public override bool TryDynamicCall(StackContext sctx, PValue subject, PValue[] args, PCall call, string id,
-                                            out PValue result)
+        public override bool TryDynamicCall(
+            StackContext sctx,
+            PValue subject,
+            PValue[] args,
+            PCall call,
+            string id,
+            out PValue result)
         {
             result = null;
 
@@ -115,7 +121,7 @@ namespace Prexonite.Types
             else
             {
                 int index;
-                switch(id.ToLowerInvariant())
+                switch (id.ToLowerInvariant())
                 {
                     case "length":
                     case "count":
@@ -160,12 +166,12 @@ namespace Prexonite.Types
                         break;
                     case "remove":
                         foreach (PValue arg in args)
-                        lst.Remove(arg);
+                            lst.Remove(arg);
                         result = Null.CreatePValue();
                         break;
                     case "removeat":
                         foreach (PValue arg in args)
-                        lst.RemoveAt((int) arg.ConvertTo(sctx, Int).Value);
+                            lst.RemoveAt((int) arg.ConvertTo(sctx, Int).Value);
                         result = Null.CreatePValue();
                         break;
                     case "indexof":
@@ -184,20 +190,22 @@ namespace Prexonite.Types
                     case "insert":
                     case "insertat":
                         if (args.Length < 1)
-                            throw new PrexoniteException("List.InsertAt requires at least an index.");
+                            throw new PrexoniteException(
+                                "List.InsertAt requires at least an index.");
                         index = (int) args[0].ConvertTo(sctx, Int).Value;
                         for (int i = 1; i < args.Length; i++)
                             lst.Insert(index, args[i]);
                         result = Null.CreatePValue();
                         break;
                     case "sort":
-                        if(args.Length < 1)
+                        if (args.Length < 1)
                         {
                             lst.Sort(new PValueComparer(sctx));
                             break;
                         }
-                        if(args.Length == 1 && args[0].Type is ObjectPType)
-                        { //Maybe: comparison using IComparer or Comparison
+                        if (args.Length == 1 && args[0].Type is ObjectPType)
+                        {
+                            //Maybe: comparison using IComparer or Comparison
                             IComparer<PValue> icmp = args[0].Value as IComparer<PValue>;
                             if (icmp != null)
                             {
@@ -206,7 +214,7 @@ namespace Prexonite.Types
                                 break;
                             }
                             Comparer<PValue> cmp = args[0].Value as Comparer<PValue>;
-                            if(cmp != null)
+                            if (cmp != null)
                             {
                                 lst.Sort(icmp);
                                 result = Null.CreatePValue();
@@ -215,19 +223,20 @@ namespace Prexonite.Types
                         }
                         //else
                         //Comparison using lambda expressions
-                        lst.Sort(delegate(PValue a, PValue b)
-                        {
-                            foreach(PValue f in args)
+                        lst.Sort(
+                            delegate(PValue a, PValue b)
                             {
-                                PValue pdec = f.IndirectCall(sctx, new PValue[] {a, b});
-                                if (!(pdec.Type is IntPType))
-                                    pdec = pdec.ConvertTo(sctx, Int);
-                                int dec = (int) pdec.Value;
-                                if(dec != 0)
-                                    return dec;
-                            }
-                            return 0;
-                        });
+                                foreach (PValue f in args)
+                                {
+                                    PValue pdec = f.IndirectCall(sctx, new PValue[] {a, b});
+                                    if (!(pdec.Type is IntPType))
+                                        pdec = pdec.ConvertTo(sctx, Int);
+                                    int dec = (int) pdec.Value;
+                                    if (dec != 0)
+                                        return dec;
+                                }
+                                return 0;
+                            });
                         result = Null.CreatePValue();
                         break;
                     case "tostring":
@@ -242,9 +251,11 @@ namespace Prexonite.Types
                         sb.Append(" ]");
                         result = sb.ToString();
                         break;
-                
+
                     default:
-                        if (Object[subject.ClrType].TryDynamicCall(sctx, subject, args, call, id, out result))
+                        if (
+                            Object[subject.ClrType].TryDynamicCall(
+                                sctx, subject, args, call, id, out result))
                         {
                             if (call == PCall.Get)
                                 if (result == null)
@@ -259,12 +270,12 @@ namespace Prexonite.Types
                         }
                         break;
                 }
-
             }
             return result != null;
         }
 
-        public override bool TryStaticCall(StackContext sctx, PValue[] args, PCall call, string id, out PValue result)
+        public override bool TryStaticCall(
+            StackContext sctx, PValue[] args, PCall call, string id, out PValue result)
         {
             result = null;
 
@@ -274,7 +285,8 @@ namespace Prexonite.Types
             }
             else if (Engine.StringsAreEqual(id, "CreateFromSize") && args.Length >= 1)
             {
-                result = new PValue(new List<PValue>((int) args[0].ConvertTo(sctx, Int).Value), this);
+                result =
+                    new PValue(new List<PValue>((int) args[0].ConvertTo(sctx, Int).Value), this);
             }
             else if (Engine.StringsAreEqual(id, "CreateFromList"))
             {
@@ -305,8 +317,12 @@ namespace Prexonite.Types
             return true;
         }
 
-        protected override bool InternalConvertTo(StackContext sctx, PValue subject, PType target, bool useExplicit,
-                                                  out PValue result)
+        protected override bool InternalConvertTo(
+            StackContext sctx,
+            PValue subject,
+            PType target,
+            bool useExplicit,
+            out PValue result)
         {
             ObjectPType objT = target as ObjectPType;
             result = null;
@@ -323,7 +339,7 @@ namespace Prexonite.Types
                     result = target.CreatePValue(subject);
                 else if (clrType == typeof(PValue[]) && useExplicit)
                     result = target.CreatePValue(((List<PValue>) subject.Value).ToArray());
-                else if(clrType == typeof(PValueKeyValuePair))
+                else if (clrType == typeof(PValueKeyValuePair))
                 {
                     List<PValue> lst = (List<PValue>) subject.Value;
                     PValue key = lst.Count > 0 ? lst[0] : Null.CreatePValue();
@@ -337,8 +353,11 @@ namespace Prexonite.Types
             return result != null;
         }
 
-        protected override bool InternalConvertFrom(StackContext sctx, PValue subject, bool useExplicit,
-                                                    out PValue result)
+        protected override bool InternalConvertFrom(
+            StackContext sctx,
+            PValue subject,
+            bool useExplicit,
+            out PValue result)
         {
             throw new Exception("The method or operation is not implemented.");
         }
@@ -348,7 +367,8 @@ namespace Prexonite.Types
             return otherType is ListPType;
         }
 
-        public override bool IndirectCall(StackContext sctx, PValue subject, PValue[] args, out PValue result)
+        public override bool IndirectCall(
+            StackContext sctx, PValue subject, PValue[] args, out PValue result)
         {
             List<PValue> lst = new List<PValue>();
             result = List.CreatePValue(lst);
@@ -379,24 +399,25 @@ namespace Prexonite.Types
         ///         <code>~List.Create(1,2,3) + 4 == ~List.Create(1,2,3,4)</code>
         ///     </para>
         /// </remarks>
-        public override bool Addition(StackContext sctx, PValue leftOperand, PValue rightOperand, out PValue result)
+        public override bool Addition(
+            StackContext sctx, PValue leftOperand, PValue rightOperand, out PValue result)
         {
             if (leftOperand == null)
                 throw new ArgumentNullException("leftOperand");
             if (rightOperand == null)
-                throw new ArgumentNullException("rightOperand"); 
+                throw new ArgumentNullException("rightOperand");
 
             List<PValue> nlst = new List<PValue>();
             PValue npv = List.CreatePValue(nlst);
 
             if (leftOperand.Type is ListPType)
                 nlst.AddRange((List<PValue>) leftOperand.Value);
-            else 
+            else
                 nlst.Add(leftOperand);
 
             if (rightOperand.Type is ListPType)
                 nlst.AddRange((List<PValue>) rightOperand.Value);
-            else 
+            else
                 nlst.Add(rightOperand);
 
             result = npv;

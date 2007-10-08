@@ -1,17 +1,17 @@
 using System;
-using System.Collections.Generic;
-using System.Text;
 
 namespace Prexonite.Compiler.Ast
 {
-    public class AstKeyValuePair : AstNode, IAstExpression
+    public class AstKeyValuePair : AstNode,
+                                   IAstExpression
     {
         public AstKeyValuePair(string file, int line, int column)
             : this(file, line, column, null, null)
         {
         }
 
-        public AstKeyValuePair(string file, int line, int column, IAstExpression key, IAstExpression value)
+        public AstKeyValuePair(
+            string file, int line, int column, IAstExpression key, IAstExpression value)
             : base(file, line, column)
         {
             Key = key;

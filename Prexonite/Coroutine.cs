@@ -83,7 +83,7 @@ namespace Prexonite
             while (IsValid)
             {
                 PValue result = Execute(_corctx.ParentEngine);
-                if(!IsValid)
+                if (!IsValid)
                     break;
                 yield return result;
             }
@@ -119,7 +119,8 @@ namespace Prexonite
         /// <param name="id">The id of the memeber to be called.</param>
         /// <param name="result">The result returned by the member call.</param>
         /// <returns>True if a member has been called; false otherwise.</returns>
-        public bool TryDynamicCall(StackContext sctx, PValue[] args, PCall call, string id, out PValue result)
+        public bool TryDynamicCall(
+            StackContext sctx, PValue[] args, PCall call, string id, out PValue result)
         {
             switch (id.ToLower())
             {

@@ -23,6 +23,7 @@
 
 using System;
 using System.Collections.Generic;
+using Prexonite.Types;
 using NoDebug = System.Diagnostics.DebuggerNonUserCodeAttribute;
 
 namespace Prexonite
@@ -71,7 +72,7 @@ namespace Prexonite
         /// <value>The PValue object stored in this variables or a PValue(null) object if the reference is null.</value>
         public PValue Value
         {
-            get { return value ?? Types.PType.Null.CreatePValue(); }
+            get { return value ?? PType.Null.CreatePValue(); }
             set { this.value = value; }
         }
 
@@ -82,7 +83,8 @@ namespace Prexonite
             return key;
         }
 
-        KeyValuePair<string, MetaEntry>? IMetaFilter.SetTransform(KeyValuePair<string, MetaEntry> item)
+        KeyValuePair<string, MetaEntry>? IMetaFilter.SetTransform(
+            KeyValuePair<string, MetaEntry> item)
         {
             //The name property may not be reset
             if (Engine.StringsAreEqual(item.Key, Application.NameKey))
@@ -133,7 +135,7 @@ namespace Prexonite
         public PValue IndirectCall(StackContext sctx, PValue[] args)
         {
             if (args.Length != 0)
-                value = args[args.Length -1];
+                value = args[args.Length - 1];
             return value;
         }
 
@@ -147,6 +149,6 @@ namespace Prexonite
         public override int GetHashCode()
         {
             return value.GetHashCode() ^ 6537;
-        } 
+        }
     }
 }

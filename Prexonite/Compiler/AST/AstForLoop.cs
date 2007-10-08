@@ -84,7 +84,9 @@ namespace Prexonite.Compiler.Ast
             {
                 AstConstant constCond = (AstConstant) Condition;
                 PValue condValue;
-                if (!constCond.ToPValue(target).TryConvertTo(target.Loader, PType.Bool, out condValue))
+                if (
+                    !constCond.ToPValue(target).TryConvertTo(
+                         target.Loader, PType.Bool, out condValue))
                     goto continueFull;
                 else if ((bool) condValue.Value == IsPositive)
                     conditionIsConstant = true;
@@ -141,7 +143,8 @@ namespace Prexonite.Compiler.Ast
                     target.EmitLabel(Labels.ContinueLabel);
                     NextIteration.EmitCode(target);
                     target.EmitLabel(conditionLabel);
-                    AstLazyLogical.EmitJumpCondition(target, Condition, Labels.BeginLabel, IsPositive);
+                    AstLazyLogical.EmitJumpCondition(
+                        target, Condition, Labels.BeginLabel, IsPositive);
                 }
             }
             else //Body does not exist -> Condition loop
@@ -159,7 +162,7 @@ namespace Prexonite.Compiler.Ast
                     target.EmitJump(Labels.ContinueLabel);
                 target.EmitLabel(Labels.BeginLabel);
                 AstLazyLogical.EmitJumpCondition(target, Condition, Labels.BreakLabel, !IsPositive);
-                if(IsPrecondition)
+                if (IsPrecondition)
                     target.EmitLabel(Labels.ContinueLabel);
                 NextIteration.EmitCode(target);
                 target.EmitJump(Labels.BeginLabel);

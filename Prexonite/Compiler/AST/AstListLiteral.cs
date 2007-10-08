@@ -21,13 +21,12 @@
  *  51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
  */
 
-using System;
 using System.Collections.Generic;
-using System.Text;
 
 namespace Prexonite.Compiler.Ast
 {
-    public class AstListLiteral : AstNode, IAstExpression
+    public class AstListLiteral : AstNode,
+                                  IAstExpression
     {
         public List<IAstExpression> Elements = new List<IAstExpression>();
 
@@ -49,8 +48,9 @@ namespace Prexonite.Compiler.Ast
             foreach (IAstExpression arg in Elements.ToArray())
             {
                 if (arg == null)
-                    throw new PrexoniteException("Invalid (null) argument in ListLiteral node (" + ToString() +
-                                                 ") detected at position " + Elements.IndexOf(arg) + ".");
+                    throw new PrexoniteException(
+                        "Invalid (null) argument in ListLiteral node (" + ToString() +
+                        ") detected at position " + Elements.IndexOf(arg) + ".");
                 oArg = GetOptimizedNode(target, arg);
                 if (!ReferenceEquals(oArg, arg))
                 {
@@ -67,9 +67,9 @@ namespace Prexonite.Compiler.Ast
 
         public override void EmitCode(CompilerTarget target)
         {
-            if(Elements.Count == 0)
+            if (Elements.Count == 0)
             {
-                target.Emit(OpCode.newobj,0,"List");
+                target.Emit(OpCode.newobj, 0, "List");
             }
             else
             {

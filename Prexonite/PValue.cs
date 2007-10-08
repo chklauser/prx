@@ -71,7 +71,8 @@ namespace Prexonite
     /// </remarks>
     /// <seealso cref="PType"/>
     /// <seealso cref="PVariable"/>
-    public sealed class PValue : IIndirectCall, IObject
+    public sealed class PValue : IIndirectCall,
+                                 IObject
     {
         #region Internals
 
@@ -148,7 +149,8 @@ namespace Prexonite
         /// <returns>True if the call was successful, false otherwise.</returns>
         /// <remarks>Note that the value of <paramref name="result" /> is undefined (and therefor not to be used) if the method call returned false.</remarks>
         [NoDebug()]
-        public bool TryDynamicCall(StackContext sctx, PValue[] args, PCall call, string id, out PValue result)
+        public bool TryDynamicCall(
+            StackContext sctx, PValue[] args, PCall call, string id, out PValue result)
         {
             return _type.TryDynamicCall(sctx, this, args, call, id, out result);
         }
@@ -219,7 +221,8 @@ namespace Prexonite
         /// <returns>True if the conversion was successful, false otherwise.</returns>
         /// <remarks>Note that the value of <paramref name="result" /> is undefined (and therefor not to be used) if the method call returned false.</remarks>
         [NoDebug()]
-        public bool TryConvertTo(StackContext sctx, PType target, bool useExplicit, out PValue result)
+        public bool TryConvertTo(
+            StackContext sctx, PType target, bool useExplicit, out PValue result)
         {
             return _type.TryConvertTo(sctx, this, target, useExplicit, out result);
         }
@@ -249,7 +252,8 @@ namespace Prexonite
         /// <returns>True if the conversion was successful, false otherwise.</returns>
         /// <remarks>Note that the value of <paramref name="result" /> is undefined (and therefor not to be used) if the method call returned false.</remarks>
         [NoDebug()]
-        public bool TryConvertTo(StackContext sctx, Type clrTarget, bool useExplicit, out PValue result)
+        public bool TryConvertTo(
+            StackContext sctx, Type clrTarget, bool useExplicit, out PValue result)
         {
             return _type.TryConvertTo(sctx, this, clrTarget, useExplicit, out result);
         }
@@ -785,8 +789,9 @@ namespace Prexonite
             if (Addition(sctx, rightOperand, out result))
                 return result;
             else
-                throw new InvalidCallException("Neither " + Type + " nor " + rightOperand.Type +
-                                               " supports the Addition operator.");
+                throw new InvalidCallException(
+                    "Neither " + Type + " nor " + rightOperand.Type +
+                    " supports the Addition operator.");
         }
 
         /// <summary>
@@ -810,8 +815,9 @@ namespace Prexonite
             if (Subtraction(sctx, rightOperand, out result))
                 return result;
             else
-                throw new InvalidCallException("Neither " + Type + " nor " + rightOperand.Type +
-                                               " supports the Subtraction operator.");
+                throw new InvalidCallException(
+                    "Neither " + Type + " nor " + rightOperand.Type +
+                    " supports the Subtraction operator.");
         }
 
         /// <summary>
@@ -835,8 +841,9 @@ namespace Prexonite
             if (Multiply(sctx, rightOperand, out result))
                 return result;
             else
-                throw new InvalidCallException("Neither " + Type + " nor " + rightOperand.Type +
-                                               " supports the Multiply operator.");
+                throw new InvalidCallException(
+                    "Neither " + Type + " nor " + rightOperand.Type +
+                    " supports the Multiply operator.");
         }
 
         /// <summary>
@@ -860,8 +867,9 @@ namespace Prexonite
             if (Division(sctx, rightOperand, out result))
                 return result;
             else
-                throw new InvalidCallException("Neither " + Type + " nor " + rightOperand.Type +
-                                               " supports the Division operator.");
+                throw new InvalidCallException(
+                    "Neither " + Type + " nor " + rightOperand.Type +
+                    " supports the Division operator.");
         }
 
         /// <summary>
@@ -885,8 +893,9 @@ namespace Prexonite
             if (Modulus(sctx, rightOperand, out result))
                 return result;
             else
-                throw new InvalidCallException("Neither " + Type + " nor " + rightOperand.Type +
-                                               " supports the Modulus operator.");
+                throw new InvalidCallException(
+                    "Neither " + Type + " nor " + rightOperand.Type +
+                    " supports the Modulus operator.");
         }
 
         /// <summary>
@@ -910,8 +919,9 @@ namespace Prexonite
             if (BitwiseAnd(sctx, rightOperand, out result))
                 return result;
             else
-                throw new InvalidCallException("Neither " + Type + " nor " + rightOperand.Type +
-                                               " supports the BitwiseAnd operator.");
+                throw new InvalidCallException(
+                    "Neither " + Type + " nor " + rightOperand.Type +
+                    " supports the BitwiseAnd operator.");
         }
 
         /// <summary>
@@ -935,8 +945,9 @@ namespace Prexonite
             if (BitwiseOr(sctx, rightOperand, out result))
                 return result;
             else
-                throw new InvalidCallException("Neither " + Type + " nor " + rightOperand.Type +
-                                               " supports the BitwiseOr operator.");
+                throw new InvalidCallException(
+                    "Neither " + Type + " nor " + rightOperand.Type +
+                    " supports the BitwiseOr operator.");
         }
 
         /// <summary>
@@ -960,8 +971,9 @@ namespace Prexonite
             if (ExclusiveOr(sctx, rightOperand, out result))
                 return result;
             else
-                throw new InvalidCallException("Neither " + Type + " nor " + rightOperand.Type +
-                                               " supports the ExclusiveOr operator.");
+                throw new InvalidCallException(
+                    "Neither " + Type + " nor " + rightOperand.Type +
+                    " supports the ExclusiveOr operator.");
         }
 
         /// <summary>
@@ -985,8 +997,9 @@ namespace Prexonite
             if (Equality(sctx, rightOperand, out result))
                 return result;
             else
-                throw new InvalidCallException("Neither " + Type + " nor " + rightOperand.Type +
-                                               " supports the Equality operator.");
+                throw new InvalidCallException(
+                    "Neither " + Type + " nor " + rightOperand.Type +
+                    " supports the Equality operator.");
         }
 
         /// <summary>
@@ -1010,8 +1023,9 @@ namespace Prexonite
             if (Inequality(sctx, rightOperand, out result))
                 return result;
             else
-                throw new InvalidCallException("Neither " + Type + " nor " + rightOperand.Type +
-                                               " supports the Inequality operator.");
+                throw new InvalidCallException(
+                    "Neither " + Type + " nor " + rightOperand.Type +
+                    " supports the Inequality operator.");
         }
 
         /// <summary>
@@ -1035,8 +1049,9 @@ namespace Prexonite
             if (GreaterThan(sctx, rightOperand, out result))
                 return result;
             else
-                throw new InvalidCallException("Neither " + Type + " nor " + rightOperand.Type +
-                                               " supports the GreaterThan operator.");
+                throw new InvalidCallException(
+                    "Neither " + Type + " nor " + rightOperand.Type +
+                    " supports the GreaterThan operator.");
         }
 
         /// <summary>
@@ -1060,8 +1075,9 @@ namespace Prexonite
             if (GreaterThanOrEqual(sctx, rightOperand, out result))
                 return result;
             else
-                throw new InvalidCallException("Neither " + Type + " nor " + rightOperand.Type +
-                                               " supports the GreaterThanOrEqual operator.");
+                throw new InvalidCallException(
+                    "Neither " + Type + " nor " + rightOperand.Type +
+                    " supports the GreaterThanOrEqual operator.");
         }
 
         /// <summary>
@@ -1085,8 +1101,9 @@ namespace Prexonite
             if (LessThan(sctx, rightOperand, out result))
                 return result;
             else
-                throw new InvalidCallException("Neither " + Type + " nor " + rightOperand.Type +
-                                               " supports the LessThan operator.");
+                throw new InvalidCallException(
+                    "Neither " + Type + " nor " + rightOperand.Type +
+                    " supports the LessThan operator.");
         }
 
         /// <summary>
@@ -1110,8 +1127,9 @@ namespace Prexonite
             if (LessThanOrEqual(sctx, rightOperand, out result))
                 return result;
             else
-                throw new InvalidCallException("Neither " + Type + " nor " + rightOperand.Type +
-                                               " LessThanOrEqual the Addition operator.");
+                throw new InvalidCallException(
+                    "Neither " + Type + " nor " + rightOperand.Type +
+                    " LessThanOrEqual the Addition operator.");
         }
 
         #endregion //Failing-Variants
@@ -1188,7 +1206,9 @@ namespace Prexonite
         [NoDebug()]
         public override string ToString()
         {
-            return String.Concat("{", (_value == null ? "-NULL-" : String.Concat(_value, "~", _type)),"}");
+            return
+                String.Concat(
+                    "{", (_value == null ? "-NULL-" : String.Concat(_value, "~", _type)), "}");
         }
 
         /// <summary>
@@ -1215,10 +1235,10 @@ namespace Prexonite
         public override bool Equals(object obj)
         {
             PValue o = obj as PValue;
-            if(o == null)
-                return false;           
+            if (o == null)
+                return false;
 
-            if(o.IsNull && IsNull)
+            if (o.IsNull && IsNull)
                 return true;
 
             return _type.Equals(o._type) && _value.Equals(o._value);
@@ -1253,7 +1273,7 @@ namespace Prexonite
         [NoDebug()]
         public static explicit operator PValue(UInt32 number)
         {
-            return PType.Int.CreatePValue((int)number);
+            return PType.Int.CreatePValue((int) number);
         }
 
         /// <summary>
@@ -1265,7 +1285,7 @@ namespace Prexonite
         [NoDebug()]
         public static explicit operator PValue(Byte number)
         {
-            return PType.Int.CreatePValue((int)number);
+            return PType.Int.CreatePValue((int) number);
         }
 
         /// <summary>
@@ -1277,7 +1297,7 @@ namespace Prexonite
         [NoDebug()]
         public static explicit operator PValue(SByte number)
         {
-            return PType.Int.CreatePValue((int)number);
+            return PType.Int.CreatePValue((int) number);
         }
 
         /// <summary>
@@ -1290,7 +1310,7 @@ namespace Prexonite
         [NoDebug()]
         public static explicit operator PValue(Int64 number)
         {
-            return PType.Int.CreatePValue((int)number);
+            return PType.Int.CreatePValue((int) number);
         }
 
         /// <summary>
@@ -1303,7 +1323,7 @@ namespace Prexonite
         [NoDebug()]
         public static explicit operator PValue(UInt64 number)
         {
-            return PType.Int.CreatePValue((int)number);
+            return PType.Int.CreatePValue((int) number);
         }
 
         /// <summary>
@@ -1315,7 +1335,7 @@ namespace Prexonite
         [NoDebug()]
         public static explicit operator PValue(Int16 number)
         {
-            return PType.Int.CreatePValue((int)number);
+            return PType.Int.CreatePValue((int) number);
         }
 
         /// <summary>
@@ -1352,7 +1372,7 @@ namespace Prexonite
         [NoDebug()]
         public static explicit operator PValue(Single number)
         {
-            return PType.Real.CreatePValue((double)number);
+            return PType.Real.CreatePValue((double) number);
         }
 
         /// <summary>
@@ -1364,7 +1384,7 @@ namespace Prexonite
         [NoDebug()]
         public static explicit operator PValue(Decimal number)
         {
-            return PType.Object.CreatePValue((double)number);
+            return PType.Object.CreatePValue((double) number);
         }
 
         //PBool
@@ -1421,7 +1441,8 @@ namespace Prexonite
 
         #region IObject Members
 
-        bool IObject.TryDynamicCall(StackContext sctx, PValue[] args, PCall call, string id, out PValue result)
+        bool IObject.TryDynamicCall(
+            StackContext sctx, PValue[] args, PCall call, string id, out PValue result)
         {
             if (Engine.StringsAreEqual(id, "self"))
                 result = this;

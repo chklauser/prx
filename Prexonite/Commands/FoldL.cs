@@ -15,10 +15,10 @@ namespace Prexonite.Commands
     ///     return left;
     /// }</code>
     /// </remarks>
-    class FoldL : PCommand
+    internal class FoldL : PCommand
     {
-
-        public PValue Run(StackContext sctx, IIndirectCall f, PValue left, IEnumerable<PValue> source)
+        public PValue Run(
+            StackContext sctx, IIndirectCall f, PValue left, IEnumerable<PValue> source)
         {
             if (sctx == null)
                 throw new ArgumentNullException("sctx");
@@ -41,25 +41,25 @@ namespace Prexonite.Commands
             if (sctx == null)
                 throw new ArgumentNullException("sctx");
             if (args == null)
-                throw new ArgumentNullException("args"); 
+                throw new ArgumentNullException("args");
 
             //Get f
             IIndirectCall f;
-            if(args.Length < 1)
+            if (args.Length < 1)
                 throw new PrexoniteException("The foldl command requires a function argument.");
             else
                 f = args[0];
 
             //Get left
             PValue left;
-            if(args.Length < 2)
+            if (args.Length < 2)
                 left = null;
             else
                 left = args[1];
 
             //Get the source
             IEnumerable<PValue> source;
-            if(args.Length == 3)
+            if (args.Length == 3)
             {
                 PValue psource = args[2];
                 source = MapAll._ToEnumerable(psource) ?? new PValue[] {psource};
@@ -67,15 +67,15 @@ namespace Prexonite.Commands
             else
             {
                 List<PValue> lstsource = new List<PValue>();
-                for(int i = 1; i < args.Length ; i++)
+                for (int i = 1; i < args.Length; i++)
                 {
                     IEnumerable<PValue> multiple = MapAll._ToEnumerable(args[i]);
-                    if(multiple != null)
+                    if (multiple != null)
                         lstsource.AddRange(multiple);
-                    else 
+                    else
                         lstsource.Add(args[i]);
                 }
-                source = lstsource; 
+                source = lstsource;
             }
 
             return Run(sctx, f, left, source);

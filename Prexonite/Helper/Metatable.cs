@@ -24,8 +24,6 @@
 using System;
 using System.Collections.Generic;
 using System.IO;
-using System.Text;
-using Prexonite.Types;
 using NoDebug = System.Diagnostics.DebuggerNonUserCodeAttribute;
 
 namespace Prexonite
@@ -68,7 +66,8 @@ namespace Prexonite
             set
             {
                 if (filter == this)
-                    throw new ArgumentException("You cannot use a Metatable as its own filter. (Recursion!)");
+                    throw new ArgumentException(
+                        "You cannot use a Metatable as its own filter. (Recursion!)");
                 filter = value;
             }
         }
@@ -91,9 +90,9 @@ namespace Prexonite
 
         public void AddTo(string key, MetaEntry entry)
         {
-            if(ContainsKey(key))
+            if (ContainsKey(key))
                 this[key].AddToList(entry);
-            else 
+            else
                 Add(key, (MetaEntry) new MetaEntry[] {entry});
         }
 
@@ -113,7 +112,7 @@ namespace Prexonite
                 else
                     ret = base[key] ?? new MetaEntry("");
 
-                if(!base.ContainsKey(key))
+                if (!base.ContainsKey(key))
                     base.Add(key, ret);
 
                 return ret;

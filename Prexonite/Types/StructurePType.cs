@@ -1,11 +1,10 @@
 using System;
 using System.Collections.Generic;
 using System.Text;
-using Prexonite;
 
 namespace Prexonite.Types
 {
-    [PTypeLiteral(StructurePType.Literal)]
+    [PTypeLiteral(Literal)]
     public class StructurePType : PType
     {
         /// <summary>
@@ -24,14 +23,19 @@ namespace Prexonite.Types
         public const string CallId = "Call";
 
         /// <summary>
-        /// Reserved for the member that force-assigns a value to another member.
+        /// Reserved for the member that force-assigns a value to a member.
         /// </summary>
-        public const string SetId = "\\set";
+        public const string SetId = @"\set";
 
         /// <summary>
         /// Alternative id for <see cref="SetId"/>.
         /// </summary>
-        public const string SetIdAlternative = "\\";
+        public const string SetIdAlternative = @"\";
+
+        /// <summary>
+        /// Reserved for the memver that force-assigns a reference value (e.g., method) to a member.
+        /// </summary>
+        public const string SetRefId = @"\\";
 
         /// <summary>
         /// Reserved for later use.
@@ -41,11 +45,11 @@ namespace Prexonite.Types
         /// <summary>
         /// Returns a string that both identifies and defines the structure.
         /// </summary>
-        public string  TypeSignature
+        public string TypeSignature
         {
             get
             {
-                if(_typeSignature == null)
+                if (_typeSignature == null)
                     _typeSignature = ToString();
                 return _typeSignature;
             }
@@ -55,7 +59,7 @@ namespace Prexonite.Types
 
         #region Creation
 
-        internal  class Member : IIndirectCall
+        internal class Member : IIndirectCall
         {
             public bool IsReference;
             public PValue Value;
@@ -73,7 +77,7 @@ namespace Prexonite.Types
 
             public PValue Invoke(StackContext sctx, PValue[] args, PCall call)
             {
-                if(IsReference)
+                if (IsReference)
                     return Value.IndirectCall(sctx, args);
                 else
                 {
@@ -87,11 +91,11 @@ namespace Prexonite.Types
 
             public PValue IndirectCall(StackContext sctx, PValue[] args)
             {
-                if(IsReference)
+                if (IsReference)
                     return Value.IndirectCall(sctx, args);
                 else
                 {
-                    if(args.Length > 1)
+                    if (args.Length > 1)
                         Value = args[1];
                     return Value;
                 }
@@ -123,17 +127,18 @@ namespace Prexonite.Types
             for (int i = 0; i < definitionElements.Length; i++)
             {
                 string s = definitionElements[i];
-                if(s == null)
+                if (s == null)
                     s = "";
                 bool reference = false;
-                if(s.Equals("r",StringComparison.InvariantCultureIgnoreCase) &&
+                if (s.Equals("r", StringComparison.InvariantCultureIgnoreCase) &&
                     i < definitionElements.Length - 1) // "r" is not last element
-                {   //Treat next element as a reference instead
+                {
+                    //Treat next element as a reference instead
                     reference = true;
                     s = definitionElements[++i];
                 }
-                
-                if(_prototypes.ContainsKey(s))
+
+                if (_prototypes.ContainsKey(s))
                     throw new ArgumentException("Duplicate definition of member " + s);
                 _prototypes.Add(s, new Member(reference));
             }
@@ -145,46 +150,55 @@ namespace Prexonite.Types
 
         private static PValue[] _addThis(PValue Subject, PValue[] args)
         {
-            PValue[] argst = new PValue[args.Length +1];
+            PValue[] argst = new PValue[args.Length + 1];
             argst[0] = Subject;
-            Array.Copy(args,0, argst, 1, args.Length);
+            Array.Copy(args, 0, argst, 1, args.Length);
             return argst;
         }
 
-        public override bool TryDynamicCall(StackContext sctx, PValue subject, PValue[] args, PCall call, string id,
-                                            out PValue result)
+        public override bool TryDynamicCall(
+            StackContext sctx,
+            PValue subject,
+            PValue[] args,
+            PCall call,
+            string id,
+            out PValue result)
         {
             result = null;
             SymbolTable<Member> obj = subject.Value as SymbolTable<Member>;
-            if(obj == null)
+            if (obj == null)
                 return false;
 
             PValue[] argst = _addThis(subject, args);
 
             Member m;
+            bool reference = false;
+
             //Try to call the member
-            if(obj.TryGetValue(id, out m) && m != null)
+            if (obj.TryGetValue(id, out m) && m != null)
                 result = m.Invoke(sctx, argst, call);
             else
-                switch(id.ToLower())
+                switch (id.ToLowerInvariant())
                 {
+                    case SetRefId:
+                        reference = true;
+                        goto case SetId;
                     case SetId:
                     case SetIdAlternative:
-                        if(args.Length < 2)
+                        if (args.Length < 2)
                             goto default;
 
                         string mid = (string) args[0].ConvertTo(sctx, String).Value;
 
-                        bool reference = false;
-                        if(args.Length > 2)
+                        if (reference || args.Length > 2)
                             reference = (bool) args[1].ConvertTo(sctx, Bool).Value;
 
-                        if(obj.ContainsKey(mid))
+                        if (obj.ContainsKey(mid))
                             m = obj[mid];
                         else
                         {
                             m = new Member();
-                            obj.Add(mid,m);
+                            obj.Add(mid, m);
                         }
 
                         m.Value = args[args.Length - 1];
@@ -206,7 +220,8 @@ namespace Prexonite.Types
             return result != null;
         }
 
-        public override bool TryStaticCall(StackContext sctx, PValue[] args, PCall call, string id, out PValue result)
+        public override bool TryStaticCall(
+            StackContext sctx, PValue[] args, PCall call, string id, out PValue result)
         {
             result = null;
             return false;
@@ -230,12 +245,16 @@ namespace Prexonite.Types
             return true;
         }
 
-        protected override bool InternalConvertTo(StackContext sctx, PValue subject, PType target, bool useExplicit,
-                                                  out PValue result)
+        protected override bool InternalConvertTo(
+            StackContext sctx,
+            PValue subject,
+            PType target,
+            bool useExplicit,
+            out PValue result)
         {
             result = null;
             SymbolTable<Member> obj = subject.Value as SymbolTable<Member>;
-            if(obj == null)
+            if (obj == null)
                 return false;
 
             /*
@@ -256,31 +275,37 @@ namespace Prexonite.Types
             }
             //*/
 
-            if(target is StringPType || target == Object[typeof(string)])
+            if (target is StringPType || target == Object[typeof(string)])
             {
-                if(!TryDynamicCall(sctx, subject, new PValue[]{}, PCall.Get, "ToString", out result))
+                if (
+                    !TryDynamicCall(
+                         sctx, subject, new PValue[] {}, PCall.Get, "ToString", out result))
                     result = null;
             }
 
             return result != null;
         }
 
-        protected override bool InternalConvertFrom(StackContext sctx, PValue subject, bool useExplicit,
-                                                    out PValue result)
+        protected override bool InternalConvertFrom(
+            StackContext sctx,
+            PValue subject,
+            bool useExplicit,
+            out PValue result)
         {
             result = null;
             return false;
         }
 
-        public override bool IndirectCall(StackContext sctx, PValue subject, PValue[] args, out PValue result)
+        public override bool IndirectCall(
+            StackContext sctx, PValue subject, PValue[] args, out PValue result)
         {
             result = null;
             SymbolTable<Member> obj = subject.Value as SymbolTable<Member>;
-            if(obj == null)
+            if (obj == null)
                 return false;
 
             Member m;
-            if(obj.TryGetValue(IndirectCallId, out m) && m != null)
+            if (obj.TryGetValue(IndirectCallId, out m) && m != null)
                 result = m.IndirectCall(sctx, _addThis(subject, args));
 
             return result != null;
@@ -289,10 +314,11 @@ namespace Prexonite.Types
         protected override bool InternalIsEqual(PType otherType)
         {
             StructurePType s = otherType as StructurePType;
-            if(s == null)
+            if (s == null)
                 return false;
 
-            return s.TypeSignature.Equals(TypeSignature, StringComparison.InvariantCultureIgnoreCase);
+            return
+                s.TypeSignature.Equals(TypeSignature, StringComparison.InvariantCultureIgnoreCase);
         }
 
         private const int _code = 1558687994;
@@ -316,18 +342,17 @@ namespace Prexonite.Types
             sb.Append("(");
             foreach (KeyValuePair<string, Member> kvp in _prototypes)
             {
-                if(kvp.Value.IsReference)
+                if (kvp.Value.IsReference)
                     sb.Append("r,");
                 sb.Append(StringPType.ToIdOrLiteral(kvp.Key));
                 sb.Append(",");
             }
-            if(_prototypes.Count != 0)
+            if (_prototypes.Count != 0)
                 sb.Length -= 1;
             sb.Append(")");
             return sb.ToString();
         }
 
         #endregion
-
     }
 }

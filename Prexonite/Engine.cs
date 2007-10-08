@@ -47,7 +47,8 @@ namespace Prexonite
         /// The string comparer used throughout the Prexonite VM.
         /// </summary>
         /// <remarks>The current implementation is <strong>case-insensitive</strong></remarks>
-        public static readonly StringComparer DefaultStringComparer = StringComparer.OrdinalIgnoreCase;
+        public static readonly StringComparer DefaultStringComparer =
+            StringComparer.OrdinalIgnoreCase;
 
         /// <summary>
         /// This method is used throughout the whole Prexonite VM to compare strings.
@@ -174,8 +175,9 @@ namespace Prexonite
                 if (type == null)
                     throw new ArgumentNullException("type");
                 if (outer._pTypeMap.ContainsKey(clrType))
-                    throw new InvalidOperationException("A mapping for the CLR Type " + clrType.FullName +
-                                                        " already exists");
+                    throw new InvalidOperationException(
+                        "A mapping for the CLR Type " + clrType.FullName +
+                        " already exists");
                 outer._pTypeMap.Add(clrType, type);
             }
 
@@ -298,10 +300,12 @@ namespace Prexonite
                 if (type == null)
                     throw new ArgumentNullException("type");
                 PTypeLiteralAttribute[] literals =
-                    (PTypeLiteralAttribute[]) type.GetCustomAttributes(typeof(PTypeLiteralAttribute), false);
+                    (PTypeLiteralAttribute[])
+                    type.GetCustomAttributes(typeof(PTypeLiteralAttribute), false);
                 if (literals.Length == 0)
-                    throw new PrexoniteException("Supplied PType " + type +
-                                                 " does not have any PTypeLiteral attributes.");
+                    throw new PrexoniteException(
+                        "Supplied PType " + type +
+                        " does not have any PTypeLiteral attributes.");
                 foreach (PTypeLiteralAttribute literal in literals)
                     Add(literal.Literal, type);
             }
@@ -323,8 +327,9 @@ namespace Prexonite
                 else if (!PType.IsPType(type))
                     throw new ArgumentException("ClrType " + type + " is not a PType.");
                 if (outer._pTypeRegistry.ContainsKey(name))
-                    throw new ArgumentException("The registry already contains an entry " + name + " => " +
-                                                outer._pTypeRegistry[name] + ".");
+                    throw new ArgumentException(
+                        "The registry already contains an entry " + name + " => " +
+                        outer._pTypeRegistry[name] + ".");
                 outer._pTypeRegistry.Add(name, type);
             }
 
@@ -392,8 +397,9 @@ namespace Prexonite
         public PType CreatePType(StackContext sctx, ObjectPType ptypeClrType, PValue[] args)
         {
             if (!PType.IsPType(ptypeClrType))
-                throw new ArgumentException("Cannot construct PType. ClrType " + ptypeClrType.ClrType +
-                                            " is not a PType.");
+                throw new ArgumentException(
+                    "Cannot construct PType. ClrType " + ptypeClrType.ClrType +
+                    " is not a PType.");
 
             //Performance optimizations
             Type clrType = ptypeClrType.ClrType;
@@ -411,15 +417,18 @@ namespace Prexonite
                 return PType.Object[sctx, (string) args[0].Value];
             if (clrType == typeof(ListPType))
                 return PType.List;
-            if(clrType == typeof(HashPType))
+            if (clrType == typeof(HashPType))
                 return PType.Hash;
 
-            PValue result = ptypeClrType.Construct(sctx, new PValue[] { PType.Object.CreatePValue(args) } );
+            PValue result =
+                ptypeClrType.Construct(sctx, new PValue[] {PType.Object.CreatePValue(args)});
             if (result == null || result.IsNull)
-                throw new PrexoniteException("Could not construct PType (resulted in null reference)");
+                throw new PrexoniteException(
+                    "Could not construct PType (resulted in null reference)");
             if (!PType.IsPType(result))
-                throw new PrexoniteException("Could not construct PType (" + result.ClrType +
-                                             " is not a PType).");
+                throw new PrexoniteException(
+                    "Could not construct PType (" + result.ClrType +
+                    " is not a PType).");
             return result.Value as PType;
         }
 
@@ -435,7 +444,8 @@ namespace Prexonite
         public PType CreatePType(StackContext sctx, string typeName, PValue[] args)
         {
             if (!PTypeRegistry.Contains(typeName))
-                throw new SymbolNotFoundException("PTypeRegistry does not hold a record for \"" + typeName + "\".");
+                throw new SymbolNotFoundException(
+                    "PTypeRegistry does not hold a record for \"" + typeName + "\".");
             return CreatePType(sctx, PTypeRegistry[typeName], args);
         }
 
@@ -463,7 +473,9 @@ namespace Prexonite
                 TParser parser = new TParser(lexer, sctx);
                 parser.Parse();
                 if (parser.errors.count > 0)
-                    throw new PrexoniteException("Could not construct PType. (Errors in PType expression: "+expression+")");
+                    throw new PrexoniteException(
+                        "Could not construct PType. (Errors in PType expression: " + expression +
+                        ")");
                 else
                     return parser.LastType;
             }
@@ -684,7 +696,7 @@ namespace Prexonite
                 if (alias == null)
                     throw new ArgumentNullException("alias");
                 if (action == null)
-                    throw new ArgumentNullException("action"); 
+                    throw new ArgumentNullException("action");
                 AddEngineCommand(alias, new DelegatePCommand(action));
             }
 
@@ -802,7 +814,8 @@ namespace Prexonite
 
             private void _remove_commands(PCommandGroups groups)
             {
-                KeyValuePair<string, PCommand>[] commands = new KeyValuePair<string, PCommand>[outer._commands.Count];
+                KeyValuePair<string, PCommand>[] commands =
+                    new KeyValuePair<string, PCommand>[outer._commands.Count];
                 outer._commands.CopyTo(commands, 0);
                 foreach (KeyValuePair<string, PCommand> kvp in commands)
                 {
@@ -894,7 +907,8 @@ namespace Prexonite
 
             //Assembly registry
             _registeredAssemblies = new List<Assembly>();
-            foreach (AssemblyName assName in Assembly.GetExecutingAssembly().GetReferencedAssemblies())
+            foreach (
+                AssemblyName assName in Assembly.GetExecutingAssembly().GetReferencedAssemblies())
                 _registeredAssemblies.Add(Assembly.Load(assName.FullName));
 
             //Commands
@@ -903,67 +917,70 @@ namespace Prexonite
 
             Commands.AddEngineCommand(PrintCommand, new Print());
 
-            Commands.AddEngineCommand(PrintLineCommand,new PrintLine());
+            Commands.AddEngineCommand(PrintLineCommand, new PrintLine());
 
-            Commands.AddEngineCommand(MetaCommand,
-            #region Meta command implementation
- new DelegatePCommand(
- delegate(StackContext sctx, PValue[] args)
-    {
-       if (args.Length == 0)
-           return
-               sctx.CreateNativePValue(
-                   sctx.Implementation.
-                       Meta);
-       else
-       {
-           List<PValue> lst =
-               new List<PValue>(
-                   args.Length);
-           MetaTable funcMT =
-               sctx.Implementation.Meta;
-           MetaTable appMP =
-               sctx.ParentApplication.
-                   Meta;
-           MetaTable engMT = sctx.ParentEngine.Meta;
-           foreach (PValue arg in args)
-           {
-               string key =
-                   arg.CallToString(sctx);
-               MetaEntry entry;
-               if (
-                   funcMT.TryGetValue(
-                       key, out entry) ||
-                   appMP.TryGetValue(
-                       key, out entry) ||
-                   engMT.TryGetValue(
-                        key, out entry)
-                   )
-                   lst.Add(entry);
-               else
-                   lst.Add(
-                       PType.Null.
-                           CreatePValue());
-           }
+            Commands.AddEngineCommand(
+                MetaCommand,
 
-           if (lst.Count == 1)
-               return lst[0];
-           else
-               return
-                   (PValue)lst;
-       }
-            #endregion
-                }));
+                #region Meta command implementation
+                new DelegatePCommand(
+                    delegate(StackContext sctx, PValue[] args)
+                    {
+                        if (args.Length == 0)
+                            return
+                                sctx.CreateNativePValue(
+                                    sctx.Implementation.
+                                        Meta);
+                        else
+                        {
+                            List<PValue> lst =
+                                new List<PValue>(
+                                    args.Length);
+                            MetaTable funcMT =
+                                sctx.Implementation.Meta;
+                            MetaTable appMP =
+                                sctx.ParentApplication.
+                                    Meta;
+                            MetaTable engMT = sctx.ParentEngine.Meta;
+                            foreach (PValue arg in args)
+                            {
+                                string key =
+                                    arg.CallToString(sctx);
+                                MetaEntry entry;
+                                if (
+                                    funcMT.TryGetValue(
+                                        key, out entry) ||
+                                    appMP.TryGetValue(
+                                        key, out entry) ||
+                                    engMT.TryGetValue(
+                                        key, out entry)
+                                    )
+                                    lst.Add(entry);
+                                else
+                                    lst.Add(
+                                        PType.Null.
+                                            CreatePValue());
+                            }
+
+                            if (lst.Count == 1)
+                                return lst[0];
+                            else
+                                return
+                                    (PValue) lst;
+                        }
+
+                        #endregion
+                    }));
 
             Commands.AddEngineCommand(ConcatenateCommand, new Concatenate());
 
-            Commands.AddEngineCommand(MapCommand,new MapAll());
+            Commands.AddEngineCommand(MapCommand, new MapAll());
 
-            Commands.AddEngineCommand(FoldLCommand,new FoldL());
+            Commands.AddEngineCommand(FoldLCommand, new FoldL());
 
             Commands.AddEngineCommand(FoldRCommand, new FoldR());
 
-            Commands.AddEngineCommand(DisposeCommand,new Dispose());
+            Commands.AddEngineCommand(DisposeCommand, new Dispose());
 
             Commands.AddEngineCommand(CallCommand, new Call());
 

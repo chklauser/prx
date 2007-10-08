@@ -9,7 +9,6 @@ namespace Prexonite.Commands
     /// </summary>
     public class Caller : PCommand
     {
-
         /// <summary>
         /// Returns the caller of the supplied stack context.
         /// </summary>
@@ -27,9 +26,9 @@ namespace Prexonite.Commands
             else
             {
                 LinkedListNode<StackContext> callee = stack.FindLast(sctx);
-                if(callee.Previous == null)
+                if (callee.Previous == null)
                     return PType.Null.CreatePValue();
-                else 
+                else
                     return sctx.CreateNativePValue(callee.Previous.Value);
             }
         }

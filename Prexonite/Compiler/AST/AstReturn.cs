@@ -60,7 +60,7 @@ namespace Prexonite.Compiler.Ast
                     target.Emit(OpCode.ret_set);
                     break;
                 case ReturnVariant.Continue:
-                    if(Expression != null)
+                    if (Expression != null)
                     {
                         Expression.EmitCode(target);
                         target.Emit(OpCode.ret_set);

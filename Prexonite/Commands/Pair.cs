@@ -1,6 +1,3 @@
-using System;
-using System.Collections.Generic;
-using System.Text;
 using Prexonite.Types;
 
 namespace Prexonite.Commands
@@ -25,16 +22,17 @@ namespace Prexonite.Commands
         /// </remarks>
         public override PValue Run(StackContext sctx, PValue[] args)
         {
-            if(args == null)
+            if (args == null)
                 args = new PValue[] {};
 
             if (args.Length < 2)
                 return PType.Null.CreatePValue();
             else
-                return PType.Object.CreatePValue(new PValueKeyValuePair(
-                    args[0] ?? PType.Null.CreatePValue(),
-                    args[1] ?? PType.Null.CreatePValue()
-                ));
+                return PType.Object.CreatePValue(
+                    new PValueKeyValuePair(
+                        args[0] ?? PType.Null.CreatePValue(),
+                        args[1] ?? PType.Null.CreatePValue()
+                        ));
         }
     }
 }

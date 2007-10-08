@@ -1,7 +1,5 @@
 using System;
 using System.Collections.Generic;
-using System.Text;
-using Prexonite;
 using Prexonite.Types;
 
 namespace Prexonite.Commands
@@ -40,7 +38,6 @@ namespace Prexonite.Commands
     /// the new memory location.</para></remarks>
     public class Unbind : PCommand
     {
-
         /// <summary>
         /// Executes the unbind command on each of the arguments supplied.
         /// </summary>
@@ -52,7 +49,7 @@ namespace Prexonite.Commands
         public override PValue Run(StackContext sctx, PValue[] args)
         {
             if (args == null)
-                throw new ArgumentNullException("args"); 
+                throw new ArgumentNullException("args");
             foreach (PValue arg in args)
                 Run(sctx, arg);
             return PType.Null.CreatePValue();
@@ -73,7 +70,7 @@ namespace Prexonite.Commands
         public PValue Run(StackContext sctx, PValue arg)
         {
             if (sctx == null)
-                throw new ArgumentNullException("sctx"); 
+                throw new ArgumentNullException("sctx");
 
             if (arg == null)
                 throw new ArgumentNullException("arg");
@@ -88,7 +85,7 @@ namespace Prexonite.Commands
 
             string id;
 
-            if(arg.Type is ObjectPType && arg.Value is PVariable)
+            if (arg.Type is ObjectPType && arg.Value is PVariable)
             {
                 id = null;
                 //Variable reference
@@ -107,7 +104,7 @@ namespace Prexonite.Commands
             }
 
             PVariable existing;
-            if(id != null && fctx.LocalVariables.TryGetValue(id, out existing))
+            if (id != null && fctx.LocalVariables.TryGetValue(id, out existing))
             {
                 PVariable unbound = new PVariable();
                 unbound.Value = existing.Value;

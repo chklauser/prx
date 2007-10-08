@@ -27,13 +27,16 @@ using System.Globalization;
 using System.Text;
 using Prexonite;
 using Prexonite.Compiler;
+using Prexonite.Helper;
 
-partial class Lexer
+internal partial class Lexer
 {
-    StringBuilder buffer = new StringBuilder();
+    private StringBuilder buffer = new StringBuilder();
 
     private Token tok(int kind)
-    { return tok(kind, yytext()); }
+    {
+        return tok(kind, yytext());
+    }
 
     private Token tok(int kind, string val)
     {
@@ -62,6 +65,7 @@ partial class Lexer
     }
 
     internal string _file = "--unknown--";
+
     public string File
     {
         get { return _file; }
@@ -73,19 +77,19 @@ partial class Lexer
         get { return _file; }
     }
 
-    private Prexonite.Helper.RandomAccessQueue<Token> _tokenBuffer = new Prexonite.Helper.RandomAccessQueue<Token>();
+    private RandomAccessQueue<Token> _tokenBuffer = new RandomAccessQueue<Token>();
     private int _peekIndex = NO_PEEK;
     private const int NO_PEEK = -1;
 
     internal void _InjectToken(Token c)
     {
-        if(_tokenBuffer.Count == 0)
+        if (_tokenBuffer.Count == 0)
             _tokenBuffer.Add(c);
         else
             _tokenBuffer.Insert(0, c);
     }
 
-    Token multiple(params Token[] tokens)
+    private Token multiple(params Token[] tokens)
     {
         if (tokens == null)
             throw new ArgumentNullException("tokens");
@@ -98,7 +102,7 @@ partial class Lexer
         return null;
     }
 
-    void ret(params Token[] tokens)
+    private void ret(params Token[] tokens)
     {
         multiple(tokens);
     }
@@ -107,8 +111,8 @@ partial class Lexer
     {
         int count = _tokenBuffer.Count;
         Token next = Scan();
-        if(next == null)
-            if(_tokenBuffer.Count == count)
+        if (next == null)
+            if (_tokenBuffer.Count == count)
                 throw new FatalCompilerException("Invalid (null) token returned by lexer.");
             else
             {
@@ -121,7 +125,7 @@ partial class Lexer
     Token IScanner.Scan()
     {
         _peekIndex = NO_PEEK;
-        if(_tokenBuffer.Count == 0)
+        if (_tokenBuffer.Count == 0)
             scanNextToken();
 #if DEBUG
         Token next = _tokenBuffer.Dequeue();
@@ -136,7 +140,7 @@ partial class Lexer
     Token IScanner.Peek()
     {
         _peekIndex++;
-        if(_peekIndex >= _tokenBuffer.Count)
+        if (_peekIndex >= _tokenBuffer.Count)
             scanNextToken();
 #if DEBUG
         try
@@ -161,7 +165,7 @@ partial class Lexer
         word = word.ToLowerInvariant();
 
         //Any lexer state
-        switch(word)
+        switch (word)
         {
             case "false":
                 return Parser._false;
@@ -173,8 +177,8 @@ partial class Lexer
         bool isLocal = yystate() == Local;
 
         //Not assembler
-        if( isGlobal || isLocal)
-            switch(word)
+        if (isGlobal || isLocal)
+            switch (word)
             {
                 case "as":
                     return Parser._as;
@@ -195,8 +199,8 @@ partial class Lexer
             }
 
         //Global only
-        if(isGlobal)
-            switch(word)
+        if (isGlobal)
+            switch (word)
             {
                 case "add":
                     return Parser._add;
@@ -208,25 +212,25 @@ partial class Lexer
                     return Parser._does;
                 case "enabled":
                     return Parser._enabled;
-              //case "to": //Parsed by the scanner.
+                    //case "to": //Parsed by the scanner.
             }
 
-        //Local only
-        else if(isLocal)
-            switch(word)
+            //Local only
+        else if (isLocal)
+            switch (word)
             {
                 case "static":
                     return Parser._static;
-                case "return": 
-                   return (Parser._return);
+                case "return":
+                    return (Parser._return);
                 case "yield":
                     return (Parser._yield);
-                case "in": 
-                   return (Parser._in);
-                case "continue": 
-                   return (Parser._continue);
-                case "break": 
-                   return (Parser._break);
+                case "in":
+                    return (Parser._in);
+                case "continue":
+                    return (Parser._continue);
+                case "break":
+                    return (Parser._break);
                 case "mod":
                     return Parser._mod;
                 case "or":
@@ -247,7 +251,7 @@ partial class Lexer
                     return Parser._else;
                 case "new":
                     return Parser._new;
-                /* //Not currently used.
+                    /* //Not currently used.
                 case "from":
                     return Parser._from;
                 //*/
@@ -269,27 +273,35 @@ partial class Lexer
                     return Parser._finally;
                 case "throw":
                     return Parser._throw;
-                case "using":       //Coco/R does not accept "using" as a token name.
+                case "using": //Coco/R does not accept "using" as a token name.
                     return Parser._uusing;
-        }
+            }
 
         //Is id
         return Parser._id;
     }
 
-    string unescape_char(string sequence)
+    private string unescape_char(string sequence)
     {
         string kind = sequence.Substring(1, 1);
         sequence = sequence.Substring(2);
         int utf32;
-        if (int.TryParse("0x" + sequence, NumberStyles.HexNumber, CultureInfo.InvariantCulture, out utf32))
+        if (
+            int.TryParse(
+                "0x" + sequence, NumberStyles.HexNumber, CultureInfo.InvariantCulture, out utf32))
             throw new PrexoniteException(
-                System.String.Format("Invalid escape sequence \\{3}{0} on line {1} in {2}.", sequence, yyline, File, kind));
+                System.String.Format(
+                    "Invalid escape sequence \\{3}{0} on line {1} in {2}.",
+                    sequence,
+                    yyline,
+                    File,
+                    kind));
         return char.ConvertFromUtf32(utf32);
     }
 
     void IScanner.ResetPeek()
-    {   //Try to confuse Peek() so it does no longer know where to start... *muahaha*
+    {
+        //Try to confuse Peek() so it does no longer know where to start... *muahaha*
         _peekIndex = NO_PEEK;
     }
 }

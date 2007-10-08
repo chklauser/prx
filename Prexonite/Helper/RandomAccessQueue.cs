@@ -28,14 +28,12 @@ using NoDebug = System.Diagnostics.DebuggerNonUserCodeAttribute;
 
 namespace Prexonite.Helper
 {
-
     /// <summary>
     /// Custom implementation of a queue that allows random access.
     /// </summary>
     /// <typeparam name="T">The type of the elements the queue is supposed to manage.</typeparam>
     public class RandomAccessQueue<T> : IList<T>
     {
-
         #region Constructors
 
         private const int DEFAULT_INITIAL_CAPACITY = 10;
@@ -58,7 +56,7 @@ namespace Prexonite.Helper
         public RandomAccessQueue(IEnumerable<T> collection)
         {
             if (collection == null)
-                throw new ArgumentNullException("collection"); 
+                throw new ArgumentNullException("collection");
             _store = new List<T>(collection);
         }
 
@@ -87,13 +85,13 @@ namespace Prexonite.Helper
             T[] nstore = new T[_store.Count];
             int count;
             count = normalCount();
-            _store.CopyTo(_front,nstore,0,count);
+            _store.CopyTo(_front, nstore, 0, count);
 
             //Copy the wrapped part, if necessary
-            if(isWrapped())
+            if (isWrapped())
             {
                 int wrapped = wrappedCount();
-                _store.CopyTo(0,nstore,count,wrapped);
+                _store.CopyTo(0, nstore, count, wrapped);
             }
 
             //Write queue back to the store
@@ -108,8 +106,7 @@ namespace Prexonite.Helper
             }
         }
 
-        
-        private  int  normalCount()
+        private int normalCount()
         {
             if (_rear < 0)
                 return 0;
@@ -119,7 +116,6 @@ namespace Prexonite.Helper
                 return _rear + 1 - _front;
         }
 
-        
         private int wrappedCount()
         {
             return isWrapped() ? _rear + 1 - 0 : 0;
@@ -131,7 +127,6 @@ namespace Prexonite.Helper
             return _front > _rear;
         }
 
-        
         private int toIndex(int qidx)
         {
             int idx = _front + qidx;
@@ -150,16 +145,16 @@ namespace Prexonite.Helper
         /// <param name="item">The element to be added to the end of the queue.</param>
         public void Enqueue(T item)
         {
-            if(_rear == -1)
+            if (_rear == -1)
             {
-                if(_store.Count >= 1)
+                if (_store.Count >= 1)
                     _store[0] = item;
                 else
                     _store.Add(item);
                 _rear++;
             }
             else if (!isWrapped())
-                if (_rear+1 < _store.Count || _store.Count < DEFAULT_INITIAL_CAPACITY)
+                if (_rear + 1 < _store.Count || _store.Count < DEFAULT_INITIAL_CAPACITY)
                 {
                     //Stay unwrapped
                     if (++_rear == _store.Count)
@@ -235,7 +230,9 @@ namespace Prexonite.Helper
         [NoDebug]
         public int IndexOf(T item)
         {
-            int normal = _store.IndexOf(item, _front, 
+            int normal = _store.IndexOf(
+                item,
+                _front,
                 normalCount());
             if (normal < 0 && isWrapped())
                 return _store.IndexOf(item, 0, wrappedCount());
@@ -272,15 +269,9 @@ namespace Prexonite.Helper
         public T this[int index]
         {
             [NoDebug]
-            get
-            {
-                return _store[toIndex(index)];
-            }
+            get { return _store[toIndex(index)]; }
             [NoDebug]
-            set
-            {
-                _store[toIndex(index)] = value;
-            }
+            set { _store[toIndex(index)] = value; }
         }
 
         #endregion
@@ -330,7 +321,8 @@ namespace Prexonite.Helper
         {
             int idx = arrayIndex;
             if (array.Length < Count)
-                throw new ArgumentOutOfRangeException("The supplied array is not big enough for " + Count + " elements.");
+                throw new ArgumentOutOfRangeException(
+                    "The supplied array is not big enough for " + Count + " elements.");
 
             foreach (T t in this)
                 array[idx++] = t;
