@@ -539,6 +539,11 @@ namespace Prexonite.Compiler
         public const string BuildHookCommand = @"\build\hook";
 
         /// <summary>
+        /// The name of the getloader command for build blocks
+        /// </summary>
+        public const string BuildGetLoaderCommand = @"\build\getloader";
+
+        /// <summary>
         /// The name of the default script file
         /// </summary>
         public const string DefaultScriptName = "_default.pxs";
@@ -595,6 +600,17 @@ namespace Prexonite.Compiler
                                 CompilerHooks.Add(arg);
                         }
                         return PType.Null.CreatePValue();
+                    });
+            if(!ParentEngine.Commands.Contains(BuildGetLoaderCommand))
+                ParentEngine.Commands.AddCompilerCommand(
+                    BuildGetLoaderCommand,
+                    delegate(StackContext sctx, PValue[] args)
+                    {
+                        Loader ldr = sctx as Loader;
+                        if (ldr == null)
+                            return PType.Null.CreatePValue();
+                        else
+                            return sctx.CreateNativePValue(ldr);
                     });
         }
 

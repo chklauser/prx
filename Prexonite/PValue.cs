@@ -1270,7 +1270,7 @@ namespace Prexonite
         /// <returns>A PValue object containing the supplied integer (signed) with <see cref="PType.Int"/> as its PType.</returns>
         /// <remarks><see cref="PType.Int"/> cannot represent integers other than System.Int32, but you may wish to convert them to signed integers and then create the appropriate PValues, which is exactly what this conversion operator does.
         /// If you have to do unsigned integer math inside the Prexonite VM, use <c><see cref="ObjectPType">PType.Object</see>[typeof(System.UInt32)]</c> as the PType.</remarks>
-        [NoDebug()]
+        [NoDebug(),CLSCompliant(false)]
         public static explicit operator PValue(UInt32 number)
         {
             return PType.Int.CreatePValue((int) number);
@@ -1282,7 +1282,7 @@ namespace Prexonite
         /// <param name="number">A System.Byte to be used like a System.Int32 within the Prexonite VM.</param>
         /// <returns>A PValue object containing the supplied byte as an integer with <see cref="PType.Int"/> as its PType.</returns>
         /// <remarks><see cref="PType.Int"/> cannot represent integers other than System.Int32, but you may wish to convert them to integers and then create the appropriate PValues, which is exactly what this conversion operator does.</remarks>
-        [NoDebug()]
+        [NoDebug(),CLSCompliant(false)]
         public static explicit operator PValue(Byte number)
         {
             return PType.Int.CreatePValue((int) number);
@@ -1294,7 +1294,7 @@ namespace Prexonite
         /// <param name="number">A System.SByte to be used like a System.Int32 within the Prexonite VM.</param>
         /// <returns>A PValue object containing the supplied signed byte as an integer with <see cref="PType.Int"/> as its PType.</returns>
         /// <remarks><see cref="PType.Int"/> cannot represent integers other than System.Int32, but you may wish to convert them to integers and then create the appropriate PValues, which is exactly what this conversion operator does.</remarks>
-        [NoDebug()]
+        [NoDebug(),CLSCompliant(false)]
         public static explicit operator PValue(SByte number)
         {
             return PType.Int.CreatePValue((int) number);
