@@ -97,12 +97,12 @@ namespace Prexonite
         /// <summary>
         /// Creates a stack context from the wrapped function.
         /// </summary>
-        /// <param name="eng">The engine to bind to.</param>
+        /// <param name="engine">The engine to bind to.</param>
         /// <param name="args">A list of arguments to pass to the function.</param>
         /// <returns>A stack context for that function.</returns>
-        public StackContext CreateStackContext(Engine eng, PValue[] args)
+        public StackContext CreateStackContext(Engine engine, PValue[] args)
         {
-            return CreateFunctionContext(eng, args);
+            return CreateFunctionContext(engine, args);
         }
 
         /// <summary>

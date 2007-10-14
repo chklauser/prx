@@ -3,7 +3,8 @@ using System;
 namespace Prexonite.Compiler.Ast
 {
     public class AstKeyValuePair : AstNode,
-                                   IAstExpression
+                                   IAstExpression,
+                                   IAstHasExpressions
     {
         public AstKeyValuePair(string file, int line, int column)
             : this(file, line, column, null, null)
@@ -32,6 +33,15 @@ namespace Prexonite.Compiler.Ast
 
         public IAstExpression Key;
         public IAstExpression Value;
+
+        #region IAstHasExpressions Members
+
+        public IAstExpression[] Expressions
+        {
+            get { return new IAstExpression[] {Key, Value}; }
+        }
+
+        #endregion
 
         public override void EmitCode(CompilerTarget target)
         {

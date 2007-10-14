@@ -1078,6 +1078,9 @@ namespace Prexonite.Compiler
 #if !DEBUG
             _removeNop();
 #endif
+
+            if (Loader.Options.UseIndicesLocally)
+                _by_index();
         }
 
         #region Check unresolved Instructions
@@ -1279,6 +1282,53 @@ namespace Prexonite.Compiler
             }
         }
 #endif
+
+        #endregion
+
+        #region Replacement of 'by name' instructions for local variables
+
+        private bool _by_index()
+        {
+            bool optimized = false;
+            List<Instruction> code = Function.Code;
+            Function.CreateLocalVariableMapping(); //Force (re)creation of the mapping
+            SymbolTable<int> map = Function.LocalVariableMapping;
+
+            for (int i = 0; i < code.Count; i++)
+            {
+                Instruction ins = code[i];
+                OpCode nopc;
+                switch(ins.OpCode)
+                {
+                    case OpCode.ldloc:
+                        nopc = OpCode.ldloci;
+                        goto replaceInt;
+                    case OpCode.stloc:
+                        nopc = OpCode.stloci;
+                        goto replaceInt;
+                    case OpCode.incloc:
+                        nopc = OpCode.incloci;
+                        goto replaceInt;
+                    case OpCode.decloc:
+                        nopc = OpCode.decloci;
+                        goto replaceInt;
+                    case OpCode.ldr_loc:
+                        nopc = OpCode.ldr_loci;
+                    replaceInt:
+                        int idx = map[ins.Id];
+                        code[i] = new Instruction(nopc, idx);
+                        break;
+                    case OpCode.indloc:
+                        if(!map.ContainsKey(ins.Id))
+                            continue;
+                        idx = map[ins.Id];
+                        int argc = ins.Arguments;
+                        code[i] = Instruction.CreateIndLocI(idx, argc);
+                        break;
+                }
+            }
+            return optimized;
+        }
 
         #endregion
 

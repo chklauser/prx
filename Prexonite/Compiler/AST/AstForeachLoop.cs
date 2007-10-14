@@ -27,7 +27,8 @@ using NoDebug = System.Diagnostics.DebuggerNonUserCodeAttribute;
 namespace Prexonite.Compiler.Ast
 {
     public class AstForeachLoop : AstLoop,
-                                  IAstHasBlocks
+                                  IAstHasBlocks,
+                                  IAstHasExpressions
     {
         [NoDebug]
         public AstForeachLoop(string file, int line, int column)
@@ -58,6 +59,15 @@ namespace Prexonite.Compiler.Ast
             [NoDebug]
             get { return List != null && Element != null; }
         }
+
+        #region IAstHasExpressions Members
+
+        public override IAstExpression[] Expressions
+        {
+            get { return new IAstExpression[] {List}; }
+        }
+
+        #endregion
 
         public override void EmitCode(CompilerTarget target)
         {

@@ -148,9 +148,10 @@ internal partial class Lexer
             Token next = _tokenBuffer[_peekIndex];
             if (next == null)
                 throw new ArgumentNullException("Next peek token is null!!!");
-        
-        return next;
-        }catch
+
+            return next;
+        }
+        catch
         {
             Console.Out.WriteLine("Exception occured.");
             throw;

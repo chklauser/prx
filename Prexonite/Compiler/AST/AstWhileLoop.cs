@@ -66,6 +66,11 @@ namespace Prexonite.Compiler.Ast
         public bool IsPrecondition;
         public bool IsPositive;
 
+        public override IAstExpression[] Expressions
+        {
+            get { return new IAstExpression[] {Condition}; }
+        }
+
         public bool IsInitialized
         {
             [NoDebug]

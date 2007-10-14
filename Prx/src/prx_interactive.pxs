@@ -50,7 +50,8 @@ declare function reboot;
 			@"timer\start",
 			@"timer\stop",
 			@"timer\elapsed",
-			@"timer\reset"])
+			@"timer\reset",
+			@"createBenchmark"])
 		engine.Commands.AddUserCommand(alias, thisE.Commands[alias]);
 		
 	//Set up the console

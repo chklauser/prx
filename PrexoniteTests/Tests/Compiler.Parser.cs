@@ -32,7 +32,9 @@ function func0
     static sobj1;
 }
 ";
-            Loader ldr = new Loader(engine, target);
+            LoaderOptions opt = new LoaderOptions(engine, target);
+            opt.UseIndicesLocally = false;
+            Loader ldr = new Loader(opt);
             ldr.LoadFromString(input1);
             Assert.AreEqual(0, ldr.ErrorCount, "Errors during compilation.");
 
@@ -41,38 +43,61 @@ function func0
 
             CompilerTarget tar = ldr.FunctionTargets["func0"];
 
-            Assert.AreEqual(new SymbolEntry(SymbolInterpretations.LocalObjectVariable, "obj0"), tar.Symbols["obj0"]);
+            Assert.AreEqual(
+                new SymbolEntry(SymbolInterpretations.LocalObjectVariable, "obj0"),
+                tar.Symbols["obj0"]);
             Assert.IsTrue(tar.Function.Variables.Contains("obj0"));
-            Assert.AreEqual(new SymbolEntry(SymbolInterpretations.LocalObjectVariable, "obj1"), tar.Symbols["obj1"]);
+            Assert.AreEqual(
+                new SymbolEntry(SymbolInterpretations.LocalObjectVariable, "obj1"),
+                tar.Symbols["obj1"]);
             Assert.IsTrue(tar.Function.Variables.Contains("obj1"));
-            Assert.AreEqual(new SymbolEntry(SymbolInterpretations.LocalObjectVariable, "obj2"), tar.Symbols["obj2"]);
+            Assert.AreEqual(
+                new SymbolEntry(SymbolInterpretations.LocalObjectVariable, "obj2"),
+                tar.Symbols["obj2"]);
             Assert.IsTrue(tar.Function.Variables.Contains("obj2"));
 
-            Assert.AreEqual(new SymbolEntry(SymbolInterpretations.LocalReferenceVariable, "func1"), tar.Symbols["func1"]);
+            Assert.AreEqual(
+                new SymbolEntry(SymbolInterpretations.LocalReferenceVariable, "func1"),
+                tar.Symbols["func1"]);
             Assert.IsTrue(tar.Function.Variables.Contains("func1"));
-            Assert.AreEqual(new SymbolEntry(SymbolInterpretations.LocalReferenceVariable, "ifunc0"),
-                            tar.Symbols["ifunc0"]);
+            Assert.AreEqual(
+                new SymbolEntry(SymbolInterpretations.LocalReferenceVariable, "ifunc0"),
+                tar.Symbols["ifunc0"]);
             Assert.IsTrue(tar.Function.Variables.Contains("ifunc0"));
-            Assert.AreEqual(new SymbolEntry(SymbolInterpretations.LocalReferenceVariable, "cor0"), tar.Symbols["cor0"]);
+            Assert.AreEqual(
+                new SymbolEntry(SymbolInterpretations.LocalReferenceVariable, "cor0"),
+                tar.Symbols["cor0"]);
             Assert.IsTrue(tar.Function.Variables.Contains("cor0"));
 
-            Assert.AreEqual(new SymbolEntry(SymbolInterpretations.GlobalObjectVariable, "gobj0"), tar.Symbols["gobj0"]);
-            Assert.IsFalse(tar.Function.Variables.Contains("gobj0"),
-                           "\"declare var <id>;\" only declares a global variable.");
-            Assert.IsFalse(ldr.Options.TargetApplication.Variables.ContainsKey("gobj0"),
-                           "\"global <id>;\" only declares a global variable.");
-            Assert.AreEqual(new SymbolEntry(SymbolInterpretations.GlobalObjectVariable, "gobj1"), tar.Symbols["gobj1"]);
-            Assert.IsFalse(tar.Function.Variables.Contains("gobj1"),
-                           "\"declare var <id>;\" only declares a global variable.");
-            Assert.IsFalse(ldr.Options.TargetApplication.Variables.ContainsKey("gobj1"),
-                           "\"declare var <id>;\" only declares a global variable.");
+            Assert.AreEqual(
+                new SymbolEntry(SymbolInterpretations.GlobalObjectVariable, "gobj0"),
+                tar.Symbols["gobj0"]);
+            Assert.IsFalse(
+                tar.Function.Variables.Contains("gobj0"),
+                "\"declare var <id>;\" only declares a global variable.");
+            Assert.IsFalse(
+                ldr.Options.TargetApplication.Variables.ContainsKey("gobj0"),
+                "\"global <id>;\" only declares a global variable.");
+            Assert.AreEqual(
+                new SymbolEntry(SymbolInterpretations.GlobalObjectVariable, "gobj1"),
+                tar.Symbols["gobj1"]);
+            Assert.IsFalse(
+                tar.Function.Variables.Contains("gobj1"),
+                "\"declare var <id>;\" only declares a global variable.");
+            Assert.IsFalse(
+                ldr.Options.TargetApplication.Variables.ContainsKey("gobj1"),
+                "\"declare var <id>;\" only declares a global variable.");
 
-            Assert.AreEqual(new SymbolEntry(SymbolInterpretations.GlobalObjectVariable, "func0\\static\\sobj0"),
-                            tar.Symbols["sobj0"]);
-            Assert.IsTrue(ldr.Options.TargetApplication.Variables.ContainsKey("func0\\static\\sobj0"));
-            Assert.AreEqual(new SymbolEntry(SymbolInterpretations.GlobalObjectVariable, "func0\\static\\sobj1"),
-                            tar.Symbols["sobj1"]);
-            Assert.IsTrue(ldr.Options.TargetApplication.Variables.ContainsKey("func0\\static\\sobj1"));
+            Assert.AreEqual(
+                new SymbolEntry(SymbolInterpretations.GlobalObjectVariable, "func0\\static\\sobj0"),
+                tar.Symbols["sobj0"]);
+            Assert.IsTrue(
+                ldr.Options.TargetApplication.Variables.ContainsKey("func0\\static\\sobj0"));
+            Assert.AreEqual(
+                new SymbolEntry(SymbolInterpretations.GlobalObjectVariable, "func0\\static\\sobj1"),
+                tar.Symbols["sobj1"]);
+            Assert.IsTrue(
+                ldr.Options.TargetApplication.Variables.ContainsKey("func0\\static\\sobj1"));
         }
 
         [Test]
@@ -94,7 +119,9 @@ sixth:  goto    begin;      //6
 
 function instruction {}
 ";
-            Loader ldr = new Loader(engine, target);
+            LoaderOptions opt = new LoaderOptions(engine, target);
+            opt.UseIndicesLocally = false;
+            Loader ldr = new Loader(opt);
             ldr.LoadFromString(input1);
             Assert.AreEqual(0, ldr.ErrorCount, "Errors during compilation.");
 
@@ -109,7 +136,8 @@ function instruction {}
             //instruction
             i++;
             Assert.IsInstanceOfType(typeof(AstGetSetSymbol), block[i]);
-            Assert.AreEqual(SymbolInterpretations.Function, (block[i] as AstGetSetSymbol).Interpretation);
+            Assert.AreEqual(
+                SymbolInterpretations.Function, (block[i] as AstGetSetSymbol).Interpretation);
             Assert.AreEqual("instruction", (block[i] as AstGetSetSymbol).Id);
             Assert.AreEqual(PCall.Get, (block[i] as AstGetSetSymbol).Call);
             Assert.AreEqual(0, (block[i] as AstGetSetSymbol).Arguments.Count);
@@ -127,7 +155,8 @@ function instruction {}
             //instruction
             i++;
             Assert.IsInstanceOfType(typeof(AstGetSetSymbol), block[i]);
-            Assert.AreEqual(SymbolInterpretations.Function, (block[i] as AstGetSetSymbol).Interpretation);
+            Assert.AreEqual(
+                SymbolInterpretations.Function, (block[i] as AstGetSetSymbol).Interpretation);
             Assert.AreEqual("instruction", (block[i] as AstGetSetSymbol).Id);
             Assert.AreEqual(PCall.Get, (block[i] as AstGetSetSymbol).Call);
             Assert.AreEqual(0, (block[i] as AstGetSetSymbol).Arguments.Count);
@@ -179,7 +208,9 @@ function func0
     func1(func1(func1(55)));
 }
 ";
-            Loader ldr = new Loader(engine, target);
+            LoaderOptions opt = new LoaderOptions(engine, target);
+            opt.UseIndicesLocally = false;
+            Loader ldr = new Loader(opt);
             ldr.LoadFromString(input1);
             Assert.AreEqual(0, ldr.ErrorCount, "Errors during compilation.");
 
@@ -194,7 +225,8 @@ function func0
             symbol = (AstGetSetSymbol) block[i];
             Assert.AreEqual("func1", symbol.Id);
             Assert.AreEqual(SymbolInterpretations.Function, symbol.Interpretation);
-            Assert.AreEqual(0, symbol.Arguments.Count, "First function call should have no arguments");
+            Assert.AreEqual(
+                0, symbol.Arguments.Count, "First function call should have no arguments");
             i++;
             //func1(1);
             Assert.IsInstanceOfType(typeof(AstGetSetSymbol), block[i]);
@@ -210,7 +242,8 @@ function func0
             symbol = (AstGetSetSymbol) block[i];
             Assert.AreEqual("func1", symbol.Id);
             Assert.AreEqual(SymbolInterpretations.Function, symbol.Interpretation);
-            Assert.AreEqual(3, symbol.Arguments.Count, "First function call should have 3 arguments");
+            Assert.AreEqual(
+                3, symbol.Arguments.Count, "First function call should have 3 arguments");
             Assert.IsInstanceOfType(typeof(AstConstant), symbol.Arguments[0]);
             Assert.AreEqual("2", (string) ((AstConstant) symbol.Arguments[0]).Constant);
             Assert.IsInstanceOfType(typeof(AstConstant), symbol.Arguments[1]);
@@ -251,7 +284,7 @@ function main
             _compile(@input1);
 
             _expect(
-                    @"
+                @"
 ldc.int  1
 stloc    x
 ldc.int  2
@@ -264,7 +297,7 @@ ldloc    x
 ldloc    y
 add
 stloc    x"
-                    );
+                );
         }
 
         [Test]
@@ -283,8 +316,9 @@ function func0
     x = 1+(++y)+1;
     
 }";
-
-            Loader ldr = new Loader(engine, target);
+            LoaderOptions opt = new LoaderOptions(engine, target);
+            opt.UseIndicesLocally = false;
+            Loader ldr = new Loader(opt);
             ldr.LoadFromString(input1);
             Assert.AreEqual(0, ldr.ErrorCount, "Errors during compilation.");
 
@@ -321,12 +355,18 @@ stloc    x"
 
             Console.Write(target.StoreInString());
 
-            Assert.AreEqual(expected.Count, actual.Count, "Expected and actual instruction count missmatch.");
+            Assert.AreEqual(
+                expected.Count, actual.Count, "Expected and actual instruction count missmatch.");
 
             for (int i = 0; i < actual.Count; i++)
-                Assert.AreEqual(expected[i], actual[i],
-                                String.Format("Instructions at address {0} do not match ({1} != {2})", i,
-                                              expected[i], actual[i]));
+                Assert.AreEqual(
+                    expected[i],
+                    actual[i],
+                    String.Format(
+                        "Instructions at address {0} do not match ({1} != {2})",
+                        i,
+                        expected[i],
+                        actual[i]));
         }
 
         [Test]
@@ -345,13 +385,17 @@ function func0
     continue;
 }";
 
-            Loader ldr = new Loader(engine, target);
+
+            LoaderOptions opt = new LoaderOptions(engine, target);
+            opt.UseIndicesLocally = false;
+            Loader ldr = new Loader(opt);
             ldr.LoadFromString(input1);
             Assert.AreEqual(0, ldr.ErrorCount, "Errors during compilation.");
 
             List<Instruction> actual = target.Functions["func0"].Code;
             List<Instruction> expected =
-                getInstructions(@"
+                getInstructions(
+                    @"
 ret.exit
 ldloc   x
 ret.value
@@ -362,12 +406,18 @@ ret.continue
 ");
             Console.Write(target.StoreInString());
 
-            Assert.AreEqual(expected.Count, actual.Count, "Expected and actual instruction count missmatch.");
+            Assert.AreEqual(
+                expected.Count, actual.Count, "Expected and actual instruction count missmatch.");
 
             for (int i = 0; i < actual.Count; i++)
-                Assert.AreEqual(expected[i], actual[i],
-                                String.Format("Instructions at address {0} do not match ({1} != {2})", i,
-                                              expected[i], actual[i]));
+                Assert.AreEqual(
+                    expected[i],
+                    actual[i],
+                    String.Format(
+                        "Instructions at address {0} do not match ({1} != {2})",
+                        i,
+                        expected[i],
+                        actual[i]));
         }
 
         [Test]
@@ -401,8 +451,9 @@ function test\static
 }
 ");
 
-            _expect(@"test\static",
-                    @"
+            _expect(
+                @"test\static",
+                @"
  ldc.string  ""Hello World""
 @sget.1      ""Object(\""System.Console\"")::WriteLine""
 @sget.0      ""Object(\""System.Console\"")::ReadLine""
@@ -1194,7 +1245,8 @@ function main
             string enum1 = code[3].Id ?? "No_ID_at_3";
             string enum2 = code[26].Id ?? "No_ID_at_26";
             _expect(
-                string.Format(@"
+                string.Format(
+                    @"
 var lst
 var buffer
 var enum1
@@ -1248,7 +1300,9 @@ label enum2\continue    ldloc   {1}
                         exception
                         throw
 label endTry2
-", enum1, enum2));
+",
+                    enum1,
+                    enum2));
         }
 
         [Test]
@@ -1384,7 +1438,9 @@ function main()
             _expect(@"main\nested\0", @"ldc.int 5861 ret.value");
             _expect(@"main\nested\1", @"ldc.int 2 ldloc x mul ret.value");
             _expect(@"main\nested\2", @"ldloc x ldloc y add indloc.1 z ret.value");
-            _expect(@"main\nested\3", @"var d ldloc x ldc.int 2 add stloc d ldloc d ldc.int 4 mul ret.set");
+            _expect(
+                @"main\nested\3",
+                @"var d ldloc x ldc.int 2 add stloc d ldloc d ldc.int 4 mul ret.set");
         }
 
         [Test]
@@ -1547,7 +1603,8 @@ indarg.1
         [Test]
         public void StringConcatenation()
         {
-            _compile(@"
+            _compile(
+                @"
 function main()
 {
     var x; var a; var b; var c;
@@ -1561,7 +1618,8 @@ function main()
 }
 ");
 
-            _expect(@"
+            _expect(
+                @"
 var x,a,b,c
 ldc.string  ""a""
 stloc       x
@@ -1602,7 +1660,8 @@ stloc       x
         [Test]
         public void StringInterpolationIdentifier()
         {
-            _compile(@"
+            _compile(
+                @"
 function main()
 {
     var x; var a; var b; var c;
@@ -1610,7 +1669,8 @@ function main()
     x = ""I think the first parameter is $a, while the second seems like ($b) $c"";    
 }
 ");
-            _expect(@"
+            _expect(
+                @"
 var x,a,b,c
 
 ldc.string  ""I think the first parameter is ""
@@ -1627,7 +1687,8 @@ stloc       x
         [Test]
         public void StringInterpolationExpression()
         {
-            _compile(@"
+            _compile(
+                @"
 function main()
 {
     var x; var a; var b; var c;
@@ -1636,7 +1697,8 @@ function main()
 }
 ");
 
-            _expect(@"
+            _expect(
+                @"
 var x,a,b,c
 
 ldc.string  ""I think the first parameter is ""
@@ -1666,21 +1728,21 @@ function main()
     print = ""AB$(a)CD"";
 }
 ");
-            _expect(@"
+            _expect(
+                @"
 ldc.string ""AB""
 cmd.0       a
 ldc.string  ""CD""
 cmd.3       concat
 @cmd.1      print
 ");
-
-
         }
 
         [Test]
         public void ConditionalExpression()
         {
-            _compile(@"
+            _compile(
+                @"
 function max(a,b) = a > b ? a : b;
 function maxv(a,b) = 
     if(a > b) 
@@ -1776,7 +1838,8 @@ label endif3    ret.value
         [Test]
         public void ConditionalExpressionInverted()
         {
-            _compile(@"
+            _compile(
+                @"
 declare var a,b,c;
 
 function main
@@ -1801,7 +1864,8 @@ function main
 }
 ");
 
-            _expect(@"
+            _expect(
+                @"
 var x,y,z
 
 ldglob  a
@@ -1842,14 +1906,16 @@ stloc   z
         [Test]
         public void StringInterpolationWithStrings()
         {
-            _compile(@"
+            _compile(
+                @"
 function main(x)
 {
     declare command transform;
     return ""There is $(transform(""no"")) spoon"";
 }   
 ");
-            _expect(@"
+            _expect(
+                @"
 ldc.string  ""There is ""
 ldc.string  ""no""
 cmd.1       transform
@@ -1862,13 +1928,15 @@ ret.value
         [Test]
         public void ProceduralStructureDefinition()
         {
-            _compile(@"
+            _compile(
+                @"
 function main(a,b,c)
 {
     var str = new Structure<""a"",""b"",""r"",""c"">();
 }
 ");
-            _expect(@"
+            _expect(
+                @"
 newobj.0    ""Structure(\""a\"",\""b\"",\""r\"",\""c\"")""
 stloc       str
 ");
@@ -1891,7 +1959,8 @@ ret.value
         [Test]
         public void ListLiteral()
         {
-            _compile(@"
+            _compile(
+                @"
 function main()
 {
     var x = [];
@@ -1899,7 +1968,8 @@ function main()
 }
 ");
 
-            _expect(@"
+            _expect(
+                @"
 var x,y
 newobj.0 ""List""
 stloc   x
@@ -1919,7 +1989,8 @@ stloc   y
         [Test]
         public void CoroutineCreation()
         {
-            _compile(@"
+            _compile(
+                @"
 function subrange(lst, index, count)
 {
     for(var i = index; i < index + count; i++)
@@ -1937,7 +2008,8 @@ function main()
     };
 }
 ");
-            _expect(@"
+            _expect(
+                @"
 var lst, oneToFive, even
 ldr.func    subrange
 ldloc       lst
@@ -1950,7 +2022,9 @@ newcor.0
 stloc       even      
 ");
 
-            _expect(@"subrange",@"
+            _expect(
+                @"subrange",
+                @"
 var lst, index, count,i
 ldloc   index
 stloc   i
@@ -1976,7 +2050,8 @@ jump.t  begin
         [Test]
         public void BugIllegalHide()
         {
-            _compile(@"
+            _compile(
+                @"
 var A = 5;
 
 function legalFunction()
@@ -2000,7 +2075,8 @@ ldglob  A
         [Test]
         public void CoroutineFunctionDefinitions()
         {
-            _compile(@"
+            _compile(
+                @"
 coroutine where(lst, ref predicate) does
     foreach(var e in lst)
         if(predicate(e))
@@ -2019,7 +2095,8 @@ function main()
 }
 ");
 
-            _expect(@"
+            _expect(
+                @"
 var skip
 newclo  main\nested\skip0
 stloc   skip
@@ -2035,12 +2112,13 @@ func.2  where
 ret.value
 ");
 
-            _expect("where",@"
+            _expect("where", @"
 newclo  where\nested\0
 newcor.0
 ret.value
 ");
-            _expect(@"main\nested\skip0",@"
+            _expect(
+                @"main\nested\skip0", @"
 newclo  main\nested\skip0\nested\0
 newcor.0
 ret.value
@@ -2050,7 +2128,8 @@ ret.value
         [Test]
         public void TryCatchFinallySimple()
         {
-            _compile(@"
+            _compile(
+                @"
 declare function
     createHandle,
     fail,
@@ -2076,7 +2155,8 @@ function main()
     }
 }
 ");
-            _expect(@"
+            _expect(
+                @"
 var 
     handle,
     exc
@@ -2102,7 +2182,8 @@ label endTry
         [Test]
         public void TryCatchFinallyNested()
         {
-            _compile(@"
+            _compile(
+                @"
 declare function
     open,
     close,
@@ -2135,7 +2216,8 @@ function main()
     }
 }
 ");
-            _expect(@"
+            _expect(
+                @"
 var 
     handle,
     exc
@@ -2166,7 +2248,8 @@ label endTry
         [Test]
         public void TryFinally()
         {
-            _compile(@"
+            _compile(
+                @"
 declare function
     createHandle,
     fail,
@@ -2188,7 +2271,8 @@ function main()
     }
 }
 ");
-            _expect(@"
+            _expect(
+                @"
 var 
     handle,
     exc
@@ -2212,7 +2296,8 @@ label endTry
         [Test]
         public void Throw()
         {
-            _compile(@"
+            _compile(
+                @"
 function main()
 {
     throw ""There must be a mistake!"";
@@ -2220,7 +2305,8 @@ function main()
     throw 3;
 }
 ");
-            _expect(@"
+            _expect(
+                @"
 ldc.string  ""There must be a mistake!""
 throw
 
@@ -2236,7 +2322,8 @@ throw
         [Test]
         public void Using()
         {
-            _compile(@"
+            _compile(
+                @"
 declare function
     createHandle,
     write,
@@ -2249,7 +2336,8 @@ function main
         write(h,15);
 }
 ");
-            _expect(@"
+            _expect(
+                @"
 var h
 label beginTry  try
                 ldr.loc h
@@ -2273,7 +2361,8 @@ label endTry
         [Test]
         public void KeyValuePairs()
         {
-            _compile(@"
+            _compile(
+                @"
 function main()
 {
     var x; var y; var z;
@@ -2284,7 +2373,8 @@ function main()
 }
 ");
 
-            _expect(@"
+            _expect(
+                @"
 var x, y, z
 
 ldloc   a
@@ -2315,7 +2405,8 @@ stloc   z
         [Test]
         public void HashLiteral()
         {
-            _compile(@"
+            _compile(
+                @"
 
 function main()
 {
@@ -2343,7 +2434,8 @@ function main()
 }
 ");
 
-            _expect(@"
+            _expect(
+                @"
 var hset, people
 
 ldloc   a
@@ -2404,7 +2496,8 @@ stloc   people
         [Test]
         public void KeyValuePairArrayLiteral()
         {
-            _compile(@"
+            _compile(
+                @"
 function main()
 {
     var lst = 
@@ -2415,7 +2508,8 @@ function main()
     ];
 }
 ");
-            _expect(@"
+            _expect(
+                @"
 var lst
 
 ldc.string  ""apple""
@@ -2448,7 +2542,6 @@ var h
 ldr.loc h
 @cmd.1  print
 ");
-            
         }
 
         [Test]
@@ -2466,7 +2559,8 @@ function main does println = g;
         [Test]
         public void StatementConcatenation()
         {
-            _compile(@"
+            _compile(
+                @"
 declare var a, b, c;
 
 function main does
@@ -2475,7 +2569,8 @@ function main does
     println(g);
 ");
 
-            _expect(@"
+            _expect(
+                @"
             ldglob      a
             jump.t      tr
             ldglob      b
@@ -2495,7 +2590,8 @@ label set   stglob      g
         public void AssemblerExpressions()
         {
             //Now this really *IS* Vodoo magic
-            _compile(@"
+            _compile(
+                @"
 function main
 {
     var eng = asm ( ldc.int 6 ldc.int 8 add );
@@ -2503,7 +2599,8 @@ function main
 }
 ");
 
-            _expect(@"
+            _expect(
+                @"
 var eng, funcs
 
 ldc.int 6 
@@ -2520,7 +2617,8 @@ stloc funcs
         [Test]
         public void CoalescenceOperator()
         {
-            _compile(@"
+            _compile(
+                @"
 function main()
 {
     var a; var b; var c;
@@ -2530,7 +2628,8 @@ function main()
 }
 ");
 
-            _expect(@"
+            _expect(
+                @"
 var a,b,c,x,y
 
 ldloc   a
@@ -2573,7 +2672,8 @@ label   endc1   stloc   y
         [Test]
         public void CoalescenceAssignment()
         {
-            _compile(@"
+            _compile(
+                @"
 function main()
 {
     var a;
@@ -2587,7 +2687,8 @@ function main()
 }
 ");
 
-            _expect(@"
+            _expect(
+                @"
 var a,b,c
 
 ldloc   a
@@ -2609,8 +2710,8 @@ label   endif1
         [Test]
         public void LoopExpressions()
         {
-
-            _compile(@"
+            _compile(
+                @"
 
 function main()
 {
@@ -2634,7 +2735,9 @@ function main()
             string lst1Var = code[1].Id ?? "No_ID_at_1";
             string lst2Var = code[20].Id ?? "No_ID_at_20";
             string tmp2Var = code[25].Id ?? "No_ID_at_25";
-            _expect(String.Format(@"
+            _expect(
+                String.Format(
+                    @"
 var a,i,{0},b,j,{1},{2}
                     sget.0  ""List::Create""
                     stloc   {0}
@@ -2677,15 +2780,17 @@ label continue1     ldloc   j
 label end1          ldloc   {1}
                     stloc   b
                     
-", lst1Var,lst2Var,tmp2Var));
-
-
+",
+                    lst1Var,
+                    lst2Var,
+                    tmp2Var));
         }
 
         [Test]
         public void AppendLeftArguments()
         {
-            _compile(@"
+            _compile(
+                @"
 function main()
 {
     print << 4;
@@ -2694,7 +2799,8 @@ function main()
 }
 ");
 
-            _expect(@"
+            _expect(
+                @"
 ldc.int 4
 @cmd.1  print
 ldc.int 6
@@ -2711,7 +2817,8 @@ ldc.int 15
         [Test]
         public void AppendRightArguments()
         {
-            _compile(@"
+            _compile(
+                @"
 function main()
 {
     var a; var b; var c;
@@ -2722,14 +2829,15 @@ function main()
 }   
 ");
 
-            _expect(@"
+            _expect(
+                @"
 ldc.int 4
 @cmd.1  print
 ldc.int 6
 ldc.int 9
 @cmd.2  println
-ldc.int 3
 ldc.int 7
+ldc.int 3
 cmd.2   concat
 ldc.int 15
 @cmd.2  call
@@ -2742,7 +2850,8 @@ cmd.1   call
         [Test]
         public void AppendBothArguments()
         {
-            _compile(@"
+            _compile(
+                @"
 function main(x)
 {
     var r;
@@ -2751,7 +2860,8 @@ function main(x)
 }
 ");
 
-            _expect(@"
+            _expect(
+                @"
 var r
 ldloc   x
 ldc.int 5

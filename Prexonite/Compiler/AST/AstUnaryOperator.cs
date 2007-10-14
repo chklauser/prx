@@ -27,7 +27,8 @@ using Prexonite.Types;
 namespace Prexonite.Compiler.Ast
 {
     public class AstUnaryOperator : AstNode,
-                                    IAstEffect
+                                    IAstEffect,
+                                    IAstHasExpressions
     {
         public IAstExpression Operand;
         public UnaryOperator Operator;
@@ -46,6 +47,15 @@ namespace Prexonite.Compiler.Ast
             : this(p.scanner.File, p.t.line, p.t.col, op, operand)
         {
         }
+
+        #region IAstHasExpressions Members
+
+        public IAstExpression[] Expressions
+        {
+            get { return new IAstExpression[] {Operand}; }
+        }
+
+        #endregion
 
         #region IAstExpression Members
 

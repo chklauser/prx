@@ -3,7 +3,8 @@ using Prexonite.Types;
 namespace Prexonite.Compiler.Ast
 {
     public class AstUsing : AstNode,
-                            IAstHasBlocks
+                            IAstHasBlocks,
+                            IAstHasExpressions
     {
         internal AstUsing(Parser p)
             : base(p)
@@ -43,6 +44,15 @@ namespace Prexonite.Compiler.Ast
         {
             get { return new AstBlock[] {Block}; }
         }
+
+        #region IAstHasExpressions Members
+
+        public IAstExpression[] Expressions
+        {
+            get { return new IAstExpression[] {Expression}; }
+        }
+
+        #endregion
 
         #endregion
 

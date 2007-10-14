@@ -4,7 +4,8 @@ namespace Prexonite.Compiler.Ast
 {
     public class AstLoopExpression : AstNode,
                                      IAstExpression,
-                                     IAstHasBlocks
+                                     IAstHasBlocks,
+                                     IAstHasExpressions
     {
         public AstLoopExpression(string file, int line, int column, AstLoop loop)
             : base(file, line, column)
@@ -29,6 +30,15 @@ namespace Prexonite.Compiler.Ast
         {
             get { return Loop.Blocks; }
         }
+
+        #region IAstHasExpressions Members
+
+        public IAstExpression[] Expressions
+        {
+            get { return Loop.Expressions; }
+        }
+
+        #endregion
 
         #endregion
 

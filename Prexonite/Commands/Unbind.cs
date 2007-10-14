@@ -108,7 +108,7 @@ namespace Prexonite.Commands
             {
                 PVariable unbound = new PVariable();
                 unbound.Value = existing.Value;
-                fctx.LocalVariables[id] = unbound;
+                fctx.ReplaceLocalVariable(id, unbound);
             }
 
             return PType.Null.CreatePValue();

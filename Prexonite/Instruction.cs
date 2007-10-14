@@ -32,7 +32,7 @@ namespace Prexonite
     /// <summary>
     /// Represents a single Prexonite VM instruction
     /// </summary>
-    [NoDebug]
+    //[NoDebug]
     public class Instruction
     {
         /// <summary>
@@ -391,6 +391,20 @@ namespace Prexonite
             return ins;
         }
 
+        public static Instruction CreateIndLocI(int index, int arguments)
+        {
+            if (index > ushort.MaxValue)
+                throw new ArgumentOutOfRangeException(
+                    "index", index, "index must fit into an unsigned short integer.");
+            if (arguments > ushort.MaxValue)
+                throw new ArgumentOutOfRangeException(
+                    "arguments", arguments, "arguments must fit into an unsigned short integer.");
+            ushort idx = (ushort) index;
+            ushort argc = (ushort) arguments;
+
+            return new Instruction(Prexonite.OpCode.indloci,(argc << 16) | idx);
+        }
+
         #endregion
 
         #endregion
@@ -453,9 +467,25 @@ namespace Prexonite
                     buffer.Append("inc ");
                     buffer.Append(escId);
                     break;
+                case OpCode.incloci:
+                    buffer.Append("inci ");
+                    buffer.Append(Arguments);
+                    break;
+                case OpCode.indloci:
+                    ushort index = (ushort) (Arguments & ushort.MaxValue);
+                    ushort argc = (ushort) ((Arguments & (ushort.MaxValue << 16)) >> 16);
+                    buffer.Append("indloci.");
+                    buffer.Append(argc);
+                    buffer.Append(" ");
+                    buffer.Append(index);
+                    break;
                 case OpCode.decloc:
                     buffer.Append("dec ");
                     buffer.Append(escId);
+                    break;
+                case OpCode.decloci:
+                    buffer.Append("deci ");
+                    buffer.Append(Arguments);
                     break;
                 default:
                     if (JustEffect)
@@ -509,6 +539,11 @@ namespace Prexonite
                         case OpCode.ldc_int:
                         case OpCode.pop:
                         case OpCode.dup:
+                        case OpCode.ldloci:
+                        case OpCode.stloci:
+                        case OpCode.incloci:
+                        case OpCode.decloci:
+                        case OpCode.ldr_loci:
                             buffer.Append(" ");
                             buffer.Append(Arguments.ToString());
                             return;
@@ -655,8 +690,14 @@ namespace Prexonite
                         //INTEGER INSTRUCTIONS
                     case OpCode.ldc_bool:
                     case OpCode.ldc_int:
+                    case OpCode.ldr_loci:
                     case OpCode.pop:
                     case OpCode.dup:
+                    case OpCode.ldloci:
+                    case OpCode.stloci:
+                    case OpCode.incloci:
+                    case OpCode.decloci:
+                    case OpCode.indloci: //two short int values encoded in one int.
                         return Arguments == ins.Arguments;
                         //JUMP INSTRUCTIONS
                     case OpCode.jump:
@@ -751,7 +792,8 @@ namespace Prexonite
         ldc_string, //ldc.string    loads a string value
         ldc_null, //ldc.null      loads a null value
         //  - references
-        ldr_loc, //ldr.loc       loads a reference to a local variable
+        ldr_loc, //ldr.loc       loads a reference to a local variable by name
+        ldr_loci, //ldr.loci        loads a reference to a local variable by index
         ldr_glob, //ldr.glob      loads a reference to a global variable
         ldr_func, //ldr.func      loads a reference to a function
         ldr_cmd, //ldr.cmd      loads a reference to a command
@@ -760,8 +802,10 @@ namespace Prexonite
         ldr_type, //ldr.type      loads a reference to a type (from a type expression)
         // Variables
         //  - local
-        ldloc, //ldloc         loads the value of a local variable
-        stloc, //stloc         stores a value into a local variable
+        ldloc, //ldloc         loads the value of a local variable by name
+        stloc, //stloc         stores a value into a local variable by name
+        ldloci, //ldloci       loads the value of a local variable by index
+        stloci, //stloci       stores a value into a local variable by index
         //  - global
         ldglob, //ldglob        loads the value of a global variable
         stglob, //stglob        stores a value into a global variable
@@ -772,10 +816,12 @@ namespace Prexonite
         newcor, //newcor        creates a new coroutine
         //Operators
         //  - unary
-        incloc, //incloc        unary local increment operator
+        incloc, //incloc        unary local increment operator by name
         incglob, //incglob       unary global increment operator
-        decloc, //decloc        unary local decrement operator
+        decloc, //decloc        unary local decrement operator by name
         decglob, //decglob       unary global decrement operator
+        incloci, //incloci     unary local increment operator by index
+        decloci, //incloci     unary local decrement operator by index
         neg, //neg           unary negation operator
         not, //not           unary logical not operator
         //  - addition
@@ -813,7 +859,8 @@ namespace Prexonite
         cmd, //cmd           performs a command call
         indarg, //indarg        performs an indirect call
         //Indirect calls
-        indloc, //indloc        performs an indirect call on a local variable
+        indloc, //indloc        performs an indirect call on a local variable by name
+        indloci, //indloci      performs an indriect call on a local variable by index
         indglob, //indglob       performs an indirect call on a global variable
         //Flow control
         jump, //jump          jumps to an address

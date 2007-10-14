@@ -57,10 +57,12 @@ function test1
             PFunction test1 = target.Functions["test1"];
             FunctionContext fctx = new FunctionContext(engine, test1);
             PVariable x = fctx.LocalVariables["x"];
-            Assert.IsTrue(x.Value == null || x.Value.Value == null, "variable x must be null in some way.");
+            Assert.IsTrue(
+                x.Value == null || x.Value.Value == null, "variable x must be null in some way.");
             engine.Stack.AddLast(fctx);
             engine.Process();
-            Assert.AreEqual(0, engine.Stack.Count, "Machine stack is expected to be empty after execution.");
+            Assert.AreEqual(
+                0, engine.Stack.Count, "Machine stack is expected to be empty after execution.");
             Assert.AreEqual(PType.BuiltIn.Int, x.Value.Type.ToBuiltIn());
             Assert.AreEqual(10, (int) x.Value.Value);
         }
@@ -68,7 +70,8 @@ function test1
         [Test]
         public void IncDecrement()
         {
-            const string input1 = @"
+            const string input1 =
+                @"
 function test1(x)
 {
     x++;    
@@ -87,20 +90,28 @@ function test1(x)
             x = 2*x;
             int expected = x--;
 
-            FunctionContext fctx = target.Functions["test1"].CreateFunctionContext(engine, new PValue[] {x0});
+            FunctionContext fctx =
+                target.Functions["test1"].CreateFunctionContext(engine, new PValue[] {x0});
             engine.Stack.AddLast(fctx);
             engine.Process();
 
             Assert.AreEqual(PType.BuiltIn.Int, fctx.ReturnValue.Type.ToBuiltIn());
-            Assert.AreEqual(expected, (int) fctx.ReturnValue.Value, "Return value is expected to be " + expected + ".");
+            Assert.AreEqual(
+                expected,
+                (int) fctx.ReturnValue.Value,
+                "Return value is expected to be " + expected + ".");
 
-            Assert.AreEqual(x, (int) fctx.LocalVariables["x"].Value.Value, "Value of x is supposed to be " + x + ".");
+            Assert.AreEqual(
+                x,
+                (int) fctx.LocalVariables["x"].Value.Value,
+                "Value of x is supposed to be " + x + ".");
         }
 
         [Test]
         public void LateReturn()
         {
-            const string input1 = @"
+            const string input1 =
+                @"
 function test1(x)
 {
     x*=2;
@@ -119,14 +130,21 @@ function test1(x)
             int expected = x - 2;
             x += 55;
 
-            FunctionContext fctx = target.Functions["test1"].CreateFunctionContext(engine, new PValue[] {x0});
+            FunctionContext fctx =
+                target.Functions["test1"].CreateFunctionContext(engine, new PValue[] {x0});
             engine.Stack.AddLast(fctx);
             engine.Process();
 
             Assert.AreEqual(PType.BuiltIn.Int, fctx.ReturnValue.Type.ToBuiltIn());
-            Assert.AreEqual(expected, (int) fctx.ReturnValue.Value, "Return value is expected to be " + expected + ".");
+            Assert.AreEqual(
+                expected,
+                (int) fctx.ReturnValue.Value,
+                "Return value is expected to be " + expected + ".");
 
-            Assert.AreEqual(x, (int) fctx.LocalVariables["x"].Value.Value, "Value of x is supposed to be " + x + ".");
+            Assert.AreEqual(
+                x,
+                (int) fctx.LocalVariables["x"].Value.Value,
+                "Value of x is supposed to be " + x + ".");
         }
 
         [Test]
@@ -162,7 +180,10 @@ function complicated(x,y) does
             expected = 2*v0;
 
             result = target.Functions["twice"].Run(engine, new PValue[] {v0});
-            Assert.AreEqual(PType.BuiltIn.Int, result.Type.ToBuiltIn(), "Result is expected to be an integer. (twice)");
+            Assert.AreEqual(
+                PType.BuiltIn.Int,
+                result.Type.ToBuiltIn(),
+                "Result is expected to be an integer. (twice)");
             Assert.AreEqual(expected, (int) result.Value);
 
             //Test complicated            
@@ -174,8 +195,10 @@ function complicated(x,y) does
             expected = y1 + x1;
 
             result = target.Functions["complicated"].Run(engine, new PValue[] {x0, y0});
-            Assert.AreEqual(PType.BuiltIn.Int, result.Type.ToBuiltIn(),
-                            "Result is expected to be an integer. (complicated)");
+            Assert.AreEqual(
+                PType.BuiltIn.Int,
+                result.Type.ToBuiltIn(),
+                "Result is expected to be an integer. (complicated)");
             Assert.AreEqual(expected, (int) result.Value);
         }
 
@@ -212,7 +235,8 @@ function test1(x) does
             J = (7*x0 + 2 + J);
             expected = (x0 + 2 + J)/J;
 
-            FunctionContext fctx = target.Functions["test1"].CreateFunctionContext(engine, new PValue[] {x0});
+            FunctionContext fctx =
+                target.Functions["test1"].CreateFunctionContext(engine, new PValue[] {x0});
             engine.Stack.AddLast(fctx);
             engine.Process();
             Assert.AreEqual(PType.BuiltIn.Int, fctx.ReturnValue.Type.ToBuiltIn());
@@ -248,7 +272,8 @@ function test1(x) does
             int J1 = 2 + (7*x1) + J0;
             expected = (2 + x1 + J1)/J1;
 
-            FunctionContext fctx = target.Functions["test1"].CreateFunctionContext(engine, new PValue[] {x0});
+            FunctionContext fctx =
+                target.Functions["test1"].CreateFunctionContext(engine, new PValue[] {x0});
             engine.Stack.AddLast(fctx);
             engine.Process();
             Assert.AreEqual(PType.BuiltIn.Int, fctx.ReturnValue.Type.ToBuiltIn());
@@ -279,12 +304,16 @@ function fib(n) does
             {
                 Console.WriteLine("\nFib(" + n + ") do ");
                 int expected = Fibonacci(n);
-                FunctionContext fctx = target.Functions["fib"].CreateFunctionContext(engine, new PValue[] {n});
+                FunctionContext fctx =
+                    target.Functions["fib"].CreateFunctionContext(engine, new PValue[] {n});
                 engine.Stack.AddLast(fctx);
                 engine.Process();
-                Assert.AreEqual(PType.BuiltIn.Int, fctx.ReturnValue.Type.ToBuiltIn(), "Result must be a ~Int");
-                Assert.AreEqual(expected, (int) fctx.ReturnValue.Value,
-                                "Fib(" + n + ") = " + expected + " and not " + (int) fctx.ReturnValue.Value);
+                Assert.AreEqual(
+                    PType.BuiltIn.Int, fctx.ReturnValue.Type.ToBuiltIn(), "Result must be a ~Int");
+                Assert.AreEqual(
+                    expected,
+                    (int) fctx.ReturnValue.Value,
+                    "Fib(" + n + ") = " + expected + " and not " + (int) fctx.ReturnValue.Value);
             }
         }
 
@@ -329,12 +358,16 @@ function fib(n) does asm
             {
                 Console.WriteLine("\nFib(" + n + ") do ");
                 int expected = Fibonacci(n);
-                FunctionContext fctx = target.Functions["fib"].CreateFunctionContext(engine, new PValue[] {n});
+                FunctionContext fctx =
+                    target.Functions["fib"].CreateFunctionContext(engine, new PValue[] {n});
                 engine.Stack.AddLast(fctx);
                 engine.Process();
-                Assert.AreEqual(PType.BuiltIn.Int, fctx.ReturnValue.Type.ToBuiltIn(), "Result must be a ~Int");
-                Assert.AreEqual(expected, (int) fctx.ReturnValue.Value,
-                                "Fib(" + n + ") = " + expected + " and not " + (int) fctx.ReturnValue.Value);
+                Assert.AreEqual(
+                    PType.BuiltIn.Int, fctx.ReturnValue.Type.ToBuiltIn(), "Result must be a ~Int");
+                Assert.AreEqual(
+                    expected,
+                    (int) fctx.ReturnValue.Value,
+                    "Fib(" + n + ") = " + expected + " and not " + (int) fctx.ReturnValue.Value);
             }
         }
 
@@ -416,17 +449,19 @@ function main(aList, max)
 ");
             StringBuilder buffer = new StringBuilder();
             int max = 20;
-            List<string> aList = new List<string>(new string[]
-                                                      {
-                                                          _generateRandomString(5),
-                                                          _generateRandomString(10),
-                                                          _generateRandomString(15),
-                                                          _generateRandomString(3),
-                                                          _generateRandomString(5)
-                                                      });
+            List<string> aList = new List<string>(
+                new string[]
+                    {
+                        _generateRandomString(5),
+                        _generateRandomString(10),
+                        _generateRandomString(15),
+                        _generateRandomString(3),
+                        _generateRandomString(5)
+                    });
 
             foreach (string elem in aList)
-                if (buffer.Length + elem.Length < max) buffer.Append(elem);
+                if (buffer.Length + elem.Length < max)
+                    buffer.Append(elem);
 
             _expect(buffer.ToString(), engine.CreateNativePValue(aList), max);
         }
@@ -434,7 +469,8 @@ function main(aList, max)
         [Test]
         public void StaticClrCalls()
         {
-            _compile(@"
+            _compile(
+                @"
 entry main;
 function main(rawInteger)
 {
@@ -568,8 +604,10 @@ function main
             string c = Guid.NewGuid().ToString("N");
             string expect = a + b + c;
             _expectNull("main", a, b, c);
-            Assert.AreEqual(PType.Object[typeof(StringBuilder)], target.Variables["buffer"].Value.Type,
-                            "buffer has not the expected type.");
+            Assert.AreEqual(
+                PType.Object[typeof(StringBuilder)],
+                target.Variables["buffer"].Value.Type,
+                "buffer has not the expected type.");
             Assert.AreEqual(expect, target.Variables["buffer"].Value.Value.ToString());
         }
 
@@ -577,20 +615,24 @@ function main
         public void Commands()
         {
             options.RegisterCommands = true;
-            engine.Commands.AddUserCommand("conRev",
-                                           new DelegatePCommand(delegate(StackContext localSctx, PValue[] args)
-                                                                {
-                                                                    StringBuilder sb = new StringBuilder();
-                                                                    for (int i = args.Length - 1; i > -1; i--)
-                                                                        sb.Append(args[i].CallToString(localSctx));
-                                                                    return (PValue) sb.ToString();
-                                                                }));
+            engine.Commands.AddUserCommand(
+                "conRev",
+                new DelegatePCommand(
+                    delegate(StackContext localSctx, PValue[] args)
+                    {
+                        StringBuilder sb = new StringBuilder();
+                        for (int i = args.Length - 1; i > -1; i--)
+                            sb.Append(args[i].CallToString(localSctx));
+                        return (PValue) sb.ToString();
+                    }));
 
-            string[] list = new string[] {"the", "quick", "brown", "fox", "jumps", "over", "the", "lazy", "dog"};
+            string[] list =
+                new string[] {"the", "quick", "brown", "fox", "jumps", "over", "the", "lazy", "dog"};
 
-            engine.Commands.AddUserCommand("theList",
-                                           new DelegatePCommand(
-                                               delegate(StackContext localSctx, PValue[] args) { return localSctx.CreateNativePValue(list); }));
+            engine.Commands.AddUserCommand(
+                "theList",
+                new DelegatePCommand(
+                    delegate(StackContext localSctx, PValue[] args) { return localSctx.CreateNativePValue(list); }));
             _compile(
                 @"function main = conRev(theList[0], theList[1], theList[2], theList[3], theList[4], theList[5], theList[6], theList[7], theList[8]);");
 
@@ -675,7 +717,8 @@ function main
         [Test]
         public void SimpleForeach()
         {
-            _compile(@"
+            _compile(
+                @"
 function main(lst)
 {
     var i = 0;
@@ -684,7 +727,7 @@ function main(lst)
     return i;
 }
 ");
-            _expect(5,PType.List.CreatePValue(new PValue[] { 1, 2, 3, 4, 5 }));
+            _expect(5, PType.List.CreatePValue(new PValue[] {1, 2, 3, 4, 5}));
         }
 
         [Test]
@@ -809,8 +852,9 @@ function main(level)
             _expect("#1=1o1;", 1);
 
             //Continue compilation using the same loader
-            _compile(ldr,
-                     @"
+            _compile(
+                ldr,
+                @"
 var L2 = ""2p2"";
 
 function \init [ Import { System, System::Text }; ] does
@@ -842,8 +886,9 @@ function \init does buffer = new ::StringBuilder;
     var myGlob; var initGlob;
 ");
 
-            _compile(ldr,
-                     @"
+            _compile(
+                ldr,
+                @"
 build
 {
     var loc = ""hello"";
@@ -967,11 +1012,12 @@ function main(arg)
             string rs = _generateRandomString(3);
             _expect(rs + rs, rs);
 
-            List<PValue> lst = new List<PValue>(new PValue[]
-                                                    {
-                                                        _generateRandomString(2), _generateRandomString(3),
-                                                        _generateRandomString(4)
-                                                    });
+            List<PValue> lst = new List<PValue>(
+                new PValue[]
+                    {
+                        _generateRandomString(2), _generateRandomString(3),
+                        _generateRandomString(4)
+                    });
             string ls = "";
             foreach (PValue e in lst)
                 ls += e.Value as string;
@@ -984,7 +1030,8 @@ function main(arg)
         [Test]
         public void ClosureCreation()
         {
-            _compile(@"
+            _compile(
+                @"
 function clo1 = x => 2*x;
 
 function clo2(a)
@@ -1199,7 +1246,12 @@ function main(p)
 }
 ");
             Random rnd = new Random();
-            int[] ps = new int[] {1, 2, 10, 27, 26, 57, 60, 157, rnd.Next(1, 190), rnd.Next(1, 190), rnd.Next(1, 190)};
+            int[] ps =
+                new int[]
+                    {
+                        1, 2, 10, 27, 26, 57, 60, 157, rnd.Next(1, 190), rnd.Next(1, 190),
+                        rnd.Next(1, 190)
+                    };
             foreach (int p in ps)
             {
                 int goo;
@@ -1311,7 +1363,8 @@ function main(xlst, ylst)
         [Test]
         public void ConditionalExpression()
         {
-            _compile(@"
+            _compile(
+                @"
 function abs(x) = x > 0 ? x : -x;
 function max(a,b) = a > b ? a : b;
 var rnd = new System::Random;
@@ -1333,11 +1386,11 @@ function main(lst, limit)
             Random rnd = new Random();
             List<PValue> lst = new List<PValue>();
             int sum = 0;
-            for(int i = 0; i < 10; i++)
+            for (int i = 0; i < 10; i++)
             {
                 int e = rnd.Next(-5, 6);
                 lst.Add(e);
-                if(e < 0)
+                if (e < 0)
                     sum += e;
             }
 
@@ -1352,7 +1405,8 @@ function main(lst, limit)
         [Test]
         public void NestedConditionalExpressions()
         {
-            _compile(@"
+            _compile(
+                @"
 function main(xs)
 {
     var ys = [];
@@ -1377,12 +1431,12 @@ function main(xs)
                 new PValue[]
                     {
                         12, //=> 12
-                        4,  //=> 8
-                        5,  //=> 3
-                        13  //=> 15
+                        4, //=> 8
+                        5, //=> 3
+                        13 //=> 15
                     });
 
-            _expect(12+8+3+15, PType.List.CreatePValue(xs));
+            _expect(12 + 8 + 3 + 15, PType.List.CreatePValue(xs));
         }
 
         [Test]
@@ -1420,20 +1474,21 @@ function main(lst)
 ");
             List<PValue> lst = new List<PValue>();
             int av = 0;
-            for(int i = 0; i < 10; i++)
+            for (int i = 0; i < 10; i++)
             {
                 lst.Add(i);
                 int k = i != 0 ? i != 1 ? i : 7 : 4;
                 av += k;
             }
             av = av/10;
-            _expect("f4::" + av + "::s7", PType.List.CreatePValue(lst));          
+            _expect("f4::" + av + "::s7", PType.List.CreatePValue(lst));
         }
 
         [Test]
         public void DataStructure()
         {
-            _compile(@"
+            _compile(
+                @"
 function chain(lst, serial)
 {
     var c = new Structure<""IsSerial"", ""Functions"">;
@@ -1483,14 +1538,14 @@ function main(seed)
             expected = expected%3;
             expected = (int) (Math.Sqrt(expected)*10);
 
-            _expect("The answer is: " + expected,seed);
+            _expect("The answer is: " + expected, seed);
         }
 
         [Test]
         public void ListConcat()
         {
-
-            _compile(@"
+            _compile(
+                @"
 
 function foldl(ref f, var left, var lst)
 {
@@ -1533,21 +1588,24 @@ function main(lst)
             List<PValue> lst = new List<PValue>();
             StringBuilder sbo = new StringBuilder();
             StringBuilder sbe = new StringBuilder();
-            for(int i = 0; i < 10; i++)
+            for (int i = 0; i < 10; i++)
             {
                 lst.Add(i);
-                if(i % 2 == 0)
+                if (i%2 == 0)
                     sbe.Append(i);
                 else
                     sbo.Append(i);
             }
-            _expect(string.Concat(sbe.ToString(), sbo.ToString()),new PValue[] { PType.List.CreatePValue(lst) });
+            _expect(
+                string.Concat(sbe.ToString(), sbo.ToString()),
+                new PValue[] {PType.List.CreatePValue(lst)});
         }
 
         [Test]
         public void CoroutineSimple()
         {
-            _compile(@"
+            _compile(
+                @"
 function main(a,b,c)
 {
     ref f = coroutine (x,y,z) => 
@@ -1560,13 +1618,14 @@ function main(a,b,c)
     return f + f + f;
 }
 ");
-            _expect("abc","a","b","c");
+            _expect("abc", "a", "b", "c");
         }
 
         [Test]
         public void CoroutineFunction()
         {
-            _compile(@"
+            _compile(
+                @"
 function subrange(lst, index, count) does
     for(var i = index; i < index+count; i++)
         yield lst[i];
@@ -1581,13 +1640,14 @@ function main
 }
 ");
 
-            _expect("cde","a","b","c","d","e","f","g");
+            _expect("cde", "a", "b", "c", "d", "e", "f", "g");
         }
 
         [Test]
         public void CoroutineComplex()
         {
-            _compile(@"
+            _compile(
+                @"
 function map(ref f, var lst) = coroutine () =>
 {
     foreach(var x in lst)
@@ -1651,14 +1711,14 @@ function main()
             List<PValue> lst = new List<PValue>();
             StringBuilder buffer = new StringBuilder();
             int nums = 0;
-            for(int i = 0; i < 20; i++)
+            for (int i = 0; i < 20; i++)
             {
                 lst.Add(i);
-                if(i < 2)
+                if (i < 2)
                     continue;
-                if(i*3 % 2 != 0)
+                if (i*3%2 != 0)
                     continue;
-                if(nums > 2)
+                if (nums > 2)
                     continue;
                 buffer.Append(i*3);
                 nums++;
@@ -1669,7 +1729,8 @@ function main()
         [Test]
         public void MapCommandImplementation()
         {
-            _compile(@"
+            _compile(
+                @"
 declare command mapall as map;
 
 function my_map(ref f, var lst)
@@ -1711,7 +1772,8 @@ function main()
         [Test]
         public void FoldLCommandImplementation()
         {
-            _compile(@"
+            _compile(
+                @"
 function my_foldl(ref f, var left, var xs)
 {
     foreach(var right in xs)
@@ -1732,7 +1794,8 @@ function main()
         [Test]
         public void CallCommandImplementation()
         {
-            _compile(@"
+            _compile(
+                @"
 function sum()
 {
     var s = 0;
@@ -1755,8 +1818,12 @@ function main()
                 f = 99,
                 g = 101;
 
-            _expect(a + b + c + d + e + f + g, PType.List.CreatePValue(new PValue[] {a, b, c}),
-                    PType.List.CreatePValue(new PValue[] {d, e}), f, PType.List.CreatePValue(new PValue[] {g}));
+            _expect(
+                a + b + c + d + e + f + g,
+                PType.List.CreatePValue(new PValue[] {a, b, c}),
+                PType.List.CreatePValue(new PValue[] {d, e}),
+                f,
+                PType.List.CreatePValue(new PValue[] {g}));
         }
 
         /// <summary>
@@ -1765,7 +1832,8 @@ function main()
         [Test]
         public void CoroutineNoNull()
         {
-            _compile(@"
+            _compile(
+                @"
 function main()
 {
     var c = coroutine() => 
@@ -1793,7 +1861,8 @@ function main()
         [Test]
         public void CoroutineRecursive()
         {
-            _compile(@"
+            _compile(
+                @"
 coroutine unfolded(lst)
 {
     foreach(var x in lst)
@@ -1842,13 +1911,14 @@ function main()
             args.Add(13);
             args.Add(14);
 
-            _expect("1.2.3.4.5.6.7.8.9.10.11.12.13.14",PType.List.CreatePValue(args));
+            _expect("1.2.3.4.5.6.7.8.9.10.11.12.13.14", PType.List.CreatePValue(args));
         }
 
         [Test]
         public void CoroutineFib()
         {
-            _compile(@"
+            _compile(
+                @"
 var numbers = [];
 
 declare function fib;
@@ -1870,13 +1940,14 @@ function fib(n)
 }
 ");
 
-            _expectNamed("fib",Fibonacci(6),6);
+            _expectNamed("fib", Fibonacci(6), 6);
         }
 
         [Test]
         public void UnusedTry()
         {
-            _compile(@"
+            _compile(
+                @"
 function foldl(ref f, var left, var xs)
 {
     foreach(var right in xs)
@@ -1942,7 +2013,8 @@ function main()
         [Test]
         public void IgnoreTry()
         {
-            _compile(@"
+            _compile(
+                @"
 function foldl(ref f, var left, var xs)
 {
     foreach(var right in xs)
@@ -1971,7 +2043,8 @@ function main()
         [Test]
         public void FinallyTry()
         {
-            _compile(@"
+            _compile(
+                @"
 function foldl(ref f, var left, var xs)
 {
     foreach(var right in xs)
@@ -2000,13 +2073,13 @@ function main()
             {
                 _expect("012345");
             }
-            catch(Exception exc)
+            catch (Exception exc)
             {
-                Assert.AreEqual("3",exc.Message);
+                Assert.AreEqual("3", exc.Message);
             }
 
             PValue pxs = target.Variables["xs"].Value;
-            Assert.IsInstanceOfType(typeof(ListPType),pxs.Type,"xs must be a ~List.");
+            Assert.IsInstanceOfType(typeof(ListPType), pxs.Type, "xs must be a ~List.");
             List<PValue> xs = (List<PValue>) pxs.Value;
             Assert.AreEqual("0", xs[0].CallToString(sctx));
             Assert.AreEqual("1", xs[1].CallToString(sctx));
@@ -2017,7 +2090,8 @@ function main()
         [Test]
         public void CatchTry()
         {
-            _compile(@"
+            _compile(
+                @"
 function main()
 {
     var xs = [0];
@@ -2042,7 +2116,8 @@ function main()
         [Test]
         public void CatchFinallyTry()
         {
-            _compile(@"
+            _compile(
+                @"
 function foldl(ref f, var left, var xs)
 {
     foreach(var right in xs)
@@ -2077,7 +2152,8 @@ function main()
         [Test]
         public void NestedTries()
         {
-            _compile(@"
+            _compile(
+                @"
 function foldl(ref f, var left, var xs)
 {
     foreach(var right in xs)
@@ -2120,7 +2196,8 @@ function main()
         [Test]
         public void CrossFunctionTry()
         {
-            _compile(@"
+            _compile(
+                @"
 function foldl(ref f, var left, var xs)
 {
     foreach(var right in xs)
@@ -2158,7 +2235,8 @@ function main()
         [Test]
         public void HandledSurfaceTry()
         {
-            _compile(@"
+            _compile(
+                @"
 function foldl(ref f, var left, var xs)
 {
     foreach(var right in xs)
@@ -2202,7 +2280,8 @@ function main()
         [Test]
         public void Hashes()
         {
-            _compile(@"
+            _compile(
+                @"
 function mapToHash(ref f, xs)
 {
     var h = {};
@@ -2240,7 +2319,8 @@ function main()
         [Test]
         public void NestedFunctionCrossReference()
         {
-            _compile(@"
+            _compile(
+                @"
 function main()
 {
     function A(xa)
@@ -2263,7 +2343,8 @@ function main()
         [Test]
         public void CrossForeachTryCatch()
         {
-            _compile(@"
+            _compile(
+                @"
 coroutine mayFail
 {
     yield 1;
@@ -2294,13 +2375,14 @@ function main(sum)
     return sum;
 }
 ");
-            _expect((1+4+2+5+1)*20,1);
+            _expect((1 + 4 + 2 + 5 + 1)*20, 1);
         }
 
         [Test]
         public void StructureToString()
         {
-            _compile(@"
+            _compile(
+                @"
 function main(x)
 {
     var s = new Structure<""value"", ""r"", ""ToString"">;
@@ -2309,13 +2391,14 @@ function main(x)
     return s~String;
 }
 ");
-            _expect("xzzxy","xzzxy");
+            _expect("xzzxy", "xzzxy");
         }
 
         [Test]
         public void UnbindCommandImplementation()
         {
-            _compile(@"
+            _compile(
+                @"
 function main()
 {
     var buffer = new System::Text::StringBuilder;
@@ -2343,7 +2426,8 @@ function main()
         [Test]
         public void GlobalCode()
         {
-            _compile(@"
+            _compile(
+                @"
 var price = {};
 
 {
@@ -2366,18 +2450,19 @@ function main(var lst)
 }
 ");
             List<PValue> lst = new List<PValue>(4);
-            lst.Add(new PValueKeyValuePair("apple",1));
+            lst.Add(new PValueKeyValuePair("apple", 1));
             lst.Add(new PValueKeyValuePair("pencil", 5));
-            lst.Add(new PValueKeyValuePair("juice",2));
-            lst.Add(new PValueKeyValuePair("apple",2));
+            lst.Add(new PValueKeyValuePair("juice", 2));
+            lst.Add(new PValueKeyValuePair("apple", 2));
 
-            _expect(3*3*2+5*1+2*4,PType.List.CreatePValue(lst));
+            _expect(3*3*2 + 5*1 + 2*4, PType.List.CreatePValue(lst));
         }
 
         [Test]
         public void CoalescenceOperator()
         {
-            _compile(@"
+            _compile(
+                @"
 coroutine fetch(xs) does 
     foreach(var x in xs)
         yield x;
@@ -2420,13 +2505,14 @@ function main(s)
 }
 ");
 
-            _expect("5-Bl-Oo-Dh-Ou-Nd","BloodHound");
+            _expect("5-Bl-Oo-Dh-Ou-Nd", "BloodHound");
         }
 
         [Test]
         public void HarmlessTryFinally()
         {
-            _compile(@"
+            _compile(
+                @"
 function main
 {
     var r;
@@ -2447,7 +2533,8 @@ function main
         [Test]
         public void TryCatchInFinally()
         {
-            _compile(@"
+            _compile(
+                @"
 function mightFail(x)
 {
     throw ""I don't like $x."";
@@ -2490,13 +2577,14 @@ function main()
             xs.Add("Hello");
             xs.Add(3.4);
 
-            _expect("EXC(I don't like 4.) BEGIN NP(4) NP(Hello) NP(3.4)",xs.ToArray());
+            _expect("EXC(I don't like 4.) BEGIN NP(4) NP(Hello) NP(3.4)", xs.ToArray());
         }
 
         [Test]
         public void LeftAppendArgument()
         {
-            _compile(@"
+            _compile(
+                @"
 coroutine where(ref f, xs) does foreach(var x in xs)
     if(f(x))
         yield x;
@@ -2529,7 +2617,8 @@ function main(sep) = foldl( (l,r) => $l + "" "" + $r, ""BEGIN"")
         [Test]
         public void RightAppendArgument()
         {
-            _compile(@"
+            _compile(
+                @"
 coroutine where(ref f, xs) does foreach(var x in xs)
     if(f(x))
         yield x;
@@ -2567,7 +2656,8 @@ function main(sep) =
         [Test]
         public void List_Sort()
         {
-            _compile(@"
+            _compile(
+                @"
 function main() = 
     [ ""f"", ""A"", ""x"", ""a"", ""h"", ""g"", ""H"", ""A"", ""f"", ""X"", ""F"", ""G"" ] >>
     sort
@@ -2586,7 +2676,8 @@ function main() =
         [Test]
         public void CompilerHook()
         {
-            _compile(@"
+            _compile(
+                @"
 //In some library
 declare function debug;
 
@@ -2686,13 +2777,14 @@ function main(a)
 }
 ");
 
-            _expect("DEBUG x = 3\r\nDEBUG y = 4\r\nDEBUG z = 23\r\n",4);
+            _expect("DEBUG x = 3\r\nDEBUG y = 4\r\nDEBUG z = 23\r\n", 4);
         }
 
         [Test]
         public void InitializationCodeHook()
         {
-            _compile(@"
+            _compile(
+                @"
 Imports { System, Prexonite, Prexonite::Types, Prexonite::Compiler, Prexonite::Compiler::Ast };
 
 function ast(type) [is compiler;]
@@ -2868,12 +2960,19 @@ function main()
             FunctionContext fctx = target.Functions[functionId].CreateFunctionContext(engine, args);
             engine.Stack.AddLast(fctx);
             engine.Process();
-            Assert.AreEqual(expected.Type, fctx.ReturnValue.Type,
-                            string.Format("Return type is expected to be of type {0} and not {1}. Returned {2}.", 
-                            expected.Type, fctx.ReturnValue.Type, fctx.ReturnValue));
-            Assert.AreEqual(expected.Value, fctx.ReturnValue.Value,
-                            "Return value is expected to be " + expected + " and not " +
-                            fctx.ReturnValue);
+            Assert.AreEqual(
+                expected.Type,
+                fctx.ReturnValue.Type,
+                string.Format(
+                    "Return type is expected to be of type {0} and not {1}. Returned {2}.",
+                    expected.Type,
+                    fctx.ReturnValue.Type,
+                    fctx.ReturnValue));
+            Assert.AreEqual(
+                expected.Value,
+                fctx.ReturnValue.Value,
+                "Return value is expected to be " + expected + " and not " +
+                fctx.ReturnValue);
         }
 
         private void _expectNull(params PValue[] args)

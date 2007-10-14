@@ -38,7 +38,6 @@ namespace Prx.Tests
         [Test]
         public void Startup()
         {
-            
         }
 
         #region Helper
@@ -46,7 +45,9 @@ namespace Prx.Tests
         protected internal List<Instruction> getInstructions(string assemblerCode)
         {
             Application app = new Application("getInstructions");
-            Loader ldr = new Loader(engine, app);
+            LoaderOptions opt = new LoaderOptions(engine, app);
+            opt.UseIndicesLocally = false;
+            Loader ldr = new Loader(opt);
             ldr.LoadFromString("function MyAssemblerFunction does asm {" + assemblerCode + "\n}");
             if (ldr.ErrorCount != 0)
             {
@@ -61,9 +62,11 @@ namespace Prx.Tests
 
         protected internal Loader _compile(string input)
         {
-            Loader ldr = new Loader(engine, target);
+            LoaderOptions opt = new LoaderOptions(engine, target);
+            opt.UseIndicesLocally = false;
+            Loader ldr = new Loader(opt);
             ldr.LoadFromString(input);
-            foreach(string line in ldr.Errors)
+            foreach (string line in ldr.Errors)
                 Console.Error.WriteLine(line);
             Assert.AreEqual(0, ldr.ErrorCount);
 
@@ -94,19 +97,29 @@ namespace Prx.Tests
             for (i = 0; i < actual.Count; i++)
             {
                 if (i == expected.Count)
-                    Assert.AreEqual(expected.Count, actual.Count,
-                                    "Expected and actual instruction count missmatch detected at actual instruction " +
-                                    actual[i]);
-                Assert.AreEqual(expected[i], actual[i],
-                                String.Format("Instructions at address {0} do not match (e{1},a{2})", i, expected.Count,
-                                              actual.Count));
+                    Assert.AreEqual(
+                        expected.Count,
+                        actual.Count,
+                        "Expected and actual instruction count missmatch detected at actual instruction " +
+                        actual[i]);
+                Assert.AreEqual(
+                    expected[i],
+                    actual[i],
+                    String.Format(
+                        "Instructions at address {0} do not match (e{1},a{2})",
+                        i,
+                        expected.Count,
+                        actual.Count));
             }
-            Assert.AreEqual(expected.Count, actual.Count,
-                            "Expected and actual instruction count missmatch" +
-                            (i < expected.Count ? " detected at expected instruction " + expected[i] : ""));
+            Assert.AreEqual(
+                expected.Count,
+                actual.Count,
+                "Expected and actual instruction count missmatch" +
+                (i < expected.Count ? " detected at expected instruction " + expected[i] : ""));
         }
 
-        protected internal static void _expectSharedVariables(PFunction func, params string[] shared)
+        protected internal static void _expectSharedVariables(
+            PFunction func, params string[] shared)
         {
             _expectSharedVariables_(func, shared);
         }
@@ -128,11 +141,17 @@ namespace Prx.Tests
                 return;
 
             MetaEntry[] entries = entry.List;
-            Assert.AreEqual(shared.Length, entries.Length,
-                            "The function {0} is expected to have a different number of shared variables.", func.Id);
+            Assert.AreEqual(
+                shared.Length,
+                entries.Length,
+                "The function {0} is expected to have a different number of shared variables.",
+                func.Id);
             for (int i = 0; i < entries.Length; i++)
-                Assert.IsTrue(Engine.StringsAreEqual(shared[i], entries[i] == null ? "" : entries[i].Text),
-                              "The function {0} is expected to require sharing of variable {1}.", func.Id, shared[i]);
+                Assert.IsTrue(
+                    Engine.StringsAreEqual(shared[i], entries[i] == null ? "" : entries[i].Text),
+                    "The function {0} is expected to require sharing of variable {1}.",
+                    func.Id,
+                    shared[i]);
         }
 
         #endregion

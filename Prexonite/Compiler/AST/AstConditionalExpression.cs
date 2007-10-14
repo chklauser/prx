@@ -27,7 +27,8 @@ using Prexonite.Types;
 namespace Prexonite.Compiler.Ast
 {
     public class AstConditionalExpression : AstNode,
-                                            IAstExpression
+                                            IAstExpression,
+                                            IAstHasExpressions
     {
         public AstConditionalExpression(
             string file, int line, int column, IAstExpression condition, bool isNegative)
@@ -59,6 +60,15 @@ namespace Prexonite.Compiler.Ast
         public IAstExpression Condition;
         public bool IsNegative;
         private static int depth = 0;
+
+        #region IAstHasExpressions Members
+
+        public IAstExpression[] Expressions
+        {
+            get { return new IAstExpression[] {Condition, IfExpression, ElseExpression}; }
+        }
+
+        #endregion
 
         #region IAstExpression Members
 

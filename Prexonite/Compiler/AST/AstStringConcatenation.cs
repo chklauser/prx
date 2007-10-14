@@ -35,7 +35,8 @@ namespace Prexonite.Compiler.Ast
     ///     This node get's created as a replacement for <see cref="AstBinaryOperator"/> nodes with string operands.
     /// </para></remarks>
     public class AstStringConcatenation : AstNode,
-                                          IAstExpression
+                                          IAstExpression,
+                                          IAstHasExpressions
     {
         /// <summary>
         /// The list of arguments for the string concatenation.
@@ -69,6 +70,15 @@ namespace Prexonite.Compiler.Ast
 
             Arguments.AddRange(arguments);
         }
+
+        #region IAstHasExpressions Members
+
+        public IAstExpression[] Expressions
+        {
+            get { return Arguments.ToArray(); }
+        }
+
+        #endregion
 
         /// <summary>
         /// Emits code for the AstStringConcatenation node.

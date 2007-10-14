@@ -1,13 +1,14 @@
-using System;
+using System.Collections;
 using System.Collections.Generic;
-using System.Text;
 using Prexonite;
-using Prexonite.Types;
 using Prexonite.Commands;
+using Prexonite.Types;
 
 namespace Prx
 {
-    public class PrexoniteConsole : SuperConsole, ICommand, IObject
+    public class PrexoniteConsole : SuperConsole,
+                                    ICommand,
+                                    IObject
     {
         public PrexoniteConsole(bool colorfulConsole)
             : base(colorfulConsole)
@@ -19,6 +20,7 @@ namespace Prx
             get { return _onTab; }
             set { _onTab = value; }
         }
+
         private PValue _onTab;
 
         public override bool IsPartOfIdentifier(char c)
@@ -31,10 +33,10 @@ namespace Prx
             if (_onTab != null && !_onTab.IsNull)
             {
                 PValue plst = _onTab.IndirectCall(_sctx, new PValue[] {pref, root});
-                plst.ConvertTo(_sctx, PType.Object[typeof(System.Collections.IEnumerable)], true);
-                foreach (object o in (System.Collections.IEnumerable) plst.Value)
+                plst.ConvertTo(_sctx, PType.Object[typeof(IEnumerable)], true);
+                foreach (object o in (IEnumerable) plst.Value)
                 {
-                    yield return ((PValue)o).CallToString(_sctx);
+                    yield return ((PValue) o).CallToString(_sctx);
                 }
             }
         }
@@ -57,20 +59,20 @@ namespace Prx
         #region IObject Members
 
         private StackContext _sctx = null;
-        private static ObjectPType T = PType.Object[typeof(PrexoniteConsole)];
 
-        public bool TryDynamicCall(StackContext sctx, PValue[] args, PCall call, string id, out PValue result)
+        public bool TryDynamicCall(
+            StackContext sctx, PValue[] args, PCall call, string id, out PValue result)
         {
             result = null;
 
-            switch(id.ToLowerInvariant())
+            switch (id.ToLowerInvariant())
             {
                 case "tab":
                     if (call == PCall.Get)
                     {
                         result = Tab;
                     }
-                    else if(args.Length > 0)
+                    else if (args.Length > 0)
                     {
                         Tab = args[0];
                         result = PType.Null.CreatePValue();

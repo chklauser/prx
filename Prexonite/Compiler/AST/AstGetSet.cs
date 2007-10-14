@@ -31,7 +31,8 @@ using Prexonite.Types;
 namespace Prexonite.Compiler.Ast
 {
     public abstract class AstGetSet : AstNode,
-                                      IAstEffect
+                                      IAstEffect,
+                                      IAstHasExpressions
     {
         //public readonly List<IAstExpression> Arguments = new List<IAstExpression>();
         //public readonly List<IAstExpression> RightAppendArguments = new List<IAstExpression>();
@@ -44,6 +45,15 @@ namespace Prexonite.Compiler.Ast
             [DebuggerNonUserCode()]
             get { return _proxy; }
         }
+
+        #region IAstHasExpressions Members
+
+        public virtual IAstExpression[] Expressions
+        {
+            get { return Arguments.ToArray(); }
+        }
+
+        #endregion
 
         [DebuggerNonUserCode()]
         public class ArgumentsProxy : IList<IAstExpression>
@@ -292,6 +302,11 @@ namespace Prexonite.Compiler.Ast
             }
 
             #endregion
+
+            public IAstExpression[] ToArray()
+            {
+                return _arguments.ToArray();
+            }
         }
 
         public PCall Call;

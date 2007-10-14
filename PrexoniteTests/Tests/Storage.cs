@@ -1,5 +1,4 @@
 using System;
-using System.IO;
 using NUnit.Framework;
 using Prexonite;
 using Prexonite.Compiler;
@@ -9,8 +8,6 @@ namespace Prx.Tests
     [TestFixture]
     public class Storage : Compiler
     {
-
-
         private const string storedShouldBeEqual =
             "Since the in-memory and the restored application are the same, they should" +
             " result in the same serialized form.";
@@ -32,8 +29,9 @@ namespace Prx.Tests
             reldr.LoadFromString(stored);
             string restored = reldr.Options.TargetApplication.StoreInString();
 
-            Assert.IsTrue(Engine.StringsAreEqual(stored, restored),
-                          storedShouldBeEqual);
+            Assert.IsTrue(
+                Engine.StringsAreEqual(stored, restored),
+                storedShouldBeEqual);
         }
 
         [Test]
@@ -66,8 +64,9 @@ Add System::Xml To Imports;
             reldr.LoadFromString(stored);
             string restored = reldr.Options.TargetApplication.StoreInString();
 
-            Assert.IsTrue(Engine.StringsAreEqual(stored, restored),
-                          storedShouldBeEqual);
+            Assert.IsTrue(
+                Engine.StringsAreEqual(stored, restored),
+                storedShouldBeEqual);
         }
 
         [Test]
@@ -143,7 +142,6 @@ coroutine mapf(ref f, xs) does
                 Assert.Greater(mstr.Length, 10f);
             }
         }
-#endif 
-
+#endif
     }
 }

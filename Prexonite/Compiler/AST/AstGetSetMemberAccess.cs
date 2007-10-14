@@ -27,10 +27,23 @@ using Prexonite.Types;
 namespace Prexonite.Compiler.Ast
 {
     public class AstGetSetMemberAccess : AstGetSet,
-                                         IAstExpression
+                                         IAstExpression,
+                                         IAstHasExpressions
     {
         public string Id;
         public IAstExpression Subject;
+
+        public override IAstExpression[] Expressions
+        {
+            get
+            {
+                int len = Arguments.Count;
+                IAstExpression[] ary = new IAstExpression[len + 1];
+                Array.Copy(Arguments.ToArray(), 0, ary, 1, len);
+                ary[0] = Subject;
+                return ary;
+            }
+        }
 
         public AstGetSetMemberAccess(
             string file, int line, int column, PCall call, IAstExpression subject, string id)

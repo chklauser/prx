@@ -993,6 +993,8 @@ namespace Prexonite
             Commands.AddEngineCommand(SortCommand, new Sort());
 
             Commands.AddEngineCommand(LoadAssemblyCommand, new LoadAssembly());
+
+            Commands.AddEngineCommand(DebugCommand, new Debug());
         }
 
         /// <summary>
@@ -1064,6 +1066,11 @@ namespace Prexonite
         /// Alias used for the "loadAssembly" command.
         /// </summary>
         public const string LoadAssemblyCommand = "LoadAssembly";
+
+        /// <summary>
+        /// Alias used for the debug command.
+        /// </summary>
+        public const string DebugCommand = "debug";
 
         #endregion
     }

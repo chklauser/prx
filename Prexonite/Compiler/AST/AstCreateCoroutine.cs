@@ -3,7 +3,8 @@ using System.Collections.Generic;
 namespace Prexonite.Compiler.Ast
 {
     public class AstCreateCoroutine : AstNode,
-                                      IAstExpression
+                                      IAstExpression,
+                                      IAstHasExpressions
     {
         public IAstExpression Expression;
 
@@ -13,6 +14,15 @@ namespace Prexonite.Compiler.Ast
         {
             get { return _proxy; }
         }
+
+        #region IAstHasExpressions Members
+
+        public IAstExpression[] Expressions
+        {
+            get { return Arguments.ToArray(); }
+        }
+
+        #endregion
 
         private List<IAstExpression> _arguments = new List<IAstExpression>();
 

@@ -1,6 +1,8 @@
 namespace Prexonite.Compiler.Ast
 {
-    public abstract class AstLoop : AstNode
+    public abstract class AstLoop : AstNode,
+                                    IAstHasBlocks,
+                                    IAstHasExpressions
     {
         protected AstLoop(string file, int line, int column)
             : base(file, line, column)
@@ -30,6 +32,15 @@ namespace Prexonite.Compiler.Ast
         public virtual AstBlock[] Blocks
         {
             get { return new AstBlock[] {Block}; }
+        }
+
+        #endregion
+
+        #region IAstHasExpressions Members
+
+        public abstract IAstExpression[] Expressions
+        {
+            get;
         }
 
         #endregion

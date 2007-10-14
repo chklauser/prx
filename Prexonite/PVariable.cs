@@ -148,7 +148,7 @@ namespace Prexonite
 
         public override int GetHashCode()
         {
-            return value.GetHashCode() ^ 6537;
+            return value == null ? -12 : value.GetHashCode() ^ 6537;
         }
     }
 }

@@ -389,118 +389,124 @@ internal partial class Parser {
 			Expect(_comma);
 			Integer(/*Parser.Assembler.atg:90*/out SecArg);
 			/*Parser.Assembler.atg:92*/addInstruction(block, Instruction.CreateRotate(arguments, SecArg)); 
-		} else if (/*Parser.Assembler.atg:97*/isAsmInstruction("swap", null)) {
-			AsmId(/*Parser.Assembler.atg:97*/out insbase);
-			/*Parser.Assembler.atg:98*/addInstruction(block, Instruction.CreateExchange()); 
-		} else if (/*Parser.Assembler.atg:103*/isAsmInstruction("ldc", "real")) {
+		} else if (/*Parser.Assembler.atg:96*/isAsmInstruction("indloci", null)) {
+			AsmId(/*Parser.Assembler.atg:96*/out insbase);
+			Expect(_dot);
+			Integer(/*Parser.Assembler.atg:97*/out SecArg);
+			Integer(/*Parser.Assembler.atg:98*/out arguments);
+			/*Parser.Assembler.atg:100*/addInstruction(block, Instruction.CreateIndLocI(arguments, SecArg)); 
+		} else if (/*Parser.Assembler.atg:103*/isAsmInstruction("swap", null)) {
 			AsmId(/*Parser.Assembler.atg:103*/out insbase);
+			/*Parser.Assembler.atg:104*/addInstruction(block, Instruction.CreateExchange()); 
+		} else if (/*Parser.Assembler.atg:109*/isAsmInstruction("ldc", "real")) {
+			AsmId(/*Parser.Assembler.atg:109*/out insbase);
 			Expect(_dot);
-			AsmId(/*Parser.Assembler.atg:105*/out detail);
-			SignedReal(/*Parser.Assembler.atg:106*/out dblArg);
-			/*Parser.Assembler.atg:107*/addInstruction(block, Instruction.CreateConstant(dblArg)); 
-		} else if (/*Parser.Assembler.atg:112*/isAsmInstruction("ldc", "bool")) {
-			AsmId(/*Parser.Assembler.atg:112*/out insbase);
+			AsmId(/*Parser.Assembler.atg:111*/out detail);
+			SignedReal(/*Parser.Assembler.atg:112*/out dblArg);
+			/*Parser.Assembler.atg:113*/addInstruction(block, Instruction.CreateConstant(dblArg)); 
+		} else if (/*Parser.Assembler.atg:118*/isAsmInstruction("ldc", "bool")) {
+			AsmId(/*Parser.Assembler.atg:118*/out insbase);
 			Expect(_dot);
-			AsmId(/*Parser.Assembler.atg:114*/out detail);
-			Boolean(/*Parser.Assembler.atg:115*/out bolArg);
-			/*Parser.Assembler.atg:116*/addInstruction(block, Instruction.CreateConstant(bolArg)); 
-		} else if (/*Parser.Assembler.atg:121*/isInIntegerGroup()) {
-			AsmId(/*Parser.Assembler.atg:121*/out insbase);
+			AsmId(/*Parser.Assembler.atg:120*/out detail);
+			Boolean(/*Parser.Assembler.atg:121*/out bolArg);
+			/*Parser.Assembler.atg:122*/addInstruction(block, Instruction.CreateConstant(bolArg)); 
+		} else if (/*Parser.Assembler.atg:127*/isInIntegerGroup()) {
+			AsmId(/*Parser.Assembler.atg:127*/out insbase);
 			if (la.kind == _dot) {
 				Get();
-				AsmId(/*Parser.Assembler.atg:122*/out detail);
+				AsmId(/*Parser.Assembler.atg:128*/out detail);
 			}
-			SignedInteger(/*Parser.Assembler.atg:123*/out arguments);
-			/*Parser.Assembler.atg:124*/code = getOpCode(insbase, detail);
+			SignedInteger(/*Parser.Assembler.atg:129*/out arguments);
+			/*Parser.Assembler.atg:130*/code = getOpCode(insbase, detail);
 			addInstruction(block, new Instruction(code, arguments));
 			
-		} else if (/*Parser.Assembler.atg:130*/isInJumpGroup()) {
-			AsmId(/*Parser.Assembler.atg:130*/out insbase);
+		} else if (/*Parser.Assembler.atg:136*/isInJumpGroup()) {
+			AsmId(/*Parser.Assembler.atg:136*/out insbase);
 			if (la.kind == _dot) {
 				Get();
-				AsmId(/*Parser.Assembler.atg:131*/out detail);
+				AsmId(/*Parser.Assembler.atg:137*/out detail);
 			}
-			/*Parser.Assembler.atg:132*/Instruction ins = null;
+			/*Parser.Assembler.atg:138*/Instruction ins = null;
 			code = getOpCode(insbase, detail);
 			
 			if (StartOf(2)) {
-				AsmId(/*Parser.Assembler.atg:136*/out id);
-				/*Parser.Assembler.atg:138*/ins = new Instruction(code, -1, id);
+				AsmId(/*Parser.Assembler.atg:142*/out id);
+				/*Parser.Assembler.atg:144*/ins = new Instruction(code, -1, id);
 				
 			} else if (la.kind == _integer) {
-				Integer(/*Parser.Assembler.atg:140*/out arguments);
-				/*Parser.Assembler.atg:140*/ins = new Instruction(code, arguments); 
+				Integer(/*Parser.Assembler.atg:146*/out arguments);
+				/*Parser.Assembler.atg:146*/ins = new Instruction(code, arguments); 
 			} else SynErr(94);
-			/*Parser.Assembler.atg:141*/addInstruction(block, ins); 
-		} else if (/*Parser.Assembler.atg:146*/isInIdGroup()) {
-			AsmId(/*Parser.Assembler.atg:146*/out insbase);
+			/*Parser.Assembler.atg:147*/addInstruction(block, ins); 
+		} else if (/*Parser.Assembler.atg:152*/isInIdGroup()) {
+			AsmId(/*Parser.Assembler.atg:152*/out insbase);
 			if (la.kind == _dot) {
 				Get();
-				AsmId(/*Parser.Assembler.atg:147*/out detail);
+				AsmId(/*Parser.Assembler.atg:153*/out detail);
 			}
-			AsmId(/*Parser.Assembler.atg:148*/out id);
-			/*Parser.Assembler.atg:149*/code = getOpCode(insbase, detail);
+			AsmId(/*Parser.Assembler.atg:154*/out id);
+			/*Parser.Assembler.atg:155*/code = getOpCode(insbase, detail);
 			addInstruction(block, new Instruction(code, id));
 			
-		} else if (/*Parser.Assembler.atg:156*/isInIdArgGroup()) {
+		} else if (/*Parser.Assembler.atg:162*/isInIdArgGroup()) {
 			if (la.kind == _at) {
 				Get();
-				/*Parser.Assembler.atg:156*/justEffect = true; 
+				/*Parser.Assembler.atg:162*/justEffect = true; 
 			}
-			AsmId(/*Parser.Assembler.atg:158*/out insbase);
+			AsmId(/*Parser.Assembler.atg:164*/out insbase);
 			if (la.kind == _dot) {
 				Get();
-				Integer(/*Parser.Assembler.atg:159*/out arguments);
+				Integer(/*Parser.Assembler.atg:165*/out arguments);
 			} else if (StartOf(2)) {
-				/*Parser.Assembler.atg:160*/arguments = 0; 
+				/*Parser.Assembler.atg:166*/arguments = 0; 
 			} else SynErr(95);
-			AsmId(/*Parser.Assembler.atg:162*/out id);
-			/*Parser.Assembler.atg:163*/code = getOpCode(insbase, detail);
+			AsmId(/*Parser.Assembler.atg:168*/out id);
+			/*Parser.Assembler.atg:169*/code = getOpCode(insbase, detail);
 			addInstruction(block, new Instruction(code, arguments, id, justEffect));
 			
-		} else if (/*Parser.Assembler.atg:169*/isInArgGroup()) {
+		} else if (/*Parser.Assembler.atg:175*/isInArgGroup()) {
 			if (la.kind == _at) {
 				Get();
-				/*Parser.Assembler.atg:169*/justEffect = true; 
+				/*Parser.Assembler.atg:175*/justEffect = true; 
 			}
-			AsmId(/*Parser.Assembler.atg:171*/out insbase);
+			AsmId(/*Parser.Assembler.atg:177*/out insbase);
 			if (la.kind == _dot) {
 				Get();
-				Integer(/*Parser.Assembler.atg:172*/out arguments);
+				Integer(/*Parser.Assembler.atg:178*/out arguments);
 			} else if (StartOf(3)) {
-				/*Parser.Assembler.atg:173*/arguments = 0; 
+				/*Parser.Assembler.atg:179*/arguments = 0; 
 			} else SynErr(96);
-			/*Parser.Assembler.atg:175*/code = getOpCode(insbase, detail);
+			/*Parser.Assembler.atg:181*/code = getOpCode(insbase, detail);
 			addInstruction(block, new Instruction(code, arguments, null, justEffect));
 			
-		} else if (/*Parser.Assembler.atg:181*/isInQualidArgGroup()) {
+		} else if (/*Parser.Assembler.atg:187*/isInQualidArgGroup()) {
 			if (la.kind == _at) {
 				Get();
-				/*Parser.Assembler.atg:181*/justEffect = true; 
+				/*Parser.Assembler.atg:187*/justEffect = true; 
 			}
-			AsmId(/*Parser.Assembler.atg:183*/out insbase);
+			AsmId(/*Parser.Assembler.atg:189*/out insbase);
 			if (la.kind == _dot) {
 				Get();
-				Integer(/*Parser.Assembler.atg:184*/out arguments);
+				Integer(/*Parser.Assembler.atg:190*/out arguments);
 			} else if (StartOf(2)) {
-				/*Parser.Assembler.atg:185*/arguments = 0; 
+				/*Parser.Assembler.atg:191*/arguments = 0; 
 			} else SynErr(97);
-			AsmQualid(/*Parser.Assembler.atg:187*/out id);
-			/*Parser.Assembler.atg:188*/code = getOpCode(insbase, detail);
+			AsmQualid(/*Parser.Assembler.atg:193*/out id);
+			/*Parser.Assembler.atg:194*/code = getOpCode(insbase, detail);
 			addInstruction(block, new Instruction(code, arguments, id, justEffect));
 			
 		} else if (StartOf(2)) {
-			AsmId(/*Parser.Assembler.atg:193*/out insbase);
-			/*Parser.Assembler.atg:193*/SemErr("Invalid assembler instruction \"" + insbase + "\" (" + t + ")."); 
+			AsmId(/*Parser.Assembler.atg:199*/out insbase);
+			/*Parser.Assembler.atg:199*/SemErr("Invalid assembler instruction \"" + insbase + "\" (" + t + ")."); 
 		} else SynErr(98);
 	}
 
-	void AsmId(/*Parser.Assembler.atg:197*/out string id) {
-		/*Parser.Assembler.atg:197*/id = "\\NoId\\"; 
+	void AsmId(/*Parser.Assembler.atg:203*/out string id) {
+		/*Parser.Assembler.atg:203*/id = "\\NoId\\"; 
 		if (la.kind == _string) {
-			String(/*Parser.Assembler.atg:199*/out id);
+			String(/*Parser.Assembler.atg:205*/out id);
 		} else if (StartOf(4)) {
-			Id(/*Parser.Assembler.atg:200*/out id);
+			Id(/*Parser.Assembler.atg:206*/out id);
 		} else if (StartOf(5)) {
 			switch (la.kind) {
 			case _mod: {
@@ -604,7 +610,7 @@ internal partial class Parser {
 				break;
 			}
 			}
-			/*Parser.Assembler.atg:231*/id = cache(t.val); 
+			/*Parser.Assembler.atg:237*/id = cache(t.val); 
 		} else SynErr(99);
 	}
 
@@ -658,9 +664,9 @@ internal partial class Parser {
 		/*Parser.Helper.atg:57*/value = modifier * value; 
 	}
 
-	void AsmQualid(/*Parser.Assembler.atg:235*/out string qualid) {
+	void AsmQualid(/*Parser.Assembler.atg:241*/out string qualid) {
 		
-		AsmId(/*Parser.Assembler.atg:237*/out qualid);
+		AsmId(/*Parser.Assembler.atg:243*/out qualid);
 	}
 
 	void String(/*Parser.Helper.atg:87*/out string value) {

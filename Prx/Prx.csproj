@@ -42,6 +42,10 @@
     <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="Benchmarking\Benchmark.cs" />
+    <Compile Include="Benchmarking\BenchmarkEntry.cs" />
+    <Compile Include="Benchmarking\BenchmarkEntryCollection.cs" />
+    <Compile Include="Benchmarking\Measurement.cs" />
     <Compile Include="PrexoniteConsole.cs" />
     <Compile Include="Program.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />

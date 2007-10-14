@@ -1,7 +1,16 @@
 namespace Prexonite
 {
+    /// <summary>
+    /// Marks objects that can create a representation/instance of themselves to be put on the stack.
+    /// </summary>
     public interface IStackAware
     {
-        StackContext CreateStackContext(Engine eng, PValue[] args);
+        /// <summary>
+        /// Creates a stack context, that might later be pushed onto the stack.
+        /// </summary>
+        /// <param name="engine">The engine for which the context is to be created.</param>
+        /// <param name="args">The arguments passed to this instantiation.</param>
+        /// <returns>The created <see cref="StackContext"/></returns>
+        StackContext CreateStackContext(Engine engine, PValue[] args);
     }
 }

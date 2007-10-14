@@ -3,7 +3,8 @@ using System.Collections.Generic;
 namespace Prexonite.Compiler.Ast
 {
     public class AstCoalescence : AstNode,
-                                  IAstExpression
+                                  IAstExpression,
+                                  IAstHasExpressions
     {
         public AstCoalescence(string file, int line, int column)
             : base(file, line, column)
@@ -16,6 +17,15 @@ namespace Prexonite.Compiler.Ast
         }
 
         public readonly List<IAstExpression> Expressions = new List<IAstExpression>(2);
+
+        #region IAstHasExpressions Members
+
+        IAstExpression[] IAstHasExpressions.Expressions
+        {
+            get { return Expressions.ToArray(); }
+        }
+
+        #endregion
 
         #region IAstExpression Members
 

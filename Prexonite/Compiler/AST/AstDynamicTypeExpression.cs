@@ -29,7 +29,8 @@ using Prexonite.Types;
 namespace Prexonite.Compiler.Ast
 {
     public class AstDynamicTypeExpression : AstNode,
-                                            IAstType
+                                            IAstType,
+                                            IAstHasExpressions
     {
         public List<IAstExpression> Arguments = new List<IAstExpression>();
         public string TypeId;
@@ -46,6 +47,15 @@ namespace Prexonite.Compiler.Ast
             : this(p.scanner.File, p.t.line, p.t.col, typeId)
         {
         }
+
+        #region IAstHasExpressions Members
+
+        public IAstExpression[] Expressions
+        {
+            get { return Arguments.ToArray(); }
+        }
+
+        #endregion
 
         #region IAstExpression Members
 

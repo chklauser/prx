@@ -27,9 +27,22 @@ using Prexonite.Types;
 namespace Prexonite.Compiler.Ast
 {
     public class AstIndirectCall : AstGetSet,
-                                   IAstExpression
+                                   IAstExpression,
+                                   IAstHasExpressions
     {
         public IAstExpression Subject;
+
+        public override IAstExpression[] Expressions
+        {
+            get
+            {
+                int len = Arguments.Count;
+                IAstExpression[] ary = new IAstExpression[len + 1];
+                Array.Copy(Arguments.ToArray(), 0, ary, 1, len);
+                ary[0] = Subject;
+                return ary;
+            }
+        }
 
         public AstIndirectCall(
             string file, int line, int column, PCall call, IAstExpression subject)

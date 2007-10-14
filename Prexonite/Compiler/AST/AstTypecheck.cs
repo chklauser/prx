@@ -27,7 +27,8 @@ using Prexonite.Types;
 namespace Prexonite.Compiler.Ast
 {
     public class AstTypecheck : AstNode,
-                                IAstExpression
+                                IAstExpression,
+                                IAstHasExpressions
     {
         public IAstExpression Subject;
         public IAstType Type;
@@ -48,6 +49,15 @@ namespace Prexonite.Compiler.Ast
             : this(p.scanner.File, p.t.line, p.t.col, subject, type)
         {
         }
+
+        #region IAstHasExpressions Members
+
+        public IAstExpression[] Expressions
+        {
+            get { return new IAstExpression[] {Subject}; }
+        }
+
+        #endregion
 
         public override void EmitCode(CompilerTarget target)
         {

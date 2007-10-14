@@ -84,5 +84,5 @@ function showPrompt(q) does
 var prompt = null;
 
 //Functions that provide access to the currently executing engine and application.
-function thisEngine does asm { ldr.eng ret.value }
-function thisApplication does asm { ldr.app ret.value }
+function thisEngine does return asm ( ldr.eng );
+function thisApplication does return asm ( ldr.app );

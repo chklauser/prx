@@ -119,6 +119,41 @@ namespace Prexonite
             get { return _variables; }
         }
 
+        private SymbolTable<int> _localVariableMapping;
+
+        public void CreateLocalVariableMapping()
+        {
+            int idx = 0;
+            if(_localVariableMapping == null)
+                _localVariableMapping = new SymbolTable<int>();
+            else
+                _localVariableMapping.Clear();
+
+            foreach (string p in _parameters)
+                if(!_localVariableMapping.ContainsKey(p))
+                    _localVariableMapping.Add(p, idx++);
+
+            foreach (string v in _variables)
+                if (!_localVariableMapping.ContainsKey(v))
+                    _localVariableMapping.Add(v, idx++);
+
+            if(_meta.ContainsKey(SharedNamesKey))
+                foreach (MetaEntry entry in _meta[SharedNamesKey].List)
+                    if (!_localVariableMapping.ContainsKey(entry))
+                        _localVariableMapping.Add(entry, idx++);
+        }
+
+        public SymbolTable<int> LocalVariableMapping
+        {
+            [NoDebug]
+            get
+            {
+                if(_localVariableMapping == null)
+                    CreateLocalVariableMapping();
+                return _localVariableMapping;
+            }
+        }
+
         #endregion
 
         #region Storage
@@ -340,9 +375,9 @@ namespace Prexonite
         #region IStackAware Members
 
         [NoDebug]
-        public StackContext CreateStackContext(Engine eng, PValue[] args)
+        public StackContext CreateStackContext(Engine engine, PValue[] args)
         {
-            return CreateFunctionContext(eng, args);
+            return CreateFunctionContext(engine, args);
         }
 
         #endregion

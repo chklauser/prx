@@ -24,7 +24,8 @@
 namespace Prexonite.Compiler.Ast
 {
     public class AstThrow : AstNode,
-                            IAstExpression
+                            IAstExpression,
+                            IAstHasExpressions
     {
         public IAstExpression Expression;
 
@@ -37,6 +38,15 @@ namespace Prexonite.Compiler.Ast
             : this(p.scanner.File, p.t.line, p.t.col)
         {
         }
+
+        #region IAstHasExpressions Members
+
+        public IAstExpression[] Expressions
+        {
+            get { return new IAstExpression[] {Expression}; }
+        }
+
+        #endregion
 
         #region IAstExpression Members
 

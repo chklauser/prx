@@ -25,7 +25,8 @@ using System;
 
 namespace Prexonite.Compiler.Ast
 {
-    public class AstReturn : AstNode
+    public class AstReturn : AstNode,
+                             IAstHasExpressions
     {
         public ReturnVariant ReturnVariant;
         public IAstExpression Expression;
@@ -40,6 +41,15 @@ namespace Prexonite.Compiler.Ast
             : this(p.scanner.File, p.t.line, p.t.col, returnVariant)
         {
         }
+
+        #region IAstHasExpressions Members
+
+        public IAstExpression[] Expressions
+        {
+            get { return new IAstExpression[] {Expression}; }
+        }
+
+        #endregion
 
         public override void EmitCode(CompilerTarget target)
         {

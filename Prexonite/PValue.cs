@@ -212,6 +212,68 @@ namespace Prexonite
         }
 
         /// <summary>
+        /// Converts the value to an instance of <typeparamref name="T"/> using the ObjectPType.
+        /// </summary>
+        /// <param name="sctx">The stack context in which to perform the conversion.</param>
+        /// <param name="useExplicit">A boolean that indicates whether explicit conversion operators should be used or not</param>
+        /// <typeparam name="T">The type to convert the PValue into.</typeparam>
+        /// <returns>Contains the value returned by the conversion.</returns>
+        /// <exception cref="InvalidConversionException">Thrown if the conversion is not successful.</exception>
+        [NoDebug]
+        public T ConvertTo<T>(StackContext sctx, bool useExplicit)
+        {
+            return (T) _type.ConvertTo(sctx, this, typeof(T), useExplicit).Value; 
+        }
+
+        /// <summary>
+        /// Implicitly converts the value to an instance of <typeparamref name="T"/> using the ObjectPType.
+        /// </summary>
+        /// <param name="sctx">The stack context in which to perform the conversion.</param>
+        /// <typeparam name="T">The type to convert the PValue into.</typeparam>
+        /// <returns>Contains the value returned by the conversion.</returns>
+        /// <exception cref="InvalidConversionException">Thrown if the conversion is not successful.</exception>
+        [NoDebug]
+        public T ConvertTo<T>(StackContext sctx)
+        {
+            return ConvertTo<T>(sctx, false);
+        }
+
+        /// <summary>
+        /// Tries to convert the PValue to an object of Type <typeparamref name="T"/>.
+        /// </summary>
+        /// <typeparam name="T">The CLR type to convert the PValue to.</typeparam>
+        /// <param name="sctx">The stack context in which to perform the conversion.</param>
+        /// <param name="useExplicit">A boolean that indicates whether explicit conversion operators should be used or not.</param>
+        /// <param name="result">Contains the value returned by the conversion.</param>
+        /// <returns>True if the conversion was successful, false otherwise.</returns>
+        /// <remarks>Note that the value of <paramref name="result" /> is undefined (and therefor not to be used) if the method call returned false.</remarks>
+        [NoDebug]
+        public bool TryConvertTo<T>(StackContext sctx, bool useExplicit, out T result)
+        {
+            result = default(T);
+            PValue r;
+            if((!_type.TryConvertTo(sctx, this, typeof(T),useExplicit, out r)) || !(r.Value is T))
+                return false;
+
+            result = (T) r.Value;
+            return true;
+        }
+
+        /// <summary>
+        /// Tries to implicitly convert the PValue to an object of Type <typeparamref name="T"/>.
+        /// </summary>
+        /// <typeparam name="T">The CLR type to convert the PValue to.</typeparam>
+        /// <param name="sctx">The stack context in which to perform the conversion.</param>
+        /// <param name="result">Contains the value returned by the conversion.</param>
+        /// <returns>True if the conversion was successful, false otherwise.</returns>
+        /// <remarks>Note that the value of <paramref name="result" /> is undefined (and therefor not to be used) if the method call returned false.</remarks>
+        [NoDebug]
+        public bool TryConvertTo<T>(StackContext sctx, out T result)
+        {
+            return TryConvertTo(sctx, false, out result);
+        }
+
+        /// <summary>
         /// Tries to convert the value to a PValue with the supplied <paramref name="target">target type</paramref> as it's <see cref="Type"/> and stores the result in the out parameter <paramref name="result"/>.
         /// </summary>
         /// <param name="sctx">The stack context in which to perform the conversion.</param>
@@ -1270,7 +1332,7 @@ namespace Prexonite
         /// <returns>A PValue object containing the supplied integer (signed) with <see cref="PType.Int"/> as its PType.</returns>
         /// <remarks><see cref="PType.Int"/> cannot represent integers other than System.Int32, but you may wish to convert them to signed integers and then create the appropriate PValues, which is exactly what this conversion operator does.
         /// If you have to do unsigned integer math inside the Prexonite VM, use <c><see cref="ObjectPType">PType.Object</see>[typeof(System.UInt32)]</c> as the PType.</remarks>
-        [NoDebug(),CLSCompliant(false)]
+        [NoDebug(), CLSCompliant(false)]
         public static explicit operator PValue(UInt32 number)
         {
             return PType.Int.CreatePValue((int) number);
@@ -1282,7 +1344,7 @@ namespace Prexonite
         /// <param name="number">A System.Byte to be used like a System.Int32 within the Prexonite VM.</param>
         /// <returns>A PValue object containing the supplied byte as an integer with <see cref="PType.Int"/> as its PType.</returns>
         /// <remarks><see cref="PType.Int"/> cannot represent integers other than System.Int32, but you may wish to convert them to integers and then create the appropriate PValues, which is exactly what this conversion operator does.</remarks>
-        [NoDebug(),CLSCompliant(false)]
+        [NoDebug(), CLSCompliant(false)]
         public static explicit operator PValue(Byte number)
         {
             return PType.Int.CreatePValue((int) number);
@@ -1294,7 +1356,7 @@ namespace Prexonite
         /// <param name="number">A System.SByte to be used like a System.Int32 within the Prexonite VM.</param>
         /// <returns>A PValue object containing the supplied signed byte as an integer with <see cref="PType.Int"/> as its PType.</returns>
         /// <remarks><see cref="PType.Int"/> cannot represent integers other than System.Int32, but you may wish to convert them to integers and then create the appropriate PValues, which is exactly what this conversion operator does.</remarks>
-        [NoDebug(),CLSCompliant(false)]
+        [NoDebug(), CLSCompliant(false)]
         public static explicit operator PValue(SByte number)
         {
             return PType.Int.CreatePValue((int) number);
@@ -1314,19 +1376,6 @@ namespace Prexonite
         }
 
         /// <summary>
-        /// Truncates an unsigned long integer (System.UInt64) to a signed integer (System.Int32) in a PValue object.
-        /// </summary>
-        /// <param name="number">A System.UInt64 to be used like a System.Int32 within the Prexonite VM.</param>
-        /// <returns>A PValue object containing the supplied unsigned long integer truncated to a signed integer with <see cref="PType.Int"/> as its PType.</returns>
-        /// <remarks><see cref="PType.Int"/> cannot represent integers other than System.Int32, but you may wish to convert them to signed integers and then create the appropriate PValues, which is exactly what this conversion operator does.
-        /// If you have to do unsigned long integer math inside the Prexonite VM, use <c><see cref="ObjectPType">PType.Object</see>[typeof(System.UInt64)]</c> as the PType.</remarks>
-        [NoDebug()]
-        public static explicit operator PValue(UInt64 number)
-        {
-            return PType.Int.CreatePValue((int) number);
-        }
-
-        /// <summary>
         /// Represents a short integer (System.Int16) as an integer (System.Int32) in a PValue object.
         /// </summary>
         /// <param name="number">A System.Int16 to be used like a System.Int32 within the Prexonite VM.</param>
@@ -1336,18 +1385,6 @@ namespace Prexonite
         public static explicit operator PValue(Int16 number)
         {
             return PType.Int.CreatePValue((int) number);
-        }
-
-        /// <summary>
-        /// Represents an unsigned short integer (System.UInt16) as a signed integer (System.Int32) in a PValue object.
-        /// </summary>
-        /// <param name="number">A System.UInt16 to be used like a System.Int32 within the Prexonite VM.</param>
-        /// <returns>A PValue object containing the supplied unsigned short integer as a signed integer with <see cref="PType.Int"/> as its PType.</returns>
-        /// <remarks><see cref="PType.Int"/> cannot represent integers other than System.Int32, but you may wish to convert them to integers and then create the appropriate PValues, which is exactly what this conversion operator does.</remarks>
-        [NoDebug()]
-        public static explicit operator PValue(UInt16 number)
-        {
-            return PType.Int.CreatePValue(number);
         }
 
         //PReal

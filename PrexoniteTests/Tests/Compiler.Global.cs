@@ -80,7 +80,9 @@ Add {
             const string input1 =
                 "FirstList { \"first String\", firstId, true, 55 } ;" +
                 "SecondList { \"second String\", { \"first }}Nested{ string\", secondNestedId }, thirdId }; ";
-            Loader ldr = new Loader(new LoaderOptions(engine, target));
+            LoaderOptions opt = new LoaderOptions(engine, target);
+            opt.UseIndicesLocally = false;
+            Loader ldr = new Loader(opt);
             ldr.LoadFromString(input1);
 
             Assert.AreEqual(0, ldr.ErrorCount);
@@ -97,8 +99,10 @@ Add {
             Assert.IsTrue(target.Meta.ContainsKey("secondList"), "secondList missing");
             Assert.IsTrue(target.Meta["secondList"].IsList, "secondList should be a list");
             Assert.AreEqual("second String", target.Meta["secondList"].List[0].Text);
-            Assert.IsTrue(target.Meta["secondList"].List[1].IsList, "second element should be a list");
-            Assert.AreEqual("first }}Nested{ string", target.Meta["secondList"].List[1].List[0].Text);
+            Assert.IsTrue(
+                target.Meta["secondList"].List[1].IsList, "second element should be a list");
+            Assert.AreEqual(
+                "first }}Nested{ string", target.Meta["secondList"].List[1].List[0].Text);
             Assert.AreEqual("secondNestedId", target.Meta["secondList"].List[1].List[1].Text);
             Assert.AreEqual("thirdId", target.Meta["secondList"].List[2].Text);
         }
@@ -108,7 +112,9 @@ Add {
         {
             const string input1 =
                 "MyList { elem1, elem2, elem3 };";
-            Loader ldr = new Loader(new LoaderOptions(engine, target));
+            LoaderOptions opt = new LoaderOptions(engine, target);
+            opt.UseIndicesLocally = false;
+            Loader ldr = new Loader(opt);
             ldr.LoadFromString(input1);
 
             Assert.AreEqual(0, ldr.ErrorCount);
@@ -125,7 +131,8 @@ Add {
             Assert.AreEqual(0, ldr.ErrorCount);
 
             Assert.IsTrue(target.Meta.ContainsKey("MyList"), "MyList missing after modification");
-            Assert.IsTrue(target.Meta["MyList"].IsList, "MyList should be a list, even after modification");
+            Assert.IsTrue(
+                target.Meta["MyList"].IsList, "MyList should be a list, even after modification");
             Assert.AreEqual(4, target.Meta["MyList"].List.Length);
             Assert.AreEqual("elem4", target.Meta["MyList"].List[3].Text);
 
@@ -135,8 +142,10 @@ Add {
 
             Assert.AreEqual(0, ldr.ErrorCount);
 
-            Assert.IsTrue(target.Meta.ContainsKey("MyList"), "MyList missing after 2nd modification");
-            Assert.IsTrue(target.Meta["MyList"].IsList, "MyList should be a list, even after 2nd modification");
+            Assert.IsTrue(
+                target.Meta.ContainsKey("MyList"), "MyList missing after 2nd modification");
+            Assert.IsTrue(
+                target.Meta["MyList"].IsList, "MyList should be a list, even after 2nd modification");
             Assert.AreEqual(6, target.Meta["MyList"].List.Length);
             Assert.AreEqual("elem6", target.Meta["MyList"].List[5].Text);
 
@@ -152,7 +161,8 @@ Add System::Xml to Imports;
             ldr.LoadFromString(input4);
             Assert.AreEqual(0, ldr.ErrorCount, "There were errors during compilator of input4");
             Assert.IsTrue(target.Meta.ContainsKey("Import"), "Import missing");
-            Assert.IsTrue(target.Meta["Import"].IsList, "Import should be a list after 2nd modification");
+            Assert.IsTrue(
+                target.Meta["Import"].IsList, "Import should be a list after 2nd modification");
             Assert.AreEqual(3, target.Meta["Import"].List.Length);
             Assert.AreEqual("System", target.Meta["Import"].List[0].Text);
             Assert.AreEqual("System.Text", target.Meta["Import"].List[1].Text);
@@ -167,16 +177,26 @@ Add System::Xml to Imports;
                 @"declare var go\1; " +
                 @"declare ref gf\1, gf\2; " +
                 @"declare function if\1;";
-            Loader ldr = new Loader(engine, target);
+            LoaderOptions opt = new LoaderOptions(engine, target);
+            opt.UseIndicesLocally = false;
+            Loader ldr = new Loader(opt);
             ldr.LoadFromString(input);
             Assert.AreEqual(0, ldr.ErrorCount);
             SymbolTable<SymbolEntry> symbols = ldr.Symbols;
 
-            Assert.AreEqual(new SymbolEntry(SymbolInterpretations.Function, "f\\1"), symbols[@"f\1"]);
-            Assert.AreEqual(new SymbolEntry(SymbolInterpretations.GlobalObjectVariable, "go\\1"), symbols[@"go\1"]);
-            Assert.AreEqual(new SymbolEntry(SymbolInterpretations.GlobalReferenceVariable, "gf\\1"), symbols[@"gf\1"]);
-            Assert.AreEqual(new SymbolEntry(SymbolInterpretations.GlobalReferenceVariable, "gf\\2"), symbols[@"gf\2"]);
-            Assert.AreEqual(new SymbolEntry(SymbolInterpretations.Function, "if\\1"), symbols[@"if\1"]);
+            Assert.AreEqual(
+                new SymbolEntry(SymbolInterpretations.Function, "f\\1"), symbols[@"f\1"]);
+            Assert.AreEqual(
+                new SymbolEntry(SymbolInterpretations.GlobalObjectVariable, "go\\1"),
+                symbols[@"go\1"]);
+            Assert.AreEqual(
+                new SymbolEntry(SymbolInterpretations.GlobalReferenceVariable, "gf\\1"),
+                symbols[@"gf\1"]);
+            Assert.AreEqual(
+                new SymbolEntry(SymbolInterpretations.GlobalReferenceVariable, "gf\\2"),
+                symbols[@"gf\2"]);
+            Assert.AreEqual(
+                new SymbolEntry(SymbolInterpretations.Function, "if\\1"), symbols[@"if\1"]);
         }
 
         [Test()]
@@ -187,16 +207,26 @@ Add System::Xml to Imports;
                 "declare var name2; " +
                 "declare ref name1, name2; " +
                 "declare function name1;";
-            Loader ldr = new Loader(engine, target);
+            LoaderOptions opt = new LoaderOptions(engine, target);
+            opt.UseIndicesLocally = false;
+            Loader ldr = new Loader(opt);
             ldr.LoadFromString(input);
             Assert.AreEqual(0, ldr.ErrorCount);
             SymbolTable<SymbolEntry> symbols = ldr.Symbols;
 
-            Assert.AreEqual(new SymbolEntry(SymbolInterpretations.Function, "name1"), symbols["name1"]);
-            Assert.AreNotEqual(new SymbolEntry(SymbolInterpretations.GlobalObjectVariable, "name2"), symbols["name2"]);
-            Assert.AreNotEqual(new SymbolEntry(SymbolInterpretations.GlobalReferenceVariable, "name1"), symbols["name1"]);
-            Assert.AreEqual(new SymbolEntry(SymbolInterpretations.GlobalReferenceVariable, "name2"), symbols["name2"]);
-            Assert.AreEqual(new SymbolEntry(SymbolInterpretations.Function, "name1"), symbols["name1"]);
+            Assert.AreEqual(
+                new SymbolEntry(SymbolInterpretations.Function, "name1"), symbols["name1"]);
+            Assert.AreNotEqual(
+                new SymbolEntry(SymbolInterpretations.GlobalObjectVariable, "name2"),
+                symbols["name2"]);
+            Assert.AreNotEqual(
+                new SymbolEntry(SymbolInterpretations.GlobalReferenceVariable, "name1"),
+                symbols["name1"]);
+            Assert.AreEqual(
+                new SymbolEntry(SymbolInterpretations.GlobalReferenceVariable, "name2"),
+                symbols["name2"]);
+            Assert.AreEqual(
+                new SymbolEntry(SymbolInterpretations.Function, "name1"), symbols["name1"]);
 
             const string input2 =
                 "declare function name1; " +
@@ -204,8 +234,10 @@ Add System::Xml to Imports;
 
             ldr.LoadFromString(input2);
             Assert.AreEqual(0, ldr.ErrorCount);
-            Assert.AreEqual(new SymbolEntry(SymbolInterpretations.Function, "name1"), symbols["name1"]);
-            Assert.AreEqual(new SymbolEntry(SymbolInterpretations.Function, "name2"), symbols["name2"]);
+            Assert.AreEqual(
+                new SymbolEntry(SymbolInterpretations.Function, "name1"), symbols["name1"]);
+            Assert.AreEqual(
+                new SymbolEntry(SymbolInterpretations.Function, "name2"), symbols["name2"]);
         }
 
         [Test()]
@@ -217,14 +249,23 @@ Add System::Xml to Imports;
                 "declare var name1; " +
                 "declare ref name2; " +
                 "declare var value;";
-            Loader ldr = new Loader(engine, target);
+            LoaderOptions opt = new LoaderOptions(engine, target);
+            opt.UseIndicesLocally = false;
+            Loader ldr = new Loader(opt);
             ldr.LoadFromString(input1);
-            Assert.AreEqual(0, ldr.ErrorCount, "The compiler reported errors in the first chunk of code.");
+            Assert.AreEqual(
+                0, ldr.ErrorCount, "The compiler reported errors in the first chunk of code.");
             SymbolTable<SymbolEntry> symbols = ldr.Symbols;
 
-            Assert.AreEqual(new SymbolEntry(SymbolInterpretations.GlobalObjectVariable, "name1"), symbols["name1"]);
-            Assert.AreEqual(new SymbolEntry(SymbolInterpretations.GlobalReferenceVariable, "name2"), symbols["name2"]);
-            Assert.AreEqual(new SymbolEntry(SymbolInterpretations.GlobalObjectVariable, "value"), symbols["value"]);
+            Assert.AreEqual(
+                new SymbolEntry(SymbolInterpretations.GlobalObjectVariable, "name1"),
+                symbols["name1"]);
+            Assert.AreEqual(
+                new SymbolEntry(SymbolInterpretations.GlobalReferenceVariable, "name2"),
+                symbols["name2"]);
+            Assert.AreEqual(
+                new SymbolEntry(SymbolInterpretations.GlobalObjectVariable, "value"),
+                symbols["value"]);
 
             //Then define them
             const string input2 =
@@ -233,13 +274,20 @@ Add System::Xml to Imports;
                 "var name3;";
 
             ldr.LoadFromString(input2);
-            Assert.AreEqual(0, ldr.ErrorCount, "The compiler reported errors in the second chunk of code.");
-            Assert.AreEqual(new SymbolEntry(SymbolInterpretations.GlobalObjectVariable, "name1"), symbols["name1"]);
+            Assert.AreEqual(
+                0, ldr.ErrorCount, "The compiler reported errors in the second chunk of code.");
+            Assert.AreEqual(
+                new SymbolEntry(SymbolInterpretations.GlobalObjectVariable, "name1"),
+                symbols["name1"]);
             Assert.IsNotNull(target.Variables["name1"]);
-            Assert.AreEqual(new SymbolEntry(SymbolInterpretations.GlobalReferenceVariable, "name2"), symbols["name2"]);
+            Assert.AreEqual(
+                new SymbolEntry(SymbolInterpretations.GlobalReferenceVariable, "name2"),
+                symbols["name2"]);
             Assert.IsNotNull(target.Variables["name2"]);
             Assert.AreEqual("NotUseful", target.Variables["name2"].Meta["description"].Text);
-            Assert.AreEqual(new SymbolEntry(SymbolInterpretations.GlobalObjectVariable, "name3"), symbols["name3"]);
+            Assert.AreEqual(
+                new SymbolEntry(SymbolInterpretations.GlobalObjectVariable, "name3"),
+                symbols["name3"]);
             Assert.IsNotNull(target.Variables["name3"]);
         }
 
@@ -266,8 +314,9 @@ Description ""Künste des Überredens von Krähen."";
 function twice(x) = 2*x;
 function megabyte = 1024*1024;
 ";
-
-            Loader ldr = new Loader(engine, target);
+            LoaderOptions opt = new LoaderOptions(engine, target);
+            opt.UseIndicesLocally = false;
+            Loader ldr = new Loader(opt);
             ldr.LoadFromString(input1);
             Assert.AreEqual(0, ldr.ErrorCount, "Errors during compilation.");
 
@@ -282,12 +331,20 @@ ret.value
 
             Console.Write(target.StoreInString());
 
-            Assert.AreEqual(expected.Count, actual.Count, "Expected and actual instruction count missmatch in twice.");
+            Assert.AreEqual(
+                expected.Count,
+                actual.Count,
+                "Expected and actual instruction count missmatch in twice.");
 
             for (int i = 0; i < actual.Count; i++)
-                Assert.AreEqual(expected[i], actual[i],
-                                String.Format("Twice: Instructions at address {0} do not match ({1} != {2})", i,
-                                              expected[i], actual[i]));
+                Assert.AreEqual(
+                    expected[i],
+                    actual[i],
+                    String.Format(
+                        "Twice: Instructions at address {0} do not match ({1} != {2})",
+                        i,
+                        expected[i],
+                        actual[i]));
 
             //check "megabyte"
             actual = target.Functions["megabyte"].Code;
@@ -296,12 +353,20 @@ ldc.int 1048576
 ret.value
 ");
 
-            Assert.AreEqual(expected.Count, actual.Count, "Expected and actual instruction count missmatch in megabyte.");
+            Assert.AreEqual(
+                expected.Count,
+                actual.Count,
+                "Expected and actual instruction count missmatch in megabyte.");
 
             for (int i = 0; i < actual.Count; i++)
-                Assert.AreEqual(expected[i], actual[i],
-                                String.Format("Megabyte: Instructions at address {0} do not match ({1} != {2})", i,
-                                              expected[i], actual[i]));
+                Assert.AreEqual(
+                    expected[i],
+                    actual[i],
+                    String.Format(
+                        "Megabyte: Instructions at address {0} do not match ({1} != {2})",
+                        i,
+                        expected[i],
+                        actual[i]));
         }
 
         #endregion
@@ -460,7 +525,9 @@ function func3(param1, param2)
 { 
 
     }";
-            Loader ldr = new Loader(engine, target);
+            LoaderOptions opt = new LoaderOptions(engine, target);
+            opt.UseIndicesLocally = false;
+            Loader ldr = new Loader(opt);
             ldr.LoadFromString(input1);
             Assert.AreEqual(0, ldr.ErrorCount);
 
@@ -479,7 +546,6 @@ function func3(param1, param2)
             Assert.AreEqual(2, target.Functions["func3"].Parameters.Count);
             Assert.AreEqual("param2", target.Functions["func3"].Parameters[1]);
             Assert.AreEqual(1, target.Functions["func3"].ImportedNamespaces.Count);
-
         }
 
         [Test()]
@@ -492,17 +558,21 @@ function func1() does asm
     ref loc2
 }
 ";
-            Loader ldr = new Loader(engine, target);
+            LoaderOptions opt = new LoaderOptions(engine, target);
+            opt.UseIndicesLocally = false;
+            Loader ldr = new Loader(opt);
             ldr.LoadFromString(input1);
             Assert.AreEqual(0, ldr.ErrorCount);
 
             Assert.IsTrue(target.Functions["func1"].Variables.Contains("loc1"));
-            Assert.AreEqual(SymbolInterpretations.LocalObjectVariable,
-                            ldr.FunctionTargets["func1"].Symbols["loc1"].Interpretation);
+            Assert.AreEqual(
+                SymbolInterpretations.LocalObjectVariable,
+                ldr.FunctionTargets["func1"].Symbols["loc1"].Interpretation);
 
             Assert.IsTrue(target.Functions["func1"].Variables.Contains("loc2"));
-            Assert.AreEqual(SymbolInterpretations.LocalReferenceVariable,
-                            ldr.FunctionTargets["func1"].Symbols["loc2"].Interpretation);
+            Assert.AreEqual(
+                SymbolInterpretations.LocalReferenceVariable,
+                ldr.FunctionTargets["func1"].Symbols["loc2"].Interpretation);
         }
 
         [Test()]
@@ -552,7 +622,9 @@ function func1() does asm
 }
 ";
 
-            Loader ldr = new Loader(engine, target);
+            LoaderOptions opt = new LoaderOptions(engine, target);
+            opt.UseIndicesLocally = false;
+            Loader ldr = new Loader(opt);
             ldr.LoadFromString(input1);
             Assert.AreEqual(0, ldr.ErrorCount);
 
@@ -618,7 +690,9 @@ function func1 does asm
     cast.const      Int
 }
 ";
-            Loader ldr = new Loader(engine, target);
+            LoaderOptions opt = new LoaderOptions(engine, target);
+            opt.UseIndicesLocally = false;
+            Loader ldr = new Loader(opt);
             ldr.LoadFromString(input1);
             Assert.AreEqual(0, ldr.ErrorCount, "There were errors during compilation.");
 
@@ -676,7 +750,9 @@ function func1(param1)  [ key value; ] does asm
     inda.0
 }
 ";
-            Loader ldr = new Loader(engine, target);
+            LoaderOptions opt = new LoaderOptions(engine, target);
+            opt.UseIndicesLocally = false;
+            Loader ldr = new Loader(opt);
             ldr.LoadFromString(input1);
             Assert.AreEqual(0, ldr.ErrorCount, "There were errors during compilation.");
 
@@ -728,7 +804,9 @@ function func1 does asm
     indglob.3   anotherFunction
 }
 ";
-            Loader ldr = new Loader(engine, target);
+            LoaderOptions opt = new LoaderOptions(engine, target);
+            opt.UseIndicesLocally = false;
+            Loader ldr = new Loader(opt);
             ldr.LoadFromString(input1);
             Assert.AreEqual(0, ldr.ErrorCount, "There were errors during compilation.");
 
@@ -787,7 +865,9 @@ function func1 does asm
     dup     10          //5
 }
 ";
-            Loader ldr = new Loader(engine, target);
+            LoaderOptions opt = new LoaderOptions(engine, target);
+            opt.UseIndicesLocally = false;
+            Loader ldr = new Loader(opt);
             ldr.LoadFromString(input1);
             Assert.AreEqual(0, ldr.ErrorCount, "Errors during compilation.");
 
@@ -841,7 +921,9 @@ function func1 does asm
     label       endwhile0
 }
 ";
-            Loader ldr = new Loader(engine, target);
+            LoaderOptions opt = new LoaderOptions(engine, target);
+            opt.UseIndicesLocally = false;
+            Loader ldr = new Loader(opt);
             ldr.LoadFromString(input1);
             Assert.AreEqual(0, ldr.ErrorCount, "Errors during compilation.");
 

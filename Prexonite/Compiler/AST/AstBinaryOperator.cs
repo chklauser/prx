@@ -30,7 +30,8 @@ namespace Prexonite.Compiler.Ast
     /// Represents all binary operators.
     /// </summary>
     public class AstBinaryOperator : AstNode,
-                                     IAstExpression
+                                     IAstExpression,
+                                     IAstHasExpressions
     {
         public IAstExpression LeftOperand;
         public IAstExpression RightOperand;
@@ -66,6 +67,15 @@ namespace Prexonite.Compiler.Ast
             RightOperand = rightOperand;
             Operator = op;
         }
+
+        #region IAstHasExpressions Members
+
+        public IAstExpression[] Expressions
+        {
+            get { return new IAstExpression[] {LeftOperand, RightOperand}; }
+        }
+
+        #endregion
 
         /// <summary>
         /// Emits the instruction corresponding to the supplied binary operator.

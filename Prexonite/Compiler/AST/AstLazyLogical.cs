@@ -27,7 +27,8 @@ using System.Collections.Generic;
 namespace Prexonite.Compiler.Ast
 {
     public abstract class AstLazyLogical : AstNode,
-                                           IAstExpression
+                                           IAstExpression,
+                                           IAstHasExpressions
     {
         public LinkedList<IAstExpression> Conditions = new LinkedList<IAstExpression>();
 
@@ -48,6 +49,23 @@ namespace Prexonite.Compiler.Ast
             AddExpression(leftExpression);
             AddExpression(rightExpression);
         }
+
+        #region IAstHasExpressions Members
+
+        public IAstExpression[] Expressions
+        {
+            get
+            {
+                int len = Conditions.Count;
+                IAstExpression[] ary = new IAstExpression[len];
+                int i = 0;
+                foreach (IAstExpression condition in Conditions)
+                    ary[i++] = condition;
+                return ary;
+            }
+        }
+
+        #endregion
 
         public void AddExpression(IAstExpression expr)
         {

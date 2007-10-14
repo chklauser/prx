@@ -274,7 +274,13 @@ AsmInstruction<AstBlock block>          (.  int arguments = 0;
                                         //Create rot instruction
                                         (.  addInstruction(block, Instruction.CreateRotate(arguments, SecArg)); .)
    
-    
+|	//INDIRECT LOCAL CALL BY INDEX
+	IF(isAsmInstruction("indloci", null))
+	AsmId<out insbase>
+	dot Integer<out SecArg>
+	Integer<out arguments>
+										//Create indloci instruction
+										(.	addInstruction(block, Instruction.CreateIndLocI(arguments, SecArg)); .)    
 |   //EXCHANGE INSTRUCTION
     IF(isAsmInstruction("swap", null))
     AsmId<out insbase>

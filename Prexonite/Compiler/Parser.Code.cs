@@ -664,7 +664,9 @@ namespace Prexonite.Compiler
             tab.Add("jump.true", OpCode.jump_t);
             tab.Add("jump.false", OpCode.jump_f);
             tab.Add("inc", OpCode.incloc);
+            tab.Add("inci", OpCode.incloci);
             tab.Add("dec", OpCode.decloc);
+            tab.Add("deci", OpCode.decloci);
             tab.Add("inda", OpCode.indarg);
             tab.Add("cor", OpCode.newcor);
             tab.Add("exception", OpCode.exc);
@@ -684,6 +686,12 @@ namespace Prexonite.Compiler
                 {"ldc", "int"},
                 {"pop", null},
                 {"dup", null},
+                {"ldloci", null},
+                {"stloci", null},
+                {"incloci", null},
+                {"inci", null},
+                {"deci", null},
+                {"ldr", "loci"}
             };
 
         private readonly string[,] asmJumpGroup =

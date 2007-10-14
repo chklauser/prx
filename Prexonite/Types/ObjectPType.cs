@@ -378,7 +378,7 @@ namespace Prexonite.Types
                                     if (!arg.TryConvertTo(cond.Sctx, P, false, out arg))
                                         //Try to convert
                                         goto failed;
-                                            //can't use break; because of the surrounding for-loop
+                                    //can't use break; because of the surrounding for-loop
                                 }
                             }
                             cargs[i] = arg.Value;

@@ -413,7 +413,7 @@ namespace Prexonite.Compiler
             {
 #if DEBUG
                 StringBuilder indent = new StringBuilder(_load_indent);
-                indent.Append(' ',2*(_load_indent++));
+                indent.Append(' ', 2*(_load_indent++));
                 Console.WriteLine("{1}begin compiling {0}", Path.GetFileName(finalPath), indent);
 #endif
                 LoadFromStream(str, Path.GetFileName(finalPath));
@@ -601,17 +601,10 @@ namespace Prexonite.Compiler
                         }
                         return PType.Null.CreatePValue();
                     });
-            if(!ParentEngine.Commands.Contains(BuildGetLoaderCommand))
+            if (!ParentEngine.Commands.Contains(BuildGetLoaderCommand))
                 ParentEngine.Commands.AddCompilerCommand(
                     BuildGetLoaderCommand,
-                    delegate(StackContext sctx, PValue[] args)
-                    {
-                        Loader ldr = sctx as Loader;
-                        if (ldr == null)
-                            return PType.Null.CreatePValue();
-                        else
-                            return sctx.CreateNativePValue(ldr);
-                    });
+                    delegate(StackContext sctx, PValue[] args) { return sctx.CreateNativePValue(this); });
         }
 
         private void _disableBuildBlockCommands()

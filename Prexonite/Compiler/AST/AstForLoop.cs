@@ -181,5 +181,14 @@ namespace Prexonite.Compiler.Ast
                 return blocks.ToArray();
             }
         }
+
+        #region IAstHasExpressions Members
+
+        public override IAstExpression[] Expressions
+        {
+            get { return new IAstExpression[] {Condition}; }
+        }
+
+        #endregion
     }
 }

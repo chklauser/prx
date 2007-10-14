@@ -96,6 +96,13 @@ namespace Prexonite.Compiler
         private bool _compress = false;
 #endif
 
+        public bool UseIndicesLocally
+        {
+            get { return _useIndicesLocally; }
+            set { _useIndicesLocally = value; }
+        }
+        private bool _useIndicesLocally = true;
+
         #endregion
     }
 }

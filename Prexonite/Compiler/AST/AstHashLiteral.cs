@@ -27,7 +27,8 @@ using System.Collections.Generic;
 namespace Prexonite.Compiler.Ast
 {
     public class AstHashLiteral : AstNode,
-                                  IAstExpression
+                                  IAstExpression,
+                                  IAstHasExpressions
     {
         public List<IAstExpression> Elements = new List<IAstExpression>();
 
@@ -40,6 +41,15 @@ namespace Prexonite.Compiler.Ast
             : base(file, line, column)
         {
         }
+
+        #region IAstHasExpressions Members
+
+        public IAstExpression[] Expressions
+        {
+            get { return Elements.ToArray(); }
+        }
+
+        #endregion
 
         #region IAstExpression Members
 

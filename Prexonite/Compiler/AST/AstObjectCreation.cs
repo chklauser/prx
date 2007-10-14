@@ -28,7 +28,8 @@ using NoDebug = System.Diagnostics.DebuggerNonUserCodeAttribute;
 namespace Prexonite.Compiler.Ast
 {
     public class AstObjectCreation : AstNode,
-                                     IAstExpression
+                                     IAstExpression,
+                                     IAstHasExpressions
     {
         public IAstType TypeExpr;
         private AstGetSet.ArgumentsProxy _proxy;
@@ -37,6 +38,15 @@ namespace Prexonite.Compiler.Ast
         {
             get { return _proxy; }
         }
+
+        #region IAstHasExpressions Members
+
+        public IAstExpression[] Expressions
+        {
+            get { return Arguments.ToArray(); }
+        }
+
+        #endregion
 
         private List<IAstExpression> _arguments = new List<IAstExpression>();
 

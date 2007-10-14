@@ -89,6 +89,11 @@ namespace Prexonite
                     _localVariables.Add(sharedNames[i], sharedVariables[i]);
                 }
             }
+
+            //Populate fast access array
+            _localVariableArray = new PVariable[_localVariables.Count];
+            foreach (KeyValuePair<string, int> mapping in _implementation.LocalVariableMapping)
+                _localVariableArray[mapping.Value] = _localVariables[mapping.Key];
         }
 
         public FunctionContext(Engine parentEngine, PFunction implementation, PValue[] args)
@@ -105,7 +110,7 @@ namespace Prexonite
         {
             //Create args variable
             string argVId = PFunction.ArgumentListId;
-                //Make sure the variable does not override any parameter or existing variable
+            //Make sure the variable does not override any parameter or existing variable
             while (_implementation.Parameters.Contains(argVId))
                 argVId = "\\" + argVId;
 
@@ -175,6 +180,7 @@ namespace Prexonite
         #region Local variables
 
         private SymbolTable<PVariable> _localVariables = new SymbolTable<PVariable>();
+        private PVariable[] _localVariableArray;
 
         public SymbolTable<PVariable> LocalVariables
         {
@@ -182,12 +188,23 @@ namespace Prexonite
             get { return _localVariables; }
         }
 
+        public void ReplaceLocalVariable(string name, PVariable newVariable)
+        {
+            if (String.IsNullOrEmpty(name))
+                throw new ArgumentNullException("name");
+            if (newVariable == null)
+                throw new ArgumentNullException("newVariable");
+
+            if (_implementation.LocalVariableMapping.ContainsKey(name))
+                _localVariableArray[_implementation.LocalVariableMapping[name]] = newVariable;
+            _localVariables[name] = newVariable;
+        }
+
         #endregion
 
         #region Virtual Machine
 
         private int _pointer = 0;
-        private bool _tailCallMode = false;
 
         public int Pointer
         {
@@ -364,6 +381,9 @@ namespace Prexonite
                                     id,
                                     _implementation.Id));
                         break;
+                    case OpCode.ldr_loci:
+                        push(CreateNativePValue(_localVariableArray[argc]));
+                        break;
                     case OpCode.ldr_glob:
                         if (ParentApplication.Variables.ContainsKey(id))
                             push(CreateNativePValue(ParentApplication.Variables[id]));
@@ -428,7 +448,7 @@ namespace Prexonite
                     Console.Write("=" + toDebug(val));
                     push(val);
 #else
-                        push(_localVariables[id].Value);
+                        push(pvar.Value);
 #endif
                         break;
                     case OpCode.stloc:
@@ -439,6 +459,14 @@ namespace Prexonite
                                 " does not exist.");
 
                         pvar.Value = pop();
+                        break;
+
+                    case OpCode.ldloci:
+                        push(_localVariableArray[argc].Value);
+                        break;
+
+                    case OpCode.stloci:
+                        _localVariableArray[argc].Value = pop();
                         break;
 
                         #endregion
@@ -553,11 +581,16 @@ namespace Prexonite
                         //UNARY OPERATORS
                     case OpCode.incloc:
                         pvar = _localVariables[id];
-                        pvar.Value = pvar.Value.Increment(this);
+doIncrement:            pvar.Value = pvar.Value.Increment(this);
 #if Verbose
                     Console.Write("=" + toDebug(pvar.Value));
 #endif
                         break;
+
+                    case OpCode.incloci:
+                        pvar = _localVariableArray[argc];
+                        goto doIncrement;
+
                     case OpCode.incglob:
                         pvar = ParentApplication.Variables[id];
                         pvar.Value = pvar.Value.Increment(this);
@@ -567,11 +600,15 @@ namespace Prexonite
                         break;
                     case OpCode.decloc:
                         pvar = _localVariables[id];
-                        pvar.Value = pvar.Value.Decrement(this);
+doDecrement:            pvar.Value = pvar.Value.Decrement(this);
 #if Verbose
                     Console.Write("=" + toDebug(pvar.Value));
 #endif
                         break;
+                    case OpCode.decloci:
+                        pvar = _localVariableArray[argc];
+                        goto doDecrement;
+
                     case OpCode.decglob:
                         pvar = ParentApplication.Variables[id];
                         pvar.Value = pvar.Value.Decrement(this);
@@ -866,11 +903,17 @@ namespace Prexonite
 #endif
 
                         //Perform indirect call
-                        if (justEffect)
+doIndloc:               if (justEffect)
                             left.IndirectCall(this, argv);
                         else
                             push(left.IndirectCall(this, argv));
                         break;
+                    case OpCode.indloci:
+                        idx = argc & ushort.MaxValue;
+                        argc = (argc & (ushort.MaxValue << 16)) >> 16;
+                        fillArgs(argc, out argv);
+                        left = _localVariableArray[idx].Value;
+                        goto doIndloc;
                     case OpCode.indglob:
                         fillArgs(argc, out argv);
                         needToReturn = true;
@@ -1102,7 +1145,6 @@ namespace Prexonite
                         #region TAIL
 
                     case OpCode.tail:
-                        _tailCallMode = true;
                         break;
 
                         #endregion
@@ -1204,6 +1246,7 @@ namespace Prexonite
     }
 
     [Serializable]
+    [NoDebug]
     public class PrexoniteInvalidStackException : PrexoniteException
     {
         public PrexoniteInvalidStackException()

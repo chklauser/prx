@@ -48,6 +48,7 @@
     <Compile Include="Commands\Call.cs" />
     <Compile Include="Commands\Caller.cs" />
     <Compile Include="Commands\Concatenate.cs" />
+    <Compile Include="Commands\Debug.cs" />
     <Compile Include="Commands\DelegatePCommand.cs" />
     <Compile Include="Commands\Dispose.cs" />
     <Compile Include="Commands\FoldL.cs" />
@@ -107,10 +108,12 @@
     <Compile Include="Compiler\Ast\AstGetSetSymbol.cs" />
     <Compile Include="Compiler\Ast\AstNode.cs" />
     <Compile Include="Compiler\Ast\IAstHasBlocks.cs" />
+    <Compile Include="Compiler\Ast\IAstHasExpressions.cs" />
     <Compile Include="Compiler\Ast\IAstType.cs" />
     <Compile Include="Compiler\BlockLabels.cs" />
     <Compile Include="Compiler\CompilerHook.cs" />
     <Compile Include="Compiler\CompilerTarget.cs" />
+    <Compile Include="Compiler\DebugHook.cs" />
     <Compile Include="Compiler\Lexer.Code.cs" />
     <Compile Include="Compiler\Lexer.cs" />
     <Compile Include="Compiler\Parser.cs" />

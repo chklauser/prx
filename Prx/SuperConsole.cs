@@ -20,19 +20,18 @@
  */
 
 using System;
-using System.Text;
 using System.Collections;
-using System.Threading;
+using System.Collections.Generic;
 using System.Diagnostics;
-
+using System.Text;
+using System.Threading;
 //Removed references to IronPython (-P)
 
 namespace Prx
 {
     //made class abstract
-    abstract public class SuperConsole
+    public abstract class SuperConsole
     {
-
         public ConsoleColor PromptColor = Console.ForegroundColor;
         public ConsoleColor OutColor = Console.ForegroundColor;
         public ConsoleColor ErrorColor = Console.ForegroundColor;
@@ -47,17 +46,18 @@ namespace Prx
         /// <summary>
         /// Class managing the command history.
         /// </summary>
-        class History
+        private class History
         {
             private ArrayList list = new ArrayList();
             private int current = 0;
-            private bool increment = false;     // increment on Next()
+            private bool increment = false; // increment on Next()
 
             private string Current
             {
                 get
                 {
-                    return current >= 0 && current < list.Count ? (string)list[current] : String.Empty;
+                    return
+                        current >= 0 && current < list.Count ? (string) list[current] : String.Empty;
                 }
             }
 
@@ -94,7 +94,8 @@ namespace Prx
             {
                 if (current + 1 < list.Count)
                 {
-                    if (increment) current++;
+                    if (increment)
+                        current++;
                     increment = true;
                 }
                 return Current;
@@ -104,7 +105,7 @@ namespace Prx
         /// <summary>
         /// List of available options
         /// </summary>
-        class SuperConsoleOptions
+        private class SuperConsoleOptions
         {
             private ArrayList list = new ArrayList();
             private int current = 0;
@@ -112,17 +113,15 @@ namespace Prx
 
             public int Count
             {
-                get
-                {
-                    return list.Count;
-                }
+                get { return list.Count; }
             }
 
             private string Current
             {
                 get
                 {
-                    return current >= 0 && current < list.Count ? (string)list[current] : String.Empty;
+                    return
+                        current >= 0 && current < list.Count ? (string) list[current] : String.Empty;
                 }
             }
 
@@ -144,7 +143,7 @@ namespace Prx
             {
                 if (list.Count > 0)
                 {
-                    current = ((current - 1) + list.Count) % list.Count;
+                    current = ((current - 1) + list.Count)%list.Count;
                 }
                 return Current;
             }
@@ -153,33 +152,28 @@ namespace Prx
             {
                 if (list.Count > 0)
                 {
-                    current = (current + 1) % list.Count;
+                    current = (current + 1)%list.Count;
                 }
                 return Current;
             }
 
             public string Root
             {
-                get
-                {
-                    return root;
-                }
-                set
-                {
-                    root = value;
-                }
+                get { return root; }
+                set { root = value; }
             }
         }
 
         /// <summary>
         /// Cursor position management
         /// </summary>
-        struct Cursor
+        private struct Cursor
         {
             /// <summary>
             /// Beginning position of the cursor - top coordinate.
             /// </summary>
             private int anchorTop;
+
             /// <summary>
             /// Beginning position of the cursor - left coordinate.
             /// </summary>
@@ -187,17 +181,12 @@ namespace Prx
 
             public int Top
             {
-                get
-                {
-                    return anchorTop;
-                }
+                get { return anchorTop; }
             }
+
             public int Left
             {
-                get
-                {
-                    return anchorLeft;
-                }
+                get { return anchorLeft; }
             }
 
             public void Anchor()
@@ -214,8 +203,8 @@ namespace Prx
 
             public void Place(int index)
             {
-                Console.CursorLeft = (anchorLeft + index) % Console.BufferWidth;
-                int cursorTop = anchorTop + (anchorLeft + index) / Console.BufferWidth;
+                Console.CursorLeft = (anchorLeft + index)%Console.BufferWidth;
+                int cursorTop = anchorTop + (anchorLeft + index)/Console.BufferWidth;
                 if (cursorTop >= Console.BufferHeight)
                 {
                     anchorTop -= cursorTop - Console.BufferHeight + 1;
@@ -226,17 +215,18 @@ namespace Prx
 
             public void Move(int delta)
             {
-                int position = Console.CursorTop * Console.BufferWidth + Console.CursorLeft + delta;
+                int position = Console.CursorTop*Console.BufferWidth + Console.CursorLeft + delta;
 
-                Console.CursorLeft = position % Console.BufferWidth;
-                Console.CursorTop = position / Console.BufferWidth;
+                Console.CursorLeft = position%Console.BufferWidth;
+                Console.CursorTop = position/Console.BufferWidth;
             }
-        };
+        } ;
 
         /// <summary>
         /// The console input buffer.
         /// </summary>
         private StringBuilder input = new StringBuilder();
+
         /// <summary>
         /// Current position - index into the input buffer
         /// </summary>
@@ -248,6 +238,7 @@ namespace Prx
         /// Length of the output currently rendered on screen.
         /// </summary>
         private int rendered = 0;
+
         /// <summary>
         /// Input has changed.
         /// </summary>
@@ -256,14 +247,16 @@ namespace Prx
         /// Command history
         /// </summary>
         private History history = new History();
+
         /// <summary>
         /// Tab options available in current context
         /// </summary>
         private SuperConsoleOptions options = new SuperConsoleOptions();
+
         /// <summary>
         /// Cursort anchor - position of cursor when the routine was called
         /// </summary>
-        Cursor cursor;
+        private Cursor cursor;
 
         //Removed "PythonEngine engine" an all references/assignments to it. (-P)
 
@@ -278,7 +271,7 @@ namespace Prx
                 SetupColors();
         }
 
-        void Console_CancelKeyPress(object sender, ConsoleCancelEventArgs e)
+        private void Console_CancelKeyPress(object sender, ConsoleCancelEventArgs e)
         {
             if (e.SpecialKey == ConsoleSpecialKey.ControlC)
             {
@@ -312,7 +305,9 @@ namespace Prx
             if (name.Trim().Length > 0)
             {
                 int lastDot = name.LastIndexOf('.');
-                string attr, pref, root;
+                string attr,
+                       pref,
+                       root;
                 if (lastDot < 0)
                 {
                     attr = String.Empty;
@@ -345,7 +340,7 @@ namespace Prx
                         }
                     }
                 }
-                catch(Exception exc)
+                catch (Exception exc)
                 {
                     WriteLine(exc.ToString(), Style.Error);
                     options.Clear();
@@ -358,7 +353,7 @@ namespace Prx
             }
         }
 
-        public abstract System.Collections.Generic.IEnumerable<string> OnTab(
+        public abstract IEnumerable<string> OnTab(
             string attr, string pref, string root);
 
         private void SetInput(string line)
@@ -449,8 +444,10 @@ namespace Prx
 
         private static string MapCharacter(char c)
         {
-            if (c == 13) return "\r\n";
-            if (c <= 26) return "^" + ((char)(c + 'A' - 1));
+            if (c == 13)
+                return "\r\n";
+            if (c <= 26)
+                return "^" + ((char) (c + 'A' - 1));
 
             return "^?";
             //return c.ToString();
@@ -556,7 +553,8 @@ namespace Prx
                     {
                         MoveRight();
 
-                        if (current == input.Length) break;
+                        if (current == input.Length)
+                            break;
                         if (IsSeperator(input[current]) != nonLetter)
                         {
                             if (nonLetter)
@@ -594,9 +592,10 @@ namespace Prx
         }
 
         private const int TabSize = 4;
+
         private void InsertTab()
         {
-            for (int i = TabSize - (current % TabSize); i > 0; i--)
+            for (int i = TabSize - (current%TabSize); i > 0; i--)
             {
                 Insert(' ');
             }
@@ -619,6 +618,7 @@ namespace Prx
             get { return _doBeep; }
             set { _doBeep = value; }
         }
+
         private bool _doBeep = false;
 
         //Removed autoIndentSizeInput parameter and usages (-P)
@@ -630,7 +630,7 @@ namespace Prx
             bool inputChanged = false;
             bool optionsObsolete = false;
 
-            for (; ; )
+            for (;;)
             {
                 ConsoleKeyInfo key = Console.ReadKey(true);
 
@@ -647,7 +647,8 @@ namespace Prx
                     case ConsoleKey.Enter:
                         Console.Write("\n");
                         string line = input.ToString();
-                        if (line == FinalLineText) return null;
+                        if (line == FinalLineText)
+                            return null;
                         if (line.Length > 0)
                         {
                             history.Add(line, inputChanged);
@@ -664,14 +665,16 @@ namespace Prx
 
                             if (options.Count > 0)
                             {
-                                string part = (key.Modifiers & ConsoleModifiers.Shift) != 0 ? options.Previous() : options.Next();
+                                string part = (key.Modifiers & ConsoleModifiers.Shift) != 0
+                                                  ? options.Previous()
+                                                  : options.Next();
                                 SetInput(options.Root + part);
                             }
                             else
                             {
                                 if (prefix)
                                 {
-                                    if(_doBeep)
+                                    if (_doBeep)
                                         Console.Beep();
                                 }
                                 else
@@ -717,8 +720,10 @@ namespace Prx
                         // ignore these
                         continue;
                     default:
-                        if (key.KeyChar == '\x0D') goto case ConsoleKey.Enter;      // Ctrl-M
-                        if (key.KeyChar == '\x08') goto case ConsoleKey.Backspace;  // Ctrl-H
+                        if (key.KeyChar == '\x0D')
+                            goto case ConsoleKey.Enter; // Ctrl-M
+                        if (key.KeyChar == '\x08')
+                            goto case ConsoleKey.Backspace; // Ctrl-H
                         Insert(key);
                         inputChanged = optionsObsolete = true;
                         break;
@@ -728,21 +733,24 @@ namespace Prx
 
         //Made FinalLineText static  (-P)
 
-        static string FinalLineText
+        private static string FinalLineText
         {
-            get
-            {
-                return Environment.OSVersion.Platform != PlatformID.Unix ? "\x1A" : "\x04";
-            }
+            get { return Environment.OSVersion.Platform != PlatformID.Unix ? "\x1A" : "\x04"; }
         }
 
         public void Write(string text, Style style)
         {
             switch (style)
             {
-                case Style.Prompt: WriteColor(text, PromptColor); break;
-                case Style.Out: WriteColor(text, OutColor); break;
-                case Style.Error: WriteColor(text, ErrorColor); break;
+                case Style.Prompt:
+                    WriteColor(text, PromptColor);
+                    break;
+                case Style.Out:
+                    WriteColor(text, OutColor);
+                    break;
+                case Style.Error:
+                    WriteColor(text, ErrorColor);
+                    break;
             }
         }
 
@@ -758,7 +766,6 @@ namespace Prx
             Console.Write(s);
             Console.ForegroundColor = origColor;
         }
-
     }
 
     public enum Style
