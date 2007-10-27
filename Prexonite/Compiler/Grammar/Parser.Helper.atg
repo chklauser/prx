@@ -21,32 +21,32 @@
  *  51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
  */
 
-Id<out string id>   (.  id = "\\NoId\\"; .) //<-- should never surface. this is for debugging purposes
+Id<out string id>               (.  id = "\\NoId\\"; .) //<-- should never surface. this is for debugging purposes
 =
     GlobalId<out id>
 |   (   enabled
     |   disabled
     |   build
     |   add
-    )               (.  id = cache(t.val); .)
+    )                           (.  id = cache(t.val); .)
 .
 
-Ns<out string ns>   (. ns = "\\NoId\\"; .)
+Ns<out string ns>               (. ns = "\\NoId\\"; .)
 =
-    ns              (. ns = cache(t.val); .)
+    ns                          (. ns = cache(t.val); .)
 .
 
-Boolean<out bool value>     (.  value = true; .)
+Boolean<out bool value>         (.  value = true; .)
 =                   
 	true          
-|	false         (.  value = false; .)
+|	false                       (.  value = false; .)
 .
 
 Integer<out int value>
 =
-	integer         (.  if(!Int32.TryParse(t.val, out value))
-	                        SemErr("Cannot recognize integer " + t.val + ".");
-	                .)
+	integer                     (.  if(!Int32.TryParse(t.val, out value))
+	                                SemErr("Cannot recognize integer " + t.val + ".");
+	                            .)
 .
 
 SignedInteger<out int value>    (. int modifier = 1; .)
@@ -60,16 +60,16 @@ Real<out double value>
 =
 	real            
 	/*
-	[   e           (.  real += "e"; .)
+	[   e                       (.  real += "e"; .)
 	    [   plus     
-	    |   minus   (.  real += "-"; .)
+	    |   minus               (.  real += "-"; .)
 	    ]
-	    real        (.   real += t.val; .)
+	    real                    (.   real += t.val; .)
 	] */
-	                (.  string real = t.val;
-	                    if(!double.TryParse(real, out value))
-	                        SemErr("Cannot recognize real " + real + ".");
-	                .)
+	                            (.  string real = t.val;
+	                                if(!double.TryParse(real, out value))
+	                                SemErr("Cannot recognize real " + real + ".");
+	                            .)
 .
 
 SignedReal<out double value>    (. value = 0.0; double modifier = 1.0; int ival; .)
@@ -84,7 +84,7 @@ SignedReal<out double value>    (. value = 0.0; double modifier = 1.0; int ival;
 
 String<out string value>
 =
-    string          (. value = cache(t.val); .)
+    string                      (. value = cache(t.val); .)
 .
 
 Null = null .

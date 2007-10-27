@@ -24,6 +24,7 @@
 using System;
 using System.Collections.Generic;
 using System.Reflection;
+using System.Text;
 using NoDebug = System.Diagnostics.DebuggerNonUserCodeAttribute;
 
 namespace Prexonite.Types
@@ -482,7 +483,23 @@ namespace Prexonite.Types
             if (
                 !_try_execute(
                      candidates, new call_conditions(sctx, args, call, id), subject, out ret))
-                throw new InvalidCallException("Cannot call resolved member " + candidate);
+            {
+                StringBuilder sb = new StringBuilder();
+                sb.Append("Cannot call '");
+                sb.Append(candidate);
+                sb.Append("' on object of Type ");
+                sb.Append((subject.IsNull ? "null" : subject.ClrType.FullName));
+                sb.Append(" with (");
+                foreach (PValue arg in args)
+                {
+                    sb.Append(arg);
+                    sb.Append(", ");
+                }
+                if (args.Length > 0)
+                    sb.Length -= 2;
+                sb.Append(").");
+                throw new InvalidCallException(sb.ToString());
+            }
             return ret;
         }
 
@@ -737,9 +754,23 @@ namespace Prexonite.Types
         {
             PValue result;
             if (!TryDynamicCall(sctx, subject, args, call, id, out result, out resolvedMember))
-                throw new InvalidCallException(
-                    "Cannot resolve CLR call '" + id + "' on object of type " +
-                    (subject.IsNull ? "null" : subject.ClrType.FullName) + ".");
+            {
+                StringBuilder sb = new StringBuilder();
+                sb.Append("Cannot resolve call '");
+                sb.Append(id);
+                sb.Append("' on object of type ");
+                sb.Append(subject.IsNull ? "null" : subject.ClrType.FullName);
+                sb.Append(" with (");
+                foreach (PValue arg in args)
+                {
+                    sb.Append(arg);
+                    sb.Append(", ");
+                }
+                if (args.Length > 0)
+                    sb.Length -= 2;
+                sb.Append(").");
+                throw new InvalidCallException(sb.ToString());
+            }
             return result;
         }
 
@@ -755,8 +786,23 @@ namespace Prexonite.Types
         {
             PValue result;
             if (!TryStaticCall(sctx, args, call, id, out result, out resolvedMember))
-                throw new InvalidCallException(
-                    "Cannot resolve static CLR call '" + id + "' on type " + ClrType + ".");
+            {
+                StringBuilder sb = new StringBuilder();
+                sb.Append("Cannot resolve static call '");
+                sb.Append(id);
+                sb.Append("' on type ");
+                sb.Append(_clrType.FullName);
+                sb.Append(" with (");
+                foreach (PValue arg in args)
+                {
+                    sb.Append(arg);
+                    sb.Append(", ");
+                }
+                if (args.Length > 0)
+                    sb.Length -= 2;
+                sb.Append(").");
+                throw new InvalidCallException(sb.ToString());
+            }
             return result;
         }
 

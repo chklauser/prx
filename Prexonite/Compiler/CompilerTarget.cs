@@ -1290,6 +1290,8 @@ namespace Prexonite.Compiler
         private bool _by_index()
         {
             bool optimized = false;
+            if(Engine.StringsAreEqual(Function.Id,Application.InitializationId))
+                return false; //Do not optimize \init function due to distributed symbol tables.
             List<Instruction> code = Function.Code;
             Function.CreateLocalVariableMapping(); //Force (re)creation of the mapping
             SymbolTable<int> map = Function.LocalVariableMapping;

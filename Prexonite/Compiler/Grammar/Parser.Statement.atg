@@ -272,8 +272,7 @@ Function<out AstGetSetSymbol function>
                                         function = new AstGetSetSymbol(this, sym.Id, sym.Interpretation);
                                     }
                                 .)
-    Arguments<function.Arguments>
-    
+    Arguments<function.Arguments>    
 .
 
 StaticCall<out AstGetSetStatic staticCall>
