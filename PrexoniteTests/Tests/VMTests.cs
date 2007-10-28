@@ -1143,11 +1143,7 @@ function main(lst)
                 @"
 function curry(ref f) = a => b => f(a,b);
 
-function uncurry(ref f) = (a, b) =>
-{
-    ref bc = f(a);
-    return bc(b);
-};
+function uncurry(ref f) = (a, b) => f(a).(b);
 
 function map(ref f, lst)
 {
@@ -1684,16 +1680,12 @@ function foldl(ref f, var left, var lst)
 
 function curry(ref f) = a => b => f(a,b);
 
-function chain()
+function chain() = lst =>
 {
-    var filters = var args;
-    return lst =>
-    {
-        foreach(ref filter in filters)
-            lst = filter(lst);
-        return lst;
-    };
-}
+    foreach(ref filter in var args)
+        lst = filter(lst);
+    return lst;
+};
 
 function main()
 {

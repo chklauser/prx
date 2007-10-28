@@ -965,6 +965,26 @@ namespace Prexonite.Compiler
                     //Forward destination label
                     partialResolve = jump.Id;
 
+            //resolve any unresolved jumps
+            foreach (Instruction ins in _unresolvedInstructions.ToArray())
+            {
+                if (Engine.StringsAreEqual(ins.Id, label))
+                {
+                    //Found a matching unresolved 
+
+                    if (partialResolve != null)
+                    {
+                        ins.Id = jump.Id;
+                        //keep the instruction unresolved
+                    }
+                    else
+                    {
+                        ins.Arguments = address;
+                        _unresolvedInstructions.Remove(ins);
+                    }
+                }
+            }
+
             //Check if there is a redundant jump
             Instruction redundant;
             //if...
@@ -975,48 +995,26 @@ namespace Prexonite.Compiler
                 address == Code.Count &&
                 //...the last instruction is a jump (conditional or unconditional) and ...
                 ((redundant = Code[address - 1]).IsJump) &&
-                //...that last jump has a symbolic reference, ...
-                redundant.Id != null &&
-                //...that has not yet been resolved and ...
-                redundant.Arguments == -1 &&
-                //...points to this label, ...
-                Engine.StringsAreEqual(redundant.Id, label))
+                //...that last jump points to the next instruction) ...
+                redundant.Arguments == address)
             {
                 //...then ...
                 //...remove that last jump ...
                 Code.RemoveAt(Code.Count - 1);
+                if (redundant.IsConditionalJump)
+                    EmitPop(); //Make sure the stack keeps its integrity
                 //..., adjust this labels target address
                 address--;
                 //...and all other instructions targeting this address
                 foreach (Instruction ins in Code)
                     if (ins.IsJump)
-                        if (ins.Arguments == Code.Count + 1)
+                        if (ins.Arguments == Code.Count + 1) // +1 since one instruction has been removed
                             ins.Arguments -= 1;
             }
 
             //Add the label to the symbol table
             Symbols[label + LabelSymbolPostfix] =
                 new SymbolEntry(SymbolInterpretations.JumpLabel, address);
-
-            //resolve any unresolved jumps
-            foreach (Instruction ins in _unresolvedInstructions.ToArray())
-            {
-                if (Engine.StringsAreEqual(ins.Id, label))
-                {
-                    //Found a matching unresolved 
-
-                    if (partialResolve == null)
-                    {
-                        ins.Arguments = address;
-                        _unresolvedInstructions.Remove(ins);
-                    }
-                    else
-                    {
-                        ins.Id = jump.Id;
-                        //keep the instruction unresolved
-                    }
-                }
-            }
         }
 
         [NoDebug()]
