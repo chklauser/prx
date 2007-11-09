@@ -19,7 +19,7 @@
     <DebugType>full</DebugType>
     <Optimize>false</Optimize>
     <OutputPath>bin\</OutputPath>
-    <DefineConstants>TRACE;DEBUG</DefineConstants>
+    <DefineConstants>TRACE;DEBUG;Verbose=True</DefineConstants>
     <ErrorReport>prompt</ErrorReport>
     <WarningLevel>4</WarningLevel>
     <DocumentationFile>
@@ -142,6 +142,7 @@
     <Compile Include="PValueComparer.cs" />
     <Compile Include="TryCatchFinallyBlock.cs" />
     <Compile Include="Types\BoolPType.cs" />
+    <Compile Include="Types\ExtendableObject.cs" />
     <Compile Include="Types\HashPType.cs" />
     <Compile Include="Types\IntPType.cs" />
     <Compile Include="Types\IObject.cs" />

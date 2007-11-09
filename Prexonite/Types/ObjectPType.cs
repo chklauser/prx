@@ -157,6 +157,11 @@ namespace Prexonite.Types
             out PValue result,
             out MemberInfo resolvedMember)
         {
+            return TryDynamicCall(sctx, subject, args, call, id, out result, out resolvedMember, false);
+        }
+
+        internal bool TryDynamicCall(StackContext sctx, PValue subject, PValue[] args, PCall call, string id, out PValue result, out MemberInfo resolvedMember, bool suppressIObject)
+        {
             result = null;
             resolvedMember = null;
 
@@ -164,7 +169,7 @@ namespace Prexonite.Types
                 id = "";
 
             IObject iobj = subject.Value as IObject;
-            if (iobj != null && iobj.TryDynamicCall(sctx, args, call, id, out result))
+            if ((!suppressIObject) && iobj != null && iobj.TryDynamicCall(sctx, args, call, id, out result))
                 return true;
 
             //Special interop members
@@ -187,6 +192,9 @@ namespace Prexonite.Types
                         }
                     }
                     result = true;
+                    return true;
+                case @"\boxed":
+                    result = sctx.CreateNativePValue(subject);
                     return true;
             }
 

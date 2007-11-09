@@ -148,7 +148,7 @@ namespace Prexonite.Types
 
         #region PType implementation
 
-        private static PValue[] _addThis(PValue Subject, PValue[] args)
+        internal static PValue[] _addThis(PValue Subject, PValue[] args)
         {
             PValue[] argst = new PValue[args.Length + 1];
             argst[0] = Subject;
