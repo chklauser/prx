@@ -1680,7 +1680,8 @@ function foldl(ref f, var left, var lst)
 
 function curry(ref f) = a => b => f(a,b);
 
-function chain() = lst =>
+function chain() does
+var args; and return lst =>
 {
     foreach(ref filter in var args)
         lst = filter(lst);

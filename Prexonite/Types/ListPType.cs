@@ -359,7 +359,9 @@ namespace Prexonite.Types
             bool useExplicit,
             out PValue result)
         {
-            throw new Exception("The method or operation is not implemented.");
+            //TODO: Create to List conversions (KeyValuePair)
+            result = null;
+            return false;
         }
 
         protected override bool InternalIsEqual(PType otherType)

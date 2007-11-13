@@ -1075,10 +1075,10 @@ namespace Prexonite.Compiler
 
 #if !DEBUG
             _removeNop();
-#endif
 
             if (Loader.Options.UseIndicesLocally)
                 _by_index();
+#endif
         }
 
         #region Check unresolved Instructions

@@ -2878,5 +2878,25 @@ cmd.2   call
 stloc   r
 ");
         }
+
+        [Test]
+        public void OptimizeSquare()
+        {
+            _compile(@"
+function main()
+{
+    var x;
+    return x^2;
+}
+");
+
+            _expect(@"
+var x
+ldloc   x
+dup     1
+mul
+ret
+");
+        }
     }
 }

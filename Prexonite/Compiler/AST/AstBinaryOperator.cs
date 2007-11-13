@@ -353,19 +353,41 @@ namespace Prexonite.Compiler.Ast
                         left.TryConvertTo(target.Loader, PType.Real, out rleft) &&
                         right.TryConvertTo(target.Loader, PType.Real, out rright))
                     {
-                        result = Math.Pow((double) rleft.Value, (double) rright.Value);
+                        result = Math.Pow(Convert.ToDouble(rleft.Value), Convert.ToDouble(rright.Value));
                         goto emitConstant;
                     }
                     if (right != null)
                     {
                         neutral = new PValue(1, PType.Int);
-                        if (
-                            !(right.Equality(target.Loader, neutral, out neutral) &&
-                              (bool) neutral.Value))
+                        PValue square = new PValue(2, PType.Int);
+                        if ((right.Equality(target.Loader, neutral, out neutral) &&
+                             (bool)neutral.Value))
+                        {
+                            //right operand is the neutral element 1 => left ^ 1 = left
+                            expr = leftConstant == null ? LeftOperand : leftConstant;
+                            return true;
+                        }
+                        else if(right.Equality(target.Loader, square,out square) && (bool)square.Value)
+                        {
+                            //right operand is 2
+                            expr =
+                                new AstActionBlock(
+                                    (AstNode) LeftOperand, delegate(CompilerTarget t)
+                                    {
+                                        if(leftConstant != null)
+                                            leftConstant.EmitCode(t);
+                                        else
+                                            LeftOperand.EmitCode(t);
+
+                                        t.EmitDuplicate(1);
+                                        EmitOperator(t,BinaryOperator.Multiply);
+                                    });
+                            return true;
+                        }
+                        else
+                        {
                             goto emitFull;
-                        //right operand is the neutral element 1 => left ^ 1 = left
-                        expr = leftConstant == null ? LeftOperand : leftConstant;
-                        return true;
+                        }
                     }
                     else if (left != null)
                     {
