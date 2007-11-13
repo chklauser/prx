@@ -1,0 +1,55 @@
+﻿
+//Stack implementation using []
+build does require("struct.pxs","debug.pxs");
+
+debugging disabled;
+
+function create_stack()
+{
+    var xs = [];
+    var i = -1;
+    
+    function push does foreach(var arg in var args)
+    {
+        var first;
+        if(first is Null)
+        {
+            first = false;
+            continue;
+        }
+        
+        debug(arg);
+        xs.Add(arg);
+        i++;
+        debug(xs);
+    }
+    
+    function pop
+    {
+        if(i < 0)
+            throw "The stack is empty";
+        return = xs[i];
+        xs.RemoveAt(i);
+        i--;
+    }
+    
+    function peek
+    {
+        if(i < 0)
+            throw "The stack is empty.";
+        return xs[i];
+    }
+    
+    function count
+    {
+        return i+1;
+    }
+    
+    function clear
+    {
+        xs.Clear();
+        i = -1;   
+    }
+    
+    return struct;
+}

@@ -1,0 +1,179 @@
+Import
+{
+    System,
+    Prexonite,
+    Prexonite::Types,
+    Prexonite::Compiler,
+    Prexonite::Compiler::Ast
+};
+
+function ast(type) [is compiler;]
+{
+    var args;
+    var targs = for(var i = 1; i < args.Count; i++)
+                {
+                    yield args[i];
+                };
+
+    return 
+        asm(ldr.eng)
+        .CreatePType("Object(\"Prexonite.Compiler.Ast.Ast$(type)\")")
+        .Construct((["--COMPILER-HOOK--",-1,-1]+targs)~Object<"Prexonite.PValue[]">)
+        .self;
+}
+
+function subBlocks(block) [is compiler;] =
+    if(block.\implements("Prexonite.Compiler.Ast.IAstHasBlocks"))   
+        ~List.CreateFromList(block~::IAstHasBlocks.Blocks)
+    else
+        [];
+
+var uniqueIdCounter [is compiler;];
+build does uniqueIdCounter =  0;
+function uniqueId(verb) = "hook\\" + verb + uniqueIdCounter++;
+
+function isFunctionCall(id, node)[is compiler;] =
+        node is ::AstGetSetSymbol And
+        node.Interpretation~Int == ::SymbolInterpretations.$Function~Int And
+        node.Id.ToLowerInvariant == id.ToString.ToLowerInvariant;
+        
+function isMemberAccess(id, node)[is compiler;] =
+        node is ::AstGetSetMemberAccess And
+        node.Id.ToLowerInvariant == id.ToString.ToLowerInvariant;
+        
+function localMeta(key, context)[is compiler;] =
+    if(context.Meta.ContainsKey(key))
+        context.Meta[key]
+    else
+        context.ParentApplication.Meta[key];
+        
+var SI [is compiler;];
+build {
+    SI = new Structure<"lvar", "lref", "gvar", "gref", "func", "cmd">;
+    SI.lvar = ::SymbolInterpretations.LocalObjectVariable;
+    SI.lref = ::SymbolInterpretations.LocalReferenceVariable;
+    SI.gvar = ::SymbolInterpretations.GlobalObjectVariable;
+    SI.gref = ::SymbolInterpretations.GlobalReferenceVariable;
+    SI.func = ::SymbolInterpretations.$Function;
+    SI.cmd = ::SymbolInterpretations.$Command;
+    SI.\\("eq") = (this, l, r) => l~Int == r~Int;
+    SI.\\("is_lvar") = (this, s) => s~Int == this.lvar~Int;
+    SI.\\("is_lref") = (this, s) => s~Int == this.lref~Int;
+    SI.\\("is_gvar") = (this, s) => s~Int == this.gvar~Int;
+    SI.\\("is_gref") = (this, s) => s~Int == this.gref~Int;
+    SI.\\("is_func") = (this, s) => s~Int == this.func~Int;
+    SI.\\("is_cmd") = (this, s) => s~Int == this.cmd~Int;
+    SI.\\("is_obj") = (this, s) => this.is_lvar(s) || this.is_gvar(s);
+    SI.\\("is_ref") = (this, s) => this.is_lref(s) || this.is_gref(s);
+    SI.\\("is_global") = (this, s) => this.is_gvar(s) || this.is_gref(s);
+    SI.\\("is_local") = (this, s) => this.is_lvar(s) || this.is_lref(s);
+    SI.\\("make_global") = (this, s) => 
+        if(this.is_obj(s))
+            this.gvar
+        else if(this.is_ref(s))
+            this.gref
+        else
+            throw "$s cannot be made global.";            
+    SI.\\("make_local") = (this, s) => 
+        if(this.is_obj(s))
+            this.lvar
+        else if(this.is_ref(s))
+            this.lref
+        else
+            throw "$s cannot be made local.";
+    SI.\\("make_obj") = (this, s) =>
+        if(this.is_local(s))
+            this.lvar
+        else if(this.is_global(s))
+            this.gvar
+        else
+            throw "$s cannot be made object.";
+    SI.\\("make_ref") = (this, s) =>
+        if(this.is_local(s))
+            this.lref
+        else if(this.is_global(s))
+            this.gref
+        else
+            throw "$s cannot be made reference.";
+}
+
+var _stmt_hooks [is compiler;];
+build does _stmt_hooks = [];
+
+build does hook( t =>
+{
+    if(_stmt_hooks.Count == 0)
+        return;
+        
+    //allocate stores
+    var stores = {};
+    foreach(var fhook in _stmt_hooks)
+        stores[fhook.Key] = 
+            for(var i = 0; i < fhook.Value; i++)
+                yield new Prexonite::PVariable;
+            ;
+    
+    var hooks = foreach(var hook in _stmt_hooks)
+                    yield hook;
+                ;
+            
+    function process(block)
+    {
+        for(var i = 0; i < block.Count; i++)
+        {
+            foreach(var fhook in hooks)
+            {
+                var hook = fhook.Key;
+                if(call(hook, t, block[i], ->i, stores[hook]))
+                    hooks.Remove(hook);
+                if(i >= block.Count Or i < 0)
+                    break;
+            }
+        }
+        
+        foreach(var subBlock in subBlocks(block))
+            process(subBlock);
+    }
+    
+    process(t.Ast);
+});
+
+//SIGNATURE OF STMT_HOOKS:
+//
+//  (t, stmt, ref i, ref customVariable1, ..., ref customVariableN) => true Or false
+//
+//  t => CompilerTarget
+//  stmt => the current statement
+//  ref i => the index
+//  custom variable objects are passed to the function depending on your setting for the stmt_hook.
+
+
+//Add a statement hook to the shared compiler hook
+//  Usage:
+//      stmt_hook
+//          ( 
+//              2: (t,stmt,ref i, ref v1, ref v2) => {...},
+//              4: (t,stmt,ref i, ref v1, ref v2, ref v3, ref v4) => {...},
+//              (t,stmt) => {...}
+//          )
+//
+//  The key indictaes the number of per function variables to create
+//  If no key is provided, 0 is assumed.
+function stmt_hook() [ is compiler; ] does 
+    foreach(var fhook in var args) 
+        unless(fhook is Null Or _stmt_hooks.Contains(fhook))
+        {
+            unless(fhook is Prexonite::Types::PValueKeyValuePair)
+                fhook = fhook: 0;
+            _stmt_hooks[] = fhook;
+        }
+
+function remove_stmt_hook() [ is compiler; ] does 
+    foreach(var fhook in var args) 
+        unless(fhook is Null)
+            _stmt_hooks.Remove(
+                if(fhook is Prexonite::Types::PValueKeyValuePair)
+                    fhook.Key
+                else
+                    fhook
+            );

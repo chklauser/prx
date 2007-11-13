@@ -1,0 +1,57 @@
+﻿
+build does require = "debug.pxs";
+debugging disabled;
+function struct
+{
+    function getId(g) =
+        if(g.Meta.ContainsKey("SId"))
+            g.Meta["SId"].Text
+        else if(g.Meta.ContainsKey("LogicalId"))
+            g.Meta["LogicalId"].Text
+        else
+            throw "The function $g cannot be used in a" +
+                " struct because it has no LogicalId";
+        ;
+    
+    var parentId = caller.Implementation.Id;
+    var methods = new System::Text::StringBuilder;
+    var methods_f = [];
+    
+    debug(parentId);
+    
+    foreach(var f in asm(ldr.app).Functions)
+    {
+        if(
+            f
+            .Meta["ParentFunction"]
+            .Text
+            .Equals(parentId, System::StringComparison.OrdinalIgnoreCase)
+          )
+        {
+            if(debug)
+                println("Found sub function $f");
+            var cf = caller.LocalVariables[f.Meta["LogicalId"].Text].Value;
+            if(cf == null)
+                continue; and if(debug) println("Function $f is not bound to the context.");
+            methods.Append("\"ref\", \"$(getId(f))\", ");
+            methods_f[] = f: cf;
+        }
+    }
+    if(methods.Length > 0)
+        methods.Length -= 2;
+    var s =
+        asm(ldr.eng)
+        .CreatePType("Structure(\"$(methods.ToString.Escape)\")")
+        .Construct([]~Object<"Prexonite.PValue[]">)
+        .self;
+    foreach(var kv in methods_f)
+    {
+        var id = getId(kv.Key);
+        var f = kv.Value;
+        if(debug)
+            println("$id -> $f");
+        s.\\(id) = f;
+    }
+        
+    return s;
+}

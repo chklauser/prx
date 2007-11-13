@@ -1,0 +1,3 @@
+function IsDebuggingEnabled(func) = Prexonite::Compiler::DebugHook.IsDebuggingEnabled(func);      
+
+build does Prexonite::Compiler::DebugHook.InstallHook(getloader);
