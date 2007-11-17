@@ -109,7 +109,7 @@ namespace Prexonite.Compiler.Ast
 
                     //Assignment (begin)
                     target.EmitLabel(Labels.BeginLabel);
-                    element.EmitCode(target);
+                    element.EmitEffectCode(target);
 
                     //Code block
                     Block.EmitCode(target);

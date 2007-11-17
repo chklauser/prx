@@ -32,9 +32,9 @@ namespace Prexonite.Compiler.Ast
                                      IAstHasExpressions
     {
         public IAstType TypeExpr;
-        private AstGetSet.ArgumentsProxy _proxy;
+        private ArgumentsProxy _proxy;
 
-        public AstGetSet.ArgumentsProxy Arguments
+        public ArgumentsProxy Arguments
         {
             get { return _proxy; }
         }
@@ -57,7 +57,7 @@ namespace Prexonite.Compiler.Ast
             if (type == null)
                 throw new ArgumentNullException("type");
             TypeExpr = type;
-            _proxy = new AstGetSet.ArgumentsProxy(_arguments);
+            _proxy = new ArgumentsProxy(_arguments);
         }
 
         [NoDebug]

@@ -88,18 +88,26 @@ namespace Prexonite.Compiler.Ast
         {
         }
 
-        public override void EmitCode(CompilerTarget target, bool justEffect)
+        protected override int DefaultAdditionalArguments
+        {
+            get
+            {
+                return base.DefaultAdditionalArguments + 1; //include subject
+            }
+        } 
+
+        protected override void EmitCode(CompilerTarget target, bool justEffect)
         {
             Subject.EmitCode(target);
             base.EmitCode(target, justEffect);
         }
 
-        public override void EmitGetCode(CompilerTarget target, bool justEffect)
+        protected override void EmitGetCode(CompilerTarget target, bool justEffect)
         {
             target.EmitIndirectCall(Arguments.Count, justEffect);
         }
 
-        public override void EmitSetCode(CompilerTarget target)
+        protected override void EmitSetCode(CompilerTarget target)
         {
             target.EmitIndirectCall(Arguments.Count);
         }

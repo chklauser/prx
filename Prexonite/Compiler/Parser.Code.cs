@@ -288,6 +288,47 @@ namespace Prexonite.Compiler
             return false; //something else, a GetSetComplex maybe?
         }
 
+        public bool isAssignmentOperator() //LL2
+        {
+            /* Applies to:
+             *  =
+             *  +=
+             *  -=
+             *  *=
+             *  /=
+             *  ^=
+             *  |=
+             *  &=
+             *  ??=
+             *  ~=
+             */
+            scanner.ResetPeek();
+
+            //current la = assign | plus | minus | times | div | pow | bitOr | bitAnd | coalesence | tilde
+
+            switch(la.kind)
+            {
+                case _assign:
+                    return true;
+                case _plus:
+                case _minus:
+                case _times:
+                case _div:
+                case _pow:
+                case _bitOr:
+                case _bitAnd:
+                case _coalescence:
+                case _tilde:
+                    Token c = scanner.Peek();
+                    if(c.kind == _assign)
+                        return true;
+                    else
+                        return false;
+                default:
+                    return false;
+            }
+        }
+
         [NoDebug]
         public bool isDeDereference() //LL(2)
         {

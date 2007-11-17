@@ -299,6 +299,20 @@ namespace Prexonite
             return new Instruction(OpCode.indarg, arguments, null, justEffect);
         }
 
+        public static Instruction CreateIndLocI(int index, int arguments)
+        {
+            if (index > ushort.MaxValue)
+                throw new ArgumentOutOfRangeException(
+                    "index", index, "index must fit into an unsigned short integer.");
+            if (arguments > ushort.MaxValue)
+                throw new ArgumentOutOfRangeException(
+                    "arguments", arguments, "arguments must fit into an unsigned short integer.");
+            ushort idx = (ushort)index;
+            ushort argc = (ushort)arguments;
+
+            return new Instruction(Prexonite.OpCode.indloci, (argc << 16) | idx);
+        }
+
         #endregion
 
         #region Flow-Control
@@ -382,27 +396,13 @@ namespace Prexonite
             return CreateRotate(rotations, 3);
         }
 
-        public static Instruction CreateRotate(int rotations, int instructions)
+        public static Instruction CreateRotate(int rotations, int values)
         {
-            if (rotations >= instructions)
-                throw new ArgumentException("Not enough instructions to rotate.");
+            if (rotations >= values)
+                throw new ArgumentException("Not enough values to rotate.");
             Instruction ins = new Instruction(OpCode.rot, rotations);
-            ins.GenericArgument = instructions;
+            ins.GenericArgument = values;
             return ins;
-        }
-
-        public static Instruction CreateIndLocI(int index, int arguments)
-        {
-            if (index > ushort.MaxValue)
-                throw new ArgumentOutOfRangeException(
-                    "index", index, "index must fit into an unsigned short integer.");
-            if (arguments > ushort.MaxValue)
-                throw new ArgumentOutOfRangeException(
-                    "arguments", arguments, "arguments must fit into an unsigned short integer.");
-            ushort idx = (ushort) index;
-            ushort argc = (ushort) arguments;
-
-            return new Instruction(Prexonite.OpCode.indloci,(argc << 16) | idx);
         }
 
         #endregion
@@ -463,6 +463,12 @@ namespace Prexonite
                 escId = "\"\"";
             switch (OpCode)
             {
+                case OpCode.rot:
+                    buffer.Append("rot.");
+                    buffer.Append(Arguments);
+                    buffer.Append(",");
+                    buffer.Append(GenericArgument);
+                    break;
                 case OpCode.incloc:
                     buffer.Append("inc ");
                     buffer.Append(escId);
@@ -750,6 +756,10 @@ namespace Prexonite
                         return
                             Arguments == ins.Arguments &&
                             JustEffect == ins.JustEffect;
+                    case OpCode.rot:
+                        return
+                            Arguments == ins.Arguments &&
+                            (int) GenericArgument == (int) ins.GenericArgument;
                     default:
                         throw new PrexoniteException("Invalid opcode " + OpCode);
                 }

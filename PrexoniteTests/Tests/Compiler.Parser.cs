@@ -2948,5 +2948,98 @@ add
 ret
 ");
         }
+
+        [Test]
+        public void SimpleAssignExpr()
+        {
+            _compile(@"
+function main()
+{
+    var a;
+    var b;
+    var c = b = a;
+    var d = a + 5*(b = c);
+    var s;
+    var e = s.M = d;
+    var f = System::Console.WriteLine = 5;
+    var g = f.(8) = a;
+}
+");
+
+            _expect(@"
+var a,b,c,d,e,f,g,s
+
+ldloc   a
+dup     1
+stloc   b
+stloc   c
+
+ldloc   a
+ldc.int 5
+ldloc   c
+dup     1
+stloc   b
+mul
+add
+stloc   d
+
+ldloc   s
+ldloc   d
+dup     1
+rot.1,3
+set.1   M
+stloc   e
+
+ldc.int 5
+dup     1
+sset.1  ""Object(\""System.Console\"")::WriteLine""
+stloc   f
+
+ldc.int 8
+ldloc   a
+dup     1
+rot.1,3
+indloc.2 f
+stloc   g
+");
+        }
+
+        [Test]
+        public void ComplexAssignExpr()
+        {
+            _compile(@"
+function main()
+{
+    var a;
+    var b = a *= 5;
+    var c ~= T;
+    var d = b ??= a;
+}
+");
+            _expect(@"
+var a,b,c,d
+
+            ldloc   a
+            ldc.int 5
+            mul
+            dup     1
+            stloc   a
+            stloc   b
+
+            ldloc   c
+            cast.const  ""T""
+            stloc   c
+
+            ldloc   b
+            check.null
+            jump.f  el
+            ldloc   a
+            dup     1
+            stloc   b
+            jump    end
+label   el  ldloc   b
+label end   stloc   d
+");
+        }
     }
 }

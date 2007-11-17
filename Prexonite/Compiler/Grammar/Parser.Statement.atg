@@ -547,7 +547,7 @@ Using<AstBlock block>
                                 (.  block.Add(use); .)
 .
 
-Arguments<AstGetSet.ArgumentsProxy args>
+Arguments<ArgumentsProxy args>
                                 (.  
 									IAstExpression expr;
                                 .)

@@ -8,9 +8,9 @@ namespace Prexonite.Compiler.Ast
     {
         public IAstExpression Expression;
 
-        private AstGetSet.ArgumentsProxy _proxy;
+        private ArgumentsProxy _proxy;
 
-        public AstGetSet.ArgumentsProxy Arguments
+        public ArgumentsProxy Arguments
         {
             get { return _proxy; }
         }
@@ -29,13 +29,13 @@ namespace Prexonite.Compiler.Ast
         public AstCreateCoroutine(string file, int line, int col)
             : base(file, line, col)
         {
-            _proxy = new AstGetSet.ArgumentsProxy(_arguments);
+            _proxy = new ArgumentsProxy(_arguments);
         }
 
         internal AstCreateCoroutine(Parser p)
             : base(p)
         {
-            _proxy = new AstGetSet.ArgumentsProxy(_arguments);
+            _proxy = new ArgumentsProxy(_arguments);
         }
 
         public override void EmitCode(CompilerTarget target)

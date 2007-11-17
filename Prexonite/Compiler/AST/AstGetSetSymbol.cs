@@ -62,7 +62,7 @@ namespace Prexonite.Compiler.Ast
         {
         }
 
-        public override void EmitGetCode(CompilerTarget target, bool justEffect)
+        protected override void EmitGetCode(CompilerTarget target, bool justEffect)
         {
             switch (Interpretation)
             {
@@ -96,7 +96,7 @@ namespace Prexonite.Compiler.Ast
             }
         }
 
-        public override void EmitSetCode(CompilerTarget target)
+        protected override void EmitSetCode(CompilerTarget target)
         {
             switch (Interpretation)
             {

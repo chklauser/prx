@@ -41,6 +41,9 @@ AsmInstruction<AstBlock block>          (.  int arguments = 0;
                                             bool bolArg = false;
                                             OpCode code;
                                             bool justEffect = false;
+                                            int values = 0;
+                                            int rotations = 0;
+                                            int index = 0;
                                         .)
 =
     //VARIABLE DECLARATION              
@@ -85,18 +88,18 @@ AsmInstruction<AstBlock block>          (.  int arguments = 0;
 |   //ROTATE INSTRUCTION
     IF(isAsmInstruction("rot", null))
     AsmId<out insbase>
-    dot Integer<out arguments>
-    comma Integer<out SecArg>    
+    dot Integer<out rotations>
+    comma Integer<out values>    
                                         //Create rot instruction
-                                        (.  addInstruction(block, Instruction.CreateRotate(arguments, SecArg)); .)
+                                        (.  addInstruction(block, Instruction.CreateRotate(rotations, values)); .)
    
 |	//INDIRECT LOCAL CALL BY INDEX
 	IF(isAsmInstruction("indloci", null))
 	AsmId<out insbase>
-	dot Integer<out SecArg>
-	Integer<out arguments>
+	dot Integer<out arguments>
+	Integer<out index>
 										//Create indloci instruction
-										(.	addInstruction(block, Instruction.CreateIndLocI(arguments, SecArg)); .)    
+										(.	addInstruction(block, Instruction.CreateIndLocI(index, arguments)); .)    
 |   //EXCHANGE INSTRUCTION
     IF(isAsmInstruction("swap", null))
     AsmId<out insbase>

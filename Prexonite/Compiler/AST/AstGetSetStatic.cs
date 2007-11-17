@@ -58,12 +58,13 @@ namespace Prexonite.Compiler.Ast
             return base.TryOptimize(target, out expr);
         }
 
-        public override void EmitGetCode(CompilerTarget target, bool justEffect)
+        protected override void EmitGetCode(CompilerTarget target, bool justEffect)
         {
             AstConstantTypeExpression constType = TypeExpr as AstConstantTypeExpression;
 
             if (constType != null)
             {
+                EmitArguments(target);
                 target.EmitStaticGetCall(
                     Arguments.Count, constType.TypeExpression, MemberId, justEffect);
             }
@@ -76,31 +77,37 @@ namespace Prexonite.Compiler.Ast
             }
         }
 
-        public override void EmitSetCode(CompilerTarget target)
+        protected override void EmitSetCode(CompilerTarget target)
+        {
+            EmitSetCode(target, true);
+        }
+
+        private void EmitSetCode(CompilerTarget target, bool justEffect)
         {
             AstConstantTypeExpression constType = TypeExpr as AstConstantTypeExpression;
 
             if (constType != null)
+            {
+                EmitArguments(target,!justEffect, 0);
                 target.EmitStaticSetCall(
                     Arguments.Count, constType.TypeExpression + "::" + MemberId);
+            }
             else
             {
                 TypeExpr.EmitCode(target);
                 target.EmitConstant(MemberId);
-                EmitArguments(target);
+                EmitArguments(target, !justEffect, 2); //type.StaticCall\FromStack(memberId, args...)
                 target.EmitSetCall(Arguments.Count + 1, "StaticCall\\FromStack");
             }
         }
 
-        public override void EmitCode(CompilerTarget target, bool justEffect)
+        protected override void EmitCode(CompilerTarget target, bool justEffect)
         {
-            if (TypeExpr is AstConstantTypeExpression)
-                EmitArguments(target);
-
+            //Do not yet emit arguments.
             if (Call == PCall.Get)
                 EmitGetCode(target, justEffect);
             else
-                EmitSetCode(target);
+                EmitSetCode(target,justEffect);
         }
 
         public override AstGetSet GetCopy()

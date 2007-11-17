@@ -29,10 +29,10 @@ Expr<out IAstExpression expr>
 	KeyValuePairExpr<out expr>
 	{	
 		appendright
-		GetCall<out complex>			(.	complex.Arguments.RightAppend(expr); 
-											complex.Arguments.ReleaseRightAppend();
-											expr = complex;
-										.)
+		GetCall<out complex>		    (.	complex.Arguments.RightAppend(expr); 
+										    complex.Arguments.ReleaseRightAppend();
+										    expr = complex;
+									    .)
 	}
 .
 
@@ -170,9 +170,46 @@ MulExpr<out IAstExpression expr>
 PowExpr<out IAstExpression expr>
                                         (.  IAstExpression lhs, rhs; .)
 =
-    PostfixUnaryExpr<out lhs>                  (.  expr = lhs; .)
-    {   pow PostfixUnaryExpr<out rhs>          (.  expr = new AstBinaryOperator(this, expr, BinaryOperator.Power, rhs); .)
+    AssignExpr<out lhs>                  (.  expr = lhs; .)
+    {   pow AssignExpr<out rhs>          (.  expr = new AstBinaryOperator(this, expr, BinaryOperator.Power, rhs); .)
     }
+.
+
+AssignExpr<out IAstExpression expr>     (.  AstGetSet assignment; BinaryOperator setModifier = BinaryOperator.None;
+                                            IAstType T;
+                                        .)
+=
+    PostfixUnaryExpr<out expr>
+    (IF(isAssignmentOperator())
+                                       (.  assignment = expr as AstGetSet;
+                                            if(assignment == null) 
+                                            {
+                                                SemErr(string.Format("Cannot assign to a {0}",
+                                                    expr.GetType().Name));
+                                                assignment = new AstGetSetSymbol(this, PCall.Get, "SEMANTIC_ERROR",
+                                                    SymbolInterpretations.LocalObjectVariable); //to prevent null references
+                                            }
+                                            assignment.Call = PCall.Set;
+                                        .)
+        (
+            (   assign                  (.  setModifier = BinaryOperator.None; .)
+	        |   plus assign             (.  setModifier = BinaryOperator.Addition; .)
+	        |   minus assign            (.  setModifier = BinaryOperator.Subtraction; .)
+	        |   times assign            (.  setModifier = BinaryOperator.Multiply; .)
+	        |   div assign              (.  setModifier = BinaryOperator.Division; .)
+	        |   bitAnd assign           (.  setModifier = BinaryOperator.BitwiseAnd; .)
+	        |   bitOr assign            (.  setModifier = BinaryOperator.BitwiseOr; .)
+	        |	coalescence assign		(.	setModifier = BinaryOperator.Coalescence; .)
+	        )   Expr<out expr>        //(.  expr = expr; .)
+	        
+	    |   (   tilde  assign           (.  setModifier = BinaryOperator.Cast; .)
+	        )TypeExpr<out T>            (.  expr = T; .)
+	    )                               
+	                                    (.  assignment.Arguments.Add(expr); 
+	                                        assignment.SetModifier = setModifier;
+                                            expr = assignment;
+                                        .)        
+    |)
 .
 
 PostfixUnaryExpr<out IAstExpression expr>

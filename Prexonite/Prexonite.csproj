@@ -61,6 +61,7 @@
     <Compile Include="Commands\PrintLine.cs" />
     <Compile Include="Commands\Sort.cs" />
     <Compile Include="Commands\Unbind.cs" />
+    <Compile Include="Compiler\Ast\ArgumentsProxy.cs" />
     <Compile Include="Compiler\Ast\AstActionBlock.cs" />
     <Compile Include="Compiler\Ast\AstAsmInstruction.cs" />
     <Compile Include="Compiler\Ast\AstBlockExpression.cs" />
