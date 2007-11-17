@@ -514,6 +514,7 @@ namespace Prexonite
                         case OpCode.xor:
                         case OpCode.check_arg:
                         case OpCode.cast_arg:
+                        case OpCode.check_null:
                         case OpCode.ldr_app:
                         case OpCode.ldr_eng:
                         case OpCode.ret_value:
@@ -670,6 +671,7 @@ namespace Prexonite
                     case OpCode.xor:
                     case OpCode.check_arg:
                     case OpCode.cast_arg:
+                    case OpCode.check_null:
                     case OpCode.ldr_app:
                     case OpCode.ldr_eng:
                     case OpCode.ret_value:
@@ -847,6 +849,7 @@ namespace Prexonite
         //Type check + cast
         check_const, //check         type check (type as operand)
         check_arg, //check         type check (type on stack)
+        check_null, //check.null   check for null
         cast_const, //cast          explicit type cast (type as operand)
         cast_arg, //cast          explicit type cast (type on stack)
         //Object access

@@ -377,7 +377,7 @@ namespace Prexonite.Compiler.Ast
 
                         AstGetSet getVariation = GetCopy();
                         getVariation.Call = PCall.Get;
-                        getVariation.Arguments.RemoveAt(getVariation._arguments.Count - 1);
+                        getVariation.Arguments.RemoveAt(getVariation.Arguments.Count - 1);
 
                         AstTypecheck check =
                             new AstTypecheck(
@@ -391,6 +391,29 @@ namespace Prexonite.Compiler.Ast
                         cond.IfBlock.Add(assignment);
 
                         cond.EmitCode(target);
+                    }
+                    else if(SetModifier == BinaryOperator.Cast)
+                    {
+                        // a(x,y) ~= T         //a(x,y,~T)~=
+                        //to
+                        // a(x,y) = a(x,y)~T   //a(x,y,a(x,y)~T)=
+                        AstGetSet assignment = GetCopy(); //a'(x,y,~T)~=
+                        assignment.SetModifier = BinaryOperator.None; //a'(x,y,~T)=
+
+                        AstGetSet getVariation = assignment.GetCopy(); //a''(x,y,~T)=
+                        getVariation.Call = PCall.Get; //a''(x,y,~String)
+                        getVariation.Arguments.RemoveAt(getVariation.Arguments.Count - 1); //a''(x,y)
+
+                        IAstType T = assignment.Arguments[assignment.Arguments.Count -1] as IAstType; //~T
+                        if (T == null)
+                            throw new PrexoniteException(
+                                String.Format(
+                                    "The right hand side of a cast operation must be a type expression (in {0} on line {1}).",
+                                    File,
+                                    Line));
+                        assignment.Arguments[assignment.Arguments.Count -1] =
+                            new AstTypecast(File, Line, Column, getVariation, T); //a(x,y,a(x,y)~T)=
+                        assignment.EmitCode(target);
                     }
                     else if (SetModifier != BinaryOperator.None)
                     {

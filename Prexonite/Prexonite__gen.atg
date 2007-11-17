@@ -1638,20 +1638,29 @@ ExplicitGoTo<AstBlock block>    (.  string id; .)
 .
 
 Assignment<AstGetSet lvalue>
-                                (.  IAstExpression expr; BinaryOperator setModifier = BinaryOperator.None; .)
+                                (.  IAstExpression expr = null;
+									BinaryOperator setModifier = BinaryOperator.None;
+									IAstType T;
+								.)
 =
-(   assign                      (.  setModifier = BinaryOperator.None; .)
-|   plus assign                 (.  setModifier = BinaryOperator.Addition; .)
-|   minus assign                (.  setModifier = BinaryOperator.Subtraction; .)
-|   times assign                (.  setModifier = BinaryOperator.Multiply; .)
-|   div assign                  (.  setModifier = BinaryOperator.Division; .)
-|   bitAnd assign               (.  setModifier = BinaryOperator.BitwiseAnd; .)
-|   bitOr assign                (.  setModifier = BinaryOperator.BitwiseOr; .)
-|	coalescence assign			(.	setModifier = BinaryOperator.Coalescence; .)
-)   Expr<out expr>              (.  lvalue.Arguments.Add(expr);
-                                    lvalue.Call = PCall.Set; 
-                                    lvalue.SetModifier = setModifier;
-                                .)
+(
+	(   assign                  (.  setModifier = BinaryOperator.None; .)
+	|   plus assign             (.  setModifier = BinaryOperator.Addition; .)
+	|   minus assign            (.  setModifier = BinaryOperator.Subtraction; .)
+	|   times assign            (.  setModifier = BinaryOperator.Multiply; .)
+	|   div assign              (.  setModifier = BinaryOperator.Division; .)
+	|   bitAnd assign           (.  setModifier = BinaryOperator.BitwiseAnd; .)
+	|   bitOr assign            (.  setModifier = BinaryOperator.BitwiseOr; .)
+	|	coalescence assign		(.	setModifier = BinaryOperator.Coalescence; .)
+	)   Expr<out expr>        //(.	expr = expr; .)
+	
+|	(	tilde assign			(.	setModifier = BinaryOperator.Cast; .)
+	)	TypeExpr<out T>			(.	expr = T; .)
+)								
+								(.  lvalue.Arguments.Add(expr);
+									lvalue.Call = PCall.Set; 
+									lvalue.SetModifier = setModifier;
+								.)
 .
 
 Condition<AstBlock block>

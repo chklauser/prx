@@ -750,6 +750,9 @@ doDecrement:            pvar.Value = pvar.Value.Decrement(this);
                         ;
                         push(pop().Type.Equals(t));
                         break;
+                    case OpCode.check_null:
+                        push(pop().IsNull);
+                        break;
 
                         #endregion
 

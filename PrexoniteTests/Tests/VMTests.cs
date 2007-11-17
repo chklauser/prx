@@ -2899,6 +2899,27 @@ function main()
             _expect("goo = 600; goo2 = 780;");
         }
 
+        [Test]
+        public void CastAssign()
+        {
+            _compile(@"
+function main(a,b,c)
+{
+    a~=Int;
+    b ~ = Bool;
+    c ~= String;
+
+    return ((a+10)/5) + (if(b) c*a else c);
+}
+");
+
+            double a = 2.9;     //2
+            int b = 27;         //true
+            bool c = true;      //True
+
+            _expect("2TrueTrueTrue",a,b,c);
+        }
+
         #region Helper
 
         private static string _generateRandomString(int length)

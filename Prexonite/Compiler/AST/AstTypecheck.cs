@@ -64,7 +64,21 @@ namespace Prexonite.Compiler.Ast
             Subject.EmitCode(target);
             AstConstantTypeExpression constType = Type as AstConstantTypeExpression;
             if (constType != null)
-                target.Emit(OpCode.check_const, constType.TypeExpression);
+            {
+                PType T = null;
+                try
+                {
+                    T = target.Loader.ConstructPType(constType.TypeExpression);
+                }
+                catch(PrexoniteException)
+                {
+                    //ignore failures here
+                }
+                if(T != null && T == PType.Null)
+                    target.Emit(OpCode.check_null);
+                else
+                    target.Emit(OpCode.check_const, constType.TypeExpression);
+            }
             else
             {
                 Type.EmitCode(target);

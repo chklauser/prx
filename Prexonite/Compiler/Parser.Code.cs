@@ -725,6 +725,7 @@ namespace Prexonite.Compiler
                 {"and", null},
                 {"xor", null},
                 {"check", "arg"},
+                {"check", "null"},
                 {"cast", "arg"},
                 {"ldr", "eng"},
                 {"ldr", "app"},

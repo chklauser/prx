@@ -175,13 +175,26 @@ namespace Prexonite.Compiler.Ast
         /// </remarks>
         public bool TryOptimize(CompilerTarget target, out IAstExpression expr)
         {
-            //The coalecence operator is handled separately.
+            //The coalecence and cast operators are handled separately.
             if (Operator == BinaryOperator.Coalescence)
             {
                 AstCoalescence coal = new AstCoalescence(File, Line, Column);
                 coal.Expressions.Add(LeftOperand);
                 coal.Expressions.Add(RightOperand);
                 expr = coal;
+                OptimizeNode(target, ref expr);
+                return true;
+            }
+            else if(Operator == BinaryOperator.Cast)
+            {
+                IAstType T = RightOperand as IAstType;
+                if(T == null)
+                    throw new PrexoniteException(
+                        String.Format(
+                            "The right hand side of a cast operation must be a type expression (in {0} on line {1}).",
+                            File,
+                            Line));
+                expr = new AstTypecast(File, Line, Column,LeftOperand, T);
                 OptimizeNode(target, ref expr);
                 return true;
             }
@@ -606,6 +619,13 @@ namespace Prexonite.Compiler.Ast
         /// <summary>
         /// The ??-operator.
         /// </summary>
-        Coalescence
+        /// <remarks>Will result in a AstCoalescence node when optimized.</remarks>
+        Coalescence,
+
+        /// <summary>
+        /// Entry for ~= expressions.
+        /// </summary>
+        /// <remarks>Will result in a AstTypecast node when optimized.</remarks>
+        Cast
     }
 }

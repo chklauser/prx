@@ -1815,7 +1815,7 @@ stloc           x
 //return x is Null ? 0 : x == """" ? -1 : x.Length;
 
                 ldloc           x
-                check.const     ""Null""
+                check.null
                 jump.f          else3
                 ldc.int         0
                 jump            endif3
@@ -2692,14 +2692,14 @@ function main()
 var a,b,c
 
 ldloc   a
-check.const Null
+check.null
 jump.f  endif0
 ldloc   b
 stloc   a
 label   endif0
 
 ldloc   c
-check.const Null
+check.null
 jump.f  endif1
 ldloc   b
 stloc   c
@@ -2895,6 +2895,56 @@ var x
 ldloc   x
 dup     1
 mul
+ret
+");
+        }
+
+        [Test]
+        public void CastAssign()
+        {
+            _compile(@"
+function main()
+{
+    var a;
+    var x = a;
+    var y = a;
+    var z = a;
+
+    x~=String;
+    y ~= Int;
+    z ~ = Real;
+
+    return x+y+z;
+}
+");
+
+            _expect(@"
+var a,x,y,z
+
+ldloc   a
+stloc   x
+ldloc   a
+stloc   y
+ldloc   a
+stloc   z
+
+ldloc   x
+cast.const  String
+stloc   x
+
+ldloc   y
+cast.const  Int
+stloc   y
+
+ldloc   z
+cast.const  Real
+stloc   z
+
+ldloc   x
+ldloc   y
+add
+ldloc   z
+add
 ret
 ");
         }
