@@ -21,6 +21,7 @@
  *  51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
  */
 
+using System;
 using System.Text;
 using Prexonite.Types;
 
@@ -36,7 +37,15 @@ namespace Prexonite.Commands
         /// </summary>
         public Concatenate()
         {
-            IsPure = true;
+        }
+
+        /// <summary>
+        /// A flag indicating whether the command acts like a pure function.
+        /// </summary>
+        /// <remarks>Pure commands can be applied at compile time.</remarks>
+        public override bool IsPure
+        {
+            get { return true; }
         }
 
         /// <summary>

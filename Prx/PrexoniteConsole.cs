@@ -54,6 +54,14 @@ namespace Prx
             return sctx.CreateNativePValue(this);
         }
 
+        /// <summary>
+        /// Indicates whether the command behaves like a pure function.
+        /// </summary>
+        public bool IsPure
+        {
+            get { return false; }
+        }
+
         #endregion
 
         #region IObject Members

@@ -138,5 +138,14 @@ namespace Prexonite.Commands
 
             return PType.Null.CreatePValue();
         }
+
+        /// <summary>
+        /// A flag indicating whether the command acts like a pure function.
+        /// </summary>
+        /// <remarks>Pure commands can be applied at compile time.</remarks>
+        public override bool IsPure
+        {
+            get { return false; }
+        }
     }
 }

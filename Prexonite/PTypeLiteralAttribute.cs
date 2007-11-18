@@ -26,17 +26,27 @@ using NoDebug = System.Diagnostics.DebuggerNonUserCodeAttribute;
 
 namespace Prexonite
 {
+    /// <summary>
+    /// Associates a literal with a class. Only interpreted on classes inheriting from <see cref="Prexonite.Types.PType"/>.
+    /// </summary>
     [AttributeUsage(AttributeTargets.Class, AllowMultiple=true, Inherited=false)]
     [NoDebug]
     public class PTypeLiteralAttribute : Attribute
     {
         private string _literal;
 
+        /// <summary>
+        /// The literal this attribute represents.
+        /// </summary>
         public string Literal
         {
             get { return _literal; }
         }
 
+        /// <summary>
+        /// Creates a new instance of the PTypeLiteral attribute.
+        /// </summary>
+        /// <param name="literal">The literal to associate with this type.</param>
         public PTypeLiteralAttribute(string literal)
         {
             _literal = literal;

@@ -113,5 +113,15 @@ namespace Prexonite.Commands
 
             return Run(sctx, f, source);
         }
+
+        /// <summary>
+        /// A flag indicating whether the command acts like a pure function.
+        /// </summary>
+        /// <remarks>Pure commands can be applied at compile time.</remarks>
+        public override bool IsPure
+        {
+            get { return false; } //makes use of indirect call, 
+            //which might lead to premature initialization of the parent engine.
+        }
     }
 }

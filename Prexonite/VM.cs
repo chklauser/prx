@@ -104,7 +104,7 @@ namespace Prexonite
                 {
                     try
                     {
-                        keepOnStack = sctx.HandleException(currentException);
+                        keepOnStack = sctx.TryHandleException(currentException);
                         if (keepOnStack) //Exception has been handled
                             currentException = null;
                     }

@@ -32,6 +32,10 @@ namespace Prexonite
     /// <remarks>Please note that I might turn this class into the actual implementation of FunctionContext (by removing 'abstract' and sealing the class).</remarks>
     public abstract class StackContext : IIndirectCall
     {
+
+        /// <summary>
+        /// The parent application.
+        /// </summary>
         public Application ParentApplication
         {
             get { return Implementation.ParentApplication; }
@@ -61,7 +65,12 @@ namespace Prexonite
         /// <returns>True if the context has additional work to perform in the next cycle, False if it has finished it's work and can be removed from the stack</returns>
         protected abstract bool PerformNextCylce();
 
-        public abstract bool HandleException(Exception exc);
+        /// <summary>
+        /// Tries to handle the supplied exception.
+        /// </summary>
+        /// <param name="exc">The exception to be handled.</param>
+        /// <returns>True if the exception has been handled, false otherwise.</returns>
+        public abstract bool TryHandleException(Exception exc);
 
         internal bool NextCylce()
         {
@@ -80,6 +89,9 @@ namespace Prexonite
 
         private ReturnModes _returnMode;
 
+        /// <summary>
+        /// Gets or sets the mode of return.
+        /// </summary>
         public ReturnModes ReturnMode
         {
             get { return _returnMode; }
@@ -90,21 +102,48 @@ namespace Prexonite
 
         #region Construct PType
 
+        /// <summary>
+        /// Constructs a PType instance from the supplied arguments.
+        /// </summary>
+        /// <param name="ptypeClrType">A <see cref="Type"/> of a class that inherits from <see cref="PType"/>.</param>
+        /// <param name="args">The list of arguments to pass to the constructor.</param>
+        /// <returns>An instance of the supplied <see cref="Type"/>.</returns>
         public PType ConstructPType(Type ptypeClrType, PValue[] args)
         {
             return ParentEngine.CreatePType(this, ptypeClrType, args);
         }
 
+        /// <summary>
+        /// Constructs a PType instance from the supplied arguments.
+        /// </summary>
+        /// <param name="ptypeClrType">An <see cref="ObjectPType"/> of a class that inherits from <see cref="PType"/>.</param>
+        /// <param name="args">The list of arguments to pass to the constructor.</param>
+        /// <returns>An instance of the supplied <see cref="Type"/>.</returns>
         public PType ConstructPType(ObjectPType ptypeClrType, PValue[] args)
         {
             return ParentEngine.CreatePType(this, ptypeClrType, args);
         }
 
+        /// <summary>
+        /// Constructs a PType instance from the supplied arguments.
+        /// </summary>
+        /// <param name="typeName">The name of a class that inherits from <see cref="PType"/>.</param>
+        /// <param name="args">The list of arguments to pass to the constructor.</param>
+        /// <returns>An instance of the supplied <see cref="Type"/>.</returns>
         public PType ConstructPType(string typeName, PValue[] args)
         {
             return ParentEngine.CreatePType(this, typeName, args);
         }
 
+        /// <summary>
+        /// Constructs a PType instance from the supplied arguments.
+        /// </summary>
+        /// <param name="expression">A constant type expression.</param>
+        /// <returns>A PType based on the supplied type expression.</returns>
+        /// <remarks>
+        ///     <para>Note that the function does not accept Prexonite type expression.</para>
+        ///     <para>Type expressions use parenthesis instead of angle brackets.</para>
+        /// </remarks>
         public PType ConstructPType(string expression)
         {
             return ParentEngine.CreatePType(this, expression);
@@ -114,6 +153,11 @@ namespace Prexonite
 
         #region Native PValue
 
+        /// <summary>
+        /// Creates the native representation of an object in the Prexonite engine.
+        /// </summary>
+        /// <param name="obj">The object to be represented.</param>
+        /// <returns>A PValue containing the supplied object with an appropriate type.</returns>
         public PValue CreateNativePValue(object obj)
         {
             return ParentEngine.CreateNativePValue(obj);
@@ -123,7 +167,13 @@ namespace Prexonite
 
         #region IIndirectCall Members
 
-        public PValue IndirectCall(StackContext sctx, PValue[] args)
+        /// <summary>
+        /// Executes the stack context and returns its return value.
+        /// </summary>
+        /// <param name="sctx">The stack context in which to execute.</param>
+        /// <param name="args">ignored.</param>
+        /// <returns>The value returned by the execution.</returns>
+        PValue IIndirectCall.IndirectCall(StackContext sctx, PValue[] args)
         {
             sctx.ParentEngine.Process(this);
             return ReturnValue ?? PType.Null.CreatePValue();
@@ -132,10 +182,24 @@ namespace Prexonite
         #endregion
     }
 
+    /// <summary>
+    /// The different modes of returning from a call.
+    /// </summary>
     public enum ReturnModes
     {
+        /// <summary>
+        /// The context has been exited normally. A return value may be available.
+        /// </summary>
         Exit,
+
+        /// <summary>
+        /// The context has been exited prematurely.
+        /// </summary>
         Break,
+
+        /// <summary>
+        /// The context has only been suspended.
+        /// </summary>
         Continue
     }
 }

@@ -219,7 +219,6 @@ AsmStatementBlock<AstBlock block>
 
 AsmInstruction<AstBlock block>          (.  int arguments = 0;
                                             string id = null;
-                                            int SecArg = 0;
                                             double dblArg = 0.0;
                                             string insbase = null; string detail = null;
                                             bool bolArg = false;

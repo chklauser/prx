@@ -799,7 +799,7 @@ namespace Prexonite.Compiler
             get { return Options.ParentEngine.CreateNativePValue(Options.TargetApplication); }
         }
 
-        public override bool HandleException(Exception exc)
+        public override bool TryHandleException(Exception exc)
         {
             //Cannot handle exceptions.
             return false;

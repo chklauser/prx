@@ -44,6 +44,18 @@ namespace Prexonite.Commands
         }
 
         /// <summary>
+        /// A flag indicating whether the command acts like a pure function.
+        /// </summary>
+        /// <remarks>Pure commands can be applied at compile time.</remarks>
+        public override bool IsPure
+        {
+            get
+            {
+                return _action.IsPure;
+            }
+        }
+
+        /// <summary>
         /// Creates a new <see cref="NestedPCommand"/>.
         /// </summary>
         /// <param name="action">Any implementation of <see cref="ICommand"/>.</param>
@@ -92,5 +104,13 @@ namespace Prexonite.Commands
         /// <returns>The value returned by the command.</returns>
         /// <remarks>If your implementation does not return a value, you have to return <c>PType.Null.CreatePValue()</c> and <strong>not</strong> <c>null</c>!</remarks>
         PValue Run(StackContext sctx, PValue[] args);
+
+        /// <summary>
+        /// Indicates whether the command behaves like a pure function.
+        /// </summary>
+        bool IsPure
+        {
+            get;
+        }
     }
 }

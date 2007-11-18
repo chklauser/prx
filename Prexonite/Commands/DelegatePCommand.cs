@@ -42,6 +42,17 @@ namespace Prexonite.Commands
             get { return _action; }
         }
 
+        private bool _isPure;
+
+        /// <summary>
+        /// A flag indicating whether the command acts like a pure function.
+        /// </summary>
+        /// <remarks>Pure commands can be applied at compile time.</remarks>
+        public override bool IsPure
+        {
+            get { return _isPure; }
+        }
+
         /// <summary>
         /// Returns a string that describes the current instance of <see cref="DelegatePCommand"/>.
         /// </summary>
@@ -68,10 +79,22 @@ namespace Prexonite.Commands
         /// <param name="action">An implementation of the <see cref="PCommand.Run"/> method.</param>
         /// <exception cref="ArgumentNullException"><paramref name="action"/> is null.</exception>
         public DelegatePCommand(PCommandAction action)
+            : this(action, false)
+        {
+        }
+
+        /// <summary>
+        /// Creates a new <see cref="DelegatePCommand"/>.
+        /// </summary>
+        /// <param name="action">An implementation of the <see cref="PCommand.Run"/> method.</param>
+        /// <param name="isPure">A boolean value indicating whether the command is to be treated like a pure function.</param>
+        /// <exception cref="ArgumentNullException"><paramref name="action"/> is null.</exception>
+        public DelegatePCommand(PCommandAction action, bool isPure)
         {
             if (action == null)
                 throw new ArgumentNullException("action");
             _action = action;
+            _isPure = isPure;
         }
 
         /// <summary>

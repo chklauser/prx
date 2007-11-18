@@ -39,7 +39,7 @@ namespace Prx.Tests
             get { return PType.Null.CreatePValue(); }
         }
 
-        public override bool HandleException(Exception exc)
+        public override bool TryHandleException(Exception exc)
         {
             return false;
         }

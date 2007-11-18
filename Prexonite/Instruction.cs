@@ -642,11 +642,18 @@ namespace Prexonite
 
         #region Equality
 
+        /// <summary>
+        /// Determines whether the instruction is equal to an object (possibly another instruction).
+        /// </summary>
+        /// <param name="obj">Any object (possibly an instruction).</param>
+        /// <returns>True if the instruction is equal to the object (possibly another instruction).</returns>
         [NoDebug]
         public override bool Equals(object obj)
         {
             if (obj == null)
                 return false;
+            else if(ReferenceEquals(this, obj))
+                return true;
             if (obj is Instruction)
             {
                 Instruction ins = obj as Instruction;
@@ -768,6 +775,12 @@ namespace Prexonite
                 return base.Equals(obj);
         }
 
+        /// <summary>
+        /// Determines whether two instructions are equal.
+        /// </summary>
+        /// <param name="left">One instruction</param>
+        /// <param name="right">Another instruction</param>
+        /// <returns>True if the instructions are equal, false otherwise.</returns>
         [NoDebug]
         public static bool operator ==(Instruction left, Instruction right)
         {
@@ -776,27 +789,40 @@ namespace Prexonite
             return left.Equals(right);
         }
 
+        /// <summary>
+        /// Determines whether two instructions are not equal.
+        /// </summary>
+        /// <param name="left">One instruction</param>
+        /// <param name="right">Another instruction</param>
+        /// <returns>True if the instructions are not equal, false otherwise.</returns>
         [NoDebug]
         public static bool operator !=(Instruction left, Instruction right)
         {
-            return !(left == right);
+            if ((object)left == null)
+                return (object)right != null;
+            return !left.Equals(right);
         }
 
+        /// <summary>
+        /// Returns a hash code based on <see cref="OpCode"/>, <see cref="Arguments"/> and <see cref="Id"/>.
+        /// </summary>
+        /// <returns>A hash code.</returns>
         public override int GetHashCode()
         {
-            return (
-                       OpCode.ToString()
-                   ).GetHashCode();
+            return (int)OpCode ^ Arguments ^ (Id == null ? 0 : Id.GetHashCode());
         }
 
         #endregion
     }
 
+    /// <summary>
+    /// The opcodes interpreted by the virtual machine.
+    /// </summary>
     public enum OpCode
     {
         invalid = -1,
         nop = 0,
-        //Loading
+        //Loading (13)
         //  - constants
         ldc_int, //ldc.int       loads an integer value
         ldc_real, //ldc.real      loads a floating point value
@@ -812,7 +838,7 @@ namespace Prexonite
         ldr_app, //ldr.app       loads a reference to the current application
         ldr_eng, //ldr.eng       loads a reference to the current engine
         ldr_type, //ldr.type      loads a reference to a type (from a type expression)
-        // Variables
+        // Variables (6)
         //  - local
         ldloc, //ldloc         loads the value of a local variable by name
         stloc, //stloc         stores a value into a local variable by name
@@ -821,12 +847,12 @@ namespace Prexonite
         //  - global
         ldglob, //ldglob        loads the value of a global variable
         stglob, //stglob        stores a value into a global variable
-        //Construction
+        //Construction (4)
         newobj, //newobj        creates a new instance of a specified type
         newtype, //newtype       creates a new type instance
         newclo, //newclo        creates a new closure
         newcor, //newcor        creates a new coroutine
-        //Operators
+        //Operators (23)
         //  - unary
         incloc, //incloc        unary local increment operator by name
         incglob, //incglob       unary global increment operator
@@ -856,26 +882,26 @@ namespace Prexonite
         or, //or            binary bitwise or operator
         and, //and           binary bitwise and operator
         xor, //xor           binary bitwise exclusive or operator
-        //Type check + cast
+        //Type check + cast (5)
         check_const, //check         type check (type as operand)
         check_arg, //check         type check (type on stack)
         check_null, //check.null   check for null
         cast_const, //cast          explicit type cast (type as operand)
         cast_arg, //cast          explicit type cast (type on stack)
-        //Object access
+        //Object access (4)
         get, //get           performs a get call
         set, //set           performs a set call
         sget, //sget          performs a static get call
         sset, //sset          performs a static set call
-        //Calls
+        //Calls (3)
         func, //func          performs a function call
         cmd, //cmd           performs a command call
-        indarg, //indarg        performs an indirect call
-        //Indirect calls
+        indarg, //indarg        performs an indirect call on an operand
+        //Indirect calls (3)
         indloc, //indloc        performs an indirect call on a local variable by name
         indloci, //indloci      performs an indriect call on a local variable by index
         indglob, //indglob       performs an indirect call on a global variable
-        //Flow control
+        //Flow control (13)
         jump, //jump          jumps to an address
         jump_t, //jump.t        jumps to an address if a condition is true
         jump_f, //jump.f        jumps to an address if a condition is false
@@ -891,9 +917,11 @@ namespace Prexonite
         //leave         jumps depending on whether the context is currently in exception handling mode or not.
         exc, //exc              Pushes the current exception on top of the stack.
         tail, //tail            Prevents function from yielding until it has reached an exit point
-        //Stack manipulation
+        //Stack manipulation (3)
         pop, //pop           Pops x values from the stack
         dup, //dup           duplicates the top value x times
         rot //rot           rotates the x top values y times
     }
+
+    //Total: 77 different operations excluding nop.
 }

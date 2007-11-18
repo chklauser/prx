@@ -22,53 +22,94 @@
  */
 
 using System;
+using Prexonite.Types;
 
 namespace Prexonite.Commands
 {
+    /// <summary>
+    /// The abstract base class for all commands (built-in functions)
+    /// </summary>
     public abstract class PCommand : IIndirectCall
     {
-        private bool _isPure = false;
-
-        public bool IsPure
+        /// <summary>
+        /// A flag indicating whether the command acts like a pure function.
+        /// </summary>
+        /// <remarks>Pure commands can be applied at compile time.</remarks>
+        public abstract bool IsPure
         {
-            get { return _isPure; }
-            set { _isPure = value; }
+            get;
         }
 
+        /// <summary>
+        /// Executes the command.
+        /// </summary>
+        /// <param name="sctx">The stack context in which to execut the command.</param>
+        /// <param name="args">The arguments to be passed to the command.</param>
+        /// <returns>The value returned by the command. Must not be null. (But possibly {null~Null})</returns>
         public abstract PValue Run(StackContext sctx, PValue[] args);
+
+        #region Command groups
+
         private PCommandGroups _groups = PCommandGroups.None;
 
+        /// <summary>
+        /// A bit fields that represents memberships in the <see cref="PCommandGroups"/>.
+        /// </summary>
         public PCommandGroups Groups
         {
             get { return _groups; }
         }
 
+        /// <summary>
+        /// Indicates whether the command belongs to a group.
+        /// </summary>
         public bool BelongsToAGroup
         {
             get { return _groups != PCommandGroups.None; }
         }
 
+        /// <summary>
+        /// Determines whether the command is a member of a particular group.
+        /// </summary>
+        /// <param name="groups">The group (or groups) to test the command for.</param>
+        /// <returns>True, if the command is a member of the supplied group (or all groups); false otherwise.</returns>
         public bool IsInGroup(PCommandGroups groups)
         {
             return (_groups & groups) == _groups;
             //If _groups contains groups, an AND operation won't alter it
         }
 
+        /// <summary>
+        /// Adds the command to the supplied group (or groups).
+        /// </summary>
+        /// <param name="additionalGroups">The group (or groups) to which to add the command.</param>
         public void AddToGroup(PCommandGroups additionalGroups)
         {
             _groups = _groups | additionalGroups;
         }
 
+        /// <summary>
+        /// Removes the command from the supplied group (or groups)
+        /// </summary>
+        /// <param name="groups">The group (or groups) from which to remove the command.</param>
         public void RemoveFromGroup(PCommandGroups groups)
         {
             _groups = _groups ^ (_groups & groups);
         }
 
+        #endregion
+
         #region IIndirectCall Members
 
-        public PValue IndirectCall(StackContext sctx, PValue[] args)
+        /// <summary>
+        /// Runs the command. (Calls <see cref="Run"/>)
+        /// </summary>
+        /// <param name="sctx">The stack context in which to call the command.</param>
+        /// <param name="args">The arguments to pass to the command.</param>
+        /// <returns>The value returned by the command.</returns>
+        PValue IIndirectCall.IndirectCall(StackContext sctx, PValue[] args)
         {
-            return Run(sctx, args);
+            return Run(sctx, args) ?? PType.Null.CreatePValue();
         }
 
         #endregion

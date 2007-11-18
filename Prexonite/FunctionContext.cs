@@ -1210,7 +1210,7 @@ doIndloc:               if (justEffect)
             get { return _isHandlingException.Peek(); }
         }
 
-        public override bool HandleException(Exception exc)
+        public override bool TryHandleException(Exception exc)
         {
             //Pointer has already been incremented.
             int address = _pointer - 1;
