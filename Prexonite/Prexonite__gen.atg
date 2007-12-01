@@ -461,7 +461,9 @@ Expr<out IAstExpression expr>
 		appendright
 		GetCall<out complex>		    (.	complex.Arguments.RightAppend(expr); 
 										    complex.Arguments.ReleaseRightAppend();
-										    expr = complex;
+										    if(complex is AstGetSetSymbol && ((AstGetSetSymbol)complex).IsVariable)
+										        complex.Call = PCall.Set;
+										    expr = complex;										    
 									    .)
 	}
 .
@@ -1515,6 +1517,8 @@ GetInitiator<out AstGetSet complex, out bool isDeclaration>
 		|	appendright
 			GetCall<out complex>		(.	complex.Arguments.RightAppend(args);
 											complex.Arguments.ReleaseRightAppend();
+											if(complex is AstGetSetSymbol && ((AstGetSetSymbol)complex).IsVariable)
+										        complex.Call = PCall.Set;
 											member = complex;
 										.)
 		)
@@ -1683,7 +1687,7 @@ Assignment<AstGetSet lvalue>
 								.)
 =
 (
-	(   assign                  (.  setModifier = BinaryOperator.None; .)
+	(   ( assign /*| appendleft*/ ) (.  setModifier = BinaryOperator.None; .)
 	|   plus assign             (.  setModifier = BinaryOperator.Addition; .)
 	|   minus assign            (.  setModifier = BinaryOperator.Subtraction; .)
 	|   times assign            (.  setModifier = BinaryOperator.Multiply; .)

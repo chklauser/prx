@@ -1,0 +1,173 @@
+﻿
+build does require
+(
+    "misc.pxs",
+    "debug.pxs",
+    "struct.pxs"
+);
+
+var registered_controls = [];
+
+function register_control does foreach(var arg in var args)
+{
+    if(arg is Null Or registered_controls.Contains(arg))
+        continue;
+    registered_controls.Add(arg);
+}
+
+function remove_control does foreach(var arg in var args)
+{
+    if(arg is Null)
+        continue;
+    registered_controls.Remove(arg);
+}
+
+function update_controls does
+    foreach(var control in registered_controls)
+        control.update;
+        
+function clear_controls does
+    foreach(var control in registered_controls)
+        control.clear;
+
+function create_register_function(ctor) = () => register_control = call(ctor,var args);
+        
+function create_field(x,y,length)
+[ import System; ]
+{
+    var content = "";
+    length ??= -1;    
+    var needClear = 0;
+    
+    x~=Int;
+    y~=Int;
+    length~=Int;
+    
+    function min(a,b)[is private;] = 
+        if(a < b)
+            a
+        else
+            b;
+    
+    function text(this,newContent)
+    {
+        if(Not newContent is Null)
+        {
+            newContent = newContent.ToString;
+            needClear = content.Length - newContent.Length; //need to clear if positive
+            content = 
+                if(length < 0)
+                    newContent
+                else
+                    newContent.Substring(0,min(length,newContent.Length));
+        }
+        return content;
+    }
+    
+    function do_update(action)
+    [ is private; ]
+    {
+        action ??= () => 
+        {
+            ::Console.Write(content);
+            if(needClear > 0)
+            {
+                ::Console.Write(" " * needClear);
+                needClear = 0;
+            }
+        };
+            
+        var ot = ::Console.CursorTop;
+        var ol = ::Console.CursorLeft;
+        var ov = ::Console.CursorVisible;
+        
+        try
+        {        
+            ::Console.CursorVisible = false;
+            ::Console.CursorTop = ot - y;
+            ::Console.CursorLeft = x;
+            debug(x,y,content);
+            action.();
+        }
+        finally
+        {
+            ::Console.CursorTop = ot;
+            ::Console.CursorLeft = ol;
+            ::Console.CursorVisible = ov;
+        }
+    }
+        
+    function update(this, newT)
+    {
+        this.text = newT;
+        do_update;
+    }
+    
+    function clear does do_update = () => 
+    {
+        ::Console.Write(content.Length * " ");
+        needClear = 0;
+    };
+    
+    function ToString = "Field at ($x,$y), displaying \"$(content.ToString)\"";
+    
+    return struct; 
+}
+
+function create_progressbar(x,y,length)
+{
+    length~=Int;
+    var field = create_field(x,y,length);
+    if(debug)
+        var d = create_field(x+length+2,y);
+    var per = 0.0;
+    var anim = ["/","-","\\","|"];
+    var animlen = anim.Count;
+    var idx = 0;
+    
+    function percent(this, newPer)
+    {
+        if(Not newPer is Null)
+        {
+            newPer ~=Real;
+            if(newPer < 0.0)
+                newPer = 0.0;
+            else if(newPer > 1.0)
+                newPer = 1.0;
+            per = newPer;   
+        }
+        return per;
+    }
+    
+    function max(a,b)[is private;] =
+        if(a > b)
+            a
+        else
+            b;
+    
+    function nextAnim = anim[(idx = (idx+1) mod animlen)];
+    
+    function update(this, newPer)
+    {
+        this.percent = newPer;
+        var barlen = length - 2;
+        var completed = ::Math.Floor((barlen * per)~System::Double)~Int;
+        if(debug)
+        {
+            d.text = "length $length, percent $(round(per*100))%, completed $completed";
+            d.update; 
+        }
+        var thisAnim = nextAnim;
+        if(per == 1.0)
+            field.update = "[" + (barlen)*"=" + "]";
+        else
+            field.update = "[" + setright(completed,thisAnim,"=") + max(barlen-max(completed,thisAnim.Length),0)*"_" + "]";
+    }
+    
+    function clear does field.clear;
+    
+    return struct;
+}
+
+ref register_field = create_register_function(->create_field);
+ref register_progressbar = create_register_function(->create_progressbar);

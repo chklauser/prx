@@ -14,7 +14,7 @@ function struct
         ;
     
     var parentId = caller.Implementation.Id;
-    var methods = new System::Text::StringBuilder;
+    var methods = new System::Text::StringBuilder();
     var methods_f = [];
     
     debug(parentId);
@@ -26,6 +26,7 @@ function struct
             .Meta["ParentFunction"]
             .Text
             .Equals(parentId, System::StringComparison.OrdinalIgnoreCase)
+            And Not f.Meta["Private"].Switch
           )
         {
             if(debug)
@@ -39,11 +40,16 @@ function struct
     }
     if(methods.Length > 0)
         methods.Length -= 2;
+    var ss;
     var s =
         asm(ldr.eng)
-        .CreatePType("Structure(\"$(methods.ToString.Escape)\")")
-        .Construct([]~Object<"Prexonite.PValue[]">)
-        .self;
+        .CreatePType("Structure(\"$((ss = methods.ToString).Escape)\")")
+        .Construct([]~Object<"Prexonite.PValue[]">);
+    if(s is Null Or s.self is Null)
+        throw "Could not construct Structure<$ss>.";
+    else
+        s = s.self;
+        
     foreach(var kv in methods_f)
     {
         var id = getId(kv.Key);

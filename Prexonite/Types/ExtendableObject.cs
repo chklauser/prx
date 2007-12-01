@@ -1,10 +1,7 @@
 using System;
-using System.Collections.Generic;
+using System.Collections.ObjectModel;
 using System.Diagnostics;
 using System.Reflection;
-using System.Text;
-using Prexonite;
-using Prexonite.Types;
 
 namespace Prexonite.Types
 {
@@ -15,16 +12,7 @@ namespace Prexonite.Types
     [DebuggerNonUserCode]
     public abstract class ExtendableObject : IObject, IIndirectCall
     {
-        private PType _thisT;
         private ExtensionTable _et;
-
-        /// <summary>
-        /// Creates a new instance of <see cref="ExtendableObject"/>.
-        /// </summary>
-        protected ExtendableObject()
-        {
-            _thisT = PType.Object[GetType()];
-        }
 
         #region IObject Members
 
@@ -96,7 +84,7 @@ namespace Prexonite.Types
         ///         If you want to intercept object member calls yourself, overwrite <see cref="TryDynamicClrCall(StackContext,PValue,PValue[],PCall,string,out PValue)"/> instead.
         ///     </para>
         /// </remarks>
-        public bool TryDynamicCall(
+        public virtual bool TryDynamicCall(
             StackContext sctx, PValue[] args, PCall call, string id, out PValue result)
         {
             return TryDynamicCall(sctx, sctx.CreateNativePValue(this), args, call, id, out result);
@@ -106,7 +94,7 @@ namespace Prexonite.Types
         /// Tries to call instance members of the object or members of the extended part.
         /// </summary>
         /// <param name="sctx">The context in which to perform the call.</param>
-        /// <param name="subject">The subject to substitue for this.</param>
+        /// <param name="subject">The subject to substitue for <value>this</value>.</param>
         /// <param name="args">The arguments for the call.</param>
         /// <param name="call">The type of call.</param>
         /// <param name="id">The id of the member. The empty string represents the default member.</param>
@@ -145,11 +133,6 @@ namespace Prexonite.Types
         }
 
         #endregion
-
-        private bool _tryDynamicExtensionCall(StackContext sctx, PValue[] args, PCall call, string id, out PValue result)
-        {
-            return _tryDynamicExtensionCall(sctx, sctx.CreateNativePValue(this), args, call, id, out result);
-        }
 
         private bool _tryDynamicExtensionCall(StackContext sctx, PValue subject, PValue[] args, PCall call, string id, out PValue result)
         {
@@ -348,7 +331,7 @@ namespace Prexonite.Types
     }
 
     [DebuggerNonUserCode]
-    internal class ExtensionTable : System.Collections.ObjectModel.KeyedCollection<string, ExtensionMember>
+    internal class ExtensionTable : KeyedCollection<string, ExtensionMember>
     {
         internal ExtensionTable()
             : base(StringComparer.CurrentCultureIgnoreCase)

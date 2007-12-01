@@ -104,5 +104,17 @@ namespace Prexonite.Compiler
         private bool _useIndicesLocally = true;
 
         #endregion
+
+        public void InheritFrom(LoaderOptions options)
+        {
+            if (options == null)
+                throw new ArgumentNullException("options");
+
+            RegisterCommands = options.RegisterCommands;
+            ReconstructSymbols = options.ReconstructSymbols;
+            StoreSymbols = options.StoreSymbols;
+            Compress = options.Compress;
+            UseIndicesLocally = options.UseIndicesLocally;
+        }
     }
 }

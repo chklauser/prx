@@ -233,7 +233,8 @@ namespace Prexonite.Types
                 }
             }
 
-            //Get public member candidates            
+            //Get public member candidates, a stack is used so that newly discovered members 
+            // can be examined with priority
             Stack<MemberInfo> candidates = new Stack<MemberInfo>(
                 _clrType.FindMembers(
                     mtypes,

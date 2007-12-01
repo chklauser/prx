@@ -398,8 +398,11 @@ namespace Prexonite
 
         public static Instruction CreateRotate(int rotations, int values)
         {
-            if (rotations >= values)
-                throw new ArgumentException("Not enough values to rotate.");
+            rotations = (values + rotations)%values;
+
+            if(rotations == 0)
+                return new Instruction(Prexonite.OpCode.nop);
+
             Instruction ins = new Instruction(OpCode.rot, rotations);
             ins.GenericArgument = values;
             return ins;

@@ -24,7 +24,7 @@ build does hook( t =>
         {
             var stmt = block[i];
             //We need the statement to be a while loop and have 
-            // a call to 'times' as it's condition
+            // a call to 'times' as its condition
             if(stmt is ::AstWhileLoop && isFunctionCall("times",stmt.Condition))
             {
                 //Extract the number of iterations from the condition

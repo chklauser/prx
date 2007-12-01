@@ -1,0 +1,16 @@
+﻿//Misc.
+
+build does require
+(
+    "struct.pxs",
+    "debug.pxs"
+);
+
+function round(x,d) =
+    //Here, an explicit cast to System::Double is required to disambiguate the method call
+    //  (the overload using the compatible type "decimal" is interfering)
+    ::Math.Round(x~System::Double,d ?? 0,System::MidpointRounding.AwayFromZero);
+
+function roundTo(x,r) does
+    r~=Real; and return
+    round( x/r ) * r;

@@ -123,7 +123,7 @@ namespace Prexonite.Compiler.Ast
             {
                 target.EmitDuplicate();
                 if(argc + additionalArguments > 1)
-                    target.EmitRotate(1, argc + 1 + additionalArguments);
+                    target.EmitRotate(-1, argc + 1 + additionalArguments);
             }
         }
 

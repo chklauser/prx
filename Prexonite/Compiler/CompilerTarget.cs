@@ -20,6 +20,11 @@
  *  with this program; if not, write to the Free Software Foundation, Inc.,
  *  51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
  */
+//#define forceIndex
+//#define allowIndex
+#if ((!(DEBUG || Verbose)) || forceIndex) && allowIndex
+#define UseIndex 
+#endif
 
 using System;
 using System.Collections;
@@ -1073,9 +1078,11 @@ namespace Prexonite.Compiler
 
             _removeUnconditionalJumpSequences();
 
-#if !DEBUG
+#if !(DEBUG || Verbose)
             _removeNop();
+#endif
 
+#if UseIndex
             if (Loader.Options.UseIndicesLocally)
                 _by_index();
 #endif
@@ -1268,7 +1275,7 @@ namespace Prexonite.Compiler
 
         #region Removal of nop's (only RELEASE)
 
-#if !DEBUG
+#if !(DEBUG || Verbose)
         private void _removeNop()
         {
             List<Instruction> code = Code;
@@ -1284,6 +1291,8 @@ namespace Prexonite.Compiler
         #endregion
 
         #region Replacement of 'by name' instructions for local variables
+
+#if UseIndex
 
         private bool _by_index()
         {
@@ -1329,6 +1338,8 @@ namespace Prexonite.Compiler
             }
             return optimized;
         }
+
+#endif
 
         #endregion
 

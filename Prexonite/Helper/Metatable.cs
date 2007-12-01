@@ -30,7 +30,8 @@ namespace Prexonite
 {
     [NoDebug()]
     public class MetaTable : SymbolTable<MetaEntry>,
-                             IMetaFilter
+                             IMetaFilter,
+                             ICloneable
     {
         #region Constructors
 
@@ -152,14 +153,17 @@ namespace Prexonite
                 if (entry.EntryType == MetaEntry.Type.Switch)
                 {
                     if (kvp.Key.EndsWith("ation"))
-                        writer.WriteLine("{0} {1};", kvp.Key, entry.Switch ? "enabled" : "disabled");
+                        writer.Write("{0} {1};", kvp.Key, entry.Switch ? "enabled" : "disabled");
                     else
-                        writer.WriteLine("is {1} {0};", kvp.Key, entry.Switch ? "" : "not");
+                        writer.Write("is {1} {0};", kvp.Key, entry.Switch ? "" : "not");
                 }
                 else
                 {
-                    writer.WriteLine("{0} {1};", kvp.Key, entry);
+                    writer.Write("{0} {1};", kvp.Key, entry);
                 }
+#if DEBUG || Verbose
+                writer.WriteLine();
+#endif
             }
         }
 
@@ -186,6 +190,36 @@ namespace Prexonite
                 return key;
             else
                 return Filter.GetTransform(key);
+        }
+
+        #endregion
+
+        #region ICloneable Members
+
+        ///<summary>
+        ///Creates a metatable that is a copy of the current instance.
+        ///</summary>
+        ///
+        ///<returns>
+        ///A new metatable that is a copy of this instance.
+        ///</returns>
+        ///<filterpriority>2</filterpriority>
+        public MetaTable Clone()
+        {
+            return (MetaTable) MemberwiseClone();
+        }
+
+        ///<summary>
+        ///Creates a metatable that is a copy of the current instance.
+        ///</summary>
+        ///
+        ///<returns>
+        ///A new metatable that is a copy of this instance.
+        ///</returns>
+        ///<filterpriority>2</filterpriority>
+        object ICloneable.Clone()
+        {
+            return Clone();
         }
 
         #endregion

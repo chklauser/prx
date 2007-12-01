@@ -995,6 +995,12 @@ namespace Prexonite
             Commands.AddEngineCommand(LoadAssemblyCommand, new LoadAssembly());
 
             Commands.AddEngineCommand(DebugCommand, new Debug());
+
+            Commands.AddUserCommand(SetCenterAlias, new SetCenterCommand());
+
+            Commands.AddUserCommand(SetLeftAlias, new SetLeftCommand());
+
+            Commands.AddUserCommand(SetRightAlias, new SetRightCommand());
         }
 
         /// <summary>
@@ -1071,6 +1077,21 @@ namespace Prexonite
         /// Alias used for the debug command.
         /// </summary>
         public const string DebugCommand = "debug";
+
+        /// <summary>
+        /// Alias used for the setcenter command
+        /// </summary>
+        public const string SetCenterAlias = "setcenter";
+
+        /// <summary>
+        /// Alias used for the setleft command
+        /// </summary>
+        public const string SetLeftAlias = "setleft";
+
+        /// <summary>
+        /// Alias used for the setright command
+        /// </summary>
+        public const string SetRightAlias = "setright";
 
         #endregion
     }

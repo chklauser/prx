@@ -78,7 +78,7 @@ function prx\main(args)
 	{
 		if(current == null or current.Length == 0)
 			continue;
-		else if(state == state\arg)
+		else if(state == state\arg) //ignore options after -a
 			scriptArgs[] = current;
 		else if(current.StartsWith("-"))
 			if(current == "-c")
@@ -176,7 +176,7 @@ function prx\main(args)
         			println(err);
         	};
         exc = null; 
-    	if(debugging)
+    	if(debugging) //in debugging mode, allow the script to be examined
     	    prx\interactive;
         return;
 	}
@@ -188,7 +188,7 @@ function prx\main(args)
 runInteractive:
         prx\interactive;
     }
-	else if(state == state\run)
+	else if(state == state\run || state == state\arg) // state\arg is synonymous
 	{
     	//The application might not run in non-interactive mode
     	if(app.Meta["interactive"].Switch)
@@ -204,7 +204,7 @@ runInteractive:
                     
             //If that function exists, execute it first
             if(app.Functions.Contains(intMainId))
-                var intMain = app.Functions[intMainId].Run(engine);
+                var intMain = app.Functions[intMainId].Run(engine, scriptArgs~Object<"Prexonite.PValue[]">);
             
             //before going into interactive mode.
             goto runInteractive;
@@ -217,7 +217,7 @@ runInteractive:
         }
     }
 	else
-	{
+	{   //state = state\compile
     	//Store the compiled application in a file.
     	using(var writer = new System::IO::StreamWriter(targetPath, false))
     	{
@@ -247,6 +247,7 @@ function displayHelp does print =
 	"Run the application instead by using the -r switch.\n"+
 	"Enter interactive mode (with or without a compiled application) using the -i switch.\n"+
 	"-v enables additional output.\n"+
-	"-h extracts declarations.\n"+
-	"-b enables tab completion (accepts only ASCII characters)."+
-	"-a forwards the rest of the arguments to the executed script.\n";
+	"-h extracts declarations (only with -c).\n"+
+	"-b enables tab completion (experimental, accepts only ASCII characters).\n"+
+	"-a forwards the rest of the arguments to the executed script.\n" + 
+	"-d enables debugging mode";

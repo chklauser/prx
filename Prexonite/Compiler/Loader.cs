@@ -673,20 +673,37 @@ namespace Prexonite.Compiler
             writer.WriteLine("\n//--GLOBAL VARIABLES");
             foreach (KeyValuePair<string, PVariable> kvp in app.Variables)
             {
-                writer.Write("var {0}", kvp.Key);
-                if (kvp.Value.Meta.Count > 1)
+                writer.Write("var ");
+                writer.Write(kvp.Key);
+                MetaTable meta = kvp.Value.Meta.Clone();
+                meta.Remove(Application.IdKey);
+                meta.Remove(Application.InitializationId);
+                if (meta.Count > 0)
                 {
-                    writer.WriteLine("\n[");
-                    kvp.Value.Meta.Store(writer);
+#if DEBUG || Verbose
+                    writer.WriteLine();
+#endif
+                    writer.Write("[");
+#if DEBUG || Verbose
+                    writer.WriteLine();
+#endif
+                    meta.Store(writer);
                     writer.Write("]");
+#if DEBUG || Verbose
+                    writer.WriteLine();
+#endif
                 }
-                writer.WriteLine(";");
+                writer.Write(";");
+#if DEBUG || Verbose
+                writer.WriteLine();
+#endif
             }
 
             //Functions
             writer.WriteLine("\n//--FUNCTIONS");
             app.Functions.Store(writer);
 
+            //add the initialization function only 
             if (app._InitializationFunction.Code.Count > 0)
                 app._InitializationFunction.Store(writer);
 

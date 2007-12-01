@@ -2880,6 +2880,33 @@ stloc   r
         }
 
         [Test]
+        public void AppendLeftDirect()
+        {
+            _compile(@"
+function main()
+{
+    var a;
+    println << a << 5;
+
+    println << (->a).() << 5;
+}
+");
+
+            _expect(@"
+var a
+
+ldc.int 5
+dup     1
+stloc   a
+@cmd.1  println
+
+ldc.int 5
+indloc.1 a
+@cmd.1  println
+");
+        }
+
+        [Test]
         public void OptimizeSquare()
         {
             _compile(@"

@@ -561,7 +561,7 @@ namespace Prexonite.Types
                 return true;
             }
             else
-                return false;
+                throw new PrexoniteException("String multiplication requires positive values. (Not " + right + ")");
         }
 
         public override bool Equality(

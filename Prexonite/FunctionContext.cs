@@ -1169,12 +1169,12 @@ doIndloc:               if (justEffect)
                             push(left);
                         break;
                     case OpCode.rot:
-                        int instructions = (int) ins.GenericArgument;
+                        int values = (int) ins.GenericArgument;
                         int rotations = argc;
-                        PValue[] target = new PValue[instructions];
-                        for (int i = 0; i < instructions; i++)
-                            target[(i + rotations)%instructions] = pop();
-                        for (int i = 0; i < instructions; i++)
+                        PValue[] target = new PValue[values];
+                        for (int i = 0; i < values; i++)
+                            target[(i + rotations)%values] = pop();
+                        for (int i = 0; i < values; i++)
                             push(target[i]);
                         break;
 

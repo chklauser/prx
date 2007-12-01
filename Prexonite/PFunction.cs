@@ -54,6 +54,8 @@ namespace Prexonite
         /// </summary>
         public const string ArgumentListId = "args";
 
+        public const string SymbolMappingKey = @"\symbol_mapping";
+
         #region Construction
 
         /// <summary>
@@ -268,11 +270,16 @@ namespace Prexonite
 #endif
                 int idxBeginning = buffer.Length;
                 ins.ToString(buffer);
+#if DEBUG || Verbose
                 if (buffer[idxBeginning] != '@')
                     buffer.Insert(idxBeginning, ' ');
                 buffer.AppendLine();
+#else
+                buffer.Append(' ');
+#endif
+                writer.Write(buffer.ToString());
+                buffer.Length = 0;
             }
-            writer.Write(buffer.ToString());
         }
 
         /// <summary>
@@ -290,24 +297,42 @@ namespace Prexonite
         /// <param name="writer">The writer to which to write the string representation to.</param>
         public void Store(TextWriter writer)
         {
-            writer.Write("function {0}", Id);
+            #region Head
+
+            writer.Write("function ");
+            writer.Write(Id);
             StringBuilder buffer;
             if (Parameters.Count > 0)
             {
                 writer.Write("(");
                 buffer = new StringBuilder();
                 foreach (string param in Parameters)
-                    buffer.AppendFormat("{0},", param);
+                {
+                    buffer.Append(param);
+                    buffer.Append(",");
+                }
                 buffer.Remove(buffer.Length - 1, 1);
                 writer.Write(buffer.ToString());
                 writer.Write(")");
             }
+#if DEBUG || Verbose
             writer.WriteLine();
+#endif
+
+            #endregion
+
+            #region Metainformation
 
             //Metainformation
-            writer.WriteLine("[");
-            Meta.Remove(Application.ImportKey);
-            Meta.Store(writer);
+            writer.Write("[");
+#if DEBUG || Verbose
+            writer.WriteLine();
+#endif
+            MetaTable meta = Meta.Clone();
+            meta.Remove(Application.ImportKey); //to be added separately
+            meta.Remove(Application.IdKey); //implied
+            meta.Remove(Application.InitializationId); //must be set to default
+            meta.Store(writer);
             List<MetaEntry> lst = new List<MetaEntry>();
             foreach (string ns in ImportedNamespaces)
                 lst.Add(ns);
@@ -319,13 +344,45 @@ namespace Prexonite
                 buffer = new StringBuilder();
                 imports.ToString(buffer);
                 writer.Write(buffer.ToString());
-                writer.WriteLine(";");
+                writer.Write(";");
+#if DEBUG || Verbose
+                writer.WriteLine();
+#endif
             }
+            //write symbol mapping information
+            writer.Write(SymbolMappingKey);
+            writer.Write(" {");
+            string[] map = new string[LocalVariableMapping.Count];
+            foreach (KeyValuePair<string, int> mapping in LocalVariableMapping)
+                map[mapping.Value] = mapping.Key;
+            for (int i = 0; i < map.Length; i++)
+            {
+                writer.Write(map[i]);
+                if(i < map.Length-1)
+                    writer.Write(',');
+            }
+            writer.Write("};");
+#if DEBUG || Verbose
+            writer.WriteLine();
+#endif
             writer.Write("]");
+#if DEBUG || Verbose
+            writer.WriteLine();
+#endif
+            //End of Metadata
+            #endregion
 
-            writer.WriteLine("{asm{");
+            #region Code
+
+            //write code
+            writer.Write("{asm{");
             StoreCode(writer);
-            writer.WriteLine("}}\n");
+            writer.Write("}}");
+#if DEBUG || Verbose
+            writer.WriteLine();
+#endif
+
+            #endregion
         }
 
         #endregion
@@ -388,6 +445,17 @@ namespace Prexonite
                 //Make sure the list of blocks is refreshed.
                 InvalidateTryCatchFinallyBlocks();
                 return item;
+            }
+            else if(Engine.StringsAreEqual(item.Key,SymbolMappingKey))
+            {
+                MetaEntry[] lst = item.Value.List;
+                _localVariableMapping = new SymbolTable<int>(lst.Length);
+                for (int i = 0; i < lst.Length; i++)
+                {
+                    MetaEntry symbol = lst[i];
+                    _localVariableMapping.Add(symbol.Text, i);
+                }
+                return null;
             }
             else
                 return item;

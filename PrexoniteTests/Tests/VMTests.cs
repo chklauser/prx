@@ -1,3 +1,7 @@
+#if ((!(DEBUG || Verbose)) || forceIndex) && allowIndex
+#define useIndex
+#endif
+
 using System;
 using System.Collections;
 using System.Collections.Generic;
@@ -2920,6 +2924,63 @@ function main(a,b,c)
             _expect("2TrueTrueTrue",a,b,c);
         }
 
+        [Test]
+        public void Store_Basic()
+        {
+            _compile_store(@"
+function main(a,b,c)
+{
+    //string int bool
+    var x = a.Substring(2);
+    var y = b*5;
+    var z = if(c) 
+                ""x""   
+            else 
+                -1;    
+    return ""$(x)$(y)$(z)"";
+}
+");
+
+            _expect("cd50x","abcd",10,true);
+        }
+
+#if useIndex && false
+
+        [Test]
+        public void Index_Nested()
+        {
+            _compile(@"
+function main(a,b)
+{
+    var s = ""+$a+"";
+    
+    function text(nt)
+    {
+        if(Not nt is Null)
+            s = nt;
+        return s;
+    }
+
+    function ToString
+}
+");
+        }
+
+#endif
+
+        [Test]
+        public void RotateIns()
+        {
+            _compile(@"
+function main(a)
+{   
+    var s = new Structure<""text"">;
+    return s.text = a;
+}
+");
+            _expect("ham","ham");
+        }
+
         #region Helper
 
         private static string _generateRandomString(int length)
@@ -2954,6 +3015,43 @@ function main(a,b,c)
             Loader ldr = new Loader(options);
             _compile(ldr, input);
             return ldr;
+        }
+
+        private Loader _store(Loader ldr)
+        {
+            StringBuilder sb = new StringBuilder();
+            ldr.Store(sb);
+
+            
+            //Create a new engine
+            SetupCompilerEngine();
+
+            ldr = new Loader(options);
+            try
+            {
+                ldr.LoadFromString(sb.ToString());
+            }
+            finally
+            {
+                foreach (string s in ldr.Errors)
+                {
+                    Console.Error.WriteLine(s);
+                }
+            }
+            Assert.AreEqual(0, ldr.ErrorCount, "Errors detected while loading stored code.");
+            Console.WriteLine(ldr.StoreInString());
+            return ldr;
+        }
+
+        private Loader _compile_store(Loader loader ,string input)
+        {
+            _compile(loader, input);
+            return _store(loader);
+        }
+
+        private Loader _compile_store(string input)
+        {
+            return _store(_compile(input));
         }
 
         private void _expect<T>(T expectedReturnValue, params PValue[] args)

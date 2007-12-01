@@ -31,7 +31,9 @@ Expr<out IAstExpression expr>
 		appendright
 		GetCall<out complex>		    (.	complex.Arguments.RightAppend(expr); 
 										    complex.Arguments.ReleaseRightAppend();
-										    expr = complex;
+										    if(complex is AstGetSetSymbol && ((AstGetSetSymbol)complex).IsVariable)
+										        complex.Call = PCall.Set;
+										    expr = complex;										    
 									    .)
 	}
 .

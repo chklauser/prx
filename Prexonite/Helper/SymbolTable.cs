@@ -21,6 +21,7 @@
  *  51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
  */
 
+using System;
 using System.Collections;
 using System.Collections.Generic;
 using NoDebug = System.Diagnostics.DebuggerNonUserCodeAttribute;
@@ -53,6 +54,8 @@ namespace Prexonite
 
         public virtual void Add(string key, TValue value)
         {
+            if (table.ContainsKey(key) && value.Equals(table[key]))
+                return;
             table.Add(key, value);
         }
 
