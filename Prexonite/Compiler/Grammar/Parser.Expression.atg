@@ -324,8 +324,7 @@ ObjectCreation<out IAstExpression expr>
                                         (.  IAstType type; expr = null; .)
 =
     new TypeExpr<out type>              (.  AstObjectCreation creation = new AstObjectCreation(this, type); .)
-    [   Arguments<creation.Arguments>  
-    ]                                   (.  expr = creation; .)
+    Arguments<creation.Arguments>       (.  expr = creation; .)
 .
 
 CoroutineCreation<out IAstExpression expr>

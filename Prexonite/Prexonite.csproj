@@ -19,7 +19,7 @@
     <DebugType>full</DebugType>
     <Optimize>false</Optimize>
     <OutputPath>bin\</OutputPath>
-    <DefineConstants>TRACE;DEBUG;Verbose,allowIndex,forceIndex</DefineConstants>
+    <DefineConstants>TRACE;DEBUG;allowIndex,forceIndex</DefineConstants>
     <ErrorReport>prompt</ErrorReport>
     <WarningLevel>4</WarningLevel>
     <DocumentationFile>
@@ -35,6 +35,7 @@
     <PlatformTarget>AnyCPU</PlatformTarget>
     <DocumentationFile>
     </DocumentationFile>
+    <DebugSymbols>false</DebugSymbols>
   </PropertyGroup>
   <ItemGroup>
     <Reference Include="System" />
@@ -48,6 +49,7 @@
     <Compile Include="Commands\Call.cs" />
     <Compile Include="Commands\Caller.cs" />
     <Compile Include="Commands\Concatenate.cs" />
+    <Compile Include="Commands\CallMember.cs" />
     <Compile Include="Commands\Debug.cs" />
     <Compile Include="Commands\DelegatePCommand.cs" />
     <Compile Include="Commands\Dispose.cs" />

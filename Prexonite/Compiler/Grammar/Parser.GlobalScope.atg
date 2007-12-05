@@ -308,13 +308,17 @@ FunctionDefinition<out PFunction func>
                                             ft.ParentTarget = target;	                                           
 	                                    
 	                                .)
-	[	lpar
-		[	FormalArg<ft> 
-			{	comma
-				FormalArg<ft>
-			}
-		]
-		rpar
+    [   lpar
+	    [	FormalArg<ft> 
+		    {	[comma]
+			    FormalArg<ft>
+		    }
+	    ]
+	    rpar
+    |   FormalArg<ft>
+        {   [comma]
+            FormalArg<ft>
+        }
 	]	                            (.  if(target == null && 
 	                                        (!object.ReferenceEquals(func, TargetApplication._InitializationFunction)))
 	                                    {
@@ -336,10 +340,12 @@ FunctionDefinition<out PFunction func>
                                         target = FunctionTargets[func]; 
                                         _pushLexerState(Lexer.Local);
                                     .)
-    (   does
+    (   [ does ]
         StatementBlock<target.Ast>
-    |   lbrace { Statement<target.Ast> } rbrace
-    |   assign                      (.  AstReturn ret = new AstReturn(this, ReturnVariant.Exit); .)
+    |   IF(isFollowedByStatementBlock())
+        implementation
+        StatementBlock<target.Ast>
+    |   ( assign | implementation ) (.  AstReturn ret = new AstReturn(this, ReturnVariant.Exit); .)
         Expr<out ret.Expression>    (.  target.Ast.Add(ret); .)
         semicolon
     )                               (.  _popLexerState();

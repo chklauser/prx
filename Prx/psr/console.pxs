@@ -6,31 +6,58 @@ build does require
     "struct.pxs"
 );
 
-var registered_controls = [];
+function create_container
+{   
+    var container = [];
+     
+    function register(this) does for(var i = 1; i < var args.Length; i++)
+    {
+        var arg = args[i];
+        if(arg is Null Or container.Contains(arg))
+            continue;
+        container.Add(arg);
+    }
+    
+    function remove does for(var i = 1; i < var args.Length; i++)
+    {
+        var arg = args[i];
+        if(arg is Null)
+            continue;
+        container.Remove(arg);
+        
+    }
+    
+    function update does
+        foreach(var control in container)
+            control.update;
+            
+    function clear does
+        foreach(var control in container)
+            control.clear;
+    
+    function registered(this,control) =
+        create_terminator(register(this) = control, 
+                    () => remove  (this) = control);
+                    
+    return struct;
+}
+        
+var shared_container = create_container;
 
 function register_control does foreach(var arg in var args)
-{
-    if(arg is Null Or registered_controls.Contains(arg))
-        continue;
-    registered_controls.Add(arg);
-}
+    shared_container.register(arg);
 
 function remove_control does foreach(var arg in var args)
-{
-    if(arg is Null)
-        continue;
-    registered_controls.Remove(arg);
-}
+    shared_container.remove(arg);
 
-function update_controls does
-    foreach(var control in registered_controls)
-        control.update;
+function update_controls does shared_container.update;
         
-function clear_controls does
-    foreach(var control in registered_controls)
-        control.clear;
+function clear_controls does shared_container.clear;
 
-function create_register_function(ctor) = () => register_control = call(ctor,var args);
+function registered_control control = shared_container.registered(control);
+
+function create_register_function ctor => () => register_control = call(ctor,var args);
+function create_registered_function ctor => () => registered_control = call(ctor,var args);
         
 function create_field(x,y,length)
 [ import System; ]
@@ -42,12 +69,6 @@ function create_field(x,y,length)
     x~=Int;
     y~=Int;
     length~=Int;
-    
-    function min(a,b)[is private;] = 
-        if(a < b)
-            a
-        else
-            b;
     
     function text(this,newContent)
     {
@@ -84,9 +105,21 @@ function create_field(x,y,length)
         try
         {        
             ::Console.CursorVisible = false;
+            /*
+            if(y < 0)
+            {
+                y = -y;
+                //Move content up
+                ::Console.MoveBufferArea(
+                    0,::Console.WindowTop+y,
+                    ::Console.BufferWidth,::Console.WindowHeight-y,
+                    0,::Console.WindowTop
+                );
+                y -= 1;
+                ot -= y;                
+            } */
             ::Console.CursorTop = ot - y;
             ::Console.CursorLeft = x;
-            debug(x,y,content);
             action.();
         }
         finally
@@ -139,12 +172,6 @@ function create_progressbar(x,y,length)
         return per;
     }
     
-    function max(a,b)[is private;] =
-        if(a > b)
-            a
-        else
-            b;
-    
     function nextAnim = anim[(idx = (idx+1) mod animlen)];
     
     function update(this, newPer)
@@ -170,4 +197,6 @@ function create_progressbar(x,y,length)
 }
 
 ref register_field = create_register_function(->create_field);
+ref registered_field = create_registered_function(->create_field);
 ref register_progressbar = create_register_function(->create_progressbar);
+ref registered_progressbar = create_registered_function(->create_progressbar);

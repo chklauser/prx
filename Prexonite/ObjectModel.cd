@@ -2,10 +2,10 @@
 <ClassDiagram MajorVersion="1" MinorVersion="1">
   <Font Name="Tahoma" Size="8.25" />
   <Class Name="Prexonite.Engine" Collapsed="true">
-    <Position X="3.5" Y="0.5" Width="1.5" />
+    <Position X="0.5" Y="2.5" Width="1.5" />
     <TypeIdentifier>
       <FileName>Engine.cs</FileName>
-      <HashCode>AAAQApBAAgGGCAFAIggEkABQlqAAAKAQACRBQTAEEBM=</HashCode>
+      <HashCode>AACQApBAAgGGCAFAIggEkABQlqAAAKAQASRBQTAEEBM=</HashCode>
     </TypeIdentifier>
   </Class>
   <Class Name="Prexonite.PrexoniteException" Collapsed="true">
@@ -23,16 +23,16 @@
     </TypeIdentifier>
     <Lollipop Position="0.2" />
   </Class>
-  <Class Name="Prexonite.MetaTable">
-    <Position X="0.5" Y="1.75" Width="1.75" />
+  <Class Name="Prexonite.MetaTable" Collapsed="true">
+    <Position X="0.5" Y="1.75" Width="2" />
     <TypeIdentifier>
       <FileName>Helper\Metatable.cs</FileName>
-      <HashCode>AAIAAAAAAAAEAAAACABAEAQAgBAAAAAAAAQAAQQAAAA=</HashCode>
+      <HashCode>AAIAAAAAAAAEAAAICABAEAQAgBAAAAAAAAQAAQQAABA=</HashCode>
     </TypeIdentifier>
     <Lollipop Position="0.2" />
   </Class>
   <Class Name="Prexonite.PVariable">
-    <Position X="7" Y="1.75" Width="1.5" />
+    <Position X="0.75" Y="3.5" Width="1.5" />
     <TypeIdentifier>
       <FileName>PVariable.cs</FileName>
       <HashCode>ABAAAAAIAAAAAAAAgAAAAAAAgAAAAKAAAAAgAAAAAAA=</HashCode>
@@ -40,7 +40,7 @@
     <Lollipop Position="0.2" />
   </Class>
   <Class Name="Prexonite.PValue" Collapsed="true">
-    <Position X="4.75" Y="3.75" Width="1.5" />
+    <Position X="2.75" Y="1.75" Width="2.75" />
     <TypeIdentifier>
       <FileName>PValue.cs</FileName>
       <HashCode>QDAABKCCCBBAAoQEqFABSGAQABAAIqAKAQAgAQBABCA=</HashCode>
@@ -48,7 +48,7 @@
     <Lollipop Position="0.2" />
   </Class>
   <Class Name="Prexonite.Compiler.Ast.AstGetSet" Collapsed="true">
-    <Position X="4.25" Y="5.75" Width="1.5" />
+    <Position X="4.25" Y="8.25" Width="1.5" />
     <TypeIdentifier>
       <FileName>Compiler\Ast\AstGetSet.cs</FileName>
       <HashCode>DAEAQAAAAAAAAAIEAABAAAAEAEEAAACAYAggAgAAAAQ=</HashCode>
@@ -56,7 +56,7 @@
     <Lollipop Position="0.2" />
   </Class>
   <Class Name="Prexonite.Compiler.Ast.AstGetSetSymbol" Collapsed="true">
-    <Position X="1" Y="7" Width="1.5" />
+    <Position X="1" Y="9.5" Width="1.5" />
     <TypeIdentifier>
       <FileName>Compiler\Ast\AstGetSetSymbol.cs</FileName>
       <HashCode>CAACAAAAAAABAAIEAAAAAIAAAAAAIAAAAAgAAAAAAAA=</HashCode>
@@ -64,7 +64,7 @@
     <Lollipop Position="0.2" />
   </Class>
   <Class Name="Prexonite.Compiler.Ast.AstGetSetMemberAccess" Collapsed="true">
-    <Position X="5.5" Y="7" Width="1.5" />
+    <Position X="5.5" Y="9.5" Width="1.5" />
     <TypeIdentifier>
       <FileName>Compiler\Ast\AstGetSetMemberAccess.cs</FileName>
       <HashCode>DAECAAAAAAAAAAIAAIBAAAAAAAAAAAAAAAgAAgAAAAA=</HashCode>
@@ -72,14 +72,14 @@
     <Lollipop Position="0.2" />
   </Class>
   <Class Name="Prexonite.Compiler.Ast.AstGetSetReference" Collapsed="true">
-    <Position X="1" Y="8.5" Width="1.5" />
+    <Position X="1" Y="11" Width="1.5" />
     <TypeIdentifier>
       <FileName>Compiler\Ast\AstGetSetReference.cs</FileName>
       <HashCode>AAAAAAAAAAAAAAIAAAAAAAAAAAAAAAAAAAgAAAAAAAA=</HashCode>
     </TypeIdentifier>
   </Class>
   <Class Name="Prexonite.Compiler.Ast.AstGetSetStatic" Collapsed="true">
-    <Position X="3.25" Y="7" Width="1.5" />
+    <Position X="3.25" Y="9.5" Width="1.5" />
     <TypeIdentifier>
       <FileName>Compiler\Ast\AstGetSetStatic.cs</FileName>
       <HashCode>CAEACAAAAAAAAAIAAABAAQAAAAAAAAAAAAgAAAAAAAA=</HashCode>
@@ -87,18 +87,169 @@
     <Lollipop Position="0.2" />
   </Class>
   <Class Name="Prexonite.Compiler.Ast.AstIndirectCall" Collapsed="true">
-    <Position X="7.75" Y="7" Width="1.5" />
+    <Position X="7.75" Y="9.5" Width="1.5" />
     <TypeIdentifier>
       <FileName>Compiler\Ast\AstIndirectCall.cs</FileName>
       <HashCode>DAEAAAAAAAAAAAIAAIBAAAAAAAAAAAAAAAgAAgAAAAA=</HashCode>
     </TypeIdentifier>
     <Lollipop Position="0.2" />
   </Class>
-  <Interface Name="Prexonite.IMetaFilter" Collapsed="true">
-    <Position X="5.25" Y="3" Width="1.5" />
+  <Class Name="Prexonite.Compiler.Ast.AstNode" Collapsed="true">
+    <Position X="4.25" Y="7" Width="1.5" />
     <TypeIdentifier>
-      <FileName>Helper\Metatable.cs</FileName>
-      <HashCode>AAAAAAAAAAAAAAAAAABAAAAAAAAAAAAAAAAAAAQAAAA=</HashCode>
+      <FileName>Compiler\Ast\AstNode.cs</FileName>
+      <HashCode>AAAAAAAAAAAAAAAAAABAAAAAAAEEIAAAAAAAAAABAAA=</HashCode>
+    </TypeIdentifier>
+  </Class>
+  <Class Name="Prexonite.Types.PType" Collapsed="true">
+    <Position X="8.25" Y="0.5" Width="2.75" />
+    <TypeIdentifier>
+      <FileName>PType.cs</FileName>
+      <HashCode>QDAAAiACABJAhJEs6QABCGAQABgAI6ACQAIAIWRQAmI=</HashCode>
+    </TypeIdentifier>
+    <Compartments>
+      <Compartment Name="Methods" Collapsed="true" />
+    </Compartments>
+    <NestedTypes>
+      <Enum Name="Prexonite.Types.PType.BuiltIn" Collapsed="true">
+        <TypeIdentifier>
+          <NewMemberFileName>PType.cs</NewMemberFileName>
+        </TypeIdentifier>
+      </Enum>
+      <Class Name="Prexonite.Types.PType.PrexoniteObjectTypeProxy" Collapsed="true">
+        <TypeIdentifier>
+          <NewMemberFileName>PType.cs</NewMemberFileName>
+        </TypeIdentifier>
+      </Class>
+    </NestedTypes>
+  </Class>
+  <Class Name="Prexonite.Types.BoolPType" Collapsed="true">
+    <Position X="7.25" Y="4.75" Width="1.5" />
+    <TypeIdentifier>
+      <FileName>Types\BoolPType.cs</FileName>
+      <HashCode>AAQAACAKABBAAJEEAAAACOAAAABAAIACQAAAICAgAAA=</HashCode>
+    </TypeIdentifier>
+  </Class>
+  <Class Name="Prexonite.Types.StructurePType" Collapsed="true">
+    <Position X="11.75" Y="1.75" Width="1.5" />
+    <TypeIdentifier>
+      <FileName>Types\StructurePType.cs</FileName>
+      <HashCode>ABQAAAECAAQAIBEEAAAABAgAQABAAIAIAEAAICAoAAI=</HashCode>
+    </TypeIdentifier>
+  </Class>
+  <Class Name="Prexonite.Types.ExtendableObject" Collapsed="true" BaseTypeListCollapsed="true">
+    <Position X="27.75" Y="1.75" Width="1.5" />
+    <TypeIdentifier>
+      <FileName>Types\ExtendableObject.cs</FileName>
+      <HashCode>ABAAAAACAAJAAEAAAAAAAAAAAAAAEAAAAAAAAAAAAAA=</HashCode>
+    </TypeIdentifier>
+    <Lollipop Position="0.2" />
+  </Class>
+  <Class Name="Prexonite.Types.ExtensionMember" Collapsed="true">
+    <Position X="29.5" Y="1.75" Width="1.5" />
+    <TypeIdentifier>
+      <FileName>Types\ExtendableObject.cs</FileName>
+      <HashCode>ABACAgACAAAAAAAAAABAACAAAAAAAAAAAAAgAAAAAAI=</HashCode>
+    </TypeIdentifier>
+  </Class>
+  <Class Name="Prexonite.Types.ExtensionTable" Collapsed="true">
+    <Position X="31.25" Y="1.75" Width="2.5" />
+    <TypeIdentifier>
+      <FileName>Types\ExtendableObject.cs</FileName>
+      <HashCode>CAAAAAAAAAAAAACAAAAAAAAAAAAAAAAAAAAAAAAAAAA=</HashCode>
+    </TypeIdentifier>
+  </Class>
+  <Class Name="Prexonite.Types.HashPType" Collapsed="true">
+    <Position X="9.5" Y="2.75" Width="1.5" />
+    <TypeIdentifier>
+      <FileName>Types\HashPType.cs</FileName>
+      <HashCode>ABQEAAACAAAAABEEAAAAAAAAAAAAIIAAQAAAICAgAAA=</HashCode>
+    </TypeIdentifier>
+  </Class>
+  <Class Name="Prexonite.Types.IntPType" Collapsed="true">
+    <Position X="7.25" Y="2.75" Width="1.5" />
+    <TypeIdentifier>
+      <FileName>Types\IntPType.cs</FileName>
+      <HashCode>QCQAACACABBAAJEEIgABCEAQABhAIoACQAAAISBgACA=</HashCode>
+    </TypeIdentifier>
+  </Class>
+  <Class Name="Prexonite.Types.ListPType" Collapsed="true">
+    <Position X="9.5" Y="1.75" Width="1.5" />
+    <TypeIdentifier>
+      <FileName>Types\ListPType.cs</FileName>
+      <HashCode>ABQEAAACAAAAABEEAAAAAAAAAAgAAoAAQAAAICAgAAA=</HashCode>
+    </TypeIdentifier>
+  </Class>
+  <Class Name="Prexonite.Types.NullPType" Collapsed="true">
+    <Position X="7.25" Y="1.75" Width="1.5" />
+    <TypeIdentifier>
+      <FileName>Types\NullPType.cs</FileName>
+      <HashCode>QDQAACACABBAgJEEIAABCOAQABhAIoQCQAAAISBgACA=</HashCode>
+    </TypeIdentifier>
+  </Class>
+  <Class Name="Prexonite.Types.ObjectPType" Collapsed="true">
+    <Position X="14.25" Y="0.5" Width="1.5" />
+    <TypeIdentifier>
+      <FileName>Types\ObjectPType.cs</FileName>
+      <HashCode>QDUAQLACABBARJEEIQCBCGAYABAAIoECAAIgITBgACA=</HashCode>
+    </TypeIdentifier>
+  </Class>
+  <Class Name="Prexonite.Types.PValueEnumerator" Collapsed="true" BaseTypeListCollapsed="true">
+    <Position X="9.5" Y="4" Width="1.5" />
+    <TypeIdentifier>
+      <FileName>Types\PValueEnumerator.cs</FileName>
+      <HashCode>AAAAAAACACEABAAAAACAAAAAAAAAAAAAoAAAAAAAAAA=</HashCode>
+    </TypeIdentifier>
+    <Lollipop Position="0.2" />
+  </Class>
+  <Class Name="Prexonite.Types.PValueHashtable" Collapsed="true">
+    <Position X="11.5" Y="4" Width="2.5" />
+    <TypeIdentifier>
+      <FileName>Types\PValueHashtable.cs</FileName>
+      <HashCode>AAIAAAAAAAAAAEAAgAAAAAAAAAAAAIIACICAAAAAAAA=</HashCode>
+    </TypeIdentifier>
+  </Class>
+  <Class Name="Prexonite.Types.PValueKeyValuePair" Collapsed="true" BaseTypeListCollapsed="true">
+    <Position X="11.5" Y="2.75" Width="2.5" />
+    <TypeIdentifier>
+      <FileName>Types\PValueKeyValuePair.cs</FileName>
+      <HashCode>ABAAAAACAAAAAkQEgACAAAAAAAAAAIAAAIAgAAAAAAA=</HashCode>
+    </TypeIdentifier>
+    <Lollipop Position="0.2" />
+  </Class>
+  <Class Name="Prexonite.Types.RealPType" Collapsed="true">
+    <Position X="7.25" Y="3.75" Width="1.5" />
+    <TypeIdentifier>
+      <FileName>Types\RealPType.cs</FileName>
+      <HashCode>QCQAAAACAAAAAJEEIACBCEAQABhAIoAAQAAAISBgACA=</HashCode>
+    </TypeIdentifier>
+  </Class>
+  <Class Name="Prexonite.Types.StringPType" Collapsed="true">
+    <Position X="7.25" Y="5.75" Width="1.5" />
+    <TypeIdentifier>
+      <FileName>Types\StringPType.cs</FileName>
+      <HashCode>ADQAAAACAIgAABEEIgABCEAAAAhAMoAAQAAKISBgACA=</HashCode>
+    </TypeIdentifier>
+  </Class>
+  <Class Name="Prexonite.PrexoniteInvalidStackException" Collapsed="true">
+    <Position X="5.25" Y="2.75" Width="1.5" />
+    <TypeIdentifier>
+      <FileName>FunctionContext.cs</FileName>
+      <HashCode>AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA=</HashCode>
+    </TypeIdentifier>
+  </Class>
+  <Interface Name="Prexonite.Types.IObject" Collapsed="true">
+    <Position X="14.25" Y="1.75" Width="1.5" />
+    <TypeIdentifier>
+      <FileName>Types\IObject.cs</FileName>
+      <HashCode>AAAAAAACAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA=</HashCode>
+    </TypeIdentifier>
+  </Interface>
+  <Interface Name="Prexonite.IIndirectCall" Collapsed="true">
+    <Position X="11.75" Y="0.5" Width="1.5" />
+    <TypeIdentifier>
+      <FileName>IIndirectCall.cs</FileName>
+      <HashCode>ABAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA=</HashCode>
     </TypeIdentifier>
   </Interface>
 </ClassDiagram>

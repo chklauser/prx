@@ -170,8 +170,28 @@ namespace Prexonite.Types
                         result = Null.CreatePValue();
                         break;
                     case "removeat":
+                        List<bool> toRemove = new List<bool>(lst.Count);
+                        for (int i = 0; i < lst.Count; i++)
+                            toRemove.Add(false);
+
                         foreach (PValue arg in args)
-                            lst.RemoveAt((int) arg.ConvertTo(sctx, Int).Value);
+                        {
+                            int li = (int) arg.ConvertTo(sctx, Int).Value;
+                            if (li > lst.Count - 1 || li < 0)
+                                throw new ArgumentOutOfRangeException(
+                                    "The index " + li + " is out of the range of the supplied list.");
+                            toRemove[li] = true;
+                        }
+
+                        for (int i = 0; i < toRemove.Count; i++)
+                        {
+                            if(toRemove[i])
+                            {
+                                toRemove.RemoveAt(i);
+                                lst.RemoveAt(i);
+                                i--;
+                            }
+                        }
                         result = Null.CreatePValue();
                         break;
                     case "indexof":
@@ -240,16 +260,7 @@ namespace Prexonite.Types
                         result = Null.CreatePValue();
                         break;
                     case "tostring":
-                        StringBuilder sb = new StringBuilder("[ ");
-                        foreach (PValue v in lst)
-                        {
-                            sb.Append(v.CallToString(sctx));
-                            sb.Append(", ");
-                        }
-                        if (sb.Length > 2)
-                            sb.Remove(sb.Length - 2, 2);
-                        sb.Append(" ]");
-                        result = sb.ToString();
+                        result = _getStringRepresentation(lst, sctx);
                         break;
 
                     default:
@@ -272,6 +283,20 @@ namespace Prexonite.Types
                 }
             }
             return result != null;
+        }
+
+        private static string _getStringRepresentation(List<PValue> lst, StackContext sctx)
+        {
+            StringBuilder sb = new StringBuilder("[ ");
+            foreach (PValue v in lst)
+            {
+                sb.Append(v.CallToString(sctx));
+                sb.Append(", ");
+            }
+            if (sb.Length > 2)
+                sb.Remove(sb.Length - 2, 2);
+            sb.Append(" ]");
+            return sb.ToString();
         }
 
         public override bool TryStaticCall(

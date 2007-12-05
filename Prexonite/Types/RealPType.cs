@@ -57,7 +57,7 @@ namespace Prexonite.Types
 
         public PValue CreatePValue(float value)
         {
-            return new PValue(value, Instance);
+            return new PValue((double)value, Instance);
         }
 
         #endregion

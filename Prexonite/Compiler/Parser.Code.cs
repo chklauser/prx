@@ -383,6 +383,12 @@ namespace Prexonite.Compiler
             return typeId;
         }
 
+        private bool isFollowedByStatementBlock()
+        {
+            scanner.ResetPeek();
+            return scanner.Peek().kind == _lbrace;
+        }
+
         //[NoDebug]
         private bool isLambdaExpression() //LL(*)
         {

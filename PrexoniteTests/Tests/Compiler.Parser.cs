@@ -3013,7 +3013,7 @@ stloc   d
 ldloc   s
 ldloc   d
 dup     1
-rot.1,3
+rot.2,3
 set.1   M
 stloc   e
 
@@ -3025,7 +3025,7 @@ stloc   f
 ldc.int 8
 ldloc   a
 dup     1
-rot.1,3
+rot.2,3
 indloc.2 f
 stloc   g
 ");

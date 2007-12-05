@@ -861,10 +861,9 @@ function main(level)
                 @"
 var L2 = ""2p2"";
 
-function \init [ Import { System, System::Text }; ] does
 {
     L1 = ""1o2"";
-    buffer = new ::StringBuilder;
+    buffer = new System::Text::StringBuilder;
 }
 ");
             _expect("#1=1o2;#2=2p2;", 2);

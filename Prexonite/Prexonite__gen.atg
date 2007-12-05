@@ -754,8 +754,7 @@ ObjectCreation<out IAstExpression expr>
                                         (.  IAstType type; expr = null; .)
 =
     new TypeExpr<out type>              (.  AstObjectCreation creation = new AstObjectCreation(this, type); .)
-    [   Arguments<creation.Arguments>  
-    ]                                   (.  expr = creation; .)
+    Arguments<creation.Arguments>       (.  expr = creation; .)
 .
 
 CoroutineCreation<out IAstExpression expr>
@@ -1178,13 +1177,17 @@ FunctionDefinition<out PFunction func>
                                             ft.ParentTarget = target;	                                           
 	                                    
 	                                .)
-	[	lpar
-		[	FormalArg<ft> 
-			{	comma
-				FormalArg<ft>
-			}
-		]
-		rpar
+    [   lpar
+	    [	FormalArg<ft> 
+		    {	[comma]
+			    FormalArg<ft>
+		    }
+	    ]
+	    rpar
+    |   FormalArg<ft>
+        {   [comma]
+            FormalArg<ft>
+        }
 	]	                            (.  if(target == null && 
 	                                        (!object.ReferenceEquals(func, TargetApplication._InitializationFunction)))
 	                                    {
@@ -1206,10 +1209,12 @@ FunctionDefinition<out PFunction func>
                                         target = FunctionTargets[func]; 
                                         _pushLexerState(Lexer.Local);
                                     .)
-    (   does
+    (   [ does ]
         StatementBlock<target.Ast>
-    |   lbrace { Statement<target.Ast> } rbrace
-    |   assign                      (.  AstReturn ret = new AstReturn(this, ReturnVariant.Exit); .)
+    |   IF(isFollowedByStatementBlock())
+        implementation
+        StatementBlock<target.Ast>
+    |   ( assign | implementation ) (.  AstReturn ret = new AstReturn(this, ReturnVariant.Exit); .)
         Expr<out ret.Expression>    (.  target.Ast.Add(ret); .)
         semicolon
     )                               (.  _popLexerState();
@@ -1756,9 +1761,9 @@ ForLoop<AstBlock block>         (.  AstForLoop loop;
     (
 		do StatementBlock<loop.NextIteration> 
                                 (.  loop.IsPrecondition = false; .)
-        [   while
+        (   while
         |   until               (.  loop.IsPositive = false; .)
-        ]
+        )
         Expr<out loop.Condition>
     |   [   while
         |   until               (.  loop.IsPositive = false; .)

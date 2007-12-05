@@ -36,6 +36,8 @@ namespace Prexonite.Commands
     /// </remarks>
     public class Dispose : PCommand
     {
+        public const string DisposeMemberId = "Dispose";
+
         /// <summary>
         /// Executes the dispose function.<br />
         /// Calls <see cref="IDisposable.Dispose"/> on object values that support the interface.
@@ -51,11 +53,28 @@ namespace Prexonite.Commands
             if (args == null)
                 throw new ArgumentNullException("args");
             foreach (PValue arg in args)
-                if (arg != null && arg.Type is ObjectPType)
+                if (arg != null)
                 {
-                    IDisposable toDispose = arg.Value as IDisposable;
-                    if (toDispose != null)
-                        toDispose.Dispose();
+                    PValue dummy;
+                    if (arg.Type is ObjectPType)
+                    {
+                        IDisposable toDispose = arg.Value as IDisposable;
+                        if (toDispose != null)
+                            toDispose.Dispose();
+                        else
+                        {
+                            IObject isObj = arg.Value as IObject;
+                            if (isObj != null)
+                            {
+                                isObj.TryDynamicCall(
+                                    sctx, new PValue[0], PCall.Get, DisposeMemberId, out dummy);
+                            }
+                        }
+                    }
+                    else
+                    {
+                        arg.TryDynamicCall(sctx, new PValue[0], PCall.Get, DisposeMemberId, out dummy);
+                    }
                 }
             return PType.Null.CreatePValue();
         }

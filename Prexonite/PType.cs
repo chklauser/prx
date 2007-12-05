@@ -183,6 +183,7 @@ namespace Prexonite.Types
             {
                 get
                 {
+                    //TODO: Add double
                     if (clrType == typeof(Char))
                         return CharObj;
                     else if (clrType == typeof(Byte))
@@ -766,6 +767,8 @@ namespace Prexonite.Types
         [NoDebug()]
         public bool IsEqual(PType otherType)
         {
+            if(ReferenceEquals(this,otherType))
+                return true;
             if (GetHashCode() != otherType.GetHashCode())
                 return false;
             if (InternalIsEqual(otherType))
@@ -873,12 +876,7 @@ namespace Prexonite.Types
 
         internal static int _CombineHashes(int a, int b)
         {
-            long h = Math.BigMul(a, b);
-            bool isNegative = h < 0;
-            if (isNegative)
-                h = -h;
-            h = h%Int32.MaxValue;
-            return (int) (isNegative ? -h : h);
+            return a ^ b;
         }
     }
 

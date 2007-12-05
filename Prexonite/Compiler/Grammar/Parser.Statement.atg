@@ -393,9 +393,9 @@ ForLoop<AstBlock block>         (.  AstForLoop loop;
     (
 		do StatementBlock<loop.NextIteration> 
                                 (.  loop.IsPrecondition = false; .)
-        [   while
+        (   while
         |   until               (.  loop.IsPositive = false; .)
-        ]
+        )
         Expr<out loop.Condition>
     |   [   while
         |   until               (.  loop.IsPositive = false; .)

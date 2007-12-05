@@ -179,6 +179,15 @@ namespace Prexonite.Types
             return argst;
         }
 
+        internal static PValue[] _addId(string id, PValue[] args)
+        {
+            PValue[] argst = new PValue[args.Length + 1];
+            argst[0] = args[0]; //subject
+            argst[1] = id;
+            Array.Copy(args, 1, argst, 2, args.Length - 1);
+            return argst;
+        }
+
         public override bool TryDynamicCall(
             StackContext sctx,
             PValue subject,
@@ -234,7 +243,7 @@ namespace Prexonite.Types
                     default:
                         //Try to call the generic "call" member
                         if (obj.TryGetValue(CallId, out m) && m != null)
-                            result = m.Invoke(sctx, _addThis(subject, argst), call);
+                            result = m.Invoke(sctx, _addId(id, argst), call);
                         else
                             return false;
                         break;

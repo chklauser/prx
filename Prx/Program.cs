@@ -55,6 +55,7 @@ namespace Prx
 
         private static void Main(string[] args)
         {
+            Console.CancelKeyPress += new ConsoleCancelEventHandler(Console_CancelKeyPress);
             PrexoniteConsole pc = new PrexoniteConsole(true);
 
 #if !DEBUG //Let the exceptions surface so they can more easily be debugged
@@ -264,6 +265,11 @@ namespace Prx
                 Console.WriteLine(ex);
             }
 #endif
+        }
+
+        static void Console_CancelKeyPress(object sender, ConsoleCancelEventArgs e)
+        {
+            Environment.Exit(1);
         }
 
         private static void _reportErrors(Loader ldr)
