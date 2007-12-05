@@ -116,14 +116,21 @@ Boolean<out PValue value>         (.  value = true;  .)
 |	"false"                     (.  value = false; .)
 .
 
-Integer<out PValue value>
+Integer<out PValue value>       (.  int i; .)
 =
-	integer                     (.  value = Int32.Parse(t.val); .)
+	integer                     (.  
+	                                if(!Prexonite.Compiler.Parser.TryParseInteger(t.val, out i))
+	                                    SemErr("Cannot recognize integer " + t.val);
+	                                value = i;
+	                            .)
 .
 
-Real<out PValue value>          
+Real<out PValue value>          (.  double d; .)
 =
-	real                        (.  value = Double.Parse(t.val); .)                       
+	real                        (.  if(!Prexonite.Compiler.Parser.TryParseReal(t.val, out d))
+	                                    SemErr("Cannot recognize real " + t.val);
+	                                value = d;
+	                            .)
 .
 
 String<out PValue value>

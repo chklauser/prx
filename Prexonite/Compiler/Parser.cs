@@ -618,8 +618,8 @@ internal partial class Parser {
 
 	void Integer(/*Parser.Helper.atg:47*/out int value) {
 		Expect(_integer);
-		/*Parser.Helper.atg:48*/if(!Int32.TryParse(t.val, out value))
-		SemErr("Cannot recognize integer " + t.val + ".");
+		/*Parser.Helper.atg:48*/if(!TryParseInteger(t.val, out value))
+		   SemErr(t, "Cannot recognize integer " + t.val);
 		
 	}
 
@@ -1396,8 +1396,8 @@ internal partial class Parser {
 	void Real(/*Parser.Helper.atg:61*/out double value) {
 		Expect(_real);
 		/*Parser.Helper.atg:70*/string real = t.val;
-		if(!double.TryParse(real, out value))
-		SemErr("Cannot recognize real " + real + ".");
+		if(!TryParseReal(real, out value))
+		    SemErr(t, "Cannot recognize real " + real);
 		
 	}
 

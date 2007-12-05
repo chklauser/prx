@@ -150,15 +150,15 @@ internal partial class Parser {
 		Type(/*PTypeExpression.atg:101*/out _lastType);
 	}
 
-	void Type(/*PTypeExpression.atg:135*/out PType value) {
-		/*PTypeExpression.atg:135*/string id; 
+	void Type(/*PTypeExpression.atg:142*/out PType value) {
+		/*PTypeExpression.atg:142*/string id; 
 		System.Collections.Generic.List<PValue> args = new System.Collections.Generic.List<PValue>();
 		
 		if (la.kind == _tilde) {
 			Get();
 		}
 		Expect(_id);
-		/*PTypeExpression.atg:140*/id = t.val; 
+		/*PTypeExpression.atg:147*/id = t.val; 
 		if(!_sctx.ParentEngine.PTypeRegistry.Contains(id))
 		{
 		    SemErr("Cannot find PType " + id + " referenced in PTypeExpression.");
@@ -167,18 +167,18 @@ internal partial class Parser {
 		
 		if (la.kind == 8) {
 			Get();
-			/*PTypeExpression.atg:147*/PValue obj; 
+			/*PTypeExpression.atg:154*/PValue obj; 
 			if (StartOf(1)) {
-				Expr(/*PTypeExpression.atg:148*/out obj);
-				/*PTypeExpression.atg:148*/args.Add(obj); 
+				Expr(/*PTypeExpression.atg:155*/out obj);
+				/*PTypeExpression.atg:155*/args.Add(obj); 
 				while (WeakSeparator(9,1,2) ) {
-					Expr(/*PTypeExpression.atg:150*/out obj);
-					/*PTypeExpression.atg:150*/args.Add(obj); 
+					Expr(/*PTypeExpression.atg:157*/out obj);
+					/*PTypeExpression.atg:157*/args.Add(obj); 
 				}
 			}
 			Expect(10);
 		}
-		/*PTypeExpression.atg:155*/if(id == null) //Error recovery.
+		/*PTypeExpression.atg:162*/if(id == null) //Error recovery.
 		   value = PType.Object[typeof(object)];
 		else //Normal case
 		    value = _sctx.ConstructPType(id, args.ToArray());
@@ -211,19 +211,27 @@ internal partial class Parser {
 		} else SynErr(13);
 	}
 
-	void Integer(/*PTypeExpression.atg:120*/out PValue value) {
+	void Integer(/*PTypeExpression.atg:119*/out PValue value) {
+		/*PTypeExpression.atg:119*/int i; 
 		Expect(_integer);
-		/*PTypeExpression.atg:121*/value = Int32.Parse(t.val); 
+		/*PTypeExpression.atg:122*/if(!Prexonite.Compiler.Parser.TryParseInteger(t.val, out i))
+		   SemErr("Cannot recognize integer " + t.val);
+		value = i;
+		
 	}
 
-	void Real(/*PTypeExpression.atg:125*/out PValue value) {
+	void Real(/*PTypeExpression.atg:128*/out PValue value) {
+		/*PTypeExpression.atg:128*/double d; 
 		Expect(_real);
-		/*PTypeExpression.atg:126*/value = Double.Parse(t.val); 
+		/*PTypeExpression.atg:130*/if(!Prexonite.Compiler.Parser.TryParseReal(t.val, out d))
+		   SemErr("Cannot recognize real " + t.val);
+		value = d;
+		
 	}
 
-	void String(/*PTypeExpression.atg:130*/out PValue value) {
+	void String(/*PTypeExpression.atg:137*/out PValue value) {
 		Expect(_string);
-		/*PTypeExpression.atg:131*/value = StringPType.Unescape(t.val.Substring(1,t.val.Length-2));
+		/*PTypeExpression.atg:138*/value = StringPType.Unescape(t.val.Substring(1,t.val.Length-2));
 		
 	}
 

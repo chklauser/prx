@@ -1321,8 +1321,8 @@ Boolean<out bool value>         (.  value = true; .)
 
 Integer<out int value>
 =
-	integer                     (.  if(!Int32.TryParse(t.val, out value))
-	                                SemErr("Cannot recognize integer " + t.val + ".");
+	integer                     (.  if(!TryParseInteger(t.val, out value))
+	                                    SemErr(t, "Cannot recognize integer " + t.val);
 	                            .)
 .
 
@@ -1344,8 +1344,8 @@ Real<out double value>
 	    real                    (.   real += t.val; .)
 	] */
 	                            (.  string real = t.val;
-	                                if(!double.TryParse(real, out value))
-	                                SemErr("Cannot recognize real " + real + ".");
+	                                if(!TryParseReal(real, out value))
+	                                    SemErr(t, "Cannot recognize real " + real);
 	                            .)
 .
 

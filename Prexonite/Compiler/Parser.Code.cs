@@ -25,6 +25,7 @@ using System;
 using System.Collections.Generic;
 using Prexonite.Compiler.Ast;
 using Prexonite.Types;
+using System.Globalization;
 using NoDebug = System.Diagnostics.DebuggerNonUserCodeAttribute;
 
 namespace Prexonite.Compiler
@@ -135,6 +136,32 @@ namespace Prexonite.Compiler
         #region Helper
 
         #region General
+
+        public static bool TryParseInteger(string s, out int i)
+        {
+            return Int32.TryParse(s, IntegerStyle, CultureInfo.InvariantCulture, out i);
+        }
+
+        public static bool TryParseReal(string s, out double d)
+        {
+            return Double.TryParse(s, RealStyle, CultureInfo.InvariantCulture, out d);
+        }
+
+        public static NumberStyles RealStyle
+        {
+            get
+            {
+                return NumberStyles.AllowDecimalPoint | NumberStyles.AllowExponent;
+            }
+        }
+
+        public static NumberStyles IntegerStyle
+        {
+            get
+            {
+                return NumberStyles.None;
+            }
+        }
 
         [NoDebug]
         public void SemErr(int line, int col, string message)
