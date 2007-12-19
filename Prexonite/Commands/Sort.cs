@@ -53,7 +53,7 @@ namespace Prexonite.Commands
                 return PType.Null.CreatePValue();
             else if (args.Length == 1)
             {
-                foreach (PValue x in MapAll._ToEnumerable(args[0]))
+                foreach (PValue x in Map._ToEnumerable(args[0]))
                     lst.Add(x);
                 return (PValue) lst;
             }
@@ -62,7 +62,7 @@ namespace Prexonite.Commands
                 List<PValue> clauses = new List<PValue>();
                 for (int i = 0; i + 1 < args.Length; i++)
                     clauses.Add(args[i]);
-                foreach (PValue x in MapAll._ToEnumerable(args[args.Length - 1]))
+                foreach (PValue x in Map._ToEnumerable(args[args.Length - 1]))
                     lst.Add(x);
                 lst.Sort(
                     delegate(PValue a, PValue b)

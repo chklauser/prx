@@ -87,14 +87,14 @@ namespace Prexonite.Commands
             if (args.Length == 3)
             {
                 PValue psource = args[2];
-                source = MapAll._ToEnumerable(psource) ?? new PValue[] {psource};
+                source = Map._ToEnumerable(psource) ?? new PValue[] {psource};
             }
             else
             {
                 List<PValue> lstsource = new List<PValue>();
                 for (int i = 1; i < args.Length; i++)
                 {
-                    IEnumerable<PValue> multiple = MapAll._ToEnumerable(args[i]);
+                    IEnumerable<PValue> multiple = Map._ToEnumerable(args[i]);
                     if (multiple != null)
                         lstsource.AddRange(multiple);
                     else

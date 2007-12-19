@@ -828,13 +828,11 @@ function main(x)
 
 Add System::Text to Import;
 
-var buffer = new ::Text::StringBuilder;
+var buffer = new System::Text::StringBuilder;
 function print does foreach( buffer.Append in var args);
 
 var L1 = ""1o1"";
 var L2;
-
-
 
 function main(level)
 {
@@ -876,7 +874,7 @@ var L2 = ""2m3"";
 var L1 = ""1k3"";
 
 declare var buffer;
-function \init does buffer = new ::StringBuilder;
+{ buffer = new System::Text::StringBuilder; }
 ");
 
             _expect("#1=1k3;#2=2m3;#3=3z3;", 3);
@@ -3002,7 +3000,7 @@ function main(a)
             {
                 foreach (string s in ldr.Errors)
                 {
-                    Console.Error.WriteLine(s);
+                    Console.WriteLine(s);
                 }
             }
             Assert.AreEqual(0, ldr.ErrorCount, "Errors detected during compilation.");

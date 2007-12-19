@@ -924,11 +924,18 @@ MetaAssignment<IHasMetaTable target>	(. string key = null; MetaEntry entry = nul
     GlobalId<out key>       (.  if(target.Meta.ContainsKey(key))
                                 {
                                     entry = target.Meta[key];
-                                    entry.AddToList(subEntry.List);
-                                }else
-                                    entry = subEntry;
+                                    entry = entry.AddToList(subEntry.List);
+                                }
+                                else
+                                {
+                                   entry = subEntry;
+                                }
                             .)
-)							(. if(entry == null || key == null) SemErr("Meta assignment did not generate an entry."); else target.Meta[key] = entry; .)	
+)							(. if(entry == null || key == null) 
+                                    SemErr("Meta assignment did not generate an entry.");
+                               else 
+                                    target.Meta[key] = entry; 
+                            .)	
 .
 
 MetaExpr<out MetaEntry entry>
@@ -1090,6 +1097,8 @@ BuildBlock
 GlobalCode							(.
 										PFunction func = TargetApplication._InitializationFunction;
 										CompilerTarget ft = FunctionTargets[func];
+										if(ft == null)
+										    throw new PrexoniteException("Internal compilation error: InitializeFunction got lost.");
 									.)
 =
 									(.	
@@ -1500,7 +1509,7 @@ GetInitiator<out AstGetSet complex, out bool isDeclaration>
                                             AstGetSetSymbol symbol = null;
                                             AstGetSetStatic staticCall = null;
                                             AstGetSet member = null;
-                                            IAstExpression expr = null;
+                                            IAstExpression expr;
                                             List<IAstExpression> args = new List<IAstExpression>();
                                             isDeclaration = false;                                            
                                             string id;
@@ -1912,7 +1921,7 @@ Throw<AstBlock block>
 Using<AstBlock block>
                                 (.  AstUsing use = new AstUsing(this); .)
 =
-    uusing lpar GetCall<out use.Container> assign Expr<out use.Expression> rpar
+    uusing lpar Expr<out use.Expression> rpar
     StatementBlock<use.Block>
                                 (.  block.Add(use); .)
 .

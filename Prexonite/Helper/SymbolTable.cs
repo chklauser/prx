@@ -165,5 +165,13 @@ namespace Prexonite
         }
 
         #endregion
+
+        protected void CloneFrom(SymbolTable<TValue> source)
+        {
+            Clear();
+            foreach (KeyValuePair<string, TValue> pair in source)
+                Add(pair);
+            DefaultValue = source.DefaultValue;
+        }
     }
 }

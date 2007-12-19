@@ -196,15 +196,23 @@ namespace Prexonite
             for (int i = stack.Count - 1; i >= 0; i--)
             {
                 StackContext sctx = stack[i];
-                builder.Append("   at ");
-                builder.Append(sctx.Implementation);
                 FunctionContext fctx = sctx as FunctionContext;
-                if (fctx != null && fctx.Pointer < fctx.Implementation.Code.Count)
+                builder.Append("   at ");
+                if (fctx == null)
                 {
-                    builder.Append(" around instruction ");
-                    builder.Append(fctx.Pointer);
-                    builder.Append(": ");
-                    builder.Append(fctx.Implementation.Code[fctx.Pointer]);
+                    builder.Append(sctx.ToString());
+                }
+                else
+                {
+                    builder.Append(fctx.Implementation);
+
+                    if (fctx.Pointer < fctx.Implementation.Code.Count)
+                    {
+                        builder.Append(" around instruction ");
+                        builder.Append(fctx.Pointer);
+                        builder.Append(": ");
+                        builder.Append(fctx.Implementation.Code[fctx.Pointer]);
+                    }
                 }
                 builder.Append("\n");
             }

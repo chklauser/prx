@@ -132,7 +132,7 @@ GetInitiator<out AstGetSet complex, out bool isDeclaration>
                                             AstGetSetSymbol symbol = null;
                                             AstGetSetStatic staticCall = null;
                                             AstGetSet member = null;
-                                            IAstExpression expr = null;
+                                            IAstExpression expr;
                                             List<IAstExpression> args = new List<IAstExpression>();
                                             isDeclaration = false;                                            
                                             string id;
@@ -544,7 +544,7 @@ Throw<AstBlock block>
 Using<AstBlock block>
                                 (.  AstUsing use = new AstUsing(this); .)
 =
-    uusing lpar GetCall<out use.Container> assign Expr<out use.Expression> rpar
+    uusing lpar Expr<out use.Expression> rpar
     StatementBlock<use.Block>
                                 (.  block.Add(use); .)
 .

@@ -33,13 +33,7 @@ namespace Prexonite
     public abstract class StackContext : IIndirectCall
     {
 
-        /// <summary>
-        /// The parent application.
-        /// </summary>
-        public Application ParentApplication
-        {
-            get { return Implementation.ParentApplication; }
-        }
+        
 
         #region Interface
 
@@ -52,9 +46,14 @@ namespace Prexonite
         }
 
         /// <summary>
-        /// Represents the function that provides the code and lexical environment for this stack context
+        /// The parent application.
         /// </summary>
-        public abstract PFunction Implementation
+        public abstract Application ParentApplication
+        {
+            get;
+        }
+
+        public abstract SymbolCollection ImportedNamespaces
         {
             get;
         }

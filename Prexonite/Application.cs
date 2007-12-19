@@ -85,7 +85,6 @@ namespace Prexonite
         /// Creates a new application with a given Id.
         /// </summary>
         /// <param name="id">An arbitrary id for identifying the application. Prefereably a valid identifier.</param>
-        [NoDebug]
         public Application(string id)
         {
             _meta = new MetaTable(this);
@@ -188,7 +187,7 @@ namespace Prexonite
             internal set { _initalizationState = value; }
         }
 
-        private PFunction _initializationFunction;
+        private readonly PFunction _initializationFunction;
 
         /// <summary>
         /// Provides access to the initialization function.
@@ -196,7 +195,6 @@ namespace Prexonite
         internal PFunction _InitializationFunction
         {
             get { return _initializationFunction; }
-            set { _initializationFunction = value; }
         }
 
         private int _initializationGeneration = -1;

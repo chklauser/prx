@@ -544,296 +544,15 @@ namespace Prexonite
 
         #region Command management
 
-        private SymbolTable<PCommand> _commands;
-        private CommandsIterator _commandsIterator;
+        private CommandTable _commandTable;
 
         /// <summary>
         /// A proxy to list commands provided by the engine.
         /// </summary>
-        public CommandsIterator Commands
+        public CommandTable Commands
         {
             [NoDebug]
-            get { return _commandsIterator; }
-        }
-
-        /// <summary>
-        /// A proxy class to the command provided by the current engine.
-        /// </summary>
-        [NoDebug]
-        public class CommandsIterator
-        {
-            private readonly Engine outer;
-
-            internal CommandsIterator(Engine outer)
-            {
-                this.outer = outer;
-            }
-
-            /// <summary>
-            /// The number of commands available.
-            /// </summary>
-            public int Count
-            {
-                get { return outer._commands.Count; }
-            }
-
-            /// <summary>
-            /// Determines whether a particular name is registered for a command.
-            /// </summary>
-            /// <param name="name">A name.</param>
-            /// <returns>True if a command with the supplied name exists; false otherwise.</returns>
-            public bool Contains(string name)
-            {
-                return outer._commands.ContainsKey(name);
-            }
-
-            /// <summary>
-            /// Tries to retrieve a command by it's name.
-            /// </summary>
-            /// <param name="id">The command's id</param>
-            /// <param name="cmd">An out parameter in which the result of the query is stored.</param>
-            /// <returns>True if the attempt was successful; false otherwise.</returns>
-            /// <remarks>The value of <paramref name="cmd"/> is only defined when the method returns true.</remarks>
-            public bool TryGetValue(string id, out PCommand cmd)
-            {
-                return outer._commands.TryGetValue(id, out cmd);
-            }
-
-            /// <summary>
-            /// Index based access to the dictionary of available commands.
-            /// </summary>
-            /// <param name="name">The name of the command to retrieve.</param>
-            /// <returns>The command registered with the supplied name.</returns>
-            public PCommand this[string name]
-            {
-                get
-                {
-                    if (outer._commands.ContainsKey(name))
-                        return outer._commands[name];
-                    else
-                        return null;
-                }
-                set
-                {
-                    if (value != null && (!value.BelongsToAGroup))
-                        value.AddToGroup(PCommandGroups.User);
-
-                    if (outer._commands.ContainsKey(name))
-                    {
-                        if (value == null)
-                            outer._commands.Remove(name);
-                        else
-                            outer._commands[name] = value;
-                    }
-                    else if (value == null)
-                        throw new ArgumentNullException("value");
-                    else
-                        outer._commands.Add(name, value);
-                }
-            }
-
-            /// <summary>
-            /// Adds a new command in the user space.
-            /// </summary>
-            /// <param name="alias">The alias that shall refer to the supplied command.</param>
-            /// <param name="command">A command instance.</param>
-            /// <exception cref="ArgumentNullException">If either <paramref name="alias"/> 
-            /// or <paramref name="command"/> is null.</exception>
-            public void AddUserCommand(string alias, PCommand command)
-            {
-                if (alias == null)
-                    throw new ArgumentNullException("alias");
-                if (command == null)
-                    throw new ArgumentNullException("command");
-                command.AddToGroup(PCommandGroups.User);
-                this[alias] = command;
-            }
-
-            /// <summary>
-            /// Adds a new command in the user space.
-            /// </summary>
-            /// <param name="alias">The alias that shall refer to the supplied command.</param>
-            /// <param name="action">An action to be turned into a command.</param>
-            /// <exception cref="ArgumentNullException">If either <paramref name="alias"/> 
-            /// or <paramref name="action"/> is null.</exception>
-            public void AddUserCommand(string alias, PCommandAction action)
-            {
-                if (alias == null)
-                    throw new ArgumentNullException("alias");
-                if (action == null)
-                    throw new ArgumentNullException("action");
-                AddUserCommand(alias, new DelegatePCommand(action));
-            }
-
-            /// <summary>
-            /// Adds a new command in the user space.
-            /// </summary>
-            /// <param name="alias">The alias that shall refer to the supplied command.</param>
-            /// <param name="action">An action to be turned into a command.</param>
-            /// <exception cref="ArgumentNullException">If either <paramref name="alias"/> 
-            /// or <paramref name="action"/> is null.</exception>
-            public void AddUserCommand(string alias, ICommand action)
-            {
-                if (alias == null)
-                    throw new ArgumentNullException("alias");
-                if (action == null)
-                    throw new ArgumentNullException("action");
-                AddUserCommand(alias, new NestedPCommand(action));
-            }
-
-            internal void AddEngineCommand(string alias, PCommand command)
-            {
-                if (alias == null)
-                    throw new ArgumentNullException("alias");
-                if (command == null)
-                    throw new ArgumentNullException("command");
-                command.AddToGroup(PCommandGroups.Engine);
-                this[alias] = command;
-            }
-
-            internal void AddEngineCommand(string alias, PCommandAction action)
-            {
-                if (alias == null)
-                    throw new ArgumentNullException("alias");
-                if (action == null)
-                    throw new ArgumentNullException("action");
-                AddEngineCommand(alias, new DelegatePCommand(action));
-            }
-
-            internal void AddEngineCommand(string alias, ICommand action)
-            {
-                if (alias == null)
-                    throw new ArgumentNullException("alias");
-                if (action == null)
-                    throw new ArgumentNullException("action");
-                AddEngineCommand(alias, new NestedPCommand(action));
-            }
-
-            internal void AddCompilerCommand(string alias, PCommand command)
-            {
-                if (alias == null)
-                    throw new ArgumentNullException("alias");
-                if (command == null)
-                    throw new ArgumentNullException("command");
-                command.AddToGroup(PCommandGroups.Compiler);
-                this[alias] = command;
-            }
-
-            internal void AddCompilerCommand(string alias, PCommandAction action)
-            {
-                if (alias == null)
-                    throw new ArgumentNullException("alias");
-                if (action == null)
-                    throw new ArgumentNullException("action");
-                AddCompilerCommand(alias, new DelegatePCommand(action));
-            }
-
-            internal void AddCompilerCommand(string alias, ICommand action)
-            {
-                if (alias == null)
-                    throw new ArgumentNullException("alias");
-                if (action == null)
-                    throw new ArgumentNullException("action");
-                AddCompilerCommand(alias, new NestedPCommand(action));
-            }
-
-            /// <summary>
-            /// Adds a new command in the host space.
-            /// </summary>
-            /// <param name="alias">The alias that shall refer to the supplied command.</param>
-            /// <param name="command">A command instance.</param>
-            /// <exception cref="ArgumentNullException">If either <paramref name="alias"/> 
-            /// or <paramref name="command"/> is null.</exception>
-            public void AddHostCommand(string alias, PCommand command)
-            {
-                if (alias == null)
-                    throw new ArgumentNullException("alias");
-                if (command == null)
-                    throw new ArgumentNullException("command");
-                command.AddToGroup(PCommandGroups.Host);
-                this[alias] = command;
-            }
-
-            /// <summary>
-            /// Adds a new command in the host space.
-            /// </summary>
-            /// <param name="alias">The alias that shall refer to the supplied command.</param>
-            /// <param name="action">An action to be turned into a command.</param>
-            /// <exception cref="ArgumentNullException">If either <paramref name="alias"/> 
-            /// or <paramref name="action"/> is null.</exception>
-            public void AddHostCommand(string alias, PCommandAction action)
-            {
-                if (alias == null)
-                    throw new ArgumentNullException("alias");
-                if (action == null)
-                    throw new ArgumentNullException("action");
-                AddHostCommand(alias, new DelegatePCommand(action));
-            }
-
-            /// <summary>
-            /// Adds a new command in the host space.
-            /// </summary>
-            /// <param name="alias">The alias that shall refer to the supplied command.</param>
-            /// <param name="action">An action to be turned into a command.</param>
-            /// <exception cref="ArgumentNullException">If either <paramref name="alias"/> 
-            /// or <paramref name="action"/> is null.</exception>
-            public void AddHostCommand(string alias, ICommand action)
-            {
-                if (alias == null)
-                    throw new ArgumentNullException("alias");
-                if (action == null)
-                    throw new ArgumentNullException("action");
-                AddHostCommand(alias, new NestedPCommand(action));
-            }
-
-            /// <summary>
-            /// Removes all command previously added to the user space.
-            /// </summary>
-            public void RemoveUserCommands()
-            {
-                _remove_commands(PCommandGroups.User);
-            }
-
-            /// <summary>
-            /// Removes all commands previously added to the host space.
-            /// </summary>
-            public void RemoveHostCommands()
-            {
-                _remove_commands(PCommandGroups.Host);
-            }
-
-            internal void RemoveCompilerCommands()
-            {
-                _remove_commands(PCommandGroups.Compiler);
-            }
-
-            internal void RemoveEngineCommands()
-            {
-                _remove_commands(PCommandGroups.Engine);
-            }
-
-            private void _remove_commands(PCommandGroups groups)
-            {
-                KeyValuePair<string, PCommand>[] commands =
-                    new KeyValuePair<string, PCommand>[outer._commands.Count];
-                outer._commands.CopyTo(commands, 0);
-                foreach (KeyValuePair<string, PCommand> kvp in commands)
-                {
-                    PCommand cmd = kvp.Value;
-                    cmd.RemoveFromGroup(groups);
-                    if (!cmd.BelongsToAGroup)
-                        outer._commands.Remove(kvp.Key);
-                }
-            }
-
-            /// <summary>
-            /// Returns an IEnumerator
-            /// </summary>
-            /// <returns></returns>
-            public IEnumerator<KeyValuePair<string, PCommand>> GetEnumerator()
-            {
-                return outer._commands.GetEnumerator();
-            }
+            get { return _commandTable; }
         }
 
         #endregion
@@ -912,8 +631,7 @@ namespace Prexonite
                 _registeredAssemblies.Add(Assembly.Load(assName.FullName));
 
             //Commands
-            _commands = new SymbolTable<PCommand>();
-            _commandsIterator = new CommandsIterator(this);
+            _commandTable = new CommandTable();
 
             Commands.AddEngineCommand(PrintCommand, new Print());
 
@@ -926,10 +644,13 @@ namespace Prexonite
                 new DelegatePCommand(
                     delegate(StackContext sctx, PValue[] args)
                     {
+                        FunctionContext fctx = sctx as FunctionContext;
+                        if (fctx == null)
+                            return PType.Null.CreatePValue();
                         if (args.Length == 0)
                             return
-                                sctx.CreateNativePValue(
-                                    sctx.Implementation.
+                                fctx.CreateNativePValue(
+                                    fctx.Implementation.
                                         Meta);
                         else
                         {
@@ -937,11 +658,11 @@ namespace Prexonite
                                 new List<PValue>(
                                     args.Length);
                             MetaTable funcMT =
-                                sctx.Implementation.Meta;
+                                fctx.Implementation.Meta;
                             MetaTable appMP =
-                                sctx.ParentApplication.
+                                fctx.ParentApplication.
                                     Meta;
-                            MetaTable engMT = sctx.ParentEngine.Meta;
+                            MetaTable engMT = fctx.ParentEngine.Meta;
                             foreach (PValue arg in args)
                             {
                                 string key =
@@ -974,7 +695,7 @@ namespace Prexonite
 
             Commands.AddEngineCommand(ConcatenateCommand, new Concatenate());
 
-            Commands.AddEngineCommand(MapCommand, new MapAll());
+            Commands.AddEngineCommand(MapCommand, new Map());
 
             Commands.AddEngineCommand(FoldLCommand, new FoldL());
 
@@ -998,11 +719,15 @@ namespace Prexonite
 
             Commands.AddEngineCommand(DebugCommand, new Debug());
 
-            Commands.AddUserCommand(SetCenterAlias, new SetCenterCommand());
+            Commands.AddEngineCommand(SetCenterAlias, new SetCenterCommand());
 
-            Commands.AddUserCommand(SetLeftAlias, new SetLeftCommand());
+            Commands.AddEngineCommand(SetLeftAlias, new SetLeftCommand());
 
-            Commands.AddUserCommand(SetRightAlias, new SetRightCommand());
+            Commands.AddEngineCommand(SetRightAlias, new SetRightCommand());
+
+            Commands.AddEngineCommand(AllAlias,new All());
+
+            Commands.AddEngineCommand(WhereAlias, new Where());
         }
 
         /// <summary>
@@ -1028,7 +753,7 @@ namespace Prexonite
         /// <summary>
         /// Alias used for the <c>map</c> command.
         /// </summary>
-        public const string MapCommand = "mapall";
+        public const string MapCommand = "map";
 
         /// <summary>
         /// Alias used for the <c>foldl</c> command.
@@ -1099,6 +824,17 @@ namespace Prexonite
         /// Alias used for the setright command
         /// </summary>
         public const string SetRightAlias = "setright";
+
+        /// <summary>
+        /// Alias used for the all command
+        /// </summary>
+        public const string AllAlias = "all";
+
+        /// <summary>
+        /// Alias used for the where command.
+        /// </summary>
+        public const string WhereAlias = "where";
+
 
         #endregion
     }

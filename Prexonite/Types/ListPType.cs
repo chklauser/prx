@@ -165,9 +165,13 @@ namespace Prexonite.Types
                         result = Null.CreatePValue();
                         break;
                     case "remove":
+                        int cnt = 0;
                         foreach (PValue arg in args)
-                            lst.Remove(arg);
-                        result = Null.CreatePValue();
+                        {
+                            if (lst.Remove(arg))
+                                cnt++;
+                        }
+                        result = cnt;
                         break;
                     case "removeat":
                         List<bool> toRemove = new List<bool>(lst.Count);

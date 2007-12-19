@@ -164,10 +164,26 @@ namespace Prexonite
 
         private PFunction _implementation;
 
-        public override PFunction Implementation
+        public PFunction Implementation
         {
             [NoDebug]
             get { return _implementation; }
+        }
+
+        public override Application ParentApplication
+        {
+            get
+            {
+                return _implementation.ParentApplication;
+            }
+        }
+
+        public override SymbolCollection ImportedNamespaces
+        {
+            get
+            {
+                return _implementation.ImportedNamespaces;
+            }
         }
 
         public override string ToString()

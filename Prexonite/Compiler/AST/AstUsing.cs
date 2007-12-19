@@ -29,37 +29,25 @@ namespace Prexonite.Compiler.Ast
                             IAstHasBlocks,
                             IAstHasExpressions
     {
+        private const string LabelPrefix = "using";
+
         internal AstUsing(Parser p)
             : base(p)
         {
-            Container = null;
             Block = new AstBlock(File, Line, Column);
+            Labels = new BlockLabels(LabelPrefix);
         }
 
         public AstUsing(string file, int line, int column)
             : base(file, line, column)
         {
-            Container = null;
             Block = new AstBlock(File, Line, Column);
+            Labels = new BlockLabels(LabelPrefix);
         }
 
-        internal AstUsing(Parser p, AstGetSet container)
-            : base(p)
-        {
-            Container = container;
-            Block = new AstBlock(File, Line, Column);
-        }
-
-        public AstUsing(string file, int line, int column, AstGetSet container)
-            : base(file, line, column)
-        {
-            Container = container;
-            Block = new AstBlock(File, Line, Column);
-        }
-
-        public AstGetSet Container;
         public IAstExpression Expression;
         public AstBlock Block;
+        public BlockLabels Labels;
 
         #region IAstHasBlocks Members
 
@@ -81,22 +69,38 @@ namespace Prexonite.Compiler.Ast
 
         public override void EmitCode(CompilerTarget target)
         {
-            if (Container == null)
-                throw new PrexoniteException("AstUsing requires Container to be initialized.");
             if (Expression == null)
                 throw new PrexoniteException("AstUsing requires Expression to be initialized.");
 
             AstTryCatchFinally _try = new AstTryCatchFinally(File, Line, Column);
-            //Try block => {Container} = {Expression}; {Block};
-            AstGetSet setContainer = Container.GetCopy();
-            setContainer.Call = PCall.Set;
-            setContainer.Arguments.Add(Expression);
+            string vContainer = Labels.CreateLabel("container");
+            target.Function.Variables.Add(vContainer);
+            //Try block => Container = {Expression}; {Block};
+            AstGetSetSymbol setCont =
+                new AstGetSetSymbol(
+                    File,
+                    Line,
+                    Column,
+                    PCall.Set,
+                    vContainer,
+                    SymbolInterpretations.LocalObjectVariable);
+            setCont.Arguments.Add(Expression);
+
+            AstGetSetSymbol getCont =
+                new AstGetSetSymbol(
+                    File,
+                    Line,
+                    Column,
+                    PCall.Get,
+                    vContainer,
+                    SymbolInterpretations.LocalObjectVariable);
+
 
             AstBlock _tryBlock = _try.TryBlock;
-            _tryBlock.Add(setContainer);
+            _tryBlock.Add(setCont);
             _tryBlock.AddRange(Block);
 
-            //Finally block => dispose( {Container} );
+            //Finally block => dispose( Container );
             AstGetSetSymbol dispose =
                 new AstGetSetSymbol(
                     File,
@@ -105,7 +109,8 @@ namespace Prexonite.Compiler.Ast
                     PCall.Get,
                     Engine.DisposeCommand,
                     SymbolInterpretations.Command);
-            dispose.Arguments.Add(Container);
+
+            dispose.Arguments.Add(getCont);
 
             _try.FinallyBlock.Add(dispose);
 

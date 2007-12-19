@@ -7,20 +7,11 @@ build
         lst[] = func;
 }
 
-declare command mapall;
+declare command 
+    map, where, all, sort;
+declare 
+    sort as orderby;
 
-coroutine map(ref f, xs) does
-    foreach(var x in xs)
-        yield f(x);
-        
-declare
-    map as select;
- 
-coroutine where(ref f, xs) does
-    foreach(var x in xs)
-        if(f(x))
-            yield x;
-           
 coroutine limit(count, xs)
 {
     var i = 0;
@@ -47,7 +38,7 @@ coroutine skip(index, xs)
 
 function range(index, count, xs) = xs >> skip(index) >> limit(count);
 
-coroutine distinct(xs)
+coroutine distinct xs
 {
     var dict = { };
     foreach(var x in xs)
@@ -63,7 +54,7 @@ coroutine distinct(xs)
 declare 
     distinct as unique;
 
-coroutine union(xs, ys)
+coroutine union ys xs
 {
     var dict = { };
     foreach(var x in xs)
@@ -84,7 +75,7 @@ coroutine union(xs, ys)
     }
 }
 
-coroutine intersect(xs, ys)
+coroutine intersect ys xs
 {
     var dict = { };
     foreach(var x in xs)
@@ -97,7 +88,7 @@ coroutine intersect(xs, ys)
             yield xy.Key;   
 }
 
-coroutine except(xs, ys)
+coroutine except ys xs
 {
     var dict = { };
     foreach(var x in xs)
@@ -136,15 +127,7 @@ coroutine groupby(ref f, xs)
         yield g;
 }
 
-function all =
-    foreach(var lst in var args)
-    {
-        foreach(var x in lst)
-            yield x;
-    };
 
-declare 
-    sort as orderby;
    
 /* A SAMPLE
 [ 1, 6, 8, 12, 15, 20, 99 ] >> 
@@ -178,4 +161,6 @@ build
         if(Not lst.Contains(func))
             func.Meta["PartOf"] = "lst";
     lst = null;
+    (asm(ldr.app)).Variables.Remove(@"__c\non_lst_functions");
+    getloader.Symbols.Remove(@"__c\non_lst_functions");
 }

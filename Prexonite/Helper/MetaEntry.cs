@@ -29,29 +29,29 @@ using Prexonite.Types;
 
 namespace Prexonite
 {
-    public class MetaEntry
+    public sealed class MetaEntry
     {
         #region Fields
 
         /// <summary>
         /// Indicates the kind of meta entry
         /// </summary>
-        private Type _mtype;
+        private readonly Type _mtype;
 
         /// <summary>
         /// Holds text in case the meta entry is a text entry
         /// </summary>
-        private string _text;
+        private readonly string _text;
 
         /// <summary>
         /// Holds a list in case the meta entry is a list entry
         /// </summary>
-        private MetaEntry[] _list;
+        private readonly MetaEntry[] _list;
 
         /// <summary>
         /// Holds a switch in case the meta entry is a switch entry
         /// </summary>
-        private bool _switch;
+        private readonly bool _switch;
 
         /// <summary>
         /// The possible kinds of meta entries
@@ -96,16 +96,6 @@ namespace Prexonite
                         throw new PrexoniteException("Unknown type in meta entry");
                 }
             }
-            [DebuggerNonUserCode]
-            set
-            {
-                if (value == null)
-                    value = "";
-                if (_mtype == Type.List)
-                    _list = null;
-                _mtype = Type.Text;
-                _text = value;
-            }
         }
 
         public MetaEntry[] List
@@ -124,16 +114,6 @@ namespace Prexonite
                     default:
                         throw new PrexoniteException("Unknown type in meta entry");
                 }
-            }
-            [DebuggerNonUserCode]
-            set
-            {
-                if (value == null)
-                    value = new MetaEntry[] {};
-                if (_mtype == Type.Text)
-                    _text = null;
-                _list = value;
-                _mtype = Type.List;
             }
         }
 
@@ -154,17 +134,6 @@ namespace Prexonite
                     default:
                         throw new PrexoniteException("Unknown type in meta entry");
                 }
-            }
-            [DebuggerNonUserCode]
-            set
-            {
-                if (_mtype == Type.Text)
-                    _text = null;
-                else if (_mtype == Type.List)
-                    _list = null;
-
-                _mtype = Type.Switch;
-                _switch = value;
             }
         }
 
@@ -362,66 +331,68 @@ namespace Prexonite
 
         #region Modification
 
-        public void AddToList(params MetaEntry[] newEntries)
+        public MetaEntry AddToList(params MetaEntry[] newEntries)
         {
+            MetaEntry[] list;
             //Change type to list
-            if (_mtype != Type.List)
+            switch (_mtype)
             {
-                switch (_mtype)
-                {
-                    case Type.Switch:
-                        _list = new MetaEntry[] {_switch};
-                        _switch = false;
-                        break;
-                    case Type.Text:
-                        _list = new MetaEntry[] {_text};
-                        _text = null;
-                        break;
-                }
-                _mtype = Type.List;
+                case Type.Switch:
+                    list = new MetaEntry[] {_switch};
+                    break;
+                case Type.Text:
+                    list = new MetaEntry[] {_text};
+                    break;
+                case Type.List:
+                    list = _list;
+                    break;
+                case Type.Invalid:
+                default:
+                    throw new PrexoniteException("Invalid meta entry.");
             }
-            MetaEntry[] newList = new MetaEntry[_list.Length + newEntries.Length];
-            Array.Copy(_list, newList, _list.Length);
-            Array.Copy(newEntries, 0, newList, _list.Length, newEntries.Length);
-            _list = newList;
+            MetaEntry[] newList = new MetaEntry[list.Length + newEntries.Length];
+            Array.Copy(list, newList, list.Length);
+            Array.Copy(newEntries, 0, newList, list.Length, newEntries.Length);
+            return (MetaEntry) newList;
         }
 
-        public void RemoveFromList(int index)
+        public MetaEntry RemoveFromList(int index)
         {
-            RemoveFromList(index, 1);
+            return RemoveFromList(index, 1);
         }
 
-        public void RemoveFromList(int index, int length)
+        public MetaEntry RemoveFromList(int index, int length)
         {
-            if (_mtype != Type.List)
+            MetaEntry[] list;
+            switch (_mtype)
             {
-                switch (_mtype)
-                {
-                    case Type.Switch:
-                        _list = new MetaEntry[] {_switch};
-                        _switch = false;
-                        break;
-                    case Type.Text:
-                        _list = new MetaEntry[] {_text};
-                        _text = null;
-                        break;
-                }
-                _mtype = Type.List;
+                case Type.Switch:
+                    list = new MetaEntry[] {_switch};
+                    break;
+                case Type.Text:
+                    list = new MetaEntry[] {_text};
+                    break;
+                case Type.List:
+                    list = _list;
+                    break;
+                case Type.Invalid:
+                default:
+                    throw new PrexoniteException("Invalid meta entry.");
             }
-            if (index + length > _list.Length - 1 || index < 0 || length < 0)
+            if (index + length > list.Length - 1 || index < 0 || length < 0)
                 throw new ArgumentOutOfRangeException(
                     "index",
                     "The supplied index and length " + index +
-                    " are out of the range of 0.." + (_list.Length - 1) +
+                    " are out of the range of 0.." + (list.Length - 1) +
                     ".");
-            MetaEntry[] newList = new MetaEntry[_list.Length - 1];
+            MetaEntry[] newList = new MetaEntry[list.Length - 1];
             //Copy the elements before the ones to remove
             if (index > 0)
-                Array.Copy(_list, newList, index);
+                Array.Copy(list, newList, index);
             //Copy the elements after the ones to remove
-            if (index + length < _list.Length - 1)
-                Array.Copy(_list, index + length, newList, index, _list.Length - (index + length));
-            _list = newList;
+            if (index + length < list.Length - 1)
+                Array.Copy(list, index + length, newList, index, list.Length - (index + length));
+            return (MetaEntry) newList;
         }
 
         #endregion

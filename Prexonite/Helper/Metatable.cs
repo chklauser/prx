@@ -92,7 +92,7 @@ namespace Prexonite
         public void AddTo(string key, MetaEntry entry)
         {
             if (ContainsKey(key))
-                this[key].AddToList(entry);
+                this[key] = this[key].AddToList(entry);
             else
                 Add(key, (MetaEntry) new MetaEntry[] {entry});
         }
@@ -206,7 +206,9 @@ namespace Prexonite
         ///<filterpriority>2</filterpriority>
         public MetaTable Clone()
         {
-            return (MetaTable) MemberwiseClone();
+            MetaTable clone = new MetaTable(Filter, Count);
+            clone.CloneFrom(this);
+            return clone;
         }
 
         ///<summary>

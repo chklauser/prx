@@ -132,13 +132,15 @@ namespace Prexonite.Types
                 {
                     Type clrType = ((ObjectPType) target).ClrType;
                     if (clrType == typeof(Byte))
-                        result = CreateObject((Byte) (Int32) subject.Value);
+                        result = CreateObject((Byte)(Int32)subject.Value);
+                    else if (clrType == typeof(Char))
+                        result = CreateObject(Convert.ToChar((Int32) subject.Value));
                     else if (clrType == typeof(SByte))
-                        result = CreateObject((SByte) (Int32) subject.Value);
+                        result = CreateObject((SByte)(Int32)subject.Value);
                     else if (clrType == typeof(Int16))
-                        result = CreateObject((Int16) (Int32) subject.Value);
+                        result = CreateObject((Int16)(Int32)subject.Value);
                     else if (clrType == typeof(UInt16))
-                        result = CreateObject((UInt16) (Int32) subject.Value);
+                        result = CreateObject((UInt16)(Int32)subject.Value);
                 }
             }
 

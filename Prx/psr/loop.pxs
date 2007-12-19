@@ -78,9 +78,9 @@ build does hook( t =>
 });
 
 //Although it would suffice to just declare the function, 
-//  actually defining it will enable you to provide more detailed feedback.
+//  actually defining it will enable you to provide more detailed feedback in case of a failure
 function times(x)
 {
-    println("times has not been replaced!");   
+    println("times($x) has not been replaced!");   
     return false;
 }

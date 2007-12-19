@@ -90,7 +90,7 @@ namespace Prexonite.Types
             if (result != null)
                 return true;
 
-            foreach (string ns in sctx.Implementation.ImportedNamespaces)
+            foreach (string ns in sctx.ImportedNamespaces)
             {
                 string nsName = ns + '.' + clrTypeName;
                 result = _getType_forNamesapce(nsName, assemblies);

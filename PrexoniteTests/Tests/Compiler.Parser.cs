@@ -2554,6 +2554,7 @@ var g;
 
 function main does println = g;
 ");
+
         }
 
         [Test]
@@ -2879,6 +2880,8 @@ stloc   r
 ");
         }
 
+       
+        /*
         [Test]
         public void AppendLeftDirect()
         {
@@ -2904,7 +2907,7 @@ ldc.int 5
 indloc.1 a
 @cmd.1  println
 ");
-        }
+        } //*/
 
         [Test]
         public void OptimizeSquare()

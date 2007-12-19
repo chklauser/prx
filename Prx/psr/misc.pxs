@@ -31,7 +31,6 @@ function min(a,b) =
 //Creates a wrapper around an object that intercepts calls to dispose.
 function create_terminator (obj, termination)
 {
- 
     function Call(this,id)
     {
         var args;

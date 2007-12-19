@@ -55,11 +55,18 @@ MetaAssignment<IHasMetaTable target>	(. string key = null; MetaEntry entry = nul
     GlobalId<out key>       (.  if(target.Meta.ContainsKey(key))
                                 {
                                     entry = target.Meta[key];
-                                    entry.AddToList(subEntry.List);
-                                }else
-                                    entry = subEntry;
+                                    entry = entry.AddToList(subEntry.List);
+                                }
+                                else
+                                {
+                                   entry = subEntry;
+                                }
                             .)
-)							(. if(entry == null || key == null) SemErr("Meta assignment did not generate an entry."); else target.Meta[key] = entry; .)	
+)							(. if(entry == null || key == null) 
+                                    SemErr("Meta assignment did not generate an entry.");
+                               else 
+                                    target.Meta[key] = entry; 
+                            .)	
 .
 
 MetaExpr<out MetaEntry entry>
@@ -221,6 +228,8 @@ BuildBlock
 GlobalCode							(.
 										PFunction func = TargetApplication._InitializationFunction;
 										CompilerTarget ft = FunctionTargets[func];
+										if(ft == null)
+										    throw new PrexoniteException("Internal compilation error: InitializeFunction got lost.");
 									.)
 =
 									(.	

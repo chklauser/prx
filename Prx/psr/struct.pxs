@@ -1,7 +1,4 @@
-﻿
-build does require = "debug.pxs";
-debugging disabled;
-function struct
+﻿function struct
 {
     function getId(g) =
         if(g.Meta.ContainsKey("SId"))
@@ -17,8 +14,6 @@ function struct
     var methods = new System::Text::StringBuilder();
     var methods_f = [];
     
-    debug(parentId);
-    
     foreach(var f in asm(ldr.app).Functions)
     {
         if(
@@ -29,11 +24,9 @@ function struct
             And Not f.Meta["Private"].Switch
           )
         {
-            if(debug)
-                println("Found sub function $f");
             var cf = caller.LocalVariables[f.Meta["LogicalId"].Text].Value;
             if(cf == null)
-                continue; and if(debug) println("Function $f is not bound to the context.");
+                continue;
             methods.Append("\"ref\", \"$(getId(f))\", ");
             methods_f[] = f: cf;
         }
@@ -54,8 +47,6 @@ function struct
     {
         var id = getId(kv.Key);
         var f = kv.Value;
-        if(debug)
-            println("$id -> $f");
         s.\\(id) = f;
     }
         

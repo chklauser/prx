@@ -22,6 +22,7 @@
  */
 
 using System;
+using System.Collections.Generic;
 using Prexonite.Types;
 
 namespace Prexonite.Commands
@@ -31,6 +32,10 @@ namespace Prexonite.Commands
     /// </summary>
     public abstract class PCommand : IIndirectCall
     {
+        public PCommand()
+        {
+        }
+        
         /// <summary>
         /// A flag indicating whether the command acts like a pure function.
         /// </summary>
@@ -113,6 +118,7 @@ namespace Prexonite.Commands
         }
 
         #endregion
+
     }
 
     /// <summary>

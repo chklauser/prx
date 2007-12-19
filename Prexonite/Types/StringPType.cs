@@ -22,6 +22,7 @@
  */
 
 using System;
+using System.Collections.Generic;
 using System.Globalization;
 using System.Text;
 using System.Text.RegularExpressions;
@@ -381,6 +382,7 @@ namespace Prexonite.Types
             out PValue result)
         {
             result = null;
+            string str = (string) subject.Value;
             switch ((id == null) ? "" : id.ToLowerInvariant())
             {
                 case "":
@@ -390,54 +392,182 @@ namespace Prexonite.Types
                     PValue rArg;
                     if (!nArg.TryConvertTo(sctx, Int, out rArg))
                         return false;
-                    result = ((string) subject.Value)[(int) rArg.Value].ToString();
+                    result = str[(int) rArg.Value].ToString();
                     break;
                 case "unescape":
-                    result = Unescape((string) subject.Value);
+                    result = Unescape(str);
                     break;
                 case "format":
                     string[] objs = new string[args.Length];
                     for (int i = 0; i < args.Length; i++)
                         objs[i] = args[i].CallToString(sctx);
-                    result = System.String.Format((string) subject.Value, objs);
+                    result = System.String.Format(str, objs);
                     break;
                 case "escape":
-                    result = Escape((string) subject.Value);
+                    result = Escape(str);
                     break;
                 case "isreservedword":
-                    result = IsReservedWord((string) subject.Value);
+                    result = IsReservedWord(str);
                     break;
                 case "toidorliteral":
-                    result = ToIdOrLiteral((string) subject.Value);
+                    result = ToIdOrLiteral(str);
                     break;
                 case "tostring":
                     result = subject;
                     break;
                 case "tolower":
-                    result = ((string) subject.Value).ToLower();
+                    result = str.ToLower();
                     break;
                 case "toupper":
-                    result = ((string) subject.Value).ToUpper();
+                    result = str.ToUpper();
                     break;
                 case "substring":
                     if (args.Length == 0)
                         return false;
                     else if (args.Length == 1)
                         result =
-                            ((string) subject.Value).Substring(
+                            str.Substring(
                                 (int) args[0].ConvertTo(sctx, Int).Value);
                     else
                         result =
-                            ((string) subject.Value).Substring(
+                            str.Substring(
                                 (int) args[0].ConvertTo(sctx, Int).Value,
                                 (int) args[1].ConvertTo(sctx, Int).Value);
                     break;
+                case "split":
+                    if(args.Length == 0 || args[0].IsNull)
+                    {
+                        result =
+                                    (PValue)
+                                    _wrap_strings(str.Split(null));
+                        return true;
+                    }
+                    else
+                    {
+                        //Try to interpret as params char[] or fall back to params string[]
+                        List<char> sch = new List<char>();
+                        List<string> sst = null;
+
+                        bool isParams = true;
+
+                        _resolve_params(sctx, args, ref isParams, sch, ref sst, false);
+
+                        if(isParams)
+                        {
+                            if(sst != null)
+                            {
+                                result =
+                                    (PValue)
+                                    _wrap_strings(
+                                        str.Split(sst.ToArray(), StringSplitOptions.None));
+                            }
+                            else
+                            {
+                                result =
+                                    (PValue)
+                                    _wrap_strings(
+                                        str.Split(sch.ToArray(), StringSplitOptions.None));
+                            }
+                            return true;
+                        }
+
+                        PValue list;
+                        if (!args[0].TryConvertTo(sctx, List, true, out list))
+                            throw new PrexoniteException(
+                                "String.Split requires a list as its first argument.");
+
+                        sch.Clear();
+                        sst = null;
+                        bool isValid = true;
+                        _resolve_params(sctx, ((List<PValue>)list.Value).ToArray(),ref isValid,sch, ref sst,true);
+
+                        if (!isValid)
+                            throw new PrexoniteException("String.Split only accepts lists of strings or chars.");
+
+                        if (sst != null)
+                        {
+                            result =
+                                (PValue)
+                                _wrap_strings(
+                                    str.Split(sst.ToArray(), StringSplitOptions.None));
+                        }
+                        else
+                        {
+                            result =
+                                (PValue)
+                                _wrap_strings(
+                                    str.Split(sch.ToArray(), StringSplitOptions.None));
+                        }
+                        return true;
+                    }
                 default:
                     return
                         Object[typeof(string)].TryDynamicCall(
                             sctx, subject, args, call, id, out result);
             }
             return result != null;
+        }
+
+        private static List<PValue> _wrap_strings(string[] xs)
+        {
+            List<PValue> lst = new List<PValue>(xs.Length);
+            foreach (string x in xs)
+                lst.Add(x);
+            return lst;
+        }
+
+        private static void _resolve_params(StackContext sctx, PValue[] args, ref bool isParams, List<char> sch, ref List<string> sst, bool useExplicit)
+        {
+            foreach (PValue arg in args)
+            {
+                PValue v;
+                char c;
+                if(sst != null)
+                {
+                    if(! arg.TryConvertTo(sctx, String, useExplicit, out v))
+                    {
+                        isParams = false;
+                        break;
+                    }
+                    else
+                    {
+                        sst.Add((string)v.Value);
+                    }
+                }
+                else if(arg.TryConvertTo(sctx,out c))
+                {
+                    sch.Add(c);
+                }
+                else if(arg.TryConvertTo(sctx, String, useExplicit, out v))
+                {
+                    sst = new List<string>();
+                    sst.Add((string)v.Value);
+                }
+                else
+                {
+                    isParams = false;
+                    break;
+                }
+            }
+
+            if(isParams && sst != null)
+            {
+                bool isChars = true;
+                sch.Clear();
+
+                foreach (string s in sst)
+                {
+                    if(s.Length != 1)
+                    {
+                        isChars = false;
+                        break;
+                    }
+                    sch.Add(s[0]);
+                }
+
+                if(isChars)
+                    sst = null;
+            }
         }
 
         public override bool TryStaticCall(

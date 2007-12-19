@@ -39,7 +39,10 @@ namespace Prexonite.Commands
                 throw new ArgumentNullException("sctx");
             if (args == null)
                 args = new PValue[] {};
-            bool debugging = DebugHook.IsDebuggingEnabled(sctx.Implementation);
+            FunctionContext fctx = sctx as FunctionContext;
+            if(fctx == null)
+                return false;
+            bool debugging = DebugHook.IsDebuggingEnabled(fctx.Implementation);
             PCommand println = sctx.ParentEngine.Commands[Engine.PrintLineCommand];
             if (debugging)
                 foreach (PValue arg in args)

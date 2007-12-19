@@ -19,7 +19,7 @@
     <DebugType>full</DebugType>
     <Optimize>false</Optimize>
     <OutputPath>bin\</OutputPath>
-    <DefineConstants>TRACE;DEBUG</DefineConstants>
+    <DefineConstants>TRACE;DEBUG;allowIndex,forceIndex</DefineConstants>
     <ErrorReport>prompt</ErrorReport>
     <WarningLevel>4</WarningLevel>
     <DocumentationFile>
@@ -46,17 +46,19 @@
   </ItemGroup>
   <ItemGroup>
     <Compile Include="Closure.cs" />
+    <Compile Include="Commands\All.cs" />
     <Compile Include="Commands\Call.cs" />
     <Compile Include="Commands\Caller.cs" />
     <Compile Include="Commands\Concatenate.cs" />
     <Compile Include="Commands\CallMember.cs" />
+    <Compile Include="Commands\CoroutineCommand.cs" />
     <Compile Include="Commands\Debug.cs" />
     <Compile Include="Commands\DelegatePCommand.cs" />
     <Compile Include="Commands\Dispose.cs" />
     <Compile Include="Commands\FoldL.cs" />
     <Compile Include="Commands\FoldR.cs" />
     <Compile Include="Commands\LoadAssembly.cs" />
-    <Compile Include="Commands\MapAll.cs" />
+    <Compile Include="Commands\Map.cs" />
     <Compile Include="Commands\NestedPCommand.cs" />
     <Compile Include="Commands\Pair.cs" />
     <Compile Include="Commands\Print.cs" />
@@ -66,6 +68,7 @@
     <Compile Include="Commands\SetRightCommand.cs" />
     <Compile Include="Commands\Sort.cs" />
     <Compile Include="Commands\Unbind.cs" />
+    <Compile Include="Commands\Where.cs" />
     <Compile Include="Compiler\Ast\ArgumentsProxy.cs" />
     <Compile Include="Compiler\Ast\AstActionBlock.cs" />
     <Compile Include="Compiler\Ast\AstAsmInstruction.cs" />
@@ -129,7 +132,9 @@
     <Compile Include="Compiler\Parser.Code.cs" />
     <Compile Include="Compiler\Token.cs" />
     <Compile Include="Coroutine.cs" />
+    <Compile Include="CoroutineContext.cs" />
     <Compile Include="FunctionContext.cs" />
+    <Compile Include="Helper\CommandTable.cs" />
     <Compile Include="Helper\LineCatcher.cs" />
     <Compile Include="Helper\MetaEntry.cs" />
     <Compile Include="Helper\RandomAccessQueue.cs" />

@@ -70,6 +70,71 @@ namespace Prexonite.Compiler
                 RegisterCommands();
 
             _compilerHooksIterator = new CompilerHooksIterator(this);
+
+            //Build commands
+            _buildCommands = new CommandTable();
+            _buildCommands.AddCompilerCommand(
+                BuildAddCommand,
+                delegate(StackContext sctx, PValue[] args)
+                {
+                    foreach (PValue arg in args)
+                    {
+                        string path = arg.CallToString(sctx);
+                        LoadFromFile(path);
+                    }
+                    return null;
+                });
+
+            _buildCommands.AddCompilerCommand(
+                BuildRequireCommand,
+                delegate(StackContext sctx, PValue[] args)
+                {
+                    bool allLoaded = true;
+                    foreach (PValue arg in args)
+                    {
+                        string path =
+                            Path.GetFullPath(
+                                CombineWithLoadPath(
+                                    arg.CallToString(sctx)));
+                        if (_loadedFiles.Contains(path))
+                            allLoaded = false;
+                        else
+                            LoadFromFile(path);
+                    }
+                    return
+                        PType.Bool.CreatePValue(allLoaded);
+                });
+
+            _buildCommands.AddCompilerCommand(
+                BuildDefaultCommand,
+                delegate
+                {
+                    return CombineWithLoadPath(DefaultScriptName);
+                });
+
+            _buildCommands.AddCompilerCommand(
+                BuildHookCommand,
+                delegate(StackContext sctx, PValue[] args)
+                {
+                    foreach (PValue arg in args)
+                    {
+                        if (arg != null && !arg.IsNull)
+                        {
+                            if(arg.Type == PType.Object[typeof(AstTransformation)])
+                                CompilerHooks.Add((AstTransformation)arg.Value);
+                            else 
+                                CompilerHooks.Add(arg);
+                        }
+                    }
+                    return PType.Null.CreatePValue();
+                });
+
+            _buildCommands.AddCompilerCommand(
+                BuildGetLoaderCommand,
+                delegate(StackContext sctx, PValue[] args)
+                {
+                    return sctx.CreateNativePValue(this);
+                });
         }
 
         public void RegisterCommands()
@@ -152,6 +217,17 @@ namespace Prexonite.Compiler
             CompilerTarget target = new CompilerTarget(this, func, block);
             _functionTargets.Add(func.Id, target);
             return target;
+        }
+
+        public CompilerTarget CreateBuildBlockTarget(PFunction func, AstBlock block)
+        {
+            CompilerTarget ct = CreateFunctionTarget(func, block);
+            foreach (KeyValuePair<string, PCommand> pair in _buildCommands)
+                if(pair.Value.IsInGroup(PCommandGroups.Compiler))
+                {
+                    ct.Declare(SymbolInterpretations.Command, pair.Key);
+                }
+            return ct;
         }
 
         #endregion
@@ -432,7 +508,6 @@ namespace Prexonite.Compiler
             _load(new Lexer(new StringReader(code)));
         }
 
-        [NoDebug]
         private void _load(IScanner lexer)
         {
             Parser parser = new Parser(lexer, this);
@@ -503,6 +578,12 @@ namespace Prexonite.Compiler
 
         private bool _buildCommandsEnabled = false;
 
+        public CommandTable BuildCommands
+        {
+            get { return _buildCommands; }
+        }
+        private CommandTable _buildCommands;
+
         public bool BuildCommandsEnabled
         {
             get { return _buildCommandsEnabled; }
@@ -521,27 +602,27 @@ namespace Prexonite.Compiler
         /// <summary>
         /// The name of the add command in build blocks.
         /// </summary>
-        public const string BuildAddCommand = @"\build\add";
+        public const string BuildAddCommand = @"Add";
 
         /// <summary>
         /// The name of the require command in build blocks
         /// </summary>
-        public const string BuildRequireCommand = @"\build\require";
+        public const string BuildRequireCommand = @"Require";
 
         /// <summary>
         /// The name of the default command in build blocks
         /// </summary>
-        public const string BuildDefaultCommand = @"\build\default";
+        public const string BuildDefaultCommand = @"Default";
 
         /// <summary>
         /// The name of the hook command for build blocks
         /// </summary>
-        public const string BuildHookCommand = @"\build\hook";
+        public const string BuildHookCommand = @"Hook";
 
         /// <summary>
         /// The name of the getloader command for build blocks
         /// </summary>
-        public const string BuildGetLoaderCommand = @"\build\getloader";
+        public const string BuildGetLoaderCommand = @"GetLoader";
 
         /// <summary>
         /// The name of the default script file
@@ -550,61 +631,10 @@ namespace Prexonite.Compiler
 
         private void _enableBuildCommands()
         {
-            if (!ParentEngine.Commands.Contains(BuildAddCommand))
-                ParentEngine.Commands.AddCompilerCommand(
-                    BuildAddCommand,
-                    delegate(StackContext sctx, PValue[] args)
-                    {
-                        foreach (PValue arg in args)
-                        {
-                            string path = arg.CallToString(sctx);
-                            LoadFromFile(path);
-                        }
-                        return null;
-                    });
-
-            if (!ParentEngine.Commands.Contains(BuildRequireCommand))
-                ParentEngine.Commands.AddCompilerCommand(
-                    BuildRequireCommand,
-                    delegate(StackContext sctx, PValue[] args)
-                    {
-                        bool allLoaded = true;
-                        foreach (PValue arg in args)
-                        {
-                            string path =
-                                Path.GetFullPath(
-                                    CombineWithLoadPath(
-                                        arg.CallToString(sctx)));
-                            if (_loadedFiles.Contains(path))
-                                allLoaded = false;
-                            else
-                                LoadFromFile(path);
-                        }
-                        return
-                            PType.Bool.CreatePValue(allLoaded);
-                    });
-
-            if (!ParentEngine.Commands.Contains(BuildDefaultCommand))
-                ParentEngine.Commands.AddCompilerCommand(
-                    BuildDefaultCommand,
-                    delegate { return CombineWithLoadPath(DefaultScriptName); });
-
-            if (!ParentEngine.Commands.Contains(BuildHookCommand))
-                ParentEngine.Commands.AddCompilerCommand(
-                    BuildHookCommand,
-                    delegate(StackContext sctx, PValue[] args)
-                    {
-                        foreach (PValue arg in args)
-                        {
-                            if (arg != null && !arg.IsNull)
-                                CompilerHooks.Add(arg);
-                        }
-                        return PType.Null.CreatePValue();
-                    });
-            if (!ParentEngine.Commands.Contains(BuildGetLoaderCommand))
-                ParentEngine.Commands.AddCompilerCommand(
-                    BuildGetLoaderCommand,
-                    delegate(StackContext sctx, PValue[] args) { return sctx.CreateNativePValue(this); });
+            foreach (KeyValuePair<string, PCommand> pair in _buildCommands)
+                if(pair.Value.IsInGroup(PCommandGroups.Compiler) &&
+                    ! ParentEngine.Commands.ContainsKey(pair.Key))
+                    ParentEngine.Commands.AddCompilerCommand(pair.Key, pair.Value);
         }
 
         private void _disableBuildBlockCommands()
@@ -798,10 +828,26 @@ namespace Prexonite.Compiler
             get { return _options.ParentEngine; }
         }
 
-        public override PFunction Implementation
+        public PFunction Implementation
         {
             [NoDebug()]
             get { return Options.TargetApplication._InitializationFunction; }
+        }
+
+        public override Application ParentApplication
+        {
+            get
+            {
+                return Options.TargetApplication;
+            }
+        }
+
+        public override SymbolCollection ImportedNamespaces
+        {
+            get
+            {
+                return Options.TargetApplication._InitializationFunction.ImportedNamespaces;
+            }
         }
 
         [NoDebug()]

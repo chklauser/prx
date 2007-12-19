@@ -82,7 +82,7 @@ namespace Prexonite.Commands
             for (int i = 1; i < args.Length; i++)
             {
                 PValue arg = args[i];
-                IEnumerable<PValue> folded = MapAll._ToEnumerable(arg);
+                IEnumerable<PValue> folded = Map._ToEnumerable(arg);
                 if (folded == null)
                     iargs.Add(arg);
                 else
@@ -123,7 +123,7 @@ namespace Prexonite.Commands
             for (int i = 0; i < args.Length; i++)
             {
                 PValue arg = args[i];
-                IEnumerable<PValue> folded = MapAll._ToEnumerable(arg);
+                IEnumerable<PValue> folded = Map._ToEnumerable(arg);
                 if (folded == null)
                     iargs.Add(arg);
                 else

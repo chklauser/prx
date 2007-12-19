@@ -155,8 +155,15 @@ function create_progressbar(x,y,length)
         var d = create_field(x+length+2,y);
     var per = 0.0;
     var anim = ["/","-","\\","|"];
-    var animlen = anim.Count;
+    function animlen = anim.Count;
     var idx = 0;
+    
+    function animation this newAnim
+    {
+        if(Not newAnim is Null)
+            anim = newAnim~List;
+        return anim;
+    }
     
     function percent(this, newPer)
     {

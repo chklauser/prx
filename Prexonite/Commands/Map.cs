@@ -42,7 +42,7 @@ namespace Prexonite.Commands
     ///     return nlst;
     /// }</code>
     /// </remarks>
-    public class MapAll : PCommand
+    public class Map : CoroutineCommand
     {
         internal static IEnumerable<PValue> _ToEnumerable(PValue psource)
         {
@@ -53,21 +53,10 @@ namespace Prexonite.Commands
                 return null;
         }
 
-        /// <summary>
-        /// Executes the map command.
-        /// </summary>
-        /// <param name="sctx">The stack context in which to run <paramref name="f"/>.</param>
-        /// <param name="f">The function to be applied to all elements.</param>
-        /// <param name="source">The source of the elements to map.</param>
-        /// <returns>A list with all calculated return values.</returns>
-        /// <remarks>This function will fetch <strong>all</strong> from the supplied <paramref name="source"/>.</remarks>
-        public PValue Run(StackContext sctx, IIndirectCall f, IEnumerable<PValue> source)
+        protected static IEnumerable<PValue> CoroutineRun(StackContext sctx, IIndirectCall f, IEnumerable<PValue> source)
         {
-            List<PValue> nlst = new List<PValue>();
             foreach (PValue x in source)
-                nlst.Add(f != null ? f.IndirectCall(sctx, new PValue[] {x}) : x);
-
-            return PType.List.CreatePValue(nlst);
+                yield return f != null ? f.IndirectCall(sctx, new PValue[] { x }) : x;
         }
 
         /// <summary>
@@ -75,8 +64,8 @@ namespace Prexonite.Commands
         /// </summary>
         /// <param name="sctx">The stack context in which to call the supplied function.</param>
         /// <param name="args">The list of arguments to be passed to the command.</param>
-        /// <returns>A list with all calculated return values.</returns>
-        public override PValue Run(StackContext sctx, PValue[] args)
+        /// <returns>A coroutine that maps the.</returns>
+        protected  override IEnumerable<PValue> CoroutineRun(StackContext sctx, PValue[] args)
         {
             if (sctx == null)
                 throw new ArgumentNullException("sctx");
@@ -111,7 +100,7 @@ namespace Prexonite.Commands
                 source = lstsource;
             }
 
-            return Run(sctx, f, source);
+            return CoroutineRun(sctx, f, source);
         }
 
         /// <summary>
