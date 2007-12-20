@@ -728,6 +728,10 @@ namespace Prexonite
             Commands.AddEngineCommand(AllAlias,new All());
 
             Commands.AddEngineCommand(WhereAlias, new Where());
+
+            Commands.AddEngineCommand(SkipAlias, new Skip());
+
+            Commands.AddEngineCommand(LimitAlias, new Limit());
         }
 
         /// <summary>
@@ -835,6 +839,15 @@ namespace Prexonite
         /// </summary>
         public const string WhereAlias = "where";
 
+        /// <summary>
+        /// Alias used for the skip command.
+        /// </summary>
+        public const string SkipAlias = "skip";
+
+        /// <summary>
+        /// Alias used for the limit command.
+        /// </summary>
+        public const string LimitAlias = "limit";
 
         #endregion
     }

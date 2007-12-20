@@ -8,33 +8,10 @@ build
 }
 
 declare command 
-    map, where, all, sort;
+    map, where, all, sort,
+    limit, skip;
 declare 
     sort as orderby;
-
-coroutine limit(count, xs)
-{
-    var i = 0;
-    foreach(var x in xs)
-    {
-        if(i++ >= count)
-            return;
-        yield x;
-    }
-}
-
-coroutine skip(index, xs)
-{
-    var i = 0;
-    using(var e = xs            ~System::Collections::IEnumerable
-                  .GetEnumerator~System::Collections::IEnumerator)
-    {
-        while(i++ < index && e.MoveNext);
-        while(e.MoveNext)
-            yield e.Current;
-    }
- 
-}
 
 function range(index, count, xs) = xs >> skip(index) >> limit(count);
 

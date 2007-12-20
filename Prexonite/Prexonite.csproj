@@ -57,6 +57,7 @@
     <Compile Include="Commands\Dispose.cs" />
     <Compile Include="Commands\FoldL.cs" />
     <Compile Include="Commands\FoldR.cs" />
+    <Compile Include="Commands\Limit.cs" />
     <Compile Include="Commands\LoadAssembly.cs" />
     <Compile Include="Commands\Map.cs" />
     <Compile Include="Commands\NestedPCommand.cs" />
@@ -66,6 +67,7 @@
     <Compile Include="Commands\SetCenterCommand.cs" />
     <Compile Include="Commands\SetLeftCommand.cs" />
     <Compile Include="Commands\SetRightCommand.cs" />
+    <Compile Include="Commands\Skip.cs" />
     <Compile Include="Commands\Sort.cs" />
     <Compile Include="Commands\Unbind.cs" />
     <Compile Include="Commands\Where.cs" />
