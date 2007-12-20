@@ -41,7 +41,8 @@ namespace Prexonite.Types
             Bool,
             Object,
             List,
-            Hash
+            Hash,
+            Char
         }
 
         public bool IsBuiltIn
@@ -69,6 +70,8 @@ namespace Prexonite.Types
                 return BuiltIn.List;
             if (thisType == typeof(HashPType))
                 return BuiltIn.Hash;
+            if (thisType == typeof(CharPType))
+                return BuiltIn.Char;
 
             return BuiltIn.Null;
         }
@@ -93,6 +96,8 @@ namespace Prexonite.Types
                     return List;
                 case BuiltIn.Hash:
                     return Hash;
+                case BuiltIn.Char:
+                    return Char;
                 default:
                     return null;
             }
@@ -140,6 +145,12 @@ namespace Prexonite.Types
             get { return HashPType.Instance; }
         }
 
+        public  static CharPType Char
+        {
+            [NoDebug]
+            get { return CharPType.Instance; }
+        }
+
         private static PrexoniteObjectTypeProxy pobjfacade = new PrexoniteObjectTypeProxy();
 
         public static PrexoniteObjectTypeProxy Object
@@ -161,6 +172,8 @@ namespace Prexonite.Types
             private readonly ObjectPType Int64Obj = new ObjectPType(typeof(Int64));
             private readonly ObjectPType UInt64Obj = new ObjectPType(typeof(UInt64));
             private readonly ObjectPType BooleanObj = new ObjectPType(typeof(Boolean));
+            private readonly ObjectPType SingleObj = new ObjectPType(typeof(Single));
+            private readonly ObjectPType DoubleObj = new ObjectPType(typeof(Double));
             private readonly ObjectPType StringObj = new ObjectPType(typeof(String));
             private readonly ObjectPType DecimalObj = new ObjectPType(typeof(Decimal));
             private readonly ObjectPType DateTimeObj = new ObjectPType(typeof(DateTime));
@@ -202,6 +215,10 @@ namespace Prexonite.Types
                         return Int64Obj;
                     else if (clrType == typeof(UInt64))
                         return UInt64Obj;
+                    else if (clrType == typeof(Single))
+                        return SingleObj;
+                    else if (clrType == typeof(Double))
+                        return DoubleObj;
                     else if (clrType == typeof(Boolean))
                         return BooleanObj;
                     else if (clrType == typeof(String))

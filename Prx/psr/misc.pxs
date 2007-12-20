@@ -6,27 +6,10 @@ build does require
     "debug.pxs"
 );
 
-function round(x,d) =
-    //Here, an explicit cast to System::Double is required to disambiguate the method call
-    //  (the overload using the compatible type "decimal" is interfering)
-    ::Math.Round(x~System::Double,d ?? 0,System::MidpointRounding.AwayFromZero);
-
 function roundTo(x,r) does
     r~= Real; and
     x~= Real; and return
     round( x/r ) * r;
-    
-function max(a,b) =
-    if(a > b)
-        a
-    else
-        b;
-        
-function min(a,b) = 
-    if(a < b)
-        a
-    else
-        b;
 
 //Creates a wrapper around an object that intercepts calls to dispose.
 function create_terminator (obj, termination)

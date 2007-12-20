@@ -24,7 +24,7 @@
 using System;
 using NoDebug = System.Diagnostics.DebuggerNonUserCodeAttribute;
 
-namespace Prexonite
+namespace Prexonite.Types
 {
     /// <summary>
     /// Associates a literal with a class. Only interpreted on classes inheriting from <see cref="Prexonite.Types.PType"/>.

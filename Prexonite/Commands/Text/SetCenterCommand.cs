@@ -70,10 +70,10 @@ namespace Prexonite.Commands
             sb.Capacity = w;
             sb.Length = 0;
 
-            int lw = (int) Math.Round(w/2.0, 0, MidpointRounding.AwayFromZero);
+            int lw = (int) System.Math.Round(w/2.0, 0, MidpointRounding.AwayFromZero);
             int rw = w - lw;
 
-            int ll = (int) Math.Round(l/2.0, 0, MidpointRounding.AwayFromZero);
+            int ll = (int) System.Math.Round(l/2.0, 0, MidpointRounding.AwayFromZero);
 
             sb.Append(SetRightCommand.SetRight(lw, s.Substring(0, ll), f));
             sb.Append(SetLeftCommand.SetLeft(rw, s.Substring(ll), f));

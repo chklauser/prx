@@ -27,6 +27,7 @@ using System;
 using System.Collections.Generic;
 using System.Reflection;
 using Prexonite.Commands;
+using Prexonite.Commands.Math;
 using Prexonite.Types;
 using TScanner = Prexonite.Internal.Scanner;
 using TParser = Prexonite.Internal.Parser;
@@ -597,6 +598,9 @@ namespace Prexonite
             PTypeMap[typeof(sbyte)]     = IntPType.Instance;
 #endif
 
+            //char
+            PTypeMap[typeof(char)] = PType.Char;
+
             //bool
             PTypeMap[typeof(bool)] = PType.Bool;
 
@@ -617,6 +621,7 @@ namespace Prexonite
             PTypeRegistry[IntPType.Literal] = PType.Int.GetType();
             PTypeRegistry[BoolPType.Literal] = PType.Bool.GetType();
             PTypeRegistry[RealPType.Literal] = PType.Real.GetType();
+            PTypeRegistry[CharPType.Literal] = PType.Char.GetType();
             PTypeRegistry[StringPType.Literal] = PType.String.GetType();
             PTypeRegistry[NullPType.Literal] = typeof(NullPType);
             PTypeRegistry[ObjectPType.Literal] = typeof(ObjectPType);
@@ -732,6 +737,30 @@ namespace Prexonite
             Commands.AddEngineCommand(SkipAlias, new Skip());
 
             Commands.AddEngineCommand(LimitAlias, new Limit());
+
+            Commands.AddEngineCommand(AbsAlias, new Abs());
+
+            Commands.AddEngineCommand(CeilingAlias, new Ceiling());
+
+            Commands.AddEngineCommand(ExpAlias, new Exp());
+
+            Commands.AddEngineCommand(FloorAlias, new Floor());
+
+            Commands.AddEngineCommand(LogAlias, new Log());
+
+            Commands.AddEngineCommand(MaxAlias, new Max());
+
+            Commands.AddEngineCommand(MinAlias, new Min());
+
+            Commands.AddEngineCommand(PiAlias, new Pi());
+
+            Commands.AddEngineCommand(RoundAlias, new Round());
+
+            Commands.AddEngineCommand(SinAlias, new Sin());
+
+            Commands.AddEngineCommand(SqrtAlias, new Sqrt());
+
+            Commands.AddEngineCommand(TanAlias, new Tan());
         }
 
         /// <summary>
@@ -848,6 +877,71 @@ namespace Prexonite
         /// Alias used for the limit command.
         /// </summary>
         public const string LimitAlias = "limit";
+
+        /// <summary>
+        /// Alias used for the abs command.
+        /// </summary>
+        public const string AbsAlias = "abs";
+
+        /// <summary>
+        /// Alias used for the ceiling command.
+        /// </summary>
+        public const string CeilingAlias = "ceiling";
+
+        /// <summary>
+        /// Alias used for the cos command.
+        /// </summary>
+        public const string CosAlias = "cos";
+
+        /// <summary>
+        /// Alias used for the exp command.
+        /// </summary>
+        public const string ExpAlias = "exp";
+
+        /// <summary>
+        /// Alias used for the floor command.
+        /// </summary>
+        public const string FloorAlias = "floor";
+
+        /// <summary>
+        /// Alias used for the log command.
+        /// </summary>
+        public const string LogAlias = "log";
+
+        /// <summary>
+        /// Alias used for the max command.
+        /// </summary>
+        public const string MaxAlias = "max";
+
+        /// <summary>
+        /// Alias used for the min command.
+        /// </summary>
+        public const string MinAlias = "min";
+
+        /// <summary>
+        /// Alias used for the pi command.
+        /// </summary>
+        public const string PiAlias = "pi";
+
+        /// <summary>
+        /// Alias used for the round command.
+        /// </summary>
+        public const string RoundAlias = "round";
+
+        /// <summary>
+        /// Alias used for the sin command.
+        /// </summary>
+        public const string SinAlias = "sin";
+
+        /// <summary>
+        /// Alias used for the sqrt command.
+        /// </summary>
+        public const string SqrtAlias = "sqrt";
+
+        /// <summary>
+        /// Alias used for the tan command.
+        /// </summary>
+        public const string TanAlias = "tan";
 
         #endregion
     }

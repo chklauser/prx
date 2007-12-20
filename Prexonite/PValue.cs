@@ -1424,6 +1424,19 @@ namespace Prexonite
             return PType.Object.CreatePValue((double) number);
         }
 
+        //PChar
+
+        /// <summary>
+        /// Encapsulates a char value (System.Char) as a PValue object.
+        /// </summary>
+        /// <param name="c">A System.Char to be used within the Prexonite VM.</param>
+        /// <returns>A PValue object containing the supplied char value with <see cref="PType.Char"/> as its PType.</returns>
+        /// <remarks>As System.Char ist the <strong>natural representation</strong> of <see cref="PType.Char"/> values, the conversion is implicit.</remarks>
+        public static implicit operator PValue(char c)
+        {
+            return CharPType.CreatePValue(c);
+        }
+
         //PBool
         /// <summary>
         /// Encapsulates a boolean value (System.Boolean) as a PValue object.

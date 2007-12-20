@@ -87,7 +87,9 @@ namespace Prexonite.Types
                 return true;
             }
             else
-                return args[0].TryConvertTo(sctx, Int, out result);
+            {
+                 return args[0].TryConvertTo(sctx, Int, out result);
+            }
         }
 
         public override bool TryDynamicCall(
