@@ -11,6 +11,17 @@ function roundTo(x,r) does
     x~= Real; and return
     round( x/r ) * r;
 
+function cmp(a,b) =
+    if(a > b)
+        -1
+    else if(b > a)
+        1
+    else 
+        0;
+        
+function cmp_values(a,b) = cmp(a.Value,b.Value);
+            
+    
 //Creates a wrapper around an object that intercepts calls to dispose.
 function create_terminator (obj, termination)
 {

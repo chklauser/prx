@@ -421,6 +421,13 @@ namespace Prexonite.Types
                 {
                     result = new PValue(pvht, target);
                 }
+                else if(tT == typeof(IEnumerable<PValue>) || tT == typeof(IList<PValue>) || tT==typeof(IList))
+                {
+                    List<PValue> lst = new List<PValue>(pvht.Count);
+                    foreach (KeyValuePair<PValue, PValue> pair in pvht)
+                        lst.Add(sctx.CreateNativePValue(new PValueKeyValuePair(pair)));
+                    result = new PValue(lst, target);
+                }
             }
             else if (target is ListPType)
             {

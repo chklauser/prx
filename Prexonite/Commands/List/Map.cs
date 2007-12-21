@@ -27,7 +27,7 @@ using System;
 using System.Collections.Generic;
 using Prexonite.Types;
 
-namespace Prexonite.Commands
+namespace Prexonite.Commands.List
 {
     /// <summary>
     /// Implementation of the map function. Applies a supplied function (#1) to every 
@@ -44,11 +44,14 @@ namespace Prexonite.Commands
     /// </remarks>
     public class Map : CoroutineCommand
     {
-        internal static IEnumerable<PValue> _ToEnumerable(PValue psource)
+        internal static IEnumerable<PValue> _ToEnumerable(StackContext sctx, PValue psource)
         {
+            IEnumerable<PValue> set;
             if (psource.Type is ListPType ||
                 psource.Type is ObjectPType && psource.Value is IEnumerable<PValue>)
                 return (IEnumerable<PValue>) psource.Value;
+            else if(psource.TryConvertTo(sctx, true, out set))
+                return set;
             else
                 return null;
         }
@@ -84,14 +87,14 @@ namespace Prexonite.Commands
             if (args.Length == 2)
             {
                 PValue psource = args[1];
-                source = _ToEnumerable(psource) ?? new PValue[] {psource};
+                source = _ToEnumerable(sctx, psource) ?? new PValue[] {psource};
             }
             else
             {
                 List<PValue> lstsource = new List<PValue>();
                 for (int i = 1; i < args.Length; i++)
                 {
-                    IEnumerable<PValue> multiple = _ToEnumerable(args[i]);
+                    IEnumerable<PValue> multiple = _ToEnumerable(sctx, args[i]);
                     if (multiple != null)
                         lstsource.AddRange(multiple);
                     else

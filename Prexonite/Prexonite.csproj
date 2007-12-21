@@ -49,7 +49,8 @@
     <Compile Include="Commands\Core\Call.cs" />
     <Compile Include="Commands\Core\Caller.cs" />
     <Compile Include="Commands\Core\CallMember.cs" />
-    <Compile Include="Commands\Core\Concatenate.cs" />
+    <Compile Include="Commands\Core\Char.cs" />
+    <Compile Include="Commands\Core\Concat.cs" />
     <Compile Include="Commands\Core\Debug.cs" />
     <Compile Include="Commands\Core\Dispose.cs" />
     <Compile Include="Commands\Core\LoadAssembly.cs" />

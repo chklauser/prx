@@ -1,0 +1,45 @@
+﻿
+Add System::IO To Import;
+
+function file_exists(path) = ::File.Exists(path);
+
+function file_open(path) = ::File.OpenText(path);
+
+declare file_open as file_open_read,
+        file_open as file_open_text;
+
+function file_open_write(path) = new StreamWriter << ::File.OpenWrite(path);
+
+function file_close = call(->dispose,var args);
+
+function file_lines(file) =
+    if(file is String)
+        coroutine () =>
+        {
+            using(file = file_open(file))
+            while(Not (var l = file.ReadLine) is Null)
+                yield l;
+        }
+    else  
+        coroutine () =>
+        {
+            while(Not (var l = file.ReadLine) is Null)
+                yield l;
+        }; 
+
+function file_characters(file) =
+    if(file is String)
+        coroutine () =>
+        {
+            using(file = file_open(file))
+            while((var c = file.Read) != -1)
+                yield c~Char;
+        }
+    else  
+        coroutine () =>
+        {
+            while((var c = file.Read) != -1)
+                yield c~Char;
+        };  
+        
+declare file_characters as file_chars;

@@ -204,14 +204,19 @@ namespace Prexonite
                 }
                 else
                 {
-                    builder.Append(fctx.Implementation);
+                    PFunction func = fctx.Implementation;
+                    List<Instruction> code = func.Code;
+                    int pointer = fctx.Pointer - 1;
 
-                    if (fctx.Pointer < fctx.Implementation.Code.Count)
+                    builder.Append(func); 
+                    
+                    if (fctx.Pointer < code.Count)
                     {
                         builder.Append(" around instruction ");
-                        builder.Append(fctx.Pointer);
+                        
+                        builder.Append(pointer);
                         builder.Append(": ");
-                        builder.Append(fctx.Implementation.Code[fctx.Pointer]);
+                        builder.Append(code[pointer]);
                     }
                 }
                 builder.Append("\n");

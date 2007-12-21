@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.Globalization;
 using System.Text;
 using NoDebug = System.Diagnostics.DebuggerStepThroughAttribute;
 
@@ -73,7 +74,7 @@ namespace Prexonite.Types
             }
             else
             {
-                return false;
+                c = '\0';
             }
 
             result = c;
@@ -88,12 +89,91 @@ namespace Prexonite.Types
             string id,
             out PValue result)
         {
-            //Try CLR dynamic call
-            ObjectPType clrint = Object[subject.ClrType];
-            if (clrint.TryDynamicCall(sctx, subject, args, call, id, out result))
-                return true;
+            if (sctx == null)
+                throw new ArgumentNullException("sctx");
+            if (subject == null)
+                throw new ArgumentNullException("subject");
+            if (args == null)
+                throw new ArgumentNullException("args");
+            if (id == null)
+                id = "";
+            char c = (char) subject.Value;
+            CultureInfo ci;
+            switch(id.ToLowerInvariant())
+            {
+                case "getnumericvalue":
+                    result = System.Char.GetNumericValue(c);
+                    break;
+                case "getunicodecategory":
+                    result = sctx.CreateNativePValue(System.Char.GetUnicodeCategory(c));
+                    break;
+                case "iscontrol":
+                    result = System.Char.IsControl(c);
+                    break;
+                case "isdigit":
+                    result = System.Char.IsDigit(c);
+                    break;
+                case "ishighsurrogate":
+                    result = System.Char.IsHighSurrogate(c);
+                    break;
+                case "isletter":
+                    result = System.Char.IsLetter(c);
+                    break;
+                case "isletterordigit":
+                    result = System.Char.IsLetterOrDigit(c);
+                    break;
+                case "islower":
+                    result = System.Char.IsLower(c);
+                    break;
+                case "islowsurrogate":
+                    result = System.Char.IsLowSurrogate(c);
+                    break;
+                case "isnumber":
+                    result = System.Char.IsNumber(c);
+                    break;
+                case "ispunctuation":
+                    result = System.Char.IsPunctuation(c);
+                    break;
+                case "issurrogate":
+                    result = System.Char.IsSurrogate(c);
+                    break;
+                case "issymbol":
+                    result = System.Char.IsSymbol(c);
+                    break;
+                case "isupper":
+                    result = System.Char.IsUpper(c);
+                    break;
+                case "ishwitespace":
+                    result = System.Char.IsWhiteSpace(c);
+                    break;
+                case "tolower":
+                    if (args.Length > 0 && args[0].TryConvertTo(sctx, false, out ci))
+                        result = System.Char.ToLower(c, ci);
+                    else
+                        result = System.Char.ToLower(c);
+                    break;
+                case "toupper":
+                    if (args.Length > 0 && args[0].TryConvertTo(sctx, false, out ci))
+                        result = System.Char.ToUpper(c, ci);
+                    else
+                        result = System.Char.ToUpper(c);
+                    break;
+                case "tolowerinvariant":
+                    result = System.Char.ToLowerInvariant(c);
+                    break;
+                case "toupperinvariant":
+                    result = System.Char.ToUpperInvariant(c);
+                    break;
+                   
+                default:
+                    //Try CLR dynamic call
+                    ObjectPType clrint = Object[subject.ClrType];
+                    if (!clrint.TryDynamicCall(sctx, subject, args, call, id, out result))
+                        result = null;
+                    break;
+            }
 
-            return false;
+            return result != null;
         }
 
         public override bool TryStaticCall(
@@ -194,6 +274,9 @@ namespace Prexonite.Types
             {
                 switch (bi)
                 {
+                    case BuiltIn.Int:
+                        result = (char) (int) subject.Value;
+                        break;
                     case BuiltIn.Object:
                         Type clrType = ((ObjectPType)source).ClrType;
                         TypeCode tc = Type.GetTypeCode(clrType);

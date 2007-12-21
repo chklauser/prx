@@ -27,7 +27,7 @@ using System;
 using System.Collections.Generic;
 using Prexonite.Types;
 
-namespace Prexonite.Commands
+namespace Prexonite.Commands.Core
 {
     /// <summary>
     /// Unbinds a variable from closures using it.

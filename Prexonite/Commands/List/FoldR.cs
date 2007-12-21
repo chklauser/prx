@@ -27,7 +27,7 @@ using System;
 using System.Collections.Generic;
 using Prexonite.Types;
 
-namespace Prexonite.Commands
+namespace Prexonite.Commands.List
 {
     /// <summary>
     /// Implementation of the foldr function.
@@ -92,14 +92,14 @@ namespace Prexonite.Commands
             if (args.Length == 3)
             {
                 PValue psource = args[2];
-                source = Map._ToEnumerable(psource) ?? new PValue[] {psource};
+                source = Map._ToEnumerable(sctx, psource) ?? new PValue[] {psource};
             }
             else
             {
                 List<PValue> lstsource = new List<PValue>();
                 for (int i = 1; i < args.Length; i++)
                 {
-                    IEnumerable<PValue> multiple = Map._ToEnumerable(args[i]);
+                    IEnumerable<PValue> multiple = Map._ToEnumerable(sctx, args[i]);
                     if (multiple != null)
                         lstsource.AddRange(multiple);
                     else

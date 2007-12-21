@@ -1,0 +1,48 @@
+﻿
+build does require
+(
+    "struct.pxs"
+);
+
+function create_queue(lst)
+{
+    if(lst is Null)
+        lst = [];
+    else if(Not lst is List)
+        lst = lst >> all;
+    
+    function enqueue this x = create_queue(lst + [x]);
+    
+    function count this = lst.Count;
+    
+    function peek this = if(lst.Count > 0) lst[0] else null;
+    
+    function dequeue this, ref item
+    {
+        if(lst.Count < 1)
+            throw "Queue is empty!";
+        item = lst[0];
+        return create_queue(all << skip(1) << lst);
+    }
+}
+
+function create_mutable_queue(lst)
+{
+    var q = create_queue(lst);
+    
+    function enqueue this x
+    {
+        q = q.enqueue(x);
+    }
+    
+    function peek this = q.peek;
+    
+    function count this = q.count;
+    
+    function dequeue this
+    {
+        var item;
+        q = q.dequeue(->item);
+        return item;
+    }
+}

@@ -28,7 +28,7 @@ using System.IO;
 using System.Reflection;
 using Prexonite.Types;
 
-namespace Prexonite.Commands
+namespace Prexonite.Commands.Core
 {
     /// <summary>
     /// Implementation of the LoadAssembly command which dynamically loads an assembly from a file.

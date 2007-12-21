@@ -23,6 +23,7 @@
 
 using System;
 using System.Collections.Generic;
+using System.Text;
 using NoDebug = System.Diagnostics.DebuggerNonUserCodeAttribute;
 
 namespace Prexonite.Types
@@ -196,7 +197,6 @@ namespace Prexonite.Types
             {
                 get
                 {
-                    //TODO: Add double
                     if (clrType == typeof(Char))
                         return CharObj;
                     else if (clrType == typeof(Byte))
@@ -276,8 +276,21 @@ namespace Prexonite.Types
             if (TryContruct(sctx, args, out result))
                 return result;
             else
-                throw new InvalidCallException(
-                    "Cannot construct a " + ToString() + " with the supplied arguments.");
+            {
+                StringBuilder sb = new StringBuilder();
+                sb.Append("Cannot contruct a ");
+                sb.Append(ToString());
+                sb.Append(" with (");
+                foreach (PValue arg in args)
+                {
+                    sb.Append(arg);
+                    sb.Append(", ");
+                }
+                if (args.Length > 0)
+                    sb.Length -= 2;
+                sb.Append(").");
+                throw new InvalidCallException(sb.ToString());
+            }
         }
 
         #region Indirect Call
@@ -689,7 +702,7 @@ namespace Prexonite.Types
                 return result;
             else
                 throw new InvalidConversionException(
-                    "Cannot" + (useExplicit ? "explicitly" : "implicitly") +
+                    "Cannot " + (useExplicit ? "explicitly" : "implicitly") +
                     " convert " + subject.Type + " to " + target +
                     ".");
         }

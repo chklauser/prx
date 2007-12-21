@@ -28,7 +28,10 @@ using System.Collections.Generic;
 using System.Reflection;
 using Prexonite.Commands;
 using Prexonite.Commands.Math;
+using Prexonite.Commands.Core;
+using Prexonite.Commands.List;
 using Prexonite.Types;
+using Char=Prexonite.Commands.Core.Char;
 using TScanner = Prexonite.Internal.Scanner;
 using TParser = Prexonite.Internal.Parser;
 using NoDebug = System.Diagnostics.DebuggerNonUserCodeAttribute;
@@ -420,6 +423,8 @@ namespace Prexonite
                 return PType.List;
             if (clrType == typeof(HashPType))
                 return PType.Hash;
+            if(clrType == typeof(CharPType))
+                return PType.Char;
 
             PValue result =
                 ptypeClrType.Construct(sctx, new PValue[] {PType.Object.CreatePValue(args)});
@@ -698,7 +703,7 @@ namespace Prexonite
                         #endregion
                     }));
 
-            Commands.AddEngineCommand(ConcatenateCommand, new Concatenate());
+            Commands.AddEngineCommand(ConcatenateCommand, new Concat());
 
             Commands.AddEngineCommand(MapCommand, new Map());
 
@@ -761,6 +766,8 @@ namespace Prexonite
             Commands.AddEngineCommand(SqrtAlias, new Sqrt());
 
             Commands.AddEngineCommand(TanAlias, new Tan());
+
+            Commands.AddEngineCommand(CharAlias, new Char());
         }
 
         /// <summary>
@@ -942,6 +949,11 @@ namespace Prexonite
         /// Alias used for the tan command.
         /// </summary>
         public const string TanAlias = "tan";
+
+        /// <summary>
+        /// Alias used for the char command.
+        /// </summary>
+        public const string CharAlias = "char"; 
 
         #endregion
     }

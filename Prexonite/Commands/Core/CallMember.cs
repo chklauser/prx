@@ -25,9 +25,10 @@
 
 using System;
 using System.Collections.Generic;
+using Prexonite.Commands.List;
 using Prexonite.Types;
 
-namespace Prexonite.Commands
+namespace Prexonite.Commands.Core
 {
     /// <summary>
     /// Implementation of (obj, [isSet, ] id, arg1, arg2, arg3, ..., argn) => obj.id(arg1, arg2, arg3, ..., argn);
@@ -123,7 +124,7 @@ namespace Prexonite.Commands
             for (int i = 0; i < args.Length; i++)
             {
                 PValue arg = args[i];
-                IEnumerable<PValue> folded = Map._ToEnumerable(arg);
+                IEnumerable<PValue> folded = Map._ToEnumerable(sctx, arg);
                 if (folded == null)
                     iargs.Add(arg);
                 else

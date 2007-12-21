@@ -25,17 +25,17 @@ using System;
 using System.Text;
 using Prexonite.Types;
 
-namespace Prexonite.Commands
+namespace Prexonite.Commands.Core
 {
     /// <summary>
     /// Implementation of the <c>concat</c> command.
     /// </summary>
-    public class Concatenate : PCommand
+    public class Concat : PCommand
     {
         /// <summary>
         /// Creates a new instance of the <c>concat</c> command.
         /// </summary>
-        public Concatenate()
+        public Concat()
         {
         }
 

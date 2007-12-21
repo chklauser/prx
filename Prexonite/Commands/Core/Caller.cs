@@ -26,7 +26,7 @@
 using System;
 using System.Collections.Generic;
 
-namespace Prexonite.Commands
+namespace Prexonite.Commands.Core
 {
     /// <summary>
     /// Implementation of the caller command. Returns the stack context of the caller.

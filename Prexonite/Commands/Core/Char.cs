@@ -1,13 +1,11 @@
 using System;
 using System.Collections.Generic;
 using System.Text;
+using Prexonite.Types;
 
-namespace Prexonite.Commands.List
+namespace Prexonite.Commands.Core
 {
-    /// <summary>
-    /// Implementation of the all command.
-    /// </summary>
-    public class All : PCommand
+    public class Char : PCommand
     {
         /// <summary>
         /// A flag indicating whether the command acts like a pure function.
@@ -29,18 +27,33 @@ namespace Prexonite.Commands.List
             if (sctx == null)
                 throw new ArgumentNullException("sctx");
             if (args == null)
-                throw new ArgumentNullException("args"); 
-            List<PValue> lst = new List<PValue>();
-            foreach (PValue arg in args)
-            {
-                IEnumerable<PValue> set = Map._ToEnumerable(sctx, arg);
-                if(set == null)
-                    continue;
-                else
-                    lst.AddRange(set);
-            }
+                throw new ArgumentNullException("args");
 
-            return (PValue) lst;
+            if (args.Length < 1)
+                throw new PrexoniteException("Char requires at least one argument.");
+
+            PValue v;
+            PValue arg = args[0];
+            if(arg.Type == PType.String)
+            {
+                string s = (string) arg.Value;
+                if (s.Length == 0)
+                    throw new PrexoniteException("Cannot create char from empty string.");
+                else
+                    return s[0];
+            }
+            else if(arg.TryConvertTo(sctx, PType.Char, true, out v))
+            {
+                return v;
+            }
+            else if(arg.TryConvertTo(sctx, PType.Int, true, out v))
+            {
+                return (char) (int) v.Value;
+            }
+            else
+            {
+                throw new PrexoniteException("Cannot create char from " + arg);
+            }
         }
     }
 }

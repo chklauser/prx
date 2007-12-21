@@ -26,7 +26,7 @@
 using System;
 using Prexonite.Compiler;
 
-namespace Prexonite.Commands
+namespace Prexonite.Commands.Core
 {
     /// <summary>
     /// A command that aids in generating debug output. Best used in conjunction with the <see cref="DebugHook"/>.

@@ -26,7 +26,7 @@ using System.IO;
 using System.Text;
 using Prexonite.Types;
 
-namespace Prexonite.Commands
+namespace Prexonite.Commands.Core
 {
     /// <summary>
     /// Implementation of <c>println</c>

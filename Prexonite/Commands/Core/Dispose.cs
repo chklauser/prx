@@ -26,7 +26,7 @@
 using System;
 using Prexonite.Types;
 
-namespace Prexonite.Commands
+namespace Prexonite.Commands.Core
 {
     /// <summary>
     /// Command that calls <see cref="IDisposable.Dispose"/> on object values that support the interface.

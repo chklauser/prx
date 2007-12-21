@@ -24,7 +24,7 @@
 
 using Prexonite.Types;
 
-namespace Prexonite.Commands
+namespace Prexonite.Commands.Core
 {
     /// <summary>
     /// Turns to arguments into a key-value pair

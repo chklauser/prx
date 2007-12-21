@@ -3,7 +3,7 @@ using System.Collections.Generic;
 using System.Text;
 using Prexonite.Types;
 
-namespace Prexonite.Commands
+namespace Prexonite.Commands.List
 {
     /// <summary>
     /// Implementation of the where coroutine.
@@ -32,7 +32,7 @@ namespace Prexonite.Commands
             for (int i = 1; i < args.Length; i++)
             {
                 PValue arg = args[i];
-                IEnumerable<PValue> set = Map._ToEnumerable(arg);
+                IEnumerable<PValue> set = Map._ToEnumerable(sctx, arg);
                 if(set == null)
                     continue;
                 foreach (PValue value in set)

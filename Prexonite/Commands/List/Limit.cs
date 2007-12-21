@@ -3,7 +3,7 @@ using System.Collections.Generic;
 using System.Text;
 using Prexonite.Types;
 
-namespace Prexonite.Commands
+namespace Prexonite.Commands.List
 {
     public class Limit : CoroutineCommand
     {
@@ -23,15 +23,17 @@ namespace Prexonite.Commands
             for (int j = 1; j < args.Length; j++)
             {
                 PValue arg = args[j];
-                IEnumerable<PValue> set = Map._ToEnumerable(arg);
+                IEnumerable<PValue> set = Map._ToEnumerable(sctx, arg);
                 if (set == null)
                     throw new PrexoniteException(arg + " is neither a list nor a coroutine.");
-                foreach (PValue value in set)
+                using (IEnumerator<PValue> Eset = set.GetEnumerator())
                 {
-                    if(++i > count)
+                    while(i++ < count && Eset.MoveNext())
+                    {
+                        yield return Eset.Current;
+                    }
+                    if(i >= count)
                         goto breakall;
-                    else
-                        yield return value;
                 }
             }
             breakall:

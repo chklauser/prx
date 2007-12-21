@@ -27,7 +27,7 @@ using System;
 using System.Collections.Generic;
 using Prexonite.Types;
 
-namespace Prexonite.Commands
+namespace Prexonite.Commands.List
 {
     /// <summary>
     /// Implementation of the 'sort' command.
@@ -53,7 +53,8 @@ namespace Prexonite.Commands
                 return PType.Null.CreatePValue();
             else if (args.Length == 1)
             {
-                foreach (PValue x in Map._ToEnumerable(args[0]))
+                IEnumerable<PValue> set = Map._ToEnumerable(sctx, args[0]);
+                foreach (PValue x in set)
                     lst.Add(x);
                 return (PValue) lst;
             }
@@ -62,7 +63,7 @@ namespace Prexonite.Commands
                 List<PValue> clauses = new List<PValue>();
                 for (int i = 0; i + 1 < args.Length; i++)
                     clauses.Add(args[i]);
-                foreach (PValue x in Map._ToEnumerable(args[args.Length - 1]))
+                foreach (PValue x in Map._ToEnumerable(sctx, args[args.Length - 1]))
                     lst.Add(x);
                 lst.Sort(
                     delegate(PValue a, PValue b)
