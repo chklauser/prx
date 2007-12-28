@@ -6,6 +6,13 @@ build does require
     "struct.pxs"
 );
 
+function imin(a,b) = min(a,b)~Int;
+function imax(a,b) = max(a,b)~Int;
+
+declare
+    imin as min,
+    imax as max;
+
 function create_container
 {   
     var container = [];

@@ -762,18 +762,54 @@ namespace Prexonite.Types
             out PValue result)
         {
             result = null;
-            if (target is ObjectPType)
+            string s = (string)subject.Value;
+            BuiltIn builtInT = target.ToBuiltIn();
+            if (useExplicit)
             {
-                switch (Type.GetTypeCode((target as ObjectPType).ClrType))
+                switch (builtInT)
                 {
-                    case TypeCode.String:
-                        result = CreateObject((string) subject.Value);
-                        goto ret;
+                    case BuiltIn.List:
+                        List<PValue> lst = _toPCharList(s);
+                        result = (PValue) lst;
+                        break;
                 }
             }
 
-            ret:
+            if (result == null)
+            {
+                switch(builtInT)
+                {
+                    case BuiltIn.Object:
+                        Type clrType = ((ObjectPType) target).ClrType;
+                        TypeCode typeC = Type.GetTypeCode(clrType);
+                        switch(typeC)
+                        {
+                            case TypeCode.String:
+                                result = CreateObject(s);
+                                break;
+                            case TypeCode.Object:
+                                if (clrType == typeof(IEnumerable<PValue>))
+                                    result = (PValue) _toPCharList(s);
+                                else if (clrType == typeof(char[]) ||
+                                    clrType == typeof(IEnumerable<char>) ||
+                                    clrType == typeof(ICollection<char>) ||
+                                    clrType == typeof(IList<char>))
+                                    result = new PValue(s.ToCharArray(),target);
+                                break;
+                        }
+                        break;
+                }
+            }
+
             return result != null;
+        }
+
+        private static List<PValue> _toPCharList(string s)
+        {
+            List<PValue> lst = new List<PValue>(s.Length);
+            foreach (char c in s.ToCharArray())
+                lst.Add(c);
+            return lst;
         }
 
         protected override bool InternalConvertFrom(

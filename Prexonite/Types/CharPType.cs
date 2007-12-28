@@ -143,7 +143,7 @@ namespace Prexonite.Types
                 case "isupper":
                     result = System.Char.IsUpper(c);
                     break;
-                case "ishwitespace":
+                case "iswhitespace":
                     result = System.Char.IsWhiteSpace(c);
                     break;
                 case "tolower":
@@ -163,6 +163,9 @@ namespace Prexonite.Types
                     break;
                 case "toupperinvariant":
                     result = System.Char.ToUpperInvariant(c);
+                    break;
+                case "length":
+                    result = 1;
                     break;
                    
                 default:

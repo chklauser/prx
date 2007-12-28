@@ -24,6 +24,7 @@
 
 
 using System;
+using System.Collections;
 using System.Collections.Generic;
 using Prexonite.Types;
 
@@ -46,12 +47,25 @@ namespace Prexonite.Commands.List
     {
         internal static IEnumerable<PValue> _ToEnumerable(StackContext sctx, PValue psource)
         {
+            switch(psource.Type.ToBuiltIn())
+            {
+                case PType.BuiltIn.List:
+                    return (IEnumerable<PValue>) psource.Value;
+                case PType.BuiltIn.Object:
+                    Type clrType = ((ObjectPType) psource.Type).ClrType;
+                    if(typeof(IEnumerable<PValue>).IsAssignableFrom(clrType))
+                        goto case PType.BuiltIn.List;
+                    else if(typeof(IEnumerable).IsAssignableFrom(clrType))
+                        return _wrapNonGenericIEnumerable(sctx, (IEnumerable) psource.Value);
+
+                    break;
+            }
             IEnumerable<PValue> set;
-            if (psource.Type is ListPType ||
-                psource.Type is ObjectPType && psource.Value is IEnumerable<PValue>)
-                return (IEnumerable<PValue>) psource.Value;
-            else if(psource.TryConvertTo(sctx, true, out set))
+            IEnumerable nset;
+            if (psource.TryConvertTo(sctx, true, out set))
                 return set;
+            else if (psource.TryConvertTo(sctx, true, out nset))
+                return _wrapNonGenericIEnumerable(sctx, nset);
             else
                 return null;
         }
@@ -114,6 +128,12 @@ namespace Prexonite.Commands.List
         {
             get { return false; } //makes use of indirect call, 
             //which might lead to premature initialization of the parent engine.
+        }
+
+        private static IEnumerable<PValue> _wrapNonGenericIEnumerable(StackContext sctx, IEnumerable nonGeneric)
+        {
+            foreach (object obj in nonGeneric)
+                yield return sctx.CreateNativePValue(obj);
         }
     }
 }

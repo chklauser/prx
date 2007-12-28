@@ -642,6 +642,7 @@ namespace Prexonite
 
             //Commands
             _commandTable = new CommandTable();
+            PCommand cmd;
 
             Commands.AddEngineCommand(PrintCommand, new Print());
 
@@ -705,7 +706,8 @@ namespace Prexonite
 
             Commands.AddEngineCommand(ConcatenateCommand, new Concat());
 
-            Commands.AddEngineCommand(MapCommand, new Map());
+            Commands.AddEngineCommand(MapCommand, cmd = new Map());
+            Commands.AddEngineCommand(SelectAlias, cmd);
 
             Commands.AddEngineCommand(FoldLCommand, new FoldL());
 
@@ -741,7 +743,8 @@ namespace Prexonite
 
             Commands.AddEngineCommand(SkipAlias, new Skip());
 
-            Commands.AddEngineCommand(LimitAlias, new Limit());
+            Commands.AddEngineCommand(LimitAlias, cmd = new Limit());
+            Commands.AddEngineCommand(TakeAlias, cmd);
 
             Commands.AddEngineCommand(AbsAlias, new Abs());
 
@@ -768,6 +771,18 @@ namespace Prexonite
             Commands.AddEngineCommand(TanAlias, new Tan());
 
             Commands.AddEngineCommand(CharAlias, new Char());
+
+            Commands.AddEngineCommand(CountAlias, new Count());
+
+            Commands.AddEngineCommand(DistinctAlias, cmd = new Distinct());
+            Commands.AddEngineCommand(UnionAlias, cmd);
+            Commands.AddEngineCommand(UniqueAlias, cmd);
+
+            Commands.AddEngineCommand(FrequencyAlias, new Frequency());
+
+            Commands.AddEngineCommand(GroupByAlias, new GroupBy());
+
+            Commands.AddEngineCommand(IntersectAlias, new Intersect());
         }
 
         /// <summary>
@@ -794,6 +809,11 @@ namespace Prexonite
         /// Alias used for the <c>map</c> command.
         /// </summary>
         public const string MapCommand = "map";
+
+        /// <summary>
+        /// Alias used for the map command.
+        /// </summary>
+        public const string SelectAlias = "select";
 
         /// <summary>
         /// Alias used for the <c>foldl</c> command.
@@ -886,6 +906,11 @@ namespace Prexonite
         public const string LimitAlias = "limit";
 
         /// <summary>
+        /// Alias used for the limit command.
+        /// </summary>
+        public const string TakeAlias = "take"; 
+
+        /// <summary>
         /// Alias used for the abs command.
         /// </summary>
         public const string AbsAlias = "abs";
@@ -953,7 +978,43 @@ namespace Prexonite
         /// <summary>
         /// Alias used for the char command.
         /// </summary>
-        public const string CharAlias = "char"; 
+        public const string CharAlias = "char";
+
+        /// <summary>
+        /// Alias used for the groupBy command.
+        /// </summary>
+        public const string GroupByAlias = "groupby";
+
+        /// <summary>
+        /// Alias used for the frequency command.
+        /// </summary>
+        public const string FrequencyAlias = "frequency";
+
+        /// <summary>
+        /// Alias used for the count command.
+        /// </summary>
+        public const string CountAlias = "count";
+
+        /// <summary>
+        /// Alias used for the distinct command.
+        /// </summary>
+        public const string DistinctAlias = "distinct";
+
+        /// <summary>
+        /// Alias used for the intersect command.
+        /// </summary>
+        public const string IntersectAlias = "intersect";
+
+        /// <summary>
+        /// Alias used for the distinct command.
+        /// </summary>
+        public const string UnionAlias = "union";
+
+        /// <summary>
+        /// Alias used for the distinct command.
+        /// </summary>
+        public const string UniqueAlias = "unique";
+
 
         #endregion
     }

@@ -8,7 +8,7 @@ function file_open(path) = ::File.OpenText(path);
 declare file_open as file_open_read,
         file_open as file_open_text;
 
-function file_open_write(path) = new StreamWriter << ::File.OpenWrite(path);
+function file_open_write(path) = new ::StreamWriter << ::File.OpenWrite(path);
 
 function file_close = call(->dispose,var args);
 
@@ -43,3 +43,8 @@ function file_characters(file) =
         };  
         
 declare file_characters as file_chars;
+
+coroutine file_words(file) does 
+    foreach(var line in file_lines(file))
+    foreach(var word in line.Split)
+        yield word;

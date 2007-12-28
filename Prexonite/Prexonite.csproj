@@ -39,10 +39,8 @@
   </PropertyGroup>
   <ItemGroup>
     <Reference Include="System" />
-    <Reference Include="System.Data" />
     <Reference Include="System.Drawing" />
     <Reference Include="System.Windows.Forms" />
-    <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
     <Compile Include="Closure.cs" />
@@ -61,8 +59,13 @@
     <Compile Include="Commands\CoroutineCommand.cs" />
     <Compile Include="Commands\DelegatePCommand.cs" />
     <Compile Include="Commands\List\All.cs" />
+    <Compile Include="Commands\List\Count.cs" />
+    <Compile Include="Commands\List\Distinct.cs" />
     <Compile Include="Commands\List\FoldL.cs" />
     <Compile Include="Commands\List\FoldR.cs" />
+    <Compile Include="Commands\List\Frequency.cs" />
+    <Compile Include="Commands\List\GroupBy.cs" />
+    <Compile Include="Commands\List\Intersect.cs" />
     <Compile Include="Commands\List\Limit.cs" />
     <Compile Include="Commands\List\Map.cs" />
     <Compile Include="Commands\List\Skip.cs" />

@@ -24,6 +24,10 @@ function create_queue(lst)
         item = lst[0];
         return create_queue(all << skip(1) << lst);
     }
+    
+    function ToString this = "queue $lst";
+    
+    return struct;
 }
 
 function create_mutable_queue(lst)
@@ -45,4 +49,8 @@ function create_mutable_queue(lst)
         q = q.dequeue(->item);
         return item;
     }
+    
+    function ToString this = "mutable $q";
+    
+    return struct;
 }

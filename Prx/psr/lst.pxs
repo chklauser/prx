@@ -9,7 +9,8 @@ build
 
 declare command 
     map, where, all, sort,
-    limit, skip;
+    limit, skip, distinct, union,
+    intersect, select, groupby, frequency, count;
 declare 
     sort as orderby;
 

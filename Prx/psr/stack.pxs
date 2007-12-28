@@ -2,9 +2,8 @@
 //Stack implementation using []
 build does require("struct.pxs","debug.pxs");
 
-debugging disabled;
-
 function create_stack()
+[debugging disabled;]
 {
     var xs = [];
     var i = -1;
@@ -50,6 +49,13 @@ function create_stack()
         xs.Clear();
         i = -1;   
     }
+    
+    function ToString this = xs.ToString;
+    function GetEnumerator this = (coroutine () =>
+    {
+        while(count > 0)
+            yield pop;
+    }).GetEnumerator;
     
     return struct;
 }

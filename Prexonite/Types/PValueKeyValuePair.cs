@@ -90,6 +90,7 @@ namespace Prexonite.Types
         /// </summary>
         /// <param name="sctx">The stack context of the call.</param>
         /// <param name="args">The arguments for the call.</param>
+        /// <param name="call">Indicates the mode of call.</param>
         /// <param name="id">The id of the member to call (empty for the default member).</param>
         /// <param name="result">The result returned by the call.</param>
         /// <returns>True, if the call succeeded, false otherwise.</returns>
@@ -218,5 +219,6 @@ namespace Prexonite.Types
         {
             return new PValueKeyValuePair(kvp);
         }
+
     }
 }
