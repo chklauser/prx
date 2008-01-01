@@ -86,34 +86,34 @@ namespace Prexonite
         /// <param name="sctx">The stack context in which to invoke the function.</param>
         /// <param name="args">A list of arguments to pass to the function.</param>
         /// <returns>The value returned by the function.</returns>
-        public PValue IndirectCall(StackContext sctx, PValue[] args)
+        public virtual PValue IndirectCall(StackContext sctx, PValue[] args)
         {
-            Engine eng = sctx.ParentEngine;
-            StackContext fctx = CreateStackContext(eng, args);
-            eng.Process(fctx);
-            return fctx.ReturnValue;
+            StackContext fctx = CreateStackContext(sctx, args);
+            return sctx.ParentEngine.Process(fctx);
         }
 
         /// <summary>
         /// Creates a stack context from the wrapped function.
         /// </summary>
-        /// <param name="engine">The engine to bind to.</param>
+        /// <param name="sctx">The engine to bind to.</param>
         /// <param name="args">A list of arguments to pass to the function.</param>
         /// <returns>A stack context for that function.</returns>
-        public StackContext CreateStackContext(Engine engine, PValue[] args)
+        public StackContext CreateStackContext(StackContext sctx, PValue[] args)
         {
-            return CreateFunctionContext(engine, args);
+            return CreateFunctionContext(sctx, args);
         }
 
         /// <summary>
         /// Creates a function context from the wrapped function.
         /// </summary>
-        /// <param name="eng">The engine to bind to.</param>
+        /// <param name="sctx">The stack context to bind to.</param>
         /// <param name="args">A list of arguments to pass to the function.</param>
         /// <returns>A stack context for that function.</returns>
-        public FunctionContext CreateFunctionContext(Engine eng, PValue[] args)
+        /// <remarks>Implementation may throw <see cref="NotSupportedException"/>.</remarks>
+        /// <exception cref="NotSupportedException">May be thrown by implementations</exception>
+        public virtual FunctionContext CreateFunctionContext(StackContext sctx, PValue[] args)
         {
-            return _function.CreateFunctionContext(eng, args, _sharedVariables);
+            return _function.CreateFunctionContext(sctx.ParentEngine, args, _sharedVariables);
         }
 
         #endregion

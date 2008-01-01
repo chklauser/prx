@@ -65,21 +65,6 @@ namespace Prexonite.Types
         /// </summary>
         public const string ConstructorId = "New";
 
-        /// <summary>
-        /// Returns a string that both identifies and defines the structure.
-        /// </summary>
-        public string TypeSignature
-        {
-            get
-            {
-                if (_typeSignature == null)
-                    _typeSignature = ToString();
-                return _typeSignature;
-            }
-        }
-
-        private string _typeSignature = null;
-
         #region Creation
 
         internal class Member : IIndirectCall
@@ -127,44 +112,15 @@ namespace Prexonite.Types
             #endregion
         }
 
-        private SymbolTable<Member> _prototypes = new SymbolTable<Member>();
-
-        private static string[] _toStringArray(StackContext sctx, PValue[] args)
-        {
-            string[] sargs = new string[args.Length];
-            for (int i = 0; i < sargs.Length; i++)
-                sargs[i] = args[i] != null ? args[i].CallToString(sctx) : null;
-            return sargs;
-        }
-
-        public StructurePType(StackContext sctx, PValue[] args)
-            : this(_toStringArray(sctx, args))
+        private StructurePType()
         {
         }
 
-        public StructurePType(params string[] definitionElements)
+        private static StructurePType _instance = new StructurePType();
+
+        public static StructurePType Instance
         {
-            if (definitionElements == null)
-                throw new ArgumentNullException("definitionElements");
-
-            for (int i = 0; i < definitionElements.Length; i++)
-            {
-                string s = definitionElements[i];
-                if (s == null)
-                    s = "";
-                bool reference = false;
-                if (s.Equals("r", StringComparison.InvariantCultureIgnoreCase) &&
-                    i < definitionElements.Length - 1) // "r" is not last element
-                {
-                    //Treat next element as a reference instead
-                    reference = true;
-                    s = definitionElements[++i];
-                }
-
-                if (_prototypes.ContainsKey(s))
-                    throw new ArgumentException("Duplicate definition of member " + s);
-                _prototypes.Add(s, new Member(reference));
-            }
+            get { return _instance; }
         }
 
         #endregion
@@ -235,7 +191,6 @@ namespace Prexonite.Types
 
                         m.Value = args[args.Length - 1];
                         m.IsReference = reference;
-                        _typeSignature = null; //Make sure, _typeSignature is reset.
 
                         result = m.Value;
 
@@ -268,12 +223,7 @@ namespace Prexonite.Types
         /// <returns>True if the construction was successful; false otherwise.</returns>
         public override bool TryContruct(StackContext sctx, PValue[] args, out PValue result)
         {
-            //Create structure
-            SymbolTable<Member> obj = new SymbolTable<Member>(_prototypes.Count);
-            foreach (KeyValuePair<string, Member> kvp in _prototypes)
-                obj.Add(kvp.Key, new Member(kvp.Value.IsReference));
-
-            result = new PValue(obj, this);
+            result = new PValue(new SymbolTable<Member>(), this);
             return true;
         }
 
@@ -289,30 +239,23 @@ namespace Prexonite.Types
             if (obj == null)
                 return false;
 
-            /*
-            if(target is StringPType)
+            switch(target.ToBuiltIn())
             {
-                StringBuilder sb = new StringBuilder("{");
-                foreach (KeyValuePair<string, Member> kvp in obj)
-                {
-                    sb.Append(kvp.Key);
-                    sb.Append(" => ");
-                    sb.Append(kvp.Value.Value);
-                    sb.Append(", ");
-                }
-                if(obj.Count > 0)
-                    sb.Length -= 2;
-                sb.Append("}");
-                result = sb.ToString();
-            }
-            //*/
-
-            if (target is StringPType || target == Object[typeof(string)])
-            {
-                if (
-                    !TryDynamicCall(
-                         sctx, subject, new PValue[] {}, PCall.Get, "ToString", out result))
-                    result = null;
+                case BuiltIn.String:
+                    normalString:
+                    ;
+                    if(!TryDynamicCall(sctx,subject, new PValue[] {},PCall.Get,"ToString",out result ))
+                        result = null;
+                    break;
+                case BuiltIn.Object:
+                    Type clrType = ((ObjectPType) target).ClrType;
+                    TypeCode tc = Type.GetTypeCode(clrType);
+                    switch(tc)
+                    {
+                        case TypeCode.String:
+                            goto normalString;
+                    }
+                    break;
             }
 
             return result != null;
@@ -345,23 +288,18 @@ namespace Prexonite.Types
 
         protected override bool InternalIsEqual(PType otherType)
         {
-            StructurePType s = otherType as StructurePType;
-            if (s == null)
-                return false;
-
-            return
-                s.TypeSignature.Equals(TypeSignature, StringComparison.InvariantCultureIgnoreCase);
+            return otherType is StructurePType;
         }
 
         private const int _code = 1558687994;
 
         /// <summary>
-        /// returns a hash code based on the <see cref="TypeSignature"/>.
+        /// returns a constant hash code.
         /// </summary>
-        /// <returns>A hash code based on the <see cref="TypeSignature"/>.</returns>
+        /// <returns>A constant hash code.</returns>
         public override int GetHashCode()
         {
-            return _CombineHashes(_code, TypeSignature.GetHashCode());
+            return _code;
         }
 
         /// <summary>
@@ -370,19 +308,7 @@ namespace Prexonite.Types
         /// <returns>A PTypeExpression for this structure.</returns>
         public override string ToString()
         {
-            StringBuilder sb = new StringBuilder(Literal);
-            sb.Append("(");
-            foreach (KeyValuePair<string, Member> kvp in _prototypes)
-            {
-                if (kvp.Value.IsReference)
-                    sb.Append("r,");
-                sb.Append(StringPType.ToIdOrLiteral(kvp.Key));
-                sb.Append(",");
-            }
-            if (_prototypes.Count != 0)
-                sb.Length -= 1;
-            sb.Append(")");
-            return sb.ToString();
+            return Literal;
         }
 
         #endregion

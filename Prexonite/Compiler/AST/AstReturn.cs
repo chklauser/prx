@@ -22,6 +22,7 @@
  */
 
 using System;
+using Prexonite.Types;
 
 namespace Prexonite.Compiler.Ast
 {
@@ -53,20 +54,24 @@ namespace Prexonite.Compiler.Ast
 
         public override void EmitCode(CompilerTarget target)
         {
-            if (Expression != null &&
-                (ReturnVariant == ReturnVariant.Exit || ReturnVariant == ReturnVariant.Set))
+            if (Expression != null)
             {
-                OptimizeNode(target, ref Expression);
-                Expression.EmitCode(target);
+                OptimizeNode(target,ref Expression);
+                if (ReturnVariant == Ast.ReturnVariant.Exit)
+                {
+                    emit_tail_call_exit(target);
+                    return;
+                }
             }
             switch (ReturnVariant)
             {
                 case ReturnVariant.Exit:
-                    target.Emit(Expression != null ? OpCode.ret_value : OpCode.ret_exit);
+                    target.Emit(OpCode.ret_exit);
                     break;
                 case ReturnVariant.Set:
                     if (Expression == null)
                         throw new PrexoniteException("Return assignment requires an expression.");
+                    Expression.EmitCode(target);
                     target.Emit(OpCode.ret_set);
                     break;
                 case ReturnVariant.Continue:
@@ -80,6 +85,54 @@ namespace Prexonite.Compiler.Ast
                 case ReturnVariant.Break:
                     target.Emit(OpCode.ret_break);
                     break;
+            }
+        }
+
+        private void emit_tail_call_exit(CompilerTarget target)
+        {
+            AstConditionalExpression cond = Expression as AstConditionalExpression;
+            if(cond != null)
+            {
+                                        //  return  if( cond )
+                                        //              expr1
+                                        //          else
+                                        //              expr2
+                AstCondition retif = new AstCondition(File, Line, Column, cond.Condition);
+
+                AstReturn ret1 = new AstReturn(File, Line, Column, ReturnVariant);
+                ret1.Expression = cond.IfExpression;
+                retif.IfBlock.Add(ret1);
+
+                AstReturn ret2 = new AstReturn(File, Line, Column, ReturnVariant);
+                ret2.Expression = cond.ElseExpression;
+                //not added to the condition
+
+                retif.EmitCode(target); //  if( cond )
+                                        //      return expr1
+                ret2.EmitCode(target);  //  return expr2
+
+                return; //ret1 and ret2 will continue optimizing
+            }
+
+            AstGetSet getset = Expression as AstGetSet;
+            AstGetSetSymbol symbol = Expression as AstGetSetSymbol;
+            ICanBeReferenced icbr = Expression as ICanBeReferenced;
+
+            AstGetSet reference;
+            if((getset != null && getset.Call == PCall.Set || 
+                (symbol != null && symbol.IsObjectVariable))  ||  //the 'value' of set-expressions is not the return value of the call
+                icbr == null || !icbr.TryToReference(out reference)) //call\tail requires a reference to the continuation
+            {   //Cannot be tail call optimized
+                Expression.EmitCode(target);
+                target.Emit(OpCode.ret_value);
+            }
+            else //Will be tail called
+            {
+                // getset(arg1,arg2,..,argn) => tail(->getset, arg1, arg2,..,argn)
+                reference.EmitCode(target);
+                foreach (IAstExpression argument in icbr.Arguments)
+                    argument.EmitCode(target);
+                target.Emit(OpCode.tail, icbr.Arguments.Count);
             }
         }
 

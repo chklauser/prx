@@ -43,7 +43,8 @@ namespace Prexonite.Types
             Object,
             List,
             Hash,
-            Char
+            Char,
+            Structure
         }
 
         public bool IsBuiltIn
@@ -73,6 +74,8 @@ namespace Prexonite.Types
                 return BuiltIn.Hash;
             if (thisType == typeof(CharPType))
                 return BuiltIn.Char;
+            if (thisType == typeof(StructurePType))
+                return BuiltIn.Structure;
 
             return BuiltIn.Null;
         }
@@ -99,6 +102,8 @@ namespace Prexonite.Types
                     return Hash;
                 case BuiltIn.Char:
                     return Char;
+                case BuiltIn.Structure:
+                    return Structure;
                 default:
                     return null;
             }
@@ -150,6 +155,12 @@ namespace Prexonite.Types
         {
             [NoDebug]
             get { return CharPType.Instance; }
+        }
+
+        public static StructurePType Structure
+        {
+            [NoDebug]
+            get { return StructurePType.Instance; }
         }
 
         private static PrexoniteObjectTypeProxy pobjfacade = new PrexoniteObjectTypeProxy();

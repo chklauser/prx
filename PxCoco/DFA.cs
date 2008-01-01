@@ -925,7 +925,7 @@ public class DFA {
 		}
 		CopyFramePart("-->literals"); GenLiterals();
 		CopyFramePart("-->scan1");
-		gen.Write("\t\twhile (ch == ' '");
+		gen.Write("\t\twhile (false");
 		    if (tab.ignored.Elements() > 0) { gen.Write(" || "); PutRange(tab.ignored); }
     gen.WriteLine(") NextCh();");
 		if (firstComment != null) {

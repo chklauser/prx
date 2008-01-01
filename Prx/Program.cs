@@ -124,34 +124,39 @@ namespace Prx
                     PValue[] rargs = new PValue[cargs.Length - 1];
                     Array.Copy(cargs, 1, rargs, 0, rargs.Length);
 
-                    FunctionContext rctx;
-                    if (carg.Type is StringPType)
+                    FunctionContext rctx = null;
+                    PFunction f;
+                    switch(carg.Type.ToBuiltIn())
                     {
-                        PFunction f;
-                        if (
-                            !sctx.ParentApplication.Functions.TryGetValue(
-                                 (string) carg.Value, out f))
-                            throw new PrexoniteException(
-                                "Cannot replace call to " + carg +
-                                " because no such function exists.");
+                        case PType.BuiltIn.String:
+                            if (
+                                !sctx.ParentApplication.Functions.TryGetValue(
+                                     (string)carg.Value, out f))
+                                throw new PrexoniteException(
+                                    "Cannot replace call to " + carg +
+                                    " because no such function exists.");
 
-                        rctx = f.CreateFunctionContext(e, rargs);
+                            rctx = f.CreateFunctionContext(e, rargs);
+                            break;
+                        case PType.BuiltIn.Object:
+                            Type clrType = ((ObjectPType) carg.Type).ClrType;
+                            if (clrType == typeof(PFunction))
+                            {
+                                f = (PFunction) carg.Value;
+                                rctx = f.CreateFunctionContext(e, rargs);
+                            }
+                            else if(clrType == typeof(Closure) && clrType != typeof(Continuation))
+                            {
+                                Closure c = (Closure)carg.Value;
+                                rctx = c.CreateFunctionContext(sctx, rargs);
+                            }
+                            else if(clrType == typeof(FunctionContext))
+                            {
+                                rctx = (FunctionContext)carg.Value;
+                            }
+                            break;
                     }
-                    else if (carg.Type == PType.Object[typeof(PFunction)])
-                    {
-                        PFunction f = (PFunction) carg.Value;
-                        rctx = f.CreateFunctionContext(e, rargs);
-                    }
-                    else if (carg.Type == PType.Object[typeof(Closure)])
-                    {
-                        Closure c = (Closure) carg.Value;
-                        rctx = c.CreateFunctionContext(e, rargs);
-                    }
-                    else if (carg.Type == PType.Object[typeof(FunctionContext)])
-                    {
-                        rctx = (FunctionContext) carg.Value;
-                    }
-                    else
+                    if(rctx == null)
                         throw new PrexoniteException("Cannot replace a context based on " + carg);
 
                     LinkedListNode<StackContext> node = e.Stack.Last;

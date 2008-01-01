@@ -609,9 +609,8 @@ namespace Prexonite.Types
             Engine eng = sctx.ParentEngine;
             if (app.Functions.TryGetValue(str, out func))
             {
-                FunctionContext fctx = func.CreateFunctionContext(eng, args);
-                eng.Process(fctx);
-                result = fctx.ReturnValue ?? Null.CreatePValue();
+                FunctionContext fctx = func.CreateFunctionContext(sctx, args);
+                result = eng.Process(fctx);
             }
             else if (eng.Commands.TryGetValue(str, out cmd))
             {

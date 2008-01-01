@@ -21,8 +21,9 @@
  *  51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
  */
 
-
 #define SINGLE_NULL
+
+using System.Diagnostics;
 
 namespace Prexonite.Types
 {
@@ -72,6 +73,7 @@ namespace Prexonite.Types
         /// Returns a PValue(null).
         /// </summary>
         /// <returns>PValue(null)</returns>
+        [DebuggerStepThrough]
         public PValue CreatePValue()
         {
 #if SINGLE_NULL
@@ -452,6 +454,7 @@ namespace Prexonite.Types
         /// <param name="args">The list of arguments (ignored).</param>
         /// <param name="result">The result of doing nothing. Always PValue(null).</param>
         /// <returns>Always true (doing nothing can't possibly fail...)</returns>
+        [DebuggerStepThrough]
         public override bool IndirectCall(
             StackContext sctx, PValue subject, PValue[] args, out PValue result)
         {
@@ -466,9 +469,20 @@ namespace Prexonite.Types
         /// Returns the Null <see cref="Literal"/>.
         /// </summary>
         /// <returns>The Null <see cref="Literal"/>.</returns>
+        [DebuggerStepThrough]
         public override string ToString()
         {
             return Literal;
+        }
+
+        [DebuggerStepThrough]
+        public static implicit operator PValue(NullPType T)
+        {
+#if SINGLE_NULL
+            return _single_null;
+#else
+            return new PValue(null, this);
+#endif
         }
     }
 }

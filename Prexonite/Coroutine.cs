@@ -203,8 +203,7 @@ namespace Prexonite
             if (!IsValid)
                 return PType.Null.CreatePValue();
 
-            eng.Process(_corctx);
-            PValue ret = _corctx.ReturnValue;
+            PValue ret = eng.Process(_corctx);
             if (_corctx.ReturnMode != ReturnModes.Continue)
             {
                 _corctx = null;

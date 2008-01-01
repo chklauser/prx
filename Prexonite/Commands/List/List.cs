@@ -2,10 +2,21 @@ using System;
 using System.Collections.Generic;
 using System.Text;
 
-namespace Prexonite.Commands
+namespace Prexonite.Commands.List
 {
-    public abstract class CoroutineCommand : PCommand
+    public class List : PCommand
     {
+        /// <summary>
+        /// A flag indicating whether the command acts like a pure function.
+        /// </summary>
+        /// <remarks>Pure commands can be applied at compile time.</remarks>
+        public override bool IsPure
+        {
+            get
+            {
+                return false;
+            }
+        }
 
         /// <summary>
         /// Executes the command.
@@ -20,11 +31,9 @@ namespace Prexonite.Commands
             if (args == null)
                 throw new ArgumentNullException("args"); 
 
-            CoroutineContext corctx = new CoroutineContext(sctx, CoroutineRun(sctx, args));
-            return sctx.CreateNativePValue(new Coroutine(corctx));
+            List<PValue> lst = new List<PValue>(args.Length);
+            lst.AddRange(args);
+            return (PValue) lst;
         }
-
-        protected abstract IEnumerable<PValue> CoroutineRun(StackContext sctx, PValue[] args);
-
     }
 }

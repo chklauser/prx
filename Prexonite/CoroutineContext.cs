@@ -67,7 +67,7 @@ namespace Prexonite
         /// Indicates whether the context still has code/work to do.
         /// </summary>
         /// <returns>True if the context has additional work to perform in the next cycle, False if it has finished it's work and can be removed from the stack</returns>
-        protected override bool PerformNextCylce()
+        protected override bool PerformNextCylce(StackContext lastContext)
         {
             bool moved = _coroutine.MoveNext();
             if (moved)

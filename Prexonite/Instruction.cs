@@ -534,7 +534,6 @@ namespace Prexonite
                         case OpCode.@throw:
                         case OpCode.@try:
                         case OpCode.exc:
-                        case OpCode.tail:
                             return;
                             //LOAD CONSTANT . REAL
                         case OpCode.ldc_real:
@@ -622,6 +621,7 @@ namespace Prexonite
                             //ARG INSTRUCTIONS
                         case OpCode.indarg:
                         case OpCode.newcor:
+                        case OpCode.tail:
                             buffer.Append(".");
                             buffer.Append(Arguments.ToString());
                             return;
@@ -697,7 +697,6 @@ namespace Prexonite
                     case OpCode.ret_break:
                     case OpCode.@throw:
                     case OpCode.exc:
-                    case OpCode.tail:
                     case OpCode.@try:
                         return true;
                         //LOAD CONSTANT . REAL
@@ -763,6 +762,7 @@ namespace Prexonite
                         //ARG INSTRUCTIONS
                     case OpCode.indarg:
                     case OpCode.newcor:
+                    case OpCode.tail:
                         return
                             Arguments == ins.Arguments &&
                             JustEffect == ins.JustEffect;
@@ -900,6 +900,7 @@ namespace Prexonite
         func, //func          performs a function call
         cmd, //cmd           performs a command call
         indarg, //indarg        performs an indirect call on an operand
+        tail, //tail            performs an indirect call (tries to turn it into an optimized tail call)
         //Indirect calls (3)
         indloc, //indloc        performs an indirect call on a local variable by name
         indloci, //indloci      performs an indriect call on a local variable by index
@@ -919,7 +920,7 @@ namespace Prexonite
         leave,
         //leave         jumps depending on whether the context is currently in exception handling mode or not.
         exc, //exc              Pushes the current exception on top of the stack.
-        tail, //tail            Prevents function from yielding until it has reached an exit point
+
         //Stack manipulation (3)
         pop, //pop           Pops x values from the stack
         dup, //dup           duplicates the top value x times

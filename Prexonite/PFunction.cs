@@ -500,7 +500,19 @@ namespace Prexonite
         /// <summary>
         /// Creates a new function context for execution.
         /// </summary>
-        /// <param name="engine">The engine in which to execute the function.</param>
+        /// <param name="sctx">The stack context in which to create the new context.</param>
+        /// <param name="args">The arguments to pass to the function.</param>
+        /// <returns>A function context for the execution of this function.</returns>
+        public FunctionContext CreateFunctionContext(StackContext sctx, PValue[] args)
+        {
+            return CreateFunctionContext(sctx.ParentEngine, args);
+        }
+
+
+        /// <summary>
+        /// Creates a new function context for execution.
+        /// </summary>
+        /// <param name="engine">The engine for which to create the new context.</param>
         /// <param name="args">The arguments to pass to the function.</param>
         /// <returns>A function context for the execution of this function.</returns>
         public FunctionContext CreateFunctionContext(Engine engine, PValue[] args)
@@ -530,8 +542,7 @@ namespace Prexonite
         {
             FunctionContext fctx = CreateFunctionContext(engine, args, sharedVariables);
             engine.Stack.AddLast(fctx);
-            engine.Process();
-            return fctx.ReturnValue ?? PType.Null.CreatePValue();
+            return engine.Process();
         }
 
         /// <summary>
@@ -579,13 +590,13 @@ namespace Prexonite
         /// <summary>
         /// Creates a new stack context for the execution of this function.
         /// </summary>
-        /// <param name="engine">The engine in which to execute the function.</param>
+        /// <param name="sctx">The engine in which to execute the function.</param>
         /// <param name="args">The arguments to pass to the function.</param>
         /// <returns>A function context for the execution of this function.</returns>
         [NoDebug]
-        StackContext IStackAware.CreateStackContext(Engine engine, PValue[] args)
+        StackContext IStackAware.CreateStackContext(StackContext sctx, PValue[] args)
         {
-            return CreateFunctionContext(engine, args);
+            return CreateFunctionContext(sctx, args);
         }
 
         #endregion

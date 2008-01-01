@@ -39,14 +39,18 @@
   </PropertyGroup>
   <ItemGroup>
     <Reference Include="System" />
+    <Reference Include="System.Data" />
     <Reference Include="System.Drawing" />
     <Reference Include="System.Windows.Forms" />
+    <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
     <Compile Include="Closure.cs" />
     <Compile Include="Commands\Core\Call.cs" />
     <Compile Include="Commands\Core\Caller.cs" />
-    <Compile Include="Commands\Core\CallMember.cs" />
+    <Compile Include="Commands\Core\Call_Member.cs" />
+    <Compile Include="Commands\Core\Call_CC.cs" />
+    <Compile Include="Commands\Core\Call_Tail.cs" />
     <Compile Include="Commands\Core\Char.cs" />
     <Compile Include="Commands\Core\Concat.cs" />
     <Compile Include="Commands\Core\Debug.cs" />
@@ -67,6 +71,7 @@
     <Compile Include="Commands\List\GroupBy.cs" />
     <Compile Include="Commands\List\Intersect.cs" />
     <Compile Include="Commands\List\Limit.cs" />
+    <Compile Include="Commands\List\List.cs" />
     <Compile Include="Commands\List\Map.cs" />
     <Compile Include="Commands\List\Skip.cs" />
     <Compile Include="Commands\List\Sort.cs" />
@@ -86,6 +91,7 @@
     <Compile Include="Commands\Math\Tan.cs" />
     <Compile Include="Commands\NestedPCommand.cs" />
     <Compile Include="Commands\PCommand.cs" />
+    <Compile Include="Commands\StackAwareCommand.cs" />
     <Compile Include="Commands\Text\SetCenterCommand.cs" />
     <Compile Include="Commands\Text\SetLeftCommand.cs" />
     <Compile Include="Commands\Text\SetRightCommand.cs" />
@@ -139,6 +145,7 @@
     <Compile Include="Compiler\Ast\IAstHasBlocks.cs" />
     <Compile Include="Compiler\Ast\IAstHasExpressions.cs" />
     <Compile Include="Compiler\Ast\IAstType.cs" />
+    <Compile Include="Compiler\Ast\ICanBeReferenced.cs" />
     <Compile Include="Compiler\BlockLabels.cs" />
     <Compile Include="Compiler\CompilerHook.cs" />
     <Compile Include="Compiler\CompilerTarget.cs" />
@@ -151,6 +158,7 @@
     <Compile Include="Compiler\LoaderOptions.cs" />
     <Compile Include="Compiler\Parser.Code.cs" />
     <Compile Include="Compiler\Token.cs" />
+    <Compile Include="Continuation.cs" />
     <Compile Include="Coroutine.cs" />
     <Compile Include="CoroutineContext.cs" />
     <Compile Include="FunctionContext.cs" />
@@ -160,11 +168,13 @@
     <Compile Include="Helper\RandomAccessQueue.cs" />
     <Compile Include="Helper\SymbolEntry.cs" />
     <Compile Include="IIndirectCall.cs" />
+    <Compile Include="IndirectCallContext.cs" />
     <Compile Include="Instruction.cs" />
     <Compile Include="Internal\Parser.Code.cs" />
     <Compile Include="Internal\Parser.cs" />
     <Compile Include="Internal\Scanner.cs" />
     <Compile Include="IStackAware.cs" />
+    <Compile Include="NullContext.cs" />
     <Compile Include="PFunction.cs" />
     <Compile Include="Helper\PFunctionTable.cs" />
     <Compile Include="Helper\SymbolCollection.cs" />

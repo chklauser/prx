@@ -33,8 +33,6 @@ namespace Prexonite
     public abstract class StackContext : IIndirectCall
     {
 
-        
-
         #region Interface
 
         /// <summary>
@@ -62,7 +60,7 @@ namespace Prexonite
         /// Indicates whether the context still has code/work to do.
         /// </summary>
         /// <returns>True if the context has additional work to perform in the next cycle, False if it has finished it's work and can be removed from the stack</returns>
-        protected abstract bool PerformNextCylce();
+        protected abstract bool PerformNextCylce(StackContext lastContext);
 
         /// <summary>
         /// Tries to handle the supplied exception.
@@ -71,9 +69,9 @@ namespace Prexonite
         /// <returns>True if the exception has been handled, false otherwise.</returns>
         public abstract bool TryHandleException(Exception exc);
 
-        internal bool NextCylce()
+        internal bool NextCylce(StackContext lastContext)
         {
-            return PerformNextCylce();
+            return PerformNextCylce(lastContext);
         }
 
         /// <summary>
@@ -174,8 +172,7 @@ namespace Prexonite
         /// <returns>The value returned by the execution.</returns>
         PValue IIndirectCall.IndirectCall(StackContext sctx, PValue[] args)
         {
-            sctx.ParentEngine.Process(this);
-            return ReturnValue ?? PType.Null.CreatePValue();
+            return sctx.ParentEngine.Process(this);
         }
 
         #endregion

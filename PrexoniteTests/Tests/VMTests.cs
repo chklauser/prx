@@ -97,12 +97,12 @@ function test1(x)
             FunctionContext fctx =
                 target.Functions["test1"].CreateFunctionContext(engine, new PValue[] {x0});
             engine.Stack.AddLast(fctx);
-            engine.Process();
+            PValue rv = engine.Process();
 
-            Assert.AreEqual(PType.BuiltIn.Int, fctx.ReturnValue.Type.ToBuiltIn());
+            Assert.AreEqual(PType.BuiltIn.Int, rv.Type.ToBuiltIn());
             Assert.AreEqual(
                 expected,
-                (int) fctx.ReturnValue.Value,
+                (int) rv.Value,
                 "Return value is expected to be " + expected + ".");
 
             Assert.AreEqual(
@@ -137,12 +137,12 @@ function test1(x)
             FunctionContext fctx =
                 target.Functions["test1"].CreateFunctionContext(engine, new PValue[] {x0});
             engine.Stack.AddLast(fctx);
-            engine.Process();
+            PValue rv = engine.Process();
 
-            Assert.AreEqual(PType.BuiltIn.Int, fctx.ReturnValue.Type.ToBuiltIn());
+            Assert.AreEqual(PType.BuiltIn.Int, rv.Type.ToBuiltIn());
             Assert.AreEqual(
                 expected,
-                (int) fctx.ReturnValue.Value,
+                (int) rv.Value,
                 "Return value is expected to be " + expected + ".");
 
             Assert.AreEqual(
@@ -242,9 +242,9 @@ function test1(x) does
             FunctionContext fctx =
                 target.Functions["test1"].CreateFunctionContext(engine, new PValue[] {x0});
             engine.Stack.AddLast(fctx);
-            engine.Process();
-            Assert.AreEqual(PType.BuiltIn.Int, fctx.ReturnValue.Type.ToBuiltIn());
-            Assert.AreEqual(expected, (int) fctx.ReturnValue.Value);
+            PValue rv = engine.Process();
+            Assert.AreEqual(PType.BuiltIn.Int, rv.Type.ToBuiltIn());
+            Assert.AreEqual(expected, (int) rv.Value);
         }
 
         [Test]
@@ -279,8 +279,8 @@ function test1(x) does
             FunctionContext fctx =
                 target.Functions["test1"].CreateFunctionContext(engine, new PValue[] {x0});
             engine.Stack.AddLast(fctx);
-            engine.Process();
-            Assert.AreEqual(PType.BuiltIn.Int, fctx.ReturnValue.Type.ToBuiltIn());
+            PValue rv = engine.Process();
+            Assert.AreEqual(PType.BuiltIn.Int, rv.Type.ToBuiltIn());
             Assert.AreEqual(expected, (int) fctx.ReturnValue.Value);
 
             Assert.AreEqual(PType.BuiltIn.Int, target.Variables["J"].Value.Type.ToBuiltIn());
@@ -311,13 +311,13 @@ function fib(n) does
                 FunctionContext fctx =
                     target.Functions["fib"].CreateFunctionContext(engine, new PValue[] {n});
                 engine.Stack.AddLast(fctx);
-                engine.Process();
+                PValue rv = engine.Process();
                 Assert.AreEqual(
-                    PType.BuiltIn.Int, fctx.ReturnValue.Type.ToBuiltIn(), "Result must be a ~Int");
+                    PType.BuiltIn.Int, rv.Type.ToBuiltIn(), "Result must be a ~Int");
                 Assert.AreEqual(
                     expected,
-                    (int) fctx.ReturnValue.Value,
-                    "Fib(" + n + ") = " + expected + " and not " + (int) fctx.ReturnValue.Value);
+                    (int) rv.Value,
+                    "Fib(" + n + ") = " + expected + " and not " + (int) rv.Value);
             }
         }
 
@@ -365,13 +365,13 @@ function fib(n) does asm
                 FunctionContext fctx =
                     target.Functions["fib"].CreateFunctionContext(engine, new PValue[] {n});
                 engine.Stack.AddLast(fctx);
-                engine.Process();
+                PValue rv = engine.Process();
                 Assert.AreEqual(
-                    PType.BuiltIn.Int, fctx.ReturnValue.Type.ToBuiltIn(), "Result must be a ~Int");
+                    PType.BuiltIn.Int, rv.Type.ToBuiltIn(), "Result must be a ~Int");
                 Assert.AreEqual(
                     expected,
-                    (int) fctx.ReturnValue.Value,
-                    "Fib(" + n + ") = " + expected + " and not " + (int) fctx.ReturnValue.Value);
+                    (int) rv.Value,
+                    "Fib(" + n + ") = " + expected + " and not " + (int) rv.Value);
             }
         }
 
@@ -1377,7 +1377,7 @@ function sum(lst)
 function main(lst, limit)
 {
     ref min = randomImplementation((a,b) => max(a,b) == a ? b : a, (a,b) => a < b ? a : b);
-    return -sum(mapall(a => min(a, limit), lst));
+    return -sum(all(map(a => min(a, limit), lst)));
 }
 ");
             Random rnd = new Random();
@@ -1488,10 +1488,10 @@ function main(lst)
                 @"
 function chain(lst, serial)
 {
-    var c = new Structure<""IsSerial"", ""Functions"">;
+    var c = new Structure;
     return = c;
-    c.IsSerial = serial != null ? serial : true;
-    c.Functions = lst != null ? lst : new List();
+    c.\(""IsSerial"") = serial != null ? serial : true;
+    c.\(""Functions"") = lst != null ? lst : new List();
     function Invoke(this, prev)
     {
         var res = prev;
@@ -1510,8 +1510,8 @@ function chain(lst, serial)
         }
     }
 
-    c.\(""Invoke"",true) = ->Invoke;
-    c.\(""IndirectCall"",true) = ->Invoke;
+    c.\\(""Invoke"") = ->Invoke;
+    c.\\(""IndirectCall"") = ->Invoke;
 }
 
 function main(seed)
@@ -1725,8 +1725,6 @@ function main()
         {
             _compile(
                 @"
-declare command mapall as map;
-
 function my_map(ref f, var lst)
 {
     var nlst = [];
@@ -2379,9 +2377,9 @@ function main(sum)
                 @"
 function main(x)
 {
-    var s = new Structure<""value"", ""r"", ""ToString"">;
-    s.value = x;
-    s.\(""ToString"",true) = this => this.value;
+    var s = new Structure;
+    s.\(""value"") = x;
+    s.\\(""ToString"") = this => this.value;
     return s~String;
 }
 ");
@@ -2797,53 +2795,46 @@ function ast(type) [is compiler;]
 
 var SI [is compiler;] = null;
 build {
-    SI = new Structure<""var"", ""ref"", ""gvar"", ""gref"", ""func"", ""cmd"", 
-        ""r"", ""eq"",
-        ""r"", ""is_lvar"",
-        ""r"", ""is_lref"",
-        ""r"", ""is_gvar"",
-        ""r"", ""is_gref"",
-        ""r"", ""is_func"",
-        ""r"", ""is_cmd"">;
-    SI.$var = ::SymbolInterpretations.LocalObjectVariable;
-    SI.$ref = ::SymbolInterpretations.LocalReferenceVariable;
-    SI.$gvar = ::SymbolInterpretations.GlobalObjectVariable;
-    SI.$gref = ::SymbolInterpretations.GlobalReferenceVariable;
-    SI.$func = ::SymbolInterpretations.$Function;
-    SI.$cmd = ::SymbolInterpretations.$Command;
-    SI.\(""eq"", true) = (this, l, r) => l~Int == r~Int;
-    SI.\(""is_lvar"", true) = (this, s) => s~Int == this.$var~Int;
-    SI.\(""is_lref"", true) = (this, s) => s~Int == this.$ref~Int;
-    SI.\(""is_gvar"", true) = (this, s) => s~Int == this.$gvar~Int;
-    SI.\(""is_gref"", true) = (this, s) => s~Int == this.$gref~Int;
-    SI.\(""is_func"", true) = (this, s) => s~Int == this.$func~Int;
-    SI.\(""is_cmd"", true) = (this, s) => s~Int == this.$cmd~Int;
-    SI.\(""is_obj"", true) = (this, s) => this.is_lvar(s) || this.is_gvar(s);
-    SI.\(""is_ref"", true) = (this, s) => this.is_lref(s) || this.is_gref(s);
-    SI.\(""is_global"", true) = (this, s) => this.is_gvar(s) || this.is_gref(s);
-    SI.\(""is_local"", true) = (this, s) => this.is_lvar(s) || this.is_lref(s);
-    SI.\(""make_global"", true) = (this, s) => 
+    SI = new Structure;
+    SI.\(""var"") = ::SymbolInterpretations.LocalObjectVariable;
+    SI.\(""ref"") = ::SymbolInterpretations.LocalReferenceVariable;
+    SI.\(""gvar"") = ::SymbolInterpretations.GlobalObjectVariable;
+    SI.\(""gref"") = ::SymbolInterpretations.GlobalReferenceVariable;
+    SI.\(""func"") = ::SymbolInterpretations.$Function;
+    SI.\(""cmd"") = ::SymbolInterpretations.$Command;
+    SI.\\(""eq"") = (this, l, r) => l~Int == r~Int;
+    SI.\\(""is_lvar"") = (this, s) => s~Int == this.$var~Int;
+    SI.\\(""is_lref"") = (this, s) => s~Int == this.$ref~Int;
+    SI.\\(""is_gvar"") = (this, s) => s~Int == this.$gvar~Int;
+    SI.\\(""is_gref"") = (this, s) => s~Int == this.$gref~Int;
+    SI.\\(""is_func"") = (this, s) => s~Int == this.$func~Int;
+    SI.\\(""is_cmd"") = (this, s) => s~Int == this.$cmd~Int;
+    SI.\\(""is_obj"") = (this, s) => this.is_lvar(s) || this.is_gvar(s);
+    SI.\\(""is_ref"") = (this, s) => this.is_lref(s) || this.is_gref(s);
+    SI.\\(""is_global"") = (this, s) => this.is_gvar(s) || this.is_gref(s);
+    SI.\\(""is_local"") = (this, s) => this.is_lvar(s) || this.is_lref(s);
+    SI.\\(""make_global"") = (this, s) => 
         if(this.is_obj(s))
             this.gvar
         else if(this.is_ref(s))
             this.gref
         else
             throw ""$s cannot be made global."";            
-    SI.\(""make_local"", true) = (this, s) => 
+    SI.\\(""make_local"") = (this, s) => 
         if(this.is_obj(s))
             this.lvar
         else if(this.is_ref(s))
             this.lref
         else
             throw ""$s cannot be made local."";
-    SI.\(""make_obj"", true) = (this, s) =>
+    SI.\\(""make_obj"") = (this, s) =>
         if(this.is_local(s))
             this.lvar
         else if(this.is_global(s))
             this.gvar
         else
             throw ""$s cannot be made object."";
-    SI.\(""make_ref"", true) = (this, s) =>
+    SI.\\(""make_ref"") = (this, s) =>
         if(this.is_local(s))
             this.lref
         else if(this.is_global(s))
@@ -2971,11 +2962,31 @@ function main(a,b)
             _compile(@"
 function main(a)
 {   
-    var s = new Structure<""text"">;
-    return s.text = a;
+    var s = new Structure;
+    return s.\(""text"") = a;
 }
 ");
             _expect("ham","ham");
+        }
+
+        
+        public void CallCCImplementation()
+        {
+            _compile(@"
+function get_element(cont, pred, xs)
+{
+    foreach(var x in xs)
+        cont.(x+x);
+}
+
+function main(a,b,xs) 
+{
+    return = var ys = [];
+    var x = call\cc(->get_element, e => e > 5, xs);
+    a += x;
+    ys[] = a+b;
+}
+");
         }
 
         #region Helper
@@ -3068,20 +3079,20 @@ function main(a)
                 throw new PrexoniteException("Function " + functionId + " cannot be found.");
             FunctionContext fctx = target.Functions[functionId].CreateFunctionContext(engine, args);
             engine.Stack.AddLast(fctx);
-            engine.Process();
+            PValue rv = engine.Process();
             Assert.AreEqual(
                 expected.Type,
-                fctx.ReturnValue.Type,
+                rv.Type,
                 string.Format(
                     "Return type is expected to be of type {0} and not {1}. Returned {2}.",
                     expected.Type,
-                    fctx.ReturnValue.Type,
-                    fctx.ReturnValue));
+                    rv.Type,
+                    rv));
             Assert.AreEqual(
                 expected.Value,
-                fctx.ReturnValue.Value,
+                rv.Value,
                 "Return value is expected to be " + expected + " and not " +
-                fctx.ReturnValue);
+                rv);
         }
 
         private void _expectNull(params PValue[] args)
@@ -3105,8 +3116,7 @@ function main(a)
                 throw new PrexoniteException("Function " + functionId + " cannot be found.");
             FunctionContext fctx = target.Functions[functionId].CreateFunctionContext(engine, args);
             engine.Stack.AddLast(fctx);
-            engine.Process();
-            return fctx.ReturnValue;
+            return engine.Process();
         }
 
         private PValue _getReturnValue(params PValue[] args)

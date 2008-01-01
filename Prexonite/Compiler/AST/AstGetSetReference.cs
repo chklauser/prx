@@ -22,11 +22,12 @@
  */
 
 using System;
+using System.Collections.Generic;
 using Prexonite.Types;
 
 namespace Prexonite.Compiler.Ast
 {
-    public class AstGetSetReference : AstGetSetSymbol
+    public class AstGetSetReference : AstGetSetSymbol, ICanBeReferenced
     {
         public AstGetSetReference(
             string file,
@@ -107,5 +108,58 @@ namespace Prexonite.Compiler.Ast
                     break;
             }
         }
+
+        #region ICanBeReferenced Members
+
+        ICollection<IAstExpression> ICanBeReferenced.Arguments
+        {
+            get
+            {
+                return Arguments;
+            }
+        }
+
+        public override bool TryToReference(out AstGetSet reference)
+        {
+            reference = null;
+            switch(Interpretation)
+            {
+                case SymbolInterpretations.Command:
+                case SymbolInterpretations.Function:
+                case SymbolInterpretations.JumpLabel:
+                case SymbolInterpretations.KnownType:
+                case SymbolInterpretations.GlobalObjectVariable:
+                case SymbolInterpretations.LocalObjectVariable:
+                    return false; 
+
+                //Variables are not automatically dereferenced
+                
+                case SymbolInterpretations.GlobalReferenceVariable:
+                    reference =
+                        new AstGetSetReference(
+                            File,
+                            Line,
+                            Column,
+                            PCall.Get,
+                            Id,
+                            SymbolInterpretations.GlobalObjectVariable);
+                    break;
+                
+                case SymbolInterpretations.LocalReferenceVariable:
+                    reference =
+                        new AstGetSetReference(
+                            File,
+                            Line,
+                            Column,
+                            PCall.Get,
+                            Id,
+                            SymbolInterpretations.LocalObjectVariable);
+                    break;
+            }
+
+            return reference != null;
+        }
+
+        #endregion
     }
 }

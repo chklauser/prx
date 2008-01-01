@@ -29,6 +29,7 @@ using System.Collections.Generic;
 using System.Reflection;
 using System.Runtime.Serialization;
 using Prexonite.Commands;
+using Prexonite.Commands.Core;
 using Prexonite.Types;
 using NoDebug = System.Diagnostics.DebuggerNonUserCodeAttribute;
 
@@ -94,6 +95,11 @@ namespace Prexonite
             _localVariableArray = new PVariable[_localVariables.Count];
             foreach (KeyValuePair<string, int> mapping in _implementation.LocalVariableMapping)
                 _localVariableArray[mapping.Value] = _localVariables[mapping.Key];
+        }
+
+        public FunctionContext(StackContext sctx, PFunction implementation, PValue[] args)
+            : this(sctx.ParentEngine, implementation, args)
+        {
         }
 
         public FunctionContext(Engine parentEngine, PFunction implementation, PValue[] args)
@@ -233,19 +239,19 @@ namespace Prexonite
         private Stack<PValue> _stack = new Stack<PValue>();
 
         [NoDebug]
-        private void push(PValue val)
+        public void Push(PValue val)
         {
             _stack.Push(val ?? NullPType.CreateValue());
         }
 
         [NoDebug]
-        private PValue pop()
+        public PValue Pop()
         {
             return _stack.Pop() ?? NullPType.CreateValue();
         }
 
         [NoDebug]
-        private PValue peek()
+        public PValue Peek()
         {
             return _stack.Peek() ?? NullPType.CreateValue();
         }
@@ -264,11 +270,10 @@ namespace Prexonite
             if (_stack.Count < argc)
                 throwInvalidStackException(argc);
             for (int i = argc - 1; i >= 0; i--)
-                argv[i] = pop();
+                argv[i] = Pop();
         }
 
-        private StackContext _lastContext = null;
-        private bool _lastJustEffectFlag = false;
+        private bool _fetchReturnValue = false;
 #if Verbose
         internal static string toDebug(PValue val)
         {
@@ -306,7 +311,7 @@ namespace Prexonite
         }
 #endif
 
-        protected override bool PerformNextCylce()
+        protected override bool PerformNextCylce(StackContext lastContext)
         {
             bool needToReturn = false;
             List<Instruction> codeBase = _implementation.Code;
@@ -320,11 +325,12 @@ namespace Prexonite
                 }
 
                 //Get return value
-                if (_lastContext != null)
+                if (_fetchReturnValue)
                 {
-                    if (!_lastJustEffectFlag)
-                        push(_lastContext.ReturnValue ?? PType.Null.CreatePValue());
-                    _lastContext = null;
+                    if (lastContext == null)
+                        throw new PrexoniteException("Root function tries to fetch a return value.");
+                    Push(lastContext.ReturnValue ?? PType.Null.CreatePValue());
+                    _fetchReturnValue = false;
                 }
 
                 Instruction ins = codeBase[_pointer++];
@@ -367,19 +373,19 @@ namespace Prexonite
 
                         //LOAD CONSTANT
                     case OpCode.ldc_int:
-                        push(argc);
+                        Push(argc);
                         break;
                     case OpCode.ldc_real:
-                        push((double) ins.GenericArgument);
+                        Push((double) ins.GenericArgument);
                         break;
                     case OpCode.ldc_bool:
-                        push(argc != 0);
+                        Push(argc != 0);
                         break;
                     case OpCode.ldc_string:
-                        push(id);
+                        Push(id);
                         break;
                     case OpCode.ldc_null:
-                        push(PType.Null.CreatePValue());
+                        Push(PType.Null.CreatePValue());
                         break;
 
                         #endregion LOAD CONSTANT
@@ -389,7 +395,7 @@ namespace Prexonite
                         //LOAD REFERENCE
                     case OpCode.ldr_loc:
                         if (_localVariables.ContainsKey(id))
-                            push(CreateNativePValue(_localVariables[id]));
+                            Push(CreateNativePValue(_localVariables[id]));
                         else
                             throw new PrexoniteException(
                                 string.Format(
@@ -398,11 +404,11 @@ namespace Prexonite
                                     _implementation.Id));
                         break;
                     case OpCode.ldr_loci:
-                        push(CreateNativePValue(_localVariableArray[argc]));
+                        Push(CreateNativePValue(_localVariableArray[argc]));
                         break;
                     case OpCode.ldr_glob:
                         if (ParentApplication.Variables.ContainsKey(id))
-                            push(CreateNativePValue(ParentApplication.Variables[id]));
+                            Push(CreateNativePValue(ParentApplication.Variables[id]));
                         else
                             throw new PrexoniteException(
                                 string.Format(
@@ -412,7 +418,7 @@ namespace Prexonite
                         break;
                     case OpCode.ldr_func:
                         if (ParentApplication.Functions.Contains(id))
-                            push(CreateNativePValue(ParentApplication.Functions[id]));
+                            Push(CreateNativePValue(ParentApplication.Functions[id]));
                         else
                             throw new PrexoniteException(
                                 string.Format(
@@ -422,7 +428,7 @@ namespace Prexonite
                         break;
                     case OpCode.ldr_cmd:
                         if (ParentEngine.Commands.Contains(id))
-                            push(CreateNativePValue(ParentEngine.Commands[id]));
+                            Push(CreateNativePValue(ParentEngine.Commands[id]));
                         else
                             throw new PrexoniteException(
                                 string.Format(
@@ -430,10 +436,10 @@ namespace Prexonite
                                     id));
                         break;
                     case OpCode.ldr_app:
-                        push(CreateNativePValue(ParentApplication));
+                        Push(CreateNativePValue(ParentApplication));
                         break;
                     case OpCode.ldr_eng:
-                        push(CreateNativePValue(ParentEngine));
+                        Push(CreateNativePValue(ParentEngine));
                         break;
                     case OpCode.ldr_type:
                         if (t == null)
@@ -441,7 +447,7 @@ namespace Prexonite
                             t = ConstructPType(id);
                             ins.GenericArgument = t;
                         }
-                        push(CreateNativePValue(t));
+                        Push(CreateNativePValue(t));
                         break;
 
                         #endregion //LOAD REFERENCE
@@ -464,7 +470,7 @@ namespace Prexonite
                     Console.Write("=" + toDebug(val));
                     push(val);
 #else
-                        push(pvar.Value);
+                        Push(pvar.Value);
 #endif
                         break;
                     case OpCode.stloc:
@@ -474,15 +480,15 @@ namespace Prexonite
                                 "The local variable " + id + " in function " + _implementation.Id +
                                 " does not exist.");
 
-                        pvar.Value = pop();
+                        pvar.Value = Pop();
                         break;
 
                     case OpCode.ldloci:
-                        push(_localVariableArray[argc].Value);
+                        Push(_localVariableArray[argc].Value);
                         break;
 
                     case OpCode.stloci:
-                        _localVariableArray[argc].Value = pop();
+                        _localVariableArray[argc].Value = Pop();
                         break;
 
                         #endregion
@@ -502,7 +508,7 @@ namespace Prexonite
                     Console.Write("=" + toDebug(val));
                     push(val);
 #else
-                        push(pvar.Value);
+                        Push(pvar.Value);
 #endif
                         break;
                     case OpCode.stglob:
@@ -510,7 +516,7 @@ namespace Prexonite
                         if (pvar == null)
                             throw new PrexoniteException(
                                 "The global variable " + id + " does not exist.");
-                        pvar.Value = pop();
+                        pvar.Value = Pop();
                         break;
 
                         #endregion
@@ -527,12 +533,12 @@ namespace Prexonite
                             ins.GenericArgument = t;
                         }
                         fillArgs(argc, out argv);
-                        push(t.Construct(this, argv));
+                        Push(t.Construct(this, argv));
                         break;
                     case OpCode.newtype:
                         //assemble type expression
                         fillArgs(argc, out argv);
-                        push(CreateNativePValue(ParentEngine.CreatePType(this, id, argv)));
+                        Push(CreateNativePValue(ParentEngine.CreatePType(this, id, argv)));
                         break;
 
                     case OpCode.newclo:
@@ -553,24 +559,24 @@ namespace Prexonite
                         PVariable[] pvars = new PVariable[vars.Length];
                         for (int i = 0; i < pvars.Length; i++)
                             pvars[i] = _localVariables[vars[i]];
-                        push(CreateNativePValue(new Closure(func, pvars)));
+                        Push(CreateNativePValue(new Closure(func, pvars)));
                         break;
 
                     case OpCode.newcor:
                         fillArgs(argc, out argv);
 
-                        PValue routine = pop();
+                        PValue routine = Pop();
                         object routineobj = routine.Value;
                         IStackAware routinesa = routineobj as IStackAware;
                         StackContext corctx;
                         if (routineobj == null)
                         {
-                            push(PType.Null.CreatePValue());
+                            Push(PType.Null.CreatePValue());
                         }
                         else
                         {
                             if (routinesa != null)
-                                corctx = routinesa.CreateStackContext(ParentEngine, argv);
+                                corctx = routinesa.CreateStackContext(this, argv);
                             else
                                 corctx = (StackContext)
                                          routine.DynamicCall(
@@ -583,7 +589,7 @@ namespace Prexonite
                                              PCall.Get,
                                              "CreateStackContext").Value;
 
-                            push(
+                            Push(
                                 PType.Object[typeof(Coroutine)].CreatePValue(new Coroutine(corctx)));
                         }
                         break;
@@ -633,10 +639,10 @@ doDecrement:            pvar.Value = pvar.Value.Decrement(this);
 #endif
                         break;
                     case OpCode.neg:
-                        push(pop().UnaryNegation(this));
+                        Push(Pop().UnaryNegation(this));
                         break;
                     case OpCode.not:
-                        push(pop().LogicalNot(this));
+                        Push(Pop().LogicalNot(this));
                         break;
 
                         #endregion
@@ -649,12 +655,12 @@ doDecrement:            pvar.Value = pvar.Value.Decrement(this);
 
                         //ADDITION
                     case OpCode.add:
-                        right = pop();
-                        push(pop().Addition(this, right));
+                        right = Pop();
+                        Push(Pop().Addition(this, right));
                         break;
                     case OpCode.sub:
-                        right = pop();
-                        push(pop().Subtraction(this, right));
+                        right = Pop();
+                        Push(Pop().Subtraction(this, right));
                         break;
 
                         #endregion
@@ -663,16 +669,16 @@ doDecrement:            pvar.Value = pvar.Value.Decrement(this);
 
                         //MULTIPLICATION
                     case OpCode.mul:
-                        right = pop();
-                        push(pop().Multiply(this, right));
+                        right = Pop();
+                        Push(Pop().Multiply(this, right));
                         break;
                     case OpCode.div:
-                        right = pop();
-                        push(pop().Division(this, right));
+                        right = Pop();
+                        Push(Pop().Division(this, right));
                         break;
                     case OpCode.mod:
-                        right = pop();
-                        push(pop().Modulus(this, right));
+                        right = Pop();
+                        Push(Pop().Modulus(this, right));
                         break;
 
                         #endregion
@@ -681,8 +687,8 @@ doDecrement:            pvar.Value = pvar.Value.Decrement(this);
 
                         //EXPONENTIAL
                     case OpCode.pow:
-                        right = pop();
-                        left = pop();
+                        right = Pop();
+                        left = Pop();
                         PValue rleft,
                                rright;
                         if (
@@ -690,7 +696,7 @@ doDecrement:            pvar.Value = pvar.Value.Decrement(this);
                               right.TryConvertTo(this, PType.Real, out rright)))
                             throw new PrexoniteException(
                                 "The arguments supplied to the power operator are invalid (cannot be converted to Real).");
-                        push(
+                        Push(
                             Math.Pow(Convert.ToDouble(rleft.Value), Convert.ToDouble(rright.Value)));
                         break;
 
@@ -700,28 +706,28 @@ doDecrement:            pvar.Value = pvar.Value.Decrement(this);
 
                         //COMPARISION
                     case OpCode.ceq:
-                        right = pop();
-                        push(pop().Equality(this, right));
+                        right = Pop();
+                        Push(Pop().Equality(this, right));
                         break;
                     case OpCode.cne:
-                        right = pop();
-                        push(pop().Inequality(this, right));
+                        right = Pop();
+                        Push(Pop().Inequality(this, right));
                         break;
                     case OpCode.clt:
-                        right = pop();
-                        push(pop().LessThan(this, right));
+                        right = Pop();
+                        Push(Pop().LessThan(this, right));
                         break;
                     case OpCode.cle:
-                        right = pop();
-                        push(pop().LessThanOrEqual(this, right));
+                        right = Pop();
+                        Push(Pop().LessThanOrEqual(this, right));
                         break;
                     case OpCode.cgt:
-                        right = pop();
-                        push(pop().GreaterThan(this, right));
+                        right = Pop();
+                        Push(Pop().GreaterThan(this, right));
                         break;
                     case OpCode.cge:
-                        right = pop();
-                        push(pop().GreaterThanOrEqual(this, right));
+                        right = Pop();
+                        Push(Pop().GreaterThanOrEqual(this, right));
                         break;
 
                         #endregion
@@ -730,16 +736,16 @@ doDecrement:            pvar.Value = pvar.Value.Decrement(this);
 
                         //BITWISE
                     case OpCode.or:
-                        right = pop();
-                        push(pop().BitwiseOr(this, right));
+                        right = Pop();
+                        Push(Pop().BitwiseOr(this, right));
                         break;
                     case OpCode.and:
-                        right = pop();
-                        push(pop().BitwiseAnd(this, right));
+                        right = Pop();
+                        Push(Pop().BitwiseAnd(this, right));
                         break;
                     case OpCode.xor:
-                        right = pop();
-                        push(pop().ExclusiveOr(this, right));
+                        right = Pop();
+                        Push(Pop().ExclusiveOr(this, right));
                         break;
 
                         #endregion
@@ -761,13 +767,13 @@ doDecrement:            pvar.Value = pvar.Value.Decrement(this);
                         }
                         goto check_type; //common code
                     case OpCode.check_arg:
-                        t = (PType) pop().Value;
+                        t = (PType) Pop().Value;
                         check_type:
                         ;
-                        push(pop().Type.Equals(t));
+                        Push(Pop().Type.Equals(t));
                         break;
                     case OpCode.check_null:
-                        push(pop().IsNull);
+                        Push(Pop().IsNull);
                         break;
 
                         #endregion
@@ -782,10 +788,10 @@ doDecrement:            pvar.Value = pvar.Value.Decrement(this);
                         }
                         goto cast_type; //common code
                     case OpCode.cast_arg:
-                        t = (PType) pop().Value;
+                        t = (PType) Pop().Value;
                         cast_type:
                         ;
-                        push(pop().ConvertTo(this, t, true));
+                        Push(Pop().ConvertTo(this, t, true));
                         break;
 
                         #endregion
@@ -798,15 +804,15 @@ doDecrement:            pvar.Value = pvar.Value.Decrement(this);
 
                     case OpCode.get:
                         fillArgs(argc, out argv);
-                        left = pop();
+                        left = Pop();
                         right = left.DynamicCall(this, argv, PCall.Get, id);
                         if (!justEffect)
-                            push(right);
+                            Push(right);
                         needToReturn = true;
                         break;
                     case OpCode.set:
                         fillArgs(argc, out argv);
-                        left = pop();
+                        left = Pop();
                         left.DynamicCall(this, argv, PCall.Set, id);
                         needToReturn = true;
                         break;
@@ -840,7 +846,7 @@ doDecrement:            pvar.Value = pvar.Value.Decrement(this);
                                 ObjectPType objT = (ObjectPType) t;
                                 right = objT.StaticCall(this, argv, PCall.Get, methodId, out member);
                                 if (!justEffect)
-                                    push(right);
+                                    Push(right);
                                 if (member != null)
                                     ins.GenericArgument = member;
                                 break;
@@ -853,13 +859,13 @@ doDecrement:            pvar.Value = pvar.Value.Decrement(this);
                         ;
                         right = t.StaticCall(this, argv, PCall.Get, methodId);
                         if (!justEffect)
-                            push(right);
+                            Push(right);
                         break;
                         callByMemberGet:
                         ;
                         right = ObjectPType._execute(this, member, argv, PCall.Get, methodId, null);
                         if (!justEffect)
-                            push(right);
+                            Push(right);
                         break;
 
                     case OpCode.sset:
@@ -925,7 +931,7 @@ doDecrement:            pvar.Value = pvar.Value.Decrement(this);
 doIndloc:               if (justEffect)
                             left.IndirectCall(this, argv);
                         else
-                            push(left.IndirectCall(this, argv));
+                            Push(left.IndirectCall(this, argv));
                         break;
                     case OpCode.indloci:
                         idx = argc & ushort.MaxValue;
@@ -952,18 +958,28 @@ doIndloc:               if (justEffect)
                         if (justEffect)
                             left.IndirectCall(this, argv);
                         else
-                            push(left.IndirectCall(this, argv));
+                            Push(left.IndirectCall(this, argv));
                         break;
 
                     case OpCode.indarg:
                         fillArgs(argc, out argv);
                         needToReturn = true;
-                        left = pop();
+                        left = Pop();
                         if (justEffect)
                             left.IndirectCall(this, argv);
                         else
-                            push(left.IndirectCall(this, argv));
+                            Push(left.IndirectCall(this, argv));
                         break;
+
+                    case OpCode.tail:
+                        fillArgs(argc, out argv);
+                        left = Pop();
+
+                        LinkedList<StackContext> stack = _parentEngine.Stack;
+                        stack.Remove(stack.FindLast(this));
+
+                        stack.AddLast(Call.CreateStackContext(this, left, argv));
+                        return false;
 
                         #endregion
 
@@ -984,12 +1000,12 @@ doIndloc:               if (justEffect)
                         if (func == null)
                             throw PrexoniteRuntimeException.CreateRuntimeException(
                                 this, "No function with the physical name " + id + " exists.");
-                        _lastContext =
+                        FunctionContext fctx =
                             new FunctionContext(
                                 ParentEngine, func, argv);
 
-                        _lastJustEffectFlag = justEffect;
-                        ParentEngine.Stack.AddLast(_lastContext);
+                        _fetchReturnValue = !justEffect;
+                        ParentEngine.Stack.AddLast(fctx);
 #if Verbose
                     Console.Write("\n#PSH: " + id + "(");
                     foreach (PValue arg in argv)
@@ -1013,17 +1029,27 @@ doIndloc:               if (justEffect)
                         }
                         if (cmd == null)
                             throw new PrexoniteException("Cannot find command " + id + "!");
-                        if (justEffect)
-                            cmd.Run(this, argv);
+                        IStackAware sa = cmd as IStackAware;
+                        if (sa != null)
+                        {
+                            StackContext cctx = sa.CreateStackContext(this, argv);
+                            _fetchReturnValue = !justEffect;
+                            ParentEngine.Stack.AddLast(cctx);
+                        }
                         else
                         {
+                            if (justEffect)
+                                cmd.Run(this, argv);
+                            else
+                            {
 #if Verbose
                             val = cmd.Run(this, argv);
                             Console.Write(" =" + toDebug(val));
                             push(val);
 #else
-                            push(cmd.Run(this, argv));
+                                Push(cmd.Run(this, argv));
 #endif
+                            }
                         }
                         break;
 
@@ -1039,7 +1065,7 @@ doIndloc:               if (justEffect)
                         _pointer = argc;
                         break;
                     case OpCode.jump_t:
-                        left = pop();
+                        left = Pop();
                         if (!(left.Value is bool))
                             left = left.ConvertTo(this, PType.Bool);
                         if ((bool) left.Value)
@@ -1051,7 +1077,7 @@ doIndloc:               if (justEffect)
                         }
                         break;
                     case OpCode.jump_f:
-                        left = pop();
+                        left = Pop();
                         if (!(left.Value is bool))
                             left = left.ConvertTo(this, PType.Bool);
                         if (!(bool) left.Value)
@@ -1074,7 +1100,7 @@ doIndloc:               if (justEffect)
 #endif
                         return false;
                     case OpCode.ret_value:
-                        _returnValue = pop();
+                        _returnValue = Pop();
                         ReturnMode = ReturnModes.Exit;
 #if Verbose
                     Console.WriteLine("=" + toDebug(_returnValue));
@@ -1093,7 +1119,7 @@ doIndloc:               if (justEffect)
 #endif
                         return false;
                     case OpCode.ret_set:
-                        _returnValue = pop();
+                        _returnValue = Pop();
 #if Verbose
                     Console.WriteLine("=" + toDebug(_returnValue));
 #endif
@@ -1104,7 +1130,7 @@ doIndloc:               if (justEffect)
                         #region THROW
 
                     case OpCode.@throw:
-                        left = pop();
+                        left = Pop();
                         t = left.Type;
                         PrexoniteRuntimeException prexc;
                         if (t is StringPType)
@@ -1156,14 +1182,7 @@ doIndloc:               if (justEffect)
                         #region EXCEPTION
 
                     case OpCode.exc:
-                        push(CreateNativePValue(_currentException));
-                        break;
-
-                        #endregion
-
-                        #region TAIL
-
-                    case OpCode.tail:
+                        Push(CreateNativePValue(_currentException));
                         break;
 
                         #endregion
@@ -1177,21 +1196,21 @@ doIndloc:               if (justEffect)
                         if (_stack.Count < argc)
                             throwInvalidStackException(argc);
                         for (int i = 0; i < argc; i++)
-                            pop(); //pop to nirvana
+                            Pop(); //Pop to nirvana
                         break;
                     case OpCode.dup:
-                        left = peek();
+                        left = Peek();
                         for (int i = 0; i < argc; i++)
-                            push(left);
+                            Push(left);
                         break;
                     case OpCode.rot:
                         int values = (int) ins.GenericArgument;
                         int rotations = argc;
                         PValue[] target = new PValue[values];
                         for (int i = 0; i < values; i++)
-                            target[(i + rotations)%values] = pop();
-                        for (int i = 0; i < values; i++)
-                            push(target[i]);
+                            target[(i + rotations)%values] = Pop();
+                        for (int i = values - 1; i >= 0; i--)
+                            Push(target[i]);
                         break;
 
                         #endregion

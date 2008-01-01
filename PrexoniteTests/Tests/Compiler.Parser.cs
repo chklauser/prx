@@ -1241,7 +1241,7 @@ function main
 }
 ");
             List<Instruction> code = target.Functions["main"].Code;
-            Assert.IsTrue(code.Count > 18, "Resulting must be longer than 18 instructions");
+            Assert.IsTrue(code.Count > 26, "Resulting must be longer than 18 instructions");
             string enum1 = code[3].Id ?? "No_ID_at_3";
             string enum2 = code[26].Id ?? "No_ID_at_26";
             _expect(
@@ -1437,7 +1437,7 @@ function main()
 ");
             _expect(@"main\nested\0", @"ldc.int 5861 ret.value");
             _expect(@"main\nested\1", @"ldc.int 2 ldloc x mul ret.value");
-            _expect(@"main\nested\2", @"ldloc x ldloc y add indloc.1 z ret.value");
+            _expect(@"main\nested\2", @"ldloc z ldloc x ldloc y add tail.1");
             _expect(
                 @"main\nested\3",
                 @"var d ldloc x ldc.int 2 add stloc d ldloc d ldc.int 4 mul ret.set");
@@ -1782,7 +1782,7 @@ function mainv(x)
                 cgt
                 jump.f  else
                 ldloc   a
-                jump    endif
+                ret.value
 label else      ldloc   b
 label endif     ret.value
 ";
@@ -1818,13 +1818,13 @@ stloc           x
                 check.null
                 jump.f          else3
                 ldc.int         0
-                jump            endif3
+                ret.value
 label else3     ldloc           x
                 ldc.string      """"
                 ceq
                 jump.f          else4
                 ldc.int         -1
-                jump            endif4
+                ret.value
 label else4     ldloc           x
                 get.0           Length
 label endif4    //optimized://  jump            endif3
@@ -2100,7 +2100,7 @@ function main()
 var skip
 newclo  main\nested\skip0
 stloc   skip
-
+ldr.func where
 ldc.int 1
 ldc.int 2
 ldc.int 3
@@ -2108,8 +2108,7 @@ sget.3  ""List::Create""
 ldc.int 1
 indloc.2 skip
 newclo  main\nested\1
-func.2  where
-ret.value
+tail.2
 ");
 
             _expect("where", @"
@@ -2336,26 +2335,33 @@ function main
         write(h,15);
 }
 ");
-            _expect(
+
+            List<Instruction> code = target.Functions["main"].Code;
+            Assert.IsTrue(code.Count > 6, "Resulting must be longer than 18 instructions");
+            string using1 = code[6].Id ?? "No_ID_at_6";
+
+            _expect(String.Format(
                 @"
-var h
+var h,{0}
 label beginTry  try
                 ldr.loc h
                 func.0  createHandle
+                dup 1
+                rot.2,3
                @func.2  handle
+                stloc   {0}
                 ldloc   h
                 ldc.int 15
                @func.2  write
 label beginFinally
-                ldr.loc h
-                func.1  handle
+                ldloc   {0}
                @cmd.1   dispose
                 leave   endTry
 label beginCatch
                 exception
                 throw
 label endTry                    
-");
+",using1));
         }
 
         [Test]

@@ -425,6 +425,8 @@ namespace Prexonite
                 return PType.Hash;
             if(clrType == typeof(CharPType))
                 return PType.Char;
+            if (clrType == typeof(StructurePType))
+                return PType.Structure;
 
             PValue result =
                 ptypeClrType.Construct(sctx, new PValue[] {PType.Object.CreatePValue(args)});
@@ -623,16 +625,17 @@ namespace Prexonite
             //Registry
             _pTypeRegistry = new SymbolTable<Type>();
             _pTypeRegistryIterator = new PTypeRegistryIterator(this);
-            PTypeRegistry[IntPType.Literal] = PType.Int.GetType();
-            PTypeRegistry[BoolPType.Literal] = PType.Bool.GetType();
-            PTypeRegistry[RealPType.Literal] = PType.Real.GetType();
-            PTypeRegistry[CharPType.Literal] = PType.Char.GetType();
-            PTypeRegistry[StringPType.Literal] = PType.String.GetType();
+            PTypeRegistry[IntPType.Literal] = typeof(IntPType);
+            PTypeRegistry[BoolPType.Literal] = typeof(BoolPType);
+            PTypeRegistry[RealPType.Literal] = typeof(RealPType);
+            PTypeRegistry[CharPType.Literal] = typeof(CharPType);
+            PTypeRegistry[StringPType.Literal] = typeof(StringPType);
             PTypeRegistry[NullPType.Literal] = typeof(NullPType);
             PTypeRegistry[ObjectPType.Literal] = typeof(ObjectPType);
             PTypeRegistry[ListPType.Literal] = typeof(ListPType);
             PTypeRegistry[StructurePType.Literal] = typeof(StructurePType);
             PTypeRegistry[HashPType.Literal] = typeof(HashPType);
+            PTypeRegistry[StructurePType.Literal] = typeof(StructurePType);
 
             //Assembly registry
             _registeredAssemblies = new List<Assembly>();
@@ -717,7 +720,7 @@ namespace Prexonite
 
             Commands.AddEngineCommand(CallCommand, new Call());
 
-            Commands.AddEngineCommand(CallMemberCommand, new CallMember());
+            Commands.AddEngineCommand(Call_MemberCommand, new Call_Member());
 
             Commands.AddEngineCommand(CallerCommand, new Caller());
 
@@ -783,6 +786,12 @@ namespace Prexonite
             Commands.AddEngineCommand(GroupByAlias, new GroupBy());
 
             Commands.AddEngineCommand(IntersectAlias, new Intersect());
+
+            Commands.AddEngineCommand(Call_CCAlias, new Call_CC());
+
+            Commands.AddEngineCommand(Call_TailAlias, new Call_Tail());
+
+            Commands.AddEngineCommand(ListAlias, new List());
         }
 
         /// <summary>
@@ -838,7 +847,7 @@ namespace Prexonite
         /// <summary>
         /// Alias used for the <c>callmember</c> command.
         /// </summary>
-        public const string CallMemberCommand = "callmember";
+        public const string Call_MemberCommand = @"call\member";
 
         /// <summary>
         /// Alias used for the <c>caller</c> command.
@@ -1015,6 +1024,20 @@ namespace Prexonite
         /// </summary>
         public const string UniqueAlias = "unique";
 
+        /// <summary>
+        /// Alias used for the call\cc command.
+        /// </summary>
+        public const string Call_CCAlias = @"call\cc";
+
+        /// <summary>
+        /// Alias used for the call\tail command.
+        /// </summary>
+        public const string Call_TailAlias = @"call\tail";
+
+        /// <summary>
+        /// Alias used for the list command.
+        /// </summary>
+        public const string ListAlias = @"list";
 
         #endregion
     }

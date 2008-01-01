@@ -352,8 +352,7 @@ namespace Prexonite
                     "Cannot find an entry function named \"" + entryName + "\"");
             FunctionContext fctx = Functions[entryName].CreateFunctionContext(parentEngine, args);
             parentEngine.Stack.AddLast(fctx);
-            parentEngine.Process();
-            return fctx.ReturnValue;
+            return parentEngine.Process();
         }
 
         /// <summary>

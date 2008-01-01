@@ -24,14 +24,9 @@ namespace Prx.Tests
             get { return _engine; }
         }
 
-        public override PFunction Implementation
+        public PFunction Implementation
         {
             get { return _implementation; }
-        }
-
-        protected override bool PerformNextCylce()
-        {
-            return false;
         }
 
         public override PValue ReturnValue
@@ -39,7 +34,35 @@ namespace Prx.Tests
             get { return PType.Null.CreatePValue(); }
         }
 
+        /// <summary>
+        /// The parent application.
+        /// </summary>
+        public override Application ParentApplication
+        {
+            get
+            {
+                return _implementation.ParentApplication;
+            }
+        }
+
+        public override SymbolCollection ImportedNamespaces
+        {
+            get
+            {
+                return _implementation.ImportedNamespaces;
+            }
+        }
+
         public override bool TryHandleException(Exception exc)
+        {
+            return false;
+        }
+
+        /// <summary>
+        /// Indicates whether the context still has code/work to do.
+        /// </summary>
+        /// <returns>True if the context has additional work to perform in the next cycle, False if it has finished it's work and can be removed from the stack</returns>
+        protected override bool PerformNextCylce(StackContext lastContext)
         {
             return false;
         }

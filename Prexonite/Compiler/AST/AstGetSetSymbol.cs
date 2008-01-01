@@ -22,12 +22,13 @@
  */
 
 using System;
+using System.Collections.Generic;
 using Prexonite.Types;
 
 namespace Prexonite.Compiler.Ast
 {
     public class AstGetSetSymbol : AstGetSet,
-                                   IAstExpression
+                                   IAstExpression, ICanBeReferenced
     {
         public SymbolInterpretations Interpretation;
         public string Id;
@@ -148,6 +149,18 @@ namespace Prexonite.Compiler.Ast
             }
         }
 
+        #region ICanBeReferenced Members
+
+        ICollection<IAstExpression> ICanBeReferenced.Arguments
+        {
+            get
+            {
+                return Arguments;
+            }
+        }
+
+        #endregion
+
         public override AstGetSet GetCopy()
         {
             AstGetSet copy = new AstGetSetSymbol(File, Line, Column, Call, Id, Interpretation);
@@ -165,5 +178,29 @@ namespace Prexonite.Compiler.Ast
                     Id,
                     ArgumentsToString());
         }
+
+        #region ICanBeReferenced Members
+
+
+        public virtual bool TryToReference(out AstGetSet result)
+        {
+            result = null; 
+            switch (Interpretation)
+            {
+                case SymbolInterpretations.Function:
+                case SymbolInterpretations.GlobalObjectVariable:
+                case SymbolInterpretations.LocalObjectVariable:
+                case SymbolInterpretations.LocalReferenceVariable:
+                case SymbolInterpretations.GlobalReferenceVariable:
+                case SymbolInterpretations.Command:
+                    result =
+                        new AstGetSetReference(File, Line, Column, PCall.Get, Id, Interpretation);
+                    break;
+            }
+
+            return result != null;
+        }
+
+        #endregion
     }
 }

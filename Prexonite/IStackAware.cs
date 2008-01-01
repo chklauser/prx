@@ -8,9 +8,9 @@ namespace Prexonite
         /// <summary>
         /// Creates a stack context, that might later be pushed onto the stack.
         /// </summary>
-        /// <param name="engine">The engine for which the context is to be created.</param>
+        /// <param name="sctx">The engine for which the context is to be created.</param>
         /// <param name="args">The arguments passed to this instantiation.</param>
         /// <returns>The created <see cref="StackContext"/></returns>
-        StackContext CreateStackContext(Engine engine, PValue[] args);
+        StackContext CreateStackContext(StackContext sctx, PValue[] args);
     }
 }

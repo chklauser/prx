@@ -326,7 +326,7 @@ internal partial class Scanner : IDisposable, IScanner {
 	}
 
 	Token NextToken() {
-		while (ch == ' ' || ch >= 9 && ch <= 10 || ch == 13) NextCh();
+		while (false || ch >= 9 && ch <= 10 || ch == 13) NextCh();
 
 		int apx = 0;
 		t = new Token();

@@ -851,7 +851,7 @@ namespace Prexonite.Compiler
         }
 
         [NoDebug()]
-        protected override bool PerformNextCylce()
+        protected override bool PerformNextCylce(StackContext lastContext)
         {
             return false;
         }

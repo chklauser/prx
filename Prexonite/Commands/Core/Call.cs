@@ -25,6 +25,7 @@
 
 using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using Prexonite.Commands.List;
 using Prexonite.Types;
 
@@ -42,8 +43,9 @@ namespace Prexonite.Commands.Core
     /// </para>
     /// </remarks>
     /// <seealso cref="IIndirectCall"/>
-    public class Call : PCommand
+    public class Call : StackAwareCommand
     {
+
         /// <summary>
         /// Implementation of (ref f, arg1, arg2, arg3, ..., argn) => f(arg1, arg2, arg3, ..., argn);
         /// </summary>
@@ -79,49 +81,23 @@ namespace Prexonite.Commands.Core
             if (args == null || args.Length == 0 || args[0] == null)
                 return PType.Null.CreatePValue();
 
-            List<PValue> iargs = new List<PValue>();
-            for (int i = 1; i < args.Length; i++)
-            {
-                PValue arg = args[i];
-                IEnumerable<PValue> folded = Map._ToEnumerable(sctx, arg);
-                if (folded == null)
-                    iargs.Add(arg);
-                else
-                    iargs.AddRange(folded);
-            }
+            List<PValue> iargs = FlattenArguments(sctx, args, 1);
 
             return args[0].IndirectCall(sctx, iargs.ToArray());
         }
 
-        /// <summary>
-        /// Implementation of (ref f, arg1, arg2, arg3, ..., argn) => f(arg1, arg2, arg3, ..., argn);
-        /// </summary>
-        /// <remarks>
-        /// <para>
-        ///     Returns PValue null if no callable object is passed.
-        /// </para>
-        /// <para>
-        ///     Uses the <see cref="IIndirectCall"/> interface.
-        /// </para>
-        /// </remarks>
-        /// <seealso cref="IIndirectCall"/>
-        /// <param name="sctx">The stack context in which to call <paramref name="callable"/>.</param>
-        /// <param name="callable">The <see cref="IIndirectCall"/> implementation to call.</param>
-        /// <param name="args">The array of arguments to pass to <see cref="IIndirectCall.IndirectCall"/>. <br />
-        /// Lists and coroutines are expanded.</param>
-        /// <returns>The result returned by <see cref="IIndirectCall.IndirectCall"/> or PValue null if <paramref name="callable"/> is null.</returns>
-        /// <exception cref="ArgumentNullException"><paramref name="sctx"/> is null.</exception>
-        public PValue Run(StackContext sctx, IIndirectCall callable, params PValue[] args)
+        [DebuggerStepThrough]
+        public static List<PValue> FlattenArguments(StackContext sctx, PValue[] args)
         {
-            if (callable == null)
-                return PType.Null.CreatePValue();
-            if (sctx == null)
-                throw new ArgumentNullException("sctx");
-            if (args == null)
-                args = new PValue[] {};
+            return FlattenArguments(sctx, args, 0);
+        }
 
+        public static List<PValue> FlattenArguments(StackContext sctx, PValue[] args, int index)
+        {
+            if (args == null)
+                args = new PValue[] { };
             List<PValue> iargs = new List<PValue>();
-            for (int i = 0; i < args.Length; i++)
+            for (int i = index; i < args.Length; i++)
             {
                 PValue arg = args[i];
                 IEnumerable<PValue> folded = Map._ToEnumerable(sctx, arg);
@@ -130,8 +106,7 @@ namespace Prexonite.Commands.Core
                 else
                     iargs.AddRange(folded);
             }
-
-            return callable.IndirectCall(sctx, iargs.ToArray());
+            return iargs;
         }
 
         /// <summary>
@@ -141,6 +116,28 @@ namespace Prexonite.Commands.Core
         public override bool IsPure
         {
             get { return false; }
+        }
+
+        public override StackContext CreateStackContext(StackContext sctx, PValue[] args)
+        {
+            if (sctx == null)
+                throw new ArgumentNullException("sctx");
+            if (args == null || args.Length == 0 || args[0] == null || args[0].IsNull)
+                return new NullContext(sctx);
+
+            List<PValue> iargs = FlattenArguments(sctx, args, 1);
+
+            PValue callable = args[0];
+            return CreateStackContext(sctx, callable, iargs.ToArray());
+        }
+
+        public static StackContext CreateStackContext(StackContext sctx, PValue callable, PValue[] args)
+        {
+            IStackAware sa = callable.Value as IStackAware;
+            if (callable.Type is ObjectPType && sa != null)
+                return sa.CreateStackContext(sctx, args);
+            else
+                return new IndirectCallContext(sctx, callable, args);
         }
     }
 }

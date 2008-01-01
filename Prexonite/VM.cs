@@ -23,6 +23,7 @@
 
 using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using Prexonite.Types;
 #if Verbose
 using System;
@@ -44,6 +45,7 @@ namespace Prexonite
         /// </summary>
         public LinkedList<StackContext> Stack
         {
+            [DebuggerStepThrough]
             get { return _stack; }
         }
 
@@ -65,16 +67,17 @@ namespace Prexonite
         /// <exception cref="ExecutionProhibitedException">The engine does is not permitted to execute code.</exception>
         /// <seealso cref="ExecutionProhibited"/>
         /// <seealso cref="StackContext"/>
-        public void Process()
+        public PValue Process()
         {
             if (_executionProhibited)
                 throw new ExecutionProhibitedException("The engine is not permitted to run code.");
 
             int level = _stack.Count;
             if (level < 1)
-                return;
+                throw new PrexoniteException("The VM stack is empty. Return value cannot be computed.") ;
 
             PrexoniteRuntimeException currentException = null;
+            StackContext lastContext = null;
 
             while (_stack.Count >= level)
             {
@@ -86,7 +89,8 @@ namespace Prexonite
                     //Execute code
                     try
                     {
-                        keepOnStack = sctx.NextCylce();
+                        keepOnStack = sctx.NextCylce(lastContext);
+                        lastContext = sctx;
                     }
                     catch (PrexoniteRuntimeException exc)
                     {
@@ -127,12 +131,19 @@ namespace Prexonite
 #if Verbose
                     Console.WriteLine("#POP: " + _stack.Last.Value.Implementation.Id + "=" + FunctionContext.toDebug(_stack.Last.Value.ReturnValue));
 #endif
-                    _stack.RemoveLast();
+                    if (ReferenceEquals(_stack.Last.Value, sctx))
+                        _stack.RemoveLast();
+                    //else the context has already been removed.
                 }
             }
 
             if (currentException != null)
                 throw currentException;
+
+            if (lastContext == null)
+                throw new PrexoniteException("Cannot identify last stack context.");
+            else
+                return lastContext.ReturnValue ?? PType.Null;
         }
 
         /// <summary>
@@ -140,7 +151,7 @@ namespace Prexonite
         /// </summary>
         /// <param name="sctx">Any stack context.</param>
         /// <exception cref="ArgumentNullException"><paramref name="sctx"/> is null.</exception>
-        public void Process(StackContext sctx)
+        public PValue Process(StackContext sctx)
         {
             if (sctx == null)
                 throw new ArgumentNullException("sctx");
@@ -149,7 +160,7 @@ namespace Prexonite
                     Console.WriteLine("\n#PSH: " + sctx.Implementation.Id + "(?)");
 #endif
             sctx.ReturnMode = ReturnModes.Exit;
-            Process();
+            return Process();
         }
 
         #endregion

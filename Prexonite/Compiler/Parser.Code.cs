@@ -861,7 +861,8 @@ namespace Prexonite.Compiler
                 {"indarg", null},
                 {"inda", null},
                 {"newcor", null},
-                {"cor", null}
+                {"cor", null},
+                {"tail",null}
             };
 
         private readonly string[,] asmQualidArgGroup =
