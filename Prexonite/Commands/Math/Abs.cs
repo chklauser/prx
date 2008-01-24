@@ -35,9 +35,20 @@ namespace Prexonite.Commands.Math
             if (args.Length < 1)
                 throw new PrexoniteException("Abs requires at least one argument.");
 
-            double x = (double)args[0].ConvertTo(sctx, PType.Real, true).Value;
+            PValue arg0 = args[0];
 
-            return System.Math.Abs(x);
+            if (arg0.Type == PType.Int)
+            {
+                int x = (int) arg0.Value;
+
+                return System.Math.Abs(x);
+            }
+            else
+            {
+                double x = (double) arg0.ConvertTo(sctx, PType.Real, true).Value;
+
+                return System.Math.Abs(x);
+            }
         }
     }
 }

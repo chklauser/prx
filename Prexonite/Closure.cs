@@ -187,7 +187,7 @@ namespace Prexonite
         /// <returns>A string that represents the closure.</returns>
         public override string ToString()
         {
-            return "Closure(" + _function.Id + ")";
+            return "Closure(" + _function + ")";
         }
 
         #endregion

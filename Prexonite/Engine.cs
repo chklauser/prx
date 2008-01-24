@@ -792,6 +792,12 @@ namespace Prexonite
             Commands.AddEngineCommand(Call_TailAlias, new Call_Tail());
 
             Commands.AddEngineCommand(ListAlias, new List());
+
+            Commands.AddEngineCommand(EachAlias, new Each());
+
+            Commands.AddEngineCommand(ExistsAlias, new Exists());
+
+            Commands.AddEngineCommand(ForAllAlias, new ForAll());
         }
 
         /// <summary>
@@ -1038,6 +1044,21 @@ namespace Prexonite
         /// Alias used for the list command.
         /// </summary>
         public const string ListAlias = @"list";
+
+        /// <summary>
+        /// Alias used for the each command.
+        /// </summary>
+        public const string EachAlias = "each";
+
+        /// <summary>
+        /// Alias used for the exists command.
+        /// </summary>
+        public const string ExistsAlias = "exists";
+
+        /// <summary>
+        /// Alias used for the forAll command.
+        /// </summary>
+        public const string ForAllAlias = "forall"; 
 
         #endregion
     }

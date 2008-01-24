@@ -48,8 +48,17 @@ namespace Prexonite.Compiler.Ast
 
         public override void EmitCode(CompilerTarget target)
         {
+            EmitCode(target, false);
+        }
+
+        public void EmitCode(CompilerTarget target, bool isTopLevel)
+        {
             if (target == null)
                 throw new ArgumentNullException("target", "The compiler target cannot be null");
+
+            if (isTopLevel)
+                tail_call_optimize_top_level_block();
+
             foreach (AstNode node in Statements)
             {
                 AstNode stmt = node;
@@ -61,6 +70,92 @@ namespace Prexonite.Compiler.Ast
                     ((IAstEffect) stmt).EmitEffectCode(target);
                 else
                     stmt.EmitCode(target);
+            }
+        }
+
+        private static void tail_call_optimize_expressions_of_nested_block(IAstHasExpressions hasExpressions)
+        {
+            foreach (IAstExpression expression in hasExpressions.Expressions)
+            {
+                AstBlock blockItself = expression as AstBlock;
+                IAstHasExpressions hasExpressionsItself = expression as IAstHasExpressions;
+                IAstHasBlocks hasBlocksItself = expression as IAstHasBlocks;
+
+                if(blockItself != null)
+                    blockItself.tail_call_optimize_nested_block();
+                else if(hasExpressionsItself != null)
+                    tail_call_optimize_expressions_of_nested_block(hasExpressionsItself);
+                else if(hasBlocksItself != null)
+                    tail_call_optimize_all_nested_blocks_of(hasBlocksItself);
+            }
+        }
+
+        private void tail_call_optimize_nested_block()
+        {
+            int i;
+            AstGetSet getset;
+            AstReturn ret;
+            for (i = 1; i < Statements.Count; i++)
+            {
+                AstNode stmt = Statements[i];
+                ret = stmt as AstReturn;
+                getset = Statements[i - 1] as AstGetSet;
+                IAstHasBlocks hasBlocks = stmt as IAstHasBlocks;
+                IAstHasExpressions hasExpressions = stmt as IAstHasExpressions;
+                AstBlock blockItself = stmt as AstBlock;
+                if (ret != null && ret.Expression == null &&
+                    (ret.ReturnVariant == ReturnVariant.Exit ||
+                     ret.ReturnVariant == ReturnVariant.Continue) && getset != null)
+                {
+                    ret.Expression = getset;
+                    Statements.RemoveAt(i--);
+                }
+                else if(blockItself != null)
+                {
+                    blockItself.tail_call_optimize_nested_block();
+                }
+                else if(hasBlocks != null)
+                {
+                    tail_call_optimize_all_nested_blocks_of(hasBlocks);
+                }
+                else if(hasExpressions != null)
+                {
+                    tail_call_optimize_expressions_of_nested_block(hasExpressions);
+                }
+            }
+        }
+
+        private static void tail_call_optimize_all_nested_blocks_of(IAstHasBlocks hasBlocks)
+        {
+            foreach (AstBlock block in hasBlocks.Blocks)
+                block.tail_call_optimize_nested_block();
+        }
+
+        private void tail_call_optimize_top_level_block()
+        {
+            // { GetSetComplex; return; } -> { return GetSetComplex; }
+
+            tail_call_optimize_nested_block();
+            AstGetSet getset;
+            AstReturn ret;
+
+            if (Statements.Count == 0)
+                return;
+            AstNode lastStmt = Statements[Statements.Count -1];
+            AstCondition cond;
+
+            // { if(cond) block1 else block2 } -> { if(cond) block1' else block2' }
+            if ((cond = lastStmt as AstCondition) != null)
+            {
+                cond.IfBlock.tail_call_optimize_top_level_block();
+                cond.ElseBlock.tail_call_optimize_top_level_block();
+            }
+            // { ...; GetSet(); } -> { ...; return GetSet(); }
+            else if((getset = lastStmt as AstGetSet) != null)
+            {
+                ret = new AstReturn(getset.File, getset.Line, getset.Column, ReturnVariant.Exit);
+                ret.Expression = getset;
+                Statements[Statements.Count - 1] = ret;
             }
         }
 

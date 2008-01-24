@@ -26,7 +26,7 @@ using System.Collections.Generic;
 using System.Diagnostics;
 using Prexonite.Types;
 #if Verbose
-using System;
+
 #endif
 
 namespace Prexonite
@@ -129,7 +129,7 @@ namespace Prexonite
                 if (!keepOnStack)
                 {
 #if Verbose
-                    Console.WriteLine("#POP: " + _stack.Last.Value.Implementation.Id + "=" + FunctionContext.toDebug(_stack.Last.Value.ReturnValue));
+                    Console.WriteLine("#POP: " + _stack.Last.Value + "=" + FunctionContext.toDebug(_stack.Last.Value.ReturnValue));
 #endif
                     if (ReferenceEquals(_stack.Last.Value, sctx))
                         _stack.RemoveLast();
@@ -157,7 +157,7 @@ namespace Prexonite
                 throw new ArgumentNullException("sctx");
             _stack.AddLast(sctx);
 #if Verbose
-                    Console.WriteLine("\n#PSH: " + sctx.Implementation.Id + "(?)");
+                    Console.WriteLine("\n#PSH: " + sctx + "(?)");
 #endif
             sctx.ReturnMode = ReturnModes.Exit;
             return Process();

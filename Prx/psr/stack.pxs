@@ -27,9 +27,10 @@ function create_stack()
     {
         if(i < 0)
             throw "The stack is empty";
-        return = xs[i];
+        var ret = xs[i];
         xs.RemoveAt(i);
         i--;
+        return ret;
     }
     
     function peek

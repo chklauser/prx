@@ -459,6 +459,7 @@ Return<AstBlock block>          (.  AstReturn ret = null;
     [   Expr<out expr>          (.  ret.Expression = expr; .)
     |   assign                  (.  ret.ReturnVariant = ReturnVariant.Set; .)
         Expr<out expr>          (.  ret.Expression = expr; .)
+                                (.  SemErr("Return value assignment is no longer supported. You must use local variables instead."); .)
     ]
 |   break                       (.  if(bl == null)
                                         ret = new AstReturn(this, ReturnVariant.Break); 

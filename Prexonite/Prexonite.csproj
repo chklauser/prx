@@ -19,7 +19,7 @@
     <DebugType>full</DebugType>
     <Optimize>false</Optimize>
     <OutputPath>bin\</OutputPath>
-    <DefineConstants>TRACE;DEBUG;allowIndex,forceIndex</DefineConstants>
+    <DefineConstants>TRACE;DEBUG;allowIndex,Verbose</DefineConstants>
     <ErrorReport>prompt</ErrorReport>
     <WarningLevel>4</WarningLevel>
     <DocumentationFile>
@@ -65,8 +65,11 @@
     <Compile Include="Commands\List\All.cs" />
     <Compile Include="Commands\List\Count.cs" />
     <Compile Include="Commands\List\Distinct.cs" />
+    <Compile Include="Commands\List\Each.cs" />
+    <Compile Include="Commands\List\Exists.cs" />
     <Compile Include="Commands\List\FoldL.cs" />
     <Compile Include="Commands\List\FoldR.cs" />
+    <Compile Include="Commands\List\ForAll.cs" />
     <Compile Include="Commands\List\Frequency.cs" />
     <Compile Include="Commands\List\GroupBy.cs" />
     <Compile Include="Commands\List\Intersect.cs" />

@@ -2596,7 +2596,7 @@ label set   stglob      g
         [Test]
         public void AssemblerExpressions()
         {
-            //Now this really *IS* Vodoo magic
+            //Now this really *IS* Voodoo magic
             _compile(
                 @"
 function main
@@ -3075,6 +3075,42 @@ var a,b,c,d
             jump    end
 label   el  ldloc   b
 label end   stloc   d
+");
+        }
+
+        [Test]
+        public void DirectTailRecursion()
+        {
+            _compile(@"
+function fac n r =
+    if(n == 1)
+        r
+    else
+        fac(n-1, n*r);
+");
+
+            _expect("fac", @"
+ldloc   n
+ldc.int 1
+ceq
+jump.f  else
+ldloc   r
+ret.value
+
+label else
+
+ldloc   n
+ldc.int 1
+sub
+
+ldloc   n
+ldloc   r
+mul
+
+stloc   r
+stloc   n
+
+jump    0
 ");
         }
     }

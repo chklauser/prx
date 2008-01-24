@@ -803,7 +803,8 @@ implementation
                                             target = oldTarget;
                                             if(errors.count == 0)
                                             {
-                                                Ast[func].EmitCode(FunctionTargets[func]);
+                                                //Emit code for top-level block
+                                                Ast[func].EmitCode(FunctionTargets[func],true);
                                                 FunctionTargets[func].FinishTarget();
                                             }
                                             
@@ -1072,7 +1073,8 @@ BuildBlock
                                         return;
                                     }
                                     
-                                    target.Ast.EmitCode(target);
+                                    //Emit code for top-level build block
+                                    target.Ast.EmitCode(target, true);
                                     target.FinishTarget();	                                
                                     target = lastTarget;
                                     //Run the build block 
@@ -1239,7 +1241,8 @@ FunctionDefinition<out PFunction func>
                                             else
                                             {
 												FunctionTargets[func].ExecuteCompilerHooks();
-                                                Ast[func].EmitCode(FunctionTargets[func]);
+												//Emit code for top-level block
+                                                Ast[func].EmitCode(FunctionTargets[func], true);
                                                 FunctionTargets[func].FinishTarget();
                                             }
                                             
@@ -1253,7 +1256,8 @@ FunctionDefinition<out PFunction func>
                                             AstReturn retst = new AstReturn(this, ReturnVariant.Exit);
                                             retst.Expression = crcor;
                                             cst.Ast.Add(retst);
-                                            cst.Ast.EmitCode(cst);
+                                            //Emit code for top-level block
+                                            cst.Ast.EmitCode(cst,true);
                                             cst.FinishTarget();
                                         }
                                     .)
@@ -1836,6 +1840,7 @@ Return<AstBlock block>          (.  AstReturn ret = null;
     [   Expr<out expr>          (.  ret.Expression = expr; .)
     |   assign                  (.  ret.ReturnVariant = ReturnVariant.Set; .)
         Expr<out expr>          (.  ret.Expression = expr; .)
+                                (.  SemErr("Return value assignment is no longer supported. You must use local variables instead."); .)
     ]
 |   break                       (.  if(bl == null)
                                         ret = new AstReturn(this, ReturnVariant.Break); 

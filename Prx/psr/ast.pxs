@@ -49,13 +49,13 @@ function localMeta(key, context)[is compiler;] =
         
 var SI [is compiler;];
 build {
-    SI = new Structure<"lvar", "lref", "gvar", "gref", "func", "cmd">;
-    SI.lvar = ::SymbolInterpretations.LocalObjectVariable;
-    SI.lref = ::SymbolInterpretations.LocalReferenceVariable;
-    SI.gvar = ::SymbolInterpretations.GlobalObjectVariable;
-    SI.gref = ::SymbolInterpretations.GlobalReferenceVariable;
-    SI.func = ::SymbolInterpretations.$Function;
-    SI.cmd = ::SymbolInterpretations.$Command;
+    SI = new Structure;
+    SI.\("lvar") = ::SymbolInterpretations.LocalObjectVariable;
+    SI.\("lref") = ::SymbolInterpretations.LocalReferenceVariable;
+    SI.\("gvar") = ::SymbolInterpretations.GlobalObjectVariable;
+    SI.\("gref") = ::SymbolInterpretations.GlobalReferenceVariable;
+    SI.\("func") = ::SymbolInterpretations.$Function;
+    SI.\("cmd") = ::SymbolInterpretations.$Command;
     SI.\\("eq") = (this, l, r) => l~Int == r~Int;
     SI.\\("is_lvar") = (this, s) => s~Int == this.lvar~Int;
     SI.\\("is_lref") = (this, s) => s~Int == this.lref~Int;
@@ -148,32 +148,37 @@ build does hook( t =>
 //  custom variable objects are passed to the function depending on your setting for the stmt_hook.
 
 
+function mk_hook(fhook) = if(Not fhook is Prexonite::Types::PValueKeyValuePair)
+                              (fhook: 0)
+                          else
+                              fhook;
+                              
+function not_null(arg) = Not arg is Null;                              
+
 //Add a statement hook to the shared compiler hook
 //  Usage:
 //      stmt_hook
 //          ( 
-//              2: (t,stmt,ref i, ref v1, ref v2) => {...},
-//              4: (t,stmt,ref i, ref v1, ref v2, ref v3, ref v4) => {...},
+//              (t,stmt,ref i, ref v1, ref v2): 2 => {...},
+//              (t,stmt,ref i, ref v1, ref v2, ref v3, ref v4): 4 => {...},
 //              (t,stmt) => {...}
 //          )
 //
-//  The key indictaes the number of per function variables to create
+//  The value in the key-value pair indictaes the number of per function variables to create
 //  If no key is provided, 0 is assumed.
 function stmt_hook() [ is compiler; ] does 
-    foreach(var fhook in var args) 
-        unless(fhook is Null Or _stmt_hooks.Contains(fhook))
-        {
-            unless(fhook is Prexonite::Types::PValueKeyValuePair)
-                fhook = fhook: 0;
-            _stmt_hooks[] = fhook;
-        }
-
+    foreach(var fhook in 
+    (var args)
+    >> where(->not_null)
+    >> map(->mk_hook)    
+    >> where(fhook => Not _stmt_hooks.Contains(fhook))
+    ) //do
+     _stmt_hooks[] = fhook;
+     
 function remove_stmt_hook() [ is compiler; ] does 
-    foreach(var fhook in var args) 
-        unless(fhook is Null)
-            _stmt_hooks.Remove(
-                if(fhook is Prexonite::Types::PValueKeyValuePair)
-                    fhook.Key
-                else
-                    fhook
-            );
+    foreach(var fhook in 
+    (var args)
+    >> where(->not_null)
+    >> map(->mk_hook)
+    ) //do
+    _stmt_hooks.Remove(fhook);

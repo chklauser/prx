@@ -92,6 +92,13 @@ namespace Prexonite.Compiler
             set { _nestedFunctionCounter = value; }
         }
 
+        public BlockLabels DirectRecursionLabels
+        {
+            get { return _directRecursionLabels; }
+            set { _directRecursionLabels = value; }
+        }
+        private BlockLabels _directRecursionLabels = new BlockLabels("direc");
+
         #endregion
 
         #region Construction

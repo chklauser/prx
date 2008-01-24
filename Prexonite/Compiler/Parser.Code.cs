@@ -550,7 +550,7 @@ namespace Prexonite.Compiler
             if (prefix == null)
                 prefix = "";
             return
-                thisTarget.Function.Id + "\\nested\\" + prefix +
+                thisTarget.Function.Id + "\\" + prefix +
                 (thisTarget.NestedFunctionCounter++);
         }
 

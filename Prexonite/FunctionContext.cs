@@ -26,6 +26,7 @@ using System.Text;
 #endif
 using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.Reflection;
 using System.Runtime.Serialization;
 using Prexonite.Commands;
@@ -256,6 +257,16 @@ namespace Prexonite
             return _stack.Peek() ?? NullPType.CreateValue();
         }
 
+        public int StackSize
+        {
+            [DebuggerStepThrough]
+            get
+            {
+                return _stack.Count;
+            }
+        }
+
+
         private void throwInvalidStackException(int argc)
         {
             throw new PrexoniteInvalidStackException(
@@ -468,7 +479,7 @@ namespace Prexonite
 #if Verbose
                     val = pvar.Value;
                     Console.Write("=" + toDebug(val));
-                    push(val);
+                    Push(val);
 #else
                         Push(pvar.Value);
 #endif
@@ -506,7 +517,7 @@ namespace Prexonite
 #if Verbose
                     val = pvar.Value;
                     Console.Write("=" + toDebug(val));
-                    push(val);
+                    Push(val);
 #else
                         Push(pvar.Value);
 #endif
@@ -1045,7 +1056,7 @@ doIndloc:               if (justEffect)
 #if Verbose
                             val = cmd.Run(this, argv);
                             Console.Write(" =" + toDebug(val));
-                            push(val);
+                            Push(val);
 #else
                                 Push(cmd.Run(this, argv));
 #endif

@@ -1,0 +1,26 @@
+﻿
+build does require
+(
+    "struct.pxs",
+    "set.pxs",
+    "stack.pxs",
+);    
+
+function create_tree_node(item)
+{
+    var nodes = create_set;
+    
+    function Item = item;
+    
+    function Children = nodes;
+    
+    function Height
+    {
+        var h = 0;
+        var stack = create_stack;
+        foreach(var n in nodes)
+            stack.push(n:0);
+        
+        while        
+    }
+}

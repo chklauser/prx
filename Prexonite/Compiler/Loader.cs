@@ -529,7 +529,7 @@ namespace Prexonite.Compiler
         {
             CompilerTarget target = FunctionTargets[Application.InitializationId];
             target.ExecuteCompilerHooks();
-            target.Ast.EmitCode(target);
+            target.Ast.EmitCode(target,false); //do not treat initialization blocks as top-level ones.
             target.Ast.Clear();
         }
 

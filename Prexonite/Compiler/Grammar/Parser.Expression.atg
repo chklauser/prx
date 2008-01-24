@@ -373,7 +373,8 @@ implementation
                                             target = oldTarget;
                                             if(errors.count == 0)
                                             {
-                                                Ast[func].EmitCode(FunctionTargets[func]);
+                                                //Emit code for top-level block
+                                                Ast[func].EmitCode(FunctionTargets[func],true);
                                                 FunctionTargets[func].FinishTarget();
                                             }
                                             

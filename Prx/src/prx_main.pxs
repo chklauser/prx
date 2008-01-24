@@ -81,25 +81,25 @@ function prx\main(args)
 		else if(state == state\arg) //ignore options after -a
 			scriptArgs[] = current;
 		else if(current.StartsWith("-"))
-			if(current == "-c")
+			if(current == "-c")         //  -c Compile
 				state = state\compile;
-			else if(current == "-t")
+			else if(current == "-t")    //  -t Target
 				state = state\target;
-			else if(current == "-i")
+			else if(current == "-i")    //  -i Interactive
 				state = state\interactive;
-			else if(current == "-r")
+			else if(current == "-r")    //  -r  Run
 				state = state\run;
-			else if(current == "-v")
+			else if(current == "-v")    //  -v  Verbose
 			    verbose = true;
-			else if(current == "-h")
+			else if(current == "-h")    //  -h  Header only
 			    headerOnly = true;
-			else if(current == "-a")
+			else if(current == "-a")    //  -a  Arguments
 				state = state\arg;
-		    else if(current == "-b")
+		    else if(current == "-b")    //  -b  *Experimental* tab completion
 		        supportsTabs = true;
-		    else if(current == "-d")
+		    else if(current == "-d")    //  -d  Debugging
 		        debugging = true;
-			else if(current == "-?")
+			else if(current == "-?")    //  -h  Help
 			{
 				displayHelp;
 				return;
@@ -229,14 +229,14 @@ runInteractive:
     }
 }
 
-//A little bit of vodoo magic (read 'custom commands') replaces the original 
+//A little bit of voodoo magic (read 'custom commands') replaces the original 
 // call to 'prx\main' with a new call using 'originalArgs' as the arguments.
 // And by 'replace' I mean deleting the old stack entry and inserting the new one.
-function reboot does __replace_call(@"prx\main", originalArgs);
+function reboot does prx\main(originalArgs); //__replace_call(@"prx\main", originalArgs);
 
 function displayHelp does print = 
 	"Usage:\n" + 
-	"\tprx -c {sources...} (-t {target...} [-h] | -r | -i) [-v | -a <arguments...> | -b]\n" +
+	"\tprx -c {sources...} (-t {target...} [-h] | -r | -i) [-v | -d | -a <arguments...> | -b]\n" +
 	"\tprx -i\n" +
 	"\tprx -?\n" +
 	"\n" + 
@@ -249,5 +249,5 @@ function displayHelp does print =
 	"-v enables additional output.\n"+
 	"-h extracts declarations (only with -c).\n"+
 	"-b enables tab completion (experimental, accepts only ASCII characters).\n"+
-	"-a forwards the rest of the arguments to the executed script.\n" + 
+	"-a forwards the rest of the arguments to the executing script.\n" + 
 	"-d enables debugging mode";

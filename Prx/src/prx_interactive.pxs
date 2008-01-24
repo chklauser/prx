@@ -148,7 +148,7 @@ function prx\interactive()
     //Compile some standard code into the interactive application
     buffer.AppendLine("var prompt = null;");
     if(Not app.Functions.Contains("exit"))
-        buffer.AppendLine("function exit(c) does System::Environment.Exit(c is Null ? 0 : c);");
+        buffer.AppendLine("function exit(c) does System::Environment.Exit(c ?? 0);");
     buffer.AppendLine("declare exit as quit;");
     ldr.LoadFromString(buffer.ToString);
     buffer.Length = 0;
@@ -218,7 +218,7 @@ function prx\interactive()
         if(raw.ToLower == ":reload") //this directive restarts prx\main with the same arguments. See 'prx_main.pxs' for details.
         {
             reboot;
-            break;          
+            return;          
         }
         else if(raw.ToLower.StartsWith(":compile "))
         {

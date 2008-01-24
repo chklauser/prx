@@ -39,7 +39,7 @@ function create_terminator (obj, termination)
         else
         {
             args.RemoveAt(0,1);
-            return callmember(obj,id,args);
+            return call\member(obj,id,args);
         }
     }
     

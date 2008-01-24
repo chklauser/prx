@@ -34,8 +34,6 @@ namespace Prexonite.Compiler.Ast
                                       IAstEffect,
                                       IAstHasExpressions
     {
-        //public readonly List<IAstExpression> Arguments = new List<IAstExpression>();
-        //public readonly List<IAstExpression> RightAppendArguments = new List<IAstExpression>();
 
         private List<IAstExpression> _arguments = new List<IAstExpression>();
         private readonly ArgumentsProxy _proxy;

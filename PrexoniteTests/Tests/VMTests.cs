@@ -80,11 +80,14 @@ function test1(x)
 {
     x++;    
     x = 2*x++;
-    return = x--;
+    return x--;
 }
 ";
             Loader ldr = new Loader(engine, target);
             ldr.LoadFromString(input1);
+            foreach (string s in ldr.Errors)
+                Console.WriteLine(s);
+
             Assert.AreEqual(0, ldr.ErrorCount, "Errors during compilation");
 
             Random rnd = new Random();
@@ -125,30 +128,11 @@ function test1(x)
 ";
             Loader ldr = new Loader(engine, target);
             ldr.LoadFromString(input1);
-            Assert.AreEqual(0, ldr.ErrorCount, "Errors during compilation");
+            foreach (string s in ldr.Errors)
+                Console.WriteLine(s);
+            Assert.AreEqual(1, ldr.ErrorCount, "One error expected.");
+            Assert.IsTrue(ldr.Errors[0].Contains("Return value assignment is no longer supported."),"The compiler did not reject a return value assignment.");
 
-            Random rnd = new Random();
-            int x0 = rnd.Next(1, 200);
-            int x = x0;
-            x *= 2;
-            int expected = x - 2;
-            x += 55;
-
-            FunctionContext fctx =
-                target.Functions["test1"].CreateFunctionContext(engine, new PValue[] {x0});
-            engine.Stack.AddLast(fctx);
-            PValue rv = engine.Process();
-
-            Assert.AreEqual(PType.BuiltIn.Int, rv.Type.ToBuiltIn());
-            Assert.AreEqual(
-                expected,
-                (int) rv.Value,
-                "Return value is expected to be " + expected + ".");
-
-            Assert.AreEqual(
-                x,
-                (int) fctx.LocalVariables["x"].Value.Value,
-                "Value of x is supposed to be " + x + ".");
         }
 
         [Test]
@@ -167,12 +151,14 @@ function complicated(x,y) does
     //y     := 2*x*y-x
     //y+z   := 3*x*y-2*x
     //y+z   := x*(3*y-2)
-    return = y+x;
+    return y+x;
     //dummy     
 }
 ";
             Loader ldr = new Loader(engine, target);
             ldr.LoadFromString(input1);
+            foreach (string s in ldr.Errors)
+                Console.WriteLine(s);
             Assert.AreEqual(0, ldr.ErrorCount);
 
             Random rnd = new Random();
@@ -595,24 +581,21 @@ function print(text) does
                 @"
 var buffer;
 function print(text) does buffer.Append(text);
-function main
+function work
 {
     var args;
     buffer = new System::Text::StringBuilder(args[0]);
     print(args[1]);
     print(args[2]);
 }
+
+function main(a,b,c) does work(a,b,c).ToString;
 ");
             string a = Guid.NewGuid().ToString("N");
             string b = Guid.NewGuid().ToString("N");
             string c = Guid.NewGuid().ToString("N");
             string expect = a + b + c;
-            _expectNull("main", a, b, c);
-            Assert.AreEqual(
-                PType.Object[typeof(StringBuilder)],
-                target.Variables["buffer"].Value.Type,
-                "buffer has not the expected type.");
-            Assert.AreEqual(expect, target.Variables["buffer"].Value.Value.ToString());
+            _expect(expect, a, b, c);
         }
 
         [Test]
@@ -847,7 +830,7 @@ function main(level)
     unless (level < 3)
         print(""#3="",L3,"";"");
 
-    return = buffer.ToString; 
+    return buffer.ToString; 
 }
 ");
 
@@ -923,8 +906,8 @@ function foldl(ref f, var left, var lst) does // (b -> a -> b) -> b -> a -> [b]
 function map(ref f, var lst) does // (a -> b) -> [a] -> [b]
 {
     var nlst = new List;
-    return = nlst;
     foreach(var e in lst) nlst.Add = f(e);
+    return nlst;
 }
 
 var tuple\lst;
@@ -936,9 +919,10 @@ function tuple(x)
     if(idx == null)
         idx = 0;
 
-    return = ~List.Create(x, lst[idx++]);
+    var ret = ~List.Create(x, lst[idx++]);
     unless(idx < lst.Count)
         idx = null;
+    return ret;
 }
 
 ref reduce\f;
@@ -1445,9 +1429,9 @@ var theList;
 
 function accessor(index) = v => 
 {
-    return = theList[index];
     if(v != null)
         theList[index] = v;
+    return theList[index];
 };
 
 ref first = accessor(0);
@@ -1489,7 +1473,6 @@ function main(lst)
 function chain(lst, serial)
 {
     var c = new Structure;
-    return = c;
     c.\(""IsSerial"") = serial != null ? serial : true;
     c.\(""Functions"") = lst != null ? lst : new List();
     function Invoke(this, prev)
@@ -1512,6 +1495,7 @@ function chain(lst, serial)
 
     c.\\(""Invoke"") = ->Invoke;
     c.\\(""IndirectCall"") = ->Invoke;
+    return c;
 }
 
 function main(seed)
@@ -2329,7 +2313,7 @@ function main()
 }
 ");
 
-            _expect("bs.Closure(main\\nested\\A0)b", "s");
+            _expect("bs.Closure(main\\A0)b", "s");
         }
 
         [Test]
@@ -2987,6 +2971,28 @@ function main(a,b,xs)
     ys[] = a+b;
 }
 ");
+        }
+
+        private static int fac(int n)
+        {
+            int r = 1;
+            while (n > 1)
+                r *= n--;
+            return r;
+        }
+
+        [Test]
+        public void DirectTailRecursion()
+        {
+            _compile(@"
+function fac n r =
+    if(n == 1)
+        r
+    else
+        fac(n-1, n*r);
+");
+
+            _expectNamed("fac",fac(6),6,1);
         }
 
         #region Helper

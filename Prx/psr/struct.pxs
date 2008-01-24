@@ -1,4 +1,6 @@
-﻿function struct
+﻿var struct\ordinalIc = System::StringComparison.OrdinalIgnoreCase;
+
+function struct
 {
     function getId(g) =
         if(g.Meta.ContainsKey("SId"))
@@ -11,44 +13,23 @@
         ;
     
     var parentId = caller.Implementation.Id;
-    var methods = new System::Text::StringBuilder();
-    var methods_f = [];
-    
-    foreach(var f in asm(ldr.app).Functions)
-    {
-        if(
+    var methods = (asm(ldr.app).Functions) 
+        >> where(f => 
             f
-            .Meta["ParentFunction"]
-            .Text
-            .Equals(parentId, System::StringComparison.OrdinalIgnoreCase)
-            And Not f.Meta["Private"].Switch
-          )
-        {
-            var cf = caller.LocalVariables[f.Meta["LogicalId"].Text].Value;
-            if(cf == null)
-                continue;
-            methods.Append("\"ref\", \"$(getId(f))\", ");
-            methods_f[] = f: cf;
-        }
-    }
-    if(methods.Length > 0)
-        methods.Length -= 2;
-    var ss;
-    var s =
-        asm(ldr.eng)
-        .CreatePType("Structure(\"$((ss = methods.ToString).Escape)\")")
-        .Construct([]~Object<"Prexonite.PValue[]">);
-    if(s is Null Or s.self is Null)
-        throw "Could not construct Structure<$ss>.";
-    else
-        s = s.self;
+                .Meta["ParentFunction"]
+                .Text
+                .Equals(parentId, struct\ordinalIc)            
+            And Not f.Meta["Private"].Switch)
+        >> map(f => getId(f): 
+            caller
+                .LocalVariables[f.Meta["LogicalId"].Text]
+                .Value)
+        >> where(fcf => Not fcf.Value is Null);
+    
+    var s = new Structure;
         
-    foreach(var kv in methods_f)
-    {
-        var id = getId(kv.Key);
-        var f = kv.Value;
-        s.\\(id) = f;
-    }
+    foreach(var fcf in methods)
+        s.\\(fcf.Key) = fcf.Value;
         
     return s;
 }

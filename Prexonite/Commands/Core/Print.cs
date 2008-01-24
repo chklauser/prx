@@ -78,7 +78,7 @@ namespace Prexonite.Commands.Core
 
             _writer.Write(buffer);
 
-            return PType.Null.CreatePValue();
+            return buffer.ToString();
         }
     }
 }

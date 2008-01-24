@@ -1,0 +1,30 @@
+﻿
+build does require = "struct.pxs";
+
+function create_set()
+{
+    var store = [];
+    
+    function add(this) =
+        (var args) >> skip(1) >>
+            where(arg => Not store.Contains(arg)) >>
+            each(arg => store.Add(arg));
+    
+    function remove(this) = 
+        (var args) >> skip(1) >>
+            forall(arg => store.Remove(arg));
+            
+    function contains(this) = 
+        (var args) >> skip(1) >>
+            forall(var arg => store.Contains(arg));
+        
+    function count =
+        store.Count;
+        
+    function GetEnumerator =
+        store.GetEnumerator;        
+        
+    add(var args);
+    
+    return struct;    
+}

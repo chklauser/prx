@@ -32,10 +32,22 @@ namespace Prexonite.Commands.Math
             if (args.Length < 2)
                 throw new PrexoniteException("Max requires at least two arguments.");
 
-            double a = (double) args[0].ConvertTo(sctx, PType.Real, true).Value;
-            double b = (double) args[1].ConvertTo(sctx, PType.Real, true).Value;
+            PValue arg0 = args[0];
+            PValue arg1 = args[1];
+            if (arg0.Type == PType.Int && arg1.Type == PType.Int)
+            {
+                int a = (int) arg0.Value;
+                int b = (int) arg1.Value;
 
-            return System.Math.Max(a, b);
+                return System.Math.Max(a, b);
+            }
+            else
+            {
+                double a = (double) arg0.ConvertTo(sctx, PType.Real, true).Value;
+                double b = (double) arg1.ConvertTo(sctx, PType.Real, true).Value;
+
+                return System.Math.Max(a, b);
+            }
         }
     }
 }

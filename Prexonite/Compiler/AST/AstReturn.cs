@@ -22,6 +22,7 @@
  */
 
 using System;
+using System.Collections.Generic;
 using Prexonite.Types;
 
 namespace Prexonite.Compiler.Ast
@@ -90,29 +91,8 @@ namespace Prexonite.Compiler.Ast
 
         private void emit_tail_call_exit(CompilerTarget target)
         {
-            AstConditionalExpression cond = Expression as AstConditionalExpression;
-            if(cond != null)
-            {
-                                        //  return  if( cond )
-                                        //              expr1
-                                        //          else
-                                        //              expr2
-                AstCondition retif = new AstCondition(File, Line, Column, cond.Condition);
-
-                AstReturn ret1 = new AstReturn(File, Line, Column, ReturnVariant);
-                ret1.Expression = cond.IfExpression;
-                retif.IfBlock.Add(ret1);
-
-                AstReturn ret2 = new AstReturn(File, Line, Column, ReturnVariant);
-                ret2.Expression = cond.ElseExpression;
-                //not added to the condition
-
-                retif.EmitCode(target); //  if( cond )
-                                        //      return expr1
-                ret2.EmitCode(target);  //  return expr2
-
-                return; //ret1 and ret2 will continue optimizing
-            }
+            if(optimize_conditional_return_expression(target))
+                return;
 
             AstGetSet getset = Expression as AstGetSet;
             AstGetSetSymbol symbol = Expression as AstGetSetSymbol;
@@ -128,12 +108,89 @@ namespace Prexonite.Compiler.Ast
             }
             else //Will be tail called
             {
-                // getset(arg1,arg2,..,argn) => tail(->getset, arg1, arg2,..,argn)
-                reference.EmitCode(target);
-                foreach (IAstExpression argument in icbr.Arguments)
-                    argument.EmitCode(target);
-                target.Emit(OpCode.tail, icbr.Arguments.Count);
+                if (symbol != null && check_if_stackless_function_recursion_is_possible(target, symbol))
+                {
+                    // specialized approach
+                    // self(arg1, arg2, ..., argn) => { param1 = arg1; param2 = arg2; ... paramn = argn; goto 0; }
+                    List<string> symbolParams = target.Function.Parameters;
+                    ArgumentsProxy symbolArgs = symbol.Arguments;
+                    AstNull nullNode = new AstNull(File, Line, Column);
+                    
+                    //copy parameters to temporary variables
+                    for (int i = 0; i < symbolParams.Count; i++)
+                    {
+                        if (i < symbolArgs.Count)
+                            symbolArgs[i].EmitCode(target);
+                        else
+                            nullNode.EmitCode(target);
+                    }
+                    //overwrite parameters
+                    for (int i = symbolParams.Count-1; i >= 0; i--)
+                    {
+                        target.EmitStoreLocal(symbolParams[i]);
+                    }
+
+                    target.EmitJump(0);
+                }
+                else
+                {
+                    // general apporach
+                    // getset(arg1,arg2,..,argn) => tail(->getset, arg1, arg2,..,argn)
+                    reference.EmitCode(target);
+                    foreach (IAstExpression argument in icbr.Arguments)
+                        argument.EmitCode(target);
+                    target.Emit(OpCode.tail, icbr.Arguments.Count);
+                }
             }
+        }
+
+        private static bool check_if_stackless_function_recursion_is_possible(CompilerTarget target, AstGetSetSymbol symbol)
+        {
+            if(symbol.Interpretation != SymbolInterpretations.Function) //must be function call
+                return false;
+            if(!Engine.StringsAreEqual(target.Function.Id,symbol.Id)) //must be direct recursive iteration
+                return false;
+            if(target.Function.Variables.Contains(PFunction.ArgumentListId)) //must not use argument list
+                return false;
+            if(symbol.Arguments.Count > target.Function.Parameters.Count) //must not supply more arguments than mapped
+                return false;
+            return true;
+        }
+
+        private void emit_param_set(CompilerTarget target, string param, string var)
+        {
+            AstGetSetSymbol setSym = new AstGetSetSymbol(File, Line, Column, PCall.Set, param, SymbolInterpretations.LocalObjectVariable);
+            AstGetSetSymbol getparam = new AstGetSetSymbol(File, Line, Column, PCall.Get, var, SymbolInterpretations.LocalObjectVariable);
+            setSym.Arguments.Add(getparam);
+            setSym.EmitEffectCode(target);
+        }
+
+        private bool optimize_conditional_return_expression(CompilerTarget target)
+        {
+            AstConditionalExpression cond = Expression as AstConditionalExpression;
+            if (cond == null)
+                return false;
+
+            //  return  if( cond )
+            //              expr1
+            //          else
+            //              expr2
+            AstCondition retif = new AstCondition(File, Line, Column, cond.Condition);
+
+            AstReturn ret1 = new AstReturn(File, Line, Column, ReturnVariant);
+            ret1.Expression = cond.IfExpression;
+            retif.IfBlock.Add(ret1);
+
+            AstReturn ret2 = new AstReturn(File, Line, Column, ReturnVariant);
+            ret2.Expression = cond.ElseExpression;
+            //not added to the condition
+
+            retif.EmitCode(target); //  if( cond )
+            //      return expr1
+            ret2.EmitCode(target); //  return expr2
+
+            //ret1 and ret2 will continue optimizing
+            return true;
         }
 
         public override string ToString()

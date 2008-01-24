@@ -299,7 +299,7 @@ internal class Errors {
 			default: s = "error " + n; break;
 		}
 		if(s.EndsWith(" expected"))
-		    s += " and not \"" + parentParser.t.ToString(false) + " " + parentParser.la.ToString(false) + "\"";
+            s = "after \"" + parentParser.t.ToString(false) + "\", " + s.Replace("expected","is expected") + " and not \"" + parentParser.la.ToString(false) + "\"";
 		else if(s.StartsWith("this symbol "))
 		    s = "\"" + parentParser.t.val + "\"" + s.Substring(12);
 		errorStream.WriteLine(errMsgFormat, line, col, s, parentParser.scanner.File);
