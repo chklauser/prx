@@ -120,7 +120,7 @@ namespace Prexonite.Compiler.Ast
                 if (i + 1 < Expressions.Count)
                 {
                     target.EmitDuplicate();
-                    target.Emit(OpCode.check_const, "Null");
+                    target.Emit(OpCode.check_null);
                     target.EmitJumpIfFalse(endOfExpression_label);
                 }
             }
