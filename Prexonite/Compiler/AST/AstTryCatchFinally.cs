@@ -49,23 +49,29 @@ namespace Prexonite.Compiler.Ast
                     return;
                 else
                 {
-                    target.Emit(OpCode.@try);
+                    //The finally block is not protected
+                    //  A trycatchfinally with just a finally block is equivalent to the contents of the finally block
+                    //  " try {} finally { $code } " => " $code "
                     FinallyBlock.EmitCode(target);
+                    return;
                 }
 
-            //Try block
+            //Emit try block
             target.EmitLabel(beginTryLabel);
             target.Emit(OpCode.@try);
             TryBlock.EmitCode(target);
 
-            //Finally block
+            //Emit finally block
             target.EmitLabel(beginFinallyLabel);
             FinallyBlock.EmitCode(target);
             target.EmitLeave(endTry);
 
-            //Catch block
+            //Emit catch block
             target.EmitLabel(beginCatchLabel);
-            if (ExceptionVar != null)
+            bool usesException = ExceptionVar != null;
+            bool justRethrow = CatchBlock.IsEmpty && !usesException;
+
+            if (usesException)
             {
                 //Assign exception
                 ExceptionVar = GetOptimizedNode(target, ExceptionVar) as AstGetSet ?? ExceptionVar;
@@ -74,7 +80,7 @@ namespace Prexonite.Compiler.Ast
                 ExceptionVar.EmitEffectCode(target);
             }
 
-            if ((!CatchBlock.IsEmpty) || ExceptionVar != null)
+            if (!justRethrow)
             {
                 //Exception handled
                 CatchBlock.EmitCode(target);
@@ -82,9 +88,10 @@ namespace Prexonite.Compiler.Ast
             else
             {
                 //Exception not handled => rethrow.
-                AstThrow th = new AstThrow(File, Line, Column);
-                th.Expression = new AstGetException(File, Line, Column);
-                th.EmitCode(target);
+                // * Rethrow is implemented in the runtime *
+                //AstThrow th = new AstThrow(File, Line, Column);
+                //th.Expression = new AstGetException(File, Line, Column);
+                //th.EmitCode(target);
             }
 
             target.EmitLabel(endTry);
@@ -94,8 +101,8 @@ namespace Prexonite.Compiler.Ast
                     _getAddress(target, beginTryLabel), _getAddress(target, endTry));
 
             block.BeginFinally = !FinallyBlock.IsEmpty ? _getAddress(target, beginFinallyLabel) : -1;
-            block.BeginCatch = !CatchBlock.IsEmpty ? _getAddress(target, beginCatchLabel) : -1;
-            block.UsesException = ExceptionVar != null;
+            block.BeginCatch = !justRethrow ? _getAddress(target, beginCatchLabel) : -1;
+            block.UsesException = usesException;
 
             //Register try-catch-finally block
             target.Function.Meta.AddTo(TryCatchFinallyBlock.MetaKey, block);

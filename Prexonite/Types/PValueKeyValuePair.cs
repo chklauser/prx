@@ -43,7 +43,7 @@ namespace Prexonite.Types
             get { return _objectType; }
         }
 
-        private PValue _key;
+        private readonly PValue _key;
 
         /// <summary>
         /// Provides access to the value stored as the "Key".
@@ -53,7 +53,7 @@ namespace Prexonite.Types
             get { return _key; }
         }
 
-        private PValue _value;
+        private readonly PValue _value;
 
         /// <summary>
         /// Provides access to the value stored as the "Value".

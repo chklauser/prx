@@ -8,6 +8,7 @@ using Prexonite.Types;
 
 namespace Prx.Tests
 {
+    [TestFixture]
     public class CompilerParser : Compiler
     {
         [Test]
@@ -245,23 +246,27 @@ function func0
             Assert.AreEqual(
                 3, symbol.Arguments.Count, "First function call should have 3 arguments");
             Assert.IsInstanceOfType(typeof(AstConstant), symbol.Arguments[0]);
-            Assert.AreEqual("2", (string) ((AstConstant) symbol.Arguments[0]).Constant);
+            Assert.AreEqual("2", ((AstConstant) symbol.Arguments[0]).Constant);
             Assert.IsInstanceOfType(typeof(AstConstant), symbol.Arguments[1]);
             Assert.AreEqual(true, (bool) ((AstConstant) symbol.Arguments[1]).Constant);
             Assert.IsInstanceOfType(typeof(AstConstant), symbol.Arguments[2]);
             Assert.AreEqual(3.41, (double) ((AstConstant) symbol.Arguments[2]).Constant);
             i++;
             //func1(func1(func1(55)));
-            Assert.IsInstanceOfType(typeof(AstGetSetSymbol), block[i]);
-            symbol = (AstGetSetSymbol) block[i];
+            Assert.IsInstanceOfType(typeof(AstReturn), block[i]);
+            AstReturn ret = (AstReturn) block[i];
+            Assert.IsInstanceOfType(typeof(AstGetSetSymbol),ret.Expression);
+            symbol = (AstGetSetSymbol) ret.Expression;
             Assert.AreEqual("func1", symbol.Id);
             Assert.AreEqual(SymbolInterpretations.Function, symbol.Interpretation);
             Assert.AreEqual(1, symbol.Arguments.Count, "First function call should have 1 argument");
             Assert.IsInstanceOfType(typeof(AstGetSetSymbol), symbol.Arguments[0]);
             AstGetSetSymbol sub = symbol.Arguments[0] as AstGetSetSymbol;
+            Assert.IsNotNull(sub);
             Assert.AreEqual(1, sub.Arguments.Count);
             Assert.IsInstanceOfType(typeof(AstGetSetSymbol), sub.Arguments[0]);
             sub = sub.Arguments[0] as AstGetSetSymbol;
+            Assert.IsNotNull(sub);
             Assert.AreEqual(1, sub.Arguments.Count);
             Assert.IsInstanceOfType(typeof(AstConstant), sub.Arguments[0]);
             Assert.AreEqual(55, (int) ((AstConstant) sub.Arguments[0]).Constant);
@@ -296,14 +301,14 @@ stloc    y
 ldloc    x
 ldloc    y
 add
-stloc    x"
-                );
+stloc    x
+");
         }
 
         [Test]
         public void IncrementDecrement()
         {
-            const string input1 =
+            _compile(
                 @"
 function func0
 {
@@ -315,16 +320,9 @@ function func0
     x = --y;
     x = 1+(++y)+1;
     
-}";
-            LoaderOptions opt = new LoaderOptions(engine, target);
-            opt.UseIndicesLocally = false;
-            Loader ldr = new Loader(opt);
-            ldr.LoadFromString(input1);
-            Assert.AreEqual(0, ldr.ErrorCount, "Errors during compilation.");
-
-            List<Instruction> actual = target.Functions["func0"].Code;
-            List<Instruction> expected =
-                getInstructions(
+}");
+   
+                _expect("func0",
                     @"
 //x = 1
 ldc.int  1
@@ -350,29 +348,16 @@ ldloc    y
 add
 ldc.int  1
 add
-stloc    x"
+dup      1
+stloc    x
+ret.value"
                     );
-
-            Console.Write(target.StoreInString());
-
-            Assert.AreEqual(
-                expected.Count, actual.Count, "Expected and actual instruction count missmatch.");
-
-            for (int i = 0; i < actual.Count; i++)
-                Assert.AreEqual(
-                    expected[i],
-                    actual[i],
-                    String.Format(
-                        "Instructions at address {0} do not match ({1} != {2})",
-                        i,
-                        expected[i],
-                        actual[i]));
         }
 
         [Test]
         public void ReturnStatements()
         {
-            const string input1 =
+            _compile(
                 @"
 function func0
 {
@@ -380,17 +365,10 @@ function func0
     var y;
     return;
     return x;
-    return = 6 + 7;
     break;
     continue;
-}";
+}");
 
-
-            LoaderOptions opt = new LoaderOptions(engine, target);
-            opt.UseIndicesLocally = false;
-            Loader ldr = new Loader(opt);
-            ldr.LoadFromString(input1);
-            Assert.AreEqual(0, ldr.ErrorCount, "Errors during compilation.");
 
             List<Instruction> actual = target.Functions["func0"].Code;
             List<Instruction> expected =
@@ -399,8 +377,6 @@ function func0
 ret.exit
 ldloc   x
 ret.value
-ldc.int 13
-ret.set
 ret.break
 ret.continue
 ");
@@ -475,7 +451,8 @@ function test\static
 @cmd.1      println
 
  ldc.string  ""Bye!""
-@sget.1      ""Object(\""System.Console\"")::WriteLine""
+ sget.1      ""Object(\""System.Console\"")::WriteLine""
+ ret.value
 ");
         }
 
@@ -905,6 +882,7 @@ function println(text) does ::Console.WriteLine(text);
 function main(str, idx)
 {
     println(str[idx]);
+    return null;
 }
 ");
             _expect(@"
@@ -912,6 +890,8 @@ function main(str, idx)
  ldloc   idx
  get.1   """"
 @func.1  println
+ ldc.null
+ ret.val
 ");
         }
 
@@ -1209,6 +1189,7 @@ function main
     print(""Hello"");
     println = ""Hello2"";
     echo(""The good old echo"");
+    return null;
 }
 ");
             _expect(
@@ -1219,6 +1200,8 @@ ldc.string  ""Hello2""
 @cmd.1       println
 ldc.string  ""The good old echo""
 @cmd.1      println
+ldc.null
+ret.val
 ");
         }
 
@@ -1243,7 +1226,7 @@ function main
             List<Instruction> code = target.Functions["main"].Code;
             Assert.IsTrue(code.Count > 26, "Resulting must be longer than 18 instructions");
             string enum1 = code[3].Id ?? "No_ID_at_3";
-            string enum2 = code[26].Id ?? "No_ID_at_26";
+            string enum2 = code[24].Id ?? "No_ID_at_24";
             _expect(
                 string.Format(
                     @"
@@ -1272,8 +1255,6 @@ label enum1\continue    ldloc   {0}
 label enum1\break       ldloc   {0}
                        @cmd.1   dispose
                         leave   endTry
-                        exception
-                        throw
 label endTry            nop+COMPLICATED
                                     
                         newobj.0    ""Object(\""StringBuilder\"")""
@@ -1297,8 +1278,6 @@ label enum2\continue    ldloc   {1}
                         ldloc   {1}
                        @cmd.1   dispose
                         leave   endTry2
-                        exception
-                        throw
 label endTry2
 ",
                     enum1,
@@ -1325,11 +1304,14 @@ declare command print;
 function main()
 {
     print=ekoe;
+    return null;
 }
 ");
             _expect(@"
 ldglob  ekoe
 @cmd.1   print
+ldc.null
+ret.val
 ");
         }
 
@@ -1354,6 +1336,8 @@ function main
     print = gprime;
     print = hprime;
     print = primes;
+
+    return null;
 }
 ");
             _expect(
@@ -1381,6 +1365,9 @@ indloc.0    hprime
 @cmd.1      print
 indloc.0    primes
 @cmd.1      print
+
+ldc.null
+ret.val
 ");
         }
 
@@ -1393,6 +1380,7 @@ function main(var arg)
 {   
     if(not arg is System::Text::StringBuilder) return false;
     if(arg.ToString is String) print = arg;
+    return null;
 }
 ");
             _expect(
@@ -1410,6 +1398,8 @@ jump.f      else2
 ldloc       arg
 @cmd.1      print
 label       else2
+ldc.null
+ret.val
 ");
         }
 
@@ -1432,15 +1422,15 @@ function main()
     var t = ( ) => 5861;
     var u = (x) => 2*x;
     var v = (x, var y, ref z) => z(x + y);
-    var w = x => { var d = x+2; return = d * 4; };
+    var w = x => { var d = x+2; return d * 4; };
 }
 ");
-            _expect(@"main\nested\0", @"ldc.int 5861 ret.value");
-            _expect(@"main\nested\1", @"ldc.int 2 ldloc x mul ret.value");
-            _expect(@"main\nested\2", @"ldloc z ldloc x ldloc y add tail.1");
+            _expect(@"main\0", @"ldc.int 5861 ret.value");
+            _expect(@"main\1", @"ldc.int 2 ldloc x mul ret.value");
+            _expect(@"main\2", @"ldloc z ldloc x ldloc y add tail.1");
             _expect(
-                @"main\nested\3",
-                @"var d ldloc x ldc.int 2 add stloc d ldloc d ldc.int 4 mul ret.set");
+                @"main\3",
+                @"var d ldloc x ldc.int 2 add stloc d ldloc d ldc.int 4 mul ret.val");
         }
 
         [Test]
@@ -1454,24 +1444,26 @@ function main()
     var a;
 
     var t = x => x + a;
-    var u = () => { ref a; a; };
+    var u = () => { ref a; a; return null; };
 }
 ");
 
-            _expect(@"main\nested\0", @"
+            _expect(@"main\0", @"
 ldloc   x
 ldloc   a
 add
 ret.value
 ");
-            PFunction func = target.Functions[@"main\nested\0"];
+            PFunction func = target.Functions[@"main\0"];
             Assert.AreEqual(1, func.Meta[PFunction.SharedNamesKey].List.Length);
             Assert.AreEqual("a", func.Meta[PFunction.SharedNamesKey].List[0].Text);
 
-            _expect(@"main\nested\1", @"
+            _expect(@"main\1", @"
 @indloc.0  a
+ldnull
+ret.val
 ");
-            func = target.Functions[@"main\nested\1"];
+            func = target.Functions[@"main\1"];
             Assert.AreEqual(1, func.Meta[PFunction.SharedNamesKey].List.Length);
             Assert.AreEqual("a", func.Meta[PFunction.SharedNamesKey].List[0].Text);
         }
@@ -1495,11 +1487,12 @@ function main
     function N2(x, ref f) = f(x);
 
     N2(5, x => 2*x);
+    return null;
 }
 ");
 
-            _expectSharedVariables(@"main\nested\N10", "a");
-            _expectSharedVariables(@"main\nested\N21");
+            _expectSharedVariables(@"main\N10", "a");
+            _expectSharedVariables(@"main\N21");
 
             _expect(
                 @"
@@ -1507,18 +1500,21 @@ var         a
 var         N1
 var         N2
 
-newclo      main\nested\N10
+newclo      main\N10
 stloc       N1
 
 ldc.int     4
 @indloc.1   N1
 
-newclo      main\nested\N21
+newclo      main\N21
 stloc       N2
 
 ldc.int     5
-newclo      main\nested\2
+newclo      main\2
 @indloc.2   N2
+
+ldc.null
+ret.val
 ");
         }
 
@@ -1539,18 +1535,20 @@ function main()
     fobj(); //x => 2+x
     f();    //x => 2*x
     fobj2();//x => 2*x
+
+    return null;
 }
 ");
             _expect(
                 @"
-newclo  main\nested\0
+newclo  main\0
 stloc   f
 ldloc   f
 stloc   fobj
 ldr.loc f
 stloc   fvar
-newclo  main\nested\1
-indloc.1 fvar
+newclo  main\1
+@indloc.1 fvar
 
 indloc.0 fvar
 stloc fobj2
@@ -1558,6 +1556,9 @@ stloc fobj2
 @indloc.0 fobj
 @indloc.0 f
 @indloc.0 fobj2
+
+ldc.null
+ret.val
 ");
         }
 
@@ -1575,14 +1576,15 @@ function main()
     println( fobj.(15) );           //Optimized
     println( gobj.() );             //Optimized
     println( ->fobj.Value.(10) );
+    return null;
 }
 ");
 
             _expect(
                 @"
-newclo      main\nested\0
+newclo      main\0
 stloc       fobj
-newclo      main\nested\1
+newclo      main\1
 stloc       gobj
 
 ldc.int     15
@@ -1597,6 +1599,9 @@ get.0       Value
 ldc.int     10
 indarg.1
 @cmd.1      println
+
+ldc.null
+ret.val
 ");
         }
 
@@ -1615,6 +1620,8 @@ function main()
     x =   a   + ""b"";
     x = ""a"" +   b   + ""c"";
     x = ""a"" +   b   +   c   + ""a"" + ""d"";
+
+    return null;
 }
 ");
 
@@ -1654,6 +1661,9 @@ ldloc       c
 ldc.string  ""ad""
 cmd.4       concat
 stloc       x
+
+ldc.null
+ret.val
 ");
         }
 
@@ -1667,6 +1677,7 @@ function main()
     var x; var a; var b; var c;
 
     x = ""I think the first parameter is $a, while the second seems like ($b) $c"";    
+    return null;
 }
 ");
             _expect(
@@ -1681,6 +1692,8 @@ ldc.string  "") ""
 ldloc       c
 cmd.6       concat
 stloc       x
+ldc.null
+ret.val
 ");
         }
 
@@ -1694,6 +1707,7 @@ function main()
     var x; var a; var b; var c;
 
     x = ""I think the first parameter is $(a) while the second seems like $(c.Substring(5,4).Length~String) ($(b.()))"";
+    return null;
 }
 ");
 
@@ -1715,6 +1729,8 @@ indloc      b
 ldc.string  "")""
 cmd.7       concat
 stloc       x
+ldc.null
+ret.val
 ");
         }
 
@@ -1726,6 +1742,7 @@ declare command a;
 function main()
 {
     print = ""AB$(a)CD"";
+    return null;
 }
 ");
             _expect(
@@ -1735,6 +1752,8 @@ cmd.0       a
 ldc.string  ""CD""
 cmd.3       concat
 @cmd.1      print
+ldc.null
+ret.val
 ");
         }
 
@@ -1861,6 +1880,8 @@ function main
             c 
         else 
             a-b;
+
+    return null;
 }
 ");
 
@@ -1900,6 +1921,9 @@ ldglob  b
 sub
 label   sz
 stloc   z
+
+ldc.null
+ret.val
 ");
         }
 
@@ -1933,12 +1957,15 @@ ret.value
 function main(a,b,c)
 {
     var str = new Structure<""a"",""b"",""r"",""c"">();
+    return null;
 }
 ");
             _expect(
                 @"
 newobj.0    ""Structure(\""a\"",\""b\"",\""r\"",\""c\"")""
 stloc       str
+ldnull
+ret.val
 ");
         }
 
@@ -1965,24 +1992,27 @@ function main()
 {
     var x = [];
     var y = [1,[4,5],8,[10],11];
+    return null;
 }
 ");
 
             _expect(
                 @"
 var x,y
-newobj.0 ""List""
+cmd.0   list
 stloc   x
 ldc.int 1
 ldc.int 4
 ldc.int 5
-sget.2  ""List::Create""
+cmd.2   list
 ldc.int 8
 ldc.int 10
-sget.1  ""List::Create""
+cmd.1   list
 ldc.int 11
-sget.5  ""List::Create""
+cmd.5   list
 stloc   y
+ldnull
+ret.val
 ");
         }
 
@@ -2006,6 +2036,7 @@ function main()
         foreach(var x in lst)
             yield x;
     };
+    return null;
 }
 ");
             _expect(
@@ -2017,9 +2048,11 @@ ldc.int     1
 ldc.int     5
 newcor.3
 stloc       oneToFive
-newclo      main\nested\0
+newclo      main\0
 newcor.0
-stloc       even      
+stloc       even     
+ldnull
+ret.val 
 ");
 
             _expect(
@@ -2064,11 +2097,14 @@ function main()
 {
     println(A); //Refers to the global variable.
                 //Due to a bug, the local variable in 'legalFunction' hides the global 'A'.
+    return null;
 }
 ");
             _expect(@"
 ldglob  A
 @cmd.1  println
+ldnull
+ret.val
 ");
         }
 
@@ -2098,27 +2134,27 @@ function main()
             _expect(
                 @"
 var skip
-newclo  main\nested\skip0
+newclo  main\skip0
 stloc   skip
 ldr.func where
 ldc.int 1
 ldc.int 2
 ldc.int 3
-sget.3  ""List::Create""
+cmd.3   list
 ldc.int 1
 indloc.2 skip
-newclo  main\nested\1
+newclo  main\1
 tail.2
 ");
 
             _expect("where", @"
-newclo  where\nested\0
+newclo  where\0
 newcor.0
 ret.value
 ");
             _expect(
-                @"main\nested\skip0", @"
-newclo  main\nested\skip0\nested\0
+                @"main\skip0", @"
+newclo  main\skip0\0
 newcor.0
 ret.value
 ");
@@ -2285,9 +2321,6 @@ label beginFinally
                     ldloc   handle
                    @func.1  closeHandle
                     leave   endTry
-label beginCatch
-                    exception
-                    throw
 label endTry
 ");
         }
@@ -2302,6 +2335,7 @@ function main()
     throw ""There must be a mistake!"";
     throw new System::Exception(""There IS a mistake!"");
     throw 3;
+    return null;
 }
 ");
             _expect(
@@ -2315,6 +2349,9 @@ throw
 
 ldc.int     3
 throw
+
+ldnull
+ret.value
 ");
         }
 
@@ -2337,7 +2374,7 @@ function main
 ");
 
             List<Instruction> code = target.Functions["main"].Code;
-            Assert.IsTrue(code.Count > 6, "Resulting must be longer than 18 instructions");
+            Assert.IsTrue(code.Count > 6, "Resulting must be longer than 6 instructions");
             string using1 = code[6].Id ?? "No_ID_at_6";
 
             _expect(String.Format(
@@ -2357,9 +2394,6 @@ label beginFinally
                 ldloc   {0}
                @cmd.1   dispose
                 leave   endTry
-label beginCatch
-                exception
-                throw
 label endTry                    
 ",using1));
         }
@@ -2376,6 +2410,8 @@ function main()
     x = a: b;
     y = a: b: c;
     z = (a: b): (c: a): b;
+
+    return null;
 }
 ");
 
@@ -2405,6 +2441,9 @@ ldloc   b
 cmd.2   pair
 cmd.2   pair
 stloc   z
+
+ldnull
+ret.val
 ");
         }
 
@@ -2437,6 +2476,8 @@ function main()
             ""Age"": 53
         }
     };
+
+    return null;
 }
 ");
 
@@ -2496,6 +2537,9 @@ cmd.2   pair
 
 sget.2  ""Hash::Create""
 stloc   people
+
+ldnull
+ret.value
 ");
         }
 
@@ -2512,6 +2556,8 @@ function main()
         ""orange"": 6,
         ""apple"": 8
     ];
+
+    return null;
 }
 ");
             _expect(
@@ -2530,9 +2576,12 @@ ldc.string  ""apple""
 ldc.int 8
 cmd.2   pair
 
-sget.3  ""List::Create""
+cmd.3  list
 
 stloc lst
+
+ldnull
+ret.val
 ");
         }
 
@@ -2540,13 +2589,20 @@ stloc lst
         public void ReferenceDeclarationLiteral()
         {
             _compile(@"
-function main does print = ref h;
+function main
+{
+    print = ref h;
+    return null;
+}
 ");
 
             _expect(@"
 var h
 ldr.loc h
 @cmd.1  print
+
+ldnull
+ret.val
 ");
         }
 
@@ -2558,7 +2614,11 @@ var g;
 
 { g = 4; }
 
-function main does println = g;
+function main does
+{
+    println = g;
+    return null;
+}
 ");
 
         }
@@ -2573,7 +2633,8 @@ declare var a, b, c;
 function main does
     declare var g; and
     g = a or b and c; and
-    println(g);
+    println(g); and
+    return null;
 ");
 
             _expect(
@@ -2590,6 +2651,9 @@ label tr    ldc.bool    true
 label set   stglob      g
             ldglob      g
             @cmd.1      println
+
+            ldnull
+            ret.val
 ");
         }
 
@@ -2603,6 +2667,7 @@ function main
 {
     var eng = asm ( ldc.int 6 ldc.int 8 add );
     var funcs = asm ( ldr.app get.0 Functions );
+    return null;
 }
 ");
 
@@ -2618,6 +2683,9 @@ stloc eng
 ldr.app
 get.0 Functions
 stloc funcs
+
+ldnull
+ret.val
 ");
         }
 
@@ -2632,6 +2700,8 @@ function main()
 
     var x = a ?? b;
     var y = a + b ?? (a ? b ?? c : c ) ?? null ?? c;
+
+    return null;
 }
 ");
 
@@ -2641,7 +2711,7 @@ var a,b,c,x,y
 
 ldloc   a
 dup     1
-check.const Null
+check.null
 jump.f  endc0
 pop     1
 ldloc   b
@@ -2652,14 +2722,14 @@ stloc   x
                 ldloc   b
                 add
                 dup     1
-                check.const Null
+                check.null
                 jump.f  endc1
                 pop     1
                 ldloc   a
                 jump.f  else
                 ldloc   b
                 dup     1
-                check.const Null
+                check.null
                 jump.f  endc2
                 pop     1
                 ldloc   c
@@ -2667,12 +2737,15 @@ stloc   x
 label   else    ldloc   c                
 label   endif
 label   endc2   dup     1
-                check.const Null
+                check.null
                 jump.f  endc1
                 pop     1
                 ldloc   c
                 
 label   endc1   stloc   y
+
+                ldnull
+                ret.val                
 ");
         }
 
@@ -2691,6 +2764,8 @@ function main()
         a = b;
 
     c ??= b;
+
+    return null;
 }
 ");
 
@@ -2711,6 +2786,8 @@ jump.f  endif1
 ldloc   b
 stloc   c
 label   endif1
+ldnull
+ret.val
 ");
         }
 
@@ -2730,22 +2807,22 @@ function main()
     var j = 7;
     var b = until( j == 100) 
             {
-                yield = j/2;
+                var y = j/2;
                 j*=4;
-                yield;
+                yield y;
             };
+    return null;
 }
 ");
 
             List<Instruction> code = target.Functions["main"].Code;
-            Assert.IsTrue(code.Count > 3, "Resulting must be longer than 3 instructions");
+            Assert.IsTrue(code.Count > 20, "Resulting must be longer than 20 instructions");
             string lst1Var = code[1].Id ?? "No_ID_at_1";
             string lst2Var = code[20].Id ?? "No_ID_at_20";
-            string tmp2Var = code[25].Id ?? "No_ID_at_25";
             _expect(
                 String.Format(
                     @"
-var a,i,{0},b,j,{1},{2}
+var a,i,{0},b,j,{1},y
                     sget.0  ""List::Create""
                     stloc   {0}
                     ldc.int 5
@@ -2772,13 +2849,13 @@ label end0          ldloc   {0}
 label begin1        ldloc   j
                     ldc.int 2
                     div
-                    stloc   {2}
+                    stloc   y
                     ldloc   j
                     ldc.int 4
                     mul
                     stloc   j
                     ldloc   {1}
-                    ldloc   {2}
+                    ldloc   y
                     set.1   """"
 label continue1     ldloc   j
                     ldc.int 100
@@ -2787,10 +2864,11 @@ label continue1     ldloc   j
 label end1          ldloc   {1}
                     stloc   b
                     
+                    ldnull
+                    ret.val
 ",
                     lst1Var,
-                    lst2Var,
-                    tmp2Var));
+                    lst2Var));
         }
 
         [Test]
@@ -2803,6 +2881,7 @@ function main()
     print << 4;
     println << (6,9);
     call << (concat << (3,7), 15);
+    return null;
 }
 ");
 
@@ -2818,6 +2897,8 @@ ldc.int 7
 cmd.2   concat
 ldc.int 15
 @cmd.2  call  
+ldnull
+ret.val
 ");
         }
 
@@ -2833,6 +2914,7 @@ function main()
     (6,9) >> println;
     ( 3 >> concat(7), 15 ) >> call;
     println = 5 >> call;
+    return null;
 }   
 ");
 
@@ -2851,6 +2933,8 @@ ldc.int 15
 ldc.int 5
 cmd.1   call
 @cmd.1  println
+ldnull
+ret.val
 ");
         }
 
@@ -2864,6 +2948,7 @@ function main(x)
     var r;
     r = x >> call << 5;
     r = x * 8 >> call << 5: x;
+    return null;
 }
 ");
 
@@ -2883,6 +2968,9 @@ ldloc   x
 cmd.2   pair
 cmd.2   call
 stloc   r
+
+ldnull
+ret.val
 ");
         }
 
@@ -2999,6 +3087,8 @@ function main()
     var e = s.M = d;
     var f = System::Console.WriteLine = 5;
     var g = f.(8) = a;
+    
+    return null;
 }
 ");
 
@@ -3035,8 +3125,11 @@ ldc.int 8
 ldloc   a
 dup     1
 rot.2,3
-indloc.2 f
+@indloc.2 f
 stloc   g
+
+ldnull
+ret.val
 ");
         }
 
@@ -3050,6 +3143,8 @@ function main()
     var b = a *= 5;
     var c ~= T;
     var d = b ??= a;
+
+    return null;
 }
 ");
             _expect(@"
@@ -3075,6 +3170,9 @@ var a,b,c,d
             jump    end
 label   el  ldloc   b
 label end   stloc   d
+    
+            ldnull
+            ret.val
 ");
         }
 
@@ -3111,6 +3209,62 @@ stloc   r
 stloc   n
 
 jump    0
+");
+        }
+
+        [Test]
+        public void ComplexModifyAssign()
+        {
+            _compile(@"
+function main()
+{
+    var a;
+    var b;
+    a.Member -= b;
+    return null;
+}
+");
+
+            _expect(@"
+var a,b
+ldloc   a
+ldloc   a
+get.0   Member
+ldloc   b
+sub
+//dup 1
+set.1   Member
+//rot.2,3
+ldc.null
+ret.value
+");
+        }
+
+        [Test]
+        public void AppendRightStatement()
+        {
+            _compile(@"
+function main(lst)
+{
+    lst >>
+        where(x => x > 5) >>
+        foldl((a,b) => a + b, 1);
+    return null;
+}
+");
+
+            _expect(@"
+var lst
+
+newclo  main\1
+ldc.int 1
+newclo  main\0
+ldloc   lst
+cmd.2   where
+@cmd.3   foldl
+
+ldnull
+ret.val
 ");
         }
     }

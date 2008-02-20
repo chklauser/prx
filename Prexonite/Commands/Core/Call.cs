@@ -43,8 +43,18 @@ namespace Prexonite.Commands.Core
     /// </para>
     /// </remarks>
     /// <seealso cref="IIndirectCall"/>
-    public class Call : StackAwareCommand
+    public sealed class Call : StackAwareCommand
     {
+        private Call()
+        {
+        }
+
+        private static Call _instance = new Call();
+
+        public static Call Instance
+        {
+            get { return _instance; }
+        }   
 
         /// <summary>
         /// Implementation of (ref f, arg1, arg2, arg3, ..., argn) => f(arg1, arg2, arg3, ..., argn);

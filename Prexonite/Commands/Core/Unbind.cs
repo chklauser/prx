@@ -25,6 +25,8 @@
 
 using System;
 using System.Collections.Generic;
+using System.Reflection.Emit;
+using Prexonite.Compiler.Cil;
 using Prexonite.Types;
 
 namespace Prexonite.Commands.Core
@@ -61,8 +63,19 @@ namespace Prexonite.Commands.Core
     /// <para>Note that the value of the variable remains untouched. 
     /// The <see cref="PValue"/> object reference is just copied to 
     /// the new memory location.</para></remarks>
-    public class Unbind : PCommand
+    public sealed class Unbind : PCommand, ICilCompilerAware
     {
+        private Unbind()
+        {
+        }
+
+        private static readonly Unbind _instance = new Unbind();
+
+        public static Unbind Instance
+        {
+            get { return _instance; }
+        }
+
         /// <summary>
         /// Executes the unbind command on each of the arguments supplied.
         /// </summary>
@@ -125,7 +138,7 @@ namespace Prexonite.Commands.Core
             }
             else
             {
-                id = arg.CallToString(fctx);
+                throw new PrexoniteException("Unbind requires variable references as arguments.");
             }
 
             PVariable existing;
@@ -147,5 +160,19 @@ namespace Prexonite.Commands.Core
         {
             get { return false; }
         }
+
+        #region ICilCompilerAware Members
+
+        public CompilationFlags CheckQualification(Instruction ins)
+        {
+            return CompilationFlags.IsIncompatible;  
+        }
+
+        public void ImplementInCil(CompilerState state, Instruction ins)
+        {
+            throw new NotSupportedException(); 
+        }
+
+        #endregion
     }
 }

@@ -1,7 +1,6 @@
 using System;
 using System.Collections.Generic;
 using System.Diagnostics;
-using System.Text;
 using Prexonite;
 
 namespace Prx.Benchmarking
@@ -22,14 +21,14 @@ namespace Prx.Benchmarking
             get { return _measurements; }
         }
 
-        private List<Measurement> _measurements = new List<Measurement>();
+        private readonly List<Measurement> _measurements = new List<Measurement>();
 
         public long GetAverageRawMilliseconds()
         {
             ulong sum = 0;
             foreach (Measurement m in _measurements)
                 sum += (ulong)m.RawMilliseconds;
-            return (long) Math.Round(((double)sum/(double)_measurements.Count),MidpointRounding.AwayFromZero);
+            return (long) Math.Round((sum/(double)_measurements.Count),MidpointRounding.AwayFromZero);
         }
 
         internal BenchmarkEntry(Benchmark parent, PFunction function)
@@ -113,11 +112,10 @@ namespace Prx.Benchmarking
                     Console.WriteLine("\tIterations:\t{0}",iterations);
             }
 
-            FunctionContext fctx =
-                    Function.CreateFunctionContext(Parent.Machine, new PValue[] { iterations });
+            PValue[] argv = new PValue[] { iterations };
             sw.Reset();
             sw.Start();
-            Parent.Machine.Process(fctx);
+            Function.Run(Parent.Machine, argv);
             sw.Stop();
 
             long raw = sw.ElapsedMilliseconds;

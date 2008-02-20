@@ -35,7 +35,7 @@ namespace Prexonite.Types
     {
         #region Class
 
-        private IEnumerator<PValue> _baseEnumerator;
+        private readonly IEnumerator<PValue> _baseEnumerator;
 
         /// <summary>
         /// Creates a new proxy for the IEnumerator of the supplied <paramref name="enumerable"/>.
@@ -73,12 +73,24 @@ namespace Prexonite.Types
 
         #region IDisposable Members
 
+        // Dispose() calls Dispose(true)
         /// <summary>
-        /// Disposes the base enumerator
+        /// Releases all managed and unmanaged resources held by this instance.
         /// </summary>
         public void Dispose()
         {
-            _baseEnumerator.Dispose();
+            Dispose(true);
+            GC.SuppressFinalize(this);
+        }
+
+        // The bulk of the clean-up code is implemented in Dispose(bool)
+        protected virtual void Dispose(bool disposing)
+        {
+            if(!disposing)
+                return;
+            // free managed resources 
+            if(_baseEnumerator != null)
+                _baseEnumerator.Dispose();
         }
 
         #endregion
@@ -121,6 +133,7 @@ namespace Prexonite.Types
         /// </summary>
         /// <param name="sctx">The stack context in which to call the memeber.</param>
         /// <param name="args">The array of arguments to be passed to the member call.</param>
+        /// <param name="call">The call method. (ignored)</param>
         /// <param name="id">The name of the member to call.</param>
         /// <param name="result">The PValue returned by the member call.</param>
         /// <returns>True if the call was successful; false otherwise.</returns>

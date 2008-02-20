@@ -81,7 +81,10 @@ namespace Prx.Tests
 
         protected internal void _expect(string functionId, string assemblerCode)
         {
-            List<Instruction> actual = target.Functions[functionId].Code;
+            PFunction func = target.Functions[functionId];
+            if(func == null)
+                throw new ArgumentException(string.Format("No function with the id {0} exists", functionId)); 
+            List<Instruction> actual = func.Code;
             _expect(actual, assemblerCode);
         }
 

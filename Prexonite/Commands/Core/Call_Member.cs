@@ -33,8 +33,19 @@ namespace Prexonite.Commands.Core
     /// <summary>
     /// Implementation of (obj, [isSet, ] id, arg1, arg2, arg3, ..., argn) => obj.id(arg1, arg2, arg3, ..., argn);
     /// </summary>
-    public class Call_Member : PCommand
+    public sealed class Call_Member : PCommand
     {
+        private Call_Member()
+        {
+        }
+
+        private static Call_Member _instance = new Call_Member();
+
+        public static Call_Member Instance
+        {
+            get { return _instance; }
+        }
+
         /// <summary>
         /// Implementation of (obj, [isSet, ] id, arg1, arg2, arg3, ..., argn) => obj.id(arg1, arg2, arg3, ..., argn);
         /// </summary>

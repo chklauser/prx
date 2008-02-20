@@ -160,24 +160,24 @@ namespace Prexonite.Compiler.Ast
                     {
                         //The get/set fallback
                         complex = complex.GetCopy();
-                        complex.SetModifier = Operator ==
+                        AstModifyingAssignment assignment = new AstModifyingAssignment(complex.File, complex.Line, complex.Column,Operator ==
                                               UnaryOperator.PostIncrement ||
                                               Operator == UnaryOperator.PreIncrement
                                                   ?
                                               BinaryOperator.Addition
-                                                  : BinaryOperator.Subtraction;
+                                                  : BinaryOperator.Subtraction,complex);
                         if (complex.Call == PCall.Get)
                             complex.Arguments.Add(new AstConstant(File, Line, Column, 1));
                         else
                             complex.Arguments[complex.Arguments.Count - 1] =
                                 new AstConstant(File, Line, Column, 1);
                         complex.Call = PCall.Set;
-                        complex.EmitCode(target);
+                        assignment.EmitCode(target);
                     }
                     else
                         throw new PrexoniteException(
                             "Node of type " + Operand.GetType() +
-                            " does not support decrement operators.");
+                            " does not support increment/decrement operators.");
                     break;
                 case UnaryOperator.UnaryNegation:
                 case UnaryOperator.LogicalNot:

@@ -31,6 +31,7 @@ using System.IO;
 using System.Text;
 using Prexonite.Commands;
 using Prexonite.Compiler.Ast;
+using Prexonite.Compiler.Cil;
 using Prexonite.Helper;
 using Prexonite.Types;
 using NoDebug = System.Diagnostics.DebuggerNonUserCodeAttribute;
@@ -869,5 +870,14 @@ namespace Prexonite.Compiler
         }
 
         #endregion
+
+        public const string CilHintsKey = "cilhints";
+
+        public const string TailCallHintKey = "tail";
+        public const int TailCallHintLength = 5;
+        public const int TailCallHintReferenceIndex = 1;
+        public const int TailCallHintCallIndex = 2;
+        public const int TailCallHintTypeIndex = 3;
+        public const int TailCallHintSymbolIndex = 4;
     }
 }

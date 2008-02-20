@@ -29,35 +29,35 @@ namespace Prexonite.Compiler
     [NoDebug]
     public class BlockLabels
     {
-        private string _continueLabel;
+        private readonly string _continueLabel;
 
         public string ContinueLabel
         {
             get { return _continueLabel; }
         }
 
-        private string _breakLabel;
+        private readonly string _breakLabel;
 
         public string BreakLabel
         {
             get { return _breakLabel; }
         }
 
-        private string _beginLabel;
+        private readonly string _beginLabel;
 
         public string BeginLabel
         {
             get { return _beginLabel; }
         }
 
-        private string _prefix;
+        private readonly string _prefix;
 
         public string Prefix
         {
             get { return _prefix.Substring(0, _prefix.Length - 1); }
         }
 
-        private string _uid;
+        private readonly string _uid;
 
         public string Uid
         {

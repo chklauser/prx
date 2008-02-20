@@ -23,7 +23,7 @@ function cmp_values(a,b) = cmp(a.Value,b.Value);
             
     
 //Creates a wrapper around an object that intercepts calls to dispose.
-function create_terminator (obj, termination)
+function create_terminator (obj, termination) [is volatile;]
 {
     function Call(this,id)
     {

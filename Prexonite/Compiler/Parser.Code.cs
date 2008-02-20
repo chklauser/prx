@@ -625,19 +625,19 @@ namespace Prexonite.Compiler
 
         #region Assembler
 
-        [NoDebug()]
+        [NoDebug]
         public void addInstruction(AstBlock block, Instruction ins)
         {
             block.Add(new AstAsmInstruction(this, ins));
         }
 
-        [NoDebug()]
+        [NoDebug]
         public void addLabel(AstBlock block, string label)
         {
             block.Statements.Add(new AstExplicitLabel(this, label));
         }
 
-        [NoDebug()]
+        [NoDebug]
         private bool isAsmInstruction(string insBase, string detail) //LL(4)
         {
             scanner.ResetPeek();
@@ -660,31 +660,31 @@ namespace Prexonite.Compiler
                 );
         }
 
-        [NoDebug()]
+        [NoDebug]
         private bool isInIntegerGroup()
         {
             return peekIsOneOf(asmIntegerGroup);
         }
 
-        [NoDebug()]
+        [NoDebug]
         private bool isInJumpGroup()
         {
             return peekIsOneOf(asmJumpGroup);
         }
 
-        //[NoDebug()]
+        [NoDebug]
         private bool isInNullGroup()
         {
             return peekIsOneOf(asmNullGroup);
         }
 
-        [NoDebug()]
+        [NoDebug]
         private bool isInIdGroup()
         {
             return peekIsOneOf(asmIdGroup);
         }
 
-        [NoDebug()]
+        [NoDebug]
         private bool isInIdArgGroup()
         {
             return peekIsOneOf(asmIdArgGroup);
@@ -696,7 +696,7 @@ namespace Prexonite.Compiler
             return peekIsOneOf(asmArgGroup);
         }
 
-        [NoDebug()]
+        [NoDebug]
         private bool isInQualidArgGroup()
         {
             return peekIsOneOf(asmQualidArgGroup);
@@ -715,15 +715,15 @@ namespace Prexonite.Compiler
             return false;
         }
 
-        private SymbolTable<OpCode> _tableOfInstructionNames = new SymbolTable<OpCode>(60);
+        private readonly SymbolTable<OpCode> _tableOfInstructionNames = new SymbolTable<OpCode>(60);
 
-        [NoDebug()]
+        [NoDebug]
         private void _createTableOfInstructions()
         {
             SymbolTable<OpCode> tab = _tableOfInstructionNames;
             //Add original names
             foreach (string code in Enum.GetNames(typeof(OpCode)))
-                tab.Add(code, (OpCode) Enum.Parse(typeof(OpCode), code));
+                tab.Add(code.Replace('_','.'), (OpCode) Enum.Parse(typeof(OpCode), code));
 
             //Add aliases -- NOTE: You'll also have to add them to the respective groups
             tab.Add("new", OpCode.newobj);
@@ -744,12 +744,13 @@ namespace Prexonite.Compiler
             tab.Add("inda", OpCode.indarg);
             tab.Add("cor", OpCode.newcor);
             tab.Add("exception", OpCode.exc);
+            tab.Add("ldnull",OpCode.ldc_null);
         }
 
-        [NoDebug()]
+        //[NoDebug]
         private OpCode getOpCode(string insBase, string detail)
         {
-            string combined = insBase + (detail == null ? "" : "_" + detail);
+            string combined = insBase + (detail == null ? "" : "." + detail);
             return _tableOfInstructionNames.GetDefault(combined, OpCode.invalid);
         }
 
@@ -781,6 +782,7 @@ namespace Prexonite.Compiler
         private readonly string[,] asmNullGroup =
             {
                 {"ldc", "null"},
+                {"ldnull",null},
                 {"neg", null},
                 {"not", null},
                 {"add", null},

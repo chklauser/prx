@@ -2,12 +2,24 @@ using System;
 using System.Collections.Generic;
 using System.Text;
 using Prexonite.Commands.List;
+using Prexonite.Compiler.Cil;
 using Prexonite.Types;
 
 namespace Prexonite.Commands.Core
 {
-    public class Call_CC : StackAwareCommand
+    public sealed class Call_CC : StackAwareCommand, ICilCompilerAware
     {
+        private Call_CC()
+        {
+        }
+
+        private static readonly Call_CC _instance = new Call_CC();
+
+        public static Call_CC Instance
+        {
+            get { return _instance; }
+        }
+
         /// <summary>
         /// A flag indicating whether the command acts like a pure function.
         /// </summary>
@@ -89,5 +101,19 @@ namespace Prexonite.Commands.Core
             //Insert the continuation as the first argument
             iargs.Insert(0, sctx.CreateNativePValue(new Continuation(fctx)));
         }
+
+        #region ICilCompilerAware Members
+
+        CompilationFlags ICilCompilerAware.CheckQualification(Instruction ins)
+        {
+            return CompilationFlags.IsIncompatible;
+        }
+
+        void ICilCompilerAware.ImplementInCil(CompilerState state, Instruction ins)
+        {
+            throw new NotImplementedException(); 
+        }
+
+        #endregion
     }
 }

@@ -276,6 +276,15 @@ namespace Prexonite.Compiler.Ast
 
             //Return the list
             target.EmitLoadLocal(lstVar);
+
+            //Mark the function as volatile
+            //  Using loop expressions with a non-empty stack causes verification errors in CIL implementations because of
+            //      - backward branch constraints
+            //      - guarded blocks (which require an empty stack on entry an exit)
+            //  Possible fix
+            //      - automatically export the loop into a separate function/closure
+            target.Function.Meta[PFunction.VolatileKey] = true;
+            target.Function.Meta[PFunction.DeficiencyKey] = "Uses loop expression";
         }
     }
 }

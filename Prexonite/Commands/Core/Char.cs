@@ -5,8 +5,19 @@ using Prexonite.Types;
 
 namespace Prexonite.Commands.Core
 {
-    public class Char : PCommand
+    public sealed class Char : PCommand
     {
+        private Char()
+        {
+        }
+
+        private static Char _instance = new Char();
+
+        public static Char Instance
+        {
+            get { return _instance; }
+        }
+
         /// <summary>
         /// A flag indicating whether the command acts like a pure function.
         /// </summary>

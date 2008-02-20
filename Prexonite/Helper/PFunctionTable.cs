@@ -33,12 +33,11 @@ namespace Prexonite
     /// Wraps a SymbolicTable&lt;PFunction&gt; to ensure that a function is stored with it's Id as the key.
     /// </summary>
     [NoDebug]
-    public class PFunctionTable : ICollection<PFunction>,
-                                  IEnumerable<PFunction>
+    public class PFunctionTable : ICollection<PFunction>
     {
         #region table
 
-        private SymbolTable<PFunction> _table;
+        private readonly SymbolTable<PFunction> _table;
 
         public PFunctionTable()
         {

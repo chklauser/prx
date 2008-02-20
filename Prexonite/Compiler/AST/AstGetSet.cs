@@ -22,7 +22,6 @@
  */
 
 using System;
-using System.Collections;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.Text;
@@ -35,12 +34,12 @@ namespace Prexonite.Compiler.Ast
                                       IAstHasExpressions
     {
 
-        private List<IAstExpression> _arguments = new List<IAstExpression>();
+        private readonly List<IAstExpression> _arguments = new List<IAstExpression>();
         private readonly ArgumentsProxy _proxy;
 
         public ArgumentsProxy Arguments
         {
-            [DebuggerNonUserCode()]
+            [DebuggerNonUserCode]
             get { return _proxy; }
         }
 
@@ -54,7 +53,7 @@ namespace Prexonite.Compiler.Ast
         #endregion
 
         public PCall Call;
-        public BinaryOperator SetModifier;
+
 
         protected AstGetSet(string file, int line, int column, PCall call)
             : base(file, line, column)
@@ -75,14 +74,13 @@ namespace Prexonite.Compiler.Ast
             expr = null;
 
             //Optimize arguments
-            IAstExpression oArg;
             foreach (IAstExpression arg in _arguments.ToArray())
             {
                 if (arg == null)
                     throw new PrexoniteException(
                         "Invalid (null) argument in GetSet node (" + ToString() +
                         ") detected at position " + _arguments.IndexOf(arg) + ".");
-                oArg = GetOptimizedNode(target, arg);
+                IAstExpression oArg = GetOptimizedNode(target, arg);
                 if (!ReferenceEquals(oArg, arg))
                 {
                     int idx = _arguments.IndexOf(arg);
@@ -94,7 +92,7 @@ namespace Prexonite.Compiler.Ast
             return false;
         }
 
-        protected virtual int DefaultAdditionalArguments
+        public virtual int DefaultAdditionalArguments
         {
             get
             {
@@ -132,95 +130,15 @@ namespace Prexonite.Compiler.Ast
 
         protected virtual void EmitCode(CompilerTarget target, bool justEffect)
         {
-            switch (Call)
+            if (Call == PCall.Get)
             {
-                case PCall.Get:
-                    EmitArguments(target);
-                    EmitGetCode(target, justEffect);
-                    break;
-                case PCall.Set:
-                    if (SetModifier == BinaryOperator.Coalescence)
-                    {
-                        AstGetSet assignment = GetCopy();
-                        assignment.SetModifier = BinaryOperator.None;
-
-                        AstGetSet getVariation = GetCopy();
-                        getVariation.Call = PCall.Get;
-                        getVariation.Arguments.RemoveAt(getVariation.Arguments.Count - 1);
-
-                        AstTypecheck check =
-                            new AstTypecheck(
-                                File,
-                                Line,
-                                Column,
-                                getVariation,
-                                new AstConstantTypeExpression(File, Line, Column, "Null"));
-
-                        if (justEffect)
-                        {
-                            //Create a traditional condition
-                            AstCondition cond = new AstCondition(File, Line, Column, check);
-                            cond.IfBlock.Add(assignment);
-                            cond.EmitCode(target);
-                        }
-                        else
-                        {
-                            //Create a conditional expression
-                            AstConditionalExpression cond = new AstConditionalExpression(File, Line, Column, check);
-                            cond.IfExpression = assignment;
-                            cond.ElseExpression = getVariation;
-                            cond.EmitCode(target);
-                        }
-                    }
-                    else if(SetModifier == BinaryOperator.Cast)
-                    {
-                        // a(x,y) ~= T         //a(x,y,~T)~=
-                        //to
-                        // a(x,y) = a(x,y)~T   //a(x,y,a(x,y)~T)=
-                        AstGetSet assignment = GetCopy(); //a'(x,y,~T)~=
-                        assignment.SetModifier = BinaryOperator.None; //a'(x,y,~T)=
-
-                        AstGetSet getVariation = assignment.GetCopy(); //a''(x,y,~T)=
-                        getVariation.Call = PCall.Get; //a''(x,y,~String)
-                        getVariation.Arguments.RemoveAt(getVariation.Arguments.Count - 1); //a''(x,y)
-
-                        IAstType T = assignment.Arguments[assignment.Arguments.Count -1] as IAstType; //~T
-                        if (T == null)
-                            throw new PrexoniteException(
-                                String.Format(
-                                    "The right hand side of a cast operation must be a type expression (in {0} on line {1}).",
-                                    File,
-                                    Line));
-                        assignment.Arguments[assignment.Arguments.Count -1] =
-                            new AstTypecast(File, Line, Column, getVariation, T); //a(x,y,a(x,y)~T)=
-                        assignment.EmitCode(target, justEffect);
-                    }
-                    else if (SetModifier != BinaryOperator.None)
-                    {
-                        //Without more detailed information, a Set call with a set modifier has to be expressed using 
-                        //  conventional set call and binary operator nodes.
-                        //Note that code generator for this original node is completely bypassed.
-                        AstGetSet assignment = GetCopy();
-                        assignment.SetModifier = BinaryOperator.None;
-                        AstGetSet getVariation = GetCopy();
-                        getVariation.Call = PCall.Get;
-                        getVariation._arguments.RemoveAt(getVariation._arguments.Count - 1);
-                        assignment._arguments[assignment._arguments.Count - 1] =
-                            new AstBinaryOperator(
-                                File,
-                                Line,
-                                Column,
-                                getVariation,
-                                SetModifier,
-                                _arguments[_arguments.Count - 1]);
-                        assignment.EmitCode(target, justEffect);
-                    }
-                    else
-                    {
-                        EmitArguments(target,!justEffect);
-                        EmitSetCode(target);
-                    }
-                    break;
+                EmitArguments(target);
+                EmitGetCode(target, justEffect);
+            }
+            else
+            {
+                EmitArguments(target, !justEffect);
+                EmitSetCode(target);
             }
         }
 
@@ -240,14 +158,11 @@ namespace Prexonite.Compiler.Ast
         {
             string typeName;
             return String.Format(
-                "{0}{2}: {1}",
+                "{0}: {1}",
                 Enum.GetName(typeof(PCall), Call).ToLowerInvariant(),
                 (typeName = GetType().Name).StartsWith("AstGetSet")
                     ? typeName.Substring(9)
-                    : typeName,
-                SetModifier != BinaryOperator.None
-                    ? "(" + Enum.GetName(typeof(BinaryOperator), SetModifier) + ")"
-                    : "");
+                    : typeName);
         }
 
         protected string ArgumentsToString()

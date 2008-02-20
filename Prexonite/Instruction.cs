@@ -33,7 +33,7 @@ namespace Prexonite
     /// Represents a single Prexonite VM instruction
     /// </summary>
     //[NoDebug]
-    public class Instruction
+    public class Instruction : ICloneable
     {
         /// <summary>
         /// The instructions opcode. Determines the VMs behaviour at runtime.
@@ -299,7 +299,7 @@ namespace Prexonite
             return new Instruction(OpCode.indarg, arguments, null, justEffect);
         }
 
-        public static Instruction CreateIndLocI(int index, int arguments)
+        public static Instruction CreateIndLocI(int index, int arguments, bool justEffect)
         {
             if (index > ushort.MaxValue)
                 throw new ArgumentOutOfRangeException(
@@ -310,7 +310,7 @@ namespace Prexonite
             ushort idx = (ushort)index;
             ushort argc = (ushort)arguments;
 
-            return new Instruction(Prexonite.OpCode.indloci, (argc << 16) | idx);
+            return new Instruction(Prexonite.OpCode.indloci, (argc << 16) | idx,null,justEffect);
         }
 
         #endregion
@@ -481,8 +481,11 @@ namespace Prexonite
                     buffer.Append(Arguments);
                     break;
                 case OpCode.indloci:
-                    ushort index = (ushort) (Arguments & ushort.MaxValue);
-                    ushort argc = (ushort) ((Arguments & (ushort.MaxValue << 16)) >> 16);
+                    if (JustEffect)
+                        buffer.Append('@');
+                    int index;
+                    int argc;
+                    DecodeIndLocIndex(out index, out argc);
                     buffer.Append("indloci.");
                     buffer.Append(argc);
                     buffer.Append(" ");
@@ -641,6 +644,14 @@ namespace Prexonite
             }
         }
 
+        public void DecodeIndLocIndex(out int index, out int argc)
+        {
+            if (OpCode != Prexonite.OpCode.indloci)
+                throw new ArgumentException("Can only decode indloci instructions.");
+            index = (Arguments & ushort.MaxValue);
+            argc =  ((Arguments & (ushort.MaxValue << 16)) >> 16);
+        }
+
         #endregion
 
         #region Equality
@@ -714,8 +725,9 @@ namespace Prexonite
                     case OpCode.stloci:
                     case OpCode.incloci:
                     case OpCode.decloci:
-                    case OpCode.indloci: //two short int values encoded in one int.
                         return Arguments == ins.Arguments;
+                    case OpCode.indloci: //two short int values encoded in one int.
+                        return Arguments == ins.Arguments && JustEffect == ins.JustEffect;
                         //JUMP INSTRUCTIONS
                     case OpCode.jump:
                     case OpCode.jump_t:
@@ -813,6 +825,32 @@ namespace Prexonite
         public override int GetHashCode()
         {
             return (int)OpCode ^ Arguments ^ (Id == null ? 0 : Id.GetHashCode());
+        }
+
+        #endregion
+
+        #region ICloneable Members
+
+        ///<summary>
+        ///Creates a new object that is a copy of the current instance.
+        ///</summary>
+        ///
+        ///<returns>
+        ///A new object that is a copy of this instance.
+        ///</returns>
+        ///<filterpriority>2</filterpriority>
+        object ICloneable.Clone()
+        {
+            return MemberwiseClone();
+        }
+
+        /// <summary>
+        /// Retuns a shallow clone of the instruction.
+        /// </summary>
+        /// <returns>A shallow clone of the instruction</returns>
+        public Instruction Clone()
+        {
+            return (Instruction) MemberwiseClone();
         }
 
         #endregion

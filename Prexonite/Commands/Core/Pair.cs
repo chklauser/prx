@@ -22,6 +22,8 @@
  *  51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
  */
 
+using System.Reflection.Emit;
+using Prexonite.Compiler.Cil;
 using Prexonite.Types;
 
 namespace Prexonite.Commands.Core
@@ -33,8 +35,19 @@ namespace Prexonite.Commands.Core
     /// Equivalent to:
     /// <code>function pair(key, value) = key: value;</code>
     /// </remarks>
-    public class Pair : PCommand
+    public sealed class Pair : PCommand, ICilCompilerAware
     {
+        private Pair()
+        {
+        }
+
+        private static readonly Pair _instance = new Pair();
+
+        public static Pair Instance
+        {
+            get { return _instance; }
+        }   
+
         /// <summary>
         /// Turns to arguments into a key-value pair
         /// </summary>
@@ -67,5 +80,41 @@ namespace Prexonite.Commands.Core
         {
             get { return true; }
         }
+
+        #region ICilCompilerAware Members
+
+        CompilationFlags ICilCompilerAware.CheckQualification(Instruction ins)
+        {
+            return CompilationFlags.PreferCustomImplementation;
+        }
+
+        void ICilCompilerAware.ImplementInCil(CompilerState state, Instruction ins)
+        {
+            int argc = ins.Arguments;
+
+            if(argc < 2)
+            {
+                state.EmitLoadPValueNull();
+            }
+            else
+            {
+                //pop excessive arguments
+                for(int i = 2; i < argc; i++)
+                    state.Il.Emit(OpCodes.Pop);
+
+                //make pvkvp
+                state.Il.Emit(OpCodes.Newobj,Compiler.Cil.Compiler.NewPValueKeyValuePair);
+
+                //save pvkvp in temporary variable
+                state.EmitStoreTemp(0);
+
+                //PType.Object.CreatePValue(temp)
+                state.Il.EmitCall(OpCodes.Call, Compiler.Cil.Compiler.GetObjectPTypeSelector, null);
+                state.EmitLoadTemp(0);
+                state.Il.EmitCall(OpCodes.Call, Compiler.Cil.Compiler.CreatePValueAsObject, null);
+            }
+        }
+
+        #endregion
     }
 }

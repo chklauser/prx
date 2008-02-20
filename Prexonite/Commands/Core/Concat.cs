@@ -23,6 +23,7 @@
 
 using System;
 using System.Text;
+using Prexonite.Compiler.Cil;
 using Prexonite.Types;
 
 namespace Prexonite.Commands.Core
@@ -30,14 +31,25 @@ namespace Prexonite.Commands.Core
     /// <summary>
     /// Implementation of the <c>concat</c> command.
     /// </summary>
-    public class Concat : PCommand
+    public sealed class Concat : PCommand, ICilCompilerAware
     {
-        /// <summary>
-        /// Creates a new instance of the <c>concat</c> command.
-        /// </summary>
-        public Concat()
+        #region Singleton pattern
+
+        private Concat()
         {
         }
+
+        private static readonly Concat _instance = new Concat();
+
+        public static Concat Instance
+        {
+            get
+            {
+                return _instance;
+            }
+        }
+
+        #endregion
 
         /// <summary>
         /// A flag indicating whether the command acts like a pure function.
@@ -72,17 +84,43 @@ namespace Prexonite.Commands.Core
         /// </summary>
         /// <param name="sctx">The context in which to convert the arguments to strings.</param>
         /// <param name="args">The list of fragments to concatenate.</param>
-        /// <returns>A PValue containing the concatenated string.</returns>
-        public override PValue Run(StackContext sctx, PValue[] args)
+        /// <returns>The concatenated string.</returns>
+        /// <remarks>Please note that this method uses a string builder. The addition operator is faster for only two fragments.</remarks>
+        public static PValue RunStatically(StackContext sctx, PValue[] args)
         {
             StringBuilder buffer = new StringBuilder();
             for (int i = 0; i < args.Length; i++)
             {
                 PValue arg = args[i];
-                buffer.Append(arg.Type is StringPType ? (string) arg.Value : arg.CallToString(sctx));
+                buffer.Append(arg.Type is StringPType ? (string)arg.Value : arg.CallToString(sctx));
             }
 
             return buffer.ToString();
         }
+
+        /// <summary>
+        /// Concatenates all arguments and return one big string.
+        /// </summary>
+        /// <param name="sctx">The context in which to convert the arguments to strings.</param>
+        /// <param name="args">The list of fragments to concatenate.</param>
+        /// <returns>A PValue containing the concatenated string.</returns>
+        public override PValue Run(StackContext sctx, PValue[] args)
+        {
+            return RunStatically(sctx, args);
+        }
+
+        #region ICilCompilerAware Members
+
+        CompilationFlags ICilCompilerAware.CheckQualification(Instruction ins)
+        {
+            return CompilationFlags.PreferRunStatically;
+        }
+
+        void ICilCompilerAware.ImplementInCil(CompilerState state, Instruction ins)
+        {
+            throw new NotSupportedException();  
+        }
+
+        #endregion
     }
 }

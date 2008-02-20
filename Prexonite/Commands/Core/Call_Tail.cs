@@ -5,8 +5,19 @@ using Prexonite.Types;
 
 namespace Prexonite.Commands.Core
 {
-    public class Call_Tail : StackAwareCommand
+    public sealed class Call_Tail : StackAwareCommand
     {
+        private Call_Tail()
+        {
+        }
+
+        private static Call_Tail _instance = new Call_Tail();
+
+        public static Call_Tail Instance
+        {
+            get { return _instance; }
+        }
+
         /// <summary>
         /// A flag indicating whether the command acts like a pure function.
         /// </summary>

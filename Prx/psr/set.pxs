@@ -1,7 +1,7 @@
 ﻿
 build does require = "struct.pxs";
 
-function create_set()
+function create_set()[is volatile;]
 {
     var store = [];
     

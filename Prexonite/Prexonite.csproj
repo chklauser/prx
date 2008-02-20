@@ -19,7 +19,7 @@
     <DebugType>full</DebugType>
     <Optimize>false</Optimize>
     <OutputPath>bin\</OutputPath>
-    <DefineConstants>TRACE;DEBUG;allowIndex,Verbose</DefineConstants>
+    <DefineConstants>TRACE;DEBUG;allowIndex,forceIndex</DefineConstants>
     <ErrorReport>prompt</ErrorReport>
     <WarningLevel>4</WarningLevel>
     <DocumentationFile>
@@ -29,7 +29,7 @@
     <DebugType>none</DebugType>
     <Optimize>true</Optimize>
     <OutputPath>bin\</OutputPath>
-    <DefineConstants>TRACE</DefineConstants>
+    <DefineConstants>TRACE;allowIndex</DefineConstants>
     <ErrorReport>prompt</ErrorReport>
     <WarningLevel>4</WarningLevel>
     <PlatformTarget>AnyCPU</PlatformTarget>
@@ -45,23 +45,30 @@
     <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="CilClosure.cs" />
+    <Compile Include="CilFunctionContext.cs" />
     <Compile Include="Closure.cs" />
+    <Compile Include="Commands\CompilationFlags.cs" />
+    <Compile Include="Commands\CilTestCommand.cs" />
     <Compile Include="Commands\Core\Call.cs" />
     <Compile Include="Commands\Core\Caller.cs" />
     <Compile Include="Commands\Core\Call_Member.cs" />
     <Compile Include="Commands\Core\Call_CC.cs" />
     <Compile Include="Commands\Core\Call_Tail.cs" />
     <Compile Include="Commands\Core\Char.cs" />
+    <Compile Include="Commands\Core\CompileToCil.cs" />
     <Compile Include="Commands\Core\Concat.cs" />
     <Compile Include="Commands\Core\Debug.cs" />
     <Compile Include="Commands\Core\Dispose.cs" />
     <Compile Include="Commands\Core\LoadAssembly.cs" />
+    <Compile Include="Commands\Core\Meta.cs" />
     <Compile Include="Commands\Core\Pair.cs" />
     <Compile Include="Commands\Core\Print.cs" />
     <Compile Include="Commands\Core\PrintLine.cs" />
     <Compile Include="Commands\Core\Unbind.cs" />
     <Compile Include="Commands\CoroutineCommand.cs" />
     <Compile Include="Commands\DelegatePCommand.cs" />
+    <Compile Include="Commands\ICilCompilerAware.cs" />
     <Compile Include="Commands\List\All.cs" />
     <Compile Include="Commands\List\Count.cs" />
     <Compile Include="Commands\List\Distinct.cs" />
@@ -127,6 +134,7 @@
     <Compile Include="Compiler\Ast\AstDynamicTypeExpression.cs" />
     <Compile Include="Compiler\Ast\AstLoop.cs" />
     <Compile Include="Compiler\Ast\AstLoopExpression.cs" />
+    <Compile Include="Compiler\Ast\AstModifyingAssignment.cs" />
     <Compile Include="Compiler\Ast\AstNull.cs" />
     <Compile Include="Compiler\Ast\AstObjectCreation.cs" />
     <Compile Include="Compiler\Ast\AstReturn.cs" />
@@ -150,6 +158,12 @@
     <Compile Include="Compiler\Ast\IAstType.cs" />
     <Compile Include="Compiler\Ast\ICanBeReferenced.cs" />
     <Compile Include="Compiler\BlockLabels.cs" />
+    <Compile Include="Compiler\Cil\Compiler.cs" />
+    <Compile Include="Compiler\Cil\CompilerState.cs" />
+    <Compile Include="Compiler\Cil\CilFunction.cs" />
+    <Compile Include="Compiler\Cil\ForeachHint.cs" />
+    <Compile Include="Compiler\Cil\Runtime.cs" />
+    <Compile Include="Compiler\Cil\Symbol.cs" />
     <Compile Include="Compiler\CompilerHook.cs" />
     <Compile Include="Compiler\CompilerTarget.cs" />
     <Compile Include="Compiler\DebugHook.cs" />
@@ -275,7 +289,7 @@
     <Message Text="$(PrexoniteGrammarDefinition) is now ready." />
   </Target>
   <Target Name="PrexoniteScanner">
-    <Exec Command="$(ToolsDirectory)\csflex.exe --csharp --nested-default-skeleton --nobak $(PrexoniteScannerDefinition)" WorkingDirectory="$(ProjectDir)\Compiler" />
+    <Exec Command="&quot;$(ToolsDirectory)\csflex.exe&quot; --csharp --nested-default-skeleton --nobak $(PrexoniteScannerDefinition)" WorkingDirectory="$(ProjectDir)\Compiler" />
   </Target>
   <!-- PxCoco Tool Target -->
   <Target Name="PxCocoTool" Condition="!Exists('$(PxCoco)')">

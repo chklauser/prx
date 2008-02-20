@@ -94,11 +94,13 @@ AsmInstruction<AstBlock block>          (.  int arguments = 0;
    
 |	//INDIRECT LOCAL CALL BY INDEX
 	IF(isAsmInstruction("indloci", null))
+	[ at                                (.  justEffect = true; .)
+	]
 	AsmId<out insbase>
 	dot Integer<out arguments>
 	Integer<out index>
 										//Create indloci instruction
-										(.	addInstruction(block, Instruction.CreateIndLocI(index, arguments)); .)    
+										(.	addInstruction(block, Instruction.CreateIndLocI(index, arguments, justEffect)); .)    
 |   //EXCHANGE INSTRUCTION
     IF(isAsmInstruction("swap", null))
     AsmId<out insbase>

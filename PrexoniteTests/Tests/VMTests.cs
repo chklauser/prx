@@ -2,6 +2,8 @@
 #define useIndex
 #endif
 
+#define UseCil
+
 using System;
 using System.Collections;
 using System.Collections.Generic;
@@ -11,6 +13,7 @@ using NUnit.Framework;
 using Prexonite;
 using Prexonite.Commands;
 using Prexonite.Compiler;
+using Prexonite.Compiler.Cil;
 using Prexonite.Types;
 
 namespace Prx.Tests
@@ -408,10 +411,11 @@ function main(newM, iterations)
                 @"
 var theList;
 
-function getNextElement does
-{
-    if(static index < theList.Count) return theList[index++]; else return null;
-}
+function getNextElement =
+    if(static index < theList.Count)
+        theList[index++]
+    else 
+        null;
 
 function print(text) does static buffer.Append(text);
 
@@ -566,7 +570,7 @@ function print(text) does
             Random rnd = new Random();
             int idx = rnd.Next(0, str.Length);
             StringBuilder buffer = new StringBuilder();
-            foreach (char ch in str.ToCharArray())
+            foreach (char ch in str)
                 buffer.Append(ch.ToString() + ' ');
             buffer.Append("--" + str[idx]);
             string expect = buffer.ToString();
@@ -637,7 +641,7 @@ function main(a,b,c) does work(a,b,c).ToString;
                 _input = input;
             }
 
-            private string _input;
+            private readonly string _input;
 
             #region IEnumerable<string> Members
 
@@ -1027,6 +1031,19 @@ function clo2(a)
 
             Random rnd = new Random();
 
+#if UseCil
+            PValue pclo1 = _getReturnValueNamed("clo1");
+            Assert.AreEqual(PType.Object[typeof(CilClosure)], pclo1.Type);
+            CilClosure clo1 = pclo1.Value as CilClosure;
+            Assert.IsNotNull(clo1);
+            Assert.AreEqual(0, clo1.SharedVariables.Length);
+
+            PValue pclo2 = _getReturnValueNamed("clo2", rnd.Next(1, 10));
+            Assert.AreEqual(PType.Object[typeof(CilClosure)], pclo2.Type);
+            CilClosure clo2 = pclo2.Value as CilClosure;
+            Assert.IsNotNull(clo2);
+            Assert.AreEqual(1, clo2.SharedVariables.Length);
+#else
             PValue pclo1 = _getReturnValueNamed("clo1");
             Assert.AreEqual(PType.Object[typeof(Closure)], pclo1.Type);
             Closure clo1 = pclo1.Value as Closure;
@@ -1038,6 +1055,7 @@ function clo2(a)
             Closure clo2 = pclo2.Value as Closure;
             Assert.IsNotNull(clo2);
             Assert.AreEqual(1, clo2.SharedVariables.Length);
+#endif
         }
 
         [Test]
@@ -1045,20 +1063,6 @@ function clo2(a)
         {
             _compile(
                 @"
-function map(ref f, lst)
-{
-    var nlst = new List;
-    foreach(var x in lst) nlst.Add = f(x);
-    return nlst;
-}
-
-function foldl(ref f, var left, var lst)
-{
-    foreach(var x in lst)
-        left = f(left, x);
-    return left;   
-}
-
 function split(ref f, var lst, ref left, ref right)
 {
     var l;
@@ -2094,12 +2098,6 @@ function main()
         {
             _compile(
                 @"
-function foldl(ref f, var left, var xs)
-{
-    foreach(var right in xs)
-        left = f(left,right);
-    return left;
-}
 function tos(xs) = foldl((a,b) => a + b,"""",xs);
 
 function main()
@@ -2312,8 +2310,12 @@ function main()
     return B(var args[0]);
 }
 ");
+#if UseCil
+            _expect("bs.CilClosure(function main\\A0( xa))b", "s");
+#else
+            _expect("bs.Closure(function main\\A0( xa))b", "s");
+#endif
 
-            _expect("bs.Closure(main\\A0)b", "s");
         }
 
         [Test]
@@ -3012,6 +3014,9 @@ function fac n r =
             try
             {
                 ldr.LoadFromString(input);
+#if UseCil
+                Prexonite.Compiler.Cil.Compiler.Compile(ldr.ParentApplication, ldr.ParentEngine);
+#endif                
             }
             finally
             {

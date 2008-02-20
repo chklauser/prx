@@ -10,10 +10,7 @@ Import
 function ast(type) [is compiler;]
 {
     var args;
-    var targs = for(var i = 1; i < args.Count; i++)
-                {
-                    yield args[i];
-                };
+    var targs = args >> skip(1);
 
     return 
         asm(ldr.eng)
@@ -166,19 +163,16 @@ function not_null(arg) = Not arg is Null;
 //
 //  The value in the key-value pair indictaes the number of per function variables to create
 //  If no key is provided, 0 is assumed.
-function stmt_hook() [ is compiler; ] does 
-    foreach(var fhook in 
+function stmt_hook() [ is compiler; ] = 
     (var args)
     >> where(->not_null)
     >> map(->mk_hook)    
     >> where(fhook => Not _stmt_hooks.Contains(fhook))
-    ) //do
-     _stmt_hooks[] = fhook;
+    >> each( fhook => _stmt_hooks[] = fhook);
      
-function remove_stmt_hook() [ is compiler; ] does 
-    foreach(var fhook in 
+function remove_stmt_hook() [ is compiler; ] = 
     (var args)
     >> where(->not_null)
     >> map(->mk_hook)
-    ) //do
-    _stmt_hooks.Remove(fhook);
+    >> each( fhook => _stmt_hooks.Remove(fhook));
+   

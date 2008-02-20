@@ -1,7 +1,5 @@
 using System;
-using System.Collections.Generic;
 using System.Diagnostics;
-using System.Text;
 
 namespace Prx.Benchmarking
 {
@@ -23,9 +21,9 @@ namespace Prx.Benchmarking
         {
             get { return _entry; }
         }
-        private BenchmarkEntry _entry;
-        private long _overheadMilliseconds;
-        private long _rawMilliseconds;
+        private readonly BenchmarkEntry _entry;
+        private readonly long _overheadMilliseconds;
+        private readonly long _rawMilliseconds;
 
         public double RawSeconds
         {
@@ -39,7 +37,7 @@ namespace Prx.Benchmarking
         {
             get
             {
-                return (double)_rawMilliseconds / (double)Entry.Parent.Iterations;
+                return _rawMilliseconds / (double)Entry.Parent.Iterations;
             }
         }
 
@@ -71,7 +69,7 @@ namespace Prx.Benchmarking
         {
             get
             {
-                return (double)ClearedMilliseconds/(double)Entry.Parent.Iterations;
+                return ClearedMilliseconds/(double)Entry.Parent.Iterations;
             }
         }
 
@@ -94,7 +92,6 @@ namespace Prx.Benchmarking
         public long RawMilliseconds
         {
             get { return _rawMilliseconds; }
-            set { _rawMilliseconds = value; }
         }
     }
 }

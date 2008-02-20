@@ -362,6 +362,7 @@ FunctionDefinition<out PFunction func>
                                         target = lastTarget; 
                                         //Compile AST
                                         if(errors.count == 0)
+                                        {
                                             if(Engine.StringsAreEqual(func.Id, @"\init"))
                                             {
                                                 TargetApplication._RequireInitialization();
@@ -374,21 +375,23 @@ FunctionDefinition<out PFunction func>
 												//Emit code for top-level block
                                                 Ast[func].EmitCode(FunctionTargets[func], true);
                                                 FunctionTargets[func].FinishTarget();
-                                            }
+                                            }                                       
                                             
-                                        if(isCoroutine)
-                                        {
-                                            //Stub has to be returned
-                                            func = corStub;
-                                            //Generate code for the stub
-                                            AstCreateCoroutine crcor = new AstCreateCoroutine(this);                                            
-                                            crcor.Expression = new AstCreateClosure(this,corBody.Id);
-                                            AstReturn retst = new AstReturn(this, ReturnVariant.Exit);
-                                            retst.Expression = crcor;
-                                            cst.Ast.Add(retst);
-                                            //Emit code for top-level block
-                                            cst.Ast.EmitCode(cst,true);
-                                            cst.FinishTarget();
+											if(isCoroutine)
+											{
+												//Stub has to be returned
+												func = corStub;
+												//Generate code for the stub
+												AstCreateCoroutine crcor = new AstCreateCoroutine(this);                                            
+												crcor.Expression = new AstCreateClosure(this,corBody.Id);
+												AstReturn retst = new AstReturn(this, ReturnVariant.Exit);
+												retst.Expression = crcor;
+												cst.Ast.Add(retst);
+												//Emit code for top-level block
+												cst.Ast.EmitCode(cst,true);
+												cst.FinishTarget();
+											}
+                                        
                                         }
                                     .)
 .

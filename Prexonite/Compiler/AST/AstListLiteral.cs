@@ -54,14 +54,13 @@ namespace Prexonite.Compiler.Ast
 
         public bool TryOptimize(CompilerTarget target, out IAstExpression expr)
         {
-            IAstExpression oArg;
             foreach (IAstExpression arg in Elements.ToArray())
             {
                 if (arg == null)
                     throw new PrexoniteException(
                         "Invalid (null) argument in ListLiteral node (" + ToString() +
                         ") detected at position " + Elements.IndexOf(arg) + ".");
-                oArg = GetOptimizedNode(target, arg);
+                IAstExpression oArg = GetOptimizedNode(target, arg);
                 if (!ReferenceEquals(oArg, arg))
                 {
                     int idx = Elements.IndexOf(arg);
@@ -77,16 +76,11 @@ namespace Prexonite.Compiler.Ast
 
         public override void EmitCode(CompilerTarget target)
         {
-            if (Elements.Count == 0)
-            {
-                target.Emit(OpCode.newobj, 0, "List");
-            }
-            else
-            {
-                foreach (IAstExpression element in Elements)
-                    element.EmitCode(target);
-                target.EmitStaticGetCall(Elements.Count, "List", "Create", false);
-            }
+            
+            foreach (IAstExpression element in Elements)
+                element.EmitCode(target);
+            target.EmitCommandCall(Elements.Count, Engine.ListAlias);
+            //target.EmitStaticGetCall(Elements.Count, "List", "Create", false);
         }
     }
 }

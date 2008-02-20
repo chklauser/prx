@@ -2,6 +2,7 @@
 Add System::IO To Import;
 
 function file_exists(path) = ::File.Exists(path);
+function file_delete(path) = ::File.Delete(path);
 
 function file_open(path) = ::File.OpenText(path);
 

@@ -26,7 +26,7 @@ using NoDebug = System.Diagnostics.DebuggerNonUserCodeAttribute;
 
 namespace Prexonite.Compiler
 {
-    [NoDebug()]
+    [NoDebug]
     public class LoaderOptions
     {
         #region Construction
@@ -46,14 +46,14 @@ namespace Prexonite.Compiler
 
         #region Properties
 
-        private Engine _parentEngine;
+        private readonly Engine _parentEngine;
 
         public Engine ParentEngine
         {
             get { return _parentEngine; }
         }
 
-        private Application _targetApplication;
+        private readonly Application _targetApplication;
 
         public Application TargetApplication
         {

@@ -93,7 +93,7 @@ namespace Prexonite.Compiler.Ast
         {
         }
 
-        protected override int DefaultAdditionalArguments
+        public override int DefaultAdditionalArguments
         {
             get
             {

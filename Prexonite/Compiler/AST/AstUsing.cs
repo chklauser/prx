@@ -95,7 +95,6 @@ namespace Prexonite.Compiler.Ast
                     vContainer,
                     SymbolInterpretations.LocalObjectVariable);
 
-
             AstBlock _tryBlock = _try.TryBlock;
             _tryBlock.Add(setCont);
             _tryBlock.AddRange(Block);

@@ -570,7 +570,14 @@ namespace Prexonite
                         PVariable[] pvars = new PVariable[vars.Length];
                         for (int i = 0; i < pvars.Length; i++)
                             pvars[i] = _localVariables[vars[i]];
-                        Push(CreateNativePValue(new Closure(func, pvars)));
+                        if (func.HasCilImplementation)
+                        {
+                            Push(CreateNativePValue(new CilClosure(func, pvars)));
+                        }
+                        else
+                        {
+                            Push(CreateNativePValue(new Closure(func, pvars)));
+                        }
                         break;
 
                     case OpCode.newcor:
@@ -1011,12 +1018,31 @@ doIndloc:               if (justEffect)
                         if (func == null)
                             throw PrexoniteRuntimeException.CreateRuntimeException(
                                 this, "No function with the physical name " + id + " exists.");
+#if NoCil
                         FunctionContext fctx =
                             new FunctionContext(
                                 ParentEngine, func, argv);
 
                         _fetchReturnValue = !justEffect;
                         ParentEngine.Stack.AddLast(fctx);
+#else
+                        if (func.HasCilImplementation)
+                        {
+                            func.CilImplementation(func, this, argv, null, out left);
+                            if (!justEffect)
+                                Push(left);
+                        }
+                        else
+                        {
+                            FunctionContext fctx =
+                                new FunctionContext(
+                                    ParentEngine, func, argv);
+
+                            _fetchReturnValue = !justEffect;
+                            ParentEngine.Stack.AddLast(fctx);
+                        }
+#endif
+                        
 #if Verbose
                     Console.Write("\n#PSH: " + id + "(");
                     foreach (PValue arg in argv)
@@ -1174,18 +1200,30 @@ doIndloc:               if (justEffect)
                     case OpCode.leave:
                         if (!_isHandlingException.Pop())
                         {
+                            //No exception to handle
                             _pointer = argc;
 #if Verbose
                         Console.Write(" => Skip catch block.");
 #endif
                         }
-#if Verbose
-                        else
+                        else 
                         {
-                            Console.Write(" => execute catch({0}:{1})", 
-                                _currentException.GetType().Name, _currentException.Message);
-                        }
+                            if (currentTry.HasCatch)
+                            {
+                                //Exception handled by user code
+#if Verbose
+
+                                Console.Write(" => execute catch({0}:{1})", 
+                                    _currentException.GetType().Name, _currentException.Message);
 #endif
+                            }
+                            else
+                            {
+                                //Rethrow exception
+                                throw _currentException;
+                            }
+                        }
+
                         break;
 
                         #endregion
@@ -1256,6 +1294,8 @@ doIndloc:               if (justEffect)
             get { return _isHandlingException.Peek(); }
         }
 
+        private TryCatchFinallyBlock currentTry;
+
         public override bool TryHandleException(Exception exc)
         {
             //Pointer has already been incremented.
@@ -1277,6 +1317,7 @@ doIndloc:               if (justEffect)
                 _isHandlingException.Pop();
                 _isHandlingException.Push(true);
                 _pointer = block.BeginFinally;
+                currentTry = block;
             }
             else if (block.HasCatch)
             {

@@ -24,6 +24,10 @@
 
 
 using System;
+using System.ComponentModel;
+using System.Reflection;
+using System.Reflection.Emit;
+using Prexonite.Compiler.Cil;
 using Prexonite.Types;
 
 namespace Prexonite.Commands.Core
@@ -34,8 +38,19 @@ namespace Prexonite.Commands.Core
     /// <remarks>
     /// Note that only wrapped .NET objects are disposed. Custom types that respond to "Dispose" are ignored.
     /// </remarks>
-    public class Dispose : PCommand
+    public sealed class Dispose : PCommand, ICilCompilerAware
     {
+        private Dispose()
+        {
+        }
+
+        private static readonly Dispose _instance = new Dispose();
+
+        public static Dispose Instance
+        {
+            get { return _instance; }
+        }
+
         public const string DisposeMemberId = "Dispose";
 
         /// <summary>
@@ -46,38 +61,60 @@ namespace Prexonite.Commands.Core
         /// <param name="args">The list of values to dispose.</param>
         /// <returns>Always null.</returns>
         /// <remarks><para>
-        /// Note that only wrapped .NET objects are disposed. Custom types that respond to "Dispose" are ignored.</para>
+        /// Dispose tries to call the implementation of the IDisposable interface first before issuing dynamic calls.</para>
         /// </remarks>
         public override PValue Run(StackContext sctx, PValue[] args)
+        {
+            return RunStatically(sctx, args);
+        }
+
+        /// <summary>
+        /// Executes the dispose function.<br />
+        /// Calls <see cref="IDisposable.Dispose"/> on object values that support the interface.
+        /// </summary>
+        /// <param name="sctx">The stack context. Ignored by this command.</param>
+        /// <param name="args">The list of values to dispose.</param>
+        /// <returns>Always null.</returns>
+        /// <remarks><para>
+        /// Dispose tries to call the implementation of the IDisposable interface first before issuing dynamic calls.</para>
+        /// </remarks>
+        public static PValue RunStatically(StackContext sctx, PValue[] args)
         {
             if (args == null)
                 throw new ArgumentNullException("args");
             foreach (PValue arg in args)
                 if (arg != null)
                 {
-                    PValue dummy;
-                    if (arg.Type is ObjectPType)
-                    {
-                        IDisposable toDispose = arg.Value as IDisposable;
-                        if (toDispose != null)
-                            toDispose.Dispose();
-                        else
-                        {
-                            IObject isObj = arg.Value as IObject;
-                            if (isObj != null)
-                            {
-                                isObj.TryDynamicCall(
-                                    sctx, new PValue[0], PCall.Get, DisposeMemberId, out dummy);
-                            }
-                        }
-                    }
-                    else
-                    {
-                        arg.TryDynamicCall(sctx, new PValue[0], PCall.Get, DisposeMemberId, out dummy);
-                    }
+                    RunStatically(arg, sctx);
                 }
             return PType.Null.CreatePValue();
         }
+
+        [EditorBrowsable(EditorBrowsableState.Advanced)]
+        public static void RunStatically(PValue arg, StackContext sctx)
+        {
+            PValue dummy;
+            if (arg.Type is ObjectPType)
+            {
+                IDisposable toDispose = arg.Value as IDisposable;
+                if (toDispose != null)
+                    toDispose.Dispose();
+                else
+                {
+                    IObject isObj = arg.Value as IObject;
+                    if (isObj != null)
+                    {
+                        isObj.TryDynamicCall(
+                            sctx, new PValue[0], PCall.Get, DisposeMemberId, out dummy);
+                    }
+                }
+            }
+            else
+            {
+                arg.TryDynamicCall(sctx, new PValue[0], PCall.Get, DisposeMemberId, out dummy);
+            }
+        }
+
 
         /// <summary>
         /// A flag indicating whether the command acts like a pure function.
@@ -87,5 +124,38 @@ namespace Prexonite.Commands.Core
         {
             get { return false; }
         }
+
+        #region ICilCompilerAware Members
+
+        CompilationFlags ICilCompilerAware.CheckQualification(Instruction ins)
+        {
+            return CompilationFlags.PreferCustomImplementation;
+        }
+
+        void ICilCompilerAware.ImplementInCil(CompilerState state, Instruction ins)
+        {
+            switch(ins.Arguments)
+            {
+                case 0:
+                    if(!ins.JustEffect)
+                        state.EmitLoadPValueNull();
+                    break;
+                case 1:
+                    //Emit call to RunStatically(PValue, StackContext)
+                    state.EmitLoadLocal(state.SctxLocal);
+                    MethodInfo run =
+                        typeof(Dispose).GetMethod("RunStatically", new Type[] {typeof(PValue), typeof(StackContext)});
+                    state.Il.EmitCall(OpCodes.Call, run, null);
+                    if(!ins.JustEffect)
+                        state.EmitLoadPValueNull();
+                    break;
+                default:
+                    //Emit call to RunStatically(StackContext, PValue[])
+                    state.EmitEarlyBoundCommandCall(typeof(Dispose), ins);
+                    break;
+            }
+        }
+
+        #endregion
     }
 }

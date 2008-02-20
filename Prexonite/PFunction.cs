@@ -27,6 +27,7 @@ using System.Collections.ObjectModel;
 using System.IO;
 using System.Text;
 using Prexonite.Types;
+using System.Diagnostics;
 using NoDebug = System.Diagnostics.DebuggerNonUserCodeAttribute;
 
 namespace Prexonite
@@ -55,6 +56,12 @@ namespace Prexonite
         public const string ArgumentListId = "args";
 
         public const string SymbolMappingKey = @"\symbol_mapping";
+
+        public const string VolatileKey = "volatile";
+
+        public const string DynamicKey = "dynamic";
+
+        public const string DeficiencyKey = "deficiency";
 
         #region Construction
 
@@ -205,6 +212,31 @@ namespace Prexonite
             }
         }
 
+        public Prexonite.Compiler.Cil.CilFunction CilImplementation 
+        {
+            [DebuggerStepThrough]
+            get
+            {
+                return _cilImplementation;
+            }
+            [DebuggerStepThrough]
+            internal set
+            {
+                _cilImplementation = value;
+            }
+        }
+
+        private Prexonite.Compiler.Cil.CilFunction _cilImplementation = null;
+
+        public bool HasCilImplementation
+        {
+            [DebuggerStepThrough]
+            get
+            {
+                return CilImplementation != null;
+            }
+        }
+
         #endregion
 
         #region Storage
@@ -242,6 +274,18 @@ namespace Prexonite
         /// <summary>
         /// Creates a complete string representation of the function.
         /// </summary>
+        /// <returns>A string containing the complete representation of the function.</returns>
+        /// <remarks>Use buffer or stream based overloads where possible.</remarks>
+        public string Store()
+        {
+            StringBuilder sb = new StringBuilder();
+            Store(sb);
+            return sb.ToString();
+        }
+
+        /// <summary>
+        /// Creates a complete string representation of the function.
+        /// </summary>
         /// <param name="writer">The writer to which to write the string representation.</param>
         public void StoreCode(TextWriter writer)
         {
@@ -259,27 +303,42 @@ namespace Prexonite
                 buffer.Length = 0;
             }
 
-#if DEBUG || Verbose
+//#if DEBUG || Verbose
             int idx = 0;
-#endif
-
-            foreach (Instruction ins in Code)
+//#endif
+            if (Code.Count > 0)
             {
+                int digits = (int) Math.Ceiling(Math.Log10(Code.Count));
+
+                appendAddress(buffer, idx, digits);
+
+                foreach (Instruction ins in Code)
+                {
 #if DEBUG || Verbose
-                buffer.Append("/* " + (idx++).ToString().PadLeft(4, '0') + " */ ");
+                    int idxBeginning = buffer.Length;
 #endif
-                int idxBeginning = buffer.Length;
-                ins.ToString(buffer);
+                    ins.ToString(buffer);
 #if DEBUG || Verbose
-                if (buffer[idxBeginning] != '@')
-                    buffer.Insert(idxBeginning, ' ');
-                buffer.AppendLine();
+                    if (buffer[idxBeginning] != '@')
+                        buffer.Insert(idxBeginning, ' ');
+                    buffer.AppendLine();
 #else
-                buffer.Append(' ');
+                    //buffer.Append(' ');
+                    buffer.AppendLine();
+                    
 #endif
-                writer.Write(buffer.ToString());
-                buffer.Length = 0;
+                    appendAddress(buffer, ++idx, digits);
+                    writer.Write(buffer.ToString());
+                    buffer.Length = 0;
+                }
             }
+        }
+
+        private static void appendAddress(StringBuilder buffer, int address, int digits)
+        {
+            buffer.Append("/* ");
+            buffer.Append(address.ToString().PadLeft(digits, '0'));
+            buffer.Append(" */ ");
         }
 
         /// <summary>
@@ -315,9 +374,7 @@ namespace Prexonite
                 writer.Write(buffer.ToString());
                 writer.Write(")");
             }
-#if DEBUG || Verbose
             writer.WriteLine();
-#endif
 
             #endregion
 
@@ -366,9 +423,7 @@ namespace Prexonite
             writer.WriteLine();
 #endif
             writer.Write("]");
-#if DEBUG || Verbose
             writer.WriteLine();
-#endif
             //End of Metadata
             #endregion
 
@@ -376,11 +431,10 @@ namespace Prexonite
 
             //write code
             writer.Write("{asm{");
-            StoreCode(writer);
-            writer.Write("}}");
-#if DEBUG || Verbose
             writer.WriteLine();
-#endif
+            StoreCode(writer);
+            writer.WriteLine("}}");
+            writer.WriteLine();
 
             #endregion
         }
@@ -540,9 +594,18 @@ namespace Prexonite
         /// <returns>The value returned by the function or {null~Null}</returns>
         public PValue Run(Engine engine, PValue[] args, PVariable[] sharedVariables)
         {
-            FunctionContext fctx = CreateFunctionContext(engine, args, sharedVariables);
-            engine.Stack.AddLast(fctx);
-            return engine.Process();
+            if (HasCilImplementation)
+            {
+                PValue result;
+                CilImplementation(this, new NullContext(engine, ParentApplication, ImportedNamespaces), args, sharedVariables, out result);
+                return result;
+            }
+            else
+            {
+                FunctionContext fctx = CreateFunctionContext(engine, args, sharedVariables);
+                engine.Stack.AddLast(fctx);
+                return engine.Process();
+            }
         }
 
         /// <summary>

@@ -72,6 +72,7 @@ GetSetComplex<AstBlock block>
                                         (.  AstGetSet complex = null; 
                                             AstGetSetSymbol symbol = null;
                                             bool isDeclaration = false;
+                                            AstNode node = null;
                                         .)
 =
 //GetSet Initiator
@@ -81,22 +82,31 @@ GetInitiator<out complex, out isDeclaration>
     {   GetSetExtension<complex, out complex>
     }
 //GetSet Terminator
-(
-|   inc                                 (.  block.Add(new AstUnaryOperator(this, UnaryOperator.PostIncrement, complex));
-                                            complex = null;
-                                        .)
-|   dec                                 (.  block.Add(new AstUnaryOperator(this, UnaryOperator.PostDecrement, complex));
-                                            complex = null;
-                                        .)
-|   Assignment<complex>                 (.  symbol = complex as AstGetSetSymbol;
+(                                       (.  block.Add(complex); .)
+|   inc                                 (.  block.Add(new AstUnaryOperator(this, UnaryOperator.PostIncrement, complex)); .)
+|   dec                                 (.  block.Add(new AstUnaryOperator(this, UnaryOperator.PostDecrement, complex)); .)
+|   Assignment<complex, out node>       (.  symbol = node as AstGetSetSymbol;
                                             if(symbol != null && InterpretationIsVariable(symbol.Interpretation) && isDeclaration)
                                                 symbol.Interpretation = InterpretAsObjectVariable(symbol.Interpretation);
+                                            block.Add(node);
                                         .)
+|	AppendRightTermination<ref complex>
+	{	AppendRightTermination<ref complex>
+	}
+										(.	block.Add(complex);  .)  
 )
-                                        (.  //Add the complex to the block
-                                            if(complex != null)
-                                                block.Add(complex);
-                                        .)
+.
+
+AppendRightTermination<ref AstGetSet complex>
+		                                (.	AstGetSet actualComplex; .)
+=
+	appendright
+	GetCall<out actualComplex>			(.	actualComplex.Arguments.RightAppend(complex);
+											actualComplex.Arguments.ReleaseRightAppend();
+											if(actualComplex is AstGetSetSymbol && ((AstGetSetSymbol)actualComplex).IsVariable)
+										        actualComplex.Call = PCall.Set;
+										    complex = actualComplex;
+										.)
 .
 
 GetSetExtension<IAstExpression subject, out AstGetSet extension>
@@ -144,7 +154,7 @@ GetInitiator<out AstGetSet complex, out bool isDeclaration>
     |   Variable<out symbol, out isDeclaration>
     |   StaticCall<out staticCall>
     |	lpar Expr<out expr>				(.	args.Add(expr); .)
-		{	comma Expr<out expr>		(.	args.Add(expr); .)
+		{	comma Expr<out expr>		(.	args.Add(expr); .) //multiple expressions can only be used as arguments
 		}
 		rpar
 		(	GetSetExtension<expr, out member>
@@ -317,10 +327,11 @@ ExplicitGoTo<AstBlock block>    (.  string id; .)
     Id<out id>                  (.  block.Statements.Add(new AstExplicitGoTo(this, id)); .)
 .
 
-Assignment<AstGetSet lvalue>
+Assignment<AstGetSet lvalue, out AstNode node>
                                 (.  IAstExpression expr = null;
 									BinaryOperator setModifier = BinaryOperator.None;
 									IAstType T;
+									node = lvalue;
 								.)
 =
 (
@@ -339,7 +350,8 @@ Assignment<AstGetSet lvalue>
 )								
 								(.  lvalue.Arguments.Add(expr);
 									lvalue.Call = PCall.Set; 
-									lvalue.SetModifier = setModifier;
+									if(setModifier != BinaryOperator.None)
+									    node = new AstModifyingAssignment(this,setModifier,lvalue);
 								.)
 .
 

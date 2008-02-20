@@ -99,8 +99,8 @@ namespace Prexonite
                     }
                     catch (Exception exc)
                     {
-                        currentException =
-                            PrexoniteRuntimeException.CreateRuntimeException(sctx, exc);
+                        currentException = PrexoniteRuntimeException.UnpackException(
+                            PrexoniteRuntimeException.CreateRuntimeException(sctx, exc));
                         continue;
                     }
                 }

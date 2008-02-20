@@ -2,8 +2,8 @@
 //Stack implementation using []
 build does require("struct.pxs","debug.pxs");
 
-function create_stack()
-[debugging disabled;]
+function create_stack() 
+[is volatile;debugging disabled;]
 {
     var xs = [];
     var i = -1;

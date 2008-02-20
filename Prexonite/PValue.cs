@@ -252,7 +252,7 @@ namespace Prexonite
         {
             result = default(T);
             PValue r;
-            if((!_type.TryConvertTo(sctx, this, typeof(T),useExplicit, out r)) || !(r.Value is T))
+            if((!_type.TryConvertTo(sctx, this,sctx.ParentEngine.PTypeMap[typeof(T)],useExplicit, out r)) || !(r.Value is T))
                 return false;
 
             result = (T) r.Value;
@@ -637,7 +637,7 @@ namespace Prexonite
         /// <returns>True if the equality test was successful; false otherwise.</returns>
         /// <remarks>Note that the value of <paramref name="result" /> is undefined (and therefor not to be used) if the method call returned false.</remarks>
         /// <exception cref="ArgumentNullException">If either <paramref name="sctx"/> or <paramref name="rightOperand"/> are null.</exception>
-        [NoDebug()]
+        [NoDebug]
         public bool Equality(StackContext sctx, PValue rightOperand, out PValue result)
         {
             if (sctx == null)

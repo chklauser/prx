@@ -61,7 +61,7 @@ namespace Prexonite
         /// <param name="y">The right operand.</param>
         /// <remarks>The current implementation is <strong>case-insensitive</strong>.</remarks>
         /// <returns>True if the two strings <paramref name="x"/> and <paramref name="y"/> are equal; false otherwise.</returns>
-        [NoDebug()]
+        [NoDebug]
         public static bool StringsAreEqual(string x, string y)
         {
             return String.Equals(x, y, StringComparison.OrdinalIgnoreCase);
@@ -82,7 +82,7 @@ namespace Prexonite
 
         #region Meta
 
-        private MetaTable meta;
+        private readonly MetaTable meta;
 
         /// <summary>
         /// The metatable provided to store settings and information about the virtual machine. This table also provides default values, should both applications and functions lack specific entries.
@@ -98,8 +98,8 @@ namespace Prexonite
 
         #region PType map
 
-        private Dictionary<Type, PType> _pTypeMap;
-        private PTypeMapIterator _ptypemapiterator;
+        private readonly Dictionary<Type, PType> _pTypeMap;
+        private readonly PTypeMapIterator _ptypemapiterator;
 
         /// <summary>
         /// Provides access to the PType to CLR <see cref="System.Type">Type</see> mapping.
@@ -211,8 +211,8 @@ namespace Prexonite
 
         #region PType registry
 
-        private SymbolTable<Type> _pTypeRegistry;
-        private PTypeRegistryIterator _pTypeRegistryIterator;
+        private readonly SymbolTable<Type> _pTypeRegistry;
+        private readonly PTypeRegistryIterator _pTypeRegistryIterator;
 
         /// <summary>
         /// Provides access to the dictionary of <see cref="PType">PTypes</see> registered 
@@ -495,7 +495,7 @@ namespace Prexonite
 
         #region Assembly management
 
-        private List<Assembly> _registeredAssemblies;
+        private readonly List<Assembly> _registeredAssemblies;
 
         /// <summary>
         /// Determines whether an assembly is already registered for use by the Prexonite VM.
@@ -552,7 +552,7 @@ namespace Prexonite
 
         #region Command management
 
-        private CommandTable _commandTable;
+        private readonly CommandTable _commandTable;
 
         /// <summary>
         /// A proxy to list commands provided by the engine.
@@ -575,7 +575,7 @@ namespace Prexonite
             get { return _paths; }
         }
 
-        private List<String> _paths = new List<string>();
+        private readonly List<String> _paths = new List<string>();
 
         #endregion
 
@@ -651,63 +651,9 @@ namespace Prexonite
 
             Commands.AddEngineCommand(PrintLineCommand, new PrintLine());
 
-            Commands.AddEngineCommand(
-                MetaCommand,
+            Commands.AddEngineCommand(MetaCommand, Prexonite.Commands.Core.Meta.Instance);
 
-                #region Meta command implementation
-                new DelegatePCommand(
-                    delegate(StackContext sctx, PValue[] args)
-                    {
-                        FunctionContext fctx = sctx as FunctionContext;
-                        if (fctx == null)
-                            return PType.Null.CreatePValue();
-                        if (args.Length == 0)
-                            return
-                                fctx.CreateNativePValue(
-                                    fctx.Implementation.
-                                        Meta);
-                        else
-                        {
-                            List<PValue> lst =
-                                new List<PValue>(
-                                    args.Length);
-                            MetaTable funcMT =
-                                fctx.Implementation.Meta;
-                            MetaTable appMP =
-                                fctx.ParentApplication.
-                                    Meta;
-                            MetaTable engMT = fctx.ParentEngine.Meta;
-                            foreach (PValue arg in args)
-                            {
-                                string key =
-                                    arg.CallToString(sctx);
-                                MetaEntry entry;
-                                if (
-                                    funcMT.TryGetValue(
-                                        key, out entry) ||
-                                    appMP.TryGetValue(
-                                        key, out entry) ||
-                                    engMT.TryGetValue(
-                                        key, out entry)
-                                    )
-                                    lst.Add(entry);
-                                else
-                                    lst.Add(
-                                        PType.Null.
-                                            CreatePValue());
-                            }
-
-                            if (lst.Count == 1)
-                                return lst[0];
-                            else
-                                return
-                                    (PValue) lst;
-                        }
-
-                        #endregion
-                    }));
-
-            Commands.AddEngineCommand(ConcatenateCommand, new Concat());
+            Commands.AddEngineCommand(ConcatenateCommand, Concat.Instance);
 
             Commands.AddEngineCommand(MapCommand, cmd = new Map());
             Commands.AddEngineCommand(SelectAlias, cmd);
@@ -716,21 +662,21 @@ namespace Prexonite
 
             Commands.AddEngineCommand(FoldRCommand, new FoldR());
 
-            Commands.AddEngineCommand(DisposeCommand, new Dispose());
+            Commands.AddEngineCommand(DisposeCommand, Dispose.Instance);
 
-            Commands.AddEngineCommand(CallCommand, new Call());
+            Commands.AddEngineCommand(CallCommand, Call.Instance);
 
-            Commands.AddEngineCommand(Call_MemberCommand, new Call_Member());
+            Commands.AddEngineCommand(Call_MemberCommand, Call_Member.Instance);
 
-            Commands.AddEngineCommand(CallerCommand, new Caller());
+            Commands.AddEngineCommand(CallerCommand, Caller.Instance);
 
-            Commands.AddEngineCommand(PairCommand, new Pair());
+            Commands.AddEngineCommand(PairCommand, Pair.Instance);
 
-            Commands.AddEngineCommand(UnbindCommand, new Unbind());
+            Commands.AddEngineCommand(UnbindCommand, Unbind.Instance);
 
             Commands.AddEngineCommand(SortCommand, new Sort());
 
-            Commands.AddEngineCommand(LoadAssemblyCommand, new LoadAssembly());
+            Commands.AddEngineCommand(LoadAssemblyCommand, LoadAssembly.Instance);
 
             Commands.AddEngineCommand(DebugCommand, new Debug());
 
@@ -773,7 +719,7 @@ namespace Prexonite
 
             Commands.AddEngineCommand(TanAlias, new Tan());
 
-            Commands.AddEngineCommand(CharAlias, new Char());
+            Commands.AddEngineCommand(CharAlias, Char.Instance);
 
             Commands.AddEngineCommand(CountAlias, new Count());
 
@@ -787,9 +733,9 @@ namespace Prexonite
 
             Commands.AddEngineCommand(IntersectAlias, new Intersect());
 
-            Commands.AddEngineCommand(Call_CCAlias, new Call_CC());
+            Commands.AddEngineCommand(Call_CCAlias, Call_CC.Instance);
 
-            Commands.AddEngineCommand(Call_TailAlias, new Call_Tail());
+            Commands.AddEngineCommand(Call_TailAlias, Call_Tail.Instance);
 
             Commands.AddEngineCommand(ListAlias, new List());
 
@@ -798,6 +744,8 @@ namespace Prexonite
             Commands.AddEngineCommand(ExistsAlias, new Exists());
 
             Commands.AddEngineCommand(ForAllAlias, new ForAll());
+
+            Commands.AddEngineCommand(CompileToCilAlias, CompileToCil.Instance);
         }
 
         /// <summary>
@@ -1058,7 +1006,12 @@ namespace Prexonite
         /// <summary>
         /// Alias used for the forAll command.
         /// </summary>
-        public const string ForAllAlias = "forall"; 
+        public const string ForAllAlias = "forall";
+
+        /// <summary>
+        /// Alias used for the CompileToCil command.
+        /// </summary>
+        public const string CompileToCilAlias = "CompileToCil";
 
         #endregion
     }

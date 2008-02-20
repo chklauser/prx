@@ -93,16 +93,22 @@ namespace Prexonite.Compiler.Ast
         private void tail_call_optimize_nested_block()
         {
             int i;
-            AstGetSet getset;
-            AstReturn ret;
             for (i = 1; i < Statements.Count; i++)
             {
-                AstNode stmt = Statements[i];
+                AstNode stmt;
+                AstReturn ret;
+                AstGetSet getset;
+                IAstHasBlocks hasBlocks;
+                IAstHasExpressions hasExpressions;
+                AstBlock blockItself;
+
+                stmt = Statements[i];
                 ret = stmt as AstReturn;
                 getset = Statements[i - 1] as AstGetSet;
-                IAstHasBlocks hasBlocks = stmt as IAstHasBlocks;
-                IAstHasExpressions hasExpressions = stmt as IAstHasExpressions;
-                AstBlock blockItself = stmt as AstBlock;
+                hasBlocks = stmt as IAstHasBlocks;
+                hasExpressions = stmt as IAstHasExpressions;
+                blockItself = stmt as AstBlock;
+
                 if (ret != null && ret.Expression == null &&
                     (ret.ReturnVariant == ReturnVariant.Exit ||
                      ret.ReturnVariant == ReturnVariant.Continue) && getset != null)
@@ -180,6 +186,8 @@ namespace Prexonite.Compiler.Ast
         [NoDebug]
         public void Insert(int index, AstNode item)
         {
+            if (item == null)
+                throw new ArgumentNullException("item"); 
             Statements.Insert(index, item);
         }
 
@@ -194,7 +202,12 @@ namespace Prexonite.Compiler.Ast
             [NoDebug]
             get { return Statements[index]; }
             [NoDebug]
-            set { Statements[index] = value; }
+            set
+            {
+                if (value == null)
+                    throw new ArgumentNullException("value"); 
+                Statements[index] = value;
+            }
         }
 
         #endregion
@@ -204,12 +217,22 @@ namespace Prexonite.Compiler.Ast
         [NoDebug]
         public void Add(AstNode item)
         {
+            if (item == null)
+                throw new ArgumentNullException("item"); 
             Statements.Add(item);
         }
 
         [NoDebug]
         public void AddRange(IEnumerable<AstNode> collection)
         {
+            if (collection == null)
+                throw new ArgumentNullException("collection");
+            foreach (AstNode node in collection)
+            {
+                if (node == null)
+                    throw new ArgumentException(
+                        "AstNode collection may not contain null.", "collection");
+            }
             Statements.AddRange(collection);
         }
 
@@ -222,6 +245,8 @@ namespace Prexonite.Compiler.Ast
         [NoDebug]
         public bool Contains(AstNode item)
         {
+            if (item == null)
+                throw new ArgumentNullException("item"); 
             return Statements.Contains(item);
         }
 
@@ -246,6 +271,8 @@ namespace Prexonite.Compiler.Ast
         [NoDebug]
         public bool Remove(AstNode item)
         {
+            if (item == null)
+                throw new ArgumentNullException("item"); 
             return Statements.Remove(item);
         }
 

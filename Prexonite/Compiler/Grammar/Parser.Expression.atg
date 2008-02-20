@@ -208,8 +208,10 @@ AssignExpr<out IAstExpression expr>     (.  AstGetSet assignment; BinaryOperator
 	        )TypeExpr<out T>            (.  expr = T; .)
 	    )                               
 	                                    (.  assignment.Arguments.Add(expr); 
-	                                        assignment.SetModifier = setModifier;
-                                            expr = assignment;
+	                                        if(setModifier == BinaryOperator.None)
+	                                            expr = assignment;
+	                                        else
+	                                            expr = new AstModifyingAssignment(this,setModifier, assignment);
                                         .)        
     |)
 .

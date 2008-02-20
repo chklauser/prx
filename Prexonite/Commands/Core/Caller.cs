@@ -25,14 +25,26 @@
 
 using System;
 using System.Collections.Generic;
+using Prexonite.Compiler.Cil;
 
 namespace Prexonite.Commands.Core
 {
     /// <summary>
     /// Implementation of the caller command. Returns the stack context of the caller.
     /// </summary>
-    public class Caller : PCommand
+    public sealed class Caller : PCommand, ICilCompilerAware
     {
+        private Caller()
+        {
+        }
+
+        private static readonly Caller _instance = new Caller();
+
+        public static Caller Instance
+        {
+            get { return _instance; }
+        }
+
         /// <summary>
         /// Returns the caller of the supplied stack context.
         /// </summary>
@@ -74,5 +86,19 @@ namespace Prexonite.Commands.Core
         {
             get { return false; }
         }
+
+        #region ICilCompilerAware Members
+
+        CompilationFlags ICilCompilerAware.CheckQualification(Instruction ins)
+        {
+            return CompilationFlags.OperatesOnCaller;
+        }
+
+        void ICilCompilerAware.ImplementInCil(CompilerState state, Instruction ins)
+        {
+            throw new NotSupportedException(); 
+        }
+
+        #endregion
     }
 }

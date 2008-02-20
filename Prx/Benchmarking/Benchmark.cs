@@ -77,7 +77,7 @@ namespace Prx.Benchmarking
         public const int DefaultIterations = 1000;
         public const int DefaultWarmUpIterations = 50;
 
-        private BenchmarkEntryCollection entries = new BenchmarkEntryCollection();
+        private readonly BenchmarkEntryCollection entries = new BenchmarkEntryCollection();
         public BenchmarkEntryCollection Entries
         {
             get
@@ -91,7 +91,7 @@ namespace Prx.Benchmarking
             get { return __Stopwatch; }
         }
 
-        private Stopwatch __Stopwatch = new Stopwatch();
+        private readonly Stopwatch __Stopwatch = new Stopwatch();
 
         public void IncludeAll(Application application)
         {

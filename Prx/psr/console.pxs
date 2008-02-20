@@ -13,7 +13,7 @@ declare
     imin as min,
     imax as max;
 
-function create_container
+function create_container [is volatile;]
 {   
     var container = [];
      
@@ -67,7 +67,7 @@ function create_register_function ctor => () => register_control = call(ctor,var
 function create_registered_function ctor => () => registered_control = call(ctor,var args);
         
 function create_field(x,y,length)
-[ import System; ]
+[ import System; is volatile; ]
 {
     var content = "";
     length ??= -1;    
@@ -154,7 +154,7 @@ function create_field(x,y,length)
     return struct; 
 }
 
-function create_progressbar(x,y,length)
+function create_progressbar(x,y,length) [is volatile;]
 {
     length~=Int;
     var field = create_field(x,y,length);

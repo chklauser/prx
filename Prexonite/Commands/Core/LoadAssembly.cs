@@ -33,8 +33,19 @@ namespace Prexonite.Commands.Core
     /// <summary>
     /// Implementation of the LoadAssembly command which dynamically loads an assembly from a file.
     /// </summary>
-    public class LoadAssembly : PCommand
+    public sealed class LoadAssembly : PCommand
     {
+        private LoadAssembly()
+        {
+        }
+
+        private static LoadAssembly _instance = new LoadAssembly();
+
+        public static LoadAssembly Instance
+        {
+            get { return _instance; }
+        }
+
         /// <summary>
         /// Implementation of the LoadAssembly command which dynamically loads an assembly from a file.
         /// </summary>

@@ -21,11 +21,14 @@
  *  51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
  */
 
+using System;
+
 namespace Prexonite.Compiler.Ast
 {
     public class AstThrow : AstNode,
                             IAstExpression,
-                            IAstHasExpressions
+                            IAstHasExpressions,
+                            IAstEffect
     {
         public IAstExpression Expression;
 
@@ -58,18 +61,34 @@ namespace Prexonite.Compiler.Ast
 
         #endregion
 
-        public override void EmitCode(CompilerTarget target)
+        public void EmitCode(CompilerTarget target, bool justEffect)
         {
             if (Expression == null)
                 throw new PrexoniteException("Expression must be assigned.");
 
             Expression.EmitCode(target);
             target.Emit(OpCode.@throw);
+            if (!justEffect)
+                target.Emit(OpCode.ldc_null);
         }
 
         public override string ToString()
         {
             return "throw " + (Expression.ToString() ?? "");
+        }
+
+        #region IAstEffect Members
+
+        public void EmitEffectCode(CompilerTarget target)
+        {
+            EmitCode(target, true);
+        }
+
+        #endregion
+
+        public override void EmitCode(CompilerTarget target)
+        {
+            EmitCode(target, false);
         }
     }
 }

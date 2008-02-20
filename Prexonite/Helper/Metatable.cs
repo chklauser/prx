@@ -113,8 +113,8 @@ namespace Prexonite
                 else
                     ret = base[key] ?? new MetaEntry("");
 
-                if (!base.ContainsKey(key))
-                    base.Add(key, ret);
+                //if (!base.ContainsKey(key))
+                //    base.Add(key, ret);
 
                 return ret;
             }

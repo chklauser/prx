@@ -1,13 +1,19 @@
 using System;
 using System.Collections.Generic;
 using System.Text;
+using Prexonite.Compiler.Cil;
 using Prexonite.Types;
 
 namespace Prexonite.Commands.List
 {
-    public class Each : PCommand
+    public class Each : PCommand, ICilCompilerAware
     {
         public override PValue Run(StackContext sctx, PValue[] args)
+        {
+            return RunStatically(sctx, args);
+        }
+
+        public static PValue RunStatically(StackContext sctx, PValue[] args)
         {
             if (sctx == null)
                 throw new ArgumentNullException("sctx");
@@ -43,5 +49,19 @@ namespace Prexonite.Commands.List
         {
             get { return false; }
         }
+
+        #region ICilCompilerAware Members
+
+        CompilationFlags ICilCompilerAware.CheckQualification(Instruction ins)
+        {
+            return CompilationFlags.PreferRunStatically;
+        }
+
+        void ICilCompilerAware.ImplementInCil(CompilerState state, Instruction ins)
+        {
+            throw new NotSupportedException();
+        }
+
+        #endregion
     }
 }

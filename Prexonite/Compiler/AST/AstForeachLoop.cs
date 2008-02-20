@@ -21,13 +21,13 @@
  *  51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
  */
 
+using Prexonite.Compiler.Cil;
 using Prexonite.Types;
 using NoDebug = System.Diagnostics.DebuggerNonUserCodeAttribute;
 
 namespace Prexonite.Compiler.Ast
 {
     public class AstForeachLoop : AstLoop,
-                                  IAstHasBlocks,
                                   IAstHasExpressions
     {
         [NoDebug]
@@ -52,7 +52,6 @@ namespace Prexonite.Compiler.Ast
 
         public IAstExpression List;
         public AstGetSet Element;
-        public bool IsPositive = true;
 
         public bool IsInitialized
         {
@@ -92,13 +91,21 @@ namespace Prexonite.Compiler.Ast
             element.Call = PCall.Set;
 
             //Actual Code Generation
+            int castAddr, moveNextAddr = -1, getCurrentAddr = -1, disposeAddr = -1;
 
             //Get the enumerator
             List.EmitCode(target);
             target.EmitGetCall(0, "GetEnumerator");
-            target.Emit(
-                new Instruction(OpCode.cast_const, "Object(\"System.Collections.IEnumerator\")"));
+            castAddr = target.Code.Count;
+            target.Emit(OpCode.cast_const, "Object(\"System.Collections.IEnumerator\")");
             target.EmitStoreLocal(enumVar);
+
+            //check whether an enhanced CIL implementation is possible
+            bool emitHint;
+            if (element.DefaultAdditionalArguments + element.Arguments.Count > 1) //has additional arguments
+                emitHint = false;
+            else
+                emitHint = true;
 
             AstTryCatchFinally _try = new AstTryCatchFinally(File, Line, Column);
             _try.TryBlock = new AstActionBlock(
@@ -109,6 +116,7 @@ namespace Prexonite.Compiler.Ast
 
                     //Assignment (begin)
                     target.EmitLabel(Labels.BeginLabel);
+                    getCurrentAddr = target.Code.Count;
                     element.EmitEffectCode(target);
 
                     //Code block
@@ -116,6 +124,7 @@ namespace Prexonite.Compiler.Ast
 
                     //Condition (continue)
                     target.EmitLabel(Labels.ContinueLabel);
+                    moveNextAddr = target.Code.Count;
                     target.EmitLoadLocal(enumVar);
                     target.EmitGetCall(0, "MoveNext");
                     target.EmitJumpIfTrue(Labels.BeginLabel);
@@ -128,11 +137,46 @@ namespace Prexonite.Compiler.Ast
                 this,
                 delegate
                 {
+                    disposeAddr = target.Code.Count;
                     target.EmitLoadLocal(enumVar);
                     target.EmitCommandCall(1, Engine.DisposeCommand, true);
                 });
 
             _try.EmitCode(target);
+
+            if(getCurrentAddr < 0 || moveNextAddr < 0 || disposeAddr < 0)
+                throw new PrexoniteException("Could not capture addresses within foreach construct for CIL compiler hint.");
+            else if (emitHint)
+            {
+                ForeachHint hint = new ForeachHint(enumVar, castAddr, getCurrentAddr, moveNextAddr, disposeAddr);
+                if(target.Meta.ContainsKey(Loader.CilHintsKey))
+                    target.Meta.AddTo(Loader.CilHintsKey, hint.ToMetaEntry());
+                else
+                    target.Meta[Loader.CilHintsKey] = (MetaEntry) new MetaEntry[] {hint.ToMetaEntry()};
+
+                Action<int, int> mkHook =
+                    delegate(int index, int original)
+                    {
+                        target.AddressChangeHooks.Add(
+                            original,
+                            delegate(int newAddr)
+                            {
+                                foreach(MetaEntry hintEntry in target.Meta[Loader.CilHintsKey].List)
+                                {
+                                    MetaEntry[] entry = hintEntry.List;
+                                    if(entry[0] == ForeachHint.Key && entry[index].Text == original.ToString())
+                                        entry[index] = newAddr.ToString();
+                                }
+                            });
+                    };
+
+                mkHook(ForeachHint.CastAddressIndex, castAddr);
+                mkHook(ForeachHint.GetCurrentAddressIndex, getCurrentAddr);
+                mkHook(ForeachHint.MoveNextAddressIndex, moveNextAddr);
+                mkHook(ForeachHint.DisposeAddressIndex, disposeAddr);
+            } // else nothing
         }
+
+        private delegate void Action<Ta1, Ta2>(Ta1 a1, Ta2 a2);
     }
 }

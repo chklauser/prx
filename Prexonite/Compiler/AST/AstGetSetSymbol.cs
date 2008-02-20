@@ -27,8 +27,7 @@ using Prexonite.Types;
 
 namespace Prexonite.Compiler.Ast
 {
-    public class AstGetSetSymbol : AstGetSet,
-                                   IAstExpression, ICanBeReferenced
+    public class AstGetSetSymbol : AstGetSet, ICanBeReferenced
     {
         public SymbolInterpretations Interpretation;
         public string Id;
@@ -99,6 +98,7 @@ namespace Prexonite.Compiler.Ast
 
         protected override void EmitSetCode(CompilerTarget target)
         {
+            bool justEffect = true;
             switch (Interpretation)
             {
                 case SymbolInterpretations.Command:
@@ -111,10 +111,10 @@ namespace Prexonite.Compiler.Ast
                     target.EmitStoreGlobal(Id);
                     break;
                 case SymbolInterpretations.LocalReferenceVariable:
-                    target.Emit(Instruction.CreateLocalIndirectCall(Arguments.Count, Id));
+                    target.Emit(Instruction.CreateLocalIndirectCall(Arguments.Count, Id, justEffect));
                     break;
                 case SymbolInterpretations.GlobalReferenceVariable:
-                    target.Emit(Instruction.CreateGlobalIndirectCall(Arguments.Count, Id));
+                    target.Emit(Instruction.CreateGlobalIndirectCall(Arguments.Count, Id, justEffect));
                     break;
                 case SymbolInterpretations.LocalObjectVariable:
                     target.EmitStoreLocal(Id);

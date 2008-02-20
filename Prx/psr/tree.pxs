@@ -6,7 +6,7 @@ build does require
     "stack.pxs",
 );    
 
-function create_tree_node(item)
+function create_tree_node(item)[is volatile;]
 {
     var nodes = create_set;
     

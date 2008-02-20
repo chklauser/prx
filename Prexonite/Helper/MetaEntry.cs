@@ -34,26 +34,6 @@ namespace Prexonite
         #region Fields
 
         /// <summary>
-        /// Indicates the kind of meta entry
-        /// </summary>
-        private readonly Type _mtype;
-
-        /// <summary>
-        /// Holds text in case the meta entry is a text entry
-        /// </summary>
-        private readonly string _text;
-
-        /// <summary>
-        /// Holds a list in case the meta entry is a list entry
-        /// </summary>
-        private readonly MetaEntry[] _list;
-
-        /// <summary>
-        /// Holds a switch in case the meta entry is a switch entry
-        /// </summary>
-        private readonly bool _switch;
-
-        /// <summary>
         /// The possible kinds of meta entries
         /// </summary>
         public enum Type
@@ -64,6 +44,26 @@ namespace Prexonite
             Switch = 3
         }
 
+        /// <summary>
+        /// Holds a list in case the meta entry is a list entry
+        /// </summary>
+        private readonly MetaEntry[] _list;
+
+        /// <summary>
+        /// Indicates the kind of meta entry
+        /// </summary>
+        private readonly Type _mtype;
+
+        /// <summary>
+        /// Holds a switch in case the meta entry is a switch entry
+        /// </summary>
+        private readonly bool _switch;
+
+        /// <summary>
+        /// Holds text in case the meta entry is a text entry
+        /// </summary>
+        private readonly string _text;
+
         #endregion
 
         #region MetaEntry -> Value
@@ -73,7 +73,7 @@ namespace Prexonite
             [DebuggerNonUserCode]
             get
             {
-                switch (_mtype)
+                switch(_mtype)
                 {
                     case Type.Text:
                         return _text;
@@ -82,13 +82,13 @@ namespace Prexonite
                     case Type.List:
                         StringBuilder buffer = new StringBuilder();
                         buffer.Append("{");
-                        foreach (string entry in List)
+                        foreach(string entry in List)
                         {
                             buffer.Append(entry);
                             buffer.Append(", ");
                         }
                         //Cut off last ", "
-                        if (buffer.Length > 0)
+                        if(buffer.Length > 0)
                             buffer.Remove(buffer.Length - 2, 2);
                         buffer.Append("}");
                         return buffer.ToString();
@@ -103,7 +103,7 @@ namespace Prexonite
             [DebuggerNonUserCode]
             get
             {
-                switch (_mtype)
+                switch(_mtype)
                 {
                     case Type.List:
                         return _list;
@@ -122,7 +122,7 @@ namespace Prexonite
             [DebuggerNonUserCode]
             get
             {
-                switch (_mtype)
+                switch(_mtype)
                 {
                     case Type.Text:
                         bool sw;
@@ -141,25 +141,35 @@ namespace Prexonite
 
         #region Construction
 
-        [DebuggerNonUserCode()]
+        [DebuggerNonUserCode]
         public MetaEntry(string text)
         {
+            if(text == null)
+                throw new ArgumentNullException("text");
             _mtype = Type.Text;
             _list = null;
             _switch = false;
             _text = text;
         }
 
-        [DebuggerNonUserCode()]
+        [DebuggerNonUserCode]
         public MetaEntry(MetaEntry[] list)
         {
+            //Check sanity
+            if(list == null)
+                throw new ArgumentNullException("list");
+            foreach(MetaEntry entry in list)
+            {
+                if (entry == null)
+                    throw new ArgumentException("A MetaEntry list must not contain null references.", "list");
+            }
             _mtype = Type.List;
             _text = null;
             _switch = false;
             _list = list;
         }
 
-        [DebuggerNonUserCode()]
+        [DebuggerNonUserCode]
         public MetaEntry(bool @switch)
         {
             _mtype = Type.Switch;
@@ -174,71 +184,95 @@ namespace Prexonite
 
         public Type EntryType
         {
-            [DebuggerNonUserCode()]
-            get { return _mtype; }
+            [DebuggerNonUserCode]
+            get
+            {
+                return _mtype;
+            }
         }
 
         public bool IsText
         {
-            [DebuggerNonUserCode()]
-            get { return _mtype == Type.Text; }
+            [DebuggerNonUserCode]
+            get
+            {
+                return _mtype == Type.Text;
+            }
         }
 
         public bool IsList
         {
-            [DebuggerNonUserCode()]
-            get { return _mtype == Type.List; }
+            [DebuggerNonUserCode]
+            get
+            {
+                return _mtype == Type.List;
+            }
         }
 
         public bool IsSwitch
         {
-            [DebuggerNonUserCode()]
-            get { return _mtype == Type.Switch; }
+            [DebuggerNonUserCode]
+            get
+            {
+                return _mtype == Type.Switch;
+            }
         }
 
         #endregion
 
         #region Operators and Conversions
 
-        [DebuggerNonUserCode()]
+        [DebuggerNonUserCode]
         public static implicit operator string(MetaEntry item)
         {
+            if(item == null)
+                throw new ArgumentNullException("item","A null reference cannot be implicitly converted."); 
             return item.Text;
         }
 
-        [DebuggerNonUserCode()]
+        [DebuggerNonUserCode]
         public static implicit operator bool(MetaEntry item)
         {
+            if (item == null)
+                throw new ArgumentNullException("item", "A null reference cannot be implicitly converted."); 
             return item.Switch;
         }
 
-        [DebuggerNonUserCode()]
+        [DebuggerNonUserCode]
         public static explicit operator MetaEntry[](MetaEntry item)
         {
+            if (item == null)
+                throw new ArgumentNullException("item", "A null reference cannot be explicitly converted."); 
             return item.List;
         }
 
-        [DebuggerNonUserCode()]
+        [DebuggerNonUserCode]
         public static implicit operator MetaEntry(bool item)
         {
             return new MetaEntry(item);
         }
 
-        [DebuggerNonUserCode()]
+        [DebuggerNonUserCode]
         public static implicit operator MetaEntry(string item)
         {
+            if (item == null)
+                throw new ArgumentNullException("item", "A null reference cannot be explicitly converted.");
             return new MetaEntry(item);
         }
 
-        [DebuggerNonUserCode()]
+        [DebuggerNonUserCode]
         public static explicit operator MetaEntry(MetaEntry[] item)
         {
+            if (item == null)
+                throw new ArgumentNullException("item", "A null reference cannot be implicitly converted."); 
             return new MetaEntry(item);
         }
 
         public static implicit operator PValue(MetaEntry item)
         {
-            switch (item._mtype)
+            if (item == null)
+                throw new ArgumentNullException("item", "A null reference cannot be implicitly converted."); 
+            switch(item._mtype)
             {
                 case Type.Text:
                     return PType.String.CreatePValue(item._text);
@@ -246,7 +280,7 @@ namespace Prexonite
                     return PType.Bool.CreatePValue(item._switch);
                 case Type.List:
                     List<PValue> lst = new List<PValue>(item._list.Length);
-                    foreach (MetaEntry entry in item._list)
+                    foreach(MetaEntry entry in item._list)
                         lst.Add(entry);
                     return PType.List.CreatePValue(lst);
                 default:
@@ -257,9 +291,9 @@ namespace Prexonite
 
         public static bool operator ==(MetaEntry a, MetaEntry b)
         {
-            if ((object) a == null && (object) b == null)
+            if((object) a == null && (object) b == null)
                 return true;
-            else if ((object) a == null || (object) b == null)
+            else if((object) a == null || (object) b == null)
                 return false;
             else
             {
@@ -270,20 +304,20 @@ namespace Prexonite
                  *   L | T  L   L
                  */
 
-                if (a.IsText || b.IsText)
+                if(a.IsText || b.IsText)
                 {
                     return Engine.StringsAreEqual(a.Text, b.Text);
                 }
-                else if (b.IsList || b.IsList)
+                else if(b.IsList || b.IsList)
                 {
                     MetaEntry[] ar = a.List,
                                 br = b.List;
-                    if (ar.Length != br.Length)
+                    if(ar.Length != br.Length)
                         return false;
 
                     int i;
-                    for (i = 0; i < ar.Length; i++)
-                        if (ar[i] != br[i])
+                    for(i = 0; i < ar.Length; i++)
+                        if(ar[i] != br[i])
                             break;
 
                     return i < ar.Length;
@@ -300,13 +334,13 @@ namespace Prexonite
 
         public override bool Equals(object obj)
         {
-            if (obj == null)
+            if(obj == null)
                 return false;
-            if (ReferenceEquals(this, obj))
+            if(ReferenceEquals(this, obj))
                 return true;
 
             MetaEntry entry = obj as MetaEntry;
-            if (entry == null)
+            if(entry == null)
                 return false;
             else
                 return this == entry;
@@ -314,7 +348,7 @@ namespace Prexonite
 
         public override int GetHashCode()
         {
-            switch (_mtype)
+            switch(_mtype)
             {
                 case Type.List:
                     return _list.GetHashCode();
@@ -335,7 +369,7 @@ namespace Prexonite
         {
             MetaEntry[] list;
             //Change type to list
-            switch (_mtype)
+            switch(_mtype)
             {
                 case Type.Switch:
                     list = new MetaEntry[] {_switch};
@@ -364,7 +398,7 @@ namespace Prexonite
         public MetaEntry RemoveFromList(int index, int length)
         {
             MetaEntry[] list;
-            switch (_mtype)
+            switch(_mtype)
             {
                 case Type.Switch:
                     list = new MetaEntry[] {_switch};
@@ -379,7 +413,7 @@ namespace Prexonite
                 default:
                     throw new PrexoniteException("Invalid meta entry.");
             }
-            if (index + length > list.Length - 1 || index < 0 || length < 0)
+            if(index + length > list.Length - 1 || index < 0 || length < 0)
                 throw new ArgumentOutOfRangeException(
                     "index",
                     "The supplied index and length " + index +
@@ -387,10 +421,10 @@ namespace Prexonite
                     ".");
             MetaEntry[] newList = new MetaEntry[list.Length - 1];
             //Copy the elements before the ones to remove
-            if (index > 0)
+            if(index > 0)
                 Array.Copy(list, newList, index);
             //Copy the elements after the ones to remove
-            if (index + length < list.Length - 1)
+            if(index + length < list.Length - 1)
                 Array.Copy(list, index + length, newList, index, list.Length - (index + length));
             return (MetaEntry) newList;
         }
@@ -400,14 +434,14 @@ namespace Prexonite
         public static MetaEntry[] CreateArray(StackContext sctx, List<PValue> elements)
         {
             List<MetaEntry> proto = new List<MetaEntry>(elements.Count);
-            foreach (PValue pv in elements)
+            foreach(PValue pv in elements)
             {
                 PValue pventry;
-                if (pv.TryConvertTo(sctx, typeof(MetaEntry), out pventry))
+                if(pv.TryConvertTo(sctx, typeof(MetaEntry), out pventry))
                     proto.Add((MetaEntry) pventry.Value);
-                else if (pv.Type is ListPType)
+                else if(pv.Type is ListPType)
                     proto.Add((MetaEntry) CreateArray(sctx, (List<PValue>) pv.Value));
-                else if (pv.Type is BoolPType)
+                else if(pv.Type is BoolPType)
                     proto.Add((bool) pv.Value);
                 else
                     proto.Add(pv.CallToString(sctx));
@@ -426,16 +460,20 @@ namespace Prexonite
         [DebuggerNonUserCode]
         public void ToString(StringBuilder buffer)
         {
-            switch (_mtype)
+            if(buffer == null)
+                throw new ArgumentNullException("buffer");
+            switch(_mtype)
             {
                 case Type.List:
                     buffer.Append("{ ");
-                    foreach (MetaEntry entry in _list)
+                    foreach(MetaEntry entry in _list)
                     {
+                        if(entry == null)
+                            continue;
                         entry.ToString(buffer);
                         buffer.Append(", ");
                     }
-                    if (_list.Length > 0)
+                    if(_list.Length > 0)
                         buffer.Remove(buffer.Length - 2, 2);
                     buffer.Append(" }");
                     break;

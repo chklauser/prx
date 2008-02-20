@@ -88,7 +88,7 @@ namespace Prexonite.Compiler.Ast
         {
         }
 
-        protected override int DefaultAdditionalArguments
+        public override int DefaultAdditionalArguments
         {
             get
             {
@@ -109,7 +109,8 @@ namespace Prexonite.Compiler.Ast
 
         protected override void EmitSetCode(CompilerTarget target)
         {
-            target.EmitIndirectCall(Arguments.Count);
+            //Indirect set does not have a return value, therefore justEffect is true
+            target.EmitIndirectCall(Arguments.Count, true);
         }
 
         public override bool TryOptimize(CompilerTarget target, out IAstExpression expr)
