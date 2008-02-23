@@ -25,7 +25,10 @@
 
 using System;
 using System.Collections.Generic;
+using System.Reflection;
+using System.Reflection.Emit;
 using Prexonite.Compiler.Cil;
+using Prexonite.Types;
 
 namespace Prexonite.Commands.Core
 {
@@ -78,6 +81,18 @@ namespace Prexonite.Commands.Core
             }
         }
 
+        public static PValue GetCallerFromCilFunction(StackContext sctx)
+        {
+            LinkedList<StackContext> stack = sctx.ParentEngine.Stack;
+            if (stack.Count == 0)
+                return PType.Null;
+            else
+                return sctx.CreateNativePValue(stack.Last.Value);
+        }
+
+        private static readonly MethodInfo GetCallerFromCilFunctionMethod =
+            typeof(Caller).GetMethod("GetCallerFromCilFunction", new Type[] {typeof(StackContext)});
+
         /// <summary>
         /// A flag indicating whether the command acts like a pure function.
         /// </summary>
@@ -91,12 +106,18 @@ namespace Prexonite.Commands.Core
 
         CompilationFlags ICilCompilerAware.CheckQualification(Instruction ins)
         {
-            return CompilationFlags.OperatesOnCaller;
+            return CompilationFlags.OperatesOnCaller | CompilationFlags.HasCustomWorkaround;
         }
 
         void ICilCompilerAware.ImplementInCil(CompilerState state, Instruction ins)
         {
-            throw new NotSupportedException(); 
+            for(int i = 0; i < ins.Arguments; i++)   
+                state.Il.Emit(OpCodes.Pop);
+            if (!ins.JustEffect)
+            {
+                state.EmitLoadLocal(state.SctxLocal);
+                state.Il.EmitCall(OpCodes.Call, GetCallerFromCilFunctionMethod, null);
+            }
         }
 
         #endregion

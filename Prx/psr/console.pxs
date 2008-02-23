@@ -162,7 +162,7 @@ function create_progressbar(x,y,length) [is volatile;]
         var d = create_field(x+length+2,y);
     var per = 0.0;
     var anim = ["/","-","\\","|"];
-    function animlen = anim.Count;
+    function animlen [is private;] = anim.Count;
     var idx = 0;
     
     function animation this newAnim
@@ -186,7 +186,7 @@ function create_progressbar(x,y,length) [is volatile;]
         return per;
     }
     
-    function nextAnim = anim[(idx = (idx+1) mod animlen)];
+    function nextAnim [is private;] = anim[(idx = (idx+1) mod animlen)];
     
     function update(this, newPer)
     {
@@ -202,7 +202,11 @@ function create_progressbar(x,y,length) [is volatile;]
         if(per == 1.0)
             field.update = "[" + (barlen)*"=" + "]";
         else
-            field.update = "[" + setright(completed,thisAnim,"=") + max(barlen-max(completed,thisAnim.Length),0)*"_" + "]";
+            field.update = 
+                "[" + 
+                setright(completed,thisAnim,"=") + 
+                max(barlen-max(completed,thisAnim.Length),0)*"_" + 
+                "]";
     }
     
     function clear does field.clear;

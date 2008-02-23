@@ -16,56 +16,6 @@ declare
 
 function range(index, count, xs) = xs >> skip(index) >> limit(count);
 
-coroutine distinct xs
-{
-    var dict = { };
-    foreach(var x in xs)
-    {
-        if(Not dict.ContainsKey(x))
-        {
-            dict.Add(x, null);
-            yield x;
-        }
-    }
-}
-
-declare 
-    distinct as unique;
-
-coroutine union ys xs
-{
-    var dict = { };
-    foreach(var x in xs)
-    {
-        if(Not dict.ContainsKey(x))
-        {
-            dict.Add(x, null);
-            yield x;
-        }
-    }
-    foreach(var y in ys)
-    {
-        if(Not dict.ContainsKey(y))
-        {
-            dict.Add(y, null);
-            yield y;
-        }
-    }
-}
-
-coroutine intersect ys xs
-{
-    var dict = { };
-    foreach(var x in xs)
-        dict[x] = false;
-    foreach(var y in ys)
-        if(dict.ContainsKey(y))
-            dict[y] = true;
-    foreach(var xy in dict)
-        if(xy.Value)
-            yield xy.Key;   
-}
-
 coroutine except ys xs
 {
     var dict = { };
@@ -89,23 +39,6 @@ coroutine takewhile(ref f, xs)
         yield x;
     }
 }
-
-coroutine groupby(ref f, xs)
-{
-    var groups = { };
-    foreach(var x in xs)
-    {
-        var fx = f(x);
-        if(Not groups.ContainsKey(fx))
-            groups[fx] = [x];
-        else
-            groups[fx].Add(x);
-    }
-    foreach(var g in groups)
-        yield g;
-}
-
-
    
 /* A SAMPLE
 [ 1, 6, 8, 12, 15, 20, 99 ] >> 

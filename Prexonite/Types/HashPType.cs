@@ -489,6 +489,27 @@ namespace Prexonite.Types
             return result != null;
         }
 
+        public override bool Addition(StackContext sctx, PValue leftOperand, PValue rightOperand, out PValue result)
+        {
+            result = null;
+
+            if(leftOperand.Type is HashPType && rightOperand.Type is HashPType)
+            {
+                PValueHashtable pvht1 = (PValueHashtable) leftOperand.Value;
+                PValueHashtable pvht2 = (PValueHashtable)rightOperand.Value;
+
+                PValueHashtable pvht = new PValueHashtable(pvht1.Count + pvht2.Count);
+                foreach(KeyValuePair<PValue, PValue> pair in pvht1)
+                    pvht.Add(pair);
+                foreach(KeyValuePair<PValue, PValue> pair in pvht2)
+                    pvht.AddOverride(pair);
+
+                result = (PValue) pvht;
+            }
+
+            return result != null;
+        }
+
         protected override bool InternalIsEqual(PType otherType)
         {
             return otherType is HashPType;

@@ -584,16 +584,17 @@ function print(text) does
             _compile(
                 @"
 var buffer;
-function print(text) does buffer.Append(text);
+function print(text) = buffer.Append = text;
 function work
 {
     var args;
     buffer = new System::Text::StringBuilder(args[0]);
     print(args[1]);
     print(args[2]);
+    return buffer;
 }
 
-function main(a,b,c) does work(a,b,c).ToString;
+function main(a,b,c) = work(a,b,c).ToString;
 ");
             string a = Guid.NewGuid().ToString("N");
             string b = Guid.NewGuid().ToString("N");

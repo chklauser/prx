@@ -8,11 +8,12 @@ function struct
         else if(g.Meta.ContainsKey("LogicalId"))
             g.Meta["LogicalId"].Text
         else
-            throw "The function $g cannot be used in a" +
-                " struct because it has no LogicalId";
+            null;
         ;
     
-    var parentId = caller.Implementation.Id;
+    var callingCtx = caller;
+        
+    var parentId = callingCtx.Implementation.Id;
     var methods = (asm(ldr.app).Functions) 
         >> where(f => 
             f
@@ -20,14 +21,18 @@ function struct
                 .Text
                 .Equals(parentId, struct\ordinalIc)            
             And Not f.Meta["Private"].Switch)
-        >> map(f => getId(f): 
-            caller
-                .LocalVariables[f.Meta["LogicalId"].Text]
-                .Value)
-        >> where(fcf => Not fcf.Value is Null);
+        >> map(f => 
+            if(Not f.Meta.ContainsKey("LogicalId"))
+                (null: null)
+            else
+                (getId(f): callingCtx.LocalVariables[f.Meta["LogicalId"].Text].Value)
+           )
+        >> where(fcf => (Not fcf.Value is Null) && (Not fcf.Key is Null));
     
     var s = new Structure;
-        
+
+    s.\\(@"\ctorId") = () => parentId;
+    
     foreach(var fcf in methods)
         s.\\(fcf.Key) = fcf.Value;
         

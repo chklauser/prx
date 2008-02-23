@@ -7,13 +7,19 @@ namespace Prexonite
 {
     public class IndirectCallContext : StackContext
     {
+        private readonly StackContext _originalStackContext;
 
         public IndirectCallContext(StackContext parent, IIndirectCall callable, PValue[] args)
-            : this(parent.ParentEngine,parent.ParentApplication,parent.ImportedNamespaces,callable,args)
+            : this(parent, parent.ParentEngine,parent.ParentApplication,parent.ImportedNamespaces,callable,args)
         {
         }
 
-        public IndirectCallContext(Engine parentEngine, Application parentApplication, ICollection<string> importedNamespaces, IIndirectCall callable, PValue[] args)
+        public IndirectCallContext(Engine parentEngine, Application parentApplication, IEnumerable<string> importedNamespaces, IIndirectCall callable, PValue[] args) 
+            : this(null, parentEngine, parentApplication, importedNamespaces, callable, args)
+        {
+        }
+
+        public IndirectCallContext(StackContext originalSctx, Engine parentEngine, Application parentApplication, IEnumerable<string> importedNamespaces, IIndirectCall callable, PValue[] args)
         {
             if (parentEngine == null)
                 throw new ArgumentNullException("parentEngine");
@@ -24,13 +30,14 @@ namespace Prexonite
             if (callable == null)
                 throw new ArgumentNullException("callable");
             if (args == null)
-                throw new ArgumentNullException("args"); 
+                throw new ArgumentNullException("args");
 
             _engine = parentEngine;
             _application = parentApplication;
             _importedNamespaces = (importedNamespaces as SymbolCollection) ?? new SymbolCollection(importedNamespaces);
             _callable = callable;
             _arguments = args;
+            _originalStackContext = originalSctx;
         }
 
         public IIndirectCall Callable
@@ -83,15 +90,16 @@ namespace Prexonite
         /// <returns>True if the context has additional work to perform in the next cycle, False if it has finished it's work and can be removed from the stack</returns>
         protected override bool PerformNextCylce(StackContext lastContext)
         {
-            LinkedList<StackContext> stack = _engine.Stack;
-
-            StackContext sctx = this;
+            StackContext sctx;
 
             //Remove this context if possible (IndirectCallContext should be transparent)
-            if(stack.Count > 1)
+            if (_originalStackContext != null)
             {
-                stack.RemoveLast();
-                sctx = stack.Last.Value;
+                sctx = _originalStackContext;
+            }
+            else
+            {
+                sctx = this;
             }
 
             _returnValue = _callable.IndirectCall(sctx, _arguments);

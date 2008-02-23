@@ -1521,21 +1521,21 @@ internal partial class Parser {
 		/*Parser.Statement.atg:580*/args.RemeberRightAppendPosition(); 
 		if (la.kind == _appendleft) {
 			Get();
-			if (la.kind == _lpar) {
-				Get();
+			if (/*Parser.Statement.atg:585*/la.kind == _lpar && (!isLambdaExpression())) {
+				Expect(_lpar);
 				if (StartOf(14)) {
-					Expr(/*Parser.Statement.atg:585*/out expr);
-					/*Parser.Statement.atg:585*/args.Add(expr); 
+					Expr(/*Parser.Statement.atg:586*/out expr);
+					/*Parser.Statement.atg:586*/args.Add(expr); 
 					while (la.kind == _comma) {
 						Get();
-						Expr(/*Parser.Statement.atg:587*/out expr);
-						/*Parser.Statement.atg:588*/args.Add(expr); 
+						Expr(/*Parser.Statement.atg:588*/out expr);
+						/*Parser.Statement.atg:589*/args.Add(expr); 
 					}
 				}
 				Expect(_rpar);
 			} else if (StartOf(14)) {
-				Expr(/*Parser.Statement.atg:592*/out expr);
-				/*Parser.Statement.atg:592*/args.Add(expr); 
+				Expr(/*Parser.Statement.atg:593*/out expr);
+				/*Parser.Statement.atg:593*/args.Add(expr); 
 			} else SynErr(119);
 		}
 	}

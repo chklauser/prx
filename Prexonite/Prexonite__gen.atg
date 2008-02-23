@@ -1968,6 +1968,7 @@ Arguments<ArgumentsProxy args>
 	[
 		appendleft
 		(
+			IF(la.kind == _lpar && (!isLambdaExpression()))
 			lpar
 			[	Expr<out expr>	(.  args.Add(expr); .)
 				{	comma

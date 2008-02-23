@@ -107,6 +107,8 @@ namespace Prexonite.Types
             result = null;
             if (Engine.StringsAreEqual(id, "tostring"))
                 result = String.CreatePValue("");
+            else if (Engine.StringsAreEqual(id, @"\boxed"))
+                result = sctx.CreateNativePValue(this);
             return result != null;
         }
 

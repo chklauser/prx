@@ -200,7 +200,7 @@ function instruction {}
         {
             const string input1 =
                 @"
-function func0
+function main
 {
     declare function func1;
     func1;
@@ -209,67 +209,22 @@ function func0
     func1(func1(func1(55)));
 }
 ";
-            LoaderOptions opt = new LoaderOptions(engine, target);
-            opt.UseIndicesLocally = false;
-            Loader ldr = new Loader(opt);
-            ldr.LoadFromString(input1);
-            Assert.AreEqual(0, ldr.ErrorCount, "Errors during compilation.");
+            _compile(input1);
+            _expect(@"
+@func.0 func1
 
-            //Check AST
-            int i = 0;
-            AstGetSetSymbol symbol;
+ldc.int 1
+@func.1 func1
+ldc.string ""2""
+ldc.bool true
+ldc.real 3.41
+@func.3 func1
 
-            AstBlock block = ldr.FunctionTargets["func0"].Ast;
-
-            //func1;
-            Assert.IsInstanceOfType(typeof(AstGetSetSymbol), block[i]);
-            symbol = (AstGetSetSymbol) block[i];
-            Assert.AreEqual("func1", symbol.Id);
-            Assert.AreEqual(SymbolInterpretations.Function, symbol.Interpretation);
-            Assert.AreEqual(
-                0, symbol.Arguments.Count, "First function call should have no arguments");
-            i++;
-            //func1(1);
-            Assert.IsInstanceOfType(typeof(AstGetSetSymbol), block[i]);
-            symbol = (AstGetSetSymbol) block[i];
-            Assert.AreEqual("func1", symbol.Id);
-            Assert.AreEqual(SymbolInterpretations.Function, symbol.Interpretation);
-            Assert.AreEqual(1, symbol.Arguments.Count, "First function call should have 1 argument");
-            Assert.IsInstanceOfType(typeof(AstConstant), symbol.Arguments[0]);
-            Assert.AreEqual(1, (int) ((AstConstant) symbol.Arguments[0]).Constant);
-            i++;
-            //func1("2", true, 3.41);
-            Assert.IsInstanceOfType(typeof(AstGetSetSymbol), block[i]);
-            symbol = (AstGetSetSymbol) block[i];
-            Assert.AreEqual("func1", symbol.Id);
-            Assert.AreEqual(SymbolInterpretations.Function, symbol.Interpretation);
-            Assert.AreEqual(
-                3, symbol.Arguments.Count, "First function call should have 3 arguments");
-            Assert.IsInstanceOfType(typeof(AstConstant), symbol.Arguments[0]);
-            Assert.AreEqual("2", ((AstConstant) symbol.Arguments[0]).Constant);
-            Assert.IsInstanceOfType(typeof(AstConstant), symbol.Arguments[1]);
-            Assert.AreEqual(true, (bool) ((AstConstant) symbol.Arguments[1]).Constant);
-            Assert.IsInstanceOfType(typeof(AstConstant), symbol.Arguments[2]);
-            Assert.AreEqual(3.41, (double) ((AstConstant) symbol.Arguments[2]).Constant);
-            i++;
-            //func1(func1(func1(55)));
-            Assert.IsInstanceOfType(typeof(AstReturn), block[i]);
-            AstReturn ret = (AstReturn) block[i];
-            Assert.IsInstanceOfType(typeof(AstGetSetSymbol),ret.Expression);
-            symbol = (AstGetSetSymbol) ret.Expression;
-            Assert.AreEqual("func1", symbol.Id);
-            Assert.AreEqual(SymbolInterpretations.Function, symbol.Interpretation);
-            Assert.AreEqual(1, symbol.Arguments.Count, "First function call should have 1 argument");
-            Assert.IsInstanceOfType(typeof(AstGetSetSymbol), symbol.Arguments[0]);
-            AstGetSetSymbol sub = symbol.Arguments[0] as AstGetSetSymbol;
-            Assert.IsNotNull(sub);
-            Assert.AreEqual(1, sub.Arguments.Count);
-            Assert.IsInstanceOfType(typeof(AstGetSetSymbol), sub.Arguments[0]);
-            sub = sub.Arguments[0] as AstGetSetSymbol;
-            Assert.IsNotNull(sub);
-            Assert.AreEqual(1, sub.Arguments.Count);
-            Assert.IsInstanceOfType(typeof(AstConstant), sub.Arguments[0]);
-            Assert.AreEqual(55, (int) ((AstConstant) sub.Arguments[0]).Constant);
+ldc.int 55
+ func.1 func1
+ func.1 func1
+@func.1 func1
+");
         }
 
         [Test]
@@ -348,9 +303,7 @@ ldloc    y
 add
 ldc.int  1
 add
-dup      1
-stloc    x
-ret.value"
+stloc    x"
                     );
         }
 
@@ -451,8 +404,7 @@ function test\static
 @cmd.1      println
 
  ldc.string  ""Bye!""
- sget.1      ""Object(\""System.Console\"")::WriteLine""
- ret.value
+@sget.1      ""Object(\""System.Console\"")::WriteLine""
 ");
         }
 
@@ -1427,7 +1379,7 @@ function main()
 ");
             _expect(@"main\0", @"ldc.int 5861 ret.value");
             _expect(@"main\1", @"ldc.int 2 ldloc x mul ret.value");
-            _expect(@"main\2", @"ldloc z ldloc x ldloc y add tail.1");
+            _expect(@"main\2", @"ldloc x ldloc y add indloc.1 z ret.val");
             _expect(
                 @"main\3",
                 @"var d ldloc x ldc.int 2 add stloc d ldloc d ldc.int 4 mul ret.val");
@@ -2136,7 +2088,6 @@ function main()
 var skip
 newclo  main\skip0
 stloc   skip
-ldr.func where
 ldc.int 1
 ldc.int 2
 ldc.int 3
@@ -2144,7 +2095,8 @@ cmd.3   list
 ldc.int 1
 indloc.2 skip
 newclo  main\1
-tail.2
+func.2  where
+ret.val
 ");
 
             _expect("where", @"

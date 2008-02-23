@@ -134,8 +134,14 @@ namespace Prexonite.Compiler.Ast
                 }
                 else
                 {
+                    //NOTE: VM tail calls are not used at the moment.
+                    Expression.EmitCode(target);
+                    target.Emit(OpCode.ret_value);
+                    return;
+
                     // general apporach
                     // getset(arg1,arg2,..,argn) => tail(->getset, arg1, arg2,..,argn)
+/*
                     int addrReference, addrCall;
 
                     //Emit code for the reference
@@ -195,6 +201,7 @@ namespace Prexonite.Compiler.Ast
                                     hint[Loader.TailCallHintCallIndex] = newAddr.ToString();
                             }
                         });
+//*/
                 }
             }
         }

@@ -389,6 +389,17 @@ namespace Prexonite.Compiler.Cil
             else if (source.Meta[PFunction.VolatileKey].Switch)
                 return false;
 
+            //Check tail calls for dynamic functions
+            foreach(TailCallHint call in findTailCalls(source))
+            {
+                PFunction func;
+                if (source.ParentApplication.Functions.TryGetValue(call.ActualCall.Id, out func) && func.Meta[PFunction.DynamicKey].Switch)
+                {
+                    reason = "Uses dynamic function " + call.ActualCall.Id;
+                    return false;
+                }
+            }
+
             //Not supported instructions
             for(int address = 0; address < source.Code.Count; address++)
             {
@@ -663,12 +674,18 @@ namespace Prexonite.Compiler.Cil
                     case OpCode.newclo:
                         MetaEntry[] entries;
                         PFunction func = state.Source.ParentApplication.Functions[ins.Id];
-                        if(func.Meta.ContainsKey(PFunction.SharedNamesKey))
-                            entries = func.Meta[PFunction.SharedNamesKey].List;
+                        MetaEntry entry;
+                        if(func.Meta.ContainsKey(PFunction.SharedNamesKey) && (entry = func.Meta[PFunction.SharedNamesKey]).IsList)
+                            entries = entry.List;
                         else
                             entries = new MetaEntry[] {};
-                        for(int i = 0; i < entries.Length; i++)
-                            state.Symbols[entries[i].Text].Kind = SymbolKind.LocalRef;
+                        for (int i = 0; i < entries.Length; i++)
+                        {
+                            string symbolName = entries[i].Text;
+                            if(!state.Symbols.ContainsKey(symbolName))
+                                throw new CilException(func + " does not contain a mapping for the symbol " + symbolName);
+                            state.Symbols[symbolName].Kind = SymbolKind.LocalRef;
+                        }
                         needsSharedVariables = needsSharedVariables || entries.Length > 0;
                         break;
                 }

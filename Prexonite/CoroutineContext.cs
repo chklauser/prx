@@ -13,7 +13,7 @@ namespace Prexonite
 
         public override string ToString()
         {
-            return "Managed Coroutine";
+            return string.Format("Managed Coroutine({0})", _coroutine);
         } 
 
         public CoroutineContext(StackContext sctx, IEnumerator<PValue> coroutine)
@@ -35,11 +35,11 @@ namespace Prexonite
         {
         }
 
-        private IEnumerator<PValue> _coroutine;
+        private readonly IEnumerator<PValue> _coroutine;
 
-        private Engine parentEngine;
-        private Application parentApplication;
-        private SymbolCollection importedNamespaces;
+        private readonly Engine parentEngine;
+        private readonly Application parentApplication;
+        private readonly SymbolCollection importedNamespaces;
         private PValue returnValue;
 
         /// <summary>

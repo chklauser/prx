@@ -142,5 +142,10 @@ namespace Prexonite.Types
             foreach (KeyValuePair<PValue, PValue> pair in this)
                 yield return PType.Object.CreatePValue(new PValueKeyValuePair(pair));
         }
+
+        public static explicit operator PValue(PValueHashtable pvht)
+        {
+            return new PValue(pvht, PType.Hash);
+        }
     }
 }

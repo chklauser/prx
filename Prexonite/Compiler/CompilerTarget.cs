@@ -638,15 +638,21 @@ namespace Prexonite.Compiler
         public void RequireOuterVariable(string id)
         {
             _outerVariables.Add(id);
-            //Make parent function hand down the variable, even if they don't use them.
+            //Make parent functions hand down the variable, even if they don't use them.
             for(CompilerTarget T = _parentTarget; T != null; T = T._parentTarget)
             {
-                if(T._parentTarget != null)
-                {
-                    PFunction func = T.Function;
-                    if(!(func.Parameters.Contains(id) || func.Variables.Contains(id)))
-                        T.RequireOuterVariable(id);
-                }
+                PFunction func = T.Function;
+                if (func.Variables.Contains(id) || func.Parameters.Contains(id))
+                    break; //Parent can supply the variable/parameter. Stop search here.
+                else if (T._parentTarget != null)
+                    T.RequireOuterVariable(id); //Order parent function to request outer variable
+                else
+                    throw new PrexoniteException(
+                        string.Format(
+                            "{0} references outer variable {1} which cannot be supplied by top-level function {2}",
+                            Function,
+                            id,
+                            func));
             }
         }
 
