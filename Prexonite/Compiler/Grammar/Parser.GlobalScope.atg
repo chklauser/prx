@@ -205,6 +205,7 @@ BuildBlock
                                     
                                     //Emit code for top-level build block
                                     target.Ast.EmitCode(target, true);
+                                    target.Function.Meta["File"] = scanner.File;
                                     target.FinishTarget();	                                
                                     target = lastTarget;
                                     //Run the build block 

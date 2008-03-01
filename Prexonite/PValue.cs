@@ -1279,11 +1279,13 @@ namespace Prexonite
         /// <param name="sctx">The stack context in which to execute the call to "ToString".</param>
         /// <returns>Either the result of the "ToString" call or, in case of a failure, the result of <see cref="ToString">PValue.ToString</see>.</returns>
         /// <remarks>Note that unlike in the CLR, null values in Prexonite <strong>do</strong> implement "ToString".</remarks>
-        [NoDebug()]
+        [NoDebug]
         public string CallToString(StackContext sctx)
         {
             PValue text;
-            if (TryDynamicCall(sctx, new PValue[] {}, PCall.Get, "ToString", out text))
+            if(Type == PType.String)
+                return (string) Value;
+            else if (TryDynamicCall(sctx, new PValue[] {}, PCall.Get, "ToString", out text))
                 return text.Value.ToString();
             else
                 return ToString();

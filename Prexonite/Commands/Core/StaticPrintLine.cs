@@ -1,29 +1,43 @@
 using System;
-using System.Collections.Generic;
+using System.IO;
 using System.Text;
 using Prexonite.Compiler.Cil;
+using Prexonite.Types;
 
-namespace Prexonite.Commands.List
+namespace Prexonite.Commands.Core
 {
-    /// <summary>
-    /// Implementation of the all command.
-    /// </summary>
-    public class All : PCommand, ICilCompilerAware
+    public class StaticPrintLine : PCommand, ICilCompilerAware
     {
         #region Singleton
 
-        private All()
+        private StaticPrintLine()
         {
         }
 
-        private static readonly All _instance = new All();
+        private static readonly StaticPrintLine _instance = new StaticPrintLine();
 
-        public static All Instance
+        public static StaticPrintLine Instance
         {
             get { return _instance; }
         }
 
-        #endregion 
+        private static TextWriter _writer = Console.Out;
+
+        public static TextWriter Writer
+        {
+            get
+            {
+                return _writer;
+            }
+            set
+            {
+                if(value == null)
+                    throw new ArgumentNullException("value");
+                _writer = value;
+            }
+        }
+
+        #endregion  
 
         /// <summary>
         /// A flag indicating whether the command acts like a pure function.
@@ -42,23 +56,24 @@ namespace Prexonite.Commands.List
         /// <returns>The value returned by the command. Must not be null. (But possibly {null~Null})</returns>
         public static PValue RunStatically(StackContext sctx, PValue[] args)
         {
-            if (sctx == null)
-                throw new ArgumentNullException("sctx");
-            if (args == null)
-                throw new ArgumentNullException("args"); 
-            List<PValue> lst = new List<PValue>();
-            foreach (PValue arg in args)
+            StringBuilder buffer = new StringBuilder();
+            for (int i = 0; i < args.Length; i++)
             {
-                IEnumerable<PValue> set = Map._ToEnumerable(sctx, arg);
-                if(set == null)
-                    continue;
-                else
-                    lst.AddRange(set);
+                PValue arg = args[i];
+                buffer.Append(arg.Type is StringPType ? (string)arg.Value : arg.CallToString(sctx));
             }
 
-            return (PValue) lst;
+            _writer.WriteLine(buffer);
+
+            return buffer.ToString();
         }
 
+        /// <summary>
+        /// Executes the command.
+        /// </summary>
+        /// <param name="sctx">The stack context in which to execut the command.</param>
+        /// <param name="args">The arguments to be passed to the command.</param>
+        /// <returns>The value returned by the command. Must not be null. (But possibly {null~Null})</returns>
         public override PValue Run(StackContext sctx, PValue[] args)
         {
             return RunStatically(sctx, args);
@@ -83,7 +98,7 @@ namespace Prexonite.Commands.List
         /// <param name="ins">The instruction to compile.</param>
         void ICilCompilerAware.ImplementInCil(CompilerState state, Instruction ins)
         {
-            throw new NotSupportedException(); 
+            throw new NotSupportedException();
         }
 
         #endregion

@@ -25,13 +25,16 @@
 //Behaviour is not defined for these types
 using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.Reflection;
 using Prexonite.Commands;
 using Prexonite.Commands.Math;
 using Prexonite.Commands.Core;
 using Prexonite.Commands.List;
+using Prexonite.Commands.Text;
 using Prexonite.Types;
 using Char=Prexonite.Commands.Core.Char;
+using Debug=Prexonite.Commands.Core.Debug;
 using TScanner = Prexonite.Internal.Scanner;
 using TParser = Prexonite.Internal.Parser;
 using NoDebug = System.Diagnostics.DebuggerNonUserCodeAttribute;
@@ -572,6 +575,7 @@ namespace Prexonite
         /// </summary>
         public List<String> Paths
         {
+            [DebuggerStepThrough]
             get { return _paths; }
         }
 
@@ -647,9 +651,9 @@ namespace Prexonite
             _commandTable = new CommandTable();
             PCommand cmd;
 
-            Commands.AddEngineCommand(PrintCommand, new Print());
+            Commands.AddEngineCommand(PrintCommand, ConsolePrint.Instance);
 
-            Commands.AddEngineCommand(PrintLineCommand, new PrintLine());
+            Commands.AddEngineCommand(PrintLineCommand, ConsolePrintLine.Instance);
 
             Commands.AddEngineCommand(MetaCommand, Prexonite.Commands.Core.Meta.Instance);
 
@@ -680,44 +684,44 @@ namespace Prexonite
 
             Commands.AddEngineCommand(DebugCommand, new Debug());
 
-            Commands.AddEngineCommand(SetCenterAlias, new SetCenterCommand());
+            Commands.AddEngineCommand(SetCenterAlias, SetCenterCommand.Instance);
 
-            Commands.AddEngineCommand(SetLeftAlias, new SetLeftCommand());
+            Commands.AddEngineCommand(SetLeftAlias, SetLeftCommand.Instance);
 
-            Commands.AddEngineCommand(SetRightAlias, new SetRightCommand());
+            Commands.AddEngineCommand(SetRightAlias, SetRightCommand.Instance);
 
-            Commands.AddEngineCommand(AllAlias,new All());
+            Commands.AddEngineCommand(AllAlias, All.Instance);
 
-            Commands.AddEngineCommand(WhereAlias, new Where());
+            Commands.AddEngineCommand(WhereAlias, Where.Instance);
 
             Commands.AddEngineCommand(SkipAlias, new Skip());
 
             Commands.AddEngineCommand(LimitAlias, cmd = new Limit());
             Commands.AddEngineCommand(TakeAlias, cmd);
 
-            Commands.AddEngineCommand(AbsAlias, new Abs());
+            Commands.AddEngineCommand(AbsAlias, Abs.Instance);
 
-            Commands.AddEngineCommand(CeilingAlias, new Ceiling());
+            Commands.AddEngineCommand(CeilingAlias, Ceiling.Instance);
 
-            Commands.AddEngineCommand(ExpAlias, new Exp());
+            Commands.AddEngineCommand(ExpAlias, Exp.Instance);
 
-            Commands.AddEngineCommand(FloorAlias, new Floor());
+            Commands.AddEngineCommand(FloorAlias, Floor.Instance);
 
-            Commands.AddEngineCommand(LogAlias, new Log());
+            Commands.AddEngineCommand(LogAlias, Log.Instance);
 
-            Commands.AddEngineCommand(MaxAlias, new Max());
+            Commands.AddEngineCommand(MaxAlias, Max.Instance);
 
-            Commands.AddEngineCommand(MinAlias, new Min());
+            Commands.AddEngineCommand(MinAlias, Min.Instance);
 
-            Commands.AddEngineCommand(PiAlias, new Pi());
+            Commands.AddEngineCommand(PiAlias, Pi.Instance);
 
-            Commands.AddEngineCommand(RoundAlias, new Round());
+            Commands.AddEngineCommand(RoundAlias, Round.Instance);
 
-            Commands.AddEngineCommand(SinAlias, new Sin());
+            Commands.AddEngineCommand(SinAlias, Sin.Instance);
 
-            Commands.AddEngineCommand(SqrtAlias, new Sqrt());
+            Commands.AddEngineCommand(SqrtAlias, Sqrt.Instance);
 
-            Commands.AddEngineCommand(TanAlias, new Tan());
+            Commands.AddEngineCommand(TanAlias, Tan.Instance);
 
             Commands.AddEngineCommand(CharAlias, Char.Instance);
 
@@ -737,9 +741,9 @@ namespace Prexonite
 
             Commands.AddEngineCommand(Call_TailAlias, Call_Tail.Instance);
 
-            Commands.AddEngineCommand(ListAlias, new List());
+            Commands.AddEngineCommand(ListAlias, List.Instance);
 
-            Commands.AddEngineCommand(EachAlias, new Each());
+            Commands.AddEngineCommand(EachAlias, Each.Instance);
 
             Commands.AddEngineCommand(ExistsAlias, new Exists());
 

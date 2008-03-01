@@ -798,6 +798,8 @@ namespace Prexonite.Compiler.Cil
 
         private static void _create_and_initialize_remaining_locals(CompilerState state)
         {
+            List<LocalBuilder> nullLocals = new List<LocalBuilder>();
+
             //Create remaining local variables and initialize them
             foreach(KeyValuePair<string, Symbol> pair in state.Symbols)
             {
@@ -811,25 +813,48 @@ namespace Prexonite.Compiler.Cil
                     case SymbolKind.Local:
                         {
                             sym.Local = state.Il.DeclareLocal(typeof(PValue));
-                            Action initVal = GetVariableInitializationValue(state, id, false);
-                            if(initVal != null)
+                            VariableInitialization initVal = GetVariableInitialization(state, id, false);
+                            switch(initVal)
                             {
-                                initVal();
-                                state.EmitStoreLocal(sym.Local);
+                                case VariableInitialization.ArgV:
+                                    EmitLoadArgV(state);
+                                    state.EmitStoreLocal(sym.Local);
+                                    break;
+                                case VariableInitialization.Null:
+                                    nullLocals.Add(sym.Local); //defer assignment
+                                    break;
+
+                                case VariableInitialization.None:
+                                default:
+                                    break;
                             }
                         }
                         break;
                     case SymbolKind.LocalRef:
                         {
                             sym.Local = state.Il.DeclareLocal(typeof(PVariable));
+                            VariableInitialization initVal = GetVariableInitialization(state, id, true);
+
                             int idx = sym.Local.LocalIndex;
+
                             state.Il.Emit(OpCodes.Newobj, newPVariableCtor);
                             state.EmitStoreLocal(idx);
-                            Action initVal = GetVariableInitializationValue(state, id, true);
-                            if(initVal != null)
+
+                            if(initVal != VariableInitialization.None)
                             {
                                 state.EmitLoadLocal(idx);
-                                initVal();
+                                switch (initVal)
+                                {
+                                    case VariableInitialization.ArgV:
+                                        EmitLoadArgV(state);
+                                        break;
+                                    case VariableInitialization.Null:
+                                        state.EmitLoadPValueNull();
+                                        break;
+
+                                    default:
+                                        break;
+                                }
                                 state.Il.EmitCall(OpCodes.Call, SetValueMethod, null);
                             }
                         }
@@ -843,7 +868,20 @@ namespace Prexonite.Compiler.Cil
                     default:
                         throw new CilException("Cannot initialize unknown symbol kind.");  
                 }
+            }
 
+            //Initialize null locals
+            int nullCount = nullLocals.Count;
+            if (nullCount > 0)
+            {
+                state.EmitLoadPValueNull();
+                for(int i = 0; i < nullCount; i++)
+                {
+                    LocalBuilder local = nullLocals[i];
+                    if(i+1 != nullCount)
+                        state.Il.Emit(OpCodes.Dup);
+                    state.EmitStoreLocal(local);
+                }
             }
         }
 
@@ -879,6 +917,8 @@ namespace Prexonite.Compiler.Cil
             List<Instruction> sourceCode = state.Source.Code;
             for(int instructionIndex = 0; instructionIndex < sourceCode.Count; instructionIndex++)
             {
+
+                #region Handling for try-finally-catch blocks
                 //Handle try-finally-catch blocks
                 foreach(TryCatchFinallyBlock block in state.Source.TryCatchFinallyBlocks)
                 {
@@ -912,12 +952,15 @@ namespace Prexonite.Compiler.Cil
                     }
                 }
 
+                #endregion
+
                 state.MarkInstruction(instructionIndex);
 
                 lastWasRet = false;
 
                 Instruction ins = sourceCode[instructionIndex];
-                
+
+                #region CIL hints
                 // **** CIL hints ****
                 //  * Tail call *
                 TailCallHint tailCallHint;
@@ -981,6 +1024,8 @@ namespace Prexonite.Compiler.Cil
                     continue;
                 }
 
+                #endregion
+
                 //  * Normal code generation *
                 //Decode instruction
                 int argc = ins.Arguments;
@@ -1011,29 +1056,22 @@ namespace Prexonite.Compiler.Cil
                         //LOAD CONSTANT
                     case OpCode.ldc_int:
                         state.EmitLdcI4(argc);
-                        state.Il.Emit(OpCodes.Box, typeof(int));
-                        state.Il.EmitCall(OpCodes.Call, GetIntPType, null);
-                        state.Il.Emit(OpCodes.Newobj, NewPValue);
+                        state.EmitWrapInt();
                         break;
                     case OpCode.ldc_real:
                         state.Il.Emit(OpCodes.Ldc_R8, (double) ins.GenericArgument);
-                        state.Il.Emit(OpCodes.Box, typeof(double));
-                        state.Il.EmitCall(OpCodes.Call, GetRealPType, null);
-                        state.Il.Emit(OpCodes.Newobj, NewPValue);
+                        state.EmitWrapReal();
                         break;
                     case OpCode.ldc_bool:
                         if(argc != 0)
                             state.EmitLdcI4(1);
                         else
                             state.EmitLdcI4(0);
-                        state.Il.Emit(OpCodes.Box, typeof(bool));
-                        state.Il.EmitCall(OpCodes.Call, GetBoolPType, null);
-                        state.Il.Emit(OpCodes.Newobj, NewPValue);
+                        state.EmitWrapBool();
                         break;
                     case OpCode.ldc_string:
                         state.Il.Emit(OpCodes.Ldstr, id);
-                        state.Il.EmitCall(OpCodes.Call, GetStringPType, null);
-                        state.Il.Emit(OpCodes.Newobj, NewPValue);
+                        state.EmitWrapString();
                         break;
 
                     case OpCode.ldc_null:
@@ -1982,7 +2020,7 @@ namespace Prexonite.Compiler.Cil
             }
         }
 
-        private static MethodInfo GetIntPType
+        internal static MethodInfo GetIntPType
         {
             get
             {
@@ -1990,7 +2028,7 @@ namespace Prexonite.Compiler.Cil
             }
         }
 
-        private static MethodInfo GetRealPType
+        internal static MethodInfo GetRealPType
         {
             get
             {
@@ -1998,7 +2036,7 @@ namespace Prexonite.Compiler.Cil
             }
         }
 
-        private static MethodInfo GetBoolPType
+        internal static MethodInfo GetBoolPType
         {
             get
             {
@@ -2006,7 +2044,7 @@ namespace Prexonite.Compiler.Cil
             }
         }
 
-        private static MethodInfo GetStringPType
+        internal static MethodInfo GetStringPType
         {
             get
             {
@@ -2051,7 +2089,7 @@ namespace Prexonite.Compiler.Cil
         //    get { return _CreateNativePValue; }
         //}
 
-        private static ConstructorInfo NewPValue
+        internal static ConstructorInfo NewPValue
         {
             get
             {
@@ -2227,28 +2265,36 @@ namespace Prexonite.Compiler.Cil
             }
         }
 
-        private static Action GetVariableInitializationValue(CompilerState state, string id, bool isRef)
+        private enum VariableInitialization
+        {
+            None,
+            Null,
+            ArgV
+        }
+
+        private static VariableInitialization GetVariableInitialization(CompilerState state, string id, bool isRef)
         {
             if(Engine.StringsAreEqual(id, PFunction.ArgumentListId) &&
                !state.Source.Parameters.Contains(id))
             {
-                return
-                    delegate
-                    {
-                        state.EmitLoadArg(CompilerState.ParamArgsIndex);
-                        state.Il.Emit(OpCodes.Newobj, NewPValueListCtor);
-                        state.Il.EmitCall(OpCodes.Call, GetPTypeListMethod, null);
-                        state.Il.Emit(OpCodes.Newobj, NewPValue);
-                    };
+                return VariableInitialization.ArgV;
             }
             else if(!isRef)
             {
-                return delegate { state.EmitLoadPValueNull(); };
+                return VariableInitialization.Null;
             }
             else
             {
-                return null;
+                return VariableInitialization.None;
             }
+        }
+
+        private static void EmitLoadArgV(CompilerState state)
+        {
+            state.EmitLoadArg(CompilerState.ParamArgsIndex);
+            state.Il.Emit(OpCodes.Newobj, NewPValueListCtor);
+            state.Il.EmitCall(OpCodes.Call, GetPTypeListMethod, null);
+            state.Il.Emit(OpCodes.Newobj, NewPValue);
         }
 
         public static void MakePTypeFromExpr(CompilerState state, string expr)

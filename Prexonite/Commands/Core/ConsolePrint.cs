@@ -1,29 +1,28 @@
 using System;
-using System.Collections.Generic;
 using System.Reflection;
 using System.Reflection.Emit;
 using System.Text;
 using Prexonite.Compiler.Cil;
 using Prexonite.Types;
 
-namespace Prexonite.Commands.Math
+namespace Prexonite.Commands.Core
 {
-    public class Exp : PCommand, ICilCompilerAware
+    public class ConsolePrint : PCommand, ICilCompilerAware
     {
         #region Singleton
 
-        private Exp()
+        private ConsolePrint()
         {
         }
 
-        private static readonly Exp _instance = new Exp();
+        private static readonly ConsolePrint _instance = new ConsolePrint();
 
-        public static Exp Instance
+        public static ConsolePrint Instance
         {
             get { return _instance; }
         }
 
-        #endregion 
+        #endregion  
 
         /// <summary>
         /// A flag indicating whether the command acts like a pure function.
@@ -31,10 +30,7 @@ namespace Prexonite.Commands.Math
         /// <remarks>Pure commands can be applied at compile time.</remarks>
         public override bool IsPure
         {
-            get
-            {
-                return true;
-            }
+            get { return false; }
         }
 
         /// <summary>
@@ -45,26 +41,24 @@ namespace Prexonite.Commands.Math
         /// <returns>The value returned by the command. Must not be null. (But possibly {null~Null})</returns>
         public static PValue RunStatically(StackContext sctx, PValue[] args)
         {
-            if (sctx == null)
-                throw new ArgumentNullException("sctx");
-            if (args == null)
-                throw new ArgumentNullException("args");
+            StringBuilder buffer = new StringBuilder();
+            for (int i = 0; i < args.Length; i++)
+            {
+                PValue arg = args[i];
+                buffer.Append(arg.Type is StringPType ? (string)arg.Value : arg.CallToString(sctx));
+            }
 
-            if (args.Length < 1)
-                throw new PrexoniteException("Exp requires at least one argument.");
+            Console.Write(buffer);
 
-            PValue arg0 = args[0];
-
-            return RunStatically(arg0, sctx);
+            return buffer.ToString();
         }
 
-        public static PValue RunStatically(PValue arg0, StackContext sctx)
-        {
-            double x = (double)arg0.ConvertTo(sctx, PType.Real, true).Value;
-
-            return System.Math.Exp(x);
-        }
-
+        /// <summary>
+        /// Executes the command.
+        /// </summary>
+        /// <param name="sctx">The stack context in which to execut the command.</param>
+        /// <param name="args">The arguments to be passed to the command.</param>
+        /// <returns>The value returned by the command. Must not be null. (But possibly {null~Null})</returns>
         public override PValue Run(StackContext sctx, PValue[] args)
         {
             return RunStatically(sctx, args);
@@ -79,18 +73,15 @@ namespace Prexonite.Commands.Math
         /// <returns>A set of <see cref="CompilationFlags"/>.</returns>
         CompilationFlags ICilCompilerAware.CheckQualification(Instruction ins)
         {
-            switch (ins.Arguments)
+            switch(ins.Arguments)
             {
+                case 0:
                 case 1:
                     return CompilationFlags.PreferCustomImplementation;
-                case 0:
                 default:
                     return CompilationFlags.PreferRunStatically;
             }
         }
-
-        private static readonly MethodInfo RunStaticallyMethod =
-            typeof(Exp).GetMethod("RunStatically", new Type[] { typeof(PValue), typeof(StackContext) });
 
         /// <summary>
         /// Provides a custom compiler routine for emitting CIL byte code for a specific instruction.
@@ -99,27 +90,38 @@ namespace Prexonite.Commands.Math
         /// <param name="ins">The instruction to compile.</param>
         void ICilCompilerAware.ImplementInCil(CompilerState state, Instruction ins)
         {
-            switch (ins.Arguments)
+            switch(ins.Arguments)
             {
-                case 1:
-                    break;
                 case 0:
+                    if(!ins.JustEffect)
+                    {
+                        state.Il.Emit(OpCodes.Ldstr, "");
+                        state.EmitWrapString();
+                    }
+                    break;
+                case 1:
+                    state.EmitLoadLocal(state.SctxLocal);
+                    state.Il.EmitCall(OpCodes.Call, ConsolePrintLine.PValueCallToString, null);
+                    if(!ins.JustEffect)
+                    {
+                        state.Il.Emit(OpCodes.Dup);
+                        state.EmitWrapString();
+                        state.EmitStoreTemp(0);
+                    }
+                    state.Il.EmitCall(OpCodes.Call, ConsolePrintLine.ConsoleWriteMethod, null);
+                    if(!ins.JustEffect)
+                    {
+                        state.EmitLoadTemp(0);
+                    }
+                    break;
                 default:
                     throw new NotSupportedException();
             }
+                
 
-            if (ins.JustEffect)
-            {
-                state.Il.Emit(OpCodes.Pop);
-            }
-            else
-            {
-                state.EmitLoadLocal(state.SctxLocal);
-                state.EmitCall(RunStaticallyMethod);
-            }
+
         }
 
         #endregion
-
     }
 }

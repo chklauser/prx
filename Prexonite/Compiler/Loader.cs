@@ -93,14 +93,17 @@ namespace Prexonite.Compiler
                     bool allLoaded = true;
                     foreach (PValue arg in args)
                     {
-                        string path =
-                            Path.GetFullPath(
-                                CombineWithLoadPath(
-                                    arg.CallToString(sctx)));
-                        if (_loadedFiles.Contains(path))
+                        string path = arg.CallToString(sctx);
+                        FileInfo file = ApplyLoadPaths(path);
+                        if (file == null)
+                        {
+                            _throwCannotFindScriptFile(path);
+                            return PType.Null;
+                        }
+                        if(_loadedFiles.Contains(file.FullName))
                             allLoaded = false;
                         else
-                            LoadFromFile(path);
+                            LoadFromFile(file.FullName);
                     }
                     return
                         PType.Bool.CreatePValue(allLoaded);
@@ -110,7 +113,11 @@ namespace Prexonite.Compiler
                 BuildDefaultCommand,
                 delegate
                 {
-                    return CombineWithLoadPath(DefaultScriptName);
+                    FileInfo defaultFile = ApplyLoadPaths(DefaultScriptName);
+                    if (defaultFile == null)
+                        return DefaultScriptName;
+                    else
+                        return defaultFile.FullName;
                 });
 
             _buildCommands.AddCompilerCommand(
@@ -450,7 +457,10 @@ namespace Prexonite.Compiler
 #endif
             Lexer lex = new Lexer(new StreamReader(str, Encoding.UTF8));
             if (filePath != null)
+            {
                 lex._file = filePath;
+                _loadedFiles.Add(Path.GetFullPath(filePath));
+            }
 
             _load(lex);
         }
@@ -465,45 +475,41 @@ namespace Prexonite.Compiler
         private int _load_indent = 0;
 #endif
 
-        [NoDebug()]
+        [NoDebug]
         public void LoadFromFile(string path)
         {
-            string oldPath = _loadPath;
-            string finalPath = CombineWithLoadPath(path);
-            if (!File.Exists(finalPath))
+            FileInfo file = ApplyLoadPaths(path);
+            if (file == null)
             {
-                IList<string> paths = ParentEngine.Paths;
-                int i;
-                for (i = 0; i < paths.Count; i++)
-                {
-                    finalPath = Path.Combine(paths[i], path);
-                    if (File.Exists(finalPath))
-                        break;
-                }
-                if (i >= paths.Count)
-                    throw new FileNotFoundException(
-                        "Cannot find script file \"" + path + "\".", path);
+                _throwCannotFindScriptFile(path);
+                return;
             }
-            _loadedFiles.Add(Path.GetFullPath(finalPath));
-            _loadPath = Path.GetDirectoryName(finalPath);
-            using (Stream str = new FileStream(finalPath, FileMode.Open))
+            _loadedFiles.Add(file.FullName);
+            _loadPaths.Push(file.DirectoryName);
+            using (Stream str = new FileStream(file.FullName, FileMode.Open))
             {
 #if DEBUG
                 StringBuilder indent = new StringBuilder(_load_indent);
                 indent.Append(' ', 2*(_load_indent++));
-                Console.WriteLine("{1}begin compiling {0}", Path.GetFileName(finalPath), indent);
+                Console.WriteLine("{1}begin compiling {0}", file.Name, indent);
 #endif
-                LoadFromStream(str, Path.GetFileName(finalPath));
+                LoadFromStream(str, file.Name);
 #if DEBUG
-                Console.WriteLine("{1}end   compiling {0}", Path.GetFileName(finalPath), indent);
+                Console.WriteLine("{1}end   compiling {0}", file.Name, indent);
                 _load_indent--;
 #endif
             }
 
-            _loadPath = oldPath;
+            _loadPaths.Pop();
         }
 
-        [NoDebug()]
+        private static void _throwCannotFindScriptFile(string path)
+        {
+            throw new FileNotFoundException(
+                "Cannot find script file \"" + path + "\".", path);
+        }
+
+        [NoDebug]
         public void LoadFromString(string code)
         {
             _load(new Lexer(new StringReader(code)));
@@ -514,8 +520,7 @@ namespace Prexonite.Compiler
             Parser parser = new Parser(lexer, this);
             LineCatcher lc = new LineCatcher();
             lc.LineCaught +=
-                new LineCaughtEventHandler(
-                    delegate(object sender, LineCaughtEventArgs o) { _errors.Add(o.Line); });
+                delegate(object sender, LineCaughtEventArgs o) { _errors.Add(o.Line); };
             parser.errors.errorStream = lc;
             parser.Parse();
 
@@ -545,28 +550,56 @@ namespace Prexonite.Compiler
             get { return _errors; }
         }
 
-        private List<string> _errors = new List<string>();
+        private readonly List<string> _errors = new List<string>();
 
         #endregion
 
         #region Load Path and file table
 
-        private string _loadPath = Environment.CurrentDirectory;
+        private readonly Stack<string> _loadPaths = new Stack<string>();
 
-        public string LoadPath
+        public Stack<string> LoadPaths
         {
-            get { return _loadPath; }
-            set { _loadPath = value; }
+            get
+            {
+                return _loadPaths;
+            }
         }
 
-        public string CombineWithLoadPath(string path)
+        private static readonly string _imageLocation =
+            (new FileInfo(System.Reflection.Assembly.GetExecutingAssembly().Location)).DirectoryName;
+
+        public FileInfo ApplyLoadPaths(string pathPostfix)
         {
-            if (path == null)
-                throw new ArgumentNullException("path");
-            return Path.Combine(_loadPath, path);
+            if(pathPostfix == null)
+                throw new ArgumentNullException("pathPostfix");
+            string path = pathPostfix;
+            if (File.Exists(path))
+                return new FileInfo(path);
+
+            //Try to find in load paths
+            foreach(string pathPrefix in _loadPaths)
+                if(File.Exists((path = Path.Combine(pathPrefix, pathPostfix))))
+                    return new FileInfo(path);
+
+            //Try to find in engine paths
+            foreach(string pathPrefix in ParentEngine.Paths)
+                if (File.Exists((path = Path.Combine(pathPrefix, pathPostfix))))
+                    return new FileInfo(path);
+
+            //Try to find in current directory
+            if (File.Exists((path = Path.Combine(Environment.CurrentDirectory, pathPostfix))))
+                return new FileInfo(path);
+
+            //Try to find next to image
+            if (File.Exists((path = Path.Combine(_imageLocation, pathPostfix))))
+                return new FileInfo(path);
+
+            //Not found
+            return null;
         }
 
-        private SymbolCollection _loadedFiles = new SymbolCollection();
+        private readonly SymbolCollection _loadedFiles = new SymbolCollection();
 
         public SymbolCollection LoadedFiles
         {

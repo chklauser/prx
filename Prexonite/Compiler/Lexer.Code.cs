@@ -31,7 +31,7 @@ using Prexonite.Helper;
 
 internal partial class Lexer
 {
-    private StringBuilder buffer = new StringBuilder();
+    private readonly StringBuilder buffer = new StringBuilder();
 
     private Token tok(int kind)
     {
@@ -50,7 +50,7 @@ internal partial class Lexer
         return t;
     }
 
-    private Stack<int> yystates = new Stack<int>();
+    private readonly Stack<int> yystates = new Stack<int>();
 
     public void PushState(int state)
     {
@@ -77,7 +77,7 @@ internal partial class Lexer
         get { return _file; }
     }
 
-    private RandomAccessQueue<Token> _tokenBuffer = new RandomAccessQueue<Token>();
+    private readonly RandomAccessQueue<Token> _tokenBuffer = new RandomAccessQueue<Token>();
     private int _peekIndex = NO_PEEK;
     private const int NO_PEEK = -1;
 

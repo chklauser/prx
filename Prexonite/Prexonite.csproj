@@ -39,10 +39,6 @@
   </PropertyGroup>
   <ItemGroup>
     <Reference Include="System" />
-    <Reference Include="System.Data" />
-    <Reference Include="System.Drawing" />
-    <Reference Include="System.Windows.Forms" />
-    <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
     <Compile Include="CilClosure.cs" />
@@ -58,6 +54,8 @@
     <Compile Include="Commands\Core\Char.cs" />
     <Compile Include="Commands\Core\CompileToCil.cs" />
     <Compile Include="Commands\Core\Concat.cs" />
+    <Compile Include="Commands\Core\ConsolePrint.cs" />
+    <Compile Include="Commands\Core\ConsolePrintLine.cs" />
     <Compile Include="Commands\Core\Debug.cs" />
     <Compile Include="Commands\Core\Dispose.cs" />
     <Compile Include="Commands\Core\LoadAssembly.cs" />
@@ -65,6 +63,8 @@
     <Compile Include="Commands\Core\Pair.cs" />
     <Compile Include="Commands\Core\Print.cs" />
     <Compile Include="Commands\Core\PrintLine.cs" />
+    <Compile Include="Commands\Core\StaticPrint.cs" />
+    <Compile Include="Commands\Core\StaticPrintLine.cs" />
     <Compile Include="Commands\Core\Unbind.cs" />
     <Compile Include="Commands\CoroutineCommand.cs" />
     <Compile Include="Commands\DelegatePCommand.cs" />

@@ -31,15 +31,15 @@ namespace Prexonite.Commands.Core
     /// <summary>
     /// Implementation of the <c>print</c> command.
     /// </summary>
-    public class Print : PCommand
+    public class DynamicPrint : PCommand
     {
-        private TextWriter _writer;
+        private readonly TextWriter _writer;
 
         /// <summary>
         /// Creates a new <c>println</c> command, that prints to the supplied <see cref="TextWriter"/>.
         /// </summary>
         /// <param name="writer">The TextWriter to write to.</param>
-        public Print(TextWriter writer)
+        public DynamicPrint(TextWriter writer)
         {
             _writer = writer;
         }
@@ -47,7 +47,7 @@ namespace Prexonite.Commands.Core
         /// <summary>
         /// Creates a new <c>println</c> command that prints to <see cref="Console.Out"/>.
         /// </summary>
-        public Print()
+        public DynamicPrint()
         {
             _writer = Console.Out;
         }

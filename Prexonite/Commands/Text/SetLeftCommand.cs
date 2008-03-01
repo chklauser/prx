@@ -24,18 +24,34 @@
 
 using System;
 using System.Text;
+using Prexonite.Compiler.Cil;
 using Prexonite.Types;
 
-namespace Prexonite.Commands
+namespace Prexonite.Commands.Text
 {
-    public class SetLeftCommand : PCommand
+    public class SetLeftCommand : PCommand, ICilCompilerAware
     {
+        #region Singleton
+
+        private SetLeftCommand()
+        {
+        }
+
+        private static readonly SetLeftCommand _instance = new SetLeftCommand();
+
+        public static SetLeftCommand Instance
+        {
+            get { return _instance; }
+        }
+
+        #endregion 
+
         public override bool IsPure
         {
             get { return true; }
         }
 
-        public override PValue Run(StackContext sctx, PValue[] args)
+        public static PValue RunStatically(StackContext sctx, PValue[] args)
         {
             // function setright(w,s,f)
             if (sctx == null)
@@ -86,5 +102,34 @@ namespace Prexonite.Commands
         {
             return SetLeft(w, s, " ");
         }
+
+        public override PValue Run(StackContext sctx, PValue[] args)
+        {
+            return RunStatically(sctx, args);
+        }
+
+        #region ICilCompilerAware Members
+
+        /// <summary>
+        /// Asses qualification and preferences for a certain instruction.
+        /// </summary>
+        /// <param name="ins">The instruction that is about to be compiled.</param>
+        /// <returns>A set of <see cref="CompilationFlags"/>.</returns>
+        CompilationFlags ICilCompilerAware.CheckQualification(Instruction ins)
+        {
+            return CompilationFlags.PreferRunStatically;
+        }
+
+        /// <summary>
+        /// Provides a custom compiler routine for emitting CIL byte code for a specific instruction.
+        /// </summary>
+        /// <param name="state">The compiler state.</param>
+        /// <param name="ins">The instruction to compile.</param>
+        void ICilCompilerAware.ImplementInCil(CompilerState state, Instruction ins)
+        {
+            throw new NotSupportedException();
+        }
+
+        #endregion
     }
 }

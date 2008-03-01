@@ -118,7 +118,7 @@ function test1(x)
         }
 
         [Test]
-        public void LateReturn()
+        public void LateReturnIsIllegal()
         {
             const string input1 =
                 @"

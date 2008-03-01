@@ -8,6 +8,21 @@ namespace Prexonite.Commands.List
 {
     public class Each : PCommand, ICilCompilerAware
     {
+        #region Singleton
+
+        private Each()
+        {
+        }
+
+        private static readonly Each _instance = new Each();
+
+        public static Each Instance
+        {
+            get { return _instance; }
+        }
+
+        #endregion 
+
         public override PValue Run(StackContext sctx, PValue[] args)
         {
             return RunStatically(sctx, args);

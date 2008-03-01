@@ -223,7 +223,8 @@ ldc.real 3.41
 ldc.int 55
  func.1 func1
  func.1 func1
-@func.1 func1
+ func.1 func1
+ ret.val
 ");
         }
 
@@ -274,7 +275,7 @@ function func0
     y++;
     x = --y;
     x = 1+(++y)+1;
-    
+    return null;
 }");
    
                 _expect("func0",
@@ -303,7 +304,10 @@ ldloc    y
 add
 ldc.int  1
 add
-stloc    x"
+stloc    x
+
+ldnull
+ret.val"
                     );
         }
 
@@ -377,6 +381,8 @@ function test\static
     
     //CLR over Prexonite
     ~Object<""System.Console"">.WriteLine(""Bye!"");
+
+    return null;
 }
 ");
 
@@ -405,6 +411,9 @@ function test\static
 
  ldc.string  ""Bye!""
 @sget.1      ""Object(\""System.Console\"")::WriteLine""
+
+ ldnull
+ ret.val
 ");
         }
 

@@ -60,6 +60,8 @@ namespace Prexonite.Compiler.Cil
             }
         }
 
+        #region Accessors
+
         public LocalBuilder ArgcLocal
         {
             get
@@ -183,6 +185,10 @@ namespace Prexonite.Compiler.Cil
                 return _foreachHints;
             }
         }
+
+        #endregion
+
+        #region Emit-helper methods
 
         public void EmitLdcI4(int i)
         {
@@ -485,6 +491,43 @@ namespace Prexonite.Compiler.Cil
             Il.MarkLabel(InstructionLabels[instructionAddress]);
         }
 
+        public void EmitCall(MethodInfo method)
+        {
+            Il.EmitCall(OpCodes.Call, method, null);
+        }
+
+        public void EmitVirtualCall(MethodInfo method)
+        {
+            Il.EmitCall(OpCodes.Callvirt, method, null);
+        }
+
+        public void EmitWrapString()
+        {
+            Il.EmitCall(OpCodes.Call, Compiler.GetStringPType, null);
+            Il.Emit(OpCodes.Newobj, Compiler.NewPValue);
+        }
+
+        public void EmitWrapBool()
+        {
+            Il.Emit(OpCodes.Box, typeof(bool));
+            Il.EmitCall(OpCodes.Call, Compiler.GetBoolPType, null);
+            Il.Emit(OpCodes.Newobj, Compiler.NewPValue);
+        }
+
+        public void EmitWrapReal()
+        {
+            Il.Emit(OpCodes.Box, typeof(double));
+            Il.EmitCall(OpCodes.Call, Compiler.GetRealPType, null);
+            Il.Emit(OpCodes.Newobj, Compiler.NewPValue);
+        }
+
+        public void EmitWrapInt()
+        {
+            Il.Emit(OpCodes.Box, typeof(int));
+            Il.EmitCall(OpCodes.Call, Compiler.GetIntPType, null);
+            Il.Emit(OpCodes.Newobj, Compiler.NewPValue);
+        }
+
         #region Early bound command call
 
         /// <summary>
@@ -535,5 +578,13 @@ namespace Prexonite.Compiler.Cil
         }
 
         #endregion
+
+        #endregion
+
+        public void EmitIgnoreArguments(int argc)
+        {
+            for(int i = 0; i  < argc; i++)
+                Il.Emit(OpCodes.Pop);
+        }
     }
 }

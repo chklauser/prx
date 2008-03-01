@@ -161,10 +161,9 @@ namespace Prexonite.Compiler.Ast
             // { ...; GetSet(); } -> { ...; return GetSet(); }
             else if((getset = lastStmt as AstGetSet) != null)
             {
-                //NOTE: Aggressive TCO disabled
-                //ret = new AstReturn(getset.File, getset.Line, getset.Column, ReturnVariant.Exit);
-                //ret.Expression = getset;
-                //Statements[Statements.Count - 1] = ret;
+                ret = new AstReturn(getset.File, getset.Line, getset.Column, ReturnVariant.Exit);
+                ret.Expression = getset;
+                Statements[Statements.Count - 1] = ret;
             }
         }
 

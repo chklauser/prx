@@ -1,29 +1,29 @@
 using System;
-using System.Collections.Generic;
+using System.IO;
 using System.Reflection;
 using System.Reflection.Emit;
 using System.Text;
 using Prexonite.Compiler.Cil;
 using Prexonite.Types;
 
-namespace Prexonite.Commands.Math
+namespace Prexonite.Commands.Core
 {
-    public class Max : PCommand, ICilCompilerAware
+    public class ConsolePrintLine : PCommand, ICilCompilerAware
     {
         #region Singleton
 
-        private Max()
+        private ConsolePrintLine()
         {
         }
 
-        private static readonly Max _instance = new Max();
+        private static readonly ConsolePrintLine _instance = new ConsolePrintLine();
 
-        public static Max Instance
+        public static ConsolePrintLine Instance
         {
             get { return _instance; }
         }
 
-        #endregion 
+        #endregion  
 
         /// <summary>
         /// A flag indicating whether the command acts like a pure function.
@@ -31,7 +31,7 @@ namespace Prexonite.Commands.Math
         /// <remarks>Pure commands can be applied at compile time.</remarks>
         public override bool IsPure
         {
-            get { return true; }
+            get { return false; }
         }
 
         /// <summary>
@@ -42,36 +42,16 @@ namespace Prexonite.Commands.Math
         /// <returns>The value returned by the command. Must not be null. (But possibly {null~Null})</returns>
         public static PValue RunStatically(StackContext sctx, PValue[] args)
         {
-            if (sctx == null)
-                throw new ArgumentNullException("sctx");
-            if (args == null)
-                throw new ArgumentNullException("args");
-
-            if (args.Length < 2)
-                throw new PrexoniteException("Max requires at least two arguments.");
-
-            PValue arg0 = args[0];
-            PValue arg1 = args[1];
-
-            return RunStatically(arg0, arg1, sctx);
-        }
-
-        public static PValue RunStatically(PValue arg0, PValue arg1, StackContext sctx)
-        {
-            if (arg0.Type == PType.Int && arg1.Type == PType.Int)
+            StringBuilder buffer = new StringBuilder();
+            for (int i = 0; i < args.Length; i++)
             {
-                int a = (int) arg0.Value;
-                int b = (int) arg1.Value;
-
-                return System.Math.Max(a, b);
+                PValue arg = args[i];
+                buffer.Append(arg.Type is StringPType ? (string)arg.Value : arg.CallToString(sctx));
             }
-            else
-            {
-                double a = (double) arg0.ConvertTo(sctx, PType.Real, true).Value;
-                double b = (double) arg1.ConvertTo(sctx, PType.Real, true).Value;
 
-                return System.Math.Max(a, b);
-            }
+            Console.WriteLine(buffer);
+
+            return buffer.ToString();
         }
 
         /// <summary>
@@ -98,15 +78,20 @@ namespace Prexonite.Commands.Math
             {
                 case 0:
                 case 1:
-                case 2:
                     return CompilationFlags.PreferCustomImplementation;
                 default:
                     return CompilationFlags.PreferRunStatically;
             }
         }
 
-        private static readonly MethodInfo RunStaticallyMethod =
-            typeof(Max).GetMethod("RunStatically", new Type[] {typeof(PValue), typeof(PValue), typeof(StackContext)});
+        internal static readonly MethodInfo ConsoleWriteLineMethod =
+            typeof(Console).GetMethod("WriteLine", new Type[] {typeof(String)});
+
+        internal static readonly MethodInfo ConsoleWriteMethod =
+            typeof(Console).GetMethod("Write", new Type[] { typeof(String) });
+
+        internal static readonly MethodInfo PValueCallToString =
+            typeof(PValue).GetMethod("CallToString", new Type[] {typeof(StackContext)});
 
         /// <summary>
         /// Provides a custom compiler routine for emitting CIL byte code for a specific instruction.
@@ -115,31 +100,39 @@ namespace Prexonite.Commands.Math
         /// <param name="ins">The instruction to compile.</param>
         void ICilCompilerAware.ImplementInCil(CompilerState state, Instruction ins)
         {
-            if (ins.JustEffect)
+            switch(ins.Arguments)
             {
-                for (int i = 0; i < ins.Arguments; i++)
-                    state.Il.Emit(OpCodes.Pop);
+                case 0:
+                    state.Il.EmitCall(OpCodes.Call, ConsoleWriteLineMethod,null);
+                    if(!ins.JustEffect)
+                    {
+                        state.Il.Emit(OpCodes.Ldstr, "");
+                        state.Il.EmitCall(OpCodes.Call, Compiler.Cil.Compiler.GetStringPType, null);
+                        state.Il.Emit(OpCodes.Newobj, Compiler.Cil.Compiler.NewPValue);
+                    }
+                    break;
+                case 1:
+                    state.EmitLoadLocal(state.SctxLocal);
+                    state.Il.EmitCall(OpCodes.Call, PValueCallToString, null);
+                    if(!ins.JustEffect)
+                    {
+                        state.Il.Emit(OpCodes.Dup);
+                        state.Il.EmitCall(OpCodes.Call, Compiler.Cil.Compiler.GetStringPType, null);
+                        state.Il.Emit(OpCodes.Newobj, Compiler.Cil.Compiler.NewPValue);
+                        state.EmitStoreTemp(0);
+                    }
+                    state.Il.EmitCall(OpCodes.Call, ConsoleWriteLineMethod, null);
+                    if(!ins.JustEffect)
+                    {
+                        state.EmitLoadTemp(0);
+                    }
+                    break;
+                default:
+                    throw new NotSupportedException();
             }
-            else
-            {
-                switch(ins.Arguments)
-                {
-                    case 0:
-                        state.EmitLoadPValueNull();
-                        state.EmitLoadPValueNull();
-                        break;
-                    case 1:
-                        state.EmitLoadPValueNull();
-                        break;
-                    case 2:
-                        break;
-                    default:
-                        throw new NotSupportedException();
-                }
+                
 
-                state.EmitLoadLocal(state.SctxLocal);
-                state.EmitCall(RunStaticallyMethod);
-            }
+
         }
 
         #endregion

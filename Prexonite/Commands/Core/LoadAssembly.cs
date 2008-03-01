@@ -26,6 +26,7 @@
 using System;
 using System.IO;
 using System.Reflection;
+using Prexonite.Compiler;
 using Prexonite.Types;
 
 namespace Prexonite.Commands.Core
@@ -39,7 +40,7 @@ namespace Prexonite.Commands.Core
         {
         }
 
-        private static LoadAssembly _instance = new LoadAssembly();
+        private static readonly LoadAssembly _instance = new LoadAssembly();
 
         public static LoadAssembly Instance
         {
@@ -63,7 +64,10 @@ namespace Prexonite.Commands.Core
             foreach (PValue arg in args)
             {
                 string path = arg.CallToString(sctx);
-                eng.RegisterAssembly(Assembly.LoadFile(Path.GetFullPath(path)));
+                LoaderOptions ldrOptions = new LoaderOptions(sctx.ParentEngine, sctx.ParentApplication);
+                ldrOptions.ReconstructSymbols = false;
+                Loader ldr = sctx as Loader ?? new Loader(ldrOptions);
+                eng.RegisterAssembly(Assembly.LoadFile(ldr.ApplyLoadPaths(path).FullName));
             }
 
             return PType.Null.CreatePValue();

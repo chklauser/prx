@@ -14,6 +14,24 @@ namespace Prexonite.Types
     {
         private ExtensionTable _et;
 
+        protected void InitializeExtensionTable()
+        {
+            if(_et != null)
+                throw new InvalidOperationException("The extension table for this object has already been created.");
+            _et = new ExtensionTable();
+        }
+
+        protected ExtendableObject(bool _tableIsInitialized)
+        {
+            if(!_tableIsInitialized)
+                InitializeExtensionTable();
+        }
+
+        protected ExtendableObject()
+            : this(false)
+        {
+        }
+
         #region IObject Members
 
         /// <summary>
@@ -31,7 +49,7 @@ namespace Prexonite.Types
         ///         <paramref name="result"/> is only defined if the method returns true.
         ///     </para>
         ///     <para>
-        ///         If you want to intercept object member calls yourself, overwrite <see cref="TryDynamicCall(StackContext,PValue,PValue[],PCall,string,out PValue)"/>instead.
+        ///         If you want to intercept object member calls yourself, overwrite <see cref="TryDynamicCall(StackContext,PValue,PValue[],PCall,string,out PValue)"/> instead.
         ///     </para>
         /// </remarks>
         protected virtual bool TryDynamicClrCall(StackContext sctx, PValue subject, PValue[] args, PCall call, string id, out PValue result)
@@ -84,7 +102,7 @@ namespace Prexonite.Types
         ///         If you want to intercept object member calls yourself, overwrite <see cref="TryDynamicClrCall(StackContext,PValue,PValue[],PCall,string,out PValue)"/> instead.
         ///     </para>
         /// </remarks>
-        public virtual bool TryDynamicCall(
+        public bool TryDynamicCall(
             StackContext sctx, PValue[] args, PCall call, string id, out PValue result)
         {
             return TryDynamicCall(sctx, sctx.CreateNativePValue(this), args, call, id, out result);
@@ -133,6 +151,29 @@ namespace Prexonite.Types
         }
 
         #endregion
+
+        protected void AddRefMember(string id, PValue value)
+        {
+            if(id == null)
+                throw new ArgumentNullException("id");
+            if(value == null)
+                throw new ArgumentNullException("value"); 
+            _et.Add(new ExtensionMember(id, true, value));
+        }
+
+        protected void AddMember(string id, PValue value)
+        {
+            if (id == null)
+                throw new ArgumentNullException("id");
+            if (value == null)
+                throw new ArgumentNullException("value"); 
+            _et.Add(new ExtensionMember(id, value));
+        }
+
+        protected void RemoveMember(string id)
+        {
+            _et.Remove(id);
+        }
 
         private bool _tryDynamicExtensionCall(StackContext sctx, PValue subject, PValue[] args, PCall call, string id, out PValue result)
         {

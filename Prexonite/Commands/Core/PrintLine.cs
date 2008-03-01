@@ -24,6 +24,7 @@
 using System;
 using System.IO;
 using System.Text;
+using Prexonite.Compiler.Cil;
 using Prexonite.Types;
 
 namespace Prexonite.Commands.Core
@@ -31,15 +32,15 @@ namespace Prexonite.Commands.Core
     /// <summary>
     /// Implementation of <c>println</c>
     /// </summary>
-    public class PrintLine : PCommand
+    public class DynamicPrintLine : PCommand
     {
-        private TextWriter _writer;
+        private readonly TextWriter _writer;
 
         /// <summary>
         /// Creates a new <c>println</c> command, that prints to the supplied <see cref="TextWriter"/>.
         /// </summary>
         /// <param name="writer">The TextWriter to write to.</param>
-        public PrintLine(TextWriter writer)
+        public DynamicPrintLine(TextWriter writer)
         {
             _writer = writer;
         }
@@ -47,7 +48,7 @@ namespace Prexonite.Commands.Core
         /// <summary>
         /// Creates a new <c>println</c> command that prints to <see cref="Console.Out"/>.
         /// </summary>
-        public PrintLine()
+        public DynamicPrintLine()
         {
             _writer = Console.Out;
         }
