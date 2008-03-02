@@ -245,18 +245,21 @@ Variable<out AstGetSetSymbol variable, out bool isDeclared>
 |   Id<out id>                          (.  if(target.Symbols.ContainsKey(id))
                                             {
                                                 SymbolEntry varSym = target.Symbols[id];
+                                                variable = new AstGetSetSymbol(this, varSym.Id, varSym.Interpretation);
                                                 if(InterpretationIsVariable(varSym.Interpretation))
                                                 {
                                                     if(isOuterVariable(id))
-                                                        target.RequireOuterVariable(id);
-                                                    variable = new AstGetSetSymbol(this, varSym.Id, varSym.Interpretation);
+                                                        target.RequireOuterVariable(id);                                                    
                                                 }
                                                 else
+                                                {
                                                     SemErr(t.line, t.col, "Variable name expected");
+                                                }
                                             }
                                             else
                                             {
                                                 SemErr(t.line, t.col, "Unkown symbol \"" + id + "\". Variable name expected.");
+                                                variable = new AstGetSetSymbol(this, "Not a Variable Id", SymbolInterpretations.LocalObjectVariable);
                                             }
                                         .)
 .

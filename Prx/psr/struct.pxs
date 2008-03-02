@@ -22,11 +22,15 @@ function struct
                 .Equals(parentId, struct\ordinalIc)            
             And Not f.Meta["Private"].Switch)
         >> map(f => 
-            if(Not f.Meta.ContainsKey("LogicalId"))
-                (null: null)
-            else
-                (getId(f): callingCtx.LocalVariables[f.Meta["LogicalId"].Text].Value)
-           )
+        {
+			if(Not f.Meta.ContainsKey("LogicalId"))
+				return (null: null);
+			var logicalId = f.Meta["LogicalId"].Text;
+			if(Not callingCtx.LocalVariables.ContainsKey(logicalId))
+				return (null: null);
+			else
+				return (getId(f): callingCtx.LocalVariables[logicalId].Value);            
+        })
         >> where(fcf => (Not fcf.Value is Null) && (Not fcf.Key is Null));
     
     var s = new Structure;
