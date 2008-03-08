@@ -31,7 +31,6 @@ using System.IO;
 using System.Text;
 using Prexonite.Commands;
 using Prexonite.Compiler.Ast;
-using Prexonite.Compiler.Cil;
 using Prexonite.Helper;
 using Prexonite.Types;
 using NoDebug = System.Diagnostics.DebuggerNonUserCodeAttribute;
@@ -46,7 +45,7 @@ namespace Prexonite.Compiler
 
         #region Construction
 
-        [NoDebug()]
+        [NoDebug]
         public Loader(Engine parentEngine, Application targetApplication)
             : this(new LoaderOptions(parentEngine, targetApplication))
         {
@@ -114,7 +113,7 @@ namespace Prexonite.Compiler
                 delegate
                 {
                     FileInfo defaultFile = ApplyLoadPaths(DefaultScriptName);
-                    if (defaultFile == null)
+                    if(defaultFile == null)
                         return DefaultScriptName;
                     else
                         return defaultFile.FullName;
@@ -155,11 +154,11 @@ namespace Prexonite.Compiler
 
         #region Options
 
-        private LoaderOptions _options;
+        private readonly LoaderOptions _options;
 
         public LoaderOptions Options
         {
-            [NoDebug()]
+            [NoDebug]
             get { return _options; }
         }
 
@@ -167,11 +166,11 @@ namespace Prexonite.Compiler
 
         #region Symbol Table
 
-        private SymbolTable<SymbolEntry> _symbols;
+        private readonly SymbolTable<SymbolEntry> _symbols;
 
         public SymbolTable<SymbolEntry> Symbols
         {
-            [NoDebug()]
+            [NoDebug]
             get { return _symbols; }
         }
 
@@ -179,17 +178,17 @@ namespace Prexonite.Compiler
 
         #region Function Symbol Tables
 
-        private SymbolTable<CompilerTarget> _functionTargets;
-        private FunctionTargetsIterator _functionTargetsIterator;
+        private readonly SymbolTable<CompilerTarget> _functionTargets;
+        private readonly FunctionTargetsIterator _functionTargetsIterator;
 
         public FunctionTargetsIterator FunctionTargets
         {
-            [NoDebug()]
+            [NoDebug]
             get { return _functionTargetsIterator; }
         }
 
-        [NoDebug()]
-        public class FunctionTargetsIterator
+        [NoDebug]
+        public sealed class FunctionTargetsIterator
         {
             private readonly Loader outer;
 
@@ -214,16 +213,22 @@ namespace Prexonite.Compiler
             }
         }
 
-        [NoDebug()]
+        [NoDebug]
         public CompilerTarget CreateFunctionTarget(PFunction func, AstBlock block)
         {
             if (func == null)
                 throw new ArgumentNullException("func");
-            if (_functionTargets.ContainsKey(func.Id))
-                throw new ArgumentException(
-                    "A symbol table for the function " + func.Id + " has already been created");
+            
             CompilerTarget target = new CompilerTarget(this, func, block);
-            _functionTargets.Add(func.Id, target);
+            if(_functionTargets.ContainsKey(func.Id) &&
+               (!ParentApplication.Meta.GetDefault(Application.AllowOverridingKey, true).Switch))
+                Errors.Add(
+                    string.Format(
+                        "The application {0} does not allow overriding of function {1}.", ParentApplication.Id, func.Id));
+
+            //The function target is added nontheless in order not to confuse the compiler
+            _functionTargets[func.Id] = target;
+
             return target;
         }
 
@@ -242,7 +247,7 @@ namespace Prexonite.Compiler
 
         #region Compiler Hooks
 
-        private CompilerHooksIterator _compilerHooksIterator;
+        private readonly CompilerHooksIterator _compilerHooksIterator;
 
         public CompilerHooksIterator CompilerHooks
         {
@@ -616,7 +621,7 @@ namespace Prexonite.Compiler
         {
             get { return _buildCommands; }
         }
-        private CommandTable _buildCommands;
+        private readonly CommandTable _buildCommands;
 
         public bool BuildCommandsEnabled
         {
@@ -828,7 +833,7 @@ namespace Prexonite.Compiler
         private static void _writeSymbolKind(
             TextWriter writer,
             string kind,
-            List<KeyValuePair<string, SymbolEntry>> entries)
+            ICollection<KeyValuePair<string, SymbolEntry>> entries)
         {
             if (entries.Count > 0)
             {
@@ -856,19 +861,19 @@ namespace Prexonite.Compiler
 
         #region Stack Context
 
-        public override Engine ParentEngine
+        public sealed override Engine ParentEngine
         {
-            [NoDebug()]
+            [NoDebug]
             get { return _options.ParentEngine; }
         }
 
         public PFunction Implementation
         {
-            [NoDebug()]
+            [NoDebug]
             get { return Options.TargetApplication._InitializationFunction; }
         }
 
-        public override Application ParentApplication
+        public sealed override Application ParentApplication
         {
             get
             {
@@ -876,7 +881,7 @@ namespace Prexonite.Compiler
             }
         }
 
-        public override SymbolCollection ImportedNamespaces
+        public sealed override SymbolCollection ImportedNamespaces
         {
             get
             {
@@ -884,7 +889,7 @@ namespace Prexonite.Compiler
             }
         }
 
-        [NoDebug()]
+        [NoDebug]
         protected override bool PerformNextCylce(StackContext lastContext)
         {
             return false;
@@ -892,7 +897,7 @@ namespace Prexonite.Compiler
 
         public override PValue ReturnValue
         {
-            [NoDebug()]
+            [NoDebug]
             get { return Options.ParentEngine.CreateNativePValue(Options.TargetApplication); }
         }
 

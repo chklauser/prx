@@ -25,6 +25,7 @@
 
 using System;
 using System.Collections.Generic;
+using Prexonite.Compiler.Cil;
 using Prexonite.Types;
 
 namespace Prexonite.Commands.List
@@ -40,9 +41,24 @@ namespace Prexonite.Commands.List
     ///     return left;
     /// }</code>
     /// </remarks>
-    internal class FoldL : PCommand
+    public class FoldL : PCommand, ICilCompilerAware
     {
-        public PValue Run(
+        #region Singleton
+
+        private FoldL()
+        {
+        }
+
+        private static readonly FoldL _instance = new FoldL();
+
+        public static FoldL Instance
+        {
+            get { return _instance; }
+        }
+
+        #endregion 
+
+        public static PValue Run(
             StackContext sctx, IIndirectCall f, PValue left, IEnumerable<PValue> source)
         {
             if (sctx == null)
@@ -61,7 +77,7 @@ namespace Prexonite.Commands.List
             return left;
         }
 
-        public override PValue Run(StackContext sctx, PValue[] args)
+        public static PValue RunStatically(StackContext sctx, PValue[] args)
         {
             if (sctx == null)
                 throw new ArgumentNullException("sctx");
@@ -106,6 +122,11 @@ namespace Prexonite.Commands.List
             return Run(sctx, f, left, source);
         }
 
+        public override PValue Run(StackContext sctx, PValue[] args)
+        {
+            return RunStatically(sctx, args);
+        }
+
         /// <summary>
         /// A flag indicating whether the command acts like a pure function.
         /// </summary>
@@ -114,5 +135,29 @@ namespace Prexonite.Commands.List
         {
             get { return false; } //indirect call
         }
+
+        #region ICilCompilerAware Members
+
+        /// <summary>
+        /// Asses qualification and preferences for a certain instruction.
+        /// </summary>
+        /// <param name="ins">The instruction that is about to be compiled.</param>
+        /// <returns>A set of <see cref="CompilationFlags"/>.</returns>
+        CompilationFlags ICilCompilerAware.CheckQualification(Instruction ins)
+        {
+            return CompilationFlags.PreferRunStatically;
+        }
+
+        /// <summary>
+        /// Provides a custom compiler routine for emitting CIL byte code for a specific instruction.
+        /// </summary>
+        /// <param name="state">The compiler state.</param>
+        /// <param name="ins">The instruction to compile.</param>
+        void ICilCompilerAware.ImplementInCil(CompilerState state, Instruction ins)
+        {
+            throw new NotSupportedException();
+        }
+
+        #endregion
     }
 }

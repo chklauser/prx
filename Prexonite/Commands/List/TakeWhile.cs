@@ -5,17 +5,20 @@ using Prexonite.Types;
 
 namespace Prexonite.Commands.List
 {
-    public class Limit : CoroutineCommand, ICilCompilerAware
+    /// <summary>
+    /// Implementation of takewhile
+    /// </summary>
+    public class TakeWhile : CoroutineCommand, ICilCompilerAware
     {
         #region Singleton
 
-        private Limit()
+        private TakeWhile()
         {
         }
 
-        private static readonly Limit _instance = new Limit();
+        private static readonly TakeWhile _instance = new TakeWhile();
 
-        public static Limit Instance
+        public static TakeWhile Instance
         {
             get { return _instance; }
         }
@@ -29,35 +32,26 @@ namespace Prexonite.Commands.List
 
         protected static IEnumerable<PValue> CoroutineRunStatically(StackContext sctx, PValue[] args)
         {
-            if (sctx == null)
+            if(sctx == null)
                 throw new ArgumentNullException("sctx");
-            if (args == null)
+            if(args == null)
                 throw new ArgumentNullException("args");
+            if (args.Length < 2)
+                throw new PrexoniteException("TakeWhile requires at least two arguments.");
 
-            if (args.Length < 1)
-                throw new PrexoniteException("Limit requires at least one argument.");
+            PValue f = args[0];
 
             int i = 0;
-            int count = (int) args[0].ConvertTo(sctx, PType.Int, true).Value;
-
-            for (int j = 1; j < args.Length; j++)
+            for(int k = 1; k < args.Length; k++)
             {
-                PValue arg = args[j];
+                PValue arg = args[k];
                 IEnumerable<PValue> set = Map._ToEnumerable(sctx, arg);
-                if (set == null)
-                    throw new PrexoniteException(arg + " is neither a list nor a coroutine.");
-                using (IEnumerator<PValue> Eset = set.GetEnumerator())
-                {
-                    while(i++ < count && Eset.MoveNext())
-                    {
-                        yield return Eset.Current;
-                    }
-                    if(i >= count)
-                        goto breakall;
-                }
+                if(set == null)
+                    continue;
+                foreach(PValue value in set)
+                    if((bool) f.IndirectCall(sctx, new PValue[] {value, i++}).ConvertTo(sctx, PType.Bool, true).Value)
+                        yield return value;
             }
-            breakall:
-            ;
         }
 
         public static PValue RunStatically(StackContext sctx, PValue[] args)
@@ -94,7 +88,7 @@ namespace Prexonite.Commands.List
         /// <param name="ins">The instruction to compile.</param>
         void ICilCompilerAware.ImplementInCil(CompilerState state, Instruction ins)
         {
-            throw new NotSupportedException();
+            throw  new NotSupportedException();
         }
 
         #endregion

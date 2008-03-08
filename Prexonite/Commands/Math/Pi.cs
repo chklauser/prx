@@ -56,7 +56,7 @@ namespace Prexonite.Commands.Math
         /// <returns>A set of <see cref="CompilationFlags"/>.</returns>
         CompilationFlags ICilCompilerAware.CheckQualification(Instruction ins)
         {
-            return CompilationFlags.HasCustomImplementation;
+            return CompilationFlags.PreferCustomImplementation;
         }
 
         private static readonly FieldInfo MathPIField = typeof(System.Math).GetField("PI");

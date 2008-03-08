@@ -102,17 +102,18 @@ build does hook( t =>
     if(_stmt_hooks.Count == 0)
         return;
         
-    //allocate stores
+    //Allocate variables for each stmt_hook
     var stores = {};
     foreach(var fhook in _stmt_hooks)
-        stores[fhook.Key] = 
-            for(var i = 0; i < fhook.Value; i++)
-                yield new Prexonite::PVariable;
-            ;
+    {
+        var lst = [];        
+        for(var i = 0; i < fhook.Value; i++)
+            lst[] = new Prexonite::PVariable;
+        stores[fhook.Key] = lst;
+    }
     
-    var hooks = foreach(var hook in _stmt_hooks)
-                    yield hook;
-                ;
+    
+    var hooks = _stmt_hooks >> all;
             
     function process(block)
     {
@@ -128,10 +129,12 @@ build does hook( t =>
             }
         }
         
+        //Recursively process statements in sub block
         foreach(var subBlock in subBlocks(block))
             process(subBlock);
     }
     
+    //Process top-level block
     process(t.Ast);
 });
 

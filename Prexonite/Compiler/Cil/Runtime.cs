@@ -1,9 +1,9 @@
 using System;
 using System.Collections;
+using System.Collections.Generic;
 using System.Reflection;
 using Prexonite.Commands;
 using Prexonite.Types;
-using System.Collections.Generic;
 
 namespace Prexonite.Compiler.Cil
 {
@@ -38,12 +38,24 @@ namespace Prexonite.Compiler.Cil
         private static readonly MethodInfo _NewTypeMethod = typeof(Runtime).GetMethod("NewType");
         private static readonly MethodInfo _ParseExceptionMethod = typeof(Runtime).GetMethod("ParseException");
         private static readonly MethodInfo _RaiseToPowerMethod = typeof(Runtime).GetMethod("RaiseToPower");
-        private static readonly MethodInfo _StaticCallMethod = typeof(Runtime).GetMethod("StaticCall");
+
+        private static readonly MethodInfo _StaticCallMethod =
+            typeof(PType).GetMethod(
+                "StaticCall",
+                new Type[] {typeof(StackContext), typeof(PValue[]), typeof(PCall), typeof(string)});
+
         private static readonly MethodInfo _ThrowExceptionMethod = typeof(Runtime).GetMethod("ThrowException");
+
+        internal static readonly MethodInfo DisposeIfPossibleMethod =
+            typeof(Runtime).GetMethod("DisposeIfPossible", new Type[] {typeof(object)});
+
         public static readonly PValue[] EmptyPValueArray = new PValue[0];
         internal static readonly FieldInfo EmptyPValueArrayField = typeof(Runtime).GetField("EmptyPValueArray");
         public static readonly PVariable[] EmptyPVariableArray = new PVariable[0];
         internal static readonly FieldInfo EmptyPVariableArrayField = typeof(Runtime).GetField("EmptyPVariableArray");
+
+        internal static readonly MethodInfo ExtractEnumeratorMethod =
+            typeof(Runtime).GetMethod("ExtractEnumerator", new Type[] {typeof(PValue), typeof(StackContext)});
 
         internal static readonly MethodInfo LoadGlobalVariableReferenceMethod =
             typeof(Runtime).GetMethod("LoadGlobalVariableReference");
@@ -53,146 +65,92 @@ namespace Prexonite.Compiler.Cil
 
         internal static MethodInfo LoadGlobalVariableReferenceAsPValueMethod
         {
-            get
-            {
-                return _LoadGlobalVariableReferenceAsPValueMethod;
-            }
+            get { return _LoadGlobalVariableReferenceAsPValueMethod; }
         }
 
         internal static MethodInfo LoadFunctionReferenceMethod
         {
-            get
-            {
-                return _LoadFunctionReferenceMethod;
-            }
+            get { return _LoadFunctionReferenceMethod; }
         }
 
         internal static MethodInfo LoadApplicationReferenceMethod
         {
-            get
-            {
-                return _LoadApplicationReferenceMethod;
-            }
+            get { return _LoadApplicationReferenceMethod; }
         }
 
         internal static MethodInfo LoadEngineReferenceMethod
         {
-            get
-            {
-                return _LoadEngineReferenceMethod;
-            }
+            get { return _LoadEngineReferenceMethod; }
         }
 
         internal static MethodInfo LoadCommandReferenceMethod
         {
-            get
-            {
-                return _LoadCommandReferenceMethod;
-            }
+            get { return _LoadCommandReferenceMethod; }
         }
 
         internal static MethodInfo ConstructPTypeAsPValueMethod
         {
-            get
-            {
-                return _ConstructPTypeAsPValueMethod;
-            }
+            get { return _ConstructPTypeAsPValueMethod; }
         }
 
         internal static MethodInfo NewObjMethod
         {
-            get
-            {
-                return _NewObjMethod;
-            }
+            get { return _NewObjMethod; }
         }
 
         internal static MethodInfo NewTypeMethod
         {
-            get
-            {
-                return _NewTypeMethod;
-            }
+            get { return _NewTypeMethod; }
         }
 
         internal static MethodInfo NewClosureMethod
         {
-            get
-            {
-                return _NewClosureMethod;
-            }
+            get { return _NewClosureMethod; }
         }
 
         internal static MethodInfo RaiseToPowerMethod
         {
-            get
-            {
-                return _RaiseToPowerMethod;
-            }
+            get { return _RaiseToPowerMethod; }
         }
 
         internal static MethodInfo CheckTypeMethod
         {
-            get
-            {
-                return _CheckTypeMethod;
-            }
+            get { return _CheckTypeMethod; }
         }
 
         internal static MethodInfo CastMethod
         {
-            get
-            {
-                return _CastMethod;
-            }
+            get { return _CastMethod; }
         }
 
         internal static MethodInfo StaticCallMethod
         {
-            get
-            {
-                return _StaticCallMethod;
-            }
+            get { return _StaticCallMethod; }
         }
 
         internal static MethodInfo CallFunctionMethod
         {
-            get
-            {
-                return _CallFunctionMethod;
-            }
+            get { return _CallFunctionMethod; }
         }
 
         internal static MethodInfo CallCommandMethod
         {
-            get
-            {
-                return _CallCommandMethod;
-            }
+            get { return _CallCommandMethod; }
         }
 
         internal static MethodInfo ThrowExceptionMethod
         {
-            get
-            {
-                return _ThrowExceptionMethod;
-            }
+            get { return _ThrowExceptionMethod; }
         }
 
         internal static MethodInfo ExtractBoolMethod
         {
-            get
-            {
-                return _ExtractBoolMethod;
-            }
+            get { return _ExtractBoolMethod; }
         }
 
         internal static MethodInfo ParseExceptionMethod
         {
-            get
-            {
-                return _ParseExceptionMethod;
-            }
+            get { return _ParseExceptionMethod; }
         }
 
         public static PValue LoadGlobalVariableReferenceAsPValue(StackContext sctx, string id)
@@ -238,6 +196,9 @@ namespace Prexonite.Compiler.Cil
                 throw new PrexoniteException("Cannot load reference to non existing command " + id);
             return sctx.CreateNativePValue(cmd);
         }
+
+        internal static readonly MethodInfo ConstructPTypeMethod =
+            typeof(Runtime).GetMethod("ConstructPType", new Type[] {typeof(StackContext), typeof(string)});
 
         public static PType ConstructPType(StackContext sctx, string expr)
         {
@@ -289,19 +250,30 @@ namespace Prexonite.Compiler.Cil
                 Math.Pow(Convert.ToDouble(rleft.Value), Convert.ToDouble(rright.Value));
         }
 
+        public static PValue CheckTypeConst(PValue obj, PType type)
+        {
+            return obj.Type.Equals(type);
+        }
+
+        internal static readonly MethodInfo CheckTypeConstMethod =
+            typeof(Runtime).GetMethod("CheckTypeConst", new Type[] {typeof(PValue), typeof(PType)});
+
         public static PValue CheckType(PValue obj, PValue type)
         {
             return obj.Type.Equals(type.Value);
         }
 
+        public static PValue CastConst(PValue obj, PType type, StackContext sctx)
+        {
+            return obj.ConvertTo(sctx, type, true);
+        }
+
+        internal static MethodInfo CastConstMethod =
+            typeof(Runtime).GetMethod("CastConst", new Type[] {typeof(PValue), typeof(PType), typeof(StackContext)});
+
         public static PValue Cast(PValue obj, PValue type, StackContext sctx)
         {
             return obj.ConvertTo(sctx, (PType) type.Value, true);
-        }
-
-        public static PValue StaticCall(StackContext sctx, string typeExpr, PValue[] args, PCall call, string memId)
-        {
-            return ConstructPType(sctx, typeExpr).StaticCall(sctx, args, call, memId);
         }
 
         //[System.Diagnostics.DebuggerHidden]
@@ -423,14 +395,14 @@ namespace Prexonite.Compiler.Cil
 
             IEnumerator genEn;
 
-            if (value.Type is ObjectPType)
-                genEn =  (IEnumerator)value.Value;
+            if(value.Type is ObjectPType)
+                genEn = (IEnumerator) value.Value;
             else
                 genEn = value.ConvertTo<IEnumerator>(sctx, true);
 
             PValueEnumerator pvEn = genEn as PValueEnumerator;
 
-            if (pvEn != null)
+            if(pvEn != null)
             {
                 return pvEn;
             }
@@ -440,9 +412,6 @@ namespace Prexonite.Compiler.Cil
             }
         }
 
-        internal static readonly MethodInfo ExtractEnumeratorMethod =
-            typeof(Runtime).GetMethod("ExtractEnumerator", new Type[] {typeof(PValue), typeof(StackContext)});
-
         public static void DisposeIfPossible(object obj)
         {
             IDisposable disposable = obj as IDisposable;
@@ -451,13 +420,11 @@ namespace Prexonite.Compiler.Cil
                 disposable.Dispose();
         }
 
-        internal static readonly MethodInfo DisposeIfPossibleMethod =
-            typeof(Runtime).GetMethod("DisposeIfPossible", new Type[] {typeof(object)});
+        #region Nested type: EnumeratorWrapper
 
         public sealed class EnumeratorWrapper
             : IEnumerator<PValue>
         {
-
             #region Class
 
             private readonly IEnumerator _enumerator;
@@ -475,15 +442,8 @@ namespace Prexonite.Compiler.Cil
 
             public PValue Current
             {
-                get
-                {
-                    return _sctx.CreateNativePValue(_enumerator.Current);
-                }
+                get { return _sctx.CreateNativePValue(_enumerator.Current); }
             }
-
-            #endregion
-
-            #region IDisposable Members
 
             public void Dispose()
             {
@@ -495,16 +455,9 @@ namespace Prexonite.Compiler.Cil
                 }
             }
 
-            #endregion
-
-            #region IEnumerator Members
-
             object IEnumerator.Current
             {
-                get 
-                {
-                    return Current; 
-                }
+                get { return Current; }
             }
 
             public bool MoveNext()
@@ -519,5 +472,7 @@ namespace Prexonite.Compiler.Cil
 
             #endregion
         }
+
+        #endregion
     }
 }

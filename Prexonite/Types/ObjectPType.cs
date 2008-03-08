@@ -25,17 +25,18 @@ using System;
 using System.Collections.Generic;
 using System.Reflection;
 using System.Text;
+using Prexonite.Compiler.Cil;
 using NoDebug = System.Diagnostics.DebuggerNonUserCodeAttribute;
 
 namespace Prexonite.Types
 {
     [PTypeLiteral("Object")]
-    public sealed class ObjectPType : PType
+    public sealed class ObjectPType : PType, ICilCompilerAware
     {
         #region Construction
 
         //Constructor
-        [NoDebug()]
+        [NoDebug]
         public ObjectPType(Type clrType)
         {
             if (clrType == null)
@@ -100,7 +101,7 @@ namespace Prexonite.Types
             return false;
         }
 
-        private static Type _getType_forNamesapce(string clrTypeName, Assembly[] assemblies)
+        private static Type _getType_forNamesapce(string clrTypeName, IEnumerable<Assembly> assemblies)
         {
             //Try Prexonite and mscorlib
             Type result = Type.GetType(clrTypeName, false, true);
@@ -122,11 +123,11 @@ namespace Prexonite.Types
 
         #region ClrType
 
-        private Type _clrType;
+        private readonly Type _clrType;
 
         public Type ClrType
         {
-            [NoDebug()]
+            [NoDebug]
             get { return _clrType; }
         }
 
@@ -512,15 +513,15 @@ namespace Prexonite.Types
             return ret;
         }
 
-        [NoDebug()]
+        [NoDebug]
         private class call_conditions
         {
-            public StackContext Sctx;
-            public PValue[] Args;
-            public PCall Call;
-            public string Id;
+            public readonly StackContext Sctx;
+            public readonly PValue[] Args;
+            public readonly PCall Call;
+            public readonly string Id;
             public bool IgnoreId;
-            public string Directive;
+            public readonly string Directive;
             public Type returnType;
             public List<MemberInfo> memberRestriction;
 
@@ -1287,6 +1288,30 @@ namespace Prexonite.Types
         }
 
         #endregion
+
+        #endregion
+
+        #region ICilCompilerAware Members
+
+        /// <summary>
+        /// Asses qualification and preferences for a certain instruction.
+        /// </summary>
+        /// <param name="ins">The instruction that is about to be compiled.</param>
+        /// <returns>A set of <see cref="CompilationFlags"/>.</returns>
+        CompilationFlags ICilCompilerAware.CheckQualification(Instruction ins)
+        {
+            return CompilationFlags.PreferCustomImplementation;
+        }
+
+        /// <summary>
+        /// Provides a custom compiler routine for emitting CIL byte code for a specific instruction.
+        /// </summary>
+        /// <param name="state">The compiler state.</param>
+        /// <param name="ins">The instruction to compile.</param>
+        void ICilCompilerAware.ImplementInCil(CompilerState state, Instruction ins)
+        {
+            PrexoniteObjectTypeProxy.ImplementInCil(state, ClrType);
+        }
 
         #endregion
     }

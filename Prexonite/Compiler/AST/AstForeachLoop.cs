@@ -139,7 +139,7 @@ namespace Prexonite.Compiler.Ast
                 {
                     disposeAddr = target.Code.Count;
                     target.EmitLoadLocal(enumVar);
-                    target.EmitCommandCall(1, Engine.DisposeCommand, true);
+                    target.EmitCommandCall(1, Engine.DisposeAlias, true);
                 });
 
             _try.EmitCode(target);

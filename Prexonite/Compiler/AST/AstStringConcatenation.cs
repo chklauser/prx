@@ -24,6 +24,7 @@
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.Text;
+using Prexonite;
 
 namespace Prexonite.Compiler.Ast
 {
@@ -108,7 +109,7 @@ namespace Prexonite.Compiler.Ast
         ///         </item>
         ///         <item>
         ///             <term>n</term>
-        ///             <description>A call to the <c><see cref="Engine.ConcatenateCommand">concat</see></c> command.</description>
+        ///             <description>A call to the <c><see cref="Engine.ConcatenateAlias">concat</see></c> command.</description>
         ///         </item>
         ///     </list>
         /// </para>
@@ -119,7 +120,7 @@ namespace Prexonite.Compiler.Ast
                 arg.EmitCode(target);
 
             if (Arguments.Count > 2)
-                target.EmitCommandCall(Arguments.Count, Engine.ConcatenateCommand);
+                target.EmitCommandCall(Arguments.Count, Engine.ConcatenateAlias);
             else if (Arguments.Count == 2)
                 AstBinaryOperator.EmitOperator(target, BinaryOperator.Addition);
             else if (Arguments.Count == 1)

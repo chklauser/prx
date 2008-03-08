@@ -24,12 +24,14 @@
 using System;
 using System.Collections;
 using System.Collections.Generic;
+using System.Reflection;
 using System.Text;
+using Prexonite.Compiler.Cil;
 
 namespace Prexonite.Types
 {
     [PTypeLiteral(Literal)]
-    public class HashPType : PType
+    public class HashPType : PType, ICilCompilerAware
     {
         #region Singleton
 
@@ -37,7 +39,7 @@ namespace Prexonite.Types
         {
         }
 
-        private static HashPType _instance = new HashPType();
+        private static readonly HashPType _instance = new HashPType();
 
         public static HashPType Instance
         {
@@ -527,6 +529,32 @@ namespace Prexonite.Types
         public override string ToString()
         {
             return Literal;
+        }
+
+        #endregion
+
+        #region ICilCompilerAware Members
+
+        /// <summary>
+        /// Asses qualification and preferences for a certain instruction.
+        /// </summary>
+        /// <param name="ins">The instruction that is about to be compiled.</param>
+        /// <returns>A set of <see cref="CompilationFlags"/>.</returns>
+        CompilationFlags ICilCompilerAware.CheckQualification(Instruction ins)
+        {
+            return CompilationFlags.PreferCustomImplementation;
+        }
+
+        private static readonly MethodInfo GetHashPType = typeof(PType).GetProperty("Hash").GetGetMethod();
+
+        /// <summary>
+        /// Provides a custom compiler routine for emitting CIL byte code for a specific instruction.
+        /// </summary>
+        /// <param name="state">The compiler state.</param>
+        /// <param name="ins">The instruction to compile.</param>
+        void ICilCompilerAware.ImplementInCil(CompilerState state, Instruction ins)
+        {
+            state.EmitCall(GetHashPType);
         }
 
         #endregion

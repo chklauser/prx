@@ -106,7 +106,7 @@ namespace Prexonite.Compiler.Ast
                     Line,
                     Column,
                     PCall.Get,
-                    Engine.DisposeCommand,
+                    Engine.DisposeAlias,
                     SymbolInterpretations.Command);
 
             dispose.Arguments.Add(getCont);

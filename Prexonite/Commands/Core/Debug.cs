@@ -43,7 +43,7 @@ namespace Prexonite.Commands.Core
             if(fctx == null)
                 return false;
             bool debugging = DebugHook.IsDebuggingEnabled(fctx.Implementation);
-            PCommand println = sctx.ParentEngine.Commands[Engine.PrintLineCommand];
+            PCommand println = sctx.ParentEngine.Commands[Engine.PrintLineAlias];
             if (debugging)
                 foreach (PValue arg in args)
                 {

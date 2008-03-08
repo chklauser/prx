@@ -24,10 +24,11 @@
 using System;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
-using System.IO;
-using System.Text;
-using Prexonite.Types;
 using System.Diagnostics;
+using System.IO;
+using System.Reflection;
+using System.Text;
+using Prexonite.Compiler.Cil;
 using NoDebug = System.Diagnostics.DebuggerNonUserCodeAttribute;
 
 namespace Prexonite
@@ -70,7 +71,7 @@ namespace Prexonite
         /// </summary>
         /// <param name="parentApplication">The application of which the new function is part of.</param>
         /// <remarks>The id is randomly generated using a GUID.</remarks>
-        [NoDebug()]
+        [NoDebug]
         public PFunction(Application parentApplication)
             : this(parentApplication, "F\\" + Guid.NewGuid().ToString("N"))
         {
@@ -112,62 +113,62 @@ namespace Prexonite
         /// </summary>
         public string Id
         {
-            [NoDebug()]
+            [NoDebug]
             get { return _meta[IdKey]; }
         }
 
-        private Application _parentApplication;
+        private readonly Application _parentApplication;
 
         /// <summary>
         /// The application the function belongs to.
         /// </summary>
         public Application ParentApplication
         {
-            [NoDebug()]
+            [NoDebug]
             get { return _parentApplication; }
         }
 
-        private SymbolCollection _importedNamesapces = new SymbolCollection();
+        private readonly SymbolCollection _importedNamesapces = new SymbolCollection();
 
         /// <summary>
         /// The set of namespaces imported by this particular function.
         /// </summary>
         public SymbolCollection ImportedNamespaces
         {
-            [NoDebug()]
+            [NoDebug]
             get { return _importedNamesapces; }
         }
 
-        private List<Instruction> _code = new List<Instruction>();
+        private readonly List<Instruction> _code = new List<Instruction>();
 
         /// <summary>
         /// The bytecode for this function.
         /// </summary>
         public List<Instruction> Code
         {
-            [NoDebug()]
+            [NoDebug]
             get { return _code; }
         }
 
-        private List<string> _parameters = new List<string>();
+        private readonly List<string> _parameters = new List<string>();
 
         /// <summary>
         /// The list of formal parameters for this function.
         /// </summary>
         public List<string> Parameters
         {
-            [NoDebug()]
+            [NoDebug]
             get { return _parameters; }
         }
 
-        private SymbolCollection _variables = new SymbolCollection();
+        private readonly SymbolCollection _variables = new SymbolCollection();
 
         /// <summary>
         /// The collection of variable names used by this function.
         /// </summary>
         public SymbolCollection Variables
         {
-            [NoDebug()]
+            [NoDebug]
             get { return _variables; }
         }
 
@@ -212,7 +213,7 @@ namespace Prexonite
             }
         }
 
-        public Prexonite.Compiler.Cil.CilFunction CilImplementation 
+        public CilFunction CilImplementation 
         {
             [DebuggerStepThrough]
             get
@@ -226,7 +227,7 @@ namespace Prexonite
             }
         }
 
-        private Prexonite.Compiler.Cil.CilFunction _cilImplementation = null;
+        private CilFunction _cilImplementation = null;
 
         public bool HasCilImplementation
         {
@@ -443,14 +444,14 @@ namespace Prexonite
 
         #region IHasMetaTable Members
 
-        private MetaTable _meta;
+        private readonly MetaTable _meta;
 
         /// <summary>
         /// Returns a reference to the meta table associated with this function.
         /// </summary>
         public MetaTable Meta
         {
-            [NoDebug()]
+            [NoDebug]
             get { return _meta; }
         }
 

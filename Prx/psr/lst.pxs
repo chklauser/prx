@@ -28,17 +28,6 @@ coroutine except ys xs
         if(xy.Value)
             yield xy.Key;  
 }
-
-coroutine takewhile(ref f, xs)
-{
-    var i = 0;
-    foreach(var x in xs)
-    {
-        unless(f(x,i++))
-            return;
-        yield x;
-    }
-}
    
 /* A SAMPLE
 [ 1, 6, 8, 12, 15, 20, 99 ] >> 

@@ -2,7 +2,7 @@ using System;
 using System.Collections.Generic;
 using System.Text;
 
-namespace Prexonite.Commands
+namespace Prexonite
 {
     /// <summary>
     /// A bit field that indicates how a subject integrates with cil compilation (compatibility etc.).

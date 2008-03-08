@@ -2,9 +2,8 @@ using System;
 using System.Collections.Generic;
 using System.Text;
 
-namespace Prexonite.Commands
+namespace Prexonite
 {
-
     /// <summary>
     /// Provides a way to communicate incompatibilities and custom implementations to the CIL compiler.
     /// </summary>

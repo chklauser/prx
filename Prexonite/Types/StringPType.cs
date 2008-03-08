@@ -27,13 +27,14 @@ using System.Globalization;
 using System.Text;
 using System.Text.RegularExpressions;
 using Prexonite.Commands;
+using Prexonite.Compiler.Cil;
 using NoDebug = System.Diagnostics.DebuggerNonUserCodeAttribute;
 using UInt8 = System.Byte;
 
 namespace Prexonite.Types
 {
     [PTypeLiteral("String")]
-    public class StringPType : PType
+    public class StringPType : PType, ICilCompilerAware
     {
         #region Singleton Pattern
 
@@ -851,5 +852,29 @@ namespace Prexonite.Types
         {
             return _code;
         }
+
+        #region ICilCompilerAware Members
+
+        /// <summary>
+        /// Asses qualification and preferences for a certain instruction.
+        /// </summary>
+        /// <param name="ins">The instruction that is about to be compiled.</param>
+        /// <returns>A set of <see cref="CompilationFlags"/>.</returns>
+        CompilationFlags ICilCompilerAware.CheckQualification(Instruction ins)
+        {
+            return CompilationFlags.PreferCustomImplementation;
+        }
+
+        /// <summary>
+        /// Provides a custom compiler routine for emitting CIL byte code for a specific instruction.
+        /// </summary>
+        /// <param name="state">The compiler state.</param>
+        /// <param name="ins">The instruction to compile.</param>
+        void ICilCompilerAware.ImplementInCil(CompilerState state, Instruction ins)
+        {
+            state.EmitCall(Compiler.Cil.Compiler.GetStringPType);
+        }
+
+        #endregion
     }
 }

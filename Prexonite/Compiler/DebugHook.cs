@@ -1,5 +1,6 @@
 using System;
-using Prexonite.Commands;
+using System.Collections.Generic;
+using Prexonite.Commands.Core;
 using Prexonite.Compiler.Ast;
 using Prexonite.Types;
 
@@ -26,7 +27,7 @@ namespace Prexonite.Compiler
             replace_debug(t, t.Ast, debugging);
         }
 
-        private static CompilerHook _hook = new CompilerHook(Hook);
+        private static readonly CompilerHook _hook = new CompilerHook(Hook);
 
         /// <summary>
         /// Installs the hook in the supplied <see cref="Loader"/>.
@@ -63,14 +64,14 @@ namespace Prexonite.Compiler
                 return function.ParentApplication.Meta[DebuggingMetaKey].Switch;
         }
 
-        private static void replace_debug(CompilerTarget t, AstBlock block, bool debugging)
+        private static void replace_debug(CompilerTarget t, IList<AstNode> block, bool debugging)
         {
             for (int i = 0; i < block.Count; i++)
             {
                 AstGetSetSymbol stmt = block[i] as AstGetSetSymbol;
                 //look for calls
                 if (stmt != null && stmt.Interpretation == SymbolInterpretations.Command &&
-                    Engine.StringsAreEqual(stmt.Id, Engine.DebugCommand))
+                    Engine.StringsAreEqual(stmt.Id, Engine.DebugAlias))
                 {
                     //Found a call to debug
                     block.RemoveAt(i);
@@ -87,7 +88,7 @@ namespace Prexonite.Compiler
                                         stmt.Line,
                                         stmt.Column,
                                         PCall.Get,
-                                        Engine.PrintLineCommand,
+                                        Engine.PrintLineAlias,
                                         SymbolInterpretations.Command);
                                 AstGetSetSymbol concatCall =
                                     new AstGetSetSymbol(
@@ -95,7 +96,7 @@ namespace Prexonite.Compiler
                                         stmt.Line,
                                         stmt.Column,
                                         PCall.Get,
-                                        Engine.ConcatenateCommand,
+                                        Engine.ConcatenateAlias,
                                         SymbolInterpretations.Command);
 
                                 AstConstant consts =
@@ -124,7 +125,7 @@ namespace Prexonite.Compiler
                 {
                     AstGetSetSymbol expr = cond.Condition as AstGetSetSymbol;
                     if (expr != null && expr.Interpretation == SymbolInterpretations.Command &&
-                        Engine.StringsAreEqual(expr.Id, Engine.DebugCommand))
+                        Engine.StringsAreEqual(expr.Id, Engine.DebugAlias))
                         cond.Condition =
                             new AstConstant(expr.File, expr.Line, expr.Column, debugging);
                 }

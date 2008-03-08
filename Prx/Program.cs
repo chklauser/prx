@@ -55,7 +55,7 @@ namespace Prx
 
         private static void Main(string[] args)
         {
-            Console.CancelKeyPress += new ConsoleCancelEventHandler(Console_CancelKeyPress);
+            Console.CancelKeyPress += delegate { Environment.Exit(1); };
             PrexoniteConsole pc = new PrexoniteConsole(true);
 
 #if !DEBUG //Let the exceptions surface so they can more easily be debugged

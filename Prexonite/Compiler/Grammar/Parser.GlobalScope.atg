@@ -296,7 +296,9 @@ FunctionDefinition<out PFunction func>
                                                  func.Meta["LogicalId"] = id;
                                             
                                             Loader.CreateFunctionTarget(func, new AstBlock(this));
-                                            TargetApplication.Functions.Add(func);
+                                            if(TargetApplication.Functions.Contains(func.Id) && !TargetApplication.Meta.GetDefault(Application.AllowOverridingKey,true))
+												SemErr(t,"Application " + TargetApplication.Id + " does not allow overriding of function " + func.Id + ".");
+                                            TargetApplication.Functions.AddOverride(func);
                                         }
                                         CompilerTarget ft = FunctionTargets[func];
                                         if(isCoroutine)

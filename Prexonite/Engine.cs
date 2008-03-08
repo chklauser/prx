@@ -651,38 +651,38 @@ namespace Prexonite
             _commandTable = new CommandTable();
             PCommand cmd;
 
-            Commands.AddEngineCommand(PrintCommand, ConsolePrint.Instance);
+            Commands.AddEngineCommand(PrintAlias, ConsolePrint.Instance);
 
-            Commands.AddEngineCommand(PrintLineCommand, ConsolePrintLine.Instance);
+            Commands.AddEngineCommand(PrintLineAlias, ConsolePrintLine.Instance);
 
-            Commands.AddEngineCommand(MetaCommand, Prexonite.Commands.Core.Meta.Instance);
+            Commands.AddEngineCommand(MetaAlias, Prexonite.Commands.Core.Meta.Instance);
 
-            Commands.AddEngineCommand(ConcatenateCommand, Concat.Instance);
+            Commands.AddEngineCommand(ConcatenateAlias, Concat.Instance);
 
-            Commands.AddEngineCommand(MapCommand, cmd = new Map());
+            Commands.AddEngineCommand(MapAlias, cmd = Map.Instance);
             Commands.AddEngineCommand(SelectAlias, cmd);
 
-            Commands.AddEngineCommand(FoldLCommand, new FoldL());
+            Commands.AddEngineCommand(FoldLAlias, FoldL.Instance);
 
-            Commands.AddEngineCommand(FoldRCommand, new FoldR());
+            Commands.AddEngineCommand(FoldRAlias, FoldR.Instance);
 
-            Commands.AddEngineCommand(DisposeCommand, Dispose.Instance);
+            Commands.AddEngineCommand(DisposeAlias, Dispose.Instance);
 
-            Commands.AddEngineCommand(CallCommand, Call.Instance);
+            Commands.AddEngineCommand(CallAlias, Call.Instance);
 
-            Commands.AddEngineCommand(Call_MemberCommand, Call_Member.Instance);
+            Commands.AddEngineCommand(Call_MemberAlias, Call_Member.Instance);
 
-            Commands.AddEngineCommand(CallerCommand, Caller.Instance);
+            Commands.AddEngineCommand(CallerAlias, Caller.Instance);
 
-            Commands.AddEngineCommand(PairCommand, Pair.Instance);
+            Commands.AddEngineCommand(PairAlias, Pair.Instance);
 
-            Commands.AddEngineCommand(UnbindCommand, Unbind.Instance);
+            Commands.AddEngineCommand(UnbindAlias, Unbind.Instance);
 
-            Commands.AddEngineCommand(SortCommand, new Sort());
+            Commands.AddEngineCommand(SortAlias, new Sort());
 
-            Commands.AddEngineCommand(LoadAssemblyCommand, LoadAssembly.Instance);
+            Commands.AddEngineCommand(LoadAssemblyAlias, LoadAssembly.Instance);
 
-            Commands.AddEngineCommand(DebugCommand, new Debug());
+            Commands.AddEngineCommand(DebugAlias, new Debug());
 
             Commands.AddEngineCommand(SetCenterAlias, SetCenterCommand.Instance);
 
@@ -694,9 +694,9 @@ namespace Prexonite
 
             Commands.AddEngineCommand(WhereAlias, Where.Instance);
 
-            Commands.AddEngineCommand(SkipAlias, new Skip());
+            Commands.AddEngineCommand(SkipAlias, Skip.Instance);
 
-            Commands.AddEngineCommand(LimitAlias, cmd = new Limit());
+            Commands.AddEngineCommand(LimitAlias, cmd = Limit.Instance);
             Commands.AddEngineCommand(TakeAlias, cmd);
 
             Commands.AddEngineCommand(AbsAlias, Abs.Instance);
@@ -725,7 +725,7 @@ namespace Prexonite
 
             Commands.AddEngineCommand(CharAlias, Char.Instance);
 
-            Commands.AddEngineCommand(CountAlias, new Count());
+            Commands.AddEngineCommand(CountAlias, Count.Instance);
 
             Commands.AddEngineCommand(DistinctAlias, cmd = new Distinct());
             Commands.AddEngineCommand(UnionAlias, cmd);
@@ -750,32 +750,34 @@ namespace Prexonite
             Commands.AddEngineCommand(ForAllAlias, new ForAll());
 
             Commands.AddEngineCommand(CompileToCilAlias, CompileToCil.Instance);
+
+            Commands.AddEngineCommand(TakeWhileAlias, TakeWhile.Instance);
         }
 
         /// <summary>
         /// Alias used for the <c>concat</c> command.
         /// </summary>
-        public const string ConcatenateCommand = "concat";
+        public const string ConcatenateAlias = "concat";
 
         /// <summary>
         /// Alias used for the <c>meta</c> command.
         /// </summary>
-        public const string MetaCommand = "meta";
+        public const string MetaAlias = "meta";
 
         /// <summary>
         /// Alias used for the <c>println</c> command.
         /// </summary>
-        public const string PrintLineCommand = "println";
+        public const string PrintLineAlias = "println";
 
         /// <summary>
         /// Alias used for the <c>print</c> command.
         /// </summary>
-        public const string PrintCommand = "print";
+        public const string PrintAlias = "print";
 
         /// <summary>
         /// Alias used for the <c>map</c> command.
         /// </summary>
-        public const string MapCommand = "map";
+        public const string MapAlias = "map";
 
         /// <summary>
         /// Alias used for the map command.
@@ -785,57 +787,57 @@ namespace Prexonite
         /// <summary>
         /// Alias used for the <c>foldl</c> command.
         /// </summary>
-        public const string FoldLCommand = "foldl";
+        public const string FoldLAlias = "foldl";
 
         /// <summary>
         /// Alias used for the <c>foldr</c> command.
         /// </summary>
-        public const string FoldRCommand = "foldr";
+        public const string FoldRAlias = "foldr";
 
         /// <summary>
         /// Alias used for the <c>dispose</c> command.
         /// </summary>
-        public const string DisposeCommand = "dispose";
+        public const string DisposeAlias = "dispose";
 
         /// <summary>
         /// Alias used for the <c>call</c> command.
         /// </summary>
-        public const string CallCommand = "call";
+        public const string CallAlias = "call";
 
         /// <summary>
         /// Alias used for the <c>callmember</c> command.
         /// </summary>
-        public const string Call_MemberCommand = @"call\member";
+        public const string Call_MemberAlias = @"call\member";
 
         /// <summary>
         /// Alias used for the <c>caller</c> command.
         /// </summary>
-        public const string CallerCommand = "caller";
+        public const string CallerAlias = "caller";
 
         /// <summary>
         /// Alias used for the "pair" command.
         /// </summary>
-        public const string PairCommand = "pair";
+        public const string PairAlias = "pair";
 
         /// <summary>
         /// Alias used for the "unbind" command.
         /// </summary>
-        public const string UnbindCommand = "unbind";
+        public const string UnbindAlias = "unbind";
 
         /// <summary>
         /// Alias used for the "sort" command.
         /// </summary>
-        public const string SortCommand = "sort";
+        public const string SortAlias = "sort";
 
         /// <summary>
         /// Alias used for the "loadAssembly" command.
         /// </summary>
-        public const string LoadAssemblyCommand = "LoadAssembly";
+        public const string LoadAssemblyAlias = "LoadAssembly";
 
         /// <summary>
         /// Alias used for the debug command.
         /// </summary>
-        public const string DebugCommand = "debug";
+        public const string DebugAlias = "debug";
 
         /// <summary>
         /// Alias used for the setcenter command
@@ -1016,6 +1018,11 @@ namespace Prexonite
         /// Alias used for the CompileToCil command.
         /// </summary>
         public const string CompileToCilAlias = "CompileToCil";
+
+        /// <summary>
+        /// Alias used for the TakeWhile command.
+        /// </summary>
+        public const string TakeWhileAlias = "takewhile";
 
         #endregion
     }

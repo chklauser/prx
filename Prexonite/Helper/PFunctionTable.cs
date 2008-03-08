@@ -87,6 +87,13 @@ namespace Prexonite
             _table.Add(item.Id, item);
         }
 
+        public void AddOverride(PFunction item)
+        {
+            if (_table.ContainsKey(item.Id))
+                _table.Remove(item.Id);
+            _table.Add(item.Id, item);
+        }
+
         public void Clear()
         {
             _table.Clear();

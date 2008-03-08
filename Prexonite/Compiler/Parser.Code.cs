@@ -34,53 +34,53 @@ namespace Prexonite.Compiler
     {
         #region Proxy interface
 
-        private Loader _loader;
+        private readonly Loader _loader;
 
         public Loader Loader
         {
-            [NoDebug()]
+            [NoDebug]
             get { return _loader; }
         }
 
         public Application TargetApplication
         {
-            [NoDebug()]
+            [NoDebug]
             get { return _loader.Options.TargetApplication; }
         }
 
         public LoaderOptions Options
         {
-            [NoDebug()]
+            [NoDebug]
             get { return _loader.Options; }
         }
 
         public Engine ParentEngine
         {
-            [NoDebug()]
+            [NoDebug]
             get { return _loader.Options.ParentEngine; }
         }
 
         public SymbolTable<SymbolEntry> Symbols
         {
-            [NoDebug()]
+            [NoDebug]
             get { return _loader.Symbols; }
         }
 
         public Loader.FunctionTargetsIterator FunctionTargets
         {
-            [NoDebug()]
+            [NoDebug]
             get { return _loader.FunctionTargets; }
         }
 
-        private AstProxy _astProxy;
+        private readonly AstProxy _astProxy;
 
         public AstProxy Ast
         {
-            [NoDebug()]
+            [NoDebug]
             get { return _astProxy; }
         }
 
-        [NoDebug()]
+        [NoDebug]
         public class AstProxy
         {
             private readonly Parser outer;
@@ -101,7 +101,7 @@ namespace Prexonite.Compiler
             }
         }
 
-        [NoDebug()]
+        [NoDebug]
         internal Parser(IScanner scanner, Loader loader)
             : this(scanner)
         {
@@ -116,9 +116,9 @@ namespace Prexonite.Compiler
 
         #region String cache
 
-        private Dictionary<int, string> _stringCache = new Dictionary<int, string>();
+        private readonly Dictionary<int, string> _stringCache = new Dictionary<int, string>();
 
-        [NoDebug()]
+        [NoDebug]
         internal string cache(string toCache)
         {
             int hash = toCache.GetHashCode();

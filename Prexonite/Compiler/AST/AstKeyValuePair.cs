@@ -75,7 +75,7 @@ namespace Prexonite.Compiler.Ast
 
             Key.EmitCode(target);
             Value.EmitCode(target);
-            target.EmitCommandCall(2, Engine.PairCommand);
+            target.EmitCommandCall(2, Engine.PairAlias);
         }
 
         #region IAstExpression Members

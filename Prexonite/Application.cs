@@ -70,6 +70,8 @@ namespace Prexonite
         /// </summary>
         public const string NameKey = "name";
 
+        public const string AllowOverridingKey = "AllowOverriding";
+
         public static readonly MetaEntry DefaultImport = new MetaEntry(new MetaEntry[] {"System"});
 
         /// <summary>
@@ -90,7 +92,7 @@ namespace Prexonite
             _meta = new MetaTable(this);
 
             if (id == null)
-                throw new ArgumentNullException("Application id cannot be null.");
+                throw new ArgumentNullException("id","Application id cannot be null.");
             if (id.Length <= 0)
                 throw new ArgumentException("Application Id cannot be null.");
             //Please note that application id's do not have to be Command Script identifiers.
@@ -109,14 +111,14 @@ namespace Prexonite
 
         #region Variables
 
-        private SymbolTable<PVariable> _variables;
+        private readonly SymbolTable<PVariable> _variables;
 
         /// <summary>
         /// Provides access to the table of global variables.
         /// </summary>
         public SymbolTable<PVariable> Variables
         {
-            [NoDebug()]
+            [NoDebug]
             get { return _variables; }
         }
 
@@ -124,7 +126,7 @@ namespace Prexonite
 
         #region Functions
 
-        private PFunctionTable _functions;
+        private readonly PFunctionTable _functions;
 
         /// <summary>
         /// Provides access to the table of registered functions.
@@ -275,7 +277,6 @@ namespace Prexonite
                 return;
             MetaEntry init;
             int generation = _initializationGeneration + 1;
-            int offset;
             switch (_initalizationState)
             {
                 case ApplicationInitializationState.None:
@@ -288,6 +289,7 @@ namespace Prexonite
                                 new PValue[] {},
                                 new PVariable[] {},
                                 true);
+                        int offset;
                         if (
                             (!(_initializationFunction.Meta.TryGetValue(InitializationId, out init) &&
                                int.TryParse(init.Text, out offset))) || offset < 0)
@@ -471,14 +473,14 @@ namespace Prexonite
 
         #region IHasMetaTable Members
 
-        private MetaTable _meta;
+        private readonly MetaTable _meta;
 
         /// <summary>
         /// The applications metadata structure.
         /// </summary>
         public MetaTable Meta
         {
-            [NoDebug()]
+            [NoDebug]
             get { return _meta; }
         }
 

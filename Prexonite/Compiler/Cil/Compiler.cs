@@ -3,7 +3,6 @@ using System.Collections.Generic;
 using System.ComponentModel;
 using System.Reflection;
 using System.Reflection.Emit;
-using System.Threading;
 using Prexonite.Commands;
 using Prexonite.Types;
 using CilException = Prexonite.PrexoniteException;
@@ -18,21 +17,44 @@ namespace Prexonite.Compiler.Cil
 
         public static void Compile(Application app, Engine targetEngine)
         {
+            Compile(app, targetEngine, FunctionLinking.FullyStatic);
+        }
+
+        public static void Compile(Application app, Engine targetEngine, FunctionLinking linking)
+        {
             if(app == null)
                 throw new ArgumentNullException("app");
-            Compile(app.Functions,targetEngine);
+            Compile(app.Functions,targetEngine, linking);
         }
 
         [EditorBrowsable(EditorBrowsableState.Never)]
         public static void Compile(StackContext sctx, Application app)
         {
+            Compile(sctx, app, FunctionLinking.FullyStatic);
+        }
+
+        [EditorBrowsable(EditorBrowsableState.Never)]
+        public static void Compile(StackContext sctx, Application app, FunctionLinking linking)
+        {
             if(sctx == null)
                 throw new ArgumentNullException("sctx");
-            Compile(app, sctx.ParentEngine);
+            Compile(app, sctx.ParentEngine, linking);
         }
 
         [EditorBrowsable(EditorBrowsableState.Never)]
         public static void Compile(StackContext sctx, List<PValue> lst)
+        {
+            Compile(sctx, lst, FunctionLinking.FullyStatic);
+        }
+
+        [EditorBrowsable(EditorBrowsableState.Never)]
+        public static void Compile(StackContext sctx, List<PValue> lst, bool fullyStatic)
+        {
+            Compile(sctx, lst, fullyStatic ? FunctionLinking.FullyStatic : FunctionLinking.FullyIsolated);
+        }
+
+        [EditorBrowsable(EditorBrowsableState.Never)]
+        public static void Compile(StackContext sctx, List<PValue> lst, FunctionLinking linking)
         {
             if(lst == null)
                 throw new ArgumentNullException("lst");
@@ -63,26 +85,68 @@ namespace Prexonite.Compiler.Cil
                 functions.Add(func);
             }
 
-            Compile(functions, sctx.ParentEngine);
+            Compile(functions, sctx.ParentEngine, linking);
         }
 
         public static void Compile(IEnumerable<PFunction> functions, Engine targetEngine)
         {
+            Compile(functions, targetEngine, FunctionLinking.FullyStatic);
+        }
+
+        public static void Compile(IEnumerable<PFunction> functions, Engine targetEngine, FunctionLinking linking)
+        {
             CheckQualification(functions, targetEngine);
 
-            foreach (PFunction func in functions)
+            List<PFunction> qfuncs = new List<PFunction>();
+
+            //Get a list of qualifying functions
+            foreach(PFunction func in functions)
+                if(!func.Meta.GetDefault(PFunction.VolatileKey, false))
+                    qfuncs.Add(func);
+
+            if (qfuncs.Count == 0)
+                return; //No compilation to be done
+
+            CompilerPass pass = new CompilerPass(linking);
+
+            //Generate method stubs
+            foreach(PFunction func in qfuncs)
+                pass.DefineImplementationMethod(func.Id);
+
+            //Emit IL
+            foreach (PFunction func in qfuncs)
             {
-                MetaEntry isVolatile;
-                if((!func.Meta.TryGetValue(PFunction.VolatileKey, out isVolatile) || !isVolatile.Switch))
-                    func.CilImplementation = _compileFunction(func, targetEngine);
+                _compile(func, CompilerPass.GetIlGenerator(pass.Implementations[func.Id]), targetEngine, pass, linking);
+            }
+
+            //Enable by name linking and link meta data to CIL implementations
+            foreach(PFunction func in qfuncs)
+            {
+                func.CilImplementation = pass.GetDelegate(func.Id);
+                pass.LinkMetadata(func);
             }
         }
 
         public static bool TryCompile(PFunction func, Engine targetEngine)
         {
+            return TryCompile(func, targetEngine, FunctionLinking.FullyStatic);
+        }
+
+        public static bool TryCompile(PFunction func, Engine targetEngine, FunctionLinking linking)
+        {
             if(CheckQualification(func, targetEngine))
             {
-                func.CilImplementation = _compileFunction(func, targetEngine);
+
+                CompilerPass pass = new CompilerPass(func.ParentApplication, linking);
+
+                MethodInfo m = pass.DefineImplementationMethod(func.Id);
+                ILGenerator il = CompilerPass.GetIlGenerator(m);
+
+                _compile(func, il, targetEngine, pass,linking);
+
+                func.CilImplementation = pass.GetDelegate(m);
+                pass.LinkMetadata(func);
+
                 return true;
             }
             else
@@ -107,111 +171,48 @@ namespace Prexonite.Compiler.Cil
 
         public static void StoreDebugImplementation(Application app, Engine targetEngine)
         {
-            AssemblyName assemblyName = new AssemblyName();
-            assemblyName.Name = "cilimpl";
-            AppDomain thisDomain = Thread.GetDomain();
-            AssemblyBuilder asmBuilder = thisDomain.DefineDynamicAssembly(
-                assemblyName,
-                AssemblyBuilderAccess.RunAndSave);
+            CheckQualification(app.Functions, targetEngine);
 
-            ModuleBuilder modBuilder = asmBuilder.DefineDynamicModule(
-                asmBuilder.GetName().Name, asmBuilder.GetName().Name + ".dll");
+            FunctionLinking linking = FunctionLinking.FullyStatic;
+            CompilerPass pass = new CompilerPass(linking);
 
-            TypeBuilder typeBuilder = modBuilder.DefineType(
-                "impl",
-                TypeAttributes.Public |
-                TypeAttributes.Class |
-                TypeAttributes.AutoClass |
-                TypeAttributes.AnsiClass |
-                TypeAttributes.BeforeFieldInit |
-                TypeAttributes.AutoLayout,
-                typeof(object),
-                new Type[] {});
-
+            List<PFunction> qfuncs = new List<PFunction>();
             foreach(PFunction func in app.Functions)
             {
-                if (CheckQualification(func, targetEngine))
+                if (!func.Meta.GetDefault(PFunction.VolatileKey, false))
                 {
-                    MethodBuilder dm = typeBuilder.DefineMethod(
-                        func.Id,
-                        MethodAttributes.Static | MethodAttributes.Public,
-                        typeof(void),
-                        new Type[]
-                            {
-                                typeof(PFunction),
-                                typeof(StackContext),
-                                typeof(PValue[]),
-                                typeof(PVariable[]),
-                                typeof(PValue).MakeByRefType()
-                            });
-                    dm.DefineParameter(1, ParameterAttributes.In, "source");
-                    dm.DefineParameter(2, ParameterAttributes.In, "sctx");
-                    dm.DefineParameter(3, ParameterAttributes.In, "args");
-                    dm.DefineParameter(4, ParameterAttributes.In, "sharedVariables");
-                    dm.DefineParameter(5, ParameterAttributes.Out, "result");
-
-                    ILGenerator il = dm.GetILGenerator();
-
-                    _compile(func, il, targetEngine);
+                    qfuncs.Add(func);
+                    pass.DefineImplementationMethod(func.Id);
                 }
             }
 
-            typeBuilder.CreateType();
+            foreach(PFunction func in qfuncs)
+            {
+                _compile(func, pass.GetIlGenerator(func.Id), targetEngine, pass, linking);
+            }
 
-            asmBuilder.Save(asmBuilder.GetName().Name + ".dll");
+            pass.Type.CreateType();
+            
+            pass.Assembly.Save(pass.Assembly.GetName().Name + ".dll");
         }
 
         public static void StoreDebugImplementation(PFunction func, Engine targetEngine)
         {
-            AssemblyName assemblyName = new AssemblyName();
-            assemblyName.Name = "cilimpl";
-            AppDomain thisDomain = Thread.GetDomain();
-            AssemblyBuilder asmBuilder = thisDomain.DefineDynamicAssembly(
-                assemblyName,
-                AssemblyBuilderAccess.RunAndSave);
+            FunctionLinking linking = FunctionLinking.FullyStatic;
+            CompilerPass pass = new CompilerPass(linking);
 
-            ModuleBuilder modBuilder = asmBuilder.DefineDynamicModule(
-                asmBuilder.GetName().Name, asmBuilder.GetName().Name + ".dll");
+            MethodInfo m = pass.DefineImplementationMethod(func.Id);
 
-            TypeBuilder typeBuilder = modBuilder.DefineType(
-                "impl",
-                TypeAttributes.Public |
-                TypeAttributes.Class |
-                TypeAttributes.AutoClass |
-                TypeAttributes.AnsiClass |
-                TypeAttributes.BeforeFieldInit |
-                TypeAttributes.AutoLayout,
-                typeof(object),
-                new Type[] {});
+            ILGenerator il = CompilerPass.GetIlGenerator(m);
 
-            MethodBuilder dm = typeBuilder.DefineMethod(
-                "<impl>" + func.Id,
-                MethodAttributes.Static | MethodAttributes.Public,
-                typeof(void),
-                new Type[]
-                    {
-                        typeof(PFunction),
-                        typeof(StackContext),
-                        typeof(PValue[]),
-                        typeof(PVariable[]),
-                        typeof(PValue).MakeByRefType()
-                    });
-            dm.DefineParameter(1, ParameterAttributes.In, "source");
-            dm.DefineParameter(2, ParameterAttributes.In, "sctx");
-            dm.DefineParameter(3, ParameterAttributes.In, "args");
-            dm.DefineParameter(4, ParameterAttributes.In, "sharedVariables");
-            dm.DefineParameter(5, ParameterAttributes.Out, "result");
+            _compile(func, il, targetEngine,pass, linking);
 
-            ILGenerator il = dm.GetILGenerator();
-
-            _compile(func, il, targetEngine);
-
-            typeBuilder.CreateType();
+            pass.Type.CreateType();
 
             //var sm = tb.DefineMethod("whoop", MethodAttributes.Static | MethodAttributes.Public);
 
             //ab.SetEntryPoint(sm);
-            asmBuilder.Save(asmBuilder.GetName().Name + ".dll");
+            pass.Assembly.Save(pass.Assembly.GetName().Name + ".dll");
         }
 
         public static void StoreDebugImplementation(StackContext sctx , PFunction func)
@@ -524,43 +525,9 @@ namespace Prexonite.Compiler.Cil
 
         #region Compile Function
 
-        private static CilFunction _compileFunction(PFunction source, Engine targetEngine)
+        private static void _compile(PFunction _source, ILGenerator il, Engine targetEngine, CompilerPass pass, FunctionLinking linking)
         {
-            if(source == null)
-                throw new ArgumentNullException("source");
-            lock(source)
-            {
-                DynamicMethod cilm =
-                    new DynamicMethod(
-                        "<" + source.ParentApplication.Id + ">" + source.Id,
-                        typeof(void),
-                        new Type[]
-                            {
-                                typeof(PFunction),
-                                typeof(StackContext),
-                                typeof(PValue[]),
-                                typeof(PVariable[]),
-                                typeof(PValue).MakeByRefType()
-                            },
-                        typeof(Runtime));
-
-                cilm.DefineParameter(1, ParameterAttributes.In, "source");
-                cilm.DefineParameter(2, ParameterAttributes.In, "sctx");
-                cilm.DefineParameter(3, ParameterAttributes.In, "args");
-                cilm.DefineParameter(4, ParameterAttributes.In, "sharedVariables");
-                cilm.DefineParameter(5, ParameterAttributes.Out, "result");
-
-                ILGenerator il = cilm.GetILGenerator();
-
-                _compile(source, il, targetEngine);
-
-                return (CilFunction) cilm.CreateDelegate(typeof(CilFunction));
-            }
-        }
-
-        private static void _compile(PFunction _source, ILGenerator il, Engine targetEngine)
-        {
-            CompilerState state = new CompilerState(_source, targetEngine, il);
+            CompilerState state = new CompilerState(_source, targetEngine, il, pass, linking);
 
             //Every cil implementation needs to instantiate a CilFunctionContext and assign PValue.Null to the result.
             emit_cil_implementation_header(state);
@@ -1190,11 +1157,7 @@ namespace Prexonite.Compiler.Cil
 
                         //CONSTRUCTION
                     case OpCode.newobj:
-                        state.fillArgv(argc);
-                        state.EmitLoadLocal(state.SctxLocal);
-                        state.readArgv(argc);
-                        state.Il.Emit(OpCodes.Ldstr, id);
-                        state.Il.EmitCall(OpCodes.Call, Runtime.NewObjMethod, null);
+                        state.EmitNewObj(id, argc);
                         break;
                     case OpCode.newtype:
                         state.fillArgv(argc);
@@ -1465,14 +1428,12 @@ namespace Prexonite.Compiler.Cil
                     case OpCode.check_const:
                         //Stack:
                         //  Obj
-                        state.EmitLoadLocal(state.SctxLocal);
-                        state.Il.Emit(OpCodes.Ldstr, id);
-                        state.Il.EmitCall(
-                            OpCodes.Call, Runtime.ConstructPTypeAsPValueMethod, null);
+                        state.EmitLoadType(id);
                         //Stack:
                         //  Obj
                         //  Type
-                        goto case OpCode.check_arg;
+                        state.EmitCall(Runtime.CheckTypeConstMethod);
+                        break;
                     case OpCode.check_arg:
                         //Stack: 
                         //  Obj
@@ -1494,15 +1455,14 @@ namespace Prexonite.Compiler.Cil
                     case OpCode.cast_const:
                         //Stack:
                         //  Obj
-                        state.EmitLoadLocal(state.SctxLocal);
-                        state.Il.Emit(OpCodes.Ldstr, id);
-                        state.Il.EmitCall(
-                            OpCodes.Call, Runtime.ConstructPTypeAsPValueMethod, null);
+                        state.EmitLoadType(id);
                         //Stack:
                         //  Obj
                         //  Type
-                        goto case OpCode.cast_arg;
+                        state.EmitLoadLocal(state.SctxLocal);
+                        state.EmitCall(Runtime.CastConstMethod);
 
+                        break;
                     case OpCode.cast_arg:
                         //Stack
                         //  Obj
@@ -1557,12 +1517,12 @@ namespace Prexonite.Compiler.Cil
                                 "Invalid sget instruction. Does not specify a method.");
                         methodId = id.Substring(idx + 2);
                         typeExpr = id.Substring(0, idx);
+                        state.EmitLoadType(typeExpr);
                         state.EmitLoadLocal(state.SctxLocal);
-                        state.Il.Emit(OpCodes.Ldstr, typeExpr);
                         state.readArgv(argc);
                         state.EmitLdcI4((int) PCall.Get);
                         state.Il.Emit(OpCodes.Ldstr, methodId);
-                        state.Il.EmitCall(OpCodes.Call, Runtime.StaticCallMethod, null);
+                        state.EmitVirtualCall(Runtime.StaticCallMethod);
                         if(justEffect)
                             state.Il.Emit(OpCodes.Pop);
                         break;
@@ -1575,12 +1535,12 @@ namespace Prexonite.Compiler.Cil
                                 "Invalid sset instruction. Does not specify a method.");
                         methodId = id.Substring(idx + 2);
                         typeExpr = id.Substring(0, idx);
+                        state.EmitLoadType(typeExpr);
                         state.EmitLoadLocal(state.SctxLocal);
-                        state.Il.Emit(OpCodes.Ldstr, typeExpr);
                         state.readArgv(argc);
                         state.EmitLdcI4((int) PCall.Set);
                         state.Il.Emit(OpCodes.Ldstr, methodId);
-                        state.Il.EmitCall(OpCodes.Call, Runtime.StaticCallMethod, null);
+                        state.EmitVirtualCall(Runtime.StaticCallMethod);
                         state.Il.Emit(OpCodes.Pop);
                         break;
 
@@ -1636,13 +1596,30 @@ namespace Prexonite.Compiler.Cil
                         #region ENGINE CALLS
 
                     case OpCode.func:
-                        state.fillArgv(argc);
-                        state.EmitLoadLocal(state.SctxLocal);
-                        state.readArgv(argc);
-                        state.Il.Emit(OpCodes.Ldstr, id);
-                        state.Il.EmitCall(OpCodes.Call, Runtime.CallFunctionMethod, null);
-                        if(justEffect)
-                            state.Il.Emit(OpCodes.Pop);
+                        MethodInfo targetMethod;
+                        if ((state.Linking & FunctionLinking.Static) == FunctionLinking.Static &&
+                           state.Pass.Implementations.TryGetValue(id, out targetMethod))
+                        {
+                            state.fillArgv(argc);
+                            state.Il.Emit(OpCodes.Ldsfld, state.Pass.FunctionFields[id]);
+                            state.EmitLoadLocal(state.SctxLocal);
+                            state.readArgv(argc);
+                            state.Il.Emit(OpCodes.Ldnull);
+                            state.Il.Emit(OpCodes.Ldloca_S, state.TempLocals[0]);
+                            state.EmitCall(targetMethod);
+                            if(!justEffect)
+                                state.EmitLoadTemp(0);
+                        }
+                        else
+                        {
+                            state.fillArgv(argc);
+                            state.EmitLoadLocal(state.SctxLocal);
+                            state.readArgv(argc);
+                            state.Il.Emit(OpCodes.Ldstr, id);
+                            state.Il.EmitCall(OpCodes.Call, Runtime.CallFunctionMethod, null);
+                            if(justEffect)
+                                state.Il.Emit(OpCodes.Pop);
+                        }
                         break;
                     case OpCode.cmd:
                         PCommand cmd;
@@ -1875,6 +1852,12 @@ namespace Prexonite.Compiler.Cil
 
         private static readonly MethodInfo _GetStringPType =
             typeof(PType).GetProperty("String").GetGetMethod();
+
+        internal static readonly MethodInfo GetNullPType =
+            typeof(PType).GetProperty("Null").GetGetMethod();
+
+        internal static readonly MethodInfo GetObjectProxy =
+            typeof(PType).GetProperty("Object").GetGetMethod();
 
         private static readonly MethodInfo _getValue =
             typeof(PVariable).GetProperty("Value").GetGetMethod();

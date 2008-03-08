@@ -22,20 +22,21 @@
  */
 
 using System;
+using Prexonite.Compiler.Cil;
 using NoDebug = System.Diagnostics.DebuggerNonUserCodeAttribute;
 
 namespace Prexonite.Types
 {
     [PTypeLiteral("Int")]
-    public sealed class IntPType : PType
+    public sealed class IntPType : PType, ICilCompilerAware
     {
         #region Singleton Pattern
 
-        private static IntPType instance;
+        private static readonly IntPType instance;
 
         public static IntPType Instance
         {
-            [NoDebug()]
+            [NoDebug]
             get { return instance; }
         }
 
@@ -44,7 +45,7 @@ namespace Prexonite.Types
             instance = new IntPType();
         }
 
-        [NoDebug()]
+        [NoDebug]
         private IntPType()
         {
         }
@@ -53,25 +54,25 @@ namespace Prexonite.Types
 
         #region Static
 
-        [NoDebug()]
+        [NoDebug]
         public PValue CreatePValue(byte value)
         {
             return new PValue(value, Instance);
         }
 
-        [NoDebug()]
+        [NoDebug]
         public PValue CreatePValue(short value)
         {
             return new PValue(value, Instance);
         }
 
-        [NoDebug()]
+        [NoDebug]
         public PValue CreatePValue(int value)
         {
             return new PValue(value, Instance);
         }
 
-        [NoDebug()]
+        [NoDebug]
         public PValue CreatePValue(long value)
         {
             return new PValue(value, Instance);
@@ -530,7 +531,7 @@ namespace Prexonite.Types
             return Literal;
         }
 
-        [NoDebug()]
+        [NoDebug]
         protected override bool InternalIsEqual(PType otherType)
         {
             return otherType is IntPType;
@@ -542,5 +543,29 @@ namespace Prexonite.Types
         {
             return _code;
         }
+
+        #region ICilCompilerAware Members
+
+        /// <summary>
+        /// Asses qualification and preferences for a certain instruction.
+        /// </summary>
+        /// <param name="ins">The instruction that is about to be compiled.</param>
+        /// <returns>A set of <see cref="CompilationFlags"/>.</returns>
+        CompilationFlags ICilCompilerAware.CheckQualification(Instruction ins)
+        {
+            return CompilationFlags.PreferCustomImplementation;
+        }
+
+        /// <summary>
+        /// Provides a custom compiler routine for emitting CIL byte code for a specific instruction.
+        /// </summary>
+        /// <param name="state">The compiler state.</param>
+        /// <param name="ins">The instruction to compile.</param>
+        void ICilCompilerAware.ImplementInCil(CompilerState state, Instruction ins)
+        {
+            state.EmitCall(Compiler.Cil.Compiler.GetIntPType);
+        }
+
+        #endregion
     }
 }

@@ -24,18 +24,20 @@
 using System;
 using System.Collections;
 using System.Collections.Generic;
+using System.Reflection;
 using System.Text;
+using Prexonite.Compiler.Cil;
 
 namespace Prexonite.Types
 {
     [PTypeLiteral("List")]
-    public class ListPType : PType
+    public class ListPType : PType, ICilCompilerAware
     {
         private ListPType()
         {
         }
 
-        private static ListPType _instance = new ListPType();
+        private static readonly ListPType _instance = new ListPType();
 
         public static ListPType Instance
         {
@@ -289,7 +291,7 @@ namespace Prexonite.Types
             return result != null;
         }
 
-        private static string _getStringRepresentation(List<PValue> lst, StackContext sctx)
+        private static string _getStringRepresentation(IEnumerable<PValue> lst, StackContext sctx)
         {
             StringBuilder sb = new StringBuilder("[ ");
             foreach (PValue v in lst)
@@ -468,5 +470,31 @@ namespace Prexonite.Types
         {
             return _code;
         }
+
+        #region ICilCompilerAware Members
+
+        /// <summary>
+        /// Asses qualification and preferences for a certain instruction.
+        /// </summary>
+        /// <param name="ins">The instruction that is about to be compiled.</param>
+        /// <returns>A set of <see cref="CompilationFlags"/>.</returns>
+        CompilationFlags ICilCompilerAware.CheckQualification(Instruction ins)
+        {
+            return CompilationFlags.PreferCustomImplementation;
+        }
+
+        private static readonly MethodInfo GetListPType = typeof(PType).GetProperty("List").GetGetMethod();
+
+        /// <summary>
+        /// Provides a custom compiler routine for emitting CIL byte code for a specific instruction.
+        /// </summary>
+        /// <param name="state">The compiler state.</param>
+        /// <param name="ins">The instruction to compile.</param>
+        void ICilCompilerAware.ImplementInCil(CompilerState state, Instruction ins)
+        {
+            state.EmitCall(GetListPType);
+        }
+
+        #endregion
     }
 }

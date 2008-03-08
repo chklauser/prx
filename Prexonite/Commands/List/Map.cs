@@ -26,6 +26,7 @@
 using System;
 using System.Collections;
 using System.Collections.Generic;
+using Prexonite.Compiler.Cil;
 using Prexonite.Types;
 
 namespace Prexonite.Commands.List
@@ -43,8 +44,23 @@ namespace Prexonite.Commands.List
     ///     return nlst;
     /// }</code>
     /// </remarks>
-    public class Map : CoroutineCommand
+    public class Map : CoroutineCommand, ICilCompilerAware
     {
+        #region Singleton
+
+        private Map()
+        {
+        }
+
+        private static readonly Map _instance = new Map();
+
+        public static Map Instance
+        {
+            get { return _instance; }
+        }
+
+        #endregion 
+
         internal static IEnumerable<PValue> _ToEnumerable(StackContext sctx, PValue psource)
         {
             switch(psource.Type.ToBuiltIn())
@@ -82,7 +98,7 @@ namespace Prexonite.Commands.List
         /// <param name="sctx">The stack context in which to call the supplied function.</param>
         /// <param name="args">The list of arguments to be passed to the command.</param>
         /// <returns>A coroutine that maps the.</returns>
-        protected  override IEnumerable<PValue> CoroutineRun(StackContext sctx, PValue[] args)
+        protected  static IEnumerable<PValue> CoroutineRunStatically(StackContext sctx, PValue[] args)
         {
             if (sctx == null)
                 throw new ArgumentNullException("sctx");
@@ -120,20 +136,54 @@ namespace Prexonite.Commands.List
             return CoroutineRun(sctx, f, source);
         }
 
+        private static IEnumerable<PValue> _wrapNonGenericIEnumerable(StackContext sctx, IEnumerable nonGeneric)
+        {
+            foreach (object obj in nonGeneric)
+                yield return sctx.CreateNativePValue(obj);
+        }
+
+        public static PValue RunStatically(StackContext sctx, PValue[] args)
+        {
+            CoroutineContext corctx = new CoroutineContext(sctx, CoroutineRunStatically(sctx, args));
+            return sctx.CreateNativePValue(new Coroutine(corctx));
+        }
+
         /// <summary>
         /// A flag indicating whether the command acts like a pure function.
         /// </summary>
         /// <remarks>Pure commands can be applied at compile time.</remarks>
         public override bool IsPure
         {
-            get { return false; } //makes use of indirect call, 
-            //which might lead to premature initialization of the parent engine.
+            get { return false; }
         }
 
-        private static IEnumerable<PValue> _wrapNonGenericIEnumerable(StackContext sctx, IEnumerable nonGeneric)
+        #region ICilCompilerAware Members
+
+        /// <summary>
+        /// Asses qualification and preferences for a certain instruction.
+        /// </summary>
+        /// <param name="ins">The instruction that is about to be compiled.</param>
+        /// <returns>A set of <see cref="CompilationFlags"/>.</returns>
+        CompilationFlags ICilCompilerAware.CheckQualification(Instruction ins)
         {
-            foreach (object obj in nonGeneric)
-                yield return sctx.CreateNativePValue(obj);
+            return CompilationFlags.PreferRunStatically;
+        }
+
+        /// <summary>
+        /// Provides a custom compiler routine for emitting CIL byte code for a specific instruction.
+        /// </summary>
+        /// <param name="state">The compiler state.</param>
+        /// <param name="ins">The instruction to compile.</param>
+        void ICilCompilerAware.ImplementInCil(CompilerState state, Instruction ins)
+        {
+            throw new NotSupportedException();
+        }
+
+        #endregion
+
+        protected override IEnumerable<PValue> CoroutineRun(StackContext sctx, PValue[] args)
+        {
+            return CoroutineRunStatically(sctx, args);
         }
     }
 }

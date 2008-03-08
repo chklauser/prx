@@ -24,11 +24,12 @@
 #define SINGLE_NULL
 
 using System.Diagnostics;
+using Prexonite.Compiler.Cil;
 
 namespace Prexonite.Types
 {
     [PTypeLiteral("Null")]
-    public class NullPType : PType
+    public class NullPType : PType, ICilCompilerAware
     {
         #region Singleton
 
@@ -36,7 +37,7 @@ namespace Prexonite.Types
         {
         }
 
-        private static NullPType instance = new NullPType();
+        private static readonly NullPType instance = new NullPType();
 
         /// <summary>
         /// The one and only instance of <see cref="NullPType"/>.
@@ -51,7 +52,7 @@ namespace Prexonite.Types
         #region Static
 
 #if SINGLE_NULL
-        private static PValue _single_null = new PValue(null, instance);
+        private static readonly PValue _single_null = new PValue(null, instance);
 #endif
 
         /// <summary>
@@ -486,5 +487,29 @@ namespace Prexonite.Types
             return new PValue(null, this);
 #endif
         }
+
+        #region ICilCompilerAware Members
+
+        /// <summary>
+        /// Asses qualification and preferences for a certain instruction.
+        /// </summary>
+        /// <param name="ins">The instruction that is about to be compiled.</param>
+        /// <returns>A set of <see cref="CompilationFlags"/>.</returns>
+        CompilationFlags ICilCompilerAware.CheckQualification(Instruction ins)
+        {
+            return CompilationFlags.PreferCustomImplementation;
+        }
+
+        /// <summary>
+        /// Provides a custom compiler routine for emitting CIL byte code for a specific instruction.
+        /// </summary>
+        /// <param name="state">The compiler state.</param>
+        /// <param name="ins">The instruction to compile.</param>
+        void ICilCompilerAware.ImplementInCil(CompilerState state, Instruction ins)
+        {
+            state.EmitCall(Compiler.Cil.Compiler.GetNullPType);
+        }
+
+        #endregion
     }
 }

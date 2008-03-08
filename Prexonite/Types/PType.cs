@@ -23,7 +23,10 @@
 
 using System;
 using System.Collections.Generic;
+using System.Reflection;
+using System.Reflection.Emit;
 using System.Text;
+using Prexonite.Compiler.Cil;
 using NoDebug = System.Diagnostics.DebuggerNonUserCodeAttribute;
 
 namespace Prexonite.Types
@@ -111,31 +114,31 @@ namespace Prexonite.Types
 
         public static RealPType Real
         {
-            [NoDebug()]
+            [NoDebug]
             get { return RealPType.Instance; }
         }
 
         public static IntPType Int
         {
-            [NoDebug()]
+            [NoDebug]
             get { return IntPType.Instance; }
         }
 
         public static StringPType String
         {
-            [NoDebug()]
+            [NoDebug]
             get { return StringPType.Instance; }
         }
 
         public static NullPType Null
         {
-            [NoDebug()]
+            [NoDebug]
             get { return NullPType.Instance; }
         }
 
         public static BoolPType Bool
         {
-            [NoDebug()]
+            [NoDebug]
             get { return BoolPType.Instance; }
         }
 
@@ -163,15 +166,15 @@ namespace Prexonite.Types
             get { return StructurePType.Instance; }
         }
 
-        private static PrexoniteObjectTypeProxy pobjfacade = new PrexoniteObjectTypeProxy();
+        private static readonly PrexoniteObjectTypeProxy pobjfacade = new PrexoniteObjectTypeProxy();
 
         public static PrexoniteObjectTypeProxy Object
         {
-            [NoDebug()]
+            [NoDebug]
             get { return pobjfacade; }
         }
 
-        //[NoDebug()]
+        //[NoDebug]
         public class PrexoniteObjectTypeProxy
         {
             private readonly ObjectPType CharObj = new ObjectPType(typeof(Char));
@@ -203,6 +206,33 @@ namespace Prexonite.Types
                 else
                     return this[value.GetType()].CreatePValue(value);
             }
+
+            internal static void ImplementInCil(CompilerState state, Type clrType)
+            {
+                if (clrType == typeof(PValueHashtable))
+                {
+                    state.EmitCall(GetPValueHashTableObjectType);
+                }
+                else if (clrType == typeof(PValueKeyValuePair))
+                {
+                    state.EmitCall(GetPValueKeyValuePairObjectType);
+                }
+                else
+                {
+                    state.EmitCall(Compiler.Cil.Compiler.GetObjectProxy);
+                    state.EmitLoadClrType(clrType);
+                    state.EmitCall(GetAnyObjectType);
+                }
+            }
+
+            private static readonly MethodInfo GetPValueHashTableObjectType =
+                typeof(PValueHashtable).GetProperty("ObjectType").GetGetMethod();
+
+            private static readonly MethodInfo GetPValueKeyValuePairObjectType =
+                typeof(PValueKeyValuePair).GetProperty("ObjectType").GetGetMethod();
+
+            private static readonly MethodInfo GetAnyObjectType =
+                typeof(PrexoniteObjectTypeProxy).GetProperty("Item", new Type[] {typeof(Type)}).GetGetMethod();
 
             public ObjectPType this[Type clrType]
             {
@@ -259,7 +289,7 @@ namespace Prexonite.Types
 
         #endregion
 
-        [NoDebug()]
+        [NoDebug]
         public virtual PValue CreatePValue(object value)
         {
             return new PValue(value, this);
@@ -280,7 +310,7 @@ namespace Prexonite.Types
 
         public abstract bool TryContruct(StackContext sctx, PValue[] args, out PValue result);
 
-        [NoDebug()]
+        [NoDebug]
         public virtual PValue Construct(StackContext sctx, PValue[] args)
         {
             PValue result;
@@ -678,7 +708,7 @@ namespace Prexonite.Types
 
         #endregion //Operators
 
-        [NoDebug()]
+        [NoDebug]
         public virtual PValue DynamicCall(
             StackContext sctx, PValue subject, PValue[] args, PCall call, string id)
         {
@@ -690,7 +720,7 @@ namespace Prexonite.Types
                     "Cannot call '" + id + "' on object of PType " + ToString() + ".");
         }
 
-        [NoDebug()]
+        [NoDebug]
         public virtual PValue StaticCall(StackContext sctx, PValue[] args, PCall call, string id)
         {
             PValue result;
@@ -705,7 +735,7 @@ namespace Prexonite.Types
 
         #region xConvertTo methods
 
-        [NoDebug()]
+        [NoDebug]
         public PValue ConvertTo(StackContext sctx, PValue subject, PType target, bool useExplicit)
         {
             PValue result;
@@ -718,19 +748,19 @@ namespace Prexonite.Types
                     ".");
         }
 
-        [NoDebug()]
+        [NoDebug]
         public PValue ConvertTo(StackContext sctx, PValue subject, PType target)
         {
             return ConvertTo(sctx, subject, target, false);
         }
 
-        [NoDebug()]
+        [NoDebug]
         public PValue ExplicitlyConvertTo(StackContext sctx, PValue subject, PType target)
         {
             return ConvertTo(sctx, subject, target, true);
         }
 
-        [NoDebug()]
+        [NoDebug]
         public PValue ConvertTo(StackContext sctx, PValue subject, Type clrTarget, bool useExplicit)
         {
             if (clrTarget == null)
@@ -738,19 +768,19 @@ namespace Prexonite.Types
             return ConvertTo(sctx, subject, Object[clrTarget], useExplicit);
         }
 
-        [NoDebug()]
+        [NoDebug]
         public PValue ConvertTo(StackContext sctx, PValue subject, Type clrTarget)
         {
             return ConvertTo(sctx, subject, clrTarget, false);
         }
 
-        [NoDebug()]
+        [NoDebug]
         public PValue ExplicitlyConvertTo(StackContext sctx, PValue subject, Type clrTarget)
         {
             return ConvertTo(sctx, subject, clrTarget, true);
         }
 
-        [NoDebug()]
+        [NoDebug]
         public bool TryConvertTo(
             StackContext sctx, PValue subject, PType target, bool useExplicit, out PValue result)
         {
@@ -766,13 +796,13 @@ namespace Prexonite.Types
                     target.InternalConvertFrom(sctx, subject, useExplicit, out result);
         }
 
-        [NoDebug()]
+        [NoDebug]
         public bool TryConvertTo(StackContext sctx, PValue subject, PType target, out PValue result)
         {
             return TryConvertTo(sctx, subject, target, false, out result);
         }
 
-        [NoDebug()]
+        [NoDebug]
         public bool TryConvertTo(
             StackContext sctx, PValue subject, Type clrTarget, bool useExplicit, out PValue result)
         {
@@ -781,7 +811,7 @@ namespace Prexonite.Types
             return TryConvertTo(sctx, subject, Object[clrTarget], useExplicit, out result);
         }
 
-        [NoDebug()]
+        [NoDebug]
         public bool TryConvertTo(
             StackContext sctx, PValue subject, Type clrTarget, out PValue result)
         {
@@ -805,7 +835,7 @@ namespace Prexonite.Types
 
         #region Comparision
 
-        [NoDebug()]
+        [NoDebug]
         public bool IsEqual(PType otherType)
         {
             if(ReferenceEquals(this,otherType))

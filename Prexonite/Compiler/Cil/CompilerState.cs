@@ -2,10 +2,11 @@ using System;
 using System.Collections.Generic;
 using System.Reflection;
 using System.Reflection.Emit;
+using Prexonite.Types;
 
 namespace Prexonite.Compiler.Cil
 {
-    public class CompilerState
+    public sealed class CompilerState : StackContext
     {
         public const int ParamArgsIndex = 2;
         public const int ParamResultIndex = 4;
@@ -25,8 +26,10 @@ namespace Prexonite.Compiler.Cil
         private LocalBuilder _sctxLocal;
         private LocalBuilder _sharedLocal;
         private LocalBuilder[] _tempLocals;
+        private readonly CompilerPass _pass;
+        private readonly FunctionLinking _linking;
 
-        public CompilerState(PFunction source, Engine targetEngine, ILGenerator il)
+        public CompilerState(PFunction source, Engine targetEngine, ILGenerator il, CompilerPass _pass, FunctionLinking _linking)
         {
             if(source == null)
                 throw new ArgumentNullException("source");
@@ -36,6 +39,8 @@ namespace Prexonite.Compiler.Cil
                 throw new ArgumentNullException("il");
 
             _source = source;
+            this._linking = _linking;
+            this._pass = _pass;
             _targetEngine = targetEngine;
             _il = il;
             _indexMap = new Dictionary<int, string>();
@@ -184,6 +189,69 @@ namespace Prexonite.Compiler.Cil
             {
                 return _foreachHints;
             }
+        }
+
+        /// <summary>
+        /// Represents the engine this context is part of.
+        /// </summary>
+        public override Engine ParentEngine
+        {
+            get { return _targetEngine; }
+        }
+
+        /// <summary>
+        /// The parent application.
+        /// </summary>
+        public override Application ParentApplication
+        {
+            get { return _source.ParentApplication; }
+        }
+
+        public override SymbolCollection ImportedNamespaces
+        {
+            get { return _source.ImportedNamespaces; }
+        }
+
+        /// <summary>
+        /// Indicates whether the context still has code/work to do.
+        /// </summary>
+        /// <returns>True if the context has additional work to perform in the next cycle, False if it has finished it's work and can be removed from the stack</returns>
+        protected override bool PerformNextCylce(StackContext lastContext)
+        {
+            return false;
+        }
+
+        /// <summary>
+        /// Tries to handle the supplied exception.
+        /// </summary>
+        /// <param name="exc">The exception to be handled.</param>
+        /// <returns>True if the exception has been handled, false otherwise.</returns>
+        public override bool TryHandleException(Exception exc)
+        {
+            return false;
+        }
+
+        /// <summary>
+        /// Represents the return value of the context.
+        /// Just providing a value here does not mean that it gets consumed by the caller.
+        /// If the context does not provide a return value, this property should return null (not NullPType).
+        /// </summary>
+        public override PValue ReturnValue
+        {
+            get { return PType.Null; }
+        }
+
+        /// <summary>
+        /// Returns a reference to the current compiler pass.
+        /// </summary>
+        public CompilerPass Pass
+        {
+            get { return _pass; }
+        }
+
+        public FunctionLinking Linking
+        {
+            get { return _linking; }
         }
 
         #endregion
@@ -527,6 +595,53 @@ namespace Prexonite.Compiler.Cil
             Il.EmitCall(OpCodes.Call, Compiler.GetIntPType, null);
             Il.Emit(OpCodes.Newobj, Compiler.NewPValue);
         }
+
+        public void EmitLoadType(string typeExpr)
+        {
+            PType T = ConstructPType(typeExpr);
+            ICilCompilerAware cilT = T as ICilCompilerAware;
+
+            CompilationFlags cf;
+            Instruction virtualInstruction = new Instruction(OpCode.cast_const, typeExpr);
+            if (cilT != null)
+            {
+                cf = cilT.CheckQualification(virtualInstruction);
+            }
+            else 
+                cf = CompilationFlags.IsCompatible;
+
+            if((cf & CompilationFlags.HasCustomImplementation) == CompilationFlags.HasCustomImplementation && cilT != null)
+            {
+                cilT.ImplementInCil(this, virtualInstruction);
+            }
+            else
+            {
+                EmitLoadLocal(SctxLocal);
+                Il.Emit(OpCodes.Ldstr, typeExpr);
+                EmitCall(Runtime.ConstructPTypeMethod);
+            }
+        }
+
+        public void EmitNewObj(string typeExpr, int argc)
+        {
+            fillArgv(argc);
+            EmitLoadType(typeExpr);
+            EmitLoadLocal(SctxLocal);
+            readArgv(argc);
+            EmitVirtualCall(PType_ConstructMethod);
+        }
+
+        private static readonly MethodInfo PType_ConstructMethod =
+            typeof(PType).GetMethod("Construct", new Type[] {typeof(StackContext), typeof(PValue[])});
+
+        public void EmitLoadClrType(Type T)
+        {
+            Il.Emit(OpCodes.Ldtoken, T);
+            EmitCall(Type_GetTypeFromHandle);
+        }
+
+        private static readonly MethodInfo Type_GetTypeFromHandle =
+            typeof(Type).GetMethod("GetTypeFromHandle", new Type[] {typeof(RuntimeTypeHandle)});
 
         #region Early bound command call
 

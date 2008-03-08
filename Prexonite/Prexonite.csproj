@@ -39,6 +39,8 @@
   </PropertyGroup>
   <ItemGroup>
     <Reference Include="System" />
+    <Reference Include="System.Data" />
+    <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
     <Compile Include="CilClosure.cs" />
@@ -85,6 +87,7 @@
     <Compile Include="Commands\List\Map.cs" />
     <Compile Include="Commands\List\Skip.cs" />
     <Compile Include="Commands\List\Sort.cs" />
+    <Compile Include="Commands\List\TakeWhile.cs" />
     <Compile Include="Commands\List\Where.cs" />
     <Compile Include="Commands\Math\Abs.cs" />
     <Compile Include="Commands\Math\Ceiling.cs" />
@@ -159,9 +162,11 @@
     <Compile Include="Compiler\Ast\ICanBeReferenced.cs" />
     <Compile Include="Compiler\BlockLabels.cs" />
     <Compile Include="Compiler\Cil\Compiler.cs" />
+    <Compile Include="Compiler\Cil\CompilerPass.cs" />
     <Compile Include="Compiler\Cil\CompilerState.cs" />
     <Compile Include="Compiler\Cil\CilFunction.cs" />
     <Compile Include="Compiler\Cil\ForeachHint.cs" />
+    <Compile Include="Compiler\Cil\FunctionLinking.cs" />
     <Compile Include="Compiler\Cil\Runtime.cs" />
     <Compile Include="Compiler\Cil\Symbol.cs" />
     <Compile Include="Compiler\CompilerHook.cs" />

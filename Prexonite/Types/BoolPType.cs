@@ -21,10 +21,12 @@
  *  51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
  */
 
+using Prexonite.Compiler.Cil;
+
 namespace Prexonite.Types
 {
     [PTypeLiteral("Bool")]
-    public class BoolPType : PType
+    public class BoolPType : PType, ICilCompilerAware
     {
         #region Singleton
 
@@ -37,7 +39,7 @@ namespace Prexonite.Types
             instance = new BoolPType();
         }
 
-        private static BoolPType instance;
+        private static readonly BoolPType instance;
 
         public static BoolPType Instance
         {
@@ -135,12 +137,12 @@ namespace Prexonite.Types
             bool useExplicit,
             out PValue result)
         {
-            bool parsed;
             result = null;
             if (subject.Type is ObjectPType && ((ObjectPType) subject.Type).ClrType == typeof(bool))
                 result = (bool) subject.Value;
             else if (useExplicit && subject.Type is StringPType)
             {
+                bool parsed;
                 if (bool.TryParse(subject.Value as string, out parsed))
                     result = parsed;
                 else
@@ -286,5 +288,29 @@ namespace Prexonite.Types
         {
             return Literal;
         }
+
+        #region ICilCompilerAware Members
+
+        /// <summary>
+        /// Asses qualification and preferences for a certain instruction.
+        /// </summary>
+        /// <param name="ins">The instruction that is about to be compiled.</param>
+        /// <returns>A set of <see cref="CompilationFlags"/>.</returns>
+        CompilationFlags ICilCompilerAware.CheckQualification(Instruction ins)
+        {
+            return CompilationFlags.PreferCustomImplementation;
+        }
+
+        /// <summary>
+        /// Provides a custom compiler routine for emitting CIL byte code for a specific instruction.
+        /// </summary>
+        /// <param name="state">The compiler state.</param>
+        /// <param name="ins">The instruction to compile.</param>
+        void ICilCompilerAware.ImplementInCil(CompilerState state, Instruction ins)
+        {
+            state.EmitCall(Compiler.Cil.Compiler.GetBoolPType);
+        }
+
+        #endregion
     }
 }

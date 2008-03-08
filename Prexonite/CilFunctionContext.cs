@@ -34,7 +34,7 @@ namespace Prexonite
             return New(caller, (SymbolCollection) null);
         }
 
-        private static MethodInfo _NewMethod =
+        private static readonly MethodInfo _NewMethod =
             typeof(CilFunctionContext).GetMethod(
                 "New", new Type[] {typeof(StackContext), typeof(PFunction)});
         internal static MethodInfo NewMethod
@@ -58,9 +58,9 @@ namespace Prexonite
             this.importedNamespaces = importedNamespaces;
         }
 
-        private Engine parentEngine;
-        private Application parentApplication;
-        private SymbolCollection importedNamespaces;
+        private readonly Engine parentEngine;
+        private readonly Application parentApplication;
+        private readonly SymbolCollection importedNamespaces;
 
         /// <summary>
         /// Represents the engine this context is part of.

@@ -1,22 +1,22 @@
 using System;
-using System.Collections.Generic;
 using System.Globalization;
-using System.Text;
+using System.Reflection;
+using Prexonite.Compiler.Cil;
 using NoDebug = System.Diagnostics.DebuggerStepThroughAttribute;
 
 namespace Prexonite.Types
 {
     [PTypeLiteral("Char")]
-    public class CharPType : PType
+    public class CharPType : PType, ICilCompilerAware
     {
 
         #region Singleton
 
-        private static CharPType instance;
+        private static readonly CharPType instance;
 
         public static CharPType Instance
         {
-            [NoDebug()]
+            [NoDebug]
             get { return instance; }
         }
 
@@ -25,7 +25,7 @@ namespace Prexonite.Types
             instance = new CharPType();
         }
 
-        [NoDebug()]
+        [NoDebug]
         private CharPType()
         {
         }
@@ -335,6 +335,32 @@ namespace Prexonite.Types
         {
             return Convert.ToChar(value);
         }  
+
+        #endregion
+
+        #region ICilCompilerAware Members
+
+        /// <summary>
+        /// Asses qualification and preferences for a certain instruction.
+        /// </summary>
+        /// <param name="ins">The instruction that is about to be compiled.</param>
+        /// <returns>A set of <see cref="CompilationFlags"/>.</returns>
+        CompilationFlags ICilCompilerAware.CheckQualification(Instruction ins)
+        {
+            return CompilationFlags.PreferCustomImplementation;
+        }
+
+        private static readonly MethodInfo GetCharPType = typeof(PType).GetProperty("Char").GetGetMethod();
+
+        /// <summary>
+        /// Provides a custom compiler routine for emitting CIL byte code for a specific instruction.
+        /// </summary>
+        /// <param name="state">The compiler state.</param>
+        /// <param name="ins">The instruction to compile.</param>
+        void ICilCompilerAware.ImplementInCil(CompilerState state, Instruction ins)
+        {
+            state.EmitCall(GetCharPType);
+        }
 
         #endregion
     }

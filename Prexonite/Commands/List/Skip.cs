@@ -1,13 +1,33 @@
 using System;
 using System.Collections.Generic;
-using System.Text;
+using Prexonite.Compiler.Cil;
 using Prexonite.Types;
 
 namespace Prexonite.Commands.List
 {
-    public class Skip : CoroutineCommand
+    public class Skip : CoroutineCommand, ICilCompilerAware
     {
+        #region Singleton
+
+        private Skip()
+        {
+        }
+
+        private static readonly Skip _instance = new Skip();
+
+        public static Skip Instance
+        {
+            get { return _instance; }
+        }
+
+        #endregion 
+
         protected override IEnumerable<PValue> CoroutineRun(StackContext sctx, PValue[] args)
+        {
+            return CoroutineRunStatically(sctx, args);
+        }
+
+        protected static IEnumerable<PValue> CoroutineRunStatically(StackContext sctx, PValue[] args)
         {
             if (sctx == null)
                 throw new ArgumentNullException("sctx");
@@ -34,6 +54,12 @@ namespace Prexonite.Commands.List
             }
         }
 
+        public static PValue RunStatically(StackContext sctx, PValue[] args)
+        {
+            CoroutineContext corctx = new CoroutineContext(sctx, CoroutineRunStatically(sctx, args));
+            return sctx.CreateNativePValue(new Coroutine(corctx));
+        }
+
         /// <summary>
         /// A flag indicating whether the command acts like a pure function.
         /// </summary>
@@ -42,5 +68,29 @@ namespace Prexonite.Commands.List
         {
             get { return false; }
         }
+
+        #region ICilCompilerAware Members
+
+        /// <summary>
+        /// Asses qualification and preferences for a certain instruction.
+        /// </summary>
+        /// <param name="ins">The instruction that is about to be compiled.</param>
+        /// <returns>A set of <see cref="CompilationFlags"/>.</returns>
+        CompilationFlags ICilCompilerAware.CheckQualification(Instruction ins)
+        {
+            return CompilationFlags.PreferRunStatically;
+        }
+
+        /// <summary>
+        /// Provides a custom compiler routine for emitting CIL byte code for a specific instruction.
+        /// </summary>
+        /// <param name="state">The compiler state.</param>
+        /// <param name="ins">The instruction to compile.</param>
+        void ICilCompilerAware.ImplementInCil(CompilerState state, Instruction ins)
+        {
+            throw new NotSupportedException();
+        }
+
+        #endregion
     }
 }

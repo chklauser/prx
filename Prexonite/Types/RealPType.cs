@@ -22,15 +22,16 @@
  */
 
 using System;
+using Prexonite.Compiler.Cil;
 
 namespace Prexonite.Types
 {
     [PTypeLiteral("Real")]
-    public class RealPType : PType
+    public class RealPType : PType, ICilCompilerAware
     {
         #region Singleton pattern
 
-        private static RealPType instance;
+        private static readonly RealPType instance;
 
         public static RealPType Instance
         {
@@ -474,5 +475,29 @@ namespace Prexonite.Types
         {
             return Literal;
         }
+
+        #region ICilCompilerAware Members
+
+        /// <summary>
+        /// Asses qualification and preferences for a certain instruction.
+        /// </summary>
+        /// <param name="ins">The instruction that is about to be compiled.</param>
+        /// <returns>A set of <see cref="CompilationFlags"/>.</returns>
+        CompilationFlags ICilCompilerAware.CheckQualification(Instruction ins)
+        {
+            return CompilationFlags.PreferCustomImplementation;
+        }
+
+        /// <summary>
+        /// Provides a custom compiler routine for emitting CIL byte code for a specific instruction.
+        /// </summary>
+        /// <param name="state">The compiler state.</param>
+        /// <param name="ins">The instruction to compile.</param>
+        void ICilCompilerAware.ImplementInCil(CompilerState state, Instruction ins)
+        {
+            state.EmitCall(Compiler.Cil.Compiler.GetRealPType);
+        }
+
+        #endregion
     }
 }

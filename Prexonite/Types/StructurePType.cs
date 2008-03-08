@@ -22,13 +22,13 @@
  */
 
 using System;
-using System.Collections.Generic;
-using System.Text;
+using System.Reflection;
+using Prexonite.Compiler.Cil;
 
 namespace Prexonite.Types
 {
     [PTypeLiteral(Literal)]
-    public class StructurePType : PType
+    public class StructurePType : PType, ICilCompilerAware
     {
         /// <summary>
         /// The official name for this type.
@@ -116,7 +116,7 @@ namespace Prexonite.Types
         {
         }
 
-        private static StructurePType _instance = new StructurePType();
+        private static readonly StructurePType _instance = new StructurePType();
 
         public static StructurePType Instance
         {
@@ -309,6 +309,32 @@ namespace Prexonite.Types
         public override string ToString()
         {
             return Literal;
+        }
+
+        #endregion
+
+        #region ICilCompilerAware Members
+
+        /// <summary>
+        /// Asses qualification and preferences for a certain instruction.
+        /// </summary>
+        /// <param name="ins">The instruction that is about to be compiled.</param>
+        /// <returns>A set of <see cref="CompilationFlags"/>.</returns>
+        CompilationFlags ICilCompilerAware.CheckQualification(Instruction ins)
+        {
+            return CompilationFlags.PreferCustomImplementation;
+        }
+
+        private static readonly MethodInfo GetStructurePType = typeof(PType).GetProperty("Structure").GetGetMethod();
+
+        /// <summary>
+        /// Provides a custom compiler routine for emitting CIL byte code for a specific instruction.
+        /// </summary>
+        /// <param name="state">The compiler state.</param>
+        /// <param name="ins">The instruction to compile.</param>
+        void ICilCompilerAware.ImplementInCil(CompilerState state, Instruction ins)
+        {
+           state.EmitCall(GetStructurePType);
         }
 
         #endregion
