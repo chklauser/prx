@@ -820,7 +820,7 @@ namespace Prexonite.Types
         {
             result = null;
             ObjectPType subjT = subject.Type as ObjectPType;
-            if (subjT != null)
+            if ((object)subjT != null)
             {
                 switch (Type.GetTypeCode(subjT.ClrType))
                 {

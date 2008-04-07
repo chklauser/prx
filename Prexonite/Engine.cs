@@ -157,12 +157,12 @@ namespace Prexonite
                 {
                     if (outer._pTypeMap.ContainsKey(clrType))
                     {
-                        if (value == null)
+                        if ((object)value == null)
                             outer._pTypeMap.Remove(clrType);
                         else
                             outer._pTypeMap[clrType] = value;
                     }
-                    else if (value == null)
+                    else if ((object)value == null)
                         throw new ArgumentNullException("value");
                     else
                         outer._pTypeMap.Add(clrType, value);
@@ -179,7 +179,7 @@ namespace Prexonite
             {
                 if (clrType == null)
                     throw new ArgumentNullException("clrType");
-                if (type == null)
+                if ((object)type == null)
                     throw new ArgumentNullException("type");
                 if (outer._pTypeMap.ContainsKey(clrType))
                     throw new InvalidOperationException(
@@ -752,6 +752,8 @@ namespace Prexonite
             Commands.AddEngineCommand(CompileToCilAlias, CompileToCil.Instance);
 
             Commands.AddEngineCommand(TakeWhileAlias, TakeWhile.Instance);
+
+            Commands.AddEngineCommand(ExceptAlias, Except.Instance);
         }
 
         /// <summary>
@@ -1023,6 +1025,8 @@ namespace Prexonite
         /// Alias used for the TakeWhile command.
         /// </summary>
         public const string TakeWhileAlias = "takewhile";
+
+        public const string ExceptAlias = "except";
 
         #endregion
     }

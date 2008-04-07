@@ -495,7 +495,7 @@ NestedFunction<AstBlock block>
     FunctionDefinition<out func>
                                 (.  
                                     string logicalId = func.Meta["LogicalId"];
-                                    func.Meta["ParentFunction"] = target.Function.Id;
+                                    func.Meta[PFunction.ParentFunctionKey] = target.Function.Id;
                                     string physicalId = func.Id;
                                     
                                     AstGetSetSymbol setVar = new AstGetSetSymbol(this, PCall.Set, logicalId, SymbolInterpretations.LocalObjectVariable);

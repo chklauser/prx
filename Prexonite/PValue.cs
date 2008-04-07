@@ -90,7 +90,7 @@ namespace Prexonite
         {
             if (value == null)
                 type = NullPType.Instance;
-            else if (type == null)
+            else if ((object)type == null)
                 throw new ArgumentNullException("type");
 
             _value = value;

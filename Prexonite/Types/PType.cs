@@ -24,7 +24,6 @@
 using System;
 using System.Collections.Generic;
 using System.Reflection;
-using System.Reflection.Emit;
 using System.Text;
 using Prexonite.Compiler.Cil;
 using NoDebug = System.Diagnostics.DebuggerNonUserCodeAttribute;
@@ -866,6 +865,58 @@ namespace Prexonite.Types
             return !(left == right);
         }
 
+        public static bool operator ==(Type left, PType right)
+        {
+            ObjectPType objT;
+            if ((object)right == null && left == null)
+                return true;
+            else if ((object)right != null || left != null)
+                return false;
+            else if ((object)(objT = right as ObjectPType) == null)
+                return false;
+            else
+                return objT.ClrType == left;
+        }
+
+        public static bool operator !=(Type left, PType right)
+        {
+            ObjectPType objT;
+            if ((object)right == null && left == null)
+                return false;
+            else if ((object)right != null || left != null)
+                return true;
+            else if ((object)(objT = right as ObjectPType) == null)
+                return false;
+            else
+                return objT.ClrType != left;
+        }
+
+        public static bool operator ==(PType left, Type right)
+        {
+            ObjectPType objT;
+            if ((object)left == null && right == null)
+                return true;
+            else if ((object)left == null || right == null)
+                return false;
+            else if ((object)(objT = left as ObjectPType) == null)
+                return false;
+            else
+                return objT.ClrType == right;
+        }
+
+        public static bool operator !=(PType left, Type right)
+        {
+            ObjectPType objT;
+            if ((object)left == null && right == null)
+                return false;
+            else if ((object)left != null || right != null)
+                return true;
+            else if ((object)(objT = left as ObjectPType) == null)
+                return false;
+            else
+                return objT.ClrType != right;
+        }
+
         [NoDebug]
         public override bool Equals(object obj)
         {
@@ -893,7 +944,7 @@ namespace Prexonite.Types
 
         public static bool IsPType(ObjectPType clrType)
         {
-            if (clrType == null)
+            if ((object)clrType == null)
                 throw new ArgumentNullException("clrType");
             return IsPType(clrType.ClrType);
         }

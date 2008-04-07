@@ -247,6 +247,8 @@ GlobalCode							(.
 											TargetApplication._RequireInitialization();
 											Loader._EmitPartialInitializationCode();
 										}
+										//Symbols defined in this block are not available to further global code blocks
+										target.Symbols.Clear();
 										target = null;
 										_popLexerState();
 									.)
@@ -293,7 +295,7 @@ FunctionDefinition<out PFunction func>
                                             func = new PFunction(TargetApplication, funcId);
                                             
                                             if(isNested)
-                                                 func.Meta["LogicalId"] = id;
+                                                 func.Meta[PFunction.LogicalIdKey] = id;
                                             
                                             Loader.CreateFunctionTarget(func, new AstBlock(this));
                                             if(TargetApplication.Functions.Contains(func.Id) && !TargetApplication.Meta.GetDefault(Application.AllowOverridingKey,true))
@@ -310,7 +312,7 @@ FunctionDefinition<out PFunction func>
                                             corBody = new PFunction(TargetApplication, corId);
                                             Loader.CreateFunctionTarget(corBody, new AstBlock(this));
                                             TargetApplication.Functions.Add(corBody);
-                                            corBody.Meta["LogicalId"] = id;
+                                            corBody.Meta[PFunction.LogicalIdKey] = id;
 
                                             //Get compiler target references
                                             ct = FunctionTargets[corBody];

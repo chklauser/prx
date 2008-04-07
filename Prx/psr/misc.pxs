@@ -2,8 +2,7 @@
 
 build does require
 (
-    "struct.pxs",
-    "debug.pxs"
+    "struct.pxs"
 );
 
 function roundTo(x,r) does

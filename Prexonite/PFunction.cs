@@ -26,7 +26,6 @@ using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.Diagnostics;
 using System.IO;
-using System.Reflection;
 using System.Text;
 using Prexonite.Compiler.Cil;
 using NoDebug = System.Diagnostics.DebuggerNonUserCodeAttribute;
@@ -63,6 +62,10 @@ namespace Prexonite
         public const string DynamicKey = "dynamic";
 
         public const string DeficiencyKey = "deficiency";
+
+        public const string LogicalIdKey = "LogicalId";
+
+        public const string ParentFunctionKey = "ParentFunction";
 
         #region Construction
 

@@ -75,6 +75,7 @@
     <Compile Include="Commands\List\Count.cs" />
     <Compile Include="Commands\List\Distinct.cs" />
     <Compile Include="Commands\List\Each.cs" />
+    <Compile Include="Commands\List\Except.cs" />
     <Compile Include="Commands\List\Exists.cs" />
     <Compile Include="Commands\List\FoldL.cs" />
     <Compile Include="Commands\List\FoldR.cs" />
@@ -179,6 +180,7 @@
     <Compile Include="Compiler\Loader.cs" />
     <Compile Include="Compiler\LoaderOptions.cs" />
     <Compile Include="Compiler\Parser.Code.cs" />
+    <Compile Include="Compiler\StructHook.cs" />
     <Compile Include="Compiler\Token.cs" />
     <Compile Include="Continuation.cs" />
     <Compile Include="Coroutine.cs" />
@@ -242,6 +244,9 @@
   </ItemGroup>
   <ItemGroup>
     <Grammar Include="PTypeExpression.atg" />
+  </ItemGroup>
+  <ItemGroup>
+    <Service Include="{B4F97281-0DBD-4835-9ED8-7DFB966E87FF}" />
   </ItemGroup>
   <!-- CUSTOM TASKS -->
   <PropertyGroup>

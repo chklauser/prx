@@ -57,7 +57,7 @@ namespace Prexonite.Types
             ObjectPType oT = arg.Type as ObjectPType;
             if (arg.IsNull)
                 _clrType = typeof(object);
-            else if (oT != null && typeof(Type).IsAssignableFrom(oT.ClrType))
+            else if ((object)oT != null && typeof(Type).IsAssignableFrom(oT.ClrType))
                 _clrType = (Type) arg.Value;
             else if (arg.TryConvertTo(sctx, String, false, out sarg))
                 _clrType = GetType(sctx, (string) sarg.Value);
@@ -1219,7 +1219,7 @@ namespace Prexonite.Types
 
                 return true;
             }
-            else if (objT != null)
+            else if ((object)objT != null)
             {
                 if (objT.ClrType.IsInterface &&
                     ClrType.FindInterfaces(

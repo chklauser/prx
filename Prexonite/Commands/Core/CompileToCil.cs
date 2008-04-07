@@ -32,6 +32,11 @@ namespace Prexonite.Commands.Core
             }
         }
 
+        public static bool AlreadyCompiledStatically
+        {
+            get { return _alreadyCompiledStatically; }
+        }
+
         #region ICilCompilerAware Members
 
         public CompilationFlags CheckQualification(Instruction ins)
@@ -57,6 +62,9 @@ namespace Prexonite.Commands.Core
             return RunStatically(sctx, args);
         }
 
+        private static bool _alreadyCompiledStatically = false;
+
+
         /// <summary>
         /// Executes the command.
         /// </summary>
@@ -73,42 +81,77 @@ namespace Prexonite.Commands.Core
             if(sctx == null)
                 throw new ArgumentNullException("sctx");
             if(args == null)
-                args = new PValue[0];
+                args = new PValue[] {};
 
-            if(args.Length == 0)
+            FunctionLinking linking = FunctionLinking.FullyStatic;
+            switch(args.Length)
             {
-                Compiler.Cil.Compiler.Compile(sctx.ParentApplication, sctx.ParentEngine);
-            }
-            else
-            {
-                //Compile individual functions to CIL
-                foreach(PValue arg in args)
-                {
-                    PType T = arg.Type;
-                    PFunction func;
-                    switch(T.ToBuiltIn())
+                case 0:
+                    if(args.Length == 0)
                     {
-                        case PType.BuiltIn.String:
-                            if(!sctx.ParentApplication.Functions.TryGetValue((string) arg.Value, out func))
-                                continue;
-                            break;
-                        case PType.BuiltIn.Object:
-                            func = arg.Value as PFunction;
-                            if(func == null)
-                                goto default;
-                            else
-                                break;
-                        default:
-                            if(!arg.TryConvertTo(sctx, out func))
-                                continue;
-                            break;
+                        if (AlreadyCompiledStatically)
+                            throw new PrexoniteException(
+                                string.Format("You should only use static compilation once per process. Use {0}(true)" + 
+                                " to force recompilation (warning: memory leak!). Should your program recompile dynamically, " + 
+                                "use {1}(false) for disposable implementations.", Engine.CompileToCilAlias, Engine.CompileToCilAlias));
+                        else
+                            _alreadyCompiledStatically = true;
                     }
+                    Compiler.Cil.Compiler.Compile(sctx.ParentApplication, sctx.ParentEngine,linking);
+                    break;
+                case 1:
+                    PValue arg0 = args[0];
 
-                    Compiler.Cil.Compiler.TryCompile(func, sctx.ParentEngine);
-                }
+                    if (arg0 == null || arg0.IsNull)
+                        goto case 0;
+                    if (arg0.Type == PType.Bool)
+                    {
+                        if (!(bool)arg0.Value)
+                            linking = FunctionLinking.FullyIsolated;
+                        else
+                            linking = FunctionLinking.FullyStatic;
+                        goto case 0;
+                    }
+                    else if (arg0.Type == typeof(FunctionLinking))
+                    {
+                        linking = (FunctionLinking)arg0.Value;
+                        goto case 0;
+                    }
+                    else
+                    {
+                        goto default;
+                    }
+                default:
+                    //Compile individual functions to CIL
+                    foreach(PValue arg in args)
+                    {
+                        PType T = arg.Type;
+                        PFunction func;
+                        switch(T.ToBuiltIn())
+                        {
+                            case PType.BuiltIn.String:
+                                if(!sctx.ParentApplication.Functions.TryGetValue((string) arg.Value, out func))
+                                    continue;
+                                break;
+                            case PType.BuiltIn.Object:
+                                func = arg.Value as PFunction;
+                                if(func == null)
+                                    goto default;
+                                else
+                                    break;
+                            default:
+                                if(!arg.TryConvertTo(sctx, out func))
+                                    continue;
+                                break;
+                        }
+
+                        Compiler.Cil.Compiler.TryCompile(func, sctx.ParentEngine,FunctionLinking.FullyIsolated);
+                    }
+                    break;
             }
 
             return PType.Null;
         }
+
     }
 }

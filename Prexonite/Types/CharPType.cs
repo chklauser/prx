@@ -197,7 +197,7 @@ namespace Prexonite.Types
                 throw new ArgumentNullException("sctx");
             if (subject == null || subject.IsNull)
                 throw new ArgumentNullException("subject");
-            if (target == null)
+            if ((object)target == null)
                 throw new ArgumentNullException("target"); 
 
             result = null;

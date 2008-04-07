@@ -453,7 +453,7 @@ namespace Prexonite
                         Push(CreateNativePValue(ParentEngine));
                         break;
                     case OpCode.ldr_type:
-                        if (t == null)
+                        if ((object)t == null)
                         {
                             t = ConstructPType(id);
                             ins.GenericArgument = t;
@@ -538,7 +538,7 @@ namespace Prexonite
 
                         //CONSTRUCTION
                     case OpCode.newobj:
-                        if (t == null)
+                        if ((object)t == null)
                         {
                             t = ConstructPType(id);
                             ins.GenericArgument = t;
@@ -778,7 +778,7 @@ doDecrement:            pvar.Value = pvar.Value.Decrement(this);
 
                         //TYPE CHECK
                     case OpCode.check_const:
-                        if (t == null)
+                        if ((object)t == null)
                         {
                             t = ConstructPType(id);
                             ins.GenericArgument = t;
@@ -799,7 +799,7 @@ doDecrement:            pvar.Value = pvar.Value.Decrement(this);
                         #region TYPE CAST
 
                     case OpCode.cast_const:
-                        if (t == null)
+                        if ((object)t == null)
                         {
                             t = ConstructPType(id);
                             ins.GenericArgument = t;
@@ -850,7 +850,7 @@ doDecrement:            pvar.Value = pvar.Value.Decrement(this);
                         member = ins.GenericArgument as MemberInfo;
                         if (member != null)
                             goto callByMemberGet;
-                        else if (t != null)
+                        else if ((object)t != null)
                             goto callByTypeGet;
                         else
                         {
@@ -897,7 +897,7 @@ doDecrement:            pvar.Value = pvar.Value.Decrement(this);
                         member = ins.GenericArgument as MemberInfo;
                         if (member != null)
                             goto callByMemberSet;
-                        else if (t != null)
+                        else if ((object)t != null)
                             goto callByTypeSet;
                         else
                         {

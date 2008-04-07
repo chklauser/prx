@@ -357,7 +357,7 @@ namespace Prexonite.Types
         {
             ObjectPType objT = target as ObjectPType;
             result = null;
-            if (objT != null)
+            if ((object)objT != null)
             {
                 Type clrType = objT.ClrType;
                 if (clrType == typeof(IEnumerable<PValue>) ||

@@ -30,7 +30,7 @@ namespace Prexonite.Compiler
 {
     /// <summary>
     /// A method that modifies the supplied 
-    /// <see cref="CompilerTarget"/> when invoked priot to optimization and code generation.
+    /// <see cref="CompilerTarget"/> when invoked prior to optimization and code generation.
     /// </summary>
     /// <param name="target">The <see cref="CompilerTarget"/> of the function to be modified.</param>
     public delegate void AstTransformation(CompilerTarget target);
@@ -41,8 +41,8 @@ namespace Prexonite.Compiler
     [DebuggerNonUserCode]
     public sealed class CompilerHook
     {
-        private AstTransformation _managed;
-        private PValue _interpreted;
+        private readonly AstTransformation _managed;
+        private readonly PValue _interpreted;
 
         /// <summary>
         /// Creates a new compiler hook, that executes a managed method.

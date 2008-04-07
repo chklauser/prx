@@ -49,3 +49,9 @@ coroutine file_words(file) does
     foreach(var line in file_lines(file))
     foreach(var word in line.Split)
         yield word;
+        
+function file_change_extension(path, extension) = 
+    ::Path.ChangeExtension(path~String, extension~String);
+    
+function file_get_extension(path) =
+    ::Path.GetExtension(path~String);    

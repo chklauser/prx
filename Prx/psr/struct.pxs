@@ -1,7 +1,9 @@
 ﻿var struct\ordinalIc = System::StringComparison.OrdinalIgnoreCase;
 
-function struct
+function struct(suppressWarning)
 {
+    println("Use struct as {return struct();} for improved performance. Pass true in order to suppress this warning");
+    
     function getId(g) =
         if(g.Meta.ContainsKey("SId"))
             g.Meta["SId"].Text
@@ -42,3 +44,5 @@ function struct
         
     return s;
 }
+
+build does Prexonite::Compiler::StructHook.InstallHook(getloader);  

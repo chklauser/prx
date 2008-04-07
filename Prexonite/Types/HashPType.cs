@@ -400,7 +400,7 @@ namespace Prexonite.Types
                 throw new ArgumentNullException("sctx");
             if (subject == null)
                 throw new ArgumentNullException("subject");
-            if (target == null)
+            if ((object)target == null)
                 throw new ArgumentNullException("target");
 
             PValueHashtable pvht = subject.Value as PValueHashtable;

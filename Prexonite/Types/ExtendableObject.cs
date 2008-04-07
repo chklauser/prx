@@ -56,7 +56,7 @@ namespace Prexonite.Types
         {
             MemberInfo dummyInfo;
             ObjectPType objT = subject.Type as ObjectPType;
-            if (objT != null)
+            if ((object)objT != null)
                 return objT.TryDynamicCall(sctx, subject, args, call, id, out result, out dummyInfo, true);
             else
                 return subject.TryDynamicCall(sctx, args, call, id, out result);
@@ -277,7 +277,9 @@ namespace Prexonite.Types
             if (_et == null)
                 _et = new ExtensionTable();
 
-            ExtensionMember m = _et[StructurePType.IndirectCallId];
+            ExtensionMember m;
+            if(!_et.TryGetValue(StructurePType.IndirectCallId, out m))
+                throw new PrexoniteException(this + " does not support indirect calls.");
             return
                 m.DynamicCall(
                     sctx, StructurePType._addThis(subject, args), PCall.Get);

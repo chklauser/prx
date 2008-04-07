@@ -23,7 +23,7 @@ namespace Prexonite.Commands.List
 
             int n = xss.Count;
             if (n < 2)
-                throw new PrexoniteException("Union requires at least two sources.");
+                throw new PrexoniteException("Intersect requires at least two sources.");
             
             Dictionary<PValue, int> t = new Dictionary<PValue, int>();
             //All elements of the first source are considered candidates
@@ -59,7 +59,7 @@ namespace Prexonite.Commands.List
         /// <remarks>Pure commands can be applied at compile time.</remarks>
         public override bool IsPure
         {
-            get { throw new NotImplementedException(); }
+            get { return false; }
         }
     }
 }

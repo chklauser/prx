@@ -159,8 +159,6 @@ namespace Prexonite.Compiler.Cil
             [DebuggerStepThrough]
             get
             {
-                if (!MakeAvailableForLinking)
-                    throw new NotSupportedException("The compiler pass is not configured to make implementations available for static linking.");
                 return _implementationTable;
             }
         }

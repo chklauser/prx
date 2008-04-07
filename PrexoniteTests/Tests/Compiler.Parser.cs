@@ -3228,5 +3228,46 @@ ldnull
 ret.val
 ");
         }
+
+        [Test]
+        public void Bug__0()
+        {
+            _compile(
+                @"
+declare function f;
+
+function main does foreach(var arg in var args)
+{
+    var t = f(arg);
+    t.() = t.().M;
+}
+");
+
+            _expect(String.Format(@"
+var args,arg,t,{0}
+                        ldloc   args
+                        get.0   GetEnumerator
+                        cast.const ""Object(\""System.Collections.IEnumerator\"")""
+                        stloc   {0}
+                        try
+                        jump    continueForeach
+label   beginForeach    ldloc   {0}
+                        get.0   Current
+                        stloc   arg
+                        ldloc   arg
+                        func.1  f
+                        stloc   t
+                        indloc.0    t
+                        get.0   M
+                        @indloc.1    t
+label continueForeach   ldloc   {0}
+                        get.0   MoveNext
+                        jump.t  beginForeach
+                        ldloc   {0}
+                        @cmd.1  dispose
+                        leave   end
+label   end
+",target.Functions["main"].Code[3].Id));
+        }
     }
 }
