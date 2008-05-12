@@ -33,7 +33,7 @@ namespace Prexonite.Types
     [NoDebug]
     public class PTypeLiteralAttribute : Attribute
     {
-        private string _literal;
+        private readonly string _literal;
 
         /// <summary>
         /// The literal this attribute represents.

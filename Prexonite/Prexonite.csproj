@@ -86,6 +86,8 @@
     <Compile Include="Commands\List\Limit.cs" />
     <Compile Include="Commands\List\List.cs" />
     <Compile Include="Commands\List\Map.cs" />
+    <Compile Include="Commands\List\Range.cs" />
+    <Compile Include="Commands\List\Reverse.cs" />
     <Compile Include="Commands\List\Skip.cs" />
     <Compile Include="Commands\List\Sort.cs" />
     <Compile Include="Commands\List\TakeWhile.cs" />

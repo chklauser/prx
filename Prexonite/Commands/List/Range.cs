@@ -23,63 +23,77 @@
 
 using System;
 using System.Collections.Generic;
+using System.Text;
+
 using Prexonite.Compiler.Cil;
+using Prexonite.Types;
 
 namespace Prexonite.Commands.List
 {
-    public class Except : PCommand, ICilCompilerAware
+    /// <summary>
+    /// Restricts sequences  to a given range. <br />
+    /// <code>range(index, count, xs) = xs >> skip(index) >> limit(count);</code>
+    /// </summary>
+    public class Range : CoroutineCommand, ICilCompilerAware
     {
-        #region Singleton pattern
+        private static readonly Range _instance = new Range();
 
-        private static readonly Except _instance = new Except();
-
-        public static Except Instance
-        {
-            get { return _instance; }
-        }
-
-        private Except()
+        private Range()
         {
         }
 
-        #endregion
-
-        public override PValue Run(StackContext sctx, PValue[] args)
+        protected override IEnumerable<PValue> CoroutineRun(StackContext sctx, PValue[] args)
         {
-            return RunStatically(sctx, args);
+            return CoroutineRunStatically(sctx, args);
+        }
+
+        //function range(index, count, xs) = xs >> skip(index) >> limit(count);
+        private static IEnumerable<PValue> CoroutineRunStatically(StackContext sctx, PValue[] args)
+        {
+            if (sctx == null)
+                throw new ArgumentNullException("sctx");
+            if (args == null)
+                throw new ArgumentNullException("args");
+            int skipCount, returnCount;
+            if(args.Length < 3)
+                throw new  PrexoniteException("The command range requires at least 3 arguments: [index], [count] and the [list].");
+
+            skipCount = (int) args[0].ConvertTo(sctx, PType.Int, true).Value;
+            returnCount = (int) args[1].ConvertTo(sctx, PType.Int, true).Value;
+
+            int index = 0;
+
+            for (int i = 2; i < args.Length; i++)
+            {
+                PValue arg = args[i];
+
+                IEnumerable<PValue> xs = Map._ToEnumerable(sctx, arg);
+
+                foreach (PValue x in xs)
+                {
+                    if (index >= skipCount)
+                    {
+                        if (index == skipCount + returnCount)
+                        {
+                            goto breakAll; //stop processing
+                        }
+                        else
+                        {
+                            yield return x;
+                        }
+                    }
+                    index += 1;
+                }
+
+            breakAll:
+                ;
+            }
         }
 
         public static PValue RunStatically(StackContext sctx, PValue[] args)
         {
-            if (args == null)
-                throw new ArgumentNullException("args");
-            if (sctx == null)
-                throw new ArgumentNullException("sctx");
-
-            List<IEnumerable<PValue>> xss = new List<IEnumerable<PValue>>();
-            foreach (PValue arg in args)
-            {
-                IEnumerable<PValue> xs = Map._ToEnumerable(sctx, arg);
-                if (xs != null)
-                    xss.Add(xs);
-            }
-
-            int n = xss.Count;
-            if (n < 2)
-                throw new PrexoniteException("Except requires at least two sources.");
-
-            Dictionary<PValue, bool> t = new Dictionary<PValue, bool>();
-            //All elements of the first source are considered candidates
-            foreach (PValue x in xss[0])
-                if (!t.ContainsKey(x))
-                    t.Add(x, true);
-
-            for (int i = 1; i < n; i++)
-                foreach (PValue x in xss[i])
-                    if (t.ContainsKey(x))
-                        t.Remove(x);
-
-            return sctx.CreateNativePValue(t.Keys);
+            CoroutineContext corctx = new CoroutineContext(sctx, CoroutineRunStatically(sctx, args));
+            return sctx.CreateNativePValue(new Coroutine(corctx));
         }
 
         /// <summary>
@@ -89,6 +103,14 @@ namespace Prexonite.Commands.List
         public override bool IsPure
         {
             get { return false; }
+        }
+
+        public static Range Instance
+        {
+            get
+            {
+                return _instance;
+            }
         }
 
         #region ICilCompilerAware Members

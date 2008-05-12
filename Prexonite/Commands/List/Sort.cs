@@ -34,6 +34,24 @@ namespace Prexonite.Commands.List
     /// </summary>
     public class Sort : PCommand
     {
+        #region Singleton pattern
+
+        private static readonly Sort _instance = new Sort();
+
+        public static Sort Instance
+        {
+            get
+            {
+                return _instance;
+            }
+        }
+
+        private Sort()
+        {
+        }
+
+        #endregion
+
         /// <summary>
         /// Sorts an IEnumerable.
         /// <code>function sort(ref f1(a,b), ref f2(a,b), ... , xs)

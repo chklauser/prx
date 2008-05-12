@@ -272,11 +272,6 @@ namespace Prx
 #endif
         }
 
-        static void Console_CancelKeyPress(object sender, ConsoleCancelEventArgs e)
-        {
-            Environment.Exit(1);
-        }
-
         private static void _reportErrors(Loader ldr)
         {
             if (ldr.ErrorCount > 0)
@@ -285,9 +280,8 @@ namespace Prx
                 Console.ForegroundColor = ConsoleColor.Red;
                 Console.Error.WriteLine("Errors during compilation detected. Aborting.");
                 foreach (string err in ldr.Errors)
-                {
                     Console.WriteLine(err);
-                }
+
                 Console.ForegroundColor = originalColor;
                 Environment.Exit(1);
                 return;

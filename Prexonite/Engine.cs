@@ -678,7 +678,8 @@ namespace Prexonite
 
             Commands.AddEngineCommand(UnbindAlias, Unbind.Instance);
 
-            Commands.AddEngineCommand(SortAlias, new Sort());
+            Commands.AddEngineCommand(SortAlias, Sort.Instance);
+            Commands.AddEngineCommand(SortAlternativeAlias, Sort.Instance);
 
             Commands.AddEngineCommand(LoadAssemblyAlias, LoadAssembly.Instance);
 
@@ -718,6 +719,7 @@ namespace Prexonite
             Commands.AddEngineCommand(RoundAlias, Round.Instance);
 
             Commands.AddEngineCommand(SinAlias, Sin.Instance);
+            Commands.AddEngineCommand(CosAlias, Cos.Instance);
 
             Commands.AddEngineCommand(SqrtAlias, Sqrt.Instance);
 
@@ -754,6 +756,10 @@ namespace Prexonite
             Commands.AddEngineCommand(TakeWhileAlias, TakeWhile.Instance);
 
             Commands.AddEngineCommand(ExceptAlias, Except.Instance);
+
+            Commands.AddEngineCommand(RangeAlias, Range.Instance);
+
+            Commands.AddEngineCommand(ReverseAlias, Reverse.Instance);
         }
 
         /// <summary>
@@ -830,6 +836,7 @@ namespace Prexonite
         /// Alias used for the "sort" command.
         /// </summary>
         public const string SortAlias = "sort";
+        public const string SortAlternativeAlias = "orderby";
 
         /// <summary>
         /// Alias used for the "loadAssembly" command.
@@ -1027,6 +1034,10 @@ namespace Prexonite
         public const string TakeWhileAlias = "takewhile";
 
         public const string ExceptAlias = "except";
+
+        public const string RangeAlias = "range";
+
+        public const string ReverseAlias = "reverse";
 
         #endregion
     }

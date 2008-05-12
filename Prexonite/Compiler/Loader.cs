@@ -579,6 +579,8 @@ namespace Prexonite.Compiler
             if(pathPostfix == null)
                 throw new ArgumentNullException("pathPostfix");
             string path = pathPostfix;
+
+            //Try to find in process environment
             if (File.Exists(path))
                 return new FileInfo(path);
 

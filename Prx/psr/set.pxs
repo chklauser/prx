@@ -16,7 +16,7 @@ function create_set()[is volatile;]
             
     function contains(this) = 
         (var args) >> skip(1) >>
-            forall(var arg => store.Contains(arg));
+            forall(arg => store.Contains(arg));
         
     function count =
         store.Count;
@@ -31,7 +31,7 @@ function create_set()[is volatile;]
 
 function create_immutable_set(elements)[is volatile;]
 {
-    elements = if(elements is Null) [] else all(elements);
+    elements = if(elements is Null) [] else all(elements); //all makes a copy
     
     function add(this) = 
         ((var args) >> skip(1)) + elements >> distinct >> create_immutable_set;
@@ -41,7 +41,7 @@ function create_immutable_set(elements)[is volatile;]
         
     function contains(this) =
         (var args) >> skip(1) >>
-            forall(var arg => elements.Contains(arg));
+            forall(arg => elements.Contains(arg));
             
     function count = 
         elements.Count; 

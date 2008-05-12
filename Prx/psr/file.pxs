@@ -9,7 +9,7 @@ function file_open(path) = ::File.OpenText(path);
 declare file_open as file_open_read,
         file_open as file_open_text;
 
-function file_open_write(path) = new ::StreamWriter << ::File.OpenWrite(path);
+function file_open_write(path) = new ::StreamWriter(::File.OpenWrite(path), System::Text::Encoding.UTF8);
 
 function file_close = call(->dispose,var args);
 
@@ -54,4 +54,28 @@ function file_change_extension(path, extension) =
     ::Path.ChangeExtension(path~String, extension~String);
     
 function file_get_extension(path) =
-    ::Path.GetExtension(path~String);    
+    ::Path.GetExtension(path~String);
+
+    
+function directory_exists(path) =
+    ::Directory.Exists(path);
+    
+function directory_list(path,pattern)
+{
+    pattern ??= "*.*";
+    pattern ~= String;
+    
+    return ::Directory.GetFiles(path, pattern, ::SearchOption.AllDirectories) >> all;
+}  
+
+function file_move(file, newPath, replace)
+{
+    if( (replace ?? false) and ::File.Exists(newPath))
+        ::File.Delete(newPath);
+    ::File.Move(file, newPath);
+} 
+
+function file_delete(file)
+{
+    ::File.Delete(file);
+}

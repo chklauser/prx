@@ -1,3 +1,26 @@
+/*
+ * Prexonite, a scripting engine (Scripting Language -> Bytecode -> Virtual Machine)
+ *  Copyright (C) 2007  Christian "SealedSun" Klauser
+ *  E-mail  sealedsun a.t gmail d.ot com
+ *  Web     http://www.sealedsun.ch/
+ *
+ *  This program is free software; you can redistribute it and/or modify
+ *  it under the terms of the GNU General Public License as published by
+ *  the Free Software Foundation; either version 2 of the License, or
+ *  (at your option) any later version.
+ *
+ *  Please contact me (sealedsun a.t gmail do.t com) if you need a different license.
+ * 
+ *  This program is distributed in the hope that it will be useful,
+ *  but WITHOUT ANY WARRANTY; without even the implied warranty of
+ *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ *  GNU General Public License for more details.
+ *
+ *  You should have received a copy of the GNU General Public License along
+ *  with this program; if not, write to the Free Software Foundation, Inc.,
+ *  51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
+ */
+
 using System;
 using System.Collections.ObjectModel;
 using System.Diagnostics;
@@ -9,8 +32,8 @@ namespace Prexonite.Types
     /// Implements the interfaces <see cref="IObject"/> and <see cref="IIndirectCall"/> in 
     /// such a way that the object acts like a Prexonite structure (e.g., members can be added at runtime).
     /// </summary>
-    [DebuggerNonUserCode]
-    public abstract class ExtendableObject : IObject, IIndirectCall
+    //[DebuggerNonUserCode]
+    public class ExtendableObject : IObject, IIndirectCall
     {
         private ExtensionTable _et;
 
@@ -35,7 +58,7 @@ namespace Prexonite.Types
         #region IObject Members
 
         /// <summary>
-        /// Tries to call an instance member of the object (CLR). Overwrite this method to intercept object member calls.
+        /// Tries to call an instance member of the object (CLR).
         /// </summary>
         /// <param name="sctx">The context in which to perform the call.</param>
         /// <param name="subject">The subject to substitute for this</param>
@@ -145,7 +168,7 @@ namespace Prexonite.Types
                 result = _dynamicCall(
                     sctx, new PValue[] { id, args[0] }, PCall.Set, StructurePType.SetId);
             else
-                result = null; //Make sure, result is really null.
+                result = null; //Make sure result is really null.
 
             return result != null;
         }
@@ -244,7 +267,7 @@ namespace Prexonite.Types
             if (!_tryDynamicExtensionCall(sctx, subject, args, call, id, out result))
                 throw new InvalidCallException(
                     "Cannot call " + id + " on extension of type " + GetType().Name);
-            return result;
+            return result ?? PType.Null;
         }
 
         #region IIndirectCall Members
@@ -261,13 +284,13 @@ namespace Prexonite.Types
         }
 
         /// <summary>
-        /// Indirectly calls the extended part of the object.
+        /// Indirectly calls the extended part of this object using a different subject (used together with object facades).
         /// </summary>
         /// <param name="sctx">The stack context in which to perform the call.</param>
         /// <param name="subject">The subject to substitute for this.</param>
         /// <param name="args">The arguments to pass to the handling function.</param>
         /// <returns>The value returned by the extended part of the object.</returns>
-        public virtual PValue IndirectCall(StackContext sctx, PValue subject, PValue[] args)
+        public PValue IndirectCall(StackContext sctx, PValue subject, PValue[] args)
         {
             if (sctx == null)
                 throw new ArgumentNullException("sctx");

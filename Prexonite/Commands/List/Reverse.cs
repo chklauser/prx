@@ -23,63 +23,57 @@
 
 using System;
 using System.Collections.Generic;
+using System.Text;
+
 using Prexonite.Compiler.Cil;
 
 namespace Prexonite.Commands.List
 {
-    public class Except : PCommand, ICilCompilerAware
+    public class Reverse : CoroutineCommand, ICilCompilerAware
     {
         #region Singleton pattern
 
-        private static readonly Except _instance = new Except();
+        private static readonly Reverse _instance = new Reverse();
 
-        public static Except Instance
+        public static Reverse Instance
         {
-            get { return _instance; }
+            get
+            {
+                return _instance;
+            }
         }
 
-        private Except()
+        private Reverse()
         {
         }
 
         #endregion
 
-        public override PValue Run(StackContext sctx, PValue[] args)
+        protected override IEnumerable<PValue> CoroutineRun(StackContext sctx, PValue[] args)
         {
-            return RunStatically(sctx, args);
+            return CoroutineRunStatically(sctx, args);
         }
 
-        public static PValue RunStatically(StackContext sctx, PValue[] args)
+        private static IEnumerable<PValue> CoroutineRunStatically(StackContext sctx, IEnumerable<PValue> args)
         {
             if (args == null)
                 throw new ArgumentNullException("args");
             if (sctx == null)
                 throw new ArgumentNullException("sctx");
 
-            List<IEnumerable<PValue>> xss = new List<IEnumerable<PValue>>();
+            List<PValue> lst = new List<PValue>();
+
             foreach (PValue arg in args)
-            {
-                IEnumerable<PValue> xs = Map._ToEnumerable(sctx, arg);
-                if (xs != null)
-                    xss.Add(xs);
-            }
+                lst.AddRange(Map._ToEnumerable(sctx, arg));
 
-            int n = xss.Count;
-            if (n < 2)
-                throw new PrexoniteException("Except requires at least two sources.");
+            for (int i = lst.Count - 1; i <= 0; i--)
+                yield return lst[i];
+        }
 
-            Dictionary<PValue, bool> t = new Dictionary<PValue, bool>();
-            //All elements of the first source are considered candidates
-            foreach (PValue x in xss[0])
-                if (!t.ContainsKey(x))
-                    t.Add(x, true);
-
-            for (int i = 1; i < n; i++)
-                foreach (PValue x in xss[i])
-                    if (t.ContainsKey(x))
-                        t.Remove(x);
-
-            return sctx.CreateNativePValue(t.Keys);
+        public static PValue RunStatically(StackContext sctx, PValue[] args)
+        {
+            CoroutineContext corctx = new CoroutineContext(sctx, CoroutineRunStatically(sctx, args));
+            return sctx.CreateNativePValue(new Coroutine(corctx));
         }
 
         /// <summary>

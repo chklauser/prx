@@ -2,7 +2,8 @@
 
 function struct(suppressWarning)
 {
-    println("Use struct as {return struct();} for improved performance. Pass true in order to suppress this warning");
+    unless(suppressWarning)
+        println("Use struct as {return struct();} for improved performance. Pass true in order to suppress this warning");
     
     function getId(g) =
         if(g.Meta.ContainsKey("SId"))

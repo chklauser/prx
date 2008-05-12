@@ -18,11 +18,15 @@ function cmp(a,b) =
     else 
         0;
         
-function cmp_values(a,b) = cmp(a.Value,b.Value);
+function cmp_values(a,b,ccmp) = (ccmp ?? ->cmp).(a.Value,b.Value);
+
+function cmp_keys(a,b,ccmp) = (ccmp ?? ->cmp).(a.Key,b.Key);
+
+function cmpr(a,b,ccmp) = (ccmp ?? ->cmp).(b,a);
             
     
 //Creates a wrapper around an object that intercepts calls to dispose.
-function create_terminator (obj, termination) [is volatile;]
+function create_terminator (obj, termination)
 {
     function Call(this,id)
     {

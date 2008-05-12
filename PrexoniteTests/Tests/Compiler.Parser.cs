@@ -132,65 +132,65 @@ function instruction {}
             //label begin
             int i = 0;
             Assert.IsInstanceOfType(typeof(AstExplicitLabel), block[i]);
-            Assert.AreEqual("begin", (block[i] as AstExplicitLabel).Label);
+            Assert.AreEqual("begin", ((AstExplicitLabel) block[i]).Label);
 
             //instruction
             i++;
             Assert.IsInstanceOfType(typeof(AstGetSetSymbol), block[i]);
             Assert.AreEqual(
-                SymbolInterpretations.Function, (block[i] as AstGetSetSymbol).Interpretation);
-            Assert.AreEqual("instruction", (block[i] as AstGetSetSymbol).Id);
-            Assert.AreEqual(PCall.Get, (block[i] as AstGetSetSymbol).Call);
-            Assert.AreEqual(0, (block[i] as AstGetSetSymbol).Arguments.Count);
+                SymbolInterpretations.Function, ((AstGetSetSymbol) block[i]).Interpretation);
+            Assert.AreEqual("instruction", ((AstGetSetSymbol) block[i]).Id);
+            Assert.AreEqual(PCall.Get, ((AstGetSetSymbol) block[i]).Call);
+            Assert.AreEqual(0, ((AstGetSetSymbol) block[i]).Arguments.Count);
 
             //goto fith
             i++;
             Assert.IsInstanceOfType(typeof(AstExplicitGoTo), block[i]);
-            Assert.AreEqual("fifth", (block[i] as AstExplicitGoTo).Destination);
+            Assert.AreEqual("fifth", ((AstExplicitGoTo) block[i]).Destination);
 
             //label third
             i++;
             Assert.IsInstanceOfType(typeof(AstExplicitLabel), block[i]);
-            Assert.AreEqual("third", (block[i] as AstExplicitLabel).Label);
+            Assert.AreEqual("third", ((AstExplicitLabel) block[i]).Label);
 
             //instruction
             i++;
             Assert.IsInstanceOfType(typeof(AstGetSetSymbol), block[i]);
             Assert.AreEqual(
-                SymbolInterpretations.Function, (block[i] as AstGetSetSymbol).Interpretation);
-            Assert.AreEqual("instruction", (block[i] as AstGetSetSymbol).Id);
-            Assert.AreEqual(PCall.Get, (block[i] as AstGetSetSymbol).Call);
-            Assert.AreEqual(0, (block[i] as AstGetSetSymbol).Arguments.Count);
+                SymbolInterpretations.Function, ((AstGetSetSymbol) block[i]).Interpretation);
+            Assert.AreEqual("instruction", ((AstGetSetSymbol) block[i]).Id);
+            Assert.AreEqual(PCall.Get, ((AstGetSetSymbol) block[i]).Call);
+            Assert.AreEqual(0, ((AstGetSetSymbol) block[i]).Arguments.Count);
 
             //label fourth
             i++;
             Assert.IsInstanceOfType(typeof(AstExplicitLabel), block[i]);
-            Assert.AreEqual("fourth", (block[i] as AstExplicitLabel).Label);
+            Assert.AreEqual("fourth", ((AstExplicitLabel) block[i]).Label);
 
             //goto sixth
             i++;
             Assert.IsInstanceOfType(typeof(AstExplicitGoTo), block[i]);
-            Assert.AreEqual("sixth", (block[i] as AstExplicitGoTo).Destination);
+            Assert.AreEqual("sixth", ((AstExplicitGoTo) block[i]).Destination);
 
             //label fifth
             i++;
             Assert.IsInstanceOfType(typeof(AstExplicitLabel), block[i]);
-            Assert.AreEqual("fifth", (block[i] as AstExplicitLabel).Label);
+            Assert.AreEqual("fifth", ((AstExplicitLabel) block[i]).Label);
 
             //goto fourth
             i++;
             Assert.IsInstanceOfType(typeof(AstExplicitGoTo), block[i]);
-            Assert.AreEqual("fourth", (block[i] as AstExplicitGoTo).Destination);
+            Assert.AreEqual("fourth", ((AstExplicitGoTo) block[i]).Destination);
 
             //label sixth
             i++;
             Assert.IsInstanceOfType(typeof(AstExplicitLabel), block[i]);
-            Assert.AreEqual("sixth", (block[i] as AstExplicitLabel).Label);
+            Assert.AreEqual("sixth", ((AstExplicitLabel) block[i]).Label);
 
             //goto begin
             i++;
             Assert.IsInstanceOfType(typeof(AstExplicitGoTo), block[i]);
-            Assert.AreEqual("begin", (block[i] as AstExplicitGoTo).Destination);
+            Assert.AreEqual("begin", ((AstExplicitGoTo) block[i]).Destination);
 
             Console.WriteLine(target.StoreInString());
         }
@@ -1187,7 +1187,7 @@ function main
             List<Instruction> code = target.Functions["main"].Code;
             Assert.IsTrue(code.Count > 26, "Resulting must be longer than 18 instructions");
             string enum1 = code[3].Id ?? "No_ID_at_3";
-            string enum2 = code[23].Id ?? "No_ID_at_23";
+            string enum2 = code[24].Id ?? "No_ID_at_24";
             _expect(
                 string.Format(
                     @"
