@@ -3,7 +3,7 @@
 function struct(suppressWarning)
 {
     unless(suppressWarning)
-        println("Use struct as {return struct();} for improved performance. Pass true in order to suppress this warning");
+        println("Latebound struct. Use struct as {return struct();} for improved performance. Pass true in order to suppress this warning");
     
     function getId(g) =
         if(g.Meta.ContainsKey("SId"))

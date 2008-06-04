@@ -1187,7 +1187,8 @@ function main
             List<Instruction> code = target.Functions["main"].Code;
             Assert.IsTrue(code.Count > 26, "Resulting must be longer than 18 instructions");
             string enum1 = code[3].Id ?? "No_ID_at_3";
-            string enum2 = code[24].Id ?? "No_ID_at_24";
+            string enum2 = code[23].Id ?? "No_ID_at_23";
+
             _expect(
                 string.Format(
                     @"
@@ -1216,7 +1217,7 @@ label enum1\continue    ldloc   {0}
 label enum1\break       ldloc   {0}
                        @cmd.1   dispose
                         leave   endTry
-label endTry            nop+COMPLICATED
+label endTry            
                                     
                         newobj.0    ""Object(\""StringBuilder\"")""
                         stloc   buffer

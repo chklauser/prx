@@ -9,14 +9,17 @@ using System.Collections;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.Text;
+
 using NUnit.Framework;
+
 using Prexonite;
 using Prexonite.Commands;
 using Prexonite.Compiler;
-using Prexonite.Compiler.Cil;
 using Prexonite.Types;
 
-namespace Prx.Tests
+using Prx.Tests;
+
+namespace PrexoniteTests
 {
     [TestFixture]
     public class VMTests
@@ -28,7 +31,7 @@ namespace Prx.Tests
         private Application target;
         private LoaderOptions options;
 
-        [SetUp()]
+        [SetUp]
         public void SetupCompilerEngine()
         {
             engine = new Engine();
@@ -37,7 +40,7 @@ namespace Prx.Tests
             options = new LoaderOptions(engine, target);
         }
 
-        [TearDown()]
+        [TearDown]
         public void TeardownCompilerEngine()
         {
             engine = null;
@@ -370,7 +373,7 @@ function fib(n) does asm
             return
                 n <= 2
                     ?
-                1
+                        1
                     : Fibonacci(n - 1) + Fibonacci(n - 2);
         }
 
@@ -2998,6 +3001,24 @@ function fac n r =
             _expectNamed("fac",fac(6),6,1);
         }
 
+        [Test]
+        public void IsNotSyntax()
+        {
+            _compile(@"
+function main(a,b)
+{
+    if(a is not String)
+        return a;
+    else
+        return b;
+}
+");
+
+            _expect(125,125, "s-b-s");
+            _expect(125.0, 125.0, "s-b-s");
+            _expect(true, true, "s-b-s");
+        }
+
         #region Helper
 
         private static string _generateRandomString(int length)
@@ -3063,13 +3084,13 @@ function fac n r =
             return ldr;
         }
 
-        private Loader _compile_store(Loader loader ,string input)
+        public Loader _compile_store(Loader loader ,string input)
         {
             _compile(loader, input);
             return _store(loader);
         }
 
-        private Loader _compile_store(string input)
+        public Loader _compile_store(string input)
         {
             return _store(_compile(input));
         }
@@ -3107,12 +3128,12 @@ function fac n r =
                 rv);
         }
 
-        private void _expectNull(params PValue[] args)
+        public void _expectNull(params PValue[] args)
         {
             _expectReturnValue<object>(target.Meta[Application.EntryKey], null, args);
         }
 
-        private void _expectNull(string functionId, params PValue[] args)
+        public void _expectNull(string functionId, params PValue[] args)
         {
             _expectReturnValue<object>(functionId, null, args);
         }
@@ -3131,7 +3152,7 @@ function fac n r =
             return engine.Process();
         }
 
-        private PValue _getReturnValue(params PValue[] args)
+        public PValue _getReturnValue(params PValue[] args)
         {
             return _getReturnValueNamed_(target.Meta[Application.EntryKey], args);
         }

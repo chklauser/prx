@@ -649,11 +649,15 @@ AssignExpr<out IAstExpression expr>     (.  AstGetSet assignment; BinaryOperator
 .
 
 PostfixUnaryExpr<out IAstExpression expr>
-                                        (.  IAstType type = null; AstGetSet extension; .)
+                                        (.  IAstType type = null; AstGetSet extension; bool isInverted = false; .)
 =
     PrefixUnaryExpr<out expr>   
     {   tilde TypeExpr<out type>        (.  expr = new AstTypecast(this, expr, type); .)
-    |   is TypeExpr<out type>           (.  expr = new AstTypecheck(this, expr, type); .)
+    |   is	[ not						(.	isInverted = true; .) ]
+    		 TypeExpr<out type>         (.  expr = new AstTypecheck(this, expr, type);
+    										if(isInverted)
+    											expr = new AstUnaryOperator(this, UnaryOperator.LogicalNot, expr);
+    									.)
     |   inc                             (.  expr = new AstUnaryOperator(this, UnaryOperator.PostIncrement, expr); .)
     |   dec                             (.  expr = new AstUnaryOperator(this, UnaryOperator.PostDecrement, expr); .)
     |   GetSetExtension<expr, out extension>

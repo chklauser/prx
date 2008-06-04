@@ -1,5 +1,4 @@
-﻿
-build does require
+﻿build does require
 (
     @"file.pxs"
 );

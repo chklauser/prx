@@ -54,3 +54,6 @@ function create_mutable_queue(lst)[is volatile;]
     
     return struct;
 }
+
+declare 
+    create_queue as create_immutable_queue;

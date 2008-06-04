@@ -38,6 +38,9 @@ namespace Prexonite.Commands.List
 
         private static readonly Sort _instance = new Sort();
 
+        /// <summary>
+        /// As <see cref="Sort"/> cannot be parametrized, Instance returns the one and only instance of the <see cref="Sort"/> command.
+        /// </summary>
         public static Sort Instance
         {
             get
