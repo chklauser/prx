@@ -27,6 +27,9 @@ using Prexonite.Compiler.Cil;
 
 namespace Prexonite.Types
 {
+    /// <summary>
+    /// Bult-in type for programmatically constructed user defined structures.
+    /// </summary>
     [PTypeLiteral(Literal)]
     public class StructurePType : PType, ICilCompilerAware
     {

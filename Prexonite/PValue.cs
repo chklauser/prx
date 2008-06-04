@@ -1293,7 +1293,7 @@ namespace Prexonite
 
         public override int GetHashCode()
         {
-            return PType._CombineHashes(_type.GetHashCode(), _value.GetHashCode());
+            return _type.GetHashCode() ^ _value.GetHashCode();
         }
 
         public override bool Equals(object obj)

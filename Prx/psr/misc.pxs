@@ -48,3 +48,24 @@ function create_terminator (obj, termination)
     
     return struct;   
 }
+
+function create_lazy(factory)
+{
+    var _computed = false;
+    var _value;
+    function computed = computed;
+    function value 
+    {
+        if(_computed)
+        {
+            return _value;
+        }
+        else
+        {
+            _computed = true;
+            return _value = factory.();
+        }
+    }
+            
+    return struct;            
+}

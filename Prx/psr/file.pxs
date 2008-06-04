@@ -60,13 +60,35 @@ function file_get_extension(path) =
 function directory_exists(path) =
     ::Directory.Exists(path);
     
-function directory_list(path,pattern)
+function directory_list_files(path,pattern)
+{
+    pattern ??= "*.*";
+    pattern ~= String;
+    
+    return ::Directory.GetFiles(path, pattern, ::SearchOption.TopDirectoryOnly) >> all;
+}  
+
+function directory_list_files_recursive(path,pattern)
 {
     pattern ??= "*.*";
     pattern ~= String;
     
     return ::Directory.GetFiles(path, pattern, ::SearchOption.AllDirectories) >> all;
 }  
+
+function directory_list_dirs(path, pattern)
+{
+    pattern ??= "*";
+    pattern ~= String;
+    
+    if(pattern == "*")
+        return ::Directory.GetDirectories(path);
+    else
+        return ::Directory.GetDirectories(path, pattern);    
+}
+
+declare
+    directory_list_dirs as directory_list_directories;
 
 function file_move(file, newPath, replace)
 {

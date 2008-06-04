@@ -186,7 +186,7 @@ namespace Prexonite.Types
 
         public override int GetHashCode()
         {
-            return PType._CombineHashes(_key.GetHashCode(), _value.GetHashCode());
+            return _key.GetHashCode() ^ _value.GetHashCode();
         }
 
         public override string ToString()

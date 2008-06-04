@@ -25,36 +25,95 @@ using System;
 using System.Collections.Generic;
 using System.Reflection;
 using System.Text;
+
+using Prexonite;
 using Prexonite.Compiler.Cil;
 using NoDebug = System.Diagnostics.DebuggerNonUserCodeAttribute;
 
 namespace Prexonite.Types
 {
+
+    /// <summary>
+    /// Representation of a Type in the Prexonite virtual machine.
+    /// </summary>
     public abstract class PType
     {
         #region Built-In Types
 
+        /// <summary>
+        /// Lightweight identification of built-in types.
+        /// </summary>
         public enum BuiltIn
         {
+            /// <summary>
+            /// Not a built-in type
+            /// </summary>
             None,
+
+            /// <summary>
+            /// <see cref="PType.Real"/>
+            /// </summary>
             Real,
+
+            /// <summary>
+            /// <see cref="PType.Int"/>
+            /// </summary>
             Int,
+
+            /// <summary>
+            /// <see cref="PType.String"/>
+            /// </summary>
             String,
+
+            /// <summary>
+            /// <see cref="PType.Null"/>
+            /// </summary>
             Null,
+
+            /// <summary>
+            /// <see cref="PType.Bool"/>
+            /// </summary>
             Bool,
+
+            /// <summary>
+            /// <see cref="PType.Object"/>
+            /// </summary>
             Object,
+
+            /// <summary>
+            /// <see cref="PType.List"/>
+            /// </summary>
             List,
+
+            /// <summary>
+            /// <see cref="PType.Hash"/>
+            /// </summary>
             Hash,
+
+            /// <summary>
+            /// <see cref="PType.Char"/>
+            /// </summary>
             Char,
+
+            /// <summary>
+            /// <see cref="PType.Structure"/>
+            /// </summary>
             Structure
         }
 
+        /// <summary>
+        /// Indicates whether the current type belongs to the set of <see cref="BuiltIn"/> types.
+        /// </summary>
         public bool IsBuiltIn
         {
             [NoDebug]
             get { return ToBuiltIn() != BuiltIn.None; }
         }
 
+        /// <summary>
+        /// Reduces the current type to a <see cref="BuiltIn"/> enumeration value.
+        /// </summary>
+        /// <returns>A <see cref="BuiltIn"/> enumeration value.</returns>
         public BuiltIn ToBuiltIn()
         {
             Type thisType = GetType();
@@ -82,6 +141,11 @@ namespace Prexonite.Types
             return BuiltIn.Null;
         }
 
+        /// <summary>
+        /// Returns a reference to a built-in runtime type.
+        /// </summary>
+        /// <param name="biType">The built-in type.</param>
+        /// <returns>A reference to a built-in runtime type.</returns>
         public static PType GetBuiltIn(BuiltIn biType)
         {
             switch (biType)
@@ -110,6 +174,7 @@ namespace Prexonite.Types
                     return null;
             }
         }
+
 
         public static RealPType Real
         {
@@ -173,7 +238,9 @@ namespace Prexonite.Types
             get { return pobjfacade; }
         }
 
-        //[NoDebug]
+        /// <summary>
+        /// A proxy that manages instances of the <see cref="PType.Object"/> type.
+        /// </summary>
         public class PrexoniteObjectTypeProxy
         {
             private readonly ObjectPType CharObj = new ObjectPType(typeof(Char));
@@ -288,6 +355,12 @@ namespace Prexonite.Types
 
         #endregion
 
+        /// <summary>
+        /// Wraps the object in a PValue of the current type.
+        /// </summary>
+        /// <param name="value">The CLR object to wrap.</param>
+        /// <returns>A PValue object that wraps the supplied object.</returns>
+        /// <exception cref="ArgumentException">Value incompatible with type.</exception>
         [NoDebug]
         public virtual PValue CreatePValue(object value)
         {
@@ -734,6 +807,17 @@ namespace Prexonite.Types
 
         #region xConvertTo methods
 
+        /// <summary>
+        /// Converts a value of this type to a value of a supplied other type.
+        /// </summary>
+        /// <param name="sctx">The stack context in which to perform the conversion.</param>
+        /// <param name="subject">The value to convert.</param>
+        /// <param name="target">The type to convert the value to.</param>
+        /// <param name="useExplicit">True if explicit conversions are to be used. False otherwise.</param>
+        /// <returns>The converted value.</returns>
+        /// <exception cref="PrexoniteException">Conversion failed.</exception>
+        /// <remarks>For implementors: Use the <see cref="InternalConvertTo"/> and <see cref="InternalConvertFrom"/> methods to customise 
+        /// the conversion behaviour of your types.</remarks>
         [NoDebug]
         public PValue ConvertTo(StackContext sctx, PValue subject, PType target, bool useExplicit)
         {
@@ -747,18 +831,49 @@ namespace Prexonite.Types
                     ".");
         }
 
+        /// <summary>
+        /// Converts a value of this type to a value of a supplied other type.
+        /// </summary>
+        /// <param name="sctx">The stack context in which to perform the conversion.</param>
+        /// <param name="subject">The value to convert.</param>
+        /// <param name="target">The type to convert the value to.</param>
+        /// <returns>The converted value.</returns>
+        /// <exception cref="PrexoniteException">Conversion failed.</exception>
+        /// <remarks>For implementors: Use the <see cref="InternalConvertTo"/> and <see cref="InternalConvertFrom"/> methods to customise 
+        /// the conversion behaviour of your types.</remarks>
         [NoDebug]
         public PValue ConvertTo(StackContext sctx, PValue subject, PType target)
         {
             return ConvertTo(sctx, subject, target, false);
         }
 
+        /// <summary>
+        /// Explicitly converts a value of this type to a value of a supplied other type.
+        /// </summary>
+        /// <param name="sctx">The stack context in which to perform the conversion.</param>
+        /// <param name="subject">The value to convert.</param>
+        /// <param name="target">The type to convert the value to.</param>
+        /// <returns>The converted value.</returns>
+        /// <exception cref="PrexoniteException">Conversion failed.</exception>
+        /// <remarks>For implementors: Use the <see cref="InternalConvertTo"/> and <see cref="InternalConvertFrom"/> methods to customise 
+        /// the conversion behaviour of your types.</remarks>
         [NoDebug]
         public PValue ExplicitlyConvertTo(StackContext sctx, PValue subject, PType target)
         {
             return ConvertTo(sctx, subject, target, true);
         }
 
+        /// <summary>
+        /// Converts a value of this type to a value of a supplied other type.
+        /// </summary>
+        /// <param name="sctx">The stack context in which to perform the conversion.</param>
+        /// <param name="subject">The value to convert.</param>
+        /// <param name="clrTarget">The clr type to convert the value to.</param>
+        /// <param name="useExplicit">True if explicit conversions are to be used. False otherwise.</param>
+        /// <returns>The converted value.</returns>
+        /// <exception cref="PrexoniteException">Conversion failed.</exception>
+        /// <remarks>For implementors: Use the <see cref="InternalConvertTo"/> and <see cref="InternalConvertFrom"/> methods to customise 
+        /// the conversion behaviour of your types.</remarks>
         [NoDebug]
         public PValue ConvertTo(StackContext sctx, PValue subject, Type clrTarget, bool useExplicit)
         {
@@ -767,18 +882,49 @@ namespace Prexonite.Types
             return ConvertTo(sctx, subject, Object[clrTarget], useExplicit);
         }
 
+        /// <summary>
+        /// Converts a value of this type to a value of a supplied other type.
+        /// </summary>
+        /// <param name="sctx">The stack context in which to perform the conversion.</param>
+        /// <param name="subject">The value to convert.</param>
+        /// <param name="clrTarget">The clr type to convert the value to.</param>
+        /// <returns>The converted value.</returns>
+        /// <exception cref="PrexoniteException">Conversion failed.</exception>
+        /// <remarks>For implementors: Use the <see cref="InternalConvertTo"/> and <see cref="InternalConvertFrom"/> methods to customise 
+        /// the conversion behaviour of your types.</remarks>
         [NoDebug]
         public PValue ConvertTo(StackContext sctx, PValue subject, Type clrTarget)
         {
             return ConvertTo(sctx, subject, clrTarget, false);
         }
 
+        /// <summary>
+        /// Explicitly converts a value of this type to a value of a supplie other type.
+        /// </summary>
+        /// <param name="sctx">The stack context in which to perform the conversion.</param>
+        /// <param name="subject">The value to convert.</param>
+        /// <param name="clrTarget">The clr type to convert the value to.</param>
+        /// <returns>The converted value.</returns>
+        /// <exception cref="PrexoniteException">Conversion failed.</exception>
+        /// <remarks>For implementors: Use the <see cref="InternalConvertTo"/> and <see cref="InternalConvertFrom"/> methods to customise 
+        /// the conversion behaviour of your types.</remarks>
         [NoDebug]
         public PValue ExplicitlyConvertTo(StackContext sctx, PValue subject, Type clrTarget)
         {
             return ConvertTo(sctx, subject, clrTarget, true);
         }
 
+        /// <summary>
+        /// Tries to convert a value of this type to a value of a supplied other type.
+        /// </summary>
+        /// <param name="sctx">The stack context in which to try to perform the conversion.</param>
+        /// <param name="subject">The value to convert.</param>
+        /// <param name="target">The type to convert the value to.</param>
+        /// <param name="useExplicit">True if explicit conversions are to be used. False otherwise.</param>
+        /// <param name="result">The converted value if the conversion was successful, null otherwise.</param>
+        /// <returns>True if the conversion succeeded, false otherwise.</returns>
+        /// <remarks>For implementors: Use the <see cref="InternalConvertTo"/> and <see cref="InternalConvertFrom"/> methods to customise 
+        /// the conversion behaviour of your types.</remarks>
         [NoDebug]
         public bool TryConvertTo(
             StackContext sctx, PValue subject, PType target, bool useExplicit, out PValue result)
@@ -795,12 +941,33 @@ namespace Prexonite.Types
                     target.InternalConvertFrom(sctx, subject, useExplicit, out result);
         }
 
+        /// <summary>
+        /// Tries to convert a value of this type to a value of a supplied other type.
+        /// </summary>
+        /// <param name="sctx">The stack context in which to try to perform the conversion.</param>
+        /// <param name="subject">The value to convert.</param>
+        /// <param name="target">The type to convert the value to.</param>
+        /// <param name="result">The converted value if the conversion was successful, null otherwise.</param>
+        /// <returns>True if the conversion succeeded, false otherwise.</returns>
+        /// <remarks>For implementors: Use the <see cref="InternalConvertTo"/> and <see cref="InternalConvertFrom"/> methods to customise 
+        /// the conversion behaviour of your types.</remarks>
         [NoDebug]
         public bool TryConvertTo(StackContext sctx, PValue subject, PType target, out PValue result)
         {
             return TryConvertTo(sctx, subject, target, false, out result);
         }
 
+        /// <summary>
+        /// Tries to convert a value of this type to a value of a supplied other type.
+        /// </summary>
+        /// <param name="sctx">The stack context in which to try to perform the conversion.</param>
+        /// <param name="subject">The value to convert.</param>
+        /// <param name="clrTarget">The clr type to convert the value to.</param>
+        /// <param name="useExplicit">True if explicit conversions are to be used. False otherwise.</param>
+        /// <param name="result">The converted value if the conversion was successful, null otherwise.</param>
+        /// <returns>True if the conversion succeeded, false otherwise.</returns>
+        /// <remarks>For implementors: Use the <see cref="InternalConvertTo"/> and <see cref="InternalConvertFrom"/> methods to customise 
+        /// the conversion behaviour of your types.</remarks>
         [NoDebug]
         public bool TryConvertTo(
             StackContext sctx, PValue subject, Type clrTarget, bool useExplicit, out PValue result)
@@ -810,6 +977,16 @@ namespace Prexonite.Types
             return TryConvertTo(sctx, subject, Object[clrTarget], useExplicit, out result);
         }
 
+        /// <summary>
+        /// Tries to convert a value of this type to a value of a supplied other type.
+        /// </summary>
+        /// <param name="sctx">The stack context in which to try to perform the conversion.</param>
+        /// <param name="subject">The value to convert.</param>
+        /// <param name="clrTarget">The type to convert the value to.</param>
+        /// <param name="result">The converted value if the conversion was successful, null otherwise.</param>
+        /// <returns>True if the conversion succeeded, false otherwise.</returns>
+        /// <remarks>For implementors: Use the <see cref="InternalConvertTo"/> and <see cref="InternalConvertFrom"/> methods to customise 
+        /// the conversion behaviour of your types.</remarks>
         [NoDebug]
         public bool TryConvertTo(
             StackContext sctx, PValue subject, Type clrTarget, out PValue result)
@@ -817,6 +994,17 @@ namespace Prexonite.Types
             return TryConvertTo(sctx, subject, clrTarget, false, out result);
         }
 
+        /// <summary>
+        /// Tries to convert a value of this type to a value of a supplied other type.
+        /// </summary>
+        /// <param name="sctx">The stack context in which to try to perform the conversion.</param>
+        /// <param name="subject">The value to convert.</param>
+        /// <param name="target">The type to convert the value to.</param>
+        /// <param name="useExplicit">True if explicit conversions are to be used. False otherwise.</param>
+        /// <param name="result">The converted value if the conversion was successful, null otherwise.</param>
+        /// <returns>True if the conversion succeeded, false otherwise.</returns>
+        /// <remarks>For implementors: <paramref name="result"/> MUST be null if the conversion fails and MUST NOT be 
+        /// null (but possibly an instance of <see cref="Null"/>) if the conversion succeeds.</remarks>
         protected abstract bool InternalConvertTo(
             StackContext sctx,
             PValue subject,
@@ -824,6 +1012,16 @@ namespace Prexonite.Types
             bool useExplicit,
             out PValue result);
 
+        /// <summary>
+        /// Tries to convert a value of the supplied type to a value of the current other type.
+        /// </summary>
+        /// <param name="sctx">The stack context in which to try to perform the conversion.</param>
+        /// <param name="subject">The value to convert.</param>
+        /// <param name="useExplicit">True if explicit conversions are to be used. False otherwise.</param>
+        /// <param name="result">The converted value if the conversion was successful, null otherwise.</param>
+        /// <returns>True if the conversion succeeded, false otherwise.</returns>
+        /// <remarks>For implementors: <paramref name="result"/> MUST be null if the conversion fails and MUST NOT be 
+        /// null (but possibly an instance of <see cref="Null"/>) if the conversion succeeds.</remarks>
         protected abstract bool InternalConvertFrom(
             StackContext sctx,
             PValue subject,
@@ -834,9 +1032,17 @@ namespace Prexonite.Types
 
         #region Comparision
 
+        /// <summary>
+        /// Determines if two types are equal. Also used by <see cref="Equals"/>.
+        /// </summary>
+        /// <param name="otherType">The type to check for equality.</param>
+        /// <returns>True if the two types are equal. False otherwise.</returns>
+        /// <remarks>The types are tested for <em>equality</em>, not <em>Identity</em>.</remarks>
         [NoDebug]
         public bool IsEqual(PType otherType)
         {
+            if ((object) otherType == null)
+                throw new ArgumentNullException("otherType");
             if(ReferenceEquals(this,otherType))
                 return true;
             if (GetHashCode() != otherType.GetHashCode())
@@ -847,8 +1053,19 @@ namespace Prexonite.Types
                 return otherType.InternalIsEqual(this);
         }
 
+        /// <summary>
+        /// Provides the type specific part of equality checking. Reference has already been checked and hashcode is guaranteed to match.
+        /// </summary>
+        /// <param name="otherType">A reference to a non-identical type.</param>
+        /// <returns>True if the two types are equal. False otherwise.</returns>
         protected abstract bool InternalIsEqual(PType otherType);
 
+        /// <summary>
+        /// Checks two types for equality.
+        /// </summary>
+        /// <param name="left">A type</param>
+        /// <param name="right">A type</param>
+        /// <returns>True, if the types are equal. False otherwise,</returns>
         [NoDebug]
         public static bool operator ==(PType left, PType right)
         {
@@ -859,12 +1076,25 @@ namespace Prexonite.Types
             return left.IsEqual(right);
         }
 
+        /// <summary>
+        /// Checks two types for inequality.
+        /// </summary>
+        /// <param name="left">A type</param>
+        /// <param name="right">A type</param>
+        /// <returns>True, if the types are inequal. False otherwise,</returns>
+
         [NoDebug]
         public static bool operator !=(PType left, PType right)
         {
             return !(left == right);
         }
 
+        /// <summary>
+        /// Checks a CLR type and a Prexonite type for equality.
+        /// </summary>
+        /// <param name="left">A clr type</param>
+        /// <param name="right">A type</param>
+        /// <returns>True, if the types are equal. False otherwise,</returns>
         public static bool operator ==(Type left, PType right)
         {
             ObjectPType objT;
@@ -878,6 +1108,12 @@ namespace Prexonite.Types
                 return objT.ClrType == left;
         }
 
+        /// <summary>
+        /// Checks a CLR type and a Prexonite type for inequality.
+        /// </summary>
+        /// <param name="left">A clr type</param>
+        /// <param name="right">A type</param>
+        /// <returns>True, if the types are inequal. False otherwise,</returns>
         public static bool operator !=(Type left, PType right)
         {
             ObjectPType objT;
@@ -891,6 +1127,12 @@ namespace Prexonite.Types
                 return objT.ClrType != left;
         }
 
+        /// <summary>
+        /// Checks a CLR type and a Prexonite type for equality.
+        /// </summary>
+        /// <param name="left">A type</param>
+        /// <param name="right">A clr type</param>
+        /// <returns>True, if the types are equal. False otherwise,</returns>
         public static bool operator ==(PType left, Type right)
         {
             ObjectPType objT;
@@ -904,6 +1146,12 @@ namespace Prexonite.Types
                 return objT.ClrType == right;
         }
 
+        /// <summary>
+        /// Checks a CLR type and a Prexonite type for inequality.
+        /// </summary>
+        /// <param name="left">A type</param>
+        /// <param name="right">A clr type</param>
+        /// <returns>True, if the types are inequal. False otherwise,</returns>
         public static bool operator !=(PType left, Type right)
         {
             ObjectPType objT;
@@ -917,21 +1165,43 @@ namespace Prexonite.Types
                 return objT.ClrType != right;
         }
 
+        /// <summary>
+        /// Determines whether two objects are equal. Uses <see cref="IsEqual"/>.
+        /// </summary>
+        /// <param name="obj">The object to check for equality.</param>
+        /// <returns></returns>
         [NoDebug]
         public override bool Equals(object obj)
         {
-            if (obj is PType)
-                return IsEqual(obj as PType);
+            if (obj == null)
+                return false;
+            else if (obj is PType)
+                return this == (PType)obj;
+            else if (obj is Type)
+                return this == (Type)obj;
             else
                 return base.Equals(obj);
         }
 
+        /// <summary>
+        /// Returns a 32 bit checksum for the type. Non-parametrized types are to return a constant checksum.
+        /// </summary>
+        /// <returns>A 32 bit checksum for the type.</returns>
         public abstract override int GetHashCode();
 
         #endregion
 
+        /// <summary>
+        /// Returns a string representation of the type.
+        /// </summary>
+        /// <returns>A string representation of the type.</returns>
         public abstract override string ToString();
 
+        /// <summary>
+        /// Checks if the supplied value is a runtime type reference.
+        /// </summary>
+        /// <param name="clrType">The value to be checked.</param>
+        /// <returns>True if the value is a runtime type reference. False otherwise.</returns>
         public static bool IsPType(PValue clrType)
         {
             if (clrType == null)
@@ -942,6 +1212,11 @@ namespace Prexonite.Types
                 return IsPType(clrType.ClrType);
         }
 
+        /// <summary>
+        /// Checks if the supplied value is a runtime type reference.
+        /// </summary>
+        /// <param name="clrType">The value to be checked.</param>
+        /// <returns>True if the value is a runtime type reference. False otherwise.</returns>
         public static bool IsPType(ObjectPType clrType)
         {
             if ((object)clrType == null)
@@ -949,40 +1224,16 @@ namespace Prexonite.Types
             return IsPType(clrType.ClrType);
         }
 
+        /// <summary>
+        /// Checks if the supplied value is a runtime type reference.
+        /// </summary>
+        /// <param name="clrType">The value to be checked.</param>
+        /// <returns>True if the value is a runtime type reference. False otherwise.</returns>
         public static bool IsPType(Type clrType)
         {
             if (clrType == null)
                 return false;
             return typeof(PType).IsAssignableFrom(clrType);
-        }
-
-        public static object[] ToObjectArray(PValue[] input)
-        {
-            if (input == null)
-                return null;
-            object[] output = new object[input.Length];
-            for (int i = input.Length - 1; i > -1; i--)
-                output[i] = input[i].Value;
-            return output;
-        }
-
-        public static PValue[] ToClrObjectArray(object[] input)
-        {
-            if (input == null)
-                return null;
-            PValue[] output = new PValue[input.Length];
-            for (int i = input.Length - 1; i > -1; i--)
-                output[i] = Object.CreatePValue(input[i]);
-            return output;
-        }
-
-        protected internal static bool PTypeToClrType<T>(
-            PValue subject, PType target, out PValue result)
-        {
-            result = null;
-            if (target is ObjectPType && ((ObjectPType) target).ClrType == typeof(T))
-                result = Object[typeof(T)].CreatePValue(subject.Value);
-            return result != null;
         }
 
         /// <summary>
@@ -994,11 +1245,6 @@ namespace Prexonite.Types
         protected internal static PValue CreateObject<T>(T value)
         {
             return Object[typeof(T)].CreatePValue(value);
-        }
-
-        internal static int _CombineHashes(int a, int b)
-        {
-            return a ^ b;
         }
     }
 

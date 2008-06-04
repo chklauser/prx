@@ -120,8 +120,7 @@ namespace Prexonite.Types
             int hash = 1;
             foreach (KeyValuePair<PValue, PValue> pair in this)
                 hash =
-                    PType._CombineHashes(
-                        hash, PType._CombineHashes(pair.Key.GetHashCode(), pair.Value.GetHashCode()));
+                        hash ^ pair.Key.GetHashCode() ^ pair.Value.GetHashCode();
 
             return hash;
         }

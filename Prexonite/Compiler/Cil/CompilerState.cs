@@ -683,8 +683,8 @@ namespace Prexonite.Compiler.Cil
                 throw new PrexoniteException(
                     string.Format("{0}'s RunStatically method does not return PValue but {1}.", target, run.ReturnType));
             else //nothing
-
                 fillArgv(argc);
+
             EmitLoadLocal(SctxLocal);
             readArgv(argc);
             Il.EmitCall(OpCodes.Call, run, null);

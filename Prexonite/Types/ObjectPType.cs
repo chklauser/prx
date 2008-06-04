@@ -1275,7 +1275,7 @@ namespace Prexonite.Types
 
         public override int GetHashCode()
         {
-            return _CombineHashes(_code, _clrType.GetHashCode());
+            return _code ^ _clrType.GetHashCode();
         }
 
         public const string Literal = "Object";

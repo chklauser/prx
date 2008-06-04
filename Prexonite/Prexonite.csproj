@@ -33,8 +33,7 @@
     <ErrorReport>prompt</ErrorReport>
     <WarningLevel>4</WarningLevel>
     <PlatformTarget>AnyCPU</PlatformTarget>
-    <DocumentationFile>
-    </DocumentationFile>
+    <DocumentationFile>bin\Prexonite.XML</DocumentationFile>
     <DebugSymbols>false</DebugSymbols>
   </PropertyGroup>
   <ItemGroup>
