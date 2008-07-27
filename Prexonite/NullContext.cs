@@ -23,7 +23,6 @@
 
 using System;
 using System.Collections.Generic;
-using System.Text;
 using Prexonite.Types;
 
 namespace Prexonite
@@ -36,7 +35,7 @@ namespace Prexonite
         {
         }
 
-        public NullContext(Engine parentEngine, Application parentApplication, ICollection<string> importedNamespaces)
+        public NullContext(Engine parentEngine, Application parentApplication, IEnumerable<string> importedNamespaces)
         {
             if (parentEngine == null)
                 throw new ArgumentNullException("parentEngine");
@@ -50,9 +49,9 @@ namespace Prexonite
             this.importedNamespaces = (importedNamespaces as SymbolCollection) ?? new SymbolCollection(importedNamespaces);
         }
 
-        private Engine parentEngine;
-        private Application parentApplication;
-        private SymbolCollection importedNamespaces;
+        private readonly Engine parentEngine;
+        private readonly Application parentApplication;
+        private readonly SymbolCollection importedNamespaces;
 
         /// <summary>
         /// Represents the engine this context is part of.
