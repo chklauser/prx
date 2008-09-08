@@ -1,0 +1,139 @@
+﻿
+//Provides compiler support for properties via compiler hooks
+//  Simple:
+//      function Amount = prop;
+//
+//  Proxy:
+//      function Amount = prop(Something.Amount);
+//
+//  Complex:
+//      function Amount = prop(
+//          () => Something.GetAmount, 
+//          newAmount => Something.SetAmount(newAmount)
+//      );
+
+build does require(
+    "ast.pxs"
+);
+
+Import
+{
+    System,
+    Prexonite,
+    Prexonite::Types,
+    Prexonite::Compiler,
+    Prexonite::Compiler::Ast
+};
+
+function prop => throw "Autoproperty has not been converted by the compiler. Have you forgotten to import psr\\prop.pxs ?";
+
+function struct_prop => prop;
+
+build does Prexonite::Compiler::PropHook.InstallHook(getloader); 
+
+/*
+build does null.() = (t,stmt,ref i) => 
+{
+    var ret_stmt = stmt;
+    if(stmt is ::AstReturn and stmt.Expression is not Null and (isFunctionCall(->prop.Id, stmt.Expression) or isFunctionCall(->struct_prop.Id,stmt.Expression)))
+        stmt = stmt.Expression;
+    else
+        return true;    
+           
+    var args_offset = 0;
+    
+    //accomodate for the "this" parameter in struct member functions.
+    if(stmt.Id == ->struct_prop.Id)
+        args_offset = 1;        
+        
+    //Ensure access to function arguments
+    var parameters = t.$Function.Parameters;
+    while(parameters.Count < args_offset)
+        parameters.Add(::CompilerTarget.GenerateName("dummy_arg"));
+    if(parameters.Count == args_offset)
+        t.$Function.Parameters.Add(::CompilerTarget.GenerateName("prop_forward"));
+    var prop_arg = ast(
+        "GetSetSymbol",
+        ::PCall.Get,
+        t.$Function.Parameters[args_offset],
+        SI.lvar);
+        
+    //Determine type of prop
+    var pk_simple = 1;
+    var pk_proxy = 2;
+    var pk_complex = 3;
+    var kind;
+    var argc = stmt.Arguments.Count;
+   
+    var prop_get;
+    var prop_set;
+    if(argc == 0)
+    {
+        kind = pk_simple;
+        //create backing field
+        var backingField;
+        if(t.ParentTarget is Null)
+        {
+            //Property is global, using a global backing field.
+            backingField = ast(
+                "GetSetSymbol",
+                ::PCall.Get,
+                ::CompilerTarget.GenerateName(t.$Function.Id + "_prop_field_"),
+                SI.gvar);
+            t.Loader.ParentApplication.Variables.Add(backingField.Id,new ::PVariable(backingField.Id));
+        }
+        else
+        {
+            //Property is local using a closure field for storage
+            var pt = t.ParentTarget;
+            backingField = ast(
+                "GetSetSymbol",
+                ::PCall.Get,
+                ::CompilerTarget.GenerateName(t.$Function.Id + "_prop_field_"),
+                SI.lvar);
+            pt.$Function.Variables.Add(backingField.Id);
+            t.RequireOuterVariable(backingField.Id);
+        } 
+        prop_get = backingField; 
+        prop_set = backingField.GetCopy;
+        prop_set.Call = ::PCall.Set;    
+    }
+    else if(argc == 1)
+    {
+        kind = pk_proxy;
+        var proxy_expr = stmt.Arguments[0];
+        if(Not proxy_expr.\implements("Prexonite.Compiler.Ast.AstGetSet"))
+            throw "prop requires a assignable expression as its argument.";
+        prop_get = proxy_expr;
+        prop_set = proxy_expr.GetCopy;
+        prop_set.Call = ::PCall.Set;    
+    }
+    else 
+    {
+        kind = pk_complex;
+        var get_action = stmt.Arguments[0];
+        var set_action = stmt.Arguments[1];
+        
+        prop_get = ast("IndirectCall", get_action);
+        prop_set = ast("IndirectCall", set_action);
+    }
+    
+    //Create get or set check
+    var check = ast("ConditionalExpression",
+        ast("Typecheck",
+            prop_arg,
+            ast("ConstantTypeExpression", "Null")
+            )
+        );    
+    
+    prop_set.Arguments.Add = prop_arg;  
+        
+    check.IfExpression = prop_get;
+    check.ElseExpression = prop_set;
+    
+    ret_stmt.Expression = check;       
+
+    return true;
+};
+
+*/

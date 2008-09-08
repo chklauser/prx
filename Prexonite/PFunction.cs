@@ -102,7 +102,7 @@ namespace Prexonite
             //Note that function names do not have to be identifiers
 
             _meta = new MetaTable(this);
-            _meta.SetDirect(IdKey, id);
+            _meta._SetDirect(IdKey, id);
 
             Meta[Application.ImportKey] = parentApplication.Meta[Application.ImportKey];
         }

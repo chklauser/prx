@@ -31,8 +31,6 @@ using Prexonite;
 using Prexonite.Commands;
 using Prexonite.Compiler;
 using Prexonite.Types;
-
-using Prx.Commands.Timer;
 using Prx.Properties;
 
 namespace Prx
@@ -55,11 +53,6 @@ namespace Prx
                 fsmain.Write(buffer, 0, buffer.Length);
         }
 
-        public const string StartStopwatchCommandId = "timer\\start";
-        public const string StopStopwatchCommandId = "timer\\stop";
-        public const string ResetStopwatchCommandId = "timer\\reset";
-        public const string ElapsedStopwatchCommandId = "timer\\elapsed";
-
         private static void Main(string[] args)
         {
             Console.CancelKeyPress += delegate { Environment.Exit(1); };
@@ -73,11 +66,41 @@ namespace Prx
             engine.RegisterAssembly(Assembly.GetExecutingAssembly());
 
             #region Stopwatch commands
-            //prx.exe provides these four additional commands for high speed access to a stopwatch from your script code
-            engine.Commands.AddHostCommand(StartStopwatchCommandId,SharedTimer.StartCommand.Instance);
-            engine.Commands.AddHostCommand(StopStopwatchCommandId, SharedTimer.StopCommand.Instance);
-            engine.Commands.AddHostCommand(ResetStopwatchCommandId, SharedTimer.ResetCommand.Instance);
-            engine.Commands.AddHostCommand(ElapsedStopwatchCommandId, SharedTimer.ElapsedCommand.Instance);
+
+            //prx.exe provides these three additional commands for high speed access to a stopwatch from your script code
+            Stopwatch timer = new Stopwatch();
+            engine.Commands.AddHostCommand(
+                @"timer\start",
+                new DelegatePCommand(
+                    delegate
+                    {
+                        timer.Start();
+                        return null;
+                    }));
+
+            engine.Commands.AddHostCommand(
+                @"timer\stop",
+                new DelegatePCommand(
+                    delegate
+                    {
+                        timer.Stop();
+                        return (double) timer.ElapsedMilliseconds;
+                    }));
+
+            engine.Commands.AddHostCommand(
+                @"timer\reset",
+                new DelegatePCommand(
+                    delegate
+                    {
+                        timer.Reset();
+                        return null;
+                    }));
+
+            engine.Commands.AddHostCommand(
+                @"timer\elapsed",
+                new DelegatePCommand(
+                    delegate { return (double) timer.ElapsedMilliseconds; }));
+
             #endregion
 
             #region Stack Manipulation commands
@@ -239,7 +262,7 @@ namespace Prx
             _reportErrors(ldr);
 
             //Run the applications main function.
-            app.Run(engine, new PValue[] {engine.CreateNativePValue(args)});
+            app.Run(engine, new[] {engine.CreateNativePValue(args)});
 #if !DEBUG
             }
             catch (Exception ex)

@@ -1,25 +1,4 @@
-/*
- * Prexonite, a scripting engine (Scripting Language -> Bytecode -> Virtual Machine)
- *  Copyright (C) 2007  Christian "SealedSun" Klauser
- *  E-mail  sealedsun a.t gmail d.ot com
- *  Web     http://www.sealedsun.ch/
- *
- *  This program is free software; you can redistribute it and/or modify
- *  it under the terms of the GNU General Public License as published by
- *  the Free Software Foundation; either version 2 of the License, or
- *  (at your option) any later version.
- *
- *  Please contact me (sealedsun a.t gmail do.t com) if you need a different license.
- * 
- *  This program is distributed in the hope that it will be useful,
- *  but WITHOUT ANY WARRANTY; without even the implied warranty of
- *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- *  GNU General Public License for more details.
- *
- *  You should have received a copy of the GNU General Public License along
- *  with this program; if not, write to the Free Software Foundation, Inc.,
- *  51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
- */
+#region
 
 using System;
 using System.Collections;
@@ -27,6 +6,8 @@ using System.Collections.Generic;
 using System.Reflection;
 using System.Text;
 using Prexonite.Compiler.Cil;
+
+#endregion
 
 namespace Prexonite.Types
 {
@@ -55,7 +36,7 @@ namespace Prexonite.Types
         {
             PValue res;
             result = null;
-            if (!inpv.TryConvertTo(sctx, typeof(PValueKeyValuePair), out res))
+            if (!inpv.TryConvertTo(sctx, typeof (PValueKeyValuePair), out res))
                 return false;
             else
                 result = (PValueKeyValuePair) res.Value;
@@ -76,7 +57,7 @@ namespace Prexonite.Types
 
             int argc = args.Length;
 
-            PValueHashtable pvht = (PValueHashtable) subject.Value;
+            var pvht = (PValueHashtable) subject.Value;
 
             if (argc == 0)
             {
@@ -112,7 +93,7 @@ namespace Prexonite.Types
             if (id == null)
                 id = "";
 
-            PValueHashtable pvht = subject.Value as PValueHashtable;
+            var pvht = subject.Value as PValueHashtable;
 
             if (pvht == null)
                 throw new ArgumentException("Subject must be a Hash.");
@@ -185,7 +166,7 @@ namespace Prexonite.Types
                     else if (argc > 1)
                     {
                         bool found = true;
-                        foreach (PValue arg in args)
+                        foreach (var arg in args)
                         {
                             if (!pvht.ContainsKey(arg))
                             {
@@ -205,7 +186,7 @@ namespace Prexonite.Types
                     else if (argc > 1)
                     {
                         bool found = true;
-                        foreach (PValue arg in args)
+                        foreach (var arg in args)
                         {
                             if (!pvht.ContainsValue(arg))
                             {
@@ -231,7 +212,7 @@ namespace Prexonite.Types
                     break;
 
                 case "gettype":
-                    result = Object.CreatePValue(typeof(PValueHashtable));
+                    result = Object.CreatePValue(typeof (PValueHashtable));
                     break;
 
                 case "keys":
@@ -245,8 +226,8 @@ namespace Prexonite.Types
                     }
                     else if (argc > 1)
                     {
-                        List<PValue> removed = new List<PValue>(pvht.Count);
-                        foreach (PValue arg in args)
+                        var removed = new List<PValue>(pvht.Count);
+                        foreach (var arg in args)
                             removed.Add(pvht.Remove(arg));
 
                         result = List.CreatePValue(removed);
@@ -254,8 +235,8 @@ namespace Prexonite.Types
                     break;
 
                 case "tostring":
-                    StringBuilder sb = new StringBuilder("{ ");
-                    foreach (KeyValuePair<PValue, PValue> pair in pvht)
+                    var sb = new StringBuilder("{ ");
+                    foreach (var pair in pvht)
                     {
                         sb.Append(pair.Key.CallToString(sctx));
                         sb.Append(": ");
@@ -274,7 +255,7 @@ namespace Prexonite.Types
                         PValue value;
                         if (pvht.TryGetValue(args[0], out value))
                         {
-                            args[1].IndirectCall(sctx, new PValue[] {value});
+                            args[1].IndirectCall(sctx, new[] {value});
                             result = true;
                         }
                         else
@@ -321,7 +302,7 @@ namespace Prexonite.Types
                 case "create":
                     //Create(params KeyValuePair[] pairs)
                     pvht = new PValueHashtable(args.Length);
-                    foreach (PValue arg in args)
+                    foreach (var arg in args)
                     {
                         PValueKeyValuePair pairArg;
                         if (_tryConvertToPair(sctx, arg, out pairArg))
@@ -400,10 +381,10 @@ namespace Prexonite.Types
                 throw new ArgumentNullException("sctx");
             if (subject == null)
                 throw new ArgumentNullException("subject");
-            if ((object)target == null)
+            if ((object) target == null)
                 throw new ArgumentNullException("target");
 
-            PValueHashtable pvht = subject.Value as PValueHashtable;
+            var pvht = subject.Value as PValueHashtable;
 
             if (pvht == null)
                 throw new ArgumentException("Subject must be a Hash.");
@@ -413,28 +394,28 @@ namespace Prexonite.Types
             if (target is ObjectPType)
             {
                 Type tT = ((ObjectPType) target).ClrType;
-                if (tT == typeof(IDictionary<PValue, PValue>) ||
-                    tT == typeof(Dictionary<PValue, PValue>) ||
-                    tT == typeof(IDictionary) ||
-                    tT == typeof(IEnumerable<KeyValuePair<PValue, PValue>>) ||
-                    tT == typeof(IEnumerable) ||
-                    tT == typeof(ICollection<KeyValuePair<PValue, PValue>>) ||
-                    tT == typeof(ICollection))
+                if (tT == typeof (IDictionary<PValue, PValue>) ||
+                    tT == typeof (Dictionary<PValue, PValue>) ||
+                    tT == typeof (IDictionary) ||
+                    tT == typeof (IEnumerable<KeyValuePair<PValue, PValue>>) ||
+                    tT == typeof (IEnumerable) ||
+                    tT == typeof (ICollection<KeyValuePair<PValue, PValue>>) ||
+                    tT == typeof (ICollection))
                 {
                     result = new PValue(pvht, target);
                 }
-                else if(tT == typeof(IEnumerable<PValue>) || tT == typeof(IList<PValue>) || tT==typeof(IList))
+                else if (tT == typeof (IEnumerable<PValue>) || tT == typeof (IList<PValue>) || tT == typeof (IList))
                 {
-                    List<PValue> lst = new List<PValue>(pvht.Count);
-                    foreach (KeyValuePair<PValue, PValue> pair in pvht)
+                    var lst = new List<PValue>(pvht.Count);
+                    foreach (var pair in pvht)
                         lst.Add(sctx.CreateNativePValue(new PValueKeyValuePair(pair)));
                     result = new PValue(lst, target);
                 }
             }
             else if (target is ListPType)
             {
-                List<PValue> lst = new List<PValue>(pvht.Count);
-                foreach (KeyValuePair<PValue, PValue> pair in pvht)
+                var lst = new List<PValue>(pvht.Count);
+                foreach (var pair in pvht)
                     lst.Add(sctx.CreateNativePValue(new PValueKeyValuePair(pair.Key, pair.Value)));
                 result = List.CreatePValue(lst);
             }
@@ -458,17 +439,17 @@ namespace Prexonite.Types
             if (sT is ObjectPType)
             {
                 object os = subject.Value;
-                PValueHashtable o_pvht = os as PValueHashtable;
+                var o_pvht = os as PValueHashtable;
                 if (o_pvht != null)
                     pvht = o_pvht;
                 else
                 {
-                    IDictionary<PValue, PValue> id = os as IDictionary<PValue, PValue>;
+                    var id = os as IDictionary<PValue, PValue>;
                     if (id != null)
                         pvht = new PValueHashtable(id);
                     else
                     {
-                        PValueKeyValuePair pvkvp = os as PValueKeyValuePair;
+                        var pvkvp = os as PValueKeyValuePair;
                         if (pvkvp != null)
                         {
                             pvht = new PValueHashtable(1);
@@ -495,15 +476,15 @@ namespace Prexonite.Types
         {
             result = null;
 
-            if(leftOperand.Type is HashPType && rightOperand.Type is HashPType)
+            if (leftOperand.Type is HashPType && rightOperand.Type is HashPType)
             {
-                PValueHashtable pvht1 = (PValueHashtable) leftOperand.Value;
-                PValueHashtable pvht2 = (PValueHashtable)rightOperand.Value;
+                var pvht1 = (PValueHashtable) leftOperand.Value;
+                var pvht2 = (PValueHashtable) rightOperand.Value;
 
-                PValueHashtable pvht = new PValueHashtable(pvht1.Count + pvht2.Count);
-                foreach(KeyValuePair<PValue, PValue> pair in pvht1)
+                var pvht = new PValueHashtable(pvht1.Count + pvht2.Count);
+                foreach (var pair in pvht1)
                     pvht.Add(pair);
-                foreach(KeyValuePair<PValue, PValue> pair in pvht2)
+                foreach (var pair in pvht2)
                     pvht.AddOverride(pair);
 
                 result = (PValue) pvht;
@@ -545,7 +526,7 @@ namespace Prexonite.Types
             return CompilationFlags.PreferCustomImplementation;
         }
 
-        private static readonly MethodInfo GetHashPType = typeof(PType).GetProperty("Hash").GetGetMethod();
+        private static readonly MethodInfo GetHashPType = typeof (PType).GetProperty("Hash").GetGetMethod();
 
         /// <summary>
         /// Provides a custom compiler routine for emitting CIL byte code for a specific instruction.

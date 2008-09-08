@@ -129,10 +129,10 @@ namespace Prexonite.Commands.Core
                         goto case 0;
                     if (arg0.Type == PType.Bool)
                     {
-                        if (!(bool)arg0.Value)
-                            linking = FunctionLinking.FullyIsolated;
-                        else
+                        if ((bool) arg0.Value)
                             linking = FunctionLinking.FullyStatic;
+                        else
+                            linking = FunctionLinking.FullyIsolated;
                         goto case 0;
                     }
                     else if (arg0.Type == typeof(FunctionLinking))

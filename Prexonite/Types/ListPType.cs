@@ -1,25 +1,4 @@
-/*
- * Prexonite, a scripting engine (Scripting Language -> Bytecode -> Virtual Machine)
- *  Copyright (C) 2007  Christian "SealedSun" Klauser
- *  E-mail  sealedsun a.t gmail d.ot com
- *  Web     http://www.sealedsun.ch/
- *
- *  This program is free software; you can redistribute it and/or modify
- *  it under the terms of the GNU General Public License as published by
- *  the Free Software Foundation; either version 2 of the License, or
- *  (at your option) any later version.
- *
- *  Please contact me (sealedsun a.t gmail do.t com) if you need a different license.
- * 
- *  This program is distributed in the hope that it will be useful,
- *  but WITHOUT ANY WARRANTY; without even the implied warranty of
- *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- *  GNU General Public License for more details.
- *
- *  You should have received a copy of the GNU General Public License along
- *  with this program; if not, write to the Free Software Foundation, Inc.,
- *  51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
- */
+#region
 
 using System;
 using System.Collections;
@@ -27,6 +6,8 @@ using System.Collections.Generic;
 using System.Reflection;
 using System.Text;
 using Prexonite.Compiler.Cil;
+
+#endregion
 
 namespace Prexonite.Types
 {
@@ -46,20 +27,20 @@ namespace Prexonite.Types
 
         public override PValue CreatePValue(object value)
         {
-            List<PValue> listOfPValue = value as List<PValue>;
-            IEnumerable<PValue> enumerableOfPValue = value as IEnumerable<PValue>;
-            IEnumerable enumerable = value as IEnumerable;
+            var listOfPValue = value as List<PValue>;
+            var enumerableOfPValue = value as IEnumerable<PValue>;
+            var enumerable = value as IEnumerable;
 
             if (listOfPValue != null)
                 return new PValue(listOfPValue, this);
-            else if (enumerableOfPValue != null)
+            if (enumerableOfPValue != null)
                 return new PValue(new List<PValue>(enumerableOfPValue), this);
-            else if (enumerable != null)
+            if (enumerable != null)
             {
-                List<PValue> lst = new List<PValue>();
-                foreach (object v in enumerable)
+                var lst = new List<PValue>();
+                foreach (var v in enumerable)
                 {
-                    PValue pv = v as PValue;
+                    var pv = v as PValue;
                     if (pv != null)
                         lst.Add(pv);
                     else
@@ -68,9 +49,8 @@ namespace Prexonite.Types
                 }
                 return new PValue(lst, this);
             }
-            else
-                throw new PrexoniteException(
-                    "Cannot create a PValue from the supplied " + value + ".");
+            throw new PrexoniteException(
+                "Cannot create a PValue from the supplied " + value + ".");
         }
 
         public override bool TryDynamicCall(
@@ -83,7 +63,7 @@ namespace Prexonite.Types
         {
             result = null;
 
-            List<PValue> lst = subject.Value as List<PValue>;
+            var lst = subject.Value as List<PValue>;
             if (lst == null)
                 throw new PrexoniteException(subject + " is not a List.");
 
@@ -91,20 +71,21 @@ namespace Prexonite.Types
             {
                 if (call == PCall.Get)
                 {
-                    if (args.Length == 0)
-                        if (lst.Count == 0)
-                            result = Null.CreatePValue();
-                        else
-                            result = lst[lst.Count - 1];
-                    else if (args.Length == 1)
-                        result = lst[(int) args[0].ConvertTo(sctx, Int).Value];
-                    else
+                    switch (args.Length)
                     {
-                        //Multi-index lookup
-                        List<PValue> n_lst = new List<PValue>(args.Length);
-                        foreach (PValue index in args)
-                            n_lst.Add(lst[(int) index.ConvertTo(sctx, Int).Value]);
-                        result = new PValue(n_lst, this);
+                        case 0:
+                            result = lst.Count == 0 ? Null.CreatePValue() : lst[lst.Count - 1];
+                            break;
+                        case 1:
+                            result = lst[(int) args[0].ConvertTo(sctx, Int).Value];
+                            break;
+                        default:
+                            //Multi-index lookup
+                            var n_lst = new List<PValue>(args.Length);
+                            foreach (var index in args)
+                                n_lst.Add(lst[(int) index.ConvertTo(sctx, Int).Value]);
+                            result = new PValue(n_lst, this);
+                            break;
                     }
                 }
                 else
@@ -143,7 +124,7 @@ namespace Prexonite.Types
                         break;
                     case "contains":
                         bool r = true;
-                        foreach (PValue arg in args)
+                        foreach (var arg in args)
                             if (!lst.Contains(arg))
                             {
                                 r = false;
@@ -157,18 +138,18 @@ namespace Prexonite.Types
                             index = (int) args[1].ConvertTo(sctx, Int).Value;
                         else if (args.Length == 0)
                             throw new PrexoniteException("List.CopyTo requires a target array.");
-                        PValue[] targetAsArray = args[0].Value as PValue[];
+                        var targetAsArray = args[0].Value as PValue[];
 
                         if (targetAsArray == null)
                             throw new PrexoniteException(
                                 "List.CopyTo requires it's first argument to be of type Object(\"" +
-                                typeof(PValue[]) + "\")");
+                                typeof (PValue[]) + "\")");
                         lst.CopyTo(targetAsArray, index);
                         result = Null.CreatePValue();
                         break;
                     case "remove":
                         int cnt = 0;
-                        foreach (PValue arg in args)
+                        foreach (var arg in args)
                         {
                             if (lst.Remove(arg))
                                 cnt++;
@@ -176,13 +157,13 @@ namespace Prexonite.Types
                         result = cnt;
                         break;
                     case "removeat":
-                        List<bool> toRemove = new List<bool>(lst.Count);
+                        var toRemove = new List<bool>(lst.Count);
                         for (int i = 0; i < lst.Count; i++)
                             toRemove.Add(false);
 
-                        foreach (PValue arg in args)
+                        foreach (var arg in args)
                         {
-                            int li = (int) arg.ConvertTo(sctx, Int).Value;
+                            var li = (int) arg.ConvertTo(sctx, Int).Value;
                             if (li > lst.Count - 1 || li < 0)
                                 throw new ArgumentOutOfRangeException(
                                     "The index " + li + " is out of the range of the supplied list.");
@@ -191,7 +172,7 @@ namespace Prexonite.Types
 
                         for (int i = 0; i < toRemove.Count; i++)
                         {
-                            if(toRemove[i])
+                            if (toRemove[i])
                             {
                                 toRemove.RemoveAt(i);
                                 lst.RemoveAt(i);
@@ -207,8 +188,8 @@ namespace Prexonite.Types
                             result = lst.IndexOf(args[0]);
                         else
                         {
-                            List<PValue> indices = new List<PValue>(args.Length);
-                            foreach (PValue arg in args)
+                            var indices = new List<PValue>(args.Length);
+                            foreach (var arg in args)
                                 indices.Add(lst.IndexOf(arg));
                             result = new PValue(indices, this);
                         }
@@ -232,14 +213,14 @@ namespace Prexonite.Types
                         if (args.Length == 1 && args[0].Type is ObjectPType)
                         {
                             //Maybe: comparison using IComparer or Comparison
-                            IComparer<PValue> icmp = args[0].Value as IComparer<PValue>;
+                            var icmp = args[0].Value as IComparer<PValue>;
                             if (icmp != null)
                             {
                                 lst.Sort(icmp);
                                 result = Null.CreatePValue();
                                 break;
                             }
-                            Comparer<PValue> cmp = args[0].Value as Comparer<PValue>;
+                            var cmp = args[0].Value as Comparer<PValue>;
                             if (cmp != null)
                             {
                                 lst.Sort(icmp);
@@ -252,12 +233,12 @@ namespace Prexonite.Types
                         lst.Sort(
                             delegate(PValue a, PValue b)
                             {
-                                foreach (PValue f in args)
+                                foreach (var f in args)
                                 {
-                                    PValue pdec = f.IndirectCall(sctx, new PValue[] {a, b});
+                                    PValue pdec = f.IndirectCall(sctx, new[] {a, b});
                                     if (!(pdec.Type is IntPType))
                                         pdec = pdec.ConvertTo(sctx, Int);
-                                    int dec = (int) pdec.Value;
+                                    var dec = (int) pdec.Value;
                                     if (dec != 0)
                                         return dec;
                                 }
@@ -280,10 +261,7 @@ namespace Prexonite.Types
                                 else if (result.Value is PValue)
                                     result = (PValue) result.Value;
                                 else
-                                {
-                                }
-                            else
-                                result = Null.CreatePValue();
+                                    result = Null.CreatePValue();
                         }
                         break;
                 }
@@ -293,8 +271,8 @@ namespace Prexonite.Types
 
         private static string _getStringRepresentation(IEnumerable<PValue> lst, StackContext sctx)
         {
-            StringBuilder sb = new StringBuilder("[ ");
-            foreach (PValue v in lst)
+            var sb = new StringBuilder("[ ");
+            foreach (var v in lst)
             {
                 sb.Append(v.CallToString(sctx));
                 sb.Append(", ");
@@ -321,18 +299,17 @@ namespace Prexonite.Types
             }
             else if (Engine.StringsAreEqual(id, "CreateFromList"))
             {
-                List<PValue> lst = new List<PValue>();
+                var lst = new List<PValue>();
 
-                foreach (PValue arg in args)
+                foreach (var arg in args)
                 {
-                    PType argT = arg.Type;
-                    IEnumerable<PValue> enumerableP = arg.Value as IEnumerable<PValue>;
-                    IEnumerable enumerable = arg.Value as IEnumerable;
-                    if (argT is ListPType || enumerableP != null)
+                    var enumerableP = arg.Value as IEnumerable<PValue>;
+                    var enumerable = arg.Value as IEnumerable;
+                    if (enumerableP != null)
                         lst.AddRange(enumerableP);
                     else if (enumerable != null)
                     {
-                        foreach (object e in enumerable)
+                        foreach (var e in enumerable)
                             lst.Add(e as PValue ?? sctx.CreateNativePValue(e));
                     }
                 }
@@ -355,26 +332,26 @@ namespace Prexonite.Types
             bool useExplicit,
             out PValue result)
         {
-            ObjectPType objT = target as ObjectPType;
+            var objT = target as ObjectPType;
             result = null;
-            if ((object)objT != null)
+            if ((object) objT != null)
             {
                 Type clrType = objT.ClrType;
-                if (clrType == typeof(IEnumerable<PValue>) ||
-                    clrType == typeof(List<PValue>) ||
-                    clrType == typeof(ICollection<PValue>) ||
-                    clrType == typeof(IList<PValue>) ||
-                    clrType == typeof(IEnumerable) ||
-                    clrType == typeof(ICollection) ||
-                    clrType == typeof(IList))
+                if (clrType == typeof (IEnumerable<PValue>) ||
+                    clrType == typeof (List<PValue>) ||
+                    clrType == typeof (ICollection<PValue>) ||
+                    clrType == typeof (IList<PValue>) ||
+                    clrType == typeof (IEnumerable) ||
+                    clrType == typeof (ICollection) ||
+                    clrType == typeof (IList))
                     result = target.CreatePValue(subject);
-                else if (clrType == typeof(PValue[]) && useExplicit)
+                else if (clrType == typeof (PValue[]) && useExplicit)
                     result = target.CreatePValue(((List<PValue>) subject.Value).ToArray());
-                else if (clrType == typeof(PValueKeyValuePair))
+                else if (clrType == typeof (PValueKeyValuePair))
                 {
-                    List<PValue> lst = (List<PValue>) subject.Value;
+                    var lst = (List<PValue>) subject.Value;
                     PValue key = lst.Count > 0 ? lst[0] : Null.CreatePValue();
-                    List<PValue> valueList = new List<PValue>(lst.Count > 0 ? lst.Count - 1 : 0);
+                    var valueList = new List<PValue>(lst.Count > 0 ? lst.Count - 1 : 0);
                     for (int i = 1; i < lst.Count; i++)
                         valueList.Add(lst[i]);
                     PValue value = List.CreatePValue(valueList);
@@ -403,10 +380,10 @@ namespace Prexonite.Types
         public override bool IndirectCall(
             StackContext sctx, PValue subject, PValue[] args, out PValue result)
         {
-            List<PValue> lst = new List<PValue>();
+            var lst = new List<PValue>();
             result = List.CreatePValue(lst);
             PValue r;
-            foreach (PValue e in ((IEnumerable<PValue>) subject.Value))
+            foreach (var e in ((IEnumerable<PValue>) subject.Value))
                 if (e.TryIndirectCall(sctx, args, out r))
                     lst.Add(r);
                 else
@@ -440,7 +417,7 @@ namespace Prexonite.Types
             if (rightOperand == null)
                 throw new ArgumentNullException("rightOperand");
 
-            List<PValue> nlst = new List<PValue>();
+            var nlst = new List<PValue>();
             PValue npv = List.CreatePValue(nlst);
 
             if (leftOperand.Type is ListPType)
@@ -483,7 +460,7 @@ namespace Prexonite.Types
             return CompilationFlags.PreferCustomImplementation;
         }
 
-        private static readonly MethodInfo GetListPType = typeof(PType).GetProperty("List").GetGetMethod();
+        private static readonly MethodInfo GetListPType = typeof (PType).GetProperty("List").GetGetMethod();
 
         /// <summary>
         /// Provides a custom compiler routine for emitting CIL byte code for a specific instruction.

@@ -1,25 +1,4 @@
-/*
- * Prexonite, a scripting engine (Scripting Language -> Bytecode -> Virtual Machine)
- *  Copyright (C) 2007  Christian "SealedSun" Klauser
- *  E-mail  sealedsun a.t gmail d.ot com
- *  Web     http://www.sealedsun.ch/
- *
- *  This program is free software; you can redistribute it and/or modify
- *  it under the terms of the GNU General Public License as published by
- *  the Free Software Foundation; either version 2 of the License, or
- *  (at your option) any later version.
- *
- *  Please contact me (sealedsun a.t gmail do.t com) if you need a different license.
- * 
- *  This program is distributed in the hope that it will be useful,
- *  but WITHOUT ANY WARRANTY; without even the implied warranty of
- *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- *  GNU General Public License for more details.
- *
- *  You should have received a copy of the GNU General Public License along
- *  with this program; if not, write to the Free Software Foundation, Inc.,
- *  51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
- */
+#region
 
 using System;
 using System.Collections.Generic;
@@ -27,6 +6,8 @@ using System.Reflection;
 using System.Text;
 using Prexonite.Compiler.Cil;
 using NoDebug = System.Diagnostics.DebuggerNonUserCodeAttribute;
+
+#endregion
 
 namespace Prexonite.Types
 {
@@ -54,10 +35,10 @@ namespace Prexonite.Types
 
             PValue arg = args[0];
             PValue sarg;
-            ObjectPType oT = arg.Type as ObjectPType;
+            var oT = arg.Type as ObjectPType;
             if (arg.IsNull)
-                _clrType = typeof(object);
-            else if ((object)oT != null && typeof(Type).IsAssignableFrom(oT.ClrType))
+                _clrType = typeof (object);
+            else if ((object) oT != null && typeof (Type).IsAssignableFrom(oT.ClrType))
                 _clrType = (Type) arg.Value;
             else if (arg.TryConvertTo(sctx, String, false, out sarg))
                 _clrType = GetType(sctx, (string) sarg.Value);
@@ -91,7 +72,7 @@ namespace Prexonite.Types
             if (result != null)
                 return true;
 
-            foreach (string ns in sctx.ImportedNamespaces)
+            foreach (var ns in sctx.ImportedNamespaces)
             {
                 string nsName = ns + '.' + clrTypeName;
                 result = _getType_forNamesapce(nsName, assemblies);
@@ -109,7 +90,7 @@ namespace Prexonite.Types
                 return result;
 
             //Try registered assemblies
-            foreach (Assembly ass in assemblies)
+            foreach (var ass in assemblies)
             {
                 result = ass.GetType(clrTypeName, false, true);
                 if (result != null)
@@ -161,7 +142,15 @@ namespace Prexonite.Types
             return TryDynamicCall(sctx, subject, args, call, id, out result, out resolvedMember, false);
         }
 
-        internal bool TryDynamicCall(StackContext sctx, PValue subject, PValue[] args, PCall call, string id, out PValue result, out MemberInfo resolvedMember, bool suppressIObject)
+        internal bool TryDynamicCall(
+            StackContext sctx,
+            PValue subject,
+            PValue[] args,
+            PCall call,
+            string id,
+            out PValue result,
+            out MemberInfo resolvedMember,
+            bool suppressIObject)
         {
             result = null;
             resolvedMember = null;
@@ -169,7 +158,7 @@ namespace Prexonite.Types
             if (id == null)
                 id = "";
 
-            IObject iobj = subject.Value as IObject;
+            var iobj = subject.Value as IObject;
             if ((!suppressIObject) && iobj != null && iobj.TryDynamicCall(sctx, args, call, id, out result))
                 return true;
 
@@ -177,11 +166,11 @@ namespace Prexonite.Types
             switch (id.ToLowerInvariant())
             {
                 case @"\implements":
-                    foreach (PValue arg in args)
+                    foreach (var arg in args)
                     {
                         Type T;
                         if (arg.Type is ObjectPType &&
-                            typeof(Type).IsAssignableFrom(((ObjectPType) arg.Type).ClrType))
+                            typeof (Type).IsAssignableFrom(((ObjectPType) arg.Type).ClrType))
                             T = (Type) arg.Value;
                         else
                             T = GetType(sctx, arg.CallToString(sctx));
@@ -199,7 +188,7 @@ namespace Prexonite.Types
                     return true;
             }
 
-            call_conditions cond = new call_conditions(sctx, args, call, id);
+            var cond = new call_conditions(sctx, args, call, id);
             MemberTypes mtypes;
             MemberFilter filter;
             if (id.Length != 0)
@@ -236,7 +225,7 @@ namespace Prexonite.Types
 
             //Get public member candidates, a stack is used so that newly discovered members 
             // can be examined with priority
-            Stack<MemberInfo> candidates = new Stack<MemberInfo>(
+            var candidates = new Stack<MemberInfo>(
                 _clrType.FindMembers(
                     mtypes,
                     //Member types
@@ -280,7 +269,7 @@ namespace Prexonite.Types
             if (id == null)
                 id = "";
 
-            call_conditions cond = new call_conditions(sctx, args, call, id);
+            var cond = new call_conditions(sctx, args, call, id);
             MemberTypes mtypes;
             MemberFilter filter;
             if (id.Length != 0)
@@ -300,7 +289,7 @@ namespace Prexonite.Types
             }
 
             //Get member candidates            
-            Stack<MemberInfo> candidates = new Stack<MemberInfo>(
+            var candidates = new Stack<MemberInfo>(
                 _clrType.FindMembers(
                     mtypes,
                     //Member types
@@ -331,11 +320,11 @@ namespace Prexonite.Types
             if (id == null || id.Length == 0)
                 throw new ArgumentException("id may not be null or empty.");
 
-            call_conditions cond = new call_conditions(sctx, args, call, id);
+            var cond = new call_conditions(sctx, args, call, id);
             cond.returnType = targetType;
 
             //Get member candidates            
-            Stack<MemberInfo> candidates = new Stack<MemberInfo>(
+            var candidates = new Stack<MemberInfo>(
                 _clrType.FindMembers(
                     MemberTypes.Method,
                     //Member types
@@ -363,9 +352,9 @@ namespace Prexonite.Types
                     case MemberTypes.Method:
                     case MemberTypes.Constructor:
                         //Try to execute the method
-                        MethodBase method = (MethodBase) candidate;
+                        var method = (MethodBase) candidate;
                         ParameterInfo[] parameters = method.GetParameters();
-                        object[] cargs = new object[parameters.Length];
+                        var cargs = new object[parameters.Length];
                         //The Sctx hack needs to modify the supplied arguments, so we need a copy of the original reference
                         PValue[] sargs = cond.Args;
 
@@ -413,7 +402,7 @@ namespace Prexonite.Types
                         break;
                     case MemberTypes.Field:
                         //Do field access
-                        FieldInfo field = (FieldInfo) candidate;
+                        var field = (FieldInfo) candidate;
                         if (cond.Call == PCall.Get)
                             if (subject == null)
                                 result = field.GetValue(null);
@@ -442,7 +431,7 @@ namespace Prexonite.Types
                         goto success;
                     case MemberTypes.Property:
                         //Push accessor method
-                        PropertyInfo property = (PropertyInfo) candidate;
+                        var property = (PropertyInfo) candidate;
                         if (cond.Call == PCall.Get)
                             candidates.Push(property.GetGetMethod());
                         else
@@ -450,7 +439,7 @@ namespace Prexonite.Types
                         break;
                     case MemberTypes.Event:
                         //Push requested method
-                        EventInfo info = (EventInfo) candidate;
+                        var info = (EventInfo) candidate;
                         if (cond.Directive == "" ||
                             Engine.DefaultStringComparer.Compare(cond.Directive, "Raise") == 0)
                         {
@@ -487,20 +476,20 @@ namespace Prexonite.Types
             string id,
             PValue subject)
         {
-            Stack<MemberInfo> candidates = new Stack<MemberInfo>();
+            var candidates = new Stack<MemberInfo>();
             candidates.Push(candidate);
             PValue ret;
             if (
                 !_try_execute(
                      candidates, new call_conditions(sctx, args, call, id), subject, out ret))
             {
-                StringBuilder sb = new StringBuilder();
+                var sb = new StringBuilder();
                 sb.Append("Cannot call '");
                 sb.Append(candidate);
                 sb.Append("' on object of Type ");
                 sb.Append((subject.IsNull ? "null" : subject.ClrType.FullName));
                 sb.Append(" with (");
-                foreach (PValue arg in args)
+                foreach (var arg in args)
                 {
                     sb.Append(arg);
                     sb.Append(", ");
@@ -549,9 +538,9 @@ namespace Prexonite.Types
 
         private static bool _default_member_filter(MemberInfo candidate, object arg)
         {
-            PropertyInfo property = candidate as PropertyInfo;
-            MethodInfo method = candidate as MethodInfo;
-            call_conditions cond = (call_conditions) arg;
+            var property = candidate as PropertyInfo;
+            var method = candidate as MethodInfo;
+            var cond = (call_conditions) arg;
 
             //Criteria No.1: Default indices are called "Item" by convention
             if (!(
@@ -589,7 +578,7 @@ namespace Prexonite.Types
 
         private static bool _member_filter(MemberInfo candidate, object arg)
         {
-            call_conditions cond = (call_conditions) arg;
+            var cond = (call_conditions) arg;
             //Criteria No.1: The members name (may be supressed)
             if (
                 !(cond.IgnoreId ||
@@ -632,7 +621,7 @@ namespace Prexonite.Types
             }
             else if (candidate is PropertyInfo)
             {
-                PropertyInfo property = candidate as PropertyInfo;
+                var property = candidate as PropertyInfo;
                 if (cond.Call == PCall.Get)
                 {
                     if (!property.CanRead)
@@ -654,7 +643,7 @@ namespace Prexonite.Types
             }
             else if (candidate is EventInfo)
             {
-                EventInfo info = candidate as EventInfo;
+                var info = candidate as EventInfo;
                 if (cond.Directive == "" ||
                     Engine.DefaultStringComparer.Compare(cond.Directive, "Raise") == 0)
                 {
@@ -693,7 +682,7 @@ namespace Prexonite.Types
                    //One argument must be missing
                    cond.Args.Length + 1 == parameters.Length &&
                    //First parameter must be a StackContext
-                   typeof(StackContext).IsAssignableFrom(parameters[0].ParameterType));
+                   typeof (StackContext).IsAssignableFrom(parameters[0].ParameterType));
         }
 
         private static bool _method_filter(MethodBase method, call_conditions cond)
@@ -703,7 +692,7 @@ namespace Prexonite.Types
             //Hide Sctx parameter
             if (_sctx_hack(parameters, cond))
             {
-                ParameterInfo[] relevantParameters = new ParameterInfo[parameters.Length - 1];
+                var relevantParameters = new ParameterInfo[parameters.Length - 1];
                 Array.Copy(parameters, 1, relevantParameters, 0, relevantParameters.Length);
                 parameters = relevantParameters;
             }
@@ -727,7 +716,7 @@ namespace Prexonite.Types
             //optional Criteria No.3: Return types must match
             if (cond.returnType != null && method is MethodInfo)
             {
-                MethodInfo methodEx = method as MethodInfo;
+                var methodEx = method as MethodInfo;
                 if (!(methodEx.ReturnType.Equals(cond.returnType) ||
                       cond.returnType.IsAssignableFrom(methodEx.ReturnType)))
                 {
@@ -743,7 +732,7 @@ namespace Prexonite.Types
             StackContext sctx, PValue subject, PValue[] args, out PValue result)
         {
             result = null;
-            IIndirectCall icall = subject.Value as IIndirectCall;
+            var icall = subject.Value as IIndirectCall;
             if (icall != null)
                 result = icall.IndirectCall(sctx, args) ?? Null.CreatePValue();
 
@@ -765,13 +754,13 @@ namespace Prexonite.Types
             PValue result;
             if (!TryDynamicCall(sctx, subject, args, call, id, out result, out resolvedMember))
             {
-                StringBuilder sb = new StringBuilder();
+                var sb = new StringBuilder();
                 sb.Append("Cannot resolve call '");
                 sb.Append(id);
                 sb.Append("' on object of type ");
                 sb.Append(subject.IsNull ? "null" : subject.ClrType.FullName);
                 sb.Append(" with (");
-                foreach (PValue arg in args)
+                foreach (var arg in args)
                 {
                     sb.Append(arg);
                     sb.Append(", ");
@@ -797,13 +786,13 @@ namespace Prexonite.Types
             PValue result;
             if (!TryStaticCall(sctx, args, call, id, out result, out resolvedMember))
             {
-                StringBuilder sb = new StringBuilder();
+                var sb = new StringBuilder();
                 sb.Append("Cannot resolve static call '");
                 sb.Append(id);
                 sb.Append("' on type ");
                 sb.Append(_clrType.FullName);
                 sb.Append(" with (");
-                foreach (PValue arg in args)
+                foreach (var arg in args)
                 {
                     sb.Append(arg);
                     sb.Append(", ");
@@ -831,12 +820,12 @@ namespace Prexonite.Types
         public bool TryContruct(
             StackContext sctx, PValue[] args, out PValue result, out MemberInfo resolvedMember)
         {
-            call_conditions cond = new call_conditions(sctx, args, PCall.Get, "");
+            var cond = new call_conditions(sctx, args, PCall.Get, "");
             cond.IgnoreId = true;
 
             //Get member candidates            
-            Stack<MemberInfo> candidates = new Stack<MemberInfo>();
-            foreach (ConstructorInfo ctor in _clrType.GetConstructors())
+            var candidates = new Stack<MemberInfo>();
+            foreach (var ctor in _clrType.GetConstructors())
             {
                 if (_method_filter(ctor, cond))
                     candidates.Push(ctor);
@@ -863,13 +852,13 @@ namespace Prexonite.Types
             return
                 TryStaticCall(
                     sctx,
-                    new PValue[] {leftOperand, rightOperand},
+                    new[] {leftOperand, rightOperand},
                     PCall.Get,
                     "op_Addition",
                     out result) ||
                 rightOperand.Type.TryStaticCall(
                     sctx,
-                    new PValue[] {rightOperand, leftOperand},
+                    new[] {rightOperand, leftOperand},
                     PCall.Get,
                     "op_Addition",
                     out result);
@@ -881,13 +870,13 @@ namespace Prexonite.Types
             return
                 TryStaticCall(
                     sctx,
-                    new PValue[] {leftOperand, rightOperand},
+                    new[] {leftOperand, rightOperand},
                     PCall.Get,
                     "op_Subtraction",
                     out result) ||
                 rightOperand.Type.TryStaticCall(
                     sctx,
-                    new PValue[] {rightOperand, leftOperand},
+                    new[] {rightOperand, leftOperand},
                     PCall.Get,
                     "op_Subtraction",
                     out result);
@@ -899,13 +888,13 @@ namespace Prexonite.Types
             return
                 TryStaticCall(
                     sctx,
-                    new PValue[] {leftOperand, rightOperand},
+                    new[] {leftOperand, rightOperand},
                     PCall.Get,
                     "op_Multiply",
                     out result) ||
                 rightOperand.Type.TryStaticCall(
                     sctx,
-                    new PValue[] {rightOperand, leftOperand},
+                    new[] {rightOperand, leftOperand},
                     PCall.Get,
                     "op_Multiply",
                     out result);
@@ -917,13 +906,13 @@ namespace Prexonite.Types
             return
                 TryStaticCall(
                     sctx,
-                    new PValue[] {leftOperand, rightOperand},
+                    new[] {leftOperand, rightOperand},
                     PCall.Get,
                     "op_Division",
                     out result) ||
                 rightOperand.Type.TryStaticCall(
                     sctx,
-                    new PValue[] {rightOperand, leftOperand},
+                    new[] {rightOperand, leftOperand},
                     PCall.Get,
                     "op_Division",
                     out result);
@@ -935,13 +924,13 @@ namespace Prexonite.Types
             return
                 TryStaticCall(
                     sctx,
-                    new PValue[] {leftOperand, rightOperand},
+                    new[] {leftOperand, rightOperand},
                     PCall.Get,
                     "op_Modulus",
                     out result) ||
                 rightOperand.Type.TryStaticCall(
                     sctx,
-                    new PValue[] {rightOperand, leftOperand},
+                    new[] {rightOperand, leftOperand},
                     PCall.Get,
                     "op_Modulus",
                     out result);
@@ -953,13 +942,13 @@ namespace Prexonite.Types
             return
                 TryStaticCall(
                     sctx,
-                    new PValue[] {leftOperand, rightOperand},
+                    new[] {leftOperand, rightOperand},
                     PCall.Get,
                     "op_BitwiseAnd",
                     out result) ||
                 rightOperand.Type.TryStaticCall(
                     sctx,
-                    new PValue[] {rightOperand, leftOperand},
+                    new[] {rightOperand, leftOperand},
                     PCall.Get,
                     "op_BitwiseAnd",
                     out result);
@@ -971,13 +960,13 @@ namespace Prexonite.Types
             return
                 TryStaticCall(
                     sctx,
-                    new PValue[] {leftOperand, rightOperand},
+                    new[] {leftOperand, rightOperand},
                     PCall.Get,
                     "op_BitwiseOr",
                     out result) ||
                 rightOperand.Type.TryStaticCall(
                     sctx,
-                    new PValue[] {rightOperand, leftOperand},
+                    new[] {rightOperand, leftOperand},
                     PCall.Get,
                     "op_BitwiseOr",
                     out result);
@@ -989,13 +978,13 @@ namespace Prexonite.Types
             return
                 TryStaticCall(
                     sctx,
-                    new PValue[] {leftOperand, rightOperand},
+                    new[] {leftOperand, rightOperand},
                     PCall.Get,
                     "op_ExclusiveOr",
                     out result) ||
                 rightOperand.Type.TryStaticCall(
                     sctx,
-                    new PValue[] {rightOperand, leftOperand},
+                    new[] {rightOperand, leftOperand},
                     PCall.Get,
                     "op_ExclusiveOr",
                     out result);
@@ -1007,13 +996,13 @@ namespace Prexonite.Types
             return
                 TryStaticCall(
                     sctx,
-                    new PValue[] {leftOperand, rightOperand},
+                    new[] {leftOperand, rightOperand},
                     PCall.Get,
                     "op_Equality",
                     out result) ||
                 rightOperand.Type.TryStaticCall(
                     sctx,
-                    new PValue[] {rightOperand, leftOperand},
+                    new[] {rightOperand, leftOperand},
                     PCall.Get,
                     "op_Equality",
                     out result);
@@ -1025,13 +1014,13 @@ namespace Prexonite.Types
             return
                 TryStaticCall(
                     sctx,
-                    new PValue[] {leftOperand, rightOperand},
+                    new[] {leftOperand, rightOperand},
                     PCall.Get,
                     "op_Inequality",
                     out result) ||
                 rightOperand.Type.TryStaticCall(
                     sctx,
-                    new PValue[] {rightOperand, leftOperand},
+                    new[] {rightOperand, leftOperand},
                     PCall.Get,
                     "op_Inequality",
                     out result);
@@ -1043,13 +1032,13 @@ namespace Prexonite.Types
             return
                 TryStaticCall(
                     sctx,
-                    new PValue[] {leftOperand, rightOperand},
+                    new[] {leftOperand, rightOperand},
                     PCall.Get,
                     "op_GreaterThan",
                     out result) ||
                 rightOperand.Type.TryStaticCall(
                     sctx,
-                    new PValue[] {rightOperand, leftOperand},
+                    new[] {rightOperand, leftOperand},
                     PCall.Get,
                     "op_GreaterThan",
                     out result);
@@ -1064,13 +1053,13 @@ namespace Prexonite.Types
             return
                 TryStaticCall(
                     sctx,
-                    new PValue[] {leftOperand, rightOperand},
+                    new[] {leftOperand, rightOperand},
                     PCall.Get,
                     "op_GreaterThanOrEqual",
                     out result) ||
                 rightOperand.Type.TryStaticCall(
                     sctx,
-                    new PValue[] {rightOperand, leftOperand},
+                    new[] {rightOperand, leftOperand},
                     PCall.Get,
                     "op_GreaterThanOrEqual",
                     out result);
@@ -1082,13 +1071,13 @@ namespace Prexonite.Types
             return
                 TryStaticCall(
                     sctx,
-                    new PValue[] {leftOperand, rightOperand},
+                    new[] {leftOperand, rightOperand},
                     PCall.Get,
                     "op_LessThan",
                     out result) ||
                 rightOperand.Type.TryStaticCall(
                     sctx,
-                    new PValue[] {rightOperand, leftOperand},
+                    new[] {rightOperand, leftOperand},
                     PCall.Get,
                     "op_LessThan",
                     out result);
@@ -1103,13 +1092,13 @@ namespace Prexonite.Types
             return
                 TryStaticCall(
                     sctx,
-                    new PValue[] {leftOperand, rightOperand},
+                    new[] {leftOperand, rightOperand},
                     PCall.Get,
                     "op_LessThanOrEqual",
                     out result) ||
                 rightOperand.Type.TryStaticCall(
                     sctx,
-                    new PValue[] {rightOperand, leftOperand},
+                    new[] {rightOperand, leftOperand},
                     PCall.Get,
                     "op_LessThanOrEqual",
                     out result);
@@ -1119,32 +1108,32 @@ namespace Prexonite.Types
         {
             return
                 TryStaticCall(
-                    sctx, new PValue[] {operand}, PCall.Get, "op_UnaryNegation", out result);
+                    sctx, new[] {operand}, PCall.Get, "op_UnaryNegation", out result);
         }
 
         public override bool LogicalNot(StackContext sctx, PValue operand, out PValue result)
         {
             return
-                TryStaticCall(sctx, new PValue[] {operand}, PCall.Get, "op_LogicalNot", out result);
+                TryStaticCall(sctx, new[] {operand}, PCall.Get, "op_LogicalNot", out result);
         }
 
         public override bool OnesComplement(StackContext sctx, PValue operand, out PValue result)
         {
             return
                 TryStaticCall(
-                    sctx, new PValue[] {operand}, PCall.Get, "op_OnesComplement", out result);
+                    sctx, new[] {operand}, PCall.Get, "op_OnesComplement", out result);
         }
 
         public override bool Increment(StackContext sctx, PValue operand, out PValue result)
         {
             return
-                TryStaticCall(sctx, new PValue[] {operand}, PCall.Get, "op_Increment", out result);
+                TryStaticCall(sctx, new[] {operand}, PCall.Get, "op_Increment", out result);
         }
 
         public override bool Decrement(StackContext sctx, PValue operand, out PValue result)
         {
             return
-                TryStaticCall(sctx, new PValue[] {operand}, PCall.Get, "op_Decrement", out result);
+                TryStaticCall(sctx, new[] {operand}, PCall.Get, "op_Decrement", out result);
         }
 
         #endregion
@@ -1158,8 +1147,8 @@ namespace Prexonite.Types
             bool useExplicit,
             out PValue result)
         {
-            PValue[] arg = new PValue[] {subject};
-            ObjectPType objT = target as ObjectPType;
+            var arg = new[] {subject};
+            var objT = target as ObjectPType;
             result = null;
             if (target is IntPType)
             {
@@ -1175,7 +1164,7 @@ namespace Prexonite.Types
                         //ignore invalid cast exceptions
                     }
                 }
-                else if (_try_clr_convert_to(sctx, subject, typeof(int), useExplicit, out result))
+                else if (_try_clr_convert_to(sctx, subject, typeof (int), useExplicit, out result))
                     return true;
 
                 return false;
@@ -1195,21 +1184,21 @@ namespace Prexonite.Types
                     }
                 }
 
-                if (_try_clr_convert_to(sctx, subject, typeof(double), useExplicit, out result))
+                if (_try_clr_convert_to(sctx, subject, typeof (double), useExplicit, out result))
                     return true;
 
                 return false;
             }
             else if (target is StringPType)
             {
-                return _try_clr_convert_to(sctx, subject, typeof(string), useExplicit, out result);
+                return _try_clr_convert_to(sctx, subject, typeof (string), useExplicit, out result);
             }
             else if (target is BoolPType)
             {
                 // ::op_True > ::op_Implicit > ::op_Explicit
                 PValue res;
                 if (!TryStaticCall(sctx, arg, PCall.Get, "op_True", out res))
-                    if (!_try_clr_convert_to(sctx, subject, typeof(bool), useExplicit, out res))
+                    if (!_try_clr_convert_to(sctx, subject, typeof (bool), useExplicit, out res))
                         //An object is true by default
                         result = new PValue(true, Bool);
                     else if (res.Value is bool)
@@ -1219,7 +1208,7 @@ namespace Prexonite.Types
 
                 return true;
             }
-            else if ((object)objT != null)
+            else if ((object) objT != null)
             {
                 if (objT.ClrType.IsInterface &&
                     ClrType.FindInterfaces(
@@ -1243,7 +1232,7 @@ namespace Prexonite.Types
             bool useExplicit,
             out PValue result)
         {
-            PValue[] arg = new PValue[] {subject};
+            var arg = new[] {subject};
             if (
                 _try_call_conversion_operator(
                     sctx, arg, PCall.Get, "op_Implicit", target, out result) ||

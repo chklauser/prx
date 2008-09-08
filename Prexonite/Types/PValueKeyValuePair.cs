@@ -1,28 +1,9 @@
-/*
- * Prexonite, a scripting engine (Scripting Language -> Bytecode -> Virtual Machine)
- *  Copyright (C) 2007  Christian "SealedSun" Klauser
- *  E-mail  sealedsun a.t gmail d.ot com
- *  Web     http://www.sealedsun.ch/
- *
- *  This program is free software; you can redistribute it and/or modify
- *  it under the terms of the GNU General Public License as published by
- *  the Free Software Foundation; either version 2 of the License, or
- *  (at your option) any later version.
- *
- *  Please contact me (sealedsun a.t gmail do.t com) if you need a different license.
- * 
- *  This program is distributed in the hope that it will be useful,
- *  but WITHOUT ANY WARRANTY; without even the implied warranty of
- *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- *  GNU General Public License for more details.
- *
- *  You should have received a copy of the GNU General Public License along
- *  with this program; if not, write to the Free Software Foundation, Inc.,
- *  51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
- */
+#region
 
 using System;
 using System.Collections.Generic;
+
+#endregion
 
 namespace Prexonite.Types
 {
@@ -33,7 +14,7 @@ namespace Prexonite.Types
     public class PValueKeyValuePair : IObject
     {
         private static readonly ObjectPType _objectType =
-            new ObjectPType(typeof(PValueKeyValuePair));
+            new ObjectPType(typeof (PValueKeyValuePair));
 
         /// <summary>
         /// A static reference to the object type of this class.
@@ -117,13 +98,11 @@ namespace Prexonite.Types
                     {
                         if (args[0].TryConvertTo(sctx, PType.Int, out arg0))
                         {
-                            int i = (int) arg0.Value;
+                            var i = (int) arg0.Value;
                             if (i == 0)
                                 result = _key;
-                            else if (i == 1)
-                                result = _value;
                             else
-                                result = PType.Null.CreatePValue();
+                                result = i == 1 ? _value : PType.Null.CreatePValue();
                         }
                     }
                     break;
@@ -138,7 +117,7 @@ namespace Prexonite.Types
                     {
                         if (args[0].TryConvertTo(sctx, _objectType, out arg0))
                         {
-                            PValueKeyValuePair pair = (PValueKeyValuePair) arg0.Value;
+                            var pair = (PValueKeyValuePair) arg0.Value;
                             result = _key.Equals(pair._key) && _value.Equals(pair._value);
                         }
                     }
@@ -168,13 +147,13 @@ namespace Prexonite.Types
 
             if (obj is PValueKeyValuePair)
             {
-                PValueKeyValuePair pvkvp = (PValueKeyValuePair) obj;
+                var pvkvp = (PValueKeyValuePair) obj;
                 okey = pvkvp.Key;
                 ovalue = pvkvp.Value;
             }
             else if (obj is KeyValuePair<PValue, PValue>)
             {
-                KeyValuePair<PValue, PValue> kvp = (KeyValuePair<PValue, PValue>) obj;
+                var kvp = (KeyValuePair<PValue, PValue>) obj;
                 okey = kvp.Key;
                 ovalue = kvp.Value;
             }
@@ -213,6 +192,5 @@ namespace Prexonite.Types
         {
             return new PValueKeyValuePair(kvp);
         }
-
     }
 }

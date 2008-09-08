@@ -29,6 +29,7 @@ using Prexonite.Types;
 
 namespace Prexonite
 {
+    [DebuggerNonUserCode]
     public sealed class MetaEntry
     {
         #region Fields
@@ -433,8 +434,8 @@ namespace Prexonite
 
         public static MetaEntry[] CreateArray(StackContext sctx, List<PValue> elements)
         {
-            List<MetaEntry> proto = new List<MetaEntry>(elements.Count);
-            foreach(PValue pv in elements)
+            var proto = new List<MetaEntry>(elements.Count);
+            foreach(var pv in elements)
             {
                 PValue pventry;
                 if(pv.TryConvertTo(sctx, typeof(MetaEntry), out pventry))
@@ -449,15 +450,13 @@ namespace Prexonite
             return proto.ToArray();
         }
 
-        [DebuggerNonUserCode]
         public override string ToString()
         {
-            StringBuilder buffer = new StringBuilder();
+            var buffer = new StringBuilder();
             ToString(buffer);
             return buffer.ToString();
         }
 
-        [DebuggerNonUserCode]
         public void ToString(StringBuilder buffer)
         {
             if(buffer == null)
@@ -484,6 +483,15 @@ namespace Prexonite
                     buffer.Append(StringPType.ToIdOrLiteral(_text));
                     break;
             }
+        }
+
+        /// <summary>
+        /// Returns the default meta entry.
+        /// </summary>
+        /// <returns>The default meta entry.</returns>
+        public static MetaEntry CreateDefaultEntry()
+        {
+            return new MetaEntry("");
         }
     }
 }

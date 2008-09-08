@@ -33,14 +33,12 @@ function create_immutable_set(elements)[is volatile;]
 {
     elements = if(elements is Null) [] else all(elements); //all makes a copy
     
-    //Actions
     function add(this) = 
         ((var args) >> skip(1)) + elements >> distinct >> create_immutable_set;
         
     function remove(this) =
         elements >> except((var args) >> skip(1)) >> create_immutable_set;
-    
-    //Queries
+        
     function contains(this) =
         (var args) >> skip(1) >>
             forall(arg => elements.Contains(arg));

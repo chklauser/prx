@@ -1,30 +1,11 @@
-/*
- * Prexonite, a scripting engine (Scripting Language -> Bytecode -> Virtual Machine)
- *  Copyright (C) 2007  Christian "SealedSun" Klauser
- *  E-mail  sealedsun a.t gmail d.ot com
- *  Web     http://www.sealedsun.ch/
- *
- *  This program is free software; you can redistribute it and/or modify
- *  it under the terms of the GNU General Public License as published by
- *  the Free Software Foundation; either version 2 of the License, or
- *  (at your option) any later version.
- *
- *  Please contact me (sealedsun a.t gmail do.t com) if you need a different license.
- * 
- *  This program is distributed in the hope that it will be useful,
- *  but WITHOUT ANY WARRANTY; without even the implied warranty of
- *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- *  GNU General Public License for more details.
- *
- *  You should have received a copy of the GNU General Public License along
- *  with this program; if not, write to the Free Software Foundation, Inc.,
- *  51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
- */
+#region
 
 using System;
 using System.Collections.ObjectModel;
 using System.Diagnostics;
 using System.Reflection;
+
+#endregion
 
 namespace Prexonite.Types
 {
@@ -39,14 +20,14 @@ namespace Prexonite.Types
 
         protected void InitializeExtensionTable()
         {
-            if(_et != null)
+            if (_et != null)
                 throw new InvalidOperationException("The extension table for this object has already been created.");
             _et = new ExtensionTable();
         }
 
         protected ExtendableObject(bool _tableIsInitialized)
         {
-            if(!_tableIsInitialized)
+            if (!_tableIsInitialized)
                 InitializeExtensionTable();
         }
 
@@ -75,11 +56,12 @@ namespace Prexonite.Types
         ///         If you want to intercept object member calls yourself, overwrite <see cref="TryDynamicCall(StackContext,PValue,PValue[],PCall,string,out PValue)"/> instead.
         ///     </para>
         /// </remarks>
-        protected virtual bool TryDynamicClrCall(StackContext sctx, PValue subject, PValue[] args, PCall call, string id, out PValue result)
+        protected virtual bool TryDynamicClrCall(
+            StackContext sctx, PValue subject, PValue[] args, PCall call, string id, out PValue result)
         {
             MemberInfo dummyInfo;
-            ObjectPType objT = subject.Type as ObjectPType;
-            if ((object)objT != null)
+            var objT = subject.Type as ObjectPType;
+            if ((object) objT != null)
                 return objT.TryDynamicCall(sctx, subject, args, call, id, out result, out dummyInfo, true);
             else
                 return subject.TryDynamicCall(sctx, args, call, id, out result);
@@ -149,24 +131,25 @@ namespace Prexonite.Types
         ///         If you want to intercept object member calls yourself, overwrite <see cref="TryDynamicClrCall(StackContext,PValue,PValue[],PCall,string,out PValue)"/> instead.
         ///     </para>
         /// </remarks>
-        public bool TryDynamicCall(StackContext sctx, PValue subject, PValue[] args, PCall call, string id, out PValue result)
+        public bool TryDynamicCall(
+            StackContext sctx, PValue subject, PValue[] args, PCall call, string id, out PValue result)
         {
             if (sctx == null)
                 throw new ArgumentNullException("sctx");
             if (args == null)
-                args = new PValue[] { };
+                args = new PValue[] {};
             if (id == null)
                 id = "";
 
-            if(_et == null)
+            if (_et == null)
                 _et = new ExtensionTable();
 
-            if (TryDynamicClrCall(sctx, subject, args, call, id, out result) ||  //Try conventional call
+            if (TryDynamicClrCall(sctx, subject, args, call, id, out result) || //Try conventional call
                 _tryDynamicExtensionCall(sctx, subject, args, call, id, out result)) //Try extension call
                 return true;
             else if (call == PCall.Set && args.Length > 0) //Add field if it does not exist
                 result = _dynamicCall(
-                    sctx, new PValue[] { id, args[0] }, PCall.Set, StructurePType.SetId);
+                    sctx, new[] {id, args[0]}, PCall.Set, StructurePType.SetId);
             else
                 result = null; //Make sure result is really null.
 
@@ -177,10 +160,10 @@ namespace Prexonite.Types
 
         protected void AddRefMember(string id, PValue value)
         {
-            if(id == null)
+            if (id == null)
                 throw new ArgumentNullException("id");
-            if(value == null)
-                throw new ArgumentNullException("value"); 
+            if (value == null)
+                throw new ArgumentNullException("value");
             _et.Add(new ExtensionMember(id, true, value));
         }
 
@@ -189,7 +172,7 @@ namespace Prexonite.Types
             if (id == null)
                 throw new ArgumentNullException("id");
             if (value == null)
-                throw new ArgumentNullException("value"); 
+                throw new ArgumentNullException("value");
             _et.Add(new ExtensionMember(id, value));
         }
 
@@ -198,7 +181,8 @@ namespace Prexonite.Types
             _et.Remove(id);
         }
 
-        private bool _tryDynamicExtensionCall(StackContext sctx, PValue subject, PValue[] args, PCall call, string id, out PValue result)
+        private bool _tryDynamicExtensionCall(
+            StackContext sctx, PValue subject, PValue[] args, PCall call, string id, out PValue result)
         {
             result = null;
 
@@ -221,10 +205,10 @@ namespace Prexonite.Types
                         if (args.Length < 2)
                             goto default;
 
-                        string mid = (string)args[0].ConvertTo(sctx, PType.String).Value;
+                        var mid = (string) args[0].ConvertTo(sctx, PType.String).Value;
 
                         if (reference || args.Length > 2)
-                            reference = (bool)args[1].ConvertTo(sctx, PType.Bool).Value;
+                            reference = (bool) args[1].ConvertTo(sctx, PType.Bool).Value;
 
                         if (_et.Contains(mid))
                             m = _et[mid];
@@ -295,13 +279,13 @@ namespace Prexonite.Types
             if (sctx == null)
                 throw new ArgumentNullException("sctx");
             if (args == null)
-                args = new PValue[] { };
+                args = new PValue[] {};
 
             if (_et == null)
                 _et = new ExtensionTable();
 
             ExtensionMember m;
-            if(!_et.TryGetValue(StructurePType.IndirectCallId, out m))
+            if (!_et.TryGetValue(StructurePType.IndirectCallId, out m))
                 throw new PrexoniteException(this + " does not support indirect calls.");
             return
                 m.DynamicCall(
@@ -336,9 +320,9 @@ namespace Prexonite.Types
             if (value == null)
                 value = PType.Null.CreatePValue();
 
-            _id = id;
+            Id = id;
             _indirect = indirect;
-            _value = value;
+            Value = value;
         }
 
         public bool Indirect
@@ -346,27 +330,18 @@ namespace Prexonite.Types
             get { return _indirect; }
             set { _indirect = value; }
         }
+
         private bool _indirect;
 
-        public string Id
-        {
-            get { return _id; }
-            set { _id = value; }
-        }
-        private string _id;
+        public string Id { get; set; }
 
-        public PValue Value
-        {
-            get { return _value; }
-            set { _value = value; }
-        }
-        private PValue _value;
+        public PValue Value { get; set; }
 
         public bool TryDynamicCall(
             StackContext sctx, PValue[] args, PCall call, out PValue result)
         {
             result = null;
-            if(_indirect)
+            if (_indirect)
             {
                 result = Value.IndirectCall(sctx, args);
             }
@@ -423,7 +398,7 @@ namespace Prexonite.Types
 
         public bool TryGetValue(string key, out ExtensionMember value)
         {
-            if(Contains(key))
+            if (Contains(key))
             {
                 value = this[key];
                 return true;

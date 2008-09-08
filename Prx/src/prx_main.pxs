@@ -54,7 +54,7 @@ function prx\main(args)
     	printHead;
 		println("NO ARGUMENTS DETECTED.");
 		displayHelp;	
-		break;
+		return;
 	}
 	
 	//Define the states of the arguments parser
@@ -126,7 +126,7 @@ function prx\main(args)
     	if(state == state\interactive)
 		    prx\interactive;
 		else
-    	    red = () => println("No source files specified.");
+    	    red(() => println("No source files specified."));
 		return;	
 	}
 	
@@ -163,18 +163,18 @@ function prx\main(args)
 	}
 	catch(var exc)
 	{
-        green = () => println(exc);
+        green(() => println(exc));
 	}
 	
 	//Compilation errors are not thrown as exceptions but held in 'ldr.Errors'
 	if(ldr.Errors.Count != 0 Or not (exc is null)) 
 	{
-	    red = () =>
+	    red(() =>
         	{    	
         		println("Errors detected. Aborting...");
         		foreach(var err in ldr.Errors)
         			println(err);
-        	};
+        	});
         exc = null; 
     	if(debugging) //in debugging mode, allow the script to be examined
     	    prx\interactive;
@@ -229,10 +229,7 @@ runInteractive:
     }
 }
 
-//A little bit of voodoo magic (read 'custom commands') replaces the original 
-// call to 'prx\main' with a new call using 'originalArgs' as the arguments.
-// And by 'replace' I mean deleting the old stack entry and inserting the new one.
-function reboot does prx\main(originalArgs); //__replace_call(@"prx\main", originalArgs);
+function reboot does prx\main(originalArgs);
 
 function displayHelp does print = 
 	"Usage:\n" + 
@@ -251,3 +248,6 @@ function displayHelp does print =
 	"-b enables tab completion (experimental, accepts only ASCII characters).\n"+
 	"-a forwards the rest of the arguments to the executing script.\n" + 
 	"-d enables debugging mode";
+	
+//Invokes the CIL compiler, a component that translates the Prexonite byte code into late bound CIL byte code to improve performance.
+{ CompileToCil(); }

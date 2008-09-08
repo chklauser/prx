@@ -349,12 +349,15 @@ namespace Prexonite
         public PValue Run(Engine parentEngine, PValue[] args)
         {
             string entryName = Meta[EntryKey];
-            if (!Functions.Contains(entryName))
+            PFunction func;
+            if (!Functions.TryGetValue(entryName, out func))
                 throw new PrexoniteException(
                     "Cannot find an entry function named \"" + entryName + "\"");
-            FunctionContext fctx = Functions[entryName].CreateFunctionContext(parentEngine, args);
-            parentEngine.Stack.AddLast(fctx);
-            return parentEngine.Process();
+
+            //Make sure the functions environment is initialized.
+            EnsureInitialization(parentEngine, func);
+
+            return func.Run(parentEngine, args);
         }
 
         /// <summary>

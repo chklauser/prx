@@ -1,8 +1,8 @@
-﻿<Project DefaultTargets="Build" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+﻿<Project DefaultTargets="Build" xmlns="http://schemas.microsoft.com/developer/msbuild/2003" ToolsVersion="3.5">
   <PropertyGroup>
     <Configuration Condition=" '$(Configuration)' == '' ">Debug</Configuration>
     <Platform Condition=" '$(Platform)' == '' ">AnyCPU</Platform>
-    <ProductVersion>8.0.50727</ProductVersion>
+    <ProductVersion>9.0.21022</ProductVersion>
     <SchemaVersion>2.0</SchemaVersion>
     <ProjectGuid>{8C90E0C5-8FD3-407C-ABE8-9EE856F87269}</ProjectGuid>
     <OutputType>Exe</OutputType>
@@ -18,6 +18,11 @@
     <SccProvider>
     </SccProvider>
     <ApplicationIcon>Prx.ico</ApplicationIcon>
+    <FileUpgradeFlags>
+    </FileUpgradeFlags>
+    <OldToolsVersion>2.0</OldToolsVersion>
+    <UpgradeBackupLocation>
+    </UpgradeBackupLocation>
   </PropertyGroup>
   <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Debug|AnyCPU' ">
     <DebugSymbols>true</DebugSymbols>
@@ -38,15 +43,12 @@
   </PropertyGroup>
   <ItemGroup>
     <Reference Include="System" />
-    <Reference Include="System.Data" />
-    <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
     <Compile Include="Benchmarking\Benchmark.cs" />
     <Compile Include="Benchmarking\BenchmarkEntry.cs" />
     <Compile Include="Benchmarking\BenchmarkEntryCollection.cs" />
     <Compile Include="Benchmarking\Measurement.cs" />
-    <Compile Include="Commands\Timer\SharedTimer.cs" />
     <Compile Include="PrexoniteConsole.cs" />
     <Compile Include="Program.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
@@ -78,6 +80,9 @@
     </None>
     <None Include="psr\misc.pxs">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </None>
+    <None Include="psr\prop.pxs">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </None>
     <None Include="psr\queue.pxs">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>

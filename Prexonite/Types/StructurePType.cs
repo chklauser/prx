@@ -1,29 +1,10 @@
-/*
- * Prexonite, a scripting engine (Scripting Language -> Bytecode -> Virtual Machine)
- *  Copyright (C) 2007  Christian "SealedSun" Klauser
- *  E-mail  sealedsun a.t gmail d.ot com
- *  Web     http://www.sealedsun.ch/
- *
- *  This program is free software; you can redistribute it and/or modify
- *  it under the terms of the GNU General Public License as published by
- *  the Free Software Foundation; either version 2 of the License, or
- *  (at your option) any later version.
- *
- *  Please contact me (sealedsun a.t gmail do.t com) if you need a different license.
- * 
- *  This program is distributed in the hope that it will be useful,
- *  but WITHOUT ANY WARRANTY; without even the implied warranty of
- *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- *  GNU General Public License for more details.
- *
- *  You should have received a copy of the GNU General Public License along
- *  with this program; if not, write to the Free Software Foundation, Inc.,
- *  51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
- */
+#region
 
 using System;
 using System.Reflection;
 using Prexonite.Compiler.Cil;
+
+#endregion
 
 namespace Prexonite.Types
 {
@@ -90,12 +71,9 @@ namespace Prexonite.Types
             {
                 if (IsReference)
                     return Value.IndirectCall(sctx, args);
-                else
-                {
-                    if (call == PCall.Set && args.Length != 0)
-                        Value = args[1];
-                    return Value;
-                }
+                if (call == PCall.Set && args.Length != 0)
+                    Value = args[1];
+                return Value;
             }
 
             #region IIndirectCall Members
@@ -104,12 +82,9 @@ namespace Prexonite.Types
             {
                 if (IsReference)
                     return Value.IndirectCall(sctx, args);
-                else
-                {
-                    if (args.Length > 1)
-                        Value = args[1];
-                    return Value;
-                }
+                if (args.Length > 1)
+                    Value = args[1];
+                return Value;
             }
 
             #endregion
@@ -132,7 +107,7 @@ namespace Prexonite.Types
 
         internal static PValue[] _addThis(PValue Subject, PValue[] args)
         {
-            PValue[] argst = new PValue[args.Length + 1];
+            var argst = new PValue[args.Length + 1];
             argst[0] = Subject;
             Array.Copy(args, 0, argst, 1, args.Length);
             return argst;
@@ -140,7 +115,7 @@ namespace Prexonite.Types
 
         internal static PValue[] _addId(string id, PValue[] args)
         {
-            PValue[] argst = new PValue[args.Length + 1];
+            var argst = new PValue[args.Length + 1];
             argst[0] = args[0]; //subject
             argst[1] = id;
             Array.Copy(args, 1, argst, 2, args.Length - 1);
@@ -156,7 +131,7 @@ namespace Prexonite.Types
             out PValue result)
         {
             result = null;
-            SymbolTable<Member> obj = subject.Value as SymbolTable<Member>;
+            var obj = subject.Value as SymbolTable<Member>;
             if (obj == null)
                 return false;
 
@@ -179,7 +154,7 @@ namespace Prexonite.Types
                         if (args.Length < 2)
                             goto default;
 
-                        string mid = (string) args[0].ConvertTo(sctx, String).Value;
+                        var mid = (string) args[0].ConvertTo(sctx, String).Value;
 
                         if (reference || args.Length > 2)
                             reference = (bool) args[1].ConvertTo(sctx, Bool).Value;
@@ -238,22 +213,21 @@ namespace Prexonite.Types
             out PValue result)
         {
             result = null;
-            SymbolTable<Member> obj = subject.Value as SymbolTable<Member>;
+            var obj = subject.Value as SymbolTable<Member>;
             if (obj == null)
                 return false;
 
-            switch(target.ToBuiltIn())
+            switch (target.ToBuiltIn())
             {
                 case BuiltIn.String:
                     normalString:
-                    ;
-                    if(!TryDynamicCall(sctx,subject, new PValue[] {},PCall.Get,"ToString",out result ))
+                    if (!TryDynamicCall(sctx, subject, new PValue[] {}, PCall.Get, "ToString", out result))
                         result = null;
                     break;
                 case BuiltIn.Object:
                     Type clrType = ((ObjectPType) target).ClrType;
                     TypeCode tc = Type.GetTypeCode(clrType);
-                    switch(tc)
+                    switch (tc)
                     {
                         case TypeCode.String:
                             goto normalString;
@@ -278,7 +252,7 @@ namespace Prexonite.Types
             StackContext sctx, PValue subject, PValue[] args, out PValue result)
         {
             result = null;
-            SymbolTable<Member> obj = subject.Value as SymbolTable<Member>;
+            var obj = subject.Value as SymbolTable<Member>;
             if (obj == null)
                 return false;
 
@@ -328,7 +302,7 @@ namespace Prexonite.Types
             return CompilationFlags.PreferCustomImplementation;
         }
 
-        private static readonly MethodInfo GetStructurePType = typeof(PType).GetProperty("Structure").GetGetMethod();
+        private static readonly MethodInfo GetStructurePType = typeof (PType).GetProperty("Structure").GetGetMethod();
 
         /// <summary>
         /// Provides a custom compiler routine for emitting CIL byte code for a specific instruction.
@@ -337,7 +311,7 @@ namespace Prexonite.Types
         /// <param name="ins">The instruction to compile.</param>
         void ICilCompilerAware.ImplementInCil(CompilerState state, Instruction ins)
         {
-           state.EmitCall(GetStructurePType);
+            state.EmitCall(GetStructurePType);
         }
 
         #endregion

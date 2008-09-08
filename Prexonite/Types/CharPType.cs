@@ -1,25 +1,4 @@
-/*
- * Prexonite, a scripting engine (Scripting Language -> Bytecode -> Virtual Machine)
- *  Copyright (C) 2007  Christian "SealedSun" Klauser
- *  E-mail  sealedsun a.t gmail d.ot com
- *  Web     http://www.sealedsun.ch/
- *
- *  This program is free software; you can redistribute it and/or modify
- *  it under the terms of the GNU General Public License as published by
- *  the Free Software Foundation; either version 2 of the License, or
- *  (at your option) any later version.
- *
- *  Please contact me (sealedsun a.t gmail do.t com) if you need a different license.
- * 
- *  This program is distributed in the hope that it will be useful,
- *  but WITHOUT ANY WARRANTY; without even the implied warranty of
- *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- *  GNU General Public License for more details.
- *
- *  You should have received a copy of the GNU General Public License along
- *  with this program; if not, write to the Free Software Foundation, Inc.,
- *  51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
- */
+#region
 
 using System;
 using System.Globalization;
@@ -27,12 +6,13 @@ using System.Reflection;
 using Prexonite.Compiler.Cil;
 using NoDebug = System.Diagnostics.DebuggerStepThroughAttribute;
 
+#endregion
+
 namespace Prexonite.Types
 {
     [PTypeLiteral("Char")]
     public class CharPType : PType, ICilCompilerAware
     {
-
         #region Singleton
 
         private static readonly CharPType instance;
@@ -83,15 +63,15 @@ namespace Prexonite.Types
 
             PValue v;
 
-            if(args.Length < 1 || args[0].IsNull)
+            if (args.Length < 1 || args[0].IsNull)
             {
                 c = '\0';
             }
-            else if(args[0].TryConvertTo(sctx, Char, out v))
+            else if (args[0].TryConvertTo(sctx, Char, out v))
             {
                 c = (char) v.Value;
             }
-            else if(args[0].TryConvertTo(sctx, Int, false,out v))
+            else if (args[0].TryConvertTo(sctx, Int, false, out v))
             {
                 c = (char) (int) v.Value;
             }
@@ -120,9 +100,9 @@ namespace Prexonite.Types
                 throw new ArgumentNullException("args");
             if (id == null)
                 id = "";
-            char c = (char) subject.Value;
+            var c = (char) subject.Value;
             CultureInfo ci;
-            switch(id.ToLowerInvariant())
+            switch (id.ToLowerInvariant())
             {
                 case "getnumericvalue":
                     result = System.Char.GetNumericValue(c);
@@ -190,7 +170,7 @@ namespace Prexonite.Types
                 case "length":
                     result = 1;
                     break;
-                   
+
                 default:
                     //Try CLR dynamic call
                     ObjectPType clrint = Object[subject.ClrType];
@@ -206,7 +186,7 @@ namespace Prexonite.Types
             StackContext sctx, PValue[] args, PCall call, string id, out PValue result)
         {
             //Try CLR static call
-            ObjectPType clrint = Object[typeof(int)];
+            ObjectPType clrint = Object[typeof (int)];
             if (clrint.TryStaticCall(sctx, args, call, id, out result))
                 return true;
 
@@ -220,16 +200,16 @@ namespace Prexonite.Types
                 throw new ArgumentNullException("sctx");
             if (subject == null || subject.IsNull)
                 throw new ArgumentNullException("subject");
-            if ((object)target == null)
-                throw new ArgumentNullException("target"); 
+            if ((object) target == null)
+                throw new ArgumentNullException("target");
 
             result = null;
-            char c = (char) subject.Value;
+            var c = (char) subject.Value;
             BuiltIn bi = target.ToBuiltIn();
 
-            if(useExplicit)
+            if (useExplicit)
             {
-                switch(bi)
+                switch (bi)
                 {
                     case BuiltIn.Object:
                         Type clrType = ((ObjectPType) target).ClrType;
@@ -243,9 +223,9 @@ namespace Prexonite.Types
                 }
             }
 
-            if(result == null)
+            if (result == null)
             {
-                switch(bi)
+                switch (bi)
                 {
                     case BuiltIn.Int:
                         result = (int) c;
@@ -254,21 +234,21 @@ namespace Prexonite.Types
                         result = c.ToString();
                         break;
                     case BuiltIn.Object:
-                        Type clrType = ((ObjectPType)target).ClrType;
+                        Type clrType = ((ObjectPType) target).ClrType;
                         switch (Type.GetTypeCode(clrType))
                         {
                             case TypeCode.Char:
                                 result = new PValue(c, target);
                                 break;
                             case TypeCode.Int32:
-                                result = new PValue((Int32)c, target);
+                                result = new PValue((Int32) c, target);
                                 break;
                         }
                         break;
                 }
             }
 
-            return result != null;            
+            return result != null;
         }
 
         protected override bool InternalConvertFrom(
@@ -277,26 +257,26 @@ namespace Prexonite.Types
             if (sctx == null)
                 throw new ArgumentNullException("sctx");
             if (subject == null || subject.IsNull)
-                throw new ArgumentNullException("subject"); 
-            
+                throw new ArgumentNullException("subject");
+
             PType source = subject.Type;
             BuiltIn bi = source.ToBuiltIn();
 
             result = null;
 
-            if(useExplicit)
+            if (useExplicit)
             {
-                switch(bi)
+                switch (bi)
                 {
                     case BuiltIn.String:
-                        string s = (string) subject.Value;
+                        var s = (string) subject.Value;
                         if (s.Length == 1)
                             result = s[0];
                         break;
                 }
             }
 
-            if(result == null)
+            if (result == null)
             {
                 switch (bi)
                 {
@@ -304,24 +284,23 @@ namespace Prexonite.Types
                         result = (char) (int) subject.Value;
                         break;
                     case BuiltIn.Object:
-                        Type clrType = ((ObjectPType)source).ClrType;
+                        Type clrType = ((ObjectPType) source).ClrType;
                         TypeCode tc = Type.GetTypeCode(clrType);
                         switch (tc)
                         {
                             case TypeCode.Byte:
-                                result = (char)subject.Value;
+                                result = (char) subject.Value;
                                 break;
                             case TypeCode.Int32:
                                 result = (char) (Int32) subject.Value;
                                 break;
                             case TypeCode.Char:
-                                result = (char)subject.Value;
+                                result = (char) subject.Value;
                                 break;
-
                         }
 
-                        if(result == null && 
-                            source.TryConvertTo(sctx, subject, Object[typeof(char)],useExplicit,out result))
+                        if (result == null &&
+                            source.TryConvertTo(sctx, subject, Object[typeof (char)], useExplicit, out result))
                         {
                             result = (char) result.Value;
                         }
@@ -357,7 +336,7 @@ namespace Prexonite.Types
         public override PValue CreatePValue(object value)
         {
             return Convert.ToChar(value);
-        }  
+        }
 
         #endregion
 
@@ -373,7 +352,7 @@ namespace Prexonite.Types
             return CompilationFlags.PreferCustomImplementation;
         }
 
-        private static readonly MethodInfo GetCharPType = typeof(PType).GetProperty("Char").GetGetMethod();
+        private static readonly MethodInfo GetCharPType = typeof (PType).GetProperty("Char").GetGetMethod();
 
         /// <summary>
         /// Provides a custom compiler routine for emitting CIL byte code for a specific instruction.

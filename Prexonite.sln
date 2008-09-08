@@ -1,6 +1,6 @@
 ﻿
-Microsoft Visual Studio Solution File, Format Version 9.00
-# Visual Studio 2005
+Microsoft Visual Studio Solution File, Format Version 10.00
+# Visual Studio 2008
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Prexonite", "Prexonite\Prexonite.csproj", "{2FE722CA-B671-4EE8-9BF1-9F3ACFACD24D}"
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Prx", "Prx\Prx.csproj", "{8C90E0C5-8FD3-407C-ABE8-9EE856F87269}"

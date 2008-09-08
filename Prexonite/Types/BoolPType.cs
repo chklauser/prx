@@ -1,27 +1,8 @@
-/*
- * Prexonite, a scripting engine (Scripting Language -> Bytecode -> Virtual Machine)
- *  Copyright (C) 2007  Christian "SealedSun" Klauser
- *  E-mail  sealedsun a.t gmail d.ot com
- *  Web     http://www.sealedsun.ch/
- *
- *  This program is free software; you can redistribute it and/or modify
- *  it under the terms of the GNU General Public License as published by
- *  the Free Software Foundation; either version 2 of the License, or
- *  (at your option) any later version.
- *
- *  Please contact me (sealedsun a.t gmail do.t com) if you need a different license.
- * 
- *  This program is distributed in the hope that it will be useful,
- *  but WITHOUT ANY WARRANTY; without even the implied warranty of
- *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- *  GNU General Public License for more details.
- *
- *  You should have received a copy of the GNU General Public License along
- *  with this program; if not, write to the Free Software Foundation, Inc.,
- *  51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
- */
+#region
 
 using Prexonite.Compiler.Cil;
+
+#endregion
 
 namespace Prexonite.Types
 {
@@ -97,7 +78,7 @@ namespace Prexonite.Types
         public override bool TryStaticCall(
             StackContext sctx, PValue[] args, PCall call, string id, out PValue result)
         {
-            if (Object[typeof(bool)].TryStaticCall(sctx, args, call, id, out result))
+            if (Object[typeof (bool)].TryStaticCall(sctx, args, call, id, out result))
                 return true;
 
             return false;
@@ -112,7 +93,7 @@ namespace Prexonite.Types
         {
             if (target is ObjectPType)
                 return
-                    Object[typeof(bool)].TryConvertTo(
+                    Object[typeof (bool)].TryConvertTo(
                         sctx, subject, target, useExplicit, out result);
 
             result = null;
@@ -123,8 +104,8 @@ namespace Prexonite.Types
                 result = (bool) subject.Value ? 1.0 : 0.0;
             else if (target is StringPType && useExplicit)
                 result = (bool) subject.Value ? bool.TrueString : bool.FalseString;
-            else if (target is ObjectPType && ((ObjectPType) target).ClrType == typeof(bool))
-                result = Object[typeof(bool)].CreatePValue(subject.Value);
+            else if (target is ObjectPType && ((ObjectPType) target).ClrType == typeof (bool))
+                result = Object[typeof (bool)].CreatePValue(subject.Value);
             else
                 return false;
 
@@ -138,7 +119,7 @@ namespace Prexonite.Types
             out PValue result)
         {
             result = null;
-            if (subject.Type is ObjectPType && ((ObjectPType) subject.Type).ClrType == typeof(bool))
+            if (subject.Type is ObjectPType && ((ObjectPType) subject.Type).ClrType == typeof (bool))
                 result = (bool) subject.Value;
             else if (useExplicit && subject.Type is StringPType)
             {

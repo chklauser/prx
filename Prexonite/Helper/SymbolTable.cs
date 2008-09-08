@@ -24,15 +24,15 @@
 using System;
 using System.Collections;
 using System.Collections.Generic;
-using NoDebug = System.Diagnostics.DebuggerNonUserCodeAttribute;
+using System.Diagnostics;
 
 namespace Prexonite
 {
-    [NoDebug()]
+    [DebuggerNonUserCode]
     public class SymbolTable<TValue> : IDictionary<string, TValue>
     {
-        private Dictionary<string, TValue> table;
-        private TValue _defaultValue = default(TValue);
+        private readonly Dictionary<string, TValue> table;
+        private TValue _defaultValue;
 
         public TValue DefaultValue
         {
@@ -74,7 +74,7 @@ namespace Prexonite
             return table.Remove(key);
         }
 
-        public bool TryGetValue(string key, out TValue value)
+        public virtual bool TryGetValue(string key, out TValue value)
         {
             value = DefaultValue;
             if (!table.ContainsKey(key))
@@ -98,7 +98,7 @@ namespace Prexonite
 
         public virtual TValue this[string key]
         {
-            get { return table.ContainsKey(key) ? table[key] : _defaultValue; }
+            get { return GetDefault(key, _defaultValue); }
             set
             {
                 if (table.ContainsKey(key))

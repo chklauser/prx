@@ -87,7 +87,7 @@ namespace Prexonite.Compiler.Cil
             if (MakeAvailableForLinking)
             {
                 string sequenceName = CreateNextTypeName(app != null ? app.Id : null);
-                AssemblyName asmName = new AssemblyName(sequenceName);
+                var asmName = new AssemblyName(sequenceName);
                 _assemblyBuilder =
                     AppDomain.CurrentDomain.DefineDynamicAssembly(asmName, AssemblyBuilderAccess.RunAndSave);
                 _moduleBuilder = _assemblyBuilder.DefineDynamicModule(asmName.Name, asmName.Name + ".dll");
@@ -108,7 +108,7 @@ namespace Prexonite.Compiler.Cil
                     id,
                     MethodAttributes.Static | MethodAttributes.Public,
                     typeof(void),
-                    new Type[]
+                    new[]
                         {
                             typeof(PFunction),
                             typeof(StackContext),
@@ -133,7 +133,7 @@ namespace Prexonite.Compiler.Cil
             }
             else
             {
-                DynamicMethod cilm =
+                var cilm =
                     new DynamicMethod(
                         id,
                         typeof(void),

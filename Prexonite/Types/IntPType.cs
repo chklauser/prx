@@ -1,29 +1,10 @@
-/*
- * Prexonite, a scripting engine (Scripting Language -> Bytecode -> Virtual Machine)
- *  Copyright (C) 2007  Christian "SealedSun" Klauser
- *  E-mail  sealedsun a.t gmail d.ot com
- *  Web     http://www.sealedsun.ch/
- *
- *  This program is free software; you can redistribute it and/or modify
- *  it under the terms of the GNU General Public License as published by
- *  the Free Software Foundation; either version 2 of the License, or
- *  (at your option) any later version.
- *
- *  Please contact me (sealedsun a.t gmail do.t com) if you need a different license.
- * 
- *  This program is distributed in the hope that it will be useful,
- *  but WITHOUT ANY WARRANTY; without even the implied warranty of
- *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- *  GNU General Public License for more details.
- *
- *  You should have received a copy of the GNU General Public License along
- *  with this program; if not, write to the Free Software Foundation, Inc.,
- *  51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
- */
+#region
 
 using System;
 using Prexonite.Compiler.Cil;
 using NoDebug = System.Diagnostics.DebuggerNonUserCodeAttribute;
+
+#endregion
 
 namespace Prexonite.Types
 {
@@ -89,7 +70,7 @@ namespace Prexonite.Types
             }
             else
             {
-                 return args[0].TryConvertTo(sctx, Int, out result);
+                return args[0].TryConvertTo(sctx, Int, out result);
             }
         }
 
@@ -113,7 +94,7 @@ namespace Prexonite.Types
             StackContext sctx, PValue[] args, PCall call, string id, out PValue result)
         {
             //Try CLR static call
-            ObjectPType clrint = Object[typeof(int)];
+            ObjectPType clrint = Object[typeof (int)];
             if (clrint.TryStaticCall(sctx, args, call, id, out result))
                 return true;
 
@@ -134,16 +115,16 @@ namespace Prexonite.Types
                 if (target is ObjectPType)
                 {
                     Type clrType = ((ObjectPType) target).ClrType;
-                    if (clrType == typeof(Byte))
-                        result = CreateObject((Byte)(Int32)subject.Value);
-                    else if (clrType == typeof(Char))
+                    if (clrType == typeof (Byte))
+                        result = CreateObject((Byte) (Int32) subject.Value);
+                    else if (clrType == typeof (Char))
                         result = CreateObject(Convert.ToChar((Int32) subject.Value));
-                    else if (clrType == typeof(SByte))
-                        result = CreateObject((SByte)(Int32)subject.Value);
-                    else if (clrType == typeof(Int16))
-                        result = CreateObject((Int16)(Int32)subject.Value);
-                    else if (clrType == typeof(UInt16))
-                        result = CreateObject((UInt16)(Int32)subject.Value);
+                    else if (clrType == typeof (SByte))
+                        result = CreateObject((SByte) (Int32) subject.Value);
+                    else if (clrType == typeof (Int16))
+                        result = CreateObject((Int16) (Int32) subject.Value);
+                    else if (clrType == typeof (UInt16))
+                        result = CreateObject((UInt16) (Int32) subject.Value);
                 }
             }
 
@@ -159,19 +140,19 @@ namespace Prexonite.Types
                 else if (target is ObjectPType)
                 {
                     Type clrType = ((ObjectPType) target).ClrType;
-                    if (clrType == typeof(Int32))
+                    if (clrType == typeof (Int32))
                         result = CreateObject((Int32) subject.Value);
-                    else if (clrType == typeof(Double))
+                    else if (clrType == typeof (Double))
                         result = CreateObject((Double) (Int32) subject.Value);
-                    else if (clrType == typeof(Single))
+                    else if (clrType == typeof (Single))
                         result = CreateObject((Single) (Int32) subject.Value);
-                    else if (clrType == typeof(Decimal))
+                    else if (clrType == typeof (Decimal))
                         result = CreateObject((Decimal) (Int32) subject.Value);
-                    else if (clrType == typeof(Int64))
+                    else if (clrType == typeof (Int64))
                         result = CreateObject((Int64) (Int32) subject.Value);
-                    else if (clrType == typeof(UInt32))
+                    else if (clrType == typeof (UInt32))
                         result = CreateObject((UInt32) (Int32) subject.Value);
-                    else if (clrType == typeof(UInt64))
+                    else if (clrType == typeof (UInt64))
                         result = CreateObject((UInt64) (Int32) subject.Value);
                 }
             }

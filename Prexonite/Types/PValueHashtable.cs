@@ -1,28 +1,9 @@
-/*
- * Prexonite, a scripting engine (Scripting Language -> Bytecode -> Virtual Machine)
- *  Copyright (C) 2007  Christian "SealedSun" Klauser
- *  E-mail  sealedsun a.t gmail d.ot com
- *  Web     http://www.sealedsun.ch/
- *
- *  This program is free software; you can redistribute it and/or modify
- *  it under the terms of the GNU General Public License as published by
- *  the Free Software Foundation; either version 2 of the License, or
- *  (at your option) any later version.
- *
- *  Please contact me (sealedsun a.t gmail do.t com) if you need a different license.
- * 
- *  This program is distributed in the hope that it will be useful,
- *  but WITHOUT ANY WARRANTY; without even the implied warranty of
- *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- *  GNU General Public License for more details.
- *
- *  You should have received a copy of the GNU General Public License along
- *  with this program; if not, write to the Free Software Foundation, Inc.,
- *  51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
- */
+#region
 
 using System.Collections.Generic;
 using System.Diagnostics;
+
+#endregion
 
 namespace Prexonite.Types
 {
@@ -32,7 +13,7 @@ namespace Prexonite.Types
     [DebuggerNonUserCode]
     public class PValueHashtable : Dictionary<PValue, PValue>
     {
-        private static readonly ObjectPType _objectType = new ObjectPType(typeof(PValueHashtable));
+        private static readonly ObjectPType _objectType = new ObjectPType(typeof (PValueHashtable));
 
         /// <summary>
         /// Adds a new key-value pair to the hashtable.
@@ -111,16 +92,15 @@ namespace Prexonite.Types
         {
             if (obj != null && (obj is PValueHashtable || obj is Dictionary<PValue, PValue>))
                 return base.Equals(obj);
-            else
-                return false;
+            return false;
         }
 
         public override int GetHashCode()
         {
             int hash = 1;
-            foreach (KeyValuePair<PValue, PValue> pair in this)
+            foreach (var pair in this)
                 hash =
-                        hash ^ pair.Key.GetHashCode() ^ pair.Value.GetHashCode();
+                    hash ^ pair.Key.GetHashCode() ^ pair.Value.GetHashCode();
 
             return hash;
         }
@@ -132,13 +112,13 @@ namespace Prexonite.Types
         /// <returns>An IEnumerator that returns <see cref="PValueKeyValuePair"/> instances.</returns>
         public IEnumerable<PValueKeyValuePair> PValueKeyValuePairs()
         {
-            foreach (KeyValuePair<PValue, PValue> pair in this)
+            foreach (var pair in this)
                 yield return pair;
         }
 
         internal IEnumerable<PValue> GetPValueEnumerator()
         {
-            foreach (KeyValuePair<PValue, PValue> pair in this)
+            foreach (var pair in this)
                 yield return PType.Object.CreatePValue(new PValueKeyValuePair(pair));
         }
 

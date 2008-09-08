@@ -1,25 +1,4 @@
-/*
- * Prexonite, a scripting engine (Scripting Language -> Bytecode -> Virtual Machine)
- *  Copyright (C) 2007  Christian "SealedSun" Klauser
- *  E-mail  sealedsun a.t gmail d.ot com
- *  Web     http://www.sealedsun.ch/
- *
- *  This program is free software; you can redistribute it and/or modify
- *  it under the terms of the GNU General Public License as published by
- *  the Free Software Foundation; either version 2 of the License, or
- *  (at your option) any later version.
- *
- *  Please contact me (sealedsun a.t gmail do.t com) if you need a different license.
- * 
- *  This program is distributed in the hope that it will be useful,
- *  but WITHOUT ANY WARRANTY; without even the implied warranty of
- *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- *  GNU General Public License for more details.
- *
- *  You should have received a copy of the GNU General Public License along
- *  with this program; if not, write to the Free Software Foundation, Inc.,
- *  51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
- */
+#region
 
 using System;
 using System.Collections.Generic;
@@ -31,6 +10,8 @@ using Prexonite.Compiler.Cil;
 using NoDebug = System.Diagnostics.DebuggerNonUserCodeAttribute;
 using UInt8 = System.Byte;
 
+#endregion
+
 namespace Prexonite.Types
 {
     [PTypeLiteral("String")]
@@ -38,11 +19,11 @@ namespace Prexonite.Types
     {
         #region Singleton Pattern
 
-        private static StringPType instance;
+        private static readonly StringPType instance;
 
         public static StringPType Instance
         {
-            [NoDebug()]
+            [NoDebug]
             get { return instance; }
         }
 
@@ -51,7 +32,7 @@ namespace Prexonite.Types
             instance = new StringPType();
         }
 
-        [NoDebug()]
+        [NoDebug]
         private StringPType()
         {
         }
@@ -60,7 +41,7 @@ namespace Prexonite.Types
 
         #region Static
 
-        [NoDebug()]
+        [NoDebug]
         public override PValue CreatePValue(object value)
         {
             if (value == null)
@@ -78,7 +59,7 @@ namespace Prexonite.Types
         public static string Escape(string unescaped)
         {
             //The initial capacity is just a random guess
-            StringBuilder buffer = new StringBuilder(unescaped.Length + 10);
+            var buffer = new StringBuilder(unescaped.Length + 10);
             for (int i = 0; i < unescaped.Length; i++)
             {
                 char curr = unescaped[i];
@@ -120,11 +101,11 @@ namespace Prexonite.Types
                         default:
                             UInt32 utf32 = curr;
                             UInt16 utf16 = curr;
-                            UInt8 utf8 = (UInt8) curr;
+                            var utf8 = (Byte) curr;
                             if (utf32 > UInt16.MaxValue)
                                 //Use \U notation
                                 buffer.AppendFormat("\\U{0:00000000}", utf32.ToString("X"));
-                            else if (utf32 > UInt8.MaxValue)
+                            else if (utf32 > Byte.MaxValue)
                                 //Use \u notation
                                 buffer.AppendFormat("\\u{0:0000}", utf16.ToString("X"));
                             else
@@ -139,7 +120,7 @@ namespace Prexonite.Types
         public static string Unescape(string escaped)
         {
             char[] esc = escaped.ToCharArray();
-            StringBuilder buffer = new StringBuilder();
+            var buffer = new StringBuilder();
             for (int i = 0; i < esc.Length; i++)
             {
                 //Is escape char
@@ -275,7 +256,7 @@ namespace Prexonite.Types
 
         #region IdOrLiteral
 
-        private static Regex idLetters =
+        private static readonly Regex idLetters =
             new Regex(
                 @"^[\w\\][\w\d\\]{0,}$", RegexOptions.Compiled);
 
@@ -289,15 +270,14 @@ namespace Prexonite.Types
                 //Empty strings cannot be represented as Ids
                 raw.Length == 0)
                 return "\"\"";
-            else if (
+            if (
                 raw.Length > anArbitraryIdLengthLimit ||
                 !idLetters.IsMatch(raw) ||
                 IsReservedWord(raw) ||
                 char.IsDigit(raw, 0)
                 )
                 return "\"" + Escape(raw) + "\"";
-            else
-                return raw;
+            return raw;
         }
 
         #endregion
@@ -310,48 +290,48 @@ namespace Prexonite.Types
             //Spaces are most common in strings, but forbidden in Ids
             if (word.Length < 1 || word.Length > 9 || word.Contains(" "))
                 return false;
-            string[] reservedWords = new string[]
-                {
-                    #region list of reserved words
-                    "mod",
-                    "is",
-                    "not",
-                    "enabled",
-                    "disabled",
-                    "function",
-                    "inline",
-                    "true",
-                    "false",
-                    "asm",
-                    "ref",
-                    "declare",
-                    "do",
-                    "does",
-                    "build",
-                    "return",
-                    "in",
-                    "to",
-                    "add",
-                    "continue",
-                    "break",
-                    "or",
-                    "and",
-                    "xor",
-                    "label",
-                    "goto",
-                    "local",
-                    "static",
-                    "var",
-                    "null",
-                    "for",
-                    "foreach",
-                    "while",
-                    "until",
-                    "if",
-                    "unless"
-                    #endregion
-                };
-            foreach (string reservedWord in reservedWords)
+            var reservedWords = new[]
+            {
+                #region list of reserved words
+                "mod",
+                "is",
+                "not",
+                "enabled",
+                "disabled",
+                "function",
+                "inline",
+                "true",
+                "false",
+                "asm",
+                "ref",
+                "declare",
+                "do",
+                "does",
+                "build",
+                "return",
+                "in",
+                "to",
+                "add",
+                "continue",
+                "break",
+                "or",
+                "and",
+                "xor",
+                "label",
+                "goto",
+                "local",
+                "static",
+                "var",
+                "null",
+                "for",
+                "foreach",
+                "while",
+                "until",
+                "if",
+                "unless"
+                #endregion
+            };
+            foreach (var reservedWord in reservedWords)
                 if (Engine.StringsAreEqual(word, reservedWord))
                     return true;
             return false;
@@ -383,7 +363,7 @@ namespace Prexonite.Types
             out PValue result)
         {
             result = null;
-            string str = (string) subject.Value;
+            var str = (string) subject.Value;
             switch ((id == null) ? "" : id.ToLowerInvariant())
             {
                 case "":
@@ -399,7 +379,7 @@ namespace Prexonite.Types
                     result = Unescape(str);
                     break;
                 case "format":
-                    string[] objs = new string[args.Length];
+                    var objs = new string[args.Length];
                     for (int i = 0; i < args.Length; i++)
                         objs[i] = args[i].CallToString(sctx);
                     result = System.String.Format(str, objs);
@@ -423,68 +403,41 @@ namespace Prexonite.Types
                     result = str.ToUpper();
                     break;
                 case "substring":
-                    if (args.Length == 0)
-                        return false;
-                    else if (args.Length == 1)
-                        result =
-                            str.Substring(
-                                (int) args[0].ConvertTo(sctx, Int).Value);
-                    else
-                        result =
-                            str.Substring(
-                                (int) args[0].ConvertTo(sctx, Int).Value,
-                                (int) args[1].ConvertTo(sctx, Int).Value);
+                    switch (args.Length)
+                    {
+                        case 0:
+                            return false;
+                        case 1:
+                            result =
+                                str.Substring(
+                                    (int) args[0].ConvertTo(sctx, Int).Value);
+                            break;
+                        default:
+                            result =
+                                str.Substring(
+                                    (int) args[0].ConvertTo(sctx, Int).Value,
+                                    (int) args[1].ConvertTo(sctx, Int).Value);
+                            break;
+                    }
                     break;
                 case "split":
-                    if(args.Length == 0 || args[0].IsNull)
+                    if (args.Length == 0 || args[0].IsNull)
                     {
                         result =
-                                    (PValue)
-                                    _wrap_strings(str.Split(null));
+                            (PValue)
+                            _wrap_strings(str.Split(null));
                         return true;
                     }
-                    else
+                    //Try to interpret as params char[] or fall back to params string[]
+                    var sch = new List<char>();
+                    List<string> sst = null;
+
+                    bool isParams = true;
+
+                    _resolve_params(sctx, args, ref isParams, sch, ref sst, false);
+
+                    if (isParams)
                     {
-                        //Try to interpret as params char[] or fall back to params string[]
-                        List<char> sch = new List<char>();
-                        List<string> sst = null;
-
-                        bool isParams = true;
-
-                        _resolve_params(sctx, args, ref isParams, sch, ref sst, false);
-
-                        if(isParams)
-                        {
-                            if(sst != null)
-                            {
-                                result =
-                                    (PValue)
-                                    _wrap_strings(
-                                        str.Split(sst.ToArray(), StringSplitOptions.None));
-                            }
-                            else
-                            {
-                                result =
-                                    (PValue)
-                                    _wrap_strings(
-                                        str.Split(sch.ToArray(), StringSplitOptions.None));
-                            }
-                            return true;
-                        }
-
-                        PValue list;
-                        if (!args[0].TryConvertTo(sctx, List, true, out list))
-                            throw new PrexoniteException(
-                                "String.Split requires a list as its first argument.");
-
-                        sch.Clear();
-                        sst = null;
-                        bool isValid = true;
-                        _resolve_params(sctx, ((List<PValue>)list.Value).ToArray(),ref isValid,sch, ref sst,true);
-
-                        if (!isValid)
-                            throw new PrexoniteException("String.Split only accepts lists of strings or chars.");
-
                         if (sst != null)
                         {
                             result =
@@ -501,48 +454,79 @@ namespace Prexonite.Types
                         }
                         return true;
                     }
+
+                    PValue list;
+                    if (!args[0].TryConvertTo(sctx, List, true, out list))
+                        throw new PrexoniteException(
+                            "String.Split requires a list as its first argument.");
+
+                    sch.Clear();
+                    sst = null;
+                    bool isValid = true;
+                    _resolve_params(sctx, ((List<PValue>) list.Value).ToArray(), ref isValid, sch, ref sst, true);
+
+                    if (!isValid)
+                        throw new PrexoniteException("String.Split only accepts lists of strings or chars.");
+
+                    if (sst != null)
+                    {
+                        result =
+                            (PValue)
+                            _wrap_strings(
+                                str.Split(sst.ToArray(), StringSplitOptions.None));
+                    }
+                    else
+                    {
+                        result =
+                            (PValue)
+                            _wrap_strings(
+                                str.Split(sch.ToArray(), StringSplitOptions.None));
+                    }
+                    return true;
                 default:
                     return
-                        Object[typeof(string)].TryDynamicCall(
+                        Object[typeof (string)].TryDynamicCall(
                             sctx, subject, args, call, id, out result);
             }
             return result != null;
         }
 
-        private static List<PValue> _wrap_strings(string[] xs)
+        private static List<PValue> _wrap_strings(ICollection<string> xs)
         {
-            List<PValue> lst = new List<PValue>(xs.Length);
-            foreach (string x in xs)
+            var lst = new List<PValue>(xs.Count);
+            foreach (var x in xs)
                 lst.Add(x);
             return lst;
         }
 
-        private static void _resolve_params(StackContext sctx, PValue[] args, ref bool isParams, List<char> sch, ref List<string> sst, bool useExplicit)
+        private static void _resolve_params(
+            StackContext sctx,
+            IEnumerable<PValue> args,
+            ref bool isParams,
+            ICollection<char> sch,
+            ref List<string> sst,
+            bool useExplicit)
         {
-            foreach (PValue arg in args)
+            foreach (var arg in args)
             {
                 PValue v;
                 char c;
-                if(sst != null)
+                if (sst != null)
                 {
-                    if(! arg.TryConvertTo(sctx, String, useExplicit, out v))
+                    if (! arg.TryConvertTo(sctx, String, useExplicit, out v))
                     {
                         isParams = false;
                         break;
                     }
-                    else
-                    {
-                        sst.Add((string)v.Value);
-                    }
+                    sst.Add((string) v.Value);
                 }
-                else if(arg.TryConvertTo(sctx,out c))
+                else if (arg.TryConvertTo(sctx, out c))
                 {
                     sch.Add(c);
                 }
-                else if(arg.TryConvertTo(sctx, String, useExplicit, out v))
+                else if (arg.TryConvertTo(sctx, String, useExplicit, out v))
                 {
-                    sst = new List<string>();
-                    sst.Add((string)v.Value);
+                    sst = new List<string> {(string) v.Value};
                 }
                 else
                 {
@@ -551,14 +535,14 @@ namespace Prexonite.Types
                 }
             }
 
-            if(isParams && sst != null)
+            if (isParams && sst != null)
             {
                 bool isChars = true;
                 sch.Clear();
 
-                foreach (string s in sst)
+                foreach (var s in sst)
                 {
-                    if(s.Length != 1)
+                    if (s.Length != 1)
                     {
                         isChars = false;
                         break;
@@ -566,7 +550,7 @@ namespace Prexonite.Types
                     sch.Add(s[0]);
                 }
 
-                if(isChars)
+                if (isChars)
                     sst = null;
             }
         }
@@ -579,31 +563,28 @@ namespace Prexonite.Types
                 result = Unescape(args[0].ConvertTo(sctx, String).Value as string);
                 return true;
             }
-            else if (args.Length >= 1 && Engine.StringsAreEqual(id, "escape"))
+            if (args.Length >= 1 && Engine.StringsAreEqual(id, "escape"))
             {
                 result = Escape(args[0].ConvertTo(sctx, String).Value as string);
                 return true;
             }
-            else if (args.Length > 1 && Engine.StringsAreEqual(id, "format"))
+            if (args.Length > 1 && Engine.StringsAreEqual(id, "format"))
             {
-                object[] oargs = new object[args.Length - 1];
+                var oargs = new object[args.Length - 1];
                 string format = args[0].CallToString(sctx);
                 for (int i = 0; i < oargs.Length; i++)
                     oargs[i] = args[i + 1].CallToString(sctx);
                 result = System.String.Format(format, oargs);
                 return true;
             }
-            else
-            {
-                return Object[typeof(string)].TryStaticCall(sctx, args, call, id, out result);
-            }
+            return Object[typeof (string)].TryStaticCall(sctx, args, call, id, out result);
         }
 
         public override bool IndirectCall(
             StackContext sctx, PValue subject, PValue[] args, out PValue result)
         {
             result = null;
-            string str = subject.Value as string;
+            var str = (string) subject.Value;
             PFunction func;
             PCommand cmd;
             Application app = sctx.ParentApplication;
@@ -623,25 +604,19 @@ namespace Prexonite.Types
 
         public override bool Increment(StackContext sctx, PValue operand, out PValue result)
         {
-            String sop = operand.Value as String;
+            var sop = operand.Value as String;
             if (sop == null)
                 throw new PrexoniteException(operand + " cannot be supplied to ~String.Increment");
-            if (sop.Length == 0)
-                result = String.CreatePValue("");
-            else
-                result = String.CreatePValue(System.String.Concat(sop, sop));
+            result = sop.Length == 0 ? String.CreatePValue("") : String.CreatePValue(System.String.Concat(sop, sop));
             return true;
         }
 
         public override bool Decrement(StackContext sctx, PValue operand, out PValue result)
         {
-            String sop = operand.Value as String;
+            var sop = operand.Value as String;
             if (sop == null)
                 throw new PrexoniteException(operand + " cannot be supplied to ~String.Decrement");
-            if (sop.Length == 0)
-                result = String.CreatePValue("");
-            else
-                result = String.CreatePValue(sop.Substring(0, sop.Length - 1));
+            result = sop.Length == 0 ? String.CreatePValue("") : String.CreatePValue(sop.Substring(0, sop.Length - 1));
             return true;
         }
 
@@ -682,16 +657,15 @@ namespace Prexonite.Types
                 result = String.CreatePValue("");
                 return true;
             }
-            else if (right > -1)
+            if (right > -1)
             {
-                StringBuilder res = new StringBuilder();
+                var res = new StringBuilder();
                 for (Int32 i = right; i > 0; i--)
                     res.Append(left);
                 result = res.ToString();
                 return true;
             }
-            else
-                throw new PrexoniteException("String multiplication requires positive values. (Not " + right + ")");
+            throw new PrexoniteException("String multiplication requires positive values. (Not " + right + ")");
         }
 
         public override bool Equality(
@@ -762,7 +736,7 @@ namespace Prexonite.Types
             out PValue result)
         {
             result = null;
-            string s = (string)subject.Value;
+            var s = (string) subject.Value;
             BuiltIn builtInT = target.ToBuiltIn();
             if (useExplicit)
             {
@@ -777,24 +751,24 @@ namespace Prexonite.Types
 
             if (result == null)
             {
-                switch(builtInT)
+                switch (builtInT)
                 {
                     case BuiltIn.Object:
                         Type clrType = ((ObjectPType) target).ClrType;
                         TypeCode typeC = Type.GetTypeCode(clrType);
-                        switch(typeC)
+                        switch (typeC)
                         {
                             case TypeCode.String:
                                 result = CreateObject(s);
                                 break;
                             case TypeCode.Object:
-                                if (clrType == typeof(IEnumerable<PValue>))
+                                if (clrType == typeof (IEnumerable<PValue>))
                                     result = (PValue) _toPCharList(s);
-                                else if (clrType == typeof(char[]) ||
-                                    clrType == typeof(IEnumerable<char>) ||
-                                    clrType == typeof(ICollection<char>) ||
-                                    clrType == typeof(IList<char>))
-                                    result = new PValue(s.ToCharArray(),target);
+                                else if (clrType == typeof (char[]) ||
+                                         clrType == typeof (IEnumerable<char>) ||
+                                         clrType == typeof (ICollection<char>) ||
+                                         clrType == typeof (IList<char>))
+                                    result = new PValue(s.ToCharArray(), target);
                                 break;
                         }
                         break;
@@ -806,8 +780,8 @@ namespace Prexonite.Types
 
         private static List<PValue> _toPCharList(string s)
         {
-            List<PValue> lst = new List<PValue>(s.Length);
-            foreach (char c in s.ToCharArray())
+            var lst = new List<PValue>(s.Length);
+            foreach (var c in s)
                 lst.Add(c);
             return lst;
         }
@@ -819,8 +793,8 @@ namespace Prexonite.Types
             out PValue result)
         {
             result = null;
-            ObjectPType subjT = subject.Type as ObjectPType;
-            if ((object)subjT != null)
+            var subjT = subject.Type as ObjectPType;
+            if ((object) subjT != null)
             {
                 switch (Type.GetTypeCode(subjT.ClrType))
                 {
