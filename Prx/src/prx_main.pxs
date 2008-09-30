@@ -231,7 +231,7 @@ runInteractive:
 
 function reboot does prx\main(originalArgs);
 
-function displayHelp does print = 
+function displayHelp does print(
 	"Usage:\n" + 
 	"\tprx -c {sources...} (-t {target...} [-h] | -r | -i) [-v | -d | -a <arguments...> | -b]\n" +
 	"\tprx -i\n" +
@@ -247,7 +247,4 @@ function displayHelp does print =
 	"-h extracts declarations (only with -c).\n"+
 	"-b enables tab completion (experimental, accepts only ASCII characters).\n"+
 	"-a forwards the rest of the arguments to the executing script.\n" + 
-	"-d enables debugging mode";
-	
-//Invokes the CIL compiler, a component that translates the Prexonite byte code into late bound CIL byte code to improve performance.
-{ CompileToCil(); }
+	"-d enables debugging mode");
