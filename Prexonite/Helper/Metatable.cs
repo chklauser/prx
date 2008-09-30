@@ -9,7 +9,7 @@ namespace Prexonite
     /// The Prexonite meta table is used to store information about <see cref="Application"/>s, 
     /// Functions (<see cref="PFunction"/>) and global variables (<see cref="PVariable"/>).
     /// </summary>
-    [NoDebug]
+    ///[NoDebug]
     public class MetaTable : SymbolTable<MetaEntry>,
                              IMetaFilter,
                              ICloneable
@@ -132,7 +132,7 @@ namespace Prexonite
         {
             get
             {
-                key = Filter.GetTransform(key);
+                key = GetTransform(key);
                 MetaEntry ret;
                 if (key == null)
                     ret = new MetaEntry("");
@@ -149,8 +149,7 @@ namespace Prexonite
                 var item = Transform(key, value);
                 if (item == null)
                     return;
-                else
-                    base[item.Value.Key] = item.Value.Value;
+                base[item.Value.Key] = item.Value.Value;
             }
         }
 
@@ -170,11 +169,8 @@ namespace Prexonite
                 value = base[key];
                 return true;
             }
-            else
-            {
-                value = MetaEntry.CreateDefaultEntry();
-                return false;
-            }
+            value = MetaEntry.CreateDefaultEntry();
+            return false;
         }
 
         /// <summary>
@@ -247,21 +243,27 @@ namespace Prexonite
             return SetTransform(new KeyValuePair<string, MetaEntry>(key, value));
         }
 
-
+        /// <summary>
+        /// Applies the set transformation of the associated filter to the supplied meta entry.
+        /// </summary>
+        /// <param name="item">The new entry to transform.</param>
+        /// <returns>A transformed entry or null if the filter completly blocks the entry.</returns>
         public KeyValuePair<string, MetaEntry>? SetTransform(KeyValuePair<string, MetaEntry> item)
         {
             if (Filter == null)
                 return item;
-            else
-                return Filter.SetTransform(item);
+            return Filter.SetTransform(item);
         }
 
+        ///<summary>Applies the "get" transformation defined by the current <see cref="Filter"/>, if it is not null.
+        ///</summary>
+        ///<param name="key">The key to transform by the filter.</param>
+        ///<returns>The transformed key.</returns>
         public string GetTransform(string key)
         {
             if (Filter == null)
                 return key;
-            else
-                return Filter.GetTransform(key);
+            return Filter.GetTransform(key);
         }
 
         #endregion
