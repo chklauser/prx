@@ -55,10 +55,13 @@ declare function reboot;
 		engine.Commands.AddUserCommand(alias, thisE.Commands[alias]);
 		
 	//Set up the console
-	__console.OutColor = ::ConsoleColor.White;
-	__console.PromptColor = ::ConsoleColor.Red;
-	__console.ErrorColor = ::ConsoleColor.Green;
-	__console.DoBeep = false;
+	if(supportsTabs)
+   	{
+    	__console.OutColor = ::ConsoleColor.White;
+    	__console.PromptColor = ::ConsoleColor.Red;
+    	__console.ErrorColor = ::ConsoleColor.Green;
+    	__console.DoBeep = false;
+    }
 }
 
 var app; //<-- the compiled application
@@ -127,7 +130,8 @@ coroutine tabHook(prefix, root)
 
 function prx\interactive()
 {
-    __console.Tab = ->tabHook;
+    if(supportsTabs)
+        __console.Tab = ->tabHook;
     
     println("Entering Prexonite INTERACTIVE MODE.\nType :quit to quit.\n\"=<expr>\" evaluates an expression.\n\":<GlobalStatement>\" inserts global code.");
     
@@ -311,15 +315,12 @@ executeStatement:
         {
             function removeEvalFunctions()
             {
-                var toRemove =  foreach(var func in app.Functions)
-                                    if(func.Id.StartsWith("eval\\"))
-                                        yield func;
-                                ;
-                                        
+                var toRemove = app.Functions
+                                >>  where(func => func.Id.StartsWith("eval\\"))
+                                >> all;
+                
                 foreach(var func in toRemove)
-                {
                     app.Functions.Remove(func);
-                }
             }
             removeEvalFunctions();
         } //end finally

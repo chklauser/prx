@@ -86,9 +86,10 @@ namespace Prexonite.Commands.Core
                 buffer.Append(arg.Type is StringPType ? (string)arg.Value : arg.CallToString(sctx));
             }
 
-            _writer.WriteLine(buffer);
+            var text = buffer.ToString();
+            _writer.WriteLine(text);
 
-            return buffer.ToString();
+            return text;
         }
 
         /// <summary>

@@ -2016,7 +2016,7 @@ function main()
             xs[] = i;
             if(i == 3)
                 throw i; //Should be ignored
-        }
+        }catch(var exc){}
     return tos(xs);
 }
 ");
@@ -2157,7 +2157,7 @@ function main()
                     throw exc;
             }
         }
-        catch
+        catch(var exc)
         {
             xs[] = i;
         }
@@ -2168,7 +2168,14 @@ function main()
     return tos(xs);
 }
 ");
-            _expect("0123445");
+            try
+            {
+                _expect("0123445");
+            }
+            catch (Exception exc)
+            {
+                Assert.Fail(exc.Message, exc);
+            }
         }
 
         [Test]
@@ -3019,6 +3026,79 @@ function main(a,b)
             _expect(true, true, "s-b-s");
         }
 
+        [Test]
+        public void ReturnFromForeach()
+        {
+            _compile(@"
+function main(xs)
+{
+    foreach(var x in xs)
+        if(x > 5)
+            return x;
+    return -1;
+}
+");
+            var xs = (PValue) new List<PValue> {1, 2, 3, 4, 7, 15};
+
+            _expect(7,xs);
+        }
+
+        [Test]
+        public void SuperFastPrintLn()
+        {
+            //Covers #10
+            _compile(@"
+function main = println;
+");
+
+            _expect("");
+        }
+
+        [Test]
+        public void ReturnFromCatch()
+        {
+            _compile
+                (@"
+
+var lastCode = -1;
+var buffer = new System::Text::StringBuilder;
+function green f => f.();
+var errors = [];
+var ldrErrors = [""error1"",""error2""];
+
+function main()
+{
+    try 
+    {
+        var exc = null;
+        lastCode = buffer.ToString; //Save the code for error reporting            
+    } 
+    catch(exc)
+    {
+        //Exceptions are truly exceptional, so they should be printed
+        // out right away.
+        green = () =>
+		{
+			println(exc);
+			exc = null;
+			foreach(var err in errors)
+				println(err);
+		};
+		return false;
+    }
+    finally
+    {
+        //Save errors for review and clean up.
+        buffer.Length = 0;
+        errors = ~List.CreateFromList(ldrErrors);            
+    }
+    println(errors.Count);
+    return errors.Count == 0;
+}");
+
+            _expect(false);
+        }
+
         #region Helper
 
         private static string _generateRandomString(int length)
@@ -3110,9 +3190,9 @@ function main(a,b)
             PValue expected = engine.CreateNativePValue(expectedReturnValue);
             if (!target.Functions.Contains(functionId))
                 throw new PrexoniteException("Function " + functionId + " cannot be found.");
-            FunctionContext fctx = target.Functions[functionId].CreateFunctionContext(engine, args);
-            engine.Stack.AddLast(fctx);
-            PValue rv = engine.Process();
+
+            var rv = target.Functions[functionId].Run(engine, args);
+            
             Assert.AreEqual(
                 expected.Type,
                 rv.Type,

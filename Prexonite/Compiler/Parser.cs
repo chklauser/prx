@@ -8,7 +8,7 @@ using Prexonite.Compiler.Ast;
 using Prexonite.Types;//END SOURCE ARRAY
 
 
-#line 27 "C:\Users\Christian\Documents\Visual Studio 2008\Projects\Prexonite\Tools\Parser.frame" //FRAME
+#line 27 "D:\DotNetProjects\Prexonite\Tools\Parser.frame" //FRAME
 
 using System;
 
@@ -18,7 +18,7 @@ using System;
 namespace Prexonite.Compiler {
 
 
-#line 30 "C:\Users\Christian\Documents\Visual Studio 2008\Projects\Prexonite\Tools\Parser.frame" //FRAME
+#line 30 "D:\DotNetProjects\Prexonite\Tools\Parser.frame" //FRAME
 
 
 using NoDebug = System.Diagnostics.DebuggerNonUserCodeAttribute;
@@ -224,7 +224,7 @@ internal partial class Parser {
 	}
 	const int maxT = 92;
 
-#line 43 "C:\Users\Christian\Documents\Visual Studio 2008\Projects\Prexonite\Tools\Parser.frame" //FRAME
+#line 43 "D:\DotNetProjects\Prexonite\Tools\Parser.frame" //FRAME
 
 	const bool T = true;
 	const bool x = false;
@@ -243,7 +243,7 @@ internal partial class Parser {
 //SOURCE ARRAY
 //END SOURCE ARRAY
 
-#line 55 "C:\Users\Christian\Documents\Visual Studio 2008\Projects\Prexonite\Tools\Parser.frame" //FRAME
+#line 55 "D:\DotNetProjects\Prexonite\Tools\Parser.frame" //FRAME
 
 
     [NoDebug()]
@@ -275,7 +275,7 @@ internal partial class Parser {
 #line default //END FRAME -->pragmas
 
 
-#line 82 "C:\Users\Christian\Documents\Visual Studio 2008\Projects\Prexonite\Tools\Parser.frame" //FRAME
+#line 82 "D:\DotNetProjects\Prexonite\Tools\Parser.frame" //FRAME
 
 			la = t;
 		}
@@ -1510,39 +1510,39 @@ internal partial class Parser {
 		/*Parser.Statement.atg:440*/block.Add(loop); 
 	}
 
-	void Arguments(/*Parser.Statement.atg:570*/ArgumentsProxy args) {
-		/*Parser.Statement.atg:571*/IAstExpression expr;
+	void Arguments(/*Parser.Statement.atg:572*/ArgumentsProxy args) {
+		/*Parser.Statement.atg:573*/IAstExpression expr;
 		                      
 		if (la.kind == _lpar) {
 			Get();
 			if (StartOf(14)) {
-				Expr(/*Parser.Statement.atg:576*/out expr);
-				/*Parser.Statement.atg:576*/args.Add(expr); 
+				Expr(/*Parser.Statement.atg:578*/out expr);
+				/*Parser.Statement.atg:578*/args.Add(expr); 
 				while (WeakSeparator(_comma,14,23) ) {
-					Expr(/*Parser.Statement.atg:578*/out expr);
-					/*Parser.Statement.atg:578*/args.Add(expr); 
+					Expr(/*Parser.Statement.atg:580*/out expr);
+					/*Parser.Statement.atg:580*/args.Add(expr); 
 				}
 			}
 			Expect(_rpar);
 		}
-		/*Parser.Statement.atg:583*/args.RemeberRightAppendPosition(); 
+		/*Parser.Statement.atg:585*/args.RemeberRightAppendPosition(); 
 		if (la.kind == _appendleft) {
 			Get();
-			if (/*Parser.Statement.atg:588*/la.kind == _lpar && (!isLambdaExpression())) {
+			if (/*Parser.Statement.atg:590*/la.kind == _lpar && (!isLambdaExpression())) {
 				Expect(_lpar);
 				if (StartOf(14)) {
-					Expr(/*Parser.Statement.atg:589*/out expr);
-					/*Parser.Statement.atg:589*/args.Add(expr); 
+					Expr(/*Parser.Statement.atg:591*/out expr);
+					/*Parser.Statement.atg:591*/args.Add(expr); 
 					while (la.kind == _comma) {
 						Get();
-						Expr(/*Parser.Statement.atg:591*/out expr);
-						/*Parser.Statement.atg:592*/args.Add(expr); 
+						Expr(/*Parser.Statement.atg:593*/out expr);
+						/*Parser.Statement.atg:594*/args.Add(expr); 
 					}
 				}
 				Expect(_rpar);
 			} else if (StartOf(14)) {
-				Expr(/*Parser.Statement.atg:596*/out expr);
-				/*Parser.Statement.atg:596*/args.Add(expr); 
+				Expr(/*Parser.Statement.atg:598*/out expr);
+				/*Parser.Statement.atg:598*/args.Add(expr); 
 			} else SynErr(119);
 		}
 	}
@@ -2328,10 +2328,10 @@ internal partial class Parser {
 		/*Parser.Statement.atg:490*/block.Add((AstNode)ret ?? (AstNode)jump); 
 	}
 
-	void Throw(/*Parser.Statement.atg:555*/AstBlock block) {
-		/*Parser.Statement.atg:555*/AstThrow th; 
-		ThrowExpression(/*Parser.Statement.atg:557*/out th);
-		/*Parser.Statement.atg:558*/block.Add(th); 
+	void Throw(/*Parser.Statement.atg:557*/AstBlock block) {
+		/*Parser.Statement.atg:557*/AstThrow th; 
+		ThrowExpression(/*Parser.Statement.atg:559*/out th);
+		/*Parser.Statement.atg:560*/block.Add(th); 
 	}
 
 	void Condition(/*Parser.Statement.atg:363*/AstBlock block) {
@@ -2383,17 +2383,19 @@ internal partial class Parser {
 					Get();
 					GetCall(/*Parser.Statement.atg:518*/out a.ExceptionVar);
 					Expect(_rpar);
-				}
+				} else if (la.kind == _lbrace) {
+					/*Parser.Statement.atg:520*/SemErr(la,"catch-clauses that don't store the exception are illegal."); 
+				} else SynErr(145);
 				Expect(_lbrace);
 				while (StartOf(20)) {
-					Statement(/*Parser.Statement.atg:522*/a.CatchBlock);
+					Statement(/*Parser.Statement.atg:523*/a.CatchBlock);
 				}
 				Expect(_rbrace);
 				if (la.kind == _finally) {
 					Get();
 					Expect(_lbrace);
 					while (StartOf(20)) {
-						Statement(/*Parser.Statement.atg:529*/a.FinallyBlock);
+						Statement(/*Parser.Statement.atg:530*/a.FinallyBlock);
 					}
 					Expect(_rbrace);
 				}
@@ -2401,35 +2403,37 @@ internal partial class Parser {
 				Get();
 				Expect(_lbrace);
 				while (StartOf(20)) {
-					Statement(/*Parser.Statement.atg:536*/a.FinallyBlock);
+					Statement(/*Parser.Statement.atg:537*/a.FinallyBlock);
 				}
 				Expect(_rbrace);
 				if (la.kind == _catch) {
 					Get();
 					if (la.kind == _lpar) {
 						Get();
-						GetCall(/*Parser.Statement.atg:542*/out a.ExceptionVar);
+						GetCall(/*Parser.Statement.atg:543*/out a.ExceptionVar);
 						Expect(_rpar);
-					}
+					} else if (la.kind == _lbrace) {
+						/*Parser.Statement.atg:545*/SemErr(la,"catch-clauses that don't store the exception are illegal."); 
+					} else SynErr(146);
 					Expect(_lbrace);
 					while (StartOf(20)) {
-						Statement(/*Parser.Statement.atg:546*/a.CatchBlock);
+						Statement(/*Parser.Statement.atg:548*/a.CatchBlock);
 					}
 					Expect(_rbrace);
 				}
 			}
 		}
-		/*Parser.Statement.atg:551*/block.Add(a); 
+		/*Parser.Statement.atg:553*/block.Add(a); 
 	}
 
-	void Using(/*Parser.Statement.atg:562*/AstBlock block) {
-		/*Parser.Statement.atg:562*/AstUsing use = new AstUsing(this); 
+	void Using(/*Parser.Statement.atg:564*/AstBlock block) {
+		/*Parser.Statement.atg:564*/AstUsing use = new AstUsing(this); 
 		Expect(_uusing);
 		Expect(_lpar);
-		Expr(/*Parser.Statement.atg:564*/out use.Expression);
+		Expr(/*Parser.Statement.atg:566*/out use.Expression);
 		Expect(_rpar);
-		StatementBlock(/*Parser.Statement.atg:565*/use.Block);
-		/*Parser.Statement.atg:566*/block.Add(use); 
+		StatementBlock(/*Parser.Statement.atg:567*/use.Block);
+		/*Parser.Statement.atg:568*/block.Add(use); 
 	}
 
 	void Assignment(/*Parser.Statement.atg:335*/AstGetSet lvalue, out AstNode node) {
@@ -2495,7 +2499,7 @@ internal partial class Parser {
 			/*Parser.Statement.atg:352*/setModifier = BinaryOperator.Cast; 
 			TypeExpr(/*Parser.Statement.atg:353*/out T);
 			/*Parser.Statement.atg:353*/expr = T; 
-		} else SynErr(145);
+		} else SynErr(147);
 		/*Parser.Statement.atg:355*/lvalue.Arguments.Add(expr);
 		lvalue.Call = PCall.Set; 
 		if(setModifier != BinaryOperator.None)
@@ -2561,7 +2565,7 @@ internal partial class Parser {
 			    variable = new AstGetSetSymbol(this, "Not a Variable Id", SymbolInterpretations.LocalObjectVariable);
 			}
 			
-		} else SynErr(146);
+		} else SynErr(148);
 	}
 
 	void StaticCall(/*Parser.Statement.atg:295*/out AstGetSetStatic staticCall) {
@@ -2608,7 +2612,7 @@ internal partial class Parser {
 			if(!target.Loader.Options.TargetApplication.Variables.ContainsKey(staticId))
 			    target.Loader.Options.TargetApplication.Variables.Add(staticId, new PVariable(staticId));
 			
-		} else SynErr(147);
+		} else SynErr(149);
 		/*Parser.Statement.atg:236*/variable = InterpretationIsObjectVariable(kind) ?
 		new AstGetSetSymbol(this, PCall.Get, staticId, kind)
 		:
@@ -2616,7 +2620,7 @@ internal partial class Parser {
 	}
 
 
-#line 121 "C:\Users\Christian\Documents\Visual Studio 2008\Projects\Prexonite\Tools\Parser.frame" //FRAME
+#line 121 "D:\DotNetProjects\Prexonite\Tools\Parser.frame" //FRAME
 
 
 	public void Parse() {
@@ -2628,7 +2632,7 @@ internal partial class Parser {
 
 		Prexonite();
 
-#line 127 "C:\Users\Christian\Documents\Visual Studio 2008\Projects\Prexonite\Tools\Parser.frame" //FRAME
+#line 127 "D:\DotNetProjects\Prexonite\Tools\Parser.frame" //FRAME
 
     Expect(0);
 	}
@@ -2680,7 +2684,7 @@ internal partial class Parser {
 		{x,x,x,x, x,x,x,x, T,T,x,x, T,x,x,x, x,x,x,x, x,x,x,T, x,T,T,x, x,x,x,T, T,x,x,x, T,x,x,x, x,x,x,x, x,x,x,x, x,x,x,x, x,x,x,x, x,x,x,x, x,x,x,x, x,x,x,x, x,x,x,x, x,x,x,x, x,x,x,x, x,x,x,x, x,x,x,x, x,x,x,x, x,x},
 		{x,T,T,x, T,T,T,T, x,T,x,T, x,x,x,x, x,T,T,T, T,x,x,T, x,x,T,x, x,x,x,T, x,x,x,T, x,x,T,x, x,x,x,T, T,T,T,x, x,x,x,T, T,T,x,x, T,x,T,x, x,x,T,x, x,x,x,x, x,x,x,T, T,T,T,x, T,T,x,T, x,T,T,T, T,x,x,x, T,x,x,T, x,x}
 
-#line 132 "C:\Users\Christian\Documents\Visual Studio 2008\Projects\Prexonite\Tools\Parser.frame" //FRAME
+#line 132 "D:\DotNetProjects\Prexonite\Tools\Parser.frame" //FRAME
 
 	};
 } // end Parser
@@ -2843,11 +2847,13 @@ internal class Errors {
 			case 142: s = "invalid GetSetComplex"; break;
 			case 143: s = "invalid Return"; break;
 			case 144: s = "invalid Condition"; break;
-			case 145: s = "invalid Assignment"; break;
-			case 146: s = "invalid Variable"; break;
-			case 147: s = "invalid VariableDeclaration"; break;
+			case 145: s = "invalid TryCatchFinally"; break;
+			case 146: s = "invalid TryCatchFinally"; break;
+			case 147: s = "invalid Assignment"; break;
+			case 148: s = "invalid Variable"; break;
+			case 149: s = "invalid VariableDeclaration"; break;
 
-#line 146 "C:\Users\Christian\Documents\Visual Studio 2008\Projects\Prexonite\Tools\Parser.frame" //FRAME
+#line 146 "D:\DotNetProjects\Prexonite\Tools\Parser.frame" //FRAME
 
 			default: s = "error " + n; break;
 		}

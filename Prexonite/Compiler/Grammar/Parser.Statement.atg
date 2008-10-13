@@ -513,10 +513,11 @@ TryCatchFinally<AstBlock block>
     }
     rbrace
     [	catch
-		[   lpar
+		(   lpar
 			GetCall<out a.ExceptionVar>
 			rpar
-		]
+	    |                       (.  SemErr(la,"catch-clauses that don't store the exception are illegal."); .)
+		)
 		lbrace
 		{   Statement<a.CatchBlock>
 		}
@@ -537,10 +538,11 @@ TryCatchFinally<AstBlock block>
 		rbrace
 		
 		[	catch
-			[   lpar
+			(   lpar
 				GetCall<out a.ExceptionVar>
 				rpar
-			]
+			|                   (.  SemErr(la,"catch-clauses that don't store the exception are illegal."); .)
+			)
 			lbrace
 			{   Statement<a.CatchBlock>
 			}

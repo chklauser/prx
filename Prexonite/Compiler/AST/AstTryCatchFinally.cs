@@ -32,7 +32,7 @@ namespace Prexonite.Compiler.Ast
         public AstBlock TryBlock;
         public AstBlock CatchBlock;
         public AstBlock FinallyBlock;
-        public AstGetSet ExceptionVar = null;
+        public AstGetSet ExceptionVar;
 
         public AstTryCatchFinally(string file, int line, int column)
             : base(file, line, column)
@@ -54,18 +54,18 @@ namespace Prexonite.Compiler.Ast
 
         public AstBlock[] Blocks
         {
-            get { return new AstBlock[] {TryBlock, CatchBlock, FinallyBlock}; }
+            get { return new[] {TryBlock, CatchBlock, FinallyBlock}; }
         }
 
         #endregion
 
         public override void EmitCode(CompilerTarget target)
         {
-            string prefix = "try\\" + Guid.NewGuid().ToString("N") + "\\";
-            string beginTryLabel = prefix + "beginTry";
-            string beginFinallyLabel = prefix + "beginFinally";
-            string beginCatchLabel = prefix + "beginCatch";
-            string endTry = prefix + "endTry";
+            var prefix = "try\\" + Guid.NewGuid().ToString("N") + "\\";
+            var beginTryLabel = prefix + "beginTry";
+            var beginFinallyLabel = prefix + "beginFinally";
+            var beginCatchLabel = prefix + "beginCatch";
+            var endTry = prefix + "endTry";
 
             if (TryBlock.IsEmpty)
                 if (FinallyBlock.IsEmpty)
@@ -91,8 +91,8 @@ namespace Prexonite.Compiler.Ast
 
             //Emit catch block
             target.EmitLabel(beginCatchLabel);
-            bool usesException = ExceptionVar != null;
-            bool justRethrow = CatchBlock.IsEmpty && !usesException;
+            var usesException = ExceptionVar != null;
+            var justRethrow = CatchBlock.IsEmpty && !usesException;
 
             if (usesException)
             {
@@ -119,13 +119,14 @@ namespace Prexonite.Compiler.Ast
 
             target.EmitLabel(endTry);
 
-            TryCatchFinallyBlock block =
+            var block =
                 new TryCatchFinallyBlock(
-                    _getAddress(target, beginTryLabel), _getAddress(target, endTry));
-
-            block.BeginFinally = !FinallyBlock.IsEmpty ? _getAddress(target, beginFinallyLabel) : -1;
-            block.BeginCatch = !justRethrow ? _getAddress(target, beginCatchLabel) : -1;
-            block.UsesException = usesException;
+                    _getAddress(target, beginTryLabel), _getAddress(target, endTry))
+                {
+                    BeginFinally = (!FinallyBlock.IsEmpty ? _getAddress(target, beginFinallyLabel) : -1),
+                    BeginCatch = (!justRethrow ? _getAddress(target, beginCatchLabel) : -1),
+                    UsesException = usesException
+                };
 
             //Register try-catch-finally block
             target.Function.Meta.AddTo(TryCatchFinallyBlock.MetaKey, block);

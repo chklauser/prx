@@ -1,28 +1,32 @@
-/*
- * Prexonite, a scripting engine (Scripting Language -> Bytecode -> Virtual Machine)
- *  Copyright (C) 2007  Christian "SealedSun" Klauser
- *  E-mail  sealedsun a.t gmail d.ot com
- *  Web     http://www.sealedsun.ch/
- *
- *  This program is free software; you can redistribute it and/or modify
- *  it under the terms of the GNU General Public License as published by
- *  the Free Software Foundation; either version 2 of the License, or
- *  (at your option) any later version.
- *
- *  Please contact me (sealedsun a.t gmail do.t com) if you need a different license.
- * 
- *  This program is distributed in the hope that it will be useful,
- *  but WITHOUT ANY WARRANTY; without even the implied warranty of
- *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- *  GNU General Public License for more details.
- *
- *  You should have received a copy of the GNU General Public License along
- *  with this program; if not, write to the Free Software Foundation, Inc.,
- *  51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
- */
+// /*
+//  * Prexonite, a scripting engine (Scripting Language -> Bytecode -> Virtual Machine)
+//  *  Copyright (C) 2007  Christian "SealedSun" Klauser
+//  *  E-mail  sealedsun a.t gmail d.ot com
+//  *  Web     http://www.sealedsun.ch/
+//  *
+//  *  This program is free software; you can redistribute it and/or modify
+//  *  it under the terms of the GNU General Public License as published by
+//  *  the Free Software Foundation; either version 2 of the License, or
+//  *  (at your option) any later version.
+//  *
+//  *  Please contact me (sealedsun a.t gmail do.t com) if you need a different license.
+//  * 
+//  *  This program is distributed in the hope that it will be useful,
+//  *  but WITHOUT ANY WARRANTY; without even the implied warranty of
+//  *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+//  *  GNU General Public License for more details.
+//  *
+//  *  You should have received a copy of the GNU General Public License along
+//  *  with this program; if not, write to the Free Software Foundation, Inc.,
+//  *  51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
+//  */
+
+#region Namespace Imports
 
 using System;
 using System.Collections.Generic;
+
+#endregion
 
 namespace Prexonite
 {
@@ -69,7 +73,8 @@ namespace Prexonite
                 if ((_endTry > 0 ? value >= _endTry : false) ||
                     (HasFinally ? value >= _beginFinally : false) ||
                     (HasCatch ? value >= _beginCatch : false))
-                    throw new ArgumentOutOfRangeException(
+                    throw new ArgumentOutOfRangeException
+                        (
                         "value",
                         "BeginTry(" + value +
                         ") has to be less than BeginFinally,BeginCatch and EndTry.");
@@ -92,7 +97,8 @@ namespace Prexonite
                     ((_beginTry > 0 ? value <= _beginTry : false) ||
                      (_endTry > 0 ? value >= _endTry : false) ||
                      (HasCatch ? value >= _beginCatch : false)))
-                    throw new ArgumentOutOfRangeException(
+                    throw new ArgumentOutOfRangeException
+                        (
                         "value",
                         "BeginFinally(" + value +
                         ") has to be within the whole try-catch-finally structure but before a catch-clause.");
@@ -115,7 +121,8 @@ namespace Prexonite
                     ((_beginTry > 0 ? value <= _beginTry : false) ||
                      (_endTry > 0 ? value >= _endTry : false) ||
                      (HasFinally ? value <= _beginFinally : false)))
-                    throw new ArgumentOutOfRangeException(
+                    throw new ArgumentOutOfRangeException
+                        (
                         "value",
                         "BeginCatch(" + value +
                         ") has to be within whole try-catch-finally structure but after a finally-clause.");
@@ -137,7 +144,8 @@ namespace Prexonite
                 if ((_beginTry > 0 ? value <= _beginTry : false) ||
                     (HasCatch ? value <= _beginCatch : false) ||
                     (HasFinally ? value <= _beginFinally : false))
-                    throw new ArgumentOutOfRangeException(
+                    throw new ArgumentOutOfRangeException
+                        (
                         "value",
                         "EndTry(" + value +
                         ") has to be greater than BeginTry, BeginFinally and BeginCatch.");
@@ -147,13 +155,7 @@ namespace Prexonite
 
         private int _endTry = -1;
 
-        public bool UsesException
-        {
-            get { return _usesException; }
-            set { _usesException = value; }
-        }
-
-        private bool _usesException = false;
+        public bool UsesException { get; set; }
 
         /// <summary>
         /// Indicates whether this instance has correctly been initialized.
@@ -210,13 +212,26 @@ namespace Prexonite
         }
 
         /// <summary>
+        /// Determines whether an address belongs to the "guarded block" (CIL). Use <see cref="Handles"/> to determine whether a try-block provides handlers 
+        /// </summary>
+        /// <param name="address">An instruction address</param>
+        /// <returns>True if the address falls into the "guarded block" (CIL), false otherwise.</returns>
+        public bool Guards(int address)
+        {
+            return
+                address >= _beginTry &&
+                address < _endTry;
+        }
+
+        /// <summary>
         /// Determines which of the supplied try-catch-finally blocks
         ///  is supposed to handle an exception at the supplied address.
         /// </summary>
         /// <param name="address">The address where the excpetion has been caught.</param>
         /// <param name="blocks">An collection of try-catch-finally candidates.</param>
         /// <returns>The block closest to the address or null if none of the blocks handles that specific address.</returns>
-        public static TryCatchFinallyBlock Closest(
+        public static TryCatchFinallyBlock Closest
+            (
             int address, ICollection<TryCatchFinallyBlock> blocks)
         {
             if (blocks == null)
@@ -226,7 +241,7 @@ namespace Prexonite
 
             TryCatchFinallyBlock closest = null;
 
-            foreach (TryCatchFinallyBlock block in blocks)
+            foreach (var block in blocks)
             {
                 if (!block.Handles(address))
                     continue;
@@ -247,7 +262,8 @@ namespace Prexonite
         /// <param name="address">The address where the excpetion has been caught.</param>
         /// <param name="blocks">An array of try-catch-finally candidates.</param>
         /// <returns>The block closest to the address or null if none of the blocks handles that specific address.</returns>
-        public static TryCatchFinallyBlock Closest(
+        public static TryCatchFinallyBlock Closest
+            (
             int address, params TryCatchFinallyBlock[] blocks)
         {
             return Closest(address, (ICollection<TryCatchFinallyBlock>) blocks);
@@ -261,7 +277,8 @@ namespace Prexonite
         /// <param name="b">A try-catch-finally block that handles the address.</param>
         /// <returns>The try-catch-finally block that is closer to the address.
         /// If neither <paramref name="a"/> nor <paramref name="b"/> handle the supplied address, null is returned.</returns>
-        public static TryCatchFinallyBlock Closer(
+        public static TryCatchFinallyBlock Closer
+            (
             int address, TryCatchFinallyBlock a, TryCatchFinallyBlock b)
         {
             if (a == null)
@@ -277,8 +294,8 @@ namespace Prexonite
             if ((!a.IsValid) || (!b.IsValid))
                 throw new ArgumentException("One of the try-catch-finally blocks is not valid.");
 
-            bool Ahandles = a.Handles(address);
-            bool Bhandles = b.Handles(address);
+            var Ahandles = a.Handles(address);
+            var Bhandles = b.Handles(address);
 
             if (Ahandles && (!Bhandles))
                 return a;
@@ -287,15 +304,16 @@ namespace Prexonite
             else if ((!Ahandles))
                 return null; //None of the two blocks handles an exception at the given address.
 
-            int Arange = a.Range;
-            int Brange = b.Range;
+            var Arange = a.Range;
+            var Brange = b.Range;
 
             if (Arange < Brange)
                 return a;
             else if (Brange < Arange)
                 return b;
             else
-                throw new PrexoniteException(
+                throw new PrexoniteException
+                    (
                     "The supplied try-catch-finally blocks cannot be compared to each other, as they cover the same range of instructions.");
         }
 
@@ -309,7 +327,7 @@ namespace Prexonite
                 "try{" + _beginTry + (!(HasFinally || HasCatch) ? ", " + (_beginTry + Range) : "") +
                 "}" +
                 (HasFinally
-                     ? "finally{" + _beginCatch + (!HasCatch ? ", " + _endTry : "") + "}"
+                     ? "finally{" + _beginFinally + (!HasCatch ? ", " + _endTry : "") + "}"
                      : "") +
                 (HasCatch ? "catch{" + _beginCatch + ", " + _endTry + "}" : "");
         }
@@ -317,13 +335,13 @@ namespace Prexonite
         public MetaEntry ToMetaEntry()
         {
             return (MetaEntry) new MetaEntry[]
-                                   {
-                                       BeginTry.ToString(),
-                                       BeginFinally.ToString(),
-                                       BeginCatch.ToString(),
-                                       EndTry.ToString(),
-                                       UsesException
-                                   };
+            {
+                BeginTry.ToString(),
+                BeginFinally.ToString(),
+                BeginCatch.ToString(),
+                EndTry.ToString(),
+                UsesException
+            };
         }
 
         public static implicit operator MetaEntry(TryCatchFinallyBlock block)
@@ -340,7 +358,7 @@ namespace Prexonite
         {
             if (obj == null)
                 return false;
-            TryCatchFinallyBlock block = obj as TryCatchFinallyBlock;
+            var block = obj as TryCatchFinallyBlock;
 
             if (block == null)
                 return false;
@@ -354,7 +372,7 @@ namespace Prexonite
 
         public override int GetHashCode()
         {
-            long prod = Math.BigMul(_beginTry, _endTry);
+            var prod = Math.BigMul(_beginTry, _endTry);
             while (prod > Int32.MaxValue)
                 prod = prod%(Int32.MaxValue/3);
             return Convert.ToInt32(prod);

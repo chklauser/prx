@@ -107,14 +107,18 @@ namespace Prexonite.Commands.Core
             }
         }
 
-        internal static readonly MethodInfo ConsoleWriteLineMethod =
-            typeof(Console).GetMethod("WriteLine", new Type[] {typeof(String)});
+        //Fix #10
+        internal static readonly MethodInfo consoleWriteLineMethod_String =
+            typeof(Console).GetMethod("WriteLine", new[] {typeof(String)});
+
+        internal static readonly MethodInfo consoleWriteLineMethod_ =
+            typeof (Console).GetMethod("WriteLine", Type.EmptyTypes);
 
         internal static readonly MethodInfo ConsoleWriteMethod =
-            typeof(Console).GetMethod("Write", new Type[] { typeof(String) });
+            typeof(Console).GetMethod("Write", new[] { typeof(String) });
 
         internal static readonly MethodInfo PValueCallToString =
-            typeof(PValue).GetMethod("CallToString", new Type[] {typeof(StackContext)});
+            typeof(PValue).GetMethod("CallToString", new[] {typeof(StackContext)});
 
         /// <summary>
         /// Provides a custom compiler routine for emitting CIL byte code for a specific instruction.
@@ -126,7 +130,7 @@ namespace Prexonite.Commands.Core
             switch(ins.Arguments)
             {
                 case 0:
-                    state.Il.EmitCall(OpCodes.Call, ConsoleWriteLineMethod,null);
+                    state.Il.EmitCall(OpCodes.Call, consoleWriteLineMethod_,null);
                     if(!ins.JustEffect)
                     {
                         state.Il.Emit(OpCodes.Ldstr, "");
@@ -144,7 +148,7 @@ namespace Prexonite.Commands.Core
                         state.Il.Emit(OpCodes.Newobj, Compiler.Cil.Compiler.NewPValue);
                         state.EmitStoreTemp(0);
                     }
-                    state.Il.EmitCall(OpCodes.Call, ConsoleWriteLineMethod, null);
+                    state.Il.EmitCall(OpCodes.Call, consoleWriteLineMethod_String, null);
                     if(!ins.JustEffect)
                     {
                         state.EmitLoadTemp(0);

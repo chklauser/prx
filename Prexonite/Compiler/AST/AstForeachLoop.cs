@@ -27,8 +27,7 @@ using NoDebug = System.Diagnostics.DebuggerNonUserCodeAttribute;
 
 namespace Prexonite.Compiler.Ast
 {
-    public class AstForeachLoop : AstLoop,
-                                  IAstHasExpressions
+    public class AstForeachLoop : AstLoop
     {
         [NoDebug]
         public AstForeachLoop(string file, int line, int column)
@@ -63,7 +62,7 @@ namespace Prexonite.Compiler.Ast
 
         public override IAstExpression[] Expressions
         {
-            get { return new IAstExpression[] {List}; }
+            get { return new[] {List}; }
         }
 
         #endregion
@@ -77,26 +76,28 @@ namespace Prexonite.Compiler.Ast
             OptimizeNode(target, ref List);
 
             //Create the enumerator variable
-            string enumVar = Labels.CreateLabel("enumerator");
+            var enumVar = Labels.CreateLabel("enumerator");
             target.Function.Variables.Add(enumVar);
 
             //Create the element assignment statement
-            AstGetSet element = Element.GetCopy();
-            AstGetSetSymbol ldEnumVar =
+            var element = Element.GetCopy();
+            var ldEnumVar =
                 new AstGetSetSymbol(
                     File, Line, Column, enumVar, SymbolInterpretations.LocalObjectVariable);
-            AstGetSetMemberAccess getCurrent =
+            var getCurrent =
                 new AstGetSetMemberAccess(File, Line, Column, ldEnumVar, "Current");
             element.Arguments.Add(getCurrent);
             element.Call = PCall.Set;
 
             //Actual Code Generation
-            int castAddr, moveNextAddr = -1, getCurrentAddr = -1, disposeAddr = -1;
+            var moveNextAddr = -1;
+            var getCurrentAddr = -1;
+            var disposeAddr = -1;
 
             //Get the enumerator
             List.EmitCode(target);
             target.EmitGetCall(0, "GetEnumerator");
-            castAddr = target.Code.Count;
+            var castAddr = target.Code.Count;
             target.Emit(OpCode.cast_const, "Object(\"System.Collections.IEnumerator\")");
             target.EmitStoreLocal(enumVar);
 
@@ -107,40 +108,43 @@ namespace Prexonite.Compiler.Ast
             else
                 emitHint = true;
 
-            AstTryCatchFinally _try = new AstTryCatchFinally(File, Line, Column);
-            _try.TryBlock = new AstActionBlock(
-                this,
-                delegate
-                {
-                    target.EmitJump(Labels.ContinueLabel);
+            var _try = new AstTryCatchFinally(File, Line, Column)
+            {
+                TryBlock = new AstActionBlock
+                    (
+                    this,
+                    delegate
+                    {
+                        target.EmitJump(Labels.ContinueLabel);
 
-                    //Assignment (begin)
-                    target.EmitLabel(Labels.BeginLabel);
-                    getCurrentAddr = target.Code.Count;
-                    element.EmitEffectCode(target);
+                        //Assignment (begin)
+                        target.EmitLabel(Labels.BeginLabel);
+                        getCurrentAddr = target.Code.Count;
+                        element.EmitEffectCode(target);
 
-                    //Code block
-                    Block.EmitCode(target);
+                        //Code block
+                        Block.EmitCode(target);
 
-                    //Condition (continue)
-                    target.EmitLabel(Labels.ContinueLabel);
-                    moveNextAddr = target.Code.Count;
-                    target.EmitLoadLocal(enumVar);
-                    target.EmitGetCall(0, "MoveNext");
-                    target.EmitJumpIfTrue(Labels.BeginLabel);
+                        //Condition (continue)
+                        target.EmitLabel(Labels.ContinueLabel);
+                        moveNextAddr = target.Code.Count;
+                        target.EmitLoadLocal(enumVar);
+                        target.EmitGetCall(0, "MoveNext");
+                        target.EmitJumpIfTrue(Labels.BeginLabel);
 
-                    //Break
-                    target.EmitLabel(Labels.BreakLabel);
-                });
-
-            _try.FinallyBlock = new AstActionBlock(
-                this,
-                delegate
-                {
-                    disposeAddr = target.Code.Count;
-                    target.EmitLoadLocal(enumVar);
-                    target.EmitCommandCall(1, Engine.DisposeAlias, true);
-                });
+                        //Break
+                        target.EmitLabel(Labels.BreakLabel);
+                    }),
+                FinallyBlock = new AstActionBlock
+                    (
+                    this,
+                    delegate
+                    {
+                        disposeAddr = target.Code.Count;
+                        target.EmitLoadLocal(enumVar);
+                        target.EmitCommandCall(1, Engine.DisposeAlias, true);
+                    })
+            };
 
             _try.EmitCode(target);
 
@@ -148,26 +152,36 @@ namespace Prexonite.Compiler.Ast
                 throw new PrexoniteException("Could not capture addresses within foreach construct for CIL compiler hint.");
             else if (emitHint)
             {
-                ForeachHint hint = new ForeachHint(enumVar, castAddr, getCurrentAddr, moveNextAddr, disposeAddr);
+                var hint = new ForeachHint(enumVar, castAddr, getCurrentAddr, moveNextAddr, disposeAddr);
                 if(target.Meta.ContainsKey(Loader.CilHintsKey))
                     target.Meta.AddTo(Loader.CilHintsKey, hint.ToMetaEntry());
                 else
-                    target.Meta[Loader.CilHintsKey] = (MetaEntry) new MetaEntry[] {hint.ToMetaEntry()};
+                    target.Meta[Loader.CilHintsKey] = (MetaEntry) new[] {hint.ToMetaEntry()};
 
                 Action<int, int> mkHook =
-                    delegate(int index, int original)
+                    (index, original) =>
                     {
-                        target.AddressChangeHooks.Add(
+                        AddressChangeHook hook = null;
+                        hook = new AddressChangeHook(
                             original,
-                            delegate(int newAddr)
+                            newAddr =>
                             {
-                                foreach(MetaEntry hintEntry in target.Meta[Loader.CilHintsKey].List)
+                                foreach (var hintEntry in target.Meta[Loader.CilHintsKey].List)
                                 {
-                                    MetaEntry[] entry = hintEntry.List;
-                                    if(entry[0] == ForeachHint.Key && entry[index].Text == original.ToString())
+                                    var entry = hintEntry.List;
+                                    if (entry[0] == ForeachHint.Key &&
+                                        entry[index].Text == original.ToString())
+                                    {
                                         entry[index] = newAddr.ToString();
+                                        // AddressChangeHook.ctor can be trusted not to call the closure.
+// ReSharper disable PossibleNullReferenceException
+                                        hook.InstructionIndex = newAddr;
+// ReSharper restore PossibleNullReferenceException
+                                        original = newAddr;
+                                    }
                                 }
                             });
+                        target.AddressChangeHooks.Add(hook);
                     };
 
                 mkHook(ForeachHint.CastAddressIndex, castAddr);

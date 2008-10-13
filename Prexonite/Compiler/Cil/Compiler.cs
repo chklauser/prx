@@ -1,25 +1,27 @@
-/*
- * Prexonite, a scripting engine (Scripting Language -> Bytecode -> Virtual Machine)
- *  Copyright (C) 2007  Christian "SealedSun" Klauser
- *  E-mail  sealedsun a.t gmail d.ot com
- *  Web     http://www.sealedsun.ch/
- *
- *  This program is free software; you can redistribute it and/or modify
- *  it under the terms of the GNU General Public License as published by
- *  the Free Software Foundation; either version 2 of the License, or
- *  (at your option) any later version.
- *
- *  Please contact me (sealedsun a.t gmail do.t com) if you need a different license.
- * 
- *  This program is distributed in the hope that it will be useful,
- *  but WITHOUT ANY WARRANTY; without even the implied warranty of
- *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- *  GNU General Public License for more details.
- *
- *  You should have received a copy of the GNU General Public License along
- *  with this program; if not, write to the Free Software Foundation, Inc.,
- *  51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
- */
+// /*
+//  * Prexonite, a scripting engine (Scripting Language -> Bytecode -> Virtual Machine)
+//  *  Copyright (C) 2007  Christian "SealedSun" Klauser
+//  *  E-mail  sealedsun a.t gmail d.ot com
+//  *  Web     http://www.sealedsun.ch/
+//  *
+//  *  This program is free software; you can redistribute it and/or modify
+//  *  it under the terms of the GNU General Public License as published by
+//  *  the Free Software Foundation; either version 2 of the License, or
+//  *  (at your option) any later version.
+//  *
+//  *  Please contact me (sealedsun a.t gmail do.t com) if you need a different license.
+//  * 
+//  *  This program is distributed in the hope that it will be useful,
+//  *  but WITHOUT ANY WARRANTY; without even the implied warranty of
+//  *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+//  *  GNU General Public License for more details.
+//  *
+//  *  You should have received a copy of the GNU General Public License along
+//  *  with this program; if not, write to the Free Software Foundation, Inc.,
+//  *  51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
+//  */
+
+#region Namespace Imports
 
 using System;
 using System.Collections.Generic;
@@ -29,6 +31,8 @@ using System.Reflection.Emit;
 using Prexonite.Commands;
 using Prexonite.Types;
 using CilException = Prexonite.PrexoniteException;
+
+#endregion
 
 namespace Prexonite.Compiler.Cil
 {
@@ -45,9 +49,9 @@ namespace Prexonite.Compiler.Cil
 
         public static void Compile(Application app, Engine targetEngine, FunctionLinking linking)
         {
-            if(app == null)
+            if (app == null)
                 throw new ArgumentNullException("app");
-            Compile(app.Functions,targetEngine, linking);
+            Compile(app.Functions, targetEngine, linking);
         }
 
         [EditorBrowsable(EditorBrowsableState.Never)]
@@ -59,7 +63,7 @@ namespace Prexonite.Compiler.Cil
         [EditorBrowsable(EditorBrowsableState.Never)]
         public static void Compile(StackContext sctx, Application app, FunctionLinking linking)
         {
-            if(sctx == null)
+            if (sctx == null)
                 throw new ArgumentNullException("sctx");
             Compile(app, sctx.ParentEngine, linking);
         }
@@ -79,29 +83,27 @@ namespace Prexonite.Compiler.Cil
         [EditorBrowsable(EditorBrowsableState.Never)]
         public static void Compile(StackContext sctx, List<PValue> lst, FunctionLinking linking)
         {
-            if(lst == null)
+            if (lst == null)
                 throw new ArgumentNullException("lst");
-            if(sctx == null)
-                throw new ArgumentNullException("sctx"); 
-            List<PFunction> functions = new List<PFunction>();
-            foreach(PValue value in lst)
+            if (sctx == null)
+                throw new ArgumentNullException("sctx");
+            var functions = new List<PFunction>();
+            foreach (var value in lst)
             {
-                if(value == null)
+                if (value == null)
                     continue;
-                PType.BuiltIn T = value.Type.ToBuiltIn();
+                var T = value.Type.ToBuiltIn();
                 PFunction func;
-                switch(T)
+                switch (T)
                 {
                     case PType.BuiltIn.String:
-                        if(!sctx.ParentApplication.Functions.TryGetValue((string) value.Value,out func))
+                        if (!sctx.ParentApplication.Functions.TryGetValue((string) value.Value, out func))
                             continue;
-                        else
-                            break;
+                        break;
                     case PType.BuiltIn.Object:
-                        if(!value.TryConvertTo(sctx, false,out func))
+                        if (!value.TryConvertTo(sctx, false, out func))
                             continue;
-                        else
-                            break;
+                        break;
                     default:
                         continue;
                 }
@@ -120,30 +122,30 @@ namespace Prexonite.Compiler.Cil
         {
             CheckQualification(functions, targetEngine);
 
-            List<PFunction> qfuncs = new List<PFunction>();
+            var qfuncs = new List<PFunction>();
 
             //Get a list of qualifying functions
-            foreach(PFunction func in functions)
-                if(!func.Meta.GetDefault(PFunction.VolatileKey, false))
+            foreach (var func in functions)
+                if (!func.Meta.GetDefault(PFunction.VolatileKey, false))
                     qfuncs.Add(func);
 
             if (qfuncs.Count == 0)
                 return; //No compilation to be done
 
-            CompilerPass pass = new CompilerPass(linking);
+            var pass = new CompilerPass(linking);
 
             //Generate method stubs
-            foreach(PFunction func in qfuncs)
+            foreach (var func in qfuncs)
                 pass.DefineImplementationMethod(func.Id);
 
             //Emit IL
-            foreach (PFunction func in qfuncs)
+            foreach (var func in qfuncs)
             {
                 _compile(func, CompilerPass.GetIlGenerator(pass.Implementations[func.Id]), targetEngine, pass, linking);
             }
 
             //Enable by name linking and link meta data to CIL implementations
-            foreach(PFunction func in qfuncs)
+            foreach (var func in qfuncs)
             {
                 func.CilImplementation = pass.GetDelegate(func.Id);
                 pass.LinkMetadata(func);
@@ -157,25 +159,21 @@ namespace Prexonite.Compiler.Cil
 
         public static bool TryCompile(PFunction func, Engine targetEngine, FunctionLinking linking)
         {
-            if(CheckQualification(func, targetEngine))
+            if (CheckQualification(func, targetEngine))
             {
+                var pass = new CompilerPass(func.ParentApplication, linking);
 
-                CompilerPass pass = new CompilerPass(func.ParentApplication, linking);
+                var m = pass.DefineImplementationMethod(func.Id);
+                var il = CompilerPass.GetIlGenerator(m);
 
-                MethodInfo m = pass.DefineImplementationMethod(func.Id);
-                ILGenerator il = CompilerPass.GetIlGenerator(m);
-
-                _compile(func, il, targetEngine, pass,linking);
+                _compile(func, il, targetEngine, pass, linking);
 
                 func.CilImplementation = pass.GetDelegate(m);
                 pass.LinkMetadata(func);
 
                 return true;
             }
-            else
-            {
-                return false;
-            }
+            return false;
         }
 
         #endregion
@@ -196,11 +194,11 @@ namespace Prexonite.Compiler.Cil
         {
             CheckQualification(app.Functions, targetEngine);
 
-            FunctionLinking linking = FunctionLinking.FullyStatic;
-            CompilerPass pass = new CompilerPass(linking);
+            var linking = FunctionLinking.FullyStatic;
+            var pass = new CompilerPass(linking);
 
-            List<PFunction> qfuncs = new List<PFunction>();
-            foreach(PFunction func in app.Functions)
+            var qfuncs = new List<PFunction>();
+            foreach (var func in app.Functions)
             {
                 if (!func.Meta.GetDefault(PFunction.VolatileKey, false))
                 {
@@ -209,26 +207,26 @@ namespace Prexonite.Compiler.Cil
                 }
             }
 
-            foreach(PFunction func in qfuncs)
+            foreach (var func in qfuncs)
             {
                 _compile(func, pass.GetIlGenerator(func.Id), targetEngine, pass, linking);
             }
 
             pass.Type.CreateType();
-            
+
             pass.Assembly.Save(pass.Assembly.GetName().Name + ".dll");
         }
 
         public static void StoreDebugImplementation(PFunction func, Engine targetEngine)
         {
-            FunctionLinking linking = FunctionLinking.FullyStatic;
-            CompilerPass pass = new CompilerPass(linking);
+            var linking = FunctionLinking.FullyStatic;
+            var pass = new CompilerPass(linking);
 
-            MethodInfo m = pass.DefineImplementationMethod(func.Id);
+            var m = pass.DefineImplementationMethod(func.Id);
 
-            ILGenerator il = CompilerPass.GetIlGenerator(m);
+            var il = CompilerPass.GetIlGenerator(m);
 
-            _compile(func, il, targetEngine,pass, linking);
+            _compile(func, il, targetEngine, pass, linking);
 
             pass.Type.CreateType();
 
@@ -238,7 +236,7 @@ namespace Prexonite.Compiler.Cil
             pass.Assembly.Save(pass.Assembly.GetName().Name + ".dll");
         }
 
-        public static void StoreDebugImplementation(StackContext sctx , PFunction func)
+        public static void StoreDebugImplementation(StackContext sctx, PFunction func)
         {
             StoreDebugImplementation(func, sctx.ParentEngine);
         }
@@ -249,12 +247,12 @@ namespace Prexonite.Compiler.Cil
 
         private static bool CheckQualification(PFunction source, Engine targetEngine)
         {
-            if(source == null)
+            if (source == null)
                 throw new ArgumentNullException("source");
-            lock(source)
+            lock (source)
             {
                 string reason;
-                bool qualifies = _check(source, targetEngine, out reason);
+                var qualifies = _check(source, targetEngine, out reason);
                 _register_check_results(source, qualifies, reason);
                 return qualifies;
             }
@@ -262,7 +260,7 @@ namespace Prexonite.Compiler.Cil
 
         private static void _register_check_results(IHasMetaTable source, bool qualifies, string reason)
         {
-            if(!qualifies && source.Meta[PFunction.DeficiencyKey].Text == "" && reason != null)
+            if (!qualifies && source.Meta[PFunction.DeficiencyKey].Text == "" && reason != null)
             {
                 source.Meta[PFunction.DeficiencyKey] = reason;
             } //else nothing
@@ -272,7 +270,7 @@ namespace Prexonite.Compiler.Cil
             }
         }
 
-        class TailCallHint
+        private class TailCallHint
         {
             private readonly int indexOfReference;
             private readonly int indexOfCall;
@@ -288,26 +286,17 @@ namespace Prexonite.Compiler.Cil
 
             public int IndexOfReference
             {
-                get
-                {
-                    return indexOfReference;
-                }
+                get { return indexOfReference; }
             }
 
             public int IndexOfCall
             {
-                get
-                {
-                    return indexOfCall;
-                }
+                get { return indexOfCall; }
             }
 
             public Instruction ActualCall
             {
-                get
-                {
-                    return actualCall;
-                }
+                get { return actualCall; }
             }
         }
 
@@ -316,21 +305,21 @@ namespace Prexonite.Compiler.Cil
             MetaEntry cilHintEntry;
             if (source.Meta.TryGetValue(Loader.CilHintsKey, out cilHintEntry))
             {
-                foreach (MetaEntry hintEntry in cilHintEntry.List)
+                foreach (var hintEntry in cilHintEntry.List)
                 {
-                    MetaEntry[] hint = hintEntry.List;
+                    var hint = hintEntry.List;
                     if (hint.Length < 1)
                         continue;
                     if (hint[0].Text == Loader.TailCallHintKey)
                     {
                         if (hint.Length < Loader.TailCallHintLength)
-                            throw new CilException(source + " has an invalid tail call CIL hint.");
-                        int refAddr = int.Parse(hint[Loader.TailCallHintReferenceIndex].Text);
-                        int callAddr = int.Parse(hint[Loader.TailCallHintCallIndex].Text);
-                        Instruction tailCall = source.Code[callAddr];
-                        Instruction actualCall = tailCall.Clone();
-                        string type = hint[Loader.TailCallHintTypeIndex].Text;
-                        switch(type)
+                            throw new PrexoniteException(source + " has an invalid tail call CIL hint.");
+                        var refAddr = int.Parse(hint[Loader.TailCallHintReferenceIndex].Text);
+                        var callAddr = int.Parse(hint[Loader.TailCallHintCallIndex].Text);
+                        var tailCall = source.Code[callAddr];
+                        var actualCall = tailCall.Clone();
+                        var type = hint[Loader.TailCallHintTypeIndex].Text;
+                        switch (type)
                         {
                             case "cmd":
                                 actualCall.OpCode = OpCode.cmd;
@@ -339,7 +328,8 @@ namespace Prexonite.Compiler.Cil
                                 actualCall.OpCode = OpCode.func;
                                 break;
                             default:
-                                throw new CilException(source + "has a tail call CIL hint with an unknown type " + type);
+                                throw new PrexoniteException
+                                    (source + "has a tail call CIL hint with an unknown type " + type);
                         }
                         actualCall.Id = hint[Loader.TailCallHintSymbolIndex].Text;
 
@@ -352,19 +342,19 @@ namespace Prexonite.Compiler.Cil
         private static void CheckQualification(IEnumerable<PFunction> functions, Engine targetEngine)
         {
             //Whole program compatibility analysis
-            foreach (PFunction source in functions)
+            foreach (var source in functions)
             {
                 if (source.Meta[PFunction.VolatileKey].Switch || source.Meta.ContainsKey(PFunction.DynamicKey))
                     continue;
 
                 //Handle command calls via tail
-                foreach(TailCallHint call in findTailCalls(source))
-                    if(call.ActualCall.OpCode == OpCode.cmd)
+                foreach (var call in findTailCalls(source))
+                    if (call.ActualCall.OpCode == OpCode.cmd)
                         handle_possibly_dynamic_command(source, call.ActualCall, targetEngine);
 
                 //Handle 'normal' command calls (cmd instruction)
-                foreach(Instruction ins in source.Code)
-                    switch(ins.OpCode)
+                foreach (var ins in source.Code)
+                    switch (ins.OpCode)
                     {
                         case OpCode.cmd:
                             handle_possibly_dynamic_command(source, ins, targetEngine);
@@ -373,10 +363,10 @@ namespace Prexonite.Compiler.Cil
             }
 
             //Check qualifications
-            foreach(PFunction func in functions)
+            foreach (var func in functions)
             {
                 string reason;
-                bool qualifies = _check(func, targetEngine, out reason);
+                var qualifies = _check(func, targetEngine, out reason);
                 _register_check_results(func, qualifies, reason);
             }
         }
@@ -388,7 +378,7 @@ namespace Prexonite.Compiler.Cil
             if (targetEngine.Commands.TryGetValue(ins.Id, out cmd) &&
                 (aware = cmd as ICilCompilerAware) != null)
             {
-                CompilationFlags flags = aware.CheckQualification(ins);
+                var flags = aware.CheckQualification(ins);
                 if ((flags & CompilationFlags.OperatesOnCaller) == CompilationFlags.OperatesOnCaller)
                     source.Meta[PFunction.DynamicKey] = true;
             }
@@ -398,26 +388,27 @@ namespace Prexonite.Compiler.Cil
         private static bool _check(PFunction source, Engine targetEngine, out string reason)
         {
             reason = null;
-            if(source == null)
+            if (source == null)
                 throw new ArgumentNullException("source");
-            if(targetEngine == null)
+            if (targetEngine == null)
                 throw new ArgumentNullException("targetEngine");
             //Application does not allow cil compilation
             if ((!source.Meta.ContainsKey(PFunction.VolatileKey)) &&
-               source.ParentApplication.Meta[PFunction.VolatileKey].Switch)
+                source.ParentApplication.Meta[PFunction.VolatileKey].Switch)
             {
                 reason = "Application does not allow cil compilation";
                 return false;
             }
-                //Function does not allow cil compilation
-            else if (source.Meta[PFunction.VolatileKey].Switch)
+            //Function does not allow cil compilation
+            if (source.Meta[PFunction.VolatileKey].Switch)
                 return false;
 
             //Check tail calls for dynamic functions
-            foreach(TailCallHint call in findTailCalls(source))
+            foreach (var call in findTailCalls(source))
             {
                 PFunction func;
-                if (source.ParentApplication.Functions.TryGetValue(call.ActualCall.Id, out func) && func.Meta[PFunction.DynamicKey].Switch)
+                if (source.ParentApplication.Functions.TryGetValue(call.ActualCall.Id, out func) &&
+                    func.Meta[PFunction.DynamicKey].Switch)
                 {
                     reason = "Uses dynamic function " + call.ActualCall.Id;
                     return false;
@@ -425,20 +416,20 @@ namespace Prexonite.Compiler.Cil
             }
 
             //Not supported instructions
-            for(int address = 0; address < source.Code.Count; address++)
+            for (var address = 0; address < source.Code.Count; address++)
             {
-                Instruction ins = source.Code[address];
-                switch(ins.OpCode)
+                var ins = source.Code[address];
+                switch (ins.OpCode)
                 {
                     case OpCode.cmd:
                         //Check for commands that are not compatible.
                         PCommand cmd;
                         ICilCompilerAware aware;
-                        if( targetEngine.Commands.TryGetValue(ins.Id, out cmd) &&
+                        if (targetEngine.Commands.TryGetValue(ins.Id, out cmd) &&
                             (aware = cmd as ICilCompilerAware) != null)
                         {
-                            CompilationFlags flags = aware.CheckQualification(ins);
-                            if(flags == CompilationFlags.IsIncompatible) //Incompatible and no workaround
+                            var flags = aware.CheckQualification(ins);
+                            if (flags == CompilationFlags.IsIncompatible) //Incompatible and no workaround
                             {
                                 reason = "Incompatible command " + cmd;
                                 return false;
@@ -448,7 +439,8 @@ namespace Prexonite.Compiler.Cil
                     case OpCode.func:
                         //Check for functions that use dynamic features
                         PFunction func;
-                        if (source.ParentApplication.Functions.TryGetValue(ins.Id, out func) && func.Meta[PFunction.DynamicKey].Switch)
+                        if (source.ParentApplication.Functions.TryGetValue(ins.Id, out func) &&
+                            func.Meta[PFunction.DynamicKey].Switch)
                         {
                             reason = "Uses dynamic function " + ins.Id;
                             return false;
@@ -469,10 +461,10 @@ namespace Prexonite.Compiler.Cil
                         break;
                     case OpCode.@try:
                         //must be the first instruction of a try block
-                        bool isCorrect = false;
-                        foreach(TryCatchFinallyBlock block in source.TryCatchFinallyBlocks)
+                        var isCorrect = false;
+                        foreach (var block in source.TryCatchFinallyBlocks)
                         {
-                            if(block.BeginTry == address)
+                            if (block.BeginTry == address)
                             {
                                 isCorrect = true;
                                 break;
@@ -487,9 +479,9 @@ namespace Prexonite.Compiler.Cil
                     case OpCode.exc:
                         //must be the first instruction of a catch block
                         isCorrect = false;
-                        foreach(TryCatchFinallyBlock block in source.TryCatchFinallyBlocks)
+                        foreach (var block in source.TryCatchFinallyBlocks)
                         {
-                            if(block.BeginCatch == address)
+                            if (block.BeginCatch == address)
                             {
                                 isCorrect = true;
                                 break;
@@ -505,26 +497,26 @@ namespace Prexonite.Compiler.Cil
                         //must either be at the end of a finally or a try block without a finally one.
                         //must point to the instruction after the tryfinallycatch
                         isCorrect = false;
-                        foreach(TryCatchFinallyBlock block in source.TryCatchFinallyBlocks)
+                        foreach (var block in source.TryCatchFinallyBlocks)
                         {
                             int lastOfTry;
-                            if(block.HasFinally)
+                            if (block.HasFinally)
                                 lastOfTry = -1; //<-- must not be last of try if finally exists
-                            else if(block.HasCatch)
+                            else if (block.HasCatch)
                                 lastOfTry = block.BeginCatch - 1;
                             else
                                 lastOfTry = block.EndTry - 1;
 
                             int lastOfFinally;
-                            if(!block.HasFinally)
+                            if (!block.HasFinally)
                                 lastOfFinally = -1;
-                            else if(block.HasCatch)
+                            else if (block.HasCatch)
                                 lastOfFinally = block.BeginCatch - 1;
                             else
                                 lastOfFinally = block.EndTry - 1;
 
-                            if(ins.Arguments == block.EndTry &&
-                               (address == lastOfTry || address == lastOfFinally))
+                            if (ins.Arguments == block.EndTry &&
+                                (address == lastOfTry || address == lastOfFinally))
                             {
                                 isCorrect = true;
                                 break;
@@ -548,9 +540,10 @@ namespace Prexonite.Compiler.Cil
 
         #region Compile Function
 
-        private static void _compile(PFunction _source, ILGenerator il, Engine targetEngine, CompilerPass pass, FunctionLinking linking)
+        private static void _compile
+            (PFunction _source, ILGenerator il, Engine targetEngine, CompilerPass pass, FunctionLinking linking)
         {
-            CompilerState state = new CompilerState(_source, targetEngine, il, pass, linking);
+            var state = new CompilerState(_source, targetEngine, il, pass, linking);
 
             //Every cil implementation needs to instantiate a CilFunctionContext and assign PValue.Null to the result.
             emit_cil_implementation_header(state);
@@ -578,13 +571,15 @@ namespace Prexonite.Compiler.Cil
         private static void emit_cil_implementation_header(CompilerState state)
         {
             //Create local cil function stack context
-            state.SctxLocal = state.Il.DeclareLocal(typeof(CilFunctionContext));
+            //  CilFunctionContext cfctx = CilFunctionContext.New(sctx, source);
+            state.SctxLocal = state.Il.DeclareLocal(typeof (CilFunctionContext));
             state.EmitLoadArg(CompilerState.ParamSctxIndex);
             state.EmitLoadArg(CompilerState.ParamSourceIndex);
             state.Il.EmitCall(OpCodes.Call, CilFunctionContext.NewMethod, null);
             state.EmitStoreLocal(state.SctxLocal.LocalIndex);
 
             //Initialize result
+            //  Result = null;
             state.EmitLoadArg(CompilerState.ParamResultIndex);
             state.EmitLoadPValueNull();
             state.Il.Emit(OpCodes.Stind_Ref);
@@ -594,16 +589,18 @@ namespace Prexonite.Compiler.Cil
         {
             //Create local ref variables for shared names
             //  and populate them with the contents of the sharedVariables parameter
-            if(state.Source.Meta.ContainsKey(PFunction.SharedNamesKey))
+            if (state.Source.Meta.ContainsKey(PFunction.SharedNamesKey))
             {
-                MetaEntry[] sharedNames = state.Source.Meta[PFunction.SharedNamesKey].List;
-                for(int i = 0; i < sharedNames.Length; i++)
+                var sharedNames = state.Source.Meta[PFunction.SharedNamesKey].List;
+                for (var i = 0; i < sharedNames.Length; i++)
                 {
-                    if(state.Source.Variables.Contains(sharedNames[i]))
+                    if (state.Source.Variables.Contains(sharedNames[i]))
                         continue; //Arguments are redeclarations.
-                    Symbol sym = new Symbol(SymbolKind.LocalRef);
-                    sym.Local = state.Il.DeclareLocal(typeof(PVariable));
-                    string id = sharedNames[i].Text;
+                    var sym = new Symbol(SymbolKind.LocalRef)
+                    {
+                        Local = state.Il.DeclareLocal(typeof (PVariable))
+                    };
+                    var id = sharedNames[i].Text;
 
                     state.EmitLoadArg(CompilerState.ParamSharedVariablesIndex);
                     state.Il.Emit(OpCodes.Ldc_I4, i);
@@ -615,67 +612,77 @@ namespace Prexonite.Compiler.Cil
             }
 
             //Create index -> id map
-            foreach(KeyValuePair<string, int> mapping in state.Source.LocalVariableMapping)
+            foreach (var mapping in state.Source.LocalVariableMapping)
                 state.IndexMap.Add(mapping.Value, mapping.Key);
 
             //Add entries for paramters
-            foreach(string parameter in state.Source.Parameters)
-                if(!state.Symbols.ContainsKey(parameter))
+            foreach (var parameter in state.Source.Parameters)
+                if (!state.Symbols.ContainsKey(parameter))
                     state.Symbols.Add(parameter, new Symbol(SymbolKind.Local));
 
             //Add entries for enumerator variables
-            foreach(ForeachHint hint in state.ForeachHints)
+            foreach (var hint in state.ForeachHints)
             {
-                if(state.Symbols.ContainsKey(hint.EnumVar))
-                    throw new CilException("Invalid foreach hint. Enumerator variable is shared."); 
-                state.Symbols.Add(hint.EnumVar,new Symbol(SymbolKind.LocalEnum));
+                if (state.Symbols.ContainsKey(hint.EnumVar))
+                    throw new PrexoniteException("Invalid foreach hint. Enumerator variable is shared.");
+                state.Symbols.Add(hint.EnumVar, new Symbol(SymbolKind.LocalEnum));
             }
 
             //Add entries for non-shared local variables
-            foreach(string variable in state.Source.Variables)
-                if(!state.Symbols.ContainsKey(variable))
+            foreach (var variable in state.Source.Variables)
+                if (!state.Symbols.ContainsKey(variable))
                     state.Symbols.Add(variable, new Symbol(SymbolKind.Local));
         }
 
         private static void analysis_and_preparation(CompilerState state)
         {
-            int tempMaxOrder = 1; // 
-            bool needsSharedVariables = false;
-            List<Instruction> sourceCode = state.Source.Code;
-            foreach(Instruction ins in sourceCode)
+            var tempMaxOrder = 1; // 
+            var needsSharedVariables = false;
+            var sourceCode = state.Source.Code;
+            foreach (var ins in sourceCode)
             {
                 string toConvert;
-                switch(ins.OpCode)
+                switch (ins.OpCode)
                 {
                     case OpCode.ldr_loci:
+                        //see ldr_loc
                         toConvert = state.IndexMap[ins.Arguments];
                         goto Convert;
                     case OpCode.ldr_loc:
                         toConvert = ins.Id;
                         Convert:
-                        ;
+
+                        //Normal local variables are implemented as CIL locals.
+                        // If the function uses variable references, they must be converted to reference variables.
                         state.Symbols[toConvert].Kind = SymbolKind.LocalRef;
                         break;
                     case OpCode.rot:
-                        int order = (int) ins.GenericArgument;
-                        if(order > tempMaxOrder)
+                        //Determine the maximum number of temporary variables for the implementation of rot[ate]
+                        var order = (int) ins.GenericArgument;
+                        if (order > tempMaxOrder)
                             tempMaxOrder = order;
                         break;
                     case OpCode.newclo:
                         MetaEntry[] entries;
-                        PFunction func = state.Source.ParentApplication.Functions[ins.Id];
+                        var func = state.Source.ParentApplication.Functions[ins.Id];
                         MetaEntry entry;
-                        if(func.Meta.ContainsKey(PFunction.SharedNamesKey) && (entry = func.Meta[PFunction.SharedNamesKey]).IsList)
+                        if (func.Meta.ContainsKey(PFunction.SharedNamesKey) &&
+                            (entry = func.Meta[PFunction.SharedNamesKey]).IsList)
                             entries = entry.List;
                         else
                             entries = new MetaEntry[] {};
-                        for (int i = 0; i < entries.Length; i++)
+                        for (var i = 0; i < entries.Length; i++)
                         {
-                            string symbolName = entries[i].Text;
-                            if(!state.Symbols.ContainsKey(symbolName))
-                                throw new CilException(func + " does not contain a mapping for the symbol " + symbolName);
+                            var symbolName = entries[i].Text;
+                            if (!state.Symbols.ContainsKey(symbolName))
+                                throw new PrexoniteException
+                                    (func + " does not contain a mapping for the symbol " + symbolName);
+
+                            //In order for variables to be shared, they too, need to be converted to reference locals.
                             state.Symbols[symbolName].Kind = SymbolKind.LocalRef;
                         }
+
+                        //Notify the compiler of the presence of closures with shared variables
                         needsSharedVariables = needsSharedVariables || entries.Length > 0;
                         break;
                 }
@@ -683,22 +690,22 @@ namespace Prexonite.Compiler.Cil
 
             //Create temporary variables for rotation
             state.TempLocals = new LocalBuilder[tempMaxOrder];
-            for(int i = 0; i < tempMaxOrder; i++)
+            for (var i = 0; i < tempMaxOrder; i++)
             {
-                LocalBuilder rot_temp = state.Il.DeclareLocal(typeof(PValue));
+                var rot_temp = state.Il.DeclareLocal(typeof (PValue));
                 state.TempLocals[i] = rot_temp;
             }
 
             //Create temporary variable for argv and sharedVariables
-            state.ArgvLocal = state.Il.DeclareLocal(typeof(PValue[]));
+            state.ArgvLocal = state.Il.DeclareLocal(typeof (PValue[]));
             state.SharedLocal = needsSharedVariables
-                                    ? state.Il.DeclareLocal(typeof(PVariable[]))
+                                    ? state.Il.DeclareLocal(typeof (PVariable[]))
                                     : null;
 
             //Create argc local variable and initialize it, if needed
-            if(state.Source.Parameters.Count > 0)
+            if (state.Source.Parameters.Count > 0)
             {
-                state.ArgcLocal = state.Il.DeclareLocal(typeof(Int32));
+                state.ArgcLocal = state.Il.DeclareLocal(typeof (Int32));
                 state.EmitLoadArg(CompilerState.ParamArgsIndex);
                 state.Il.Emit(OpCodes.Ldlen);
                 state.Il.Emit(OpCodes.Conv_I4);
@@ -708,25 +715,25 @@ namespace Prexonite.Compiler.Cil
 
         private static void parse_parameters(CompilerState state)
         {
-            for(int i = 0; i < state.Source.Parameters.Count; i++)
+            for (var i = 0; i < state.Source.Parameters.Count; i++)
             {
-                string id = state.Source.Parameters[i];
-                Symbol sym = state.Symbols[id];
+                var id = state.Source.Parameters[i];
+                var sym = state.Symbols[id];
                 LocalBuilder local;
 
-                //Local variable for this parameter has not yet been declared
-                if(sym.Kind == SymbolKind.Local)
+                //Determine whether local variables for parameters have already been created and create them if necessary
+                if (sym.Kind == SymbolKind.Local)
                 {
-                    if(sym.Local == null)
-                        local = state.Il.DeclareLocal(typeof(PValue));
+                    if (sym.Local == null)
+                        local = state.Il.DeclareLocal(typeof (PValue));
                     else
                         local = sym.Local;
                 }
-                else if(sym.Kind == SymbolKind.LocalRef)
+                else if (sym.Kind == SymbolKind.LocalRef)
                 {
-                    if(sym.Local == null)
+                    if (sym.Local == null)
                     {
-                        local = state.Il.DeclareLocal(typeof(PVariable));
+                        local = state.Il.DeclareLocal(typeof (PVariable));
                         state.Il.Emit(OpCodes.Newobj, newPVariableCtor);
                         state.EmitStoreLocal(local);
                         //PVariable objects already contain PValue.Null and need not be initialized if no
@@ -744,17 +751,19 @@ namespace Prexonite.Compiler.Cil
 
                 sym.Local = local;
 
-                Label hasArg = state.Il.DefineLabel();
-                Label end;
-                bool needsInit = sym.Kind == SymbolKind.Local;
-                end = state.Il.DefineLabel();
+                var hasArg = state.Il.DefineLabel();
+                var end = state.Il.DefineLabel();
 
-                if(needsInit) // var = idx < len ? args[idx] : null;
+                if (sym.Kind == SymbolKind.Local) // var = idx < len ? args[idx] : null;
                 {
-                    state.EmitStorePValue(
+                    //The closure below is only accessed once. The capture is therefore transparent.
+                    // ReSharper disable AccessToModifiedClosure
+                    state.EmitStorePValue
+                        (
                         sym,
                         delegate
                         {
+                            //(idx < argc) ? args[idx] : null; 
                             state.EmitLdcI4(i);
                             state.EmitLoadLocal(state.ArgcLocal);
                             state.Il.Emit(OpCodes.Blt_S, hasArg);
@@ -767,13 +776,18 @@ namespace Prexonite.Compiler.Cil
                             state.Il.MarkLabel(end);
                         }
                         );
+                    // ReSharper restore AccessToModifiedClosure
                 }
                 else // if(idx < len) var = args[idx];
                 {
                     state.EmitLdcI4(i);
                     state.EmitLoadLocal(state.ArgcLocal);
                     state.Il.Emit(OpCodes.Bge_S, end);
-                    state.EmitStorePValue(
+
+                    //The following closure is only accessed once. The capture is therefore transparent.
+                    // ReSharper disable AccessToModifiedClosure
+                    state.EmitStorePValue
+                        (
                         sym,
                         delegate
                         {
@@ -781,6 +795,7 @@ namespace Prexonite.Compiler.Cil
                             state.EmitLdcI4(i);
                             state.Il.Emit(OpCodes.Ldelem_Ref);
                         });
+                    // ReSharper restore AccessToModifiedClosure
                     state.Il.MarkLabel(end);
                 }
             }
@@ -788,87 +803,87 @@ namespace Prexonite.Compiler.Cil
 
         private static void _create_and_initialize_remaining_locals(CompilerState state)
         {
-            List<LocalBuilder> nullLocals = new List<LocalBuilder>();
+            var nullLocals = new List<LocalBuilder>();
 
             //Create remaining local variables and initialize them
-            foreach(KeyValuePair<string, Symbol> pair in state.Symbols)
+            foreach (var pair in state.Symbols)
             {
-                string id = pair.Key;
-                Symbol sym = pair.Value;
-                if(sym.Local != null)
+                var id = pair.Key;
+                var sym = pair.Value;
+                if (sym.Local != null)
                     continue;
 
-                switch(sym.Kind)
+                switch (sym.Kind)
                 {
                     case SymbolKind.Local:
+                    {
+                        sym.Local = state.Il.DeclareLocal(typeof (PValue));
+                        var initVal = GetVariableInitialization(state, id, false);
+                        switch (initVal)
                         {
-                            sym.Local = state.Il.DeclareLocal(typeof(PValue));
-                            VariableInitialization initVal = GetVariableInitialization(state, id, false);
-                            switch(initVal)
+                            case VariableInitialization.ArgV:
+                                EmitLoadArgV(state);
+                                state.EmitStoreLocal(sym.Local);
+                                break;
+                            case VariableInitialization.Null:
+                                nullLocals.Add(sym.Local); //defer assignment
+                                break;
+
+                            case VariableInitialization.None:
+                            default:
+                                break;
+                        }
+                    }
+                        break;
+                    case SymbolKind.LocalRef:
+                    {
+                        sym.Local = state.Il.DeclareLocal(typeof (PVariable));
+                        var initVal = GetVariableInitialization(state, id, true);
+
+                        var idx = sym.Local.LocalIndex;
+
+                        state.Il.Emit(OpCodes.Newobj, newPVariableCtor);
+                        state.EmitStoreLocal(idx);
+
+                        if (initVal != VariableInitialization.None)
+                        {
+                            state.EmitLoadLocal(idx);
+                            switch (initVal)
                             {
                                 case VariableInitialization.ArgV:
                                     EmitLoadArgV(state);
-                                    state.EmitStoreLocal(sym.Local);
                                     break;
                                 case VariableInitialization.Null:
-                                    nullLocals.Add(sym.Local); //defer assignment
+                                    state.EmitLoadPValueNull();
                                     break;
 
-                                case VariableInitialization.None:
                                 default:
                                     break;
                             }
+                            state.Il.EmitCall(OpCodes.Call, SetValueMethod, null);
                         }
-                        break;
-                    case SymbolKind.LocalRef:
-                        {
-                            sym.Local = state.Il.DeclareLocal(typeof(PVariable));
-                            VariableInitialization initVal = GetVariableInitialization(state, id, true);
-
-                            int idx = sym.Local.LocalIndex;
-
-                            state.Il.Emit(OpCodes.Newobj, newPVariableCtor);
-                            state.EmitStoreLocal(idx);
-
-                            if(initVal != VariableInitialization.None)
-                            {
-                                state.EmitLoadLocal(idx);
-                                switch (initVal)
-                                {
-                                    case VariableInitialization.ArgV:
-                                        EmitLoadArgV(state);
-                                        break;
-                                    case VariableInitialization.Null:
-                                        state.EmitLoadPValueNull();
-                                        break;
-
-                                    default:
-                                        break;
-                                }
-                                state.Il.EmitCall(OpCodes.Call, SetValueMethod, null);
-                            }
-                        }
+                    }
                         break;
                     case SymbolKind.LocalEnum:
-                        {
-                            sym.Local = state.Il.DeclareLocal(typeof(IEnumerator<PValue>));
-                            //No initialization needed.
-                        }
+                    {
+                        sym.Local = state.Il.DeclareLocal(typeof (IEnumerator<PValue>));
+                        //No initialization needed.
+                    }
                         break;
                     default:
-                        throw new CilException("Cannot initialize unknown symbol kind.");  
+                        throw new PrexoniteException("Cannot initialize unknown symbol kind.");
                 }
             }
 
             //Initialize null locals
-            int nullCount = nullLocals.Count;
+            var nullCount = nullLocals.Count;
             if (nullCount > 0)
             {
                 state.EmitLoadPValueNull();
-                for(int i = 0; i < nullCount; i++)
+                for (var i = 0; i < nullCount; i++)
                 {
-                    LocalBuilder local = nullLocals[i];
-                    if(i+1 != nullCount)
+                    var local = nullLocals[i];
+                    if (i + 1 != nullCount)
                         state.Il.Emit(OpCodes.Dup);
                     state.EmitStoreLocal(local);
                 }
@@ -878,22 +893,22 @@ namespace Prexonite.Compiler.Cil
         private static void emit_instructions(CompilerState state)
         {
             //Tables of tail call hint hooks
-            Dictionary<int, TailCallHint> tailReferences = new Dictionary<int, TailCallHint>();
-            Dictionary<int, TailCallHint> tailCalls = new Dictionary<int, TailCallHint>();
+            var tailReferences = new Dictionary<int, TailCallHint>();
+            var tailCalls = new Dictionary<int, TailCallHint>();
 
-            foreach (TailCallHint hint in findTailCalls(state.Source))
+            foreach (var hint in findTailCalls(state.Source))
             {
                 tailReferences.Add(hint.IndexOfReference, hint);
                 tailCalls.Add(hint.IndexOfCall, hint);
             }
 
             //Tables of foreach call hint hooks
-            Dictionary<int, ForeachHint> foreachCasts = new Dictionary<int, ForeachHint>();
-            Dictionary<int, ForeachHint> foreachGetCurrents = new Dictionary<int, ForeachHint>();
-            Dictionary<int, ForeachHint> foreachMoveNexts = new Dictionary<int, ForeachHint>();
-            Dictionary<int, ForeachHint> foreachDisposes = new Dictionary<int, ForeachHint>();
+            var foreachCasts = new Dictionary<int, ForeachHint>();
+            var foreachGetCurrents = new Dictionary<int, ForeachHint>();
+            var foreachMoveNexts = new Dictionary<int, ForeachHint>();
+            var foreachDisposes = new Dictionary<int, ForeachHint>();
 
-            foreach(ForeachHint hint in state.ForeachHints)
+            foreach (var hint in state.ForeachHints)
             {
                 foreachCasts.Add(hint.CastAddress, hint);
                 foreachGetCurrents.Add(hint.GetCurrentAddress, hint);
@@ -902,41 +917,41 @@ namespace Prexonite.Compiler.Cil
             }
 
             //Used to prevent duplicate ret OpCodes at the end of the compiled function.
-            bool lastWasRet = false;
+            var lastWasRet = false;
 
-            List<Instruction> sourceCode = state.Source.Code;
-            for(int instructionIndex = 0; instructionIndex < sourceCode.Count; instructionIndex++)
+            var sourceCode = state.Source.Code;
+            for (var instructionIndex = 0; instructionIndex < sourceCode.Count; instructionIndex++)
             {
-
                 #region Handling for try-finally-catch blocks
+
                 //Handle try-finally-catch blocks
-                foreach(TryCatchFinallyBlock block in state.Source.TryCatchFinallyBlocks)
+                foreach (var block in state.Source.TryCatchFinallyBlocks)
                 {
-                    if(instructionIndex == block.BeginTry)
+                    if (instructionIndex == block.BeginTry)
                     {
                         state.TryBlocks.Push(block);
-                        if(block.HasFinally)
+                        if (block.HasFinally)
                             state.Il.BeginExceptionBlock();
-                        if(block.HasCatch)
+                        if (block.HasCatch)
                             state.Il.BeginExceptionBlock();
                     }
-                    else if(instructionIndex == block.BeginFinally)
+                    else if (instructionIndex == block.BeginFinally)
                     {
                         state.Il.BeginFinallyBlock();
                     }
-                    else if(instructionIndex == block.BeginCatch)
+                    else if (instructionIndex == block.BeginCatch)
                     {
-                        if(block.HasFinally)
+                        if (block.HasFinally)
                             state.Il.EndExceptionBlock(); //end finally here
-                        state.Il.BeginCatchBlock(typeof(Exception));
+                        state.Il.BeginCatchBlock(typeof (Exception));
                         //parse the exception
                         state.EmitLoadLocal(state.SctxLocal);
                         state.Il.EmitCall(OpCodes.Call, Runtime.ParseExceptionMethod, null);
                         //user code will store it in a local variable
                     }
-                    else if(instructionIndex == block.EndTry)
+                    else if (instructionIndex == block.EndTry)
                     {
-                        if(block.HasFinally || block.HasCatch)
+                        if (block.HasFinally || block.HasCatch)
                             state.Il.EndExceptionBlock();
                         state.TryBlocks.Pop();
                     }
@@ -948,14 +963,15 @@ namespace Prexonite.Compiler.Cil
 
                 lastWasRet = false;
 
-                Instruction ins = sourceCode[instructionIndex];
+                var ins = sourceCode[instructionIndex];
 
                 #region CIL hints
+
                 // **** CIL hints ****
                 //  * Tail call *
                 TailCallHint tailCallHint;
                 ForeachHint hint;
-                if(tailReferences.ContainsKey(instructionIndex))
+                if (tailReferences.ContainsKey(instructionIndex))
                 {
                     //Do not load that reference (yes that means ignoring it)
 
@@ -964,13 +980,13 @@ namespace Prexonite.Compiler.Cil
                     //This will save us some rotating
                     continue;
                 }
-                else if(tailCalls.TryGetValue(instructionIndex, out tailCallHint))
+                else if (tailCalls.TryGetValue(instructionIndex, out tailCallHint))
                 {
                     //Emit code for the actual call by repacing the 
                     ins = tailCallHint.ActualCall;
                 }
                     //  * Foreach *
-                else if(foreachCasts.TryGetValue(instructionIndex, out hint))
+                else if (foreachCasts.TryGetValue(instructionIndex, out hint))
                 {
                     //result of (expr).GetEnumerator on the stack
                     //cast IEnumerator
@@ -1000,8 +1016,8 @@ namespace Prexonite.Compiler.Cil
                     state.Il.EmitCall(OpCodes.Callvirt, ForeachHint.MoveNextMethod, null);
                     instructionIndex++;
                     //jump.t begin
-                    int target = sourceCode[instructionIndex].Arguments; //read from user code
-                    state.Il.Emit(OpCodes.Brtrue,state.InstructionLabels[target]);
+                    var target = sourceCode[instructionIndex].Arguments; //read from user code
+                    state.Il.Emit(OpCodes.Brtrue, state.InstructionLabels[target]);
                     continue;
                 }
                 else if (foreachDisposes.TryGetValue(instructionIndex, out hint))
@@ -1018,16 +1034,16 @@ namespace Prexonite.Compiler.Cil
 
                 //  * Normal code generation *
                 //Decode instruction
-                int argc = ins.Arguments;
-                bool justEffect = ins.JustEffect;
-                string id = ins.Id;
+                var argc = ins.Arguments;
+                var justEffect = ins.JustEffect;
+                var id = ins.Id;
                 int idx;
                 string methodId;
                 string typeExpr;
 
                 //Emit code for the instruction
-                LocalBuilder primaryTempLocal = state.TempLocals[0];
-                switch(ins.OpCode)
+                var primaryTempLocal = state.TempLocals[0];
+                switch (ins.OpCode)
                 {
                         #region NOP
 
@@ -1053,7 +1069,7 @@ namespace Prexonite.Compiler.Cil
                         state.EmitWrapReal();
                         break;
                     case OpCode.ldc_bool:
-                        if(argc != 0)
+                        if (argc != 0)
                             state.EmitLdcI4(1);
                         else
                             state.EmitLdcI4(0);
@@ -1083,13 +1099,15 @@ namespace Prexonite.Compiler.Cil
                     case OpCode.ldr_glob:
                         state.EmitLoadLocal(state.SctxLocal);
                         state.Il.Emit(OpCodes.Ldstr, id);
-                        state.Il.EmitCall(
+                        state.Il.EmitCall
+                            (
                             OpCodes.Call, Runtime.LoadGlobalVariableReferenceAsPValueMethod, null);
                         break;
                     case OpCode.ldr_func:
                         state.EmitLoadLocal(state.SctxLocal);
                         state.Il.Emit(OpCodes.Ldstr, id);
-                        state.Il.EmitCall(
+                        state.Il.EmitCall
+                            (
                             OpCodes.Call, Runtime.LoadFunctionReferenceMethod, null);
                         break;
                     case OpCode.ldr_cmd:
@@ -1099,7 +1117,8 @@ namespace Prexonite.Compiler.Cil
                         break;
                     case OpCode.ldr_app:
                         state.EmitLoadLocal(state.SctxLocal);
-                        state.Il.EmitCall(
+                        state.Il.EmitCall
+                            (
                             OpCodes.Call, Runtime.LoadApplicationReferenceMethod, null);
                         break;
                     case OpCode.ldr_eng:
@@ -1120,12 +1139,12 @@ namespace Prexonite.Compiler.Cil
 
                         //LOAD LOCAL VARIABLE
                     case OpCode.ldloc:
-                        Symbol sym = state.Symbols[id];
-                        if(sym.Kind == SymbolKind.Local)
+                        var sym = state.Symbols[id];
+                        if (sym.Kind == SymbolKind.Local)
                         {
                             state.EmitLoadLocal(sym.Local.LocalIndex);
                         }
-                        else if(sym.Kind == SymbolKind.LocalRef)
+                        else if (sym.Kind == SymbolKind.LocalRef)
                         {
                             state.EmitLoadLocal(sym.Local.LocalIndex);
                             state.Il.EmitCall(OpCodes.Call, GetValueMethod, null);
@@ -1133,11 +1152,11 @@ namespace Prexonite.Compiler.Cil
                         break;
                     case OpCode.stloc:
                         sym = state.Symbols[id];
-                        if(sym.Kind == SymbolKind.Local)
+                        if (sym.Kind == SymbolKind.Local)
                         {
                             state.EmitStoreLocal(sym.Local.LocalIndex);
                         }
-                        else if(sym.Kind == SymbolKind.LocalRef)
+                        else if (sym.Kind == SymbolKind.LocalRef)
                         {
                             state.EmitStoreLocal(primaryTempLocal.LocalIndex);
                             state.EmitLoadLocal(sym.Local.LocalIndex);
@@ -1166,7 +1185,8 @@ namespace Prexonite.Compiler.Cil
                         state.EmitStoreLocal(primaryTempLocal.LocalIndex);
                         state.EmitLoadLocal(state.SctxLocal.LocalIndex);
                         state.Il.Emit(OpCodes.Ldstr, id);
-                        state.Il.EmitCall(
+                        state.Il.EmitCall
+                            (
                             OpCodes.Call, Runtime.LoadGlobalVariableReferenceMethod, null);
                         state.EmitLoadLocal(primaryTempLocal.LocalIndex);
                         state.Il.EmitCall(OpCodes.Call, SetValueMethod, null);
@@ -1193,18 +1213,18 @@ namespace Prexonite.Compiler.Cil
                     case OpCode.newclo:
                         //Collect shared variables
                         MetaEntry[] entries;
-                        PFunction func = state.Source.ParentApplication.Functions[id];
-                        if(func.Meta.ContainsKey(PFunction.SharedNamesKey))
+                        var func = state.Source.ParentApplication.Functions[id];
+                        if (func.Meta.ContainsKey(PFunction.SharedNamesKey))
                             entries = func.Meta[PFunction.SharedNamesKey].List;
                         else
                             entries = new MetaEntry[] {};
-                        bool hasSharedVariables = entries.Length > 0;
-                        if(hasSharedVariables)
+                        var hasSharedVariables = entries.Length > 0;
+                        if (hasSharedVariables)
                         {
                             state.EmitLdcI4(entries.Length);
-                            state.Il.Emit(OpCodes.Newarr, typeof(PVariable));
+                            state.Il.Emit(OpCodes.Newarr, typeof (PVariable));
                             state.EmitStoreLocal(state.SharedLocal);
-                            for(int i = 0; i < entries.Length; i++)
+                            for (var i = 0; i < entries.Length; i++)
                             {
                                 state.EmitLoadLocal(state.SharedLocal);
                                 state.EmitLdcI4(i);
@@ -1213,7 +1233,7 @@ namespace Prexonite.Compiler.Cil
                             }
                         }
                         state.EmitLoadLocal(state.SctxLocal);
-                        if(hasSharedVariables)
+                        if (hasSharedVariables)
                             state.EmitLoadLocal(state.SharedLocal);
                         else
                             state.Il.Emit(OpCodes.Ldnull);
@@ -1237,14 +1257,14 @@ namespace Prexonite.Compiler.Cil
                         //UNARY OPERATORS
                     case OpCode.incloc:
                         sym = state.Symbols[id];
-                        if(sym.Kind == SymbolKind.Local)
+                        if (sym.Kind == SymbolKind.Local)
                         {
                             state.EmitLoadLocal(sym.Local);
                             state.EmitLoadLocal(state.SctxLocal);
                             state.Il.EmitCall(OpCodes.Call, PVIncrementMethod, null);
                             state.EmitStoreLocal(sym.Local);
                         }
-                        else if(sym.Kind == SymbolKind.LocalRef)
+                        else if (sym.Kind == SymbolKind.LocalRef)
                         {
                             state.EmitLoadLocal(sym.Local);
                             state.Il.Emit(OpCodes.Dup);
@@ -1262,7 +1282,8 @@ namespace Prexonite.Compiler.Cil
                     case OpCode.incglob:
                         state.EmitLoadLocal(state.SctxLocal);
                         state.Il.Emit(OpCodes.Ldstr, id);
-                        state.Il.EmitCall(
+                        state.Il.EmitCall
+                            (
                             OpCodes.Call, Runtime.LoadGlobalVariableReferenceMethod, null);
                         state.Il.Emit(OpCodes.Dup);
                         state.Il.EmitCall(OpCodes.Call, GetValueMethod, null);
@@ -1273,14 +1294,14 @@ namespace Prexonite.Compiler.Cil
 
                     case OpCode.decloc:
                         sym = state.Symbols[id];
-                        if(sym.Kind == SymbolKind.Local)
+                        if (sym.Kind == SymbolKind.Local)
                         {
                             state.EmitLoadLocal(sym.Local);
                             state.EmitLoadLocal(state.SctxLocal);
                             state.Il.EmitCall(OpCodes.Call, PVDecrementMethod, null);
                             state.EmitStoreLocal(sym.Local);
                         }
-                        else if(sym.Kind == SymbolKind.LocalRef)
+                        else if (sym.Kind == SymbolKind.LocalRef)
                         {
                             state.EmitLoadLocal(sym.Local);
                             state.Il.Emit(OpCodes.Dup);
@@ -1297,7 +1318,8 @@ namespace Prexonite.Compiler.Cil
                     case OpCode.decglob:
                         state.EmitLoadLocal(state.SctxLocal);
                         state.Il.Emit(OpCodes.Ldstr, id);
-                        state.Il.EmitCall(
+                        state.Il.EmitCall
+                            (
                             OpCodes.Call, Runtime.LoadGlobalVariableReferenceMethod, null);
                         state.Il.Emit(OpCodes.Dup);
                         state.Il.EmitCall(OpCodes.Call, GetValueMethod, null);
@@ -1466,7 +1488,7 @@ namespace Prexonite.Compiler.Cil
 
                     case OpCode.check_null:
                         state.Il.EmitCall(OpCodes.Call, PVIsNullMethod, null);
-                        state.Il.Emit(OpCodes.Box, typeof(bool));
+                        state.Il.Emit(OpCodes.Box, typeof (bool));
                         state.Il.EmitCall(OpCodes.Call, GetBoolPType, null);
                         state.Il.Emit(OpCodes.Newobj, NewPValue);
                         break;
@@ -1509,7 +1531,7 @@ namespace Prexonite.Compiler.Cil
                         state.EmitLdcI4((int) PCall.Get);
                         state.Il.Emit(OpCodes.Ldstr, id);
                         state.Il.EmitCall(OpCodes.Call, PVDynamicCallMethod, null);
-                        if(justEffect)
+                        if (justEffect)
                             state.Il.Emit(OpCodes.Pop);
                         break;
 
@@ -1535,8 +1557,9 @@ namespace Prexonite.Compiler.Cil
                         //   .
                         state.fillArgv(argc);
                         idx = id.LastIndexOf("::");
-                        if(idx < 0)
-                            throw new PrexoniteException(
+                        if (idx < 0)
+                            throw new PrexoniteException
+                                (
                                 "Invalid sget instruction. Does not specify a method.");
                         methodId = id.Substring(idx + 2);
                         typeExpr = id.Substring(0, idx);
@@ -1546,15 +1569,16 @@ namespace Prexonite.Compiler.Cil
                         state.EmitLdcI4((int) PCall.Get);
                         state.Il.Emit(OpCodes.Ldstr, methodId);
                         state.EmitVirtualCall(Runtime.StaticCallMethod);
-                        if(justEffect)
+                        if (justEffect)
                             state.Il.Emit(OpCodes.Pop);
                         break;
 
                     case OpCode.sset:
                         state.fillArgv(argc);
                         idx = id.LastIndexOf("::");
-                        if(idx < 0)
-                            throw new PrexoniteException(
+                        if (idx < 0)
+                            throw new PrexoniteException
+                                (
                                 "Invalid sset instruction. Does not specify a method.");
                         methodId = id.Substring(idx + 2);
                         typeExpr = id.Substring(0, idx);
@@ -1621,7 +1645,7 @@ namespace Prexonite.Compiler.Cil
                     case OpCode.func:
                         MethodInfo targetMethod;
                         if ((state.Linking & FunctionLinking.Static) == FunctionLinking.Static &&
-                           state.Pass.Implementations.TryGetValue(id, out targetMethod))
+                            state.Pass.Implementations.TryGetValue(id, out targetMethod))
                         {
                             state.fillArgv(argc);
                             state.Il.Emit(OpCodes.Ldsfld, state.Pass.FunctionFields[id]);
@@ -1630,7 +1654,7 @@ namespace Prexonite.Compiler.Cil
                             state.Il.Emit(OpCodes.Ldnull);
                             state.Il.Emit(OpCodes.Ldloca_S, state.TempLocals[0]);
                             state.EmitCall(targetMethod);
-                            if(!justEffect)
+                            if (!justEffect)
                                 state.EmitLoadTemp(0);
                         }
                         else
@@ -1640,7 +1664,7 @@ namespace Prexonite.Compiler.Cil
                             state.readArgv(argc);
                             state.Il.Emit(OpCodes.Ldstr, id);
                             state.Il.EmitCall(OpCodes.Call, Runtime.CallFunctionMethod, null);
-                            if(justEffect)
+                            if (justEffect)
                                 state.Il.Emit(OpCodes.Pop);
                         }
                         break;
@@ -1648,7 +1672,7 @@ namespace Prexonite.Compiler.Cil
                         PCommand cmd;
                         ICilCompilerAware aware = null;
                         CompilationFlags flags;
-                        if(
+                        if (
                             state.TargetEngine.Commands.TryGetValue(id, out cmd) &&
                             (aware = cmd as ICilCompilerAware) != null)
                             flags = aware.CheckQualification(ins);
@@ -1657,7 +1681,8 @@ namespace Prexonite.Compiler.Cil
 
                         if (
                             (
-                                (flags & CompilationFlags.PreferCustomImplementation) == CompilationFlags.PreferCustomImplementation ||
+                                (flags & CompilationFlags.PreferCustomImplementation) ==
+                                CompilationFlags.PreferCustomImplementation ||
                                 (flags & CompilationFlags.HasCustomWorkaround) == CompilationFlags.HasCustomWorkaround
                             ) && aware != null)
                         {
@@ -1677,7 +1702,7 @@ namespace Prexonite.Compiler.Cil
                             state.readArgv(argc);
                             state.Il.Emit(OpCodes.Ldstr, id);
                             state.Il.EmitCall(OpCodes.Call, Runtime.CallCommandMethod, null);
-                            if(justEffect)
+                            if (justEffect)
                                 state.Il.Emit(OpCodes.Pop);
                         }
                         break;
@@ -1691,16 +1716,17 @@ namespace Prexonite.Compiler.Cil
                         #region JUMPS
 
                     case OpCode.jump:
-                        state.Il.Emit(
+                        state.Il.Emit
+                            (
                             state.MustUseLeave(instructionIndex, ref argc) ? OpCodes.Leave : OpCodes.Br,
                             state.InstructionLabels[argc]);
                         break;
                     case OpCode.jump_t:
                         state.EmitLoadLocal(state.SctxLocal);
                         state.Il.EmitCall(OpCodes.Call, Runtime.ExtractBoolMethod, null);
-                        if(state.MustUseLeave(instructionIndex, ref argc))
+                        if (state.MustUseLeave(instructionIndex, ref argc))
                         {
-                            Label cont = state.Il.DefineLabel();
+                            var cont = state.Il.DefineLabel();
                             state.Il.Emit(OpCodes.Brfalse_S, cont);
                             state.Il.Emit(OpCodes.Leave, state.InstructionLabels[argc]);
                             state.Il.MarkLabel(cont);
@@ -1713,9 +1739,9 @@ namespace Prexonite.Compiler.Cil
                     case OpCode.jump_f:
                         state.EmitLoadLocal(state.SctxLocal);
                         state.Il.EmitCall(OpCodes.Call, Runtime.ExtractBoolMethod, null);
-                        if(state.MustUseLeave(instructionIndex, ref argc))
+                        if (state.MustUseLeave(instructionIndex, ref argc))
                         {
-                            Label cont = state.Il.DefineLabel();
+                            var cont = state.Il.DefineLabel();
                             state.Il.Emit(OpCodes.Brtrue_S, cont);
                             state.Il.Emit(OpCodes.Leave, state.InstructionLabels[argc]);
                             state.Il.MarkLabel(cont);
@@ -1745,15 +1771,19 @@ namespace Prexonite.Compiler.Cil
                         break;
 
                     case OpCode.ret_break:
-                        throw new CilException(
-                            String.Format(
+                        throw new PrexoniteException
+                            (
+                            String.Format
+                                (
                                 "OpCode {0} not implemented in Cil compiler",
-                                Enum.GetName(typeof(OpCode), ins.OpCode)));
+                                Enum.GetName(typeof (OpCode), ins.OpCode)));
                     case OpCode.ret_continue:
-                        throw new CilException(
-                            String.Format(
+                        throw new PrexoniteException
+                            (
+                            String.Format
+                                (
                                 "OpCode {0} not implemented in Cil compiler",
-                                Enum.GetName(typeof(OpCode), ins.OpCode)));
+                                Enum.GetName(typeof (OpCode), ins.OpCode)));
                     case OpCode.ret_set:
                         state.EmitStoreLocal(primaryTempLocal);
                         state.EmitLoadArg(CompilerState.ParamResultIndex);
@@ -1775,20 +1805,19 @@ namespace Prexonite.Compiler.Cil
                         #region LEAVE
 
                     case OpCode.@try:
-                        //is not represented via Emit
+                        //Is done via analysis of TryCatchFinally objects associated with the funciton
                         break;
 
                     case OpCode.leave:
                         //is handled by the CLR
-                        //is handled like the unconditional jump
-                        //goto case OpCode.jump;
 
                         #endregion
 
                         #region EXCEPTION
 
                     case OpCode.exc:
-                        //is not represented via Emit
+                        //is not implemented via Emit
+                        // The exception is stored when the exception block is entered.
                         break;
 
                         #endregion
@@ -1799,20 +1828,21 @@ namespace Prexonite.Compiler.Cil
 
                         //STACK MANIPULATION
                     case OpCode.pop:
-                        for(int i = 0; i < argc; i++)
+                        for (var i = 0; i < argc; i++)
                             state.Il.Emit(OpCodes.Pop);
                         break;
                     case OpCode.dup:
-                        for(int i = 0; i < argc; i++)
+                        for (var i = 0; i < argc; i++)
                             state.Il.Emit(OpCodes.Dup);
                         break;
                     case OpCode.rot:
-                        int values = (int) ins.GenericArgument;
-                        int rotations = argc;
-                        for(int i = 0; i < values; i++)
-                            state.EmitStoreLocal(
+                        var values = (int) ins.GenericArgument;
+                        var rotations = argc;
+                        for (var i = 0; i < values; i++)
+                            state.EmitStoreLocal
+                                (
                                 state.TempLocals[(i + rotations)%values].LocalIndex);
-                        for(int i = values - 1; i >= 0; i--)
+                        for (var i = values - 1; i >= 0; i--)
                             state.EmitLoadLocal(state.TempLocals[i].LocalIndex);
                         break;
 
@@ -1832,14 +1862,13 @@ namespace Prexonite.Compiler.Cil
             }
 
             //Often instructions refer to a virtual instruction after the last real one.
-
-            foreach(TryCatchFinallyBlock block in state.TryBlocks)
+            foreach (var block in state.TryBlocks)
             {
-                if(block.HasCatch || block.HasFinally)
+                if (block.HasCatch || block.HasFinally)
                     state.Il.EndExceptionBlock();
             }
 
-            if(!lastWasRet)
+            if (!lastWasRet)
             {
                 state.MarkInstruction(sourceCode.Count);
                 state.Il.Emit(OpCodes.Ret);
@@ -1848,245 +1877,220 @@ namespace Prexonite.Compiler.Cil
 
         private static void _emit_ret(CompilerState state, int instructionIndex)
         {
-            if(instructionIndex == state.Source.Code.Count - 1) //last instruction
-                state.MarkInstruction(instructionIndex + 1); //mark ret
-            state.Il.Emit(OpCodes.Ret);
+            var max = state.Source.Code.Count;
+            var rmax = max;
+            if (instructionIndex == max - 1) //last instruction
+                state.MarkInstruction(max); //mark ret ("over-last instruction")
+
+            if (state.MustUseLeave(instructionIndex, ref rmax))
+                //Cannot return from protected block.
+                //Jump to return instruction (guaranteed to be at address $count)
+                state.Il.Emit(OpCodes.Leave, state.InstructionLabels[max]);
+            else
+                //Use conventional jump
+                state.Il.Emit(OpCodes.Ret);
         }
 
         #region IL helper
 
         public static readonly MethodInfo CreateNativePValue =
-            typeof(CilFunctionContext).GetMethod("CreateNativePValue", new Type[] {typeof(object)});
+            typeof (CilFunctionContext).GetMethod("CreateNativePValue", new[] {typeof (object)});
 
         private static readonly MethodInfo _GetBoolPType =
-            typeof(PType).GetProperty("Bool").GetGetMethod();
+            typeof (PType).GetProperty("Bool").GetGetMethod();
 
         private static readonly MethodInfo _GetIntPType =
-            typeof(PType).GetProperty("Int").GetGetMethod();
+            typeof (PType).GetProperty("Int").GetGetMethod();
 
         private static readonly MethodInfo _GetPTypeListMethod =
-            typeof(PType).GetProperty("List").GetGetMethod();
+            typeof (PType).GetProperty("List").GetGetMethod();
 
         private static readonly MethodInfo _getPTypeNull =
-            typeof(PType).GetProperty("Null").GetGetMethod();
+            typeof (PType).GetProperty("Null").GetGetMethod();
 
         private static readonly MethodInfo _GetRealPType =
-            typeof(PType).GetProperty("Real").GetGetMethod();
+            typeof (PType).GetProperty("Real").GetGetMethod();
 
         private static readonly MethodInfo _GetStringPType =
-            typeof(PType).GetProperty("String").GetGetMethod();
+            typeof (PType).GetProperty("String").GetGetMethod();
 
         internal static readonly MethodInfo GetNullPType =
-            typeof(PType).GetProperty("Null").GetGetMethod();
+            typeof (PType).GetProperty("Null").GetGetMethod();
 
         internal static readonly MethodInfo GetObjectProxy =
-            typeof(PType).GetProperty("Object").GetGetMethod();
+            typeof (PType).GetProperty("Object").GetGetMethod();
 
         private static readonly MethodInfo _getValue =
-            typeof(PVariable).GetProperty("Value").GetGetMethod();
+            typeof (PVariable).GetProperty("Value").GetGetMethod();
 
         private static readonly ConstructorInfo _NewPValue =
-            typeof(PValue).GetConstructor(new Type[] {typeof(object), typeof(PType)});
+            typeof (PValue).GetConstructor(new[] {typeof (object), typeof (PType)});
 
         private static readonly ConstructorInfo _NewPValueListCtor =
-            typeof(List<PValue>).GetConstructor(new Type[] {typeof(IEnumerable<PValue>)});
+            typeof (List<PValue>).GetConstructor(new[] {typeof (IEnumerable<PValue>)});
 
         private static readonly ConstructorInfo _newPVariableCtor =
-            typeof(PVariable).GetConstructor(new Type[] {});
+            typeof (PVariable).GetConstructor(new Type[] {});
 
         private static readonly MethodInfo _nullCreatePValue =
-            typeof(NullPType).GetMethod("CreatePValue", new Type[] {});
+            typeof (NullPType).GetMethod("CreatePValue", new Type[] {});
 
         private static readonly MethodInfo _PVAdditionMethod =
-            typeof(PValue).GetMethod("Addition", new Type[] {typeof(StackContext), typeof(PValue)});
+            typeof (PValue).GetMethod("Addition", new[] {typeof (StackContext), typeof (PValue)});
 
         private static readonly MethodInfo _PVBitwiseAndMethod =
-            typeof(PValue).GetMethod(
-                "BitwiseAnd", new Type[] {typeof(StackContext), typeof(PValue)});
+            typeof (PValue).GetMethod
+                (
+                "BitwiseAnd", new[] {typeof (StackContext), typeof (PValue)});
 
         private static readonly MethodInfo _PVBitwiseOrMethod =
-            typeof(PValue).GetMethod("BitwiseOr", new Type[] {typeof(StackContext), typeof(PValue)});
+            typeof (PValue).GetMethod("BitwiseOr", new[] {typeof (StackContext), typeof (PValue)});
 
         private static readonly MethodInfo _PVDecrementMethod =
-            typeof(PValue).GetMethod("Decrement", new Type[] {typeof(StackContext)});
+            typeof (PValue).GetMethod("Decrement", new[] {typeof (StackContext)});
 
         private static readonly MethodInfo _PVDivisionMethod =
-            typeof(PValue).GetMethod("Division", new Type[] {typeof(StackContext), typeof(PValue)});
+            typeof (PValue).GetMethod("Division", new[] {typeof (StackContext), typeof (PValue)});
 
         private static readonly MethodInfo _PVDynamicCallMethod =
-            typeof(PValue).GetMethod("DynamicCall");
+            typeof (PValue).GetMethod("DynamicCall");
 
         private static readonly MethodInfo _PVEqualityMethod =
-            typeof(PValue).GetMethod("Equality", new Type[] {typeof(StackContext), typeof(PValue)});
+            typeof (PValue).GetMethod("Equality", new[] {typeof (StackContext), typeof (PValue)});
 
         private static readonly MethodInfo _PVExclusiveOrMethod =
-            typeof(PValue).GetMethod(
-                "ExclusiveOr", new Type[] {typeof(StackContext), typeof(PValue)});
+            typeof (PValue).GetMethod
+                (
+                "ExclusiveOr", new[] {typeof (StackContext), typeof (PValue)});
 
         private static readonly MethodInfo _PVGreaterThanMethod =
-            typeof(PValue).GetMethod(
-                "GreaterThan", new Type[] {typeof(StackContext), typeof(PValue)});
+            typeof (PValue).GetMethod
+                (
+                "GreaterThan", new[] {typeof (StackContext), typeof (PValue)});
 
         private static readonly MethodInfo _PVGreaterThanOrEqualMethod =
-            typeof(PValue).GetMethod(
-                "GreaterThanOrEqual", new Type[] {typeof(StackContext), typeof(PValue)});
+            typeof (PValue).GetMethod
+                (
+                "GreaterThanOrEqual", new[] {typeof (StackContext), typeof (PValue)});
 
         private static readonly MethodInfo _PVIncrementMethod =
-            typeof(PValue).GetMethod("Increment", new Type[] {typeof(StackContext)});
+            typeof (PValue).GetMethod("Increment", new[] {typeof (StackContext)});
 
         private static readonly MethodInfo _PVIndirectCallMethod =
-            typeof(PValue).GetMethod("IndirectCall");
+            typeof (PValue).GetMethod("IndirectCall");
 
         private static readonly MethodInfo _PVInequalityMethod =
-            typeof(PValue).GetMethod(
-                "Inequality", new Type[] {typeof(StackContext), typeof(PValue)});
+            typeof (PValue).GetMethod
+                (
+                "Inequality", new[] {typeof (StackContext), typeof (PValue)});
 
         private static readonly MethodInfo _PVIsNullMethod =
-            typeof(PValue).GetProperty("IsNull").GetGetMethod();
+            typeof (PValue).GetProperty("IsNull").GetGetMethod();
 
         private static readonly MethodInfo _PVLessThanMethod =
-            typeof(PValue).GetMethod("LessThan", new Type[] {typeof(StackContext), typeof(PValue)});
+            typeof (PValue).GetMethod("LessThan", new[] {typeof (StackContext), typeof (PValue)});
 
         private static readonly MethodInfo _PVLessThanOrEqualMethod =
-            typeof(PValue).GetMethod(
-                "LessThanOrEqual", new Type[] {typeof(StackContext), typeof(PValue)});
+            typeof (PValue).GetMethod
+                (
+                "LessThanOrEqual", new[] {typeof (StackContext), typeof (PValue)});
 
         private static readonly MethodInfo _PVLogicalNotMethod =
-            typeof(PValue).GetMethod("LogicalNot", new Type[] {typeof(StackContext)});
+            typeof (PValue).GetMethod("LogicalNot", new[] {typeof (StackContext)});
 
         private static readonly MethodInfo _PVModulusMethod =
-            typeof(PValue).GetMethod("Modulus", new Type[] {typeof(StackContext), typeof(PValue)});
+            typeof (PValue).GetMethod("Modulus", new[] {typeof (StackContext), typeof (PValue)});
 
         private static readonly MethodInfo _PVMultiplyMethod =
-            typeof(PValue).GetMethod("Multiply", new Type[] {typeof(StackContext), typeof(PValue)});
+            typeof (PValue).GetMethod("Multiply", new[] {typeof (StackContext), typeof (PValue)});
 
         private static readonly MethodInfo _PVSubtractionMethod =
-            typeof(PValue).GetMethod(
-                "Subtraction", new Type[] {typeof(StackContext), typeof(PValue)});
+            typeof (PValue).GetMethod
+                (
+                "Subtraction", new[] {typeof (StackContext), typeof (PValue)});
 
         private static readonly MethodInfo _PVUnaryNegationMethod =
-            typeof(PValue).GetMethod("UnaryNegation", new Type[] {typeof(StackContext)});
+            typeof (PValue).GetMethod("UnaryNegation", new[] {typeof (StackContext)});
 
         private static readonly MethodInfo _setValue =
-            typeof(PVariable).GetProperty("Value").GetSetMethod();
+            typeof (PVariable).GetProperty("Value").GetSetMethod();
 
         private static MethodInfo GetPTypeListMethod
         {
-            get
-            {
-                return _GetPTypeListMethod;
-            }
+            get { return _GetPTypeListMethod; }
         }
 
         private static ConstructorInfo NewPValueListCtor
         {
-            get
-            {
-                return _NewPValueListCtor;
-            }
+            get { return _NewPValueListCtor; }
         }
 
         internal static MethodInfo getPTypeNull
         {
-            get
-            {
-                return _getPTypeNull;
-            }
+            get { return _getPTypeNull; }
         }
 
         internal static MethodInfo nullCreatePValue
         {
-            get
-            {
-                return _nullCreatePValue;
-            }
+            get { return _nullCreatePValue; }
         }
 
         private static ConstructorInfo newPVariableCtor
         {
-            get
-            {
-                return _newPVariableCtor;
-            }
+            get { return _newPVariableCtor; }
         }
 
         public static MethodInfo GetValueMethod
         {
-            get
-            {
-                return _getValue;
-            }
+            get { return _getValue; }
         }
 
         public static MethodInfo SetValueMethod
         {
-            get
-            {
-                return _setValue;
-            }
+            get { return _setValue; }
         }
 
         internal static MethodInfo GetIntPType
         {
-            get
-            {
-                return _GetIntPType;
-            }
+            get { return _GetIntPType; }
         }
 
         internal static MethodInfo GetRealPType
         {
-            get
-            {
-                return _GetRealPType;
-            }
+            get { return _GetRealPType; }
         }
 
         internal static MethodInfo GetBoolPType
         {
-            get
-            {
-                return _GetBoolPType;
-            }
+            get { return _GetBoolPType; }
         }
 
         internal static MethodInfo GetStringPType
         {
-            get
-            {
-                return _GetStringPType;
-            }
+            get { return _GetStringPType; }
         }
 
-        private static readonly MethodInfo _GetObjectPTypeSelector = typeof(PType).GetProperty("Object").GetGetMethod();
+        private static readonly MethodInfo _GetObjectPTypeSelector = typeof (PType).GetProperty("Object").GetGetMethod();
 
         public static MethodInfo GetObjectPTypeSelector
         {
-            get
-            {
-                return _GetObjectPTypeSelector;
-            }
+            get { return _GetObjectPTypeSelector; }
         }
 
-        private static readonly MethodInfo _CreatePValueAsObject = typeof(PType.PrexoniteObjectTypeProxy).GetMethod("CreatePValue",new Type[]{typeof(object)});
+        private static readonly MethodInfo _CreatePValueAsObject = typeof (PType.PrexoniteObjectTypeProxy).GetMethod
+            ("CreatePValue", new[] {typeof (object)});
 
         public static MethodInfo CreatePValueAsObject
         {
-            get
-            {
-                return _CreatePValueAsObject;
-            }
+            get { return _CreatePValueAsObject; }
         }
 
         private static readonly ConstructorInfo _NewPValueKeyValuePair =
-            typeof(PValueKeyValuePair).GetConstructor(new Type[] {typeof(PValue), typeof(PValue)});
+            typeof (PValueKeyValuePair).GetConstructor(new[] {typeof (PValue), typeof (PValue)});
 
         public static ConstructorInfo NewPValueKeyValuePair
         {
-            get
-            {
-                return _NewPValueKeyValuePair;
-            }
+            get { return _NewPValueKeyValuePair; }
         }
 
         //private readonly MethodInfo _CreateNativePValue = typeof(StackContext).GetMethod("CreateNativePValue");
@@ -2097,178 +2101,112 @@ namespace Prexonite.Compiler.Cil
 
         internal static ConstructorInfo NewPValue
         {
-            get
-            {
-                return _NewPValue;
-            }
+            get { return _NewPValue; }
         }
 
         private static MethodInfo PVIncrementMethod
         {
-            get
-            {
-                return _PVIncrementMethod;
-            }
+            get { return _PVIncrementMethod; }
         }
 
         private static MethodInfo PVDecrementMethod
         {
-            get
-            {
-                return _PVDecrementMethod;
-            }
+            get { return _PVDecrementMethod; }
         }
 
         private static MethodInfo PVUnaryNegationMethod
         {
-            get
-            {
-                return _PVUnaryNegationMethod;
-            }
+            get { return _PVUnaryNegationMethod; }
         }
 
         private static MethodInfo PVLogicalNotMethod
         {
-            get
-            {
-                return _PVLogicalNotMethod;
-            }
+            get { return _PVLogicalNotMethod; }
         }
 
         private static MethodInfo PVAdditionMethod
         {
-            get
-            {
-                return _PVAdditionMethod;
-            }
+            get { return _PVAdditionMethod; }
         }
 
         private static MethodInfo PVSubtractionMethod
         {
-            get
-            {
-                return _PVSubtractionMethod;
-            }
+            get { return _PVSubtractionMethod; }
         }
 
         private static MethodInfo PVMultiplyMethod
         {
-            get
-            {
-                return _PVMultiplyMethod;
-            }
+            get { return _PVMultiplyMethod; }
         }
 
         private static MethodInfo PVDivisionMethod
         {
-            get
-            {
-                return _PVDivisionMethod;
-            }
+            get { return _PVDivisionMethod; }
         }
 
         private static MethodInfo PVModulusMethod
         {
-            get
-            {
-                return _PVModulusMethod;
-            }
+            get { return _PVModulusMethod; }
         }
 
         private static MethodInfo PVBitwiseAndMethod
         {
-            get
-            {
-                return _PVBitwiseAndMethod;
-            }
+            get { return _PVBitwiseAndMethod; }
         }
 
         private static MethodInfo PVBitwiseOrMethod
         {
-            get
-            {
-                return _PVBitwiseOrMethod;
-            }
+            get { return _PVBitwiseOrMethod; }
         }
 
         private static MethodInfo PVExclusiveOrMethod
         {
-            get
-            {
-                return _PVExclusiveOrMethod;
-            }
+            get { return _PVExclusiveOrMethod; }
         }
 
         private static MethodInfo PVEqualityMethod
         {
-            get
-            {
-                return _PVEqualityMethod;
-            }
+            get { return _PVEqualityMethod; }
         }
 
         private static MethodInfo PVInequalityMethod
         {
-            get
-            {
-                return _PVInequalityMethod;
-            }
+            get { return _PVInequalityMethod; }
         }
 
         private static MethodInfo PVGreaterThanMethod
         {
-            get
-            {
-                return _PVGreaterThanMethod;
-            }
+            get { return _PVGreaterThanMethod; }
         }
 
         private static MethodInfo PVLessThanMethod
         {
-            get
-            {
-                return _PVLessThanMethod;
-            }
+            get { return _PVLessThanMethod; }
         }
 
         private static MethodInfo PVGreaterThanOrEqualMethod
         {
-            get
-            {
-                return _PVGreaterThanOrEqualMethod;
-            }
+            get { return _PVGreaterThanOrEqualMethod; }
         }
 
         private static MethodInfo PVLessThanOrEqualMethod
         {
-            get
-            {
-                return _PVLessThanOrEqualMethod;
-            }
+            get { return _PVLessThanOrEqualMethod; }
         }
 
         private static MethodInfo PVIsNullMethod
         {
-            get
-            {
-                return _PVIsNullMethod;
-            }
+            get { return _PVIsNullMethod; }
         }
 
         private static MethodInfo PVDynamicCallMethod
         {
-            get
-            {
-                return _PVDynamicCallMethod;
-            }
+            get { return _PVDynamicCallMethod; }
         }
 
         internal static MethodInfo PVIndirectCallMethod
         {
-            get
-            {
-                return _PVIndirectCallMethod;
-            }
+            get { return _PVIndirectCallMethod; }
         }
 
         private enum VariableInitialization
@@ -2280,12 +2218,12 @@ namespace Prexonite.Compiler.Cil
 
         private static VariableInitialization GetVariableInitialization(CompilerState state, string id, bool isRef)
         {
-            if(Engine.StringsAreEqual(id, PFunction.ArgumentListId) &&
-               !state.Source.Parameters.Contains(id))
+            if (Engine.StringsAreEqual(id, PFunction.ArgumentListId) &&
+                !state.Source.Parameters.Contains(id))
             {
                 return VariableInitialization.ArgV;
             }
-            else if(!isRef)
+            else if (!isRef)
             {
                 return VariableInitialization.Null;
             }

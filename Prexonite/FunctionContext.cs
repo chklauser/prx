@@ -1,29 +1,31 @@
-/*
- * Prexonite, a scripting engine (Scripting Language -> Bytecode -> Virtual Machine)
- *  Copyright (C) 2007  Christian "SealedSun" Klauser
- *  E-mail  sealedsun a.t gmail d.ot com
- *  Web     http://www.sealedsun.ch/
- *
- *  This program is free software; you can redistribute it and/or modify
- *  it under the terms of the GNU General Public License as published by
- *  the Free Software Foundation; either version 2 of the License, or
- *  (at your option) any later version.
- *
- *  Please contact me (sealedsun a.t gmail do.t com) if you need a different license.
- * 
- *  This program is distributed in the hope that it will be useful,
- *  but WITHOUT ANY WARRANTY; without even the implied warranty of
- *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- *  GNU General Public License for more details.
- *
- *  You should have received a copy of the GNU General Public License along
- *  with this program; if not, write to the Free Software Foundation, Inc.,
- *  51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
- */
-
+// /*
+//  * Prexonite, a scripting engine (Scripting Language -> Bytecode -> Virtual Machine)
+//  *  Copyright (C) 2007  Christian "SealedSun" Klauser
+//  *  E-mail  sealedsun a.t gmail d.ot com
+//  *  Web     http://www.sealedsun.ch/
+//  *
+//  *  This program is free software; you can redistribute it and/or modify
+//  *  it under the terms of the GNU General Public License as published by
+//  *  the Free Software Foundation; either version 2 of the License, or
+//  *  (at your option) any later version.
+//  *
+//  *  Please contact me (sealedsun a.t gmail do.t com) if you need a different license.
+//  * 
+//  *  This program is distributed in the hope that it will be useful,
+//  *  but WITHOUT ANY WARRANTY; without even the implied warranty of
+//  *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+//  *  GNU General Public License for more details.
+//  *
+//  *  You should have received a copy of the GNU General Public License along
+//  *  with this program; if not, write to the Free Software Foundation, Inc.,
+//  *  51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
+//  */
 #if Verbose
 using System.Text;
 #endif
+
+#region Namespace Imports
+
 using System;
 using System.Collections.Generic;
 using System.Diagnostics;
@@ -34,13 +36,16 @@ using Prexonite.Commands.Core;
 using Prexonite.Types;
 using NoDebug = System.Diagnostics.DebuggerNonUserCodeAttribute;
 
+#endregion
+
 namespace Prexonite
 {
     public class FunctionContext : StackContext
     {
         #region Creation
 
-        public FunctionContext(
+        public FunctionContext
+            (
             Engine parentEngine,
             PFunction implementation,
             PValue[] args,
@@ -49,7 +54,8 @@ namespace Prexonite
         {
         }
 
-        internal FunctionContext(
+        internal FunctionContext
+            (
             Engine parentEngine,
             PFunction implementation,
             PValue[] args,
@@ -74,15 +80,17 @@ namespace Prexonite
             ReturnMode = ReturnModes.Exit;
             if (_implementation.Meta.ContainsKey(PFunction.SharedNamesKey))
             {
-                MetaEntry[] sharedNames = _implementation.Meta[PFunction.SharedNamesKey].List;
+                var sharedNames = _implementation.Meta[PFunction.SharedNamesKey].List;
                 if (sharedNames.Length > sharedVariables.Length)
-                    throw new ArgumentException(
+                    throw new ArgumentException
+                        (
                         "The function " + _implementation.Id + " requires " +
                         sharedNames.Length + " variables to be shared.");
-                for (int i = 0; i < sharedNames.Length; i++)
+                for (var i = 0; i < sharedNames.Length; i++)
                 {
                     if (sharedVariables[i] == null)
-                        throw new ArgumentNullException(
+                        throw new ArgumentNullException
+                            (
                             "sharedVariables",
                             "One of the elements passed in sharedVariables is null.");
 
@@ -94,7 +102,7 @@ namespace Prexonite
 
             //Populate fast access array
             _localVariableArray = new PVariable[_localVariables.Count];
-            foreach (KeyValuePair<string, int> mapping in _implementation.LocalVariableMapping)
+            foreach (var mapping in _implementation.LocalVariableMapping)
                 _localVariableArray[mapping.Value] = _localVariables[mapping.Key];
         }
 
@@ -116,23 +124,23 @@ namespace Prexonite
         private void _bindArguments(PValue[] args)
         {
             //Create args variable
-            string argVId = PFunction.ArgumentListId;
+            var argVId = PFunction.ArgumentListId;
             //Make sure the variable does not override any parameter or existing variable
             while (_implementation.Parameters.Contains(argVId))
                 argVId = "\\" + argVId;
 
             if (_implementation.Variables.Contains(argVId))
             {
-                PVariable argsV = new PVariable();
+                var argsV = new PVariable();
                 argsV.Value = _parentEngine.CreateNativePValue(args);
                 _localVariables.Add(argVId, argsV);
             }
 
             //Create actual parameter variables
-            int i = 0;
-            foreach (string arg in _implementation.Parameters)
+            var i = 0;
+            foreach (var arg in _implementation.Parameters)
             {
-                PVariable pvar = new PVariable();
+                var pvar = new PVariable();
                 if (i < args.Length)
                     pvar.Value = args[i++];
                 //Ensure it is a PValue
@@ -143,7 +151,7 @@ namespace Prexonite
             }
 
             //Create local variables
-            foreach (string local in _implementation.Variables)
+            foreach (var local in _implementation.Variables)
                 if (!_localVariables.ContainsKey(local))
                     _localVariables.Add(local, new PVariable());
         }
@@ -152,7 +160,7 @@ namespace Prexonite
 
         #region Interface
 
-        private PValue _returnValue = null;
+        private PValue _returnValue;
 
         public override PValue ReturnValue
         {
@@ -161,7 +169,7 @@ namespace Prexonite
             //Returns PValue(null) instead of just null.
         }
 
-        private Engine _parentEngine;
+        private readonly Engine _parentEngine;
 
         public override Engine ParentEngine
         {
@@ -169,7 +177,7 @@ namespace Prexonite
             get { return _parentEngine; }
         }
 
-        private PFunction _implementation;
+        private readonly PFunction _implementation;
 
         public PFunction Implementation
         {
@@ -179,18 +187,12 @@ namespace Prexonite
 
         public override Application ParentApplication
         {
-            get
-            {
-                return _implementation.ParentApplication;
-            }
+            get { return _implementation.ParentApplication; }
         }
 
         public override SymbolCollection ImportedNamespaces
         {
-            get
-            {
-                return _implementation.ImportedNamespaces;
-            }
+            get { return _implementation.ImportedNamespaces; }
         }
 
         public override string ToString()
@@ -202,8 +204,8 @@ namespace Prexonite
 
         #region Local variables
 
-        private SymbolTable<PVariable> _localVariables = new SymbolTable<PVariable>();
-        private PVariable[] _localVariableArray;
+        private readonly SymbolTable<PVariable> _localVariables = new SymbolTable<PVariable>();
+        private readonly PVariable[] _localVariableArray;
 
         public SymbolTable<PVariable> LocalVariables
         {
@@ -227,7 +229,7 @@ namespace Prexonite
 
         #region Virtual Machine
 
-        private int _pointer = 0;
+        private int _pointer;
 
         public int Pointer
         {
@@ -237,7 +239,7 @@ namespace Prexonite
             set { _pointer = value; }
         }
 
-        private Stack<PValue> _stack = new Stack<PValue>();
+        private readonly Stack<PValue> _stack = new Stack<PValue>();
 
         [NoDebug]
         public void Push(PValue val)
@@ -260,31 +262,29 @@ namespace Prexonite
         public int StackSize
         {
             [DebuggerStepThrough]
-            get
-            {
-                return _stack.Count;
-            }
+            get { return _stack.Count; }
         }
 
 
         private void throwInvalidStackException(int argc)
         {
-            throw new PrexoniteInvalidStackException(
+            throw new PrexoniteInvalidStackException
+                (
                 "Code expects " + argc +
                 " values on the stack but finds " + _stack.Count);
         }
 
-        [NoDebug]
+        [DebuggerNonUserCode]
         private void fillArgs(int argc, out PValue[] argv)
         {
             argv = new PValue[argc];
             if (_stack.Count < argc)
                 throwInvalidStackException(argc);
-            for (int i = argc - 1; i >= 0; i--)
+            for (var i = argc - 1; i >= 0; i--)
                 argv[i] = Pop();
         }
 
-        private bool _fetchReturnValue = false;
+        private bool _fetchReturnValue;
 #if Verbose
         internal static string toDebug(PValue val)
         {
@@ -324,9 +324,9 @@ namespace Prexonite
 
         protected override bool PerformNextCylce(StackContext lastContext)
         {
-            bool needToReturn = false;
-            List<Instruction> codeBase = _implementation.Code;
-            int codeLength = codeBase.Count;
+            var needToReturn = false;
+            var codeBase = _implementation.Code;
+            var codeLength = codeBase.Count;
             while (!needToReturn)
             {
                 if (_pointer >= codeLength)
@@ -344,20 +344,20 @@ namespace Prexonite
                     _fetchReturnValue = false;
                 }
 
-                Instruction ins = codeBase[_pointer++];
+                var ins = codeBase[_pointer++];
 
 #if Verbose
             Console.Write("/* " + (_pointer-1).ToString().PadLeft(4, '0') + " */ " + ins);
             PValue val;
 #endif
 
-                int argc = ins.Arguments;
-                bool justEffect = ins.JustEffect;
+                var argc = ins.Arguments;
+                var justEffect = ins.JustEffect;
                 PValue[] argv;
-                string id = ins.Id;
+                var id = ins.Id;
                 PValue left;
                 PValue right;
-                PType t = ins.GenericArgument as PType;
+                var t = ins.GenericArgument as PType;
                 PVariable pvar;
                 PFunction func;
                 //used by static calls
@@ -408,8 +408,10 @@ namespace Prexonite
                         if (_localVariables.ContainsKey(id))
                             Push(CreateNativePValue(_localVariables[id]));
                         else
-                            throw new PrexoniteException(
-                                string.Format(
+                            throw new PrexoniteException
+                                (
+                                string.Format
+                                    (
                                     "Cannot load reference to local variable {0} in function {1}.",
                                     id,
                                     _implementation.Id));
@@ -421,8 +423,10 @@ namespace Prexonite
                         if (ParentApplication.Variables.ContainsKey(id))
                             Push(CreateNativePValue(ParentApplication.Variables[id]));
                         else
-                            throw new PrexoniteException(
-                                string.Format(
+                            throw new PrexoniteException
+                                (
+                                string.Format
+                                    (
                                     "Cannot load reference to global variable {0} in application {1}.",
                                     id,
                                     ParentApplication.Id));
@@ -431,8 +435,10 @@ namespace Prexonite
                         if (ParentApplication.Functions.Contains(id))
                             Push(CreateNativePValue(ParentApplication.Functions[id]));
                         else
-                            throw new PrexoniteException(
-                                string.Format(
+                            throw new PrexoniteException
+                                (
+                                string.Format
+                                    (
                                     "Cannot load reference to function {0} in application {1}.",
                                     id,
                                     ParentApplication.Id));
@@ -441,8 +447,10 @@ namespace Prexonite
                         if (ParentEngine.Commands.Contains(id))
                             Push(CreateNativePValue(ParentEngine.Commands[id]));
                         else
-                            throw new PrexoniteException(
-                                string.Format(
+                            throw new PrexoniteException
+                                (
+                                string.Format
+                                    (
                                     "Cannot load reference to command {0}.",
                                     id));
                         break;
@@ -453,7 +461,7 @@ namespace Prexonite
                         Push(CreateNativePValue(ParentEngine));
                         break;
                     case OpCode.ldr_type:
-                        if ((object)t == null)
+                        if ((object) t == null)
                         {
                             t = ConstructPType(id);
                             ins.GenericArgument = t;
@@ -473,7 +481,8 @@ namespace Prexonite
                     case OpCode.ldloc:
                         pvar = _localVariables[id];
                         if (pvar == null)
-                            throw new PrexoniteException(
+                            throw new PrexoniteException
+                                (
                                 "The local variable " + id + " in function " + _implementation.Id +
                                 " does not exist.");
 #if Verbose
@@ -487,7 +496,8 @@ namespace Prexonite
                     case OpCode.stloc:
                         pvar = _localVariables[id];
                         if (pvar == null)
-                            throw new PrexoniteException(
+                            throw new PrexoniteException
+                                (
                                 "The local variable " + id + " in function " + _implementation.Id +
                                 " does not exist.");
 
@@ -508,10 +518,11 @@ namespace Prexonite
 
                         //LOAD GLOBAL VARIABLE
                     case OpCode.ldglob:
-                        Application app = ParentApplication;
+                        var app = ParentApplication;
                         pvar = app.Variables[id];
                         if (pvar == null)
-                            throw new PrexoniteException(
+                            throw new PrexoniteException
+                                (
                                 "The global variable " + id + " does not exist.");
                         app.EnsureInitialization(ParentEngine, pvar);
 #if Verbose
@@ -525,7 +536,8 @@ namespace Prexonite
                     case OpCode.stglob:
                         pvar = ParentApplication.Variables[id];
                         if (pvar == null)
-                            throw new PrexoniteException(
+                            throw new PrexoniteException
+                                (
                                 "The global variable " + id + " does not exist.");
                         pvar.Value = Pop();
                         break;
@@ -538,7 +550,7 @@ namespace Prexonite
 
                         //CONSTRUCTION
                     case OpCode.newobj:
-                        if ((object)t == null)
+                        if ((object) t == null)
                         {
                             t = ConstructPType(id);
                             ins.GenericArgument = t;
@@ -553,7 +565,7 @@ namespace Prexonite
                         break;
 
                     case OpCode.newclo:
-                        string[] vars = ins.GenericArgument as string[];
+                        var vars = ins.GenericArgument as string[];
                         func = ParentApplication.Functions[id];
                         if (vars == null)
                         {
@@ -563,12 +575,12 @@ namespace Prexonite
                             else
                                 entries = new MetaEntry[] {};
                             vars = new string[entries.Length];
-                            for (int i = 0; i < entries.Length; i++)
+                            for (var i = 0; i < entries.Length; i++)
                                 vars[i] = entries[i].Text;
                             ins.GenericArgument = vars;
                         }
-                        PVariable[] pvars = new PVariable[vars.Length];
-                        for (int i = 0; i < pvars.Length; i++)
+                        var pvars = new PVariable[vars.Length];
+                        for (var i = 0; i < pvars.Length; i++)
                             pvars[i] = _localVariables[vars[i]];
                         if (func.HasCilImplementation)
                         {
@@ -583,9 +595,9 @@ namespace Prexonite
                     case OpCode.newcor:
                         fillArgs(argc, out argv);
 
-                        PValue routine = Pop();
-                        object routineobj = routine.Value;
-                        IStackAware routinesa = routineobj as IStackAware;
+                        var routine = Pop();
+                        var routineobj = routine.Value;
+                        var routinesa = routineobj as IStackAware;
                         StackContext corctx;
                         if (routineobj == null)
                         {
@@ -597,18 +609,20 @@ namespace Prexonite
                                 corctx = routinesa.CreateStackContext(this, argv);
                             else
                                 corctx = (StackContext)
-                                         routine.DynamicCall(
+                                         routine.DynamicCall
+                                             (
                                              this,
-                                             new PValue[]
-                                                 {
-                                                     PType.Object.CreatePValue(ParentEngine),
-                                                     PType.Object.CreatePValue(argv)
-                                                 },
+                                             new[]
+                                             {
+                                                 PType.Object.CreatePValue(ParentEngine),
+                                                 PType.Object.CreatePValue(argv)
+                                             },
                                              PCall.Get,
                                              "CreateStackContext").Value;
 
-                            Push(
-                                PType.Object[typeof(Coroutine)].CreatePValue(new Coroutine(corctx)));
+                            Push
+                                (
+                                PType.Object[typeof (Coroutine)].CreatePValue(new Coroutine(corctx)));
                         }
                         break;
 
@@ -621,7 +635,8 @@ namespace Prexonite
                         //UNARY OPERATORS
                     case OpCode.incloc:
                         pvar = _localVariables[id];
-doIncrement:            pvar.Value = pvar.Value.Increment(this);
+                        doIncrement:
+                        pvar.Value = pvar.Value.Increment(this);
 #if Verbose
                     Console.Write("=" + toDebug(pvar.Value));
 #endif
@@ -640,7 +655,8 @@ doIncrement:            pvar.Value = pvar.Value.Increment(this);
                         break;
                     case OpCode.decloc:
                         pvar = _localVariables[id];
-doDecrement:            pvar.Value = pvar.Value.Decrement(this);
+                        doDecrement:
+                        pvar.Value = pvar.Value.Decrement(this);
 #if Verbose
                     Console.Write("=" + toDebug(pvar.Value));
 #endif
@@ -712,9 +728,11 @@ doDecrement:            pvar.Value = pvar.Value.Decrement(this);
                         if (
                             !(left.TryConvertTo(this, PType.Real, out rleft) &&
                               right.TryConvertTo(this, PType.Real, out rright)))
-                            throw new PrexoniteException(
+                            throw new PrexoniteException
+                                (
                                 "The arguments supplied to the power operator are invalid (cannot be converted to Real).");
-                        Push(
+                        Push
+                            (
                             Math.Pow(Convert.ToDouble(rleft.Value), Convert.ToDouble(rright.Value)));
                         break;
 
@@ -778,7 +796,7 @@ doDecrement:            pvar.Value = pvar.Value.Decrement(this);
 
                         //TYPE CHECK
                     case OpCode.check_const:
-                        if ((object)t == null)
+                        if ((object) t == null)
                         {
                             t = ConstructPType(id);
                             ins.GenericArgument = t;
@@ -799,7 +817,7 @@ doDecrement:            pvar.Value = pvar.Value.Decrement(this);
                         #region TYPE CAST
 
                     case OpCode.cast_const:
-                        if ((object)t == null)
+                        if ((object) t == null)
                         {
                             t = ConstructPType(id);
                             ins.GenericArgument = t;
@@ -843,25 +861,26 @@ doDecrement:            pvar.Value = pvar.Value.Decrement(this);
                         fillArgs(argc, out argv);
                         idx = id.LastIndexOf("::");
                         if (idx < 0)
-                            throw new PrexoniteException(
+                            throw new PrexoniteException
+                                (
                                 "Invalid sget instruction. Does not specify a method.");
                         needToReturn = true;
                         methodId = id.Substring(idx + 2);
                         member = ins.GenericArgument as MemberInfo;
                         if (member != null)
                             goto callByMemberGet;
-                        else if ((object)t != null)
+                        else if ((object) t != null)
                             goto callByTypeGet;
                         else
                         {
                             //Full resolve
-                            string typeExpr = id.Substring(0, idx);
+                            var typeExpr = id.Substring(0, idx);
                             t = ConstructPType(typeExpr);
                             ins.GenericArgument = t;
                             if (t is ObjectPType)
                             {
                                 //Try to get a member info
-                                ObjectPType objT = (ObjectPType) t;
+                                var objT = (ObjectPType) t;
                                 right = objT.StaticCall(this, argv, PCall.Get, methodId, out member);
                                 if (!justEffect)
                                     Push(right);
@@ -890,25 +909,26 @@ doDecrement:            pvar.Value = pvar.Value.Decrement(this);
                         fillArgs(argc, out argv);
                         idx = id.LastIndexOf("::");
                         if (idx < 0)
-                            throw new PrexoniteException(
+                            throw new PrexoniteException
+                                (
                                 "Invalid sget instruction. Does not specify a method.");
                         needToReturn = true;
                         methodId = id.Substring(idx + 2);
                         member = ins.GenericArgument as MemberInfo;
                         if (member != null)
                             goto callByMemberSet;
-                        else if ((object)t != null)
+                        else if ((object) t != null)
                             goto callByTypeSet;
                         else
                         {
                             //Full resolve
-                            string typeExpr = id.Substring(0, idx);
+                            var typeExpr = id.Substring(0, idx);
                             t = ConstructPType(typeExpr);
                             ins.GenericArgument = t;
                             if (t is ObjectPType)
                             {
                                 //Try to get a member info
-                                ObjectPType objT = (ObjectPType) t;
+                                var objT = (ObjectPType) t;
                                 objT.StaticCall(this, argv, PCall.Set, methodId, out member);
                                 if (member != null)
                                     ins.GenericArgument = member;
@@ -946,7 +966,8 @@ doDecrement:            pvar.Value = pvar.Value.Decrement(this);
 #endif
 
                         //Perform indirect call
-doIndloc:               if (justEffect)
+                        doIndloc:
+                        if (justEffect)
                             left.IndirectCall(this, argv);
                         else
                             Push(left.IndirectCall(this, argv));
@@ -993,7 +1014,7 @@ doIndloc:               if (justEffect)
                         fillArgs(argc, out argv);
                         left = Pop();
 
-                        LinkedList<StackContext> stack = _parentEngine.Stack;
+                        var stack = _parentEngine.Stack;
                         stack.Remove(stack.FindLast(this));
 
                         stack.AddLast(Call.CreateStackContext(this, left, argv));
@@ -1016,7 +1037,8 @@ doIndloc:               if (justEffect)
                             func = ParentApplication.Functions[id];
                         }
                         if (func == null)
-                            throw PrexoniteRuntimeException.CreateRuntimeException(
+                            throw PrexoniteRuntimeException.CreateRuntimeException
+                                (
                                 this, "No function with the physical name " + id + " exists.");
 #if NoCil
                         FunctionContext fctx =
@@ -1034,15 +1056,16 @@ doIndloc:               if (justEffect)
                         }
                         else
                         {
-                            FunctionContext fctx =
-                                new FunctionContext(
+                            var fctx =
+                                new FunctionContext
+                                    (
                                     ParentEngine, func, argv);
 
                             _fetchReturnValue = !justEffect;
                             ParentEngine.Stack.AddLast(fctx);
                         }
 #endif
-                        
+
 #if Verbose
                     Console.Write("\n#PSH: " + id + "(");
                     foreach (PValue arg in argv)
@@ -1066,10 +1089,10 @@ doIndloc:               if (justEffect)
                         }
                         if (cmd == null)
                             throw new PrexoniteException("Cannot find command " + id + "!");
-                        IStackAware sa = cmd as IStackAware;
+                        var sa = cmd as IStackAware;
                         if (sa != null)
                         {
-                            StackContext cctx = sa.CreateStackContext(this, argv);
+                            var cctx = sa.CreateStackContext(this, argv);
                             _fetchReturnValue = !justEffect;
                             ParentEngine.Stack.AddLast(cctx);
                         }
@@ -1172,17 +1195,20 @@ doIndloc:               if (justEffect)
                         PrexoniteRuntimeException prexc;
                         if (t is StringPType)
                             prexc =
-                                PrexoniteRuntimeException.CreateRuntimeException(
+                                PrexoniteRuntimeException.CreateRuntimeException
+                                    (
                                     this, (string) left.Value);
                         else if (t is ObjectPType && left.Value is Exception)
                             prexc =
-                                PrexoniteRuntimeException.CreateRuntimeException(
+                                PrexoniteRuntimeException.CreateRuntimeException
+                                    (
                                     this,
                                     ((Exception) left.Value).Message,
                                     (Exception) left.Value);
                         else
                             prexc =
-                                PrexoniteRuntimeException.CreateRuntimeException(
+                                PrexoniteRuntimeException.CreateRuntimeException
+                                    (
                                     this, left.CallToString(this));
 #if Verbose
                     Console.WriteLine();
@@ -1206,7 +1232,7 @@ doIndloc:               if (justEffect)
                         Console.Write(" => Skip catch block.");
 #endif
                         }
-                        else 
+                        else
                         {
                             if (currentTry.HasCatch)
                             {
@@ -1244,21 +1270,21 @@ doIndloc:               if (justEffect)
                     case OpCode.pop:
                         if (_stack.Count < argc)
                             throwInvalidStackException(argc);
-                        for (int i = 0; i < argc; i++)
+                        for (var i = 0; i < argc; i++)
                             Pop(); //Pop to nirvana
                         break;
                     case OpCode.dup:
                         left = Peek();
-                        for (int i = 0; i < argc; i++)
+                        for (var i = 0; i < argc; i++)
                             Push(left);
                         break;
                     case OpCode.rot:
-                        int values = (int) ins.GenericArgument;
-                        int rotations = argc;
-                        PValue[] target = new PValue[values];
-                        for (int i = 0; i < values; i++)
+                        var values = (int) ins.GenericArgument;
+                        var rotations = argc;
+                        var target = new PValue[values];
+                        for (var i = 0; i < values; i++)
                             target[(i + rotations)%values] = Pop();
-                        for (int i = values - 1; i >= 0; i--)
+                        for (var i = values - 1; i >= 0; i--)
                             Push(target[i]);
                         break;
 
@@ -1280,9 +1306,9 @@ doIndloc:               if (justEffect)
 
         #region Exception Handling
 
-        private Exception _currentException = null;
+        private Exception _currentException;
 
-        private Stack<bool> _isHandlingException = new Stack<bool>();
+        private readonly Stack<bool> _isHandlingException = new Stack<bool>();
 
         /// <summary>
         /// Indicates whether the function context is currently handling an exception or not.
@@ -1299,9 +1325,9 @@ doIndloc:               if (justEffect)
         public override bool TryHandleException(Exception exc)
         {
             //Pointer has already been incremented.
-            int address = _pointer - 1;
+            var address = _pointer - 1;
 
-            TryCatchFinallyBlock block =
+            var block =
                 TryCatchFinallyBlock.Closest(address, _implementation.TryCatchFinallyBlocks);
 
             if (block == null) //No try-catch-finally block handles exceptions at the given address.
@@ -1326,6 +1352,12 @@ doIndloc:               if (justEffect)
 #endif
                 _pointer = block.BeginCatch;
             }
+            else
+            {
+                //Fix #9 (Different handling of exception blocks in CIL implementation)
+                // The CLR defaults to rethrowing exceptions.
+                return false;
+            }
 
             return true;
         }
@@ -1336,7 +1368,7 @@ doIndloc:               if (justEffect)
     }
 
     [Serializable]
-    [NoDebug]
+    [DebuggerNonUserCode]
     public class PrexoniteInvalidStackException : PrexoniteException
     {
         public PrexoniteInvalidStackException()
@@ -1353,7 +1385,8 @@ doIndloc:               if (justEffect)
         {
         }
 
-        protected PrexoniteInvalidStackException(
+        protected PrexoniteInvalidStackException
+            (
             SerializationInfo info,
             StreamingContext context)
             : base(info, context)

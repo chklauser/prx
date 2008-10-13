@@ -27,6 +27,9 @@ Author SealedSun;
 	
 declare println as echo;
 
+//Access to an experimental terminal
+declare command __console;
+
 //Not all environments may support colors...
 var supportsColors = (supportsColors ?? true)~Bool;
 

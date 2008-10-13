@@ -1,6 +1,7 @@
 #region
 
 using System;
+using System.Collections.Generic;
 using Prexonite.Compiler.Cil;
 using NoDebug = System.Diagnostics.DebuggerNonUserCodeAttribute;
 
@@ -82,12 +83,46 @@ namespace Prexonite.Types
             string id,
             out PValue result)
         {
+            if (sctx == null)
+                throw new ArgumentNullException("sctx");
+
+            result = null;
+
+            switch(id.ToUpperInvariant())
+            {
+                case "TO":
+                    if(args.Length < 1)
+                        break;
+                    var upperLimitPV = args[0].ConvertTo(sctx, Int,true);
+                    var stepPV = args.Length > 1 ? args[1].ConvertTo(sctx, Int, true) : 1;
+
+                    var lowerLimit = (int)subject.Value;
+                    var upperLimit = (int) upperLimitPV.Value;
+                    var step = (int) stepPV.Value;
+
+                    Console.WriteLine();
+
+
+                    result = sctx.CreateNativePValue
+                        (new Coroutine(new CoroutineContext(sctx, _generateIntegerRange(lowerLimit, step, upperLimit))));
+                    break;
+            }
+
+            if(result != null)
+                return true;
+
             //Try CLR dynamic call
-            ObjectPType clrint = Object[subject.ClrType];
+            var clrint = Object[subject.ClrType];
             if (clrint.TryDynamicCall(sctx, subject, args, call, id, out result))
                 return true;
 
             return false;
+        }
+
+        private IEnumerable<PValue> _generateIntegerRange(int lowerLimit, int step, int upperLimit)
+        {
+            for (var i = lowerLimit; i <= upperLimit; i += step)
+                yield return i;
         }
 
         public override bool TryStaticCall(

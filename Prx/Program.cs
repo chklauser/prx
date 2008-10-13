@@ -222,22 +222,32 @@ namespace Prx
             Application app = new Application("prx");
             //Create a loader for that application and...
             Loader ldr = new Loader(engine, app);
-            //load the main script file.
-            string entryPath = GetPrxPath() + @"\src\prx_main.pxs";
-            bool deleteSrc = false;
-            if (!File.Exists(entryPath))
-            {
-                if (!Directory.Exists("src"))
-                {
-                    DirectoryInfo di = Directory.CreateDirectory(GetPrxPath() + @"\src");
-                    di.Attributes = di.Attributes | FileAttributes.Hidden;
-                    deleteSrc = true;
-                }
+            //load the main script file. 
 
-                //Unpack source
-                writeFile(Resources.prx_main, "prx_main.pxs");
-                writeFile(Resources.prx_lib, "prx_lib.pxs");
-                writeFile(Resources.prx_interactive, "prx_interactive.pxs");
+            //CLI overrîde script in action:
+            bool deleteSrc = false;
+            var entryPath = GetPrxPath() + @"\prx.pxs";
+            if(!File.Exists(entryPath))
+            {
+                //Load default CLI app
+                entryPath = GetPrxPath() + @"\src\prx_main.pxs";
+                   
+                //var entryPath = GetPrxPath() + @"\src\prx_main.pxs";
+                
+                if (!File.Exists(entryPath))
+                {
+                    if (!Directory.Exists("src"))
+                    {
+                        DirectoryInfo di = Directory.CreateDirectory(GetPrxPath() + @"\src");
+                        di.Attributes = di.Attributes | FileAttributes.Hidden;
+                        deleteSrc = true;
+                    }
+
+                    //Unpack source
+                    writeFile(Resources.prx_main, "prx_main.pxs");
+                    writeFile(Resources.prx_lib, "prx_lib.pxs");
+                    writeFile(Resources.prx_interactive, "prx_interactive.pxs");
+                }
             }
 
 #if !DEBUG
@@ -285,6 +295,19 @@ namespace Prx
                 Console.ForegroundColor = originalColor;
                 Environment.Exit(1);
                 return;
+            }
+        }
+
+        public static int _test(int x)
+        {
+            try
+            {
+                return x + 1;
+            }
+            catch (Exception)
+            {
+                Console.WriteLine(x);
+                throw;
             }
         }
     }

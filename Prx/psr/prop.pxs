@@ -13,7 +13,7 @@
 //      );
 
 build does require(
-    "ast.pxs"
+    //"ast.pxs"
 );
 
 Import

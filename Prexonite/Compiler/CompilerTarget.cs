@@ -1,30 +1,30 @@
-/*
- * Prexonite, a scripting engine (Scripting Language -> Bytecode -> Virtual Machine)
- *  Copyright (C) 2007  Christian "SealedSun" Klauser
- *  E-mail  sealedsun a.t gmail d.ot com
- *  Web     http://www.sealedsun.ch/
- *
- *  This program is free software; you can redistribute it and/or modify
- *  it under the terms of the GNU General Public License as published by
- *  the Free Software Foundation; either version 2 of the License, or
- *  (at your option) any later version.
- *
- *  Please contact me (sealedsun a.t gmail do.t com) if you need a different license.
- * 
- *  This program is distributed in the hope that it will be useful,
- *  but WITHOUT ANY WARRANTY; without even the implied warranty of
- *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- *  GNU General Public License for more details.
- *
- *  You should have received a copy of the GNU General Public License along
- *  with this program; if not, write to the Free Software Foundation, Inc.,
- *  51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
- */
-//#define forceIndex
-//#define allowIndex
+// /*
+//  * Prexonite, a scripting engine (Scripting Language -> Bytecode -> Virtual Machine)
+//  *  Copyright (C) 2007  Christian "SealedSun" Klauser
+//  *  E-mail  sealedsun a.t gmail d.ot com
+//  *  Web     http://www.sealedsun.ch/
+//  *
+//  *  This program is free software; you can redistribute it and/or modify
+//  *  it under the terms of the GNU General Public License as published by
+//  *  the Free Software Foundation; either version 2 of the License, or
+//  *  (at your option) any later version.
+//  *
+//  *  Please contact me (sealedsun a.t gmail do.t com) if you need a different license.
+//  * 
+//  *  This program is distributed in the hope that it will be useful,
+//  *  but WITHOUT ANY WARRANTY; without even the implied warranty of
+//  *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+//  *  GNU General Public License for more details.
+//  *
+//  *  You should have received a copy of the GNU General Public License along
+//  *  with this program; if not, write to the Free Software Foundation, Inc.,
+//  *  51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
+//  */
 #if ((!(DEBUG || Verbose)) || forceIndex) && allowIndex
 #define UseIndex
 #endif
+
+#region Namespace Imports
 
 using System;
 using System.Collections;
@@ -32,16 +32,37 @@ using System.Collections.Generic;
 using Prexonite.Compiler.Ast;
 using NoDebug = System.Diagnostics.DebuggerNonUserCodeAttribute;
 
+#endregion
+
 namespace Prexonite.Compiler
 {
+    [NoDebug]
+    public class AddressChangeHook
+    {
+        public AddressChangeHook(int instructionIndex, Action<int> reaction)
+        {
+            if (reaction == null)
+                throw new ArgumentNullException("reaction");
+            if (instructionIndex < 0)
+                throw new ArgumentOutOfRangeException
+                    ("instructionIndex", instructionIndex, "The instruction index must be valid (i.e. not negative).");
+
+            React = reaction;
+            InstructionIndex = instructionIndex;
+        }
+
+        public Action<int> React { get; private set; }
+
+        public int InstructionIndex { get; set; }
+    }
+
     public class CompilerTarget : IHasMetaTable
     {
-        public Dictionary<int, Action<int>> AddressChangeHooks
+        private readonly LinkedList<AddressChangeHook> _addressChangeHooks = new LinkedList<AddressChangeHook>();
+
+        public ICollection<AddressChangeHook> AddressChangeHooks
         {
-            get
-            {
-                return _AddressChangeHooks;
-            }
+            get { return _addressChangeHooks; }
         }
 
         #region IHasMetaTable Members
@@ -52,10 +73,7 @@ namespace Prexonite.Compiler
         public MetaTable Meta
         {
             [NoDebug]
-            get
-            {
-                return _function.Meta;
-            }
+            get { return _function.Meta; }
         }
 
         #endregion
@@ -82,43 +100,30 @@ namespace Prexonite.Compiler
         private readonly Loader _loader;
         private readonly SymbolTable<SymbolEntry> _symbols = new SymbolTable<SymbolEntry>();
         private BlockLabels _directRecursionLabels = new BlockLabels("direc");
-        private int _nestedFunctionCounter = 0;
         private CompilerTarget _parentTarget;
 
         public Loader Loader
         {
             [NoDebug]
-            get
-            {
-                return _loader;
-            }
+            get { return _loader; }
         }
 
         public PFunction Function
         {
             [NoDebug]
-            get
-            {
-                return _function;
-            }
+            get { return _function; }
         }
 
         public SymbolTable<SymbolEntry> LocalSymbols
         {
             [NoDebug]
-            get
-            {
-                return _symbols;
-            }
+            get { return _symbols; }
         }
 
         public CompilerTarget ParentTarget
         {
             [NoDebug]
-            get
-            {
-                return _parentTarget;
-            }
+            get { return _parentTarget; }
             [NoDebug]
             set
             {
@@ -127,30 +132,14 @@ namespace Prexonite.Compiler
             }
         }
 
-        public int NestedFunctionCounter
-        {
-            [NoDebug]
-            get
-            {
-                return _nestedFunctionCounter;
-            }
-            [NoDebug]
-            set
-            {
-                _nestedFunctionCounter = value;
-            }
-        }
+        public int NestedFunctionCounter { [NoDebug]
+        get; [NoDebug]
+        set; }
 
         public BlockLabels DirectRecursionLabels
         {
-            get
-            {
-                return _directRecursionLabels;
-            }
-            set
-            {
-                _directRecursionLabels = value;
-            }
+            get { return _directRecursionLabels; }
+            set { _directRecursionLabels = value; }
         }
 
         #endregion
@@ -160,9 +149,9 @@ namespace Prexonite.Compiler
         [NoDebug]
         public CompilerTarget(Loader loader, PFunction function, AstBlock block)
         {
-            if(loader == null)
+            if (loader == null)
                 throw new ArgumentNullException("loader");
-            if(function == null)
+            if (function == null)
                 function = new PFunction(loader.Options.TargetApplication);
 
             _loader = loader;
@@ -182,10 +171,7 @@ namespace Prexonite.Compiler
         public CombinedSymbolProxy Symbols
         {
             [NoDebug]
-            get
-            {
-                return _combinedSymbolProxy;
-            }
+            get { return _combinedSymbolProxy; }
         }
 
         [NoDebug]
@@ -209,17 +195,14 @@ namespace Prexonite.Compiler
                 get
                 {
                     SymbolEntry entry;
-                    if(symbols.TryGetValue(key, out entry))
+                    if (symbols.TryGetValue(key, out entry))
                         return entry;
-                    else if(parent != null)
+                    else if (parent != null)
                         return parent[key];
                     else
                         return loaderSymbols[key];
                 }
-                set
-                {
-                    symbols[key] = value;
-                }
+                set { symbols[key] = value; }
             }
 
             public void Add(string key, SymbolEntry value)
@@ -229,9 +212,9 @@ namespace Prexonite.Compiler
 
             public bool ContainsKey(string key)
             {
-                if(symbols.ContainsKey(key))
+                if (symbols.ContainsKey(key))
                     return true;
-                else if(parent != null)
+                else if (parent != null)
                     return parent.ContainsKey(key);
                 else
                     return loaderSymbols.ContainsKey(key);
@@ -241,18 +224,18 @@ namespace Prexonite.Compiler
             {
                 get
                 {
-                    ICollection<string> localKeys = symbols.Keys;
-                    SymbolCollection keys = new SymbolCollection(localKeys);
-                    if(parent != null)
+                    var localKeys = symbols.Keys;
+                    var keys = new SymbolCollection(localKeys);
+                    if (parent != null)
                     {
-                        foreach(string key in parent.Keys)
-                            if(!localKeys.Contains(key))
+                        foreach (var key in parent.Keys)
+                            if (!localKeys.Contains(key))
                                 keys.Add(key);
                     }
                     else
                     {
-                        foreach(string key in loaderSymbols.Keys)
-                            if(!localKeys.Contains(key))
+                        foreach (var key in loaderSymbols.Keys)
+                            if (!localKeys.Contains(key))
                                 keys.Add(key);
                     }
                     return keys;
@@ -266,9 +249,9 @@ namespace Prexonite.Compiler
 
             public bool TryGetValue(string key, out SymbolEntry value)
             {
-                if(symbols.TryGetValue(key, out value))
+                if (symbols.TryGetValue(key, out value))
                     return true;
-                else if(parent != null)
+                else if (parent != null)
                     return parent.TryGetValue(key, out value);
                 else
                     return loaderSymbols.TryGetValue(key, out value);
@@ -278,18 +261,18 @@ namespace Prexonite.Compiler
             {
                 get
                 {
-                    ICollection<SymbolEntry> localValues = symbols.Values;
-                    List<SymbolEntry> values = new List<SymbolEntry>(localValues);
-                    if(parent != null)
+                    var localValues = symbols.Values;
+                    var values = new List<SymbolEntry>(localValues);
+                    if (parent != null)
                     {
-                        foreach(KeyValuePair<string, SymbolEntry> kvp in parent)
-                            if(!localValues.Contains(kvp.Value))
+                        foreach (var kvp in parent)
+                            if (!localValues.Contains(kvp.Value))
                                 values.Add(kvp.Value);
                     }
                     else
                     {
-                        foreach(KeyValuePair<string, SymbolEntry> kvp in loaderSymbols)
-                            if(!localValues.Contains(kvp.Value))
+                        foreach (var kvp in loaderSymbols)
+                            if (!localValues.Contains(kvp.Value))
                                 values.Add(kvp.Value);
                     }
                     return values;
@@ -308,9 +291,9 @@ namespace Prexonite.Compiler
 
             public bool Contains(KeyValuePair<string, SymbolEntry> item)
             {
-                if(symbols.Contains(item))
+                if (symbols.Contains(item))
                     return true;
-                else if(parent != null)
+                else if (parent != null)
                     return parent.Contains(item);
                 else
                     return loaderSymbols.Contains(item);
@@ -318,18 +301,18 @@ namespace Prexonite.Compiler
 
             public void CopyTo(KeyValuePair<string, SymbolEntry>[] array, int arrayIndex)
             {
-                List<KeyValuePair<string, SymbolEntry>> lst =
+                var lst =
                     new List<KeyValuePair<string, SymbolEntry>>(symbols);
-                if(parent != null)
+                if (parent != null)
                 {
-                    foreach(KeyValuePair<string, SymbolEntry> kvp in parent)
-                        if(!symbols.ContainsKey(kvp.Key))
+                    foreach (var kvp in parent)
+                        if (!symbols.ContainsKey(kvp.Key))
                             lst.Add(kvp);
                 }
                 else
                 {
-                    foreach(KeyValuePair<string, SymbolEntry> kvp in loaderSymbols)
-                        if(!symbols.ContainsKey(kvp.Key))
+                    foreach (var kvp in loaderSymbols)
+                        if (!symbols.ContainsKey(kvp.Key))
                             lst.Add(kvp);
                 }
                 lst.CopyTo(array, arrayIndex);
@@ -337,18 +320,12 @@ namespace Prexonite.Compiler
 
             public int Count
             {
-                get
-                {
-                    return Keys.Count;
-                }
+                get { return Keys.Count; }
             }
 
             public bool IsReadOnly
             {
-                get
-                {
-                    return false;
-                }
+                get { return false; }
             }
 
             public bool Remove(KeyValuePair<string, SymbolEntry> item)
@@ -359,36 +336,36 @@ namespace Prexonite.Compiler
             IEnumerator<KeyValuePair<string, SymbolEntry>>
                 IEnumerable<KeyValuePair<string, SymbolEntry>>.GetEnumerator()
             {
-                foreach(KeyValuePair<string, SymbolEntry> kvp in symbols)
+                foreach (var kvp in symbols)
                     yield return kvp;
-                if(parent != null)
+                if (parent != null)
                 {
-                    foreach(KeyValuePair<string, SymbolEntry> kvp in parent)
-                        if(!symbols.ContainsKey(kvp.Key))
+                    foreach (var kvp in parent)
+                        if (!symbols.ContainsKey(kvp.Key))
                             yield return kvp;
                 }
                 else
                 {
-                    foreach(KeyValuePair<string, SymbolEntry> kvp in loaderSymbols)
-                        if(!symbols.ContainsKey(kvp.Key))
+                    foreach (var kvp in loaderSymbols)
+                        if (!symbols.ContainsKey(kvp.Key))
                             yield return kvp;
                 }
             }
 
             IEnumerator IEnumerable.GetEnumerator()
             {
-                foreach(KeyValuePair<string, SymbolEntry> kvp in symbols)
+                foreach (var kvp in symbols)
                     yield return kvp;
-                if(parent != null)
+                if (parent != null)
                 {
-                    foreach(KeyValuePair<string, SymbolEntry> kvp in parent)
-                        if(!symbols.ContainsKey(kvp.Key))
+                    foreach (var kvp in parent)
+                        if (!symbols.ContainsKey(kvp.Key))
                             yield return kvp;
                 }
                 else
                 {
-                    foreach(KeyValuePair<string, SymbolEntry> kvp in loaderSymbols)
-                        if(!symbols.ContainsKey(kvp.Key))
+                    foreach (var kvp in loaderSymbols)
+                        if (!symbols.ContainsKey(kvp.Key))
                             yield return kvp;
                 }
             }
@@ -402,9 +379,9 @@ namespace Prexonite.Compiler
 
             public bool IsKeyDefinedInParent(string key)
             {
-                if(parent == null)
+                if (parent == null)
                     return false;
-                else if(parent.symbols.ContainsKey(key)) //Direct lookup in parent
+                else if (parent.symbols.ContainsKey(key)) //Direct lookup in parent
                     return true;
                 else //Forward question
                     return parent.IsKeyDefinedInParent(key);
@@ -418,10 +395,7 @@ namespace Prexonite.Compiler
         public List<Instruction> Code
         {
             [NoDebug]
-            get
-            {
-                return _function.Code;
-            }
+            get { return _function.Code; }
         }
 
         #endregion
@@ -433,10 +407,7 @@ namespace Prexonite.Compiler
         public AstBlock Ast
         {
             [NoDebug]
-            get
-            {
-                return _ast;
-            }
+            get { return _ast; }
         }
 
         #endregion
@@ -445,7 +416,7 @@ namespace Prexonite.Compiler
 
         public void ExecuteCompilerHooks()
         {
-            foreach(CompilerHook hook in _loader.CompilerHooks)
+            foreach (CompilerHook hook in _loader.CompilerHooks)
                 hook.Execute(this);
         }
 
@@ -464,9 +435,9 @@ namespace Prexonite.Compiler
         [NoDebug]
         public void Declare(SymbolInterpretations kind, string id, string translatedId)
         {
-            if(Symbols.IsKeyDefinedLocally(id))
+            if (Symbols.IsKeyDefinedLocally(id))
             {
-                SymbolEntry entry = Symbols[id];
+                var entry = Symbols[id];
                 entry.Interpretation = kind;
                 entry.Id = translatedId;
             }
@@ -485,12 +456,12 @@ namespace Prexonite.Compiler
         [NoDebug]
         public void Define(SymbolInterpretations kind, string id, string translatedId)
         {
-            switch(kind)
+            switch (kind)
             {
                     //Declare global variables
                 case SymbolInterpretations.GlobalObjectVariable:
                 case SymbolInterpretations.GlobalReferenceVariable:
-                    if(Symbols.IsKeyDefinedLocally(id))
+                    if (Symbols.IsKeyDefinedLocally(id))
                         Symbols[id].Interpretation = kind;
                     else
                         Symbols[id] = new SymbolEntry(kind, translatedId);
@@ -498,12 +469,12 @@ namespace Prexonite.Compiler
                     //Define local variables
                 case SymbolInterpretations.LocalObjectVariable:
                 case SymbolInterpretations.LocalReferenceVariable:
-                    if(Symbols.IsKeyDefinedLocally(id))
+                    if (Symbols.IsKeyDefinedLocally(id))
                         Symbols[id].Interpretation = kind;
                     else
                         Symbols[id] = new SymbolEntry(kind, translatedId);
 
-                    if(!Function.Variables.Contains(id))
+                    if (!Function.Variables.Contains(id))
                         Function.Variables.Add(id);
                     break;
             }
@@ -518,25 +489,19 @@ namespace Prexonite.Compiler
         public Stack<BlockLabels> BlockLabelStack
         {
             [NoDebug]
-            get
-            {
-                return _blockLabelStack;
-            }
+            get { return _blockLabelStack; }
         }
 
         public BlockLabels CurrentBlock
         {
             [NoDebug]
-            get
-            {
-                return _blockLabelStack.Count > 0 ? _blockLabelStack.Peek() : null;
-            }
+            get { return _blockLabelStack.Count > 0 ? _blockLabelStack.Peek() : null; }
         }
 
         [NoDebug]
         public void BeginBlock(BlockLabels bl)
         {
-            if(bl == null)
+            if (bl == null)
                 throw new ArgumentNullException("bl");
             _blockLabelStack.Push(bl);
         }
@@ -544,7 +509,7 @@ namespace Prexonite.Compiler
         [NoDebug]
         public BlockLabels BeginBlock(string prefix)
         {
-            BlockLabels bl = new BlockLabels(prefix);
+            var bl = new BlockLabels(prefix);
             _blockLabelStack.Push(bl);
             return bl;
         }
@@ -558,7 +523,7 @@ namespace Prexonite.Compiler
         [NoDebug]
         public BlockLabels EndBlock()
         {
-            if(_blockLabelStack.Count > 0)
+            if (_blockLabelStack.Count > 0)
                 return _blockLabelStack.Pop();
             else
                 throw new PrexoniteException("There is no open block.");
@@ -568,8 +533,6 @@ namespace Prexonite.Compiler
 
         #region Code
 
-        private readonly Dictionary<int, Action<int>> _AddressChangeHooks = new Dictionary<int, Action<int>>();
-
         [NoDebug]
         public void RemoveInstructionAt(int index)
         {
@@ -578,42 +541,43 @@ namespace Prexonite.Compiler
 
         public void RemoveInstructionRange(int index, int count)
         {
-            List<Instruction> code = Code;
-            if(index < 0 || index >= code.Count)
+            var code = Code;
+            if (index < 0 || index >= code.Count)
                 throw new ArgumentOutOfRangeException("index");
-            if(count < 0 || index + count > code.Count)
+            if (count < 0 || index + count > code.Count)
                 throw new ArgumentOutOfRangeException("count");
-            if(count == 0)
+            if (count == 0)
                 return;
 
             //Remove the instruction
             code.RemoveRange(index, count);
 
             //Correct jump targets by...
-            foreach(Instruction ins in code)
+            foreach (var ins in code)
             {
-                if((ins.IsJump || ins.OpCode == OpCode.leave)
-                   && ins.Arguments > index) //decrementing target addresses pointing 
+                if ((ins.IsJump || ins.OpCode == OpCode.leave)
+                    && ins.Arguments > index) //decrementing target addresses pointing 
                     //behind the removed instruction
                     ins.Arguments -= count;
             }
 
             //Correct try-catch-finally blocks
-            MetaEntry[] modifiedBlocks = new MetaEntry[_function.TryCatchFinallyBlocks.Count];
-            int i = 0;
-            foreach(TryCatchFinallyBlock block in _function.TryCatchFinallyBlocks)
+            var modifiedBlocks = new MetaEntry[_function.TryCatchFinallyBlocks.Count];
+            var i = 0;
+            foreach (var block in _function.TryCatchFinallyBlocks)
             {
-                if(block.BeginTry > index)
+                if (block.BeginTry > index)
                     block.BeginTry -= count;
-                if(block.BeginFinally > index)
+                if (block.BeginFinally > index)
                     block.BeginFinally -= count;
-                if(block.BeginCatch > index)
+                if (block.BeginCatch > index)
                     block.BeginCatch -= count;
-                if(block.EndTry > index)
+                if (block.EndTry > index)
                     block.EndTry -= count;
 
-                if(!block.IsValid)
-                    throw new PrexoniteException(
+                if (!block.IsValid)
+                    throw new PrexoniteException
+                        (
                         "The try-catch-finally block (" + block +
                         ") is not valid after optimization.");
 
@@ -621,9 +585,9 @@ namespace Prexonite.Compiler
             }
 
             //Change custom addresses into this code (e.g., cil compiler hints)
-            foreach(KeyValuePair<int, Action<int>> hook in _AddressChangeHooks)
-                if(hook.Key > index)
-                    hook.Value(hook.Key - count);
+            foreach (var hook in _addressChangeHooks)
+                if (hook.InstructionIndex > index)
+                    hook.React(hook.InstructionIndex - count);
 
             _function.Meta[TryCatchFinallyBlock.MetaKey] = (MetaEntry) modifiedBlocks;
         }
@@ -639,16 +603,18 @@ namespace Prexonite.Compiler
         {
             _outerVariables.Add(id);
             //Make parent functions hand down the variable, even if they don't use them.
-            for(CompilerTarget T = _parentTarget; T != null; T = T._parentTarget)
+            for (var T = _parentTarget; T != null; T = T._parentTarget)
             {
-                PFunction func = T.Function;
+                var func = T.Function;
                 if (func.Variables.Contains(id) || func.Parameters.Contains(id))
                     break; //Parent can supply the variable/parameter. Stop search here.
                 else if (T._parentTarget != null)
                     T.RequireOuterVariable(id); //Order parent function to request outer variable
                 else
-                    throw new PrexoniteException(
-                        string.Format(
+                    throw new PrexoniteException
+                        (
+                        string.Format
+                            (
                             "{0} references outer variable {1} which cannot be supplied by top-level function {2}",
                             Function,
                             id,
@@ -905,25 +871,25 @@ namespace Prexonite.Compiler
 
         public void EmitLeave(int address)
         {
-            Instruction ins = new Instruction(OpCode.leave, address);
+            var ins = new Instruction(OpCode.leave, address);
             Emit(ins);
         }
 
         public void EmitJump(int address)
         {
-            Instruction ins = Instruction.CreateJump(address);
+            var ins = Instruction.CreateJump(address);
             Emit(ins);
         }
 
         public void EmitLeave(int address, string label)
         {
-            Instruction ins = new Instruction(OpCode.leave, address, label);
+            var ins = new Instruction(OpCode.leave, address, label);
             Emit(ins);
         }
 
         public void EmitJump(int address, string label)
         {
-            Instruction ins = Instruction.CreateJump(address, label);
+            var ins = Instruction.CreateJump(address, label);
             Emit(ins);
         }
 
@@ -950,13 +916,13 @@ namespace Prexonite.Compiler
         public void EmitLeave(string label)
         {
             int address;
-            if(TryResolveLabel(label, out address))
+            if (TryResolveLabel(label, out address))
             {
                 EmitLeave(address, label);
             }
             else
             {
-                Instruction ins = new Instruction(OpCode.leave, label);
+                var ins = new Instruction(OpCode.leave, label);
                 _unresolvedInstructions.Add(ins);
                 Emit(ins);
             }
@@ -965,13 +931,13 @@ namespace Prexonite.Compiler
         public void EmitJump(string label)
         {
             int address;
-            if(TryResolveLabel(label, out address))
+            if (TryResolveLabel(label, out address))
             {
                 EmitJump(address, label);
             }
             else
             {
-                Instruction ins = Instruction.CreateJump(label);
+                var ins = Instruction.CreateJump(label);
                 _unresolvedInstructions.Add(ins);
                 Emit(ins);
             }
@@ -980,13 +946,13 @@ namespace Prexonite.Compiler
         public void EmitJumpIfTrue(string label)
         {
             int address;
-            if(TryResolveLabel(label, out address))
+            if (TryResolveLabel(label, out address))
             {
                 EmitJumpIfTrue(address, label);
             }
             else
             {
-                Instruction ins = Instruction.CreateJumpIfTrue(label);
+                var ins = Instruction.CreateJumpIfTrue(label);
                 _unresolvedInstructions.Add(ins);
                 Emit(ins);
             }
@@ -995,13 +961,13 @@ namespace Prexonite.Compiler
         public void EmitJumpIfFalse(string label)
         {
             int address;
-            if(TryResolveLabel(label, out address))
+            if (TryResolveLabel(label, out address))
             {
                 EmitJumpIfFalse(address, label);
             }
             else
             {
-                Instruction ins = Instruction.CreateJumpIfFalse(label);
+                var ins = Instruction.CreateJumpIfFalse(label);
                 _unresolvedInstructions.Add(ins);
                 Emit(ins);
             }
@@ -1015,8 +981,8 @@ namespace Prexonite.Compiler
         public bool TryResolveLabel(string label, out int address)
         {
             address = -1;
-            string labelNs = label + LabelSymbolPostfix;
-            if(!LocalSymbols.ContainsKey(labelNs))
+            var labelNs = label + LabelSymbolPostfix;
+            if (!LocalSymbols.ContainsKey(labelNs))
                 return false;
 
             address = LocalSymbols[labelNs].Argument.Value;
@@ -1026,7 +992,7 @@ namespace Prexonite.Compiler
         [NoDebug]
         public string EmitLabel(int address)
         {
-            string label = "L\\" + Guid.NewGuid().ToString("N");
+            var label = "L\\" + Guid.NewGuid().ToString("N");
             EmitLabel(label, address);
             return label;
         }
@@ -1047,8 +1013,8 @@ namespace Prexonite.Compiler
 
             //Check if the label points to an unconditional jump instruction
             Instruction jump = null;
-            if(Code.Count > 0 && address < Code.Count && (jump = Code[address]).IsUnconditionalJump)
-                if(jump.Arguments != -1)
+            if (Code.Count > 0 && address < Code.Count && (jump = Code[address]).IsUnconditionalJump)
+                if (jump.Arguments != -1)
                     //Forward destination address
                     address = jump.Arguments;
                 else
@@ -1056,13 +1022,13 @@ namespace Prexonite.Compiler
                     partialResolve = jump.Id;
 
             //resolve any unresolved jumps
-            foreach(Instruction ins in _unresolvedInstructions.ToArray())
+            foreach (var ins in _unresolvedInstructions.ToArray())
             {
-                if(Engine.StringsAreEqual(ins.Id, label))
+                if (Engine.StringsAreEqual(ins.Id, label))
                 {
                     //Found a matching unresolved 
 
-                    if(partialResolve != null)
+                    if (partialResolve != null)
                     {
                         ins.Id = jump.Id;
                         //keep the instruction unresolved
@@ -1078,7 +1044,7 @@ namespace Prexonite.Compiler
             //Check if there is a redundant jump
             Instruction redundant;
             //if...
-            if(
+            if (
                 //...there already are instructions, ...
                 Code.Count > 0 &&
                 //...this label points to the next instruction to write, ...
@@ -1091,14 +1057,14 @@ namespace Prexonite.Compiler
                 //...then ...
                 //...remove that last jump ...
                 Code.RemoveAt(Code.Count - 1);
-                if(redundant.IsConditionalJump)
+                if (redundant.IsConditionalJump)
                     EmitPop(); //Make sure the stack keeps its integrity
                 //..., adjust this labels target address
                 address--;
                 //...and all other instructions targeting this address
-                foreach(Instruction ins in Code)
-                    if(ins.IsJump)
-                        if(ins.Arguments == Code.Count + 1) // +1 since one instruction has been removed
+                foreach (var ins in Code)
+                    if (ins.IsJump)
+                        if (ins.Arguments == Code.Count + 1) // +1 since one instruction has been removed
                             ins.Arguments -= 1;
             }
 
@@ -1146,11 +1112,11 @@ namespace Prexonite.Compiler
         /// </remarks>
         public void FinishTarget()
         {
-            MetaEntry[] outerVars = new MetaEntry[_outerVariables.Count];
-            int i = 0;
-            foreach(string outerVar in _outerVariables)
+            var outerVars = new MetaEntry[_outerVariables.Count];
+            var i = 0;
+            foreach (var outerVar in _outerVariables)
                 outerVars[i++] = outerVar;
-            if(i > 0)
+            if (i > 0)
                 Function.Meta[PFunction.SharedNamesKey] = (MetaEntry) outerVars;
 
             _checkUnresolvedInstructions();
@@ -1178,8 +1144,9 @@ namespace Prexonite.Compiler
         private void _checkUnresolvedInstructions()
         {
             //Check for unresolved instructions
-            if(_unresolvedInstructions.Count > 0)
-                throw new PrexoniteException(
+            if (_unresolvedInstructions.Count > 0)
+                throw new PrexoniteException
+                    (
                     "The instruction [ " + _unresolvedInstructions[0] +
                     " ] has not been resolved.");
         }
@@ -1191,36 +1158,34 @@ namespace Prexonite.Compiler
         private void _unconditionalJumpTargetPropagation()
         {
             //Unconditional jump target propagation
-            List<Instruction> code = Code;
-            int count = code.Count;
-            bool[] addresses = new bool[count];
-            for(int i = 0; i < count; i++)
+            var code = Code;
+            var count = code.Count;
+            var addresses = new bool[count];
+            for (var i = 0; i < count; i++)
             {
-                Instruction current,
-                            target;
-
-                current = code[i];
+                var current = code[i];
                 //Only valid jumps...
-                if(!_isValidJump(current, count))
+                if (!_isValidJump(current, count))
                     continue;
 
-                target = code[current.Arguments];
+                var target = code[current.Arguments];
                 _reset(addresses);
                 //...targetting valid unconditional jumps
-                while(_isValidUnconditionalJump(target, count))
+                while (_isValidUnconditionalJump(target, count))
                 {
                     //Mark the address of the unconditional jump for loop detection
                     addresses[current.Arguments] = true;
                     //Check for loop (uncond. jump targets another unconditional jump already visited
-                    if(addresses[target.Arguments])
-                        throw new PrexoniteException(
+                    if (addresses[target.Arguments])
+                        throw new PrexoniteException
+                            (
                             "Infinite loop in unconditional jump sequence detected.");
                     //Propagate address
                     current.Arguments = target.Arguments;
                     current.Id = target.Id;
 
                     //Prepare next step
-                    if(_targetIsInRange(target, count))
+                    if (_targetIsInRange(target, count))
                         target = code[target.Arguments];
                     else
                         break;
@@ -1231,7 +1196,7 @@ namespace Prexonite.Compiler
 
         private static void _reset(bool[] addresses)
         {
-            for(int i = 0; i < addresses.Length; i++)
+            for (var i = 0; i < addresses.Length; i++)
                 addresses[i] = false;
         }
 
@@ -1264,18 +1229,18 @@ namespace Prexonite.Compiler
 
         private void _removeUnconditionalJumpSequences()
         {
-            List<Instruction> code = Code;
-            for(int i = 0; i < code.Count; i++)
+            var code = Code;
+            for (var i = 0; i < code.Count; i++)
             {
-                Instruction current = code[i];
-                if(!current.IsUnconditionalJump)
+                var current = code[i];
+                if (!current.IsUnconditionalJump)
                     continue;
 
-                int count = 0;
-                while((i + count + 1) < code.Count && code[i + count + 1].IsUnconditionalJump)
+                var count = 0;
+                while ((i + count + 1) < code.Count && code[i + count + 1].IsUnconditionalJump)
                     count++;
 
-                if(count > 0)
+                if (count > 0)
                     RemoveInstructionRange(i + 1, count);
                 i -= count;
             }
@@ -1287,19 +1252,20 @@ namespace Prexonite.Compiler
 
         private void _removeJumpsToNextInstruction()
         {
-            List<Instruction> code = Code;
-            for(int i = 0; i < code.Count; i++)
+            var code = Code;
+            for (var i = 0; i < code.Count; i++)
             {
-                Instruction ins = code[i];
-                if(ins.Arguments == i + 1)
+                var ins = code[i];
+                if (ins.Arguments == i + 1)
                 {
-                    if(ins.IsUnconditionalJump)
+                    if (ins.IsUnconditionalJump)
                     {
                         RemoveInstructionAt(i--);
                     }
-                    else if(ins.IsConditionalJump)
+                    else if (ins.IsConditionalJump)
                     {
-                        throw new PrexoniteException(
+                        throw new PrexoniteException
+                            (
                             "Redundant conditional jump to following instruction at address " +
                             i);
                     }
@@ -1314,16 +1280,16 @@ namespace Prexonite.Compiler
 
         private void _JumpReInversion()
         {
-            List<Instruction> code = Code;
-            for(int i = 0; i < code.Count - 1; i++)
+            var code = Code;
+            for (var i = 0; i < code.Count - 1; i++)
             {
-                Instruction condJ = code[i];
+                var condJ = code[i];
                 //jump, skipping the next instruction
-                if(!(condJ.IsJump && condJ.Arguments == i + 2))
+                if (!(condJ.IsJump && condJ.Arguments == i + 2))
                     continue;
-                Instruction uncondJ = code[i + 1];
+                var uncondJ = code[i + 1];
                 //Unconditional jump
-                if(!(uncondJ.IsUnconditionalJump))
+                if (!(uncondJ.IsUnconditionalJump))
                     continue;
                 /*  jump.f  after
                  *  jump    somewhere
@@ -1333,7 +1299,7 @@ namespace Prexonite.Compiler
                  * 
                  *  jump.t  somewhere
                  */
-                if(condJ.IsConditionalJump)
+                if (condJ.IsConditionalJump)
                 {
                     condJ.OpCode = Instruction.InvertJumpCondition(condJ.OpCode);
                     condJ.Arguments = uncondJ.Arguments;
@@ -1356,10 +1322,10 @@ namespace Prexonite.Compiler
 #if !(DEBUG || Verbose)
         private void _removeNop()
         {
-            List<Instruction> code = Code;
-            for (int i = 0; i < code.Count; i++)
+            var code = Code;
+            for (var i = 0; i < code.Count; i++)
             {
-                Instruction instruction = code[i];
+                var instruction = code[i];
                 if (instruction.OpCode == OpCode.nop)
                     RemoveInstructionAt(i--);
             }
@@ -1374,17 +1340,17 @@ namespace Prexonite.Compiler
 
         private void _by_index()
         {
-            if(Engine.StringsAreEqual(Function.Id,Application.InitializationId))
+            if (Engine.StringsAreEqual(Function.Id, Application.InitializationId))
                 return;
-            List<Instruction> code = Function.Code;
+            var code = Function.Code;
             Function.CreateLocalVariableMapping(); //Force (re)creation of the mapping
-            SymbolTable<int> map = Function.LocalVariableMapping;
+            var map = Function.LocalVariableMapping;
 
-            for (int i = 0; i < code.Count; i++)
+            for (var i = 0; i < code.Count; i++)
             {
-                Instruction ins = code[i];
+                var ins = code[i];
                 OpCode nopc;
-                switch(ins.OpCode)
+                switch (ins.OpCode)
                 {
                     case OpCode.ldloc:
                         nopc = OpCode.ldloci;
@@ -1400,15 +1366,15 @@ namespace Prexonite.Compiler
                         goto replaceInt;
                     case OpCode.ldr_loc:
                         nopc = OpCode.ldr_loci;
-                    replaceInt:
-                        int idx = map[ins.Id];
+                        replaceInt:
+                        var idx = map[ins.Id];
                         code[i] = new Instruction(nopc, idx);
                         break;
                     case OpCode.indloc:
-                        if(!map.ContainsKey(ins.Id))
+                        if (!map.ContainsKey(ins.Id))
                             continue;
                         idx = map[ins.Id];
-                        int argc = ins.Arguments;
+                        var argc = ins.Arguments;
                         code[i] = Instruction.CreateIndLocI(idx, argc, ins.JustEffect);
                         break;
                 }

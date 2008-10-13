@@ -1,38 +1,41 @@
-/*
- * Prexonite, a scripting engine (Scripting Language -> Bytecode -> Virtual Machine)
- *  Copyright (C) 2007  Christian "SealedSun" Klauser
- *  E-mail  sealedsun a.t gmail d.ot com
- *  Web     http://www.sealedsun.ch/
- *
- *  This program is free software; you can redistribute it and/or modify
- *  it under the terms of the GNU General Public License as published by
- *  the Free Software Foundation; either version 2 of the License, or
- *  (at your option) any later version.
- *
- *  Please contact me (sealedsun a.t gmail do.t com) if you need a different license.
- * 
- *  This program is distributed in the hope that it will be useful,
- *  but WITHOUT ANY WARRANTY; without even the implied warranty of
- *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- *  GNU General Public License for more details.
- *
- *  You should have received a copy of the GNU General Public License along
- *  with this program; if not, write to the Free Software Foundation, Inc.,
- *  51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
- */
+// /*
+//  * Prexonite, a scripting engine (Scripting Language -> Bytecode -> Virtual Machine)
+//  *  Copyright (C) 2007  Christian "SealedSun" Klauser
+//  *  E-mail  sealedsun a.t gmail d.ot com
+//  *  Web     http://www.sealedsun.ch/
+//  *
+//  *  This program is free software; you can redistribute it and/or modify
+//  *  it under the terms of the GNU General Public License as published by
+//  *  the Free Software Foundation; either version 2 of the License, or
+//  *  (at your option) any later version.
+//  *
+//  *  Please contact me (sealedsun a.t gmail do.t com) if you need a different license.
+//  * 
+//  *  This program is distributed in the hope that it will be useful,
+//  *  but WITHOUT ANY WARRANTY; without even the implied warranty of
+//  *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+//  *  GNU General Public License for more details.
+//  *
+//  *  You should have received a copy of the GNU General Public License along
+//  *  with this program; if not, write to the Free Software Foundation, Inc.,
+//  *  51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
+//  */
+
+#region Namespace Imports
 
 using System;
 using System.Collections.Generic;
 using System.Diagnostics;
-using System.Text;
 using System.Reflection;
 using System.Reflection.Emit;
+
+#endregion
 
 namespace Prexonite.Compiler.Cil
 {
     public class CompilerPass
     {
-        private static int numberOfPasses = 0;
+        private static int numberOfPasses;
 
         [DebuggerStepThrough]
         private static string CreateNextTypeName(string applicationId)
@@ -46,37 +49,43 @@ namespace Prexonite.Compiler.Cil
         private readonly bool _makeAvailableForLinking;
 
         private readonly AssemblyBuilder _assemblyBuilder;
+
         public AssemblyBuilder Assembly
         {
             [DebuggerStepThrough]
             get
             {
-                if(!MakeAvailableForLinking)
-                    throw new NotSupportedException("The compiler pass is not configured to make implementations available for static linking.");
+                if (!MakeAvailableForLinking)
+                    throw new NotSupportedException
+                        ("The compiler pass is not configured to make implementations available for static linking.");
                 return _assemblyBuilder;
             }
         }
 
         private readonly ModuleBuilder _moduleBuilder;
+
         public ModuleBuilder Module
         {
             [DebuggerStepThrough]
             get
             {
                 if (!MakeAvailableForLinking)
-                    throw new NotSupportedException("The compiler pass is not configured to make implementations available for static linking.");
+                    throw new NotSupportedException
+                        ("The compiler pass is not configured to make implementations available for static linking.");
                 return _moduleBuilder;
             }
         }
 
         private readonly TypeBuilder _typeBuilder;
+
         public TypeBuilder Type
         {
             [DebuggerStepThrough]
             get
             {
                 if (!MakeAvailableForLinking)
-                    throw new NotSupportedException("The compiler pass is not configured to make implementations available for static linking.");
+                    throw new NotSupportedException
+                        ("The compiler pass is not configured to make implementations available for static linking.");
                 return _typeBuilder;
             }
         }
@@ -86,7 +95,7 @@ namespace Prexonite.Compiler.Cil
             _makeAvailableForLinking = makeAvailableForLinking;
             if (MakeAvailableForLinking)
             {
-                string sequenceName = CreateNextTypeName(app != null ? app.Id : null);
+                var sequenceName = CreateNextTypeName(app != null ? app.Id : null);
                 var asmName = new AssemblyName(sequenceName);
                 _assemblyBuilder =
                     AppDomain.CurrentDomain.DefineDynamicAssembly(asmName, AssemblyBuilderAccess.RunAndSave);
@@ -97,25 +106,25 @@ namespace Prexonite.Compiler.Cil
 
         public MethodInfo DefineImplementationMethod(string id)
         {
-            if(id == null)
+            if (id == null)
                 throw new ArgumentNullException("id");
 
             if (MakeAvailableForLinking)
             {
-
                 //Create method stub
-                MethodBuilder dm = Type.DefineMethod(
+                var dm = Type.DefineMethod
+                    (
                     id,
                     MethodAttributes.Static | MethodAttributes.Public,
-                    typeof(void),
+                    typeof (void),
                     new[]
-                        {
-                            typeof(PFunction),
-                            typeof(StackContext),
-                            typeof(PValue[]),
-                            typeof(PVariable[]),
-                            typeof(PValue).MakeByRefType()
-                        });
+                    {
+                        typeof (PFunction),
+                        typeof (StackContext),
+                        typeof (PValue[]),
+                        typeof (PVariable[]),
+                        typeof (PValue).MakeByRefType()
+                    });
                 dm.DefineParameter(1, ParameterAttributes.In, "source");
                 dm.DefineParameter(2, ParameterAttributes.In, "sctx");
                 dm.DefineParameter(3, ParameterAttributes.In, "args");
@@ -125,38 +134,37 @@ namespace Prexonite.Compiler.Cil
                 Implementations.Add(id, dm);
 
                 //Create function field
-                FieldBuilder fb =
-                    Type.DefineField(_mkFieldName(id), typeof(PFunction), FieldAttributes.Public | FieldAttributes.Static);
+                var fb =
+                    Type.DefineField
+                        (_mkFieldName(id), typeof (PFunction), FieldAttributes.Public | FieldAttributes.Static);
                 FunctionFields.Add(id, fb);
 
                 return dm;
             }
-            else
-            {
-                var cilm =
-                    new DynamicMethod(
-                        id,
-                        typeof(void),
-                        new Type[]
-                            {
-                                typeof(PFunction),
-                                typeof(StackContext),
-                                typeof(PValue[]),
-                                typeof(PVariable[]),
-                                typeof(PValue).MakeByRefType()
-                            },
-                        typeof(Runtime));
+            var cilm =
+                new DynamicMethod
+                    (
+                    id,
+                    typeof (void),
+                    new[]
+                    {
+                        typeof (PFunction),
+                        typeof (StackContext),
+                        typeof (PValue[]),
+                        typeof (PVariable[]),
+                        typeof (PValue).MakeByRefType()
+                    },
+                    typeof (Runtime));
 
-                cilm.DefineParameter(1, ParameterAttributes.In, "source");
-                cilm.DefineParameter(2, ParameterAttributes.In, "sctx");
-                cilm.DefineParameter(3, ParameterAttributes.In, "args");
-                cilm.DefineParameter(4, ParameterAttributes.In, "sharedVariables");
-                cilm.DefineParameter(5, ParameterAttributes.Out, "result");
+            cilm.DefineParameter(1, ParameterAttributes.In, "source");
+            cilm.DefineParameter(2, ParameterAttributes.In, "sctx");
+            cilm.DefineParameter(3, ParameterAttributes.In, "args");
+            cilm.DefineParameter(4, ParameterAttributes.In, "sharedVariables");
+            cilm.DefineParameter(5, ParameterAttributes.Out, "result");
 
-                Implementations.Add(id, cilm);
+            Implementations.Add(id, cilm);
 
-                return cilm;
-            }
+            return cilm;
         }
 
         private static string _mkFieldName(string id)
@@ -170,28 +178,27 @@ namespace Prexonite.Compiler.Cil
         {
             get
             {
-                if(!MakeAvailableForLinking)
-                    throw new NotSupportedException("The compiler pass is not configured to make implementations available for static linking.");
+                if (!MakeAvailableForLinking)
+                    throw new NotSupportedException
+                        ("The compiler pass is not configured to make implementations available for static linking.");
                 return _functionFieldTable;
             }
         }
 
         private readonly SymbolTable<MethodInfo> _implementationTable = new SymbolTable<MethodInfo>();
+
         public SymbolTable<MethodInfo> Implementations
         {
             [DebuggerStepThrough]
-            get
-            {
-                return _implementationTable;
-            }
+            get { return _implementationTable; }
         }
 
         public ILGenerator GetIlGenerator(string id)
         {
-            if(id == null)
+            if (id == null)
                 throw new ArgumentNullException("id");
             MethodInfo m;
-            if(!_implementationTable.TryGetValue(id,out m))
+            if (!_implementationTable.TryGetValue(id, out m))
                 throw new PrexoniteException("No implementation stub for a function named " + id + " exists.");
 
             return GetIlGenerator(m);
@@ -203,10 +210,11 @@ namespace Prexonite.Compiler.Cil
             MethodBuilder mb;
             if ((dm = m as DynamicMethod) != null)
                 return dm.GetILGenerator();
-            else if ((mb = m as MethodBuilder) != null)
+            if ((mb = m as MethodBuilder) != null)
                 return mb.GetILGenerator();
-            else
-                throw new PrexoniteException("CIL Implementation " + m.Name + " is neither a dynamic method nor a method builder but a " + m.GetType()); 
+            throw new PrexoniteException
+                ("CIL Implementation " + m.Name + " is neither a dynamic method nor a method builder but a " +
+                 m.GetType());
         }
 
         public bool MakeAvailableForLinking
@@ -230,7 +238,7 @@ namespace Prexonite.Compiler.Cil
         }
 
         private readonly Dictionary<MethodInfo, CilFunction> _delegateCache = new Dictionary<MethodInfo, CilFunction>();
-        private Type _cachedTypeReference = null;
+        private Type _cachedTypeReference;
 
         public CilFunction GetDelegate(string id)
         {
@@ -250,15 +258,15 @@ namespace Prexonite.Compiler.Cil
 
             DynamicMethod dm;
             if ((dm = m as DynamicMethod) != null)
-                return _delegateCache[m] = (CilFunction)dm.CreateDelegate(typeof(CilFunction));
-            else
-                return
-                    _delegateCache[m] =
-                    (CilFunction)
-                    Delegate.CreateDelegate(
-                        typeof(CilFunction),
-                        (_getRuntimeType()).GetMethod(m.Name),
-                        true);
+                return _delegateCache[m] = (CilFunction) dm.CreateDelegate(typeof (CilFunction));
+            return
+                _delegateCache[m] =
+                (CilFunction)
+                Delegate.CreateDelegate
+                    (
+                    typeof (CilFunction),
+                    (_getRuntimeType()).GetMethod(m.Name),
+                    true);
         }
 
         private Type _getRuntimeType()
@@ -271,7 +279,7 @@ namespace Prexonite.Compiler.Cil
             if (!MakeAvailableForLinking)
                 return;
 
-            Type T = _getRuntimeType();
+            var T = _getRuntimeType();
 
             T.GetField(_mkFieldName(func.Id)).SetValue(null, func);
         }

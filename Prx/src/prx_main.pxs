@@ -248,3 +248,5 @@ function displayHelp does print(
 	"-b enables tab completion (experimental, accepts only ASCII characters).\n"+
 	"-a forwards the rest of the arguments to the executing script.\n" + 
 	"-d enables debugging mode");
+ 
+ { CompileToCil; } 

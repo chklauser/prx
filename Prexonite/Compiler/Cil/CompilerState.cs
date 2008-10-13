@@ -1,8 +1,35 @@
+// /*
+//  * Prexonite, a scripting engine (Scripting Language -> Bytecode -> Virtual Machine)
+//  *  Copyright (C) 2007  Christian "SealedSun" Klauser
+//  *  E-mail  sealedsun a.t gmail d.ot com
+//  *  Web     http://www.sealedsun.ch/
+//  *
+//  *  This program is free software; you can redistribute it and/or modify
+//  *  it under the terms of the GNU General Public License as published by
+//  *  the Free Software Foundation; either version 2 of the License, or
+//  *  (at your option) any later version.
+//  *
+//  *  Please contact me (sealedsun a.t gmail do.t com) if you need a different license.
+//  * 
+//  *  This program is distributed in the hope that it will be useful,
+//  *  but WITHOUT ANY WARRANTY; without even the implied warranty of
+//  *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+//  *  GNU General Public License for more details.
+//  *
+//  *  You should have received a copy of the GNU General Public License along
+//  *  with this program; if not, write to the Free Software Foundation, Inc.,
+//  *  51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
+//  */
+
+#region Namespace Imports
+
 using System;
 using System.Collections.Generic;
 using System.Reflection;
 using System.Reflection.Emit;
 using Prexonite.Types;
+
+#endregion
 
 namespace Prexonite.Compiler.Cil
 {
@@ -21,21 +48,18 @@ namespace Prexonite.Compiler.Cil
         private readonly SymbolTable<Symbol> _symbols;
         private readonly Engine _targetEngine;
         private readonly Stack<TryCatchFinallyBlock> _tryBlocks;
-        private LocalBuilder _argcLocal;
-        private LocalBuilder _argvLocal;
-        private LocalBuilder _sctxLocal;
-        private LocalBuilder _sharedLocal;
         private LocalBuilder[] _tempLocals;
         private readonly CompilerPass _pass;
         private readonly FunctionLinking _linking;
 
-        public CompilerState(PFunction source, Engine targetEngine, ILGenerator il, CompilerPass _pass, FunctionLinking _linking)
+        public CompilerState
+            (PFunction source, Engine targetEngine, ILGenerator il, CompilerPass _pass, FunctionLinking _linking)
         {
-            if(source == null)
+            if (source == null)
                 throw new ArgumentNullException("source");
-            if(targetEngine == null)
+            if (targetEngine == null)
                 throw new ArgumentNullException("targetEngine");
-            if(il == null)
+            if (il == null)
                 throw new ArgumentNullException("il");
 
             _source = source;
@@ -45,21 +69,21 @@ namespace Prexonite.Compiler.Cil
             _il = il;
             _indexMap = new Dictionary<int, string>();
             _instructionLabels = new Label[Source.Code.Count + 1];
-            for(int i = 0; i < InstructionLabels.Length; i++)
+            for (var i = 0; i < InstructionLabels.Length; i++)
                 InstructionLabels[i] = il.DefineLabel();
             _symbols = new SymbolTable<Symbol>();
             _tryBlocks = new Stack<TryCatchFinallyBlock>();
 
             MetaEntry cilHints;
             _foreachHints = new List<ForeachHint>();
-            if(source.Meta.TryGetValue(Loader.CilHintsKey, out cilHints))
+            if (source.Meta.TryGetValue(Loader.CilHintsKey, out cilHints))
             {
-                foreach(MetaEntry entry in cilHints.List)
+                foreach (var entry in cilHints.List)
                 {
-                    MetaEntry[] hint = entry.List;
-                    if(hint.Length < 1)
+                    var hint = entry.List;
+                    if (hint.Length < 1)
                         continue;
-                    if(hint[0].Text == ForeachHint.Key)
+                    if (hint[0].Text == ForeachHint.Key)
                         ForeachHints.Add(ForeachHint.FromMetaEntry(hint));
                 }
             }
@@ -67,128 +91,58 @@ namespace Prexonite.Compiler.Cil
 
         #region Accessors
 
-        public LocalBuilder ArgcLocal
-        {
-            get
-            {
-                return _argcLocal;
-            }
-            internal set
-            {
-                _argcLocal = value;
-            }
-        }
+        public LocalBuilder ArgcLocal { get; internal set; }
 
         public PFunction Source
         {
-            get
-            {
-                return _source;
-            }
+            get { return _source; }
         }
 
-        public LocalBuilder ArgvLocal
-        {
-            get
-            {
-                return _argvLocal;
-            }
-            internal set
-            {
-                _argvLocal = value;
-            }
-        }
+        public LocalBuilder ArgvLocal { get; internal set; }
 
         public ILGenerator Il
         {
-            get
-            {
-                return _il;
-            }
+            get { return _il; }
         }
 
         public Dictionary<int, string> IndexMap
         {
-            get
-            {
-                return _indexMap;
-            }
+            get { return _indexMap; }
         }
 
         public Label[] InstructionLabels
         {
-            get
-            {
-                return _instructionLabels;
-            }
+            get { return _instructionLabels; }
         }
 
-        public LocalBuilder SctxLocal
-        {
-            get
-            {
-                return _sctxLocal;
-            }
-            internal set
-            {
-                _sctxLocal = value;
-            }
-        }
+        public LocalBuilder SctxLocal { get; internal set; }
 
-        public LocalBuilder SharedLocal
-        {
-            get
-            {
-                return _sharedLocal;
-            }
-            internal set
-            {
-                _sharedLocal = value;
-            }
-        }
+        public LocalBuilder SharedLocal { get; internal set; }
 
         public SymbolTable<Symbol> Symbols
         {
-            get
-            {
-                return _symbols;
-            }
+            get { return _symbols; }
         }
 
         public LocalBuilder[] TempLocals
         {
-            get
-            {
-                return _tempLocals;
-            }
-            internal set
-            {
-                _tempLocals = value;
-            }
+            get { return _tempLocals; }
+            internal set { _tempLocals = value; }
         }
 
         public Stack<TryCatchFinallyBlock> TryBlocks
         {
-            get
-            {
-                return _tryBlocks;
-            }
+            get { return _tryBlocks; }
         }
 
         public Engine TargetEngine
         {
-            get
-            {
-                return _targetEngine;
-            }
+            get { return _targetEngine; }
         }
 
         public List<ForeachHint> ForeachHints
         {
-            get
-            {
-                return _foreachHints;
-            }
+            get { return _foreachHints; }
         }
 
         /// <summary>
@@ -260,7 +214,7 @@ namespace Prexonite.Compiler.Cil
 
         public void EmitLdcI4(int i)
         {
-            switch(i)
+            switch (i)
             {
                 case -1:
                     Il.Emit(OpCodes.Ldc_I4_M1);
@@ -293,7 +247,7 @@ namespace Prexonite.Compiler.Cil
                     Il.Emit(OpCodes.Ldc_I4_8);
                     break;
                 default:
-                    if(i >= SByte.MinValue && i <= SByte.MaxValue)
+                    if (i >= SByte.MinValue && i <= SByte.MaxValue)
                         Il.Emit(OpCodes.Ldc_I4_S, (sbyte) i);
                     else
                         Il.Emit(OpCodes.Ldc_I4, i);
@@ -304,39 +258,34 @@ namespace Prexonite.Compiler.Cil
         //CompilerState state, 
         public bool MustUseLeave(int instructionAddress, ref int targetAddress)
         {
-            bool useLeave;
-            if(TryBlocks.Count == 0)
+            var useLeave = false;
+            foreach (var enclosingBlock in TryBlocks)
             {
-                //jump normally
-                useLeave = false;
-            }
-            else
-            {
-                TryCatchFinallyBlock enclosingBlock = TryBlocks.Peek();
-                if(enclosingBlock.Handles(instructionAddress))
+                if (enclosingBlock.Handles(instructionAddress))
                 {
-                    if(enclosingBlock.Handles(targetAddress))
-                    {
-                        useLeave = false; //is a local jump
-                    }
-                    else
+                    if (!enclosingBlock.Handles(targetAddress))
                     {
                         useLeave = true;
                         //To skip a try block in Prexonite, one jumps to the first finally instruction.
                         // This is illegal in CIL. The same behaviour is achieved by leaving the try block as
                         //  the finally clause is automatically executed first.
-                        // As for try-catch: The Prexonite "leave" instruction has no representation in CIL and can therefor not
+                        // As for try-catch: The Prexonite "leave" instruction has no representation in CIL and can therefore not
                         //  be targeted directly. The same workaround applies.
-                        if(targetAddress == enclosingBlock.BeginFinally || targetAddress == enclosingBlock.BeginCatch)
+                        if (targetAddress == enclosingBlock.BeginFinally ||
+                            targetAddress == enclosingBlock.BeginCatch)
                             targetAddress = enclosingBlock.EndTry;
+                        break;
+                    }
+                    else
+                    {
+                        //remains a local jump so far
                     }
                 }
                 else
                 {
-                    if(enclosingBlock.Handles(targetAddress))
+                    if (enclosingBlock.Handles(targetAddress))
                         throw new PrexoniteException("Jumps into guarded (try) blocks are illegal.");
-                    else
-                        useLeave = false; //is an external jump
+                    //remains an external jump so far
                 }
             }
             return useLeave;
@@ -344,7 +293,7 @@ namespace Prexonite.Compiler.Cil
 
         public void fillArgv(int argc)
         {
-            if(argc == 0)
+            if (argc == 0)
             {
                 //Nothing, argv is read from CilRuntime.EmptyPValueArrayField
             }
@@ -365,10 +314,10 @@ namespace Prexonite.Compiler.Cil
 
                 //Instantiate array -> argv
                 Il.Emit(OpCodes.Ldc_I4, argc);
-                Il.Emit(OpCodes.Newarr, typeof(PValue));
+                Il.Emit(OpCodes.Newarr, typeof (PValue));
                 EmitStoreLocal(ArgvLocal);
 
-                for(int i = argc - 1; i >= 0; i--)
+                for (var i = argc - 1; i >= 0; i--)
                 {
                     //get argument
                     EmitStoreTemp(0);
@@ -384,7 +333,7 @@ namespace Prexonite.Compiler.Cil
 
         public void readArgv(int argc)
         {
-            if(argc == 0)
+            if (argc == 0)
             {
                 Il.Emit(OpCodes.Ldsfld, Runtime.EmptyPValueArrayField);
             }
@@ -396,7 +345,7 @@ namespace Prexonite.Compiler.Cil
 
         public void EmitLoadArg(int index)
         {
-            switch(index)
+            switch (index)
             {
                 case 0:
                     Il.Emit(OpCodes.Ldarg_0);
@@ -411,7 +360,7 @@ namespace Prexonite.Compiler.Cil
                     Il.Emit(OpCodes.Ldarg_3);
                     break;
                 default:
-                    if(index < byte.MaxValue)
+                    if (index < byte.MaxValue)
                         Il.Emit(OpCodes.Ldarg_S, (byte) index);
                     else
                         Il.Emit(OpCodes.Ldarg, index);
@@ -426,7 +375,7 @@ namespace Prexonite.Compiler.Cil
 
         public void EmitLoadLocal(int index)
         {
-            switch(index)
+            switch (index)
             {
                 case 0:
                     Il.Emit(OpCodes.Ldloc_0);
@@ -441,7 +390,7 @@ namespace Prexonite.Compiler.Cil
                     Il.Emit(OpCodes.Ldloc_3);
                     break;
                 default:
-                    if(index < byte.MaxValue)
+                    if (index < byte.MaxValue)
                         Il.Emit(OpCodes.Ldloc_S, (byte) index);
                     else
                         Il.Emit(OpCodes.Ldloc, index);
@@ -456,7 +405,7 @@ namespace Prexonite.Compiler.Cil
 
         public void EmitStoreLocal(int index)
         {
-            switch(index)
+            switch (index)
             {
                 case 0:
                     Il.Emit(OpCodes.Stloc_0);
@@ -471,7 +420,7 @@ namespace Prexonite.Compiler.Cil
                     Il.Emit(OpCodes.Stloc_3);
                     break;
                 default:
-                    if(index < byte.MaxValue)
+                    if (index < byte.MaxValue)
                         Il.Emit(OpCodes.Stloc_S, (byte) index);
                     else
                         Il.Emit(OpCodes.Stloc, index);
@@ -481,16 +430,18 @@ namespace Prexonite.Compiler.Cil
 
         public void EmitStoreTemp(int i)
         {
-            if(i >= _tempLocals.Length)
-                throw new ArgumentOutOfRangeException(
+            if (i >= _tempLocals.Length)
+                throw new ArgumentOutOfRangeException
+                    (
                     "i", i, "This particular cil implementation does not use that many temporary variables.");
             EmitStoreLocal(_tempLocals[i]);
         }
 
         public void EmitLoadTemp(int i)
         {
-            if(i >= _tempLocals.Length)
-                throw new ArgumentOutOfRangeException(
+            if (i >= _tempLocals.Length)
+                throw new ArgumentOutOfRangeException
+                    (
                     "i", i, "This particular cil implementation does not use that many temporary variables.");
             EmitLoadLocal(_tempLocals[i]);
         }
@@ -508,18 +459,18 @@ namespace Prexonite.Compiler.Cil
             EmitLoadLocal(SctxLocal);
             readArgv(argc);
             Il.EmitCall(OpCodes.Call, Compiler.PVIndirectCallMethod, null);
-            if(justEffect)
+            if (justEffect)
                 Il.Emit(OpCodes.Pop);
         }
 
         public void EmitStorePValue(Symbol sym, Action action)
         {
-            if(sym.Kind == SymbolKind.Local)
+            if (sym.Kind == SymbolKind.Local)
             {
                 action();
                 EmitStoreLocal(sym.Local);
             }
-            else if(sym.Kind == SymbolKind.LocalRef)
+            else if (sym.Kind == SymbolKind.LocalRef)
             {
                 EmitLoadLocal(sym.Local);
                 action();
@@ -533,11 +484,11 @@ namespace Prexonite.Compiler.Cil
 
         public void EmitLoadPValue(Symbol sym)
         {
-            if(sym.Kind == SymbolKind.Local)
+            if (sym.Kind == SymbolKind.Local)
             {
                 EmitLoadLocal(sym.Local);
             }
-            else if(sym.Kind == SymbolKind.LocalRef)
+            else if (sym.Kind == SymbolKind.LocalRef)
             {
                 EmitLoadLocal(sym.Local);
                 Il.EmitCall(OpCodes.Call, Compiler.GetValueMethod, null);
@@ -577,40 +528,41 @@ namespace Prexonite.Compiler.Cil
 
         public void EmitWrapBool()
         {
-            Il.Emit(OpCodes.Box, typeof(bool));
+            Il.Emit(OpCodes.Box, typeof (bool));
             Il.EmitCall(OpCodes.Call, Compiler.GetBoolPType, null);
             Il.Emit(OpCodes.Newobj, Compiler.NewPValue);
         }
 
         public void EmitWrapReal()
         {
-            Il.Emit(OpCodes.Box, typeof(double));
+            Il.Emit(OpCodes.Box, typeof (double));
             Il.EmitCall(OpCodes.Call, Compiler.GetRealPType, null);
             Il.Emit(OpCodes.Newobj, Compiler.NewPValue);
         }
 
         public void EmitWrapInt()
         {
-            Il.Emit(OpCodes.Box, typeof(int));
+            Il.Emit(OpCodes.Box, typeof (int));
             Il.EmitCall(OpCodes.Call, Compiler.GetIntPType, null);
             Il.Emit(OpCodes.Newobj, Compiler.NewPValue);
         }
 
         public void EmitLoadType(string typeExpr)
         {
-            PType T = ConstructPType(typeExpr);
-            ICilCompilerAware cilT = T as ICilCompilerAware;
+            var T = ConstructPType(typeExpr);
+            var cilT = T as ICilCompilerAware;
 
             CompilationFlags cf;
-            Instruction virtualInstruction = new Instruction(OpCode.cast_const, typeExpr);
+            var virtualInstruction = new Instruction(OpCode.cast_const, typeExpr);
             if (cilT != null)
             {
                 cf = cilT.CheckQualification(virtualInstruction);
             }
-            else 
+            else
                 cf = CompilationFlags.IsCompatible;
 
-            if((cf & CompilationFlags.HasCustomImplementation) == CompilationFlags.HasCustomImplementation && cilT != null)
+            if ((cf & CompilationFlags.HasCustomImplementation) == CompilationFlags.HasCustomImplementation &&
+                cilT != null)
             {
                 cilT.ImplementInCil(this, virtualInstruction);
             }
@@ -632,7 +584,7 @@ namespace Prexonite.Compiler.Cil
         }
 
         private static readonly MethodInfo PType_ConstructMethod =
-            typeof(PType).GetMethod("Construct", new Type[] {typeof(StackContext), typeof(PValue[])});
+            typeof (PType).GetMethod("Construct", new[] {typeof (StackContext), typeof (PValue[])});
 
         public void EmitLoadClrType(Type T)
         {
@@ -641,7 +593,7 @@ namespace Prexonite.Compiler.Cil
         }
 
         private static readonly MethodInfo Type_GetTypeFromHandle =
-            typeof(Type).GetMethod("GetTypeFromHandle", new Type[] {typeof(RuntimeTypeHandle)});
+            typeof (Type).GetMethod("GetTypeFromHandle", new[] {typeof (RuntimeTypeHandle)});
 
         #region Early bound command call
 
@@ -673,22 +625,23 @@ namespace Prexonite.Compiler.Cil
         /// <param name="justEffect">Indicates whether or not to ignore the return value.</param>
         public void EmitEarlyBoundCommandCall(Type target, int argc, bool justEffect)
         {
-            MethodInfo run =
-                target.GetMethod("RunStatically", new Type[] {typeof(StackContext), typeof(PValue[])});
+            var run =
+                target.GetMethod("RunStatically", new[] {typeof (StackContext), typeof (PValue[])});
 
-            if(run == null)
-                throw new PrexoniteException(
+            if (run == null)
+                throw new PrexoniteException
+                    (
                     string.Format("{0} does not provide a static method RunStatically(StackContext, PValue[])", target));
-            else if(run.ReturnType != typeof(PValue))
-                throw new PrexoniteException(
+            if (run.ReturnType != typeof (PValue))
+                throw new PrexoniteException
+                    (
                     string.Format("{0}'s RunStatically method does not return PValue but {1}.", target, run.ReturnType));
-            else //nothing
-                fillArgv(argc);
+            fillArgv(argc);
 
             EmitLoadLocal(SctxLocal);
             readArgv(argc);
             Il.EmitCall(OpCodes.Call, run, null);
-            if(justEffect)
+            if (justEffect)
                 Il.Emit(OpCodes.Pop);
         }
 
@@ -698,7 +651,7 @@ namespace Prexonite.Compiler.Cil
 
         public void EmitIgnoreArguments(int argc)
         {
-            for(int i = 0; i  < argc; i++)
+            for (var i = 0; i < argc; i++)
                 Il.Emit(OpCodes.Pop);
         }
     }
