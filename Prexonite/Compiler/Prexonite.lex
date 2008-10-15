@@ -32,7 +32,6 @@ using Prexonite.Commands;
 using Prexonite.Compiler;
 using Prexonite.Compiler.Ast;
 
-
 partial
 %%
 
@@ -115,6 +114,24 @@ Noise               = "/*" ~"*/" | "//" {NotLineBreak}* {LineBreak} | {WhiteSpac
      
      "{"    { return tok(Parser._lbrace); }
      "["    { return tok(Parser._lbrack); }
+     "(+)" { return tok(Parser._id,OperatorNames.Prexonite.Addition); }
+     "(-)" { return tok(Parser._id,OperatorNames.Prexonite.Subtraction); }
+     "(*)" { return tok(Parser._id,OperatorNames.Prexonite.Multiplication); }
+     "(/)" { return tok(Parser._id,OperatorNames.Prexonite.Division); }
+     "(" [mM][oO][dD] ")" { return tok(Parser._id,OperatorNames.Prexonite.Modulus); }
+     "(^)" { return tok(Parser._id,OperatorNames.Prexonite.Power); }
+     "(&)" { return tok(Parser._id,OperatorNames.Prexonite.BitwiseAnd); }
+     "(|)" { return tok(Parser._id,OperatorNames.Prexonite.BitwiseOr); }
+     "(" [xX][oO][rR] ")" { return tok(Parser._id,OperatorNames.Prexonite.ExclusiveOr); }
+     "(==)" { return tok(Parser._id,OperatorNames.Prexonite.Equality); }
+     "(!=)" { return tok(Parser._id,OperatorNames.Prexonite.Inequality); }
+     "(>)" { return tok(Parser._id,OperatorNames.Prexonite.GreaterThan); }
+     "(>=)" { return tok(Parser._id,OperatorNames.Prexonite.GreaterThanOrEqual); }
+     "(<)" { return tok(Parser._id,OperatorNames.Prexonite.LessThan); }
+     "(<=)" { return tok(Parser._id,OperatorNames.Prexonite.LessThanOrEqual); }
+     "(-.)" { return tok(Parser._id,OperatorNames.Prexonite.UnaryNegation); }
+     "(++)" { return tok(Parser._id,OperatorNames.Prexonite.Increment); }
+     "(--)" { return tok(Parser._id,OperatorNames.Prexonite.Decrement); }
      "("    { return tok(Parser._lpar); }
      ")"    { return tok(Parser._rpar); }
      "]"    { return tok(Parser._rbrack); }

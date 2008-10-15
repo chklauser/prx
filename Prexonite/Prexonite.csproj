@@ -201,6 +201,7 @@
     <Compile Include="Compiler\DebugHook.cs" />
     <Compile Include="Compiler\Lexer.Code.cs" />
     <Compile Include="Compiler\Lexer.cs" />
+    <Compile Include="OperatorNames.cs" />
     <Compile Include="Compiler\Parser.cs" />
     <Compile Include="Application.cs" />
     <Compile Include="Compiler\Loader.cs" />

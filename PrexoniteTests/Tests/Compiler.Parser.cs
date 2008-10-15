@@ -3271,29 +3271,5 @@ label   end
 ",target.Functions["main"].Code[3].Id));
         }
 
-        [Test]
-        public void IgnoringCatchClauseIllegal()
-        {
-            try
-            {
-                _compile(@"
-function main()
-{
-    try {
-        throw 2;
-    }catch{
-        println(2);
-    }
-}
-");
-            }
-            catch(AssertionException exc)
-            {
-                Console.WriteLine(exc);
-                return;
-            }
-
-            Assert.Fail("Ignoring catch clause is illegal and should have been rejected.");
-        }
     }
 }

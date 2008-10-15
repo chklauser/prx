@@ -25,9 +25,15 @@ namespace Prexonite.Types
             _et = new ExtensionTable();
         }
 
-        protected ExtendableObject(bool _tableIsInitialized)
+        /// <summary>
+        /// Creates a new instance of ExtendableObject.
+        /// </summary>
+        /// <param name="tableIsInitialized">Indicates whether the initialization of the 
+        /// extension table (<see cref="InitializeExtensionTable"/>) should be performed by this 
+        /// constructor overload.</param>
+        protected ExtendableObject(bool tableIsInitialized)
         {
-            if (!_tableIsInitialized)
+            if (!tableIsInitialized)
                 InitializeExtensionTable();
         }
 
