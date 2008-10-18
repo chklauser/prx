@@ -100,8 +100,6 @@ namespace Prexonite.Types
                     var upperLimit = (int) upperLimitPV.Value;
                     var step = (int) stepPV.Value;
 
-                    Console.WriteLine();
-
                     result = sctx.CreateNativePValue
                         (new Coroutine(new CoroutineContext(sctx, _generateIntegerRange(lowerLimit, step, upperLimit))));
                     break;
