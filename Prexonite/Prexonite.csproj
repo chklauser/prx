@@ -106,6 +106,7 @@
     <Compile Include="Commands\List\ForAll.cs" />
     <Compile Include="Commands\List\Frequency.cs" />
     <Compile Include="Commands\List\GroupBy.cs" />
+    <Compile Include="Commands\List\HeadTail.cs" />
     <Compile Include="Commands\List\Intersect.cs" />
     <Compile Include="Commands\List\Limit.cs" />
     <Compile Include="Commands\List\List.cs" />

@@ -102,7 +102,6 @@ namespace Prexonite.Types
 
                     Console.WriteLine();
 
-
                     result = sctx.CreateNativePValue
                         (new Coroutine(new CoroutineContext(sctx, _generateIntegerRange(lowerLimit, step, upperLimit))));
                     break;

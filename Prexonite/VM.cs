@@ -24,6 +24,7 @@
 using System;
 using System.Collections.Generic;
 using System.Diagnostics;
+using Prexonite.Commands.Core;
 using Prexonite.Types;
 #if Verbose
 
@@ -215,6 +216,12 @@ namespace Prexonite
             get { return _executionProhibited; }
             set { _executionProhibited = value; }
         }
+
+        /// <summary>
+        /// Indicates whether the <see cref="CompileToCil"/> command is allowed to link statically. 
+        /// This setting overrides any arguments passed to CompileToCil.
+        /// </summary>
+        public bool StaticLinkingAllowed { get; set; }
 
         #endregion
     }

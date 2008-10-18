@@ -2205,7 +2205,7 @@ function main()
         {
             close(handle);
         }
-        catch
+        catch(var exc)
         {
             log(""FATAL"");
             shutdown;
@@ -2229,7 +2229,9 @@ label beginTry2     try
                    @func.1  close
 
 label beginFinally2 leave   endTry2
-label beginCatch2   ldc.string
+label beginCatch2   exception
+                    stloc exc
+                    ldc.string
                             ""FATAL""
                    @func.1  log
                    @func.0  shutdown

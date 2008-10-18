@@ -306,14 +306,14 @@ namespace Prexonite
             {
                 if (type == null)
                     throw new ArgumentNullException("type");
-                PTypeLiteralAttribute[] literals =
+                var literals =
                     (PTypeLiteralAttribute[])
                     type.GetCustomAttributes(typeof(PTypeLiteralAttribute), false);
                 if (literals.Length == 0)
                     throw new PrexoniteException(
                         "Supplied PType " + type +
                         " does not have any PTypeLiteral attributes.");
-                foreach (PTypeLiteralAttribute literal in literals)
+                foreach (var literal in literals)
                     Add(literal.Literal, type);
             }
 
@@ -431,8 +431,8 @@ namespace Prexonite
             if (clrType == typeof(StructurePType))
                 return PType.Structure;
 
-            PValue result =
-                ptypeClrType.Construct(sctx, new PValue[] {PType.Object.CreatePValue(args)});
+            var result =
+                ptypeClrType.Construct(sctx, new[] {PType.Object.CreatePValue(args)});
             if (result == null || result.IsNull)
                 throw new PrexoniteException(
                     "Could not construct PType (resulted in null reference)");
@@ -481,7 +481,7 @@ namespace Prexonite
         {
             using (TScanner lexer = TScanner.CreateFromString(expression))
             {
-                TParser parser = new TParser(lexer, sctx);
+                var parser = new TParser(lexer, sctx);
                 parser.Parse();
                 if (parser.errors.count > 0)
                     throw new PrexoniteException(
@@ -760,6 +760,8 @@ namespace Prexonite
             Commands.AddEngineCommand(RangeAlias, Range.Instance);
 
             Commands.AddEngineCommand(ReverseAlias, Reverse.Instance);
+
+            Commands.AddEngineCommand(HeadTailAlias,HeadTail.Instance);
         }
 
         /// <summary>
@@ -1038,6 +1040,8 @@ namespace Prexonite
         public const string RangeAlias = "range";
 
         public const string ReverseAlias = "reverse";
+
+        public const string HeadTailAlias = "headtail";
 
         #endregion
     }

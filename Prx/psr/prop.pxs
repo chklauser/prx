@@ -12,10 +12,6 @@
 //          newAmount => Something.SetAmount(newAmount)
 //      );
 
-build does require(
-    //"ast.pxs"
-);
-
 Import
 {
     System,
@@ -25,7 +21,8 @@ Import
     Prexonite::Compiler::Ast
 };
 
-function prop => throw "Autoproperty has not been converted by the compiler. Have you forgotten to import psr\\prop.pxs ?";
+//In case prop is used with the application used with a different loader.
+function prop => throw "Autoproperty has not been converted by the compiler. Have you forgotten to import psr\\prop.pxs?";
 
 function struct_prop => prop;
 

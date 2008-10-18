@@ -55,10 +55,7 @@ namespace Prexonite.Commands.Core
             }
         }
 
-        public static bool AlreadyCompiledStatically
-        {
-            get { return _alreadyCompiledStatically; }
-        }
+        public static bool AlreadyCompiledStatically { get; private set; }
 
         #region ICilCompilerAware Members
 
@@ -85,9 +82,6 @@ namespace Prexonite.Commands.Core
             return RunStatically(sctx, args);
         }
 
-        private static bool _alreadyCompiledStatically = false;
-
-
         /// <summary>
         /// Executes the command.
         /// </summary>
@@ -106,24 +100,35 @@ namespace Prexonite.Commands.Core
             if(args == null)
                 args = new PValue[] {};
 
-            FunctionLinking linking = FunctionLinking.FullyStatic;
+            var linking = FunctionLinking.FullyStatic;
             switch(args.Length)
             {
                 case 0:
-                    if(args.Length == 0)
+                    if (sctx.ParentEngine.StaticLinkingAllowed)
                     {
-                        if (AlreadyCompiledStatically)
-                            throw new PrexoniteException(
-                                string.Format("You should only use static compilation once per process. Use {0}(true)" + 
-                                " to force recompilation (warning: memory leak!). Should your program recompile dynamically, " + 
-                                "use {1}(false) for disposable implementations.", Engine.CompileToCilAlias, Engine.CompileToCilAlias));
-                        else
-                            _alreadyCompiledStatically = true;
+                        if (args.Length == 0)
+                        {
+                            if (AlreadyCompiledStatically)
+                                throw new PrexoniteException
+                                    (
+                                    string.Format
+                                        ("You should only use static compilation once per process. Use {0}(true)" +
+                                         " to force recompilation (warning: memory leak!). Should your program recompile dynamically, " +
+                                         "use {1}(false) for disposable implementations.",
+                                         Engine.CompileToCilAlias,
+                                         Engine.CompileToCilAlias));
+                            else
+                                AlreadyCompiledStatically = true;
+                        }
+                    }
+                    else
+                    {
+                        linking = FunctionLinking.FullyIsolated;
                     }
                     Compiler.Cil.Compiler.Compile(sctx.ParentApplication, sctx.ParentEngine,linking);
                     break;
                 case 1:
-                    PValue arg0 = args[0];
+                    var arg0 = args[0];
 
                     if (arg0 == null || arg0.IsNull)
                         goto case 0;
