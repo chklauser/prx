@@ -61,6 +61,12 @@ namespace Prexonite.Commands.List
 
         #endregion 
 
+        /// <summary>
+        /// Tries to turn a generic PValue object into an <see cref="IEnumerable{PValue}"/> if possible. Returns null if <paramref name="psource"/> cannot be enumerated over.
+        /// </summary>
+        /// <param name="sctx"></param>
+        /// <param name="psource"></param>
+        /// <returns></returns>
         internal static IEnumerable<PValue> _ToEnumerable(StackContext sctx, PValue psource)
         {
             switch(psource.Type.ToBuiltIn())

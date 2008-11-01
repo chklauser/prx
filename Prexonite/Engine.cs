@@ -762,6 +762,10 @@ namespace Prexonite
             Commands.AddEngineCommand(ReverseAlias, Reverse.Instance);
 
             Commands.AddEngineCommand(HeadTailAlias,HeadTail.Instance);
+
+            Commands.AddEngineCommand(AppendAlias,Append.Instance);
+
+            Commands.AddEngineCommand(SumAlias,Sum.Instance);
         }
 
         /// <summary>
@@ -1042,6 +1046,16 @@ namespace Prexonite
         public const string ReverseAlias = "reverse";
 
         public const string HeadTailAlias = "headtail";
+
+        /// <summary>
+        /// Alias used for the Append command.
+        /// </summary>
+        public const string AppendAlias = "append";
+
+        /// <summary>
+        /// Alias used for the Sum command.
+        /// </summary>
+        public const string SumAlias = "sum";
 
         #endregion
     }

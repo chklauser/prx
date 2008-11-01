@@ -96,6 +96,7 @@
     <Compile Include="Commands\DelegatePCommand.cs" />
     <Compile Include="Commands\ICilCompilerAware.cs" />
     <Compile Include="Commands\List\All.cs" />
+    <Compile Include="Commands\List\Append.cs" />
     <Compile Include="Commands\List\Count.cs" />
     <Compile Include="Commands\List\Distinct.cs" />
     <Compile Include="Commands\List\Each.cs" />
@@ -115,6 +116,7 @@
     <Compile Include="Commands\List\Reverse.cs" />
     <Compile Include="Commands\List\Skip.cs" />
     <Compile Include="Commands\List\Sort.cs" />
+    <Compile Include="Commands\List\Sum.cs" />
     <Compile Include="Commands\List\TakeWhile.cs" />
     <Compile Include="Commands\List\Where.cs" />
     <Compile Include="Commands\Math\Abs.cs" />
