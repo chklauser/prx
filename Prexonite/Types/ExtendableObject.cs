@@ -13,7 +13,7 @@ namespace Prexonite.Types
     /// Implements the interfaces <see cref="IObject"/> and <see cref="IIndirectCall"/> in 
     /// such a way that the object acts like a Prexonite structure (e.g., members can be added at runtime).
     /// </summary>
-    //[DebuggerNonUserCode]
+    [DebuggerNonUserCode]
     public class ExtendableObject : IObject, IIndirectCall
     {
         private ExtensionTable _et;
