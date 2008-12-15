@@ -97,7 +97,7 @@ function create_SI [is compiler;]
         else
             throw "$s cannot be made reference.";
 }
-build does SI = create_SI;
+build does create_SI;
 
 var _stmt_hooks [is compiler;];
 build does _stmt_hooks = [];
