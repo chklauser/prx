@@ -21,6 +21,7 @@
  *  51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
  */
 
+using System.Diagnostics;
 using Prexonite.Compiler.Cil;
 using Prexonite.Types;
 using NoDebug = System.Diagnostics.DebuggerNonUserCodeAttribute;
@@ -29,7 +30,7 @@ namespace Prexonite.Compiler.Ast
 {
     public class AstForeachLoop : AstLoop
     {
-        [NoDebug]
+        [DebuggerStepThrough]
         public AstForeachLoop(string file, int line, int column)
             : base(file, line, column)
         {
@@ -37,13 +38,13 @@ namespace Prexonite.Compiler.Ast
             Labels = CreateBlockLabels();
         }
 
-        [NoDebug]
+        [DebuggerStepThrough]
         public static BlockLabels CreateBlockLabels()
         {
             return new BlockLabels("foreach");
         }
 
-        [NoDebug]
+        [DebuggerStepThrough]
         internal AstForeachLoop(Parser p)
             : this(p.scanner.File, p.t.line, p.t.col)
         {
@@ -54,7 +55,7 @@ namespace Prexonite.Compiler.Ast
 
         public bool IsInitialized
         {
-            [NoDebug]
+            [DebuggerStepThrough]
             get { return List != null && Element != null; }
         }
 
@@ -81,6 +82,20 @@ namespace Prexonite.Compiler.Ast
 
             //Create the element assignment statement
             var element = Element.GetCopy();
+            IAstExpression optElem;
+            if(element.TryOptimize(target,out optElem))
+            {
+                element = optElem as AstGetSet;
+                if (element == null)
+                {
+                    target.Loader.ReportSemanticError
+                        (Element.Line,
+                         Element.Column,
+                         "Optimization of the element expression in the foreach head " + 
+                         "resulted in a non-GetSet expression. Try to use a simpler expression.");
+                    return;
+                }
+            }
             var ldEnumVar =
                 new AstGetSetSymbol(
                     File, Line, Column, enumVar, SymbolInterpretations.LocalObjectVariable);

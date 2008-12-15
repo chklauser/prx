@@ -2,6 +2,7 @@
 
 using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.Reflection;
 using System.Text;
 using Prexonite.Compiler.Cil;
@@ -17,7 +18,7 @@ namespace Prexonite.Types
         #region Construction
 
         //Constructor
-        [NoDebug]
+        [DebuggerStepThrough]
         public ObjectPType(Type clrType)
         {
             if (clrType == null)
@@ -108,7 +109,7 @@ namespace Prexonite.Types
 
         public Type ClrType
         {
-            [NoDebug]
+            [DebuggerStepThrough]
             get { return _clrType; }
         }
 
@@ -317,11 +318,13 @@ namespace Prexonite.Types
         {
             result = null;
 
-            if (id == null || id.Length == 0)
+            if (string.IsNullOrEmpty(id))
                 throw new ArgumentException("id may not be null or empty.");
 
-            var cond = new call_conditions(sctx, args, call, id);
-            cond.returnType = targetType;
+            var cond = new call_conditions(sctx, args, call, id)
+            {
+                returnType = targetType
+            };
 
             //Get member candidates            
             var candidates = new Stack<MemberInfo>(
@@ -502,7 +505,7 @@ namespace Prexonite.Types
             return ret;
         }
 
-        [NoDebug]
+        [DebuggerStepThrough]
         private class call_conditions
         {
             public readonly StackContext Sctx;
@@ -820,8 +823,10 @@ namespace Prexonite.Types
         public bool TryContruct(
             StackContext sctx, PValue[] args, out PValue result, out MemberInfo resolvedMember)
         {
-            var cond = new call_conditions(sctx, args, PCall.Get, "");
-            cond.IgnoreId = true;
+            var cond = new call_conditions(sctx, args, PCall.Get, "")
+            {
+                IgnoreId = true
+            };
 
             //Get member candidates            
             var candidates = new Stack<MemberInfo>();
@@ -1321,7 +1326,7 @@ namespace Prexonite.Types
             {
                 if (objT.ClrType.IsInterface &&
                     ClrType.FindInterfaces(
-                        delegate(Type T, object o) { return T.Name == o as string; },
+                        (T, o) => T.Name == o as string,
                         objT.ClrType.Name).Length == 1)
                 {
                     result = objT.CreatePValue(subject.Value);

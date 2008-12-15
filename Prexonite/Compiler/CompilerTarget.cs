@@ -29,6 +29,7 @@
 using System;
 using System.Collections;
 using System.Collections.Generic;
+using System.Diagnostics;
 using Prexonite.Compiler.Ast;
 using NoDebug = System.Diagnostics.DebuggerNonUserCodeAttribute;
 
@@ -36,7 +37,7 @@ using NoDebug = System.Diagnostics.DebuggerNonUserCodeAttribute;
 
 namespace Prexonite.Compiler
 {
-    [NoDebug]
+    [DebuggerStepThrough]
     public class AddressChangeHook
     {
         public AddressChangeHook(int instructionIndex, Action<int> reaction)
@@ -72,13 +73,13 @@ namespace Prexonite.Compiler
         /// </summary>
         public MetaTable Meta
         {
-            [NoDebug]
+            [DebuggerStepThrough]
             get { return _function.Meta; }
         }
 
         #endregion
 
-        [NoDebug]
+        [DebuggerStepThrough]
         public static string GenerateName(string prefix)
         {
             return prefix + "\\" + Engine.GenerateName();
@@ -88,7 +89,7 @@ namespace Prexonite.Compiler
         /// Returns the string <see cref="Function"/>'s string representation.
         /// </summary>
         /// <returns>The string <see cref="Function"/>'s string representation.</returns>
-        [NoDebug]
+        [DebuggerStepThrough]
         public override string ToString()
         {
             return string.Format("Target({0})", Function);
@@ -104,27 +105,27 @@ namespace Prexonite.Compiler
 
         public Loader Loader
         {
-            [NoDebug]
+            [DebuggerStepThrough]
             get { return _loader; }
         }
 
         public PFunction Function
         {
-            [NoDebug]
+            [DebuggerStepThrough]
             get { return _function; }
         }
 
         public SymbolTable<SymbolEntry> LocalSymbols
         {
-            [NoDebug]
+            [DebuggerStepThrough]
             get { return _symbols; }
         }
 
         public CompilerTarget ParentTarget
         {
-            [NoDebug]
+            [DebuggerStepThrough]
             get { return _parentTarget; }
-            [NoDebug]
+            [DebuggerStepThrough]
             set
             {
                 _parentTarget = value;
@@ -132,8 +133,8 @@ namespace Prexonite.Compiler
             }
         }
 
-        public int NestedFunctionCounter { [NoDebug]
-        get; [NoDebug]
+        public int NestedFunctionCounter { [DebuggerStepThrough]
+        get; [DebuggerStepThrough]
         set; }
 
         public BlockLabels DirectRecursionLabels
@@ -146,7 +147,7 @@ namespace Prexonite.Compiler
 
         #region Construction
 
-        [NoDebug]
+        [DebuggerStepThrough]
         public CompilerTarget(Loader loader, PFunction function, AstBlock block)
         {
             if (loader == null)
@@ -170,11 +171,11 @@ namespace Prexonite.Compiler
 
         public CombinedSymbolProxy Symbols
         {
-            [NoDebug]
+            [DebuggerStepThrough]
             get { return _combinedSymbolProxy; }
         }
 
-        [NoDebug]
+        [DebuggerStepThrough]
         public sealed class CombinedSymbolProxy : IDictionary<string, SymbolEntry>
         {
             private readonly SymbolTable<SymbolEntry> loaderSymbols;
@@ -394,7 +395,7 @@ namespace Prexonite.Compiler
 
         public List<Instruction> Code
         {
-            [NoDebug]
+            [DebuggerStepThrough]
             get { return _function.Code; }
         }
 
@@ -406,7 +407,7 @@ namespace Prexonite.Compiler
 
         public AstBlock Ast
         {
-            [NoDebug]
+            [DebuggerStepThrough]
             get { return _ast; }
         }
 
@@ -426,13 +427,13 @@ namespace Prexonite.Compiler
 
         #region Symbols
 
-        [NoDebug]
+        [DebuggerStepThrough]
         public void Declare(SymbolInterpretations kind, string id)
         {
             Declare(kind, id, id);
         }
 
-        [NoDebug]
+        [DebuggerStepThrough]
         public void Declare(SymbolInterpretations kind, string id, string translatedId)
         {
             if (Symbols.IsKeyDefinedLocally(id))
@@ -447,13 +448,13 @@ namespace Prexonite.Compiler
             }
         }
 
-        [NoDebug]
+        [DebuggerStepThrough]
         public void Define(SymbolInterpretations kind, string id)
         {
             Define(kind, id, id);
         }
 
-        [NoDebug]
+        [DebuggerStepThrough]
         public void Define(SymbolInterpretations kind, string id, string translatedId)
         {
             switch (kind)
@@ -488,17 +489,17 @@ namespace Prexonite.Compiler
 
         public Stack<BlockLabels> BlockLabelStack
         {
-            [NoDebug]
+            [DebuggerStepThrough]
             get { return _blockLabelStack; }
         }
 
         public BlockLabels CurrentBlock
         {
-            [NoDebug]
+            [DebuggerStepThrough]
             get { return _blockLabelStack.Count > 0 ? _blockLabelStack.Peek() : null; }
         }
 
-        [NoDebug]
+        [DebuggerStepThrough]
         public void BeginBlock(BlockLabels bl)
         {
             if (bl == null)
@@ -506,7 +507,7 @@ namespace Prexonite.Compiler
             _blockLabelStack.Push(bl);
         }
 
-        [NoDebug]
+        [DebuggerStepThrough]
         public BlockLabels BeginBlock(string prefix)
         {
             var bl = new BlockLabels(prefix);
@@ -514,13 +515,13 @@ namespace Prexonite.Compiler
             return bl;
         }
 
-        [NoDebug]
+        [DebuggerStepThrough]
         public BlockLabels BeginBlock()
         {
             return BeginBlock((string) null);
         }
 
-        [NoDebug]
+        [DebuggerStepThrough]
         public BlockLabels EndBlock()
         {
             if (_blockLabelStack.Count > 0)
@@ -533,7 +534,7 @@ namespace Prexonite.Compiler
 
         #region Code
 
-        [NoDebug]
+        [DebuggerStepThrough]
         public void RemoveInstructionAt(int index)
         {
             RemoveInstructionRange(index, 1);
@@ -598,7 +599,7 @@ namespace Prexonite.Compiler
 
         private readonly SymbolCollection _outerVariables = new SymbolCollection();
 
-        [NoDebug]
+        [DebuggerStepThrough]
         public void RequireOuterVariable(string id)
         {
             _outerVariables.Add(id);
@@ -630,31 +631,31 @@ namespace Prexonite.Compiler
 
         #region Low Level
 
-        [NoDebug]
+        [DebuggerStepThrough]
         public void Emit(Instruction ins)
         {
             _function.Code.Add(ins);
         }
 
-        [NoDebug]
+        [DebuggerStepThrough]
         public void Emit(OpCode code)
         {
             Emit(new Instruction(code));
         }
 
-        [NoDebug]
+        [DebuggerStepThrough]
         public void Emit(OpCode code, string id)
         {
             Emit(new Instruction(code, id));
         }
 
-        [NoDebug]
+        [DebuggerStepThrough]
         public void Emit(OpCode code, int arguments)
         {
             Emit(new Instruction(code, arguments));
         }
 
-        [NoDebug]
+        [DebuggerStepThrough]
         public void Emit(OpCode code, int arguments, string id)
         {
             Emit(new Instruction(code, arguments, id));
@@ -666,31 +667,31 @@ namespace Prexonite.Compiler
 
         #region Constants
 
-        [NoDebug]
+        [DebuggerStepThrough]
         public void EmitConstant(string value)
         {
             Emit(Instruction.CreateConstant(value));
         }
 
-        [NoDebug]
+        [DebuggerStepThrough]
         public void EmitConstant(bool value)
         {
             Emit(Instruction.CreateConstant(value));
         }
 
-        [NoDebug]
+        [DebuggerStepThrough]
         public void EmitConstant(double value)
         {
             Emit(Instruction.CreateConstant(value));
         }
 
-        [NoDebug]
+        [DebuggerStepThrough]
         public void EmitConstant(int value)
         {
             Emit(Instruction.CreateConstant(value));
         }
 
-        [NoDebug]
+        [DebuggerStepThrough]
         public void EmitNull()
         {
             Emit(Instruction.CreateNull());
@@ -704,7 +705,7 @@ namespace Prexonite.Compiler
 
         #region Variables
 
-        [NoDebug]
+        [DebuggerStepThrough]
         public void EmitLoadLocal(string id)
         {
             Emit(Instruction.CreateLoadLocal(id));
@@ -729,67 +730,67 @@ namespace Prexonite.Compiler
 
         #region Get/Set
 
-        [NoDebug]
+        [DebuggerStepThrough]
         public void EmitGetCall(int args, string id, bool justEffect)
         {
             Emit(Instruction.CreateGetCall(args, id, justEffect));
         }
 
-        [NoDebug]
+        [DebuggerStepThrough]
         public void EmitGetCall(int args, string id)
         {
             EmitGetCall(args, id, false);
         }
 
-        [NoDebug]
+        [DebuggerStepThrough]
         public void EmitSetCall(int args, string id)
         {
             Emit(Instruction.CreateSetCall(args, id));
         }
 
-        [NoDebug]
+        [DebuggerStepThrough]
         public void EmitStaticGetCall(int args, string callExpr, bool justEffect)
         {
             Emit(Instruction.CreateStaticGetCall(args, callExpr, justEffect));
         }
 
-        [NoDebug]
+        [DebuggerStepThrough]
         public void EmitStaticGetCall(int args, string callExpr)
         {
             EmitStaticGetCall(args, callExpr, false);
         }
 
-        [NoDebug]
+        [DebuggerStepThrough]
         public void EmitStaticGetCall(int args, string typeId, string memberId, bool justEffect)
         {
             Emit(Instruction.CreateStaticGetCall(args, typeId, memberId, justEffect));
         }
 
-        [NoDebug]
+        [DebuggerStepThrough]
         public void EmitStaticGetCall(int args, string typeId, string memberId)
         {
             EmitStaticGetCall(args, typeId, memberId, false);
         }
 
-        [NoDebug]
+        [DebuggerStepThrough]
         public void EmitStaticSetCall(int args, string callExpr)
         {
             Emit(Instruction.CreateStaticSetCall(args, callExpr));
         }
 
-        [NoDebug]
+        [DebuggerStepThrough]
         public void EmitStaticSet(int args, string typeId, string memberId)
         {
             Emit(Instruction.CreateStaticSetCall(args, typeId, memberId));
         }
 
-        [NoDebug]
+        [DebuggerStepThrough]
         public void EmitIndirectCall(int args, bool justEffect)
         {
             Emit(Instruction.CreateIndirectCall(args, justEffect));
         }
 
-        [NoDebug]
+        [DebuggerStepThrough]
         public void EmitIndirectCall(int args)
         {
             Emit(Instruction.CreateIndirectCall(args));
@@ -799,25 +800,25 @@ namespace Prexonite.Compiler
 
         #region Functions/Commands
 
-        [NoDebug]
+        [DebuggerStepThrough]
         public void EmitFunctionCall(int args, string id)
         {
             EmitFunctionCall(args, id, false);
         }
 
-        [NoDebug]
+        [DebuggerStepThrough]
         public void EmitFunctionCall(int args, string id, bool justEffect)
         {
             Emit(Instruction.CreateFunctionCall(args, id, justEffect));
         }
 
-        [NoDebug]
+        [DebuggerStepThrough]
         public void EmitCommandCall(int args, string id)
         {
             EmitCommandCall(args, id, false);
         }
 
-        [NoDebug]
+        [DebuggerStepThrough]
         public void EmitCommandCall(int args, string id, bool justEffect)
         {
             Emit(Instruction.CreateCommandCall(args, id, justEffect));
@@ -989,7 +990,7 @@ namespace Prexonite.Compiler
             return true;
         }
 
-        [NoDebug]
+        [DebuggerStepThrough]
         public string EmitLabel(int address)
         {
             var label = "L\\" + Guid.NewGuid().ToString("N");
@@ -1006,7 +1007,7 @@ namespace Prexonite.Compiler
         /// </summary>
         /// <param name="label">The label's symbolic name.</param>
         /// <param name="address">The label's address.</param>
-        //[NoDebug]
+        //[DebuggerStepThrough]
         public void EmitLabel(string label, int address)
         {
             string partialResolve = null;
@@ -1073,13 +1074,13 @@ namespace Prexonite.Compiler
                 new SymbolEntry(SymbolInterpretations.JumpLabel, address);
         }
 
-        [NoDebug]
+        [DebuggerStepThrough]
         public void EmitLabel(string label)
         {
             EmitLabel(label, Code.Count);
         }
 
-        [NoDebug]
+        [DebuggerStepThrough]
         public string EmitLabel()
         {
             return EmitLabel(Code.Count);

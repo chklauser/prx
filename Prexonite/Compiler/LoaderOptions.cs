@@ -22,11 +22,12 @@
  */
 
 using System;
+using System.Diagnostics;
 using NoDebug = System.Diagnostics.DebuggerNonUserCodeAttribute;
 
 namespace Prexonite.Compiler
 {
-    [NoDebug]
+    [DebuggerStepThrough]
     public class LoaderOptions
     {
         #region Construction
@@ -84,7 +85,9 @@ namespace Prexonite.Compiler
             set { _storeSymbols = value; }
         }
 
+// ReSharper disable ConvertToAutoProperty
         public bool Compress
+// ReSharper restore ConvertToAutoProperty
         {
             get { return _compress; }
             set { _compress = value; }
@@ -93,7 +96,7 @@ namespace Prexonite.Compiler
 #if DEBUG
         private bool _compress = false;
 #else
-        private bool _compress = false;
+        private bool _compress;
 #endif
 
         public bool UseIndicesLocally

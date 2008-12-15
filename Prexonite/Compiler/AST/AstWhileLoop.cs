@@ -21,6 +21,7 @@
  *  51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
  */
 
+using System.Diagnostics;
 using Prexonite.Types;
 using NoDebug = System.Diagnostics.DebuggerNonUserCodeAttribute;
 
@@ -28,7 +29,7 @@ namespace Prexonite.Compiler.Ast
 {
     public class AstWhileLoop : AstLoop
     {
-        [NoDebug]
+        [DebuggerStepThrough]
         public AstWhileLoop(string file, int line, int column, bool isPrecondition, bool isNegative)
             : base(file, line, column)
         {
@@ -38,25 +39,25 @@ namespace Prexonite.Compiler.Ast
             Labels = CreateBlockLabels();
         }
 
-        [NoDebug]
+        [DebuggerStepThrough]
         public static BlockLabels CreateBlockLabels()
         {
             return new BlockLabels("while");
         }
 
-        [NoDebug]
+        [DebuggerStepThrough]
         public AstWhileLoop(string file, int line, int column, bool isPrecondition)
             : this(file, line, column, isPrecondition, false)
         {
         }
 
-        [NoDebug]
+        [DebuggerStepThrough]
         internal AstWhileLoop(Parser p, bool isPrecondition, bool isNegative)
             : this(p.scanner.File, p.t.line, p.t.col, isPrecondition, isNegative)
         {
         }
 
-        [NoDebug]
+        [DebuggerStepThrough]
         internal AstWhileLoop(Parser p, bool isPrecondition)
             : this(p, isPrecondition, false)
         {
@@ -68,12 +69,12 @@ namespace Prexonite.Compiler.Ast
 
         public override IAstExpression[] Expressions
         {
-            get { return new IAstExpression[] {Condition}; }
+            get { return new[] {Condition}; }
         }
 
         public bool IsInitialized
         {
-            [NoDebug]
+            [DebuggerStepThrough]
             get { return Condition != null; }
         }
 
@@ -84,7 +85,7 @@ namespace Prexonite.Compiler.Ast
 
             //Optimize unary not condition
             OptimizeNode(target, ref Condition);
-            AstUnaryOperator unaryCond = Condition as AstUnaryOperator;
+            var unaryCond = Condition as AstUnaryOperator;
             while (unaryCond != null && unaryCond.Operator == UnaryOperator.LogicalNot)
             {
                 Condition = unaryCond.Operand;
@@ -93,10 +94,10 @@ namespace Prexonite.Compiler.Ast
             }
 
             //Constant conditions
-            bool conditionIsConstant = false;
+            var conditionIsConstant = false;
             if (Condition is AstConstant)
             {
-                AstConstant constCond = (AstConstant) Condition;
+                var constCond = (AstConstant) Condition;
                 PValue condValue;
                 if (
                     !constCond.ToPValue(target).TryConvertTo(
@@ -113,7 +114,7 @@ namespace Prexonite.Compiler.Ast
                 }
             }
             continueFull:
-            ;
+            
 
             if (!Block.IsEmpty) //Body exists -> complete loop code?
             {

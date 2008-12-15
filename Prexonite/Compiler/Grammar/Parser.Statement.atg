@@ -149,9 +149,9 @@ GetInitiator<out AstGetSet complex, out bool isDeclaration>
                                         .)
 =
     //Actual value
-    (   IF( isLikeFunction(la.val) ) 
-        Function<out symbol>
-    |   Variable<out symbol, out isDeclaration>
+    (   IF( isLikeFunction() || isUnknownId() ) 
+        Function<out complex>
+    |   Variable<out complex, out isDeclaration>
     |   StaticCall<out staticCall>
     |	lpar Expr<out expr>				(.	args.Add(expr); .)
 		{	comma Expr<out expr>		(.	args.Add(expr); .) //multiple expressions can only be used as arguments
@@ -173,7 +173,8 @@ GetInitiator<out AstGetSet complex, out bool isDeclaration>
                                         (.  complex = 
 												(AstGetSet)symbol ?? 
 												(AstGetSet)staticCall ?? 
-												(AstGetSet)member; 
+												(AstGetSet)member ??
+												complex; 
 										.)
     //Reference
 |   IF( isDeDereference() )
@@ -238,14 +239,14 @@ VariableDeclaration<out AstGetSetSymbol variable>
 												new AstGetSetReference(this, PCall.Get, staticId, InterpretAsObjectVariable(kind)); .)
 .
 
-Variable<out AstGetSetSymbol variable, out bool isDeclared>
-                                        (.  variable = null; string id; isDeclared = false; .)
-=
-    VariableDeclaration<out variable>   (. isDeclared = true; .)
-|   Id<out id>                          (.  if(target.Symbols.ContainsKey(id))
+Variable<out AstGetSet complex, out bool isDeclared>
+                                        (. string id; isDeclared = false; complex = null; .)
+=                                       (. AstGetSetSymbol variable; .)
+    VariableDeclaration<out variable>   (. isDeclared = true; complex = variable; .)
+|   Id<out id>                          (.  
+                                            if(target.Symbols.ContainsKey(id))
                                             {
                                                 SymbolEntry varSym = target.Symbols[id];
-                                                variable = new AstGetSetSymbol(this, varSym.Id, varSym.Interpretation);
                                                 if(InterpretationIsVariable(varSym.Interpretation))
                                                 {
                                                     if(isOuterVariable(id))
@@ -253,13 +254,16 @@ Variable<out AstGetSetSymbol variable, out bool isDeclared>
                                                 }
                                                 else
                                                 {
-                                                    SemErr(t.line, t.col, "Variable name expected");
+                                                    SemErr(t.line, t.col, "Variable name expected but was " + 
+                                                        Enum.GetName(typeof(SymbolInterpretations),varSym.Interpretation));
                                                 }
+                                                complex = new AstGetSetSymbol(this, varSym.Id, varSym.Interpretation);;
                                             }
                                             else
                                             {
-                                                SemErr(t.line, t.col, "Unkown symbol \"" + id + "\". Variable name expected.");
-                                                variable = new AstGetSetSymbol(this, "Not a Variable Id", SymbolInterpretations.LocalObjectVariable);
+                                                //Unknown symbols are treated as functions. See production Function for details.
+                                                SemErr(t.line, t.col, "Internal compiler error. Did not catch unknown identifier.");
+                                                complex = new AstGetSetSymbol(this, "Not a Variable Id", SymbolInterpretations.LocalObjectVariable);
                                             }
                                         .)
 .
@@ -271,13 +275,12 @@ VariableDeclarationStatement
                                         //  for variable declarations without assignment.
 .
 
-Function<out AstGetSetSymbol function>
+Function<out AstGetSet function>
                                 (.  function = null; string id; .)
 =
     Id<out id>                  (.  if(!target.Symbols.ContainsKey(id))
                                     {
-                                        SemErr("There is no function-like symbol named " + id + ".");
-                                        function = new AstGetSetSymbol(this, id, SymbolInterpretations.Function);
+                                        function = new AstUnresolved(this, id);
                                     }
                                     else
                                     {

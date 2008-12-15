@@ -1178,7 +1178,7 @@ function main
     foreach(var e in lst)
         println = e;
     
-    asm nop+COMPLICATED;
+    //asm nop+COMPLICATED;
 
     var buffer = new ::StringBuilder;
     foreach(buffer.Append in lst.ToArray);

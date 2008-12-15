@@ -22,6 +22,7 @@
  */
 
 using System.Collections.Generic;
+using System.Diagnostics;
 using Prexonite.Types;
 using NoDebug = System.Diagnostics.DebuggerNonUserCodeAttribute;
 
@@ -29,7 +30,7 @@ namespace Prexonite.Compiler.Ast
 {
     public class AstForLoop : AstLoop
     {
-        [NoDebug]
+        [DebuggerStepThrough]
         public AstForLoop(string file, int line, int column)
             : base(file, line, column)
         {
@@ -39,13 +40,13 @@ namespace Prexonite.Compiler.Ast
             Labels = CreateBlockLabels();
         }
 
-        [NoDebug]
+        [DebuggerStepThrough]
         public static BlockLabels CreateBlockLabels()
         {
             return new BlockLabels("for");
         }
 
-        [NoDebug]
+        [DebuggerStepThrough]
         internal AstForLoop(Parser p)
             : this(p.scanner.File, p.t.line, p.t.col)
         {
@@ -59,7 +60,7 @@ namespace Prexonite.Compiler.Ast
 
         public bool IsInitialized
         {
-            [NoDebug]
+            [DebuggerStepThrough]
             get { return Condition != null; }
         }
 
@@ -70,7 +71,7 @@ namespace Prexonite.Compiler.Ast
 
             //Optimize unary not condition
             OptimizeNode(target, ref Condition);
-            AstUnaryOperator unaryCond = Condition as AstUnaryOperator;
+            var unaryCond = Condition as AstUnaryOperator;
             while (unaryCond != null && unaryCond.Operator == UnaryOperator.LogicalNot)
             {
                 Condition = unaryCond.Operand;
@@ -79,10 +80,10 @@ namespace Prexonite.Compiler.Ast
             }
 
             //Constant conditions
-            bool conditionIsConstant = false;
+            var conditionIsConstant = false;
             if (Condition is AstConstant)
             {
-                AstConstant constCond = (AstConstant) Condition;
+                var constCond = (AstConstant) Condition;
                 PValue condValue;
                 if (
                     !constCond.ToPValue(target).TryConvertTo(
@@ -97,9 +98,8 @@ namespace Prexonite.Compiler.Ast
                 }
             }
             continueFull:
-            ;
 
-            string conditionLabel = Labels.CreateLabel("condition");
+            var conditionLabel = Labels.CreateLabel("condition");
 
             if (!Block.IsEmpty) //Body exists -> complete loop code?
             {
@@ -175,9 +175,11 @@ namespace Prexonite.Compiler.Ast
         {
             get
             {
-                List<AstBlock> blocks = new List<AstBlock>(base.Blocks);
-                blocks.Add(Initialize);
-                blocks.Add(NextIteration);
+                var blocks = new List<AstBlock>(base.Blocks)
+                {
+                    Initialize, 
+                    NextIteration
+                };
                 return blocks.ToArray();
             }
         }
@@ -186,7 +188,7 @@ namespace Prexonite.Compiler.Ast
 
         public override IAstExpression[] Expressions
         {
-            get { return new IAstExpression[] {Condition}; }
+            get { return new[] {Condition}; }
         }
 
         #endregion

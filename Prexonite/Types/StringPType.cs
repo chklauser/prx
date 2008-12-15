@@ -2,6 +2,7 @@
 
 using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.Globalization;
 using System.Text;
 using System.Text.RegularExpressions;
@@ -23,7 +24,7 @@ namespace Prexonite.Types
 
         public static StringPType Instance
         {
-            [NoDebug]
+            [DebuggerStepThrough]
             get { return instance; }
         }
 
@@ -32,7 +33,7 @@ namespace Prexonite.Types
             instance = new StringPType();
         }
 
-        [NoDebug]
+        [DebuggerStepThrough]
         private StringPType()
         {
         }
@@ -41,7 +42,7 @@ namespace Prexonite.Types
 
         #region Static
 
-        [NoDebug]
+        [DebuggerStepThrough]
         public override PValue CreatePValue(object value)
         {
             if (value == null)
@@ -104,7 +105,9 @@ namespace Prexonite.Types
                             var utf8 = (Byte) curr;
                             if (utf32 > UInt16.MaxValue)
                                 //Use \U notation
+// ReSharper disable FormatStringProblem
                                 buffer.AppendFormat("\\U{0:00000000}", utf32.ToString("X"));
+
                             else if (utf32 > Byte.MaxValue)
                                 //Use \u notation
                                 buffer.AppendFormat("\\u{0:0000}", utf16.ToString("X"));
@@ -112,6 +115,7 @@ namespace Prexonite.Types
                                 //Use \x notation
                                 buffer.AppendFormat("\\x{0:00}", utf8.ToString("X"));
                             break;
+// ReSharper restore FormatStringProblem
                     }
             }
             return buffer.ToString();

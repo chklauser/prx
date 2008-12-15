@@ -22,11 +22,12 @@
  */
 
 using System;
+using System.Diagnostics;
 using NoDebug = System.Diagnostics.DebuggerNonUserCodeAttribute;
 
 namespace Prexonite.Compiler.Ast
 {
-    [NoDebug]
+    [DebuggerStepThrough]
     public abstract class AstNode
     {
         public string File;
@@ -35,7 +36,7 @@ namespace Prexonite.Compiler.Ast
 
         protected AstNode(string file, int line, int column)
         {
-            File = file != null ? file : "unknown~";
+            File = file ?? "unknown~";
             Line = line;
             Column = column;
         }

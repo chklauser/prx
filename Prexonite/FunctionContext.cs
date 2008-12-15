@@ -131,8 +131,10 @@ namespace Prexonite
 
             if (_implementation.Variables.Contains(argVId))
             {
-                var argsV = new PVariable();
-                argsV.Value = _parentEngine.CreateNativePValue(args);
+                var argsV = new PVariable
+                {
+                    Value = _parentEngine.CreateNativePValue(args)
+                };
                 _localVariables.Add(argVId, argsV);
             }
 
@@ -164,7 +166,7 @@ namespace Prexonite
 
         public override PValue ReturnValue
         {
-            [NoDebug]
+            [DebuggerStepThrough]
             get { return _returnValue ?? NullPType.CreateValue(); }
             //Returns PValue(null) instead of just null.
         }
@@ -173,7 +175,7 @@ namespace Prexonite
 
         public override Engine ParentEngine
         {
-            [NoDebug]
+            [DebuggerStepThrough]
             get { return _parentEngine; }
         }
 
@@ -181,7 +183,7 @@ namespace Prexonite
 
         public PFunction Implementation
         {
-            [NoDebug]
+            [DebuggerStepThrough]
             get { return _implementation; }
         }
 
@@ -209,7 +211,7 @@ namespace Prexonite
 
         public SymbolTable<PVariable> LocalVariables
         {
-            [NoDebug]
+            [DebuggerStepThrough]
             get { return _localVariables; }
         }
 
@@ -233,27 +235,27 @@ namespace Prexonite
 
         public int Pointer
         {
-            [NoDebug]
+            [DebuggerStepThrough]
             get { return _pointer; }
-            [NoDebug]
+            [DebuggerStepThrough]
             set { _pointer = value; }
         }
 
         private readonly Stack<PValue> _stack = new Stack<PValue>();
 
-        [NoDebug]
+        [DebuggerStepThrough]
         public void Push(PValue val)
         {
             _stack.Push(val ?? NullPType.CreateValue());
         }
 
-        [NoDebug]
+        [DebuggerStepThrough]
         public PValue Pop()
         {
             return _stack.Pop() ?? NullPType.CreateValue();
         }
 
-        [NoDebug]
+        [DebuggerStepThrough]
         public PValue Peek()
         {
             return _stack.Peek() ?? NullPType.CreateValue();
@@ -598,13 +600,13 @@ namespace Prexonite
                         var routine = Pop();
                         var routineobj = routine.Value;
                         var routinesa = routineobj as IStackAware;
-                        StackContext corctx;
                         if (routineobj == null)
                         {
                             Push(PType.Null.CreatePValue());
                         }
                         else
                         {
+                            StackContext corctx;
                             if (routinesa != null)
                                 corctx = routinesa.CreateStackContext(this, argv);
                             else
@@ -805,7 +807,6 @@ namespace Prexonite
                     case OpCode.check_arg:
                         t = (PType) Pop().Value;
                         check_type:
-                        ;
                         Push(Pop().Type.Equals(t));
                         break;
                     case OpCode.check_null:
@@ -826,7 +827,6 @@ namespace Prexonite
                     case OpCode.cast_arg:
                         t = (PType) Pop().Value;
                         cast_type:
-                        ;
                         Push(Pop().ConvertTo(this, t, true));
                         break;
 
@@ -893,13 +893,11 @@ namespace Prexonite
                         }
 
                         callByTypeGet:
-                        ;
                         right = t.StaticCall(this, argv, PCall.Get, methodId);
                         if (!justEffect)
                             Push(right);
                         break;
                         callByMemberGet:
-                        ;
                         right = ObjectPType._execute(this, member, argv, PCall.Get, methodId, null);
                         if (!justEffect)
                             Push(right);
@@ -939,11 +937,9 @@ namespace Prexonite
                         }
 
                         callByTypeSet:
-                        ;
                         t.StaticCall(this, argv, PCall.Set, methodId);
                         break;
                         callByMemberSet:
-                        ;
                         ObjectPType._execute(this, member, argv, PCall.Set, methodId, null);
                         break;
 
@@ -1015,7 +1011,9 @@ namespace Prexonite
                         left = Pop();
 
                         var stack = _parentEngine.Stack;
+// ReSharper disable AssignNullToNotNullAttribute
                         stack.Remove(stack.FindLast(this));
+// ReSharper restore AssignNullToNotNullAttribute
 
                         stack.AddLast(Call.CreateStackContext(this, left, argv));
                         return false;

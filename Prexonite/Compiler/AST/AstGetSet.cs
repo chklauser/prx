@@ -74,16 +74,16 @@ namespace Prexonite.Compiler.Ast
             expr = null;
 
             //Optimize arguments
-            foreach (IAstExpression arg in _arguments.ToArray())
+            foreach (var arg in _arguments.ToArray())
             {
                 if (arg == null)
                     throw new PrexoniteException(
                         "Invalid (null) argument in GetSet node (" + ToString() +
                         ") detected at position " + _arguments.IndexOf(arg) + ".");
-                IAstExpression oArg = GetOptimizedNode(target, arg);
+                var oArg = GetOptimizedNode(target, arg);
                 if (!ReferenceEquals(oArg, arg))
                 {
-                    int idx = _arguments.IndexOf(arg);
+                    var idx = _arguments.IndexOf(arg);
                     _arguments.Insert(idx, oArg);
                     _arguments.RemoveAt(idx + 1);
                 }
@@ -167,7 +167,7 @@ namespace Prexonite.Compiler.Ast
 
         protected string ArgumentsToString()
         {
-            StringBuilder buffer = new StringBuilder();
+            var buffer = new StringBuilder();
             buffer.Append("(");
             foreach (IAstExpression expr in Arguments)
                 if (expr != null)

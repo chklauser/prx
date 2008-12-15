@@ -98,7 +98,7 @@ namespace Prexonite.Compiler.Ast
 
         protected override void EmitSetCode(CompilerTarget target)
         {
-            bool justEffect = true;
+            const bool justEffect = true;
             switch (Interpretation)
             {
                 case SymbolInterpretations.Command:
@@ -149,18 +149,6 @@ namespace Prexonite.Compiler.Ast
             }
         }
 
-        #region ICanBeReferenced Members
-
-        ICollection<IAstExpression> ICanBeReferenced.Arguments
-        {
-            get
-            {
-                return Arguments;
-            }
-        }
-
-        #endregion
-
         public override AstGetSet GetCopy()
         {
             AstGetSet copy = new AstGetSetSymbol(File, Line, Column, Call, Id, Interpretation);
@@ -181,6 +169,13 @@ namespace Prexonite.Compiler.Ast
 
         #region ICanBeReferenced Members
 
+        ICollection<IAstExpression> ICanBeReferenced.Arguments
+        {
+            get
+            {
+                return Arguments;
+            }
+        }
 
         public virtual bool TryToReference(out AstGetSet result)
         {

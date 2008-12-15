@@ -105,10 +105,10 @@ namespace Prexonite.Compiler.Ast
             //Expressions contains at least two expressions
 
             _count++;
-            string endOfExpression_label = "coal\\n" + _count + "\\end";
-            for (int i = 0; i < Expressions.Count; i++)
+            var endOfExpression_label = "coal\\n" + _count + "\\end";
+            for (var i = 0; i < Expressions.Count; i++)
             {
-                IAstExpression expr = Expressions[i];
+                var expr = Expressions[i];
 
                 if (i > 0)
                 {
@@ -117,12 +117,11 @@ namespace Prexonite.Compiler.Ast
 
                 expr.EmitCode(target);
 
-                if (i + 1 < Expressions.Count)
-                {
-                    target.EmitDuplicate();
-                    target.Emit(OpCode.check_null);
-                    target.EmitJumpIfFalse(endOfExpression_label);
-                }
+                if (i + 1 >= Expressions.Count)
+                    continue;
+                target.EmitDuplicate();
+                target.Emit(OpCode.check_null);
+                target.EmitJumpIfFalse(endOfExpression_label);
             }
 
             target.EmitLabel(endOfExpression_label);

@@ -26,7 +26,7 @@ using System.Collections.Generic;
 using Prexonite.Compiler.Ast;
 using Prexonite.Types;
 using System.Globalization;
-using NoDebug = System.Diagnostics.DebuggerNonUserCodeAttribute;
+using System.Diagnostics;
 
 namespace Prexonite.Compiler
 {
@@ -38,37 +38,37 @@ namespace Prexonite.Compiler
 
         public Loader Loader
         {
-            [NoDebug]
+            [DebuggerStepThrough]
             get { return _loader; }
         }
 
         public Application TargetApplication
         {
-            [NoDebug]
+            [DebuggerStepThrough]
             get { return _loader.Options.TargetApplication; }
         }
 
         public LoaderOptions Options
         {
-            [NoDebug]
+            [DebuggerStepThrough]
             get { return _loader.Options; }
         }
 
         public Engine ParentEngine
         {
-            [NoDebug]
+            [DebuggerStepThrough]
             get { return _loader.Options.ParentEngine; }
         }
 
         public SymbolTable<SymbolEntry> Symbols
         {
-            [NoDebug]
+            [DebuggerStepThrough]
             get { return _loader.Symbols; }
         }
 
         public Loader.FunctionTargetsIterator FunctionTargets
         {
-            [NoDebug]
+            [DebuggerStepThrough]
             get { return _loader.FunctionTargets; }
         }
 
@@ -76,11 +76,11 @@ namespace Prexonite.Compiler
 
         public AstProxy Ast
         {
-            [NoDebug]
+            [DebuggerStepThrough]
             get { return _astProxy; }
         }
 
-        [NoDebug]
+        [DebuggerStepThrough]
         public class AstProxy
         {
             private readonly Parser outer;
@@ -101,7 +101,7 @@ namespace Prexonite.Compiler
             }
         }
 
-        [NoDebug]
+        [DebuggerStepThrough]
         internal Parser(IScanner scanner, Loader loader)
             : this(scanner)
         {
@@ -116,19 +116,10 @@ namespace Prexonite.Compiler
 
         #region String cache
 
-        private readonly Dictionary<int, string> _stringCache = new Dictionary<int, string>();
-
-        [NoDebug]
+        [DebuggerStepThrough]
         internal string cache(string toCache)
         {
-            int hash = toCache.GetHashCode();
-            if (_stringCache.ContainsKey(hash))
-                return _stringCache[hash];
-            else
-            {
-                _stringCache.Add(hash, toCache);
-                return toCache;
-            }
+            return _loader.CacheString(toCache);
         }
 
         #endregion
@@ -163,19 +154,19 @@ namespace Prexonite.Compiler
             }
         }
 
-        [NoDebug]
+        [DebuggerStepThrough]
         public void SemErr(int line, int col, string message)
         {
             errors.SemErr(line, col, message);
         }
 
-        [NoDebug]
+        [DebuggerStepThrough]
         public void SemErr(Token tok, string s)
         {
             errors.SemErr(tok.line, tok.col, s);
         }
 
-        [NoDebug]
+        [DebuggerStepThrough]
         public static bool InterpretationIsVariable(SymbolInterpretations interpretation)
         {
             return
@@ -183,7 +174,7 @@ namespace Prexonite.Compiler
                 InterpretationIsLocalVariable(interpretation);
         }
 
-        [NoDebug]
+        [DebuggerStepThrough]
         public static bool InterpretationIsLocalVariable(SymbolInterpretations interpretation)
         {
             return
@@ -191,7 +182,7 @@ namespace Prexonite.Compiler
                 interpretation == SymbolInterpretations.LocalObjectVariable;
         }
 
-        [NoDebug]
+        [DebuggerStepThrough]
         public static bool InterpretationIsGlobalVariable(SymbolInterpretations interpretation)
         {
             return
@@ -199,7 +190,7 @@ namespace Prexonite.Compiler
                 interpretation == SymbolInterpretations.GlobalObjectVariable;
         }
 
-        [NoDebug]
+        [DebuggerStepThrough]
         public static bool InterpretationIsObjectVariable(SymbolInterpretations interpretation)
         {
             return
@@ -207,7 +198,7 @@ namespace Prexonite.Compiler
                 interpretation == SymbolInterpretations.GlobalObjectVariable;
         }
 
-        [NoDebug]
+        [DebuggerStepThrough]
         public static SymbolInterpretations InterpretAsObjectVariable(
             SymbolInterpretations interpretation)
         {
@@ -221,7 +212,7 @@ namespace Prexonite.Compiler
 
         private void _pushLexerState(int state)
         {
-            Lexer lex = scanner as Lexer;
+            var lex = scanner as Lexer;
             if (lex == null)
                 throw new PrexoniteException("The prexonite grammar requires a *Lex-scanner.");
             lex.PushState(state);
@@ -229,7 +220,7 @@ namespace Prexonite.Compiler
 
         private void _popLexerState()
         {
-            Lexer lex = scanner as Lexer;
+            var lex = scanner as Lexer;
             if (lex == null)
                 throw new PrexoniteException("The prexonite grammar requires a *Lex-scanner.");
             lex.PopState();
@@ -240,7 +231,7 @@ namespace Prexonite.Compiler
 
         private void _inject(Token c)
         {
-            Lexer lex = scanner as Lexer;
+            var lex = scanner as Lexer;
             if (lex == null)
                 throw new PrexoniteException("The prexonite grammar requires a *Lex-scanner.");
 
@@ -254,9 +245,11 @@ namespace Prexonite.Compiler
         {
             if (val == null)
                 throw new ArgumentNullException("val");
-            Token c = new Token();
-            c.kind = kind;
-            c.val = val;
+            var c = new Token
+            {
+                kind = kind, 
+                val = val
+            };
             _inject(c);
         }
 
@@ -271,7 +264,7 @@ namespace Prexonite.Compiler
 
         public CompilerTarget target;
 
-        [NoDebug]
+        [DebuggerStepThrough]
         public bool isLabel() //LL(2)
         {
             scanner.ResetPeek();
@@ -281,7 +274,7 @@ namespace Prexonite.Compiler
             return c.kind == _lid || (isId(c) && cla.kind == _colon);
         }
 
-        [NoDebug]
+        [DebuggerStepThrough]
         public bool isVariableDeclaration() //LL(4)
         {
             /* Applies to:
@@ -295,24 +288,18 @@ namespace Prexonite.Compiler
             //current la = static | var | ref
             if (la.kind != _static && la.kind != _var && la.kind != _ref)
                 return false;
-            Token c;
-            Token interpretation;
-            c = scanner.Peek();
+            var c = scanner.Peek();
             if (c.kind == _semicolon || c.kind == _comma) //id expected
                 return false;
 
-            interpretation = c;
+            var interpretation = c;
 
             c = scanner.Peek();
             if (c.kind == _semicolon || c.kind == _comma) //no interpretation
                 return true;
 
             c = scanner.Peek();
-            if (interpretation.kind == _ref && (c.kind == _semicolon || c.kind == _comma))
-                //is "static ref"
-                return true;
-
-            return false; //something else, a GetSetComplex maybe?
+            return interpretation.kind == _ref && (c.kind == _semicolon || c.kind == _comma);
         }
 
         public bool isAssignmentOperator() //LL2
@@ -356,7 +343,7 @@ namespace Prexonite.Compiler
             }
         }
 
-        [NoDebug]
+        [DebuggerStepThrough]
         public bool isDeDereference() //LL(2)
         {
             scanner.ResetPeek();
@@ -367,12 +354,12 @@ namespace Prexonite.Compiler
         }
 
         //id is object or reference variable
-        [NoDebug]
+        [DebuggerStepThrough]
         public bool isLikeVariable(string id) //context
         {
             if (!target.Symbols.ContainsKey(id))
                 return false;
-            SymbolInterpretations kind = target.Symbols[id].Interpretation;
+            var kind = target.Symbols[id].Interpretation;
             return
                 kind == SymbolInterpretations.LocalObjectVariable ||
                 kind == SymbolInterpretations.GlobalObjectVariable ||
@@ -381,30 +368,41 @@ namespace Prexonite.Compiler
         }
 
         //id is like a function
-        [NoDebug]
-        public bool isLikeFunction(string id) //Context
+        [DebuggerStepThrough]
+        public bool isLikeFunction() //Context
         {
-            if (!target.Symbols.ContainsKey(id))
-                return false;
-            return isLikeFunction(target.Symbols[id].Interpretation);
+            var id = la.val;
+            return 
+                la.kind == _id &&
+                target.Symbols.ContainsKey(id) && 
+                isLikeFunction(target.Symbols[id].Interpretation);
         } //context
+
         //interpretation is like function
-        [NoDebug]
-        public bool isLikeFunction(SymbolInterpretations kind) //Context
+        [DebuggerStepThrough]
+        private static bool isLikeFunction(SymbolInterpretations interpretation) //Context
         {
             return
-                kind == SymbolInterpretations.Function ||
-                kind == SymbolInterpretations.Command ||
-                kind == SymbolInterpretations.LocalReferenceVariable ||
-                kind == SymbolInterpretations.GlobalReferenceVariable;
+                interpretation == SymbolInterpretations.Function ||
+                interpretation == SymbolInterpretations.Command ||
+                interpretation == SymbolInterpretations.LocalReferenceVariable ||
+                interpretation == SymbolInterpretations.GlobalReferenceVariable;
         } //context
-        [NoDebug]
+
+        [DebuggerStepThrough]
+        public bool isUnknownId()
+        {
+            var id = la.val;
+            return la.kind == _id && !target.Symbols.ContainsKey(id);
+        }
+
+        [DebuggerStepThrough]
         public string getTypeName(string typeId, bool staticPrefix)
         {
             if (staticPrefix) //already marked as CLR call
                 return ObjectPType.Literal + "(\"" + StringPType.Escape(typeId) + "\")";
             else
-                foreach (string importedNamespace in target.Function.ImportedNamespaces)
+                foreach (var importedNamespace in target.Function.ImportedNamespaces)
                     if (typeId.StartsWith(importedNamespace, StringComparison.OrdinalIgnoreCase))
                         return ObjectPType.Literal + "(\"" + StringPType.Escape(typeId) + "\")";
             return typeId;
@@ -416,72 +414,72 @@ namespace Prexonite.Compiler
             return scanner.Peek().kind == _lbrace;
         }
 
-        //[NoDebug]
+        //[DebuggerStepThrough]
         private bool isLambdaExpression() //LL(*)
         {
             scanner.ResetPeek();
 
-            Token c = la;
-            if (!(c.kind == _lpar || isId(c)))
+            var current = la;
+            if (!(current.kind == _lpar || isId(current)))
                 return false;
-            Token cla = scanner.Peek();
+            var next = scanner.Peek();
 
-            bool requirePar = false;
-            if (c.kind == _lpar)
+            var requirePar = false;
+            if (current.kind == _lpar)
             {
                 requirePar = true;
-                c = cla;
-                cla = scanner.Peek();
+                current = next;
+                next = scanner.Peek();
 
                 //Check for lambda expression without arguments
-                if (c.kind == _rpar && cla.kind == _implementation)
+                if (current.kind == _rpar && next.kind == _implementation)
                     return true;
             }
 
-            if (isId(c))
+            if (isId(current))
             {
                 //break if lookahead is not valid to save tokens
                 if (
-                    !(cla.kind == _comma || cla.kind == _implementation ||
-                      (cla.kind == _rpar && requirePar)))
+                    !(next.kind == _comma || next.kind == _implementation ||
+                      (next.kind == _rpar && requirePar)))
                     return false;
                 //Consume 1
-                c = cla;
-                cla = scanner.Peek();
+                current = next;
+                next = scanner.Peek();
             }
-            else if ((c.kind == _var || c.kind == _ref) && isId(cla))
+            else if ((current.kind == _var || current.kind == _ref) && isId(next))
             {
                 //Consume 2
-                c = scanner.Peek();
+                current = scanner.Peek();
                 //break if lookahead is not valid to save tokens
                 if (
-                    !(c.kind == _comma || c.kind == _implementation ||
-                      (c.kind == _rpar && requirePar)))
+                    !(current.kind == _comma || current.kind == _implementation ||
+                      (current.kind == _rpar && requirePar)))
                     return false;
-                cla = scanner.Peek();
+                next = scanner.Peek();
             }
             else
             {
                 return false;
             }
 
-            while (c.kind == _comma && requirePar)
+            while (current.kind == _comma && requirePar)
             {
                 //Consume comma
-                c = cla;
-                cla = scanner.Peek();
+                current = next;
+                next = scanner.Peek();
 
-                if (isId(c))
+                if (isId(current))
                 {
                     //Consume 1
-                    c = cla;
-                    cla = scanner.Peek();
+                    current = next;
+                    next = scanner.Peek();
                 }
-                else if ((c.kind == _var || c.kind == _ref) && isId(cla))
+                else if ((current.kind == _var || current.kind == _ref) && isId(next))
                 {
                     //Consume 2
-                    c = scanner.Peek();
-                    cla = scanner.Peek();
+                    current = scanner.Peek();
+                    next = scanner.Peek();
                 }
                 else
                 {
@@ -490,9 +488,9 @@ namespace Prexonite.Compiler
             }
 
             if (requirePar)
-                if (c.kind == _rpar)
+                if (current.kind == _rpar)
                 {
-                    c = cla;
+                    current = next;
                     //cla = scanner.Peek();
                 }
                 else
@@ -500,20 +498,20 @@ namespace Prexonite.Compiler
                     return false;
                 }
 
-            return c.kind == _implementation;
+            return current.kind == _implementation;
         } //LL(*)
 
-        [NoDebug]
+        [DebuggerStepThrough]
         private bool isIndirectCall() //LL(2)
         {
             scanner.ResetPeek();
-            Token c = la;
-            Token cla = scanner.Peek();
+            var c = la;
+            var cla = scanner.Peek();
 
             return c.kind == _dot && cla.kind == _lpar;
         }
 
-        [NoDebug]
+        [DebuggerStepThrough]
         private bool isOuterVariable(string id) //context
         {
             for (CompilerTarget parent = target.ParentTarget;
@@ -582,13 +580,13 @@ namespace Prexonite.Compiler
         }
 */
 
-        [NoDebug]
+        [DebuggerStepThrough]
         private bool isQualification()
         {
             return la.kind == _doublecolon || isNs();
         }
 
-        [NoDebug]
+        [DebuggerStepThrough]
         private bool isNs()
         {
             scanner.ResetPeek();
@@ -598,7 +596,7 @@ namespace Prexonite.Compiler
             return isId(d) && dla.kind == _doublecolon;
         }
 
-        [NoDebug]
+        [DebuggerStepThrough]
         private static bool isId(Token c)
         {
             if (isGlobalId(c))
@@ -615,7 +613,7 @@ namespace Prexonite.Compiler
             }
         }
 
-        [NoDebug]
+        [DebuggerStepThrough]
         private static bool isGlobalId(Token c)
         {
             return c.kind == _id || c.kind == _anyId;
@@ -625,19 +623,19 @@ namespace Prexonite.Compiler
 
         #region Assembler
 
-        [NoDebug]
+        [DebuggerStepThrough]
         public void addInstruction(AstBlock block, Instruction ins)
         {
             block.Add(new AstAsmInstruction(this, ins));
         }
 
-        [NoDebug]
+        [DebuggerStepThrough]
         public void addLabel(AstBlock block, string label)
         {
             block.Statements.Add(new AstExplicitLabel(this, label));
         }
 
-        [NoDebug]
+        [DebuggerStepThrough]
         private bool isAsmInstruction(string insBase, string detail) //LL(4)
         {
             scanner.ResetPeek();
@@ -660,43 +658,43 @@ namespace Prexonite.Compiler
                 );
         }
 
-        [NoDebug]
+        [DebuggerStepThrough]
         private bool isInIntegerGroup()
         {
             return peekIsOneOf(asmIntegerGroup);
         }
 
-        [NoDebug]
+        [DebuggerStepThrough]
         private bool isInJumpGroup()
         {
             return peekIsOneOf(asmJumpGroup);
         }
 
-        [NoDebug]
+        [DebuggerStepThrough]
         private bool isInNullGroup()
         {
             return peekIsOneOf(asmNullGroup);
         }
 
-        [NoDebug]
+        [DebuggerStepThrough]
         private bool isInIdGroup()
         {
             return peekIsOneOf(asmIdGroup);
         }
 
-        [NoDebug]
+        [DebuggerStepThrough]
         private bool isInIdArgGroup()
         {
             return peekIsOneOf(asmIdArgGroup);
         }
 
-        [NoDebug]
+        [DebuggerStepThrough]
         private bool isInArgGroup()
         {
             return peekIsOneOf(asmArgGroup);
         }
 
-        [NoDebug]
+        [DebuggerStepThrough]
         private bool isInQualidArgGroup()
         {
             return peekIsOneOf(asmQualidArgGroup);
@@ -717,12 +715,12 @@ namespace Prexonite.Compiler
 
         private readonly SymbolTable<OpCode> _tableOfInstructionNames = new SymbolTable<OpCode>(60);
 
-        [NoDebug]
+        [DebuggerStepThrough]
         private void _createTableOfInstructions()
         {
-            SymbolTable<OpCode> tab = _tableOfInstructionNames;
+            var tab = _tableOfInstructionNames;
             //Add original names
-            foreach (string code in Enum.GetNames(typeof(OpCode)))
+            foreach (var code in Enum.GetNames(typeof(OpCode)))
                 tab.Add(code.Replace('_','.'), (OpCode) Enum.Parse(typeof(OpCode), code));
 
             //Add aliases -- NOTE: You'll also have to add them to the respective groups
@@ -747,7 +745,7 @@ namespace Prexonite.Compiler
             tab.Add("ldnull",OpCode.ldc_null);
         }
 
-        //[NoDebug]
+        //[DebuggerStepThrough]
         private OpCode getOpCode(string insBase, string detail)
         {
             string combined = insBase + (detail == null ? "" : "." + detail);

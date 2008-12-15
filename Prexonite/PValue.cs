@@ -23,6 +23,7 @@
 
 using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using Prexonite.Types;
 using NoDebug = System.Diagnostics.DebuggerNonUserCodeAttribute;
 
@@ -85,7 +86,7 @@ namespace Prexonite
         /// </summary>
         /// <param name="value">The object to encapsulated in a PValue.</param>
         /// <param name="type">The type of the value inside the Prexonite VM.</param>
-        [NoDebug]
+        [DebuggerStepThrough]
         public PValue(object value, PType type)
         {
             if (value == null)
@@ -103,7 +104,7 @@ namespace Prexonite
         /// <value>An object reference. <see cref="Value"/> is only null, if <see cref="Type"/> returns a <see cref="NullPType"/> object.</value>
         public object Value
         {
-            [NoDebug]
+            [DebuggerStepThrough]
             get { return _value; }
         }
 
@@ -113,7 +114,7 @@ namespace Prexonite
         /// <value>An instance of <see cref="PType"/>.</value>
         public PType Type
         {
-            [NoDebug]
+            [DebuggerStepThrough]
             get { return _type; }
         }
 
@@ -131,7 +132,7 @@ namespace Prexonite
         /// The string can be empty if you want to call the default member (C# only supports default indexers).</param>
         /// <returns>The value returned by the dynamic (instance) call. In case the call does not have a return value, a PValue containing null is returned.</returns>
         /// <exception cref="InvalidCallException">Thrown if the call is not successful.</exception>
-        [NoDebug]
+        [DebuggerStepThrough]
         public PValue DynamicCall(StackContext sctx, PValue[] args, PCall call, string id)
         {
             return _type.DynamicCall(sctx, this, args, call, id);
@@ -148,7 +149,7 @@ namespace Prexonite
         /// <param name="result">Contains the value returned by the dynamic (instance) call. In case the call does not have a return value, a PValue containing null is returned.</param>
         /// <returns>True if the call was successful, false otherwise.</returns>
         /// <remarks>Note that the value of <paramref name="result" /> is undefined (and therefor not to be used) if the method call returned false.</remarks>
-        [NoDebug]
+        [DebuggerStepThrough]
         public bool TryDynamicCall(
             StackContext sctx, PValue[] args, PCall call, string id, out PValue result)
         {
@@ -163,7 +164,7 @@ namespace Prexonite
         /// <param name="useExplicit">A boolean that indicates whether explicit conversion operators should be used or not</param>
         /// <returns>Contains the value returned by the conversion.</returns>
         /// <exception cref="InvalidConversionException">Thrown if the conversion is not successful.</exception>
-        [NoDebug]
+        [DebuggerStepThrough]
         public PValue ConvertTo(StackContext sctx, PType target, bool useExplicit)
         {
             return _type.ConvertTo(sctx, this, target, useExplicit);
@@ -177,7 +178,7 @@ namespace Prexonite
         /// <param name="target">The type you would like to convert the value to.</param>
         /// <returns>Contains the value returned by the conversion.</returns>
         /// <exception cref="InvalidConversionException">Thrown if the conversion is not successful.</exception>
-        [NoDebug]
+        [DebuggerStepThrough]
         public PValue ConvertTo(StackContext sctx, PType target)
         {
             return ConvertTo(sctx, target, false);
@@ -191,7 +192,7 @@ namespace Prexonite
         /// <param name="useExplicit">A boolean that indicates whether explicit conversion operators should be used or not</param>
         /// <returns>Contains the value returned by the conversion.</returns>
         /// <exception cref="InvalidConversionException">Thrown if the conversion is not successful.</exception>
-        [NoDebug]
+        [DebuggerStepThrough]
         public PValue ConvertTo(StackContext sctx, Type clrTarget, bool useExplicit)
         {
             return _type.ConvertTo(sctx, this, clrTarget, useExplicit);
@@ -205,7 +206,7 @@ namespace Prexonite
         /// <param name="clrTarget">The <see cref="System.Type"/> you would like to convert the value to.</param>
         /// <returns>Contains the value returned by the conversion.</returns>
         /// <exception cref="InvalidConversionException">Thrown if the conversion is not successful.</exception>
-        [NoDebug]
+        [DebuggerStepThrough]
         public PValue ConvertTo(StackContext sctx, Type clrTarget)
         {
             return ConvertTo(sctx, clrTarget, false);
@@ -219,7 +220,7 @@ namespace Prexonite
         /// <typeparam name="T">The type to convert the PValue into.</typeparam>
         /// <returns>Contains the value returned by the conversion.</returns>
         /// <exception cref="InvalidConversionException">Thrown if the conversion is not successful.</exception>
-        [NoDebug]
+        [DebuggerStepThrough]
         public T ConvertTo<T>(StackContext sctx, bool useExplicit)
         {
             return (T) _type.ConvertTo(sctx, this, typeof(T), useExplicit).Value; 
@@ -232,7 +233,7 @@ namespace Prexonite
         /// <typeparam name="T">The type to convert the PValue into.</typeparam>
         /// <returns>Contains the value returned by the conversion.</returns>
         /// <exception cref="InvalidConversionException">Thrown if the conversion is not successful.</exception>
-        [NoDebug]
+        [DebuggerStepThrough]
         public T ConvertTo<T>(StackContext sctx)
         {
             return ConvertTo<T>(sctx, false);
@@ -247,7 +248,7 @@ namespace Prexonite
         /// <param name="result">Contains the value returned by the conversion.</param>
         /// <returns>True if the conversion was successful, false otherwise.</returns>
         /// <remarks>Note that the value of <paramref name="result" /> is undefined (and therefor not to be used) if the method call returned false.</remarks>
-        [NoDebug]
+        [DebuggerStepThrough]
         public bool TryConvertTo<T>(StackContext sctx, bool useExplicit, out T result)
         {
             result = default(T);
@@ -267,7 +268,7 @@ namespace Prexonite
         /// <param name="result">Contains the value returned by the conversion.</param>
         /// <returns>True if the conversion was successful, false otherwise.</returns>
         /// <remarks>Note that the value of <paramref name="result" /> is undefined (and therefor not to be used) if the method call returned false.</remarks>
-        [NoDebug]
+        [DebuggerStepThrough]
         public bool TryConvertTo<T>(StackContext sctx, out T result)
         {
             return TryConvertTo(sctx, false, out result);
@@ -282,7 +283,7 @@ namespace Prexonite
         /// <param name="result">Contains the value returned by the conversion.</param>
         /// <returns>True if the conversion was successful, false otherwise.</returns>
         /// <remarks>Note that the value of <paramref name="result" /> is undefined (and therefor not to be used) if the method call returned false.</remarks>
-        [NoDebug]
+        [DebuggerStepThrough]
         public bool TryConvertTo(
             StackContext sctx, PType target, bool useExplicit, out PValue result)
         {
@@ -298,7 +299,7 @@ namespace Prexonite
         /// <param name="result">Contains the value returned by the conversion.</param>
         /// <returns>True if the conversion was successful, false otherwise.</returns>
         /// <remarks>Note that the value of <paramref name="result" /> is undefined (and therefor not to be used) if the method call returned false.</remarks>
-        [NoDebug]
+        [DebuggerStepThrough]
         public bool TryConvertTo(StackContext sctx, PType target, out PValue result)
         {
             return TryConvertTo(sctx, target, false, out result);
@@ -313,7 +314,7 @@ namespace Prexonite
         /// <param name="result">Contains the value returned by the conversion.</param>
         /// <returns>True if the conversion was successful, false otherwise.</returns>
         /// <remarks>Note that the value of <paramref name="result" /> is undefined (and therefor not to be used) if the method call returned false.</remarks>
-        [NoDebug]
+        [DebuggerStepThrough]
         public bool TryConvertTo(
             StackContext sctx, Type clrTarget, bool useExplicit, out PValue result)
         {
@@ -329,7 +330,7 @@ namespace Prexonite
         /// <param name="result">Contains the value returned by the conversion.</param>
         /// <returns>True if the conversion was successful, false otherwise.</returns>
         /// <remarks>Note that the value of <paramref name="result" /> is undefined (and therefor not to be used) if the method call returned false.</remarks>
-        [NoDebug]
+        [DebuggerStepThrough]
         public bool TryConvertTo(StackContext sctx, Type clrTarget, out PValue result)
         {
             return TryConvertTo(sctx, clrTarget, false, out result);
@@ -343,7 +344,7 @@ namespace Prexonite
         /// <param name="result">Contains the value returned by the indirect call. In case the call does not have a return value, a PValue containing null is returned.</param>
         /// <returns>True if the call was successful, false otherwise.</returns>
         /// <remarks>Note that the value of <paramref name="result" /> is undefined (and therefor not to be used) if the method call returned false.</remarks>
-        [NoDebug]
+        [DebuggerStepThrough]
         public bool TryIndirectCall(StackContext sctx, PValue[] args, out PValue result)
         {
             return _type.IndirectCall(sctx, this, args, out result);
@@ -356,7 +357,7 @@ namespace Prexonite
         /// <param name="args">An array of arguments to be passed in the call.</param>
         /// <returns>Contains the value returned by the indirect call. In case the call does not have a return value, a PValue containing null is returned.</returns>
         /// <exception cref="InvalidCallException">Thrown if the call is not successful.</exception>
-        [NoDebug]
+        [DebuggerStepThrough]
         public PValue IndirectCall(StackContext sctx, PValue[] args)
         {
             return _type.IndirectCall(sctx, this, args);
@@ -376,7 +377,7 @@ namespace Prexonite
         /// <returns>True if the unary negation was successful; false otherwise.</returns>
         /// <remarks>Note that the value of <paramref name="result" /> is undefined (and therefor not to be used) if the method call returned false.</remarks>
         /// <exception cref="ArgumentNullException">If <paramref name="sctx"/> is null.</exception>
-        [NoDebug]
+        [DebuggerStepThrough]
         public bool UnaryNegation(StackContext sctx, out PValue result)
         {
             if (sctx == null)
@@ -392,7 +393,7 @@ namespace Prexonite
         /// <returns>True if the logical not operation was successful; false otherwise.</returns>
         /// <remarks>Note that the value of <paramref name="result" /> is undefined (and therefor not to be used) if the method call returned false.</remarks>
         /// <exception cref="ArgumentNullException">If <paramref name="sctx"/> is null.</exception>
-        [NoDebug]
+        [DebuggerStepThrough]
         public bool LogicalNot(StackContext sctx, out PValue result)
         {
             if (sctx == null)
@@ -408,7 +409,7 @@ namespace Prexonite
         /// <returns>True if taking the values complement was successful; false otherwise.</returns>
         /// <remarks>Note that the value of <paramref name="result" /> is undefined (and therefor not to be used) if the method call returned false.</remarks>
         /// <exception cref="ArgumentNullException">If <paramref name="sctx"/> is null.</exception>
-        [NoDebug]
+        [DebuggerStepThrough]
         public bool OnesComplement(StackContext sctx, out PValue result)
         {
             if (sctx == null)
@@ -424,7 +425,7 @@ namespace Prexonite
         /// <returns>True if incrementing the value was successful; false otherwise.</returns>
         /// <remarks>Note that the value of <paramref name="result" /> is undefined (and therefor not to be used) if the method call returned false.</remarks>
         /// <exception cref="ArgumentNullException">If <paramref name="sctx"/> is null.</exception>
-        [NoDebug]
+        [DebuggerStepThrough]
         public bool Increment(StackContext sctx, out PValue result)
         {
             if (sctx == null)
@@ -440,7 +441,7 @@ namespace Prexonite
         /// <returns>True if decrementing the value was successful; false otherwise.</returns>
         /// <remarks>Note that the value of <paramref name="result" /> is undefined (and therefor not to be used) if the method call returned false.</remarks>
         /// <exception cref="ArgumentNullException">If <paramref name="sctx"/> is null.</exception>
-        [NoDebug]
+        [DebuggerStepThrough]
         public bool Decrement(StackContext sctx, out PValue result)
         {
             if (sctx == null)
@@ -461,7 +462,7 @@ namespace Prexonite
         /// <returns>True if the addition was successful; false otherwise.</returns>
         /// <remarks>Note that the value of <paramref name="result" /> is undefined (and therefor not to be used) if the method call returned false.</remarks>
         /// <exception cref="ArgumentNullException">If either <paramref name="sctx"/> or <paramref name="rightOperand"/> are null.</exception>
-        [NoDebug]
+        [DebuggerStepThrough]
         public bool Addition(StackContext sctx, PValue rightOperand, out PValue result)
         {
             if (sctx == null)
@@ -483,7 +484,7 @@ namespace Prexonite
         /// <returns>True if the subtraction was successful; false otherwise.</returns>
         /// <remarks>Note that the value of <paramref name="result" /> is undefined (and therefor not to be used) if the method call returned false.</remarks>
         /// <exception cref="ArgumentNullException">If either <paramref name="sctx"/> or <paramref name="rightOperand"/> are null.</exception>
-        [NoDebug]
+        [DebuggerStepThrough]
         public bool Subtraction(StackContext sctx, PValue rightOperand, out PValue result)
         {
             if (sctx == null)
@@ -505,7 +506,7 @@ namespace Prexonite
         /// <returns>True if the multiplication was successful; false otherwise.</returns>
         /// <remarks>Note that the value of <paramref name="result" /> is undefined (and therefor not to be used) if the method call returned false.</remarks>
         /// <exception cref="ArgumentNullException">If either <paramref name="sctx"/> or <paramref name="rightOperand"/> are null.</exception>
-        [NoDebug]
+        [DebuggerStepThrough]
         public bool Multiply(StackContext sctx, PValue rightOperand, out PValue result)
         {
             if (sctx == null)
@@ -527,7 +528,7 @@ namespace Prexonite
         /// <returns>True if the division was successful; false otherwise.</returns>
         /// <remarks>Note that the value of <paramref name="result" /> is undefined (and therefor not to be used) if the method call returned false.</remarks>
         /// <exception cref="ArgumentNullException">If either <paramref name="sctx"/> or <paramref name="rightOperand"/> are null.</exception>
-        [NoDebug]
+        [DebuggerStepThrough]
         public bool Division(StackContext sctx, PValue rightOperand, out PValue result)
         {
             if (sctx == null)
@@ -549,7 +550,7 @@ namespace Prexonite
         /// <returns>True if the modulus division was successful; false otherwise.</returns>
         /// <remarks>Note that the value of <paramref name="result" /> is undefined (and therefor not to be used) if the method call returned false.</remarks>
         /// <exception cref="ArgumentNullException">If either <paramref name="sctx"/> or <paramref name="rightOperand"/> are null.</exception>
-        [NoDebug]
+        [DebuggerStepThrough]
         public bool Modulus(StackContext sctx, PValue rightOperand, out PValue result)
         {
             if (sctx == null)
@@ -571,7 +572,7 @@ namespace Prexonite
         /// <returns>True if the bitwise AND operation was successful; false otherwise.</returns>
         /// <remarks>Note that the value of <paramref name="result" /> is undefined (and therefor not to be used) if the method call returned false.</remarks>
         /// <exception cref="ArgumentNullException">If either <paramref name="sctx"/> or <paramref name="rightOperand"/> are null.</exception>
-        [NoDebug]
+        [DebuggerStepThrough]
         public bool BitwiseAnd(StackContext sctx, PValue rightOperand, out PValue result)
         {
             if (sctx == null)
@@ -593,7 +594,7 @@ namespace Prexonite
         /// <returns>True if the bitwise OR operation was successful; false otherwise.</returns>
         /// <remarks>Note that the value of <paramref name="result" /> is undefined (and therefor not to be used) if the method call returned false.</remarks>
         /// <exception cref="ArgumentNullException">If either <paramref name="sctx"/> or <paramref name="rightOperand"/> are null.</exception>
-        [NoDebug]
+        [DebuggerStepThrough]
         public bool BitwiseOr(StackContext sctx, PValue rightOperand, out PValue result)
         {
             if (sctx == null)
@@ -615,7 +616,7 @@ namespace Prexonite
         /// <returns>True if the bitwise XOR operation was successful; false otherwise.</returns>
         /// <remarks>Note that the value of <paramref name="result" /> is undefined (and therefor not to be used) if the method call returned false.</remarks>
         /// <exception cref="ArgumentNullException">If either <paramref name="sctx"/> or <paramref name="rightOperand"/> are null.</exception>
-        [NoDebug]
+        [DebuggerStepThrough]
         public bool ExclusiveOr(StackContext sctx, PValue rightOperand, out PValue result)
         {
             if (sctx == null)
@@ -637,7 +638,7 @@ namespace Prexonite
         /// <returns>True if the equality test was successful; false otherwise.</returns>
         /// <remarks>Note that the value of <paramref name="result" /> is undefined (and therefor not to be used) if the method call returned false.</remarks>
         /// <exception cref="ArgumentNullException">If either <paramref name="sctx"/> or <paramref name="rightOperand"/> are null.</exception>
-        [NoDebug]
+        [DebuggerStepThrough]
         public bool Equality(StackContext sctx, PValue rightOperand, out PValue result)
         {
             if (sctx == null)
@@ -659,7 +660,7 @@ namespace Prexonite
         /// <returns>True if the inequality test was successful; false otherwise.</returns>
         /// <remarks>Note that the value of <paramref name="result" /> is undefined (and therefor not to be used) if the method call returned false.</remarks>
         /// <exception cref="ArgumentNullException">If either <paramref name="sctx"/> or <paramref name="rightOperand"/> are null.</exception>
-        [NoDebug]
+        [DebuggerStepThrough]
         public bool Inequality(StackContext sctx, PValue rightOperand, out PValue result)
         {
             if (sctx == null)
@@ -681,7 +682,7 @@ namespace Prexonite
         /// <returns>True if the greater than-test was successful; false otherwise.</returns>
         /// <remarks>Note that the value of <paramref name="result" /> is undefined (and therefor not to be used) if the method call returned false.</remarks>
         /// <exception cref="ArgumentNullException">If either <paramref name="sctx"/> or <paramref name="rightOperand"/> are null.</exception>
-        [NoDebug]
+        [DebuggerStepThrough]
         public bool GreaterThan(StackContext sctx, PValue rightOperand, out PValue result)
         {
             if (sctx == null)
@@ -703,7 +704,7 @@ namespace Prexonite
         /// <returns>True if the greater than or equal-test was successful; false otherwise.</returns>
         /// <remarks>Note that the value of <paramref name="result" /> is undefined (and therefor not to be used) if the method call returned false.</remarks>
         /// <exception cref="ArgumentNullException">If either <paramref name="sctx"/> or <paramref name="rightOperand"/> are null.</exception>
-        [NoDebug]
+        [DebuggerStepThrough]
         public bool GreaterThanOrEqual(StackContext sctx, PValue rightOperand, out PValue result)
         {
             if (sctx == null)
@@ -725,7 +726,7 @@ namespace Prexonite
         /// <returns>True if the less than-test was successful; false otherwise.</returns>
         /// <remarks>Note that the value of <paramref name="result" /> is undefined (and therefor not to be used) if the method call returned false.</remarks>
         /// <exception cref="ArgumentNullException">If either <paramref name="sctx"/> or <paramref name="rightOperand"/> are null.</exception>
-        [NoDebug]
+        [DebuggerStepThrough]
         public bool LessThan(StackContext sctx, PValue rightOperand, out PValue result)
         {
             if (sctx == null)
@@ -747,7 +748,7 @@ namespace Prexonite
         /// <returns>True if the less than or equal-test was successful; false otherwise.</returns>
         /// <remarks>Note that the value of <paramref name="result" /> is undefined (and therefor not to be used) if the method call returned false.</remarks>
         /// <exception cref="ArgumentNullException">If either <paramref name="sctx"/> or <paramref name="rightOperand"/> are null.</exception>
-        [NoDebug]
+        [DebuggerStepThrough]
         public bool LessThanOrEqual(StackContext sctx, PValue rightOperand, out PValue result)
         {
             if (sctx == null)
@@ -1202,19 +1203,12 @@ namespace Prexonite
 
         #region Interaction
 
-        private bool isTypeLocked;
-
         /// <summary>
         /// Allows you to prevent the Prexonite VM from performing type conversions on the PValue object.
         /// </summary>
         /// <value>A boolean value that indicates whether the type lock is in action or not.</value>
-        public bool IsTypeLocked
-        {
-            [NoDebug]
-            get { return isTypeLocked; }
-            [NoDebug]
-            set { isTypeLocked = value; }
-        }
+        public bool IsTypeLocked 
+            { get; set; }
 
         /// <summary>
         /// Indicates whether the PValue object contains a null reference or not.
@@ -1222,7 +1216,7 @@ namespace Prexonite
         /// <value>True if <see cref="Value"/> is null; false otherwise.</value>
         public bool IsNull
         {
-            [NoDebug]
+            [DebuggerStepThrough]
             get { return _value == null; }
         }
 
@@ -1232,7 +1226,7 @@ namespace Prexonite
         /// <value>The <see cref="System.Type"/> of the value encapsulated in PValue or null if that value is null.</value>
         public Type ClrType
         {
-            [NoDebug]
+            [DebuggerStepThrough]
             get { return _value != null ? _value.GetType() : null; }
         }
 
@@ -1243,7 +1237,7 @@ namespace Prexonite
         /// <returns>A new PValue object with the same <see cref="Value"/> as the current instance but with the supplied <paramref name="type"/> as it's <see cref="PType"/>.</returns>
         /// <remarks>If <see cref="Value"/> is null, the PType of the returned PValue will bee <see cref="PType.Null"/>.
         /// Also note that not all <see cref="PType"/> constructors support other CLR types than their natural representation.</remarks>
-        [NoDebug]
+        [DebuggerStepThrough]
         public PValue ReinterpretAs(PType type)
         {
             return type.CreatePValue(_value);
@@ -1254,7 +1248,7 @@ namespace Prexonite
         /// </summary>
         /// <returns>A new PValue object with the same value but with it's natural CLR type instead (<c><see cref="ObjectPType"/>[<see cref="Value"/>.GetType()]</c>).</returns>
         /// <remarks>If <see cref="Value"/> is null, the PType of the returned PValue will bee <see cref="PType.Null"/>.</remarks>
-        [NoDebug]
+        [DebuggerStepThrough]
         public PValue ToObject()
         {
             return PType.Object.CreatePValue(_value);
@@ -1265,7 +1259,7 @@ namespace Prexonite
         /// </summary>
         /// <returns>A string that represents the PValue object in human read-able form.</returns>
         /// <remarks>These strings cannot be used for round trips as <c>Object.ToString</c> is a narrowing conversion in most cases.</remarks>
-        [NoDebug]
+        [DebuggerStepThrough]
         public override string ToString()
         {
             return
@@ -1279,7 +1273,7 @@ namespace Prexonite
         /// <param name="sctx">The stack context in which to execute the call to "ToString".</param>
         /// <returns>Either the result of the "ToString" call or, in case of a failure, the result of <see cref="ToString">PValue.ToString</see>.</returns>
         /// <remarks>Note that unlike in the CLR, null values in Prexonite <strong>do</strong> implement "ToString".</remarks>
-        [NoDebug]
+        [DebuggerStepThrough]
         public string CallToString(StackContext sctx)
         {
             PValue text;
@@ -1298,7 +1292,7 @@ namespace Prexonite
 
         public override bool Equals(object obj)
         {
-            PValue o = obj as PValue;
+            var o = obj as PValue;
             if (o == null)
                 return false;
 
@@ -1321,7 +1315,7 @@ namespace Prexonite
         /// <param name="number">A System.Int32 to be used within the Prexonite VM.</param>
         /// <returns>A PValue object containing the supplied integer with <see cref="PType.Int"/> as its PType.</returns>
         /// <remarks>As System.Int32 is the <strong>natural representation</strong> of <see cref="PType.Int"/> values, this conversion is implicit.</remarks>
-        [NoDebug]
+        [DebuggerStepThrough]
         public static implicit operator PValue(Int32 number)
         {
             return PType.Int.CreatePValue(number);
@@ -1371,7 +1365,7 @@ namespace Prexonite
         /// <returns>A PValue object containing the supplied long integer truncated to an integer with <see cref="PType.Int"/> as its PType.</returns>
         /// <remarks><see cref="PType.Int"/> cannot represent integers other than System.Int32, but you may wish to convert them to integers and then create the appropriate PValues, which is exactly what this conversion operator does.
         /// If you have to do long integer math inside the Prexonite VM, use <c><see cref="ObjectPType">PType.Object</see>[typeof(System.Int64)]</c> as the PType.</remarks>
-        [NoDebug]
+        [DebuggerStepThrough]
         public static explicit operator PValue(Int64 number)
         {
             return PType.Int.CreatePValue((int) number);
@@ -1383,7 +1377,7 @@ namespace Prexonite
         /// <param name="number">A System.Int16 to be used like a System.Int32 within the Prexonite VM.</param>
         /// <returns>A PValue object containing the supplied short integer as an integer with <see cref="PType.Int"/> as its PType.</returns>
         /// <remarks><see cref="PType.Int"/> cannot represent integers other than System.Int32, but you may wish to convert them to integers and then create the appropriate PValues, which is exactly what this conversion operator does.</remarks>
-        [NoDebug]
+        [DebuggerStepThrough]
         public static explicit operator PValue(Int16 number)
         {
             return PType.Int.CreatePValue((int) number);
@@ -1396,7 +1390,7 @@ namespace Prexonite
         /// <param name="number">A System.Double to be used within the Prexonite VM.</param>
         /// <returns>A PValue object containing the supplied double with <see cref="PType.Real"/> as its PType.</returns>
         /// <remarks>As System.Double is the <strong>natural representation</strong> of <see cref="PType.Real"/> values, this conversion is implicit.</remarks>
-        [NoDebug]
+        [DebuggerStepThrough]
         public static implicit operator PValue(Double number)
         {
             return PType.Real.CreatePValue(number);
@@ -1408,7 +1402,7 @@ namespace Prexonite
         /// <param name="number">A System.Single to be used within the Prexonite VM.</param>
         /// <returns>A PValue object containing the supplied float with <see cref="PType.Real"/> as its PType.</returns>
         /// <remarks><see cref="PType.Real"/> cannot represent floating point numbers other than System.Double, but you may wish to convert them to double precision floating point numbers and then create the appropriate PValues, which is exactly what this conversion operator does.</remarks>
-        [NoDebug]
+        [DebuggerStepThrough]
         public static explicit operator PValue(Single number)
         {
             return PType.Real.CreatePValue((double) number);
@@ -1420,7 +1414,7 @@ namespace Prexonite
         /// <param name="number">A System.Decimal to be used as a double precision floating point number within the Prexonite VM.</param>
         /// <returns>A PValue object containing the supplied decimal number as a double precision floating point number with <see cref="PType.Real"/> as its PType.</returns>
         /// <remarks><see cref="PType.Real"/> cannot represent a decimal number, but you may wish to convert it to double precision floating point numbers and then create the appropriate PValue, which is exactly what this conversion operator does.</remarks>
-        [NoDebug]
+        [DebuggerStepThrough]
         public static explicit operator PValue(Decimal number)
         {
             return PType.Object.CreatePValue((double) number);
@@ -1446,7 +1440,7 @@ namespace Prexonite
         /// <param name="state">A System.Boolean to be used within the Prexonite VM.</param>
         /// <returns>A PValue object containing the supplied boolean value with <see cref="PType.Bool"/> as its PType.</returns>
         /// <remarks>As System.Boolean is the <strong>natural representation</strong> of <see cref="PType.Bool"/> values, this conversion is implicit.</remarks>
-        [NoDebug]
+        [DebuggerStepThrough]
         public static implicit operator PValue(Boolean state)
         {
             return PType.Bool.CreatePValue(state);
@@ -1459,7 +1453,7 @@ namespace Prexonite
         /// <param name="text">A System.String to be used within the Prexonite VM.</param>
         /// <returns>A PValue object containing the supplied string with <see cref="PType.String"/> as its PType.</returns>
         /// <remarks>As System.String is the <strong>natural representation</strong> of <see cref="PType.String"/> values, this conversion is implicit.</remarks>
-        [NoDebug]
+        [DebuggerStepThrough]
         public static implicit operator PValue(String text)
         {
             return PType.String.CreatePValue(text);
@@ -1472,7 +1466,7 @@ namespace Prexonite
         /// <param name="list">A System.Collections.Generic.List&lt;PValue&gt; to be used within the Prexonite VM.</param>
         /// <returns>A PValue object containing the supplied list with <see cref="PType.List"/> as its PType.</returns>
         /// <remarks>Although System.Collections.Generic.List&lt;PValue&gt; is the <strong>natural representation</strong> of <see cref="PType.String"/> values, this conversion is <strong>not</strong> implicit, as it might lead to programming mistakes.</remarks>
-        [NoDebug]
+        [DebuggerStepThrough]
         public static explicit operator PValue(List<PValue> list)
         {
             return PType.List.CreatePValue(list);
@@ -1483,7 +1477,7 @@ namespace Prexonite
         /// </summary>
         /// <param name="pair">A key-value pair of PValues</param>
         /// <returns>A PValue object containing the supplied key-value pair.</returns>
-        [NoDebug]
+        [DebuggerStepThrough]
         public static implicit operator PValue(PValueKeyValuePair pair)
         {
             return PType.Object.CreatePValue(pair);

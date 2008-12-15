@@ -9,7 +9,7 @@ namespace Prexonite
     /// The Prexonite meta table is used to store information about <see cref="Application"/>s, 
     /// Functions (<see cref="PFunction"/>) and global variables (<see cref="PVariable"/>).
     /// </summary>
-    ///[NoDebug]
+    ///[DebuggerStepThrough]
     public class MetaTable : SymbolTable<MetaEntry>,
                              IMetaFilter,
                              ICloneable

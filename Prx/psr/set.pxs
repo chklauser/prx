@@ -3,7 +3,7 @@ build does require = "struct.pxs";
 
 function create_set()[is volatile;]
 {
-    var store = [];
+    var store = var args;
     
     function add(this) =
         (var args) >> skip(1) >>
@@ -23,8 +23,6 @@ function create_set()[is volatile;]
         
     function GetEnumerator =
         store.GetEnumerator;        
-        
-    add(var args);
     
     return struct;    
 }

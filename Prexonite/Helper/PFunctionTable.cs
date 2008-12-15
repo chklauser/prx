@@ -24,15 +24,15 @@
 using System;
 using System.Collections;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.IO;
-using NoDebug = System.Diagnostics.DebuggerNonUserCodeAttribute;
 
 namespace Prexonite
 {
     /// <summary>
     /// Wraps a SymbolicTable&lt;PFunction&gt; to ensure that a function is stored with it's Id as the key.
     /// </summary>
-    [NoDebug]
+    [DebuggerStepThrough]
     public class PFunctionTable : ICollection<PFunction>
     {
         #region table

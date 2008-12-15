@@ -22,11 +22,12 @@
  */
 
 using System;
+using System.Diagnostics;
 using NoDebug = System.Diagnostics.DebuggerNonUserCodeAttribute;
 
 namespace Prexonite.Compiler
 {
-    [NoDebug]
+    [DebuggerStepThrough]
     public class BlockLabels
     {
         private readonly string _continueLabel;

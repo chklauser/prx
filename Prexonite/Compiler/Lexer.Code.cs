@@ -40,12 +40,14 @@ internal partial class Lexer
 
     private Token tok(int kind, string val)
     {
-        Token t = new Token();
-        t.kind = kind;
-        t.val = val;
-        t.pos = yychar;
-        t.line = yyline;
-        t.col = yycolumn;
+        var t = new Token
+        {
+            kind = kind,
+            val = val,
+            pos = yychar,
+            line = yyline,
+            col = yycolumn
+        };
 
         return t;
     }
@@ -60,7 +62,7 @@ internal partial class Lexer
 
     public void PopState()
     {
-        int state = yystates.Count > 0 ? yystates.Pop() : YYINITIAL;
+        var state = yystates.Count > 0 ? yystates.Pop() : YYINITIAL;
         yybegin(state);
     }
 
@@ -96,7 +98,7 @@ internal partial class Lexer
         if (tokens.Length == 0)
             throw new ArgumentException("Must at least return one token.");
 
-        foreach (Token token in tokens)
+        foreach (var token in tokens)
             _tokenBuffer.Enqueue(token);
 
         return null;
@@ -109,8 +111,8 @@ internal partial class Lexer
 
     private void scanNextToken()
     {
-        int count = _tokenBuffer.Count;
-        Token next = Scan();
+        var count = _tokenBuffer.Count;
+        var next = Scan();
         if (next == null)
             if (_tokenBuffer.Count == count)
                 throw new FatalCompilerException("Invalid (null) token returned by lexer.");
@@ -127,14 +129,7 @@ internal partial class Lexer
         _peekIndex = NO_PEEK;
         if (_tokenBuffer.Count == 0)
             scanNextToken();
-#if DEBUG
-        Token next = _tokenBuffer.Dequeue();
-        if (next == null)
-            throw new ArgumentNullException("Next token is null!!!");
-        return next;
-#else
         return _tokenBuffer.Dequeue();
-#endif
     }
 
     Token IScanner.Peek()
@@ -142,23 +137,7 @@ internal partial class Lexer
         _peekIndex++;
         if (_peekIndex >= _tokenBuffer.Count)
             scanNextToken();
-#if DEBUG
-        try
-        {
-            Token next = _tokenBuffer[_peekIndex];
-            if (next == null)
-                throw new ArgumentNullException("Next peek token is null!!!");
-
-            return next;
-        }
-        catch
-        {
-            Console.Out.WriteLine("Exception occured.");
-            throw;
-        }
-#else
         return _tokenBuffer[_peekIndex];
-#endif
     }
 
     public int checkKeyword(string word)
@@ -174,8 +153,8 @@ internal partial class Lexer
                 return Parser._true;
         }
 
-        bool isGlobal = yystate() == YYINITIAL;
-        bool isLocal = yystate() == Local;
+        var isGlobal = yystate() == YYINITIAL;
+        var isLocal = yystate() == Local;
 
         //Not assembler
         if (isGlobal || isLocal)
@@ -284,7 +263,7 @@ internal partial class Lexer
 
     private string unescape_char(string sequence)
     {
-        string kind = sequence.Substring(1, 1);
+        var kind = sequence.Substring(1, 1);
         sequence = sequence.Substring(2);
         int utf32;
         if (

@@ -64,7 +64,7 @@ namespace Prexonite
         /// <param name="y">The right operand.</param>
         /// <remarks>The current implementation is <strong>case-insensitive</strong>.</remarks>
         /// <returns>True if the two strings <paramref name="x"/> and <paramref name="y"/> are equal; false otherwise.</returns>
-        [NoDebug]
+        [DebuggerStepThrough]
         public static bool StringsAreEqual(string x, string y)
         {
             return String.Equals(x, y, StringComparison.OrdinalIgnoreCase);
@@ -111,7 +111,7 @@ namespace Prexonite
         /// <seealso cref="PTypeMapIterator"/>
         public PTypeMapIterator PTypeMap
         {
-            [NoDebug]
+            [DebuggerStepThrough]
             get { return _ptypemapiterator; }
         }
 
@@ -119,7 +119,7 @@ namespace Prexonite
         /// Proxy type that is used to provide access to the <see cref="PType"/> to CLR <see cref="System.Type">Type</see> mapping.
         /// </summary>
         /// <seealso cref="Engine.PTypeMap"/>
-        [NoDebug]
+        [DebuggerStepThrough]
         public class PTypeMapIterator
         {
             private readonly Engine outer;
@@ -224,7 +224,7 @@ namespace Prexonite
         /// <seealso cref="PTypeRegistryIterator"/>
         public PTypeRegistryIterator PTypeRegistry
         {
-            [NoDebug]
+            [DebuggerStepThrough]
             get { return _pTypeRegistryIterator; }
         }
 
@@ -232,7 +232,7 @@ namespace Prexonite
         /// The proxy class that is used to provide access to the <see cref="Engine.PTypeRegistry"/>
         /// </summary>
         /// <seealso cref="Engine.PTypeRegistry"/>
-        [NoDebug]
+        [DebuggerStepThrough]
         public class PTypeRegistryIterator
         {
             private readonly Engine outer;
@@ -505,7 +505,7 @@ namespace Prexonite
         /// </summary>
         /// <param name="ass">An assembly reference.</param>
         /// <returns>True if the supplied assembly is registered; false otherwise.</returns>
-        [NoDebug]
+        [DebuggerStepThrough]
         public bool IsAssemblyRegistered(Assembly ass)
         {
             if (ass == null)
@@ -517,7 +517,7 @@ namespace Prexonite
         /// Gets a list of all registered assemblies.
         /// </summary>
         /// <returns>A copy of the list of registered assemblies.</returns>
-        [NoDebug]
+        [DebuggerStepThrough]
         public Assembly[] GetRegisteredAssemblies()
         {
             return _registeredAssemblies.ToArray();
@@ -528,7 +528,7 @@ namespace Prexonite
         /// </summary>
         /// <param name="ass">An assembly reference.</param>
         /// <exception cref="ArgumentNullException"><paramref name="ass"/> is null.</exception>
-        [NoDebug]
+        [DebuggerStepThrough]
         public void RegisterAssembly(Assembly ass)
         {
             if (ass == null)
@@ -542,7 +542,7 @@ namespace Prexonite
         /// </summary>
         /// <param name="ass">The assembly to remove.</param>
         /// <exception cref="ArgumentNullException"><paramref name="ass"/> is null.</exception>
-        [NoDebug]
+        [DebuggerStepThrough]
         public void RemoveAssembly(Assembly ass)
         {
             if (ass == null)
@@ -562,7 +562,7 @@ namespace Prexonite
         /// </summary>
         public CommandTable Commands
         {
-            [NoDebug]
+            [DebuggerStepThrough]
             get { return _commandTable; }
         }
 

@@ -22,6 +22,7 @@
  */
 
 using System;
+using System.Diagnostics;
 using NoDebug = System.Diagnostics.DebuggerNonUserCodeAttribute;
 
 namespace Prexonite
@@ -29,13 +30,13 @@ namespace Prexonite
     /// <summary>
     /// Represents a closure, a nested function bound to a set of shared variables.
     /// </summary>
-    [NoDebug]
+    [DebuggerStepThrough]
     public class Closure : IIndirectCall,
                            IStackAware
     {
         #region Properties
 
-        private PFunction _function;
+        private readonly PFunction _function;
 
         /// <summary>
         /// Provides readonly access to the function that makes up this closure.
@@ -45,7 +46,7 @@ namespace Prexonite
             get { return _function; }
         }
 
-        private PVariable[] _sharedVariables;
+        private readonly PVariable[] _sharedVariables;
 
         /// <summary>
         /// Provides readonly access to the list of variables the closure binds to the function.
@@ -166,7 +167,7 @@ namespace Prexonite
         /// <returns>True if <paramref name="obj"/> is a closure that is equal to the current instance.</returns>
         public override bool Equals(object obj)
         {
-            Closure clo = obj as Closure;
+            var clo = obj as Closure;
             if (((object) clo) == null)
                 return false;
             return this == clo;

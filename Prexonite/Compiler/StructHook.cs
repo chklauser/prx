@@ -58,9 +58,9 @@ namespace Prexonite.Compiler
 
         private static void replace_struct(CompilerTarget t, IList<AstNode> block)
         {
-            for (int i = 0; i < block.Count; i++)
+            for (var i = 0; i < block.Count; i++)
             {
-                AstNode stmt = block[i];
+                var stmt = block[i];
                 AstReturn ret;
                 AstGetSetSymbol symbolRef;
                 if ((ret = stmt as AstReturn) != null && ret.ReturnVariant == ReturnVariant.Exit &&
@@ -69,21 +69,21 @@ namespace Prexonite.Compiler
                     Engine.StringsAreEqual(symbolRef.Id, TriggerId))
                 {
                     //Found a return struct();
-                    PFunction caller = t.Function;
-                    string parentId = caller.Id;
+                    var caller = t.Function;
+                    var parentId = caller.Id;
 
                     //Get all methods (Mapping from method id to logical id (id of the variable containing the reference to the closure)
-                    Dictionary<string, string> methods = new Dictionary<string, string>();
-                    foreach (PFunction f in caller.ParentApplication.Functions)
+                    var methods = new Dictionary<string, string>();
+                    foreach (var f in caller.ParentApplication.Functions)
                     {
-                        MetaTable fmeta = f.Meta;
+                        var fmeta = f.Meta;
                         if (Engine.StringsAreEqual(fmeta[PFunction.ParentFunctionKey].Text, parentId) &&
                             !fmeta[PrivateKey].Switch)
                         {
                             MetaEntry e;
                             if (!fmeta.TryGetValue(PFunction.LogicalIdKey, out e))
                                 continue;
-                            string logicalId = e.Text;
+                            var logicalId = e.Text;
 
                             string methodId;
                             if (fmeta.TryGetValue(StructId, out e))
@@ -95,12 +95,12 @@ namespace Prexonite.Compiler
                     }
 
                     //Insert code that creates and returns the structure
-                    List<AstNode> newCode = new List<AstNode>(2 + methods.Count);
-                    BlockLabels l = new BlockLabels("struct");
-                    string vtemps = l.CreateLabel("temp");
+                    var newCode = new List<AstNode>(2 + methods.Count);
+                    var l = new BlockLabels("struct");
+                    var vtemps = l.CreateLabel("temp");
 
                     //(s)
-                    AstGetSetSymbol structGet =
+                    var structGet =
                         new AstGetSetSymbol(stmt.File,
                                             stmt.Line,
                                             stmt.Column,
@@ -110,7 +110,7 @@ namespace Prexonite.Compiler
 
                     //var s = new Structure;
                     caller.Variables.Add(vtemps);
-                    AstGetSetSymbol structAssignment =
+                    var structAssignment =
                         new AstGetSetSymbol(stmt.File,
                                             stmt.Line,
                                             stmt.Column,
@@ -129,7 +129,7 @@ namespace Prexonite.Compiler
 
                     //set \ctorId
                     //s.\(@"\ctorId") = "ctorId";
-                    AstGetSetMemberAccess setCtorId =
+                    var setCtorId =
                         new AstGetSetMemberAccess(stmt.File,
                                                   stmt.Line,
                                                   stmt.Column,
@@ -140,10 +140,10 @@ namespace Prexonite.Compiler
                     setCtorId.Arguments.Add(new AstConstant(stmt.File, stmt.Line, stmt.Column, parentId));
                     newCode.Add(setCtorId);
 
-                    foreach (KeyValuePair<string, string> method in methods)
+                    foreach (var method in methods)
                     {
                         //Key => member id //Value => logical id
-                        AstGetSetMemberAccess setMethod =
+                        var setMethod =
                             new AstGetSetMemberAccess(stmt.File,
                                                       stmt.Line,
                                                       stmt.Column,
@@ -162,12 +162,14 @@ namespace Prexonite.Compiler
                     }
 
                     //Return the struct
-                    AstReturn r = new AstReturn(stmt.File, stmt.Line, stmt.Column, ReturnVariant.Exit);
-                    r.Expression = structGet;
+                    var r = new AstReturn(stmt.File, stmt.Line, stmt.Column, ReturnVariant.Exit)
+                    {
+                        Expression = structGet
+                    };
                     newCode.Add(r);
 
                     //Insert new code
-                    foreach (AstNode node in newCode)
+                    foreach (var node in newCode)
                         block.Insert(i++, node);
 
                     //remove call to struct
@@ -176,9 +178,9 @@ namespace Prexonite.Compiler
                 else
                 {
                     //Recursively replace 'debug' in nested blocks.
-                    IAstHasBlocks complex = block[i] as IAstHasBlocks;
+                    var complex = block[i] as IAstHasBlocks;
                     if (complex != null)
-                        foreach (AstBlock subBlock in complex.Blocks)
+                        foreach (var subBlock in complex.Blocks)
                             replace_struct(t, subBlock);
                 }
             } //End of statement loop

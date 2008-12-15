@@ -178,6 +178,7 @@
     <Compile Include="Compiler\Ast\AstTypecheck.cs" />
     <Compile Include="Compiler\Ast\AstUnaryOperator.cs" />
     <Compile Include="Compiler\Ast\AstGetSetStatic.cs" />
+    <Compile Include="Compiler\Ast\AstUnresolved.cs" />
     <Compile Include="Compiler\Ast\AstUsing.cs" />
     <Compile Include="Compiler\Ast\AstWhileLoop.cs" />
     <Compile Include="Compiler\Ast\AstForeachLoop.cs" />
@@ -201,6 +202,7 @@
     <Compile Include="Compiler\Cil\Symbol.cs" />
     <Compile Include="Compiler\CompilerHook.cs" />
     <Compile Include="Compiler\CompilerTarget.cs" />
+    <Compile Include="Compiler\CustomResolver.cs" />
     <Compile Include="Compiler\DebugHook.cs" />
     <Compile Include="Compiler\Lexer.Code.cs" />
     <Compile Include="Compiler\Lexer.cs" />

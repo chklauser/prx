@@ -1,6 +1,7 @@
 #region
 
 using System;
+using System.Diagnostics;
 using System.Globalization;
 using System.Reflection;
 using Prexonite.Compiler.Cil;
@@ -28,7 +29,7 @@ namespace Prexonite.Types
             instance = new CharPType();
         }
 
-        [NoDebug]
+        [DebuggerStepThrough]
         private CharPType()
         {
         }

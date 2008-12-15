@@ -35,13 +35,7 @@ namespace Prexonite.Helper
         /// <summary>
         /// The line caught by the <see cref="LineCatcher"/>.
         /// </summary>
-        public string Line
-        {
-            get { return _line; }
-            set { _line = value; }
-        }
-
-        private string _line;
+        public string Line { get; set; }
 
         /// <summary>
         /// Creates a new instance of the LineCaughtEventArgs.
@@ -49,7 +43,7 @@ namespace Prexonite.Helper
         /// <param name="line">The line caught by the <see cref="LineCatcher"/>.</param>
         public LineCaughtEventArgs(string line)
         {
-            _line = line;
+            Line = line;
         }
     }
 
@@ -79,7 +73,7 @@ namespace Prexonite.Helper
             get { return Encoding.UTF8; }
         }
 
-        private StringBuilder buffer = new StringBuilder();
+        private readonly StringBuilder buffer = new StringBuilder();
 
         /// <summary>
         /// Write text to the buffer. As soon as a newline character is encountered, the <see cref="LineCaught"/> event is raised.

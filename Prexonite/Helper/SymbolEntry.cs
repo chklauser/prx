@@ -74,12 +74,7 @@ namespace Prexonite.Compiler
         {
             return (
                        Enum.GetName(typeof(SymbolInterpretations), Interpretation) +
-                       (Id == null
-                            ?
-                        "-\\/_\\/-"
-                            :
-                        Id
-                       ) +
+                       (Id ?? "-\\/_\\/-") +
                        (!Argument.HasValue
                             ?
                         "\\-//\\-//\\"
@@ -94,7 +89,7 @@ namespace Prexonite.Compiler
                 return false;
             else if (obj is SymbolEntry)
             {
-                SymbolEntry entry = (SymbolEntry) obj;
+                var entry = (SymbolEntry) obj;
                 return
                     Id == entry.Id &&
                     Argument == entry.Argument &&

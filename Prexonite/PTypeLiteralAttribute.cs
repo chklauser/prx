@@ -22,6 +22,7 @@
  */
 
 using System;
+using System.Diagnostics;
 using NoDebug = System.Diagnostics.DebuggerNonUserCodeAttribute;
 
 namespace Prexonite.Types
@@ -30,7 +31,7 @@ namespace Prexonite.Types
     /// Associates a literal with a class. Only interpreted on classes inheriting from <see cref="Prexonite.Types.PType"/>.
     /// </summary>
     [AttributeUsage(AttributeTargets.Class, AllowMultiple=true, Inherited=false)]
-    [NoDebug]
+    [DebuggerStepThrough]
     public class PTypeLiteralAttribute : Attribute
     {
         private readonly string _literal;

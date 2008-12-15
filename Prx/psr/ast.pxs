@@ -1,4 +1,7 @@
-﻿Import
+﻿is psr_ast_pxs_open;
+is compiler_loaded;
+
+Import
 {
     System,
     Prexonite,
@@ -15,7 +18,7 @@ function ast(type) [is compiler;]
     return 
         asm(ldr.eng)
         .CreatePType("Object(\"Prexonite.Compiler.Ast.Ast$(type)\")")
-        .Construct((["--COMPILER-HOOK--",-1,-1]+targs)~Object<"Prexonite.PValue[]">)
+        .Construct((["--COMPILER-HOOK--",-1,-1]+(targs >> all))~Object<"Prexonite.PValue[]">)
         .self;
 }
 
@@ -27,7 +30,7 @@ function subBlocks(block) [is compiler;] =
 
 var uniqueIdCounter [is compiler;];
 build does uniqueIdCounter =  0;
-function uniqueId(verb) = "hook\\" + verb + uniqueIdCounter++;
+function uniqueId(verb) [is compiler;] = "hook\\" + verb + uniqueIdCounter++;
 
 function isFunctionCall(id, node)[is compiler;] =
         node is ::AstGetSetSymbol And
@@ -45,7 +48,8 @@ function localMeta(key, context)[is compiler;] =
         context.ParentApplication.Meta[key];
         
 var SI [is compiler;];
-build {
+function create_SI [is compiler;]
+{
     SI = new Structure;
     SI.\("lvar") = ::SymbolInterpretations.LocalObjectVariable;
     SI.\("lref") = ::SymbolInterpretations.LocalReferenceVariable;
@@ -93,11 +97,12 @@ build {
         else
             throw "$s cannot be made reference.";
 }
+build does SI = create_SI;
 
 var _stmt_hooks [is compiler;];
 build does _stmt_hooks = [];
 
-build does hook( t =>
+function hook_impl(t) [ is compiler; ]
 {
     if(_stmt_hooks.Count == 0)
         return;
@@ -136,7 +141,7 @@ build does hook( t =>
     
     //Process top-level block
     process(t.Ast);
-});
+}
 
 //SIGNATURE OF STMT_HOOKS:
 //
@@ -147,13 +152,15 @@ build does hook( t =>
 //  ref i => the index
 //  custom variable objects are passed to the function depending on your setting for the stmt_hook.
 
+var _stmt_hook_active [is compiler;];
+build does _stmt_hook_active = false;
 
-function mk_hook(fhook) = if(Not fhook is Prexonite::Types::PValueKeyValuePair)
+function mk_hook(fhook) [is compiler;] = if(Not fhook is Prexonite::Types::PValueKeyValuePair)
                               (fhook: 0)
                           else
                               fhook;
                               
-function not_null(arg) = Not arg is Null;                              
+function not_null(arg) [is compiler;] = Not arg is Null;
 
 //Add a statement hook to the shared compiler hook
 //  Usage:
@@ -166,12 +173,20 @@ function not_null(arg) = Not arg is Null;
 //
 //  The value in the key-value pair indictaes the number of per function variables to create
 //  If no key is provided, 0 is assumed.
-function stmt_hook() [ is compiler; ] = 
+function stmt_hook() [ is compiler; ] does
+{
     (var args)
     >> where(->not_null)
     >> map(->mk_hook)    
     >> where(fhook => Not _stmt_hooks.Contains(fhook))
     >> each( fhook => _stmt_hooks[] = fhook);
+    if(not _stmt_hook_active)
+    {
+        declare command hook;
+        hook(->hook_impl);
+        _stmt_hook_active = true;
+    }
+}
      
 function remove_stmt_hook() [ is compiler; ] = 
     (var args)
@@ -179,3 +194,55 @@ function remove_stmt_hook() [ is compiler; ] =
     >> map(->mk_hook)
     >> each( fhook => _stmt_hooks.Remove(fhook));
    
+//
+//  Removal of compiler related functions and variables from the final application
+//
+
+function unload_compiler()
+{
+    //unload_compiler removes itself and is thus not marked [is compiler;]
+    //  Note: to simplify things, TRY NOT TO USE INNER FUNCTIONS HERE.
+    declare command GetLoader;
+    var app = GetLoader.ParentApplication;
+    
+    //Variables
+    var comp_vars = [];
+    foreach(var kvp in app.Variables)
+        if(kvp.Value.Meta["compiler"].Switch)
+            comp_vars[] = kvp.Key;
+            
+    foreach(var comp_var in comp_vars)
+        app.Variables.Remove(comp_var);        
+    
+    //Functions
+    var ordinalIc = System::StringComparison.OrdinalIgnoreCase;
+    var comp_funcs = [];
+    //Recursively mark all compiler functions and their inner functions
+    function mark_comp_func(func) [is compiler;]
+    {
+        var fid = func.Id;
+        foreach(var inner in app.Functions)
+            if(inner.Meta["ParentFunction"].Text.Equals(fid,ordinalIc) and 
+              not inner.Meta["compiler"].Switch)
+            {
+                inner.Meta["compiler"] = true;
+                comp_funcs[] = inner;
+                mark_comp_func(inner);
+            }        
+    }
+    
+    //Mark and collect    
+    foreach(var func in app.Functions)
+        if(func.Meta["compiler"].Switch)
+        {
+            comp_funcs[] = func;
+            mark_comp_func(func);
+        }
+            
+    //Remove functions
+    foreach(var comp_func in comp_funcs)
+        app.Functions.Remove(comp_func);
+        
+    app.Functions.Remove(->unload_compiler);
+    app.Meta["compiler_loaded"] = false;
+}

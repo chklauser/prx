@@ -249,6 +249,37 @@ namespace Prexonite.Types
                     case "tostring":
                         result = _getStringRepresentation(lst, sctx);
                         break;
+                    case @"\implements":
+                        foreach (var arg in args)
+                        {
+                            Type T;
+                            if (arg.Type is ObjectPType &&
+                                typeof(Type).IsAssignableFrom(((ObjectPType)arg.Type).ClrType))
+                                T = (Type)arg.Value;
+                            else
+                            {
+                                var typeName = arg.CallToString(sctx);
+                                switch (typeName.ToUpperInvariant())
+                                {
+                                    case "IENUMERABLE":
+                                    case "ILIST":
+                                    case "ICOLLECTION":
+                                        result = true;
+                                        return true;
+                                    default:
+                                        T = ObjectPType.GetType(sctx, typeName);
+                                        break;
+                                }
+                            }
+
+                            if (!T.IsAssignableFrom(typeof(List<PValue>)))
+                            {
+                                result = false;
+                                return true;
+                            }
+                        }
+                        result = true;
+                        return true;
 
                     default:
                         if (

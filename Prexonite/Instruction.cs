@@ -22,9 +22,9 @@
  */
 
 using System;
+using System.Diagnostics;
 using System.Text;
 using Prexonite.Types;
-using NoDebug = System.Diagnostics.DebuggerNonUserCodeAttribute;
 
 namespace Prexonite
 {
@@ -32,7 +32,7 @@ namespace Prexonite
     /// <summary>
     /// Represents a single Prexonite VM instruction
     /// </summary>
-    //[NoDebug]
+    //[DebuggerStepThrough]
     public class Instruction : ICloneable
     {
         /// <summary>
@@ -335,7 +335,7 @@ namespace Prexonite
             var idx = (ushort)index;
             var argc = (ushort)arguments;
 
-            return new Instruction(Prexonite.OpCode.indloci, (argc << 16) | idx,null,justEffect);
+            return new Instruction(OpCode.indloci, (argc << 16) | idx,null,justEffect);
         }
 
         #endregion
@@ -426,7 +426,7 @@ namespace Prexonite
             rotations = (values + rotations)%values;
 
             if(rotations == 0)
-                return new Instruction(Prexonite.OpCode.nop);
+                return new Instruction(OpCode.nop);
 
             var ins = new Instruction(OpCode.rot, rotations)
                       {
@@ -445,19 +445,19 @@ namespace Prexonite
 
         public bool IsJump
         {
-            [NoDebug]
+            [DebuggerStepThrough]
             get { return OpCode == OpCode.jump || OpCode == OpCode.jump_t || OpCode == OpCode.jump_f; }
         }
 
         public bool IsUnconditionalJump
         {
-            [NoDebug]
+            [DebuggerStepThrough]
             get { return OpCode == OpCode.jump; }
         }
 
         public bool IsConditionalJump
         {
-            [NoDebug]
+            [DebuggerStepThrough]
             get { return OpCode == OpCode.jump_t || OpCode == OpCode.jump_f; }
         }
 
@@ -682,7 +682,7 @@ namespace Prexonite
         /// <param name="argc">The address at which to store the actual arguments count.</param>
         internal void DecodeIndLocIndex(out int index, out int argc)
         {
-            if (OpCode != Prexonite.OpCode.indloci)
+            if (OpCode != OpCode.indloci)
                 throw new ArgumentException("Can only decode indloci instructions.");
             index = (Arguments & ushort.MaxValue);
             argc =  ((Arguments & (ushort.MaxValue << 16)) >> 16);
@@ -697,7 +697,7 @@ namespace Prexonite
         /// </summary>
         /// <param name="obj">Any object (possibly an instruction).</param>
         /// <returns>True if the instruction is equal to the object (possibly another instruction).</returns>
-        [NoDebug]
+        [DebuggerStepThrough]
         public override bool Equals(object obj)
         {
             if (obj == null)
@@ -829,7 +829,7 @@ namespace Prexonite
         /// <param name="left">One instruction</param>
         /// <param name="right">Another instruction</param>
         /// <returns>True if the instructions are equal, false otherwise.</returns>
-        [NoDebug]
+        [DebuggerStepThrough]
         public static bool operator ==(Instruction left, Instruction right)
         {
             if ((object) left == null)
@@ -843,7 +843,7 @@ namespace Prexonite
         /// <param name="left">One instruction</param>
         /// <param name="right">Another instruction</param>
         /// <returns>True if the instructions are not equal, false otherwise.</returns>
-        [NoDebug]
+        [DebuggerStepThrough]
         public static bool operator !=(Instruction left, Instruction right)
         {
             if ((object)left == null)

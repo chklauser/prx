@@ -370,7 +370,7 @@ namespace Prexonite.Compiler.Cil
 
         public static bool ExtractBool(PValue left, StackContext sctx)
         {
-            if (ReferenceEquals(left.Type, PType.Bool))
+            if (!ReferenceEquals(left.Type, PType.Bool))
                 left = left.ConvertTo(sctx, PType.Bool);
             return (bool) left.Value;
         }

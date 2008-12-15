@@ -22,6 +22,7 @@
  */
 
 using System;
+using System.Diagnostics;
 using Prexonite.Types;
 using NoDebug = System.Diagnostics.DebuggerNonUserCodeAttribute;
 
@@ -33,7 +34,7 @@ namespace Prexonite.Compiler.Ast
         public IAstType TypeExpr;
         public string MemberId;
 
-        [NoDebug]
+        [DebuggerStepThrough]
         public AstGetSetStatic(
             string file, int line, int col, PCall call, IAstType typeExpr, string memberId)
             : base(file, line, col, call)
@@ -46,7 +47,7 @@ namespace Prexonite.Compiler.Ast
             MemberId = memberId;
         }
 
-        [NoDebug]
+        [DebuggerStepThrough]
         internal AstGetSetStatic(Parser p, PCall call, IAstType typeExpr, string memberId)
             : this(p.scanner.File, p.t.line, p.t.col, call, typeExpr, memberId)
         {
@@ -60,7 +61,7 @@ namespace Prexonite.Compiler.Ast
 
         protected override void EmitGetCode(CompilerTarget target, bool justEffect)
         {
-            AstConstantTypeExpression constType = TypeExpr as AstConstantTypeExpression;
+            var constType = TypeExpr as AstConstantTypeExpression;
 
             if (constType != null)
             {
@@ -84,7 +85,7 @@ namespace Prexonite.Compiler.Ast
 
         private void EmitSetCode(CompilerTarget target, bool justEffect)
         {
-            AstConstantTypeExpression constType = TypeExpr as AstConstantTypeExpression;
+            var constType = TypeExpr as AstConstantTypeExpression;
 
             if (constType != null)
             {

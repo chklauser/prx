@@ -28,7 +28,7 @@ using System.Diagnostics;
 
 namespace Prexonite.Compiler.Ast
 {
-    [DebuggerNonUserCode()]
+    [DebuggerNonUserCode]
     public class ArgumentsProxy : IList<IAstExpression>
     {
         private List<IAstExpression> _arguments;
@@ -47,7 +47,7 @@ namespace Prexonite.Compiler.Ast
             _arguments = arguments;
         }
 
-        private List<IAstExpression> rightAppends = new List<IAstExpression>();
+        private readonly List<IAstExpression> rightAppends = new List<IAstExpression>();
 
         public int RightAppendPosition
         {

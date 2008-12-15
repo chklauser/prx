@@ -24,6 +24,7 @@
 using System;
 using System.Collections;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.Text;
 using NoDebug = System.Diagnostics.DebuggerNonUserCodeAttribute;
 
@@ -32,13 +33,13 @@ namespace Prexonite.Compiler.Ast
     public class AstBlock : AstNode,
                             IList<AstNode>
     {
-        [NoDebug]
+        [DebuggerStepThrough]
         public AstBlock(string file, int line, int column)
             : base(file, line, column)
         {
         }
 
-        [NoDebug]
+        [DebuggerStepThrough]
         internal AstBlock(Parser p)
             : base(p)
         {
@@ -59,10 +60,10 @@ namespace Prexonite.Compiler.Ast
             if (isTopLevel)
                 tail_call_optimize_top_level_block();
 
-            foreach (AstNode node in Statements)
+            foreach (var node in Statements)
             {
-                AstNode stmt = node;
-                IAstExpression expr = stmt as IAstExpression;
+                var stmt = node;
+                var expr = stmt as IAstExpression;
                 if (expr != null)
                     stmt = (AstNode) GetOptimizedNode(target, expr);
 
@@ -75,11 +76,11 @@ namespace Prexonite.Compiler.Ast
 
         private static void tail_call_optimize_expressions_of_nested_block(IAstHasExpressions hasExpressions)
         {
-            foreach (IAstExpression expression in hasExpressions.Expressions)
+            foreach (var expression in hasExpressions.Expressions)
             {
-                AstBlock blockItself = expression as AstBlock;
-                IAstHasExpressions hasExpressionsItself = expression as IAstHasExpressions;
-                IAstHasBlocks hasBlocksItself = expression as IAstHasBlocks;
+                var blockItself = expression as AstBlock;
+                var hasExpressionsItself = expression as IAstHasExpressions;
+                var hasBlocksItself = expression as IAstHasBlocks;
 
                 if(blockItself != null)
                     blockItself.tail_call_optimize_nested_block();
@@ -95,19 +96,12 @@ namespace Prexonite.Compiler.Ast
             int i;
             for (i = 1; i < Statements.Count; i++)
             {
-                AstNode stmt;
-                AstReturn ret;
-                AstGetSet getset;
-                IAstHasBlocks hasBlocks;
-                IAstHasExpressions hasExpressions;
-                AstBlock blockItself;
-
-                stmt = Statements[i];
-                ret = stmt as AstReturn;
-                getset = Statements[i - 1] as AstGetSet;
-                hasBlocks = stmt as IAstHasBlocks;
-                hasExpressions = stmt as IAstHasExpressions;
-                blockItself = stmt as AstBlock;
+                var stmt = Statements[i];
+                var ret = stmt as AstReturn;
+                var getset = Statements[i - 1] as AstGetSet;
+                var hasBlocks = stmt as IAstHasBlocks;
+                var hasExpressions = stmt as IAstHasExpressions;
+                var blockItself = stmt as AstBlock;
 
                 if (ret != null && ret.Expression == null &&
                     (ret.ReturnVariant == ReturnVariant.Exit ||
@@ -135,7 +129,7 @@ namespace Prexonite.Compiler.Ast
 
         private static void tail_call_optimize_all_nested_blocks_of(IAstHasBlocks hasBlocks)
         {
-            foreach (AstBlock block in hasBlocks.Blocks)
+            foreach (var block in hasBlocks.Blocks)
                 block.tail_call_optimize_nested_block();
         }
 
@@ -145,11 +139,10 @@ namespace Prexonite.Compiler.Ast
 
             tail_call_optimize_nested_block();
             AstGetSet getset;
-            AstReturn ret;
 
             if (Statements.Count == 0)
                 return;
-            AstNode lastStmt = Statements[Statements.Count -1];
+            var lastStmt = Statements[Statements.Count -1];
             AstCondition cond;
 
             // { if(cond) block1 else block2 } -> { if(cond) block1' else block2' }
@@ -161,8 +154,10 @@ namespace Prexonite.Compiler.Ast
             // { ...; GetSet(); } -> { ...; return GetSet(); }
             else if((getset = lastStmt as AstGetSet) != null)
             {
-                ret = new AstReturn(getset.File, getset.Line, getset.Column, ReturnVariant.Exit);
-                ret.Expression = getset;
+                var ret = new AstReturn(getset.File, getset.Line, getset.Column, ReturnVariant.Exit)
+                {
+                    Expression = getset
+                };
                 Statements[Statements.Count - 1] = ret;
             }
         }
@@ -179,13 +174,13 @@ namespace Prexonite.Compiler.Ast
 
         #region IList<AstNode> Members
 
-        [NoDebug]
+        [DebuggerStepThrough]
         public int IndexOf(AstNode item)
         {
             return Statements.IndexOf(item);
         }
 
-        [NoDebug]
+        [DebuggerStepThrough]
         public void Insert(int index, AstNode item)
         {
             if (item == null)
@@ -193,7 +188,7 @@ namespace Prexonite.Compiler.Ast
             Statements.Insert(index, item);
         }
 
-        [NoDebug]
+        [DebuggerStepThrough]
         public void RemoveAt(int index)
         {
             Statements.RemoveAt(index);
@@ -201,9 +196,9 @@ namespace Prexonite.Compiler.Ast
 
         public AstNode this[int index]
         {
-            [NoDebug]
+            [DebuggerStepThrough]
             get { return Statements[index]; }
-            [NoDebug]
+            [DebuggerStepThrough]
             set
             {
                 if (value == null)
@@ -216,7 +211,7 @@ namespace Prexonite.Compiler.Ast
 
         #region ICollection<AstNode> Members
 
-        [NoDebug]
+        [DebuggerStepThrough]
         public void Add(AstNode item)
         {
             if (item == null)
@@ -224,7 +219,7 @@ namespace Prexonite.Compiler.Ast
             Statements.Add(item);
         }
 
-        [NoDebug]
+        [DebuggerStepThrough]
         public void AddRange(IEnumerable<AstNode> collection)
         {
             if (collection == null)
@@ -238,13 +233,13 @@ namespace Prexonite.Compiler.Ast
             Statements.AddRange(collection);
         }
 
-        [NoDebug]
+        [DebuggerStepThrough]
         public void Clear()
         {
             Statements.Clear();
         }
 
-        [NoDebug]
+        [DebuggerStepThrough]
         public bool Contains(AstNode item)
         {
             if (item == null)
@@ -252,25 +247,25 @@ namespace Prexonite.Compiler.Ast
             return Statements.Contains(item);
         }
 
-        [NoDebug]
+        [DebuggerStepThrough]
         public void CopyTo(AstNode[] array, int arrayIndex)
         {
             Statements.CopyTo(array, arrayIndex);
         }
 
-        [NoDebug]
         public int Count
         {
+            [DebuggerStepThrough]
             get { return Statements.Count; }
         }
 
         public bool IsReadOnly
         {
-            [NoDebug]
+            [DebuggerStepThrough]
             get { return ((IList<AstNode>) Statements).IsReadOnly; }
         }
 
-        [NoDebug]
+        [DebuggerStepThrough]
         public bool Remove(AstNode item)
         {
             if (item == null)
@@ -282,7 +277,7 @@ namespace Prexonite.Compiler.Ast
 
         #region IEnumerable<AstNode> Members
 
-        [NoDebug]
+        [DebuggerStepThrough]
         public IEnumerator<AstNode> GetEnumerator()
         {
             return Statements.GetEnumerator();
@@ -292,7 +287,7 @@ namespace Prexonite.Compiler.Ast
 
         #region IEnumerable Members
 
-        [NoDebug]
+        [DebuggerStepThrough]
         IEnumerator IEnumerable.GetEnumerator()
         {
             return Statements.GetEnumerator();
@@ -302,8 +297,8 @@ namespace Prexonite.Compiler.Ast
 
         public override string ToString()
         {
-            StringBuilder buffer = new StringBuilder();
-            foreach (AstNode node in Statements)
+            var buffer = new StringBuilder();
+            foreach (var node in Statements)
                 buffer.AppendFormat("{0} ;", node);
             return buffer.ToString();
         }

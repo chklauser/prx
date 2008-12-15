@@ -23,6 +23,7 @@
 
 using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using NoDebug = System.Diagnostics.DebuggerNonUserCodeAttribute;
 
 namespace Prexonite.Compiler.Ast
@@ -32,7 +33,7 @@ namespace Prexonite.Compiler.Ast
                                      IAstHasExpressions
     {
         public IAstType TypeExpr;
-        private ArgumentsProxy _proxy;
+        private readonly ArgumentsProxy _proxy;
 
         public ArgumentsProxy Arguments
         {
@@ -48,9 +49,9 @@ namespace Prexonite.Compiler.Ast
 
         #endregion
 
-        private List<IAstExpression> _arguments = new List<IAstExpression>();
+        private readonly List<IAstExpression> _arguments = new List<IAstExpression>();
 
-        [NoDebug]
+        [DebuggerStepThrough]
         public AstObjectCreation(string file, int line, int col, IAstType type)
             : base(file, line, col)
         {
@@ -60,7 +61,7 @@ namespace Prexonite.Compiler.Ast
             _proxy = new ArgumentsProxy(_arguments);
         }
 
-        [NoDebug]
+        [DebuggerStepThrough]
         internal AstObjectCreation(Parser p, IAstType type)
             : this(p.scanner.File, p.t.line, p.t.col, type)
         {
@@ -75,15 +76,13 @@ namespace Prexonite.Compiler.Ast
             TypeExpr = (IAstType) GetOptimizedNode(target, TypeExpr);
 
             //Optimize arguments
-            IAstExpression oArg;
-            foreach (IAstExpression arg in _arguments.ToArray())
+            foreach (var arg in _arguments.ToArray())
             {
-                oArg = GetOptimizedNode(target, arg);
-                if (!ReferenceEquals(oArg, arg))
-                {
-                    _arguments.Remove(arg);
-                    _arguments.Add(oArg);
-                }
+                var oArg = GetOptimizedNode(target, arg);
+                if (ReferenceEquals(oArg, arg))
+                    continue;
+                _arguments.Remove(arg);
+                _arguments.Add(oArg);
             }
 
             return false;
@@ -91,19 +90,19 @@ namespace Prexonite.Compiler.Ast
 
         public override void EmitCode(CompilerTarget target)
         {
-            AstConstantTypeExpression constType = TypeExpr as AstConstantTypeExpression;
+            var constType = TypeExpr as AstConstantTypeExpression;
 
             if (constType != null)
             {
-                foreach (IAstExpression arg in _arguments)
+                foreach (var arg in _arguments)
                     arg.EmitCode(target);
                 target.Emit(OpCode.newobj, _arguments.Count, constType.TypeExpression);
             }
             else
             {
-//Load type and call construct on it
+                //Load type and call construct on it
                 TypeExpr.EmitCode(target);
-                foreach (IAstExpression arg in _arguments)
+                foreach (var arg in _arguments)
                     arg.EmitCode(target);
                 target.EmitGetCall(_arguments.Count, "Construct\\FromStack");
             }

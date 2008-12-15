@@ -24,14 +24,15 @@
 using System;
 using System.Collections;
 using System.Collections.Generic;
+using System.Diagnostics;
 using NoDebug = System.Diagnostics.DebuggerNonUserCodeAttribute;
 
 namespace Prexonite
 {
-    [NoDebug]
+    [DebuggerStepThrough]
     public class SymbolCollection : ICollection<string>
     {
-        private Hashtable _set;
+        private readonly Hashtable _set;
 
         public SymbolCollection()
         {

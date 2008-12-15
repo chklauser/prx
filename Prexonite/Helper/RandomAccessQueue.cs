@@ -24,7 +24,7 @@
 using System;
 using System.Collections;
 using System.Collections.Generic;
-using NoDebug = System.Diagnostics.DebuggerNonUserCodeAttribute;
+using System.Diagnostics;
 
 namespace Prexonite.Helper
 {
@@ -42,7 +42,7 @@ namespace Prexonite.Helper
         /// Creates a new RandomAccessQueue
         /// </summary>
         /// <remarks>This overload uses a default value for the capacity of it's data store.</remarks>
-        [NoDebug]
+        [DebuggerStepThrough]
         public RandomAccessQueue()
         {
             _store = new List<T>();
@@ -52,7 +52,7 @@ namespace Prexonite.Helper
         /// Creates a new RandomAccessQueue.
         /// </summary>
         /// <param name="collection">Elements to copy to the queue upon creation.</param>
-        [NoDebug]
+        [DebuggerStepThrough]
         public RandomAccessQueue(IEnumerable<T> collection)
         {
             if (collection == null)
@@ -66,7 +66,7 @@ namespace Prexonite.Helper
         /// <param name="capacity">The initial capacity of the queue.</param>
         /// <remarks>Although the queue increases the size of it's data store as required, setting an 
         /// initial capacity can reduce the number of resize operations, when filling the queue.</remarks>
-        [NoDebug]
+        [DebuggerStepThrough]
         public RandomAccessQueue(int capacity)
         {
             _store = new List<T>(capacity);
@@ -76,21 +76,20 @@ namespace Prexonite.Helper
 
         #region Core
 
-        private List<T> _store;
-        private int _front = 0;
+        private readonly List<T> _store;
+        private int _front;
         private int _rear = -1;
 
         private void unwrap()
         {
-            T[] nstore = new T[_store.Count];
-            int count;
-            count = normalCount();
+            var nstore = new T[_store.Count];
+            var count = normalCount();
             _store.CopyTo(_front, nstore, 0, count);
 
             //Copy the wrapped part, if necessary
             if (isWrapped())
             {
-                int wrapped = wrappedCount();
+                var wrapped = wrappedCount();
                 _store.CopyTo(0, nstore, count, wrapped);
             }
 
@@ -99,7 +98,7 @@ namespace Prexonite.Helper
             _store.Capacity = nstore.Length;
             _front = 0;
             _rear = -1;
-            foreach (T t in nstore)
+            foreach (var t in nstore)
             {
                 _store.Add(t);
                 _rear++;
@@ -121,7 +120,7 @@ namespace Prexonite.Helper
             return isWrapped() ? _rear + 1 - 0 : 0;
         }
 
-        [NoDebug]
+        [DebuggerStepThrough]
         private bool isWrapped()
         {
             return _front > _rear;
@@ -192,7 +191,7 @@ namespace Prexonite.Helper
         /// Returns the element in front of the queue (to be dequeued next).
         /// </summary>
         /// <returns>The element in front of the queue (to be dequeued next).</returns>
-        [NoDebug]
+        [DebuggerStepThrough]
         public T Peek()
         {
             return _store[_front];
@@ -227,7 +226,7 @@ namespace Prexonite.Helper
         /// </summary>
         /// <param name="item">The item to search for.</param>
         /// <returns>The index in the queue where the item is stored or -1 if the item cannot be found.</returns>
-        [NoDebug]
+        [DebuggerStepThrough]
         public int IndexOf(T item)
         {
             int normal = _store.IndexOf(
@@ -245,7 +244,7 @@ namespace Prexonite.Helper
         /// </summary>
         /// <param name="index">Where to insert <paramref name="item"/>.</param>
         /// <param name="item">What to insert at <paramref name="index"/>.</param>
-        [NoDebug]
+        [DebuggerStepThrough]
         public void Insert(int index, T item)
         {
             _store.Insert(toIndex(index), item);
@@ -255,7 +254,7 @@ namespace Prexonite.Helper
         /// Removes the element at a supplied index.
         /// </summary>
         /// <param name="index">The index of the element to remove.</param>
-        [NoDebug]
+        [DebuggerStepThrough]
         public void RemoveAt(int index)
         {
             _store.RemoveAt(toIndex(index));
@@ -268,9 +267,9 @@ namespace Prexonite.Helper
         /// <returns>The element at the supplied index.</returns>
         public T this[int index]
         {
-            [NoDebug]
+            [DebuggerStepThrough]
             get { return _store[toIndex(index)]; }
-            [NoDebug]
+            [DebuggerStepThrough]
             set { _store[toIndex(index)] = value; }
         }
 
@@ -282,7 +281,7 @@ namespace Prexonite.Helper
         /// Adds an element to the queue. Synonym to <see cref="Enqueue"/>.
         /// </summary>
         /// <param name="item">The item to add (enqueue).</param>
-        [NoDebug]
+        [DebuggerStepThrough]
         public void Add(T item)
         {
             Enqueue(item);
@@ -291,7 +290,7 @@ namespace Prexonite.Helper
         /// <summary>
         /// Removes all elements from the queue.
         /// </summary>
-        [NoDebug]
+        [DebuggerStepThrough]
         public void Clear()
         {
             _store.Clear();
@@ -304,7 +303,7 @@ namespace Prexonite.Helper
         /// </summary>
         /// <param name="item">The element to look for.</param>
         /// <returns>True, if the queue contains the element; false otherwise.</returns>
-        [NoDebug]
+        [DebuggerStepThrough]
         public bool Contains(T item)
         {
             return IndexOf(item) >= 0;
@@ -316,7 +315,7 @@ namespace Prexonite.Helper
         /// <param name="array">An array, that is big enough to hold all elements in the queue.</param>
         /// <param name="arrayIndex">The index in the supplied array, that indicates where to start writing.</param>
         /// <exception cref="ArgumentOutOfRangeException"><paramref name="array"/> is not big enough.</exception>
-        [NoDebug]
+        [DebuggerStepThrough]
         public void CopyTo(T[] array, int arrayIndex)
         {
             int idx = arrayIndex;
@@ -341,7 +340,7 @@ namespace Prexonite.Helper
         /// </summary>
         public bool IsReadOnly
         {
-            [NoDebug]
+            [DebuggerStepThrough]
             get { return false; }
         }
 
@@ -350,7 +349,7 @@ namespace Prexonite.Helper
         /// </summary>
         /// <param name="item">The element to remove.</param>
         /// <returns>True if an element has been removed; false otherwise.</returns>
-        [NoDebug]
+        [DebuggerStepThrough]
         public bool Remove(T item)
         {
             int idx = IndexOf(item);
@@ -369,7 +368,7 @@ namespace Prexonite.Helper
         /// Returns an IEnumerator that enumerates over all elements in the queue.
         /// </summary>
         /// <returns></returns>
-        [NoDebug]
+        [DebuggerStepThrough]
         public IEnumerator<T> GetEnumerator()
         {
             int count = normalCount();
@@ -393,7 +392,7 @@ namespace Prexonite.Helper
 
         #region IEnumerable Members
 
-        [NoDebug]
+        [DebuggerStepThrough]
         IEnumerator IEnumerable.GetEnumerator()
         {
             return GetEnumerator();

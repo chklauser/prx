@@ -27,6 +27,7 @@ using System.IO.Compression;
 using System;
 using System.Collections;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.IO;
 using System.Text;
 using Prexonite.Commands;
@@ -45,13 +46,13 @@ namespace Prexonite.Compiler
 
         #region Construction
 
-        [NoDebug]
+        [DebuggerStepThrough]
         public Loader(Engine parentEngine, Application targetApplication)
             : this(new LoaderOptions(parentEngine, targetApplication))
         {
         }
 
-        [NoDebug]
+        [DebuggerStepThrough]
         public Loader(LoaderOptions options)
         {
             if (options == null)
@@ -70,6 +71,7 @@ namespace Prexonite.Compiler
                 RegisterCommands();
 
             _compilerHooksIterator = new CompilerHooksIterator(this);
+            _customResolversProxy = new CustomResolversIterator(_customResolvers);
 
             //Build commands
             _buildCommands = new CommandTable();
@@ -137,11 +139,22 @@ namespace Prexonite.Compiler
                 });
 
             _buildCommands.AddCompilerCommand(
-                BuildGetLoaderCommand,
+                BuildResolveCommand,
                 delegate(StackContext sctx, PValue[] args)
                 {
-                    return sctx.CreateNativePValue(this);
+                    foreach (var arg in args)
+                    {
+                        if (arg.Type == PType.Object[typeof (ResolveSymbol)])
+                            CustomResolvers.Add(new CustomResolver((ResolveSymbol) arg.Value));
+                        else
+                            CustomResolvers.Add(new CustomResolver(arg));
+                    }
+                    return PType.Null.CreatePValue();
                 });
+
+            _buildCommands.AddCompilerCommand(
+                BuildGetLoaderCommand,
+                (sctx, args) => sctx.CreateNativePValue(this));
         }
 
         public void RegisterCommands()
@@ -158,7 +171,7 @@ namespace Prexonite.Compiler
 
         public LoaderOptions Options
         {
-            [NoDebug]
+            [DebuggerStepThrough]
             get { return _options; }
         }
 
@@ -170,7 +183,7 @@ namespace Prexonite.Compiler
 
         public SymbolTable<SymbolEntry> Symbols
         {
-            [NoDebug]
+            [DebuggerStepThrough]
             get { return _symbols; }
         }
 
@@ -183,11 +196,11 @@ namespace Prexonite.Compiler
 
         public FunctionTargetsIterator FunctionTargets
         {
-            [NoDebug]
+            [DebuggerStepThrough]
             get { return _functionTargetsIterator; }
         }
 
-        [NoDebug]
+        [DebuggerStepThrough]
         public sealed class FunctionTargetsIterator
         {
             private readonly Loader outer;
@@ -213,13 +226,13 @@ namespace Prexonite.Compiler
             }
         }
 
-        [NoDebug]
+        [DebuggerStepThrough]
         public CompilerTarget CreateFunctionTarget(PFunction func, AstBlock block)
         {
             if (func == null)
                 throw new ArgumentNullException("func");
             
-            CompilerTarget target = new CompilerTarget(this, func, block);
+            var target = new CompilerTarget(this, func, block);
             if(_functionTargets.ContainsKey(func.Id) &&
                (!ParentApplication.Meta.GetDefault(Application.AllowOverridingKey, true).Switch))
                 Errors.Add(
@@ -251,13 +264,13 @@ namespace Prexonite.Compiler
 
         public CompilerHooksIterator CompilerHooks
         {
-            [NoDebug]
+            [DebuggerStepThrough]
             get { return _compilerHooksIterator; }
         }
 
         private readonly List<CompilerHook> _compilerHooks = new List<CompilerHook>();
 
-        [NoDebug]
+        [DebuggerStepThrough]
         public class CompilerHooksIterator : ICollection<CompilerHook>
         {
             private readonly List<CompilerHook> lst;
@@ -429,9 +442,150 @@ namespace Prexonite.Compiler
 
         #endregion
 
+        #region Symbol resolving
+
+        private readonly List<CustomResolver> _customResolvers = new List<CustomResolver>();
+        private readonly CustomResolversIterator _customResolversProxy;
+
+        public CustomResolversIterator CustomResolvers
+        {
+            get { return _customResolversProxy; }
+        }
+
+        public class CustomResolversIterator : ICollection<CustomResolver>
+        {
+            private readonly List<CustomResolver> _resolvers;
+
+            internal CustomResolversIterator(List<CustomResolver> outer)
+            {
+                _resolvers = outer;
+            }
+
+            public int Length
+            {
+                get { return _resolvers.Count; }
+            }
+
+            public CustomResolver this[int index]
+            {
+                get
+                {
+                    return _resolvers[index];
+                }
+            }
+
+            public IEnumerator<CustomResolver> GetEnumerator()
+            {
+                return _resolvers.GetEnumerator();
+            }
+
+            #region Implementation of IEnumerable
+
+            /// <summary>
+            /// Returns an enumerator that iterates through a collection.
+            /// </summary>
+            /// <returns>
+            /// An <see cref="T:System.Collections.IEnumerator" /> object that can be used to iterate through the collection.
+            /// </returns>
+            /// <filterpriority>2</filterpriority>
+            IEnumerator IEnumerable.GetEnumerator()
+            {
+                return GetEnumerator();
+            }
+
+            #endregion
+
+            #region Implementation of ICollection<CustomResolver>
+
+            /// <summary>
+            /// Adds an item to the <see cref="T:System.Collections.Generic.ICollection`1" />.
+            /// </summary>
+            /// <param name="item">The object to add to the <see cref="T:System.Collections.Generic.ICollection`1" />.</param>
+            /// <exception cref="T:System.NotSupportedException">The <see cref="T:System.Collections.Generic.ICollection`1" /> is read-only.</exception>
+            public void Add(CustomResolver item)
+            {
+                if (item == null)
+                    throw new ArgumentNullException("item");
+                _resolvers.Add(item);
+            }
+
+            /// <summary>
+            /// Removes all items from the <see cref="T:System.Collections.Generic.ICollection`1" />.
+            /// </summary>
+            /// <exception cref="T:System.NotSupportedException">The <see cref="T:System.Collections.Generic.ICollection`1" /> is read-only. </exception>
+            public void Clear()
+            {
+               _resolvers.Clear();
+            }
+
+            /// <summary>
+            /// Determines whether the <see cref="T:System.Collections.Generic.ICollection`1" /> contains a specific value.
+            /// </summary>
+            /// <returns>
+            /// true if <paramref name="item" /> is found in the <see cref="T:System.Collections.Generic.ICollection`1" />; otherwise, false.
+            /// </returns>
+            /// <param name="item">The object to locate in the <see cref="T:System.Collections.Generic.ICollection`1" />.</param>
+            public bool Contains(CustomResolver item)
+            {
+                return item != null && _resolvers.Contains(item);
+            }
+
+            /// <summary>
+            /// Copies the elements of the <see cref="T:System.Collections.Generic.ICollection`1" /> to an <see cref="T:System.Array" />, starting at a particular <see cref="T:System.Array" /> index.
+            /// </summary>
+            /// <param name="array">The one-dimensional <see cref="T:System.Array" /> that is the destination of the elements copied from <see cref="T:System.Collections.Generic.ICollection`1" />. The <see cref="T:System.Array" /> must have zero-based indexing.</param>
+            /// <param name="arrayIndex">The zero-based index in <paramref name="array" /> at which copying begins.</param>
+            /// <exception cref="T:System.ArgumentNullException"><paramref name="array" /> is null.</exception>
+            /// <exception cref="T:System.ArgumentOutOfRangeException"><paramref name="arrayIndex" /> is less than 0.</exception>
+            /// <exception cref="T:System.ArgumentException"><paramref name="array" /> is multidimensional.-or-<paramref name="arrayIndex" /> is equal to or greater than the length of <paramref name="array" />.-or-The number of elements in the source <see cref="T:System.Collections.Generic.ICollection`1" /> is greater than the available space from <paramref name="arrayIndex" /> to the end of the destination <paramref name="array" />.-or-Type cannot be cast automatically to the type of the destination <paramref name="array" />.</exception>
+            public void CopyTo(CustomResolver[] array, int arrayIndex)
+            {
+                _resolvers.CopyTo(array, arrayIndex);
+            }
+
+            /// <summary>
+            /// Removes the first occurrence of a specific object from the <see cref="T:System.Collections.Generic.ICollection`1" />.
+            /// </summary>
+            /// <returns>
+            /// true if <paramref name="item" /> was successfully removed from the <see cref="T:System.Collections.Generic.ICollection`1" />; otherwise, false. This method also returns false if <paramref name="item" /> is not found in the original <see cref="T:System.Collections.Generic.ICollection`1" />.
+            /// </returns>
+            /// <param name="item">The object to remove from the <see cref="T:System.Collections.Generic.ICollection`1" />.</param>
+            /// <exception cref="T:System.NotSupportedException">The <see cref="T:System.Collections.Generic.ICollection`1" /> is read-only.</exception>
+            public bool Remove(CustomResolver item)
+            {
+                return item != null && _resolvers.Remove(item);
+            }
+
+            /// <summary>
+            /// Gets the number of elements contained in the <see cref="T:System.Collections.Generic.ICollection`1" />.
+            /// </summary>
+            /// <returns>
+            /// The number of elements contained in the <see cref="T:System.Collections.Generic.ICollection`1" />.
+            /// </returns>
+            public int Count
+            {
+                get { return _resolvers.Count; }
+            }
+
+            /// <summary>
+            /// Gets a value indicating whether the <see cref="T:System.Collections.Generic.ICollection`1" /> is read-only.
+            /// </summary>
+            /// <returns>
+            /// true if the <see cref="T:System.Collections.Generic.ICollection`1" /> is read-only; otherwise, false.
+            /// </returns>
+            public bool IsReadOnly
+            {
+                get { return false; }
+            }
+
+            #endregion
+        }        
+
+        #endregion
+
         #region Compilation
 
-        [NoDebug]
+        [DebuggerStepThrough]
         private void LoadFromStream(Stream str, string filePath)
         {
 #if Compression
@@ -460,7 +614,7 @@ namespace Prexonite.Compiler
 
             compile:
 #endif
-            Lexer lex = new Lexer(new StreamReader(str, Encoding.UTF8));
+            var lex = new Lexer(new StreamReader(str, Encoding.UTF8));
             if (filePath != null)
             {
                 lex._file = filePath;
@@ -470,20 +624,20 @@ namespace Prexonite.Compiler
             _load(lex);
         }
 
-        [NoDebug]
+        [DebuggerStepThrough]
         public void LoadFromStream(Stream str)
         {
             LoadFromStream(str, null);
         }
 
 #if DEBUG
-        private int _load_indent = 0;
+        private int _load_indent;
 #endif
 
-        [NoDebug]
+        [DebuggerStepThrough]
         public void LoadFromFile(string path)
         {
-            FileInfo file = ApplyLoadPaths(path);
+            var file = ApplyLoadPaths(path);
             if (file == null)
             {
                 _throwCannotFindScriptFile(path);
@@ -494,7 +648,7 @@ namespace Prexonite.Compiler
             using (Stream str = new FileStream(file.FullName, FileMode.Open))
             {
 #if DEBUG
-                StringBuilder indent = new StringBuilder(_load_indent);
+                var indent = new StringBuilder(_load_indent);
                 indent.Append(' ', 2*(_load_indent++));
                 Console.WriteLine("{1}begin compiling {0}", file.Name, indent);
 #endif
@@ -514,31 +668,54 @@ namespace Prexonite.Compiler
                 "Cannot find script file \"" + path + "\".", path);
         }
 
-        [NoDebug]
+        [DebuggerStepThrough]
         public void LoadFromString(string code)
         {
             _load(new Lexer(new StringReader(code)));
         }
 
+        private Action<int, int, string> _reportSemError;
+
+        /// <summary>
+        /// Reports a semantic error to the current parsers error stream. 
+        /// Can only be used while Loader is actively parsing.
+        /// </summary>
+        /// <param name="line">The line on which the error occurred.</param>
+        /// <param name="column">The column in which the error occurred.</param>
+        /// <param name="message">The error message.</param>
+        /// <exception cref="InvalidOperationException">when the Loader is not actively parsing.</exception>
+        public void ReportSemanticError(int line, int column, string message)
+        {
+            if (_reportSemError == null)
+                throw new InvalidOperationException("The Loader must be parsing when this method is called.");
+
+            _reportSemError(line, column, message);
+        }
+
         private void _load(IScanner lexer)
         {
-            Parser parser = new Parser(lexer, this);
-            LineCatcher lc = new LineCatcher();
+            var parser = new Parser(lexer, this);
+            var lc = new LineCatcher();
             lc.LineCaught +=
-                delegate(object sender, LineCaughtEventArgs o) { _errors.Add(o.Line); };
+                ((sender, o) => _errors.Add(o.Line));
             parser.errors.errorStream = lc;
+
+            var oldReportSemError = _reportSemError;
+            _reportSemError = parser.SemErr;
             parser.Parse();
 
             //Compile initialization function
-            CompilerTarget target = FunctionTargets[Application.InitializationId];
+            var target = FunctionTargets[Application.InitializationId];
             _EmitPartialInitializationCode();
             target.FinishTarget();
+
+            _reportSemError = oldReportSemError;
         }
 
-        [NoDebug]
+        [DebuggerStepThrough]
         internal void _EmitPartialInitializationCode()
         {
-            CompilerTarget target = FunctionTargets[Application.InitializationId];
+            var target = FunctionTargets[Application.InitializationId];
             target.ExecuteCompilerHooks();
             target.Ast.EmitCode(target,false); //do not treat initialization blocks as top-level ones.
             target.Ast.Clear();
@@ -546,7 +723,7 @@ namespace Prexonite.Compiler
 
         public int ErrorCount
         {
-            [NoDebug]
+            [DebuggerStepThrough]
             get { return _errors.Count; }
         }
 
@@ -617,7 +794,7 @@ namespace Prexonite.Compiler
 
         #region Build Block Commands
 
-        private bool _buildCommandsEnabled = false;
+        private bool _buildCommandsEnabled;
 
         public CommandTable BuildCommands
         {
@@ -656,9 +833,14 @@ namespace Prexonite.Compiler
         public const string BuildDefaultCommand = @"Default";
 
         /// <summary>
-        /// The name of the hook command for build blocks
+        /// The name of the hook command for build blocks.
         /// </summary>
         public const string BuildHookCommand = @"Hook";
+
+        /// <summary>
+        /// The name of the resolver command for build blocks.
+        /// </summary>
+        public const string BuildResolveCommand = "Resolve";
 
         /// <summary>
         /// The name of the getloader command for build blocks
@@ -672,7 +854,7 @@ namespace Prexonite.Compiler
 
         private void _enableBuildCommands()
         {
-            foreach (KeyValuePair<string, PCommand> pair in _buildCommands)
+            foreach (var pair in _buildCommands)
                 if(pair.Value.IsInGroup(PCommandGroups.Compiler) &&
                     ! ParentEngine.Commands.ContainsKey(pair.Key))
                     ParentEngine.Commands.AddCompilerCommand(pair.Key, pair.Value);
@@ -695,20 +877,20 @@ namespace Prexonite.Compiler
                     StoreCompressed(fstr);
             else
 #endif
-            using (StreamWriter writer = new StreamWriter(path, false))
+            using (var writer = new StreamWriter(path, false))
                 Store(writer);
         }
 
         public string StoreInString()
         {
-            StringWriter writer = new StringWriter();
+            var writer = new StringWriter();
             Store(writer);
             return writer.ToString();
         }
 
         public void Store(StringBuilder builder)
         {
-            using (StringWriter writer = new StringWriter(builder))
+            using (var writer = new StringWriter(builder))
                 Store(writer);
         }
 
@@ -731,7 +913,7 @@ namespace Prexonite.Compiler
 
         public void Store(TextWriter writer)
         {
-            Application app = ParentApplication;
+            var app = ParentApplication;
 
             //Header
             writer.WriteLine("//PXS_");
@@ -742,14 +924,14 @@ namespace Prexonite.Compiler
 
             //Global variables
             writer.WriteLine("\n//--GLOBAL VARIABLES");
-            foreach (KeyValuePair<string, PVariable> kvp in app.Variables)
+            foreach (var kvp in app.Variables)
             {
                 writer.Write("var ");
                 writer.Write(kvp.Key);
-                MetaTable meta = kvp.Value.Meta.Clone();
-                meta.Remove(Application.IdKey);
-                meta.Remove(Application.InitializationId);
-                if (meta.Count > 0)
+                var metaTable = kvp.Value.Meta.Clone();
+                metaTable.Remove(Application.IdKey);
+                metaTable.Remove(Application.InitializationId);
+                if (metaTable.Count > 0)
                 {
 #if DEBUG || Verbose
                     writer.WriteLine();
@@ -758,7 +940,7 @@ namespace Prexonite.Compiler
 #if DEBUG || Verbose
                     writer.WriteLine();
 #endif
-                    meta.Store(writer);
+                    metaTable.Store(writer);
                     writer.Write("]");
 #if DEBUG || Verbose
                     writer.WriteLine();
@@ -790,16 +972,16 @@ namespace Prexonite.Compiler
         public void StoreSymbols(TextWriter writer)
         {
             writer.WriteLine("\n//--SYMBOLS");
-            List<KeyValuePair<string, SymbolEntry>> functions =
+            var functions =
                 new List<KeyValuePair<string, SymbolEntry>>();
-            List<KeyValuePair<string, SymbolEntry>> commands =
+            var commands =
                 new List<KeyValuePair<string, SymbolEntry>>();
-            List<KeyValuePair<string, SymbolEntry>> objectVariables =
+            var objectVariables =
                 new List<KeyValuePair<string, SymbolEntry>>();
-            List<KeyValuePair<string, SymbolEntry>> referenceVariables =
+            var referenceVariables =
                 new List<KeyValuePair<string, SymbolEntry>>();
 
-            foreach (KeyValuePair<string, SymbolEntry> kvp in Symbols)
+            foreach (var kvp in Symbols)
                 switch (kvp.Value.Interpretation)
                 {
                     case SymbolInterpretations.Function:
@@ -837,25 +1019,24 @@ namespace Prexonite.Compiler
             string kind,
             ICollection<KeyValuePair<string, SymbolEntry>> entries)
         {
-            if (entries.Count > 0)
+            if (entries.Count <= 0)
+                return;
+            writer.Write("declare ");
+            writer.Write(kind);
+            writer.Write(" ");
+            var idx = 0;
+            foreach (var kvp in entries)
             {
-                writer.Write("declare ");
-                writer.Write(kind);
-                writer.Write(" ");
-                int idx = 0;
-                foreach (KeyValuePair<string, SymbolEntry> kvp in entries)
+                writer.Write(kvp.Value.Id);
+                if (!Engine.StringsAreEqual(kvp.Value.Id, kvp.Key))
                 {
-                    writer.Write(kvp.Value.Id);
-                    if (!Engine.StringsAreEqual(kvp.Value.Id, kvp.Key))
-                    {
-                        writer.Write(" as ");
-                        writer.Write(kvp.Key);
-                    }
-                    if (++idx == entries.Count)
-                        writer.WriteLine(";");
-                    else
-                        writer.Write(",");
+                    writer.Write(" as ");
+                    writer.Write(kvp.Key);
                 }
+                if (++idx == entries.Count)
+                    writer.WriteLine(";");
+                else
+                    writer.Write(",");
             }
         }
 
@@ -865,13 +1046,13 @@ namespace Prexonite.Compiler
 
         public sealed override Engine ParentEngine
         {
-            [NoDebug]
+            [DebuggerStepThrough]
             get { return _options.ParentEngine; }
         }
 
         public PFunction Implementation
         {
-            [NoDebug]
+            [DebuggerStepThrough]
             get { return Options.TargetApplication._InitializationFunction; }
         }
 
@@ -891,7 +1072,7 @@ namespace Prexonite.Compiler
             }
         }
 
-        [NoDebug]
+        [DebuggerStepThrough]
         protected override bool PerformNextCylce(StackContext lastContext)
         {
             return false;
@@ -899,7 +1080,7 @@ namespace Prexonite.Compiler
 
         public override PValue ReturnValue
         {
-            [NoDebug]
+            [DebuggerStepThrough]
             get { return Options.ParentEngine.CreateNativePValue(Options.TargetApplication); }
         }
 
@@ -907,6 +1088,31 @@ namespace Prexonite.Compiler
         {
             //Cannot handle exceptions.
             return false;
+        }
+
+        #endregion
+
+        #region String Caching
+
+        private readonly Dictionary<string, string> _stringCache = new Dictionary<string, string>();
+
+        /// <summary>
+        /// Caches strings encountered while loading code.
+        /// </summary>
+        /// <param name="toCache">The string to cache.</param>
+        /// <returns>The cached instance of the supplied string. </returns>
+        [DebuggerStepThrough]
+        public string CacheString(string toCache)
+        {
+            if (_stringCache.ContainsKey(toCache))
+            {
+                return _stringCache[toCache];
+            }
+            else
+            {
+                _stringCache.Add(toCache, toCache);
+                return toCache;
+            }
         }
 
         #endregion

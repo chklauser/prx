@@ -2,6 +2,7 @@
 
 using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using Prexonite.Compiler.Cil;
 using NoDebug = System.Diagnostics.DebuggerNonUserCodeAttribute;
 
@@ -18,7 +19,7 @@ namespace Prexonite.Types
 
         public static IntPType Instance
         {
-            [NoDebug]
+            [DebuggerStepThrough]
             get { return instance; }
         }
 
@@ -27,7 +28,7 @@ namespace Prexonite.Types
             instance = new IntPType();
         }
 
-        [NoDebug]
+        [DebuggerStepThrough]
         private IntPType()
         {
         }
@@ -36,25 +37,25 @@ namespace Prexonite.Types
 
         #region Static
 
-        [NoDebug]
+        [DebuggerStepThrough]
         public PValue CreatePValue(byte value)
         {
             return new PValue(value, Instance);
         }
 
-        [NoDebug]
+        [DebuggerStepThrough]
         public PValue CreatePValue(short value)
         {
             return new PValue(value, Instance);
         }
 
-        [NoDebug]
+        [DebuggerStepThrough]
         public PValue CreatePValue(int value)
         {
             return new PValue(value, Instance);
         }
 
-        [NoDebug]
+        [DebuggerStepThrough]
         public PValue CreatePValue(long value)
         {
             return new PValue(value, Instance);
@@ -110,13 +111,10 @@ namespace Prexonite.Types
 
             //Try CLR dynamic call
             var clrint = Object[subject.ClrType];
-            if (clrint.TryDynamicCall(sctx, subject, args, call, id, out result))
-                return true;
-
-            return false;
+            return clrint.TryDynamicCall(sctx, subject, args, call, id, out result);
         }
 
-        private IEnumerable<PValue> _generateIntegerRange(int lowerLimit, int step, int upperLimit)
+        private static IEnumerable<PValue> _generateIntegerRange(int lowerLimit, int step, int upperLimit)
         {
             for (var i = lowerLimit; i <= upperLimit; i += step)
                 yield return i;
@@ -126,11 +124,8 @@ namespace Prexonite.Types
             StackContext sctx, PValue[] args, PCall call, string id, out PValue result)
         {
             //Try CLR static call
-            ObjectPType clrint = Object[typeof (int)];
-            if (clrint.TryStaticCall(sctx, args, call, id, out result))
-                return true;
-
-            return false;
+            var clrint = Object[typeof (int)];
+            return clrint.TryStaticCall(sctx, args, call, id, out result);
         }
 
         protected override bool InternalConvertTo(
@@ -544,7 +539,7 @@ namespace Prexonite.Types
             return Literal;
         }
 
-        [NoDebug]
+        [DebuggerStepThrough]
         protected override bool InternalIsEqual(PType otherType)
         {
             return otherType is IntPType;

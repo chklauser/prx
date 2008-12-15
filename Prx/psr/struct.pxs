@@ -46,4 +46,7 @@ function struct(suppressWarning)
     return s;
 }
 
+function struct_options does
+    throw "Struct options only supported by compile-time structures.";
+
 build does Prexonite::Compiler::StructHook.InstallHook(getloader);  

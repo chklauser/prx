@@ -23,6 +23,7 @@
 
 using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.IO;
 using Prexonite.Compiler;
 using NoDebug = System.Diagnostics.DebuggerNonUserCodeAttribute;
@@ -31,8 +32,8 @@ namespace Prexonite
 {
     /// <summary>
     /// An application can be compared to an assembly in the .NET framework. 
-    /// It holds functions and variables together, provides a <see cref="MetaTable"/> and m
-    /// anages the initialization of global variables.
+    /// It holds functions and variables together, provides a <see cref="MetaTable"/> and 
+    /// manages the initialization of global variables.
     /// </summary>
     public class Application : IMetaFilter,
                                IHasMetaTable,
@@ -77,7 +78,7 @@ namespace Prexonite
         /// <summary>
         /// Creates a new application with a GUID as its Id.
         /// </summary>
-        [NoDebug]
+        [DebuggerStepThrough]
         public Application()
             : this("A\\" + Guid.NewGuid().ToString("N"))
         {
@@ -118,7 +119,7 @@ namespace Prexonite
         /// </summary>
         public SymbolTable<PVariable> Variables
         {
-            [NoDebug]
+            [DebuggerStepThrough]
             get { return _variables; }
         }
 
@@ -133,7 +134,7 @@ namespace Prexonite
         /// </summary>
         public PFunctionTable Functions
         {
-            [NoDebug]
+            [DebuggerStepThrough]
             get { return _functions; }
         }
 
@@ -145,7 +146,7 @@ namespace Prexonite
         /// </value>
         public PFunction EntryFunction
         {
-            [NoDebug]
+            [DebuggerStepThrough]
             get { return Functions[_meta[EntryKey]]; }
         }
 
@@ -153,7 +154,7 @@ namespace Prexonite
         /// Creates a new function for the application with a random Id.
         /// </summary>
         /// <returns>An unregistered function with a random Id, bound to the current application instance.</returns>
-        [NoDebug]
+        [DebuggerStepThrough]
         public PFunction CreateFunction()
         {
             return new PFunction(this);
@@ -164,7 +165,7 @@ namespace Prexonite
         /// </summary>
         /// <param name="id">An identifier to name the function.</param>
         /// <returns>An unregistered function with a given Id, bound to the current application instance.</returns>
-        [NoDebug]
+        [DebuggerStepThrough]
         public PFunction CreateFunction(string id)
         {
             return new PFunction(this, id);
@@ -210,7 +211,7 @@ namespace Prexonite
             set { _initializationGeneration = value; }
         }
 
-        private bool _suppressInitialization = false;
+        private bool _suppressInitialization;
 
         /// <summary>
         /// Allows you to suppress initialization of the application.
@@ -380,13 +381,12 @@ namespace Prexonite
         /// </summary>
         /// <param name="path">Path to the file to (over) write.</param>
         /// <remarks>Use a <see cref="Loader"/> for more control over the amount of information stored in the file.</remarks>
-        [NoDebug]
+        [DebuggerStepThrough]
         public void StoreInFile(string path)
         {
             //Create a crippled engine for this process
-            Engine eng = new Engine();
-            eng.ExecutionProhibited = true;
-            Loader ldr = new Loader(eng, this);
+            var eng = new Engine {ExecutionProhibited = true};
+            var ldr = new Loader(eng, this);
             ldr.StoreInFile(path);
         }
 
@@ -403,10 +403,10 @@ namespace Prexonite
         /// </remarks>
         /// <returns>A string that contains the serialized application.</returns>
         /// <seealso cref="Store">Includes a more efficient way to write the application to stdout.</seealso>
-        [NoDebug]
+        [DebuggerStepThrough]
         public string StoreInString()
         {
-            StringWriter writer = new StringWriter();
+            var writer = new StringWriter();
             Store(writer);
             return writer.ToString();
         }
@@ -439,9 +439,8 @@ namespace Prexonite
         public void Store(TextWriter writer)
         {
             //Create a crippled engine for this process
-            Engine eng = new Engine();
-            eng.ExecutionProhibited = true;
-            Loader ldr = new Loader(eng, this);
+            var eng = new Engine {ExecutionProhibited = true};
+            var ldr = new Loader(eng, this);
             ldr.Store(writer);
         }
 
@@ -449,7 +448,7 @@ namespace Prexonite
 
         #region IMetaFilter Members
 
-        [NoDebug]
+        [DebuggerStepThrough]
         string IMetaFilter.GetTransform(string key)
         {
             if (Engine.StringsAreEqual(key, "name"))
@@ -460,7 +459,7 @@ namespace Prexonite
                 return key;
         }
 
-        [NoDebug]
+        [DebuggerStepThrough]
         KeyValuePair<string, MetaEntry>? IMetaFilter.SetTransform(
             KeyValuePair<string, MetaEntry> item)
         {
@@ -483,7 +482,7 @@ namespace Prexonite
         /// </summary>
         public MetaTable Meta
         {
-            [NoDebug]
+            [DebuggerStepThrough]
             get { return _meta; }
         }
 
@@ -494,7 +493,7 @@ namespace Prexonite
         /// </summary>
         public string Id
         {
-            [NoDebug]
+            [DebuggerStepThrough]
             get { return Meta[IdKey].Text; }
         }
 
@@ -508,7 +507,7 @@ namespace Prexonite
         /// <returns>The value returned by the entry function.</returns>
         /// <seealso cref="EntryKey"/>
         /// <seealso cref="EntryFunction"/>
-        [NoDebug]
+        [DebuggerStepThrough]
         public PValue IndirectCall(StackContext sctx, PValue[] args)
         {
             return Run(sctx.ParentEngine, args);

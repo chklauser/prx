@@ -78,7 +78,7 @@ namespace Prexonite
         /// </summary>
         /// <param name="parentApplication">The application of which the new function is part of.</param>
         /// <remarks>The id is randomly generated using a GUID.</remarks>
-        [NoDebug]
+        [DebuggerStepThrough]
         public PFunction(Application parentApplication)
             : this(parentApplication, "F\\" + Guid.NewGuid().ToString("N"))
         {
@@ -90,7 +90,7 @@ namespace Prexonite
         /// <param name="parentApplication">The application of which the new function is part of.</param>
         /// <param name="id">The functions id.</param>
         /// <remarks>The id does not have to be a legal Prexonite Script identifier.</remarks>
-        [NoDebug]
+        [DebuggerStepThrough]
         internal PFunction(Application parentApplication, string id)
         {
             if (parentApplication == null)
@@ -120,7 +120,7 @@ namespace Prexonite
         /// </summary>
         public string Id
         {
-            [NoDebug]
+            [DebuggerStepThrough]
             get { return _meta[IdKey]; }
         }
 
@@ -131,7 +131,7 @@ namespace Prexonite
         /// </summary>
         public Application ParentApplication
         {
-            [NoDebug]
+            [DebuggerStepThrough]
             get { return _parentApplication; }
         }
 
@@ -142,7 +142,7 @@ namespace Prexonite
         /// </summary>
         public SymbolCollection ImportedNamespaces
         {
-            [NoDebug]
+            [DebuggerStepThrough]
             get { return _importedNamesapces; }
         }
 
@@ -153,7 +153,7 @@ namespace Prexonite
         /// </summary>
         public List<Instruction> Code
         {
-            [NoDebug]
+            [DebuggerStepThrough]
             get { return _code; }
         }
 
@@ -164,7 +164,7 @@ namespace Prexonite
         /// </summary>
         public List<string> Parameters
         {
-            [NoDebug]
+            [DebuggerStepThrough]
             get { return _parameters; }
         }
 
@@ -175,7 +175,7 @@ namespace Prexonite
         /// </summary>
         public SymbolCollection Variables
         {
-            [NoDebug]
+            [DebuggerStepThrough]
             get { return _variables; }
         }
 
@@ -211,7 +211,7 @@ namespace Prexonite
         /// </summary>
         public SymbolTable<int> LocalVariableMapping
         {
-            [NoDebug]
+            [DebuggerStepThrough]
             get
             {
                 if (_localVariableMapping == null)
@@ -714,10 +714,12 @@ namespace Prexonite
                             if (!int.TryParse(blockLst[3], out endTry)) //endTry, required
                                 continue;
 
-                            var block = new TryCatchFinallyBlock(beginTry, endTry);
-                            block.BeginFinally = beginFinally;
-                            block.BeginCatch = beginCatch;
-                            block.UsesException = blockLst[4].Switch;
+                            var block = new TryCatchFinallyBlock(beginTry, endTry)
+                            {
+                                BeginFinally = beginFinally,
+                                BeginCatch = beginCatch,
+                                UsesException = blockLst[4].Switch
+                            };
 
                             _tryCatchFinallyBlocks.Add(block);
                         }
