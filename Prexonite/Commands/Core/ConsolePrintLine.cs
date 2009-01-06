@@ -65,16 +65,11 @@ namespace Prexonite.Commands.Core
         /// <returns>The value returned by the command. Must not be null. (But possibly {null~Null})</returns>
         public static PValue RunStatically(StackContext sctx, PValue[] args)
         {
-            StringBuilder buffer = new StringBuilder();
-            for (int i = 0; i < args.Length; i++)
-            {
-                PValue arg = args[i];
-                buffer.Append(arg.Type is StringPType ? (string)arg.Value : arg.CallToString(sctx));
-            }
+            var buffer = Concat.ConcatenateString(sctx, args);
 
             Console.WriteLine(buffer);
 
-            return buffer.ToString();
+            return buffer;
         }
 
         /// <summary>

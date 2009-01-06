@@ -69,16 +69,10 @@ namespace Prexonite.Commands.Core
         /// <returns></returns>
         public override PValue Run(StackContext sctx, PValue[] args)
         {
-            var buffer = new StringBuilder();
-            for (var i = 0; i < args.Length; i++)
-            {
-                var arg = args[i];
-                buffer.Append(arg.Type is StringPType ? (string) arg.Value : arg.CallToString(sctx));
-            }
+            var s = Concat.ConcatenateString(sctx, args);
+            _writer.Write(s);
 
-            _writer.Write(buffer);
-
-            return buffer.ToString();
+            return s;
         }
     }
 }

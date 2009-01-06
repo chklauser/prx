@@ -82,8 +82,6 @@ namespace Prexonite.Commands.Math
             return CompilationFlags.PreferCustomImplementation;
         }
 
-        private static readonly FieldInfo MathPIField = typeof(System.Math).GetField("PI");
-
         /// <summary>
         /// Provides a custom compiler routine for emitting CIL byte code for a specific instruction.
         /// </summary>
@@ -96,7 +94,7 @@ namespace Prexonite.Commands.Math
 
             if(!ins.JustEffect)
             {
-                state.Il.Emit(OpCodes.Ldsfld, MathPIField);
+                state.Il.Emit(OpCodes.Ldc_R8, System.Math.PI);
                 state.EmitWrapReal();
             }
         }

@@ -69,14 +69,15 @@ namespace Prexonite.Commands.Core
         /// <remarks>Please note that this method uses a string builder. The addition operator is faster for only two fragments.</remarks>
         public static string ConcatenateString(StackContext sctx, PValue[] args)
         {
-            StringBuilder buffer = new StringBuilder();
-            for (int i = 0; i < args.Length; i++)
+            var elements = new string[args.Length];
+            for (var i = 0; i < args.Length; i++)
             {
-                PValue arg = args[i];
-                buffer.Append(arg.Type is StringPType ? (string) arg.Value : arg.CallToString(sctx));
+                var arg = args[i];
+                var element = arg.Type is StringPType ? (string) arg.Value : arg.CallToString(sctx);
+                elements[i] = element;
             }
 
-            return buffer.ToString();
+            return String.Concat(elements);
         }
 
         /// <summary>
@@ -88,14 +89,7 @@ namespace Prexonite.Commands.Core
         /// <remarks>Please note that this method uses a string builder. The addition operator is faster for only two fragments.</remarks>
         public static PValue RunStatically(StackContext sctx, PValue[] args)
         {
-            StringBuilder buffer = new StringBuilder();
-            for (int i = 0; i < args.Length; i++)
-            {
-                PValue arg = args[i];
-                buffer.Append(arg.Type is StringPType ? (string)arg.Value : arg.CallToString(sctx));
-            }
-
-            return buffer.ToString();
+            return ConcatenateString(sctx, args);
         }
 
         /// <summary>

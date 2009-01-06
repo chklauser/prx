@@ -19,7 +19,7 @@ using Prexonite.Types;
 
 using Prx.Tests;
 
-namespace PrexoniteTests
+namespace Prx.Tests
 {
     [TestFixture]
     public class VMTests
@@ -60,20 +60,22 @@ function test1
     var x = 5 + 5;
 }
 ";
-            Loader ldr = new Loader(engine, target);
+            var ldr = new Loader(engine, target);
             ldr.LoadFromString(input1);
             Assert.AreEqual(0, ldr.ErrorCount);
 
-            PFunction test1 = target.Functions["test1"];
-            FunctionContext fctx = new FunctionContext(engine, test1);
-            PVariable x = fctx.LocalVariables["x"];
+            var test1 = target.Functions["test1"];
+            var fctx = new FunctionContext(engine, test1);
+            var x = fctx.LocalVariables["x"];
             Assert.IsTrue(
                 x.Value == null || x.Value.Value == null, "variable x must be null in some way.");
             engine.Stack.AddLast(fctx);
             engine.Process();
             Assert.AreEqual(
                 0, engine.Stack.Count, "Machine stack is expected to be empty after execution.");
+            Assert.IsNotNull(x.Value, "Value of PVariable is null (violates invariant).");
             Assert.AreEqual(PType.BuiltIn.Int, x.Value.Type.ToBuiltIn());
+            Assert.IsNotNull(x.Value.Value, "Result is null (while PType is Int)");
             Assert.AreEqual(10, (int) x.Value.Value);
         }
 
@@ -89,24 +91,24 @@ function test1(x)
     return x--;
 }
 ";
-            Loader ldr = new Loader(engine, target);
+            var ldr = new Loader(engine, target);
             ldr.LoadFromString(input1);
             foreach (string s in ldr.Errors)
                 Console.WriteLine(s);
 
             Assert.AreEqual(0, ldr.ErrorCount, "Errors during compilation");
 
-            Random rnd = new Random();
-            int x0 = rnd.Next(1, 200);
-            int x = x0;
+            var rnd = new Random();
+            var x0 = rnd.Next(1, 200);
+            var x = x0;
             x++;
             x = 2*x;
-            int expected = x--;
+            var expected = x--;
 
-            FunctionContext fctx =
+            var fctx =
                 target.Functions["test1"].CreateFunctionContext(engine, new PValue[] {x0});
             engine.Stack.AddLast(fctx);
-            PValue rv = engine.Process();
+            var rv = engine.Process();
 
             Assert.AreEqual(PType.BuiltIn.Int, rv.Type.ToBuiltIn());
             Assert.AreEqual(
@@ -132,9 +134,9 @@ function test1(x)
     x+=55;
 }
 ";
-            Loader ldr = new Loader(engine, target);
+            var ldr = new Loader(engine, target);
             ldr.LoadFromString(input1);
-            foreach (string s in ldr.Errors)
+            foreach (var s in ldr.Errors)
                 Console.WriteLine(s);
             Assert.AreEqual(1, ldr.ErrorCount, "One error expected.");
             Assert.IsTrue(ldr.Errors[0].Contains("Return value assignment is no longer supported."),"The compiler did not reject a return value assignment.");
@@ -161,21 +163,19 @@ function complicated(x,y) does
     //dummy     
 }
 ";
-            Loader ldr = new Loader(engine, target);
+            var ldr = new Loader(engine, target);
             ldr.LoadFromString(input1);
             foreach (string s in ldr.Errors)
                 Console.WriteLine(s);
             Assert.AreEqual(0, ldr.ErrorCount);
 
-            Random rnd = new Random();
-            PValue result;
-            int expected;
+            var rnd = new Random();
 
             //Test simple
-            int v0 = rnd.Next(1, 100);
-            expected = 2*v0;
+            var v0 = rnd.Next(1, 100);
+            var expected = 2*v0;
 
-            result = target.Functions["twice"].Run(engine, new PValue[] {v0});
+            var result = target.Functions["twice"].Run(engine, new PValue[] {v0});
             Assert.AreEqual(
                 PType.BuiltIn.Int,
                 result.Type.ToBuiltIn(),
@@ -183,11 +183,11 @@ function complicated(x,y) does
             Assert.AreEqual(expected, (int) result.Value);
 
             //Test complicated            
-            int x0 = rnd.Next(1, 100);
-            int y0 = rnd.Next(1, 100);
-            int z = x0*y0;
-            int x1 = z - x0;
-            int y1 = x1 + z;
+            var x0 = rnd.Next(1, 100);
+            var y0 = rnd.Next(1, 100);
+            var z = x0*y0;
+            var x1 = z - x0;
+            var y1 = x1 + z;
             expected = y1 + x1;
 
             result = target.Functions["complicated"].Run(engine, new PValue[] {x0, y0});
@@ -213,12 +213,10 @@ function test1(x) does
     return h(x)/J;
 }
 ";
-            Random rnd = new Random();
-            int expected,
-                J;
-            J = rnd.Next(1, 1000);
+            var rnd = new Random();
+            var J = rnd.Next(1, 1000);
 
-            Loader ldr = new Loader(engine, target);
+            var ldr = new Loader(engine, target);
             ldr.LoadFromString(input1);
             target.Variables["J"].Value = J;
             Assert.AreEqual(0, ldr.ErrorCount);
@@ -226,15 +224,15 @@ function test1(x) does
             Console.WriteLine(target.StoreInString());
 
             //Expectation
-            int x0 = rnd.Next(1, 589);
+            var x0 = rnd.Next(1, 589);
             J = 0;
             J = (7*x0 + 2 + J);
-            expected = (x0 + 2 + J)/J;
+            var expected = (x0 + 2 + J)/J;
 
-            FunctionContext fctx =
+            var fctx =
                 target.Functions["test1"].CreateFunctionContext(engine, new PValue[] {x0});
             engine.Stack.AddLast(fctx);
-            PValue rv = engine.Process();
+            var rv = engine.Process();
             Assert.AreEqual(PType.BuiltIn.Int, rv.Type.ToBuiltIn());
             Assert.AreEqual(expected, (int) rv.Value);
         }
@@ -254,24 +252,23 @@ function test1(x) does
     return h(x)/J;
 }
 ";
-            Loader ldr = new Loader(engine, target);
+            var ldr = new Loader(engine, target);
             ldr.LoadFromString(input1);
             Assert.AreEqual(0, ldr.ErrorCount);
 
             Console.WriteLine(target.StoreInString());
 
-            Random rnd = new Random();
-            int expected;
-            int J0 = 0;
-            int x0 = rnd.Next(1, 300);
-            int x1 = 2 + J0 + J0;
-            int J1 = 2 + (7*x1) + J0;
-            expected = (2 + x1 + J1)/J1;
+            var rnd = new Random();
+            var J0 = 0;
+            var x0 = rnd.Next(1, 300);
+            var x1 = 2 + J0 + J0;
+            var J1 = 2 + (7*x1) + J0;
+            var expected = (2 + x1 + J1)/J1;
 
-            FunctionContext fctx =
+            var fctx =
                 target.Functions["test1"].CreateFunctionContext(engine, new PValue[] {x0});
             engine.Stack.AddLast(fctx);
-            PValue rv = engine.Process();
+            var rv = engine.Process();
             Assert.AreEqual(PType.BuiltIn.Int, rv.Type.ToBuiltIn());
             Assert.AreEqual(expected, (int) fctx.ReturnValue.Value);
 
@@ -292,18 +289,18 @@ function fib(n) does
         return fib(n-1) + fib(n-2);
 }
 ";
-            Loader ldr = new Loader(engine, target);
+            var ldr = new Loader(engine, target);
             ldr.LoadFromString(input1);
             Assert.AreEqual(0, ldr.ErrorCount);
 
-            for (int n = 1; n <= 6; n++)
+            for (var n = 1; n <= 6; n++)
             {
                 Console.WriteLine("\nFib(" + n + ") do ");
-                int expected = Fibonacci(n);
-                FunctionContext fctx =
+                var expected = Fibonacci(n);
+                var fctx =
                     target.Functions["fib"].CreateFunctionContext(engine, new PValue[] {n});
                 engine.Stack.AddLast(fctx);
-                PValue rv = engine.Process();
+                var rv = engine.Process();
                 Assert.AreEqual(
                     PType.BuiltIn.Int, rv.Type.ToBuiltIn(), "Result must be a ~Int");
                 Assert.AreEqual(
@@ -346,18 +343,18 @@ function fib(n) does asm
     label   endif
 }
 ";
-            Loader ldr = new Loader(engine, target);
+            var ldr = new Loader(engine, target);
             ldr.LoadFromString(input1);
             Assert.AreEqual(0, ldr.ErrorCount);
 
-            for (int n = 1; n <= 6; n++)
+            for (var n = 1; n <= 6; n++)
             {
                 Console.WriteLine("\nFib(" + n + ") do ");
-                int expected = Fibonacci(n);
-                FunctionContext fctx =
+                var expected = Fibonacci(n);
+                var fctx =
                     target.Functions["fib"].CreateFunctionContext(engine, new PValue[] {n});
                 engine.Stack.AddLast(fctx);
-                PValue rv = engine.Process();
+                var rv = engine.Process();
                 Assert.AreEqual(
                     PType.BuiltIn.Int, rv.Type.ToBuiltIn(), "Result must be a ~Int");
                 Assert.AreEqual(
@@ -396,13 +393,13 @@ function main(newM, iterations)
 }
 ");
 
-            Random rnd = new Random();
-            int M = rnd.Next(1, 13);
-            int iterations = rnd.Next(3, 10);
-            int sum = 0;
-            for (int i = 0; i < iterations; i++)
+            var rnd = new Random();
+            var M = rnd.Next(1, 13);
+            var iterations = rnd.Next(3, 10);
+            var sum = 0;
+            for (var i = 0; i < iterations; i++)
                 sum += M*i + 12;
-            int expected = sum;
+            var expected = sum;
 
             _expectNamed("main", expected, M, iterations);
         }
@@ -444,10 +441,10 @@ function main(aList, max)
     return print\static\buffer.ToString;
 }
 ");
-            StringBuilder buffer = new StringBuilder();
-            int max = 20;
-            List<string> aList = new List<string>(
-                new string[]
+            var buffer = new StringBuilder();
+            var max = 20;
+            var aList = new List<string>(
+                new[]
                     {
                         _generateRandomString(5),
                         _generateRandomString(10),
@@ -474,8 +471,8 @@ function main(rawInteger)
     return System::Int32.Parse(rawInteger);
 }
 ");
-            Random rnd = new Random();
-            int expected = rnd.Next(1, 45);
+            var rnd = new Random();
+            var expected = rnd.Next(1, 45);
             _expect(expected, expected.ToString());
         }
 
@@ -569,14 +566,14 @@ function print(text) does
 }
 ");
 
-            string str = Guid.NewGuid().ToString("N").Substring(0, 3);
-            Random rnd = new Random();
-            int idx = rnd.Next(0, str.Length);
-            StringBuilder buffer = new StringBuilder();
-            foreach (char ch in str)
+            var str = Guid.NewGuid().ToString("N").Substring(0, 3);
+            var rnd = new Random();
+            var idx = rnd.Next(0, str.Length);
+            var buffer = new StringBuilder();
+            foreach (var ch in str)
                 buffer.Append(ch.ToString() + ' ');
             buffer.Append("--" + str[idx]);
-            string expect = buffer.ToString();
+            var expect = buffer.ToString();
             _expect(expect, str, idx);
         }
 
@@ -599,10 +596,10 @@ function work
 
 function main(a,b,c) = work(a,b,c).ToString;
 ");
-            string a = Guid.NewGuid().ToString("N");
-            string b = Guid.NewGuid().ToString("N");
-            string c = Guid.NewGuid().ToString("N");
-            string expect = a + b + c;
+            var a = Guid.NewGuid().ToString("N");
+            var b = Guid.NewGuid().ToString("N");
+            var c = Guid.NewGuid().ToString("N");
+            var expect = a + b + c;
             _expect(expect, a, b, c);
         }
 
@@ -615,24 +612,24 @@ function main(a,b,c) = work(a,b,c).ToString;
                 new DelegatePCommand(
                     delegate(StackContext localSctx, PValue[] args)
                     {
-                        StringBuilder sb = new StringBuilder();
-                        for (int i = args.Length - 1; i > -1; i--)
+                        var sb = new StringBuilder();
+                        for (var i = args.Length - 1; i > -1; i--)
                             sb.Append(args[i].CallToString(localSctx));
                         return (PValue) sb.ToString();
                     }));
 
-            string[] list =
-                new string[] {"the", "quick", "brown", "fox", "jumps", "over", "the", "lazy", "dog"};
+            var list =
+                new[] {"the", "quick", "brown", "fox", "jumps", "over", "the", "lazy", "dog"};
 
             engine.Commands.AddUserCommand(
                 "theList",
                 new DelegatePCommand(
-                    delegate(StackContext localSctx, PValue[] args) { return localSctx.CreateNativePValue(list); }));
+                    (localSctx, args) => localSctx.CreateNativePValue(list)));
             _compile(
                 @"function main = conRev(theList[0], theList[1], theList[2], theList[3], theList[4], theList[5], theList[6], theList[7], theList[8]);");
 
-            StringBuilder buffer = new StringBuilder();
-            for (int i = list.Length - 1; i > -1; i--)
+            var buffer = new StringBuilder();
+            for (var i = list.Length - 1; i > -1; i--)
                 buffer.Append(list[i]);
 
             _expect(buffer.ToString());
@@ -651,15 +648,15 @@ function main(a,b,c) = work(a,b,c).ToString;
 
             public IEnumerator<string> GetEnumerator()
             {
-                string[] words = _input.Split(new char[] {' ', '\t', '\n', '\r'});
+                var words = _input.Split(new[] {' ', '\t', '\n', '\r'});
 
-                foreach (string word in words)
+                foreach (var word in words)
                     if (word.Length > 0)
                         yield return word[0].ToString().ToUpperInvariant();
 
                 yield return ">>";
 
-                foreach (string word in words)
+                foreach (var word in words)
                     if (word.Length > 0)
                         if (word[0]%2 == 0)
                             yield return word.Insert(1, "\\").ToUpperInvariant();
@@ -683,8 +680,8 @@ function main(a,b,c) = work(a,b,c).ToString;
 
             internal string printList()
             {
-                StringBuilder buffer = new StringBuilder();
-                foreach (string s in this)
+                var buffer = new StringBuilder();
+                foreach (var s in this)
                 {
                     buffer.Append(' ');
                     buffer.Append(s);
@@ -694,11 +691,11 @@ function main(a,b,c) = work(a,b,c).ToString;
 
             internal int countList()
             {
-                IEnumerator<string> e = GetEnumerator();
+                var e = GetEnumerator();
                 while (e.MoveNext())
                     if (e.Current == ">>")
                         break;
-                int cnt = 0;
+                var cnt = 0;
                 while (e.MoveNext())
                     if (e.Current == "<<")
                         break;
@@ -728,7 +725,7 @@ function main(lst)
         [Test]
         public void Foreach()
         {
-            SomeSortOfList lst = new SomeSortOfList("The quick brown fox jumps over the lazy dog");
+            var lst = new SomeSortOfList("The quick brown fox jumps over the lazy dog");
             _compile(
                 @"
 var buffer;
@@ -794,18 +791,18 @@ function main(x)
     return buffer.ToString;
 }
 ");
-            StringBuilder buffer = new StringBuilder();
-            StringBuilder HW = new StringBuilder("Hello World");
-            Random rnd = new Random();
-            int x = rnd.Next(0, HW.Length + 1);
-            int xi = x >= HW.Length ? HW.Length - 1 : x;
-            for (int i = 0; i < xi; i++)
+            var buffer = new StringBuilder();
+            var HW = new StringBuilder("Hello World");
+            var rnd = new Random();
+            var x = rnd.Next(0, HW.Length + 1);
+            var xi = x >= HW.Length ? HW.Length - 1 : x;
+            for (var i = 0; i < xi; i++)
             {
                 HW.Insert(i, i.ToString());
                 buffer.Append(">");
                 buffer.Append(HW.ToString());
             }
-            string expect = buffer.ToString();
+            var expect = buffer.ToString();
 
             _expect(expect, x);
         }
@@ -813,7 +810,7 @@ function main(x)
         [Test]
         public void PartialInitialization()
         {
-            Loader ldr =
+            var ldr =
                 _compile(
                     @"
 
@@ -874,7 +871,7 @@ declare var buffer;
         [Test]
         public void UselessBuildBlock()
         {
-            Loader ldr = _compile(@"
+            var ldr = _compile(@"
     var myGlob; var initGlob;
 ");
 
@@ -3097,6 +3094,16 @@ function main()
 }");
 
             _expect(false);
+        }
+
+        [Test]
+        public void MathPiWorksInCIL()
+        {
+            _compile(@"
+function main = pi;
+");
+
+            _expect(Math.PI);
         }
 
         #region Helper
