@@ -24,6 +24,7 @@
 using System;
 using System.Collections.Generic;
 using System.Diagnostics;
+using System.Text;
 using Prexonite.Types;
 using NoDebug = System.Diagnostics.DebuggerNonUserCodeAttribute;
 
@@ -1287,7 +1288,10 @@ namespace Prexonite
 
         public override int GetHashCode()
         {
-            return _type.GetHashCode() ^ _value.GetHashCode();
+            if (_value == null)
+                return 0;
+            else 
+                return _type.GetHashCode() ^ _value.GetHashCode();
         }
 
         public override bool Equals(object obj)
@@ -1328,7 +1332,7 @@ namespace Prexonite
         /// <returns>A PValue object containing the supplied integer (signed) with <see cref="PType.Int"/> as its PType.</returns>
         /// <remarks><see cref="PType.Int"/> cannot represent integers other than System.Int32, but you may wish to convert them to signed integers and then create the appropriate PValues, which is exactly what this conversion operator does.
         /// If you have to do unsigned integer math inside the Prexonite VM, use <c><see cref="ObjectPType">PType.Object</see>[typeof(System.UInt32)]</c> as the PType.</remarks>
-        [NoDebug, CLSCompliant(false)]
+        [DebuggerNonUserCode, CLSCompliant(false)]
         public static explicit operator PValue(UInt32 number)
         {
             return PType.Int.CreatePValue((int) number);
@@ -1340,7 +1344,7 @@ namespace Prexonite
         /// <param name="number">A System.Byte to be used like a System.Int32 within the Prexonite VM.</param>
         /// <returns>A PValue object containing the supplied byte as an integer with <see cref="PType.Int"/> as its PType.</returns>
         /// <remarks><see cref="PType.Int"/> cannot represent integers other than System.Int32, but you may wish to convert them to integers and then create the appropriate PValues, which is exactly what this conversion operator does.</remarks>
-        [NoDebug, CLSCompliant(false)]
+        [DebuggerNonUserCode, CLSCompliant(false)]
         public static explicit operator PValue(Byte number)
         {
             return PType.Int.CreatePValue((int) number);
@@ -1352,7 +1356,7 @@ namespace Prexonite
         /// <param name="number">A System.SByte to be used like a System.Int32 within the Prexonite VM.</param>
         /// <returns>A PValue object containing the supplied signed byte as an integer with <see cref="PType.Int"/> as its PType.</returns>
         /// <remarks><see cref="PType.Int"/> cannot represent integers other than System.Int32, but you may wish to convert them to integers and then create the appropriate PValues, which is exactly what this conversion operator does.</remarks>
-        [NoDebug, CLSCompliant(false)]
+        [DebuggerNonUserCode, CLSCompliant(false)]
         public static explicit operator PValue(SByte number)
         {
             return PType.Int.CreatePValue((int) number);
@@ -1499,5 +1503,42 @@ namespace Prexonite
         }
 
         #endregion
+
+        public static string ToDebugString(PValue val)
+        {
+            if (val == null)
+                return "null";
+            switch(val.Type.ToBuiltIn())
+            {
+                case PType.BuiltIn.Int:
+                case PType.BuiltIn.Real:
+                case PType.BuiltIn.Bool:
+                    return val.Value.ToString();
+                case PType.BuiltIn.String:            
+                    return "\"" + StringPType.Escape(val.Value as string) + "\"";
+                case PType.BuiltIn.Null:            
+                    return NullPType.Literal;
+                case PType.BuiltIn.Object:
+                    return "{" + val.Value + "}";
+                case PType.BuiltIn.List:
+                    var lst = val.Value as List<PValue>;
+                    if (lst == null)
+                        return "[]";
+                    var buffer = new StringBuilder("[");
+                    for(var i = 0; i < lst.Count-1; i++)
+                    {
+                        buffer.Append(ToDebugString(lst[i]));
+                        buffer.Append(",");
+                    }
+                    if (lst.Count > 0)
+                    {
+                        buffer.Append(ToDebugString(lst[lst.Count-1]));
+                    }
+                    buffer.Append("]");
+                    return buffer.ToString();
+                default:
+                    return "#" + val +"#";
+            }
+        }
     }
 }

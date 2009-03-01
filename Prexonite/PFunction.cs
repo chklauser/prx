@@ -61,14 +61,29 @@ namespace Prexonite
 
         public const string SymbolMappingKey = @"\symbol_mapping";
 
+        /// <summary>
+        /// Signals that the function cannot be compiled to CIL.
+        /// </summary>
         public const string VolatileKey = "volatile";
 
+        /// <summary>
+        /// Signals that the function operates on its caller and thus causes the caller to be volatile (<see cref="VolatileKey"/>).
+        /// </summary>
         public const string DynamicKey = "dynamic";
 
+        /// <summary>
+        /// The reason why a function was marked volatile by the CIL compiler.
+        /// </summary>
         public const string DeficiencyKey = "deficiency";
 
+        /// <summary>
+        /// The id used in the source code. (As the nested function)
+        /// </summary>
         public const string LogicalIdKey = "LogicalId";
 
+        /// <summary>
+        /// The name of the functions logical parent.
+        /// </summary>
         public const string ParentFunctionKey = "ParentFunction";
 
         #region Construction
@@ -587,7 +602,6 @@ namespace Prexonite
         /// <param name="engine">The engine in which to execute the function.</param>
         /// <param name="args">The arguments to pass to the function.</param>
         /// <param name="sharedVariables">The list of variables shared with the caller.</param>
-        /// <returns>A function context for the execution of this function.</returns>
         /// <returns>The value returned by the function or {null~Null}</returns>
         public PValue Run(Engine engine, PValue[] args, PVariable[] sharedVariables)
         {

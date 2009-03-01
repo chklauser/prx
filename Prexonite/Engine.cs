@@ -35,9 +35,8 @@ using Prexonite.Commands.Text;
 using Prexonite.Types;
 using Char=Prexonite.Commands.Core.Char;
 using Debug=Prexonite.Commands.Core.Debug;
-using TScanner = Prexonite.Internal.Scanner;
-using TParser = Prexonite.Internal.Parser;
-using NoDebug = System.Diagnostics.DebuggerNonUserCodeAttribute;
+using TypeExpressionScanner = Prexonite.Internal.Scanner;
+using TypeExpressionParser = Prexonite.Internal.Parser;
 
 namespace Prexonite
 {
@@ -479,9 +478,9 @@ namespace Prexonite
         /// </remarks>
         public PType CreatePType(StackContext sctx, string expression)
         {
-            using (TScanner lexer = TScanner.CreateFromString(expression))
+            using (TypeExpressionScanner lexer = TypeExpressionScanner.CreateFromString(expression))
             {
-                var parser = new TParser(lexer, sctx);
+                var parser = new TypeExpressionParser(lexer, sctx);
                 parser.Parse();
                 if (parser.errors.count > 0)
                     throw new PrexoniteException(
@@ -590,6 +589,7 @@ namespace Prexonite
         /// </summary>
         public Engine()
         {
+            ExecutionProhibited = false;
             //Metatable
             meta = new MetaTable();
 

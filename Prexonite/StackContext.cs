@@ -84,16 +84,10 @@ namespace Prexonite
             get;
         }
 
-        private ReturnModes _returnMode;
-
         /// <summary>
         /// Gets or sets the mode of return.
         /// </summary>
-        public ReturnModes ReturnMode
-        {
-            get { return _returnMode; }
-            set { _returnMode = value; }
-        }
+        public ReturnModes ReturnMode { get; set; }
 
         #endregion
 

@@ -61,6 +61,7 @@ namespace Prexonite.Compiler
     {
         private readonly LinkedList<AddressChangeHook> _addressChangeHooks = new LinkedList<AddressChangeHook>();
 
+
         public ICollection<AddressChangeHook> AddressChangeHooks
         {
             get { return _addressChangeHooks; }
@@ -78,12 +79,6 @@ namespace Prexonite.Compiler
         }
 
         #endregion
-
-        [DebuggerStepThrough]
-        public static string GenerateName(string prefix)
-        {
-            return prefix + "\\" + Engine.GenerateName();
-        }
 
         /// <summary>
         /// Returns the string <see cref="Function"/>'s string representation.
@@ -427,12 +422,23 @@ namespace Prexonite.Compiler
 
         #region Symbols
 
+        /// <summary>
+        /// (Re)declares a local symbol.
+        /// </summary>
+        /// <param name="kind">The new interpretation for this symbol.</param>
+        /// <param name="id">The symbols id.</param>
         [DebuggerStepThrough]
         public void Declare(SymbolInterpretations kind, string id)
         {
             Declare(kind, id, id);
         }
 
+        /// <summary>
+        /// (Re)declares a local symbol.
+        /// </summary>
+        /// <param name="kind">The new interpretation for this symbol.</param>
+        /// <param name="id">The id entered into the symbol table.</param>
+        /// <param name="translatedId">The (physical) id used when translating the program. (Use for aliases or set to <paramref name="id"/>)</param>
         [DebuggerStepThrough]
         public void Declare(SymbolInterpretations kind, string id, string translatedId)
         {
@@ -448,11 +454,25 @@ namespace Prexonite.Compiler
             }
         }
 
+        /// <summary>
+        /// Creates local variables or declares global variables locally.
+        /// </summary>
+        /// <param name="kind">The (new) interpretation for the local variable.</param>
+        /// <param name="id">The id for the local variable.</param>
+        /// <remarks>Local object and reference variables are created in addition to being registered in the symbol table. Global object and reference variables are only declared, not created.</remarks>
         [DebuggerStepThrough]
         public void Define(SymbolInterpretations kind, string id)
         {
             Define(kind, id, id);
         }
+
+        /// <summary>
+        /// Creates local variables or declares global variables locally.
+        /// </summary>
+        /// <param name="kind">The (new) interpretation for the local variable.</param>
+        /// <param name="id">The id for the local variable.</param>
+        /// <param name="translatedId">The (physical) id used when translating the program. (Use for aliases or set to <paramref name="id"/>). This is the name used for the variable created.</param>
+        /// <remarks>Local object and reference variables are created in addition to being registered in the symbol table. Global object and reference variables are only declared, not created.</remarks>
 
         [DebuggerStepThrough]
         public void Define(SymbolInterpretations kind, string id, string translatedId)
@@ -484,6 +504,15 @@ namespace Prexonite.Compiler
         #endregion //Symbols
 
         #region Block Jump Stack
+
+        //
+        //  This is a facility for code generation.
+        //  AST nodes can pop/push new break/continue-scopes onto/from the block stack via
+        //      BeginBlock,
+        //      EndBlock
+        //  or directly manipulate the stack via
+        //      BlockLabelsStack
+        //
 
         private readonly Stack<BlockLabels> _blockLabelStack = new Stack<BlockLabels>();
 
@@ -534,12 +563,21 @@ namespace Prexonite.Compiler
 
         #region Code
 
+        /// <summary>
+        /// Safely removes an instruction without invalidating jumps or try-blocks. Notifies <see cref="AddressChangeHooks"/>.
+        /// </summary>
+        /// <param name="index">The address of the instruction to remove.</param>
         [DebuggerStepThrough]
         public void RemoveInstructionAt(int index)
         {
             RemoveInstructionRange(index, 1);
         }
 
+        /// <summary>
+        /// Safely remoes a range of instructions without invalidating jumps or try-blocks. Notifies <see cref="AddressChangeHooks"/>.
+        /// </summary>
+        /// <param name="index">The address of the first instruction to remove.</param>
+        /// <param name="count">The number of instructions to remove.</param>
         public void RemoveInstructionRange(int index, int count)
         {
             var code = Code;
@@ -584,13 +622,12 @@ namespace Prexonite.Compiler
 
                 modifiedBlocks[i++] = block;
             }
+            _function.Meta[TryCatchFinallyBlock.MetaKey] = (MetaEntry)modifiedBlocks;
 
             //Change custom addresses into this code (e.g., cil compiler hints)
             foreach (var hook in _addressChangeHooks)
                 if (hook.InstructionIndex > index)
                     hook.React(hook.InstructionIndex - count);
-
-            _function.Meta[TryCatchFinallyBlock.MetaKey] = (MetaEntry) modifiedBlocks;
         }
 
         #endregion
@@ -599,11 +636,16 @@ namespace Prexonite.Compiler
 
         private readonly SymbolCollection _outerVariables = new SymbolCollection();
 
+        /// <summary>
+        /// Requests an outer function to share a variable with this inner function.
+        /// </summary>
+        /// <param name="id">The (physical) id of the variable or parameter to require from the outer function.</param>
+        /// <exception cref="PrexoniteException">Outer function(s) don't contain a variable or parameter named <paramref name="id"/>.</exception>
         [DebuggerStepThrough]
         public void RequireOuterVariable(string id)
         {
             _outerVariables.Add(id);
-            //Make parent functions hand down the variable, even if they don't use them.
+            //Make parent functions hand down the variable, even if they don't use them themselves.
             for (var T = _parentTarget; T != null; T = T._parentTarget)
             {
                 var func = T.Function;
@@ -1104,6 +1146,11 @@ namespace Prexonite.Compiler
 
         #region Finishing
 
+        //
+        //  This region contains code that is invoked after a first version
+        //    of bytecode has been emitted by the AST.
+        //
+
         /// <summary>
         /// Performs checks and block level optimizations on the target.
         /// </summary>
@@ -1156,6 +1203,9 @@ namespace Prexonite.Compiler
 
         #region Unconditional jump target propagation
 
+        /// <summary>
+        /// Searches for jumps targeting unconditional jumps and propagates the final target back to the initial jump.
+        /// </summary>
         private void _unconditionalJumpTargetPropagation()
         {
             //Unconditional jump target propagation
@@ -1226,8 +1276,34 @@ namespace Prexonite.Compiler
 
         #endregion
 
-        #region RemoveUnconditionalJumpSequences
+        #region Remove unconditional jump sequences
 
+        /// <summary>
+        /// Detects and removes consecutive unconditional jumps.
+        /// </summary>
+        /// <remarks>
+        /// <para>Since all jumps targeting unconditional jumps have been redirected by 
+        /// <see cref="_unconditionalJumpTargetPropagation"/>, unconditional jumps that are preceded by an unconditional jump can no longer be reached directly.</para>
+        /// <code>
+        /// jump.f b
+        /// ...
+        /// jump a
+        /// jump b
+        /// jump c
+        /// ...
+        /// label a
+        /// ...
+        /// </code>
+        /// <para>The above can be shortened to:</para>
+        /// <code>
+        /// jump.f b
+        /// ...
+        /// jump a
+        /// ...
+        /// label a
+        /// ...
+        /// </code>
+        /// </remarks>
         private void _removeUnconditionalJumpSequences()
         {
             var code = Code;
@@ -1251,6 +1327,17 @@ namespace Prexonite.Compiler
 
         #region RemoveJumpsToNextInstruction
 
+        /// <summary>
+        /// Detects and removes unconditional jumps to the following instruction.
+        /// </summary>
+        /// <remarks>
+        /// <code>
+        /// jump b
+        /// label b
+        /// ...
+        /// </code> is shortened to <code>
+        /// ...
+        /// </code></remarks>
         private void _removeJumpsToNextInstruction()
         {
             var code = Code;
@@ -1265,6 +1352,11 @@ namespace Prexonite.Compiler
                     }
                     else if (ins.IsConditionalJump)
                     {
+                        //This is something of the form
+                        //  <bool expr>
+                        //  jump.t n
+                        //  label n
+                        //  ...
                         throw new PrexoniteException
                             (
                             "Redundant conditional jump to following instruction at address " +
@@ -1279,6 +1371,18 @@ namespace Prexonite.Compiler
 
         #region Jump re-inversion
 
+        /// <summary>
+        /// Detects conditional jumps skipping unconditional jumps and combines them into an inverted conditional jump.
+        /// </summary>
+        /// <remarks>
+        /// <code>
+        /// jump.f  after
+        /// jump    somewhere
+        /// label   after
+        /// </code><para>is equal to</para>
+        /// <code>
+        /// jump.t  somewhere
+        /// </code></remarks>
         private void _JumpReInversion()
         {
             var code = Code;
@@ -1339,10 +1443,17 @@ namespace Prexonite.Compiler
 
 #if UseIndex
 
+        /// <summary>
+        /// Replaces by-name opcodes with by-index ones. Ignores variables with no mapping.
+        /// </summary>
         private void _by_index()
         {
+            //Exclude the initialization function from this optimization
+            // as its symbol table keeps changing as more code files
+            // are loaded into the VM.
             if (Engine.StringsAreEqual(Function.Id, Application.InitializationId))
                 return;
+
             var code = Function.Code;
             Function.CreateLocalVariableMapping(); //Force (re)creation of the mapping
             var map = Function.LocalVariableMapping;
@@ -1351,6 +1462,7 @@ namespace Prexonite.Compiler
             {
                 var ins = code[i];
                 OpCode nopc;
+                int idx;
                 switch (ins.OpCode)
                 {
                     case OpCode.ldloc:
@@ -1367,14 +1479,14 @@ namespace Prexonite.Compiler
                         goto replaceInt;
                     case OpCode.ldr_loc:
                         nopc = OpCode.ldr_loci;
-                        replaceInt:
-                        var idx = map[ins.Id];
+                    replaceInt:
+                        if(!map.TryGetValue(ins.Id, out idx))
+                            continue;
                         code[i] = new Instruction(nopc, idx);
                         break;
                     case OpCode.indloc:
-                        if (!map.ContainsKey(ins.Id))
+                        if (!map.TryGetValue(ins.Id, out idx))
                             continue;
-                        idx = map[ins.Id];
                         var argc = ins.Arguments;
                         code[i] = Instruction.CreateIndLocI(idx, argc, ins.JustEffect);
                         break;

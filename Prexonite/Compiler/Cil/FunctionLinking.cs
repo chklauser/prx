@@ -43,14 +43,14 @@ namespace Prexonite.Compiler.Cil
         AvailableForLinking = 1,
 
         /// <summary>
-        /// Function calls are linked statically whenever possible.
-        /// </summary>
-        Static = 2,
-
-        /// <summary>
         /// Function calls are always linked by name.
         /// </summary>
         ByName = 0,
+
+        /// <summary>
+        /// Function calls are linked statically whenever possible.
+        /// </summary>
+        Static = 2,
 
         /// <summary>
         /// The CIL implementation is completely independant of other implementations.
@@ -63,7 +63,7 @@ namespace Prexonite.Compiler.Cil
         FullyStatic = AvailableForLinking | Static,
 
         /// <summary>
-        /// The CIL implementation is isolated but links statically.
+        /// The CIL implementation is isolated but links statically to functions available for linking.
         /// </summary>
         JustStatic = Isolated | Static,
 

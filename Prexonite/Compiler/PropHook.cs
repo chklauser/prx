@@ -63,10 +63,10 @@ namespace Prexonite.Compiler
                 var parameters = target.Function.Parameters;
 
                 while (parameters.Count < args_offset)
-                    parameters.Add(CompilerTarget.GenerateName("dummy_arg"));
+                    parameters.Add(Engine.GenerateName("dummy_arg"));
 
                 if(parameters.Count == args_offset)
-                    target.Function.Parameters.Add(CompilerTarget.GenerateName("prop_forward"));
+                    target.Function.Parameters.Add(Engine.GenerateName("prop_forward"));
 
                 var prop_arg = new AstGetSetSymbol(
                     stmt.File,
@@ -96,7 +96,7 @@ namespace Prexonite.Compiler
                                 stmt.Line,
                                 stmt.Column,
                                 PCall.Get,
-                                CompilerTarget.GenerateName(target.Function.Id + "_prop_field_"),
+                                Engine.GenerateName(target.Function.Id + "_prop_field_"),
                                 SymbolInterpretations.GlobalObjectVariable);
                             target.Loader.ParentApplication.Variables.Add(
                                 backingField.Id, new PVariable(backingField.Id));
@@ -110,7 +110,7 @@ namespace Prexonite.Compiler
                                 stmt.Line,
                                 stmt.Column,
                                 PCall.Get,
-                                CompilerTarget.GenerateName(target.Function.Id + "_prop_field_"),
+                                Engine.GenerateName(target.Function.Id + "_prop_field_"),
                                 SymbolInterpretations.LocalObjectVariable);
                             pt.Function.Variables.Add(backingField.Id);
                             target.RequireOuterVariable(backingField.Id);

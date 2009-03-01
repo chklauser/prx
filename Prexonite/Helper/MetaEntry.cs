@@ -81,7 +81,7 @@ namespace Prexonite
                     case Type.Switch:
                         return _switch.ToString();
                     case Type.List:
-                        StringBuilder buffer = new StringBuilder();
+                        var buffer = new StringBuilder();
                         buffer.Append("{");
                         foreach(string entry in List)
                         {
@@ -89,7 +89,7 @@ namespace Prexonite
                             buffer.Append(", ");
                         }
                         //Cut off last ", "
-                        if(buffer.Length > 0)
+                        if(buffer.Length >= 2)
                             buffer.Remove(buffer.Length - 2, 2);
                         buffer.Append("}");
                         return buffer.ToString();

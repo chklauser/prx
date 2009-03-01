@@ -68,13 +68,13 @@ namespace Prexonite.Commands.Core
         {
             if (sctx == null)
                 throw new ArgumentNullException("sctx");
-            LinkedList<StackContext> stack = sctx.ParentEngine.Stack;
+            var stack = sctx.ParentEngine.Stack;
             if (!stack.Contains(sctx))
                 return null;
             else
             {
-                LinkedListNode<StackContext> callee = stack.FindLast(sctx);
-                if (callee.Previous == null)
+                var callee = stack.FindLast(sctx);
+                if (callee == null || callee.Previous == null)
                     return null;
                 else
                     return callee.Previous.Value;
@@ -83,7 +83,7 @@ namespace Prexonite.Commands.Core
 
         public static PValue GetCallerFromCilFunction(StackContext sctx)
         {
-            LinkedList<StackContext> stack = sctx.ParentEngine.Stack;
+            var stack = sctx.ParentEngine.Stack;
             if (stack.Count == 0)
                 return PType.Null;
             else
@@ -111,7 +111,7 @@ namespace Prexonite.Commands.Core
 
         void ICilCompilerAware.ImplementInCil(CompilerState state, Instruction ins)
         {
-            for(int i = 0; i < ins.Arguments; i++)   
+            for(var i = 0; i < ins.Arguments; i++)   
                 state.Il.Emit(OpCodes.Pop);
             if (!ins.JustEffect)
             {

@@ -39,7 +39,7 @@ namespace Prexonite
     {
         #region Stack management
 
-        private LinkedList<StackContext> _stack = new LinkedList<StackContext>();
+        private readonly LinkedList<StackContext> _stack = new LinkedList<StackContext>();
 
         /// <summary>
         /// Provides access to the virtual machine's call stack.
@@ -70,10 +70,10 @@ namespace Prexonite
         /// <seealso cref="StackContext"/>
         public PValue Process()
         {
-            if (_executionProhibited)
+            if (ExecutionProhibited)
                 throw new ExecutionProhibitedException("The engine is not permitted to run code.");
 
-            int level = _stack.Count;
+            var level = _stack.Count;
             if (level < 1)
                 throw new PrexoniteException("The VM stack is empty. Return value cannot be computed.") ;
 
@@ -82,9 +82,9 @@ namespace Prexonite
 
             while (_stack.Count >= level)
             {
-                StackContext sctx = _stack.Last.Value;
+                var sctx = _stack.Last.Value;
 
-                bool keepOnStack = false;
+                var keepOnStack = false;
                 if (currentException == null)
                 {
                     //Execute code
@@ -168,33 +168,19 @@ namespace Prexonite
 
         #region Runtime Settings
 
-        private bool _cacheFunctions = false;
-
         /// <summary>
         /// Controls whether function references are cached to skip the string comparison based lookup.
         /// </summary>
         /// <remarks>If you enabled caching and replace a function at runtime, instructions that 
         /// maintain a cached reference will still call the original function.</remarks>
-        public bool CacheFunctions
-        {
-            get { return _cacheFunctions; }
-            set { _cacheFunctions = value; }
-        }
-
-        private bool _cacheCommands = false;
+        public bool CacheFunctions { get; set; }
 
         /// <summary>
         /// Controls wether command references are cached to skip the string comparison based lookup.
         /// </summary>
         /// <remarks>If you enabled caching and replace a commanc at runtime, instructions that 
         /// maintain a cached reference will still call the original command.</remarks>
-        public bool CacheCommands
-        {
-            get { return _cacheCommands; }
-            set { _cacheCommands = value; }
-        }
-
-        private bool _executionProhibited = false;
+        public bool CacheCommands { get; set; }
 
         /// <summary>
         /// You can prevent an engine from accidentially executing code by setting this property to true.
@@ -211,11 +197,7 @@ namespace Prexonite
         ///     This can be usefull if you want to prevent a script from executing it's build block upon loading.<br />
         /// </para>
         /// </remarks>
-        public bool ExecutionProhibited
-        {
-            get { return _executionProhibited; }
-            set { _executionProhibited = value; }
-        }
+        public bool ExecutionProhibited { get; set; }
 
         /// <summary>
         /// Indicates whether the <see cref="CompileToCil"/> command is allowed to link statically. 
@@ -224,5 +206,11 @@ namespace Prexonite
         public bool StaticLinkingAllowed { get; set; }
 
         #endregion
+
+        [DebuggerStepThrough]
+        public static string GenerateName(string prefix)
+        {
+            return prefix + "\\" + GenerateName();
+        }
     }
 }

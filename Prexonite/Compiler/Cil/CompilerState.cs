@@ -299,19 +299,6 @@ namespace Prexonite.Compiler.Cil
             }
             else
             {
-                /*/*                for(int i = argc - 1; i >= 0; i--)
-                    EmitStoreLocal(TempLocals[i]);
-                Il.Emit(OpCodes.Ldc_I4, argc);
-                Il.Emit(OpCodes.Newarr, typeof(PValue));
-                EmitStoreLocal(ArgvLocal);
-                for(int i = 0; i < argc; i++)
-                {
-                    EmitLoadLocal(ArgvLocal);
-                    Il.Emit(OpCodes.Ldc_I4, i);
-                    EmitLoadLocal(TempLocals[i]);
-                    Il.Emit(OpCodes.Stelem_Ref);
-                }*/
-
                 //Instantiate array -> argv
                 Il.Emit(OpCodes.Ldc_I4, argc);
                 Il.Emit(OpCodes.Newarr, typeof (PValue));

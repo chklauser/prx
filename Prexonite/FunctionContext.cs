@@ -31,6 +31,7 @@ using System.Collections.Generic;
 using System.Diagnostics;
 using System.Reflection;
 using System.Runtime.Serialization;
+using System.Text;
 using Prexonite.Commands;
 using Prexonite.Commands.Core;
 using Prexonite.Types;
@@ -77,15 +78,19 @@ namespace Prexonite
             _parentEngine = parentEngine;
             _implementation = implementation;
             _bindArguments(args);
+            _createLocalVariables();
             ReturnMode = ReturnModes.Exit;
             if (_implementation.Meta.ContainsKey(PFunction.SharedNamesKey))
             {
                 var sharedNames = _implementation.Meta[PFunction.SharedNamesKey].List;
+                //Ensure enough shared variables have been passed
                 if (sharedNames.Length > sharedVariables.Length)
                     throw new ArgumentException
                         (
                         "The function " + _implementation.Id + " requires " +
                         sharedNames.Length + " variables to be shared.");
+
+
                 for (var i = 0; i < sharedNames.Length; i++)
                 {
                     if (sharedVariables[i] == null)
@@ -95,12 +100,12 @@ namespace Prexonite
                             "One of the elements passed in sharedVariables is null.");
 
                     if (_localVariables.ContainsKey(sharedNames[i]))
-                        continue; //Arguments are redeclarations.
+                        continue; //Arguments are redeclarations, that is not shared 
                     _localVariables.Add(sharedNames[i], sharedVariables[i]);
                 }
             }
 
-            //Populate fast access array
+            //Populate fast variable access array (call by index)
             _localVariableArray = new PVariable[_localVariables.Count];
             foreach (var mapping in _implementation.LocalVariableMapping)
                 _localVariableArray[mapping.Value] = _localVariables[mapping.Key];
@@ -151,10 +156,13 @@ namespace Prexonite
 
                 _localVariables.Add(arg, pvar);
             }
+        }
 
+        private void _createLocalVariables()
+        {
             //Create local variables
             foreach (var local in _implementation.Variables)
-                if (!_localVariables.ContainsKey(local))
+                if (!_localVariables.ContainsKey(local)) //Don't override arguments
                     _localVariables.Add(local, new PVariable());
         }
 
@@ -267,7 +275,6 @@ namespace Prexonite
             get { return _stack.Count; }
         }
 
-
         private void throwInvalidStackException(int argc)
         {
             throw new PrexoniteInvalidStackException
@@ -287,49 +294,25 @@ namespace Prexonite
         }
 
         private bool _fetchReturnValue;
-#if Verbose
-        internal static string toDebug(PValue val)
-        {
-            if (val == null)
-                return "@null";
-            switch(val.Type.ToBuiltIn())
-            {
-                case PType.BuiltIn.Int:
-                case PType.BuiltIn.Real:
-                case PType.BuiltIn.Bool:
-                    return val.Value.ToString();
-                case PType.BuiltIn.String:            
-                    return "\"" + StringPType.Escape(val.Value as string) + "\"";
-                case PType.BuiltIn.Null:            
-                    return NullPType.Literal;
-                case PType.BuiltIn.Object:
-                    return "{" + val.Value + "}";
-                case PType.BuiltIn.List:
-                    StringBuilder buffer = new StringBuilder("List(");
-                    List<PValue> lst = val.Value as List<PValue>;
-                    for(int i = 0; i < lst.Count-1; i++)
-                    {
-                        buffer.Append(toDebug(lst[i]));
-                        buffer.Append(",");
-                    }
-                    if (lst.Count > 0)
-                    {
-                        buffer.Append(toDebug(lst[lst.Count-1]));
-                    }
-                    buffer.Append(")");
-                    return buffer.ToString();
-                default:
-                    return "#" + val +"#";
-            }
-        }
-#endif
 
         protected override bool PerformNextCylce(StackContext lastContext)
         {
-            var needToReturn = false;
+            return PerformNextCylce(lastContext, false);
+        }
+
+        public bool Step(StackContext lastContext)
+        {
+            return PerformNextCylce(lastContext, true);
+        }
+
+        private bool PerformNextCylce(StackContext lastContext, bool needToReturn)
+        {
+            //Indicates whether or not control needs to be returned to the VM.
+            //  as long as no operation is performed on the stack, 
+            //  
             var codeBase = _implementation.Code;
             var codeLength = codeBase.Count;
-            while (!needToReturn)
+            do
             {
                 if (_pointer >= codeLength)
                 {
@@ -961,7 +944,7 @@ namespace Prexonite
                     Console.WriteLine(")");
 #endif
 
-                        //Perform indirect call
+//Perform indirect call
                         doIndloc:
                         if (justEffect)
                             left.IndirectCall(this, argv);
@@ -989,7 +972,7 @@ namespace Prexonite
                     Console.WriteLine(")");
 #endif
 
-                        //Perform indirect call
+//Perform indirect call
                         if (justEffect)
                             left.IndirectCall(this, argv);
                         else
@@ -1297,7 +1280,7 @@ namespace Prexonite
 #endif
                 if (_pointer >= codeLength)
                     return false;
-            }
+            } while (!needToReturn);
 
             return _pointer < codeLength;
         }

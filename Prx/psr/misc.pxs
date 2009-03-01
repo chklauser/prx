@@ -23,6 +23,10 @@ function cmp_values(a,b,ccmp) = (ccmp ?? ->cmp).(a.Value,b.Value);
 function cmp_keys(a,b,ccmp) = (ccmp ?? ->cmp).(a.Key,b.Key);
 
 function cmpr(a,b,ccmp) = (ccmp ?? ->cmp).(b,a);
+
+function ieq(a,b) = a~Int == b~Int;
+function ieq_any(a) = 
+    var args >> skip(1) >> exists( b => ieq(a,b) );
             
     
 //Creates a wrapper around an object that intercepts calls to dispose.
@@ -66,6 +70,8 @@ function create_lazy(factory)
             return _value = factory.();
         }
     }
+    
+   
             
     return struct;            
 }

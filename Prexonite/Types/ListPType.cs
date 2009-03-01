@@ -388,6 +388,29 @@ namespace Prexonite.Types
                     PValue value = List.CreatePValue(valueList);
                     result = target.CreatePValue(new PValueKeyValuePair(key, value));
                 }
+                else if(clrType.IsArray)
+                {
+                    //Convert each element in the list to the element type of the array.
+                    var et = clrType.GetElementType();
+                    var lst = (List<PValue>) subject.Value;
+                    var array = Array.CreateInstance(et, lst.Count);
+                    var success = true;
+                    for (var i = 0; i < lst.Count; i++)
+                    {
+                        PValue converted;
+                        if (lst[i].TryConvertTo(sctx, et, useExplicit, out converted))
+                        {
+                            array.SetValue(converted.Value, i);
+                        }
+                        else
+                        {
+                            success = false;
+                            break;
+                        }
+                    }
+                    if (success)
+                        result = sctx.CreateNativePValue(array);
+                }
             }
             return result != null;
         }

@@ -61,7 +61,8 @@ namespace Prexonite.Compiler.Cil
         private static readonly MethodInfo _LoadGlobalVariableReferenceAsPValueMethod =
             typeof (Runtime).GetMethod("LoadGlobalVariableReferenceAsPValue");
 
-        private static readonly MethodInfo _NewClosureMethod = typeof (Runtime).GetMethod("NewClosure");
+        private static readonly MethodInfo _NewClosureMethod_LateBound = typeof (Runtime).GetMethod("NewClosure", new[] { typeof(StackContext), typeof(PVariable[]), typeof(string) });
+        private static readonly MethodInfo _NewClosureMethod_StaticallyBound = typeof(Runtime).GetMethod("NewClosure", new[] { typeof(StackContext), typeof(PVariable[]), typeof(PFunction)});
         private static readonly MethodInfo _NewObjMethod = typeof (Runtime).GetMethod("NewObj");
         private static readonly MethodInfo _NewTypeMethod = typeof (Runtime).GetMethod("NewType");
         private static readonly MethodInfo _ParseExceptionMethod = typeof (Runtime).GetMethod("ParseException");
@@ -141,9 +142,17 @@ namespace Prexonite.Compiler.Cil
             get { return _NewTypeMethod; }
         }
 
-        internal static MethodInfo NewClosureMethod
+        internal static MethodInfo newClosureMethod_LateBound
         {
-            get { return _NewClosureMethod; }
+            get { return _NewClosureMethod_LateBound; }
+        }
+
+        internal static MethodInfo newClosureMethod_StaticallyBound
+        {
+            get
+            {
+                return _NewClosureMethod_StaticallyBound;
+            }
         }
 
         internal static MethodInfo RaiseToPowerMethod
@@ -259,18 +268,21 @@ namespace Prexonite.Compiler.Cil
 
         public static PValue NewClosure(StackContext sctx, PVariable[] sharedVariables, string funcId)
         {
-            if (sharedVariables == null)
-                sharedVariables = EmptyPVariableArray;
             PFunction func;
             if (!sctx.ParentApplication.Functions.TryGetValue(funcId, out func))
                 throw new PrexoniteException("Cannot create closure for non existant function " + funcId);
-            if (func.HasCilImplementation)
+            return NewClosure(sctx, sharedVariables, func);
+        }
+
+        public static PValue NewClosure(StackContext sctx, PVariable[] sharedVariables, PFunction function)
+        {
+            if (function.HasCilImplementation)
             {
-                return sctx.CreateNativePValue(new CilClosure(func, sharedVariables));
+                return sctx.CreateNativePValue(new CilClosure(function, sharedVariables ?? EmptyPVariableArray));
             }
             else
             {
-                return sctx.CreateNativePValue(new Closure(func, sharedVariables));
+                return sctx.CreateNativePValue(new Closure(function, sharedVariables ?? EmptyPVariableArray));
             }
         }
 
@@ -375,7 +387,7 @@ namespace Prexonite.Compiler.Cil
             return (bool) left.Value;
         }
 
-        public static PValue CreateList(StackContext sctx, PValue[] args)
+        public static PValue CreateList(StackContext sctx, params PValue[] args)
         {
             return PType.List.CreatePValue(args);
         }
@@ -425,6 +437,13 @@ namespace Prexonite.Compiler.Cil
                 );
         }
 
+        /// <summary>
+        /// Extracts an IEnumerator[PValue] from the supplied value. The input can either directly supply a 
+        /// sequence of PValue objects or arbitrary CLR objects that will be transparently mapped to PValues with respect to the stack context.
+        /// </summary>
+        /// <param name="value">The value sequence (implements IEnumerator or IEnumerator[PValue].</param>
+        /// <param name="sctx">The stack context-</param>
+        /// <returns>A sequence of PValue objects.</returns>
         public static IEnumerator<PValue> ExtractEnumerator(PValue value, StackContext sctx)
         {
             if (value == null)
@@ -459,6 +478,9 @@ namespace Prexonite.Compiler.Cil
 
         #region Nested type: EnumeratorWrapper
 
+        /// <summary>
+        /// Used to transparently convert arbitrary sequences to PValue sequences
+        /// </summary>
         public sealed class EnumeratorWrapper
             : IEnumerator<PValue>
         {

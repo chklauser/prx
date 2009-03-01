@@ -1237,8 +1237,18 @@ namespace Prexonite.Compiler.Cil
                             state.EmitLoadLocal(state.SharedLocal);
                         else
                             state.Il.Emit(OpCodes.Ldnull);
-                        state.Il.Emit(OpCodes.Ldstr, id);
-                        state.Il.EmitCall(OpCodes.Call, Runtime.NewClosureMethod, null);
+
+                        MethodInfo dummy;
+                        if (TryGetStaticallyLinkedFunction(state, id, out dummy))
+                        {
+                            state.Il.Emit(OpCodes.Ldsfld,state.Pass.FunctionFields[id]);
+                            state.Il.EmitCall(OpCodes.Call, Runtime.newClosureMethod_StaticallyBound, null);
+                        }
+                        else
+                        {
+                            state.Il.Emit(OpCodes.Ldstr, id);
+                            state.Il.EmitCall(OpCodes.Call, Runtime.newClosureMethod_LateBound, null);
+                        }
                         break;
 
                     case OpCode.newcor:
@@ -1644,8 +1654,7 @@ namespace Prexonite.Compiler.Cil
 
                     case OpCode.func:
                         MethodInfo targetMethod;
-                        if ((state.Linking & FunctionLinking.Static) == FunctionLinking.Static &&
-                            state.Pass.Implementations.TryGetValue(id, out targetMethod))
+                        if (TryGetStaticallyLinkedFunction(state, id, out targetMethod))
                         {
                             state.fillArgv(argc);
                             state.Il.Emit(OpCodes.Ldsfld, state.Pass.FunctionFields[id]);
@@ -1873,6 +1882,13 @@ namespace Prexonite.Compiler.Cil
                 state.MarkInstruction(sourceCode.Count);
                 state.Il.Emit(OpCodes.Ret);
             }
+        }
+
+        public static bool TryGetStaticallyLinkedFunction(CompilerState state, string id, out MethodInfo targetMethod)
+        {
+            targetMethod = null;
+            return (state.Linking & FunctionLinking.Static) == FunctionLinking.Static &&
+                   state.Pass.Implementations.TryGetValue(id, out targetMethod);
         }
 
         private static void _emit_ret(CompilerState state, int instructionIndex)

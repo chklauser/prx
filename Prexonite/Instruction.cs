@@ -487,7 +487,6 @@ namespace Prexonite
             return buffer.ToString();
         }
 
-
         /// <summary>
         /// Writes a human- and machine-readable string representation of the instruction to the supplied <paramref name="buffer"/>.
         /// </summary>
@@ -680,12 +679,20 @@ namespace Prexonite
         /// </summary>
         /// <param name="index">The address at which to store the actual index.</param>
         /// <param name="argc">The address at which to store the actual arguments count.</param>
-        internal void DecodeIndLocIndex(out int index, out int argc)
+        public void DecodeIndLocIndex(out int index, out int argc)
         {
             if (OpCode != OpCode.indloci)
                 throw new ArgumentException("Can only decode indloci instructions.");
             index = (Arguments & ushort.MaxValue);
             argc =  ((Arguments & (ushort.MaxValue << 16)) >> 16);
+        }
+
+        public PValueKeyValuePair DecodeIndLocIndex()
+        {
+            int index;
+            int argc;
+            DecodeIndLocIndex(out index, out argc);
+            return new PValueKeyValuePair(index, argc);
         }
 
         #endregion
