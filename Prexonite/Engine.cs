@@ -80,6 +80,12 @@ namespace Prexonite
             return "gen" + Guid.NewGuid().ToString("N");
         }
 
+        [DebuggerStepThrough]
+        public static string GenerateName(string prefix)
+        {
+            return prefix + "\\" + GenerateName();
+        }
+
         #endregion
 
         #region Meta
@@ -1058,5 +1064,6 @@ namespace Prexonite
         public const string SumAlias = "sum";
 
         #endregion
+        
     }
 }

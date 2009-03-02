@@ -554,13 +554,18 @@ namespace Prexonite.Compiler
 
         private void SmartDeclareLocal(string id, SymbolInterpretations kind)
         {
-            if (isOuterVariable(id))
+            SmartDeclareLocal(id, id, kind);   
+        }
+
+        private void SmartDeclareLocal(string logicalId, string physicalId, SymbolInterpretations kind)
+        {
+            if (isOuterVariable(physicalId))
             {
-                target.RequireOuterVariable(id);
-                target.Declare(kind, id, id);
+                target.RequireOuterVariable(physicalId);
+                target.Declare(kind, logicalId, physicalId);
             }
             else
-                target.Define(kind, id);
+                target.Define(kind, logicalId, physicalId);
         }
 
 /*

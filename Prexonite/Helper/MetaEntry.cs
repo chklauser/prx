@@ -227,7 +227,7 @@ namespace Prexonite
         public static implicit operator string(MetaEntry item)
         {
             if(item == null)
-                throw new ArgumentNullException("item","A null reference cannot be implicitly converted."); 
+                throw new ArgumentNullException("item", "A null reference cannot be implicitly converted to a meta entry."); 
             return item.Text;
         }
 
@@ -235,7 +235,7 @@ namespace Prexonite
         public static implicit operator bool(MetaEntry item)
         {
             if (item == null)
-                throw new ArgumentNullException("item", "A null reference cannot be implicitly converted."); 
+                throw new ArgumentNullException("item", "A null reference cannot be implicitly converted to a meta entry."); 
             return item.Switch;
         }
 
@@ -243,7 +243,7 @@ namespace Prexonite
         public static explicit operator MetaEntry[](MetaEntry item)
         {
             if (item == null)
-                throw new ArgumentNullException("item", "A null reference cannot be explicitly converted."); 
+                throw new ArgumentNullException("item", "A null reference cannot be explicitly converted to a meta entry."); 
             return item.List;
         }
 
@@ -257,7 +257,7 @@ namespace Prexonite
         public static implicit operator MetaEntry(string item)
         {
             if (item == null)
-                throw new ArgumentNullException("item", "A null reference cannot be explicitly converted.");
+                throw new ArgumentNullException("item", "A null reference cannot be implicitly converted to a meta entry.");
             return new MetaEntry(item);
         }
 
@@ -265,14 +265,14 @@ namespace Prexonite
         public static explicit operator MetaEntry(MetaEntry[] item)
         {
             if (item == null)
-                throw new ArgumentNullException("item", "A null reference cannot be implicitly converted."); 
+                throw new ArgumentNullException("item", "A null reference cannot be explicitly converted to a meta entry."); 
             return new MetaEntry(item);
         }
 
         public static implicit operator PValue(MetaEntry item)
         {
             if (item == null)
-                throw new ArgumentNullException("item", "A null reference cannot be implicitly converted."); 
+                throw new ArgumentNullException("item", "A null reference cannot be implicitly converted to a meta entry."); 
             switch(item._mtype)
             {
                 case Type.Text:
@@ -280,8 +280,8 @@ namespace Prexonite
                 case Type.Switch:
                     return PType.Bool.CreatePValue(item._switch);
                 case Type.List:
-                    List<PValue> lst = new List<PValue>(item._list.Length);
-                    foreach(MetaEntry entry in item._list)
+                    var lst = new List<PValue>(item._list.Length);
+                    foreach(var entry in item._list)
                         lst.Add(entry);
                     return PType.List.CreatePValue(lst);
                 default:
@@ -340,7 +340,7 @@ namespace Prexonite
             if(ReferenceEquals(this, obj))
                 return true;
 
-            MetaEntry entry = obj as MetaEntry;
+            var entry = obj as MetaEntry;
             if(entry == null)
                 return false;
             else
@@ -385,7 +385,7 @@ namespace Prexonite
                 default:
                     throw new PrexoniteException("Invalid meta entry.");
             }
-            MetaEntry[] newList = new MetaEntry[list.Length + newEntries.Length];
+            var newList = new MetaEntry[list.Length + newEntries.Length];
             Array.Copy(list, newList, list.Length);
             Array.Copy(newEntries, 0, newList, list.Length, newEntries.Length);
             return (MetaEntry) newList;
@@ -420,7 +420,7 @@ namespace Prexonite
                     "The supplied index and length " + index +
                     " are out of the range of 0.." + (list.Length - 1) +
                     ".");
-            MetaEntry[] newList = new MetaEntry[list.Length - 1];
+            var newList = new MetaEntry[list.Length - 1];
             //Copy the elements before the ones to remove
             if(index > 0)
                 Array.Copy(list, newList, index);

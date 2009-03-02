@@ -495,8 +495,8 @@ namespace Prexonite.Compiler
                     else
                         Symbols[id] = new SymbolEntry(kind, translatedId);
 
-                    if (!Function.Variables.Contains(id))
-                        Function.Variables.Add(id);
+                    if (!Function.Variables.Contains(translatedId))
+                        Function.Variables.Add(translatedId);
                     break;
             }
         }

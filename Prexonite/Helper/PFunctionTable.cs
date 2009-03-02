@@ -109,8 +109,8 @@ namespace Prexonite
             if (_table.Count + arrayIndex > array.Length)
                 throw new ArgumentException("Array to copy functions into is not long enough.");
 
-            int i = arrayIndex;
-            foreach (KeyValuePair<string, PFunction> kvp in _table)
+            var i = arrayIndex;
+            foreach (var kvp in _table)
             {
                 if (i >= array.Length)
                     break;

@@ -257,10 +257,19 @@ GlobalCode							(.
 
 /* ---- Function definition ---- */
 
+FunctionAliasList<. IList<string> aliases .> 
+                                    (.  String id; .)
+=
+    as Id<out id>                   (.  aliases.Add(id); .)
+    [   comma Id<out id>            (.  aliases.Add(id); .)
+    ]
+.
+
 FunctionDefinition<out PFunction func>
                                     (.  
                                         func = null; 
-                                        string id;     
+                                        List<string> funcAliases = new List<string>();
+                                        string id = null;     
                                         string funcId; 
                                         func = null; 
                                         bool isNested = target != null; 
@@ -273,10 +282,14 @@ FunctionDefinition<out PFunction func>
                                     .)         
 =	
 	(   function
-	|   coroutine                   (.  isCoroutine = true;
-	                                .)
+	|   coroutine                   (.  isCoroutine = true; .)
+	|   macro
 	)
-	Id<out id>                      (.  funcId = id;
+	(   Id<out id>                  (.  funcAliases.Add(id); .)
+	    [ FunctionAliasList<funcAliases> ]
+	|   FunctionAliasList<funcAliases>
+	)                               (.  
+	                                    funcId = id ?? Engine.GenerateName("f");
                                         if(Engine.StringsAreEqual(id, @"\init"))
                                         {
                                             func = TargetApplication._InitializationFunction;
@@ -287,16 +300,26 @@ FunctionDefinition<out PFunction func>
                                         }
                                         else
                                         {
+                                            var localId = id;
+                                            
                                             if(isNested)
                                             {
-                                                funcId = generateNestedFunctionId(id);
-                                                SmartDeclareLocal(id, SymbolInterpretations.LocalReferenceVariable);
+                                                funcId = generateNestedFunctionId(id ?? "inner");
+                                                
+                                                if(string.IsNullOrEmpty(localId))
+                                                {
+                                                    //Create shadow name
+                                                    localId = generateNestedFunctionId(id ?? "inner");
+                                                }
+                                                SmartDeclareLocal(localId, SymbolInterpretations.LocalReferenceVariable);
+                                                foreach(var alias in funcAliases)
+                                                        SmartDeclareLocal(alias, localId, SymbolInterpretations.LocalReferenceVariable);
                                             }
                                             
                                             func = new PFunction(TargetApplication, funcId);
                                             
                                             if(isNested)
-                                                 func.Meta[PFunction.LogicalIdKey] = id;
+                                                 func.Meta[PFunction.LogicalIdKey] = localId;
                                             
                                             Loader.CreateFunctionTarget(func, new AstBlock(this));
                                             if(TargetApplication.Functions.Contains(func.Id) && !TargetApplication.Meta.GetDefault(Application.AllowOverridingKey,true))
@@ -336,10 +359,16 @@ FunctionDefinition<out PFunction func>
             FormalArg<ft>
         }
 	]	                            (.  if(target == null && 
-	                                        (!object.ReferenceEquals(func, TargetApplication._InitializationFunction)))
+	                                        (!object.ReferenceEquals(func, TargetApplication._InitializationFunction)) &&
+	                                        (!isNested))
 	                                    {
 	                                            //Add the name to the symboltable
-	                                            Symbols[func.Id] = new SymbolEntry(SymbolInterpretations.Function, func.Id);
+	                                            foreach(var alias in funcAliases)	                                                
+	                                                Symbols[alias] = new SymbolEntry(SymbolInterpretations.Function, func.Id);
+	                                            
+	                                            //Store the original (logical id)
+	                                            if((!string.IsNullOrEmpty(id)))
+	                                                func.Meta[PFunction.LogicalIdKey] = id;
 	                                    }
 	                                    //Target the coroutine body instead of the stub
                                         if(isCoroutine)

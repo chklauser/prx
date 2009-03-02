@@ -176,6 +176,8 @@ internal partial class Lexer
                     return Parser._is;
                 case "not":
                     return Parser._not;
+                case "macro":
+                    return Parser._macro;
             }
 
         //Global only

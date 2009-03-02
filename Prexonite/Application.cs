@@ -284,12 +284,14 @@ namespace Prexonite
                     try
                     {
                         _suppressInitialization = true;
-                        FunctionContext fctx =
-                            _initializationFunction.CreateFunctionContext(
+                        var fctx =
+                            _initializationFunction.CreateFunctionContext
+                                (
                                 targetEngine,
-                                new PValue[] {},
-                                new PVariable[] {},
-                                true);
+                                new PValue[0], // \init has no arguments
+                                new PVariable[0],// \init is not a closure
+                                true // don't initialize. That's what WE are trying to do here.
+                            );
                         int offset;
                         if (
                             (!(_initializationFunction.Meta.TryGetValue(InitializationId, out init) &&

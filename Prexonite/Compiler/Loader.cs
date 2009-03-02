@@ -183,7 +183,7 @@ namespace Prexonite.Compiler
 
         public SymbolTable<SymbolEntry> Symbols
         {
-            [DebuggerStepThrough]
+            /*[DebuggerStepThrough]*/
             get { return _symbols; }
         }
 

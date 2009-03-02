@@ -206,11 +206,5 @@ namespace Prexonite
         public bool StaticLinkingAllowed { get; set; }
 
         #endregion
-
-        [DebuggerStepThrough]
-        public static string GenerateName(string prefix)
-        {
-            return prefix + "\\" + GenerateName();
-        }
     }
 }

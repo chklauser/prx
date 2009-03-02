@@ -125,8 +125,9 @@ internal partial class Parser {
 	public const int _finally = 87;
 	public const int _throw = 88;
 	public const int _uusing = 89;
-	public const int _ENDKEYWORDS = 90;
-	public const int _LPopExpr = 91;
+	public const int _macro = 90;
+	public const int _ENDKEYWORDS = 91;
+	public const int _LPopExpr = 92;
 	public enum Terminals
 	{
 		@EOF = 0,
@@ -219,10 +220,11 @@ internal partial class Parser {
 		@finally = 87,
 		@throw = 88,
 		@uusing = 89,
-		@ENDKEYWORDS = 90,
-		@LPopExpr = 91,
+		@macro = 90,
+		@ENDKEYWORDS = 91,
+		@LPopExpr = 92,
 	}
-	const int maxT = 92;
+	const int maxT = 93;
 
 #line 43 "D:\DotNetProjects\Prexonite\Tools\Parser.frame" //FRAME
 
@@ -328,7 +330,7 @@ internal partial class Parser {
 		} else if (StartOf(1)) {
 			AsmInstruction(/*Parser.Assembler.atg:34*/block);
 			Expect(_semicolon);
-		} else SynErr(93);
+		} else SynErr(94);
 	}
 
 	void AsmInstruction(/*Parser.Assembler.atg:37*/AstBlock block) {
@@ -442,7 +444,7 @@ internal partial class Parser {
 			} else if (la.kind == _integer) {
 				Integer(/*Parser.Assembler.atg:150*/out arguments);
 				/*Parser.Assembler.atg:150*/ins = new Instruction(code, arguments); 
-			} else SynErr(94);
+			} else SynErr(95);
 			/*Parser.Assembler.atg:151*/addInstruction(block, ins); 
 		} else if (/*Parser.Assembler.atg:156*/isInIdGroup()) {
 			AsmId(/*Parser.Assembler.atg:156*/out insbase);
@@ -465,7 +467,7 @@ internal partial class Parser {
 				Integer(/*Parser.Assembler.atg:169*/out arguments);
 			} else if (StartOf(2)) {
 				/*Parser.Assembler.atg:170*/arguments = 0; 
-			} else SynErr(95);
+			} else SynErr(96);
 			AsmId(/*Parser.Assembler.atg:172*/out id);
 			/*Parser.Assembler.atg:173*/code = getOpCode(insbase, detail);
 			addInstruction(block, new Instruction(code, arguments, id, justEffect));
@@ -481,7 +483,7 @@ internal partial class Parser {
 				Integer(/*Parser.Assembler.atg:182*/out arguments);
 			} else if (StartOf(3)) {
 				/*Parser.Assembler.atg:183*/arguments = 0; 
-			} else SynErr(96);
+			} else SynErr(97);
 			/*Parser.Assembler.atg:185*/code = getOpCode(insbase, detail);
 			addInstruction(block, new Instruction(code, arguments, null, justEffect));
 			
@@ -496,7 +498,7 @@ internal partial class Parser {
 				Integer(/*Parser.Assembler.atg:194*/out arguments);
 			} else if (StartOf(2)) {
 				/*Parser.Assembler.atg:195*/arguments = 0; 
-			} else SynErr(97);
+			} else SynErr(98);
 			AsmQualid(/*Parser.Assembler.atg:197*/out id);
 			/*Parser.Assembler.atg:198*/code = getOpCode(insbase, detail);
 			addInstruction(block, new Instruction(code, arguments, id, justEffect));
@@ -504,7 +506,7 @@ internal partial class Parser {
 		} else if (StartOf(2)) {
 			AsmId(/*Parser.Assembler.atg:203*/out insbase);
 			/*Parser.Assembler.atg:203*/SemErr("Invalid assembler instruction \"" + insbase + "\" (" + t + ")."); 
-		} else SynErr(98);
+		} else SynErr(99);
 	}
 
 	void AsmId(/*Parser.Assembler.atg:207*/out string id) {
@@ -617,7 +619,7 @@ internal partial class Parser {
 			}
 			}
 			/*Parser.Assembler.atg:241*/id = cache(t.val); 
-		} else SynErr(99);
+		} else SynErr(100);
 	}
 
 	void Integer(/*Parser.Helper.atg:47*/out int value) {
@@ -642,7 +644,7 @@ internal partial class Parser {
 		} else if (la.kind == _integer) {
 			Integer(/*Parser.Helper.atg:81*/out ival);
 			/*Parser.Helper.atg:81*/value = ival; 
-		} else SynErr(100);
+		} else SynErr(101);
 		/*Parser.Helper.atg:83*/value = modifier * value; 
 	}
 
@@ -653,7 +655,7 @@ internal partial class Parser {
 		} else if (la.kind == _false) {
 			Get();
 			/*Parser.Helper.atg:43*/value = false; 
-		} else SynErr(101);
+		} else SynErr(102);
 	}
 
 	void SignedInteger(/*Parser.Helper.atg:53*/out int value) {
@@ -695,7 +697,7 @@ internal partial class Parser {
 				Get();
 			}
 			/*Parser.Helper.atg:32*/id = cache(t.val); 
-		} else SynErr(102);
+		} else SynErr(103);
 	}
 
 	void Expr(/*Parser.Expression.atg:28*/out IAstExpression expr) {
@@ -772,7 +774,7 @@ internal partial class Parser {
 			Expect(_else);
 			AtomicExpr(/*Parser.Expression.atg:66*/out cexpr.ElseExpression);
 			/*Parser.Expression.atg:66*/expr = cexpr; 
-		} else SynErr(103);
+		} else SynErr(104);
 	}
 
 	void OrExpr(/*Parser.Expression.atg:70*/out IAstExpression expr) {
@@ -1012,7 +1014,7 @@ internal partial class Parser {
 				/*Parser.Expression.atg:208*/setModifier = BinaryOperator.Cast; 
 				TypeExpr(/*Parser.Expression.atg:209*/out T);
 				/*Parser.Expression.atg:209*/expr = T; 
-			} else SynErr(104);
+			} else SynErr(105);
 			/*Parser.Expression.atg:211*/assignment.Arguments.Add(expr); 
 			if(setModifier == BinaryOperator.None)
 			    expr = assignment;
@@ -1020,7 +1022,7 @@ internal partial class Parser {
 			    expr = new AstModifyingAssignment(this,setModifier, assignment);
 			
 		} else if (StartOf(10)) {
-		} else SynErr(105);
+		} else SynErr(106);
 	}
 
 	void PostfixUnaryExpr(/*Parser.Expression.atg:221*/out IAstExpression expr) {
@@ -1061,7 +1063,7 @@ internal partial class Parser {
 			PrexoniteTypeExpr(/*Parser.Expression.atg:406*/out type);
 		} else if (la.kind == _ns || la.kind == _doublecolon) {
 			ClrTypeExpr(/*Parser.Expression.atg:407*/out type);
-		} else SynErr(106);
+		} else SynErr(107);
 	}
 
 	void PrefixUnaryExpr(/*Parser.Expression.atg:238*/out IAstExpression expr) {
@@ -1115,7 +1117,7 @@ internal partial class Parser {
 				}
 			}
 			Expect(_rbrack);
-		} else SynErr(107);
+		} else SynErr(108);
 	}
 
 	void Primary(/*Parser.Expression.atg:249*/out IAstExpression expr) {
@@ -1165,7 +1167,7 @@ internal partial class Parser {
 			Expr(/*Parser.Expression.atg:270*/out expr);
 			/*Parser.Expression.atg:275*/_popLexerState(); _inject(_plus); 
 			Expect(_rpar);
-		} else SynErr(108);
+		} else SynErr(109);
 	}
 
 	void Constant(/*Parser.Expression.atg:280*/out IAstExpression expr) {
@@ -1185,7 +1187,7 @@ internal partial class Parser {
 		} else if (la.kind == _null) {
 			Null();
 			/*Parser.Expression.atg:286*/expr = new AstConstant(this, null); 
-		} else SynErr(109);
+		} else SynErr(110);
 	}
 
 	void CoroutineCreation(/*Parser.Expression.atg:338*/out IAstExpression expr) {
@@ -1256,7 +1258,7 @@ internal partial class Parser {
 			ForLoop(/*Parser.Expression.atg:324*/dummyBlock);
 		} else if (la.kind == _foreach) {
 			ForeachLoop(/*Parser.Expression.atg:325*/dummyBlock);
-		} else SynErr(110);
+		} else SynErr(111);
 		/*Parser.Expression.atg:326*/expr = new AstLoopExpression(this, (AstLoop) dummyBlock.Statements[0]); 
 	}
 
@@ -1288,7 +1290,7 @@ internal partial class Parser {
 				}
 			}
 			Expect(_rpar);
-		} else SynErr(111);
+		} else SynErr(112);
 		/*Parser.Expression.atg:369*/CompilerTarget oldTarget = target;
 		target = ft;
 		
@@ -1303,7 +1305,7 @@ internal partial class Parser {
 			/*Parser.Expression.atg:376*/AstReturn ret = new AstReturn(this, ReturnVariant.Exit); 
 			Expr(/*Parser.Expression.atg:377*/out ret.Expression);
 			/*Parser.Expression.atg:377*/ft.Ast.Add(ret); 
-		} else SynErr(112);
+		} else SynErr(113);
 		/*Parser.Expression.atg:380*/target = oldTarget;
 		if(errors.count == 0)
 		{
@@ -1357,7 +1359,7 @@ internal partial class Parser {
 					       complex.Call = PCall.Set;
 					member = complex;
 					
-				} else SynErr(113);
+				} else SynErr(114);
 			}
 			/*Parser.Statement.atg:174*/complex = 
 			(AstGetSet)symbol ?? 
@@ -1405,7 +1407,7 @@ internal partial class Parser {
 			}
 			complex = new AstGetSetReference(this, s.Id, s.Interpretation);
 			
-		} else SynErr(114);
+		} else SynErr(115);
 	}
 
 	void Real(/*Parser.Helper.atg:61*/out double value) {
@@ -1449,7 +1451,7 @@ internal partial class Parser {
 			} else if (la.kind == _until) {
 				Get();
 				/*Parser.Statement.atg:398*/isPositive = false; 
-			} else SynErr(115);
+			} else SynErr(116);
 			/*Parser.Statement.atg:399*/loop = new AstWhileLoop(this, false, isPositive); 
 			loop.Labels = labels;
 			loop.Block = loopBody;
@@ -1457,7 +1459,7 @@ internal partial class Parser {
 			Expect(_lpar);
 			Expr(/*Parser.Statement.atg:403*/out loop.Condition);
 			Expect(_rpar);
-		} else SynErr(116);
+		} else SynErr(117);
 		/*Parser.Statement.atg:404*/target.EndBlock(); block.Add(loop); 
 	}
 
@@ -1477,7 +1479,7 @@ internal partial class Parser {
 			} else if (la.kind == _until) {
 				Get();
 				/*Parser.Statement.atg:416*/loop.IsPositive = false; 
-			} else SynErr(117);
+			} else SynErr(118);
 			Expr(/*Parser.Statement.atg:418*/out loop.Condition);
 		} else if (StartOf(14)) {
 			if (la.kind == _while || la.kind == _until) {
@@ -1491,7 +1493,7 @@ internal partial class Parser {
 			Expr(/*Parser.Statement.atg:422*/out loop.Condition);
 			Expect(_semicolon);
 			SimpleStatement(/*Parser.Statement.atg:424*/loop.NextIteration);
-		} else SynErr(118);
+		} else SynErr(119);
 		Expect(_rpar);
 		StatementBlock(/*Parser.Statement.atg:427*/loop.Block);
 		/*Parser.Statement.atg:427*/target.EndBlock(); block.Add(loop); 
@@ -1544,22 +1546,22 @@ internal partial class Parser {
 			} else if (StartOf(14)) {
 				Expr(/*Parser.Statement.atg:601*/out expr);
 				/*Parser.Statement.atg:601*/args.Add(expr); 
-			} else SynErr(119);
+			} else SynErr(120);
 		}
 	}
 
-	void FormalArg(/*Parser.GlobalScope.atg:406*/CompilerTarget ft) {
-		/*Parser.GlobalScope.atg:406*/string id; SymbolInterpretations kind = SymbolInterpretations.LocalObjectVariable; 
+	void FormalArg(/*Parser.GlobalScope.atg:435*/CompilerTarget ft) {
+		/*Parser.GlobalScope.atg:435*/string id; SymbolInterpretations kind = SymbolInterpretations.LocalObjectVariable; 
 		if (la.kind == _var || la.kind == _ref) {
 			if (la.kind == _var) {
 				Get();
 			} else {
 				Get();
-				/*Parser.GlobalScope.atg:408*/kind = SymbolInterpretations.LocalReferenceVariable; 
+				/*Parser.GlobalScope.atg:437*/kind = SymbolInterpretations.LocalReferenceVariable; 
 			}
 		}
-		Id(/*Parser.GlobalScope.atg:410*/out id);
-		/*Parser.GlobalScope.atg:410*/ft.Function.Parameters.Add(id); 
+		Id(/*Parser.GlobalScope.atg:439*/out id);
+		/*Parser.GlobalScope.atg:439*/ft.Function.Parameters.Add(id); 
 		ft.Symbols.Add(id, new SymbolEntry(kind, id));
 		
 	}
@@ -1574,7 +1576,7 @@ internal partial class Parser {
 			Expect(_semicolon);
 		} else if (StartOf(26)) {
 			StructureStatement(/*Parser.Statement.atg:36*/block);
-		} else SynErr(120);
+		} else SynErr(121);
 		while (la.kind == _and) {
 			Get();
 			Statement(/*Parser.Statement.atg:38*/block);
@@ -1588,7 +1590,7 @@ internal partial class Parser {
 			PrexoniteTypeExpr(/*Parser.Expression.atg:400*/out type);
 		} else if (la.kind == _ns || la.kind == _doublecolon) {
 			ClrTypeExpr(/*Parser.Expression.atg:401*/out type);
-		} else SynErr(121);
+		} else SynErr(122);
 	}
 
 	void PrexoniteTypeExpr(/*Parser.Expression.atg:426*/out IAstType type) {
@@ -1598,7 +1600,7 @@ internal partial class Parser {
 		} else if (la.kind == _null) {
 			Get();
 			/*Parser.Expression.atg:428*/id = NullPType.Literal; 
-		} else SynErr(122);
+		} else SynErr(123);
 		/*Parser.Expression.atg:430*/AstDynamicTypeExpression dType = new AstDynamicTypeExpression(this, id); 
 		if (la.kind == _lt) {
 			Get();
@@ -1622,7 +1624,7 @@ internal partial class Parser {
 		} else if (la.kind == _ns) {
 			Ns(/*Parser.Expression.atg:415*/out id);
 			/*Parser.Expression.atg:415*/typeId.Append(id); typeId.Append('.'); 
-		} else SynErr(123);
+		} else SynErr(124);
 		while (la.kind == _ns) {
 			Ns(/*Parser.Expression.atg:417*/out id);
 			/*Parser.Expression.atg:417*/typeId.Append(id); typeId.Append('.'); 
@@ -1653,7 +1655,7 @@ internal partial class Parser {
 			Expr(/*Parser.Expression.atg:445*/out expr);
 			Expect(_rpar);
 			/*Parser.Expression.atg:445*/args.Add(expr); 
-		} else SynErr(124);
+		} else SynErr(125);
 	}
 
 	void Prexonite() {
@@ -1669,7 +1671,7 @@ internal partial class Parser {
 						MetaAssignment(/*Parser.GlobalScope.atg:30*/TargetApplication);
 					}
 				}
-				while (!(la.kind == _EOF || la.kind == _semicolon)) {SynErr(125); Get();}
+				while (!(la.kind == _EOF || la.kind == _semicolon)) {SynErr(126); Get();}
 				Expect(_semicolon);
 			} else if (la.kind == _lbrace) {
 				GlobalCode();
@@ -1684,13 +1686,13 @@ internal partial class Parser {
 
 	void GlobalVariableDefinition() {
 		/*Parser.GlobalScope.atg:92*/string id; PVariable vari; SymbolInterpretations type = SymbolInterpretations.GlobalObjectVariable;; 
-		while (!(la.kind == _EOF || la.kind == _var || la.kind == _ref)) {SynErr(126); Get();}
+		while (!(la.kind == _EOF || la.kind == _var || la.kind == _ref)) {SynErr(127); Get();}
 		if (la.kind == _var) {
 			Get();
 		} else if (la.kind == _ref) {
 			Get();
 			/*Parser.GlobalScope.atg:96*/type = SymbolInterpretations.GlobalReferenceVariable; 
-		} else SynErr(127);
+		} else SynErr(128);
 		GlobalId(/*Parser.GlobalScope.atg:99*/out id);
 		/*Parser.GlobalScope.atg:100*/Symbols[id] = new SymbolEntry(type, id);
 		if(TargetApplication.Variables.ContainsKey(id))
@@ -1705,7 +1707,7 @@ internal partial class Parser {
 			Get();
 			while (StartOf(31)) {
 				MetaAssignment(/*Parser.GlobalScope.atg:110*/vari);
-				while (!(la.kind == _EOF || la.kind == _semicolon)) {SynErr(128); Get();}
+				while (!(la.kind == _EOF || la.kind == _semicolon)) {SynErr(129); Get();}
 				Expect(_semicolon);
 			}
 			Expect(_rbrack);
@@ -1734,7 +1736,7 @@ internal partial class Parser {
 
 	void Declaration() {
 		/*Parser.GlobalScope.atg:137*/SymbolInterpretations type = SymbolInterpretations.Undefined; 
-		while (!(la.kind == _EOF || la.kind == _declare)) {SynErr(129); Get();}
+		while (!(la.kind == _EOF || la.kind == _declare)) {SynErr(130); Get();}
 		Expect(_declare);
 		if (StartOf(32)) {
 			if (la.kind == _var) {
@@ -1777,7 +1779,7 @@ internal partial class Parser {
 				/*Parser.GlobalScope.atg:50*/entry = false; 
 			} else if (StartOf(34)) {
 				MetaExpr(/*Parser.GlobalScope.atg:51*/out entry);
-			} else SynErr(130);
+			} else SynErr(131);
 		} else if (la.kind == _add) {
 			Get();
 			/*Parser.GlobalScope.atg:53*/MetaEntry subEntry; 
@@ -1795,7 +1797,7 @@ internal partial class Parser {
 			   entry = subEntry;
 			}
 			
-		} else SynErr(131);
+		} else SynErr(132);
 		/*Parser.GlobalScope.atg:66*/if(entry == null || key == null) 
 		                        SemErr("Meta assignment did not generate an entry.");
 		                   else 
@@ -1830,7 +1832,7 @@ internal partial class Parser {
 	}
 
 	void BuildBlock() {
-		while (!(la.kind == _EOF || la.kind == _build)) {SynErr(132); Get();}
+		while (!(la.kind == _EOF || la.kind == _build)) {SynErr(133); Get();}
 		Expect(_build);
 		/*Parser.GlobalScope.atg:185*/PFunction func = new PFunction(TargetApplication);
 		  CompilerTarget lastTarget = target; 
@@ -1876,9 +1878,10 @@ internal partial class Parser {
 		
 	}
 
-	void FunctionDefinition(/*Parser.GlobalScope.atg:262*/out PFunction func) {
-		/*Parser.GlobalScope.atg:263*/func = null; 
-		string id;     
+	void FunctionDefinition(/*Parser.GlobalScope.atg:270*/out PFunction func) {
+		/*Parser.GlobalScope.atg:271*/func = null; 
+		List<string> funcAliases = new List<string>();
+		string id = null;     
 		string funcId; 
 		func = null; 
 		bool isNested = target != null; 
@@ -1893,11 +1896,20 @@ internal partial class Parser {
 			Get();
 		} else if (la.kind == _coroutine) {
 			Get();
-			/*Parser.GlobalScope.atg:277*/isCoroutine = true;
-			
-		} else SynErr(133);
-		Id(/*Parser.GlobalScope.atg:280*/out id);
-		/*Parser.GlobalScope.atg:280*/funcId = id;
+			/*Parser.GlobalScope.atg:286*/isCoroutine = true; 
+		} else if (la.kind == _macro) {
+			Get();
+		} else SynErr(134);
+		if (StartOf(4)) {
+			Id(/*Parser.GlobalScope.atg:289*/out id);
+			/*Parser.GlobalScope.atg:289*/funcAliases.Add(id); 
+			if (la.kind == _as) {
+				FunctionAliasList(/*Parser.GlobalScope.atg:290*/funcAliases);
+			}
+		} else if (la.kind == _as) {
+			FunctionAliasList(/*Parser.GlobalScope.atg:291*/funcAliases);
+		} else SynErr(135);
+		/*Parser.GlobalScope.atg:293*/funcId = id ?? Engine.GenerateName("f");
 		  if(Engine.StringsAreEqual(id, @"\init"))
 		  {
 		      func = TargetApplication._InitializationFunction;
@@ -1908,16 +1920,26 @@ internal partial class Parser {
 		  }
 		  else
 		  {
+		      var localId = id;
+		      
 		      if(isNested)
 		      {
-		          funcId = generateNestedFunctionId(id);
-		          SmartDeclareLocal(id, SymbolInterpretations.LocalReferenceVariable);
+		          funcId = generateNestedFunctionId(id ?? "inner");
+		          
+		          if(string.IsNullOrEmpty(localId))
+		          {
+		              //Create shadow name
+		              localId = generateNestedFunctionId(id ?? "inner");
+		          }
+		          SmartDeclareLocal(localId, SymbolInterpretations.LocalReferenceVariable);
+		          foreach(var alias in funcAliases)
+		                  SmartDeclareLocal(alias, localId, SymbolInterpretations.LocalReferenceVariable);
 		      }
 		      
 		      func = new PFunction(TargetApplication, funcId);
 		      
 		      if(isNested)
-		           func.Meta[PFunction.LogicalIdKey] = id;
+		           func.Meta[PFunction.LogicalIdKey] = localId;
 		      
 		      Loader.CreateFunctionTarget(func, new AstBlock(this));
 		      if(TargetApplication.Functions.Contains(func.Id) && !TargetApplication.Meta.GetDefault(Application.AllowOverridingKey,true))
@@ -1949,47 +1971,53 @@ internal partial class Parser {
 			if (la.kind == _lpar) {
 				Get();
 				if (StartOf(19)) {
-					FormalArg(/*Parser.GlobalScope.atg:329*/ft);
+					FormalArg(/*Parser.GlobalScope.atg:352*/ft);
 					while (StartOf(36)) {
 						if (la.kind == _comma) {
 							Get();
 						}
-						FormalArg(/*Parser.GlobalScope.atg:331*/ft);
+						FormalArg(/*Parser.GlobalScope.atg:354*/ft);
 					}
 				}
 				Expect(_rpar);
 			} else {
-				FormalArg(/*Parser.GlobalScope.atg:335*/ft);
+				FormalArg(/*Parser.GlobalScope.atg:358*/ft);
 				while (StartOf(36)) {
 					if (la.kind == _comma) {
 						Get();
 					}
-					FormalArg(/*Parser.GlobalScope.atg:337*/ft);
+					FormalArg(/*Parser.GlobalScope.atg:360*/ft);
 				}
 			}
 		}
-		/*Parser.GlobalScope.atg:339*/if(target == null && 
-		     (!object.ReferenceEquals(func, TargetApplication._InitializationFunction)))
+		/*Parser.GlobalScope.atg:362*/if(target == null && 
+		     (!object.ReferenceEquals(func, TargetApplication._InitializationFunction)) &&
+		     (!isNested))
 		 {
 		         //Add the name to the symboltable
-		         Symbols[func.Id] = new SymbolEntry(SymbolInterpretations.Function, func.Id);
+		         foreach(var alias in funcAliases)	                                                
+		             Symbols[alias] = new SymbolEntry(SymbolInterpretations.Function, func.Id);
+		         
+		         //Store the original (logical id)
+		         if((!string.IsNullOrEmpty(id)))
+		             func.Meta[PFunction.LogicalIdKey] = id;
 		 }
 		 //Target the coroutine body instead of the stub
 		    if(isCoroutine)
 		        func = corBody;
 		
 		if (la.kind == _lbrack) {
-			/*Parser.GlobalScope.atg:349*/_pushLexerState(Lexer.YYINITIAL); 
+			/*Parser.GlobalScope.atg:378*/_pushLexerState(Lexer.YYINITIAL); 
 			Get();
 			while (StartOf(31)) {
-				MetaAssignment(/*Parser.GlobalScope.atg:351*/func);
-				while (!(la.kind == _EOF || la.kind == _semicolon)) {SynErr(134); Get();}
+				MetaAssignment(/*Parser.GlobalScope.atg:380*/func);
+				while (!(la.kind == _EOF || la.kind == _semicolon)) {SynErr(136); Get();}
 				Expect(_semicolon);
 			}
-			/*Parser.GlobalScope.atg:353*/_popLexerState(); 
+			/*Parser.GlobalScope.atg:382*/_popLexerState(); 
 			Expect(_rbrack);
 		}
-		/*Parser.GlobalScope.atg:356*/CompilerTarget lastTarget = target;
+		/*Parser.GlobalScope.atg:385*/CompilerTarget lastTarget = target;
 		target = FunctionTargets[func]; 
 		_pushLexerState(Lexer.Local);
 		
@@ -1997,22 +2025,22 @@ internal partial class Parser {
 			if (la.kind == _does) {
 				Get();
 			}
-			StatementBlock(/*Parser.GlobalScope.atg:361*/target.Ast);
-		} else if (/*Parser.GlobalScope.atg:363*/isFollowedByStatementBlock()) {
+			StatementBlock(/*Parser.GlobalScope.atg:390*/target.Ast);
+		} else if (/*Parser.GlobalScope.atg:392*/isFollowedByStatementBlock()) {
 			Expect(_implementation);
-			StatementBlock(/*Parser.GlobalScope.atg:364*/target.Ast);
+			StatementBlock(/*Parser.GlobalScope.atg:393*/target.Ast);
 		} else if (la.kind == _assign || la.kind == _implementation) {
 			if (la.kind == _assign) {
 				Get();
 			} else {
 				Get();
 			}
-			/*Parser.GlobalScope.atg:365*/AstReturn ret = new AstReturn(this, ReturnVariant.Exit); 
-			Expr(/*Parser.GlobalScope.atg:366*/out ret.Expression);
-			/*Parser.GlobalScope.atg:366*/target.Ast.Add(ret); 
+			/*Parser.GlobalScope.atg:394*/AstReturn ret = new AstReturn(this, ReturnVariant.Exit); 
+			Expr(/*Parser.GlobalScope.atg:395*/out ret.Expression);
+			/*Parser.GlobalScope.atg:395*/target.Ast.Add(ret); 
 			Expect(_semicolon);
-		} else SynErr(135);
-		/*Parser.GlobalScope.atg:368*/_popLexerState();
+		} else SynErr(137);
+		/*Parser.GlobalScope.atg:397*/_popLexerState();
 		target = lastTarget; 
 		//Compile AST
 		if(errors.count == 0)
@@ -2050,15 +2078,15 @@ internal partial class Parser {
 		                         
 	}
 
-	void GlobalId(/*Parser.GlobalScope.atg:415*/out string id) {
-		/*Parser.GlobalScope.atg:415*/id = "...no freaking id..."; 
+	void GlobalId(/*Parser.GlobalScope.atg:444*/out string id) {
+		/*Parser.GlobalScope.atg:444*/id = "...no freaking id..."; 
 		if (la.kind == _id) {
 			Get();
-			/*Parser.GlobalScope.atg:417*/id = cache(t.val); 
+			/*Parser.GlobalScope.atg:446*/id = cache(t.val); 
 		} else if (la.kind == _anyId) {
 			Get();
-			/*Parser.GlobalScope.atg:418*/id = cache(t.val.Substring(1)); 
-		} else SynErr(136);
+			/*Parser.GlobalScope.atg:447*/id = cache(t.val.Substring(1)); 
+		} else SynErr(138);
 	}
 
 	void MetaExpr(/*Parser.GlobalScope.atg:74*/out MetaEntry entry) {
@@ -2104,25 +2132,25 @@ internal partial class Parser {
 			/*Parser.GlobalScope.atg:87*/entry = (MetaEntry) lst.ToArray(); 
 			break;
 		}
-		default: SynErr(137); break;
+		default: SynErr(139); break;
 		}
 	}
 
-	void GlobalQualifiedId(/*Parser.GlobalScope.atg:421*/out string id) {
-		/*Parser.GlobalScope.atg:421*/id = "\\NoId\\"; 
+	void GlobalQualifiedId(/*Parser.GlobalScope.atg:450*/out string id) {
+		/*Parser.GlobalScope.atg:450*/id = "\\NoId\\"; 
 		if (la.kind == _id || la.kind == _anyId) {
-			GlobalId(/*Parser.GlobalScope.atg:423*/out id);
+			GlobalId(/*Parser.GlobalScope.atg:452*/out id);
 		} else if (la.kind == _ns) {
-			Ns(/*Parser.GlobalScope.atg:424*/out id);
-			/*Parser.GlobalScope.atg:424*/StringBuilder buffer = new StringBuilder(id); buffer.Append('.'); 
+			Ns(/*Parser.GlobalScope.atg:453*/out id);
+			/*Parser.GlobalScope.atg:453*/StringBuilder buffer = new StringBuilder(id); buffer.Append('.'); 
 			while (la.kind == _ns) {
-				Ns(/*Parser.GlobalScope.atg:425*/out id);
-				/*Parser.GlobalScope.atg:425*/buffer.Append(id); buffer.Append('.'); 
+				Ns(/*Parser.GlobalScope.atg:454*/out id);
+				/*Parser.GlobalScope.atg:454*/buffer.Append(id); buffer.Append('.'); 
 			}
-			GlobalId(/*Parser.GlobalScope.atg:427*/out id);
-			/*Parser.GlobalScope.atg:427*/buffer.Append(id); 
-			/*Parser.GlobalScope.atg:428*/id = buffer.ToString(); 
-		} else SynErr(138);
+			GlobalId(/*Parser.GlobalScope.atg:456*/out id);
+			/*Parser.GlobalScope.atg:456*/buffer.Append(id); 
+			/*Parser.GlobalScope.atg:457*/id = buffer.ToString(); 
+		} else SynErr(140);
 	}
 
 	void DeclarationInstance(/*Parser.GlobalScope.atg:151*/SymbolInterpretations type) {
@@ -2163,6 +2191,18 @@ internal partial class Parser {
 		Statement(/*Parser.Statement.atg:27*/block);
 	}
 
+	void FunctionAliasList(/*Parser.GlobalScope.atg:262*/IList<string> aliases ) {
+		/*Parser.GlobalScope.atg:262*/String id; 
+		Expect(_as);
+		Id(/*Parser.GlobalScope.atg:264*/out id);
+		/*Parser.GlobalScope.atg:264*/aliases.Add(id); 
+		if (la.kind == _comma) {
+			Get();
+			Id(/*Parser.GlobalScope.atg:265*/out id);
+			/*Parser.GlobalScope.atg:265*/aliases.Add(id); 
+		}
+	}
+
 	void ExplicitLabel(/*Parser.Statement.atg:324*/AstBlock block) {
 		/*Parser.Statement.atg:324*/string id = "--\\NotAnId\\--"; 
 		if (StartOf(4)) {
@@ -2171,7 +2211,7 @@ internal partial class Parser {
 		} else if (la.kind == _lid) {
 			Get();
 			/*Parser.Statement.atg:327*/id = cache(t.val.Substring(0,t.val.Length-1)); 
-		} else SynErr(139);
+		} else SynErr(141);
 		/*Parser.Statement.atg:328*/block.Statements.Add(new AstExplicitLabel(this, id)); 
 	}
 
@@ -2188,7 +2228,7 @@ internal partial class Parser {
 			Return(/*Parser.Statement.atg:49*/block);
 		} else if (la.kind == _throw) {
 			Throw(/*Parser.Statement.atg:50*/block);
-		} else SynErr(140);
+		} else SynErr(142);
 	}
 
 	void StructureStatement(/*Parser.Statement.atg:54*/AstBlock block) {
@@ -2216,7 +2256,7 @@ internal partial class Parser {
 			ForeachLoop(/*Parser.Statement.atg:61*/block);
 			break;
 		}
-		case _function: case _coroutine: {
+		case _function: case _coroutine: case _macro: {
 			NestedFunction(/*Parser.Statement.atg:62*/block);
 			break;
 		}
@@ -2236,7 +2276,7 @@ internal partial class Parser {
 			Expect(_rbrace);
 			break;
 		}
-		default: SynErr(141); break;
+		default: SynErr(143); break;
 		}
 	}
 
@@ -2283,7 +2323,7 @@ internal partial class Parser {
 				AppendRightTermination(/*Parser.Statement.atg:95*/ref complex);
 			}
 			/*Parser.Statement.atg:97*/block.Add(complex);  
-		} else SynErr(142);
+		} else SynErr(144);
 	}
 
 	void Return(/*Parser.Statement.atg:467*/AstBlock block) {
@@ -2326,7 +2366,7 @@ internal partial class Parser {
 			else
 			    jump = new AstExplicitGoTo(this, bl.ContinueLabel);
 			
-		} else SynErr(143);
+		} else SynErr(145);
 		/*Parser.Statement.atg:493*/block.Add((AstNode)ret ?? (AstNode)jump); 
 	}
 
@@ -2344,7 +2384,7 @@ internal partial class Parser {
 		} else if (la.kind == _unless) {
 			Get();
 			/*Parser.Statement.atg:369*/isNegative = true; 
-		} else SynErr(144);
+		} else SynErr(146);
 		Expect(_lpar);
 		Expr(/*Parser.Statement.atg:372*/out expr);
 		Expect(_rpar);
@@ -2387,7 +2427,7 @@ internal partial class Parser {
 					Expect(_rpar);
 				} else if (la.kind == _lbrace) {
 					/*Parser.Statement.atg:523*/SemErr(la,"catch-clauses that don't store the exception are illegal."); 
-				} else SynErr(145);
+				} else SynErr(147);
 				Expect(_lbrace);
 				while (StartOf(20)) {
 					Statement(/*Parser.Statement.atg:526*/a.CatchBlock);
@@ -2416,7 +2456,7 @@ internal partial class Parser {
 						Expect(_rpar);
 					} else if (la.kind == _lbrace) {
 						/*Parser.Statement.atg:548*/SemErr(la,"catch-clauses that don't store the exception are illegal."); 
-					} else SynErr(146);
+					} else SynErr(148);
 					Expect(_lbrace);
 					while (StartOf(20)) {
 						Statement(/*Parser.Statement.atg:551*/a.CatchBlock);
@@ -2501,7 +2541,7 @@ internal partial class Parser {
 			/*Parser.Statement.atg:355*/setModifier = BinaryOperator.Cast; 
 			TypeExpr(/*Parser.Statement.atg:356*/out T);
 			/*Parser.Statement.atg:356*/expr = T; 
-		} else SynErr(147);
+		} else SynErr(149);
 		/*Parser.Statement.atg:358*/lvalue.Arguments.Add(expr);
 		lvalue.Call = PCall.Set; 
 		if(setModifier != BinaryOperator.None)
@@ -2569,7 +2609,7 @@ internal partial class Parser {
 			    complex = new AstGetSetSymbol(this, "Not a Variable Id", SymbolInterpretations.LocalObjectVariable);
 			}
 			
-		} else SynErr(148);
+		} else SynErr(150);
 	}
 
 	void StaticCall(/*Parser.Statement.atg:298*/out AstGetSetStatic staticCall) {
@@ -2616,7 +2656,7 @@ internal partial class Parser {
 			if(!target.Loader.Options.TargetApplication.Variables.ContainsKey(staticId))
 			    target.Loader.Options.TargetApplication.Variables.Add(staticId, new PVariable(staticId));
 			
-		} else SynErr(149);
+		} else SynErr(151);
 		/*Parser.Statement.atg:237*/variable = InterpretationIsObjectVariable(kind) ?
 		new AstGetSetSymbol(this, PCall.Get, staticId, kind)
 		:
@@ -2645,48 +2685,48 @@ internal partial class Parser {
 
 #line default //END FRAME -->initialization
 
-		{T,x,x,x, x,x,x,x, x,x,x,x, x,x,x,x, x,x,x,x, x,x,x,x, x,x,x,x, x,x,x,x, x,T,x,x, x,x,x,x, x,x,x,T, T,x,x,x, x,x,x,x, x,x,x,x, x,T,T,x, x,x,x,x, x,x,x,x, x,x,x,x, x,x,x,x, x,x,x,x, x,x,x,x, x,x,x,x, x,x,x,x, x,x},
-		{x,T,T,x, x,x,x,T, x,x,x,x, x,x,x,x, x,x,x,x, x,x,x,x, x,x,x,x, x,x,x,x, x,x,x,x, x,x,x,x, T,x,x,T, T,x,x,x, T,T,T,T, T,T,x,T, x,x,T,T, T,T,T,T, T,x,T,T, T,x,T,x, T,T,T,T, T,x,x,x, x,T,T,T, T,T,x,x, T,x,x,x, x,x},
-		{x,T,T,x, x,x,x,T, x,x,x,x, x,x,x,x, x,x,x,x, x,x,x,x, x,x,x,x, x,x,x,x, x,x,x,x, x,x,x,x, x,x,x,x, x,x,x,x, T,T,T,T, T,T,x,T, x,x,T,T, T,T,T,T, T,x,T,T, T,x,T,x, T,T,T,T, T,x,x,x, x,T,T,T, T,T,x,x, T,x,x,x, x,x},
-		{x,T,T,x, x,x,x,T, x,x,x,x, x,x,x,x, x,x,x,x, x,x,x,x, x,x,x,x, T,x,T,x, x,T,x,x, x,x,x,x, T,x,x,T, T,x,x,x, T,T,T,T, T,T,x,T, x,x,T,T, T,T,T,T, T,x,T,T, T,x,T,x, T,T,T,T, T,x,x,x, x,T,T,T, T,T,x,x, T,x,x,x, x,x},
-		{x,T,T,x, x,x,x,x, x,x,x,x, x,x,x,x, x,x,x,x, x,x,x,x, x,x,x,x, x,x,x,x, x,x,x,x, x,x,x,x, x,x,x,x, x,x,x,x, x,x,x,x, T,T,x,x, x,x,T,x, x,x,T,x, x,x,x,x, x,x,x,x, x,x,x,x, x,x,x,x, x,x,x,x, x,x,x,x, x,x,x,x, x,x},
-		{x,x,x,x, x,x,x,x, x,x,x,x, x,x,x,x, x,x,x,x, x,x,x,x, x,x,x,x, x,x,x,x, x,x,x,x, x,x,x,x, x,x,x,x, x,x,x,x, T,T,T,T, x,x,x,T, x,x,x,T, T,T,x,T, T,x,T,T, T,x,T,x, T,T,T,T, T,x,x,x, x,T,T,T, T,T,x,x, T,x,x,x, x,x},
-		{x,x,x,x, x,x,x,x, x,x,x,x, x,x,x,x, x,x,x,x, x,x,x,x, x,x,x,x, x,x,x,x, x,x,x,x, x,x,x,x, x,x,x,x, x,x,x,x, x,x,x,x, T,T,x,x, x,x,T,x, x,x,T,x, x,x,x,x, x,x,x,x, x,x,x,x, x,x,x,x, x,x,x,x, x,x,x,x, x,x,x,x, x,x},
-		{x,T,T,x, T,T,T,T, x,x,x,T, x,x,x,x, x,T,T,T, T,x,x,T, x,x,T,x, x,x,x,T, x,x,x,T, x,x,T,x, x,x,x,T, T,T,T,x, x,x,x,T, T,T,x,x, T,x,T,x, x,x,T,x, x,x,x,x, x,x,x,T, T,x,x,x, T,T,x,T, x,T,T,T, T,x,x,x, T,x,x,T, x,x},
-		{x,x,x,x, x,x,x,x, x,x,x,x, x,x,x,T, T,x,x,x, x,T,T,x, x,x,x,x, x,x,x,x, x,x,x,x, x,x,x,x, x,x,x,x, x,x,x,x, x,x,x,x, x,x,x,x, x,x,x,x, x,x,x,x, x,x,x,x, x,x,x,x, x,x,x,x, x,x,x,x, x,x,x,x, x,x,x,x, x,x,x,x, x,x},
-		{x,x,x,x, x,x,x,x, T,T,x,x, T,x,x,x, x,x,x,x, x,x,x,T, x,T,T,x, x,x,x,x, T,x,x,x, T,x,x,x, x,x,x,x, x,x,x,x, x,x,x,x, x,x,x,x, x,x,x,x, x,x,x,x, x,x,x,x, x,x,x,x, x,x,x,x, x,x,x,x, x,x,x,x, x,x,x,x, x,x,x,x, x,x},
-		{x,x,x,x, x,x,x,x, T,T,T,T, T,T,T,T, T,T,x,T, x,T,T,T, T,T,T,T, T,T,T,T, T,T,T,x, T,T,x,x, x,x,T,x, x,x,x,x, T,T,x,x, x,x,x,x, x,x,x,x, T,x,x,x, x,x,T,T, T,x,x,x, x,x,x,T, x,x,x,x, x,x,x,T, x,x,x,x, x,x,x,x, x,x},
-		{x,x,x,x, x,x,x,x, x,x,x,T, x,T,x,x, x,T,x,T, x,x,x,x, x,x,x,x, x,x,x,T, x,x,x,x, x,x,x,x, x,x,x,x, x,x,x,x, x,T,x,x, x,x,x,x, x,x,x,x, x,x,x,x, x,x,x,x, x,x,x,x, x,x,x,x, x,x,x,x, x,x,x,x, x,x,x,x, x,x,x,x, x,x},
-		{x,T,T,x, x,x,x,x, x,x,x,x, x,x,x,x, x,x,x,x, x,x,x,x, x,x,x,x, x,x,x,x, x,x,x,x, x,x,x,x, x,x,x,x, x,x,x,x, x,x,x,x, T,T,x,x, x,x,T,x, x,x,T,x, x,x,x,x, x,x,x,x, T,x,x,x, x,x,x,x, x,x,x,x, x,x,x,x, x,x,x,x, x,x},
-		{x,x,x,x, x,x,x,x, x,x,x,T, x,x,x,x, x,T,x,x, x,x,x,T, x,x,T,x, x,x,x,x, x,x,x,x, x,x,x,x, x,x,x,x, x,x,x,x, x,x,x,x, x,x,x,x, x,x,x,x, x,x,x,x, x,x,x,x, x,x,x,x, x,x,x,x, x,x,x,x, x,x,x,x, x,x,x,x, x,x,x,x, x,x},
-		{x,T,T,x, T,T,T,T, x,x,x,T, x,x,x,x, x,T,T,T, T,x,x,T, x,x,T,x, x,x,x,T, x,x,x,T, x,x,T,x, x,x,x,T, T,T,T,x, x,x,x,T, T,T,x,x, T,x,T,x, x,x,T,x, x,x,x,x, x,x,x,T, T,T,T,x, T,T,x,T, x,T,T,T, T,x,x,x, T,x,x,T, x,x},
-		{x,x,x,x, x,x,x,x, x,x,x,x, x,x,x,x, x,x,x,x, x,x,x,x, x,x,x,x, x,T,x,x, x,x,x,x, x,x,x,x, x,x,x,x, x,x,x,x, x,x,x,x, x,x,x,x, x,x,x,x, x,x,x,x, x,x,x,x, x,x,x,x, x,x,x,x, x,x,x,x, x,x,x,x, x,x,x,x, x,x,x,x, x,x},
-		{x,x,x,x, x,T,T,T, x,x,x,x, x,x,x,x, x,x,x,x, x,x,x,x, x,x,x,x, x,x,x,x, x,x,x,x, x,x,x,x, x,x,x,x, x,T,T,x, x,x,x,x, x,x,x,x, x,x,x,x, x,x,x,x, x,x,x,x, x,x,x,x, T,x,x,x, x,x,x,x, x,x,x,x, x,x,x,x, x,x,x,x, x,x},
-		{x,x,x,x, x,x,x,x, x,x,x,x, x,x,x,x, x,x,x,x, x,x,x,x, x,x,x,x, x,x,x,x, x,x,x,x, x,x,x,x, x,x,x,x, x,x,x,x, x,x,x,x, x,x,x,x, x,x,x,x, x,x,x,x, x,x,x,x, x,x,x,x, x,x,x,x, x,x,x,T, x,T,T,T, T,x,x,x, x,x,x,x, x,x},
-		{x,T,T,x, T,x,x,x, x,x,x,x, x,x,x,x, x,x,x,x, T,x,x,x, x,x,x,x, x,x,x,T, x,x,x,T, x,x,T,x, x,x,x,T, T,x,x,x, x,x,x,x, T,T,x,x, x,x,T,x, x,x,T,x, x,x,x,x, x,x,x,T, x,x,x,x, x,x,x,x, x,x,x,x, x,x,x,x, x,x,x,x, x,x},
-		{x,T,T,x, x,x,x,x, x,x,x,x, x,x,x,x, x,x,x,x, x,x,x,x, x,x,x,x, x,x,x,x, x,x,x,x, x,x,x,x, x,x,x,T, T,x,x,x, x,x,x,x, T,T,x,x, x,x,T,x, x,x,T,x, x,x,x,x, x,x,x,x, x,x,x,x, x,x,x,x, x,x,x,x, x,x,x,x, x,x,x,x, x,x},
-		{x,T,T,T, T,x,x,x, x,x,x,x, x,x,x,x, x,x,T,x, T,x,x,x, x,x,x,x, x,x,x,T, x,T,x,T, x,x,T,x, x,x,x,T, T,x,x,x, x,x,x,x, T,T,T,x, T,T,T,T, x,x,T,T, T,T,x,x, x,x,T,T, x,T,T,x, x,T,x,T, x,T,T,T, T,T,x,x, T,T,x,x, x,x},
-		{x,T,T,x, T,x,x,x, x,x,x,x, x,x,x,x, x,x,x,x, T,x,x,x, x,x,x,x, x,x,x,T, x,x,x,T, x,x,x,x, x,x,x,T, T,x,x,x, x,x,x,x, T,T,x,x, x,x,T,x, x,x,T,x, x,x,x,x, x,x,x,T, x,x,x,x, x,x,x,x, x,x,x,x, x,x,x,x, x,x,x,x, x,x},
-		{x,T,T,x, x,x,x,x, x,x,x,x, x,x,x,x, x,x,x,x, x,x,x,x, x,x,x,x, x,x,x,x, x,x,x,x, x,x,x,x, x,x,x,T, T,x,x,x, x,x,x,x, T,T,x,x, x,x,T,x, x,x,T,x, x,x,x,x, x,x,x,T, x,x,x,x, x,x,x,x, x,x,x,x, x,x,x,x, x,x,x,x, x,x},
-		{x,x,x,x, x,x,x,x, x,x,x,x, x,x,x,x, x,x,x,x, x,x,x,x, x,x,x,x, x,x,T,x, x,x,x,x, x,x,x,x, x,x,x,x, x,x,x,x, x,x,x,x, x,x,x,x, x,x,x,x, x,x,x,x, x,x,x,x, x,x,x,x, x,x,x,x, x,x,x,x, x,x,x,x, x,x,x,x, x,x,x,x, x,x},
-		{x,T,T,x, T,x,x,x, x,x,x,x, x,x,x,x, x,x,x,x, T,x,x,x, x,x,x,x, x,x,x,T, x,T,x,T, x,x,T,x, x,x,x,T, T,x,x,x, x,x,x,x, T,T,x,x, x,T,T,T, x,x,T,T, T,T,x,x, x,x,T,T, x,x,x,x, x,x,x,x, x,x,x,x, x,x,x,x, T,x,x,x, x,x},
-		{x,T,T,x, T,x,x,x, x,x,x,x, x,x,x,x, x,x,x,x, T,x,x,x, x,x,x,x, x,x,x,T, x,x,x,T, x,x,T,x, x,x,x,T, T,x,x,x, x,x,x,x, T,T,x,x, x,T,T,T, x,x,T,T, T,T,x,x, x,x,T,T, x,x,x,x, x,x,x,x, x,x,x,x, x,x,x,x, T,x,x,x, x,x},
-		{x,x,x,x, x,x,x,x, x,x,x,x, x,x,x,x, x,x,T,x, x,x,x,x, x,x,x,x, x,x,x,x, x,x,x,x, x,x,x,x, x,x,x,x, x,x,x,x, x,x,x,x, x,x,T,x, T,x,x,x, x,x,x,x, x,x,x,x, x,x,x,x, x,T,T,x, x,T,x,T, x,T,T,T, T,T,x,x, x,T,x,x, x,x},
-		{x,x,x,x, T,T,T,T, x,x,x,x, x,x,x,x, x,x,x,x, T,x,x,x, x,x,x,x, x,x,x,T, x,x,x,T, x,x,x,x, x,x,x,x, x,T,T,x, x,x,x,x, x,x,x,x, x,x,x,x, x,x,x,x, x,x,x,x, x,x,x,x, T,x,x,x, x,x,x,x, x,x,x,x, x,x,x,x, x,x,x,x, x,x},
-		{x,T,T,x, x,x,x,x, x,x,x,x, x,x,x,x, x,x,T,x, x,x,x,x, x,x,x,x, x,x,x,x, x,T,x,x, x,x,x,x, x,x,x,T, T,x,x,x, x,T,x,x, x,x,T,x, x,T,T,x, x,x,T,x, x,x,x,x, x,x,x,x, x,x,x,x, x,T,x,x, x,x,x,x, x,x,x,x, x,x,x,x, x,x},
-		{x,T,T,x, x,x,x,x, x,x,x,x, x,x,x,x, x,x,x,x, x,x,x,x, x,x,x,x, x,x,x,x, x,T,x,x, x,x,x,x, x,x,x,T, T,x,x,x, x,T,x,x, x,x,x,x, x,T,x,x, x,x,T,x, x,x,x,x, x,x,x,x, x,x,x,x, x,x,x,x, x,x,x,x, x,x,x,x, x,x,x,x, x,x},
-		{x,T,T,x, x,x,x,x, x,x,x,x, x,x,x,x, x,x,x,x, x,x,x,x, x,x,x,x, x,x,x,x, x,x,x,x, x,x,x,x, x,x,x,T, T,x,x,x, x,T,x,x, x,x,x,x, x,T,x,x, x,x,T,x, x,x,x,x, x,x,x,x, x,x,x,x, x,x,x,x, x,x,x,x, x,x,x,x, x,x,x,x, x,x},
-		{x,T,T,x, x,x,x,x, x,x,x,x, x,x,x,x, x,x,x,x, x,x,x,x, x,x,x,x, x,x,x,x, x,x,x,x, x,x,x,x, x,x,x,x, x,x,x,x, x,T,x,x, x,x,x,x, x,x,x,x, x,x,T,x, x,x,x,x, x,x,x,x, x,x,x,x, x,x,x,x, x,x,x,x, x,x,x,x, x,x,x,x, x,x},
-		{x,x,x,x, x,x,x,x, x,x,x,x, x,x,x,x, x,x,x,x, x,x,x,x, x,x,x,x, x,x,x,x, x,x,x,x, x,x,x,x, x,x,x,T, T,x,x,x, x,x,x,x, x,x,T,T, x,x,x,x, x,x,x,x, x,x,x,x, x,x,x,x, x,x,x,x, x,x,x,x, x,x,x,x, x,x,x,x, x,x,x,x, x,x},
-		{x,x,x,x, x,x,x,x, x,x,x,x, x,x,x,x, x,x,x,x, x,x,x,x, x,x,x,x, x,x,T,x, x,T,x,x, x,x,x,x, x,x,x,x, x,x,x,x, x,x,x,x, x,x,x,x, x,x,x,x, x,x,x,x, x,x,x,x, x,x,x,x, x,x,x,x, x,x,x,x, x,x,x,x, x,x,x,x, x,x,x,x, x,x},
-		{x,T,T,x, T,T,T,T, x,x,x,x, x,x,x,x, x,x,T,x, x,x,x,x, x,x,x,x, x,x,x,x, x,x,x,x, x,x,x,x, x,x,x,x, x,T,T,x, x,x,x,x, x,x,x,x, x,x,x,x, x,x,x,x, x,x,x,x, x,x,x,x, x,x,x,x, x,x,x,x, x,x,x,x, x,x,x,x, x,x,x,x, x,x},
-		{x,T,T,x, x,x,x,x, x,x,x,x, x,x,x,x, x,x,x,x, T,x,x,x, x,x,x,x, x,x,x,x, x,x,x,x, x,x,x,x, x,x,x,T, T,x,x,x, x,x,x,x, T,T,x,x, x,x,T,x, x,x,T,x, x,x,x,x, x,x,x,x, x,x,x,x, x,x,x,x, x,x,x,x, x,x,x,x, x,x,x,x, x,x},
-		{x,T,T,x, x,x,x,x, x,x,T,x, x,x,x,x, x,x,x,x, x,x,x,x, x,x,x,x, x,x,x,x, x,x,x,x, x,x,x,x, x,x,x,T, T,x,x,x, x,x,x,x, T,T,x,x, x,x,T,x, x,x,T,x, x,x,x,x, x,x,x,x, x,x,x,x, x,x,x,x, x,x,x,x, x,x,x,x, x,x,x,x, x,x},
-		{x,T,T,T, T,x,x,x, x,x,x,x, x,x,x,x, x,x,T,x, T,x,x,x, x,x,x,x, x,x,x,T, x,T,x,T, x,x,T,x, x,x,x,T, T,x,x,x, x,x,x,x, T,T,T,x, T,T,T,T, x,x,T,T, T,T,x,x, x,x,T,T, x,T,T,x, x,T,x,T, T,T,T,T, T,T,x,x, T,T,x,x, x,x},
-		{x,x,x,x, x,x,x,x, x,x,x,x, x,x,x,x, x,x,x,x, x,x,x,x, x,x,x,x, T,x,x,x, x,x,x,x, x,x,x,x, x,x,x,x, x,x,x,x, x,x,x,x, x,x,x,x, x,x,x,x, x,x,x,x, x,x,x,x, x,x,x,x, x,x,x,x, x,x,x,x, x,x,x,x, x,x,x,x, x,x,x,x, x,x},
-		{x,x,x,x, x,x,x,x, x,x,x,x, x,x,x,x, x,x,x,x, x,x,x,x, x,x,x,x, x,x,x,x, x,x,x,x, x,x,x,x, x,x,x,x, x,x,x,x, x,x,x,x, x,x,x,x, x,x,x,T, x,x,x,T, T,T,x,x, x,x,x,x, x,x,x,x, x,x,x,x, x,x,x,x, x,x,x,x, x,x,x,x, x,x},
-		{x,x,x,x, x,x,x,x, T,T,x,x, T,x,x,x, x,x,x,x, x,x,x,T, x,T,T,x, x,x,x,T, T,x,x,x, T,x,x,x, x,x,x,x, x,x,x,x, x,x,x,x, x,x,x,x, x,x,x,x, x,x,x,x, x,x,x,x, x,x,x,x, x,x,x,x, x,x,x,x, x,x,x,x, x,x,x,x, x,x,x,x, x,x},
-		{x,T,T,x, T,T,T,T, x,T,x,T, x,x,x,x, x,T,T,T, T,x,x,T, x,x,T,x, x,x,x,T, x,x,x,T, x,x,T,x, x,x,x,T, T,T,T,x, x,x,x,T, T,T,x,x, T,x,T,x, x,x,T,x, x,x,x,x, x,x,x,T, T,T,T,x, T,T,x,T, x,T,T,T, T,x,x,x, T,x,x,T, x,x}
+		{T,x,x,x, x,x,x,x, x,x,x,x, x,x,x,x, x,x,x,x, x,x,x,x, x,x,x,x, x,x,x,x, x,T,x,x, x,x,x,x, x,x,x,T, T,x,x,x, x,x,x,x, x,x,x,x, x,T,T,x, x,x,x,x, x,x,x,x, x,x,x,x, x,x,x,x, x,x,x,x, x,x,x,x, x,x,x,x, x,x,x,x, x,x,x},
+		{x,T,T,x, x,x,x,T, x,x,x,x, x,x,x,x, x,x,x,x, x,x,x,x, x,x,x,x, x,x,x,x, x,x,x,x, x,x,x,x, T,x,x,T, T,x,x,x, T,T,T,T, T,T,x,T, x,x,T,T, T,T,T,T, T,x,T,T, T,x,T,x, T,T,T,T, T,x,x,x, x,T,T,T, T,T,x,x, T,x,x,x, x,x,x},
+		{x,T,T,x, x,x,x,T, x,x,x,x, x,x,x,x, x,x,x,x, x,x,x,x, x,x,x,x, x,x,x,x, x,x,x,x, x,x,x,x, x,x,x,x, x,x,x,x, T,T,T,T, T,T,x,T, x,x,T,T, T,T,T,T, T,x,T,T, T,x,T,x, T,T,T,T, T,x,x,x, x,T,T,T, T,T,x,x, T,x,x,x, x,x,x},
+		{x,T,T,x, x,x,x,T, x,x,x,x, x,x,x,x, x,x,x,x, x,x,x,x, x,x,x,x, T,x,T,x, x,T,x,x, x,x,x,x, T,x,x,T, T,x,x,x, T,T,T,T, T,T,x,T, x,x,T,T, T,T,T,T, T,x,T,T, T,x,T,x, T,T,T,T, T,x,x,x, x,T,T,T, T,T,x,x, T,x,x,x, x,x,x},
+		{x,T,T,x, x,x,x,x, x,x,x,x, x,x,x,x, x,x,x,x, x,x,x,x, x,x,x,x, x,x,x,x, x,x,x,x, x,x,x,x, x,x,x,x, x,x,x,x, x,x,x,x, T,T,x,x, x,x,T,x, x,x,T,x, x,x,x,x, x,x,x,x, x,x,x,x, x,x,x,x, x,x,x,x, x,x,x,x, x,x,x,x, x,x,x},
+		{x,x,x,x, x,x,x,x, x,x,x,x, x,x,x,x, x,x,x,x, x,x,x,x, x,x,x,x, x,x,x,x, x,x,x,x, x,x,x,x, x,x,x,x, x,x,x,x, T,T,T,T, x,x,x,T, x,x,x,T, T,T,x,T, T,x,T,T, T,x,T,x, T,T,T,T, T,x,x,x, x,T,T,T, T,T,x,x, T,x,x,x, x,x,x},
+		{x,x,x,x, x,x,x,x, x,x,x,x, x,x,x,x, x,x,x,x, x,x,x,x, x,x,x,x, x,x,x,x, x,x,x,x, x,x,x,x, x,x,x,x, x,x,x,x, x,x,x,x, T,T,x,x, x,x,T,x, x,x,T,x, x,x,x,x, x,x,x,x, x,x,x,x, x,x,x,x, x,x,x,x, x,x,x,x, x,x,x,x, x,x,x},
+		{x,T,T,x, T,T,T,T, x,x,x,T, x,x,x,x, x,T,T,T, T,x,x,T, x,x,T,x, x,x,x,T, x,x,x,T, x,x,T,x, x,x,x,T, T,T,T,x, x,x,x,T, T,T,x,x, T,x,T,x, x,x,T,x, x,x,x,x, x,x,x,T, T,x,x,x, T,T,x,T, x,T,T,T, T,x,x,x, T,x,x,x, T,x,x},
+		{x,x,x,x, x,x,x,x, x,x,x,x, x,x,x,T, T,x,x,x, x,T,T,x, x,x,x,x, x,x,x,x, x,x,x,x, x,x,x,x, x,x,x,x, x,x,x,x, x,x,x,x, x,x,x,x, x,x,x,x, x,x,x,x, x,x,x,x, x,x,x,x, x,x,x,x, x,x,x,x, x,x,x,x, x,x,x,x, x,x,x,x, x,x,x},
+		{x,x,x,x, x,x,x,x, T,T,x,x, T,x,x,x, x,x,x,x, x,x,x,T, x,T,T,x, x,x,x,x, T,x,x,x, T,x,x,x, x,x,x,x, x,x,x,x, x,x,x,x, x,x,x,x, x,x,x,x, x,x,x,x, x,x,x,x, x,x,x,x, x,x,x,x, x,x,x,x, x,x,x,x, x,x,x,x, x,x,x,x, x,x,x},
+		{x,x,x,x, x,x,x,x, T,T,T,T, T,T,T,T, T,T,x,T, x,T,T,T, T,T,T,T, T,T,T,T, T,T,T,x, T,T,x,x, x,x,T,x, x,x,x,x, T,T,x,x, x,x,x,x, x,x,x,x, T,x,x,x, x,x,T,T, T,x,x,x, x,x,x,T, x,x,x,x, x,x,x,T, x,x,x,x, x,x,x,x, x,x,x},
+		{x,x,x,x, x,x,x,x, x,x,x,T, x,T,x,x, x,T,x,T, x,x,x,x, x,x,x,x, x,x,x,T, x,x,x,x, x,x,x,x, x,x,x,x, x,x,x,x, x,T,x,x, x,x,x,x, x,x,x,x, x,x,x,x, x,x,x,x, x,x,x,x, x,x,x,x, x,x,x,x, x,x,x,x, x,x,x,x, x,x,x,x, x,x,x},
+		{x,T,T,x, x,x,x,x, x,x,x,x, x,x,x,x, x,x,x,x, x,x,x,x, x,x,x,x, x,x,x,x, x,x,x,x, x,x,x,x, x,x,x,x, x,x,x,x, x,x,x,x, T,T,x,x, x,x,T,x, x,x,T,x, x,x,x,x, x,x,x,x, T,x,x,x, x,x,x,x, x,x,x,x, x,x,x,x, x,x,x,x, x,x,x},
+		{x,x,x,x, x,x,x,x, x,x,x,T, x,x,x,x, x,T,x,x, x,x,x,T, x,x,T,x, x,x,x,x, x,x,x,x, x,x,x,x, x,x,x,x, x,x,x,x, x,x,x,x, x,x,x,x, x,x,x,x, x,x,x,x, x,x,x,x, x,x,x,x, x,x,x,x, x,x,x,x, x,x,x,x, x,x,x,x, x,x,x,x, x,x,x},
+		{x,T,T,x, T,T,T,T, x,x,x,T, x,x,x,x, x,T,T,T, T,x,x,T, x,x,T,x, x,x,x,T, x,x,x,T, x,x,T,x, x,x,x,T, T,T,T,x, x,x,x,T, T,T,x,x, T,x,T,x, x,x,T,x, x,x,x,x, x,x,x,T, T,T,T,x, T,T,x,T, x,T,T,T, T,x,x,x, T,x,x,x, T,x,x},
+		{x,x,x,x, x,x,x,x, x,x,x,x, x,x,x,x, x,x,x,x, x,x,x,x, x,x,x,x, x,T,x,x, x,x,x,x, x,x,x,x, x,x,x,x, x,x,x,x, x,x,x,x, x,x,x,x, x,x,x,x, x,x,x,x, x,x,x,x, x,x,x,x, x,x,x,x, x,x,x,x, x,x,x,x, x,x,x,x, x,x,x,x, x,x,x},
+		{x,x,x,x, x,T,T,T, x,x,x,x, x,x,x,x, x,x,x,x, x,x,x,x, x,x,x,x, x,x,x,x, x,x,x,x, x,x,x,x, x,x,x,x, x,T,T,x, x,x,x,x, x,x,x,x, x,x,x,x, x,x,x,x, x,x,x,x, x,x,x,x, T,x,x,x, x,x,x,x, x,x,x,x, x,x,x,x, x,x,x,x, x,x,x},
+		{x,x,x,x, x,x,x,x, x,x,x,x, x,x,x,x, x,x,x,x, x,x,x,x, x,x,x,x, x,x,x,x, x,x,x,x, x,x,x,x, x,x,x,x, x,x,x,x, x,x,x,x, x,x,x,x, x,x,x,x, x,x,x,x, x,x,x,x, x,x,x,x, x,x,x,x, x,x,x,T, x,T,T,T, T,x,x,x, x,x,x,x, x,x,x},
+		{x,T,T,x, T,x,x,x, x,x,x,x, x,x,x,x, x,x,x,x, T,x,x,x, x,x,x,x, x,x,x,T, x,x,x,T, x,x,T,x, x,x,x,T, T,x,x,x, x,x,x,x, T,T,x,x, x,x,T,x, x,x,T,x, x,x,x,x, x,x,x,T, x,x,x,x, x,x,x,x, x,x,x,x, x,x,x,x, x,x,x,x, x,x,x},
+		{x,T,T,x, x,x,x,x, x,x,x,x, x,x,x,x, x,x,x,x, x,x,x,x, x,x,x,x, x,x,x,x, x,x,x,x, x,x,x,x, x,x,x,T, T,x,x,x, x,x,x,x, T,T,x,x, x,x,T,x, x,x,T,x, x,x,x,x, x,x,x,x, x,x,x,x, x,x,x,x, x,x,x,x, x,x,x,x, x,x,x,x, x,x,x},
+		{x,T,T,T, T,x,x,x, x,x,x,x, x,x,x,x, x,x,T,x, T,x,x,x, x,x,x,x, x,x,x,T, x,T,x,T, x,x,T,x, x,x,x,T, T,x,x,x, x,x,x,x, T,T,T,x, T,T,T,T, x,x,T,T, T,T,x,x, x,x,T,T, x,T,T,x, x,T,x,T, x,T,T,T, T,T,x,x, T,T,T,x, x,x,x},
+		{x,T,T,x, T,x,x,x, x,x,x,x, x,x,x,x, x,x,x,x, T,x,x,x, x,x,x,x, x,x,x,T, x,x,x,T, x,x,x,x, x,x,x,T, T,x,x,x, x,x,x,x, T,T,x,x, x,x,T,x, x,x,T,x, x,x,x,x, x,x,x,T, x,x,x,x, x,x,x,x, x,x,x,x, x,x,x,x, x,x,x,x, x,x,x},
+		{x,T,T,x, x,x,x,x, x,x,x,x, x,x,x,x, x,x,x,x, x,x,x,x, x,x,x,x, x,x,x,x, x,x,x,x, x,x,x,x, x,x,x,T, T,x,x,x, x,x,x,x, T,T,x,x, x,x,T,x, x,x,T,x, x,x,x,x, x,x,x,T, x,x,x,x, x,x,x,x, x,x,x,x, x,x,x,x, x,x,x,x, x,x,x},
+		{x,x,x,x, x,x,x,x, x,x,x,x, x,x,x,x, x,x,x,x, x,x,x,x, x,x,x,x, x,x,T,x, x,x,x,x, x,x,x,x, x,x,x,x, x,x,x,x, x,x,x,x, x,x,x,x, x,x,x,x, x,x,x,x, x,x,x,x, x,x,x,x, x,x,x,x, x,x,x,x, x,x,x,x, x,x,x,x, x,x,x,x, x,x,x},
+		{x,T,T,x, T,x,x,x, x,x,x,x, x,x,x,x, x,x,x,x, T,x,x,x, x,x,x,x, x,x,x,T, x,T,x,T, x,x,T,x, x,x,x,T, T,x,x,x, x,x,x,x, T,T,x,x, x,T,T,T, x,x,T,T, T,T,x,x, x,x,T,T, x,x,x,x, x,x,x,x, x,x,x,x, x,x,x,x, T,x,x,x, x,x,x},
+		{x,T,T,x, T,x,x,x, x,x,x,x, x,x,x,x, x,x,x,x, T,x,x,x, x,x,x,x, x,x,x,T, x,x,x,T, x,x,T,x, x,x,x,T, T,x,x,x, x,x,x,x, T,T,x,x, x,T,T,T, x,x,T,T, T,T,x,x, x,x,T,T, x,x,x,x, x,x,x,x, x,x,x,x, x,x,x,x, T,x,x,x, x,x,x},
+		{x,x,x,x, x,x,x,x, x,x,x,x, x,x,x,x, x,x,T,x, x,x,x,x, x,x,x,x, x,x,x,x, x,x,x,x, x,x,x,x, x,x,x,x, x,x,x,x, x,x,x,x, x,x,T,x, T,x,x,x, x,x,x,x, x,x,x,x, x,x,x,x, x,T,T,x, x,T,x,T, x,T,T,T, T,T,x,x, x,T,T,x, x,x,x},
+		{x,x,x,x, T,T,T,T, x,x,x,x, x,x,x,x, x,x,x,x, T,x,x,x, x,x,x,x, x,x,x,T, x,x,x,T, x,x,x,x, x,x,x,x, x,T,T,x, x,x,x,x, x,x,x,x, x,x,x,x, x,x,x,x, x,x,x,x, x,x,x,x, T,x,x,x, x,x,x,x, x,x,x,x, x,x,x,x, x,x,x,x, x,x,x},
+		{x,T,T,x, x,x,x,x, x,x,x,x, x,x,x,x, x,x,T,x, x,x,x,x, x,x,x,x, x,x,x,x, x,T,x,x, x,x,x,x, x,x,x,T, T,x,x,x, x,T,x,x, x,x,T,x, x,T,T,x, x,x,T,x, x,x,x,x, x,x,x,x, x,x,x,x, x,T,x,x, x,x,x,x, x,x,x,x, x,x,T,x, x,x,x},
+		{x,T,T,x, x,x,x,x, x,x,x,x, x,x,x,x, x,x,x,x, x,x,x,x, x,x,x,x, x,x,x,x, x,T,x,x, x,x,x,x, x,x,x,T, T,x,x,x, x,T,x,x, x,x,x,x, x,T,x,x, x,x,T,x, x,x,x,x, x,x,x,x, x,x,x,x, x,x,x,x, x,x,x,x, x,x,x,x, x,x,x,x, x,x,x},
+		{x,T,T,x, x,x,x,x, x,x,x,x, x,x,x,x, x,x,x,x, x,x,x,x, x,x,x,x, x,x,x,x, x,x,x,x, x,x,x,x, x,x,x,T, T,x,x,x, x,T,x,x, x,x,x,x, x,T,x,x, x,x,T,x, x,x,x,x, x,x,x,x, x,x,x,x, x,x,x,x, x,x,x,x, x,x,x,x, x,x,x,x, x,x,x},
+		{x,T,T,x, x,x,x,x, x,x,x,x, x,x,x,x, x,x,x,x, x,x,x,x, x,x,x,x, x,x,x,x, x,x,x,x, x,x,x,x, x,x,x,x, x,x,x,x, x,T,x,x, x,x,x,x, x,x,x,x, x,x,T,x, x,x,x,x, x,x,x,x, x,x,x,x, x,x,x,x, x,x,x,x, x,x,x,x, x,x,x,x, x,x,x},
+		{x,x,x,x, x,x,x,x, x,x,x,x, x,x,x,x, x,x,x,x, x,x,x,x, x,x,x,x, x,x,x,x, x,x,x,x, x,x,x,x, x,x,x,T, T,x,x,x, x,x,x,x, x,x,T,T, x,x,x,x, x,x,x,x, x,x,x,x, x,x,x,x, x,x,x,x, x,x,x,x, x,x,x,x, x,x,x,x, x,x,x,x, x,x,x},
+		{x,x,x,x, x,x,x,x, x,x,x,x, x,x,x,x, x,x,x,x, x,x,x,x, x,x,x,x, x,x,T,x, x,T,x,x, x,x,x,x, x,x,x,x, x,x,x,x, x,x,x,x, x,x,x,x, x,x,x,x, x,x,x,x, x,x,x,x, x,x,x,x, x,x,x,x, x,x,x,x, x,x,x,x, x,x,x,x, x,x,x,x, x,x,x},
+		{x,T,T,x, T,T,T,T, x,x,x,x, x,x,x,x, x,x,T,x, x,x,x,x, x,x,x,x, x,x,x,x, x,x,x,x, x,x,x,x, x,x,x,x, x,T,T,x, x,x,x,x, x,x,x,x, x,x,x,x, x,x,x,x, x,x,x,x, x,x,x,x, x,x,x,x, x,x,x,x, x,x,x,x, x,x,x,x, x,x,x,x, x,x,x},
+		{x,T,T,x, x,x,x,x, x,x,x,x, x,x,x,x, x,x,x,x, T,x,x,x, x,x,x,x, x,x,x,x, x,x,x,x, x,x,x,x, x,x,x,T, T,x,x,x, x,x,x,x, T,T,x,x, x,x,T,x, x,x,T,x, x,x,x,x, x,x,x,x, x,x,x,x, x,x,x,x, x,x,x,x, x,x,x,x, x,x,x,x, x,x,x},
+		{x,T,T,x, x,x,x,x, x,x,T,x, x,x,x,x, x,x,x,x, x,x,x,x, x,x,x,x, x,x,x,x, x,x,x,x, x,x,x,x, x,x,x,T, T,x,x,x, x,x,x,x, T,T,x,x, x,x,T,x, x,x,T,x, x,x,x,x, x,x,x,x, x,x,x,x, x,x,x,x, x,x,x,x, x,x,x,x, x,x,x,x, x,x,x},
+		{x,T,T,T, T,x,x,x, x,x,x,x, x,x,x,x, x,x,T,x, T,x,x,x, x,x,x,x, x,x,x,T, x,T,x,T, x,x,T,x, x,x,x,T, T,x,x,x, x,x,x,x, T,T,T,x, T,T,T,T, x,x,T,T, T,T,x,x, x,x,T,T, x,T,T,x, x,T,x,T, T,T,T,T, T,T,x,x, T,T,T,x, x,x,x},
+		{x,x,x,x, x,x,x,x, x,x,x,x, x,x,x,x, x,x,x,x, x,x,x,x, x,x,x,x, T,x,x,x, x,x,x,x, x,x,x,x, x,x,x,x, x,x,x,x, x,x,x,x, x,x,x,x, x,x,x,x, x,x,x,x, x,x,x,x, x,x,x,x, x,x,x,x, x,x,x,x, x,x,x,x, x,x,x,x, x,x,x,x, x,x,x},
+		{x,x,x,x, x,x,x,x, x,x,x,x, x,x,x,x, x,x,x,x, x,x,x,x, x,x,x,x, x,x,x,x, x,x,x,x, x,x,x,x, x,x,x,x, x,x,x,x, x,x,x,x, x,x,x,x, x,x,x,T, x,x,x,T, T,T,x,x, x,x,x,x, x,x,x,x, x,x,x,x, x,x,x,x, x,x,x,x, x,x,x,x, x,x,x},
+		{x,x,x,x, x,x,x,x, T,T,x,x, T,x,x,x, x,x,x,x, x,x,x,T, x,T,T,x, x,x,x,T, T,x,x,x, T,x,x,x, x,x,x,x, x,x,x,x, x,x,x,x, x,x,x,x, x,x,x,x, x,x,x,x, x,x,x,x, x,x,x,x, x,x,x,x, x,x,x,x, x,x,x,x, x,x,x,x, x,x,x,x, x,x,x},
+		{x,T,T,x, T,T,T,T, x,T,x,T, x,x,x,x, x,T,T,T, T,x,x,T, x,x,T,x, x,x,x,T, x,x,x,T, x,x,T,x, x,x,x,T, T,T,T,x, x,x,x,T, T,T,x,x, T,x,T,x, x,x,T,x, x,x,x,x, x,x,x,T, T,T,T,x, T,T,x,T, x,T,T,T, T,x,x,x, T,x,x,x, T,x,x}
 
 #line 132 "D:\DotNetProjects\Prexonite\Tools\Parser.frame" //FRAME
 
@@ -2796,66 +2836,68 @@ internal class Errors {
 			case 87: s = "finally expected"; break;
 			case 88: s = "throw expected"; break;
 			case 89: s = "uusing expected"; break;
-			case 90: s = "ENDKEYWORDS expected"; break;
-			case 91: s = "LPopExpr expected"; break;
-			case 92: s = "??? expected"; break;
-			case 93: s = "invalid AsmStatementBlock"; break;
-			case 94: s = "invalid AsmInstruction"; break;
+			case 90: s = "macro expected"; break;
+			case 91: s = "ENDKEYWORDS expected"; break;
+			case 92: s = "LPopExpr expected"; break;
+			case 93: s = "??? expected"; break;
+			case 94: s = "invalid AsmStatementBlock"; break;
 			case 95: s = "invalid AsmInstruction"; break;
 			case 96: s = "invalid AsmInstruction"; break;
 			case 97: s = "invalid AsmInstruction"; break;
 			case 98: s = "invalid AsmInstruction"; break;
-			case 99: s = "invalid AsmId"; break;
-			case 100: s = "invalid SignedReal"; break;
-			case 101: s = "invalid Boolean"; break;
-			case 102: s = "invalid Id"; break;
-			case 103: s = "invalid AtomicExpr"; break;
-			case 104: s = "invalid AssignExpr"; break;
+			case 99: s = "invalid AsmInstruction"; break;
+			case 100: s = "invalid AsmId"; break;
+			case 101: s = "invalid SignedReal"; break;
+			case 102: s = "invalid Boolean"; break;
+			case 103: s = "invalid Id"; break;
+			case 104: s = "invalid AtomicExpr"; break;
 			case 105: s = "invalid AssignExpr"; break;
-			case 106: s = "invalid TypeExpr"; break;
-			case 107: s = "invalid GetSetExtension"; break;
-			case 108: s = "invalid Primary"; break;
-			case 109: s = "invalid Constant"; break;
-			case 110: s = "invalid LoopExpr"; break;
-			case 111: s = "invalid LambdaExpression"; break;
+			case 106: s = "invalid AssignExpr"; break;
+			case 107: s = "invalid TypeExpr"; break;
+			case 108: s = "invalid GetSetExtension"; break;
+			case 109: s = "invalid Primary"; break;
+			case 110: s = "invalid Constant"; break;
+			case 111: s = "invalid LoopExpr"; break;
 			case 112: s = "invalid LambdaExpression"; break;
-			case 113: s = "invalid GetInitiator"; break;
+			case 113: s = "invalid LambdaExpression"; break;
 			case 114: s = "invalid GetInitiator"; break;
-			case 115: s = "invalid WhileLoop"; break;
+			case 115: s = "invalid GetInitiator"; break;
 			case 116: s = "invalid WhileLoop"; break;
-			case 117: s = "invalid ForLoop"; break;
+			case 117: s = "invalid WhileLoop"; break;
 			case 118: s = "invalid ForLoop"; break;
-			case 119: s = "invalid Arguments"; break;
-			case 120: s = "invalid Statement"; break;
-			case 121: s = "invalid ExplicitTypeExpr"; break;
-			case 122: s = "invalid PrexoniteTypeExpr"; break;
-			case 123: s = "invalid ClrTypeExpr"; break;
-			case 124: s = "invalid TypeExprElement"; break;
-			case 125: s = "this symbol not expected in Prexonite"; break;
-			case 126: s = "this symbol not expected in GlobalVariableDefinition"; break;
-			case 127: s = "invalid GlobalVariableDefinition"; break;
-			case 128: s = "this symbol not expected in GlobalVariableDefinition"; break;
-			case 129: s = "this symbol not expected in Declaration"; break;
-			case 130: s = "invalid MetaAssignment"; break;
+			case 119: s = "invalid ForLoop"; break;
+			case 120: s = "invalid Arguments"; break;
+			case 121: s = "invalid Statement"; break;
+			case 122: s = "invalid ExplicitTypeExpr"; break;
+			case 123: s = "invalid PrexoniteTypeExpr"; break;
+			case 124: s = "invalid ClrTypeExpr"; break;
+			case 125: s = "invalid TypeExprElement"; break;
+			case 126: s = "this symbol not expected in Prexonite"; break;
+			case 127: s = "this symbol not expected in GlobalVariableDefinition"; break;
+			case 128: s = "invalid GlobalVariableDefinition"; break;
+			case 129: s = "this symbol not expected in GlobalVariableDefinition"; break;
+			case 130: s = "this symbol not expected in Declaration"; break;
 			case 131: s = "invalid MetaAssignment"; break;
-			case 132: s = "this symbol not expected in BuildBlock"; break;
-			case 133: s = "invalid FunctionDefinition"; break;
-			case 134: s = "this symbol not expected in FunctionDefinition"; break;
+			case 132: s = "invalid MetaAssignment"; break;
+			case 133: s = "this symbol not expected in BuildBlock"; break;
+			case 134: s = "invalid FunctionDefinition"; break;
 			case 135: s = "invalid FunctionDefinition"; break;
-			case 136: s = "invalid GlobalId"; break;
-			case 137: s = "invalid MetaExpr"; break;
-			case 138: s = "invalid GlobalQualifiedId"; break;
-			case 139: s = "invalid ExplicitLabel"; break;
-			case 140: s = "invalid SimpleStatement"; break;
-			case 141: s = "invalid StructureStatement"; break;
-			case 142: s = "invalid GetSetComplex"; break;
-			case 143: s = "invalid Return"; break;
-			case 144: s = "invalid Condition"; break;
-			case 145: s = "invalid TryCatchFinally"; break;
-			case 146: s = "invalid TryCatchFinally"; break;
-			case 147: s = "invalid Assignment"; break;
-			case 148: s = "invalid Variable"; break;
-			case 149: s = "invalid VariableDeclaration"; break;
+			case 136: s = "this symbol not expected in FunctionDefinition"; break;
+			case 137: s = "invalid FunctionDefinition"; break;
+			case 138: s = "invalid GlobalId"; break;
+			case 139: s = "invalid MetaExpr"; break;
+			case 140: s = "invalid GlobalQualifiedId"; break;
+			case 141: s = "invalid ExplicitLabel"; break;
+			case 142: s = "invalid SimpleStatement"; break;
+			case 143: s = "invalid StructureStatement"; break;
+			case 144: s = "invalid GetSetComplex"; break;
+			case 145: s = "invalid Return"; break;
+			case 146: s = "invalid Condition"; break;
+			case 147: s = "invalid TryCatchFinally"; break;
+			case 148: s = "invalid TryCatchFinally"; break;
+			case 149: s = "invalid Assignment"; break;
+			case 150: s = "invalid Variable"; break;
+			case 151: s = "invalid VariableDeclaration"; break;
 
 #line 146 "D:\DotNetProjects\Prexonite\Tools\Parser.frame" //FRAME
 
