@@ -1056,6 +1056,9 @@ namespace Prexonite.Types
         public override bool Equality(
             StackContext sctx, PValue leftOperand, PValue rightOperand, out PValue result)
         {
+            if (base.Equality(sctx, leftOperand, rightOperand, out result))
+                return true;
+
             return
                 TryStaticCall(
                     sctx,
@@ -1081,6 +1084,9 @@ namespace Prexonite.Types
         public override bool Inequality(
             StackContext sctx, PValue leftOperand, PValue rightOperand, out PValue result)
         {
+            if (base.Equality(sctx, leftOperand, rightOperand, out result))
+                return true;
+
             return
                 TryStaticCall(
                     sctx,

@@ -88,15 +88,26 @@ MetaExpr<out MetaEntry entry>
 
 /* ---- Global variable definition --- */
 
-GlobalVariableDefinition	(.  string id; PVariable vari; SymbolInterpretations type = SymbolInterpretations.GlobalObjectVariable;; .)
+GlobalVariableDefinition	(.  
+                                string id = null; 
+                                List<string> aliases = new List<string>();
+                                PVariable vari; 
+                                SymbolInterpretations type = SymbolInterpretations.GlobalObjectVariable; 
+                            .)
 =
-SYNC
+
 	(   var                 
 	|   ref                 (.  type = SymbolInterpretations.GlobalReferenceVariable; .)
 	)
 	
-	GlobalId<out id>        (.
-	                            Symbols[id] = new SymbolEntry(type, id);
+	(   GlobalId<out id>    (.  aliases.Add(id); .)
+	    [ GlobalVariableAliasList<aliases> ]
+	|   GlobalVariableAliasList<aliases>
+	                        (.  id = Engine.GenerateName("v"); .)
+	)
+	                        (.
+	                            foreach(var alias in aliases)
+	                                Symbols[alias] = new SymbolEntry(type, id);
 	                            if(TargetApplication.Variables.ContainsKey(id))
 	                                vari = TargetApplication.Variables[id];
 	                            else
@@ -128,6 +139,15 @@ SYNC
 		                        target = lastTarget;
 		                    .)
 	]
+.
+
+GlobalVariableAliasList<. IList<string> aliases .>
+                            (.  string id = "\\NoId_In_GlobalVariableAliasList_\\"; .)
+=
+    as GlobalId<out id>     (.  aliases.Add(id); .)
+    {   comma
+        GlobalId<out id>    (.  aliases.Add(id); .)
+    }
 .
 
 /* ---- Global declaration ---- */

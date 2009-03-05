@@ -717,15 +717,31 @@ namespace Prexonite.Types
         public virtual bool Equality(
             StackContext sctx, PValue leftOperand, PValue rightOperand, out PValue result)
         {
-            result = null;
-            return false;
+            if (ReferenceEquals(leftOperand.Value, rightOperand.Value) && leftOperand.Type == rightOperand.Type)
+            {
+                result = true;
+                return true;
+            }
+            else
+            {
+                result = null;
+                return false;
+            }
         }
 
         public virtual bool Inequality(
             StackContext sctx, PValue leftOperand, PValue rightOperand, out PValue result)
         {
-            result = null;
-            return false;
+            if (!ReferenceEquals(leftOperand.Value, rightOperand.Value) || leftOperand.Type != rightOperand.Type)
+            {
+                result = true;
+                return true;
+            }
+            else
+            {
+                result = null;
+                return false;
+            }
         }
 
         public virtual bool GreaterThan(

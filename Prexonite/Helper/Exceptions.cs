@@ -167,7 +167,7 @@ namespace Prexonite
             get { return _prexoniteStackTrace; }
         }
 
-        private string _prexoniteStackTrace;
+        private readonly string _prexoniteStackTrace;
 
         private PrexoniteRuntimeException(
             string message, Exception innerException, string prexoniteStackTrace)
@@ -191,12 +191,12 @@ namespace Prexonite
             if (message == null)
                 message = "An error occured at runtime.";
 
-            StringBuilder builder = new StringBuilder();
-            List<StackContext> stack = new List<StackContext>(esctx.ParentEngine.Stack);
-            for (int i = stack.Count - 1; i >= 0; i--)
+            var builder = new StringBuilder();
+            var stack = new List<StackContext>(esctx.ParentEngine.Stack);
+            for (var i = stack.Count - 1; i >= 0; i--)
             {
-                StackContext sctx = stack[i];
-                FunctionContext fctx = sctx as FunctionContext;
+                var sctx = stack[i];
+                var fctx = sctx as FunctionContext;
                 builder.Append("   at ");
                 if (fctx == null)
                 {
@@ -204,11 +204,13 @@ namespace Prexonite
                 }
                 else
                 {
-                    PFunction func = fctx.Implementation;
-                    List<Instruction> code = func.Code;
-                    int pointer = fctx.Pointer - 1;
+                    var func = fctx.Implementation;
+                    var code = func.Code;
+                    var pointer = fctx.Pointer - 1;
 
-                    builder.Append(func); 
+                    builder.Append("function ");
+
+                    builder.Append(func.Meta.GetDefault(PFunction.LogicalIdKey, func.Id).Text);
                     
                     if (fctx.Pointer < code.Count)
                     {

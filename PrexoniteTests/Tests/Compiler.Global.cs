@@ -963,5 +963,58 @@ function main does asm
         }
 
         #endregion
+
+        [Test]
+        public void GlobalVariableShadowId()
+        {
+            var ldr = _compile(@"
+var a;
+
+var as b, c;
+
+var d as e, f;
+
+");
+
+            Assert.IsTrue(target.Variables.ContainsKey("a"),"Variable a must exist.");
+            Assert.IsFalse(target.Variables.ContainsKey("b"),"No Variable b must exist.");
+            Assert.IsFalse(target.Variables.ContainsKey("c"), "No Variable c must exist.");
+            Assert.IsTrue(target.Variables.ContainsKey("d"), "Variable d must exist.");
+            Assert.IsFalse(target.Variables.ContainsKey("e"), "No Variable e must exist.");
+            Assert.IsFalse(target.Variables.ContainsKey("f"), "No Variable f must exist.");
+
+
+            Assert.IsTrue(ldr.Symbols.ContainsKey("a"),"Symbol a must exist.");
+            var a = ldr.Symbols["a"];
+            Assert.IsTrue(a.Interpretation == SymbolInterpretations.GlobalObjectVariable,"Symbol a must be global object variable.");
+
+            Assert.IsTrue(ldr.Symbols.ContainsKey("b"), "Symbol b must exist.");
+            var b = ldr.Symbols["b"];
+            Assert.IsTrue(b.Interpretation == SymbolInterpretations.GlobalObjectVariable, "Symbol b must be global object variable.");
+            Assert.IsTrue(target.Variables.ContainsKey(b.Id),"Symbol b must point to a physical variable.");
+
+            Assert.IsTrue(ldr.Symbols.ContainsKey("c"), "Symbol c must exist.");
+            var c = ldr.Symbols["c"];
+            Assert.IsTrue(c.Interpretation == SymbolInterpretations.GlobalObjectVariable, "Symbol c must be global object variable.");
+            Assert.IsTrue(target.Variables.ContainsKey(c.Id), "Symbol c must point to a physical variable.");   
+            Assert.IsTrue(b.Id == c.Id, "Symbols b and c must point to the same variable.");
+
+            Assert.IsTrue(ldr.Symbols.ContainsKey("d"), "Symbol d must exist.");
+            var d = ldr.Symbols["d"];
+            Assert.IsTrue(d.Interpretation == SymbolInterpretations.GlobalObjectVariable, "Symbol d must be global object variable.");
+
+            Assert.IsTrue(ldr.Symbols.ContainsKey("e"), "Symbol e must exist.");
+            var e = ldr.Symbols["e"];
+            Assert.IsTrue(e.Interpretation == SymbolInterpretations.GlobalObjectVariable, "Symbol e must be global object variable.");
+            Assert.IsTrue(target.Variables.ContainsKey(e.Id), "Symbol e must point to a physical variable.");
+
+            Assert.IsTrue(ldr.Symbols.ContainsKey("f"), "Symbol f must exist.");
+            var f = ldr.Symbols["f"];
+            Assert.IsTrue(f.Interpretation == SymbolInterpretations.GlobalObjectVariable, "Symbol f must be global object variable.");
+            Assert.IsTrue(target.Variables.ContainsKey(f.Id), "Symbol f must point to a physical variable.");
+            Assert.IsTrue(e.Id == f.Id, "Symbols e and f must point to the same variable.");
+
+            Assert.IsTrue(e.Id == "d","Symbols e and f must point to variable d");
+        }
     }
 }
