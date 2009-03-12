@@ -13,25 +13,22 @@ declare
     imin as min,
     imax as max;
 
-function create_container [is volatile;]
+function create_container
 {   
     var container = [];
      
-    function register(this) does for(var i = 1; i < var args.Length; i++)
+    function register(this) does foreach(var arg in (var args) >> skip(1))
     {
-        var arg = args[i];
         if(arg is Null Or container.Contains(arg))
             continue;
         container.Add(arg);
     }
     
-    function remove does for(var i = 1; i < var args.Length; i++)
+    function remove does foreach(var arg in (var args) >> skip(1))
     {
-        var arg = args[i];
         if(arg is Null)
             continue;
-        container.Remove(arg);
-        
+        container.Remove(arg);        
     }
     
     function update does
@@ -67,7 +64,7 @@ function create_register_function ctor => () => register_control = call(ctor,var
 function create_registered_function ctor => () => registered_control = call(ctor,var args);
         
 function create_field(x,y,length)
-[ import System; is volatile; ]
+[ import System; ]
 {
     var content = "";
     length ??= -1;    
@@ -154,7 +151,7 @@ function create_field(x,y,length)
     return struct; 
 }
 
-function create_progressbar(x,y,length) [is volatile;]
+function create_progressbar(x,y,length)
 {
     length~=Int;
     var field = create_field(x,y,length);
@@ -164,12 +161,28 @@ function create_progressbar(x,y,length) [is volatile;]
     var anim = ["/","-","\\","|"];
     function animlen [is private;] = anim.Count;
     var idx = 0;
+    var c_pad_full = "=";
+    var c_pad_empty = "_";
     
     function animation this newAnim
     {
         if(Not newAnim is Null)
             anim = newAnim~List;
         return anim;
+    }
+    
+    function PaddingFull this newPadding
+    {
+        if(not newPadding is Null)
+            c_pad_full = newPadding;
+        return c_pad_full;    
+    }
+    
+    function PaddingEmpty this newPadding
+    {
+        if(not newPadding is Null)
+            c_pad_empty = newPadding;
+        return c_pad_empty;    
     }
     
     function percent(this, newPer)
@@ -200,12 +213,12 @@ function create_progressbar(x,y,length) [is volatile;]
         }
         var thisAnim = nextAnim;
         if(per == 1.0)
-            field.update = "[" + (barlen)*"=" + "]";
+            field.update = "[" + (barlen)*c_pad_full + "]";
         else
             field.update = 
                 "[" + 
-                setright(completed,thisAnim,"=") + 
-                max(barlen-max(completed,thisAnim.Length),0)*"_" + 
+                setright(completed,thisAnim,c_pad_full) + 
+                max(barlen-max(completed,thisAnim.Length),0)*c_pad_empty + 
                 "]";
     }
     
