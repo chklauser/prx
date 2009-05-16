@@ -16,14 +16,10 @@ var fields = [  _, _, _,
              ];
 
 //Counts the number of empty fields
-function emptyFields
-{
-    var n = 0;
-    foreach(var f in fields)
-        if(f == _)
-            n++;
-    return n;
-}
+function emptyFields = 
+    fields 
+    >> where(f => f == _) 
+    >> count;
 
 //Translate a string address to an index
 function address(s)
@@ -49,9 +45,9 @@ function address(s)
 //Create shorthands for fields
 function accessor(index) = v => 
 {
-    return = fields[index];
     if(v != null)
         fields[index] = v;
+    return fields[index];
 };
 
 //The actual shortcuts
@@ -85,13 +81,16 @@ function randomAddress
 }
 
 //Ask the player to enter a field address
-function choose_field does
+function choose_field
+{
+    var chosen_field;
     do
     {
         print("Please enter a field address (e.g., $randomAddress): ");   
-        var r = address(::Console.ReadLine);
-        return = r;
-    }until(r > -1)
+        chosen_field = address(::Console.ReadLine);        
+    } until(chosen_field > -1)
+    return chosen_field;
+}
 
 function main
 {

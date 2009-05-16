@@ -86,7 +86,7 @@ BitOrExpr<out IAstExpression expr>
                                         (. IAstExpression lhs, rhs; .)
 =
     BitXorExpr<out lhs>                 (. expr = lhs; .)
-    { bitAnd BitXorExpr<out rhs>        (. expr = new AstBinaryOperator(this, expr, BinaryOperator.BitwiseOr, rhs); .)
+    { bitOr BitXorExpr<out rhs>        (. expr = new AstBinaryOperator(this, expr, BinaryOperator.BitwiseOr, rhs); .)
     }
 .
 

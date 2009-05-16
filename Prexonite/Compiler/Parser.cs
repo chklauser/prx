@@ -803,7 +803,7 @@ internal partial class Parser {
 		/*Parser.Expression.atg:87*/IAstExpression lhs, rhs; 
 		BitXorExpr(/*Parser.Expression.atg:89*/out lhs);
 		/*Parser.Expression.atg:89*/expr = lhs; 
-		while (la.kind == _bitAnd) {
+		while (la.kind == _bitOr) {
 			Get();
 			BitXorExpr(/*Parser.Expression.atg:90*/out rhs);
 			/*Parser.Expression.atg:90*/expr = new AstBinaryOperator(this, expr, BinaryOperator.BitwiseOr, rhs); 

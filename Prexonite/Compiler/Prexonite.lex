@@ -169,7 +169,7 @@ Noise               = "/*" ~"*/" | "//" {NotLineBreak}* {LineBreak} | {WhiteSpac
     ">>"	{ return tok(Parser._appendright); }
     "<<"	{ return tok(Parser._appendleft); }
     
-    .|\n    { Console.WriteLine("Rouge Character: \"{0}\"", yytext()); }
+    .|\n    { Console.WriteLine("Rogue Character: \"{0}\"", yytext()); }
 }
 
 <String> {
