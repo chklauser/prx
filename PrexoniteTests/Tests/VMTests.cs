@@ -2,7 +2,7 @@
 #define useIndex
 #endif
 
-#define UseCil
+#define UseCil //need to change this in VMTestsBase.cs too!
 
 using System;
 using System.Collections;
@@ -22,32 +22,9 @@ using Prx.Tests;
 namespace Prx.Tests
 {
     [TestFixture]
-    public class VMTests
+    public class VMTests : VMTestsBase
     {
         #region Setup
-
-        private Engine engine;
-        private TestStackContext sctx;
-        private Application target;
-        private LoaderOptions options;
-
-        [SetUp]
-        public void SetupCompilerEngine()
-        {
-            engine = new Engine();
-            target = new Application("testApplication");
-            sctx = new TestStackContext(engine, target);
-            options = new LoaderOptions(engine, target);
-        }
-
-        [TearDown]
-        public void TeardownCompilerEngine()
-        {
-            engine = null;
-            sctx = null;
-            target = null;
-            options = null;
-        }
 
         #endregion
 
@@ -296,7 +273,7 @@ function fib(n) does
             for (var n = 1; n <= 6; n++)
             {
                 Console.WriteLine("\nFib(" + n + ") do ");
-                var expected = Fibonacci(n);
+                var expected = _fibonacci(n);
                 var fctx =
                     target.Functions["fib"].CreateFunctionContext(engine, new PValue[] {n});
                 engine.Stack.AddLast(fctx);
@@ -350,7 +327,7 @@ function fib(n) does asm
             for (var n = 1; n <= 6; n++)
             {
                 Console.WriteLine("\nFib(" + n + ") do ");
-                var expected = Fibonacci(n);
+                var expected = _fibonacci(n);
                 var fctx =
                     target.Functions["fib"].CreateFunctionContext(engine, new PValue[] {n});
                 engine.Stack.AddLast(fctx);
@@ -365,19 +342,19 @@ function fib(n) does asm
         }
 
         [DebuggerNonUserCode]
-        private static int Fibonacci(int n)
+        private static int _fibonacci(int n)
         {
             return
                 n <= 2
                     ?
                         1
-                    : Fibonacci(n - 1) + Fibonacci(n - 2);
+                    : _fibonacci(n - 1) + _fibonacci(n - 2);
         }
 
         [Test]
         public void WhileLoop()
         {
-            _compile(
+            Compile(
                 @"
 var M;
 function modify(x) =  M*x+12;
@@ -401,13 +378,13 @@ function main(newM, iterations)
                 sum += M*i + 12;
             var expected = sum;
 
-            _expectNamed("main", expected, M, iterations);
+            ExpectNamed("main", expected, M, iterations);
         }
 
         [Test]
         public void ForLoop()
         {
-            _compile(
+            Compile(
                 @"
 var theList;
 
@@ -446,24 +423,24 @@ function main(aList, max)
             var aList = new List<string>(
                 new[]
                     {
-                        _generateRandomString(5),
-                        _generateRandomString(10),
-                        _generateRandomString(15),
-                        _generateRandomString(3),
-                        _generateRandomString(5)
+                        GenerateRandomString(5),
+                        GenerateRandomString(10),
+                        GenerateRandomString(15),
+                        GenerateRandomString(3),
+                        GenerateRandomString(5)
                     });
 
             foreach (string elem in aList)
                 if (buffer.Length + elem.Length < max)
                     buffer.Append(elem);
 
-            _expect(buffer.ToString(), engine.CreateNativePValue(aList), max);
+            Expect(buffer.ToString(), engine.CreateNativePValue(aList), max);
         }
 
         [Test]
         public void StaticClrCalls()
         {
-            _compile(
+            Compile(
                 @"
 entry main;
 function main(rawInteger)
@@ -473,13 +450,13 @@ function main(rawInteger)
 ");
             var rnd = new Random();
             var expected = rnd.Next(1, 45);
-            _expect(expected, expected.ToString());
+            Expect(expected, expected.ToString());
         }
 
         [Test]
         public void Conditions()
         {
-            _compile(
+            Compile(
                 @"
 entry conditions;
 var G;
@@ -530,19 +507,19 @@ function conditions(x,y)
             const string xx = "11122";
 
             Console.WriteLine("// TRUE  - TRUE ");
-            _expect(TT, true, true);
+            Expect(TT, true, true);
             Console.WriteLine("// TRUE  - FALSE");
-            _expect(Tx, true, false);
+            Expect(Tx, true, false);
             Console.WriteLine("// FALSE - TRUE ");
-            _expect(xT, false, true);
+            Expect(xT, false, true);
             Console.WriteLine("// FALSE - FALSE");
-            _expect(xx, false, false);
+            Expect(xx, false, false);
         }
 
         [Test]
         public void IndexAccess()
         {
-            _compile(
+            Compile(
                 @"
 declare function print;
 function main(str, idx)
@@ -574,14 +551,14 @@ function print(text) does
                 buffer.Append(ch.ToString() + ' ');
             buffer.Append("--" + str[idx]);
             var expect = buffer.ToString();
-            _expect(expect, str, idx);
+            Expect(expect, str, idx);
         }
 
         [Test]
         public void NonRecursiveTailCall()
         {
             options.RegisterCommands = true;
-            _compile(
+            Compile(
                 @"
 var buffer;
 function print(text) = buffer.Append = text;
@@ -600,7 +577,7 @@ function main(a,b,c) = work(a,b,c).ToString;
             var b = Guid.NewGuid().ToString("N");
             var c = Guid.NewGuid().ToString("N");
             var expect = a + b + c;
-            _expect(expect, a, b, c);
+            Expect(expect, a, b, c);
         }
 
         [Test]
@@ -625,14 +602,14 @@ function main(a,b,c) = work(a,b,c).ToString;
                 "theList",
                 new DelegatePCommand(
                     (localSctx, args) => localSctx.CreateNativePValue(list)));
-            _compile(
+            Compile(
                 @"function main = conRev(theList[0], theList[1], theList[2], theList[3], theList[4], theList[5], theList[6], theList[7], theList[8]);");
 
             var buffer = new StringBuilder();
             for (var i = list.Length - 1; i > -1; i--)
                 buffer.Append(list[i]);
 
-            _expect(buffer.ToString());
+            Expect(buffer.ToString());
         }
 
         public class SomeSortOfList : IEnumerable<string>
@@ -709,7 +686,7 @@ function main(a,b,c) = work(a,b,c).ToString;
         [Test]
         public void SimpleForeach()
         {
-            _compile(
+            Compile(
                 @"
 function main(lst)
 {
@@ -719,14 +696,14 @@ function main(lst)
     return i;
 }
 ");
-            _expect(5, PType.List.CreatePValue(new PValue[] {1, 2, 3, 4, 5}));
+            Expect(5, PType.List.CreatePValue(new PValue[] {1, 2, 3, 4, 5}));
         }
 
         [Test]
         public void Foreach()
         {
             var lst = new SomeSortOfList("The quick brown fox jumps over the lazy dog");
-            _compile(
+            Compile(
                 @"
 var buffer;
 function print does
@@ -764,14 +741,14 @@ function countList(lst) does
 }
 ");
 
-            _expectNamed("printList", lst.printList(), sctx.CreateNativePValue(lst));
-            _expectNamed("countList", lst.countList(), sctx.CreateNativePValue(lst));
+            ExpectNamed("printList", lst.printList(), sctx.CreateNativePValue(lst));
+            ExpectNamed("countList", lst.countList(), sctx.CreateNativePValue(lst));
         }
 
         [Test]
         public void GlobalVarInit()
         {
-            _compile(
+            Compile(
                 @"
 var buffer = new ::Text::StringBuilder;
 var HW = ""Hello"";
@@ -804,14 +781,14 @@ function main(x)
             }
             var expect = buffer.ToString();
 
-            _expect(expect, x);
+            Expect(expect, x);
         }
 
         [Test]
         public void PartialInitialization()
         {
             var ldr =
-                _compile(
+                Compile(
                     @"
 
 Add System::Text to Import;
@@ -839,10 +816,10 @@ function main(level)
 }
 ");
 
-            _expect("#1=1o1;", 1);
+            Expect("#1=1o1;", 1);
 
             //Continue compilation using the same loader
-            _compile(
+            Compile(
                 ldr,
                 @"
 var L2 = ""2p2"";
@@ -852,10 +829,10 @@ var L2 = ""2p2"";
     buffer = new System::Text::StringBuilder;
 }
 ");
-            _expect("#1=1o2;#2=2p2;", 2);
+            Expect("#1=1o2;#2=2p2;", 2);
 
             //Continue compilation using a different loader
-            _compile(
+            Compile(
                 @"
 var L3 = ""3z3"";
 var L2 = ""2m3"";
@@ -865,17 +842,17 @@ declare var buffer;
 { buffer = new System::Text::StringBuilder; }
 ");
 
-            _expect("#1=1k3;#2=2m3;#3=3z3;", 3);
+            Expect("#1=1k3;#2=2m3;#3=3z3;", 3);
         }
 
         [Test]
         public void UselessBuildBlock()
         {
-            var ldr = _compile(@"
+            var ldr = Compile(@"
     var myGlob; var initGlob;
 ");
 
-            _compile(
+            Compile(
                 ldr,
                 @"
 build
@@ -894,13 +871,13 @@ var initGlob = ""init"";
 
 function main = myGlob + initGlob;
 ");
-            _expect("ELLO" + (55*77) + "init");
+            Expect("ELLO" + (55*77) + "init");
         }
 
         [Test]
         public void References()
         {
-            _compile(
+            Compile(
                 @"
 function foldl(ref f, var left, var lst) does // (b -> a -> b) -> b -> a -> [b]
 {
@@ -978,13 +955,13 @@ function main()                           // IO() -> IO()
     return  (bin\quad\sum - tup\bin_twi\sub\sum)~Int; // 6248
 }
 ");
-            _expect(6248);
+            Expect(6248);
         }
 
         [Test]
         public void Typecheck()
         {
-            _compile(
+            Compile(
                 @"
 function main(arg)
 {
@@ -999,28 +976,28 @@ function main(arg)
     return r;       
 }
 ");
-            string rs = _generateRandomString(3);
-            _expect(rs + rs, rs);
+            string rs = GenerateRandomString(3);
+            Expect(rs + rs, rs);
 
             List<PValue> lst = new List<PValue>(
                 new PValue[]
                     {
-                        _generateRandomString(2), _generateRandomString(3),
-                        _generateRandomString(4)
+                        GenerateRandomString(2), GenerateRandomString(3),
+                        GenerateRandomString(4)
                     });
             string ls = "";
             foreach (PValue e in lst)
                 ls += e.Value as string;
-            _expect(ls, (PValue) lst);
+            Expect(ls, (PValue) lst);
 
-            StringBuilder sb = new StringBuilder(_generateRandomString(5));
-            _expect(sb.ToString(), engine.CreateNativePValue(sb));
+            StringBuilder sb = new StringBuilder(GenerateRandomString(5));
+            Expect(sb.ToString(), engine.CreateNativePValue(sb));
         }
 
         [Test]
         public void ClosureCreation()
         {
-            _compile(
+            Compile(
                 @"
 function clo1 = x => 2*x;
 
@@ -1033,13 +1010,13 @@ function clo2(a)
             Random rnd = new Random();
 
 #if UseCil
-            PValue pclo1 = _getReturnValueNamed("clo1");
+            PValue pclo1 = GetReturnValueNamed("clo1");
             Assert.AreEqual(PType.Object[typeof(CilClosure)], pclo1.Type);
             CilClosure clo1 = pclo1.Value as CilClosure;
             Assert.IsNotNull(clo1);
             Assert.AreEqual(0, clo1.SharedVariables.Length);
 
-            PValue pclo2 = _getReturnValueNamed("clo2", rnd.Next(1, 10));
+            PValue pclo2 = GetReturnValueNamed("clo2", rnd.Next(1, 10));
             Assert.AreEqual(PType.Object[typeof(CilClosure)], pclo2.Type);
             CilClosure clo2 = pclo2.Value as CilClosure;
             Assert.IsNotNull(clo2);
@@ -1062,7 +1039,7 @@ function clo2(a)
         [Test]
         public void Lambda()
         {
-            _compile(
+            Compile(
                 @"
 function split(ref f, var lst, ref left, ref right)
 {
@@ -1123,13 +1100,13 @@ function main(lst)
             foreach (int x in lst)
                 plst.Add(x);
 
-            _expect(expected, PType.List.CreatePValue(plst));
+            Expect(expected, PType.List.CreatePValue(plst));
         }
 
         [Test]
         public void Currying()
         {
-            _compile(
+            Compile(
                 @"
 function curry(ref f) = a => b => f(a,b);
 
@@ -1191,13 +1168,13 @@ function main(lst, s)
             }
             string expect = sb.ToString();
 
-            _expect(expect, PType.List.CreatePValue(plst), s);
+            Expect(expect, PType.List.CreatePValue(plst), s);
         }
 
         [Test]
         public void NestedFunctions()
         {
-            _compile(
+            Compile(
                 @"
 function apply(ref f, x) = f(x);
 
@@ -1257,14 +1234,14 @@ function main(p)
                     koo = q.Length%2 != 0 ? q + "q" : q;
                 }
 
-                _expect(koo, p);
+                Expect(koo, p);
             }
         }
 
         [Test]
         public void DeDereference()
         {
-            _compile(
+            Compile(
                 @"
 function applyInChain(var chain, var x)
 {
@@ -1292,13 +1269,13 @@ function main(var m)
             int m = rnd.Next(3, 500);
             int expected = 2 + (2*m);
 
-            _expect(expected, m);
+            Expect(expected, m);
         }
 
         [Test]
         public void ExplicitIndirectCall()
         {
-            _compile(
+            Compile(
                 @"
 function map(f, lst)
 {
@@ -1343,13 +1320,13 @@ function main(xlst, ylst)
                 double d = Math.Sqrt(Math.Pow(x, 2) + Math.Pow(y, 2));
                 sum += d;
             }
-            _expect(sum, PType.List.CreatePValue(xlst), PType.List.CreatePValue(ylst));
+            Expect(sum, PType.List.CreatePValue(xlst), PType.List.CreatePValue(ylst));
         }
 
         [Test]
         public void ConditionalExpression()
         {
-            _compile(
+            Compile(
                 @"
 function abs(x) = x > 0 ? x : -x;
 function max(a,b) = a > b ? a : b;
@@ -1385,13 +1362,13 @@ function main(lst, limit)
             lst.Add(0);
             lst.Add(-2);
             sum -= 2;
-            _expect(-sum, PType.List.CreatePValue(lst));
+            Expect(-sum, PType.List.CreatePValue(lst));
         }
 
         [Test]
         public void NestedConditionalExpressions()
         {
-            _compile(
+            Compile(
                 @"
 function main(xs)
 {
@@ -1422,13 +1399,13 @@ function main(xs)
                         13 //=> 15
                     });
 
-            _expect(12 + 8 + 3 + 15, PType.List.CreatePValue(xs));
+            Expect(12 + 8 + 3 + 15, PType.List.CreatePValue(xs));
         }
 
         [Test]
         public void GlobalRefAssignment()
         {
-            _compile(
+            Compile(
                 @"
 var theList;
 
@@ -1467,13 +1444,13 @@ function main(lst)
                 av += k;
             }
             av = av/10;
-            _expect("f4::" + av + "::s7", PType.List.CreatePValue(lst));
+            Expect("f4::" + av + "::s7", PType.List.CreatePValue(lst));
         }
 
         [Test]
         public void DataStructure()
         {
-            _compile(
+            Compile(
                 @"
 function chain(lst, serial)
 {
@@ -1524,13 +1501,13 @@ function main(seed)
             expected = expected%3;
             expected = (int) (Math.Sqrt(expected)*10);
 
-            _expect("The answer is: " + expected, seed);
+            Expect("The answer is: " + expected, seed);
         }
 
         [Test]
         public void ListConcat()
         {
-            _compile(
+            Compile(
                 @"
 
 function foldl(ref f, var left, var lst)
@@ -1582,7 +1559,7 @@ function main(lst)
                 else
                     sbo.Append(i);
             }
-            _expect(
+            Expect(
                 string.Concat(sbe.ToString(), sbo.ToString()),
                 new PValue[] {PType.List.CreatePValue(lst)});
         }
@@ -1590,7 +1567,7 @@ function main(lst)
         [Test]
         public void CoroutineSimple()
         {
-            _compile(
+            Compile(
                 @"
 function main(a,b,c)
 {
@@ -1604,13 +1581,13 @@ function main(a,b,c)
     return f + f + f;
 }
 ");
-            _expect("abc", "a", "b", "c");
+            Expect("abc", "a", "b", "c");
         }
 
         [Test]
         public void CoroutineFunction()
         {
-            _compile(
+            Compile(
                 @"
 function subrange(lst, index, count) does
     for(var i = index; i < index+count; i++)
@@ -1626,13 +1603,13 @@ function main
 }
 ");
 
-            _expect("cde", "a", "b", "c", "d", "e", "f", "g");
+            Expect("cde", "a", "b", "c", "d", "e", "f", "g");
         }
 
         [Test]
         public void CoroutineComplex()
         {
-            _compile(
+            Compile(
                 @"
 function map(ref f, var lst) = coroutine () =>
 {
@@ -1706,13 +1683,13 @@ function main()
                 buffer.Append(i*3);
                 nums++;
             }
-            _expect(buffer.ToString(), lst.ToArray());
+            Expect(buffer.ToString(), lst.ToArray());
         }
 
         [Test]
         public void MapCommandImplementation()
         {
-            _compile(
+            Compile(
                 @"
 function my_map(ref f, var lst)
 {
@@ -1747,13 +1724,13 @@ function main()
 }
 ");
 
-            _expect("01234", 1, 2, 3, 4, 5);
+            Expect("01234", 1, 2, 3, 4, 5);
         }
 
         [Test]
         public void FoldLCommandImplementation()
         {
-            _compile(
+            Compile(
                 @"
 function my_foldl(ref f, var left, var xs)
 {
@@ -1769,13 +1746,13 @@ function main()
 }
 ");
 
-            _expect(13, 4, 5, 6, 7);
+            Expect(13, 4, 5, 6, 7);
         }
 
         [Test]
         public void CallCommandImplementation()
         {
-            _compile(
+            Compile(
                 @"
 function sum()
 {
@@ -1799,7 +1776,7 @@ function main()
                 f = 99,
                 g = 101;
 
-            _expect(
+            Expect(
                 a + b + c + d + e + f + g,
                 PType.List.CreatePValue(new PValue[] {a, b, c}),
                 PType.List.CreatePValue(new PValue[] {d, e}),
@@ -1813,7 +1790,7 @@ function main()
         [Test]
         public void CoroutineNoNull()
         {
-            _compile(
+            Compile(
                 @"
 function main()
 {
@@ -1836,13 +1813,13 @@ function main()
     return buffer.ToString;
 }
 ");
-            _expect("=>0\n=>1\n=>2\n=>3\n");
+            Expect("=>0\n=>1\n=>2\n=>3\n");
         }
 
         [Test]
         public void CoroutineRecursive()
         {
-            _compile(
+            Compile(
                 @"
 coroutine unfolded(lst)
 {
@@ -1892,13 +1869,13 @@ function main()
             args.Add(13);
             args.Add(14);
 
-            _expect("1.2.3.4.5.6.7.8.9.10.11.12.13.14", PType.List.CreatePValue(args));
+            Expect("1.2.3.4.5.6.7.8.9.10.11.12.13.14", PType.List.CreatePValue(args));
         }
 
         [Test]
         public void CoroutineFib()
         {
-            _compile(
+            Compile(
                 @"
 var numbers = [];
 
@@ -1921,13 +1898,13 @@ function fib(n)
 }
 ");
 
-            _expectNamed("fib", Fibonacci(6), 6);
+            ExpectNamed("fib", _fibonacci(6), 6);
         }
 
         [Test]
         public void UnusedTry()
         {
-            _compile(
+            Compile(
                 @"
 function foldl(ref f, var left, var xs)
 {
@@ -1958,13 +1935,13 @@ function main()
 }
 ");
 
-            _expect("001234--");
+            Expect("001234--");
         }
 
         [Test]
         public void UnusedSimpleTry()
         {
-            _compile(
+            Compile(
                 @"
 function foldl(ref f, var left, var xs)
 {
@@ -1988,13 +1965,13 @@ function main()
 }
 ");
 
-            _expect("001234--");
+            Expect("001234--");
         }
 
         [Test]
         public void IgnoreTry()
         {
-            _compile(
+            Compile(
                 @"
 function foldl(ref f, var left, var xs)
 {
@@ -2018,13 +1995,13 @@ function main()
 }
 ");
 
-            _expect("012345");
+            Expect("012345");
         }
 
         [Test]
         public void FinallyTry()
         {
-            _compile(
+            Compile(
                 @"
 function foldl(ref f, var left, var xs)
 {
@@ -2052,7 +2029,7 @@ function main()
 ");
             try
             {
-                _expect("012345");
+                Expect("012345");
             }
             catch (Exception exc)
             {
@@ -2071,7 +2048,7 @@ function main()
         [Test]
         public void CatchTry()
         {
-            _compile(
+            Compile(
                 @"
 function main()
 {
@@ -2091,13 +2068,13 @@ function main()
     return xs.ToString;
 }
 ");
-            _expect("[ 0, 1, 2, 3 ]");
+            Expect("[ 0, 1, 2, 3 ]");
         }
 
         [Test]
         public void CatchFinallyTry()
         {
-            _compile(
+            Compile(
                 @"
 function tos(xs) = foldl((a,b) => a + b,"""",xs);
 
@@ -2121,13 +2098,13 @@ function main()
     return tos(xs);
 }
 ");
-            _expect("0123345");
+            Expect("0123345");
         }
 
         [Test]
         public void NestedTries()
         {
-            _compile(
+            Compile(
                 @"
 function foldl(ref f, var left, var xs)
 {
@@ -2167,7 +2144,7 @@ function main()
 ");
             try
             {
-                _expect("0123445");
+                Expect("0123445");
             }
             catch (Exception exc)
             {
@@ -2178,7 +2155,7 @@ function main()
         [Test]
         public void CrossFunctionTry()
         {
-            _compile(
+            Compile(
                 @"
 function foldl(ref f, var left, var xs)
 {
@@ -2211,13 +2188,13 @@ function main()
     return tos(xs);
 }
 ");
-            _expect("0123345");
+            Expect("0123345");
         }
 
         [Test]
         public void HandledSurfaceTry()
         {
-            _compile(
+            Compile(
                 @"
 function foldl(ref f, var left, var xs)
 {
@@ -2256,13 +2233,13 @@ function main()
     return tos(xs);
 }
 ");
-            _expect("01233i45");
+            Expect("01233i45");
         }
 
         [Test]
         public void Hashes()
         {
-            _compile(
+            Compile(
                 @"
 function mapToHash(ref f, xs)
 {
@@ -2295,13 +2272,13 @@ function main()
                         3, //5
                         8, //10
                     };
-            _expect(4 + 5 + 10, xs);
+            Expect(4 + 5 + 10, xs);
         }
 
         [Test]
         public void NestedFunctionCrossReference()
         {
-            _compile(
+            Compile(
                 @"
 function main()
 {
@@ -2319,9 +2296,9 @@ function main()
 }
 ");
 #if UseCil
-            _expect("bs.CilClosure(function main\\A0( xa))b", "s");
+            Expect("bs.CilClosure(function main\\A0( xa))b", "s");
 #else
-            _expect("bs.Closure(function main\\A0( xa))b", "s");
+            Expect("bs.Closure(function main\\A0( xa))b", "s");
 #endif
 
         }
@@ -2329,7 +2306,7 @@ function main()
         [Test]
         public void CrossForeachTryCatch()
         {
-            _compile(
+            Compile(
                 @"
 coroutine mayFail
 {
@@ -2361,13 +2338,13 @@ function main(sum)
     return sum;
 }
 ");
-            _expect((1 + 4 + 2 + 5 + 1)*20, 1);
+            Expect((1 + 4 + 2 + 5 + 1)*20, 1);
         }
 
         [Test]
         public void StructureToString()
         {
-            _compile(
+            Compile(
                 @"
 function main(x)
 {
@@ -2377,13 +2354,13 @@ function main(x)
     return s~String;
 }
 ");
-            _expect("xzzxy", "xzzxy");
+            Expect("xzzxy", "xzzxy");
         }
 
         [Test]
         public void UnbindCommandImplementation()
         {
-            _compile(
+            Compile(
                 @"
 function main()
 {
@@ -2406,13 +2383,13 @@ function main()
 ");
 
             const string expected = "5.7.9.11.13.15.(5->19)(7->18)(9->17)(11->16)(13->15)(15->14)";
-            _expect(expected);
+            Expect(expected);
         }
 
         [Test]
         public void GlobalCode()
         {
-            _compile(
+            Compile(
                 @"
 var price = {};
 
@@ -2441,13 +2418,13 @@ function main(var lst)
             lst.Add(new PValueKeyValuePair("juice", 2));
             lst.Add(new PValueKeyValuePair("apple", 2));
 
-            _expect(3*3*2 + 5*1 + 2*4, PType.List.CreatePValue(lst));
+            Expect(3*3*2 + 5*1 + 2*4, PType.List.CreatePValue(lst));
         }
 
         [Test]
         public void CoalescenceOperator()
         {
-            _compile(
+            Compile(
                 @"
 coroutine fetch(xs) does 
     foreach(var x in xs)
@@ -2467,13 +2444,13 @@ function main()
 }        
 ");
 
-            _expect(".6.2.4.4.?.1");
+            Expect(".6.2.4.4.?.1");
         }
 
         [Test]
         public void LoopExpressions()
         {
-            _compile(
+            Compile(
                 @"
 function main(s)
 {
@@ -2491,13 +2468,13 @@ function main(s)
 }
 ");
 
-            _expect("5-Bl-Oo-Dh-Ou-Nd", "BloodHound");
+            Expect("5-Bl-Oo-Dh-Ou-Nd", "BloodHound");
         }
 
         [Test]
         public void HarmlessTryFinally()
         {
-            _compile(
+            Compile(
                 @"
 function main
 {
@@ -2513,13 +2490,13 @@ function main
     return r;
 }
 ");
-            _expect("NO_ERROR, REALLY");
+            Expect("NO_ERROR, REALLY");
         }
 
         [Test]
         public void TryCatchInFinally()
         {
-            _compile(
+            Compile(
                 @"
 function mightFail(x)
 {
@@ -2563,13 +2540,13 @@ function main()
             xs.Add("Hello");
             xs.Add(3.4);
 
-            _expect("EXC(I don't like 4.) BEGIN NP(4) NP(Hello) NP(3.4)", xs.ToArray());
+            Expect("EXC(I don't like 4.) BEGIN NP(4) NP(Hello) NP(3.4)", xs.ToArray());
         }
 
         [Test]
         public void LeftAppendArgument()
         {
-            _compile(
+            Compile(
                 @"
 coroutine where(ref f, xs) does foreach(var x in xs)
     if(f(x))
@@ -2597,13 +2574,13 @@ function main(sep) = foldl( (l,r) => $l + "" "" + $r, ""BEGIN"")
     << limit(3) << map( x => x.Length + sep + x ) << where( x => x.Length >= 3 ) << skip(1) << var args;
 ");
 
-            _expect("BEGIN 3:abc 5:hello 3:123", ":", "ab", "abc", "hello", "12", "123", "8965");
+            Expect("BEGIN 3:abc 5:hello 3:123", ":", "ab", "abc", "hello", "12", "123", "8965");
         }
 
         [Test]
         public void RightAppendArgument()
         {
-            _compile(
+            Compile(
                 @"
 coroutine where(ref f, xs) does foreach(var x in xs)
     if(f(x))
@@ -2636,13 +2613,13 @@ function main(sep) =
     foldl( (l,r) => $l + "" "" + $r, ""BEGIN"");
 ");
 
-            _expect("BEGIN 3:abc 5:hello 3:123", ":", "ab", "abc", "hello", "12", "123", "8965");
+            Expect("BEGIN 3:abc 5:hello 3:123", ":", "ab", "abc", "hello", "12", "123", "8965");
         }
 
         [Test]
         public void List_Sort()
         {
-            _compile(
+            Compile(
                 @"
 function main() = 
     [ ""f"", ""A"", ""x"", ""a"", ""h"", ""g"", ""H"", ""A"", ""f"", ""X"", ""F"", ""G"" ] >>
@@ -2656,13 +2633,13 @@ function main() =
     foldl( (l,r) => l + "","" + r, """");
 ");
 
-            _expect(",A,A,a,F,f,f,G,g,H,h,X,x");
+            Expect(",A,A,a,F,f,f,G,g,H,h,X,x");
         }
 
         [Test]
         public void CompilerHook()
         {
-            _compile(
+            Compile(
                 @"
 //In some library
 declare function debug;
@@ -2763,13 +2740,13 @@ function main(a)
 }
 ");
 
-            _expect("DEBUG x = 3\r\nDEBUG y = 4\r\nDEBUG z = 23\r\n", 4);
+            Expect("DEBUG x = 3\r\nDEBUG y = 4\r\nDEBUG z = 23\r\n", 4);
         }
 
         [Test]
         public void InitializationCodeHook()
         {
-            _compile(
+            Compile(
                 @"
 Imports { System, Prexonite, Prexonite::Types, Prexonite::Compiler, Prexonite::Compiler::Ast };
 
@@ -2882,13 +2859,13 @@ function main()
     return ""goo = $goo; goo2 = $goo2;"";
 }
 ");
-            _expect("goo = 600; goo2 = 780;");
+            Expect("goo = 600; goo2 = 780;");
         }
 
         [Test]
         public void CastAssign()
         {
-            _compile(@"
+            Compile(@"
 function main(a,b,c)
 {
     a~=Int;
@@ -2903,13 +2880,13 @@ function main(a,b,c)
             int b = 27;         //true
             bool c = true;      //True
 
-            _expect("2TrueTrueTrue",a,b,c);
+            Expect("2TrueTrueTrue",a,b,c);
         }
 
         [Test]
         public void Store_Basic()
         {
-            _compile_store(@"
+            CompileStore(@"
 function main(a,b,c)
 {
     //string int bool
@@ -2923,7 +2900,7 @@ function main(a,b,c)
 }
 ");
 
-            _expect("cd50x","abcd",10,true);
+            Expect("cd50x","abcd",10,true);
         }
 
 #if useIndex && false
@@ -2953,20 +2930,22 @@ function main(a,b)
         [Test]
         public void RotateIns()
         {
-            _compile(@"
+            Compile(@"
 function main(a)
 {   
     var s = new Structure;
     return s.\(""text"") = a;
 }
 ");
-            _expect("ham","ham");
+            Expect("ham","ham");
         }
 
         
+// ReSharper disable InconsistentNaming
         public void CallCCImplementation()
+// ReSharper restore InconsistentNaming
         {
-            _compile(@"
+            Compile(@"
 function get_element(cont, pred, xs)
 {
     foreach(var x in xs)
@@ -2994,7 +2973,7 @@ function main(a,b,xs)
         [Test]
         public void DirectTailRecursion()
         {
-            _compile(@"
+            Compile(@"
 function fac n r =
     if(n == 1)
         r
@@ -3002,13 +2981,13 @@ function fac n r =
         fac(n-1, n*r);
 ");
 
-            _expectNamed("fac",fac(6),6,1);
+            ExpectNamed("fac",fac(6),6,1);
         }
 
         [Test]
         public void IsNotSyntax()
         {
-            _compile(@"
+            Compile(@"
 function main(a,b)
 {
     if(a is not String)
@@ -3018,15 +2997,15 @@ function main(a,b)
 }
 ");
 
-            _expect(125,125, "s-b-s");
-            _expect(125.0, 125.0, "s-b-s");
-            _expect(true, true, "s-b-s");
+            Expect(125,125, "s-b-s");
+            Expect(125.0, 125.0, "s-b-s");
+            Expect(true, true, "s-b-s");
         }
 
         [Test]
         public void ReturnFromForeach()
         {
-            _compile(@"
+            Compile(@"
 function main(xs)
 {
     foreach(var x in xs)
@@ -3037,24 +3016,24 @@ function main(xs)
 ");
             var xs = (PValue) new List<PValue> {1, 2, 3, 4, 7, 15};
 
-            _expect(7,xs);
+            Expect(7,xs);
         }
 
         [Test]
         public void SuperFastPrintLn()
         {
             //Covers #10
-            _compile(@"
+            Compile(@"
 function main = println;
 ");
 
-            _expect("");
+            Expect("");
         }
 
         [Test]
         public void ReturnFromCatch()
         {
-            _compile
+            Compile
                 (@"
 
 var lastCode = -1;
@@ -3093,156 +3072,28 @@ function main()
     return errors.Count == 0;
 }");
 
-            _expect(false);
+            Expect(false);
         }
 
         [Test]
-        public void MathPiWorksInCIL()
+        public void MathPiWorksInCil()
         {
-            _compile(@"
+            Compile(@"
 function main = pi;
 ");
 
-            _expect(Math.PI);
+            Expect(Math.PI);
+        }
+
+        [Test]
+        public void ReverseCmd()
+        {
+            Compile(@"function main = [1,2,3,4,5] >> reverse >> foldl((a,b) => a + b,"""");");
+
+            Expect("54321",new PValue[0]);
         }
 
         #region Helper
-
-        private static string _generateRandomString(int length)
-        {
-            return _generateRandomString().Substring(0, length);
-        }
-
-        private static string _generateRandomString()
-        {
-            return Guid.NewGuid().ToString("N");
-        }
-
-        private static void _compile(Loader ldr, string input)
-        {
-            try
-            {
-                ldr.LoadFromString(input);
-#if UseCil
-                Prexonite.Compiler.Cil.Compiler.Compile(ldr.ParentApplication, ldr.ParentEngine);
-#endif                
-            }
-            finally
-            {
-                foreach (string s in ldr.Errors)
-                {
-                    Console.WriteLine(s);
-                }
-            }
-            Assert.AreEqual(0, ldr.ErrorCount, "Errors detected during compilation.");
-            Console.WriteLine(ldr.StoreInString());
-        }
-
-        private Loader _compile(string input)
-        {
-            Loader ldr = new Loader(options);
-            _compile(ldr, input);
-            return ldr;
-        }
-
-        private Loader _store(Loader ldr)
-        {
-            StringBuilder sb = new StringBuilder();
-            ldr.Store(sb);
-
-            
-            //Create a new engine
-            SetupCompilerEngine();
-
-            ldr = new Loader(options);
-            try
-            {
-                ldr.LoadFromString(sb.ToString());
-            }
-            finally
-            {
-                foreach (string s in ldr.Errors)
-                {
-                    Console.Error.WriteLine(s);
-                }
-            }
-            Assert.AreEqual(0, ldr.ErrorCount, "Errors detected while loading stored code.");
-            Console.WriteLine(ldr.StoreInString());
-            return ldr;
-        }
-
-        public Loader _compile_store(Loader loader ,string input)
-        {
-            _compile(loader, input);
-            return _store(loader);
-        }
-
-        public Loader _compile_store(string input)
-        {
-            return _store(_compile(input));
-        }
-
-        private void _expect<T>(T expectedReturnValue, params PValue[] args)
-        {
-            _expectReturnValue(target.Meta[Application.EntryKey], expectedReturnValue, args);
-        }
-
-        private void _expectNamed<T>(string functionId, T expectedReturnValue, params PValue[] args)
-        {
-            _expectReturnValue(functionId, expectedReturnValue, args);
-        }
-
-        private void _expectReturnValue<T>(string functionId, T expectedReturnValue, PValue[] args)
-        {
-            PValue expected = engine.CreateNativePValue(expectedReturnValue);
-            if (!target.Functions.Contains(functionId))
-                throw new PrexoniteException("Function " + functionId + " cannot be found.");
-
-            var rv = target.Functions[functionId].Run(engine, args);
-            
-            Assert.AreEqual(
-                expected.Type,
-                rv.Type,
-                string.Format(
-                    "Return type is expected to be of type {0} and not {1}. Returned {2}.",
-                    expected.Type,
-                    rv.Type,
-                    rv));
-            Assert.AreEqual(
-                expected.Value,
-                rv.Value,
-                "Return value is expected to be " + expected + " and not " +
-                rv);
-        }
-
-        public void _expectNull(params PValue[] args)
-        {
-            _expectReturnValue<object>(target.Meta[Application.EntryKey], null, args);
-        }
-
-        public void _expectNull(string functionId, params PValue[] args)
-        {
-            _expectReturnValue<object>(functionId, null, args);
-        }
-
-        private PValue _getReturnValueNamed(string functionId, params PValue[] args)
-        {
-            return _getReturnValueNamed_(functionId, args);
-        }
-
-        private PValue _getReturnValueNamed_(string functionId, PValue[] args)
-        {
-            if (!target.Functions.Contains(functionId))
-                throw new PrexoniteException("Function " + functionId + " cannot be found.");
-            FunctionContext fctx = target.Functions[functionId].CreateFunctionContext(engine, args);
-            engine.Stack.AddLast(fctx);
-            return engine.Process();
-        }
-
-        public PValue _getReturnValue(params PValue[] args)
-        {
-            return _getReturnValueNamed_(target.Meta[Application.EntryKey], args);
-        }
 
         #endregion
     }

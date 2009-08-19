@@ -1,64 +1,35 @@
-/*
- * Prexonite, a scripting engine (Scripting Language -> Bytecode -> Virtual Machine)
- *  Copyright (C) 2007  Christian "SealedSun" Klauser
- *  E-mail  sealedsun a.t gmail d.ot com
- *  Web     http://www.sealedsun.ch/
- *
- *  This program is free software; you can redistribute it and/or modify
- *  it under the terms of the GNU General Public License as published by
- *  the Free Software Foundation; either version 2 of the License, or
- *  (at your option) any later version.
- *
- *  Please contact me (sealedsun a.t gmail do.t com) if you need a different license.
- * 
- *  This program is distributed in the hope that it will be useful,
- *  but WITHOUT ANY WARRANTY; without even the implied warranty of
- *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- *  GNU General Public License for more details.
- *
- *  You should have received a copy of the GNU General Public License along
- *  with this program; if not, write to the Free Software Foundation, Inc.,
- *  51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
- */
-
 using System;
 using System.Collections.Generic;
 using Prexonite.Types;
 
 namespace Prexonite
 {
-
     /// <summary>
     /// Integrates suspendable .NET managed code into the Prexonite stack via the IEnumerator interface.
     /// </summary>
-    public class CoroutineContext : StackContext, IDisposable
+    public class CooperativeContext : StackContext, IDisposable
     {
 
         public override string ToString()
         {
-            return string.Format("Managed Coroutine({0})", _coroutine);
+            return String.Format("Cooperative managed method({0})", _method);
         } 
 
-        public CoroutineContext(StackContext sctx, IEnumerator<PValue> coroutine)
+        public CooperativeContext(StackContext sctx, Func<Action<PValue>,IEnumerable<bool>> methodCtor)
         {
             if (sctx == null)
                 throw new ArgumentNullException("sctx");
-            if (coroutine == null)
-                throw new ArgumentNullException("coroutine");
+            if (methodCtor == null)
+                throw new ArgumentNullException("methodCtor");
 
-            _coroutine = coroutine;
+            _method = methodCtor(v => _returnValue = v).GetEnumerator();
 
             _parentEngine = sctx.ParentEngine;
             _parentApplication = sctx.ParentApplication;
             _importedNamespaces = sctx.ImportedNamespaces;
         }
 
-        public CoroutineContext(StackContext sctx, IEnumerable<PValue> coroutine)
-            : this(sctx, coroutine.GetEnumerator())
-        {
-        }
-
-        private readonly IEnumerator<PValue> _coroutine;
+        private readonly IEnumerator<bool> _method;
 
         private readonly Engine _parentEngine;
         private readonly Application _parentApplication;
@@ -92,18 +63,7 @@ namespace Prexonite
         /// <returns>True if the context has additional work to perform in the next cycle, False if it has finished it's work and can be removed from the stack</returns>
         protected override bool PerformNextCylce(StackContext lastContext)
         {
-            bool moved = _coroutine.MoveNext();
-            if (moved)
-            {
-                if (_coroutine.Current != null)
-                    _returnValue = _coroutine.Current;
-                ReturnMode = ReturnModes.Continue;
-            }
-            else
-            {
-                ReturnMode = ReturnModes.Break;
-            }
-            return false; //remove the context from the stack (for now)
+            return _method.MoveNext();
         }
 
         /// <summary>
@@ -113,8 +73,13 @@ namespace Prexonite
         /// <returns>True if the exception has been handled, false otherwise.</returns>
         public override bool TryHandleException(Exception exc)
         {
-            return false;
+            if (ExceptionHandler != null)
+                return ExceptionHandler(exc);
+            else
+                return false;
         }
+
+        public Func<Exception,bool> ExceptionHandler { get; set; }
 
         /// <summary>
         /// Represents the return value of the context.
@@ -141,14 +106,14 @@ namespace Prexonite
             {
                 if (disposing)
                 {
-                    if(_coroutine != null)
-                        _coroutine.Dispose();
+                    if(_method != null)
+                        _method.Dispose();
                 }
             }
             disposed = true;
         }
 
-        ~CoroutineContext()
+        ~CooperativeContext()
         {
             Dispose(false);
         }

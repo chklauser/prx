@@ -61,18 +61,21 @@ namespace Prexonite.Commands.List
             if (sctx == null)
                 throw new ArgumentNullException("sctx");
 
-            List<PValue> lst = new List<PValue>();
+            var lst = new List<PValue>();
 
-            foreach (PValue arg in args)
+            foreach (var arg in args)
                 lst.AddRange(Map._ToEnumerable(sctx, arg));
 
-            for (int i = lst.Count - 1; i <= 0; i--)
+            for (var i = lst.Count - 1; i >= 0; i--)
                 yield return lst[i];
         }
 
+// Bound statically by CIL compiler
+// ReSharper disable UnusedMember.Global
         public static PValue RunStatically(StackContext sctx, PValue[] args)
+// ReSharper restore UnusedMember.Global
         {
-            CoroutineContext corctx = new CoroutineContext(sctx, CoroutineRunStatically(sctx, args));
+            var corctx = new CoroutineContext(sctx, CoroutineRunStatically(sctx, args));
             return sctx.CreateNativePValue(new Coroutine(corctx));
         }
 

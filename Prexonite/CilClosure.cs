@@ -30,11 +30,11 @@ namespace Prexonite
     /// Represents a closure, a nested function bound to a set of shared variables.
     /// </summary>
     
-    public class CilClosure : IIndirectCall
+    public sealed class CilClosure : IIndirectCall
     {
         #region Properties
 
-        private PFunction _function;
+        private readonly PFunction _function;
 
         /// <summary>
         /// Provides readonly access to the function that makes up this closure.
@@ -44,7 +44,7 @@ namespace Prexonite
             get { return _function; }
         }
 
-        private PVariable[] _sharedVariables;
+        private readonly PVariable[] _sharedVariables;
 
         /// <summary>
         /// Provides readonly access to the list of variables the closure binds to the function.
@@ -88,7 +88,7 @@ namespace Prexonite
         /// <param name="sctx">The stack context in which to invoke the function.</param>
         /// <param name="args">A list of arguments to pass to the function.</param>
         /// <returns>The value returned by the function.</returns>
-        public virtual PValue IndirectCall(StackContext sctx, PValue[] args)
+        public PValue IndirectCall(StackContext sctx, PValue[] args)
         {
             if (!_function.HasCilImplementation)
                 throw new PrexoniteException("CilClosure cannot handle " + _function + " because it has no cil implementation");

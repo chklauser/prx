@@ -97,7 +97,7 @@ namespace Prexonite
                         throw new ArgumentNullException
                             (
                             "sharedVariables",
-                            "One of the elements passed in sharedVariables is null.");
+                            String.Format("The element at index {0} passed in sharedVariables is null for function {1}.",i,implementation));
 
                     if (_localVariables.ContainsKey(sharedNames[i]))
                         continue; //Arguments are redeclarations, that is not shared 
@@ -254,7 +254,10 @@ namespace Prexonite
         [DebuggerStepThrough]
         public void Push(PValue val)
         {
-            _stack.Push(val ?? NullPType.CreateValue());
+            if (_useVirtualStackInstead)
+                _useVirtualStackInstead = false;
+            else
+                _stack.Push(val ?? NullPType.CreateValue());
         }
 
         [DebuggerStepThrough]
@@ -303,6 +306,14 @@ namespace Prexonite
         public bool Step(StackContext lastContext)
         {
             return PerformNextCylce(lastContext, true);
+        }
+
+        private bool _useVirtualStackInstead;
+
+        public void UseVirtualStackInstead()
+        {
+            _useVirtualStackInstead = true;
+            _fetchReturnValue = true;
         }
 
         private bool PerformNextCylce(StackContext lastContext, bool needToReturn)

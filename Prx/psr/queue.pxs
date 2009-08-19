@@ -4,7 +4,7 @@ build does require
     "struct.pxs"
 );
 
-function create_queue(lst)[is volatile;]
+function create_queue(lst)
 {
     if(lst is Null)
         lst = [];
@@ -30,7 +30,7 @@ function create_queue(lst)[is volatile;]
     return struct;
 }
 
-function create_mutable_queue(lst)[is volatile;]
+function create_mutable_queue(lst)
 {
     var q = create_queue(lst);
     

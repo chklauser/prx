@@ -1,0 +1,577 @@
+﻿//PXS_
+
+build does require(
+    @"psr\misc.pxs",
+    "disassembler.pxs"
+);
+
+Imports { 
+    System, 
+    System::Text,
+    Prexonite, 
+    Prexonite::Types,
+    Prexonite::Compiler };
+    
+coroutine bind(f, xs)
+{
+    foreach(var x in xs)
+        foreach(var y in f.(x))
+            yield y;
+}
+
+function as create_debug_command(a_cmd, a_aliases, a_description)
+{
+    a_cmd ??= () => "Debugger command created with null as the command reference.";
+    a_aliases ??= [];
+    a_description ??= "Description missing";
+    
+    function cmd = a_cmd;
+    function aliases = a_aliases;
+    function description = a_description;
+    
+    return struct;
+}
+
+function as debug_prompt(fctx, lastCtx)
+{   
+    var HIDERETURN = "__HIDERETURN__";
+    
+    function toDebugString(v)
+    {
+        var pv = fctx.CreateNativePValue(v);
+        return ::PValue.ToDebugString(pv);
+    }
+    static evalStep ??= 1;
+    
+    var func = fctx.Implementation;
+    
+    //Operate in the currently running engine.
+    var engine = asm(ldr.eng);
+    
+    //Operate in the currently running app.
+    var app = asm(ldr.app);
+    
+    //Create a new loader (='compiler')
+    var ldr = new ::Loader(engine, app);    
+    
+    //Compile some standard code into the interactive application
+    var buffer = new ::StringBuilder;
+    //...
+    ldr.LoadFromString(buffer.ToString);
+    buffer.Length = 0;
+    
+    var errors; //Contains list of compiler errors
+    var lastCode; //Contains the last line of code that has been compiled, for error reporting
+    
+    //This function tries to load code from the buffer
+    function tryLoad()
+    {
+        try 
+        {
+            var exc = null;
+            lastCode = buffer.ToString; //Save the code for error reporting
+            ldr.LoadFromString(lastCode);            
+        } 
+        catch(exc)
+        {
+            //Exceptions are truly exceptional, so they should be printed
+            // out right away.
+			println(exc);
+			exc = null;
+			foreach(var err in errors)
+				println(err);
+			return false;
+        }
+        finally
+        {
+            //Save errors for review and clean up.
+            buffer.Length = 0;
+            errors = ~List.CreateFromList(ldr.Errors);
+            ldr.Errors.Clear;            
+        }
+        return errors.Count == 0;
+    }
+    
+    //Print errors (if 'otherErrors' is null, 'errors' is used)
+    function printErrors(otherErrors)
+    {
+        otherErrors ??= errors;
+        foreach(var err in otherErrors);
+            println(err);
+    }
+    
+    //Generate the next unique function id
+    function nextFuncId = "eval\\" + evalStep++;
+    
+    //Function that shortens a string
+    var shortenTo = 20;
+    function shortened(s) = 
+        if(s.Length <= shortenTo) 
+            s 
+        else 
+            (s.Substring(0,shortenTo-3) + "...");
+    
+    var continueSignal = false;
+    var ignoredNames;
+    
+    //The continue action.
+    function \continue
+    {
+        continueSignal = true;
+    }
+    
+    var \step\smart = null;
+    var \step\always = 1;
+    var \step\never = 2;
+    
+    var atEndOfFunction = false;
+    
+    ref \stepover;
+    
+    function \stepout()
+    {
+        while(not atEndOfFunction)
+            \stepover(true); //Step over, suppressing info
+        
+        println("Switching context");
+        var node = engine.Stack.FindLast(fctx);
+        engine.Stack.Remove(node);
+        var newCtx = node.Previous;
+        if(newCtx is not null)
+        {
+            println("New context: $newCtx.Value");
+            debug_prompt(newCtx.Value, fctx);
+        }    
+        \continue;
+        return HIDERETURN;   
+    }
+    
+    var displayStateInfo = true;
+    
+    //Step smart
+    function \step(mode, suppressInfo)
+    {
+        if(atEndOfFunction)
+        {
+            //Step out
+            println("reached eof. stepping out");
+            \stepout();
+        }
+        else 
+        {
+            //Step
+            var keepOnStack = fctx.Step(lastCtx);
+            if(not keepOnStack)
+                atEndOfFunction = true;
+            if(not suppressInfo)    
+                displayStateInfo = true;    
+        } 
+        return HIDERETURN;       
+    }
+    
+    //Step over
+    function \stepover(suppressInfo) does
+        \step(\step\never, suppressInfo);
+    
+    //Step into
+    function \stepinto does
+        \step(\step\always);
+    
+    //Show bytecode
+    function \bytecode
+    {
+        show_bytecode(func, fctx.Pointer);
+    }
+    
+    var watch = [];
+    
+    //Add watch expression
+    function \watch
+    { 
+        var args;
+        if(args.Count == 0)
+        {
+            var maxlen = 
+                watch
+                >> foldl( (m, w) => max(m,w.Key.Length), 0);
+                
+            foreach(var w in watch)
+                println(setleft(maxlen+3,w.Key) + "= " + toDebugString(w.Value.()));
+        }
+        else
+        {
+            foreach(var arg in var args)
+            {
+                var name = null;
+                var expression = null;
+                if(arg is ::PValueKeyValuePair)
+                {
+                    name = arg.Key;
+                    arg = arg.Value;
+                }
+                
+                if(arg is String)
+                {
+                    name ??= arg;
+                    if(fctx.LocalVariables.ContainsKey(name))
+                        expression = () => fctx.LocalVariables[name].Value.self;
+                    else 
+                        expression = () => "eval($arg)";
+                }
+                else
+                {
+                    name ??= arg.ToString;
+                    expression = arg;
+                }
+                
+                watch.Add(name: expression);
+            }
+        } 
+        return HIDERETURN;
+    }
+    
+    //Delete watch expressions
+    function \clearwatch
+    {
+        watch.Clear();
+        println("Cleared watch list.");
+        return HIDERETURN;
+    }
+    
+    //Show locals
+    function \locals
+    {
+        println("Local variables of $(func.Id)");
+        var ignoredMap = {};
+        var T = true;
+        foreach(var name in ignoredNames)
+            ignoredMap.Add(name: T);
+        foreach(var local in fctx.LocalVariables >> where(loc => not ignoredMap.ContainsKey(loc.Key)))
+            println(" var $(local.Key) = $(toDebugString(local.Value.Value.self));");
+        println;
+        return HIDERETURN;
+    }
+    
+    //Show stack
+    function \stack(showOnlyIfRelevant)
+    {
+        var size = fctx.StackSize;
+        if(size < 1 and not showOnlyIfRelevant)
+        {
+            println("Stack of $fctx is empty!");
+        }
+        else 
+        {
+            var digits = 
+                if(size <= 0)
+                    1
+                else    
+                    floor(::Math.Log10(size))~Int + 1;
+            println("Stack of $fctx");
+            var backupStack = [];
+            var i = 1;
+            while(fctx.StackSize > 0)
+            {
+                var elem = fctx.Pop;
+                backupStack[] = elem;
+                println(setright(digits+1,i++) + ": " + ToDebugString(elem));
+            }
+            for(var i = backupStack.Count -1 ; i >= 0; i--)
+                fctx.Push(backupStack[i]);
+        }
+        return HIDERETURN;
+    }
+    
+    //Show help
+    var debuggerCommands;
+    function \help
+    {
+        println("The following actions are available:");
+        foreach(var cmd in debuggerCommands)
+        {
+            var a =
+                cmd.aliases
+                >> foldl( (l,r) => l + " " + r, "\t\t");
+            println("\t" + cmd.description);    
+            println(a);
+        } 
+        return HIDERETURN;   
+    }
+    
+    var debuggerCommands = [
+            create_debug_command(->\continue, [@"\continue", "c", "exit", "quit"], "Exit debugging mode and continue execution"),
+            create_debug_command(->\step, [@"\step", "step", "s"], "Executes one instruction and then stops (stepping into functions not marked with \"is skipped\")"),
+            create_debug_command(->\stepover, [@"\stepover", "stepover", "so"], "Executes one instruction and then stops (stepping over everything)"),
+            create_debug_command(->\stepinto, [@"\stepinto", "stepinto", "si"], "Execute one instruction and then stops (stepping into functions, even if they are marked with \"is skipped\")"),
+            create_debug_command(->\stepout, [@"\stepout", "stepout", "su"], "Execute the the current function and break after removing the stack context"),
+            create_debug_command(->\bytecode, [@"\code", @"\bytecode", "code", "bytecode", "b"], "Shows the complete byte code for the current function"),
+            create_debug_command(->\watch, [@"\watch", "watch", "w"], "Adds a watch, either as a lambda expression, a variable reference, or a string. " +
+                "No arguments results in printing the watched expressions"),
+            create_debug_command(->\clearwatch, [@"\clearwatch", "clearwatch", "cw"], "Clears the watch list"),
+            create_debug_command(->\locals, [@"\locals", @"\vars", "locals","vars", "l", "v"], "Shows the list of local variables "),
+            create_debug_command(->\stack, [@"\stack", "stack", "ss", "st"], "Shows the current stack"),
+            create_debug_command(->\help, [@"\help", "help", "h"], "Shows help")
+        ];
+    var ignoredNames = [];    
+        
+    function ensureDebuggerCommandsIntegration()
+    {
+        var locals = fctx.LocalVariables;
+        foreach(var cmd in debuggerCommands)
+        {
+            var aliases = cmd.aliases;
+            var toRemove = [];
+            ignoredNames.Add(aliases[0]);
+            foreach(var alias in aliases >> skip(1) >> all)
+            {
+                if(locals.ContainsKey(alias))
+                    aliases.Remove(alias);
+                else 
+                    ignoredNames.Add(alias);   
+            }
+        }
+    }
+    ensureDebuggerCommandsIntegration();
+    
+    //Writes symbols to the loader, so that injected variables 
+    //  are recognized when compiling
+    function registerSharedVariables()
+    {
+        var sharedNames = append(
+            ignoredNames,
+            fctx.LocalVariables.Keys
+        );
+        
+        foreach(var sn in sharedNames)
+            ldr.Symbols[sn] = new ::SymbolEntry(::SymbolInterpretations.LocalObjectVariable,sn);
+    }
+    registerSharedVariables;
+    
+    //Create the \sharedNames { ... } meta entry for debugger commands and local variables
+    function createDebuggerSharedNames()
+    {
+        var sharedNames = append(
+            ignoredNames,
+            fctx.LocalVariables.Keys
+        );
+        var sb = new ::Text::StringBuilder;
+        sb.Append(::PFunction.SharedNamesKey);
+        sb.Append(" {");
+        foreach(var sn in sharedNames)
+        {
+            sb.Append(sn);
+            sb.Append(",");
+        }
+        sb.Length -= 1;
+        sb.Append("};");
+        
+        return sb.ToString;
+    }
+    var debuggerSharedNames = createDebuggerSharedNames;
+    
+    //Create redefine symbols as reference variables
+    function guessByRefLocals()
+    {
+        foreach(var name in ignoredNames)
+            ldr.Symbols[name] = new ::SymbolEntry(::SymbolInterpretations.LocalReferenceVariable, name);
+    }
+    
+    guessByRefLocals();
+    var byRefLocals = "";
+    
+    //Create a list of variables shared with the debugger action.
+    //  A new list is created for every action.
+    function createSharedVariables
+    {
+        var vars = [];
+        //Copy debug commands
+        foreach(var cmd in debuggerCommands)
+        {
+            var c = cmd.cmd;
+            foreach(var alias in cmd.aliases)
+            {
+                var pvar = new ::PVariable;
+                pvar.Value = fctx.CreateNativePValue(c);
+                vars[] = pvar;
+            }
+        }
+        
+        //Copy local variables
+        foreach(var v in fctx.LocalVariables.Values)
+            vars[] = v;
+        return vars;
+    }    
+    
+    //Shows a prompt and asks for input     
+    function showPrompt(s)
+    {
+        if(displayStateInfo)
+        {
+            \watch;
+            \stack(true);
+            println("Next instruction:");
+            if(fctx.Pointer < func.Code.Count)
+                println("\t" + func.Code[fctx.Pointer]);
+            else
+                println("\tend of function.");
+            displayStateInfo = false;    
+        }
+        print(s);
+        return ::Console.ReadLine;
+    }
+    
+    //Get 'raw' until 'raw' continue is signalized
+    //This 'for' syntax might look stupid at first but it manages to separate
+    // more complex iteration logic from the loop body.
+    // One only needs to look at the header to know under what conditions
+    // the loop runs. In addition, the body code can use the traditional
+    // 'continue' statement to skip an iteration.
+    for(var raw; do raw = showPrompt(func.Id + "@" + fctx.Pointer + "> "); until continueSignal)
+    {      
+        var funcId = nextFuncId; //<-- get the first unique function id
+        var cmd = "r"; //<-- assume execution of code
+        
+        function as_expression = 
+            "function $(funcId) [$(debuggerSharedNames)] {$(byRefLocals) " + 
+            "var $HIDERETURN = (\n$raw \n); if($HIDERETURN == \"" + HIDERETURN + "\")return; else" + 
+            " println(\"$(shortened(raw).Escape) = \") = $(HIDERETURN); }";
+        function as_statement  = "function $(funcId) [$(debuggerSharedNames)] {$(byRefLocals) \n$(raw)\n; }";
+        
+        if(raw.Trim.ToUpper == "CONTINUE")
+        {
+            continueSignal = true;
+            break;
+        }
+        if(raw.StartsWith("=")) //force compilation as an expression
+        {
+            raw = raw.Substring(1);
+            buffer.Append = as_expression;
+            if(Not tryLoad)
+            {
+                printErrors;
+                continue;   
+            }
+        }
+        else if(raw.StartsWith("::")) //Must be a static get/set
+            goto executeStatement;
+        else if(raw.StartsWith(":")) //Global code
+        {
+            buffer.Append = raw.Substring(1);
+executeGlobal:
+            if(Not tryLoad)
+            {
+                printErrors;
+                continue;
+            }  
+            cmd = "g"; //do not execute anything          
+        }
+        else if(raw.ToLower.StartsWith("global ")) //Global code too
+        {
+            buffer.Append = raw.Substring(7);
+            goto executeGlobal;
+        }
+        else
+        {
+executeStatement:
+            //First, try to compile the code as an expression
+            buffer.Append(as_expression);
+            if(Not tryLoad)
+            {
+                //should that fail, try to compile the code as a statement
+                var evalErrors = errors;
+                var evalCode = lastCode;
+
+                funcId = nextFuncId;
+                buffer.Append(as_statement);
+
+                if(Not tryLoad)
+                {
+                    //if both fails, the code must be wrong.
+                    // show why it can't be an expression
+                    println("(" + raw + ") is not an expression:");
+                        println(evalCode);
+                    printErrors(evalErrors);
+
+                    // shwo why it can't be a statement
+                    println;
+                    println("{" + shortened(raw) + "; } is also not a statement:");
+                        println(lastCode);
+                    printErrors(errors);
+
+                    continue;
+                }
+            }
+        }             
+        
+        try
+        {
+            if(cmd == "r")
+            {
+                //A function needs to be run
+                var action = app.Functions[funcId];
+                if(action is not Null)
+                    action.Run(engine, []~Object<"Prexonite.PValue[]">, createSharedVariables~Object<"Prexonite.PVariable[]">);
+                if(continueSignal)
+                    break;    
+            }
+        }
+        catch(var exc)
+        {
+           println(exc);
+        }
+        finally
+        {
+            function removeEvalFunctions()
+            {
+                var toRemove = app.Functions
+                                >>  where(f => f.Id.StartsWith("eval\\"))
+                                >> all;
+                
+                foreach(var f in toRemove)
+                    app.Functions.Remove(f);
+            }
+            removeEvalFunctions();
+        } //end finally
+    } //end for -> next prompt
+}
+
+
+
+function as debug_break()
+{
+    var ctx = caller;
+    function cannot_call_exc(ctxname) =
+        "Cannot call debug_break from $ctxname context. Use a conventional function.";
+    if(ctx is null)
+        throw "Cannot break because caller is unknown. Possibly due to CIL compilation.";
+    if(ctx is ::IndirectCallContext)
+        throw cannot_call_exc("an indirect call");
+    if(ctx is ::CoroutineContext)
+        throw cannot_call_exc("a coroutine");
+    if(ctx is ::CilFunctionContext)
+        throw ctx.Implementation + " is compiled to CIL and cannot be debugged. Mark it as \"is volatile;\" to enable debugging.";
+    else if(ctx is not ::FunctionContext)
+        throw cannot_call_exc(ctx.GetType.Id);
+    
+    //Ensured that ctx is of type PrexoniteFunctionContext
+    
+    var fctx = ctx;
+    
+    debug_prompt(fctx);
+}
+
+function as debug_this(func,argv,shared)
+{
+    argv ??= [];
+    argv ~= Object<"Prexonite.PValue[]">;
+    
+    shared ??= [];
+    shared ~= Object<"Prexonite.PVariable[]">;
+    
+    debug_prompt(func.CreateFunctionContext(asm(ldr.eng),argv,shared));
+}
+
+function as debug_call(func)
+{
+    debug_this(func, var args >> skip(1) >> all);
+}

@@ -28,6 +28,7 @@ using System.Collections.Generic;
 using System.Diagnostics;
 using System.Reflection;
 using Prexonite.Commands;
+using Prexonite.Commands.Lazy;
 using Prexonite.Commands.Math;
 using Prexonite.Commands.Core;
 using Prexonite.Commands.List;
@@ -676,6 +677,8 @@ namespace Prexonite
 
             Commands.AddEngineCommand(CallAlias, Call.Instance);
 
+            Commands.AddEngineCommand(ThunkAlias, ThunkCommand.Instance);
+
             Commands.AddEngineCommand(Call_MemberAlias, Call_Member.Instance);
 
             Commands.AddEngineCommand(CallerAlias, Caller.Instance);
@@ -828,6 +831,8 @@ namespace Prexonite
         /// Alias used for the <c>callmember</c> command.
         /// </summary>
         public const string Call_MemberAlias = @"call\member";
+
+        public const string ThunkAlias = "thunk";
 
         /// <summary>
         /// Alias used for the <c>caller</c> command.

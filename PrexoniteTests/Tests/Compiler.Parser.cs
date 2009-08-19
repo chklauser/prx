@@ -2943,7 +2943,7 @@ ret.val
         [Test]
         public void AppendLeftDirect()
         {
-            _compile(@"
+            Compile(@"
 function main()
 {
     var a;
@@ -2953,7 +2953,7 @@ function main()
 }
 ");
 
-            _expect(@"
+            Expect(@"
 var a
 
 ldc.int 5

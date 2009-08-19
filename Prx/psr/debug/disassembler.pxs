@@ -1,0 +1,278 @@
+﻿
+build does require(
+    @"psr\misc.pxs",
+    @"psr\ast.pxs"
+);
+
+Imports { 
+    System, 
+    System::Text,
+    Prexonite, 
+    Prexonite::Types,
+    Prexonite::Compiler };
+    
+function write_instruction(ins, func, buffer)
+{
+    if(ins is Null)
+        throw "Instruction must not be null.";
+    if(func is Null)
+        throw "Function must not be null.";    
+    ins ~= Prexonite::Instruction;    
+    if(buffer is not null)
+    {
+        function write s = buffer.Append(s);
+        function writeln s = buffer.AppendLine(s);
+    }
+    else 
+    {
+        function write s = print(s);
+        function writeln s = println(s);
+    }
+    
+    function write_normal_instruction
+    {
+        write(ins.ToString);
+    }
+    
+    if(func is null)
+    {
+        write_normal_instruction;
+    }
+    else 
+    {
+        func ~= Prexonite::PFunction;
+        //write_instruction is often used multiple times for the same function.
+        //  Caching the reverse map therefor can increase performance.
+        static map_cache ??= null: null;
+        var rmap;
+        if(func.Equals(map_cache.Key))
+        {
+            rmap = map_cache.Value;
+        }
+        else 
+        {
+            //Build reverse map
+            var fmap = func.LocalVariableMapping;
+            rmap = {};
+            foreach(var entry in fmap)
+                rmap.Add(entry.Value, entry.Key);
+            //Cache map    
+            map_cache = func: rmap;    
+        }
+        
+        function substitute_instruction(nopc)
+        {
+            if(rmap.ContainsKey(ins.Arguments))
+                ins = new ::Instruction(nopc, rmap[ins.Arguments]);
+            write_normal_instruction;    
+        }
+        
+        var opc = ins.OpCode~Int;
+        if(opc == ::OpCode.ldloci~Int)
+            substitute_instruction(::OpCode.ldloc);
+        else if(opc == ::OpCode.stloci~Int)
+            substitute_instruction(::OpCode.stloc);  
+        else if(opc == ::OpCode.incloci~Int)
+            substitute_instruction(::OpCode.incloc);
+        else if(opc == ::OpCode.decloci~Int)
+            substitute_instruction(::OpCode.decloci);
+        else if(opc == ::OpCode.ldr_loci)
+            substitute_instruction(::OpCode.ldr_loc);
+        else if(opc == ::OpCode.indloci)
+        {
+            var kvp = ins.DecodeIndLocIndex();
+            var index = kvp.Key;
+            var argc = kvp.Value;
+            if(rmap.ContainsKey(index))
+            {   
+                var id = rmap[index];             
+                ins = ::Instruction.CreateLocalIndirectCall(argc, id, ins.JustEffect);             
+            }
+            write_normal_instruction;
+        }
+        else
+            write_normal_instruction;
+    }
+}
+
+function show_bytecode(func, pointer)
+{
+    if(func is Null)
+        throw "`show_bytecode` expects a function as its first parameter.";
+    pointer ??= [0];
+    if(pointer is Int)
+        pointer = [pointer];    
+    
+    function head(writer)
+    {
+        writer.Write("function ");
+        writer.Write(func.Id);
+        var buffer;
+        if (func.Parameters.Count > 0)
+        {
+            writer.Write("(");
+            buffer = new ::StringBuilder();
+            foreach (var param in func.Parameters)
+            {
+                buffer.Append(param);
+                buffer.Append(", ");
+            }
+            buffer.Remove(buffer.Length - 1, 1);
+            writer.Write(buffer.ToString());
+            writer.Write(")");
+        }
+        writer.WriteLine();
+    }
+    
+    function metainfo(writer)
+    {
+        writer.Write("[");
+        writer.WriteLine();
+        //Parts of the meta table are added separately
+        var meta = func.Meta.Clone();
+        meta.Remove(::Application.ImportKey); //to be added separately
+        meta.Remove(::Application.IdKey); //implied
+        //Importes namespaces are not stored in the meta table
+        meta.Store(writer);
+        
+        //Custom meta entries
+        var lst = [];
+        foreach (var ns in func.ImportedNamespaces)
+            lst.Add(ns);
+        if (lst.Count > 0)
+        {
+            var imports = new ::MetaEntry(lst.ToArray());
+            writer.Write(::Application.ImportKey);
+            writer.Write(" ");
+            var buffer = new ::StringBuilder();
+            imports.ToString(buffer);
+            writer.Write(buffer.ToString());
+            writer.Write(";");
+            writer.WriteLine();
+        }
+        //write symbol mapping information
+        writer.Write(::PFunction.SymbolMappingKey);
+        writer.WriteLine(" {");
+
+        //Local variable mapping is a Id -> Index table
+        func.LocalVariableMapping
+            >> sort( ->cmp_values )
+            >> map(kvp => kvp.Key)
+            >> all
+            >> var localmap;
+
+        for (var i = 0; i < localmap.Count; i++)
+        {
+            var mapping = localmap[i];
+            writer.Write("  $i -> $mapping");
+            if (i < localmap.Length - 1)
+                writer.WriteLine(", ");
+        }
+        writer.Write("};");
+        writer.WriteLine();
+        writer.Write("]");
+        writer.WriteLine();
+    }
+    
+    //Subroutine for printing the actual assembler code
+    function code(writer)
+    {   
+        //Only show addresses where they
+        //  are actually interesting. 
+        //  I.e. 
+        //   - beginning / end
+        //   - jump targets
+        //   - current instruction 
+        var importantAddresses = 
+            {
+                0 : true,
+                func.Code.Count : true,
+                func.Code.Count-1 : true
+            };
+            
+        //Mark pointer(s)
+        foreach(var p in pointer)
+            importantAddresses.Add(p: true);
+        
+        //Mark jump targets    
+        foreach(var ins in func.Code)
+        {
+            if(ieq_any(ins.OpCode,
+                    ::OpCode.jump,
+                    ::OpCode.jump_f,
+                    ::OpCode.jump_t))
+                importantAddresses.Add(ins.Arguments: true);
+        }    
+        
+        //Subroutine for prepending instruction addresses
+        function writeAddress(buffer, address, digits)
+        {
+            if(importantAddresses[address])
+            {
+                //Current instruction
+                buffer.Append(
+                    if(pointer.Contains(address))
+                        "-> "
+                    else
+                        "   "
+                );
+                //Address
+                buffer.Append(address.ToString().PadLeft(digits, char("0")));
+                buffer.Append(": ");
+            }
+            else 
+            {
+                buffer.Append(" "*(5+digits));
+            }
+        }
+        
+        var buffer = new ::StringBuilder();
+        
+        //Write local variables
+        if (func.Variables.Count > 0)
+        {
+            buffer.Append("var ");
+            foreach (var variable in func.Variables)
+            {
+                buffer.Append(variable);
+                buffer.Append(",");
+            }
+            buffer.Length -= 1;
+            writer.WriteLine(buffer);
+            buffer.Length = 0;
+        }
+
+        var idx = 0;
+        //Write instructions
+        if (func.Code.Count > 0)
+        {
+            var digits = ::Math.Ceiling(::Math.Log10(func.Code.Count))~Int;
+
+            writeAddress(buffer, idx, digits);
+
+            foreach (var ins in func.Code)
+            {
+                var idxBeginning = buffer.Length;
+                write_instruction(ins, func, buffer);
+                if (buffer[idxBeginning]~String != "@")
+                    buffer.Insert(idxBeginning, char(" "));
+                buffer.AppendLine();
+
+                writeAddress(buffer, ++idx, digits);
+                writer.Write(buffer.ToString());
+                buffer.Length = 0;
+            }
+        }
+    }
+    
+    //Assemble function code
+    var sb = new System::Text::StringBuilder();
+    var w = new System::IO::StringWriter(sb);
+    head(w);
+    metainfo(w);
+    w.WriteLine(" does asm {");
+    code(w);
+    w.WriteLine("}");
+    
+    return sb.ToString;
+}

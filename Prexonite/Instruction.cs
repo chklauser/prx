@@ -66,7 +66,10 @@ namespace Prexonite
         /// This is useful in situations where only the side effect of an operation but not it's return value 
         /// is interesting, eliminating the need for an additional pop instruction.
         /// </summary>
+// ReSharper disable FieldCanBeMadeReadOnly.Global
+// For consistency with the rest of instruction data type
         public bool JustEffect;
+// ReSharper restore FieldCanBeMadeReadOnly.Global
 
         #region Construction
 
@@ -896,6 +899,7 @@ namespace Prexonite
         #endregion
     }
 
+    // ReSharper disable InconsistentNaming
     /// <summary>
     /// The opcodes interpreted by the virtual machine.
     /// </summary>
@@ -1030,9 +1034,10 @@ namespace Prexonite
         //Stack manipulation (3)
         pop, //pop           Pops x values from the stack
         dup, //dup           duplicates the top value x times
-        rot //rot           rotates the x top values y times
 
+        rot //rot           rotates the x top values y times
     }
+    // ReSharper restore InconsistentNaming
 
     //Total: 77 different operations excluding nop.
 }

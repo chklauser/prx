@@ -113,17 +113,8 @@ namespace Prexonite
         /// <returns>True if the context has additional work to perform in the next cycle, False if it has finished it's work and can be removed from the stack</returns>
         protected override bool PerformNextCylce(StackContext lastContext)
         {
-            StackContext sctx;
-
             //Remove this context if possible (IndirectCallContext should be transparent)
-            if (_originalStackContext != null)
-            {
-                sctx = _originalStackContext;
-            }
-            else
-            {
-                sctx = this;
-            }
+            var sctx = _originalStackContext ?? this;
 
             _returnValue = _callable.IndirectCall(sctx, _arguments);
             return false;

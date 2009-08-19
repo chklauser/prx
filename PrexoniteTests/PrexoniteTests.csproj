@@ -39,6 +39,8 @@
       <Private>True</Private>
     </Reference>
     <Reference Include="System" />
+    <Reference Include="System.Data" />
+    <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
     <Compile Include="Program.cs" />
@@ -46,12 +48,14 @@
     <Compile Include="Tests\Compiler.cs" />
     <Compile Include="Tests\Compiler.Global.cs" />
     <Compile Include="Tests\Compiler.Parser.cs" />
+    <Compile Include="Tests\Lazy.cs" />
     <Compile Include="Tests\RandomAccessQueue.cs" />
     <Compile Include="Tests\Storage.cs" />
     <Compile Include="Tests\TestObject.cs" />
     <Compile Include="Tests\TestStackContext.cs" />
     <Compile Include="Tests\TypeSystem.cs" />
     <Compile Include="Tests\VMTests.cs" />
+    <Compile Include="Tests\VMTestsBase.cs" />
   </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="..\Prexonite\Prexonite.csproj">
