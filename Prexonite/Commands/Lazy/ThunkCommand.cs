@@ -48,13 +48,13 @@ namespace Prexonite.Commands.Lazy
                 throw new PrexoniteException("The thunk command requires an expression.");
 
             var expr = args[0];
-            var parameters = args.Skip(1).Select<PValue, PValue>(_enforceThunk).ToArray();
+            var parameters = args.Skip(1).Select<PValue, PValue>(_EnforceThunk).ToArray();
              
             return PType.Object.CreatePValue(Thunk.NewExpression(expr, parameters));
         }
 // ReSharper restore MemberCanBePrivate.Global
 
-        private static PValue _enforceThunk(PValue value)
+        internal static PValue _EnforceThunk(PValue value)
         {
             if (value.Type.Equals(PType.Object[typeof (Thunk)]))
                 return value;

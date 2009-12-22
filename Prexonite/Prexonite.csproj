@@ -2,7 +2,7 @@
   <PropertyGroup>
     <Configuration Condition=" '$(Configuration)' == '' ">Debug</Configuration>
     <Platform Condition=" '$(Platform)' == '' ">AnyCPU</Platform>
-    <ProductVersion>9.0.21022</ProductVersion>
+    <ProductVersion>9.0.30729</ProductVersion>
     <SchemaVersion>2.0</SchemaVersion>
     <ProjectGuid>{2FE722CA-B671-4EE8-9BF1-9F3ACFACD24D}</ProjectGuid>
     <OutputType>Library</OutputType>
@@ -95,6 +95,7 @@
     <Compile Include="Commands\CoroutineCommand.cs" />
     <Compile Include="Commands\DelegatePCommand.cs" />
     <Compile Include="Commands\ICilCompilerAware.cs" />
+    <Compile Include="Commands\Lazy\AsThunkCommand.cs" />
     <Compile Include="Commands\Lazy\ThunkCommand.cs" />
     <Compile Include="Commands\List\All.cs" />
     <Compile Include="Commands\List\Append.cs" />

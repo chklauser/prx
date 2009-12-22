@@ -678,6 +678,7 @@ namespace Prexonite
             Commands.AddEngineCommand(CallAlias, Call.Instance);
 
             Commands.AddEngineCommand(ThunkAlias, ThunkCommand.Instance);
+            Commands.AddEngineCommand(AsThunkAlias,AsThunkCommand.Instance);
 
             Commands.AddEngineCommand(Call_MemberAlias, Call_Member.Instance);
 
@@ -833,6 +834,7 @@ namespace Prexonite
         public const string Call_MemberAlias = @"call\member";
 
         public const string ThunkAlias = "thunk";
+        public const string AsThunkAlias = "asthunk";
 
         /// <summary>
         /// Alias used for the <c>caller</c> command.

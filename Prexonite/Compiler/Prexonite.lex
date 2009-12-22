@@ -191,7 +191,7 @@ Noise               = "/*" ~"*/" | "//" {NotLineBreak}* {LineBreak} | {WhiteSpac
     "\\"x {HexDigit} {HexDigit}? {HexDigit}? {HexDigit}? |
     "\\"u {HexDigit} {HexDigit}  {HexDigit}  {HexDigit}  |
     "\\"U {HexDigit} {HexDigit}  {HexDigit}  {HexDigit}  {HexDigit}  {HexDigit}  {HexDigit}  {HexDigit} { buffer.Append(unescape_char(yytext())); }
-    //No need to escape $, but possible valid.
+    //No need to escape $, but possible.
     "$" | "\\$"         { buffer.Append("$"); }    
 }
 

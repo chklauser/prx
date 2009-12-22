@@ -166,8 +166,9 @@ function not_null(arg) [is compiler;] = Not arg is Null;
 //  Usage:
 //      stmt_hook
 //          ( 
-//              (t,stmt,ref i, ref v1, ref v2): 2 => {...},
-//              (t,stmt,ref i, ref v1, ref v2, ref v3, ref v4): 4 => {...},
+//              (t,stmt,ref i, ref v1, ref v2) => {...} : 2,
+//              (t,stmt,ref i, ref v1, ref v2, ref v3, ref v4) => {...} : 4,
+//              (t,stmt,ref i) => {...} : 0,
 //              (t,stmt) => {...}
 //          )
 //
@@ -218,7 +219,7 @@ function unload_compiler()
     var ordinalIc = System::StringComparison.OrdinalIgnoreCase;
     var comp_funcs = [];
     //Recursively mark all compiler functions and their inner functions
-    function mark_comp_func(func) [is compiler;]
+    function mark_comp_func(func)
     {
         var fid = func.Id;
         foreach(var inner in app.Functions)
@@ -244,5 +245,6 @@ function unload_compiler()
         app.Functions.Remove(comp_func);
         
     app.Functions.Remove(->unload_compiler);
+    app.Functions.Remove(->mark_comp_func);
     app.Meta["compiler_loaded"] = false;
 }

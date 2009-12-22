@@ -33,8 +33,9 @@ function cmpr(a,b,ccmp) = (ccmp ?? ->cmp).(b,a);
 function ieq(a,b) = a~Int == b~Int;
 function ieq_any(a) = 
     var args >> skip(1) >> exists( b => ieq(a,b) );
-            
-    
+function ieq_all(a) =
+    var args >> skip(1) >> forall( b => ieq(a,b) );
+                
 //Creates a wrapper around an object that intercepts calls to dispose.
 function create_terminator (obj, termination)
 {

@@ -63,7 +63,7 @@ namespace Prexonite
         /// <returns>True if the context has additional work to perform in the next cycle, False if it has finished it's work and can be removed from the stack</returns>
         protected override bool PerformNextCylce(StackContext lastContext)
         {
-            return _method.MoveNext();
+            return _method.MoveNext() && _method.Current;
         }
 
         /// <summary>
@@ -93,16 +93,17 @@ namespace Prexonite
 
         #region IDisposable
 
-        private bool disposed = false;
+        private bool _disposed = false;
 
         public void Dispose()
         {
-            Dispose(true);
+            GC.SuppressFinalize(this);
+            _dispose(true);
         }
 
-        private void Dispose(bool disposing)
+        private void _dispose(bool disposing)
         {
-            if (!disposed)
+            if (!_disposed)
             {
                 if (disposing)
                 {
@@ -110,12 +111,12 @@ namespace Prexonite
                         _method.Dispose();
                 }
             }
-            disposed = true;
+            _disposed = true;
         }
 
         ~CooperativeContext()
         {
-            Dispose(false);
+            _dispose(false);
         }
 
         #endregion

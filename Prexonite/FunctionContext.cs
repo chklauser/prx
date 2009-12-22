@@ -300,12 +300,12 @@ namespace Prexonite
 
         protected override bool PerformNextCylce(StackContext lastContext)
         {
-            return PerformNextCylce(lastContext, false);
+            return _performNextCylce(lastContext, false);
         }
 
         public bool Step(StackContext lastContext)
         {
-            return PerformNextCylce(lastContext, true);
+            return _performNextCylce(lastContext, true);
         }
 
         private bool _useVirtualStackInstead;
@@ -316,7 +316,7 @@ namespace Prexonite
             _fetchReturnValue = true;
         }
 
-        private bool PerformNextCylce(StackContext lastContext, bool needToReturn)
+        private bool _performNextCylce(StackContext lastContext, bool needToReturn)
         {
             //Indicates whether or not control needs to be returned to the VM.
             //  as long as no operation is performed on the stack, 
@@ -945,7 +945,6 @@ namespace Prexonite
 
                     case OpCode.indloc:
                         fillArgs(argc, out argv);
-                        needToReturn = true;
                         left = _localVariables[id].Value;
 
 #if Verbose
@@ -957,10 +956,23 @@ namespace Prexonite
 
 //Perform indirect call
                         doIndloc:
-                        if (justEffect)
-                            left.IndirectCall(this, argv);
-                        else
-                            Push(left.IndirectCall(this, argv));
+                        {
+                            var stackAware = left.Value as IStackAware;
+                            if(stackAware != null && left.Type is ObjectPType)
+                            {
+                                _fetchReturnValue = !justEffect;
+                                ParentEngine.Stack.AddLast(stackAware.CreateStackContext(this, argv));
+                            }
+                            else
+                            {
+                                if (justEffect)
+                                    left.IndirectCall(this, argv);
+                                else
+                                    Push(left.IndirectCall(this, argv));  
+                            }
+                        }
+
+                        needToReturn = true;
                         break;
                     case OpCode.indloci:
                         idx = argc & ushort.MaxValue;
@@ -970,7 +982,6 @@ namespace Prexonite
                         goto doIndloc;
                     case OpCode.indglob:
                         fillArgs(argc, out argv);
-                        needToReturn = true;
                         app = ParentApplication;
                         pvar = app.Variables[id];
                         app.EnsureInitialization(ParentEngine, pvar);
@@ -984,21 +995,12 @@ namespace Prexonite
 #endif
 
 //Perform indirect call
-                        if (justEffect)
-                            left.IndirectCall(this, argv);
-                        else
-                            Push(left.IndirectCall(this, argv));
-                        break;
+                        goto doIndloc;
 
                     case OpCode.indarg:
                         fillArgs(argc, out argv);
-                        needToReturn = true;
                         left = Pop();
-                        if (justEffect)
-                            left.IndirectCall(this, argv);
-                        else
-                            Push(left.IndirectCall(this, argv));
-                        break;
+                        goto doIndloc;
 
                     case OpCode.tail:
                         fillArgs(argc, out argv);

@@ -18,13 +18,13 @@ function file_lines(file) =
         coroutine () =>
         {
             using(file = file_open(file))
-            while(Not (var l = file.ReadLine) is Null)
+            while((var l = file.ReadLine) is not Null)
                 yield l;
         }
     else  
         coroutine () =>
         {
-            while(Not (var l = file.ReadLine) is Null)
+            while((var l = file.ReadLine) is not Null)
                 yield l;
         }; 
 
