@@ -31,7 +31,7 @@ namespace Prexonite
     [DebuggerNonUserCode]
     public class SymbolTable<TValue> : IDictionary<string, TValue>
     {
-        private readonly Dictionary<string, TValue> table;
+        private readonly Dictionary<string, TValue> _table;
         private TValue _defaultValue;
 
         public TValue DefaultValue
@@ -42,58 +42,57 @@ namespace Prexonite
 
         public SymbolTable()
         {
-            table = new Dictionary<string, TValue>(Engine.DefaultStringComparer);
+            _table = new Dictionary<string, TValue>(Engine.DefaultStringComparer);
         }
 
         public SymbolTable(int capacity)
         {
-            table = new Dictionary<string, TValue>(capacity, Engine.DefaultStringComparer);
+            _table = new Dictionary<string, TValue>(capacity, Engine.DefaultStringComparer);
         }
 
         #region IDictionary<string,TValue> Members
 
         public virtual void Add(string key, TValue value)
         {
-            if (table.ContainsKey(key) && value.Equals(table[key]))
+            if (_table.ContainsKey(key) && value.Equals(_table[key]))
                 return;
-            table.Add(key, value);
+            _table.Add(key, value);
         }
 
         public virtual bool ContainsKey(string key)
         {
-            return table.ContainsKey(key);
+            return _table.ContainsKey(key);
         }
 
         public ICollection<string> Keys
         {
-            get { return table.Keys; }
+            get { return _table.Keys; }
         }
 
         public bool Remove(string key)
         {
-            return table.Remove(key);
+            return _table.Remove(key);
         }
 
         public virtual bool TryGetValue(string key, out TValue value)
         {
-            value = DefaultValue;
-            if (!table.ContainsKey(key))
-                return false;
-            value = table[key];
-            return true;
+            var cont = _table.TryGetValue(key, out value);
+            if (!cont)
+                value = DefaultValue;
+            return cont;
         }
 
         public TValue GetDefault(string key, TValue defaultValue)
         {
-            if (table.ContainsKey(key))
-                return table[key];
+            if (_table.ContainsKey(key))
+                return _table[key];
             else
                 return defaultValue;
         }
 
         public ICollection<TValue> Values
         {
-            get { return table.Values; }
+            get { return _table.Values; }
         }
 
         public virtual TValue this[string key]
@@ -101,9 +100,9 @@ namespace Prexonite
             get { return GetDefault(key, _defaultValue); }
             set
             {
-                if (table.ContainsKey(key))
-                    table.Remove(key);
-                table[key] = value;
+                if (_table.ContainsKey(key))
+                    _table.Remove(key);
+                _table[key] = value;
             }
         }
 
@@ -113,37 +112,37 @@ namespace Prexonite
 
         public virtual void Add(KeyValuePair<string, TValue> item)
         {
-            table.Add(item.Key, item.Value);
+            _table.Add(item.Key, item.Value);
         }
 
         public void Clear()
         {
-            table.Clear();
+            _table.Clear();
         }
 
         public bool Contains(KeyValuePair<string, TValue> item)
         {
-            return ((ICollection<KeyValuePair<string, TValue>>) table).Contains(item);
+            return ((ICollection<KeyValuePair<string, TValue>>) _table).Contains(item);
         }
 
         public void CopyTo(KeyValuePair<string, TValue>[] array, int arrayIndex)
         {
-            ((ICollection<KeyValuePair<string, TValue>>) table).CopyTo(array, arrayIndex);
+            ((ICollection<KeyValuePair<string, TValue>>) _table).CopyTo(array, arrayIndex);
         }
 
         public int Count
         {
-            get { return table.Count; }
+            get { return _table.Count; }
         }
 
         public bool IsReadOnly
         {
-            get { return ((ICollection<KeyValuePair<string, TValue>>) table).IsReadOnly; }
+            get { return ((ICollection<KeyValuePair<string, TValue>>) _table).IsReadOnly; }
         }
 
         public bool Remove(KeyValuePair<string, TValue> item)
         {
-            return ((ICollection<KeyValuePair<string, TValue>>) table).Remove(item);
+            return ((ICollection<KeyValuePair<string, TValue>>) _table).Remove(item);
         }
 
         #endregion
@@ -152,7 +151,7 @@ namespace Prexonite
 
         public IEnumerator<KeyValuePair<string, TValue>> GetEnumerator()
         {
-            return table.GetEnumerator();
+            return _table.GetEnumerator();
         }
 
         #endregion
@@ -161,7 +160,7 @@ namespace Prexonite
 
         IEnumerator IEnumerable.GetEnumerator()
         {
-            return ((ICollection<KeyValuePair<string, TValue>>) table).GetEnumerator();
+            return ((ICollection<KeyValuePair<string, TValue>>) _table).GetEnumerator();
         }
 
         #endregion

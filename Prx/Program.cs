@@ -30,7 +30,7 @@ namespace Prx
                 var fsmain =
                     new FileStream
                         (
-                        GetPrxPath() + Path.DirectorySeparatorChar + @"Path.PathSeparatorsrc" + Path.DirectorySeparatorChar + path,
+                        GetPrxPath() + Path.DirectorySeparatorChar + "src" + Path.DirectorySeparatorChar + path,
                         FileMode.Create,
                         FileAccess.Write))
                 fsmain.Write(buffer, 0, buffer.Length);
@@ -224,7 +224,7 @@ namespace Prx
                 var ldr = new Loader(engine, app);
                 //load the main script file. 
 
-                //CLI overrîde script in action:
+                //CLI override script in action:
                 var deleteSrc = false;
                 var entryPath = GetPrxPath() + Path.DirectorySeparatorChar + @"prx.pxs";
                 if (!File.Exists(entryPath))
@@ -298,19 +298,6 @@ namespace Prx
                 Console.ForegroundColor = originalColor;
                 Environment.Exit(1);
                 return;
-            }
-        }
-
-        public static int _test(int x)
-        {
-            try
-            {
-                return x + 1;
-            }
-            catch (Exception)
-            {
-                Console.WriteLine(x);
-                throw;
             }
         }
     }

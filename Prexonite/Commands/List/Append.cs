@@ -27,17 +27,19 @@ namespace Prexonite.Commands.List
             get { return false; }
         }
 
-        protected override IEnumerable<PValue> CoroutineRun(StackContext sctx, PValue[] args)
+        protected override IEnumerable<PValue> CoroutineRun(ContextCarrier sctxCarrier, PValue[] args)
         {
-            return CoroutineRunStatically(sctx, args);
+            return CoroutineRunStatically(sctxCarrier, args);
         }
 
-        protected static IEnumerable<PValue> CoroutineRunStatically(StackContext sctx, PValue[] args)
+        protected static IEnumerable<PValue> CoroutineRunStatically(ContextCarrier sctxCarrier, PValue[] args)
         {
             if (args == null)
                 yield break;
-            if (sctx == null)
-                throw new ArgumentNullException("sctx");
+            if (sctxCarrier == null)
+                throw new ArgumentNullException("sctxCarrier");
+
+            var sctx = sctxCarrier.StackContext;
 
             foreach (var arg in args)
             {
@@ -54,6 +56,14 @@ namespace Prexonite.Commands.List
         public CompilationFlags CheckQualification(Instruction ins)
         {
             return CompilationFlags.PreferRunStatically;
+        }
+
+        public static PValue RunStatically(StackContext sctx, PValue[] args)
+        {
+            var carrier = new ContextCarrier();
+            var corctx = new CoroutineContext(sctx, CoroutineRunStatically(carrier, args));
+            carrier.StackContext = corctx;
+            return sctx.CreateNativePValue(new Coroutine(corctx));
         }
 
         public void ImplementInCil(CompilerState state, Instruction ins)

@@ -22,8 +22,12 @@
  */
 
 using System;
+using System.Collections;
 using System.Collections.Generic;
 using System.Diagnostics;
+using System.Reflection;
+using System.Threading;
+using Prexonite.Commands;
 using Prexonite.Commands.Core;
 using Prexonite.Types;
 #if Verbose
@@ -39,7 +43,7 @@ namespace Prexonite
     {
         #region Stack management
 
-        private readonly LinkedList<StackContext> _stack = new LinkedList<StackContext>();
+        //private readonly LinkedList<StackContext> _stack = new LinkedList<StackContext>();
 
         /// <summary>
         /// Provides access to the virtual machine's call stack.
@@ -47,7 +51,13 @@ namespace Prexonite
         public LinkedList<StackContext> Stack
         {
             [DebuggerStepThrough]
-            get { return _stack; }
+            get
+            {
+                var stack = Thread.GetData(_stackSlot) as LinkedList<StackContext>;
+                if(stack == null)
+                    Thread.SetData(_stackSlot, stack = new LinkedList<StackContext>());
+                return stack;
+            }
         }
 
         #endregion
@@ -73,16 +83,17 @@ namespace Prexonite
             if (ExecutionProhibited)
                 throw new ExecutionProhibitedException("The engine is not permitted to run code.");
 
-            var level = _stack.Count;
+            var localStack = Stack;
+            var level = localStack.Count;
             if (level < 1)
                 throw new PrexoniteException("The VM stack is empty. Return value cannot be computed.") ;
 
             PrexoniteRuntimeException currentException = null;
             StackContext lastContext = null;
 
-            while (_stack.Count >= level)
+            while (localStack.Count >= level)
             {
-                var sctx = _stack.Last.Value;
+                var sctx = localStack.Last.Value;
 
                 var keepOnStack = false;
                 if (currentException == null)
@@ -130,10 +141,10 @@ namespace Prexonite
                 if (!keepOnStack)
                 {
 #if Verbose
-                    Console.WriteLine("#POP: " + _stack.Last.Value + "=" + FunctionContext.toDebug(_stack.Last.Value.ReturnValue));
+                    Console.WriteLine("#POP: " + Stack.Last.Value + "=" + PValue.ToDebugString(Stack.Last.Value.ReturnValue));
 #endif
-                    if (ReferenceEquals(_stack.Last.Value, sctx))
-                        _stack.RemoveLast();
+                    if (ReferenceEquals(localStack.Last.Value, sctx))
+                        localStack.RemoveLast();
                     //else the context has already been removed.
                 }
             }
@@ -156,7 +167,7 @@ namespace Prexonite
         {
             if (sctx == null)
                 throw new ArgumentNullException("sctx");
-            _stack.AddLast(sctx);
+            Stack.AddLast(sctx);
 #if Verbose
                     Console.WriteLine("\n#PSH: " + sctx + "(?)");
 #endif

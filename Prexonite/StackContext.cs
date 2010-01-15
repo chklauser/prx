@@ -29,7 +29,6 @@ namespace Prexonite
     /// <summary>
     /// This class represents an element on the runtime stack.
     /// </summary>
-    /// <remarks>Please note that I might turn this class into the actual implementation of FunctionContext (by removing 'abstract' and sealing the class).</remarks>
     public abstract class StackContext : IIndirectCall
     {
 

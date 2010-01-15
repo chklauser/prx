@@ -42,28 +42,28 @@ namespace Prexonite.Commands.List
         {
         }
 
-        protected override IEnumerable<PValue> CoroutineRun(StackContext sctx, PValue[] args)
+        protected override IEnumerable<PValue> CoroutineRun(ContextCarrier sctxCarrier, PValue[] args)
         {
-            return CoroutineRunStatically(sctx, args);
+            return CoroutineRunStatically(sctxCarrier, args);
         }
 
         //function range(index, count, xs) = xs >> skip(index) >> limit(count);
-        private static IEnumerable<PValue> CoroutineRunStatically(StackContext sctx, PValue[] args)
+        private static IEnumerable<PValue> CoroutineRunStatically(ContextCarrier sctxCarrier, PValue[] args)
         {
-            if (sctx == null)
-                throw new ArgumentNullException("sctx");
+            if (sctxCarrier == null)
+                throw new ArgumentNullException("sctxCarrier");
             if (args == null)
                 throw new ArgumentNullException("args");
-            int skipCount, returnCount;
             if(args.Length < 3)
                 throw new  PrexoniteException("The command range requires at least 3 arguments: [index], [count] and the [list].");
 
-            skipCount = (int) args[0].ConvertTo(sctx, PType.Int, true).Value;
-            returnCount = (int) args[1].ConvertTo(sctx, PType.Int, true).Value;
+            var sctx = sctxCarrier.StackContext;
 
-            int index = 0;
+            var skipCount = (int) args[0].ConvertTo(sctx, PType.Int, true).Value;
+            var returnCount = (int) args[1].ConvertTo(sctx, PType.Int, true).Value;
+            var index = 0;
 
-            for (int i = 2; i < args.Length; i++)
+            for (var i = 2; i < args.Length; i++)
             {
                 PValue arg = args[i];
 
@@ -92,7 +92,9 @@ namespace Prexonite.Commands.List
 
         public static PValue RunStatically(StackContext sctx, PValue[] args)
         {
-            CoroutineContext corctx = new CoroutineContext(sctx, CoroutineRunStatically(sctx, args));
+            var carrier = new ContextCarrier();
+            var corctx = new CoroutineContext(sctx, CoroutineRunStatically(carrier, args));
+            carrier.StackContext = corctx;
             return sctx.CreateNativePValue(new Coroutine(corctx));
         }
 

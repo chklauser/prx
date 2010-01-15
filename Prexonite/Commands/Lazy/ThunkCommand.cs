@@ -3,9 +3,9 @@ using System.Collections.Generic;
 using System.Diagnostics;
 using System.Linq;
 using System.Text;
+using System.Threading;
 using Prexonite.Compiler.Cil;
 using Prexonite.Types;
-using Action=Prexonite.Compiler.Cil.Action;
 
 namespace Prexonite.Commands.Lazy
 {
@@ -76,7 +76,55 @@ namespace Prexonite.Commands.Lazy
 
     public class Thunk : IIndirectCall, IObject
     {
-        private bool _isBlackHole;
+        private struct BlackHole
+        {
+            private readonly bool _isActive;
+            private readonly int _threadId;
+            private readonly ManualResetEvent _evaluationDone;
+
+            private BlackHole(int threadId)
+            {
+                _isActive = true;
+                _threadId = threadId;
+                _evaluationDone = new ManualResetEvent(false);
+            }
+
+            public static BlackHole Active(int threadId)
+            {
+                return new BlackHole(threadId);
+            }
+
+            public BlackHole Inactivate()
+            {
+                if (_evaluationDone != null)
+                    _evaluationDone.Set();
+                return _inactive();
+            }
+
+            private static BlackHole _inactive()
+            {
+                return new BlackHole();
+            }
+
+            public bool Trap()
+            {
+                if(_isActive)
+                {
+                    if (_threadId == Thread.CurrentThread.ManagedThreadId)
+                    {
+                        throw new PrexoniteException("Thunk is already being evaluated!");
+                    }
+                    else
+                    {
+                        _evaluationDone.WaitOne(Timeout.Infinite, true);
+                        return true;
+                    }
+                }
+                return false;
+            }
+        }
+
+        private BlackHole _blackHole;
 
         private PValue _expr;
         private PValue[] _parameters;
@@ -116,9 +164,9 @@ namespace Prexonite.Commands.Lazy
 
         #region Interface
 
-        public PValue Force(StackContext sctx, PValue[] args)
+        public PValue Force(StackContext sctx)
         {
-            return ((IIndirectCall) this).IndirectCall(sctx, args);
+            return ((IIndirectCall) this).IndirectCall(sctx, Runtime.EmptyPValueArray);
         }
 
         public bool IsEvaluated
@@ -132,7 +180,7 @@ namespace Prexonite.Commands.Lazy
             switch (id.ToUpperInvariant())
             {
                 case "FORCE":
-                    result = Force(sctx, args);
+                    result = Force(sctx);
                     break;
                 case "EVALUATED":
                 case "ISEVALUATED":
@@ -146,8 +194,11 @@ namespace Prexonite.Commands.Lazy
 
         #endregion
 
-        private IEnumerable<bool> _cooperativeForce(StackContext sctx, PValue[] args, Action<PValue> setReturnValue)
+        private IEnumerable<bool> _cooperativeForce(StackContext sctx, Action<PValue> setReturnValue)
         {
+            if (sctx == null)
+                throw new ArgumentNullException("sctx");
+
             while (true)
             {
                 //Check if evaluation resulted in exception
@@ -159,13 +210,13 @@ namespace Prexonite.Commands.Lazy
                     break;
 
                 //Prevent infinite loops
-                if (_isBlackHole)
-                    throw new PrexoniteException("Thunk is already being evaluated!");
+                if (_blackHole.Trap())
+                    continue; //If we have been trapped, check exception again
 
                 Debug.WriteLine("Force " + _expr, "thunk");
 
                 //Tag thunk as being evaluated
-                _isBlackHole = true;
+                _blackHole = BlackHole.Active(Thread.CurrentThread.ManagedThreadId);
 
                 Debug.Indent();
                 //We need to save stack space here, so try to invoke via IStackAware
@@ -187,7 +238,7 @@ namespace Prexonite.Commands.Lazy
                     }
                     catch (Exception ex)
                     {
-                        _isBlackHole = false;
+                        _blackHole = _blackHole.Inactivate();
                         _value = PType.Null;
                         _exception = ex;
                         throw;
@@ -201,7 +252,7 @@ namespace Prexonite.Commands.Lazy
                 if (t != null)
                 {
                     //Assimilate nested thunk
-                    _isBlackHole = t._isBlackHole;
+                    _blackHole = t._blackHole;
                     _expr = t._expr;
                     _parameters = t._parameters;
                     _value = t._value;
@@ -213,7 +264,7 @@ namespace Prexonite.Commands.Lazy
                     //Release expression
                     _expr = null;
                     _parameters = null;
-                    _isBlackHole = false;
+                    _blackHole = _blackHole.Inactivate();
                     break;
                 }
 
@@ -225,17 +276,17 @@ namespace Prexonite.Commands.Lazy
 
         PValue IIndirectCall.IndirectCall(StackContext sctx, PValue[] args)
         {
-            var coopctx =
-                new CooperativeContext(sctx, f => _cooperativeForce(sctx, args, f))
-                    {
-                        ExceptionHandler = ex =>
-                                               {
-                                                   _isBlackHole = false;
-                                                   _value = PType.Null;
-                                                   _exception = ex;
-                                                   return false;
-                                               }
-                    };
+            CooperativeContext coopctx = null;
+            coopctx = new CooperativeContext(sctx, f => _cooperativeForce(coopctx, f))
+            {
+                ExceptionHandler = ex =>
+                {
+                    _blackHole = _blackHole.Inactivate();
+                    _value = PType.Null;
+                    _exception = ex;
+                    return false;
+                }
+            };
 
             var fctx = sctx as FunctionContext;
             if (fctx != null)

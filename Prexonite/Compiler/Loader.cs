@@ -495,6 +495,7 @@ namespace Prexonite.Compiler
 
             #endregion
 
+
             #region Implementation of ICollection<CustomResolver>
 
             /// <summary>
@@ -527,7 +528,7 @@ namespace Prexonite.Compiler
             /// <param name="item">The object to locate in the <see cref="T:System.Collections.Generic.ICollection`1" />.</param>
             public bool Contains(CustomResolver item)
             {
-                return item != null && _resolvers.Contains(item);
+                return item != null && Count > 0 && _resolvers.Contains(item);
             }
 
             /// <summary>

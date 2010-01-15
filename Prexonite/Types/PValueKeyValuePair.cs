@@ -8,7 +8,7 @@ using System.Collections.Generic;
 namespace Prexonite.Types
 {
     /// <summary>
-    /// Pair or PValues
+    /// Pair of PValues
     /// </summary>
     //[System.Diagnostics.DebuggerNonUserCode()]
     public class PValueKeyValuePair : IObject

@@ -210,7 +210,7 @@ namespace Prexonite.Compiler.Ast
         {
             if(symbol.Interpretation != SymbolInterpretations.Function) //must be function call
                 return false;
-            if(!Engine.StringsAreEqual(target.Function.Id,symbol.Id)) //must be direct recursive iteration
+            if (!Engine.StringsAreEqual(target.Function.Id, symbol.Id)) //must be direct recursive iteration
                 return false;
             if(target.Function.Variables.Contains(PFunction.ArgumentListId)) //must not use argument list
                 return false;

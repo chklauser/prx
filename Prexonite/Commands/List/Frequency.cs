@@ -30,14 +30,16 @@ namespace Prexonite.Commands.List
 {
     public class Frequency : CoroutineCommand
     {
-        protected override IEnumerable<PValue> CoroutineRun(StackContext sctx, PValue[] args)
+        protected override IEnumerable<PValue> CoroutineRun(ContextCarrier sctxCarrier, PValue[] args)
         {
             if (args == null)
                 throw new ArgumentNullException("args");
-            if (sctx == null)
-                throw new ArgumentNullException("sctx");
+            if (sctxCarrier == null)
+                throw new ArgumentNullException("sctxCarrier");
 
             Dictionary<PValue, int> t = new Dictionary<PValue, int>();
+
+            var sctx = sctxCarrier.StackContext;
 
             foreach (PValue arg in args)
             {

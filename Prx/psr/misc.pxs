@@ -77,8 +77,6 @@ function create_lazy(factory)
             return _value = factory.();
         }
     }
-    
-   function lazy(this,f) = create_lazy(() => f.(this.value));
             
     return struct;            
 }

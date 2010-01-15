@@ -48,19 +48,21 @@ namespace Prexonite.Commands.List
 
         #endregion 
 
-        protected override IEnumerable<PValue> CoroutineRun(StackContext sctx, PValue[] args)
+        protected override IEnumerable<PValue> CoroutineRun(ContextCarrier sctxCarrier, PValue[] args)
         {
-            return CoroutineRunStatically(sctx, args);
+            return CoroutineRunStatically(sctxCarrier, args);
         }
 
-        protected static IEnumerable<PValue> CoroutineRunStatically(StackContext sctx, PValue[] args)
+        protected static IEnumerable<PValue> CoroutineRunStatically(ContextCarrier sctxCarrier, PValue[] args)
         {
-            if(sctx == null)
-                throw new ArgumentNullException("sctx");
+            if (sctxCarrier == null)
+                throw new ArgumentNullException("sctxCarrier");
             if(args == null)
                 throw new ArgumentNullException("args");
             if (args.Length < 2)
                 throw new PrexoniteException("TakeWhile requires at least two arguments.");
+
+            var sctx = sctxCarrier.StackContext;
 
             PValue f = args[0];
 
@@ -79,7 +81,9 @@ namespace Prexonite.Commands.List
 
         public static PValue RunStatically(StackContext sctx, PValue[] args)
         {
-            CoroutineContext corctx = new CoroutineContext(sctx, CoroutineRunStatically(sctx, args));
+            var carrier = new ContextCarrier();
+            var corctx = new CoroutineContext(sctx, CoroutineRunStatically(carrier, args));
+            carrier.StackContext = corctx;
             return sctx.CreateNativePValue(new Coroutine(corctx));
         }
 

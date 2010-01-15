@@ -30,17 +30,19 @@ namespace Prexonite.Commands.List
 {
     public class GroupBy : CoroutineCommand
     {
-        protected override IEnumerable<PValue> CoroutineRun(StackContext sctx, PValue[] args)
+        protected override IEnumerable<PValue> CoroutineRun(ContextCarrier sctxCarrier, PValue[] args)
         {
             if (args == null)
                 throw new ArgumentNullException("args");
-            if (sctx == null)
-                throw new ArgumentNullException("sctx");
+            if (sctxCarrier == null)
+                throw new ArgumentNullException("sctxCarrier");
 
             if (args.Length < 1)
                 throw new PrexoniteException("GroupBy requires at least one argument.");
 
             PValue f = args[0];
+
+            var sctx = sctxCarrier.StackContext;
 
             Dictionary<PValue, List<PValue>> groups =
                 new Dictionary<PValue, List<PValue>>();
@@ -53,7 +55,7 @@ namespace Prexonite.Commands.List
                     continue;
                 foreach (PValue x in xs)
                 {
-                    PValue fx = f.IndirectCall(sctx, new PValue[] {x});
+                    PValue fx = f.IndirectCall(sctx, new PValue[] { x });
                     if (!groups.ContainsKey(fx))
                     {
                         List<PValue> lst = new List<PValue>();

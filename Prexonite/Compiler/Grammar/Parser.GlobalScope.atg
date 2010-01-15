@@ -289,34 +289,40 @@ FunctionDefinition<out PFunction func>
                                     (.  
                                         func = null; 
                                         List<string> funcAliases = new List<string>();
-                                        string id = null;     
-                                        string funcId; 
-                                        func = null; 
+                                        string id = null; //The logical id (given in the source code)
+                                        string funcId; //The "physical" function id
                                         bool isNested = target != null; 
                                         bool isCoroutine = false;
-                                        PFunction corBody = null;
-                                        PFunction corStub = null;
-                                        string corId = null;
-                                        CompilerTarget ct = null;
-                                        CompilerTarget cst = null;
+                                        bool isMacro = false;
+                                        bool isLazy = false;
+                                        PFunction derBody = null; //The derived (coroutine/lazy) body function (carries a different name)
+                                        PFunction derStub = null; //The derived (coroutine/lazy) stub function (carries the name(s) specified)
+                                        string derId = null; //The name of the derived stub
+                                        CompilerTarget ct = null;   //The compiler target for the function (as mentioned in the source code)
+                                        CompilerTarget cst = null;  //The compiler target for a stub (coroutine/lazy)
                                     .)         
 =	
-	(   function
+	(   lazy [function]             (.  isLazy = true; .)
+	|   function
 	|   coroutine                   (.  isCoroutine = true; .)
-	|   macro
+	|   macro [function]            (.  isMacro = true; .)
 	)
 	(   Id<out id>                  (.  funcAliases.Add(id); .)
 	    [ FunctionAliasList<funcAliases> ]
 	|   FunctionAliasList<funcAliases>
 	)                               (.  
 	                                    funcId = id ?? Engine.GenerateName("f");
-                                        if(Engine.StringsAreEqual(id, @"\init"))
+                                        if(Engine.StringsAreEqual(id, @"\init")) //Treat "\init" specially (that's the initialization code)
                                         {
                                             func = TargetApplication._InitializationFunction;
                                             if(isNested)
                                                 SemErr("Cannot define initialization code inside another function.");
                                             if(isCoroutine)
                                                 SemErr("Cannot define initialization code as a coroutine.");
+                                            if(isLazy)
+                                                SemErr("Cannot define initialization code as a lazy function.");
+                                            if(isMacro)
+                                                SemErr("Cannot define initialization code as a macro function.");
                                         }
                                         else
                                         {
@@ -334,38 +340,53 @@ FunctionDefinition<out PFunction func>
                                                 SmartDeclareLocal(localId, SymbolInterpretations.LocalReferenceVariable);
                                                 foreach(var alias in funcAliases)
                                                         SmartDeclareLocal(alias, localId, SymbolInterpretations.LocalReferenceVariable);
+                                                
                                             }
                                             
                                             func = new PFunction(TargetApplication, funcId);
                                             
                                             if(isNested)
+                                            {
                                                  func.Meta[PFunction.LogicalIdKey] = localId;
+                                                 if(isLazy)
+                                                    mark_as_let(target.Function,localId);
+                                            }
                                             
                                             Loader.CreateFunctionTarget(func, new AstBlock(this));
+                                            
+                                            //Add function to application
                                             if(TargetApplication.Functions.Contains(func.Id) && !TargetApplication.Meta.GetDefault(Application.AllowOverridingKey,true))
 												SemErr(t,"Application " + TargetApplication.Id + " does not allow overriding of function " + func.Id + ".");
                                             TargetApplication.Functions.AddOverride(func);
                                         }
                                         CompilerTarget ft = FunctionTargets[func];
-                                        if(isCoroutine)
+                                        
+                                        //Generate derived stub
+                                        if(isCoroutine || isLazy)
                                         {
-                                            corStub = func;
+                                            derStub = func;
                                             
-                                            //Create coroutine body function
-                                            corId = generateNestedFunctionId(ft);                                            
-                                            corBody = new PFunction(TargetApplication, corId);
-                                            Loader.CreateFunctionTarget(corBody, new AstBlock(this));
-                                            TargetApplication.Functions.Add(corBody);
-                                            corBody.Meta[PFunction.LogicalIdKey] = id;
+                                            //Create derived body function
+                                            derId = generateNestedFunctionId(ft);                                            
+                                            derBody = new PFunction(TargetApplication, derId);
+                                            Loader.CreateFunctionTarget(derBody, new AstBlock(this));
+                                            TargetApplication.Functions.Add(derBody);
+                                            derBody.Meta[PFunction.LogicalIdKey] = id;
 
-                                            //Get compiler target references
-                                            ct = FunctionTargets[corBody];
+                                            //Swap compiler target references
+                                            // -> Compile source code into derived body
+                                            // -> Let derived stub have the physical function id
+                                            ct = FunctionTargets[derBody];
                                             cst = ft;
                                             ct.ParentTarget = cst;
                                         }
-                                        if(target != null) //Link to parent in case of a nested function
+                                        
+                                        if(isNested) //Link to parent in case of a nested function
+                                        {
                                             ft.ParentTarget = target;	                                           
-	                                    
+                                            if(isLazy)
+                                                ft = ct;
+                                        }	                                    
 	                                .)
     [   lpar
 	    [	FormalArg<ft> 
@@ -378,7 +399,11 @@ FunctionDefinition<out PFunction func>
         {   [comma]
             FormalArg<ft>
         }
-	]	                            (.  if(target == null && 
+	]	                            (.  
+		                                if(isNested && isLazy)
+		                                    ft = cst;
+	                                    
+	                                    if(target == null && 
 	                                        (!object.ReferenceEquals(func, TargetApplication._InitializationFunction)) &&
 	                                        (!isNested))
 	                                    {
@@ -386,13 +411,14 @@ FunctionDefinition<out PFunction func>
 	                                            foreach(var alias in funcAliases)	                                                
 	                                                Symbols[alias] = new SymbolEntry(SymbolInterpretations.Function, func.Id);
 	                                            
-	                                            //Store the original (logical id)
+	                                            //Store the original (logical id, mentioned in the source code)
 	                                            if((!string.IsNullOrEmpty(id)))
 	                                                func.Meta[PFunction.LogicalIdKey] = id;
 	                                    }
-	                                    //Target the coroutine body instead of the stub
-                                        if(isCoroutine)
-                                            func = corBody;
+	                                    
+	                                    //Target the derived (coroutine/lazy) body instead of the stub
+                                        if(isCoroutine || isLazy)
+                                            func = derBody;
 	                                .)
     [                               (.  _pushLexerState(Lexer.YYINITIAL); .)
         lbrack
@@ -401,7 +427,24 @@ FunctionDefinition<out PFunction func>
                                     (.  _popLexerState(); .)
         rbrack
     ]
-                                    (.  CompilerTarget lastTarget = target;
+                                    (.  
+                                    
+                                        //Copy stub parameters to body of lazy function
+                                        if(isLazy && !isNested)
+	                                    {
+	                                        foreach(var kvp in ft.LocalSymbols)
+	                                        {
+	                                            var paramId = kvp.Key;
+	                                            var s = kvp.Value;
+	                                            //Lazy functions cannot have ref parameters
+	                                            if(s.Interpretation != SymbolInterpretations.LocalObjectVariable)
+	                                                SemErr("Lazy functions can only have value parameters (ref is not allowed)");
+	                                            ct.Function.Parameters.Add(s.Id);
+	                                            ct.Symbols.Add(paramId, s);
+	                                        }
+	                                    }
+                                    
+                                        CompilerTarget lastTarget = target;
                                         target = FunctionTargets[func]; 
                                         _pushLexerState(Lexer.Local);
                                     .)
@@ -426,6 +469,7 @@ FunctionDefinition<out PFunction func>
                                             }
                                             else
                                             {
+                                                //Apply compiler hooks for all kinds of functions (lazy/coroutine/macro)
 												FunctionTargets[func].ExecuteCompilerHooks();
 												//Emit code for top-level block
                                                 Ast[func].EmitCode(FunctionTargets[func], true);
@@ -434,17 +478,84 @@ FunctionDefinition<out PFunction func>
                                             
 											if(isCoroutine)
 											{
-												//Stub has to be returned
-												func = corStub;
+												//Stub has to be returned into the physical slot mentioned in the source code
+												func = derStub;
 												//Generate code for the stub
 												AstCreateCoroutine crcor = new AstCreateCoroutine(this);                                            
-												crcor.Expression = new AstCreateClosure(this,corBody.Id);
+												crcor.Expression = new AstCreateClosure(this,derBody.Id);
 												AstReturn retst = new AstReturn(this, ReturnVariant.Exit);
 												retst.Expression = crcor;
 												cst.Ast.Add(retst);
 												//Emit code for top-level block
 												cst.Ast.EmitCode(cst,true);
 												cst.FinishTarget();
+											}
+											else if(isLazy)
+											{
+											    derStub.Meta[PFunction.LazyKey] = true;
+											    derStub.Meta["strict"] = true;
+											
+											    //Stub has to be returned into the physical slot mentioned in the source code
+											    func = derStub;
+											    
+											    //Generate code for the stub
+											    IAstExpression retVal;										    
+										        
+										        if(isNested)
+										        {
+										            //Nested lazy functions need a stub to capture their environment by value (handled by NestedFunction)
+										            
+										            //Generate stub code
+										            retVal = new AstCreateClosure(this, ct.Function.Id);
+										            
+										            //Inject asthunk-conversion code into body
+										            var inject = derStub.Parameters.Select(par => 
+										            {
+										                var getParam =
+										                    new AstGetSetSymbol(this, PCall.Get, par, SymbolInterpretations.LocalObjectVariable);
+										                var asThunkCall = 
+											                new AstGetSetSymbol(this, PCall.Get, Engine.AsThunkAlias, SymbolInterpretations.Command);
+											            asThunkCall.Arguments.Add(getParam);
+											            var setParam =
+											                new AstGetSetSymbol(this, PCall.Set, par, SymbolInterpretations.LocalObjectVariable);
+											            setParam.Arguments.Add(asThunkCall);
+											            return (AstNode) setParam;
+										            });
+										            ct.Ast.InsertRange(0,inject);
+										        }
+										        else
+										        {										            
+										            //Global lazy functions don't technically need a stub. Might be removed later on
+										            var call = new AstGetSetSymbol(this, ct.Function.Id, SymbolInterpretations.Function);
+										            
+										            //Generate code for arguments (each wrapped in a `asThunk` command call)
+											        foreach(var par in derStub.Parameters)
+											        {
+											            var getParam = 
+											                new AstGetSetSymbol(this, PCall.Get, par, SymbolInterpretations.LocalObjectVariable);
+											            var asThunkCall = 
+											                new AstGetSetSymbol(this, PCall.Get, Engine.AsThunkAlias, SymbolInterpretations.Command);
+											            asThunkCall.Arguments.Add(getParam);
+											            call.Arguments.Add(asThunkCall);
+											        }
+											        
+											        retVal = call;
+										        }								    
+											    
+											    
+											    //Assemble return statement
+											    var ret = new AstReturn(this, ReturnVariant.Exit);
+											    ret.Expression = retVal;
+											    
+											    cst.Ast.Add(ret);
+											    
+											    //Emit code for stub
+											    cst.Ast.EmitCode(cst,true);
+											    cst.FinishTarget();
+											}
+											else if(isMacro)
+											{
+											    func.Meta["macro"] = true;
 											}
                                         
                                         }
@@ -455,7 +566,10 @@ FormalArg<CompilerTarget ft>        (.  string id; SymbolInterpretations kind = 
 =
 	[ var | ref                     (.  kind = SymbolInterpretations.LocalReferenceVariable; .)
 	]
-	Id<out id>                      (.  ft.Function.Parameters.Add(id); 
+	Id<out id>                      (.  
+	                                    //Note: lazy functions need to copy the
+	                                    //  parameters of the stub to the body!
+	                                    ft.Function.Parameters.Add(id); 
 	                                    ft.Symbols.Add(id, new SymbolEntry(kind, id));
 	                                .)
 .

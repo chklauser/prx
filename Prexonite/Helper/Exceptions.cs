@@ -272,7 +272,7 @@ namespace Prexonite
         public static PrexoniteRuntimeException UnpackException(PrexoniteRuntimeException pExc)
         {
             if (pExc == null)
-                throw new ArgumentNullException("exc");
+                throw new ArgumentNullException("pExc");
             Exception exc = pExc;
             PrexoniteRuntimeException lastpExc = pExc;
             Exception lastExc = pExc;

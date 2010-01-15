@@ -30,6 +30,7 @@ using System;
 using System.Collections;
 using System.Collections.Generic;
 using System.Diagnostics;
+using System.Linq;
 using Prexonite.Compiler.Ast;
 using NoDebug = System.Diagnostics.DebuggerNonUserCodeAttribute;
 
@@ -60,7 +61,6 @@ namespace Prexonite.Compiler
     public class CompilerTarget : IHasMetaTable
     {
         private readonly LinkedList<AddressChangeHook> _addressChangeHooks = new LinkedList<AddressChangeHook>();
-
 
         public ICollection<AddressChangeHook> AddressChangeHooks
         {
@@ -170,18 +170,26 @@ namespace Prexonite.Compiler
             get { return _combinedSymbolProxy; }
         }
 
-        [DebuggerStepThrough]
+        //[DebuggerStepThrough]
         public sealed class CombinedSymbolProxy : IDictionary<string, SymbolEntry>
         {
-            private readonly SymbolTable<SymbolEntry> loaderSymbols;
-            private readonly CombinedSymbolProxy parent;
-            private readonly SymbolTable<SymbolEntry> symbols;
+            private readonly SymbolTable<SymbolEntry> _loaderSymbols;
+            private readonly SymbolTable<SymbolEntry> _symbols;
+            private readonly CompilerTarget _outer;
 
             internal CombinedSymbolProxy(CompilerTarget outer)
             {
-                symbols = outer._symbols;
-                parent = outer._parentTarget != null ? outer._parentTarget.Symbols : null;
-                loaderSymbols = outer._loader.Symbols;
+                _symbols = outer._symbols;
+                _outer = outer;
+                _loaderSymbols = outer._loader.Symbols;
+            }
+
+            private CombinedSymbolProxy _parent
+            {
+                get 
+                { 
+                    return _outer._parentTarget != null ? _outer._parentTarget.Symbols : null;
+                }
             }
 
             #region IDictionary<string,SymbolEntry> Members
@@ -191,46 +199,46 @@ namespace Prexonite.Compiler
                 get
                 {
                     SymbolEntry entry;
-                    if (symbols.TryGetValue(key, out entry))
+                    if (_symbols.TryGetValue(key, out entry))
                         return entry;
-                    else if (parent != null)
-                        return parent[key];
+                    else if (_parent != null)
+                        return _parent[key];
                     else
-                        return loaderSymbols[key];
+                        return _loaderSymbols[key];
                 }
-                set { symbols[key] = value; }
+                set { _symbols[key] = value; }
             }
 
             public void Add(string key, SymbolEntry value)
             {
-                symbols.Add(key, value);
+                _symbols.Add(key, value);
             }
 
             public bool ContainsKey(string key)
             {
-                if (symbols.ContainsKey(key))
+                if (_symbols.ContainsKey(key))
                     return true;
-                else if (parent != null)
-                    return parent.ContainsKey(key);
+                else if (_parent != null)
+                    return _parent.ContainsKey(key);
                 else
-                    return loaderSymbols.ContainsKey(key);
+                    return _loaderSymbols.ContainsKey(key);
             }
 
             public ICollection<string> Keys
             {
                 get
                 {
-                    var localKeys = symbols.Keys;
+                    var localKeys = _symbols.Keys;
                     var keys = new SymbolCollection(localKeys);
-                    if (parent != null)
+                    if (_parent != null)
                     {
-                        foreach (var key in parent.Keys)
+                        foreach (var key in _parent.Keys)
                             if (!localKeys.Contains(key))
                                 keys.Add(key);
                     }
                     else
                     {
-                        foreach (var key in loaderSymbols.Keys)
+                        foreach (var key in _loaderSymbols.Keys)
                             if (!localKeys.Contains(key))
                                 keys.Add(key);
                     }
@@ -240,34 +248,34 @@ namespace Prexonite.Compiler
 
             public bool Remove(string key)
             {
-                return symbols.Remove(key);
+                return _symbols.Remove(key);
             }
 
             public bool TryGetValue(string key, out SymbolEntry value)
             {
-                if (symbols.TryGetValue(key, out value))
+                if (_symbols.TryGetValue(key, out value))
                     return true;
-                else if (parent != null)
-                    return parent.TryGetValue(key, out value);
+                else if (_parent != null)
+                    return _parent.TryGetValue(key, out value);
                 else
-                    return loaderSymbols.TryGetValue(key, out value);
+                    return _loaderSymbols.TryGetValue(key, out value);
             }
 
             public ICollection<SymbolEntry> Values
             {
                 get
                 {
-                    var localValues = symbols.Values;
+                    var localValues = _symbols.Values;
                     var values = new List<SymbolEntry>(localValues);
-                    if (parent != null)
+                    if (_parent != null)
                     {
-                        foreach (var kvp in parent)
+                        foreach (var kvp in _parent)
                             if (!localValues.Contains(kvp.Value))
                                 values.Add(kvp.Value);
                     }
                     else
                     {
-                        foreach (var kvp in loaderSymbols)
+                        foreach (var kvp in _loaderSymbols)
                             if (!localValues.Contains(kvp.Value))
                                 values.Add(kvp.Value);
                     }
@@ -277,38 +285,38 @@ namespace Prexonite.Compiler
 
             public void Add(KeyValuePair<string, SymbolEntry> item)
             {
-                symbols.Add(item);
+                _symbols.Add(item);
             }
 
             public void Clear()
             {
-                symbols.Clear();
+                _symbols.Clear();
             }
 
             public bool Contains(KeyValuePair<string, SymbolEntry> item)
             {
-                if (symbols.Contains(item))
+                if (_symbols.Contains(item))
                     return true;
-                else if (parent != null)
-                    return parent.Contains(item);
+                else if (_parent != null)
+                    return _parent.Contains(item);
                 else
-                    return loaderSymbols.Contains(item);
+                    return _loaderSymbols.Contains(item);
             }
 
             public void CopyTo(KeyValuePair<string, SymbolEntry>[] array, int arrayIndex)
             {
                 var lst =
-                    new List<KeyValuePair<string, SymbolEntry>>(symbols);
-                if (parent != null)
+                    new List<KeyValuePair<string, SymbolEntry>>(_symbols);
+                if (_parent != null)
                 {
-                    foreach (var kvp in parent)
-                        if (!symbols.ContainsKey(kvp.Key))
+                    foreach (var kvp in _parent)
+                        if (!_symbols.ContainsKey(kvp.Key))
                             lst.Add(kvp);
                 }
                 else
                 {
-                    foreach (var kvp in loaderSymbols)
-                        if (!symbols.ContainsKey(kvp.Key))
+                    foreach (var kvp in _loaderSymbols)
+                        if (!_symbols.ContainsKey(kvp.Key))
                             lst.Add(kvp);
                 }
                 lst.CopyTo(array, arrayIndex);
@@ -326,42 +334,42 @@ namespace Prexonite.Compiler
 
             public bool Remove(KeyValuePair<string, SymbolEntry> item)
             {
-                return symbols.Remove(item);
+                return _symbols.Remove(item);
             }
 
             IEnumerator<KeyValuePair<string, SymbolEntry>>
                 IEnumerable<KeyValuePair<string, SymbolEntry>>.GetEnumerator()
             {
-                foreach (var kvp in symbols)
+                foreach (var kvp in _symbols)
                     yield return kvp;
-                if (parent != null)
+                if (_parent != null)
                 {
-                    foreach (var kvp in parent)
-                        if (!symbols.ContainsKey(kvp.Key))
+                    foreach (var kvp in _parent)
+                        if (!_symbols.ContainsKey(kvp.Key))
                             yield return kvp;
                 }
                 else
                 {
-                    foreach (var kvp in loaderSymbols)
-                        if (!symbols.ContainsKey(kvp.Key))
+                    foreach (var kvp in _loaderSymbols)
+                        if (!_symbols.ContainsKey(kvp.Key))
                             yield return kvp;
                 }
             }
 
             IEnumerator IEnumerable.GetEnumerator()
             {
-                foreach (var kvp in symbols)
+                foreach (var kvp in _symbols)
                     yield return kvp;
-                if (parent != null)
+                if (_parent != null)
                 {
-                    foreach (var kvp in parent)
-                        if (!symbols.ContainsKey(kvp.Key))
+                    foreach (var kvp in _parent)
+                        if (!_symbols.ContainsKey(kvp.Key))
                             yield return kvp;
                 }
                 else
                 {
-                    foreach (var kvp in loaderSymbols)
-                        if (!symbols.ContainsKey(kvp.Key))
+                    foreach (var kvp in _loaderSymbols)
+                        if (!_symbols.ContainsKey(kvp.Key))
                             yield return kvp;
                 }
             }
@@ -370,17 +378,17 @@ namespace Prexonite.Compiler
 
             public bool IsKeyDefinedLocally(string key)
             {
-                return symbols.ContainsKey(key);
+                return _symbols.ContainsKey(key);
             }
 
             public bool IsKeyDefinedInParent(string key)
             {
-                if (parent == null)
+                if (_parent == null)
                     return false;
-                else if (parent.symbols.ContainsKey(key)) //Direct lookup in parent
+                else if (_parent._symbols.ContainsKey(key)) //Direct lookup in parent
                     return true;
                 else //Forward question
-                    return parent.IsKeyDefinedInParent(key);
+                    return _parent.IsKeyDefinedInParent(key);
             }
         }
 
@@ -646,11 +654,13 @@ namespace Prexonite.Compiler
         {
             _outerVariables.Add(id);
             //Make parent functions hand down the variable, even if they don't use them themselves.
-            for (var T = _parentTarget; T != null; T = T._parentTarget)
+
+            //for (var T = _parentTarget; T != null; T = T._parentTarget)
+            var T = _parentTarget;
             {
                 var func = T.Function;
                 if (func.Variables.Contains(id) || func.Parameters.Contains(id))
-                    break; //Parent can supply the variable/parameter. Stop search here.
+                    return; //Parent can supply the variable/parameter. Stop search here.
                 else if (T._parentTarget != null)
                     T.RequireOuterVariable(id); //Order parent function to request outer variable
                 else
@@ -663,6 +673,47 @@ namespace Prexonite.Compiler
                             id,
                             func));
             }
+        }
+
+        #endregion
+
+        #region Lambda lifting (capture by value)
+
+        /// <summary>
+        /// Promotes captured variables to function parameters.
+        /// </summary>
+        /// <returns>A list of expressions (get symbol) that should be added to the arguments list of any call to the lifted function.</returns>
+        internal Func<Parser, IList<IAstExpression>> ToCaptureByValue()
+        {
+            return ToCaptureByValue(new string[0]);
+        }
+
+        /// <summary>
+        /// Promotes captured variables to function parameters.
+        /// </summary>
+        /// <param name="keepByRef">The set of captured variables that should be kept captured by reference (i.e. not promoted to parameters)</param>
+        /// <returns>A list of expressions (get symbol) that should be added to the arguments list of any call to the lifted function.</returns>
+        internal Func<Parser,IList<IAstExpression>> ToCaptureByValue(IEnumerable<string> keepByRef)
+        {
+            var toPromote =
+                _outerVariables.Where(outer => !keepByRef.Contains(outer)).ToList();
+
+            //Declare locally, remove from outer variables and add as parameter to the end
+            var exprs = new List<Func<Parser,IAstExpression>>();
+            foreach (var outer in toPromote)
+            {
+                SymbolEntry sym;
+                if (Symbols.TryGetValue(outer, out sym))
+                    Symbols.Add(outer, sym);
+                _outerVariables.Remove(outer);
+                Function.Parameters.Add(outer);
+                {   //Copy the value for capture by value in closure
+                    var byValOuter = outer;
+                    exprs.Add(p => new AstGetSetSymbol(p, byValOuter, SymbolInterpretations.LocalObjectVariable));
+                }
+            }
+
+            return p => exprs.Select(e => e(p)).ToList();
         }
 
         #endregion
@@ -1160,12 +1211,7 @@ namespace Prexonite.Compiler
         /// </remarks>
         public void FinishTarget()
         {
-            var outerVars = new MetaEntry[_outerVariables.Count];
-            var i = 0;
-            foreach (var outerVar in _outerVariables)
-                outerVars[i++] = outerVar;
-            if (i > 0)
-                Function.Meta[PFunction.SharedNamesKey] = (MetaEntry) outerVars;
+            _DetermineSharedNames();
 
             _checkUnresolvedInstructions();
 
@@ -1185,6 +1231,16 @@ namespace Prexonite.Compiler
             if (Loader.Options.UseIndicesLocally)
                 _by_index();
 #endif
+        }
+
+        internal void _DetermineSharedNames()
+        {
+            var outerVars = new MetaEntry[_outerVariables.Count];
+            var i = 0;
+            foreach (var outerVar in _outerVariables)
+                outerVars[i++] = outerVar;
+            if (i > 0)
+                Function.Meta[PFunction.SharedNamesKey] = (MetaEntry) outerVars;
         }
 
         #region Check unresolved Instructions

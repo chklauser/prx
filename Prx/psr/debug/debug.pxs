@@ -571,7 +571,7 @@ function as debug_this(func,argv,shared)
     debug_prompt(func.CreateFunctionContext(asm(ldr.eng),argv,shared));
 }
 
-function as debug_call(func)
+function as debug_call,call\debug(func)
 {
     debug_this(func, var args >> skip(1) >> all);
 }

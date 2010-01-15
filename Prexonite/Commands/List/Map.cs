@@ -92,8 +92,10 @@ namespace Prexonite.Commands.List
                 return null;
         }
 
-        protected static IEnumerable<PValue> CoroutineRun(StackContext sctx, IIndirectCall f, IEnumerable<PValue> source)
+        protected static IEnumerable<PValue> CoroutineRun(ContextCarrier sctxCarrier, IIndirectCall f, IEnumerable<PValue> source)
         {
+            var sctx = sctxCarrier.StackContext;
+
             foreach (PValue x in source)
                 yield return f != null ? f.IndirectCall(sctx, new PValue[] { x }) : x;
         }
@@ -101,15 +103,17 @@ namespace Prexonite.Commands.List
         /// <summary>
         /// Executes the map command.
         /// </summary>
-        /// <param name="sctx">The stack context in which to call the supplied function.</param>
+        /// <param name="sctxCarrier">The stack context in which to call the supplied function.</param>
         /// <param name="args">The list of arguments to be passed to the command.</param>
         /// <returns>A coroutine that maps the.</returns>
-        protected  static IEnumerable<PValue> CoroutineRunStatically(StackContext sctx, PValue[] args)
+        protected  static IEnumerable<PValue> CoroutineRunStatically(ContextCarrier sctxCarrier, PValue[] args)
         {
-            if (sctx == null)
-                throw new ArgumentNullException("sctx");
+            if (sctxCarrier == null)
+                throw new ArgumentNullException("sctxCarrier");
             if (args == null)
                 throw new ArgumentNullException("args");
+
+            var sctx = sctxCarrier.StackContext;
 
             //Get f
             IIndirectCall f;
@@ -139,7 +143,11 @@ namespace Prexonite.Commands.List
                 source = lstsource;
             }
 
-            return CoroutineRun(sctx, f, source);
+            //Note: need to forward element because this method must remain lazy.
+            foreach (var value in CoroutineRun(sctxCarrier, f, source))
+            {
+                yield return value;
+            } 
         }
 
         private static IEnumerable<PValue> _wrapNonGenericIEnumerable(StackContext sctx, IEnumerable nonGeneric)
@@ -150,7 +158,9 @@ namespace Prexonite.Commands.List
 
         public static PValue RunStatically(StackContext sctx, PValue[] args)
         {
-            CoroutineContext corctx = new CoroutineContext(sctx, CoroutineRunStatically(sctx, args));
+            var carrier = new ContextCarrier();
+            var corctx = new CoroutineContext(sctx, CoroutineRunStatically(carrier, args));
+            carrier.StackContext = corctx;
             return sctx.CreateNativePValue(new Coroutine(corctx));
         }
 
@@ -187,9 +197,9 @@ namespace Prexonite.Commands.List
 
         #endregion
 
-        protected override IEnumerable<PValue> CoroutineRun(StackContext sctx, PValue[] args)
+        protected override IEnumerable<PValue> CoroutineRun(ContextCarrier sctxCarrier, PValue[] args)
         {
-            return CoroutineRunStatically(sctx, args);
+            return CoroutineRunStatically(sctxCarrier, args);
         }
     }
 }

@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using Prexonite.Types;
 
 namespace Prexonite
@@ -12,7 +13,7 @@ namespace Prexonite
 
         public override string ToString()
         {
-            return String.Format("Cooperative managed method({0})", _method);
+            return String.Format("Cooperative managed method({0})", _existingMethod);
         } 
 
         public CooperativeContext(StackContext sctx, Func<Action<PValue>,IEnumerable<bool>> methodCtor)
@@ -22,14 +23,33 @@ namespace Prexonite
             if (methodCtor == null)
                 throw new ArgumentNullException("methodCtor");
 
-            _method = methodCtor(v => _returnValue = v).GetEnumerator();
-
+            _methodCtor = methodCtor;
             _parentEngine = sctx.ParentEngine;
             _parentApplication = sctx.ParentApplication;
             _importedNamespaces = sctx.ImportedNamespaces;
         }
 
-        private readonly IEnumerator<bool> _method;
+        private IEnumerator<bool> _method
+        {
+            [DebuggerStepThrough]
+            get
+            {
+                if (_existingMethod != null)
+                {
+                    return _existingMethod;
+
+                }
+                else
+                {
+                    _existingMethod = _methodCtor(v => _returnValue = v).GetEnumerator();
+                    _methodCtor = null;
+                    return _existingMethod;
+                }
+            }
+        }
+
+        private Func<Action<PValue>, IEnumerable<bool>> _methodCtor;
+        private IEnumerator<bool> _existingMethod;
 
         private readonly Engine _parentEngine;
         private readonly Application _parentApplication;
@@ -93,7 +113,7 @@ namespace Prexonite
 
         #region IDisposable
 
-        private bool _disposed = false;
+        private bool _disposed;
 
         public void Dispose()
         {
@@ -107,8 +127,8 @@ namespace Prexonite
             {
                 if (disposing)
                 {
-                    if(_method != null)
-                        _method.Dispose();
+                    if(_existingMethod != null)
+                        _existingMethod.Dispose();
                 }
             }
             _disposed = true;

@@ -20,9 +20,6 @@
 //  *  with this program; if not, write to the Free Software Foundation, Inc.,
 //  *  51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
 //  */
-#if Verbose
-using System.Text;
-#endif
 
 #region Namespace Imports
 
@@ -302,7 +299,7 @@ namespace Prexonite
         {
             return _performNextCylce(lastContext, false);
         }
-
+        
         public bool Step(StackContext lastContext)
         {
             return _performNextCylce(lastContext, true);
@@ -1359,6 +1356,11 @@ namespace Prexonite
         #endregion
 
         #endregion Virtual Machine
+
+        private static string toDebug(PValue value)
+        {
+            return PValue.ToDebugString(value);
+        }
     }
 
     [Serializable]

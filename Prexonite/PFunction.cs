@@ -86,6 +86,16 @@ namespace Prexonite
         /// </summary>
         public const string ParentFunctionKey = "ParentFunction";
 
+        /// <summary>
+        /// Indicates whether a function requires its arguments to be lazy.
+        /// </summary>
+        public const string LazyKey = "lazy";
+
+        /// <summary>
+        /// The list of let-bound local names (local variables and shared variables)
+        /// </summary>
+        public const string LetKey = "let";
+
         #region Construction
 
         /// <summary>
@@ -226,7 +236,7 @@ namespace Prexonite
         /// </summary>
         public SymbolTable<int> LocalVariableMapping
         {
-            [DebuggerStepThrough]
+            [DebuggerNonUserCode]
             get
             {
                 if (_localVariableMapping == null)

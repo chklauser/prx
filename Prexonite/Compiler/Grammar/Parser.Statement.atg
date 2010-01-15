@@ -47,6 +47,7 @@ SimpleStatement<AstBlock block>
 |   GetSetComplex<block>
 |   Return<block>
 |   Throw<block>
+|   LetBindingStmt<block>
 .
 
 StructureStatement<AstBlock block>
@@ -206,8 +207,8 @@ GetInitiator<out AstGetSet complex, out bool isDeclaration>
                                             }
                                             else if(InterpretationIsVariable(s.Interpretation))
                                             {
-                                                if(isOuterVariable(id))
-                                                    target.RequireOuterVariable(id);
+                                                if(isOuterVariable(s.Id))
+                                                    target.RequireOuterVariable(s.Id);
                                             }
                                             complex = new AstGetSetReference(this, s.Id, s.Interpretation);
                                         .)
@@ -497,14 +498,56 @@ NestedFunction<AstBlock block>
 =
     FunctionDefinition<out func>
                                 (.  
-                                    string logicalId = func.Meta["LogicalId"];
+                                    string logicalId = func.Meta[PFunction.LogicalIdKey];
                                     func.Meta[PFunction.ParentFunctionKey] = target.Function.Id;
                                     string physicalId = func.Id;
                                     
                                     AstGetSetSymbol setVar = new AstGetSetSymbol(this, PCall.Set, logicalId, SymbolInterpretations.LocalObjectVariable);
-                                    setVar.Arguments.Add( new AstCreateClosure(this, physicalId) );
+                                    if(func.Meta[PFunction.LazyKey].Switch)
+                                    {
+                                        //Capture environment by value
+                                        CompilerTarget ft = FunctionTargets[func];
+                                        var ps = ft.ToCaptureByValue(let_bindings(ft));
+                                        ft._DetermineSharedNames(); //Need to re-determine shared names since
+                                                                    // ToCaptureByValue does not automatically modify shared names
+                                        var clos = new AstCreateClosure(this, func.Id);
+                                        var callStub = new AstIndirectCall(this, clos);
+                                        callStub.Arguments.AddRange(ps(this));
+                                        setVar.Arguments.Add(callStub);
+                                    }
+                                    else
+                                    {                                        
+                                        setVar.Arguments.Add( new AstCreateClosure(this, physicalId) );                                        
+                                    }
                                     block.Add(setVar);
                                 .)
+.
+
+LetBindingStmt<AstBlock block>
+=
+    let LetBinder<block> { comma LetBinder<block> }
+.
+
+LetBinder<AstBlock block>
+                                (.  string id = null;
+                                    IAstExpression thunk;
+                                .)
+=
+    Id<out id>                  (.  //Declare local "let" variable
+                                    SmartDeclareLocal(id, SymbolInterpretations.LocalObjectVariable);
+                                    mark_as_let(target.Function, id);
+                                    if(la.kind == _assign)
+                                        _inject(_lazy,"lazy"); 
+                                .)
+    [   assign                      
+        LazyExpression<out thunk>   
+                                (.  
+                                    //Assign thunk to that variable
+                                    var assign = new AstGetSetSymbol(this, PCall.Set, id, SymbolInterpretations.LocalObjectVariable);
+                                    assign.Arguments.Add(thunk);
+                                    block.Add(assign);
+                                .)
+    ]
 .
 
 TryCatchFinally<AstBlock block>

@@ -3364,5 +3364,38 @@ function main()
             Assert.AreEqual(alias3.Id, alias4.Id);
         }
 
+        [Test]
+        public void PrxShowPrompt()
+        {
+            _compile(@"
+declare function runInDifferentColor, readline;
+
+function showPrompt(q) does
+{
+	declare var prompt\color as color;
+	var originalColor;
+    if(q == null)
+        q = ""PRX> "";
+    runInDifferentColor( () => print(q), 
+        color != null ? color : ::Console.ForegroundColor);
+	return readline;
+}
+");
+
+        }
+
+        [Test]
+        public void NestedDerivedCapture()
+        {
+            _compile(@"
+function parent
+{
+    var x;
+    coroutine nested = x;
+    lazy nested = x;
+}
+");
+        }
+
     }
 }

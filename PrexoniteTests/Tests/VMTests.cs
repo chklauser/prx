@@ -959,7 +959,7 @@ function main()                           // IO() -> IO()
         }
 
         [Test]
-        public void Typecheck()
+        public void TypeIdentification()
         {
             Compile(
                 @"

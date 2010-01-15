@@ -45,23 +45,24 @@ namespace Prexonite.Commands.List
 
         #endregion 
 
-        protected override IEnumerable<PValue> CoroutineRun(StackContext sctx, PValue[] args)
+        protected override IEnumerable<PValue> CoroutineRun(ContextCarrier sctxCarrier, PValue[] args)
         {
-            return CoroutineRunStatically(sctx, args);
+            return CoroutineRunStatically(sctxCarrier, args);
         }
 
-        protected static IEnumerable<PValue> CoroutineRunStatically(StackContext sctx, PValue[] args)
+        protected static IEnumerable<PValue> CoroutineRunStatically(ContextCarrier ctxCarrier, PValue[] args)
         {
-            if (sctx == null)
-                throw new ArgumentNullException("sctx");
+            if (ctxCarrier == null)
+                throw new ArgumentNullException("ctxCarrier");
             if (args == null)
                 throw new ArgumentNullException("args");
 
             if (args.Length < 1)
                 throw new PrexoniteException("Limit requires at least one argument.");
 
-            int i = 0;
-            int count = (int) args[0].ConvertTo(sctx, PType.Int, true).Value;
+            var i = 0;
+            var sctx = ctxCarrier.StackContext;
+            var count = (int) args[0].ConvertTo(sctx, PType.Int, true).Value;
 
             for (int j = 1; j < args.Length; j++)
             {
@@ -85,7 +86,9 @@ namespace Prexonite.Commands.List
 
         public static PValue RunStatically(StackContext sctx, PValue[] args)
         {
-            CoroutineContext corctx = new CoroutineContext(sctx, CoroutineRunStatically(sctx, args));
+            var carrier = new ContextCarrier();
+            var corctx = new CoroutineContext(sctx, CoroutineRunStatically(carrier, args));
+            carrier.StackContext = corctx;
             return sctx.CreateNativePValue(new Coroutine(corctx));
         }
 

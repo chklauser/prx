@@ -27,7 +27,9 @@ using System;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.Reflection;
+using System.Threading;
 using Prexonite.Commands;
+using Prexonite.Commands.Concurrency;
 using Prexonite.Commands.Lazy;
 using Prexonite.Commands.Math;
 using Prexonite.Commands.Core;
@@ -91,14 +93,14 @@ namespace Prexonite
 
         #region Meta
 
-        private readonly MetaTable meta;
+        private readonly MetaTable _meta;
 
         /// <summary>
         /// The metatable provided to store settings and information about the virtual machine. This table also provides default values, should both applications and functions lack specific entries.
         /// </summary>
         public MetaTable Meta
         {
-            get { return meta; }
+            get { return _meta; }
         }
 
         #endregion
@@ -124,15 +126,15 @@ namespace Prexonite
         /// <summary>
         /// Proxy type that is used to provide access to the <see cref="PType"/> to CLR <see cref="System.Type">Type</see> mapping.
         /// </summary>
-        /// <seealso cref="Engine.PTypeMap"/>
+        /// <seealso cref="Prexonite.Engine.PTypeMap"/>
         [DebuggerStepThrough]
         public class PTypeMapIterator
         {
-            private readonly Engine outer;
+            private readonly Engine _outer;
 
             internal PTypeMapIterator(Engine outer)
             {
-                this.outer = outer;
+                this._outer = outer;
             }
 
             /// <summary>
@@ -141,7 +143,7 @@ namespace Prexonite
             /// <value>The number of mappings in the current engine.</value>
             public int Count
             {
-                get { return outer._pTypeMap.Count; }
+                get { return _outer._pTypeMap.Count; }
             }
 
             /// <summary>
@@ -154,24 +156,24 @@ namespace Prexonite
             {
                 get
                 {
-                    if (outer._pTypeMap.ContainsKey(clrType))
-                        return outer._pTypeMap[clrType];
+                    if (_outer._pTypeMap.ContainsKey(clrType))
+                        return _outer._pTypeMap[clrType];
                     else
                         return PType.Object[clrType];
                 }
                 set
                 {
-                    if (outer._pTypeMap.ContainsKey(clrType))
+                    if (_outer._pTypeMap.ContainsKey(clrType))
                     {
                         if ((object)value == null)
-                            outer._pTypeMap.Remove(clrType);
+                            _outer._pTypeMap.Remove(clrType);
                         else
-                            outer._pTypeMap[clrType] = value;
+                            _outer._pTypeMap[clrType] = value;
                     }
                     else if ((object)value == null)
                         throw new ArgumentNullException("value");
                     else
-                        outer._pTypeMap.Add(clrType, value);
+                        _outer._pTypeMap.Add(clrType, value);
                 }
             }
 
@@ -187,11 +189,11 @@ namespace Prexonite
                     throw new ArgumentNullException("clrType");
                 if ((object)type == null)
                     throw new ArgumentNullException("type");
-                if (outer._pTypeMap.ContainsKey(clrType))
+                if (_outer._pTypeMap.ContainsKey(clrType))
                     throw new InvalidOperationException(
                         "A mapping for the CLR Type " + clrType.FullName +
                         " already exists");
-                outer._pTypeMap.Add(clrType, type);
+                _outer._pTypeMap.Add(clrType, type);
             }
 
             /// <summary>
@@ -202,8 +204,8 @@ namespace Prexonite
             {
                 if (clrType == null)
                     throw new ArgumentNullException("clrType");
-                if (outer._pTypeMap.ContainsKey(clrType))
-                    outer._pTypeMap.Remove(clrType);
+                if (_outer._pTypeMap.ContainsKey(clrType))
+                    _outer._pTypeMap.Remove(clrType);
             }
 
             /// <summary>
@@ -212,7 +214,7 @@ namespace Prexonite
             /// <returns>An IEnumerator to enumerate over all mappings in the current engine.</returns>
             public IEnumerator<KeyValuePair<Type, PType>> GetEnumerator()
             {
-                return outer._pTypeMap.GetEnumerator();
+                return _outer._pTypeMap.GetEnumerator();
             }
         }
 
@@ -235,17 +237,17 @@ namespace Prexonite
         }
 
         /// <summary>
-        /// The proxy class that is used to provide access to the <see cref="Engine.PTypeRegistry"/>
+        /// The proxy class that is used to provide access to the <see cref="Prexonite.Engine.PTypeRegistry"/>
         /// </summary>
-        /// <seealso cref="Engine.PTypeRegistry"/>
+        /// <seealso cref="Prexonite.Engine.PTypeRegistry"/>
         [DebuggerStepThrough]
         public class PTypeRegistryIterator
         {
-            private readonly Engine outer;
+            private readonly Engine _outer;
 
             internal PTypeRegistryIterator(Engine outer)
             {
-                this.outer = outer;
+                this._outer = outer;
             }
 
             /// <summary>
@@ -254,7 +256,7 @@ namespace Prexonite
             /// <value>The number of registered <see cref="PType">PTypes</see>.</value>
             public int Count
             {
-                get { return outer._pTypeRegistry.Count; }
+                get { return _outer._pTypeRegistry.Count; }
             }
 
             /// <summary>
@@ -264,11 +266,11 @@ namespace Prexonite
             /// <returns>True if the name has been registered; false otherwise.</returns>
             public bool Contains(string name)
             {
-                return outer._pTypeRegistry.ContainsKey(name);
+                return _outer._pTypeRegistry.ContainsKey(name);
             }
 
             /// <summary>
-            /// Provides index based access to the <see cref="Engine.PTypeRegistry"/>.
+            /// Provides index based access to the <see cref="Prexonite.Engine.PTypeRegistry"/>.
             /// </summary>
             /// <param name="name">The name of the <see cref="PType"/> to lookup.</param>
             /// <returns>A <see cref="Type"/> that inherits from <see cref="PType"/> or null, if no such mapping exists.</returns>
@@ -278,8 +280,8 @@ namespace Prexonite
             {
                 get
                 {
-                    if (outer._pTypeRegistry.ContainsKey(name))
-                        return outer._pTypeRegistry[name];
+                    if (_outer._pTypeRegistry.ContainsKey(name))
+                        return _outer._pTypeRegistry[name];
                     else
                         return null;
                 }
@@ -287,17 +289,17 @@ namespace Prexonite
                 {
                     if (value != null && !PType.IsPType(value))
                         throw new ArgumentException("ClrType " + value + " is not a PType.");
-                    if (outer._pTypeRegistry.ContainsKey(name))
+                    if (_outer._pTypeRegistry.ContainsKey(name))
                     {
                         if (value == null)
-                            outer._pTypeRegistry.Remove(name);
+                            _outer._pTypeRegistry.Remove(name);
                         else
-                            outer._pTypeRegistry[name] = value;
+                            _outer._pTypeRegistry[name] = value;
                     }
                     else if (value == null)
                         throw new ArgumentNullException("value");
                     else
-                        outer._pTypeRegistry.Add(name, value);
+                        _outer._pTypeRegistry.Add(name, value);
                 }
             }
 
@@ -339,11 +341,11 @@ namespace Prexonite
                     throw new ArgumentNullException("type");
                 else if (!PType.IsPType(type))
                     throw new ArgumentException("ClrType " + type + " is not a PType.");
-                if (outer._pTypeRegistry.ContainsKey(name))
+                if (_outer._pTypeRegistry.ContainsKey(name))
                     throw new ArgumentException(
                         "The registry already contains an entry " + name + " => " +
-                        outer._pTypeRegistry[name] + ".");
-                outer._pTypeRegistry.Add(name, type);
+                        _outer._pTypeRegistry[name] + ".");
+                _outer._pTypeRegistry.Add(name, type);
             }
 
             /// <summary>
@@ -354,8 +356,8 @@ namespace Prexonite
             {
                 if (name == null)
                     throw new ArgumentNullException("name");
-                if (outer._pTypeRegistry.ContainsKey(name))
-                    outer._pTypeRegistry.Remove(name);
+                if (_outer._pTypeRegistry.ContainsKey(name))
+                    _outer._pTypeRegistry.Remove(name);
             }
 
             /// <summary>
@@ -364,7 +366,7 @@ namespace Prexonite
             /// <returns>An IEnumerator to enumerate over all registrations.</returns>
             public IEnumerator<KeyValuePair<string, Type>> GetEnumerator()
             {
-                return outer._pTypeRegistry.GetEnumerator();
+                return _outer._pTypeRegistry.GetEnumerator();
             }
         }
 
@@ -591,14 +593,18 @@ namespace Prexonite
 
         #region Class
 
+        private readonly LocalDataStoreSlot _stackSlot;
+
         /// <summary>
         /// Creates a new Prexonite virtual machine.
         /// </summary>
         public Engine()
         {
-            ExecutionProhibited = false;
+            //Thread local storage for stack
+            _stackSlot = Thread.AllocateDataSlot();
+
             //Metatable
-            meta = new MetaTable();
+            _meta = new MetaTable();
 
             //PTypes
             _pTypeMap = new Dictionary<Type, PType>();
@@ -679,6 +685,8 @@ namespace Prexonite
 
             Commands.AddEngineCommand(ThunkAlias, ThunkCommand.Instance);
             Commands.AddEngineCommand(AsThunkAlias,AsThunkCommand.Instance);
+            Commands.AddEngineCommand(ForceAlias, ForceCommand.Instance);
+            Commands.AddEngineCommand(ToSeqAlias, ToSeqCommand.Instance);
 
             Commands.AddEngineCommand(Call_MemberAlias, Call_Member.Instance);
 
@@ -776,6 +784,14 @@ namespace Prexonite
             Commands.AddEngineCommand(AppendAlias,Append.Instance);
 
             Commands.AddEngineCommand(SumAlias,Sum.Instance);
+
+            Commands.AddEngineCommand(ChanAlias, Chan.Instance);
+
+            Commands.AddEngineCommand(SelectAlias, Select.Instance);
+
+            Commands.AddEngineCommand(Call_AsyncAlias, CallAsync.Instance);
+
+            Commands.AddEngineCommand(AsyncSeqAlias, AsyncSeq.Instance);
         }
 
         /// <summary>
@@ -804,11 +820,6 @@ namespace Prexonite
         public const string MapAlias = "map";
 
         /// <summary>
-        /// Alias used for the map command.
-        /// </summary>
-        public const string SelectAlias = "select";
-
-        /// <summary>
         /// Alias used for the <c>foldl</c> command.
         /// </summary>
         public const string FoldLAlias = "foldl";
@@ -829,12 +840,34 @@ namespace Prexonite
         public const string CallAlias = "call";
 
         /// <summary>
+        /// Alias used for the <c>call\async</c> command.
+        /// </summary>
+        public const string Call_AsyncAlias = @"call\async";
+
+        /// <summary>
+        /// Alias used for the "async_seq" command.
+        /// </summary>
+        public const string AsyncSeqAlias = @"async_seq";
+
+        /// <summary>
+        /// Alias used for the "chan" command.
+        /// </summary>
+        public const string ChanAlias = "chan";
+
+        /// <summary>
+        /// Alias used for the "select" command.
+        /// </summary>
+        public const string SelectAlias = "select";
+
+        /// <summary>
         /// Alias used for the <c>callmember</c> command.
         /// </summary>
         public const string Call_MemberAlias = @"call\member";
 
         public const string ThunkAlias = "thunk";
         public const string AsThunkAlias = "asthunk";
+        public const string ForceAlias = "force";
+        public const string ToSeqAlias = "toseq";
 
         /// <summary>
         /// Alias used for the <c>caller</c> command.

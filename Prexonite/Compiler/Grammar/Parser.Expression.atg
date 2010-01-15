@@ -261,6 +261,7 @@ Primary<out IAstExpression expr>
 	ThrowExpression<out th>				(. expr = th; .)
 |   IF(isLambdaExpression())
     LambdaExpression<out expr>
+|   LazyExpression<out expr>
 |
     (   lpar Expr<out expr> rpar
     |   GetInitiator<out complex, out declared>
@@ -348,7 +349,7 @@ LambdaExpression<out IAstExpression expr>
                                         (.  expr = null;
                                             PFunction func = new PFunction(TargetApplication, generateNestedFunctionId());                                             
                                             func.Meta[Application.ImportKey] = target.Function.Meta[Application.ImportKey];
-                                            func.Meta["ParentFunction"] = target.Function.Id;
+                                            func.Meta[PFunction.ParentFunctionKey] = target.Function.Id;
                                             TargetApplication.Functions.Add(func);
                                             Loader.CreateFunctionTarget(func, new AstBlock(this));
                                             CompilerTarget ft = FunctionTargets[func];
@@ -385,6 +386,51 @@ implementation
                                             }
                                             
                                             expr = new AstCreateClosure(this, func.Id);                                         
+                                        .)
+.
+
+LazyExpression<out IAstExpression expr>
+                                        (.  expr = null;
+                                            PFunction func = new PFunction(TargetApplication, generateNestedFunctionId());
+                                            func.Meta[Application.ImportKey] = target.Function.Meta[Application.ImportKey];
+                                            func.Meta[PFunction.ParentFunctionKey] = target.Function.Id;
+                                            TargetApplication.Functions.Add(func);
+                                            Loader.CreateFunctionTarget(func, new AstBlock(this));
+                                            CompilerTarget ft = FunctionTargets[func];
+                                            ft.ParentTarget = target;
+                                            
+                                            //Switch to nested target
+                                            CompilerTarget oldTarget = target;
+                                            target = ft;
+                                        .)
+=
+lazy
+(   lbrace
+    { Statement<ft.Ast> }
+    rbrace
+|                                       (.  AstReturn ret = new AstReturn(this, ReturnVariant.Exit); .)
+    Expr<out ret.Expression>            (.  ft.Ast.Add(ret); .)
+)                                       
+                                        (.
+                                            //Turn into capture by value
+                                            var cap = ft.ToCaptureByValue(let_bindings(ft));
+                                            
+                                            //Restore parent target
+                                            target = oldTarget;
+                                            
+                                            //Finish nested function
+                                            if(errors.count == 0)
+                                            {
+                                                Ast[func].EmitCode(FunctionTargets[func],true);
+                                                FunctionTargets[func].FinishTarget();
+                                            }
+                                            
+                                            //Construct expr (appears in the place of lazy expression)
+                                            var clo = new AstCreateClosure(this, func.Id);
+                                            var thunk = new AstGetSetSymbol(this, Engine.ThunkAlias, SymbolInterpretations.Command);
+                                            thunk.Arguments.Add(clo);
+                                            thunk.Arguments.AddRange(cap(this)); //Add captured values
+                                            expr = thunk;
                                         .)
 .
 

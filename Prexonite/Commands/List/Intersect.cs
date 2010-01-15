@@ -29,17 +29,19 @@ namespace Prexonite.Commands.List
 {
     public class Intersect : CoroutineCommand
     {
-        protected override IEnumerable<PValue> CoroutineRun(StackContext sctx, PValue[] args)
+        protected override IEnumerable<PValue> CoroutineRun(ContextCarrier sctxCarrier, PValue[] args)
         {
             if (args == null)
                 throw new ArgumentNullException("args");
-            if (sctx == null)
-                throw new ArgumentNullException("sctx");
+            if (sctxCarrier == null)
+                throw new ArgumentNullException("sctxCarrier");
 
-            List<IEnumerable<PValue>> xss = new List<IEnumerable<PValue>>();
+            var sctx = sctxCarrier.StackContext;
+
+            var xss = new List<IEnumerable<PValue>>();
             foreach (PValue arg in args)
             {
-                IEnumerable<PValue> xs = Map._ToEnumerable(sctx,arg);
+                IEnumerable<PValue> xs = Map._ToEnumerable(sctx, arg);
                 if(xs != null)
                     xss.Add(xs);
             }
@@ -48,13 +50,13 @@ namespace Prexonite.Commands.List
             if (n < 2)
                 throw new PrexoniteException("Intersect requires at least two sources.");
             
-            Dictionary<PValue, int> t = new Dictionary<PValue, int>();
+            var t = new Dictionary<PValue, int>();
             //All elements of the first source are considered candidates
             foreach (PValue x in xss[0])
                 if (!t.ContainsKey(x))
                     t.Add(x, 1);
 
-            Dictionary<PValue, object> d = new Dictionary<PValue, object>();
+            var d = new Dictionary<PValue, object>();
             for (int i = 1; i < n-1; i++)
             {
                 foreach (PValue x in xss[i])

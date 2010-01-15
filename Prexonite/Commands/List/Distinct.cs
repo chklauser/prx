@@ -29,14 +29,16 @@ namespace Prexonite.Commands.List
 {
     public class Distinct : CoroutineCommand
     {
-        protected override IEnumerable<PValue> CoroutineRun(StackContext sctx, PValue[] args)
+        protected override IEnumerable<PValue> CoroutineRun(ContextCarrier sctxCarrier, PValue[] args)
         {
             if (args == null)
                 throw new ArgumentNullException("args");
-            if (sctx == null)
-                throw new ArgumentNullException("sctx"); 
+            if (sctxCarrier == null)
+                throw new ArgumentNullException("sctxCarrier"); 
             
             Dictionary<PValue, object> t = new Dictionary<PValue, object>();
+
+            var sctx = sctxCarrier.StackContext;
 
             foreach (PValue arg in args)
             {

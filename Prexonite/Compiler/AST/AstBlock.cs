@@ -188,6 +188,13 @@ namespace Prexonite.Compiler.Ast
             Statements.Insert(index, item);
         }
 
+        public void InsertRange(int index, IEnumerable<AstNode> items)
+        {
+            if (items == null)
+                throw new ArgumentNullException("items");
+            Statements.InsertRange(index, items);
+        }
+
         [DebuggerStepThrough]
         public void RemoveAt(int index)
         {

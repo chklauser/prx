@@ -23,6 +23,7 @@
 
 using System;
 using System.Collections.Generic;
+using System.Linq;
 using Prexonite.Compiler.Ast;
 using Prexonite.Types;
 using System.Globalization;
@@ -514,11 +515,17 @@ namespace Prexonite.Compiler
         [DebuggerStepThrough]
         private bool isOuterVariable(string id) //context
         {
+            //Check local function
+            PFunction func = target.Function;
+            if (func.Variables.Contains(id) || func.Parameters.Contains(id))
+                return false;
+
+            //Check parents
             for (CompilerTarget parent = target.ParentTarget;
                  parent != null;
                  parent = parent.ParentTarget)
             {
-                PFunction func = parent.Function;
+                func = parent.Function;
                 if (func.Variables.Contains(id) || func.Parameters.Contains(id))
                     return true;
             }
@@ -625,6 +632,22 @@ namespace Prexonite.Compiler
         }
 
         #endregion
+
+        private IEnumerable<string> let_bindings(CompilerTarget ft)
+        {
+            var lets = new HashSet<string>(Engine.DefaultStringComparer);
+            for (var ct = ft; ct != null; ct = ct.ParentTarget)
+                lets.UnionWith(ct.Function.Meta[PFunction.LetKey].List.Select(e => e.Text));
+            return lets;
+        }
+
+        private void mark_as_let(PFunction f, string local)
+        {
+            f.Meta[PFunction.LetKey] = (MetaEntry) 
+                f.Meta[PFunction.LetKey].List
+                .Union(new[] {(MetaEntry) local})
+                .ToArray();
+        }
 
         #region Assembler
 

@@ -72,7 +72,7 @@ namespace Prexonite.Commands.List
 
             foreach (PValue right in source)
             {
-                left = f.IndirectCall(sctx, new PValue[] {left, right});
+                left = f.IndirectCall(sctx, new[] {left, right});
             }
             return left;
         }

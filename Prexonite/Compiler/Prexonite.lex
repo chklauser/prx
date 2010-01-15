@@ -235,7 +235,7 @@ Noise               = "/*" ~"*/" | "//" {NotLineBreak}* {LineBreak} | {WhiteSpac
                             //2nd plus is injected by the parser
                         );
                      }
-    .|\n        { throw new PrexoniteException("Invalid character '" + yytext() + "' in input on line " + yyline + "."); }
+    .|\n        { throw new PrexoniteException("Invalid smart string character '" + yytext() + "' (ASCII " + ((int)yytext()[0]) + ") in input on line " + yyline + "."); }
 }
 
 <VerbatimString> {

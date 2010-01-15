@@ -109,7 +109,7 @@ namespace Prexonite.Compiler.Ast
         ///         </item>
         ///         <item>
         ///             <term>n</term>
-        ///             <description>A call to the <c><see cref="Engine.ConcatenateAlias">concat</see></c> command.</description>
+        ///             <description>A call to the <c><see cref="Prexonite.Engine.ConcatenateAlias">concat</see></c> command.</description>
         ///         </item>
         ///     </list>
         /// </para>

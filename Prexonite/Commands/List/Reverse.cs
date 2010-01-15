@@ -49,17 +49,19 @@ namespace Prexonite.Commands.List
 
         #endregion
 
-        protected override IEnumerable<PValue> CoroutineRun(StackContext sctx, PValue[] args)
+        protected override IEnumerable<PValue> CoroutineRun(ContextCarrier sctxCarrier, PValue[] args)
         {
-            return CoroutineRunStatically(sctx, args);
+            return CoroutineRunStatically(sctxCarrier, args);
         }
 
-        private static IEnumerable<PValue> CoroutineRunStatically(StackContext sctx, IEnumerable<PValue> args)
+        private static IEnumerable<PValue> CoroutineRunStatically(ContextCarrier sctxCarrier, IEnumerable<PValue> args)
         {
             if (args == null)
                 throw new ArgumentNullException("args");
-            if (sctx == null)
-                throw new ArgumentNullException("sctx");
+            if (sctxCarrier == null)
+                throw new ArgumentNullException("sctxCarrier");
+
+            var sctx = sctxCarrier.StackContext;
 
             var lst = new List<PValue>();
 
@@ -75,7 +77,9 @@ namespace Prexonite.Commands.List
         public static PValue RunStatically(StackContext sctx, PValue[] args)
 // ReSharper restore UnusedMember.Global
         {
-            var corctx = new CoroutineContext(sctx, CoroutineRunStatically(sctx, args));
+            var carrier = new ContextCarrier();
+            var corctx = new CoroutineContext(sctx, CoroutineRunStatically(carrier, args));
+            carrier.StackContext = corctx;
             return sctx.CreateNativePValue(new Coroutine(corctx));
         }
 
