@@ -383,9 +383,9 @@ namespace Prexonite.Types
                     result = Unescape(str);
                     break;
                 case "format":
-                    var objs = new string[args.Length];
-                    for (int i = 0; i < args.Length; i++)
-                        objs[i] = args[i].CallToString(sctx);
+                    var objs = new object[args.Length];
+                    for (var i = 0; i < args.Length; i++)
+                        objs[i] = args[i].Value;
                     result = System.String.Format(str, objs);
                     break;
                 case "escape":

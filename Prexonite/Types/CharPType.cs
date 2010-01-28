@@ -339,6 +339,79 @@ namespace Prexonite.Types
             return Convert.ToChar(value);
         }
 
+        private bool _tryConvert(StackContext sctx, PValue pv, out char c)
+        {
+            c = '\0';
+            switch (pv.Type.ToBuiltIn())
+            {
+                case BuiltIn.Char:
+                    c = (char) pv.Value;
+                    return true;
+
+                case BuiltIn.Int:
+                    c = (char) (int) pv.Value;
+                    return true;
+
+                case BuiltIn.Null:
+                    return true;
+
+                case BuiltIn.String:
+                    var s = (string) pv.Value;
+                    if(s.Length == 1)
+                    {
+                        c = s[0];
+                        return true;
+                    }
+                    else
+                    {
+                        return false;
+                    }
+
+                case BuiltIn.Object:
+                    if (pv.TryConvertTo(sctx, Char, false, out pv))
+                        return _tryConvert(sctx, pv, out c);
+                    else
+                        return false;
+
+                case BuiltIn.Structure:
+                case BuiltIn.Hash:
+                case BuiltIn.List:
+                case BuiltIn.Bool:
+                case BuiltIn.None:
+                case BuiltIn.Real:
+                    return false;
+                
+                default:
+                    throw new ArgumentOutOfRangeException();
+            }
+        }
+
+        public override bool Equality(StackContext sctx, PValue leftOperand, PValue rightOperand, out PValue result)
+        {
+            result = null;
+
+            char left;
+            char right;
+
+            if (_tryConvert(sctx, leftOperand, out left) && _tryConvert(sctx, rightOperand, out right))
+                result = left == right;
+
+            return result != null;
+        }
+
+        public override bool Inequality(StackContext sctx, PValue leftOperand, PValue rightOperand, out PValue result)
+        {
+            char left;
+            char right;
+
+            if (!(_tryConvert(sctx, leftOperand, out left)) || !(_tryConvert(sctx, rightOperand, out right)))
+                result = false;
+            else
+                result = left != right;
+
+            return true;
+        }
+
         #endregion
 
         #region ICilCompilerAware Members
@@ -353,7 +426,7 @@ namespace Prexonite.Types
             return CompilationFlags.PreferCustomImplementation;
         }
 
-        private static readonly MethodInfo GetCharPType = typeof (PType).GetProperty("Char").GetGetMethod();
+        private static readonly MethodInfo _getCharPType = typeof (PType).GetProperty("Char").GetGetMethod();
 
         /// <summary>
         /// Provides a custom compiler routine for emitting CIL byte code for a specific instruction.
@@ -362,7 +435,7 @@ namespace Prexonite.Types
         /// <param name="ins">The instruction to compile.</param>
         void ICilCompilerAware.ImplementInCil(CompilerState state, Instruction ins)
         {
-            state.EmitCall(GetCharPType);
+            state.EmitCall(_getCharPType);
         }
 
         #endregion
