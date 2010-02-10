@@ -3093,6 +3093,19 @@ function main = pi;
             Expect("54321",new PValue[0]);
         }
 
+        [Test]
+        public void AsyncSeqSemantics()
+        {
+            Compile(@"
+function main(xs)
+{
+    return foldl((a,b) => a + "">"" + b, """") << async_seq(xs);
+}
+");
+
+            Expect(">1>2>3", (PValue) new List<PValue> {1, 2, 3});
+        }
+
         #region Helper
 
         #endregion

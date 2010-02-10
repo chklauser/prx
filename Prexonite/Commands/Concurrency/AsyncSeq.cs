@@ -7,6 +7,7 @@ using Prexonite.Commands.List;
 using Prexonite.Compiler.Cil;
 using Prexonite.Concurrency;
 using Prexonite.Types;
+using Action=Prexonite.Compiler.Cil.Action;
 
 namespace Prexonite.Commands.Concurrency
 {
@@ -54,24 +55,20 @@ namespace Prexonite.Commands.Concurrency
             if (args.Length < 1)
                 throw new PrexoniteException("async_seq requires one parameter: The sequence to be computed.");
 
-            var sctx = sctxCarrier.StackContext;
-
-            //Store all necessary information in enumerable
-            var seq = Map._ToEnumerable(sctx, args[0]);
-
-            return new ChannelEnumerable(sctx, seq);
+            return new ChannelEnumerable(sctxCarrier, args[0]);
         }
 
         //Contains all the logic for spawing the background worker
         private class ChannelEnumerable : IEnumerable<PValue>
         {
-            private readonly StackContext _sctx;
-            private readonly IEnumerable<PValue> _seq;
+            private readonly ContextCarrier _sctxCarrier;
+            private readonly PValue _arg;
+            
 
-            public ChannelEnumerable(StackContext sctx, IEnumerable<PValue> seq)
+            public ChannelEnumerable(ContextCarrier sctxCarrier, PValue arg)
             {
-                _sctx = sctx;
-                _seq = seq;
+                _sctxCarrier = sctxCarrier;
+                _arg = arg;
             }
 
             #region Implementation of IEnumerable
@@ -84,74 +81,79 @@ namespace Prexonite.Commands.Concurrency
                 var disp = new Channel();
 
                 #region Producer
-                //The producer runs on a separate thread and communicates
-                //  with this thread via 4 channels, one for each method
-                CallAsync.RunAsync(_sctx, () =>
-                {
-                    using (var e = _seq.GetEnumerator())
+
+                Func<PValue> producer = 
+                    () =>
                     {
-                        var doCont = true;
-                        var doDisp = false;
-
-                        cont:
-                        if(e.MoveNext())
+                        using (var e = Map._ToEnumerable(_sctxCarrier.StackContext,_arg).GetEnumerator())
                         {
-                            peek.Send(true);
-                            data.Send(e.Current);
-                        }
-                        else
-                        {
-                            peek.Send(false);
-                            doCont = false;
-                        }
+                            var doCont = true;
+                            var doDisp = false;
 
-                        wait:
-                        Select.RunStatically(
-                            _sctx, new[]
+                            cont:
+                            if (e.MoveNext())
                             {
-                                new KeyValuePair<Channel, PValue>
-                                    (rset,pfunc((s,a) =>
-                                    {
-                                        doCont = true;
-                                        try
-                                        {
-                                            e.Reset();
-                                        }
-                                        catch (Exception exc)
-                                        {
-                                            rset.Send(PType.Object.CreatePValue(exc));
-                                        }
-                                        rset.Send(PType.Null);
-                                        return PType.Null;
-                                    })),
-                                new KeyValuePair<Channel, PValue>
-                                    (disp,pfunc((s,a) =>
-                                    {
-                                        doCont = false;
-                                        doDisp = true;
-                                        return PType.Null;
-                                    })),
-                                new KeyValuePair<Channel, PValue>
-                                    (null,PType.Null), 
-                            });
+                                peek.Send(true);
+                                data.Send(e.Current);
+                            }
+                            else
+                            {
+                                peek.Send(false);
+                                //doCont = false;
+                                goto shutDown;
+                            }
 
-                        //We loop until the dispose command is explicitly given. 
-                        //  -> This way, a reset command can be issued after
-                        //  the complete enumeration has been computed
-                        //  without the enumerator being disposed of prematurely
-                        if(doCont)
-                            goto cont;
-                        else if(! doDisp)
-                            goto wait;
-                    }//end using (disposes enumerator)
+                            wait:
+                            Select.RunStatically(
+                                _sctxCarrier.StackContext, new[]
+                                {
+                                    new KeyValuePair<Channel, PValue>
+                                        (
+                                        rset, pfunc(
+                                            (s, a) =>
+                                            {
+                                                doCont = true;
+                                                try
+                                                {
+                                                    e.Reset();
+                                                }
+                                                catch (Exception exc)
+                                                {
+                                                    rset.Send(PType.Object.CreatePValue(exc));
+                                                }
+                                                rset.Send(PType.Null);
+                                                return PType.Null;
+                                            })),
+                                    new KeyValuePair<Channel, PValue>
+                                        (
+                                        disp, pfunc(
+                                            (s, a) =>
+                                            {
+                                                doCont = false;
+                                                doDisp = true;
+                                                return PType.Null;
+                                            })),
+                                    new KeyValuePair<Channel, PValue>
+                                        (null, PType.Null),
+                                });
 
-                    //Ignored (part of CallAsync interface)
-                    return PType.Null;
-                });
+                            //We loop until the dispose command is explicitly given. 
+                            //  -> This way, a reset command can be issued after
+                            //  the complete enumeration has been computed
+                            //  without the enumerator being disposed of prematurely
+                            if (doCont)
+                                goto cont;
+                            else if (! doDisp)
+                                goto wait;
+                        } //end using (disposes enumerator)
 
-                #endregion
+                        //Ignored (part of CallAsync interface)
+                        shutDown:
+                        return PType.Null;
+                    };
+                    #endregion
 
-                return new ChannelEnumerator(peek, data, rset, disp);
+                return new ChannelEnumerator(peek, data, rset, disp, producer,_sctxCarrier);
             }
 
             IEnumerator IEnumerable.GetEnumerator()
@@ -167,18 +169,26 @@ namespace Prexonite.Commands.Concurrency
         private class ChannelEnumerator : IEnumerator<PValue>
         {
 
-            public ChannelEnumerator(Channel peek, Channel data, Channel rset, Channel disp)
+            public ChannelEnumerator(Channel peek, Channel data, Channel rset, Channel disp, Func<PValue> produce, ContextCarrier sctxCarrier)
             {
                 _peek = peek;
+                _sctxCarrier = sctxCarrier;
+                _produce = produce;
                 _data = data;
                 _rset = rset;
                 _disp = disp;
+
+                //The producer runs on a separate thread and communicates
+                //  with this thread via 4 channels, one for each method
+                
             }
 
             private readonly Channel _peek;
             private readonly Channel _data;
             private readonly Channel _rset;
             private readonly Channel _disp;
+            private readonly Func<PValue> _produce;
+            private readonly ContextCarrier _sctxCarrier;
             private PValue _current;
 
             #region Implementation of IDisposable
@@ -194,6 +204,14 @@ namespace Prexonite.Commands.Concurrency
 
             public bool MoveNext()
             {
+                if (_current == null)
+                {
+                    //The producer runs on a separate thread and communicates
+                    //  with this thread via 4 channels, one for each method
+                    CallAsync.RunAsync(_sctxCarrier.StackContext, _produce);
+                    _current = PType.Null;
+                }
+
                 if((bool)_peek.Receive().Value)
                 {
                     _current = _data.Receive();

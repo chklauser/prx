@@ -71,6 +71,12 @@ var evalStep = 1; //<-- helps to make identifiers unique
 
 coroutine tabHook(prefix, root)
 {
+
+    //User supplied entries
+    foreach(var e in app.Meta["Tab"].List)
+        if(e.Text.Length > 0)
+            yield e.Text;
+
     var hideKeys = [ "hidden", "private" ];
     function isHidden(func)
     {
@@ -91,19 +97,19 @@ coroutine tabHook(prefix, root)
     
     //Add symbols (the declarations, not the physical names)
     foreach(var symbol in ldr.Symbols)
-    if( symbol.Value.Interpretation~Int == ::SymbolInterpretations.$Command~Int ||
-        symbol.Value.Interpretation~Int == ::SymbolInterpretations.$GlobalObjectVariable~Int ||
-        symbol.Value.Interpretation~Int == ::SymbolInterpretations.$GlobalReferenceVariable~Int )
-    {
-        
-        yield symbol.Key;
-    }
-    else if(symbol.Value.Interpretation~Int == ::SymbolInterpretations.$Function~Int)
-    {
-        //Functions may be explicitly hidden
-        unless(isHidden(app.Functions[symbol.Value.Id]))
-            yield symbol.Key;   
-    }
+        if( symbol.Value.Interpretation~Int == ::SymbolInterpretations.$Command~Int ||
+            symbol.Value.Interpretation~Int == ::SymbolInterpretations.$GlobalObjectVariable~Int ||
+            symbol.Value.Interpretation~Int == ::SymbolInterpretations.$GlobalReferenceVariable~Int )
+        {
+            
+            yield symbol.Key;
+        }
+        else if(symbol.Value.Interpretation~Int == ::SymbolInterpretations.$Function~Int)
+        {
+            //Functions may be explicitly hidden
+            unless(isHidden(app.Functions[symbol.Value.Id]))
+                yield symbol.Key;   
+        }
     
     //A collection of common usages
     yield "ToString";
@@ -121,11 +127,6 @@ coroutine tabHook(prefix, root)
     yield "Real";
     yield "Bool";
     yield "Structure";
-    
-    //User supplied entries
-    foreach(var e in app.Meta["Tab"].List)
-        if(e.Text.Length > 0)
-            yield e.Text;
 }
 
 function prx\interactive()
