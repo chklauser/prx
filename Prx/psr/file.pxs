@@ -90,6 +90,11 @@ function directory_list_dirs(path, pattern)
 declare
     directory_list_dirs as directory_list_directories;
 
+function file_copy(file, newPath, replace)
+{
+    ::File.Copy(file, newPath, replace ?? false);
+}
+    
 function file_move(file, newPath, replace)
 {
     if( (replace ?? false) and ::File.Exists(newPath))

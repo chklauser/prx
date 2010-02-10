@@ -70,6 +70,7 @@ function prx\main(args)
 	var verbose = false;
 	var headerOnly = false;
 	var debugging = false;
+    //supportsTabs is a global variable
 	
 	var scriptArgs = [];
 	
@@ -96,7 +97,7 @@ function prx\main(args)
 			else if(current == "-a")    //  -a  Arguments
 				state = state\arg;
 		    else if(current == "-b")    //  -b  *Experimental* tab completion
-		        supportsTabs = true;
+		        supportsTabs = false;
 		    else if(current == "-d")    //  -d  Debugging
 		        debugging = true;
 			else if(current == "-?")    //  -h  Help
@@ -245,7 +246,7 @@ function displayHelp does print(
 	"Enter interactive mode (with or without a compiled application) using the -i switch.\n"+
 	"-v enables additional output.\n"+
 	"-h extracts declarations (only with -c).\n"+
-	"-b enables tab completion (experimental, accepts only ASCII characters).\n"+
+	"-b disables tab completion (tab completion only supported on windows).\n"+
 	"-a forwards the rest of the arguments to the executing script.\n" + 
 	"-d enables debugging mode");
  

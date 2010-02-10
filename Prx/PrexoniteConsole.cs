@@ -30,6 +30,13 @@ namespace Prx
 
         public override IEnumerable<string> OnTab(string attr, string pref, string root)
         {
+            return OnTab(attr, pref, root, _sctx);
+        }
+
+        public virtual IEnumerable<string> OnTab(string attr, string pref, string root, StackContext sctx)
+        {
+            if (sctx == null)
+                throw new System.ArgumentNullException("sctx","OnTab must either be called from via the ReadLine method or with a valid stack context.");
             if (_onTab != null && !_onTab.IsNull)
             {
                 PValue plst = _onTab.IndirectCall(_sctx, new PValue[] {pref, root});

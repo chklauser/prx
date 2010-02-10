@@ -265,7 +265,7 @@ namespace Prx
 
         public SuperConsole(bool colorfulConsole)
         {
-            Console.CancelKeyPress += new ConsoleCancelEventHandler(Console_CancelKeyPress);
+            Console.CancelKeyPress += Console_CancelKeyPress;
             ctrlCEvent = new AutoResetEvent(false);
             if (colorfulConsole)
                 SetupColors();
@@ -398,18 +398,19 @@ namespace Prx
 
         private void Insert(ConsoleKeyInfo key)
         {
-            char c;
             if (key.Key == ConsoleKey.F6)
             {
                 Debug.Assert(FinalLineText.Length == 1);
 
-                c = FinalLineText[0];
+                Insert(FinalLineText[0]);
             }
             else
             {
-                c = key.KeyChar;
+                //c = key.KeyChar;
+                var us = Win32.User32.ToUnicode(key,true);
+                if(us.Length > 0)
+                    Insert(us[0]);
             }
-            Insert(c);
         }
 
         private void Insert(char c)
@@ -761,7 +762,7 @@ namespace Prx
 
         private static void WriteColor(string s, ConsoleColor c)
         {
-            ConsoleColor origColor = Console.ForegroundColor;
+            var origColor = Console.ForegroundColor;
             Console.ForegroundColor = c;
             Console.Write(s);
             Console.ForegroundColor = origColor;

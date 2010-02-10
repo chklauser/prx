@@ -63,7 +63,9 @@ ref green =
         f => f.()
     ;
 
-var supportsTabs = (supportsTabs ?? false)~Bool;
+var isWindowsNT = System::Environment.OSVersion.Platform~Int == System::PlatformID.Win32NT~Int; 
+    
+var supportsTabs = (supportsTabs ?? isWindowsNT)~Bool;
     
 function readline = 
     if(supportsTabs)

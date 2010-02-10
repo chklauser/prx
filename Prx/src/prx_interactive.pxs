@@ -44,7 +44,7 @@ declare function reboot;
 	//The interactive prompt uses a second, isolated engine for execution.
 	var thisE = thisEngine;
 	
-	//Copy those 4 timing commands from the current engine to the 
+	//Copy those timing commands from the current engine to the 
 	// interactive engine
 	foreach(var alias in [
 			@"timer\start",
@@ -71,7 +71,7 @@ var evalStep = 1; //<-- helps to make identifiers unique
 
 coroutine tabHook(prefix, root)
 {
-    var hideKeys = [ "hidden" ];
+    var hideKeys = [ "hidden", "private" ];
     function isHidden(func)
     {
         if(func is Null)
@@ -216,18 +216,19 @@ function prx\interactive()
     // 'continue' statement to skip an iteration.
     for(var raw; do raw = showPrompt(app.Variables["prompt"].Value.self); until raw.ToLower == ":quit")
     {        
+        var lowRaw = raw.ToLower;
         var funcId = nextFuncId; //<-- get the first unique function id
         var cmd = "r"; //<-- assume execution of code
         
-        if(raw.ToLower == ":reload") //this directive restarts prx\main with the same arguments. See 'prx_main.pxs' for details.
+        if(lowRaw == ":r" or lowRaw == ":reload") //this directive restarts prx\main with the same arguments. See 'prx_main.pxs' for details.
         {
             reboot;
             return;          
         }
-        else if(raw.ToLower.StartsWith(":compile "))
+        else if(lowRaw.StartsWith(":c ") or lowRaw.StartsWith(":compile "))
         {
             cmd = "c";
-            raw = raw.Substring(9);
+            raw = raw.Substring(raw.IndexOf(" "));
             goto executeStatement;
         }
         else if(raw.StartsWith("=")) //force compilation as an expression

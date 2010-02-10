@@ -2047,7 +2047,7 @@ internal partial class Parser {
 		                                derBody = new PFunction(TargetApplication, derId);
 		                                Loader.CreateFunctionTarget(derBody, new AstBlock(this));
 		                                TargetApplication.Functions.Add(derBody);
-		                                derBody.Meta[PFunction.LogicalIdKey] = id;
+		                                derBody.Meta[PFunction.LogicalIdKey] = id ?? funcId;
 		
 		                                            //Swap compiler target references
 		                                            // -> Compile source code into derived body
@@ -2100,7 +2100,7 @@ internal partial class Parser {
 		          
 		          //Store the original (logical id, mentioned in the source code)
 		          if((!string.IsNullOrEmpty(id)))
-		              func.Meta[PFunction.LogicalIdKey] = id;
+		              func.Meta[PFunction.LogicalIdKey] = id ?? funcId;
 		  }
 		  
 		  //Target the derived (coroutine/lazy) body instead of the stub
