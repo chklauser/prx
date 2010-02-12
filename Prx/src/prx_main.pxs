@@ -26,7 +26,7 @@ build does require("prx_interactive.pxs", "prx_lib.pxs");
 Name prx\main;
 Description "prx main logic.";
 Author SealedSun;
-Version "v.cli";
+Version "v.0.9.8.0";
 
 Entry prx\main;
 
@@ -96,7 +96,7 @@ function prx\main(args)
 			    headerOnly = true;
 			else if(current == "-a")    //  -a  Arguments
 				state = state\arg;
-		    else if(current == "-b")    //  -b  *Experimental* tab completion
+		    else if(current == "-b")    //  -b  disable tab completion (for piped input)
 		        supportsTabs = false;
 		    else if(current == "-d")    //  -d  Debugging
 		        debugging = true;
@@ -132,7 +132,7 @@ function prx\main(args)
 	}
 	
 	//Assemble a default target path if necessary
-	if(targetPath == null or targetPath.Length == 0)
+	if(targetPath is null or targetPath.Length == 0)
 		targetPath = System::IO::Path.GetFileNameWithoutExtension(sourceFiles[0]) + ".c.pxs";
 		
 	//Report
@@ -168,17 +168,24 @@ function prx\main(args)
 	}
 	
 	//Compilation errors are not thrown as exceptions but held in 'ldr.Errors'
-	if(ldr.Errors.Count != 0 Or not (exc is null)) 
+	if(ldr.Errors.Count != 0 Or exc is not null) 
 	{
 	    red(() =>
         	{    	
-        		println("Errors detected. Aborting...");
+        		println("Compilation completed, but errors detected. ");
         		foreach(var err in ldr.Errors)
         			println(err);
         	});
         exc = null; 
     	if(debugging) //in debugging mode, allow the script to be examined
+        {
+            println("Entering interactive mode for debugging.");
     	    prx\interactive;
+        }
+        else
+        {
+            println("Aborting (Enable debugging mode for inspection of partial results)");
+        }
         return;
 	}
 	

@@ -40,13 +40,14 @@ function runInDifferentColor(ref f, color)
     {
     	var orig = ::Console.ForegroundColor;
     	::Console.ForegroundColor = color;
-    	f();
+    	var r = f();
     	::Console.ForegroundColor = orig;
     }
     else
     {
-        f();   
+        var r = f();   
     }
+    return r;
 }
 
 //Shortcuts for commonly used colorations
@@ -64,8 +65,12 @@ ref green =
     ;
 
 var isWindowsNT = System::Environment.OSVersion.Platform~Int == System::PlatformID.Win32NT~Int; 
-    
-var supportsTabs = (supportsTabs ?? isWindowsNT)~Bool;
+  
+function __consoleAvailable = asm(ldr.eng).Commands.Contains("__console");
+  
+var supportsTabs = (supportsTabs ?? (isWindowsNT && __consoleAvailable))~Bool;
+
+
     
 function readline = 
     if(supportsTabs)
@@ -86,8 +91,25 @@ function showPrompt(q) does
 	return readline;
 }
 
+function report
+{
+    foreach(var arg in var args)
+    {
+        if(arg is not Prexonite::Types::PValueKeyValuePair)
+            throw "Arguments must be key value pairs!";
+            
+        var msg = arg.Key;
+        var act = arg.Value;
+        
+        print("$msg...");
+        var r = act.();
+        println("done.");
+    }
+    return r;
+}
+
 var prompt = null;
 
 //Functions that provide access to the currently executing engine and application.
-function thisEngine does return asm ( ldr.eng );
-function thisApplication does return asm ( ldr.app );
+function thisEngine = asm ( ldr.eng );
+function thisApplication = asm ( ldr.app );

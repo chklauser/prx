@@ -75,7 +75,7 @@ namespace Prx.Benchmarking
         public const string UsesIterationKey = "Iteration";
         public const string OverheadKey = "Overhead";
         public const int DefaultIterations = 1000;
-        public const int DefaultWarmUpIterations = 50;
+        public const int DefaultWarmUpIterations = 2;
 
         private readonly BenchmarkEntryCollection entries = new BenchmarkEntryCollection();
         public BenchmarkEntryCollection Entries
