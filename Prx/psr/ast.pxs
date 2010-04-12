@@ -10,16 +10,25 @@ Import
     Prexonite::Compiler::Ast
 };
 
-function ast(type) [is compiler;]
+function ast\withPos(type, file, line, column) [is compiler;]
 {
     var args;
-    var targs = args >> skip(1);
+    var targs = args >> skip(4);
 
+    file ??= "--COMPILER-HOOK--";
+    line ??= -1;
+    column ??= -1;
+    
     return 
         asm(ldr.eng)
         .CreatePType("Object(\"Prexonite.Compiler.Ast.Ast$(type)\")")
-        .Construct((["--COMPILER-HOOK--",-1,-1]+(targs >> all))~Object<"Prexonite.PValue[]">)
+        .Construct(([file,line,column]+(targs >> all))~Object<"Prexonite.PValue[]">)
         .self;
+}
+
+function ast\simple as ast(type) [is compiler;]
+{
+    call(->ast\withPos,[type,null,null,null] + (var args >> skip(1) >> all));
 }
 
 function subBlocks(block) [is compiler;] =
@@ -57,6 +66,8 @@ function create_SI [is compiler;]
     SI.\("gref") = ::SymbolInterpretations.GlobalReferenceVariable;
     SI.\("func") = ::SymbolInterpretations.$Function;
     SI.\("cmd") = ::SymbolInterpretations.$Command;
+    SI.\("get") = Prexonite::Types::PCall.Get;
+    SI.\("set") = Prexonite::Types::PCall.Set;
     SI.\\("eq") = (this, l, r) => l~Int == r~Int;
     SI.\\("is_lvar") = (this, s) => s~Int == this.lvar~Int;
     SI.\\("is_lref") = (this, s) => s~Int == this.lref~Int;
@@ -98,102 +109,6 @@ function create_SI [is compiler;]
             throw "$s cannot be made reference.";
 }
 build does create_SI;
-
-var _stmt_hooks [is compiler;];
-build does _stmt_hooks = [];
-
-function hook_impl(t) [ is compiler; ]
-{
-    if(_stmt_hooks.Count == 0)
-        return;
-        
-    //Allocate variables for each stmt_hook
-    var stores = {};
-    foreach(var fhook in _stmt_hooks)
-    {
-        var lst = [];        
-        for(var i = 0; i < fhook.Value; i++)
-            lst[] = new Prexonite::PVariable;
-        stores[fhook.Key] = lst;
-    }
-    
-    
-    var hooks = _stmt_hooks >> all;
-            
-    function process(block)
-    {
-        for(var i = 0; i < block.Count; i++)
-        {
-            foreach(var fhook in hooks)
-            {
-                var hook = fhook.Key;
-                if(call(hook, t, block[i], ->i, stores[hook]))
-                    hooks.Remove(hook);
-                if(i >= block.Count Or i < 0)
-                    break;
-            }
-        }
-        
-        //Recursively process statements in sub block
-        foreach(var subBlock in subBlocks(block))
-            process(subBlock);
-    }
-    
-    //Process top-level block
-    process(t.Ast);
-}
-
-//SIGNATURE OF STMT_HOOKS:
-//
-//  (t, stmt, ref i, ref customVariable1, ..., ref customVariableN) => true Or false
-//
-//  t => CompilerTarget
-//  stmt => the current statement
-//  ref i => the index
-//  custom variable objects are passed to the function depending on your setting for the stmt_hook.
-
-var _stmt_hook_active [is compiler;];
-build does _stmt_hook_active = false;
-
-function mk_hook(fhook) [is compiler;] = if(Not fhook is Prexonite::Types::PValueKeyValuePair)
-                              (fhook: 0)
-                          else
-                              fhook;
-                              
-function not_null(arg) [is compiler;] = Not arg is Null;
-
-//Add a statement hook to the shared compiler hook
-//  Usage:
-//      stmt_hook
-//          ( 
-//              (t,stmt,ref i, ref v1, ref v2) => {...} : 2,
-//              (t,stmt,ref i, ref v1, ref v2, ref v3, ref v4) => {...} : 4,
-//              (t,stmt,ref i) => {...} : 0,
-//              (t,stmt) => {...}
-//          )
-//
-//  The value in the key-value pair indictaes the number of per function variables to create
-//  If no key is provided, 0 is assumed.
-function stmt_hook() [ is compiler; ] does
-{
-    (var args)
-    >> where(->not_null)
-    >> map(->mk_hook)    
-    >> where(fhook => Not _stmt_hooks.Contains(fhook))
-    >> each( fhook => _stmt_hooks[] = fhook);
-    if(not _stmt_hook_active)
-    {
-        declare command hook;
-        hook(->hook_impl);
-        _stmt_hook_active = true;
-    }
-}
-     
-function remove_stmt_hook() [ is compiler; ] = 
-    (var args)
-    >> where(->not_null)
-    >> map(->mk_hook)
-    >> each( fhook => _stmt_hooks.Remove(fhook));
    
 //
 //  Removal of compiler related functions and variables from the final application
@@ -245,6 +160,6 @@ function unload_compiler()
         app.Functions.Remove(comp_func);
         
     app.Functions.Remove(->unload_compiler);
-    app.Functions.Remove(->mark_comp_func);
+    app.Functions.Remove(->mark_comp_func.$Function.Id);
     app.Meta["compiler_loaded"] = false;
 }

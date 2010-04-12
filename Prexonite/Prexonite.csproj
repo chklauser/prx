@@ -173,6 +173,7 @@
     <Compile Include="Commands\Text\SetCenterCommand.cs" />
     <Compile Include="Commands\Text\SetLeftCommand.cs" />
     <Compile Include="Commands\Text\SetRightCommand.cs" />
+    <Compile Include="Compiler\AddressChangeHook.cs" />
     <Compile Include="Compiler\Ast\ArgumentsProxy.cs" />
     <Compile Include="Compiler\Ast\AstActionBlock.cs" />
     <Compile Include="Compiler\Ast\AstAsmInstruction.cs" />
@@ -202,6 +203,7 @@
     <Compile Include="Compiler\Ast\AstDynamicTypeExpression.cs" />
     <Compile Include="Compiler\Ast\AstLoop.cs" />
     <Compile Include="Compiler\Ast\AstLoopExpression.cs" />
+    <Compile Include="Compiler\Ast\AstMacroInvocation.cs" />
     <Compile Include="Compiler\Ast\AstModifyingAssignment.cs" />
     <Compile Include="Compiler\Ast\AstNull.cs" />
     <Compile Include="Compiler\Ast\AstObjectCreation.cs" />
@@ -241,6 +243,7 @@
     <Compile Include="Compiler\DebugHook.cs" />
     <Compile Include="Compiler\Lexer.Code.cs" />
     <Compile Include="Compiler\Lexer.cs" />
+    <Compile Include="Compiler\MacroAliases.cs" />
     <Compile Include="Concurrency\Channel.cs" />
     <Compile Include="CooperativeContext.cs" />
     <Compile Include="OperatorNames.cs" />

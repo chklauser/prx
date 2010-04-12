@@ -1,0 +1,61 @@
+
+build does require("macro.pxs");
+
+macro kvp(key, value, the_pair)
+{
+    optimize(key);
+    optimize(value);
+    
+    if(SI.eq(callType,SI.get))
+    {
+        //Synonym for (key:value)
+        return ast("KeyValuePair",key,value);
+    }
+    else 
+    {
+        if(not key.\implements("Prexonite.Compiler.Ast.AstGetSet"))
+            throw "Key of kvp is not assignable.";
+        if(not SI.eq(key.Call,SI.get))
+            throw "Key of kvp must not be a set-call";
+            
+        if(not value.\implements("Prexonite.Compiler.Ast.AstGetSet"))
+            throw "Value of kvp is not assignable.";
+        if(not SI.eq(value.Call,SI.get))
+            throw "Value of kvp must not be a set-call";
+        
+        var block = ast("BlockExpression");
+        var tempV;
+        var useTemp;
+        if(the_pair is Prexonite::Compiler::Ast::AstGetSetSymbol and SI.is_obj(the_pair.Interpretation))
+        {
+            useTemp = false;
+            tempV = the_pair.Id;
+        }        
+        else
+        {
+            useTemp = true;
+            tempV = tempalloc;       
+        
+            var assignTmp = ast\lvar(SI.set, tempV);
+            assignTmp.Arguments.Add(the_pair);
+            block.Add(assignTmp);
+        }
+        
+        var setKey = key.GetCopy();
+        setKey.Call = SI.set;
+        setKey.Arguments.Add(ast\member(ast\lvar(SI.get, tempV), SI.get,"Key"));
+        block.Add(setKey);
+        
+        var setValue = value.GetCopy();
+        setValue.Call = SI.set;
+        setValue.Arguments.Add(ast\member(ast\lvar(SI.get, tempV), SI.get, "Value"));
+        block.Add(setValue);
+        
+        block.Expression = ast\lvar(SI.get, tempV);
+        
+        if(useTemp)
+            tempfree(tempV);
+        
+        return block;
+    }
+}

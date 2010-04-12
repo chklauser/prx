@@ -99,6 +99,9 @@
     <None Include="psr\file.pxs">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </None>
+    <None Include="psr\hook.pxs">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </None>
     <None Include="psr\json.pxs">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </None>

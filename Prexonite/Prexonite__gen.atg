@@ -1132,12 +1132,7 @@ BuildBlock
 	SYNC build                  (.  PFunction func = new PFunction(TargetApplication);
                                     CompilerTarget lastTarget = target; 
                                     target = Loader.CreateFunctionTarget(func, new AstBlock(this));
-                                    target.Declare(SymbolInterpretations.Command, "Add", Loader.BuildAddCommand);
-                                    target.Declare(SymbolInterpretations.Command, "Require", Loader.BuildRequireCommand);
-                                    target.Declare(SymbolInterpretations.Command, "Default", Loader.BuildDefaultCommand);
-                                    target.Declare(SymbolInterpretations.Command, "Hook", Loader.BuildHookCommand);
-                                    target.Declare(SymbolInterpretations.Command, "Resolve", Loader.BuildResolveCommand);
-                                    target.Declare(SymbolInterpretations.Command, "GetLoader", Loader.BuildGetLoaderCommand);
+                                    Loader.DeclareBuildBlockCommands(target);
                                     _pushLexerState(Lexer.Local);                                
                                 .)
 	
@@ -1258,6 +1253,9 @@ FunctionDefinition<out PFunction func>
                                             
                                             if(isNested)
                                             {
+                                                if(isMacro)
+                                                    SemErr("Inner macros are illegal. Macros must be top-level.");
+                                                    
                                                 funcId = generateNestedFunctionId(id ?? "inner");
                                                 
                                                 if(string.IsNullOrEmpty(localId))
@@ -1375,6 +1373,8 @@ FunctionDefinition<out PFunction func>
                                         CompilerTarget lastTarget = target;
                                         target = FunctionTargets[func]; 
                                         _pushLexerState(Lexer.Local);
+                                        if(isMacro)
+                                            target.SetupAsMacro();
                                     .)
     (   [ does ]
         StatementBlock<target.Ast>
@@ -1480,12 +1480,7 @@ FunctionDefinition<out PFunction func>
 											    //Emit code for stub
 											    cst.Ast.EmitCode(cst,true);
 											    cst.FinishTarget();
-											}
-											else if(isMacro)
-											{
-											    func.Meta["macro"] = true;
-											}
-                                        
+											}                                        
                                         }
                                     .)
 .
@@ -1899,7 +1894,14 @@ Function<out AstGetSet function>
                                         if(isOuterVariable(id))
                                             target.RequireOuterVariable(id);
                                         SymbolEntry sym = target.Symbols[id];
-                                        function = new AstGetSetSymbol(this, sym.Id, sym.Interpretation);
+                                        if(isKnownMacro(sym)) 
+                                        {
+                                            function = new AstMacroInvocation(this, sym.Id);
+                                        } 
+                                        else
+                                        {
+                                            function = new AstGetSetSymbol(this, sym.Id, sym.Interpretation);
+                                        }
                                     }
                                 .)
     Arguments<function.Arguments>    

@@ -23,11 +23,17 @@
  */
 
 
+using System;
+
 namespace Prexonite.Compiler.Ast
 {
     public class AstBlockExpression : AstBlock,
-                                      IAstExpression
+                                      IAstEffect,
+                                        IAstHasExpressions
     {
+
+        public IAstExpression Expression;
+
         public AstBlockExpression(string file, int line, int column)
             : base(file, line, column)
         {
@@ -38,13 +44,40 @@ namespace Prexonite.Compiler.Ast
         {
         }
 
-        #region IAstExpression Members
+        #region IAstExpression/IAstEffect Members
 
-        public virtual bool TryOptimize(CompilerTarget target, out IAstExpression expr)
+        public bool TryOptimize(CompilerTarget target, out IAstExpression expr)
         {
             //Will be optimized after code generation, hopefully
+            if(Expression != null)
+                OptimizeNode(target, ref Expression);
+
             expr = null;
             return false;
+        }
+
+        public void EmitEffectCode(CompilerTarget target)
+        {
+            base.EmitCode(target);
+            var effect = Expression as IAstEffect;
+            if (effect != null)
+                effect.EmitEffectCode(target);
+        }
+
+        #endregion
+
+        public override void EmitCode(CompilerTarget target)
+        {
+            base.EmitCode(target);
+            if (Expression != null)
+                Expression.EmitCode(target);
+        }
+
+        #region Implementation of IAstHasExpressions
+
+        public IAstExpression[] Expressions
+        {
+            get { return new[] {Expression}; }
         }
 
         #endregion

@@ -259,7 +259,7 @@ namespace Prexonite.Compiler.Ast
                     format = "return = {0};";
                     break;
                 case ReturnVariant.Continue:
-                    format = "continue;";
+                    format = Expression != null ? "yield {0};" : "continue;";
                     break;
                 case ReturnVariant.Break:
                     format = "break;";

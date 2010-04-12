@@ -188,13 +188,13 @@ namespace Prexonite.Compiler.Ast
             }
 
             //Try to shorten argument list
-            List<IAstExpression> nlst = new List<IAstExpression>();
+            var nlst = new List<IAstExpression>();
             string last = null;
-            StringBuilder buffer = new StringBuilder();
-            foreach (IAstExpression e in Arguments)
+            var buffer = new StringBuilder();
+            foreach (var e in Arguments)
             {
                 string current;
-                AstConstant currConst = e as AstConstant;
+                var currConst = e as AstConstant;
                 if (currConst != null)
                     current = currConst.ToPValue(target).CallToString(target.Loader);
                 else
@@ -228,6 +228,15 @@ namespace Prexonite.Compiler.Ast
             }
 
             Arguments = nlst;
+
+            AstConstant collapsed;
+            if(nlst.Count == 1 && (collapsed = nlst[0] as AstConstant) != null)
+            {
+                expr = collapsed.Constant is string
+                           ? (IAstExpression) collapsed
+                           : new AstGetSetMemberAccess(File, Line, Column, collapsed, "ToString");
+            }
+
             return expr != null;
         }
 

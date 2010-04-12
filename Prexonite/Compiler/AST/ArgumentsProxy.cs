@@ -25,13 +25,17 @@ using System;
 using System.Collections;
 using System.Collections.Generic;
 using System.Diagnostics;
+using System.Linq;
+using Prexonite.Types;
 
 namespace Prexonite.Compiler.Ast
 {
     [DebuggerNonUserCode]
-    public class ArgumentsProxy : IList<IAstExpression>
+    public class ArgumentsProxy : IList<IAstExpression>, IObject
     {
         private List<IAstExpression> _arguments;
+        private int _rightAppendPosition = -1;
+        private readonly List<IAstExpression> _rightAppends = new List<IAstExpression>();
 
         internal ArgumentsProxy(List<IAstExpression> arguments)
         {
@@ -47,23 +51,19 @@ namespace Prexonite.Compiler.Ast
             _arguments = arguments;
         }
 
-        private readonly List<IAstExpression> rightAppends = new List<IAstExpression>();
-
         public int RightAppendPosition
         {
             get { return _rightAppendPosition; }
         }
 
-        private int _rightAppendPosition = -1;
-
         public void RightAppend(IAstExpression item)
         {
-            rightAppends.Add(item);
+            _rightAppends.Add(item);
         }
 
         public void RightAppend(IEnumerable<IAstExpression> item)
         {
-            rightAppends.AddRange(item);
+            _rightAppends.AddRange(item);
         }
 
         public void RemeberRightAppendPosition()
@@ -75,8 +75,8 @@ namespace Prexonite.Compiler.Ast
         {
             _arguments.InsertRange(
                 (_rightAppendPosition < 0) ? _arguments.Count : _rightAppendPosition,
-                rightAppends);
-            rightAppends.Clear();
+                _rightAppends);
+            _rightAppends.Clear();
         }
 
         #region IList<IAstExpression> Members
@@ -280,5 +280,61 @@ namespace Prexonite.Compiler.Ast
         {
             return _arguments.ToArray();
         }
+
+        public void CopyFrom(ArgumentsProxy proxy)
+        {
+            _arguments.Clear();
+            _arguments.AddRange(proxy._arguments);
+
+            _rightAppendPosition = proxy._rightAppendPosition;
+
+            _rightAppends.Clear();
+            _rightAppends.AddRange(proxy._rightAppends);
+        }
+
+        #region Implementation of IObject
+
+        public bool TryDynamicCall(StackContext sctx, PValue[] args, PCall call, string id, out PValue result)
+        {
+            switch (id.ToUpperInvariant())
+            {
+                case "ADDRANGE":
+                    if(args.Length > 0)
+                    {
+                        var arg0 = args[0];
+                        var exprs = arg0.Value as IEnumerable<IAstExpression>;
+                        IEnumerable<PValue> xs;
+                        if(exprs != null)
+                        {
+                            AddRange(exprs);
+                            result = PType.Null;
+                            return true;
+                        }
+                        else if((xs = arg0.Value as IEnumerable<PValue>) != null)
+                        {
+                            AddRange(
+                                from x in xs
+                                select (IAstExpression) 
+                                    x.ConvertTo(sctx, typeof (IAstExpression), true).Value
+                            );
+                            result = PType.Null;
+                            return true;
+                        }
+                    }
+                    else
+                    {
+                        goto default;
+                    }
+                    break;
+                default:
+                    result = null;
+                    return false;
+            }
+
+            result = null;
+            return false;
+        }
+
+        #endregion
     }
 }

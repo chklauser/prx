@@ -68,98 +68,20 @@ namespace Prexonite.Compiler
                 ParentApplication._InitializationFunction, new AstBlock("~NoFile", -1, -1));
 
             if (options.RegisterCommands)
-                RegisterCommands();
+                RegisterExistingCommands();
 
             _compilerHooksIterator = new CompilerHooksIterator(this);
             _customResolversProxy = new CustomResolversIterator(_customResolvers);
 
             //Build commands
-            _buildCommands = new CommandTable();
-            _buildCommands.AddCompilerCommand(
-                BuildAddCommand,
-                delegate(StackContext sctx, PValue[] args)
-                {
-                    foreach (PValue arg in args)
-                    {
-                        string path = arg.CallToString(sctx);
-                        LoadFromFile(path);
-                    }
-                    return null;
-                });
-
-            _buildCommands.AddCompilerCommand(
-                BuildRequireCommand,
-                delegate(StackContext sctx, PValue[] args)
-                {
-                    bool allLoaded = true;
-                    foreach (PValue arg in args)
-                    {
-                        string path = arg.CallToString(sctx);
-                        FileInfo file = ApplyLoadPaths(path);
-                        if (file == null)
-                        {
-                            _throwCannotFindScriptFile(path);
-                            return PType.Null;
-                        }
-                        if(_loadedFiles.Contains(file.FullName))
-                            allLoaded = false;
-                        else
-                            LoadFromFile(file.FullName);
-                    }
-                    return
-                        PType.Bool.CreatePValue(allLoaded);
-                });
-
-            _buildCommands.AddCompilerCommand(
-                BuildDefaultCommand,
-                delegate
-                {
-                    FileInfo defaultFile = ApplyLoadPaths(DefaultScriptName);
-                    if(defaultFile == null)
-                        return DefaultScriptName;
-                    else
-                        return defaultFile.FullName;
-                });
-
-            _buildCommands.AddCompilerCommand(
-                BuildHookCommand,
-                delegate(StackContext sctx, PValue[] args)
-                {
-                    foreach (PValue arg in args)
-                    {
-                        if (arg != null && !arg.IsNull)
-                        {
-                            if(arg.Type == PType.Object[typeof(AstTransformation)])
-                                CompilerHooks.Add((AstTransformation)arg.Value);
-                            else 
-                                CompilerHooks.Add(arg);
-                        }
-                    }
-                    return PType.Null.CreatePValue();
-                });
-
-            _buildCommands.AddCompilerCommand(
-                BuildResolveCommand,
-                delegate(StackContext sctx, PValue[] args)
-                {
-                    foreach (var arg in args)
-                    {
-                        if (arg.Type == PType.Object[typeof (ResolveSymbol)])
-                            CustomResolvers.Add(new CustomResolver((ResolveSymbol) arg.Value));
-                        else
-                            CustomResolvers.Add(new CustomResolver(arg));
-                    }
-                    return PType.Null.CreatePValue();
-                });
-
-            _buildCommands.AddCompilerCommand(
-                BuildGetLoaderCommand,
-                (sctx, args) => sctx.CreateNativePValue(this));
+            _initializeBuildCommands();
         }
 
-        public void RegisterCommands()
+        
+
+        public void RegisterExistingCommands()
         {
-            foreach (KeyValuePair<string, PCommand> kvp in ParentEngine.Commands)
+            foreach (var kvp in ParentEngine.Commands)
                 Symbols.Add(kvp.Key, new SymbolEntry(SymbolInterpretations.Command, kvp.Key));
         }
 
@@ -224,6 +146,13 @@ namespace Prexonite.Compiler
             {
                 get { return outer._functionTargets[key.Id]; }
             }
+
+            public void Remove(CompilerTarget target)
+            {
+                var funcId = target.Function.Id;
+                if (outer._functionTargets.ContainsKey(funcId))
+                    outer._functionTargets.Remove(funcId);
+            }
         }
 
         [DebuggerStepThrough]
@@ -243,17 +172,6 @@ namespace Prexonite.Compiler
             _functionTargets[func.Id] = target;
 
             return target;
-        }
-
-        public CompilerTarget CreateBuildBlockTarget(PFunction func, AstBlock block)
-        {
-            CompilerTarget ct = CreateFunctionTarget(func, block);
-            foreach (KeyValuePair<string, PCommand> pair in _buildCommands)
-                if(pair.Value.IsInGroup(PCommandGroups.Compiler))
-                {
-                    ct.Declare(SymbolInterpretations.Command, pair.Key);
-                }
-            return ct;
         }
 
         #endregion
@@ -801,7 +719,7 @@ namespace Prexonite.Compiler
         {
             get { return _buildCommands; }
         }
-        private readonly CommandTable _buildCommands;
+        private readonly CommandTable _buildCommands = new CommandTable();
 
         public bool BuildCommandsEnabled
         {
@@ -853,6 +771,92 @@ namespace Prexonite.Compiler
         /// </summary>
         public const string DefaultScriptName = "_default.pxs";
 
+        private void _initializeBuildCommands()
+        {
+            _buildCommands.Clear();
+            _buildCommands.AddCompilerCommand(
+                BuildAddCommand,
+                delegate(StackContext sctx, PValue[] args)
+                {
+                    foreach (PValue arg in args)
+                    {
+                        string path = arg.CallToString(sctx);
+                        LoadFromFile(path);
+                    }
+                    return null;
+                });
+
+            _buildCommands.AddCompilerCommand(
+                BuildRequireCommand,
+                delegate(StackContext sctx, PValue[] args)
+                {
+                    bool allLoaded = true;
+                    foreach (PValue arg in args)
+                    {
+                        string path = arg.CallToString(sctx);
+                        FileInfo file = ApplyLoadPaths(path);
+                        if (file == null)
+                        {
+                            _throwCannotFindScriptFile(path);
+                            return PType.Null;
+                        }
+                        if (_loadedFiles.Contains(file.FullName))
+                            allLoaded = false;
+                        else
+                            LoadFromFile(file.FullName);
+                    }
+                    return
+                        PType.Bool.CreatePValue(allLoaded);
+                });
+
+            _buildCommands.AddCompilerCommand(
+                BuildDefaultCommand,
+                delegate
+                {
+                    FileInfo defaultFile = ApplyLoadPaths(DefaultScriptName);
+                    if (defaultFile == null)
+                        return DefaultScriptName;
+                    else
+                        return defaultFile.FullName;
+                });
+
+            _buildCommands.AddCompilerCommand(
+                BuildHookCommand,
+                delegate(StackContext sctx, PValue[] args)
+                {
+                    foreach (PValue arg in args)
+                    {
+                        if (arg != null && !arg.IsNull)
+                        {
+                            if (arg.Type == PType.Object[typeof(AstTransformation)])
+                                CompilerHooks.Add((AstTransformation)arg.Value);
+                            else
+                                CompilerHooks.Add(arg);
+                        }
+                    }
+                    return PType.Null.CreatePValue();
+                });
+
+            _buildCommands.AddCompilerCommand(
+                BuildResolveCommand,
+                delegate(StackContext sctx, PValue[] args)
+                {
+                    foreach (var arg in args)
+                    {
+                        if (arg.Type == PType.Object[typeof(ResolveSymbol)])
+                            CustomResolvers.Add(new CustomResolver((ResolveSymbol)arg.Value));
+                        else
+                            CustomResolvers.Add(new CustomResolver(arg));
+                    }
+                    return PType.Null.CreatePValue();
+                });
+
+            _buildCommands.AddCompilerCommand(
+                BuildGetLoaderCommand,
+                (sctx, args) => sctx.CreateNativePValue(this));
+        }
+
+
         private void _enableBuildCommands()
         {
             foreach (var pair in _buildCommands)
@@ -864,6 +868,12 @@ namespace Prexonite.Compiler
         private void _disableBuildBlockCommands()
         {
             ParentEngine.Commands.RemoveCompilerCommands();
+        }
+
+        public void DeclareBuildBlockCommands(CompilerTarget target)
+        {
+            foreach (var cmdEntry in _buildCommands)
+                target.Declare(SymbolInterpretations.Command, cmdEntry.Key);
         }
 
         #endregion

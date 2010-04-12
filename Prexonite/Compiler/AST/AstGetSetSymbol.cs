@@ -102,10 +102,10 @@ namespace Prexonite.Compiler.Ast
             switch (Interpretation)
             {
                 case SymbolInterpretations.Command:
-                    target.EmitCommandCall(Arguments.Count, Id, true);
+                    target.EmitCommandCall(Arguments.Count, Id, justEffect);
                     break;
                 case SymbolInterpretations.Function:
-                    target.EmitFunctionCall(Arguments.Count, Id, true);
+                    target.EmitFunctionCall(Arguments.Count, Id, justEffect);
                     break;
                 case SymbolInterpretations.GlobalObjectVariable:
                     target.EmitStoreGlobal(Id);

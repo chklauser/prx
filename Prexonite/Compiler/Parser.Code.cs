@@ -398,6 +398,19 @@ namespace Prexonite.Compiler
         }
 
         [DebuggerStepThrough]
+        public bool isKnownMacro(SymbolEntry symbol)
+        {
+            if(symbol.Interpretation != SymbolInterpretations.Function)
+                return false;
+
+            PFunction func;
+            if(!TargetApplication.Functions.TryGetValue(symbol.Id, out func))
+                return false;
+
+            return func.Meta[CompilerTarget.MacroMetaKey].Switch;
+        }
+
+        [DebuggerStepThrough]
         public string getTypeName(string typeId, bool staticPrefix)
         {
             if (staticPrefix) //already marked as CLR call

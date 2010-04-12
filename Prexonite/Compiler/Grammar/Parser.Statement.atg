@@ -288,7 +288,14 @@ Function<out AstGetSet function>
                                         if(isOuterVariable(id))
                                             target.RequireOuterVariable(id);
                                         SymbolEntry sym = target.Symbols[id];
-                                        function = new AstGetSetSymbol(this, sym.Id, sym.Interpretation);
+                                        if(isKnownMacro(sym)) 
+                                        {
+                                            function = new AstMacroInvocation(this, sym.Id);
+                                        } 
+                                        else
+                                        {
+                                            function = new AstGetSetSymbol(this, sym.Id, sym.Interpretation);
+                                        }
                                     }
                                 .)
     Arguments<function.Arguments>    

@@ -177,6 +177,10 @@ namespace Prexonite.Compiler.Ast
             return buffer + ")";
         }
 
+        /// <summary>
+        /// Copies the base class fields from this to the target.
+        /// </summary>
+        /// <param name="target">The object that shall reveice the values from this object.</param>
         protected virtual void CopyBaseMembers(AstGetSet target)
         {
             target._arguments.AddRange(_arguments);

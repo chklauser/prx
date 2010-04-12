@@ -23,12 +23,13 @@
 
 using System;
 using System.Diagnostics;
+using Prexonite.Types;
 using NoDebug = System.Diagnostics.DebuggerNonUserCodeAttribute;
 
 namespace Prexonite.Compiler.Ast
 {
     [DebuggerStepThrough]
-    public abstract class AstNode
+    public abstract class AstNode : IObject
     {
         public string File;
         public int Line;
@@ -68,5 +69,30 @@ namespace Prexonite.Compiler.Ast
                     "expr", "Expression to be optimized can not be null.");
             expr = GetOptimizedNode(target, expr);
         }
+
+        #region Implementation of IObject
+
+        public virtual bool TryDynamicCall(StackContext sctx, PValue[] args, PCall call, string id, out PValue result)
+        {
+            result = null;
+
+            switch (id.ToUpperInvariant())
+            {
+                case "GETOPTIMIZEDNODE":
+                    CompilerTarget target;
+                    if (args.Length < 1 || (target = args[0].Value as CompilerTarget) == null)
+                        throw new PrexoniteException("GetOptimizedNode(CompilerTarget target) requires target.");
+                    var expr = this as IAstExpression;
+                    if(expr == null)
+                        throw new PrexoniteException("The node is not an IAstExpression.");
+
+                    result = target.Loader.CreateNativePValue(GetOptimizedNode(target, expr));
+                    break;
+            }
+
+            return result != null;
+        }
+
+        #endregion
     }
 }

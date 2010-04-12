@@ -31,33 +31,15 @@ using System.Collections;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.Linq;
+using Microsoft.Contracts;
 using Prexonite.Compiler.Ast;
+using Prexonite.Types;
 using NoDebug = System.Diagnostics.DebuggerNonUserCodeAttribute;
 
 #endregion
 
 namespace Prexonite.Compiler
 {
-    [DebuggerStepThrough]
-    public class AddressChangeHook
-    {
-        public AddressChangeHook(int instructionIndex, Action<int> reaction)
-        {
-            if (reaction == null)
-                throw new ArgumentNullException("reaction");
-            if (instructionIndex < 0)
-                throw new ArgumentOutOfRangeException
-                    ("instructionIndex", instructionIndex, "The instruction index must be valid (i.e. not negative).");
-
-            React = reaction;
-            InstructionIndex = instructionIndex;
-        }
-
-        public Action<int> React { get; private set; }
-
-        public int InstructionIndex { get; set; }
-    }
-
     public class CompilerTarget : IHasMetaTable
     {
         private readonly LinkedList<AddressChangeHook> _addressChangeHooks = new LinkedList<AddressChangeHook>();
@@ -81,9 +63,9 @@ namespace Prexonite.Compiler
         #endregion
 
         /// <summary>
-        /// Returns the string <see cref="Function"/>'s string representation.
+        /// Returns the <see cref="Function"/>'s string representation.
         /// </summary>
-        /// <returns>The string <see cref="Function"/>'s string representation.</returns>
+        /// <returns>The <see cref="Function"/>'s string representation.</returns>
         [DebuggerStepThrough]
         public override string ToString()
         {
@@ -95,7 +77,6 @@ namespace Prexonite.Compiler
         private readonly PFunction _function;
         private readonly Loader _loader;
         private readonly SymbolTable<SymbolEntry> _symbols = new SymbolTable<SymbolEntry>();
-        private BlockLabels _directRecursionLabels = new BlockLabels("direc");
         private CompilerTarget _parentTarget;
 
         public Loader Loader
@@ -132,12 +113,6 @@ namespace Prexonite.Compiler
         get; [DebuggerStepThrough]
         set; }
 
-        public BlockLabels DirectRecursionLabels
-        {
-            get { return _directRecursionLabels; }
-            set { _directRecursionLabels = value; }
-        }
-
         #endregion
 
         #region Construction
@@ -156,6 +131,195 @@ namespace Prexonite.Compiler
             _combinedSymbolProxy = new CombinedSymbolProxy(this);
 
             _ast = block;
+        }
+
+        #endregion
+
+        #region Macro system
+
+        /// <summary>
+        /// Setup function as macro (symbol declarations etc.)
+        /// </summary>
+        public void SetupAsMacro()
+        {
+            if(!_function.Meta.ContainsKey(MacroMetaKey))
+                _function.Meta[MacroMetaKey] = true;
+
+            if (!_function.Meta.ContainsKey(CompilerMetakey))
+                _function.Meta[CompilerMetakey] = true;
+
+            //If you change something in this list, it must also be changed in
+            // AstMacroInvocation.cs (method EmitCode).
+            var providedLocalRefs = new List<string>
+            {
+                MacroAliases.LoaderAlias,
+                MacroAliases.TargetAlias, 
+                MacroAliases.LocalsAlias, 
+                MacroAliases.NewLocalVariableAlias, 
+                MacroAliases.CallTypeAlias,
+                MacroAliases.JustEffectAlias,
+                MacroAliases.MacroInvocationAlias
+            };
+
+            foreach (var localRefId in providedLocalRefs)
+            {
+                Declare(SymbolInterpretations.LocalReferenceVariable, localRefId);
+                _outerVariables.Add(localRefId); //remember: outer variables are not added as local variables
+            }
+        }
+
+        /// <summary>
+        /// The boolean macro meta key indicates that a function is a macro and to be executed at compile time. 
+        /// </summary>
+        public const string MacroMetaKey = "macro";
+
+        public bool IsMacro
+        {
+            get 
+            {
+                return Meta.GetDefault(MacroMetaKey,false).Switch;
+            }
+            set
+            {
+                Meta[MacroMetaKey] = value;
+            }
+        }
+
+        /// <summary>
+        /// The boolean compiler meta key indicates that a function is part of the compiler and might not work outside of the original loader environment.
+        /// </summary>
+        public const string CompilerMetakey = "compiler";
+
+        private class ProvidedValue : IIndirectCall
+        {
+            private readonly PValue _value;
+
+            public ProvidedValue(PValue value)
+            {
+                _value = value;
+            }
+
+            #region Implementation of IIndirectCall
+
+            public PValue IndirectCall(StackContext sctx, PValue[] args)
+            {
+                return _value;
+            }
+
+            #endregion
+        }
+
+        private static PVariable _value(CompilerTarget target, Object value)
+        {
+            return new PVariable { Value = PType.Object.CreatePValue(new ProvidedValue(target.Loader.CreateNativePValue(value))) };
+        }
+
+        private class ProvidedFunction : IIndirectCall
+        {
+            private readonly Func<StackContext, PValue[], PValue> _func;
+
+            public ProvidedFunction(Func<StackContext, PValue[], PValue> func)
+            {
+                _func = func;
+            }
+
+            public PValue IndirectCall(StackContext sctx, PValue[] args)
+            {
+                return _func(sctx, args);
+            }
+        }
+
+        private static PVariable _func(Func<StackContext, PValue[], PValue> func)
+        {
+            return new PVariable { Value = PType.Object.CreatePValue(new ProvidedFunction(func)) };
+        }
+
+        public static SymbolTable<PVariable> CreateEnvironment(CompilerTarget target, AstMacroInvocation invocation, bool justEffect)
+        {
+            return new SymbolTable<PVariable>
+            {
+                {MacroAliases.LoaderAlias, _value(target, target.Loader)},
+                {MacroAliases.TargetAlias, _value(target, target)},
+                {MacroAliases.LocalsAlias,_value(target, target.Function.Variables)},
+                {MacroAliases.NewLocalVariableAlias,_func(_makeNewLocalVariableFunction(target))},
+                {MacroAliases.CallTypeAlias,_value(target, invocation.Call)},
+                {MacroAliases.JustEffectAlias,_value(target, justEffect)},
+                {MacroAliases.MacroInvocationAlias, _value(target, invocation)}
+            };
+        }
+
+        private static Func<StackContext, PValue[], PValue> _makeNewLocalVariableFunction(CompilerTarget target)
+        {
+            return (sctx, args) =>
+            {
+                string varId;
+                IAstExpression init;
+
+                if (args.Length == 0)
+                {
+                    varId = null;
+                    init = null;
+                }
+                else
+                {
+                    var idArg = args[0];
+                    var initArg = args.Length >= 2 ? args[1] : null;
+                    //Check for string arg
+                    varId = idArg.Value as string;
+                    if (varId == null)
+                        initArg = idArg;
+
+                    init = initArg != null ? initArg.Value as IAstExpression : null;
+                }
+
+                varId = varId ?? Engine.GenerateName();
+
+                if (!target.Function.Variables.Contains(varId))
+                    target.Function.Variables.Add(varId);
+
+                if (init == null)
+                {
+                    return varId;
+                }
+                else
+                {
+                    var varAssign = new AstGetSetSymbol("MacroInvocation", -1, -1, PCall.Set, varId, SymbolInterpretations.LocalObjectVariable);
+                    varAssign.Arguments.Add(init);
+                    return target.Loader.CreateNativePValue(init);
+                }
+            };
+        }
+
+        #endregion
+
+        #region Temporary variables
+
+        private readonly Stack<string> _freeTemporaryVariables = new Stack<string>(5);
+        private readonly SymbolCollection _usedTemporaryVariables = new SymbolCollection(5);
+
+        public string RequestTemporaryVariable()
+        {
+            if(_freeTemporaryVariables.Count == 0)
+            {
+                //Allocate temporary variable
+                var tempName = Engine.GenerateName("tmp" + _usedTemporaryVariables.Count);
+                _function.Variables.Add(tempName);
+                _freeTemporaryVariables.Push(tempName);
+            }
+
+            var temp = _freeTemporaryVariables.Pop();
+            _usedTemporaryVariables.Add(temp);
+
+            return temp;
+        }
+
+        public void ReleaseTemporaryVariable(string temporaryVariableId)
+        {
+            if (!_usedTemporaryVariables.Contains(temporaryVariableId))
+                throw new PrexoniteException("The variable " + temporaryVariableId + " is not a temporary variable managed by " + this);
+
+            _usedTemporaryVariables.Remove(temporaryVariableId);
+            _freeTemporaryVariables.Push(temporaryVariableId);
         }
 
         #endregion
@@ -644,6 +808,12 @@ namespace Prexonite.Compiler
 
         private readonly SymbolCollection _outerVariables = new SymbolCollection();
 
+        public SymbolCollection OuterVariables
+        {
+            [DebuggerStepThrough]
+            get { return _outerVariables; }
+        }
+
         /// <summary>
         /// Requests an outer function to share a variable with this inner function.
         /// </summary>
@@ -652,14 +822,18 @@ namespace Prexonite.Compiler
         [DebuggerStepThrough]
         public void RequireOuterVariable(string id)
         {
+            if (_parentTarget == null)
+                throw new PrexoniteException("Cannot require outer variable from top-level function.");
+
             _outerVariables.Add(id);
             //Make parent functions hand down the variable, even if they don't use them themselves.
 
             //for (var T = _parentTarget; T != null; T = T._parentTarget)
             var T = _parentTarget;
+
             {
                 var func = T.Function;
-                if (func.Variables.Contains(id) || func.Parameters.Contains(id))
+                if (func.Variables.Contains(id) || func.Parameters.Contains(id) || T.OuterVariables.Contains(id))
                     return; //Parent can supply the variable/parameter. Stop search here.
                 else if (T._parentTarget != null)
                     T.RequireOuterVariable(id); //Order parent function to request outer variable
