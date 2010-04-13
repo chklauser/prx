@@ -1,12 +1,11 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using Prexonite.Compiler.Cil;
 
 namespace Prexonite.Commands.List
 {
-    public class Append : CoroutineCommand , ICilCompilerAware
+    public class Append : CoroutineCommand, ICilCompilerAware
     {
-
         #region Singleton pattern
 
         private Append()
@@ -43,10 +42,10 @@ namespace Prexonite.Commands.List
 
             foreach (var arg in args)
             {
-                if(arg == null)
-                    throw new ArgumentException("No element in args must be null.","args") ;
+                if (arg == null)
+                    throw new ArgumentException("No element in args must be null.", "args");
                 var xs = Map._ToEnumerable(sctx, arg);
-                if(xs == null)
+                if (xs == null)
                     continue;
                 foreach (var x in xs)
                     yield return x;
@@ -68,7 +67,7 @@ namespace Prexonite.Commands.List
 
         public void ImplementInCil(CompilerState state, Instruction ins)
         {
-            throw new  NotSupportedException();
+            throw new NotSupportedException();
         }
     }
 }

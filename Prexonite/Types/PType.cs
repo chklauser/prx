@@ -95,7 +95,7 @@ namespace Prexonite.Types
         /// <returns>A <see cref="BuiltIn"/> enumeration value.</returns>
         public BuiltIn ToBuiltIn()
         {
-            Type thisType = GetType();
+            var thisType = GetType();
             if (thisType == typeof (RealPType))
                 return BuiltIn.Real;
             if (thisType == typeof (IntPType))

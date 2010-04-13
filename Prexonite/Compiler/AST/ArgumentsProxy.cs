@@ -299,24 +299,24 @@ namespace Prexonite.Compiler.Ast
             switch (id.ToUpperInvariant())
             {
                 case "ADDRANGE":
-                    if(args.Length > 0)
+                    if (args.Length > 0)
                     {
                         var arg0 = args[0];
                         var exprs = arg0.Value as IEnumerable<IAstExpression>;
                         IEnumerable<PValue> xs;
-                        if(exprs != null)
+                        if (exprs != null)
                         {
                             AddRange(exprs);
                             result = PType.Null;
                             return true;
                         }
-                        else if((xs = arg0.Value as IEnumerable<PValue>) != null)
+                        else if ((xs = arg0.Value as IEnumerable<PValue>) != null)
                         {
                             AddRange(
                                 from x in xs
-                                select (IAstExpression) 
-                                    x.ConvertTo(sctx, typeof (IAstExpression), true).Value
-                            );
+                                select (IAstExpression)
+                                       x.ConvertTo(sctx, typeof (IAstExpression), true).Value
+                                );
                             result = PType.Null;
                             return true;
                         }

@@ -49,10 +49,7 @@ namespace Prexonite.Commands
         /// <remarks>Pure commands can be applied at compile time.</remarks>
         public override bool IsPure
         {
-            get
-            {
-                return _action.IsPure;
-            }
+            get { return _action.IsPure; }
         }
 
         /// <summary>
@@ -108,9 +105,6 @@ namespace Prexonite.Commands
         /// <summary>
         /// Indicates whether the command behaves like a pure function.
         /// </summary>
-        bool IsPure
-        {
-            get;
-        }
+        bool IsPure { get; }
     }
 }

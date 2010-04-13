@@ -44,7 +44,7 @@ namespace Prexonite.Commands.Text
             get { return _instance; }
         }
 
-        #endregion 
+        #endregion
 
         public override bool IsPure
         {
@@ -84,12 +84,12 @@ namespace Prexonite.Commands.Text
 
         public static string SetLeft(int w, string s, string f)
         {
-            int fl = f.Length;
-            int l = s.Length;
+            var fl = f.Length;
+            var l = s.Length;
             if (l >= w)
                 return s;
 
-            StringBuilder sb = new StringBuilder(w, w);
+            var sb = new StringBuilder(w, w);
             sb.Append(s);
 
             for (; l < w; l += fl)

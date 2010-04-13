@@ -34,18 +34,18 @@ namespace Prexonite.Commands.List
             if (args == null)
                 throw new ArgumentNullException("args");
             if (sctxCarrier == null)
-                throw new ArgumentNullException("sctxCarrier"); 
-            
-            Dictionary<PValue, object> t = new Dictionary<PValue, object>();
+                throw new ArgumentNullException("sctxCarrier");
+
+            var t = new Dictionary<PValue, object>();
 
             var sctx = sctxCarrier.StackContext;
 
-            foreach (PValue arg in args)
+            foreach (var arg in args)
             {
-                IEnumerable<PValue> xs = Map._ToEnumerable(sctx, arg);
-                if(xs == null)
+                var xs = Map._ToEnumerable(sctx, arg);
+                if (xs == null)
                     continue;
-                foreach (PValue x in xs)
+                foreach (var x in xs)
                     if (!t.ContainsKey(x))
                     {
                         t.Add(x, null);
@@ -60,10 +60,7 @@ namespace Prexonite.Commands.List
         /// <remarks>Pure commands can be applied at compile time.</remarks>
         public override bool IsPure
         {
-            get
-            {
-                return false;
-            }
+            get { return false; }
         }
     }
 }

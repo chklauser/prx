@@ -92,7 +92,7 @@ namespace Prexonite
         {
             if (value == null)
                 type = NullPType.Instance;
-            else if ((object)type == null)
+            else if ((object) type == null)
                 throw new ArgumentNullException("type");
 
             _value = value;
@@ -224,7 +224,7 @@ namespace Prexonite
         [DebuggerStepThrough]
         public T ConvertTo<T>(StackContext sctx, bool useExplicit)
         {
-            return (T) _type.ConvertTo(sctx, this, typeof(T), useExplicit).Value; 
+            return (T) _type.ConvertTo(sctx, this, typeof (T), useExplicit).Value;
         }
 
         /// <summary>
@@ -254,7 +254,7 @@ namespace Prexonite
         {
             result = default(T);
             PValue r;
-            if((!_type.TryConvertTo(sctx, this,sctx.ParentEngine.PTypeMap[typeof(T)],useExplicit, out r)) || !(r.Value is T))
+            if ((!_type.TryConvertTo(sctx, this, sctx.ParentEngine.PTypeMap[typeof (T)], useExplicit, out r)) || !(r.Value is T))
                 return false;
 
             result = (T) r.Value;
@@ -1208,8 +1208,7 @@ namespace Prexonite
         /// Allows you to prevent the Prexonite VM from performing type conversions on the PValue object.
         /// </summary>
         /// <value>A boolean value that indicates whether the type lock is in action or not.</value>
-        public bool IsTypeLocked 
-            { get; set; }
+        public bool IsTypeLocked { get; set; }
 
         /// <summary>
         /// Indicates whether the PValue object contains a null reference or not.
@@ -1278,7 +1277,7 @@ namespace Prexonite
         public string CallToString(StackContext sctx)
         {
             PValue text;
-            if(Type == PType.String)
+            if (Type == PType.String)
                 return (string) Value;
             else if (TryDynamicCall(sctx, new PValue[] {}, PCall.Get, "ToString", out text))
                 return text.Value.ToString();
@@ -1290,7 +1289,7 @@ namespace Prexonite
         {
             if (_value == null)
                 return 0;
-            else 
+            else
                 return _type.GetHashCode() ^ _value.GetHashCode();
         }
 
@@ -1508,15 +1507,15 @@ namespace Prexonite
         {
             if (val == null)
                 return "null";
-            switch(val.Type.ToBuiltIn())
+            switch (val.Type.ToBuiltIn())
             {
                 case PType.BuiltIn.Int:
                 case PType.BuiltIn.Real:
                 case PType.BuiltIn.Bool:
                     return val.Value.ToString();
-                case PType.BuiltIn.String:            
+                case PType.BuiltIn.String:
                     return "\"" + StringPType.Escape(val.Value as string) + "\"";
-                case PType.BuiltIn.Null:            
+                case PType.BuiltIn.Null:
                     return NullPType.Literal;
                 case PType.BuiltIn.Object:
                     return "{" + val.Value + "}";
@@ -1525,19 +1524,19 @@ namespace Prexonite
                     if (lst == null)
                         return "[]";
                     var buffer = new StringBuilder("[");
-                    for(var i = 0; i < lst.Count-1; i++)
+                    for (var i = 0; i < lst.Count - 1; i++)
                     {
                         buffer.Append(ToDebugString(lst[i]));
                         buffer.Append(",");
                     }
                     if (lst.Count > 0)
                     {
-                        buffer.Append(ToDebugString(lst[lst.Count-1]));
+                        buffer.Append(ToDebugString(lst[lst.Count - 1]));
                     }
                     buffer.Append("]");
                     return buffer.ToString();
                 default:
-                    return "#" + val +"#";
+                    return "#" + val + "#";
             }
         }
     }

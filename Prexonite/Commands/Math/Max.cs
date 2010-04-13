@@ -46,7 +46,7 @@ namespace Prexonite.Commands.Math
             get { return _instance; }
         }
 
-        #endregion 
+        #endregion
 
         /// <summary>
         /// A flag indicating whether the command acts like a pure function.
@@ -73,8 +73,8 @@ namespace Prexonite.Commands.Math
             if (args.Length < 2)
                 throw new PrexoniteException("Max requires at least two arguments.");
 
-            PValue arg0 = args[0];
-            PValue arg1 = args[1];
+            var arg0 = args[0];
+            var arg1 = args[1];
 
             return RunStatically(arg0, arg1, sctx);
         }
@@ -83,15 +83,15 @@ namespace Prexonite.Commands.Math
         {
             if (arg0.Type == PType.Int && arg1.Type == PType.Int)
             {
-                int a = (int) arg0.Value;
-                int b = (int) arg1.Value;
+                var a = (int) arg0.Value;
+                var b = (int) arg1.Value;
 
                 return System.Math.Max(a, b);
             }
             else
             {
-                double a = (double) arg0.ConvertTo(sctx, PType.Real, true).Value;
-                double b = (double) arg1.ConvertTo(sctx, PType.Real, true).Value;
+                var a = (double) arg0.ConvertTo(sctx, PType.Real, true).Value;
+                var b = (double) arg1.ConvertTo(sctx, PType.Real, true).Value;
 
                 return System.Math.Max(a, b);
             }
@@ -117,7 +117,7 @@ namespace Prexonite.Commands.Math
         /// <returns>A set of <see cref="CompilationFlags"/>.</returns>
         CompilationFlags ICilCompilerAware.CheckQualification(Instruction ins)
         {
-            switch(ins.Arguments)
+            switch (ins.Arguments)
             {
                 case 0:
                 case 1:
@@ -129,7 +129,7 @@ namespace Prexonite.Commands.Math
         }
 
         private static readonly MethodInfo RunStaticallyMethod =
-            typeof(Max).GetMethod("RunStatically", new Type[] {typeof(PValue), typeof(PValue), typeof(StackContext)});
+            typeof (Max).GetMethod("RunStatically", new[] {typeof (PValue), typeof (PValue), typeof (StackContext)});
 
         /// <summary>
         /// Provides a custom compiler routine for emitting CIL byte code for a specific instruction.
@@ -140,12 +140,12 @@ namespace Prexonite.Commands.Math
         {
             if (ins.JustEffect)
             {
-                for (int i = 0; i < ins.Arguments; i++)
+                for (var i = 0; i < ins.Arguments; i++)
                     state.Il.Emit(OpCodes.Pop);
             }
             else
             {
-                switch(ins.Arguments)
+                switch (ins.Arguments)
                 {
                     case 0:
                         state.EmitLoadPValueNull();

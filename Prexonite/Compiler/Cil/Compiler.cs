@@ -816,59 +816,59 @@ namespace Prexonite.Compiler.Cil
                 switch (sym.Kind)
                 {
                     case SymbolKind.Local:
-                    {
-                        sym.Local = state.Il.DeclareLocal(typeof (PValue));
-                        var initVal = GetVariableInitialization(state, id, false);
-                        switch (initVal)
                         {
-                            case VariableInitialization.ArgV:
-                                EmitLoadArgV(state);
-                                state.EmitStoreLocal(sym.Local);
-                                break;
-                            case VariableInitialization.Null:
-                                nullLocals.Add(sym.Local); //defer assignment
-                                break;
-
-                            case VariableInitialization.None:
-                            default:
-                                break;
-                        }
-                    }
-                        break;
-                    case SymbolKind.LocalRef:
-                    {
-                        sym.Local = state.Il.DeclareLocal(typeof (PVariable));
-                        var initVal = GetVariableInitialization(state, id, true);
-
-                        var idx = sym.Local.LocalIndex;
-
-                        state.Il.Emit(OpCodes.Newobj, newPVariableCtor);
-                        state.EmitStoreLocal(idx);
-
-                        if (initVal != VariableInitialization.None)
-                        {
-                            state.EmitLoadLocal(idx);
+                            sym.Local = state.Il.DeclareLocal(typeof (PValue));
+                            var initVal = GetVariableInitialization(state, id, false);
                             switch (initVal)
                             {
                                 case VariableInitialization.ArgV:
                                     EmitLoadArgV(state);
+                                    state.EmitStoreLocal(sym.Local);
                                     break;
                                 case VariableInitialization.Null:
-                                    state.EmitLoadPValueNull();
+                                    nullLocals.Add(sym.Local); //defer assignment
                                     break;
 
+                                case VariableInitialization.None:
                                 default:
                                     break;
                             }
-                            state.Il.EmitCall(OpCodes.Call, SetValueMethod, null);
                         }
-                    }
+                        break;
+                    case SymbolKind.LocalRef:
+                        {
+                            sym.Local = state.Il.DeclareLocal(typeof (PVariable));
+                            var initVal = GetVariableInitialization(state, id, true);
+
+                            var idx = sym.Local.LocalIndex;
+
+                            state.Il.Emit(OpCodes.Newobj, newPVariableCtor);
+                            state.EmitStoreLocal(idx);
+
+                            if (initVal != VariableInitialization.None)
+                            {
+                                state.EmitLoadLocal(idx);
+                                switch (initVal)
+                                {
+                                    case VariableInitialization.ArgV:
+                                        EmitLoadArgV(state);
+                                        break;
+                                    case VariableInitialization.Null:
+                                        state.EmitLoadPValueNull();
+                                        break;
+
+                                    default:
+                                        break;
+                                }
+                                state.Il.EmitCall(OpCodes.Call, SetValueMethod, null);
+                            }
+                        }
                         break;
                     case SymbolKind.LocalEnum:
-                    {
-                        sym.Local = state.Il.DeclareLocal(typeof (IEnumerator<PValue>));
-                        //No initialization needed.
-                    }
+                        {
+                            sym.Local = state.Il.DeclareLocal(typeof (IEnumerator<PValue>));
+                            //No initialization needed.
+                        }
                         break;
                     default:
                         throw new PrexoniteException("Cannot initialize unknown symbol kind.");
@@ -1241,7 +1241,7 @@ namespace Prexonite.Compiler.Cil
                         MethodInfo dummy;
                         if (TryGetStaticallyLinkedFunction(state, id, out dummy))
                         {
-                            state.Il.Emit(OpCodes.Ldsfld,state.Pass.FunctionFields[id]);
+                            state.Il.Emit(OpCodes.Ldsfld, state.Pass.FunctionFields[id]);
                             state.Il.EmitCall(OpCodes.Call, Runtime.newClosureMethod_StaticallyBound, null);
                         }
                         else

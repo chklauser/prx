@@ -33,16 +33,25 @@ namespace Prexonite
         private readonly StackContext _originalStackContext;
 
         public IndirectCallContext(StackContext parent, IIndirectCall callable, PValue[] args)
-            : this(parent, parent.ParentEngine,parent.ParentApplication,parent.ImportedNamespaces,callable,args)
+            : this(parent, parent.ParentEngine, parent.ParentApplication, parent.ImportedNamespaces, callable, args)
         {
         }
 
-        public IndirectCallContext(Engine parentEngine, Application parentApplication, IEnumerable<string> importedNamespaces, IIndirectCall callable, PValue[] args) 
+        public IndirectCallContext(Engine parentEngine,
+            Application parentApplication,
+            IEnumerable<string> importedNamespaces,
+            IIndirectCall callable,
+            PValue[] args)
             : this(null, parentEngine, parentApplication, importedNamespaces, callable, args)
         {
         }
 
-        public IndirectCallContext(StackContext originalSctx, Engine parentEngine, Application parentApplication, IEnumerable<string> importedNamespaces, IIndirectCall callable, PValue[] args)
+        public IndirectCallContext(StackContext originalSctx,
+            Engine parentEngine,
+            Application parentApplication,
+            IEnumerable<string> importedNamespaces,
+            IIndirectCall callable,
+            PValue[] args)
         {
             if (parentEngine == null)
                 throw new ArgumentNullException("parentEngine");
@@ -67,12 +76,14 @@ namespace Prexonite
         {
             get { return _callable; }
         }
-        private readonly  IIndirectCall _callable;
+
+        private readonly IIndirectCall _callable;
 
         public PValue[] Arguments
         {
             get { return _arguments; }
         }
+
         private readonly PValue[] _arguments;
 
         private readonly Engine _engine;
@@ -93,18 +104,12 @@ namespace Prexonite
         /// </summary>
         public override Application ParentApplication
         {
-            get
-            {
-                return _application;
-            }
+            get { return _application; }
         }
 
         public override SymbolCollection ImportedNamespaces
         {
-            get
-            {
-                return _importedNamespaces;
-            }
+            get { return _importedNamespaces; }
         }
 
         /// <summary>
@@ -137,10 +142,7 @@ namespace Prexonite
         /// </summary>
         public override PValue ReturnValue
         {
-            get
-            {
-                return _returnValue ?? PType.Null;
-            }
+            get { return _returnValue ?? PType.Null; }
         }
     }
 }

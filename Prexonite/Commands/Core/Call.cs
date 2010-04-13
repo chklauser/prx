@@ -55,7 +55,7 @@ namespace Prexonite.Commands.Core
         public static Call Instance
         {
             get { return _instance; }
-        }   
+        }
 
         /// <summary>
         /// Implementation of (ref f, arg1, arg2, arg3, ..., argn) => f(arg1, arg2, arg3, ..., argn);
@@ -92,7 +92,7 @@ namespace Prexonite.Commands.Core
             if (args == null || args.Length == 0 || args[0] == null)
                 return PType.Null.CreatePValue();
 
-            List<PValue> iargs = FlattenArguments(sctx, args, 1);
+            var iargs = FlattenArguments(sctx, args, 1);
 
             return args[0].IndirectCall(sctx, iargs.ToArray());
         }
@@ -139,12 +139,12 @@ namespace Prexonite.Commands.Core
         public static List<PValue> FlattenArguments(StackContext sctx, PValue[] args, int index)
         {
             if (args == null)
-                args = new PValue[] { };
-            List<PValue> iargs = new List<PValue>();
-            for (int i = index; i < args.Length; i++)
+                args = new PValue[] {};
+            var iargs = new List<PValue>();
+            for (var i = index; i < args.Length; i++)
             {
-                PValue arg = args[i];
-                IEnumerable<PValue> folded = Map._ToEnumerable(sctx, arg);
+                var arg = args[i];
+                var folded = Map._ToEnumerable(sctx, arg);
                 if (folded == null)
                     iargs.Add(arg);
                 else
@@ -169,15 +169,15 @@ namespace Prexonite.Commands.Core
             if (args == null || args.Length == 0 || args[0] == null || args[0].IsNull)
                 return new NullContext(sctx);
 
-            List<PValue> iargs = FlattenArguments(sctx, args, 1);
+            var iargs = FlattenArguments(sctx, args, 1);
 
-            PValue callable = args[0];
+            var callable = args[0];
             return CreateStackContext(sctx, callable, iargs.ToArray());
         }
 
         public static StackContext CreateStackContext(StackContext sctx, PValue callable, PValue[] args)
         {
-            IStackAware sa = callable.Value as IStackAware;
+            var sa = callable.Value as IStackAware;
             if (callable.Type is ObjectPType && sa != null)
                 return sa.CreateStackContext(sctx, args);
             else

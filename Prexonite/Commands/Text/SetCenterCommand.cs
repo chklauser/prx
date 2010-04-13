@@ -44,7 +44,7 @@ namespace Prexonite.Commands.Text
             get { return _instance; }
         }
 
-        #endregion 
+        #endregion
 
         public override bool IsPure
         {
@@ -79,7 +79,7 @@ namespace Prexonite.Commands.Text
             else
                 f = " ";
 
-            int l = s.Length;
+            var l = s.Length;
             if (l >= w)
                 return s;
 
@@ -88,10 +88,10 @@ namespace Prexonite.Commands.Text
                 sb.Capacity = w;
                 sb.Length = 0;
 
-                int lw = (int) System.Math.Round(w/2.0, 0, MidpointRounding.AwayFromZero);
-                int rw = w - lw;
+                var lw = (int) System.Math.Round(w/2.0, 0, MidpointRounding.AwayFromZero);
+                var rw = w - lw;
 
-                int ll = (int) System.Math.Round(l/2.0, 0, MidpointRounding.AwayFromZero);
+                var ll = (int) System.Math.Round(l/2.0, 0, MidpointRounding.AwayFromZero);
 
                 sb.Append(SetRightCommand.SetRight(lw, s.Substring(0, ll), f));
                 sb.Append(SetLeftCommand.SetLeft(rw, s.Substring(ll), f));

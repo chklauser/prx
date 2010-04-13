@@ -23,7 +23,6 @@
 
 using System;
 using System.Collections.Generic;
-
 using Prexonite.Compiler.Ast;
 using Prexonite.Types;
 
@@ -96,46 +95,50 @@ namespace Prexonite.Compiler
 
                     //Insert code that creates and returns the structure
                     var newCode = new List<AstNode>(2 + methods.Count);
-                    var l = new BlockLabels("struct");
-                    var vtemps = l.CreateLabel("temp");
+                    var vtemps = t.CurrentBlock.CreateLabel("temp");
 
                     //(s)
                     var structGet =
-                        new AstGetSetSymbol(stmt.File,
-                                            stmt.Line,
-                                            stmt.Column,
-                                            PCall.Get,
-                                            vtemps,
-                                            SymbolInterpretations.LocalObjectVariable);
+                        new AstGetSetSymbol(
+                            stmt.File,
+                            stmt.Line,
+                            stmt.Column,
+                            PCall.Get,
+                            vtemps,
+                            SymbolInterpretations.LocalObjectVariable);
 
                     //var s = new Structure;
                     caller.Variables.Add(vtemps);
                     var structAssignment =
-                        new AstGetSetSymbol(stmt.File,
-                                            stmt.Line,
-                                            stmt.Column,
-                                            PCall.Set,
-                                            vtemps,
-                                            SymbolInterpretations.LocalObjectVariable);
+                        new AstGetSetSymbol(
+                            stmt.File,
+                            stmt.Line,
+                            stmt.Column,
+                            PCall.Set,
+                            vtemps,
+                            SymbolInterpretations.LocalObjectVariable);
                     structAssignment.Arguments.Add(
-                        new AstObjectCreation(stmt.File,
-                                              stmt.Line,
-                                              stmt.Column,
-                                              new AstConstantTypeExpression(stmt.File,
-                                                                            stmt.Line,
-                                                                            stmt.Column,
-                                                                            StructurePType.Literal)));
+                        new AstObjectCreation(
+                            stmt.File,
+                            stmt.Line,
+                            stmt.Column,
+                            new AstConstantTypeExpression(
+                                stmt.File,
+                                stmt.Line,
+                                stmt.Column,
+                                StructurePType.Literal)));
                     newCode.Add(structAssignment);
 
                     //set \ctorId
                     //s.\(@"\ctorId") = "ctorId";
                     var setCtorId =
-                        new AstGetSetMemberAccess(stmt.File,
-                                                  stmt.Line,
-                                                  stmt.Column,
-                                                  PCall.Set,
-                                                  structGet,
-                                                  StructurePType.SetIdAlternative);
+                        new AstGetSetMemberAccess(
+                            stmt.File,
+                            stmt.Line,
+                            stmt.Column,
+                            PCall.Set,
+                            structGet,
+                            StructurePType.SetIdAlternative);
                     setCtorId.Arguments.Add(new AstConstant(stmt.File, stmt.Line, stmt.Column, CtorId));
                     setCtorId.Arguments.Add(new AstConstant(stmt.File, stmt.Line, stmt.Column, parentId));
                     newCode.Add(setCtorId);
@@ -144,20 +147,22 @@ namespace Prexonite.Compiler
                     {
                         //Key => member id //Value => logical id
                         var setMethod =
-                            new AstGetSetMemberAccess(stmt.File,
-                                                      stmt.Line,
-                                                      stmt.Column,
-                                                      PCall.Set,
-                                                      structGet,
-                                                      StructurePType.SetRefId);
+                            new AstGetSetMemberAccess(
+                                stmt.File,
+                                stmt.Line,
+                                stmt.Column,
+                                PCall.Set,
+                                structGet,
+                                StructurePType.SetRefId);
                         setMethod.Arguments.Add(new AstConstant(stmt.File, stmt.Line, stmt.Column, method.Key));
                         setMethod.Arguments.Add(
-                            new AstGetSetSymbol(stmt.File,
-                                                stmt.Line,
-                                                stmt.Column,
-                                                PCall.Get,
-                                                method.Value,
-                                                SymbolInterpretations.LocalObjectVariable));
+                            new AstGetSetSymbol(
+                                stmt.File,
+                                stmt.Line,
+                                stmt.Column,
+                                PCall.Get,
+                                method.Value,
+                                SymbolInterpretations.LocalObjectVariable));
                         newCode.Add(setMethod);
                     }
 

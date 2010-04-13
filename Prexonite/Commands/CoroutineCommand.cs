@@ -1,13 +1,11 @@
 using System;
 using System.Collections.Generic;
 using System.Text;
-using Prexonite.Compiler.Cil;
 
 namespace Prexonite.Commands
 {
     public abstract class CoroutineCommand : PCommand
     {
-
         /// <summary>
         /// Executes the command.
         /// </summary>
@@ -33,7 +31,6 @@ namespace Prexonite.Commands
         {
             public ContextCarrier()
             {
-                
             }
 
             public ContextCarrier(StackContext sctx)
@@ -42,11 +39,12 @@ namespace Prexonite.Commands
             }
 
             private StackContext _stackContext;
+
             public StackContext StackContext
             {
                 get
                 {
-                    if(_stackContext == null)
+                    if (_stackContext == null)
                         throw new InvalidOperationException("StackContext has not been assigned yet.");
                     return _stackContext;
                 }
@@ -58,6 +56,5 @@ namespace Prexonite.Commands
                 }
             }
         }
-
     }
 }

@@ -31,29 +31,19 @@ namespace Prexonite
     /// </summary>
     public abstract class StackContext : IIndirectCall
     {
-
         #region Interface
 
         /// <summary>
         /// Represents the engine this context is part of.
         /// </summary>
-        public abstract Engine ParentEngine
-        {
-            get;
-        }
+        public abstract Engine ParentEngine { get; }
 
         /// <summary>
         /// The parent application.
         /// </summary>
-        public abstract Application ParentApplication
-        {
-            get;
-        }
+        public abstract Application ParentApplication { get; }
 
-        public abstract SymbolCollection ImportedNamespaces
-        {
-            get;
-        }
+        public abstract SymbolCollection ImportedNamespaces { get; }
 
         /// <summary>
         /// Indicates whether the context still has code/work to do.
@@ -78,10 +68,7 @@ namespace Prexonite
         /// Just providing a value here does not mean that it gets consumed by the caller.
         /// If the context does not provide a return value, this property should return null (not NullPType).
         /// </summary>
-        public abstract PValue ReturnValue
-        {
-            get;
-        }
+        public abstract PValue ReturnValue { get; }
 
         /// <summary>
         /// Gets or sets the mode of return.

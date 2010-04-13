@@ -30,10 +30,10 @@ using System.Reflection;
 using System.Threading;
 using Prexonite.Commands;
 using Prexonite.Commands.Concurrency;
-using Prexonite.Commands.Lazy;
-using Prexonite.Commands.Math;
 using Prexonite.Commands.Core;
+using Prexonite.Commands.Lazy;
 using Prexonite.Commands.List;
+using Prexonite.Commands.Math;
 using Prexonite.Commands.Text;
 using Prexonite.Types;
 using Char=Prexonite.Commands.Core.Char;
@@ -134,7 +134,7 @@ namespace Prexonite
 
             internal PTypeMapIterator(Engine outer)
             {
-                this._outer = outer;
+                _outer = outer;
             }
 
             /// <summary>
@@ -165,12 +165,12 @@ namespace Prexonite
                 {
                     if (_outer._pTypeMap.ContainsKey(clrType))
                     {
-                        if ((object)value == null)
+                        if ((object) value == null)
                             _outer._pTypeMap.Remove(clrType);
                         else
                             _outer._pTypeMap[clrType] = value;
                     }
-                    else if ((object)value == null)
+                    else if ((object) value == null)
                         throw new ArgumentNullException("value");
                     else
                         _outer._pTypeMap.Add(clrType, value);
@@ -187,7 +187,7 @@ namespace Prexonite
             {
                 if (clrType == null)
                     throw new ArgumentNullException("clrType");
-                if ((object)type == null)
+                if ((object) type == null)
                     throw new ArgumentNullException("type");
                 if (_outer._pTypeMap.ContainsKey(clrType))
                     throw new InvalidOperationException(
@@ -247,7 +247,7 @@ namespace Prexonite
 
             internal PTypeRegistryIterator(Engine outer)
             {
-                this._outer = outer;
+                _outer = outer;
             }
 
             /// <summary>
@@ -316,7 +316,7 @@ namespace Prexonite
                     throw new ArgumentNullException("type");
                 var literals =
                     (PTypeLiteralAttribute[])
-                    type.GetCustomAttributes(typeof(PTypeLiteralAttribute), false);
+                    type.GetCustomAttributes(typeof (PTypeLiteralAttribute), false);
                 if (literals.Length == 0)
                     throw new PrexoniteException(
                         "Supplied PType " + type +
@@ -417,26 +417,26 @@ namespace Prexonite
                     " is not a PType.");
 
             //Performance optimizations
-            Type clrType = ptypeClrType.ClrType;
-            if (clrType == typeof(IntPType))
+            var clrType = ptypeClrType.ClrType;
+            if (clrType == typeof (IntPType))
                 return PType.Int;
-            if (clrType == typeof(RealPType))
+            if (clrType == typeof (RealPType))
                 return PType.Real;
-            if (clrType == typeof(BoolPType))
+            if (clrType == typeof (BoolPType))
                 return PType.Bool;
-            if (clrType == typeof(StringPType))
+            if (clrType == typeof (StringPType))
                 return PType.String;
-            if (clrType == typeof(NullPType))
+            if (clrType == typeof (NullPType))
                 return PType.Null;
-            if (clrType == typeof(ObjectPType) && args.Length > 0 && args[0].Type == PType.String)
+            if (clrType == typeof (ObjectPType) && args.Length > 0 && args[0].Type == PType.String)
                 return PType.Object[sctx, (string) args[0].Value];
-            if (clrType == typeof(ListPType))
+            if (clrType == typeof (ListPType))
                 return PType.List;
-            if (clrType == typeof(HashPType))
+            if (clrType == typeof (HashPType))
                 return PType.Hash;
-            if(clrType == typeof(CharPType))
+            if (clrType == typeof (CharPType))
                 return PType.Char;
-            if (clrType == typeof(StructurePType))
+            if (clrType == typeof (StructurePType))
                 return PType.Structure;
 
             var result =
@@ -487,7 +487,7 @@ namespace Prexonite
         /// </remarks>
         public PType CreatePType(StackContext sctx, string expression)
         {
-            using (TypeExpressionScanner lexer = TypeExpressionScanner.CreateFromString(expression))
+            using (var lexer = TypeExpressionScanner.CreateFromString(expression))
             {
                 var parser = new TypeExpressionParser(lexer, sctx);
                 parser.Parse();
@@ -610,10 +610,10 @@ namespace Prexonite
             _pTypeMap = new Dictionary<Type, PType>();
             _ptypemapiterator = new PTypeMapIterator(this);
             //int
-            PTypeMap[typeof(int)] = PType.Int;
-            PTypeMap[typeof(long)] = PType.Int;
-            PTypeMap[typeof(short)] = PType.Int;
-            PTypeMap[typeof(byte)] = PType.Int;
+            PTypeMap[typeof (int)] = PType.Int;
+            PTypeMap[typeof (long)] = PType.Int;
+            PTypeMap[typeof (short)] = PType.Int;
+            PTypeMap[typeof (byte)] = PType.Int;
 
 #if UseNonCTSIntegers
             PTypeMap[typeof(uint)]      = IntPType.Instance;
@@ -623,41 +623,41 @@ namespace Prexonite
 #endif
 
             //char
-            PTypeMap[typeof(char)] = PType.Char;
+            PTypeMap[typeof (char)] = PType.Char;
 
             //bool
-            PTypeMap[typeof(bool)] = PType.Bool;
+            PTypeMap[typeof (bool)] = PType.Bool;
 
             //real
-            PTypeMap[typeof(float)] = PType.Real;
-            PTypeMap[typeof(double)] = PType.Real;
+            PTypeMap[typeof (float)] = PType.Real;
+            PTypeMap[typeof (double)] = PType.Real;
 
             //string
-            PTypeMap[typeof(string)] = PType.String;
+            PTypeMap[typeof (string)] = PType.String;
 
-            PTypeMap[typeof(List<PValue>)] = PType.List;
-            PTypeMap[typeof(PValue[])] = PType.List;
-            PTypeMap[typeof(PValueHashtable)] = PType.Hash;
+            PTypeMap[typeof (List<PValue>)] = PType.List;
+            PTypeMap[typeof (PValue[])] = PType.List;
+            PTypeMap[typeof (PValueHashtable)] = PType.Hash;
 
             //Registry
             _pTypeRegistry = new SymbolTable<Type>();
             _pTypeRegistryIterator = new PTypeRegistryIterator(this);
-            PTypeRegistry[IntPType.Literal] = typeof(IntPType);
-            PTypeRegistry[BoolPType.Literal] = typeof(BoolPType);
-            PTypeRegistry[RealPType.Literal] = typeof(RealPType);
-            PTypeRegistry[CharPType.Literal] = typeof(CharPType);
-            PTypeRegistry[StringPType.Literal] = typeof(StringPType);
-            PTypeRegistry[NullPType.Literal] = typeof(NullPType);
-            PTypeRegistry[ObjectPType.Literal] = typeof(ObjectPType);
-            PTypeRegistry[ListPType.Literal] = typeof(ListPType);
-            PTypeRegistry[StructurePType.Literal] = typeof(StructurePType);
-            PTypeRegistry[HashPType.Literal] = typeof(HashPType);
-            PTypeRegistry[StructurePType.Literal] = typeof(StructurePType);
+            PTypeRegistry[IntPType.Literal] = typeof (IntPType);
+            PTypeRegistry[BoolPType.Literal] = typeof (BoolPType);
+            PTypeRegistry[RealPType.Literal] = typeof (RealPType);
+            PTypeRegistry[CharPType.Literal] = typeof (CharPType);
+            PTypeRegistry[StringPType.Literal] = typeof (StringPType);
+            PTypeRegistry[NullPType.Literal] = typeof (NullPType);
+            PTypeRegistry[ObjectPType.Literal] = typeof (ObjectPType);
+            PTypeRegistry[ListPType.Literal] = typeof (ListPType);
+            PTypeRegistry[StructurePType.Literal] = typeof (StructurePType);
+            PTypeRegistry[HashPType.Literal] = typeof (HashPType);
+            PTypeRegistry[StructurePType.Literal] = typeof (StructurePType);
 
             //Assembly registry
             _registeredAssemblies = new List<Assembly>();
             foreach (
-                AssemblyName assName in Assembly.GetExecutingAssembly().GetReferencedAssemblies())
+                var assName in Assembly.GetExecutingAssembly().GetReferencedAssemblies())
                 _registeredAssemblies.Add(Assembly.Load(assName.FullName));
 
             //Commands
@@ -684,7 +684,7 @@ namespace Prexonite
             Commands.AddEngineCommand(CallAlias, Call.Instance);
 
             Commands.AddEngineCommand(ThunkAlias, ThunkCommand.Instance);
-            Commands.AddEngineCommand(AsThunkAlias,AsThunkCommand.Instance);
+            Commands.AddEngineCommand(AsThunkAlias, AsThunkCommand.Instance);
             Commands.AddEngineCommand(ForceAlias, ForceCommand.Instance);
             Commands.AddEngineCommand(ToSeqAlias, ToSeqCommand.Instance);
 
@@ -779,11 +779,11 @@ namespace Prexonite
 
             Commands.AddEngineCommand(ReverseAlias, Reverse.Instance);
 
-            Commands.AddEngineCommand(HeadTailAlias,HeadTail.Instance);
+            Commands.AddEngineCommand(HeadTailAlias, HeadTail.Instance);
 
-            Commands.AddEngineCommand(AppendAlias,Append.Instance);
+            Commands.AddEngineCommand(AppendAlias, Append.Instance);
 
-            Commands.AddEngineCommand(SumAlias,Sum.Instance);
+            Commands.AddEngineCommand(SumAlias, Sum.Instance);
 
             Commands.AddEngineCommand(ChanAlias, Chan.Instance);
 
@@ -888,6 +888,7 @@ namespace Prexonite
         /// Alias used for the "sort" command.
         /// </summary>
         public const string SortAlias = "sort";
+
         public const string SortAlternativeAlias = "orderby";
 
         /// <summary>
@@ -938,7 +939,7 @@ namespace Prexonite
         /// <summary>
         /// Alias used for the limit command.
         /// </summary>
-        public const string TakeAlias = "take"; 
+        public const string TakeAlias = "take";
 
         /// <summary>
         /// Alias used for the abs command.
@@ -1104,6 +1105,5 @@ namespace Prexonite
         public const string SumAlias = "sum";
 
         #endregion
-        
     }
 }

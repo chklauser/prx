@@ -33,9 +33,8 @@ namespace Prexonite.Commands
 
         public override PValue Run(StackContext sctx, PValue[] args)
         {
-            StackContext rctx = CreateStackContext(sctx, args);
+            var rctx = CreateStackContext(sctx, args);
             return sctx.ParentEngine.Process(rctx);
-        } 
-
+        }
     }
 }

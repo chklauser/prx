@@ -24,7 +24,6 @@
 
 
 using System;
-using System.IO;
 using System.Reflection;
 using Prexonite.Compiler;
 using Prexonite.Types;
@@ -60,13 +59,13 @@ namespace Prexonite.Commands.Core
             if (args == null)
                 args = new PValue[] {};
 
-            Engine eng = sctx.ParentEngine;
-            foreach (PValue arg in args)
+            var eng = sctx.ParentEngine;
+            foreach (var arg in args)
             {
-                string path = arg.CallToString(sctx);
-                LoaderOptions ldrOptions = new LoaderOptions(sctx.ParentEngine, sctx.ParentApplication);
+                var path = arg.CallToString(sctx);
+                var ldrOptions = new LoaderOptions(sctx.ParentEngine, sctx.ParentApplication);
                 ldrOptions.ReconstructSymbols = false;
-                Loader ldr = sctx as Loader ?? new Loader(ldrOptions);
+                var ldr = sctx as Loader ?? new Loader(ldrOptions);
                 eng.RegisterAssembly(Assembly.LoadFile(ldr.ApplyLoadPaths(path).FullName));
             }
 

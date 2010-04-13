@@ -32,18 +32,11 @@ namespace Prexonite.Commands
     /// </summary>
     public abstract class PCommand : IIndirectCall
     {
-        public PCommand()
-        {
-        }
-        
         /// <summary>
         /// A flag indicating whether the command acts like a pure function.
         /// </summary>
         /// <remarks>Pure commands can be applied at compile time.</remarks>
-        public abstract bool IsPure
-        {
-            get;
-        }
+        public abstract bool IsPure { get; }
 
         /// <summary>
         /// Executes the command.
@@ -118,7 +111,6 @@ namespace Prexonite.Commands
         }
 
         #endregion
-
     }
 
     /// <summary>

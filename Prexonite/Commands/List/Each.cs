@@ -44,7 +44,7 @@ namespace Prexonite.Commands.List
             get { return _instance; }
         }
 
-        #endregion 
+        #endregion
 
         public override PValue Run(StackContext sctx, PValue[] args)
         {
@@ -60,16 +60,16 @@ namespace Prexonite.Commands.List
 
             if (args.Length < 1)
                 throw new PrexoniteException("Each requires at least two arguments");
-            PValue f = args[0];
+            var f = args[0];
 
-            PValue[] eargs = new PValue[1];
-            for (int i = 1; i < args.Length; i++)
+            var eargs = new PValue[1];
+            for (var i = 1; i < args.Length; i++)
             {
-                PValue arg = args[i];
-                IEnumerable<PValue> set = Map._ToEnumerable(sctx, arg);
-                if(set == null)
+                var arg = args[i];
+                var set = Map._ToEnumerable(sctx, arg);
+                if (set == null)
                     continue;
-                foreach (PValue value in set)
+                foreach (var value in set)
                 {
                     eargs[0] = value;
                     f.IndirectCall(sctx, eargs);

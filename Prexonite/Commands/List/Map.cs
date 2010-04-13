@@ -59,7 +59,7 @@ namespace Prexonite.Commands.List
             get { return _instance; }
         }
 
-        #endregion 
+        #endregion
 
         /// <summary>
         /// Tries to turn a generic PValue object into an <see cref="IEnumerable{PValue}"/> if possible. Returns null if <paramref name="psource"/> cannot be enumerated over.
@@ -69,15 +69,15 @@ namespace Prexonite.Commands.List
         /// <returns></returns>
         internal static IEnumerable<PValue> _ToEnumerable(StackContext sctx, PValue psource)
         {
-            switch(psource.Type.ToBuiltIn())
+            switch (psource.Type.ToBuiltIn())
             {
                 case PType.BuiltIn.List:
                     return (IEnumerable<PValue>) psource.Value;
                 case PType.BuiltIn.Object:
-                    Type clrType = ((ObjectPType) psource.Type).ClrType;
-                    if(typeof(IEnumerable<PValue>).IsAssignableFrom(clrType))
+                    var clrType = ((ObjectPType) psource.Type).ClrType;
+                    if (typeof (IEnumerable<PValue>).IsAssignableFrom(clrType))
                         goto case PType.BuiltIn.List;
-                    else if(typeof(IEnumerable).IsAssignableFrom(clrType))
+                    else if (typeof (IEnumerable).IsAssignableFrom(clrType))
                         return _wrapNonGenericIEnumerable(sctx, (IEnumerable) psource.Value);
 
                     break;
@@ -96,8 +96,8 @@ namespace Prexonite.Commands.List
         {
             var sctx = sctxCarrier.StackContext;
 
-            foreach (PValue x in source)
-                yield return f != null ? f.IndirectCall(sctx, new PValue[] { x }) : x;
+            foreach (var x in source)
+                yield return f != null ? f.IndirectCall(sctx, new[] {x}) : x;
         }
 
         /// <summary>
@@ -106,7 +106,7 @@ namespace Prexonite.Commands.List
         /// <param name="sctxCarrier">The stack context in which to call the supplied function.</param>
         /// <param name="args">The list of arguments to be passed to the command.</param>
         /// <returns>A coroutine that maps the.</returns>
-        protected  static IEnumerable<PValue> CoroutineRunStatically(ContextCarrier sctxCarrier, PValue[] args)
+        protected static IEnumerable<PValue> CoroutineRunStatically(ContextCarrier sctxCarrier, PValue[] args)
         {
             if (sctxCarrier == null)
                 throw new ArgumentNullException("sctxCarrier");
@@ -126,15 +126,15 @@ namespace Prexonite.Commands.List
             IEnumerable<PValue> source;
             if (args.Length == 2)
             {
-                PValue psource = args[1];
-                source = _ToEnumerable(sctx, psource) ?? new PValue[] {psource};
+                var psource = args[1];
+                source = _ToEnumerable(sctx, psource) ?? new[] {psource};
             }
             else
             {
-                List<PValue> lstsource = new List<PValue>();
-                for (int i = 1; i < args.Length; i++)
+                var lstsource = new List<PValue>();
+                for (var i = 1; i < args.Length; i++)
                 {
-                    IEnumerable<PValue> multiple = _ToEnumerable(sctx, args[i]);
+                    var multiple = _ToEnumerable(sctx, args[i]);
                     if (multiple != null)
                         lstsource.AddRange(multiple);
                     else
@@ -147,12 +147,12 @@ namespace Prexonite.Commands.List
             foreach (var value in CoroutineRun(sctxCarrier, f, source))
             {
                 yield return value;
-            } 
+            }
         }
 
         private static IEnumerable<PValue> _wrapNonGenericIEnumerable(StackContext sctx, IEnumerable nonGeneric)
         {
-            foreach (object obj in nonGeneric)
+            foreach (var obj in nonGeneric)
                 yield return sctx.CreateNativePValue(obj);
         }
 

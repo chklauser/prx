@@ -71,7 +71,7 @@ namespace Prexonite
 
         public void Store(TextWriter writer)
         {
-            foreach (KeyValuePair<string, PFunction> kvp in _table)
+            foreach (var kvp in _table)
                 kvp.Value.Store(writer);
         }
 
@@ -155,7 +155,7 @@ namespace Prexonite
 
         public IEnumerator<PFunction> GetEnumerator()
         {
-            foreach (KeyValuePair<string, PFunction> kvp in _table)
+            foreach (var kvp in _table)
                 yield return kvp.Value;
         }
 
@@ -165,7 +165,7 @@ namespace Prexonite
 
         IEnumerator IEnumerable.GetEnumerator()
         {
-            foreach (KeyValuePair<string, PFunction> kvp in _table)
+            foreach (var kvp in _table)
                 yield return kvp.Value;
         }
 

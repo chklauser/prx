@@ -73,13 +73,13 @@ namespace Prexonite.Compiler
         public override int GetHashCode()
         {
             return (
-                       Enum.GetName(typeof(SymbolInterpretations), Interpretation) +
+                       Enum.GetName(typeof (SymbolInterpretations), Interpretation) +
                        (Id ?? "-\\/_\\/-") +
                        (!Argument.HasValue
                             ?
-                        "\\-//\\-//\\"
+                                "\\-//\\-//\\"
                             :
-                        Argument.ToString()
+                                Argument.ToString()
                        )).GetHashCode();
         }
 
@@ -102,7 +102,7 @@ namespace Prexonite.Compiler
         public override string ToString()
         {
             return Enum.GetName(
-                       typeof(SymbolInterpretations), Interpretation) +
+                       typeof (SymbolInterpretations), Interpretation) +
                    (Id == null ? "" : "->" + Id) +
                    (Argument.HasValue ? "#" + Argument.Value : ""
                    );

@@ -63,13 +63,13 @@ namespace Prexonite.Compiler.Ast
         {
             expr = null;
 
-            bool isConstant = true;
-            StringBuilder buffer = new StringBuilder(TypeId);
+            var isConstant = true;
+            var buffer = new StringBuilder(TypeId);
             buffer.Append("(");
 
             //Optimize arguments
             IAstExpression oArg;
-            foreach (IAstExpression arg in Arguments.ToArray())
+            foreach (var arg in Arguments.ToArray())
             {
                 oArg = GetOptimizedNode(target, arg);
                 if (!ReferenceEquals(oArg, arg))
@@ -78,8 +78,8 @@ namespace Prexonite.Compiler.Ast
                     Arguments.Add(oArg);
                 }
 
-                AstConstant constValue = oArg as AstConstant;
-                AstConstantTypeExpression constType = oArg as AstConstantTypeExpression;
+                var constValue = oArg as AstConstant;
+                var constType = oArg as AstConstantTypeExpression;
 
                 if (constValue == null && constType == null)
                 {
@@ -113,7 +113,7 @@ namespace Prexonite.Compiler.Ast
 
         public override void EmitCode(CompilerTarget target)
         {
-            foreach (IAstExpression expr in Arguments)
+            foreach (var expr in Arguments)
                 expr.EmitCode(target);
             target.Emit(OpCode.newtype, Arguments.Count, TypeId);
         }

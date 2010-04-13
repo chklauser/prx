@@ -28,7 +28,6 @@ namespace Prexonite.Commands
 {
     public class CommandTable : SymbolTable<PCommand>
     {
-
         /// <summary>
         /// Determines whether a particular name is registered for a command.
         /// </summary>
@@ -42,9 +41,9 @@ namespace Prexonite.Commands
         public override void Add(string key, PCommand value)
         {
             if (value == null)
-                throw new ArgumentNullException("value"); 
+                throw new ArgumentNullException("value");
             base.Add(key, value);
-        } 
+        }
 
         /// <summary>
         /// Index based access to the dictionary of available commands.
@@ -261,17 +260,16 @@ namespace Prexonite.Commands
 
         private void _remove_commands(PCommandGroups groups)
         {
-            KeyValuePair<string, PCommand>[] commands =
+            var commands =
                 new KeyValuePair<string, PCommand>[Count];
             CopyTo(commands, 0);
-            foreach (KeyValuePair<string, PCommand> kvp in commands)
+            foreach (var kvp in commands)
             {
-                PCommand cmd = kvp.Value;
+                var cmd = kvp.Value;
                 cmd.RemoveFromGroup(groups);
                 if (!cmd.BelongsToAGroup)
                     Remove(kvp.Key);
             }
         }
-
     }
 }

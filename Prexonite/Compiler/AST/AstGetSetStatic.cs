@@ -89,7 +89,7 @@ namespace Prexonite.Compiler.Ast
 
             if (constType != null)
             {
-                EmitArguments(target,!justEffect, 0);
+                EmitArguments(target, !justEffect, 0);
                 target.EmitStaticSetCall(
                     Arguments.Count, constType.TypeExpression + "::" + MemberId);
             }
@@ -108,7 +108,7 @@ namespace Prexonite.Compiler.Ast
             if (Call == PCall.Get)
                 EmitGetCode(target, justEffect);
             else
-                EmitSetCode(target,justEffect);
+                EmitSetCode(target, justEffect);
         }
 
         public override AstGetSet GetCopy()

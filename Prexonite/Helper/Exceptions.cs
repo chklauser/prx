@@ -211,11 +211,11 @@ namespace Prexonite
                     builder.Append("function ");
 
                     builder.Append(func.Meta.GetDefault(PFunction.LogicalIdKey, func.Id).Text);
-                    
+
                     if (fctx.Pointer < code.Count)
                     {
                         builder.Append(" around instruction ");
-                        
+
                         builder.Append(pointer);
                         builder.Append(": ");
                         builder.Append(code[pointer]);
@@ -274,13 +274,13 @@ namespace Prexonite
             if (pExc == null)
                 throw new ArgumentNullException("pExc");
             Exception exc = pExc;
-            PrexoniteRuntimeException lastpExc = pExc;
+            var lastpExc = pExc;
             Exception lastExc = pExc;
             while (
                 (exc is PrexoniteRuntimeException || exc is TargetInvocationException) &&
                 exc.InnerException != null)
             {
-                PrexoniteRuntimeException ipexc = exc as PrexoniteRuntimeException;
+                var ipexc = exc as PrexoniteRuntimeException;
                 if (ipexc != null)
                     lastpExc = ipexc;
                 lastExc = exc;
@@ -306,7 +306,7 @@ namespace Prexonite
         }
     }
 
-    [Serializable()]
+    [Serializable]
     public class InvalidCallException : PrexoniteException
     {
         public InvalidCallException(string message)
@@ -327,7 +327,7 @@ namespace Prexonite
         }
     }
 
-    [Serializable()]
+    [Serializable]
     public class InvalidConversionException : PrexoniteException
     {
         public InvalidConversionException(string message)

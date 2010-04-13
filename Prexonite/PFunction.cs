@@ -621,11 +621,12 @@ namespace Prexonite
                 ParentApplication.EnsureInitialization(engine, this);
                 PValue result;
                 CilImplementation
-                    (this,
-                     new NullContext(engine, ParentApplication, ImportedNamespaces),
-                     args,
-                     sharedVariables,
-                     out result);
+                    (
+                    this,
+                    new NullContext(engine, ParentApplication, ImportedNamespaces),
+                    args,
+                    sharedVariables,
+                    out result);
                 return result;
             }
             else

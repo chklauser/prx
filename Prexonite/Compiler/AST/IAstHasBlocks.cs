@@ -25,9 +25,6 @@ namespace Prexonite.Compiler.Ast
 {
     public interface IAstHasBlocks
     {
-        AstBlock[] Blocks
-        {
-            get;
-        }
+        AstBlock[] Blocks { get; }
     }
 }

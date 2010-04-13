@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using Prexonite.Compiler.Ast;
 using Prexonite.Types;
 
@@ -10,7 +10,6 @@ namespace Prexonite.Compiler
     /// </summary>
     public static class PropHook
     {
-
         private static readonly CompilerHook _hook = new CompilerHook(Hook);
         public const string PropFunctionId = "prop";
         public const string StrucPropFunctionId = "struct_prop";
@@ -65,7 +64,7 @@ namespace Prexonite.Compiler
                 while (parameters.Count < args_offset)
                     parameters.Add(Engine.GenerateName("dummy_arg"));
 
-                if(parameters.Count == args_offset)
+                if (parameters.Count == args_offset)
                     target.Function.Parameters.Add(Engine.GenerateName("prop_forward"));
 
                 var prop_arg = new AstGetSetSymbol(
@@ -88,7 +87,7 @@ namespace Prexonite.Compiler
 
                         //create backing field
                         AstGetSetSymbol backingField;
-                        if(target.ParentTarget ==null)
+                        if (target.ParentTarget == null)
                         {
                             //property is global, using a global backing field.
                             backingField = new AstGetSetSymbol(
@@ -121,7 +120,7 @@ namespace Prexonite.Compiler
                         break;
                     case 1:
                         var proxy_expr = stmt.Arguments[0] as AstGetSet;
-                        if(proxy_expr == null)
+                        if (proxy_expr == null)
                             throw new PrexoniteException("prop requires an assignable expression as its argument.");
                         prop_get = proxy_expr;
                         prop_set = proxy_expr.GetCopy();
@@ -153,7 +152,6 @@ namespace Prexonite.Compiler
                 check.ElseExpression = prop_set;
 
                 stmt_ret.Expression = check;
-
             }
         }
     }

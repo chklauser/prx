@@ -46,7 +46,7 @@ namespace Prexonite.Commands.Math
             get { return _instance; }
         }
 
-        #endregion 
+        #endregion
 
         /// <summary>
         /// A flag indicating whether the command acts like a pure function.
@@ -68,26 +68,26 @@ namespace Prexonite.Commands.Math
             if (sctx == null)
                 throw new ArgumentNullException("sctx");
             if (args == null)
-                throw new ArgumentNullException("args"); 
+                throw new ArgumentNullException("args");
 
             if (args.Length < 1)
                 throw new PrexoniteException("Round requires at least one argument.");
 
-            PValue arg0 = args[0];
-            PValue arg1 = args.Length > 1 ? args[1] : null;
+            var arg0 = args[0];
+            var arg1 = args.Length > 1 ? args[1] : null;
 
             return RunStatically(arg0, arg1, sctx);
         }
 
         public static PValue RunStatically(PValue arg0, PValue arg1, StackContext sctx)
         {
-            double x = (double) arg0.ConvertTo(sctx, PType.Real, true).Value;
+            var x = (double) arg0.ConvertTo(sctx, PType.Real, true).Value;
 
             int d;
             PValue pd;
 
             if (arg1 != null && arg1.TryConvertTo(sctx, PType.Int, true, out pd))
-                d = System.Math.Abs((int)pd.Value);
+                d = System.Math.Abs((int) pd.Value);
             else
                 d = 0;
 
@@ -126,7 +126,7 @@ namespace Prexonite.Commands.Math
         }
 
         private static readonly MethodInfo RunStaticallyMethod =
-            typeof(Round).GetMethod("RunStatically", new Type[] { typeof(PValue), typeof(PValue), typeof(StackContext) });
+            typeof (Round).GetMethod("RunStatically", new[] {typeof (PValue), typeof (PValue), typeof (StackContext)});
 
         /// <summary>
         /// Provides a custom compiler routine for emitting CIL byte code for a specific instruction.
@@ -137,7 +137,7 @@ namespace Prexonite.Commands.Math
         {
             if (ins.JustEffect)
             {
-                for (int i = 0; i < ins.Arguments; i++)
+                for (var i = 0; i < ins.Arguments; i++)
                     state.Il.Emit(OpCodes.Pop);
             }
             else

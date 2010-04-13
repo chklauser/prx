@@ -42,7 +42,7 @@ namespace Prexonite.Commands.List
             get { return _instance; }
         }
 
-        #endregion 
+        #endregion
 
         /// <summary>
         /// A flag indicating whether the command acts like a pure function.
@@ -66,13 +66,13 @@ namespace Prexonite.Commands.List
             if (args == null)
                 throw new ArgumentNullException("args");
 
-            int c = 0;
+            var c = 0;
 
-            foreach (PValue arg in args)
+            foreach (var arg in args)
             {
-                IEnumerable<PValue> set = Map._ToEnumerable(sctx, arg);
+                var set = Map._ToEnumerable(sctx, arg);
                 if (set != null)
-                    using (IEnumerator<PValue> Eset = set.GetEnumerator())
+                    using (var Eset = set.GetEnumerator())
                         while (Eset.MoveNext())
                             c++;
             }

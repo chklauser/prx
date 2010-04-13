@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
@@ -7,13 +7,11 @@ using Prexonite.Commands.Core;
 using Prexonite.Compiler.Cil;
 using Prexonite.Concurrency;
 using Prexonite.Types;
-using Action=System.Action;
 
 namespace Prexonite.Commands.Concurrency
 {
     public class CallAsync : PCommand, ICilCompilerAware
     {
-
         #region Singleton pattern
 
         private CallAsync()
@@ -27,7 +25,7 @@ namespace Prexonite.Commands.Concurrency
             get { return _instance; }
         }
 
-        #endregion 
+        #endregion
 
         #region Overrides of PCommand
 

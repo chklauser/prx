@@ -75,9 +75,9 @@ namespace Prexonite.Commands.Core
                 throw new ArgumentException(
                     "The command callmember has the signature(obj, [isSet,] id [, arg1, arg2,...,argn]).");
 
-            bool isSet = false;
+            var isSet = false;
             string id;
-            int i = 2;
+            var i = 2;
 
             if (args[1].Type == PType.Bool && args.Length > 2)
             {
@@ -90,8 +90,8 @@ namespace Prexonite.Commands.Core
             }
 
 
-            PValue[] iargs = new PValue[args.Length - i];
-            Array.Copy(args,i,iargs,0,iargs.Length);
+            var iargs = new PValue[args.Length - i];
+            Array.Copy(args, i, iargs, 0, iargs.Length);
 
             return Run(sctx, args[0], isSet, id, iargs);
         }
@@ -131,11 +131,11 @@ namespace Prexonite.Commands.Core
             if (args == null)
                 args = new PValue[] {};
 
-            List<PValue> iargs = new List<PValue>();
-            for (int i = 0; i < args.Length; i++)
+            var iargs = new List<PValue>();
+            for (var i = 0; i < args.Length; i++)
             {
-                PValue arg = args[i];
-                IEnumerable<PValue> folded = Map._ToEnumerable(sctx, arg);
+                var arg = args[i];
+                var folded = Map._ToEnumerable(sctx, arg);
                 if (folded == null)
                     iargs.Add(arg);
                 else

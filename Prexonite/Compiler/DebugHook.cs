@@ -45,7 +45,7 @@ namespace Prexonite.Compiler
         /// <param name="t">The compiler target that is to be transformed.</param>
         public static void Hook(CompilerTarget t)
         {
-            bool debugging = IsDebuggingEnabled(t.Function);
+            var debugging = IsDebuggingEnabled(t.Function);
 
             replace_debug(t, t.Ast, debugging);
         }
@@ -89,9 +89,9 @@ namespace Prexonite.Compiler
 
         private static void replace_debug(CompilerTarget t, IList<AstNode> block, bool debugging)
         {
-            for (int i = 0; i < block.Count; i++)
+            for (var i = 0; i < block.Count; i++)
             {
-                AstGetSetSymbol stmt = block[i] as AstGetSetSymbol;
+                var stmt = block[i] as AstGetSetSymbol;
                 //look for calls
                 if (stmt != null && stmt.Interpretation == SymbolInterpretations.Command &&
                     Engine.StringsAreEqual(stmt.Id, Engine.DebugAlias))
@@ -100,12 +100,12 @@ namespace Prexonite.Compiler
                     block.RemoveAt(i);
                     if (debugging)
                     {
-                        for (int j = 0; j < stmt.Arguments.Count; j++)
+                        for (var j = 0; j < stmt.Arguments.Count; j++)
                         {
-                            AstGetSetSymbol arg = stmt.Arguments[j] as AstGetSetSymbol;
+                            var arg = stmt.Arguments[j] as AstGetSetSymbol;
                             if (arg != null)
                             {
-                                AstGetSetSymbol printlnCall =
+                                var printlnCall =
                                     new AstGetSetSymbol(
                                         stmt.File,
                                         stmt.Line,
@@ -113,7 +113,7 @@ namespace Prexonite.Compiler
                                         PCall.Get,
                                         Engine.PrintLineAlias,
                                         SymbolInterpretations.Command);
-                                AstGetSetSymbol concatCall =
+                                var concatCall =
                                     new AstGetSetSymbol(
                                         stmt.File,
                                         stmt.Line,
@@ -122,7 +122,7 @@ namespace Prexonite.Compiler
                                         Engine.ConcatenateAlias,
                                         SymbolInterpretations.Command);
 
-                                AstConstant consts =
+                                var consts =
                                     new AstConstant(
                                         stmt.File,
                                         stmt.Line,
@@ -141,12 +141,12 @@ namespace Prexonite.Compiler
                     continue;
                 } //end if debug call
 
-                AstCondition cond = block[i] as AstCondition;
+                var cond = block[i] as AstCondition;
 
                 //look for conditions
                 if (cond != null)
                 {
-                    AstGetSetSymbol expr = cond.Condition as AstGetSetSymbol;
+                    var expr = cond.Condition as AstGetSetSymbol;
                     if (expr != null && expr.Interpretation == SymbolInterpretations.Command &&
                         Engine.StringsAreEqual(expr.Id, Engine.DebugAlias))
                         cond.Condition =
@@ -154,9 +154,9 @@ namespace Prexonite.Compiler
                 }
 
                 //Recursively replace 'debug' in nested blocks.
-                IAstHasBlocks complex = block[i] as IAstHasBlocks;
+                var complex = block[i] as IAstHasBlocks;
                 if (complex != null)
-                    foreach (AstBlock subBlock in complex.Blocks)
+                    foreach (var subBlock in complex.Blocks)
                         replace_debug(t, subBlock, debugging);
             } //end for statements
         }

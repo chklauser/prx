@@ -89,7 +89,7 @@ namespace Prexonite
         /// <returns>The value returned by the function.</returns>
         public virtual PValue IndirectCall(StackContext sctx, PValue[] args)
         {
-            StackContext fctx = CreateStackContext(sctx, args);
+            var fctx = CreateStackContext(sctx, args);
             return sctx.ParentEngine.Process(fctx);
         }
 
@@ -141,7 +141,7 @@ namespace Prexonite
                     return false;
                 if (a._sharedVariables.Length != b._sharedVariables.Length)
                     return false;
-                for (int i = 0; i < a._sharedVariables.Length; i++)
+                for (var i = 0; i < a._sharedVariables.Length; i++)
                     if (!ReferenceEquals(a._sharedVariables[i], b._sharedVariables[i]))
                         return false;
                 return true;

@@ -91,7 +91,7 @@ namespace Prexonite.Commands.Core
         }
 
         private static readonly MethodInfo GetCallerFromCilFunctionMethod =
-            typeof(Caller).GetMethod("GetCallerFromCilFunction", new Type[] {typeof(StackContext)});
+            typeof (Caller).GetMethod("GetCallerFromCilFunction", new[] {typeof (StackContext)});
 
         /// <summary>
         /// A flag indicating whether the command acts like a pure function.
@@ -111,7 +111,7 @@ namespace Prexonite.Commands.Core
 
         void ICilCompilerAware.ImplementInCil(CompilerState state, Instruction ins)
         {
-            for(var i = 0; i < ins.Arguments; i++)   
+            for (var i = 0; i < ins.Arguments; i++)
                 state.Il.Emit(OpCodes.Pop);
             if (!ins.JustEffect)
             {

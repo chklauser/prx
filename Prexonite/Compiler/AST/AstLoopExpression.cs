@@ -235,8 +235,8 @@ namespace Prexonite.Compiler.Ast
                 goto leave;
 
             //Perform statement to expression transformation
-            lstVar = Loop.Labels.CreateLabel("lst");
-            tmpVar = Loop.Labels.CreateLabel("tmp");
+            lstVar = Loop.Block.CreateLabel("lst");
+            tmpVar = Loop.Block.CreateLabel("tmp");
 
             foreach (AstBlock block in Loop.Blocks)
             {

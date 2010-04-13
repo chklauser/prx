@@ -730,13 +730,13 @@ internal partial class Parser {
 		}
 	}
 
-	void GetCall(/*Parser.Statement.atg:455*/out AstGetSet complex) {
-		/*Parser.Statement.atg:455*/AstGetSet getMember = null; bool isDeclaration; 
-		GetInitiator(/*Parser.Statement.atg:457*/out complex, out isDeclaration);
+	void GetCall(/*Parser.Statement.atg:457*/out AstGetSet complex) {
+		/*Parser.Statement.atg:457*/AstGetSet getMember = null; bool isDeclaration; 
+		GetInitiator(/*Parser.Statement.atg:459*/out complex, out isDeclaration);
 		while (la.kind == _dot || la.kind == _lbrack) {
-			GetSetExtension(/*Parser.Statement.atg:458*/complex, out getMember);
+			GetSetExtension(/*Parser.Statement.atg:460*/complex, out getMember);
 		}
-		/*Parser.Statement.atg:460*/if(getMember != null) 
+		/*Parser.Statement.atg:462*/if(getMember != null) 
 		{
 		    complex = getMember; 
 		}
@@ -1277,7 +1277,7 @@ internal partial class Parser {
 
 	void LambdaExpression(/*Parser.Expression.atg:350*/out IAstExpression expr) {
 		/*Parser.Expression.atg:350*/expr = null;
-		PFunction func = new PFunction(TargetApplication, generateNestedFunctionId());                                             
+		PFunction func = new PFunction(TargetApplication, generateLocalId());                                             
 		func.Meta[Application.ImportKey] = target.Function.Meta[Application.ImportKey];
 		func.Meta[PFunction.ParentFunctionKey] = target.Function.Id;
 		TargetApplication.Functions.Add(func);
@@ -1327,7 +1327,7 @@ internal partial class Parser {
 
 	void LazyExpression(/*Parser.Expression.atg:394*/out IAstExpression expr) {
 		/*Parser.Expression.atg:394*/expr = null;
-		PFunction func = new PFunction(TargetApplication, generateNestedFunctionId());
+		PFunction func = new PFunction(TargetApplication, generateLocalId());
 		func.Meta[Application.ImportKey] = target.Function.Meta[Application.ImportKey];
 		func.Meta[PFunction.ParentFunctionKey] = target.Function.Id;
 		TargetApplication.Functions.Add(func);
@@ -1476,8 +1476,8 @@ internal partial class Parser {
 		Expect(_null);
 	}
 
-	void WhileLoop(/*Parser.Statement.atg:392*/AstBlock block) {
-		/*Parser.Statement.atg:392*/AstWhileLoop loop = null;
+	void WhileLoop(/*Parser.Statement.atg:395*/AstBlock block) {
+		/*Parser.Statement.atg:395*/AstWhileLoop loop = null;
 		bool isPositive = true; 
 		
 		if (la.kind == _while || la.kind == _until) {
@@ -1485,121 +1485,121 @@ internal partial class Parser {
 				Get();
 			} else {
 				Get();
-				/*Parser.Statement.atg:396*/isPositive = false; 
+				/*Parser.Statement.atg:399*/isPositive = false; 
 			}
-			/*Parser.Statement.atg:397*/loop = new AstWhileLoop(this, true, isPositive); 
+			/*Parser.Statement.atg:400*/loop = new AstWhileLoop(this, true, isPositive); 
 			Expect(_lpar);
-			Expr(/*Parser.Statement.atg:398*/out loop.Condition);
+			Expr(/*Parser.Statement.atg:401*/out loop.Condition);
 			Expect(_rpar);
-			/*Parser.Statement.atg:399*/target.BeginBlock(loop.Labels); 
-			StatementBlock(/*Parser.Statement.atg:400*/loop.Block);
+			/*Parser.Statement.atg:402*/target.BeginBlock(loop.Block); 
+			StatementBlock(/*Parser.Statement.atg:403*/loop.Block);
 		} else if (la.kind == _do) {
 			Get();
-			/*Parser.Statement.atg:401*/AstBlock loopBody = new AstBlock(this); 
-			BlockLabels labels = AstWhileLoop.CreateBlockLabels();
-			target.BeginBlock(labels);
+			/*Parser.Statement.atg:405*/AstLoopBlock loopBody = new AstLoopBlock(this, null, "while"); 
+			target.BeginBlock(loopBody);
 			
-			StatementBlock(/*Parser.Statement.atg:405*/loopBody);
+			StatementBlock(/*Parser.Statement.atg:408*/loopBody);
 			if (la.kind == _while) {
 				Get();
 			} else if (la.kind == _until) {
 				Get();
-				/*Parser.Statement.atg:406*/isPositive = false; 
+				/*Parser.Statement.atg:409*/isPositive = false; 
 			} else SynErr(119);
-			/*Parser.Statement.atg:407*/loop = new AstWhileLoop(this, false, isPositive); 
-			loop.Labels = labels;
+			/*Parser.Statement.atg:410*/loop = new AstWhileLoop(this, false, isPositive); 
 			loop.Block = loopBody;
 			
 			Expect(_lpar);
-			Expr(/*Parser.Statement.atg:411*/out loop.Condition);
+			Expr(/*Parser.Statement.atg:413*/out loop.Condition);
 			Expect(_rpar);
 		} else SynErr(120);
-		/*Parser.Statement.atg:412*/target.EndBlock(); block.Add(loop); 
+		/*Parser.Statement.atg:414*/target.EndBlock(); block.Add(loop); 
 	}
 
-	void ForLoop(/*Parser.Statement.atg:415*/AstBlock block) {
-		/*Parser.Statement.atg:415*/AstForLoop loop;
+	void ForLoop(/*Parser.Statement.atg:417*/AstBlock block) {
+		/*Parser.Statement.atg:417*/AstForLoop loop;
 		
 		Expect(_for);
-		/*Parser.Statement.atg:418*/loop = new AstForLoop(this); target.BeginBlock(loop.Labels); 
+		/*Parser.Statement.atg:420*/loop = new AstForLoop(this); target.BeginBlock(loop.Block); 
 		Expect(_lpar);
-		StatementBlock(/*Parser.Statement.atg:419*/loop.Initialize);
+		StatementBlock(/*Parser.Statement.atg:421*/loop.Initialize);
 		if (la.kind == _do) {
 			Get();
-			StatementBlock(/*Parser.Statement.atg:421*/loop.NextIteration);
-			/*Parser.Statement.atg:422*/loop.IsPrecondition = false; 
+			StatementBlock(/*Parser.Statement.atg:423*/loop.NextIteration);
+			/*Parser.Statement.atg:424*/loop.IsPrecondition = false; 
 			if (la.kind == _while) {
 				Get();
 			} else if (la.kind == _until) {
 				Get();
-				/*Parser.Statement.atg:424*/loop.IsPositive = false; 
+				/*Parser.Statement.atg:426*/loop.IsPositive = false; 
 			} else SynErr(121);
-			Expr(/*Parser.Statement.atg:426*/out loop.Condition);
+			Expr(/*Parser.Statement.atg:428*/out loop.Condition);
 		} else if (StartOf(14)) {
 			if (la.kind == _while || la.kind == _until) {
 				if (la.kind == _while) {
 					Get();
 				} else {
 					Get();
-					/*Parser.Statement.atg:428*/loop.IsPositive = false; 
+					/*Parser.Statement.atg:430*/loop.IsPositive = false; 
 				}
 			}
-			Expr(/*Parser.Statement.atg:430*/out loop.Condition);
+			Expr(/*Parser.Statement.atg:432*/out loop.Condition);
 			Expect(_semicolon);
-			SimpleStatement(/*Parser.Statement.atg:432*/loop.NextIteration);
+			SimpleStatement(/*Parser.Statement.atg:434*/loop.NextIteration);
 		} else SynErr(122);
 		Expect(_rpar);
-		StatementBlock(/*Parser.Statement.atg:435*/loop.Block);
-		/*Parser.Statement.atg:435*/target.EndBlock(); block.Add(loop); 
+		StatementBlock(/*Parser.Statement.atg:437*/loop.Block);
+		/*Parser.Statement.atg:437*/target.EndBlock(); block.Add(loop); 
 	}
 
-	void ForeachLoop(/*Parser.Statement.atg:439*/AstBlock block) {
+	void ForeachLoop(/*Parser.Statement.atg:441*/AstBlock block) {
 		Expect(_foreach);
-		/*Parser.Statement.atg:440*/AstForeachLoop loop = new AstForeachLoop(this); 
+		/*Parser.Statement.atg:442*/AstForeachLoop loop = new AstForeachLoop(this);
+		target.BeginBlock(loop.Block);
+		
 		Expect(_lpar);
-		GetCall(/*Parser.Statement.atg:442*/out loop.Element);
+		GetCall(/*Parser.Statement.atg:446*/out loop.Element);
 		Expect(_in);
-		Expr(/*Parser.Statement.atg:444*/out loop.List);
+		Expr(/*Parser.Statement.atg:448*/out loop.List);
 		Expect(_rpar);
-		/*Parser.Statement.atg:446*/target.BeginBlock(loop.Labels); 
-		StatementBlock(/*Parser.Statement.atg:447*/loop.Block);
-		/*Parser.Statement.atg:448*/target.EndBlock(); 
-		/*Parser.Statement.atg:451*/block.Add(loop); 
+		StatementBlock(/*Parser.Statement.atg:450*/loop.Block);
+		/*Parser.Statement.atg:451*/target.EndBlock();
+		block.Add(loop); 
+		
 	}
 
-	void Arguments(/*Parser.Statement.atg:625*/ArgumentsProxy args) {
-		/*Parser.Statement.atg:626*/IAstExpression expr;
+	void Arguments(/*Parser.Statement.atg:632*/ArgumentsProxy args) {
+		/*Parser.Statement.atg:633*/IAstExpression expr;
 		                      
 		if (la.kind == _lpar) {
 			Get();
 			if (StartOf(14)) {
-				Expr(/*Parser.Statement.atg:631*/out expr);
-				/*Parser.Statement.atg:631*/args.Add(expr); 
+				Expr(/*Parser.Statement.atg:638*/out expr);
+				/*Parser.Statement.atg:638*/args.Add(expr); 
 				while (WeakSeparator(_comma,14,23) ) {
-					Expr(/*Parser.Statement.atg:633*/out expr);
-					/*Parser.Statement.atg:633*/args.Add(expr); 
+					Expr(/*Parser.Statement.atg:640*/out expr);
+					/*Parser.Statement.atg:640*/args.Add(expr); 
 				}
 			}
 			Expect(_rpar);
 		}
-		/*Parser.Statement.atg:638*/args.RemeberRightAppendPosition(); 
+		/*Parser.Statement.atg:645*/args.RemeberRightAppendPosition(); 
 		if (la.kind == _appendleft) {
 			Get();
-			if (/*Parser.Statement.atg:643*/la.kind == _lpar && (!isLambdaExpression())) {
+			if (/*Parser.Statement.atg:650*/la.kind == _lpar && (!isLambdaExpression())) {
 				Expect(_lpar);
 				if (StartOf(14)) {
-					Expr(/*Parser.Statement.atg:644*/out expr);
-					/*Parser.Statement.atg:644*/args.Add(expr); 
+					Expr(/*Parser.Statement.atg:651*/out expr);
+					/*Parser.Statement.atg:651*/args.Add(expr); 
 					while (la.kind == _comma) {
 						Get();
-						Expr(/*Parser.Statement.atg:646*/out expr);
-						/*Parser.Statement.atg:647*/args.Add(expr); 
+						Expr(/*Parser.Statement.atg:653*/out expr);
+						/*Parser.Statement.atg:654*/args.Add(expr); 
 					}
 				}
 				Expect(_rpar);
 			} else if (StartOf(14)) {
-				Expr(/*Parser.Statement.atg:651*/out expr);
-				/*Parser.Statement.atg:651*/args.Add(expr); 
+				Expr(/*Parser.Statement.atg:658*/out expr);
+				/*Parser.Statement.atg:658*/args.Add(expr); 
 			} else SynErr(123);
 		}
 	}
@@ -2004,12 +2004,12 @@ internal partial class Parser {
 		          if(isMacro)
 		              SemErr("Inner macros are illegal. Macros must be top-level.");
 		              
-		          funcId = generateNestedFunctionId(id ?? "inner");
+		          funcId = generateLocalId(id ?? "inner");
 		          
 		          if(string.IsNullOrEmpty(localId))
 		          {
 		              //Create shadow name
-		              localId = generateNestedFunctionId(id ?? "inner");
+		              localId = generateLocalId(id ?? "inner");
 		          }
 		          SmartDeclareLocal(localId, SymbolInterpretations.LocalReferenceVariable);
 		          foreach(var alias in funcAliases)
@@ -2041,7 +2041,7 @@ internal partial class Parser {
 		                                derStub = func;
 		                                
 		                                //Create derived body function
-		                                derId = generateNestedFunctionId(ft);                                            
+		                                derId = ft.GenerateLocalId();
 		                                derBody = new PFunction(TargetApplication, derId);
 		                                Loader.CreateFunctionTarget(derBody, new AstBlock(this));
 		                                TargetApplication.Functions.Add(derBody);
@@ -2518,62 +2518,62 @@ internal partial class Parser {
 		} else SynErr(147);
 	}
 
-	void Return(/*Parser.Statement.atg:475*/AstBlock block) {
-		/*Parser.Statement.atg:475*/AstReturn ret = null; 
+	void Return(/*Parser.Statement.atg:477*/AstBlock block) {
+		/*Parser.Statement.atg:477*/AstReturn ret = null; 
 		AstExplicitGoTo jump = null; 
 		IAstExpression expr = null; 
-		BlockLabels bl = target.CurrentBlock;
+		AstLoopBlock bl = target.CurrentLoopBlock;
 		
 		if (la.kind == _return || la.kind == _yield) {
 			if (la.kind == _return) {
 				Get();
-				/*Parser.Statement.atg:483*/ret = new AstReturn(this, ReturnVariant.Exit); 
+				/*Parser.Statement.atg:485*/ret = new AstReturn(this, ReturnVariant.Exit); 
 			} else {
 				Get();
-				/*Parser.Statement.atg:484*/ret = new AstReturn(this, ReturnVariant.Continue); 
+				/*Parser.Statement.atg:486*/ret = new AstReturn(this, ReturnVariant.Continue); 
 			}
 			if (StartOf(41)) {
 				if (StartOf(14)) {
-					Expr(/*Parser.Statement.atg:486*/out expr);
-					/*Parser.Statement.atg:486*/ret.Expression = expr; 
-				} else {
-					Get();
-					/*Parser.Statement.atg:487*/ret.ReturnVariant = ReturnVariant.Set; 
 					Expr(/*Parser.Statement.atg:488*/out expr);
 					/*Parser.Statement.atg:488*/ret.Expression = expr; 
-					/*Parser.Statement.atg:489*/SemErr("Return value assignment is no longer supported. You must use local variables instead."); 
+				} else {
+					Get();
+					/*Parser.Statement.atg:489*/ret.ReturnVariant = ReturnVariant.Set; 
+					Expr(/*Parser.Statement.atg:490*/out expr);
+					/*Parser.Statement.atg:490*/ret.Expression = expr; 
+					/*Parser.Statement.atg:491*/SemErr("Return value assignment is no longer supported. You must use local variables instead."); 
 				}
 			}
 		} else if (la.kind == _break) {
 			Get();
-			/*Parser.Statement.atg:491*/if(bl == null)
+			/*Parser.Statement.atg:493*/if(bl == null)
 			   ret = new AstReturn(this, ReturnVariant.Break); 
 			else
 			    jump = new AstExplicitGoTo(this, bl.BreakLabel);
 			
 		} else if (la.kind == _continue) {
 			Get();
-			/*Parser.Statement.atg:496*/if(bl == null)
+			/*Parser.Statement.atg:498*/if(bl == null)
 			   ret = new AstReturn(this, ReturnVariant.Continue); 
 			else
 			    jump = new AstExplicitGoTo(this, bl.ContinueLabel);
 			
 		} else SynErr(148);
-		/*Parser.Statement.atg:501*/block.Add((AstNode)ret ?? (AstNode)jump); 
+		/*Parser.Statement.atg:503*/block.Add((AstNode)ret ?? (AstNode)jump); 
 	}
 
-	void Throw(/*Parser.Statement.atg:610*/AstBlock block) {
-		/*Parser.Statement.atg:610*/AstThrow th; 
-		ThrowExpression(/*Parser.Statement.atg:612*/out th);
-		/*Parser.Statement.atg:613*/block.Add(th); 
+	void Throw(/*Parser.Statement.atg:614*/AstBlock block) {
+		/*Parser.Statement.atg:614*/AstThrow th; 
+		ThrowExpression(/*Parser.Statement.atg:616*/out th);
+		/*Parser.Statement.atg:617*/block.Add(th); 
 	}
 
-	void LetBindingStmt(/*Parser.Statement.atg:535*/AstBlock block) {
+	void LetBindingStmt(/*Parser.Statement.atg:537*/AstBlock block) {
 		Expect(_let);
-		LetBinder(/*Parser.Statement.atg:536*/block);
+		LetBinder(/*Parser.Statement.atg:538*/block);
 		while (la.kind == _comma) {
 			Get();
-			LetBinder(/*Parser.Statement.atg:536*/block);
+			LetBinder(/*Parser.Statement.atg:538*/block);
 		}
 	}
 
@@ -2589,19 +2589,24 @@ internal partial class Parser {
 		Expect(_lpar);
 		Expr(/*Parser.Statement.atg:380*/out expr);
 		Expect(_rpar);
-		/*Parser.Statement.atg:381*/AstCondition cond = new AstCondition(this, expr, isNegative); 
-		StatementBlock(/*Parser.Statement.atg:383*/cond.IfBlock);
+		/*Parser.Statement.atg:380*/AstCondition cond = new AstCondition(this, expr, isNegative);
+		target.BeginBlock(cond.IfBlock);
+		
+		StatementBlock(/*Parser.Statement.atg:384*/cond.IfBlock);
+		/*Parser.Statement.atg:385*/target.EndBlock(); 
 		if (la.kind == _else) {
 			Get();
-			StatementBlock(/*Parser.Statement.atg:386*/cond.ElseBlock);
+			/*Parser.Statement.atg:388*/target.BeginBlock(cond.ElseBlock); 
+			StatementBlock(/*Parser.Statement.atg:389*/cond.ElseBlock);
+			/*Parser.Statement.atg:390*/target.EndBlock(); 
 		}
-		/*Parser.Statement.atg:388*/block.Add(cond); 
+		/*Parser.Statement.atg:391*/block.Add(cond); 
 	}
 
-	void NestedFunction(/*Parser.Statement.atg:505*/AstBlock block) {
-		/*Parser.Statement.atg:505*/PFunction func; 
-		FunctionDefinition(/*Parser.Statement.atg:507*/out func);
-		/*Parser.Statement.atg:509*/string logicalId = func.Meta[PFunction.LogicalIdKey];
+	void NestedFunction(/*Parser.Statement.atg:507*/AstBlock block) {
+		/*Parser.Statement.atg:507*/PFunction func; 
+		FunctionDefinition(/*Parser.Statement.atg:509*/out func);
+		/*Parser.Statement.atg:511*/string logicalId = func.Meta[PFunction.LogicalIdKey];
 		func.Meta[PFunction.ParentFunctionKey] = target.Function.Id;
 		string physicalId = func.Id;
 		
@@ -2626,72 +2631,85 @@ internal partial class Parser {
 		
 	}
 
-	void TryCatchFinally(/*Parser.Statement.atg:562*/AstBlock block) {
-		/*Parser.Statement.atg:562*/AstTryCatchFinally a = new AstTryCatchFinally(this); 
+	void TryCatchFinally(/*Parser.Statement.atg:564*/AstBlock block) {
+		/*Parser.Statement.atg:564*/AstTryCatchFinally a = new AstTryCatchFinally(this); 
 		Expect(_try);
+		/*Parser.Statement.atg:566*/target.BeginBlock(a.TryBlock); 
 		Expect(_lbrace);
 		while (StartOf(20)) {
-			Statement(/*Parser.Statement.atg:566*/a.TryBlock);
+			Statement(/*Parser.Statement.atg:568*/a.TryBlock);
 		}
 		Expect(_rbrace);
+		/*Parser.Statement.atg:570*/target.EndBlock(); 
 		if (la.kind == _catch || la.kind == _finally) {
 			if (la.kind == _catch) {
 				Get();
+				/*Parser.Statement.atg:571*/target.BeginBlock(a.CatchBlock); 
 				if (la.kind == _lpar) {
 					Get();
-					GetCall(/*Parser.Statement.atg:571*/out a.ExceptionVar);
+					GetCall(/*Parser.Statement.atg:573*/out a.ExceptionVar);
 					Expect(_rpar);
 				} else if (la.kind == _lbrace) {
-					/*Parser.Statement.atg:573*/SemErr(la,"catch-clauses that don't store the exception are illegal."); 
+					/*Parser.Statement.atg:575*/SemErr(la,"catch-clauses that don't store the exception are illegal."); 
 				} else SynErr(150);
 				Expect(_lbrace);
 				while (StartOf(20)) {
-					Statement(/*Parser.Statement.atg:576*/a.CatchBlock);
+					Statement(/*Parser.Statement.atg:578*/a.CatchBlock);
 				}
 				Expect(_rbrace);
+				/*Parser.Statement.atg:580*/target.EndBlock(); 
 				if (la.kind == _finally) {
 					Get();
+					/*Parser.Statement.atg:583*/target.BeginBlock(a.FinallyBlock); 
 					Expect(_lbrace);
 					while (StartOf(20)) {
-						Statement(/*Parser.Statement.atg:583*/a.FinallyBlock);
+						Statement(/*Parser.Statement.atg:585*/a.FinallyBlock);
 					}
 					Expect(_rbrace);
+					/*Parser.Statement.atg:587*/target.EndBlock(); 
 				}
 			} else {
 				Get();
+				/*Parser.Statement.atg:590*/target.BeginBlock(a.FinallyBlock); 
 				Expect(_lbrace);
 				while (StartOf(20)) {
-					Statement(/*Parser.Statement.atg:590*/a.FinallyBlock);
+					Statement(/*Parser.Statement.atg:592*/a.FinallyBlock);
 				}
 				Expect(_rbrace);
+				/*Parser.Statement.atg:594*/target.EndBlock(); 
 				if (la.kind == _catch) {
+					/*Parser.Statement.atg:596*/target.BeginBlock(a.CatchBlock); 
 					Get();
 					if (la.kind == _lpar) {
 						Get();
-						GetCall(/*Parser.Statement.atg:596*/out a.ExceptionVar);
+						GetCall(/*Parser.Statement.atg:599*/out a.ExceptionVar);
 						Expect(_rpar);
 					} else if (la.kind == _lbrace) {
-						/*Parser.Statement.atg:598*/SemErr(la,"catch-clauses that don't store the exception are illegal."); 
+						/*Parser.Statement.atg:601*/SemErr(la,"catch-clauses that don't store the exception are illegal."); 
 					} else SynErr(151);
 					Expect(_lbrace);
 					while (StartOf(20)) {
-						Statement(/*Parser.Statement.atg:601*/a.CatchBlock);
+						Statement(/*Parser.Statement.atg:604*/a.CatchBlock);
 					}
 					Expect(_rbrace);
+					/*Parser.Statement.atg:607*/target.EndBlock(); 
 				}
 			}
 		}
-		/*Parser.Statement.atg:606*/block.Add(a); 
+		/*Parser.Statement.atg:610*/block.Add(a); 
 	}
 
-	void Using(/*Parser.Statement.atg:617*/AstBlock block) {
-		/*Parser.Statement.atg:617*/AstUsing use = new AstUsing(this); 
+	void Using(/*Parser.Statement.atg:621*/AstBlock block) {
+		/*Parser.Statement.atg:621*/AstUsing use = new AstUsing(this); 
 		Expect(_uusing);
 		Expect(_lpar);
-		Expr(/*Parser.Statement.atg:619*/out use.Expression);
+		Expr(/*Parser.Statement.atg:623*/out use.Expression);
 		Expect(_rpar);
-		StatementBlock(/*Parser.Statement.atg:620*/use.Block);
-		/*Parser.Statement.atg:621*/block.Add(use); 
+		/*Parser.Statement.atg:624*/target.BeginBlock(use.Block); 
+		StatementBlock(/*Parser.Statement.atg:625*/use.Block);
+		/*Parser.Statement.atg:626*/target.EndBlock();
+		block.Add(use); 
+		
 	}
 
 	void Assignment(/*Parser.Statement.atg:346*/AstGetSet lvalue, out AstNode node) {
@@ -2886,20 +2904,20 @@ internal partial class Parser {
 			new AstGetSetReference(this, PCall.Get, staticId, InterpretAsObjectVariable(kind)); 
 	}
 
-	void LetBinder(/*Parser.Statement.atg:540*/AstBlock block) {
-		/*Parser.Statement.atg:540*/string id = null;
+	void LetBinder(/*Parser.Statement.atg:542*/AstBlock block) {
+		/*Parser.Statement.atg:542*/string id = null;
 		IAstExpression thunk;
 		
-		Id(/*Parser.Statement.atg:544*/out id);
-		/*Parser.Statement.atg:545*/SmartDeclareLocal(id, SymbolInterpretations.LocalObjectVariable);
+		Id(/*Parser.Statement.atg:546*/out id);
+		/*Parser.Statement.atg:547*/SmartDeclareLocal(id, SymbolInterpretations.LocalObjectVariable);
 		mark_as_let(target.Function, id);
 		if(la.kind == _assign)
 		    _inject(_lazy,"lazy"); 
 		
 		if (la.kind == _assign) {
 			Get();
-			LazyExpression(/*Parser.Statement.atg:551*/out thunk);
-			/*Parser.Statement.atg:554*/var assign = new AstGetSetSymbol(this, PCall.Set, id, SymbolInterpretations.LocalObjectVariable);
+			LazyExpression(/*Parser.Statement.atg:553*/out thunk);
+			/*Parser.Statement.atg:556*/var assign = new AstGetSetSymbol(this, PCall.Set, id, SymbolInterpretations.LocalObjectVariable);
 			assign.Arguments.Add(thunk);
 			block.Add(assign);
 			

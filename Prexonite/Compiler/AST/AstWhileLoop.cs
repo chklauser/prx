@@ -35,14 +35,7 @@ namespace Prexonite.Compiler.Ast
         {
             IsPrecondition = isPrecondition;
             IsPositive = isNegative;
-            Block = new AstBlock(file, line, column);
-            Labels = CreateBlockLabels();
-        }
-
-        [DebuggerStepThrough]
-        public static BlockLabels CreateBlockLabels()
-        {
-            return new BlockLabels("while");
+            Block = new AstLoopBlock(file, line, column);
         }
 
         [DebuggerStepThrough]
@@ -114,23 +107,23 @@ namespace Prexonite.Compiler.Ast
                 }
             }
             continueFull:
-            
+
 
             if (!Block.IsEmpty) //Body exists -> complete loop code?
             {
                 if (conditionIsConstant) //Infinite, hopefully user managed, loop ->
                 {
-                    target.EmitLabel(Labels.ContinueLabel);
-                    target.EmitLabel(Labels.BeginLabel);
+                    target.EmitLabel(Block.ContinueLabel);
+                    target.EmitLabel(Block.BeginLabel);
                     Block.EmitCode(target);
-                    target.EmitJump(Labels.ContinueLabel);
+                    target.EmitJump(Block.ContinueLabel);
                 }
                 else
                 {
                     if (IsPrecondition)
-                        target.EmitJump(Labels.ContinueLabel);
+                        target.EmitJump(Block.ContinueLabel);
 
-                    target.EmitLabel(Labels.BeginLabel);
+                    target.EmitLabel(Block.BeginLabel);
                     Block.EmitCode(target);
 
                     _emitCondition(target);
@@ -138,17 +131,17 @@ namespace Prexonite.Compiler.Ast
             }
             else //Body does not exist -> Condition loop
             {
-                target.EmitLabel(Labels.BeginLabel);
+                target.EmitLabel(Block.BeginLabel);
                 _emitCondition(target);
             }
 
-            target.EmitLabel(Labels.BreakLabel);
+            target.EmitLabel(Block.BreakLabel);
         }
 
         private void _emitCondition(CompilerTarget target)
         {
-            target.EmitLabel(Labels.ContinueLabel);
-            AstLazyLogical.EmitJumpCondition(target, Condition, Labels.BeginLabel, IsPositive);
+            target.EmitLabel(Block.ContinueLabel);
+            AstLazyLogical.EmitJumpCondition(target, Condition, Block.BeginLabel, IsPositive);
         }
     }
 }

@@ -37,8 +37,8 @@ namespace Prexonite.Compiler.Ast
         {
             get
             {
-                int len = Arguments.Count;
-                IAstExpression[] ary = new IAstExpression[len + 1];
+                var len = Arguments.Count;
+                var ary = new IAstExpression[len + 1];
                 Array.Copy(Arguments.ToArray(), 0, ary, 1, len);
                 ary[0] = Subject;
                 return ary;
@@ -95,12 +95,10 @@ namespace Prexonite.Compiler.Ast
 
         public override int DefaultAdditionalArguments
         {
-            get
-            {
-                return base.DefaultAdditionalArguments + 1; //include subject
+            get { return base.DefaultAdditionalArguments + 1; //include subject
             }
-        } 
-        
+        }
+
         protected override void EmitCode(CompilerTarget target, bool justEffect)
         {
             Subject.EmitCode(target);

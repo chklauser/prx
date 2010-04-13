@@ -43,10 +43,7 @@ namespace Prexonite.Commands.Core
 
         public static Concat Instance
         {
-            get
-            {
-                return _instance;
-            }
+            get { return _instance; }
         }
 
         #endregion
@@ -112,7 +109,7 @@ namespace Prexonite.Commands.Core
 
         void ICilCompilerAware.ImplementInCil(CompilerState state, Instruction ins)
         {
-            throw new NotSupportedException();  
+            throw new NotSupportedException();
         }
 
         #endregion

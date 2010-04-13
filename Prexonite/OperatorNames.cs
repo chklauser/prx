@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
@@ -11,13 +11,11 @@ namespace Prexonite
     /// </summary>
     public static class OperatorNames
     {
-
         /// <summary>
         /// Provides constants for the names of operators in Prexonite
         /// </summary>
         public static class Prexonite
         {
-
             public const string Addition = "plus";
             public const string Subtraction = "minus";
             public const string Multiplication = "times";
@@ -98,6 +96,5 @@ namespace Prexonite
                 }
             }
         }
-
     }
 }

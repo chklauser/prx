@@ -46,7 +46,7 @@ namespace Prexonite.Commands.Math
             get { return _instance; }
         }
 
-        #endregion 
+        #endregion
 
         /// <summary>
         /// A flag indicating whether the command acts like a pure function.
@@ -54,10 +54,7 @@ namespace Prexonite.Commands.Math
         /// <remarks>Pure commands can be applied at compile time.</remarks>
         public override bool IsPure
         {
-            get
-            {
-                return true;
-            }
+            get { return true; }
         }
 
 
@@ -95,18 +92,18 @@ namespace Prexonite.Commands.Math
         {
             if (sctx == null)
                 throw new ArgumentNullException("sctx");
-            if(arg == null)
+            if (arg == null)
                 throw new ArgumentNullException("arg");
 
             if (arg.Type == PType.Int)
             {
-                int x = (int)arg.Value;
+                var x = (int) arg.Value;
 
                 return System.Math.Abs(x);
             }
             else
             {
-                double x = (double)arg.ConvertTo(sctx, PType.Real, true).Value;
+                var x = (double) arg.ConvertTo(sctx, PType.Real, true).Value;
 
                 return System.Math.Abs(x);
             }
@@ -121,7 +118,7 @@ namespace Prexonite.Commands.Math
         /// <returns>A set of <see cref="CompilationFlags"/>.</returns>
         CompilationFlags ICilCompilerAware.CheckQualification(Instruction ins)
         {
-            switch(ins.Arguments)
+            switch (ins.Arguments)
             {
                 case 1:
                     return CompilationFlags.PreferCustomImplementation;
@@ -132,7 +129,7 @@ namespace Prexonite.Commands.Math
         }
 
         private static readonly MethodInfo RunStaticallyMethod =
-            typeof(Abs).GetMethod("RunStatically", new Type[] {typeof(PValue), typeof(StackContext)});
+            typeof (Abs).GetMethod("RunStatically", new[] {typeof (PValue), typeof (StackContext)});
 
         /// <summary>
         /// Provides a custom compiler routine for emitting CIL byte code for a specific instruction.
@@ -141,7 +138,7 @@ namespace Prexonite.Commands.Math
         /// <param name="ins">The instruction to compile.</param>
         void ICilCompilerAware.ImplementInCil(CompilerState state, Instruction ins)
         {
-            switch(ins.Arguments)
+            switch (ins.Arguments)
             {
                 case 1:
                     break;
@@ -150,7 +147,7 @@ namespace Prexonite.Commands.Math
                     throw new NotSupportedException();
             }
 
-            if(ins.JustEffect)
+            if (ins.JustEffect)
             {
                 state.Il.Emit(OpCodes.Pop);
             }

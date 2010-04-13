@@ -94,7 +94,7 @@ namespace Prexonite
                         throw new ArgumentNullException
                             (
                             "sharedVariables",
-                            String.Format("The element at index {0} passed in sharedVariables is null for function {1}.",i,implementation));
+                            String.Format("The element at index {0} passed in sharedVariables is null for function {1}.", i, implementation));
 
                     if (_localVariables.ContainsKey(sharedNames[i]))
                         continue; //Arguments are redeclarations, that is not shared 
@@ -299,7 +299,7 @@ namespace Prexonite
         {
             return _performNextCylce(lastContext, false);
         }
-        
+
         public bool Step(StackContext lastContext)
         {
             return _performNextCylce(lastContext, true);
@@ -955,7 +955,7 @@ namespace Prexonite
                         doIndloc:
                         {
                             var stackAware = left.Value as IStackAware;
-                            if(stackAware != null && left.Type is ObjectPType)
+                            if (stackAware != null && left.Type is ObjectPType)
                             {
                                 _fetchReturnValue = !justEffect;
                                 ParentEngine.Stack.AddLast(stackAware.CreateStackContext(this, argv));
@@ -965,7 +965,7 @@ namespace Prexonite
                                 if (justEffect)
                                     left.IndirectCall(this, argv);
                                 else
-                                    Push(left.IndirectCall(this, argv));  
+                                    Push(left.IndirectCall(this, argv));
                             }
                         }
 

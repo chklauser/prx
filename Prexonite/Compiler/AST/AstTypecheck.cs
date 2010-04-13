@@ -54,7 +54,7 @@ namespace Prexonite.Compiler.Ast
 
         public IAstExpression[] Expressions
         {
-            get { return new IAstExpression[] {Subject}; }
+            get { return new[] {Subject}; }
         }
 
         #endregion
@@ -62,7 +62,7 @@ namespace Prexonite.Compiler.Ast
         public override void EmitCode(CompilerTarget target)
         {
             Subject.EmitCode(target);
-            AstConstantTypeExpression constType = Type as AstConstantTypeExpression;
+            var constType = Type as AstConstantTypeExpression;
             if (constType != null)
             {
                 PType T = null;
@@ -70,11 +70,11 @@ namespace Prexonite.Compiler.Ast
                 {
                     T = target.Loader.ConstructPType(constType.TypeExpression);
                 }
-                catch(PrexoniteException)
+                catch (PrexoniteException)
                 {
                     //ignore failures here
                 }
-                if ((object)T != null && T == PType.Null)
+                if ((object) T != null && T == PType.Null)
                     target.Emit(OpCode.check_null);
                 else
                     target.Emit(OpCode.check_const, constType.TypeExpression);
@@ -93,8 +93,8 @@ namespace Prexonite.Compiler.Ast
 
             expr = null;
 
-            AstConstant constSubject = Subject as AstConstant;
-            AstConstantTypeExpression constType = Type as AstConstantTypeExpression;
+            var constSubject = Subject as AstConstant;
+            var constType = Type as AstConstantTypeExpression;
             if (constSubject == null || constType == null)
                 return false;
             PType type;

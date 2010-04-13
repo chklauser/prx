@@ -54,7 +54,7 @@ namespace Prexonite.Commands.List
             get { return _instance; }
         }
 
-        #endregion 
+        #endregion
 
         protected override IEnumerable<PValue> CoroutineRun(ContextCarrier sctxCarrier, PValue[] args)
         {
@@ -71,20 +71,20 @@ namespace Prexonite.Commands.List
             if (args.Length < 2)
                 throw new PrexoniteException("Where(f, xs) requires at least two arguments.");
 
-            PValue f = args[0];
+            var f = args[0];
 
             var sctx = sctxCarrier.StackContext;
 
-            for (int i = 1; i < args.Length; i++)
+            for (var i = 1; i < args.Length; i++)
             {
-                PValue arg = args[i];
-                IEnumerable<PValue> set = Map._ToEnumerable(sctx, arg);
-                if(set == null)
+                var arg = args[i];
+                var set = Map._ToEnumerable(sctx, arg);
+                if (set == null)
                     continue;
-                foreach (PValue value in set)
+                foreach (var value in set)
                 {
-                    PValue include = f.IndirectCall(sctx, new PValue[] { value }).ConvertTo(sctx, PType.Bool, true);
-                    if ((bool)include.Value)
+                    var include = f.IndirectCall(sctx, new[] {value}).ConvertTo(sctx, PType.Bool, true);
+                    if ((bool) include.Value)
                         yield return value;
                 }
             }

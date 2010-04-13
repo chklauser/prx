@@ -36,8 +36,8 @@ namespace Prexonite.Compiler.Ast
         {
             get
             {
-                int len = Arguments.Count;
-                IAstExpression[] ary = new IAstExpression[len + 1];
+                var len = Arguments.Count;
+                var ary = new IAstExpression[len + 1];
                 Array.Copy(Arguments.ToArray(), 0, ary, 1, len);
                 ary[0] = Subject;
                 return ary;
@@ -90,11 +90,9 @@ namespace Prexonite.Compiler.Ast
 
         public override int DefaultAdditionalArguments
         {
-            get
-            {
-                return base.DefaultAdditionalArguments + 1; //include subject
+            get { return base.DefaultAdditionalArguments + 1; //include subject
             }
-        } 
+        }
 
         protected override void EmitCode(CompilerTarget target, bool justEffect)
         {
@@ -119,16 +117,16 @@ namespace Prexonite.Compiler.Ast
             OptimizeNode(target, ref Subject);
 
             //Try to replace { ldloc var ; indarg.x } by { indloc.x var } (same for glob)
-            AstGetSetSymbol symbol = Subject as AstGetSetSymbol;
+            var symbol = Subject as AstGetSetSymbol;
             if (symbol != null && symbol.IsObjectVariable)
             {
-                SymbolInterpretations kind =
+                var kind =
                     symbol.Interpretation == SymbolInterpretations.GlobalObjectVariable
                         ?
-                    SymbolInterpretations.GlobalReferenceVariable
+                            SymbolInterpretations.GlobalReferenceVariable
                         :
-                    SymbolInterpretations.LocalReferenceVariable;
-                AstGetSetSymbol refcall =
+                            SymbolInterpretations.LocalReferenceVariable;
+                var refcall =
                     new AstGetSetSymbol(File, Line, Column, Call, symbol.Id, kind);
                 refcall.Arguments.AddRange(Arguments);
                 expr = refcall;

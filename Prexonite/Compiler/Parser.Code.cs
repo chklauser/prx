@@ -23,11 +23,11 @@
 
 using System;
 using System.Collections.Generic;
+using System.Diagnostics;
+using System.Globalization;
 using System.Linq;
 using Prexonite.Compiler.Ast;
 using Prexonite.Types;
-using System.Globalization;
-using System.Diagnostics;
 
 namespace Prexonite.Compiler
 {
@@ -141,18 +141,12 @@ namespace Prexonite.Compiler
 
         public static NumberStyles RealStyle
         {
-            get
-            {
-                return NumberStyles.AllowDecimalPoint | NumberStyles.AllowExponent;
-            }
+            get { return NumberStyles.AllowDecimalPoint | NumberStyles.AllowExponent; }
         }
 
         public static NumberStyles IntegerStyle
         {
-            get
-            {
-                return NumberStyles.None;
-            }
+            get { return NumberStyles.None; }
         }
 
         [DebuggerStepThrough]
@@ -248,7 +242,7 @@ namespace Prexonite.Compiler
                 throw new ArgumentNullException("val");
             var c = new Token
             {
-                kind = kind, 
+                kind = kind,
                 val = val
             };
             _inject(c);
@@ -269,8 +263,8 @@ namespace Prexonite.Compiler
         public bool isLabel() //LL(2)
         {
             scanner.ResetPeek();
-            Token c = la;
-            Token cla = scanner.Peek();
+            var c = la;
+            var cla = scanner.Peek();
 
             return c.kind == _lid || (isId(c) && cla.kind == _colon);
         }
@@ -321,7 +315,7 @@ namespace Prexonite.Compiler
 
             //current la = assign | plus | minus | times | div | pow | bitOr | bitAnd | coalesence | tilde
 
-            switch(la.kind)
+            switch (la.kind)
             {
                 case _assign:
                     return true;
@@ -334,8 +328,8 @@ namespace Prexonite.Compiler
                 case _bitAnd:
                 case _coalescence:
                 case _tilde:
-                    Token c = scanner.Peek();
-                    if(c.kind == _assign)
+                    var c = scanner.Peek();
+                    if (c.kind == _assign)
                         return true;
                     else
                         return false;
@@ -348,8 +342,8 @@ namespace Prexonite.Compiler
         public bool isDeDereference() //LL(2)
         {
             scanner.ResetPeek();
-            Token c = la;
-            Token cla = scanner.Peek();
+            var c = la;
+            var cla = scanner.Peek();
 
             return c.kind == _pointer && cla.kind == _pointer;
         }
@@ -373,9 +367,9 @@ namespace Prexonite.Compiler
         public bool isLikeFunction() //Context
         {
             var id = la.val;
-            return 
+            return
                 la.kind == _id &&
-                target.Symbols.ContainsKey(id) && 
+                target.Symbols.ContainsKey(id) &&
                 isLikeFunction(target.Symbols[id].Interpretation);
         } //context
 
@@ -400,11 +394,11 @@ namespace Prexonite.Compiler
         [DebuggerStepThrough]
         public bool isKnownMacro(SymbolEntry symbol)
         {
-            if(symbol.Interpretation != SymbolInterpretations.Function)
+            if (symbol.Interpretation != SymbolInterpretations.Function)
                 return false;
 
             PFunction func;
-            if(!TargetApplication.Functions.TryGetValue(symbol.Id, out func))
+            if (!TargetApplication.Functions.TryGetValue(symbol.Id, out func))
                 return false;
 
             return func.Meta[CompilerTarget.MacroMetaKey].Switch;
@@ -529,12 +523,12 @@ namespace Prexonite.Compiler
         private bool isOuterVariable(string id) //context
         {
             //Check local function
-            PFunction func = target.Function;
+            var func = target.Function;
             if (func.Variables.Contains(id) || func.Parameters.Contains(id))
                 return false;
 
             //Check parents
-            for (CompilerTarget parent = target.ParentTarget;
+            for (var parent = target.ParentTarget;
                  parent != null;
                  parent = parent.ParentTarget)
             {
@@ -545,36 +539,21 @@ namespace Prexonite.Compiler
             return false;
         }
 
-        private string generateNestedFunctionId()
+        private string generateLocalId()
         {
-            return generateNestedFunctionId("");
+            return generateLocalId("");
         }
 
-        private string generateNestedFunctionId(string prefix)
+        private string generateLocalId(string prefix)
         {
-            return generateNestedFunctionId(target, prefix);
+            return target.GenerateLocalId(prefix);
         }
 
         // Not currently used
-        private static string generateNestedFunctionId(CompilerTarget thisTarget)
-        {
-            return generateNestedFunctionId(thisTarget, "");
-        }
-
-        private static string generateNestedFunctionId(CompilerTarget thisTarget, string prefix)
-        {
-            if (thisTarget == null)
-                throw new ArgumentNullException("thisTarget");
-            if (prefix == null)
-                prefix = "";
-            return
-                thisTarget.Function.Id + "\\" + prefix +
-                (thisTarget.NestedFunctionCounter++);
-        }
 
         private void SmartDeclareLocal(string id, SymbolInterpretations kind)
         {
-            SmartDeclareLocal(id, id, kind);   
+            SmartDeclareLocal(id, id, kind);
         }
 
         private void SmartDeclareLocal(string logicalId, string physicalId, SymbolInterpretations kind)
@@ -656,10 +635,10 @@ namespace Prexonite.Compiler
 
         private void mark_as_let(PFunction f, string local)
         {
-            f.Meta[PFunction.LetKey] = (MetaEntry) 
-                f.Meta[PFunction.LetKey].List
-                .Union(new[] {(MetaEntry) local})
-                .ToArray();
+            f.Meta[PFunction.LetKey] = (MetaEntry)
+                                       f.Meta[PFunction.LetKey].List
+                                           .Union(new[] {(MetaEntry) local})
+                                           .ToArray();
         }
 
         #region Assembler
@@ -680,9 +659,9 @@ namespace Prexonite.Compiler
         private bool isAsmInstruction(string insBase, string detail) //LL(4)
         {
             scanner.ResetPeek();
-            Token la1 = la.kind == _at ? scanner.Peek() : la;
-            Token la2 = scanner.Peek();
-            Token la3 = scanner.Peek();
+            var la1 = la.kind == _at ? scanner.Peek() : la;
+            var la2 = scanner.Peek();
+            var la3 = scanner.Peek();
             return checkAsmInstruction(la1, la2, la3, insBase, detail);
         }
 
@@ -693,9 +672,9 @@ namespace Prexonite.Compiler
                 la1.kind != _string && Engine.StringsAreEqual(la1.val, insBase) &&
                 (detail == null
                      ?
-                 (la2.kind == _dot ? la3.kind == _integer : true)
+                         (la2.kind == _dot ? la3.kind == _integer : true)
                      :
-                 (la2.kind == _dot && la3.kind != _string && Engine.StringsAreEqual(la3.val, detail))
+                         (la2.kind == _dot && la3.kind != _string && Engine.StringsAreEqual(la3.val, detail))
                 );
         }
 
@@ -745,10 +724,10 @@ namespace Prexonite.Compiler
         private bool peekIsOneOf(string[,] table)
         {
             scanner.ResetPeek();
-            Token la1 = la.kind == _at ? scanner.Peek() : la;
-            Token la2 = scanner.Peek();
-            Token la3 = scanner.Peek();
-            for (int i = table.GetUpperBound(0); i >= 0; i--)
+            var la1 = la.kind == _at ? scanner.Peek() : la;
+            var la2 = scanner.Peek();
+            var la3 = scanner.Peek();
+            for (var i = table.GetUpperBound(0); i >= 0; i--)
                 if (checkAsmInstruction(la1, la2, la3, table[i, 0], table[i, 1]))
                     return true;
             return false;
@@ -761,8 +740,8 @@ namespace Prexonite.Compiler
         {
             var tab = _tableOfInstructionNames;
             //Add original names
-            foreach (var code in Enum.GetNames(typeof(OpCode)))
-                tab.Add(code.Replace('_','.'), (OpCode) Enum.Parse(typeof(OpCode), code));
+            foreach (var code in Enum.GetNames(typeof (OpCode)))
+                tab.Add(code.Replace('_', '.'), (OpCode) Enum.Parse(typeof (OpCode), code));
 
             //Add aliases -- NOTE: You'll also have to add them to the respective groups
             tab.Add("new", OpCode.newobj);
@@ -783,13 +762,13 @@ namespace Prexonite.Compiler
             tab.Add("inda", OpCode.indarg);
             tab.Add("cor", OpCode.newcor);
             tab.Add("exception", OpCode.exc);
-            tab.Add("ldnull",OpCode.ldc_null);
+            tab.Add("ldnull", OpCode.ldc_null);
         }
 
         //[DebuggerStepThrough]
         private OpCode getOpCode(string insBase, string detail)
         {
-            string combined = insBase + (detail == null ? "" : "." + detail);
+            var combined = insBase + (detail == null ? "" : "." + detail);
             return _tableOfInstructionNames.GetDefault(combined, OpCode.invalid);
         }
 
@@ -821,7 +800,7 @@ namespace Prexonite.Compiler
         private readonly string[,] asmNullGroup =
             {
                 {"ldc", "null"},
-                {"ldnull",null},
+                {"ldnull", null},
                 {"neg", null},
                 {"not", null},
                 {"add", null},
@@ -903,7 +882,7 @@ namespace Prexonite.Compiler
                 {"inda", null},
                 {"newcor", null},
                 {"cor", null},
-                {"tail",null}
+                {"tail", null}
             };
 
         private readonly string[,] asmQualidArgGroup =

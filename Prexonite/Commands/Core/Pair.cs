@@ -46,7 +46,7 @@ namespace Prexonite.Commands.Core
         public static Pair Instance
         {
             get { return _instance; }
-        }   
+        }
 
         /// <summary>
         /// Turns to arguments into a key-value pair
@@ -90,20 +90,20 @@ namespace Prexonite.Commands.Core
 
         void ICilCompilerAware.ImplementInCil(CompilerState state, Instruction ins)
         {
-            int argc = ins.Arguments;
+            var argc = ins.Arguments;
 
-            if(argc < 2)
+            if (argc < 2)
             {
                 state.EmitLoadPValueNull();
             }
             else
             {
                 //pop excessive arguments
-                for(int i = 2; i < argc; i++)
+                for (var i = 2; i < argc; i++)
                     state.Il.Emit(OpCodes.Pop);
 
                 //make pvkvp
-                state.Il.Emit(OpCodes.Newobj,Compiler.Cil.Compiler.NewPValueKeyValuePair);
+                state.Il.Emit(OpCodes.Newobj, Compiler.Cil.Compiler.NewPValueKeyValuePair);
 
                 //save pvkvp in temporary variable
                 state.EmitStoreTemp(0);

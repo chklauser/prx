@@ -55,7 +55,7 @@ namespace Prexonite.Types
 
             result = null;
 
-            int argc = args.Length;
+            var argc = args.Length;
 
             var pvht = (PValueHashtable) subject.Value;
 
@@ -100,20 +100,20 @@ namespace Prexonite.Types
 
             result = null;
 
-            for (int i = 0; i < args.Length; i++)
+            for (var i = 0; i < args.Length; i++)
             {
                 if (args[i] == null)
                     args[i] = Null.CreatePValue();
             }
 
-            int argc = args.Length;
+            var argc = args.Length;
 
             switch (id.ToLowerInvariant())
             {
                 case "":
                     if (call == PCall.Get && argc > 0)
                     {
-                        PValue key = args[0];
+                        var key = args[0];
                         if (pvht.ContainsKey(key))
                             result = pvht[key];
                         else
@@ -165,7 +165,7 @@ namespace Prexonite.Types
                     }
                     else if (argc > 1)
                     {
-                        bool found = true;
+                        var found = true;
                         foreach (var arg in args)
                         {
                             if (!pvht.ContainsKey(arg))
@@ -185,7 +185,7 @@ namespace Prexonite.Types
                     }
                     else if (argc > 1)
                     {
-                        bool found = true;
+                        var found = true;
                         foreach (var arg in args)
                         {
                             if (!pvht.ContainsValue(arg))
@@ -289,7 +289,7 @@ namespace Prexonite.Types
 
             result = null;
 
-            for (int i = 0; i < args.Length; i++)
+            for (var i = 0; i < args.Length; i++)
             {
                 if (args[i] == null)
                     args[i] = Null.CreatePValue();
@@ -315,7 +315,7 @@ namespace Prexonite.Types
                     if (args.Length%2 != 0)
                         break;
                     pvht = new PValueHashtable(args.Length/2);
-                    for (int i = 0; i < args.Length; i += 2)
+                    for (var i = 0; i < args.Length; i += 2)
                         pvht.AddOverride(args[i], args[i + 1]);
                     result = new PValue(pvht, this);
                     break;
@@ -337,13 +337,13 @@ namespace Prexonite.Types
 
             result = null;
 
-            for (int i = 0; i < args.Length; i++)
+            for (var i = 0; i < args.Length; i++)
             {
                 if (args[i] == null)
                     args[i] = Null.CreatePValue();
             }
 
-            int argc = args.Length;
+            var argc = args.Length;
             PValueHashtable pvht = null;
 
             if (argc == 0)
@@ -356,7 +356,7 @@ namespace Prexonite.Types
             }
             else if (argc > 0)
             {
-                PValue arg0 = args[0];
+                var arg0 = args[0];
                 if (arg0.Type == Hash ||
                     (arg0.Type is ObjectPType && arg0.Value is IDictionary<PValue, PValue>))
                 {
@@ -393,7 +393,7 @@ namespace Prexonite.Types
 
             if (target is ObjectPType)
             {
-                Type tT = ((ObjectPType) target).ClrType;
+                var tT = ((ObjectPType) target).ClrType;
                 if (tT == typeof (IDictionary<PValue, PValue>) ||
                     tT == typeof (Dictionary<PValue, PValue>) ||
                     tT == typeof (IDictionary) ||
@@ -434,11 +434,11 @@ namespace Prexonite.Types
             result = null;
             PValueHashtable pvht = null;
 
-            PType sT = subject.Type;
+            var sT = subject.Type;
 
             if (sT is ObjectPType)
             {
-                object os = subject.Value;
+                var os = subject.Value;
                 var o_pvht = os as PValueHashtable;
                 if (o_pvht != null)
                     pvht = o_pvht;

@@ -72,7 +72,7 @@ namespace Prexonite.Compiler.Ast
 
         public IAstExpression[] Expressions
         {
-            get { return new IAstExpression[] {LeftOperand, RightOperand}; }
+            get { return new[] {LeftOperand, RightOperand}; }
         }
 
         #endregion
@@ -178,23 +178,23 @@ namespace Prexonite.Compiler.Ast
             //The coalecence and cast operators are handled separately.
             if (Operator == BinaryOperator.Coalescence)
             {
-                AstCoalescence coal = new AstCoalescence(File, Line, Column);
+                var coal = new AstCoalescence(File, Line, Column);
                 coal.Expressions.Add(LeftOperand);
                 coal.Expressions.Add(RightOperand);
                 expr = coal;
                 OptimizeNode(target, ref expr);
                 return true;
             }
-            else if(Operator == BinaryOperator.Cast)
+            else if (Operator == BinaryOperator.Cast)
             {
-                IAstType T = RightOperand as IAstType;
-                if(T == null)
+                var T = RightOperand as IAstType;
+                if (T == null)
                     throw new PrexoniteException(
                         String.Format(
                             "The right hand side of a cast operation must be a type expression (in {0} on line {1}).",
                             File,
                             Line));
-                expr = new AstTypecast(File, Line, Column,LeftOperand, T);
+                expr = new AstTypecast(File, Line, Column, LeftOperand, T);
                 OptimizeNode(target, ref expr);
                 return true;
             }
@@ -206,12 +206,12 @@ namespace Prexonite.Compiler.Ast
             OptimizeNode(target, ref RightOperand);
 
             //Constant folding
-            AstConstant leftConstant = LeftOperand as AstConstant;
-            AstConstant rightConstant = RightOperand as AstConstant;
-            bool constant = leftConstant != null && rightConstant != null;
+            var leftConstant = LeftOperand as AstConstant;
+            var rightConstant = RightOperand as AstConstant;
+            var constant = leftConstant != null && rightConstant != null;
 
-            PValue left = leftConstant != null ? leftConstant.ToPValue(target) : null;
-            PValue right = rightConstant != null ? rightConstant.ToPValue(target) : null;
+            var left = leftConstant != null ? leftConstant.ToPValue(target) : null;
+            var right = rightConstant != null ? rightConstant.ToPValue(target) : null;
             PValue result;
 
             PValue neutral;
@@ -372,28 +372,28 @@ namespace Prexonite.Compiler.Ast
                     if (right != null)
                     {
                         neutral = new PValue(1, PType.Int);
-                        PValue square = new PValue(2, PType.Int);
+                        var square = new PValue(2, PType.Int);
                         if ((right.Equality(target.Loader, neutral, out neutral) &&
-                             (bool)neutral.Value))
+                             (bool) neutral.Value))
                         {
                             //right operand is the neutral element 1 => left ^ 1 = left
                             expr = leftConstant == null ? LeftOperand : leftConstant;
                             return true;
                         }
-                        else if(right.Equality(target.Loader, square,out square) && (bool)square.Value)
+                        else if (right.Equality(target.Loader, square, out square) && (bool) square.Value)
                         {
                             //right operand is 2
                             expr =
                                 new AstActionBlock(
                                     (AstNode) LeftOperand, delegate(CompilerTarget t)
                                     {
-                                        if(leftConstant != null)
+                                        if (leftConstant != null)
                                             leftConstant.EmitCode(t);
                                         else
                                             LeftOperand.EmitCode(t);
 
                                         t.EmitDuplicate(1);
-                                        EmitOperator(t,BinaryOperator.Multiply);
+                                        EmitOperator(t, BinaryOperator.Multiply);
                                     });
                             return true;
                         }
@@ -521,7 +521,7 @@ namespace Prexonite.Compiler.Ast
                 String.Format(
                     "({0}) {1} ({2})",
                     LeftOperand,
-                    Enum.GetName(typeof(BinaryOperator), Operator),
+                    Enum.GetName(typeof (BinaryOperator), Operator),
                     RightOperand);
         }
     }

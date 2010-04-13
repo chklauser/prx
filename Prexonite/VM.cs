@@ -22,14 +22,12 @@
  */
 
 using System;
-using System.Collections;
 using System.Collections.Generic;
 using System.Diagnostics;
-using System.Reflection;
 using System.Threading;
-using Prexonite.Commands;
 using Prexonite.Commands.Core;
 using Prexonite.Types;
+
 #if Verbose
 
 #endif
@@ -54,7 +52,7 @@ namespace Prexonite
             get
             {
                 var stack = Thread.GetData(_stackSlot) as LinkedList<StackContext>;
-                if(stack == null)
+                if (stack == null)
                     Thread.SetData(_stackSlot, stack = new LinkedList<StackContext>());
                 return stack;
             }
@@ -86,7 +84,7 @@ namespace Prexonite
             var localStack = Stack;
             var level = localStack.Count;
             if (level < 1)
-                throw new PrexoniteException("The VM stack is empty. Return value cannot be computed.") ;
+                throw new PrexoniteException("The VM stack is empty. Return value cannot be computed.");
 
             PrexoniteRuntimeException currentException = null;
             StackContext lastContext = null;

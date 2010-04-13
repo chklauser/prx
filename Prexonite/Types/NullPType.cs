@@ -188,8 +188,8 @@ namespace Prexonite.Types
             StackContext sctx, PValue leftOperand, PValue rightOperand, out PValue result)
         {
             result = null;
-            bool leftIsNull = leftOperand.Value == null;
-            bool rightIsNull = rightOperand.Value == null;
+            var leftIsNull = leftOperand.Value == null;
+            var rightIsNull = rightOperand.Value == null;
 
             if (leftIsNull && rightIsNull)
                 result = Null.CreatePValue();
@@ -205,8 +205,8 @@ namespace Prexonite.Types
             StackContext sctx, PValue leftOperand, PValue rightOperand, out PValue result)
         {
             result = null;
-            bool leftIsNull = leftOperand.Value == null;
-            bool rightIsNull = rightOperand.Value == null;
+            var leftIsNull = leftOperand.Value == null;
+            var rightIsNull = rightOperand.Value == null;
 
             if (leftIsNull && rightIsNull)
                 result = Null.CreatePValue();
@@ -222,8 +222,8 @@ namespace Prexonite.Types
             StackContext sctx, PValue leftOperand, PValue rightOperand, out PValue result)
         {
             result = null;
-            bool leftIsNull = leftOperand.Value == null;
-            bool rightIsNull = rightOperand.Value == null;
+            var leftIsNull = leftOperand.Value == null;
+            var rightIsNull = rightOperand.Value == null;
 
             if (leftIsNull && rightIsNull)
                 result = Null.CreatePValue();
@@ -239,8 +239,8 @@ namespace Prexonite.Types
             StackContext sctx, PValue leftOperand, PValue rightOperand, out PValue result)
         {
             result = null;
-            bool leftIsNull = leftOperand.Value == null;
-            bool rightIsNull = rightOperand.Value == null;
+            var leftIsNull = leftOperand.Value == null;
+            var rightIsNull = rightOperand.Value == null;
 
             if (leftIsNull && rightIsNull)
                 result = Null.CreatePValue();
@@ -256,8 +256,8 @@ namespace Prexonite.Types
             StackContext sctx, PValue leftOperand, PValue rightOperand, out PValue result)
         {
             result = null;
-            bool leftIsNull = leftOperand.Value == null;
-            bool rightIsNull = rightOperand.Value == null;
+            var leftIsNull = leftOperand.Value == null;
+            var rightIsNull = rightOperand.Value == null;
 
             if (leftIsNull && rightIsNull)
                 result = Null.CreatePValue();
@@ -273,8 +273,8 @@ namespace Prexonite.Types
             StackContext sctx, PValue leftOperand, PValue rightOperand, out PValue result)
         {
             result = null;
-            bool leftIsNull = leftOperand.Value == null;
-            bool rightIsNull = rightOperand.Value == null;
+            var leftIsNull = leftOperand.Value == null;
+            var rightIsNull = rightOperand.Value == null;
 
             if (leftIsNull && rightIsNull)
                 result = Null.CreatePValue();
@@ -290,8 +290,8 @@ namespace Prexonite.Types
             StackContext sctx, PValue leftOperand, PValue rightOperand, out PValue result)
         {
             result = null;
-            bool leftIsNull = leftOperand.Value == null;
-            bool rightIsNull = rightOperand.Value == null;
+            var leftIsNull = leftOperand.Value == null;
+            var rightIsNull = rightOperand.Value == null;
 
             if (leftIsNull && rightIsNull)
                 result = Null.CreatePValue();
@@ -307,8 +307,8 @@ namespace Prexonite.Types
             StackContext sctx, PValue leftOperand, PValue rightOperand, out PValue result)
         {
             result = null;
-            bool leftIsNull = leftOperand.Value == null;
-            bool rightIsNull = rightOperand.Value == null;
+            var leftIsNull = leftOperand.Value == null;
+            var rightIsNull = rightOperand.Value == null;
 
             if (leftIsNull && rightIsNull)
                 result = Null.CreatePValue();
@@ -323,8 +323,8 @@ namespace Prexonite.Types
         public override bool Equality(
             StackContext sctx, PValue leftOperand, PValue rightOperand, out PValue result)
         {
-            bool leftIsNull = leftOperand.Value == null;
-            bool rightIsNull = rightOperand.Value == null;
+            var leftIsNull = leftOperand.Value == null;
+            var rightIsNull = rightOperand.Value == null;
 
             if (leftIsNull && rightIsNull)
                 result = Bool.CreatePValue(true);
@@ -339,8 +339,8 @@ namespace Prexonite.Types
         public override bool Inequality(
             StackContext sctx, PValue leftOperand, PValue rightOperand, out PValue result)
         {
-            bool leftIsNull = leftOperand.Value == null;
-            bool rightIsNull = rightOperand.Value == null;
+            var leftIsNull = leftOperand.Value == null;
+            var rightIsNull = rightOperand.Value == null;
 
             if (leftIsNull && rightIsNull)
                 result = Bool.CreatePValue(false);
@@ -356,8 +356,8 @@ namespace Prexonite.Types
             StackContext sctx, PValue leftOperand, PValue rightOperand, out PValue result)
         {
             result = null;
-            bool leftIsNull = leftOperand.Value == null;
-            bool rightIsNull = rightOperand.Value == null;
+            var leftIsNull = leftOperand.Value == null;
+            var rightIsNull = rightOperand.Value == null;
 
             if (leftIsNull && rightIsNull)
                 result = Bool.CreatePValue(false);
@@ -376,8 +376,8 @@ namespace Prexonite.Types
             out PValue result)
         {
             result = null;
-            bool leftIsNull = leftOperand.Value == null;
-            bool rightIsNull = rightOperand.Value == null;
+            var leftIsNull = leftOperand.Value == null;
+            var rightIsNull = rightOperand.Value == null;
 
             if (leftIsNull && rightIsNull)
                 result = Bool.CreatePValue(true);
@@ -393,8 +393,8 @@ namespace Prexonite.Types
             StackContext sctx, PValue leftOperand, PValue rightOperand, out PValue result)
         {
             result = null;
-            bool leftIsNull = leftOperand.Value == null;
-            bool rightIsNull = rightOperand.Value == null;
+            var leftIsNull = leftOperand.Value == null;
+            var rightIsNull = rightOperand.Value == null;
 
             if (leftIsNull && rightIsNull)
                 result = Bool.CreatePValue(false);
@@ -413,8 +413,8 @@ namespace Prexonite.Types
             out PValue result)
         {
             result = null;
-            bool leftIsNull = leftOperand.Value == null;
-            bool rightIsNull = rightOperand.Value == null;
+            var leftIsNull = leftOperand.Value == null;
+            var rightIsNull = rightOperand.Value == null;
 
             if (leftIsNull && rightIsNull)
                 result = Bool.CreatePValue(true);

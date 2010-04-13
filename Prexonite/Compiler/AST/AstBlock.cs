@@ -33,19 +33,57 @@ namespace Prexonite.Compiler.Ast
     public class AstBlock : AstNode,
                             IList<AstNode>
     {
+        #region Construction
+
         [DebuggerStepThrough]
         public AstBlock(string file, int line, int column)
+            : this(file, line, column, null)
+        {
+        }
+
+        [DebuggerStepThrough]
+        public AstBlock(string file, int line, int column, string uid)
+            : this(file, line, column, uid, null)
+        {
+        }
+
+        [DebuggerStepThrough]
+        public AstBlock(string file, int line, int column, string uid, string prefix)
             : base(file, line, column)
+        {
+            //See other ctor!
+            _uid = String.IsNullOrEmpty(uid) ? "\\" + Guid.NewGuid().ToString("N") : uid;
+            _prefix = (prefix ?? DefaultPrefix) + "\\";
+        }
+
+        [DebuggerStepThrough]
+        internal AstBlock(Parser p, string uid, string prefix)
+            : this(p.scanner.File,p.t.line, p.t.col, uid, prefix)
         {
         }
 
         [DebuggerStepThrough]
         internal AstBlock(Parser p)
-            : base(p)
+            : this(p, null)
         {
         }
 
-        public List<AstNode> Statements = new List<AstNode>();
+        [DebuggerStepThrough]
+        internal AstBlock(Parser p, string uid)
+            : this(p, uid, null)
+        {
+        }
+
+        #endregion
+
+
+        private List<AstNode> _statements = new List<AstNode>();
+
+        public List<AstNode> Statements
+        {
+            get { return _statements; }
+            set { _statements = value; }
+        }
 
         public override void EmitCode(CompilerTarget target)
         {
@@ -60,7 +98,7 @@ namespace Prexonite.Compiler.Ast
             if (isTopLevel)
                 tail_call_optimize_top_level_block();
 
-            foreach (var node in Statements)
+            foreach (var node in _statements)
             {
                 var stmt = node;
                 var expr = stmt as IAstExpression;
@@ -74,6 +112,8 @@ namespace Prexonite.Compiler.Ast
             }
         }
 
+        #region Tail call optimization
+
         private static void tail_call_optimize_expressions_of_nested_block(IAstHasExpressions hasExpressions)
         {
             foreach (var expression in hasExpressions.Expressions)
@@ -82,11 +122,11 @@ namespace Prexonite.Compiler.Ast
                 var hasExpressionsItself = expression as IAstHasExpressions;
                 var hasBlocksItself = expression as IAstHasBlocks;
 
-                if(blockItself != null)
+                if (blockItself != null)
                     blockItself.tail_call_optimize_nested_block();
-                else if(hasExpressionsItself != null)
+                else if (hasExpressionsItself != null)
                     tail_call_optimize_expressions_of_nested_block(hasExpressionsItself);
-                else if(hasBlocksItself != null)
+                else if (hasBlocksItself != null)
                     tail_call_optimize_all_nested_blocks_of(hasBlocksItself);
             }
         }
@@ -94,11 +134,11 @@ namespace Prexonite.Compiler.Ast
         private void tail_call_optimize_nested_block()
         {
             int i;
-            for (i = 1; i < Statements.Count; i++)
+            for (i = 1; i < _statements.Count; i++)
             {
-                var stmt = Statements[i];
+                var stmt = _statements[i];
                 var ret = stmt as AstReturn;
-                var getset = Statements[i - 1] as AstGetSet;
+                var getset = _statements[i - 1] as AstGetSet;
                 var hasBlocks = stmt as IAstHasBlocks;
                 var hasExpressions = stmt as IAstHasExpressions;
                 var blockItself = stmt as AstBlock;
@@ -108,19 +148,19 @@ namespace Prexonite.Compiler.Ast
                      ret.ReturnVariant == ReturnVariant.Continue) && getset != null)
                 {
                     //NOTE: Aggressive TCO disabled
-                    
+
                     //ret.Expression = getset;
                     //Statements.RemoveAt(i--);
                 }
-                else if(blockItself != null)
+                else if (blockItself != null)
                 {
                     blockItself.tail_call_optimize_nested_block();
                 }
-                else if(hasBlocks != null)
+                else if (hasBlocks != null)
                 {
                     tail_call_optimize_all_nested_blocks_of(hasBlocks);
                 }
-                else if(hasExpressions != null)
+                else if (hasExpressions != null)
                 {
                     tail_call_optimize_expressions_of_nested_block(hasExpressions);
                 }
@@ -140,9 +180,9 @@ namespace Prexonite.Compiler.Ast
             tail_call_optimize_nested_block();
             AstGetSet getset;
 
-            if (Statements.Count == 0)
+            if (_statements.Count == 0)
                 return;
-            var lastStmt = Statements[Statements.Count -1];
+            var lastStmt = _statements[_statements.Count - 1];
             AstCondition cond;
 
             // { if(cond) block1 else block2 } -> { if(cond) block1' else block2' }
@@ -151,16 +191,18 @@ namespace Prexonite.Compiler.Ast
                 cond.IfBlock.tail_call_optimize_top_level_block();
                 cond.ElseBlock.tail_call_optimize_top_level_block();
             }
-            // { ...; GetSet(); } -> { ...; return GetSet(); }
-            else if((getset = lastStmt as AstGetSet) != null)
+                // { ...; GetSet(); } -> { ...; return GetSet(); }
+            else if ((getset = lastStmt as AstGetSet) != null)
             {
                 var ret = new AstReturn(getset.File, getset.Line, getset.Column, ReturnVariant.Exit)
                 {
                     Expression = getset
                 };
-                Statements[Statements.Count - 1] = ret;
+                _statements[_statements.Count - 1] = ret;
             }
         }
+
+        #endregion
 
         public virtual bool IsEmpty
         {
@@ -177,40 +219,40 @@ namespace Prexonite.Compiler.Ast
         [DebuggerStepThrough]
         public int IndexOf(AstNode item)
         {
-            return Statements.IndexOf(item);
+            return _statements.IndexOf(item);
         }
 
         [DebuggerStepThrough]
         public void Insert(int index, AstNode item)
         {
             if (item == null)
-                throw new ArgumentNullException("item"); 
-            Statements.Insert(index, item);
+                throw new ArgumentNullException("item");
+            _statements.Insert(index, item);
         }
 
         public void InsertRange(int index, IEnumerable<AstNode> items)
         {
             if (items == null)
                 throw new ArgumentNullException("items");
-            Statements.InsertRange(index, items);
+            _statements.InsertRange(index, items);
         }
 
         [DebuggerStepThrough]
         public void RemoveAt(int index)
         {
-            Statements.RemoveAt(index);
+            _statements.RemoveAt(index);
         }
 
         public AstNode this[int index]
         {
             [DebuggerStepThrough]
-            get { return Statements[index]; }
+            get { return _statements[index]; }
             [DebuggerStepThrough]
             set
             {
                 if (value == null)
-                    throw new ArgumentNullException("value"); 
-                Statements[index] = value;
+                    throw new ArgumentNullException("value");
+                _statements[index] = value;
             }
         }
 
@@ -222,8 +264,8 @@ namespace Prexonite.Compiler.Ast
         public void Add(AstNode item)
         {
             if (item == null)
-                throw new ArgumentNullException("item"); 
-            Statements.Add(item);
+                throw new ArgumentNullException("item");
+            _statements.Add(item);
         }
 
         [DebuggerStepThrough]
@@ -231,53 +273,53 @@ namespace Prexonite.Compiler.Ast
         {
             if (collection == null)
                 throw new ArgumentNullException("collection");
-            foreach (AstNode node in collection)
+            foreach (var node in collection)
             {
                 if (node == null)
                     throw new ArgumentException(
                         "AstNode collection may not contain null.", "collection");
             }
-            Statements.AddRange(collection);
+            _statements.AddRange(collection);
         }
 
         [DebuggerStepThrough]
         public void Clear()
         {
-            Statements.Clear();
+            _statements.Clear();
         }
 
         [DebuggerStepThrough]
         public bool Contains(AstNode item)
         {
             if (item == null)
-                throw new ArgumentNullException("item"); 
-            return Statements.Contains(item);
+                throw new ArgumentNullException("item");
+            return _statements.Contains(item);
         }
 
         [DebuggerStepThrough]
         public void CopyTo(AstNode[] array, int arrayIndex)
         {
-            Statements.CopyTo(array, arrayIndex);
+            _statements.CopyTo(array, arrayIndex);
         }
 
         public int Count
         {
             [DebuggerStepThrough]
-            get { return Statements.Count; }
+            get { return _statements.Count; }
         }
 
         public bool IsReadOnly
         {
             [DebuggerStepThrough]
-            get { return ((IList<AstNode>) Statements).IsReadOnly; }
+            get { return ((IList<AstNode>) _statements).IsReadOnly; }
         }
 
         [DebuggerStepThrough]
         public bool Remove(AstNode item)
         {
             if (item == null)
-                throw new ArgumentNullException("item"); 
-            return Statements.Remove(item);
+                throw new ArgumentNullException("item");
+            return _statements.Remove(item);
         }
 
         #endregion
@@ -287,7 +329,7 @@ namespace Prexonite.Compiler.Ast
         [DebuggerStepThrough]
         public IEnumerator<AstNode> GetEnumerator()
         {
-            return Statements.GetEnumerator();
+            return _statements.GetEnumerator();
         }
 
         #endregion
@@ -297,7 +339,7 @@ namespace Prexonite.Compiler.Ast
         [DebuggerStepThrough]
         IEnumerator IEnumerable.GetEnumerator()
         {
-            return Statements.GetEnumerator();
+            return _statements.GetEnumerator();
         }
 
         #endregion
@@ -305,9 +347,103 @@ namespace Prexonite.Compiler.Ast
         public override string ToString()
         {
             var buffer = new StringBuilder();
-            foreach (var node in Statements)
+            foreach (var node in _statements)
                 buffer.AppendFormat("{0} ;", node);
             return buffer.ToString();
+        }
+
+        #region Block labels
+
+
+        public bool JumpLabelsEnabled { get; set; }
+        public AstBlock LexicalParentBlock { get; set; }
+
+        private readonly string _prefix;
+        private readonly string _uid;
+
+        public string Prefix
+        {
+            get { return _prefix.Substring(0, _prefix.Length - 1); }
+        }
+
+        public string BlockUid
+        {
+            get { return _uid; }
+        }
+
+        public const string DefaultPrefix = "_";
+        public const string RootBlockName = "root";
+
+        public string CreateLabel(string verb)
+        {
+            return String.Concat(_prefix, verb, _uid);
+        }
+
+        #endregion
+    }
+
+    public class AstLoopBlock : AstBlock
+    {
+        public const string ContinueWord = "continue";
+        public const string BreakWord = "break";
+        public const string BeginWord = "begin";
+        private readonly string _continueLabel;
+        private readonly string _breakLabel;
+        private readonly string _beginLabel;
+
+        [DebuggerStepThrough]
+        public AstLoopBlock(string file, int line, int column)
+            : this(file, line, column, null)
+        {
+        }
+
+        [DebuggerStepThrough]
+        public AstLoopBlock(string file, int line, int column, string uid)
+            : this(file, line, column, uid, null)
+        {
+        }
+
+        [DebuggerStepThrough]
+        public AstLoopBlock(string file, int line, int column, string uid, string prefix)
+            : base(file, line, column, uid, prefix)
+        {
+            //See other ctor!
+            _continueLabel = CreateLabel(ContinueWord);
+            _breakLabel = CreateLabel(BreakWord);
+            _beginLabel = CreateLabel(BeginWord);
+        }
+
+        [DebuggerStepThrough]
+        internal AstLoopBlock(Parser p, string uid, string prefix)
+            : this(p.scanner.File,p.t.line, p.t.col, uid, prefix)
+        {
+        }
+
+        [DebuggerStepThrough]
+        internal AstLoopBlock(Parser p)
+            : this(p, null)
+        {
+        }
+
+        [DebuggerStepThrough]
+        internal AstLoopBlock(Parser p, string uid)
+            : this(p, uid, null)
+        {
+        }
+
+        public string ContinueLabel
+        {
+            get { return _continueLabel; }
+        }
+
+        public string BreakLabel
+        {
+            get { return _breakLabel; }
+        }
+
+        public string BeginLabel
+        {
+            get { return _beginLabel; }
         }
     }
 }

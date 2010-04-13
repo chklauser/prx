@@ -54,7 +54,7 @@ namespace Prexonite.Compiler
                 String.Format(
                     "({0})~{1}" + (includePosition ? "/line:{2}/col:{3}" : ""),
                     val,
-                    Enum.GetName(typeof(Parser.Terminals), (Parser.Terminals) kind),
+                    Enum.GetName(typeof (Parser.Terminals), (Parser.Terminals) kind),
                     line,
                     col);
         }

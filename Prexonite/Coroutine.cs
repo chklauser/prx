@@ -82,7 +82,7 @@ namespace Prexonite
         {
             while (IsValid)
             {
-                PValue result = Execute(_corctx.ParentEngine);
+                var result = Execute(_corctx.ParentEngine);
                 if (!IsValid)
                     break;
                 yield return result;
@@ -203,7 +203,7 @@ namespace Prexonite
             if (!IsValid)
                 return PType.Null.CreatePValue();
 
-            PValue ret = eng.Process(_corctx);
+            var ret = eng.Process(_corctx);
             if (_corctx.ReturnMode != ReturnModes.Continue)
             {
                 _corctx = null;

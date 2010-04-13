@@ -783,7 +783,7 @@ CoroutineCreation<out IAstExpression expr>
 
 LambdaExpression<out IAstExpression expr>
                                         (.  expr = null;
-                                            PFunction func = new PFunction(TargetApplication, generateNestedFunctionId());                                             
+                                            PFunction func = new PFunction(TargetApplication, generateLocalId());                                             
                                             func.Meta[Application.ImportKey] = target.Function.Meta[Application.ImportKey];
                                             func.Meta[PFunction.ParentFunctionKey] = target.Function.Id;
                                             TargetApplication.Functions.Add(func);
@@ -827,7 +827,7 @@ implementation
 
 LazyExpression<out IAstExpression expr>
                                         (.  expr = null;
-                                            PFunction func = new PFunction(TargetApplication, generateNestedFunctionId());
+                                            PFunction func = new PFunction(TargetApplication, generateLocalId());
                                             func.Meta[Application.ImportKey] = target.Function.Meta[Application.ImportKey];
                                             func.Meta[PFunction.ParentFunctionKey] = target.Function.Id;
                                             TargetApplication.Functions.Add(func);
@@ -1256,12 +1256,12 @@ FunctionDefinition<out PFunction func>
                                                 if(isMacro)
                                                     SemErr("Inner macros are illegal. Macros must be top-level.");
                                                     
-                                                funcId = generateNestedFunctionId(id ?? "inner");
+                                                funcId = generateLocalId(id ?? "inner");
                                                 
                                                 if(string.IsNullOrEmpty(localId))
                                                 {
                                                     //Create shadow name
-                                                    localId = generateNestedFunctionId(id ?? "inner");
+                                                    localId = generateLocalId(id ?? "inner");
                                                 }
                                                 SmartDeclareLocal(localId, SymbolInterpretations.LocalReferenceVariable);
                                                 foreach(var alias in funcAliases)
@@ -1293,7 +1293,7 @@ FunctionDefinition<out PFunction func>
                                             derStub = func;
                                             
                                             //Create derived body function
-                                            derId = generateNestedFunctionId(ft);                                            
+                                            derId = ft.GenerateLocalId();
                                             derBody = new PFunction(TargetApplication, derId);
                                             Loader.CreateFunctionTarget(derBody, new AstBlock(this));
                                             TargetApplication.Functions.Add(derBody);
@@ -1982,14 +1982,17 @@ Condition<AstBlock block>
     |   unless                  (.  isNegative = true; .)
     )
     
-    lpar Expr<out expr> rpar
-                                (.  AstCondition cond = new AstCondition(this, expr, isNegative); .)
+    lpar Expr<out expr> rpar    (.  AstCondition cond = new AstCondition(this, expr, isNegative);
+                                    target.BeginBlock(cond.IfBlock);
+                                .)
     
     StatementBlock<cond.IfBlock> 
+                                (.  target.EndBlock(); .)
 
     
-    [   else StatementBlock<cond.ElseBlock> 
-
+    [   else                    (.  target.BeginBlock(cond.ElseBlock); .)
+        StatementBlock<cond.ElseBlock> 
+                                (.  target.EndBlock(); .)
     ]                           (.  block.Add(cond); .)
 .
 
@@ -2001,16 +2004,15 @@ WhileLoop<AstBlock block>
 (   (   while  | until          (.  isPositive = false; .)    
     )                           (.  loop = new AstWhileLoop(this, true, isPositive); .)
     lpar Expr<out loop.Condition> rpar
-                                (.  target.BeginBlock(loop.Labels); .)
+                                (.  target.BeginBlock(loop.Block); .)
     StatementBlock<loop.Block> 
-|   do                          (.  AstBlock loopBody = new AstBlock(this); 
-                                    BlockLabels labels = AstWhileLoop.CreateBlockLabels();
-                                    target.BeginBlock(labels);
+    
+|   do                          (.  AstLoopBlock loopBody = new AstLoopBlock(this, null, "while"); 
+                                    target.BeginBlock(loopBody);
                                 .)
     StatementBlock<loopBody>
     (   while  | until          (.  isPositive = false; .)    
     )                           (.  loop = new AstWhileLoop(this, false, isPositive); 
-                                    loop.Labels = labels;
                                     loop.Block = loopBody;
                                 .)
     lpar Expr<out loop.Condition> rpar
@@ -2020,7 +2022,7 @@ WhileLoop<AstBlock block>
 ForLoop<AstBlock block>         (.  AstForLoop loop;
                                 .)
 =
-    for                         (.  loop = new AstForLoop(this); target.BeginBlock(loop.Labels); .)
+    for                         (.  loop = new AstForLoop(this); target.BeginBlock(loop.Block); .)
     lpar StatementBlock<loop.Initialize>
     (
 		do StatementBlock<loop.NextIteration> 
@@ -2042,18 +2044,18 @@ ForLoop<AstBlock block>         (.  AstForLoop loop;
 
 ForeachLoop<AstBlock block>
 =
-    foreach                      (.  AstForeachLoop loop = new AstForeachLoop(this); .)
+    foreach                      (.  AstForeachLoop loop = new AstForeachLoop(this);
+                                     target.BeginBlock(loop.Block);
+                                 .)
     lpar
     GetCall<out loop.Element> 
     in 
     Expr<out loop.List> 
     rpar
-                                (.  target.BeginBlock(loop.Labels); .)
     StatementBlock<loop.Block>
-                                (.  target.EndBlock(); .)
-    
-    
-                                (.  block.Add(loop); .) 
+                                (.  target.EndBlock();
+                                    block.Add(loop); 
+                                .) 
 .
 
 GetCall<out AstGetSet complex>
@@ -2080,7 +2082,7 @@ GetCall<out AstGetSet complex>
 Return<AstBlock block>          (.  AstReturn ret = null; 
                                     AstExplicitGoTo jump = null; 
                                     IAstExpression expr = null; 
-                                    BlockLabels bl = target.CurrentBlock;
+                                    AstLoopBlock bl = target.CurrentLoopBlock;
                                 .)
 =
 (   
@@ -2166,12 +2168,12 @@ LetBinder<AstBlock block>
 TryCatchFinally<AstBlock block>
                                 (.  AstTryCatchFinally a = new AstTryCatchFinally(this); .)
 =
-    try
+    try                         (.  target.BeginBlock(a.TryBlock); .)
     lbrace
     {   Statement<a.TryBlock>
     }
-    rbrace
-    [	catch
+    rbrace                      (. target.EndBlock(); .)
+    [	catch                   (. target.BeginBlock(a.CatchBlock); .)
 		(   lpar
 			GetCall<out a.ExceptionVar>
 			rpar
@@ -2180,23 +2182,24 @@ TryCatchFinally<AstBlock block>
 		lbrace
 		{   Statement<a.CatchBlock>
 		}
-		rbrace		
+		rbrace		            (.  target.EndBlock(); .)
 	    
 		[
-			finally
+			finally             (.  target.BeginBlock(a.FinallyBlock); .)
 			lbrace
 			{   Statement<a.FinallyBlock>
 			}
-			rbrace
+			rbrace              (.  target.EndBlock(); .)
 		]
 		
-	|	finally
+	|	finally                 (.  target.BeginBlock(a.FinallyBlock); .)
 		lbrace
 		{   Statement<a.FinallyBlock>
 		}
-		rbrace
+		rbrace                  (.  target.EndBlock(); .)
 		
-		[	catch
+		[	                    (.  target.BeginBlock(a.CatchBlock); .)
+		    catch
 			(   lpar
 				GetCall<out a.ExceptionVar>
 				rpar
@@ -2206,6 +2209,7 @@ TryCatchFinally<AstBlock block>
 			{   Statement<a.CatchBlock>
 			}
 			rbrace
+			                    (.  target.EndBlock(); .)
 		]
 	]                       
                                 (.  block.Add(a); .)
@@ -2222,8 +2226,11 @@ Using<AstBlock block>
                                 (.  AstUsing use = new AstUsing(this); .)
 =
     uusing lpar Expr<out use.Expression> rpar
+                                (.  target.BeginBlock(use.Block); .)
     StatementBlock<use.Block>
-                                (.  block.Add(use); .)
+                                (.  target.EndBlock();
+                                    block.Add(use); 
+                                .)
 .
 
 Arguments<ArgumentsProxy args>

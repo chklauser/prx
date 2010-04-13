@@ -1,7 +1,6 @@
 using System;
 using System.Collections.Generic;
 using System.Text;
-using Prexonite.Commands.List;
 using Prexonite.Compiler.Cil;
 using Prexonite.Types;
 
@@ -94,7 +93,7 @@ namespace Prexonite.Commands.Core
 
             callable = args[0];
 
-            FunctionContext fctx = sctx as FunctionContext;
+            var fctx = sctx as FunctionContext;
             if (fctx == null)
                 throw new PrexoniteException(@"Call\cc can only be called from within functions.");
 
@@ -111,7 +110,7 @@ namespace Prexonite.Commands.Core
 
         void ICilCompilerAware.ImplementInCil(CompilerState state, Instruction ins)
         {
-            throw new NotImplementedException(); 
+            throw new NotImplementedException();
         }
 
         #endregion

@@ -46,7 +46,7 @@ namespace Prexonite.Commands.List
             get { return _instance; }
         }
 
-        #endregion 
+        #endregion
 
         /// <summary>
         /// A flag indicating whether the command acts like a pure function.
@@ -68,12 +68,12 @@ namespace Prexonite.Commands.List
             if (sctx == null)
                 throw new ArgumentNullException("sctx");
             if (args == null)
-                throw new ArgumentNullException("args"); 
-            List<PValue> lst = new List<PValue>();
-            foreach (PValue arg in args)
+                throw new ArgumentNullException("args");
+            var lst = new List<PValue>();
+            foreach (var arg in args)
             {
-                IEnumerable<PValue> set = Map._ToEnumerable(sctx, arg);
-                if(set == null)
+                var set = Map._ToEnumerable(sctx, arg);
+                if (set == null)
                     continue;
                 else
                     lst.AddRange(set);
@@ -106,7 +106,7 @@ namespace Prexonite.Commands.List
         /// <param name="ins">The instruction to compile.</param>
         void ICilCompilerAware.ImplementInCil(CompilerState state, Instruction ins)
         {
-            throw new NotSupportedException(); 
+            throw new NotSupportedException();
         }
 
         #endregion

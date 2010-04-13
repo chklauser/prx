@@ -59,13 +59,13 @@ namespace Prexonite.Compiler.Ast
         public IAstExpression ElseExpression;
         public IAstExpression Condition;
         public bool IsNegative;
-        private static int depth = 0;
+        private static int depth;
 
         #region IAstHasExpressions Members
 
         public IAstExpression[] Expressions
         {
-            get { return new IAstExpression[] {Condition, IfExpression, ElseExpression}; }
+            get { return new[] {Condition, IfExpression, ElseExpression}; }
         }
 
         #endregion
@@ -76,7 +76,7 @@ namespace Prexonite.Compiler.Ast
         {
             //Optimize condition
             OptimizeNode(target, ref Condition);
-            AstUnaryOperator unaryCond = Condition as AstUnaryOperator;
+            var unaryCond = Condition as AstUnaryOperator;
             while (unaryCond != null && unaryCond.Operator == UnaryOperator.LogicalNot)
             {
                 Condition = unaryCond.Operand;
@@ -87,7 +87,7 @@ namespace Prexonite.Compiler.Ast
             //Constant conditions
             if (Condition is AstConstant)
             {
-                AstConstant constCond = (AstConstant) Condition;
+                var constCond = (AstConstant) Condition;
                 PValue condValue;
                 if (
                     !constCond.ToPValue(target).TryConvertTo(
@@ -113,8 +113,8 @@ namespace Prexonite.Compiler.Ast
             OptimizeNode(target, ref IfExpression);
             OptimizeNode(target, ref ElseExpression);
 
-            string elseLabel = "elsei\\" + depth + "\\assembler";
-            string endLabel = "endifi\\" + depth + "\\assembler";
+            var elseLabel = "elsei\\" + depth + "\\assembler";
+            var endLabel = "endifi\\" + depth + "\\assembler";
             depth++;
 
             //Emit

@@ -29,6 +29,7 @@ using System.Collections;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.IO;
+using System.Reflection;
 using System.Text;
 using Prexonite.Commands;
 using Prexonite.Compiler.Ast;
@@ -77,7 +78,6 @@ namespace Prexonite.Compiler
             _initializeBuildCommands();
         }
 
-        
 
         public void RegisterExistingCommands()
         {
@@ -160,10 +160,10 @@ namespace Prexonite.Compiler
         {
             if (func == null)
                 throw new ArgumentNullException("func");
-            
+
             var target = new CompilerTarget(this, func, block);
-            if(_functionTargets.ContainsKey(func.Id) &&
-               (!ParentApplication.Meta.GetDefault(Application.AllowOverridingKey, true).Switch))
+            if (_functionTargets.ContainsKey(func.Id) &&
+                (!ParentApplication.Meta.GetDefault(Application.AllowOverridingKey, true).Switch))
                 Errors.Add(
                     string.Format(
                         "The application {0} does not allow overriding of function {1}.", ParentApplication.Id, func.Id));
@@ -386,10 +386,7 @@ namespace Prexonite.Compiler
 
             public CustomResolver this[int index]
             {
-                get
-                {
-                    return _resolvers[index];
-                }
+                get { return _resolvers[index]; }
             }
 
             public IEnumerator<CustomResolver> GetEnumerator()
@@ -413,7 +410,6 @@ namespace Prexonite.Compiler
 
             #endregion
 
-
             #region Implementation of ICollection<CustomResolver>
 
             /// <summary>
@@ -434,7 +430,7 @@ namespace Prexonite.Compiler
             /// <exception cref="T:System.NotSupportedException">The <see cref="T:System.Collections.Generic.ICollection`1" /> is read-only. </exception>
             public void Clear()
             {
-               _resolvers.Clear();
+                _resolvers.Clear();
             }
 
             /// <summary>
@@ -498,7 +494,7 @@ namespace Prexonite.Compiler
             }
 
             #endregion
-        }        
+        }
 
         #endregion
 
@@ -636,7 +632,7 @@ namespace Prexonite.Compiler
         {
             var target = FunctionTargets[Application.InitializationId];
             target.ExecuteCompilerHooks();
-            target.Ast.EmitCode(target,false); //do not treat initialization blocks as top-level ones.
+            target.Ast.EmitCode(target, false); //do not treat initialization blocks as top-level ones.
             target.Ast.Clear();
         }
 
@@ -661,32 +657,29 @@ namespace Prexonite.Compiler
 
         public Stack<string> LoadPaths
         {
-            get
-            {
-                return _loadPaths;
-            }
+            get { return _loadPaths; }
         }
 
         private static readonly string _imageLocation =
-            (new FileInfo(System.Reflection.Assembly.GetExecutingAssembly().Location)).DirectoryName;
+            (new FileInfo(Assembly.GetExecutingAssembly().Location)).DirectoryName;
 
         public FileInfo ApplyLoadPaths(string pathPostfix)
         {
-            if(pathPostfix == null)
+            if (pathPostfix == null)
                 throw new ArgumentNullException("pathPostfix");
-            string path = pathPostfix;
+            var path = pathPostfix;
 
             //Try to find in process environment
             if (File.Exists(path))
                 return new FileInfo(path);
 
             //Try to find in load paths
-            foreach(string pathPrefix in _loadPaths)
-                if(File.Exists((path = Path.Combine(pathPrefix, pathPostfix))))
+            foreach (var pathPrefix in _loadPaths)
+                if (File.Exists((path = Path.Combine(pathPrefix, pathPostfix))))
                     return new FileInfo(path);
 
             //Try to find in engine paths
-            foreach(string pathPrefix in ParentEngine.Paths)
+            foreach (var pathPrefix in ParentEngine.Paths)
                 if (File.Exists((path = Path.Combine(pathPrefix, pathPostfix))))
                     return new FileInfo(path);
 
@@ -719,6 +712,7 @@ namespace Prexonite.Compiler
         {
             get { return _buildCommands; }
         }
+
         private readonly CommandTable _buildCommands = new CommandTable();
 
         public bool BuildCommandsEnabled
@@ -778,9 +772,9 @@ namespace Prexonite.Compiler
                 BuildAddCommand,
                 delegate(StackContext sctx, PValue[] args)
                 {
-                    foreach (PValue arg in args)
+                    foreach (var arg in args)
                     {
-                        string path = arg.CallToString(sctx);
+                        var path = arg.CallToString(sctx);
                         LoadFromFile(path);
                     }
                     return null;
@@ -790,11 +784,11 @@ namespace Prexonite.Compiler
                 BuildRequireCommand,
                 delegate(StackContext sctx, PValue[] args)
                 {
-                    bool allLoaded = true;
-                    foreach (PValue arg in args)
+                    var allLoaded = true;
+                    foreach (var arg in args)
                     {
-                        string path = arg.CallToString(sctx);
-                        FileInfo file = ApplyLoadPaths(path);
+                        var path = arg.CallToString(sctx);
+                        var file = ApplyLoadPaths(path);
                         if (file == null)
                         {
                             _throwCannotFindScriptFile(path);
@@ -813,7 +807,7 @@ namespace Prexonite.Compiler
                 BuildDefaultCommand,
                 delegate
                 {
-                    FileInfo defaultFile = ApplyLoadPaths(DefaultScriptName);
+                    var defaultFile = ApplyLoadPaths(DefaultScriptName);
                     if (defaultFile == null)
                         return DefaultScriptName;
                     else
@@ -824,12 +818,12 @@ namespace Prexonite.Compiler
                 BuildHookCommand,
                 delegate(StackContext sctx, PValue[] args)
                 {
-                    foreach (PValue arg in args)
+                    foreach (var arg in args)
                     {
                         if (arg != null && !arg.IsNull)
                         {
-                            if (arg.Type == PType.Object[typeof(AstTransformation)])
-                                CompilerHooks.Add((AstTransformation)arg.Value);
+                            if (arg.Type == PType.Object[typeof (AstTransformation)])
+                                CompilerHooks.Add((AstTransformation) arg.Value);
                             else
                                 CompilerHooks.Add(arg);
                         }
@@ -843,8 +837,8 @@ namespace Prexonite.Compiler
                 {
                     foreach (var arg in args)
                     {
-                        if (arg.Type == PType.Object[typeof(ResolveSymbol)])
-                            CustomResolvers.Add(new CustomResolver((ResolveSymbol)arg.Value));
+                        if (arg.Type == PType.Object[typeof (ResolveSymbol)])
+                            CustomResolvers.Add(new CustomResolver((ResolveSymbol) arg.Value));
                         else
                             CustomResolvers.Add(new CustomResolver(arg));
                     }
@@ -860,7 +854,7 @@ namespace Prexonite.Compiler
         private void _enableBuildCommands()
         {
             foreach (var pair in _buildCommands)
-                if(pair.Value.IsInGroup(PCommandGroups.Compiler) &&
+                if (pair.Value.IsInGroup(PCommandGroups.Compiler) &&
                     ! ParentEngine.Commands.ContainsKey(pair.Key))
                     ParentEngine.Commands.AddCompilerCommand(pair.Key, pair.Value);
         }
@@ -1055,7 +1049,7 @@ namespace Prexonite.Compiler
 
         #region Stack Context
 
-        public sealed override Engine ParentEngine
+        public override sealed Engine ParentEngine
         {
             [DebuggerStepThrough]
             get { return _options.ParentEngine; }
@@ -1067,20 +1061,14 @@ namespace Prexonite.Compiler
             get { return Options.TargetApplication._InitializationFunction; }
         }
 
-        public sealed override Application ParentApplication
+        public override sealed Application ParentApplication
         {
-            get
-            {
-                return Options.TargetApplication;
-            }
+            get { return Options.TargetApplication; }
         }
 
-        public sealed override SymbolCollection ImportedNamespaces
+        public override sealed SymbolCollection ImportedNamespaces
         {
-            get
-            {
-                return Options.TargetApplication._InitializationFunction.ImportedNamespaces;
-            }
+            get { return Options.TargetApplication._InitializationFunction.ImportedNamespaces; }
         }
 
         [DebuggerStepThrough]

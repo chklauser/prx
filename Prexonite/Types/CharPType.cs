@@ -1,7 +1,6 @@
 #region
 
 using System;
-using System.Diagnostics;
 using System.Globalization;
 using System.Reflection;
 using Prexonite.Compiler.Cil;
@@ -29,7 +28,7 @@ namespace Prexonite.Types
             instance = new CharPType();
         }
 
-        [DebuggerStepThrough]
+        [NoDebug]
         private CharPType()
         {
         }
@@ -174,7 +173,7 @@ namespace Prexonite.Types
 
                 default:
                     //Try CLR dynamic call
-                    ObjectPType clrint = Object[subject.ClrType];
+                    var clrint = Object[subject.ClrType];
                     if (!clrint.TryDynamicCall(sctx, subject, args, call, id, out result))
                         result = null;
                     break;
@@ -187,7 +186,7 @@ namespace Prexonite.Types
             StackContext sctx, PValue[] args, PCall call, string id, out PValue result)
         {
             //Try CLR static call
-            ObjectPType clrint = Object[typeof (int)];
+            var clrint = Object[typeof (int)];
             if (clrint.TryStaticCall(sctx, args, call, id, out result))
                 return true;
 
@@ -206,14 +205,14 @@ namespace Prexonite.Types
 
             result = null;
             var c = (char) subject.Value;
-            BuiltIn bi = target.ToBuiltIn();
+            var bi = target.ToBuiltIn();
 
             if (useExplicit)
             {
                 switch (bi)
                 {
                     case BuiltIn.Object:
-                        Type clrType = ((ObjectPType) target).ClrType;
+                        var clrType = ((ObjectPType) target).ClrType;
                         switch (Type.GetTypeCode(clrType))
                         {
                             case TypeCode.Byte:
@@ -235,7 +234,7 @@ namespace Prexonite.Types
                         result = c.ToString();
                         break;
                     case BuiltIn.Object:
-                        Type clrType = ((ObjectPType) target).ClrType;
+                        var clrType = ((ObjectPType) target).ClrType;
                         switch (Type.GetTypeCode(clrType))
                         {
                             case TypeCode.Char:
@@ -260,8 +259,8 @@ namespace Prexonite.Types
             if (subject == null || subject.IsNull)
                 throw new ArgumentNullException("subject");
 
-            PType source = subject.Type;
-            BuiltIn bi = source.ToBuiltIn();
+            var source = subject.Type;
+            var bi = source.ToBuiltIn();
 
             result = null;
 
@@ -285,8 +284,8 @@ namespace Prexonite.Types
                         result = (char) (int) subject.Value;
                         break;
                     case BuiltIn.Object:
-                        Type clrType = ((ObjectPType) source).ClrType;
-                        TypeCode tc = Type.GetTypeCode(clrType);
+                        var clrType = ((ObjectPType) source).ClrType;
+                        var tc = Type.GetTypeCode(clrType);
                         switch (tc)
                         {
                             case TypeCode.Byte:
@@ -357,7 +356,7 @@ namespace Prexonite.Types
 
                 case BuiltIn.String:
                     var s = (string) pv.Value;
-                    if(s.Length == 1)
+                    if (s.Length == 1)
                     {
                         c = s[0];
                         return true;
@@ -380,7 +379,7 @@ namespace Prexonite.Types
                 case BuiltIn.None:
                 case BuiltIn.Real:
                     return false;
-                
+
                 default:
                     throw new ArgumentOutOfRangeException();
             }

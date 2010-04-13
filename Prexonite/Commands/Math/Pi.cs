@@ -23,7 +23,6 @@
 
 using System;
 using System.Collections.Generic;
-using System.Reflection;
 using System.Reflection.Emit;
 using System.Text;
 using Prexonite.Compiler.Cil;
@@ -45,7 +44,7 @@ namespace Prexonite.Commands.Math
             get { return _instance; }
         }
 
-        #endregion 
+        #endregion
 
         /// <summary>
         /// A flag indicating whether the command acts like a pure function.
@@ -53,10 +52,7 @@ namespace Prexonite.Commands.Math
         /// <remarks>Pure commands can be applied at compile time.</remarks>
         public override bool IsPure
         {
-            get
-            {
-                return true;
-            }
+            get { return true; }
         }
 
         /// <summary>
@@ -89,10 +85,10 @@ namespace Prexonite.Commands.Math
         /// <param name="ins">The instruction to compile.</param>
         void ICilCompilerAware.ImplementInCil(CompilerState state, Instruction ins)
         {
-            for(int i = 0; i < ins.Arguments; i++)
+            for (var i = 0; i < ins.Arguments; i++)
                 state.Il.Emit(OpCodes.Pop);
 
-            if(!ins.JustEffect)
+            if (!ins.JustEffect)
             {
                 state.Il.Emit(OpCodes.Ldc_R8, System.Math.PI);
                 state.EmitWrapReal();

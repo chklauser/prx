@@ -31,7 +31,6 @@ using System.Collections;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.Linq;
-using Microsoft.Contracts;
 using Prexonite.Compiler.Ast;
 using Prexonite.Types;
 using NoDebug = System.Diagnostics.DebuggerNonUserCodeAttribute;
@@ -69,7 +68,7 @@ namespace Prexonite.Compiler
         [DebuggerStepThrough]
         public override string ToString()
         {
-            return string.Format("Target({0})", Function);
+            return String.Format("Target({0})", Function);
         }
 
         #region Fields
@@ -109,9 +108,7 @@ namespace Prexonite.Compiler
             }
         }
 
-        public int NestedFunctionCounter { [DebuggerStepThrough]
-        get; [DebuggerStepThrough]
-        set; }
+        private int _nestedIdCounter;
 
         #endregion
 
@@ -142,7 +139,7 @@ namespace Prexonite.Compiler
         /// </summary>
         public void SetupAsMacro()
         {
-            if(!_function.Meta.ContainsKey(MacroMetaKey))
+            if (!_function.Meta.ContainsKey(MacroMetaKey))
                 _function.Meta[MacroMetaKey] = true;
 
             if (!_function.Meta.ContainsKey(CompilerMetakey))
@@ -153,9 +150,9 @@ namespace Prexonite.Compiler
             var providedLocalRefs = new List<string>
             {
                 MacroAliases.LoaderAlias,
-                MacroAliases.TargetAlias, 
-                MacroAliases.LocalsAlias, 
-                MacroAliases.NewLocalVariableAlias, 
+                MacroAliases.TargetAlias,
+                MacroAliases.LocalsAlias,
+                MacroAliases.NewLocalVariableAlias,
                 MacroAliases.CallTypeAlias,
                 MacroAliases.JustEffectAlias,
                 MacroAliases.MacroInvocationAlias
@@ -175,14 +172,8 @@ namespace Prexonite.Compiler
 
         public bool IsMacro
         {
-            get 
-            {
-                return Meta.GetDefault(MacroMetaKey,false).Switch;
-            }
-            set
-            {
-                Meta[MacroMetaKey] = value;
-            }
+            get { return Meta.GetDefault(MacroMetaKey, false).Switch; }
+            set { Meta[MacroMetaKey] = value; }
         }
 
         /// <summary>
@@ -211,7 +202,7 @@ namespace Prexonite.Compiler
 
         private static PVariable _value(CompilerTarget target, Object value)
         {
-            return new PVariable { Value = PType.Object.CreatePValue(new ProvidedValue(target.Loader.CreateNativePValue(value))) };
+            return new PVariable {Value = PType.Object.CreatePValue(new ProvidedValue(target.Loader.CreateNativePValue(value)))};
         }
 
         private class ProvidedFunction : IIndirectCall
@@ -231,7 +222,7 @@ namespace Prexonite.Compiler
 
         private static PVariable _func(Func<StackContext, PValue[], PValue> func)
         {
-            return new PVariable { Value = PType.Object.CreatePValue(new ProvidedFunction(func)) };
+            return new PVariable {Value = PType.Object.CreatePValue(new ProvidedFunction(func))};
         }
 
         public static SymbolTable<PVariable> CreateEnvironment(CompilerTarget target, AstMacroInvocation invocation, bool justEffect)
@@ -240,10 +231,10 @@ namespace Prexonite.Compiler
             {
                 {MacroAliases.LoaderAlias, _value(target, target.Loader)},
                 {MacroAliases.TargetAlias, _value(target, target)},
-                {MacroAliases.LocalsAlias,_value(target, target.Function.Variables)},
-                {MacroAliases.NewLocalVariableAlias,_func(_makeNewLocalVariableFunction(target))},
-                {MacroAliases.CallTypeAlias,_value(target, invocation.Call)},
-                {MacroAliases.JustEffectAlias,_value(target, justEffect)},
+                {MacroAliases.LocalsAlias, _value(target, target.Function.Variables)},
+                {MacroAliases.NewLocalVariableAlias, _func(_makeNewLocalVariableFunction(target))},
+                {MacroAliases.CallTypeAlias, _value(target, invocation.Call)},
+                {MacroAliases.JustEffectAlias, _value(target, justEffect)},
                 {MacroAliases.MacroInvocationAlias, _value(target, invocation)}
             };
         }
@@ -283,7 +274,8 @@ namespace Prexonite.Compiler
                 }
                 else
                 {
-                    var varAssign = new AstGetSetSymbol("MacroInvocation", -1, -1, PCall.Set, varId, SymbolInterpretations.LocalObjectVariable);
+                    var varAssign = new AstGetSetSymbol(
+                        "MacroInvocation", -1, -1, PCall.Set, varId, SymbolInterpretations.LocalObjectVariable);
                     varAssign.Arguments.Add(init);
                     return target.Loader.CreateNativePValue(init);
                 }
@@ -299,7 +291,7 @@ namespace Prexonite.Compiler
 
         public string RequestTemporaryVariable()
         {
-            if(_freeTemporaryVariables.Count == 0)
+            if (_freeTemporaryVariables.Count == 0)
             {
                 //Allocate temporary variable
                 var tempName = Engine.GenerateName("tmp" + _usedTemporaryVariables.Count);
@@ -350,10 +342,7 @@ namespace Prexonite.Compiler
 
             private CombinedSymbolProxy _parent
             {
-                get 
-                { 
-                    return _outer._parentTarget != null ? _outer._parentTarget.Symbols : null;
-                }
+                get { return _outer._parentTarget != null ? _outer._parentTarget.Symbols : null; }
             }
 
             #region IDictionary<string,SymbolEntry> Members
@@ -645,7 +634,6 @@ namespace Prexonite.Compiler
         /// <param name="id">The id for the local variable.</param>
         /// <param name="translatedId">The (physical) id used when translating the program. (Use for aliases or set to <paramref name="id"/>). This is the name used for the variable created.</param>
         /// <remarks>Local object and reference variables are created in addition to being registered in the symbol table. Global object and reference variables are only declared, not created.</remarks>
-
         [DebuggerStepThrough]
         public void Define(SymbolInterpretations kind, string id, string translatedId)
         {
@@ -675,63 +663,69 @@ namespace Prexonite.Compiler
 
         #endregion //Symbols
 
-        #region Block Jump Stack
+        #region Scope Block Stack
 
-        //
-        //  This is a facility for code generation.
-        //  AST nodes can pop/push new break/continue-scopes onto/from the block stack via
-        //      BeginBlock,
-        //      EndBlock
-        //  or directly manipulate the stack via
-        //      BlockLabelsStack
-        //
+        private readonly Stack<AstBlock> _scopeBlocks = new Stack<AstBlock>();
 
-        private readonly Stack<BlockLabels> _blockLabelStack = new Stack<BlockLabels>();
-
-        public Stack<BlockLabels> BlockLabelStack
+        public AstBlock CurrentBlock
         {
             [DebuggerStepThrough]
-            get { return _blockLabelStack; }
+            get
+            {
+                if (_scopeBlocks.Count == 0)
+                    return _ast;
+                else
+                    return _scopeBlocks.Peek();
+            }
         }
 
-        public BlockLabels CurrentBlock
+        public AstLoopBlock CurrentLoopBlock
         {
-            [DebuggerStepThrough]
-            get { return _blockLabelStack.Count > 0 ? _blockLabelStack.Peek() : null; }
+            get
+            {
+                foreach (var block in _scopeBlocks)
+                {
+                    var loop = block as AstLoopBlock;
+                    if (loop != null)
+                        return loop;
+                }
+                return _ast as AstLoopBlock;
+            }
         }
 
         [DebuggerStepThrough]
-        public void BeginBlock(BlockLabels bl)
+        public void BeginBlock(AstBlock bl)
         {
             if (bl == null)
                 throw new ArgumentNullException("bl");
-            _blockLabelStack.Push(bl);
+            _scopeBlocks.Push(bl);
         }
 
         [DebuggerStepThrough]
-        public BlockLabels BeginBlock(string prefix)
+        public AstBlock BeginBlock(string prefix)
         {
-            var bl = new BlockLabels(prefix);
-            _blockLabelStack.Push(bl);
+            var prototype = _scopeBlocks.Count > 0 ? _scopeBlocks.Peek() : _ast;
+            var bl = new AstBlock(prototype.File, prototype.Line, prototype.Column, GenerateLocalId(), prefix);
+            _scopeBlocks.Push(bl);
             return bl;
         }
 
         [DebuggerStepThrough]
-        public BlockLabels BeginBlock()
+        public AstBlock BeginBlock()
         {
             return BeginBlock((string) null);
         }
 
         [DebuggerStepThrough]
-        public BlockLabels EndBlock()
+        public AstBlock EndBlock()
         {
-            if (_blockLabelStack.Count > 0)
-                return _blockLabelStack.Pop();
+            if (_scopeBlocks.Count > 0)
+                return _scopeBlocks.Pop();
             else
-                throw new PrexoniteException("There is no open block.");
+                throw new PrexoniteException("Cannot end root block.");
         }
 
-        #endregion //Block Jump Stack
+        #endregion //Scope Block Stack
 
         #region Code
 
@@ -794,7 +788,7 @@ namespace Prexonite.Compiler
 
                 modifiedBlocks[i++] = block;
             }
-            _function.Meta[TryCatchFinallyBlock.MetaKey] = (MetaEntry)modifiedBlocks;
+            _function.Meta[TryCatchFinallyBlock.MetaKey] = (MetaEntry) modifiedBlocks;
 
             //Change custom addresses into this code (e.g., cil compiler hints)
             foreach (var hook in _addressChangeHooks)
@@ -840,7 +834,7 @@ namespace Prexonite.Compiler
                 else
                     throw new PrexoniteException
                         (
-                        string.Format
+                        String.Format
                             (
                             "{0} references outer variable {1} which cannot be supplied by top-level function {2}",
                             Function,
@@ -867,13 +861,13 @@ namespace Prexonite.Compiler
         /// </summary>
         /// <param name="keepByRef">The set of captured variables that should be kept captured by reference (i.e. not promoted to parameters)</param>
         /// <returns>A list of expressions (get symbol) that should be added to the arguments list of any call to the lifted function.</returns>
-        internal Func<Parser,IList<IAstExpression>> ToCaptureByValue(IEnumerable<string> keepByRef)
+        internal Func<Parser, IList<IAstExpression>> ToCaptureByValue(IEnumerable<string> keepByRef)
         {
             var toPromote =
                 _outerVariables.Where(outer => !keepByRef.Contains(outer)).ToList();
 
             //Declare locally, remove from outer variables and add as parameter to the end
-            var exprs = new List<Func<Parser,IAstExpression>>();
+            var exprs = new List<Func<Parser, IAstExpression>>();
             foreach (var outer in toPromote)
             {
                 SymbolEntry sym;
@@ -881,7 +875,8 @@ namespace Prexonite.Compiler
                     Symbols.Add(outer, sym);
                 _outerVariables.Remove(outer);
                 Function.Parameters.Add(outer);
-                {   //Copy the value for capture by value in closure
+                {
+                    //Copy the value for capture by value in closure
                     var byValOuter = outer;
                     exprs.Add(p => new AstGetSetSymbol(p, byValOuter, SymbolInterpretations.LocalObjectVariable));
                 }
@@ -1709,8 +1704,8 @@ namespace Prexonite.Compiler
                         goto replaceInt;
                     case OpCode.ldr_loc:
                         nopc = OpCode.ldr_loci;
-                    replaceInt:
-                        if(!map.TryGetValue(ins.Id, out idx))
+                        replaceInt:
+                        if (!map.TryGetValue(ins.Id, out idx))
                             continue;
                         code[i] = new Instruction(nopc, idx);
                         break;
@@ -1730,5 +1725,19 @@ namespace Prexonite.Compiler
         #endregion
 
         #endregion
+
+        public string GenerateLocalId()
+        {
+            return GenerateLocalId("");
+        }
+
+        public string GenerateLocalId(string prefix)
+        {
+            if (prefix == null)
+                prefix = "";
+            return
+                Function.Id + "\\" + prefix +
+                (_nestedIdCounter++);
+        }
     }
 }

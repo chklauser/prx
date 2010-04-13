@@ -69,6 +69,7 @@ namespace Prexonite
 // ReSharper disable FieldCanBeMadeReadOnly.Global
 // For consistency with the rest of instruction data type
         public bool JustEffect;
+
 // ReSharper restore FieldCanBeMadeReadOnly.Global
 
         #region Construction
@@ -161,9 +162,9 @@ namespace Prexonite
         public static Instruction CreateConstant(double r)
         {
             var ins = new Instruction(OpCode.ldc_real)
-                      {
-                          GenericArgument = r
-                      };
+            {
+                GenericArgument = r
+            };
             return ins;
         }
 
@@ -335,10 +336,10 @@ namespace Prexonite
             if (arguments > ushort.MaxValue)
                 throw new ArgumentOutOfRangeException(
                     "arguments", arguments, "arguments must fit into an unsigned short integer.");
-            var idx = (ushort)index;
-            var argc = (ushort)arguments;
+            var idx = (ushort) index;
+            var argc = (ushort) arguments;
 
-            return new Instruction(OpCode.indloci, (argc << 16) | idx,null,justEffect);
+            return new Instruction(OpCode.indloci, (argc << 16) | idx, null, justEffect);
         }
 
         #endregion
@@ -428,13 +429,13 @@ namespace Prexonite
         {
             rotations = (values + rotations)%values;
 
-            if(rotations == 0)
+            if (rotations == 0)
                 return new Instruction(OpCode.nop);
 
             var ins = new Instruction(OpCode.rot, rotations)
-                      {
-                          GenericArgument = values
-                      };
+            {
+                GenericArgument = values
+            };
             return ins;
         }
 
@@ -535,7 +536,7 @@ namespace Prexonite
                 default:
                     if (JustEffect)
                         buffer.Append("@");
-                    buffer.Append(Enum.GetName(typeof(OpCode), OpCode).Replace('_', '.'));
+                    buffer.Append(Enum.GetName(typeof (OpCode), OpCode).Replace('_', '.'));
                     switch (OpCode)
                     {
                             //NULL INSTRUCTIONS
@@ -687,7 +688,7 @@ namespace Prexonite
             if (OpCode != OpCode.indloci)
                 throw new ArgumentException("Can only decode indloci instructions.");
             index = (Arguments & ushort.MaxValue);
-            argc =  ((Arguments & (ushort.MaxValue << 16)) >> 16);
+            argc = ((Arguments & (ushort.MaxValue << 16)) >> 16);
         }
 
         public PValueKeyValuePair DecodeIndLocIndex()
@@ -856,8 +857,8 @@ namespace Prexonite
         [DebuggerStepThrough]
         public static bool operator !=(Instruction left, Instruction right)
         {
-            if ((object)left == null)
-                return (object)right != null;
+            if ((object) left == null)
+                return (object) right != null;
             return !left.Equals(right);
         }
 
@@ -867,7 +868,7 @@ namespace Prexonite
         /// <returns>A hash code.</returns>
         public override int GetHashCode()
         {
-            return (int)OpCode ^ Arguments ^ (Id == null ? 0 : Id.GetHashCode());
+            return (int) OpCode ^ Arguments ^ (Id == null ? 0 : Id.GetHashCode());
         }
 
         #endregion
@@ -1037,6 +1038,7 @@ namespace Prexonite
 
         rot //rot           rotates the x top values y times
     }
+
     // ReSharper restore InconsistentNaming
 
     //Total: 77 different operations excluding nop.

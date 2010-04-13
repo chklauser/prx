@@ -61,8 +61,12 @@ namespace Prexonite.Compiler.Cil
         private static readonly MethodInfo _LoadGlobalVariableReferenceAsPValueMethod =
             typeof (Runtime).GetMethod("LoadGlobalVariableReferenceAsPValue");
 
-        private static readonly MethodInfo _NewClosureMethod_LateBound = typeof (Runtime).GetMethod("NewClosure", new[] { typeof(StackContext), typeof(PVariable[]), typeof(string) });
-        private static readonly MethodInfo _NewClosureMethod_StaticallyBound = typeof(Runtime).GetMethod("NewClosure", new[] { typeof(StackContext), typeof(PVariable[]), typeof(PFunction)});
+        private static readonly MethodInfo _NewClosureMethod_LateBound = typeof (Runtime).GetMethod(
+            "NewClosure", new[] {typeof (StackContext), typeof (PVariable[]), typeof (string)});
+
+        private static readonly MethodInfo _NewClosureMethod_StaticallyBound = typeof (Runtime).GetMethod(
+            "NewClosure", new[] {typeof (StackContext), typeof (PVariable[]), typeof (PFunction)});
+
         private static readonly MethodInfo _NewObjMethod = typeof (Runtime).GetMethod("NewObj");
         private static readonly MethodInfo _NewTypeMethod = typeof (Runtime).GetMethod("NewType");
         private static readonly MethodInfo _ParseExceptionMethod = typeof (Runtime).GetMethod("ParseException");
@@ -149,10 +153,7 @@ namespace Prexonite.Compiler.Cil
 
         internal static MethodInfo newClosureMethod_StaticallyBound
         {
-            get
-            {
-                return _NewClosureMethod_StaticallyBound;
-            }
+            get { return _NewClosureMethod_StaticallyBound; }
         }
 
         internal static MethodInfo RaiseToPowerMethod

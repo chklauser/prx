@@ -328,12 +328,12 @@ FunctionDefinition<out PFunction func>
                                                 if(isMacro)
                                                     SemErr("Inner macros are illegal. Macros must be top-level.");
                                                     
-                                                funcId = generateNestedFunctionId(id ?? "inner");
+                                                funcId = generateLocalId(id ?? "inner");
                                                 
                                                 if(string.IsNullOrEmpty(localId))
                                                 {
                                                     //Create shadow name
-                                                    localId = generateNestedFunctionId(id ?? "inner");
+                                                    localId = generateLocalId(id ?? "inner");
                                                 }
                                                 SmartDeclareLocal(localId, SymbolInterpretations.LocalReferenceVariable);
                                                 foreach(var alias in funcAliases)
@@ -365,7 +365,7 @@ FunctionDefinition<out PFunction func>
                                             derStub = func;
                                             
                                             //Create derived body function
-                                            derId = generateNestedFunctionId(ft);                                            
+                                            derId = ft.GenerateLocalId();
                                             derBody = new PFunction(TargetApplication, derId);
                                             Loader.CreateFunctionTarget(derBody, new AstBlock(this));
                                             TargetApplication.Functions.Add(derBody);

@@ -56,7 +56,7 @@ namespace Prexonite.Commands.List
             get { return _instance; }
         }
 
-        #endregion 
+        #endregion
 
         public static PValue Run(
             StackContext sctx, IIndirectCall f, PValue left, IEnumerable<PValue> source)
@@ -70,7 +70,7 @@ namespace Prexonite.Commands.List
             if (source == null)
                 source = new PValue[] {};
 
-            foreach (PValue right in source)
+            foreach (var right in source)
             {
                 left = f.IndirectCall(sctx, new[] {left, right});
             }
@@ -102,15 +102,15 @@ namespace Prexonite.Commands.List
             IEnumerable<PValue> source;
             if (args.Length == 3)
             {
-                PValue psource = args[2];
-                source = Map._ToEnumerable(sctx, psource) ?? new PValue[] {psource};
+                var psource = args[2];
+                source = Map._ToEnumerable(sctx, psource) ?? new[] {psource};
             }
             else
             {
-                List<PValue> lstsource = new List<PValue>();
-                for (int i = 1; i < args.Length; i++)
+                var lstsource = new List<PValue>();
+                for (var i = 1; i < args.Length; i++)
                 {
-                    IEnumerable<PValue> multiple = Map._ToEnumerable(sctx, args[i]);
+                    var multiple = Map._ToEnumerable(sctx, args[i]);
                     if (multiple != null)
                         lstsource.AddRange(multiple);
                     else

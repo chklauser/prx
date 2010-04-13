@@ -56,7 +56,7 @@ namespace Prexonite.Compiler.Ast
         public bool TryOptimize(CompilerTarget target, out IAstExpression expr)
         {
             IAstExpression oArg;
-            foreach (IAstExpression arg in Elements.ToArray())
+            foreach (var arg in Elements.ToArray())
             {
                 if (arg == null)
                     throw new PrexoniteException(
@@ -65,7 +65,7 @@ namespace Prexonite.Compiler.Ast
                 oArg = GetOptimizedNode(target, arg);
                 if (!ReferenceEquals(oArg, arg))
                 {
-                    int idx = Elements.IndexOf(arg);
+                    var idx = Elements.IndexOf(arg);
                     Elements.Insert(idx, oArg);
                     Elements.RemoveAt(idx + 1);
                 }
@@ -84,7 +84,7 @@ namespace Prexonite.Compiler.Ast
             }
             else
             {
-                foreach (IAstExpression element in Elements)
+                foreach (var element in Elements)
                 {
                     if (element is AstConstant)
                         throw new PrexoniteException(

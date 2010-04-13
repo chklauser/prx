@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using Prexonite.Compiler.Cil;
@@ -8,7 +8,6 @@ namespace Prexonite.Commands.List
 {
     public class Sum : PCommand, ICilCompilerAware
     {
-
         #region Singleton pattern
 
         private Sum()

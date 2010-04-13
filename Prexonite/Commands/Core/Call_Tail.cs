@@ -64,7 +64,7 @@ namespace Prexonite.Commands.Core
             if (args == null || args.Length < 1 || args[0] == null || args[0].IsNull)
                 return PType.Null;
 
-            List<PValue> iargs = make_tailcall(sctx, args);
+            var iargs = make_tailcall(sctx, args);
 
             return args[0].IndirectCall(sctx, iargs.ToArray());
         }
@@ -77,17 +77,17 @@ namespace Prexonite.Commands.Core
             if (args == null || args.Length < 1 || args[0] == null || args[0].IsNull)
                 return new NullContext(sctx);
 
-            List<PValue> iargs = make_tailcall(sctx, args);
+            var iargs = make_tailcall(sctx, args);
 
             return Call.CreateStackContext(sctx, args[0], iargs.ToArray());
         }
 
         private static List<PValue> make_tailcall(StackContext sctx, PValue[] args)
         {
-            List<PValue> iargs = Call.FlattenArguments(sctx, args, 1);
+            var iargs = Call.FlattenArguments(sctx, args, 1);
 
             //remove caller from stack
-            LinkedList<StackContext> stack = sctx.ParentEngine.Stack;
+            var stack = sctx.ParentEngine.Stack;
             stack.Remove(stack.FindLast(sctx));
             return iargs;
         }

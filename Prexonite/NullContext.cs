@@ -30,9 +30,8 @@ namespace Prexonite
 {
     public class NullContext : StackContext
     {
-
         public NullContext(StackContext parentCtx)
-            : this(parentCtx.ParentEngine, parentCtx.ParentApplication,parentCtx.ImportedNamespaces)
+            : this(parentCtx.ParentEngine, parentCtx.ParentApplication, parentCtx.ImportedNamespaces)
         {
         }
 

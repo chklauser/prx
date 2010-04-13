@@ -95,7 +95,7 @@ namespace Prexonite.Compiler.Ast
                 case SymbolInterpretations.KnownType:
                     throw new PrexoniteException(
                         "Cannot assign to a reference to a " +
-                        Enum.GetName(typeof(SymbolInterpretations), Interpretation).ToLower());
+                        Enum.GetName(typeof (SymbolInterpretations), Interpretation).ToLower());
 
                     //Variables are not automatically dereferenced
                 case SymbolInterpretations.GlobalObjectVariable:
@@ -113,16 +113,13 @@ namespace Prexonite.Compiler.Ast
 
         ICollection<IAstExpression> ICanBeReferenced.Arguments
         {
-            get
-            {
-                return Arguments;
-            }
+            get { return Arguments; }
         }
 
         public override bool TryToReference(out AstGetSet reference)
         {
             reference = null;
-            switch(Interpretation)
+            switch (Interpretation)
             {
                 case SymbolInterpretations.Command:
                 case SymbolInterpretations.Function:
@@ -130,10 +127,10 @@ namespace Prexonite.Compiler.Ast
                 case SymbolInterpretations.KnownType:
                 case SymbolInterpretations.GlobalObjectVariable:
                 case SymbolInterpretations.LocalObjectVariable:
-                    return false; 
+                    return false;
 
-                //Variables are not automatically dereferenced
-                
+                    //Variables are not automatically dereferenced
+
                 case SymbolInterpretations.GlobalReferenceVariable:
                     reference =
                         new AstGetSetReference(
@@ -144,7 +141,7 @@ namespace Prexonite.Compiler.Ast
                             Id,
                             SymbolInterpretations.GlobalObjectVariable);
                     break;
-                
+
                 case SymbolInterpretations.LocalReferenceVariable:
                     reference =
                         new AstGetSetReference(

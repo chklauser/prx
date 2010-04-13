@@ -23,7 +23,6 @@
 
 using System;
 using System.Collections.Generic;
-using System.Reflection;
 using System.Reflection.Emit;
 using System.Text;
 using Prexonite.Compiler.Cil;
@@ -42,10 +41,7 @@ namespace Prexonite.Commands.Core
 
         public static Meta Instance
         {
-            get
-            {
-                return _instance;
-            }
+            get { return _instance; }
         }
 
         #endregion
@@ -60,11 +56,11 @@ namespace Prexonite.Commands.Core
         void ICilCompilerAware.ImplementInCil(CompilerState state, Instruction ins)
         {
             if (ins.Arguments > 0)
-                throw new PrexoniteException("The meta command no longer accepts arguments."); 
+                throw new PrexoniteException("The meta command no longer accepts arguments.");
 
             state.EmitLoadLocal(state.SctxLocal);
             state.EmitLoadArg(CompilerState.ParamSourceIndex);
-            MethodInfo getMeta = typeof(PFunction).GetProperty("Meta").GetGetMethod();
+            var getMeta = typeof (PFunction).GetProperty("Meta").GetGetMethod();
             state.Il.EmitCall(OpCodes.Callvirt, getMeta, null);
             state.Il.EmitCall(OpCodes.Call, Compiler.Cil.Compiler.CreateNativePValue, null);
         }
@@ -77,10 +73,7 @@ namespace Prexonite.Commands.Core
         /// <remarks>Pure commands can be applied at compile time.</remarks>
         public override bool IsPure
         {
-            get
-            {
-                return false;
-            }
+            get { return false; }
         }
 
         /// <summary>
@@ -91,15 +84,16 @@ namespace Prexonite.Commands.Core
         /// <returns>The value returned by the command. Must not be null. (But possibly {null~Null})</returns>
         public override PValue Run(StackContext sctx, PValue[] args)
         {
-            if(sctx == null)
+            if (sctx == null)
                 throw new ArgumentNullException("sctx");
-            if(args != null && args.Length > 0)
-                throw new PrexoniteException("The meta command no longer accepts arguments."); 
+            if (args != null && args.Length > 0)
+                throw new PrexoniteException("The meta command no longer accepts arguments.");
 
-            FunctionContext fctx = sctx as FunctionContext;
+            var fctx = sctx as FunctionContext;
 
-            if(fctx == null)
-                throw new PrexoniteException("The meta command uses dynamic features and can therefor only be called from a Prexonite function.");
+            if (fctx == null)
+                throw new PrexoniteException(
+                    "The meta command uses dynamic features and can therefor only be called from a Prexonite function.");
 
             return fctx.CreateNativePValue(fctx.Implementation.Meta);
         }

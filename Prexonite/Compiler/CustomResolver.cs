@@ -1,4 +1,4 @@
-﻿/*
+/*
  * Prx, a standalone command line interface to the Prexonite scripting engine.
  * Prexonite, a scripting engine (Scripting Language -> Bytecode -> Virtual Machine)
  *  Copyright (C) 2007  Christian "SealedSun" Klauser
@@ -67,10 +67,7 @@ namespace Prexonite.Compiler
         /// </summary>
         public bool IsManaged
         {
-            get
-            {
-                return _managed != null;
-            }
+            get { return _managed != null; }
         }
 
         /// <summary>
@@ -78,10 +75,7 @@ namespace Prexonite.Compiler
         /// </summary>
         public bool IsInterpreted
         {
-            get
-            {
-                return _interpreted != null;
-            }
+            get { return _interpreted != null; }
         }
 
         /// <summary>
@@ -92,16 +86,17 @@ namespace Prexonite.Compiler
         /// <returns>Null if no solution has been found. A compatible AST node otherwise.</returns>
         public IAstExpression Resolve(CompilerTarget t, AstUnresolved unresolved)
         {
-            if(IsManaged)
+            if (IsManaged)
             {
                 return _managed(t, unresolved);
             }
-            else if(IsInterpreted)
+            else if (IsInterpreted)
             {
                 var presult = _interpreted.IndirectCall
-                    (t.Loader, new[]
+                    (
+                    t.Loader, new[]
                     {
-                        t.Loader.CreateNativePValue(t), 
+                        t.Loader.CreateNativePValue(t),
                         t.Loader.CreateNativePValue(unresolved)
                     });
                 if (presult.Type is ObjectPType)
@@ -111,7 +106,7 @@ namespace Prexonite.Compiler
             }
             else
             {
-                throw new InvalidOperationException("Invalid custom resolver. No implementation provided."); 
+                throw new InvalidOperationException("Invalid custom resolver. No implementation provided.");
             }
         }
     }

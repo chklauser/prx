@@ -39,21 +39,21 @@ namespace Prexonite.Commands.List
 
             if (args.Length < 1)
                 throw new PrexoniteException("Exists requires at least two arguments");
-            PValue f = args[0];
+            var f = args[0];
 
-            PValue[] eargs = new PValue[1];
-            for (int i = 1; i < args.Length; i++)
+            var eargs = new PValue[1];
+            for (var i = 1; i < args.Length; i++)
             {
-                PValue arg = args[i];
-                IEnumerable<PValue> set = Map._ToEnumerable(sctx, arg);
+                var arg = args[i];
+                var set = Map._ToEnumerable(sctx, arg);
                 if (set == null)
                     continue;
-                foreach (PValue value in set)
+                foreach (var value in set)
                 {
                     eargs[0] = value;
-                    PValue result = f.IndirectCall(sctx, eargs);
+                    var result = f.IndirectCall(sctx, eargs);
                     PValue existance;
-                    if((!result.TryConvertTo(sctx, PType.Bool, true, out existance)) || (!(bool)existance.Value))
+                    if ((!result.TryConvertTo(sctx, PType.Bool, true, out existance)) || (!(bool) existance.Value))
                         return false;
                 }
             }
@@ -67,10 +67,7 @@ namespace Prexonite.Commands.List
         /// <remarks>Pure commands can be applied at compile time.</remarks>
         public override bool IsPure
         {
-            get
-            {
-                return false;
-            }
+            get { return false; }
         }
     }
 }

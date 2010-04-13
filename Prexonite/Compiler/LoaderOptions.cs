@@ -104,6 +104,7 @@ namespace Prexonite.Compiler
             get { return _useIndicesLocally; }
             set { _useIndicesLocally = value; }
         }
+
         private bool _useIndicesLocally = true;
 
         #endregion

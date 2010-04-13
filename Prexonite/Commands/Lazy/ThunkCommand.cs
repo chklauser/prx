@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.Linq;
@@ -11,7 +11,6 @@ namespace Prexonite.Commands.Lazy
 {
     public class ThunkCommand : PCommand, ICilCompilerAware
     {
-
         #region Singleton
 
         private ThunkCommand()
@@ -25,7 +24,7 @@ namespace Prexonite.Commands.Lazy
             get { return _instance; }
         }
 
-        #endregion 
+        #endregion
 
         public override bool IsPure
         {
@@ -49,9 +48,10 @@ namespace Prexonite.Commands.Lazy
 
             var expr = args[0];
             var parameters = args.Skip(1).Select<PValue, PValue>(_EnforceThunk).ToArray();
-             
+
             return PType.Object.CreatePValue(Thunk.NewExpression(expr, parameters));
         }
+
 // ReSharper restore MemberCanBePrivate.Global
 
         internal static PValue _EnforceThunk(PValue value)
@@ -108,7 +108,7 @@ namespace Prexonite.Commands.Lazy
 
             public bool Trap()
             {
-                if(_isActive)
+                if (_isActive)
                 {
                     if (_threadId == Thread.CurrentThread.ManagedThreadId)
                     {
@@ -191,7 +191,6 @@ namespace Prexonite.Commands.Lazy
             return result != null;
         }
 
-
         #endregion
 
         private IEnumerable<bool> _cooperativeForce(StackContext sctx, Action<PValue> setReturnValue)
@@ -243,7 +242,6 @@ namespace Prexonite.Commands.Lazy
                         _exception = ex;
                         throw;
                     }
-                    
                 }
                 Debug.Unindent();
 
@@ -267,7 +265,6 @@ namespace Prexonite.Commands.Lazy
                     _blackHole = _blackHole.Inactivate();
                     break;
                 }
-
             }
 
             setReturnValue(_value);
@@ -302,6 +299,5 @@ namespace Prexonite.Commands.Lazy
                 return sctx.ParentEngine.Process(coopctx);
             }
         }
-
     }
 }

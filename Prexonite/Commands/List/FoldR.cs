@@ -59,7 +59,7 @@ namespace Prexonite.Commands.List
             get { return _instance; }
         }
 
-        #endregion 
+        #endregion
 
         public static PValue Run(
             StackContext sctx, IIndirectCall f, PValue right, IEnumerable<PValue> source)
@@ -73,11 +73,11 @@ namespace Prexonite.Commands.List
             if (source == null)
                 source = new PValue[] {};
 
-            List<PValue> lst = new List<PValue>(source);
+            var lst = new List<PValue>(source);
 
-            for (int i = lst.Count - 1; i >= 0; i--)
+            for (var i = lst.Count - 1; i >= 0; i--)
             {
-                right = f.IndirectCall(sctx, new PValue[] {lst[i], right});
+                right = f.IndirectCall(sctx, new[] {lst[i], right});
             }
             return right;
         }
@@ -112,15 +112,15 @@ namespace Prexonite.Commands.List
             IEnumerable<PValue> source;
             if (args.Length == 3)
             {
-                PValue psource = args[2];
-                source = Map._ToEnumerable(sctx, psource) ?? new PValue[] {psource};
+                var psource = args[2];
+                source = Map._ToEnumerable(sctx, psource) ?? new[] {psource};
             }
             else
             {
-                List<PValue> lstsource = new List<PValue>();
-                for (int i = 1; i < args.Length; i++)
+                var lstsource = new List<PValue>();
+                for (var i = 1; i < args.Length; i++)
                 {
-                    IEnumerable<PValue> multiple = Map._ToEnumerable(sctx, args[i]);
+                    var multiple = Map._ToEnumerable(sctx, args[i]);
                     if (multiple != null)
                         lstsource.AddRange(multiple);
                     else

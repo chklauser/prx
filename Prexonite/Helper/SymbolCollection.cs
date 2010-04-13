@@ -47,7 +47,7 @@ namespace Prexonite
         public SymbolCollection(IEnumerable<string> items)
             : this()
         {
-            foreach (string item in items)
+            foreach (var item in items)
                 Add(item);
         }
 
@@ -86,7 +86,7 @@ namespace Prexonite
 
         public bool Remove(string item)
         {
-            int cnt = _set.Count;
+            var cnt = _set.Count;
             _set.Remove(item);
             return cnt != _set.Count;
         }

@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.Linq;
@@ -30,9 +30,9 @@ namespace Prexonite.Concurrency
                 case "TRYRECEIVE":
                     PValue datum;
                     var refVar = (args.Length > 0 ? args[0] : null) ?? PType.Null;
-                    if(TryReceive(out datum))
+                    if (TryReceive(out datum))
                     {
-                        refVar.IndirectCall(sctx, new PValue[] {datum});
+                        refVar.IndirectCall(sctx, new[] {datum});
                         result = true;
                     }
                     else
@@ -100,7 +100,7 @@ namespace Prexonite.Concurrency
 
         public PValue Receive()
         {
-            lock(_syncRoot)
+            lock (_syncRoot)
             {
                 while (_datum == null)
                 {
@@ -128,7 +128,7 @@ namespace Prexonite.Concurrency
         {
             lock (_syncRoot)
             {
-                if(_datum == null)
+                if (_datum == null)
                 {
                     datum = null;
                     return false;

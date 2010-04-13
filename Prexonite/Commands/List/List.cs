@@ -42,7 +42,7 @@ namespace Prexonite.Commands.List
             get { return _instance; }
         }
 
-        #endregion 
+        #endregion
 
         /// <summary>
         /// A flag indicating whether the command acts like a pure function.
@@ -50,10 +50,7 @@ namespace Prexonite.Commands.List
         /// <remarks>Pure commands can be applied at compile time.</remarks>
         public override bool IsPure
         {
-            get
-            {
-                return false;
-            }
+            get { return false; }
         }
 
         /// <summary>
@@ -67,9 +64,9 @@ namespace Prexonite.Commands.List
             if (sctx == null)
                 throw new ArgumentNullException("sctx");
             if (args == null)
-                throw new ArgumentNullException("args"); 
+                throw new ArgumentNullException("args");
 
-            List<PValue> lst = new List<PValue>(args.Length);
+            var lst = new List<PValue>(args.Length);
             lst.AddRange(args);
             return (PValue) lst;
         }

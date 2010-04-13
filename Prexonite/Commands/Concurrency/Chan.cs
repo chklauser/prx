@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Reflection;
@@ -12,7 +12,6 @@ namespace Prexonite.Commands.Concurrency
 {
     public class Chan : PCommand, ICilCompilerAware
     {
-
         #region Singleton pattern
 
         private Chan()
@@ -56,7 +55,7 @@ namespace Prexonite.Commands.Concurrency
         {
             state.EmitIgnoreArguments(ins.Arguments);
             state.Il.Emit(OpCodes.Newobj, _channelCtor);
-            PType.PrexoniteObjectTypeProxy.ImplementInCil(state,typeof(Channel));
+            PType.PrexoniteObjectTypeProxy.ImplementInCil(state, typeof (Channel));
             state.Il.Emit(OpCodes.Newobj, _newPValue);
         }
 

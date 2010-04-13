@@ -27,9 +27,9 @@ using System.Text;
 
 namespace Prexonite.Compiler.Ast
 {
-    interface ICanBeReferenced
+    internal interface ICanBeReferenced
     {
-        ICollection<IAstExpression> Arguments{ get; }
+        ICollection<IAstExpression> Arguments { get; }
         bool TryToReference(out AstGetSet reference);
     }
 }

@@ -46,7 +46,7 @@ namespace Prexonite.Commands.List
             get { return _instance; }
         }
 
-        #endregion 
+        #endregion
 
         protected override IEnumerable<PValue> CoroutineRun(ContextCarrier sctxCarrier, PValue[] args)
         {
@@ -57,24 +57,24 @@ namespace Prexonite.Commands.List
         {
             if (sctxCarrier == null)
                 throw new ArgumentNullException("sctxCarrier");
-            if(args == null)
+            if (args == null)
                 throw new ArgumentNullException("args");
             if (args.Length < 2)
                 throw new PrexoniteException("TakeWhile requires at least two arguments.");
 
             var sctx = sctxCarrier.StackContext;
 
-            PValue f = args[0];
+            var f = args[0];
 
-            int i = 0;
-            for(int k = 1; k < args.Length; k++)
+            var i = 0;
+            for (var k = 1; k < args.Length; k++)
             {
-                PValue arg = args[k];
-                IEnumerable<PValue> set = Map._ToEnumerable(sctx, arg);
-                if(set == null)
+                var arg = args[k];
+                var set = Map._ToEnumerable(sctx, arg);
+                if (set == null)
                     continue;
-                foreach(PValue value in set)
-                    if((bool) f.IndirectCall(sctx, new PValue[] {value, i++}).ConvertTo(sctx, PType.Bool, true).Value)
+                foreach (var value in set)
+                    if ((bool) f.IndirectCall(sctx, new[] {value, i++}).ConvertTo(sctx, PType.Bool, true).Value)
                         yield return value;
             }
         }
@@ -115,7 +115,7 @@ namespace Prexonite.Commands.List
         /// <param name="ins">The instruction to compile.</param>
         void ICilCompilerAware.ImplementInCil(CompilerState state, Instruction ins)
         {
-            throw  new NotSupportedException();
+            throw new NotSupportedException();
         }
 
         #endregion

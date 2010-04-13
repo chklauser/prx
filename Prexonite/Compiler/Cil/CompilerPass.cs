@@ -213,8 +213,9 @@ namespace Prexonite.Compiler.Cil
             if ((mb = m as MethodBuilder) != null)
                 return mb.GetILGenerator();
             throw new PrexoniteException
-                ("CIL Implementation " + m.Name + " is neither a dynamic method nor a method builder but a " +
-                 m.GetType());
+                (
+                "CIL Implementation " + m.Name + " is neither a dynamic method nor a method builder but a " +
+                m.GetType());
         }
 
         public bool MakeAvailableForLinking

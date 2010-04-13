@@ -67,20 +67,20 @@ namespace Prexonite.Commands.Core
                 throw new PrexoniteException("Char requires at least one argument.");
 
             PValue v;
-            PValue arg = args[0];
-            if(arg.Type == PType.String)
+            var arg = args[0];
+            if (arg.Type == PType.String)
             {
-                string s = (string) arg.Value;
+                var s = (string) arg.Value;
                 if (s.Length == 0)
                     throw new PrexoniteException("Cannot create char from empty string.");
                 else
                     return s[0];
             }
-            else if(arg.TryConvertTo(sctx, PType.Char, true, out v))
+            else if (arg.TryConvertTo(sctx, PType.Char, true, out v))
             {
                 return v;
             }
-            else if(arg.TryConvertTo(sctx, PType.Int, true, out v))
+            else if (arg.TryConvertTo(sctx, PType.Int, true, out v))
             {
                 return (char) (int) v.Value;
             }

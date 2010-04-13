@@ -24,6 +24,7 @@
 using System;
 using System.Collections.Generic;
 using System.Text;
+using Prexonite.Compiler.Cil;
 
 namespace Prexonite
 {
@@ -32,7 +33,6 @@ namespace Prexonite
     /// </summary>
     public interface ICilCompilerAware
     {
-
         /// <summary>
         /// Asses qualification and preferences for a certain instruction.
         /// </summary>
@@ -45,6 +45,6 @@ namespace Prexonite
         /// </summary>
         /// <param name="state">The compiler state.</param>
         /// <param name="ins">The instruction to compile.</param>
-        void ImplementInCil(Compiler.Cil.CompilerState state, Instruction ins);
+        void ImplementInCil(CompilerState state, Instruction ins);
     }
 }

@@ -34,16 +34,9 @@ namespace Prexonite.Compiler.Ast
         public AstForLoop(string file, int line, int column)
             : base(file, line, column)
         {
-            Block = new AstBlock(file, line, column);
+            Block = new AstLoopBlock(file, line, column);
             Initialize = new AstBlock(file, line, column);
             NextIteration = new AstBlock(file, line, column);
-            Labels = CreateBlockLabels();
-        }
-
-        [DebuggerStepThrough]
-        public static BlockLabels CreateBlockLabels()
-        {
-            return new BlockLabels("for");
         }
 
         [DebuggerStepThrough]
@@ -99,7 +92,7 @@ namespace Prexonite.Compiler.Ast
             }
             continueFull:
 
-            var conditionLabel = Labels.CreateLabel("condition");
+            var conditionLabel = Block.CreateLabel("condition");
 
             if (!Block.IsEmpty) //Body exists -> complete loop code?
             {
@@ -114,12 +107,12 @@ namespace Prexonite.Compiler.Ast
                      */
                     Initialize.EmitCode(target);
                     if (!IsPrecondition) //start with nextIteration
-                        target.EmitJump(Labels.ContinueLabel);
-                    target.EmitLabel(Labels.BeginLabel);
+                        target.EmitJump(Block.ContinueLabel);
+                    target.EmitLabel(Block.BeginLabel);
                     Block.EmitCode(target);
-                    target.EmitLabel(Labels.ContinueLabel);
+                    target.EmitLabel(Block.ContinueLabel);
                     NextIteration.EmitCode(target);
-                    target.EmitJump(Labels.BeginLabel);
+                    target.EmitJump(Block.BeginLabel);
                 }
                 else //Variable condition and body -> full loop code
                 {
@@ -137,14 +130,14 @@ namespace Prexonite.Compiler.Ast
                     if (IsPrecondition)
                         target.EmitJump(conditionLabel);
                     else
-                        target.EmitJump(Labels.ContinueLabel);
-                    target.EmitLabel(Labels.BeginLabel);
+                        target.EmitJump(Block.ContinueLabel);
+                    target.EmitLabel(Block.BeginLabel);
                     Block.EmitCode(target);
-                    target.EmitLabel(Labels.ContinueLabel);
+                    target.EmitLabel(Block.ContinueLabel);
                     NextIteration.EmitCode(target);
                     target.EmitLabel(conditionLabel);
                     AstLazyLogical.EmitJumpCondition(
-                        target, Condition, Labels.BeginLabel, IsPositive);
+                        target, Condition, Block.BeginLabel, IsPositive);
                 }
             }
             else //Body does not exist -> Condition loop
@@ -159,16 +152,16 @@ namespace Prexonite.Compiler.Ast
                  */
                 Initialize.EmitCode(target);
                 if (!IsPrecondition)
-                    target.EmitJump(Labels.ContinueLabel);
-                target.EmitLabel(Labels.BeginLabel);
-                AstLazyLogical.EmitJumpCondition(target, Condition, Labels.BreakLabel, !IsPositive);
+                    target.EmitJump(Block.ContinueLabel);
+                target.EmitLabel(Block.BeginLabel);
+                AstLazyLogical.EmitJumpCondition(target, Condition, Block.BreakLabel, !IsPositive);
                 if (IsPrecondition)
-                    target.EmitLabel(Labels.ContinueLabel);
+                    target.EmitLabel(Block.ContinueLabel);
                 NextIteration.EmitCode(target);
-                target.EmitJump(Labels.BeginLabel);
+                target.EmitJump(Block.BeginLabel);
             }
 
-            target.EmitLabel(Labels.BreakLabel);
+            target.EmitLabel(Block.BreakLabel);
         }
 
         public override AstBlock[] Blocks
@@ -177,7 +170,7 @@ namespace Prexonite.Compiler.Ast
             {
                 var blocks = new List<AstBlock>(base.Blocks)
                 {
-                    Initialize, 
+                    Initialize,
                     NextIteration
                 };
                 return blocks.ToArray();

@@ -10,13 +10,12 @@ namespace Prexonite
     /// </summary>
     public class CooperativeContext : StackContext, IDisposable
     {
-
         public override string ToString()
         {
             return String.Format("Cooperative managed method({0})", _existingMethod);
-        } 
+        }
 
-        public CooperativeContext(StackContext sctx, Func<Action<PValue>,IEnumerable<bool>> methodCtor)
+        public CooperativeContext(StackContext sctx, Func<Action<PValue>, IEnumerable<bool>> methodCtor)
         {
             if (sctx == null)
                 throw new ArgumentNullException("sctx");
@@ -37,7 +36,6 @@ namespace Prexonite
                 if (_existingMethod != null)
                 {
                     return _existingMethod;
-
                 }
                 else
                 {
@@ -99,7 +97,7 @@ namespace Prexonite
                 return false;
         }
 
-        public Func<Exception,bool> ExceptionHandler { get; set; }
+        public Func<Exception, bool> ExceptionHandler { get; set; }
 
         /// <summary>
         /// Represents the return value of the context.
@@ -127,7 +125,7 @@ namespace Prexonite
             {
                 if (disposing)
                 {
-                    if(_existingMethod != null)
+                    if (_existingMethod != null)
                         _existingMethod.Dispose();
                 }
             }
@@ -140,6 +138,5 @@ namespace Prexonite
         }
 
         #endregion
-
     }
 }

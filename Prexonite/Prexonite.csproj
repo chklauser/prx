@@ -228,7 +228,6 @@
     <Compile Include="Compiler\Ast\IAstHasExpressions.cs" />
     <Compile Include="Compiler\Ast\IAstType.cs" />
     <Compile Include="Compiler\Ast\ICanBeReferenced.cs" />
-    <Compile Include="Compiler\BlockLabels.cs" />
     <Compile Include="Compiler\Cil\Compiler.cs" />
     <Compile Include="Compiler\Cil\CompilerPass.cs" />
     <Compile Include="Compiler\Cil\CompilerState.cs" />

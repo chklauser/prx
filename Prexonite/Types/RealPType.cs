@@ -156,7 +156,7 @@ namespace Prexonite.Types
             out PValue result)
         {
             result = null;
-            PType subjectType = subject.Type;
+            var subjectType = subject.Type;
             if (subjectType is StringPType)
             {
                 double value;

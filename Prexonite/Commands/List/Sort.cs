@@ -43,10 +43,7 @@ namespace Prexonite.Commands.List
         /// </summary>
         public static Sort Instance
         {
-            get
-            {
-                return _instance;
-            }
+            get { return _instance; }
         }
 
         private Sort()
@@ -69,32 +66,32 @@ namespace Prexonite.Commands.List
                 throw new ArgumentNullException("sctx");
             if (args == null)
                 args = new PValue[] {};
-            List<PValue> lst = new List<PValue>();
+            var lst = new List<PValue>();
             if (args.Length == 0)
                 return PType.Null.CreatePValue();
             else if (args.Length == 1)
             {
-                IEnumerable<PValue> set = Map._ToEnumerable(sctx, args[0]);
-                foreach (PValue x in set)
+                var set = Map._ToEnumerable(sctx, args[0]);
+                foreach (var x in set)
                     lst.Add(x);
                 return (PValue) lst;
             }
             else
             {
-                List<PValue> clauses = new List<PValue>();
-                for (int i = 0; i + 1 < args.Length; i++)
+                var clauses = new List<PValue>();
+                for (var i = 0; i + 1 < args.Length; i++)
                     clauses.Add(args[i]);
-                foreach (PValue x in Map._ToEnumerable(sctx, args[args.Length - 1]))
+                foreach (var x in Map._ToEnumerable(sctx, args[args.Length - 1]))
                     lst.Add(x);
                 lst.Sort(
                     delegate(PValue a, PValue b)
                     {
-                        foreach (PValue f in clauses)
+                        foreach (var f in clauses)
                         {
-                            PValue pdec = f.IndirectCall(sctx, new PValue[] {a, b});
+                            var pdec = f.IndirectCall(sctx, new[] {a, b});
                             if (!(pdec.Type is IntPType))
                                 pdec = pdec.ConvertTo(sctx, PType.Int);
-                            int dec = (int) pdec.Value;
+                            var dec = (int) pdec.Value;
                             if (dec != 0)
                                 return dec;
                         }

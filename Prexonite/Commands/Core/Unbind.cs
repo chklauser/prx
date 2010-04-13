@@ -25,7 +25,6 @@
 
 using System;
 using System.Collections.Generic;
-using System.Reflection.Emit;
 using Prexonite.Compiler.Cil;
 using Prexonite.Types;
 
@@ -88,7 +87,7 @@ namespace Prexonite.Commands.Core
         {
             if (args == null)
                 throw new ArgumentNullException("args");
-            foreach (PValue arg in args)
+            foreach (var arg in args)
                 Run(sctx, arg);
             return PType.Null.CreatePValue();
         }
@@ -116,7 +115,7 @@ namespace Prexonite.Commands.Core
             if (arg.IsNull)
                 throw new PrexoniteException("The unbind command cannot process Null.");
 
-            FunctionContext fctx = sctx as FunctionContext;
+            var fctx = sctx as FunctionContext;
             if (fctx == null)
                 throw new PrexoniteException(
                     "The unbind command can only work on function contexts.");
@@ -127,7 +126,7 @@ namespace Prexonite.Commands.Core
             {
                 id = null;
                 //Variable reference
-                foreach (KeyValuePair<string, PVariable> pair in fctx.LocalVariables)
+                foreach (var pair in fctx.LocalVariables)
                 {
                     if (ReferenceEquals(pair.Value, arg.Value))
                     {
@@ -144,7 +143,7 @@ namespace Prexonite.Commands.Core
             PVariable existing;
             if (id != null && fctx.LocalVariables.TryGetValue(id, out existing))
             {
-                PVariable unbound = new PVariable();
+                var unbound = new PVariable();
                 unbound.Value = existing.Value;
                 fctx.ReplaceLocalVariable(id, unbound);
             }
@@ -165,12 +164,12 @@ namespace Prexonite.Commands.Core
 
         public CompilationFlags CheckQualification(Instruction ins)
         {
-            return CompilationFlags.IsIncompatible;  
+            return CompilationFlags.IsIncompatible;
         }
 
         public void ImplementInCil(CompilerState state, Instruction ins)
         {
-            throw new NotSupportedException(); 
+            throw new NotSupportedException();
         }
 
         #endregion

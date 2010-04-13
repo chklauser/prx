@@ -56,26 +56,26 @@ namespace Prexonite.Commands.List
             if (sctx == null)
                 throw new ArgumentNullException("sctx");
 
-            List<IEnumerable<PValue>> xss = new List<IEnumerable<PValue>>();
-            foreach (PValue arg in args)
+            var xss = new List<IEnumerable<PValue>>();
+            foreach (var arg in args)
             {
-                IEnumerable<PValue> xs = Map._ToEnumerable(sctx, arg);
+                var xs = Map._ToEnumerable(sctx, arg);
                 if (xs != null)
                     xss.Add(xs);
             }
 
-            int n = xss.Count;
+            var n = xss.Count;
             if (n < 2)
                 throw new PrexoniteException("Except requires at least two sources.");
 
-            Dictionary<PValue, bool> t = new Dictionary<PValue, bool>();
+            var t = new Dictionary<PValue, bool>();
             //All elements of the first source are considered candidates
-            foreach (PValue x in xss[0])
+            foreach (var x in xss[0])
                 if (!t.ContainsKey(x))
                     t.Add(x, true);
 
-            for (int i = 1; i < n; i++)
-                foreach (PValue x in xss[i])
+            for (var i = 1; i < n; i++)
+                foreach (var x in xss[i])
                     if (t.ContainsKey(x))
                         t.Remove(x);
 

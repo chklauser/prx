@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.Linq;
@@ -10,7 +10,6 @@ namespace Prexonite.Commands.Lazy
 {
     public class ForceCommand : PCommand, ICilCompilerAware
     {
-
         #region Singleton pattern
 
         private ForceCommand()
@@ -24,7 +23,7 @@ namespace Prexonite.Commands.Lazy
             get { return _instance; }
         }
 
-        #endregion 
+        #endregion
 
         #region Overrides of PCommand
 
@@ -71,7 +70,8 @@ namespace Prexonite.Commands.Lazy
 
         CompilationFlags ICilCompilerAware.CheckQualification(Instruction ins)
         {
-return CompilationFlags.PreferRunStatically;        }
+            return CompilationFlags.PreferRunStatically;
+        }
 
         void ICilCompilerAware.ImplementInCil(CompilerState state, Instruction ins)
         {

@@ -22,11 +22,9 @@
  */
 
 using System;
-using System.Reflection;
 using System.Reflection.Emit;
 using System.Text;
 using Prexonite.Compiler.Cil;
-using Prexonite.Types;
 
 namespace Prexonite.Commands.Core
 {
@@ -45,7 +43,7 @@ namespace Prexonite.Commands.Core
             get { return _instance; }
         }
 
-        #endregion  
+        #endregion
 
         /// <summary>
         /// A flag indicating whether the command acts like a pure function.
@@ -91,7 +89,7 @@ namespace Prexonite.Commands.Core
         /// <returns>A set of <see cref="CompilationFlags"/>.</returns>
         CompilationFlags ICilCompilerAware.CheckQualification(Instruction ins)
         {
-            switch(ins.Arguments)
+            switch (ins.Arguments)
             {
                 case 0:
                 case 1:
@@ -108,10 +106,10 @@ namespace Prexonite.Commands.Core
         /// <param name="ins">The instruction to compile.</param>
         void ICilCompilerAware.ImplementInCil(CompilerState state, Instruction ins)
         {
-            switch(ins.Arguments)
+            switch (ins.Arguments)
             {
                 case 0:
-                    if(!ins.JustEffect)
+                    if (!ins.JustEffect)
                     {
                         state.Il.Emit(OpCodes.Ldstr, "");
                         state.EmitWrapString();
@@ -120,14 +118,14 @@ namespace Prexonite.Commands.Core
                 case 1:
                     state.EmitLoadLocal(state.SctxLocal);
                     state.Il.EmitCall(OpCodes.Call, ConsolePrintLine.PValueCallToString, null);
-                    if(!ins.JustEffect)
+                    if (!ins.JustEffect)
                     {
                         state.Il.Emit(OpCodes.Dup);
                         state.EmitWrapString();
                         state.EmitStoreTemp(0);
                     }
                     state.Il.EmitCall(OpCodes.Call, ConsolePrintLine.ConsoleWriteMethod, null);
-                    if(!ins.JustEffect)
+                    if (!ins.JustEffect)
                     {
                         state.EmitLoadTemp(0);
                     }
@@ -135,9 +133,6 @@ namespace Prexonite.Commands.Core
                 default:
                     throw new NotSupportedException();
             }
-                
-
-
         }
 
         #endregion

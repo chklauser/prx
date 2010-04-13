@@ -1,9 +1,8 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using Prexonite.Compiler.Cil;
-using Prexonite.Types;
 
 namespace Prexonite.Commands.Lazy
 {
@@ -13,7 +12,6 @@ namespace Prexonite.Commands.Lazy
     /// </summary>
     public class AsThunkCommand : PCommand, ICilCompilerAware
     {
-
         #region Singleton pattern
 
         private AsThunkCommand()

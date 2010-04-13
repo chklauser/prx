@@ -128,7 +128,7 @@ namespace Prexonite.Helper
 
         private int toIndex(int qidx)
         {
-            int idx = _front + qidx;
+            var idx = _front + qidx;
             if (idx >= _store.Count)
                 idx -= _store.Count;
             return idx;
@@ -175,7 +175,7 @@ namespace Prexonite.Helper
             else //wrapped
                 if (_rear + 1 == _front)
                 {
-                    int newRear = Count - 1 + 1;
+                    var newRear = Count - 1 + 1;
                     unwrap();
                     _store.Add(item);
                     _rear = newRear;
@@ -203,7 +203,7 @@ namespace Prexonite.Helper
         /// <returns>The element in front of the queue.</returns>
         public T Dequeue()
         {
-            T item = _store[_front];
+            var item = _store[_front];
             _store[_front] = default(T); //Make sure, item get's garbage collected
             if (_front == _rear) //just removed last element -> reset
             {
@@ -229,7 +229,7 @@ namespace Prexonite.Helper
         [DebuggerStepThrough]
         public int IndexOf(T item)
         {
-            int normal = _store.IndexOf(
+            var normal = _store.IndexOf(
                 item,
                 _front,
                 normalCount());
@@ -318,12 +318,12 @@ namespace Prexonite.Helper
         [DebuggerStepThrough]
         public void CopyTo(T[] array, int arrayIndex)
         {
-            int idx = arrayIndex;
+            var idx = arrayIndex;
             if (array.Length < Count)
                 throw new ArgumentOutOfRangeException(
                     "The supplied array is not big enough for " + Count + " elements.");
 
-            foreach (T t in this)
+            foreach (var t in this)
                 array[idx++] = t;
         }
 
@@ -352,7 +352,7 @@ namespace Prexonite.Helper
         [DebuggerStepThrough]
         public bool Remove(T item)
         {
-            int idx = IndexOf(item);
+            var idx = IndexOf(item);
             if (idx < 0)
                 return false;
             else
@@ -371,19 +371,19 @@ namespace Prexonite.Helper
         [DebuggerStepThrough]
         public IEnumerator<T> GetEnumerator()
         {
-            int count = normalCount();
+            var count = normalCount();
 
             //Return normal part.
-            for (int i = _front; i < count; i++)
+            for (var i = _front; i < count; i++)
                 yield return _store[i];
 
             //Check if there exists a wrapped part
             if (isWrapped())
             {
-                int wrapped = wrappedCount();
+                var wrapped = wrappedCount();
 
                 //Return the wrapped part.
-                for (int i = 0; i < wrapped; i++)
+                for (var i = 0; i < wrapped; i++)
                     yield return _store[i];
             }
         }

@@ -37,23 +37,23 @@ namespace Prexonite.Commands.List
             if (sctxCarrier == null)
                 throw new ArgumentNullException("sctxCarrier");
 
-            Dictionary<PValue, int> t = new Dictionary<PValue, int>();
+            var t = new Dictionary<PValue, int>();
 
             var sctx = sctxCarrier.StackContext;
 
-            foreach (PValue arg in args)
+            foreach (var arg in args)
             {
-                IEnumerable<PValue> xs = Map._ToEnumerable(sctx, arg);
-                if(xs == null)
+                var xs = Map._ToEnumerable(sctx, arg);
+                if (xs == null)
                     continue;
-                foreach (PValue x in xs)
+                foreach (var x in xs)
                     if (t.ContainsKey(x))
                         t[x]++;
                     else
                         t.Add(x, 1);
             }
 
-            foreach (KeyValuePair<PValue, int> pair in t)
+            foreach (var pair in t)
                 yield return new PValueKeyValuePair(pair.Key, pair.Value);
         }
 

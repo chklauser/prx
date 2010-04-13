@@ -44,7 +44,7 @@ namespace Prexonite.Commands.Text
             get { return _instance; }
         }
 
-        #endregion 
+        #endregion
 
         public override bool IsPure
         {
@@ -83,14 +83,14 @@ namespace Prexonite.Commands.Text
 
         public static string SetRight(int w, string s, string f)
         {
-            int fl = f.Length;
-            int l = s.Length;
+            var fl = f.Length;
+            var l = s.Length;
             if (l >= w)
                 return s;
 
-            StringBuilder sb = new StringBuilder(w, w);
+            var sb = new StringBuilder(w, w);
 
-            for (int i = l; i < w; i += fl)
+            for (var i = l; i < w; i += fl)
                 sb.Append(f);
             sb.Length = w - l;
             sb.Append(s);

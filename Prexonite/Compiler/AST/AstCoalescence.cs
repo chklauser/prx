@@ -60,7 +60,7 @@ namespace Prexonite.Compiler.Ast
 
             //Optimize arguments
             IAstExpression oArg;
-            foreach (IAstExpression arg in Expressions.ToArray())
+            foreach (var arg in Expressions.ToArray())
             {
                 if (arg == null)
                     throw new PrexoniteException(
@@ -69,13 +69,13 @@ namespace Prexonite.Compiler.Ast
                 oArg = GetOptimizedNode(target, arg);
                 if (!ReferenceEquals(oArg, arg))
                 {
-                    int idx = Expressions.IndexOf(arg);
+                    var idx = Expressions.IndexOf(arg);
                     Expressions.Insert(idx, oArg);
                     Expressions.RemoveAt(idx + 1);
                 }
             }
 
-            foreach (IAstExpression iexpr in Expressions.ToArray())
+            foreach (var iexpr in Expressions.ToArray())
             {
                 if (iexpr is AstNull ||
                     (iexpr is AstConstant && ((AstConstant) iexpr).Constant == null))

@@ -35,32 +35,29 @@ namespace Prexonite.Compiler.Ast
             : base(p)
         {
             Block = new AstBlock(File, Line, Column);
-            Labels = new BlockLabels(LabelPrefix);
         }
 
         public AstUsing(string file, int line, int column)
             : base(file, line, column)
         {
             Block = new AstBlock(File, Line, Column);
-            Labels = new BlockLabels(LabelPrefix);
         }
 
         public IAstExpression Expression;
         public AstBlock Block;
-        public BlockLabels Labels;
 
         #region IAstHasBlocks Members
 
         public AstBlock[] Blocks
         {
-            get { return new AstBlock[] {Block}; }
+            get { return new[] {Block}; }
         }
 
         #region IAstHasExpressions Members
 
         public IAstExpression[] Expressions
         {
-            get { return new IAstExpression[] {Expression}; }
+            get { return new[] {Expression}; }
         }
 
         #endregion
@@ -72,11 +69,11 @@ namespace Prexonite.Compiler.Ast
             if (Expression == null)
                 throw new PrexoniteException("AstUsing requires Expression to be initialized.");
 
-            AstTryCatchFinally _try = new AstTryCatchFinally(File, Line, Column);
-            string vContainer = Labels.CreateLabel("container");
+            var tryNode = new AstTryCatchFinally(File, Line, Column);
+            var vContainer = Block.CreateLabel("container");
             target.Function.Variables.Add(vContainer);
             //Try block => Container = {Expression}; {Block};
-            AstGetSetSymbol setCont =
+            var setCont =
                 new AstGetSetSymbol(
                     File,
                     Line,
@@ -86,7 +83,7 @@ namespace Prexonite.Compiler.Ast
                     SymbolInterpretations.LocalObjectVariable);
             setCont.Arguments.Add(Expression);
 
-            AstGetSetSymbol getCont =
+            var getCont =
                 new AstGetSetSymbol(
                     File,
                     Line,
@@ -95,12 +92,12 @@ namespace Prexonite.Compiler.Ast
                     vContainer,
                     SymbolInterpretations.LocalObjectVariable);
 
-            AstBlock _tryBlock = _try.TryBlock;
-            _tryBlock.Add(setCont);
-            _tryBlock.AddRange(Block);
+            var tryBlock = tryNode.TryBlock;
+            tryBlock.Add(setCont);
+            tryBlock.AddRange(Block);
 
             //Finally block => dispose( Container );
-            AstGetSetSymbol dispose =
+            var dispose =
                 new AstGetSetSymbol(
                     File,
                     Line,
@@ -111,10 +108,10 @@ namespace Prexonite.Compiler.Ast
 
             dispose.Arguments.Add(getCont);
 
-            _try.FinallyBlock.Add(dispose);
+            tryNode.FinallyBlock.Add(dispose);
 
             //Emit code!
-            _try.EmitCode(target);
+            tryNode.EmitCode(target);
         }
     }
 }

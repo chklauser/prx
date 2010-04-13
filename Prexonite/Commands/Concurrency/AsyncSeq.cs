@@ -7,13 +7,11 @@ using Prexonite.Commands.List;
 using Prexonite.Compiler.Cil;
 using Prexonite.Concurrency;
 using Prexonite.Types;
-using Action=Prexonite.Compiler.Cil.Action;
 
 namespace Prexonite.Commands.Concurrency
 {
     public class AsyncSeq : CoroutineCommand, ICilCompilerAware
     {
-
         #region Singleton pattern
 
         private AsyncSeq()
@@ -27,7 +25,7 @@ namespace Prexonite.Commands.Concurrency
             get { return _instance; }
         }
 
-        #endregion 
+        #endregion
 
         #region Overrides of PCommand
 
@@ -63,7 +61,7 @@ namespace Prexonite.Commands.Concurrency
         {
             private readonly ContextCarrier _sctxCarrier;
             private readonly PValue _arg;
-            
+
 
             public ChannelEnumerable(ContextCarrier sctxCarrier, PValue arg)
             {
@@ -82,10 +80,10 @@ namespace Prexonite.Commands.Concurrency
 
                 #region Producer
 
-                Func<PValue> producer = 
+                Func<PValue> producer =
                     () =>
                     {
-                        using (var e = Map._ToEnumerable(_sctxCarrier.StackContext,_arg).GetEnumerator())
+                        using (var e = Map._ToEnumerable(_sctxCarrier.StackContext, _arg).GetEnumerator())
                         {
                             var doCont = true;
                             var doDisp = false;
@@ -151,9 +149,10 @@ namespace Prexonite.Commands.Concurrency
                         shutDown:
                         return PType.Null;
                     };
-                    #endregion
 
-                return new ChannelEnumerator(peek, data, rset, disp, producer,_sctxCarrier);
+                #endregion
+
+                return new ChannelEnumerator(peek, data, rset, disp, producer, _sctxCarrier);
             }
 
             IEnumerator IEnumerable.GetEnumerator()
@@ -168,8 +167,12 @@ namespace Prexonite.Commands.Concurrency
         //  to our producer
         private class ChannelEnumerator : IEnumerator<PValue>
         {
-
-            public ChannelEnumerator(Channel peek, Channel data, Channel rset, Channel disp, Func<PValue> produce, ContextCarrier sctxCarrier)
+            public ChannelEnumerator(Channel peek,
+                Channel data,
+                Channel rset,
+                Channel disp,
+                Func<PValue> produce,
+                ContextCarrier sctxCarrier)
             {
                 _peek = peek;
                 _sctxCarrier = sctxCarrier;
@@ -180,7 +183,6 @@ namespace Prexonite.Commands.Concurrency
 
                 //The producer runs on a separate thread and communicates
                 //  with this thread via 4 channels, one for each method
-                
             }
 
             private readonly Channel _peek;
@@ -212,7 +214,7 @@ namespace Prexonite.Commands.Concurrency
                     _current = PType.Null;
                 }
 
-                if((bool)_peek.Receive().Value)
+                if ((bool) _peek.Receive().Value)
                 {
                     _current = _data.Receive();
                     return true;
@@ -227,7 +229,7 @@ namespace Prexonite.Commands.Concurrency
             {
                 _rset.Send(PType.Null);
                 var p = _rset.Receive();
-                if(!p.IsNull)
+                if (!p.IsNull)
                 {
                     var exc = p.Value as Exception;
                     if (exc != null)

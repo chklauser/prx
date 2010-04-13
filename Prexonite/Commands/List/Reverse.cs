@@ -24,7 +24,6 @@
 using System;
 using System.Collections.Generic;
 using System.Text;
-
 using Prexonite.Compiler.Cil;
 
 namespace Prexonite.Commands.List
@@ -37,10 +36,7 @@ namespace Prexonite.Commands.List
 
         public static Reverse Instance
         {
-            get
-            {
-                return _instance;
-            }
+            get { return _instance; }
         }
 
         private Reverse()

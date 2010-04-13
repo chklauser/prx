@@ -43,7 +43,7 @@ namespace Prexonite.Commands.List
             get { return _instance; }
         }
 
-        #endregion 
+        #endregion
 
         protected override IEnumerable<PValue> CoroutineRun(ContextCarrier sctxCarrier, PValue[] args)
         {
@@ -59,19 +59,19 @@ namespace Prexonite.Commands.List
 
             var sctx = sctxCarrier.StackContext;
 
-            int i = 0;
+            var i = 0;
             if (args.Length < 1)
                 throw new PrexoniteException("Skip requires at least one argument.");
 
-            int index = (int)args[0].ConvertTo(sctx, PType.Int, true).Value;
+            var index = (int) args[0].ConvertTo(sctx, PType.Int, true).Value;
 
-            for (int j = 1; j < args.Length; j++)
+            for (var j = 1; j < args.Length; j++)
             {
-                PValue arg = args[j];
-                IEnumerable<PValue> set = Map._ToEnumerable(sctx, arg);
+                var arg = args[j];
+                var set = Map._ToEnumerable(sctx, arg);
                 if (set == null)
                     throw new PrexoniteException(arg + " is neither a list nor a coroutine.");
-                foreach (PValue value in set)
+                foreach (var value in set)
                 {
                     if (i++ >= index)
                         yield return value;

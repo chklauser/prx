@@ -1,4 +1,4 @@
-﻿/*
+/*
  * Prx, a standalone command line interface to the Prexonite scripting engine.
  * Prexonite, a scripting engine (Scripting Language -> Bytecode -> Virtual Machine)
  *  Copyright (C) 2007  Christian "SealedSun" Klauser

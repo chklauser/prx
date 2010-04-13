@@ -40,25 +40,25 @@ namespace Prexonite.Commands.List
             if (args.Length < 1)
                 throw new PrexoniteException("GroupBy requires at least one argument.");
 
-            PValue f = args[0];
+            var f = args[0];
 
             var sctx = sctxCarrier.StackContext;
 
-            Dictionary<PValue, List<PValue>> groups =
+            var groups =
                 new Dictionary<PValue, List<PValue>>();
 
-            for (int i = 1; i < args.Length; i++)
+            for (var i = 1; i < args.Length; i++)
             {
-                PValue arg = args[i];
-                IEnumerable<PValue> xs = Map._ToEnumerable(sctx, arg);
-                if(xs == null)
+                var arg = args[i];
+                var xs = Map._ToEnumerable(sctx, arg);
+                if (xs == null)
                     continue;
-                foreach (PValue x in xs)
+                foreach (var x in xs)
                 {
-                    PValue fx = f.IndirectCall(sctx, new PValue[] { x });
+                    var fx = f.IndirectCall(sctx, new[] {x});
                     if (!groups.ContainsKey(fx))
                     {
-                        List<PValue> lst = new List<PValue>();
+                        var lst = new List<PValue>();
                         lst.Add(x);
                         groups.Add(fx, lst);
                     }
@@ -69,8 +69,8 @@ namespace Prexonite.Commands.List
                 }
             }
 
-            foreach (KeyValuePair<PValue, List<PValue>> pair in groups)
-                yield return new PValueKeyValuePair(pair.Key, (PValue)pair.Value);
+            foreach (var pair in groups)
+                yield return new PValueKeyValuePair(pair.Key, (PValue) pair.Value);
         }
 
         /// <summary>

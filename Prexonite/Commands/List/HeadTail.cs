@@ -1,15 +1,13 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using Prexonite.Compiler.Cil;
-using Prexonite.Types;
 
 namespace Prexonite.Commands.List
 {
     public class HeadTail : PCommand, ICilCompilerAware
     {
-
         #region Singleton
 
         private HeadTail()
@@ -23,7 +21,7 @@ namespace Prexonite.Commands.List
             get { return _instance; }
         }
 
-        #endregion 
+        #endregion
 
         public override bool IsPure
         {
@@ -43,7 +41,7 @@ namespace Prexonite.Commands.List
                 throw new ArgumentNullException("args");
 
             PValue head;
-            var nextArg = ((IEnumerable<PValue>)args).GetEnumerator();
+            var nextArg = ((IEnumerable<PValue>) args).GetEnumerator();
             IEnumerator<PValue> nextX;
             try
             {
@@ -81,7 +79,7 @@ namespace Prexonite.Commands.List
             using (current)
                 while (current.MoveNext())
                     yield return current.Current;
-            using(remaining)
+            using (remaining)
             {
                 while (remaining.MoveNext())
                 {

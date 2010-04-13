@@ -27,17 +27,15 @@ using Prexonite.Types;
 
 namespace Prexonite
 {
-
     /// <summary>
     /// Integrates suspendable .NET managed code into the Prexonite stack via the IEnumerator interface.
     /// </summary>
     public class CoroutineContext : StackContext, IDisposable
     {
-
         public override string ToString()
         {
             return string.Format("Managed Coroutine({0})", _coroutine);
-        } 
+        }
 
         public CoroutineContext(StackContext sctx, IEnumerator<PValue> coroutine)
         {
@@ -92,7 +90,7 @@ namespace Prexonite
         /// <returns>True if the context has additional work to perform in the next cycle, False if it has finished it's work and can be removed from the stack</returns>
         protected override bool PerformNextCylce(StackContext lastContext)
         {
-            bool moved = _coroutine.MoveNext();
+            var moved = _coroutine.MoveNext();
             if (moved)
             {
                 if (_coroutine.Current != null)
@@ -128,7 +126,7 @@ namespace Prexonite
 
         #region IDisposable
 
-        private bool disposed = false;
+        private bool disposed;
 
         public void Dispose()
         {
@@ -141,7 +139,7 @@ namespace Prexonite
             {
                 if (disposing)
                 {
-                    if(_coroutine != null)
+                    if (_coroutine != null)
                         _coroutine.Dispose();
                 }
             }
@@ -154,6 +152,5 @@ namespace Prexonite
         }
 
         #endregion
-
     }
 }

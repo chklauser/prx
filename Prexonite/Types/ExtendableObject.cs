@@ -192,9 +192,9 @@ namespace Prexonite.Types
         {
             result = null;
 
-            PValue[] argst = StructurePType._addThis(subject, args);
+            var argst = StructurePType._addThis(subject, args);
 
-            bool reference = false;
+            var reference = false;
             ExtensionMember m;
 
             //Try to call the member

@@ -93,7 +93,7 @@ namespace Prexonite
             _meta = new MetaTable(this);
 
             if (id == null)
-                throw new ArgumentNullException("id","Application id cannot be null.");
+                throw new ArgumentNullException("id", "Application id cannot be null.");
             if (id.Length <= 0)
                 throw new ArgumentException("Application Id cannot be null.");
             //Please note that application id's do not have to be Command Script identifiers.
@@ -277,7 +277,7 @@ namespace Prexonite
             if (_suppressInitialization)
                 return;
             MetaEntry init;
-            int generation = _initializationGeneration + 1;
+            var generation = _initializationGeneration + 1;
             switch (_initalizationState)
             {
                 case ApplicationInitializationState.None:
@@ -289,9 +289,9 @@ namespace Prexonite
                                 (
                                 targetEngine,
                                 new PValue[0], // \init has no arguments
-                                new PVariable[0],// \init is not a closure
+                                new PVariable[0], // \init is not a closure
                                 true // don't initialize. That's what WE are trying to do here.
-                            );
+                                );
                         int offset;
                         if (
                             (!(_initializationFunction.Meta.TryGetValue(InitializationId, out init) &&

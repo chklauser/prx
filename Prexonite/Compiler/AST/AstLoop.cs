@@ -1,8 +1,8 @@
 namespace Prexonite.Compiler.Ast
 {
     public abstract class AstLoop : AstNode,
-                                    IAstHasBlocks,
-                                    IAstHasExpressions
+                                    IAstHasBlocks
+
     {
         protected AstLoop(string file, int line, int column)
             : base(file, line, column)
@@ -14,34 +14,20 @@ namespace Prexonite.Compiler.Ast
         {
         }
 
-        public AstBlock Block;
-        public BlockLabels Labels;
-
-        public AstLoop GetCopy()
-        {
-            AstLoop copy = (AstLoop) MemberwiseClone();
-            copy.Block = new AstBlock(File, Line, Column);
-            copy.Block.Statements.AddRange(Block.Statements);
-            copy.Labels = BlockLabels.CreateExistingLabels(Labels.Prefix, Labels.Uid);
-
-            return copy;
-        }
+        public AstLoopBlock Block;
 
         #region IAstHasBlocks Members
 
         public virtual AstBlock[] Blocks
         {
-            get { return new AstBlock[] {Block}; }
+            get { return new[] {Block}; }
         }
 
         #endregion
 
         #region IAstHasExpressions Members
 
-        public abstract IAstExpression[] Expressions
-        {
-            get;
-        }
+        public abstract IAstExpression[] Expressions { get; }
 
         #endregion
     }

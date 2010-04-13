@@ -97,7 +97,7 @@ namespace Prexonite.Types
 
         public override int GetHashCode()
         {
-            int hash = 1;
+            var hash = 1;
             foreach (var pair in this)
                 hash =
                     hash ^ pair.Key.GetHashCode() ^ pair.Value.GetHashCode();

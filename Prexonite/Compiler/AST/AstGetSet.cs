@@ -33,7 +33,6 @@ namespace Prexonite.Compiler.Ast
                                       IAstEffect,
                                       IAstHasExpressions
     {
-
         private readonly List<IAstExpression> _arguments = new List<IAstExpression>();
         private readonly ArgumentsProxy _proxy;
 
@@ -94,10 +93,7 @@ namespace Prexonite.Compiler.Ast
 
         public virtual int DefaultAdditionalArguments
         {
-            get
-            {
-                return 0;
-            }
+            get { return 0; }
         }
 
         protected void EmitArguments(CompilerTarget target)
@@ -114,11 +110,11 @@ namespace Prexonite.Compiler.Ast
         {
             foreach (IAstExpression expr in Arguments)
                 expr.EmitCode(target);
-            int argc = Arguments.Count;
-            if(duplicateLast && argc > 0)
+            var argc = Arguments.Count;
+            if (duplicateLast && argc > 0)
             {
                 target.EmitDuplicate();
-                if(argc + additionalArguments > 1)
+                if (argc + additionalArguments > 1)
                     target.EmitRotate(-1, argc + 1 + additionalArguments);
             }
         }
@@ -159,7 +155,7 @@ namespace Prexonite.Compiler.Ast
             string typeName;
             return String.Format(
                 "{0}: {1}",
-                Enum.GetName(typeof(PCall), Call).ToLowerInvariant(),
+                Enum.GetName(typeof (PCall), Call).ToLowerInvariant(),
                 (typeName = GetType().Name).StartsWith("AstGetSet")
                     ? typeName.Substring(9)
                     : typeName);

@@ -39,20 +39,14 @@ namespace Prexonite.Commands.Core
 
         public static CompileToCil Instance
         {
-            get
-            {
-                return _instance;
-            }
+            get { return _instance; }
         }
 
         #endregion
 
         public override bool IsPure
         {
-            get
-            {
-                return false;
-            }
+            get { return false; }
         }
 
         public static bool AlreadyCompiledStatically { get; private set; }
@@ -95,13 +89,13 @@ namespace Prexonite.Commands.Core
         /// </remarks>
         public static PValue RunStatically(StackContext sctx, PValue[] args)
         {
-            if(sctx == null)
+            if (sctx == null)
                 throw new ArgumentNullException("sctx");
-            if(args == null)
+            if (args == null)
                 args = new PValue[] {};
 
             var linking = FunctionLinking.FullyStatic;
-            switch(args.Length)
+            switch (args.Length)
             {
                 case 0:
                     if (sctx.ParentEngine.StaticLinkingAllowed)
@@ -112,11 +106,12 @@ namespace Prexonite.Commands.Core
                                 throw new PrexoniteException
                                     (
                                     string.Format
-                                        ("You should only use static compilation once per process. Use {0}(true)" +
-                                         " to force recompilation (warning: memory leak!). Should your program recompile dynamically, " +
-                                         "use {1}(false) for disposable implementations.",
-                                         Engine.CompileToCilAlias,
-                                         Engine.CompileToCilAlias));
+                                        (
+                                        "You should only use static compilation once per process. Use {0}(true)" +
+                                        " to force recompilation (warning: memory leak!). Should your program recompile dynamically, " +
+                                        "use {1}(false) for disposable implementations.",
+                                        Engine.CompileToCilAlias,
+                                        Engine.CompileToCilAlias));
                             else
                                 AlreadyCompiledStatically = true;
                         }
@@ -125,7 +120,7 @@ namespace Prexonite.Commands.Core
                     {
                         linking = FunctionLinking.FullyIsolated;
                     }
-                    Compiler.Cil.Compiler.Compile(sctx.ParentApplication, sctx.ParentEngine,linking);
+                    Compiler.Cil.Compiler.Compile(sctx.ParentApplication, sctx.ParentEngine, linking);
                     break;
                 case 1:
                     var arg0 = args[0];
@@ -140,9 +135,9 @@ namespace Prexonite.Commands.Core
                             linking = FunctionLinking.FullyIsolated;
                         goto case 0;
                     }
-                    else if (arg0.Type == typeof(FunctionLinking))
+                    else if (arg0.Type == typeof (FunctionLinking))
                     {
-                        linking = (FunctionLinking)arg0.Value;
+                        linking = (FunctionLinking) arg0.Value;
                         goto case 0;
                     }
                     else
@@ -151,35 +146,34 @@ namespace Prexonite.Commands.Core
                     }
                 default:
                     //Compile individual functions to CIL
-                    foreach(PValue arg in args)
+                    foreach (var arg in args)
                     {
-                        PType T = arg.Type;
+                        var T = arg.Type;
                         PFunction func;
-                        switch(T.ToBuiltIn())
+                        switch (T.ToBuiltIn())
                         {
                             case PType.BuiltIn.String:
-                                if(!sctx.ParentApplication.Functions.TryGetValue((string) arg.Value, out func))
+                                if (!sctx.ParentApplication.Functions.TryGetValue((string) arg.Value, out func))
                                     continue;
                                 break;
                             case PType.BuiltIn.Object:
                                 func = arg.Value as PFunction;
-                                if(func == null)
+                                if (func == null)
                                     goto default;
                                 else
                                     break;
                             default:
-                                if(!arg.TryConvertTo(sctx, out func))
+                                if (!arg.TryConvertTo(sctx, out func))
                                     continue;
                                 break;
                         }
 
-                        Compiler.Cil.Compiler.TryCompile(func, sctx.ParentEngine,FunctionLinking.FullyIsolated);
+                        Compiler.Cil.Compiler.TryCompile(func, sctx.ParentEngine, FunctionLinking.FullyIsolated);
                     }
                     break;
             }
 
             return PType.Null;
         }
-
     }
 }

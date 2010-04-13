@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
@@ -12,7 +12,6 @@ namespace Prexonite.Commands.Concurrency
 {
     public class Select : PCommand, ICilCompilerAware
     {
-
         #region Singleton pattern
 
         private Select()
@@ -26,7 +25,7 @@ namespace Prexonite.Commands.Concurrency
             get { return _instance; }
         }
 
-        #endregion 
+        #endregion
 
         #region Overrides of PCommand
 
@@ -43,16 +42,16 @@ namespace Prexonite.Commands.Concurrency
         public static PValue RunStatically(StackContext sctx, PValue[] args)
         {
             var rawCases = new List<PValue>();
-            foreach (PValue arg in args)
+            foreach (var arg in args)
             {
-                IEnumerable<PValue> set = Map._ToEnumerable(sctx, arg);
+                var set = Map._ToEnumerable(sctx, arg);
                 if (set == null)
                     continue;
                 else
                     rawCases.AddRange(set);
             }
 
-            var appCases = _extract(rawCases.Where(c => isApplicable(sctx,c))).ToArray();
+            var appCases = _extract(rawCases.Where(c => isApplicable(sctx, c))).ToArray();
 
             //Check if there data is already available (i.e. if the select can be processed non-blocking)
             return RunStatically(sctx, appCases);
@@ -84,14 +83,14 @@ namespace Prexonite.Commands.Concurrency
             //We have to wait for one of the channels to become active (there are no default handlers)
             Channel[] channels;
             PValue[] handlers;
-            _split(appCases,out channels, out handlers);
+            _split(appCases, out channels, out handlers);
             var flags = channels.Select(c => c.DataAvailable).ToArray();
 
             while (true)
             {
                 var selected = WaitHandle.WaitAny(flags);
                 PValue datum;
-                if(channels[selected].TryReceive(out datum))
+                if (channels[selected].TryReceive(out datum))
                 {
                     handlers[selected].IndirectCall(sctx, new[] {datum});
                     return PType.Object.CreatePValue(channels[selected]);
@@ -104,13 +103,13 @@ namespace Prexonite.Commands.Concurrency
 
         private static bool isApplicable(StackContext sctx, PValue selectCase)
         {
-            if(selectCase.Type == PValueKeyValuePair.ObjectType)
+            if (selectCase.Type == PValueKeyValuePair.ObjectType)
             {
                 var key = ((PValueKeyValuePair) selectCase.Value).Key;
                 if (key.Type == _chanType)
                     return true;
                 else if (key.Type.ToBuiltIn() == PType.BuiltIn.Bool)
-                    return (bool)key.Value;
+                    return (bool) key.Value;
                 else if (key.Value == null)
                     return false;
                 else
@@ -122,7 +121,7 @@ namespace Prexonite.Commands.Concurrency
             }
         }
 
-        private static IEnumerable<KeyValuePair<Channel,PValue>> _extract(IEnumerable<PValue> cases)
+        private static IEnumerable<KeyValuePair<Channel, PValue>> _extract(IEnumerable<PValue> cases)
         {
             foreach (var c in cases)
             {
@@ -131,14 +130,15 @@ namespace Prexonite.Commands.Concurrency
                     var kvp = ((PValueKeyValuePair) c.Value);
                     var key = kvp.Key;
                     if (key.Type == _chanType)
-                        yield return new KeyValuePair<Channel, PValue>((Channel)kvp.Key.Value, kvp.Value);
+                        yield return new KeyValuePair<Channel, PValue>((Channel) kvp.Key.Value, kvp.Value);
                     else
                         throw new PrexoniteException(
                             "Invalid select clause. Syntax: select( [channel:handler] ) or select( [cond:channel:handler] )");
                 }
-                else if(c.Type == _chanType)
+                else if (c.Type == _chanType)
                 {
-                    throw new PrexoniteException("Missing handler in select clause. Syntax: select( [channel: handler] ) or select( [cond:channel:handler] )");
+                    throw new PrexoniteException(
+                        "Missing handler in select clause. Syntax: select( [channel: handler] ) or select( [cond:channel:handler] )");
                 }
                 else
                 {

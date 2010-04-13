@@ -44,7 +44,7 @@ namespace Prexonite.Compiler.Ast
                 throw new PrexoniteException("CreateCoroutine node requires an Expression.");
 
             Expression.EmitCode(target);
-            foreach (IAstExpression argument in _arguments)
+            foreach (var argument in _arguments)
                 argument.EmitCode(target);
 
             target.Emit(OpCode.newcor, _arguments.Count);
@@ -58,7 +58,7 @@ namespace Prexonite.Compiler.Ast
 
             //Optimize arguments
             IAstExpression oArg;
-            foreach (IAstExpression arg in _arguments.ToArray())
+            foreach (var arg in _arguments.ToArray())
             {
                 if (arg == null)
                     throw new PrexoniteException(
@@ -67,7 +67,7 @@ namespace Prexonite.Compiler.Ast
                 oArg = GetOptimizedNode(target, arg);
                 if (!ReferenceEquals(oArg, arg))
                 {
-                    int idx = _arguments.IndexOf(arg);
+                    var idx = _arguments.IndexOf(arg);
                     _arguments.Insert(idx, oArg);
                     _arguments.RemoveAt(idx + 1);
                 }

@@ -52,7 +52,7 @@ namespace Prexonite.Compiler.Ast
 
         public IAstExpression[] Expressions
         {
-            get { return new IAstExpression[] {Operand}; }
+            get { return new[] {Operand}; }
         }
 
         #endregion
@@ -65,8 +65,8 @@ namespace Prexonite.Compiler.Ast
             OptimizeNode(target, ref Operand);
             if (Operand is AstConstant)
             {
-                AstConstant constOperand = (AstConstant) Operand;
-                PValue valueOperand = constOperand.ToPValue(target);
+                var constOperand = (AstConstant) Operand;
+                var valueOperand = constOperand.ToPValue(target);
                 PValue result;
                 switch (Operator)
                 {
@@ -109,7 +109,7 @@ namespace Prexonite.Compiler.Ast
                 case UnaryOperator.UnaryNegation:
                 case UnaryOperator.LogicalNot:
                 case UnaryOperator.OnesComplement:
-                    AstUnaryOperator doubleNegation = Operand as AstUnaryOperator;
+                    var doubleNegation = Operand as AstUnaryOperator;
                     if (doubleNegation != null && doubleNegation.Operator == Operator)
                     {
                         expr = doubleNegation.Operand;
@@ -131,10 +131,10 @@ namespace Prexonite.Compiler.Ast
 
         public void EmitEffectCode(CompilerTarget target)
         {
-            AstGetSetSymbol symbol = Operand as AstGetSetSymbol;
-            bool isVariable = symbol != null && symbol.IsObjectVariable;
-            AstGetSet complex = Operand as AstGetSet;
-            bool isAssignable = complex != null;
+            var symbol = Operand as AstGetSetSymbol;
+            var isVariable = symbol != null && symbol.IsObjectVariable;
+            var complex = Operand as AstGetSet;
+            var isAssignable = complex != null;
             switch (Operator)
             {
                 case UnaryOperator.PreIncrement:
@@ -160,12 +160,13 @@ namespace Prexonite.Compiler.Ast
                     {
                         //The get/set fallback
                         complex = complex.GetCopy();
-                        AstModifyingAssignment assignment = new AstModifyingAssignment(complex.File, complex.Line, complex.Column,Operator ==
-                                              UnaryOperator.PostIncrement ||
-                                              Operator == UnaryOperator.PreIncrement
-                                                  ?
-                                              BinaryOperator.Addition
-                                                  : BinaryOperator.Subtraction,complex);
+                        var assignment = new AstModifyingAssignment(
+                            complex.File, complex.Line, complex.Column, Operator ==
+                                                                        UnaryOperator.PostIncrement ||
+                                                                        Operator == UnaryOperator.PreIncrement
+                                                                            ?
+                                                                                BinaryOperator.Addition
+                                                                            : BinaryOperator.Subtraction, complex);
                         if (complex.Call == PCall.Get)
                             complex.Arguments.Add(new AstConstant(File, Line, Column, 1));
                         else

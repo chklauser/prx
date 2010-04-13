@@ -24,7 +24,6 @@
 using System;
 using System.Collections.Generic;
 using System.Text;
-
 using Prexonite.Compiler.Cil;
 using Prexonite.Types;
 
@@ -54,8 +53,8 @@ namespace Prexonite.Commands.List
                 throw new ArgumentNullException("sctxCarrier");
             if (args == null)
                 throw new ArgumentNullException("args");
-            if(args.Length < 3)
-                throw new  PrexoniteException("The command range requires at least 3 arguments: [index], [count] and the [list].");
+            if (args.Length < 3)
+                throw new PrexoniteException("The command range requires at least 3 arguments: [index], [count] and the [list].");
 
             var sctx = sctxCarrier.StackContext;
 
@@ -65,11 +64,11 @@ namespace Prexonite.Commands.List
 
             for (var i = 2; i < args.Length; i++)
             {
-                PValue arg = args[i];
+                var arg = args[i];
 
-                IEnumerable<PValue> xs = Map._ToEnumerable(sctx, arg);
+                var xs = Map._ToEnumerable(sctx, arg);
 
-                foreach (PValue x in xs)
+                foreach (var x in xs)
                 {
                     if (index >= skipCount)
                     {
@@ -85,7 +84,7 @@ namespace Prexonite.Commands.List
                     index += 1;
                 }
 
-            breakAll:
+                breakAll:
                 ;
             }
         }
@@ -109,10 +108,7 @@ namespace Prexonite.Commands.List
 
         public static Range Instance
         {
-            get
-            {
-                return _instance;
-            }
+            get { return _instance; }
         }
 
         #region ICilCompilerAware Members

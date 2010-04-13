@@ -29,9 +29,8 @@ namespace Prexonite.Compiler.Ast
 {
     public class AstBlockExpression : AstBlock,
                                       IAstEffect,
-                                        IAstHasExpressions
+                                      IAstHasExpressions
     {
-
         public IAstExpression Expression;
 
         public AstBlockExpression(string file, int line, int column)
@@ -49,7 +48,7 @@ namespace Prexonite.Compiler.Ast
         public bool TryOptimize(CompilerTarget target, out IAstExpression expr)
         {
             //Will be optimized after code generation, hopefully
-            if(Expression != null)
+            if (Expression != null)
                 OptimizeNode(target, ref Expression);
 
             expr = null;

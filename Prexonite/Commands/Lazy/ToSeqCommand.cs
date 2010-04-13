@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
@@ -22,7 +22,7 @@ namespace Prexonite.Commands.Lazy
             get { return _instance; }
         }
 
-        #endregion 
+        #endregion
 
         #region Overrides of PCommand
 
@@ -50,7 +50,7 @@ namespace Prexonite.Commands.Lazy
             if (args.Length < 1)
                 throw new PrexoniteException("toseq requires one argument.");
 
-            PValue xsT = args[0];
+            var xsT = args[0];
             PValue xs;
 
             var sctx = getSctx.StackContext;
@@ -64,7 +64,7 @@ namespace Prexonite.Commands.Lazy
                     yield return kvp.Key;
                     xsT = kvp.Value;
                 }
-                //Late bound
+                    //Late bound
                 else
                 {
                     var k = xs.DynamicCall(sctx, Runtime.EmptyPValueArray, PCall.Get, "Key");
@@ -86,7 +86,7 @@ namespace Prexonite.Commands.Lazy
         public static PValue RunStatically(StackContext sctx, PValue[] args)
         {
             var carrier = new ContextCarrier();
-            var corctx = new CoroutineContext(sctx, CoroutineRunStatically(carrier , args));
+            var corctx = new CoroutineContext(sctx, CoroutineRunStatically(carrier, args));
             carrier.StackContext = corctx;
             return sctx.CreateNativePValue(new Coroutine(corctx));
         }

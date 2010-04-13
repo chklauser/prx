@@ -39,28 +39,28 @@ namespace Prexonite.Commands.List
             var sctx = sctxCarrier.StackContext;
 
             var xss = new List<IEnumerable<PValue>>();
-            foreach (PValue arg in args)
+            foreach (var arg in args)
             {
-                IEnumerable<PValue> xs = Map._ToEnumerable(sctx, arg);
-                if(xs != null)
+                var xs = Map._ToEnumerable(sctx, arg);
+                if (xs != null)
                     xss.Add(xs);
             }
 
-            int n = xss.Count;
+            var n = xss.Count;
             if (n < 2)
                 throw new PrexoniteException("Intersect requires at least two sources.");
-            
+
             var t = new Dictionary<PValue, int>();
             //All elements of the first source are considered candidates
-            foreach (PValue x in xss[0])
+            foreach (var x in xss[0])
                 if (!t.ContainsKey(x))
                     t.Add(x, 1);
 
             var d = new Dictionary<PValue, object>();
-            for (int i = 1; i < n-1; i++)
+            for (var i = 1; i < n - 1; i++)
             {
-                foreach (PValue x in xss[i])
-                    if((!d.ContainsKey(x)) && t.ContainsKey(x))
+                foreach (var x in xss[i])
+                    if ((!d.ContainsKey(x)) && t.ContainsKey(x))
                     {
                         d.Add(x, null); //only current source
                         t[x]++;
@@ -68,12 +68,12 @@ namespace Prexonite.Commands.List
                 d.Clear();
             }
 
-            foreach (PValue x in xss[n-1])
+            foreach (var x in xss[n - 1])
                 if ((!d.ContainsKey(x)) && t.ContainsKey(x))
                 {
                     d.Add(x, null); //only current source
-                    int k = t[x]+1;
-                    if(k == n)
+                    var k = t[x] + 1;
+                    if (k == n)
                         yield return x;
                 }
         }

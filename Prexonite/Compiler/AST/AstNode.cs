@@ -83,7 +83,7 @@ namespace Prexonite.Compiler.Ast
                     if (args.Length < 1 || (target = args[0].Value as CompilerTarget) == null)
                         throw new PrexoniteException("GetOptimizedNode(CompilerTarget target) requires target.");
                     var expr = this as IAstExpression;
-                    if(expr == null)
+                    if (expr == null)
                         throw new PrexoniteException("The node is not an IAstExpression.");
 
                     result = target.Loader.CreateNativePValue(GetOptimizedNode(target, expr));

@@ -30,7 +30,7 @@ namespace Prexonite.Types
     /// <summary>
     /// Associates a literal with a class. Only interpreted on classes inheriting from <see cref="Prexonite.Types.PType"/>.
     /// </summary>
-    [AttributeUsage(AttributeTargets.Class, AllowMultiple=true, Inherited=false)]
+    [AttributeUsage(AttributeTargets.Class, AllowMultiple = true, Inherited = false)]
     [DebuggerStepThrough]
     public class PTypeLiteralAttribute : Attribute
     {

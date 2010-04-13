@@ -89,15 +89,15 @@ namespace Prexonite.Types
 
             result = null;
 
-            switch(id.ToUpperInvariant())
+            switch (id.ToUpperInvariant())
             {
                 case "TO":
-                    if(args.Length < 1)
+                    if (args.Length < 1)
                         break;
-                    var upperLimitPV = args[0].ConvertTo(sctx, Int,true);
+                    var upperLimitPV = args[0].ConvertTo(sctx, Int, true);
                     var stepPV = args.Length > 1 ? args[1].ConvertTo(sctx, Int, true) : 1;
 
-                    var lowerLimit = (int)subject.Value;
+                    var lowerLimit = (int) subject.Value;
                     var upperLimit = (int) upperLimitPV.Value;
                     var step = (int) stepPV.Value;
 
@@ -106,7 +106,7 @@ namespace Prexonite.Types
                     break;
             }
 
-            if(result != null)
+            if (result != null)
                 return true;
 
             //Try CLR dynamic call
@@ -141,7 +141,7 @@ namespace Prexonite.Types
             {
                 if (target is ObjectPType)
                 {
-                    Type clrType = ((ObjectPType) target).ClrType;
+                    var clrType = ((ObjectPType) target).ClrType;
                     if (clrType == typeof (Byte))
                         result = CreateObject((Byte) (Int32) subject.Value);
                     else if (clrType == typeof (Char))
@@ -166,7 +166,7 @@ namespace Prexonite.Types
                     result = Bool.CreatePValue(((int) subject.Value) != 0);
                 else if (target is ObjectPType)
                 {
-                    Type clrType = ((ObjectPType) target).ClrType;
+                    var clrType = ((ObjectPType) target).ClrType;
                     if (clrType == typeof (Int32))
                         result = CreateObject((Int32) subject.Value);
                     else if (clrType == typeof (Double))
@@ -194,7 +194,7 @@ namespace Prexonite.Types
             out PValue result)
         {
             result = null;
-            PType subjectType = subject.Type;
+            var subjectType = subject.Type;
             if (subjectType is StringPType)
             {
                 int value;

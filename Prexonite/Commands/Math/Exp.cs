@@ -46,7 +46,7 @@ namespace Prexonite.Commands.Math
             get { return _instance; }
         }
 
-        #endregion 
+        #endregion
 
         /// <summary>
         /// A flag indicating whether the command acts like a pure function.
@@ -54,10 +54,7 @@ namespace Prexonite.Commands.Math
         /// <remarks>Pure commands can be applied at compile time.</remarks>
         public override bool IsPure
         {
-            get
-            {
-                return true;
-            }
+            get { return true; }
         }
 
         /// <summary>
@@ -76,14 +73,14 @@ namespace Prexonite.Commands.Math
             if (args.Length < 1)
                 throw new PrexoniteException("Exp requires at least one argument.");
 
-            PValue arg0 = args[0];
+            var arg0 = args[0];
 
             return RunStatically(arg0, sctx);
         }
 
         public static PValue RunStatically(PValue arg0, StackContext sctx)
         {
-            double x = (double)arg0.ConvertTo(sctx, PType.Real, true).Value;
+            var x = (double) arg0.ConvertTo(sctx, PType.Real, true).Value;
 
             return System.Math.Exp(x);
         }
@@ -113,7 +110,7 @@ namespace Prexonite.Commands.Math
         }
 
         private static readonly MethodInfo RunStaticallyMethod =
-            typeof(Exp).GetMethod("RunStatically", new Type[] { typeof(PValue), typeof(StackContext) });
+            typeof (Exp).GetMethod("RunStatically", new[] {typeof (PValue), typeof (StackContext)});
 
         /// <summary>
         /// Provides a custom compiler routine for emitting CIL byte code for a specific instruction.
@@ -143,6 +140,5 @@ namespace Prexonite.Commands.Math
         }
 
         #endregion
-
     }
 }

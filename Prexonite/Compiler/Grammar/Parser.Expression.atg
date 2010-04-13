@@ -347,7 +347,7 @@ CoroutineCreation<out IAstExpression expr>
 
 LambdaExpression<out IAstExpression expr>
                                         (.  expr = null;
-                                            PFunction func = new PFunction(TargetApplication, generateNestedFunctionId());                                             
+                                            PFunction func = new PFunction(TargetApplication, generateLocalId());                                             
                                             func.Meta[Application.ImportKey] = target.Function.Meta[Application.ImportKey];
                                             func.Meta[PFunction.ParentFunctionKey] = target.Function.Id;
                                             TargetApplication.Functions.Add(func);
@@ -391,7 +391,7 @@ implementation
 
 LazyExpression<out IAstExpression expr>
                                         (.  expr = null;
-                                            PFunction func = new PFunction(TargetApplication, generateNestedFunctionId());
+                                            PFunction func = new PFunction(TargetApplication, generateLocalId());
                                             func.Meta[Application.ImportKey] = target.Function.Meta[Application.ImportKey];
                                             func.Meta[PFunction.ParentFunctionKey] = target.Function.Id;
                                             TargetApplication.Functions.Add(func);

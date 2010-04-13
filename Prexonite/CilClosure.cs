@@ -1,4 +1,4 @@
-﻿/*
+/*
  * Prexonite, a scripting engine (Scripting Language -> Bytecode -> Virtual Machine)
  *  Copyright (C) 2007  Christian "SealedSun" Klauser
  *  E-mail  sealedsun a.t gmail d.ot com
@@ -29,7 +29,6 @@ namespace Prexonite
     /// <summary>
     /// Represents a closure, a nested function bound to a set of shared variables.
     /// </summary>
-    
     public sealed class CilClosure : IIndirectCall
     {
         #region Properties
@@ -109,9 +108,9 @@ namespace Prexonite
         /// <returns>True, if the two closures use to the same function and the same shared variables; false otherwise.</returns>
         public static bool operator ==(CilClosure a, CilClosure b)
         {
-            if ((object)a == null && (object)b == null)
+            if ((object) a == null && (object) b == null)
                 return true;
-            else if ((object)a == null || (object)b == null)
+            else if ((object) a == null || (object) b == null)
                 return false;
             else if (ReferenceEquals(a, b))
                 return true;
@@ -121,7 +120,7 @@ namespace Prexonite
                     return false;
                 if (a._sharedVariables.Length != b._sharedVariables.Length)
                     return false;
-                for (int i = 0; i < a._sharedVariables.Length; i++)
+                for (var i = 0; i < a._sharedVariables.Length; i++)
                     if (!ReferenceEquals(a._sharedVariables[i], b._sharedVariables[i]))
                         return false;
                 return true;
@@ -147,8 +146,8 @@ namespace Prexonite
         /// <returns>True if <paramref name="obj"/> is a closure that is equal to the current instance.</returns>
         public override bool Equals(object obj)
         {
-            CilClosure clo = obj as CilClosure;
-            if (((object)clo) == null)
+            var clo = obj as CilClosure;
+            if (((object) clo) == null)
                 return false;
             return this == clo;
         }

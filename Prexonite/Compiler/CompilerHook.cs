@@ -96,7 +96,7 @@ namespace Prexonite.Compiler
                     _managed(target);
                 else
                     _interpreted.IndirectCall(
-                        target.Loader, new PValue[] {target.Loader.CreateNativePValue(target)});
+                        target.Loader, new[] {target.Loader.CreateNativePValue(target)});
             }
             finally
             {

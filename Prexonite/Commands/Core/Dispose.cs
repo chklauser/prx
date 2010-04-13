@@ -25,7 +25,6 @@
 
 using System;
 using System.ComponentModel;
-using System.Reflection;
 using System.Reflection.Emit;
 using Prexonite.Compiler.Cil;
 using Prexonite.Types;
@@ -82,7 +81,7 @@ namespace Prexonite.Commands.Core
         {
             if (args == null)
                 throw new ArgumentNullException("args");
-            foreach (PValue arg in args)
+            foreach (var arg in args)
                 if (arg != null)
                 {
                     RunStatically(arg, sctx);
@@ -96,12 +95,12 @@ namespace Prexonite.Commands.Core
             PValue dummy;
             if (arg.Type is ObjectPType)
             {
-                IDisposable toDispose = arg.Value as IDisposable;
+                var toDispose = arg.Value as IDisposable;
                 if (toDispose != null)
                     toDispose.Dispose();
                 else
                 {
-                    IObject isObj = arg.Value as IObject;
+                    var isObj = arg.Value as IObject;
                     if (isObj != null)
                     {
                         isObj.TryDynamicCall(
@@ -134,24 +133,24 @@ namespace Prexonite.Commands.Core
 
         void ICilCompilerAware.ImplementInCil(CompilerState state, Instruction ins)
         {
-            switch(ins.Arguments)
+            switch (ins.Arguments)
             {
                 case 0:
-                    if(!ins.JustEffect)
+                    if (!ins.JustEffect)
                         state.EmitLoadPValueNull();
                     break;
                 case 1:
                     //Emit call to RunStatically(PValue, StackContext)
                     state.EmitLoadLocal(state.SctxLocal);
-                    MethodInfo run =
-                        typeof(Dispose).GetMethod("RunStatically", new Type[] {typeof(PValue), typeof(StackContext)});
+                    var run =
+                        typeof (Dispose).GetMethod("RunStatically", new[] {typeof (PValue), typeof (StackContext)});
                     state.Il.EmitCall(OpCodes.Call, run, null);
-                    if(!ins.JustEffect)
+                    if (!ins.JustEffect)
                         state.EmitLoadPValueNull();
                     break;
                 default:
                     //Emit call to RunStatically(StackContext, PValue[])
-                    state.EmitEarlyBoundCommandCall(typeof(Dispose), ins);
+                    state.EmitEarlyBoundCommandCall(typeof (Dispose), ins);
                     break;
             }
         }

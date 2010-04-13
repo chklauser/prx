@@ -104,10 +104,11 @@ namespace Prexonite
             if (ContainsKey(key))
                 this[key] = this[key].AddToList(entry);
             else
-                Add(key, (MetaEntry) new[]
-                                     {
-                                         entry
-                                     });
+                Add(
+                    key, (MetaEntry) new[]
+                    {
+                        entry
+                    });
         }
 
         /// <summary>
@@ -164,7 +165,7 @@ namespace Prexonite
         public override bool TryGetValue(string key, out MetaEntry value)
         {
             key = Filter.GetTransform(key);
-            if(base.ContainsKey(key))
+            if (base.ContainsKey(key))
             {
                 value = base[key];
                 return true;

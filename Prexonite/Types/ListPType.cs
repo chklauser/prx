@@ -94,8 +94,8 @@ namespace Prexonite.Types
                         lst.Add(args[0] ?? Null.CreatePValue());
                     else //Multi index set
                     {
-                        PValue v = args[args.Length - 1] ?? Null.CreatePValue();
-                        for (int i = 0; i < args.Length - 1; i++)
+                        var v = args[args.Length - 1] ?? Null.CreatePValue();
+                        for (var i = 0; i < args.Length - 1; i++)
                             lst[(int) args[i].ConvertTo(sctx, Int).Value] = v;
                     }
                     result = Null.CreatePValue();
@@ -123,7 +123,7 @@ namespace Prexonite.Types
                         result = Null.CreatePValue();
                         break;
                     case "contains":
-                        bool r = true;
+                        var r = true;
                         foreach (var arg in args)
                             if (!lst.Contains(arg))
                             {
@@ -148,7 +148,7 @@ namespace Prexonite.Types
                         result = Null.CreatePValue();
                         break;
                     case "remove":
-                        int cnt = 0;
+                        var cnt = 0;
                         foreach (var arg in args)
                         {
                             if (lst.Remove(arg))
@@ -158,7 +158,7 @@ namespace Prexonite.Types
                         break;
                     case "removeat":
                         var toRemove = new List<bool>(lst.Count);
-                        for (int i = 0; i < lst.Count; i++)
+                        for (var i = 0; i < lst.Count; i++)
                             toRemove.Add(false);
 
                         foreach (var arg in args)
@@ -170,7 +170,7 @@ namespace Prexonite.Types
                             toRemove[li] = true;
                         }
 
-                        for (int i = 0; i < toRemove.Count; i++)
+                        for (var i = 0; i < toRemove.Count; i++)
                         {
                             if (toRemove[i])
                             {
@@ -200,7 +200,7 @@ namespace Prexonite.Types
                             throw new PrexoniteException(
                                 "List.InsertAt requires at least an index.");
                         index = (int) args[0].ConvertTo(sctx, Int).Value;
-                        for (int i = 1; i < args.Length; i++)
+                        for (var i = 1; i < args.Length; i++)
                             lst.Insert(index, args[i]);
                         result = Null.CreatePValue();
                         break;
@@ -235,7 +235,7 @@ namespace Prexonite.Types
                             {
                                 foreach (var f in args)
                                 {
-                                    PValue pdec = f.IndirectCall(sctx, new[] {a, b});
+                                    var pdec = f.IndirectCall(sctx, new[] {a, b});
                                     if (!(pdec.Type is IntPType))
                                         pdec = pdec.ConvertTo(sctx, Int);
                                     var dec = (int) pdec.Value;
@@ -254,8 +254,8 @@ namespace Prexonite.Types
                         {
                             Type T;
                             if (arg.Type is ObjectPType &&
-                                typeof(Type).IsAssignableFrom(((ObjectPType)arg.Type).ClrType))
-                                T = (Type)arg.Value;
+                                typeof (Type).IsAssignableFrom(((ObjectPType) arg.Type).ClrType))
+                                T = (Type) arg.Value;
                             else
                             {
                                 var typeName = arg.CallToString(sctx);
@@ -272,7 +272,7 @@ namespace Prexonite.Types
                                 }
                             }
 
-                            if (!T.IsAssignableFrom(typeof(List<PValue>)))
+                            if (!T.IsAssignableFrom(typeof (List<PValue>)))
                             {
                                 result = false;
                                 return true;
@@ -367,7 +367,7 @@ namespace Prexonite.Types
             result = null;
             if ((object) objT != null)
             {
-                Type clrType = objT.ClrType;
+                var clrType = objT.ClrType;
                 if (clrType == typeof (IEnumerable<PValue>) ||
                     clrType == typeof (List<PValue>) ||
                     clrType == typeof (ICollection<PValue>) ||
@@ -381,14 +381,14 @@ namespace Prexonite.Types
                 else if (clrType == typeof (PValueKeyValuePair))
                 {
                     var lst = (List<PValue>) subject.Value;
-                    PValue key = lst.Count > 0 ? lst[0] : Null.CreatePValue();
+                    var key = lst.Count > 0 ? lst[0] : Null.CreatePValue();
                     var valueList = new List<PValue>(lst.Count > 0 ? lst.Count - 1 : 0);
-                    for (int i = 1; i < lst.Count; i++)
+                    for (var i = 1; i < lst.Count; i++)
                         valueList.Add(lst[i]);
-                    PValue value = List.CreatePValue(valueList);
+                    var value = List.CreatePValue(valueList);
                     result = target.CreatePValue(new PValueKeyValuePair(key, value));
                 }
-                else if(clrType.IsArray)
+                else if (clrType.IsArray)
                 {
                     //Convert each element in the list to the element type of the array.
                     var et = clrType.GetElementType();
@@ -472,7 +472,7 @@ namespace Prexonite.Types
                 throw new ArgumentNullException("rightOperand");
 
             var nlst = new List<PValue>();
-            PValue npv = List.CreatePValue(nlst);
+            var npv = List.CreatePValue(nlst);
 
             if (leftOperand.Type is ListPType)
                 nlst.AddRange((List<PValue>) leftOperand.Value);

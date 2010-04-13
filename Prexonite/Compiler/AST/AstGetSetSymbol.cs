@@ -91,7 +91,7 @@ namespace Prexonite.Compiler.Ast
                 default:
                     throw new PrexoniteException(
                         "Invalid symbol " +
-                        Enum.GetName(typeof(SymbolInterpretations), Interpretation) +
+                        Enum.GetName(typeof (SymbolInterpretations), Interpretation) +
                         " in AST.");
             }
         }
@@ -122,7 +122,7 @@ namespace Prexonite.Compiler.Ast
                 default:
                     throw new PrexoniteException(
                         "Invalid symbol " +
-                        Enum.GetName(typeof(SymbolInterpretations), Interpretation) +
+                        Enum.GetName(typeof (SymbolInterpretations), Interpretation) +
                         " in AST.");
             }
         }
@@ -162,7 +162,7 @@ namespace Prexonite.Compiler.Ast
                 base.ToString() +
                 String.Format(
                     " {0}-{1} {2}",
-                    Enum.GetName(typeof(SymbolInterpretations), Interpretation),
+                    Enum.GetName(typeof (SymbolInterpretations), Interpretation),
                     Id,
                     ArgumentsToString());
         }
@@ -171,15 +171,12 @@ namespace Prexonite.Compiler.Ast
 
         ICollection<IAstExpression> ICanBeReferenced.Arguments
         {
-            get
-            {
-                return Arguments;
-            }
+            get { return Arguments; }
         }
 
         public virtual bool TryToReference(out AstGetSet result)
         {
-            result = null; 
+            result = null;
             switch (Interpretation)
             {
                 case SymbolInterpretations.Function:

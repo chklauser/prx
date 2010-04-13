@@ -61,9 +61,9 @@ namespace Prexonite.Types
         {
             //The initial capacity is just a random guess
             var buffer = new StringBuilder(unescaped.Length + 10);
-            for (int i = 0; i < unescaped.Length; i++)
+            for (var i = 0; i < unescaped.Length; i++)
             {
-                char curr = unescaped[i];
+                var curr = unescaped[i];
                 if (curr == '\\')
                     buffer.Append(@"\\");
                 else if (curr == '"')
@@ -123,9 +123,9 @@ namespace Prexonite.Types
 
         public static string Unescape(string escaped)
         {
-            char[] esc = escaped.ToCharArray();
+            var esc = escaped.ToCharArray();
             var buffer = new StringBuilder();
-            for (int i = 0; i < esc.Length; i++)
+            for (var i = 0; i < esc.Length; i++)
             {
                 //Is escape char
                 if (esc[i] == '\\')
@@ -181,9 +181,9 @@ namespace Prexonite.Types
                                 goto add; //Ignore this sequence
                             i++;
                             hex = new StringBuilder();
-                            for (int j = 0; i < esc.Length && j < 3; i++, j++)
+                            for (var j = 0; i < esc.Length && j < 3; i++, j++)
                             {
-                                char curr = esc[i];
+                                var curr = esc[i];
                                 if (
                                     !(char.IsDigit(curr) ||
                                       (char.IsLetter(curr) &&
@@ -210,7 +210,7 @@ namespace Prexonite.Types
                                 goto add; //Ignore this sequence
                             hex = new StringBuilder();
                             i++;
-                            for (int j = 0; i < esc.Length && j < 3; i++, j++)
+                            for (var j = 0; i < esc.Length && j < 3; i++, j++)
                             {
                                 hex.Append(esc[i]);
                             }
@@ -230,7 +230,7 @@ namespace Prexonite.Types
                                 goto add; //Ignore this sequence
                             hex = new StringBuilder();
                             i++;
-                            for (int j = 0; i < esc.Length && j < 7; i++, j++)
+                            for (var j = 0; i < esc.Length && j < 7; i++, j++)
                             {
                                 hex.Append(esc[i]);
                             }
@@ -373,7 +373,7 @@ namespace Prexonite.Types
                 case "":
                     if (args.Length < 1)
                         return false;
-                    PValue nArg = args[0];
+                    var nArg = args[0];
                     PValue rArg;
                     if (!nArg.TryConvertTo(sctx, Int, out rArg))
                         return false;
@@ -436,7 +436,7 @@ namespace Prexonite.Types
                     var sch = new List<char>();
                     List<string> sst = null;
 
-                    bool isParams = true;
+                    var isParams = true;
 
                     _resolve_params(sctx, args, ref isParams, sch, ref sst, false);
 
@@ -466,7 +466,7 @@ namespace Prexonite.Types
 
                     sch.Clear();
                     sst = null;
-                    bool isValid = true;
+                    var isValid = true;
                     _resolve_params(sctx, ((List<PValue>) list.Value).ToArray(), ref isValid, sch, ref sst, true);
 
                     if (!isValid)
@@ -541,7 +541,7 @@ namespace Prexonite.Types
 
             if (isParams && sst != null)
             {
-                bool isChars = true;
+                var isChars = true;
                 sch.Clear();
 
                 foreach (var s in sst)
@@ -575,8 +575,8 @@ namespace Prexonite.Types
             if (args.Length > 1 && Engine.StringsAreEqual(id, "format"))
             {
                 var oargs = new object[args.Length - 1];
-                string format = args[0].CallToString(sctx);
-                for (int i = 0; i < oargs.Length; i++)
+                var format = args[0].CallToString(sctx);
+                for (var i = 0; i < oargs.Length; i++)
                     oargs[i] = args[i + 1].CallToString(sctx);
                 result = System.String.Format(format, oargs);
                 return true;
@@ -591,11 +591,11 @@ namespace Prexonite.Types
             var str = (string) subject.Value;
             PFunction func;
             PCommand cmd;
-            Application app = sctx.ParentApplication;
-            Engine eng = sctx.ParentEngine;
+            var app = sctx.ParentApplication;
+            var eng = sctx.ParentEngine;
             if (app.Functions.TryGetValue(str, out func))
             {
-                FunctionContext fctx = func.CreateFunctionContext(sctx, args);
+                var fctx = func.CreateFunctionContext(sctx, args);
                 result = eng.Process(fctx);
             }
             else if (eng.Commands.TryGetValue(str, out cmd))
@@ -627,8 +627,8 @@ namespace Prexonite.Types
         public override bool Addition(
             StackContext sctx, PValue leftOperand, PValue rightOperand, out PValue result)
         {
-            String left = leftOperand.CallToString(sctx);
-            String right = rightOperand.CallToString(sctx);
+            var left = leftOperand.CallToString(sctx);
+            var right = rightOperand.CallToString(sctx);
             result = System.String.Concat(left, right);
             return true;
         }
@@ -664,7 +664,7 @@ namespace Prexonite.Types
             if (right > -1)
             {
                 var res = new StringBuilder();
-                for (Int32 i = right; i > 0; i--)
+                for (var i = right; i > 0; i--)
                     res.Append(left);
                 result = res.ToString();
                 return true;
@@ -741,13 +741,13 @@ namespace Prexonite.Types
         {
             result = null;
             var s = (string) subject.Value;
-            BuiltIn builtInT = target.ToBuiltIn();
+            var builtInT = target.ToBuiltIn();
             if (useExplicit)
             {
                 switch (builtInT)
                 {
                     case BuiltIn.List:
-                        List<PValue> lst = _toPCharList(s);
+                        var lst = _toPCharList(s);
                         result = (PValue) lst;
                         break;
                 }
@@ -758,8 +758,8 @@ namespace Prexonite.Types
                 switch (builtInT)
                 {
                     case BuiltIn.Object:
-                        Type clrType = ((ObjectPType) target).ClrType;
-                        TypeCode typeC = Type.GetTypeCode(clrType);
+                        var clrType = ((ObjectPType) target).ClrType;
+                        var typeC = Type.GetTypeCode(clrType);
                         switch (typeC)
                         {
                             case TypeCode.String:

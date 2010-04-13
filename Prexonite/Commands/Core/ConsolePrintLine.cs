@@ -22,12 +22,10 @@
  */
 
 using System;
-using System.IO;
 using System.Reflection;
 using System.Reflection.Emit;
 using System.Text;
 using Prexonite.Compiler.Cil;
-using Prexonite.Types;
 
 namespace Prexonite.Commands.Core
 {
@@ -46,7 +44,7 @@ namespace Prexonite.Commands.Core
             get { return _instance; }
         }
 
-        #endregion  
+        #endregion
 
         /// <summary>
         /// A flag indicating whether the command acts like a pure function.
@@ -92,7 +90,7 @@ namespace Prexonite.Commands.Core
         /// <returns>A set of <see cref="CompilationFlags"/>.</returns>
         CompilationFlags ICilCompilerAware.CheckQualification(Instruction ins)
         {
-            switch(ins.Arguments)
+            switch (ins.Arguments)
             {
                 case 0:
                 case 1:
@@ -104,16 +102,16 @@ namespace Prexonite.Commands.Core
 
         //Fix #10
         internal static readonly MethodInfo consoleWriteLineMethod_String =
-            typeof(Console).GetMethod("WriteLine", new[] {typeof(String)});
+            typeof (Console).GetMethod("WriteLine", new[] {typeof (String)});
 
         internal static readonly MethodInfo consoleWriteLineMethod_ =
             typeof (Console).GetMethod("WriteLine", Type.EmptyTypes);
 
         internal static readonly MethodInfo ConsoleWriteMethod =
-            typeof(Console).GetMethod("Write", new[] { typeof(String) });
+            typeof (Console).GetMethod("Write", new[] {typeof (String)});
 
         internal static readonly MethodInfo PValueCallToString =
-            typeof(PValue).GetMethod("CallToString", new[] {typeof(StackContext)});
+            typeof (PValue).GetMethod("CallToString", new[] {typeof (StackContext)});
 
         /// <summary>
         /// Provides a custom compiler routine for emitting CIL byte code for a specific instruction.
@@ -122,11 +120,11 @@ namespace Prexonite.Commands.Core
         /// <param name="ins">The instruction to compile.</param>
         void ICilCompilerAware.ImplementInCil(CompilerState state, Instruction ins)
         {
-            switch(ins.Arguments)
+            switch (ins.Arguments)
             {
                 case 0:
-                    state.Il.EmitCall(OpCodes.Call, consoleWriteLineMethod_,null);
-                    if(!ins.JustEffect)
+                    state.Il.EmitCall(OpCodes.Call, consoleWriteLineMethod_, null);
+                    if (!ins.JustEffect)
                     {
                         state.Il.Emit(OpCodes.Ldstr, "");
                         state.Il.EmitCall(OpCodes.Call, Compiler.Cil.Compiler.GetStringPType, null);
@@ -136,7 +134,7 @@ namespace Prexonite.Commands.Core
                 case 1:
                     state.EmitLoadLocal(state.SctxLocal);
                     state.Il.EmitCall(OpCodes.Call, PValueCallToString, null);
-                    if(!ins.JustEffect)
+                    if (!ins.JustEffect)
                     {
                         state.Il.Emit(OpCodes.Dup);
                         state.Il.EmitCall(OpCodes.Call, Compiler.Cil.Compiler.GetStringPType, null);
@@ -144,7 +142,7 @@ namespace Prexonite.Commands.Core
                         state.EmitStoreTemp(0);
                     }
                     state.Il.EmitCall(OpCodes.Call, consoleWriteLineMethod_String, null);
-                    if(!ins.JustEffect)
+                    if (!ins.JustEffect)
                     {
                         state.EmitLoadTemp(0);
                     }
@@ -152,9 +150,6 @@ namespace Prexonite.Commands.Core
                 default:
                     throw new NotSupportedException();
             }
-                
-
-
         }
 
         #endregion

@@ -34,14 +34,7 @@ namespace Prexonite.Compiler.Ast
         public AstForeachLoop(string file, int line, int column)
             : base(file, line, column)
         {
-            Block = new AstBlock(file, line, column);
-            Labels = CreateBlockLabels();
-        }
-
-        [DebuggerStepThrough]
-        public static BlockLabels CreateBlockLabels()
-        {
-            return new BlockLabels("foreach");
+            Block = new AstLoopBlock(file, line, column);
         }
 
         [DebuggerStepThrough]
@@ -77,22 +70,23 @@ namespace Prexonite.Compiler.Ast
             OptimizeNode(target, ref List);
 
             //Create the enumerator variable
-            var enumVar = Labels.CreateLabel("enumerator");
+            var enumVar = Block.CreateLabel("enumerator");
             target.Function.Variables.Add(enumVar);
 
             //Create the element assignment statement
             var element = Element.GetCopy();
             IAstExpression optElem;
-            if(element.TryOptimize(target,out optElem))
+            if (element.TryOptimize(target, out optElem))
             {
                 element = optElem as AstGetSet;
                 if (element == null)
                 {
                     target.Loader.ReportSemanticError
-                        (Element.Line,
-                         Element.Column,
-                         "Optimization of the element expression in the foreach head " + 
-                         "resulted in a non-GetSet expression. Try to use a simpler expression.");
+                        (
+                        Element.Line,
+                        Element.Column,
+                        "Optimization of the element expression in the foreach head " +
+                        "resulted in a non-GetSet expression. Try to use a simpler expression.");
                     return;
                 }
             }
@@ -130,10 +124,10 @@ namespace Prexonite.Compiler.Ast
                     this,
                     delegate
                     {
-                        target.EmitJump(Labels.ContinueLabel);
+                        target.EmitJump(Block.ContinueLabel);
 
                         //Assignment (begin)
-                        target.EmitLabel(Labels.BeginLabel);
+                        target.EmitLabel(Block.BeginLabel);
                         getCurrentAddr = target.Code.Count;
                         element.EmitEffectCode(target);
 
@@ -141,14 +135,14 @@ namespace Prexonite.Compiler.Ast
                         Block.EmitCode(target);
 
                         //Condition (continue)
-                        target.EmitLabel(Labels.ContinueLabel);
+                        target.EmitLabel(Block.ContinueLabel);
                         moveNextAddr = target.Code.Count;
                         target.EmitLoadLocal(enumVar);
                         target.EmitGetCall(0, "MoveNext");
-                        target.EmitJumpIfTrue(Labels.BeginLabel);
+                        target.EmitJumpIfTrue(Block.BeginLabel);
 
                         //Break
-                        target.EmitLabel(Labels.BreakLabel);
+                        target.EmitLabel(Block.BreakLabel);
                     }),
                 FinallyBlock = new AstActionBlock
                     (
@@ -163,12 +157,12 @@ namespace Prexonite.Compiler.Ast
 
             _try.EmitCode(target);
 
-            if(getCurrentAddr < 0 || moveNextAddr < 0 || disposeAddr < 0)
+            if (getCurrentAddr < 0 || moveNextAddr < 0 || disposeAddr < 0)
                 throw new PrexoniteException("Could not capture addresses within foreach construct for CIL compiler hint.");
             else if (emitHint)
             {
                 var hint = new ForeachHint(enumVar, castAddr, getCurrentAddr, moveNextAddr, disposeAddr);
-                if(target.Meta.ContainsKey(Loader.CilHintsKey))
+                if (target.Meta.ContainsKey(Loader.CilHintsKey))
                     target.Meta.AddTo(Loader.CilHintsKey, hint.ToMetaEntry());
                 else
                     target.Meta[Loader.CilHintsKey] = (MetaEntry) new[] {hint.ToMetaEntry()};

@@ -24,7 +24,6 @@
 using System;
 using System.Collections.Generic;
 using System.Reflection;
-using System.Reflection.Emit;
 using System.Text;
 using Prexonite.Compiler.Cil;
 using Prexonite.Types;
@@ -46,7 +45,7 @@ namespace Prexonite.Commands.Math
             get { return _instance; }
         }
 
-        #endregion 
+        #endregion
 
         /// <summary>
         /// A flag indicating whether the command acts like a pure function.
@@ -54,10 +53,7 @@ namespace Prexonite.Commands.Math
         /// <remarks>Pure commands can be applied at compile time.</remarks>
         public override bool IsPure
         {
-            get
-            {
-                return true;
-            }
+            get { return true; }
         }
 
         /// <summary>
@@ -78,14 +74,14 @@ namespace Prexonite.Commands.Math
 
             if (args.Length > 1)
             {
-                PValue arg0 = args[0];
-                PValue arg1 = args[1];
+                var arg0 = args[0];
+                var arg1 = args[1];
 
                 return RunStatically(arg0, arg1, sctx);
             }
             else
             {
-                PValue arg0 = args[0];
+                var arg0 = args[0];
 
                 return RunStatically(arg0, sctx);
             }
@@ -93,14 +89,14 @@ namespace Prexonite.Commands.Math
 
         public static PValue RunStatically(PValue arg0, PValue arg1, StackContext sctx)
         {
-            double x = (double)arg0.ConvertTo(sctx, PType.Real, true).Value;
-            double b = (double) arg1.ConvertTo(sctx, PType.Real, true).Value;
+            var x = (double) arg0.ConvertTo(sctx, PType.Real, true).Value;
+            var b = (double) arg1.ConvertTo(sctx, PType.Real, true).Value;
             return System.Math.Log(x, b);
         }
 
         public static PValue RunStatically(PValue arg0, StackContext sctx)
         {
-            double x = (double)arg0.ConvertTo(sctx, PType.Real, true).Value;
+            var x = (double) arg0.ConvertTo(sctx, PType.Real, true).Value;
             return System.Math.Log(x);
         }
 
@@ -122,10 +118,10 @@ namespace Prexonite.Commands.Math
         }
 
         private static readonly MethodInfo RunStaticallyNaturalMethod =
-            typeof(Log).GetMethod("RunStatically", new Type[] {typeof(PValue), typeof(StackContext)});
+            typeof (Log).GetMethod("RunStatically", new[] {typeof (PValue), typeof (StackContext)});
 
         private static readonly MethodInfo RunStaticallyAnyMethod =
-            typeof(Log).GetMethod("RunStatically", new Type[] {typeof(PValue), typeof(PValue), typeof(StackContext)});
+            typeof (Log).GetMethod("RunStatically", new[] {typeof (PValue), typeof (PValue), typeof (StackContext)});
 
         /// <summary>
         /// Provides a custom compiler routine for emitting CIL byte code for a specific instruction.
@@ -134,8 +130,8 @@ namespace Prexonite.Commands.Math
         /// <param name="ins">The instruction to compile.</param>
         void ICilCompilerAware.ImplementInCil(CompilerState state, Instruction ins)
         {
-            int argc = ins.Arguments;
-            if(ins.JustEffect)
+            var argc = ins.Arguments;
+            if (ins.JustEffect)
             {
                 state.EmitIgnoreArguments(argc);
             }
@@ -146,7 +142,7 @@ namespace Prexonite.Commands.Math
                     state.EmitIgnoreArguments(argc - 2);
                     argc = 2;
                 }
-                switch(argc)
+                switch (argc)
                 {
                     case 0:
                         state.EmitLdcI4(0);
