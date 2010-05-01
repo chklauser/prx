@@ -24,8 +24,11 @@
 using System;
 using System.Collections.Generic;
 using System.Diagnostics;
+using System.Runtime.CompilerServices;
 using System.Text;
+using System.Linq;
 using Prexonite.Types;
+using System.Dynamic;
 using NoDebug = System.Diagnostics.DebuggerNonUserCodeAttribute;
 
 namespace Prexonite
@@ -73,7 +76,8 @@ namespace Prexonite
     /// </remarks>
     /// <seealso cref="PType"/>
     /// <seealso cref="PVariable"/>
-    public sealed class PValue : IIndirectCall,
+    public sealed class PValue : DynamicObject,
+                                 IIndirectCall,
                                  IObject
     {
         #region Internals
@@ -1539,5 +1543,78 @@ namespace Prexonite
                     return "#" + val + "#";
             }
         }
+
+        #region DLR (dynamic) interface
+
+        private static bool _tryParseCall(object[] args, out StackContext sctx, out PValue[] icargs)
+        {
+            if (args.Length > 0 && (sctx = args[0] as StackContext) != null)
+            {
+                var localStcx = sctx;
+                icargs = args.Skip(1).Select(o => o as PValue ?? localStcx.CreateNativePValue(o)).ToArray();
+                return true;
+            }
+            else
+            {
+                sctx = null;
+                icargs = null;
+                return false;
+            }
+        }
+
+        public override bool  TryInvoke(InvokeBinder binder, object[] args, out object result)
+        {
+            result = null;
+
+            StackContext sctx;
+            PValue[] icargs;
+            if (_tryParseCall(args, out sctx, out icargs))
+                result = IndirectCall(sctx, icargs);
+
+            return result != null || base.TryInvoke(binder, args, out result);
+        }
+
+        public override bool TryInvokeMember(InvokeMemberBinder binder, object[] args, out object result)
+        {
+            result = null;
+            StackContext sctx;
+            PValue[] icargs;
+
+            PValue pvresult;
+            if (_tryParseCall(args, out sctx, out icargs) && TryDynamicCall(sctx, icargs, PCall.Get, binder.Name, out pvresult))
+                result = pvresult;
+
+            return result != null || base.TryInvokeMember(binder, args, out result);
+        }
+
+        public override bool TryGetIndex(GetIndexBinder binder, object[] indexes, out object result)
+        {
+            result = null;
+            StackContext sctx;
+            PValue[] icargs; 
+
+            PValue pvresult;
+            if (_tryParseCall(indexes, out sctx, out icargs) && TryDynamicCall(sctx, icargs, PCall.Get, String.Empty, out pvresult))
+            {
+                result = pvresult;
+            }
+
+            return result != null || base.TryGetIndex(binder, indexes, out result);
+        }
+
+        public override bool TrySetIndex(SetIndexBinder binder, object[] indexes, object value)
+        {
+            StackContext sctx;
+            PValue[] icargs;
+            var args = new object[indexes.Length + 1];
+            Array.Copy(indexes, args, indexes.Length);
+            args[args.Length - 1] = value;
+
+            PValue pvresult;
+            return (_tryParseCall(args, out sctx, out icargs) && TryDynamicCall(sctx, icargs, PCall.Set, String.Empty, out pvresult))
+                   || base.TrySetIndex(binder, indexes, value);
+        }
+
+        #endregion
     }
 }

@@ -533,18 +533,13 @@ namespace Prexonite.Compiler
                  parent = parent.ParentTarget)
             {
                 func = parent.Function;
-                if (func.Variables.Contains(id) || func.Parameters.Contains(id))
+                if (func.Variables.Contains(id) || func.Parameters.Contains(id) || parent.OuterVariables.Contains(id))
                     return true;
             }
             return false;
         }
 
-        private string generateLocalId()
-        {
-            return generateLocalId("");
-        }
-
-        private string generateLocalId(string prefix)
+        private string generateLocalId(string prefix = "")
         {
             return target.GenerateLocalId(prefix);
         }

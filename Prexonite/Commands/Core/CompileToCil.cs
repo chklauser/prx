@@ -98,6 +98,7 @@ namespace Prexonite.Commands.Core
             switch (args.Length)
             {
                 case 0:
+                    //come from case 1
                     if (sctx.ParentEngine.StaticLinkingAllowed)
                     {
                         if (args.Length == 0)

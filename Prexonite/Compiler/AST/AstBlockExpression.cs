@@ -80,5 +80,10 @@ namespace Prexonite.Compiler.Ast
         }
 
         #endregion
+
+        public override string ToString()
+        {
+            return string.Format("{0} (return {1})", base.ToString(), Expression.ToString());
+        }
     }
 }

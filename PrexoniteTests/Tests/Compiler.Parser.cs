@@ -1468,7 +1468,7 @@ stloc       N1
 ldc.int     4
 @indloc.1   N1
 
-newclo      main\N21
+ldr.func    main\N21 //no need to create a closure
 stloc       N2
 
 ldc.int     5
@@ -2096,7 +2096,7 @@ function main()
             _expect(
                 @"
 var skip
-newclo  main\skip0
+ldr.func  main\skip0  //the nested function does not need to be a closure, so it is not
 stloc   skip
 ldc.int 1
 ldc.int 2

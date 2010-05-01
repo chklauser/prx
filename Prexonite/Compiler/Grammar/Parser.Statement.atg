@@ -511,11 +511,11 @@ NestedFunction<AstBlock block>
                                     func.Meta[PFunction.ParentFunctionKey] = target.Function.Id;
                                     string physicalId = func.Id;
                                     
+                                    CompilerTarget ft = FunctionTargets[func];
                                     AstGetSetSymbol setVar = new AstGetSetSymbol(this, PCall.Set, logicalId, SymbolInterpretations.LocalObjectVariable);
                                     if(func.Meta[PFunction.LazyKey].Switch)
                                     {
-                                        //Capture environment by value
-                                        CompilerTarget ft = FunctionTargets[func];
+                                        //Capture environment by value                                        
                                         var ps = ft.ToCaptureByValue(let_bindings(ft));
                                         ft._DetermineSharedNames(); //Need to re-determine shared names since
                                                                     // ToCaptureByValue does not automatically modify shared names
@@ -524,9 +524,13 @@ NestedFunction<AstBlock block>
                                         callStub.Arguments.AddRange(ps(this));
                                         setVar.Arguments.Add(callStub);
                                     }
-                                    else
+                                    else if(ft.OuterVariables.Count > 0)
                                     {                                        
                                         setVar.Arguments.Add( new AstCreateClosure(this, physicalId) );                                        
+                                    }
+                                    else
+                                    {
+                                        setVar.Arguments.Add( new AstGetSetReference(this, physicalId, SymbolInterpretations.Function) );
                                     }
                                     block.Add(setVar);
                                 .)

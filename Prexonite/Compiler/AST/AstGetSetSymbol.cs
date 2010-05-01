@@ -41,6 +41,9 @@ namespace Prexonite.Compiler.Ast
             SymbolInterpretations interpretation)
             : base(file, line, column, call)
         {
+            if (id == null)
+                throw new ArgumentNullException("id");
+
             Interpretation = interpretation;
             Id = id;
         }

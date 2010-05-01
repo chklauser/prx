@@ -1764,7 +1764,7 @@ function sum()
 
 function main()
 {
-    return call(->call, ->sum, var args);
+    return call(->call, [->sum], var args);
 }
 ");
             int
@@ -1780,7 +1780,7 @@ function main()
                 a + b + c + d + e + f + g,
                 PType.List.CreatePValue(new PValue[] {a, b, c}),
                 PType.List.CreatePValue(new PValue[] {d, e}),
-                f,
+                PType.List.CreatePValue(new PValue[] {f}),
                 PType.List.CreatePValue(new PValue[] {g}));
         }
 
@@ -2265,7 +2265,7 @@ function main()
     return diff;
 }
 ");
-            PValue[] xs =
+            var xs =
                 new PValue[]
                     {
                         2, //4
@@ -2295,12 +2295,13 @@ function main()
     return B(var args[0]);
 }
 ");
-#if UseCil
-            Expect("bs.CilClosure(function main\\A0( xa))b", "s");
-#else
-            Expect("bs.Closure(function main\\A0( xa))b", "s");
-#endif
 
+//#if UseCil
+//            Expect("bs.CilClosure(function main\\A0( xa))b", "s");
+//#else
+//            Expect("bs.Closure(function main\\A0( xa))b", "s");
+//#endif
+            Expect("bs.function main\\A0( xa)b", "s");
         }
 
         [Test]
@@ -3104,6 +3105,32 @@ function main(xs)
 ");
 
             Expect(">1>2>3", (PValue) new List<PValue> {1, 2, 3});
+        }
+
+        [Test]
+        public void CaptureUnmentionedMacroVariable()
+        {
+            Compile(@"
+    macro echo() 
+    {
+        var f = (x) => target.Symbols[x];
+        println(f.(""x""));
+    }
+
+    function main()
+    {
+        var x = 15;
+        echo;
+        return x;
+    }
+");
+            var clo = target.Functions["echo\\0"];
+            Assert.IsNotNull(clo,"Closure must exist.");
+            Assert.IsTrue(clo.Meta.ContainsKey(PFunction.SharedNamesKey));
+            Assert.AreEqual(clo.Meta[PFunction.SharedNamesKey].List.Length, 1);
+            Assert.AreEqual(clo.Meta[PFunction.SharedNamesKey].List[0].Text, "target");
+
+            Expect(15, new PValue[0]);
         }
 
         #region Helper

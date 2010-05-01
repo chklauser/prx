@@ -95,7 +95,7 @@ function write_instruction(ins, func, buffer)
     }
 }
 
-function show_bytecode(func, pointer)
+function show_bytecode as dasm(func, pointer)
 {
     if(func is Null)
         throw "`show_bytecode` expects a function as its first parameter.";

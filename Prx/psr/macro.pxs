@@ -100,7 +100,7 @@ macro tempfree(macroRef, tempId)
 //Optimization
 function optimize\ref(target, node) [is compiler;]
 {
-    node.() = node.().GetOptimizedNode(target);
+    return node.() = node.().GetOptimizedNode(target);
 }
 
 macro optimize(targetRef, node)
@@ -420,11 +420,15 @@ macro call\macro(macroReference, values)
     }
     else if(macroReference is Prexonite::Compiler::Ast::AstUnresolved)
     {
-        macroId = macroReference.MacroId;
+        macroId = macroReference.Id;
     }
     else 
     {
-        throw "cannot infer macro id from $(macroReference.\boxed).";
+        throw "cannot infer macro id from $(macroReference.\boxed). call\\macro only works on functions that are known at compile-time.";
+        //try call\macro\dynamic
+        //var c = ast("MacroInvocation", ->call\macro\dynamic.Id);
+        //c.Arguments.AddRange(var args);
+        //return c;
     }
     
     if(macroId is Null)
@@ -564,4 +568,12 @@ macro POSITION
     var line = macroInvocation.Line;
     var col = macroInvocation.Column;
     return ast\const("$file, line $line, column $col");
+}
+
+build
+{
+    if(not GetLoader.Options.TargetApplication.Meta["SuppressCilCompilation"].Switch)
+    {
+        CompileToCil(false);
+    }
 }

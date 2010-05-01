@@ -942,6 +942,9 @@ namespace Prexonite
 
                     case OpCode.indloc:
                         fillArgs(argc, out argv);
+                        pvar = _localVariables[id];
+                        if(pvar == null)
+                            throw new PrexoniteException("The local variable " + id + " resolved to null in function " + Implementation.Id);
                         left = _localVariables[id].Value;
 
 #if Verbose

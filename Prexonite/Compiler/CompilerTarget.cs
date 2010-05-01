@@ -1682,6 +1682,8 @@ namespace Prexonite.Compiler
             var code = Function.Code;
             Function.CreateLocalVariableMapping(); //Force (re)creation of the mapping
             var map = Function.LocalVariableMapping;
+            if(map == null)
+                throw new PrexoniteException("Local variable mapping of function " + Function.Id + " does not exist.");
 
             for (var i = 0; i < code.Count; i++)
             {
@@ -1704,7 +1706,9 @@ namespace Prexonite.Compiler
                         goto replaceInt;
                     case OpCode.ldr_loc:
                         nopc = OpCode.ldr_loci;
-                        replaceInt:
+                    replaceInt:
+                        if (ins.Id == null)
+                            throw new PrexoniteException(string.Format("Invalid instruction ({1}) in function {0}. Id missing.", Function.Id, ins));
                         if (!map.TryGetValue(ins.Id, out idx))
                             continue;
                         code[i] = new Instruction(nopc, idx);

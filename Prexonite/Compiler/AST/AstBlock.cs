@@ -348,7 +348,7 @@ namespace Prexonite.Compiler.Ast
         {
             var buffer = new StringBuilder();
             foreach (var node in _statements)
-                buffer.AppendFormat("{0} ;", node);
+                buffer.AppendFormat("{0}; ", node);
             return buffer.ToString();
         }
 

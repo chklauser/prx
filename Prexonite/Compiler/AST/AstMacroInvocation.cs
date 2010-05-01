@@ -9,14 +9,8 @@ namespace Prexonite.Compiler.Ast
 {
     public sealed class AstMacroInvocation : AstGetSet
     {
-
         private readonly string _macroId;
-
-        public string MacroId
-        {
-            [DebuggerStepThrough]
-            get { return _macroId; }
-        }
+        private SymbolCollection _releaseAfterEmit;
 
         public AstMacroInvocation(string file, int line, int column, string macroId) : base(file, line, column, PCall.Get)
         {
@@ -28,6 +22,12 @@ namespace Prexonite.Compiler.Ast
             _macroId = macroId;
         }
 
+        public string MacroId
+        {
+            [DebuggerStepThrough]
+            get { return _macroId; }
+        }
+
         protected override void EmitGetCode(CompilerTarget target, bool justEffect)
         {
             throw new NotImplementedException("Macro invocation requires a different mechanic. Use AstGetSet.EmitCode instead.");
@@ -37,8 +37,6 @@ namespace Prexonite.Compiler.Ast
         {
             throw new NotImplementedException("Macro invocation requires a different mechanic. Use AstGetSet.EmitCode instead.");
         }
-
-        private SymbolCollection _releaseAfterEmit;
 
         protected override void EmitCode(CompilerTarget target, bool justEffect)
         {
@@ -64,7 +62,7 @@ namespace Prexonite.Compiler.Ast
                 var macro = new Closure(macroFunc, sharedVariables);
 
                 //Execute macro (argument nodes of the invocation node are passed as arguments to the macro)
-                var arguments = Arguments.Select<IAstExpression, PValue>(target.Loader.CreateNativePValue).ToArray();
+                var arguments = Arguments.Select(target.Loader.CreateNativePValue).ToArray();
                 var astRaw = macro.IndirectCall(target.Loader, arguments);
 
                 //Optimize and then emit returned code.
@@ -94,7 +92,7 @@ namespace Prexonite.Compiler.Ast
                 //In well-structured code (block based branching) it is now safe to release temporary variables.
                 foreach (var temp in _releaseAfterEmit)
                     target.ReleaseTemporaryVariable(temp);
-            } 
+            }
             finally
             {
                 _releaseAfterEmit = null;
@@ -121,6 +119,11 @@ namespace Prexonite.Compiler.Ast
             var macro = new AstMacroInvocation(File, Line, Column, _macroId);
             CopyBaseMembers(macro);
             return macro;
+        }
+
+        public override string ToString()
+        {
+            return string.Format("{0} {1}{2}", base.ToString(), MacroId, ArgumentsToString());
         }
     }
 }

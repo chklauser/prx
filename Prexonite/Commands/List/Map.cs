@@ -89,7 +89,15 @@ namespace Prexonite.Commands.List
             else if (psource.TryConvertTo(sctx, true, out nset))
                 return _wrapNonGenericIEnumerable(sctx, nset);
             else
-                return null;
+                return _wrapDynamicIEnumerable(sctx, psource);
+        }
+
+        private static IEnumerable<PValue> _wrapDynamicIEnumerable(StackContext sctx, PValue psource)
+        {
+            var pvEnumerator = psource.DynamicCall(sctx, Runtime.EmptyPValueArray, PCall.Get, "GetEnumerator").ConvertTo(sctx, typeof(IEnumerator));
+            var enumerator = (IEnumerator) pvEnumerator.Value;
+            while (enumerator.MoveNext())
+                yield return sctx.CreateNativePValue(enumerator.Current);
         }
 
         protected static IEnumerable<PValue> CoroutineRun(ContextCarrier sctxCarrier, IIndirectCall f, IEnumerable<PValue> source)

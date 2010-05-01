@@ -1,61 +1,182 @@
 
-build does require("macro.pxs");
+build does require(@"psr\macro.pxs", @"psr\struct.pxs", @"psr\prop.pxs");
 
-macro kvp(key, value, the_pair)
+coroutine zip(xs,ys)
 {
-    optimize(key);
-    optimize(value);
+	using(var xsE = xs.GetEnumerator)
+	using(var ysE = ys.GetEnumerator)
+		while(xsE.MoveNext and ysE.MoveNext)
+			yield xsE.Current : ysE.Current;
+}
+
+function repeatable(xs)
+{
+
+    var rep = [];
+
+    coroutine tee\cor
+    {
+        foreach(var x in xs)
+        {
+            yield rep[] = x;            
+        }
+    }
     
+    var tee = tee\cor();
+
+    function GetEnumerator(this) 
+    {
+        return (append(rep,tee)).GetEnumerator;
+    }
+    
+    function ToString = "repeatable $xs";
+    
+    return struct;
+}
+
+macro pattern\construct(desc)
+{
+	var targets = var args >> skip(1) >> map(a => {optimize\ref(target,->a); return a;}) >> all;
+	var dynamicCall = ast\invoke_macro(desc.construct);
+	dynamicCall.Arguments.AddRange(targets); 
+    return dynamicCall;
+}
+
+macro pattern\deconstruct(desc)
+{
+    var args;
+	var targets = var args >> range(1,args.Count-2) >> map(a => {optimize\ref(target,->a); return a;}) >> all;
+	var the_object = args[args.Count - 1];
+	    
+	var block = ast("BlockExpression");
+	
+	//Temporary variable used to hold RHS, if RHS is not an object variable itself
+	var tempV;
+	var useTemp;
+	if(the_object is Prexonite::Compiler::Ast::AstGetSetSymbol and SI.is_obj(the_object.Interpretation))
+    {
+        useTemp = false;
+        tempV = the_object.Id;
+    }        
+    else
+    {
+        useTemp = true;
+        tempV = tempalloc;       
+    
+        var assignTmp = ast\lvar(SI.set, tempV);
+        assignTmp.Arguments.Add(the_object);
+        block.Add(assignTmp);
+    }
+	
+	foreach(var bpt in zip(desc.bindings,targets))
+	{
+		var binding = bpt.Key;
+		var bindingTarget = bpt.Value;
+		var binding_name = binding.Name;
+		if(not bindingTarget.\implements("Prexonite.Compiler.Ast.AstGetSet"))
+            throw "The target $binding_name of $(desc.name) must be assignable.";
+        if(not SI.eq(bindingTarget.Call,SI.get))
+            throw "The target $binding_name of $(desc.name) must not be a set-call";	
+    
+        //var dynamicMacroCall = code(call\macro(binding.getValue~String,[tempV]));
+        //var tempVListLit = ast("ListLiteral");
+        //tempVListLit.Elements.Add(ast\const(tempV));
+        //var dynamicMacroCall = ast\macro(call\macro(ast\const(binding.getValue~String), tempVListLit));
+        var dynamicMacroCall = ast\invoke_macro(binding.getValue);
+        dynamicMacroCall.Arguments.Add(ast\const(tempV));
+            
+    	var setTarget = bindingTarget.GetCopy();
+    	setTarget.Call = SI.set;
+    	setTarget.Arguments.Add(dynamicMacroCall);
+    	block.Add(setTarget);
+	}
+	
+	//Behave like a proper set-call and return the RHS
+	block.Expression = ast\lvar(SI.get, tempV);
+    
+	//Free temporary variable, if necessary
+    if(useTemp)
+        tempfree(tempV);
+        
+    return block;
+}
+
+function create_binding_desc(kvp) [is compiler;]
+{
+	if(kvp is not Prexonite::Types::PValueKeyValuePair)
+		throw "Signature: create_binding(name: obj_var_id => deconstruct)";
+	var _name = kvp.Key;
+	var _getValue = kvp.Value;
+    
+    if(_getValue is Prexonite::PFunction)
+        _getValue = _getValue.Id;
+        
+    _getValue ~= String;
+	
+	function name = _name;
+	function getValue = _getValue;
+    function ToString = "$name(->$getValue)";
+	
+	return struct;
+}
+
+function create_pat_desc(_name, _bindings, _construct) [is compiler;]
+{	
+	if(_name is not String)
+		throw "Pattern needs a name.";
+	
+	_bindings = _bindings >> map(->create_binding_desc) >> repeatable;
+    
+    if(_construct is Prexonite::PFunction)
+        _construct = _construct.Id;        
+    _construct ~= String;
+    
+	function name = _name;	
+	function bindings = _bindings;
+	function construct = _construct;
+    function ToString(this) = "data $name = $name(" + foldl((a,b) => a + " " + b.ToString,"", this.bindings) + " );";
+	
+	return struct;
+}
+
+macro pattern\gen(desc, args)
+{
     if(SI.eq(callType,SI.get))
     {
-        //Synonym for (key:value)
-        return ast("KeyValuePair",key,value);
+        //construct value
+        return call\macro(->pattern\construct, [desc]);
     }
-    else 
+    else
     {
-        if(not key.\implements("Prexonite.Compiler.Ast.AstGetSet"))
-            throw "Key of kvp is not assignable.";
-        if(not SI.eq(key.Call,SI.get))
-            throw "Key of kvp must not be a set-call";
-            
-        if(not value.\implements("Prexonite.Compiler.Ast.AstGetSet"))
-            throw "Value of kvp is not assignable.";
-        if(not SI.eq(value.Call,SI.get))
-            throw "Value of kvp must not be a set-call";
-        
-        var block = ast("BlockExpression");
-        var tempV;
-        var useTemp;
-        if(the_pair is Prexonite::Compiler::Ast::AstGetSetSymbol and SI.is_obj(the_pair.Interpretation))
-        {
-            useTemp = false;
-            tempV = the_pair.Id;
-        }        
-        else
-        {
-            useTemp = true;
-            tempV = tempalloc;       
-        
-            var assignTmp = ast\lvar(SI.set, tempV);
-            assignTmp.Arguments.Add(the_pair);
-            block.Add(assignTmp);
-        }
-        
-        var setKey = key.GetCopy();
-        setKey.Call = SI.set;
-        setKey.Arguments.Add(ast\member(ast\lvar(SI.get, tempV), SI.get,"Key"));
-        block.Add(setKey);
-        
-        var setValue = value.GetCopy();
-        setValue.Call = SI.set;
-        setValue.Arguments.Add(ast\member(ast\lvar(SI.get, tempV), SI.get, "Value"));
-        block.Add(setValue);
-        
-        block.Expression = ast\lvar(SI.get, tempV);
-        
-        if(useTemp)
-            tempfree(tempV);
-        
-        return block;
+        //deconstruct value
+        return call\macro(->pattern\deconstruct, [desc] + args);
     }
+}
+
+macro kvp\decon\key(tempV)
+{
+    var tempV = ast\read(target, tempV);
+    return ast\member(ast\lvar(SI.get, tempV), SI.get,"Key");
+}
+
+macro kvp\decon\value(tempV)
+{
+    return ast\member(ast\lvar(SI.get, ast\read(target, tempV)), SI.get,"Value");
+}
+
+macro kvp\con(key, value)
+{
+    return ast("KeyValuePair",key,value);
+}
+
+macro kvp
+{    
+    var desc = create_pat_desc("KeyValuePair",
+            [ "key": ->kvp\decon\key
+            , "value": ->kvp\decon\value
+            ]
+        , ->kvp\con
+        );
+        var args;
+    return call\macro(pattern\gen(desc, var args));
 }
