@@ -112,7 +112,6 @@
     <Compile Include="Win32\User32.cs" />
   </ItemGroup>
   <ItemGroup>
-    <None Include="app.config" />
     <None Include="app.manifest" />
     <None Include="psr\ast.pxs">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>

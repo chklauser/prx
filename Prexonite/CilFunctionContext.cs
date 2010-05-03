@@ -31,7 +31,7 @@ using System.Reflection;
 namespace Prexonite
 {
     [DebuggerStepThrough]
-    public class CilFunctionContext : StackContext
+    public sealed class CilFunctionContext : StackContext
     {
 
         public  static CilFunctionContext New(StackContext caller, PFunction originalImplementation)

@@ -102,13 +102,17 @@ namespace Prexonite.Compiler.Ast
                 {
                     //Condition is always false
                     if (!IsPrecondition) //If do-while, emit the body without loop code
+                    {
+                        target.BeginBlock(Block);
                         Block.EmitCode(target);
+                        target.EndBlock();
+                    }
                     return;
                 }
             }
             continueFull:
 
-
+            target.BeginBlock(Block);
             if (!Block.IsEmpty) //Body exists -> complete loop code?
             {
                 if (conditionIsConstant) //Infinite, hopefully user managed, loop ->
@@ -127,6 +131,7 @@ namespace Prexonite.Compiler.Ast
                     Block.EmitCode(target);
 
                     _emitCondition(target);
+                    
                 }
             }
             else //Body does not exist -> Condition loop
@@ -136,6 +141,7 @@ namespace Prexonite.Compiler.Ast
             }
 
             target.EmitLabel(Block.BreakLabel);
+            target.EndBlock();
         }
 
         private void _emitCondition(CompilerTarget target)

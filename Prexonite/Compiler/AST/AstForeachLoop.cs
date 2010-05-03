@@ -104,6 +104,7 @@ namespace Prexonite.Compiler.Ast
             var disposeAddr = -1;
 
             //Get the enumerator
+            target.BeginBlock(Block);
             List.EmitCode(target);
             target.EmitGetCall(0, "GetEnumerator");
             var castAddr = target.Code.Count;
@@ -156,6 +157,8 @@ namespace Prexonite.Compiler.Ast
             };
 
             _try.EmitCode(target);
+
+            target.EndBlock();
 
             if (getCurrentAddr < 0 || moveNextAddr < 0 || disposeAddr < 0)
                 throw new PrexoniteException("Could not capture addresses within foreach construct for CIL compiler hint.");

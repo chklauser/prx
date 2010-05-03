@@ -273,8 +273,8 @@ namespace Prexonite.Compiler.Ast
     public enum ReturnVariant
     {
         Exit,
-        Set,
         Break,
-        Continue
+        Continue,
+        Set
     }
 }

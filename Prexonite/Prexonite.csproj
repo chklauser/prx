@@ -105,6 +105,7 @@
     <Compile Include="Commands\Concurrency\Select.cs" />
     <Compile Include="Commands\Core\Call.cs" />
     <Compile Include="Commands\Core\Caller.cs" />
+    <Compile Include="Commands\Core\CallSubPerform.cs" />
     <Compile Include="Commands\Core\Call_Member.cs" />
     <Compile Include="Commands\Core\Call_CC.cs" />
     <Compile Include="Commands\Core\Call_Tail.cs" />
@@ -318,7 +319,7 @@
     <Grammar Include="PTypeExpression.atg" />
   </ItemGroup>
   <ItemGroup>
-    <Service Include="{B4F97281-0DBD-4835-9ED8-7DFB966E87FF}" />
+    <!-- <Service Include="{B4F97281-0DBD-4835-9ED8-7DFB966E87FF}" /> -->
   </ItemGroup>
   <ItemGroup>
     <BootstrapperPackage Include="Microsoft.Net.Client.3.5">

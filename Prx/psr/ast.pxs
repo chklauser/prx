@@ -68,6 +68,10 @@ function create_SI [is compiler;]
     SI.\("cmd") = ::SymbolInterpretations.$Command;
     SI.\("get") = Prexonite::Types::PCall.Get;
     SI.\("set") = Prexonite::Types::PCall.Set;
+	SI.\("ret\\exit") = Prexonite::Compiler::Ast::ReturnVariant.Exit;
+	SI.\("ret\\set") = Prexonite::Compiler::Ast::ReturnVariant.$Set;
+	SI.\("ret\\continue") = Prexonite::Compiler::Ast::ReturnVariant.$Continue;
+	SI.\("ret\\break") = Prexonite::Compiler::Ast::ReturnVariant.$Break;
     SI.\\("eq") = (this, l, r) => l~Int == r~Int;
     SI.\\("is_lvar") = (this, s) => s~Int == this.lvar~Int;
     SI.\\("is_lref") = (this, s) => s~Int == this.lref~Int;

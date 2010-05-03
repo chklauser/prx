@@ -792,6 +792,8 @@ namespace Prexonite
             Commands.AddEngineCommand(Call_AsyncAlias, CallAsync.Instance);
 
             Commands.AddEngineCommand(AsyncSeqAlias, AsyncSeq.Instance);
+
+            Commands.AddEngineCommand(CallSubPerformAlias, CallSubPerform.Instance);
         }
 
         /// <summary>
@@ -1103,6 +1105,11 @@ namespace Prexonite
         /// Alias used for the Sum command.
         /// </summary>
         public const string SumAlias = "sum";
+
+        /// <summary>
+        /// Alias used for the call\sub\perform command.
+        /// </summary>
+        public const string CallSubPerformAlias = @"call\sub\perform";
 
         #endregion
     }

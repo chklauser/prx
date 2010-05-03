@@ -105,6 +105,7 @@ namespace Prexonite.Compiler.Ast
                      *  {next}
                      *  jump -> begin
                      */
+                    target.BeginBlock(Block);
                     Initialize.EmitCode(target);
                     if (!IsPrecondition) //start with nextIteration
                         target.EmitJump(Block.ContinueLabel);
@@ -113,6 +114,7 @@ namespace Prexonite.Compiler.Ast
                     target.EmitLabel(Block.ContinueLabel);
                     NextIteration.EmitCode(target);
                     target.EmitJump(Block.BeginLabel);
+                    target.EndBlock();
                 }
                 else //Variable condition and body -> full loop code
                 {
@@ -126,6 +128,7 @@ namespace Prexonite.Compiler.Ast
                      *  {condition}
                      *  jump if true -> begin
                      */
+                    target.BeginBlock(Block);
                     Initialize.EmitCode(target);
                     if (IsPrecondition)
                         target.EmitJump(conditionLabel);
@@ -138,6 +141,7 @@ namespace Prexonite.Compiler.Ast
                     target.EmitLabel(conditionLabel);
                     AstLazyLogical.EmitJumpCondition(
                         target, Condition, Block.BeginLabel, IsPositive);
+                    target.EndBlock();
                 }
             }
             else //Body does not exist -> Condition loop
@@ -150,6 +154,7 @@ namespace Prexonite.Compiler.Ast
                  *  {next}
                  *  jump -> begin
                  */
+                target.BeginBlock(Block);
                 Initialize.EmitCode(target);
                 if (!IsPrecondition)
                     target.EmitJump(Block.ContinueLabel);
@@ -159,6 +164,7 @@ namespace Prexonite.Compiler.Ast
                     target.EmitLabel(Block.ContinueLabel);
                 NextIteration.EmitCode(target);
                 target.EmitJump(Block.BeginLabel);
+                target.EndBlock();
             }
 
             target.EmitLabel(Block.BreakLabel);
