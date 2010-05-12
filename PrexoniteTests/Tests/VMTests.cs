@@ -3133,6 +3133,107 @@ function main(xs)
             Expect(15, new PValue[0]);
         }
 
+        [Test]
+        public void ForeachLastInConditionCil()
+        {
+            Compile(@"
+function main(cond, xs)
+{
+    var z = 0;
+    if(cond)
+    {
+        foreach(var x in xs)
+            z += x;
+    }
+    else
+    {
+        z = 5;
+    }
+    return z;
+}
+");
+
+            if(CompileToCil)
+            {
+                var main = target.Functions["main"];
+                Assert.IsFalse(main.Meta[PFunction.VolatileKey],"main must not be volatile.");
+                Assert.IsFalse(main.Meta.ContainsKey(PFunction.DeficiencyKey),"main must not have a deficiency");
+                Assert.IsTrue(main.HasCilImplementation, "main must have CIL implementation.");
+            }
+
+            Expect(6, true, (PValue) new List<PValue> {1,2,3});
+        }
+
+        [Test]
+        public void ReturnContinueFormTryFinally()
+        {
+            Compile(@"
+function main()
+{
+    try
+    {
+        continue;
+    } 
+    finally
+    {
+
+    }
+}
+");
+
+            var func = target.Functions["main"];
+            
+            var emptyArgV = new PValue[0];
+            var emptyEnvironment = new PVariable[0];
+           
+            if(CompileToCil)
+            {
+                var nullContext = new NullContext(engine, target, new List<string>());
+                Assert.IsTrue(func.HasCilImplementation, "main must have CIL implementation.");
+                ReturnMode returnMode;
+                PValue value;
+                func.CilImplementation(
+                    func, nullContext, emptyArgV, emptyEnvironment, out value, out returnMode);
+                Assert.AreEqual(value.Type, PType.Null);
+                Assert.AreEqual(returnMode, ReturnMode.Continue);
+            }
+
+            var fctx = func.CreateFunctionContext(engine, emptyArgV, emptyEnvironment);
+            engine.Process(fctx);
+            Assert.AreEqual(fctx.ReturnValue.Type, PType.Null);
+            Assert.AreEqual(fctx.ReturnMode, ReturnMode.Continue);
+        }
+
+        [Test]
+        public void JumpToAfterEmptyFinally()
+        {
+            Compile(@"
+function main()
+{
+    try
+    {
+        goto after;
+        goto fin;
+    } 
+    finally
+    {
+        fin:
+    }
+after:
+}
+");
+
+            var func = target.Functions["main"];
+
+
+            if (CompileToCil)
+            {
+                Assert.IsTrue(func.HasCilImplementation, "main must have CIL implementation.");
+            }
+
+            ExpectNull(new PValue[0]);
+        }
+
         #region Helper
 
         #endregion

@@ -204,7 +204,7 @@ namespace Prexonite
                 return PType.Null.CreatePValue();
 
             var ret = eng.Process(_corctx);
-            if (_corctx.ReturnMode != ReturnModes.Continue)
+            if (_corctx.ReturnMode != ReturnMode.Continue)
             {
                 _corctx = null;
                 return PType.Null.CreatePValue();

@@ -532,7 +532,7 @@ namespace Prexonite.Compiler
             var lex = new Lexer(new StreamReader(str, Encoding.UTF8));
             if (filePath != null)
             {
-                lex._file = filePath;
+                lex.File = filePath;
                 _loadedFiles.Add(Path.GetFullPath(filePath));
             }
 

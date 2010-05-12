@@ -133,7 +133,7 @@ namespace Prexonite.Commands.Concurrency
                                             })),
                                     new KeyValuePair<Channel, PValue>
                                         (null, PType.Null),
-                                });
+                                }, false);
 
                             //We loop until the dispose command is explicitly given. 
                             //  -> This way, a reset command can be issued after

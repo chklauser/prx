@@ -330,7 +330,8 @@ namespace Prexonite.Compiler.Cil
             if (func.HasCilImplementation)
             {
                 PValue result;
-                func.CilImplementation(func, sctx, args, null, out result);
+                ReturnMode returnMode;
+                func.CilImplementation(func, sctx, args, null, out result, out returnMode);
                 return result;
             }
             else
@@ -396,15 +397,17 @@ namespace Prexonite.Compiler.Cil
         public static PValue NewCoroutine(PValue routine, StackContext sctx, PValue[] argv)
         {
             var routineobj = routine.Value;
-            var routinesa = routineobj as IStackAware;
+            IStackAware routinesa;
+            
             if (routineobj == null)
             {
                 return PType.Null.CreatePValue();
             }
             else
             {
+
                 StackContext corctx;
-                if (routinesa != null)
+                if ((routinesa = routineobj as IStackAware) != null)
                     corctx = routinesa.CreateStackContext(sctx, argv);
                 else
                     corctx = (StackContext)

@@ -620,13 +620,14 @@ namespace Prexonite
                 //Fix #8
                 ParentApplication.EnsureInitialization(engine, this);
                 PValue result;
+                ReturnMode returnMode;
                 CilImplementation
                     (
                     this,
                     new NullContext(engine, ParentApplication, ImportedNamespaces),
                     args,
                     sharedVariables,
-                    out result);
+                    out result, out returnMode);
                 return result;
             }
             else

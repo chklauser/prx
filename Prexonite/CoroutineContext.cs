@@ -95,11 +95,11 @@ namespace Prexonite
             {
                 if (_coroutine.Current != null)
                     _returnValue = _coroutine.Current;
-                ReturnMode = ReturnModes.Continue;
+                ReturnMode = Prexonite.ReturnMode.Continue;
             }
             else
             {
-                ReturnMode = ReturnModes.Break;
+                ReturnMode = Prexonite.ReturnMode.Break;
             }
             return false; //remove the context from the stack (for now)
         }

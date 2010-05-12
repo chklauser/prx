@@ -66,7 +66,7 @@ internal partial class Lexer
         yybegin(state);
     }
 
-    internal string _file = "--unknown--";
+    private string _file = "--unknown--";
 
     public string File
     {
@@ -78,6 +78,22 @@ internal partial class Lexer
     {
         get { return _file; }
     }
+
+    #region fake reference to Lexer.zzAtBOL (too lazy to hack into scanner generator)
+
+    private void _fake1()
+    {
+        if(!zzAtBOL)
+            _fake2();
+    }
+
+    private void _fake2()
+    {
+        if(zzAtBOL)
+            _fake1();
+    }
+
+    #endregion
 
     private readonly RandomAccessQueue<Token> _tokenBuffer = new RandomAccessQueue<Token>();
     private int _peekIndex = NO_PEEK;

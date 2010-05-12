@@ -35,15 +35,15 @@ namespace Prexonite.Compiler.Cil
 {
     public class CompilerPass
     {
-        private static int numberOfPasses;
+        private static int _numberOfPasses;
 
         [DebuggerStepThrough]
-        private static string CreateNextTypeName(string applicationId)
+        private static string _createNextTypeName(string applicationId)
         {
             if (String.IsNullOrEmpty(applicationId))
                 applicationId = "cilimpl";
 
-            return applicationId + "_" + numberOfPasses++ + "";
+            return applicationId + "_" + _numberOfPasses++ + "";
         }
 
         private readonly bool _makeAvailableForLinking;
@@ -95,7 +95,7 @@ namespace Prexonite.Compiler.Cil
             _makeAvailableForLinking = makeAvailableForLinking;
             if (MakeAvailableForLinking)
             {
-                var sequenceName = CreateNextTypeName(app != null ? app.Id : null);
+                var sequenceName = _createNextTypeName(app != null ? app.Id : null);
                 var asmName = new AssemblyName(sequenceName);
                 _assemblyBuilder =
                     AppDomain.CurrentDomain.DefineDynamicAssembly(asmName, AssemblyBuilderAccess.RunAndSave);
@@ -109,27 +109,31 @@ namespace Prexonite.Compiler.Cil
             if (id == null)
                 throw new ArgumentNullException("id");
 
+            var parameterTypes = new[]
+                {
+                    typeof (PFunction),
+                    typeof (StackContext),
+                    typeof (PValue[]),
+                    typeof (PVariable[]),
+                    typeof (PValue).MakeByRefType(),
+                    typeof (ReturnMode).MakeByRefType(),
+                };
             if (MakeAvailableForLinking)
             {
                 //Create method stub
+                
                 var dm = Type.DefineMethod
                     (
                     id,
                     MethodAttributes.Static | MethodAttributes.Public,
                     typeof (void),
-                    new[]
-                    {
-                        typeof (PFunction),
-                        typeof (StackContext),
-                        typeof (PValue[]),
-                        typeof (PVariable[]),
-                        typeof (PValue).MakeByRefType()
-                    });
+                    parameterTypes);
                 dm.DefineParameter(1, ParameterAttributes.In, "source");
                 dm.DefineParameter(2, ParameterAttributes.In, "sctx");
                 dm.DefineParameter(3, ParameterAttributes.In, "args");
                 dm.DefineParameter(4, ParameterAttributes.In, "sharedVariables");
                 dm.DefineParameter(5, ParameterAttributes.Out, "result");
+                dm.DefineParameter(6, ParameterAttributes.Out, "returnMode");
 
                 Implementations.Add(id, dm);
 
@@ -146,14 +150,7 @@ namespace Prexonite.Compiler.Cil
                     (
                     id,
                     typeof (void),
-                    new[]
-                    {
-                        typeof (PFunction),
-                        typeof (StackContext),
-                        typeof (PValue[]),
-                        typeof (PVariable[]),
-                        typeof (PValue).MakeByRefType()
-                    },
+                    parameterTypes,
                     typeof (Runtime));
 
             cilm.DefineParameter(1, ParameterAttributes.In, "source");
@@ -228,8 +225,8 @@ namespace Prexonite.Compiler.Cil
         {
         }
 
-        public CompilerPass(bool _makeAvailableForLinking)
-            : this(null, _makeAvailableForLinking)
+        public CompilerPass(bool makeAvailableForLinking)
+            : this(null, makeAvailableForLinking)
         {
         }
 

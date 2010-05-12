@@ -51,23 +51,51 @@ namespace Prexonite.Commands.Core
                 throw new PrexoniteException("call\\sub\\perform needs at least one argument, the function to call.");
             var fpv = args[0];
 
-            args = args.Skip(1).ToArray();
+            var iargs = Call.FlattenArguments(sctx, args, 1).ToArray();
 
+            return RunStatically(sctx, fpv, iargs);
+        }
+
+        public static PValue RunStatically(StackContext sctx, PValue fpv, PValue[] iargs, bool useIndirectCallAsFallback = false)
+        {
             IStackAware f;
-            if((f = fpv.Value as IStackAware) != null)
+            CilClosure cilClosure;
+            PFunction func = null;
+            PVariable[] sharedVars = null;
+
+            PValue result;
+            ReturnMode returnMode;
+
+            if ((cilClosure = fpv.Value as CilClosure) != null)
+            {
+                func = cilClosure.Function;
+                sharedVars = cilClosure.SharedVariables;
+            }
+
+            if((func = func ?? fpv.Value as PFunction) != null && func.HasCilImplementation)
+            {
+                func.CilImplementation.Invoke(
+                    func, CilFunctionContext.New(sctx, func), iargs, sharedVars ?? new PVariable[0], out result, out returnMode);    
+            }
+            else if((f = fpv.Value as IStackAware) != null)
             {
                 //Create stack context, let the engine execute it
-                var subCtx = f.CreateStackContext(sctx, args);
-                var ret = sctx.ParentEngine.Process(subCtx);
-                var retVar = subCtx.ReturnMode;
-
-                //return (returnMode: returnValue)
-                return new PValueKeyValuePair(sctx.CreateNativePValue(retVar), ret);
+                var subCtx = f.CreateStackContext(sctx, iargs);
+                sctx.ParentEngine.Process(subCtx);
+                result = subCtx.ReturnValue;
+                returnMode = subCtx.ReturnMode;
+            }
+            else if(useIndirectCallAsFallback)
+            {
+                result = fpv.IndirectCall(sctx, iargs);
+                returnMode = ReturnMode.Exit;
             }
             else
             {
                 throw new PrexoniteException("call\\sub\\perform requires its argument to be stack aware.");
             }
+
+            return new PValueKeyValuePair(sctx.CreateNativePValue(returnMode), result);
         }
 
         #endregion

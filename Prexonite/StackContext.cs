@@ -73,7 +73,7 @@ namespace Prexonite
         /// <summary>
         /// Gets or sets the mode of return.
         /// </summary>
-        public ReturnModes ReturnMode { get; set; }
+        public ReturnMode ReturnMode { get; set; }
 
         #endregion
 
@@ -161,7 +161,7 @@ namespace Prexonite
     /// <summary>
     /// The different modes of returning from a call.
     /// </summary>
-    public enum ReturnModes
+    public enum ReturnMode : int
     {
         /// <summary>
         /// The context has been exited normally. A return value may be available.

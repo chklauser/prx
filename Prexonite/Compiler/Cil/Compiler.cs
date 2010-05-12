@@ -26,6 +26,7 @@
 using System;
 using System.Collections.Generic;
 using System.ComponentModel;
+using System.Linq;
 using System.Reflection;
 using System.Reflection.Emit;
 using Prexonite.Commands;
@@ -120,7 +121,7 @@ namespace Prexonite.Compiler.Cil
 
         public static void Compile(IEnumerable<PFunction> functions, Engine targetEngine, FunctionLinking linking)
         {
-            CheckQualification(functions, targetEngine);
+            _checkQualification(functions, targetEngine);
 
             var qfuncs = new List<PFunction>();
 
@@ -159,7 +160,7 @@ namespace Prexonite.Compiler.Cil
 
         public static bool TryCompile(PFunction func, Engine targetEngine, FunctionLinking linking)
         {
-            if (CheckQualification(func, targetEngine))
+            if (_checkQualification(func, targetEngine))
             {
                 var pass = new CompilerPass(func.ParentApplication, linking);
 
@@ -192,7 +193,7 @@ namespace Prexonite.Compiler.Cil
 
         public static void StoreDebugImplementation(Application app, Engine targetEngine)
         {
-            CheckQualification(app.Functions, targetEngine);
+            _checkQualification(app.Functions, targetEngine);
 
             var linking = FunctionLinking.FullyStatic;
             var pass = new CompilerPass(linking);
@@ -245,7 +246,7 @@ namespace Prexonite.Compiler.Cil
 
         #region Check Qualification
 
-        private static bool CheckQualification(PFunction source, Engine targetEngine)
+        private static bool _checkQualification(PFunction source, Engine targetEngine)
         {
             if (source == null)
                 throw new ArgumentNullException("source");
@@ -253,12 +254,12 @@ namespace Prexonite.Compiler.Cil
             {
                 string reason;
                 var qualifies = _check(source, targetEngine, out reason);
-                _register_check_results(source, qualifies, reason);
+                _registerCheckResults(source, qualifies, reason);
                 return qualifies;
             }
         }
 
-        private static void _register_check_results(IHasMetaTable source, bool qualifies, string reason)
+        private static void _registerCheckResults(IHasMetaTable source, bool qualifies, string reason)
         {
             if (!qualifies && source.Meta[PFunction.DeficiencyKey].Text == "" && reason != null)
             {
@@ -272,31 +273,31 @@ namespace Prexonite.Compiler.Cil
 
         private class TailCallHint
         {
-            private readonly int indexOfReference;
-            private readonly int indexOfCall;
-            private readonly Instruction actualCall;
+            private readonly int _indexOfReference;
+            private readonly int _indexOfCall;
+            private readonly Instruction _actualCall;
 
             internal TailCallHint(int indexOfReference, int indexOfCall, Instruction actualCall)
             {
-                this.indexOfReference = indexOfReference;
-                this.actualCall = actualCall;
-                this.indexOfCall = indexOfCall;
+                this._indexOfReference = indexOfReference;
+                this._actualCall = actualCall;
+                this._indexOfCall = indexOfCall;
             }
 
 
             public int IndexOfReference
             {
-                get { return indexOfReference; }
+                get { return _indexOfReference; }
             }
 
             public int IndexOfCall
             {
-                get { return indexOfCall; }
+                get { return _indexOfCall; }
             }
 
             public Instruction ActualCall
             {
-                get { return actualCall; }
+                get { return _actualCall; }
             }
         }
 
@@ -339,7 +340,7 @@ namespace Prexonite.Compiler.Cil
             }
         }
 
-        private static void CheckQualification(IEnumerable<PFunction> functions, Engine targetEngine)
+        private static void _checkQualification(IEnumerable<PFunction> functions, Engine targetEngine)
         {
             //Whole program compatibility analysis
             foreach (var source in functions)
@@ -350,14 +351,14 @@ namespace Prexonite.Compiler.Cil
                 //Handle command calls via tail
                 foreach (var call in findTailCalls(source))
                     if (call.ActualCall.OpCode == OpCode.cmd)
-                        handle_possibly_dynamic_command(source, call.ActualCall, targetEngine);
+                        _handlePossiblyDynamicCommand(source, call.ActualCall, targetEngine);
 
                 //Handle 'normal' command calls (cmd instruction)
                 foreach (var ins in source.Code)
                     switch (ins.OpCode)
                     {
                         case OpCode.cmd:
-                            handle_possibly_dynamic_command(source, ins, targetEngine);
+                            _handlePossiblyDynamicCommand(source, ins, targetEngine);
                             break;
                     }
             }
@@ -367,11 +368,11 @@ namespace Prexonite.Compiler.Cil
             {
                 string reason;
                 var qualifies = _check(func, targetEngine, out reason);
-                _register_check_results(func, qualifies, reason);
+                _registerCheckResults(func, qualifies, reason);
             }
         }
 
-        private static void handle_possibly_dynamic_command(IHasMetaTable source, Instruction ins, Engine targetEngine)
+        private static void _handlePossiblyDynamicCommand(IHasMetaTable source, Instruction ins, Engine targetEngine)
         {
             PCommand cmd;
             ICilCompilerAware aware;
@@ -446,8 +447,8 @@ namespace Prexonite.Compiler.Cil
                             return false;
                         }
                         break;
-                    case OpCode.ret_break:
-                    case OpCode.ret_continue:
+                    //case OpCode.ret_break:
+                    //case OpCode.ret_continue:
                     case OpCode.invalid:
                         reason = "Unsupported instruction " + ins;
                         return false;
@@ -455,21 +456,13 @@ namespace Prexonite.Compiler.Cil
                         //Function must already be available
                         if (!source.ParentApplication.Functions.Contains(ins.Id))
                         {
-                            reason = "Enclosed function " + ins.Id + " must already be compiled";
+                            reason = "Enclosed function " + ins.Id + " must already be compiled (closure creation)";
                             return false;
                         }
                         break;
                     case OpCode.@try:
                         //must be the first instruction of a try block
-                        var isCorrect = false;
-                        foreach (var block in source.TryCatchFinallyBlocks)
-                        {
-                            if (block.BeginTry == address)
-                            {
-                                isCorrect = true;
-                                break;
-                            }
-                        }
+                        var isCorrect = source.TryCatchFinallyBlocks.Any(block => block.BeginTry == address);
                         if (!isCorrect)
                         {
                             reason = "try instruction is not the first instruction of a guarded block.";
@@ -478,15 +471,7 @@ namespace Prexonite.Compiler.Cil
                         break;
                     case OpCode.exc:
                         //must be the first instruction of a catch block
-                        isCorrect = false;
-                        foreach (var block in source.TryCatchFinallyBlocks)
-                        {
-                            if (block.BeginCatch == address)
-                            {
-                                isCorrect = true;
-                                break;
-                            }
-                        }
+                        isCorrect = source.TryCatchFinallyBlocks.Any(block => block.BeginCatch == address);
                         if (!isCorrect)
                         {
                             reason = "exc instruction is not the first instruction of a catch clause.";
@@ -515,8 +500,11 @@ namespace Prexonite.Compiler.Cil
                             else
                                 lastOfFinally = block.EndTry - 1;
 
-                            if (ins.Arguments == block.EndTry &&
-                                (address == lastOfTry || address == lastOfFinally))
+                            //Correction: leave instruction must just point outside the try block, not necessarily
+                            //  to the next instruction.
+                            var isOutside = ins.Arguments < block.BeginTry || ins.Arguments >= block.EndTry;
+                            var isAtTheEnd = (address == lastOfTry || address == lastOfFinally);
+                            if (isOutside && isAtTheEnd)
                             {
                                 isCorrect = true;
                                 break;
@@ -541,34 +529,34 @@ namespace Prexonite.Compiler.Cil
         #region Compile Function
 
         private static void _compile
-            (PFunction _source, ILGenerator il, Engine targetEngine, CompilerPass pass, FunctionLinking linking)
+            (PFunction source, ILGenerator il, Engine targetEngine, CompilerPass pass, FunctionLinking linking)
         {
-            var state = new CompilerState(_source, targetEngine, il, pass, linking);
+            var state = new CompilerState(source, targetEngine, il, pass, linking);
 
             //Every cil implementation needs to instantiate a CilFunctionContext and assign PValue.Null to the result.
-            emit_cil_implementation_header(state);
+            _emitCilImplementationHeader(state);
 
             //Reads the functions metadata about parameters, local variables and shared variables.
             //initializes shared variables.
-            build_symbol_table(state);
+            _buildSymbolTable(state);
 
             //CODE ANALYSIS
             //  - determine number of temporary variables
             //  - find variable references (alters the symbol table)
-            analysis_and_preparation(state);
+            _analysisAndPreparation(state);
 
             //Create and initialize local variables for parameters
-            parse_parameters(state);
+            _parseParameters(state);
 
             //Shared variables and parameters have already been initialized
             // this method initializes (PValue.Null) the rest.
-            _create_and_initialize_remaining_locals(state);
+            _createAndInitializeRemainingLocals(state);
 
             //Emits IL for the functions Prexonite byte code.
-            emit_instructions(state);
+            _emitInstructions(state);
         }
 
-        private static void emit_cil_implementation_header(CompilerState state)
+        private static void _emitCilImplementationHeader(CompilerState state)
         {
             //Create local cil function stack context
             //  CilFunctionContext cfctx = CilFunctionContext.New(sctx, source);
@@ -585,7 +573,14 @@ namespace Prexonite.Compiler.Cil
             state.Il.Emit(OpCodes.Stind_Ref);
         }
 
-        private static void build_symbol_table(CompilerState state)
+        private static void _assignReturnMode(CompilerState state, ReturnMode returnMode)
+        {
+            state.EmitLoadArg(CompilerState.ParamReturnModeIndex);
+            state.EmitLdcI4((int) returnMode);
+            state.Il.Emit(OpCodes.Stind_I4);
+        }
+
+        private static void _buildSymbolTable(CompilerState state)
         {
             //Create local ref variables for shared names
             //  and populate them with the contents of the sharedVariables parameter
@@ -634,7 +629,7 @@ namespace Prexonite.Compiler.Cil
                     state.Symbols.Add(variable, new Symbol(SymbolKind.Local));
         }
 
-        private static void analysis_and_preparation(CompilerState state)
+        private static void _analysisAndPreparation(CompilerState state)
         {
             var tempMaxOrder = 1; // 
             var needsSharedVariables = false;
@@ -692,8 +687,8 @@ namespace Prexonite.Compiler.Cil
             state.TempLocals = new LocalBuilder[tempMaxOrder];
             for (var i = 0; i < tempMaxOrder; i++)
             {
-                var rot_temp = state.Il.DeclareLocal(typeof (PValue));
-                state.TempLocals[i] = rot_temp;
+                var rotTemp = state.Il.DeclareLocal(typeof (PValue));
+                state.TempLocals[i] = rotTemp;
             }
 
             //Create temporary variable for argv and sharedVariables
@@ -713,7 +708,7 @@ namespace Prexonite.Compiler.Cil
             }
         }
 
-        private static void parse_parameters(CompilerState state)
+        private static void _parseParameters(CompilerState state)
         {
             for (var i = 0; i < state.Source.Parameters.Count; i++)
             {
@@ -801,7 +796,7 @@ namespace Prexonite.Compiler.Cil
             }
         }
 
-        private static void _create_and_initialize_remaining_locals(CompilerState state)
+        private static void _createAndInitializeRemainingLocals(CompilerState state)
         {
             var nullLocals = new List<LocalBuilder>();
 
@@ -829,7 +824,9 @@ namespace Prexonite.Compiler.Cil
                                     nullLocals.Add(sym.Local); //defer assignment
                                     break;
 
+// ReSharper disable RedundantCaseLabel
                                 case VariableInitialization.None:
+// ReSharper restore RedundantCaseLabel
                                 default:
                                     break;
                             }
@@ -890,7 +887,7 @@ namespace Prexonite.Compiler.Cil
             }
         }
 
-        private static void emit_instructions(CompilerState state)
+        private static void _emitInstructions(CompilerState state)
         {
             //Tables of tail call hint hooks
             var tailReferences = new Dictionary<int, TailCallHint>();
@@ -1203,9 +1200,9 @@ namespace Prexonite.Compiler.Cil
                         state.EmitNewObj(id, argc);
                         break;
                     case OpCode.newtype:
-                        state.fillArgv(argc);
+                        state.FillArgv(argc);
                         state.EmitLoadLocal(state.SctxLocal);
-                        state.readArgv(argc);
+                        state.ReadArgv(argc);
                         state.Il.Emit(OpCodes.Ldstr, id);
                         state.Il.EmitCall(OpCodes.Call, Runtime.NewTypeMethod, null);
                         break;
@@ -1252,9 +1249,9 @@ namespace Prexonite.Compiler.Cil
                         break;
 
                     case OpCode.newcor:
-                        state.fillArgv(argc);
+                        state.FillArgv(argc);
                         state.EmitLoadLocal(state.SctxLocal);
-                        state.readArgv(argc);
+                        state.ReadArgv(argc);
                         state.Il.EmitCall(OpCodes.Call, Runtime.NewCoroutineMethod, null);
                         break;
 
@@ -1535,9 +1532,9 @@ namespace Prexonite.Compiler.Cil
                         #region DYNAMIC
 
                     case OpCode.get:
-                        state.fillArgv(argc);
+                        state.FillArgv(argc);
                         state.EmitLoadLocal(state.SctxLocal);
-                        state.readArgv(argc);
+                        state.ReadArgv(argc);
                         state.EmitLdcI4((int) PCall.Get);
                         state.Il.Emit(OpCodes.Ldstr, id);
                         state.Il.EmitCall(OpCodes.Call, PVDynamicCallMethod, null);
@@ -1546,9 +1543,9 @@ namespace Prexonite.Compiler.Cil
                         break;
 
                     case OpCode.set:
-                        state.fillArgv(argc);
+                        state.FillArgv(argc);
                         state.EmitLoadLocal(state.SctxLocal);
-                        state.readArgv(argc);
+                        state.ReadArgv(argc);
                         state.EmitLdcI4((int) PCall.Set);
                         state.Il.Emit(OpCodes.Ldstr, id);
                         state.Il.EmitCall(OpCodes.Call, PVDynamicCallMethod, null);
@@ -1565,7 +1562,7 @@ namespace Prexonite.Compiler.Cil
                         //   .
                         //   .
                         //   .
-                        state.fillArgv(argc);
+                        state.FillArgv(argc);
                         idx = id.LastIndexOf("::");
                         if (idx < 0)
                             throw new PrexoniteException
@@ -1575,7 +1572,7 @@ namespace Prexonite.Compiler.Cil
                         typeExpr = id.Substring(0, idx);
                         state.EmitLoadType(typeExpr);
                         state.EmitLoadLocal(state.SctxLocal);
-                        state.readArgv(argc);
+                        state.ReadArgv(argc);
                         state.EmitLdcI4((int) PCall.Get);
                         state.Il.Emit(OpCodes.Ldstr, methodId);
                         state.EmitVirtualCall(Runtime.StaticCallMethod);
@@ -1584,7 +1581,7 @@ namespace Prexonite.Compiler.Cil
                         break;
 
                     case OpCode.sset:
-                        state.fillArgv(argc);
+                        state.FillArgv(argc);
                         idx = id.LastIndexOf("::");
                         if (idx < 0)
                             throw new PrexoniteException
@@ -1594,7 +1591,7 @@ namespace Prexonite.Compiler.Cil
                         typeExpr = id.Substring(0, idx);
                         state.EmitLoadType(typeExpr);
                         state.EmitLoadLocal(state.SctxLocal);
-                        state.readArgv(argc);
+                        state.ReadArgv(argc);
                         state.EmitLdcI4((int) PCall.Set);
                         state.Il.Emit(OpCodes.Ldstr, methodId);
                         state.EmitVirtualCall(Runtime.StaticCallMethod);
@@ -1609,7 +1606,7 @@ namespace Prexonite.Compiler.Cil
 
                     case OpCode.indloc:
                         sym = state.Symbols[id];
-                        state.fillArgv(argc);
+                        state.FillArgv(argc);
                         sym.EmitLoad(state);
                         state.EmitIndirectCall(argc, justEffect);
                         break;
@@ -1621,7 +1618,7 @@ namespace Prexonite.Compiler.Cil
                         goto case OpCode.indloc;
 
                     case OpCode.indglob:
-                        state.fillArgv(argc);
+                        state.FillArgv(argc);
                         state.EmitLoadGlobalValue(id);
                         state.EmitIndirectCall(argc, justEffect);
                         break;
@@ -1630,7 +1627,7 @@ namespace Prexonite.Compiler.Cil
                         //Stack
                         //  obj
                         //  args
-                        state.fillArgv(argc);
+                        state.FillArgv(argc);
                         state.EmitIndirectCall(argc, justEffect);
                         break;
 
@@ -1638,13 +1635,13 @@ namespace Prexonite.Compiler.Cil
                         //Stack
                         //  obj
                         //  args
-                        state.fillArgv(argc);
+                        state.FillArgv(argc);
                         state.EmitIndirectCall(argc, justEffect);
                         state.EmitStoreLocal(primaryTempLocal);
                         state.EmitLoadArg(CompilerState.ParamResultIndex);
                         state.EmitLoadLocal(primaryTempLocal);
                         state.Il.Emit(OpCodes.Stind_Ref);
-                        _emit_ret(state, instructionIndex);
+                        _emitRetExit(state, instructionIndex);
                         lastWasRet = true;
                         break;
 
@@ -1656,21 +1653,24 @@ namespace Prexonite.Compiler.Cil
                         MethodInfo targetMethod;
                         if (TryGetStaticallyLinkedFunction(state, id, out targetMethod))
                         {
-                            state.fillArgv(argc);
+                            //Link function statically
+                            state.FillArgv(argc);
                             state.Il.Emit(OpCodes.Ldsfld, state.Pass.FunctionFields[id]);
                             state.EmitLoadLocal(state.SctxLocal);
-                            state.readArgv(argc);
+                            state.ReadArgv(argc);
                             state.Il.Emit(OpCodes.Ldnull);
                             state.Il.Emit(OpCodes.Ldloca_S, state.TempLocals[0]);
+                            state.EmitLoadArg(CompilerState.ParamReturnModeIndex);
                             state.EmitCall(targetMethod);
                             if (!justEffect)
                                 state.EmitLoadTemp(0);
                         }
                         else
                         {
-                            state.fillArgv(argc);
+                            //Link function dynamically
+                            state.FillArgv(argc);
                             state.EmitLoadLocal(state.SctxLocal);
-                            state.readArgv(argc);
+                            state.ReadArgv(argc);
                             state.Il.Emit(OpCodes.Ldstr, id);
                             state.Il.EmitCall(OpCodes.Call, Runtime.CallFunctionMethod, null);
                             if (justEffect)
@@ -1706,9 +1706,9 @@ namespace Prexonite.Compiler.Cil
                         else
                         {
                             //Implement via Runtime.CallCommand (call by name)
-                            state.fillArgv(argc);
+                            state.FillArgv(argc);
                             state.EmitLoadLocal(state.SctxLocal);
-                            state.readArgv(argc);
+                            state.ReadArgv(argc);
                             state.Il.Emit(OpCodes.Ldstr, id);
                             state.Il.EmitCall(OpCodes.Call, Runtime.CallCommandMethod, null);
                             if (justEffect)
@@ -1728,7 +1728,7 @@ namespace Prexonite.Compiler.Cil
                         state.Il.Emit
                             (
                             state.MustUseLeave(instructionIndex, ref argc) ? OpCodes.Leave : OpCodes.Br,
-                            state.InstructionLabels[argc]);
+                            _getInstructionLabel(state, argc));
                         break;
                     case OpCode.jump_t:
                         state.EmitLoadLocal(state.SctxLocal);
@@ -1737,12 +1737,12 @@ namespace Prexonite.Compiler.Cil
                         {
                             var cont = state.Il.DefineLabel();
                             state.Il.Emit(OpCodes.Brfalse_S, cont);
-                            state.Il.Emit(OpCodes.Leave, state.InstructionLabels[argc]);
+                            state.Il.Emit(OpCodes.Leave, _getInstructionLabel(state, argc));
                             state.Il.MarkLabel(cont);
                         }
                         else
                         {
-                            state.Il.Emit(OpCodes.Brtrue, state.InstructionLabels[argc]);
+                            state.Il.Emit(OpCodes.Brtrue, _getInstructionLabel(state, argc));
                         }
                         break;
                     case OpCode.jump_f:
@@ -1752,12 +1752,12 @@ namespace Prexonite.Compiler.Cil
                         {
                             var cont = state.Il.DefineLabel();
                             state.Il.Emit(OpCodes.Brtrue_S, cont);
-                            state.Il.Emit(OpCodes.Leave, state.InstructionLabels[argc]);
+                            state.Il.Emit(OpCodes.Leave, _getInstructionLabel(state, argc));
                             state.Il.MarkLabel(cont);
                         }
                         else
                         {
-                            state.Il.Emit(OpCodes.Brfalse, state.InstructionLabels[argc]);
+                            state.Il.Emit(OpCodes.Brfalse, _getInstructionLabel(state, argc));
                         }
                         break;
 
@@ -1766,7 +1766,7 @@ namespace Prexonite.Compiler.Cil
                         #region RETURNS
 
                     case OpCode.ret_exit:
-                        _emit_ret(state, instructionIndex);
+                        _emitRetExit(state, instructionIndex);
                         lastWasRet = true;
                         break;
 
@@ -1775,24 +1775,27 @@ namespace Prexonite.Compiler.Cil
                         state.EmitLoadArg(CompilerState.ParamResultIndex);
                         state.EmitLoadLocal(primaryTempLocal);
                         state.Il.Emit(OpCodes.Stind_Ref);
-                        _emit_ret(state, instructionIndex);
+                        _emitRetExit(state, instructionIndex);
                         lastWasRet = true;
                         break;
 
                     case OpCode.ret_break:
-                        throw new PrexoniteException
-                            (
-                            String.Format
-                                (
-                                "OpCode {0} not implemented in Cil compiler",
-                                Enum.GetName(typeof (OpCode), ins.OpCode)));
+                        _emitRetSpecial(state, instructionIndex, ReturnMode.Break);
+                        //do not set `lastWasRet`. We need that implicit return in case someone
+                        //  issued an asm{jump $MAX}
+                        break;
+                        //throw new PrexoniteException
+                        //    (
+                        //    String.Format
+                        //        (
+                        //        "OpCode {0} not implemented in Cil compiler",
+                        //        Enum.GetName(typeof (OpCode), ins.OpCode)));
                     case OpCode.ret_continue:
-                        throw new PrexoniteException
-                            (
-                            String.Format
-                                (
-                                "OpCode {0} not implemented in Cil compiler",
-                                Enum.GetName(typeof (OpCode), ins.OpCode)));
+                        _emitRetSpecial(state, instructionIndex, ReturnMode.Continue);
+                        //do not set `lastWasRet`. We need that implicit return in case someone
+                        //  issued an asm{jump $MAX}
+                        break;
+                        
                     case OpCode.ret_set:
                         state.EmitStoreLocal(primaryTempLocal);
                         state.EmitLoadArg(CompilerState.ParamResultIndex);
@@ -1814,7 +1817,7 @@ namespace Prexonite.Compiler.Cil
                         #region LEAVE
 
                     case OpCode.@try:
-                        //Is done via analysis of TryCatchFinally objects associated with the funciton
+                        //Is done via analysis of TryCatchFinally objects associated with the function
                         break;
 
                     case OpCode.leave:
@@ -1865,23 +1868,34 @@ namespace Prexonite.Compiler.Cil
                     //  call has already been emitted, ret.value is missing
                     //  also, the address of the return value is already on the stack (emitted instead of the ldr.* instruction)
                     state.Il.Emit(OpCodes.Stind_Ref);
-                    _emit_ret(state, instructionIndex);
+                    _emitRetExit(state, instructionIndex);
                     lastWasRet = true;
                 }
             }
 
-            //Often instructions refer to a virtual instruction after the last real one.
+            //Close all pending try blocks, since the next instruction will never come
+            //  (other closing try blocks are handled by the emitting the instruction immediately following 
+            //  the try block)
             foreach (var block in state.TryBlocks)
             {
                 if (block.HasCatch || block.HasFinally)
                     state.Il.EndExceptionBlock();
             }
 
+            //Implicit return
+            //Often instructions refer to a virtual instruction after the last real one.
             if (!lastWasRet)
             {
                 state.MarkInstruction(sourceCode.Count);
+                _assignReturnMode(state, ReturnMode.Exit);
+                state.Il.MarkLabel(state.ReturnLabel);
                 state.Il.Emit(OpCodes.Ret);
             }
+        }
+
+        private static Label _getInstructionLabel(CompilerState state, int argc)
+        {
+            return state.InstructionLabels[argc];
         }
 
         public static bool TryGetStaticallyLinkedFunction(CompilerState state, string id, out MethodInfo targetMethod)
@@ -1891,19 +1905,44 @@ namespace Prexonite.Compiler.Cil
                    state.Pass.Implementations.TryGetValue(id, out targetMethod);
         }
 
-        private static void _emit_ret(CompilerState state, int instructionIndex)
+        private static void _emitRetExit(CompilerState state, int instructionIndex)
         {
             var max = state.Source.Code.Count;
             var rmax = max;
-            if (instructionIndex == max - 1) //last instruction
-                state.MarkInstruction(max); //mark ret ("over-last instruction")
 
             if (state.MustUseLeave(instructionIndex, ref rmax))
+            {
                 //Cannot return from protected block.
                 //Jump to return instruction (guaranteed to be at address $count)
+                //return mode exit is set when reaching instruction at index max
                 state.Il.Emit(OpCodes.Leave, state.InstructionLabels[max]);
+            }
             else
+            {
+                if (instructionIndex == max - 1) //last instruction
+                {
+                    state.MarkInstruction(max); //mark ret ("over-last instruction")
+                    _assignReturnMode(state, ReturnMode.Exit);
+                    state.Il.MarkLabel(state.ReturnLabel);
+                }
+                else
+                {
+                    _assignReturnMode(state, ReturnMode.Exit);
+                }
                 //Use conventional jump
+                state.Il.Emit(OpCodes.Ret);
+            }
+        }
+
+        private static void _emitRetSpecial(CompilerState state, int instructionIndex, ReturnMode returnMode)
+        {
+            _assignReturnMode(state, returnMode);
+
+            
+            var endOfFunction = state.Source.Code.Count;
+            if (state.MustUseLeave(instructionIndex, ref endOfFunction))
+                state.Il.Emit(OpCodes.Leave, state.ReturnLabel);
+            else
                 state.Il.Emit(OpCodes.Ret);
         }
 

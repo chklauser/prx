@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading;
+using Prexonite.Commands.Core;
 using Prexonite.Commands.List;
 using Prexonite.Compiler.Cil;
 using Prexonite.Concurrency;
@@ -41,8 +42,14 @@ namespace Prexonite.Commands.Concurrency
 
         public static PValue RunStatically(StackContext sctx, PValue[] args)
         {
+            bool performSubCall;
+            if (args.Length > 0 && args[0].Type.ToBuiltIn() == PType.BuiltIn.Bool)
+                performSubCall = (bool)args[0].Value;
+            else
+                performSubCall = false;
+
             var rawCases = new List<PValue>();
-            foreach (var arg in args)
+            foreach (var arg in args.Skip(performSubCall ? 1 : 0))
             {
                 var set = Map._ToEnumerable(sctx, arg);
                 if (set == null)
@@ -53,12 +60,12 @@ namespace Prexonite.Commands.Concurrency
 
             var appCases = _extract(rawCases.Where(c => isApplicable(sctx, c))).ToArray();
 
-            //Check if there data is already available (i.e. if the select can be processed non-blocking)
-            return RunStatically(sctx, appCases);
+            return RunStatically(sctx, appCases, performSubCall);
         }
 
-        public static PValue RunStatically(StackContext sctx, KeyValuePair<Channel, PValue>[] appCases)
+        public static PValue RunStatically(StackContext sctx, KeyValuePair<Channel, PValue>[] appCases, bool performSubCall)
         {
+            //Check if there data is already available (i.e. if the select can be processed non-blocking)
             foreach (var kvp in appCases)
             {
                 var chan = kvp.Key;
@@ -69,14 +76,12 @@ namespace Prexonite.Commands.Concurrency
                     PValue datum;
                     if (chan.TryReceive(out datum))
                     {
-                        handler.IndirectCall(sctx, new[] {datum});
-                        return PType.Object.CreatePValue(chan);
+                        return _invokeHandler(sctx, handler, datum, performSubCall);
                     }
                 }
                 else
                 {
-                    handler.IndirectCall(sctx, Runtime.EmptyPValueArray);
-                    return PType.Null;
+                    return _invokeHandler(sctx, handler, null, performSubCall);
                 }
             }
 
@@ -92,11 +97,18 @@ namespace Prexonite.Commands.Concurrency
                 PValue datum;
                 if (channels[selected].TryReceive(out datum))
                 {
-                    handlers[selected].IndirectCall(sctx, new[] {datum});
-                    return PType.Object.CreatePValue(channels[selected]);
+                    return _invokeHandler(sctx, handlers[selected], datum, performSubCall);
                 }
                 //else: someone ninja'd the damn thing before we could get to it, continue waiting
             }
+        }
+
+        private static PValue _invokeHandler(StackContext sctx, PValue handler, PValue datum, bool performSubCall)
+        {
+            var handlerArgv = datum != null ? new[] { datum } : Runtime.EmptyPValueArray;
+            return performSubCall 
+                ? CallSubPerform.RunStatically(sctx, handler, handlerArgv, useIndirectCallAsFallback: true) 
+                : handler.IndirectCall(sctx, handlerArgv);
         }
 
         private static readonly PType _chanType = PType.Object[typeof (Channel)];
@@ -128,12 +140,19 @@ namespace Prexonite.Commands.Concurrency
                 if (c.Type == PValueKeyValuePair.ObjectType)
                 {
                     var kvp = ((PValueKeyValuePair) c.Value);
+                    
+                    if( kvp.Value.Type == PValueKeyValuePair.ObjectType)
+                    {
+                        kvp = (PValueKeyValuePair) kvp.Value.Value;
+                    }
+
                     var key = kvp.Key;
+
                     if (key.Type == _chanType)
                         yield return new KeyValuePair<Channel, PValue>((Channel) kvp.Key.Value, kvp.Value);
                     else
                         throw new PrexoniteException(
-                            "Invalid select clause. Syntax: select( [channel:handler] ) or select( [cond:channel:handler] )");
+                            "Invalid select clause. Syntax: select( [channel:handler] ) or select( [cond:channel:handler] ). Offending value " + c.Value);
                 }
                 else if (c.Type == _chanType)
                 {

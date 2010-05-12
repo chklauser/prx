@@ -29,7 +29,7 @@ namespace Prexonite
     /// <summary>
     /// Represents a closure, a nested function bound to a set of shared variables.
     /// </summary>
-    public sealed class CilClosure : IIndirectCall
+    public sealed class CilClosure : IIndirectCall, IStackAware
     {
         #region Properties
 
@@ -91,9 +91,10 @@ namespace Prexonite
         {
             if (!_function.HasCilImplementation)
                 throw new PrexoniteException("CilClosure cannot handle " + _function + " because it has no cil implementation");
-            PValue r;
-            _function.CilImplementation(_function, sctx, args, _sharedVariables, out r);
-            return r;
+            PValue result;
+            ReturnMode returnMode;
+            _function.CilImplementation(_function, sctx, args, _sharedVariables, out result, out returnMode);
+            return result;
         }
 
         #endregion
@@ -159,6 +160,17 @@ namespace Prexonite
         public override int GetHashCode()
         {
             return _function.GetHashCode();
+        }
+
+        /// <summary>
+        /// Creates a stack context, that might later be pushed onto the stack.
+        /// </summary>
+        /// <param name="sctx">The engine for which the context is to be created.</param>
+        /// <param name="args">The arguments passed to this instantiation.</param>
+        /// <returns>The created <see cref="StackContext"/></returns>
+        public StackContext CreateStackContext(StackContext sctx, PValue[] args)
+        {
+            return _function.CreateFunctionContext(sctx.ParentEngine, args, _sharedVariables);
         }
 
         /// <summary>

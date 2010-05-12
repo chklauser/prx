@@ -169,7 +169,7 @@ namespace Prexonite
 #if Verbose
                     Console.WriteLine("\n#PSH: " + sctx + "(?)");
 #endif
-            sctx.ReturnMode = ReturnModes.Exit;
+            sctx.ReturnMode = ReturnMode.Exit;
             return Process();
         }
 

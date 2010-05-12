@@ -630,14 +630,14 @@ function func1() does asm
 
             List<Instruction> code = target.Functions["func1"].Code;
             int i = 0;
-#if DEBUG //nops are stripped in release mode
+//#if DEBUG //nops are stripped in release mode //no longer
             Assert.AreEqual(OpCode.nop, code[i++].OpCode);
-#endif
+//#endif
             Assert.AreEqual(OpCode.ldc_null, code[i++].OpCode);
-#if DEBUG
+//#if DEBUG
             Assert.AreEqual(OpCode.nop, code[i++].OpCode);
             Assert.AreEqual(OpCode.nop, code[i++].OpCode);
-#endif
+//#endif
             Assert.AreEqual(OpCode.neg, code[i++].OpCode);
             Assert.AreEqual(OpCode.not, code[i++].OpCode);
             Assert.AreEqual(OpCode.add, code[i++].OpCode);

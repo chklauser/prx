@@ -36,6 +36,11 @@ namespace Prx
                 fsmain.Write(buffer, 0, buffer.Length);
         }
 
+        private static void _test(out ReturnMode mode)
+        {
+            mode = ReturnMode.Exit;
+        }
+
         private static void Main(string[] args)
         {
             Console.CancelKeyPress += delegate { Environment.Exit(1); };

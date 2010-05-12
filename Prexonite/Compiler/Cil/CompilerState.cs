@@ -40,10 +40,12 @@ namespace Prexonite.Compiler.Cil
         public const int ParamSctxIndex = 1;
         public const int ParamSharedVariablesIndex = 3;
         public const int ParamSourceIndex = 0;
+        public const int ParamReturnModeIndex = 5;
         private readonly List<ForeachHint> _foreachHints;
         private readonly ILGenerator _il;
         private readonly Dictionary<int, string> _indexMap;
         private readonly Label[] _instructionLabels;
+        private readonly Label _returnLabel;
         private readonly PFunction _source;
         private readonly SymbolTable<Symbol> _symbols;
         private readonly Engine _targetEngine;
@@ -53,7 +55,7 @@ namespace Prexonite.Compiler.Cil
         private readonly FunctionLinking _linking;
 
         public CompilerState
-            (PFunction source, Engine targetEngine, ILGenerator il, CompilerPass _pass, FunctionLinking _linking)
+            (PFunction source, Engine targetEngine, ILGenerator il, CompilerPass pass, FunctionLinking linking)
         {
             if (source == null)
                 throw new ArgumentNullException("source");
@@ -63,14 +65,15 @@ namespace Prexonite.Compiler.Cil
                 throw new ArgumentNullException("il");
 
             _source = source;
-            this._linking = _linking;
-            this._pass = _pass;
+            this._linking = linking;
+            this._pass = pass;
             _targetEngine = targetEngine;
             _il = il;
             _indexMap = new Dictionary<int, string>();
             _instructionLabels = new Label[Source.Code.Count + 1];
             for (var i = 0; i < InstructionLabels.Length; i++)
                 InstructionLabels[i] = il.DefineLabel();
+            _returnLabel = il.DefineLabel();
             _symbols = new SymbolTable<Symbol>();
             _tryBlocks = new Stack<TryCatchFinallyBlock>();
 
@@ -113,6 +116,11 @@ namespace Prexonite.Compiler.Cil
         public Label[] InstructionLabels
         {
             get { return _instructionLabels; }
+        }
+
+        public Label ReturnLabel
+        {
+            get { return _returnLabel; }
         }
 
         public LocalBuilder SctxLocal { get; internal set; }
@@ -291,7 +299,12 @@ namespace Prexonite.Compiler.Cil
             return useLeave;
         }
 
-        public void fillArgv(int argc)
+        /// <summary>
+        /// Shove arguments from the stack into the argument array (`argv`). This way the arguments can later be
+        /// passed to methods. Use <see cref="ReadArgv"/>(<paramref name="argc"/>) to load that array onto the stack.
+        /// </summary>
+        /// <param name="argc">The number of arguments to load from the stack.</param>
+        public void FillArgv(int argc)
         {
             if (argc == 0)
             {
@@ -318,7 +331,11 @@ namespace Prexonite.Compiler.Cil
             }
         }
 
-        public void readArgv(int argc)
+        /// <summary>
+        /// Load previously perpared argument array (<see cref="FillArgv"/>) onto the stack. 
+        /// </summary>
+        /// <param name="argc">The number of elements in that argument array.</param>
+        public void ReadArgv(int argc)
         {
             if (argc == 0)
             {
@@ -444,7 +461,7 @@ namespace Prexonite.Compiler.Cil
         public void EmitIndirectCall(int argc, bool justEffect)
         {
             EmitLoadLocal(SctxLocal);
-            readArgv(argc);
+            ReadArgv(argc);
             Il.EmitCall(OpCodes.Call, Compiler.PVIndirectCallMethod, null);
             if (justEffect)
                 Il.Emit(OpCodes.Pop);
@@ -563,10 +580,10 @@ namespace Prexonite.Compiler.Cil
 
         public void EmitNewObj(string typeExpr, int argc)
         {
-            fillArgv(argc);
+            FillArgv(argc);
             EmitLoadType(typeExpr);
             EmitLoadLocal(SctxLocal);
-            readArgv(argc);
+            ReadArgv(argc);
             EmitVirtualCall(PType_ConstructMethod);
         }
 
@@ -581,6 +598,8 @@ namespace Prexonite.Compiler.Cil
 
         private static readonly MethodInfo Type_GetTypeFromHandle =
             typeof (Type).GetMethod("GetTypeFromHandle", new[] {typeof (RuntimeTypeHandle)});
+
+        
 
         #region Early bound command call
 
@@ -623,10 +642,10 @@ namespace Prexonite.Compiler.Cil
                 throw new PrexoniteException
                     (
                     string.Format("{0}'s RunStatically method does not return PValue but {1}.", target, run.ReturnType));
-            fillArgv(argc);
+            FillArgv(argc);
 
             EmitLoadLocal(SctxLocal);
-            readArgv(argc);
+            ReadArgv(argc);
             Il.EmitCall(OpCodes.Call, run, null);
             if (justEffect)
                 Il.Emit(OpCodes.Pop);

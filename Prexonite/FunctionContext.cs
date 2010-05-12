@@ -76,7 +76,7 @@ namespace Prexonite
             _implementation = implementation;
             _bindArguments(args);
             _createLocalVariables();
-            ReturnMode = ReturnModes.Exit;
+            ReturnMode = Prexonite.ReturnMode.Exit;
             if (_implementation.Meta.ContainsKey(PFunction.SharedNamesKey))
             {
                 var sharedNames = _implementation.Meta[PFunction.SharedNamesKey].List;
@@ -324,7 +324,7 @@ namespace Prexonite
             {
                 if (_pointer >= codeLength)
                 {
-                    ReturnMode = ReturnModes.Exit;
+                    ReturnMode = Prexonite.ReturnMode.Exit;
                     return false;
                 }
 
@@ -1044,7 +1044,9 @@ namespace Prexonite
 #else
                         if (func.HasCilImplementation)
                         {
-                            func.CilImplementation(func, this, argv, null, out left);
+                            ReturnMode returnMode;
+                            func.CilImplementation(func, this, argv, null, out left, out returnMode);
+                            ReturnMode = returnMode;
                             if (!justEffect)
                                 Push(left);
                         }
@@ -1148,26 +1150,26 @@ namespace Prexonite
                         #region RETURNS
 
                     case OpCode.ret_exit:
-                        ReturnMode = ReturnModes.Exit;
+                        ReturnMode = Prexonite.ReturnMode.Exit;
 #if Verbose
                     Console.WriteLine();
 #endif
                         return false;
                     case OpCode.ret_value:
                         _returnValue = Pop();
-                        ReturnMode = ReturnModes.Exit;
+                        ReturnMode = Prexonite.ReturnMode.Exit;
 #if Verbose
                     Console.WriteLine("=" + toDebug(_returnValue));
 #endif
                         return false;
                     case OpCode.ret_break:
-                        ReturnMode = ReturnModes.Break;
+                        ReturnMode = Prexonite.ReturnMode.Break;
 #if Verbose
                     Console.WriteLine();
 #endif
                         return false;
                     case OpCode.ret_continue:
-                        ReturnMode = ReturnModes.Continue;
+                        ReturnMode = Prexonite.ReturnMode.Continue;
 #if Verbose
                     Console.WriteLine();
 #endif

@@ -193,7 +193,7 @@ macro ast\symbol\mk_macro(symbolInterpretation)
     var block = ast("BlockExpression");
     
     //Generation of
-    //  var c = ast\invoke_macro(->ast\symbol\impl.Id);
+    //  var c = ast\invoke_macro(->ast\symbol.Id);
     var varC = tempalloc;
     var mc = ast\invoke_macro(->ast\invoke_macro.Id);
     mc.Arguments.Add(ast("Constant",->ast\symbol.Id));
@@ -374,7 +374,7 @@ macro ast\ret\set(expr)
 }
 
 //Call macro, essential part of macro writing!
-macro call\macro(macroReference, values)
+macro call\macro(macroReference)
 {
     //Ensure that we are in a valid context
     if(macroReference is Null)
@@ -438,27 +438,36 @@ macro call\macro(macroReference, values)
 
     var c = ast("IndirectCall", callType, the_macro);
     
+    var values = var args >> skip(1) >> all;
+    
     if(isPrototype) 
     {
         c.Arguments.CopyFrom(macroReference.Arguments);
         c.Call = macroReference.Call;
+        
+        if(values.Count > 0)
+            throw "Either use prototype syntax ( call\\macro(myMacro(arg1, arg2)) ) or call\\* syntax ( call\\macro(->RefToMyMacro, [arg1, arg2]) ). You cannot do ( call\\macro(myMacro(arg1), [arg2]) ) or anything like that.";
     }
     else 
     {
-        values ??= ast("ListLiteral");
-        
+        var allAreListLiterals = values
+            >> map(v => v is Prexonite::Compiler::Ast::AstListLiteral) >> foldl((a,b) => a and b, true);
+            
         //Hard code arguments in list literal
-        if(values is Prexonite::Compiler::Ast::AstListLiteral)
+        if(allAreListLiterals)
         {
-            foreach(var arg in values.Elements)
-                c.Arguments.Add(arg);
+            foreach(var lst in values)
+                foreach(var arg in lst.Elements)
+                    c.Arguments.Add(arg);
         }
         else 
         {   //otherwise, use the call command to emulate the call\* behaviour
             c = ast\cmd(CallType, "call");
             c.Arguments.Add(the_macro);
-            c.Arguments.Add(values);
+            c.Arguments.AddRange(values);
         }
+        
+        c.Call = callType;
     }
     
     return c;
@@ -570,10 +579,9 @@ macro POSITION
     return ast\const("$file, line $line, column $col");
 }
 
-build
+macro compile_macros\macro as compile_macros()
 {
-    if(not GetLoader.Options.TargetApplication.Meta["SuppressCilCompilation"].Switch)
-    {
-        CompileToCil(false);
-    }
+    var c = ast\cmd(SI.get, Prexonite::Engine.CompileToCilAlias);
+    c.Arguments.Add(ast\const(false));
+    return c;
 }

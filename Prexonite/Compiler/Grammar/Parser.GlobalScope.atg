@@ -370,6 +370,11 @@ FunctionDefinition<out PFunction func>
                                             Loader.CreateFunctionTarget(derBody, new AstBlock(this));
                                             TargetApplication.Functions.Add(derBody);
                                             derBody.Meta[PFunction.LogicalIdKey] = id ?? funcId;
+                                            if(isCoroutine)
+                                            {
+                                                derBody.Meta[PFunction.VolatileKey] = true;
+                                                derBody.Meta[PFunction.DeficiencyKey] = "Coroutine body can only be executed by VM anyway.";
+                                            }
 
                                             //Swap compiler target references
                                             // -> Compile source code into derived body

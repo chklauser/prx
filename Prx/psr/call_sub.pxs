@@ -1,0 +1,87 @@
+﻿build does require(@"psr\macro.pxs");
+
+macro call\sub\genCompare(retVar, expected)
+{
+	var eq = Prexonite::Compiler::Ast::BinaryOperator.Equality;
+	var cmp = ast("BinaryOperator", retVar, eq, ast\const(expected~Int));
+	return cmp;
+}
+
+macro call\sub\interpret(kvp)
+{
+	var resultV = tempalloc;
+	
+	var block = ast("BlockExpression");
+	
+	//Store result of call
+	var setResult = ast\lvar(SI.set, resultV);
+	setResult.Arguments.Add(kvp);
+	block.Add(setResult);
+	
+	//Extract return variant as int into retVarV
+	var retVarV = tempalloc;
+	var intT = ast("ConstantTypeExpression","Int");	
+	var getRetVar = ast\member(ast\lvar(SI.get, resultV), SI.get, "Key");
+	var asInt = ast("TypeCast", getRetVar, intT);
+	var setRetVar = ast\lvar(SI.set, retVarV);
+	setRetVar.Arguments.Add(asInt);
+	block.Add(setRetVar);
+	
+	function retVar = ast\lvar(SI.get, retVarV);
+	
+	//Extract return value into retValueV (which happens to be the same as resultV)	
+	var retValueV = resultV;
+	var getRetValue = ast\member(ast\lvar(SI.get, resultV), SI.get, "Value");
+	var setRetValue = ast\lvar(SI.set, retValueV);
+	setRetValue.Arguments.Add(getRetValue);
+	block.Add(setRetValue);
+	
+	function retValue = ast\lvar(SI.get, retValueV);
+	
+	//Break and Continue behave differently outside loop blocks
+	var bl = target.CurrentLoopBlock;
+	var contStmt;
+	var breakStmt;
+	if(bl is Null)
+	{
+		contStmt = ast\ret\continue(retValue);
+		breakStmt = ast\ret\break(retValue);
+	}
+	else
+	{
+		contStmt = ast("ExplicitGoto", bl.ContinueLabel);
+		breakStmt = ast("ExplicitGoto", bl.BreakLabel);
+	}
+	
+	//Generate check for continue
+	var contCond = call\macro(call\sub\genCompare(retVar, 
+		Prexonite::Compiler::Ast::ReturnVariant.$Continue));
+	var checkCont = ast("Condition", contCond);
+	checkCont.IfBlock.Add(contStmt);
+	block.Add(checkCont);
+	
+	//Generate check for break
+	var breakCond = call\macro(call\sub\genCompare(retVar,
+		Prexonite::Compiler::Ast::ReturnVariant.$Break));
+	var checkBreak = ast("Condition", breakCond);
+	checkBreak.IfBlock.Add(breakStmt);
+	
+	//Connect break-check to continue-check
+	checkCont.ElseBlock.Add(checkBreak);
+	
+	block.Expression = retValue;
+	
+	tempfree(retVarV);
+	tempfree(retValueV);
+	//resultV is identical to retValueV, can't free that one twice!
+	
+	return block;
+}
+
+macro call\sub()
+{
+	var perform = ast\cmd(SI.Get, Prexonite::Engine.CallSubPerformAlias);
+	perform.Arguments.AddRange(var args);
+	
+	return call\macro(call\sub\interpret(perform));
+}

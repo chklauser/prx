@@ -86,7 +86,10 @@ namespace Prexonite.Compiler.Ast
 
             //Emit finally block
             target.EmitLabel(beginFinallyLabel);
+            var beforeEmit = target.Code.Count;
             FinallyBlock.EmitCode(target);
+            if(FinallyBlock.Count > 0 && target.Code.Count == beforeEmit)
+                target.Emit(OpCode.nop);
             target.EmitLeave(endTry);
 
             //Emit catch block
