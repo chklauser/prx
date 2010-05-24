@@ -11,7 +11,7 @@ namespace Prexonite.Types
     /// <summary>
     /// An enumerator proxyy that returns the values instead of PValue objects of an <see cref="IEnumerable{PValue}"/>
     /// </summary>
-    public class PValueEnumerator : IEnumerator<PValue>,
+    public sealed class PValueEnumerator : IEnumerator<PValue>,
                                     IObject
     {
         #region Class
@@ -65,7 +65,7 @@ namespace Prexonite.Types
         }
 
         // The bulk of the clean-up code is implemented in Dispose(bool)
-        protected virtual void Dispose(bool disposing)
+        private void Dispose(bool disposing)
         {
             if (!disposing)
                 return;

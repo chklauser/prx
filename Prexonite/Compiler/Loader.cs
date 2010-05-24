@@ -1103,14 +1103,16 @@ namespace Prexonite.Compiler
         [DebuggerStepThrough]
         public string CacheString(string toCache)
         {
-            if (_stringCache.ContainsKey(toCache))
+            string cached;
+            if(_stringCache.TryGetValue(toCache, out cached))
             {
-                return _stringCache[toCache];
+                return cached;
             }
             else
             {
-                _stringCache.Add(toCache, toCache);
-                return toCache;
+                cached = toCache;
+                _stringCache.Add(toCache, cached);
+                return cached;
             }
         }
 

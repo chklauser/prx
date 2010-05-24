@@ -2,7 +2,8 @@
 
 build does require(
     @"psr\misc.pxs",
-    "disassembler.pxs"
+    @"disassembler.pxs",
+    @"psr\struct.pxs"
 );
 
 Imports { 
@@ -11,13 +12,6 @@ Imports {
     Prexonite, 
     Prexonite::Types,
     Prexonite::Compiler };
-    
-coroutine bind(f, xs)
-{
-    foreach(var x in xs)
-        foreach(var y in f.(x))
-            yield y;
-}
 
 function as create_debug_command(a_cmd, a_aliases, a_description)
 {
@@ -32,9 +26,24 @@ function as create_debug_command(a_cmd, a_aliases, a_description)
     return struct;
 }
 
-function as debug_prompt(fctx, lastCtx)
+function as debug_prompt(ctx, lastCtx)
 {   
     var HIDERETURN = "__HIDERETURN__";
+    
+    function cannot_call_exc(ctxname) =
+        "Cannot call debug_break from $ctxname context. Use a conventional function.";
+    if(ctx is null)
+        throw "Cannot break because caller is unknown. Possibly due to CIL compilation.";
+    if(ctx is ::IndirectCallContext)
+        throw cannot_call_exc("an indirect call");
+    if(ctx is ::CoroutineContext)
+        throw cannot_call_exc("a coroutine");
+    if(ctx is ::CilFunctionContext)
+        throw ctx.Implementation + " is compiled to CIL and cannot be debugged. Mark it as \"is volatile;\" to enable debugging.";
+    if(ctx is not ::FunctionContext)
+        throw cannot_call_exc(ctx.GetType.Id);    
+    //Ensured that ctx is of type PrexoniteFunctionContext
+    var fctx = ctx;
     
     function toDebugString(v)
     {
@@ -101,7 +110,8 @@ function as debug_prompt(fctx, lastCtx)
     }
     
     //Generate the next unique function id
-    function nextFuncId = "eval\\" + evalStep++;
+    var funcIdPrefix = "eval\\DAD08BFD\\31CE\\4DC4\\A209\\4D57C5128A75";
+    function nextFuncId = funcIdPrefix + evalStep++;
     
     //Function that shortens a string
     var shortenTo = 20;
@@ -134,9 +144,11 @@ function as debug_prompt(fctx, lastCtx)
             \stepover(true); //Step over, suppressing info
         
         println("Switching context");
-        var node = engine.Stack.FindLast(fctx);
+        foreach(var ctx in engine.Stack)
+            println(" .. $ctx");
+        var node = engine.Stack.FindLast(fctx); 
         engine.Stack.Remove(node);
-        var newCtx = node.Previous;
+        var newCtx = engine.Stack.Last;
         if(newCtx is not null)
         {
             println("New context: $newCtx.Value");
@@ -369,13 +381,12 @@ function as debug_prompt(fctx, lastCtx)
     }
     var debuggerSharedNames = createDebuggerSharedNames;
     
-    //Create redefine symbols as reference variables
+    //Redefine symbols as reference variables
     function guessByRefLocals()
     {
         foreach(var name in ignoredNames)
             ldr.Symbols[name] = new ::SymbolEntry(::SymbolInterpretations.LocalReferenceVariable, name);
-    }
-    
+    }    
     guessByRefLocals();
     var byRefLocals = "";
     
@@ -524,7 +535,7 @@ executeStatement:
             function removeEvalFunctions()
             {
                 var toRemove = app.Functions
-                                >>  where(f => f.Id.StartsWith("eval\\"))
+                                >>  where(f => f.Id.StartsWith(funcIdPrefix))
                                 >> all;
                 
                 foreach(var f in toRemove)
@@ -538,26 +549,10 @@ executeStatement:
 
 
 function as debug_break()
+[is dynamic;] //prevents caller from being compiled to cil
 {
-    var ctx = caller;
-    function cannot_call_exc(ctxname) =
-        "Cannot call debug_break from $ctxname context. Use a conventional function.";
-    if(ctx is null)
-        throw "Cannot break because caller is unknown. Possibly due to CIL compilation.";
-    if(ctx is ::IndirectCallContext)
-        throw cannot_call_exc("an indirect call");
-    if(ctx is ::CoroutineContext)
-        throw cannot_call_exc("a coroutine");
-    if(ctx is ::CilFunctionContext)
-        throw ctx.Implementation + " is compiled to CIL and cannot be debugged. Mark it as \"is volatile;\" to enable debugging.";
-    else if(ctx is not ::FunctionContext)
-        throw cannot_call_exc(ctx.GetType.Id);
-    
-    //Ensured that ctx is of type PrexoniteFunctionContext
-    
-    var fctx = ctx;
-    
-    debug_prompt(fctx);
+    var ctx = caller;    
+    debug_prompt(ctx);
 }
 
 function as debug_this(func,argv,shared)

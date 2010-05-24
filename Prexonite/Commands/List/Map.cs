@@ -96,8 +96,17 @@ namespace Prexonite.Commands.List
         {
             var pvEnumerator = psource.DynamicCall(sctx, Runtime.EmptyPValueArray, PCall.Get, "GetEnumerator").ConvertTo(sctx, typeof(IEnumerator));
             var enumerator = (IEnumerator) pvEnumerator.Value;
-            while (enumerator.MoveNext())
-                yield return sctx.CreateNativePValue(enumerator.Current);
+            PValueEnumerator pvEnum;
+            if((pvEnum = enumerator as PValueEnumerator) != null)
+            {
+                while (pvEnum.MoveNext())
+                    yield return pvEnum.Current;
+            }
+            else
+            {
+                while (enumerator.MoveNext())
+                    yield return sctx.CreateNativePValue(enumerator.Current);                
+            }
         }
 
         protected static IEnumerable<PValue> CoroutineRun(ContextCarrier sctxCarrier, IIndirectCall f, IEnumerable<PValue> source)

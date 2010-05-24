@@ -59,6 +59,7 @@ function localMeta(key, context)[is compiler;] =
 var SI [is compiler;];
 function create_SI [is compiler;]
 {
+    //Note: don't use struct here, because struct.pxs depends on ast.pxs!
     SI = new Structure;
     SI.\("lvar") = ::SymbolInterpretations.LocalObjectVariable;
     SI.\("lref") = ::SymbolInterpretations.LocalReferenceVariable;
@@ -137,18 +138,33 @@ function unload_compiler()
     //Functions
     var ordinalIc = System::StringComparison.OrdinalIgnoreCase;
     var comp_funcs = [];
+    
+    //Build graph
+    var graph = {};
+    foreach(var func in app.Functions)
+        graph[func.Id.ToUpperInvariant] = [];
+    
+    var parentFunctionKey = Prexonite::PFunction.ParentFunctionKey;
+    foreach(var func in app.Functions)
+        if(func.Meta.ContainsKey(parentFunctionKey))
+            graph[func.Meta[parentFunctionKey].Text.ToUpperInvariant][] = func;
+        
     //Recursively mark all compiler functions and their inner functions
     function mark_comp_func(func)
     {
-        var fid = func.Id;
-        foreach(var inner in app.Functions)
-            if(inner.Meta["ParentFunction"].Text.Equals(fid,ordinalIc) and 
-              not inner.Meta["compiler"].Switch)
-            {
-                inner.Meta["compiler"] = true;
-                comp_funcs[] = inner;
-                mark_comp_func(inner);
-            }        
+        var fid = func.Id.ToUpperInvariant;
+        // foreach(var inner in app.Functions)
+            // if(inner.Meta["ParentFunction"].Text.Equals(fid,ordinalIc) and 
+              // not inner.Meta["compiler"].Switch)
+            // {
+                // inner.Meta["compiler"] = true;
+                // comp_funcs[] = inner;
+                // mark_comp_func(inner);
+            // }       
+        comp_funcs[] = func;
+                
+        foreach(var inner in graph[fid] ?? [])
+            mark_comp_func(inner);
     }
     
     //Mark and collect    

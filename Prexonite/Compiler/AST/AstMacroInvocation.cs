@@ -38,6 +38,55 @@ namespace Prexonite.Compiler.Ast
             throw new NotImplementedException("Macro invocation requires a different mechanic. Use AstGetSet.EmitCode instead.");
         }
 
+        public AstNode InvokeImmediate(CompilerTarget target)
+        {
+            const bool justEffect = false;
+
+            //instantiate macro for the current target
+            PFunction macroFunc;
+            if (!target.Loader.Options.TargetApplication.Functions.TryGetValue(_macroId, out macroFunc))
+                throw new PrexoniteException(
+                    string.Format(
+                        "The macro function {0} was called from function {1} but is not available at compile time.", _macroId,
+                        target.Function.Id));
+
+            if (_releaseAfterEmit != null)
+                throw new PrexoniteException(
+                    "AstMacroInvocation.InvokeImmediate is not reentrant. Use GetCopy() to operate on a copy of this macro invocation.");
+
+            try
+            {
+                _releaseAfterEmit = new SymbolCollection(5);
+
+                var astRaw = _invokeMacro(target, justEffect, macroFunc);
+
+                //Optimize and then emit returned code.
+                AstNode ast;
+                if (astRaw == null || (ast = astRaw.Value as AstNode) == null)
+                {
+                    //If a value was expected, we need to at least make up null, otherwise
+                    //  we risk stack corruption.
+                    return new AstNull(File, Line, Column);
+                }
+
+                AstMacroInvocation anotherMacro;
+                while((anotherMacro = ast as AstMacroInvocation) != null)
+                {
+                    ast = anotherMacro.InvokeImmediate(target);
+                }
+
+                //In well-structured code (block based branching) it is now safe to release temporary variables.
+                foreach (var temp in _releaseAfterEmit)
+                    target.ReleaseTemporaryVariable(temp);
+
+                return ast;
+            }
+            finally
+            {
+                _releaseAfterEmit = null;
+            }
+        }
+
         protected override void EmitCode(CompilerTarget target, bool justEffect)
         {
             //instantiate macro for the current target
@@ -56,14 +105,7 @@ namespace Prexonite.Compiler.Ast
             {
                 _releaseAfterEmit = new SymbolCollection(5);
 
-                var env = CompilerTarget.CreateEnvironment(target, this, justEffect);
-
-                var sharedVariables = macroFunc.Meta[PFunction.SharedNamesKey].List.Select(entry => env[entry.Text]).ToArray();
-                var macro = new Closure(macroFunc, sharedVariables);
-
-                //Execute macro (argument nodes of the invocation node are passed as arguments to the macro)
-                var arguments = Arguments.Select(target.Loader.CreateNativePValue).ToArray();
-                var astRaw = macro.IndirectCall(target.Loader, arguments);
+                var astRaw = _invokeMacro(target, justEffect, macroFunc);
 
                 //Optimize and then emit returned code.
                 AstNode ast;
@@ -97,6 +139,18 @@ namespace Prexonite.Compiler.Ast
             {
                 _releaseAfterEmit = null;
             }
+        }
+
+        private PValue _invokeMacro(CompilerTarget target, bool justEffect, PFunction macroFunc)
+        {
+            var env = CompilerTarget.CreateEnvironment(target, this, justEffect);
+
+            var sharedVariables = macroFunc.Meta[PFunction.SharedNamesKey].List.Select(entry => env[entry.Text]).ToArray();
+            var macro = new Closure(macroFunc, sharedVariables);
+
+            //Execute macro (argument nodes of the invocation node are passed as arguments to the macro)
+            var arguments = Arguments.Select(target.Loader.CreateNativePValue).ToArray();
+            return macro.IndirectCall(target.Loader, arguments);
         }
 
         public void ReleaseAfterEmit(string temporaryVariable)

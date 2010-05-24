@@ -29,6 +29,7 @@ using System.Linq;
 using Prexonite.Compiler.Ast;
 using Prexonite.Types;
 
+// ReSharper disable InconsistentNaming
 namespace Prexonite.Compiler
 {
     internal partial class Parser
@@ -118,7 +119,9 @@ namespace Prexonite.Compiler
         #region String cache
 
         [DebuggerStepThrough]
+
         internal string cache(string toCache)
+
         {
             return _loader.CacheString(toCache);
         }
@@ -250,7 +253,7 @@ namespace Prexonite.Compiler
 
         private void _inject(int kind)
         {
-            _inject(kind, "");
+            _inject(kind, System.String.Empty);
         }
 
         #endregion //General
@@ -409,10 +412,9 @@ namespace Prexonite.Compiler
         {
             if (staticPrefix) //already marked as CLR call
                 return ObjectPType.Literal + "(\"" + StringPType.Escape(typeId) + "\")";
-            else
-                foreach (var importedNamespace in target.Function.ImportedNamespaces)
-                    if (typeId.StartsWith(importedNamespace, StringComparison.OrdinalIgnoreCase))
-                        return ObjectPType.Literal + "(\"" + StringPType.Escape(typeId) + "\")";
+            else if (target.Function.ImportedNamespaces.Any(
+                importedNamespace => typeId.StartsWith(importedNamespace, StringComparison.OrdinalIgnoreCase)))
+                return ObjectPType.Literal + "(\"" + StringPType.Escape(typeId) + "\")";
             return typeId;
         }
 
@@ -895,3 +897,4 @@ namespace Prexonite.Compiler
         #endregion
     }
 }
+// ReSharper restore InconsistentNaming

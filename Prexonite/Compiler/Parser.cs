@@ -623,7 +623,7 @@ internal partial class Parser {
 				break;
 			}
 			}
-			/*Parser.Assembler.atg:241*/id = cache(t.val); 
+			/*Parser.Assembler.atg:240*/id = cache(t.val); 
 		} else SynErr(102);
 	}
 
@@ -677,9 +677,9 @@ internal partial class Parser {
 		/*Parser.Helper.atg:57*/value = modifier * value; 
 	}
 
-	void AsmQualid(/*Parser.Assembler.atg:245*/out string qualid) {
+	void AsmQualid(/*Parser.Assembler.atg:244*/out string qualid) {
 		
-		AsmId(/*Parser.Assembler.atg:247*/out qualid);
+		AsmId(/*Parser.Assembler.atg:246*/out qualid);
 	}
 
 	void String(/*Parser.Helper.atg:87*/out string value) {

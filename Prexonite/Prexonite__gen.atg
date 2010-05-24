@@ -419,7 +419,6 @@ AsmId<out string id>        (.  id = "\\NoId\\"; .)
     |   while
     |   until
     |   for
-    //   in
     |   foreach
     |   command
     |   as

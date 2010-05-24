@@ -555,6 +555,96 @@ macro ast\eval(loaderRef, expr)
     return c;
 }
 
+//Abbreviation for ast nodes with arguments
+macro ast\with_arguments as ast\args (astN)
+{
+    var block = ast("BlockExpression");
+    var astV = tempalloc;
+    
+    var assignAst = ast\lvar(SI.set, astV);
+    assignAst.Arguments.Add(astN);
+    block.Add(assignAst);
+    
+    var args;
+    if(args.Count > 1)
+    {
+        
+        if(args.Count > 2)
+        {      
+            var getArguments = ast\member(ast\lvar(SI.get, astV), SI.get, "Arguments");
+            var argumentsV = tempalloc;
+            var assignAst = ast\lvar(SI.set, argumentsV);
+            assignAst.Arguments.Add(getArguments);
+            block.Add(assignAst);
+            
+            function getArguments = ast\lvar(argumentsV);
+        }
+        else
+        {
+            function getArguments = ast\member(ast\lvar(SI.get, astV), SI.get, "Arguments");
+        }
+        
+        foreach(var argN in var args >> skip(1))
+        {
+            var assignAst = ast\member(getArguments, SI.get, "Add");
+            assignAst.Arguments.Add(argN);
+            block.Add(assignAst);
+        }
+        
+        if(argumentsV is not null)
+            tempfree(argumentsV);
+    }
+    
+    block.Expression = ast\lvar(SI.get, astV);
+    tempfree(astV);
+    return block;
+}
+
+//Object creation (simple, constant type expressions)
+macro ast\new\const as ast\new(typename)
+{       
+    var block = ast("BlockExpression");
+    var constructV = tempalloc;
+    
+    //Create object creation node { $constructV = new ObjectCreation(new ConstantTypeExpression($typename)) }   
+    block.Add(ast\args(ast\lvar(SI.set, constructV),
+        ast\args(ast\invoke_macro(->ast.Id),
+            ast\const("ObjectCreation"),
+            ast\args(ast\invoke_macro(->ast.Id),
+                ast\const("ConstantTypeExpression"),
+                typename
+            )
+        )
+    ));
+    
+    //Add constructor arguments to constructor nodes
+    var args;
+    if(args.Count > 1)
+    {
+        var argsV = tempalloc;
+        var getConstruct = ast\lvar(SI.get, constructV);
+        var getArguments = ast\member(getConstruct, SI.get, "Arguments");
+        var assignArgs = ast\lvar(SI.set, argsV);
+        assignArgs.Arguments.Add(getArguments);
+        block.add(assignArgs);
+        function getArguments = ast\lvar(SI.get, argsV); 
+        
+        foreach(var argN in var args >> skip(1))
+        {
+            var addArgument = ast\member(getArguments, SI.get, "Add");
+            addArgument.Arguments.Add(argN);
+            block.Add(addArgument);
+        }
+        
+        tempfree(argsV);
+    }
+    
+    //return object creation node
+    block.Expression = ast\lvar(SI.get, constructV);
+    tempfree(constructV);
+    return block;
+}
+
 //Position report (so that position information is used at least once (!)
 macro CURRENT_FILE
 {

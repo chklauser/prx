@@ -1,52 +1,113 @@
-﻿var struct\ordinalIc = System::StringComparison.OrdinalIgnoreCase;
+﻿var struct\ordinalIc [is compiler;] = System::StringComparison.OrdinalIgnoreCase;
 
-function struct(suppressWarning)
-{
-    unless(suppressWarning)
-        println("Latebound struct. Use struct as {return struct();} for improved performance. Pass true in order to suppress this warning");
+// function struct(suppressWarning)
+// {
+    // unless(suppressWarning)
+        // println("Latebound struct. Use struct as {return struct();} for improved performance. Pass true in order to suppress this warning");
     
+    // function getId(g) =
+        // if(g.Meta.ContainsKey("SId"))
+            // g.Meta["SId"].Text
+        // else if(g.Meta.ContainsKey("LogicalId"))
+            // g.Meta["LogicalId"].Text
+        // else
+            // null;
+        // ;
+    
+    // var callingCtx = caller;
+        
+    // var parentId = callingCtx.Implementation.Id;
+    // var methods = (asm(ldr.app).Functions) 
+        // >> where(f => 
+            // f
+                // .Meta["ParentFunction"]
+                // .Text
+                // .Equals(parentId, struct\ordinalIc)            
+            // And Not f.Meta["Private"].Switch)
+        // >> map(f => 
+        // {
+			// if(Not f.Meta.ContainsKey("LogicalId"))
+				// return (null: null);
+			// var logicalId = f.Meta["LogicalId"].Text;
+			// if(Not callingCtx.LocalVariables.ContainsKey(logicalId))
+				// return (null: null);
+			// else
+				// return (getId(f): callingCtx.LocalVariables[logicalId].Value);            
+        // })
+        // >> where(fcf => (Not fcf.Value is Null) && (Not fcf.Key is Null));
+    
+    // var s = new Structure;
+
+    // s.\\(@"\ctorId") = () => parentId;
+    
+    // foreach(var fcf in methods)
+        // s.\\(fcf.Key) = fcf.Value;
+        
+    // return s;
+// }
+
+build does require(@"psr\macro.pxs");
+
+macro struct\as_macro as struct()
+{
+    var CTORID = Prexonite::Compiler::StructHook.CtorId;
+    var PRIVATEKEY = Prexonite::Compiler::StructHook.PrivateKey;
+    var STRUCTID = Prexonite::Compiler::StructHook.StructId;
+    var LOGICALIDKEY = Prexonite::PFunction.LogicalIdKey;
+    var PARENTFUNCTIONKEY = Prexonite::PFunction.ParentFunctionKey;
+
     function getId(g) =
-        if(g.Meta.ContainsKey("SId"))
-            g.Meta["SId"].Text
-        else if(g.Meta.ContainsKey("LogicalId"))
-            g.Meta["LogicalId"].Text
+        if(g.Meta.ContainsKey(STRUCTID))
+            g.Meta[STRUCTID].Text
+        else if(g.Meta.ContainsKey(LOGICALIDKEY))
+            g.Meta[LOGICALIDKEY].Text
         else
             null;
         ;
-    
-    var callingCtx = caller;
         
-    var parentId = callingCtx.Implementation.Id;
-    var methods = (asm(ldr.app).Functions) 
+    var parentId = target.$Function.Id;
+    var methods = target.Loader.Options.TargetApplication.Functions
         >> where(f => 
             f
-                .Meta["ParentFunction"]
+                .Meta[PARENTFUNCTIONKEY]
                 .Text
                 .Equals(parentId, struct\ordinalIc)            
-            And Not f.Meta["Private"].Switch)
+            And Not f.Meta[PRIVATEKEY].Switch)
         >> map(f => 
         {
-			if(Not f.Meta.ContainsKey("LogicalId"))
+			if(Not f.Meta.ContainsKey(LOGICALIDKEY))
 				return (null: null);
-			var logicalId = f.Meta["LogicalId"].Text;
-			if(Not callingCtx.LocalVariables.ContainsKey(logicalId))
-				return (null: null);
-			else
-				return (getId(f): callingCtx.LocalVariables[logicalId].Value);            
+			return (getId(f): f.Meta[LOGICALIDKEY].Text);            
         })
-        >> where(fcf => (Not fcf.Value is Null) && (Not fcf.Key is Null));
-    
-    var s = new Structure;
-
-    s.\\(@"\ctorId") = () => parentId;
-    
-    foreach(var fcf in methods)
-        s.\\(fcf.Key) = fcf.Value;
+        >> where(fcf => fcf.Value is not Null and fcf.Key is not Null);
         
-    return s;
+    var block = ast("BlockExpression");
+    var structV = tempalloc;
+    
+    //assign new structure
+    var assignStructure = ast\lvar(SI.set, structV);
+    assignStructure.Arguments.Add(ast\new("Structure"));
+    block.Add(assignStructure);
+    
+    //assign ctorId
+    var assignCtorId = ast\member(ast\lvar(SI.get, structV), SI.get,"\\");
+    assignCtorId.Arguments.Add(ast\const(CTORID));
+    assignCtorId.Arguments.Add(ast\const(parentId));
+    block.Add(assignCtorId);
+    
+    //assign methods
+    foreach(var method in methods)
+    {
+        var addMethod = ast\member(ast\lvar(SI.get, structV), SI.get, @"\\");
+        addMethod.Arguments.Add(ast\const(method.Key));
+        addMethod.Arguments.Add(ast\lvar(SI.get, method.Value));
+        block.Add(addMethod);
+    }
+    
+    //return struct
+    block.Expression = ast\lvar(SI.get, structV);
+    tempfree(structV);
+    return block;
 }
 
-function struct_options does
-    throw "Struct options only supported by compile-time structures.";
-
-build does Prexonite::Compiler::StructHook.InstallHook(getloader);  
+//build does Prexonite::Compiler::StructHook.InstallHook(getloader);  

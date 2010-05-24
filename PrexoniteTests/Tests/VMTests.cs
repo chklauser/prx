@@ -8,6 +8,7 @@ using System;
 using System.Collections;
 using System.Collections.Generic;
 using System.Diagnostics;
+using System.Linq;
 using System.Text;
 
 using NUnit.Framework;
@@ -985,9 +986,7 @@ function main(arg)
                         GenerateRandomString(2), GenerateRandomString(3),
                         GenerateRandomString(4)
                     });
-            string ls = "";
-            foreach (PValue e in lst)
-                ls += e.Value as string;
+            string ls = lst.Aggregate("", (current, e) => current + (e.Value as string));
             Expect(ls, (PValue) lst);
 
             StringBuilder sb = new StringBuilder(GenerateRandomString(5));
@@ -3232,6 +3231,18 @@ after:
             }
 
             ExpectNull(new PValue[0]);
+        }
+
+        [Test]
+        public void ConstantFoldingReferenceEquality()
+        {
+            Compile(@"
+function interpreted [is volatile;] = System::Object.ReferenceEquals(""ab"", ""a"" + ""b"");
+function compiled [is volatile;] = System::Object.ReferenceEquals(""ab"", ""a"" + ""b"");
+");
+
+            ExpectNamed("interpreted", true, new PValue[0]);
+            ExpectNamed("compiled", true, new PValue[0]);
         }
 
         #region Helper

@@ -200,7 +200,7 @@ namespace Prexonite.Compiler
             #endregion
         }
 
-        private static PVariable _value(CompilerTarget target, Object value)
+        private static PVariable _createValue(CompilerTarget target, Object value)
         {
             return new PVariable {Value = PType.Object.CreatePValue(new ProvidedValue(target.Loader.CreateNativePValue(value)))};
         }
@@ -220,7 +220,7 @@ namespace Prexonite.Compiler
             }
         }
 
-        private static PVariable _func(Func<StackContext, PValue[], PValue> func)
+        private static PVariable _createFunc(Func<StackContext, PValue[], PValue> func)
         {
             return new PVariable {Value = PType.Object.CreatePValue(new ProvidedFunction(func))};
         }
@@ -229,13 +229,13 @@ namespace Prexonite.Compiler
         {
             return new SymbolTable<PVariable>
             {
-                {MacroAliases.LoaderAlias, _value(target, target.Loader)},
-                {MacroAliases.TargetAlias, _value(target, target)},
-                {MacroAliases.LocalsAlias, _value(target, target.Function.Variables)},
-                {MacroAliases.NewLocalVariableAlias, _func(_makeNewLocalVariableFunction(target))},
-                {MacroAliases.CallTypeAlias, _value(target, invocation.Call)},
-                {MacroAliases.JustEffectAlias, _value(target, justEffect)},
-                {MacroAliases.MacroInvocationAlias, _value(target, invocation)}
+                {MacroAliases.LoaderAlias, _createValue(target, target.Loader)},
+                {MacroAliases.TargetAlias, _createValue(target, target)},
+                {MacroAliases.LocalsAlias, _createValue(target, target.Function.Variables)},
+                {MacroAliases.NewLocalVariableAlias, _createFunc(_makeNewLocalVariableFunction(target))},
+                {MacroAliases.CallTypeAlias, _createValue(target, invocation.Call)},
+                {MacroAliases.JustEffectAlias, _createValue(target, justEffect)},
+                {MacroAliases.MacroInvocationAlias, _createValue(target, invocation)}
             };
         }
 
@@ -277,7 +277,7 @@ namespace Prexonite.Compiler
                     var varAssign = new AstGetSetSymbol(
                         "MacroInvocation", -1, -1, PCall.Set, varId, SymbolInterpretations.LocalObjectVariable);
                     varAssign.Arguments.Add(init);
-                    return target.Loader.CreateNativePValue(init);
+                    return target.Loader.CreateNativePValue(varAssign);
                 }
             };
         }
@@ -420,18 +420,10 @@ namespace Prexonite.Compiler
                 {
                     var localValues = _symbols.Values;
                     var values = new List<SymbolEntry>(localValues);
-                    if (_parent != null)
-                    {
-                        foreach (var kvp in _parent)
-                            if (!localValues.Contains(kvp.Value))
-                                values.Add(kvp.Value);
-                    }
-                    else
-                    {
-                        foreach (var kvp in _loaderSymbols)
-                            if (!localValues.Contains(kvp.Value))
-                                values.Add(kvp.Value);
-                    }
+                    values.AddRange(
+                        from kvp in ((IEnumerable<KeyValuePair<string, SymbolEntry>>) _parent ?? _loaderSymbols)
+                        where !localValues.Contains(kvp.Value)
+                        select kvp.Value);
                     return values;
                 }
             }
@@ -460,18 +452,9 @@ namespace Prexonite.Compiler
             {
                 var lst =
                     new List<KeyValuePair<string, SymbolEntry>>(_symbols);
-                if (_parent != null)
-                {
-                    foreach (var kvp in _parent)
-                        if (!_symbols.ContainsKey(kvp.Key))
-                            lst.Add(kvp);
-                }
-                else
-                {
-                    foreach (var kvp in _loaderSymbols)
-                        if (!_symbols.ContainsKey(kvp.Key))
-                            lst.Add(kvp);
-                }
+                lst.AddRange(
+                    ((IEnumerable<KeyValuePair<string, SymbolEntry>>) _parent ?? _loaderSymbols).Where(
+                        kvp => !_symbols.ContainsKey(kvp.Key)));
                 lst.CopyTo(array, arrayIndex);
             }
 
@@ -893,9 +876,10 @@ namespace Prexonite.Compiler
 
         #region Low Level
 
-        [DebuggerStepThrough]
         public void Emit(Instruction ins)
         {
+            if (ins.Id != null)
+                ins.Id = Loader.CacheString(ins.Id);
             _function.Code.Add(ins);
         }
 
@@ -929,7 +913,6 @@ namespace Prexonite.Compiler
 
         #region Constants
 
-        [DebuggerStepThrough]
         public void EmitConstant(string value)
         {
             Emit(Instruction.CreateConstant(value));
@@ -1245,10 +1228,14 @@ namespace Prexonite.Compiler
         {
             address = -1;
             var labelNs = label + LabelSymbolPostfix;
-            if (!LocalSymbols.ContainsKey(labelNs))
+            SymbolEntry sym;
+            if(!LocalSymbols.TryGetValue(labelNs, out sym))
                 return false;
 
-            address = LocalSymbols[labelNs].Argument.Value;
+            if (sym.Argument == null)
+                throw new PrexoniteException("The label symbol " + labelNs + " does not provide an adress.");
+
+            address = sym.Argument.Value;
             return true;
         }
 
@@ -1272,7 +1259,7 @@ namespace Prexonite.Compiler
         //[DebuggerStepThrough]
         public void EmitLabel(string label, int address)
         {
-            string partialResolve = null;
+            //string partialResolve = null;
 
             ////Check if the label points to an unconditional jump instruction
             //Instruction jump = null;
@@ -1388,7 +1375,7 @@ namespace Prexonite.Compiler
 
             _removeJumpsToNextInstruction();
 
-            _JumpReInversion();
+            _jumpReInversion();
 
             _removeUnconditionalJumpSequences();
 
@@ -1399,7 +1386,7 @@ namespace Prexonite.Compiler
 
 #if UseIndex
             if (Loader.Options.UseIndicesLocally)
-                _by_index();
+                _byIndex();
 #endif
         }
 
@@ -1609,7 +1596,7 @@ namespace Prexonite.Compiler
         /// <code>
         /// jump.t  somewhere
         /// </code></remarks>
-        private void _JumpReInversion()
+        private void _jumpReInversion()
         {
             var code = Code;
             for (var i = 0; i < code.Count - 1; i++)
@@ -1672,7 +1659,7 @@ namespace Prexonite.Compiler
         /// <summary>
         /// Replaces by-name opcodes with by-index ones. Ignores variables with no mapping.
         /// </summary>
-        private void _by_index()
+        private void _byIndex()
         {
             //Exclude the initialization function from this optimization
             // as its symbol table keeps changing as more code files
