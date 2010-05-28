@@ -246,6 +246,11 @@
     <Compile Include="Compiler\MacroAliases.cs" />
     <Compile Include="Concurrency\Channel.cs" />
     <Compile Include="CooperativeContext.cs" />
+    <Compile Include="Helper\DependencyAnalysis.cs" />
+    <Compile Include="Helper\DependencyEntity.cs" />
+    <Compile Include="Helper\Extensions.cs" />
+    <Compile Include="Helper\IDependent.cs" />
+    <Compile Include="Helper\INamed.cs" />
     <Compile Include="OperatorNames.cs" />
     <Compile Include="Compiler\Parser.cs" />
     <Compile Include="Application.cs" />

@@ -5,11 +5,6 @@ build does require
     "struct.pxs"
 );
 
-function roundTo(x,r) does
-    r~= Real; and
-    x~= Real; and return
-    round( x/r ) * r;
-
 function cmp(a,b) =
     if(a > b)
         -1
