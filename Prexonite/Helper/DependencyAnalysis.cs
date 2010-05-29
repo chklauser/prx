@@ -35,7 +35,7 @@ namespace Prexonite
         /// <param name="query">The set of (possibly) interdependent items.</param>
         /// <param name="ignoreUnknownDependencies">Indicates whether to ignore dependencies to items not included in the set. Enabled by default.</param>
         /// <exception cref="ArgumentNullException">query is null</exception>
-        /// <exception cref="ArgumentException">Set contains dependency on element not in the set AND <paramref name="ignoreUnknownDependencies"/> is false.</exception>
+        /// <exception cref="ArgumentException">Set contains dependency one element not in the set AND <paramref name="ignoreUnknownDependencies"/> is false.</exception>
         public DependencyAnalysis( IEnumerable<TValue> query, bool ignoreUnknownDependencies)
         {
             if (query == null) throw new ArgumentNullException("query");
@@ -61,6 +61,22 @@ namespace Prexonite
                     //else ignore
                 }
             }
+        }
+
+        public DependencyAnalysis(IEnumerable<PValue> query)
+            : this(_acceptPValueSequence(query))
+        {
+        }
+
+        private static IEnumerable<TValue> _acceptPValueSequence(IEnumerable<PValue> query)
+        {
+            return from pv in query
+                   select (TValue)pv.Value;
+        }
+
+        public DependencyAnalysis(IEnumerable<PValue> query, bool ignoreUnknownDependencies)
+            : this(_acceptPValueSequence(query), ignoreUnknownDependencies)
+        {
         }
 
         [DebuggerStepThrough]

@@ -3,6 +3,7 @@
 using System;
 using System.Collections.Generic;
 using System.Diagnostics;
+using System.Linq;
 using System.Reflection;
 using System.Text;
 using Prexonite.Compiler.Cil;
@@ -15,7 +16,7 @@ namespace Prexonite.Types
     /// <summary>
     /// Representation of a Type in the Prexonite virtual machine.
     /// </summary>
-    public abstract class PType
+    public abstract class PType : IObject
     {
         #region Built-In Types
 
@@ -208,12 +209,14 @@ namespace Prexonite.Types
             get { return StructurePType.Instance; }
         }
 
-        private static readonly PrexoniteObjectTypeProxy pobjfacade = new PrexoniteObjectTypeProxy();
+        private static readonly PrexoniteObjectTypeProxy _pobjfacade = new PrexoniteObjectTypeProxy();
+        public const string StaticCallFromStackId = "StaticCall\\FromStack";
+        public const string ConstructFromStackId = "Construct\\FromStack";
 
         public static PrexoniteObjectTypeProxy Object
         {
             [DebuggerStepThrough]
-            get { return pobjfacade; }
+            get { return _pobjfacade; }
         }
 
         /// <summary>
@@ -221,23 +224,23 @@ namespace Prexonite.Types
         /// </summary>
         public class PrexoniteObjectTypeProxy
         {
-            private readonly ObjectPType CharObj = new ObjectPType(typeof (Char));
-            private readonly ObjectPType ByteObj = new ObjectPType(typeof (Byte));
-            private readonly ObjectPType SByteObj = new ObjectPType(typeof (SByte));
-            private readonly ObjectPType Int16Obj = new ObjectPType(typeof (Int16));
-            private readonly ObjectPType UInt16Obj = new ObjectPType(typeof (UInt16));
-            private readonly ObjectPType Int32Obj = new ObjectPType(typeof (Int32));
-            private readonly ObjectPType UInt32Obj = new ObjectPType(typeof (UInt32));
-            private readonly ObjectPType Int64Obj = new ObjectPType(typeof (Int64));
-            private readonly ObjectPType UInt64Obj = new ObjectPType(typeof (UInt64));
-            private readonly ObjectPType BooleanObj = new ObjectPType(typeof (Boolean));
-            private readonly ObjectPType SingleObj = new ObjectPType(typeof (Single));
-            private readonly ObjectPType DoubleObj = new ObjectPType(typeof (Double));
-            private readonly ObjectPType StringObj = new ObjectPType(typeof (String));
-            private readonly ObjectPType DecimalObj = new ObjectPType(typeof (Decimal));
-            private readonly ObjectPType DateTimeObj = new ObjectPType(typeof (DateTime));
-            private readonly ObjectPType TimeSpanObj = new ObjectPType(typeof (TimeSpan));
-            private readonly ObjectPType ListOfPTypeObj = new ObjectPType(typeof (List<PValue>));
+            private readonly ObjectPType _charObj = new ObjectPType(typeof (Char));
+            private readonly ObjectPType _byteObj = new ObjectPType(typeof (Byte));
+            private readonly ObjectPType _sByteObj = new ObjectPType(typeof (SByte));
+            private readonly ObjectPType _int16Obj = new ObjectPType(typeof (Int16));
+            private readonly ObjectPType _uInt16Obj = new ObjectPType(typeof (UInt16));
+            private readonly ObjectPType _int32Obj = new ObjectPType(typeof (Int32));
+            private readonly ObjectPType _uInt32Obj = new ObjectPType(typeof (UInt32));
+            private readonly ObjectPType _int64Obj = new ObjectPType(typeof (Int64));
+            private readonly ObjectPType _uInt64Obj = new ObjectPType(typeof (UInt64));
+            private readonly ObjectPType _booleanObj = new ObjectPType(typeof (Boolean));
+            private readonly ObjectPType _singleObj = new ObjectPType(typeof (Single));
+            private readonly ObjectPType _doubleObj = new ObjectPType(typeof (Double));
+            private readonly ObjectPType _stringObj = new ObjectPType(typeof (String));
+            private readonly ObjectPType _decimalObj = new ObjectPType(typeof (Decimal));
+            private readonly ObjectPType _dateTimeObj = new ObjectPType(typeof (DateTime));
+            private readonly ObjectPType _timeSpanObj = new ObjectPType(typeof (TimeSpan));
+            private readonly ObjectPType _listOfPTypeObj = new ObjectPType(typeof (List<PValue>));
 
             internal PrexoniteObjectTypeProxy()
             {
@@ -254,27 +257,27 @@ namespace Prexonite.Types
             {
                 if (clrType == typeof (PValueHashtable))
                 {
-                    state.EmitCall(GetPValueHashTableObjectType);
+                    state.EmitCall(_getPValueHashTableObjectType);
                 }
                 else if (clrType == typeof (PValueKeyValuePair))
                 {
-                    state.EmitCall(GetPValueKeyValuePairObjectType);
+                    state.EmitCall(_getPValueKeyValuePairObjectType);
                 }
                 else
                 {
                     state.EmitCall(Compiler.Cil.Compiler.GetObjectProxy);
                     state.EmitLoadClrType(clrType);
-                    state.EmitCall(GetAnyObjectType);
+                    state.EmitCall(_getAnyObjectType);
                 }
             }
 
-            private static readonly MethodInfo GetPValueHashTableObjectType =
+            private static readonly MethodInfo _getPValueHashTableObjectType =
                 typeof (PValueHashtable).GetProperty("ObjectType").GetGetMethod();
 
-            private static readonly MethodInfo GetPValueKeyValuePairObjectType =
+            private static readonly MethodInfo _getPValueKeyValuePairObjectType =
                 typeof (PValueKeyValuePair).GetProperty("ObjectType").GetGetMethod();
 
-            private static readonly MethodInfo GetAnyObjectType =
+            private static readonly MethodInfo _getAnyObjectType =
                 typeof (PrexoniteObjectTypeProxy).GetProperty("Item", new[] {typeof (Type)}).GetGetMethod();
 
             public ObjectPType this[Type clrType]
@@ -282,39 +285,39 @@ namespace Prexonite.Types
                 get
                 {
                     if (clrType == typeof (Char))
-                        return CharObj;
+                        return _charObj;
                     if (clrType == typeof (Byte))
-                        return ByteObj;
+                        return _byteObj;
                     if (clrType == typeof (SByte))
-                        return SByteObj;
+                        return _sByteObj;
                     if (clrType == typeof (Int16))
-                        return Int16Obj;
+                        return _int16Obj;
                     if (clrType == typeof (UInt16))
-                        return UInt16Obj;
+                        return _uInt16Obj;
                     if (clrType == typeof (Int32))
-                        return Int32Obj;
+                        return _int32Obj;
                     if (clrType == typeof (UInt32))
-                        return UInt32Obj;
+                        return _uInt32Obj;
                     if (clrType == typeof (Int64))
-                        return Int64Obj;
+                        return _int64Obj;
                     if (clrType == typeof (UInt64))
-                        return UInt64Obj;
+                        return _uInt64Obj;
                     if (clrType == typeof (Single))
-                        return SingleObj;
+                        return _singleObj;
                     else if (clrType == typeof (Double))
-                        return DoubleObj;
+                        return _doubleObj;
                     else if (clrType == typeof (Boolean))
-                        return BooleanObj;
+                        return _booleanObj;
                     else if (clrType == typeof (String))
-                        return StringObj;
+                        return _stringObj;
                     else if (clrType == typeof (Decimal))
-                        return DecimalObj;
+                        return _decimalObj;
                     else if (clrType == typeof (DateTime))
-                        return DateTimeObj;
+                        return _dateTimeObj;
                     else if (clrType == typeof (TimeSpan))
-                        return TimeSpanObj;
+                        return _timeSpanObj;
                     else if (clrType == typeof (List<PValue>))
-                        return ListOfPTypeObj;
+                        return _listOfPTypeObj;
                     else if (clrType ==
                              typeof (PValueHashtable))
                         return
@@ -1246,6 +1249,31 @@ namespace Prexonite.Types
         protected internal static PValue CreateObject<T>(T value)
         {
             return Object[typeof (T)].CreatePValue(value);
+        }
+
+
+        bool IObject.TryDynamicCall(StackContext sctx, PValue[] args, PCall call, string id, out PValue result)
+        {
+            result = null;
+
+            if (Engine.StringsAreEqual(id, ConstructFromStackId))
+            {
+                //Try calling the constructor
+                if (!TryContruct(sctx, args, out result))
+                    result = null;
+            } 
+            else if(Engine.StringsAreEqual(id, StaticCallFromStackId))
+            {
+                
+                //Try perform static call using the first arguments as the member id.
+                var actualArgs = new PValue[args.Length - 1];
+                Array.Copy(args,1, actualArgs, 0, actualArgs.Length);
+                var actualId = args[0].CallToString(sctx);
+                if(!TryStaticCall(sctx, actualArgs, call, actualId, out result))
+                    result = null;
+            }
+
+            return result != null;
         }
     }
 

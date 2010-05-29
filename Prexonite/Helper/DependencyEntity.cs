@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
+using Prexonite.Types;
 
 namespace Prexonite
 {
@@ -33,7 +34,7 @@ namespace Prexonite
         }
     }
 
-    public class DependencyEntity<TKey,TValue> : IDependent<TKey>
+    public class DependencyEntity<TKey, TValue> : IDependent<TKey>
     {
         private readonly TKey _name;
         private readonly TValue _value;
@@ -70,5 +71,6 @@ namespace Prexonite
         }
 
         #endregion
+
     }
 }

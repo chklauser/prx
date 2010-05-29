@@ -24,6 +24,7 @@
 using System;
 using System.Collections.Generic;
 using System.Diagnostics;
+using Prexonite.Types;
 using NoDebug = System.Diagnostics.DebuggerNonUserCodeAttribute;
 
 namespace Prexonite.Compiler.Ast
@@ -104,7 +105,7 @@ namespace Prexonite.Compiler.Ast
                 TypeExpr.EmitCode(target);
                 foreach (var arg in _arguments)
                     arg.EmitCode(target);
-                target.EmitGetCall(_arguments.Count, "Construct\\FromStack");
+                target.EmitGetCall(_arguments.Count, PType.ConstructFromStackId);
             }
         }
 

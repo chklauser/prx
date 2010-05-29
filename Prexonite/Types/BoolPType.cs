@@ -69,10 +69,9 @@ namespace Prexonite.Types
             string id,
             out PValue result)
         {
-            if (subject.ToObject().TryDynamicCall(sctx, args, call, id, out result))
-                return true;
-
-            return false;
+            //Try CLR dynamic call
+            var clrint = Object[subject.ClrType];
+            return clrint.TryDynamicCall(sctx, subject, args, call, id, out result);
         }
 
         public override bool TryStaticCall(

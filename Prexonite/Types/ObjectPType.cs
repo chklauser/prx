@@ -394,10 +394,17 @@ namespace Prexonite.Types
                         }
                         else
                         {
-                            if (subject == null)
-                                result = method.Invoke(null, cargs);
-                            else
-                                result = method.Invoke(subject.Value, cargs);
+                            try
+                            {
+                                if (subject == null)
+                                    result = method.Invoke(null, cargs);
+                                else
+                                    result = method.Invoke(subject.Value, cargs);
+                            } 
+                            catch(TargetException exc)
+                            {
+                                throw new PrexoniteException("Exception while calling " + method.ToString() + " with " + cargs.ToEnumerationString(), exc);
+                            }
                         }
                         goto success;
 

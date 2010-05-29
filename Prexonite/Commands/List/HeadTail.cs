@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using Prexonite.Compiler.Cil;
+using Prexonite.Types;
 
 namespace Prexonite.Commands.List
 {
@@ -53,7 +54,7 @@ namespace Prexonite.Commands.List
                 try
                 {
                     if (!nextX.MoveNext())
-                        throw new PrexoniteException("headtail requires the list to be non-empty.");
+                        return PType.Null;
                     head = nextX.Current;
                 }
                 catch (Exception)

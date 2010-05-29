@@ -74,7 +74,7 @@ namespace Prexonite.Compiler.Ast
                 TypeExpr.EmitCode(target);
                 target.EmitConstant(MemberId);
                 EmitArguments(target);
-                target.EmitGetCall(Arguments.Count + 1, "StaticCall\\FromStack", justEffect);
+                target.EmitGetCall(Arguments.Count + 1, PType.StaticCallFromStackId, justEffect);
             }
         }
 
@@ -98,7 +98,7 @@ namespace Prexonite.Compiler.Ast
                 TypeExpr.EmitCode(target);
                 target.EmitConstant(MemberId);
                 EmitArguments(target, !justEffect, 2); //type.StaticCall\FromStack(memberId, args...)
-                target.EmitSetCall(Arguments.Count + 1, "StaticCall\\FromStack");
+                target.EmitSetCall(Arguments.Count + 1, PType.StaticCallFromStackId);
             }
         }
 

@@ -450,7 +450,7 @@ namespace Prexonite.Compiler.Cil
         /// <returns>A sequence of PValue objects.</returns>
         public static IEnumerator<PValue> ExtractEnumerator(PValue value, StackContext sctx)
         {
-            if (value == null)
+            if (sctx == null)
                 throw new ArgumentNullException("sctx");
 
             IEnumerator genEn;
