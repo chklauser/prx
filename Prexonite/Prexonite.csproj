@@ -241,9 +241,13 @@
     <Compile Include="Compiler\CompilerTarget.cs" />
     <Compile Include="Compiler\CustomResolver.cs" />
     <Compile Include="Compiler\DebugHook.cs" />
+    <Compile Include="Compiler\ISourcePosition.cs" />
     <Compile Include="Compiler\Lexer.Code.cs" />
     <Compile Include="Compiler\Lexer.cs" />
     <Compile Include="Compiler\MacroAliases.cs" />
+    <Compile Include="Compiler\SourceMapping.cs" />
+    <Compile Include="Compiler\SourcePosition.cs" />
+    <Compile Include="Compiler\SourcePositionExtensions.cs" />
     <Compile Include="Concurrency\Channel.cs" />
     <Compile Include="CooperativeContext.cs" />
     <Compile Include="Helper\DependencyAnalysis.cs" />

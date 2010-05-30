@@ -41,6 +41,12 @@ namespace Prexonite.Compiler
 
             _parentEngine = parentEngine;
             _targetApplication = targetApplication;
+            StoreSymbols = true;
+            RegisterCommands = true;
+            ReconstructSymbols = true;
+            Compress = false;
+            UseIndicesLocally = true;
+            StoreSourceInformation = false;
         }
 
         #endregion
@@ -61,51 +67,17 @@ namespace Prexonite.Compiler
             get { return _targetApplication; }
         }
 
-        private bool _registerCommands = true;
+        public bool RegisterCommands { get; set; }
 
-        public bool RegisterCommands
-        {
-            get { return _registerCommands; }
-            set { _registerCommands = value; }
-        }
+        public bool ReconstructSymbols { get; set; }
 
-        private bool _reconstructSymbols = true;
+        public bool StoreSymbols { get; set; }
 
-        public bool ReconstructSymbols
-        {
-            get { return _reconstructSymbols; }
-            set { _reconstructSymbols = value; }
-        }
+        public bool Compress { get; set; }
 
-        private bool _storeSymbols = true;
+        public bool UseIndicesLocally { get; set; }
 
-        public bool StoreSymbols
-        {
-            get { return _storeSymbols; }
-            set { _storeSymbols = value; }
-        }
-
-// ReSharper disable ConvertToAutoProperty
-        public bool Compress
-// ReSharper restore ConvertToAutoProperty
-        {
-            get { return _compress; }
-            set { _compress = value; }
-        }
-
-#if DEBUG
-        private bool _compress = false;
-#else
-        private bool _compress;
-#endif
-
-        public bool UseIndicesLocally
-        {
-            get { return _useIndicesLocally; }
-            set { _useIndicesLocally = value; }
-        }
-
-        private bool _useIndicesLocally = true;
+        public bool StoreSourceInformation { get; set; }
 
         #endregion
 
@@ -119,6 +91,7 @@ namespace Prexonite.Compiler
             StoreSymbols = options.StoreSymbols;
             Compress = options.Compress;
             UseIndicesLocally = options.UseIndicesLocally;
+            StoreSourceInformation = options.StoreSourceInformation;
         }
     }
 }

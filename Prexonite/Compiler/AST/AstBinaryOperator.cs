@@ -80,57 +80,58 @@ namespace Prexonite.Compiler.Ast
         /// <summary>
         /// Emits the instruction corresponding to the supplied binary operator.
         /// </summary>
+        /// <param name="position">The position in source code where this ast node originated.</param>
         /// <param name="target">The target to which to write the instruction to.</param>
         /// <param name="op">Any binary operator.</param>
         /// <seealso cref="BinaryOperator"/>
-        public static void EmitOperator(CompilerTarget target, BinaryOperator op)
+        public static void EmitOperator(ISourcePosition position, CompilerTarget target, BinaryOperator op)
         {
             switch (op)
             {
                 case BinaryOperator.Addition:
-                    target.Emit(OpCode.add);
+                    target.Emit(position, OpCode.add);
                     break;
                 case BinaryOperator.Subtraction:
-                    target.Emit(OpCode.sub);
+                    target.Emit(position, OpCode.sub);
                     break;
                 case BinaryOperator.Multiply:
-                    target.Emit(OpCode.mul);
+                    target.Emit(position, OpCode.mul);
                     break;
                 case BinaryOperator.Division:
-                    target.Emit(OpCode.div);
+                    target.Emit(position, OpCode.div);
                     break;
                 case BinaryOperator.Modulus:
-                    target.Emit(OpCode.mod);
+                    target.Emit(position, OpCode.mod);
                     break;
                 case BinaryOperator.Power:
-                    target.Emit(OpCode.pow);
+                    target.Emit(position, OpCode.pow);
                     break;
                 case BinaryOperator.BitwiseAnd:
-                    target.Emit(OpCode.and);
+                    target.Emit(position, OpCode.and);
                     break;
                 case BinaryOperator.BitwiseOr:
-                    target.Emit(OpCode.or);
+                    target.Emit(position, OpCode.or);
                     break;
                 case BinaryOperator.ExclusiveOr:
-                    target.Emit(OpCode.xor);
+                    target.Emit(position, OpCode.xor);
                     break;
                 case BinaryOperator.Equality:
-                    target.Emit(OpCode.ceq);
+                    target.Emit(position, OpCode.ceq);
                     break;
                 case BinaryOperator.Inequality:
-                    target.Emit(OpCode.cne);
+                    target.Emit(position, OpCode.cne);
                     break;
                 case BinaryOperator.GreaterThan:
-                    target.Emit(OpCode.cgt);
+                    target.Emit(position, OpCode.cgt);
                     break;
                 case BinaryOperator.GreaterThanOrEqual:
-                    target.Emit(OpCode.cge);
+                    target.Emit(position, OpCode.cge);
                     break;
                 case BinaryOperator.LessThan:
-                    target.Emit(OpCode.clt);
+                    target.Emit(position, OpCode.clt);
                     break;
                 case BinaryOperator.LessThanOrEqual:
-                    target.Emit(OpCode.cle);
+                    target.Emit(position, OpCode.cle);
                     break;
             }
         }
@@ -141,7 +142,7 @@ namespace Prexonite.Compiler.Ast
         /// <param name="target">The target to which to write the instruction to.</param>
         public void EmitOperator(CompilerTarget target)
         {
-            EmitOperator(target, Operator);
+            EmitOperator(this, target, Operator);
         }
 
         /// <summary>
@@ -231,7 +232,7 @@ namespace Prexonite.Compiler.Ast
                              (bool) neutral.Value))
                         {
                             //right operand is the neutral element 0 => left + 0 = left
-                            expr = leftConstant == null ? LeftOperand : leftConstant;
+                            expr = leftConstant ?? LeftOperand;
                             return true;
                         }
                     }
@@ -241,7 +242,7 @@ namespace Prexonite.Compiler.Ast
                              (bool) neutral.Value))
                         {
                             //left operand is the neutral element 0 => 0 + right = right
-                            expr = rightConstant == null ? RightOperand : rightConstant;
+                            expr = rightConstant ?? RightOperand;
                             return true;
                         }
                     }
@@ -273,7 +274,7 @@ namespace Prexonite.Compiler.Ast
                                 Line,
                                 Column,
                                 leftConstant,
-                                rightConstant == null ? RightOperand : rightConstant));
+                                rightConstant ?? RightOperand));
 
                         return true;
                     }
@@ -286,7 +287,7 @@ namespace Prexonite.Compiler.Ast
                                 File,
                                 Line,
                                 Column,
-                                leftConstant == null ? LeftOperand : leftConstant,
+                                leftConstant ?? LeftOperand,
                                 rightConstant));
                         return true;
                     }
@@ -314,7 +315,7 @@ namespace Prexonite.Compiler.Ast
                               (bool) neutral.Value))
                             goto emitFull;
                         //right operand is the neutral element 1 => left * 1 = left
-                        expr = leftConstant == null ? LeftOperand : leftConstant;
+                        expr = leftConstant ?? LeftOperand;
                         return true;
                     }
                     else if (left != null)
@@ -325,7 +326,7 @@ namespace Prexonite.Compiler.Ast
                               (bool) neutral.Value))
                             goto emitFull;
                         //left operand is the neutral element 1 => 1 * right = right
-                        expr = rightConstant == null ? RightOperand : rightConstant;
+                        expr = rightConstant ?? RightOperand;
                         return true;
                     }
                     else
@@ -346,7 +347,7 @@ namespace Prexonite.Compiler.Ast
                               (bool) neutral.Value))
                             goto emitFull;
                         //right operand is the neutral element 1 => left * 1 = left
-                        expr = leftConstant == null ? LeftOperand : leftConstant;
+                        expr = leftConstant ?? LeftOperand;
                         return true;
                     }
                     else
@@ -377,7 +378,7 @@ namespace Prexonite.Compiler.Ast
                              (bool) neutral.Value))
                         {
                             //right operand is the neutral element 1 => left ^ 1 = left
-                            expr = leftConstant == null ? LeftOperand : leftConstant;
+                            expr = leftConstant ?? LeftOperand;
                             return true;
                         }
                         else if (right.Equality(target.Loader, square, out square) && (bool) square.Value)
@@ -392,8 +393,8 @@ namespace Prexonite.Compiler.Ast
                                         else
                                             LeftOperand.EmitCode(t);
 
-                                        t.EmitDuplicate(1);
-                                        EmitOperator(t, BinaryOperator.Multiply);
+                                        t.EmitDuplicate(this, 1);
+                                        EmitOperator(this, t, BinaryOperator.Multiply);
                                     });
                             return true;
                         }

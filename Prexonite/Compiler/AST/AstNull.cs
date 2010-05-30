@@ -44,7 +44,7 @@ namespace Prexonite.Compiler.Ast
 
         public override void EmitCode(CompilerTarget target)
         {
-            target.EmitNull();
+            target.EmitNull(this);
         }
     }
 }

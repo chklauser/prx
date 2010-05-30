@@ -437,7 +437,8 @@ namespace Prexonite.Compiler.Cil
             var rexc = exc as PrexoniteRuntimeException;
             return sctx.CreateNativePValue
                 (
-                rexc ?? PrexoniteRuntimeException.CreateRuntimeException(sctx, exc)
+                    PrexoniteRuntimeException.UnpackException(
+                        rexc ?? PrexoniteRuntimeException.CreateRuntimeException(sctx, exc))
                 );
         }
 

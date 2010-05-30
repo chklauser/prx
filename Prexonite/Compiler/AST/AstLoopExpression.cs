@@ -268,14 +268,14 @@ namespace Prexonite.Compiler.Ast
                 target.Function.Variables.Add(tmpVar);
 
             //Initialize the list
-            target.EmitStaticGetCall(0, "List", "Create");
-            target.EmitStoreLocal(lstVar);
+            target.EmitStaticGetCall(this, 0, "List", "Create");
+            target.EmitStoreLocal(this, lstVar);
 
             //Emit the modified loop
             Loop.EmitCode(target);
 
             //Return the list
-            target.EmitLoadLocal(lstVar);
+            target.EmitLoadLocal(this, lstVar);
 
             //Mark the function as volatile
             //  Using loop expressions with a non-empty stack causes verification errors in CIL implementations because of

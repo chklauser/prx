@@ -80,20 +80,20 @@ namespace Prexonite.Compiler.Ast
                 }
 
             //Emit try block
-            target.EmitLabel(beginTryLabel);
-            target.Emit(OpCode.@try);
+            target.EmitLabel(this, beginTryLabel);
+            target.Emit(this, OpCode.@try);
             TryBlock.EmitCode(target);
 
             //Emit finally block
-            target.EmitLabel(beginFinallyLabel);
+            target.EmitLabel(FinallyBlock, beginFinallyLabel);
             var beforeEmit = target.Code.Count;
             FinallyBlock.EmitCode(target);
             if(FinallyBlock.Count > 0 && target.Code.Count == beforeEmit)
-                target.Emit(OpCode.nop);
-            target.EmitLeave(endTry);
+                target.Emit(FinallyBlock, OpCode.nop);
+            target.EmitLeave(FinallyBlock, endTry);
 
             //Emit catch block
-            target.EmitLabel(beginCatchLabel);
+            target.EmitLabel(CatchBlock, beginCatchLabel);
             var usesException = ExceptionVar != null;
             var justRethrow = CatchBlock.IsEmpty && !usesException;
 
@@ -120,7 +120,7 @@ namespace Prexonite.Compiler.Ast
                 //th.EmitCode(target);
             }
 
-            target.EmitLabel(endTry);
+            target.EmitLabel(this, endTry);
 
             var block =
                 new TryCatchFinallyBlock(

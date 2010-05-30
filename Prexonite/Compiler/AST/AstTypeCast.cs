@@ -61,13 +61,13 @@ namespace Prexonite.Compiler.Ast
         public override void EmitCode(CompilerTarget target)
         {
             Subject.EmitCode(target);
-            AstConstantTypeExpression constType = Type as AstConstantTypeExpression;
+            var constType = Type as AstConstantTypeExpression;
             if (constType != null)
-                target.Emit(OpCode.cast_const, constType.TypeExpression);
+                target.Emit(this, OpCode.cast_const, constType.TypeExpression);
             else
             {
                 Type.EmitCode(target);
-                target.Emit(OpCode.cast_arg);
+                target.Emit(this, OpCode.cast_arg);
             }
         }
 
@@ -78,8 +78,8 @@ namespace Prexonite.Compiler.Ast
 
             expr = null;
 
-            AstConstant constSubject = Subject as AstConstant;
-            AstConstantTypeExpression constType = Type as AstConstantTypeExpression;
+            var constSubject = Subject as AstConstant;
+            var constType = Type as AstConstantTypeExpression;
             if (constSubject == null || constType == null)
                 return false;
             PType type;

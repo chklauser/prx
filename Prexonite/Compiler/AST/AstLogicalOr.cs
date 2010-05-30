@@ -95,12 +95,12 @@ namespace Prexonite.Compiler.Ast
 
             EmitCode(target, trueLabel, falseLabel);
 
-            target.EmitLabel(falseLabel);
-            target.EmitConstant(false);
-            target.EmitJump(evalLabel);
-            target.EmitLabel(trueLabel);
-            target.EmitConstant(true);
-            target.EmitLabel(evalLabel);
+            target.EmitLabel(this, falseLabel);
+            target.EmitConstant(this, false);
+            target.EmitJump(this, evalLabel);
+            target.EmitLabel(this, trueLabel);
+            target.EmitConstant(this, true);
+            target.EmitLabel(this, evalLabel);
         }
 
         public override void EmitCode(CompilerTarget target, string trueLabel, string falseLabel)
@@ -109,22 +109,22 @@ namespace Prexonite.Compiler.Ast
             string nextLabel = @"Next\" + labelNs;
             foreach (IAstExpression expr in Conditions)
             {
-                AstLogicalAnd and = expr as AstLogicalAnd;
+                var and = expr as AstLogicalAnd;
                 if (and != null)
                 {
                     and.EmitCode(target, trueLabel, nextLabel);
                     //Resolve pending jumps to Next
-                    target.EmitLabel(nextLabel);
+                    target.EmitLabel(this, nextLabel);
                     target.FreeLabel(nextLabel);
                     //Future references of to nextLabel will be resolved in the next iteration
                 }
                 else
                 {
                     expr.EmitCode(target);
-                    target.EmitJumpIfTrue(trueLabel);
+                    target.EmitJumpIfTrue(this, trueLabel);
                 }
             }
-            target.EmitJump(falseLabel);
+            target.EmitJump(this, falseLabel);
         }
     }
 }

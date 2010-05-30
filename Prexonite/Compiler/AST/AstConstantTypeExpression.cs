@@ -53,7 +53,7 @@ namespace Prexonite.Compiler.Ast
 
         public override void EmitCode(CompilerTarget target)
         {
-            target.Emit(OpCode.ldr_type, TypeExpression);
+            target.Emit(this, OpCode.ldr_type, TypeExpression);
         }
 
         #endregion

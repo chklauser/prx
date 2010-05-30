@@ -70,25 +70,25 @@ namespace Prexonite.Compiler.Ast
             switch (Interpretation)
             {
                 case SymbolInterpretations.Command:
-                    target.EmitCommandCall(Arguments.Count, Id, justEffect);
+                    target.EmitCommandCall(this, Arguments.Count, Id, justEffect);
                     break;
                 case SymbolInterpretations.Function:
-                    target.EmitFunctionCall(Arguments.Count, Id, justEffect);
+                    target.EmitFunctionCall(this, Arguments.Count, Id, justEffect);
                     break;
                 case SymbolInterpretations.GlobalObjectVariable:
                     if (!justEffect)
-                        target.EmitLoadGlobal(Id);
+                        target.EmitLoadGlobal(this, Id);
                     break;
                 case SymbolInterpretations.LocalObjectVariable:
                     if (!justEffect)
-                        target.EmitLoadLocal(Id);
+                        target.EmitLoadLocal(this, Id);
                     break;
                 case SymbolInterpretations.LocalReferenceVariable:
-                    target.Emit(
+                    target.Emit(this, 
                         Instruction.CreateLocalIndirectCall(Arguments.Count, Id, justEffect));
                     break;
                 case SymbolInterpretations.GlobalReferenceVariable:
-                    target.Emit(
+                    target.Emit(this, 
                         Instruction.CreateGlobalIndirectCall(Arguments.Count, Id, justEffect));
                     break;
                 default:
@@ -105,22 +105,22 @@ namespace Prexonite.Compiler.Ast
             switch (Interpretation)
             {
                 case SymbolInterpretations.Command:
-                    target.EmitCommandCall(Arguments.Count, Id, justEffect);
+                    target.EmitCommandCall(this, Arguments.Count, Id, justEffect);
                     break;
                 case SymbolInterpretations.Function:
-                    target.EmitFunctionCall(Arguments.Count, Id, justEffect);
+                    target.EmitFunctionCall(this, Arguments.Count, Id, justEffect);
                     break;
                 case SymbolInterpretations.GlobalObjectVariable:
-                    target.EmitStoreGlobal(Id);
+                    target.EmitStoreGlobal(this, Id);
                     break;
                 case SymbolInterpretations.LocalReferenceVariable:
-                    target.Emit(Instruction.CreateLocalIndirectCall(Arguments.Count, Id, justEffect));
+                    target.Emit(this, Instruction.CreateLocalIndirectCall(Arguments.Count, Id, justEffect));
                     break;
                 case SymbolInterpretations.GlobalReferenceVariable:
-                    target.Emit(Instruction.CreateGlobalIndirectCall(Arguments.Count, Id, justEffect));
+                    target.Emit(this, Instruction.CreateGlobalIndirectCall(Arguments.Count, Id, justEffect));
                     break;
                 case SymbolInterpretations.LocalObjectVariable:
-                    target.EmitStoreLocal(Id);
+                    target.EmitStoreLocal(this, Id);
                     break;
                 default:
                     throw new PrexoniteException(

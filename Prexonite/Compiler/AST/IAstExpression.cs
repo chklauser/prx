@@ -23,7 +23,7 @@
 
 namespace Prexonite.Compiler.Ast
 {
-    public interface IAstExpression
+    public interface IAstExpression : ISourcePosition
     {
         bool TryOptimize(CompilerTarget target, out IAstExpression expr);
         void EmitCode(CompilerTarget target);

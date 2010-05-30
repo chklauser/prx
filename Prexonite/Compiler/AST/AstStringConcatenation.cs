@@ -120,18 +120,18 @@ namespace Prexonite.Compiler.Ast
                 arg.EmitCode(target);
 
             if (Arguments.Count > 2)
-                target.EmitCommandCall(Arguments.Count, Engine.ConcatenateAlias);
+                target.EmitCommandCall(this, Arguments.Count, Engine.ConcatenateAlias);
             else if (Arguments.Count == 2)
-                AstBinaryOperator.EmitOperator(target, BinaryOperator.Addition);
+                AstBinaryOperator.EmitOperator(this, target, BinaryOperator.Addition);
             else if (Arguments.Count == 1)
             {
                 AstConstant constant;
                 if ((constant = Arguments[0] as AstConstant) != null &&
                     !(constant.Constant is string))
-                    target.EmitGetCall(1, "ToString");
+                    target.EmitGetCall(this, 1, "ToString");
             }
             else if (Arguments.Count == 0)
-                target.EmitConstant("");
+                target.EmitConstant(this, "");
         }
 
         #region IAstExpression Members
@@ -155,14 +155,13 @@ namespace Prexonite.Compiler.Ast
         public bool TryOptimize(CompilerTarget target, out IAstExpression expr)
         {
             //Optimize arguments
-            IAstExpression oArg;
             foreach (IAstExpression arg in Arguments.ToArray())
             {
                 if (arg == null)
                     throw new PrexoniteException(
                         "Invalid (null) argument in StringConcat node (" + ToString() +
                         ") detected at position " + Arguments.IndexOf(arg) + ".");
-                oArg = GetOptimizedNode(target, arg);
+                var oArg = GetOptimizedNode(target, arg);
                 if (!ReferenceEquals(oArg, arg))
                 {
                     int idx = Arguments.IndexOf(arg);
@@ -174,11 +173,11 @@ namespace Prexonite.Compiler.Ast
             expr = null;
 
             //Expand embedded concats argument list
-            IAstExpression[] argumentArray = Arguments.ToArray();
+            var argumentArray = Arguments.ToArray();
             for (int i = 0; i < argumentArray.Length; i++)
             {
-                IAstExpression argument = argumentArray[i];
-                AstStringConcatenation concat = argument as AstStringConcatenation;
+                var argument = argumentArray[i];
+                var concat = argument as AstStringConcatenation;
 
                 if (concat != null)
                 {

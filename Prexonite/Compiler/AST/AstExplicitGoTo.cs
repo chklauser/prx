@@ -44,7 +44,7 @@ namespace Prexonite.Compiler.Ast
 
         public override void EmitCode(CompilerTarget target)
         {
-            target.EmitJump(Destination);
+            target.EmitJump(this, Destination);
         }
 
         public override string ToString()

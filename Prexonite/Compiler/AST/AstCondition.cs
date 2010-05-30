@@ -61,7 +61,7 @@ namespace Prexonite.Compiler.Ast
         public AstBlock ElseBlock;
         public IAstExpression Condition;
         public bool IsNegative;
-        private static int depth = 0;
+        private static int _depth;
 
         #region IAstHasBlocks Members
 
@@ -85,7 +85,7 @@ namespace Prexonite.Compiler.Ast
         {
             //Optimize condition
             OptimizeNode(target, ref Condition);
-            AstUnaryOperator unaryCond = Condition as AstUnaryOperator;
+            var unaryCond = Condition as AstUnaryOperator;
             while (unaryCond != null && unaryCond.Operator == UnaryOperator.LogicalNot)
             {
                 Condition = unaryCond.Operand;
@@ -96,13 +96,13 @@ namespace Prexonite.Compiler.Ast
             //Constant conditions
             if (Condition is AstConstant)
             {
-                AstConstant constCond = (AstConstant) Condition;
+                var constCond = (AstConstant) Condition;
                 PValue condValue;
                 if (
                     !constCond.ToPValue(target).TryConvertTo(
                          target.Loader, PType.Bool, out condValue))
                     goto continueFull;
-                else if ((bool) condValue.Value)
+                else if (((bool) condValue.Value) ^ IsNegative)
                     IfBlock.EmitCode(target);
                 else
                     ElseBlock.EmitCode(target);
@@ -111,13 +111,13 @@ namespace Prexonite.Compiler.Ast
             //Conditions with empty blocks
             if (IfBlock.IsEmpty && ElseBlock.IsEmpty)
             {
-                IAstEffect effect = Condition as IAstEffect;
+                var effect = Condition as IAstEffect;
                 if (effect != null)
                     effect.EmitEffectCode(target);
                 else
                 {
                     Condition.EmitCode(target);
-                    target.EmitPop();
+                    target.EmitPop(this);
                 }
                 return;
             }
@@ -133,9 +133,9 @@ namespace Prexonite.Compiler.Ast
                 ElseBlock = tmp;
             }
 
-            string elseLabel = "else\\" + depth + "\\assembler";
-            string endLabel = "endif\\" + depth + "\\assembler";
-            depth++;
+            string elseLabel = "else\\" + _depth + "\\assembler";
+            string endLabel = "endif\\" + _depth + "\\assembler";
+            _depth++;
 
             //Emit
             AstExplicitGoTo ifGoto = IfBlock.IsSingleStatement
@@ -177,10 +177,10 @@ namespace Prexonite.Compiler.Ast
                 //if => block / else => block
                 AstLazyLogical.EmitJumpCondition(target, Condition, elseLabel, IsNegative);
                 IfBlock.EmitCode(target);
-                target.EmitJump(endLabel);
-                target.EmitLabel(elseLabel);
+                target.EmitJump(this, endLabel);
+                target.EmitLabel(this, elseLabel);
                 ElseBlock.EmitCode(target);
-                target.EmitLabel(endLabel);
+                target.EmitLabel(this, endLabel);
             }
 
             target.FreeLabel(elseLabel);

@@ -41,24 +41,54 @@ namespace Prx
             mode = ReturnMode.Exit;
         }
 
-        private static void Main(string[] args)
+        public static void Main(string[] args)
         {
             Console.CancelKeyPress += delegate { Environment.Exit(1); };
-            var pc = new PrexoniteConsole(true);
+            var prexoniteConsole = new PrexoniteConsole(true);
 
 #if !DEBUG //Let the exceptions surface so they can more easily be debugged
             try
             {
 #endif
+                //Create an empty application
+                var app = new Application("prx");
+
                 var engine = new Engine();
                 engine.RegisterAssembly(Assembly.GetExecutingAssembly());
 
-                #region Stopwatch commands
+                //Load application
+                if(!_loadApplication(engine, prexoniteConsole, app))
+                    return;
 
-                //prx.exe provides these three additional commands for high speed access to a stopwatch from your script code
-                var timer = new Stopwatch();
-                engine.Commands.AddHostCommand
-                    (
+                //Run the applications main function.
+                _runApplication(engine, app, args);
+#if !DEBUG
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine(ex);
+            }
+#endif
+        }
+
+        private static void _runApplication(Engine engine, Application app, string[] args)
+        {
+            app.Run
+                (engine,
+                    new[]
+                    {
+                        engine.CreateNativePValue(args)
+                    });
+        }
+
+        private static bool _loadApplication(Engine engine, PrexoniteConsole prexoniteConsole, Application app)
+        {
+            #region Stopwatch commands
+
+            //prx.exe provides these three additional commands for high speed access to a stopwatch from your script code
+            var timer = new Stopwatch();
+            engine.Commands.AddHostCommand
+                (
                     @"timer\start",
                     new DelegatePCommand
                         (
@@ -68,8 +98,8 @@ namespace Prx
                             return null;
                         }));
 
-                engine.Commands.AddHostCommand
-                    (
+            engine.Commands.AddHostCommand
+                (
                     @"timer\stop",
                     new DelegatePCommand
                         (
@@ -79,8 +109,8 @@ namespace Prx
                             return (double) timer.ElapsedMilliseconds;
                         }));
 
-                engine.Commands.AddHostCommand
-                    (
+            engine.Commands.AddHostCommand
+                (
                     @"timer\reset",
                     new DelegatePCommand
                         (
@@ -90,19 +120,19 @@ namespace Prx
                             return null;
                         }));
 
-                engine.Commands.AddHostCommand
-                    (
+            engine.Commands.AddHostCommand
+                (
                     @"timer\elapsed",
                     new DelegatePCommand
                         (
                         delegate { return (double) timer.ElapsedMilliseconds; }));
 
-                #endregion
+            #endregion
 
-                #region Stack Manipulation commands
+            #region Stack Manipulation commands
 
-                engine.Commands.AddHostCommand
-                    (
+            engine.Commands.AddHostCommand
+                (
                     @"__replace_call",
                     delegate(StackContext sctx, PValue[] cargs)
                     {
@@ -132,7 +162,7 @@ namespace Prx
                                 if (
                                     !sctx.ParentApplication.Functions.TryGetValue
                                          (
-                                         (string) carg.Value, out f))
+                                             (string) carg.Value, out f))
                                     throw new PrexoniteException
                                         (
                                         "Cannot replace call to " + carg +
@@ -179,115 +209,100 @@ namespace Prx
                         return PType.Null.CreatePValue();
                     });
 
-                #endregion
+            #endregion
 
-                #region Prexonite Console constant
+            #region Prexonite Console constant
 
-                engine.Commands.AddHostCommand("__console", pc);
+            engine.Commands.AddHostCommand("__console", prexoniteConsole);
 
-                #endregion
+            #endregion
 
-                #region Create benchmark command
+            #region Create benchmark command
 
-                engine.Commands.AddHostCommand
-                    ("createBenchmark",
-                     delegate(StackContext sctx, PValue[] cargs)
-                     {
-                         if (sctx == null)
-                             throw new ArgumentNullException("sctx");
-                         if (cargs == null)
-                             cargs = new PValue[]
-                             {
-                             };
-
-                         Engine teng;
-                         int tit;
-
-                         if (cargs.Length >= 2)
-                         {
-                             teng = cargs[0].ConvertTo<Engine>(sctx);
-                             tit = cargs[1].ConvertTo<int>(sctx);
-                         }
-                         else if (cargs.Length >= 1)
-                         {
-                             teng = sctx.ParentEngine;
-                             tit = cargs[0].ConvertTo<int>(sctx);
-                         }
-                         else
-                         {
-                             return sctx.CreateNativePValue(new Benchmark(sctx.ParentEngine));
-                         }
-
-                         return sctx.CreateNativePValue(new Benchmark(teng, tit));
-                     });
-
-                #endregion
-
-                //Create an empty application
-                var app = new Application("prx");
-                //Create a loader for that application and...
-                var ldr = new Loader(engine, app);
-                //load the main script file. 
-
-                //CLI override script in action:
-                var deleteSrc = false;
-                var entryPath = GetPrxPath() + Path.DirectorySeparatorChar + @"prx.pxs";
-                if (!File.Exists(entryPath))
-                {
-                    //Load default CLI app
-                    entryPath = GetPrxPath() + Path.DirectorySeparatorChar + @"src" + Path.DirectorySeparatorChar + "prx_main.pxs";
-
-                    if (!File.Exists(entryPath))
+            engine.Commands.AddHostCommand
+                ("createBenchmark",
+                    delegate(StackContext sctx, PValue[] cargs)
                     {
-                        if (!Directory.Exists("src"))
+                        if (sctx == null)
+                            throw new ArgumentNullException("sctx");
+                        if (cargs == null)
+                            cargs = new PValue[]
+                            {
+                            };
+
+                        Engine teng;
+                        int tit;
+
+                        if (cargs.Length >= 2)
                         {
-                            var di = Directory.CreateDirectory(GetPrxPath() + Path.DirectorySeparatorChar + @"src");
-                            di.Attributes = di.Attributes | FileAttributes.Hidden;
-                            deleteSrc = true;
+                            teng = cargs[0].ConvertTo<Engine>(sctx);
+                            tit = cargs[1].ConvertTo<int>(sctx);
+                        }
+                        else if (cargs.Length >= 1)
+                        {
+                            teng = sctx.ParentEngine;
+                            tit = cargs[0].ConvertTo<int>(sctx);
+                        }
+                        else
+                        {
+                            return sctx.CreateNativePValue(new Benchmark(sctx.ParentEngine));
                         }
 
-                        //Unpack source
-                        writeFile(Resources.prx_main, "prx_main.pxs");
-                        writeFile(Resources.prx_lib, "prx_lib.pxs");
-                        writeFile(Resources.prx_interactive, "prx_interactive.pxs");
-                    }
-                }
+                        return sctx.CreateNativePValue(new Benchmark(teng, tit));
+                    });
 
-#if !DEBUG
-                try
-                {
-#endif
-                    ldr.LoadFromFile(entryPath);
-#if !DEBUG
-                }
-                catch (Exception exc)
-                {
-                    _reportErrors(ldr);
-                    Console.WriteLine(exc);
-                    return;
-                }
-#endif
+            #endregion
 
-                if (deleteSrc)
-                    Directory.Delete(GetPrxPath() + Path.DirectorySeparatorChar + @"src", true);
+            //Create a loader for that application and...
+            var ldr = new Loader(engine, app);
+            //load the main script file. 
 
-                //Report errors
-                _reportErrors(ldr);
-
-                //Run the applications main function.
-                app.Run
-                    (engine,
-                     new[]
-                     {
-                         engine.CreateNativePValue(args)
-                     });
-#if !DEBUG
-            }
-            catch (Exception ex)
+            //CLI override script in action:
+            var deleteSrc = false;
+            var entryPath = GetPrxPath() + Path.DirectorySeparatorChar + @"prx.pxs";
+            if (!File.Exists(entryPath))
             {
-                Console.WriteLine(ex);
+                //Load default CLI app
+                entryPath = GetPrxPath() + Path.DirectorySeparatorChar + @"src" + Path.DirectorySeparatorChar + "prx_main.pxs";
+
+                if (!File.Exists(entryPath))
+                {
+                    if (!Directory.Exists("src"))
+                    {
+                        var di = Directory.CreateDirectory(GetPrxPath() + Path.DirectorySeparatorChar + @"src");
+                        di.Attributes = di.Attributes | FileAttributes.Hidden;
+                        deleteSrc = true;
+                    }
+
+                    //Unpack source
+                    writeFile(Resources.prx_main, "prx_main.pxs");
+                    writeFile(Resources.prx_lib, "prx_lib.pxs");
+                    writeFile(Resources.prx_interactive, "prx_interactive.pxs");
+                }
+            }
+
+#if !DEBUG
+            try
+            {
+#endif
+                ldr.LoadFromFile(entryPath);
+#if !DEBUG
+            }
+            catch (Exception exc)
+            {
+                _reportErrors(ldr);
+                Console.WriteLine(exc);
+                return false;
             }
 #endif
+
+            if (deleteSrc)
+                Directory.Delete(GetPrxPath() + Path.DirectorySeparatorChar + @"src", true);
+
+            //Report errors
+            _reportErrors(ldr);
+
+            return ldr.ErrorCount == 0;
         }
 
         private static void _reportErrors(Loader ldr)

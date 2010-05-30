@@ -107,12 +107,12 @@ namespace Prexonite.Compiler.Ast
 
         protected override void EmitGetCode(CompilerTarget target, bool justEffect)
         {
-            target.EmitGetCall(Arguments.Count, Id, justEffect);
+            target.EmitGetCall(this, Arguments.Count, Id, justEffect);
         }
 
         protected override void EmitSetCode(CompilerTarget target)
         {
-            target.EmitSetCall(Arguments.Count, Id);
+            target.EmitSetCall(this, Arguments.Count, Id);
         }
 
         public override bool TryOptimize(CompilerTarget target, out IAstExpression expr)

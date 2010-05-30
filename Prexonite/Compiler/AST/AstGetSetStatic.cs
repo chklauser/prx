@@ -66,15 +66,15 @@ namespace Prexonite.Compiler.Ast
             if (constType != null)
             {
                 EmitArguments(target);
-                target.EmitStaticGetCall(
+                target.EmitStaticGetCall(this, 
                     Arguments.Count, constType.TypeExpression, MemberId, justEffect);
             }
             else
             {
                 TypeExpr.EmitCode(target);
-                target.EmitConstant(MemberId);
+                target.EmitConstant(this, MemberId);
                 EmitArguments(target);
-                target.EmitGetCall(Arguments.Count + 1, PType.StaticCallFromStackId, justEffect);
+                target.EmitGetCall(this, Arguments.Count + 1, PType.StaticCallFromStackId, justEffect);
             }
         }
 
@@ -90,15 +90,15 @@ namespace Prexonite.Compiler.Ast
             if (constType != null)
             {
                 EmitArguments(target, !justEffect, 0);
-                target.EmitStaticSetCall(
+                target.EmitStaticSetCall(this, 
                     Arguments.Count, constType.TypeExpression + "::" + MemberId);
             }
             else
             {
                 TypeExpr.EmitCode(target);
-                target.EmitConstant(MemberId);
+                target.EmitConstant(this, MemberId);
                 EmitArguments(target, !justEffect, 2); //type.StaticCall\FromStack(memberId, args...)
-                target.EmitSetCall(Arguments.Count + 1, PType.StaticCallFromStackId);
+                target.EmitSetCall(this, Arguments.Count + 1, PType.StaticCallFromStackId);
             }
         }
 

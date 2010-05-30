@@ -1,4 +1,5 @@
-﻿is psr_ast_pxs_open;
+﻿
+is psr_ast_pxs_open;
 is compiler_loaded;
 
 Import
@@ -16,8 +17,13 @@ function ast\withPos(type, file, line, column) [is compiler;]
     var targs = args >> skip(4);
 
     file ??= "--COMPILER-HOOK--";
+    file ~= String;
+    
     line ??= -1;
+    line ~= Int;
+    
     column ??= -1;
+    column~= Int;
     
     return 
         asm(ldr.eng)

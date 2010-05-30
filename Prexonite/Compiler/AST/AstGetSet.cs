@@ -113,9 +113,9 @@ namespace Prexonite.Compiler.Ast
             var argc = Arguments.Count;
             if (duplicateLast && argc > 0)
             {
-                target.EmitDuplicate();
+                target.EmitDuplicate(this);
                 if (argc + additionalArguments > 1)
-                    target.EmitRotate(-1, argc + 1 + additionalArguments);
+                    target.EmitRotate(this, -1, argc + 1 + additionalArguments);
             }
         }
 

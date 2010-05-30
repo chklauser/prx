@@ -45,7 +45,7 @@ namespace Prexonite.Compiler.Ast
 
         public override void EmitCode(CompilerTarget target)
         {
-            target.Emit(OpCode.newclo, FuncId);
+            target.Emit(this, OpCode.newclo, FuncId);
         }
 
         #region IAstExpression Members

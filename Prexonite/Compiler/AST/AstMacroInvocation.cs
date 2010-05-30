@@ -114,7 +114,7 @@ namespace Prexonite.Compiler.Ast
                     //If a value was expected, we need to at least make up null, otherwise
                     //  we risk stack corruption.
                     if (!justEffect)
-                        target.Emit(OpCode.ldc_null);
+                        target.Emit(this, OpCode.ldc_null);
                     return;
                 }
 

@@ -83,7 +83,10 @@ namespace Prexonite.Compiler.Ast
 
         public override string ToString()
         {
-            return string.Format("{0} (return {1})", base.ToString(), Expression.ToString());
+            if (Expression == null)
+                return base.ToString();
+            else
+                return string.Format("{0} (return {1})", base.ToString(), Expression);
         }
     }
 }

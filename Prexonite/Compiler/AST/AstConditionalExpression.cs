@@ -93,7 +93,7 @@ namespace Prexonite.Compiler.Ast
                     !constCond.ToPValue(target).TryConvertTo(
                          target.Loader, PType.Bool, out condValue))
                     expr = null;
-                else if ((bool) condValue.Value)
+                else if (((bool) condValue.Value) ^ IsNegative)
                     expr = IfExpression;
                 else
                     expr = ElseExpression;
@@ -121,10 +121,10 @@ namespace Prexonite.Compiler.Ast
             //if => block / else => block
             AstLazyLogical.EmitJumpCondition(target, Condition, elseLabel, IsNegative);
             IfExpression.EmitCode(target);
-            target.EmitJump(endLabel);
-            target.EmitLabel(elseLabel);
+            target.EmitJump(this, endLabel);
+            target.EmitLabel(this, elseLabel);
             ElseExpression.EmitCode(target);
-            target.EmitLabel(endLabel);
+            target.EmitLabel(this, endLabel);
 
             target.FreeLabel(elseLabel);
             target.FreeLabel(endLabel);

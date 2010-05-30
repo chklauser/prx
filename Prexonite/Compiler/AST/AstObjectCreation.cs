@@ -97,7 +97,7 @@ namespace Prexonite.Compiler.Ast
             {
                 foreach (var arg in _arguments)
                     arg.EmitCode(target);
-                target.Emit(OpCode.newobj, _arguments.Count, constType.TypeExpression);
+                target.Emit(this, OpCode.newobj, _arguments.Count, constType.TypeExpression);
             }
             else
             {
@@ -105,7 +105,7 @@ namespace Prexonite.Compiler.Ast
                 TypeExpr.EmitCode(target);
                 foreach (var arg in _arguments)
                     arg.EmitCode(target);
-                target.EmitGetCall(_arguments.Count, PType.ConstructFromStackId);
+                target.EmitGetCall(this, _arguments.Count, PType.ConstructFromStackId);
             }
         }
 

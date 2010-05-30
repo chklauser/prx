@@ -47,7 +47,7 @@ namespace Prexonite.Compiler.Ast
             foreach (var argument in _arguments)
                 argument.EmitCode(target);
 
-            target.Emit(OpCode.newcor, _arguments.Count);
+            target.Emit(this, OpCode.newcor, _arguments.Count);
         }
 
         #region IAstExpression Members

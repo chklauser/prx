@@ -154,7 +154,7 @@ namespace Prexonite.Compiler.Ast
                             opc = OpCode.decglob;
                         else
                             opc = OpCode.decloc;
-                        target.Emit(opc, symbol.Id);
+                        target.Emit(this, opc, symbol.Id);
                     }
                     else if (isAssignable)
                     {
@@ -194,15 +194,15 @@ namespace Prexonite.Compiler.Ast
             {
                 case UnaryOperator.UnaryNegation:
                     Operand.EmitCode(target);
-                    target.Emit(OpCode.neg);
+                    target.Emit(this, OpCode.neg);
                     break;
                 case UnaryOperator.LogicalNot:
                     Operand.EmitCode(target);
-                    target.Emit(OpCode.not);
+                    target.Emit(this, OpCode.not);
                     break;
                 case UnaryOperator.OnesComplement:
                     Operand.EmitCode(target);
-                    target.Emit(OpCode.neg);
+                    target.Emit(this, OpCode.neg);
                     break;
                 case UnaryOperator.PreDecrement:
                 case UnaryOperator.PreIncrement:

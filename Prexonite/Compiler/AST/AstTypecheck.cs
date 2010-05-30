@@ -75,14 +75,14 @@ namespace Prexonite.Compiler.Ast
                     //ignore failures here
                 }
                 if ((object) T != null && T == PType.Null)
-                    target.Emit(OpCode.check_null);
+                    target.Emit(this, OpCode.check_null);
                 else
-                    target.Emit(OpCode.check_const, constType.TypeExpression);
+                    target.Emit(this, OpCode.check_const, constType.TypeExpression);
             }
             else
             {
                 Type.EmitCode(target);
-                target.Emit(OpCode.check_arg);
+                target.Emit(this, OpCode.check_arg);
             }
         }
 

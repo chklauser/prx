@@ -3245,6 +3245,20 @@ function compiled [is volatile;] = System::Object.ReferenceEquals(""ab"", ""a"" 
             ExpectNamed("compiled", true, new PValue[0]);
         }
 
+        [Test]
+        public void UnlessConditionalExpression()
+        {
+            Compile(@"
+function main()
+{
+    return unless(true) 1 else 2;
+}
+");
+
+            Expect(2,new PValue[0]);
+
+        }
+
         #region Helper
 
         #endregion

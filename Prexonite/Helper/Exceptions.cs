@@ -26,6 +26,7 @@ using System.Collections.Generic;
 using System.Reflection;
 using System.Runtime.Serialization;
 using System.Text;
+using Prexonite.Compiler;
 
 namespace Prexonite
 {
@@ -212,13 +213,20 @@ namespace Prexonite
 
                     builder.Append(func.Meta.GetDefault(PFunction.LogicalIdKey, func.Id).Text);
 
-                    if (fctx.Pointer < code.Count)
+                    if (pointer < code.Count)
                     {
                         builder.Append(" around instruction ");
 
                         builder.Append(pointer);
                         builder.Append(": ");
                         builder.Append(code[pointer]);
+
+                        var sm = SourceMapping.Load(fctx.Implementation);
+                        ISourcePosition pos;
+                        if(sm.TryGetValue(pointer, out pos))
+                        {
+                            builder.AppendFormat(" (in {0}, on line {1}, col {2})", pos.File, pos.Line, pos.Column);
+                        }
                     }
                 }
                 builder.Append("\n");
@@ -273,29 +281,63 @@ namespace Prexonite
         {
             if (pExc == null)
                 throw new ArgumentNullException("pExc");
-            Exception exc = pExc;
-            var lastpExc = pExc;
-            Exception lastExc = pExc;
+
+            //Exception exc = pExc;
+            //Exception lastExc = null;
+
+            //while (
+            //    (exc is PrexoniteRuntimeException || exc is TargetInvocationException) &&
+            //    exc.InnerException != null)
+            //{
+            //    var ipexc = exc as PrexoniteRuntimeException;
+            //    if (ipexc != null)
+            //        lastpExc = ipexc;
+            //    lastExc = exc;
+            //    exc = exc.InnerException;
+            //}
+
+            //if (ReferenceEquals(exc, pExc))
+            //    return pExc; //No unpacking needed
+
+            //if (ReferenceEquals(lastExc, pExc))
+            //    return pExc; //Use lowest prexonite runtime exception
+            //else 
+            //    //Construct new runtime exception
+            //    return
+            //        new PrexoniteRuntimeException(exc.Message, exc, pExc._prexoniteStackTrace);
+
+            PrexoniteRuntimeException lowestRuntimeException;
+            Exception lowestException;
+
+            if (pExc.InnerException == null)
+                return pExc;
+
+            _unpack(pExc, out lowestException, out lowestRuntimeException);
+
+            //Check if something changed
+            if (ReferenceEquals(lowestException, pExc.InnerException) && ReferenceEquals(lowestRuntimeException, pExc))
+                return pExc;
+
+            return new PrexoniteRuntimeException(lowestException.Message, lowestException, lowestRuntimeException._prexoniteStackTrace);
+        }
+
+        private static void _unpack(PrexoniteRuntimeException originalException, out Exception lowestException, out PrexoniteRuntimeException lowestRuntimeException)
+        {
+            Exception exc = originalException;
+            TargetInvocationException targetInvocationExc = null;
+            lowestRuntimeException = originalException;
+
             while (
-                (exc is PrexoniteRuntimeException || exc is TargetInvocationException) &&
-                exc.InnerException != null)
+                    (exc is PrexoniteRuntimeException || (targetInvocationExc = exc as TargetInvocationException) != null)
+                    && exc.InnerException != null)
             {
-                var ipexc = exc as PrexoniteRuntimeException;
-                if (ipexc != null)
-                    lastpExc = ipexc;
-                lastExc = exc;
+                if (targetInvocationExc == null)
+                    lowestRuntimeException = (PrexoniteRuntimeException) exc;
                 exc = exc.InnerException;
             }
 
-            if (ReferenceEquals(exc, pExc))
-                return pExc; //No unpacking needed
-
-            if (ReferenceEquals(lastExc, lastpExc))
-                return lastpExc; //Use lowest prexonite runtime exception
-            else 
-                //Construct new runtime exception
-                return
-                    new PrexoniteRuntimeException(exc.Message, exc, lastpExc._prexoniteStackTrace);
+            lowestRuntimeException = (exc as PrexoniteRuntimeException) ?? lowestRuntimeException;
+            lowestException = exc;
         }
 
         public PrexoniteRuntimeException(

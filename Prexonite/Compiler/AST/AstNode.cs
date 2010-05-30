@@ -29,22 +29,37 @@ using NoDebug = System.Diagnostics.DebuggerNonUserCodeAttribute;
 namespace Prexonite.Compiler.Ast
 {
     [DebuggerStepThrough]
-    public abstract class AstNode : IObject
+    public abstract class AstNode : IObject, ISourcePosition
     {
-        public string File;
-        public int Line;
-        public int Column;
+        private readonly string _file;
+        private readonly int _line;
+        private readonly int _column;
 
         protected AstNode(string file, int line, int column)
         {
-            File = file ?? "unknown~";
-            Line = line;
-            Column = column;
+            _file = file ?? "unknown~";
+            _line = line;
+            _column = column;
         }
 
         internal AstNode(Parser p)
             : this(p.scanner.File, p.t.line, p.t.col)
         {
+        }
+
+        public string File
+        {
+            get { return _file; }
+        }
+
+        public int Line
+        {
+            get { return _line; }
+        }
+
+        public int Column
+        {
+            get { return _column; }
         }
 
         public abstract void EmitCode(CompilerTarget target);

@@ -71,11 +71,11 @@ namespace Prexonite.Compiler.Ast
             if (Key == null)
                 throw new PrexoniteException("AstKeyValuePair.Key must be initialized.");
             if (Value == null)
-                throw new ArgumentNullException("AstKeyValuePair.Value must be initialized.");
+                throw new ArgumentNullException("target");
 
             Key.EmitCode(target);
             Value.EmitCode(target);
-            target.EmitCommandCall(2, Engine.PairAlias);
+            target.EmitCommandCall(this, 2, Engine.PairAlias);
         }
 
         #region IAstExpression Members
@@ -85,7 +85,7 @@ namespace Prexonite.Compiler.Ast
             if (Key == null)
                 throw new PrexoniteException("AstKeyValuePair.Key must be initialized.");
             if (Value == null)
-                throw new ArgumentNullException("AstKeyValuePair.Value must be initialized.");
+                throw new ArgumentNullException("target");
 
             OptimizeNode(target, ref Key);
             OptimizeNode(target, ref Value);

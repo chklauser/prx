@@ -70,7 +70,7 @@ namespace Prexonite.Compiler.Ast
         public void AddExpression(IAstExpression expr)
         {
             //Flatten hierarchy
-            AstLazyLogical lazy = expr as AstLazyLogical;
+            var lazy = expr as AstLazyLogical;
             if (lazy != null && lazy.GetType() == GetType())
             {
                 foreach (IAstExpression cond in lazy.Conditions)
@@ -95,17 +95,17 @@ namespace Prexonite.Compiler.Ast
             if (String.IsNullOrEmpty(targetLabel))
                 throw new ArgumentException(
                     "targetLabel may neither be null nor empty.", "targetLabel");
-            AstLazyLogical logical = cond as AstLazyLogical;
+            var logical = cond as AstLazyLogical;
             if (logical != null)
             {
                 string continueLabel = "Continue\\Lazy\\" + Guid.NewGuid().ToString("N");
                 logical.EmitCode(target, targetLabel, continueLabel);
-                target.EmitLabel(continueLabel);
+                target.EmitLabel(cond, continueLabel);
             }
             else
             {
                 cond.EmitCode(target);
-                target.EmitJumpIfTrue(targetLabel);
+                target.EmitJumpIfTrue(cond, targetLabel);
             }
         }
 
@@ -138,7 +138,7 @@ namespace Prexonite.Compiler.Ast
             if (String.IsNullOrEmpty(alternativeLabel))
                 throw new ArgumentException(
                     "alternativeLabel may neither be null nor empty.", "alternativeLabel");
-            AstLazyLogical logical = cond as AstLazyLogical;
+            var logical = cond as AstLazyLogical;
             if (!isPositive)
             {
                 //Invert if needed
@@ -153,8 +153,8 @@ namespace Prexonite.Compiler.Ast
             else
             {
                 cond.EmitCode(target);
-                target.EmitJumpIfTrue(targetLabel);
-                target.EmitJump(alternativeLabel);
+                target.EmitJumpIfTrue(cond, targetLabel);
+                target.EmitJump(cond, alternativeLabel);
             }
         }
 
@@ -177,17 +177,17 @@ namespace Prexonite.Compiler.Ast
             if (String.IsNullOrEmpty(targetLabel))
                 throw new ArgumentException(
                     "targetLabel may neither be null nor empty.", "targetLabel");
-            AstLazyLogical logical = cond as AstLazyLogical;
+            var logical = cond as AstLazyLogical;
             if (logical != null)
             {
                 string continueLabel = "Continue\\Lazy\\" + Guid.NewGuid().ToString("N");
                 logical.EmitCode(target, continueLabel, targetLabel); //inverted
-                target.EmitLabel(continueLabel);
+                target.EmitLabel(cond, continueLabel);
             }
             else
             {
                 cond.EmitCode(target);
-                target.EmitJumpIfFalse(targetLabel);
+                target.EmitJumpIfFalse(cond, targetLabel);
             }
         }
     }

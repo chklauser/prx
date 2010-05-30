@@ -40,7 +40,7 @@ namespace Prexonite.Compiler.Ast
 
         public override void EmitCode(CompilerTarget target)
         {
-            target.EmitLabel(Label);
+            target.EmitLabel(this, Label);
         }
 
         public override string ToString()

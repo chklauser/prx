@@ -54,12 +54,12 @@ namespace Prexonite.Compiler.Ast
 
             EmitCode(target, trueLabel, falseLabel);
 
-            target.EmitLabel(trueLabel);
-            target.EmitConstant(true);
-            target.EmitJump(evalLabel);
-            target.EmitLabel(falseLabel);
-            target.EmitConstant(false);
-            target.EmitLabel(evalLabel);
+            target.EmitLabel(this, trueLabel);
+            target.EmitConstant(this, true);
+            target.EmitJump(this, evalLabel);
+            target.EmitLabel(this, falseLabel);
+            target.EmitConstant(this, false);
+            target.EmitLabel(this, evalLabel);
         }
 
         //Called by either AstLogicalAnd or AstLogicalOr
@@ -69,22 +69,22 @@ namespace Prexonite.Compiler.Ast
             string nextLabel = @"Next\" + labelNs;
             foreach (IAstExpression expr in Conditions)
             {
-                AstLogicalOr or = expr as AstLogicalOr;
+                var or = expr as AstLogicalOr;
                 if (or != null)
                 {
                     or.EmitCode(target, nextLabel, falseLabel);
                     //Resolve pending jumps to Next
-                    target.EmitLabel(nextLabel);
+                    target.EmitLabel(this, nextLabel);
                     target.FreeLabel(nextLabel);
                     //Future references of to nextLabel will be resolved in the next iteration
                 }
                 else
                 {
                     expr.EmitCode(target);
-                    target.EmitJumpIfFalse(falseLabel);
+                    target.EmitJumpIfFalse(this, falseLabel);
                 }
             }
-            target.EmitJump(trueLabel);
+            target.EmitJump(this, trueLabel);
         }
 
         #region IAstExpression Members
@@ -94,16 +94,16 @@ namespace Prexonite.Compiler.Ast
             expr = null;
             if (Conditions.Count <= 0)
                 return false;
-            LinkedListNode<IAstExpression> node = Conditions.First;
+            var node = Conditions.First;
             do
             {
-                IAstExpression condition = node.Value;
+                var condition = node.Value;
                 OptimizeNode(target, ref condition);
                 node.Value = condition; //Update list of conditions with optimized condition
 
                 if (condition is AstConstant && ((AstConstant) condition).Constant is bool)
                 {
-                    bool result = (bool) (condition as AstConstant).Constant;
+                    var result = (bool) (condition as AstConstant).Constant;
                     if (result) // Expr1 And True And Expr2 = Expr And Expr
                         Conditions.Remove(node);
                     else

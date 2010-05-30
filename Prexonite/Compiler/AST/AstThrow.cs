@@ -67,9 +67,9 @@ namespace Prexonite.Compiler.Ast
                 throw new PrexoniteException("Expression must be assigned.");
 
             Expression.EmitCode(target);
-            target.Emit(OpCode.@throw);
+            target.Emit(this, OpCode.@throw);
             if (!justEffect)
-                target.Emit(OpCode.ldc_null);
+                target.Emit(this, OpCode.ldc_null);
         }
 
         public override string ToString()

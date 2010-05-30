@@ -38,7 +38,7 @@ namespace Prexonite.Compiler.Ast
 
         public override void EmitCode(CompilerTarget target)
         {
-            target.Emit(OpCode.exc);
+            target.Emit(this, OpCode.exc);
         }
 
         #region IAstExpression Members

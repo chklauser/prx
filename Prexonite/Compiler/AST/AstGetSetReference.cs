@@ -64,22 +64,22 @@ namespace Prexonite.Compiler.Ast
             switch (Interpretation)
             {
                 case SymbolInterpretations.Command:
-                    target.Emit(OpCode.ldr_cmd, Id);
+                    target.Emit(this, OpCode.ldr_cmd, Id);
                     break;
                 case SymbolInterpretations.Function:
-                    target.Emit(OpCode.ldr_func, Id);
+                    target.Emit(this, OpCode.ldr_func, Id);
                     break;
                 case SymbolInterpretations.GlobalObjectVariable:
-                    target.Emit(OpCode.ldr_glob, Id);
+                    target.Emit(this, OpCode.ldr_glob, Id);
                     break;
                 case SymbolInterpretations.GlobalReferenceVariable:
-                    target.Emit(OpCode.ldglob, Id);
+                    target.Emit(this, OpCode.ldglob, Id);
                     break;
                 case SymbolInterpretations.LocalObjectVariable:
-                    target.Emit(OpCode.ldr_loc, Id);
+                    target.Emit(this, OpCode.ldr_loc, Id);
                     break;
                 case SymbolInterpretations.LocalReferenceVariable:
-                    target.Emit(OpCode.ldloc, Id);
+                    target.Emit(this, OpCode.ldloc, Id);
                     break;
             }
         }
@@ -100,11 +100,11 @@ namespace Prexonite.Compiler.Ast
                     //Variables are not automatically dereferenced
                 case SymbolInterpretations.GlobalObjectVariable:
                 case SymbolInterpretations.GlobalReferenceVariable:
-                    target.EmitStoreGlobal(Id);
+                    target.EmitStoreGlobal(this, Id);
                     break;
                 case SymbolInterpretations.LocalObjectVariable:
                 case SymbolInterpretations.LocalReferenceVariable:
-                    target.EmitStoreLocal(Id);
+                    target.EmitStoreLocal(this, Id);
                     break;
             }
         }

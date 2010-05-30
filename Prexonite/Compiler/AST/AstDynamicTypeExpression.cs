@@ -115,7 +115,7 @@ namespace Prexonite.Compiler.Ast
         {
             foreach (var expr in Arguments)
                 expr.EmitCode(target);
-            target.Emit(OpCode.newtype, Arguments.Count, TypeId);
+            target.Emit(this, OpCode.newtype, Arguments.Count, TypeId);
         }
 
         #endregion

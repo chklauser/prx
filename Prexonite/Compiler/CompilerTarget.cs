@@ -740,7 +740,10 @@ namespace Prexonite.Compiler
             //Remove the instruction
             code.RemoveRange(index, count);
 
-            //Correct jump targets by...
+            //Adapt source mapping
+            SourceMapping.RemoveRange(index, count);
+
+            //Correct jump targets by...);
             foreach (var ins in code)
             {
                 if ((ins.IsJump || ins.OpCode == OpCode.leave)
@@ -846,6 +849,7 @@ namespace Prexonite.Compiler
         /// <returns>A list of expressions (get symbol) that should be added to the arguments list of any call to the lifted function.</returns>
         internal Func<Parser, IList<IAstExpression>> ToCaptureByValue(IEnumerable<string> keepByRef)
         {
+            keepByRef = new HashSet<string>(keepByRef);
             var toPromote =
                 _outerVariables.Where(outer => !keepByRef.Contains(outer)).ToList();
 
@@ -872,39 +876,54 @@ namespace Prexonite.Compiler
 
         #endregion
 
+        #region Source Mapping
+
+        private readonly SourceMapping _sourceMapping = new SourceMapping();
+
+        public SourceMapping SourceMapping
+        {
+            [DebuggerStepThrough]
+            get { return _sourceMapping; }
+        }
+
+        #endregion
+
         #region Emitting Instructions
 
         #region Low Level
 
-        public void Emit(Instruction ins)
+        public void Emit(ISourcePosition position, Instruction ins)
         {
+            var index = Function.Code.Count;
             if (ins.Id != null)
                 ins.Id = Loader.CacheString(ins.Id);
-            _function.Code.Add(ins);
+
+            Function.Code.Add(ins);
+            SourceMapping.Add(index, position);
         }
 
         [DebuggerStepThrough]
-        public void Emit(OpCode code)
+        public void Emit(ISourcePosition position, OpCode code)
         {
-            Emit(new Instruction(code));
+            Emit(position, new Instruction(code));
         }
 
         [DebuggerStepThrough]
-        public void Emit(OpCode code, string id)
+        public void Emit(ISourcePosition position, OpCode code, string id)
         {
-            Emit(new Instruction(code, id));
+            Emit(position, new Instruction(code, id));
         }
 
         [DebuggerStepThrough]
-        public void Emit(OpCode code, int arguments)
+        public void Emit(ISourcePosition position, OpCode code, int arguments)
         {
-            Emit(new Instruction(code, arguments));
+            Emit(position, new Instruction(code, arguments));
         }
 
         [DebuggerStepThrough]
-        public void Emit(OpCode code, int arguments, string id)
+        public void Emit(ISourcePosition position, OpCode code, int arguments, string id)
         {
-            Emit(new Instruction(code, arguments, id));
+            Emit(position, new Instruction(code, arguments, id));
         }
 
         #endregion //Low Level
@@ -913,33 +932,33 @@ namespace Prexonite.Compiler
 
         #region Constants
 
-        public void EmitConstant(string value)
+        public void EmitConstant(ISourcePosition position, string value)
         {
-            Emit(Instruction.CreateConstant(value));
+            Emit(position, Instruction.CreateConstant(value));
         }
 
         [DebuggerStepThrough]
-        public void EmitConstant(bool value)
+        public void EmitConstant(ISourcePosition position, bool value)
         {
-            Emit(Instruction.CreateConstant(value));
+            Emit(position, Instruction.CreateConstant(value));
         }
 
         [DebuggerStepThrough]
-        public void EmitConstant(double value)
+        public void EmitConstant(ISourcePosition position, double value)
         {
-            Emit(Instruction.CreateConstant(value));
+            Emit(position, Instruction.CreateConstant(value));
         }
 
         [DebuggerStepThrough]
-        public void EmitConstant(int value)
+        public void EmitConstant(ISourcePosition position, int value)
         {
-            Emit(Instruction.CreateConstant(value));
+            Emit(position, Instruction.CreateConstant(value));
         }
 
         [DebuggerStepThrough]
-        public void EmitNull()
+        public void EmitNull(ISourcePosition position)
         {
-            Emit(Instruction.CreateNull());
+            Emit(position, Instruction.CreateNull());
         }
 
         #endregion
@@ -951,24 +970,24 @@ namespace Prexonite.Compiler
         #region Variables
 
         [DebuggerStepThrough]
-        public void EmitLoadLocal(string id)
+        public void EmitLoadLocal(ISourcePosition position, string id)
         {
-            Emit(Instruction.CreateLoadLocal(id));
+            Emit( position,  Instruction.CreateLoadLocal(id));
         }
 
-        public void EmitStoreLocal(string id)
+        public void EmitStoreLocal(ISourcePosition position, string id)
         {
-            Emit(Instruction.CreateStoreLocal(id));
+            Emit(position, Instruction.CreateStoreLocal(id));
         }
 
-        public void EmitLoadGlobal(string id)
+        public void EmitLoadGlobal(ISourcePosition position, string id)
         {
-            Emit(Instruction.CreateLoadGlobal(id));
+            Emit(position, Instruction.CreateLoadGlobal(id));
         }
 
-        public void EmitStoreGlobal(string id)
+        public void EmitStoreGlobal(ISourcePosition position, string id)
         {
-            Emit(Instruction.CreateStoreGlobal(id));
+            Emit(position, Instruction.CreateStoreGlobal(id));
         }
 
         #endregion
@@ -976,69 +995,69 @@ namespace Prexonite.Compiler
         #region Get/Set
 
         [DebuggerStepThrough]
-        public void EmitGetCall(int args, string id, bool justEffect)
+        public void EmitGetCall(ISourcePosition position, int args, string id, bool justEffect)
         {
-            Emit(Instruction.CreateGetCall(args, id, justEffect));
+            Emit(position, Instruction.CreateGetCall(args, id, justEffect));
         }
 
         [DebuggerStepThrough]
-        public void EmitGetCall(int args, string id)
+        public void EmitGetCall(ISourcePosition position, int args, string id)
         {
-            EmitGetCall(args, id, false);
+            EmitGetCall(position, args, id, false);
         }
 
         [DebuggerStepThrough]
-        public void EmitSetCall(int args, string id)
+        public void EmitSetCall(ISourcePosition position, int args, string id)
         {
-            Emit(Instruction.CreateSetCall(args, id));
+            Emit(position, Instruction.CreateSetCall(args, id));
         }
 
         [DebuggerStepThrough]
-        public void EmitStaticGetCall(int args, string callExpr, bool justEffect)
+        public void EmitStaticGetCall(ISourcePosition position, int args, string callExpr, bool justEffect)
         {
-            Emit(Instruction.CreateStaticGetCall(args, callExpr, justEffect));
+            Emit(position, Instruction.CreateStaticGetCall(args, callExpr, justEffect));
         }
 
         [DebuggerStepThrough]
-        public void EmitStaticGetCall(int args, string callExpr)
+        public void EmitStaticGetCall(ISourcePosition position, int args, string callExpr)
         {
-            EmitStaticGetCall(args, callExpr, false);
+            EmitStaticGetCall(position, args, callExpr, false);
         }
 
         [DebuggerStepThrough]
-        public void EmitStaticGetCall(int args, string typeId, string memberId, bool justEffect)
+        public void EmitStaticGetCall(ISourcePosition position, int args, string typeId, string memberId, bool justEffect)
         {
-            Emit(Instruction.CreateStaticGetCall(args, typeId, memberId, justEffect));
+            Emit(position, Instruction.CreateStaticGetCall(args, typeId, memberId, justEffect));
         }
 
         [DebuggerStepThrough]
-        public void EmitStaticGetCall(int args, string typeId, string memberId)
+        public void EmitStaticGetCall(ISourcePosition position, int args, string typeId, string memberId)
         {
-            EmitStaticGetCall(args, typeId, memberId, false);
+            EmitStaticGetCall(position, args, typeId, memberId, false);
         }
 
         [DebuggerStepThrough]
-        public void EmitStaticSetCall(int args, string callExpr)
+        public void EmitStaticSetCall(ISourcePosition position, int args, string callExpr)
         {
-            Emit(Instruction.CreateStaticSetCall(args, callExpr));
+            Emit(position, Instruction.CreateStaticSetCall(args, callExpr));
         }
 
         [DebuggerStepThrough]
-        public void EmitStaticSet(int args, string typeId, string memberId)
+        public void EmitStaticSet(ISourcePosition position, int args, string typeId, string memberId)
         {
-            Emit(Instruction.CreateStaticSetCall(args, typeId, memberId));
+            Emit(position, Instruction.CreateStaticSetCall(args, typeId, memberId));
         }
 
         [DebuggerStepThrough]
-        public void EmitIndirectCall(int args, bool justEffect)
+        public void EmitIndirectCall(ISourcePosition position, int args, bool justEffect)
         {
-            Emit(Instruction.CreateIndirectCall(args, justEffect));
+            Emit(position, Instruction.CreateIndirectCall(args, justEffect));
         }
 
         [DebuggerStepThrough]
-        public void EmitIndirectCall(int args)
+        public void EmitIndirectCall(ISourcePosition position, int args)
         {
-            Emit(Instruction.CreateIndirectCall(args));
+            Emit(position, Instruction.CreateIndirectCall(args));
         }
 
         #endregion //Get/Set
@@ -1046,66 +1065,66 @@ namespace Prexonite.Compiler
         #region Functions/Commands
 
         [DebuggerStepThrough]
-        public void EmitFunctionCall(int args, string id)
+        public void EmitFunctionCall(ISourcePosition position, int args, string id)
         {
-            EmitFunctionCall(args, id, false);
+            EmitFunctionCall(position, args, id, false);
         }
 
         [DebuggerStepThrough]
-        public void EmitFunctionCall(int args, string id, bool justEffect)
+        public void EmitFunctionCall(ISourcePosition position, int args, string id, bool justEffect)
         {
-            Emit(Instruction.CreateFunctionCall(args, id, justEffect));
+            Emit(position, Instruction.CreateFunctionCall(args, id, justEffect));
         }
 
         [DebuggerStepThrough]
-        public void EmitCommandCall(int args, string id)
+        public void EmitCommandCall(ISourcePosition position, int args, string id)
         {
-            EmitCommandCall(args, id, false);
+            EmitCommandCall(position, args, id, false);
         }
 
         [DebuggerStepThrough]
-        public void EmitCommandCall(int args, string id, bool justEffect)
+        public void EmitCommandCall(ISourcePosition position, int args, string id, bool justEffect)
         {
-            Emit(Instruction.CreateCommandCall(args, id, justEffect));
+            Emit(position, Instruction.CreateCommandCall(args, id, justEffect));
         }
 
         #endregion //Functions/Commands
 
         #region Stack manipulation
 
-        public void EmitExchange()
+        public void EmitExchange(ISourcePosition position)
         {
-            Emit(Instruction.CreateExchange());
+            Emit(position, Instruction.CreateExchange());
         }
 
-        public void EmitRotate(int rotations)
+        public void EmitRotate(ISourcePosition position, int rotations)
         {
-            Emit(Instruction.CreateRotate(rotations));
+            Emit(position, Instruction.CreateRotate(rotations));
         }
 
-        public void EmitRotate(int rotations, int instructions)
+        public void EmitRotate(ISourcePosition position, int rotations, int instructions)
         {
-            Emit(Instruction.CreateRotate(rotations, instructions));
+            Emit(position, Instruction.CreateRotate(rotations, instructions));
         }
 
-        public void EmitPop(int values)
+        public void EmitPop(ISourcePosition position, int values)
         {
-            Emit(Instruction.CreatePop(values));
+            Emit(position, Instruction.CreatePop(values));
         }
 
-        public void EmitPop()
+        public void EmitPop(ISourcePosition position)
         {
-            EmitPop(1);
+            EmitPop(position, 1);
         }
 
-        public void EmitDuplicate(int copies)
+        public void EmitDuplicate(ISourcePosition position, int copies)
         {
-            Emit(Instruction.CreateDuplicate(copies));
+            Emit(position, Instruction.CreateDuplicate(copies));
         }
 
-        public void EmitDuplicate()
+        public void EmitDuplicate(ISourcePosition position)
         {
-            Emit(Instruction.CreateDuplicate());
+            Emit(position, Instruction.CreateDuplicate());
         }
 
         #endregion
@@ -1115,107 +1134,107 @@ namespace Prexonite.Compiler
         public const string LabelSymbolPostfix = @"\label\assembler";
         private readonly List<Instruction> _unresolvedInstructions = new List<Instruction>();
 
-        public void EmitLeave(int address)
+        public void EmitLeave(ISourcePosition position, int address)
         {
             var ins = new Instruction(OpCode.leave, address);
-            Emit(ins);
+            Emit(position, ins);
         }
 
-        public void EmitJump(int address)
+        public void EmitJump(ISourcePosition position, int address)
         {
             var ins = Instruction.CreateJump(address);
-            Emit(ins);
+            Emit(position, ins);
         }
 
-        public void EmitLeave(int address, string label)
+        public void EmitLeave(ISourcePosition position, int address, string label)
         {
             var ins = new Instruction(OpCode.leave, address, label);
-            Emit(ins);
+            Emit(position, ins);
         }
 
-        public void EmitJump(int address, string label)
+        public void EmitJump(ISourcePosition position, int address, string label)
         {
             var ins = Instruction.CreateJump(address, label);
-            Emit(ins);
+            Emit(position, ins);
         }
 
-        public void EmitJumpIfTrue(int address)
+        public void EmitJumpIfTrue(ISourcePosition position, int address)
         {
-            Emit(Instruction.CreateJumpIfTrue(address));
+            Emit(position, Instruction.CreateJumpIfTrue(address));
         }
 
-        public void EmitJumpIfTrue(int address, string label)
+        public void EmitJumpIfTrue(ISourcePosition position, int address, string label)
         {
-            Emit(Instruction.CreateJumpIfTrue(address, label));
+            Emit(position, Instruction.CreateJumpIfTrue(address, label));
         }
 
-        public void EmitJumpIfFalse(int address)
+        public void EmitJumpIfFalse(ISourcePosition position, int address)
         {
-            Emit(Instruction.CreateJumpIfFalse(address));
+            Emit(position, Instruction.CreateJumpIfFalse(address));
         }
 
-        public void EmitJumpIfFalse(int address, string label)
+        public void EmitJumpIfFalse(ISourcePosition position, int address, string label)
         {
-            Emit(Instruction.CreateJumpIfFalse(address, label));
+            Emit(position, Instruction.CreateJumpIfFalse(address, label));
         }
 
-        public void EmitLeave(string label)
+        public void EmitLeave(ISourcePosition position, string label)
         {
             int address;
             if (TryResolveLabel(label, out address))
             {
-                EmitLeave(address, label);
+                EmitLeave(position, address, label);
             }
             else
             {
                 var ins = new Instruction(OpCode.leave, label);
                 _unresolvedInstructions.Add(ins);
-                Emit(ins);
+                Emit(position, ins);
             }
         }
 
-        public void EmitJump(string label)
+        public void EmitJump(ISourcePosition position, string label)
         {
             int address;
             if (TryResolveLabel(label, out address))
             {
-                EmitJump(address, label);
+                EmitJump(position, address, label);
             }
             else
             {
                 var ins = Instruction.CreateJump(label);
                 _unresolvedInstructions.Add(ins);
-                Emit(ins);
+                Emit(position, ins);
             }
         }
 
-        public void EmitJumpIfTrue(string label)
+        public void EmitJumpIfTrue(ISourcePosition position, string label)
         {
             int address;
             if (TryResolveLabel(label, out address))
             {
-                EmitJumpIfTrue(address, label);
+                EmitJumpIfTrue(position, address, label);
             }
             else
             {
                 var ins = Instruction.CreateJumpIfTrue(label);
                 _unresolvedInstructions.Add(ins);
-                Emit(ins);
+                Emit(position, ins);
             }
         }
 
-        public void EmitJumpIfFalse(string label)
+        public void EmitJumpIfFalse(ISourcePosition position, string label)
         {
             int address;
             if (TryResolveLabel(label, out address))
             {
-                EmitJumpIfFalse(address, label);
+                EmitJumpIfFalse(position, address, label);
             }
             else
             {
                 var ins = Instruction.CreateJumpIfFalse(label);
                 _unresolvedInstructions.Add(ins);
-                Emit(ins);
+                Emit(position, ins);
             }
         }
 
@@ -1240,10 +1259,10 @@ namespace Prexonite.Compiler
         }
 
         [DebuggerStepThrough]
-        public string EmitLabel(int address)
+        public string EmitLabel(ISourcePosition position, int address)
         {
             var label = "L\\" + Guid.NewGuid().ToString("N");
-            EmitLabel(label, address);
+            EmitLabel(position, label, address);
             return label;
         }
 
@@ -1254,10 +1273,11 @@ namespace Prexonite.Compiler
         /// <para>If the last instruction was a jump (conditional or unconditional) to this label, it 
         /// is considered redundant and will be removed.</para>
         /// </summary>
+        /// <param name="position">The position in source code where this label originated.</param>
         /// <param name="label">The label's symbolic name.</param>
         /// <param name="address">The label's address.</param>
         //[DebuggerStepThrough]
-        public void EmitLabel(string label, int address)
+        public void EmitLabel(ISourcePosition position, string label, int address)
         {
             //string partialResolve = null;
 
@@ -1324,15 +1344,15 @@ namespace Prexonite.Compiler
         }
 
         [DebuggerStepThrough]
-        public void EmitLabel(string label)
+        public void EmitLabel(ISourcePosition position, string label)
         {
-            EmitLabel(label, Code.Count);
+            EmitLabel(position, label, Code.Count);
         }
 
         [DebuggerStepThrough]
-        public string EmitLabel()
+        public string EmitLabel(ISourcePosition position)
         {
-            return EmitLabel(Code.Count);
+            return EmitLabel(position, Code.Count);
         }
 
         /// <summary>
@@ -1388,6 +1408,9 @@ namespace Prexonite.Compiler
             if (Loader.Options.UseIndicesLocally)
                 _byIndex();
 #endif
+
+            if(Loader.Options.StoreSourceInformation)
+                SourceMapping.Store(Function);
         }
 
         internal void _DetermineSharedNames()

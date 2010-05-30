@@ -28,16 +28,23 @@ macro ast\macro(type)
         if(not target.OuterVariables.Contains(inv))
             target.RequireOuterVariable(inv);
         
-        var getInv = ast("GetSetSymbol",SI.get,inv,SI.lref);
-        nodeFile = ast("GetSetMemberAccess", SI.get, getInv, "File");
-        nodeLine = ast("GetSetMemberAccess", SI.get, getInv, "Line");
-        nodeColumn = ast("GetSetMemberAccess", SI.get, getInv, "Column");
+        var getInv = ast\withPos("GetSetSymbol",
+            macroInvocation.File, macroInvocation.Line,macroInvocation.Column ,SI.get,inv,SI.lref);
+        nodeFile = ast\withPos("GetSetMemberAccess",
+            macroInvocation.File, macroInvocation.Line,macroInvocation.Column, SI.get, getInv, "File");
+        nodeLine = ast\withPos("GetSetMemberAccess",
+            macroInvocation.File, macroInvocation.Line,macroInvocation.Column, SI.get, getInv, "Line");
+        nodeColumn = ast\withPos("GetSetMemberAccess",
+            macroInvocation.File, macroInvocation.Line,macroInvocation.Column, SI.get, getInv, "Column");
     }
     else 
     {
-        nodeFile = ast("Constant",macroInvocation.File);
-        nodeLine = ast("Constant",macroInvocation.Line);
-        nodeColumn = ast("Constant",macroInvocation.Column);
+        nodeFile = ast\withPos("Constant",
+            macroInvocation.File, macroInvocation.Line,macroInvocation.Column,macroInvocation.File);
+        nodeLine = ast\withPos("Constant",
+            macroInvocation.File, macroInvocation.Line,macroInvocation.Column,macroInvocation.Line);
+        nodeColumn = ast\withPos("Constant",
+            macroInvocation.File, macroInvocation.Line,macroInvocation.Column,macroInvocation.Column);
     }
     
     astCall.Arguments.AddRange([type,nodeFile, nodeLine, nodeColumn ]);

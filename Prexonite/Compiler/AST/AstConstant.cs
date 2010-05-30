@@ -70,26 +70,26 @@ namespace Prexonite.Compiler.Ast
         public override void EmitCode(CompilerTarget target)
         {
             if (Constant == null)
-                target.EmitNull();
+                target.EmitNull(this);
             else
                 switch (Type.GetTypeCode(Constant.GetType()))
                 {
                     case TypeCode.Boolean:
-                        target.EmitConstant((bool) Constant);
+                        target.EmitConstant(this, (bool)Constant);
                         break;
                     case TypeCode.Int16:
                     case TypeCode.Byte:
                     case TypeCode.Int32:
                     case TypeCode.UInt16:
                     case TypeCode.UInt32:
-                        target.EmitConstant((int) Constant);
+                        target.EmitConstant(this, (int)Constant);
                         break;
                     case TypeCode.Single:
                     case TypeCode.Double:
-                        target.EmitConstant((double) Constant);
+                        target.EmitConstant(this, (double)Constant);
                         break;
                     case TypeCode.String:
-                        target.EmitConstant((string) Constant);
+                        target.EmitConstant(this, (string)Constant);
                         break;
                     default:
                         throw new PrexoniteException(

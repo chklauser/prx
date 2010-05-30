@@ -80,7 +80,7 @@ namespace Prexonite.Compiler.Ast
         {
             if (Elements.Count == 0)
             {
-                target.Emit(OpCode.newobj, 0, "Hash");
+                target.Emit(this, OpCode.newobj, 0, "Hash");
             }
             else
             {
@@ -98,7 +98,7 @@ namespace Prexonite.Compiler.Ast
                                 "]"));
                     element.EmitCode(target);
                 }
-                target.EmitStaticGetCall(Elements.Count, "Hash", "Create", false);
+                target.EmitStaticGetCall(this, Elements.Count, "Hash", "Create", false);
             }
         }
     }

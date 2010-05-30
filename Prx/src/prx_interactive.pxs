@@ -264,7 +264,7 @@ executeGlobal:
         {
 executeStatement:
             //First, try to compile the code as an expression
-            buffer.AppendFormat(" function {0} does println = \"{1} = \" + ( {2} ) ; ", funcId, shortened(raw).Escape, raw);
+            buffer.AppendFormat(" function {0} does println = \"{1} = \" + ( \n{2}\n ) ; ", funcId, shortened(raw).Escape, raw);
             if(Not tryLoad)
             {
                 //should that fail, try to compile the code as a statement
@@ -272,7 +272,7 @@ executeStatement:
                 var evalCode = lastCode;
 
                 funcId = nextFuncId;
-                buffer.AppendFormat(" function {0} {{ {1} ; }} ", funcId, raw);
+                buffer.AppendFormat(" function {0} {{ \n{1}\n ; }} ", funcId, raw);
 
                 if(Not tryLoad)
                 {

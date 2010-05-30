@@ -76,11 +76,13 @@ namespace Prexonite.Compiler.Ast
 
         public override void EmitCode(CompilerTarget target)
         {
-            
-            foreach (IAstExpression element in Elements)
+            var lastPosition = (ISourcePosition) this;
+            foreach (var element in Elements)
+            {
                 element.EmitCode(target);
-            target.EmitCommandCall(Elements.Count, Engine.ListAlias);
-            //target.EmitStaticGetCall(Elements.Count, "List", "Create", false);
+                lastPosition = element;
+            }
+            target.EmitCommandCall(lastPosition, Elements.Count, Engine.ListAlias);
         }
     }
 }

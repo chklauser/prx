@@ -67,24 +67,24 @@ namespace Prexonite.Compiler.Ast
             switch (ReturnVariant)
             {
                 case ReturnVariant.Exit:
-                    target.Emit(OpCode.ret_exit);
+                    target.Emit(this, OpCode.ret_exit);
                     break;
                 case ReturnVariant.Set:
                     if (Expression == null)
                         throw new PrexoniteException("Return assignment requires an expression.");
                     Expression.EmitCode(target);
-                    target.Emit(OpCode.ret_set);
+                    target.Emit(this, OpCode.ret_set);
                     break;
                 case ReturnVariant.Continue:
                     if (Expression != null)
                     {
                         Expression.EmitCode(target);
-                        target.Emit(OpCode.ret_set);
+                        target.Emit(this, OpCode.ret_set);
                     }
-                    target.Emit(OpCode.ret_continue);
+                    target.Emit(this, OpCode.ret_continue);
                     break;
                 case ReturnVariant.Break:
-                    target.Emit(OpCode.ret_break);
+                    target.Emit(this, OpCode.ret_break);
                     break;
             }
         }
@@ -105,11 +105,11 @@ namespace Prexonite.Compiler.Ast
             {
                 //Cannot be tail call optimized
                 Expression.EmitCode(target);
-                target.Emit(OpCode.ret_value);
+                target.Emit(this, OpCode.ret_value);
             }
             else //Will be tail called
             {
-                if (symbol != null && check_if_stackless_function_recursion_is_possible(target, symbol))
+                if (symbol != null && _isStacklessRecursionPossible(target, symbol))
                 {
                     // specialized approach
                     // self(arg1, arg2, ..., argn) => { param1 = arg1; param2 = arg2; ... paramn = argn; goto 0; }
@@ -128,16 +128,16 @@ namespace Prexonite.Compiler.Ast
                     //overwrite parameters
                     for (var i = symbolParams.Count - 1; i >= 0; i--)
                     {
-                        target.EmitStoreLocal(symbolParams[i]);
+                        target.EmitStoreLocal(this, symbolParams[i]);
                     }
 
-                    target.EmitJump(0);
+                    target.EmitJump(this, 0);
                 }
                 else
                 {
                     //NOTE: VM tail calls are not used at the moment.
                     Expression.EmitCode(target);
-                    target.Emit(OpCode.ret_value);
+                    target.Emit(this, OpCode.ret_value);
                     return;
 
                     // general apporach
@@ -207,7 +207,7 @@ namespace Prexonite.Compiler.Ast
             }
         }
 
-        private static bool check_if_stackless_function_recursion_is_possible(CompilerTarget target, AstGetSetSymbol symbol)
+        private static bool _isStacklessRecursionPossible(CompilerTarget target, AstGetSetSymbol symbol)
         {
             if (symbol.Interpretation != SymbolInterpretations.Function) //must be function call
                 return false;
@@ -232,12 +232,16 @@ namespace Prexonite.Compiler.Ast
             //              expr2
             var retif = new AstCondition(File, Line, Column, cond.Condition);
 
-            var ret1 = new AstReturn(File, Line, Column, ReturnVariant);
-            ret1.Expression = cond.IfExpression;
+            var ret1 = new AstReturn(File, Line, Column, ReturnVariant)
+            {
+                Expression = cond.IfExpression
+            };
             retif.IfBlock.Add(ret1);
 
-            var ret2 = new AstReturn(File, Line, Column, ReturnVariant);
-            ret2.Expression = cond.ElseExpression;
+            var ret2 = new AstReturn(File, Line, Column, ReturnVariant)
+            {
+                Expression = cond.ElseExpression
+            };
             //not added to the condition
 
             retif.EmitCode(target); //  if( cond )

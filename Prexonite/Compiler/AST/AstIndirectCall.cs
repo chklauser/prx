@@ -102,13 +102,13 @@ namespace Prexonite.Compiler.Ast
 
         protected override void EmitGetCode(CompilerTarget target, bool justEffect)
         {
-            target.EmitIndirectCall(Arguments.Count, justEffect);
+            target.EmitIndirectCall(this, Arguments.Count, justEffect);
         }
 
         protected override void EmitSetCode(CompilerTarget target)
         {
             //Indirect set does not have a return value, therefore justEffect is true
-            target.EmitIndirectCall(Arguments.Count, true);
+            target.EmitIndirectCall(this, Arguments.Count, true);
         }
 
         public override bool TryOptimize(CompilerTarget target, out IAstExpression expr)
