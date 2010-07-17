@@ -24,8 +24,10 @@
 
 
 using System;
+using System.IO;
 using System.Reflection;
 using Prexonite.Compiler;
+using Prexonite.Compiler.Cil;
 using Prexonite.Types;
 
 namespace Prexonite.Commands.Core
@@ -33,7 +35,7 @@ namespace Prexonite.Commands.Core
     /// <summary>
     /// Implementation of the LoadAssembly command which dynamically loads an assembly from a file.
     /// </summary>
-    public sealed class LoadAssembly : PCommand
+    public sealed class LoadAssembly : PCommand, ICilCompilerAware
     {
         private LoadAssembly()
         {
@@ -54,10 +56,15 @@ namespace Prexonite.Commands.Core
         /// <returns>Null</returns>
         public override PValue Run(StackContext sctx, PValue[] args)
         {
+            return RunStatically(sctx, args);
+        }
+
+        public static PValue RunStatically(StackContext sctx, PValue[] args)
+        {
             if (sctx == null)
                 throw new ArgumentNullException("sctx");
             if (args == null)
-                args = new PValue[] {};
+                args = new PValue[] { };
 
             var eng = sctx.ParentEngine;
             foreach (var arg in args)
@@ -66,7 +73,11 @@ namespace Prexonite.Commands.Core
                 var ldrOptions = new LoaderOptions(sctx.ParentEngine, sctx.ParentApplication);
                 ldrOptions.ReconstructSymbols = false;
                 var ldr = sctx as Loader ?? new Loader(ldrOptions);
-                eng.RegisterAssembly(Assembly.LoadFile(ldr.ApplyLoadPaths(path).FullName));
+                var asmFile = ldr.ApplyLoadPaths(path);
+                if (asmFile == null)
+                    throw new FileNotFoundException("Prexonite can't load assembly located in " + path);
+
+                eng.RegisterAssembly(Assembly.LoadFile(asmFile.FullName));
             }
 
             return PType.Null.CreatePValue();
@@ -80,5 +91,29 @@ namespace Prexonite.Commands.Core
         {
             get { return false; }
         }
+
+        #region Implementation of ICilCompilerAware
+
+        /// <summary>
+        /// Asses qualification and preferences for a certain instruction.
+        /// </summary>
+        /// <param name="ins">The instruction that is about to be compiled.</param>
+        /// <returns>A set of <see cref="CompilationFlags"/>.</returns>
+        public CompilationFlags CheckQualification(Instruction ins)
+        {
+            return CompilationFlags.PreferRunStatically;
+        }
+
+        /// <summary>
+        /// Provides a custom compiler routine for emitting CIL byte code for a specific instruction.
+        /// </summary>
+        /// <param name="state">The compiler state.</param>
+        /// <param name="ins">The instruction to compile.</param>
+        public void ImplementInCil(CompilerState state, Instruction ins)
+        {
+            throw new NotSupportedException();
+        }
+
+        #endregion
     }
 }

@@ -30,6 +30,7 @@ using System.Diagnostics;
 using System.IO;
 using System.Text;
 using Prexonite.Compiler.Cil;
+using Prexonite.Types;
 using NoDebug = System.Diagnostics.DebuggerNonUserCodeAttribute;
 
 #endregion
@@ -318,7 +319,11 @@ namespace Prexonite
                     buffer.Append(',');
                 }
                 buffer.Length -= 1;
-                writer.WriteLine(buffer);
+                buffer.Append(' ');
+                writer.Write(buffer);
+#if DEBUG || Verbose || true
+                writer.WriteLine();
+#endif
                 buffer.Length = 0;
             }
 
@@ -341,12 +346,13 @@ namespace Prexonite
                     if (buffer[idxBeginning] != '@')
                         buffer.Insert(idxBeginning, ' ');
                     buffer.AppendLine();
+                    appendAddress(buffer, ++idx, digits);
 #else
                     //buffer.Append(' ');
                     buffer.AppendLine();
+                    appendAddress(buffer, ++idx, digits);
 
 #endif
-                    appendAddress(buffer, ++idx, digits);
                     writer.Write(buffer.ToString());
                     buffer.Length = 0;
                 }
@@ -393,7 +399,9 @@ namespace Prexonite
                 writer.Write(buffer.ToString());
                 writer.Write(")");
             }
+#if DEBUG || Verbose || true
             writer.WriteLine();
+#endif
 
             #endregion
 
@@ -435,7 +443,7 @@ namespace Prexonite
                 map[mapping.Value] = mapping.Key;
             for (var i = 0; i < map.Length; i++)
             {
-                writer.Write(map[i]);
+                writer.Write(StringPType.ToIdOrLiteral(map[i]));
                 if (i < map.Length - 1)
                     writer.Write(',');
             }
@@ -444,7 +452,9 @@ namespace Prexonite
             writer.WriteLine();
 #endif
             writer.Write("]");
+#if DEBUG || Verbose
             writer.WriteLine();
+#endif
             //End of Metadata
 
             #endregion
@@ -453,10 +463,17 @@ namespace Prexonite
 
             //write code
             writer.Write("{asm{");
+#if DEBUG || Verbose || true
             writer.WriteLine();
+#endif
             StoreCode(writer);
+
+#if DEBUG || Verbose || true
             writer.WriteLine("}}");
             writer.WriteLine();
+#else
+            writer.Write("}}");
+#endif
 
             #endregion
         }

@@ -8,7 +8,7 @@ namespace Prx.Tests
     [TestFixture]
     public class Storage : Compiler
     {
-        private const string storedShouldBeEqual =
+        private const string StoredShouldBeEqual =
             "Since the in-memory and the restored application are the same, they should" +
             " result in the same serialized form.";
 
@@ -31,7 +31,7 @@ namespace Prx.Tests
 
             Assert.IsTrue(
                 Engine.StringsAreEqual(stored, restored),
-                storedShouldBeEqual);
+                StoredShouldBeEqual);
         }
 
         [Test]
@@ -66,7 +66,7 @@ Add System::Xml To Imports;
 
             Assert.IsTrue(
                 Engine.StringsAreEqual(stored, restored),
-                storedShouldBeEqual);
+                StoredShouldBeEqual);
         }
 
         [Test]
@@ -143,5 +143,34 @@ coroutine mapf(ref f, xs) does
             }
         }
 #endif
+
+        [Test]
+        public void MetaEntryIntegerNotString()
+        {
+            var ldr = new Loader(engine, target);
+            const string numberToStore = "1234567890";
+            ldr.LoadFromString(@"
+meta_entry " + numberToStore + @";
+");
+            foreach (var error in ldr.Errors)
+                Console.WriteLine("ERROR: {0}", error);
+            Assert.AreEqual(0, ldr.ErrorCount, "no errors expected");
+            var stored = ldr.Options.TargetApplication.StoreInString();
+            Console.WriteLine("//== 1st Store");
+            Console.WriteLine(stored);
+            Assert.IsFalse(stored.Contains("\""));
+
+
+            var reldr = new Loader(engine, new Application());
+            reldr.LoadFromString(stored);
+            var restored = ldr.Options.TargetApplication.StoreInString();
+            Console.WriteLine("//== 2nd Store");
+            Console.WriteLine(restored);
+
+            Assert.AreEqual(stored, restored);
+            Assert.AreEqual(numberToStore, ldr.Options.TargetApplication.Meta["meta_entry"].Text);
+            Assert.AreEqual(numberToStore, reldr.Options.TargetApplication.Meta["meta_entry"].Text);
+        }
+
     }
 }

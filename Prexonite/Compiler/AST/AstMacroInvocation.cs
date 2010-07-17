@@ -150,7 +150,16 @@ namespace Prexonite.Compiler.Ast
 
             //Execute macro (argument nodes of the invocation node are passed as arguments to the macro)
             var arguments = Arguments.Select(target.Loader.CreateNativePValue).ToArray();
-            return macro.IndirectCall(target.Loader, arguments);
+            var parentApplication = macroFunc.ParentApplication;
+            try
+            {
+                parentApplication._SuppressInitialization = true;
+                return macro.IndirectCall(target.Loader, arguments);
+            }
+            finally
+            {
+                parentApplication._SuppressInitialization = false;
+            }
         }
 
         public void ReleaseAfterEmit(string temporaryVariable)

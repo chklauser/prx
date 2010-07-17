@@ -4,6 +4,7 @@ using System;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.Globalization;
+using System.Linq;
 using System.Text;
 using System.Text.RegularExpressions;
 using Prexonite.Commands;
@@ -297,48 +298,59 @@ namespace Prexonite.Types
             var reservedWords = new[]
             {
                 #region list of reserved words
-                "mod",
-                "is",
-                "not",
-                "enabled",
-                "disabled",
-                "function",
-                "inline",
-                "true",
-                "false",
+                "add",
+                "and",
+                "as",
                 "asm",
-                "ref",
+                "break",
+                "build",
+                "command",
+                "continue",
+                "coroutine",
+                "catch",
                 "declare",
+                "disabled",
                 "do",
                 "does",
-                "build",
-                "return",
-                "in",
-                "to",
-                "add",
-                "continue",
-                "break",
-                "or",
-                "and",
-                "xor",
-                "label",
-                "goto",
-                "local",
-                "static",
-                "var",
-                "null",
+                "enabled",
+                "else",
+                "false",
+                "finally",
                 "for",
                 "foreach",
-                "while",
-                "until",
+                "function",
+                "goto",
                 "if",
-                "unless"
+                "in",
+                "inline",
+                "is",
+                "label",
+                "lazy",
+                "let",
+                "local",
+                "macro",
+                "mod",
+                "not",
+                "null",
+                "new",
+                "or",
+                "ref",
+                "return",
+                "static",
+                "to",
+                "true",
+                "try",
+                "throw",
+                "unless",
+                "until",
+                "using",
+                "var",
+                "while",
+                "xor",
+                "yield",
                 #endregion
             };
-            foreach (var reservedWord in reservedWords)
-                if (Engine.StringsAreEqual(word, reservedWord))
-                    return true;
-            return false;
+            return reservedWords.Any(reservedWord => Engine.StringsAreEqual(word, reservedWord));
         }
 
         #endregion

@@ -1016,5 +1016,6 @@ var d as e, f;
 
             Assert.IsTrue(e.Id == "d","Symbols e and f must point to variable d");
         }
+
     }
 }

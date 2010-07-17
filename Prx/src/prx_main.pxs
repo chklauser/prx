@@ -170,7 +170,7 @@ function prx\main(args)
 	    	    println("  * " + sourceFile);
 	    	    
 	    	//The next call compiles 'sourceFile' into 'app'
-			ldr.LoadFromFile(sourceFile);
+			ldr.RequireFromFile(sourceFile); //require only loads files that haven't been loaded before.
 		}
 		if(verbose) 
 		    println("Loading of sources done.");

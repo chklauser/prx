@@ -69,7 +69,7 @@ namespace Prexonite
             if (args == null)
                 args = new PValue[] {};
 
-            if (!suppressInitialization)
+            if (!(suppressInitialization || implementation.ParentApplication._SuppressInitialization))
                 implementation.ParentApplication.EnsureInitialization(parentEngine, implementation);
 
             _parentEngine = parentEngine;

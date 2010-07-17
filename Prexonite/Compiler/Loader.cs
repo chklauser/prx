@@ -558,6 +558,13 @@ namespace Prexonite.Compiler
                 _throwCannotFindScriptFile(path);
                 return;
             }
+            LoadFromFile(file);
+        }
+
+        public void LoadFromFile(FileInfo file)
+        {
+            if (file == null)
+                throw new ArgumentNullException("file");
             _loadedFiles.Add(file.FullName);
             _loadPaths.Push(file.DirectoryName);
             using (Stream str = new FileStream(file.FullName, FileMode.Open))
@@ -575,6 +582,21 @@ namespace Prexonite.Compiler
             }
 
             _loadPaths.Pop();
+        }
+
+        public void RequireFromFile(string path)
+        {
+            var file = ApplyLoadPaths(path);
+            if (file == null)
+            {
+                _throwCannotFindScriptFile(path);
+                return;
+            }
+
+            if(_loadedFiles.Contains(file.FullName))
+                return;
+
+            LoadFromFile(file);
         }
 
         private static void _throwCannotFindScriptFile(string path)
@@ -797,7 +819,7 @@ namespace Prexonite.Compiler
                         if (_loadedFiles.Contains(file.FullName))
                             allLoaded = false;
                         else
-                            LoadFromFile(file.FullName);
+                            LoadFromFile(file);
                     }
                     return
                         PType.Bool.CreatePValue(allLoaded);

@@ -3259,6 +3259,20 @@ function main()
 
         }
 
+        [Test]
+        public void BuildBlockDoesNotTriggerInitialization()
+        {
+            Compile(@"
+var flag = true;
+
+function write does print(var args);
+
+build does write(""nothing"");
+");
+
+            Assert.IsNull(target.Variables["flag"].Value.Value);
+        }
+
         #region Helper
 
         #endregion

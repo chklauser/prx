@@ -168,7 +168,7 @@ namespace Prexonite.Compiler
         /// <summary>
         /// The boolean macro meta key indicates that a function is a macro and to be executed at compile time. 
         /// </summary>
-        public const string MacroMetaKey = "macro";
+        public const string MacroMetaKey = @"\macro";
 
         public bool IsMacro
         {

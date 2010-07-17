@@ -24,8 +24,10 @@
 using System;
 using System.Collections.Generic;
 using System.Diagnostics;
+using System.Globalization;
 using System.Text;
 using Prexonite.Types;
+using System.Linq;
 
 namespace Prexonite
 {
@@ -452,25 +454,48 @@ namespace Prexonite
             switch (_mtype)
             {
                 case Type.List:
-                    buffer.Append("{ ");
+                    buffer.Append("{");
                     foreach (var entry in _list)
                     {
                         if (entry == null)
                             continue;
                         entry.ToString(buffer);
-                        buffer.Append(", ");
+                        buffer.Append(",");
                     }
                     if (_list.Length > 0)
-                        buffer.Remove(buffer.Length - 2, 2);
-                    buffer.Append(" }");
+                        buffer.Remove(buffer.Length - 1, 1);
+                    buffer.Append("}");
                     break;
                 case Type.Switch:
                     buffer.Append(_switch.ToString());
                     break;
                 case Type.Text:
-                    buffer.Append(StringPType.ToIdOrLiteral(_text));
+                    //Special case: allow integer numbers
+                    long num;
+                    if (_text.Length <= LengthOfInt32MaxValue && _looksLikeNumber(_text) && Int64.TryParse(_text, out num))
+                    {
+                        var format = NumberFormatInfo.InvariantInfo;
+                        var numStr = num.ToString(format);
+                        Debug.Assert(_looksLikeNumber(numStr));
+                        buffer.Append(numStr);
+                    }
+                    else
+                    {
+                        buffer.Append(StringPType.ToIdOrLiteral(_text));
+                    }
                     break;
             }
+        }
+
+        private const int LengthOfInt32MaxValue = 10+1; //sign allowed
+
+        private static bool _looksLikeNumber(string text)
+        {
+            var end = Math.Min(text.Length, LengthOfInt32MaxValue);
+            for(var i = 0; i < end; i++)
+                if(!Char.IsDigit(text[i]))
+                    return false;
+            return true;
         }
 
         /// <summary>
