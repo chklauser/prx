@@ -70,7 +70,7 @@ namespace Prexonite.Commands.List
 
         public CompilationFlags CheckQualification(Instruction ins)
         {
-            return CompilationFlags.PreferRunStatically;
+            return CompilationFlags.PrefersRunStatically;
         }
 
         public void ImplementInCil(CompilerState state, Instruction ins)

@@ -121,10 +121,10 @@ namespace Prexonite.Commands.Math
             switch (ins.Arguments)
             {
                 case 1:
-                    return CompilationFlags.PreferCustomImplementation;
+                    return CompilationFlags.PrefersCustomImplementation;
                 case 0:
                 default:
-                    return CompilationFlags.PreferRunStatically;
+                    return CompilationFlags.PrefersRunStatically;
             }
         }
 

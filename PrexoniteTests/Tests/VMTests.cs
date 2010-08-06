@@ -3273,6 +3273,85 @@ build does write(""nothing"");
             Assert.IsNull(target.Variables["flag"].Value.Value);
         }
 
+        [Test]
+        public void NestedVariableShadowing()
+        {
+            Compile(@"
+function main(x,y)
+{
+    var a = x;
+    function innerShadow
+    {
+        new var a = y; //variable is new-declared, it should not capture the outer variable
+        return a;
+    }
+    function innerCapture
+    {
+        a = y;
+        return a;
+    }
+
+    var t1 = a;
+    var k1 = innerShadow;
+    var t2 = a;
+    var k2 = innerCapture;
+    var t3 = a;
+
+    return ""$t1,$k1; $t2,$k2; $t3"";
+}
+");
+
+            Expect("x,y; x,y; y","x","y");
+        }
+
+        [Test]
+        public void DeclareNewVarTopLevel()
+        {
+            Compile(
+                @"
+function main()
+{
+    var buffer = new System::Text::StringBuilder;
+    function print(s) does buffer.Append(s);
+    new var xs = [ 5,7,9,11,13,15 ];
+    var fs = [];
+    foreach(var x in xs)
+    {
+        fs[] = y => ""($(x)->$(y))"";
+        print(""$(new var x)."");
+    }
+
+    var i = 19;
+    foreach(var f in fs)
+        print(f.(i--));
+    return buffer.ToString;
+}
+");
+
+            const string expected = "5.7.9.11.13.15.(5->19)(7->18)(9->17)(11->16)(13->15)(15->14)";
+            Expect(expected);
+        }
+
+        [Test]
+        public void ObjectCreationFallback()
+        {
+            Compile(@"
+declare function make_foo as create_foo;
+
+function main(x,y)
+{
+    var a = new foo(x);
+    function create_bar(z) = ""bar($z)"";
+    var b = new bar(y);
+    return a + b;
+}
+
+function make_foo(z) = ""foo($z)"";
+");
+
+            Expect("foo(x)bar(y)", "x", "y");
+        }
+
         #region Helper
 
         #endregion

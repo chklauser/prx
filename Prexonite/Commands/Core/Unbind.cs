@@ -25,6 +25,7 @@
 
 using System;
 using System.Collections.Generic;
+using System.Linq;
 using Prexonite.Compiler.Cil;
 using Prexonite.Types;
 
@@ -124,16 +125,11 @@ namespace Prexonite.Commands.Core
 
             if (arg.Type is ObjectPType && arg.Value is PVariable)
             {
-                id = null;
                 //Variable reference
-                foreach (var pair in fctx.LocalVariables)
-                {
-                    if (ReferenceEquals(pair.Value, arg.Value))
-                    {
-                        id = pair.Key;
-                        break;
-                    }
-                }
+                id = (from pair in fctx.LocalVariables
+                      where ReferenceEquals(pair.Value, arg.Value)
+                      select pair.Key
+                     ).FirstOrDefault();
             }
             else
             {
@@ -143,8 +139,7 @@ namespace Prexonite.Commands.Core
             PVariable existing;
             if (id != null && fctx.LocalVariables.TryGetValue(id, out existing))
             {
-                var unbound = new PVariable();
-                unbound.Value = existing.Value;
+                var unbound = new PVariable {Value = existing.Value};
                 fctx.ReplaceLocalVariable(id, unbound);
             }
 
@@ -169,6 +164,7 @@ namespace Prexonite.Commands.Core
 
         public void ImplementInCil(CompilerState state, Instruction ins)
         {
+            
             throw new NotSupportedException();
         }
 

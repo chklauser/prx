@@ -54,7 +54,7 @@ namespace Prexonite.Commands.List
 
         public CompilationFlags CheckQualification(Instruction ins)
         {
-            return CompilationFlags.PreferRunStatically;
+            return CompilationFlags.PrefersRunStatically;
         }
 
         public static PValue RunStatically(StackContext sctx, PValue[] args)

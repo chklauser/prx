@@ -128,7 +128,7 @@ namespace Prexonite.Commands.Core
 
         CompilationFlags ICilCompilerAware.CheckQualification(Instruction ins)
         {
-            return CompilationFlags.PreferCustomImplementation;
+            return CompilationFlags.PrefersCustomImplementation;
         }
 
         void ICilCompilerAware.ImplementInCil(CompilerState state, Instruction ins)

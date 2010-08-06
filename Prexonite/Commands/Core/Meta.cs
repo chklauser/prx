@@ -50,7 +50,7 @@ namespace Prexonite.Commands.Core
 
         CompilationFlags ICilCompilerAware.CheckQualification(Instruction ins)
         {
-            return CompilationFlags.HasCustomWorkaround;
+            return CompilationFlags.RequiresCustomImplementation;
         }
 
         void ICilCompilerAware.ImplementInCil(CompilerState state, Instruction ins)

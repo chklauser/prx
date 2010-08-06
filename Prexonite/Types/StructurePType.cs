@@ -411,7 +411,7 @@ namespace Prexonite.Types
         /// <returns>A set of <see cref="CompilationFlags"/>.</returns>
         CompilationFlags ICilCompilerAware.CheckQualification(Instruction ins)
         {
-            return CompilationFlags.PreferCustomImplementation;
+            return CompilationFlags.PrefersCustomImplementation;
         }
 
         private static readonly MethodInfo GetStructurePType = typeof (PType).GetProperty("Structure").GetGetMethod();

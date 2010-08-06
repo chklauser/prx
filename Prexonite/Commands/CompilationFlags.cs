@@ -60,19 +60,19 @@ namespace Prexonite
 
         //Shortcuts
         /// <summary>
-        /// Composed. Indicates that the subject is compatible but provides a static method for early binding.
+        /// Composed. Indicates that the subject is compatible and provides a static method for early binding.
         /// </summary>
-        PreferRunStatically = IsCompatible | HasRunStatically,
+        PrefersRunStatically = IsCompatible | HasRunStatically,
 
         /// <summary>
         /// Composed. Indicates that the subject is compatible but provides a more efficient custom implementation via <see cref="ICilCompilerAware.ImplementInCil"/>.
         /// </summary>
-        PreferCustomImplementation = IsCompatible | HasCustomImplementation,
+        PrefersCustomImplementation = IsCompatible | HasCustomImplementation,
 
         /// <summary>
         /// Composed. Indicates that the subject is not compatible but provides a workaround via <see cref="ICilCompilerAware.ImplementInCil"/>.
         /// </summary>
-        HasCustomWorkaround = IsIncompatible | HasCustomImplementation,
+        RequiresCustomImplementation = IsIncompatible | HasCustomImplementation,
 
         /// <summary>
         /// Composed. Indicates that the function uses dynamic features (requires an interpreted caller) but apart from that is compatible to cil compilation.

@@ -121,9 +121,9 @@ namespace Prexonite.Commands.Math
                 case 0:
                 case 1:
                 case 2:
-                    return CompilationFlags.PreferCustomImplementation;
+                    return CompilationFlags.PrefersCustomImplementation;
                 default:
-                    return CompilationFlags.PreferRunStatically;
+                    return CompilationFlags.PrefersRunStatically;
             }
         }
 

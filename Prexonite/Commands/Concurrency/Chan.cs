@@ -45,7 +45,7 @@ namespace Prexonite.Commands.Concurrency
 
         CompilationFlags ICilCompilerAware.CheckQualification(Instruction ins)
         {
-            return CompilationFlags.PreferCustomImplementation;
+            return CompilationFlags.PrefersCustomImplementation;
         }
 
         private static readonly ConstructorInfo _channelCtor = typeof (Channel).GetConstructor(new Type[] {});

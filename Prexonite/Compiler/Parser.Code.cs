@@ -277,16 +277,27 @@ namespace Prexonite.Compiler
         {
             /* Applies to:
              *  var id;
+             *  new var id;
              *  static id;
-             *  var interpretation id;
-             *  static interpretation id;
+             *  new static id;
+             *  ref id;
+             *  new ref id;
+             *  static ref id;
+             *  new static ref id;
              */
 
             scanner.ResetPeek();
+            //current might optionally be `new`
+            Token c = la;
+            if (c.kind == _new)
+                c = scanner.Peek();
+
             //current la = static | var | ref
-            if (la.kind != _static && la.kind != _var && la.kind != _ref)
+            if (c.kind != _var && c.kind != _ref && c.kind != _static)
                 return false;
-            var c = scanner.Peek();
+            c = scanner.Peek();
+
+            //must not terminate here
             if (c.kind == _semicolon || c.kind == _comma) //id expected
                 return false;
 
@@ -439,7 +450,7 @@ namespace Prexonite.Compiler
             {
                 requirePar = true;
                 current = next;
-                next = scanner.Peek();
+                 next = scanner.Peek();
 
                 //Check for lambda expression without arguments
                 if (current.kind == _rpar && next.kind == _implementation)
@@ -546,55 +557,27 @@ namespace Prexonite.Compiler
             return target.GenerateLocalId(prefix);
         }
 
-        // Not currently used
-
         private void SmartDeclareLocal(string id, SymbolInterpretations kind)
         {
-            SmartDeclareLocal(id, id, kind);
+            SmartDeclareLocal(id, id, kind, false);
         }
 
-        private void SmartDeclareLocal(string logicalId, string physicalId, SymbolInterpretations kind)
+        private void SmartDeclareLocal(string id, SymbolInterpretations kind, bool isOverrideDecl)
         {
-            if (isOuterVariable(physicalId))
+            SmartDeclareLocal(id, id, kind, isOverrideDecl);
+        }
+
+        private void SmartDeclareLocal(string logicalId, string physicalId, SymbolInterpretations kind, bool isOverrideDecl)
+        {
+            if (!isOverrideDecl && !target.Function.Variables.Contains(physicalId) && isOuterVariable(physicalId))
             {
                 target.RequireOuterVariable(physicalId);
                 target.Declare(kind, logicalId, physicalId);
             }
             else
+            {
                 target.Define(kind, logicalId, physicalId);
-        }
-
-/*
-        private bool mightBeVariableReference(Token n, Token m)
-        {
-            return isId(n) || ((n.kind == _var || n.kind == _ref) && isId(m));
-        }
-*/
-
-        private Token d,
-                      dla;
-
-/*
-        private  bool isTypeExpr()
-        {
-            return la.kind == _tilde || isQualification();
-        }
-*/
-
-        [DebuggerStepThrough]
-        private bool isQualification()
-        {
-            return la.kind == _doublecolon || isNs();
-        }
-
-        [DebuggerStepThrough]
-        private bool isNs()
-        {
-            scanner.ResetPeek();
-            d = la;
-            dla = scanner.Peek();
-
-            return isId(d) && dla.kind == _doublecolon;
+            }
         }
 
         [DebuggerStepThrough]
@@ -620,9 +603,20 @@ namespace Prexonite.Compiler
             return c.kind == _id || c.kind == _anyId;
         }
 
+        private bool _isNotNewDecl()
+        {
+            if (la.kind != _new)
+                return false;
+
+            scanner.ResetPeek();
+            var varTok = scanner.Peek();
+
+            return varTok.kind != _var && varTok.kind != _ref;
+        }
+
         #endregion
 
-        private IEnumerable<string> let_bindings(CompilerTarget ft)
+        private static IEnumerable<string> let_bindings(CompilerTarget ft)
         {
             var lets = new HashSet<string>(Engine.DefaultStringComparer);
             for (var ct = ft; ct != null; ct = ct.ParentTarget)
@@ -630,7 +624,7 @@ namespace Prexonite.Compiler
             return lets;
         }
 
-        private void mark_as_let(PFunction f, string local)
+        private static void mark_as_let(PFunction f, string local)
         {
             f.Meta[PFunction.LetKey] = (MetaEntry)
                                        f.Meta[PFunction.LetKey].List
@@ -895,6 +889,41 @@ namespace Prexonite.Compiler
         #endregion
 
         #endregion
+
+        private void _fallbackObjectCreation(Parser parser, IAstType type, out IAstExpression expr, out ArgumentsProxy args)
+        {
+            var typeExpr = type as AstDynamicTypeExpression;
+            SymbolEntry fallbackSymbol;
+            if (//is a type expression we understand (Parser currently only generates dynamic type expressions)
+                //  constant type expressions are recognized during optimization
+                typeExpr != null 
+                //happens in case of parse failure
+                && typeExpr.TypeId != null
+                //there is no such thing as a parametrized struct
+                && typeExpr.Arguments.Count == 0 
+                //built-in types take precedence
+                && !ParentEngine.PTypeRegistry.Contains(typeExpr.TypeId) 
+                //in case neither the built-in type nor the struct constructor exists, 
+                //  stay with built-in types for predictibility
+                && target.Symbols.TryGetValue("create_" + typeExpr.TypeId, out fallbackSymbol))
+            {
+                var call = new AstGetSetSymbol(parser, PCall.Get, fallbackSymbol.Id, fallbackSymbol.Interpretation);
+                expr = call;
+                args = call.Arguments;
+            }
+            else if(type != null)
+            {
+                var creation = new AstObjectCreation(parser, type);
+                expr = creation;
+                args = creation.Arguments;
+            } 
+            else
+            {
+                SemErr("Failed to transform object creation expression.");
+                expr = new AstNull(this);
+                args = new ArgumentsProxy(new List<IAstExpression>());
+            }
+        }
     }
 }
 // ReSharper restore InconsistentNaming

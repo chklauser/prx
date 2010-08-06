@@ -27,6 +27,7 @@ using System;
 using System.Collections.Generic;
 using System.Reflection;
 using System.Reflection.Emit;
+using Prexonite.Commands;
 using Prexonite.Types;
 
 #endregion
@@ -65,8 +66,8 @@ namespace Prexonite.Compiler.Cil
                 throw new ArgumentNullException("il");
 
             _source = source;
-            this._linking = linking;
-            this._pass = pass;
+            _linking = linking;
+            _pass = pass;
             _targetEngine = targetEngine;
             _il = il;
             _indexMap = new Dictionary<int, string>();
@@ -364,7 +365,7 @@ namespace Prexonite.Compiler.Cil
                     Il.Emit(OpCodes.Ldarg_3);
                     break;
                 default:
-                    if (index < byte.MaxValue)
+                    if (index < Byte.MaxValue)
                         Il.Emit(OpCodes.Ldarg_S, (byte) index);
                     else
                         Il.Emit(OpCodes.Ldarg, index);
@@ -394,7 +395,7 @@ namespace Prexonite.Compiler.Cil
                     Il.Emit(OpCodes.Ldloc_3);
                     break;
                 default:
-                    if (index < byte.MaxValue)
+                    if (index < Byte.MaxValue)
                         Il.Emit(OpCodes.Ldloc_S, (byte) index);
                     else
                         Il.Emit(OpCodes.Ldloc, index);
@@ -424,7 +425,7 @@ namespace Prexonite.Compiler.Cil
                     Il.Emit(OpCodes.Stloc_3);
                     break;
                 default:
-                    if (index < byte.MaxValue)
+                    if (index < Byte.MaxValue)
                         Il.Emit(OpCodes.Stloc_S, (byte) index);
                     else
                         Il.Emit(OpCodes.Stloc, index);
@@ -599,7 +600,6 @@ namespace Prexonite.Compiler.Cil
         private static readonly MethodInfo Type_GetTypeFromHandle =
             typeof (Type).GetMethod("GetTypeFromHandle", new[] {typeof (RuntimeTypeHandle)});
 
-        
 
         #region Early bound command call
 
@@ -637,11 +637,11 @@ namespace Prexonite.Compiler.Cil
             if (run == null)
                 throw new PrexoniteException
                     (
-                    string.Format("{0} does not provide a static method RunStatically(StackContext, PValue[])", target));
+                    String.Format("{0} does not provide a static method RunStatically(StackContext, PValue[])", target));
             if (run.ReturnType != typeof (PValue))
                 throw new PrexoniteException
                     (
-                    string.Format("{0}'s RunStatically method does not return PValue but {1}.", target, run.ReturnType));
+                    String.Format("{0}'s RunStatically method does not return PValue but {1}.", target, run.ReturnType));
             FillArgv(argc);
 
             EmitLoadLocal(SctxLocal);
@@ -659,6 +659,207 @@ namespace Prexonite.Compiler.Cil
         {
             for (var i = 0; i < argc; i++)
                 Il.Emit(OpCodes.Pop);
+        }
+
+        public void MakePTypeFromExpr(string expr)
+        {
+            EmitLoadLocal(SctxLocal);
+            Il.Emit(OpCodes.Ldstr, expr);
+            Il.EmitCall(OpCodes.Call, Runtime.ConstructPTypeAsPValueMethod, null);
+        }
+
+        public bool TryGetStaticallyLinkedFunction(string id, out MethodInfo targetMethod)
+        {
+            targetMethod = null;
+            return (Linking & FunctionLinking.Static) == FunctionLinking.Static &&
+                   Pass.Implementations.TryGetValue(id, out targetMethod);
+        }
+
+        public bool TryCreateCompileTimeValue(ref CompileTimeValue compileTimeValue, Instruction ins)
+        {
+            var argc = ins.Arguments;
+            var id = ins.Id;
+
+            switch (ins.OpCode)
+            {
+                case OpCode.invalid:
+                    break;
+                case OpCode.nop:
+                    break;
+                case OpCode.ldc_int:
+                    compileTimeValue.Interpretation = CompileTimeInterpretation.Int;
+                    compileTimeValue.Value = ins.Arguments;
+                    return true;
+                case OpCode.ldc_real:
+                    break;
+                case OpCode.ldc_bool:
+                    compileTimeValue.Interpretation = CompileTimeInterpretation.Bool;
+                    compileTimeValue.Value = argc != 0;
+                    return true;
+                case OpCode.ldc_string:
+                    compileTimeValue.Interpretation = CompileTimeInterpretation.String;
+                    compileTimeValue.Value = id;
+                    return true;
+                case OpCode.ldc_null:
+                    compileTimeValue.Interpretation = CompileTimeInterpretation.Null;
+                    compileTimeValue.Value = null;
+                    return true;
+                case OpCode.ldr_loc:
+                    compileTimeValue.Interpretation = CompileTimeInterpretation.LocalVariableReference;
+                    compileTimeValue.Value = id;
+                    return true;
+                case OpCode.ldr_loci:
+                    compileTimeValue.Interpretation = CompileTimeInterpretation.LocalVariableReference;
+                    compileTimeValue.Value = IndexMap[argc];
+                    return true;
+                case OpCode.ldr_glob:
+                    compileTimeValue.Interpretation = CompileTimeInterpretation.GlobalVariableReference;
+                    compileTimeValue.Value = id;
+                    return true;
+                case OpCode.ldr_func:
+                    compileTimeValue.Interpretation = CompileTimeInterpretation.FunctionReference;
+                    compileTimeValue.Value = id;
+                    return true;
+                case OpCode.ldr_cmd:
+                    compileTimeValue.Interpretation = CompileTimeInterpretation.CommandReference;
+                    compileTimeValue.Value = id;
+                    return true;
+                case OpCode.ldr_app:
+                    break;
+                case OpCode.ldr_eng:
+                    break;
+                case OpCode.ldr_type:
+                    break;
+                case OpCode.ldloc:
+                    break;
+                case OpCode.stloc:
+                    break;
+                case OpCode.ldloci:
+                    break;
+                case OpCode.stloci:
+                    break;
+                case OpCode.ldglob:
+                    break;
+                case OpCode.stglob:
+                    break;
+                case OpCode.newobj:
+                    break;
+                case OpCode.newtype:
+                    break;
+                case OpCode.newclo:
+                    break;
+                case OpCode.newcor:
+                    break;
+                case OpCode.incloc:
+                    break;
+                case OpCode.incglob:
+                    break;
+                case OpCode.decloc:
+                    break;
+                case OpCode.decglob:
+                    break;
+                case OpCode.incloci:
+                    break;
+                case OpCode.decloci:
+                    break;
+                case OpCode.neg:
+                    break;
+                case OpCode.not:
+                    break;
+                case OpCode.add:
+                    break;
+                case OpCode.sub:
+                    break;
+                case OpCode.mul:
+                    break;
+                case OpCode.div:
+                    break;
+                case OpCode.mod:
+                    break;
+                case OpCode.pow:
+                    break;
+                case OpCode.ceq:
+                    break;
+                case OpCode.cne:
+                    break;
+                case OpCode.clt:
+                    break;
+                case OpCode.cle:
+                    break;
+                case OpCode.cgt:
+                    break;
+                case OpCode.cge:
+                    break;
+                case OpCode.or:
+                    break;
+                case OpCode.and:
+                    break;
+                case OpCode.xor:
+                    break;
+                case OpCode.check_const:
+                    break;
+                case OpCode.check_arg:
+                    break;
+                case OpCode.check_null:
+                    break;
+                case OpCode.cast_const:
+                    break;
+                case OpCode.cast_arg:
+                    break;
+                case OpCode.get:
+                    break;
+                case OpCode.set:
+                    break;
+                case OpCode.sget:
+                    break;
+                case OpCode.sset:
+                    break;
+                case OpCode.func:
+                    break;
+                case OpCode.cmd:
+                    break;
+                case OpCode.indarg:
+                    break;
+                case OpCode.tail:
+                    break;
+                case OpCode.indloc:
+                    break;
+                case OpCode.indloci:
+                    break;
+                case OpCode.indglob:
+                    break;
+                case OpCode.jump:
+                    break;
+                case OpCode.jump_t:
+                    break;
+                case OpCode.jump_f:
+                    break;
+                case OpCode.ret_exit:
+                    break;
+                case OpCode.ret_value:
+                    break;
+                case OpCode.ret_break:
+                    break;
+                case OpCode.ret_continue:
+                    break;
+                case OpCode.ret_set:
+                    break;
+                case OpCode.@throw:
+                    break;
+                case OpCode.@try:
+                    break;
+                case OpCode.leave:
+                    break;
+                case OpCode.exc:
+                    break;
+                case OpCode.pop:
+                    break;
+                case OpCode.dup:
+                    break;
+                case OpCode.rot:
+                    break;
+            }
+            return false;
         }
     }
 }

@@ -296,7 +296,7 @@ namespace Prexonite.Commands.Concurrency
 
         CompilationFlags ICilCompilerAware.CheckQualification(Instruction ins)
         {
-            return CompilationFlags.PreferRunStatically;
+            return CompilationFlags.PrefersRunStatically;
         }
 
         void ICilCompilerAware.ImplementInCil(CompilerState state, Instruction ins)

@@ -253,7 +253,6 @@ Primary<out IAstExpression expr>
     (.  _popLexerState(); .)			(.	expr = blockExpr; .)
 |   Constant<out expr>
 |   CoroutineCreation<out expr>
-|   ObjectCreation<out expr>
 |   ListLiteral<out expr>
 |	HashLiteral<out expr>
 |	LoopExpr<out expr>
@@ -262,11 +261,10 @@ Primary<out IAstExpression expr>
 |   IF(isLambdaExpression())
     LambdaExpression<out expr>
 |   LazyExpression<out expr>
-|
-    (   lpar Expr<out expr> rpar
-    |   GetInitiator<out complex, out declared>
+|   lpar Expr<out expr> rpar
+|   IF(_isNotNewDecl()) ObjectCreation<out expr>
+|   GetInitiator<out complex, out declared>
                                         (.  expr = complex; .)
-    )
 |   LPopExpr lpar Expr<out expr>        (.  //This is a hack that makes string interpolation with expressions possible
                                             //The non-verbal token "LPopExpr" (has no character representation) is 
                                             //returned by the lexer if the parser has to treat an expression in a special
@@ -328,10 +326,11 @@ LoopExpr<out IAstExpression expr>
 											
 
 ObjectCreation<out IAstExpression expr>
-                                        (.  IAstType type; expr = null; .)
+                                        (.  IAstType type; expr = null;
+                                            ArgumentsProxy args; .)
 =
-    new TypeExpr<out type>              (.  AstObjectCreation creation = new AstObjectCreation(this, type); .)
-    Arguments<creation.Arguments>       (.  expr = creation; .)
+    new TypeExpr<out type>              (.  _fallbackObjectCreation(this, type, out expr, out args); .)
+    Arguments<args>
 .
 
 CoroutineCreation<out IAstExpression expr>

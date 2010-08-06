@@ -337,7 +337,7 @@ FunctionDefinition<out PFunction func>
                                                 }
                                                 SmartDeclareLocal(localId, SymbolInterpretations.LocalReferenceVariable);
                                                 foreach(var alias in funcAliases)
-                                                        SmartDeclareLocal(alias, localId, SymbolInterpretations.LocalReferenceVariable);
+                                                        SmartDeclareLocal(alias, localId, SymbolInterpretations.LocalReferenceVariable, false);
                                                 
                                             }
                                             

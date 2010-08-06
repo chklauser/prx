@@ -51,9 +51,6 @@ namespace Prexonite.Compiler.Ast
 
         #endregion
 
-        public PCall Call;
-
-
         protected AstGetSet(string file, int line, int column, PCall call)
             : base(file, line, column)
         {
@@ -95,6 +92,12 @@ namespace Prexonite.Compiler.Ast
         {
             get { return 0; }
         }
+
+        /// <summary>
+        /// <para>Indicates whether this node uses get or set syntax</para>
+        /// <para>(set syntax involves an equal sign (=); get syntax does not)</para>
+        /// </summary>
+        public virtual PCall Call { get; set; }
 
         protected void EmitArguments(CompilerTarget target)
         {

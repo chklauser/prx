@@ -128,6 +128,7 @@
     <Compile Include="Commands\Core\Unbind.cs" />
     <Compile Include="Commands\CoroutineCommand.cs" />
     <Compile Include="Commands\DelegatePCommand.cs" />
+    <Compile Include="Commands\IExtensionCommand.cs" />
     <Compile Include="Commands\ICilCompilerAware.cs" />
     <Compile Include="Commands\Lazy\AsThunkCommand.cs" />
     <Compile Include="Commands\Lazy\ForceCommand.cs" />
@@ -195,6 +196,7 @@
     <Compile Include="Compiler\Ast\AstGetSet.cs" />
     <Compile Include="Compiler\Ast\AstBinaryOperator.cs" />
     <Compile Include="Compiler\Ast\AstGetSetMemberAccess.cs" />
+    <Compile Include="Compiler\Ast\AstGetSetNewDecl.cs" />
     <Compile Include="Compiler\Ast\AstGetSetReference.cs" />
     <Compile Include="Compiler\Ast\AstHashLiteral.cs" />
     <Compile Include="Compiler\Ast\AstIndirectCall.cs" />

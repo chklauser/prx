@@ -43,7 +43,7 @@ SimpleStatement<AstBlock block>
 	ExplicitGoTo<block>
 |   Declaration
 |   IF ( isVariableDeclaration() ) 
-        VariableDeclarationStatement
+        VariableDeclarationStatement<block>
 |   GetSetComplex<block>
 |   Return<block>
 |   Throw<block>
@@ -214,15 +214,20 @@ GetInitiator<out AstGetSet complex, out bool isDeclaration>
                                         .)
 .
 
-VariableDeclaration<out AstGetSetSymbol variable>
-                                        (.  variable = null; string staticId = null; .)
-=                                       (.  string id = null; SymbolInterpretations kind = SymbolInterpretations.Undefined; .)
+VariableDeclaration<out AstGetSet variable, bool isNewDecl>
+                                        (.  variable = null; 
+                                            string staticId = null; 
+                                            string id = null;
+                                            bool isOverrideDecl = false;
+                                        .)
+=                                       (.  SymbolInterpretations kind = SymbolInterpretations.Undefined; .)
 (   (  var                              (.  kind = SymbolInterpretations.LocalObjectVariable; .)
     |  ref                              (.  kind = SymbolInterpretations.LocalReferenceVariable; .)
     )
-    
+    [   new                             (.  isOverrideDecl = true; .)
+    ]
     Id<out id>                          (.  
-                                            SmartDeclareLocal(id, kind);
+                                            SmartDeclareLocal(id, kind, isOverrideDecl);
                                             staticId = id; 
                                         .)
 |   static                              (.  kind = SymbolInterpretations.GlobalObjectVariable; .)
@@ -237,13 +242,27 @@ VariableDeclaration<out AstGetSetSymbol variable>
 )                                       (.  variable = InterpretationIsObjectVariable(kind) ?
 												new AstGetSetSymbol(this, PCall.Get, staticId, kind)
 											:
-												new AstGetSetReference(this, PCall.Get, staticId, InterpretAsObjectVariable(kind)); .)
+												new AstGetSetReference(this, PCall.Get, staticId, InterpretAsObjectVariable(kind)); 
+                                                
+                                            if(isNewDecl)
+                                                variable = new AstGetSetNewDecl(this)
+                                                {
+                                                    Expression = variable,
+                                                    Id = staticId
+                                                };
+                                        .)
 .
 
 Variable<out AstGetSet complex, out bool isDeclared>
-                                        (. string id; isDeclared = false; complex = null; .)
-=                                       (. AstGetSetSymbol variable; .)
-    VariableDeclaration<out variable>   (. isDeclared = true; complex = variable; .)
+                                        (.  string id; 
+                                            isDeclared = false; 
+                                            complex = null; 
+                                            bool isNewDecl = false;
+                                        .)
+=
+    [   new                             (.  isNewDecl = true; .)
+    ]
+    VariableDeclaration<out complex, isNewDecl>    (. isDeclared = true; .)
 |   Id<out id>                          (.  
                                             if(target.Symbols.ContainsKey(id))
                                             {
@@ -269,11 +288,23 @@ Variable<out AstGetSet complex, out bool isDeclared>
                                         .)
 .
 
-VariableDeclarationStatement
-=                                       (.  AstGetSetSymbol variable; .)
-    VariableDeclaration<out variable>
-                                        //No additional action is required. This is just a platform
-                                        //  for variable declarations without assignment.
+VariableDeclarationStatement<AstBlock block>
+=                                       (.  AstGetSet variable;
+                                            bool isNewDecl = false;
+                                        .)
+    [ new                               (.  isNewDecl = true; .)
+    ]
+    VariableDeclaration<out variable, isNewDecl>
+                                        (.  if(isNewDecl)
+                                            {
+                                                block.Add(variable);
+                                            }
+                                            else
+                                            {
+                                                //No additional action is required. This is just a platform
+                                                //  for variable declarations without assignment.
+                                            }
+                                        .)
 .
 
 Function<out AstGetSet function>

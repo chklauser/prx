@@ -135,74 +135,9 @@ namespace Prexonite.Compiler.Ast
                 }
                 else
                 {
-                    //NOTE: VM tail calls are not used at the moment.
                     Expression.EmitCode(target);
                     target.Emit(this, OpCode.ret_value);
                     return;
-
-                    // general apporach
-                    // getset(arg1,arg2,..,argn) => tail(->getset, arg1, arg2,..,argn)
-/*
-                    int addrReference, addrCall;
-
-                    //Emit code for the reference
-                    addrReference = target.Code.Count;
-                    reference.EmitCode(target);
-
-                    //Emit arguments
-                    foreach(IAstExpression argument in icbr.Arguments)
-                        argument.EmitCode(target);
-
-                    //Emit actual call
-                    addrCall = target.Code.Count;
-                    target.Emit(OpCode.tail, icbr.Arguments.Count);
-
-                    if(symbol == null)
-                        return; //don't add cil compiler hint, as there is no more efficient implementation
-
-                    //Compose CIL compiler hint.
-                    MetaEntry[] entry = new MetaEntry[Loader.TailCallHintLength];
-                    entry[0] = Loader.TailCallHintKey;
-
-                    entry[Loader.TailCallHintReferenceIndex] = addrReference.ToString();
-                    entry[Loader.TailCallHintCallIndex] = addrCall.ToString();
-
-                    if (symbol.Interpretation == SymbolInterpretations.Function)
-                        entry[Loader.TailCallHintTypeIndex] = "func";
-                    else if (symbol.Interpretation == SymbolInterpretations.Command)
-                        entry[Loader.TailCallHintTypeIndex] = "cmd";
-                    else 
-                        return; //don't add cil compiler hint as there is no more efficient implementation for non-engine calls (e.g., indirect calls)
-                    entry[Loader.TailCallHintSymbolIndex] = symbol.Id;
-
-                    //Add hint to the meta table
-                    if (target.Meta.ContainsKey(Loader.CilHintsKey))
-                        target.Meta.AddTo(Loader.CilHintsKey, (MetaEntry)entry);
-                    else
-                        target.Meta[Loader.CilHintsKey] = (MetaEntry)new MetaEntry[] { (MetaEntry)entry };
-
-                    //Add hooks for address changes
-                    target.AddressChangeHooks.Add(addrReference,
-                        delegate(int newAddr)
-                        {
-                            foreach(MetaEntry hintEntry in target.Meta[Loader.CilHintsKey].List)
-                            {
-                                MetaEntry[] hint = hintEntry.List;
-                                if(hint[0] == Loader.TailCallHintKey && hint[Loader.TailCallHintReferenceIndex].Text == addrReference.ToString())
-                                    hint[Loader.TailCallHintReferenceIndex] = newAddr.ToString();
-                            }
-                        });
-                    target.AddressChangeHooks.Add(addrCall,
-                        delegate(int newAddr)
-                        {
-                            foreach (MetaEntry hintEntry in target.Meta[Loader.CilHintsKey].List)
-                            {
-                                MetaEntry[] hint = hintEntry.List;
-                                if (hint[0] == Loader.TailCallHintKey && hint[Loader.TailCallHintCallIndex].Text == addrCall.ToString())
-                                    hint[Loader.TailCallHintCallIndex] = newAddr.ToString();
-                            }
-                        });
-//*/
                 }
             }
         }

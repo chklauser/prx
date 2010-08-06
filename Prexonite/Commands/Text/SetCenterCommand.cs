@@ -115,7 +115,7 @@ namespace Prexonite.Commands.Text
         /// <returns>A set of <see cref="CompilationFlags"/>.</returns>
         CompilationFlags ICilCompilerAware.CheckQualification(Instruction ins)
         {
-            return CompilationFlags.PreferRunStatically;
+            return CompilationFlags.PrefersRunStatically;
         }
 
         /// <summary>

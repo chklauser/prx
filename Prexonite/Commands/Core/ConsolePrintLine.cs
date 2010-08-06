@@ -94,9 +94,9 @@ namespace Prexonite.Commands.Core
             {
                 case 0:
                 case 1:
-                    return CompilationFlags.PreferCustomImplementation;
+                    return CompilationFlags.PrefersCustomImplementation;
                 default:
-                    return CompilationFlags.PreferRunStatically;
+                    return CompilationFlags.PrefersRunStatically;
             }
         }
 

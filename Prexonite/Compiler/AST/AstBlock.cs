@@ -76,7 +76,6 @@ namespace Prexonite.Compiler.Ast
 
         #endregion
 
-
         private List<AstNode> _statements = new List<AstNode>();
 
         public List<AstNode> Statements

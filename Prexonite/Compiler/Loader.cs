@@ -125,33 +125,33 @@ namespace Prexonite.Compiler
         [DebuggerStepThrough]
         public sealed class FunctionTargetsIterator
         {
-            private readonly Loader outer;
+            private readonly Loader _outer;
 
             internal FunctionTargetsIterator(Loader outer)
             {
-                this.outer = outer;
+                _outer = outer;
             }
 
             public int Count
             {
-                get { return outer._functionTargets.Count; }
+                get { return _outer._functionTargets.Count; }
             }
 
             public CompilerTarget this[string key]
             {
-                get { return outer._functionTargets[key]; }
+                get { return _outer._functionTargets[key]; }
             }
 
             public CompilerTarget this[PFunction key]
             {
-                get { return outer._functionTargets[key.Id]; }
+                get { return _outer._functionTargets[key.Id]; }
             }
 
             public void Remove(CompilerTarget target)
             {
                 var funcId = target.Function.Id;
-                if (outer._functionTargets.ContainsKey(funcId))
-                    outer._functionTargets.Remove(funcId);
+                if (_outer._functionTargets.ContainsKey(funcId))
+                    _outer._functionTargets.Remove(funcId);
             }
         }
 
@@ -191,11 +191,11 @@ namespace Prexonite.Compiler
         [DebuggerStepThrough]
         public class CompilerHooksIterator : ICollection<CompilerHook>
         {
-            private readonly List<CompilerHook> lst;
+            private readonly List<CompilerHook> _lst;
 
             internal CompilerHooksIterator(Loader outer)
             {
-                lst = outer._compilerHooks;
+                _lst = outer._compilerHooks;
             }
 
             #region ICollection<CompilerHook> Members
@@ -210,7 +210,7 @@ namespace Prexonite.Compiler
             {
                 if (item == null)
                     throw new ArgumentNullException("item");
-                lst.Add(item);
+                _lst.Add(item);
             }
 
             /// <summary>
@@ -219,7 +219,7 @@ namespace Prexonite.Compiler
             /// <param name="transformation">A managed transformation.</param>
             public void Add(AstTransformation transformation)
             {
-                lst.Add(new CompilerHook(transformation));
+                _lst.Add(new CompilerHook(transformation));
             }
 
             /// <summary>
@@ -230,9 +230,9 @@ namespace Prexonite.Compiler
             {
                 if (transformation.Type.ToBuiltIn() == PType.BuiltIn.Object &&
                     transformation.Value is AstTransformation)
-                    lst.Add(new CompilerHook((AstTransformation) transformation.Value));
+                    _lst.Add(new CompilerHook((AstTransformation) transformation.Value));
                 else
-                    lst.Add(new CompilerHook(transformation));
+                    _lst.Add(new CompilerHook(transformation));
             }
 
             ///<summary>
@@ -242,7 +242,7 @@ namespace Prexonite.Compiler
             ///<exception cref="T:System.NotSupportedException">The <see cref="T:System.Collections.Generic.ICollection`1"></see> is read-only. </exception>
             public void Clear()
             {
-                lst.Clear();
+                _lst.Clear();
             }
 
             ///<summary>
@@ -258,7 +258,7 @@ namespace Prexonite.Compiler
             {
                 if (item == null)
                     return false;
-                return lst.Contains(item);
+                return _lst.Contains(item);
             }
 
             ///<summary>
@@ -274,7 +274,7 @@ namespace Prexonite.Compiler
             {
                 if (array == null)
                     throw new ArgumentNullException("array");
-                lst.CopyTo(array, arrayIndex);
+                _lst.CopyTo(array, arrayIndex);
             }
 
             ///<summary>
@@ -292,7 +292,7 @@ namespace Prexonite.Compiler
                 if (item == null)
                     return false;
                 else
-                    return lst.Remove(item);
+                    return _lst.Remove(item);
             }
 
             ///<summary>
@@ -305,7 +305,7 @@ namespace Prexonite.Compiler
             ///
             public int Count
             {
-                get { return lst.Count; }
+                get { return _lst.Count; }
             }
 
             ///<summary>
@@ -318,7 +318,7 @@ namespace Prexonite.Compiler
             ///
             public bool IsReadOnly
             {
-                get { return ((ICollection<CompilerHook>) lst).IsReadOnly; }
+                get { return ((ICollection<CompilerHook>) _lst).IsReadOnly; }
             }
 
             #endregion
@@ -335,7 +335,7 @@ namespace Prexonite.Compiler
             ///<filterpriority>1</filterpriority>
             IEnumerator<CompilerHook> IEnumerable<CompilerHook>.GetEnumerator()
             {
-                return lst.GetEnumerator();
+                return _lst.GetEnumerator();
             }
 
             #endregion
@@ -352,7 +352,7 @@ namespace Prexonite.Compiler
             ///<filterpriority>2</filterpriority>
             public IEnumerator GetEnumerator()
             {
-                return lst.GetEnumerator();
+                return _lst.GetEnumerator();
             }
 
             #endregion
