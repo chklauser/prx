@@ -1,6 +1,6 @@
 ﻿
 //Without ast.pxs, manipulating the ast is a real pain :-)
-build does require = "ast.pxs";
+build does require = @"psr\ast.pxs";
 
 //What we will need.
 Import

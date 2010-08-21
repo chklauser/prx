@@ -26,10 +26,11 @@ using System.Reflection;
 using System.Reflection.Emit;
 using System.Text;
 using Prexonite.Compiler.Cil;
+using System.Linq;
 
 namespace Prexonite.Commands.Core
 {
-    public class ConsolePrintLine : PCommand, ICilCompilerAware
+    public class ConsolePrintLine : PCommand, ICilCompilerAware, ICilExtension
     {
         #region Singleton
 
@@ -149,6 +150,48 @@ namespace Prexonite.Commands.Core
                     break;
                 default:
                     throw new NotSupportedException();
+            }
+        }
+
+        #endregion
+
+        #region Implementation of ICilExtension
+
+        /// <summary>
+        /// Checks whether the static arguments and number of dynamic arguments are valid for the CIL extension. 
+        /// 
+        /// <para>Returning false means that the CIL extension cannot provide a CIL implementation for the set of arguments at hand. In that case the CIL compiler will fall back to  <see cref="ICilCompilerAware"/> and finally the built-in mechanisms.</para>
+        /// <para>Returning true means that the CIL extension can provide a CIL implementation for the set of arguments at hand. In that case the CIL compiler may subsequently call <see cref="ICilExtension.Implement"/> with the same set of arguments.</para>
+        /// </summary>
+        /// <param name="staticArgv">The suffix of compile-time constant arguments, starting after the last dynamic (not compile-time constant) argument. An empty array means that there were no compile-time constant arguments at the end.</param>
+        /// <param name="dynamicArgc">The number of dynamic arguments preceding the supplied static arguments. The total number of arguments is determined by <code>(staticArgv.Length + dynamicArgc)</code></param>
+        /// <returns>true if the extension can provide a CIL implementation for the set of arguments; false otherwise</returns>
+        public bool ValidateArguments(CompileTimeValue[] staticArgv, int dynamicArgc)
+        {
+            return dynamicArgc <= 0 && staticArgv.All(ctv => !ctv.IsReference);
+        }
+
+        /// <summary>
+        /// Implements the CIL extension in CIL for the supplied arguments. The CIL compiler guarantees to always first call <see cref="ICilExtension.ValidateArguments"/> in order to establish whether the extension can actually implement a particular call.
+        /// Thus, this method does not have to verify <paramref name="staticArgv"/> and <paramref name="dynamicArgc"/>.
+        /// </summary>
+        /// <param name="state">The CIL compiler state. This object is used to emit instructions.</param>
+        /// <param name="ins">The instruction that "calls" the CIL extension. Usually a command call.</param>
+        /// <param name="staticArgv">The suffix of compile-time constant arguments, starting after the last dynamic (not compile-time constant) argument. An empty array means that there were no compile-time constant arguments at the end.</param>
+        /// <param name="dynamicArgc">The number of dynamic arguments preceding the supplied static arguments. The total number of arguments is determined by <code>(staticArgv.Length + dynamicArgc)</code></param>
+        public void Implement(CompilerState state, Instruction ins, CompileTimeValue[] staticArgv, int dynamicArgc)
+        {
+            var text = String.Concat(staticArgv.Select(StaticPrint._ToString));
+
+            state.Il.Emit(OpCodes.Ldstr, text);
+            if (!ins.JustEffect)
+            {
+                state.Il.Emit(OpCodes.Dup);
+            }
+            state.EmitCall(consoleWriteLineMethod_String);
+            if (!ins.JustEffect)
+            {
+                state.EmitWrapString();
             }
         }
 

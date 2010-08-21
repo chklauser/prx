@@ -1,9 +1,9 @@
 ﻿
 build does require
 (
-    "misc.pxs",
-    "debug.pxs",
-    "struct.pxs"
+    @"psr\misc.pxs",
+    @"psr\debug.pxs",
+    @"psr\struct.pxs"
 );
 
 function imin(a,b) = min(a,b)~Int;

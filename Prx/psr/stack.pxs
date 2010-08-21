@@ -1,6 +1,6 @@
 ﻿
 //Stack implementation using []
-build does require("struct.pxs","debug.pxs");
+build does require(@"psr\struct.pxs",@"psr\debug.pxs");
 
 function create_stack() 
 [debugging disabled;]

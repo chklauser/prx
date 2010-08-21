@@ -165,10 +165,7 @@ namespace Prexonite.Compiler.Ast
             else if (emitHint)
             {
                 var hint = new ForeachHint(enumVar, castAddr, getCurrentAddr, moveNextAddr, disposeAddr);
-                if (target.Meta.ContainsKey(Loader.CilHintsKey))
-                    target.Meta.AddTo(Loader.CilHintsKey, hint.ToMetaEntry());
-                else
-                    target.Meta[Loader.CilHintsKey] = (MetaEntry) new[] {hint.ToMetaEntry()};
+                Cil.Compiler.AddCilHint(target, hint);
 
                 Action<int, int> mkHook =
                     (index, original) =>
@@ -196,10 +193,10 @@ namespace Prexonite.Compiler.Ast
                         target.AddressChangeHooks.Add(hook);
                     };
 
-                mkHook(ForeachHint.CastAddressIndex, castAddr);
-                mkHook(ForeachHint.GetCurrentAddressIndex, getCurrentAddr);
-                mkHook(ForeachHint.MoveNextAddressIndex, moveNextAddr);
-                mkHook(ForeachHint.DisposeAddressIndex, disposeAddr);
+                mkHook(ForeachHint.CastAddressIndex + 1, castAddr);
+                mkHook(ForeachHint.GetCurrentAddressIndex + 1, getCurrentAddr);
+                mkHook(ForeachHint.MoveNextAddressIndex + 1, moveNextAddr);
+                mkHook(ForeachHint.DisposeAddressIndex + 1, disposeAddr);
             } // else nothing
         }
 

@@ -23,13 +23,16 @@
 
 using System;
 using System.IO;
+using System.Linq;
+using System.Reflection;
+using System.Reflection.Emit;
 using System.Text;
 using Prexonite.Compiler.Cil;
 using Prexonite.Types;
 
 namespace Prexonite.Commands.Core
 {
-    public class StaticPrintLine : PCommand, ICilCompilerAware
+    public class StaticPrintLine : PCommand, ICilCompilerAware, ICilExtension
     {
         #region Singleton
 
@@ -42,22 +45,6 @@ namespace Prexonite.Commands.Core
         public static StaticPrintLine Instance
         {
             get { return _instance; }
-        }
-
-        private static TextWriter _writer = Console.Out;
-
-        public static TextWriter Writer
-        {
-            get
-            {
-                return _writer;
-            }
-            set
-            {
-                if(value == null)
-                    throw new ArgumentNullException("value");
-                _writer = value;
-            }
         }
 
         #endregion  
@@ -80,7 +67,7 @@ namespace Prexonite.Commands.Core
         public static PValue RunStatically(StackContext sctx, PValue[] args)
         {
             var text = Concat.ConcatenateString(sctx, args);
-            _writer.WriteLine(text);
+            StaticPrint.Writer.WriteLine(text);
 
             return text;
         }
@@ -117,6 +104,46 @@ namespace Prexonite.Commands.Core
         {
             throw new NotSupportedException();
         }
+
+        #endregion
+
+        #region Implementation of ICilExtension
+
+        /// <summary>
+        /// Checks whether the static arguments and number of dynamic arguments are valid for the CIL extension. 
+        /// 
+        /// <para>Returning false means that the CIL extension cannot provide a CIL implementation for the set of arguments at hand. In that case the CIL compiler will fall back to  <see cref="ICilCompilerAware"/> and finally the built-in mechanisms.</para>
+        /// <para>Returning true means that the CIL extension can provide a CIL implementation for the set of arguments at hand. In that case the CIL compiler may subsequently call <see cref="ICilExtension.Implement"/> with the same set of arguments.</para>
+        /// </summary>
+        /// <param name="staticArgv">The suffix of compile-time constant arguments, starting after the last dynamic (not compile-time constant) argument. An empty array means that there were no compile-time constant arguments at the end.</param>
+        /// <param name="dynamicArgc">The number of dynamic arguments preceding the supplied static arguments. The total number of arguments is determined by <code>(staticArgv.Length + dynamicArgc)</code></param>
+        /// <returns>true if the extension can provide a CIL implementation for the set of arguments; false otherwise</returns>
+        public bool ValidateArguments(CompileTimeValue[] staticArgv, int dynamicArgc)
+        {
+            return dynamicArgc <= 0 && staticArgv.All(ctv => !ctv.IsReference);
+        }
+
+        public void Implement(CompilerState state, Instruction ins, CompileTimeValue[] staticArgv, int dynamicArgc)
+        {
+            var text = String.Concat(staticArgv.Select(StaticPrint._ToString));
+
+            state.EmitCall(StaticPrint._StaticPrintTextWriterGetMethod);
+            state.Il.Emit(OpCodes.Ldstr, text);
+            if (!ins.JustEffect)
+            {
+                state.Il.Emit(OpCodes.Dup);
+                state.EmitStoreTemp(0);
+            }
+            state.EmitVirtualCall(_textWriterWriteLineMethod);
+            if (!ins.JustEffect)
+            {
+                state.EmitLoadTemp(0);
+                state.EmitWrapString();
+            }
+        }
+
+        private static readonly MethodInfo _textWriterWriteLineMethod = typeof (TextWriter).GetMethod(
+            "WriteLine", new[] {typeof (String)});
 
         #endregion
     }

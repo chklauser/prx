@@ -24,7 +24,9 @@
 #region Namespace Imports
 
 using System;
+using System.Collections;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.Reflection;
 using System.Reflection.Emit;
 using Prexonite.Commands;
@@ -43,6 +45,7 @@ namespace Prexonite.Compiler.Cil
         public const int ParamSourceIndex = 0;
         public const int ParamReturnModeIndex = 5;
         private readonly List<ForeachHint> _foreachHints;
+        private readonly Queue<int> _cilExtensionOffsets;
         private readonly ILGenerator _il;
         private readonly Dictionary<int, string> _indexMap;
         private readonly Label[] _instructionLabels;
@@ -80,15 +83,33 @@ namespace Prexonite.Compiler.Cil
 
             MetaEntry cilHints;
             _foreachHints = new List<ForeachHint>();
+            _cilExtensionOffsets = new Queue<int>();
             if (source.Meta.TryGetValue(Loader.CilHintsKey, out cilHints))
             {
+                SortedSet<int> cilExtensionOffsets = null;
                 foreach (var entry in cilHints.List)
                 {
                     var hint = entry.List;
                     if (hint.Length < 1)
                         continue;
-                    if (hint[0].Text == ForeachHint.Key)
-                        ForeachHints.Add(ForeachHint.FromMetaEntry(hint));
+                    switch (hint[0].Text)
+                    {
+                        case CilExtensionHint.Key:
+                            if(cilExtensionOffsets == null)
+                                cilExtensionOffsets = new SortedSet<int>();
+                            var cilExt = CilExtensionHint.FromMetaEntry(hint);
+                            foreach (var offset in cilExt.Offsets)
+                                cilExtensionOffsets.Add(offset);
+                            break;
+                        case ForeachHint.Key:
+                            ForeachHints.Add(ForeachHint.FromMetaEntry(hint));
+                            break;
+                    }
+                }
+                if(cilExtensionOffsets != null)
+                {
+                    foreach (var offset in cilExtensionOffsets)
+                        _cilExtensionOffsets.Enqueue(offset);
                 }
             }
         }
@@ -152,6 +173,12 @@ namespace Prexonite.Compiler.Cil
         public List<ForeachHint> ForeachHints
         {
             get { return _foreachHints; }
+        }
+
+        public Queue<int> CilExtensionOffsets
+        {
+            [DebuggerStepThrough]
+            get { return _cilExtensionOffsets; }
         }
 
         /// <summary>

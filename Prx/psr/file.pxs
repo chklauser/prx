@@ -11,7 +11,7 @@ declare file_open as file_open_read,
 
 function file_open_write(path) = new ::StreamWriter(::File.OpenWrite(path), System::Text::Encoding.UTF8);
 
-function file_close = call(->dispose,var args);
+declare dispose as file_close;
 
 function file_lines(file) =
     if(file is String)
@@ -34,13 +34,13 @@ function file_characters(file) =
         {
             using(file = file_open(file))
             while((var c = file.Read) != -1)
-                yield c~Char;
+                yield char(c);
         }
     else  
         coroutine () =>
         {
             while((var c = file.Read) != -1)
-                yield c~Char;
+                yield char(c);
         };  
         
 declare file_characters as file_chars;
@@ -56,6 +56,9 @@ function file_change_extension(path, extension) =
 function file_get_extension(path) =
     ::Path.GetExtension(path~String);
 
+function path_combine(path1, path2) =
+    ::Path.Combine(path1, path2);
+    
     
 function directory_exists(path) =
     ::Directory.Exists(path);

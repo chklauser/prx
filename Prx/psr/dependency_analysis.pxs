@@ -1,8 +1,8 @@
 
 build does require(
     @"psr\pattern.pxs",
-    @"psr\misc.pxs",
-    @"psr\debug\debug.pxs"
+    @"psr\misc.pxs"
+   // ,@"psr\debug\debug.pxs"
 );
 
 
@@ -66,7 +66,7 @@ function create_function_dependency_analysis(functions, ignoreUnknownDependencie
         }
     }
     
-    return create_dependency_analysis\dynamic(functions ?? asm(ldr.app).Functions, f => f.Id, f => findDependencies(f), ignoreUnknownDependencies);
+    return create_dependency_analysis\dynamic(functions ?? asm(ldr.app).Functions, f => f.Id, ->findDependencies, ignoreUnknownDependencies);
 }
 
 function node_self(n) = n.Subject.Value.self;

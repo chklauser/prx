@@ -1,51 +1,5 @@
 ﻿var struct\ordinalIc [is compiler;] = System::StringComparison.OrdinalIgnoreCase;
 
-// function struct(suppressWarning)
-// {
-    // unless(suppressWarning)
-        // println("Latebound struct. Use struct as {return struct();} for improved performance. Pass true in order to suppress this warning");
-    
-    // function getId(g) =
-        // if(g.Meta.ContainsKey("SId"))
-            // g.Meta["SId"].Text
-        // else if(g.Meta.ContainsKey("LogicalId"))
-            // g.Meta["LogicalId"].Text
-        // else
-            // null;
-        // ;
-    
-    // var callingCtx = caller;
-        
-    // var parentId = callingCtx.Implementation.Id;
-    // var methods = (asm(ldr.app).Functions) 
-        // >> where(f => 
-            // f
-                // .Meta["ParentFunction"]
-                // .Text
-                // .Equals(parentId, struct\ordinalIc)            
-            // And Not f.Meta["Private"].Switch)
-        // >> map(f => 
-        // {
-			// if(Not f.Meta.ContainsKey("LogicalId"))
-				// return (null: null);
-			// var logicalId = f.Meta["LogicalId"].Text;
-			// if(Not callingCtx.LocalVariables.ContainsKey(logicalId))
-				// return (null: null);
-			// else
-				// return (getId(f): callingCtx.LocalVariables[logicalId].Value);            
-        // })
-        // >> where(fcf => (Not fcf.Value is Null) && (Not fcf.Key is Null));
-    
-    // var s = new Structure;
-
-    // s.\\(@"\ctorId") = () => parentId;
-    
-    // foreach(var fcf in methods)
-        // s.\\(fcf.Key) = fcf.Value;
-        
-    // return s;
-// }
-
 build does require(@"psr\macro.pxs");
 
 macro struct\as_macro as struct()
@@ -109,5 +63,3 @@ macro struct\as_macro as struct()
     tempfree(structV);
     return block;
 }
-
-//build does Prexonite::Compiler::StructHook.InstallHook(getloader);  

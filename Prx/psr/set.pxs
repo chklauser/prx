@@ -1,5 +1,5 @@
 ﻿
-build does require = "struct.pxs";
+build does require = @"psr\struct.pxs";
 
 function create_set()
 {

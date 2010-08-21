@@ -2,7 +2,7 @@
 
 build does require
 (
-    "struct.pxs"
+    @"psr\struct.pxs"
 );
 
 function cmp(a,b) =

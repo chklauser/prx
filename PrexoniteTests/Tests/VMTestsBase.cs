@@ -67,9 +67,9 @@ namespace Prx.Tests
                 {
                     Console.WriteLine(s);
                 }
+                Console.WriteLine(ldr.StoreInString());
             }
             Assert.AreEqual(0, ldr.ErrorCount, "Errors detected during compilation.");
-            Console.WriteLine(ldr.StoreInString());
         }
 
         protected Loader Compile(string input)
@@ -132,8 +132,18 @@ namespace Prx.Tests
             if (!target.Functions.Contains(functionId))
                 throw new PrexoniteException("Function " + functionId + " cannot be found.");
 
-            var rv = target.Functions[functionId].Run(engine, args);
-            
+            PValue rv;
+            try
+            {
+                rv = target.Functions[functionId].Run(engine, args);
+            }
+            catch(InvalidProgramException)
+            {
+                Console.WriteLine("Detected InvalidProgramException. Trying to store debug implementation (Repeats CIL compilation)");
+                Prexonite.Compiler.Cil.Compiler.StoreDebugImplementation(target, engine);
+                throw;
+            }
+
             Assert.AreEqual(
                 expected.Type,
                 rv.Type,

@@ -1,6 +1,6 @@
 ﻿build does require
 (
-    @"file.pxs"
+    @"psr\file.pxs"
 );
 
 var _json_var = @"__json_data_var__";

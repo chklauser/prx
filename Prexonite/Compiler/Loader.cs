@@ -572,7 +572,7 @@ namespace Prexonite.Compiler
 #if DEBUG
                 var indent = new StringBuilder(_load_indent);
                 indent.Append(' ', 2*(_load_indent++));
-                Console.WriteLine("{1}begin compiling {0}", file.Name, indent);
+                Console.WriteLine("{1}begin compiling {0} [Path: {2} ]", file.Name, indent, file.FullName);
 #endif
                 LoadFromStream(str, file.Name);
 #if DEBUG

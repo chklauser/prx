@@ -1,7 +1,7 @@
 ﻿
 build does require
 (
-    "struct.pxs"
+    @"psr\struct.pxs"
 );
 
 function create_queue(lst)

@@ -128,7 +128,7 @@
     <Compile Include="Commands\Core\Unbind.cs" />
     <Compile Include="Commands\CoroutineCommand.cs" />
     <Compile Include="Commands\DelegatePCommand.cs" />
-    <Compile Include="Commands\IExtensionCommand.cs" />
+    <Compile Include="Commands\ICilExtension.cs" />
     <Compile Include="Commands\ICilCompilerAware.cs" />
     <Compile Include="Commands\Lazy\AsThunkCommand.cs" />
     <Compile Include="Commands\Lazy\ForceCommand.cs" />
@@ -233,12 +233,14 @@
     <Compile Include="Compiler\Ast\IAstHasExpressions.cs" />
     <Compile Include="Compiler\Ast\IAstType.cs" />
     <Compile Include="Compiler\Ast\ICanBeReferenced.cs" />
+    <Compile Include="Compiler\Cil\CilExtensionHint.cs" />
     <Compile Include="Compiler\Cil\Compiler.cs" />
     <Compile Include="Compiler\Cil\CompilerPass.cs" />
     <Compile Include="Compiler\Cil\CompilerState.cs" />
     <Compile Include="Compiler\Cil\CilFunction.cs" />
     <Compile Include="Compiler\Cil\ForeachHint.cs" />
     <Compile Include="Compiler\Cil\FunctionLinking.cs" />
+    <Compile Include="Compiler\Cil\ICilHint.cs" />
     <Compile Include="Compiler\Cil\Runtime.cs" />
     <Compile Include="Compiler\Cil\Symbol.cs" />
     <Compile Include="Compiler\CompilerHook.cs" />
