@@ -1100,7 +1100,7 @@ namespace Prexonite.Types
         public override bool Inequality(
             StackContext sctx, PValue leftOperand, PValue rightOperand, out PValue result)
         {
-            if (base.Equality(sctx, leftOperand, rightOperand, out result))
+            if (base.Inequality(sctx, leftOperand, rightOperand, out result))
                 return true;
 
             return

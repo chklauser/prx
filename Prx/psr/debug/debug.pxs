@@ -1,8 +1,8 @@
 ﻿//PXS_
 
 build does require(
-    @"psr\misc.pxs",
-    @"disassembler.pxs",
+    @"psr\debug\disassembler.pxs",
+    @"psr\misc.pxs",    
     @"psr\struct.pxs"
 );
 

@@ -735,13 +735,15 @@ namespace Prexonite.Types
         public virtual bool Inequality(
             StackContext sctx, PValue leftOperand, PValue rightOperand, out PValue result)
         {
-            if (!ReferenceEquals(leftOperand.Value, rightOperand.Value) || leftOperand.Type != rightOperand.Type)
+            //Types must be the same for this shortcut to be valid.
+            if (ReferenceEquals(leftOperand.Value, rightOperand.Value) && leftOperand.Type == rightOperand.Type)
             {
-                result = true;
+                result = false;
                 return true;
             }
             else
             {
+                //We're not sure yet, delegate to more complete implementation of concrete PType.
                 result = null;
                 return false;
             }

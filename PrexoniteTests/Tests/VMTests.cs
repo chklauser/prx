@@ -3352,6 +3352,18 @@ function make_foo(z) = ""foo($z)"";
             Expect("foo(x)bar(y)", "x", "y");
         }
 
+        [Test]
+        public void ObjectIdentity()
+        {
+            Compile(@"
+function eq(x) = x == x;
+function neq(x) = x != x;
+");
+
+            ExpectNamed("eq", true, new PValue(new object(), PType.Object[typeof(object)]));
+            ExpectNamed("neq",false, new PValue(new object(), PType.Object[typeof(object)]));
+        }
+
         #region Helper
 
         #endregion

@@ -276,3 +276,14 @@ function show_bytecode as dasm(func, pointer)
     
     return sb.ToString;
 }
+
+build {
+    println("compiled disassembler");
+    var sb = asm(ldr.app).Functions["show_bytecode"];
+    if(sb is not null)
+        println("function show_bytecode exists physically");
+    var ldr = GetLoader;
+    var sym = ldr.Symbols["show_bytecode"];
+    if(sym is not null)
+        println("symbol for show_bytecode exists");
+}
