@@ -171,6 +171,7 @@ TOKENS
 	catch
 	finally
 	throw
+    then
 	uusing //Coco/R does not accept "using" as a token name.
 	macro
 	lazy

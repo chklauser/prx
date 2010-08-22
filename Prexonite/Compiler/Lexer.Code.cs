@@ -275,6 +275,8 @@ internal partial class Lexer
                     return Parser._finally;
                 case "throw":
                     return Parser._throw;
+                case "then":
+                    return Parser._then;
                 case "using": //Coco/R does not accept "using" as a token name.
                     return Parser._uusing;
             }
@@ -289,8 +291,7 @@ internal partial class Lexer
         sequence = sequence.Substring(2);
         int utf32;
         if (
-            int.TryParse(
-                "0x" + sequence, NumberStyles.HexNumber, CultureInfo.InvariantCulture, out utf32))
+            !int.TryParse(sequence, NumberStyles.HexNumber, CultureInfo.InvariantCulture, out utf32))
             throw new PrexoniteException(
                 System.String.Format(
                     "Invalid escape sequence \\{3}{0} on line {1} in {2}.",

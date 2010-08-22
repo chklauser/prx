@@ -3352,7 +3352,7 @@ function make_foo(z) = ""foo($z)"";
             Expect("foo(x)bar(y)", "x", "y");
         }
 
-        [Test]
+        [Test] //#19
         public void ObjectIdentity()
         {
             Compile(@"
@@ -3362,6 +3362,16 @@ function neq(x) = x != x;
 
             ExpectNamed("eq", true, new PValue(new object(), PType.Object[typeof(object)]));
             ExpectNamed("neq",false, new PValue(new object(), PType.Object[typeof(object)]));
+        }
+
+        [Test] //#18
+        public void HexEscapeSequences()
+        {
+            Compile(@"
+function main = ""\x20\x21\x9\x0020\x020\xAAAA\uABCD\U0000ABCD"".ToCharArray() >> map(x => x~Int) >> all;
+");
+
+            Expect(new List<PValue>{0x20, 0x21, 0x9, 0x0020, 0x020, 0xAAAA, 0xABCD, 0x0000ABCD});
         }
 
         #region Helper

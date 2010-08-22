@@ -1,11 +1,12 @@
 #define UseCil
 
 using System;
+using System.Collections.Generic;
 using System.Text;
 using NUnit.Framework;
 using Prexonite;
 using Prexonite.Compiler;
-
+using Prexonite.Types;
 
 
 namespace Prx.Tests
@@ -144,6 +145,11 @@ namespace Prx.Tests
                 throw;
             }
 
+            AssertPValuesAreEqual(expected, rv);
+        }
+
+        public void AssertPValuesAreEqual(PValue expected, PValue rv)
+        {
             Assert.AreEqual(
                 expected.Type,
                 rv.Type,
@@ -152,11 +158,27 @@ namespace Prx.Tests
                     expected.Type,
                     rv.Type,
                     rv));
-            Assert.AreEqual(
-                expected.Value,
-                rv.Value,
-                "Return value is expected to be " + expected + " and not " +
-                rv);
+            if (expected.Type == PType.List)
+            {
+                var expectedL = (List<PValue>) expected.Value;
+                var rvL = (List<PValue>)rv.Value;
+                Assert.AreEqual(expectedL.Count, rvL.Count, string.Format("Returned list differs in length. Elements returned {0}", rvL.ToEnumerationString()));
+
+                for (var i = 0; i < expectedL.Count; i++)
+                {
+                    var expectedLi = expectedL[i];
+                    var rvLi = rvL[i];
+                    AssertPValuesAreEqual(expectedLi, rvLi);
+                }
+            }
+            else
+            {
+                Assert.AreEqual(
+                    expected.Value,
+                    rv.Value,
+                    "Return value is expected to be " + expected + " and not " +
+                    rv);
+            }
         }
 
         protected void ExpectNull(params PValue[] args)
