@@ -55,9 +55,9 @@ namespace Prexonite.Compiler.Ast
             return false;
         }
 
-        public void EmitEffectCode(CompilerTarget target)
+        void IAstEffect.DoEmitEffectCode(CompilerTarget target)
         {
-            base.EmitCode(target);
+            EmitCode(target);
             var effect = Expression as IAstEffect;
             if (effect != null)
                 effect.EmitEffectCode(target);
@@ -65,9 +65,9 @@ namespace Prexonite.Compiler.Ast
 
         #endregion
 
-        public override void EmitCode(CompilerTarget target)
+        protected override void DoEmitCode(CompilerTarget target)
         {
-            base.EmitCode(target);
+            base.DoEmitCode(target);
             if (Expression != null)
                 Expression.EmitCode(target);
         }

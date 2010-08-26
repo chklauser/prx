@@ -114,7 +114,7 @@ namespace Prexonite.Compiler.Ast
         ///     </list>
         /// </para>
         /// </remarks>
-        public override void EmitCode(CompilerTarget target)
+        protected override void DoEmitCode(CompilerTarget target)
         {
             foreach (IAstExpression arg in Arguments)
                 arg.EmitCode(target);

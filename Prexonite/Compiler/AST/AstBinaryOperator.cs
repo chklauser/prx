@@ -149,7 +149,7 @@ namespace Prexonite.Compiler.Ast
         /// Emits the code for this node.
         /// </summary>
         /// <param name="target">The target to which to write the code to.</param>
-        public override void EmitCode(CompilerTarget target)
+        protected override void DoEmitCode(CompilerTarget target)
         {
             LeftOperand.EmitCode(target);
             RightOperand.EmitCode(target);

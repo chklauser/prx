@@ -64,7 +64,7 @@ namespace Prexonite.Compiler.Ast
 
         #endregion
 
-        public override void EmitCode(CompilerTarget target)
+        protected override void DoEmitCode(CompilerTarget target)
         {
             if (Expression == null)
                 throw new PrexoniteException("AstUsing requires Expression to be initialized.");

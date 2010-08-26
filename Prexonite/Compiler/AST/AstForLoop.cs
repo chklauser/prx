@@ -57,7 +57,7 @@ namespace Prexonite.Compiler.Ast
             get { return Condition != null; }
         }
 
-        public override void EmitCode(CompilerTarget target)
+        protected override void DoEmitCode(CompilerTarget target)
         {
             if (!IsInitialized)
                 throw new PrexoniteException("AstForLoop requires Condition to be set.");

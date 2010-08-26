@@ -49,12 +49,24 @@ namespace Prexonite.Compiler.Ast
             get { return Arguments.ToArray(); }
         }
 
+        private PCall _call;
+
+        /// <summary>
+        /// <para>Indicates whether this node uses get or set syntax</para>
+        /// <para>(set syntax involves an equal sign (=); get syntax does not)</para>
+        /// </summary>
+        public virtual PCall Call
+        {
+            get { return _call; }
+            set { _call = value; }
+        }
+
         #endregion
 
         protected AstGetSet(string file, int line, int column, PCall call)
             : base(file, line, column)
         {
-            Call = call;
+            _call = call;
             _proxy = new ArgumentsProxy(_arguments);
         }
 
@@ -93,12 +105,6 @@ namespace Prexonite.Compiler.Ast
             get { return 0; }
         }
 
-        /// <summary>
-        /// <para>Indicates whether this node uses get or set syntax</para>
-        /// <para>(set syntax involves an equal sign (=); get syntax does not)</para>
-        /// </summary>
-        public virtual PCall Call { get; set; }
-
         protected void EmitArguments(CompilerTarget target)
         {
             EmitArguments(target, false, DefaultAdditionalArguments);
@@ -122,7 +128,7 @@ namespace Prexonite.Compiler.Ast
             }
         }
 
-        public void EmitEffectCode(CompilerTarget target)
+        void IAstEffect.DoEmitEffectCode(CompilerTarget target)
         {
             EmitCode(target, true);
         }
@@ -141,7 +147,7 @@ namespace Prexonite.Compiler.Ast
             }
         }
 
-        public override sealed void EmitCode(CompilerTarget target)
+        protected override sealed void DoEmitCode(CompilerTarget target)
         {
             EmitCode(target, false);
         }

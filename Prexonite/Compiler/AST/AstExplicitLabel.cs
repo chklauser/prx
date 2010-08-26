@@ -38,7 +38,7 @@ namespace Prexonite.Compiler.Ast
         {
         }
 
-        public override void EmitCode(CompilerTarget target)
+        protected override void DoEmitCode(CompilerTarget target)
         {
             target.EmitLabel(this, Label);
         }

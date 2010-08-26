@@ -129,7 +129,7 @@ namespace Prexonite.Compiler.Ast
 
         #endregion
 
-        public void EmitEffectCode(CompilerTarget target)
+        void IAstEffect.DoEmitEffectCode(CompilerTarget target)
         {
             var symbol = Operand as AstGetSetSymbol;
             var isVariable = symbol != null && symbol.IsObjectVariable;
@@ -188,7 +188,7 @@ namespace Prexonite.Compiler.Ast
             }
         }
 
-        public override void EmitCode(CompilerTarget target)
+        protected override void DoEmitCode(CompilerTarget target)
         {
             switch (Operator)
             {
@@ -206,13 +206,13 @@ namespace Prexonite.Compiler.Ast
                     break;
                 case UnaryOperator.PreDecrement:
                 case UnaryOperator.PreIncrement:
-                    EmitEffectCode(target);
+                    ((IAstEffect)this).DoEmitEffectCode(target);
                     Operand.EmitCode(target);
                     break;
                 case UnaryOperator.PostDecrement:
                 case UnaryOperator.PostIncrement:
                     Operand.EmitCode(target);
-                    EmitEffectCode(target);
+                    ((IAstEffect)this).DoEmitEffectCode(target);
                     break;
             }
         }

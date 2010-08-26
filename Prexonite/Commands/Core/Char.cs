@@ -24,17 +24,18 @@
 using System;
 using System.Collections.Generic;
 using System.Text;
+using Prexonite.Compiler.Cil;
 using Prexonite.Types;
 
 namespace Prexonite.Commands.Core
 {
-    public sealed class Char : PCommand
+    public sealed class Char : PCommand, ICilCompilerAware, ICilExtension
     {
         private Char()
         {
         }
 
-        private static Char _instance = new Char();
+        private static readonly Char _instance = new Char();
 
         public static Char Instance
         {
@@ -56,7 +57,7 @@ namespace Prexonite.Commands.Core
         /// <param name="sctx">The stack context in which to execut the command.</param>
         /// <param name="args">The arguments to be passed to the command.</param>
         /// <returns>The value returned by the command. Must not be null. (But possibly {null~Null})</returns>
-        public override PValue Run(StackContext sctx, PValue[] args)
+        public static PValue RunStatically(StackContext sctx, PValue[] args)
         {
             if (sctx == null)
                 throw new ArgumentNullException("sctx");
@@ -89,5 +90,61 @@ namespace Prexonite.Commands.Core
                 throw new PrexoniteException("Cannot create char from " + arg);
             }
         }
+
+        public override PValue Run(StackContext sctx, PValue[] args)
+        {
+            return RunStatically(sctx, args);
+        }
+
+        #region Implementation of ICilCompilerAware
+
+        /// <summary>
+        /// Asses qualification and preferences for a certain instruction.
+        /// </summary>
+        /// <param name="ins">The instruction that is about to be compiled.</param>
+        /// <returns>A set of <see cref="CompilationFlags"/>.</returns>
+        public CompilationFlags CheckQualification(Instruction ins)
+        {
+            return CompilationFlags.PrefersRunStatically;
+        }
+
+        /// <summary>
+        /// Provides a custom compiler routine for emitting CIL byte code for a specific instruction.
+        /// </summary>
+        /// <param name="state">The compiler state.</param>
+        /// <param name="ins">The instruction to compile.</param>
+        public void ImplementInCil(CompilerState state, Instruction ins)
+        {
+            throw new NotImplementedException();
+        }
+
+        #endregion
+
+        #region Implementation of ICilExtension
+
+        bool ICilExtension.ValidateArguments(CompileTimeValue[] staticArgv, int dynamicArgc)
+        {
+            string literal;
+            int code;
+            return dynamicArgc == 0 && staticArgv.Length == 1 && (staticArgv[0].TryGetString(out literal) && literal.Length > 0 || staticArgv[0].TryGetInt(out code) && code >= 0);
+        }
+
+        void ICilExtension.Implement(CompilerState state, Instruction ins, CompileTimeValue[] staticArgv, int dynamicArgc)
+        {
+            if (ins.JustEffect)
+                return; //ValidateArguments proved that there are no arguments on the stack.
+            string literal;
+            int code;
+            if (staticArgv[0].TryGetString(out literal))
+                code = literal[0];
+            else if (!staticArgv[0].TryGetInt(out code))
+                throw new ArgumentException(
+                    "char command requires one argument that is either a string or a 32-bit integer with the most significant bit cleared.");
+
+            state.EmitLdcI4(code);
+            state.EmitWrapChar();
+        }
+
+        #endregion
     }
 }

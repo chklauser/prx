@@ -54,11 +54,16 @@ namespace Prexonite.Compiler.Ast
             return false;
         }
 
+        void IAstExpression.EmitCode(CompilerTarget target)
+        {
+            EmitCode(target);
+        }
+
         #endregion
 
-        public override void EmitCode(CompilerTarget target)
+        protected override void DoEmitCode(CompilerTarget target)
         {
-            base.EmitCode(target);
+            base.DoEmitCode(target);
             Action(target);
         }
 
@@ -71,5 +76,6 @@ namespace Prexonite.Compiler.Ast
         {
             get { return false; }
         }
+
     }
 }

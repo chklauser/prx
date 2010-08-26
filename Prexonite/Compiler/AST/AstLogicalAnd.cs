@@ -45,12 +45,12 @@ namespace Prexonite.Compiler.Ast
         {
         }
 
-        public override void EmitCode(CompilerTarget target)
+        protected override void DoEmitCode(CompilerTarget target)
         {
-            string labelNs = @"And\" + Guid.NewGuid().ToString("N");
-            string trueLabel = @"True\" + labelNs;
-            string falseLabel = @"False\" + labelNs;
-            string evalLabel = @"Eval\" + labelNs;
+            var labelNs = @"And\" + Guid.NewGuid().ToString("N");
+            var trueLabel = @"True\" + labelNs;
+            var falseLabel = @"False\" + labelNs;
+            var evalLabel = @"Eval\" + labelNs;
 
             EmitCode(target, trueLabel, falseLabel);
 
@@ -65,9 +65,9 @@ namespace Prexonite.Compiler.Ast
         //Called by either AstLogicalAnd or AstLogicalOr
         public override void EmitCode(CompilerTarget target, string trueLabel, string falseLabel)
         {
-            string labelNs = @"And\" + Guid.NewGuid().ToString("N");
-            string nextLabel = @"Next\" + labelNs;
-            foreach (IAstExpression expr in Conditions)
+            var labelNs = @"And\" + Guid.NewGuid().ToString("N");
+            var nextLabel = @"Next\" + labelNs;
+            foreach (var expr in Conditions)
             {
                 var or = expr as AstLogicalOr;
                 if (or != null)

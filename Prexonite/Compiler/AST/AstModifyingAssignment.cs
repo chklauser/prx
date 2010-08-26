@@ -66,7 +66,7 @@ namespace Prexonite.Compiler.Ast
 
         #endregion
 
-        public override void EmitCode(CompilerTarget target)
+        protected override void DoEmitCode(CompilerTarget target)
         {
             EmitCode(target, false);
         }
@@ -84,7 +84,7 @@ namespace Prexonite.Compiler.Ast
                         //remove last argument (the assigned value)
                         getVariation.Arguments.RemoveAt(getVariation.Arguments.Count - 1);
 
-                        AstTypecheck check =
+                        var check =
                             new AstTypecheck(
                                 File,
                                 Line,
@@ -95,17 +95,19 @@ namespace Prexonite.Compiler.Ast
                         if (justEffect)
                         {
                             //Create a traditional condition
-                            AstCondition cond = new AstCondition(File, Line, Column, check);
+                            var cond = new AstCondition(File, Line, Column, check);
                             cond.IfBlock.Add(assignment);
                             cond.EmitCode(target);
                         }
                         else
                         {
                             //Create a conditional expression
-                            AstConditionalExpression cond =
-                                new AstConditionalExpression(File, Line, Column, check);
-                            cond.IfExpression = assignment;
-                            cond.ElseExpression = getVariation;
+                            var cond =
+                                new AstConditionalExpression(File, Line, Column, check)
+                                {
+                                    IfExpression = assignment,
+                                    ElseExpression = getVariation
+                                };
                             cond.EmitCode(target);
                         }
                     }
@@ -115,14 +117,14 @@ namespace Prexonite.Compiler.Ast
                         // a(x,y) ~= T         //a(x,y,~T)~=
                         //to
                         // a(x,y) = a(x,y)~T   //a(x,y,a(x,y)~T)=
-                        AstGetSet assignment = ModifyingAssignment.GetCopy(); //a'(x,y,~T)~=
+                        var assignment = ModifyingAssignment.GetCopy(); //a'(x,y,~T)~=
 
-                        AstGetSet getVariation = assignment.GetCopy(); //a''(x,y,~T)=
+                        var getVariation = assignment.GetCopy(); //a''(x,y,~T)=
                         getVariation.Call = PCall.Get; //a''(x,y,~String)
                         getVariation.Arguments.RemoveAt(getVariation.Arguments.Count - 1);
                             //a''(x,y)
 
-                        IAstType T =
+                        var T =
                             assignment.Arguments[assignment.Arguments.Count - 1] as IAstType; //~T
                         if (T == null)
                             throw new PrexoniteException(
@@ -149,8 +151,8 @@ namespace Prexonite.Compiler.Ast
                         //Without more detailed information, a Set call with a set modifier has to be expressed using 
                         //  conventional set call and binary operator nodes.
                         //Note that code generator for this original node is completely bypassed.
-                        AstGetSet assignment = ModifyingAssignment.GetCopy();
-                        AstGetSet getVersion = ModifyingAssignment.GetCopy();
+                        var assignment = ModifyingAssignment.GetCopy();
+                        var getVersion = ModifyingAssignment.GetCopy();
                         getVersion.Call = PCall.Get;
                         getVersion.Arguments.RemoveAt(getVersion.Arguments.Count - 1);
                         assignment.Arguments[assignment.Arguments.Count - 1] =
@@ -172,7 +174,7 @@ namespace Prexonite.Compiler.Ast
 
         #region IAstEffect Members
 
-        public void EmitEffectCode(CompilerTarget target)
+        void IAstEffect.DoEmitEffectCode(CompilerTarget target)
         {
             EmitCode(target, true);
         }

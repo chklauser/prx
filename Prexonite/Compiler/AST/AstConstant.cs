@@ -67,7 +67,7 @@ namespace Prexonite.Compiler.Ast
             return target.Loader.Options.ParentEngine.CreateNativePValue(Constant);
         }
 
-        public override void EmitCode(CompilerTarget target)
+        protected override void DoEmitCode(CompilerTarget target)
         {
             if (Constant == null)
                 target.EmitNull(this);

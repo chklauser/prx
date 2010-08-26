@@ -22,6 +22,7 @@
  */
 
 using System;
+using System.ComponentModel;
 using System.Diagnostics;
 using Prexonite.Types;
 using NoDebug = System.Diagnostics.DebuggerNonUserCodeAttribute;
@@ -62,7 +63,26 @@ namespace Prexonite.Compiler.Ast
             get { return _column; }
         }
 
-        public abstract void EmitCode(CompilerTarget target);
+        public void EmitCode(CompilerTarget target)
+        {
+            _dispatchDoEmitCode(target, false);
+        }
+
+        protected abstract void DoEmitCode(CompilerTarget target);
+
+        [EditorBrowsable(EditorBrowsableState.Never)]
+        internal void _EmitEffectCode(CompilerTarget target)
+        {
+            _dispatchDoEmitCode(target, true);
+        }
+
+        private void _dispatchDoEmitCode(CompilerTarget target, bool justEffectCode)
+        {
+            if (justEffectCode)
+                ((IAstEffect)this).DoEmitEffectCode(target);
+            else
+                DoEmitCode(target);
+        }
 
         protected static IAstExpression GetOptimizedNode(CompilerTarget target, IAstExpression expr)
         {
@@ -102,6 +122,15 @@ namespace Prexonite.Compiler.Ast
                         throw new PrexoniteException("The node is not an IAstExpression.");
 
                     result = target.Loader.CreateNativePValue(GetOptimizedNode(target, expr));
+                    break;
+                case "EMITEFFECTCODE":
+                    if (args.Length < 1 || (target = args[0].Value as CompilerTarget) == null)
+                        throw new PrexoniteException("GetOptimizedNode(CompilerTarget target) requires target.");
+                    var effect = this as IAstEffect;
+                    if (effect == null)
+                        throw new PrexoniteException("The node is not an IAstExpression.");
+                    effect.EmitEffectCode(target);
+                    result = PType.Null;
                     break;
             }
 

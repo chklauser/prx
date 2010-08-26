@@ -21,10 +21,40 @@
  *  51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
  */
 
+using System;
+
 namespace Prexonite.Compiler.Ast
 {
+    /// <summary>
+    /// Indicates that the ast node can optionally skip emitting a value and just emit effect code. Called when an expression is used as a statement.
+    /// 
+    /// <strong>Implement this interface explicitly, and DON'T CALL IT DIRECTLY, use <see cref="AstEffect.EmitEffectCode{T}"/> instead (an extension method).</strong>
+    /// </summary>
     public interface IAstEffect : IAstExpression
     {
-        void EmitEffectCode(CompilerTarget target);
+        /// <summary>
+        /// For internal use only. Emits the effect code only. No value must be produced.
+        /// </summary>
+        /// <param name="target">The function target to compile to.</param>
+        void DoEmitEffectCode(CompilerTarget target);
+    }
+
+    /// <summary>
+    /// Extensions to the <see cref="IAstEffect"/> interface.
+    /// </summary>
+    public static class AstEffect
+    {
+        public static void EmitEffectCode<T>(this T node, CompilerTarget target) where T : AstNode, IAstEffect
+        {
+            node._EmitEffectCode(target);
+        }
+
+        public static void EmitEffectCode(this IAstEffect effect, CompilerTarget target)
+        {
+            var node = effect as AstNode;
+            if (node == null)
+                throw new ArgumentException("Effect must be an AST node", "effect");
+            node._EmitEffectCode(target);
+        }
     }
 }

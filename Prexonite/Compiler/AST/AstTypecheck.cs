@@ -59,7 +59,7 @@ namespace Prexonite.Compiler.Ast
 
         #endregion
 
-        public override void EmitCode(CompilerTarget target)
+        protected override void DoEmitCode(CompilerTarget target)
         {
             Subject.EmitCode(target);
             var constType = Type as AstConstantTypeExpression;

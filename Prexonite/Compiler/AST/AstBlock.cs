@@ -84,7 +84,7 @@ namespace Prexonite.Compiler.Ast
             set { _statements = value; }
         }
 
-        public override void EmitCode(CompilerTarget target)
+        protected override void DoEmitCode(CompilerTarget target)
         {
             EmitCode(target, false);
         }

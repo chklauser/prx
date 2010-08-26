@@ -66,7 +66,7 @@ namespace Prexonite.Compiler.Ast
 
         #endregion
 
-        public override void EmitCode(CompilerTarget target)
+        protected override void DoEmitCode(CompilerTarget target)
         {
             if (Key == null)
                 throw new PrexoniteException("AstKeyValuePair.Key must be initialized.");

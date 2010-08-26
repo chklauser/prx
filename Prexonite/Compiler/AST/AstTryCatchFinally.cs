@@ -59,7 +59,7 @@ namespace Prexonite.Compiler.Ast
 
         #endregion
 
-        public override void EmitCode(CompilerTarget target)
+        protected override void DoEmitCode(CompilerTarget target)
         {
             var prefix = "try\\" + Guid.NewGuid().ToString("N") + "\\";
             var beginTryLabel = prefix + "beginTry";

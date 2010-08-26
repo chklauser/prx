@@ -86,12 +86,12 @@ namespace Prexonite.Compiler.Ast
 
         #endregion
 
-        public override void EmitCode(CompilerTarget target)
+        protected override void DoEmitCode(CompilerTarget target)
         {
-            string labelNs = @"Or\" + Guid.NewGuid().ToString("N");
-            string trueLabel = @"True\" + labelNs;
-            string falseLabel = @"False\" + labelNs;
-            string evalLabel = @"Eval\" + labelNs;
+            var labelNs = @"Or\" + Guid.NewGuid().ToString("N");
+            var trueLabel = @"True\" + labelNs;
+            var falseLabel = @"False\" + labelNs;
+            var evalLabel = @"Eval\" + labelNs;
 
             EmitCode(target, trueLabel, falseLabel);
 

@@ -42,7 +42,7 @@ namespace Prexonite.Compiler.Ast
             return false;
         }
 
-        public override void EmitCode(CompilerTarget target)
+        protected override void DoEmitCode(CompilerTarget target)
         {
             target.EmitNull(this);
         }

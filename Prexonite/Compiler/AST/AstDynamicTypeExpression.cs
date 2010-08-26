@@ -111,7 +111,7 @@ namespace Prexonite.Compiler.Ast
             return true;
         }
 
-        public override void EmitCode(CompilerTarget target)
+        protected override void DoEmitCode(CompilerTarget target)
         {
             foreach (var expr in Arguments)
                 expr.EmitCode(target);

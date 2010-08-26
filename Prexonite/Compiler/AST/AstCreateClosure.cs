@@ -43,7 +43,7 @@ namespace Prexonite.Compiler.Ast
             FuncId = funcId;
         }
 
-        public override void EmitCode(CompilerTarget target)
+        protected override void DoEmitCode(CompilerTarget target)
         {
             target.Emit(this, OpCode.newclo, FuncId);
         }

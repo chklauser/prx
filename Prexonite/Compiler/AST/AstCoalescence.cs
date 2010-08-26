@@ -100,7 +100,7 @@ namespace Prexonite.Compiler.Ast
 
         private static int _count = -1;
 
-        public override void EmitCode(CompilerTarget target)
+        protected override void DoEmitCode(CompilerTarget target)
         {
             //Expressions contains at least two expressions
 

@@ -38,7 +38,7 @@ namespace Prexonite.Compiler.Ast
             _proxy = new ArgumentsProxy(_arguments);
         }
 
-        public override void EmitCode(CompilerTarget target)
+        protected override void DoEmitCode(CompilerTarget target)
         {
             if (Expression == null)
                 throw new PrexoniteException("CreateCoroutine node requires an Expression.");

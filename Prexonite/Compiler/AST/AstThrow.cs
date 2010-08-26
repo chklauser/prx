@@ -79,14 +79,14 @@ namespace Prexonite.Compiler.Ast
 
         #region IAstEffect Members
 
-        public void EmitEffectCode(CompilerTarget target)
+        void IAstEffect.DoEmitEffectCode(CompilerTarget target)
         {
             EmitCode(target, true);
         }
 
         #endregion
 
-        public override void EmitCode(CompilerTarget target)
+        protected override void DoEmitCode(CompilerTarget target)
         {
             EmitCode(target, false);
         }

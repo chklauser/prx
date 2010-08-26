@@ -579,6 +579,13 @@ namespace Prexonite.Compiler.Cil
             Il.Emit(OpCodes.Newobj, Compiler.NewPValue);
         }
 
+        public void EmitWrapChar()
+        {
+            Il.Emit(OpCodes.Box, typeof(char));
+            Il.EmitCall(OpCodes.Call, Compiler.GetCharPType, null);
+            Il.Emit(OpCodes.Newobj, Compiler.NewPValue);
+        }
+
         public void EmitLoadType(string typeExpr)
         {
             var T = ConstructPType(typeExpr);

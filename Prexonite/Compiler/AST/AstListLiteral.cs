@@ -74,7 +74,7 @@ namespace Prexonite.Compiler.Ast
 
         #endregion
 
-        public override void EmitCode(CompilerTarget target)
+        protected override void DoEmitCode(CompilerTarget target)
         {
             var lastPosition = (ISourcePosition) this;
             foreach (var element in Elements)

@@ -1890,6 +1890,10 @@ namespace Prexonite.Compiler.Cil
         private static readonly MethodInfo _GetStringPType =
             typeof(PType).GetProperty("String").GetGetMethod();
 
+        private static readonly MethodInfo _GetCharPType =
+            typeof(PType).GetProperty("Char").GetGetMethod();
+
+
         internal static readonly MethodInfo GetNullPType =
             typeof(PType).GetProperty("Null").GetGetMethod();
 
@@ -2048,6 +2052,11 @@ namespace Prexonite.Compiler.Cil
             get { return _GetStringPType; }
         }
 
+        internal static MethodInfo GetCharPType
+        {
+            get { return _GetCharPType; }
+        }
+
         private static readonly MethodInfo _GetObjectPTypeSelector = typeof(PType).GetProperty("Object").GetGetMethod();
 
         public static MethodInfo GetObjectPTypeSelector
@@ -2065,6 +2074,8 @@ namespace Prexonite.Compiler.Cil
 
         private static readonly ConstructorInfo _NewPValueKeyValuePair =
             typeof(PValueKeyValuePair).GetConstructor(new[] { typeof(PValue), typeof(PValue) });
+
+        
 
         public static ConstructorInfo NewPValueKeyValuePair
         {
