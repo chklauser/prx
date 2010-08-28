@@ -102,7 +102,7 @@ namespace Prexonite.Compiler.Cil
                                 cilExtensionOffsets.Add(offset);
                             break;
                         case ForeachHint.Key:
-                            ForeachHints.Add(ForeachHint.FromMetaEntry(hint));
+                            _ForeachHints.Add(ForeachHint.FromMetaEntry(hint));
                             break;
                     }
                 }
@@ -130,52 +130,86 @@ namespace Prexonite.Compiler.Cil
             get { return _il; }
         }
 
+        /// <summary>
+        /// Maps from local variable indices to local variable phyical ids
+        /// </summary>
         public Dictionary<int, string> IndexMap
         {
             get { return _indexMap; }
         }
 
+        /// <summary>
+        /// <para>Maps from instruction addresses to the corresponding logical labels</para>
+        /// <para>Use these labels to jump to Prexonite Instructions.</para>
+        /// </summary>
         public Label[] InstructionLabels
         {
             get { return _instructionLabels; }
         }
 
+        /// <summary>
+        /// <para>The label that marks the exit of the function. Jump here to return.</para>
+        /// </summary>
         public Label ReturnLabel
         {
             get { return _returnLabel; }
         }
 
+        /// <summary>
+        /// The local variable that holds the CIL stack context
+        /// </summary>
         public LocalBuilder SctxLocal { get; internal set; }
 
+        /// <summary>
+        /// <para>The local variable that holds arrays of shared variables immediately before closure instantiation</para>
+        /// </summary>
         public LocalBuilder SharedLocal { get; internal set; }
 
+        /// <summary>
+        /// Symbol table for the CIL compiler. See <see cref="Symbol"/> for details.
+        /// </summary>
         public SymbolTable<Symbol> Symbols
         {
             get { return _symbols; }
         }
 
+        /// <summary>
+        /// <para>Array of temporary variables. They are not preserved across Prexonite instructions. You are free to use them within <see cref="ICilCompilerAware.ImplementInCil"/> or <see cref="ICilExtension.Implement"/></para>.
+        /// </summary>
         public LocalBuilder[] TempLocals
         {
             get { return _tempLocals; }
             internal set { _tempLocals = value; }
         }
 
+        /// <summary>
+        /// The stack of try blocks currently in effect. The innermost try block is on top.
+        /// </summary>
         public Stack<TryCatchFinallyBlock> TryBlocks
         {
             get { return _tryBlocks; }
         }
 
+        /// <summary>
+        /// The engine in which the function is compiled to CIL. It can be assumed that engine configuration (such as command aliases) will not change anymore.
+        /// </summary>
         public Engine TargetEngine
         {
             get { return _targetEngine; }
         }
 
-        public List<ForeachHint> ForeachHints
+        /// <summary>
+        /// List of foreach CIL hints associated with this function. 
+        /// </summary>
+        internal List<ForeachHint> _ForeachHints
         {
             get { return _foreachHints; }
         }
 
-        public Queue<int> CilExtensionOffsets
+        /// <summary>
+        /// List of addresses where valid CIL extension code begins.
+        /// </summary>
+        internal Queue<int> _CilExtensionOffsets
         {
             [DebuggerStepThrough]
             get { return _cilExtensionOffsets; }
@@ -197,6 +231,9 @@ namespace Prexonite.Compiler.Cil
             get { return _source.ParentApplication; }
         }
 
+        /// <summary>
+        /// Collection of imported namespaces. Serves the same function as <see cref="StackContext.ImportedNamespaces"/>.
+        /// </summary>
         public override SymbolCollection ImportedNamespaces
         {
             get { return _source.ImportedNamespaces; }
@@ -248,6 +285,10 @@ namespace Prexonite.Compiler.Cil
 
         #region Emit-helper methods
 
+        /// <summary>
+        /// <para>Emits the shortest possible ldc.i4 opcode.</para>
+        /// </summary>
+        /// <param name="i"></param>
         public void EmitLdcI4(int i)
         {
             switch (i)
@@ -291,8 +332,7 @@ namespace Prexonite.Compiler.Cil
             }
         }
 
-        //CompilerState state, 
-        public bool MustUseLeave(int instructionAddress, ref int targetAddress)
+        internal bool _MustUseLeave(int instructionAddress, ref int targetAddress)
         {
             var useLeave = false;
             foreach (var enclosingBlock in TryBlocks)
@@ -329,7 +369,7 @@ namespace Prexonite.Compiler.Cil
 
         /// <summary>
         /// Shove arguments from the stack into the argument array (`argv`). This way the arguments can later be
-        /// passed to methods. Use <see cref="ReadArgv"/>(<paramref name="argc"/>) to load that array onto the stack.
+        /// passed to methods. Use <see cref="ReadArgv"/> to load that array onto the stack.
         /// </summary>
         /// <param name="argc">The number of arguments to load from the stack.</param>
         public void FillArgv(int argc)
@@ -375,6 +415,10 @@ namespace Prexonite.Compiler.Cil
             }
         }
 
+        /// <summary>
+        /// Emits the shortest possible ldarg instruction.
+        /// </summary>
+        /// <param name="index">The index of the argument to load.</param>
         public void EmitLoadArg(int index)
         {
             switch (index)
@@ -400,11 +444,19 @@ namespace Prexonite.Compiler.Cil
             }
         }
 
+        /// <summary>
+        /// Emits the shortest possible ldloc instruction for the supplied local variable.
+        /// </summary>
+        /// <param name="local">The local variable to load.</param>
         public void EmitLoadLocal(LocalBuilder local)
         {
             EmitLoadLocal(local.LocalIndex);
         }
 
+        /// <summary>
+        /// Emits the shortest possible ldloc instruction for the supplied local variable.
+        /// </summary>
+        /// <param name="index">The index of the local variable to load.</param>
         public void EmitLoadLocal(int index)
         {
             switch (index)
@@ -495,6 +547,12 @@ namespace Prexonite.Compiler.Cil
                 Il.Emit(OpCodes.Pop);
         }
 
+        /// <summary>
+        /// <para>Write the value produced by <paramref name="action"/> into the local variable behind <paramref name="sym"/>.</para>
+        /// <para>Warning: Action must work with an empty stack</para>
+        /// </summary>
+        /// <param name="sym">The local variable to write to.</param>
+        /// <param name="action">The action that produces the value.</param>
         public void EmitStorePValue(Symbol sym, Action action)
         {
             if (sym.Kind == SymbolKind.Local)
@@ -514,6 +572,10 @@ namespace Prexonite.Compiler.Cil
             }
         }
 
+        /// <summary>
+        /// <para>Load a value from the specified local variable.</para>
+        /// </summary>
+        /// <param name="sym">The variable to load.</param>
         public void EmitLoadPValue(Symbol sym)
         {
             if (sym.Kind == SymbolKind.Local)
@@ -531,6 +593,9 @@ namespace Prexonite.Compiler.Cil
             }
         }
 
+        /// <summary>
+        /// Creates a PValue null value.
+        /// </summary>
         public void EmitLoadPValueNull()
         {
             Il.EmitCall(OpCodes.Call, Compiler.getPTypeNull, null);
@@ -652,18 +717,8 @@ namespace Prexonite.Compiler.Cil
         /// </summary>
         /// <param name="target">The type, that declares the RunStatically to call.</param>
         /// <param name="argc">The number of arguments to pass to the command.</param>
-        public void EmitEarlyBoundCommandCall(Type target, int argc)
-        {
-            EmitEarlyBoundCommandCall(target, argc, false);
-        }
-
-        /// <summary>
-        /// Emits a call to the static method "RunStatically(StackContext sctx, PValue[] args)" of the supplied type.
-        /// </summary>
-        /// <param name="target">The type, that declares the RunStatically to call.</param>
-        /// <param name="argc">The number of arguments to pass to the command.</param>
         /// <param name="justEffect">Indicates whether or not to ignore the return value.</param>
-        public void EmitEarlyBoundCommandCall(Type target, int argc, bool justEffect)
+        public void EmitEarlyBoundCommandCall(Type target, int argc, bool justEffect = false)
         {
             var run =
                 target.GetMethod("RunStatically", new[] {typeof (StackContext), typeof (PValue[])});
@@ -689,6 +744,10 @@ namespace Prexonite.Compiler.Cil
 
         #endregion
 
+        /// <summary>
+        /// Pops the specified number of arguments off the stack.
+        /// </summary>
+        /// <param name="argc">The number of arguments to pop off the stack.</param>
         public void EmitIgnoreArguments(int argc)
         {
             for (var i = 0; i < argc; i++)
@@ -707,193 +766,6 @@ namespace Prexonite.Compiler.Cil
             targetMethod = null;
             return (Linking & FunctionLinking.Static) == FunctionLinking.Static &&
                    Pass.Implementations.TryGetValue(id, out targetMethod);
-        }
-
-        public bool TryCreateCompileTimeValue(ref CompileTimeValue compileTimeValue, Instruction ins)
-        {
-            var argc = ins.Arguments;
-            var id = ins.Id;
-
-            switch (ins.OpCode)
-            {
-                case OpCode.invalid:
-                    break;
-                case OpCode.nop:
-                    break;
-                case OpCode.ldc_int:
-                    compileTimeValue.Interpretation = CompileTimeInterpretation.Int;
-                    compileTimeValue.Value = ins.Arguments;
-                    return true;
-                case OpCode.ldc_real:
-                    break;
-                case OpCode.ldc_bool:
-                    compileTimeValue.Interpretation = CompileTimeInterpretation.Bool;
-                    compileTimeValue.Value = argc != 0;
-                    return true;
-                case OpCode.ldc_string:
-                    compileTimeValue.Interpretation = CompileTimeInterpretation.String;
-                    compileTimeValue.Value = id;
-                    return true;
-                case OpCode.ldc_null:
-                    compileTimeValue.Interpretation = CompileTimeInterpretation.Null;
-                    compileTimeValue.Value = null;
-                    return true;
-                case OpCode.ldr_loc:
-                    compileTimeValue.Interpretation = CompileTimeInterpretation.LocalVariableReference;
-                    compileTimeValue.Value = id;
-                    return true;
-                case OpCode.ldr_loci:
-                    compileTimeValue.Interpretation = CompileTimeInterpretation.LocalVariableReference;
-                    compileTimeValue.Value = IndexMap[argc];
-                    return true;
-                case OpCode.ldr_glob:
-                    compileTimeValue.Interpretation = CompileTimeInterpretation.GlobalVariableReference;
-                    compileTimeValue.Value = id;
-                    return true;
-                case OpCode.ldr_func:
-                    compileTimeValue.Interpretation = CompileTimeInterpretation.FunctionReference;
-                    compileTimeValue.Value = id;
-                    return true;
-                case OpCode.ldr_cmd:
-                    compileTimeValue.Interpretation = CompileTimeInterpretation.CommandReference;
-                    compileTimeValue.Value = id;
-                    return true;
-                case OpCode.ldr_app:
-                    break;
-                case OpCode.ldr_eng:
-                    break;
-                case OpCode.ldr_type:
-                    break;
-                case OpCode.ldloc:
-                    break;
-                case OpCode.stloc:
-                    break;
-                case OpCode.ldloci:
-                    break;
-                case OpCode.stloci:
-                    break;
-                case OpCode.ldglob:
-                    break;
-                case OpCode.stglob:
-                    break;
-                case OpCode.newobj:
-                    break;
-                case OpCode.newtype:
-                    break;
-                case OpCode.newclo:
-                    break;
-                case OpCode.newcor:
-                    break;
-                case OpCode.incloc:
-                    break;
-                case OpCode.incglob:
-                    break;
-                case OpCode.decloc:
-                    break;
-                case OpCode.decglob:
-                    break;
-                case OpCode.incloci:
-                    break;
-                case OpCode.decloci:
-                    break;
-                case OpCode.neg:
-                    break;
-                case OpCode.not:
-                    break;
-                case OpCode.add:
-                    break;
-                case OpCode.sub:
-                    break;
-                case OpCode.mul:
-                    break;
-                case OpCode.div:
-                    break;
-                case OpCode.mod:
-                    break;
-                case OpCode.pow:
-                    break;
-                case OpCode.ceq:
-                    break;
-                case OpCode.cne:
-                    break;
-                case OpCode.clt:
-                    break;
-                case OpCode.cle:
-                    break;
-                case OpCode.cgt:
-                    break;
-                case OpCode.cge:
-                    break;
-                case OpCode.or:
-                    break;
-                case OpCode.and:
-                    break;
-                case OpCode.xor:
-                    break;
-                case OpCode.check_const:
-                    break;
-                case OpCode.check_arg:
-                    break;
-                case OpCode.check_null:
-                    break;
-                case OpCode.cast_const:
-                    break;
-                case OpCode.cast_arg:
-                    break;
-                case OpCode.get:
-                    break;
-                case OpCode.set:
-                    break;
-                case OpCode.sget:
-                    break;
-                case OpCode.sset:
-                    break;
-                case OpCode.func:
-                    break;
-                case OpCode.cmd:
-                    break;
-                case OpCode.indarg:
-                    break;
-                case OpCode.tail:
-                    break;
-                case OpCode.indloc:
-                    break;
-                case OpCode.indloci:
-                    break;
-                case OpCode.indglob:
-                    break;
-                case OpCode.jump:
-                    break;
-                case OpCode.jump_t:
-                    break;
-                case OpCode.jump_f:
-                    break;
-                case OpCode.ret_exit:
-                    break;
-                case OpCode.ret_value:
-                    break;
-                case OpCode.ret_break:
-                    break;
-                case OpCode.ret_continue:
-                    break;
-                case OpCode.ret_set:
-                    break;
-                case OpCode.@throw:
-                    break;
-                case OpCode.@try:
-                    break;
-                case OpCode.leave:
-                    break;
-                case OpCode.exc:
-                    break;
-                case OpCode.pop:
-                    break;
-                case OpCode.dup:
-                    break;
-                case OpCode.rot:
-                    break;
-            }
-            return false;
         }
     }
 }

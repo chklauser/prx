@@ -534,7 +534,7 @@ namespace Prexonite.Compiler.Cil
                     state.Symbols.Add(parameter, new Symbol(SymbolKind.Local));
 
             //Add entries for enumerator variables
-            foreach (var hint in state.ForeachHints)
+            foreach (var hint in state._ForeachHints)
             {
                 if (state.Symbols.ContainsKey(hint.EnumVar))
                     throw new PrexoniteException("Invalid foreach hint. Enumerator variable is shared.");
@@ -643,7 +643,7 @@ namespace Prexonite.Compiler.Cil
                         if (sym.Local == null)
                         {
                             local = state.Il.DeclareLocal(typeof(PVariable));
-                            state.Il.Emit(OpCodes.Newobj, newPVariableCtor);
+                            state.Il.Emit(OpCodes.Newobj, NewPVariableCtor);
                             state.EmitStoreLocal(local);
                             //PVariable objects already contain PValue.Null and need not be initialized if no
                             //  argument has been passed.
@@ -752,12 +752,13 @@ namespace Prexonite.Compiler.Cil
 
                             var idx = sym.Local.LocalIndex;
 
-                            state.Il.Emit(OpCodes.Newobj, newPVariableCtor);
-                            state.EmitStoreLocal(idx);
+                            state.Il.Emit(OpCodes.Newobj, NewPVariableCtor);
 
                             if (initVal != VariableInitialization.None)
                             {
-                                state.EmitLoadLocal(idx);
+                                state.Il.Emit(OpCodes.Dup);
+                                state.EmitStoreLocal(idx);
+
                                 switch (initVal)
                                 {
                                     case VariableInitialization.ArgV:
@@ -771,6 +772,10 @@ namespace Prexonite.Compiler.Cil
                                         break;
                                 }
                                 state.Il.EmitCall(OpCodes.Call, SetValueMethod, null);
+                            }
+                            else
+                            {
+                                state.EmitStoreLocal(idx); 
                             }
                         }
                         break;
@@ -808,7 +813,7 @@ namespace Prexonite.Compiler.Cil
             var foreachMoveNexts = new Dictionary<int, ForeachHint>();
             var foreachDisposes = new Dictionary<int, ForeachHint>();
 
-            foreach (var hint in state.ForeachHints)
+            foreach (var hint in state._ForeachHints)
             {
                 foreachCasts.Add(hint.CastAddress, hint);
                 foreachGetCurrents.Add(hint.GetCurrentAddress, hint);
@@ -875,9 +880,9 @@ namespace Prexonite.Compiler.Cil
                 // **** CIL hints ****
                 //  * CIL Extension *
                 {
-                    if (state.CilExtensionOffsets.Count > 0 && state.CilExtensionOffsets.Peek() == instructionIndex)
+                    if (state._CilExtensionOffsets.Count > 0 && state._CilExtensionOffsets.Peek() == instructionIndex)
                     {
-                        state.CilExtensionOffsets.Dequeue();
+                        state._CilExtensionOffsets.Dequeue();
                         if (staticArgv == null)
                             staticArgv = new List<CompileTimeValue>(8);
                         else
@@ -1070,19 +1075,11 @@ namespace Prexonite.Compiler.Cil
 
                     //LOAD LOCAL VARIABLE
                     case OpCode.ldloc:
-                        var sym = state.Symbols[id];
-                        if (sym.Kind == SymbolKind.Local)
-                        {
-                            state.EmitLoadLocal(sym.Local.LocalIndex);
-                        }
-                        else if (sym.Kind == SymbolKind.LocalRef)
-                        {
-                            state.EmitLoadLocal(sym.Local.LocalIndex);
-                            state.Il.EmitCall(OpCodes.Call, GetValueMethod, null);
-                        }
+                        state.EmitLoadPValue(state.Symbols[id]);
                         break;
                     case OpCode.stloc:
-                        sym = state.Symbols[id];
+                        //Don't use EmitStorePValue here, because this is a more efficient solution
+                        var sym = state.Symbols[id];
                         if (sym.Kind == SymbolKind.Local)
                         {
                             state.EmitStoreLocal(sym.Local.LocalIndex);
@@ -1661,13 +1658,13 @@ namespace Prexonite.Compiler.Cil
                     case OpCode.jump:
                         state.Il.Emit
                             (
-                            state.MustUseLeave(instructionIndex, ref argc) ? OpCodes.Leave : OpCodes.Br,
+                            state._MustUseLeave(instructionIndex, ref argc) ? OpCodes.Leave : OpCodes.Br,
                             _getInstructionLabel(state, argc));
                         break;
                     case OpCode.jump_t:
                         state.EmitLoadLocal(state.SctxLocal);
                         state.Il.EmitCall(OpCodes.Call, Runtime.ExtractBoolMethod, null);
-                        if (state.MustUseLeave(instructionIndex, ref argc))
+                        if (state._MustUseLeave(instructionIndex, ref argc))
                         {
                             var cont = state.Il.DefineLabel();
                             state.Il.Emit(OpCodes.Brfalse_S, cont);
@@ -1682,7 +1679,7 @@ namespace Prexonite.Compiler.Cil
                     case OpCode.jump_f:
                         state.EmitLoadLocal(state.SctxLocal);
                         state.Il.EmitCall(OpCodes.Call, Runtime.ExtractBoolMethod, null);
-                        if (state.MustUseLeave(instructionIndex, ref argc))
+                        if (state._MustUseLeave(instructionIndex, ref argc))
                         {
                             var cont = state.Il.DefineLabel();
                             state.Il.Emit(OpCodes.Brtrue_S, cont);
@@ -1829,7 +1826,7 @@ namespace Prexonite.Compiler.Cil
             var max = state.Source.Code.Count;
             var rmax = max;
 
-            if (state.MustUseLeave(instructionIndex, ref rmax))
+            if (state._MustUseLeave(instructionIndex, ref rmax))
             {
                 //Cannot return from protected block.
                 //Jump to return instruction (guaranteed to be at address $count)
@@ -1859,7 +1856,7 @@ namespace Prexonite.Compiler.Cil
 
 
             var endOfFunction = state.Source.Code.Count;
-            if (state.MustUseLeave(instructionIndex, ref endOfFunction))
+            if (state._MustUseLeave(instructionIndex, ref endOfFunction))
                 state.Il.Emit(OpCodes.Leave, state.ReturnLabel);
             else
                 state.Il.Emit(OpCodes.Ret);
@@ -2017,7 +2014,7 @@ namespace Prexonite.Compiler.Cil
             get { return _nullCreatePValue; }
         }
 
-        private static ConstructorInfo newPVariableCtor
+        public static ConstructorInfo NewPVariableCtor
         {
             get { return _newPVariableCtor; }
         }

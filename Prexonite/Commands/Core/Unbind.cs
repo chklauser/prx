@@ -26,6 +26,7 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Reflection.Emit;
 using Prexonite.Compiler.Cil;
 using Prexonite.Types;
 
@@ -60,10 +61,10 @@ namespace Prexonite.Commands.Core
     /// calling unbind on a shared variable, those two closures will still 
     /// use the same memory location. Only the references in the calling 
     /// function change.</para>
-    /// <para>Note that the value of the variable remains untouched. 
+    /// <para>Important: that the value of the variable remains untouched. 
     /// The <see cref="PValue"/> object reference is just copied to 
     /// the new memory location.</para></remarks>
-    public sealed class Unbind : PCommand, ICilCompilerAware
+    public sealed class Unbind : PCommand, ICilCompilerAware, ICilExtension
     {
         private Unbind()
         {
@@ -105,7 +106,7 @@ namespace Prexonite.Commands.Core
         /// <exception cref="ArgumentNullException"><paramref name="arg"/> is null</exception>
         /// <exception cref="PrexoniteException"><paramref name="arg"/> contains null</exception>
         /// <exception cref="PrexoniteException"><paramref name="sctx"/> is not a <see cref="FunctionContext"/></exception>
-        public PValue Run(StackContext sctx, PValue arg)
+        public static PValue Run(StackContext sctx, PValue arg)
         {
             if (sctx == null)
                 throw new ArgumentNullException("sctx");
@@ -166,6 +167,41 @@ namespace Prexonite.Commands.Core
         {
             
             throw new NotSupportedException();
+        }
+
+        #endregion
+
+        #region Implementation of ICilExtension
+
+        bool ICilExtension.ValidateArguments(CompileTimeValue[] staticArgv, int dynamicArgc)
+        {
+            return dynamicArgc == 0
+                   && staticArgv.All(arg => arg.Interpretation == CompileTimeInterpretation.LocalVariableReference);
+        }
+
+        void ICilExtension.Implement(CompilerState state, Instruction ins, CompileTimeValue[] staticArgv, int dynamicArgc)
+        {
+            foreach (var compileTimeValue in staticArgv)
+            {
+                string localVariableId;
+                if(!compileTimeValue.TryGetLocalVariableReference(out localVariableId))
+                    throw new ArgumentException("CIL implementation of Core.Unbind command only accepts local variable references.","staticArgv");
+
+                Symbol symbol;
+                if(!state.Symbols.TryGetValue(localVariableId, out symbol) || symbol.Kind != SymbolKind.LocalRef)
+                    throw new PrexoniteException("CIL implementation of Core.Unbind cannot find local explicit variable " + localVariableId);
+
+                //Create new PVariable
+                state.Il.Emit(OpCodes.Newobj, Compiler.Cil.Compiler.NewPVariableCtor);
+                state.Il.Emit(OpCodes.Dup);
+
+                //Copy old value
+                state.EmitLoadPValue(symbol);
+                state.EmitCall(Compiler.Cil.Compiler.SetValueMethod);
+
+                //Override variable slot
+                state.EmitStoreLocal(symbol.Local);
+            }
         }
 
         #endregion
