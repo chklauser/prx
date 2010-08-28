@@ -977,7 +977,7 @@ class Lexer: IScanner {
         case 15: 
           if (ZZ_SPURIOUS_WARNINGS_SUCK)
           {
-#line 135 "Prexonite.lex"
+#line 134 "Prexonite.lex"
               return tok(Parser._lpar); 
 #line default
           }
@@ -985,7 +985,7 @@ class Lexer: IScanner {
         case 100: 
           if (ZZ_SPURIOUS_WARNINGS_SUCK)
           {
-#line 193 "Prexonite.lex"
+#line 192 "Prexonite.lex"
                                                                                                           buffer.Append(unescape_char(yytext())); 
 #line default
           }
@@ -993,7 +993,7 @@ class Lexer: IScanner {
         case 16: 
           if (ZZ_SPURIOUS_WARNINGS_SUCK)
           {
-#line 136 "Prexonite.lex"
+#line 135 "Prexonite.lex"
               return tok(Parser._rpar); 
 #line default
           }
@@ -1001,7 +1001,7 @@ class Lexer: IScanner {
         case 45: 
           if (ZZ_SPURIOUS_WARNINGS_SUCK)
           {
-#line 110 "Prexonite.lex"
+#line 109 "Prexonite.lex"
                            return tok(Parser._id, yytext().Substring(1)); 
 #line default
           }
@@ -1009,7 +1009,7 @@ class Lexer: IScanner {
         case 66: 
           if (ZZ_SPURIOUS_WARNINGS_SUCK)
           {
-#line 189 "Prexonite.lex"
+#line 188 "Prexonite.lex"
                   buffer.Append("\v"); 
 #line default
           }
@@ -1017,7 +1017,7 @@ class Lexer: IScanner {
         case 105: 
           if (ZZ_SPURIOUS_WARNINGS_SUCK)
           {
-#line 134 "Prexonite.lex"
+#line 133 "Prexonite.lex"
               return tok(Parser._id,OperatorNames.Prexonite.Decrement); 
 #line default
           }
@@ -1025,7 +1025,7 @@ class Lexer: IScanner {
         case 31: 
           if (ZZ_SPURIOUS_WARNINGS_SUCK)
           {
-#line 176 "Prexonite.lex"
+#line 175 "Prexonite.lex"
                   PopState();
                   ret(tok(Parser._string, buffer.ToString()));
                   buffer.Length = 0;
@@ -1036,7 +1036,7 @@ class Lexer: IScanner {
         case 33: 
           if (ZZ_SPURIOUS_WARNINGS_SUCK)
           {
-#line 203 "Prexonite.lex"
+#line 202 "Prexonite.lex"
                            buffer.Append(yytext()); 
 #line default
           }
@@ -1044,7 +1044,7 @@ class Lexer: IScanner {
         case 103: 
           if (ZZ_SPURIOUS_WARNINGS_SUCK)
           {
-#line 75 "Prexonite.lex"
+#line 74 "Prexonite.lex"
               return tok(Parser._does); 
 #line default
           }
@@ -1052,7 +1052,7 @@ class Lexer: IScanner {
         case 30: 
           if (ZZ_SPURIOUS_WARNINGS_SUCK)
           {
-#line 283 "Prexonite.lex"
+#line 282 "Prexonite.lex"
                   throw new PrexoniteException(System.String.Format("Invalid character \"{0}\" detected on line {1} in {2}.", yytext(), yyline, File)); 
 #line default
           }
@@ -1060,7 +1060,7 @@ class Lexer: IScanner {
         case 13: 
           if (ZZ_SPURIOUS_WARNINGS_SUCK)
           {
-#line 115 "Prexonite.lex"
+#line 114 "Prexonite.lex"
               return tok(Parser._lbrace); 
 #line default
           }
@@ -1068,7 +1068,7 @@ class Lexer: IScanner {
         case 7: 
           if (ZZ_SPURIOUS_WARNINGS_SUCK)
           {
-#line 80 "Prexonite.lex"
+#line 79 "Prexonite.lex"
                     buffer.Length = 0; PushState(String); 
 #line default
           }
@@ -1076,7 +1076,7 @@ class Lexer: IScanner {
         case 74: 
           if (ZZ_SPURIOUS_WARNINGS_SUCK)
           {
-#line 211 "Prexonite.lex"
+#line 210 "Prexonite.lex"
                   buffer.Append("\r"); 
 #line default
           }
@@ -1084,7 +1084,7 @@ class Lexer: IScanner {
         case 86: 
           if (ZZ_SPURIOUS_WARNINGS_SUCK)
           {
-#line 87 "Prexonite.lex"
+#line 86 "Prexonite.lex"
                   buffer.Length = 0; PushState(SmartVerbatimString); 
 #line default
           }
@@ -1092,7 +1092,7 @@ class Lexer: IScanner {
         case 14: 
           if (ZZ_SPURIOUS_WARNINGS_SUCK)
           {
-#line 116 "Prexonite.lex"
+#line 115 "Prexonite.lex"
               return tok(Parser._lbrack); 
 #line default
           }
@@ -1100,7 +1100,7 @@ class Lexer: IScanner {
         case 109: 
           if (ZZ_SPURIOUS_WARNINGS_SUCK)
           {
-#line 129 "Prexonite.lex"
+#line 128 "Prexonite.lex"
               return tok(Parser._id,OperatorNames.Prexonite.GreaterThanOrEqual); 
 #line default
           }
@@ -1108,7 +1108,7 @@ class Lexer: IScanner {
         case 72: 
           if (ZZ_SPURIOUS_WARNINGS_SUCK)
           {
-#line 213 "Prexonite.lex"
+#line 212 "Prexonite.lex"
                   buffer.Append("\t"); 
 #line default
           }
@@ -1116,7 +1116,7 @@ class Lexer: IScanner {
         case 41: 
           if (ZZ_SPURIOUS_WARNINGS_SUCK)
           {
-#line 86 "Prexonite.lex"
+#line 85 "Prexonite.lex"
                   buffer.Length = 0; PushState(SmartString); 
 #line default
           }
@@ -1124,7 +1124,7 @@ class Lexer: IScanner {
         case 9: 
           if (ZZ_SPURIOUS_WARNINGS_SUCK)
           {
-#line 141 "Prexonite.lex"
+#line 140 "Prexonite.lex"
               return tok(Parser._times); 
 #line default
           }
@@ -1132,7 +1132,7 @@ class Lexer: IScanner {
         case 101: 
           if (ZZ_SPURIOUS_WARNINGS_SUCK)
           {
-#line 216 "Prexonite.lex"
+#line 215 "Prexonite.lex"
                                                                                                           buffer.Append(unescape_char(yytext())); 
 #line default
           }
@@ -1140,7 +1140,7 @@ class Lexer: IScanner {
         case 20: 
           if (ZZ_SPURIOUS_WARNINGS_SUCK)
           {
-#line 144 "Prexonite.lex"
+#line 143 "Prexonite.lex"
               return tok(Parser._assign); 
 #line default
           }
@@ -1148,7 +1148,7 @@ class Lexer: IScanner {
         case 26: 
           if (ZZ_SPURIOUS_WARNINGS_SUCK)
           {
-#line 161 "Prexonite.lex"
+#line 160 "Prexonite.lex"
               return tok(Parser._question); 
 #line default
           }
@@ -1156,7 +1156,7 @@ class Lexer: IScanner {
         case 78: 
           if (ZZ_SPURIOUS_WARNINGS_SUCK)
           {
-#line 208 "Prexonite.lex"
+#line 207 "Prexonite.lex"
                   buffer.Append("\b"); 
 #line default
           }
@@ -1164,7 +1164,7 @@ class Lexer: IScanner {
         case 65: 
           if (ZZ_SPURIOUS_WARNINGS_SUCK)
           {
-#line 184 "Prexonite.lex"
+#line 183 "Prexonite.lex"
                   buffer.Append("\a"); 
 #line default
           }
@@ -1172,7 +1172,7 @@ class Lexer: IScanner {
         case 64: 
           if (ZZ_SPURIOUS_WARNINGS_SUCK)
           {
-#line 186 "Prexonite.lex"
+#line 185 "Prexonite.lex"
                   buffer.Append("\f"); 
 #line default
           }
@@ -1180,7 +1180,7 @@ class Lexer: IScanner {
         case 12: 
           if (ZZ_SPURIOUS_WARNINGS_SUCK)
           {
-#line 164 "Prexonite.lex"
+#line 163 "Prexonite.lex"
               return tok(Parser._colon); 
 #line default
           }
@@ -1188,7 +1188,7 @@ class Lexer: IScanner {
         case 8: 
           if (ZZ_SPURIOUS_WARNINGS_SUCK)
           {
-#line 142 "Prexonite.lex"
+#line 141 "Prexonite.lex"
               return tok(Parser._div); 
 #line default
           }
@@ -1196,7 +1196,7 @@ class Lexer: IScanner {
         case 42: 
           if (ZZ_SPURIOUS_WARNINGS_SUCK)
           {
-#line 156 "Prexonite.lex"
+#line 155 "Prexonite.lex"
               return tok(Parser._inc); 
 #line default
           }
@@ -1204,7 +1204,7 @@ class Lexer: IScanner {
         case 19: 
           if (ZZ_SPURIOUS_WARNINGS_SUCK)
           {
-#line 148 "Prexonite.lex"
+#line 147 "Prexonite.lex"
               return tok(Parser._bitOr); 
 #line default
           }
@@ -1212,7 +1212,7 @@ class Lexer: IScanner {
         case 79: 
           if (ZZ_SPURIOUS_WARNINGS_SUCK)
           {
-#line 210 "Prexonite.lex"
+#line 209 "Prexonite.lex"
                   buffer.Append("\n"); 
 #line default
           }
@@ -1220,7 +1220,7 @@ class Lexer: IScanner {
         case 24: 
           if (ZZ_SPURIOUS_WARNINGS_SUCK)
           {
-#line 138 "Prexonite.lex"
+#line 137 "Prexonite.lex"
               return tok(Parser._rbrace); 
 #line default
           }
@@ -1228,7 +1228,7 @@ class Lexer: IScanner {
         case 84: 
           if (ZZ_SPURIOUS_WARNINGS_SUCK)
           {
-#line 259 "Prexonite.lex"
+#line 258 "Prexonite.lex"
                         string fragment = buffer.ToString();
                         buffer.Length = 0;
                         return multiple(
@@ -1244,7 +1244,7 @@ class Lexer: IScanner {
         case 113: 
           if (ZZ_SPURIOUS_WARNINGS_SUCK)
           {
-#line 121 "Prexonite.lex"
+#line 120 "Prexonite.lex"
                             return tok(Parser._id,OperatorNames.Prexonite.Modulus); 
 #line default
           }
@@ -1252,7 +1252,7 @@ class Lexer: IScanner {
         case 90: 
           if (ZZ_SPURIOUS_WARNINGS_SUCK)
           {
-#line 103 "Prexonite.lex"
+#line 102 "Prexonite.lex"
               return tok(Parser._var); 
 #line default
           }
@@ -1260,7 +1260,7 @@ class Lexer: IScanner {
         case 23: 
           if (ZZ_SPURIOUS_WARNINGS_SUCK)
           {
-#line 137 "Prexonite.lex"
+#line 136 "Prexonite.lex"
               return tok(Parser._rbrack); 
 #line default
           }
@@ -1268,7 +1268,7 @@ class Lexer: IScanner {
         case 6: 
           if (ZZ_SPURIOUS_WARNINGS_SUCK)
           {
-#line 94 "Prexonite.lex"
+#line 93 "Prexonite.lex"
                   /* Comment/Whitespace: ignore */ 
 #line default
           }
@@ -1276,7 +1276,7 @@ class Lexer: IScanner {
         case 25: 
           if (ZZ_SPURIOUS_WARNINGS_SUCK)
           {
-#line 158 "Prexonite.lex"
+#line 157 "Prexonite.lex"
               return tok(Parser._tilde); 
 #line default
           }
@@ -1284,7 +1284,7 @@ class Lexer: IScanner {
         case 80: 
           if (ZZ_SPURIOUS_WARNINGS_SUCK)
           {
-#line 218 "Prexonite.lex"
+#line 217 "Prexonite.lex"
                         string fragment = buffer.ToString();
                         buffer.Length = 0;
                         return multiple(
@@ -1300,7 +1300,7 @@ class Lexer: IScanner {
         case 59: 
           if (ZZ_SPURIOUS_WARNINGS_SUCK)
           {
-#line 181 "Prexonite.lex"
+#line 180 "Prexonite.lex"
                   buffer.Append("\\"); 
 #line default
           }
@@ -1308,7 +1308,7 @@ class Lexer: IScanner {
         case 2: 
           if (ZZ_SPURIOUS_WARNINGS_SUCK)
           {
-#line 99 "Prexonite.lex"
+#line 98 "Prexonite.lex"
                                   return tok(Parser._integer, yytext()); 
 #line default
           }
@@ -1316,7 +1316,7 @@ class Lexer: IScanner {
         case 82: 
           if (ZZ_SPURIOUS_WARNINGS_SUCK)
           {
-#line 247 "Prexonite.lex"
+#line 246 "Prexonite.lex"
                   buffer.Append("\""); 
 #line default
           }
@@ -1324,7 +1324,7 @@ class Lexer: IScanner {
         case 48: 
           if (ZZ_SPURIOUS_WARNINGS_SUCK)
           {
-#line 159 "Prexonite.lex"
+#line 158 "Prexonite.lex"
               return tok(Parser._doublecolon); 
 #line default
           }
@@ -1332,7 +1332,7 @@ class Lexer: IScanner {
         case 29: 
           if (ZZ_SPURIOUS_WARNINGS_SUCK)
           {
-#line 180 "Prexonite.lex"
+#line 179 "Prexonite.lex"
                            buffer.Append(yytext()); 
 #line default
           }
@@ -1340,7 +1340,7 @@ class Lexer: IScanner {
         case 40: 
           if (ZZ_SPURIOUS_WARNINGS_SUCK)
           {
-#line 253 "Prexonite.lex"
+#line 252 "Prexonite.lex"
                   PopState();
                   ret(tok(Parser._string, buffer.ToString()));
                   buffer.Length = 0;
@@ -1351,7 +1351,7 @@ class Lexer: IScanner {
         case 55: 
           if (ZZ_SPURIOUS_WARNINGS_SUCK)
           {
-#line 169 "Prexonite.lex"
+#line 168 "Prexonite.lex"
            return tok(Parser._appendright); 
 #line default
           }
@@ -1359,7 +1359,7 @@ class Lexer: IScanner {
         case 73: 
           if (ZZ_SPURIOUS_WARNINGS_SUCK)
           {
-#line 206 "Prexonite.lex"
+#line 205 "Prexonite.lex"
                   buffer.Append("\0"); 
 #line default
           }
@@ -1367,7 +1367,7 @@ class Lexer: IScanner {
         case 50: 
           if (ZZ_SPURIOUS_WARNINGS_SUCK)
           {
-#line 147 "Prexonite.lex"
+#line 146 "Prexonite.lex"
               return tok(Parser._or); 
 #line default
           }
@@ -1375,7 +1375,7 @@ class Lexer: IScanner {
         case 89: 
           if (ZZ_SPURIOUS_WARNINGS_SUCK)
           {
-#line 104 "Prexonite.lex"
+#line 103 "Prexonite.lex"
               return tok(Parser._ref); 
 #line default
           }
@@ -1383,7 +1383,7 @@ class Lexer: IScanner {
         case 111: 
           if (ZZ_SPURIOUS_WARNINGS_SUCK)
           {
-#line 102 "Prexonite.lex"
+#line 101 "Prexonite.lex"
                return tok(Parser._false); 
 #line default
           }
@@ -1391,7 +1391,7 @@ class Lexer: IScanner {
         case 102: 
           if (ZZ_SPURIOUS_WARNINGS_SUCK)
           {
-#line 101 "Prexonite.lex"
+#line 100 "Prexonite.lex"
               return tok(Parser._true); 
 #line default
           }
@@ -1399,7 +1399,7 @@ class Lexer: IScanner {
         case 4: 
           if (ZZ_SPURIOUS_WARNINGS_SUCK)
           {
-#line 139 "Prexonite.lex"
+#line 138 "Prexonite.lex"
               return tok(Parser._plus); 
 #line default
           }
@@ -1407,7 +1407,7 @@ class Lexer: IScanner {
         case 57: 
           if (ZZ_SPURIOUS_WARNINGS_SUCK)
           {
-#line 170 "Prexonite.lex"
+#line 169 "Prexonite.lex"
            return tok(Parser._appendleft); 
 #line default
           }
@@ -1415,7 +1415,7 @@ class Lexer: IScanner {
         case 98: 
           if (ZZ_SPURIOUS_WARNINGS_SUCK)
           {
-#line 128 "Prexonite.lex"
+#line 127 "Prexonite.lex"
              return tok(Parser._id,OperatorNames.Prexonite.GreaterThan); 
 #line default
           }
@@ -1423,7 +1423,7 @@ class Lexer: IScanner {
         case 94: 
           if (ZZ_SPURIOUS_WARNINGS_SUCK)
           {
-#line 119 "Prexonite.lex"
+#line 118 "Prexonite.lex"
              return tok(Parser._id,OperatorNames.Prexonite.Multiplication); 
 #line default
           }
@@ -1431,7 +1431,7 @@ class Lexer: IScanner {
         case 106: 
           if (ZZ_SPURIOUS_WARNINGS_SUCK)
           {
-#line 132 "Prexonite.lex"
+#line 131 "Prexonite.lex"
               return tok(Parser._id,OperatorNames.Prexonite.UnaryNegation); 
 #line default
           }
@@ -1439,7 +1439,7 @@ class Lexer: IScanner {
         case 60: 
           if (ZZ_SPURIOUS_WARNINGS_SUCK)
           {
-#line 182 "Prexonite.lex"
+#line 181 "Prexonite.lex"
                   buffer.Append("\""); 
 #line default
           }
@@ -1447,7 +1447,7 @@ class Lexer: IScanner {
         case 51: 
           if (ZZ_SPURIOUS_WARNINGS_SUCK)
           {
-#line 150 "Prexonite.lex"
+#line 149 "Prexonite.lex"
               return tok(Parser._eq); 
 #line default
           }
@@ -1455,7 +1455,7 @@ class Lexer: IScanner {
         case 43: 
           if (ZZ_SPURIOUS_WARNINGS_SUCK)
           {
-#line 157 "Prexonite.lex"
+#line 156 "Prexonite.lex"
               return tok(Parser._dec); 
 #line default
           }
@@ -1463,7 +1463,7 @@ class Lexer: IScanner {
         case 88: 
           if (ZZ_SPURIOUS_WARNINGS_SUCK)
           {
-#line 106 "Prexonite.lex"
+#line 105 "Prexonite.lex"
                          string ns = yytext();
                          return tok(Parser._ns, ns.Substring(0, ns.Length-2)); 
 #line default
@@ -1472,7 +1472,7 @@ class Lexer: IScanner {
         case 36: 
           if (ZZ_SPURIOUS_WARNINGS_SUCK)
           {
-#line 246 "Prexonite.lex"
+#line 245 "Prexonite.lex"
                                   buffer.Append(yytext()); 
 #line default
           }
@@ -1480,7 +1480,7 @@ class Lexer: IScanner {
         case 28: 
           if (ZZ_SPURIOUS_WARNINGS_SUCK)
           {
-#line 166 "Prexonite.lex"
+#line 165 "Prexonite.lex"
               return tok(Parser._comma); 
 #line default
           }
@@ -1488,7 +1488,7 @@ class Lexer: IScanner {
         case 46: 
           if (ZZ_SPURIOUS_WARNINGS_SUCK)
           {
-#line 71 "Prexonite.lex"
+#line 70 "Prexonite.lex"
                   return tok(Parser._to); 
 #line default
           }
@@ -1496,7 +1496,7 @@ class Lexer: IScanner {
         case 32: 
           if (ZZ_SPURIOUS_WARNINGS_SUCK)
           {
-#line 195 "Prexonite.lex"
+#line 194 "Prexonite.lex"
                           buffer.Append("$"); 
 #line default
           }
@@ -1504,7 +1504,7 @@ class Lexer: IScanner {
         case 92: 
           if (ZZ_SPURIOUS_WARNINGS_SUCK)
           {
-#line 118 "Prexonite.lex"
+#line 117 "Prexonite.lex"
              return tok(Parser._id,OperatorNames.Prexonite.Subtraction); 
 #line default
           }
@@ -1512,7 +1512,7 @@ class Lexer: IScanner {
         case 34: 
           if (ZZ_SPURIOUS_WARNINGS_SUCK)
           {
-#line 238 "Prexonite.lex"
+#line 237 "Prexonite.lex"
                   throw new PrexoniteException("Invalid smart string character '" + yytext() + "' (ASCII " + ((int)yytext()[0]) + ") in input on line " + yyline + "."); 
 #line default
           }
@@ -1520,7 +1520,7 @@ class Lexer: IScanner {
         case 44: 
           if (ZZ_SPURIOUS_WARNINGS_SUCK)
           {
-#line 162 "Prexonite.lex"
+#line 161 "Prexonite.lex"
               return tok(Parser._pointer); 
 #line default
           }
@@ -1528,7 +1528,7 @@ class Lexer: IScanner {
         case 49: 
           if (ZZ_SPURIOUS_WARNINGS_SUCK)
           {
-#line 146 "Prexonite.lex"
+#line 145 "Prexonite.lex"
               return tok(Parser._and); 
 #line default
           }
@@ -1536,7 +1536,7 @@ class Lexer: IScanner {
         case 87: 
           if (ZZ_SPURIOUS_WARNINGS_SUCK)
           {
-#line 96 "Prexonite.lex"
+#line 95 "Prexonite.lex"
                                                             return tok(Parser._real, yytext()); 
 #line default
           }
@@ -1544,7 +1544,7 @@ class Lexer: IScanner {
         case 56: 
           if (ZZ_SPURIOUS_WARNINGS_SUCK)
           {
-#line 154 "Prexonite.lex"
+#line 153 "Prexonite.lex"
               return tok(Parser._le); 
 #line default
           }
@@ -1552,7 +1552,7 @@ class Lexer: IScanner {
         case 47: 
           if (ZZ_SPURIOUS_WARNINGS_SUCK)
           {
-#line 81 "Prexonite.lex"
+#line 80 "Prexonite.lex"
                     buffer.Length = 0; PushState(VerbatimString); 
 #line default
           }
@@ -1560,7 +1560,7 @@ class Lexer: IScanner {
         case 81: 
           if (ZZ_SPURIOUS_WARNINGS_SUCK)
           {
-#line 227 "Prexonite.lex"
+#line 226 "Prexonite.lex"
                         string fragment = buffer.ToString(); 
                         buffer.Length = 0;
                         PushState(Local);
@@ -1578,7 +1578,7 @@ class Lexer: IScanner {
         case 37: 
           if (ZZ_SPURIOUS_WARNINGS_SUCK)
           {
-#line 242 "Prexonite.lex"
+#line 241 "Prexonite.lex"
                   PopState();
                   ret(tok(Parser._string, buffer.ToString()));
                   buffer.Length = 0;
@@ -1589,7 +1589,7 @@ class Lexer: IScanner {
         case 54: 
           if (ZZ_SPURIOUS_WARNINGS_SUCK)
           {
-#line 153 "Prexonite.lex"
+#line 152 "Prexonite.lex"
               return tok(Parser._ge); 
 #line default
           }
@@ -1597,7 +1597,7 @@ class Lexer: IScanner {
         case 71: 
           if (ZZ_SPURIOUS_WARNINGS_SUCK)
           {
-#line 217 "Prexonite.lex"
+#line 216 "Prexonite.lex"
                   buffer.Append("$"); 
 #line default
           }
@@ -1605,7 +1605,7 @@ class Lexer: IScanner {
         case 108: 
           if (ZZ_SPURIOUS_WARNINGS_SUCK)
           {
-#line 127 "Prexonite.lex"
+#line 126 "Prexonite.lex"
               return tok(Parser._id,OperatorNames.Prexonite.Inequality); 
 #line default
           }
@@ -1613,7 +1613,7 @@ class Lexer: IScanner {
         case 22: 
           if (ZZ_SPURIOUS_WARNINGS_SUCK)
           {
-#line 155 "Prexonite.lex"
+#line 154 "Prexonite.lex"
               return tok(Parser._lt); 
 #line default
           }
@@ -1621,7 +1621,7 @@ class Lexer: IScanner {
         case 63: 
           if (ZZ_SPURIOUS_WARNINGS_SUCK)
           {
-#line 188 "Prexonite.lex"
+#line 187 "Prexonite.lex"
                   buffer.Append("\r"); 
 #line default
           }
@@ -1629,7 +1629,7 @@ class Lexer: IScanner {
         case 27: 
           if (ZZ_SPURIOUS_WARNINGS_SUCK)
           {
-#line 165 "Prexonite.lex"
+#line 164 "Prexonite.lex"
               return tok(Parser._semicolon); 
 #line default
           }
@@ -1637,7 +1637,7 @@ class Lexer: IScanner {
         case 58: 
           if (ZZ_SPURIOUS_WARNINGS_SUCK)
           {
-#line 160 "Prexonite.lex"
+#line 159 "Prexonite.lex"
            return tok(Parser._coalescence); 
 #line default
           }
@@ -1645,7 +1645,7 @@ class Lexer: IScanner {
         case 85: 
           if (ZZ_SPURIOUS_WARNINGS_SUCK)
           {
-#line 268 "Prexonite.lex"
+#line 267 "Prexonite.lex"
                         string fragment = buffer.ToString(); 
                         buffer.Length = 0;
                         PushState(Local);
@@ -1663,7 +1663,7 @@ class Lexer: IScanner {
         case 77: 
           if (ZZ_SPURIOUS_WARNINGS_SUCK)
           {
-#line 212 "Prexonite.lex"
+#line 211 "Prexonite.lex"
                   buffer.Append("\v"); 
 #line default
           }
@@ -1671,7 +1671,7 @@ class Lexer: IScanner {
         case 21: 
           if (ZZ_SPURIOUS_WARNINGS_SUCK)
           {
-#line 152 "Prexonite.lex"
+#line 151 "Prexonite.lex"
               return tok(Parser._gt); 
 #line default
           }
@@ -1679,7 +1679,7 @@ class Lexer: IScanner {
         case 61: 
           if (ZZ_SPURIOUS_WARNINGS_SUCK)
           {
-#line 190 "Prexonite.lex"
+#line 189 "Prexonite.lex"
                   buffer.Append("\t"); 
 #line default
           }
@@ -1687,7 +1687,7 @@ class Lexer: IScanner {
         case 107: 
           if (ZZ_SPURIOUS_WARNINGS_SUCK)
           {
-#line 126 "Prexonite.lex"
+#line 125 "Prexonite.lex"
               return tok(Parser._id,OperatorNames.Prexonite.Equality); 
 #line default
           }
@@ -1695,7 +1695,7 @@ class Lexer: IScanner {
         case 67: 
           if (ZZ_SPURIOUS_WARNINGS_SUCK)
           {
-#line 185 "Prexonite.lex"
+#line 184 "Prexonite.lex"
                   buffer.Append("\b"); 
 #line default
           }
@@ -1703,7 +1703,7 @@ class Lexer: IScanner {
         case 1: 
           if (ZZ_SPURIOUS_WARNINGS_SUCK)
           {
-#line 172 "Prexonite.lex"
+#line 171 "Prexonite.lex"
               Console.WriteLine("Rogue Character: \"{0}\"", yytext()); 
 #line default
           }
@@ -1711,7 +1711,7 @@ class Lexer: IScanner {
         case 99: 
           if (ZZ_SPURIOUS_WARNINGS_SUCK)
           {
-#line 130 "Prexonite.lex"
+#line 129 "Prexonite.lex"
              return tok(Parser._id,OperatorNames.Prexonite.LessThan); 
 #line default
           }
@@ -1719,7 +1719,7 @@ class Lexer: IScanner {
         case 76: 
           if (ZZ_SPURIOUS_WARNINGS_SUCK)
           {
-#line 207 "Prexonite.lex"
+#line 206 "Prexonite.lex"
                   buffer.Append("\a"); 
 #line default
           }
@@ -1727,7 +1727,7 @@ class Lexer: IScanner {
         case 75: 
           if (ZZ_SPURIOUS_WARNINGS_SUCK)
           {
-#line 209 "Prexonite.lex"
+#line 208 "Prexonite.lex"
                   buffer.Append("\f"); 
 #line default
           }
@@ -1735,7 +1735,7 @@ class Lexer: IScanner {
         case 97: 
           if (ZZ_SPURIOUS_WARNINGS_SUCK)
           {
-#line 124 "Prexonite.lex"
+#line 123 "Prexonite.lex"
              return tok(Parser._id,OperatorNames.Prexonite.BitwiseOr); 
 #line default
           }
@@ -1743,7 +1743,7 @@ class Lexer: IScanner {
         case 5: 
           if (ZZ_SPURIOUS_WARNINGS_SUCK)
           {
-#line 140 "Prexonite.lex"
+#line 139 "Prexonite.lex"
               return tok(Parser._minus); 
 #line default
           }
@@ -1751,7 +1751,7 @@ class Lexer: IScanner {
         case 53: 
           if (ZZ_SPURIOUS_WARNINGS_SUCK)
           {
-#line 151 "Prexonite.lex"
+#line 150 "Prexonite.lex"
               return tok(Parser._ne); 
 #line default
           }
@@ -1759,7 +1759,7 @@ class Lexer: IScanner {
         case 39: 
           if (ZZ_SPURIOUS_WARNINGS_SUCK)
           {
-#line 257 "Prexonite.lex"
+#line 256 "Prexonite.lex"
                                   buffer.Append(yytext()); 
 #line default
           }
@@ -1767,7 +1767,7 @@ class Lexer: IScanner {
         case 68: 
           if (ZZ_SPURIOUS_WARNINGS_SUCK)
           {
-#line 187 "Prexonite.lex"
+#line 186 "Prexonite.lex"
                   buffer.Append("\n"); 
 #line default
           }
@@ -1775,7 +1775,7 @@ class Lexer: IScanner {
         case 91: 
           if (ZZ_SPURIOUS_WARNINGS_SUCK)
           {
-#line 117 "Prexonite.lex"
+#line 116 "Prexonite.lex"
              return tok(Parser._id,OperatorNames.Prexonite.Addition); 
 #line default
           }
@@ -1783,7 +1783,7 @@ class Lexer: IScanner {
         case 83: 
           if (ZZ_SPURIOUS_WARNINGS_SUCK)
           {
-#line 258 "Prexonite.lex"
+#line 257 "Prexonite.lex"
                   buffer.Append("\""); 
 #line default
           }
@@ -1791,7 +1791,7 @@ class Lexer: IScanner {
         case 52: 
           if (ZZ_SPURIOUS_WARNINGS_SUCK)
           {
-#line 163 "Prexonite.lex"
+#line 162 "Prexonite.lex"
               return tok(Parser._implementation); 
 #line default
           }
@@ -1799,7 +1799,7 @@ class Lexer: IScanner {
         case 11: 
           if (ZZ_SPURIOUS_WARNINGS_SUCK)
           {
-#line 167 "Prexonite.lex"
+#line 166 "Prexonite.lex"
               return tok(Parser._dot); 
 #line default
           }
@@ -1807,7 +1807,7 @@ class Lexer: IScanner {
         case 3: 
           if (ZZ_SPURIOUS_WARNINGS_SUCK)
           {
-#line 112 "Prexonite.lex"
+#line 111 "Prexonite.lex"
                     return tok(checkKeyword(yytext()), yytext()); 
 #line default
           }
@@ -1815,7 +1815,7 @@ class Lexer: IScanner {
         case 95: 
           if (ZZ_SPURIOUS_WARNINGS_SUCK)
           {
-#line 122 "Prexonite.lex"
+#line 121 "Prexonite.lex"
              return tok(Parser._id,OperatorNames.Prexonite.Power); 
 #line default
           }
@@ -1823,7 +1823,7 @@ class Lexer: IScanner {
         case 17: 
           if (ZZ_SPURIOUS_WARNINGS_SUCK)
           {
-#line 143 "Prexonite.lex"
+#line 142 "Prexonite.lex"
               return tok(Parser._pow); 
 #line default
           }
@@ -1831,7 +1831,7 @@ class Lexer: IScanner {
         case 35: 
           if (ZZ_SPURIOUS_WARNINGS_SUCK)
           {
-#line 199 "Prexonite.lex"
+#line 198 "Prexonite.lex"
                   PopState();
                   ret(tok(Parser._string, buffer.ToString()));
                   buffer.Length = 0;
@@ -1842,7 +1842,7 @@ class Lexer: IScanner {
         case 62: 
           if (ZZ_SPURIOUS_WARNINGS_SUCK)
           {
-#line 183 "Prexonite.lex"
+#line 182 "Prexonite.lex"
                   buffer.Append("\0"); 
 #line default
           }
@@ -1850,7 +1850,7 @@ class Lexer: IScanner {
         case 69: 
           if (ZZ_SPURIOUS_WARNINGS_SUCK)
           {
-#line 204 "Prexonite.lex"
+#line 203 "Prexonite.lex"
                   buffer.Append("\\"); 
 #line default
           }
@@ -1858,7 +1858,7 @@ class Lexer: IScanner {
         case 112: 
           if (ZZ_SPURIOUS_WARNINGS_SUCK)
           {
-#line 125 "Prexonite.lex"
+#line 124 "Prexonite.lex"
                             return tok(Parser._id,OperatorNames.Prexonite.ExclusiveOr); 
 #line default
           }
@@ -1866,7 +1866,7 @@ class Lexer: IScanner {
         case 18: 
           if (ZZ_SPURIOUS_WARNINGS_SUCK)
           {
-#line 149 "Prexonite.lex"
+#line 148 "Prexonite.lex"
               return tok(Parser._bitAnd); 
 #line default
           }
@@ -1874,7 +1874,7 @@ class Lexer: IScanner {
         case 10: 
           if (ZZ_SPURIOUS_WARNINGS_SUCK)
           {
-#line 168 "Prexonite.lex"
+#line 167 "Prexonite.lex"
               return tok(Parser._at); 
 #line default
           }
@@ -1882,7 +1882,7 @@ class Lexer: IScanner {
         case 70: 
           if (ZZ_SPURIOUS_WARNINGS_SUCK)
           {
-#line 205 "Prexonite.lex"
+#line 204 "Prexonite.lex"
                   buffer.Append("\""); 
 #line default
           }
@@ -1890,7 +1890,7 @@ class Lexer: IScanner {
         case 104: 
           if (ZZ_SPURIOUS_WARNINGS_SUCK)
           {
-#line 133 "Prexonite.lex"
+#line 132 "Prexonite.lex"
               return tok(Parser._id,OperatorNames.Prexonite.Increment); 
 #line default
           }
@@ -1898,7 +1898,7 @@ class Lexer: IScanner {
         case 96: 
           if (ZZ_SPURIOUS_WARNINGS_SUCK)
           {
-#line 123 "Prexonite.lex"
+#line 122 "Prexonite.lex"
              return tok(Parser._id,OperatorNames.Prexonite.BitwiseAnd); 
 #line default
           }
@@ -1906,7 +1906,7 @@ class Lexer: IScanner {
         case 38: 
           if (ZZ_SPURIOUS_WARNINGS_SUCK)
           {
-#line 248 "Prexonite.lex"
+#line 247 "Prexonite.lex"
                   buffer.Append("$"); 
 #line default
           }
@@ -1914,7 +1914,7 @@ class Lexer: IScanner {
         case 93: 
           if (ZZ_SPURIOUS_WARNINGS_SUCK)
           {
-#line 120 "Prexonite.lex"
+#line 119 "Prexonite.lex"
              return tok(Parser._id,OperatorNames.Prexonite.Division); 
 #line default
           }
@@ -1922,7 +1922,7 @@ class Lexer: IScanner {
         case 110: 
           if (ZZ_SPURIOUS_WARNINGS_SUCK)
           {
-#line 131 "Prexonite.lex"
+#line 130 "Prexonite.lex"
               return tok(Parser._id,OperatorNames.Prexonite.LessThanOrEqual); 
 #line default
           }

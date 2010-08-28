@@ -57,10 +57,9 @@ Exponent            = e("+"|"-")?{Integer}
 Identifier          = ([:jletter:] | [\\]) ([:jletterdigit:] | [\\])*
 LineBreak           = \r|\n|\r\n|\u2028|\u2029|\u000B|\u000C|\u0085
 WhiteSpace          = [ \t\r\n\u2028\u2029\u000B\u000C\u0085]
-NotLineBreak        = [^\r\n\u2028\u2029\u000B\u000C\u0085]
 RegularStringChar   = [^$\"\\\r\n\u2028\u2029\u000B\u000C\u0085]
 RegularVerbatimStringChar = [^$\"] 
-Noise               = "/*" ~"*/" | "//" {NotLineBreak}* {LineBreak} | {WhiteSpace}+
+Noise               = "/*" ~"*/" | "//" ~{LineBreak} | {WhiteSpace}+
 
 %state String, SmartString, VerbatimString, SmartVerbatimString, VerbatimBlock, Local, Asm
 

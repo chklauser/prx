@@ -1142,11 +1142,5 @@ namespace Prexonite.Compiler
 
         public const string CilHintsKey = "cilhints";
 
-        public const string TailCallHintKey = "tail";
-        public const int TailCallHintLength = 5;
-        public const int TailCallHintReferenceIndex = 1;
-        public const int TailCallHintCallIndex = 2;
-        public const int TailCallHintTypeIndex = 3;
-        public const int TailCallHintSymbolIndex = 4;
     }
 }

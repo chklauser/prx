@@ -12,7 +12,7 @@ using Compiler = Prexonite.Compiler.Cil.Compiler;
 namespace PrexoniteTests.Tests
 {
     [TestFixture]
-    public class CilCompilerTestscs : VMTestsBase
+    public class CilCompilerTests : VMTestsBase
     {
 
         [Test]
@@ -119,6 +119,36 @@ function main() {
                 table.Meta[Loader.CilHintsKey] = (MetaEntry)new MetaEntry[0];
                 return _getCilHints(table, true);
             }
+        }
+
+        [Test]
+        public void UnbindCommandTest()
+        {
+            Compile(@"
+function main()
+{
+    var result = [];
+    var x = 1;
+    ref y = ->x;
+    result[] = x == 1;
+    result[] = ->x == ->y;
+    new var x;
+    result[] = x == 1;
+    result[] = not System::Object.ReferenceEquals(->x,  ->y);
+    
+    result[] = var x == new var x;
+    result[] = x == 1;
+    result[] = not System::Object.ReferenceEquals(->x,  ->y);
+
+    //behave like ordinary command
+    result[] = unbind(->x) is null;
+    result[] = x == 1;
+    result[] = not System::Object.ReferenceEquals(->x,  ->y);
+    
+    return result;
+}
+");
+            Expect(Enumerable.Range(1,10).Select(_ => (PValue) true).ToList());
         }
     }
 }

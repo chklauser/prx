@@ -3233,7 +3233,7 @@ ret.val
         }
 
         [Test]
-        public void Bug__0()
+        public void Bug0()
         {
             _compile(
                 @"
@@ -3271,6 +3271,83 @@ label continueForeach   ldloc   {0}
                         leave   end
 label   end
 ",target.Functions["main"].Code[3].Id));
+        }
+
+        [Test]
+        public void Bug26CommentsAtEnd()
+        {
+            //cannot reproduce as unit test so far
+            _compile(@"
+//PXS_
+
+function get_routine(name) = asm(ldr.app).Functions[name] ?? () => {};
+
+function as setup does get_routine(""setup"").();
+function as teardown does get_routine(""teardown"").();
+
+var TEST_KEY = ""test"";
+
+function run\test(test)
+{
+	var result = null;
+	try {
+		setup();		
+		test.();
+		teardown();
+	} 
+	catch(var e)
+	{
+		result = e;
+	}
+	
+	return result;
+}
+
+function main as run_all()
+{
+	if(var args.count == 0)
+		args = asm(ldr.app).Functions;
+	
+	var tests =
+		args 
+		>> map(t => if(t is String) asm(ldr.app).Functions[t] else t)
+		>> where(t => t is not null and t.Meta[TEST_KEY].Switch)
+		>> all;
+	
+	var n = tests.Count;
+	println(""Running $(tests.Count) tests."");
+	var i = 1;
+	var failed = [];
+	foreach(var test in tests)
+	{
+		println(""Running test $i/$n: "",$test.Id);
+		var exc = run\test(test);
+		if(exc is not null)
+		{
+			failed[] = test;
+			println(""\tFAILED"");
+			println(exc);
+		}
+		else 
+		{
+			println(""\tSUCCESS"");
+		}
+		
+		println();
+		i++;
+	}
+}
+
+{ 
+	CompileToCil;
+	if(->run\test.Meta[""volatile""].Switch)
+		throw ""run\\test was not compiled to CIL. This is necessary in order to ensure testing integrity."";
+}
+
+//
+
+/* */
+");
         }
 
         [Test]

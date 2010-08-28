@@ -68,6 +68,12 @@ namespace Prx
             {
                 Console.WriteLine(ex);
             }
+#else
+                if (Debugger.IsAttached)
+                {
+                    Console.WriteLine("Exiting Prx.Main normally. Press Enter to exit");
+                    Console.ReadLine();
+                }
 #endif
         }
 

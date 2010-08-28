@@ -202,6 +202,9 @@ namespace Prexonite.Commands.Core
                 //Override variable slot
                 state.EmitStoreLocal(symbol.Local);
             }
+
+            if(!ins.JustEffect)
+                state.EmitLoadPValueNull();
         }
 
         #endregion

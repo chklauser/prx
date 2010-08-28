@@ -6,8 +6,7 @@ using Prexonite.Compiler;
 
 namespace Prx.Tests
 {
-    [TestFixture(Description="Tests the built in compiler")]
-    public partial class Compiler
+    public class Compiler
     {
         #region Setup
 
@@ -34,11 +33,6 @@ namespace Prx.Tests
         }
 
         #endregion
-
-        [Test]
-        public void Startup()
-        {
-        }
 
         #region Helper
 
