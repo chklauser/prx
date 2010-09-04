@@ -105,6 +105,7 @@
     <Compile Include="Commands\Concurrency\CallAsync.cs" />
     <Compile Include="Commands\Concurrency\Chan.cs" />
     <Compile Include="Commands\Concurrency\Select.cs" />
+    <Compile Include="Commands\Core\Boxed.cs" />
     <Compile Include="Commands\Core\Call.cs" />
     <Compile Include="Commands\Core\Caller.cs" />
     <Compile Include="Commands\Core\CallSubPerform.cs" />
@@ -121,6 +122,10 @@
     <Compile Include="Commands\Core\LoadAssembly.cs" />
     <Compile Include="Commands\Core\Meta.cs" />
     <Compile Include="Commands\Core\Pair.cs" />
+    <Compile Include="Commands\Core\PartialApplication\PartialApplicationBase.cs" />
+    <Compile Include="Commands\Core\PartialApplication\PartialApplicationCommandBase.cs" />
+    <Compile Include="Commands\Core\PartialApplication\PartialCall.cs" />
+    <Compile Include="Commands\Core\PartialApplication\PartialCallCommand.cs" />
     <Compile Include="Commands\Core\Print.cs" />
     <Compile Include="Commands\Core\PrintLine.cs" />
     <Compile Include="Commands\Core\StaticPrint.cs" />
@@ -212,6 +217,7 @@
     <Compile Include="Compiler\Ast\AstModifyingAssignment.cs" />
     <Compile Include="Compiler\Ast\AstNull.cs" />
     <Compile Include="Compiler\Ast\AstObjectCreation.cs" />
+    <Compile Include="Compiler\Ast\AstPlaceholder.cs" />
     <Compile Include="Compiler\Ast\AstReturn.cs" />
     <Compile Include="Compiler\Ast\AstStringConcatenation.cs" />
     <Compile Include="Compiler\Ast\AstThrow.cs" />
@@ -231,6 +237,7 @@
     <Compile Include="Compiler\Ast\AstNode.cs" />
     <Compile Include="Compiler\Ast\IAstHasBlocks.cs" />
     <Compile Include="Compiler\Ast\IAstHasExpressions.cs" />
+    <Compile Include="Compiler\Ast\IAstPartiallyApplicable.cs" />
     <Compile Include="Compiler\Ast\IAstType.cs" />
     <Compile Include="Compiler\Ast\ICanBeReferenced.cs" />
     <Compile Include="Compiler\Cil\CilExtensionHint.cs" />

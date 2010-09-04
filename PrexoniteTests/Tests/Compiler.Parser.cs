@@ -3474,5 +3474,25 @@ function parent
 ");
         }
 
+        [Test]
+        public void ArgumentListDuplicate()
+        {
+            //If the argument list of a AstGetSet complex contains successive references to the same node, it will 
+            //  emit a duplicate instructions.
+            //This shouldn't happen during ordinary operation, as the nodes may be equal, but not identical
+            _compile(@"
+declare command side_effect, target;
+function main does
+    target(side_effect, side_effect);
+");
+
+            _expect(@"
+cmd.0 side_effect
+cmd.0 side_effect
+cmd.2 target
+ret
+");
+        }
+
     }
 }

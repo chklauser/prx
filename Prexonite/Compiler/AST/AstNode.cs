@@ -78,10 +78,41 @@ namespace Prexonite.Compiler.Ast
 
         private void _dispatchDoEmitCode(CompilerTarget target, bool justEffectCode)
         {
-            if (justEffectCode)
-                ((IAstEffect)this).DoEmitEffectCode(target);
+            var effect = this as IAstEffect;
+            var partiallyApplicabale = this as IAstPartiallyApplicable;
+            var isPartialApplication = partiallyApplicabale != null && partiallyApplicabale.CheckForPlaceholders();
+
+            if (justEffectCode && effect != null)
+            {
+                if (isPartialApplication)
+                {
+                    //A partial application does not have an effect.
+                }
+                else
+                {
+                    effect.DoEmitEffectCode(target);
+                }
+            }
             else
-                DoEmitCode(target);
+            {
+                if (isPartialApplication)
+                {
+                    partiallyApplicabale.DoEmitPartialApplicationCode(target);
+                }
+                else
+                {
+                    DoEmitCode(target);
+                }
+            }
+        }
+
+        /// <summary>
+        /// Checks the nodes immediate child nodes for instances of <see cref="AstPlaceholder"/>. Must yield the same result as <see cref="IAstPartiallyApplicable.CheckForPlaceholders"/>, if implemented in derived types.
+        /// </summary>
+        /// <returns>True if this node has placeholders; false otherwise</returns>
+        public virtual bool CheckForPlaceholders()
+        {
+            return false;
         }
 
         protected static IAstExpression GetOptimizedNode(CompilerTarget target, IAstExpression expr)

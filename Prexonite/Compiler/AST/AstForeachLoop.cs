@@ -21,6 +21,7 @@
  *  51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
  */
 
+using System;
 using System.Diagnostics;
 using Prexonite.Compiler.Cil;
 using Prexonite.Types;
@@ -118,7 +119,7 @@ namespace Prexonite.Compiler.Ast
             else
                 emitHint = true;
 
-            var _try = new AstTryCatchFinally(File, Line, Column)
+            var @try = new AstTryCatchFinally(File, Line, Column)
             {
                 TryBlock = new AstActionBlock
                     (
@@ -156,7 +157,7 @@ namespace Prexonite.Compiler.Ast
                     })
             };
 
-            _try.EmitCode(target);
+            @try.EmitCode(target);
 
             target.EndBlock();
 
@@ -199,7 +200,5 @@ namespace Prexonite.Compiler.Ast
                 mkHook(ForeachHint.DisposeAddressIndex + 1, disposeAddr);
             } // else nothing
         }
-
-        private delegate void Action<in TA1, in TA2>(TA1 a1, TA2 a2);
     }
 }

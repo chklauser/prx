@@ -94,11 +94,13 @@
   <ItemGroup>
     <Compile Include="Program.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
+    <Compile Include="Tests\AstTests.cs" />
     <Compile Include="Tests\CilCompilerTests.cs" />
     <Compile Include="Tests\Compiler.cs" />
     <Compile Include="Tests\Compiler.Global.cs" />
     <Compile Include="Tests\Compiler.Parser.cs" />
     <Compile Include="Tests\Lazy.cs" />
+    <Compile Include="Tests\PartialApplication.cs" />
     <Compile Include="Tests\RandomAccessQueue.cs" />
     <Compile Include="Tests\Storage.cs" />
     <Compile Include="Tests\TestObject.cs" />

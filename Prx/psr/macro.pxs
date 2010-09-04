@@ -12,6 +12,94 @@ function is_in_macro(target) [is compiler;]
     return false;
 }
 
+var ast_is_expression [is compiler;];
+var ast_is_effect [is compiler;];
+var ast_is_partially_applicable [is compiler;];
+var ast_is_partial_application [is compiler;];
+
+//Create check functions
+build
+{
+    function human_name(t) = if((var n = t.Name).StartsWith("Ast")) n.Substring(3) else n;
+    
+    var AstNode_t = System::Type.GetType("Prexonite.Compiler.Ast.AstNode");
+    
+    //Create check function for each type that inherits from AstNode
+    AstNode_t.Assembly.GetTypes() 
+    >> where(t => astnode_t.IsAssignableFrom(t))
+    >> var node_ts;
+    
+    foreach(new var node_t in node_ts)
+    {
+        var ptype = asm(ldloc       node_t
+                        get.0       FullName
+                        newtype.1   Object
+                    );
+        var ref_name = "ast_is_$(human_name(node_t))";
+        var ref_var = new Prexonite::PVariable;
+        function check_is_node_t(node_arg) [is compiler;]
+        {
+            //Ensure is object type in the first place
+            if((var arg_pt = boxed(node_arg).Type) is not Prexonite::Types::ObjectPType)
+                return false;
+                
+            var arg_t = arg_pt.ClrType;
+            
+            //Check if it is correct node, but not a partial application
+            return node_t.IsAssignableFrom(arg_t) and not node_arg.CheckForPlaceholders();
+        }
+        ref_var.Value = boxed(->check_is_node_t);
+        ref_var.Meta["compiler"] = true;
+        
+        //Add variable and declare corresponding symbol
+        GetLoader.ParentApplication.Variables.Add(ref_name, ref_var);
+        GetLoader.Symbols.Add(ref_name,new Prexonite::Compiler::SymbolEntry(SI.gref,ref_name));
+    }
+    
+    //Create special check functions for expressions, partially applicables and effects
+    var interfaces = ["Prexonite.Compiler.Ast.IAstExpression": ->ast_is_expression,
+                      "Prexonite.Compiler.Ast.IAstEffect": ->ast_is_effect,
+                      "Prexonite.Compiler.Ast.IAstPartiallyApplicable": ->ast_is_partially_applicable];
+    foreach(var entry in interfaces)
+    {
+        new var interface_t = System::Type.GetType(entry.Key);
+        function check_is_interface_t(node_arg) [is compiler;]
+        {
+            //Ensure is object type in the first place
+            if((var arg_pt = boxed(node_arg).Type) is not Prexonite::Types::ObjectPType)
+                return false;
+                
+            var arg_t = arg_pt.ClrType;
+            
+            //Check if it is correct node, but not a partial application
+            return  AstNode_t.IsAssignableFrom(arg_t) 
+              and   interface_t.IsAssignableFrom(arg_t) 
+              and   not node_arg.CheckForPlaceholders();
+        }
+        
+        entry.Value.() = ->check_is_interface_t;
+    }
+    
+    //Create special check function for partial application
+    function check_is_partial_application(node_arg) [is compiler;]
+    {
+        //Ensure is object type in the first place
+            if((var arg_pt = boxed(node_arg).Type) is not Prexonite::Types::ObjectPType)
+                return false;
+                
+            var arg_t = arg_pt.ClrType;
+            
+            //Check if it is node and a partial application
+            return  AstNode_t.IsAssignableFrom(arg_t) 
+              and   node_arg.CheckForPlaceholders();
+    }
+    
+    //Remove helper functions
+    GetLoader.ParentApplication.Functions.Remove(->human_name.Id);
+}
+
+declare ref ast_is_expression, ast_is_partially_applicable, ast_is_effect, ast_is_partial_application;
+
 macro ast\macro(type)
 {
     var astCall = ast\withPos("GetSetSymbol",

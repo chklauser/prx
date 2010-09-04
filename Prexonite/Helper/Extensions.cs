@@ -153,6 +153,14 @@ namespace Prexonite
             return list;
         }
 
+        /// <summary>
+        /// Applies <paramref name="func"/> to every element of <paramref name="source"/> and then filters out any <code>null</code> results.
+        /// </summary>
+        /// <typeparam name="TSource">The type of the input elements</typeparam>
+        /// <typeparam name="TResult">The type of the output elements</typeparam>
+        /// <param name="source">The sequence of input elements to map and filter.</param>
+        /// <param name="func">The mapping function. <code>null</code> return values will be filtered out and not returned by <see cref="MapMaybe{TSource,TResult}(System.Collections.Generic.IEnumerable{TSource},System.Func{TSource,TResult})"/>.</param>
+        /// <returns>The sequence of mapped elements that are not <code>null</code></returns>
         [DebuggerNonUserCode]
         public static IEnumerable<TResult> MapMaybe<TSource, TResult>(this IEnumerable<TSource> source, Func<TSource, TResult> func) where TResult : class
         {

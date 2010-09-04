@@ -22,13 +22,12 @@
  */
 
 using System;
+using System.Linq;
 using Prexonite.Types;
 
 namespace Prexonite.Compiler.Ast
 {
-    public class AstIndirectCall : AstGetSet,
-                                   IAstExpression,
-                                   IAstHasExpressions
+    public class AstIndirectCall : AstGetSet, IAstPartiallyApplicable
     {
         public IAstExpression Subject;
 
@@ -143,5 +142,19 @@ namespace Prexonite.Compiler.Ast
             CopyBaseMembers(copy);
             return copy;
         }
+
+        #region Implementation of IAstPartiallyApplicable
+
+        void IAstPartiallyApplicable.DoEmitPartialApplicationCode(CompilerTarget target)
+        {
+            this.EmitConstructorCall(target, Engine.PartialCallAlias, Subject.Singleton().Append(Arguments));
+        }
+
+        public override bool CheckForPlaceholders()
+        {
+            return base.CheckForPlaceholders() || Subject is AstPlaceholder;
+        }
+
+        #endregion
     }
 }

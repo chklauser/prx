@@ -33,7 +33,7 @@ namespace Prexonite.Compiler.Ast
     public interface IAstEffect : IAstExpression
     {
         /// <summary>
-        /// For internal use only. Emits the effect code only. No value must be produced.
+        /// For internal use only. Implement explicitly. Emits the effect code only. No value must be produced.
         /// </summary>
         /// <param name="target">The function target to compile to.</param>
         void DoEmitEffectCode(CompilerTarget target);

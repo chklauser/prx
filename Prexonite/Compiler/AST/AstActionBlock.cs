@@ -54,11 +54,6 @@ namespace Prexonite.Compiler.Ast
             return false;
         }
 
-        void IAstExpression.EmitCode(CompilerTarget target)
-        {
-            EmitCode(target);
-        }
-
         #endregion
 
         protected override void DoEmitCode(CompilerTarget target)

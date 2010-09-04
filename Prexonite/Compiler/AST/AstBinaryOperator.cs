@@ -152,7 +152,10 @@ namespace Prexonite.Compiler.Ast
         protected override void DoEmitCode(CompilerTarget target)
         {
             LeftOperand.EmitCode(target);
-            RightOperand.EmitCode(target);
+            if (ReferenceEquals(LeftOperand, RightOperand))
+                target.EmitDuplicate(this);
+            else
+                RightOperand.EmitCode(target);
             EmitOperator(target);
         }
 
@@ -384,18 +387,8 @@ namespace Prexonite.Compiler.Ast
                         else if (right.Equality(target.Loader, square, out square) && (bool) square.Value)
                         {
                             //right operand is 2
-                            expr =
-                                new AstActionBlock(
-                                    (AstNode) LeftOperand, delegate(CompilerTarget t)
-                                    {
-                                        if (leftConstant != null)
-                                            leftConstant.EmitCode(t);
-                                        else
-                                            LeftOperand.EmitCode(t);
-
-                                        t.EmitDuplicate(this, 1);
-                                        EmitOperator(this, t, BinaryOperator.Multiply);
-                                    });
+                            expr = new AstBinaryOperator(
+                                File, Line, Column, LeftOperand, BinaryOperator.Multiply, LeftOperand);
                             return true;
                         }
                         else

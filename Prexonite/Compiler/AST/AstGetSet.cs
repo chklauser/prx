@@ -26,6 +26,7 @@ using System.Collections.Generic;
 using System.Diagnostics;
 using System.Text;
 using Prexonite.Types;
+using System.Linq;
 
 namespace Prexonite.Compiler.Ast
 {
@@ -117,8 +118,16 @@ namespace Prexonite.Compiler.Ast
 
         protected void EmitArguments(CompilerTarget target, bool duplicateLast, int additionalArguments)
         {
+            Object lastArg = null;
             foreach (IAstExpression expr in Arguments)
-                expr.EmitCode(target);
+            {
+                Debug.Assert(expr != null, "Argument list of get-set-complex contains null reference");
+                if (ReferenceEquals(lastArg, expr))
+                    target.EmitDuplicate(this);
+                else
+                    expr.EmitCode(target);
+                lastArg = expr;
+            }
             var argc = Arguments.Count;
             if (duplicateLast && argc > 0)
             {
@@ -189,6 +198,11 @@ namespace Prexonite.Compiler.Ast
         protected virtual void CopyBaseMembers(AstGetSet target)
         {
             target._arguments.AddRange(_arguments);
+        }
+
+        public override bool CheckForPlaceholders()
+        {
+            return this is IAstPartiallyApplicable && (base.CheckForPlaceholders() || Arguments.Any(a => a is AstPlaceholder));
         }
     }
 }

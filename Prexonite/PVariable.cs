@@ -45,9 +45,9 @@ namespace Prexonite
                                     IHasMetaTable,
                                     IIndirectCall
     {
-        private PValue value;
+        private PValue _value;
         //Variable metatables are only created when requested.
-        private MetaTable meta;
+        private MetaTable _meta;
 
         /// <summary>
         /// Provides readonly access to the variable's <see cref="MetaTable"/>.
@@ -57,12 +57,12 @@ namespace Prexonite
         {
             get
             {
-                if (meta == null)
+                if (_meta == null)
                 {
-                    meta = new MetaTable(this);
-                    meta[Application.NameKey] = Engine.GenerateName();
+                    _meta = new MetaTable(this);
+                    _meta[Application.NameKey] = Engine.GenerateName();
                 }
-                return meta;
+                return _meta;
             }
         }
 
@@ -72,8 +72,8 @@ namespace Prexonite
         /// <value>The PValue object stored in this variables or a PValue(null) object if the reference is null.</value>
         public PValue Value
         {
-            get { return value ?? PType.Null.CreatePValue(); }
-            set { this.value = value; }
+            get { return _value ?? PType.Null.CreatePValue(); }
+            set { this._value = value; }
         }
 
         #region IMetaFilter Members
@@ -135,8 +135,8 @@ namespace Prexonite
         public PValue IndirectCall(StackContext sctx, PValue[] args)
         {
             if (args.Length != 0)
-                value = args[args.Length - 1];
-            return value;
+                _value = args[args.Length - 1];
+            return _value;
         }
 
         #endregion
@@ -148,7 +148,7 @@ namespace Prexonite
 
         public override int GetHashCode()
         {
-            return value == null ? -12 : value.GetHashCode() ^ 6537;
+            return _value == null ? -12 : _value.GetHashCode() ^ 6537;
         }
     }
 }

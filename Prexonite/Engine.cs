@@ -31,6 +31,7 @@ using System.Threading;
 using Prexonite.Commands;
 using Prexonite.Commands.Concurrency;
 using Prexonite.Commands.Core;
+using Prexonite.Commands.Core.PartialApplication;
 using Prexonite.Commands.Lazy;
 using Prexonite.Commands.List;
 using Prexonite.Commands.Math;
@@ -670,6 +671,8 @@ namespace Prexonite
 
             Commands.AddEngineCommand(MetaAlias, Prexonite.Commands.Core.Meta.Instance);
 
+            Commands.AddEngineCommand(BoxedAlias, Prexonite.Commands.Core.Boxed.Instance);
+
             Commands.AddEngineCommand(ConcatenateAlias, Concat.Instance);
 
             Commands.AddEngineCommand(MapAlias, cmd = Map.Instance);
@@ -794,6 +797,8 @@ namespace Prexonite
             Commands.AddEngineCommand(AsyncSeqAlias, AsyncSeq.Instance);
 
             Commands.AddEngineCommand(CallSubPerformAlias, CallSubPerform.Instance);
+
+            Commands.AddEngineCommand(PartialCallAlias, new PartialCallCommand());
         }
 
         /// <summary>
@@ -805,6 +810,11 @@ namespace Prexonite
         /// Alias used for the <c>meta</c> command.
         /// </summary>
         public const string MetaAlias = "meta";
+
+        /// <summary>
+        /// Alias used for the <c>boxed</c> command.
+        /// </summary>
+        public const string BoxedAlias = "boxed";
 
         /// <summary>
         /// Alias used for the <c>println</c> command.
@@ -1110,6 +1120,11 @@ namespace Prexonite
         /// Alias used for the call\sub\perform command.
         /// </summary>
         public const string CallSubPerformAlias = @"call\sub\perform";
+
+        /// <summary>
+        /// Alias used for the pa\ind command (constructor for partial applications of indirect calls)
+        /// </summary>
+        public const string PartialCallAlias = @"pa\ind";
 
         #endregion
     }

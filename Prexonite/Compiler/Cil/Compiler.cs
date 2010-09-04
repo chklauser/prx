@@ -981,27 +981,27 @@ namespace Prexonite.Compiler.Cil
                 var primaryTempLocal = state.TempLocals[0];
                 switch (ins.OpCode)
                 {
-                    #region NOP
+                        #region NOP
 
-                    //NOP
+                        //NOP
                     case OpCode.nop:
                         //Do nothing
                         state.Il.Emit(OpCodes.Nop);
                         break;
 
-                    #endregion
+                        #endregion
 
-                    #region LOAD
+                        #region LOAD
 
-                    #region LOAD CONSTANT
+                        #region LOAD CONSTANT
 
-                    //LOAD CONSTANT
+                        //LOAD CONSTANT
                     case OpCode.ldc_int:
                         state.EmitLdcI4(argc);
                         state.EmitWrapInt();
                         break;
                     case OpCode.ldc_real:
-                        state.Il.Emit(OpCodes.Ldc_R8, (double)ins.GenericArgument);
+                        state.Il.Emit(OpCodes.Ldc_R8, (double) ins.GenericArgument);
                         state.EmitWrapReal();
                         break;
                     case OpCode.ldc_bool:
@@ -1020,11 +1020,11 @@ namespace Prexonite.Compiler.Cil
                         state.EmitLoadPValueNull();
                         break;
 
-                    #endregion LOAD CONSTANT
+                        #endregion LOAD CONSTANT
 
-                    #region LOAD REFERENCE
+                        #region LOAD REFERENCE
 
-                    //LOAD REFERENCE
+                        //LOAD REFERENCE
                     case OpCode.ldr_loc:
                         state.EmitLoadLocal(state.Symbols[id].Local);
                         state.Il.EmitCall(OpCodes.Call, Runtime.WrapPVariableMethod, null);
@@ -1037,14 +1037,23 @@ namespace Prexonite.Compiler.Cil
                         state.Il.Emit(OpCodes.Ldstr, id);
                         state.Il.EmitCall
                             (
-                            OpCodes.Call, Runtime.LoadGlobalVariableReferenceAsPValueMethod, null);
+                                OpCodes.Call, Runtime.LoadGlobalVariableReferenceAsPValueMethod, null);
                         break;
                     case OpCode.ldr_func:
+                        MethodInfo dummyMethodInfo;
                         state.EmitLoadLocal(state.SctxLocal);
-                        state.Il.Emit(OpCodes.Ldstr, id);
-                        state.Il.EmitCall
-                            (
-                            OpCodes.Call, Runtime.LoadFunctionReferenceMethod, null);
+                        if (state.TryGetStaticallyLinkedFunction(id, out dummyMethodInfo))
+                        {
+                            state.Il.Emit(OpCodes.Ldsfld, state.Pass.FunctionFields[id]);   
+                            state.EmitVirtualCall(CreateNativePValue);
+                        }
+                        else
+                        {
+                            state.Il.Emit(OpCodes.Ldstr, id);
+                            state.Il.EmitCall
+                                (
+                                    OpCodes.Call, Runtime.LoadFunctionReferenceMethod, null);
+                        }
                         break;
                     case OpCode.ldr_cmd:
                         state.EmitLoadLocal(state.SctxLocal);
@@ -1055,7 +1064,7 @@ namespace Prexonite.Compiler.Cil
                         state.EmitLoadLocal(state.SctxLocal);
                         state.Il.EmitCall
                             (
-                            OpCodes.Call, Runtime.LoadApplicationReferenceMethod, null);
+                                OpCodes.Call, Runtime.LoadApplicationReferenceMethod, null);
                         break;
                     case OpCode.ldr_eng:
                         state.EmitLoadLocal(state.SctxLocal);
@@ -1065,15 +1074,15 @@ namespace Prexonite.Compiler.Cil
                         state.MakePTypeFromExpr(id);
                         break;
 
-                    #endregion //LOAD REFERENCE
+                        #endregion //LOAD REFERENCE
 
-                    #endregion //LOAD
+                        #endregion //LOAD
 
-                    #region VARIABLES
+                        #region VARIABLES
 
-                    #region LOCAL
+                        #region LOCAL
 
-                    //LOAD LOCAL VARIABLE
+                        //LOAD LOCAL VARIABLE
                     case OpCode.ldloc:
                         state.EmitLoadPValue(state.Symbols[id]);
                         break;
@@ -1101,11 +1110,11 @@ namespace Prexonite.Compiler.Cil
                         id = state.IndexMap[argc];
                         goto case OpCode.stloc;
 
-                    #endregion
+                        #endregion
 
-                    #region GLOBAL
+                        #region GLOBAL
 
-                    //LOAD GLOBAL VARIABLE
+                        //LOAD GLOBAL VARIABLE
                     case OpCode.ldglob:
                         state.EmitLoadGlobalValue(id);
                         break;
@@ -1115,18 +1124,18 @@ namespace Prexonite.Compiler.Cil
                         state.Il.Emit(OpCodes.Ldstr, id);
                         state.Il.EmitCall
                             (
-                            OpCodes.Call, Runtime.LoadGlobalVariableReferenceMethod, null);
+                                OpCodes.Call, Runtime.LoadGlobalVariableReferenceMethod, null);
                         state.EmitLoadLocal(primaryTempLocal.LocalIndex);
                         state.Il.EmitCall(OpCodes.Call, SetValueMethod, null);
                         break;
 
-                    #endregion
+                        #endregion
 
-                    #endregion
+                        #endregion
 
-                    #region CONSTRUCTION
+                        #region CONSTRUCTION
 
-                    //CONSTRUCTION
+                        //CONSTRUCTION
                     case OpCode.newobj:
                         state.EmitNewObj(id, argc);
                         break;
@@ -1145,12 +1154,12 @@ namespace Prexonite.Compiler.Cil
                         if (func.Meta.ContainsKey(PFunction.SharedNamesKey))
                             entries = func.Meta[PFunction.SharedNamesKey].List;
                         else
-                            entries = new MetaEntry[] { };
+                            entries = new MetaEntry[] {};
                         var hasSharedVariables = entries.Length > 0;
                         if (hasSharedVariables)
                         {
                             state.EmitLdcI4(entries.Length);
-                            state.Il.Emit(OpCodes.Newarr, typeof(PVariable));
+                            state.Il.Emit(OpCodes.Newarr, typeof (PVariable));
                             state.EmitStoreLocal(state.SharedLocal);
                             for (var i = 0; i < entries.Length; i++)
                             {
@@ -1166,8 +1175,7 @@ namespace Prexonite.Compiler.Cil
                         else
                             state.Il.Emit(OpCodes.Ldnull);
 
-                        MethodInfo dummy;
-                        if (state.TryGetStaticallyLinkedFunction(id, out dummy))
+                        if (state.TryGetStaticallyLinkedFunction(id, out dummyMethodInfo))
                         {
                             state.Il.Emit(OpCodes.Ldsfld, state.Pass.FunctionFields[id]);
                             state.Il.EmitCall(OpCodes.Call, Runtime.newClosureMethod_StaticallyBound, null);
@@ -1186,13 +1194,13 @@ namespace Prexonite.Compiler.Cil
                         state.Il.EmitCall(OpCodes.Call, Runtime.NewCoroutineMethod, null);
                         break;
 
-                    #endregion
+                        #endregion
 
-                    #region OPERATORS
+                        #region OPERATORS
 
-                    #region UNARY
+                        #region UNARY
 
-                    //UNARY OPERATORS
+                        //UNARY OPERATORS
                     case OpCode.incloc:
                         sym = state.Symbols[id];
                         if (sym.Kind == SymbolKind.Local)
@@ -1222,7 +1230,7 @@ namespace Prexonite.Compiler.Cil
                         state.Il.Emit(OpCodes.Ldstr, id);
                         state.Il.EmitCall
                             (
-                            OpCodes.Call, Runtime.LoadGlobalVariableReferenceMethod, null);
+                                OpCodes.Call, Runtime.LoadGlobalVariableReferenceMethod, null);
                         state.Il.Emit(OpCodes.Dup);
                         state.Il.EmitCall(OpCodes.Call, GetValueMethod, null);
                         state.EmitLoadLocal(state.SctxLocal);
@@ -1258,7 +1266,7 @@ namespace Prexonite.Compiler.Cil
                         state.Il.Emit(OpCodes.Ldstr, id);
                         state.Il.EmitCall
                             (
-                            OpCodes.Call, Runtime.LoadGlobalVariableReferenceMethod, null);
+                                OpCodes.Call, Runtime.LoadGlobalVariableReferenceMethod, null);
                         state.Il.Emit(OpCodes.Dup);
                         state.Il.EmitCall(OpCodes.Call, GetValueMethod, null);
                         state.EmitLoadLocal(state.SctxLocal);
@@ -1275,15 +1283,15 @@ namespace Prexonite.Compiler.Cil
                         state.Il.EmitCall(OpCodes.Call, PVLogicalNotMethod, null);
                         break;
 
-                    #endregion
+                        #endregion
 
-                    #region BINARY
+                        #region BINARY
 
-                    //BINARY OPERATORS
+                        //BINARY OPERATORS
 
-                    #region ADDITION
+                        #region ADDITION
 
-                    //ADDITION
+                        //ADDITION
                     case OpCode.add:
                         state.EmitStoreLocal(primaryTempLocal);
                         state.EmitLoadLocal(state.SctxLocal);
@@ -1297,11 +1305,11 @@ namespace Prexonite.Compiler.Cil
                         state.Il.EmitCall(OpCodes.Call, PVSubtractionMethod, null);
                         break;
 
-                    #endregion
+                        #endregion
 
-                    #region MULTIPLICATION
+                        #region MULTIPLICATION
 
-                    //MULTIPLICATION
+                        //MULTIPLICATION
                     case OpCode.mul:
                         state.EmitStoreLocal(primaryTempLocal);
                         state.EmitLoadLocal(state.SctxLocal);
@@ -1321,21 +1329,21 @@ namespace Prexonite.Compiler.Cil
                         state.Il.EmitCall(OpCodes.Call, PVModulusMethod, null);
                         break;
 
-                    #endregion
+                        #endregion
 
-                    #region EXPONENTIAL
+                        #region EXPONENTIAL
 
-                    //EXPONENTIAL
+                        //EXPONENTIAL
                     case OpCode.pow:
                         state.EmitLoadLocal(state.SctxLocal);
                         state.Il.EmitCall(OpCodes.Call, Runtime.RaiseToPowerMethod, null);
                         break;
 
-                    #endregion EXPONENTIAL
+                        #endregion EXPONENTIAL
 
-                    #region COMPARISION
+                        #region COMPARISION
 
-                    //COMPARISION
+                        //COMPARISION
                     case OpCode.ceq:
                         state.EmitStoreLocal(primaryTempLocal);
                         state.EmitLoadLocal(state.SctxLocal);
@@ -1373,11 +1381,11 @@ namespace Prexonite.Compiler.Cil
                         state.Il.EmitCall(OpCodes.Call, PVGreaterThanOrEqualMethod, null);
                         break;
 
-                    #endregion
+                        #endregion
 
-                    #region BITWISE
+                        #region BITWISE
 
-                    //BITWISE
+                        //BITWISE
                     case OpCode.or:
                         state.EmitStoreLocal(primaryTempLocal);
                         state.EmitLoadLocal(state.SctxLocal);
@@ -1397,17 +1405,17 @@ namespace Prexonite.Compiler.Cil
                         state.Il.EmitCall(OpCodes.Call, PVExclusiveOrMethod, null);
                         break;
 
-                    #endregion
+                        #endregion
 
-                    #endregion //OPERATORS
+                        #endregion //OPERATORS
 
-                    #endregion
+                        #endregion
 
-                    #region TYPE OPERATIONS
+                        #region TYPE OPERATIONS
 
-                    #region TYPE CHECK
+                        #region TYPE CHECK
 
-                    //TYPE CHECK
+                        //TYPE CHECK
                     case OpCode.check_const:
                         //Stack:
                         //  Obj
@@ -1426,14 +1434,14 @@ namespace Prexonite.Compiler.Cil
 
                     case OpCode.check_null:
                         state.Il.EmitCall(OpCodes.Call, PVIsNullMethod, null);
-                        state.Il.Emit(OpCodes.Box, typeof(bool));
+                        state.Il.Emit(OpCodes.Box, typeof (bool));
                         state.Il.EmitCall(OpCodes.Call, GetBoolPType, null);
                         state.Il.Emit(OpCodes.Newobj, NewPValue);
                         break;
 
-                    #endregion
+                        #endregion
 
-                    #region TYPE CAST
+                        #region TYPE CAST
 
                     case OpCode.cast_const:
                         //Stack:
@@ -1454,19 +1462,19 @@ namespace Prexonite.Compiler.Cil
                         state.Il.EmitCall(OpCodes.Call, Runtime.CastMethod, null);
                         break;
 
-                    #endregion
+                        #endregion
 
-                    #endregion
+                        #endregion
 
-                    #region OBJECT CALLS
+                        #region OBJECT CALLS
 
-                    #region DYNAMIC
+                        #region DYNAMIC
 
                     case OpCode.get:
                         state.FillArgv(argc);
                         state.EmitLoadLocal(state.SctxLocal);
                         state.ReadArgv(argc);
-                        state.EmitLdcI4((int)PCall.Get);
+                        state.EmitLdcI4((int) PCall.Get);
                         state.Il.Emit(OpCodes.Ldstr, id);
                         state.Il.EmitCall(OpCodes.Call, PVDynamicCallMethod, null);
                         if (justEffect)
@@ -1477,15 +1485,15 @@ namespace Prexonite.Compiler.Cil
                         state.FillArgv(argc);
                         state.EmitLoadLocal(state.SctxLocal);
                         state.ReadArgv(argc);
-                        state.EmitLdcI4((int)PCall.Set);
+                        state.EmitLdcI4((int) PCall.Set);
                         state.Il.Emit(OpCodes.Ldstr, id);
                         state.Il.EmitCall(OpCodes.Call, PVDynamicCallMethod, null);
                         state.Il.Emit(OpCodes.Pop);
                         break;
 
-                    #endregion
+                        #endregion
 
-                    #region STATIC
+                        #region STATIC
 
                     case OpCode.sget:
                         //Stack:
@@ -1504,7 +1512,7 @@ namespace Prexonite.Compiler.Cil
                         state.EmitLoadType(typeExpr);
                         state.EmitLoadLocal(state.SctxLocal);
                         state.ReadArgv(argc);
-                        state.EmitLdcI4((int)PCall.Get);
+                        state.EmitLdcI4((int) PCall.Get);
                         state.Il.Emit(OpCodes.Ldstr, methodId);
                         state.EmitVirtualCall(Runtime.StaticCallMethod);
                         if (justEffect)
@@ -1523,17 +1531,17 @@ namespace Prexonite.Compiler.Cil
                         state.EmitLoadType(typeExpr);
                         state.EmitLoadLocal(state.SctxLocal);
                         state.ReadArgv(argc);
-                        state.EmitLdcI4((int)PCall.Set);
+                        state.EmitLdcI4((int) PCall.Set);
                         state.Il.Emit(OpCodes.Ldstr, methodId);
                         state.EmitVirtualCall(Runtime.StaticCallMethod);
                         state.Il.Emit(OpCodes.Pop);
                         break;
 
-                    #endregion
+                        #endregion
 
-                    #endregion
+                        #endregion
 
-                    #region INDIRECT CALLS
+                        #region INDIRECT CALLS
 
                     case OpCode.indloc:
                         sym = state.Symbols[id];
@@ -1576,9 +1584,9 @@ namespace Prexonite.Compiler.Cil
                         lastWasRet = true;
                         break;
 
-                    #endregion
+                        #endregion
 
-                    #region ENGINE CALLS
+                        #region ENGINE CALLS
 
                     case OpCode.func:
                         MethodInfo targetMethod;
@@ -1623,13 +1631,15 @@ namespace Prexonite.Compiler.Cil
                             (
                                 (flags & CompilationFlags.PrefersCustomImplementation) ==
                                 CompilationFlags.PrefersCustomImplementation ||
-                                (flags & CompilationFlags.RequiresCustomImplementation) == CompilationFlags.RequiresCustomImplementation
+                                (flags & CompilationFlags.RequiresCustomImplementation)
+                                == CompilationFlags.RequiresCustomImplementation
                             ) && aware != null)
                         {
                             //Let the command handle the call
                             aware.ImplementInCil(state, ins);
                         }
-                        else if ((flags & CompilationFlags.PrefersRunStatically) == CompilationFlags.PrefersRunStatically)
+                        else if ((flags & CompilationFlags.PrefersRunStatically)
+                                 == CompilationFlags.PrefersRunStatically)
                         {
                             //Emit a static call to $commandType$.RunStatically
                             state.EmitEarlyBoundCommandCall(cmd.GetType(), ins);
@@ -1647,19 +1657,19 @@ namespace Prexonite.Compiler.Cil
                         }
                         break;
 
-                    #endregion
+                        #endregion
 
-                    #region FLOW CONTROL
+                        #region FLOW CONTROL
 
-                    //FLOW CONTROL
+                        //FLOW CONTROL
 
-                    #region JUMPS
+                        #region JUMPS
 
                     case OpCode.jump:
                         state.Il.Emit
                             (
-                            state._MustUseLeave(instructionIndex, ref argc) ? OpCodes.Leave : OpCodes.Br,
-                            _getInstructionLabel(state, argc));
+                                state._MustUseLeave(instructionIndex, ref argc) ? OpCodes.Leave : OpCodes.Br,
+                                _getInstructionLabel(state, argc));
                         break;
                     case OpCode.jump_t:
                         state.EmitLoadLocal(state.SctxLocal);
@@ -1692,9 +1702,9 @@ namespace Prexonite.Compiler.Cil
                         }
                         break;
 
-                    #endregion
+                        #endregion
 
-                    #region RETURNS
+                        #region RETURNS
 
                     case OpCode.ret_exit:
                         _emitRetExit(state, instructionIndex);
@@ -1715,12 +1725,12 @@ namespace Prexonite.Compiler.Cil
                         //do not set `lastWasRet`. We need that implicit return in case someone
                         //  issued an asm{jump $MAX}
                         break;
-                    //throw new PrexoniteException
-                    //    (
-                    //    String.Format
-                    //        (
-                    //        "OpCode {0} not implemented in Cil compiler",
-                    //        Enum.GetName(typeof (OpCode), ins.OpCode)));
+                        //throw new PrexoniteException
+                        //    (
+                        //    String.Format
+                        //        (
+                        //        "OpCode {0} not implemented in Cil compiler",
+                        //        Enum.GetName(typeof (OpCode), ins.OpCode)));
                     case OpCode.ret_continue:
                         _emitRetSpecial(state, instructionIndex, ReturnMode.Continue);
                         //do not set `lastWasRet`. We need that implicit return in case someone
@@ -1734,42 +1744,42 @@ namespace Prexonite.Compiler.Cil
                         state.Il.Emit(OpCodes.Stind_Ref);
                         break;
 
-                    #endregion
+                        #endregion
 
-                    #region THROW
+                        #region THROW
 
                     case OpCode.@throw:
                         state.EmitLoadLocal(state.SctxLocal);
                         state.Il.EmitCall(OpCodes.Call, Runtime.ThrowExceptionMethod, null);
                         break;
 
-                    #endregion
+                        #endregion
 
-                    #region LEAVE
+                        #region LEAVE
 
                     case OpCode.@try:
                         //Is done via analysis of TryCatchFinally objects associated with the function
                         break;
 
                     case OpCode.leave:
-                    //is handled by the CLR
+                        //is handled by the CLR
 
-                    #endregion
+                        #endregion
 
-                    #region EXCEPTION
+                        #region EXCEPTION
 
                     case OpCode.exc:
                         //is not implemented via Emit
                         // The exception is stored when the exception block is entered.
                         break;
 
-                    #endregion
+                        #endregion
 
-                    #endregion
+                        #endregion
 
-                    #region STACK MANIPULATION
+                        #region STACK MANIPULATION
 
-                    //STACK MANIPULATION
+                        //STACK MANIPULATION
                     case OpCode.pop:
                         for (var i = 0; i < argc; i++)
                             state.Il.Emit(OpCodes.Pop);
@@ -1779,17 +1789,17 @@ namespace Prexonite.Compiler.Cil
                             state.Il.Emit(OpCodes.Dup);
                         break;
                     case OpCode.rot:
-                        var values = (int)ins.GenericArgument;
+                        var values = (int) ins.GenericArgument;
                         var rotations = argc;
                         for (var i = 0; i < values; i++)
                             state.EmitStoreLocal
                                 (
-                                state.TempLocals[(i + rotations) % values].LocalIndex);
+                                    state.TempLocals[(i + rotations)%values].LocalIndex);
                         for (var i = values - 1; i >= 0; i--)
                             state.EmitLoadLocal(state.TempLocals[i].LocalIndex);
                         break;
 
-                    #endregion
+                        #endregion
                 } //end of switch over opcode
 
                 //DON'T ADD ANY CODE HERE, A LOT OF CASES USE `CONTINUE`
