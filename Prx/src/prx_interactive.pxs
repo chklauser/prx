@@ -205,8 +205,8 @@ function prx\interactive()
     function nextFuncId = "eval\\" + evalStep++;
     
     //Function that shortens a string
-    var shortenTo = 20;
-    function shortened(s) = s.Length <= shortenTo ? s : (s.Substring(0,shortenTo-3) + "...");
+    var shortenTo = 30;
+    function shortened(s) = if(s.Length <= shortenTo) s else (s.Substring(0,shortenTo-3) + "...");
     
     //Get 'raw' using showPrompt (passing the value of the variable 'prompt' 
     // from inside 'app') until that 'raw' is ":quit".

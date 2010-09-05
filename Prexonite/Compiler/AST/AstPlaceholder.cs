@@ -3,13 +3,14 @@ using System.Collections.Generic;
 using System.Diagnostics;
 using System.Linq;
 using System.Text;
+using Prexonite.Types;
 
 namespace Prexonite.Compiler.Ast
 {
     /// <summary>
     /// AST node that represents a partial application placeholder ('?'). Optionally has an index assigned (e.g., '?5')
     /// </summary>
-    public class AstPlaceholder : AstNode, IAstExpression
+    public class AstPlaceholder : AstGetSet, IAstExpression
     {
         private int? _index;
         public int? Index
@@ -27,31 +28,33 @@ namespace Prexonite.Compiler.Ast
         {
         }
 
-        public AstPlaceholder(string file, int line, int column, int? index) : base(file, line, column)
+        public AstPlaceholder(string file, int line, int column, int? index) : base(file, line, column, PCall.Get)
         {
             Index = index;
         }
 
-        internal AstPlaceholder(Parser p, int? index = null) : base(p)
+        internal AstPlaceholder(Parser p, int? index = null) : base(p,PCall.Get)
         {
             Index = index;
         }
 
         #region Overrides of AstNode
 
-        protected override void DoEmitCode(CompilerTarget target)
+        protected override void EmitGetCode(CompilerTarget target, bool justEffect)
         {
             throw new PrexoniteException(string.Format("This syntax does not support placeholders. {0}:{1} col {2}", File, Line, Column));
         }
 
-        #endregion
-
-        #region Implementation of IAstExpression
-
-        public bool TryOptimize(CompilerTarget target, out IAstExpression expr)
+        protected override void EmitSetCode(CompilerTarget target)
         {
-            expr = null;
-            return false;
+            throw new PrexoniteException(string.Format("This syntax does not support placeholders. {0}:{1} col {2}", File, Line, Column));
+        }
+
+        public override AstGetSet GetCopy()
+        {
+            var copy = new AstPlaceholder(File, Line, Column, Index);
+            CopyBaseMembers(copy);
+            return copy;
         }
 
         #endregion

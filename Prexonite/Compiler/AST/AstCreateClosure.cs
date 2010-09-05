@@ -45,7 +45,15 @@ namespace Prexonite.Compiler.Ast
 
         protected override void DoEmitCode(CompilerTarget target)
         {
-            target.Emit(this, OpCode.newclo, FuncId);
+            PFunction targetFunction;
+            MetaEntry sharedNamesEntry;
+            if (target.Loader.ParentApplication.Functions.TryGetValue(FuncId, out targetFunction)
+                && (!targetFunction.Meta.TryGetValue(PFunction.SharedNamesKey, out sharedNamesEntry) 
+                    || !sharedNamesEntry.IsList
+                    || sharedNamesEntry.List.Length == 0))
+                target.Emit(this, OpCode.ldr_func, FuncId);
+            else
+                target.Emit(this, OpCode.newclo, FuncId);
         }
 
         #region IAstExpression Members

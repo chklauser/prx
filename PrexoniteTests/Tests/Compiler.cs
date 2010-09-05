@@ -56,13 +56,12 @@ namespace Prx.Tests
 
         protected internal Loader _compile(string input)
         {
-            LoaderOptions opt = new LoaderOptions(engine, target);
-            opt.UseIndicesLocally = false;
-            Loader ldr = new Loader(opt);
+            var opt = new LoaderOptions(engine, target) {UseIndicesLocally = false};
+            var ldr = new Loader(opt);
             ldr.LoadFromString(input);
             foreach (string line in ldr.Errors)
                 Console.Error.WriteLine(line);
-            Assert.AreEqual(0, ldr.ErrorCount);
+            Assert.AreEqual(0, ldr.ErrorCount, "Test code did not compile without errors.");
 
             Console.WriteLine(target.StoreInString());
             return ldr;

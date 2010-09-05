@@ -1472,7 +1472,7 @@ ldr.func    main\N21 //no need to create a closure
 stloc       N2
 
 ldc.int     5
-newclo      main\2
+ldr.func    main\2 //no need to create a closure
 @indloc.2   N2
 
 ldc.null
@@ -1503,14 +1503,17 @@ function main()
 ");
             _expect(
                 @"
-newclo  main\0
+ldr.func main\0 //no need for closure here
 stloc   f
+
 ldloc   f
 stloc   fobj
+
 ldr.loc f
 stloc   fvar
-newclo  main\1
-@indloc.1 fvar
+
+ldr.func main\1
+@indloc.1    fvar
 
 indloc.0 fvar
 stloc fobj2
@@ -1544,7 +1547,7 @@ function main()
 
             _expect(
                 @"
-newclo      main\0
+ldr.func    main\0 //no need for a closure here
 stloc       fobj
 newclo      main\1
 stloc       gobj
@@ -1724,7 +1727,7 @@ ret.val
         {
             _compile(
                 @"
-function max(a,b) = a > b ? a : b;
+function max(a,b) = if(a > b) a else b;
 function maxv(a,b) = 
     if(a > b) 
         a 
@@ -1733,8 +1736,8 @@ function maxv(a,b) =
 
 function main(x)
 {
-    x = x mod 2 == 0 ? (x > 0 ? x : -x) : max(x,2);
-    return x is Null ? 0 : x == """" ? -1 : x.Length;
+    x = if(x mod 2 == 0) (if(x > 0) x else -x) else max(x,2);
+    return if(x is Null) 0 else if(x == """") -1 else x.Length;
 }
 
 function mainv(x)
@@ -2104,7 +2107,7 @@ ldc.int 3
 cmd.3   list
 ldc.int 1
 indloc.2 skip
-newclo  main\1
+ldr.func main\1 //no need for a closure
 func.2  where
 ret.val
 ");
@@ -2424,7 +2427,7 @@ function main()
                     c: d, 
                     5: a, 
                     ""hello"": ""ciao"",
-                    (a > b ? a : b): (c > d ? c : d)
+                    (if(a > b) a else b): (if(c > d) c else d)
                };
     var people = 
     {
@@ -2663,7 +2666,7 @@ function main()
     var a; var b; var c;
 
     var x = a ?? b;
-    var y = a + b ?? (a ? b ?? c : c ) ?? null ?? c;
+    var y = a + b ?? (if(a) b ?? c else c ) ?? null ?? c;
 
     return null;
 }
@@ -3220,9 +3223,9 @@ function main(lst)
             _expect(@"
 var lst
 
-newclo  main\1
+ldr.func main\1
 ldc.int 1
-newclo  main\0
+ldr.func main\0
 ldloc   lst
 cmd.2   where
 @cmd.3   foldl
@@ -3454,7 +3457,7 @@ function showPrompt(q) does
     if(q == null)
         q = ""PRX> "";
     runInDifferentColor( () => print(q), 
-        color != null ? color : ::Console.ForegroundColor);
+        if(color != null) color else ::Console.ForegroundColor);
 	return readline;
 }
 ");
@@ -3490,6 +3493,19 @@ function main does
 cmd.0 side_effect
 cmd.0 side_effect
 cmd.2 target
+ret
+");
+        }
+
+        [Test]
+        public void NoClosureForSimpleLambda()
+        {
+            _compile(@"
+function main = x => x;
+");
+
+            _expect(@"
+ldr.func    main\0
 ret
 ");
         }

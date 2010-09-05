@@ -432,6 +432,12 @@ FunctionDefinition<out PFunction func>
     ]
                                     (.  
                                     
+                                        //Imprint certain meta key from parent function
+                                        if(isNested)
+                                        {
+                                            func.Meta[Application.ImportKey] = target.Function.Meta[Application.ImportKey];
+                                        }
+
                                         //Copy stub parameters to body of lazy function
                                         if(isLazy && !isNested)
 	                                    {

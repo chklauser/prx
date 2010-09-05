@@ -87,7 +87,7 @@ function showPrompt(q) does
     if(q == null)
         q = "PRX> ";
     runInDifferentColor( () => print(q), 
-        color != null ? color : ::Console.ForegroundColor);
+        if(color != null) color else ::Console.ForegroundColor);
 	return readline;
 }
 

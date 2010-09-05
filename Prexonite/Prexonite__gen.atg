@@ -484,13 +484,7 @@ KeyValuePairExpr<out IAstExpression expr>
 
 AtomicExpr<out IAstExpression expr>		(.	AstConditionalExpression cexpr = null; expr = null; .)
 =	
-	OrExpr<out expr>
-    {
-        question                        (.  cexpr = new AstConditionalExpression(this, expr); .)
-        AtomicExpr<out cexpr.IfExpression>
-        colon
-        AtomicExpr<out cexpr.ElseExpression>  (.  expr = cexpr; .)
-    }    
+	OrExpr<out expr>   
 |										(.	bool isNegated = false; .)
 	(	if
 	|	unless							(.	isNegated = true; .)
@@ -1359,6 +1353,12 @@ FunctionDefinition<out PFunction func>
     ]
                                     (.  
                                     
+                                        //Imprint certain meta key from parent function
+                                        if(isNested)
+                                        {
+                                            func.Meta[Application.ImportKey] = target.Function.Meta[Application.ImportKey];
+                                        }
+
                                         //Copy stub parameters to body of lazy function
                                         if(isLazy && !isNested)
 	                                    {
@@ -1757,6 +1757,7 @@ GetInitiator<out AstGetSet complex, out bool isDeclaration>
                                             List<IAstExpression> args = new List<IAstExpression>();
                                             isDeclaration = false;                                            
                                             string id;
+                                            int placeholderIndex = -1;
                                         .)
 =
     //Actual value
@@ -1822,6 +1823,8 @@ GetInitiator<out AstGetSet complex, out bool isDeclaration>
                                             }
                                             complex = new AstGetSetReference(this, s.Id, s.Interpretation);
                                         .)
+|   question
+    [   Integer<out placeholderIndex> ] (.  complex = new AstPlaceholder(this, 0 <= placeholderIndex ? (int?)placeholderIndex : null); .)
 .
 
 VariableDeclaration<out AstGetSet variable, bool isNewDecl>

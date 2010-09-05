@@ -20,10 +20,14 @@ using Prexonite.Types;
 
 using Prx.Tests;
 
+// ReSharper disable CheckNamespace
 namespace Prx.Tests
+// ReSharper restore CheckNamespace
 {
     [TestFixture]
+// ReSharper disable InconsistentNaming
     public class VMTests : VMTestsBase
+// ReSharper restore InconsistentNaming
     {
         #region Setup
 
@@ -192,20 +196,20 @@ function test1(x) does
 }
 ";
             var rnd = new Random();
-            var J = rnd.Next(1, 1000);
+            var j = rnd.Next(1, 1000);
 
             var ldr = new Loader(engine, target);
             ldr.LoadFromString(input1);
-            target.Variables["J"].Value = J;
+            target.Variables["J"].Value = j;
             Assert.AreEqual(0, ldr.ErrorCount);
 
             Console.WriteLine(target.StoreInString());
 
             //Expectation
             var x0 = rnd.Next(1, 589);
-            J = 0;
-            J = (7*x0 + 2 + J);
-            var expected = (x0 + 2 + J)/J;
+            j = 0;
+            j = (7*x0 + 2 + j);
+            var expected = (x0 + 2 + j)/j;
 
             var fctx =
                 target.Functions["test1"].CreateFunctionContext(engine, new PValue[] {x0});
@@ -237,11 +241,11 @@ function test1(x) does
             Console.WriteLine(target.StoreInString());
 
             var rnd = new Random();
-            var J0 = 0;
+            const int j0 = 0;
             var x0 = rnd.Next(1, 300);
-            var x1 = 2 + J0 + J0;
-            var J1 = 2 + (7*x1) + J0;
-            var expected = (2 + x1 + J1)/J1;
+            const int x1 = 2 + j0 + j0;
+            const int j1 = 2 + (7*x1) + j0;
+            const int expected = (2 + x1 + j1)/j1;
 
             var fctx =
                 target.Functions["test1"].CreateFunctionContext(engine, new PValue[] {x0});
@@ -251,7 +255,7 @@ function test1(x) does
             Assert.AreEqual(expected, (int) fctx.ReturnValue.Value);
 
             Assert.AreEqual(PType.BuiltIn.Int, target.Variables["J"].Value.Type.ToBuiltIn());
-            Assert.AreEqual(J1, (int) target.Variables["J"].Value.Value);
+            Assert.AreEqual(j1, (int) target.Variables["J"].Value.Value);
         }
 
         [Test]
@@ -372,14 +376,14 @@ function main(newM, iterations)
 ");
 
             var rnd = new Random();
-            var M = rnd.Next(1, 13);
+            var m = rnd.Next(1, 13);
             var iterations = rnd.Next(3, 10);
             var sum = 0;
             for (var i = 0; i < iterations; i++)
-                sum += M*i + 12;
+                sum += m*i + 12;
             var expected = sum;
 
-            ExpectNamed("main", expected, M, iterations);
+            ExpectNamed("main", expected, m, iterations);
         }
 
         [Test]
@@ -420,7 +424,7 @@ function main(aList, max)
 }
 ");
             var buffer = new StringBuilder();
-            var max = 20;
+            const int max = 20;
             var aList = new List<string>(
                 new[]
                     {
@@ -502,15 +506,15 @@ function conditions(x,y)
     return G;
 }
 ");
-            const string TT = "1212";
-            const string Tx = "11112";
+            const string tt = "1212";
+            const string tx = "11112";
             const string xT = "2112";
             const string xx = "11122";
 
             Console.WriteLine("// TRUE  - TRUE ");
-            Expect(TT, true, true);
+            Expect(tt, true, true);
             Console.WriteLine("// TRUE  - FALSE");
-            Expect(Tx, true, false);
+            Expect(tx, true, false);
             Console.WriteLine("// FALSE - TRUE ");
             Expect(xT, false, true);
             Console.WriteLine("// FALSE - FALSE");
@@ -656,7 +660,7 @@ function main(a,b,c) = work(a,b,c).ToString;
 
             #endregion
 
-            internal string printList()
+            internal string _PrintList()
             {
                 var buffer = new StringBuilder();
                 foreach (var s in this)
@@ -667,7 +671,7 @@ function main(a,b,c) = work(a,b,c).ToString;
                 return buffer.ToString();
             }
 
-            internal int countList()
+            internal int _CountList()
             {
                 var e = GetEnumerator();
                 while (e.MoveNext())
@@ -742,8 +746,8 @@ function countList(lst) does
 }
 ");
 
-            ExpectNamed("printList", lst.printList(), sctx.CreateNativePValue(lst));
-            ExpectNamed("countList", lst.countList(), sctx.CreateNativePValue(lst));
+            ExpectNamed("printList", lst._PrintList(), sctx.CreateNativePValue(lst));
+            ExpectNamed("countList", lst._CountList(), sctx.CreateNativePValue(lst));
         }
 
         [Test]
@@ -770,15 +774,15 @@ function main(x)
 }
 ");
             var buffer = new StringBuilder();
-            var HW = new StringBuilder("Hello World");
+            var hw = new StringBuilder("Hello World");
             var rnd = new Random();
-            var x = rnd.Next(0, HW.Length + 1);
-            var xi = x >= HW.Length ? HW.Length - 1 : x;
+            var x = rnd.Next(0, hw.Length + 1);
+            var xi = x >= hw.Length ? hw.Length - 1 : x;
             for (var i = 0; i < xi; i++)
             {
-                HW.Insert(i, i.ToString());
+                hw.Insert(i, i.ToString());
                 buffer.Append(">");
-                buffer.Append(HW.ToString());
+                buffer.Append(hw.ToString());
             }
             var expect = buffer.ToString();
 
@@ -980,16 +984,16 @@ function main(arg)
             string rs = GenerateRandomString(3);
             Expect(rs + rs, rs);
 
-            List<PValue> lst = new List<PValue>(
+            var lst = new List<PValue>(
                 new PValue[]
                     {
                         GenerateRandomString(2), GenerateRandomString(3),
                         GenerateRandomString(4)
                     });
-            string ls = lst.Aggregate("", (current, e) => current + (e.Value as string));
+            var ls = lst.Aggregate("", (current, e) => current + (e.Value as string));
             Expect(ls, (PValue) lst);
 
-            StringBuilder sb = new StringBuilder(GenerateRandomString(5));
+            var sb = new StringBuilder(GenerateRandomString(5));
             Expect(sb.ToString(), engine.CreateNativePValue(sb));
         }
 
@@ -1006,18 +1010,17 @@ function clo2(a)
 }
 ");
 
-            Random rnd = new Random();
+            var rnd = new Random();
 
 #if UseCil
-            PValue pclo1 = GetReturnValueNamed("clo1");
-            Assert.AreEqual(PType.Object[typeof(CilClosure)], pclo1.Type);
-            CilClosure clo1 = pclo1.Value as CilClosure;
+            var pclo1 = GetReturnValueNamed("clo1");
+            Assert.AreEqual(PType.Object[typeof(PFunction)], pclo1.Type);
+            var clo1 = pclo1.Value as PFunction;
             Assert.IsNotNull(clo1);
-            Assert.AreEqual(0, clo1.SharedVariables.Length);
 
-            PValue pclo2 = GetReturnValueNamed("clo2", rnd.Next(1, 10));
+            var pclo2 = GetReturnValueNamed("clo2", rnd.Next(1, 10));
             Assert.AreEqual(PType.Object[typeof(CilClosure)], pclo2.Type);
-            CilClosure clo2 = pclo2.Value as CilClosure;
+            var clo2 = pclo2.Value as CilClosure;
             Assert.IsNotNull(clo2);
             Assert.AreEqual(1, clo2.SharedVariables.Length);
 #else
@@ -1081,23 +1084,20 @@ function main(lst)
     return foldl( (l,r) => l + "" "" + r, """", tuples);
 }
 ");
-            string expected;
-            int[] lst = new int[10];
-            Random rnd = new Random();
-            StringBuilder sb = new StringBuilder();
-            for (int i = 0; i < 10; i++)
+            var lst = new int[10];
+            var rnd = new Random();
+            var sb = new StringBuilder();
+            for (var i = 0; i < 10; i++)
             {
                 lst[i] = rnd.Next(4, 49);
-                int twi = 2*lst[i];
-                int factors = twi/10;
-                int rests = twi%10;
+                var twi = 2*lst[i];
+                var factors = twi/10;
+                var rests = twi%10;
                 sb.Append(" (" + factors + "," + rests + ")");
             }
-            expected = sb.ToString();
+            var expected = sb.ToString();
 
-            List<PValue> plst = new List<PValue>();
-            foreach (int x in lst)
-                plst.Add(x);
+            var plst = lst.Select(x => (PValue) x).ToList();
 
             Expect(expected, PType.List.CreatePValue(plst));
         }
@@ -1149,19 +1149,19 @@ function main(lst, s)
     return sb.ToString;
 }
 ");
-            Random rnd = new Random();
-            int s = rnd.Next(2, 9);
-            List<PValue> plst = new List<PValue>();
-            int head = -1;
-            StringBuilder sb = new StringBuilder();
-            for (int i = 0; i < 10; i++)
+            var rnd = new Random();
+            var s = rnd.Next(2, 9);
+            var plst = new List<PValue>();
+            var head = -1;
+            var sb = new StringBuilder();
+            for (var i = 0; i < 10; i++)
             {
-                int c = rnd.Next(11, 99);
+                var c = rnd.Next(11, 99);
                 if (head < 0)
                     head = c;
                 plst.Add(c);
-                int d = c + s;
-                int compared = d - head;
+                var d = c + s;
+                var compared = d - head;
                 sb.Append(" ");
                 sb.Append(compared.ToString());
             }
@@ -1207,14 +1207,14 @@ function main(p)
     return apply( ->koo , goo( p ) );
 }
 ");
-            Random rnd = new Random();
-            int[] ps =
-                new int[]
+            var rnd = new Random();
+            var ps =
+                new[]
                     {
                         1, 2, 10, 27, 26, 57, 60, 157, rnd.Next(1, 190), rnd.Next(1, 190),
                         rnd.Next(1, 190)
                     };
-            foreach (int p in ps)
+            foreach (var p in ps)
             {
                 int goo;
                 if (p%10 == 0)
@@ -1222,9 +1222,8 @@ function main(p)
                 else
                     goo = 2 + p;
 
-                string q;
                 string koo;
-                q = goo.ToString();
+                var q = goo.ToString();
                 if (p <= 50)
                     koo = q.Length > 1 ? q + "koo" : q;
                 else
@@ -1264,9 +1263,9 @@ function main(var m)
     return applyInChain(->flst, m);
 }
 ");
-            Random rnd = new Random();
-            int m = rnd.Next(3, 500);
-            int expected = 2 + (2*m);
+            var rnd = new Random();
+            var m = rnd.Next(3, 500);
+            var expected = 2 + (2*m);
 
             Expect(expected, m);
         }
@@ -1304,14 +1303,14 @@ function main(xlst, ylst)
     return sum;
 }
 ");
-            Random rnd = new Random();
-            double sum = 0.0;
+            var rnd = new Random();
+            var sum = 0.0;
             List<PValue> xlst = new List<PValue>(),
                          ylst = new List<PValue>();
-            for (int i = 0; i < 10; i++)
+            for (var i = 0; i < 10; i++)
             {
-                int x = rnd.Next(3, 50);
-                int y = rnd.Next(6, 34);
+                var x = rnd.Next(3, 50);
+                var y = rnd.Next(6, 34);
 
                 xlst.Add(x);
                 ylst.Add(y);
@@ -1327,10 +1326,10 @@ function main(xlst, ylst)
         {
             Compile(
                 @"
-function abs(x) = x > 0 ? x : -x;
-function max(a,b) = a > b ? a : b;
+function abs(x) = if(x > 0) x else -x;
+function max(a,b) = if(a > b) a else b;
 var rnd = new System::Random;
-function randomImplementation(fa, fb) = (a,b) => rnd.Next(0,2) mod 2 == 0 ? fa.(a,b) : fb.(a,b);
+function randomImplementation(fa, fb) = (a,b) => if(rnd.Next(0,2) mod 2 == 0) fa.(a,b) else fb.(a,b);
 function sum(lst)
 {
     var s = 0;
@@ -1341,16 +1340,16 @@ function sum(lst)
 
 function main(lst, limit)
 {
-    ref min = randomImplementation((a,b) => max(a,b) == a ? b : a, (a,b) => a < b ? a : b);
+    ref min = randomImplementation((a,b) => if(max(a,b) == a) b else a, (a,b) => if(a < b) a else b);
     return -sum(all(map(a => min(a, limit), lst)));
 }
 ");
-            Random rnd = new Random();
-            List<PValue> lst = new List<PValue>();
-            int sum = 0;
-            for (int i = 0; i < 10; i++)
+            var rnd = new Random();
+            var lst = new List<PValue>();
+            var sum = 0;
+            for (var i = 0; i < 10; i++)
             {
-                int e = rnd.Next(-5, 6);
+                var e = rnd.Next(-5, 6);
                 lst.Add(e);
                 if (e < 0)
                     sum += e;
@@ -1374,13 +1373,10 @@ function main(xs)
     var ys = [];
     foreach(var x in xs)
         ys[] = 
-            x mod 2 == 0
-            ?   x > 5
-                ?   x
-                :   x*2
-            :   x < 10
-                ?   (x+1) / 2
-                :   x+2
+            if(x mod 2 == 0) if(x > 5)   x
+                             else        x*2
+            else             if(x < 10)  (x+1) / 2
+                             else        x+2
         ;
     
     var s = 0;
@@ -1389,7 +1385,7 @@ function main(xs)
     return s;
 }
 ");
-            List<PValue> xs = new List<PValue>(
+            var xs = new List<PValue>(
                 new PValue[]
                     {
                         12, //=> 12
@@ -1434,12 +1430,12 @@ function main(lst)
     return ""f$first::$(average(lst))::s$second"";
 }
 ");
-            List<PValue> lst = new List<PValue>();
-            int av = 0;
-            for (int i = 0; i < 10; i++)
+            var lst = new List<PValue>();
+            var av = 0;
+            for (var i = 0; i < 10; i++)
             {
                 lst.Add(i);
-                int k = i != 0 ? i != 1 ? i : 7 : 4;
+                var k = i != 0 ? i != 1 ? i : 7 : 4;
                 av += k;
             }
             av = av/10;
@@ -1454,8 +1450,8 @@ function main(lst)
 function chain(lst, serial)
 {
     var c = new Structure;
-    c.\(""IsSerial"") = serial != null ? serial : true;
-    c.\(""Functions"") = lst != null ? lst : new List();
+    c.\(""IsSerial"") = if(serial != null) serial else true;
+    c.\(""Functions"") = if(lst != null) lst else new List();
     function Invoke(this, prev)
     {
         var res = prev;
@@ -1547,10 +1543,10 @@ function main(lst)
     return toString( select(0) + select(1) );
 }
 ");
-            List<PValue> lst = new List<PValue>();
-            StringBuilder sbo = new StringBuilder();
-            StringBuilder sbe = new StringBuilder();
-            for (int i = 0; i < 10; i++)
+            var lst = new List<PValue>();
+            var sbo = new StringBuilder();
+            var sbe = new StringBuilder();
+            for (var i = 0; i < 10; i++)
             {
                 lst.Add(i);
                 if (i%2 == 0)
@@ -1560,7 +1556,7 @@ function main(lst)
             }
             Expect(
                 string.Concat(sbe.ToString(), sbo.ToString()),
-                new PValue[] {PType.List.CreatePValue(lst)});
+                new[] {PType.List.CreatePValue(lst)});
         }
 
         [Test]
@@ -1667,10 +1663,10 @@ function main()
     return toString(filterChain(var args));
 }
 ");
-            List<PValue> lst = new List<PValue>();
-            StringBuilder buffer = new StringBuilder();
-            int nums = 0;
-            for (int i = 0; i < 20; i++)
+            var lst = new List<PValue>();
+            var buffer = new StringBuilder();
+            var nums = 0;
+            for (var i = 0; i < 20; i++)
             {
                 lst.Add(i);
                 if (i < 2)
@@ -1766,14 +1762,13 @@ function main()
     return call(->call, [->sum], var args);
 }
 ");
-            int
-                a = 3,
-                b = 7,
-                c = 9,
-                d = 13,
-                e = 14,
-                f = 99,
-                g = 101;
+            const int a = 3;
+            const int b = 7;
+            const int c = 9;
+            const int d = 13;
+            const int e = 14;
+            const int f = 99;
+            const int g = 101;
 
             Expect(
                 a + b + c + d + e + f + g,
@@ -1845,10 +1840,10 @@ function main()
 }
 ");
 
-            List<PValue> args = new List<PValue>();
-            List<PValue> sub1 = new List<PValue>();
-            List<PValue> sub2 = new List<PValue>();
-            List<PValue> sub21 = new List<PValue>();
+            var args = new List<PValue>();
+            var sub1 = new List<PValue>();
+            var sub2 = new List<PValue>();
+            var sub21 = new List<PValue>();
 
             args.Add(1);
             args.Add(2);
@@ -2035,9 +2030,9 @@ function main()
                 Assert.AreEqual("3", exc.Message);
             }
 
-            PValue pxs = target.Variables["xs"].Value;
+            var pxs = target.Variables["xs"].Value;
             Assert.IsInstanceOfType(typeof(ListPType), pxs.Type, "xs must be a ~List.");
-            List<PValue> xs = (List<PValue>) pxs.Value;
+            var xs = (List<PValue>) pxs.Value;
             Assert.AreEqual("0", xs[0].CallToString(sctx));
             Assert.AreEqual("1", xs[1].CallToString(sctx));
             Assert.AreEqual("2", xs[2].CallToString(sctx));
@@ -2412,11 +2407,13 @@ function main(var lst)
     return sum;
 }
 ");
-            List<PValue> lst = new List<PValue>(4);
-            lst.Add(new PValueKeyValuePair("apple", 1));
-            lst.Add(new PValueKeyValuePair("pencil", 5));
-            lst.Add(new PValueKeyValuePair("juice", 2));
-            lst.Add(new PValueKeyValuePair("apple", 2));
+            var lst = new List<PValue>(4)
+            {
+                new PValueKeyValuePair("apple", 1),
+                new PValueKeyValuePair("pencil", 5),
+                new PValueKeyValuePair("juice", 2),
+                new PValueKeyValuePair("apple", 2)
+            };
 
             Expect(3*3*2 + 5*1 + 2*4, PType.List.CreatePValue(lst));
         }
@@ -2535,10 +2532,7 @@ function main()
 }
 ");
 
-            List<PValue> xs = new List<PValue>();
-            xs.Add(4);
-            xs.Add("Hello");
-            xs.Add(3.4);
+            var xs = new List<PValue> {4, "Hello", 3.4};
 
             Expect("EXC(I don't like 4.) BEGIN NP(4) NP(Hello) NP(3.4)", xs.ToArray());
         }
@@ -2617,7 +2611,7 @@ function main(sep) =
         }
 
         [Test]
-        public void List_Sort()
+        public void ListSort()
         {
             Compile(
                 @"
@@ -2876,15 +2870,15 @@ function main(a,b,c)
 }
 ");
 
-            double a = 2.9;     //2
-            int b = 27;         //true
-            bool c = true;      //True
+            const double a = 2.9;
+            const int b = 27;
+            const bool c = true;
 
             Expect("2TrueTrueTrue",a,b,c);
         }
 
         [Test]
-        public void Store_Basic()
+        public void StoreBasic()
         {
             CompileStore(@"
 function main(a,b,c)
@@ -2940,29 +2934,7 @@ function main(a)
             Expect("ham","ham");
         }
 
-        
-// ReSharper disable InconsistentNaming
-        public void CallCCImplementation()
-// ReSharper restore InconsistentNaming
-        {
-            Compile(@"
-function get_element(cont, pred, xs)
-{
-    foreach(var x in xs)
-        cont.(x+x);
-}
-
-function main(a,b,xs) 
-{
-    return = var ys = [];
-    var x = call\cc(->get_element, e => e > 5, xs);
-    a += x;
-    ys[] = a+b;
-}
-");
-        }
-
-        private static int fac(int n)
+        private static int _fac(int n)
         {
             int r = 1;
             while (n > 1)
@@ -2981,7 +2953,7 @@ function fac n r =
         fac(n-1, n*r);
 ");
 
-            ExpectNamed("fac",fac(6),6,1);
+            ExpectNamed("fac",_fac(6),6,1);
         }
 
         [Test]
@@ -3372,6 +3344,27 @@ function main = ""\x20\x21\x9\x0020\x020\xAAAA\uABCD\U0000ABCD"".ToCharArray() >
 ");
 
             Expect(new List<PValue>{0x20, 0x21, 0x9, 0x0020, 0x020, 0xAAAA, 0xABCD, 0x0000ABCD});
+        }
+
+        [Test]
+        public void InnerFunctionNamespaceImport()
+        {
+            Compile(@"
+Import {
+    System,
+    Prexonite
+};
+
+function main(x)[ Add Prexonite::Types to Import; ]
+{
+    function inner  k => k is ::PValueKeyValuePair;
+    ref lambda =    k => k is ::PValueKeyValuePair;
+    return inner(x) and lambda(x);
+}
+");
+
+            Expect(true, new PValueKeyValuePair(1,2));
+            Expect(false, 1);
         }
 
         #region Helper

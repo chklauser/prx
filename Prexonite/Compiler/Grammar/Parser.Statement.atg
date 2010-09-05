@@ -147,6 +147,7 @@ GetInitiator<out AstGetSet complex, out bool isDeclaration>
                                             List<IAstExpression> args = new List<IAstExpression>();
                                             isDeclaration = false;                                            
                                             string id;
+                                            int placeholderIndex = -1;
                                         .)
 =
     //Actual value
@@ -212,6 +213,8 @@ GetInitiator<out AstGetSet complex, out bool isDeclaration>
                                             }
                                             complex = new AstGetSetReference(this, s.Id, s.Interpretation);
                                         .)
+|   question
+    [   Integer<out placeholderIndex> ] (.  complex = new AstPlaceholder(this, 0 <= placeholderIndex ? (int?)placeholderIndex : null); .)
 .
 
 VariableDeclaration<out AstGetSet variable, bool isNewDecl>
