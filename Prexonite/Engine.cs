@@ -760,8 +760,6 @@ namespace Prexonite
 
             Commands.AddEngineCommand(IntersectAlias, new Intersect());
 
-            Commands.AddEngineCommand(Call_CCAlias, Call_CC.Instance);
-
             Commands.AddEngineCommand(Call_TailAlias, Call_Tail.Instance);
 
             Commands.AddEngineCommand(ListAlias, List.Instance);
@@ -1057,11 +1055,6 @@ namespace Prexonite
         /// Alias used for the distinct command.
         /// </summary>
         public const string UniqueAlias = "unique";
-
-        /// <summary>
-        /// Alias used for the call\cc command.
-        /// </summary>
-        public const string Call_CCAlias = @"call\cc";
 
         /// <summary>
         /// Alias used for the call\tail command.
