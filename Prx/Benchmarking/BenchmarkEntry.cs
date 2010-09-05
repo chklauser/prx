@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using System.Diagnostics;
+using System.Linq;
 using Prexonite;
 
 namespace Prx.Benchmarking
@@ -25,9 +26,7 @@ namespace Prx.Benchmarking
 
         public long GetAverageRawMilliseconds()
         {
-            ulong sum = 0;
-            foreach (Measurement m in _measurements)
-                sum += (ulong)m.RawMilliseconds;
+            var sum = _measurements.Aggregate<Measurement, ulong>(0, (current, m) => current + (ulong) m.RawMilliseconds);
             return (long) Math.Round((sum/(double)_measurements.Count),MidpointRounding.AwayFromZero);
         }
 
@@ -64,11 +63,8 @@ namespace Prx.Benchmarking
         {
             if(obj == null)
                 return false;
-            BenchmarkEntry be = obj as BenchmarkEntry;
-            if (be != null)
-                return Function.Equals(be.Function);
-            else
-                return false;
+            var be = obj as BenchmarkEntry;
+            return be != null && Function.Equals(be.Function);
         }
 
         public override int GetHashCode()
@@ -112,7 +108,7 @@ namespace Prx.Benchmarking
                     Console.WriteLine("\tIterations:\t{0}",iterations);
             }
 
-            PValue[] argv = new PValue[] { iterations };
+            var argv = new PValue[] { iterations };
             sw.Reset();
             sw.Start();
             Function.Run(Parent.Machine, argv);
@@ -123,7 +119,7 @@ namespace Prx.Benchmarking
             if (Overhead != null && Parent.Entries.Contains(Overhead))
                 overhead = Parent.Entries[Overhead].GetAverageRawMilliseconds();
 
-            Measurement m = new Measurement(this, raw, overhead);
+            var m = new Measurement(this, raw, overhead);
 
             if(verbose)
             {
@@ -151,7 +147,7 @@ namespace Prx.Benchmarking
 
         public void WarmUp()
         {
-            FunctionContext fctx =
+            var fctx =
                 Function.CreateFunctionContext(
                     Parent.Machine, new PValue[] {Benchmark.DefaultWarmUpIterations});
             Parent.Machine.Process(fctx);

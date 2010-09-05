@@ -27,7 +27,7 @@ using Prexonite.Types;
 
 namespace Prexonite.Compiler.Ast
 {
-    public class AstGetSetSymbol : AstGetSet, ICanBeReferenced
+    public class AstGetSetSymbol : AstGetSet, ICanBeReferenced, IAstPartiallyApplicable
     {
         public SymbolInterpretations Interpretation;
         public string Id;
@@ -194,6 +194,22 @@ namespace Prexonite.Compiler.Ast
             }
 
             return result != null;
+        }
+
+        #endregion
+
+        #region Implementation of IAstPartiallyApplicable
+
+        public void DoEmitPartialApplicationCode(CompilerTarget target)
+        {
+            AstGetSet refNode;
+            if(!TryToReference(out refNode))
+                throw new PrexoniteException("Cannot partially apply " + this + " because it can't be converted to a reference.");
+
+            var indTemplate = new AstIndirectCall(File, Line, Column, Call, refNode);
+            indTemplate.Arguments.AddRange(Arguments);
+            System.Diagnostics.Debug.Assert(indTemplate.CheckForPlaceholders());
+            indTemplate.EmitCode(target);
         }
 
         #endregion

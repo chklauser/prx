@@ -137,7 +137,7 @@ namespace Prexonite.Commands.Core
             {
                 case 0:
                     if (!ins.JustEffect)
-                        state.EmitLoadPValueNull();
+                        state.EmitLoadNullAsPValue();
                     break;
                 case 1:
                     //Emit call to RunStatically(PValue, StackContext)
@@ -146,7 +146,7 @@ namespace Prexonite.Commands.Core
                         typeof (Dispose).GetMethod("RunStatically", new[] {typeof (PValue), typeof (StackContext)});
                     state.Il.EmitCall(OpCodes.Call, run, null);
                     if (!ins.JustEffect)
-                        state.EmitLoadPValueNull();
+                        state.EmitLoadNullAsPValue();
                     break;
                 default:
                     //Emit call to RunStatically(StackContext, PValue[])

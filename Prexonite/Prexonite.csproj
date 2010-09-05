@@ -110,7 +110,6 @@
     <Compile Include="Commands\Core\Caller.cs" />
     <Compile Include="Commands\Core\CallSubPerform.cs" />
     <Compile Include="Commands\Core\Call_Member.cs" />
-    <Compile Include="Commands\Core\Call_CC.cs" />
     <Compile Include="Commands\Core\Call_Tail.cs" />
     <Compile Include="Commands\Core\Char.cs" />
     <Compile Include="Commands\Core\CompileToCil.cs" />

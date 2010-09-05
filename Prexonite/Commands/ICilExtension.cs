@@ -333,6 +333,56 @@ namespace Prexonite.Commands
 
         #endregion
 
+        public void EmitLoadAsPValue(CompilerState state)
+        {
+            string id;
+            switch (Interpretation)
+            {
+                case CompileTimeInterpretation.Null:
+                    state.EmitLoadNullAsPValue();
+                    break;
+                case CompileTimeInterpretation.String:
+                    string stringValue;
+                    if(!TryGetString(out stringValue))
+                        goto default;
+                    state.EmitLoadStringAsPValue(stringValue);
+                    break;
+                case CompileTimeInterpretation.Int:
+                    int intValue;
+                    if(!TryGetInt(out intValue))
+                        goto default;
+                    state.EmitLoadIntAsPValue(intValue);
+                    break;
+                case CompileTimeInterpretation.Bool:
+                    bool boolValue;
+                    if(!TryGetBool(out boolValue))
+                        goto default;
+                    state.EmitLoadBoolAsPValue(boolValue);
+                    break;
+                case CompileTimeInterpretation.LocalVariableReference:
+                    if(!TryGetLocalVariableReference(out id))
+                        goto default;
+                    state.EmitLoadLocalRefAsPValue(id);
+                    break;
+                case CompileTimeInterpretation.GlobalVariableReference:
+                    if(!TryGetGlobalVariableReference(out id))
+                        goto default;
+                    state.EmitLoadGlobalRefAsPValue(id);
+                    break;
+                case CompileTimeInterpretation.FunctionReference:
+                    if(!TryGetFunctionReference(out id))
+                        goto default;
+                    state.EmitLoadFuncRefAsPValue(id);
+                    break;
+                case CompileTimeInterpretation.CommandReference:
+                    if(!TryGetCommandReference(out id))
+                        goto default;
+                    state.EmitLoadCmdRefAsPValue(id);
+                    break;
+                default:
+                    throw new ArgumentOutOfRangeException();
+            }
+        }
     }
 
 }

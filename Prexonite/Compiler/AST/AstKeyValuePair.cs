@@ -22,12 +22,13 @@
  */
 
 using System;
+using Prexonite.Types;
 
 namespace Prexonite.Compiler.Ast
 {
     public class AstKeyValuePair : AstNode,
                                    IAstExpression,
-                                   IAstHasExpressions
+                                   IAstHasExpressions, IAstPartiallyApplicable
     {
         public AstKeyValuePair(string file, int line, int column)
             : this(file, line, column, null, null)
@@ -73,9 +74,11 @@ namespace Prexonite.Compiler.Ast
             if (Value == null)
                 throw new ArgumentNullException("target");
 
-            Key.EmitCode(target);
-            Value.EmitCode(target);
-            target.EmitCommandCall(this, 2, Engine.PairAlias);
+            var call = new AstGetSetSymbol(
+                File, Line, Column, PCall.Get, Engine.PairAlias, SymbolInterpretations.Command);
+            call.Arguments.Add(Key);
+            call.Arguments.Add(Value);
+            call.EmitCode(target);
         }
 
         #region IAstExpression Members
@@ -93,6 +96,20 @@ namespace Prexonite.Compiler.Ast
             expr = null;
 
             return false;
+        }
+
+        #endregion
+
+        #region Implementation of IAstPartiallyApplicable
+
+        public void DoEmitPartialApplicationCode(CompilerTarget target)
+        {
+            DoEmitCode(target); //Partial application is handled by AstGetSetSymbol. Code is the same
+        }
+
+        public override bool CheckForPlaceholders()
+        {
+            return base.CheckForPlaceholders() || Key is AstPlaceholder || Value is AstPlaceholder;
         }
 
         #endregion

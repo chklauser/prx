@@ -25,15 +25,6 @@ namespace Prexonite.Commands.Core.PartialApplication
         private readonly PValue[] _effectiveArgumentsPrototype;
 
         /// <summary>
-        /// <para>The number of open arguments mapped.</para>
-        /// <para>Used to determine ideal size of effective argument array</para>
-        /// </summary>
-        /// <remarks>
-        /// <para>It is assumed, that each of the closed arguments is mapped exactly once.</para>
-        /// </remarks>
-        private readonly int _countOpenArgumentsMapped;
-
-        /// <summary>
         /// <para>Copy of the mappings from effective argument position to closed and open arguments. </para>
         /// <para>Negative values indicate open arguments, positive values indicate closed arguments.</para>
         /// </summary>
@@ -55,22 +46,17 @@ namespace Prexonite.Commands.Core.PartialApplication
                 throw new ArgumentOutOfRangeException(
                     "nonArgumentPrefix", "non-argument prefix cannot be negative");
 
-            _mappings = mappings;
-            _countOpenArgumentsMapped = _computeCountOpenArgumentsMapped();
-
-            _assertMappingsNonZero();
-
             //Prepare prototype arrays
             _nonArgumentsPrototype = new PValue[nonArgumentPrefix];
             _effectiveArgumentsPrototype = new PValue[System.Math.Max(mappings.Length-nonArgumentPrefix,0)];
 
-            for (var absoluteIndex = 0; absoluteIndex < _mappings.Length; absoluteIndex++)
+            for (var absoluteIndex = 0; absoluteIndex < mappings.Length; absoluteIndex++)
             {
-                var mapping = _mappings[absoluteIndex];
+                var mapping = mappings[absoluteIndex];
                 System.Diagnostics.Debug.Assert(mapping != 0, "Mapping contains zero");
 
                 //Skip open arguments
-                if (mapping <= 0) 
+                if (mapping < 0) 
                     continue;
 
                 int relativeIndex;
@@ -82,12 +68,36 @@ namespace Prexonite.Commands.Core.PartialApplication
                 //maps closed argument
                 argumentList[relativeIndex] = closedArguments[index];
             }
+
+            _mappings = mappings;
+            _assertMappingsNonZero();
         }
 
-        private int _computeCountOpenArgumentsMapped()
+        /// <summary>
+        /// <para>The number of open arguments mapped.</para>
+        /// <para>Used to determine ideal size of effective argument array</para>
+        /// </summary>
+        /// <remarks>
+        /// <para>It is assumed, that each of the closed arguments is mapped exactly once.</para>
+        /// </remarks>
+        private int _computeCountOpenArgumentsMapped(int argc)
         {
-            //TODO: Array-based implementation
-            return _mappings.Where(m => m < 0).Distinct().Count();
+            var mapped = new bool[argc];
+            var count = 0;
+            foreach (var m in _mappings)
+            {
+                int idx;
+                if (0 <= m || (idx = -m - 1) >= mapped.Length)
+                    continue;
+
+                if (mapped[idx]) 
+                    continue;
+
+                count++;
+                mapped[idx] = true;
+            }
+
+            return count;
         }
 
         #region Implementation of IIndirectCall
@@ -102,10 +112,9 @@ namespace Prexonite.Commands.Core.PartialApplication
         public virtual PValue IndirectCall(StackContext sctx, PValue[] args)
         {
             var argc = args.Length;
-            var countExcessArguments = System.Math.Max(argc - _countOpenArgumentsMapped, 0);
-            var countMappings = _mappings.Length;
+            var countExcessArguments = System.Math.Max(argc - _computeCountOpenArgumentsMapped(argc), 0);
             var nonArgumentPrefix = NonArgumentPrefix;
-            var countEffectiveArguments = System.Math.Max(countMappings + countExcessArguments - nonArgumentPrefix,0);
+            var countEffectiveArguments = System.Math.Max(_mappings.Length + countExcessArguments - nonArgumentPrefix,0);
 
             var nonArguments = new PValue[nonArgumentPrefix];
             var effectiveArguments = new PValue[countEffectiveArguments];

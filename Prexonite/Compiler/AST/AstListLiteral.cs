@@ -21,13 +21,17 @@
  *  51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
  */
 
+using System;
 using System.Collections.Generic;
+using System.Linq;
+using Prexonite.Types;
 
 namespace Prexonite.Compiler.Ast
 {
     public class AstListLiteral : AstNode,
                                   IAstExpression,
-                                  IAstHasExpressions
+                                  IAstHasExpressions,
+        IAstPartiallyApplicable
     {
         public List<IAstExpression> Elements = new List<IAstExpression>();
 
@@ -76,13 +80,24 @@ namespace Prexonite.Compiler.Ast
 
         protected override void DoEmitCode(CompilerTarget target)
         {
-            var lastPosition = (ISourcePosition) this;
-            foreach (var element in Elements)
-            {
-                element.EmitCode(target);
-                lastPosition = element;
-            }
-            target.EmitCommandCall(lastPosition, Elements.Count, Engine.ListAlias);
+            var call = new AstGetSetSymbol(
+                File, Line, Column, PCall.Get, Engine.ListAlias, SymbolInterpretations.Command);
+            call.Arguments.AddRange(Elements);
+            call.EmitCode(target);
         }
+
+        #region Implementation of IAstPartiallyApplicable
+
+        public void DoEmitPartialApplicationCode(CompilerTarget target)
+        {
+            DoEmitCode(target); //Code is the same. Partial application is handled by AstGetSetSymbol
+        }
+
+        public override bool CheckForPlaceholders()
+        {
+            return base.CheckForPlaceholders() || Elements.Any(AstExpressionExtensions.IsPlaceholder);
+        }
+
+        #endregion
     }
 }

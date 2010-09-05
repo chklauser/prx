@@ -204,7 +204,7 @@ namespace Prexonite.Commands.Core
             }
 
             if(!ins.JustEffect)
-                state.EmitLoadPValueNull();
+                state.EmitLoadNullAsPValue();
         }
 
         #endregion

@@ -215,6 +215,17 @@ namespace Prexonite.Compiler.Cil
             get { return _cilExtensionOffsets; }
         }
 
+        private LocalBuilder _partialApplicationMapping;
+
+        /// <summary>
+        /// <para>Local <code>System.Int32[]</code> variable. Used for temporarily holding arguments for partial application constructors.</para>
+        /// <para>Is not guaranteed to retain its value across instructions</para>
+        /// </summary>
+        public LocalBuilder PartialApplicationMappingLocal
+        {
+            get { return _partialApplicationMapping ?? (_partialApplicationMapping = Il.DeclareLocal(typeof(int[]))); }
+        }
+
         /// <summary>
         /// Represents the engine this context is part of.
         /// </summary>
@@ -381,7 +392,7 @@ namespace Prexonite.Compiler.Cil
             else
             {
                 //Instantiate array -> argv
-                Il.Emit(OpCodes.Ldc_I4, argc);
+                EmitLdcI4(argc);
                 Il.Emit(OpCodes.Newarr, typeof (PValue));
                 EmitStoreLocal(ArgvLocal);
 
@@ -596,7 +607,7 @@ namespace Prexonite.Compiler.Cil
         /// <summary>
         /// Creates a PValue null value.
         /// </summary>
-        public void EmitLoadPValueNull()
+        public void EmitLoadNullAsPValue()
         {
             Il.EmitCall(OpCodes.Call, Compiler.getPTypeNull, null);
             Il.EmitCall(OpCodes.Call, Compiler.nullCreatePValue, null);
@@ -754,7 +765,7 @@ namespace Prexonite.Compiler.Cil
                 Il.Emit(OpCodes.Pop);
         }
 
-        public void MakePTypeFromExpr(string expr)
+        public void EmityPTypeAsPValue(string expr)
         {
             EmitLoadLocal(SctxLocal);
             Il.Emit(OpCodes.Ldstr, expr);
@@ -766,6 +777,162 @@ namespace Prexonite.Compiler.Cil
             targetMethod = null;
             return (Linking & FunctionLinking.Static) == FunctionLinking.Static &&
                    Pass.Implementations.TryGetValue(id, out targetMethod);
+        }
+
+        public void EmitCommandCall(Instruction ins)
+        {
+            var argc = ins.Arguments;
+            var id = ins.Id;
+            var justEffect = ins.JustEffect;
+            PCommand cmd;
+            ICilCompilerAware aware = null;
+            CompilationFlags flags;
+            if (
+                TargetEngine.Commands.TryGetValue(id, out cmd) &&
+                (aware = cmd as ICilCompilerAware) != null)
+                flags = aware.CheckQualification(ins);
+            else
+                flags = CompilationFlags.IsCompatible;
+
+            if (
+                (
+                    (flags & CompilationFlags.PrefersCustomImplementation) ==
+                    CompilationFlags.PrefersCustomImplementation ||
+                    (flags & CompilationFlags.RequiresCustomImplementation)
+                    == CompilationFlags.RequiresCustomImplementation
+                ) && aware != null)
+            {
+                //Let the command handle the call
+                aware.ImplementInCil(this, ins);
+            }
+            else if ((flags & CompilationFlags.PrefersRunStatically)
+                     == CompilationFlags.PrefersRunStatically)
+            {
+                //Emit a static call to $commandType$.RunStatically
+                EmitEarlyBoundCommandCall(cmd.GetType(), ins);
+            }
+            else
+            {
+                //Implement via Runtime.CallCommand (call by name)
+                FillArgv(argc);
+                EmitLoadLocal(SctxLocal);
+                ReadArgv(argc);
+                Il.Emit(OpCodes.Ldstr, id);
+                Il.EmitCall(OpCodes.Call, Runtime.CallCommandMethod, null);
+                if (justEffect)
+                    Il.Emit(OpCodes.Pop);
+            }
+        }
+
+        public void EmitFuncCall(int argc, string id, bool justEffect)
+        {
+            MethodInfo targetMethod;
+            if (TryGetStaticallyLinkedFunction(id, out targetMethod))
+            {
+                //Link function statically
+                FillArgv(argc);
+                Il.Emit(OpCodes.Ldsfld, Pass.FunctionFields[id]);
+                EmitLoadLocal(SctxLocal);
+                ReadArgv(argc);
+                Il.Emit(OpCodes.Ldnull);
+                Il.Emit(OpCodes.Ldloca_S, TempLocals[0]);
+                EmitLoadArg(ParamReturnModeIndex);
+                EmitCall(targetMethod);
+                if (!justEffect)
+                    EmitLoadTemp(0);
+            }
+            else
+            {
+                //Link function dynamically
+                FillArgv(argc);
+                EmitLoadLocal(SctxLocal);
+                ReadArgv(argc);
+                Il.Emit(OpCodes.Ldstr, id);
+                Il.EmitCall(OpCodes.Call, Runtime.CallFunctionMethod, null);
+                if (justEffect)
+                    Il.Emit(OpCodes.Pop);
+            }
+        }
+
+        public void EmitLoadEngRefAsPValue()
+        {
+            EmitLoadLocal(SctxLocal);
+            Il.EmitCall(OpCodes.Call, Runtime.LoadEngineReferenceMethod, null);
+        }
+
+        public static void EmitLoadAppRefAsPValue(CompilerState state)
+        {
+            state.EmitLoadLocal(state.SctxLocal);
+            state.Il.EmitCall
+                (
+                    OpCodes.Call, Runtime.LoadApplicationReferenceMethod, null);
+        }
+
+        public void EmitLoadCmdRefAsPValue(string id)
+        {
+            EmitLoadLocal(SctxLocal);
+            Il.Emit(OpCodes.Ldstr, id);
+            Il.EmitCall(OpCodes.Call, Runtime.LoadCommandReferenceMethod, null);
+        }
+
+        public void EmitLoadFuncRefAsPValue(string id)
+        {
+            MethodInfo dummyMethodInfo;
+            EmitLoadLocal(SctxLocal);
+            if (TryGetStaticallyLinkedFunction(id, out dummyMethodInfo))
+            {
+                Il.Emit(OpCodes.Ldsfld, Pass.FunctionFields[id]);   
+                EmitVirtualCall(Compiler.CreateNativePValue);
+            }
+            else
+            {
+                Il.Emit(OpCodes.Ldstr, id);
+                Il.EmitCall
+                    (
+                        OpCodes.Call, Runtime.LoadFunctionReferenceMethod, null);
+            }
+        }
+
+        public void EmitLoadGlobalRefAsPValue(string id)
+        {
+            EmitLoadLocal(SctxLocal);
+            Il.Emit(OpCodes.Ldstr, id);
+            Il.EmitCall
+                (
+                    OpCodes.Call, Runtime.LoadGlobalVariableReferenceAsPValueMethod, null);
+        }
+
+        public void EmitLoadLocalRefAsPValue(string id)
+        {
+            EmitLoadLocal(Symbols[id].Local);
+            Il.EmitCall(OpCodes.Call, Runtime.WrapPVariableMethod, null);
+        }
+
+        public void EmitLoadStringAsPValue(string id)
+        {
+            Il.Emit(OpCodes.Ldstr, id);
+            EmitWrapString();
+        }
+
+        public void EmitLoadBoolAsPValue(bool value)
+        {
+            if (value)
+                EmitLdcI4(1);
+            else
+                EmitLdcI4(0);
+            EmitWrapBool();
+        }
+
+        public void EmitLoadRealAsPValue(Instruction ins)
+        {
+            Il.Emit(OpCodes.Ldc_R8, (double) ins.GenericArgument);
+            EmitWrapReal();
+        }
+
+        public void EmitLoadIntAsPValue(int argc)
+        {
+            EmitLdcI4(argc);
+            EmitWrapInt();
         }
     }
 }

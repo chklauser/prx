@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Reflection;
 using System.Text;
 using NUnit.Framework;
 using Prexonite;
@@ -48,9 +49,14 @@ namespace PrexoniteTests.Tests
         {
             #region Overrides of PartialApplicationCommandBase
 
-            protected override IIndirectCall CreatePartialApplication(sbyte[] mappings, PValue[] closedArguments)
+            protected override IIndirectCall CreatePartialApplication(StackContext sctx1, sbyte[] mappings, PValue[] closedArguments)
             {
                 return new PartialApplicationImplMock { Mappings = mappings, ClosedArguments = closedArguments };
+            }
+
+            protected override Type PartialCallRepresentationType
+            {
+                get { return typeof (PartialApplicationImplMock); }
             }
 
             #endregion
@@ -58,6 +64,16 @@ namespace PrexoniteTests.Tests
 
         public class PartialApplicationImplMock : IIndirectCall
         {
+            public PartialApplicationImplMock()
+            {
+            }
+
+            public PartialApplicationImplMock(sbyte[] mappings, PValue[] closedArguments)
+            {
+                Mappings = mappings;
+                ClosedArguments = closedArguments;
+            }
+
 
             public sbyte[] Mappings { get; set; }
             public PValue[] ClosedArguments { get; set; }
@@ -314,6 +330,81 @@ namespace PrexoniteTests.Tests
 
                 Assert.AreSame(caE, caA, string.Format("The closed arguments at index {0} are not the same.", i));
             }
+        }
+
+        [Test]
+        public void IndBasicExplicit()
+        {
+            Compile(@"
+function main(x,y,z)
+{
+    function proc(a,b,c) = ""a=$a, b=$b, c=$c"";
+    var pa = proc(?0,?1,?2);
+    return pa.(x,y,z);
+}
+");
+
+            Expect("a=1, b=2, c=3", 1,2,3);
+        }
+
+        [Test]
+        public void IndBasicImplicit()
+        {
+            Compile(@"
+function main(x,y,z)
+{
+    function proc(a,b,c) = ""a=$a, b=$b, c=$c"";
+    var pa = proc(?,?,?);
+    return pa.(x,y,z);
+}
+");
+
+            Expect("a=1, b=2, c=3", 1, 2, 3);
+        }
+
+        [Test]
+        public void BasicDefaultToNull()
+        {
+            Compile(@"
+function main(x)
+{
+    function proc(a,b,c) = ""a=$a, b=$b, c=$(c is null)"";
+    var pa = proc(?,?,?);
+    return pa.(x);
+}
+");
+
+            Expect("a=1, b=, c=" + (sctx.CreateNativePValue(true).CallToString(sctx)), 1);
+        }
+        
+        [Test]
+        public void BasicExcess()
+        {
+            Compile(@"
+function main(x,y,z)
+{
+    function proc(a,b,c) = ""a=$a, b=$b, c=$c"";
+    var pa = proc(?);
+    return pa.(x,y,z);
+}
+");
+
+            Expect("a=1, b=2, c=3", 1,2,3);
+        }
+
+        [Test]
+        public void MissingMapped()
+        {
+            Compile(@"
+function main(x)
+{
+    function proc(a,b,c) = ""a=$a, b=$b, c=$c"";
+    var pa = proc(?1,?2);
+    return pa.(x);
+}
+");
+
+            Expect("a=, b=, c=1", 1, 2, 3);
         }
 
     }

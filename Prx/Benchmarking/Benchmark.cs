@@ -2,6 +2,7 @@ using System;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.Globalization;
+using System.Linq;
 using System.Text;
 
 using Prexonite;
@@ -14,22 +15,10 @@ namespace Prx.Benchmarking
 
         #region Construction
 
-        private Engine _machine;
+        public Engine Machine { get; set; }
 
-        public Engine Machine
-        {
-            get
-            {
-                return _machine;
-            }
-            set
-            {
-                _machine = value;
-            }
-        }
-	
 
-        private int _iterations;
+        private readonly int _iterations;
 
         public int Iterations
         {
@@ -52,7 +41,7 @@ namespace Prx.Benchmarking
                 throw new ArgumentOutOfRangeException(
                     "iterations", iterations, "iterations must be a positive integer.");
             _iterations = iterations;
-            _machine = eng;
+            Machine = eng;
         }
 
         public Benchmark(Engine eng)
@@ -77,21 +66,21 @@ namespace Prx.Benchmarking
         public const int DefaultIterations = 1000;
         public const int DefaultWarmUpIterations = 2;
 
-        private readonly BenchmarkEntryCollection entries = new BenchmarkEntryCollection();
+        private readonly BenchmarkEntryCollection _entries = new BenchmarkEntryCollection();
         public BenchmarkEntryCollection Entries
         {
             get
             {
-                return entries;
+                return _entries;
             }
         }
 
         internal Stopwatch _Stopwatch
         {
-            get { return __Stopwatch; }
+            get { return _stopwatch; }
         }
 
-        private readonly Stopwatch __Stopwatch = new Stopwatch();
+        private readonly Stopwatch _stopwatch = new Stopwatch();
 
         public void IncludeAll(Application application)
         {
@@ -114,20 +103,20 @@ namespace Prx.Benchmarking
         {
             if (function == null)
                 throw new ArgumentNullException("function"); 
-            entries.Add(new BenchmarkEntry(this,function));
+            _entries.Add(new BenchmarkEntry(this,function));
         }
 
         public List<Measurement> MeasureAll(bool verbose)
         {
             List<Measurement> lst = new List<Measurement>(Entries.Count);
-            foreach (BenchmarkEntry entry in entries)
+            foreach (BenchmarkEntry entry in _entries)
                 lst.Add(entry.Measure(verbose));
             return lst;
         }
 
         public void WarmUp()
         {
-            foreach (BenchmarkEntry entry in entries)
+            foreach (BenchmarkEntry entry in _entries)
                 entry.WarmUp();
         }
 
@@ -154,11 +143,11 @@ namespace Prx.Benchmarking
                     result = PType.Null.CreatePValue();
                     break;
                 case "includerange":
-                    foreach (PValue arg in args)
+                    foreach (var arg in args)
                     {
                         if(arg.Type.ToBuiltIn() != PType.BuiltIn.List)
                             continue;
-                        foreach (PValue func in (List<PValue>)arg.Value)
+                        foreach (var func in (List<PValue>)arg.Value)
                             Include(func.ConvertTo<PFunction>(sctx));
                     }
                     result = PType.Null.CreatePValue();
@@ -174,9 +163,7 @@ namespace Prx.Benchmarking
                     bool verbose;
                     if(!(args.Length > 0 && args[0].TryConvertTo(sctx, out verbose)))
                         verbose = true;
-                    List<PValue> plst = new List<PValue>();
-                    foreach (Measurement m in MeasureAll(verbose))
-                        plst.Add(sctx.CreateNativePValue(m));
+                    var plst = MeasureAll(verbose).Select(sctx.CreateNativePValue).ToList();
                     result = (PValue)plst;
                     break;
                 case "warmup":

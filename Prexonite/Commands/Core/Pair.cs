@@ -94,7 +94,7 @@ namespace Prexonite.Commands.Core
 
             if (argc < 2)
             {
-                state.EmitLoadPValueNull();
+                state.EmitLoadNullAsPValue();
             }
             else
             {

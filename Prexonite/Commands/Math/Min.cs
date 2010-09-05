@@ -147,11 +147,11 @@ namespace Prexonite.Commands.Math
                 switch (ins.Arguments)
                 {
                     case 0:
-                        state.EmitLoadPValueNull();
-                        state.EmitLoadPValueNull();
+                        state.EmitLoadNullAsPValue();
+                        state.EmitLoadNullAsPValue();
                         break;
                     case 1:
-                        state.EmitLoadPValueNull();
+                        state.EmitLoadNullAsPValue();
                         break;
                     case 2:
                         break;

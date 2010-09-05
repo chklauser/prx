@@ -28,4 +28,12 @@ namespace Prexonite.Compiler.Ast
         bool TryOptimize(CompilerTarget target, out IAstExpression expr);
         void EmitCode(CompilerTarget target);
     }
+
+    public static class AstExpressionExtensions
+    {
+        public static bool IsPlaceholder(this IAstExpression expression)
+        {
+            return expression is AstPlaceholder;
+        }
+    }
 }
