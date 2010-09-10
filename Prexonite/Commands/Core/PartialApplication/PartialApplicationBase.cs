@@ -21,8 +21,9 @@ namespace Prexonite.Commands.Core.PartialApplication
         /// </summary>
         private readonly sbyte[] _mappings;
 
-        private readonly PValue[] _nonArgumentsPrototype;
-        private readonly PValue[] _effectiveArgumentsPrototype;
+        private readonly PValue[] _closedArguments;
+
+        private readonly int _nonArgumentPrefix;
 
         /// <summary>
         /// <para>Copy of the mappings from effective argument position to closed and open arguments. </para>
@@ -46,30 +47,10 @@ namespace Prexonite.Commands.Core.PartialApplication
                 throw new ArgumentOutOfRangeException(
                     "nonArgumentPrefix", "non-argument prefix cannot be negative");
 
-            //Prepare prototype arrays
-            _nonArgumentsPrototype = new PValue[nonArgumentPrefix];
-            _effectiveArgumentsPrototype = new PValue[System.Math.Max(mappings.Length-nonArgumentPrefix,0)];
-
-            for (var absoluteIndex = 0; absoluteIndex < mappings.Length; absoluteIndex++)
-            {
-                var mapping = mappings[absoluteIndex];
-                System.Diagnostics.Debug.Assert(mapping != 0, "Mapping contains zero");
-
-                //Skip open arguments
-                if (mapping < 0) 
-                    continue;
-
-                int relativeIndex;
-                var argumentList = _determineArgumentList(
-                    out relativeIndex, nonArgumentPrefix, absoluteIndex, _nonArgumentsPrototype,
-                    _effectiveArgumentsPrototype);
-                var index = mapping - 1;
-                System.Diagnostics.Debug.Assert(index < closedArguments.Length);
-                //maps closed argument
-                argumentList[relativeIndex] = closedArguments[index];
-            }
+            _closedArguments = closedArguments;
 
             _mappings = mappings;
+            _nonArgumentPrefix = nonArgumentPrefix;
             _assertMappingsNonZero();
         }
 
@@ -120,10 +101,6 @@ namespace Prexonite.Commands.Core.PartialApplication
             var effectiveArguments = new PValue[countEffectiveArguments];
             System.Diagnostics.Debug.Assert(effectiveArguments.Length + nonArgumentPrefix >= _mappings.Length);
 
-            //Overlay closed arguments
-            Array.Copy(_nonArgumentsPrototype, nonArguments, _nonArgumentsPrototype.Length);
-            Array.Copy(_effectiveArgumentsPrototype, effectiveArguments, _effectiveArgumentsPrototype.Length);
-
             //Apply mapping
             var openArgumentUsed = new bool[argc];
             var absoluteIndex = 0;
@@ -132,24 +109,29 @@ namespace Prexonite.Commands.Core.PartialApplication
                 var mapping = _mappings[absoluteIndex];
                 System.Diagnostics.Debug.Assert(mapping != 0, "Mapping contains zero");
 
-                //skip closed arguments
-                if (0 <= mapping) 
-                    continue;
-
                 int relativeIndex;
                 var argumentList = _determineArgumentList(
                     out relativeIndex, nonArgumentPrefix, absoluteIndex, nonArguments, effectiveArguments);
 
-                var index = (-mapping) - 1;
-                //maps open argument
-                if (index < argc)
+                if (0 <= mapping)
                 {
-                    argumentList[relativeIndex] = args[index];
-                    openArgumentUsed[index] = true;
+                    var index = mapping - 1;
+                    //maps closed arguments   
+                    argumentList[relativeIndex] = _closedArguments[index];
                 }
                 else
                 {
-                    argumentList[relativeIndex] = PType.Null;
+                    var index = (-mapping) - 1;
+                    //maps open argument
+                    if (index < argc)
+                    {
+                        argumentList[relativeIndex] = args[index];
+                        openArgumentUsed[index] = true;
+                    }
+                    else
+                    {
+                        argumentList[relativeIndex] = PType.Null;
+                    }
                 }
             }
 
@@ -206,7 +188,7 @@ namespace Prexonite.Commands.Core.PartialApplication
         /// </remarks>
         protected int NonArgumentPrefix
         {
-            get { return _nonArgumentsPrototype.Length; }
+            get { return _nonArgumentPrefix; }
         }
 
         #endregion
