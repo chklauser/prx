@@ -10,7 +10,7 @@ namespace Prexonite.Commands.Core.PartialApplication
     /// </summary>
     public class PartialCall : PartialApplicationBase
     {
-        public PartialCall(sbyte[] mappings, PValue[] closedArguments) : base(mappings, closedArguments, 1)
+        public PartialCall(int[] mappings, PValue[] closedArguments) : base(mappings, closedArguments, 1)
         {
         }
 

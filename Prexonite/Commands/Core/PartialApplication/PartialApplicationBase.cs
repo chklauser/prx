@@ -12,14 +12,13 @@ namespace Prexonite.Commands.Core.PartialApplication
     /// <para>Base implementation of partial applications. Don't use for classification. Partial applications just <see cref="IIndirectCall"/> implementations.</para>
     /// <para>It is not mandatory for partial applications to inherit from <see cref="PartialApplicationBase"/>.</para>
     /// </summary>
-    [CLSCompliant(false)]
     public abstract class PartialApplicationBase : IIndirectCall
     {
         /// <summary>
         /// <para>Mappings from effective argument position to closed and open arguments. </para>
         /// <para>Negative values indicate open arguments, positive values indicate closed arguments.</para>
         /// </summary>
-        private readonly sbyte[] _mappings;
+        private readonly int[] _mappings;
 
         private readonly PValue[] _closedArguments;
 
@@ -29,7 +28,7 @@ namespace Prexonite.Commands.Core.PartialApplication
         /// <para>Copy of the mappings from effective argument position to closed and open arguments. </para>
         /// <para>Negative values indicate open arguments, positive values indicate closed arguments.</para>
         /// </summary>
-        public IEnumerable<sbyte> Mappings
+        public IEnumerable<int> Mappings
         {
             [DebuggerStepThrough]
             get { return _mappings; }
@@ -41,7 +40,7 @@ namespace Prexonite.Commands.Core.PartialApplication
         /// <param name="mappings">Mappings from effective argument position to closed and open arguments. See <see cref="Mappings"/>.</param>
         /// <param name="closedArguments">Already provided (closed) arguments.</param>
         /// <param name="nonArgumentPrefix">Indicates how many of the effective arguments should be isolated and not packed into the arguments array. See remarks on <see cref="NonArgumentPrefix"/>.</param>
-        protected PartialApplicationBase(sbyte[] mappings, PValue[] closedArguments, int nonArgumentPrefix)
+        protected PartialApplicationBase(int[] mappings, PValue[] closedArguments, int nonArgumentPrefix)
         {
             if (nonArgumentPrefix < 0)
                 throw new ArgumentOutOfRangeException(

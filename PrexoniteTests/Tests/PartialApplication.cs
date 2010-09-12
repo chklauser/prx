@@ -1,11 +1,13 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.Linq;
 using System.Reflection;
 using System.Text;
 using NUnit.Framework;
 using Prexonite;
 using Prexonite.Commands.Core.PartialApplication;
+using Prexonite.Compiler.Ast;
 using Prexonite.Types;
 
 namespace PrexoniteTests.Tests
@@ -18,7 +20,7 @@ namespace PrexoniteTests.Tests
 
         public class PartialApplicationMock : PartialApplicationBase
         {
-            public PartialApplicationMock(sbyte[] mappings, PValue[] closedArguments, int theNonArgumentPrefox)
+            public PartialApplicationMock(int[] mappings, PValue[] closedArguments, int theNonArgumentPrefox)
                 : base(mappings, closedArguments, theNonArgumentPrefox)
             {
             }
@@ -45,18 +47,18 @@ namespace PrexoniteTests.Tests
         }
 
 
-        public class RoundtripPartialApplicationCommandMock : PartialApplicationCommandBase
+        public class RoundtripPartialApplicationCommandMock : PartialApplicationCommandBase<Object>
         {
             #region Overrides of PartialApplicationCommandBase
 
-            protected override IIndirectCall CreatePartialApplication(StackContext sctx1, sbyte[] mappings, PValue[] closedArguments)
+            protected override IIndirectCall CreatePartialApplication(StackContext sctx1, int[] mappings, PValue[] closedArguments, object parameter)
             {
                 return new PartialApplicationImplMock { Mappings = mappings, ClosedArguments = closedArguments };
             }
 
-            protected override Type PartialCallRepresentationType
+            protected override Type GetPartialCallRepresentationType(object parameter)
             {
-                get { return typeof (PartialApplicationImplMock); }
+                return typeof (PartialApplicationImplMock);
             }
 
             #endregion
@@ -68,16 +70,16 @@ namespace PrexoniteTests.Tests
             {
             }
 
-            public PartialApplicationImplMock(sbyte[] mappings, PValue[] closedArguments)
+            public PartialApplicationImplMock(int[] mappings, PValue[] closedArguments)
             {
                 Mappings = mappings;
                 ClosedArguments = closedArguments;
             }
 
 
-            public sbyte[] Mappings { get; set; }
+            public int[] Mappings { get; set; }
             public PValue[] ClosedArguments { get; set; }
-            public Func<sbyte[], PValue[], StackContext, PValue[], PValue> IndirectCallImpl { get; set; }
+            public Func<int[], PValue[], StackContext, PValue[], PValue> IndirectCallImpl { get; set; }
 
             #region Implementation of IIndirectCall
 
@@ -97,7 +99,7 @@ namespace PrexoniteTests.Tests
         {
             const int nonArgc = 2;
             var closedArguments = new PValue[] { 1, 2 };
-            var mappings = new sbyte[] { -1, 1, -1, 2, -2 };
+            var mappings = new[] { -1, 1, -1, 2, -2 };
             var pa = new PartialApplicationMock(mappings, closedArguments, nonArgc);
             Assert.AreSame(mappings, pa.Mappings);
 
@@ -136,7 +138,7 @@ namespace PrexoniteTests.Tests
         {
             const int nonArgc = 2;
             var closedArguments = new PValue[] { 1, 2 };
-            var mappings = new sbyte[] { -1, 1, -1, 2, -2 };
+            var mappings = new[] { -1, 1, -1, 2, -2 };
             var pa = new PartialApplicationMock(mappings, closedArguments, nonArgc);
             Assert.AreSame(mappings, pa.Mappings);
 
@@ -171,7 +173,7 @@ namespace PrexoniteTests.Tests
         {
             const int nonArgc = 2;
             var closedArguments = new PValue[] { 1, 2 };
-            var mappings = new sbyte[] { -1, 1, -1, 2, -2 };
+            var mappings = new[] { -1, 1, -1, 2, -2 };
             var pa = new PartialApplicationMock(mappings, closedArguments, nonArgc);
             Assert.AreSame(mappings, pa.Mappings);
 
@@ -211,7 +213,7 @@ namespace PrexoniteTests.Tests
         {
             const int nonArgc = 0;
             var closedArguments = new PValue[] { 1, 2 };
-            var mappings = new sbyte[] { -1, 1, -1, 2, -2 };
+            var mappings = new[] { -1, 1, -1, 2, -2 };
             var pa = new PartialApplicationMock(mappings, closedArguments, nonArgc);
             Assert.AreSame(mappings, pa.Mappings);
 
@@ -251,7 +253,7 @@ namespace PrexoniteTests.Tests
         {
             const int nonArgc = 2;
             var closedArguments = new PValue[] { };
-            var mappings = new sbyte[] { };
+            var mappings = new int[] { };
             var pa = new PartialApplicationMock(mappings, closedArguments, nonArgc);
             Assert.AreSame(mappings, pa.Mappings);
 
@@ -286,7 +288,7 @@ namespace PrexoniteTests.Tests
         [Test]
         public void PackRoundtrip32()
         {
-            var mappings = new sbyte[]
+            var mappings = new[]
             {
                 1, -8, 2, -13, 3, -5, 4, 5
             };
@@ -378,7 +380,7 @@ function main(x)
         }
         
         [Test]
-        public void BasicExcess()
+        public void AsLoadReferenceNotation()
         {
             Compile(@"
 function main(x,y,z)
@@ -390,6 +392,21 @@ function main(x,y,z)
 ");
 
             Expect("a=1, b=2, c=3", 1,2,3);
+        }
+        
+        [Test]
+        public void BasicExcess()
+        {
+            Compile(@"
+function main(x,y,z)
+{
+    function proc(a,b,c) = ""a=$a, b=$b, c=$c"";
+    var pa = proc(?2);
+    return pa.(x,y,z);
+}
+");
+
+            Expect("a=3, b=1, c=2", 1,2,3);
         }
 
         [Test]
@@ -406,6 +423,225 @@ function main(x)
 
             Expect("a=, b=, c=1", 1, 2, 3);
         }
+
+        [Test]
+        public void PartialCallOperatorSimple()
+        {
+            Compile(@"
+function main(x,y,z)
+{
+    function proc(a,b,c) = ""a=$a, b=$b, c=$c"";
+    var pa = ?.();
+    return pa.(->proc, x, y);
+}
+");
+
+            Expect("a=1, b=2, c=", 1, 2, 3);
+        }
+
+        [Test]
+        public void PartialCallOperator()
+        {
+            Compile(@"
+function main(x,y,z)
+{
+    function proc(a,b,c) = ""a=$a, b=$b, c=$c"";
+    var pa = ?2.(?1,?0);
+    return pa.(x, y, ->proc, z);
+}
+");
+
+            Expect("a=2, b=1, c=3", 1, 2, 3);
+        }
+
+
+        public class MemberCallable : IObject
+        {
+            public class CallExpectation
+            {
+                public PCall ExpectedCall { get; set; }
+                public PValue[] ExpectedArguments { get; set; }
+                public PValue ReturnValue { get; set; }
+                public bool WasCalled { get; set; }
+            }
+
+            public string Name { get; set; }
+
+            private readonly SymbolTable<CallExpectation> _expectations = new SymbolTable<CallExpectation>(8);
+
+            public SymbolTable<CallExpectation> Expectations
+            {
+                [DebuggerStepThrough]
+                get { return _expectations; }
+            }
+
+            #region Implementation of IObject
+
+            public bool TryDynamicCall(StackContext sctx, PValue[] args, PCall call, string id, out PValue result)
+            {
+                CallExpectation expectation;
+                Assert.IsTrue(_expectations.TryGetValue(id, out expectation), string.Format("A call to member {0} on object {1} is not expected.", id, Name));
+
+                Assert.AreEqual(expectation.ExpectedCall, call,"Call type (get/set)");
+                Assert.AreEqual(expectation.ExpectedArguments.Length, args.Length, "Number of arguments do not match. Called with " + args.ToEnumerationString());
+                for(var i = 0; i < expectation.ExpectedArguments.Length; i++)
+                    Assert.AreEqual(expectation.ExpectedArguments[i], args[i], string.Format("Arguments at position {0} don't match", i));
+
+                result = expectation.ReturnValue ?? PType.Null;
+                expectation.WasCalled = true;
+                return true;
+            }
+
+            #endregion
+
+            public void Expect(string memberId, PValue[] args, PCall call = PCall.Get, PValue returns = null)
+            {
+                _expectations.Add(
+                    memberId,
+                    new CallExpectation
+                    {
+                        ExpectedArguments = args, 
+                        ExpectedCall = call, 
+                        ReturnValue = returns
+                    });
+            }
+
+            public void AssertCalledAll()
+            {
+                foreach (var expectation in _expectations)
+                    Assert.IsTrue(
+                        expectation.Value.WasCalled,
+                        string.Format("The member {0} was not called.", expectation.Key));
+            }
+        }
+
+        [Test]
+        public void MemberSimpleGet()
+        {
+            Compile(@"
+function main(x,y,z)
+{
+    var pa = x.m(?,y);
+    return pa.(z);
+}
+");
+
+            var x = new MemberCallable {Name = "x"};
+            x.Expect("m",new PValue[]{3,2}, call: PCall.Get, returns: 11);
+
+            Expect(11, sctx.CreateNativePValue(x), 2, 3);
+            x.AssertCalledAll();
+        }
+
+        [Test]
+        public void MemberSimpleGetIndex()
+        {
+            Compile(@"
+function main(x,y,z)
+{
+    var pa = x[y,?];
+    return pa.(z);
+}
+");
+
+            var x = new MemberCallable {Name = "x"};
+            x.Expect("", new PValue[] { 2, 3 }, call: PCall.Get, returns: 11);
+
+            Expect(11, sctx.CreateNativePValue(x), 2, 3);
+            x.AssertCalledAll();
+        }
+
+        [Test]
+        public void MemberSubjectGet()
+        {
+            Compile(@"
+function main(x,y,z)
+{
+    var pa = ?.m(z,?);
+    return pa.(x,y);
+}
+");
+
+            var x = new MemberCallable {Name = "x"};
+            x.Expect("m", new PValue[] { 3, 2 }, call: PCall.Get, returns: 11);
+
+            Expect(11, sctx.CreateNativePValue(x), 2, 3);
+            x.AssertCalledAll();
+        }
+        
+        [Test]
+        public void MemberOperatorGet()
+        {
+            Compile(@"
+function main(x,y,z)
+{
+    var pa = ?.m;
+    return pa.(x,z,y);
+}
+");
+
+            var x = new MemberCallable {Name = "x"};
+            x.Expect("m", new PValue[] { 3, 2 }, call: PCall.Get, returns: 11);
+
+            Expect(11, sctx.CreateNativePValue(x), 2, 3);
+            x.AssertCalledAll();
+        }
+
+        [Test]
+        public void MemberOperatorSet()
+        {
+            Compile(@"
+function main(x,y,z)
+{
+    var pa = ?.m = ?;
+    return pa.(x,z,y);
+}
+");
+
+            var x = new MemberCallable {Name = "x"};
+            x.Expect("m", new PValue[] { 3, 2 }, call: PCall.Set, returns: 11);
+
+            Expect(2, sctx.CreateNativePValue(x), 2, 3);
+            x.AssertCalledAll();
+        }
+
+        [Test]
+        public void MemberSetSimple()
+        {
+            Compile(@"
+function main(x,y,z)
+{
+    var pa = x.m(?) = ?;
+    return pa.(z,y);
+}
+");
+
+            var x = new MemberCallable {Name = "x"};
+            x.Expect("m", new PValue[] { 3, 2 }, call: PCall.Set, returns: 11);
+
+            Expect(2, sctx.CreateNativePValue(x), 2, 3);
+            x.AssertCalledAll();
+        }
+
+        [Test]
+        public void MemberSetIndex()
+        {
+            Compile(@"
+function main(x,y,z)
+{
+    var pa = x[?] = ?;
+    return pa.(z,y);
+}
+");
+
+            var x = new MemberCallable {Name = "x"};
+            x.Expect("", new PValue[] { 3, 2 }, call: PCall.Set, returns: 11);
+
+            Expect(2, sctx.CreateNativePValue(x), 2, 3);
+            x.AssertCalledAll();
+        }
+
+
 
     }
 }

@@ -329,6 +329,12 @@ namespace Prexonite
             return result;
         }
 
+        public static IEnumerable<T> ToEnumerable<T>(this ArraySegment<T> arraySegment)
+        {
+            for (var i = arraySegment.Offset; i < (arraySegment.Offset + arraySegment.Count); i++)
+                yield return arraySegment.Array[i];
+        }
+
         #region Nested type: SingletonEnum
 
         private class SingletonEnum<T> : IEnumerable<T>

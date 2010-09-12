@@ -6,19 +6,18 @@ namespace Prexonite.Commands.Core.PartialApplication
     /// <summary>
     /// <para>Used to implement partial application for indirect calls (the default call interface in Prexonite)</para>
     /// </summary>
-    public class PartialCallCommand : PartialApplicationCommandBase
+    public class PartialCallCommand : PartialApplicationCommandBase<Object>
     {
+        #region Overrides of PartialApplicationCommandBase<object>
 
-        #region Overrides of PartialApplicationCommandBase
-
-        protected override IIndirectCall CreatePartialApplication(StackContext sctx, sbyte[] mappings, PValue[] closedArguments)
+        protected override IIndirectCall CreatePartialApplication(StackContext sctx, int[] mappings, PValue[] closedArguments, object parameter)
         {
             return new PartialCall(mappings, closedArguments);
         }
 
-        protected override Type PartialCallRepresentationType
+        protected override Type GetPartialCallRepresentationType(object parameter)
         {
-            get { return typeof (PartialCall); }
+            return typeof (PartialCall);
         }
 
         #endregion

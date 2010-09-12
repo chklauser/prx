@@ -458,8 +458,36 @@ AsmQualid<out string qualid>
  */
 
 
+Expr<out IAstExpression expr>		    (.	AstConditionalExpression cexpr = null; expr = null; .)
+=	
+	AtomicExpr<out expr>   
+|										(.	bool isNegated = false; .)
+	(	if
+	|	unless							(.	isNegated = true; .)
+	)
+	lpar Expr<out expr> rpar			(.	cexpr = new AstConditionalExpression(this, expr, isNegated); .)
+	Expr<out cexpr.IfExpression>
+    else
+    Expr<out cexpr.ElseExpression>      (.  expr = cexpr; .)
+.
 
-Expr<out IAstExpression expr>
+
+AtomicExpr<out IAstExpression expr>
+                                        (.  IAstExpression outerExpr = null; .)
+=
+    AppendRightExpr<out expr>
+    {
+        then
+        AppendRightExpr<out outerExpr>  (.  AstGetSetSymbol thenExpr = new AstGetSetSymbol(this, PCall.Get, Engine.ThenAlias, SymbolInterpretations.Command);
+                                            thenExpr.Arguments.Add(expr);
+                                            thenExpr.Arguments.Add(outerExpr);
+                                            expr = thenExpr;
+                                        .)
+    }
+.
+
+
+AppendRightExpr<out IAstExpression expr>
 										(.	AstGetSet complex = null; .)
 =
 	KeyValuePairExpr<out expr>
@@ -476,23 +504,10 @@ Expr<out IAstExpression expr>
 
 KeyValuePairExpr<out IAstExpression expr>
 =
-	AtomicExpr<out expr>
+	OrExpr<out expr>
 	[	colon							(.	IAstExpression value; .)
-		Expr<out value>					(.	expr = new AstKeyValuePair(this, expr, value); .)
+		KeyValuePairExpr<out value>		(.	expr = new AstKeyValuePair(this, expr, value); .)
 	]
-.
-
-AtomicExpr<out IAstExpression expr>		(.	AstConditionalExpression cexpr = null; expr = null; .)
-=	
-	OrExpr<out expr>   
-|										(.	bool isNegated = false; .)
-	(	if
-	|	unless							(.	isNegated = true; .)
-	)
-	lpar OrExpr<out expr> rpar			(.	cexpr = new AstConditionalExpression(this, expr, isNegated); .)
-	AtomicExpr<out cexpr.IfExpression>
-    else
-    AtomicExpr<out cexpr.ElseExpression>(.  expr = cexpr; .)
 .
 
 OrExpr<out IAstExpression expr>
@@ -516,7 +531,7 @@ BitOrExpr<out IAstExpression expr>
                                         (. IAstExpression lhs, rhs; .)
 =
     BitXorExpr<out lhs>                 (. expr = lhs; .)
-    { bitOr BitXorExpr<out rhs>        (. expr = new AstBinaryOperator(this, expr, BinaryOperator.BitwiseOr, rhs); .)
+    { bitOr BitXorExpr<out rhs>         (. expr = new AstBinaryOperator(this, expr, BinaryOperator.BitwiseOr, rhs); .)
     }
 .
 

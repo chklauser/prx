@@ -340,6 +340,7 @@ namespace Prexonite.Types
                 "to",
                 "true",
                 "try",
+                "then",
                 "throw",
                 "unless",
                 "until",

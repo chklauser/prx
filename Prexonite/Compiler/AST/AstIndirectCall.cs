@@ -22,6 +22,7 @@
  */
 
 using System;
+using System.Collections.Generic;
 using System.Linq;
 using Prexonite.Types;
 
@@ -147,7 +148,24 @@ namespace Prexonite.Compiler.Ast
 
         void IAstPartiallyApplicable.DoEmitPartialApplicationCode(CompilerTarget target)
         {
-            this.EmitConstructorCall(target, Engine.PartialCallAlias, Subject.Singleton().Append(Arguments));
+            var argv =
+                AstPartiallyApplicable.PreprocessPartialApplicationArguments(
+                    Subject.Singleton().Append(Arguments));
+            var argc = argv.Count;
+            if(argc == 0)
+            {
+                target.EmitConstant(this, 0);
+                target.EmitCommandCall(this, 1, Engine.PartialCallAlias);
+            }
+            else if(argc == 1 && !argv[0].IsPlaceholder())
+            {
+                Subject.EmitCode(target);
+            }
+            else
+            {
+                var ctorArgc = this.EmitConstructorArguments(target, argv);
+                target.EmitCommandCall(this,ctorArgc, Engine.PartialCallAlias);
+            }
         }
 
         public override bool CheckForPlaceholders()

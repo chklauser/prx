@@ -27,11 +27,10 @@ using Prexonite.Types;
 namespace Prexonite.Compiler.Ast
 {
     public class AstGetSetMemberAccess : AstGetSet,
-                                         IAstExpression,
-                                         IAstHasExpressions
+                                         IAstPartiallyApplicable
     {
-        public string Id;
-        public IAstExpression Subject;
+        public string Id { get; set; }
+        public IAstExpression Subject { get; set; }
 
         public override IAstExpression[] Expressions
         {
@@ -118,7 +117,9 @@ namespace Prexonite.Compiler.Ast
         public override bool TryOptimize(CompilerTarget target, out IAstExpression expr)
         {
             base.TryOptimize(target, out expr);
-            OptimizeNode(target, ref Subject);
+            var subject = Subject;
+            OptimizeNode(target, ref subject);
+            Subject = subject;
             return false;
         }
 
@@ -128,5 +129,23 @@ namespace Prexonite.Compiler.Ast
             CopyBaseMembers(copy);
             return copy;
         }
+
+        #region Implementation of IAstPartiallyApplicable
+
+        public void DoEmitPartialApplicationCode(CompilerTarget target)
+        {
+            var argv = AstPartiallyApplicable.PreprocessPartialApplicationArguments(Subject.Singleton().Append(Arguments));
+            var ctorArgc = this.EmitConstructorArguments(target, argv);
+            target.EmitConstant(this, (int)Call);
+            target.EmitConstant(this, Id);
+            target.EmitCommandCall(this, ctorArgc + 2, Engine.PartialMemberCallAlias);
+        }
+
+        public override bool CheckForPlaceholders()
+        {
+            return base.CheckForPlaceholders() || Subject.IsPlaceholder();
+        }
+
+        #endregion
     }
 }

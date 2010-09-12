@@ -125,6 +125,8 @@
     <Compile Include="Commands\Core\PartialApplication\PartialApplicationCommandBase.cs" />
     <Compile Include="Commands\Core\PartialApplication\PartialCall.cs" />
     <Compile Include="Commands\Core\PartialApplication\PartialCallCommand.cs" />
+    <Compile Include="Commands\Core\PartialApplication\PartialMemberCallCommand.cs" />
+    <Compile Include="Commands\Core\PartialApplication\ThenCommand.cs" />
     <Compile Include="Commands\Core\Print.cs" />
     <Compile Include="Commands\Core\PrintLine.cs" />
     <Compile Include="Commands\Core\StaticPrint.cs" />

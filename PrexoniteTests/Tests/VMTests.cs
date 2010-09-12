@@ -3367,6 +3367,103 @@ function main(x)[ Add Prexonite::Types to Import; ]
             Expect(false, 1);
         }
 
+        [Test]
+        public void ConditionalExpressionVsKvpPriority()
+        {
+            Compile(@"
+function main(x,y,z) = if(x) x else y:z;
+");
+
+            Expect(true, true, 1, 2);
+        }
+
+        [Test]
+        public void KvpSelfPriority()
+        {
+            Compile(@"
+function main(x,y,z) = (x : y : z).Key;
+");
+
+            Expect(1,1,2,3);
+        }
+
+        private class Callable : IIndirectCall
+        {
+            private readonly Func<StackContext, PValue[], PValue> _impl;
+
+            public Callable(Func<StackContext, PValue[], PValue> impl)
+            {
+                if (impl == null)
+                    throw new ArgumentNullException("impl");
+                _impl = impl;
+            }
+
+            #region Implementation of IIndirectCall
+
+
+            public PValue IndirectCall(StackContext sctx, PValue[] args)
+            {
+                return _impl(sctx, args);
+            }
+
+            #endregion
+        }
+
+        [Test]
+        public void FunctionCompositionSyntax()
+        {
+            Compile(@"
+function closed(x,y) 
+{   
+    var f = x then y;
+    return f.(null);
+}
+
+function partialLeft(x,y) 
+{   
+    var f = (? then y);
+    f = f.(x);
+    return f.(null);
+}
+
+function partialRight(x,y) 
+{   
+    var f = (x then ?);
+    f = f.(y);
+    return f.(null);
+}
+
+function partialFull(x,y) 
+{   
+    var f = (? then ?);
+    f = f.(x,y);
+    return f.(null);
+}
+
+function chainedPrio(x,y,z) 
+{   
+    var f = x then y then z;
+    return f.(null);
+}
+");
+
+            var x =
+                sctx.CreateNativePValue(
+                    new Callable((stackContext, args) => "x" + args[0].CallToString(stackContext) + "x"));
+            var y =
+                sctx.CreateNativePValue(
+                    new Callable((stackContext, args) => "y" + args[0].CallToString(stackContext) + "y"));
+            var z =
+                sctx.CreateNativePValue(
+                    new Callable((stackContext, args) => "z" + args[0].CallToString(stackContext) + "z"));
+
+            ExpectNamed("closed","yxxy",x,y);
+            ExpectNamed("partialLeft", "yxxy", x, y);
+            ExpectNamed("partialRight", "yxxy", x, y);
+            ExpectNamed("partialFull", "yxxy", x, y);
+            ExpectNamed("chainedPrio", "zyxxyz", x, y, z);
+        }
+
         #region Helper
 
         #endregion

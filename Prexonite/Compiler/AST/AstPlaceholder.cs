@@ -13,6 +13,10 @@ namespace Prexonite.Compiler.Ast
     public class AstPlaceholder : AstGetSet, IAstExpression
     {
         private int? _index;
+
+        /// <summary>
+        /// The explicit argument index, if one is set. 0-based.
+        /// </summary>
         public int? Index
         {
             get { return _index; }
@@ -109,5 +113,6 @@ namespace Prexonite.Compiler.Ast
             else
                 return "?";
         }
+
     }
 }

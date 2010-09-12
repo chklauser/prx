@@ -129,9 +129,11 @@ namespace Prx.Tests
 
         protected void ExpectReturnValue<T>(string functionId, T expectedReturnValue, PValue[] args)
         {
-            PValue expected = engine.CreateNativePValue(expectedReturnValue);
+            var expected = engine.CreateNativePValue(expectedReturnValue);
             if (!target.Functions.Contains(functionId))
                 throw new PrexoniteException("Function " + functionId + " cannot be found.");
+
+            Console.WriteLine("Expecting " + functionId + " to return " + expected);
 
             PValue rv;
             try
