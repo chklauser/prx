@@ -641,6 +641,41 @@ function main(x,y,z)
             x.AssertCalledAll();
         }
 
+        [Test]
+        public void Construct1()
+        {
+            Compile(@"
+function main(x,y,z)
+{
+    var pa = new List(?2,?1);
+    return pa.(x,y,z);
+}
+");
+            PValue x = 1;
+            PValue y = 2;
+            PValue z = 3;
+            Expect(new List<PValue>{z,y,x}, x,y,z);
+        }
+
+        [Test]
+        public void ConstructCustomFallback()
+        {
+            Compile(@"
+function create_box(a,b,c) = [a, c, b];
+
+function main(x,y,z)
+{
+    var pa = new box(?2);
+    return pa.(x,y,z);
+}
+");
+
+
+            PValue x = 1;
+            PValue y = 2;
+            PValue z = 3;
+            Expect(new List<PValue> { z, y, x }, x, y, z);
+        }
 
 
     }

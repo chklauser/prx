@@ -231,12 +231,19 @@ namespace Prexonite.Commands.Core.PartialApplication
         /// <param name="sctx"></param>
         /// <param name="mappings">Mappings from effective argument position to closed and open arguments. See <see cref="PartialApplicationBase.Mappings"/>.</param>
         /// <param name="closedArguments">Already provided (closed) arguments.</param>
+        /// <param name="parameter">The custom parameter extracted by <see cref="FilterRuntimeArguments"/>.</param>
         /// <returns></returns>
         protected abstract IIndirectCall CreatePartialApplication(StackContext sctx, int[] mappings, PValue[] closedArguments, TParam parameter);
 
+        /// <summary>
+        /// <para>Extracts a custom parameter from the arguments supplied to the constructor at runtime.</para>
+        /// <para>This method is only invoked when the calling function is interpreted. In CIL-compiled functions, the parameter is extracted by <see cref="FilterCompileTimeArguments"/>.</para>
+        /// </summary>
+        /// <param name="sctx">The stack context that issued this constructor call.</param>
+        /// <param name="arguments">The arguments as provided by the interpreter. Remove any arguments used to build the parameter (the return value) from <paramref name="arguments"/> by adapting the array segment.</param>
+        /// <returns>A custom parameter. Will be passed to <see cref="CreatePartialApplication"/> untouched.</returns>
         protected virtual TParam FilterRuntimeArguments(StackContext sctx, ref ArraySegment<PValue> arguments)
         {
-
             return default(TParam);
         }
 
@@ -336,11 +343,24 @@ namespace Prexonite.Commands.Core.PartialApplication
                 state.EmitVirtualCall(Compiler.Cil.Compiler.CreateNativePValue);
         }
 
+        /// <summary>
+        /// <para>Emits the call to the partial application constructor, along with any custom parameters.</para>
+        /// <para>When this method is called the parameter mappings (<see cref="Int32"/>[]) and the closed arguments (<see cref="PValue"/>[]) are already on the stack, in that order.</para>
+        /// </summary>
+        /// <param name="state">The compiler state to compile to.</param>
+        /// <param name="parameter">The custom parameter as returned by <see cref="FilterCompileTimeArguments"/>.</param>
         protected virtual void EmitConstructorCall(CompilerState state, TParam parameter)
         {
             state.Il.Emit(OpCodes.Newobj, PartialApplicationConstructor(parameter));
         }
 
+        /// <summary>
+        /// <para>Performs additional compatibility checks on static arguments and extracts a custom parameter from the static arguments read from byte code during CIL-compilation.</para>
+        /// <para>This method is only invoked when the constructor call is being compiled to CIL. In interpreted functions, the parameter is extracted by <see cref="FilterRuntimeArguments"/>.</para>
+        /// </summary>
+        /// <param name="staticArgv">The static arguments as read from byte code. Remove any arguments used to build the <paramref name="parameter"/> from <paramref name="staticArgv"/> by adapting the array segment.</param>
+        /// <param name="parameter">The custom parameter. Will be passed to <see cref="EmitConstructorCall"/> untouched. If the method returns false, the value of this out parameter is undefined.</param>
+        /// <returns>True if the static arguments are compatible with the partial application command; false otehrwise</returns>
         protected virtual bool FilterCompileTimeArguments(ref ArraySegment<CompileTimeValue> staticArgv, out TParam parameter)
         {
             parameter = default(TParam);

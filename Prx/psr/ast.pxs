@@ -125,11 +125,13 @@ build does create_SI;
 //  Removal of compiler related functions and variables from the final application
 //
 
-function unload_compiler()
+function unload_compiler(GetLoader\cmd)
 {
     //unload_compiler removes itself and is thus not marked [is compiler;]
     //  Note: to simplify things, TRY NOT TO USE INNER FUNCTIONS HERE.
     declare command GetLoader;
+    GetLoader\cmd ??= ->GetLoader;
+    ref GetLoader = GetLoader\cmd;
     var app = GetLoader.ParentApplication;
     
     //Variables
@@ -152,9 +154,9 @@ function unload_compiler()
     
     var parentFunctionKey = Prexonite::PFunction.ParentFunctionKey;
     foreach(var func in app.Functions)
-        if(func.Meta.ContainsKey(parentFunctionKey))
-            graph[func.Meta[parentFunctionKey].Text.ToUpperInvariant][] = func;
-        
+        if(func.Meta.ContainsKey(parentFunctionKey) and graph.ContainsKey((var parentId = func.Meta[parentFunctionKey].Text.ToUpperInvariant)))
+            graph[parentId][] = func;
+            
     //Recursively mark all compiler functions and their inner functions
     function mark_comp_func(func)
     {
@@ -188,4 +190,4 @@ function unload_compiler()
     app.Functions.Remove(->unload_compiler);
     app.Functions.Remove(->mark_comp_func.$Function.Id);
     app.Meta["compiler_loaded"] = false;
-}
+    }

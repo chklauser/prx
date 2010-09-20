@@ -800,6 +800,8 @@ namespace Prexonite
 
             Commands.AddEngineCommand(PartialMemberCallAlias, PartialMemberCallCommand.Instance);
 
+            Commands.AddEngineCommand(PartialConstructionAlias, PartialConstructionCommand.Instance);
+
             Commands.AddEngineCommand(ThenAlias, ThenCommand.Instance);
         }
 
@@ -1127,6 +1129,11 @@ namespace Prexonite
         /// Alias used for the pa\mem command (constructor for partial application of instance member calls)
         /// </summary>
         public const string PartialMemberCallAlias = @"pa\mem";
+
+        /// <summary>
+        /// Alias used for the pa\ctor command (constructor for partial application of object constructions)
+        /// </summary>
+        public const string PartialConstructionAlias = @"pa\ctor";
 
         /// <summary>
         /// Alias used for the then command (constructor for function composition)

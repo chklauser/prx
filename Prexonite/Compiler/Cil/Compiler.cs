@@ -1148,12 +1148,12 @@ namespace Prexonite.Compiler.Cil
                         if (state.TryGetStaticallyLinkedFunction(id, out dummyMethodInfo))
                         {
                             state.Il.Emit(OpCodes.Ldsfld, state.Pass.FunctionFields[id]);
-                            state.Il.EmitCall(OpCodes.Call, Runtime.newClosureMethod_StaticallyBound, null);
+                            state.Il.EmitCall(OpCodes.Call, Runtime.NewClosureMethodStaticallyBound, null);
                         }
                         else
                         {
                             state.Il.Emit(OpCodes.Ldstr, id);
-                            state.Il.EmitCall(OpCodes.Call, Runtime.newClosureMethod_LateBound, null);
+                            state.Il.EmitCall(OpCodes.Call, Runtime.NewClosureMethodLateBound, null);
                         }
                         break;
 

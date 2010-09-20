@@ -80,123 +80,123 @@ namespace Prexonite.Compiler.Cil
 
         private static readonly MethodInfo _ThrowExceptionMethod = typeof (Runtime).GetMethod("ThrowException");
 
-        internal static readonly MethodInfo CheckTypeConstMethod =
+        public static readonly MethodInfo CheckTypeConstMethod =
             typeof (Runtime).GetMethod("CheckTypeConst", new[] {typeof (PValue), typeof (PType)});
 
-        internal static readonly MethodInfo ConstructPTypeMethod =
-            typeof (Runtime).GetMethod("ConstructPType", new[] {typeof (StackContext), typeof (string)});
+        public static readonly MethodInfo ConstructPTypeMethod =
+            typeof (StackContext).GetMethod("ConstructPType", new[] {typeof (string)});
 
-        internal static readonly MethodInfo DisposeIfPossibleMethod =
+        public static readonly MethodInfo DisposeIfPossibleMethod =
             typeof (Runtime).GetMethod("DisposeIfPossible", new[] {typeof (object)});
 
         public static readonly PValue[] EmptyPValueArray = new PValue[0];
-        internal static readonly FieldInfo EmptyPValueArrayField = typeof (Runtime).GetField("EmptyPValueArray");
+        public static readonly FieldInfo EmptyPValueArrayField = typeof (Runtime).GetField("EmptyPValueArray");
         public static readonly PVariable[] EmptyPVariableArray = new PVariable[0];
-        internal static readonly FieldInfo EmptyPVariableArrayField = typeof (Runtime).GetField("EmptyPVariableArray");
+        public static readonly FieldInfo EmptyPVariableArrayField = typeof (Runtime).GetField("EmptyPVariableArray");
 
-        internal static readonly MethodInfo ExtractEnumeratorMethod =
+        public static readonly MethodInfo ExtractEnumeratorMethod =
             typeof (Runtime).GetMethod("ExtractEnumerator", new[] {typeof (PValue), typeof (StackContext)});
 
-        internal static readonly MethodInfo LoadGlobalVariableReferenceMethod =
+        public static readonly MethodInfo LoadGlobalVariableReferenceMethod =
             typeof (Runtime).GetMethod("LoadGlobalVariableReference");
 
-        internal static readonly MethodInfo NewCoroutineMethod = typeof (Runtime).GetMethod("NewCoroutine");
-        internal static readonly MethodInfo WrapPVariableMethod = typeof (Runtime).GetMethod("WrapPVariable");
+        public static readonly MethodInfo NewCoroutineMethod = typeof (Runtime).GetMethod("NewCoroutine");
+        public static readonly MethodInfo WrapPVariableMethod = typeof (Runtime).GetMethod("WrapPVariable");
 
-        internal static MethodInfo CastConstMethod =
+        public static readonly MethodInfo CastConstMethod =
             typeof (Runtime).GetMethod("CastConst", new[] {typeof (PValue), typeof (PType), typeof (StackContext)});
 
-        internal static MethodInfo LoadGlobalVariableReferenceAsPValueMethod
+        public static MethodInfo LoadGlobalVariableReferenceAsPValueMethod
         {
             get { return _LoadGlobalVariableReferenceAsPValueMethod; }
         }
 
-        internal static MethodInfo LoadFunctionReferenceMethod
+        public static MethodInfo LoadFunctionReferenceMethod
         {
             get { return _LoadFunctionReferenceMethod; }
         }
 
-        internal static MethodInfo LoadApplicationReferenceMethod
+        public static MethodInfo LoadApplicationReferenceMethod
         {
             get { return _LoadApplicationReferenceMethod; }
         }
 
-        internal static MethodInfo LoadEngineReferenceMethod
+        public static MethodInfo LoadEngineReferenceMethod
         {
             get { return _LoadEngineReferenceMethod; }
         }
 
-        internal static MethodInfo LoadCommandReferenceMethod
+        public static MethodInfo LoadCommandReferenceMethod
         {
             get { return _LoadCommandReferenceMethod; }
         }
 
-        internal static MethodInfo ConstructPTypeAsPValueMethod
+        public static MethodInfo ConstructPTypeAsPValueMethod
         {
             get { return _ConstructPTypeAsPValueMethod; }
         }
 
-        internal static MethodInfo NewObjMethod
+        public static MethodInfo NewObjMethod
         {
             get { return _NewObjMethod; }
         }
 
-        internal static MethodInfo NewTypeMethod
+        public static MethodInfo NewTypeMethod
         {
             get { return _NewTypeMethod; }
         }
 
-        internal static MethodInfo newClosureMethod_LateBound
+        public static MethodInfo NewClosureMethodLateBound
         {
             get { return _NewClosureMethod_LateBound; }
         }
 
-        internal static MethodInfo newClosureMethod_StaticallyBound
+        public static MethodInfo NewClosureMethodStaticallyBound
         {
             get { return _NewClosureMethod_StaticallyBound; }
         }
 
-        internal static MethodInfo RaiseToPowerMethod
+        public static MethodInfo RaiseToPowerMethod
         {
             get { return _RaiseToPowerMethod; }
         }
 
-        internal static MethodInfo CheckTypeMethod
+        public static MethodInfo CheckTypeMethod
         {
             get { return _CheckTypeMethod; }
         }
 
-        internal static MethodInfo CastMethod
+        public static MethodInfo CastMethod
         {
             get { return _CastMethod; }
         }
 
-        internal static MethodInfo StaticCallMethod
+        public static MethodInfo StaticCallMethod
         {
             get { return _StaticCallMethod; }
         }
 
-        internal static MethodInfo CallFunctionMethod
+        public static MethodInfo CallFunctionMethod
         {
             get { return _CallFunctionMethod; }
         }
 
-        internal static MethodInfo CallCommandMethod
+        public static MethodInfo CallCommandMethod
         {
             get { return _CallCommandMethod; }
         }
 
-        internal static MethodInfo ThrowExceptionMethod
+        public static MethodInfo ThrowExceptionMethod
         {
             get { return _ThrowExceptionMethod; }
         }
 
-        internal static MethodInfo ExtractBoolMethod
+        public static MethodInfo ExtractBoolMethod
         {
             get { return _ExtractBoolMethod; }
         }
 
-        internal static MethodInfo ParseExceptionMethod
+        public static MethodInfo ParseExceptionMethod
         {
             get { return _ParseExceptionMethod; }
         }
@@ -247,19 +247,14 @@ namespace Prexonite.Compiler.Cil
             return sctx.CreateNativePValue(cmd);
         }
 
-        public static PType ConstructPType(StackContext sctx, string expr)
-        {
-            return sctx.ConstructPType(expr);
-        }
-
         public static PValue ConstructPTypeAsPValue(StackContext sctx, string expr)
         {
-            return sctx.CreateNativePValue(ConstructPType(sctx, expr));
+            return sctx.CreateNativePValue(sctx.ConstructPType(expr));
         }
 
         public static PValue NewObj(StackContext sctx, PValue[] args, string expr)
         {
-            return ConstructPType(sctx, expr).Construct(sctx, args);
+            return sctx.ConstructPType(expr).Construct(sctx, args);
         }
 
         public static PValue NewType(StackContext sctx, PValue[] args, string name)
