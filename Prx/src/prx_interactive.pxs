@@ -97,14 +97,14 @@ coroutine tabHook(prefix, root)
     
     //Add symbols (the declarations, not the physical names)
     foreach(var symbol in ldr.Symbols)
-        if( symbol.Value.Interpretation~Int == ::SymbolInterpretations.$Command~Int ||
-            symbol.Value.Interpretation~Int == ::SymbolInterpretations.$GlobalObjectVariable~Int ||
-            symbol.Value.Interpretation~Int == ::SymbolInterpretations.$GlobalReferenceVariable~Int )
+        if( symbol.Value.Interpretation~Int == ::SymbolInterpretations.Command~Int ||
+            symbol.Value.Interpretation~Int == ::SymbolInterpretations.GlobalObjectVariable~Int ||
+            symbol.Value.Interpretation~Int == ::SymbolInterpretations.GlobalReferenceVariable~Int )
         {
             
             yield symbol.Key;
         }
-        else if(symbol.Value.Interpretation~Int == ::SymbolInterpretations.$Function~Int)
+        else if(symbol.Value.Interpretation~Int == ::SymbolInterpretations.Function~Int)
         {
             //Functions may be explicitly hidden
             unless(isHidden(app.Functions[symbol.Value.Id]))

@@ -41,8 +41,8 @@ build does hook( t =>
                 var vmax = uniqueId("max");
                 
                 //Add the variables to the function definition.
-                t.$Function.Variables.Add(vcount);
-                t.$Function.Variables.Add(vmax);
+                t.Function.Variables.Add(vcount);
+                t.Function.Variables.Add(vmax);
                 
                 //Create a new assignment statement
                 var setvMax = ast("GetSetSymbol", ::PCall.Set, vmax, SI.lvar);

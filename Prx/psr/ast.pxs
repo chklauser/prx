@@ -49,7 +49,7 @@ function uniqueId(verb) [is compiler;] = "hook\\" + verb + uniqueIdCounter++;
 
 function isFunctionCall(id, node)[is compiler;] =
         node is ::AstGetSetSymbol And
-        node.Interpretation~Int == ::SymbolInterpretations.$Function~Int And
+        node.Interpretation~Int == ::SymbolInterpretations.Function~Int And
         node.Id.ToLowerInvariant == id.ToString.ToLowerInvariant;
         
 function isMemberAccess(id, node)[is compiler;] =
@@ -71,14 +71,14 @@ function create_SI [is compiler;]
     SI.\("lref") = ::SymbolInterpretations.LocalReferenceVariable;
     SI.\("gvar") = ::SymbolInterpretations.GlobalObjectVariable;
     SI.\("gref") = ::SymbolInterpretations.GlobalReferenceVariable;
-    SI.\("func") = ::SymbolInterpretations.$Function;
-    SI.\("cmd") = ::SymbolInterpretations.$Command;
+    SI.\("func") = ::SymbolInterpretations.Function;
+    SI.\("cmd") = ::SymbolInterpretations.Command;
     SI.\("get") = Prexonite::Types::PCall.Get;
     SI.\("set") = Prexonite::Types::PCall.Set;
 	SI.\("ret\\exit") = Prexonite::Compiler::Ast::ReturnVariant.Exit;
-	SI.\("ret\\set") = Prexonite::Compiler::Ast::ReturnVariant.$Set;
-	SI.\("ret\\continue") = Prexonite::Compiler::Ast::ReturnVariant.$Continue;
-	SI.\("ret\\break") = Prexonite::Compiler::Ast::ReturnVariant.$Break;
+	SI.\("ret\\set") = Prexonite::Compiler::Ast::ReturnVariant.Set;
+	SI.\("ret\\continue") = Prexonite::Compiler::Ast::ReturnVariant.Continue;
+	SI.\("ret\\break") = Prexonite::Compiler::Ast::ReturnVariant.Break;
     SI.\\("eq") = (this, l, r) => l~Int == r~Int;
     SI.\\("is_lvar") = (this, s) => s~Int == this.lvar~Int;
     SI.\\("is_lref") = (this, s) => s~Int == this.lref~Int;
@@ -188,6 +188,6 @@ function unload_compiler(GetLoader\cmd)
         app.Functions.Remove(comp_func);
         
     app.Functions.Remove(->unload_compiler);
-    app.Functions.Remove(->mark_comp_func.$Function.Id);
+    app.Functions.Remove(->mark_comp_func.Function.Id);
     app.Meta["compiler_loaded"] = false;
     }

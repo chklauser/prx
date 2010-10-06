@@ -2664,7 +2664,7 @@ function ast(type) [is hidden;]
 build does hook (t => 
 {
     var body = t.Ast;
-    if(t.$Function.Id == ""main"")
+    if(t.Function.Id == ""main"")
     {
         //Append a return statement
         var ret = ast(""Return"", ::ReturnVariant.Exit);

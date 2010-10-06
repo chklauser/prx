@@ -19,7 +19,7 @@ macro struct\as_macro as struct()
             null;
         ;
         
-    var parentId = target.$Function.Id;
+    var parentId = target.Function.Id;
     var methods = target.Loader.Options.TargetApplication.Functions
         >> where(f => 
             f

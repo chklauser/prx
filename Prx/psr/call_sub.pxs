@@ -55,14 +55,14 @@ macro call\sub\interpret(kvp)
 	
 	//Generate check for continue
 	var contCond = call\macro(call\sub\genCompare(retVar, 
-		Prexonite::Compiler::Ast::ReturnVariant.$Continue));
+		Prexonite::Compiler::Ast::ReturnVariant.Continue));
 	var checkCont = ast("Condition", contCond);
 	checkCont.IfBlock.Add(contStmt);
 	block.Add(checkCont);
 	
 	//Generate check for break
 	var breakCond = call\macro(call\sub\genCompare(retVar,
-		Prexonite::Compiler::Ast::ReturnVariant.$Break));
+		Prexonite::Compiler::Ast::ReturnVariant.Break));
 	var checkBreak = ast("Condition", breakCond);
 	checkBreak.IfBlock.Add(breakStmt);
 	

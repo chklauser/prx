@@ -5,7 +5,7 @@ function is_in_macro(target) [is compiler;]
 {
     while(target is not Null)
     {
-        if(target.$Function.Meta[Prexonite::Compiler::CompilerTarget.MacroMetaKey].Switch)
+        if(target.Function.Meta[Prexonite::Compiler::CompilerTarget.MacroMetaKey].Switch)
             return true;
         target = target.ParentTarget;
     }
@@ -476,7 +476,7 @@ macro call\macro(macroReference)
         throw "Macro cannot be null. Either supply a call (like in call\\macro(myMacro(arg1,arg2));) or a reference that can be resolved at compile time, i.e. ->myMacro or \"myMacro\".";
     
     if(not is_in_macro(target))
-        throw @"call\macro called from $(target.$Function.Id). call\macro can only be called from a macro context, i.e. from a macro function or an inner function of a macro.";
+        throw @"call\macro called from $(target.Function.Id). call\macro can only be called from a macro context, i.e. from a macro function or an inner function of a macro.";
 
     var forwardedVariables = all(Prexonite::Compiler::MacroAliases.Aliases);
     foreach(var fvar in forwardedVariables)
