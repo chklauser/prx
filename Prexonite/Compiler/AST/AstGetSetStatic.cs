@@ -29,7 +29,7 @@ using NoDebug = System.Diagnostics.DebuggerNonUserCodeAttribute;
 namespace Prexonite.Compiler.Ast
 {
     public class AstGetSetStatic : AstGetSet,
-                                   IAstExpression
+                                   IAstExpression, IAstPartiallyApplicable
     {
         public IAstType TypeExpr;
         public string MemberId;
@@ -116,6 +116,20 @@ namespace Prexonite.Compiler.Ast
             AstGetSet copy = new AstGetSetStatic(File, Line, Column, Call, TypeExpr, MemberId);
             CopyBaseMembers(copy);
             return copy;
+        }
+
+        public void DoEmitPartialApplicationCode(CompilerTarget target)
+        {
+            var argv = AstPartiallyApplicable.PreprocessPartialApplicationArguments(Arguments);
+            var ctorArgc = this.EmitConstructorArguments(target, argv);
+            var constTypeExpr = TypeExpr as AstConstantTypeExpression;
+            if (constTypeExpr != null)
+                target.EmitConstant(constTypeExpr, constTypeExpr.TypeExpression);
+            else
+                TypeExpr.EmitCode(target);
+            target.EmitConstant(this, (int) Call);
+            target.EmitConstant(this, MemberId);
+            target.EmitCommandCall(this, ctorArgc + 3, Engine.PartialStaticCallAlias);
         }
     }
 }

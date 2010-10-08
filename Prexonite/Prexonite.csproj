@@ -120,6 +120,7 @@
     <Compile Include="Commands\Core\Dispose.cs" />
     <Compile Include="Commands\Core\LoadAssembly.cs" />
     <Compile Include="Commands\Core\Meta.cs" />
+    <Compile Include="Commands\Core\Not.cs" />
     <Compile Include="Commands\Core\Pair.cs" />
     <Compile Include="Commands\Core\PartialApplication\PartialApplicationBase.cs" />
     <Compile Include="Commands\Core\PartialApplication\PartialApplicationCommandBase.cs" />
@@ -128,6 +129,14 @@
     <Compile Include="Commands\Core\PartialApplication\PartialConstruction.cs" />
     <Compile Include="Commands\Core\PartialApplication\PartialConstructionCommand.cs" />
     <Compile Include="Commands\Core\PartialApplication\PartialMemberCallCommand.cs" />
+    <Compile Include="Commands\Core\PartialApplication\PartialStaticCall.cs" />
+    <Compile Include="Commands\Core\PartialApplication\PartialStaticCallCommand.cs" />
+    <Compile Include="Commands\Core\PartialApplication\PartialTypeCast.cs" />
+    <Compile Include="Commands\Core\PartialApplication\PartialTypeCastCommand.cs" />
+    <Compile Include="Commands\Core\PartialApplication\PartialTypeCheck.cs" />
+    <Compile Include="Commands\Core\PartialApplication\PartialTypeCheckCommand.cs" />
+    <Compile Include="Commands\Core\PartialApplication\PartialWithPTypeCommandBase.cs" />
+    <Compile Include="Commands\Core\PartialApplication\PTypeInfo.cs" />
     <Compile Include="Commands\Core\PartialApplication\ThenCommand.cs" />
     <Compile Include="Commands\Core\Print.cs" />
     <Compile Include="Commands\Core\PrintLine.cs" />

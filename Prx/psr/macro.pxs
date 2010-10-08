@@ -12,94 +12,6 @@ function is_in_macro(target) [is compiler;]
     return false;
 }
 
-var ast_is_expression [is compiler;];
-var ast_is_effect [is compiler;];
-var ast_is_partially_applicable [is compiler;];
-var ast_is_partial_application [is compiler;];
-
-//Create check functions
-build
-{
-    function human_name(t) = if((var n = t.Name).StartsWith("Ast")) n.Substring(3) else n;
-    
-    var AstNode_t = System::Type.GetType("Prexonite.Compiler.Ast.AstNode");
-    
-    //Create check function for each type that inherits from AstNode
-    AstNode_t.Assembly.GetTypes() 
-    >> where(t => astnode_t.IsAssignableFrom(t))
-    >> var node_ts;
-    
-    foreach(new var node_t in node_ts)
-    {
-        var ptype = asm(ldloc       node_t
-                        get.0       FullName
-                        newtype.1   Object
-                    );
-        var ref_name = "ast_is_$(human_name(node_t))";
-        var ref_var = new Prexonite::PVariable;
-        function check_is_node_t(node_arg) [is compiler;]
-        {
-            //Ensure is object type in the first place
-            if((var arg_pt = boxed(node_arg).Type) is not Prexonite::Types::ObjectPType)
-                return false;
-                
-            var arg_t = arg_pt.ClrType;
-            
-            //Check if it is correct node, but not a partial application
-            return node_t.IsAssignableFrom(arg_t) and not node_arg.CheckForPlaceholders();
-        }
-        ref_var.Value = boxed(->check_is_node_t);
-        ref_var.Meta["compiler"] = true;
-        
-        //Add variable and declare corresponding symbol
-        GetLoader.ParentApplication.Variables.Add(ref_name, ref_var);
-        GetLoader.Symbols.Add(ref_name,new Prexonite::Compiler::SymbolEntry(SI.gref,ref_name));
-    }
-    
-    //Create special check functions for expressions, partially applicables and effects
-    var interfaces = ["Prexonite.Compiler.Ast.IAstExpression": ->ast_is_expression,
-                      "Prexonite.Compiler.Ast.IAstEffect": ->ast_is_effect,
-                      "Prexonite.Compiler.Ast.IAstPartiallyApplicable": ->ast_is_partially_applicable];
-    foreach(var entry in interfaces)
-    {
-        new var interface_t = System::Type.GetType(entry.Key);
-        function check_is_interface_t(node_arg) [is compiler;]
-        {
-            //Ensure is object type in the first place
-            if((var arg_pt = boxed(node_arg).Type) is not Prexonite::Types::ObjectPType)
-                return false;
-                
-            var arg_t = arg_pt.ClrType;
-            
-            //Check if it is correct node, but not a partial application
-            return  AstNode_t.IsAssignableFrom(arg_t) 
-              and   interface_t.IsAssignableFrom(arg_t) 
-              and   not node_arg.CheckForPlaceholders();
-        }
-        
-        entry.Value.() = ->check_is_interface_t;
-    }
-    
-    //Create special check function for partial application
-    function check_is_partial_application(node_arg) [is compiler;]
-    {
-        //Ensure is object type in the first place
-            if((var arg_pt = boxed(node_arg).Type) is not Prexonite::Types::ObjectPType)
-                return false;
-                
-            var arg_t = arg_pt.ClrType;
-            
-            //Check if it is node and a partial application
-            return  AstNode_t.IsAssignableFrom(arg_t) 
-              and   node_arg.CheckForPlaceholders();
-    }
-    
-    //Remove helper functions
-    GetLoader.ParentApplication.Functions.Remove(->human_name.Id);
-}
-
-declare ref ast_is_expression, ast_is_partially_applicable, ast_is_effect, ast_is_partial_application;
-
 macro ast\macro(type)
 {
     var astCall = ast\withPos("GetSetSymbol",
@@ -143,6 +55,95 @@ macro ast\macro(type)
 
 declare ast\macro as ast;
 
+//Create node type check functions (to separate macro implementations from the CLR ast node types.
+var ast_is_expression [is compiler;];
+var ast_is_effect [is compiler;];
+var ast_is_partially_applicable [is compiler;];
+var ast_is_partial_application [is compiler;];
+
+build
+{
+    function human_name(t) = if((var n = t.Name).StartsWith("Ast")) n.Substring(3) else n;
+    
+    var AstNode_t = System::Type.GetType("Prexonite.Compiler.Ast.AstNode");
+    
+    //Create check function for each type that inherits from AstNode
+    AstNode_t.Assembly.GetTypes() 
+    >> where(t => astnode_t.IsAssignableFrom(t))
+    >> var node_ts;
+    
+    foreach(new var node_t in node_ts)
+    {
+        var ptype = asm(ldloc       node_t
+                        get.0       FullName
+                        newtype.1   Object
+                    );
+        var ref_name = "ast_is_$(human_name(node_t))";
+        var ref_var = new Prexonite::PVariable;
+        function check_is_node_t(node_arg) [is compiler;]
+        {
+            //Ensure is object type in the first place
+            if((var arg_pt = boxed(node_arg).Type) is not Prexonite::Types::ObjectPType)
+                return false;
+                
+            var arg_t = arg_pt.ClrType;
+            
+            //Check if it is correct node, but not a partial application
+            return node_t.IsAssignableFrom(arg_t) and not node_arg.CheckForPlaceholders();
+        }
+        ref_var.Value = boxed(->check_is_node_t);
+        ref_var.Meta["compiler"] = true;
+        
+        //Add variable and declare corresponding symbol
+        GetLoader.ParentApplication.Variables.Add(ref_name, ref_var);
+        GetLoader.Symbols.Add(ref_name,new Prexonite::Compiler::SymbolEntry(SI.gref,ref_name));
+    }
+    
+    //Create special check functions for expressions, partially applicables and effects
+    var interfaces = ["Prexonite.Compiler.Ast.IAstExpression": ast_is_expression = ?,
+                      "Prexonite.Compiler.Ast.IAstEffect": ast_is_effect = ?,
+                      "Prexonite.Compiler.Ast.IAstPartiallyApplicable": ast_is_partially_applicable = ?];
+    foreach(var entry in interfaces)
+    {
+        new var interface_t = System::Type.GetType(entry.Key);
+        function check_is_interface_t(node_arg) [is compiler;]
+        {
+            //Ensure is object type in the first place
+            if((var arg_pt = boxed(node_arg).Type) is not Prexonite::Types::ObjectPType)
+                return false;
+                
+            var arg_t = arg_pt.ClrType;
+            
+            //Check if it is correct node, but not a partial application
+            return  AstNode_t.IsAssignableFrom(arg_t) 
+              and   interface_t.IsAssignableFrom(arg_t) 
+              and   not node_arg.CheckForPlaceholders();
+        }
+        
+        entry.Value.() = check_is_interface_t(?);
+    }
+    
+    //Create special check function for partial application
+    function check_is_partial_application(node_arg) [is compiler;]
+    {
+        //Ensure is object type in the first place
+            if((var arg_pt = boxed(node_arg).Type) is not Prexonite::Types::ObjectPType)
+                return false;
+                
+            var arg_t = arg_pt.ClrType;
+            
+            //Check if it is node and a partial application
+            return  AstNode_t.IsAssignableFrom(arg_t) 
+              and   node_arg.CheckForPlaceholders();
+    }
+    ast_is_partial_application = check_is_partial_application(?);
+    
+    //Remove helper functions
+    GetLoader.ParentApplication.Functions.Remove(->human_name.Id);
+}
+
+declare ref ast_is_expression, ast_is_partially_applicable, ast_is_effect, ast_is_partial_application;
+
 macro tempalloc(targetRef)
 {
     var tar = Prexonite::Compiler::MacroAliases.TargetAlias;
@@ -154,7 +155,7 @@ macro tempalloc(targetRef)
     }
     else if(targetRef is Null)
     {
-        throw "tempalloc must either be called in a macro context, or be supplied a target~::CompilerTarget";
+        throw "tempalloc must either be called in a macro context, or be supplied a target~Prexonite::Compiler::CompilerTarget";
     }
     
     targetRef ??= ast("GetSetSymbol",SI.get,tar,SI.lref);
@@ -179,7 +180,7 @@ macro tempfree(macroRef, tempId)
     }
     else if(macroRef is Null)
     {
-        throw "tempfree must either be called in a macro context, or be supplied a macroInvocation~::AstMacroInvocation";
+        throw "tempfree must either be called in a macro context, or be supplied a macroInvocation~Prexonite::Compiler::Ast::AstMacroInvocation";
     }
     
     if(tempId is Null)
@@ -193,9 +194,9 @@ macro tempfree(macroRef, tempId)
 }
 
 //Optimization
-function optimize\ref(target, node) [is compiler;]
+function optimize\ref(target, ref node) [is compiler;]
 {
-    return node.() = node.().GetOptimizedNode(target);
+    return node = node.GetOptimizedNode(target);
 }
 
 macro optimize(targetRef, node)
@@ -214,7 +215,7 @@ macro optimize(targetRef, node)
     if(node is Null)
         throw "optimize([target, ] node) requires a node to optimize";
     
-    if(node is Prexonite::Compiler::Ast::AstGetSetSymbol)
+    if(ast_is_GetSetSymbol(node))
     {
         var setNode = node.GetCopy();
         setNode.Call = SI.set;
@@ -235,7 +236,7 @@ macro optimize(targetRef, node)
     }
 }
 
-//Evaluation of constant arguments
+//Safe "evaluation" of constant arguments
 function ast\read(target, expr) [is compiler;]
 {
     if(expr is Null)
@@ -249,15 +250,15 @@ function ast\read(target, expr) [is compiler;]
         if(subexpr is Prexonite::Compiler::Ast::AstConstant)
             return subexpr.Constant;
         else if(subexpr is Prexonite::Compiler::Ast::AstListLiteral)
-            return subexpr.Elements >> map(->convert) >> all;
+            return subexpr.Elements >> map(convert(?)) >> all;
         else if(subexpr is Prexonite::Compiler::Ast::AstHashLiteral)
-            return subexpr.Elements >> map(->convert) >> all;
+            return subexpr.Elements >> map(convert(?)) >> all;
         else if(subexpr is Prexonite::Compiler::Ast::AstKeyValuePair)
             return convert(subexpr.Key) : convert(subexpr.Value);
         else if(subexpr is Prexonite::Compiler::Ast::AstNull)
             return null;
         else 
-            throw "Cannot convert compile-time expression $(expr.\boxed) to runtime value.";
+            throw "Cannot convert compile-time expression $(boxed(expr)) to runtime value.";
     }
     
     return convert(expr);
@@ -330,7 +331,6 @@ macro ast\lvar = ast\symbol\mk_macro("lvar");
 macro ast\lref = ast\symbol\mk_macro("lref");
 macro ast\gvar = ast\symbol\mk_macro("gvar");
 macro ast\gref = ast\symbol\mk_macro("gref");
-
 
 //Create GetSetMemberAccess node
 macro ast\member(subject, call_type, id)
@@ -473,7 +473,7 @@ macro call\macro(macroReference)
 {
     //Ensure that we are in a valid context
     if(macroReference is Null)
-        throw "Macro cannot be null. Either supply a call (like in call\\macro(myMacro(arg1,arg2));) or a reference that can be resolved at compile time, i.e. ->myMacro or \"myMacro\".";
+        throw "call\\macro called with null. Either supply a call (like in call\\macro(myMacro(arg1,arg2));) or a reference that can be resolved at compile time, i.e. ->myMacro or \"myMacro\".";
     
     if(not is_in_macro(target))
         throw @"call\macro called from $(target.Function.Id). call\macro can only be called from a macro context, i.e. from a macro function or an inner function of a macro.";
@@ -519,11 +519,7 @@ macro call\macro(macroReference)
     }
     else 
     {
-        throw "cannot infer macro id from $(macroReference.\boxed). call\\macro only works on functions that are known at compile-time.";
-        //try call\macro\dynamic
-        //var c = ast("MacroInvocation", ->call\macro\dynamic.Id);
-        //c.Arguments.AddRange(var args);
-        //return c;
+        throw "cannot infer macro id from $(boxed(macroReference)). call\\macro only works on functions that are known at compile-time.";
     }
     
     if(macroId is Null)
@@ -568,7 +564,7 @@ macro call\macro(macroReference)
     return c;
 }
 
-//Evaluate Ast nodes (really executing them, you know!)
+//Evaluate Ast nodes (really executing them, so watch out!)
 function ast\run\impl(loader, block) [is compiler;]
 {
     var func = new Prexonite::PFunction(loader.ParentApplication);
@@ -598,7 +594,7 @@ macro ast\run(loaderRef, block)
     }
     else if(loaderRef is Null)
     {
-        throw "ast\\run must either be called in a macro context, or be supplied a loader~::Loader";
+        throw "ast\\run must either be called in a macro context, or be supplied a loader~Prexonite::Compiler::Loader";
     }
     
     var targetRef = ast("GetSetSymbol",SI.get,tar,SI.lref);
@@ -663,7 +659,6 @@ macro ast\with_arguments as ast\args (astN)
     var args;
     if(args.Count > 1)
     {
-        
         if(args.Count > 2)
         {      
             var getArguments = ast\member(ast\lvar(SI.get, astV), SI.get, "Arguments");
@@ -740,7 +735,7 @@ macro ast\new\const as ast\new(typename)
     return block;
 }
 
-//Position report (so that position information is used at least once (!)
+//Position report
 macro CURRENT_FILE
 {
     return ast("Constant",macroInvocation.File);

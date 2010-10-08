@@ -1351,13 +1351,13 @@ namespace Prexonite.Types
             }
             else if ((object) objT != null)
             {
-                if (objT.ClrType.IsInterface &&
-                    ClrType.FindInterfaces(
-                        (T, o) => T.Name == o as string,
-                        objT.ClrType.Name).Length == 1)
+                if(subject.Value == null)
+                    return false;
+
+                if (objT.ClrType.IsAssignableFrom(subject.Value.GetType()))
                 {
                     result = objT.CreatePValue(subject.Value);
-                    return result != null && !(result.Type == Null);
+                    return result != null;
                 }
                 else
                     return _try_clr_convert_to(sctx, subject, objT.ClrType, useExplicit, out result);

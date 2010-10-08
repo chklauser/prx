@@ -677,6 +677,133 @@ function main(x,y,z)
             Expect(new List<PValue> { z, y, x }, x, y, z);
         }
 
+        [Test]
+        public void ConstructDynamicType()
+        {
+            Compile(@"
+function main(x,y,z)
+{
+    var pa = new Object<(""System.$x"")>(y,?0,?0);
+    return pa.(z);
+}
+");
 
+            Expect(new DateTime(2010,10,10),"DateTime",2010,10);
+        }
+
+        [Test]
+        public void TypeCast()
+        {
+            Compile(@"
+function main(x,y,z)
+{
+    var pa = ?~Int;
+    return pa.(x) + pa.(y,z);
+}
+");
+
+            Expect(5,"2",3.0,"sixteen");
+        }
+
+        [Test]
+        public void DynamicTypeCast()
+        {
+            Compile(@"
+function main(x,y,z)
+{
+    var pa = ?~Object<(x)>;
+    return pa.(y) is Object<(x)>;
+}
+");
+
+            Expect(true, "Prexonite.StackContext",sctx.CreateNativePValue(sctx));
+        }
+
+        [Test]
+        public void DynamicTypeCheck()
+        {
+            Compile(@"
+function main(x,y,z)
+{
+    var pa = ? is Object<(x)>;
+    return pa.(y~Object<(x)>);
+}
+");
+
+            Expect(true, "Prexonite.StackContext", sctx.CreateNativePValue(sctx));
+        }
+
+        [Test]
+        public void TypeCheck()
+        {
+            Compile(@"
+function main(x,y,z)
+{
+    var pa = ? is String;
+    function i(b) = if(b) ""T"" else ""_"";
+    return i(pa.(x)) + i(pa.(y)) + i(pa.(z,x));
+}
+");
+            Expect("T_T","I'm", 'a', "String");
+        }
+
+        [Test]
+        public void NegativeTypeCheck()
+        {
+            Compile(@"
+function main(x,y,z)
+{
+    var pa = ? is not String;
+    function i(b) = if(b) ""T"" else ""_"";
+    return i(pa.(x)) + i(pa.(y)) + i(pa.(z,x));
+}
+");
+            Expect("_T_", "I'm", 'a', "String");
+        }
+
+        [Test]
+        public void NullCheck()
+        {
+            Compile(@"
+function main(x,y,z)
+{
+    var pa = ? is null;
+    var pa2 = ? is not null;
+    function i(b) = if(b) ""T"" else ""_"";
+    return i(pa.(x)) + i(pa.(y)) + i(pa.(z,x)) + i(pa2.(x)) + i(pa2.(y)) + i(pa2.(z,x));
+}
+");
+            Expect("_T_T_T","I'm",null,1);
+        }
+
+        [Test]
+        public void StaticCall()
+        {
+            Compile(@"
+function main(x,y,z)
+{
+    var pa = System::Int32.Parse(?);
+    var pa2 = System::Int32.MaxValue(?);
+    return pa2.() - pa.(x);
+}
+");
+
+            Expect(Int32.MaxValue - 255, "255");
+        }
+
+        [Test]
+        public void DynamicStaticCall()
+        {
+            Compile(@"
+function main(x,y,z)
+{
+    var pa = ~Object<(y)>.Parse(?);
+    var pa2 = ~Object<(y)>.MaxValue(?);
+    return pa2.() - pa.(x);
+}
+");
+
+            Expect(Int32.MaxValue - 255, "255","System.Int32");
+        }
     }
 }

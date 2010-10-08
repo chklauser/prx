@@ -802,6 +802,10 @@ namespace Prexonite
 
             Commands.AddEngineCommand(PartialConstructionAlias, PartialConstructionCommand.Instance);
 
+            Commands.AddEngineCommand(PartialTypeCheckAlias, PartialTypeCheckCommand.Instance);
+            Commands.AddEngineCommand(PartialTypeCastAlias, PartialTypeCastCommand.Instance);
+            Commands.AddEngineCommand(PartialStaticCallAlias, PartialStaticCallCommand.Instance);
+
             Commands.AddEngineCommand(ThenAlias, ThenCommand.Instance);
         }
 
@@ -1134,6 +1138,26 @@ namespace Prexonite
         /// Alias used for the pa\ctor command (constructor for partial application of object constructions)
         /// </summary>
         public const string PartialConstructionAlias = @"pa\ctor";
+
+        /// <summary>
+        /// Alias used for the pa\check command (constructor for partial application of type checks)
+        /// </summary>
+        public const string PartialTypeCheckAlias = @"pa\check";
+
+        /// <summary>
+        /// Alias used for the pa\cast command (constructor for partial application of type casts)
+        /// </summary>
+        public const string PartialTypeCastAlias = @"pa\cast";
+
+        /// <summary>
+        /// Alias used for the pa\smem command (constructor for partial application of static calls)
+        /// </summary>
+        public const string PartialStaticCallAlias = @"pa\smem";
+
+        /// <summary>
+        /// Alias used for the not command (implements the logical not operator)
+        /// </summary>
+        public const string NotAlias = @"not";
 
         /// <summary>
         /// Alias used for the then command (constructor for function composition)

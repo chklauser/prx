@@ -28,7 +28,8 @@ namespace Prexonite.Compiler.Ast
 {
     public class AstTypecheck : AstNode,
                                 IAstExpression,
-                                IAstHasExpressions
+                                IAstHasExpressions,
+        IAstPartiallyApplicable
     {
         public IAstExpression Subject;
         public IAstType Type;
@@ -110,6 +111,24 @@ namespace Prexonite.Compiler.Ast
             expr =
                 new AstConstant(File, Line, Column, constSubject.ToPValue(target).Type.Equals(type));
             return true;
+        }
+
+        public override bool CheckForPlaceholders()
+        {
+            return base.CheckForPlaceholders() || Subject.IsPlaceholder();
+        }
+
+        public void DoEmitPartialApplicationCode(CompilerTarget target)
+        {
+            var argv = AstPartiallyApplicable.PreprocessPartialApplicationArguments(Subject.Singleton());
+            var ctorArgc = this.EmitConstructorArguments(target, argv);
+            var constType = Type as AstConstantTypeExpression;
+            if (constType != null)
+                target.EmitConstant(this, constType.TypeExpression);
+            else
+                Type.EmitCode(target);
+
+            target.EmitCommandCall(this, ctorArgc + 1, Engine.PartialTypeCheckAlias);
         }
     }
 }

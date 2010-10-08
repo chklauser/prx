@@ -22,8 +22,6 @@
  */
 
 using System;
-using System.Collections.Generic;
-using System.Linq;
 using Prexonite.Types;
 
 namespace Prexonite.Compiler.Ast
@@ -63,18 +61,8 @@ namespace Prexonite.Compiler.Ast
         {
         }
 
-        internal AstIndirectCall(Parser p, PCall call)
-            : this(p, call, null)
-        {
-        }
-
         public AstIndirectCall(string file, int line, int column)
             : this(file, line, column, PCall.Get)
-        {
-        }
-
-        internal AstIndirectCall(Parser p)
-            : this(p.scanner.File, p.t.line, p.t.col, PCall.Get)
         {
         }
 

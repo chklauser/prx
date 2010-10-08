@@ -251,7 +251,7 @@ namespace Prexonite.Commands.Core.PartialApplication
         /// <para>Returns the constructor overload to use for CIL compilation. Must have exactly the following signature:</para>
         /// <code>theConstructor(sbyte[] mappings, PValue[] closedArguments)</code>
         /// </summary>
-        protected ConstructorInfo PartialApplicationConstructor(TParam parameter)
+        protected virtual ConstructorInfo GetConstructorCtor(TParam parameter)
         { 
             return GetPartialCallRepresentationType(parameter).GetConstructor(new[] {typeof (int[]), typeof (PValue[])});
         }
@@ -351,7 +351,7 @@ namespace Prexonite.Commands.Core.PartialApplication
         /// <param name="parameter">The custom parameter as returned by <see cref="FilterCompileTimeArguments"/>.</param>
         protected virtual void EmitConstructorCall(CompilerState state, TParam parameter)
         {
-            state.Il.Emit(OpCodes.Newobj, PartialApplicationConstructor(parameter));
+            state.Il.Emit(OpCodes.Newobj, GetConstructorCtor(parameter));
         }
 
         /// <summary>
