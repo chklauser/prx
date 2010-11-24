@@ -807,6 +807,8 @@ namespace Prexonite
             Commands.AddEngineCommand(PartialStaticCallAlias, PartialStaticCallCommand.Instance);
 
             Commands.AddEngineCommand(ThenAlias, ThenCommand.Instance);
+
+            Prexonite.Commands.Core.Operators.OperatorCommands.AddToEngine(this);
         }
 
         /// <summary>
@@ -1153,11 +1155,6 @@ namespace Prexonite
         /// Alias used for the pa\smem command (constructor for partial application of static calls)
         /// </summary>
         public const string PartialStaticCallAlias = @"pa\smem";
-
-        /// <summary>
-        /// Alias used for the not command (implements the logical not operator)
-        /// </summary>
-        public const string NotAlias = @"not";
 
         /// <summary>
         /// Alias used for the then command (constructor for function composition)

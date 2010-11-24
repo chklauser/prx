@@ -144,12 +144,12 @@ macro pattern\gen(desc, args)
     if(SI.eq(callType,SI.get))
     {
         //construct value
-        return call\macro(->pattern\construct, [desc]);
+        return call\macro(->pattern\construct, [desc], args);
     }
     else
     {
         //deconstruct value
-        return call\macro(->pattern\deconstruct, [desc] + args);
+        return call\macro(->pattern\deconstruct, [desc], args);
     }
 }
 
@@ -177,6 +177,6 @@ macro kvp
             ]
         , ->kvp\con
         );
-        var args;
+    var args;
     return call\macro(pattern\gen(desc, var args));
 }

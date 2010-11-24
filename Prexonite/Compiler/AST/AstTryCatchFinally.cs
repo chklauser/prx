@@ -121,6 +121,7 @@ namespace Prexonite.Compiler.Ast
             }
 
             target.EmitLabel(this, endTry);
+            target.Emit(this, OpCode.nop);
 
             var block =
                 new TryCatchFinallyBlock(

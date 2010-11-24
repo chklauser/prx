@@ -7,7 +7,7 @@ macro call\sub\genCompare(retVar, expected)
 	return cmp;
 }
 
-macro call\sub\interpret(kvp)
+macro call\sub\interpret(computeKvp)
 {
 	var resultV = tempalloc;
 	
@@ -15,7 +15,7 @@ macro call\sub\interpret(kvp)
 	
 	//Store result of call
 	var setResult = ast\lvar(SI.set, resultV);
-	setResult.Arguments.Add(kvp);
+	setResult.Arguments.Add(computeKvp);
 	block.Add(setResult);
 	
 	//Extract return variant as int into retVarV

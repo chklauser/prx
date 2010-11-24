@@ -8,6 +8,7 @@ using NUnit.Framework;
 using Prexonite;
 using Prexonite.Commands.Core.PartialApplication;
 using Prexonite.Compiler.Ast;
+using Prexonite.Compiler.Cil;
 using Prexonite.Types;
 
 namespace PrexoniteTests.Tests
@@ -773,7 +774,8 @@ function main(x,y,z)
     return i(pa.(x)) + i(pa.(y)) + i(pa.(z,x)) + i(pa2.(x)) + i(pa2.(y)) + i(pa2.(z,x));
 }
 ");
-            Expect("_T_T_T","I'm",null,1);
+
+            Expect("_T_T_T","I'm",PType.Null,1);
         }
 
         [Test]

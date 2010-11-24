@@ -288,9 +288,16 @@ namespace Prexonite.Compiler.Cil
             }
         }
 
+        private static bool _rangeInSet(int offset, int count, HashSet<int> hashSet)
+        {
+            for(var i = offset; i < offset + count; i++)
+                if(hashSet.Contains(i))
+                    return true;
+            return false;
+        }
+
         private static bool _check(PFunction source, Engine targetEngine, out string reason)
         {
-            reason = null;
             if (source == null)
                 throw new ArgumentNullException("source");
             if (targetEngine == null)
@@ -304,7 +311,10 @@ namespace Prexonite.Compiler.Cil
             }
             //Function does not allow cil compilation
             if (source.Meta[PFunction.VolatileKey].Switch)
+            {
+                reason = null; //don't add a message
                 return false;
+            }
 
             //Prepare for CIL extensions
             var cilExtensions = new List<int>();
@@ -312,6 +322,13 @@ namespace Prexonite.Compiler.Cil
             foreach (var kvp in source.LocalVariableMapping)
                 localVariableMapping[kvp.Value] = kvp.Key;
 
+            var jumpTargets = new HashSet<int>(from ins in source.Code
+                                               where ins.OpCode == OpCode.jump
+                                                     || ins.OpCode == OpCode.jump_t
+                                                     || ins.OpCode == OpCode.jump_f
+                                               select ins.Arguments);
+
+            var seh = new StructuredExceptionHandling(source);
 
             //Check for not supported instructions and instructions used in a way
             //  that is not supported by the CIL compiler)
@@ -336,10 +353,11 @@ namespace Prexonite.Compiler.Cil
 
                         //First allow CIL extensions to kick in, and only if they don't apply, check for CIL awareness.
                         if ((extension = cmd as ICilExtension) != null //
-                            && extension.ValidateArguments( //
-                            /**/    staticArgv = CompileTimeValue.ParseSequenceReverse(source.Code, localVariableMapping, address - 1),
-                                ins.Arguments - staticArgv.Length))
+                            && !_rangeInSet(insOffset - (staticArgv = CompileTimeValue.ParseSequenceReverse(source.Code, localVariableMapping, address - 1)).Length + 1, staticArgv.Length, jumpTargets)
+                            && extension.ValidateArguments(staticArgv, ins.Arguments - staticArgv.Length))
+                        {
                             cilExtensions.Add(address - staticArgv.Length);
+                        }
                         else if ((aware = cmd as ICilCompilerAware) != null)
                         {
                             var flags = aware.CheckQualification(ins);
@@ -390,42 +408,23 @@ namespace Prexonite.Compiler.Cil
                             return false;
                         }
                         break;
+                    case OpCode.jump:
+                    case OpCode.jump_t:
+                    case OpCode.jump_f:
                     case OpCode.leave:
-                        //must either be at the end of a finally or a try block without a finally one.
-                        //must point to the instruction after the tryfinallycatch
-                        isCorrect = false;
-                        foreach (var block in source.TryCatchFinallyBlocks)
+                        if(seh.AssessJump(address, ins.Arguments) == BranchHandling.Invalid)
                         {
-                            int lastOfTry;
-                            if (block.HasFinally)
-                                lastOfTry = -1; //<-- must not be last of try if finally exists
-                            else if (block.HasCatch)
-                                lastOfTry = block.BeginCatch - 1;
-                            else
-                                lastOfTry = block.EndTry - 1;
-
-                            int lastOfFinally;
-                            if (!block.HasFinally)
-                                lastOfFinally = -1;
-                            else if (block.HasCatch)
-                                lastOfFinally = block.BeginCatch - 1;
-                            else
-                                lastOfFinally = block.EndTry - 1;
-
-                            //Correction: `leave` instruction must just point outside the try block, not necessarily
-                            //  to the next instruction.
-                            var isOutside = ins.Arguments < block.BeginTry || ins.Arguments >= block.EndTry;
-                            var isAtTheEnd = (address == lastOfTry || address == lastOfFinally);
-                            if (isOutside && isAtTheEnd)
-                            {
-                                isCorrect = true;
-                                break;
-                            }
+                            reason = "jumping instruction at " + address + " invalid for SEH";
+                            return false;
                         }
-                        if (!isCorrect)
+                        break;
+                    case OpCode.ret_break:
+                    case OpCode.ret_continue:
+                    case OpCode.ret_exit:
+                    case OpCode.ret_value:
+                        if(seh.AssessJump(address, source.Code.Count) == BranchHandling.Invalid)
                         {
-                            reason =
-                                "leave instruction not in the right place (last instruction of regular control flow in try-catch-finally)";
+                            reason = "return instruction at " + address + " invalid for SEH";
                             return false;
                         }
                         break;
@@ -439,6 +438,7 @@ namespace Prexonite.Compiler.Cil
             }
 
             //Otherwise, qualification passed.
+            reason = null;
             return true;
         }
 
@@ -484,18 +484,12 @@ namespace Prexonite.Compiler.Cil
             state.Il.EmitCall(OpCodes.Call, CilFunctionContext.NewMethod, null);
             state.EmitStoreLocal(state.SctxLocal.LocalIndex);
 
-            //Initialize result
+            //Initialize result and assign default return mode
             //  Result = null;
+            state._EmitAssignReturnMode(ReturnMode.Exit);
             state.EmitLoadArg(CompilerState.ParamResultIndex);
             state.EmitLoadNullAsPValue();
             state.Il.Emit(OpCodes.Stind_Ref);
-        }
-
-        private static void _assignReturnMode(CompilerState state, ReturnMode returnMode)
-        {
-            state.EmitLoadArg(CompilerState.ParamReturnModeIndex);
-            state.EmitLdcI4((int)returnMode);
-            state.Il.Emit(OpCodes.Stind_I4);
         }
 
         private static void _buildSymbolTable(CompilerState state)
@@ -821,9 +815,6 @@ namespace Prexonite.Compiler.Cil
                 foreachDisposes.Add(hint.DisposeAddress, hint);
             }
 
-            //Used to prevent duplicate ret OpCodes at the end of the compiled function.
-            var lastWasRet = false;
-
             var sourceCode = state.Source.Code;
 
             //CIL Extension
@@ -835,43 +826,61 @@ namespace Prexonite.Compiler.Cil
                 #region Handling for try-finally-catch blocks
 
                 //Handle try-finally-catch blocks
-                foreach (var block in state.Source.TryCatchFinallyBlocks)
+                //Push new blocks
+                foreach (var block in state.Seh.GetOpeningTryBlocks(instructionIndex))
                 {
-                    if (instructionIndex == block.BeginTry)
+                    state.TryBlocks.Push(block);
+                    if (block.HasFinally)
+                        state.Il.BeginExceptionBlock();
+                    if (block.HasCatch)
+                        state.Il.BeginExceptionBlock();
+
+                }
+
+                //Handle active blocks
+                if(state.TryBlocks.Count > 0)
+                {
+                    CompiledTryCatchFinallyBlock block;
+                    do
                     {
-                        state.TryBlocks.Push(block);
-                        if (block.HasFinally)
-                            state.Il.BeginExceptionBlock();
-                        if (block.HasCatch)
-                            state.Il.BeginExceptionBlock();
-                    }
-                    else if (instructionIndex == block.BeginFinally)
-                    {
-                        state.Il.BeginFinallyBlock();
-                    }
-                    else if (instructionIndex == block.BeginCatch)
-                    {
-                        if (block.HasFinally)
-                            state.Il.EndExceptionBlock(); //end finally here
-                        state.Il.BeginCatchBlock(typeof(Exception));
-                        //parse the exception
-                        state.EmitLoadLocal(state.SctxLocal);
-                        state.Il.EmitCall(OpCodes.Call, Runtime.ParseExceptionMethod, null);
-                        //user code will store it in a local variable
-                    }
-                    else if (instructionIndex == block.EndTry)
-                    {
-                        if (block.HasFinally || block.HasCatch)
-                            state.Il.EndExceptionBlock();
-                        state.TryBlocks.Pop();
-                    }
+                        block = state.TryBlocks.Peek();
+                        if (instructionIndex == block.BeginFinally)
+                        {
+                            if (block.SkipTry == instructionIndex)
+                            {
+                                //state.Il.MarkLabel(block.SkipTryLabel);
+                                state.Il.Emit(OpCodes.Nop);
+                            }
+                            state.Il.BeginFinallyBlock();
+                        }
+                        else if (instructionIndex == block.BeginCatch)
+                        {
+                            if (block.HasFinally)
+                                state.Il.EndExceptionBlock(); //end finally here
+                            state.Il.BeginCatchBlock(typeof (Exception));
+                            //parse the exception
+                            state.EmitLoadLocal(state.SctxLocal);
+                            state.Il.EmitCall(OpCodes.Call, Runtime.ParseExceptionMethod, null);
+                            //user code will store it in a local variable
+                        }
+                        else if (instructionIndex == block.EndTry)
+                        {
+                            if (block.HasFinally || block.HasCatch)
+                                state.Il.EndExceptionBlock();
+                            if (block.SkipTry == instructionIndex)
+                            {
+                                //state.Il.MarkLabel(block.SkipTryLabel);
+                                state.Il.Emit(OpCodes.Nop);
+                            }
+                            state.TryBlocks.Pop();
+                            block = null; //signal another loop iteration
+                        }
+                    } while (block == null && state.TryBlocks.Count > 0);
                 }
 
                 #endregion
 
                 state.MarkInstruction(instructionIndex);
-
-                lastWasRet = false;
 
                 var ins = sourceCode[instructionIndex];
 
@@ -978,7 +987,6 @@ namespace Prexonite.Compiler.Cil
                 string typeExpr;
 
                 //Emit code for the instruction
-                var primaryTempLocal = state.TempLocals[0];
                 switch (ins.OpCode)
                 {
                         #region NOP
@@ -1064,9 +1072,9 @@ namespace Prexonite.Compiler.Cil
                         }
                         else if (sym.Kind == SymbolKind.LocalRef)
                         {
-                            state.EmitStoreLocal(primaryTempLocal.LocalIndex);
+                            state.EmitStoreLocal(state.PrimaryTempLocal.LocalIndex);
                             state.EmitLoadLocal(sym.Local.LocalIndex);
-                            state.EmitLoadLocal(primaryTempLocal.LocalIndex);
+                            state.EmitLoadLocal(state.PrimaryTempLocal.LocalIndex);
                             state.Il.EmitCall(OpCodes.Call, SetValueMethod, null);
                         }
                         break;
@@ -1088,13 +1096,13 @@ namespace Prexonite.Compiler.Cil
                         state.EmitLoadGlobalValue(id);
                         break;
                     case OpCode.stglob:
-                        state.EmitStoreLocal(primaryTempLocal.LocalIndex);
+                        state.EmitStoreLocal(state.PrimaryTempLocal.LocalIndex);
                         state.EmitLoadLocal(state.SctxLocal.LocalIndex);
                         state.Il.Emit(OpCodes.Ldstr, id);
                         state.Il.EmitCall
                             (
                                 OpCodes.Call, Runtime.LoadGlobalVariableReferenceMethod, null);
-                        state.EmitLoadLocal(primaryTempLocal.LocalIndex);
+                        state.EmitLoadLocal(state.PrimaryTempLocal.LocalIndex);
                         state.Il.EmitCall(OpCodes.Call, SetValueMethod, null);
                         break;
 
@@ -1244,138 +1252,12 @@ namespace Prexonite.Compiler.Cil
                         state.Il.EmitCall(OpCodes.Call, SetValueMethod, null);
                         break;
 
-                    case OpCode.neg:
-                        state.EmitLoadLocal(state.SctxLocal);
-                        state.Il.EmitCall(OpCodes.Call, PVUnaryNegationMethod, null);
-                        break;
-                    case OpCode.not:
-                        state.EmitLoadLocal(state.SctxLocal);
-                        state.Il.EmitCall(OpCodes.Call, PVLogicalNotMethod, null);
-                        break;
-
                         #endregion
 
                         #region BINARY
 
-                        //BINARY OPERATORS
-
-                        #region ADDITION
-
-                        //ADDITION
-                    case OpCode.add:
-                        state.EmitStoreLocal(primaryTempLocal);
-                        state.EmitLoadLocal(state.SctxLocal);
-                        state.EmitLoadLocal(primaryTempLocal);
-                        state.Il.EmitCall(OpCodes.Call, PVAdditionMethod, null);
-                        break;
-                    case OpCode.sub:
-                        state.EmitStoreLocal(primaryTempLocal);
-                        state.EmitLoadLocal(state.SctxLocal);
-                        state.EmitLoadLocal(primaryTempLocal);
-                        state.Il.EmitCall(OpCodes.Call, PVSubtractionMethod, null);
-                        break;
-
-                        #endregion
-
-                        #region MULTIPLICATION
-
-                        //MULTIPLICATION
-                    case OpCode.mul:
-                        state.EmitStoreLocal(primaryTempLocal);
-                        state.EmitLoadLocal(state.SctxLocal);
-                        state.EmitLoadLocal(primaryTempLocal);
-                        state.Il.EmitCall(OpCodes.Call, PVMultiplyMethod, null);
-                        break;
-                    case OpCode.div:
-                        state.EmitStoreLocal(primaryTempLocal);
-                        state.EmitLoadLocal(state.SctxLocal);
-                        state.EmitLoadLocal(primaryTempLocal);
-                        state.Il.EmitCall(OpCodes.Call, PVDivisionMethod, null);
-                        break;
-                    case OpCode.mod:
-                        state.EmitStoreLocal(primaryTempLocal);
-                        state.EmitLoadLocal(state.SctxLocal);
-                        state.EmitLoadLocal(primaryTempLocal);
-                        state.Il.EmitCall(OpCodes.Call, PVModulusMethod, null);
-                        break;
-
-                        #endregion
-
-                        #region EXPONENTIAL
-
-                        //EXPONENTIAL
-                    case OpCode.pow:
-                        state.EmitLoadLocal(state.SctxLocal);
-                        state.Il.EmitCall(OpCodes.Call, Runtime.RaiseToPowerMethod, null);
-                        break;
-
-                        #endregion EXPONENTIAL
-
-                        #region COMPARISION
-
-                        //COMPARISION
-                    case OpCode.ceq:
-                        state.EmitStoreLocal(primaryTempLocal);
-                        state.EmitLoadLocal(state.SctxLocal);
-                        state.EmitLoadLocal(primaryTempLocal);
-                        state.Il.EmitCall(OpCodes.Call, PVEqualityMethod, null);
-                        break;
-                    case OpCode.cne:
-                        state.EmitStoreLocal(primaryTempLocal);
-                        state.EmitLoadLocal(state.SctxLocal);
-                        state.EmitLoadLocal(primaryTempLocal);
-                        state.Il.EmitCall(OpCodes.Call, PVInequalityMethod, null);
-                        break;
-                    case OpCode.clt:
-                        state.EmitStoreLocal(primaryTempLocal);
-                        state.EmitLoadLocal(state.SctxLocal);
-                        state.EmitLoadLocal(primaryTempLocal);
-                        state.Il.EmitCall(OpCodes.Call, PVLessThanMethod, null);
-                        break;
-                    case OpCode.cle:
-                        state.EmitStoreLocal(primaryTempLocal);
-                        state.EmitLoadLocal(state.SctxLocal);
-                        state.EmitLoadLocal(primaryTempLocal);
-                        state.Il.EmitCall(OpCodes.Call, PVLessThanOrEqualMethod, null);
-                        break;
-                    case OpCode.cgt:
-                        state.EmitStoreLocal(primaryTempLocal);
-                        state.EmitLoadLocal(state.SctxLocal);
-                        state.EmitLoadLocal(primaryTempLocal);
-                        state.Il.EmitCall(OpCodes.Call, PVGreaterThanMethod, null);
-                        break;
-                    case OpCode.cge:
-                        state.EmitStoreLocal(primaryTempLocal);
-                        state.EmitLoadLocal(state.SctxLocal);
-                        state.EmitLoadLocal(primaryTempLocal);
-                        state.Il.EmitCall(OpCodes.Call, PVGreaterThanOrEqualMethod, null);
-                        break;
-
-                        #endregion
-
-                        #region BITWISE
-
-                        //BITWISE
-                    case OpCode.or:
-                        state.EmitStoreLocal(primaryTempLocal);
-                        state.EmitLoadLocal(state.SctxLocal);
-                        state.EmitLoadLocal(primaryTempLocal);
-                        state.Il.EmitCall(OpCodes.Call, PVBitwiseOrMethod, null);
-                        break;
-                    case OpCode.and:
-                        state.EmitStoreLocal(primaryTempLocal);
-                        state.EmitLoadLocal(state.SctxLocal);
-                        state.EmitLoadLocal(primaryTempLocal);
-                        state.Il.EmitCall(OpCodes.Call, PVBitwiseAndMethod, null);
-                        break;
-                    case OpCode.xor:
-                        state.EmitStoreLocal(primaryTempLocal);
-                        state.EmitLoadLocal(state.SctxLocal);
-                        state.EmitLoadLocal(primaryTempLocal);
-                        state.Il.EmitCall(OpCodes.Call, PVExclusiveOrMethod, null);
-                        break;
-
-                        #endregion
+                        // all binary operators are implemented as CIL extensions in
+                        //  Prexonite.Commands.Core.Operators
 
                         #endregion //OPERATORS
 
@@ -1541,18 +1423,7 @@ namespace Prexonite.Compiler.Cil
                         break;
 
                     case OpCode.tail:
-                        //Stack
-                        //  obj
-                        //  args
-                        state.FillArgv(argc);
-                        state.EmitIndirectCall(argc, justEffect);
-                        state.EmitStoreLocal(primaryTempLocal);
-                        state.EmitLoadArg(CompilerState.ParamResultIndex);
-                        state.EmitLoadLocal(primaryTempLocal);
-                        state.Il.Emit(OpCodes.Stind_Ref);
-                        _emitRetExit(state, instructionIndex);
-                        lastWasRet = true;
-                        break;
+                        throw new PrexoniteException("Cannot compile tail instruction to CIL. Qualification should have failed.");
 
                         #endregion
 
@@ -1574,40 +1445,11 @@ namespace Prexonite.Compiler.Cil
                         #region JUMPS
 
                     case OpCode.jump:
-                        state.Il.Emit
-                            (
-                                state._MustUseLeave(instructionIndex, ref argc) ? OpCodes.Leave : OpCodes.Br,
-                                _getInstructionLabel(state, argc));
-                        break;
                     case OpCode.jump_t:
-                        state.EmitLoadLocal(state.SctxLocal);
-                        state.Il.EmitCall(OpCodes.Call, Runtime.ExtractBoolMethod, null);
-                        if (state._MustUseLeave(instructionIndex, ref argc))
-                        {
-                            var cont = state.Il.DefineLabel();
-                            state.Il.Emit(OpCodes.Brfalse_S, cont);
-                            state.Il.Emit(OpCodes.Leave, _getInstructionLabel(state, argc));
-                            state.Il.MarkLabel(cont);
-                        }
-                        else
-                        {
-                            state.Il.Emit(OpCodes.Brtrue, _getInstructionLabel(state, argc));
-                        }
-                        break;
                     case OpCode.jump_f:
-                        state.EmitLoadLocal(state.SctxLocal);
-                        state.Il.EmitCall(OpCodes.Call, Runtime.ExtractBoolMethod, null);
-                        if (state._MustUseLeave(instructionIndex, ref argc))
-                        {
-                            var cont = state.Il.DefineLabel();
-                            state.Il.Emit(OpCodes.Brtrue_S, cont);
-                            state.Il.Emit(OpCodes.Leave, _getInstructionLabel(state, argc));
-                            state.Il.MarkLabel(cont);
-                        }
-                        else
-                        {
-                            state.Il.Emit(OpCodes.Brfalse, _getInstructionLabel(state, argc));
-                        }
+                    case OpCode.ret_break:
+                    case OpCode.ret_continue:
+                        state.Seh.EmitJump(instructionIndex, ins);
                         break;
 
                         #endregion
@@ -1615,41 +1457,14 @@ namespace Prexonite.Compiler.Cil
                         #region RETURNS
 
                     case OpCode.ret_exit:
-                        _emitRetExit(state, instructionIndex);
-                        lastWasRet = true;
-                        break;
+                        goto case OpCode.jump;
 
                     case OpCode.ret_value:
-                        state.EmitStoreLocal(primaryTempLocal);
-                        state.EmitLoadArg(CompilerState.ParamResultIndex);
-                        state.EmitLoadLocal(primaryTempLocal);
-                        state.Il.Emit(OpCodes.Stind_Ref);
-                        _emitRetExit(state, instructionIndex);
-                        lastWasRet = true;
-                        break;
-
-                    case OpCode.ret_break:
-                        _emitRetSpecial(state, instructionIndex, ReturnMode.Break);
-                        //do not set `lastWasRet`. We need that implicit return in case someone
-                        //  issued an asm{jump $MAX}
-                        break;
-                        //throw new PrexoniteException
-                        //    (
-                        //    String.Format
-                        //        (
-                        //        "OpCode {0} not implemented in Cil compiler",
-                        //        Enum.GetName(typeof (OpCode), ins.OpCode)));
-                    case OpCode.ret_continue:
-                        _emitRetSpecial(state, instructionIndex, ReturnMode.Continue);
-                        //do not set `lastWasRet`. We need that implicit return in case someone
-                        //  issued an asm{jump $MAX}
-                        break;
+                        //return value is assigned by SEH
+                        goto case OpCode.jump;
 
                     case OpCode.ret_set:
-                        state.EmitStoreLocal(primaryTempLocal);
-                        state.EmitLoadArg(CompilerState.ParamResultIndex);
-                        state.EmitLoadLocal(primaryTempLocal);
-                        state.Il.Emit(OpCodes.Stind_Ref);
+                        state.EmitSetReturnValue();
                         break;
 
                         #endregion
@@ -1725,59 +1540,9 @@ namespace Prexonite.Compiler.Cil
 
             //Implicit return
             //Often instructions refer to a virtual instruction after the last real one.
-            if (!lastWasRet)
-            {
-                state.MarkInstruction(sourceCode.Count);
-                _assignReturnMode(state, ReturnMode.Exit);
-                state.Il.MarkLabel(state.ReturnLabel);
-                state.Il.Emit(OpCodes.Ret);
-            }
-        }
-
-        private static Label _getInstructionLabel(CompilerState state, int argc)
-        {
-            return state.InstructionLabels[argc];
-        }
-
-        private static void _emitRetExit(CompilerState state, int instructionIndex)
-        {
-            var max = state.Source.Code.Count;
-            var rmax = max;
-
-            if (state._MustUseLeave(instructionIndex, ref rmax))
-            {
-                //Cannot return from protected block.
-                //Jump to return instruction (guaranteed to be at address $count)
-                //return mode exit is set when reaching instruction at index max
-                state.Il.Emit(OpCodes.Leave, state.InstructionLabels[max]);
-            }
-            else
-            {
-                if (instructionIndex == max - 1) //last instruction
-                {
-                    state.MarkInstruction(max); //mark ret ("over-last instruction")
-                    _assignReturnMode(state, ReturnMode.Exit);
-                    state.Il.MarkLabel(state.ReturnLabel);
-                }
-                else
-                {
-                    _assignReturnMode(state, ReturnMode.Exit);
-                }
-                //Use conventional jump
-                state.Il.Emit(OpCodes.Ret);
-            }
-        }
-
-        private static void _emitRetSpecial(CompilerState state, int instructionIndex, ReturnMode returnMode)
-        {
-            _assignReturnMode(state, returnMode);
-
-
-            var endOfFunction = state.Source.Code.Count;
-            if (state._MustUseLeave(instructionIndex, ref endOfFunction))
-                state.Il.Emit(OpCodes.Leave, state.ReturnLabel);
-            else
-                state.Il.Emit(OpCodes.Ret);
+            state.MarkInstruction(sourceCode.Count);
+            state.Il.MarkLabel(state.ReturnLabel);
+            state.Il.Emit(OpCodes.Ret);
         }
 
         #region IL helper
@@ -1872,6 +1637,13 @@ namespace Prexonite.Compiler.Cil
 
         private static readonly MethodInfo _PVIndirectCallMethod =
             typeof(PValue).GetMethod("IndirectCall");
+
+        private static readonly MethodInfo _PVOnesComplementMethod = typeof (PValue).GetMethod("OnesComplement",
+                                                                                               new[]
+                                                                                                   {
+                                                                                                       typeof (
+                                                                                                           StackContext)
+                                                                                                   });
 
         private static readonly MethodInfo _PVInequalityMethod =
             typeof(PValue).GetMethod
@@ -2007,109 +1779,114 @@ namespace Prexonite.Compiler.Cil
             get { return _NewPValue; }
         }
 
-        private static MethodInfo PVIncrementMethod
+        public static MethodInfo PVIncrementMethod
         {
             get { return _PVIncrementMethod; }
         }
 
-        private static MethodInfo PVDecrementMethod
+        public static MethodInfo PVDecrementMethod
         {
             get { return _PVDecrementMethod; }
         }
 
-        private static MethodInfo PVUnaryNegationMethod
+        public static MethodInfo PVUnaryNegationMethod
         {
             get { return _PVUnaryNegationMethod; }
         }
 
-        private static MethodInfo PVLogicalNotMethod
+        public static MethodInfo PVLogicalNotMethod
         {
             get { return _PVLogicalNotMethod; }
         }
 
-        private static MethodInfo PVAdditionMethod
+        public static MethodInfo PVAdditionMethod
         {
             get { return _PVAdditionMethod; }
         }
 
-        private static MethodInfo PVSubtractionMethod
+        public static MethodInfo PVSubtractionMethod
         {
             get { return _PVSubtractionMethod; }
         }
 
-        private static MethodInfo PVMultiplyMethod
+        public static MethodInfo PVMultiplyMethod
         {
             get { return _PVMultiplyMethod; }
         }
 
-        private static MethodInfo PVDivisionMethod
+        public static MethodInfo PVDivisionMethod
         {
             get { return _PVDivisionMethod; }
         }
 
-        private static MethodInfo PVModulusMethod
+        public static MethodInfo PVModulusMethod
         {
             get { return _PVModulusMethod; }
         }
 
-        private static MethodInfo PVBitwiseAndMethod
+        public static MethodInfo PVBitwiseAndMethod
         {
             get { return _PVBitwiseAndMethod; }
         }
 
-        private static MethodInfo PVBitwiseOrMethod
+        public static MethodInfo PVBitwiseOrMethod
         {
             get { return _PVBitwiseOrMethod; }
         }
 
-        private static MethodInfo PVExclusiveOrMethod
+        public static MethodInfo PVExclusiveOrMethod
         {
             get { return _PVExclusiveOrMethod; }
         }
 
-        private static MethodInfo PVEqualityMethod
+        public static MethodInfo PVEqualityMethod
         {
             get { return _PVEqualityMethod; }
         }
 
-        private static MethodInfo PVInequalityMethod
+        public static MethodInfo PVInequalityMethod
         {
             get { return _PVInequalityMethod; }
         }
 
-        private static MethodInfo PVGreaterThanMethod
+        public static MethodInfo PVGreaterThanMethod
         {
             get { return _PVGreaterThanMethod; }
         }
 
-        private static MethodInfo PVLessThanMethod
+        public static MethodInfo PVLessThanMethod
         {
             get { return _PVLessThanMethod; }
         }
 
-        private static MethodInfo PVGreaterThanOrEqualMethod
+        public static MethodInfo PVGreaterThanOrEqualMethod
         {
             get { return _PVGreaterThanOrEqualMethod; }
         }
 
-        private static MethodInfo PVLessThanOrEqualMethod
+        public static MethodInfo PVLessThanOrEqualMethod
         {
             get { return _PVLessThanOrEqualMethod; }
         }
 
-        private static MethodInfo PVIsNullMethod
+        public static MethodInfo PVIsNullMethod
         {
             get { return _PVIsNullMethod; }
         }
 
-        private static MethodInfo PVDynamicCallMethod
+        public static MethodInfo PVDynamicCallMethod
         {
             get { return _PVDynamicCallMethod; }
         }
 
-        internal static MethodInfo PVIndirectCallMethod
+        public static MethodInfo PVIndirectCallMethod
         {
             get { return _PVIndirectCallMethod; }
+        }
+
+        public static MethodInfo PVOnesComplementMethod
+        {
+            get { return _PVOnesComplementMethod;  }
         }
 
         // ReSharper restore InconsistentNaming

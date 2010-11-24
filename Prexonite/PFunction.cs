@@ -315,7 +315,7 @@ namespace Prexonite
                 buffer.Append("var ");
                 foreach (var variable in Variables)
                 {
-                    buffer.Append(variable);
+                    buffer.Append(StringPType.ToIdLiteral(variable));
                     buffer.Append(',');
                 }
                 buffer.Length -= 1;
@@ -384,7 +384,7 @@ namespace Prexonite
             #region Head
 
             writer.Write("function ");
-            writer.Write(Id);
+            writer.Write(StringPType.ToIdLiteral(Id));
             StringBuilder buffer;
             if (Parameters.Count > 0)
             {
@@ -392,7 +392,7 @@ namespace Prexonite
                 buffer = new StringBuilder();
                 foreach (var param in Parameters)
                 {
-                    buffer.Append(param);
+                    buffer.Append(StringPType.ToIdLiteral(param));
                     buffer.Append(",");
                 }
                 buffer.Remove(buffer.Length - 1, 1);
@@ -859,40 +859,6 @@ namespace Prexonite
                     case OpCode.incloci:
                         break;
                     case OpCode.decloci:
-                        break;
-                    case OpCode.neg:
-                        break;
-                    case OpCode.not:
-                        break;
-                    case OpCode.add:
-                        break;
-                    case OpCode.sub:
-                        break;
-                    case OpCode.mul:
-                        break;
-                    case OpCode.div:
-                        break;
-                    case OpCode.mod:
-                        break;
-                    case OpCode.pow:
-                        break;
-                    case OpCode.ceq:
-                        break;
-                    case OpCode.cne:
-                        break;
-                    case OpCode.clt:
-                        break;
-                    case OpCode.cle:
-                        break;
-                    case OpCode.cgt:
-                        break;
-                    case OpCode.cge:
-                        break;
-                    case OpCode.or:
-                        break;
-                    case OpCode.and:
-                        break;
-                    case OpCode.xor:
                         break;
                     case OpCode.check_const:
                         break;

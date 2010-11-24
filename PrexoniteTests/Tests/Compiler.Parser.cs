@@ -1187,7 +1187,7 @@ function main
             List<Instruction> code = target.Functions["main"].Code;
             Assert.IsTrue(code.Count > 26, "Resulting must be longer than 18 instructions");
             string enum1 = code[3].Id ?? "No_ID_at_3";
-            string enum2 = code[23].Id ?? "No_ID_at_23";
+            string enum2 = code[24].Id ?? "No_ID_at_23";
 
             _expect(
                 string.Format(
@@ -1217,7 +1217,7 @@ label enum1\continue    ldloc   {0}
 label enum1\break       ldloc   {0}
                        @cmd.1   dispose
                         leave   endTry
-label endTry            
+label endTry            nop
                                     
                         newobj.0    ""Object(\""StringBuilder\"")""
                         stloc   buffer
@@ -1240,7 +1240,7 @@ label enum2\continue    ldloc   {1}
                         ldloc   {1}
                        @cmd.1   dispose
                         leave   endTry2
-label endTry2
+label endTry2           nop
 ",
                     enum1,
                     enum2));
@@ -2175,7 +2175,7 @@ label beginCatch
                     stloc   exc
                     ldloc   exc
                    @func.1  log
-label endTry
+label endTry        nop
 ");
         }
 
@@ -2238,12 +2238,13 @@ label beginCatch2   exception
                             ""FATAL""
                    @func.1  log
                    @func.0  shutdown
-label endTry2       leave   endTry
+label endTry2       nop
+                    leave   endTry
 label beginCatch    exception
                     stloc   exc
                     ldloc   exc
                    @func.1  log
-label endTry
+label endTry        nop
 ");
         }
 
@@ -2288,7 +2289,7 @@ label beginFinally
                     ldloc   handle
                    @func.1  closeHandle
                     leave   endTry
-label endTry
+label endTry        nop
 ");
         }
 
@@ -2361,7 +2362,7 @@ label beginFinally
                 ldloc   {0}
                @cmd.1   dispose
                 leave   endTry
-label endTry                    
+label endTry    nop
 ",using1));
         }
 
@@ -2973,6 +2974,8 @@ indloc.1 a
         [Test]
         public void OptimizeSquare()
         {
+            //Since operators can now be overloaded, this optimization does no longer apply
+            //This test ensures that the optimization does NOT take place
             _compile(@"
 function main()
 {
@@ -2984,8 +2987,8 @@ function main()
             _expect(@"
 var x
 ldloc   x
-dup     1
-mul
+ldc.int 2   //what you would expect
+pow
 ret
 ");
         }
@@ -3272,8 +3275,8 @@ label continueForeach   ldloc   {0}
                         ldloc   {0}
                         @cmd.1  dispose
                         leave   end
-label   end
-",target.Functions["main"].Code[3].Id));
+label   end             nop //this nop ensures compatibility with CIL
+", target.Functions["main"].Code[3].Id));
         }
 
         [Test]

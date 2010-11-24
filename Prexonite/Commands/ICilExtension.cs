@@ -4,6 +4,7 @@ using System.Linq;
 using System.Text;
 using Prexonite.Compiler;
 using Prexonite.Compiler.Cil;
+using Prexonite.Types;
 
 namespace Prexonite.Commands
 {
@@ -160,6 +161,61 @@ namespace Prexonite.Commands
                 entry = null;
                 return false;
             }
+        }
+
+        public bool TryGetReference(StackContext sctx, out PValue result)
+        {
+            result = null;
+            string id;
+            switch (Interpretation)
+            {
+                case CompileTimeInterpretation.GlobalVariableReference:
+                    id = (string)Value;
+                    PVariable gvar;
+                    if (sctx.ParentApplication.Variables.TryGetValue(id, out gvar))
+                        result = sctx.CreateNativePValue(gvar);
+                    break;
+                case CompileTimeInterpretation.FunctionReference:
+                    id = (string)Value;
+                    PFunction func;
+                    if (sctx.ParentApplication.Functions.TryGetValue(id, out func))
+                        result = sctx.CreateNativePValue(func);
+                    break;
+                case CompileTimeInterpretation.CommandReference:
+                    id = (string)Value;
+                    PCommand cmd;
+                    if (sctx.ParentEngine.Commands.TryGetValue(id, out cmd))
+                        result = sctx.CreateNativePValue(cmd);
+                    break;
+            }
+
+            return result != null;
+        }
+
+        public bool TryGetConstant(out PValue result)
+        {
+            result = null;
+            switch (Interpretation)
+            {
+                case CompileTimeInterpretation.Null:
+                    result = PType.Null;
+                    break;
+                case CompileTimeInterpretation.String:
+                    result = (string) Value;
+                    break;
+                case CompileTimeInterpretation.Int:
+                    int value;
+                    TryGetInt(out value);
+                    result = value;
+                    break;
+                case CompileTimeInterpretation.Bool:
+                    bool flag;
+                    TryGetBool(out flag);
+                    result = flag;
+                    break;
+            }
+
+            return result != null;
         }
 
         /// <summary>

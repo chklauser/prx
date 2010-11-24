@@ -25,7 +25,6 @@ function main() {
 }");
 
             var main = target.Functions["main"];
-            var meta = main.Meta;
 
             var cilExt1 = new CilExtensionHint(new List<int> { 1, 5, 9 });
             var existingHints = _getCilHints(main, true);
@@ -148,7 +147,459 @@ function main()
     return result;
 }
 ");
+            _expectCil();
             Expect(Enumerable.Range(1,10).Select(_ => (PValue) true).ToList());
+        }
+
+
+        [Test]
+        public void JumpBreaksCilExtensions()
+        {
+            Compile(@"
+function main(b)
+{asm{
+                ldloc b
+                ldc.int 4
+                cmd.2 (==)
+                jump.f L_else 
+label L_if      ldc.string ""IF""
+                jump L_endif
+label L_else    ldc.string ""ELSE""
+label L_endif   ldc.string ""-branch""
+                cmd.2 (+)
+                ret
+}}
+");
+            Assert.AreEqual(1, _getCilHints(target.Functions["main"], true).Length);
+            _expectCil();
+            Expect("IF-branch", 4);
+            Expect("ELSE-branch", 3);
+            Expect("ELSE-branch", 5);
+        }
+
+        [Test]
+        public void TryCatchFinallyCompiles()
+        {
+            Compile(@"
+var t = """";
+function trace(x) = t+=x;
+
+function main()
+{
+    try {
+        trace(""t"");
+        throw ""e"";
+    }catch(var exc){
+        trace(""c"");
+        trace(exc.Message);
+    }finally{
+        trace(""f"");
+    }
+
+    return t;
+}
+");
+            _expectCil();
+            Expect("tfce");
+        }
+
+        private void _expectCil(string functionId = "main")
+        {
+            var func = target.Functions[functionId];
+            Assert.IsNotNull(func, "Function " + functionId + " must exist");
+            Assert.IsFalse(func.Meta[PFunction.VolatileKey].Switch,functionId + " must not be volatile.");
+        }
+
+        [Test,ExpectedException(typeof(PrexoniteRuntimeException),"e")]
+        public void TryFinallyCondCompiles()
+        {
+            Compile(@"
+var t = """";
+function trace(x) = t+=x;
+
+function main(x)
+{
+    try {
+        trace(""t"");
+        if(x)
+            throw ""e"";
+    }finally{
+        trace(""f"");
+    }
+
+    return t;
+}
+");
+            _expectCil();
+            Expect("tf", true);
+        }
+
+        [Test]
+        public void TryCatchCondCompiles()
+        {
+            Compile(@"
+var t = """";
+function trace(x) = t+=x;
+
+function main(x)
+{
+    try {
+        trace(""t"");
+        if(x)
+            throw ""e"";
+    }catch(var exc){
+        trace(""c"");
+        trace(exc.Message);
+    }
+
+    return t;
+}
+");
+            _expectCil();
+            Expect("tce", true);
+        }
+
+        [Test]
+        public void CatchInFinally1()
+        {
+            Compile(@"
+var t = """";
+function trace(x) = t+=x;
+
+function main(x)
+{
+    try {
+        try {
+            trace(""t"");
+            if(x)
+                throw ""e"";
+        }catch(var exc){
+            trace(""c"");
+            trace(exc.Message);
+        }
+    } finally {
+        trace(""f"");
+    }
+
+    return t;
+}
+");
+            _expectCil();
+            Expect("tcef", true);
+        }
+
+        [Test]
+        public void CatchInFinally2()
+        {
+            Compile(@"
+var t = """";
+function trace(x) = t+=x;
+
+function main(x)
+{
+    try {
+        try {
+            trace(""t"");
+            throw ""e"";
+        }catch(var exc){
+            if(x)
+                trace(""x"");
+        }
+    } finally {
+        trace(""f"");
+    }
+
+    return t;
+}
+");
+
+            _expectCil();
+            Expect("txf", true);
+        }
+
+        [Test]
+        public void CatchInFinally3()
+        {
+            Compile(@"
+var t = """";
+function trace(x) = t+=x;
+
+function main(x)
+{
+    try {
+        try {
+            trace(""t"");
+            throw ""e"";
+        }catch(var exc){
+            if(x)
+                trace(""x"");
+        }
+    } catch(var exc){
+        trace(""e"");
+    } finally {
+        trace(""f"");
+    }
+
+    return t;
+}
+");
+            _expectCil();
+            Expect("txf", true);
+        }
+
+        [Test]
+        public void CatchInFinally4()
+        {
+            Compile(@"
+var t = """";
+function trace(x) = t+=x;
+
+function main(x)  [store_debug_implementation enabled;]
+{
+    for(var i = 1; i < 6; i++)
+        try
+        {
+            try
+            {
+                throw i;
+            }
+            catch(var exc)
+            {
+                if(x)
+                    throw exc;
+            }
+        }
+        catch(var exc)
+        {
+            trace(""e"");
+        }
+        finally
+        {
+            trace(""f"");
+        }
+    return t;
+}
+");
+            _expectCil();
+            Expect("fefefefefe", true);
+        }
+
+        [Test]
+        public void CatchInFinally5()
+        {
+            Compile(@"
+var t = """";
+function trace(x) = t+=x;
+
+function main(x,y)  [store_debug_implementation enabled;]
+{
+    try
+    {
+        try
+        {
+            throw ""i""; //this must be a throw; won't work with trace
+        }
+        catch(var exc)
+        {
+            if(not x) //needs to be false (it's a runtime error after all)
+                throw exc;
+        }
+    } //must be a nested block
+    finally
+    {
+        trace(""f"");
+    }
+    return t;
+}
+");
+            _expectCil();
+            Expect("f", true,true);
+        }
+
+        [Test]
+        public void TryCatchFinallyCondCompiles()
+        {
+            Compile(@"
+var t = """";
+function trace(x) = t+=x;
+
+function main(x) //[store_debug_implementation enabled;]
+{
+    try {
+        trace(""t"");
+        if(x)
+            throw ""e"";
+    }catch(var exc){
+        trace(""c"");
+        trace(exc.Message);
+    }finally{
+        trace(""f"");
+    }
+
+    return t;
+}
+");
+            _expectCil();
+            Expect("tfce", true);
+        }
+
+        [Test, ExpectedException(typeof(PrexoniteRuntimeException), @"Unexpected leave instruction. This happens when jumping to an instruction in a try block from the outside.")]
+        public void LabelOnFirstNeLabelOnTry()
+        {
+            Compile(@"
+var t = """";
+function trace(x) = t+=x;
+
+function main(x) //[store_debug_implementation enabled;]
+{
+    try {
+        trace(""t"");
+        goto L1;
+        trace(""z"");
+    } finally {
+        trace(""f"");
+    }
+
+    try {
+        trace(""g"");
+        try {
+L1:         trace(""b"");
+        } finally {
+            trace(""r"");
+        }
+    } finally {
+        trace(""v"");
+    }
+
+    return t;
+}
+");
+            _expectSehDeficiency();
+            Expect("undefined", true);
+        }        
+        
+        [Test]
+        public void TryFinallyShadowingNoBridge()
+        {
+            Compile(@"
+var t = """";
+function trace(x) = t+=x;
+
+//This tets is expected not to compile to CIL
+function main(x) //[store_debug_implementation enabled;]
+{
+    try {
+        trace(""t"");
+        goto L1;
+        trace(""z"");
+    } finally {
+        trace(""f"");
+    }
+
+    try {
+        trace(""g"");
+L1:     try {
+            trace(""b"");
+        } finally {
+            trace(""r"");
+        }
+    } finally {
+        trace(""v"");
+    }
+
+    return t;
+}
+");
+            _expectSehDeficiency();
+            Expect("tbrv", true);
+        }        
+        
+        [Test]
+        public void TryFinallyShadowingBridge()
+        {
+            Compile(@"
+var t = """";
+function trace(x) = t+=x;
+
+function main(x) //[store_debug_implementation enabled;]
+{
+    try {
+        trace(""k"");
+        try {
+            trace(""t"");
+            goto L1;
+            trace(""z"");
+        } finally {
+            trace(""f"");
+        }
+    
+        trace(""g"");
+L1:     try {
+            trace(""b"");
+        } finally {
+            trace(""r"");
+        }
+    } finally {
+        trace(""v"");
+    }
+
+    return t;
+}
+");
+            _expectCil();
+            Expect("ktfbrv", true);
+        }       
+        
+        [Test]
+        public void ReturnFromFinally()
+        {
+            Compile(@"
+var t = """";
+function trace(x) = t+=x;
+
+function main(x) //[store_debug_implementation enabled;]
+{
+    try {
+        trace(""k"");
+    } finally {
+        trace(""f"");
+        return t;
+        trace(""v"");
+    }
+
+    return t;
+}
+");
+            _expectSehDeficiency();
+            Expect("kf", true);
+        }
+
+        private void _expectSehDeficiency(string name = "main")
+        {
+            _expectSehDeficiency(target.Functions[name]);
+        }
+
+        private static void _expectSehDeficiency(PFunction function)
+        {
+            Assert.IsNotNull(function, "function not found");
+            Assert.IsTrue(function.Meta[PFunction.VolatileKey].Switch, "Function is expected to be volatile.");
+            Assert.IsTrue(function.Meta[PFunction.DeficiencyKey].Text.Contains("SEH"),"CIL deficiency is expected to be related to SEH.");
+        }
+
+        [Test]
+        public void MinimalTryCatch()
+        {
+            Compile(@"
+var t; 
+function trace(x) = t+=x~String; 
+function main(x) [store_debug_implementation enabled;]
+{
+    try {trace(1);}
+    finally{trace(2);}
+    return t;
+}");
+
+            Expect("12",true);
         }
     }
 }

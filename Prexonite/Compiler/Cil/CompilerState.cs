@@ -53,10 +53,11 @@ namespace Prexonite.Compiler.Cil
         private readonly PFunction _source;
         private readonly SymbolTable<Symbol> _symbols;
         private readonly Engine _targetEngine;
-        private readonly Stack<TryCatchFinallyBlock> _tryBlocks;
+        private readonly Stack<CompiledTryCatchFinallyBlock> _tryBlocks;
         private LocalBuilder[] _tempLocals;
         private readonly CompilerPass _pass;
         private readonly FunctionLinking _linking;
+        private readonly StructuredExceptionHandling _seh;
 
         public CompilerState
             (PFunction source, Engine targetEngine, ILGenerator il, CompilerPass pass, FunctionLinking linking)
@@ -79,7 +80,7 @@ namespace Prexonite.Compiler.Cil
                 InstructionLabels[i] = il.DefineLabel();
             _returnLabel = il.DefineLabel();
             _symbols = new SymbolTable<Symbol>();
-            _tryBlocks = new Stack<TryCatchFinallyBlock>();
+            _tryBlocks = new Stack<CompiledTryCatchFinallyBlock>();
 
             MetaEntry cilHints;
             _foreachHints = new List<ForeachHint>();
@@ -112,6 +113,8 @@ namespace Prexonite.Compiler.Cil
                         _cilExtensionOffsets.Enqueue(offset);
                 }
             }
+
+            _seh = new StructuredExceptionHandling(this);
         }
 
         #region Accessors
@@ -185,7 +188,7 @@ namespace Prexonite.Compiler.Cil
         /// <summary>
         /// The stack of try blocks currently in effect. The innermost try block is on top.
         /// </summary>
-        public Stack<TryCatchFinallyBlock> TryBlocks
+        public Stack<CompiledTryCatchFinallyBlock> TryBlocks
         {
             get { return _tryBlocks; }
         }
@@ -292,6 +295,16 @@ namespace Prexonite.Compiler.Cil
             get { return _linking; }
         }
 
+        public LocalBuilder PrimaryTempLocal
+        {
+            get { return TempLocals[0]; }
+        }
+
+        public StructuredExceptionHandling Seh
+        {
+            get { return _seh; }
+        }
+
         #endregion
 
         #region Emit-helper methods
@@ -345,12 +358,19 @@ namespace Prexonite.Compiler.Cil
 
         internal bool _MustUseLeave(int instructionAddress, ref int targetAddress)
         {
+            Label dummy;
+            return _MustUseLeave(instructionAddress, ref targetAddress, out dummy);
+        }
+
+        internal bool _MustUseLeave(int instructionAddress, ref int targetAddress, out Label targetLabel)
+        {
+            targetLabel = default(Label);
             var useLeave = false;
-            foreach (var enclosingBlock in TryBlocks)
+            foreach (var block in TryBlocks)
             {
-                if (enclosingBlock.Handles(instructionAddress))
+                if (block.Spans(instructionAddress))
                 {
-                    if (!enclosingBlock.Handles(targetAddress))
+                    if (!block.Handles(targetAddress))
                     {
                         useLeave = true;
                         //To skip a try block in Prexonite, one jumps to the first finally instruction.
@@ -358,19 +378,34 @@ namespace Prexonite.Compiler.Cil
                         //  the finally clause is automatically executed first.
                         // As for try-catch: The Prexonite "leave" instruction has no representation in CIL and can therefore not
                         //  be targeted directly. The same workaround applies.
-                        if (targetAddress == enclosingBlock.BeginFinally ||
-                            targetAddress == enclosingBlock.BeginCatch)
-                            targetAddress = enclosingBlock.EndTry;
+                        if (targetAddress == block.BeginFinally ||
+                            targetAddress == block.BeginCatch)
+                            targetAddress = block.EndTry;
                         break;
                     }
                     else
                     {
+                        foreach(var enclosingBlock in TryBlocks)
+                        {
+                            if(ReferenceEquals(enclosingBlock,block))
+                                continue;
+                            if(!(enclosingBlock.Spans(targetAddress) && enclosingBlock.Spans(instructionAddress)))
+                                continue;
+                            
+                            if(targetAddress == enclosingBlock.BeginFinally ||
+                                targetAddress == enclosingBlock.BeginCatch)
+                            {
+                                useLeave = true;
+                                targetAddress = enclosingBlock.EndTry;
+                                break;
+                            }
+                        }
                         //remains a local jump so far
                     }
                 }
                 else
                 {
-                    if (enclosingBlock.Handles(targetAddress))
+                    if (block.Handles(targetAddress))
                         throw new PrexoniteException("Jumps into guarded (try) blocks are illegal.");
                     //remains an external jump so far
                 }
@@ -923,16 +958,36 @@ namespace Prexonite.Compiler.Cil
             EmitWrapBool();
         }
 
+        public void EmitLoadRealAsPValue(double value)
+        {
+            Il.Emit(OpCodes.Ldc_R8, value);
+            EmitWrapReal();
+        }
+
         public void EmitLoadRealAsPValue(Instruction ins)
         {
-            Il.Emit(OpCodes.Ldc_R8, (double) ins.GenericArgument);
-            EmitWrapReal();
+            EmitLoadRealAsPValue((double)ins.GenericArgument);
         }
 
         public void EmitLoadIntAsPValue(int argc)
         {
             EmitLdcI4(argc);
             EmitWrapInt();
+        }
+
+        internal void _EmitAssignReturnMode(ReturnMode returnMode)
+        {
+            EmitLoadArg(ParamReturnModeIndex);
+            EmitLdcI4((int) returnMode);
+            Il.Emit(OpCodes.Stind_I4);
+        }
+
+        public void EmitSetReturnValue()
+        {
+            EmitStoreLocal(PrimaryTempLocal);
+            EmitLoadArg(ParamResultIndex);
+            EmitLoadLocal(PrimaryTempLocal);
+            Il.Emit(OpCodes.Stind_Ref);
         }
     }
 }

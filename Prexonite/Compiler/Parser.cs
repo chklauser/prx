@@ -9,7 +9,7 @@ using Prexonite.Compiler.Ast;
 using Prexonite.Types;//END SOURCE ARRAY
 
 
-#line 27 "R:\Prexonite\Tools\Parser.frame" //FRAME
+#line 27 "D:\DotNetProjects\Prexonite\Tools\Parser.frame" //FRAME
 
 using System;
 
@@ -19,7 +19,7 @@ using System;
 namespace Prexonite.Compiler {
 
 
-#line 30 "R:\Prexonite\Tools\Parser.frame" //FRAME
+#line 30 "D:\DotNetProjects\Prexonite\Tools\Parser.frame" //FRAME
 
 
 using NoDebug = System.Diagnostics.DebuggerNonUserCodeAttribute;
@@ -233,7 +233,7 @@ internal partial class Parser {
 	}
 	const int maxT = 96;
 
-#line 43 "R:\Prexonite\Tools\Parser.frame" //FRAME
+#line 43 "D:\DotNetProjects\Prexonite\Tools\Parser.frame" //FRAME
 
 	const bool T = true;
 	const bool x = false;
@@ -252,7 +252,7 @@ internal partial class Parser {
 //SOURCE ARRAY
 //END SOURCE ARRAY
 
-#line 55 "R:\Prexonite\Tools\Parser.frame" //FRAME
+#line 55 "D:\DotNetProjects\Prexonite\Tools\Parser.frame" //FRAME
 
 
     [NoDebug()]
@@ -284,7 +284,7 @@ internal partial class Parser {
 #line default //END FRAME -->pragmas
 
 
-#line 82 "R:\Prexonite\Tools\Parser.frame" //FRAME
+#line 82 "D:\DotNetProjects\Prexonite\Tools\Parser.frame" //FRAME
 
 			la = t;
 		}
@@ -371,157 +371,164 @@ internal partial class Parser {
 				target.Symbols.Add(id, new SymbolEntry(kind, id));
 				
 			}
-		} else if (/*Parser.Assembler.atg:68*/isInNullGroup()) {
+		} else if (/*Parser.Assembler.atg:68*/isInOpAliasGroup()) {
 			AsmId(/*Parser.Assembler.atg:68*/out insbase);
 			if (la.kind == _dot) {
 				Get();
 				AsmId(/*Parser.Assembler.atg:69*/out detail);
 			}
-			/*Parser.Assembler.atg:70*/code = getOpCode(insbase, detail);
+			/*Parser.Assembler.atg:70*/addOpAlias(block, insbase, detail); 
+		} else if (/*Parser.Assembler.atg:73*/isInNullGroup()) {
+			AsmId(/*Parser.Assembler.atg:73*/out insbase);
+			if (la.kind == _dot) {
+				Get();
+				AsmId(/*Parser.Assembler.atg:74*/out detail);
+			}
+			/*Parser.Assembler.atg:75*/code = getOpCode(insbase, detail);
 			addInstruction(block, new Instruction(code));
 			
-		} else if (/*Parser.Assembler.atg:76*/isAsmInstruction("label",null) ) {
-			AsmId(/*Parser.Assembler.atg:76*/out insbase);
-			AsmId(/*Parser.Assembler.atg:79*/out id);
-			/*Parser.Assembler.atg:80*/addLabel(block, id); 
-		} else if (/*Parser.Assembler.atg:83*/isAsmInstruction("nop", null)) {
-			AsmId(/*Parser.Assembler.atg:83*/out insbase);
-			/*Parser.Assembler.atg:83*/Instruction ins = new Instruction(OpCode.nop); 
+		} else if (/*Parser.Assembler.atg:81*/isAsmInstruction("label",null) ) {
+			AsmId(/*Parser.Assembler.atg:81*/out insbase);
+			AsmId(/*Parser.Assembler.atg:84*/out id);
+			/*Parser.Assembler.atg:85*/addLabel(block, id); 
+		} else if (/*Parser.Assembler.atg:88*/isAsmInstruction("nop", null)) {
+			AsmId(/*Parser.Assembler.atg:88*/out insbase);
+			/*Parser.Assembler.atg:88*/Instruction ins = new Instruction(OpCode.nop); 
 			if (la.kind == _plus) {
 				Get();
-				AsmId(/*Parser.Assembler.atg:84*/out id);
-				/*Parser.Assembler.atg:84*/ins.Id = id; 
+				AsmId(/*Parser.Assembler.atg:89*/out id);
+				/*Parser.Assembler.atg:89*/ins.Id = id; 
 			}
-			/*Parser.Assembler.atg:86*/addInstruction(block, ins); 
-		} else if (/*Parser.Assembler.atg:90*/isAsmInstruction("rot", null)) {
-			AsmId(/*Parser.Assembler.atg:90*/out insbase);
+			/*Parser.Assembler.atg:91*/addInstruction(block, ins); 
+		} else if (/*Parser.Assembler.atg:95*/isAsmInstruction("rot", null)) {
+			AsmId(/*Parser.Assembler.atg:95*/out insbase);
 			Expect(_dot);
-			Integer(/*Parser.Assembler.atg:91*/out rotations);
+			Integer(/*Parser.Assembler.atg:96*/out rotations);
 			Expect(_comma);
-			Integer(/*Parser.Assembler.atg:92*/out values);
-			/*Parser.Assembler.atg:94*/addInstruction(block, Instruction.CreateRotate(rotations, values)); 
-		} else if (/*Parser.Assembler.atg:98*/isAsmInstruction("indloci", null)) {
+			Integer(/*Parser.Assembler.atg:97*/out values);
+			/*Parser.Assembler.atg:99*/addInstruction(block, Instruction.CreateRotate(rotations, values)); 
+		} else if (/*Parser.Assembler.atg:103*/isAsmInstruction("indloci", null)) {
 			if (la.kind == _at) {
 				Get();
-				/*Parser.Assembler.atg:98*/justEffect = true; 
+				/*Parser.Assembler.atg:103*/justEffect = true; 
 			}
-			AsmId(/*Parser.Assembler.atg:100*/out insbase);
+			AsmId(/*Parser.Assembler.atg:105*/out insbase);
 			Expect(_dot);
-			Integer(/*Parser.Assembler.atg:101*/out arguments);
-			Integer(/*Parser.Assembler.atg:102*/out index);
-			/*Parser.Assembler.atg:104*/addInstruction(block, Instruction.CreateIndLocI(index, arguments, justEffect)); 
-		} else if (/*Parser.Assembler.atg:107*/isAsmInstruction("swap", null)) {
-			AsmId(/*Parser.Assembler.atg:107*/out insbase);
-			/*Parser.Assembler.atg:108*/addInstruction(block, Instruction.CreateExchange()); 
-		} else if (/*Parser.Assembler.atg:113*/isAsmInstruction("ldc", "real")) {
-			AsmId(/*Parser.Assembler.atg:113*/out insbase);
+			Integer(/*Parser.Assembler.atg:106*/out arguments);
+			Integer(/*Parser.Assembler.atg:107*/out index);
+			/*Parser.Assembler.atg:109*/addInstruction(block, Instruction.CreateIndLocI(index, arguments, justEffect)); 
+		} else if (/*Parser.Assembler.atg:112*/isAsmInstruction("swap", null)) {
+			AsmId(/*Parser.Assembler.atg:112*/out insbase);
+			/*Parser.Assembler.atg:113*/addInstruction(block, Instruction.CreateExchange()); 
+		} else if (/*Parser.Assembler.atg:118*/isAsmInstruction("ldc", "real")) {
+			AsmId(/*Parser.Assembler.atg:118*/out insbase);
 			Expect(_dot);
-			AsmId(/*Parser.Assembler.atg:115*/out detail);
-			SignedReal(/*Parser.Assembler.atg:116*/out dblArg);
-			/*Parser.Assembler.atg:117*/addInstruction(block, Instruction.CreateConstant(dblArg)); 
-		} else if (/*Parser.Assembler.atg:122*/isAsmInstruction("ldc", "bool")) {
-			AsmId(/*Parser.Assembler.atg:122*/out insbase);
+			AsmId(/*Parser.Assembler.atg:120*/out detail);
+			SignedReal(/*Parser.Assembler.atg:121*/out dblArg);
+			/*Parser.Assembler.atg:122*/addInstruction(block, Instruction.CreateConstant(dblArg)); 
+		} else if (/*Parser.Assembler.atg:127*/isAsmInstruction("ldc", "bool")) {
+			AsmId(/*Parser.Assembler.atg:127*/out insbase);
 			Expect(_dot);
-			AsmId(/*Parser.Assembler.atg:124*/out detail);
-			Boolean(/*Parser.Assembler.atg:125*/out bolArg);
-			/*Parser.Assembler.atg:126*/addInstruction(block, Instruction.CreateConstant(bolArg)); 
-		} else if (/*Parser.Assembler.atg:131*/isInIntegerGroup()) {
-			AsmId(/*Parser.Assembler.atg:131*/out insbase);
+			AsmId(/*Parser.Assembler.atg:129*/out detail);
+			Boolean(/*Parser.Assembler.atg:130*/out bolArg);
+			/*Parser.Assembler.atg:131*/addInstruction(block, Instruction.CreateConstant(bolArg)); 
+		} else if (/*Parser.Assembler.atg:136*/isInIntegerGroup()) {
+			AsmId(/*Parser.Assembler.atg:136*/out insbase);
 			if (la.kind == _dot) {
 				Get();
-				AsmId(/*Parser.Assembler.atg:132*/out detail);
+				AsmId(/*Parser.Assembler.atg:137*/out detail);
 			}
-			SignedInteger(/*Parser.Assembler.atg:133*/out arguments);
-			/*Parser.Assembler.atg:134*/code = getOpCode(insbase, detail);
+			SignedInteger(/*Parser.Assembler.atg:138*/out arguments);
+			/*Parser.Assembler.atg:139*/code = getOpCode(insbase, detail);
 			addInstruction(block, new Instruction(code, arguments));
 			
-		} else if (/*Parser.Assembler.atg:140*/isInJumpGroup()) {
-			AsmId(/*Parser.Assembler.atg:140*/out insbase);
+		} else if (/*Parser.Assembler.atg:145*/isInJumpGroup()) {
+			AsmId(/*Parser.Assembler.atg:145*/out insbase);
 			if (la.kind == _dot) {
 				Get();
-				AsmId(/*Parser.Assembler.atg:141*/out detail);
+				AsmId(/*Parser.Assembler.atg:146*/out detail);
 			}
-			/*Parser.Assembler.atg:142*/Instruction ins = null;
+			/*Parser.Assembler.atg:147*/Instruction ins = null;
 			code = getOpCode(insbase, detail);
 			
 			if (StartOf(2)) {
-				AsmId(/*Parser.Assembler.atg:146*/out id);
-				/*Parser.Assembler.atg:148*/ins = new Instruction(code, -1, id);
+				AsmId(/*Parser.Assembler.atg:151*/out id);
+				/*Parser.Assembler.atg:153*/ins = new Instruction(code, -1, id);
 				
 			} else if (la.kind == _integer) {
-				Integer(/*Parser.Assembler.atg:150*/out arguments);
-				/*Parser.Assembler.atg:150*/ins = new Instruction(code, arguments); 
+				Integer(/*Parser.Assembler.atg:155*/out arguments);
+				/*Parser.Assembler.atg:155*/ins = new Instruction(code, arguments); 
 			} else SynErr(98);
-			/*Parser.Assembler.atg:151*/addInstruction(block, ins); 
-		} else if (/*Parser.Assembler.atg:156*/isInIdGroup()) {
-			AsmId(/*Parser.Assembler.atg:156*/out insbase);
+			/*Parser.Assembler.atg:156*/addInstruction(block, ins); 
+		} else if (/*Parser.Assembler.atg:161*/isInIdGroup()) {
+			AsmId(/*Parser.Assembler.atg:161*/out insbase);
 			if (la.kind == _dot) {
 				Get();
-				AsmId(/*Parser.Assembler.atg:157*/out detail);
+				AsmId(/*Parser.Assembler.atg:162*/out detail);
 			}
-			AsmId(/*Parser.Assembler.atg:158*/out id);
-			/*Parser.Assembler.atg:159*/code = getOpCode(insbase, detail);
+			AsmId(/*Parser.Assembler.atg:163*/out id);
+			/*Parser.Assembler.atg:164*/code = getOpCode(insbase, detail);
 			addInstruction(block, new Instruction(code, id));
 			
-		} else if (/*Parser.Assembler.atg:166*/isInIdArgGroup()) {
+		} else if (/*Parser.Assembler.atg:171*/isInIdArgGroup()) {
 			if (la.kind == _at) {
 				Get();
-				/*Parser.Assembler.atg:166*/justEffect = true; 
+				/*Parser.Assembler.atg:171*/justEffect = true; 
 			}
-			AsmId(/*Parser.Assembler.atg:168*/out insbase);
+			AsmId(/*Parser.Assembler.atg:173*/out insbase);
 			if (la.kind == _dot) {
 				Get();
-				Integer(/*Parser.Assembler.atg:169*/out arguments);
+				Integer(/*Parser.Assembler.atg:174*/out arguments);
 			} else if (StartOf(2)) {
-				/*Parser.Assembler.atg:170*/arguments = 0; 
+				/*Parser.Assembler.atg:175*/arguments = 0; 
 			} else SynErr(99);
-			AsmId(/*Parser.Assembler.atg:172*/out id);
-			/*Parser.Assembler.atg:173*/code = getOpCode(insbase, detail);
+			AsmId(/*Parser.Assembler.atg:177*/out id);
+			/*Parser.Assembler.atg:178*/code = getOpCode(insbase, detail);
 			addInstruction(block, new Instruction(code, arguments, id, justEffect));
 			
-		} else if (/*Parser.Assembler.atg:179*/isInArgGroup()) {
+		} else if (/*Parser.Assembler.atg:184*/isInArgGroup()) {
 			if (la.kind == _at) {
 				Get();
-				/*Parser.Assembler.atg:179*/justEffect = true; 
+				/*Parser.Assembler.atg:184*/justEffect = true; 
 			}
-			AsmId(/*Parser.Assembler.atg:181*/out insbase);
+			AsmId(/*Parser.Assembler.atg:186*/out insbase);
 			if (la.kind == _dot) {
 				Get();
-				Integer(/*Parser.Assembler.atg:182*/out arguments);
+				Integer(/*Parser.Assembler.atg:187*/out arguments);
 			} else if (StartOf(3)) {
-				/*Parser.Assembler.atg:183*/arguments = 0; 
+				/*Parser.Assembler.atg:188*/arguments = 0; 
 			} else SynErr(100);
-			/*Parser.Assembler.atg:185*/code = getOpCode(insbase, detail);
+			/*Parser.Assembler.atg:190*/code = getOpCode(insbase, detail);
 			addInstruction(block, new Instruction(code, arguments, null, justEffect));
 			
-		} else if (/*Parser.Assembler.atg:191*/isInQualidArgGroup()) {
+		} else if (/*Parser.Assembler.atg:196*/isInQualidArgGroup()) {
 			if (la.kind == _at) {
 				Get();
-				/*Parser.Assembler.atg:191*/justEffect = true; 
+				/*Parser.Assembler.atg:196*/justEffect = true; 
 			}
-			AsmId(/*Parser.Assembler.atg:193*/out insbase);
+			AsmId(/*Parser.Assembler.atg:198*/out insbase);
 			if (la.kind == _dot) {
 				Get();
-				Integer(/*Parser.Assembler.atg:194*/out arguments);
+				Integer(/*Parser.Assembler.atg:199*/out arguments);
 			} else if (StartOf(2)) {
-				/*Parser.Assembler.atg:195*/arguments = 0; 
+				/*Parser.Assembler.atg:200*/arguments = 0; 
 			} else SynErr(101);
-			AsmQualid(/*Parser.Assembler.atg:197*/out id);
-			/*Parser.Assembler.atg:198*/code = getOpCode(insbase, detail);
+			AsmQualid(/*Parser.Assembler.atg:202*/out id);
+			/*Parser.Assembler.atg:203*/code = getOpCode(insbase, detail);
 			addInstruction(block, new Instruction(code, arguments, id, justEffect));
 			
 		} else if (StartOf(2)) {
-			AsmId(/*Parser.Assembler.atg:203*/out insbase);
-			/*Parser.Assembler.atg:203*/SemErr("Invalid assembler instruction \"" + insbase + "\" (" + t + ")."); 
+			AsmId(/*Parser.Assembler.atg:208*/out insbase);
+			/*Parser.Assembler.atg:208*/SemErr("Invalid assembler instruction \"" + insbase + "\" (" + t + ")."); 
 		} else SynErr(102);
 	}
 
-	void AsmId(/*Parser.Assembler.atg:207*/out string id) {
-		/*Parser.Assembler.atg:207*/id = "\\NoId\\"; 
+	void AsmId(/*Parser.Assembler.atg:212*/out string id) {
+		/*Parser.Assembler.atg:212*/id = "\\NoId\\"; 
 		if (la.kind == _string) {
-			String(/*Parser.Assembler.atg:209*/out id);
+			String(/*Parser.Assembler.atg:214*/out id);
 		} else if (StartOf(4)) {
-			Id(/*Parser.Assembler.atg:210*/out id);
+			Id(/*Parser.Assembler.atg:215*/out id);
 		} else if (StartOf(5)) {
 			switch (la.kind) {
 			case _mod: {
@@ -625,7 +632,7 @@ internal partial class Parser {
 				break;
 			}
 			}
-			/*Parser.Assembler.atg:240*/id = cache(t.val); 
+			/*Parser.Assembler.atg:245*/id = cache(t.val); 
 		} else SynErr(103);
 	}
 
@@ -679,9 +686,9 @@ internal partial class Parser {
 		/*Parser.Helper.atg:57*/value = modifier * value; 
 	}
 
-	void AsmQualid(/*Parser.Assembler.atg:244*/out string qualid) {
+	void AsmQualid(/*Parser.Assembler.atg:249*/out string qualid) {
 		
-		AsmId(/*Parser.Assembler.atg:246*/out qualid);
+		AsmId(/*Parser.Assembler.atg:251*/out qualid);
 	}
 
 	void String(/*Parser.Helper.atg:87*/out string value) {
@@ -819,7 +826,7 @@ internal partial class Parser {
 		while (la.kind == _bitOr) {
 			Get();
 			BitXorExpr(/*Parser.Expression.atg:99*/out rhs);
-			/*Parser.Expression.atg:99*/expr = new AstBinaryOperator(this, expr, BinaryOperator.BitwiseOr, rhs); 
+			/*Parser.Expression.atg:99*/expr = AstBinaryOperator.Create(this, expr, BinaryOperator.BitwiseOr, rhs); 
 		}
 	}
 
@@ -830,7 +837,7 @@ internal partial class Parser {
 		while (la.kind == _xor) {
 			Get();
 			BitAndExpr(/*Parser.Expression.atg:107*/out rhs);
-			/*Parser.Expression.atg:108*/expr = new AstBinaryOperator(this, expr, BinaryOperator.ExclusiveOr, rhs); 
+			/*Parser.Expression.atg:108*/expr = AstBinaryOperator.Create(this, expr, BinaryOperator.ExclusiveOr, rhs); 
 		}
 	}
 
@@ -841,7 +848,7 @@ internal partial class Parser {
 		while (la.kind == _bitAnd) {
 			Get();
 			NotExpr(/*Parser.Expression.atg:116*/out rhs);
-			/*Parser.Expression.atg:117*/expr = new AstBinaryOperator(this, expr, BinaryOperator.BitwiseAnd, rhs); 
+			/*Parser.Expression.atg:117*/expr = AstBinaryOperator.Create(this, expr, BinaryOperator.BitwiseAnd, rhs); 
 		}
 	}
 
@@ -852,7 +859,7 @@ internal partial class Parser {
 			/*Parser.Expression.atg:124*/isNot = true; 
 		}
 		EqlExpr(/*Parser.Expression.atg:126*/out lhs);
-		/*Parser.Expression.atg:126*/expr = isNot ? new AstUnaryOperator(this, UnaryOperator.LogicalNot, lhs) : lhs; 
+		/*Parser.Expression.atg:126*/expr = isNot ? AstUnaryOperator.Create(this, UnaryOperator.LogicalNot, lhs) : lhs; 
 	}
 
 	void EqlExpr(/*Parser.Expression.atg:130*/out IAstExpression expr) {
@@ -868,7 +875,7 @@ internal partial class Parser {
 				/*Parser.Expression.atg:134*/op = BinaryOperator.Inequality; 
 			}
 			RelExpr(/*Parser.Expression.atg:135*/out rhs);
-			/*Parser.Expression.atg:135*/expr = new AstBinaryOperator(this, expr, op, rhs); 
+			/*Parser.Expression.atg:135*/expr = AstBinaryOperator.Create(this, expr, op, rhs); 
 		}
 	}
 
@@ -891,7 +898,7 @@ internal partial class Parser {
 				/*Parser.Expression.atg:146*/op = BinaryOperator.GreaterThanOrEqual;    
 			}
 			CoalExpr(/*Parser.Expression.atg:147*/out rhs);
-			/*Parser.Expression.atg:147*/expr = new AstBinaryOperator(this, expr, op, rhs); 
+			/*Parser.Expression.atg:147*/expr = AstBinaryOperator.Create(this, expr, op, rhs); 
 		}
 	}
 
@@ -919,7 +926,7 @@ internal partial class Parser {
 				/*Parser.Expression.atg:166*/op = BinaryOperator.Subtraction;   
 			}
 			MulExpr(/*Parser.Expression.atg:167*/out rhs);
-			/*Parser.Expression.atg:167*/expr = new AstBinaryOperator(this, expr, op, rhs); 
+			/*Parser.Expression.atg:167*/expr = AstBinaryOperator.Create(this, expr, op, rhs); 
 		}
 	}
 
@@ -939,7 +946,7 @@ internal partial class Parser {
 				/*Parser.Expression.atg:177*/op = BinaryOperator.Modulus;       
 			}
 			PowExpr(/*Parser.Expression.atg:178*/out rhs);
-			/*Parser.Expression.atg:178*/expr = new AstBinaryOperator(this, expr, op, rhs); 
+			/*Parser.Expression.atg:178*/expr = AstBinaryOperator.Create(this, expr, op, rhs); 
 		}
 	}
 
@@ -950,7 +957,7 @@ internal partial class Parser {
 		while (la.kind == _pow) {
 			Get();
 			AssignExpr(/*Parser.Expression.atg:186*/out rhs);
-			/*Parser.Expression.atg:186*/expr = new AstBinaryOperator(this, expr, BinaryOperator.Power, rhs); 
+			/*Parser.Expression.atg:186*/expr = AstBinaryOperator.Create(this, expr, BinaryOperator.Power, rhs); 
 		}
 	}
 
@@ -1032,7 +1039,7 @@ internal partial class Parser {
 			if(setModifier == BinaryOperator.None)
 			    expr = assignment;
 			else
-			    expr = new AstModifyingAssignment(this,setModifier, assignment);
+			    expr = AstModifyingAssignment.Create(this,setModifier, assignment);
 			
 		} else if (StartOf(10)) {
 		} else SynErr(109);
@@ -1055,48 +1062,53 @@ internal partial class Parser {
 				TypeExpr(/*Parser.Expression.atg:235*/out type);
 				/*Parser.Expression.atg:235*/expr = new AstTypecheck(this, expr, type);
 				if(isInverted)
-					expr = new AstUnaryOperator(this, UnaryOperator.LogicalNot, expr);
+				                              {
+				                                  ((AstTypecheck)expr).IsInverted = true;
+					expr = AstUnaryOperator.Create(this, UnaryOperator.LogicalNot, expr);
+				                              }
 				
 			} else if (la.kind == _inc) {
 				Get();
-				/*Parser.Expression.atg:239*/expr = new AstUnaryOperator(this, UnaryOperator.PostIncrement, expr); 
+				/*Parser.Expression.atg:242*/expr = AstUnaryOperator.Create(this, UnaryOperator.PostIncrement, expr); 
 			} else if (la.kind == _dec) {
 				Get();
-				/*Parser.Expression.atg:240*/expr = new AstUnaryOperator(this, UnaryOperator.PostDecrement, expr); 
+				/*Parser.Expression.atg:243*/expr = AstUnaryOperator.Create(this, UnaryOperator.PostDecrement, expr); 
 			} else {
-				GetSetExtension(/*Parser.Expression.atg:241*/expr, out extension);
-				/*Parser.Expression.atg:242*/expr = extension; 
+				GetSetExtension(/*Parser.Expression.atg:244*/expr, out extension);
+				/*Parser.Expression.atg:245*/expr = extension; 
 			}
 		}
 	}
 
-	void TypeExpr(/*Parser.Expression.atg:458*/out IAstType type) {
-		/*Parser.Expression.atg:458*/type = null; 
+	void TypeExpr(/*Parser.Expression.atg:464*/out IAstType type) {
+		/*Parser.Expression.atg:464*/type = null; 
 		if (StartOf(12)) {
-			PrexoniteTypeExpr(/*Parser.Expression.atg:460*/out type);
+			PrexoniteTypeExpr(/*Parser.Expression.atg:466*/out type);
 		} else if (la.kind == _ns || la.kind == _doublecolon) {
-			ClrTypeExpr(/*Parser.Expression.atg:461*/out type);
+			ClrTypeExpr(/*Parser.Expression.atg:467*/out type);
 		} else SynErr(110);
 	}
 
-	void PrefixUnaryExpr(/*Parser.Expression.atg:247*/out IAstExpression expr) {
-		/*Parser.Expression.atg:247*/UnaryOperator op = UnaryOperator.None; 
+	void PrefixUnaryExpr(/*Parser.Expression.atg:250*/out IAstExpression expr) {
+		/*Parser.Expression.atg:250*/var prefixes = new Stack<UnaryOperator>(); 
 		while (StartOf(13)) {
 			if (la.kind == _plus) {
 				Get();
 			} else if (la.kind == _minus) {
 				Get();
-				/*Parser.Expression.atg:250*/op = UnaryOperator.UnaryNegation; 
+				/*Parser.Expression.atg:253*/prefixes.Push(UnaryOperator.UnaryNegation); 
 			} else if (la.kind == _inc) {
 				Get();
-				/*Parser.Expression.atg:251*/op = UnaryOperator.PreIncrement; 
+				/*Parser.Expression.atg:254*/prefixes.Push(UnaryOperator.PreIncrement); 
 			} else {
 				Get();
-				/*Parser.Expression.atg:252*/op = UnaryOperator.PreDecrement; 
+				/*Parser.Expression.atg:255*/prefixes.Push(UnaryOperator.PreDecrement); 
 			}
 		}
-		Primary(/*Parser.Expression.atg:254*/out expr);
-		/*Parser.Expression.atg:254*/if(op != UnaryOperator.None) expr = new AstUnaryOperator(this, op, expr); 
+		Primary(/*Parser.Expression.atg:257*/out expr);
+		/*Parser.Expression.atg:258*/while(prefixes.Count > 0)
+		   expr = AstUnaryOperator.Create(this, prefixes.Pop(), expr);
+		
 	}
 
 	void GetSetExtension(/*Parser.Statement.atg:115*/IAstExpression subject, out AstGetSet extension) {
@@ -1133,147 +1145,147 @@ internal partial class Parser {
 		} else SynErr(111);
 	}
 
-	void Primary(/*Parser.Expression.atg:258*/out IAstExpression expr) {
-		/*Parser.Expression.atg:258*/expr = null;
+	void Primary(/*Parser.Expression.atg:264*/out IAstExpression expr) {
+		/*Parser.Expression.atg:264*/expr = null;
 		AstGetSet complex = null; bool declared; 
 		if (la.kind == _asm) {
-			/*Parser.Expression.atg:261*/_pushLexerState(Lexer.Asm); 
-			/*Parser.Expression.atg:261*/AstBlockExpression blockExpr = new AstBlockExpression(this); 
+			/*Parser.Expression.atg:267*/_pushLexerState(Lexer.Asm); 
+			/*Parser.Expression.atg:267*/AstBlockExpression blockExpr = new AstBlockExpression(this); 
 			Get();
 			Expect(_lpar);
 			while (StartOf(1)) {
-				AsmInstruction(/*Parser.Expression.atg:262*/blockExpr);
+				AsmInstruction(/*Parser.Expression.atg:268*/blockExpr);
 			}
 			Expect(_rpar);
-			/*Parser.Expression.atg:263*/_popLexerState(); 
-			/*Parser.Expression.atg:263*/expr = blockExpr; 
+			/*Parser.Expression.atg:269*/_popLexerState(); 
+			/*Parser.Expression.atg:269*/expr = blockExpr; 
 		} else if (StartOf(16)) {
-			Constant(/*Parser.Expression.atg:264*/out expr);
+			Constant(/*Parser.Expression.atg:270*/out expr);
 		} else if (la.kind == _coroutine) {
-			CoroutineCreation(/*Parser.Expression.atg:265*/out expr);
+			CoroutineCreation(/*Parser.Expression.atg:271*/out expr);
 		} else if (la.kind == _lbrack) {
-			ListLiteral(/*Parser.Expression.atg:266*/out expr);
+			ListLiteral(/*Parser.Expression.atg:272*/out expr);
 		} else if (la.kind == _lbrace) {
-			HashLiteral(/*Parser.Expression.atg:267*/out expr);
+			HashLiteral(/*Parser.Expression.atg:273*/out expr);
 		} else if (StartOf(17)) {
-			LoopExpr(/*Parser.Expression.atg:268*/out expr);
+			LoopExpr(/*Parser.Expression.atg:274*/out expr);
 		} else if (la.kind == _throw) {
-			/*Parser.Expression.atg:269*/AstThrow th; 
-			ThrowExpression(/*Parser.Expression.atg:270*/out th);
-			/*Parser.Expression.atg:270*/expr = th; 
-		} else if (/*Parser.Expression.atg:272*/isLambdaExpression()) {
-			LambdaExpression(/*Parser.Expression.atg:272*/out expr);
+			/*Parser.Expression.atg:275*/AstThrow th; 
+			ThrowExpression(/*Parser.Expression.atg:276*/out th);
+			/*Parser.Expression.atg:276*/expr = th; 
+		} else if (/*Parser.Expression.atg:278*/isLambdaExpression()) {
+			LambdaExpression(/*Parser.Expression.atg:278*/out expr);
 		} else if (la.kind == _lazy) {
-			LazyExpression(/*Parser.Expression.atg:273*/out expr);
+			LazyExpression(/*Parser.Expression.atg:279*/out expr);
 		} else if (la.kind == _lpar) {
 			Get();
-			Expr(/*Parser.Expression.atg:274*/out expr);
+			Expr(/*Parser.Expression.atg:280*/out expr);
 			Expect(_rpar);
-		} else if (/*Parser.Expression.atg:275*/_isNotNewDecl()) {
-			ObjectCreation(/*Parser.Expression.atg:275*/out expr);
+		} else if (/*Parser.Expression.atg:281*/_isNotNewDecl()) {
+			ObjectCreation(/*Parser.Expression.atg:281*/out expr);
 		} else if (StartOf(18)) {
-			GetInitiator(/*Parser.Expression.atg:276*/out complex, out declared);
-			/*Parser.Expression.atg:277*/expr = complex; 
+			GetInitiator(/*Parser.Expression.atg:282*/out complex, out declared);
+			/*Parser.Expression.atg:283*/expr = complex; 
 		} else if (la.kind == _LPopExpr) {
 			Get();
 			Expect(_lpar);
-			Expr(/*Parser.Expression.atg:278*/out expr);
-			/*Parser.Expression.atg:283*/_popLexerState(); _inject(_plus); 
+			Expr(/*Parser.Expression.atg:284*/out expr);
+			/*Parser.Expression.atg:289*/_popLexerState(); _inject(_plus); 
 			Expect(_rpar);
 		} else SynErr(112);
 	}
 
-	void Constant(/*Parser.Expression.atg:288*/out IAstExpression expr) {
-		/*Parser.Expression.atg:288*/expr = null; int vi; double vr; bool vb; string vs; 
+	void Constant(/*Parser.Expression.atg:294*/out IAstExpression expr) {
+		/*Parser.Expression.atg:294*/expr = null; int vi; double vr; bool vb; string vs; 
 		if (la.kind == _integer) {
-			Integer(/*Parser.Expression.atg:290*/out vi);
-			/*Parser.Expression.atg:290*/expr = new AstConstant(this, vi); 
+			Integer(/*Parser.Expression.atg:296*/out vi);
+			/*Parser.Expression.atg:296*/expr = new AstConstant(this, vi); 
 		} else if (la.kind == _real) {
-			Real(/*Parser.Expression.atg:291*/out vr);
-			/*Parser.Expression.atg:291*/expr = new AstConstant(this, vr); 
+			Real(/*Parser.Expression.atg:297*/out vr);
+			/*Parser.Expression.atg:297*/expr = new AstConstant(this, vr); 
 		} else if (la.kind == _true || la.kind == _false) {
-			Boolean(/*Parser.Expression.atg:292*/out vb);
-			/*Parser.Expression.atg:292*/expr = new AstConstant(this, vb); 
+			Boolean(/*Parser.Expression.atg:298*/out vb);
+			/*Parser.Expression.atg:298*/expr = new AstConstant(this, vb); 
 		} else if (la.kind == _string) {
-			String(/*Parser.Expression.atg:293*/out vs);
-			/*Parser.Expression.atg:293*/expr = new AstConstant(this, vs); 
+			String(/*Parser.Expression.atg:299*/out vs);
+			/*Parser.Expression.atg:299*/expr = new AstConstant(this, vs); 
 		} else if (la.kind == _null) {
 			Null();
-			/*Parser.Expression.atg:294*/expr = new AstConstant(this, null); 
+			/*Parser.Expression.atg:300*/expr = new AstConstant(this, null); 
 		} else SynErr(113);
 	}
 
-	void CoroutineCreation(/*Parser.Expression.atg:347*/out IAstExpression expr) {
-		/*Parser.Expression.atg:348*/AstCreateCoroutine cor = new AstCreateCoroutine(this); 
+	void CoroutineCreation(/*Parser.Expression.atg:353*/out IAstExpression expr) {
+		/*Parser.Expression.atg:354*/AstCreateCoroutine cor = new AstCreateCoroutine(this); 
 		IAstExpression iexpr;
 		expr = cor;
 		
 		Expect(_coroutine);
-		Expr(/*Parser.Expression.atg:353*/out iexpr);
-		/*Parser.Expression.atg:353*/cor.Expression = iexpr; 
+		Expr(/*Parser.Expression.atg:359*/out iexpr);
+		/*Parser.Expression.atg:359*/cor.Expression = iexpr; 
 		if (la.kind == _for) {
 			Get();
-			Arguments(/*Parser.Expression.atg:354*/cor.Arguments);
+			Arguments(/*Parser.Expression.atg:360*/cor.Arguments);
 		}
 	}
 
-	void ListLiteral(/*Parser.Expression.atg:298*/out IAstExpression expr) {
-		/*Parser.Expression.atg:298*/IAstExpression iexpr = null; 
+	void ListLiteral(/*Parser.Expression.atg:304*/out IAstExpression expr) {
+		/*Parser.Expression.atg:304*/IAstExpression iexpr = null; 
 		AstListLiteral lst = new AstListLiteral(this);
 		expr = lst;
 		
 		Expect(_lbrack);
 		if (StartOf(14)) {
-			Expr(/*Parser.Expression.atg:304*/out iexpr);
-			/*Parser.Expression.atg:304*/lst.Elements.Add(iexpr); 
+			Expr(/*Parser.Expression.atg:310*/out iexpr);
+			/*Parser.Expression.atg:310*/lst.Elements.Add(iexpr); 
 			while (la.kind == _comma) {
 				Get();
-				Expr(/*Parser.Expression.atg:306*/out iexpr);
-				/*Parser.Expression.atg:306*/lst.Elements.Add(iexpr); 
+				Expr(/*Parser.Expression.atg:312*/out iexpr);
+				/*Parser.Expression.atg:312*/lst.Elements.Add(iexpr); 
 			}
 		}
 		Expect(_rbrack);
 	}
 
-	void HashLiteral(/*Parser.Expression.atg:313*/out IAstExpression expr) {
-		/*Parser.Expression.atg:313*/IAstExpression iexpr = null; 
+	void HashLiteral(/*Parser.Expression.atg:319*/out IAstExpression expr) {
+		/*Parser.Expression.atg:319*/IAstExpression iexpr = null; 
 		AstHashLiteral hash = new AstHashLiteral(this);
 		expr = hash;
 		
 		Expect(_lbrace);
 		if (StartOf(14)) {
-			Expr(/*Parser.Expression.atg:319*/out iexpr);
-			/*Parser.Expression.atg:319*/hash.Elements.Add(iexpr); 
+			Expr(/*Parser.Expression.atg:325*/out iexpr);
+			/*Parser.Expression.atg:325*/hash.Elements.Add(iexpr); 
 			while (la.kind == _comma) {
 				Get();
-				Expr(/*Parser.Expression.atg:321*/out iexpr);
-				/*Parser.Expression.atg:321*/hash.Elements.Add(iexpr); 
+				Expr(/*Parser.Expression.atg:327*/out iexpr);
+				/*Parser.Expression.atg:327*/hash.Elements.Add(iexpr); 
 			}
 		}
 		Expect(_rbrace);
 	}
 
-	void LoopExpr(/*Parser.Expression.atg:328*/out IAstExpression expr) {
-		/*Parser.Expression.atg:328*/AstBlock dummyBlock = new AstBlock(this);
+	void LoopExpr(/*Parser.Expression.atg:334*/out IAstExpression expr) {
+		/*Parser.Expression.atg:334*/AstBlock dummyBlock = new AstBlock(this);
 		
 		if (la.kind == _do || la.kind == _while || la.kind == _until) {
-			WhileLoop(/*Parser.Expression.atg:331*/dummyBlock);
+			WhileLoop(/*Parser.Expression.atg:337*/dummyBlock);
 		} else if (la.kind == _for) {
-			ForLoop(/*Parser.Expression.atg:332*/dummyBlock);
+			ForLoop(/*Parser.Expression.atg:338*/dummyBlock);
 		} else if (la.kind == _foreach) {
-			ForeachLoop(/*Parser.Expression.atg:333*/dummyBlock);
+			ForeachLoop(/*Parser.Expression.atg:339*/dummyBlock);
 		} else SynErr(114);
-		/*Parser.Expression.atg:334*/expr = new AstLoopExpression(this, (AstLoop) dummyBlock.Statements[0]); 
+		/*Parser.Expression.atg:340*/expr = new AstLoopExpression(this, (AstLoop) dummyBlock.Statements[0]); 
 	}
 
-	void ThrowExpression(/*Parser.Expression.atg:446*/out AstThrow th) {
-		/*Parser.Expression.atg:446*/th = new AstThrow(this); 
+	void ThrowExpression(/*Parser.Expression.atg:452*/out AstThrow th) {
+		/*Parser.Expression.atg:452*/th = new AstThrow(this); 
 		Expect(_throw);
-		Expr(/*Parser.Expression.atg:449*/out th.Expression);
+		Expr(/*Parser.Expression.atg:455*/out th.Expression);
 	}
 
-	void LambdaExpression(/*Parser.Expression.atg:358*/out IAstExpression expr) {
-		/*Parser.Expression.atg:358*/expr = null;
+	void LambdaExpression(/*Parser.Expression.atg:364*/out IAstExpression expr) {
+		/*Parser.Expression.atg:364*/expr = null;
 		PFunction func = new PFunction(TargetApplication, generateLocalId());                                             
 		func.Meta[Application.ImportKey] = target.Function.Meta[Application.ImportKey];
 		func.Meta[PFunction.ParentFunctionKey] = target.Function.Id;
@@ -1283,34 +1295,34 @@ internal partial class Parser {
 		ft.ParentTarget = target;
 		
 		if (StartOf(19)) {
-			FormalArg(/*Parser.Expression.atg:368*/ft);
+			FormalArg(/*Parser.Expression.atg:374*/ft);
 		} else if (la.kind == _lpar) {
 			Get();
 			if (StartOf(19)) {
-				FormalArg(/*Parser.Expression.atg:370*/ft);
+				FormalArg(/*Parser.Expression.atg:376*/ft);
 				while (la.kind == _comma) {
 					Get();
-					FormalArg(/*Parser.Expression.atg:372*/ft);
+					FormalArg(/*Parser.Expression.atg:378*/ft);
 				}
 			}
 			Expect(_rpar);
 		} else SynErr(115);
-		/*Parser.Expression.atg:378*/CompilerTarget oldTarget = target;
+		/*Parser.Expression.atg:384*/CompilerTarget oldTarget = target;
 		target = ft;
 		
 		Expect(_implementation);
 		if (la.kind == _lbrace) {
 			Get();
 			while (StartOf(20)) {
-				Statement(/*Parser.Expression.atg:383*/ft.Ast);
+				Statement(/*Parser.Expression.atg:389*/ft.Ast);
 			}
 			Expect(_rbrace);
 		} else if (StartOf(14)) {
-			/*Parser.Expression.atg:385*/AstReturn ret = new AstReturn(this, ReturnVariant.Exit); 
-			Expr(/*Parser.Expression.atg:386*/out ret.Expression);
-			/*Parser.Expression.atg:386*/ft.Ast.Add(ret); 
+			/*Parser.Expression.atg:391*/AstReturn ret = new AstReturn(this, ReturnVariant.Exit); 
+			Expr(/*Parser.Expression.atg:392*/out ret.Expression);
+			/*Parser.Expression.atg:392*/ft.Ast.Add(ret); 
 		} else SynErr(116);
-		/*Parser.Expression.atg:389*/target = oldTarget;
+		/*Parser.Expression.atg:395*/target = oldTarget;
 		if(errors.count == 0)
 		{
 		    //Emit code for top-level block
@@ -1322,8 +1334,8 @@ internal partial class Parser {
 		
 	}
 
-	void LazyExpression(/*Parser.Expression.atg:402*/out IAstExpression expr) {
-		/*Parser.Expression.atg:402*/expr = null;
+	void LazyExpression(/*Parser.Expression.atg:408*/out IAstExpression expr) {
+		/*Parser.Expression.atg:408*/expr = null;
 		PFunction func = new PFunction(TargetApplication, generateLocalId());
 		func.Meta[Application.ImportKey] = target.Function.Meta[Application.ImportKey];
 		func.Meta[PFunction.ParentFunctionKey] = target.Function.Id;
@@ -1340,15 +1352,15 @@ internal partial class Parser {
 		if (la.kind == _lbrace) {
 			Get();
 			while (StartOf(20)) {
-				Statement(/*Parser.Expression.atg:418*/ft.Ast);
+				Statement(/*Parser.Expression.atg:424*/ft.Ast);
 			}
 			Expect(_rbrace);
 		} else if (StartOf(14)) {
-			/*Parser.Expression.atg:420*/AstReturn ret = new AstReturn(this, ReturnVariant.Exit); 
-			Expr(/*Parser.Expression.atg:421*/out ret.Expression);
-			/*Parser.Expression.atg:421*/ft.Ast.Add(ret); 
+			/*Parser.Expression.atg:426*/AstReturn ret = new AstReturn(this, ReturnVariant.Exit); 
+			Expr(/*Parser.Expression.atg:427*/out ret.Expression);
+			/*Parser.Expression.atg:427*/ft.Ast.Add(ret); 
 		} else SynErr(117);
-		/*Parser.Expression.atg:425*/var cap = ft.ToCaptureByValue(let_bindings(ft));
+		/*Parser.Expression.atg:431*/var cap = ft.ToCaptureByValue(let_bindings(ft));
 		
 		//Restore parent target
 		target = oldTarget;
@@ -1369,13 +1381,13 @@ internal partial class Parser {
 		
 	}
 
-	void ObjectCreation(/*Parser.Expression.atg:339*/out IAstExpression expr) {
-		/*Parser.Expression.atg:339*/IAstType type; expr = null;
+	void ObjectCreation(/*Parser.Expression.atg:345*/out IAstExpression expr) {
+		/*Parser.Expression.atg:345*/IAstType type; expr = null;
 		ArgumentsProxy args; 
 		Expect(_new);
-		TypeExpr(/*Parser.Expression.atg:342*/out type);
-		/*Parser.Expression.atg:342*/_fallbackObjectCreation(this, type, out expr, out args); 
-		Arguments(/*Parser.Expression.atg:343*/args);
+		TypeExpr(/*Parser.Expression.atg:348*/out type);
+		/*Parser.Expression.atg:348*/_fallbackObjectCreation(this, type, out expr, out args); 
+		Arguments(/*Parser.Expression.atg:349*/args);
 	}
 
 	void GetInitiator(/*Parser.Statement.atg:143*/out AstGetSet complex, out bool isDeclaration) {
@@ -1650,54 +1662,54 @@ internal partial class Parser {
 		}
 	}
 
-	void ExplicitTypeExpr(/*Parser.Expression.atg:452*/out IAstType type) {
-		/*Parser.Expression.atg:452*/type = null; 
+	void ExplicitTypeExpr(/*Parser.Expression.atg:458*/out IAstType type) {
+		/*Parser.Expression.atg:458*/type = null; 
 		if (la.kind == _tilde) {
 			Get();
-			PrexoniteTypeExpr(/*Parser.Expression.atg:454*/out type);
+			PrexoniteTypeExpr(/*Parser.Expression.atg:460*/out type);
 		} else if (la.kind == _ns || la.kind == _doublecolon) {
-			ClrTypeExpr(/*Parser.Expression.atg:455*/out type);
+			ClrTypeExpr(/*Parser.Expression.atg:461*/out type);
 		} else SynErr(126);
 	}
 
-	void PrexoniteTypeExpr(/*Parser.Expression.atg:480*/out IAstType type) {
-		/*Parser.Expression.atg:480*/string id = null; type = null; 
+	void PrexoniteTypeExpr(/*Parser.Expression.atg:486*/out IAstType type) {
+		/*Parser.Expression.atg:486*/string id = null; type = null; 
 		if (StartOf(4)) {
-			Id(/*Parser.Expression.atg:482*/out id);
+			Id(/*Parser.Expression.atg:488*/out id);
 		} else if (la.kind == _null) {
 			Get();
-			/*Parser.Expression.atg:482*/id = NullPType.Literal; 
+			/*Parser.Expression.atg:488*/id = NullPType.Literal; 
 		} else SynErr(127);
-		/*Parser.Expression.atg:484*/AstDynamicTypeExpression dType = new AstDynamicTypeExpression(this, id); 
+		/*Parser.Expression.atg:490*/AstDynamicTypeExpression dType = new AstDynamicTypeExpression(this, id); 
 		if (la.kind == _lt) {
 			Get();
 			if (StartOf(27)) {
-				TypeExprElement(/*Parser.Expression.atg:486*/dType.Arguments);
+				TypeExprElement(/*Parser.Expression.atg:492*/dType.Arguments);
 				while (la.kind == _comma) {
 					Get();
-					TypeExprElement(/*Parser.Expression.atg:487*/dType.Arguments);
+					TypeExprElement(/*Parser.Expression.atg:493*/dType.Arguments);
 				}
 			}
 			Expect(_gt);
 		}
-		/*Parser.Expression.atg:491*/type = dType; 
+		/*Parser.Expression.atg:497*/type = dType; 
 	}
 
-	void ClrTypeExpr(/*Parser.Expression.atg:465*/out IAstType type) {
-		/*Parser.Expression.atg:465*/string id; 
-		/*Parser.Expression.atg:467*/StringBuilder typeId = new StringBuilder(); 
+	void ClrTypeExpr(/*Parser.Expression.atg:471*/out IAstType type) {
+		/*Parser.Expression.atg:471*/string id; 
+		/*Parser.Expression.atg:473*/StringBuilder typeId = new StringBuilder(); 
 		if (la.kind == _doublecolon) {
 			Get();
 		} else if (la.kind == _ns) {
-			Ns(/*Parser.Expression.atg:469*/out id);
-			/*Parser.Expression.atg:469*/typeId.Append(id); typeId.Append('.'); 
+			Ns(/*Parser.Expression.atg:475*/out id);
+			/*Parser.Expression.atg:475*/typeId.Append(id); typeId.Append('.'); 
 		} else SynErr(128);
 		while (la.kind == _ns) {
-			Ns(/*Parser.Expression.atg:471*/out id);
-			/*Parser.Expression.atg:471*/typeId.Append(id); typeId.Append('.'); 
+			Ns(/*Parser.Expression.atg:477*/out id);
+			/*Parser.Expression.atg:477*/typeId.Append(id); typeId.Append('.'); 
 		}
-		Id(/*Parser.Expression.atg:473*/out id);
-		/*Parser.Expression.atg:473*/typeId.Append(id);
+		Id(/*Parser.Expression.atg:479*/out id);
+		/*Parser.Expression.atg:479*/typeId.Append(id);
 		type = new AstConstantTypeExpression(this, 
 		    "Object(\"" + StringPType.Escape(typeId.ToString()) + "\")");
 		
@@ -1709,19 +1721,19 @@ internal partial class Parser {
 		/*Parser.Helper.atg:37*/ns = cache(t.val); 
 	}
 
-	void TypeExprElement(/*Parser.Expression.atg:495*/List<IAstExpression> args ) {
-		/*Parser.Expression.atg:495*/IAstExpression expr; IAstType type; 
+	void TypeExprElement(/*Parser.Expression.atg:501*/List<IAstExpression> args ) {
+		/*Parser.Expression.atg:501*/IAstExpression expr; IAstType type; 
 		if (StartOf(16)) {
-			Constant(/*Parser.Expression.atg:497*/out expr);
-			/*Parser.Expression.atg:497*/args.Add(expr); 
+			Constant(/*Parser.Expression.atg:503*/out expr);
+			/*Parser.Expression.atg:503*/args.Add(expr); 
 		} else if (la.kind == _ns || la.kind == _tilde || la.kind == _doublecolon) {
-			ExplicitTypeExpr(/*Parser.Expression.atg:498*/out type);
-			/*Parser.Expression.atg:498*/args.Add(type); 
+			ExplicitTypeExpr(/*Parser.Expression.atg:504*/out type);
+			/*Parser.Expression.atg:504*/args.Add(type); 
 		} else if (la.kind == _lpar) {
 			Get();
-			Expr(/*Parser.Expression.atg:499*/out expr);
+			Expr(/*Parser.Expression.atg:505*/out expr);
 			Expect(_rpar);
-			/*Parser.Expression.atg:499*/args.Add(expr); 
+			/*Parser.Expression.atg:505*/args.Add(expr); 
 		} else SynErr(129);
 	}
 
@@ -2538,10 +2550,10 @@ internal partial class Parser {
 			/*Parser.Statement.atg:87*/block.Add(complex); 
 		} else if (la.kind == _inc) {
 			Get();
-			/*Parser.Statement.atg:88*/block.Add(new AstUnaryOperator(this, UnaryOperator.PostIncrement, complex)); 
+			/*Parser.Statement.atg:88*/block.Add(AstUnaryOperator.Create(this, UnaryOperator.PostIncrement, complex)); 
 		} else if (la.kind == _dec) {
 			Get();
-			/*Parser.Statement.atg:89*/block.Add(new AstUnaryOperator(this, UnaryOperator.PostDecrement, complex)); 
+			/*Parser.Statement.atg:89*/block.Add(AstUnaryOperator.Create(this, UnaryOperator.PostDecrement, complex)); 
 		} else if (StartOf(40)) {
 			Assignment(/*Parser.Statement.atg:90*/complex, out node);
 			/*Parser.Statement.atg:90*/symbol = node as AstGetSetSymbol;
@@ -2823,7 +2835,7 @@ internal partial class Parser {
 		/*Parser.Statement.atg:400*/lvalue.Arguments.Add(expr);
 		lvalue.Call = PCall.Set; 
 		if(setModifier != BinaryOperator.None)
-		    node = new AstModifyingAssignment(this,setModifier,lvalue);
+		    node = AstModifyingAssignment.Create(this,setModifier,lvalue);
 		
 	}
 
@@ -2992,7 +3004,7 @@ internal partial class Parser {
 	}
 
 
-#line 121 "R:\Prexonite\Tools\Parser.frame" //FRAME
+#line 121 "D:\DotNetProjects\Prexonite\Tools\Parser.frame" //FRAME
 
 
 	public void Parse() {
@@ -3004,7 +3016,7 @@ internal partial class Parser {
 
 		Prexonite();
 
-#line 127 "R:\Prexonite\Tools\Parser.frame" //FRAME
+#line 127 "D:\DotNetProjects\Prexonite\Tools\Parser.frame" //FRAME
 
     Expect(0);
 	}
@@ -3057,7 +3069,7 @@ internal partial class Parser {
 		{x,T,T,x, T,T,T,T, x,T,x,T, x,x,x,x, x,T,T,T, T,x,x,T, x,x,T,x, x,x,x,T, x,x,x,T, x,T,T,x, x,x,x,T, T,T,T,x, x,x,x,T, T,T,x,x, T,x,T,x, x,x,T,x, x,x,x,x, x,x,x,T, T,T,T,x, T,T,x,T, x,T,T,T, T,x,x,x, T,x,x,x, T,x,x,T, x,x},
 		{x,x,x,x, x,x,x,x, x,x,x,x, x,x,x,x, x,x,x,x, x,x,x,x, x,x,x,x, x,x,x,x, x,x,x,x, x,x,x,x, x,x,x,T, T,x,x,x, x,x,x,x, x,x,x,x, x,x,x,x, x,x,x,x, x,x,x,x, x,x,x,T, x,x,x,x, T,x,x,x, x,x,x,x, x,x,x,x, x,x,x,x, x,x,x,x, x,x}
 
-#line 132 "R:\Prexonite\Tools\Parser.frame" //FRAME
+#line 132 "D:\DotNetProjects\Prexonite\Tools\Parser.frame" //FRAME
 
 	};
 } // end Parser
@@ -3232,7 +3244,7 @@ internal class Errors {
 			case 154: s = "invalid Variable"; break;
 			case 155: s = "invalid VariableDeclaration"; break;
 
-#line 146 "R:\Prexonite\Tools\Parser.frame" //FRAME
+#line 146 "D:\DotNetProjects\Prexonite\Tools\Parser.frame" //FRAME
 
 			default: s = "error " + n; break;
 		}

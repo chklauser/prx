@@ -640,6 +640,20 @@ namespace Prexonite.Compiler
             block.Add(new AstAsmInstruction(this, ins));
         }
 
+        public void addOpAlias(AstBlock block, string insBase, string detail)
+        {
+            int argc;
+            var alias = getOpAlias(insBase, detail, out argc);
+            if(alias == null)
+            {
+                SemErr(string.Format("Unknown operator alias in assembler code: {0}.{1}", insBase, detail));
+                block.Add(new AstAsmInstruction(this, new Instruction(OpCode.nop)));
+                return;
+            }
+
+            block.Add(new AstAsmInstruction(this, Instruction.CreateCommandCall(argc, alias)));
+        }
+
         [DebuggerStepThrough]
         public void addLabel(AstBlock block, string label)
         {
@@ -679,6 +693,11 @@ namespace Prexonite.Compiler
         private bool isInJumpGroup()
         {
             return peekIsOneOf(asmJumpGroup);
+        }
+
+        private bool isInOpAliasGroup()
+        {
+            return peekIsOneOf(asmOpAliasGroup);
         }
 
         [DebuggerStepThrough]
@@ -724,17 +743,18 @@ namespace Prexonite.Compiler
             return false;
         }
 
-        private readonly SymbolTable<OpCode> _tableOfInstructionNames = new SymbolTable<OpCode>(60);
+        private readonly SymbolTable<OpCode> _instructionNameTable = new SymbolTable<OpCode>(60);
+        private readonly SymbolTable<Tuple<string, int>> _opAliasTable = new SymbolTable<Tuple<string, int>>(32);
 
         [DebuggerStepThrough]
         private void _createTableOfInstructions()
         {
-            var tab = _tableOfInstructionNames;
+            var tab = _instructionNameTable;
             //Add original names
             foreach (var code in Enum.GetNames(typeof (OpCode)))
                 tab.Add(code.Replace('_', '.'), (OpCode) Enum.Parse(typeof (OpCode), code));
 
-            //Add aliases -- NOTE: You'll also have to add them to the respective groups
+            //Add instruction aliases -- NOTE: You'll also have to add them to the respective groups
             tab.Add("new", OpCode.newobj);
             tab.Add("check", OpCode.check_const);
             tab.Add("cast", OpCode.cast_const);
@@ -754,13 +774,50 @@ namespace Prexonite.Compiler
             tab.Add("cor", OpCode.newcor);
             tab.Add("exception", OpCode.exc);
             tab.Add("ldnull", OpCode.ldc_null);
+
+            //Add operator aliases
+            var ops = _opAliasTable;
+            ops.Add("neg",Tuple.Create(Commands.Core.Operators.UnaryNegation.DefaultAlias, 1));
+            ops.Add("not",Tuple.Create(Commands.Core.Operators.LogicalNot.DefaultAlias, 1));
+            ops.Add("add",Tuple.Create(Commands.Core.Operators.Addition.DefaultAlias,2));
+            ops.Add("sub",Tuple.Create(Commands.Core.Operators.Subtraction.DefaultAlias,2));
+            ops.Add("mul",Tuple.Create(Commands.Core.Operators.Multiplication.DefaultAlias,2));
+            ops.Add("div",Tuple.Create(Commands.Core.Operators.Division.DefaultAlias,2));
+            ops.Add("mod",Tuple.Create(Commands.Core.Operators.Modulus.DefaultAlias,2));
+            ops.Add("pow",Tuple.Create(Commands.Core.Operators.Power.DefaultAlias,2));
+            ops.Add("ceq",Tuple.Create(Commands.Core.Operators.Equality.DefaultAlias,2));
+            ops.Add("cne",Tuple.Create(Commands.Core.Operators.Inequality.DefaultAlias,2));
+            ops.Add("clt",Tuple.Create(Commands.Core.Operators.LessThan.DefaultAlias,2));
+            ops.Add("cle",Tuple.Create(Commands.Core.Operators.LessThanOrEqual.DefaultAlias,2));
+            ops.Add("cgt",Tuple.Create(Commands.Core.Operators.GreaterThan.DefaultAlias,2));
+            ops.Add("cge",Tuple.Create(Commands.Core.Operators.GreaterThanOrEqual.DefaultAlias,2));
+            ops.Add("or" ,Tuple.Create(Commands.Core.Operators.BitwiseOr.DefaultAlias,2));
+            ops.Add("and",Tuple.Create(Commands.Core.Operators.BitwiseAnd.DefaultAlias,2));
+            ops.Add("xor",Tuple.Create(Commands.Core.Operators.ExclusiveOr.DefaultAlias,2));
+        }
+
+        //[DebuggerStepThrough]
+        private string getOpAlias(string insBase, string detail, out int argc)
+        {
+            var combined = insBase + (detail == null ? "" : "." + detail);
+            var entry = _opAliasTable.GetDefault(combined, null);
+            if(entry == null)
+            {
+                argc = -1;
+                return null;
+            }
+            else
+            {
+                argc = entry.Item2;
+                return entry.Item1;
+            }
         }
 
         //[DebuggerStepThrough]
         private OpCode getOpCode(string insBase, string detail)
         {
             var combined = insBase + (detail == null ? "" : "." + detail);
-            return _tableOfInstructionNames.GetDefault(combined, OpCode.invalid);
+            return _instructionNameTable.GetDefault(combined, OpCode.invalid);
         }
 
         #region Instruction tables
@@ -792,23 +849,6 @@ namespace Prexonite.Compiler
             {
                 {"ldc", "null"},
                 {"ldnull", null},
-                {"neg", null},
-                {"not", null},
-                {"add", null},
-                {"sub", null},
-                {"mul", null},
-                {"div", null},
-                {"mod", null},
-                {"pow", null},
-                {"ceq", null},
-                {"cne", null},
-                {"clt", null},
-                {"cle", null},
-                {"cgt", null},
-                {"cge", null},
-                {"or", null},
-                {"and", null},
-                {"xor", null},
                 {"check", "arg"},
                 {"check", "null"},
                 {"cast", "arg"},
@@ -829,6 +869,27 @@ namespace Prexonite.Compiler
                 {"throw", null},
                 {"exc", null},
                 {"exception", null}
+            };
+
+        private readonly string[,] asmOpAliasGroup =
+             {
+                {"neg", null},
+                {"not", null},
+                {"add", null},
+                {"sub", null},
+                {"mul", null},
+                {"div", null},
+                {"mod", null},
+                {"pow", null},
+                {"ceq", null},
+                {"cne", null},
+                {"clt", null},
+                {"cle", null},
+                {"cgt", null},
+                {"cge", null},
+                {"or", null},
+                {"and", null},
+                {"xor", null},
             };
 
         private readonly string[,] asmIdGroup =

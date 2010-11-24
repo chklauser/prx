@@ -25,6 +25,7 @@
 
 using System;
 using System.Collections.Generic;
+using System.Linq;
 
 #endregion
 
@@ -216,11 +217,25 @@ namespace Prexonite
         /// </summary>
         /// <param name="address">An instruction address</param>
         /// <returns>True if the address falls into the "guarded block" (CIL), false otherwise.</returns>
-        public bool Guards(int address)
+        public bool Spans(int address)
         {
             return
                 address >= _beginTry &&
                 address < _endTry;
+        }
+
+        /// <summary>
+        /// The address one has to jump to in order to skip (finish) the try block.
+        /// </summary>
+        public int SkipTry
+        {
+            get
+            {
+                if (HasFinally)
+                    return BeginFinally;
+                else
+                    return EndTry;
+            }
         }
 
         /// <summary>
@@ -232,27 +247,18 @@ namespace Prexonite
         /// <returns>The block closest to the address or null if none of the blocks handles that specific address.</returns>
         public static TryCatchFinallyBlock Closest
             (
-            int address, ICollection<TryCatchFinallyBlock> blocks)
+            int address, IEnumerable<TryCatchFinallyBlock> blocks)
         {
             if (blocks == null)
                 throw new ArgumentNullException("blocks");
             if (address < 0)
-                throw new ArgumentOutOfRangeException("address must be positive.");
+                throw new ArgumentOutOfRangeException("address", "address must be positive.");
 
-            TryCatchFinallyBlock closest = null;
-
-            foreach (var block in blocks)
-            {
-                if (!block.Handles(address))
-                    continue;
-
-                if (closest == null)
-                    closest = block;
-                else
-                    closest = Closer(address, closest, block);
-            }
-
-            return closest;
+            return blocks
+                .Where(block => block.Handles(address))
+                .Aggregate<TryCatchFinallyBlock, TryCatchFinallyBlock>(null,
+                                                                       (current, block) =>
+                                                                       Closer(address, current, block));
         }
 
         /// <summary>
@@ -281,12 +287,13 @@ namespace Prexonite
             (
             int address, TryCatchFinallyBlock a, TryCatchFinallyBlock b)
         {
-            if (a == null)
-                throw new ArgumentNullException("a");
-            if (b == null)
-                throw new ArgumentNullException("b");
             if (address < 0)
-                throw new ArgumentOutOfRangeException("address must be positive.");
+                throw new ArgumentOutOfRangeException("address", "address must be positive.");
+
+            if (b == null)
+                return a;
+            else if (a == null)
+                return b;
 
             if (ReferenceEquals(a, b) || a == b)
                 return a;
@@ -294,27 +301,27 @@ namespace Prexonite
             if ((!a.IsValid) || (!b.IsValid))
                 throw new ArgumentException("One of the try-catch-finally blocks is not valid.");
 
-            var Ahandles = a.Handles(address);
-            var Bhandles = b.Handles(address);
+            var aHandles = a.Handles(address);
+            var bHandles = b.Handles(address);
 
-            if (Ahandles && (!Bhandles))
+            if (aHandles && (!bHandles))
                 return a;
-            else if (Bhandles && (!Ahandles))
+            else if (bHandles && (!aHandles))
                 return b;
-            else if ((!Ahandles))
+            else if ((!aHandles))
                 return null; //None of the two blocks handles an exception at the given address.
 
-            var Arange = a.Range;
-            var Brange = b.Range;
+            var aRange = a.Range;
+            var bRange = b.Range;
 
-            if (Arange < Brange)
+            if (aRange < bRange)
                 return a;
-            else if (Brange < Arange)
+            else if (bRange < aRange)
+                return b;
+            else if (b.HasFinally)
                 return b;
             else
-                throw new PrexoniteException
-                    (
-                    "The supplied try-catch-finally blocks cannot be compared to each other, as they cover the same range of instructions.");
+                return b;
         }
 
         /// <summary>
@@ -351,6 +358,8 @@ namespace Prexonite
             else
                 return block.ToMetaEntry();
         }
+
+
 
         #region Comparison
 

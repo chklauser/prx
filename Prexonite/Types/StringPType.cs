@@ -285,6 +285,15 @@ namespace Prexonite.Types
             return raw;
         }
 
+        public static string ToIdLiteral(string physicalId)
+        {
+            string literal;
+            if (Commands.Core.Operators.OperatorCommands.TryGetLiteral(physicalId, out literal))
+                return literal;
+            else
+                return physicalId;
+        }
+
         #endregion
 
         #region IsReservedWord

@@ -954,7 +954,7 @@ namespace Prexonite.Compiler
             foreach (var kvp in app.Variables)
             {
                 writer.Write("var ");
-                writer.Write(kvp.Key);
+                writer.Write(StringPType.ToIdLiteral(kvp.Key));
                 var metaTable = kvp.Value.Meta.Clone();
                 metaTable.Remove(Application.IdKey);
                 metaTable.Remove(Application.InitializationId);
@@ -1054,11 +1054,11 @@ namespace Prexonite.Compiler
             var idx = 0;
             foreach (var kvp in entries)
             {
-                writer.Write(kvp.Value.Id);
+                writer.Write(StringPType.ToIdLiteral(kvp.Value.Id));
                 if (!Engine.StringsAreEqual(kvp.Value.Id, kvp.Key))
                 {
                     writer.Write(" as ");
-                    writer.Write(kvp.Key);
+                    writer.Write(StringPType.ToIdLiteral(kvp.Key));
                 }
                 if (++idx == entries.Count)
                     writer.WriteLine(";");

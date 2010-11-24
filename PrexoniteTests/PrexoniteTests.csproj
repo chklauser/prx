@@ -108,6 +108,8 @@
     <Compile Include="Tests\TypeSystem.cs" />
     <Compile Include="Tests\VMTests.cs" />
     <Compile Include="Tests\VMTestsBase.cs" />
+    <Compile Include="Tests\VMTestsCIL.cs" />
+    <Compile Include="Tests\VMTestsInterpreted.cs" />
   </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="..\Prexonite\Prexonite.csproj">

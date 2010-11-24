@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using System.IO;
+using Prexonite.Types;
 using NoDebug = System.Diagnostics.DebuggerNonUserCodeAttribute;
 
 namespace Prexonite
@@ -215,13 +216,13 @@ namespace Prexonite
                 if (entry.EntryType == MetaEntry.Type.Switch)
                 {
                     if (kvp.Key.EndsWith("ation"))
-                        writer.Write("{0} {1};", kvp.Key, entry.Switch ? "enabled" : "disabled");
+                        writer.Write("{0} {1};", StringPType.ToIdLiteral(kvp.Key), entry.Switch ? "enabled" : "disabled");
                     else
-                        writer.Write("is {1} {0};", kvp.Key, entry.Switch ? "" : "not");
+                        writer.Write("is {1} {0};", StringPType.ToIdLiteral(kvp.Key), entry.Switch ? "" : "not");
                 }
                 else
                 {
-                    writer.Write("{0} {1};", kvp.Key, entry);
+                    writer.Write("{0} {1};", StringPType.ToIdLiteral(kvp.Key), entry);
                 }
 #if DEBUG || Verbose
                 writer.WriteLine();

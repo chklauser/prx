@@ -199,40 +199,6 @@ namespace Prexonite
 
         #endregion
 
-        #region Operators
-
-        public static Instruction CreateAddition()
-        {
-            return new Instruction(OpCode.add);
-        }
-
-        public static Instruction CreateSubtraction()
-        {
-            return new Instruction(OpCode.sub);
-        }
-
-        public static Instruction CreateMultiplication()
-        {
-            return new Instruction(OpCode.mul);
-        }
-
-        public static Instruction CreateDivision()
-        {
-            return new Instruction(OpCode.div);
-        }
-
-        public static Instruction CreateModulus()
-        {
-            return new Instruction(OpCode.mod);
-        }
-
-        public static Instruction CreatePower()
-        {
-            return new Instruction(OpCode.pow);
-        }
-
-        #endregion
-
         #region Calls
 
         public static Instruction CreateGetCall(int arguments, string id)
@@ -497,7 +463,13 @@ namespace Prexonite
         /// <param name="buffer">The buffer to write the representation to.</param>
         public void ToString(StringBuilder buffer)
         {
-            var escId = Id != null ? StringPType.ToIdOrLiteral(Id) : "\"\"";
+            string escId;
+            if (Id != null)
+            {
+                if(!Commands.Core.Operators.OperatorCommands.TryGetLiteral(Id,out escId))
+                    escId = StringPType.ToIdOrLiteral(Id);
+            }
+            else escId = "\"\"";
             switch (OpCode)
             {
                 case OpCode.rot:
@@ -541,23 +513,6 @@ namespace Prexonite
                     {
                             //NULL INSTRUCTIONS
                         case OpCode.ldc_null:
-                        case OpCode.neg:
-                        case OpCode.not:
-                        case OpCode.add:
-                        case OpCode.sub:
-                        case OpCode.mul:
-                        case OpCode.div:
-                        case OpCode.mod:
-                        case OpCode.pow:
-                        case OpCode.ceq:
-                        case OpCode.cne:
-                        case OpCode.cgt:
-                        case OpCode.cge:
-                        case OpCode.clt:
-                        case OpCode.cle:
-                        case OpCode.or:
-                        case OpCode.and:
-                        case OpCode.xor:
                         case OpCode.check_arg:
                         case OpCode.cast_arg:
                         case OpCode.check_null:
@@ -726,23 +681,6 @@ namespace Prexonite
                     //NULL INSTRUCTIONS
                 case OpCode.nop:
                 case OpCode.ldc_null:
-                case OpCode.neg:
-                case OpCode.not:
-                case OpCode.add:
-                case OpCode.sub:
-                case OpCode.mul:
-                case OpCode.div:
-                case OpCode.mod:
-                case OpCode.pow:
-                case OpCode.ceq:
-                case OpCode.cne:
-                case OpCode.cgt:
-                case OpCode.cge:
-                case OpCode.clt:
-                case OpCode.cle:
-                case OpCode.or:
-                case OpCode.and:
-                case OpCode.xor:
                 case OpCode.check_arg:
                 case OpCode.cast_arg:
                 case OpCode.check_null:

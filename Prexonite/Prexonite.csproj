@@ -120,7 +120,13 @@
     <Compile Include="Commands\Core\Dispose.cs" />
     <Compile Include="Commands\Core\LoadAssembly.cs" />
     <Compile Include="Commands\Core\Meta.cs" />
-    <Compile Include="Commands\Core\Not.cs" />
+    <Compile Include="Commands\Core\Operators\BinaryOperatorBase.cs" />
+    <Compile Include="Commands\Core\Operators\Operators.cs">
+      <AutoGen>True</AutoGen>
+      <DesignTime>True</DesignTime>
+      <DependentUpon>Operators.tt</DependentUpon>
+    </Compile>
+    <Compile Include="Commands\Core\Operators\UnaryOperatorBase.cs" />
     <Compile Include="Commands\Core\Pair.cs" />
     <Compile Include="Commands\Core\PartialApplication\PartialApplicationBase.cs" />
     <Compile Include="Commands\Core\PartialApplication\PartialApplicationCommandBase.cs" />
@@ -252,7 +258,9 @@
     <Compile Include="Compiler\Ast\IAstPartiallyApplicable.cs" />
     <Compile Include="Compiler\Ast\IAstType.cs" />
     <Compile Include="Compiler\Ast\ICanBeReferenced.cs" />
+    <Compile Include="Compiler\Cil\BranchHandling.cs" />
     <Compile Include="Compiler\Cil\CilExtensionHint.cs" />
+    <Compile Include="Compiler\Cil\CompiledTryCatchFinallyBlock.cs" />
     <Compile Include="Compiler\Cil\Compiler.cs" />
     <Compile Include="Compiler\Cil\CompilerPass.cs" />
     <Compile Include="Compiler\Cil\CompilerState.cs" />
@@ -260,7 +268,10 @@
     <Compile Include="Compiler\Cil\ForeachHint.cs" />
     <Compile Include="Compiler\Cil\FunctionLinking.cs" />
     <Compile Include="Compiler\Cil\ICilHint.cs" />
+    <Compile Include="Compiler\Cil\Seh\RegionKind.cs" />
+    <Compile Include="Compiler\Cil\Seh\Region.cs" />
     <Compile Include="Compiler\Cil\Runtime.cs" />
+    <Compile Include="Compiler\Cil\StructuredExceptionHandling.cs" />
     <Compile Include="Compiler\Cil\Symbol.cs" />
     <Compile Include="Compiler\CompilerHook.cs" />
     <Compile Include="Compiler\CompilerTarget.cs" />
@@ -338,6 +349,10 @@
     <Compile Include="Types\StructurePType.cs" />
     <Compile Include="VM.cs" />
     <Content Include="Compiler\Prexonite.lex" />
+    <None Include="Commands\Core\Operators\Operators.tt">
+      <Generator>TextTemplatingFileGenerator</Generator>
+      <LastGenOutput>Operators.cs</LastGenOutput>
+    </None>
     <None Include="ObjectModel.cd" />
     <None Include="Prexonite.snk" />
     <Content Include="Compiler\Grammar\Grammar.Readme.txt" />
@@ -354,6 +369,7 @@
   </ItemGroup>
   <ItemGroup>
     <!-- <Service Include="{B4F97281-0DBD-4835-9ED8-7DFB966E87FF}" /> -->
+    <Service Include="{508349B6-6B84-4DF5-91F0-309BEEBAD82D}" />
   </ItemGroup>
   <ItemGroup>
     <BootstrapperPackage Include="Microsoft.Net.Client.3.5">

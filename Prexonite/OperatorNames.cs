@@ -20,11 +20,11 @@ namespace Prexonite
             public const string Subtraction = "minus";
             public const string Multiplication = "times";
             public const string Division = "dividedBy";
-            public const string Modulus = "remainder";
+            public const string Modulus = "mod";
             public const string Power = "raisedTo";
             public const string BitwiseAnd = "bitwiseAnd";
             public const string BitwiseOr = "bitwiseOr";
-            public const string ExclusiveOr = "exclusiveOr";
+            public const string ExclusiveOr = "xor";
             public const string Equality = "isEqualTo";
             public const string Inequality = "isInequalTo";
             public const string GreaterThan = "isGreaterThan";
@@ -34,6 +34,7 @@ namespace Prexonite
 
             public const string UnaryNegation = "negation";
             public const string OnesComplement = "complement";
+            public const string LogicalNot = "not";
 
             public const string Increment = "increment";
             public const string Decrement = "decrement";
@@ -91,6 +92,8 @@ namespace Prexonite
                     case UnaryOperator.PreDecrement:
                     case UnaryOperator.PostDecrement:
                         return Decrement;
+                    case UnaryOperator.LogicalNot:
+                        return LogicalNot;
                     default:
                         throw new ArgumentOutOfRangeException("op");
                 }

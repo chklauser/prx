@@ -630,31 +630,63 @@ function func1() does asm
 
             List<Instruction> code = target.Functions["func1"].Code;
             int i = 0;
-//#if DEBUG //nops are stripped in release mode //no longer
             Assert.AreEqual(OpCode.nop, code[i++].OpCode);
-//#endif
             Assert.AreEqual(OpCode.ldc_null, code[i++].OpCode);
-//#if DEBUG
             Assert.AreEqual(OpCode.nop, code[i++].OpCode);
             Assert.AreEqual(OpCode.nop, code[i++].OpCode);
-//#endif
-            Assert.AreEqual(OpCode.neg, code[i++].OpCode);
-            Assert.AreEqual(OpCode.not, code[i++].OpCode);
-            Assert.AreEqual(OpCode.add, code[i++].OpCode);
-            Assert.AreEqual(OpCode.sub, code[i++].OpCode);
-            Assert.AreEqual(OpCode.mul, code[i++].OpCode);
-            Assert.AreEqual(OpCode.div, code[i++].OpCode);
-            Assert.AreEqual(OpCode.mod, code[i++].OpCode);
-            Assert.AreEqual(OpCode.pow, code[i++].OpCode);
-            Assert.AreEqual(OpCode.ceq, code[i++].OpCode);
-            Assert.AreEqual(OpCode.cne, code[i++].OpCode);
-            Assert.AreEqual(OpCode.cgt, code[i++].OpCode);
-            Assert.AreEqual(OpCode.cge, code[i++].OpCode);
-            Assert.AreEqual(OpCode.clt, code[i++].OpCode);
-            Assert.AreEqual(OpCode.cle, code[i++].OpCode);
-            Assert.AreEqual(OpCode.or, code[i++].OpCode);
-            Assert.AreEqual(OpCode.and, code[i++].OpCode);
-            Assert.AreEqual(OpCode.xor, code[i++].OpCode);
+            //operator aliases
+            Assert.AreEqual(OpCode.cmd, code[i].OpCode);
+            Assert.AreEqual(1,code[i].Arguments);
+            Assert.AreEqual(Prexonite.Commands.Core.Operators.UnaryNegation.DefaultAlias, code[i++].Id);
+            Assert.AreEqual(1, code[i].Arguments);
+            Assert.AreEqual(OpCode.cmd, code[i].OpCode);
+            Assert.AreEqual(Prexonite.Commands.Core.Operators.LogicalNot.DefaultAlias, code[i++].Id);
+            Assert.AreEqual(2, code[i].Arguments);
+            Assert.AreEqual(OpCode.cmd, code[i].OpCode);
+            Assert.AreEqual(Prexonite.Commands.Core.Operators.Addition.DefaultAlias, code[i++].Id);
+            Assert.AreEqual(OpCode.cmd, code[i].OpCode);
+            Assert.AreEqual(2, code[i].Arguments);
+            Assert.AreEqual(Prexonite.Commands.Core.Operators.Subtraction.DefaultAlias, code[i++].Id);
+            Assert.AreEqual(OpCode.cmd, code[i].OpCode);
+            Assert.AreEqual(2, code[i].Arguments);
+            Assert.AreEqual(Prexonite.Commands.Core.Operators.Multiplication.DefaultAlias, code[i++].Id);
+            Assert.AreEqual(OpCode.cmd, code[i].OpCode);
+            Assert.AreEqual(2, code[i].Arguments);
+            Assert.AreEqual(Prexonite.Commands.Core.Operators.Division.DefaultAlias, code[i++].Id);
+            Assert.AreEqual(OpCode.cmd, code[i].OpCode);
+            Assert.AreEqual(2, code[i].Arguments);
+            Assert.AreEqual(Prexonite.Commands.Core.Operators.Modulus.DefaultAlias, code[i++].Id);
+            Assert.AreEqual(OpCode.cmd, code[i].OpCode);
+            Assert.AreEqual(2, code[i].Arguments);
+            Assert.AreEqual(Prexonite.Commands.Core.Operators.Power.DefaultAlias, code[i++].Id);
+            Assert.AreEqual(OpCode.cmd, code[i].OpCode);
+            Assert.AreEqual(2, code[i].Arguments);
+            Assert.AreEqual(Prexonite.Commands.Core.Operators.Equality.DefaultAlias, code[i++].Id);
+            Assert.AreEqual(OpCode.cmd, code[i].OpCode);
+            Assert.AreEqual(2, code[i].Arguments);
+            Assert.AreEqual(Prexonite.Commands.Core.Operators.Inequality.DefaultAlias, code[i++].Id);
+            Assert.AreEqual(OpCode.cmd, code[i].OpCode);
+            Assert.AreEqual(2, code[i].Arguments);
+            Assert.AreEqual(Prexonite.Commands.Core.Operators.GreaterThan.DefaultAlias, code[i++].Id);
+            Assert.AreEqual(OpCode.cmd, code[i].OpCode);
+            Assert.AreEqual(2, code[i].Arguments);
+            Assert.AreEqual(Prexonite.Commands.Core.Operators.GreaterThanOrEqual.DefaultAlias, code[i++].Id);
+            Assert.AreEqual(OpCode.cmd, code[i].OpCode);
+            Assert.AreEqual(2, code[i].Arguments);
+            Assert.AreEqual(Prexonite.Commands.Core.Operators.LessThan.DefaultAlias, code[i++].Id);
+            Assert.AreEqual(OpCode.cmd, code[i].OpCode);
+            Assert.AreEqual(2, code[i].Arguments);
+            Assert.AreEqual(Prexonite.Commands.Core.Operators.LessThanOrEqual.DefaultAlias, code[i++].Id);
+            Assert.AreEqual(OpCode.cmd, code[i].OpCode);
+            Assert.AreEqual(2, code[i].Arguments);
+            Assert.AreEqual(Prexonite.Commands.Core.Operators.BitwiseOr.DefaultAlias, code[i++].Id);
+            Assert.AreEqual(OpCode.cmd, code[i].OpCode);
+            Assert.AreEqual(2, code[i].Arguments);
+            Assert.AreEqual(Prexonite.Commands.Core.Operators.BitwiseAnd.DefaultAlias, code[i++].Id);
+            Assert.AreEqual(OpCode.cmd, code[i].OpCode);
+            Assert.AreEqual(2, code[i].Arguments);
+            Assert.AreEqual(Prexonite.Commands.Core.Operators.ExclusiveOr.DefaultAlias, code[i++].Id);
+            //other nullary instructions
             Assert.AreEqual(OpCode.check_arg, code[i++].OpCode);
             Assert.AreEqual(OpCode.cast_arg, code[i++].OpCode);
             Assert.AreEqual(OpCode.ldr_eng, code[i++].OpCode);

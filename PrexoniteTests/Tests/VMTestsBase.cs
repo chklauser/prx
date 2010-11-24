@@ -2,6 +2,7 @@
 
 using System;
 using System.Collections.Generic;
+using System.Linq;
 using System.Text;
 using NUnit.Framework;
 using Prexonite;
@@ -13,6 +14,7 @@ namespace Prx.Tests
 {
     public class VMTestsBase
     {
+        public const string StoreDebugImplementationKey = "store_debug_implementation";
         protected Engine engine;
         protected TestStackContext sctx;
         protected Application target;
@@ -21,7 +23,11 @@ namespace Prx.Tests
 
         public VMTestsBase()
         {
+#if UseCil
             CompileToCil = true;
+#else
+            CompileToCil = false;
+#endif
         }
 
         [SetUp]
@@ -129,16 +135,29 @@ namespace Prx.Tests
 
         protected void ExpectReturnValue<T>(string functionId, T expectedReturnValue, PValue[] args)
         {
+            if(!args.All(value => value != null))
+                throw new ArgumentException("Arguments must not contain naked CLR null references. Use `PType.Null`.");
+
             var expected = engine.CreateNativePValue(expectedReturnValue);
             if (!target.Functions.Contains(functionId))
                 throw new PrexoniteException("Function " + functionId + " cannot be found.");
 
             Console.WriteLine("Expecting " + functionId + " to return " + expected);
 
+            var func = target.Functions[functionId];
+            if (func.Meta[StoreDebugImplementationKey].Switch)
+                Prexonite.Compiler.Cil.Compiler.StoreDebugImplementation(target, engine);
+
             PValue rv;
             try
             {
-                rv = target.Functions[functionId].Run(engine, args);
+                rv = func.Run(engine, args);
+            }
+            catch(AccessViolationException)
+            {
+                Console.WriteLine("Detected AccessViolationException. Trying to store debug implementation (Repeats CIL compilation)");
+                Prexonite.Compiler.Cil.Compiler.StoreDebugImplementation(target, engine);
+                throw; 
             }
             catch(InvalidProgramException)
             {

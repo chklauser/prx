@@ -24,14 +24,28 @@ using Prx.Tests;
 namespace Prx.Tests
 // ReSharper restore CheckNamespace
 {
-    [TestFixture]
 // ReSharper disable InconsistentNaming
-    public class VMTests : VMTestsBase
+    public abstract class VMTests : VMTestsBase
 // ReSharper restore InconsistentNaming
     {
+
         #region Setup
 
         #endregion
+
+        [Test]
+        public virtual void CilVersusInterpreted()
+        {
+            Compile(@"
+function main()
+{
+    var interpreter_stack = asm(ldr.eng).Stack.Count;
+    println(interpreter_stack);
+    return interpreter_stack == 0;
+}
+");
+            Expect(CompileToCil);
+        }
 
         [Test]
         public void Basic()
@@ -1019,10 +1033,21 @@ function clo2(a)
             Assert.IsNotNull(clo1);
 
             var pclo2 = GetReturnValueNamed("clo2", rnd.Next(1, 10));
-            Assert.AreEqual(PType.Object[typeof(CilClosure)], pclo2.Type);
-            var clo2 = pclo2.Value as CilClosure;
-            Assert.IsNotNull(clo2);
-            Assert.AreEqual(1, clo2.SharedVariables.Length);
+            if (CompileToCil)
+            {
+                Assert.AreEqual(PType.Object[typeof(CilClosure)], pclo2.Type);
+                var clo2 = pclo2.Value as CilClosure;
+                Assert.IsNotNull(clo2);
+                Assert.AreEqual(1, clo2.SharedVariables.Length);
+            }
+            else
+            {
+                Assert.AreEqual(PType.Object[typeof(Closure)], pclo2.Type);
+                var clo2 = pclo2.Value as Closure;
+                Assert.IsNotNull(clo2);
+                Assert.AreEqual(1, clo2.SharedVariables.Length);
+            }
+
 #else
             PValue pclo1 = _getReturnValueNamed("clo1");
             Assert.AreEqual(PType.Object[typeof(Closure)], pclo1.Type);
@@ -1268,6 +1293,20 @@ function main(var m)
             var expected = 2 + (2*m);
 
             Expect(expected, m);
+        }
+
+        [Test]
+        public void PowerSqrt()
+        {
+            Compile(@"
+function main(x,y)
+{
+    return ::Math.Sqrt(x^2 + y^2);
+}
+");
+            var x = 113.0;
+            var y = 13.0;
+            Expect(Math.Sqrt(Math.Pow(x,2)+Math.Pow(y,2)),x,y);
         }
 
         [Test]
@@ -2108,7 +2147,7 @@ function foldl(ref f, var left, var xs)
 }
 function tos(xs) = foldl((a,b) => a + b,"""",xs);
 
-function main()
+function main()  [store_debug_implementation enabled;]
 {
     var xs = [0];
     for(var i = 1; i < 6; i++)
@@ -3463,6 +3502,7 @@ function chainedPrio(x,y,z)
             ExpectNamed("partialFull", "yxxy", x, y);
             ExpectNamed("chainedPrio", "zyxxyz", x, y, z);
         }
+
 
         #region Helper
 

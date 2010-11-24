@@ -62,6 +62,11 @@ AsmInstruction<AstBlock block>          (.  int arguments = 0;
                                             target.Symbols.Add(id, new SymbolEntry(kind, id));
                                         .)
     }
+|   //OP ALIAS INSTRUCTIONS
+    IF(isInOpAliasGroup())
+    AsmId<out insbase>
+    [ dot AsmId<out detail> ]
+                                        (.  addOpAlias(block, insbase, detail); .)
 |   //NULL INSTRUCTIONS
     IF(isInNullGroup())
     AsmId<out insbase>

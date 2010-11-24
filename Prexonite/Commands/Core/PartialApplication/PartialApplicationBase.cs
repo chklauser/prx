@@ -91,6 +91,8 @@ namespace Prexonite.Commands.Core.PartialApplication
 
         public virtual PValue IndirectCall(StackContext sctx, PValue[] args)
         {
+            System.Diagnostics.Debug.Assert(args.All(value => value != null), "Actual (CLI) null references passed to " + GetType().Name + ".IndirectCall");
+
             var argc = args.Length;
             var countExcessArguments = System.Math.Max(argc - _computeCountOpenArgumentsMapped(argc), 0);
             var nonArgumentPrefix = NonArgumentPrefix;

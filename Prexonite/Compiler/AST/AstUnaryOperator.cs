@@ -28,31 +28,66 @@ namespace Prexonite.Compiler.Ast
 {
     public class AstUnaryOperator : AstNode,
                                     IAstEffect,
-                                    IAstHasExpressions
+                                    IAstHasExpressions,
+                                    IAstPartiallyApplicable
     {
-        public IAstExpression Operand;
-        public UnaryOperator Operator;
+        private IAstExpression _operand;
+        private UnaryOperator _operator;
+
+        public SymbolInterpretations ImplementationInterpretation { get; set; }
+
+        public string ImplementationId { get; set; }
 
         public AstUnaryOperator(
-            string file, int line, int column, UnaryOperator op, IAstExpression operand)
+            string file, int line, int column, UnaryOperator op, IAstExpression operand, SymbolInterpretations implementationInterpretation, string implementationId)
             : base(file, line, column)
         {
             if (operand == null)
                 throw new ArgumentNullException("operand");
-            Operator = op;
-            Operand = operand;
+            _operator = op;
+            _operand = operand;
+            ImplementationInterpretation = implementationInterpretation;
+            ImplementationId = implementationId;
         }
 
-        internal AstUnaryOperator(Parser p, UnaryOperator op, IAstExpression operand)
-            : this(p.scanner.File, p.t.line, p.t.col, op, operand)
+        internal static AstUnaryOperator Create(Parser p, UnaryOperator op, IAstExpression operand)
         {
+            string id;
+            SymbolInterpretations interpretation;
+            
+            switch (op)
+            {
+                case UnaryOperator.PreIncrement:
+                case UnaryOperator.PreDecrement:
+                case UnaryOperator.PostIncrement:
+                case UnaryOperator.PostDecrement:
+                    id = null;
+                    interpretation = SymbolInterpretations.Undefined;
+                    break;
+                default:
+                    interpretation = Resolve(p, OperatorNames.Prexonite.GetName(op), out id);
+                    break;
+            }
+            return new AstUnaryOperator(p.scanner.File, p.t.line, p.t.col, op, operand, interpretation,id);
         }
 
         #region IAstHasExpressions Members
 
         public IAstExpression[] Expressions
         {
-            get { return new[] {Operand}; }
+            get { return new[] {_operand}; }
+        }
+
+        public UnaryOperator Operator
+        {
+            get { return _operator; }
+            set { _operator = value; }
+        }
+
+        public IAstExpression Operand
+        {
+            get { return _operand; }
+            set { _operand = value; }
         }
 
         #endregion
@@ -62,13 +97,13 @@ namespace Prexonite.Compiler.Ast
         public bool TryOptimize(CompilerTarget target, out IAstExpression expr)
         {
             expr = null;
-            OptimizeNode(target, ref Operand);
-            if (Operand is AstConstant)
+            OptimizeNode(target, ref _operand);
+            if (_operand is AstConstant)
             {
-                var constOperand = (AstConstant) Operand;
+                var constOperand = (AstConstant) _operand;
                 var valueOperand = constOperand.ToPValue(target);
                 PValue result;
-                switch (Operator)
+                switch (_operator)
                 {
                     case UnaryOperator.UnaryNegation:
                         if (valueOperand.UnaryNegation(target.Loader, out result))
@@ -104,15 +139,15 @@ namespace Prexonite.Compiler.Ast
             }
 
             //Try other optimizations
-            switch (Operator)
+            switch (_operator)
             {
                 case UnaryOperator.UnaryNegation:
                 case UnaryOperator.LogicalNot:
                 case UnaryOperator.OnesComplement:
-                    var doubleNegation = Operand as AstUnaryOperator;
-                    if (doubleNegation != null && doubleNegation.Operator == Operator)
+                    var doubleNegation = _operand as AstUnaryOperator;
+                    if (doubleNegation != null && doubleNegation._operator == _operator)
                     {
-                        expr = doubleNegation.Operand;
+                        expr = doubleNegation._operand;
                         return true;
                     }
                     break;
@@ -131,11 +166,11 @@ namespace Prexonite.Compiler.Ast
 
         void IAstEffect.DoEmitEffectCode(CompilerTarget target)
         {
-            var symbol = Operand as AstGetSetSymbol;
+            var symbol = _operand as AstGetSetSymbol;
             var isVariable = symbol != null && symbol.IsObjectVariable;
-            var complex = Operand as AstGetSet;
+            var complex = _operand as AstGetSet;
             var isAssignable = complex != null;
-            switch (Operator)
+            switch (_operator)
             {
                 case UnaryOperator.PreIncrement:
                 case UnaryOperator.PostIncrement:
@@ -144,8 +179,8 @@ namespace Prexonite.Compiler.Ast
                     if (isVariable) //The easy way
                     {
                         OpCode opc;
-                        if (Operator == UnaryOperator.PostIncrement ||
-                            Operator == UnaryOperator.PreIncrement)
+                        if (_operator == UnaryOperator.PostIncrement ||
+                            _operator == UnaryOperator.PreIncrement)
                             if (symbol.Interpretation == SymbolInterpretations.GlobalObjectVariable)
                                 opc = OpCode.incglob;
                             else
@@ -161,12 +196,12 @@ namespace Prexonite.Compiler.Ast
                         //The get/set fallback
                         complex = complex.GetCopy();
                         var assignment = new AstModifyingAssignment(
-                            complex.File, complex.Line, complex.Column, Operator ==
+                            complex.File, complex.Line, complex.Column, _operator ==
                                                                         UnaryOperator.PostIncrement ||
-                                                                        Operator == UnaryOperator.PreIncrement
+                                                                        _operator == UnaryOperator.PreIncrement
                                                                             ?
                                                                                 BinaryOperator.Addition
-                                                                            : BinaryOperator.Subtraction, complex);
+                                                                            : BinaryOperator.Subtraction, complex,ImplementationInterpretation,ImplementationId);
                         if (complex.Call == PCall.Get)
                             complex.Arguments.Add(new AstConstant(File, Line, Column, 1));
                         else
@@ -177,7 +212,7 @@ namespace Prexonite.Compiler.Ast
                     }
                     else
                         throw new PrexoniteException(
-                            "Node of type " + Operand.GetType() +
+                            "Node of type " + _operand.GetType() +
                             " does not support increment/decrement operators.");
                     break;
                 case UnaryOperator.UnaryNegation:
@@ -190,30 +225,65 @@ namespace Prexonite.Compiler.Ast
 
         protected override void DoEmitCode(CompilerTarget target)
         {
-            switch (Operator)
+            switch (_operator)
             {
-                case UnaryOperator.UnaryNegation:
-                    Operand.EmitCode(target);
-                    target.Emit(this, OpCode.neg);
-                    break;
                 case UnaryOperator.LogicalNot:
-                    Operand.EmitCode(target);
-                    target.Emit(this, OpCode.not);
-                    break;
+                case UnaryOperator.UnaryNegation:
                 case UnaryOperator.OnesComplement:
-                    Operand.EmitCode(target);
-                    target.Emit(this, OpCode.neg);
+                    var call = new AstGetSetSymbol(File, Line, Column, PCall.Get, ImplementationId,
+                                                   ImplementationInterpretation);
+                    call.Arguments.Add(_operand);
+                    call.EmitCode(target);
                     break;
                 case UnaryOperator.PreDecrement:
                 case UnaryOperator.PreIncrement:
                     ((IAstEffect)this).DoEmitEffectCode(target);
-                    Operand.EmitCode(target);
+                    _operand.EmitCode(target);
                     break;
                 case UnaryOperator.PostDecrement:
                 case UnaryOperator.PostIncrement:
-                    Operand.EmitCode(target);
+                    _operand.EmitCode(target);
                     ((IAstEffect)this).DoEmitEffectCode(target);
                     break;
+            }
+        }
+
+        public override bool CheckForPlaceholders()
+        {
+            AstTypecheck typecheck;
+            return base.CheckForPlaceholders() || Operand.IsPlaceholder() ||
+                   (Operator == UnaryOperator.LogicalNot 
+                   && (typecheck = Operand as AstTypecheck) != null && typecheck.CheckForPlaceholders());
+        }
+
+        public void DoEmitPartialApplicationCode(CompilerTarget target)
+        {
+            var typecheck = Operand as AstTypecheck;
+            //Special handling of `? is not {TypeExpr}`
+            //  the typecheck.IsInverted flag is only set for the
+            //      `? is not {TypeExpr}`
+            //  syntax, and not for
+            //      `not ? is {TypeExpr}`
+            //  for consistency reasons
+            if (Operator == UnaryOperator.LogicalNot && typecheck != null && typecheck.IsInverted)
+            {
+                //Expression is something like (? is not T)
+                //emit ((? is T) then (not ?))
+                var thenCmd = new AstGetSetSymbol(File, Line, Column, PCall.Get, Engine.ThenAlias,
+                                                  SymbolInterpretations.Command);
+                var notOp = new AstUnaryOperator(File, Line, Column, UnaryOperator.LogicalNot,
+                                                 new AstPlaceholder(File, Line, Column, 0), ImplementationInterpretation,
+                                                 ImplementationId);
+                var partialTypecheck = new AstTypecheck(File, Line, Column, typecheck.Subject, typecheck.Type);
+                thenCmd.Arguments.Add(partialTypecheck);
+                thenCmd.Arguments.Add(notOp);
+
+                thenCmd.EmitCode(target);
+            }
+            else
+            {
+                //Just emit the operator normally, the appropriate mechanism will kick in
+                DoEmitCode(target);
             }
         }
     }

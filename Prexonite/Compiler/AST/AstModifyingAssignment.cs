@@ -22,33 +22,54 @@
  */
 
 using System;
-
+using System.Diagnostics;
 using Prexonite.Types;
 
 namespace Prexonite.Compiler.Ast
 {
     public class AstModifyingAssignment : AstNode, IAstHasExpressions, IAstEffect
     {
-        public BinaryOperator SetModifier;
-        public AstGetSet ModifyingAssignment;
+        private BinaryOperator _setModifier;
+        private AstGetSet _modifyingAssignment;
 
-        public AstModifyingAssignment(string file, int line, int column, BinaryOperator setModifier, AstGetSet complex)
+        public SymbolInterpretations ImplementationInterpretation { get; set; }
+
+        public string ImplementationId { get; set; }
+
+        public AstModifyingAssignment(string file, int line, int column, BinaryOperator setModifier, AstGetSet complex, SymbolInterpretations implementationInterpretation, string implementationId)
             : base(file, line, column)
         {
-            SetModifier = setModifier;
-            ModifyingAssignment = complex;
+            _setModifier = setModifier;
+            _modifyingAssignment = complex;
+            ImplementationInterpretation = implementationInterpretation;
+            ImplementationId = implementationId;
         }
 
-        internal AstModifyingAssignment(Parser p, BinaryOperator setModifier, AstGetSet complex)
-            : this(p.scanner.File, p.t.line, p.t.col,setModifier, complex)
+        internal static AstModifyingAssignment Create(Parser p, BinaryOperator setModifier, AstGetSet complex)
         {
+            var id = OperatorNames.Prexonite.GetName(setModifier);
+            var interpretation = id == null ? SymbolInterpretations.Undefined : Resolve(p, id, out id);
+            return new AstModifyingAssignment(p.scanner.File, p.t.line, p.t.col, setModifier, complex, interpretation,
+                                              id);
         }
 
         #region IAstHasExpressions Members
 
         public IAstExpression[] Expressions
         {
-            get { return new IAstExpression[]{ModifyingAssignment}; }
+            get { return new IAstExpression[]{_modifyingAssignment}; }
+        }
+
+        public AstGetSet ModifyingAssignment
+        {
+            get { return _modifyingAssignment; }
+            set { _modifyingAssignment = value; }
+        }
+
+        public BinaryOperator SetModifier
+        {
+            get { return _setModifier; }
+            set { _setModifier = value; }
         }
 
         #endregion
@@ -58,8 +79,8 @@ namespace Prexonite.Compiler.Ast
         public bool TryOptimize(CompilerTarget target, out IAstExpression expr)
         {
             IAstExpression newAssignment;
-            if (ModifyingAssignment.TryOptimize(target, out newAssignment) && newAssignment is AstGetSet)
-                ModifyingAssignment = (AstGetSet) newAssignment;
+            if (_modifyingAssignment.TryOptimize(target, out newAssignment) && newAssignment is AstGetSet)
+                _modifyingAssignment = (AstGetSet) newAssignment;
             expr = null;
             return false;
         }
@@ -73,13 +94,13 @@ namespace Prexonite.Compiler.Ast
 
         public void EmitCode(CompilerTarget target, bool justEffect)
         {
-            switch(SetModifier)
+            switch(_setModifier)
             {
                 case BinaryOperator.Coalescence:
                     {
-                        AstGetSet assignment = ModifyingAssignment.GetCopy();
+                        AstGetSet assignment = _modifyingAssignment.GetCopy();
 
-                        AstGetSet getVariation = ModifyingAssignment.GetCopy();
+                        AstGetSet getVariation = _modifyingAssignment.GetCopy();
                         getVariation.Call = PCall.Get;
                         //remove last argument (the assigned value)
                         getVariation.Arguments.RemoveAt(getVariation.Arguments.Count - 1);
@@ -117,7 +138,7 @@ namespace Prexonite.Compiler.Ast
                         // a(x,y) ~= T         //a(x,y,~T)~=
                         //to
                         // a(x,y) = a(x,y)~T   //a(x,y,a(x,y)~T)=
-                        var assignment = ModifyingAssignment.GetCopy(); //a'(x,y,~T)~=
+                        var assignment = _modifyingAssignment.GetCopy(); //a'(x,y,~T)~=
 
                         var getVariation = assignment.GetCopy(); //a''(x,y,~T)=
                         getVariation.Call = PCall.Get; //a''(x,y,~String)
@@ -142,17 +163,17 @@ namespace Prexonite.Compiler.Ast
                     break;
                 case BinaryOperator.None:
                     if (justEffect)
-                        ModifyingAssignment.EmitEffectCode(target);
+                        _modifyingAssignment.EmitEffectCode(target);
                     else
-                        ModifyingAssignment.EmitCode(target);
+                        _modifyingAssignment.EmitCode(target);
                     break;
                 default: // +=, *= etc.
                     {
                         //Without more detailed information, a Set call with a set modifier has to be expressed using 
                         //  conventional set call and binary operator nodes.
                         //Note that code generator for this original node is completely bypassed.
-                        var assignment = ModifyingAssignment.GetCopy();
-                        var getVersion = ModifyingAssignment.GetCopy();
+                        var assignment = _modifyingAssignment.GetCopy();
+                        var getVersion = _modifyingAssignment.GetCopy();
                         getVersion.Call = PCall.Get;
                         getVersion.Arguments.RemoveAt(getVersion.Arguments.Count - 1);
                         assignment.Arguments[assignment.Arguments.Count - 1] =
@@ -161,8 +182,9 @@ namespace Prexonite.Compiler.Ast
                                 Line,
                                 Column,
                                 getVersion,
-                                SetModifier,
-                                ModifyingAssignment.Arguments[ModifyingAssignment.Arguments.Count - 1]);
+                                _setModifier,
+                                _modifyingAssignment.Arguments[_modifyingAssignment.Arguments.Count - 1],
+                                ImplementationInterpretation,ImplementationId);
                         if (justEffect)
                             assignment.EmitEffectCode(target);
                         else

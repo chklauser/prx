@@ -1,4 +1,5 @@
-﻿var struct\ordinalIc [is compiler;] = System::StringComparison.OrdinalIgnoreCase;
+﻿var struct\ordinalIc [is compiler;];
+{ struct\ordinalIc = System::StringComparison.OrdinalIgnoreCase; }
 
 build does require(@"psr\macro.pxs");
 

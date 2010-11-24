@@ -33,14 +33,20 @@ namespace Prexonite.Compiler.Ast
                                      IAstExpression,
                                      IAstHasExpressions
     {
-        public IAstExpression LeftOperand;
-        public IAstExpression RightOperand;
-        public BinaryOperator Operator;
+        private IAstExpression _leftOperand;
+        private IAstExpression _rightOperand;
+        private BinaryOperator _operator;
+        private SymbolInterpretations _implementationInterpretation;
+        private string _implementationId;
 
-        internal AstBinaryOperator(
-            Parser p, IAstExpression leftOperand, BinaryOperator op, IAstExpression rightOperand)
-            : this(p.scanner.File, p.t.line, p.t.col, leftOperand, op, rightOperand)
+        internal static AstBinaryOperator Create(Parser parser,  IAstExpression leftOperand,
+            BinaryOperator op,
+            IAstExpression rightOperand)
         {
+            string id; 
+            var interpretation = Resolve(parser, OperatorNames.Prexonite.GetName(op), out id);
+            return new AstBinaryOperator(parser.scanner.File, parser.t.line, parser.t.col, leftOperand, op,
+                                             rightOperand, interpretation, id);
         }
 
         /// <summary>
@@ -52,6 +58,8 @@ namespace Prexonite.Compiler.Ast
         /// <param name="leftOperand">The left operand of the expression.</param>
         /// <param name="op">The operator.</param>
         /// <param name="rightOperand">The right operand of the expression.</param>
+        /// <param name="implementationInterpretation">The interpretation of the implementation id (command or function in most cases)</param>
+        /// <param name="implementationId">The id of the Prexonite entity that is used for the implementation (a command or funciton id in most cases)</param>
         /// <seealso cref="BinaryOperator"/>
         /// <seealso cref="IAstExpression"/>
         public AstBinaryOperator(
@@ -60,90 +68,56 @@ namespace Prexonite.Compiler.Ast
             int column,
             IAstExpression leftOperand,
             BinaryOperator op,
-            IAstExpression rightOperand)
+            IAstExpression rightOperand,
+            SymbolInterpretations implementationInterpretation,
+            string implementationId)
             : base(file, line, column)
         {
-            LeftOperand = leftOperand;
-            RightOperand = rightOperand;
-            Operator = op;
+            _leftOperand = leftOperand;
+            _rightOperand = rightOperand;
+            _implementationInterpretation = implementationInterpretation;
+            _implementationId = implementationId;
+            _operator = op;
         }
 
         #region IAstHasExpressions Members
 
         public IAstExpression[] Expressions
         {
-            get { return new[] {LeftOperand, RightOperand}; }
+            get { return new[] {_leftOperand, _rightOperand}; }
+        }
+
+        public IAstExpression LeftOperand
+        {
+            get { return _leftOperand; }
+            set { _leftOperand = value; }
+        }
+
+        public IAstExpression RightOperand
+        {
+            get { return _rightOperand; }
+            set { _rightOperand = value; }
+        }
+
+        public BinaryOperator Operator
+        {
+            get { return _operator; }
+            set { _operator = value; }
+        }
+
+        public SymbolInterpretations ImplementationInterpretation
+        {
+            get { return _implementationInterpretation; }
+            set { _implementationInterpretation = value; }
+        }
+
+        public string ImplementationId
+        {
+            get { return _implementationId; }
+            set { _implementationId = value; }
         }
 
         #endregion
-
-        /// <summary>
-        /// Emits the instruction corresponding to the supplied binary operator.
-        /// </summary>
-        /// <param name="position">The position in source code where this ast node originated.</param>
-        /// <param name="target">The target to which to write the instruction to.</param>
-        /// <param name="op">Any binary operator.</param>
-        /// <seealso cref="BinaryOperator"/>
-        public static void EmitOperator(ISourcePosition position, CompilerTarget target, BinaryOperator op)
-        {
-            switch (op)
-            {
-                case BinaryOperator.Addition:
-                    target.Emit(position, OpCode.add);
-                    break;
-                case BinaryOperator.Subtraction:
-                    target.Emit(position, OpCode.sub);
-                    break;
-                case BinaryOperator.Multiply:
-                    target.Emit(position, OpCode.mul);
-                    break;
-                case BinaryOperator.Division:
-                    target.Emit(position, OpCode.div);
-                    break;
-                case BinaryOperator.Modulus:
-                    target.Emit(position, OpCode.mod);
-                    break;
-                case BinaryOperator.Power:
-                    target.Emit(position, OpCode.pow);
-                    break;
-                case BinaryOperator.BitwiseAnd:
-                    target.Emit(position, OpCode.and);
-                    break;
-                case BinaryOperator.BitwiseOr:
-                    target.Emit(position, OpCode.or);
-                    break;
-                case BinaryOperator.ExclusiveOr:
-                    target.Emit(position, OpCode.xor);
-                    break;
-                case BinaryOperator.Equality:
-                    target.Emit(position, OpCode.ceq);
-                    break;
-                case BinaryOperator.Inequality:
-                    target.Emit(position, OpCode.cne);
-                    break;
-                case BinaryOperator.GreaterThan:
-                    target.Emit(position, OpCode.cgt);
-                    break;
-                case BinaryOperator.GreaterThanOrEqual:
-                    target.Emit(position, OpCode.cge);
-                    break;
-                case BinaryOperator.LessThan:
-                    target.Emit(position, OpCode.clt);
-                    break;
-                case BinaryOperator.LessThanOrEqual:
-                    target.Emit(position, OpCode.cle);
-                    break;
-            }
-        }
-
-        /// <summary>
-        /// Emits the operator instruction only
-        /// </summary>
-        /// <param name="target">The target to which to write the instruction to.</param>
-        public void EmitOperator(CompilerTarget target)
-        {
-            EmitOperator(this, target, Operator);
-        }
 
         /// <summary>
         /// Emits the code for this node.
@@ -151,12 +125,11 @@ namespace Prexonite.Compiler.Ast
         /// <param name="target">The target to which to write the code to.</param>
         protected override void DoEmitCode(CompilerTarget target)
         {
-            LeftOperand.EmitCode(target);
-            if (ReferenceEquals(LeftOperand, RightOperand))
-                target.EmitDuplicate(this);
-            else
-                RightOperand.EmitCode(target);
-            EmitOperator(target);
+            var call = new AstGetSetSymbol(File, Line, Column, PCall.Get, _implementationId,
+                                           _implementationInterpretation);
+            call.Arguments.Add(_leftOperand);
+            call.Arguments.Add(_rightOperand);
+            call.EmitCode(target);
         }
 
         #region Optimization
@@ -180,25 +153,25 @@ namespace Prexonite.Compiler.Ast
         public bool TryOptimize(CompilerTarget target, out IAstExpression expr)
         {
             //The coalecence and cast operators are handled separately.
-            if (Operator == BinaryOperator.Coalescence)
+            if (_operator == BinaryOperator.Coalescence)
             {
                 var coal = new AstCoalescence(File, Line, Column);
-                coal.Expressions.Add(LeftOperand);
-                coal.Expressions.Add(RightOperand);
+                coal.Expressions.Add(_leftOperand);
+                coal.Expressions.Add(_rightOperand);
                 expr = coal;
                 OptimizeNode(target, ref expr);
                 return true;
             }
-            else if (Operator == BinaryOperator.Cast)
+            else if (_operator == BinaryOperator.Cast)
             {
-                var T = RightOperand as IAstType;
+                var T = _rightOperand as IAstType;
                 if (T == null)
                     throw new PrexoniteException(
                         String.Format(
                             "The right hand side of a cast operation must be a type expression (in {0} on line {1}).",
                             File,
                             Line));
-                expr = new AstTypecast(File, Line, Column, LeftOperand, T);
+                expr = new AstTypecast(File, Line, Column, _leftOperand, T);
                 OptimizeNode(target, ref expr);
                 return true;
             }
@@ -206,12 +179,12 @@ namespace Prexonite.Compiler.Ast
             expr = null;
 
             //Let children do optimization
-            OptimizeNode(target, ref LeftOperand);
-            OptimizeNode(target, ref RightOperand);
+            OptimizeNode(target, ref _leftOperand);
+            OptimizeNode(target, ref _rightOperand);
 
             //Constant folding
-            var leftConstant = LeftOperand as AstConstant;
-            var rightConstant = RightOperand as AstConstant;
+            var leftConstant = _leftOperand as AstConstant;
+            var rightConstant = _rightOperand as AstConstant;
             var constant = leftConstant != null && rightConstant != null;
 
             var left = leftConstant != null ? leftConstant.ToPValue(target) : null;
@@ -220,7 +193,7 @@ namespace Prexonite.Compiler.Ast
 
             PValue neutral;
 
-            switch (Operator)
+            switch (_operator)
             {
                 case BinaryOperator.Addition:
                     //Constant folding
@@ -235,7 +208,7 @@ namespace Prexonite.Compiler.Ast
                              (bool) neutral.Value))
                         {
                             //right operand is the neutral element 0 => left + 0 = left
-                            expr = leftConstant ?? LeftOperand;
+                            expr = leftConstant ?? _leftOperand;
                             return true;
                         }
                     }
@@ -245,7 +218,7 @@ namespace Prexonite.Compiler.Ast
                              (bool) neutral.Value))
                         {
                             //left operand is the neutral element 0 => 0 + right = right
-                            expr = rightConstant ?? RightOperand;
+                            expr = rightConstant ?? _rightOperand;
                             return true;
                         }
                     }
@@ -253,15 +226,15 @@ namespace Prexonite.Compiler.Ast
                     //Check for already existing concat nodes.
                     AstStringConcatenation concat;
                     //left is concat?
-                    if ((concat = LeftOperand as AstStringConcatenation) != null)
+                    if ((concat = _leftOperand as AstStringConcatenation) != null)
                     {
-                        concat.Arguments.Add(RightOperand);
+                        concat.Arguments.Add(_rightOperand);
                         expr = GetOptimizedNode(target, concat);
                         return true;
                     } //right is concat?
-                    else if ((concat = RightOperand as AstStringConcatenation) != null)
+                    else if ((concat = _rightOperand as AstStringConcatenation) != null)
                     {
-                        concat.Arguments.Insert(0, LeftOperand);
+                        concat.Arguments.Insert(0, _leftOperand);
                         expr = GetOptimizedNode(target, concat);
                         return true;
                     }
@@ -276,8 +249,10 @@ namespace Prexonite.Compiler.Ast
                                 File,
                                 Line,
                                 Column,
+                                ImplementationInterpretation, 
+                                ImplementationId,
                                 leftConstant,
-                                rightConstant ?? RightOperand));
+                                rightConstant ?? _rightOperand));
 
                         return true;
                     }
@@ -290,7 +265,9 @@ namespace Prexonite.Compiler.Ast
                                 File,
                                 Line,
                                 Column,
-                                leftConstant ?? LeftOperand,
+                                ImplementationInterpretation,
+                                ImplementationId,
+                                leftConstant ?? _leftOperand,
                                 rightConstant));
                         return true;
                     }
@@ -318,7 +295,7 @@ namespace Prexonite.Compiler.Ast
                               (bool) neutral.Value))
                             goto emitFull;
                         //right operand is the neutral element 1 => left * 1 = left
-                        expr = leftConstant ?? LeftOperand;
+                        expr = leftConstant ?? _leftOperand;
                         return true;
                     }
                     else if (left != null)
@@ -329,7 +306,7 @@ namespace Prexonite.Compiler.Ast
                               (bool) neutral.Value))
                             goto emitFull;
                         //left operand is the neutral element 1 => 1 * right = right
-                        expr = rightConstant ?? RightOperand;
+                        expr = rightConstant ?? _rightOperand;
                         return true;
                     }
                     else
@@ -349,8 +326,8 @@ namespace Prexonite.Compiler.Ast
                             !(right.Equality(target.Loader, neutral, out neutral) &&
                               (bool) neutral.Value))
                             goto emitFull;
-                        //right operand is the neutral element 1 => left * 1 = left
-                        expr = leftConstant ?? LeftOperand;
+                        //right operand is the neutral element 1 => left / 1 = left
+                        expr = leftConstant ?? _leftOperand;
                         return true;
                     }
                     else
@@ -376,19 +353,11 @@ namespace Prexonite.Compiler.Ast
                     if (right != null)
                     {
                         neutral = new PValue(1, PType.Int);
-                        var square = new PValue(2, PType.Int);
                         if ((right.Equality(target.Loader, neutral, out neutral) &&
                              (bool) neutral.Value))
                         {
                             //right operand is the neutral element 1 => left ^ 1 = left
-                            expr = leftConstant ?? LeftOperand;
-                            return true;
-                        }
-                        else if (right.Equality(target.Loader, square, out square) && (bool) square.Value)
-                        {
-                            //right operand is 2
-                            expr = new AstBinaryOperator(
-                                File, Line, Column, LeftOperand, BinaryOperator.Multiply, LeftOperand);
+                            expr = leftConstant ?? _leftOperand;
                             return true;
                         }
                         else
@@ -514,9 +483,9 @@ namespace Prexonite.Compiler.Ast
             return
                 String.Format(
                     "({0}) {1} ({2})",
-                    LeftOperand,
-                    Enum.GetName(typeof (BinaryOperator), Operator),
-                    RightOperand);
+                    _leftOperand,
+                    Enum.GetName(typeof (BinaryOperator), _operator),
+                    _rightOperand);
         }
     }
 

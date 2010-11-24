@@ -84,8 +84,8 @@ GetInitiator<out complex, out isDeclaration>
     }
 //GetSet Terminator
 (                                       (.  block.Add(complex); .)
-|   inc                                 (.  block.Add(new AstUnaryOperator(this, UnaryOperator.PostIncrement, complex)); .)
-|   dec                                 (.  block.Add(new AstUnaryOperator(this, UnaryOperator.PostDecrement, complex)); .)
+|   inc                                 (.  block.Add(AstUnaryOperator.Create(this, UnaryOperator.PostIncrement, complex)); .)
+|   dec                                 (.  block.Add(AstUnaryOperator.Create(this, UnaryOperator.PostDecrement, complex)); .)
 |   Assignment<complex, out node>       (.  symbol = node as AstGetSetSymbol;
                                             if(symbol != null && InterpretationIsVariable(symbol.Interpretation) && isDeclaration)
                                                 symbol.Interpretation = InterpretAsObjectVariable(symbol.Interpretation);
@@ -399,7 +399,7 @@ Assignment<AstGetSet lvalue, out AstNode node>
 								(.  lvalue.Arguments.Add(expr);
 									lvalue.Call = PCall.Set; 
 									if(setModifier != BinaryOperator.None)
-									    node = new AstModifyingAssignment(this,setModifier,lvalue);
+									    node = AstModifyingAssignment.Create(this,setModifier,lvalue);
 								.)
 .
 

@@ -665,119 +665,13 @@ namespace Prexonite
                     Console.Write("=" + toDebug(pvar.Value));
 #endif
                         break;
-                    case OpCode.neg:
-                        Push(Pop().UnaryNegation(this));
-                        break;
-                    case OpCode.not:
-                        Push(Pop().LogicalNot(this));
-                        break;
 
                         #endregion
 
                         #region BINARY
 
-                        //BINARY OPERATORS
-
-                        #region ADDITION
-
-                        //ADDITION
-                    case OpCode.add:
-                        right = Pop();
-                        Push(Pop().Addition(this, right));
-                        break;
-                    case OpCode.sub:
-                        right = Pop();
-                        Push(Pop().Subtraction(this, right));
-                        break;
-
-                        #endregion
-
-                        #region MULTIPLICATION
-
-                        //MULTIPLICATION
-                    case OpCode.mul:
-                        right = Pop();
-                        Push(Pop().Multiply(this, right));
-                        break;
-                    case OpCode.div:
-                        right = Pop();
-                        Push(Pop().Division(this, right));
-                        break;
-                    case OpCode.mod:
-                        right = Pop();
-                        Push(Pop().Modulus(this, right));
-                        break;
-
-                        #endregion
-
-                        #region EXPONENTIAL
-
-                        //EXPONENTIAL
-                    case OpCode.pow:
-                        right = Pop();
-                        left = Pop();
-                        PValue rleft,
-                               rright;
-                        if (
-                            !(left.TryConvertTo(this, PType.Real, out rleft) &&
-                              right.TryConvertTo(this, PType.Real, out rright)))
-                            throw new PrexoniteException
-                                (
-                                "The arguments supplied to the power operator are invalid (cannot be converted to Real).");
-                        Push
-                            (
-                            Math.Pow(Convert.ToDouble(rleft.Value), Convert.ToDouble(rright.Value)));
-                        break;
-
-                        #endregion EXPONENTIAL
-
-                        #region COMPARISION
-
-                        //COMPARISION
-                    case OpCode.ceq:
-                        right = Pop();
-                        Push(Pop().Equality(this, right));
-                        break;
-                    case OpCode.cne:
-                        right = Pop();
-                        Push(Pop().Inequality(this, right));
-                        break;
-                    case OpCode.clt:
-                        right = Pop();
-                        Push(Pop().LessThan(this, right));
-                        break;
-                    case OpCode.cle:
-                        right = Pop();
-                        Push(Pop().LessThanOrEqual(this, right));
-                        break;
-                    case OpCode.cgt:
-                        right = Pop();
-                        Push(Pop().GreaterThan(this, right));
-                        break;
-                    case OpCode.cge:
-                        right = Pop();
-                        Push(Pop().GreaterThanOrEqual(this, right));
-                        break;
-
-                        #endregion
-
-                        #region BITWISE
-
-                        //BITWISE
-                    case OpCode.or:
-                        right = Pop();
-                        Push(Pop().BitwiseOr(this, right));
-                        break;
-                    case OpCode.and:
-                        right = Pop();
-                        Push(Pop().BitwiseAnd(this, right));
-                        break;
-                    case OpCode.xor:
-                        right = Pop();
-                        Push(Pop().ExclusiveOr(this, right));
-                        break;
-
-                        #endregion
+                        //binary operators are all implemented as commands in the namespace
+                        //  Prexonite.Commands.Core.Operators
 
                         #endregion //OPERATORS
 
@@ -1220,7 +1114,11 @@ namespace Prexonite
                         break;
 
                     case OpCode.leave:
-                        if (!_isHandlingException.Pop())
+                        if(_isHandlingException.Count == 0)
+                        {
+                            throw new PrexoniteException("Unexpected leave instruction. This happens when jumping to an instruction in a try block from the outside.");
+                        }
+                        else if (!_isHandlingException.Pop())
                         {
                             //No exception to handle
                             _pointer = argc;

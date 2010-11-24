@@ -25,6 +25,8 @@ using System.Collections.Generic;
 using System.Diagnostics;
 using System.Text;
 using Prexonite;
+using Prexonite.Types;
+using System.Linq;
 
 namespace Prexonite.Compiler.Ast
 {
@@ -39,6 +41,10 @@ namespace Prexonite.Compiler.Ast
                                           IAstExpression,
                                           IAstHasExpressions
     {
+        public SymbolInterpretations OperatorInterpretation { get; set; }
+
+        public string OperatorId { get; set; }
+
         /// <summary>
         /// The list of arguments for the string concatenation.
         /// </summary>
@@ -53,23 +59,22 @@ namespace Prexonite.Compiler.Ast
         /// <param name="arguments">A list of expressions to be added to the <see cref="Arguments"/> list.</param>
         [DebuggerNonUserCode]
         public AstStringConcatenation(
-            string file, int line, int column, params IAstExpression[] arguments)
+            string file, int line, int column, SymbolInterpretations operatorImplementation, string operatorId, params IAstExpression[] arguments)
             : base(file, line, column)
         {
             if (arguments == null)
                 arguments = new IAstExpression[] {};
 
             Arguments.AddRange(arguments);
+            OperatorId = operatorId;
+            OperatorInterpretation = operatorImplementation;
         }
 
-        [DebuggerNonUserCode]
-        internal AstStringConcatenation(Parser p, params IAstExpression[] arguments)
-            : base(p)
+        internal AstStringConcatenation Create(Parser p, params IAstExpression[] arguments)
         {
-            if (arguments == null)
-                arguments = new IAstExpression[] {};
-
-            Arguments.AddRange(arguments);
+            string id;
+            var interpretation = Resolve(p, OperatorNames.Prexonite.Addition, out id);
+            return new AstStringConcatenation(p.scanner.File,p.t.line, p.t.col, interpretation, id, arguments);
         }
 
         #region IAstHasExpressions Members
@@ -116,22 +121,37 @@ namespace Prexonite.Compiler.Ast
         /// </remarks>
         protected override void DoEmitCode(CompilerTarget target)
         {
-            foreach (IAstExpression arg in Arguments)
-                arg.EmitCode(target);
-
-            if (Arguments.Count > 2)
-                target.EmitCommandCall(this, Arguments.Count, Engine.ConcatenateAlias);
-            else if (Arguments.Count == 2)
-                AstBinaryOperator.EmitOperator(this, target, BinaryOperator.Addition);
+            if (Arguments.Count > 2 
+                && OperatorInterpretation == SymbolInterpretations.Command 
+                && OperatorId == Commands.Core.Operators.Addition.DefaultAlias)
+            {
+                var call = new AstGetSetSymbol(File, Line, Column, PCall.Get, Engine.ConcatenateAlias,
+                                               SymbolInterpretations.Command);
+                call.Arguments.AddRange(Arguments);
+                call.EmitCode(target);
+            }
+            else if (Arguments.Count >= 2)
+            {
+                var op = Arguments.Skip(1).Aggregate(Arguments[0],
+                                    (aggregate, right) =>
+                                    new AstBinaryOperator(File, Line, Column, aggregate, BinaryOperator.Addition,
+                                                          right,
+                                                          OperatorInterpretation, OperatorId));
+                op.EmitCode(target);
+            }
             else if (Arguments.Count == 1)
             {
+                Arguments[0].EmitCode(target);
+
                 AstConstant constant;
                 if ((constant = Arguments[0] as AstConstant) != null &&
                     !(constant.Constant is string))
                     target.EmitGetCall(this, 1, "ToString");
             }
             else if (Arguments.Count == 0)
+            {
                 target.EmitConstant(this, "");
+            }
         }
 
         #region IAstExpression Members
