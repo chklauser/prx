@@ -394,9 +394,13 @@ implementation
                                             target = oldTarget;
                                             if(errors.count == 0)
                                             {
-                                                //Emit code for top-level block
-                                                Ast[func].EmitCode(FunctionTargets[func],true);
-                                                FunctionTargets[func].FinishTarget();
+                                                try {
+                                                    //Emit code for top-level block
+                                                    Ast[func].EmitCode(FunctionTargets[func],true);
+                                                    FunctionTargets[func].FinishTarget();
+                                                } catch(Exception e) {
+                                                    SemErr("Exception during compilation of lambda expression.\n" + e.ToString());
+                                                }
                                             }
                                             
                                             expr = new AstCreateClosure(this, func.Id);                                         
@@ -435,8 +439,12 @@ lazy
                                             //Finish nested function
                                             if(errors.count == 0)
                                             {
+                                                try {
                                                 Ast[func].EmitCode(FunctionTargets[func],true);
                                                 FunctionTargets[func].FinishTarget();
+                                                } catch(Exception e) {
+                                                    SemErr("Exception during compilation of lazy expression.\n" + e.ToString());
+                                                }
                                             }
                                             
                                             //Construct expr (appears in the place of lazy expression)

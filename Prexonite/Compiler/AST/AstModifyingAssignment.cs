@@ -33,7 +33,6 @@ namespace Prexonite.Compiler.Ast
         private AstGetSet _modifyingAssignment;
 
         public SymbolInterpretations ImplementationInterpretation { get; set; }
-
         public string ImplementationId { get; set; }
 
         public AstModifyingAssignment(string file, int line, int column, BinaryOperator setModifier, AstGetSet complex, SymbolInterpretations implementationInterpretation, string implementationId)
@@ -41,6 +40,28 @@ namespace Prexonite.Compiler.Ast
         {
             _setModifier = setModifier;
             _modifyingAssignment = complex;
+
+            switch (setModifier)
+            {
+                case BinaryOperator.Addition:
+                case BinaryOperator.Subtraction:
+                case BinaryOperator.Multiply:
+                case BinaryOperator.Division:
+                case BinaryOperator.Modulus:
+                case BinaryOperator.Power:
+                case BinaryOperator.BitwiseAnd:
+                case BinaryOperator.BitwiseOr:
+                case BinaryOperator.ExclusiveOr:
+                case BinaryOperator.Equality:
+                case BinaryOperator.Inequality:
+                case BinaryOperator.GreaterThan:
+                case BinaryOperator.GreaterThanOrEqual:
+                case BinaryOperator.LessThan:
+                case BinaryOperator.LessThanOrEqual:
+                    if(implementationId == null)
+                        throw new PrexoniteException("An implementation id is required for the operator " + Enum.GetName(typeof(BinaryOperator), setModifier));
+                    break;
+            }
             ImplementationInterpretation = implementationInterpretation;
             ImplementationId = implementationId;
         }
@@ -169,6 +190,9 @@ namespace Prexonite.Compiler.Ast
                     break;
                 default: // +=, *= etc.
                     {
+                        if (ImplementationId == null)
+                            throw new PrexoniteException(string.Format("The assignment modifier {0} is not supported.",
+                                                                       Enum.GetName(typeof(BinaryOperator), SetModifier)));
                         //Without more detailed information, a Set call with a set modifier has to be expressed using 
                         //  conventional set call and binary operator nodes.
                         //Note that code generator for this original node is completely bypassed.

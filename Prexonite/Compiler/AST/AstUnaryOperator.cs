@@ -58,11 +58,12 @@ namespace Prexonite.Compiler.Ast
             switch (op)
             {
                 case UnaryOperator.PreIncrement:
-                case UnaryOperator.PreDecrement:
                 case UnaryOperator.PostIncrement:
+                    interpretation = Resolve(p, OperatorNames.Prexonite.Addition, out id);
+                    break;
+                case UnaryOperator.PreDecrement:
                 case UnaryOperator.PostDecrement:
-                    id = null;
-                    interpretation = SymbolInterpretations.Undefined;
+                    interpretation = Resolve(p, OperatorNames.Prexonite.Subtraction, out id);
                     break;
                 default:
                     interpretation = Resolve(p, OperatorNames.Prexonite.GetName(op), out id);

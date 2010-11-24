@@ -73,6 +73,9 @@ namespace Prexonite.Compiler.Ast
             string implementationId)
             : base(file, line, column)
         {
+            if (implementationId == null)
+                throw new ArgumentNullException("implementationId");
+
             _leftOperand = leftOperand;
             _rightOperand = rightOperand;
             _implementationInterpretation = implementationInterpretation;

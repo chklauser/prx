@@ -220,23 +220,28 @@ BuildBlock
                                     }
                                     
                                     //Emit code for top-level build block
-                                    target.Ast.EmitCode(target, true);
-                                    target.Function.Meta["File"] = scanner.File;
-                                    target.FinishTarget();	                                
-                                    target = lastTarget;
-                                    //Run the build block 
-                                    FunctionContext fctx = func.CreateFunctionContext(ParentEngine, new PValue[] {}, new PVariable[] {}, true);
+                                    try {
+                                        target.Ast.EmitCode(target, true);
                                     
-                                    try
-                                    {
-                                        TargetApplication._SuppressInitialization = true;
-                                        Loader.BuildCommandsEnabled = true;
-                                        ParentEngine.Process(fctx);
-                                    }
-                                    finally
-                                    {
-                                        Loader.BuildCommandsEnabled = false;
-                                        TargetApplication._SuppressInitialization = false;
+                                        target.Function.Meta["File"] = scanner.File;
+                                        target.FinishTarget();	                                
+                                        target = lastTarget;
+                                        //Run the build block 
+                                        FunctionContext fctx = func.CreateFunctionContext(ParentEngine, new PValue[] {}, new PVariable[] {}, true);
+                                    
+                                        try
+                                        {
+                                            TargetApplication._SuppressInitialization = true;
+                                            Loader.BuildCommandsEnabled = true;
+                                            ParentEngine.Process(fctx);
+                                        }
+                                        finally
+                                        {
+                                            Loader.BuildCommandsEnabled = false;
+                                            TargetApplication._SuppressInitialization = false;
+                                        }
+                                    } catch(Exception e) {
+                                        SemErr("Exception during compilation and execution of build block.\n" + e.ToString());
                                     }
 	                            .)
 .
@@ -258,15 +263,20 @@ GlobalCode							(.
 	{ Statement<target.Ast> } 
 	rbrace
 									(.
-										if(errors.count == 0)
-										{
-											TargetApplication._RequireInitialization();
-											Loader._EmitPartialInitializationCode();
-										}
-										//Symbols defined in this block are not available to further global code blocks
-										target.Symbols.Clear();
-										target = null;
-										_popLexerState();
+                                        try {
+										    if(errors.count == 0)
+										    {
+											    TargetApplication._RequireInitialization();
+											    Loader._EmitPartialInitializationCode();
+										    }
+                                        } catch(Exception e) {
+                                            SemErr("Exception during compilation of initialization code.\n" + e.ToString());
+                                        } finally {
+										    //Symbols defined in this block are not available to further global code blocks
+										    target.Symbols.Clear();
+										    target = null;
+										    _popLexerState();
+                                        }
 									.)
 .
 
@@ -474,32 +484,44 @@ FunctionDefinition<out PFunction func>
                                         {
                                             if(Engine.StringsAreEqual(func.Id, @"\init"))
                                             {
+                                                try {
                                                 TargetApplication._RequireInitialization();
                                                 Loader._EmitPartialInitializationCode();
                                                 //Initialize function gets finished at the end of Loader.Load
+                                                } catch(Exception e) {
+                                                    SemErr("Exception during compilation of initialization code.\n" + e.ToString());
+                                                }
                                             }
                                             else
                                             {
+                                                try {
                                                 //Apply compiler hooks for all kinds of functions (lazy/coroutine/macro)
 												FunctionTargets[func].ExecuteCompilerHooks();
 												//Emit code for top-level block
                                                 Ast[func].EmitCode(FunctionTargets[func], true);
                                                 FunctionTargets[func].FinishTarget();
+                                                } catch(Exception e) {
+                                                    SemErr("Exception during compilation of function body of " + id + ".\n" + e.ToString());
+                                                }
                                             }                                       
                                             
 											if(isCoroutine)
 											{
-												//Stub has to be returned into the physical slot mentioned in the source code
-												func = derStub;
-												//Generate code for the stub
-												AstCreateCoroutine crcor = new AstCreateCoroutine(this);                                            
-												crcor.Expression = new AstCreateClosure(this,derBody.Id);
-												AstReturn retst = new AstReturn(this, ReturnVariant.Exit);
-												retst.Expression = crcor;
-												cst.Ast.Add(retst);
-												//Emit code for top-level block
-												cst.Ast.EmitCode(cst,true);
-												cst.FinishTarget();
+                                                try {
+												    //Stub has to be returned into the physical slot mentioned in the source code
+												    func = derStub;
+												    //Generate code for the stub
+												    AstCreateCoroutine crcor = new AstCreateCoroutine(this);                                            
+												    crcor.Expression = new AstCreateClosure(this,derBody.Id);
+												    AstReturn retst = new AstReturn(this, ReturnVariant.Exit);
+												    retst.Expression = crcor;
+												    cst.Ast.Add(retst);
+												    //Emit code for top-level block
+												    cst.Ast.EmitCode(cst,true);
+												    cst.FinishTarget();
+                                                } catch(Exception e) {
+                                                    SemErr("Exception during compilation of coroutine stub for " + id + ".\n" + e.ToString());
+                                                }
 											}
 											else if(isLazy)
 											{
@@ -560,9 +582,13 @@ FunctionDefinition<out PFunction func>
 											    
 											    cst.Ast.Add(ret);
 											    
+                                                try {
 											    //Emit code for stub
 											    cst.Ast.EmitCode(cst,true);
 											    cst.FinishTarget();
+                                                } catch(Exception e) {
+                                                    SemErr("Exception during compilation of lazy function stub for " + id + ".\n" + e.ToString());
+                                                }
 											}                                        
                                         }
                                     .)
