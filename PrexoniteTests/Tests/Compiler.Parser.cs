@@ -5,8 +5,9 @@ using Prexonite;
 using Prexonite.Compiler;
 using Prexonite.Compiler.Ast;
 using Prexonite.Types;
+using Prx.Tests;
 
-namespace Prx.Tests
+namespace PrexoniteTests.Tests
 {
     [TestFixture]
     public class CompilerParser : Compiler

@@ -1900,8 +1900,7 @@ namespace Prexonite.Compiler.Cil
 
         private static VariableInitialization _getVariableInitialization(CompilerState state, string id, bool isRef)
         {
-            if (Engine.StringsAreEqual(id, PFunction.ArgumentListId) &&
-                !state.Source.Parameters.Contains(id))
+            if (Engine.StringsAreEqual(id, state.EffectiveArgumentsListId))
             {
                 return VariableInitialization.ArgV;
             }

@@ -13,8 +13,7 @@ using Prexonite.Types;
 
 namespace PrexoniteTests.Tests
 {
-    [TestFixture]
-    public class PartialApplication : Prx.Tests.VMTestsBase
+    public abstract class PartialApplication : Prx.Tests.VMTestsBase
     {
 
         #region Mock implementation of partial application
@@ -806,6 +805,24 @@ function main(x,y,z)
 ");
 
             Expect(Int32.MaxValue - 255, "255","System.Int32");
+        }
+    }
+
+    [TestFixture]
+    public class PartialApplicationCil : PartialApplication
+    {
+        public PartialApplicationCil()
+        {
+            CompileToCil = true;
+        }
+    }
+
+    [TestFixture]
+    public class PartialApplicationInterpreted : PartialApplication
+    {
+        public PartialApplicationInterpreted()
+        {
+            CompileToCil = false;
         }
     }
 }

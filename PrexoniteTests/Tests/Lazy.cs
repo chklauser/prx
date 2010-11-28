@@ -1,10 +1,9 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Text;
+﻿using System.Collections.Generic;
 using NUnit.Framework;
 using Prexonite;
+using Prx.Tests;
 
-namespace Prx.Tests
+namespace PrexoniteTests.Tests
 {
 
     [TestFixture]

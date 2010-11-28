@@ -1,3 +1,4 @@
+//comment the following line to temporarily disable CIL compilation tests.
 #define UseCil
 
 using System;
@@ -7,6 +8,7 @@ using System.Text;
 using NUnit.Framework;
 using Prexonite;
 using Prexonite.Compiler;
+using Prexonite.Compiler.Cil;
 using Prexonite.Types;
 
 
@@ -20,6 +22,7 @@ namespace Prx.Tests
         protected Application target;
         protected LoaderOptions options;
         public bool CompileToCil { get; set; }
+        protected FunctionLinking StaticLinking { get; set; }
 
         public VMTestsBase()
         {
@@ -28,6 +31,7 @@ namespace Prx.Tests
 #else
             CompileToCil = false;
 #endif
+            StaticLinking = FunctionLinking.FullyStatic;
         }
 
         [SetUp]
@@ -63,10 +67,8 @@ namespace Prx.Tests
             try
             {
                 ldr.LoadFromString(input);
-#if UseCil
                 if(CompileToCil)
-                    Prexonite.Compiler.Cil.Compiler.Compile(ldr.ParentApplication, ldr.ParentEngine);
-#endif                
+                    Prexonite.Compiler.Cil.Compiler.Compile(ldr.ParentApplication, ldr.ParentEngine,StaticLinking);
             }
             finally
             {

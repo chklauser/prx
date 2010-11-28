@@ -33,18 +33,22 @@ namespace Prexonite.Commands
     public abstract class PCommand : IIndirectCall
     {
         /// <summary>
-        /// A flag indicating whether the command acts like a pure function.
-        /// </summary>
-        /// <remarks>Pure commands can be applied at compile time.</remarks>
-        public abstract bool IsPure { get; }
-
-        /// <summary>
         /// Executes the command.
         /// </summary>
         /// <param name="sctx">The stack context in which to execut the command.</param>
         /// <param name="args">The arguments to be passed to the command.</param>
         /// <returns>The value returned by the command. Must not be null. (But possibly {null~Null})</returns>
         public abstract PValue Run(StackContext sctx, PValue[] args);
+
+        [Obsolete("IsPure mechanism was abandoned in v1.2. Use ICilExtension to perform constant folding instead.")]
+// ReSharper disable UnusedMember.Global
+// ReSharper disable VirtualMemberNeverOverriden.Global
+        public virtual bool IsPure
+// ReSharper restore VirtualMemberNeverOverriden.Global
+// ReSharper restore UnusedMember.Global
+        {
+            get { return false; }
+        }
 
         #region Command groups
 

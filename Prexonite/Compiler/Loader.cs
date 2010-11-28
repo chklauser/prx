@@ -957,7 +957,7 @@ namespace Prexonite.Compiler
                 writer.Write(StringPType.ToIdLiteral(kvp.Key));
                 var metaTable = kvp.Value.Meta.Clone();
                 metaTable.Remove(Application.IdKey);
-                metaTable.Remove(Application.InitializationId);
+                metaTable.Remove(Application.InitializationGeneration);
                 if (metaTable.Count > 0)
                 {
 #if DEBUG || Verbose

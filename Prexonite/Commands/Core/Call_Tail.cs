@@ -42,15 +42,6 @@ namespace Prexonite.Commands.Core
         }
 
         /// <summary>
-        /// A flag indicating whether the command acts like a pure function.
-        /// </summary>
-        /// <remarks>Pure commands can be applied at compile time.</remarks>
-        public override bool IsPure
-        {
-            get { return false; }
-        }
-
-        /// <summary>
         /// Executes the command.
         /// </summary>
         /// <param name="sctx">The stack context in which to execut the command.</param>

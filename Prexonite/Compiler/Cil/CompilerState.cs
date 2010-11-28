@@ -59,6 +59,26 @@ namespace Prexonite.Compiler.Cil
         private readonly FunctionLinking _linking;
         private readonly StructuredExceptionHandling _seh;
 
+        private string _effectiveArgumentsListId;
+
+        /// <summary>
+        /// The name of the arguments list variable. This will be <code>args</code> most of the time
+        /// but there are fallback rules for the case that there is already a parameter called <code>args</code>.
+        /// </summary>
+        public string EffectiveArgumentsListId
+        {
+            get
+            {
+                if(_effectiveArgumentsListId == null)
+                {
+                    _effectiveArgumentsListId = PFunction.ArgumentListId;
+                    while (Source.Parameters.Contains(_effectiveArgumentsListId))
+                        _effectiveArgumentsListId = @"\" + _effectiveArgumentsListId;
+                }
+                return _effectiveArgumentsListId;
+            }
+        }
+
         public CompilerState
             (PFunction source, Engine targetEngine, ILGenerator il, CompilerPass pass, FunctionLinking linking)
         {
@@ -799,6 +819,8 @@ namespace Prexonite.Compiler.Cil
             for (var i = 0; i < argc; i++)
                 Il.Emit(OpCodes.Pop);
         }
+
+
 
         public void EmityPTypeAsPValue(string expr)
         {

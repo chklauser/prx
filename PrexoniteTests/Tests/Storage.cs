@@ -2,8 +2,9 @@ using System;
 using NUnit.Framework;
 using Prexonite;
 using Prexonite.Compiler;
+using Prx.Tests;
 
-namespace Prx.Tests
+namespace PrexoniteTests.Tests
 {
     [TestFixture]
     public class Storage : Compiler

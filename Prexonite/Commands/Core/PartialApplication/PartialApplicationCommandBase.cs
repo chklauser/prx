@@ -17,7 +17,7 @@ namespace Prexonite.Commands.Core.PartialApplication
         protected static readonly MethodInfo ExtractMappings32Method =
             typeof (PartialApplicationCommandBase).GetMethod("ExtractMappings32",new[]{typeof(Int32[])});
 
-        public override bool IsPure
+        public virtual bool IsPure
         {
             get { return false; }
         }

@@ -33,7 +33,7 @@ namespace Prexonite.Commands
     /// <seealso cref="ICommand"/>
     public sealed class NestedPCommand : PCommand
     {
-        private ICommand _action;
+        private readonly ICommand _action;
 
         /// <summary>
         /// Provides access to the implementation of this specific instance of <see cref="NestedPCommand"/>.
@@ -41,15 +41,6 @@ namespace Prexonite.Commands
         public ICommand Action
         {
             get { return _action; }
-        }
-
-        /// <summary>
-        /// A flag indicating whether the command acts like a pure function.
-        /// </summary>
-        /// <remarks>Pure commands can be applied at compile time.</remarks>
-        public override bool IsPure
-        {
-            get { return _action.IsPure; }
         }
 
         /// <summary>
@@ -101,10 +92,5 @@ namespace Prexonite.Commands
         /// <returns>The value returned by the command.</returns>
         /// <remarks>If your implementation does not return a value, you have to return <c>PType.Null.CreatePValue()</c> and <strong>not</strong> <c>null</c>!</remarks>
         PValue Run(StackContext sctx, PValue[] args);
-
-        /// <summary>
-        /// Indicates whether the command behaves like a pure function.
-        /// </summary>
-        bool IsPure { get; }
     }
 }

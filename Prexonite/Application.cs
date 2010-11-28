@@ -62,12 +62,23 @@ namespace Prexonite
         public const string DefaultEntryFunction = "main";
 
         /// <summary>
-        /// Id for the initialization function.
+        /// Id of the initialization function.
         /// </summary>
         public const string InitializationId = @"\init";
 
         /// <summary>
-        /// Metatable key used as an alias for <see cref="Application.IdKey"/>
+        /// Meta table key used for storing initialization generation.
+        /// </summary>
+        public const string InitializationGeneration = InitializationId;
+
+        /// <summary>
+        /// Meta table key used for stroing the offset in the initialization function where
+        /// execution should continue to complete initialization.
+        /// </summary>
+        public const string InitializationOffset = InitializationId;
+
+        /// <summary>
+        /// Meta table key used as an alias for <see cref="Application.IdKey"/>
         /// </summary>
         public const string NameKey = "name";
 
@@ -202,15 +213,6 @@ namespace Prexonite
 
         private int _initializationGeneration = -1;
 
-        /// <summary>
-        /// Provides access to the appliaction's initialization generation
-        /// </summary>
-        internal int _InitializationGeneration
-        {
-            get { return _initializationGeneration; }
-            set { _initializationGeneration = value; }
-        }
-
         private bool _suppressInitialization;
 
         /// <summary>
@@ -293,8 +295,12 @@ namespace Prexonite
                                 true // don't initialize. That's what WE are trying to do here.
                                 );
                         int offset;
+                        
+                        //Find offset at which to continue initialization. 
+                        //  Stored in \init key of \init function
+                        //  Default to 0 if anything goes wrong
                         if (
-                            (!(_initializationFunction.Meta.TryGetValue(InitializationId, out init) &&
+                            (!(_initializationFunction.Meta.TryGetValue(InitializationOffset, out init) &&
                                int.TryParse(init.Text, out offset))) || offset < 0)
                             offset = 0;
                         fctx.Pointer = offset;
@@ -310,8 +316,9 @@ namespace Prexonite
                         }
                         finally
                         {
-                            //Save the current initialization state
-                            _initializationFunction.Meta[InitializationId] =
+                            //Save the current initialization state (offset)
+                            //  to \init key in \init function
+                            _initializationFunction.Meta[InitializationOffset] =
                                 _initializationFunction.Code.Count.ToString();
                             _initializationGeneration = generation;
                             _initalizationState = ApplicationInitializationState.Complete;
@@ -325,9 +332,9 @@ namespace Prexonite
                 case ApplicationInitializationState.Complete:
                     break;
                 case ApplicationInitializationState.Partial:
-                    if (context.Meta.TryGetValue(InitializationId, out init))
+                    if (context.Meta.TryGetValue(InitializationGeneration, out init))
                     {
-                        context.Meta.Remove(InitializationId); //Entry no longer required
+                        context.Meta.Remove(InitializationGeneration); //Entry no longer required
                         if (int.TryParse(init.Text, out generation) &&
                             generation > _initializationGeneration)
                             goto case ApplicationInitializationState.None;

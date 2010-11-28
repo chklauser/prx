@@ -1,4 +1,5 @@
 using System;
+using PrexoniteTests.Tests;
 
 namespace Prx.Tests
 {

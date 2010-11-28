@@ -1,8 +1,7 @@
 using NUnit.Framework;
-using RAQ = Prexonite.Helper.RandomAccessQueue<int>;
-using Q = System.Collections.Generic.Queue<int>;
+using Prexonite.Helper;
 
-namespace Prx.Tests
+namespace PrexoniteTests.Tests
 {
     [TestFixture]
     public class RandomAccessQueue
@@ -15,7 +14,7 @@ namespace Prx.Tests
         [Test]
         public void Count()
         {
-            RAQ raq = new RAQ();
+            RandomAccessQueue<int> raq = new RandomAccessQueue<int>();
 
             Assert.AreEqual(0, raq.Count);
 
@@ -46,7 +45,7 @@ namespace Prx.Tests
         [Test]
         public void OrderSimple()
         {
-            RAQ raq = new RAQ();
+            RandomAccessQueue<int> raq = new RandomAccessQueue<int>();
 
             Assert.AreEqual(0, raq.Count);
 
@@ -68,7 +67,7 @@ namespace Prx.Tests
         [Test]
         public void Order()
         {
-            RAQ raq = new RAQ();
+            RandomAccessQueue<int> raq = new RandomAccessQueue<int>();
 
             Assert.AreEqual(0, raq.Count);
 
@@ -96,7 +95,7 @@ namespace Prx.Tests
         [Test]
         public void RandomAccess()
         {
-            RAQ raq = new RAQ();
+            RandomAccessQueue<int> raq = new RandomAccessQueue<int>();
 
             Assert.AreEqual(0, raq.Count);
 
@@ -128,7 +127,7 @@ namespace Prx.Tests
         [Test]
         public void SingleElement()
         {
-            RAQ raq = new RAQ();
+            RandomAccessQueue<int> raq = new RandomAccessQueue<int>();
 
             Assert.AreEqual(0, raq.Count);
 
@@ -146,7 +145,7 @@ namespace Prx.Tests
         [Test]
         public void Used()
         {
-            RAQ raq = new RAQ();
+            RandomAccessQueue<int> raq = new RandomAccessQueue<int>();
 
             int[] d = generateData(30);
             //Fill the queue

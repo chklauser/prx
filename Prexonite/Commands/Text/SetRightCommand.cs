@@ -46,7 +46,7 @@ namespace Prexonite.Commands.Text
 
         #endregion
 
-        public override bool IsPure
+        public virtual bool IsPure
         {
             get { return true; }
         }

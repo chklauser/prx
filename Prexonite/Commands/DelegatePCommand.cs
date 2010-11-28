@@ -42,17 +42,6 @@ namespace Prexonite.Commands
             get { return _action; }
         }
 
-        private bool _isPure;
-
-        /// <summary>
-        /// A flag indicating whether the command acts like a pure function.
-        /// </summary>
-        /// <remarks>Pure commands can be applied at compile time.</remarks>
-        public override bool IsPure
-        {
-            get { return _isPure; }
-        }
-
         /// <summary>
         /// Returns a string that describes the current instance of <see cref="DelegatePCommand"/>.
         /// </summary>
@@ -94,7 +83,6 @@ namespace Prexonite.Commands
             if (action == null)
                 throw new ArgumentNullException("action");
             _action = action;
-            _isPure = isPure;
         }
 
         /// <summary>

@@ -29,7 +29,7 @@ namespace Prexonite.Commands.Lazy
 
         #region Overrides of PCommand
 
-        public override bool IsPure
+        public virtual bool IsPure
         {
             get { return false; }
         }

@@ -10,10 +10,6 @@ namespace Prexonite.Commands.Core.Operators
 {
     public abstract class UnaryOperatorBase : PCommand, ICilExtension
     {
-        public override bool IsPure
-        {
-            get { return true; }
-        }
 
         public bool ValidateArguments(CompileTimeValue[] staticArgv, int dynamicArgc)
         {

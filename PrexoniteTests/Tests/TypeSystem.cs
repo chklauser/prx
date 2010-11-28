@@ -3,8 +3,9 @@ using System.Threading;
 using NUnit.Framework;
 using Prexonite;
 using Prexonite.Types;
+using Prx.Tests;
 
-namespace Prx.Tests
+namespace PrexoniteTests.Tests
 {
     [TestFixture(Description="General type system checks")]
     public class TypeSystem

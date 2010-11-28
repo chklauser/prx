@@ -208,6 +208,7 @@ namespace Prexonite.Compiler.Cil
                 throw new PrexoniteException
                     (
                     "Cannot load reference to non existant global variable " + id);
+            sctx.ParentApplication.EnsureInitialization(sctx.ParentEngine, pv);
             return sctx.CreateNativePValue(pv);
         }
 
@@ -218,6 +219,7 @@ namespace Prexonite.Compiler.Cil
                 throw new PrexoniteException
                     (
                     "Cannot load reference to non existant global variable " + id);
+            sctx.ParentApplication.EnsureInitialization(sctx.ParentEngine,pv);
             return pv;
         }
 

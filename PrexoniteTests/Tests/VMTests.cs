@@ -16,6 +16,7 @@ using NUnit.Framework;
 using Prexonite;
 using Prexonite.Commands;
 using Prexonite.Compiler;
+using Prexonite.Compiler.Cil;
 using Prexonite.Types;
 
 using Prx.Tests;
@@ -3449,6 +3450,78 @@ function main(x,y,z) = (x : y : z).Key;
         }
 
         [Test]
+        public void ReturnModes()
+        {
+            Compile(@"
+function ret_exit()
+{
+    return 5;
+}
+
+function ret_yield()
+{
+    yield 6;
+}
+
+function ret_continue()
+{
+    continue;
+}
+
+function ret_break()
+{
+    break;
+}
+");
+
+            _testReturnMode("ret_exit",ReturnMode.Exit,5);
+            _testReturnMode("ret_yield", ReturnMode.Continue, 6);
+            _testReturnMode("ret_continue",ReturnMode.Continue, PType.Null);
+            _testReturnMode("ret_break",ReturnMode.Break, PType.Null);
+        }
+
+        private void _testReturnMode(string id, ReturnMode mode, PValue retVal)
+        {
+            var fctx = target.Functions[id].CreateFunctionContext(engine);
+            engine.Process(fctx);
+            Assert.AreEqual(fctx.ReturnMode, mode, "Return mode for function " + id + " does not match.");
+            Assert.IsTrue((bool) retVal.Equality(fctx, fctx.ReturnValue).Value, "Return value for function " + id + " does not match.");
+        }
+
+        [Test]
+        public void ReturnFromFinally()
+        {
+            Compile(@"
+var t = """";
+function trace x = t += x;
+
+function main(x)
+{
+    try {
+        trace(""t"");
+    } finally {
+        if(x)
+            yield t;
+        else 
+            trace(""n"");
+    }
+
+    return t;
+}
+");
+
+            var mainTable = target.Functions["main"].Meta;
+
+            if (CompileToCil)
+            {
+                Assert.IsTrue(mainTable[PFunction.VolatileKey].Switch, "return from finally is illegal in CIL");
+                Assert.IsTrue(mainTable[PFunction.DeficiencyKey].Text.Contains("SEH"),
+                              "deficiency must be related to SEH.");
+            }
+            Expect("tn",false);
+        }
+
+        [Test]
         public void FunctionCompositionSyntax()
         {
             Compile(@"
@@ -3503,9 +3576,385 @@ function chainedPrio(x,y,z)
             ExpectNamed("chainedPrio", "zyxxyz", x, y, z);
         }
 
+        [Test]
+        public void PartialInitialization2()
+        {
+            var ldr = Compile(@"
+var x = 5;
+
+function main(y)
+{
+    return y + x;
+}
+");
+
+            Expect(11, 6);
+
+            Compile(ldr, @"
+var x = 17;
+var z = 9;
+
+function main2(x)
+{
+    return z + main(x);
+}
+");
+
+            ExpectNamed("main2",20+9, 3);
+
+            Compile(ldr, @"
+var x = 22;
+var z = 20;
+");
+
+            ExpectNamed("main2",20+22+4,4);
+        }
+
+        [Test]
+        public void ArgsFallback()
+        {
+            Compile(@"
+function main(args)
+{
+    foreach(var arg in var \args)
+        args += arg;
+
+    return args;
+}
+");
+            //note that the first argument gets added twice!
+            Expect("22abcdef","2", "a","b","c","d","e","f");
+        }
+
+        [Test]
+        public void ParamDefaultNull()
+        {
+            Compile(@"
+function main(x,y)
+{
+    return y;
+}
+");
+
+            ExpectNull("main","z");
+        }
+
+        [Test]
+        public void VariableDefaultNull()
+        {
+            Compile(@"
+function main(x)
+{
+    var y;
+    return y;
+}");
+
+            ExpectNull("main", "z");
+        }
+
+        [Test]
+        public void LocalRef()
+        {
+            Compile(
+                @"
+function interpolate(x,y,t, ref result)
+{
+    if(y < x)
+        interpolate(y,x,t,->result);
+    else
+        result = x+(y-x)*t;
+}
+
+function main(x,t)
+{
+    var y = x*1.5;
+    interpolate(y,x,t,->y);
+    return y;
+}
+");
+
+            var x = 22.5;
+            var y = x*1.5;
+            var t = 0.75;
+
+            Expect((x+(y-x)*t),x,t);
+        }
+
+        [Test]
+        public void GlobalRef()
+        {
+            Compile(
+                @"
+var result;
+
+function interpolate(x,y,t, ref result)
+{
+    if(y < x)
+        interpolate(y,x,t,->result);
+    else
+        result = x+(y-x)*t;
+}
+
+function main(x,t)
+{
+    var y = x*1.5;
+    interpolate(y,x,t,result = ?);
+    return result;
+}
+");
+
+            var x = 22.5;
+            var y = x*1.5;
+            var t = 0.75;
+
+            Expect((x+(y-x)*t),x,t);
+        }
+
+        [Test]
+        public void RealArithmetic()
+        {
+            Compile(
+                @"function main(x)
+{
+    var y = x * 2.5;
+    var z = y / 1.4;
+    var a = z^y;
+    return a;
+}");
+
+            var x = Math.PI;
+            var y = x*2.5;
+            var z = y/1.4;
+            var a = Math.Pow(z, y);
+            Expect(a,x);
+        }
+
+        [Test]
+        public void AsmLdrApp()
+        {
+            Compile(@"
+function foo(x) = 2*x;
+function main(x)
+{
+    return asm(ldr.app).Functions[""foo""].(x);
+}");
+            Expect(4,2);
+        }
+
+        [Test]
+        public void DynamicTypeIsArray()
+        {
+            Compile(@"
+function main(x,type)
+{
+    return x is Object<(type + ""[]"")>;
+}
+");
+            Expect(false, 4,"System.String");
+            Expect(true, sctx.CreateNativePValue(new int[]{1,2,3}),"System.Int32");
+        }
+
+        [Test]
+        public void PostIncDecGlobal()
+        {
+            Compile(@"
+var i = 0;
+function main(x)
+{
+    if(x mod 2 == 0)
+        return i++;
+    else
+        return i--;
+}
+");
+            var i = 0;
+            Expect(i++,2);
+            Expect(i++, 4);
+            Expect(i--,3);
+            Expect(i++, -2);
+        }
+
+        [Test]
+        public void PreIncDecGlobal()
+        {
+            Compile(@"
+var i = 0;
+function main(x)
+{
+    if(x mod 2 == 0)
+        return ++i;
+    else
+        return --i;
+}
+");
+            var i = 0;
+            Expect(++i,2);
+            Expect(++i, 4);
+            Expect(--i, 3);
+            Expect(++i, 4);
+        }
+
+        [Test]
+        public void StaticSet()
+        {
+            engine.RegisterAssembly(typeof (StaticClassMock).Assembly);
+
+            Compile(
+                @"
+function main(y,x)
+[ Add Prx::Tests to Import; ]
+{
+    for(var i = 0; i < y; i++)
+    {
+        ::StaticClassMock.SomeProperty = x;
+    }
+    if(::StaticClassMock.SomeProperty is not null)
+        return ::StaticClassMock.SomeProperty;
+    else
+        return 5;
+}
+");
+            var x = "500";
+            Expect(x,10,x);
+        }
+
+        [Test]
+        public void BreakFromProtected()
+        {
+            Compile(
+                @"
+var t = """";
+function trace x=t+=x;
+function main()
+{
+    try{
+        trace(""t"");
+        break;
+    }catch(var exc) {
+        trace(""c"");
+    }
+    
+    return t;
+}
+");
+
+            ExpectNull();
+            Assert.IsTrue((bool)((PValue)"t").Equality(sctx,target.Variables["t"].Value).Value,"trace does not match");
+        }
+
+        [Test]
+        public void TryAsLastStatement()
+        {
+            Compile(
+                @"
+var t;
+function main(x)
+{
+    try {
+        t = ""t"";  
+    } finally {
+        t += ""f"";
+    }
+}");
+
+            ExpectNull();
+            Assert.IsTrue((bool)target.Variables["t"].Value.Equality(sctx,"tf").Value, "Unexpected trace");
+        }
+
+        [Test]
+        public void BitwiseOperators()
+        {
+            Compile(@"
+function main(x,y,z)
+{
+    var a = x | y | z;
+    var b = x & y;
+    var c = y & z;
+    var d = x & y & z;
+    var e = x xor y;
+    var f = x & y | z;
+    var g = x | y & z;
+    return [a,b,c,d,e,f,g];
+}
+");
+
+            var x = 27;
+            var y = 0x113;
+            var z = 0x0FFFA;
+
+            var a = x | y | z;
+            var b = x & y;
+            var c = y & z;
+            var d = x & y & z;
+            var e = x ^ y;
+            var f = x & y | z;
+            var g = x | y & z;
+
+            Expect(new List<PValue>{a,b,c,d,e,f,g}, x,y,z);
+        }
+
+        [Test]
+        public void EndFinallies()
+        {
+            Compile(
+                @"
+var t = """";
+function trace x=t+=x;
+function main(x,y)
+{
+    try {
+        trace(""t1"");
+    } finally {
+        goto endfinally1;
+        trace(""f1"");
+endfinally1:
+    }
+
+    trace(""e1"");
+
+    try {
+        trace(""t2"");
+    } finally {
+        if(x)
+            goto endfinally2;    
+        trace(""f2"");
+endfinally2:
+    }
+
+    trace(""e2"");
+    try {
+        trace(""t3"");
+    } finally {
+        if(not y)
+            goto endfinally3;    
+        trace(""f3"");
+endfinally3:
+    }
+
+    trace(""e3"");
+
+    return t;
+}
+");
+            if (CompileToCil)
+            {
+                Assert.IsNotNull(target.Functions["main"],"function main must exist.");
+                Assert.IsFalse(target.Functions["main"].Meta[PFunction.VolatileKey].Switch, 
+                    "should compile to cil successfully");
+            }
+            Expect("t1e1t2e2t3e3",true,false);
+        }
 
         #region Helper
 
         #endregion
+    }
+}
+
+namespace Prx.Tests
+{
+    public static class StaticClassMock
+    {
+        public static string SomeProperty { get; set; }
     }
 }

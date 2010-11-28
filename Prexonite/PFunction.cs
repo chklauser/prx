@@ -415,7 +415,7 @@ namespace Prexonite
             var meta = Meta.Clone();
             meta.Remove(Application.ImportKey); //to be added separately
             meta.Remove(Application.IdKey); //implied
-            meta.Remove(Application.InitializationId); //must be set to default
+            meta.Remove(Application.InitializationGeneration); //must be set to default
             meta.Store(writer);
             var lst = new List<MetaEntry>();
 // ReSharper disable LoopCanBeConvertedToQuery
