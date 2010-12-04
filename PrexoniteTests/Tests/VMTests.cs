@@ -3538,7 +3538,7 @@ function partialLeft(x,y)
     return f.(null);
 }
 
-function partialRight(x,y) 
+function partialRight_functional(x,y) 
 {   
     var f = (x then ?);
     f = f.(y);

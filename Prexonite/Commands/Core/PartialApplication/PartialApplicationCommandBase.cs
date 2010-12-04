@@ -17,11 +17,6 @@ namespace Prexonite.Commands.Core.PartialApplication
         protected static readonly MethodInfo ExtractMappings32Method =
             typeof (PartialApplicationCommandBase).GetMethod("ExtractMappings32",new[]{typeof(Int32[])});
 
-        public virtual bool IsPure
-        {
-            get { return false; }
-        }
-
         /// <summary>
         /// Calculates how many Int32 arguments are needed to encode <paramref name="countMapppings"/> mappings, including the number that indicates how many mappings there are
         /// </summary>
@@ -232,7 +227,7 @@ namespace Prexonite.Commands.Core.PartialApplication
         /// <param name="mappings">Mappings from effective argument position to closed and open arguments. See <see cref="PartialApplicationBase.Mappings"/>.</param>
         /// <param name="closedArguments">Already provided (closed) arguments.</param>
         /// <param name="parameter">The custom parameter extracted by <see cref="FilterRuntimeArguments"/>.</param>
-        /// <returns></returns>
+        /// <returns>The object that represents the partial application. The application is completed when calling that object indirectly.</returns>
         protected abstract IIndirectCall CreatePartialApplication(StackContext sctx, int[] mappings, PValue[] closedArguments, TParam parameter);
 
         /// <summary>
@@ -263,7 +258,7 @@ namespace Prexonite.Commands.Core.PartialApplication
 
         #region Implementation of ICilExtension
 
-        public bool ValidateArguments(CompileTimeValue[] staticArgv, int dynamicArgc)
+        public virtual bool ValidateArguments(CompileTimeValue[] staticArgv, int dynamicArgc)
         {
             var staticArguments = new ArraySegment<CompileTimeValue>(staticArgv);
             TParam dummyParameter;
@@ -280,14 +275,10 @@ namespace Prexonite.Commands.Core.PartialApplication
             }
 
             var mappings = ExtractMappings32(mappingCandidates);
-            foreach (var t in mappings)
-                if (t == 0)
-                    return false;
-
-            return true;
+            return mappings.All(t => t != 0);
         }
 
-        public void Implement(CompilerState state, Instruction ins, CompileTimeValue[] staticArgv, int dynamicArgc)
+        public virtual void Implement(CompilerState state, Instruction ins, CompileTimeValue[] staticArgv, int dynamicArgc)
         {
             var staticArguments = new ArraySegment<CompileTimeValue>(staticArgv);
             TParam parameter;

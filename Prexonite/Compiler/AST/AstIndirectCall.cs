@@ -22,6 +22,7 @@
  */
 
 using System;
+using Prexonite.Commands.Core.PartialApplication;
 using Prexonite.Types;
 
 namespace Prexonite.Compiler.Ast
@@ -142,12 +143,22 @@ namespace Prexonite.Compiler.Ast
             var argc = argv.Count;
             if(argc == 0)
             {
+                //There are no mappings at all, use default constructor
                 target.EmitConstant(this, 0);
                 target.EmitCommandCall(this, 1, Engine.PartialCallAlias);
             }
             else if(argc == 1 && !argv[0].IsPlaceholder())
             {
+                //We have just a call target, this is actually the identity function
                 Subject.EmitCode(target);
+            }
+            else if(argv.TrueForAll(expr => !expr.IsPlaceholder()))
+            {
+                //This partial application was reduced to just closed arguments in prefix position
+                //  no mapping is necessary in this case. This is implemented by FunctionalPartialCall
+                foreach (var arg in argv)
+                    arg.EmitCode(target);
+                target.EmitCommandCall(this, argc, FunctionalPartialCallCommand.Alias);
             }
             else
             {

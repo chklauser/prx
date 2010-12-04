@@ -65,7 +65,7 @@ namespace Prexonite.Compiler.Ast
 
             var mappings32 = PartialApplicationCommandBase.PackMappings32(mappings8);
 
-            //Emit constructor call
+            //Emit arguments and mapping
             foreach (var arg in closedArguments)
                 arg.EmitCode(target);
 
@@ -115,6 +115,10 @@ namespace Prexonite.Compiler.Ast
             //      println(?3,?0,?1,?2,?3)
             //  No redundant placeholders here, because ?3 is mapped before, therefore
             //  it wouldn't be supplied as an excess argument.
+            //
+            //      println(?3,?0,?1,?2)
+            //  When you remove the ?3 at the end, you can reduce the mapping to
+            //  println(?3), since all other open arguments are in their "natural" position
 
             var maxIndex = placeholders.Max(p => p.Index.HasValue ? (int)p.Index : 0);
             var numUsages = new int[maxIndex + 1];
