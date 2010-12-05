@@ -72,7 +72,7 @@ namespace Prx.Tests
             }
             finally
             {
-                foreach (string s in ldr.Errors)
+                foreach (var s in ldr.Errors)
                 {
                     Console.WriteLine(s);
                 }
@@ -104,7 +104,7 @@ namespace Prx.Tests
             }
             finally
             {
-                foreach (string s in ldr.Errors)
+                foreach (var s in ldr.Errors)
                 {
                     Console.Error.WriteLine(s);
                 }

@@ -116,8 +116,10 @@
     <Compile Include="Commands\Core\Concat.cs" />
     <Compile Include="Commands\Core\ConsolePrint.cs" />
     <Compile Include="Commands\Core\ConsolePrintLine.cs" />
+    <Compile Include="Commands\Core\Const.cs" />
     <Compile Include="Commands\Core\Debug.cs" />
     <Compile Include="Commands\Core\Dispose.cs" />
+    <Compile Include="Commands\Core\Id.cs" />
     <Compile Include="Commands\Core\LoadAssembly.cs" />
     <Compile Include="Commands\Core\Meta.cs" />
     <Compile Include="Commands\Core\Operators\BinaryOperatorBase.cs" />
@@ -306,7 +308,6 @@
     <Compile Include="CoroutineContext.cs" />
     <Compile Include="FunctionContext.cs" />
     <Compile Include="Helper\CommandTable.cs" />
-    <Compile Include="Helper\LineCatcher.cs" />
     <Compile Include="Helper\MetaEntry.cs" />
     <Compile Include="Helper\RandomAccessQueue.cs" />
     <Compile Include="Helper\SymbolEntry.cs" />

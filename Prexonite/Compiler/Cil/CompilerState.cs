@@ -24,7 +24,6 @@
 #region Namespace Imports
 
 using System;
-using System.Collections;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.Reflection;
@@ -376,63 +375,6 @@ namespace Prexonite.Compiler.Cil
             }
         }
 
-        internal bool _MustUseLeave(int instructionAddress, ref int targetAddress)
-        {
-            Label dummy;
-            return _MustUseLeave(instructionAddress, ref targetAddress, out dummy);
-        }
-
-        internal bool _MustUseLeave(int instructionAddress, ref int targetAddress, out Label targetLabel)
-        {
-            targetLabel = default(Label);
-            var useLeave = false;
-            foreach (var block in TryBlocks)
-            {
-                if (block.Spans(instructionAddress))
-                {
-                    if (!block.Handles(targetAddress))
-                    {
-                        useLeave = true;
-                        //To skip a try block in Prexonite, one jumps to the first finally instruction.
-                        // This is illegal in CIL. The same behaviour is achieved by leaving the try block as
-                        //  the finally clause is automatically executed first.
-                        // As for try-catch: The Prexonite "leave" instruction has no representation in CIL and can therefore not
-                        //  be targeted directly. The same workaround applies.
-                        if (targetAddress == block.BeginFinally ||
-                            targetAddress == block.BeginCatch)
-                            targetAddress = block.EndTry;
-                        break;
-                    }
-                    else
-                    {
-                        foreach(var enclosingBlock in TryBlocks)
-                        {
-                            if(ReferenceEquals(enclosingBlock,block))
-                                continue;
-                            if(!(enclosingBlock.Spans(targetAddress) && enclosingBlock.Spans(instructionAddress)))
-                                continue;
-                            
-                            if(targetAddress == enclosingBlock.BeginFinally ||
-                                targetAddress == enclosingBlock.BeginCatch)
-                            {
-                                useLeave = true;
-                                targetAddress = enclosingBlock.EndTry;
-                                break;
-                            }
-                        }
-                        //remains a local jump so far
-                    }
-                }
-                else
-                {
-                    if (block.Handles(targetAddress))
-                        throw new PrexoniteException("Jumps into guarded (try) blocks are illegal.");
-                    //remains an external jump so far
-                }
-            }
-            return useLeave;
-        }
-
         /// <summary>
         /// Shove arguments from the stack into the argument array (`argv`). This way the arguments can later be
         /// passed to methods. Use <see cref="ReadArgv"/> to load that array onto the stack.
@@ -722,14 +664,10 @@ namespace Prexonite.Compiler.Cil
             var T = ConstructPType(typeExpr);
             var cilT = T as ICilCompilerAware;
 
-            CompilationFlags cf;
             var virtualInstruction = new Instruction(OpCode.cast_const, typeExpr);
-            if (cilT != null)
-            {
-                cf = cilT.CheckQualification(virtualInstruction);
-            }
-            else
-                cf = CompilationFlags.IsCompatible;
+            var cf = cilT != null ? 
+                    cilT.CheckQualification(virtualInstruction) 
+                :   CompilationFlags.IsCompatible;
 
             if ((cf & CompilationFlags.HasCustomImplementation) == CompilationFlags.HasCustomImplementation &&
                 cilT != null)
@@ -750,19 +688,19 @@ namespace Prexonite.Compiler.Cil
             EmitLoadType(typeExpr);
             EmitLoadLocal(SctxLocal);
             ReadArgv(argc);
-            EmitVirtualCall(PType_ConstructMethod);
+            EmitVirtualCall(_pTypeConstructMethod);
         }
 
-        private static readonly MethodInfo PType_ConstructMethod =
+        private static readonly MethodInfo _pTypeConstructMethod =
             typeof (PType).GetMethod("Construct", new[] {typeof (StackContext), typeof (PValue[])});
 
         public void EmitLoadClrType(Type T)
         {
             Il.Emit(OpCodes.Ldtoken, T);
-            EmitCall(Type_GetTypeFromHandle);
+            EmitCall(_typeGetTypeFromHandle);
         }
 
-        private static readonly MethodInfo Type_GetTypeFromHandle =
+        private static readonly MethodInfo _typeGetTypeFromHandle =
             typeof (Type).GetMethod("GetTypeFromHandle", new[] {typeof (RuntimeTypeHandle)});
 
 
@@ -973,10 +911,7 @@ namespace Prexonite.Compiler.Cil
 
         public void EmitLoadBoolAsPValue(bool value)
         {
-            if (value)
-                EmitLdcI4(1);
-            else
-                EmitLdcI4(0);
+            EmitLdcI4(value ? 1 : 0);
             EmitWrapBool();
         }
 

@@ -48,7 +48,7 @@ namespace Prx.Tests
                 Console.WriteLine("--------------- Assembler Code --------------------");
                 Console.WriteLine(assemblerCode);
                 Console.WriteLine("---------------- End Asm Code ---------------------");
-                foreach (string error in ldr.Errors)
+                foreach (var error in ldr.Errors)
                     Assert.Fail(string.Format("Error in the expected assembler code: {0}", error));
             }
             return app.Functions["MyAssemblerFunction"].Code;
@@ -59,7 +59,7 @@ namespace Prx.Tests
             var opt = new LoaderOptions(engine, target) {UseIndicesLocally = false};
             var ldr = new Loader(opt);
             ldr.LoadFromString(input);
-            foreach (string line in ldr.Errors)
+            foreach (var line in ldr.Errors)
                 Console.Error.WriteLine(line);
             Assert.AreEqual(0, ldr.ErrorCount, "Test code did not compile without errors.");
 

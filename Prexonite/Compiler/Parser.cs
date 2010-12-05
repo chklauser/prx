@@ -2221,7 +2221,7 @@ internal partial class Parser {
 		        Loader._EmitPartialInitializationCode();
 		        //Initialize function gets finished at the end of Loader.Load
 		        } catch(Exception e) {
-		            SemErr("Exception during compilation of initialization code.\n" + e.ToString());
+		            SemErr("Exception during compilation of initialization code." + e.Message);
 		        }
 		    }
 		    else
@@ -2233,7 +2233,7 @@ internal partial class Parser {
 		                                    Ast[func].EmitCode(FunctionTargets[func], true);
 		                                    FunctionTargets[func].FinishTarget();
 		                                    } catch(Exception e) {
-		                                        SemErr("Exception during compilation of function body of " + id + ".\n" + e.ToString());
+		                                        SemErr("Exception during compilation of function body of " + id + "." + e.Message);
 		                                    }
 		                                }                                       
 		                                
@@ -2252,7 +2252,7 @@ internal partial class Parser {
 			    cst.Ast.EmitCode(cst,true);
 			    cst.FinishTarget();
 		                                     } catch(Exception e) {
-		                                         SemErr("Exception during compilation of coroutine stub for " + id + ".\n" + e.ToString());
+		                                         SemErr("Exception during compilation of coroutine stub for " + id + ". " + e.Message);
 		                                     }
 		}
 		else if(isLazy)
@@ -2319,7 +2319,7 @@ internal partial class Parser {
 		    cst.Ast.EmitCode(cst,true);
 		    cst.FinishTarget();
 		                                     } catch(Exception e) {
-		                                         SemErr("Exception during compilation of lazy function stub for " + id + ".\n" + e.ToString());
+		                                         SemErr("Exception during compilation of lazy function stub for " + id + ". " + e.Message);
 		                                     }
 		}                                        
 		                             }
@@ -3108,13 +3108,94 @@ internal partial class Parser {
 	};
 } // end Parser
 
-[NoDebug()]
-internal class Errors {
-	internal int count = 0;                                    // number of errors detected
-	internal System.IO.TextWriter errorStream = Console.Out;   // error messages go to this stream
-    internal string errMsgFormat = "-- ({3}) line {0} col {1}: {2}"; // 0=line, 1=column, 2=text, 3=file
+public enum ParseMessageSeverity
+{
+    Error,
+    Warning,
+    Info
+}
+
+public partial class ParseMessage : Prexonite.Compiler.ISourcePosition {
+    private const string errMsgFormat = "-- ({3}) line {0} col {1}: {2}"; // 0=line, 1=column, 2=text, 3=file
+    private readonly string _message;
+    public string Message { get { return _message; } }
+    private readonly string _file;
+    private readonly int _line;
+    private readonly int _column;
+    public string File { get { return _file; } }
+    public int Line { get { return _line; } }
+    public int Column { get { return _column; } }
+    private readonly ParseMessageSeverity _severity;
+    public ParseMessageSeverity Severity { get { return _severity; } }
+
+    public ParseMessage(ParseMessageSeverity severity, string message, string file, int line, int column) 
+    {
+        if(message == null)
+            throw new ArgumentNullException();
+        _message = message;
+        _file = file;
+        _line = line;
+        _column = column;
+    }
+
+    public static ParseMessage Error(string message, string file, int line, int column) 
+    {
+        return new ParseMessage(ParseMessageSeverity.Error, message, file, line, column);
+    }
+
+    public static ParseMessage Warning(string message, string file, int line, int column) 
+    {
+        return new ParseMessage(ParseMessageSeverity.Warning, message, file, line, column);
+    }
+
+    public static ParseMessage Info(string message, string file, int line, int column) 
+    {
+        return new ParseMessage(ParseMessageSeverity.Info, message, file, line, column);
+    }
+
+    public ParseMessage(ParseMessageSeverity severity, string message, Prexonite.Compiler.ISourcePosition position)
+        : this(severity, message, position.File, position.Line, position.Column)
+    {
+    }
+
+    public override string ToString() 
+    {
+        return String.Format(errMsgFormat,Line, Column, Message, File);
+    }
+}
+
+internal class ParseMessageEventArgs : EventArgs
+{
+    private readonly ParseMessage _message;
+    public ParseMessage Message { get { return _message; } }
+    public ParseMessageEventArgs(ParseMessage message)
+    {
+        if(message == null)
+            throw new ArgumentNullException("message");
+        _message = message;
+    }
+}
+
+[System.Diagnostics.DebuggerStepThrough()]
+internal class Errors : System.Collections.Generic.LinkedList<ParseMessage> {
     internal Parser parentParser;
   
+    internal event EventHandler<ParseMessageEventArgs> MessageReceived;
+    protected void OnMessageReceived(ParseMessage message)
+    {
+        var handler = MessageReceived;
+        if(handler != null)
+            handler(this, new ParseMessageEventArgs(message));
+    }
+
+    internal int count 
+    {
+        get 
+        {
+            return Count;
+        }
+    }
+
 	internal void SynErr (int line, int col, int n) {
 		string s;
 		switch (n) {
@@ -3278,7 +3359,7 @@ internal class Errors {
 			case 154: s = "invalid Variable"; break;
 			case 155: s = "invalid VariableDeclaration"; break;
 
-#line 146 "D:\DotNetProjects\Prexonite\Tools\Parser.frame" //FRAME
+#line 227 "D:\DotNetProjects\Prexonite\Tools\Parser.frame" //FRAME
 
 			default: s = "error " + n; break;
 		}
@@ -3286,27 +3367,58 @@ internal class Errors {
             s = "after \"" + parentParser.t.ToString(false) + "\", " + s.Replace("expected","is expected") + " and not \"" + parentParser.la.ToString(false) + "\"";
 		else if(s.StartsWith("this symbol "))
 		    s = "\"" + parentParser.t.val + "\"" + s.Substring(12);
-		errorStream.WriteLine(errMsgFormat, line, col, s, parentParser.scanner.File);
-		count++;
+        var msg = ParseMessage.Error(s, parentParser.scanner.File, line, col);
+		AddLast(msg);
+        OnMessageReceived(msg);
 	}
 
 	internal void SemErr (int line, int col, string s) {
-		errorStream.WriteLine(errMsgFormat, line, col, s, parentParser.scanner.File);
-		count++;
+        var msg = ParseMessage.Error(s, parentParser.scanner.File, line, col);
+		AddLast(msg);
+        OnMessageReceived(msg);
+
 	}
 	
 	internal void SemErr (string s) {
-		errorStream.WriteLine(s);
-		count++;
+        var msg = ParseMessage.Error(s, parentParser.scanner.File, parentParser.la.line, parentParser.la.col);
+		AddLast(msg);
+        OnMessageReceived(msg);
 	}
 	
 	internal void Warning (int line, int col, string s) {
-		errorStream.WriteLine(errMsgFormat, line, col, s, parentParser.scanner.File);
+        var msg = ParseMessage.Warning(s, parentParser.scanner.File, line, col);
+		AddLast(msg);
+        OnMessageReceived(msg);
+
+	}
+
+    internal void Info (int line, int col, string s) {
+        var msg = ParseMessage.Info(s, parentParser.scanner.File, line, col);
+		AddLast(msg);
+        OnMessageReceived(msg);
 	}
 	
 	internal void Warning(string s) {
-		errorStream.WriteLine(s);
+        var msg = ParseMessage.Warning(s, parentParser.scanner.File, parentParser.la.line, parentParser.la.col);
+		AddLast(msg);
+        OnMessageReceived(msg);
 	}
+
+    internal void Info(string s) {
+        var msg = ParseMessage.Info(s, parentParser.scanner.File, parentParser.la.line, parentParser.la.col);
+		AddLast(msg);
+        OnMessageReceived(msg);
+	}
+
+    public int GetErrorCount() 
+    {
+        return System.Linq.Enumerable.Count(System.Linq.Enumerable.Where(this, pm => pm.Severity == ParseMessageSeverity.Error));
+    }
+
+    public int GetWarningCount() 
+    {
+         return System.Linq.Enumerable.Count(System.Linq.Enumerable.Where(this, pm => pm.Severity == ParseMessageSeverity.Warning));
+    }
 } // Errors
 
 

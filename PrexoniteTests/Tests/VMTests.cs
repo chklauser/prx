@@ -90,7 +90,7 @@ function test1(x)
 ";
             var ldr = new Loader(engine, target);
             ldr.LoadFromString(input1);
-            foreach (string s in ldr.Errors)
+            foreach (var s in ldr.Errors)
                 Console.WriteLine(s);
 
             Assert.AreEqual(0, ldr.ErrorCount, "Errors during compilation");
@@ -136,7 +136,7 @@ function test1(x)
             foreach (var s in ldr.Errors)
                 Console.WriteLine(s);
             Assert.AreEqual(1, ldr.ErrorCount, "One error expected.");
-            Assert.IsTrue(ldr.Errors[0].Contains("Return value assignment is no longer supported."),"The compiler did not reject a return value assignment.");
+            Assert.IsTrue(ldr.Errors[0].Message.Contains("Return value assignment is no longer supported."),"The compiler did not reject a return value assignment.");
 
         }
 
@@ -162,7 +162,7 @@ function complicated(x,y) does
 ";
             var ldr = new Loader(engine, target);
             ldr.LoadFromString(input1);
-            foreach (string s in ldr.Errors)
+            foreach (var s in ldr.Errors)
                 Console.WriteLine(s);
             Assert.AreEqual(0, ldr.ErrorCount);
 
@@ -3538,7 +3538,7 @@ function partialLeft(x,y)
     return f.(null);
 }
 
-function partialRight_functional(x,y) 
+function partialRight(x,y) 
 {   
     var f = (x then ?);
     f = f.(y);

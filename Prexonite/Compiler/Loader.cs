@@ -99,7 +99,7 @@ namespace Prexonite.Compiler
 
         #endregion
 
-        #region Symbol Table
+        #region Global Symbol Table
 
         private readonly SymbolTable<SymbolEntry> _symbols;
 
@@ -164,9 +164,10 @@ namespace Prexonite.Compiler
             var target = new CompilerTarget(this, func, block);
             if (_functionTargets.ContainsKey(func.Id) &&
                 (!ParentApplication.Meta.GetDefault(Application.AllowOverridingKey, true).Switch))
-                Errors.Add(
-                    string.Format(
-                        "The application {0} does not allow overriding of function {1}.", ParentApplication.Id, func.Id));
+                throw new PrexoniteException(
+                    String.Format("The application {0} does not allow overriding of function {1}.", 
+                                  ParentApplication.Id,
+                                  func.Id));
 
             //The function target is added nontheless in order not to confuse the compiler
             _functionTargets[func.Id] = target;
@@ -360,7 +361,7 @@ namespace Prexonite.Compiler
 
         #endregion
 
-        #region Symbol resolving
+        #region Custom symbol resolving
 
         private readonly List<CustomResolver> _customResolvers = new List<CustomResolver>();
         private readonly CustomResolversIterator _customResolversProxy;
@@ -558,10 +559,10 @@ namespace Prexonite.Compiler
                 _throwCannotFindScriptFile(path);
                 return;
             }
-            LoadFromFile(file);
+            _loadFromFile(file);
         }
 
-        public void LoadFromFile(FileInfo file)
+        private void _loadFromFile(FileInfo file)
         {
             if (file == null)
                 throw new ArgumentNullException("file");
@@ -596,7 +597,7 @@ namespace Prexonite.Compiler
             if(_loadedFiles.Contains(file.FullName))
                 return;
 
-            LoadFromFile(file);
+            _loadFromFile(file);
         }
 
         private static void _throwCannotFindScriptFile(string path)
@@ -629,16 +630,37 @@ namespace Prexonite.Compiler
             _reportSemError(line, column, message);
         }
 
+        private void _messageHook(Object sender, ParseMessageEventArgs e)
+        {
+            switch (e.Message.Severity)
+            {
+                case ParseMessageSeverity.Error:
+                    _errors.Add(e.Message);
+                    break;
+                case ParseMessageSeverity.Warning:
+                    _warnings.Add(e.Message);
+                    break;
+                case ParseMessageSeverity.Info:
+                    _infos.Add(e.Message);
+                    break;
+                default:
+                    throw new ArgumentOutOfRangeException();
+            }
+        }
+
+        private EventHandler<ParseMessageEventArgs> _messageHandler;
+        private EventHandler<ParseMessageEventArgs> _getMessageHandler()
+        {
+            return _messageHandler ?? (_messageHandler = _messageHook);
+        }
+
         private void _load(IScanner lexer)
         {
             var parser = new Parser(lexer, this);
-            var lc = new LineCatcher();
-            lc.LineCaught +=
-                ((sender, o) => _errors.Add(o.Line));
-            parser.errors.errorStream = lc;
 
             var oldReportSemError = _reportSemError;
             _reportSemError = parser.SemErr;
+            parser.errors.MessageReceived += _getMessageHandler();
             parser.Parse();
 
             //Compile initialization function
@@ -646,6 +668,7 @@ namespace Prexonite.Compiler
             _EmitPartialInitializationCode();
             target.FinishTarget();
 
+            parser.errors.MessageReceived -= _getMessageHandler();
             _reportSemError = oldReportSemError;
         }
 
@@ -664,12 +687,24 @@ namespace Prexonite.Compiler
             get { return _errors.Count; }
         }
 
-        public List<string> Errors
+        public List<ParseMessage> Errors
         {
             get { return _errors; }
         }
 
-        private readonly List<string> _errors = new List<string>();
+        public List<ParseMessage> Warnings
+        {
+            get { return _warnings; }
+        }
+
+        public List<ParseMessage> Infos
+        {
+            get { return _infos; }
+        }
+
+        private readonly List<ParseMessage> _errors = new List<ParseMessage>();
+        private readonly List<ParseMessage> _warnings = new List<ParseMessage>();
+        private readonly List<ParseMessage> _infos = new List<ParseMessage>();
 
         #endregion
 
@@ -819,7 +854,7 @@ namespace Prexonite.Compiler
                         if (_loadedFiles.Contains(file.FullName))
                             allLoaded = false;
                         else
-                            LoadFromFile(file);
+                            _loadFromFile(file);
                     }
                     return
                         PType.Bool.CreatePValue(allLoaded);

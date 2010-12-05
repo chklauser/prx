@@ -809,6 +809,9 @@ namespace Prexonite
 
             Commands.AddEngineCommand(ThenAlias, ThenCommand.Instance);
 
+            Commands.AddEngineCommand(Id.Alias,Id.Instance);
+            Commands.AddEngineCommand(Const.Alias, Const.Instance);
+
             Prexonite.Commands.Core.Operators.OperatorCommands.AddToEngine(this);
         }
 
