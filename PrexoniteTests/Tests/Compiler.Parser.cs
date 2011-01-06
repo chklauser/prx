@@ -3482,6 +3482,23 @@ function parent
         }
 
         [Test]
+        public void GetCopyOfAstUnknown()
+        {
+            var unr = new AstUnresolved("file", 1, 2, "the_id");
+            unr.Arguments.Add(new AstNull("file2",2,3));
+            unr.Arguments.RightAppend(new AstNull("file3",3,4));
+            unr.Arguments.ReleaseRightAppend();
+            unr.Call = PCall.Set;
+
+            var copy = unr.GetCopy();
+            Assert.AreEqual(2, unr.Arguments.Count);
+            Assert.IsInstanceOfType(typeof(AstNull),copy.Arguments[0]);
+            Assert.AreEqual("file3",copy.Arguments[1].File);
+            Assert.AreEqual(PCall.Set,unr.Call);
+            Assert.AreNotSame(unr,copy);
+        }
+
+        [Test]
         public void ArgumentListDuplicate()
         {
             //If the argument list of a AstGetSet complex contains successive references to the same node, it will 

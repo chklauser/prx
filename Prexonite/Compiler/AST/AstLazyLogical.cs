@@ -30,7 +30,7 @@ namespace Prexonite.Compiler.Ast
                                            IAstExpression,
                                            IAstHasExpressions
     {
-        public LinkedList<IAstExpression> Conditions = new LinkedList<IAstExpression>();
+        private readonly LinkedList<IAstExpression> _conditions = new LinkedList<IAstExpression>();
 
         internal AstLazyLogical(
             Parser p, IAstExpression leftExpression, IAstExpression rightExpression)
@@ -56,13 +56,18 @@ namespace Prexonite.Compiler.Ast
         {
             get
             {
-                int len = Conditions.Count;
+                int len = _conditions.Count;
                 IAstExpression[] ary = new IAstExpression[len];
                 int i = 0;
-                foreach (IAstExpression condition in Conditions)
+                foreach (IAstExpression condition in _conditions)
                     ary[i++] = condition;
                 return ary;
             }
+        }
+
+        public LinkedList<IAstExpression> Conditions
+        {
+            get { return _conditions; }
         }
 
         #endregion
@@ -73,12 +78,12 @@ namespace Prexonite.Compiler.Ast
             var lazy = expr as AstLazyLogical;
             if (lazy != null && lazy.GetType() == GetType())
             {
-                foreach (IAstExpression cond in lazy.Conditions)
+                foreach (var cond in lazy._conditions)
                     AddExpression(cond);
             }
             else
             {
-                Conditions.AddLast(expr);
+                _conditions.AddLast(expr);
             }
         }
 

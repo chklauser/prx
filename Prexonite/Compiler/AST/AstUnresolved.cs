@@ -70,7 +70,9 @@ namespace Prexonite.Compiler.Ast
 
         public override AstGetSet GetCopy()
         {
-            return new AstUnresolved(File, Line, Column, _id);
+            var copy = new AstUnresolved(File, Line, Column, _id);
+            CopyBaseMembers(copy);
+            return copy;
         }
 
         public override bool TryOptimize(CompilerTarget target, out IAstExpression expr)

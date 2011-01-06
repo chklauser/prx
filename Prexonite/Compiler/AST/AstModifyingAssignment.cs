@@ -191,8 +191,24 @@ namespace Prexonite.Compiler.Ast
                 default: // +=, *= etc.
                     {
                         if (ImplementationId == null)
-                            throw new PrexoniteException(string.Format("The assignment modifier {0} is not supported.",
-                                                                       Enum.GetName(typeof(BinaryOperator), SetModifier)));
+                        {
+                            target.Loader.Errors.Add(new ParseMessage(ParseMessageSeverity.Error,
+                                                                      string.Format(
+                                                                          "The assignment modifier {0} is not supported.",
+                                                                          Enum.GetName(typeof (BinaryOperator),
+                                                                                       SetModifier)),
+                                                                      _modifyingAssignment));
+                            target.Emit(_modifyingAssignment, OpCode.nop);
+                            return;
+                        }
+
+                        if(_modifyingAssignment.Arguments.Count < 1)
+                        {
+                            target.Loader.Errors.Add(new ParseMessage(ParseMessageSeverity.Error, "Invalid modifying assignment: No RHS.",_modifyingAssignment));
+                            target.Emit(_modifyingAssignment,OpCode.nop);
+                            return;
+                        }
+                        
                         //Without more detailed information, a Set call with a set modifier has to be expressed using 
                         //  conventional set call and binary operator nodes.
                         //Note that code generator for this original node is completely bypassed.
