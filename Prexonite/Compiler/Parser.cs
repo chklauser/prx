@@ -3136,6 +3136,7 @@ public partial class ParseMessage : Prexonite.Compiler.ISourcePosition {
         _file = file;
         _line = line;
         _column = column;
+        _severity = severity;
     }
 
     public static ParseMessage Error(string message, string file, int line, int column) 
@@ -3359,7 +3360,7 @@ internal class Errors : System.Collections.Generic.LinkedList<ParseMessage> {
 			case 154: s = "invalid Variable"; break;
 			case 155: s = "invalid VariableDeclaration"; break;
 
-#line 227 "D:\DotNetProjects\Prexonite\Tools\Parser.frame" //FRAME
+#line 228 "D:\DotNetProjects\Prexonite\Tools\Parser.frame" //FRAME
 
 			default: s = "error " + n; break;
 		}

@@ -161,6 +161,7 @@ public partial class ParseMessage : Prexonite.Compiler.ISourcePosition {
         _file = file;
         _line = line;
         _column = column;
+        _severity = severity;
     }
 
     public static ParseMessage Error(string message, string file, int line, int column) 

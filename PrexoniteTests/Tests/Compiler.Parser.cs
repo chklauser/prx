@@ -3522,7 +3522,7 @@ ret
         public void NoClosureForSimpleLambda()
         {
             _compile(@"
-function main = x => x;
+function main = x => x.(16)+5; //more complicated than id or something partially applicable
 ");
 
             _expect(@"
