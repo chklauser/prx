@@ -101,7 +101,8 @@ namespace Prexonite.Commands.List
         /// A flag indicating whether the command acts like a pure function.
         /// </summary>
         /// <remarks>Pure commands can be applied at compile time.</remarks>
-        public virtual bool IsPure
+        [Obsolete]
+        public override bool IsPure
         {
             get { return false; }
         }

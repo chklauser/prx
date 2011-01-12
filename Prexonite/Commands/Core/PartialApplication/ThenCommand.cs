@@ -27,7 +27,8 @@ namespace Prexonite.Commands.Core.PartialApplication
 
         #region Overrides of PCommand
 
-        public virtual bool IsPure
+        [Obsolete]
+        public override bool IsPure
         {
             get { return false; }
         }

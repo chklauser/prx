@@ -24,7 +24,8 @@ namespace Prexonite.Commands.List
 
         #endregion
 
-        public virtual bool IsPure
+        [Obsolete]
+        public override bool IsPure
         {
             get { return false; }
         }

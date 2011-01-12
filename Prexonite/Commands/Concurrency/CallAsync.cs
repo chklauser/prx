@@ -29,7 +29,8 @@ namespace Prexonite.Commands.Concurrency
 
         #region Overrides of PCommand
 
-        public virtual bool IsPure
+        [Obsolete]
+        public override bool IsPure
         {
             get { return false; }
         }
