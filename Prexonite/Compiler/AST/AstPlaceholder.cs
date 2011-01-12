@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.Linq;
+using System.Runtime.Serialization;
 using System.Text;
 using Prexonite.Types;
 
@@ -10,7 +11,7 @@ namespace Prexonite.Compiler.Ast
     /// <summary>
     /// AST node that represents a partial application placeholder ('?'). Optionally has an index assigned (e.g., '?5')
     /// </summary>
-    public class AstPlaceholder : AstGetSet, IAstExpression
+    public class AstPlaceholder : AstGetSet
     {
         private int? _index;
 
@@ -46,12 +47,19 @@ namespace Prexonite.Compiler.Ast
 
         protected override void EmitGetCode(CompilerTarget target, bool justEffect)
         {
-            throw new PrexoniteException(string.Format("This syntax does not support placeholders. {0}:{1} col {2}", File, Line, Column));
+            _throwSyntaxNotSupported();
+        }
+
+        private void _throwSyntaxNotSupported()
+        {
+            throw new PartialApplicationSyntaxNotSupportedException(
+                string.Format("This syntax does not support placeholders. (Position {0}:{1} col {2})", File, Line,
+                              Column));
         }
 
         protected override void EmitSetCode(CompilerTarget target)
         {
-            throw new PrexoniteException(string.Format("This syntax does not support placeholders. {0}:{1} col {2}", File, Line, Column));
+            _throwSyntaxNotSupported();
         }
 
         public override AstGetSet GetCopy()
@@ -114,5 +122,28 @@ namespace Prexonite.Compiler.Ast
                 return "?";
         }
 
+    }
+
+    [Serializable]
+    public class PartialApplicationSyntaxNotSupportedException : PrexoniteException
+    {
+
+        public PartialApplicationSyntaxNotSupportedException()
+        {
+        }
+
+        public PartialApplicationSyntaxNotSupportedException(string message) : base(message)
+        {
+        }
+
+        public PartialApplicationSyntaxNotSupportedException(string message, Exception inner) : base(message, inner)
+        {
+        }
+
+        protected PartialApplicationSyntaxNotSupportedException(
+            SerializationInfo info,
+            StreamingContext context) : base(info, context)
+        {
+        }
     }
 }

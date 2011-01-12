@@ -22,6 +22,7 @@
  */
 
 using System;
+using System.Linq;
 using Prexonite.Commands.Core.PartialApplication;
 using Prexonite.Types;
 
@@ -141,6 +142,7 @@ namespace Prexonite.Compiler.Ast
                 AstPartiallyApplicable.PreprocessPartialApplicationArguments(
                     Subject.Singleton().Append(Arguments));
             var argc = argv.Count;
+            AstPlaceholder p;
             if(argc == 0)
             {
                 //There are no mappings at all, use default constructor
@@ -152,16 +154,39 @@ namespace Prexonite.Compiler.Ast
                 //We have just a call target, this is actually the identity function
                 Subject.EmitCode(target);
             }
-            else if(argv.TrueForAll(expr => !expr.IsPlaceholder()))
+            else if(
+                argc >= 2 
+                && !argv[0].IsPlaceholder() 
+                && argv.Skip(2).All(expr => !expr.IsPlaceholder())
+                && ((p = argv[1] as AstPlaceholder) == null || p.Index == 0))
+                //Matches the patterns 
+                //  subj.(c_1, c_2,...,c_n, ?0,?1,?2,...,?m) 
+                //and 
+                //  subj.(?0, c_1,c_2,...,c_n, ?1,?2,?3,...,?m)
             {
                 //This partial application was reduced to just closed arguments in prefix position
-                //  no mapping is necessary in this case. This is implemented by FunctionalPartialCall
-                foreach (var arg in argv)
-                    arg.EmitCode(target);
-                target.EmitCommandCall(this, argc, FunctionalPartialCallCommand.Alias);
+                //  with an optional open argument in front. No mapping is necessary in this case. 
+                
+                //Check for optional open argument
+                if(p != null)
+                {
+                    //There is an open argument front. This is handled by FlippedFunctionalPartialCall
+                    argv[0].EmitCode(target);
+                    foreach (var arg in argv.Skip(2))
+                        arg.EmitCode(target);
+                    target.EmitCommandCall(this, argc-1,FlippedFunctionalPartialCallCommand.Alias);
+                }
+                else
+                {
+                    //There is no open argument in front. This is implemented by FunctionalPartialCall
+                    foreach (var arg in argv)
+                        arg.EmitCode(target);
+                    target.EmitCommandCall(this, argc, FunctionalPartialCallCommand.Alias);   
+                }
             }
             else
             {
+                //Use full-blown partial application mechanism for indirect calls.
                 var ctorArgc = this.EmitConstructorArguments(target, argv);
                 target.EmitCommandCall(this,ctorArgc, Engine.PartialCallAlias);
             }

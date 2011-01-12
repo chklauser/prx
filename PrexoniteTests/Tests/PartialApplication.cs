@@ -806,6 +806,44 @@ function main(x,y,z)
 
             Expect(Int32.MaxValue - 255, "255","System.Int32");
         }
+
+        [Test]
+        public void FlippedFunctionalCall()
+        {
+            Compile(@"
+function echo(a,b,c) = 
+    var args 
+    >> map(x => if(x is null) ""-"" else x) 
+    >> foldl(? + ?,"""");
+
+function main(a,c,d)
+{
+    var pa = echo(?,""b"");
+    var pa2 = echo(?,""k"",""L"");
+    return 
+        ([  pa.(a),     pa2.(a),
+            pa.(),      pa2.(),
+            pa.(a,c,d), pa2.(a,c,d)
+        ])
+        >> foldl(""$(?)|$(?)"","""");
+}
+");
+            var paCtors = (from ins in target.Functions["main"].Code
+                       where
+                           ins.OpCode == OpCode.cmd
+                       let id = ins.Id
+                       where id == FunctionalPartialCallCommand.Alias || id == Engine.PartialCallAlias
+                       select id).Distinct();
+
+            Assert.AreEqual(0, paCtors.Count(),
+                            "Should not use the following partial application constructors: " +
+                            paCtors.ToEnumerationString());
+                        
+            Expect("|" +
+                "ab|akL|" + 
+                "-b|-kL|" +
+                "abcd|akLcd","a","c","d");
+        }
     }
 
     [TestFixture]

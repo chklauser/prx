@@ -806,6 +806,7 @@ namespace Prexonite
             Commands.AddEngineCommand(PartialTypeCastAlias, PartialTypeCastCommand.Instance);
             Commands.AddEngineCommand(PartialStaticCallAlias, PartialStaticCallCommand.Instance);
             Commands.AddEngineCommand(FunctionalPartialCallCommand.Alias, FunctionalPartialCallCommand.Instance);
+            Commands.AddEngineCommand(FlippedFunctionalPartialCallCommand.Alias, FlippedFunctionalPartialCallCommand.Instance);
 
             Commands.AddEngineCommand(ThenAlias, ThenCommand.Instance);
 

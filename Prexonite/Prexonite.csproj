@@ -130,7 +130,10 @@
     </Compile>
     <Compile Include="Commands\Core\Operators\UnaryOperatorBase.cs" />
     <Compile Include="Commands\Core\Pair.cs" />
+    <Compile Include="Commands\Core\PartialApplication\FlippedFunctionalPartialCall.cs" />
+    <Compile Include="Commands\Core\PartialApplication\FlippedFunctionalPartialCallCommand.cs" />
     <Compile Include="Commands\Core\PartialApplication\FunctionalPartialCall.cs" />
+    <Compile Include="Commands\Core\PartialApplication\FunctionalPartialCallCommand.cs" />
     <Compile Include="Commands\Core\PartialApplication\PartialApplicationBase.cs" />
     <Compile Include="Commands\Core\PartialApplication\PartialApplicationCommandBase.cs" />
     <Compile Include="Commands\Core\PartialApplication\PartialCall.cs" />
