@@ -26,8 +26,7 @@ using System.Collections.Generic;
 
 namespace Prexonite.Compiler.Ast
 {
-    public class AstLogicalOr : AstLazyLogical,
-                                IAstExpression
+    public class AstLogicalOr : AstLazyLogical, IAstPartiallyApplicable
     {
         public AstLogicalOr(
             string file,
@@ -43,48 +42,6 @@ namespace Prexonite.Compiler.Ast
             : base(p, leftCondition, rightCondition)
         {
         }
-
-        #region IAstExpression Members
-
-        public override bool TryOptimize(CompilerTarget target, out IAstExpression expr)
-        {
-            expr = null;
-            if (Conditions.Count <= 0)
-                return false;
-            LinkedListNode<IAstExpression> node = Conditions.First;
-            do
-            {
-                IAstExpression condition = node.Value;
-                OptimizeNode(target, ref condition);
-                node.Value = condition; //Update list of conditions with optimized condition
-
-                if (condition is AstConstant && ((AstConstant) condition).Constant is bool)
-                {
-                    bool result = (bool) (condition as AstConstant).Constant;
-                    if (!result) // Expr1 Or False Or Expr2 = Expr Or Expr
-                        Conditions.Remove(node);
-                    else
-                    {
-                        // Expr1 Or True Or Expr2 = True
-                        expr = condition;
-                        return true;
-                    }
-                }
-            } while ((node = node.Next) != null);
-
-            if (Conditions.Count == 0)
-                //All conditions have been reduced because they evaluated to false
-                expr = new AstConstant(File, Line, Column, false);
-            else if (Conditions.Count == 1)
-                //There is no need for a LazyOr structure with only one condition
-                expr = Conditions.First.Value;
-            else
-                return false;
-
-            return true;
-        }
-
-        #endregion
 
         protected override void DoEmitCode(CompilerTarget target)
         {
@@ -103,7 +60,7 @@ namespace Prexonite.Compiler.Ast
             target.EmitLabel(this, evalLabel);
         }
 
-        public override void EmitCode(CompilerTarget target, string trueLabel, string falseLabel)
+        protected override void DoEmitCode(CompilerTarget target, string trueLabel, string falseLabel)
         {
             string labelNs = @"Or\" + Guid.NewGuid().ToString("N");
             string nextLabel = @"Next\" + labelNs;
@@ -126,5 +83,19 @@ namespace Prexonite.Compiler.Ast
             }
             target.EmitJump(this, falseLabel);
         }
+
+        #region Partial application
+
+        protected override bool ShortcircuitValue
+        {
+            get { return true; }
+        }
+
+        protected override IAstExpression CreatePrefix(ISourcePosition position, IEnumerable<IAstExpression> clauses)
+        {
+            return CreateDisjunction(position, clauses);
+        }
+
+        #endregion
     }
 }

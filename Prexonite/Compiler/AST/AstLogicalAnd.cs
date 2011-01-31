@@ -23,11 +23,12 @@
 
 using System;
 using System.Collections.Generic;
+using System.Linq;
+using Prexonite.Types;
 
 namespace Prexonite.Compiler.Ast
 {
-    public class AstLogicalAnd : AstLazyLogical,
-                                 IAstExpression
+    public class AstLogicalAnd : AstLazyLogical, IAstPartiallyApplicable
     {
         public AstLogicalAnd(
             string file,
@@ -63,7 +64,7 @@ namespace Prexonite.Compiler.Ast
         }
 
         //Called by either AstLogicalAnd or AstLogicalOr
-        public override void EmitCode(CompilerTarget target, string trueLabel, string falseLabel)
+        protected override void DoEmitCode(CompilerTarget target, string trueLabel, string falseLabel)
         {
             var labelNs = @"And\" + Guid.NewGuid().ToString("N");
             var nextLabel = @"Next\" + labelNs;
@@ -89,40 +90,18 @@ namespace Prexonite.Compiler.Ast
 
         #region IAstExpression Members
 
-        public override bool TryOptimize(CompilerTarget target, out IAstExpression expr)
+        #endregion
+
+        #region Partial application
+
+        protected override IAstExpression CreatePrefix(ISourcePosition position, IEnumerable<IAstExpression> clauses)
         {
-            expr = null;
-            if (Conditions.Count <= 0)
-                return false;
-            var node = Conditions.First;
-            do
-            {
-                var condition = node.Value;
-                OptimizeNode(target, ref condition);
-                node.Value = condition; //Update list of conditions with optimized condition
+            return CreateConjunction(position, clauses);
+        }
 
-                if (condition is AstConstant && ((AstConstant) condition).Constant is bool)
-                {
-                    var result = (bool) (condition as AstConstant).Constant;
-                    if (result) // Expr1 And True And Expr2 = Expr And Expr
-                        Conditions.Remove(node);
-                    else
-                    {
-                        // Expr1 And False And Expr2 = False
-                        expr = condition;
-                        return true;
-                    }
-                }
-            } while ((node = node.Next) != null);
-
-            if (Conditions.Count == 0)
-                expr = new AstConstant(File, Line, Column, true);
-            else if (Conditions.Count == 1)
-                expr = Conditions.First.Value;
-            else
-                return false;
-
-            return true;
+        protected override bool ShortcircuitValue
+        {
+            get { return false; }
         }
 
         #endregion

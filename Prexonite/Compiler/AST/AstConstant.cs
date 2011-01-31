@@ -44,7 +44,7 @@ namespace Prexonite.Compiler.Ast
 
         public static bool TryCreateConstant(
             CompilerTarget target,
-            AstNode position,
+            ISourcePosition position,
             PValue value,
             out IAstExpression expr)
         {

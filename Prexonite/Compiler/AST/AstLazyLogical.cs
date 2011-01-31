@@ -23,6 +23,8 @@
 
 using System;
 using System.Collections.Generic;
+using System.Linq;
+using Prexonite.Types;
 
 namespace Prexonite.Compiler.Ast
 {
@@ -56,10 +58,10 @@ namespace Prexonite.Compiler.Ast
         {
             get
             {
-                int len = _conditions.Count;
-                IAstExpression[] ary = new IAstExpression[len];
-                int i = 0;
-                foreach (IAstExpression condition in _conditions)
+                var len = _conditions.Count;
+                var ary = new IAstExpression[len];
+                var i = 0;
+                foreach (var condition in _conditions)
                     ary[i++] = condition;
                 return ary;
             }
@@ -87,9 +89,31 @@ namespace Prexonite.Compiler.Ast
             }
         }
 
-        public abstract void EmitCode(CompilerTarget target, string trueLabel, string falseLabel);
-        public abstract bool TryOptimize(CompilerTarget target, out IAstExpression expr);
+        public void EmitCode(CompilerTarget target, string trueLabel, string falseLabel)
+        {
+            foreach (var condition in Conditions)
+            {
+                if (((AstNode)condition).CheckForPlaceholders())
+                {
+                    target.Loader.ReportSemanticError(condition.Line, condition.Column,
+                                                      "Partial applications of logical statements must be either pure and-chains or pure or-chains.");
+                    target.EmitJump(this, trueLabel);
+                    return;
+                }
+            }
 
+
+            DoEmitCode(target,trueLabel,falseLabel);
+        }
+
+        protected abstract void DoEmitCode(CompilerTarget target, string trueLabel, string falseLabel);
+
+        /// <summary>
+        /// Emit the jump code for an if-like condition (jump if true). Recognizes and takes advantage of lazy logical expressions.
+        /// </summary>
+        /// <param name="target">The compiler target to emit code to.</param>
+        /// <param name="cond">The condition of the jump.</param>
+        /// <param name="targetLabel">The target of the conditional jump.</param>
         public static void EmitJumpIfCondition(
             CompilerTarget target, IAstExpression cond, string targetLabel)
         {
@@ -194,6 +218,202 @@ namespace Prexonite.Compiler.Ast
                 cond.EmitCode(target);
                 target.EmitJumpIfFalse(cond, targetLabel);
             }
+        }
+
+        #region Partial application
+
+        public override bool CheckForPlaceholders()
+        {
+            return this is IAstPartiallyApplicable && (base.CheckForPlaceholders() || Conditions.Any(AstExpressionExtensions.IsPlaceholder));
+        }
+
+        #endregion
+
+        public static IAstExpression CreateConjunction(ISourcePosition position, IEnumerable<IAstExpression> clauses)
+        {
+            var cs = clauses.ToList();
+
+            if(cs.Count == 0)
+            {
+                return new AstConstant(position.File, position.Line, position.Column, true);
+            }
+            else if(cs.Count == 1)
+            {
+                return cs[0];
+            }
+            else
+            {
+                var conj = new AstLogicalAnd(position.File, position.Line, position.Column, cs[0], cs[1]);
+                foreach(var clause in cs.Skip(2))
+                    conj.AddExpression(clause);
+                return conj;
+            }
+        }
+
+        public static IAstExpression CreateDisjunction(ISourcePosition position, IEnumerable<IAstExpression> clauses)
+        {
+            var cs = clauses.ToList();
+
+            if (cs.Count == 0)
+            {
+                return new AstConstant(position.File, position.Line, position.Column, true);
+            }
+            else if (cs.Count == 1)
+            {
+                return cs[0];
+            }
+            else
+            {
+                var disj = new AstLogicalOr(position.File, position.Line, position.Column, cs[0], cs[1]);
+                foreach (var clause in cs.Skip(2))
+                    disj.AddExpression(clause);
+                return disj;
+            }
+        }
+
+        protected IAstExpression ConstFunc(IAstExpression constantValue)
+        {
+            var constCmd = new AstGetSetSymbol(File, Line, Column, PCall.Get, Commands.Core.Const.Alias,
+                                               SymbolInterpretations.Command);
+            constCmd.Arguments.Add(constantValue);
+            return constCmd;
+        }
+
+        protected IAstExpression IdFunc()
+        {
+            return new AstGetSetReference(File, Line, Column, Commands.Core.Id.Alias,
+                                          SymbolInterpretations.Command);
+        }
+
+        public void DoEmitPartialApplicationCode(CompilerTarget target)
+        {
+            if(Conditions.Count == 0)
+            {
+                ConstFunc(new AstConstant(File, Line, Column, !ShortcircuitValue)).EmitCode(target);
+                return;
+            }
+
+            //only the very last condition may be a placeholder
+            for(var node = Conditions.First; node != null; node = node.Next)
+            {
+                var isPlaceholder = node.Value.IsPlaceholder();
+                if(node.Next == null)
+                {
+                    if(!isPlaceholder)
+                    {
+                        //there is no placeholder at all, wrap expression in const
+                        System.Diagnostics.Debug.Assert(Conditions.All(e => !e.IsPlaceholder()));
+                        DoEmitCode(target);
+                        target.EmitCommandCall(this, 1, Commands.Core.Const.Alias);
+                        return;
+                    }
+                }
+                else
+                {
+                    if(isPlaceholder)
+                    {
+                        _reportInvalidPlaceholders(target);
+                        return;
+                    }
+                }
+            }
+
+            //We have expression of the form `e1 and e2 and e3 and ... and ?i`
+            var placeholder = (AstPlaceholder)Conditions.Last.Value;
+            AstPlaceholder.DeterminePlaceholderIndices(placeholder.Singleton());
+            
+            
+            // compile the following code: `if(e1 and e2 and e3) id(?) else const(false)`
+            var constExpr = CreatePrefix(this, Conditions.Take(Conditions.Count - 1));
+            //var identityFunc = new AstGetSetSymbol(File, Line, Column, PCall.Get, Commands.Core.Id.Alias, SymbolInterpretations.Command);
+            //identityFunc.Arguments.Add(new AstPlaceholder(File, Line, Column, placeholder.Index));
+            var identityFunc = new AstTypecast(File, Line, Column,
+                                               new AstPlaceholder(placeholder.File, placeholder.Line, placeholder.Column,
+                                                                  placeholder.Index),
+                                               new AstConstantTypeExpression(File, Line, Column, PType.Bool.ToString()));
+            var conditional = new AstConditionalExpression(File, Line, Column, constExpr, ShortcircuitValue)
+                                  {
+                                      IfExpression = identityFunc,
+                                      ElseExpression = ConstFunc(new AstConstant(File, Line, Column, ShortcircuitValue))
+                                  };
+            conditional.EmitCode(target);
+        }
+
+        private void _reportInvalidPlaceholders(CompilerTarget target)
+        {
+            target.Loader.ReportSemanticError(Line, Column, "In partial applications of lazy expressions, only one placeholder at the end of a sequence is allowed. Consider using a lambda expression instead.");
+        }
+
+        /// <summary>
+        /// Determines which value (true/false) will be propagated when the prefix evaluates to that value.
+        /// </summary>
+        protected abstract bool ShortcircuitValue { get; }
+
+        protected virtual IAstExpression CreatePrefix(ISourcePosition position, IEnumerable<IAstExpression> clauses)
+        {
+            throw new NotImplementedException("The lazy logical expression " + GetType().Name + " must implement this method/property to support partial application.");
+        }
+
+        public virtual bool TryOptimize(CompilerTarget target, out IAstExpression expr)
+        {
+            expr = null;
+            var placeholders = Conditions.Count(AstExpressionExtensions.IsPlaceholder);
+            for(var node = Conditions.First; node != null; node = node.Next)
+            {
+                var condition = node.Value;
+                OptimizeNode(target, ref condition);
+                node.Value = condition; //Update list of conditions with optimized condition
+
+                PValue resultP;
+                if (condition is AstConstant && ((AstConstant) condition).ToPValue(target).TryConvertTo(target.Loader, PType.Bool, false,out resultP))
+                {
+                    if ((bool)resultP.Value == ShortcircuitValue)
+                    {
+                        // Expr1 OP shortcircuit OP Expr2 = shortcircuit
+                        // Expr1 OP shortcircuit OP Expr2 OP ? = const(shortcircuit)
+                        var shortcircuitConst = new AstConstant(condition.File, condition.Line, condition.Column, ShortcircuitValue);
+                        if (placeholders > 0)
+                        {
+                            if(!Conditions.Last.Value.IsPlaceholder() || placeholders > 1)
+                                _reportInvalidPlaceholders(target);
+
+                            expr = ConstFunc(shortcircuitConst);
+                        }
+                        else
+                        {
+                            expr = shortcircuitConst;
+                        }
+                        return true;
+                    }
+                    else
+                    {
+                        // Expr1 OP ¬shortcircuit OP Expr2 = Expr1 OP Expr2
+                        Conditions.Remove(node);
+                    }
+                } 
+                else if (condition is AstPlaceholder)
+                {
+                    placeholders++;
+                }
+            }
+
+            if (Conditions.Count == 0)
+            {
+                expr = new AstConstant(File, Line, Column, !ShortcircuitValue);
+            }
+            else if (Conditions.Count == 1)
+            {
+                var primaryExpr = Conditions.First.Value;
+                expr = GetOptimizedNode(target,
+                                                new AstTypecast(primaryExpr.File, primaryExpr.Line, primaryExpr.Column,
+                                                                primaryExpr,
+                                                                new AstConstantTypeExpression(primaryExpr.File,
+                                                                                              primaryExpr.Line,
+                                                                                              primaryExpr.Column,
+                                                                                              PType.Bool.ToString())));
+            }
+
+            return expr != null;
         }
     }
 }

@@ -3945,6 +3945,96 @@ endfinally3:
             Expect("t1e1t2e2t3e3",true,false);
         }
 
+        [Test]
+        public void LazyAndOptimization()
+        {
+            Compile(@"
+var x = true;
+var y = false;
+
+function main(z)
+{
+    var a = x and 1;
+    var b = x and 0;
+    var c = true and 1;
+    var d = true and 0;
+    var e = y and 1;
+    var f = y and 0;
+    var g = false and 1;
+    var h = false and 0;
+    var i = x and z;
+    var j = y and z;
+    var k = true and z;
+    var l = false and z;
+    
+    var s = ""$(a)$(b)$(c)$(d)$(e)$(f)$(g)$(h)$(i)$(j)$(k)$(l)"";
+
+    foreach(var p in [a,b,c,d,e,f,g,h,i,j,k,l])
+        if(p is not Bool)
+        {
+            s += "" Detected non-Bool value"";
+            break;
+        }
+
+    return s;
+}");
+
+            const string prefix = "TrueFalseTrueFalseFalseFalseFalseFalse";
+            const string valueEqTrue = "TrueFalseTrueFalse";
+            const string valueEqFalse = "FalseFalseFalseFalse";
+
+            Expect(prefix + valueEqTrue,true);
+            Expect(prefix + valueEqFalse, false);
+            Expect(prefix + valueEqTrue,6);
+            Expect(prefix + valueEqFalse, 0);
+            Expect(prefix + valueEqFalse, PType.Null);
+        }
+
+        [Test]
+        public void LazyOrOptimization()
+        {
+            Compile(@"
+var x = true;
+var y = false;
+
+function main(z)
+{
+    var a = x or 1;
+    var b = x or 0;
+    var c = true or 1;
+    var d = true or 0;
+    var e = y or 1;
+    var f = y or 0;
+    var g = false or 1;
+    var h = false or 0;
+    var i = x or z;
+    var j = y or z;
+    var k = true or z;
+    var l = false or z;
+    
+    var s = ""$(a)$(b)$(c)$(d)$(e)$(f)$(g)$(h)$(i)$(j)$(k)$(l)"";
+
+    foreach(var p in [a,b,c,d,e,f,g,h,i,j,k,l])
+        if(p is not Bool)
+        {
+            s += "" Detected non-Bool value"";
+            break;
+        }
+
+    return s;
+}");
+
+            const string prefix = "TrueTrueTrueTrueTrueFalseTrueFalse";
+            const string valueEqTrue = "TrueTrueTrueTrue";
+            const string valueEqFalse = "TrueFalseTrueFalse";
+
+            Expect(prefix + valueEqTrue, true);
+            Expect(prefix + valueEqFalse, false);
+            Expect(prefix + valueEqTrue, 6);
+            Expect(prefix + valueEqFalse, 0);
+            Expect(prefix + valueEqFalse, PType.Null);
+        }
+
         #region Helper
 
         #endregion

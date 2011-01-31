@@ -31,8 +31,8 @@ namespace Prexonite.Compiler.Ast
                                IAstHasExpressions,
         IAstPartiallyApplicable
     {
-        public IAstExpression Subject;
-        public IAstType Type;
+        public IAstExpression Subject { get; private set; }
+        public IAstType Type { get; private set; }
 
         public AstTypecast(string file, int line, int column, IAstExpression subject, IAstType type)
             : base(file, line, column)
@@ -74,15 +74,39 @@ namespace Prexonite.Compiler.Ast
 
         public bool TryOptimize(CompilerTarget target, out IAstExpression expr)
         {
-            OptimizeNode(target, ref Subject);
+            Subject = GetOptimizedNode(target, Subject);
             Type = (IAstType) GetOptimizedNode(target, Type);
 
             expr = null;
 
-            var constSubject = Subject as AstConstant;
             var constType = Type as AstConstantTypeExpression;
-            if (constSubject == null || constType == null)
+            if(constType == null)
                 return false;
+
+            //Constant cast
+            var constSubject = Subject as AstConstant;
+            if (constSubject != null)
+                return _tryOptimizeConstCast(target, constSubject, constType, out expr);
+
+            //Redundant cast
+            AstTypecast castSubject;
+            AstConstantTypeExpression sndCastType;
+            if ((castSubject = Subject as AstTypecast) != null && (sndCastType = castSubject.Type as AstConstantTypeExpression) != null)
+            {
+                if(Engine.StringsAreEqual(sndCastType.TypeExpression, constType.TypeExpression))
+                {
+                    //remove the outer cast.
+                    expr = castSubject;
+                    return true;
+                }
+            }
+
+            return false;
+        }
+
+        private bool _tryOptimizeConstCast(CompilerTarget target, AstConstant constSubject, AstConstantTypeExpression constType, out IAstExpression expr)
+        {
+            expr = null;
             PType type;
             try
             {
