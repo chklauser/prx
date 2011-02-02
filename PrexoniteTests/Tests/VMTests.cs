@@ -2335,7 +2335,7 @@ function main()
 //#else
 //            Expect("bs.Closure(function main\\A0( xa))b", "s");
 //#endif
-            Expect("bs.function main\\A0( xa)b", "s");
+            Expect("bs.function main\\A0(xa)b", "s");
         }
 
         [Test]
