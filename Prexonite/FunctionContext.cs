@@ -480,7 +480,7 @@ namespace Prexonite
                                 " does not exist.");
 #if Verbose
                     val = pvar.Value;
-                    Console.Write("=" + toDebug(val));
+                    Console.Write("=" + _toDebug(val));
                     Push(val);
 #else
                         Push(pvar.Value);
@@ -520,7 +520,7 @@ namespace Prexonite
                         app.EnsureInitialization(ParentEngine, pvar);
 #if Verbose
                     val = pvar.Value;
-                    Console.Write("=" + toDebug(val));
+                    Console.Write("=" + _toDebug(val));
                     Push(val);
 #else
                         Push(pvar.Value);
@@ -631,7 +631,7 @@ namespace Prexonite
                         doIncrement:
                         pvar.Value = pvar.Value.Increment(this);
 #if Verbose
-                    Console.Write("=" + toDebug(pvar.Value));
+                    Console.Write("=" + _toDebug(pvar.Value));
 #endif
                         break;
 
@@ -643,7 +643,7 @@ namespace Prexonite
                         pvar = ParentApplication.Variables[id];
                         pvar.Value = pvar.Value.Increment(this);
 #if Verbose
-                    Console.Write("=" + toDebug(pvar.Value));
+                    Console.Write("=" + _toDebug(pvar.Value));
 #endif
                         break;
                     case OpCode.decloc:
@@ -651,7 +651,7 @@ namespace Prexonite
                         doDecrement:
                         pvar.Value = pvar.Value.Decrement(this);
 #if Verbose
-                    Console.Write("=" + toDebug(pvar.Value));
+                    Console.Write("=" + _toDebug(pvar.Value));
 #endif
                         break;
                     case OpCode.decloci:
@@ -662,7 +662,7 @@ namespace Prexonite
                         pvar = ParentApplication.Variables[id];
                         pvar.Value = pvar.Value.Decrement(this);
 #if Verbose
-                    Console.Write("=" + toDebug(pvar.Value));
+                    Console.Write("=" + _toDebug(pvar.Value));
 #endif
                         break;
 
@@ -842,9 +842,9 @@ namespace Prexonite
                         left = _localVariables[id].Value;
 
 #if Verbose
-                    Console.Write("  " + toDebug(left) + "(");
+                    Console.Write("  " + _toDebug(left) + "(");
                     foreach (PValue arg in argv)
-                        Console.Write(toDebug(arg) + ", ");
+                        Console.Write(_toDebug(arg) + ", ");
                     Console.WriteLine(")");
 #endif
 
@@ -882,9 +882,9 @@ namespace Prexonite
                         left = pvar.Value;
 
 #if Verbose
-                    Console.Write("  " + toDebug(left) + "(");
+                    Console.Write("  " + _toDebug(left) + "(");
                     foreach (PValue arg in argv)
-                        Console.Write(toDebug(arg) + ", ");
+                        Console.Write(_toDebug(arg) + ", ");
                     Console.WriteLine(")");
 #endif
 
@@ -959,7 +959,7 @@ namespace Prexonite
 #if Verbose
                     Console.Write("\n#PSH: " + id + "(");
                     foreach (PValue arg in argv)
-                        Console.Write(toDebug(arg) + ", ");
+                        Console.Write(_toDebug(arg) + ", ");
                     Console.WriteLine(")");
 #endif
                         return true;
@@ -994,7 +994,7 @@ namespace Prexonite
                             {
 #if Verbose
                             val = cmd.Run(this, argv);
-                            Console.Write(" =" + toDebug(val));
+                            Console.Write(" =" + _toDebug(val));
                             Push(val);
 #else
                                 Push(cmd.Run(this, argv));
@@ -1053,7 +1053,7 @@ namespace Prexonite
                         _returnValue = Pop();
                         ReturnMode = Prexonite.ReturnMode.Exit;
 #if Verbose
-                    Console.WriteLine("=" + toDebug(_returnValue));
+                    Console.WriteLine("=" + _toDebug(_returnValue));
 #endif
                         return false;
                     case OpCode.ret_break:
@@ -1071,7 +1071,7 @@ namespace Prexonite
                     case OpCode.ret_set:
                         _returnValue = Pop();
 #if Verbose
-                    Console.WriteLine("=" + toDebug(_returnValue));
+                    Console.WriteLine("=" + _toDebug(_returnValue));
 #endif
                         break;
 
@@ -1260,7 +1260,7 @@ namespace Prexonite
 
         #endregion Virtual Machine
 
-        private static string toDebug(PValue value)
+        private static string _toDebug(PValue value)
         {
             return PValue.ToDebugString(value);
         }

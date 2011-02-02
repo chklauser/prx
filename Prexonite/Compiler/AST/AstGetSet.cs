@@ -199,7 +199,7 @@ namespace Prexonite.Compiler.Ast
 
         public override bool CheckForPlaceholders()
         {
-            return this is IAstPartiallyApplicable && (base.CheckForPlaceholders() || Arguments.Any(AstExpressionExtensions.IsPlaceholder));
+            return this is IAstPartiallyApplicable && (base.CheckForPlaceholders() || Arguments.Any(AstPartiallyApplicable.IsPlaceholder));
         }
     }
 }

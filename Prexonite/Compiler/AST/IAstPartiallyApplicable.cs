@@ -2,7 +2,10 @@
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
+using Prexonite.Commands.Core;
 using Prexonite.Commands.Core.PartialApplication;
+using Prexonite.Types;
+using Debug = System.Diagnostics.Debug;
 
 namespace Prexonite.Compiler.Ast
 {
@@ -52,7 +55,7 @@ namespace Prexonite.Compiler.Ast
                 if((placeholder = arg as AstPlaceholder) != null)
                 {
                     //Insert mapping to open argument
-                    System.Diagnostics.Debug.Assert(placeholder.Index != null);
+                    Debug.Assert(placeholder.Index != null);
                     mappings8[i] = -(placeholder.Index.Value+1); //mappings are 1-based
                 }
                 else
@@ -124,7 +127,7 @@ namespace Prexonite.Compiler.Ast
             var numUsages = new int[maxIndex + 1];
             foreach (var placeholder in placeholders)
             {
-                System.Diagnostics.Debug.Assert(placeholder.Index != null);
+                Debug.Assert(placeholder.Index != null);
                 numUsages[placeholder.Index.Value]++;
             }
 
@@ -144,7 +147,7 @@ namespace Prexonite.Compiler.Ast
                 var arg = argv[postfixIndex] as AstPlaceholder;
                 if(arg == null || lastIndex <= arg.Index)
                     break;
-                System.Diagnostics.Debug.Assert(arg.Index != null);
+                Debug.Assert(arg.Index != null);
                 if( numUsages[arg.Index.Value] > 1)
                     break;
                 lastIndex = arg.Index.Value;
@@ -161,7 +164,7 @@ namespace Prexonite.Compiler.Ast
                 if(placeholder == null)
                     continue;
 
-                System.Diagnostics.Debug.Assert(placeholder.Index != null);
+                Debug.Assert(placeholder.Index != null);
                 numUsages[placeholder.Index.Value]--;
             }
 
@@ -171,7 +174,7 @@ namespace Prexonite.Compiler.Ast
             for(redundantIndex = argv.Count - 1; postfixIndex <= redundantIndex; redundantIndex--)
             {
                 var placeholder = (AstPlaceholder) argv[redundantIndex];
-                System.Diagnostics.Debug.Assert(placeholder.Index != null);
+                Debug.Assert(placeholder.Index != null);
 
                 //find next potential excess argument
                 for(;0 <= excessIndex; excessIndex--)
@@ -185,6 +188,42 @@ namespace Prexonite.Compiler.Ast
 
             //Remove redundant placeholders
             argv.RemoveRange(redundantIndex, argv.Count - redundantIndex);
+        }
+
+        public static IAstExpression ConstFunc<T>(this T expr) where T : AstNode, IAstExpression
+        {
+            var constCmd = new AstGetSetSymbol(expr.File, expr.Line, expr.Column, PCall.Get, Const.Alias,
+                                               SymbolInterpretations.Command);
+            constCmd.Arguments.Add(expr);
+            return constCmd;
+        }
+
+        public static IAstExpression ConstFunc(this ISourcePosition position, object constantValue)
+        {
+            if (constantValue != null)
+                return new AstConstant(position.File, position.Line, position.Column, constantValue).ConstFunc();
+            else
+                return new AstNull(position.File, position.Line, position.Column).ConstFunc();
+        }
+
+        public static IAstExpression IdFunc(this ISourcePosition node)
+        {
+            return IdFunc(new AstPlaceholder(node.File, node.Line, node.Column, 0));
+        }
+
+        public static IAstExpression IdFunc(this AstPlaceholder placeholder)
+        {
+            if(!placeholder.Index.HasValue)
+                throw new ArgumentException("Placeholder must have its index assigned.", "placeholder");
+
+            var call = new AstGetSetSymbol(placeholder.File, placeholder.Line, placeholder.Column, PCall.Get, Id.Alias, SymbolInterpretations.Command);
+            call.Arguments.Add(placeholder.GetCopy());
+            return call;
+        }
+
+        public static bool IsPlaceholder(this IAstExpression expression)
+        {
+            return expression is AstPlaceholder;
         }
     }
 }

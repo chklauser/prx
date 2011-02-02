@@ -95,7 +95,7 @@ namespace Prexonite.Compiler.Ast
 
         public override bool CheckForPlaceholders()
         {
-            return base.CheckForPlaceholders() || Elements.Any(AstExpressionExtensions.IsPlaceholder);
+            return base.CheckForPlaceholders() || Elements.Any(AstPartiallyApplicable.IsPlaceholder);
         }
 
         #endregion

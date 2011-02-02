@@ -273,7 +273,7 @@ namespace Prexonite
             buffer.Append(Id);
             if (Parameters.Count > 0)
             {
-                buffer.Append("( ");
+                buffer.Append("(");
                 foreach (var param in Parameters)
                     buffer.AppendFormat("{0}, ", param);
                 buffer.Remove(buffer.Length - 2, 2);

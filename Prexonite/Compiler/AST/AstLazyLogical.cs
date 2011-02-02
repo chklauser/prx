@@ -224,7 +224,7 @@ namespace Prexonite.Compiler.Ast
 
         public override bool CheckForPlaceholders()
         {
-            return this is IAstPartiallyApplicable && (base.CheckForPlaceholders() || Conditions.Any(AstExpressionExtensions.IsPlaceholder));
+            return this is IAstPartiallyApplicable && (base.CheckForPlaceholders() || Conditions.Any(AstPartiallyApplicable.IsPlaceholder));
         }
 
         #endregion
@@ -271,25 +271,11 @@ namespace Prexonite.Compiler.Ast
             }
         }
 
-        protected IAstExpression ConstFunc(IAstExpression constantValue)
-        {
-            var constCmd = new AstGetSetSymbol(File, Line, Column, PCall.Get, Commands.Core.Const.Alias,
-                                               SymbolInterpretations.Command);
-            constCmd.Arguments.Add(constantValue);
-            return constCmd;
-        }
-
-        protected IAstExpression IdFunc()
-        {
-            return new AstGetSetReference(File, Line, Column, Commands.Core.Id.Alias,
-                                          SymbolInterpretations.Command);
-        }
-
         public void DoEmitPartialApplicationCode(CompilerTarget target)
         {
             if(Conditions.Count == 0)
             {
-                ConstFunc(new AstConstant(File, Line, Column, !ShortcircuitValue)).EmitCode(target);
+                this.ConstFunc(!ShortcircuitValue).EmitCode(target);
                 return;
             }
 
@@ -328,13 +314,12 @@ namespace Prexonite.Compiler.Ast
             //var identityFunc = new AstGetSetSymbol(File, Line, Column, PCall.Get, Commands.Core.Id.Alias, SymbolInterpretations.Command);
             //identityFunc.Arguments.Add(new AstPlaceholder(File, Line, Column, placeholder.Index));
             var identityFunc = new AstTypecast(File, Line, Column,
-                                               new AstPlaceholder(placeholder.File, placeholder.Line, placeholder.Column,
-                                                                  placeholder.Index),
+                                               placeholder.GetCopy(),
                                                new AstConstantTypeExpression(File, Line, Column, PType.Bool.ToString()));
             var conditional = new AstConditionalExpression(File, Line, Column, constExpr, ShortcircuitValue)
                                   {
                                       IfExpression = identityFunc,
-                                      ElseExpression = ConstFunc(new AstConstant(File, Line, Column, ShortcircuitValue))
+                                      ElseExpression = this.ConstFunc(ShortcircuitValue)
                                   };
             conditional.EmitCode(target);
         }
@@ -357,7 +342,7 @@ namespace Prexonite.Compiler.Ast
         public virtual bool TryOptimize(CompilerTarget target, out IAstExpression expr)
         {
             expr = null;
-            var placeholders = Conditions.Count(AstExpressionExtensions.IsPlaceholder);
+            var placeholders = Conditions.Count(AstPartiallyApplicable.IsPlaceholder);
             for(var node = Conditions.First; node != null; node = node.Next)
             {
                 var condition = node.Value;
@@ -377,7 +362,7 @@ namespace Prexonite.Compiler.Ast
                             if(!Conditions.Last.Value.IsPlaceholder() || placeholders > 1)
                                 _reportInvalidPlaceholders(target);
 
-                            expr = ConstFunc(shortcircuitConst);
+                            expr = shortcircuitConst.ConstFunc();
                         }
                         else
                         {

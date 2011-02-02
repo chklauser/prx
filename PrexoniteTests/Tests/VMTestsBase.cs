@@ -64,6 +64,31 @@ namespace Prx.Tests
 
         protected void Compile(Loader ldr, string input)
         {
+            _compile(ldr, input);
+            Assert.AreEqual(0, ldr.ErrorCount, "Errors detected during compilation.");
+        }
+
+        protected Loader CompileInvalid(string input, params string[] keywords)
+        {
+            var ldr = new Loader(options);
+            CompileInvalid(ldr, input, keywords);
+            return ldr;
+        }
+
+        protected void CompileInvalid(Loader ldr, string input, params string[] keywords)
+        {
+            _compile(ldr, input);
+            Assert.AreNotEqual(0,ldr.Errors.Count(m => m.Severity == ParseMessageSeverity.Error), "Errors expected, but none were raised.");
+            foreach (var keyword in keywords)
+            {
+                var word = keyword;
+                Assert.IsTrue(ldr.Errors.Any(m => m.Message.Contains(word)),
+                              "Expected keyword " + word + " in one of the error messages.");
+            }
+        }
+
+        private void _compile(Loader ldr, string input)
+        {
             try
             {
                 ldr.LoadFromString(input);
@@ -78,7 +103,6 @@ namespace Prx.Tests
                 }
                 Console.WriteLine(ldr.StoreInString());
             }
-            Assert.AreEqual(0, ldr.ErrorCount, "Errors detected during compilation.");
         }
 
         protected Loader Compile(string input)
@@ -231,6 +255,27 @@ namespace Prx.Tests
         protected PValue GetReturnValue(params PValue[] args)
         {
             return GetReturnValueNamedExplicit(target.Meta[Application.EntryKey], args);
+        }
+
+        protected void BoolTable4(Func<bool, bool, bool, bool, string> main, PValue pTrue, PValue pFalse)
+        {
+            Expect(main(false, false, false, false), pFalse, pFalse, pFalse, pFalse);
+            Expect(main(false, false, false, true), pFalse, pFalse, pFalse, pTrue);
+            Expect(main(false, false, true, false), pFalse, pFalse, pTrue, pFalse);
+            Expect(main(false, false, true, true), pFalse, pFalse, pTrue, pTrue);
+            Expect(main(false, true, false, false), pFalse, pTrue, pFalse, pFalse);
+            Expect(main(false, true, false, true), pFalse, pTrue, pFalse, pTrue);
+            Expect(main(false, true, true, false), pFalse, pTrue, pTrue, pFalse);
+            Expect(main(false, true, true, true), pFalse, pTrue, pTrue, pTrue);
+
+            Expect(main(true, false, false, false), pTrue, pFalse, pFalse, pFalse);
+            Expect(main(true, false, false, true), pTrue, pFalse, pFalse, pTrue);
+            Expect(main(true, false, true, false), pTrue, pFalse, pTrue, pFalse);
+            Expect(main(true, false, true, true), pTrue, pFalse, pTrue, pTrue);
+            Expect(main(true, true, false, false), pTrue, pTrue, pFalse, pFalse);
+            Expect(main(true, true, false, true), pTrue, pTrue, pFalse, pTrue);
+            Expect(main(true, true, true, false), pTrue, pTrue, pTrue, pFalse);
+            Expect(main(true, true, true, true), pTrue, pTrue, pTrue, pTrue);
         }
     }
 }

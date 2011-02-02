@@ -844,6 +844,113 @@ function main(a,c,d)
                 "-b|-kL|" +
                 "abcd|akLcd","a","c","d");
         }
+
+        [Test]
+        public void LazyPartialAnd()
+        {
+            Compile(@"function main(x,y,z,k)
+{
+    var bot = ""⊥"";
+    function supply(f) = f.(bot,bot,k,bot,bot);
+    function shorten(v) = if(v) ""1"" else ""0"";
+    var ps = [(x or y) and ?2, x and y and z and ?2, true and ?2, false and ?2];
+
+    return ps >> map(supply(?) then shorten(?)) >> foldl(? + ?,"""");
+}");
+
+            Func<bool, bool, bool, bool, string> main =
+                (x, y, z, k) =>
+                    {
+                        var ps = new[] {(x || y) && k, x && y && z && k, k, false};
+                        var ps2 = from p in ps
+                                  select p ? "1" : "0";
+                        return ps2.Aggregate((a, b) => a + b);
+                    };
+            var pFalse = (PValue) false;
+            var pTrue = (PValue) true;
+            var p0 = (PValue) 0;
+            var p1 = (PValue) 1;
+
+            BoolTable4(main, pTrue, pFalse);
+            BoolTable4(main, p1, p0);
+        }
+        
+        [Test]
+        public void LazyPartialOr()
+        {
+            Compile(@"function main(x,y,z,k)
+{
+    var bot = ""⊥"";
+    function supply(f) = f.(bot,bot,k,bot,bot);
+    function shorten(v) = if(v) ""1"" else ""0"";
+    var ps = [(x and y) or ?2, x or y or z or ?2, true or ?2, false or ?2];
+
+    return ps >> map(supply(?) then shorten(?)) >> foldl(? + ?,"""");
+}");
+
+            Func<bool, bool, bool, bool, string> main =
+                (x, y, z, k) =>
+                    {
+                        var ps = new[] {(x && y) || k, x || y || z || k, true, k};
+                        var ps2 = from p in ps
+                                  select p ? "1" : "0";
+                        return ps2.Aggregate((a, b) => a + b);
+                    };
+            var pFalse = (PValue) false;
+            var pTrue = (PValue) true;
+            var p0 = (PValue) 0;
+            var p1 = (PValue) 1;
+
+            Expect(main(false, false, false, false), pFalse, pFalse, pFalse, pFalse);
+            Expect(main(false, false, false, true), pFalse, pFalse, pFalse, pTrue);
+            Expect(main(false, false, true, false), pFalse, pFalse, pTrue, pFalse);
+            Expect(main(false, false, true, true), pFalse, pFalse, pTrue, pTrue);
+            Expect(main(false, true, false, false), pFalse, pTrue, pFalse, pFalse);
+            Expect(main(false, true, false, true), pFalse, pTrue, pFalse, pTrue);
+            Expect(main(false, true, true, false), pFalse, pTrue, pTrue, pFalse);
+            Expect(main(false, true, true, true), pFalse, pTrue, pTrue, pTrue);
+
+            BoolTable4(main, pTrue, pFalse);
+            BoolTable4(main, p1, p0);
+        }
+
+        [Test]
+        public void LazyPartialCoalescence()
+        {
+            Compile(@"function main(x,y,z,k)
+{
+    var bot = ""⊥"";
+    function supply(f) = f.(bot,bot,k,bot,bot);
+    function shorten(v) = if(v is not null) ""1"" else ""0"";
+    var p1 = (x ?? y) ?? ?2;
+    var p2 = x ?? y ?? z ?? ?2;
+    var p3 = 1 ?? ?2;
+    var p4 = null ?? ?2;
+    var ps = [p1, p2, p3, p4];
+
+    return ps >> map(supply(?) then shorten(?)) >> foldl(? + ?,"""");
+}");
+
+            Func<bool, bool, bool, bool, string> main =
+                (x, y, z, k) =>
+                    {
+                    var xO = x ? new object() : null;
+                    var yO = y ? new object() : null;
+                    var zO = z ? new object() : null;
+                    var kO = k ? new object() : null;
+                    var ps = new[] { (xO ?? yO) ?? kO, xO ?? yO ?? zO ?? kO, new object(), kO };
+                    var ps2 = from p in ps
+                              select p != null ? "1" : "0";
+                    return ps2.Aggregate((a, b) => a + b);
+                };
+            var pFalse = PType.Null;
+            var pTrue = (PValue)"";
+            var p0 = PType.Null;
+            var p1 = (PValue)0;
+
+            BoolTable4(main, pTrue, pFalse);
+            BoolTable4(main, p1, p0);
+        }
     }
 
     [TestFixture]

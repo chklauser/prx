@@ -61,7 +61,7 @@ namespace Prexonite.Commands.Core
                 return _createConstFunctionInfoCache ??
                        (_createConstFunctionInfoCache =
                         typeof (Const).GetMethod("CreateConstFunction",
-                                                 new[] {typeof (StackContext), typeof (PValue)}));
+                                                 new[] { typeof(PValue), typeof(StackContext) }));
             }
         }
         public static PValue CreateConstFunction(PValue constant, StackContext sctx)

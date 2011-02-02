@@ -165,7 +165,7 @@ namespace Prexonite.Compiler.Ast
             //              expr1
             //          else
             //              expr2
-            var retif = new AstCondition(File, Line, Column, cond.Condition);
+            var retif = new AstCondition(File, Line, Column, cond.Condition, cond.IsNegative);
 
             var ret1 = new AstReturn(File, Line, Column, ReturnVariant)
             {

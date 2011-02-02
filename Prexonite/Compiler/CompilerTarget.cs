@@ -1279,19 +1279,11 @@ namespace Prexonite.Compiler
         //[DebuggerStepThrough]
         public void EmitLabel(ISourcePosition position, string label, int address)
         {
-            //string partialResolve = null;
+            //Safety check
+            var labelKey = label + LabelSymbolPostfix;
+            Debug.Assert(!Symbols.ContainsKey(labelKey), string.Format("Error, label {0} defined multiple times in {1}, {2}", label, Function, position.File));
 
-            ////Check if the label points to an unconditional jump instruction
-            //Instruction jump = null;
-            //if (Code.Count > 0 && address < Code.Count && (jump = Code[address]).IsUnconditionalJump)
-            //    if (jump.Arguments != -1)
-            //        //Forward destination address
-            //        address = jump.Arguments;
-            //    else
-            //        //Forward destination label
-            //        partialResolve = jump.Id;
-
-            //resolve any unresolved jumps
+            //resolve any unresolved jumps);
             foreach (var ins in _unresolvedInstructions.ToArray())
             {
                 if (Engine.StringsAreEqual(ins.Id, label))
@@ -1311,35 +1303,8 @@ namespace Prexonite.Compiler
                 }
             }
 
-            ////Check if there is a redundant jump
-            //Instruction redundant;
-            ////if...
-            //if (
-            //    //...there already are instructions, ...
-            //    Code.Count > 0 &&
-            //    //...this label points to the next instruction to write, ...
-            //    address == Code.Count &&
-            //    //...the last instruction is a jump (conditional or unconditional) and ...
-            //    ((redundant = Code[address - 1]).IsJump) &&
-            //    //...that last jump points to the next instruction) ...
-            //    redundant.Arguments == address)
-            //{
-            //    //...then ...
-            //    //...remove that last jump ...
-            //    Code.RemoveAt(Code.Count - 1);
-            //    if (redundant.IsConditionalJump)
-            //        EmitPop(); //Make sure the stack keeps its integrity
-            //    //..., adjust this labels target address
-            //    address--;
-            //    //...and all other instructions targeting this address
-            //    foreach (var ins in Code)
-            //        if (ins.IsJump)
-            //            if (ins.Arguments == Code.Count + 1) // +1 since one instruction has been removed
-            //                ins.Arguments -= 1;
-            //}
-
             //Add the label to the symbol table
-            Symbols[label + LabelSymbolPostfix] =
+            Symbols[labelKey] =
                 new SymbolEntry(SymbolInterpretations.JumpLabel, address);
         }
 

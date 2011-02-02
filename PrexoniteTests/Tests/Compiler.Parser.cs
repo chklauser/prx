@@ -3240,6 +3240,75 @@ ret.val
         }
 
         [Test]
+        public void ReturnUnlessOptimization()
+        {
+            _compile(@"
+function main(x)
+{
+    return unless(x) 1 else 0;
+}");
+
+            _expect(@"
+ldloc x
+jump.t elseBranch
+ldc.int 1
+ret
+label elseBranch
+ldc.int 0
+ret
+");
+        }
+
+        [Test]
+        public void NullcheckInConditionalExpression()
+        {
+            _compile(@"
+function main(x)
+{
+    var n = if(x is null) 1 else 0;
+    var i = if(x is not null) 1 else 0;
+    asm{nop}
+    return if(x is not null) 1 else 0;
+}
+");
+
+            _expect(@"
+var n,i
+
+ldloc x
+check.null
+jump.f isNotNull
+ldc.int 1
+jump endn
+label isNotNull
+ldc.int 0
+label endn
+stloc n
+
+ldloc x
+check.null
+jump.t isNull
+ldc.int 1
+jump endi
+label isNull
+ldc.int 0
+label endi
+stloc i
+
+nop
+
+ldloc x
+check.null
+jump.t isNull2
+ldc.int 1
+ret
+label isNull2
+ldc.int 0
+ret
+");
+        }
+
+        [Test]
         public void Bug0()
         {
             _compile(

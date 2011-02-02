@@ -123,7 +123,7 @@ namespace Prexonite.Compiler.Ast
 
         public override bool CheckForPlaceholders()
         {
-            return base.CheckForPlaceholders() || Arguments.Any(AstExpressionExtensions.IsPlaceholder);
+            return base.CheckForPlaceholders() || Arguments.Any(AstPartiallyApplicable.IsPlaceholder);
         }
 
         public void DoEmitPartialApplicationCode(CompilerTarget target)
