@@ -410,7 +410,7 @@
   <PropertyGroup Condition="'$(Configuration)|$(Platform)' == 'Debug|x86'">
     <DebugSymbols>true</DebugSymbols>
     <OutputPath>bin\x86\Debug\</OutputPath>
-    <DefineConstants>TRACE;DEBUG;allowIndex,forceIndex,Verbose</DefineConstants>
+    <DefineConstants>TRACE;DEBUG;allowIndex,forceIndex</DefineConstants>
     <DebugType>full</DebugType>
     <PlatformTarget>x86</PlatformTarget>
     <CodeAnalysisLogFile>bin\Prexonite.dll.CodeAnalysisLog.xml</CodeAnalysisLogFile>
