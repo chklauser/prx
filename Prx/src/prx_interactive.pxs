@@ -36,8 +36,8 @@ var engine;
 
 declare function reboot;
 
-//The follwing code block is compiled
-// as part of the initialization of the application.
+//The follwing code block is compiled as
+// part of the initialization of the application.
 // Global variable assignments too are part of the '\init' function.
 {
 	engine = new Prexonite::Engine;
@@ -51,7 +51,8 @@ declare function reboot;
 			@"timer\stop",
 			@"timer\elapsed",
 			@"timer\reset",
-			@"createBenchmark"])
+			@"createBenchmark",
+            @"__console"])
 		engine.Commands.AddUserCommand(alias, thisE.Commands[alias]);
 		
 	//Set up the console
