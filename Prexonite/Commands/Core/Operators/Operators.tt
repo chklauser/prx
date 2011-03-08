@@ -102,9 +102,9 @@ namespace Prexonite.Commands.Core.Operators{
 <# } #>		
 		#endregion
 	}
-			<#
+		<#
 		} //end of foreach loop
-	#>
+#>
 	
 	public static class OperatorCommands
 	{
