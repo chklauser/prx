@@ -95,13 +95,129 @@ function write_instruction(ins, func, buffer)
     }
 }
 
+//Subroutine for printing the actual assembler code
+function write_code(func, pointer, writer, rangeOffset, rangeCount)
+{
+    if(func is null)
+        throw "func is null in write_code";
+
+    pointer ??= [0];
+    if(pointer is Int)
+        pointer = [pointer]; 
+
+    if(writer is not null)
+    {
+        function write s = writer.Write(s);
+        function writeln s = writer.WriteLine(s);
+    }
+    else 
+    {
+        function write s = print(s);
+        function writeln s = println(s);
+    }
+    
+    rangeOffset ??= 0;
+    rangeOffset ~= Int;
+    rangeCount ??= func.Code.Count;
+    rangeCount ~= Int;
+    
+    if(rangeOffset < 0)
+        rangeOffset = 0;
+    if(rangeOffset + rangeCount > func.Code.Count)
+        rangeCount = func.Code.Count - rangeOffset;
+   
+    //Only show addresses where they
+    //  are actually interesting. 
+    //  I.e. 
+    //   - beginning / end
+    //   - jump targets
+    //   - current instruction 
+    var importantAddresses = 
+        {
+            0 : true,
+            func.Code.Count : true,
+            func.Code.Count-1 : true
+        };
+        
+    //Mark pointer(s)
+    foreach(var p in pointer)
+        importantAddresses.Add(p: true);
+    
+    //Mark jump targets    
+    foreach(var ins in func.Code)
+    {
+        if(ieq_any(ins.OpCode,
+                ::OpCode.jump,
+                ::OpCode.jump_f,
+                ::OpCode.jump_t))
+            importantAddresses.Add(ins.Arguments: true);
+    }    
+    
+    //Subroutine for prepending instruction addresses
+    function writeAddress(buffer, address, digits)
+    {
+        if(importantAddresses[address])
+        {
+            //Current instruction
+            buffer.Append(
+                if(pointer.Contains(address))
+                    "-> "
+                else
+                    "   "
+            );
+            //Address
+            buffer.Append(address.ToString().PadLeft(digits, char("0")));
+            buffer.Append(": ");
+        }
+        else 
+        {
+            buffer.Append(" "*(5+digits));
+        }
+    }
+    
+    var buffer = new ::StringBuilder();
+    
+    //Write local variables
+    if (func.Variables.Count > 0 and rangeOffset == 0)
+    {
+        buffer.Append("var ");
+        foreach (var variable in func.Variables)
+        {
+            buffer.Append(variable);
+            buffer.Append(",");
+        }
+        buffer.Length -= 1;
+        writer.WriteLine(buffer);
+        buffer.Length = 0;
+    }
+
+    var idx = rangeOffset;
+    //Write instructions
+    if (func.Code.Count > 0)
+    {
+        var digits = ::Math.Ceiling(::Math.Log10(func.Code.Count))~Int;
+
+        writeAddress(buffer, idx, digits);
+
+        foreach (var ins in func.Code >> skip(rangeOffset) >> limit(rangeCount))
+        {
+            var idxBeginning = buffer.Length;
+            write_instruction(ins, func, buffer);
+            if (buffer[idxBeginning]~String != "@")
+                buffer.Insert(idxBeginning, char(" "));
+            buffer.AppendLine();
+
+            writeAddress(buffer, ++idx, digits);
+            write(buffer.ToString());
+            buffer.Length = 0;
+        }
+    }
+}
+
 function show_bytecode as dasm(func, pointer)
 {
     if(func is Null)
         throw "`show_bytecode` expects a function as its first parameter.";
-    pointer ??= [0];
-    if(pointer is Int)
-        pointer = [pointer];    
     
     function head(writer)
     {
@@ -174,116 +290,14 @@ function show_bytecode as dasm(func, pointer)
         writer.WriteLine();
     }
     
-    //Subroutine for printing the actual assembler code
-    function code(writer)
-    {   
-        //Only show addresses where they
-        //  are actually interesting. 
-        //  I.e. 
-        //   - beginning / end
-        //   - jump targets
-        //   - current instruction 
-        var importantAddresses = 
-            {
-                0 : true,
-                func.Code.Count : true,
-                func.Code.Count-1 : true
-            };
-            
-        //Mark pointer(s)
-        foreach(var p in pointer)
-            importantAddresses.Add(p: true);
-        
-        //Mark jump targets    
-        foreach(var ins in func.Code)
-        {
-            if(ieq_any(ins.OpCode,
-                    ::OpCode.jump,
-                    ::OpCode.jump_f,
-                    ::OpCode.jump_t))
-                importantAddresses.Add(ins.Arguments: true);
-        }    
-        
-        //Subroutine for prepending instruction addresses
-        function writeAddress(buffer, address, digits)
-        {
-            if(importantAddresses[address])
-            {
-                //Current instruction
-                buffer.Append(
-                    if(pointer.Contains(address))
-                        "-> "
-                    else
-                        "   "
-                );
-                //Address
-                buffer.Append(address.ToString().PadLeft(digits, char("0")));
-                buffer.Append(": ");
-            }
-            else 
-            {
-                buffer.Append(" "*(5+digits));
-            }
-        }
-        
-        var buffer = new ::StringBuilder();
-        
-        //Write local variables
-        if (func.Variables.Count > 0)
-        {
-            buffer.Append("var ");
-            foreach (var variable in func.Variables)
-            {
-                buffer.Append(variable);
-                buffer.Append(",");
-            }
-            buffer.Length -= 1;
-            writer.WriteLine(buffer);
-            buffer.Length = 0;
-        }
-
-        var idx = 0;
-        //Write instructions
-        if (func.Code.Count > 0)
-        {
-            var digits = ::Math.Ceiling(::Math.Log10(func.Code.Count))~Int;
-
-            writeAddress(buffer, idx, digits);
-
-            foreach (var ins in func.Code)
-            {
-                var idxBeginning = buffer.Length;
-                write_instruction(ins, func, buffer);
-                if (buffer[idxBeginning]~String != "@")
-                    buffer.Insert(idxBeginning, char(" "));
-                buffer.AppendLine();
-
-                writeAddress(buffer, ++idx, digits);
-                writer.Write(buffer.ToString());
-                buffer.Length = 0;
-            }
-        }
-    }
-    
     //Assemble function code
     var sb = new System::Text::StringBuilder();
     var w = new System::IO::StringWriter(sb);
     head(w);
     metainfo(w);
     w.WriteLine(" does asm {");
-    code(w);
+    write_code(func, pointer, w);
     w.WriteLine("}");
     
     return sb.ToString;
-}
-
-build {
-    println("compiled disassembler");
-    var sb = asm(ldr.app).Functions["show_bytecode"];
-    if(sb is not null)
-        println("function show_bytecode exists physically");
-    var ldr = GetLoader;
-    var sym = ldr.Symbols["show_bytecode"];
-    if(sym is not null)
-        println("symbol for show_bytecode exists");
 }
