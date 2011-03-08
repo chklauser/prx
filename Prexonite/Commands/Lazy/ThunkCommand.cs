@@ -290,7 +290,7 @@ namespace Prexonite.Commands.Lazy
             if (fctx != null)
             {
                 //Turn CLR call into Prexonite stack call
-                fctx.UseVirtualStackInstead();
+                fctx._UseVirtualMachineStackInstead();
                 sctx.ParentEngine.Stack.AddLast(coopctx);
                 return PType.Null;
             }
