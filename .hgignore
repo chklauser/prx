@@ -1,0 +1,5 @@
+syntax: glob
+_ReSharper.Prexonite/**
+**.cs.old
+*/bin/*
+*/obj/*
