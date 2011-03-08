@@ -300,19 +300,37 @@ namespace Prexonite
             return _performNextCylce(lastContext, false);
         }
 
+        /// <summary>
+        /// Same as <see cref="PerformNextCylce"/> but guarantees to only execute a single instruction.
+        /// </summary>
+        /// <param name="lastContext">Stack context of a called function that just returned. Must be set if the last step called a function/pushed a new context onto the VM stack. Is ignored otherwise.</param>
+        /// <returns></returns>
         public bool Step(StackContext lastContext)
         {
             return _performNextCylce(lastContext, true);
         }
 
+        /// <summary>
+        /// <see cref="_UseVirtualMachineStackInstead"/>
+        /// </summary>
         private bool _useVirtualStackInstead;
 
-        public void UseVirtualStackInstead()
+        /// <summary>
+        /// When the function context calls into managed code, that code can push itself onto the virtual machine stack and then use this 
+        /// method to instruct the calling function context to use the result of the virtual machine stack successor instead. (The return value of the managed code is discarded)
+        /// </summary>
+        internal void _UseVirtualMachineStackInstead()
         {
             _useVirtualStackInstead = true;
             _fetchReturnValue = true;
         }
 
+        /// <summary>
+        /// Implementation of <see cref="PerformNextCylce"/>.
+        /// </summary>
+        /// <param name="lastContext">Stack context of a called function that just returned. Must be set if the last step called a function/pushed a new context onto the VM stack. Is ignored otherwise.</param>
+        /// <param name="needToReturn">Indicates whether to return after executing one instruction, even if more instructions could be combined into the cycle.</param>
+        /// <returns>True if the context is not done yet, i.e., is to be kept on the VM stack; False if it is done, has produced a return value and should be removed from the VM stack.</returns>
         private bool _performNextCylce(StackContext lastContext, bool needToReturn)
         {
             //Indicates whether or not control needs to be returned to the VM.
