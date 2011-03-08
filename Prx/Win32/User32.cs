@@ -54,13 +54,6 @@ namespace Prx.Win32
 
             keyState[VK_CAPITAL] = (byte) (_queryKeyState(VK_CAPITAL) & 0xFF);
 
-            //foreach (ConsoleModifiers key in Enum.GetValues(typeof(ConsoleModifiers)))
-            //{
-            //    if ((modifiers & key) == key)
-            //    {
-            //        keyState[(int)key] = HighBit;
-            //    }
-            //}
             return keyState;
         }
 
