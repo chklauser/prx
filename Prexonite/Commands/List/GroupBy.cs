@@ -23,6 +23,7 @@
 
 using System;
 using System.Collections.Generic;
+using System.Linq;
 using System.Text;
 using Prexonite.Types;
 
@@ -68,9 +69,13 @@ namespace Prexonite.Commands.List
                     }
                 }
             }
-
+            // DO NO CONVERT TO LINQ, dereferencing of sctx MUST be delayed!
+            // ReSharper disable LoopCanBeConvertedToQuery 
             foreach (var pair in groups)
+            {
                 yield return new PValueKeyValuePair(pair.Key, (PValue) pair.Value);
+            }
+            // ReSharper restore LoopCanBeConvertedToQuery
         }
 
         /// <summary>
