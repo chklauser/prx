@@ -142,7 +142,7 @@ function create_field(x,y,length)
     
     function clear does do_update = () => 
     {
-        ::Console.Write(content.Length * " ");
+        ::Console.Write(length * " ");
         needClear = 0;
     };
     
