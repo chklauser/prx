@@ -13,7 +13,7 @@ Imports {
     Prexonite::Types,
     Prexonite::Compiler };
 
-function as create_debug_command(a_cmd, a_aliases, a_description)
+function as create_debug_command(a_cmd, a_aliases, a_description) [is debug\reqcil;]
 {
     a_cmd ??= () => "Debugger command created with null as the command reference.";
     a_aliases ??= [];
@@ -26,11 +26,22 @@ function as create_debug_command(a_cmd, a_aliases, a_description)
     return struct;
 }
 
-function as debug_prompt(ctx, lastCtx)
+function debug\MARK_END_OF_DEBUGGED_STACK [is volatile;] {}
+function as create_end_of_debugged_stack [is debug\reqcil;]
+{
+    return ->debug\MARK_END_OF_DEBUGGED_STACK.CreateFunctionContext(asm(ldr.eng),
+        []~Object<"Prexonite.PValue[]">,
+        []~Object<"Prexonite.PVariable[]">);
+}
+
+///Displays the debugger prompt for the supplied function context.
+/// @param ctx The (interpreted) function context to debug, must be on the VM stack.
+/// @lastCtx If the supplied context called an interpreted function, it's context must be passed here, in order to supply the return value.
+function as debug_prompt(ctx, lastCtx) [is debug\reqcil;]
 {   
     var HIDERETURN = "__HIDERETURN__";
     
-    function cannot_call_exc(ctxname) =
+    function cannot_call_exc(ctxname) [is debug\reqcil;] =
         "Cannot call debug_break from $ctxname context. Use a conventional function.";
     if(ctx is null)
         throw "Cannot break because caller is unknown. Possibly due to CIL compilation.";
@@ -44,12 +55,11 @@ function as debug_prompt(ctx, lastCtx)
         throw cannot_call_exc(ctx.GetType.Id);    
     //Ensured that ctx is of type PrexoniteFunctionContext
     var fctx = ctx;
+    if(fctx is null)
+        throw "Couldn't acquire reference to function context.";
     
-    function toDebugString(v)
-    {
-        var pv = fctx.CreateNativePValue(v);
-        return ::PValue.ToDebugString(pv);
-    }
+    function toDebugString(v) [is debug\reqcil;] = ::PValue.ToDebugString(boxed(v));
+
     static evalStep ??= 1;
     
     var func = fctx.Implementation;
@@ -73,7 +83,7 @@ function as debug_prompt(ctx, lastCtx)
     var lastCode; //Contains the last line of code that has been compiled, for error reporting
     
     //This function tries to load code from the buffer
-    function tryLoad()
+    function tryLoad() [is debug\reqcil;]
     {
         try 
         {
@@ -98,11 +108,13 @@ function as debug_prompt(ctx, lastCtx)
             errors = ~List.CreateFromList(ldr.Errors);
             ldr.Errors.Clear;            
         }
-        return errors.Count == 0;
+        return (errors
+            >> where(?.Severity then ?~Int then ? == Prexonite::Compiler::ParseMessageSeverity.Error~Int)
+            >> Count) == 0;
     }
     
     //Print errors (if 'otherErrors' is null, 'errors' is used)
-    function printErrors(otherErrors)
+    function printErrors(otherErrors) [is debug\reqcil;]
     {
         otherErrors ??= errors;
         foreach(var err in otherErrors);
@@ -111,11 +123,11 @@ function as debug_prompt(ctx, lastCtx)
     
     //Generate the next unique function id
     var funcIdPrefix = "eval\\DAD08BFD\\31CE\\4DC4\\A209\\4D57C5128A75";
-    function nextFuncId = funcIdPrefix + evalStep++;
+    function nextFuncId [is debug\reqcil;] = funcIdPrefix + evalStep++;
     
     //Function that shortens a string
     var shortenTo = 20;
-    function shortened(s) = 
+    function shortened(s) [is debug\reqcil;] = 
         if(s.Length <= shortenTo) 
             s 
         else 
@@ -125,7 +137,7 @@ function as debug_prompt(ctx, lastCtx)
     var ignoredNames;
     
     //The continue action.
-    function \continue
+    function \continue [is debug\reqcil;]
     {
         continueSignal = true;
     }
@@ -138,7 +150,7 @@ function as debug_prompt(ctx, lastCtx)
     
     ref \stepover;
     
-    function \stepout()
+    function \stepout() [is debug\reqcil;]
     {
         while(not atEndOfFunction)
             \stepover(true); //Step over, suppressing info
@@ -147,12 +159,20 @@ function as debug_prompt(ctx, lastCtx)
         foreach(var ctx in engine.Stack)
             println(" .. $ctx");
         var node = engine.Stack.FindLast(fctx); 
-        engine.Stack.Remove(node);
-        var newCtx = engine.Stack.Last;
+        var newCtx = node.Previous;
+        engine.Stack.Remove(node);        
         if(newCtx is not null)
         {
-            println("New context: $newCtx.Value");
-            debug_prompt(newCtx.Value, fctx);
+            if(refeq(newCtx.Value.Function,->debug\MARK_END_OF_DEBUGGED_STACK))
+            {
+                println("Done with debugging.");
+                engine.Stack.Remove(newCtx);
+            }
+            else
+            {
+                println("New context: $newCtx.Value");
+                debug_prompt(newCtx.Value, fctx);
+            }
         }    
         \continue;
         return HIDERETURN;   
@@ -161,7 +181,7 @@ function as debug_prompt(ctx, lastCtx)
     var displayStateInfo = true;
     
     //Step smart
-    function \step(mode, suppressInfo)
+    function \step(mode, suppressInfo) [is debug\reqcil;]
     {
         if(atEndOfFunction)
         {
@@ -171,7 +191,7 @@ function as debug_prompt(ctx, lastCtx)
         }
         else 
         {
-            //Step
+            //Perform step
             var keepOnStack = fctx.Step(lastCtx);
             if(not keepOnStack)
                 atEndOfFunction = true;
@@ -182,15 +202,15 @@ function as debug_prompt(ctx, lastCtx)
     }
     
     //Step over
-    function \stepover(suppressInfo) does
+    function \stepover(suppressInfo) [is debug\reqcil;] does
         \step(\step\never, suppressInfo);
     
     //Step into
-    function \stepinto does
+    function \stepinto [is debug\reqcil;] does
         \step(\step\always);
     
     //Show bytecode
-    function \bytecode
+    function \bytecode [is debug\reqcil;]
     {
         show_bytecode(func, fctx.Pointer);
     }
@@ -198,7 +218,7 @@ function as debug_prompt(ctx, lastCtx)
     var watch = [];
     
     //Add watch expression
-    function \watch
+    function \watch [is debug\reqcil;]
     { 
         var args;
         if(args.Count == 0)
@@ -243,7 +263,7 @@ function as debug_prompt(ctx, lastCtx)
     }
     
     //Delete watch expressions
-    function \clearwatch
+    function \clearwatch [is debug\reqcil;]
     {
         watch.Clear();
         println("Cleared watch list.");
@@ -251,7 +271,7 @@ function as debug_prompt(ctx, lastCtx)
     }
     
     //Show locals
-    function \locals
+    function \locals [is debug\reqcil;]
     {
         println("Local variables of $(func.Id)");
         var ignoredMap = {};
@@ -265,12 +285,13 @@ function as debug_prompt(ctx, lastCtx)
     }
     
     //Show stack
-    function \stack(showOnlyIfRelevant)
+    function \stack(showOnlyIfRelevant) [is debug\reqcil;]
     {
         var size = fctx.StackSize;
-        if(size < 1 and not showOnlyIfRelevant)
+        if(size == 0)
         {
-            println("Stack of $fctx is empty!");
+            if(not showOnlyIfRelevant)
+                println("Stack of $fctx is empty!");
         }
         else 
         {
@@ -296,16 +317,25 @@ function as debug_prompt(ctx, lastCtx)
     
     //Show help
     var debuggerCommands;
-    function \help
+    function \help [is debug\reqcil;]
     {
+        function printlnIndented(indentation,text)
+        {
+            var i = " "*(indentation~Int);
+            foreach(var line in text.split("\n"))
+            {
+                print(i);
+                println(line);
+            }
+        }
         println("The following actions are available:");
         foreach(var cmd in debuggerCommands)
         {
             var a =
                 cmd.aliases
-                >> foldl( (l,r) => l + " " + r, "\t\t");
-            println("\t" + cmd.description);    
-            println(a);
+                >> foldl( (l,r) => l + " " + r, "");
+            printlnIndented(2, a);
+            printlnIndented(10, cmd.description);    
         } 
         return HIDERETURN;   
     }
@@ -317,7 +347,7 @@ function as debug_prompt(ctx, lastCtx)
             create_debug_command(->\stepinto, [@"\stepinto", "stepinto", "si"], "Execute one instruction and then stops (stepping into functions, even if they are marked with \"is skipped\")"),
             create_debug_command(->\stepout, [@"\stepout", "stepout", "su"], "Execute the the current function and break after removing the stack context"),
             create_debug_command(->\bytecode, [@"\code", @"\bytecode", "code", "bytecode", "b"], "Shows the complete byte code for the current function"),
-            create_debug_command(->\watch, [@"\watch", "watch", "w"], "Adds a watch, either as a lambda expression, a variable reference, or a string. " +
+            create_debug_command(->\watch, [@"\watch", "watch", "w"], "Adds a watch, either as a lambda expression, a variable reference, or a string. \n" +
                 "No arguments results in printing the watched expressions"),
             create_debug_command(->\clearwatch, [@"\clearwatch", "clearwatch", "cw"], "Clears the watch list"),
             create_debug_command(->\locals, [@"\locals", @"\vars", "locals","vars", "l", "v"], "Shows the list of local variables "),
@@ -326,7 +356,7 @@ function as debug_prompt(ctx, lastCtx)
         ];
     var ignoredNames = [];    
         
-    function ensureDebuggerCommandsIntegration()
+    function ensureDebuggerCommandsIntegration() [is debug\reqcil;]
     {
         var locals = fctx.LocalVariables;
         foreach(var cmd in debuggerCommands)
@@ -347,7 +377,7 @@ function as debug_prompt(ctx, lastCtx)
     
     //Writes symbols to the loader, so that injected variables 
     //  are recognized when compiling
-    function registerSharedVariables()
+    function registerSharedVariables() [is debug\reqcil;]
     {
         var sharedNames = append(
             ignoredNames,
@@ -360,7 +390,7 @@ function as debug_prompt(ctx, lastCtx)
     registerSharedVariables;
     
     //Create the \sharedNames { ... } meta entry for debugger commands and local variables
-    function createDebuggerSharedNames()
+    function createDebuggerSharedNames() [is debug\reqcil;]
     {
         var sharedNames = append(
             ignoredNames,
@@ -382,7 +412,7 @@ function as debug_prompt(ctx, lastCtx)
     var debuggerSharedNames = createDebuggerSharedNames;
     
     //Redefine symbols as reference variables
-    function guessByRefLocals()
+    function guessByRefLocals() [is debug\reqcil;]
     {
         foreach(var name in ignoredNames)
             ldr.Symbols[name] = new ::SymbolEntry(::SymbolInterpretations.LocalReferenceVariable, name);
@@ -392,7 +422,7 @@ function as debug_prompt(ctx, lastCtx)
     
     //Create a list of variables shared with the debugger action.
     //  A new list is created for every action.
-    function createSharedVariables
+    function createSharedVariables [is debug\reqcil;]
     {
         var vars = [];
         //Copy debug commands
@@ -414,17 +444,25 @@ function as debug_prompt(ctx, lastCtx)
     }    
     
     //Shows a prompt and asks for input     
-    function showPrompt(s)
+    function showPrompt(s) [is debug\reqcil;]
     {
         if(displayStateInfo)
         {
             \watch;
             \stack(true);
-            println("Next instruction:");
-            if(fctx.Pointer < func.Code.Count)
-                println("\t" + func.Code[fctx.Pointer]);
+            
+            if(fctx.Pointer < func.Code.Count and not atEndOfFunction)
+            {
+                println("Next instructions:");
+                write_code(func,[fctx.Pointer],null,fctx.Pointer-1,4);
+                println(" ...");
+            }
             else
-                println("\tend of function.");
+            {
+                println("\tReturn mode: ", fctx.ReturnMode);
+                println("\tReturn value: ", toDebugString(fctx.ReturnValue));
+            }
+            
             displayStateInfo = false;    
         }
         print(s);
@@ -503,7 +541,7 @@ executeStatement:
                         println(evalCode);
                     printErrors(evalErrors);
 
-                    // shwo why it can't be a statement
+                    // show why it can't be a statement
                     println;
                     println("{" + shortened(raw) + "; } is also not a statement:");
                         println(lastCode);
@@ -546,27 +584,59 @@ executeStatement:
     } //end for -> next prompt
 }
 
-
+function as ensure_compiled_to_cil(f) [is debug\reqcil;]
+{
+    if(f is ::PFunction)
+    {
+        if(not f.HasCilImplementation)
+        {
+            call(CompileToCil(?), 
+                asm(ldr.app).Functions 
+                >> where(f => f.Meta[@"debug\reqcil"].Switch) 
+                >> all
+            );
+        }
+    }
+    else if(f is ::Closure)
+    {
+        return ensure_compiled_to_cil(f.Function);
+    }
+    else
+    {
+        throw "Cannot ensure that $f is compiled to CIL. Must be a function.";
+    }
+}
 
 function as debug_break()
-[is dynamic;] //prevents caller from being compiled to cil
+[is dynamic; is debug\reqcil;] //prevents caller from being compiled to cil
 {
+    ensure_compiled_to_cil(->debug_break);
     var ctx = caller;    
     debug_prompt(ctx);
 }
 
-function as debug_this(func,argv,shared)
+function as debug_this(func,argv,shared) [is debug\reqcil;]
 {
+    ensure_compiled_to_cil(->debug_this);
     argv ??= [];
     argv ~= Object<"Prexonite.PValue[]">;
     
     shared ??= [];
     shared ~= Object<"Prexonite.PVariable[]">;
     
-    debug_prompt(func.CreateFunctionContext(asm(ldr.eng),argv,shared));
+    //wrap stack manipulation code in reqcil function to ensure that it is compiled to cil.
+    function invoke_prompt [is debug\reqcil;] does
+    {
+        var fctx = func.CreateFunctionContext(asm(ldr.eng),argv,shared);
+        (asm(ldr.eng)).Stack.AddLast(new end_of_debugged_stack);
+        (asm(ldr.eng)).Stack.AddLast(fctx);
+        debug_prompt(fctx);
+    }
+    invoke_prompt();
 }
 
-function as debug_call,call\debug(func)
+function as debug_call,call\debug(func) [is debug\reqcil;]
 {
-    debug_this(func, var args >> skip(1) >> all);
+    ensure_compiled_to_cil(->debug_call);
+    debug_this(func, var args >> skip(1) >> call(append(?)) >> all);
 }
