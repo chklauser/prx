@@ -109,6 +109,17 @@ namespace Prx
                         _sctx = null;
                     }
                     break;
+                case "readlineinteractive":
+                    try
+                    {
+                        _sctx = sctx;
+                        result = ReadLineInteractive();
+                    }
+                    finally
+                    {
+                        _sctx = null;
+                    }
+                    break;
             }
 
             return result != null;
