@@ -732,6 +732,117 @@ namespace Prx
             }
         }
 
+        public string ReadLineInteractive()
+        {
+            Initialize();
+
+            bool inputChanged = false;
+            bool optionsObsolete = false;
+
+            for (; ; )
+            {
+                ConsoleKeyInfo key = Console.ReadKey(true);
+
+                switch (key.Key)
+                {
+                    case ConsoleKey.Backspace:
+                        Backspace();
+                        inputChanged = optionsObsolete = true;
+                        GetOptions();
+                        break;
+                    case ConsoleKey.Delete:
+                        Delete();
+                        inputChanged = optionsObsolete = true;
+                        GetOptions();
+                        break;
+                    case ConsoleKey.Enter:
+                        Console.Write("\n");
+                        string line = input.ToString();
+                        if (line == FinalLineText)
+                            return null;
+                        if (line.Length > 0)
+                        {
+                            history.Add(line, inputChanged);
+                        }
+                        return line;
+                    case ConsoleKey.Tab:
+                        {
+                            bool prefix = false;
+                            if (optionsObsolete)
+                            {
+                                prefix = GetOptions();
+                                optionsObsolete = false;
+                            }
+
+                            if (options.Count > 0)
+                            {
+                                string part = (key.Modifiers & ConsoleModifiers.Shift) != 0
+                                                  ? options.Previous()
+                                                  : options.Next();
+                                SetInput(options.Root + part);
+                            }
+                            else
+                            {
+                                if (prefix)
+                                {
+                                    if (_doBeep)
+                                        Console.Beep();
+                                }
+                                else
+                                {
+                                    InsertTab();
+                                }
+                            }
+                            inputChanged = true;
+                            break;
+                        }
+                    case ConsoleKey.UpArrow:
+                        SetInput(history.Previous());
+                        optionsObsolete = true;
+                        inputChanged = false;
+                        break;
+                    case ConsoleKey.DownArrow:
+                        SetInput(history.Next());
+                        optionsObsolete = true;
+                        inputChanged = false;
+                        break;
+                    case ConsoleKey.RightArrow:
+                        MoveRight(key.Modifiers);
+                        optionsObsolete = true;
+                        break;
+                    case ConsoleKey.LeftArrow:
+                        MoveLeft(key.Modifiers);
+                        optionsObsolete = true;
+                        break;
+                    case ConsoleKey.Escape:
+                        SetInput(String.Empty);
+                        inputChanged = optionsObsolete = true;
+                        break;
+                    case ConsoleKey.Home:
+                        MoveHome();
+                        optionsObsolete = true;
+                        break;
+                    case ConsoleKey.End:
+                        MoveEnd();
+                        optionsObsolete = true;
+                        break;
+                    case ConsoleKey.LeftWindows:
+                    case ConsoleKey.RightWindows:
+                        // ignore these
+                        continue;
+                    default:
+                        if (key.KeyChar == '\x0D')
+                            goto case ConsoleKey.Enter; // Ctrl-M
+                        if (key.KeyChar == '\x08')
+                            goto case ConsoleKey.Backspace; // Ctrl-H
+                        Insert(key);
+                        inputChanged = optionsObsolete = true;
+                        GetOptions();
+                        break;
+                }
+            }
+        }
+
         //Made FinalLineText static  (-P)
 
         private static string FinalLineText
