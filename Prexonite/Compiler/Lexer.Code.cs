@@ -299,7 +299,14 @@ internal partial class Lexer
                     yyline,
                     File,
                     kind));
-        return char.ConvertFromUtf32(utf32);
+        try
+        {
+            return char.ConvertFromUtf32(utf32);
+        }
+        catch(ArgumentOutOfRangeException ex)
+        {
+            throw new PrexoniteException("Failed to convert string escape sequence " + sequence + string.Format(" to string on line {0} in {1}", yyline,File),ex);
+        }
     }
 
     void IScanner.ResetPeek()
