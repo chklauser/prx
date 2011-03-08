@@ -17,10 +17,26 @@ function cmp_values(a,b,ccmp) = (ccmp ?? ->cmp).(a.Value,b.Value);
 
 function cmp_keys(a,b,ccmp) = (ccmp ?? ->cmp).(a.Key,b.Key);
 
-function cmpWith(f,ccmp) 
+function cmp_with as cmpWith(f,ccmp) 
 {
-    ccmp ??= ->cmp;
+    ccmp ??= cmp(?,?);
     return (a,b) => ccmp.(f.(a),f.(b));
+}
+
+function cmp_then
+{ 
+    var fs = var args;
+    return (a,b) =>
+    {
+        var r = 0;
+        foreach(var f in fs)
+        {
+            r = f.(a,b);
+            if(r != 0)
+                return r;
+        }
+        return r;
+    };
 }
 
 function cmpr(a,b,ccmp) = (ccmp ?? ->cmp).(b,a);
@@ -33,6 +49,8 @@ function ieq_all(a) =
     
 function refeq(a,b) = System::Object.ReferenceEquals(a,b);
 function nrefeq(a,b) = not System::Object.ReferenceEquals(a,b);
+
+function on (f,selector) => (a,b) => f.(selector.(a),selector.(b));
                 
 //Creates a wrapper around an object that intercepts calls to dispose.
 function create_terminator (obj, termination)
@@ -58,23 +76,4 @@ function create_terminator (obj, termination)
     return struct;   
 }
 
-function create_lazy(factory)
-{
-    var _computed = false;
-    var _value;
-    function computed = computed;
-    function value 
-    {
-        if(_computed)
-        {
-            return _value;
-        }
-        else
-        {
-            _computed = true;
-            return _value = factory.();
-        }
-    }
-            
-    return struct;            
-}
+function create_lazy(factory) = lazy factory.();
