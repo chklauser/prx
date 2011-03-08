@@ -403,6 +403,9 @@
       <Install>false</Install>
     </BootstrapperPackage>
   </ItemGroup>
+  <ItemGroup>
+    <Folder Include="Commands\Debugger\" />
+  </ItemGroup>
   <!-- CUSTOM TASKS -->
   <PropertyGroup>
     <PxCoco>$(ProjectDir)..\Tools\PxCoco.exe</PxCoco>
