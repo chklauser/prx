@@ -50,7 +50,19 @@ namespace Prexonite.Commands.Concurrency
             var iargs = Call.FlattenArguments(sctx, args, 1);
 
             var retChan = new Channel();
-            var T = new Thread(() => retChan.Send(args[0].IndirectCall(sctx, iargs.ToArray())))
+            var T = new Thread(() =>
+                                   {
+                                       PValue result;
+                                       try
+                                       {
+                                           result = args[0].IndirectCall(sctx, iargs.ToArray());
+                                       }
+                                       catch (Exception ex)
+                                       {
+                                           result = sctx.CreateNativePValue(ex);
+                                       }
+                                       retChan.Send(result);
+                                   })
             {
                 IsBackground = true
             };
