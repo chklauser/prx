@@ -3,3 +3,8 @@ _ReSharper.Prexonite/**
 **.cs.old
 */bin/*
 */obj/*
+**.suo
+*.ReSharper.user
+Prexonite/Compiler/Scanner.cs
+Prexonite/Parser.cs
+Prexonite/Scanner.cs
