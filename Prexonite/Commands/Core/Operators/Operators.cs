@@ -54,7 +54,7 @@ namespace Prexonite.Commands.Core.Operators{
 		
 		#endregion
 	}
-						
+					
 	public class Subtraction : BinaryOperatorBase
 	{
 	
@@ -100,7 +100,7 @@ namespace Prexonite.Commands.Core.Operators{
 		
 		#endregion
 	}
-						
+					
 	public class Multiplication : BinaryOperatorBase
 	{
 	
@@ -146,7 +146,7 @@ namespace Prexonite.Commands.Core.Operators{
 		
 		#endregion
 	}
-						
+					
 	public class Division : BinaryOperatorBase
 	{
 	
@@ -192,7 +192,7 @@ namespace Prexonite.Commands.Core.Operators{
 		
 		#endregion
 	}
-						
+					
 	public class Modulus : BinaryOperatorBase
 	{
 	
@@ -238,7 +238,7 @@ namespace Prexonite.Commands.Core.Operators{
 		
 		#endregion
 	}
-						
+					
 	public class Power : BinaryOperatorBase
 	{
 	
@@ -311,7 +311,7 @@ namespace Prexonite.Commands.Core.Operators{
 		
 		#endregion
 	}
-						
+					
 	public class BitwiseAnd : BinaryOperatorBase
 	{
 	
@@ -357,7 +357,7 @@ namespace Prexonite.Commands.Core.Operators{
 		
 		#endregion
 	}
-						
+					
 	public class BitwiseOr : BinaryOperatorBase
 	{
 	
@@ -403,7 +403,7 @@ namespace Prexonite.Commands.Core.Operators{
 		
 		#endregion
 	}
-						
+					
 	public class ExclusiveOr : BinaryOperatorBase
 	{
 	
@@ -449,7 +449,7 @@ namespace Prexonite.Commands.Core.Operators{
 		
 		#endregion
 	}
-						
+					
 	public class Equality : BinaryOperatorBase
 	{
 	
@@ -495,7 +495,7 @@ namespace Prexonite.Commands.Core.Operators{
 		
 		#endregion
 	}
-						
+					
 	public class Inequality : BinaryOperatorBase
 	{
 	
@@ -541,7 +541,7 @@ namespace Prexonite.Commands.Core.Operators{
 		
 		#endregion
 	}
-						
+					
 	public class GreaterThan : BinaryOperatorBase
 	{
 	
@@ -587,7 +587,7 @@ namespace Prexonite.Commands.Core.Operators{
 		
 		#endregion
 	}
-						
+					
 	public class GreaterThanOrEqual : BinaryOperatorBase
 	{
 	
@@ -633,7 +633,7 @@ namespace Prexonite.Commands.Core.Operators{
 		
 		#endregion
 	}
-						
+					
 	public class LessThan : BinaryOperatorBase
 	{
 	
@@ -679,7 +679,7 @@ namespace Prexonite.Commands.Core.Operators{
 		
 		#endregion
 	}
-						
+					
 	public class LessThanOrEqual : BinaryOperatorBase
 	{
 	
@@ -725,7 +725,7 @@ namespace Prexonite.Commands.Core.Operators{
 		
 		#endregion
 	}
-						
+					
 	public class UnaryNegation : UnaryOperatorBase
 	{
 	
@@ -772,7 +772,7 @@ namespace Prexonite.Commands.Core.Operators{
 		
 		#endregion
 	}
-						
+					
 	public class OnesComplement : UnaryOperatorBase
 	{
 	
@@ -819,7 +819,7 @@ namespace Prexonite.Commands.Core.Operators{
 		
 		#endregion
 	}
-						
+					
 	public class LogicalNot : UnaryOperatorBase
 	{
 	
@@ -866,7 +866,7 @@ namespace Prexonite.Commands.Core.Operators{
 		
 		#endregion
 	}
-				
+			
 	public static class OperatorCommands
 	{
 		public static void AddToEngine(Engine engine)
