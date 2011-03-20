@@ -38,8 +38,16 @@ function address(s)
     
     //Read column
     var number = ~Int.Parse(s.Substring(1,1)) - 1;
-    a += number < 3 ? number >= 0 ? number : 0 : 2;
-    return a > 8 ? 8 : a;
+    a += if(number < 3) 
+            if(number >= 0)
+                number 
+            else
+                0
+        else 2;
+    return if(a > 8) 
+                8 
+            else 
+                a;
 }
 
 //Create shorthands for fields
@@ -75,7 +83,15 @@ function randomAddress
     do
     {
         var r = rnd.Next(0,3);
-        var a = (r != 2 ? r != 1 ? "a" : "b" : "c") + rnd.Next(1,4).ToString;
+        var a = (
+            if(r != 2) 
+                if(r != 1) 
+                    "a" 
+                else 
+                    "b" 
+            else 
+                "c") 
+            + rnd.Next(1,4).ToString;
     }until(fields[address(a)] == _);
     return a;
 }
@@ -109,20 +125,20 @@ function main
         isPlayer1 = Not isPlayer1;
         draw_fields;
         //Ask for the next move
-        println("It's your turn, player " + (isPlayer1 ? "1" : "2") + ".");
+        println("It's your turn, player " + (if(isPlayer1) "1" else "2") + ".");
         do
             var chosen = choose_field;
         until(fields[chosen] == _)
         
         var winner = -1;
-        symbol = isPlayer1 ? X : O;        
+        symbol = if(isPlayer1) X else O;        
         fields[chosen] = symbol; //"symbol" is used by the function "line"
          
         if(//Horizontal      //Vertical        //Diagonal
            line(a1,a2,a3) || line(a1,b1,c1) || 
            line(b1,b2,b3) || line(a2,b2,c2) || line(a1,b2,c3) ||
            line(c1,c2,c3) || line(a3,b3,c3) || line(a3,b2,c1) ) 
-                winner = isPlayer1 ? 1 : 2;
+                winner = if(isPlayer1) 1 else 2;
         
         //Game is drawn if no player won and there are no fields left.
         if(winner == -1 && emptyFields == 0)

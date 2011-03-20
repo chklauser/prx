@@ -4,11 +4,11 @@ using System.Runtime.InteropServices;
 // set of attributes. Change these attribute values to modify the information
 // associated with an assembly.
 [assembly : AssemblyTitle("Prx")]
-[assembly : AssemblyDescription("")]
+[assembly: AssemblyDescription("Prexonite Command Line Interface")]
 [assembly : AssemblyConfiguration("")]
-[assembly : AssemblyCompany("")]
+[assembly: AssemblyCompany("Christian Klauser")]
 [assembly : AssemblyProduct("Prx")]
-[assembly: AssemblyCopyright("Copyright ©  2010")]
+[assembly: AssemblyCopyright("Copyright ©  2011")]
 [assembly : AssemblyTrademark("")]
 [assembly : AssemblyCulture("")]
 // Setting ComVisible to false makes the types in this assembly not visible 
@@ -24,5 +24,5 @@ using System.Runtime.InteropServices;
 //      Build Number
 //      Revision
 //
-[assembly: AssemblyVersion("1.2.0.0")]
-[assembly: AssemblyFileVersion("1.2.0.0")]
+[assembly: AssemblyVersion("1.2.1.0")]
+[assembly: AssemblyFileVersion("1.2.1.0")]
