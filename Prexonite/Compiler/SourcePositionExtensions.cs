@@ -15,5 +15,10 @@ namespace Prexonite.Compiler
                        && positionA.Column == positionB.Column
                        && positionA.File.Equals(positionB.File, StringComparison.Ordinal);
         }
+
+        public static string GetSourcePositionString(this ISourcePosition position)
+        {
+            return string.Format("{0}: line {1}, col {2}", position.Line, position.Line, position.Column);
+        }
     }
 }

@@ -13,6 +13,8 @@ namespace Prexonite.Compiler.Ast
     /// </summary>
     public class AstPlaceholder : AstGetSet
     {
+        public const int MaxPlaceholderIndex = 127;
+
         private int? _index;
 
         /// <summary>
@@ -82,6 +84,14 @@ namespace Prexonite.Compiler.Ast
             {
                 if (placeholder.Index.HasValue)
                 {
+                    if(placeholder.Index.Value > 127)
+                    {
+                        throw new PrexoniteException(
+                            string.Format(
+                                "The placeholder (at {0}) has a custom index value that exceeds the maxmimum mappable index.",
+                                placeholder.GetSourcePositionString()));
+                    }
+
                     if (assigned.Count <= placeholder.Index)
                     {
                         for (var i = assigned.Count; i < placeholder.Index; i++)
@@ -111,6 +121,12 @@ namespace Prexonite.Compiler.Ast
                 //it is not actually necessary to add the placeholder to the assigned list
                 //  instead we just assign the index it would occupy
                 placeholder.Index = index++;
+
+                if(index > MaxPlaceholderIndex)
+                    throw new PrexoniteException(
+                            string.Format(
+                                "The placeholder (at {0}) would be assigned an index that exceeds the maxmimum mappable index.",
+                                placeholder.GetSourcePositionString()));
             }
         }
 
