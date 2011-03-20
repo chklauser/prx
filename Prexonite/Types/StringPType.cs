@@ -65,6 +65,20 @@ namespace Prexonite.Types
             for (var i = 0; i < unescaped.Length; i++)
             {
                 var curr = unescaped[i];
+                bool nextIsHex;
+                if(i+1 < unescaped.Length)
+                {
+                    var c = unescaped[i + 1];
+                    nextIsHex = '0' <= c && c <= '9'
+                                || 'a' <= c && c <= 'f'
+                                || 'A' <= c && c <= 'F';
+                }
+                else
+                {
+                    nextIsHex = false;
+                }
+
+
                 if (curr == '\\')
                     buffer.Append(@"\\");
                 else if (curr == '"')
@@ -106,17 +120,14 @@ namespace Prexonite.Types
                             var utf8 = (Byte) curr;
                             if (utf32 > UInt16.MaxValue)
                                 //Use \U notation
-// ReSharper disable FormatStringProblem
-                                buffer.AppendFormat("\\U{0:00000000}", utf32.ToString("X"));
-
-                            else if (utf32 > Byte.MaxValue)
+                                buffer.AppendFormat("\\U{0:X8}", utf32);
+                            else if (utf32 > Byte.MaxValue || nextIsHex)
                                 //Use \u notation
-                                buffer.AppendFormat("\\u{0:0000}", utf16.ToString("X"));
+                                buffer.AppendFormat("\\u{0:X4}", utf16);
                             else
                                 //Use \x notation
-                                buffer.AppendFormat("\\x{0:00}", utf8.ToString("X"));
+                                buffer.AppendFormat("\\x{0:X2}", utf8);
                             break;
-// ReSharper restore FormatStringProblem
                     }
             }
             return buffer.ToString();
@@ -211,10 +222,8 @@ namespace Prexonite.Types
                                 goto add; //Ignore this sequence
                             hex = new StringBuilder();
                             i++;
-                            for (var j = 0; i < esc.Length && j < 3; i++, j++)
-                            {
+                            for (var j = 0; i < esc.Length && j < 4; i++, j++)
                                 hex.Append(esc[i]);
-                            }
                             if (
                                 !int.TryParse(
                                      hex.ToString(),
@@ -225,13 +234,14 @@ namespace Prexonite.Types
                                     "Invalid escape character sequence. (\"\\u" +
                                     hex.ToString().Substring(2) + "\")");
                             buffer.Append(char.ConvertFromUtf32(utf32));
+                            i--; //i will be incremented by the for-loop
                             break;
                         case 'U':
-                            if (i + 4 >= esc.Length)
+                            if (i + 8 >= esc.Length)
                                 goto add; //Ignore this sequence
                             hex = new StringBuilder();
                             i++;
-                            for (var j = 0; i < esc.Length && j < 7; i++, j++)
+                            for (var j = 0; i < esc.Length && j < 8; i++, j++)
                             {
                                 hex.Append(esc[i]);
                             }
@@ -245,13 +255,14 @@ namespace Prexonite.Types
                                     "Invalid escape character sequence. (\"\\U" +
                                     hex.ToString().Substring(2) + "\")");
                             buffer.Append(char.ConvertFromUtf32(utf32));
+                            i--; //i will be incremented by the for-loop
                             break;
                     }
                     goto next;
                 }
                 add: //Add verbatim
                 buffer.Append(esc[i]);
-                next:
+        next:
                 ;
             }
             return buffer.ToString();

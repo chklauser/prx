@@ -4035,6 +4035,32 @@ function main(z)
             Expect(prefix + valueEqFalse, PType.Null);
         }
 
+        [Test]
+        public void StringEscapeCollision()
+        {
+            Compile(@"
+function main(s)
+{
+    var es = s.Escape;
+    var ues = es.Unescape;
+    return ""$s:$ues:$es"";
+}
+");
+
+            //‰ = U+00E4
+
+            //Simple
+            _expectRoundtrip("X‰x", "X\\xE4x");
+
+            //Collision
+            _expectRoundtrip("A‰E0", "A\\u00E4E0");
+        }
+
+        private void _expectRoundtrip(string text, string escaped)
+        {
+            Expect(string.Format("{0}:{0}:{1}", text, escaped),text);
+        }
+
         #region Helper
 
         #endregion
