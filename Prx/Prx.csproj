@@ -181,12 +181,6 @@
     <None Include="samples\beer_fancy.pxs">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </None>
-    <None Include="samples\soi\soi.pxs">
-      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
-    </None>
-    <None Include="samples\soi\soi_DigitProduct.pxs">
-      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
-    </None>
     <None Include="samples\tictactoe.pxs">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </None>
