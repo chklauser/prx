@@ -67,6 +67,14 @@ namespace Prexonite.Compiler.Ast
                     target.Emit(this, OpCode.ldr_cmd, Id);
                     break;
                 case SymbolInterpretations.Function:
+                    PFunction func;
+                    //Check if the function is a macro (Cannot create references to macros)
+                    if(target.Loader.ParentApplication.Functions.TryGetValue(Id,out func) && func.IsMacro)
+                    {
+                        target.Loader.ReportSemanticError(Line, Column, "Cannot create a reference to a macro.");
+                        (new AstNull(File, Line, Column)).EmitCode(target);
+                        return;
+                    }
                     target.Emit(this, OpCode.ldr_func, Id);
                     break;
                 case SymbolInterpretations.GlobalObjectVariable:

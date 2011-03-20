@@ -264,18 +264,46 @@ function ast\read(target, expr) [is compiler;]
     return convert(expr);
 }
 
+function macro\_extract_id(prototype)[is compiler;]
+{
+    if(ast_is_MacroInvocation(prototype))
+        return prototype.MacroId;
+    else
+        return prototype.Id;
+}
+
+macro macro\reference(prototype)
+{
+    if(justEffect)
+        return;
+    
+    var id = macro\_extract_id(prototype);
+    
+    var ldrfunc = new Prexonite::Instruction(Prexonite::OpCode.ldr_func,id);
+    return ast("AsmInstruction",ldrfunc);
+}
+
 //ast helper
 macro ast\invoke_macro()
 {
-    var c = ast("MacroInvocation",->ast\macro.Id);
+    var c = ast("MacroInvocation",macro\reference(ast\macro).Id);
     c.Arguments.Add(ast("Constant","MacroInvocation"));
     c.Arguments.AddRange(var args);
     return c;
 }
 
+macro macro\id(prototype)
+{
+    if(justEffect)
+        return;
+        
+    var id = macro\_extract_id(prototype);
+    return ast("Constant",loader.ParentApplication.Functions[id].Id);
+}
+
 macro ast\symbol(symbolInterpretation)
 {
-    var c = ast\invoke_macro(->ast\macro.Id);
+    var c = ast\invoke_macro(macro\id(ast\macro));
     var getSI = ast("GetSetSymbol",SI.get,"SI",SI.gvar);
     var getSI\cmd = ast("GetSetMemberAccess",SI.get,getSI,ast\read(target, symbolInterpretation));
     c.Arguments.Add(ast("Constant", "GetSetSymbol"));
@@ -291,8 +319,8 @@ macro ast\symbol\mk_macro(symbolInterpretation)
     //Generation of
     //  var c = ast\invoke_macro(->ast\symbol.Id);
     var varC = tempalloc;
-    var mc = ast\invoke_macro(->ast\invoke_macro.Id);
-    mc.Arguments.Add(ast("Constant",->ast\symbol.Id));
+    var mc = ast\invoke_macro(macro\id(ast\invoke_macro));
+    mc.Arguments.Add(ast("Constant",macro\id(ast\symbol)));
     var setC = ast("GetSetSymbol",SI.set, varC, SI.lvar);
     setC.Arguments.Add(mc);
     block.Add(setC);
@@ -302,7 +330,7 @@ macro ast\symbol\mk_macro(symbolInterpretation)
     var getC = ast("GetSetSymbol",SI.get,varC,SI.lvar);
     var getC\Arguments = ast("GetSetMemberAccess",SI.get,getC,"Arguments");
     var getC\Arguments\Add = ast("GetSetMemberAccess",SI.get,getC\Arguments,"Add");
-    var constFunc = ast\invoke_macro(->ast\macro.Id);
+    var constFunc = ast\invoke_macro(macro\id(ast\macro));
     constFunc.Arguments.Add(ast("Constant","Constant"));
     constFunc.Arguments.Add(symbolInterpretation);
     getC\Arguments\Add.Arguments.Add(constFunc);
@@ -344,7 +372,7 @@ macro ast\member(subject, call_type, id)
     id ??= ast("Constant","");
     call_type ??= ast("GetSetMemberAccess",SI.get,ast\gvar(SI.get,"SI"),"get");
     
-    var c = ast\invoke_macro(->ast\macro.Id);
+    var c = ast\invoke_macro(macro\id(ast\macro));
     c.Arguments.Add(ast("Constant","GetSetMemberAccess"));
     c.Arguments.Add(call_type);
     c.Arguments.Add(subject);
@@ -386,20 +414,20 @@ macro ast\const(value)
 {
     if(value is ::AstNull)
     {
-        var c = ast\invoke_macro(->ast\macro.Id);
+        var c = ast\invoke_macro(macro\id(ast\macro));
         c.Arguments.Add(ast("Constant","Null"));
         return c;
     }
     else if(value is ::AstConstant)
     {
-        var c = ast\invoke_macro(->ast\macro.Id);
+        var c = ast\invoke_macro(macro\id(ast\macro));
         c.Arguments.Add(ast("Constant","Constant"));
         c.Arguments.Add(value);
         return c;
     }
     else if(value is ::AstKeyValuePair)
     {
-        var kvp = ast\invoke_macro(->ast\macro.Id);
+        var kvp = ast\invoke_macro(macro\id(ast\macro));
         kvp.Arguments.Add(ast("Constant","KeyValuePair"));
         kvp.Arguments.Add(value.Key);
         kvp.Arguments.Add(value.Value);
@@ -417,7 +445,7 @@ macro ast\const(value)
 macro ast\ret\generic_proc(expr, kind)
 {
     var getSI = ast\gvar(SI.get, "SI");
-    var mkRetNode = ast\invoke_macro(->ast\macro.Id);
+    var mkRetNode = ast\invoke_macro(macro\id(ast\macro));
     mkRetNode.Arguments.Add(ast\const("Return"));
     mkRetNode.Arguments.Add(ast\member(getSI, SI.get, "ret\\$kind"));
     if(expr is Null)
@@ -698,9 +726,9 @@ macro ast\new\const as ast\new(typename)
     
     //Create object creation node { $constructV = new ObjectCreation(new ConstantTypeExpression($typename)) }   
     block.Add(ast\args(ast\lvar(SI.set, constructV),
-        ast\args(ast\invoke_macro(->ast.Id),
+        ast\args(ast\invoke_macro(macro\id(ast)),
             ast\const("ObjectCreation"),
-            ast\args(ast\invoke_macro(->ast.Id),
+            ast\args(ast\invoke_macro(macro\id(ast)),
                 ast\const("ConstantTypeExpression"),
                 typename
             )

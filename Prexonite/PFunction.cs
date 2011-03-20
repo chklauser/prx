@@ -29,6 +29,8 @@ using System.Collections.ObjectModel;
 using System.Diagnostics;
 using System.IO;
 using System.Text;
+using Prexonite.Compiler;
+using Prexonite.Compiler.Ast;
 using Prexonite.Compiler.Cil;
 using Prexonite.Types;
 using NoDebug = System.Diagnostics.DebuggerNonUserCodeAttribute;
@@ -151,6 +153,19 @@ namespace Prexonite
             get { return _meta[IdKey]; }
         }
 
+        public string LogicalId
+        {
+            [DebuggerStepThrough]
+            get
+            {
+                MetaEntry logicalIdEntry;
+                if (_meta.TryGetValue(PFunction.LogicalIdKey, out logicalIdEntry))
+                    return logicalIdEntry.Text;
+                else
+                    return Id;
+            }
+        }
+
         private readonly Application _parentApplication;
 
         /// <summary>
@@ -255,6 +270,12 @@ namespace Prexonite
         {
             [DebuggerStepThrough]
             get { return CilImplementation != null; }
+        }
+
+        public bool IsMacro
+        {
+            [DebuggerStepThrough]
+            get { return _meta[CompilerTarget.MacroMetaKey].Switch; }
         }
 
         #endregion

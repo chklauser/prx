@@ -101,6 +101,25 @@ namespace Prexonite.Compiler.Ast
                 throw new PrexoniteException(
                     "AstMacroInvocation.EmitCode is not reentrant. Use GetCopy() to operate on a copy of this macro invocation.");
 
+            string id;
+            MetaEntry logicalIdEntry;
+            if (macroFunc.Meta.TryGetValue(PFunction.LogicalIdKey, out logicalIdEntry))
+                id = logicalIdEntry.Text;
+            else
+                id = _macroId;
+
+            //check if this macro is a partial applicatio (illegal)
+            if (Arguments.Any(AstPartiallyApplicable.IsPlaceholder))
+            {
+                target.Loader.ReportSemanticError(Line, Column, "The macro " + id + " cannot be applied partially.");
+                var ind =  new AstIndirectCall(File, Line, Column, new AstNull(File, Line, Column));
+                if (justEffect)
+                    ind.EmitEffectCode(target);
+                else
+                    ind.EmitCode(target);
+                return;
+            }
+
             try
             {
                 _releaseAfterEmit = new SymbolCollection(5);

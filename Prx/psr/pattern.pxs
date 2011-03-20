@@ -172,10 +172,10 @@ macro kvp\con(key, value)
 macro kvp
 {    
     var desc = create_pat_desc("KeyValuePair",
-            [ "key": ->kvp\decon\key
-            , "value": ->kvp\decon\value
+            [ "key": macro\reference(kvp\decon\key)
+            , "value": macro\reference(kvp\decon\value)
             ]
-        , ->kvp\con
+        , macro\reference(kvp\con)
         );
     var args;
     return call\macro(pattern\gen(desc, var args));
