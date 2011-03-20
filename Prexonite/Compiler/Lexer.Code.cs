@@ -115,7 +115,8 @@ internal partial class Lexer
             throw new ArgumentException("Must at least return one token.");
 
         foreach (var token in tokens)
-            _tokenBuffer.Enqueue(token);
+            if(token != null)
+                _tokenBuffer.Enqueue(token);
 
         return null;
     }
@@ -306,6 +307,28 @@ internal partial class Lexer
         catch(ArgumentOutOfRangeException ex)
         {
             throw new PrexoniteException("Failed to convert string escape sequence " + sequence + string.Format(" to string on line {0} in {1}", yyline,File),ex);
+        }
+    }
+
+    /// <summary>
+    /// Takes a raw smart string identifier and splits any \& sequences into the buffer, 
+    /// returning the actual identifier. The part clipped off is returned seperately (excluding the \&)
+    /// </summary>
+    /// <param name="rawIdentifier">a $identifier as it was recognized by the lexer (including the $).</param>
+    /// <param name="clipped">The part that was clipped off, excluding the \&</param>
+    /// <returns>The actual identifier, ready to be used.</returns>
+    private string _pruneSmartStringIdentifier(string rawIdentifier, out string clipped)
+    {
+        if(rawIdentifier.EndsWith("\\&"))
+        {
+            clipped = null;
+            return rawIdentifier.Substring(1, rawIdentifier.Length - 3);
+        }
+        else
+        {
+            var hasAmp = rawIdentifier.EndsWith("&");
+            clipped = hasAmp ? "&" : null;
+            return rawIdentifier.Substring(1, rawIdentifier.Length - (hasAmp ? 2 : 1));
         }
     }
 

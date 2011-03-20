@@ -184,6 +184,7 @@ Noise               = "/*" ~"*/" | "//" ~{LineBreak} | {WhiteSpace}+
     {RegularStringChar}+ { buffer.Append(yytext()); }                  
     "\\\\"      { buffer.Append("\\"); }
     "\\\""      { buffer.Append("\""); }
+    "\\"&       { /* nothing to do  */ }
     "\\"0       { buffer.Append("\0"); }
     "\\"a       { buffer.Append("\a"); }
     "\\"b       { buffer.Append("\b"); }
@@ -207,6 +208,7 @@ Noise               = "/*" ~"*/" | "//" ~{LineBreak} | {WhiteSpace}+
     {RegularStringChar}+ { buffer.Append(yytext()); }                  
     "\\\\"      { buffer.Append("\\"); }
     "\\\""      { buffer.Append("\""); }
+    "\\"&       { /* nothing to do  */ }
     "\\"0       { buffer.Append("\0"); }
     "\\"a       { buffer.Append("\a"); }
     "\\"b       { buffer.Append("\b"); }
@@ -219,12 +221,17 @@ Noise               = "/*" ~"*/" | "//" ~{LineBreak} | {WhiteSpace}+
     "\\"u {HexDigit} {HexDigit}  {HexDigit}  {HexDigit}  |
     "\\"U {HexDigit} {HexDigit}  {HexDigit}  {HexDigit}  {HexDigit}  {HexDigit}  {HexDigit}  {HexDigit} { buffer.Append(unescape_char(yytext())); }
     "\\$"       { buffer.Append("$"); }
-    "$" {Identifier} {  string fragment = buffer.ToString();
+    "$" {Identifier} &? 
+                    {   string clipped;
+                        string id = _pruneSmartStringIdentifier(yytext(), out clipped);
+                        string fragment = buffer.ToString();
                         buffer.Length = 0;
                         return multiple(
                             tok(Parser._string, fragment),
                             tok(Parser._plus),
-                            tok(Parser._id,yytext().Substring(1)),
+                            tok(Parser._id, id),
+                            clipped != null ? tok(Parser._plus) : null,
+                            clipped != null ? tok(Parser._string, clipped) : null,
                             tok(Parser._plus)
                         );
                      }
@@ -260,12 +267,17 @@ Noise               = "/*" ~"*/" | "//" ~{LineBreak} | {WhiteSpace}+
                 }
     {RegularVerbatimStringChar} { buffer.Append(yytext()); }
     "\"\""      { buffer.Append("\""); }
-    "$" {Identifier} {  string fragment = buffer.ToString();
+    "$" {Identifier} &? 
+                    {   string clipped;
+                        string id = _pruneSmartStringIdentifier(yytext(), out clipped);
+                        string fragment = buffer.ToString();
                         buffer.Length = 0;
                         return multiple(
                             tok(Parser._string, fragment),
                             tok(Parser._plus),
-                            tok(Parser._id,yytext().Substring(1)),
+                            tok(Parser._id, id),
+                            clipped != null ? tok(Parser._plus) : null,
+                            clipped != null ? tok(Parser._string, clipped) : null,
                             tok(Parser._plus)
                         );
                      }

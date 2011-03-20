@@ -4061,6 +4061,44 @@ function main(s)
             Expect(string.Format("{0}:{0}:{1}", text, escaped),text);
         }
 
+        [Test]
+        public void NullStringEscapeSequence()
+        {
+            Compile(@"
+function main(x,y)
+{
+    var z = x;
+    var z\ = y;
+    var z\t = z\;
+
+    return ""$z\&_$z\t;$z&:"" + ""\&"".Length;
+}
+
+function main_vs(x,y)
+{
+    var z = x;
+    var z\ = y;
+    var z\t = z\;
+
+    return @""$z\&_$z\t;$z&:"" + ""\&"".Length;
+}
+
+function unharmed(x,y)
+{
+    var z\ = x == y;
+    return z\&&true;
+}
+");
+
+            const string expected = "A_B;A&:0";
+            const string x = "A";
+            const string y = "B";
+            Expect(expected,x,y);
+            ExpectNamed("main_vs",expected,x,y);
+            ExpectNamed("unharmed",true,x,x);
+            ExpectNamed("unharmed",false,x,y);
+        }
+
         #region Helper
 
         #endregion
