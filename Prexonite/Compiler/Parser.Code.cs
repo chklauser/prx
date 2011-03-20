@@ -132,14 +132,19 @@ namespace Prexonite.Compiler
 
         #region General
 
+        private static string _removeSingleQuotes(string s)
+        {
+            return s.Replace("'", "");
+        }
+
         public static bool TryParseInteger(string s, out int i)
         {
-            return Int32.TryParse(s, IntegerStyle, CultureInfo.InvariantCulture, out i);
+            return Int32.TryParse(_removeSingleQuotes(s), IntegerStyle, CultureInfo.InvariantCulture, out i);
         }
 
         public static bool TryParseReal(string s, out double d)
         {
-            return Double.TryParse(s, RealStyle, CultureInfo.InvariantCulture, out d);
+            return Double.TryParse(_removeSingleQuotes(s), RealStyle, CultureInfo.InvariantCulture, out d);
         }
 
         public static NumberStyles RealStyle

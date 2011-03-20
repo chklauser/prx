@@ -51,10 +51,10 @@ partial
 
 Digit               = [0-9]
 HexDigit	        = [0-9ABCDEFabcdef]
-Integer             = {Digit}+
+Integer             = {Digit} ("'" | {Digit})*
 Exponent            = e("+"|"-")?{Integer}
 //Identifier          = {Letter} ( {Letter} | {Digit} )*
-Identifier          = ([:jletter:] | [\\]) ([:jletterdigit:] | [\\])*
+Identifier          = ([:jletter:] | [\\]) ([:jletterdigit:] | [\\] | "'")*
 LineBreak           = \r|\n|\r\n|\u2028|\u2029|\u000B|\u000C|\u0085
 WhiteSpace          = [ \t\r\n\u2028\u2029\u000B\u000C\u0085]
 RegularStringChar   = [^$\"\\\r\n\u2028\u2029\u000B\u000C\u0085]

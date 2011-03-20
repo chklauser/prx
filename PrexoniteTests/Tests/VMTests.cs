@@ -4099,6 +4099,22 @@ function unharmed(x,y)
             ExpectNamed("unharmed",false,x,y);
         }
 
+        [Test]
+        public void SingleQuotes()
+        {
+            Compile(@"
+function al'gebra_f(x'') = x'' + 6'000'';
+
+function main(x,x')
+{
+    var al'gebra = al'gebra_f(x');
+    return ""$x $al'gebra $x':"" + 54'08.9;
+}
+");
+
+            Expect("A 7000 1000:5408.9","A",1000);
+        }
+
         #region Helper
 
         #endregion

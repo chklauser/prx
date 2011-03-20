@@ -274,7 +274,7 @@ namespace Prexonite.Types
 
         private static readonly Regex idLetters =
             new Regex(
-                @"^[\w\\][\w\d\\]{0,}$", RegexOptions.Compiled);
+                @"^[\w\\][\w\d\\']{0,}$", RegexOptions.Compiled);
 
         private const int anArbitraryIdLengthLimit = 255;
 
