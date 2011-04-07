@@ -632,16 +632,21 @@ namespace Prexonite.Compiler
 
         private void _messageHook(Object sender, ParseMessageEventArgs e)
         {
-            switch (e.Message.Severity)
+            ReportMessage(e.Message);
+        }
+
+        public void ReportMessage(ParseMessage message)
+        {
+            switch (message.Severity)
             {
                 case ParseMessageSeverity.Error:
-                    _errors.Add(e.Message);
+                    _errors.Add(message);
                     break;
                 case ParseMessageSeverity.Warning:
-                    _warnings.Add(e.Message);
+                    _warnings.Add(message);
                     break;
                 case ParseMessageSeverity.Info:
-                    _infos.Add(e.Message);
+                    _infos.Add(message);
                     break;
                 default:
                     throw new ArgumentOutOfRangeException();
