@@ -589,8 +589,7 @@ namespace Prexonite.Compiler
             if (Symbols.IsKeyDefinedLocally(id))
             {
                 var entry = Symbols[id];
-                entry.Interpretation = kind;
-                entry.Id = translatedId;
+                Symbols[id] = new SymbolEntry(kind, translatedId, entry.Argument);
             }
             else
             {
@@ -626,7 +625,7 @@ namespace Prexonite.Compiler
                 case SymbolInterpretations.GlobalObjectVariable:
                 case SymbolInterpretations.GlobalReferenceVariable:
                     if (Symbols.IsKeyDefinedLocally(id))
-                        Symbols[id].Interpretation = kind;
+                        Symbols[id] = Symbols[id].With(kind, translatedId);
                     else
                         Symbols[id] = new SymbolEntry(kind, translatedId);
                     break;
@@ -634,7 +633,7 @@ namespace Prexonite.Compiler
                 case SymbolInterpretations.LocalObjectVariable:
                 case SymbolInterpretations.LocalReferenceVariable:
                     if (Symbols.IsKeyDefinedLocally(id))
-                        Symbols[id].Interpretation = kind;
+                        Symbols[id] = Symbols[id].With(kind, translatedId);
                     else
                         Symbols[id] = new SymbolEntry(kind, translatedId);
 

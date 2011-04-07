@@ -26,16 +26,16 @@ using NoDebug = System.Diagnostics.DebuggerNonUserCodeAttribute;
 
 namespace Prexonite.Compiler
 {
-    public class SymbolEntry
+    public class SymbolEntry : IEquatable<SymbolEntry>
     {
-        public SymbolInterpretations Interpretation;
-        public string Id;
-        public int? Argument;
+        private SymbolInterpretations _interpretation;
+        private string _id;
+        private int? _argument;
 
         public SymbolEntry(SymbolInterpretations interpretation)
         {
-            Interpretation = interpretation;
-            Id = null;
+            _interpretation = interpretation;
+            _id = null;
         }
 
         public SymbolEntry(SymbolInterpretations interpretation, string id)
@@ -43,60 +43,44 @@ namespace Prexonite.Compiler
         {
             if (id != null && id.Length <= 0)
                 id = null;
-            Id = id;
+            _id = id;
         }
 
         public SymbolEntry(SymbolInterpretations interpretation, int? argument)
             : this(interpretation)
         {
-            if (argument.HasValue)
-                Argument = argument.Value;
-            else
-                Argument = null;
+            _argument = argument;
         }
 
-        public static SymbolEntry CreateHiddenSymbol(SymbolInterpretations interpretation)
+        public SymbolEntry(SymbolInterpretations interpretation, string id, int? argument)
+            : this(interpretation, id)
         {
-            return new SymbolEntry(interpretation, "H\\" + Guid.NewGuid().ToString("N"));
+            _argument = argument;
         }
 
-        public static bool operator ==(SymbolEntry entry1, SymbolEntry entry2)
+        public SymbolInterpretations Interpretation
         {
-            return ReferenceEquals(entry1, entry2);
+            get { return _interpretation; }
         }
 
-        public static bool operator !=(SymbolEntry entry1, SymbolEntry entry2)
+        public string Id
         {
-            return !(entry1 == entry2);
+            get { return _id; }
         }
 
-        public override int GetHashCode()
+        public int? Argument
         {
-            return (
-                       Enum.GetName(typeof (SymbolInterpretations), Interpretation) +
-                       (Id ?? "-\\/_\\/-") +
-                       (!Argument.HasValue
-                            ?
-                                "\\-//\\-//\\"
-                            :
-                                Argument.ToString()
-                       )).GetHashCode();
+            get { return _argument; }
         }
 
-        public override bool Equals(object obj)
+        public SymbolEntry With(SymbolInterpretations interpretation, string translatedId)
         {
-            if (obj == null)
-                return false;
-            else if (obj is SymbolEntry)
-            {
-                var entry = (SymbolEntry) obj;
-                return
-                    Id == entry.Id &&
-                    Argument == entry.Argument &&
-                    Interpretation == entry.Interpretation;
-            }
-            else
-                return base.Equals(obj);
+            return new SymbolEntry(interpretation, translatedId, Argument);
+        }
+
+        public SymbolEntry With(SymbolInterpretations interpretation)
+        {
+            return new SymbolEntry(interpretation, Id, Argument);
         }
 
         public override string ToString()
@@ -104,8 +88,44 @@ namespace Prexonite.Compiler
             return Enum.GetName(
                        typeof (SymbolInterpretations), Interpretation) +
                    (Id == null ? "" : "->" + Id) +
-                   (Argument.HasValue ? "#" + Argument.Value : ""
+                   (_argument.HasValue ? "#" + _argument.Value : ""
                    );
+        }
+
+        public bool Equals(SymbolEntry other)
+        {
+            if (ReferenceEquals(null, other)) return false;
+            if (ReferenceEquals(this, other)) return true;
+            return Equals(other._interpretation, _interpretation) && Equals(other._id, _id) && other._argument.Equals(_argument);
+        }
+
+        public override bool Equals(object obj)
+        {
+            if (ReferenceEquals(null, obj)) return false;
+            if (ReferenceEquals(this, obj)) return true;
+            if (obj.GetType() != typeof (SymbolEntry)) return false;
+            return Equals((SymbolEntry) obj);
+        }
+
+        public override int GetHashCode()
+        {
+            unchecked
+            {
+                int result = _interpretation.GetHashCode();
+                result = (result*397) ^ (_id != null ? _id.GetHashCode() : 0);
+                result = (result*397) ^ (_argument.HasValue ? _argument.Value : 0);
+                return result;
+            }
+        }
+
+        public static bool operator ==(SymbolEntry left, SymbolEntry right)
+        {
+            return Equals(left, right);
+        }
+
+        public static bool operator !=(SymbolEntry left, SymbolEntry right)
+        {
+            return !Equals(left, right);
         }
     }
 
