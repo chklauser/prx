@@ -160,15 +160,7 @@ function unload_compiler(GetLoader\cmd)
     //Recursively mark all compiler functions and their inner functions
     function mark_comp_func(func)
     {
-        var fid = func.Id.ToUpperInvariant;
-        // foreach(var inner in app.Functions)
-            // if(inner.Meta["ParentFunction"].Text.Equals(fid,ordinalIc) and 
-              // not inner.Meta["compiler"].Switch)
-            // {
-                // inner.Meta["compiler"] = true;
-                // comp_funcs[] = inner;
-                // mark_comp_func(inner);
-            // }       
+        var fid = func.Id.ToUpperInvariant;    
         comp_funcs[] = func;
                 
         foreach(var inner in graph[fid] ?? [])

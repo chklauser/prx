@@ -764,22 +764,22 @@ macro ast\new\const as ast\new(typename)
 }
 
 //Position report
-macro CURRENT_FILE
+macro CURRENT_FILE as __FILE__
 {
     return ast("Constant",macroInvocation.File);
 }
 
-macro CURRENT_LINE
+macro CURRENT_LINE as __LINE__
 {
     return ast("Constant",macroInvocation.Line);
 }
 
-macro CURRENT_COLUMN
+macro CURRENT_COLUMN as __COL__
 {
     return ast("Constant",macroInvocation.Column);
 }
 
-macro POSITION
+macro POSITION as __POS__
 {
     var file = System::IO::Path.GetFileName(macroInvocation.File);
     var line = macroInvocation.Line;
