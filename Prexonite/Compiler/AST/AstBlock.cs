@@ -26,6 +26,7 @@ using System.Collections;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.Text;
+using Prexonite.Compiler.Macro;
 using NoDebug = System.Diagnostics.DebuggerNonUserCodeAttribute;
 
 namespace Prexonite.Compiler.Ast
@@ -381,7 +382,7 @@ namespace Prexonite.Compiler.Ast
         #endregion
     }
 
-    public class AstLoopBlock : AstBlock
+    public class AstLoopBlock : AstBlock, ILoopBlock
     {
         public const string ContinueWord = "continue";
         public const string BreakWord = "break";
