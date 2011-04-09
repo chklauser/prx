@@ -35,8 +35,7 @@ namespace Prexonite.Compiler.Macro
             _target = session.Target;
             _isJustEffect = isJustEffect;
             _invocation = invocation;
-
-            _session = null;
+            _session = session;
         }
 
         #region Accessors 

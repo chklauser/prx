@@ -3124,7 +3124,11 @@ function main(xs)
             Compile(@"
     macro echo() 
     {
-        var f = (x) => target.Symbols[x];
+        var f = (x) => 
+            if(context is null)
+                ""context is null""
+            else
+                context.LocalSymbols[x];
         println(f.(""x""));
     }
 
@@ -3139,7 +3143,7 @@ function main(xs)
             Assert.IsNotNull(clo,"Closure must exist.");
             Assert.IsTrue(clo.Meta.ContainsKey(PFunction.SharedNamesKey));
             Assert.AreEqual(clo.Meta[PFunction.SharedNamesKey].List.Length, 1);
-            Assert.AreEqual(clo.Meta[PFunction.SharedNamesKey].List[0].Text, "target");
+            Assert.AreEqual(clo.Meta[PFunction.SharedNamesKey].List[0].Text, MacroAliases.ContextAlias);
 
             Expect(15, new PValue[0]);
         }
