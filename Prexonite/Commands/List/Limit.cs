@@ -70,18 +70,16 @@ namespace Prexonite.Commands.List
                 var set = Map._ToEnumerable(sctx, arg);
                 if (set == null)
                     throw new PrexoniteException(arg + " is neither a list nor a coroutine.");
-                using (var Eset = set.GetEnumerator())
+                using (var setEnumerator = set.GetEnumerator())
                 {
-                    while (i++ < count && Eset.MoveNext())
+                    while (i++ < count && setEnumerator.MoveNext())
                     {
-                        yield return Eset.Current;
+                        yield return setEnumerator.Current;
                     }
                     if (i >= count)
-                        goto breakall;
+                        yield break;
                 }
             }
-            breakall:
-            ;
         }
 
         public static PValue RunStatically(StackContext sctx, PValue[] args)
