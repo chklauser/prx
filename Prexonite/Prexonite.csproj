@@ -291,6 +291,7 @@
     <Compile Include="Compiler\ILoopBlock.cs" />
     <Compile Include="Compiler\Macro\MacroContext.cs" />
     <Compile Include="Compiler\Macro\MacroSession.cs" />
+    <Compile Include="Helper\ReadOnlyCollectionView.cs" />
     <Compile Include="Helper\ReadOnlyDictionaryView.cs" />
     <Compile Include="Compiler\SourceMapping.cs" />
     <Compile Include="Compiler\SourcePosition.cs" />
