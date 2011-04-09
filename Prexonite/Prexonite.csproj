@@ -287,6 +287,10 @@
     <Compile Include="Compiler\Lexer.Code.cs" />
     <Compile Include="Compiler\Lexer.cs" />
     <Compile Include="Compiler\MacroAliases.cs" />
+    <Compile Include="Compiler\ILoopBlock.cs" />
+    <Compile Include="Compiler\Macro\MacroContext.cs" />
+    <Compile Include="Compiler\Macro\MacroSession.cs" />
+    <Compile Include="Helper\ReadOnlyDictionaryView.cs" />
     <Compile Include="Compiler\SourceMapping.cs" />
     <Compile Include="Compiler\SourcePosition.cs" />
     <Compile Include="Compiler\SourcePositionExtensions.cs" />
