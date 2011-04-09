@@ -103,8 +103,8 @@ namespace Prexonite.Compiler.Ast
 
         public bool TryOptimize(CompilerTarget target, out IAstExpression expr)
         {
-            OptimizeNode(target, ref _subject);
-            _type = (IAstType) GetOptimizedNode(target, _type);
+            _OptimizeNode(target, ref _subject);
+            _type = (IAstType) _GetOptimizedNode(target, _type);
 
             expr = null;
 

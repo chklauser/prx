@@ -100,7 +100,7 @@ namespace Prexonite.Compiler.Ast
             if (usesException)
             {
                 //Assign exception
-                ExceptionVar = GetOptimizedNode(target, ExceptionVar) as AstGetSet ?? ExceptionVar;
+                ExceptionVar = _GetOptimizedNode(target, ExceptionVar) as AstGetSet ?? ExceptionVar;
                 ExceptionVar.Arguments.Add(new AstGetException(File, Line, Column));
                 ExceptionVar.Call = PCall.Set;
                 ExceptionVar.EmitEffectCode(target);

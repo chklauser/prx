@@ -49,7 +49,7 @@ namespace Prexonite.Compiler.Ast
         {
             //Will be optimized after code generation, hopefully
             if (Expression != null)
-                OptimizeNode(target, ref Expression);
+                _OptimizeNode(target, ref Expression);
 
             expr = null;
             return false;

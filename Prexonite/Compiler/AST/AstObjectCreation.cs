@@ -82,12 +82,12 @@ namespace Prexonite.Compiler.Ast
         {
             expr = null;
 
-            _typeExpr = (IAstType) GetOptimizedNode(target, _typeExpr);
+            _typeExpr = (IAstType) _GetOptimizedNode(target, _typeExpr);
 
             //Optimize arguments
             foreach (var arg in _arguments.ToArray())
             {
-                var oArg = GetOptimizedNode(target, arg);
+                var oArg = _GetOptimizedNode(target, arg);
                 if (ReferenceEquals(oArg, arg))
                     continue;
                 _arguments.Remove(arg);

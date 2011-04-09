@@ -80,7 +80,7 @@ namespace Prexonite.Compiler.Ast
 
             //Optimize call and emit code
             var call = (IAstExpression) unlinkCall;
-            OptimizeNode(target, ref call);
+            _OptimizeNode(target, ref call);
             var optCall = call as IAstEffect;
             if (optCall != null)
                 optCall.EmitEffectCode(target);
@@ -113,7 +113,7 @@ namespace Prexonite.Compiler.Ast
             var wrappedExpr = (IAstExpression) Expression;
             if (wrappedExpr != null)
             {
-                OptimizeNode(target, ref wrappedExpr);
+                _OptimizeNode(target, ref wrappedExpr);
                 var optExpr = wrappedExpr as AstGetSet;
                 if (optExpr != null)
                     Expression = optExpr;

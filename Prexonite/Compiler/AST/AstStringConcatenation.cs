@@ -181,7 +181,7 @@ namespace Prexonite.Compiler.Ast
                     throw new PrexoniteException(
                         "Invalid (null) argument in StringConcat node (" + ToString() +
                         ") detected at position " + Arguments.IndexOf(arg) + ".");
-                var oArg = GetOptimizedNode(target, arg);
+                var oArg = _GetOptimizedNode(target, arg);
                 if (!ReferenceEquals(oArg, arg))
                 {
                     int idx = Arguments.IndexOf(arg);

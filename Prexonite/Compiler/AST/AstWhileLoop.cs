@@ -77,7 +77,7 @@ namespace Prexonite.Compiler.Ast
                 throw new PrexoniteException("AstWhileLoop requires Condition to be set.");
 
             //Optimize unary not condition
-            OptimizeNode(target, ref Condition);
+            _OptimizeNode(target, ref Condition);
             var unaryCond = Condition as AstUnaryOperator;
             while (unaryCond != null && unaryCond.Operator == UnaryOperator.LogicalNot)
             {

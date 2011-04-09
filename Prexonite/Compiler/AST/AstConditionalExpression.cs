@@ -75,7 +75,7 @@ namespace Prexonite.Compiler.Ast
         public bool TryOptimize(CompilerTarget target, out IAstExpression expr)
         {
             //Optimize condition
-            OptimizeNode(target, ref Condition);
+            _OptimizeNode(target, ref Condition);
             var unaryCond = Condition as AstUnaryOperator;
             while (unaryCond != null && unaryCond.Operator == UnaryOperator.LogicalNot)
             {
@@ -109,9 +109,9 @@ namespace Prexonite.Compiler.Ast
         protected override void DoEmitCode(CompilerTarget target)
         {
             //Optimize condition
-            OptimizeNode(target, ref Condition);
-            OptimizeNode(target, ref IfExpression);
-            OptimizeNode(target, ref ElseExpression);
+            _OptimizeNode(target, ref Condition);
+            _OptimizeNode(target, ref IfExpression);
+            _OptimizeNode(target, ref ElseExpression);
 
             var elseLabel = "elsei\\" + depth + "\\assembler";
             var endLabel = "endifi\\" + depth + "\\assembler";

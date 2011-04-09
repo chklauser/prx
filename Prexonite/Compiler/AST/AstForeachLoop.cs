@@ -68,7 +68,7 @@ namespace Prexonite.Compiler.Ast
                 throw new PrexoniteException("AstForeachLoop requires List and Element to be set.");
 
             //Optimize expression
-            OptimizeNode(target, ref List);
+            _OptimizeNode(target, ref List);
 
             //Create the enumerator variable
             var enumVar = Block.CreateLabel("enumerator");

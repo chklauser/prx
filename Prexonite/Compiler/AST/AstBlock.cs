@@ -103,7 +103,7 @@ namespace Prexonite.Compiler.Ast
                 var stmt = node;
                 var expr = stmt as IAstExpression;
                 if (expr != null)
-                    stmt = (AstNode) GetOptimizedNode(target, expr);
+                    stmt = (AstNode) _GetOptimizedNode(target, expr);
 
                 if (stmt is IAstEffect)
                     ((IAstEffect) stmt).EmitEffectCode(target);

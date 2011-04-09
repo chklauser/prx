@@ -90,8 +90,8 @@ namespace Prexonite.Compiler.Ast
             if (Value == null)
                 throw new ArgumentNullException("target");
 
-            OptimizeNode(target, ref Key);
-            OptimizeNode(target, ref Value);
+            _OptimizeNode(target, ref Key);
+            _OptimizeNode(target, ref Value);
 
             expr = null;
 

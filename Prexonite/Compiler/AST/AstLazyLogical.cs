@@ -346,7 +346,7 @@ namespace Prexonite.Compiler.Ast
             for(var node = Conditions.First; node != null; node = node.Next)
             {
                 var condition = node.Value;
-                OptimizeNode(target, ref condition);
+                _OptimizeNode(target, ref condition);
                 node.Value = condition; //Update list of conditions with optimized condition
 
                 PValue resultP;
@@ -389,7 +389,7 @@ namespace Prexonite.Compiler.Ast
             else if (Conditions.Count == 1)
             {
                 var primaryExpr = Conditions.First.Value;
-                expr = GetOptimizedNode(target,
+                expr = _GetOptimizedNode(target,
                                                 new AstTypecast(primaryExpr.File, primaryExpr.Line, primaryExpr.Column,
                                                                 primaryExpr,
                                                                 new AstConstantTypeExpression(primaryExpr.File,

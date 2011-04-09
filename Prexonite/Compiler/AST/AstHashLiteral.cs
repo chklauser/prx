@@ -62,7 +62,7 @@ namespace Prexonite.Compiler.Ast
                     throw new PrexoniteException(
                         "Invalid (null) argument in HashLiteral node (" + ToString() +
                         ") detected at position " + Elements.IndexOf(arg) + ".");
-                oArg = GetOptimizedNode(target, arg);
+                oArg = _GetOptimizedNode(target, arg);
                 if (!ReferenceEquals(oArg, arg))
                 {
                     var idx = Elements.IndexOf(arg);

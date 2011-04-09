@@ -71,7 +71,7 @@ namespace Prexonite.Compiler.Ast
             IAstExpression oArg;
             foreach (var arg in Arguments.ToArray())
             {
-                oArg = GetOptimizedNode(target, arg);
+                oArg = _GetOptimizedNode(target, arg);
                 if (!ReferenceEquals(oArg, arg))
                 {
                     Arguments.Remove(arg);

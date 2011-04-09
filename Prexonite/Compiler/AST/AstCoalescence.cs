@@ -76,7 +76,7 @@ namespace Prexonite.Compiler.Ast
                     throw new PrexoniteException(
                         "Invalid (null) argument in GetSet node (" + ToString() +
                         ") detected at position " + _expressions.IndexOf(arg) + ".");
-                var oArg = GetOptimizedNode(target, arg);
+                var oArg = _GetOptimizedNode(target, arg);
                 if (!ReferenceEquals(oArg, arg))
                     _expressions[i] = oArg;
             }

@@ -115,7 +115,7 @@ namespace Prexonite.Compiler.Ast
             return false;
         }
 
-        protected static IAstExpression GetOptimizedNode(CompilerTarget target, IAstExpression expr)
+        internal static IAstExpression _GetOptimizedNode(CompilerTarget target, IAstExpression expr)
         {
             if (target == null)
                 throw new ArgumentNullException("target", "Compiler target cannot be null.");
@@ -126,14 +126,14 @@ namespace Prexonite.Compiler.Ast
             return expr.TryOptimize(target, out opt) ? opt : expr;
         }
 
-        protected static void OptimizeNode(CompilerTarget target, ref IAstExpression expr)
+        internal static void _OptimizeNode(CompilerTarget target, ref IAstExpression expr)
         {
             if (target == null)
                 throw new ArgumentNullException("target", "Compiler target cannot be null.");
             if (expr == null)
                 throw new ArgumentNullException(
                     "expr", "Expression to be optimized can not be null.");
-            expr = GetOptimizedNode(target, expr);
+            expr = _GetOptimizedNode(target, expr);
         }
 
         #region Implementation of IObject
@@ -147,16 +147,16 @@ namespace Prexonite.Compiler.Ast
                 case "GETOPTIMIZEDNODE":
                     CompilerTarget target;
                     if (args.Length < 1 || (target = args[0].Value as CompilerTarget) == null)
-                        throw new PrexoniteException("GetOptimizedNode(CompilerTarget target) requires target.");
+                        throw new PrexoniteException("_GetOptimizedNode(CompilerTarget target) requires target.");
                     var expr = this as IAstExpression;
                     if (expr == null)
                         throw new PrexoniteException("The node is not an IAstExpression.");
 
-                    result = target.Loader.CreateNativePValue(GetOptimizedNode(target, expr));
+                    result = target.Loader.CreateNativePValue(_GetOptimizedNode(target, expr));
                     break;
                 case "EMITEFFECTCODE":
                     if (args.Length < 1 || (target = args[0].Value as CompilerTarget) == null)
-                        throw new PrexoniteException("GetOptimizedNode(CompilerTarget target) requires target.");
+                        throw new PrexoniteException("_GetOptimizedNode(CompilerTarget target) requires target.");
                     var effect = this as IAstEffect;
                     if (effect == null)
                         throw new PrexoniteException("The node is not an IAstExpression.");

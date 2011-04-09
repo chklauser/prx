@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Diagnostics;
 using System.Linq;
 using System.Text;
+using Prexonite.Compiler.Macro;
 using Prexonite.Types;
 
 namespace Prexonite.Compiler.Ast
@@ -10,7 +11,6 @@ namespace Prexonite.Compiler.Ast
     public sealed class AstMacroInvocation : AstGetSet
     {
         private readonly string _macroId;
-        private SymbolCollection _releaseAfterEmit;
 
         public AstMacroInvocation(string file, int line, int column, string macroId) : base(file, line, column, PCall.Get)
         {
@@ -41,102 +41,24 @@ namespace Prexonite.Compiler.Ast
         protected override void EmitCode(CompilerTarget target, bool justEffect)
         {
             //instantiate macro for the current target
-            PFunction macroFunc;
-            if (!target.Loader.Options.TargetApplication.Functions.TryGetValue(_macroId, out macroFunc))
-                throw new PrexoniteException(
-                    string.Format(
-                        "The macro function {0} was called from function {1} but is not available at compile time.", _macroId,
-                        target.Function.Id));
-
-            if (_releaseAfterEmit != null)
-                throw new PrexoniteException(
-                    "AstMacroInvocation.EmitCode is not reentrant. Use GetCopy() to operate on a copy of this macro invocation.");
-
-            string id;
-            MetaEntry logicalIdEntry;
-            if (macroFunc.Meta.TryGetValue(PFunction.LogicalIdKey, out logicalIdEntry))
-                id = logicalIdEntry.Text;
-            else
-                id = _macroId;
-
-            //check if this macro is a partial applicatio (illegal)
-            if (Arguments.Any(AstPartiallyApplicable.IsPlaceholder))
-            {
-                target.Loader.ReportSemanticError(Line, Column, "The macro " + id + " cannot be applied partially.");
-                var ind =  new AstIndirectCall(File, Line, Column, new AstNull(File, Line, Column));
-                if (justEffect)
-                    ind.EmitEffectCode(target);
-                else
-                    ind.EmitCode(target);
-                return;
-            }
-
+            MacroSession session = null;
+            var isTopLevel = target.CurrentMacroSession == null;
+            
             try
             {
-                _releaseAfterEmit = new SymbolCollection(5);
-
-                var astRaw = _invokeMacro(target, justEffect, macroFunc);
-
-                //Optimize and then emit returned code.
-                AstNode ast;
-                if (astRaw == null || (ast = astRaw.Value as AstNode) == null)
-                {
-                    //If a value was expected, we need to at least make up null, otherwise
-                    //  we risk stack corruption.
-                    if (!justEffect)
-                        target.Emit(this, OpCode.ldc_null);
-                    return;
-                }
-
-                var expr = ast as IAstExpression;
-                if (expr != null)
-                {
-                    OptimizeNode(target, ref expr);
-                    ast = (AstNode) expr;
-                }
-
-                var effect = ast as IAstEffect;
-                if (effect != null && justEffect)
-                    effect.EmitEffectCode(target);
-                else
-                    ast.EmitCode(target);
-
-                //In well-structured code (block based branching) it is now safe to release temporary variables.
-                foreach (var temp in _releaseAfterEmit)
-                    target.ReleaseTemporaryVariable(temp);
+                session = target.CurrentMacroSession = new MacroSession(target);
+                session.ExpandMacro(this, justEffect);
             }
             finally
             {
-                _releaseAfterEmit = null;
+                if (isTopLevel)
+                {
+                    if (session != null)
+                        session.Dispose();
+                    Debug.Assert(target.CurrentMacroSession == session);
+                    target.CurrentMacroSession = null;
+                }
             }
-        }
-
-        private PValue _invokeMacro(CompilerTarget target, bool justEffect, PFunction macroFunc)
-        {
-            var env = CompilerTarget.CreateEnvironment(target, this, justEffect);
-
-            var sharedVariables = macroFunc.Meta[PFunction.SharedNamesKey].List.Select(entry => env[entry.Text]).ToArray();
-            var macro = new Closure(macroFunc, sharedVariables);
-
-            //Execute macro (argument nodes of the invocation node are passed as arguments to the macro)
-            var arguments = Arguments.Select(target.Loader.CreateNativePValue).ToArray();
-            var parentApplication = macroFunc.ParentApplication;
-            try
-            {
-                parentApplication._SuppressInitialization = true;
-                return macro.IndirectCall(target.Loader, arguments);
-            }
-            finally
-            {
-                parentApplication._SuppressInitialization = false;
-            }
-        }
-
-        public void ReleaseAfterEmit(string temporaryVariable)
-        {
-            if (_releaseAfterEmit.Contains(temporaryVariable))
-                throw new PrexoniteException("Cannot release temporary variable " + temporaryVariable + " twice!");
-            _releaseAfterEmit.Add(temporaryVariable);
         }
 
         public override bool TryOptimize(CompilerTarget target, out IAstExpression expr)

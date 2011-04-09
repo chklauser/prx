@@ -104,7 +104,7 @@ namespace Prexonite.Compiler.Ast
         public override bool TryOptimize(CompilerTarget target, out IAstExpression expr)
         {
             base.TryOptimize(target, out expr);
-            OptimizeNode(target, ref Subject);
+            _OptimizeNode(target, ref Subject);
 
             //Try to replace { ldloc var ; indarg.x } by { indloc.x var } (same for glob)
             var symbol = Subject as AstGetSetSymbol;

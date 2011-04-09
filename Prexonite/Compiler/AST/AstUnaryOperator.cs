@@ -98,7 +98,7 @@ namespace Prexonite.Compiler.Ast
         public bool TryOptimize(CompilerTarget target, out IAstExpression expr)
         {
             expr = null;
-            OptimizeNode(target, ref _operand);
+            _OptimizeNode(target, ref _operand);
             if (_operand is AstConstant)
             {
                 var constOperand = (AstConstant) _operand;

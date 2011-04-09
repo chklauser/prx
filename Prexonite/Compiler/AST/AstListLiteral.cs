@@ -64,7 +64,7 @@ namespace Prexonite.Compiler.Ast
                     throw new PrexoniteException(
                         "Invalid (null) argument in ListLiteral node (" + ToString() +
                         ") detected at position " + Elements.IndexOf(arg) + ".");
-                IAstExpression oArg = GetOptimizedNode(target, arg);
+                IAstExpression oArg = _GetOptimizedNode(target, arg);
                 if (!ReferenceEquals(oArg, arg))
                 {
                     int idx = Elements.IndexOf(arg);

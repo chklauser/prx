@@ -57,7 +57,7 @@ namespace Prexonite.Compiler.Ast
         {
             if (Expression != null)
             {
-                OptimizeNode(target, ref Expression);
+                _OptimizeNode(target, ref Expression);
                 if (ReturnVariant == ReturnVariant.Exit)
                 {
                     emit_tail_call_exit(target);

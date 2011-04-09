@@ -162,7 +162,7 @@ namespace Prexonite.Compiler.Ast
                 coal.Expressions.Add(_leftOperand);
                 coal.Expressions.Add(_rightOperand);
                 expr = coal;
-                OptimizeNode(target, ref expr);
+                _OptimizeNode(target, ref expr);
                 return true;
             }
             else if (_operator == BinaryOperator.Cast)
@@ -175,15 +175,15 @@ namespace Prexonite.Compiler.Ast
                             File,
                             Line));
                 expr = new AstTypecast(File, Line, Column, _leftOperand, T);
-                OptimizeNode(target, ref expr);
+                _OptimizeNode(target, ref expr);
                 return true;
             }
 
             expr = null;
 
             //Let children do optimization
-            OptimizeNode(target, ref _leftOperand);
-            OptimizeNode(target, ref _rightOperand);
+            _OptimizeNode(target, ref _leftOperand);
+            _OptimizeNode(target, ref _rightOperand);
 
             //Constant folding
             var leftConstant = _leftOperand as AstConstant;
@@ -232,13 +232,13 @@ namespace Prexonite.Compiler.Ast
                     if ((concat = _leftOperand as AstStringConcatenation) != null)
                     {
                         concat.Arguments.Add(_rightOperand);
-                        expr = GetOptimizedNode(target, concat);
+                        expr = _GetOptimizedNode(target, concat);
                         return true;
                     } //right is concat?
                     else if ((concat = _rightOperand as AstStringConcatenation) != null)
                     {
                         concat.Arguments.Insert(0, _leftOperand);
-                        expr = GetOptimizedNode(target, concat);
+                        expr = _GetOptimizedNode(target, concat);
                         return true;
                     }
 
@@ -246,7 +246,7 @@ namespace Prexonite.Compiler.Ast
                     if (left != null && left.Type is StringPType)
                     {
                         //Can create concat
-                        expr = GetOptimizedNode(
+                        expr = _GetOptimizedNode(
                             target,
                             new AstStringConcatenation(
                                 File,
@@ -262,7 +262,7 @@ namespace Prexonite.Compiler.Ast
                     else if (right != null && right.Type is StringPType)
                     {
                         //Can create concat
-                        expr = GetOptimizedNode(
+                        expr = _GetOptimizedNode(
                             target,
                             new AstStringConcatenation(
                                 File,

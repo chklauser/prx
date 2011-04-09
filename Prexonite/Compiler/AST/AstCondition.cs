@@ -84,7 +84,7 @@ namespace Prexonite.Compiler.Ast
         protected override void DoEmitCode(CompilerTarget target)
         {
             //Optimize condition
-            OptimizeNode(target, ref Condition);
+            _OptimizeNode(target, ref Condition);
             var unaryCond = Condition as AstUnaryOperator;
             while (unaryCond != null && unaryCond.Operator == UnaryOperator.LogicalNot)
             {

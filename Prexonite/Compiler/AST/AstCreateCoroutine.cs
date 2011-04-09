@@ -54,7 +54,7 @@ namespace Prexonite.Compiler.Ast
 
         public bool TryOptimize(CompilerTarget target, out IAstExpression expr)
         {
-            OptimizeNode(target, ref Expression);
+            _OptimizeNode(target, ref Expression);
 
             //Optimize arguments
             IAstExpression oArg;
@@ -64,7 +64,7 @@ namespace Prexonite.Compiler.Ast
                     throw new PrexoniteException(
                         "Invalid (null) argument in CreateCoroutine node (" + ToString() +
                         ") detected at position " + _arguments.IndexOf(arg) + ".");
-                oArg = GetOptimizedNode(target, arg);
+                oArg = _GetOptimizedNode(target, arg);
                 if (!ReferenceEquals(oArg, arg))
                 {
                     var idx = _arguments.IndexOf(arg);

@@ -59,7 +59,7 @@ namespace Prexonite.Compiler.Ast
 
         public override bool TryOptimize(CompilerTarget target, out IAstExpression expr)
         {
-            TypeExpr = (IAstType) GetOptimizedNode(target, TypeExpr);
+            TypeExpr = (IAstType) _GetOptimizedNode(target, TypeExpr);
             return base.TryOptimize(target, out expr);
         }
 

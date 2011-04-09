@@ -118,7 +118,7 @@ namespace Prexonite.Compiler.Ast
         {
             base.TryOptimize(target, out expr);
             var subject = Subject;
-            OptimizeNode(target, ref subject);
+            _OptimizeNode(target, ref subject);
             Subject = subject;
             return false;
         }

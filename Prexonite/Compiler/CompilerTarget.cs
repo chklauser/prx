@@ -32,6 +32,7 @@ using System.Collections.Generic;
 using System.Diagnostics;
 using System.Linq;
 using Prexonite.Compiler.Ast;
+using Prexonite.Compiler.Macro;
 using Prexonite.Types;
 using NoDebug = System.Diagnostics.DebuggerNonUserCodeAttribute;
 
@@ -77,6 +78,7 @@ namespace Prexonite.Compiler
         private readonly Loader _loader;
         private readonly SymbolTable<SymbolEntry> _symbols = new SymbolTable<SymbolEntry>();
         private CompilerTarget _parentTarget;
+        public MacroSession CurrentMacroSession { get; set; }
 
         public Loader Loader
         {
@@ -147,18 +149,8 @@ namespace Prexonite.Compiler
 
             //If you change something in this list, it must also be changed in
             // AstMacroInvocation.cs (method EmitCode).
-            var providedLocalRefs = new List<string>
-            {
-                MacroAliases.LoaderAlias,
-                MacroAliases.TargetAlias,
-                MacroAliases.LocalsAlias,
-                MacroAliases.NewLocalVariableAlias,
-                MacroAliases.CallTypeAlias,
-                MacroAliases.JustEffectAlias,
-                MacroAliases.MacroInvocationAlias
-            };
 
-            foreach (var localRefId in providedLocalRefs)
+            foreach (var localRefId in MacroAliases.Aliases())
             {
                 Declare(SymbolInterpretations.LocalReferenceVariable, localRefId);
                 _outerVariables.Add(localRefId); //remember: outer variables are not added as local variables
@@ -200,89 +192,15 @@ namespace Prexonite.Compiler
             #endregion
         }
 
-        private static PVariable _createValue(CompilerTarget target, Object value)
+        /// <summary>
+        /// Creates a PVariable object that contains a reference to the supplied value.
+        /// </summary>
+        /// <param name="value">The value to reference.</param>
+        /// <returns>A PVariable object that contains a reference to the supplied value (needs to be de-referenced)</returns>
+        public static PVariable CreateReadonlyVariable(PValue value)
         {
-            return new PVariable {Value = PType.Object.CreatePValue(new ProvidedValue(target.Loader.CreateNativePValue(value)))};
+            return new PVariable {Value = PType.Object.CreatePValue(new ProvidedValue(value))};
         }
-
-        private class ProvidedFunction : IIndirectCall
-        {
-            private readonly Func<StackContext, PValue[], PValue> _func;
-
-            public ProvidedFunction(Func<StackContext, PValue[], PValue> func)
-            {
-                _func = func;
-            }
-
-            public PValue IndirectCall(StackContext sctx, PValue[] args)
-            {
-                return _func(sctx, args);
-            }
-        }
-
-        private static PVariable _createFunc(Func<StackContext, PValue[], PValue> func)
-        {
-            return new PVariable {Value = PType.Object.CreatePValue(new ProvidedFunction(func))};
-        }
-
-        public static SymbolTable<PVariable> CreateEnvironment(CompilerTarget target, AstMacroInvocation invocation, bool justEffect)
-        {
-            return new SymbolTable<PVariable>
-            {
-                {MacroAliases.LoaderAlias, _createValue(target, target.Loader)},
-                {MacroAliases.TargetAlias, _createValue(target, target)},
-                {MacroAliases.LocalsAlias, _createValue(target, target.Function.Variables)},
-                {MacroAliases.NewLocalVariableAlias, _createFunc(_makeNewLocalVariableFunction(target))},
-                {MacroAliases.CallTypeAlias, _createValue(target, invocation.Call)},
-                {MacroAliases.JustEffectAlias, _createValue(target, justEffect)},
-                {MacroAliases.MacroInvocationAlias, _createValue(target, invocation)}
-            };
-        }
-
-        private static Func<StackContext, PValue[], PValue> _makeNewLocalVariableFunction(CompilerTarget target)
-        {
-            return (sctx, args) =>
-            {
-                string varId;
-                IAstExpression init;
-
-                if (args.Length == 0)
-                {
-                    varId = null;
-                    init = null;
-                }
-                else
-                {
-                    var idArg = args[0];
-                    var initArg = args.Length >= 2 ? args[1] : null;
-                    //Check for string arg
-                    varId = idArg.Value as string;
-                    if (varId == null)
-                        initArg = idArg;
-
-                    init = initArg != null ? initArg.Value as IAstExpression : null;
-                }
-
-                varId = varId ?? Engine.GenerateName();
-
-                if (!target.Function.Variables.Contains(varId))
-                    target.Function.Variables.Add(varId);
-
-                if (init == null)
-                {
-                    return varId;
-                }
-                else
-                {
-                    var varAssign = new AstGetSetSymbol(
-                        "MacroInvocation", -1, -1, PCall.Set, varId, SymbolInterpretations.LocalObjectVariable);
-                    varAssign.Arguments.Add(init);
-                    return target.Loader.CreateNativePValue(varAssign);
-                }
-            };
-        }
-
-        #endregion
 
         #region Temporary variables
 
@@ -313,6 +231,16 @@ namespace Prexonite.Compiler
             _usedTemporaryVariables.Remove(temporaryVariableId);
             _freeTemporaryVariables.Push(temporaryVariableId);
         }
+
+        public void PromoteTemporaryVariable(string temporaryVariableId)
+        {
+            if (!_usedTemporaryVariables.Contains(temporaryVariableId))
+                throw new PrexoniteException("The variable " + temporaryVariableId + " is not a temporary variable managed by " + this);
+
+            _usedTemporaryVariables.Remove(temporaryVariableId);
+        }
+
+        #endregion
 
         #endregion
 
