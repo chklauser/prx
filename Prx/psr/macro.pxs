@@ -1,19 +1,39 @@
  
 build does require(@"psr\ast.pxs");
-
-function is_in_macro(target) [is compiler;]
+/*
+public const string NewLocalVariableAlias = "newvar";
+public const string LoaderAlias = "loader";
+public const string TargetAlias = "target";
+public const string LocalsAlias = "locals";
+public const string CallTypeAlias = "callType";
+public const string JustEffectAlias = "justEffect";
+public const string MacroInvocationAlias = "macroInvocation";
+*/
+function is_in_macro(context) [is compiler;] = 
+    ([context.Function]
+    >> append(context.GetParentFunctions())
+    >> where(f => f.Meta[Prexonite::Compiler::CompilerTarget.MacroMetaKey].Switch)
+    >> limit(1)
+    >> count) > 0;
+    
+/* establish_macro_context - Allows a macro, that only works in other macros, to be applied in nested functions of macros as well.*/
+macro establish_macro_context() [is compiler;]
 {
-    while(target is not Null)
+    var contextAlias = Prexonite::Compiler::MacroAliases.ContextAlias;
+    if(not is_in_macro(context)) 
     {
-        if(target.Function.Meta[Prexonite::Compiler::CompilerTarget.MacroMetaKey].Switch)
-            return true;
-        target = target.ParentTarget;
+        context.ReportMessage(Prexonite::Compiler::ParseMessageSeverity.Error, "Cannot establish macro context outside of macro", context.Invocation);
+        return;
     }
-    return false;
+    
+    if(not (context.OuterVariables >> map(?.ToUpperInvariant) >> contains(contextAlias)))
+        context.RequireOuterVariable(contextAlias);
 }
 
 macro ast\macro(type)
-{
+{   
+    var macroInvocation = context.Invocation;
+    
     var astCall = ast\withPos("GetSetSymbol",
         macroInvocation.File, macroInvocation.Line,macroInvocation.Column,
         SI.get, ->ast\withPos.Id, SI.func);
@@ -22,14 +42,16 @@ macro ast\macro(type)
     var nodeLine;
     var nodeColumn;
     
-    if(is_in_macro(target))
+    if(is_in_macro(context))
     {
-        var inv = Prexonite::Compiler::MacroAliases.MacroInvocationAlias;
-        if(not target.OuterVariables.Contains(inv))
-            target.RequireOuterVariable(inv);
+        establish_macro_context;
         
-        var getInv = ast\withPos("GetSetSymbol",
-            macroInvocation.File, macroInvocation.Line,macroInvocation.Column ,SI.get,inv,SI.lref);
+        var getContext = ast\withPos("GetSetSymbol",
+            macroInvocation.File, macroInvocation.Line,macroInvocation.Column ,
+            SI.get,Prexonite::Compiler::MacroAliases.ContextAlias,SI.lref);
+        
+        var getInv = ast\withPos("GetSetMemberAccess",
+            macroInvocation.File, macroInvocation.Line,macroInvocation.Column ,SI.get,getContext,"Invocation");
         nodeFile = ast\withPos("GetSetMemberAccess",
             macroInvocation.File, macroInvocation.Line,macroInvocation.Column, SI.get, getInv, "File");
         nodeLine = ast\withPos("GetSetMemberAccess",

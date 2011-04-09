@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Collections.Generic;
 using Prexonite.Compiler.Ast;
 using Prexonite.Helper;
 using Prexonite.Types;
@@ -96,6 +97,11 @@ namespace Prexonite.Compiler.Macro
             get { return _session.GlobalSymbols; }
         }
 
+        public ReadOnlyCollectionView<string> OuterVariables
+        {
+            get { return _session.OuterVariables; }
+        }
+
         /// <summary>
         /// A reference to the application being compiled.
         /// </summary>
@@ -110,6 +116,19 @@ namespace Prexonite.Compiler.Macro
         public PFunction Function
         {
             get { return _target.Function; }
+        }
+
+        /// <summary>
+        /// Returns the functions direct parent (outer) function.
+        /// </summary>
+        public IEnumerable<PFunction> GetParentFunctions()
+        {
+            var target = _target.ParentTarget;
+            while (target != null)
+            {
+                yield return target.Function;
+                target = target.ParentTarget;
+            }
         }
 
         #endregion

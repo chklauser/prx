@@ -16,6 +16,7 @@ namespace Prexonite.Compiler.Macro
         private LoaderOptions _options;
         private readonly ReadOnlyDictionaryView<string, SymbolEntry> _globalSymbols;
         private readonly ReadOnlyDictionaryView<string, SymbolEntry> _localSymbols;
+        private readonly ReadOnlyCollectionView<string> _outerVariables;
         private readonly SymbolCollection _releaseList = new SymbolCollection();
         private readonly SymbolCollection _allocationList = new SymbolCollection();
         private readonly HashSet<AstMacroInvocation> _invocations = new HashSet<AstMacroInvocation>();
@@ -31,6 +32,7 @@ namespace Prexonite.Compiler.Macro
             _target = target;
             _localSymbols = new ReadOnlyDictionaryView<string, SymbolEntry>(_target.Symbols);
             _globalSymbols = new ReadOnlyDictionaryView<string, SymbolEntry>(_target.Loader.Symbols);
+            _outerVariables = new ReadOnlyCollectionView<string>(_target.OuterVariables);
         }
 
         /// <summary>
@@ -56,6 +58,11 @@ namespace Prexonite.Compiler.Macro
         {
             [DebuggerStepThrough]
             get { return _target; }
+        }
+
+        public ReadOnlyCollectionView<string> OuterVariables
+        {
+            get { return _outerVariables; }
         }
 
         /// <summary>
