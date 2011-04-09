@@ -786,6 +786,8 @@ namespace Prexonite
 
             Commands.AddEngineCommand(SumAlias, Sum.Instance);
 
+            Commands.AddEngineCommand(Contains.Alias, Contains.Instance);
+
             Commands.AddEngineCommand(ChanAlias, Chan.Instance);
 
             Commands.AddEngineCommand(SelectAlias, Select.Instance);

@@ -165,6 +165,7 @@
     <Compile Include="Commands\Lazy\ToSeqCommand.cs" />
     <Compile Include="Commands\List\All.cs" />
     <Compile Include="Commands\List\Append.cs" />
+    <Compile Include="Commands\List\Contains.cs" />
     <Compile Include="Commands\List\Count.cs" />
     <Compile Include="Commands\List\Distinct.cs" />
     <Compile Include="Commands\List\Each.cs" />
