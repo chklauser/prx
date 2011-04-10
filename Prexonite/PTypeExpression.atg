@@ -148,7 +148,6 @@ Type<out PType value>           (.  string id;
                                     if(!_sctx.ParentEngine.PTypeRegistry.Contains(id))
                                     {
                                         SemErr("Cannot find PType " + id + " referenced in PTypeExpression.");
-                                        id = null;
                                     }                                    
                                 .)
     [   '('                     (.  PValue obj; .)
@@ -160,7 +159,10 @@ Type<out PType value>           (.  string id;
         ')'
     ]
                                 (.  if(id == null) //Error recovery.
+                                    {
+                                        SemErr("Error in type expression.");
                                         value = PType.Object[typeof(object)];
+                                    }
                                     else //Normal case
                                         value = _sctx.ConstructPType(id, args.ToArray());
                                 .)                        

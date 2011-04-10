@@ -46,7 +46,7 @@ namespace Prexonite.Compiler.Ast
             
             try
             {
-                session = target.CurrentMacroSession = new MacroSession(target);
+                session = target.CurrentMacroSession = target.CurrentMacroSession ?? new MacroSession(target);
                 session.ExpandMacro(this, justEffect);
             }
             finally

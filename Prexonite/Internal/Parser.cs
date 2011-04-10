@@ -162,24 +162,26 @@ internal partial class Parser {
 		if(!_sctx.ParentEngine.PTypeRegistry.Contains(id))
 		{
 		    SemErr("Cannot find PType " + id + " referenced in PTypeExpression.");
-		    id = null;
 		}                                    
 		
 		if (la.kind == 8) {
 			Get();
-			/*PTypeExpression.atg:154*/PValue obj; 
+			/*PTypeExpression.atg:153*/PValue obj; 
 			if (StartOf(1)) {
-				Expr(/*PTypeExpression.atg:155*/out obj);
-				/*PTypeExpression.atg:155*/args.Add(obj); 
+				Expr(/*PTypeExpression.atg:154*/out obj);
+				/*PTypeExpression.atg:154*/args.Add(obj); 
 				while (WeakSeparator(9,1,2) ) {
-					Expr(/*PTypeExpression.atg:157*/out obj);
-					/*PTypeExpression.atg:157*/args.Add(obj); 
+					Expr(/*PTypeExpression.atg:156*/out obj);
+					/*PTypeExpression.atg:156*/args.Add(obj); 
 				}
 			}
 			Expect(10);
 		}
-		/*PTypeExpression.atg:162*/if(id == null) //Error recovery.
-		   value = PType.Object[typeof(object)];
+		/*PTypeExpression.atg:161*/if(id == null) //Error recovery.
+		{
+		    SemErr("Error in type expression.");
+		    value = PType.Object[typeof(object)];
+		}
 		else //Normal case
 		    value = _sctx.ConstructPType(id, args.ToArray());
 		
