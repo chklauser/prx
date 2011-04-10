@@ -36,7 +36,7 @@ function repeatable(xs)
 
 macro pattern\construct(desc)
 {
-	var targets = var args >> skip(1) >> map(a => {optimize\ref(target,->a); return a;}) >> all;
+	var targets = var args >> skip(1) >> map(a => {optimize\ref(context,->a); return a;}) >> all;
 	var dynamicCall = ast\invoke_macro(desc.construct);
 	dynamicCall.Arguments.AddRange(targets); 
     return dynamicCall;
@@ -45,7 +45,7 @@ macro pattern\construct(desc)
 macro pattern\deconstruct(desc)
 {
     var args;
-	var targets = var args >> range(1,args.Count-2) >> map(a => {optimize\ref(target,->a); return a;}) >> all;
+	var targets = var args >> range(1,args.Count-2) >> map(a => {optimize\ref(context,->a); return a;}) >> all;
 	var the_object = args[args.Count - 1];
 	    
 	var block = ast("BlockExpression");
@@ -141,7 +141,7 @@ function create_pat_desc(_name, _bindings, _construct) [is compiler;]
 
 macro pattern\gen(desc, args)
 {
-    if(SI.eq(callType,SI.get))
+    if(SI.eq(context.Call,SI.get))
     {
         //construct value
         return call\macro(->pattern\construct, [desc], args);
@@ -155,13 +155,13 @@ macro pattern\gen(desc, args)
 
 macro kvp\decon\key(tempV)
 {
-    var tempV = ast\read(target, tempV);
+    var tempV = ast\read(context, tempV);
     return ast\member(ast\lvar(SI.get, tempV), SI.get,"Key");
 }
 
 macro kvp\decon\value(tempV)
 {
-    return ast\member(ast\lvar(SI.get, ast\read(target, tempV)), SI.get,"Value");
+    return ast\member(ast\lvar(SI.get, ast\read(context, tempV)), SI.get,"Value");
 }
 
 macro kvp\con(key, value)

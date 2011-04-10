@@ -39,7 +39,7 @@ macro call\sub\interpret(computeKvp)
 	function retValue = ast\lvar(SI.get, retValueV);
 	
 	//Break and Continue behave differently outside loop blocks
-	var bl = target.CurrentLoopBlock;
+	var bl = context.CurrentLoopBlock;
 	var contStmt;
 	var breakStmt;
 	if(bl is Null)
