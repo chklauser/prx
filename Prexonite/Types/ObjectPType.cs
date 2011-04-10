@@ -45,7 +45,7 @@ namespace Prexonite.Types
                 _clrType = GetType(sctx, (string) sarg.Value);
             else
                 throw new PrexoniteException(
-                    "The supplied argument parameter (" + arg +
+                    "The supplied argument (" + arg +
                     ") cannot be used to create an Object<T> type.");
         }
 
