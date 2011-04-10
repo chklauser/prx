@@ -2233,7 +2233,7 @@ internal partial class Parser {
 		                                    Ast[func].EmitCode(FunctionTargets[func], true);
 		                                    FunctionTargets[func].FinishTarget();
 		                                    } catch(Exception e) {
-		                                        SemErr("Exception during compilation of function body of " + id + "." + e.Message);
+		                                        SemErr("Exception during compilation of function body of " + id + ". " + e.Message);
 		                                    }
 		                                }                                       
 		                                
