@@ -474,8 +474,6 @@ namespace Prexonite.Compiler.Cil
                 }
             }
 
-            //public IEnumerable<>
-
             public Instruction Instruction
             {
                 [DebuggerStepThrough]
