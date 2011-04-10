@@ -178,6 +178,22 @@ namespace Prexonite.Compiler.Macro
             _target.RequireOuterVariable(variable);
         }
 
+        /// <summary>
+        /// Attempts to optimize the supplied node. Returns the original node on failure, and the optimized node on success.
+        /// </summary>
+        /// <param name="node">The node to be optimized.</param>
+        /// <returns>The optimized node on success, the old node on failure. Never null.</returns>
+        public AstNode GetOptimizedNode(AstNode node)
+        {
+            if (node == null)
+                throw new ArgumentNullException("node");
+            var expr = node as IAstExpression;
+            if(expr == null || !expr.TryOptimize(_session.Target, out expr))
+                return node;
+            else
+                return (AstNode) expr;
+        }
+
         #endregion
     }
 }
