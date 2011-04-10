@@ -20,8 +20,8 @@ macro struct\as_macro as struct()
             null;
         ;
         
-    var parentId = target.Function.Id;
-    var methods = target.Loader.Options.TargetApplication.Functions
+    var parentId = context.Function.Id;
+    var methods = context.Application.Functions
         >> where(f => 
             f
                 .Meta[PARENTFUNCTIONKEY]
