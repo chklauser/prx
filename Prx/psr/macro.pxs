@@ -19,15 +19,9 @@ function establish_macro_context\impl as establish_macro_context(context) [is co
         context.ReportMessage(Prexonite::Compiler::ParseMessageSeverity.Error, "Cannot establish macro context outside of macro", context.Invocation);
         return;
     }
-    
-    println("Establish macro context in function $(context.Function):");
-    context.OuterVariables >> map(?.ToUpperInvariant) >> each(println("    - ",?));    
-    
+
     if(not (context.OuterVariables >> map(?.ToUpperInvariant) >> contains(contextAlias.ToUpperInvariant)))
-    {
-        println("  Require outer variable $contextAlias in ", context.Function);
         context.RequireOuterVariable(contextAlias);
-    }
 }
 
 /* ast\macro - Works like ast from psr\ast.pxs but automatically supplies file, line and column information 
@@ -117,13 +111,15 @@ function macro\report_any(message, severity)
     [\sharedNames {context};]
 {
     var getContext = ast("GetSetSymbol", SI.get, Prexonite::Compiler::MacroAliases.ContextAlias, SI.lref);
-    var parseMessageSeverity_t = ast("ConstantTypeExpression", "Prexonite.Compiler.ParseMessageSeverity");
+    var parseMessageSeverity_t = ast("ConstantTypeExpression", "Object(\"Prexonite.Compiler.ParseMessageSeverity\")");
     var getSeverity = ast("GetSetStatic", SI.get, parseMessageSeverity_t, severity);
     var getInvocation = ast("GetSetMemberAccess", SI.get, getContext, "Invocation");
     var reportMessage = ast("GetSetMemberAccess", SI.get, getContext, "ReportMessage");    
     reportMessage.Arguments.Add(getSeverity);
     reportMessage.Arguments.Add(message);
     reportMessage.Arguments.Add(getInvocation);
+    
+    return reportMessage;
 }
 
 macro macro\report_error(message)
