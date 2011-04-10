@@ -70,6 +70,7 @@ function prx\main(args)
 	var verbose = false;
 	var headerOnly = false;
 	var debugging = false;
+    var suppressWarnings = false;
     //supportsTabs is a global variable
 	
 	var scriptArgs = [];
@@ -100,6 +101,8 @@ function prx\main(args)
 		        supportsTabs = false;
 		    else if(current == "-d")    //  -d  Debugging
 		        debugging = true;
+            else if(current == "-nowarn")
+                suppressWarnings = true;
 			else if(current == "-?")    //  -h  Help
 			{
 				displayHelp;
@@ -180,6 +183,26 @@ function prx\main(args)
         green(() => println(exc));
 	}
     
+    //Display information
+    if(debugging and ldr.Infos.Count > 0)
+    {
+        println("Information:");
+        foreach(var info in ldr.Infos)
+            println(info);
+    }
+    
+    //Display warnings
+    if(not suppressWarnings and ldr.Warnings.Count > 0)
+    {
+        yellow(() =>
+            {
+                println("Warnings: (disable with -nowarn)");
+                foreach(var warning in ldr.Warnings)
+                    println(warning);
+            }
+        );
+    }
+    
 	//Compilation errors are not thrown as exceptions but held in 'ldr.Errors'
 	if(ldr.Errors.Count != 0 Or exc is not null) 
 	{
@@ -232,6 +255,18 @@ runInteractive:
     	}
     	else
     	{
+            var mainId =
+                if(app.Meta.ContainsKey(Prexonite::Application.EntryKey))
+                    app.Meta[Prexonite::Application.EntryKey].Text
+                else
+                    Prexonite::Application.DefaultEntryFunction;
+                    
+            if(not app.Functions.Contains(mainId))
+            {
+                red(() => println("Cannot find entry function named `$mainId`."));
+                return;
+            }
+            
         	//Run the application (run it's entry function).
         	// the script arguments have to be converted to a Prexonite.PValue[] first.
 	        app.Run(engine, scriptArgs~Object<"Prexonite.PValue[]">);
@@ -268,10 +303,7 @@ function displayHelp does print(
 	"-h extracts declarations (only with -c).\n"+
 	"-b disables tab completion (tab completion only supported on windows).\n"+
 	"-a forwards the rest of the arguments to the executing script.\n" + 
-	"-d enables debugging mode");
+	"-d enables debugging mode\n" + 
+    "-nowarn disables all warnings");
  
- {  CompileToCil;
-    //Prexonite::Compiler::Cil::Compiler.StoreDebugImplementation;
-    //var app = asm(ldr.app);
-    //app.StoreInFile("prx.c.pxs");
-  } 
+{  CompileToCil;  } 

@@ -63,14 +63,18 @@ ref green =
     else
         f => f.()
     ;
+ref yellow =
+    if(supportsColors)
+        f => runInDifferentColor(f, ::ConsoleColor.Yellow)
+    else
+        f => f.()
+    ;
 
 var isWindowsNT = System::Environment.OSVersion.Platform~Int == System::PlatformID.Win32NT~Int; 
   
 function __consoleAvailable = asm(ldr.eng).Commands.Contains("__console");
   
 var supportsTabs = (supportsTabs ?? (isWindowsNT && __consoleAvailable))~Bool;
-
-
     
 function readline = 
     if(supportsTabs)
