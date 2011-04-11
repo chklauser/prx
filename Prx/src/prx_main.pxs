@@ -26,7 +26,7 @@ build does require("prx_interactive.pxs", "prx_lib.pxs");
 Name prx\main;
 Description "prx main logic.";
 Author SealedSun;
-Version "v.1.2.1.0";
+Version "1.2.2.0";
 
 Entry prx\main;
 
@@ -41,7 +41,7 @@ var sourceFiles;
 
 declare var app, ldr;
 	
-function printHead does println("** PREXONITE $(asm(ldr.app).Meta["Version"].Text) **");
+function printHead does println("** PREXONITE v$(asm(ldr.app).Meta["Version"].Text) **");
 
 var originalArgs;
 
