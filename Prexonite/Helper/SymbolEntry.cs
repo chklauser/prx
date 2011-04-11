@@ -30,6 +30,11 @@ namespace Prexonite.Compiler
     {
         private SymbolInterpretations _interpretation;
         private string _id;
+        /// <summary>
+        /// Optional integer parameter for this symbol.
+        /// 
+        /// Label - Address of jump target (if known)
+        /// </summary>
         private int? _argument;
 
         public SymbolEntry(SymbolInterpretations interpretation)
@@ -68,6 +73,9 @@ namespace Prexonite.Compiler
             get { return _id; }
         }
 
+        /// <summary>
+        /// An optional intger parameter for this symbol. Use determined by symbol interpretation.
+        /// </summary>
         public int? Argument
         {
             get { return _argument; }
@@ -129,17 +137,56 @@ namespace Prexonite.Compiler
         }
     }
 
+    /// <summary>
+    /// Determines the meaning of a symbol.
+    /// </summary>
     public enum SymbolInterpretations
     {
+        /// <summary>
+        /// Due to an error, the interpretation of this symbol could not be determined.
+        /// </summary>
         Undefined = -1,
+        /// <summary>
+        /// Symbol has no interpretation/meaning.
+        /// </summary>
         None = 0,
+        /// <summary>
+        /// Symbol is a function, to be looked up in <see cref="Application.Functions"/>.
+        /// </summary>
         Function,
+        /// <summary>
+        /// Symbol is a command, to be looked up in <see cref="Engine.Commands"/>.
+        /// </summary>
         Command,
+        /// <summary>
+        /// Symbol is a known type, to be looked up in <see cref="Engine.PTypeRegistry"/>.
+        /// </summary>
         KnownType,
+        /// <summary>
+        /// Symbol is a jump label, resolved during code emission.
+        /// </summary>
         JumpLabel,
+        /// <summary>
+        /// Symbol is a local variable.
+        /// </summary>
         LocalObjectVariable,
+        /// <summary>
+        /// Symbol is a local variable, will be dereferenced when mentioned. See <see cref="IIndirectCall"/>.
+        /// </summary>
         LocalReferenceVariable,
+        /// <summary>
+        /// Symbol is a global variable, to be looked up in <see cref="Application.Variables"/>.
+        /// </summary>
         GlobalObjectVariable,
-        GlobalReferenceVariable
+        /// <summary>
+        /// Symbol is a global variable, to be looked up in <see cref="Application.Variables"/>, 
+        /// will be dereferenced when mentioned. See <see cref="IIndirectCall"/>.
+        /// </summary>
+        GlobalReferenceVariable,
+        /// <summary>
+        /// Symbol is a macro command, to be looked up in <see cref="Loader.MacroCommands"/>. 
+        /// Macro commands need to be applied at compile-time.
+        /// </summary>
+        MacroCommand
     }
 }

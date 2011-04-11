@@ -76,8 +76,10 @@ namespace Prexonite.Compiler
 
             //Build commands
             _initializeBuildCommands();
-        }
 
+            //Macro commands
+            _initializeMacroCommands();
+        }
 
         public void RegisterExistingCommands()
         {
@@ -495,6 +497,27 @@ namespace Prexonite.Compiler
             }
 
             #endregion
+        }
+
+        #endregion
+
+        #region Macro commands
+
+        private readonly MacroCommandTable _macroCommands = new MacroCommandTable();
+
+        /// <summary>
+        /// Table of macro commands supported by this loader. Macro commands are referenced 
+        /// by <see cref="SymbolInterpretations.MacroCommand"/> symbols and applied at compile time.
+        /// </summary>
+        public MacroCommandTable MacroCommands
+        {
+            [DebuggerStepThrough]
+            get { return _macroCommands; }
+        }
+
+        private void _initializeMacroCommands()
+        {
+            
         }
 
         #endregion
