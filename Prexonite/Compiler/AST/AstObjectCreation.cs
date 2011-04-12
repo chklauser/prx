@@ -88,7 +88,7 @@ namespace Prexonite.Compiler.Ast
             for (var i = 0; i < _arguments.Count; i++)
             {
                 var arg = _arguments[i];
-                var oArg = GetOptimizedNode(target, arg);
+                var oArg = _GetOptimizedNode(target, arg);
                 if (ReferenceEquals(oArg, arg))
                     continue;
                 _arguments[i] = oArg;
