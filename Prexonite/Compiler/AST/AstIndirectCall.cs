@@ -197,6 +197,13 @@ namespace Prexonite.Compiler.Ast
             return base.CheckForPlaceholders() || Subject is AstPlaceholder;
         }
 
+        public override string ToString()
+        {
+            return string.Format("{0}: ({1}).{2}",
+                                 Enum.GetName(typeof(PCall), Call).ToLowerInvariant(),
+                                 Subject, ArgumentsToString());
+        }
+
         #endregion
     }
 }

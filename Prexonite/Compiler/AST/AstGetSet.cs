@@ -180,11 +180,19 @@ namespace Prexonite.Compiler.Ast
         {
             var buffer = new StringBuilder();
             buffer.Append("(");
+            var i = 0;
             foreach (IAstExpression expr in Arguments)
+            {
+                i++;
+
                 if (expr != null)
-                    buffer.Append(expr + ", ");
+                    buffer.Append(expr);
                 else
-                    buffer.Append("{null}, ");
+                    buffer.Append("{null}");
+
+                if (i != Arguments.Count)
+                    buffer.Append(", ");
+            }
             return buffer + ")";
         }
 

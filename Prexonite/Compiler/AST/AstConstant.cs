@@ -110,7 +110,13 @@ namespace Prexonite.Compiler.Ast
 
         public override string ToString()
         {
-            return Constant != null ? Constant.ToString() : "-null-";
+            string str;
+            if (Constant != null) 
+                if((str = Constant as string) != null)
+                    return String.Concat("\"",StringPType.Escape(str),"\"");
+                else
+                    return Constant.ToString();
+            else return "-null-";
         }
     }
 }

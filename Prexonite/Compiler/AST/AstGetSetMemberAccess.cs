@@ -130,6 +130,13 @@ namespace Prexonite.Compiler.Ast
             return copy;
         }
 
+        public override string ToString()
+        {
+            return string.Format("{0}: ({1}).{2}{3}",
+                                 Enum.GetName(typeof (PCall), Call).ToLowerInvariant(),
+                                 Subject, Id, ArgumentsToString());
+        }
+
         #region Implementation of IAstPartiallyApplicable
 
         public void DoEmitPartialApplicationCode(CompilerTarget target)
