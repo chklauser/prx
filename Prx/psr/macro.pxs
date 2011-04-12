@@ -281,6 +281,7 @@ macro tempfree(getContext, tempId)
     
     var c = ast("GetSetMemberAccess",SI.get,getContext,"FreeTemporaryVariable");
     c.Arguments.Add(tempId);
+    
     return c;
 }
 
@@ -376,31 +377,119 @@ macro macro\reference(prototype)
     if(context.IsJustEffect)
         return;
     
-    var id = macro\_extract_id(prototype);
-    
+    var id = macro\_extract_id(prototype);    
     var ldrfunc = new Prexonite::Instruction(Prexonite::OpCode.ldr_func,id);
+    
+    context.SuppressDefaultExpression = true;
     return ast("AsmInstruction",ldrfunc);
-}
-
-//ast helper
-macro ast\invoke_macro()
-{
-    if(is_in_macro)
-        establish_macro_context;
-
-    var c = ast("MacroInvocation",macro\reference(ast\macro).Id);
-    c.Arguments.Add(ast("Constant","MacroInvocation"));
-    c.Arguments.AddRange(var args);
-    return c;
 }
 
 macro macro\id(prototype)
 {
     if(context.IsJustEffect)
         return;
+    return ast("Constant",macro\_extract_id(prototype));
+}
+
+macro macro\interpretation(prototype)
+{
+    if(context.IsJustEffect)
+        return;
+    
+    var getSI = ast("GetSetSymbol",SI.get,"SI",SI.gvar);
+    
+    var siMem;
+    if(ast_is_MacroInvocation(prototype))
+    {
+        var i = prototype.Interpretation;
+        if(SI.m.is_func(i))
+            siMem = "func";
+        else if(SI.m.is_cmd(i))
+            siMem = "cmd";
+        else {
+            macro\report_error("Unkown macro interpretation $i. Assuming function");
+            siMem = "func";
+        }
         
-    var id = macro\_extract_id(prototype);
-    return ast("Constant",context.Application.Functions[id].Id);
+        var getSI\m = ast("GetSetMemberAccess",SI.get,getSI,"m");
+        var getSI\m\i = ast("GetSetMemberAccess",SI.get,getSI\m,siMem);
+            
+        return getSI\m\i;
+    }
+    else if(ast_is_GetSetSymbol(prototype))
+    {
+        var i = prototype.Interpretation;
+        if(SI.is_lvar(i))
+            siMem = "lvar";
+        else if(SI.is_lref(i))
+            siMem = "lref";
+        else if(SI.is_gvar(i))
+            siMem = "gvar";
+        else if(SI.is_gref(i))
+            siMem = "gref";
+        else if(SI.is_func(i))
+            siMem = "func";
+        else if(SI.is_cmd(i))
+            siMem = "cmd";
+        else if(SI.is_mcmd(i))
+            siMem = "mcmd";
+        else {
+            macro\report_error("Unkown symbol interpretation $i. Assuming function");
+            siMem = "func";
+        }
+        
+        var getSI\i = ast("GetSetMemberAccess",SI.get,getSI,siMem);
+        
+        return getSI\i;
+    }
+}
+
+//ast helper
+macro ast\invoke_macro(macroId, symbolInterpretation)
+{
+    if(context.IsJustEffect)
+        return;
+        
+    if(is_in_macro)
+        establish_macro_context;
+
+    var c = ast("MacroInvocation",macro\id(ast\macro), SI.m.func);
+    c.Arguments.Add(ast("Constant","MacroInvocation"));
+    
+    //try parse ast\invoke_macro(macro\id($PROTOTYPE))
+    if(symbolInterpretation is null)
+    {   if(ast_is_MacroInvocation(macroId) 
+            and macroId.MacroId == macro\id(macro\id)
+            and macroId.Arguments.Count > 0)
+        {
+            var i = macroId.Arguments[0].Interpretation;
+            var siMem;
+            if(SI.m.is_func(i))
+                siMem = "func";
+            else if(SI.m.is_cmd(i))
+                siMem = "cmd";
+            else {
+                macro\report_error("Unkown macro interpretation $i. Assuming function");
+                siMem = "func";
+            }
+            
+            var getSI = ast("GetSetSymbol",SI.get,"SI",SI.gvar);
+            var getSI\m = ast("GetSetMemberAccess",SI.get,getSI,"m");
+            var getSI\m\i = ast("GetSetMemberAccess",SI.get,getSI\m,siMem);
+            if((var args).Count > 1)
+                args[1] = getSI\m\i;
+            else
+                args[] = getSI\m\i;
+        }
+        else 
+        {
+            macro\report_warning("No symbol interpretation provided for construction of ast\\invoke_macro node in function $(context.Function).");
+        }
+    }
+    
+    c.Arguments.AddRange(var args);    
+        
+    return c;
 }
 
 macro ast\symbol(symbolInterpretation)
@@ -423,6 +512,8 @@ macro ast\symbol\mk_macro(symbolInterpretation)
     var varC = tempalloc;
     var mc = ast\invoke_macro(macro\id(ast\invoke_macro));
     mc.Arguments.Add(ast("Constant",macro\id(ast\symbol)));
+    var prototype = ast\invoke_macro(macro\id(ast\symbol));
+    mc.Arguments.Add(asm(newclo macro\interpretation).(prototype));
     var setC = ast("GetSetSymbol",SI.set, varC, SI.lvar);
     setC.Arguments.Add(mc);
     block.Add(setC);
@@ -452,6 +543,7 @@ macro ast\symbol\mk_macro(symbolInterpretation)
     block.Expression = getC.GetCopy();   
     
     tempfree(varC);
+    
     return block;
 }
 

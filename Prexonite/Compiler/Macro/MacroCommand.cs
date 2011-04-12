@@ -31,12 +31,11 @@ namespace Prexonite.Compiler.Macro
         /// Implementation of the application of this macro.
         /// </summary>
         /// <param name="context">The macro context for this macro expansion.</param>
-        /// <param name="args">The argument nodes to this macro expansion.</param>
-        protected abstract void DoExpand(MacroContext context, IAstExpression[] args);
+        protected abstract void DoExpand(MacroContext context);
 
-        public void Expand(MacroContext context, IAstExpression[] args)
+        public void Expand(MacroContext context)
         {
-            DoExpand(context, args);
+            DoExpand(context);
         }
     }
 }

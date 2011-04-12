@@ -3119,6 +3119,28 @@ function main(xs)
         }
 
         [Test]
+        public void MacroTemporaryAllocateFree()
+        {
+            Compile(@"
+macro acquire_free()
+{
+    var v = context.AllocateTemporaryVariable;
+    var node = new Prexonite::Compiler::Ast::AstConstant(""none"",-1,-1,v);
+    context.FreeTemporaryVariable(v);
+    return node;
+}
+
+function main = acquire_free;
+");
+
+            var mainFunc = target.Functions["main"];
+
+            Assert.AreEqual(1,mainFunc.Variables.Count);
+            var v = mainFunc.Variables.First();
+            Expect(v);
+        }
+
+        [Test]
         public void CaptureUnmentionedMacroVariable()
         {
             Compile(@"

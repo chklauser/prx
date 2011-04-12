@@ -411,7 +411,7 @@ namespace Prexonite.Compiler
         }
 
         [DebuggerStepThrough]
-        public bool isKnownMacro(SymbolEntry symbol)
+        public bool isKnownMacroFunction(SymbolEntry symbol)
         {
             if (symbol.Interpretation != SymbolInterpretations.Function)
                 return false;

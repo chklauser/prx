@@ -322,9 +322,9 @@ Function<out AstGetSet function>
                                         if(isOuterVariable(id))
                                             target.RequireOuterVariable(id);
                                         SymbolEntry sym = target.Symbols[id];
-                                        if(isKnownMacro(sym)) 
+                                        if(isKnownMacroFunction(sym) || sym.Interpretation == SymbolInterpretations.MacroCommand) 
                                         {
-                                            function = new AstMacroInvocation(this, sym.Id);
+                                            function = new AstMacroInvocation(this, sym.Id, sym.Interpretation);
                                         } 
                                         else
                                         {

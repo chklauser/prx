@@ -37,7 +37,7 @@ function repeatable(xs)
 macro pattern\construct(desc)
 {
 	var targets = var args >> skip(1) >> map(a => {optimize\ref(context,->a); return a;}) >> all;
-	var dynamicCall = ast\invoke_macro(desc.construct);
+	var dynamicCall = ast\invoke_macro(desc.construct, SI.m.func);
 	dynamicCall.Arguments.AddRange(targets); 
     return dynamicCall;
 }
@@ -82,7 +82,7 @@ macro pattern\deconstruct(desc)
         //var tempVListLit = ast("ListLiteral");
         //tempVListLit.Elements.Add(ast\const(tempV));
         //var dynamicMacroCall = ast\macro(call\macro(ast\const(binding.getValue~String), tempVListLit));
-        var dynamicMacroCall = ast\invoke_macro(binding.getValue);
+        var dynamicMacroCall = ast\invoke_macro(binding.getValue, SI.m.func);
         dynamicMacroCall.Arguments.Add(ast\const(tempV));
             
     	var setTarget = bindingTarget.GetCopy();

@@ -4,6 +4,7 @@ using System.Diagnostics;
 using System.Linq;
 using Prexonite.Compiler.Ast;
 using Prexonite.Helper;
+using Prexonite.Types;
 
 namespace Prexonite.Compiler.Macro
 {
@@ -96,6 +97,8 @@ namespace Prexonite.Compiler.Macro
         public string AllocateTemporaryVariable()
         {
             var temp = _target.RequestTemporaryVariable();
+            Debug.Assert(!_allocationList.Contains(temp));
+            Debug.Assert(!_releaseList.Contains(temp));
             _allocationList.Add(temp);
             return temp;
         }
@@ -106,8 +109,11 @@ namespace Prexonite.Compiler.Macro
         /// <param name="temporaryVariable">The temporary variable to be freed.</param>
         public void FreeTemporaryVariable(string temporaryVariable)
         {
-            if(_releaseList.Contains(temporaryVariable))
-                throw new PrexoniteException("Cannot release temporary variable " + temporaryVariable + " twice!");
+            if (_releaseList.Contains(temporaryVariable))
+            {
+                throw new PrexoniteException("Cannot release temporary variable " +
+                                             temporaryVariable + " twice!");
+            }
             _releaseList.Add(temporaryVariable);
         }
 
@@ -130,93 +136,355 @@ namespace Prexonite.Compiler.Macro
             }
         }
 
+        private interface IMacroExpander
+        {
+            void Initialize(CompilerTarget target, AstMacroInvocation invocation, bool justEffect);
+            string HumanId { get; }
+            void Expand(CompilerTarget target, MacroContext context);
+        }
 
-        public void ExpandMacro(AstMacroInvocation invocation, bool justEffect)
+        #region Command Expander
+
+        private class MacroCommandExpander : IMacroExpander
+        {
+            private MacroCommand _macroCommand;
+
+            public void Initialize(CompilerTarget target, AstMacroInvocation invocation, bool justEffect)
+            {
+                _macroCommand = null;
+
+                if (target.Loader.MacroCommands.Contains(invocation.MacroId))
+                    _macroCommand = target.Loader.MacroCommands[invocation.MacroId];
+                else
+                {
+                    target.Loader.ReportMessage(new ParseMessage(ParseMessageSeverity.Error,
+                                                                 string.Format("Cannot find macro command named `{0}`", invocation.MacroId),
+                                                                 invocation));
+                    HumanId = "cannot_find_macro_command";
+                    return;
+                }
+
+                HumanId = _macroCommand.Id;
+            }
+
+            public string HumanId { get; private set; }
+
+            public void Expand(CompilerTarget target, MacroContext context)
+            {
+                if(_macroCommand == null)
+                    return;
+
+                _macroCommand.Expand(context);
+            }
+        }
+
+        #endregion
+
+        #region Function Expander
+
+        private class MacroFunctionExpander : IMacroExpander
+        {
+            public void Initialize(CompilerTarget target, AstMacroInvocation invocation, bool justEffect)
+            {
+                _macroFunction = null;
+
+                PFunction macroFunc;
+                if (!target.Loader.Options.TargetApplication.Functions.TryGetValue(invocation.MacroId, out macroFunc))
+                {
+                    target.Loader.ReportMessage(
+                        new ParseMessage(
+                            ParseMessageSeverity.Error,
+                            String.Format(
+                                "The macro function {0} was called from function {1} but is not available at compile time.",
+                                invocation.MacroId,
+                                target.Function.Id), invocation));
+                    HumanId = "could_not_resolve_macro_function";
+                    return;
+                }
+                _macroFunction = macroFunc;
+
+                MetaEntry logicalIdEntry;
+                if (macroFunc.Meta.TryGetValue(PFunction.LogicalIdKey, out logicalIdEntry))
+                    HumanId = logicalIdEntry.Text;
+                else
+                    HumanId = invocation.MacroId;
+            }
+
+            public string HumanId { get; private set; }
+            private PFunction _macroFunction;
+
+            public void Expand(CompilerTarget target, MacroContext context)
+            {
+                if (_macroFunction == null)
+                    return;
+
+                var astRaw = _invokeMacroFunction(target, context);
+
+                //Optimize
+                AstNode ast;
+                if (astRaw != null)
+                    ast = astRaw.Value as AstNode;
+                else
+                    ast = null;
+
+                var expr = ast as IAstExpression;
+
+                /*Merge with context expression block
+                 *  cs = Statements from context
+                 *  ce = Expression from context
+                 *  fs = Statements from function return value
+                 *  fe = Expression from function return value
+                 * Rules
+                 *  general:
+                 *      {cs;ce;fs} = fe
+                 *  no-fe:
+                 *      {cs;tmp = ce;fs} = tmp
+                 *  no-f:
+                 *      {cs} = ce
+                 *  no-c:
+                 *      {fs} = fe
+                 */
+                var contextBlock = context.Block;
+                var macroBlockExpr = ast as AstBlockExpression;
+                var macroBlock = ast as AstBlock;
+
+                // ReSharper disable JoinDeclarationAndInitializer
+                IAstExpression ce, fe;
+                IEnumerable<AstNode> fs;
+                // ReSharper restore JoinDeclarationAndInitializer
+                //determine ce
+                ce = contextBlock.Expression;
+
+                //determine fe
+                if (macroBlockExpr != null)
+                    fe = macroBlockExpr.Expression;
+                else if (expr != null)
+                {
+                    fe = expr;
+
+                    //cannot be statement at the same time, set ast to null.
+                    ast = null; 
+                }
+                else
+                    fe = null;
+
+                //determine fs
+                if (macroBlock != null)
+                    fs = macroBlock.Count > 0 ? macroBlock.Statements : null;
+                else if (ast != null)
+                    fs = new[] {ast};
+                else
+                    fs = null;
+
+                _implementMergeRules(context, ce, fs, fe);
+            }
+
+            private void _implementMergeRules(MacroContext context, IAstExpression ce, IEnumerable<AstNode> fs, IAstExpression fe)
+            {
+                var contextBlock = context.Block;
+                //cs  is already stored in contextBlock, 
+                //  the rules position cs always at the beginning, thus no need to handle cs.
+
+                //At this point
+                //  {   ce   }  iff (ce ∧ fs ∧ fe)
+                //  {tmp = ce}  iff (ce ∧ fs ∧ ¬fe)
+                //  {        }  otherwise
+                if (ce != null && fs != null)
+                {
+                    if (fe != null)
+                    {
+                        contextBlock.Add((AstNode) ce);
+                    }
+                    else
+                    {
+                        //Might at a later point become a warning
+                        context.ReportMessage(ParseMessageSeverity.Info,
+                                              string.Format(
+                                                  "Macro {0} uses temporary variable to ensure that expression from `context.Block` is evaluated before statements from macro return value.",
+                                                  HumanId),
+                                              context.Invocation);
+
+                        var tmpV = context.AllocateTemporaryVariable();
+
+                        //Generate assignment to temporary variable
+                        var assignTmpV = new AstGetSetSymbol(context.Invocation.File,
+                                                             context.Invocation.Line,
+                                                             context.Invocation.Column,
+                                                             PCall.Set,
+                                                             tmpV,
+                                                             SymbolInterpretations.
+                                                                 LocalObjectVariable);
+                        assignTmpV.Arguments.Add(ce);
+                        contextBlock.Add(assignTmpV);
+
+                        //Generate lookup of computed value
+                        ce = new AstGetSetSymbol(context.Invocation.File,
+                                                 context.Invocation.Line,
+                                                 context.Invocation.Column, PCall.Get,
+                                                 tmpV,
+                                                 SymbolInterpretations.LocalObjectVariable);
+                    }
+                }
+
+                //At this point
+                //  {fs}    iff (fs)
+                //  {  }    otherwise
+
+                if (fs != null)
+                {
+                    foreach (var stmt in fs)
+                        contextBlock.Add(stmt);
+                }
+
+                //Finally determine expression
+                //  = fe    iff (ce ∧ fe)
+                //  = ce    iff (ce ∧ ¬fe ∧ ¬fs)
+                //  = tmp   iff (ce ∧ ¬fe ∧ fs)
+                //  = ⊥     otherwise
+                if (fe != null)
+                    contextBlock.Expression = fe;
+                else if (ce != null)
+                    contextBlock.Expression = ce; //if tmp is involved, it has replaced ce
+                else
+                    contextBlock.Expression = null; //macro session will cover this case
+            }
+
+            private PValue _invokeMacroFunction(CompilerTarget target, MacroContext context)
+            {
+                var env = new SymbolTable<PVariable>(1);
+                env.Add(MacroAliases.ContextAlias,
+                        CompilerTarget.CreateReadonlyVariable(target.Loader.CreateNativePValue(context)));
+
+                var sharedVariables =
+                    _macroFunction.Meta[PFunction.SharedNamesKey].List.Select(entry => env[entry.Text]).
+                        ToArray();
+                var macro = new Closure(_macroFunction, sharedVariables);
+
+                //Execute macro (argument nodes of the invocation node are passed as arguments to the macro)
+                var macroInvocation = context.Invocation;
+                var arguments = macroInvocation.Arguments.Select(target.Loader.CreateNativePValue).ToArray();
+                var parentApplication = _macroFunction.ParentApplication;
+                PValue astRaw;
+                try
+                {
+                    parentApplication._SuppressInitialization = true;
+                    astRaw = macro.IndirectCall(target.Loader, arguments);
+                }
+                finally
+                {
+                    parentApplication._SuppressInitialization = false;
+                }
+                return astRaw;
+            }
+        }
+
+        #endregion
+
+        public AstNode ExpandMacro(AstMacroInvocation invocation, bool justEffect)
         {
             var target = Target;
             var context = new MacroContext(this, invocation, justEffect);
 
-            if (_invocations.Contains(invocation))
-                throw new PrexoniteException(
-                    "AstMacroInvocation.EmitCode is not reentrant. Use GetCopy() to operate on a copy of this macro invocation.");
-            _invocations.Add(invocation);
+            //Delegate actual expansion to approriate expander
+            var expander = _getExpander(invocation, target);
 
-            PFunction macroFunc;
-            if (!target.Loader.Options.TargetApplication.Functions.TryGetValue(invocation.MacroId, out macroFunc))
-                throw new PrexoniteException(
-                    String.Format(
-                        "The macro function {0} was called from function {1} but is not available at compile time.", invocation.MacroId,
-                        target.Function.Id));
-
-            string id;
-            MetaEntry logicalIdEntry;
-            if (macroFunc.Meta.TryGetValue(PFunction.LogicalIdKey, out logicalIdEntry))
-                id = logicalIdEntry.Text;
-            else
-                id = invocation.MacroId;
-
-            //check if this macro is a partial application (illegal)
-            if (invocation.Arguments.Any(AstPartiallyApplicable.IsPlaceholder))
+            if(expander != null)
             {
-                target.Loader.ReportSemanticError(invocation.Line, invocation.Column, "The macro " + id + " cannot be applied partially.");
-                var ind =  new AstIndirectCall(invocation.File, invocation.Line, invocation.Column, new AstNull(invocation.File, invocation.Line, invocation.Column));
-                if (justEffect)
-                    ind.EmitEffectCode(target);
-                else
-                    ind.EmitCode(target);
-                return;
+                expander.Initialize(target, invocation, justEffect);
+
+                //Macro invocations need to be unique within a session
+                if (_invocations.Contains(invocation))
+                {
+                    target.Loader.ReportMessage(
+                        new ParseMessage(ParseMessageSeverity.Error,
+                                         string.Format(
+                                             "AstMacroInvocation.EmitCode is not reentrant. The invocation node for the macro {0} has been expanded already. Use GetCopy() to operate on a copy of this macro invocation.",
+                                             expander.HumanId),
+                                         invocation));
+                    return CreateNeutralExpression(invocation);
+                }
+                _invocations.Add(invocation);
+
+                //check if this macro is a partial application (illegal)
+                if (invocation.Arguments.Any(AstPartiallyApplicable.IsPlaceholder))
+                {
+                    target.Loader.ReportSemanticError(invocation.Line, invocation.Column, "The macro " + expander.HumanId + " cannot be applied partially.");
+                    var ind = new AstIndirectCall(invocation.File, invocation.Line, invocation.Column, new AstNull(invocation.File, invocation.Line, invocation.Column));
+                    if (justEffect)
+                        ind.EmitEffectCode(target);
+                    else
+                        ind.EmitCode(target);
+                    return CreateNeutralExpression(invocation);
+                }
+
+                //Actual macro expansion takes place here
+                try
+                {
+                    expander.Expand(target, context);
+                }
+                catch(Exception e)
+                {
+#if DEBUG 
+                    throw;
+#else
+                    context.ReportMessage(ParseMessageSeverity.Error,
+                                          string.Format(
+                                              "Exception during expansion of macro {0} in function {1}: {2}",
+                                              expander.HumanId, context.Function.LogicalId,
+                                              e.Message), invocation);
+                    context.Block.Clear();
+                    context.Block.Expression = CreateNeutralExpression(invocation);
+#endif
+                }
             }
 
-            var astRaw = _invokeMacroFunction(context, macroFunc, invocation.Arguments);
+            //Sanitize output
+            var ast = context.Block;
 
-            //Optimize and then emit returned code.
-            AstNode ast;
-            if (astRaw == null || (ast = astRaw.Value as AstNode) == null)
-            {
-                //If a value was expected, we need to at least make up null, otherwise
-                //  we risk stack corruption.
-                if (!justEffect)
-                    target.Emit(invocation, OpCode.ldc_null);
-                return;
-            }
+            //ensure that there is at least null being pushed onto the stack))
+            if (!justEffect && ast.Expression == null && !context.SuppressDefaultExpression)
+                ast.Expression = CreateNeutralExpression(invocation);
 
-            var expr = ast as IAstExpression;
-            if (expr != null)
-            {
-                AstNode._OptimizeNode(target, ref expr);
-                ast = (AstNode) expr;
-            }
+            var node = AstNode._GetOptimizedNode(Target, ast);
 
-            var effect = ast as IAstEffect;
-            if (effect != null && justEffect)
-                effect.EmitEffectCode(target);
-            else
-                ast.EmitCode(target);
+            return (AstNode) node;
         }
 
-        private PValue _invokeMacroFunction(MacroContext context, PFunction macroFunc, IEnumerable<IAstExpression> argumentNodes)
+        public AstGetSet CreateNeutralExpression(AstMacroInvocation invocation)
         {
-            var env = new SymbolTable<PVariable>(1);
-            env.Add(MacroAliases.ContextAlias,
-                    CompilerTarget.CreateReadonlyVariable(Target.Loader.CreateNativePValue(context)));
+            var nullLiteral = new AstNull(invocation.File, invocation.Line, invocation.Column);
+            var call = new AstIndirectCall(invocation.File, invocation.Line, invocation.Column,
+                                           invocation.Call, nullLiteral);
+            if (invocation.Call == PCall.Set)
+                call.Arguments.Add(new AstNull(invocation.File, invocation.Line, invocation.Column));
 
-            var sharedVariables =
-                macroFunc.Meta[PFunction.SharedNamesKey].List.Select(entry => env[entry.Text]).
-                    ToArray();
-            var macro = new Closure(macroFunc, sharedVariables);
+            return call;
+        }
 
-            //Execute macro (argument nodes of the invocation node are passed as arguments to the macro)
-            var arguments = argumentNodes.Select(Target.Loader.CreateNativePValue).ToArray();
-            var parentApplication = macroFunc.ParentApplication;
-            try
+        private IMacroExpander _getExpander(AstMacroInvocation invocation, CompilerTarget target)
+        {
+            IMacroExpander expander = null;
+            switch (invocation.Interpretation)
             {
-                parentApplication._SuppressInitialization = true;
-                return macro.IndirectCall(Target.Loader, arguments);
+                case SymbolInterpretations.Function:
+                    expander = new MacroFunctionExpander();
+                    break;
+                case SymbolInterpretations.MacroCommand:
+                    expander = new MacroCommandExpander();
+                    break;
+                default:
+                    target.Loader.ReportMessage(
+                        new ParseMessage(ParseMessageSeverity.Error,
+                                         string.Format(
+                                             "Cannot apply {0} as a macro at compile time.",
+                                             Enum.GetName(
+                                                 typeof (
+                                                     SymbolInterpretations),
+                                                 invocation.Interpretation)),
+                                         invocation));
+                    break;
             }
-            finally
-            {
-                parentApplication._SuppressInitialization = false;
-            }
+            return expander;
         }
     }
 }

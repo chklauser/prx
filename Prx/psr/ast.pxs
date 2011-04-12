@@ -72,7 +72,8 @@ function create_SI [is compiler;]
     SI.\("gvar") = ::SymbolInterpretations.GlobalObjectVariable;
     SI.\("gref") = ::SymbolInterpretations.GlobalReferenceVariable;
     SI.\("func") = ::SymbolInterpretations.Function;
-    SI.\("cmd") = ::SymbolInterpretations.Command;
+    SI.\("cmd") =  ::SymbolInterpretations.Command;
+    SI.\("mcmd") = ::SymbolInterpretations.MacroCommand;
     SI.\("get") = Prexonite::Types::PCall.Get;
     SI.\("set") = Prexonite::Types::PCall.Set;
 	SI.\("ret\\exit") = Prexonite::Compiler::Ast::ReturnVariant.Exit;
@@ -118,6 +119,14 @@ function create_SI [is compiler;]
             this.gref
         else
             throw "$s cannot be made reference.";
+            
+    //Macro specific
+    var m = new Structure;
+    m.\("func") = ::SymbolInterpretations.Function;
+    m.\("cmd")  = ::SymbolInterpretations.MacroCommand;
+    m.\\("is_func") = (this, s) => s~Int == this.func~Int;
+    m.\\("is_cmd") = (this, s) => s~Int == this.cmd~Int;
+    SI.\("m") = m;
 }
 build does create_SI;
    
