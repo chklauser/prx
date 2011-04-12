@@ -16,6 +16,7 @@ using NUnit.Framework;
 using Prexonite;
 using Prexonite.Commands;
 using Prexonite.Compiler;
+using Prexonite.Compiler.Ast;
 using Prexonite.Compiler.Cil;
 using Prexonite.Types;
 
@@ -4141,6 +4142,84 @@ function main(x,x')
             Expect("A 7000 1000:5408.9","A",1000);
         }
 
+        
+
+        [Test]
+        public void ObjectCreationOptimizeReorder()
+        {
+            engine.RegisterAssembly(typeof(StaticClassMock).Assembly);
+            Compile(@"
+function main()
+{
+    var x = ""xXx"";
+    var obj = new Prx::Tests::ConstructEcho(-1,x);
+    println(obj);
+    return obj.ToString;
+}
+");
+
+            Expect("-1-xXx");
+        }
+
+        [Test]
+        public void DuplicatingJustEffectBlockExpression()
+        {
+            var ldr = Compile(@"
+var s;
+function main()[is volatile;]
+{
+    s = ""BEGIN--"";
+}
+");
+            var ct = ldr.FunctionTargets["main"];
+            ct.Function.Code.RemoveAt(ct.Function.Code.Count-1);
+            var block = new AstBlockExpression("file", -1, -2);
+
+            var assignStmt = new AstGetSetSymbol("file", -1, -2, PCall.Set,
+                                                                       "s",
+                                                                       SymbolInterpretations.
+                                                                           GlobalObjectVariable);
+            assignStmt.Arguments.Add(new AstConstant("file",-1,-2,"stmt."));
+            var incStmt = new AstModifyingAssignment("file", -1, -2,
+                                                                            BinaryOperator.Addition,
+                                                                            assignStmt,
+                                                                            SymbolInterpretations.
+                                                                                Command,
+                                                                            Prexonite.Commands.Core.
+                                                                                Operators.Addition.
+                                                                                DefaultAlias);
+
+            var assignExpr = new AstGetSetSymbol("file", -1, -2, PCall.Set,
+                                                                       "s",
+                                                                       SymbolInterpretations.
+                                                                           GlobalObjectVariable);
+            assignExpr.Arguments.Add(new AstConstant("file", -1, -2, "expr."));
+            var incExpr = new AstModifyingAssignment("file", -1, -2,
+                                                                            BinaryOperator.Addition,
+                                                                            assignExpr,
+                                                                            SymbolInterpretations.
+                                                                                Command,
+                                                                            Prexonite.Commands.Core.
+                                                                                Operators.Addition.
+                                                                                DefaultAlias);
+
+            block.Statements.Add(incStmt);
+            block.Expression = incExpr;
+
+            var effect = block as IAstEffect;
+            Assert.IsNotNull(effect);
+            effect.EmitEffectCode(ct);
+
+            var sourcePosition = new SourcePosition("file", -1, -2);
+            ct.EmitLoadGlobal(sourcePosition, "s");
+            ct.Emit(sourcePosition, OpCode.ret_value);
+
+            if (CompileToCil)
+                Prexonite.Compiler.Cil.Compiler.Compile(ldr, target, StaticLinking);
+
+            Expect("BEGIN--stmt.expr.");
+        }
+
         #region Helper
 
         #endregion
@@ -4152,5 +4231,22 @@ namespace Prx.Tests
     public static class StaticClassMock
     {
         public static string SomeProperty { get; set; }
+    }
+
+    public class ConstructEcho
+    {
+        public int Index { get; set; }
+        public string X { get; set; }
+
+        public ConstructEcho(int index, string x)
+        {
+            Index = index;
+            X = x;
+        }
+
+        public override string ToString()
+        {
+            return string.Format("{0}-{1}", Index, X);
+        }
     }
 }
