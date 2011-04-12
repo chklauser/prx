@@ -9,3 +9,4 @@ Prexonite/Compiler/Scanner.cs
 Prexonite/Parser.cs
 Prexonite/Scanner.cs
 *.csproj.user
+*.*.rej

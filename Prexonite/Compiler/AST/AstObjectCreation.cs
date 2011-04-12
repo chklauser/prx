@@ -85,13 +85,13 @@ namespace Prexonite.Compiler.Ast
             _typeExpr = (IAstType) _GetOptimizedNode(target, _typeExpr);
 
             //Optimize arguments
-            foreach (var arg in _arguments.ToArray())
+            for (var i = 0; i < _arguments.Count; i++)
             {
+                var arg = _arguments[i];
                 var oArg = _GetOptimizedNode(target, arg);
                 if (ReferenceEquals(oArg, arg))
                     continue;
-                _arguments.Remove(arg);
-                _arguments.Add(oArg);
+                _arguments[i] = oArg;
             }
 
             return false;
