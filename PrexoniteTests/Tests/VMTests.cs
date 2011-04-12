@@ -4115,6 +4115,25 @@ function main(x,x')
             Expect("A 7000 1000:5408.9","A",1000);
         }
 
+        
+
+        [Test]
+        public void ObjectCreationOptimizeReorder()
+        {
+            engine.RegisterAssembly(typeof(StaticClassMock).Assembly);
+            Compile(@"
+function main()
+{
+    var x = ""xXx"";
+    var obj = new Prx::Tests::ConstructEcho(-1,x);
+    println(obj);
+    return obj.ToString;
+}
+");
+
+            Expect("-1-xXx");
+        }
+
         #region Helper
 
         #endregion
@@ -4126,5 +4145,22 @@ namespace Prx.Tests
     public static class StaticClassMock
     {
         public static string SomeProperty { get; set; }
+    }
+
+    public class ConstructEcho
+    {
+        public int Index { get; set; }
+        public string X { get; set; }
+
+        public ConstructEcho(int index, string x)
+        {
+            Index = index;
+            X = x;
+        }
+
+        public override string ToString()
+        {
+            return string.Format("{0}-{1}", Index, X);
+        }
     }
 }

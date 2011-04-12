@@ -8,3 +8,4 @@ _ReSharper.Prexonite/**
 Prexonite/Compiler/Scanner.cs
 Prexonite/Parser.cs
 Prexonite/Scanner.cs
+*.*.orig
