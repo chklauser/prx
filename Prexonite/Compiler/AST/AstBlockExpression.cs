@@ -57,7 +57,7 @@ namespace Prexonite.Compiler.Ast
 
         void IAstEffect.DoEmitEffectCode(CompilerTarget target)
         {
-            EmitCode(target);
+            base.DoEmitCode(target);
             var effect = Expression as IAstEffect;
             if (effect != null)
                 effect.EmitEffectCode(target);
