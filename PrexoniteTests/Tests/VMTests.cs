@@ -4220,6 +4220,81 @@ function main()[is volatile;]
             Expect("BEGIN--stmt.expr.");
         }
 
+        [Test]
+        public void CallSubMacroCommandNested()
+        {
+            Compile(@"
+function main(xs)
+{
+    var zs = [];
+    function f(x) 
+    {
+        if(x mod 2 == 0)
+            continue;
+        if(x > 6)
+            break;
+        return x*3+1;
+    }
+    foreach(var x in xs)
+    {
+        zs[] = call\sub(f(?),[x]);
+    }
+
+    return zs.ToString();
+}
+");
+
+            var xs = new List<PValue> {1,2,3,4,5,6,7,8,9,10,11,12,13,14};
+            Expect("[ 4, 10, 16 ]", (PValue) xs);
+        }
+
+        [Test]
+        public void CallSubMacroCommandTopLevel()
+        {
+            Compile(@"
+var zs = [];
+function main(x1,x2,x3)
+{
+    function f(x) 
+    {
+        if(x mod 2 == 0)
+            continue;
+        if(x > 6)
+            break;
+        return x*3+1;
+    }
+    
+    zs[] = call\sub(f(?),[x1]);
+    zs[] = call\sub(f(?),[x2]);
+    call\sub(f(?),[x3]);
+
+    return zs.ToString();
+}
+");
+            Func<List<PValue>> getZs = () =>
+                {
+                    var pv = target.Variables["zs"].Value.Value as List<PValue>;
+                    return pv ?? new List<PValue>(0);
+                };
+            
+            Expect("[ 4, 10 ]", 1, 3);
+
+            ExpectNull(2,4,8);
+            Assert.AreEqual(0, getZs().Count);
+
+            ExpectNull(1,8,8);
+            var zs = getZs();
+            Assert.AreEqual(1, zs.Count);
+            AssertPValuesAreEqual(4, zs[0]);
+
+            ExpectNull(1,3,8);
+            zs = getZs();
+            Assert.AreEqual(2, zs.Count);
+            AssertPValuesAreEqual(4,zs[0]);
+            AssertPValuesAreEqual(10, zs[1]);
+
+        }
+
         #region Helper
 
         #endregion

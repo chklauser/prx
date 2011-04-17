@@ -400,7 +400,8 @@ namespace Prexonite.Compiler
                 interpretation == SymbolInterpretations.Function ||
                 interpretation == SymbolInterpretations.Command ||
                 interpretation == SymbolInterpretations.LocalReferenceVariable ||
-                interpretation == SymbolInterpretations.GlobalReferenceVariable;
+                interpretation == SymbolInterpretations.GlobalReferenceVariable ||
+                interpretation == SymbolInterpretations.MacroCommand;
         } //context
 
         [DebuggerStepThrough]

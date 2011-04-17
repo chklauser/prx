@@ -290,8 +290,11 @@
     <Compile Include="Compiler\MacroAliases.cs" />
     <Compile Include="Compiler\ILoopBlock.cs" />
     <Compile Include="Compiler\MacroCommandTable.cs" />
+    <Compile Include="Compiler\Macro\Commands\CallSub.cs" />
+    <Compile Include="Compiler\Macro\Commands\CallSubInterpret.cs" />
     <Compile Include="Compiler\Macro\MacroCommand.cs" />
     <Compile Include="Compiler\Macro\MacroContext.cs" />
+    <Compile Include="Compiler\Macro\MacroContextExtensions.cs" />
     <Compile Include="Compiler\Macro\MacroSession.cs" />
     <Compile Include="Helper\ReadOnlyCollectionView.cs" />
     <Compile Include="Helper\ReadOnlyDictionaryView.cs" />
