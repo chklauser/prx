@@ -50,6 +50,7 @@ namespace Prexonite.Commands.Core
         public static PValue RunStatically(StackContext sctx, PValue fpv, PValue[] iargs, bool useIndirectCallAsFallback = false)
         {
             IStackAware f;
+            IMaybeStackAware m;
             CilClosure cilClosure;
             PFunction func = null;
             PVariable[] sharedVars = null;
@@ -75,6 +76,27 @@ namespace Prexonite.Commands.Core
                 sctx.ParentEngine.Process(subCtx);
                 result = subCtx.ReturnValue;
                 returnMode = subCtx.ReturnMode;
+            }
+            else if((m = fpv.Value as IMaybeStackAware) != null)
+            {
+                StackContext subCtx;
+                if(m.TryDefer(sctx, iargs, out subCtx, out result))
+                {
+                    sctx.ParentEngine.Process(subCtx);
+                    result = subCtx.ReturnValue;
+                    returnMode = subCtx.ReturnMode;
+                }
+                else if(useIndirectCallAsFallback)
+                {
+                    returnMode = ReturnMode.Exit;
+                }
+                else
+                {
+                    throw new PrexoniteException(
+                        string.Format(
+                            "Invocation of {0} did not produce a valid return mode. " +
+                            "Only Prexonite functions have a return mode.", fpv.CallToString(sctx)));
+                }
             }
             else if(useIndirectCallAsFallback)
             {

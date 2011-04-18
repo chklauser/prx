@@ -33,6 +33,7 @@ using System.Reflection;
 using System.Text;
 using Prexonite.Commands;
 using Prexonite.Compiler.Ast;
+using Prexonite.Compiler.Macro;
 using Prexonite.Helper;
 using Prexonite.Types;
 using NoDebug = System.Diagnostics.DebuggerNonUserCodeAttribute;
@@ -517,7 +518,16 @@ namespace Prexonite.Compiler
 
         private void _initializeMacroCommands()
         {
-            
+            _addMacroCommand(Macro.Commands.CallSub.Instance);
+            _addMacroCommand(Macro.Commands.CallSubInterpret.Instance);
+        }
+
+        private void _addMacroCommand(MacroCommand macroCommand)
+        {
+            MacroCommands.Add(macroCommand);
+            if (Options.RegisterCommands)
+                Symbols[macroCommand.Id] = new SymbolEntry(SymbolInterpretations.MacroCommand,
+                                                           macroCommand.Id);
         }
 
         #endregion

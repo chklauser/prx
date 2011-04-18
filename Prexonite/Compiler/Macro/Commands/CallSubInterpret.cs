@@ -145,7 +145,7 @@ namespace Prexonite.Compiler.Macro.Commands
             var computeKvp = context.Invocation.Arguments[0];
             var setResult = context.CreateGetSetSymbol(
                 SymbolInterpretations.LocalObjectVariable,
-                PCall.Get, resultV, computeKvp);
+                PCall.Set, resultV, computeKvp);
             context.Block.Add(setResult);
         }
 

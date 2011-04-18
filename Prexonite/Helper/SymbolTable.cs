@@ -100,9 +100,10 @@ namespace Prexonite
             get { return GetDefault(key, _defaultValue); }
             set
             {
-                if (_table.ContainsKey(key))
-                    _table.Remove(key);
-                _table[key] = value;
+                if (!_table.ContainsKey(key))
+                    _table.Add(key, value);
+                else
+                    _table[key] = value;
             }
         }
 

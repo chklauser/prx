@@ -4276,23 +4276,57 @@ function main(x1,x2,x3)
                     var pv = target.Variables["zs"].Value.Value as List<PValue>;
                     return pv ?? new List<PValue>(0);
                 };
+            Action resetZs = () => getZs().Clear();
             
             Expect("[ 4, 10 ]", 1, 3);
+            resetZs();
 
             ExpectNull(2,4,8);
             Assert.AreEqual(0, getZs().Count);
+            resetZs();
 
             ExpectNull(1,8,8);
             var zs = getZs();
             Assert.AreEqual(1, zs.Count);
             AssertPValuesAreEqual(4, zs[0]);
+            resetZs();
 
             ExpectNull(1,3,8);
             zs = getZs();
             Assert.AreEqual(2, zs.Count);
             AssertPValuesAreEqual(4,zs[0]);
             AssertPValuesAreEqual(10, zs[1]);
+            resetZs();
 
+        }
+
+        [Test]
+        public void CallSubOfPartial()
+        {
+            Compile(@"
+function main(xs,y)
+{
+    var zs = [];
+    function f(x,y) 
+    {
+        if(x mod 2 == 0)
+            continue;
+        if(x > y)
+            break;
+        return x*3+1;
+    }
+    foreach(var x in xs)
+    {
+        zs[] = call\sub(f(?,y),[x]);
+    }
+
+    return zs.ToString();
+}
+");
+
+            var xs = new List<PValue> { 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14 };
+            Expect("[ 4, 10, 16 ]", (PValue)xs, 6);
+            Expect("[ 4, 10 ]", (PValue)xs, 4);
         }
 
         #region Helper
