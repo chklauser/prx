@@ -136,12 +136,19 @@ namespace Prexonite.Commands.Core
             return FlattenArguments(sctx, args, 0);
         }
 
-        public static List<PValue> FlattenArguments(StackContext sctx, PValue[] args, int index)
+        /// <summary>
+        /// Takes an argument list and injects elements of top-level lists into that argument list.
+        /// </summary>
+        /// <param name="sctx">The stack context in which to convert enumerables.</param>
+        /// <param name="args">The raw list of arguments to process.</param>
+        /// <param name="offset">The offset at which to start processing.</param>
+        /// <returns>A copy of the argument list with top-level lists expanded.</returns>
+        public static List<PValue> FlattenArguments(StackContext sctx, PValue[] args, int offset)
         {
             if (args == null)
                 args = new PValue[] {};
             var iargs = new List<PValue>();
-            for (var i = index; i < args.Length; i++)
+            for (var i = offset; i < args.Length; i++)
             {
                 var arg = args[i];
                 var folded = Map._ToEnumerable(sctx, arg);

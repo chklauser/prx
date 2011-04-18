@@ -27,5 +27,22 @@ namespace Prexonite.Compiler.Macro
 
             return mem;
         }
+
+        public static bool CallerIsMacro(this MacroContext context)
+        {
+            return context.Function.IsMacro || context.GetParentFunctions().Any(f => f.IsMacro);
+        }
+
+        public static void EstablishMacroContext(this MacroContext context)
+        {
+            if(!CallerIsMacro(context))
+            {
+                context.ReportMessage(ParseMessageSeverity.Error, "Cannot establish macro context outside of macro.");
+                return;
+            }
+
+            if(!context.OuterVariables.Contains(MacroAliases.ContextAlias,Engine.DefaultStringComparer))
+                context.RequireOuterVariable(MacroAliases.ContextAlias);
+        }
     }
 }

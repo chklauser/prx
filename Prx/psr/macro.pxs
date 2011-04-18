@@ -1090,28 +1090,28 @@ macro macro\deprecated\macroInvocation as macroInvocation
 }
 
 //Position report
-macro CURRENT_FILE as __FILE__
+macro __FILE__ as CURRENT_FILE
 {
     if(is_in_macro)
         establish_macro_context;
     return ast("Constant",context.Invocation.File);
 }
 
-macro CURRENT_LINE as __LINE__
+macro __LINE__ as CURRENT_LINE
 {
     if(is_in_macro)
         establish_macro_context;
     return ast("Constant",context.Invocation.Line);
 }
 
-macro CURRENT_COLUMN as __COL__
+macro __COLUMN__ as CURRENT_COLUMN, __COL__
 {
     if(is_in_macro)
         establish_macro_context;
     return ast("Constant",context.Invocation.Column);
 }
 
-macro POSITION as __POS__
+macro __POSITION__ as POSITION, __POS__
 {
     if(is_in_macro)
         establish_macro_context;

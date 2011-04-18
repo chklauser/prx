@@ -158,7 +158,7 @@ namespace Prexonite.Compiler.Macro
                 else
                 {
                     target.Loader.ReportMessage(new ParseMessage(ParseMessageSeverity.Error,
-                                                                 string.Format("Cannot find macro command named `{0}`", invocation.MacroId),
+                                                                 String.Format("Cannot find macro command named `{0}`", invocation.MacroId),
                                                                  invocation));
                     HumanId = "cannot_find_macro_command";
                     return;
@@ -299,7 +299,7 @@ namespace Prexonite.Compiler.Macro
                     {
                         //Might at a later point become a warning
                         context.ReportMessage(ParseMessageSeverity.Info,
-                                              string.Format(
+                                              String.Format(
                                                   "Macro {0} uses temporary variable to ensure that expression from `context.Block` is evaluated before statements from macro return value.",
                                                   HumanId),
                                               context.Invocation);
@@ -312,8 +312,7 @@ namespace Prexonite.Compiler.Macro
                                                              context.Invocation.Column,
                                                              PCall.Set,
                                                              tmpV,
-                                                             SymbolInterpretations.
-                                                                 LocalObjectVariable);
+                                                             SymbolInterpretations.LocalObjectVariable);
                         assignTmpV.Arguments.Add(ce);
                         contextBlock.Add(assignTmpV);
 
@@ -351,14 +350,7 @@ namespace Prexonite.Compiler.Macro
 
             private PValue _invokeMacroFunction(CompilerTarget target, MacroContext context)
             {
-                var env = new SymbolTable<PVariable>(1);
-                env.Add(MacroAliases.ContextAlias,
-                        CompilerTarget.CreateReadonlyVariable(target.Loader.CreateNativePValue(context)));
-
-                var sharedVariables =
-                    _macroFunction.Meta[PFunction.SharedNamesKey].List.Select(entry => env[entry.Text]).
-                        ToArray();
-                var macro = new Closure(_macroFunction, sharedVariables);
+                var macro = PrepareMacroImplementation(target.Loader, _macroFunction, context);
 
                 //Execute macro (argument nodes of the invocation node are passed as arguments to the macro)
                 var macroInvocation = context.Invocation;
@@ -397,7 +389,7 @@ namespace Prexonite.Compiler.Macro
                 {
                     target.Loader.ReportMessage(
                         new ParseMessage(ParseMessageSeverity.Error,
-                                         string.Format(
+                                         String.Format(
                                              "AstMacroInvocation.EmitCode is not reentrant. The invocation node for the macro {0} has been expanded already. Use GetCopy() to operate on a copy of this macro invocation.",
                                              expander.HumanId),
                                          invocation));
@@ -428,7 +420,7 @@ namespace Prexonite.Compiler.Macro
                     throw;
 #else
                     context.ReportMessage(ParseMessageSeverity.Error,
-                                          string.Format(
+                                          String.Format(
                                               "Exception during expansion of macro {0} in function {1}: {2}",
                                               expander.HumanId, context.Function.LogicalId,
                                               e.Message), invocation);
@@ -475,7 +467,7 @@ namespace Prexonite.Compiler.Macro
                 default:
                     target.Loader.ReportMessage(
                         new ParseMessage(ParseMessageSeverity.Error,
-                                         string.Format(
+                                         String.Format(
                                              "Cannot apply {0} as a macro at compile time.",
                                              Enum.GetName(
                                                  typeof (
@@ -485,6 +477,28 @@ namespace Prexonite.Compiler.Macro
                     break;
             }
             return expander;
+        }
+
+        /// <summary>
+        /// Provides macro environment to its implementing function. The resulting closure 
+        /// implements the expansion of the macro.
+        /// </summary>
+        /// <param name="sctx">The stack context to use for wrapping the context.</param>
+        /// <param name="func">The implementation of the macro.</param>
+        /// <param name="context">The macro context for this expansion.</param>
+        /// <returns>A closure that implements the expansion of this macro.</returns>
+        public static Closure PrepareMacroImplementation(StackContext sctx, PFunction func, MacroContext context)
+        {
+            var contextVar =
+                CompilerTarget.CreateReadonlyVariable(sctx.CreateNativePValue(context));
+
+            var env = new SymbolTable<PVariable>(1);
+            env.Add(MacroAliases.ContextAlias, contextVar);
+
+            var sharedVariables =
+                func.Meta[PFunction.SharedNamesKey].List.Select(entry => env[entry.Text]).
+                    ToArray();
+            return new Closure(func, sharedVariables);
         }
     }
 }
