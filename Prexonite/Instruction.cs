@@ -842,6 +842,7 @@ namespace Prexonite
     /// <summary>
     /// The opcodes interpreted by the virtual machine.
     /// </summary>
+    [System.Diagnostics.CodeAnalysis.SuppressMessage("Microsoft.Naming", "CA1704:IdentifiersShouldBeSpelledCorrectly")]
     public enum OpCode
     {
         /// <summary>
@@ -924,11 +925,14 @@ namespace Prexonite
         //  - exponential
         pow, //pow           binary power operator
         //  - comparision
+        [System.Diagnostics.CodeAnalysis.SuppressMessage("Microsoft.Naming", "CA1704:IdentifiersShouldBeSpelledCorrectly", MessageId = "ceq")]
         ceq, //ceq           binary equality operator
         cne, //cne           binary inequality operator
         clt, //clt           binary less-than operator
         cle, //cle           binary less-than-or-equal operator
+        [System.Diagnostics.CodeAnalysis.SuppressMessage("Microsoft.Naming", "CA1704:IdentifiersShouldBeSpelledCorrectly", MessageId = "cgt")]
         cgt, //cgt           binary greater-than operator
+        [System.Diagnostics.CodeAnalysis.SuppressMessage("Microsoft.Naming", "CA1704:IdentifiersShouldBeSpelledCorrectly", MessageId = "cge")]
         cge, //cge           binary greater-than-or-equal operator
         //  - bitwise
         or, //or            binary bitwise or operator

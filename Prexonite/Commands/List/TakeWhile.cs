@@ -53,6 +53,7 @@ namespace Prexonite.Commands.List
             return CoroutineRunStatically(sctxCarrier, args);
         }
 
+        [System.Diagnostics.CodeAnalysis.SuppressMessage("Microsoft.Naming", "CA1704:IdentifiersShouldBeSpelledCorrectly", MessageId = "Coroutine")]
         protected static IEnumerable<PValue> CoroutineRunStatically(ContextCarrier sctxCarrier, PValue[] args)
         {
             if (sctxCarrier == null)

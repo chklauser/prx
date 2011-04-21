@@ -51,7 +51,7 @@ namespace Prexonite.Types
 
         #region PType interface
 
-        public override bool TryContruct(StackContext sctx, PValue[] args, out PValue result)
+        public override bool TryConstruct(StackContext sctx, PValue[] args, out PValue result)
         {
             char c;
             result = null;

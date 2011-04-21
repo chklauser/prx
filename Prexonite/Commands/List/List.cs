@@ -27,6 +27,7 @@ using Prexonite.Compiler.Cil;
 
 namespace Prexonite.Commands.List
 {
+    [System.Diagnostics.CodeAnalysis.SuppressMessage("Microsoft.Naming", "CA1724:TypeNamesShouldNotMatchNamespaces")]
     public class List : PCommand, ICilCompilerAware
     {
         #region Singleton

@@ -22,7 +22,7 @@ namespace Prexonite.Commands.Core.PartialApplication
             return new PartialTypeCheck(mappings, closedArguments, parameter.Type);
         }
 
-        protected override ConstructorInfo GetConstructorCtor(PTypeInfo pTypeInfo)
+        protected override ConstructorInfo GetConstructorCtor(PTypeInfo parameter)
         {
             return _partialTypeCheckCtor ??
                    (_partialTypeCheckCtor =

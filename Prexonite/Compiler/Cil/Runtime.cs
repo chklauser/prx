@@ -100,6 +100,7 @@ namespace Prexonite.Compiler.Cil
         public static readonly MethodInfo LoadGlobalVariableReferenceMethod =
             typeof (Runtime).GetMethod("LoadGlobalVariableReference");
 
+        [System.Diagnostics.CodeAnalysis.SuppressMessage("Microsoft.Naming", "CA1704:IdentifiersShouldBeSpelledCorrectly", MessageId = "Coroutine")]
         public static readonly MethodInfo NewCoroutineMethod = typeof (Runtime).GetMethod("NewCoroutine");
         public static readonly MethodInfo WrapPVariableMethod = typeof (Runtime).GetMethod("WrapPVariable");
 
@@ -379,7 +380,7 @@ namespace Prexonite.Compiler.Cil
             throw prexc;
         }
 
-        public static bool ExtractBool(PValue left, StackContext sctx)
+        public static Boolean ExtractBool(PValue left, StackContext sctx)
         {
             if (!ReferenceEquals(left.Type, PType.Bool))
                 left = left.ConvertTo(sctx, PType.Bool);
@@ -391,6 +392,7 @@ namespace Prexonite.Compiler.Cil
             return PType.List.CreatePValue(args);
         }
 
+        [System.Diagnostics.CodeAnalysis.SuppressMessage("Microsoft.Naming", "CA1704:IdentifiersShouldBeSpelledCorrectly", MessageId = "Coroutine")]
         public static PValue NewCoroutine(PValue routine, StackContext sctx, PValue[] argv)
         {
             var routineobj = routine.Value;
@@ -470,6 +472,7 @@ namespace Prexonite.Compiler.Cil
             }
         }
 
+        [System.Diagnostics.CodeAnalysis.SuppressMessage("Microsoft.Naming", "CA1720:IdentifiersShouldNotContainTypeNames", MessageId = "obj")]
         public static void DisposeIfPossible(object obj)
         {
             var disposable = obj as IDisposable;

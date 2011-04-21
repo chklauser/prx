@@ -138,6 +138,7 @@ namespace Prexonite.Compiler.Cil
 
         #region Accessors
 
+        [System.Diagnostics.CodeAnalysis.SuppressMessage("Microsoft.Naming", "CA1704:IdentifiersShouldBeSpelledCorrectly", MessageId = "Argc")]
         public LocalBuilder ArgcLocal { get; internal set; }
 
         public PFunction Source
@@ -145,6 +146,7 @@ namespace Prexonite.Compiler.Cil
             get { return _source; }
         }
 
+        [System.Diagnostics.CodeAnalysis.SuppressMessage("Microsoft.Naming", "CA1704:IdentifiersShouldBeSpelledCorrectly", MessageId = "Argv")]
         public LocalBuilder ArgvLocal { get; internal set; }
 
         public ILGenerator Il
@@ -276,7 +278,7 @@ namespace Prexonite.Compiler.Cil
         /// Indicates whether the context still has code/work to do.
         /// </summary>
         /// <returns>True if the context has additional work to perform in the next cycle, False if it has finished it's work and can be removed from the stack</returns>
-        protected override bool PerformNextCylce(StackContext lastContext)
+        protected override bool PerformNextCycle(StackContext lastContext)
         {
             return false;
         }
@@ -332,6 +334,7 @@ namespace Prexonite.Compiler.Cil
         /// <para>Emits the shortest possible ldc.i4 opcode.</para>
         /// </summary>
         /// <param name="i"></param>
+        [System.Diagnostics.CodeAnalysis.SuppressMessage("Microsoft.Naming", "CA1704:IdentifiersShouldBeSpelledCorrectly", MessageId = "Ldc")]
         public void EmitLdcI4(int i)
         {
             switch (i)
@@ -380,6 +383,7 @@ namespace Prexonite.Compiler.Cil
         /// passed to methods. Use <see cref="ReadArgv"/> to load that array onto the stack.
         /// </summary>
         /// <param name="argc">The number of arguments to load from the stack.</param>
+        [System.Diagnostics.CodeAnalysis.SuppressMessage("Microsoft.Naming", "CA1704:IdentifiersShouldBeSpelledCorrectly", MessageId = "Argv")]
         public void FillArgv(int argc)
         {
             if (argc == 0)
@@ -411,6 +415,7 @@ namespace Prexonite.Compiler.Cil
         /// Load previously perpared argument array (<see cref="FillArgv"/>) onto the stack. 
         /// </summary>
         /// <param name="argc">The number of elements in that argument array.</param>
+        [System.Diagnostics.CodeAnalysis.SuppressMessage("Microsoft.Naming", "CA1704:IdentifiersShouldBeSpelledCorrectly", MessageId = "Argv")]
         public void ReadArgv(int argc)
         {
             if (argc == 0)
@@ -722,7 +727,18 @@ namespace Prexonite.Compiler.Cil
         /// <param name="target">The type, that declares the RunStatically to call.</param>
         /// <param name="argc">The number of arguments to pass to the command.</param>
         /// <param name="justEffect">Indicates whether or not to ignore the return value.</param>
-        public void EmitEarlyBoundCommandCall(Type target, int argc, bool justEffect = false)
+        public void EmitEarlyBoundCommandCall(Type target, int argc)
+        {
+            EmitEarlyBoundCommandCall(target, argc, false);
+        }
+
+        /// <summary>
+        /// Emits a call to the static method "RunStatically(StackContext sctx, PValue[] args)" of the supplied type.
+        /// </summary>
+        /// <param name="target">The type, that declares the RunStatically to call.</param>
+        /// <param name="argc">The number of arguments to pass to the command.</param>
+        /// <param name="justEffect">Indicates whether or not to ignore the return value.</param>
+        public void EmitEarlyBoundCommandCall(Type target, int argc, bool justEffect)
         {
             var run =
                 target.GetMethod("RunStatically", new[] {typeof (StackContext), typeof (PValue[])});
@@ -760,7 +776,7 @@ namespace Prexonite.Compiler.Cil
 
 
 
-        public void EmityPTypeAsPValue(string expr)
+        public void EmitPTypeAsPValue(string expr)
         {
             EmitLoadLocal(SctxLocal);
             Il.Emit(OpCodes.Ldstr, expr);

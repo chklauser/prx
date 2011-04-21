@@ -7,13 +7,13 @@ using Prexonite.Types;
 
 namespace Prexonite.Commands.Core.PartialApplication
 {
-    public class PartialTypeCastCommand : PartialWithPTypeCommandBase<PTypeInfo>
+    public class PartialTypecastCommand : PartialWithPTypeCommandBase<PTypeInfo>
     {
-        private static readonly PartialTypeCastCommand _instance = new PartialTypeCastCommand();
-        private PartialTypeCastCommand()
+        private static readonly PartialTypecastCommand _instance = new PartialTypecastCommand();
+        private PartialTypecastCommand()
         {
         }
-        public static PartialTypeCastCommand Instance
+        public static PartialTypecastCommand Instance
         {
             get { return _instance; }
         }
@@ -22,19 +22,19 @@ namespace Prexonite.Commands.Core.PartialApplication
 
         protected override IIndirectCall CreatePartialApplication(StackContext sctx, int[] mappings, PValue[] closedArguments, PTypeInfo parameter)
         {
-            return new PartialTypeCast(mappings, closedArguments, parameter.Type);
+            return new PartialTypecast(mappings, closedArguments, parameter.Type);
         }
 
-        protected override ConstructorInfo GetConstructorCtor(PTypeInfo pTypeInfo)
+        protected override ConstructorInfo GetConstructorCtor(PTypeInfo parameter)
         {
             return _partialTypeCastCtor ??
                    (_partialTypeCastCtor =
-                    typeof (PartialTypeCast).GetConstructor(new[] {typeof (int[]), typeof (PValue[]), typeof (PType)}));
+                    typeof (PartialTypecast).GetConstructor(new[] {typeof (int[]), typeof (PValue[]), typeof (PType)}));
         }
 
         protected override Type GetPartialCallRepresentationType(PTypeInfo parameter)
         {
-            return typeof(PartialTypeCast);
+            return typeof(PartialTypecast);
         }
 
         protected override string PartialApplicationKind

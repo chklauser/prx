@@ -62,7 +62,7 @@ namespace Prx.Tests
         /// Indicates whether the context still has code/work to do.
         /// </summary>
         /// <returns>True if the context has additional work to perform in the next cycle, False if it has finished it's work and can be removed from the stack</returns>
-        protected override bool PerformNextCylce(StackContext lastContext)
+        protected override bool PerformNextCycle(StackContext lastContext)
         {
             return false;
         }

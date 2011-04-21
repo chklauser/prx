@@ -305,6 +305,7 @@
     <Compile Include="Compiler\SourcePositionExtensions.cs" />
     <Compile Include="Concurrency\Channel.cs" />
     <Compile Include="CooperativeContext.cs" />
+    <Compile Include="GlobalSuppressions.cs" />
     <Compile Include="Helper\DependencyAnalysis.cs" />
     <Compile Include="Helper\DependencyEntity.cs" />
     <Compile Include="Helper\Extensions.cs" />

@@ -2,11 +2,11 @@
 
 namespace Prexonite.Commands.Core.PartialApplication
 {
-    public class PartialTypeCast : PartialApplicationBase
+    public class PartialTypecast : PartialApplicationBase
     {
         private readonly PType _ptype;
 
-        public PartialTypeCast(int[] mappings, PValue[] closedArguments, PType ptype) : base(mappings, closedArguments, 1)
+        public PartialTypecast(int[] mappings, PValue[] closedArguments, PType ptype) : base(mappings, closedArguments, 1)
         {
             _ptype = ptype;
         }

@@ -378,7 +378,7 @@ namespace Prexonite.Types
 
         #endregion
 
-        public override bool TryContruct(StackContext sctx, PValue[] args, out PValue result)
+        public override bool TryConstruct(StackContext sctx, PValue[] args, out PValue result)
         {
             PValue arg;
             result = null;

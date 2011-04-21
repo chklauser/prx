@@ -124,7 +124,7 @@ namespace Prexonite
         /// </summary>
         /// <param name="info">The <see cref="SerializationInfo"/>.</param>
         /// <param name="context">The <see cref="StreamingContext"/> of this particular instance.</param>
-        public PrexoniteException(
+        protected PrexoniteException(
             SerializationInfo info,
             StreamingContext context)
             : base(info, context)
@@ -340,7 +340,7 @@ namespace Prexonite
             lowestException = exc;
         }
 
-        public PrexoniteRuntimeException(
+        protected PrexoniteRuntimeException(
             SerializationInfo info,
             StreamingContext context)
             : base(info, context)
@@ -351,6 +351,10 @@ namespace Prexonite
     [Serializable]
     public class InvalidCallException : PrexoniteException
     {
+        public InvalidCallException() : base()
+        {
+        }
+
         public InvalidCallException(string message)
             : base(message)
         {
@@ -361,7 +365,7 @@ namespace Prexonite
         {
         }
 
-        public InvalidCallException(
+        protected InvalidCallException(
             SerializationInfo info,
             StreamingContext context)
             : base(info, context)
@@ -372,6 +376,11 @@ namespace Prexonite
     [Serializable]
     public class InvalidConversionException : PrexoniteException
     {
+        public InvalidConversionException() : base()
+        {
+            
+        }
+
         public InvalidConversionException(string message)
             : base(message)
         {
@@ -382,7 +391,7 @@ namespace Prexonite
         {
         }
 
-        public InvalidConversionException(
+        protected InvalidConversionException(
             SerializationInfo info,
             StreamingContext context)
             : base(info, context)
