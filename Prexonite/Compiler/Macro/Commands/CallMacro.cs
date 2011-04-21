@@ -12,17 +12,36 @@ namespace Prexonite.Compiler.Macro.Commands
     public class CallMacro : MacroCommand
     {
         public const string Alias = @"call\macro";
-        public CallMacro() : base(Alias)
+
+        #region Singleton pattern
+
+        private static readonly CallMacro _instance = new CallMacro();
+
+        public static CallMacro Instance
+        {
+            get { return _instance; }
+        }
+
+        private CallMacro() : base(Alias)
         {
         }
 
-        #region Call\Macro\MakeClosure
+        #endregion
 
-        private class MakeClosure : PCommand
+        public static IEnumerable<KeyValuePair<string,PCommand>> GetHelperCommands(Loader ldr)
         {
+            yield return
+                new KeyValuePair<string, PCommand>(PrepareMacro.Alias, new PrepareMacro(ldr));
+        }
+
+        #region Call\Macro\PrepareMacro
+
+        private class PrepareMacro : PCommand
+        {
+            public const string Alias = @"call\macro\prepare_macro";
             private readonly Loader _loader;
 
-            public MakeClosure(Loader loader)
+            public PrepareMacro(Loader loader)
             {
                 _loader = loader;
             }
@@ -31,32 +50,34 @@ namespace Prexonite.Compiler.Macro.Commands
 
             public override PValue Run(StackContext sctx, PValue[] args)
             {
-                if (args.Length < 4)
+                const int varargOffset = 5;
+
+                if (args.Length < varargOffset)
                     throw new PrexoniteException("Id of macro implementation, effect flag, call type and/or context missing.");
 
                 var id = args[0].Value as string;
                 if(args[0].Type != PType.String || id == null)
                     throw new PrexoniteException("First argument must be id.");
 
-                var func = _loader.ParentApplication.Functions[id];
-                if(func == null)
-                    throw new PrexoniteException("Macro implementation does not exist.");
+                if(!(args[1].Type is ObjectPType) || !(args[1].Value is SymbolInterpretations))
+                    throw new PrexoniteException("Second argument must be symbol interpretation.");
+                var macroInterpretation = (SymbolInterpretations) args[1].Value;
 
-                var context = args[1].Value as MacroContext;
-                if(!(args[1].Type is ObjectPType) || context == null)
+                var context = args[2].Value as MacroContext;
+                if(!(args[2].Type is ObjectPType) || context == null)
                     throw new PrexoniteException("Macro context is missing.");
 
                 var target = _loader.FunctionTargets[context.Function];
 
-                if(!(args[2].Type is ObjectPType && args[2].Value is PCall))
+                if(!(args[3].Type is ObjectPType && args[3].Value is PCall))
                     throw new PrexoniteException("Call type is missing.");
-                var call = (PCall) args[2].Value;
+                var call = (PCall) args[3].Value;
 
-                if(args[3].Type != PType.Bool)
+                if(args[4].Type != PType.Bool)
                     throw new PrexoniteException("Effect flag is missing.");
-                var justEffect = (bool) args[3].Value;
+                var justEffect = (bool) args[4].Value;
 
-                var argList = Call.FlattenArguments(sctx, args, 4);
+                var argList = Call.FlattenArguments(sctx, args, varargOffset);
                 var offender =
                     argList.FirstOrDefault(
                         p => !(p.Type is ObjectPType) || !(p.Value is IAstExpression));
@@ -68,14 +89,16 @@ namespace Prexonite.Compiler.Macro.Commands
 
                 var inv = new AstMacroInvocation(context.Invocation.File, context.Invocation.Line,
                                                  context.Invocation.Column, id,
-                                                 SymbolInterpretations.Function);
+                                                 macroInterpretation);
                 inv.Arguments.AddRange(argList.Select(p => (IAstExpression) p.Value));
                 inv.Call = call;
 
-                var subContext = new MacroContext(target.CurrentMacroSession, inv, justEffect);
-                var macro = MacroSession.PrepareMacroImplementation(sctx, func, subContext);
+                var macroSession = target.CurrentMacroSession;
 
-                return sctx.CreateNativePValue(macro);
+                return
+                    CompilerTarget.CreateFunctionValue(
+                        (callSite, _) =>
+                        callSite.CreateNativePValue(macroSession.ExpandMacro(inv, justEffect)));
             }
 
             #endregion
@@ -108,30 +131,55 @@ namespace Prexonite.Compiler.Macro.Commands
             }
 
             context.EstablishMacroContext();
+
             SymbolInterpretations macroInterpretation;
             string macroId;
+            PCall call;
+            bool justEffect;
+            IAstExpression[] args;
             
-            if(!_parseReference(context, macroReference, out macroId, out macroInterpretation))
+            if(!_parseReference(context, macroReference, out macroId, out macroInterpretation, out call, out justEffect, out args))
                 return;
 
-            switch (macroInterpretation)
-            {
-                case SymbolInterpretations.Function:
-                    //code for macro as function
-                    var theMacro = new AstCreateClosure(inv.File, inv.Line, inv.Column, macroId);
-                    var c = new AstIndirectCall(inv.File, inv.Line, inv.Column, PCall.Get, theMacro);
-                    break;
-                case SymbolInterpretations.MacroCommand:
-                    break;
-                default:
-                    context.ReportMessage(ParseMessageSeverity.Error, "Macro resolves to invalid interpretation.");
-                    return;
-            }
+            // [| call\macro\prepare_macro("$macroId", $macroInterpretation, context, $call, $justEffect, $args...).() |]
+            var prepareCall = _prepareMacro(context, inv, macroId, macroInterpretation, call, justEffect, args);
+
+            var invocation = new AstIndirectCall(inv.File, inv.Line, inv.Column,
+                                                 context.Call, prepareCall);
+
+            context.Block.Expression = invocation;
         }
 
-        private bool _parseReference(MacroContext context, IAstExpression macroReference, out string macroId, out SymbolInterpretations macroInterpretation)
+        private AstGetSetSymbol _prepareMacro(MacroContext context, AstMacroInvocation inv, string macroId, SymbolInterpretations macroInterpretation, PCall call, bool justEffect, IAstExpression[] args)
+        {
+            var macroIdConst = new AstConstant(inv.File, inv.Line, inv.Column, macroId);
+            var macroInterpretationExpr = macroInterpretation.ToExpression(context);
+            var getContext = context.CreateGetSetLocal(MacroAliases.ContextAlias);
+            var callExpr = call.ToExpression(context);
+            var justEffectExpr = context.CreateConstant(justEffect);
+            var prepareCall = context.CreateGetSetSymbol(SymbolInterpretations.Command,
+                                                         PCall.Get, PrepareMacro.Alias,
+                                                         macroIdConst,
+                                                         macroInterpretationExpr,
+                                                         getContext, callExpr,
+                                                         justEffectExpr);
+            prepareCall.Arguments.AddRange(args);
+            return prepareCall;
+        }
+
+        private bool _parseReference(
+            MacroContext context, 
+            IAstExpression macroReference, 
+            out string macroId, 
+            out SymbolInterpretations macroInterpretation,
+            out PCall call,
+            out bool justEffect,
+            out IAstExpression[] args)
         {
             macroId = null;
+            call = PCall.Get;
+            justEffect = false;
+            args = new IAstExpression[0];
 
             var reference = macroReference as AstGetSetReference;
             var constant = macroReference as AstConstant;

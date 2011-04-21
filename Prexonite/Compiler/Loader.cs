@@ -34,9 +34,7 @@ using System.Text;
 using Prexonite.Commands;
 using Prexonite.Compiler.Ast;
 using Prexonite.Compiler.Macro;
-using Prexonite.Helper;
 using Prexonite.Types;
-using NoDebug = System.Diagnostics.DebuggerNonUserCodeAttribute;
 
 namespace Prexonite.Compiler
 {
@@ -520,6 +518,9 @@ namespace Prexonite.Compiler
         {
             _addMacroCommand(Macro.Commands.CallSub.Instance);
             _addMacroCommand(Macro.Commands.CallSubInterpret.Instance);
+            _addMacroCommand(Macro.Commands.CallMacro.Instance);
+            foreach (var helperCommand in Macro.Commands.CallMacro.GetHelperCommands(this))
+                ParentEngine.Commands.AddEngineCommand(helperCommand.Key, helperCommand.Value);
         }
 
         private void _addMacroCommand(MacroCommand macroCommand)
@@ -535,7 +536,7 @@ namespace Prexonite.Compiler
         #region Compilation
 
         [DebuggerStepThrough]
-        private void LoadFromStream(Stream str, string filePath)
+        private void _loadFromStream(Stream str, string filePath)
         {
 #if Compression
             if(!str.CanSeek)
@@ -576,7 +577,7 @@ namespace Prexonite.Compiler
         [DebuggerStepThrough]
         public void LoadFromStream(Stream str)
         {
-            LoadFromStream(str, null);
+            _loadFromStream(str, null);
         }
 
 #if DEBUG
@@ -608,7 +609,7 @@ namespace Prexonite.Compiler
                 indent.Append(' ', 2*(_load_indent++));
                 Console.WriteLine("{1}begin compiling {0} [Path: {2} ]", file.Name, indent, file.FullName);
 #endif
-                LoadFromStream(str, file.Name);
+                _loadFromStream(str, file.Name);
 #if DEBUG
                 Console.WriteLine("{1}end   compiling {0}", file.Name, indent);
                 _load_indent--;

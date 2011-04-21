@@ -192,6 +192,21 @@ namespace Prexonite.Compiler
             #endregion
         }
 
+        private class ProvidedFunction : IIndirectCall
+        {
+            private readonly Func<StackContext, PValue[], PValue> _func;
+
+            public ProvidedFunction(Func<StackContext, PValue[], PValue> func)
+            {
+                _func = func;
+            }
+
+            public PValue IndirectCall(StackContext sctx, PValue[] args)
+            {
+                return _func(sctx, args);
+            }
+        }
+
         /// <summary>
         /// Creates a PVariable object that contains a reference to the supplied value.
         /// </summary>
@@ -200,6 +215,11 @@ namespace Prexonite.Compiler
         public static PVariable CreateReadonlyVariable(PValue value)
         {
             return new PVariable {Value = PType.Object.CreatePValue(new ProvidedValue(value))};
+        }
+
+        public static PValue CreateFunctionValue(Func<StackContext, PValue[], PValue> implementation)
+        {
+            return new PValue(new ProvidedFunction(implementation),PType.Object[typeof(IIndirectCall)]);
         }
 
         #region Temporary variables
