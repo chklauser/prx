@@ -821,7 +821,7 @@ namespace Prexonite.Types
             return StaticCall(sctx, args, call, id, out dummy);
         }
 
-        public override bool TryContruct(StackContext sctx, PValue[] args, out PValue result)
+        public override bool TryConstruct(StackContext sctx, PValue[] args, out PValue result)
         {
             MemberInfo dummy;
             return TryContruct(sctx, args, out result, out dummy);

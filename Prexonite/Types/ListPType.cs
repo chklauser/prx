@@ -350,7 +350,7 @@ namespace Prexonite.Types
             return result != null;
         }
 
-        public override bool TryContruct(StackContext sctx, PValue[] args, out PValue result)
+        public override bool TryConstruct(StackContext sctx, PValue[] args, out PValue result)
         {
             result = new PValue(new List<PValue>(args), this);
             return true;

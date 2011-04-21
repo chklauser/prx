@@ -72,7 +72,7 @@ namespace Prexonite.Types
             return Null.CreatePValue();
         }
 
-        public override bool TryContruct(StackContext sctx, PValue[] args, out PValue result)
+        public override bool TryConstruct(StackContext sctx, PValue[] args, out PValue result)
         {
             result = Null.CreatePValue();
             return true;

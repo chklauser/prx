@@ -116,7 +116,7 @@ namespace Prexonite
         /// Indicates whether the context still has code/work to do.
         /// </summary>
         /// <returns>True if the context has additional work to perform in the next cycle, False if it has finished it's work and can be removed from the stack</returns>
-        protected override bool PerformNextCylce(StackContext lastContext)
+        protected override bool PerformNextCycle(StackContext lastContext)
         {
             //Remove this context if possible (IndirectCallContext should be transparent)
             var sctx = _originalStackContext ?? this;

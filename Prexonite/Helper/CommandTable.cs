@@ -48,14 +48,14 @@ namespace Prexonite.Commands
         /// <summary>
         /// Index based access to the dictionary of available commands.
         /// </summary>
-        /// <param name="name">The name of the command to retrieve.</param>
+        /// <param name="key">The name of the command to retrieve.</param>
         /// <returns>The command registered with the supplied name.</returns>
-        public override PCommand this[string name]
+        public override PCommand this[string key]
         {
             get
             {
-                if (ContainsKey(name))
-                    return base[name];
+                if (ContainsKey(key))
+                    return base[key];
                 else
                     return null;
             }
@@ -64,17 +64,17 @@ namespace Prexonite.Commands
                 if (value != null && (!value.BelongsToAGroup))
                     value.AddToGroup(PCommandGroups.User);
 
-                if (ContainsKey(name))
+                if (ContainsKey(key))
                 {
                     if (value == null)
-                        Remove(name);
+                        Remove(key);
                     else
-                        base[name] = value;
+                        base[key] = value;
                 }
                 else if (value == null)
                     throw new ArgumentNullException("value");
                 else
-                    Add(name, value);
+                    Add(key, value);
             }
         }
 

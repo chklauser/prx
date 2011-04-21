@@ -8,7 +8,7 @@ using Prexonite.Types;
 
 namespace Prexonite.Concurrency
 {
-    public class Channel : IObject
+    public class Channel : IObject, IDisposable
     {
         #region Implementation of IObject
 
@@ -140,5 +140,22 @@ namespace Prexonite.Concurrency
                 }
             }
         }
+
+        #region Implementation of IDisposable
+
+        private bool _disposed = false;
+
+        public void Dispose()
+        {
+            if(_disposed)
+                return;
+            if(_channelEmpty != null)
+                _channelEmpty.Dispose();
+            if(_dataAvailable != null)
+                _dataAvailable.Dispose();
+            _disposed = true;
+        }
+
+        #endregion
     }
 }

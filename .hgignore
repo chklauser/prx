@@ -11,3 +11,4 @@ Prexonite/Scanner.cs
 *.csproj.user
 *.*.orig
 *.*.rej
+*.csproj.user

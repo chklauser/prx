@@ -109,6 +109,7 @@ namespace Prexonite.Commands.List
             }
         }
 
+        [System.Diagnostics.CodeAnalysis.SuppressMessage("Microsoft.Naming", "CA1704:IdentifiersShouldBeSpelledCorrectly", MessageId = "Coroutine")]
         protected static IEnumerable<PValue> CoroutineRun(ContextCarrier sctxCarrier, IIndirectCall f, IEnumerable<PValue> source)
         {
             var sctx = sctxCarrier.StackContext;
@@ -123,6 +124,7 @@ namespace Prexonite.Commands.List
         /// <param name="sctxCarrier">The stack context in which to call the supplied function.</param>
         /// <param name="args">The list of arguments to be passed to the command.</param>
         /// <returns>A coroutine that maps the.</returns>
+        [System.Diagnostics.CodeAnalysis.SuppressMessage("Microsoft.Naming", "CA1704:IdentifiersShouldBeSpelledCorrectly", MessageId = "Coroutine")]
         protected static IEnumerable<PValue> CoroutineRunStatically(ContextCarrier sctxCarrier, PValue[] args)
         {
             if (sctxCarrier == null)

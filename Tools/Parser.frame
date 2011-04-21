@@ -39,6 +39,7 @@ internal interface IScanner
     string File { get; }
 }
 
+[System.Runtime.CompilerServices.CompilerGenerated]
 internal partial class Parser {
 -->constants
 	const bool T = true;

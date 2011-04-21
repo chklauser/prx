@@ -30,6 +30,7 @@ namespace Prexonite
     /// <summary>
     /// Integrates suspendable .NET managed code into the Prexonite stack via the IEnumerator interface.
     /// </summary>
+    [System.Diagnostics.CodeAnalysis.SuppressMessage("Microsoft.Naming", "CA1704:IdentifiersShouldBeSpelledCorrectly", MessageId = "Coroutine")]
     public class CoroutineContext : StackContext, IDisposable
     {
         public override string ToString()
@@ -88,7 +89,7 @@ namespace Prexonite
         /// Indicates whether the context still has code/work to do.
         /// </summary>
         /// <returns>True if the context has additional work to perform in the next cycle, False if it has finished it's work and can be removed from the stack</returns>
-        protected override bool PerformNextCylce(StackContext lastContext)
+        protected override bool PerformNextCycle(StackContext lastContext)
         {
             var moved = _coroutine.MoveNext();
             if (moved)

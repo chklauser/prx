@@ -328,7 +328,7 @@ namespace Prexonite.Types
             return result != null;
         }
 
-        public override bool TryContruct(StackContext sctx, PValue[] args, out PValue result)
+        public override bool TryConstruct(StackContext sctx, PValue[] args, out PValue result)
         {
             if (sctx == null)
                 throw new ArgumentNullException("sctx");

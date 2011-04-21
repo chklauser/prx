@@ -1167,7 +1167,7 @@ namespace Prexonite.Compiler
         }
 
         [DebuggerStepThrough]
-        protected override bool PerformNextCylce(StackContext lastContext)
+        protected override bool PerformNextCycle(StackContext lastContext)
         {
             return false;
         }
@@ -1213,6 +1213,7 @@ namespace Prexonite.Compiler
 
         #endregion
 
+        [System.Diagnostics.CodeAnalysis.SuppressMessage("Microsoft.Naming", "CA1704:IdentifiersShouldBeSpelledCorrectly", MessageId = "Cil")]
         public const string CilHintsKey = "cilhints";
 
     }

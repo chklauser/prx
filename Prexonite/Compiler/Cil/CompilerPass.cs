@@ -78,7 +78,7 @@ namespace Prexonite.Compiler.Cil
 
         private readonly TypeBuilder _typeBuilder;
 
-        public TypeBuilder Type
+        public TypeBuilder TargetType
         {
             [DebuggerStepThrough]
             get
@@ -122,7 +122,7 @@ namespace Prexonite.Compiler.Cil
             {
                 //Create method stub
                 
-                var dm = Type.DefineMethod
+                var dm = TargetType.DefineMethod
                     (
                     id,
                     MethodAttributes.Static | MethodAttributes.Public,
@@ -139,7 +139,7 @@ namespace Prexonite.Compiler.Cil
 
                 //Create function field
                 var fb =
-                    Type.DefineField
+                    TargetType.DefineField
                         (_mkFieldName(id), typeof (PFunction), FieldAttributes.Public | FieldAttributes.Static);
                 FunctionFields.Add(id, fb);
 
@@ -269,7 +269,7 @@ namespace Prexonite.Compiler.Cil
 
         private Type _getRuntimeType()
         {
-            return _cachedTypeReference ?? (_cachedTypeReference = Type.CreateType());
+            return _cachedTypeReference ?? (_cachedTypeReference = TargetType.CreateType());
         }
 
         public void LinkMetadata(PFunction func)

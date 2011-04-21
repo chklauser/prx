@@ -262,10 +262,12 @@ namespace Prexonite
             }
         }
 
+        [System.Diagnostics.CodeAnalysis.SuppressMessage("Microsoft.Naming", "CA1704:IdentifiersShouldBeSpelledCorrectly", MessageId = "Cil")]
         public CilFunction CilImplementation { [DebuggerStepThrough]
         get; [DebuggerStepThrough]
         internal set; }
 
+        [System.Diagnostics.CodeAnalysis.SuppressMessage("Microsoft.Naming", "CA1704:IdentifiersShouldBeSpelledCorrectly", MessageId = "Cil")]
         public bool HasCilImplementation
         {
             [DebuggerStepThrough]

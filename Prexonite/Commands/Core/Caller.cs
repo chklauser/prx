@@ -81,6 +81,7 @@ namespace Prexonite.Commands.Core
             }
         }
 
+        [System.Diagnostics.CodeAnalysis.SuppressMessage("Microsoft.Naming", "CA1704:IdentifiersShouldBeSpelledCorrectly", MessageId = "Cil")]
         public static PValue GetCallerFromCilFunction(StackContext sctx)
         {
             var stack = sctx.ParentEngine.Stack;

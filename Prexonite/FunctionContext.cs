@@ -295,13 +295,13 @@ namespace Prexonite
 
         private bool _fetchReturnValue;
 
-        protected override bool PerformNextCylce(StackContext lastContext)
+        protected override bool PerformNextCycle(StackContext lastContext)
         {
             return _performNextCylce(lastContext, false);
         }
 
         /// <summary>
-        /// Same as <see cref="PerformNextCylce"/> but guarantees to only execute a single instruction.
+        /// Same as <see cref="PerformNextCycle"/> but guarantees to only execute a single instruction.
         /// </summary>
         /// <param name="lastContext">Stack context of a called function that just returned. Must be set if the last step called a function/pushed a new context onto the VM stack. Is ignored otherwise.</param>
         /// <returns></returns>
@@ -326,7 +326,7 @@ namespace Prexonite
         }
 
         /// <summary>
-        /// Implementation of <see cref="PerformNextCylce"/>.
+        /// Implementation of <see cref="PerformNextCycle"/>.
         /// </summary>
         /// <param name="lastContext">Stack context of a called function that just returned. Must be set if the last step called a function/pushed a new context onto the VM stack. Is ignored otherwise.</param>
         /// <param name="needToReturn">Indicates whether to return after executing one instruction, even if more instructions could be combined into the cycle.</param>

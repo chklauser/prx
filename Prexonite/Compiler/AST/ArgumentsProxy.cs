@@ -66,7 +66,7 @@ namespace Prexonite.Compiler.Ast
             _rightAppends.AddRange(item);
         }
 
-        public void RemeberRightAppendPosition()
+        public void RememberRightAppendPosition()
         {
             _rightAppendPosition = _arguments.Count;
         }

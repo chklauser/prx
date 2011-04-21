@@ -6,12 +6,14 @@ namespace Prexonite.Compiler.Cil
     /// <summary>
     /// A cil hint. Can be serialized to a meta entry for storage.
     /// </summary>
+    [System.Diagnostics.CodeAnalysis.SuppressMessage("Microsoft.Naming", "CA1704:IdentifiersShouldBeSpelledCorrectly", MessageId = "Cil")]
     public interface ICilHint
     {
 
         /// <summary>
         /// The key under which this CIL hint is stored. This key is used to deserialize the hint into the correct format.
         /// </summary>
+        [System.Diagnostics.CodeAnalysis.SuppressMessage("Microsoft.Naming", "CA1704:IdentifiersShouldBeSpelledCorrectly", MessageId = "Cil")]
         string CilKey { get; }
 
         /// <summary>
@@ -21,6 +23,7 @@ namespace Prexonite.Compiler.Cil
         MetaEntry[] GetFields();
     }
 
+    [System.Diagnostics.CodeAnalysis.SuppressMessage("Microsoft.Naming", "CA1704:IdentifiersShouldBeSpelledCorrectly", MessageId = "Cil")]
     public static class CilHint
     {
         /// <summary>

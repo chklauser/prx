@@ -186,19 +186,19 @@ namespace Prexonite
 
         #region Initialization
 
-        private ApplicationInitializationState _initalizationState =
+        private ApplicationInitializationState _initializationState =
             ApplicationInitializationState.None;
 
         /// <summary>
         /// Provides readonly access to the application's <see cref="ApplicationInitializationState">initialization state</see>.
         /// <br />
-        /// The <see cref="InitalizationState"/> is only changed by the <see cref="Loader"/> or by <see cref="EnsureInitialization"/>.
+        /// The <see cref="InitializationState"/> is only changed by the <see cref="Loader"/> or by <see cref="EnsureInitialization"/>.
         /// </summary>
         /// <value>A <see cref="ApplicationInitializationState"/> that indicates the initialization state the application is currently in.</value>
-        public ApplicationInitializationState InitalizationState
+        public ApplicationInitializationState InitializationState
         {
-            get { return _initalizationState; }
-            internal set { _initalizationState = value; }
+            get { return _initializationState; }
+            internal set { _initializationState = value; }
         }
 
         private readonly PFunction _initializationFunction;
@@ -230,8 +230,8 @@ namespace Prexonite
         /// <returns>The initialization generation that is required to trigger initialization.</returns>
         internal int _RegisterInitializationUpdate()
         {
-            if (_initalizationState == ApplicationInitializationState.Complete)
-                _initalizationState = ApplicationInitializationState.Partial;
+            if (_initializationState == ApplicationInitializationState.Complete)
+                _initializationState = ApplicationInitializationState.Partial;
 
             return _initializationGeneration + 1;
         }
@@ -241,7 +241,7 @@ namespace Prexonite
         /// </summary>
         internal void _RequireInitialization()
         {
-            _initalizationState = ApplicationInitializationState.None;
+            _initializationState = ApplicationInitializationState.None;
         }
 
         /// <summary>
@@ -254,7 +254,7 @@ namespace Prexonite
         ///     <ul>
         ///         <list type="table">
         ///             <listheader>
-        ///                 <term><see cref="InitalizationState"/></term>
+        ///                 <term><see cref="InitializationState"/></term>
         ///                 <description>Behaviour</description>
         ///             </listheader>
         ///             <item>
@@ -280,7 +280,7 @@ namespace Prexonite
                 return;
             MetaEntry init;
             var generation = _initializationGeneration + 1;
-            switch (_initalizationState)
+            switch (_initializationState)
             {
                 case ApplicationInitializationState.None:
                     try
@@ -321,7 +321,7 @@ namespace Prexonite
                             _initializationFunction.Meta[InitializationOffset] =
                                 _initializationFunction.Code.Count.ToString();
                             _initializationGeneration = generation;
-                            _initalizationState = ApplicationInitializationState.Complete;
+                            _initializationState = ApplicationInitializationState.Complete;
                         }
                     }
                     finally
@@ -342,7 +342,7 @@ namespace Prexonite
                     break;
                 default:
                     throw new PrexoniteException(
-                        "Invalid InitializationState " + _initalizationState);
+                        "Invalid InitializationState " + _initializationState);
             }
         }
 
