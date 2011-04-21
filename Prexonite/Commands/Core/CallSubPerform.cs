@@ -47,7 +47,12 @@ namespace Prexonite.Commands.Core
             return RunStatically(sctx, fpv, iargs);
         }
 
-        public static PValue RunStatically(StackContext sctx, PValue fpv, PValue[] iargs, bool useIndirectCallAsFallback = false)
+        public static PValue RunStatically(StackContext sctx, PValue fpv, PValue[] iargs)
+        {
+            return RunStatically(sctx, fpv, iargs, false);
+        }
+
+        public static PValue RunStatically(StackContext sctx, PValue fpv, PValue[] iargs, bool useIndirectCallAsFallback)
         {
             IStackAware f;
             CilClosure cilClosure;

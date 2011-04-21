@@ -32,6 +32,7 @@ namespace Prexonite
     /// </summary>
     /// <seealso cref="PFunction"/>
     /// <seealso cref="FunctionContext"/>
+    [System.Diagnostics.CodeAnalysis.SuppressMessage("Microsoft.Naming", "CA1704:IdentifiersShouldBeSpelledCorrectly", MessageId = "Coroutine")]
     public class Coroutine : IEnumerable<PValue>,
                              IObject,
                              IIndirectCall

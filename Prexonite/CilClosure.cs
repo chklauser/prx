@@ -29,6 +29,7 @@ namespace Prexonite
     /// <summary>
     /// Represents a closure, a nested function bound to a set of shared variables.
     /// </summary>
+    [System.Diagnostics.CodeAnalysis.SuppressMessage("Microsoft.Naming", "CA1704:IdentifiersShouldBeSpelledCorrectly", MessageId = "Cil")]
     public sealed class CilClosure : IIndirectCall, IStackAware
     {
         #region Properties

@@ -14,6 +14,7 @@ namespace Prexonite.Commands
     /// <para>The implementation of this interface does not affect execution under the Prexonite VM.</para>
     /// <para>Currently only commands are checked for CIL extensions.</para>
     /// </summary>
+    [System.Diagnostics.CodeAnalysis.SuppressMessage("Microsoft.Naming", "CA1704:IdentifiersShouldBeSpelledCorrectly", MessageId = "Cil")]
     public interface ICilExtension
     {
         /// <summary>
@@ -247,7 +248,7 @@ namespace Prexonite.Commands
         /// </summary>
         /// <param name="value">If the conversion succeeds, <paramref name="value"/> is set to the converted boolean. Otherwise its value is undefined.</param>
         /// <returns>True if the conversion succeeded; false otherwise</returns>
-        public bool TryGetBool(out bool value)
+        public bool TryGetBool(out Boolean value)
         {
             var b = Value as bool?;
             value = b.GetValueOrDefault();

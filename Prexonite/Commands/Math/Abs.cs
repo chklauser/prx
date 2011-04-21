@@ -31,7 +31,7 @@ using Prexonite.Types;
 
 namespace Prexonite.Commands.Math
 {
-    public class Abs : PCommand, ICilCompilerAware
+    public sealed class Abs : PCommand, ICilCompilerAware
     {
         #region Singleton
 
@@ -119,6 +119,8 @@ namespace Prexonite.Commands.Math
         /// <returns>A set of <see cref="CompilationFlags"/>.</returns>
         CompilationFlags ICilCompilerAware.CheckQualification(Instruction ins)
         {
+            if (ins == null)
+                throw new ArgumentNullException("ins");
             switch (ins.Arguments)
             {
                 case 1:
@@ -139,6 +141,9 @@ namespace Prexonite.Commands.Math
         /// <param name="ins">The instruction to compile.</param>
         void ICilCompilerAware.ImplementInCil(CompilerState state, Instruction ins)
         {
+            if (ins == null)
+                throw new ArgumentNullException("ins");
+
             switch (ins.Arguments)
             {
                 case 1:

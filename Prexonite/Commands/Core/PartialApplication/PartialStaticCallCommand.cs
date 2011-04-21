@@ -18,7 +18,7 @@ namespace Prexonite.Commands.Core.PartialApplication
 
         private ConstructorInfo _partialStaticCallCtor;
 
-        protected override ConstructorInfo GetConstructorCtor(StaticCallInfo pTypeInfo)
+        protected override ConstructorInfo GetConstructorCtor(StaticCallInfo parameter)
         {
             return _partialStaticCallCtor ??
                    (_partialStaticCallCtor =

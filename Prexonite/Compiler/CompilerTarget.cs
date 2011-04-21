@@ -179,6 +179,7 @@ namespace Prexonite.Compiler
         /// <summary>
         /// The boolean compiler meta key indicates that a function is part of the compiler and might not work outside of the original loader environment.
         /// </summary>
+        [System.Diagnostics.CodeAnalysis.SuppressMessage("Microsoft.Naming", "CA1704:IdentifiersShouldBeSpelledCorrectly", MessageId = "Metakey")]
         public const string CompilerMetakey = "compiler";
 
         private class ProvidedValue : IIndirectCall

@@ -4,6 +4,7 @@ using System.Text;
 
 namespace Prexonite.Commands
 {
+    [System.Diagnostics.CodeAnalysis.SuppressMessage("Microsoft.Naming", "CA1704:IdentifiersShouldBeSpelledCorrectly", MessageId = "Coroutine")]
     public abstract class CoroutineCommand : PCommand
     {
         /// <summary>
@@ -25,6 +26,7 @@ namespace Prexonite.Commands
             return sctx.CreateNativePValue(new Coroutine(corctx));
         }
 
+        [System.Diagnostics.CodeAnalysis.SuppressMessage("Microsoft.Naming", "CA1704:IdentifiersShouldBeSpelledCorrectly", MessageId = "Coroutine")]
         protected abstract IEnumerable<PValue> CoroutineRun(ContextCarrier sctxCarrier, PValue[] args);
 
         public sealed class ContextCarrier

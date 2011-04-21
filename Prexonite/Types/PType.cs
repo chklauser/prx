@@ -369,13 +369,13 @@ namespace Prexonite.Types
         public abstract bool TryStaticCall(
             StackContext sctx, PValue[] args, PCall call, string id, out PValue result);
 
-        public abstract bool TryContruct(StackContext sctx, PValue[] args, out PValue result);
+        public abstract bool TryConstruct(StackContext sctx, PValue[] args, out PValue result);
 
         [DebuggerStepThrough]
         public virtual PValue Construct(StackContext sctx, PValue[] args)
         {
             PValue result;
-            if (TryContruct(sctx, args, out result))
+            if (TryConstruct(sctx, args, out result))
                 return result;
             else
             {
@@ -1261,7 +1261,7 @@ namespace Prexonite.Types
             if (Engine.StringsAreEqual(id, ConstructFromStackId))
             {
                 //Try calling the constructor
-                if (!TryContruct(sctx, args, out result))
+                if (!TryConstruct(sctx, args, out result))
                     result = null;
             } 
             else if(Engine.StringsAreEqual(id, StaticCallFromStackId))

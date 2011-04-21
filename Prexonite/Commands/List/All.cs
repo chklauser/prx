@@ -31,7 +31,7 @@ namespace Prexonite.Commands.List
     /// <summary>
     /// Implementation of the all command.
     /// </summary>
-    public class All : PCommand, ICilCompilerAware
+    public sealed class All : PCommand, ICilCompilerAware
     {
         #region Singleton
 

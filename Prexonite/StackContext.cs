@@ -49,7 +49,7 @@ namespace Prexonite
         /// Indicates whether the context still has code/work to do.
         /// </summary>
         /// <returns>True if the context has additional work to perform in the next cycle, False if it has finished it's work and can be removed from the stack</returns>
-        protected abstract bool PerformNextCylce(StackContext lastContext);
+        protected abstract bool PerformNextCycle(StackContext lastContext);
 
         /// <summary>
         /// Tries to handle the supplied exception.
@@ -60,7 +60,7 @@ namespace Prexonite
 
         internal bool NextCylce(StackContext lastContext)
         {
-            return PerformNextCylce(lastContext);
+            return PerformNextCycle(lastContext);
         }
 
         /// <summary>
@@ -135,6 +135,7 @@ namespace Prexonite
         /// </summary>
         /// <param name="obj">The object to be represented.</param>
         /// <returns>A PValue containing the supplied object with an appropriate type.</returns>
+        [System.Diagnostics.CodeAnalysis.SuppressMessage("Microsoft.Naming", "CA1720:IdentifiersShouldNotContainTypeNames", MessageId = "obj")]
         public PValue CreateNativePValue(object obj)
         {
             return ParentEngine.CreateNativePValue(obj);

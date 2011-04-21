@@ -38,6 +38,7 @@ using CilException = Prexonite.PrexoniteException;
 namespace Prexonite.Compiler.Cil
 {
 
+    [System.Diagnostics.CodeAnalysis.SuppressMessage("Microsoft.Naming", "CA1724:TypeNamesShouldNotMatchNamespaces")]
     public static class Compiler
     {
         #region Public interface and LCG Setup
@@ -212,7 +213,7 @@ namespace Prexonite.Compiler.Cil
                 _compile(func, pass.GetIlGenerator(func.Id), targetEngine, pass, linking);
             }
 
-            pass.Type.CreateType();
+            pass.TargetType.CreateType();
 
             pass.Assembly.Save(pass.Assembly.GetName().Name + ".dll");
         }
@@ -228,7 +229,7 @@ namespace Prexonite.Compiler.Cil
 
             _compile(func, il, targetEngine, pass, linking);
 
-            pass.Type.CreateType();
+            pass.TargetType.CreateType();
 
             //var sm = tb.DefineMethod("whoop", MethodAttributes.Static | MethodAttributes.Public);
 
@@ -1048,7 +1049,7 @@ namespace Prexonite.Compiler.Cil
                         state.EmitLoadEngRefAsPValue();
                         break;
                     case OpCode.ldr_type:
-                        state.EmityPTypeAsPValue(id);
+                        state.EmitPTypeAsPValue(id);
                         break;
 
                         #endregion //LOAD REFERENCE
@@ -1931,6 +1932,7 @@ namespace Prexonite.Compiler.Cil
         /// </summary>
         /// <param name="target"></param>
         /// <param name="newHint"></param>
+        [System.Diagnostics.CodeAnalysis.SuppressMessage("Microsoft.Naming", "CA1704:IdentifiersShouldBeSpelledCorrectly", MessageId = "Cil")]
         public static void SetCilHint(IHasMetaTable target, ICilHint newHint)
         {
             MetaEntry cilHints;
@@ -1997,6 +1999,7 @@ namespace Prexonite.Compiler.Cil
         /// </summary>
         /// <param name="target">The meta table to add the CIL hint to</param>
         /// <param name="hint">The CIL hint to add</param>
+        [System.Diagnostics.CodeAnalysis.SuppressMessage("Microsoft.Naming", "CA1704:IdentifiersShouldBeSpelledCorrectly", MessageId = "Cil")]
         public static void AddCilHint(IHasMetaTable target, ICilHint hint)
         {
             if (target.Meta.ContainsKey(Loader.CilHintsKey))

@@ -8,6 +8,7 @@ namespace Prexonite.Compiler.Cil
     /// <summary>
     /// Wraps a cil extension hint. Should replace existing hints of the same kind.
     /// </summary>
+    [System.Diagnostics.CodeAnalysis.SuppressMessage("Microsoft.Naming", "CA1704:IdentifiersShouldBeSpelledCorrectly", MessageId = "Cil")]
     public class CilExtensionHint : ICilHint
     {
         /// <summary>

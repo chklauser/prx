@@ -186,9 +186,9 @@ namespace Prexonite
                 throw new NotSupportedException("Dependency analysis groups cannot be modified.");
             }
 
-            public bool Contains(Node value)
+            public bool Contains(Node item)
             {
-                return _list.Contains(value);
+                return _list.Contains(item);
             }
 
             #region Implementation of IEnumerable

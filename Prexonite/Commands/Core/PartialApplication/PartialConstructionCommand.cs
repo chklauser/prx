@@ -33,12 +33,12 @@ namespace Prexonite.Commands.Core.PartialApplication
             return new PartialConstruction(mappings, closedArguments, parameter.Type);
         }
 
-        protected override ConstructorInfo GetConstructorCtor(PTypeInfo pTypeInfo)
+        protected override ConstructorInfo GetConstructorCtor(PTypeInfo parameter)
         {
             return (_ptypeConstructCtor
                     ??
                     (_ptypeConstructCtor =
-                     GetPartialCallRepresentationType(pTypeInfo).GetConstructor(
+                     GetPartialCallRepresentationType(parameter).GetConstructor(
                          new[] { typeof(int[]), typeof(PValue[]), typeof(PType) })));
         }
 

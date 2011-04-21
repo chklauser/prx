@@ -311,7 +311,7 @@ namespace Prexonite.Types
         /// <param name="args">An array of arguments. Ignored in the current implementation.</param>
         /// <param name="result">The out parameter that holds the resulting PValue.</param>
         /// <returns>True if the construction was successful; false otherwise.</returns>
-        public override bool TryContruct(StackContext sctx, PValue[] args, out PValue result)
+        public override bool TryConstruct(StackContext sctx, PValue[] args, out PValue result)
         {
             result = new PValue(new SymbolTable<Member>(), this);
             return true;

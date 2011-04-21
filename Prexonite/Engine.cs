@@ -803,7 +803,7 @@ namespace Prexonite
             Commands.AddEngineCommand(PartialConstructionAlias, PartialConstructionCommand.Instance);
 
             Commands.AddEngineCommand(PartialTypeCheckAlias, PartialTypeCheckCommand.Instance);
-            Commands.AddEngineCommand(PartialTypeCastAlias, PartialTypeCastCommand.Instance);
+            Commands.AddEngineCommand(PartialTypeCastAlias, PartialTypecastCommand.Instance);
             Commands.AddEngineCommand(PartialStaticCallAlias, PartialStaticCallCommand.Instance);
             Commands.AddEngineCommand(FunctionalPartialCallCommand.Alias, FunctionalPartialCallCommand.Instance);
             Commands.AddEngineCommand(FlippedFunctionalPartialCallCommand.Alias, FlippedFunctionalPartialCallCommand.Instance);
@@ -1101,6 +1101,7 @@ namespace Prexonite
         /// <summary>
         /// Alias used for the CompileToCil command.
         /// </summary>
+        [System.Diagnostics.CodeAnalysis.SuppressMessage("Microsoft.Naming", "CA1704:IdentifiersShouldBeSpelledCorrectly", MessageId = "Cil")]
         public const string CompileToCilAlias = "CompileToCil";
 
         /// <summary>

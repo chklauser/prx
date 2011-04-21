@@ -2,6 +2,7 @@ using System.Collections.Generic;
 
 namespace Prexonite.Compiler.Ast
 {
+    [System.Diagnostics.CodeAnalysis.SuppressMessage("Microsoft.Naming", "CA1704:IdentifiersShouldBeSpelledCorrectly", MessageId = "Coroutine")]
     public class AstCreateCoroutine : AstNode,
                                       IAstExpression,
                                       IAstHasExpressions

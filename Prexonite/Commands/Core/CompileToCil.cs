@@ -27,6 +27,7 @@ using Prexonite.Types;
 
 namespace Prexonite.Commands.Core
 {
+    [System.Diagnostics.CodeAnalysis.SuppressMessage("Microsoft.Naming", "CA1704:IdentifiersShouldBeSpelledCorrectly", MessageId = "Cil")]
     public class CompileToCil : PCommand, ICilCompilerAware
     {
         #region Singleton

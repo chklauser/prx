@@ -10,3 +10,4 @@ Prexonite/Parser.cs
 Prexonite/Scanner.cs
 *.*.orig
 *.*.rej
+*.csproj.user

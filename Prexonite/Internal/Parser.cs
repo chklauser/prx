@@ -4,7 +4,7 @@ using Prexonite.Types;
 using FatalError = Prexonite.Compiler.FatalCompilerException;//END SOURCE ARRAY
 
 
-#line 27 "D:\DotNetProjects\Prexonite\Tools\Parser.frame" //FRAME
+#line 27 "D:\DotNetProjects\Prexonite-Hg\prx-assembla-hg\Tools\Parser.frame" //FRAME
 
 using System;
 
@@ -14,7 +14,7 @@ using System;
 namespace Prexonite.Internal {
 
 
-#line 30 "D:\DotNetProjects\Prexonite\Tools\Parser.frame" //FRAME
+#line 30 "D:\DotNetProjects\Prexonite-Hg\prx-assembla-hg\Tools\Parser.frame" //FRAME
 
 
 using NoDebug = System.Diagnostics.DebuggerNonUserCodeAttribute;
@@ -27,6 +27,7 @@ internal interface IScanner
     string File { get; }
 }
 
+[System.Runtime.CompilerServices.CompilerGenerated]
 internal partial class Parser {
 
 #line default //END FRAME -->constants
@@ -52,7 +53,7 @@ internal partial class Parser {
 	}
 	const int maxT = 11;
 
-#line 43 "D:\DotNetProjects\Prexonite\Tools\Parser.frame" //FRAME
+#line 44 "D:\DotNetProjects\Prexonite-Hg\prx-assembla-hg\Tools\Parser.frame" //FRAME
 
 	const bool T = true;
 	const bool x = false;
@@ -71,7 +72,7 @@ internal partial class Parser {
 //SOURCE ARRAY
 //END SOURCE ARRAY
 
-#line 55 "D:\DotNetProjects\Prexonite\Tools\Parser.frame" //FRAME
+#line 56 "D:\DotNetProjects\Prexonite-Hg\prx-assembla-hg\Tools\Parser.frame" //FRAME
 
 
     [NoDebug()]
@@ -103,7 +104,7 @@ internal partial class Parser {
 #line default //END FRAME -->pragmas
 
 
-#line 82 "D:\DotNetProjects\Prexonite\Tools\Parser.frame" //FRAME
+#line 83 "D:\DotNetProjects\Prexonite-Hg\prx-assembla-hg\Tools\Parser.frame" //FRAME
 
 			la = t;
 		}
@@ -236,7 +237,7 @@ internal partial class Parser {
 	}
 
 
-#line 121 "D:\DotNetProjects\Prexonite\Tools\Parser.frame" //FRAME
+#line 122 "D:\DotNetProjects\Prexonite-Hg\prx-assembla-hg\Tools\Parser.frame" //FRAME
 
 
 	public void Parse() {
@@ -248,7 +249,7 @@ internal partial class Parser {
 
 		PTypeExpression();
 
-#line 127 "D:\DotNetProjects\Prexonite\Tools\Parser.frame" //FRAME
+#line 128 "D:\DotNetProjects\Prexonite-Hg\prx-assembla-hg\Tools\Parser.frame" //FRAME
 
     Expect(0);
 	}
@@ -261,7 +262,7 @@ internal partial class Parser {
 		{x,T,T,T, T,T,T,T, x,x,x,x, x},
 		{x,x,x,x, x,x,x,x, x,x,T,x, x}
 
-#line 132 "D:\DotNetProjects\Prexonite\Tools\Parser.frame" //FRAME
+#line 133 "D:\DotNetProjects\Prexonite-Hg\prx-assembla-hg\Tools\Parser.frame" //FRAME
 
 	};
 } // end Parser
@@ -376,7 +377,7 @@ internal class Errors : System.Collections.Generic.LinkedList<ParseMessage> {
 			case 12: s = "invalid Expr"; break;
 			case 13: s = "invalid Boolean"; break;
 
-#line 228 "D:\DotNetProjects\Prexonite\Tools\Parser.frame" //FRAME
+#line 229 "D:\DotNetProjects\Prexonite-Hg\prx-assembla-hg\Tools\Parser.frame" //FRAME
 
 			default: s = "error " + n; break;
 		}

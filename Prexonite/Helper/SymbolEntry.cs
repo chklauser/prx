@@ -109,6 +109,7 @@ namespace Prexonite.Compiler
         }
     }
 
+    [System.Diagnostics.CodeAnalysis.SuppressMessage("Microsoft.Naming", "CA1717:OnlyFlagsEnumsShouldHavePluralNames")]
     public enum SymbolInterpretations
     {
         Undefined = -1,
