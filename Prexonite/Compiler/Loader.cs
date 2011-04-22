@@ -802,7 +802,7 @@ namespace Prexonite.Compiler
 
         #region Build Block Commands
 
-        private bool _buildCommandsEnabled;
+        private readonly Stack<object> _buildCommandsRequests = new Stack<object>();
 
         public CommandTable BuildCommands
         {
@@ -811,19 +811,33 @@ namespace Prexonite.Compiler
 
         private readonly CommandTable _buildCommands = new CommandTable();
 
-        public bool BuildCommandsEnabled
+        /// <summary>
+        /// Request that build commands be added to the <see cref="ParentEngine"/>. Must be matched with a call to <see cref="ReleaseBuildCommands"/>.
+        /// </summary>
+        /// <returns>A unique token that must be passed to <see cref="ReleaseBuildCommands"/></returns>
+        public object RequestBuildCommands()
         {
-            get { return _buildCommandsEnabled; }
-            set
-            {
-                if (value != _buildCommandsEnabled)
-                    if (value)
-                        _enableBuildCommands();
-                    else
-                        _disableBuildBlockCommands();
+            if(_buildCommandsRequests.Count == 0)
+                _enableBuildCommands();
+            var token = new object();
+            _buildCommandsRequests.Push(token);
+            Debug.Assert(_buildCommandsRequests.Count > 0);
+            return token;
+        }
 
-                _buildCommandsEnabled = value;
-            }
+        /// <summary>
+        /// Notifies the loader that a caller of <see cref="RequestBuildCommands"/> no longer requires build commands.
+        /// </summary>
+        /// <param name="token">The token returned from the corresponding call to <see cref="RequestBuildCommands"/></param>
+        public void ReleaseBuildCommands(object token)
+        {
+            if (_buildCommandsRequests.Count <= 0 || !ReferenceEquals(_buildCommandsRequests.Peek(),token))
+                throw new InvalidOperationException(
+                    "Cannot release build commands more often than they were requested.");
+            _buildCommandsRequests.Pop();
+            
+            if(_buildCommandsRequests.Count == 0)
+                _disableBuildBlockCommands();
         }
 
         /// <summary>

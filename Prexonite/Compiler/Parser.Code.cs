@@ -638,6 +638,44 @@ namespace Prexonite.Compiler
                                            .ToArray();
         }
 
+        private void _compileAndExecuteBuildBlock(CompilerTarget buildBlockTarget)
+        {
+            if (errors.count > 0)
+            {
+                SemErr("Cannot execute build block. Errors detected");
+                return;
+            }
+
+            //Emit code for top-level build block
+            try
+            {
+                buildBlockTarget.Ast.EmitCode(buildBlockTarget, true);
+
+                buildBlockTarget.Function.Meta["File"] = scanner.File;
+                buildBlockTarget.FinishTarget();
+                //Run the build block 
+                var fctx = buildBlockTarget.Function.CreateFunctionContext(ParentEngine, new PValue[] {},
+                                                                 new PVariable[] {}, true);
+                object token = null;
+                try
+                {
+                    TargetApplication._SuppressInitialization = true;
+                    token = Loader.RequestBuildCommands();
+                    ParentEngine.Process(fctx);
+                }
+                finally
+                {
+                    if(token != null)
+                        Loader.ReleaseBuildCommands(token);
+                    TargetApplication._SuppressInitialization = false;
+                }
+            }
+            catch (Exception e)
+            {
+                SemErr("Exception during compilation and execution of build block.\n" + e);
+            }
+        }
+
         #region Assembler
 
         [DebuggerStepThrough]

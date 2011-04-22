@@ -203,7 +203,8 @@ BuildBlock
 =
 	SYNC build                  (.  PFunction func = new PFunction(TargetApplication);
                                     CompilerTarget lastTarget = target; 
-                                    target = Loader.CreateFunctionTarget(func, new AstBlock(this));
+                                    CompilerTarget buildBlockTarget = Loader.CreateFunctionTarget(func, new AstBlock(this));
+                                    target = buildBlockTarget;
                                     Loader.DeclareBuildBlockCommands(target);
                                     _pushLexerState(Lexer.Local);                                
                                 .)
@@ -212,37 +213,9 @@ BuildBlock
 	StatementBlock<target.Ast>
 	
                                 (.  
-	                                _popLexerState();
-                                    if(errors.count > 0)
-                                    {
-                                        SemErr("Cannot execute build block. Errors detected");
-                                        return;
-                                    }
-                                    
-                                    //Emit code for top-level build block
-                                    try {
-                                        target.Ast.EmitCode(target, true);
-                                    
-                                        target.Function.Meta["File"] = scanner.File;
-                                        target.FinishTarget();	                                
-                                        target = lastTarget;
-                                        //Run the build block 
-                                        FunctionContext fctx = func.CreateFunctionContext(ParentEngine, new PValue[] {}, new PVariable[] {}, true);
-                                    
-                                        try
-                                        {
-                                            TargetApplication._SuppressInitialization = true;
-                                            Loader.BuildCommandsEnabled = true;
-                                            ParentEngine.Process(fctx);
-                                        }
-                                        finally
-                                        {
-                                            Loader.BuildCommandsEnabled = false;
-                                            TargetApplication._SuppressInitialization = false;
-                                        }
-                                    } catch(Exception e) {
-                                        SemErr("Exception during compilation and execution of build block.\n" + e.ToString());
-                                    }
+	                                _popLexerState();                                    
+                                    target = lastTarget;
+                                    _compileAndExecuteBuildBlock(buildBlockTarget);
 	                            .)
 .
 
