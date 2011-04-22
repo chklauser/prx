@@ -99,6 +99,9 @@
     <Compile Include="Tests\Compiler.cs" />
     <Compile Include="Tests\Compiler.Global.cs" />
     <Compile Include="Tests\Compiler.Parser.cs" />
+    <Compile Include="Tests\VMTests.Macro.cs" />
+    <Compile Include="Tests\VMTests.Exception.cs" />
+    <Compile Include="Tests\VMTests.Commands.cs" />
     <Compile Include="Tests\Lazy.cs" />
     <Compile Include="Tests\PartialApplication.cs" />
     <Compile Include="Tests\RandomAccessQueue.cs" />
@@ -106,6 +109,7 @@
     <Compile Include="Tests\TestObject.cs" />
     <Compile Include="Tests\TestStackContext.cs" />
     <Compile Include="Tests\TypeSystem.cs" />
+    <Compile Include="Tests\VMTests.Basic.cs" />
     <Compile Include="Tests\VMTests.cs" />
     <Compile Include="Tests\VMTestsBase.cs" />
     <Compile Include="Tests\VMTestsCILStaticallyLinked.cs" />

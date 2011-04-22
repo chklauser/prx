@@ -21,6 +21,7 @@ namespace Prexonite.Compiler.Macro
         private readonly SymbolCollection _releaseList = new SymbolCollection();
         private readonly SymbolCollection _allocationList = new SymbolCollection();
         private readonly HashSet<AstMacroInvocation> _invocations = new HashSet<AstMacroInvocation>();
+        private object _buildCommandToken;
 
         /// <summary>
         /// Creates a new macro expansion session for the specified compiler target.
@@ -34,6 +35,8 @@ namespace Prexonite.Compiler.Macro
             _localSymbols = new ReadOnlyDictionaryView<string, SymbolEntry>(_target.Symbols);
             _globalSymbols = new ReadOnlyDictionaryView<string, SymbolEntry>(_target.Loader.Symbols);
             _outerVariables = new ReadOnlyCollectionView<string>(_target.OuterVariables);
+
+            _buildCommandToken = target.Loader.RequestBuildCommands();
         }
 
         /// <summary>
@@ -123,16 +126,30 @@ namespace Prexonite.Compiler.Macro
         public void Dispose()
         {
             //Free all variables that were marked as free during the session.
-            foreach (var temp in _releaseList)
+            if (_target != null)
             {
-                _target.FreeTemporaryVariable(temp);
-                _allocationList.Remove(temp);
-            }
+                try
+                {
+                    if (_releaseList != null)
+                        foreach (var temp in _releaseList)
+                        {
+                            _target.FreeTemporaryVariable(temp);
+                            _allocationList.Remove(temp);
+                        }
 
-            //Remove those that weren't freed to persistent variables
-            foreach (var temp in _allocationList)
-            {
-                _target.PromoteTemporaryVariable(temp);
+                    //Remove those that weren't freed to persistent variables
+                    if (_allocationList != null)
+                        foreach (var temp in _allocationList)
+                        {
+                            _target.PromoteTemporaryVariable(temp);
+                        }
+                }
+                finally
+                {
+                    var ldr = Target.Loader;
+                    if (_buildCommandToken != null && ldr != null)
+                        ldr.ReleaseBuildCommands(_buildCommandToken);
+                }
             }
         }
 

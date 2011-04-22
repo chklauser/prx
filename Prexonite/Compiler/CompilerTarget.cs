@@ -78,7 +78,10 @@ namespace Prexonite.Compiler
         private readonly Loader _loader;
         private readonly SymbolTable<SymbolEntry> _symbols = new SymbolTable<SymbolEntry>();
         private CompilerTarget _parentTarget;
-        private MacroSession _currentMacroSession;
+
+        #region Macro sessions
+
+        private MacroSession _macroSession;
         private int _macroSessionReferenceCounter;
 
         /// <summary>
@@ -89,7 +92,7 @@ namespace Prexonite.Compiler
         {
             _macroSessionReferenceCounter++;
             Debug.Assert(_macroSessionReferenceCounter > 0);
-            return _currentMacroSession ?? (_currentMacroSession = new MacroSession(this));
+            return _macroSession ?? (_macroSession = new MacroSession(this));
         }
 
         /// <summary>
@@ -98,19 +101,22 @@ namespace Prexonite.Compiler
         /// <param name="acquiredSession">A session previously acquired through <see cref="AcquireMacroSession"/>.</param>
         public void ReleaseMacroSession(MacroSession acquiredSession)
         {
-            if (_currentMacroSession != acquiredSession)
+            if (_macroSession != acquiredSession)
                 throw new InvalidOperationException(
                     "Invalid call to CompilerTarget.ReleaseMacroSession. Trying to release macro session that doesn't match.");
             _macroSessionReferenceCounter--;
             if (_macroSessionReferenceCounter <= 0)
             {
-                _currentMacroSession.Dispose();
-                _currentMacroSession = null;
+                _macroSession.Dispose();
+                _macroSession = null;
             }
 
             Debug.Assert(_macroSessionReferenceCounter >= 0);
-            Debug.Assert(_macroSessionReferenceCounter != 0 || _currentMacroSession != null);
+            Debug.Assert(_macroSessionReferenceCounter != 0 || _macroSession != null);
         }
+
+        #endregion
+
 
         public Loader Loader
         {

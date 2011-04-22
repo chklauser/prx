@@ -520,7 +520,7 @@ namespace Prexonite.Compiler
             _addMacroCommand(Macro.Commands.CallSubInterpret.Instance);
             _addMacroCommand(Macro.Commands.CallMacro.Instance);
             foreach (var helperCommand in Macro.Commands.CallMacro.GetHelperCommands(this))
-                ParentEngine.Commands.AddEngineCommand(helperCommand.Key, helperCommand.Value);
+                _buildCommands.AddCompilerCommand(helperCommand.Key, helperCommand.Value);
         }
 
         private void _addMacroCommand(MacroCommand macroCommand)
