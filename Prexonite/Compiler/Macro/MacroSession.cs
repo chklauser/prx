@@ -125,7 +125,7 @@ namespace Prexonite.Compiler.Macro
             //Free all variables that were marked as free during the session.
             foreach (var temp in _releaseList)
             {
-                _target.ReleaseTemporaryVariable(temp);
+                _target.FreeTemporaryVariable(temp);
                 _allocationList.Remove(temp);
             }
 

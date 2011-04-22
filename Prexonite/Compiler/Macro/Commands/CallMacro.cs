@@ -93,12 +93,25 @@ namespace Prexonite.Compiler.Macro.Commands
                 inv.Arguments.AddRange(argList.Select(p => (IAstExpression) p.Value));
                 inv.Call = call;
 
-                var macroSession = target.CurrentMacroSession;
-
                 return
                     CompilerTarget.CreateFunctionValue(
                         (callSite, _) =>
-                        callSite.CreateNativePValue(macroSession.ExpandMacro(inv, justEffect)));
+                            {
+                                MacroSession macroSession = null;
+
+                                try
+                                {
+                                    macroSession = target.AcquireMacroSession();
+
+                                    return callSite.CreateNativePValue(
+                                        macroSession.ExpandMacro(inv, justEffect));
+                                }
+                                finally
+                                {
+                                    if(macroSession != null)
+                                        target.ReleaseMacroSession(macroSession);
+                                }
+                            });
             }
 
             #endregion

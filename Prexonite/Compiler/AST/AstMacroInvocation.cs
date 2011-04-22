@@ -53,12 +53,11 @@ namespace Prexonite.Compiler.Ast
         {
             //instantiate macro for the current target
             MacroSession session = null;
-            var isTopLevel = target.CurrentMacroSession == null;
-            
+
             try
             {
                 //Acquire current macro session
-                session = target.CurrentMacroSession = target.CurrentMacroSession ?? new MacroSession(target);
+                session = target.AcquireMacroSession();
 
                 //Expand macro
                 var node = session.ExpandMacro(this, justEffect);
@@ -72,13 +71,8 @@ namespace Prexonite.Compiler.Ast
             }
             finally
             {
-                if (isTopLevel)
-                {
-                    if (session != null)
-                        session.Dispose();
-                    Debug.Assert(target.CurrentMacroSession == session);
-                    target.CurrentMacroSession = null;
-                }
+                if (session != null)
+                    target.ReleaseMacroSession(session);
             }
         }
 

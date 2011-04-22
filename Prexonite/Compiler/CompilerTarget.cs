@@ -78,7 +78,39 @@ namespace Prexonite.Compiler
         private readonly Loader _loader;
         private readonly SymbolTable<SymbolEntry> _symbols = new SymbolTable<SymbolEntry>();
         private CompilerTarget _parentTarget;
-        public MacroSession CurrentMacroSession { get; set; }
+        private MacroSession _currentMacroSession;
+        private int _macroSessionReferenceCounter;
+
+        /// <summary>
+        /// Returns the current macro session, or creates one if necessary. Must always be paired with a call to <see cref="ReleaseMacroSession"/>. Do not call <see cref="MacroSession.Dispose"/>.
+        /// </summary>
+        /// <returns>The current macro session.</returns>
+        public MacroSession AcquireMacroSession()
+        {
+            _macroSessionReferenceCounter++;
+            Debug.Assert(_macroSessionReferenceCounter > 0);
+            return _currentMacroSession ?? (_currentMacroSession = new MacroSession(this));
+        }
+
+        /// <summary>
+        /// Releases the macro session acquired via <see cref="AcquireMacroSession"/>. Will dispose of the session, if no other release is pending.
+        /// </summary>
+        /// <param name="acquiredSession">A session previously acquired through <see cref="AcquireMacroSession"/>.</param>
+        public void ReleaseMacroSession(MacroSession acquiredSession)
+        {
+            if (_currentMacroSession != acquiredSession)
+                throw new InvalidOperationException(
+                    "Invalid call to CompilerTarget.ReleaseMacroSession. Trying to release macro session that doesn't match.");
+            _macroSessionReferenceCounter--;
+            if (_macroSessionReferenceCounter <= 0)
+            {
+                _currentMacroSession.Dispose();
+                _currentMacroSession = null;
+            }
+
+            Debug.Assert(_macroSessionReferenceCounter >= 0);
+            Debug.Assert(_macroSessionReferenceCounter != 0 || _currentMacroSession != null);
+        }
 
         public Loader Loader
         {
@@ -244,7 +276,7 @@ namespace Prexonite.Compiler
             return temp;
         }
 
-        public void ReleaseTemporaryVariable(string temporaryVariableId)
+        public void FreeTemporaryVariable(string temporaryVariableId)
         {
             if (!_usedTemporaryVariables.Contains(temporaryVariableId))
                 throw new PrexoniteException("The variable " + temporaryVariableId + " is not a temporary variable managed by " + this);
