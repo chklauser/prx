@@ -372,18 +372,6 @@ function macro\_extract_id(prototype)[is compiler;]
         return prototype.Id;
 }
 
-macro macro\reference(prototype)
-{
-    if(context.IsJustEffect)
-        return;
-    
-    var id = macro\_extract_id(prototype);    
-    var ldrfunc = new Prexonite::Instruction(Prexonite::OpCode.ldr_func,id);
-    
-    context.SuppressDefaultExpression = true;
-    return ast("AsmInstruction",ldrfunc);
-}
-
 macro macro\id(prototype)
 {
     if(context.IsJustEffect)
