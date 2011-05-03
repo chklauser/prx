@@ -23,8 +23,8 @@
 
 using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using Prexonite.Types;
-using NoDebug = System.Diagnostics.DebuggerNonUserCodeAttribute;
 
 namespace Prexonite
 {
@@ -40,7 +40,7 @@ namespace Prexonite
     ///     Also, variable references are just references to the PVariable objects applications or functions.
     /// </para>
     /// </remarks>
-    [NoDebug()]
+    [DebuggerStepThrough]
     public sealed class PVariable : IMetaFilter,
                                     IHasMetaTable,
                                     IIndirectCall
@@ -73,7 +73,7 @@ namespace Prexonite
         public PValue Value
         {
             get { return _value ?? PType.Null.CreatePValue(); }
-            set { this._value = value; }
+            set { _value = value; }
         }
 
         #region IMetaFilter Members

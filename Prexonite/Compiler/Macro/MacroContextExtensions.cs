@@ -41,6 +41,11 @@ namespace Prexonite.Compiler.Macro
 
         public static IAstExpression ToExpression(this PCall call, MacroContext context)
         {
+            return ToExpression(call, context.Invocation);
+        }
+
+        public static IAstExpression ToExpression(this PCall call, ISourcePosition position)
+        {
             string member;
             switch (call)
             {
@@ -54,30 +59,44 @@ namespace Prexonite.Compiler.Macro
                     throw new ArgumentOutOfRangeException("call");
             }
 
-            var pcallT = new AstConstantTypeExpression(context.Invocation.File,
-                                                       context.Invocation.Line,
-                                                       context.Invocation.Column,
+            var pcallT = new AstConstantTypeExpression(position.File,
+                                                       position.Line,
+                                                       position.Column,
                                                        PType.Object[typeof (PCall)].ToString());
-            return new AstGetSetStatic(context.Invocation.File, context.Invocation.Line,
-                                       context.Invocation.Column, PCall.Get, pcallT, member);
+            return new AstGetSetStatic(position.File, position.Line,
+                                       position.Column, PCall.Get, pcallT, member);
         }
 
         public static IAstExpression ToExpression(this SymbolInterpretations interpretation, MacroContext context)
         {
-            var member = Enum.GetName(typeof (SymbolInterpretations), interpretation);
-            var pcallT = new AstConstantTypeExpression(context.Invocation.File,
-                                                       context.Invocation.Line,
-                                                       context.Invocation.Column,
-                                                       PType.Object[typeof(SymbolInterpretations)].ToString());
-            return new AstGetSetStatic(context.Invocation.File, context.Invocation.Line,
-                                       context.Invocation.Column, PCall.Get, pcallT, member);
+            return ToExpression(interpretation, context.Invocation);
         }
 
+        public static IAstExpression ToExpression(this SymbolInterpretations interpretation, ISourcePosition position)
+        {
+            var member = Enum.GetName(typeof (SymbolInterpretations), interpretation);
+            var pcallT = new AstConstantTypeExpression(position.File,
+                                                       position.Line,
+                                                       position.Column,
+                                                       PType.Object[typeof(SymbolInterpretations)].ToString());
+            return new AstGetSetStatic(position.File, position.Line,
+                                       position.Column, PCall.Get, pcallT, member);
+        }
+
+        /// <summary>
+        /// Determines whether the "caller" of this macro is a macro itself.
+        /// </summary>
+        /// <param name="context"></param>
+        /// <returns></returns>
         public static bool CallerIsMacro(this MacroContext context)
         {
             return context.Function.IsMacro || context.GetParentFunctions().Any(f => f.IsMacro);
         }
 
+        /// <summary>
+        /// Ensures that the macro is expanded in another macro, i.e. that the macro context variable is available. 
+        /// </summary>
+        /// <param name="context">The context of this macro expansion.</param>
         public static void EstablishMacroContext(this MacroContext context)
         {
             if(!CallerIsMacro(context))

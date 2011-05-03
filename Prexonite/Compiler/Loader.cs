@@ -519,7 +519,15 @@ namespace Prexonite.Compiler
             _addMacroCommand(Macro.Commands.CallSub.Instance);
             _addMacroCommand(Macro.Commands.CallSubInterpret.Instance);
             _addMacroCommand(Macro.Commands.CallMacro.Instance);
-            foreach (var helperCommand in Macro.Commands.CallMacro.GetHelperCommands(this))
+            _addHelperCommands(Macro.Commands.CallMacro.GetHelperCommands(this));
+            _addMacroCommand(Macro.Commands.Pack.Instance);
+            _addMacroCommand(Macro.Commands.Unpack.Instance);
+            _addHelperCommands(Macro.Commands.Unpack.GetHelperCommands(this));
+        }
+
+        private void _addHelperCommands(IEnumerable<KeyValuePair<string, PCommand>> helpers)
+        {
+            foreach (var helperCommand in helpers)
                 _buildCommands.AddCompilerCommand(helperCommand.Key, helperCommand.Value);
         }
 

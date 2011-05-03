@@ -208,6 +208,26 @@ namespace Prexonite.Compiler.Macro
                 return (AstNode) expr;
         }
 
+        /// <summary>
+        /// Stores an object in the macro session. It can later be retrieved via <see cref="RetrieveFromTransport"/>.
+        /// </summary>
+        /// <param name="obj">The object to be stored.</param>
+        /// <returns>The id with which to retrieve the object later.</returns>
+        public int StoreForTransport(PValue obj)
+        {
+            return _session.StoreForTransport(obj);
+        }
+
+        /// <summary>
+        /// Returns an object previously stored via <see cref="StoreForTransport"/>.
+        /// </summary>
+        /// <param name="id">The id as returned by <see cref="StoreForTransport"/></param>
+        /// <returns>The obejct stored before.</returns>
+        public PValue RetrieveFromTransport(int id)
+        {
+            return _session.RetrieveFromTransport(id);
+        }
+
         #endregion
     }
 }

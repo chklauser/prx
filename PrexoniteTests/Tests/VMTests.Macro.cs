@@ -160,28 +160,101 @@ function main(xs,y)
         }
 
         [Test]
-        public void CallMacroOnFunction()
+        public void MacroTransport()
         {
             Compile(@"
+macro echo(lst)
+{
+    lst = macro\unpack(lst);
+    return new Prexonite::Compiler::Ast::AstConstant(context.Invocation.File,
+        context.Invocation.Line,context.Invocation.Column,sum(lst) + lst.Count); 
+}
+
+macro gen(n)
+{
+    n = n.Constant~Int;
+    var id = macro\pack(1.to(n) >> all);
+    var idConst = new Prexonite::Compiler::Ast::AstConstant(context.Invocation.File,
+        context.Invocation.Line,context.Invocation.Column, id);
+    return call\macro([echo(idConst)]);
+}
+
+function main()
+{
+    return gen(4);
+}
+
+function main2()
+{
+    return gen(5);
+}
+");
+
+            Expect(1+2+3+4+4);
+            ExpectNamed("main2",1+2+3+4+5+5);
+        }
+
+        [Test]
+        public void CallMacroOnFunction()
+        {
+            Compile(
+                @"
 macro __append(con)
 {
-    con.Constant += ""__"";
+    var c = con.Constant + ""__"";
+
+    if(context.IsJustEffect)
+        c += ""je"";
+
+    if(context.Call~Int == Prexonite::Types::PCall.Set~Int)
+        c += ""="";
+
+    var con = new Prexonite::Compiler::Ast::AstConstant(context.Invocation.File,
+        context.Invocation.Line,context.Invocation.Column,c);
     return con;
 }
 
-macro __surround(con)
+macro __surround(con, idx)
 {
+    var idx = idx.Constant~Int;
     con.Constant = ""__"" + con.Constant;
-    return call\macro(__append,[con]);
+    return [ call\macro([__append],[con])
+           , call\macro([__append(con)])
+           , call\macro([__append = con])
+           , call\macro([__append,true],[con])
+           , call\macro([__append,false],[con])
+           , call\macro([__append(con),true])
+           , call\macro([__append(con),false])
+           , call\macro([__append = con, true])
+           , call\macro([__append = con, false]) ][idx];
 }
 
 function main(x,y)
 {
-    return x + __surround(""xXx"") + y;
+    return  [ x + __surround(""xXx"", 0) + y
+            , x + __surround(""xXx"", 1) + y
+            , x + __surround(""xXx"", 2) + y
+            , x + __surround(""xXx"", 3) + y
+            , x + __surround(""xXx"", 4) + y
+            , x + __surround(""xXx"", 5) + y
+            , x + __surround(""xXx"", 6) + y
+            , x + __surround(""xXx"", 7) + y
+            , x + __surround(""xXx"", 8) + y];
 }
 ");
 
-            Expect("a__xXx__b","a","b");
+            Expect(new List<PValue>
+                {
+                    "a__xXx__b",
+                    "a__xXx__b",
+                    "a__xXx__=b",
+                    "a__xXx__jeb",
+                    "a__xXx__b",
+                    "a__xXx__jeb",
+                    "a__xXx__b",
+                    "a__xXx__je=b",
+                    "a__xXx__=b"
+                }, "a", "b");
         }
     }
 }

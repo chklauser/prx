@@ -22,6 +22,7 @@ namespace Prexonite.Compiler.Macro
         private readonly SymbolCollection _allocationList = new SymbolCollection();
         private readonly HashSet<AstMacroInvocation> _invocations = new HashSet<AstMacroInvocation>();
         private object _buildCommandToken;
+        private readonly List<PValue> _transportStore = new List<PValue>();
 
         /// <summary>
         /// Creates a new macro expansion session for the specified compiler target.
@@ -516,6 +517,35 @@ namespace Prexonite.Compiler.Macro
                 func.Meta[PFunction.SharedNamesKey].List.Select(entry => env[entry.Text]).
                     ToArray();
             return new Closure(func, sharedVariables);
+        }
+
+        /// <summary>
+        /// Stores an object in the macro session. It can later be retrieved via <see cref="RetrieveFromTransport"/>.
+        /// </summary>
+        /// <param name="obj">The object to be stored.</param>
+        /// <returns>The id with which to retrieve the object later.</returns>
+        public int StoreForTransport(PValue obj)
+        {
+            if (obj == null)
+                throw new ArgumentNullException("obj");
+            var transportId = _transportStore.Count;
+            _transportStore.Add(obj);
+            return transportId;
+        }
+
+        /// <summary>
+        /// Returns an object previously stored via <see cref="StoreForTransport"/>.
+        /// </summary>
+        /// <param name="id">The id as returned by <see cref="StoreForTransport"/></param>
+        /// <returns>The obejct stored before.</returns>
+        public PValue RetrieveFromTransport(int id)
+        {
+            if (0 <= id && id < _transportStore.Count)
+                return _transportStore[id];
+            else
+                throw new PrexoniteException(
+                    string.Format("No object with id {0} in transport through this macro session.",
+                        id));
         }
     }
 }
