@@ -90,7 +90,7 @@ namespace Prexonite.Compiler.Macro.Commands
             context.Block.Expression = context.CreateGetSetSymbol(SymbolInterpretations.Command,
                 PCall.Get, Impl.Alias,
                 context.CreateConstant(prototype.MacroId),
-                prototype.Interpretation.ToExpression(prototype));
+                prototype.Interpretation.EnumToExpression(prototype));
         }
 
         #endregion

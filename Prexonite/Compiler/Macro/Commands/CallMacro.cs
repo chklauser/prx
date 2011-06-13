@@ -253,7 +253,7 @@ namespace Prexonite.Compiler.Macro.Commands
             var inv = context.Invocation;
             justEffect = new AstConstant(inv.File, inv.Line,
                                          inv.Column, false);
-            call = PCall.Get.ToExpression(context);
+            call = PCall.Get.EnumToExpression(context.Invocation);
 
             var invokeSpec = inv.Arguments[0];
             var listSpec = invokeSpec as AstListLiteral;
@@ -317,13 +317,15 @@ namespace Prexonite.Compiler.Macro.Commands
                 if (listSpec.Elements.Count >= 3)
                     call = listSpec.Elements[2];
                 else
-                    call = proto.Call.ToExpression(proto);
+                {
+                    call = proto.Call.EnumToExpression(proto);
+                }
 
                 //macroId: as a constant
                 macroId = context.CreateConstant(proto.MacroId);
 
                 //macroInterpretation: as an expression
-                macroInterpretation = proto.Interpretation.ToExpression(proto);
+                macroInterpretation = proto.Interpretation.EnumToExpression(proto);
 
                 //args: lift and pass prototype arguments, special care for set
                 var setArgs = proto.Call == PCall.Set

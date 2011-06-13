@@ -9,6 +9,15 @@ namespace Prexonite.Compiler.Macro
 {
     public static class MacroContextExtensions
     {
+        /// <summary>
+        /// Creates a symbol access node.
+        /// </summary>
+        /// <param name="context">The context for which to generate the AST node.</param>
+        /// <param name="interpretation">The interpretation of the symbol to apply (function, command, etc.)</param>
+        /// <param name="call">The call type (get or set)</param>
+        /// <param name="id">The (physical) id of the entity to access</param>
+        /// <param name="args">The arguments to pass as part of teh access (optional)</param>
+        /// <returns>A symbol access node.</returns>
         public static AstGetSetSymbol CreateGetSetSymbol(this MacroContext context, SymbolInterpretations interpretation, PCall call, string id, params IAstExpression[] args)
         {
             var sym = new AstGetSetSymbol(context.Invocation.File, context.Invocation.Line,
@@ -18,11 +27,27 @@ namespace Prexonite.Compiler.Macro
             return sym;
         }
 
+        /// <summary>
+        /// Creates a local variable access node.
+        /// </summary>
+        /// <param name="context">The context for which to generate the AST node.</param>
+        /// <param name="id">The (physical) name of the local variable.</param>
+        /// <param name="call">The access type (get or set)</param>
+        /// <returns>A local variable access node</returns>
         public static AstGetSetSymbol CreateGetSetLocal(this MacroContext context, string id, PCall call = PCall.Get)
         {
             return CreateGetSetSymbol(context, SymbolInterpretations.LocalObjectVariable, call, id);
         }
 
+        /// <summary>
+        /// Creates a instance member access node.
+        /// </summary>
+        /// <param name="context">The context for which to generate the AST node.</param>
+        /// <param name="subject">The object on which to invoke the member.</param>
+        /// <param name="call">The call type (get or set)</param>
+        /// <param name="id">The name of the member to invoke</param>
+        /// <param name="args">The arguments to pass as part of the member invocation (optional)</param>
+        /// <returns>An instance member access node.</returns>
         public static AstGetSetMemberAccess CreateGetSetMember(this MacroContext context, IAstExpression subject, PCall call, string id, params IAstExpression[] args)
         {
             var mem = new AstGetSetMemberAccess(context.Invocation.File, context.Invocation.Line,
@@ -33,52 +58,31 @@ namespace Prexonite.Compiler.Macro
             return mem;
         }
 
+        /// <summary>
+        /// Creates a constant literal node.
+        /// </summary>
+        /// <param name="context">The context for which to generate the constant node.</param>
+        /// <param name="constant">The constant value. Must be an integer, a double, a boolean value or a string.</param>
+        /// <returns></returns>
         public static AstConstant CreateConstant(this MacroContext context, object constant)
         {
             return new AstConstant(context.Invocation.File, context.Invocation.Line,
                                    context.Invocation.Column, constant);
         }
 
-        public static IAstExpression ToExpression(this PCall call, MacroContext context)
+        /// <summary>
+        /// Generates an AST node that, when compiled, loads the specified enumeration value.
+        /// </summary>
+        /// <param name="enumerationValue">The enumeration value to load</param>
+        /// <param name="position">The source position to associate with the node</param>
+        /// <returns>An AST node that represents the specified enumeration value</returns>
+        public static IAstExpression EnumToExpression<T>(this T enumerationValue, ISourcePosition position) where T : struct
         {
-            return ToExpression(call, context.Invocation);
-        }
-
-        public static IAstExpression ToExpression(this PCall call, ISourcePosition position)
-        {
-            string member;
-            switch (call)
-            {
-                case PCall.Get:
-                    member = "Get";
-                    break;
-                case PCall.Set:
-                    member = "Set";
-                    break;
-                default:
-                    throw new ArgumentOutOfRangeException("call");
-            }
-
+            var member = Enum.GetName(typeof (T), enumerationValue);
             var pcallT = new AstConstantTypeExpression(position.File,
                                                        position.Line,
                                                        position.Column,
-                                                       PType.Object[typeof (PCall)].ToString());
-            return new AstGetSetStatic(position.File, position.Line,
-                                       position.Column, PCall.Get, pcallT, member);
-        }
-
-        public static IAstExpression ToExpression(this SymbolInterpretations interpretation, MacroContext context)
-        {
-            return ToExpression(interpretation, context.Invocation);
-        }
-
-        public static IAstExpression ToExpression(this SymbolInterpretations interpretation, ISourcePosition position)
-        {
-            var member = Enum.GetName(typeof (SymbolInterpretations), interpretation);
-            var pcallT = new AstConstantTypeExpression(position.File,
-                                                       position.Line,
-                                                       position.Column,
-                                                       PType.Object[typeof(SymbolInterpretations)].ToString());
+                                                       PType.Object[typeof(T)].ToString());
             return new AstGetSetStatic(position.File, position.Line,
                                        position.Column, PCall.Get, pcallT, member);
         }
