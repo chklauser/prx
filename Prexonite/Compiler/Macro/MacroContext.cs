@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Diagnostics;
+using System.Linq;
 using Prexonite.Compiler.Ast;
 using Prexonite.Helper;
 using Prexonite.Types;
@@ -15,11 +16,11 @@ namespace Prexonite.Compiler.Macro
         #region Representation
         
         private readonly AstMacroInvocation _invocation;
-        
         private readonly CompilerTarget _target;
         private readonly bool _isJustEffect;
         private readonly MacroSession _session;
         private readonly AstBlockExpression _block;
+        private readonly bool _isPartialApplication;
 
         #endregion
 
@@ -40,6 +41,7 @@ namespace Prexonite.Compiler.Macro
             _invocation = invocation;
             _session = session;
             _block = new AstBlockExpression(invocation.File, invocation.Line, invocation.Column);
+            _isPartialApplication = _invocation.Arguments.Any(AstPartiallyApplicable.IsPlaceholder);
         }
 
         #region Accessors 
@@ -53,6 +55,15 @@ namespace Prexonite.Compiler.Macro
         {
             [DebuggerStepThrough]
             get { return _block; }
+        }
+
+        /// <summary>
+        /// Indicates whether the occurance of the macro is a partial application of the macro.
+        /// </summary>
+        public bool IsPartialApplication
+        {
+            [DebuggerStepThrough]
+            get { return _isPartialApplication; }
         }
 
         /// <summary>
@@ -111,6 +122,9 @@ namespace Prexonite.Compiler.Macro
             get { return _session.GlobalSymbols; }
         }
 
+        /// <summary>
+        /// Provides read-only access to the set of variables shared from outer functions.
+        /// </summary>
         public ReadOnlyCollectionView<string> OuterVariables
         {
             get { return _session.OuterVariables; }

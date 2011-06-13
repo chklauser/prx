@@ -21,7 +21,7 @@ namespace Prexonite.Compiler.Macro
         private readonly SymbolCollection _releaseList = new SymbolCollection();
         private readonly SymbolCollection _allocationList = new SymbolCollection();
         private readonly HashSet<AstMacroInvocation> _invocations = new HashSet<AstMacroInvocation>();
-        private object _buildCommandToken;
+        private readonly object _buildCommandToken;
         private readonly List<PValue> _transportStore = new List<PValue>();
 
         /// <summary>
@@ -159,6 +159,7 @@ namespace Prexonite.Compiler.Macro
             void Initialize(CompilerTarget target, AstMacroInvocation invocation, bool justEffect);
             string HumanId { get; }
             void Expand(CompilerTarget target, MacroContext context);
+            bool TryExpandPartially(CompilerTarget target, MacroContext context);
         }
 
         #region Command Expander
@@ -193,6 +194,12 @@ namespace Prexonite.Compiler.Macro
                     return;
 
                 _macroCommand.Expand(context);
+            }
+
+            public bool TryExpandPartially(CompilerTarget target, MacroContext context)
+            {
+                var pac = _macroCommand as PartialMacroCommand;
+                return pac != null && pac.ExpandPartialApplication(context);
             }
         }
 
@@ -295,6 +302,23 @@ namespace Prexonite.Compiler.Macro
                     fs = null;
 
                 _implementMergeRules(context, ce, fs, fe);
+            }
+
+            public bool TryExpandPartially(CompilerTarget target, MacroContext context)
+            {
+                if(!_macroFunction.Meta[@"partial\macro"].Switch)
+                    return false;
+
+                var successRaw = _invokeMacroFunction(target, context);
+                if(successRaw.Type != PType.Bool)
+                {
+                    context.ReportMessage(ParseMessageSeverity.Error,
+                        "Partial macro must return a boolean value, indicating whether it can handle the partial application. Assuming it cannot.");
+                    _setupDefaultExpression(context);
+                    return false;
+                }
+
+                return (bool) successRaw.Value;
             }
 
             private void _implementMergeRules(MacroContext context, IAstExpression ce, IEnumerable<AstNode> fs, IAstExpression fe)
@@ -418,33 +442,26 @@ namespace Prexonite.Compiler.Macro
                 //check if this macro is a partial application (illegal)
                 if (invocation.Arguments.Any(AstPartiallyApplicable.IsPlaceholder))
                 {
+
                     target.Loader.ReportSemanticError(invocation.Line, invocation.Column, "The macro " + expander.HumanId + " cannot be applied partially.");
-                    var ind = new AstIndirectCall(invocation.File, invocation.Line, invocation.Column, new AstNull(invocation.File, invocation.Line, invocation.Column));
-                    if (justEffect)
-                        ind.EmitEffectCode(target);
-                    else
-                        ind.EmitCode(target);
                     return CreateNeutralExpression(invocation);
                 }
-
-                //Actual macro expansion takes place here
-                try
+                else
                 {
-                    expander.Expand(target, context);
-                }
-                catch(Exception e)
-                {
+                    //Actual macro expansion takes place here
+                    try
+                    {
+                        expander.Expand(target, context);
+                    }
+                    catch (Exception e)
+                    {
 #if DEBUG 
                     throw;
 #else
-                    context.ReportMessage(ParseMessageSeverity.Error,
-                                          String.Format(
-                                              "Exception during expansion of macro {0} in function {1}: {2}",
-                                              expander.HumanId, context.Function.LogicalId,
-                                              e.Message), invocation);
-                    context.Block.Clear();
-                    context.Block.Expression = CreateNeutralExpression(invocation);
+                        _reportException(context, expander, e);
+                        _setupDefaultExpression(context);
 #endif
+                    }
                 }
             }
 
@@ -460,7 +477,23 @@ namespace Prexonite.Compiler.Macro
             return (AstNode) node;
         }
 
-        public AstGetSet CreateNeutralExpression(AstMacroInvocation invocation)
+        private static void _reportException(MacroContext context, IMacroExpander expander, Exception e)
+        {
+            context.ReportMessage(ParseMessageSeverity.Error,
+                String.Format(
+                    "Exception during expansion of macro {0} in function {1}: {2}",
+                    expander.HumanId, context.Function.LogicalId,
+                    e.Message), context.Invocation);
+        }
+
+        private static void _setupDefaultExpression(MacroContext context)
+        {
+            context.Block.Clear();
+            context.Block.Expression = CreateNeutralExpression(context.Invocation);
+            context.SuppressDefaultExpression = false;
+        }
+
+        public static AstGetSet CreateNeutralExpression(AstMacroInvocation invocation)
         {
             var nullLiteral = new AstNull(invocation.File, invocation.Line, invocation.Column);
             var call = new AstIndirectCall(invocation.File, invocation.Line, invocation.Column,

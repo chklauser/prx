@@ -138,6 +138,7 @@
     <Compile Include="Compiler\Macro\Commands\Pack.cs" />
     <Compile Include="Compiler\Macro\Commands\Reference.cs" />
     <Compile Include="Compiler\Macro\Commands\Unpack.cs" />
+    <Compile Include="Compiler\Macro\PartialMacroCommand.cs" />
     <Compile Include="IMaybeStackAware.cs" />
     <Compile Include="Commands\Core\PartialApplication\PartialApplicationBase.cs" />
     <Compile Include="Commands\Core\PartialApplication\PartialApplicationCommandBase.cs" />

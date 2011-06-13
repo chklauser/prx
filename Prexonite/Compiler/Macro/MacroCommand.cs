@@ -40,6 +40,10 @@ namespace Prexonite.Compiler.Macro
         /// <param name="context">The macro context for this macro expansion.</param>
         protected abstract void DoExpand(MacroContext context);
 
+        /// <summary>
+        /// Expands the macro according to the supplied macro context.
+        /// </summary>
+        /// <param name="context">Supplies call site information to the macro.</param>
         public void Expand(MacroContext context)
         {
             DoExpand(context);

@@ -112,7 +112,7 @@ namespace Prexonite.Compiler
             }
 
             Debug.Assert(_macroSessionReferenceCounter >= 0);
-            Debug.Assert(_macroSessionReferenceCounter != 0 || _macroSession != null);
+            Debug.Assert(_macroSessionReferenceCounter == 0 || _macroSession != null);
         }
 
         #endregion
