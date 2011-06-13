@@ -57,6 +57,7 @@ namespace Prexonite.Compiler.Cil
         private readonly CompilerPass _pass;
         private readonly FunctionLinking _linking;
         private readonly StructuredExceptionHandling _seh;
+        private readonly int[] _stackSize;
 
         private string _effectiveArgumentsListId;
 
@@ -134,6 +135,7 @@ namespace Prexonite.Compiler.Cil
             }
 
             _seh = new StructuredExceptionHandling(this);
+            _stackSize = new int[source.Code.Count];
         }
 
         #region Accessors
@@ -324,6 +326,12 @@ namespace Prexonite.Compiler.Cil
         public StructuredExceptionHandling Seh
         {
             get { return _seh; }
+        }
+
+        public int[] StackSize
+        {
+            [DebuggerStepThrough]
+            get { return _stackSize; }
         }
 
         #endregion

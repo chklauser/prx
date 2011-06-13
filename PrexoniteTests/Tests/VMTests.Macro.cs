@@ -101,6 +101,47 @@ function main(x1,x2,x3)
         }
 
         [Test]
+        public void CallSubMinimal()
+        {
+            Compile(@"
+function f(x)
+{
+    return x;
+}
+
+function main()
+{
+    call\sub(f(?),[2]);   
+    return 2; 
+}
+");
+
+            Expect(2);
+        }
+
+        [Test]
+        public void CallSubMinimalReturn()
+        {
+            Compile(@"
+function f()
+{
+    return 1;
+}
+
+function main()
+{
+    var zs = [];
+    asm{nop nop nop}
+    zs[] = call\sub(f(?));   
+    asm{nop nop nop}
+    return zs[0];
+}
+");
+
+            Expect(1);
+        }
+
+        [Test]
         public void CallSubOfPartial()
         {
             Compile(@"

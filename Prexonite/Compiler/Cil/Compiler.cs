@@ -26,6 +26,7 @@
 using System;
 using System.Collections.Generic;
 using System.ComponentModel;
+using System.Diagnostics;
 using System.Linq;
 using System.Reflection;
 using System.Reflection.Emit;
@@ -462,6 +463,7 @@ namespace Prexonite.Compiler.Cil
             //CODE ANALYSIS
             //  - determine number of temporary variables
             //  - find variable references (alters the symbol table)
+            //  - determine stack size at all offsets
             _analysisAndPreparation(state);
 
             //Create and initialize local variables for parameters
@@ -546,6 +548,7 @@ namespace Prexonite.Compiler.Cil
         {
             var tempMaxOrder = 1; // 
             var needsSharedVariables = false;
+            
             foreach (var ins in state.Source.Code.InReverse())
             {
                 string toConvert;
@@ -618,6 +621,67 @@ namespace Prexonite.Compiler.Cil
                 state.Il.Emit(OpCodes.Conv_I4);
                 state.EmitStoreLocal(state.ArgcLocal);
             }
+
+            //Determine stack size at every instruction
+            var stackSize = new int?[state.StackSize.Length];
+            var currentStackSize = 0;
+            for(var i = 0; i < state.Source.Code.Count;i++)
+            {
+                var ins = state.Source.Code[i];
+                var delta = ins.StackSizeDelta;
+
+                var oldValue = stackSize[i];
+                var newValue = currentStackSize + delta;
+                if (newValue < 0)
+                    throw new PrexoniteInvalidStackException(
+                        String.Format("Function {0}: Instruction {1}: {2} causes stack underflow.",
+                            state.Source, i, ins));
+
+                if (oldValue.HasValue)
+                {
+                    //Debug.Assert(currentStackSize + delta == oldValue.Value);
+                    if (newValue != oldValue)
+                        throw new PrexoniteInvalidStackException(String.Format(
+                            "Function {3}: Instruction {0} reached with stack size {1} and {2}",
+                            i, oldValue.Value, newValue, state.Source));
+                    else
+                        currentStackSize = newValue;
+                }
+                else
+                {
+                    stackSize[i] = currentStackSize = newValue;
+
+                    var tarIdx = ins.Arguments;
+                    if (ins.IsJump && 0 <= tarIdx && tarIdx < stackSize.Length)
+                    {
+                        var tarIns = state.Source.Code[tarIdx];
+                        var tarOldValue = stackSize[tarIdx];
+                        var tarNewValue = currentStackSize + tarIns.StackSizeDelta;
+                        if (tarNewValue < 0)
+                        {
+                            throw new PrexoniteInvalidStackException(
+                                String.Format(
+                                    "Function {0}: Instruction {1}: {2} causes stack underflow.",
+                                    state.Source, tarIdx, tarIns));
+                        }
+                        if (tarOldValue.HasValue)
+                        {
+                            //Debug.Assert(tarNewValue == tarOldValue);
+                            if (tarNewValue != tarOldValue)
+                                throw new PrexoniteInvalidStackException(String.Format(
+                                    "Function {4}: Instruction {0} reached with stack size {1} and {2}, the latter by jumping from instruction {3}.",
+                                    tarIdx, tarOldValue.Value, tarNewValue, i, state.Source));
+                        }
+                        else
+                        {
+                            stackSize[tarIdx] = tarNewValue;
+                        }
+                    }
+                }
+            }
+
+            for (var i = 0; i < stackSize.Length; i++)
+                state.StackSize[i] = stackSize[i] ?? 0;
         }
 
         private static void _parseParameters(CompilerState state)
@@ -1483,6 +1547,9 @@ namespace Prexonite.Compiler.Cil
 
                     case OpCode.@try:
                         //Is done via analysis of TryCatchFinally objects associated with the function
+                        Debug.Assert(state.StackSize[instructionIndex] == 0, 
+                            "The stack should be empty when entering a try-block.",
+                            "The stack is not empty when entering the try-block at instruction {0} in function {1}.", instructionIndex, state.Source);
                         break;
 
                     case OpCode.leave:

@@ -836,6 +836,117 @@ namespace Prexonite
         }
 
         #endregion
+
+        public int StackSizeDelta
+        {
+            get
+            {
+                switch (OpCode)
+                {
+                    case OpCode.newcor:
+                    case OpCode.nop:
+                    case OpCode.incloc:
+                    case OpCode.incglob:
+                    case OpCode.check_const:
+                    case OpCode.check_null:
+                    case OpCode.cast_const:
+                    case OpCode.@try:
+                    case OpCode.decloc:
+                    case OpCode.decglob:
+                    case OpCode.incloci:
+                    case OpCode.decloci:
+                    case OpCode.neg:
+                    case OpCode.ret_exit:
+                    case OpCode.ret_break:
+                    case OpCode.ret_continue:
+                    case OpCode.rot:
+                    case OpCode.leave:
+                    case OpCode.not:
+                    case OpCode.jump:
+                        return 0;
+
+                    case OpCode.ldc_real:
+                    case OpCode.ldc_bool:
+                    case OpCode.ldc_string:
+                    case OpCode.ldc_null:
+                    case OpCode.ldr_loc:
+                    case OpCode.ldr_loci:
+                    case OpCode.ldr_glob:
+                    case OpCode.ldr_func:
+                    case OpCode.ldr_cmd:
+                    case OpCode.ldglob:
+                    case OpCode.ldr_app:
+                    case OpCode.ldloci:
+                    case OpCode.ldr_eng:
+                    case OpCode.newclo:
+                    case OpCode.ldr_type:
+                    case OpCode.ldloc:
+                    case OpCode.ldc_int:
+                    case OpCode.exc:
+                        return +1;
+
+                    case OpCode.stglob:
+                    case OpCode.stloci:
+                    case OpCode.stloc:
+                    case OpCode.add:
+                    case OpCode.check_arg:
+                    case OpCode.cast_arg:
+                    case OpCode.sub:
+                    case OpCode.mul:
+                    case OpCode.div:
+                    case OpCode.mod:
+                    case OpCode.pow:
+                    case OpCode.ceq:
+                    case OpCode.ret_value:
+                    case OpCode.cne:
+                    case OpCode.clt:
+                    case OpCode.@throw:
+                    case OpCode.cle:
+                    case OpCode.cgt:
+                    case OpCode.cge:
+                    case OpCode.ret_set:
+                    case OpCode.or:
+                    case OpCode.and:
+                    case OpCode.xor:
+                    case OpCode.jump_t:
+                    case OpCode.jump_f:
+                        return -1;
+
+                    case OpCode.set:
+                        return -Arguments - 1;
+
+                    case OpCode.get:
+                    case OpCode.indarg:
+                    case OpCode.tail:
+                        return -Arguments - 1 + (JustEffect ? 0 : 1);
+
+                    case OpCode.indloc:
+                    case OpCode.indglob:
+                    case OpCode.sget:
+                    case OpCode.func:
+                    case OpCode.newobj:
+                    case OpCode.newtype:
+                    case OpCode.cmd:
+                        return -Arguments + (JustEffect ? 0 : 1);
+
+                    case OpCode.indloci:
+                        int index;
+                        int argc;
+                        DecodeIndLocIndex(out index, out argc);
+                        return -argc + (JustEffect ? 0 : 1);
+
+                    case OpCode.pop:
+                    case OpCode.sset:
+                        return -Arguments;
+
+                    case OpCode.dup:
+                        return Arguments;
+
+                    default:
+                        throw new ArgumentOutOfRangeException();
+                }
+            }
+        }
     }
 
     // ReSharper disable InconsistentNaming
