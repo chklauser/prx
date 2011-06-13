@@ -351,7 +351,8 @@ namespace Prexonite.Compiler.Cil
                     goto case OpCode.ret_exit;
                 case OpCode.ret_exit:
                     var max = _state.Source.Code.Count;
-                    EmitJump(sourceAddr,Instruction.CreateJump(max));
+                    _clearStack(sourceAddr);
+                    _state.Il.Emit(OpCodes.Br, _state.InstructionLabels[max]);
                     break;
                 case OpCode.ret_break:
                     _state._EmitAssignReturnMode(ReturnMode.Break);
@@ -383,17 +384,22 @@ namespace Prexonite.Compiler.Cil
                     goto case OpCode.ret_exit;
                 case OpCode.ret_exit:
                     //return mode is set implicitly by function header
-                    EmitJump(sourceAddr, new Instruction(OpCode.jump, targetAddr));
+                    _clearStack(sourceAddr);
+                    _state.Il.Emit(OpCodes.Br, _state.InstructionLabels[_state.Source.Code.Count]);
                     break;
                 case OpCode.ret_continue:
                     _state._EmitAssignReturnMode(ReturnMode.Continue);
-                    EmitJump(sourceAddr, new Instruction(OpCode.jump,targetAddr));
-                    break;
+                    goto case OpCode.ret_exit;
                 case OpCode.ret_break: 
                     _state._EmitAssignReturnMode(ReturnMode.Break);
-                    EmitJump(sourceAddr, new Instruction(OpCode.jump,targetAddr));
-                    break;
+                    goto case OpCode.ret_exit;
             }
+        }
+
+        private void _clearStack(int sourceAddress)
+        {
+            Debug.Assert(0 <= sourceAddress && sourceAddress <= _state.StackSize.Length);
+            _state.EmitIgnoreArguments(_state.StackSize[sourceAddress]);
         }
 
         private void _emitSkipFalse(Action skippable)
