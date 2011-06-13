@@ -31,13 +31,9 @@ function create_container
         container.Remove(arg);        
     }
     
-    function update does
-        foreach(var control in container)
-            control.update;
+    function update does container >> each(?.update);
             
-    function clear does
-        foreach(var control in container)
-            control.clear;
+    function clear does container >> each(?.clear);
     
     function registered(this,control) =
         create_terminator(register(this) = control, 
@@ -57,6 +53,7 @@ function remove_control does foreach(var arg in var args)
 function update_controls does shared_container.update;
         
 function clear_controls does shared_container.clear;
+build does println("Compiled clear controls into app " + asm(ldr.app).Id);
 
 function registered_control control = shared_container.registered(control);
 
@@ -142,7 +139,7 @@ function create_field(x,y,length)
     
     function clear does do_update = () => 
     {
-        ::Console.Write(length * " ");
+        ::Console.Write((if(length < 0) content.Length else length) * " ");
         needClear = 0;
     };
     
