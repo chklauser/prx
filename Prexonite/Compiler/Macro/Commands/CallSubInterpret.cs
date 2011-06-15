@@ -30,8 +30,15 @@ namespace Prexonite.Compiler.Macro.Commands
         {
             if (context.Invocation.Arguments.Count == 0)
             {
-                context.ReportMessage(ParseMessageSeverity.Error, Alias + " requires one argument.",
-                                      context.Invocation);
+                context.ReportMessage(ParseMessageSeverity.Error, Alias + " requires one argument.");
+                return;
+            }
+
+            if(context.CurrentLoopBlock != null && !context.IsJustEffect)
+            {
+                context.ReportMessage(ParseMessageSeverity.Error,
+                    "Due to an internal compiler limitation, " + CallSub.Alias +
+                        " and " + Alias + " cannot be used in an expression inside a loop, only as a statement.");
                 return;
             }
 
@@ -72,13 +79,14 @@ namespace Prexonite.Compiler.Macro.Commands
 
         private static void _genChecks(MacroContext context, Func<AstGetSetSymbol> retVar, AstNode contStmt, AstNode breakStmt)
         {
-            AstCondition checkCont;
             var inv = context.Invocation;
+
+            //Generate check for continue
+            AstCondition checkCont;
             {
                 var contCond = _genCompare(context, retVar(), ReturnVariant.Continue);
                 checkCont = new AstCondition(inv.File, inv.Line, inv.Column, contCond);
                 checkCont.IfBlock.Add(contStmt);
-                context.Block.Add(checkCont);
             }
 
             //Generate check for break
@@ -87,11 +95,11 @@ namespace Prexonite.Compiler.Macro.Commands
                 var breakCond = _genCompare(context, retVar(), ReturnVariant.Break);
                 checkBreak = new AstCondition(inv.File, inv.Line, inv.Column, breakCond);
                 checkBreak.IfBlock.Add(breakStmt);
-                context.Block.Add(checkBreak);
             }
 
             //Connect break-check to continue check
             checkCont.ElseBlock.Add(checkBreak);
+            context.Block.Add(checkCont);
         }
 
         private static void _determineActions(MacroContext context, Func<AstGetSetSymbol> retValue, out AstNode contStmt, out AstNode breakStmt)

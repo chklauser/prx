@@ -441,6 +441,16 @@ namespace Prexonite
                 throw new ArgumentException("The passed opcode must be a conditional jump.", "jump");
         }
 
+        public bool IsFunctionExit
+        {
+            [DebuggerStepThrough]
+            get
+            {
+                return OpCode == OpCode.ret_value || OpCode == OpCode.ret_exit ||
+                    OpCode == OpCode.ret_continue || OpCode == OpCode.ret_break;
+            }
+        }
+
         #endregion
 
         #region ToString
@@ -843,7 +853,6 @@ namespace Prexonite
             {
                 switch (OpCode)
                 {
-                    case OpCode.newcor:
                     case OpCode.nop:
                     case OpCode.incloc:
                     case OpCode.incglob:
@@ -918,6 +927,7 @@ namespace Prexonite
                     case OpCode.get:
                     case OpCode.indarg:
                     case OpCode.tail:
+                    case OpCode.newcor:
                         return -Arguments - 1 + (JustEffect ? 0 : 1);
 
                     case OpCode.indloc:

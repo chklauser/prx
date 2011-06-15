@@ -623,15 +623,47 @@ namespace Prexonite.Compiler.Cil
             }
 
             //Determine stack size at every instruction
+            _determineStackSize(state);
+        }
+
+        private static void _determineStackSize(CompilerState state)
+        {
+            if(state.Source.Code.Count == 0)
+                return;
+
             var stackSize = new int?[state.StackSize.Length];
-            var currentStackSize = 0;
-            for(var i = 0; i < state.Source.Code.Count;i++)
+            // stack for abstract interpretation: (index, size-before)
+            var interpretationStack = new Stack<Tuple<int,int>>();
+            interpretationStack.Push(Tuple.Create(0,0));
+
+            while(interpretationStack.Count > 0)
             {
+                var t = interpretationStack.Pop();
+                var i = t.Item1;
+                var currentStackSize = t.Item2;
+                Debug.Assert(0 <= i && i < state.Source.Code.Count,
+                    "Instruction pointer out of range.",
+                    "During abstract interpretation to determine stack size, the instruction" +
+                        " pointer assumed an invalid value {0}. Acceptable values are between 0 and {1}. " +
+                            "The length of the stackSize array is {2}.",
+                    i, state.Source.Code.Count - 1, stackSize.Length);
                 var ins = state.Source.Code[i];
-                var delta = ins.StackSizeDelta;
+                int newValue;
+                if(ins.IsFunctionExit)
+                {
+                    if (ins.OpCode == OpCode.ret_value && currentStackSize < 1)
+                        throw new PrexoniteInvalidStackException(
+                            String.Format(
+                                "Function {0}: Stack underflow at return instruction {1}.",
+                                state.Source, i));
+                    newValue = currentStackSize + ins.StackSizeDelta;
+                }
+                else
+                {
+                    newValue = currentStackSize + ins.StackSizeDelta;
+                }
 
                 var oldValue = stackSize[i];
-                var newValue = currentStackSize + delta;
                 if (newValue < 0)
                     throw new PrexoniteInvalidStackException(
                         String.Format("Function {0}: Instruction {1}: {2} causes stack underflow.",
@@ -644,39 +676,17 @@ namespace Prexonite.Compiler.Cil
                         throw new PrexoniteInvalidStackException(String.Format(
                             "Function {3}: Instruction {0} reached with stack size {1} and {2}",
                             i, oldValue.Value, newValue, state.Source));
-                    else
-                        currentStackSize = newValue;
                 }
                 else
                 {
-                    stackSize[i] = currentStackSize = newValue;
+                    stackSize[i] = newValue;
 
-                    var tarIdx = ins.Arguments;
-                    if (ins.IsJump && 0 <= tarIdx && tarIdx < stackSize.Length)
-                    {
-                        var tarIns = state.Source.Code[tarIdx];
-                        var tarOldValue = stackSize[tarIdx];
-                        var tarNewValue = currentStackSize + tarIns.StackSizeDelta;
-                        if (tarNewValue < 0)
-                        {
-                            throw new PrexoniteInvalidStackException(
-                                String.Format(
-                                    "Function {0}: Instruction {1}: {2} causes stack underflow.",
-                                    state.Source, tarIdx, tarIns));
-                        }
-                        if (tarOldValue.HasValue)
-                        {
-                            //Debug.Assert(tarNewValue == tarOldValue);
-                            if (tarNewValue != tarOldValue)
-                                throw new PrexoniteInvalidStackException(String.Format(
-                                    "Function {4}: Instruction {0} reached with stack size {1} and {2}, the latter by jumping from instruction {3}.",
-                                    tarIdx, tarOldValue.Value, tarNewValue, i, state.Source));
-                        }
-                        else
-                        {
-                            stackSize[tarIdx] = tarNewValue;
-                        }
-                    }
+                    if ((ins.IsJump || ins.OpCode == OpCode.leave) 
+                        && 0 <= ins.Arguments && ins.Arguments < stackSize.Length)
+                        interpretationStack.Push(Tuple.Create(ins.Arguments, newValue));
+
+                    if (i + 1 < stackSize.Length && (!ins.IsUnconditionalJump) && ins.OpCode !=  OpCode.leave)
+                        interpretationStack.Push(Tuple.Create(i + 1, newValue));
                 }
             }
 

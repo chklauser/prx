@@ -23,7 +23,7 @@ namespace Prx.Tests
         [Test]
         public void CallSubMacroCommandNested()
         {
-            Compile(@"
+            CompileInvalid(@"
 function main(xs)
 {
     var zs = [];
@@ -42,10 +42,10 @@ function main(xs)
 
     return zs.ToString();
 }
-");
+", Prexonite.Compiler.Macro.Commands.CallSub.Alias, "expression");
 
-            var xs = new List<PValue> { 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14 };
-            Expect("[ 4, 10, 16 ]", (PValue)xs);
+            //var xs = new List<PValue> { 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14 };
+            //Expect("[ 4, 10, 16 ]", (PValue)xs);
         }
 
         [Test]
@@ -144,7 +144,7 @@ function main()
         [Test]
         public void CallSubOfPartial()
         {
-            Compile(@"
+            CompileInvalid(@"
 function main(xs,y)
 {
     var zs = [];
@@ -163,11 +163,11 @@ function main(xs,y)
 
     return zs.ToString();
 }
-");
+", Prexonite.Compiler.Macro.Commands.CallSub.Alias, "expression");
 
-            var xs = new List<PValue> { 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14 };
-            Expect("[ 4, 10, 16 ]", (PValue)xs, 6);
-            Expect("[ 4, 10 ]", (PValue)xs, 4);
+            //var xs = new List<PValue> { 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14 };
+            //Expect("[ 4, 10, 16 ]", (PValue)xs, 6);
+            //Expect("[ 4, 10 ]", (PValue)xs, 4);
         }
 
         [Test]
