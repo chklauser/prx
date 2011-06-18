@@ -37,32 +37,11 @@ namespace Prexonite.Commands.Core.PartialApplication
         /// <returns>The actual argument mapping. <see cref="PartialApplicationBase.Mappings"/>.</returns>
         private static ArraySegment<int> _splitOffWrappingDirectives(ref ArraySegment<int> rawMapping)
         {
-            //TODO: use something like std::swap_ranges to get rid of allocations
-            var end = rawMapping.Offset + rawMapping.Count;
-            var directives = new int[rawMapping.Count];
-            var dirIdx = directives.Length-1;
-            var mapIdx = rawMapping.Offset;
-            for(var i = rawMapping.Offset; i < end; i++)
-            {
-                var directive = directives[dirIdx--] = rawMapping.Array[i];
-                System.Diagnostics.Debug.Assert(directive != 0);
-                Array.Copy(rawMapping.Array, i+1,rawMapping.Array,mapIdx,System.Math.Abs(directive));
-
-                mapIdx += directive;
-                i += directive;
-
-                System.Diagnostics.Debug.Assert(mapIdx <= i);
-            }
-
-            var numDirectives = directives.Length - dirIdx;
-            System.Diagnostics.Debug.Assert(mapIdx - end == numDirectives);
-            var mappingSegment = new ArraySegment<int>(rawMapping.Array, rawMapping.Offset, mapIdx);
-
-            Array.Copy(directives,dirIdx+1, rawMapping.Array, mapIdx, numDirectives);
-
-            rawMapping = new ArraySegment<int>(rawMapping.Array, dirIdx+1, numDirectives);
-            System.Diagnostics.Debug.Assert(rawMapping.Count + mappingSegment.Count == directives.Length);
-            return mappingSegment;
+            var dirCount = rawMapping.Array[rawMapping.Offset + rawMapping.Count - 1];
+            var actualMapping = new ArraySegment<int>(rawMapping.Array, rawMapping.Offset,
+                rawMapping.Count - dirCount - 1);
+            rawMapping = new ArraySegment<int>(rawMapping.Array, actualMapping.Count, dirCount);
+            return actualMapping;
         }
 
         #region Overrides of PartialApplicationBase
@@ -91,7 +70,7 @@ namespace Prexonite.Commands.Core.PartialApplication
 
                     var list = new List<PValue>(directive);
                     for (var j = 0; j < directive; j++)
-                        list[j] = arguments[argIdx++];
+                        list.Add(arguments[argIdx++]);
 
                     effectiveArguments[effIdx++] = sctx.CreateNativePValue(list);
                 }
@@ -99,6 +78,7 @@ namespace Prexonite.Commands.Core.PartialApplication
 
             System.Diagnostics.Debug.Assert(effectiveArguments.Length - effIdx ==
                 arguments.Length - argIdx);
+
             Array.Copy(arguments, argIdx, effectiveArguments, effIdx, effectiveArguments.Length - effIdx);
 
             return nonArguments[0].IndirectCall(sctx, effectiveArguments);
@@ -121,7 +101,7 @@ namespace Prexonite.Commands.Core.PartialApplication
                 var directive = _wrappingDirectives.Array[i];
                 System.Diagnostics.Debug.Assert(directive != 0);
 
-                undirectedArgc += directive;
+                undirectedArgc += System.Math.Abs(directive);
 
                 if (directive > 0)
                     directedArgc += directive;

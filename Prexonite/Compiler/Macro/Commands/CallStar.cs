@@ -49,8 +49,12 @@ namespace Prexonite.Compiler.Macro.Commands
             var flatArgs = new List<IAstExpression>(arguments.Count);
             var directives = new List<int>(arguments.Count);
 
+            //The call target is a "non-argument" in partial application terms. Do not include it in the
+            //  stream of directives.
+            flatArgs.Add(arguments[0]);
+
             var opaqueSpan = 0;
-            for(var i = 0; i < arguments.Count; i++)
+            for(var i = 1; i < arguments.Count; i++)
             {
                 var arg = arguments[i];
                 AstListLiteral lit;
@@ -62,49 +66,43 @@ namespace Prexonite.Compiler.Macro.Commands
                 else
                 {
                     flatArgs.AddRange(lit.Elements);
-                    i += lit.Elements.Count - 1;  //compensate for i++ in loop header
                     if(opaqueSpan > 0)
                     {
                         directives.Add(opaqueSpan);
                         opaqueSpan = 0;
                     }
-                    directives.Add(lit.Elements.Count);
+                    directives.Add(-lit.Elements.Count);
                 }
             }
 
             var ppArgv = AstPartiallyApplicable.PreprocessPartialApplicationArguments(flatArgs);
 
             var argc = ppArgv.Count;
-            var mappings8 = new int[argc + directives.Count];
+            var mappings8 = new int[argc + directives.Count + 1];
             var closedArguments = new List<IAstExpression>(argc);
+
+            AstPartiallyApplicable.GetMapping(ppArgv, mappings8, closedArguments);
+            _mergeDirectivesIntoMappings(directives, mappings8, argc);
+            var mappings32 = PartialApplicationCommandBase.PackMappings32(mappings8);
 
             var implCall = context.CreateGetSetSymbol(SymbolInterpretations.Command, context.Call,
                 PartialCallStarImplCommand.Alias);
             implCall.Arguments.AddRange(closedArguments);
+            
+            implCall.Arguments.AddRange(mappings32.Select(m => context.CreateConstant(m)));
 
-            AstPartiallyApplicable.GetMapping(ppArgv, mappings8, closedArguments);
-
-            _mergeDirectivesIntoMappings(directives, mappings8, argc);
-
-            implCall.Arguments.AddRange(mappings8.Select(m => context.CreateConstant(m)));
+            context.Block.Expression = implCall;
         }
 
         private static void _mergeDirectivesIntoMappings(List<int> directives, int[] mappings8, int argc)
         {
-            var mapIdx = argc;
-            var total = 0;
-            foreach(var directive in directives.InReverse())
+            var mi = argc;
+            foreach (var directive in directives)
             {
-                System.Diagnostics.Debug.Assert(directive != 0);
-                var count = Math.Abs(directive);
-
-                total += count;
-                mapIdx -= count;
-                Array.Copy(mappings8, mapIdx, mappings8, mappings8.Length - total, count);
-
-                total++;
-                mappings8[argc - total] = directive;
+                mappings8[mi++] = directive;
             }
+
+            mappings8[mappings8.Length - 1] = directives.Count;
         }
 
         #endregion
@@ -152,7 +150,7 @@ namespace Prexonite.Compiler.Macro.Commands
         {
             var arg0 = context.Invocation.Arguments[0];
             var passThroughNode = arg0 as AstConstant;
-            if (passThroughNode != null)
+            if (passThroughNode != null && passThroughNode.Constant is int)
             {
                 arguments = new List<IAstExpression>(context.Invocation.Arguments.Skip(1));
                 passThrough = (int)passThroughNode.Constant;
@@ -162,6 +160,11 @@ namespace Prexonite.Compiler.Macro.Commands
                 arguments = new List<IAstExpression>(context.Invocation.Arguments);
                 passThrough = 1;
             }
+
+            if (passThrough < 1)
+                context.ReportMessage(ParseMessageSeverity.Error,
+                    "call\\star must at least pass through one argument (the call target). It has been instructed to pass through " +
+                        passThrough + " arguments.", passThroughNode);
         }
 
         #endregion

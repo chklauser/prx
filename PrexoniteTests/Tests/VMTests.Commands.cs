@@ -205,12 +205,105 @@ function main(xs)
             Compile(@"
 function main(x, xs)
 {
-    var f = call\star([?],?,[?]);
-    return f.(xs,x);
+    var f = call\star(call([?],?),?,[?]);
+    println(var x = f.(xs,x));
+    return x;
 }
 ");
 
-            Expect((PValue) new List<PValue> {1, 2, 3}, (PValue) new List<PValue> {2, 3}, 1);
+            Expect(new List<PValue> {1, 2, 3}, 3, (PValue) new List<PValue> {1, 2});
+        }
+
+        [Test]
+        public void CallStarAllArgumentsUndirected()
+        {
+            Compile(@"
+function main(x, xs)
+{
+    var f = call\star(call([?],?),?,?);
+    println(var x = f.(xs,x));
+    return x;
+}
+");
+
+            Expect(new List<PValue> { 1, 2, 3 }, (PValue)new List<PValue>{3}, (PValue)new List<PValue> { 1, 2 });
+        }
+
+        [Test]
+        public void CallStarAllArgumentsDirected()
+        {
+            Compile(@"
+function main(x, y, z)
+{
+    var f = call\star(call([?],?),[?,?],[?]);
+    println(var x = f.(x,y,z));
+    return x;
+}
+");
+
+            Expect(new List<PValue> { 1, 2, 3 }, 1, 2, 3 );
+        }
+
+        [Test]
+        public void CallStarCustom()
+        {
+            Compile(@"
+function main(x, xs)
+{
+    var f = call\star(2,call(?),[?],?,[?]);
+    println(var x = f.(xs,x));
+    return x;
+}
+");
+
+            Expect(new List<PValue> { 1, 2, 3 }, 3, (PValue)new List<PValue> { 1, 2 });
+        }
+
+        [Test]
+        public void CallStarAllArgumentsCall()
+        {
+            Compile(
+                @"
+function main(x, xs1,xs2)
+{
+    println(var x = call\star(call([?],?),[xs1,xs2], x));
+    return x;
+}
+");
+
+            Expect(new List<PValue> { 1, 2, 3 }, (PValue)new List<PValue> { 3 }, 1, 2);
+        }
+
+        [Test]
+        public void CallStarMapped()
+        {
+            Compile(@"
+function main(x, xs)
+{
+    var f = call\star(call([?],?),?1,[?0]);
+    println(var x = f.(x, xs));
+    return x;
+}
+");
+
+            Expect(new List<PValue> { 1, 2, 3 }, 3, (PValue)new List<PValue> { 1, 2 });
+        }
+
+
+
+        [Test]
+        public void CallStarCustomMapped()
+        {
+            Compile(@"
+function main(x, xs)
+{
+    var f = call\star(2, call(?), [?], ?1, [?0]);
+    println(var x = f.(x, xs));
+    return x;
+}
+");
+
+            Expect(new List<PValue> { 1, 2, 3 }, 3, (PValue)new List<PValue> { 1, 2 });
         }
 
         #endregion

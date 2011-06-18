@@ -24,6 +24,7 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Text;
 using Prexonite.Types;
 
 namespace Prexonite.Compiler.Ast
@@ -99,5 +100,31 @@ namespace Prexonite.Compiler.Ast
         }
 
         #endregion
+
+        public override string ToString()
+        {
+            const int limit = 20;
+            var end = Elements.Count == limit + 1 ? limit+1 : Math.Min(limit, Elements.Count);
+            var sb = new StringBuilder("[ ", end * 15);
+            var i = 0;
+            for(; i < end; i++)
+            {
+                sb.Append(Elements[i]);
+                if (i + 1 < end)
+                    sb.Append(", ");
+            }
+
+            if(i < Elements.Count)
+            {
+                sb.AppendFormat(", ... «{0}» ..., {1} ]", Elements.Count - limit,
+                    Elements[Elements.Count - 1]);
+            }
+            else
+            {
+                sb.Append(" ]");
+            }
+
+            return sb.ToString();
+        }
     }
 }

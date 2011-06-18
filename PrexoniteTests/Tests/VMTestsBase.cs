@@ -201,7 +201,7 @@ namespace Prx.Tests
                 expected.Type,
                 rv.Type,
                 string.Format(
-                    "Return type is expected to be of type {0} and not {1}. Returned {2}.",
+                    "Return value is expected to be of type {0} and not {1}. Returned {2}.",
                     expected.Type,
                     rv.Type,
                     rv));
