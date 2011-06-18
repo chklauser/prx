@@ -525,6 +525,7 @@ namespace Prexonite.Compiler
             _addHelperCommands(Macro.Commands.Unpack.GetHelperCommands(this));
             _addMacroCommand(Macro.Commands.Reference.Instance);
             _addHelperCommands(Macro.Commands.Reference.GetHelperCommands(this));
+            _addMacroCommand(Macro.Commands.CallStar.Instance);
         }
 
         private void _addHelperCommands(IEnumerable<KeyValuePair<string, PCommand>> helpers)

@@ -442,9 +442,24 @@ namespace Prexonite.Compiler.Macro
                 //check if this macro is a partial application (illegal)
                 if (invocation.Arguments.Any(AstPartiallyApplicable.IsPlaceholder))
                 {
-
-                    target.Loader.ReportSemanticError(invocation.Line, invocation.Column, "The macro " + expander.HumanId + " cannot be applied partially.");
-                    return CreateNeutralExpression(invocation);
+                    //Attempt to expand partial macro
+                    try
+                    {
+                        if(!expander.TryExpandPartially(target, context))
+                        {
+                            target.Loader.ReportSemanticError(invocation.Line, invocation.Column, "The macro " + expander.HumanId + " cannot be applied partially.");
+                            return CreateNeutralExpression(invocation);
+                        }
+                    }
+                    catch (Exception e)
+                    {
+                        _setupDefaultExpression(context);
+#if DEBUG
+                        throw;
+#else
+                        _reportException(context, expander, e);
+#endif
+                    }
                 }
                 else
                 {
@@ -455,11 +470,11 @@ namespace Prexonite.Compiler.Macro
                     }
                     catch (Exception e)
                     {
-#if DEBUG 
-                    throw;
+                        _setupDefaultExpression(context);
+#if DEBUG
+                        throw;
 #else
                         _reportException(context, expander, e);
-                        _setupDefaultExpression(context);
 #endif
                     }
                 }

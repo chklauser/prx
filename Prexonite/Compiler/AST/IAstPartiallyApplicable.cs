@@ -47,10 +47,37 @@ namespace Prexonite.Compiler.Ast
         {
             var mappings8 = new int[argv.Count];
             var closedArguments = new List<IAstExpression>(argv.Count);
+            GetMapping(argv, mappings8, closedArguments);
 
-            for (var i = 0; i < argv.Count; i++)
+            var mappings32 = PartialApplicationCommandBase.PackMappings32(mappings8);
+
+            //Emit arguments and mapping
+            foreach (var arg in closedArguments)
+                arg.EmitCode(target);
+
+            foreach (var mapping in mappings32)
+                target.EmitConstant(node, mapping);
+
+            return closedArguments.Count + mappings32.Length;
+        }
+
+        /// <summary>
+        /// Goes over <paramref name="arguments"/> and determines the partial application argument mapping. Closed arguments are collected in <paramref name="closedArguments"/>.
+        /// </summary>
+        /// <param name="arguments">Result of <see cref="PreprocessPartialApplicationArguments"/>.</param>
+        /// <param name="mappings8">The list (or array) to store the mappings in. Must have space for at least <paramref name="arguments"/>.Count elements.</param>
+        /// <param name="closedArguments">The list to store the closed arguments in. Must have space for at least <paramref name="arguments"/>.Count elements.</param>
+        /// <remarks>
+        ///     <para>Does not alter <paramref name="arguments"/>.</para>
+        ///     <para><paramref name="mappings8"/> are not yet packed into 32bit integers. 
+        ///         Use <see cref="PartialApplicationCommandBase.PackMappings32"/> to pack the 
+        ///         mappings into a more compact format.</para>
+        /// </remarks>
+        public static void GetMapping(IList<IAstExpression> arguments, IList<int> mappings8, List<IAstExpression> closedArguments)
+        {
+            for (var i = 0; i < arguments.Count; i++)
             {
-                var arg = argv[i];
+                var arg = arguments[i];
                 AstPlaceholder placeholder;
                 if((placeholder = arg as AstPlaceholder) != null)
                 {
@@ -65,17 +92,6 @@ namespace Prexonite.Compiler.Ast
                     mappings8[i] = closedArguments.Count; //mappings are 1-based; no need for -1
                 }
             }
-
-            var mappings32 = PartialApplicationCommandBase.PackMappings32(mappings8);
-
-            //Emit arguments and mapping
-            foreach (var arg in closedArguments)
-                arg.EmitCode(target);
-
-            foreach (var mapping in mappings32)
-                target.EmitConstant(node, mapping);
-
-            return closedArguments.Count + mappings32.Length;
         }
 
         /// <summary>
@@ -134,9 +150,8 @@ namespace Prexonite.Compiler.Ast
             //If there are open argument indices that weren't mapped, we are dealing with
             //  a deliberate use of excess arguments already and are therefor
             //  not dealing with any redundancy at all
-            foreach (var usage in numUsages)
-                if (usage == 0)
-                    return;
+            if (numUsages.Contains(0))
+                return;
 
             //Redundant placeholders only occur in a placeholder-only postfix with strictly 
             //  ascending indices, that have not been mapped before. Find that postfix

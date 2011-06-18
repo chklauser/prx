@@ -275,7 +275,7 @@ namespace Prexonite.Commands.Core.PartialApplication
             }
 
             var mappings = ExtractMappings32(mappingCandidates);
-            return mappings.All(t => t != 0);
+            return !mappings.Contains(0);
         }
 
         public virtual void Implement(CompilerState state, Instruction ins, CompileTimeValue[] staticArgv, int dynamicArgc)

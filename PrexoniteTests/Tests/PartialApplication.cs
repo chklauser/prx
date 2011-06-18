@@ -101,7 +101,7 @@ namespace PrexoniteTests.Tests
             var closedArguments = new PValue[] { 1, 2 };
             var mappings = new[] { -1, 1, -1, 2, -2 };
             var pa = new PartialApplicationMock(mappings, closedArguments, nonArgc);
-            Assert.AreSame(mappings, pa.Mappings);
+            Assert.AreEqual(mappings, pa.Mappings.ToArray());
 
             var callArgs = new PValue[] { };
 
@@ -140,7 +140,7 @@ namespace PrexoniteTests.Tests
             var closedArguments = new PValue[] { 1, 2 };
             var mappings = new[] { -1, 1, -1, 2, -2 };
             var pa = new PartialApplicationMock(mappings, closedArguments, nonArgc);
-            Assert.AreSame(mappings, pa.Mappings);
+            Assert.AreEqual(mappings, pa.Mappings.ToArray());
 
             var callArgs = new PValue[] { "a", "b" };
 
@@ -175,7 +175,7 @@ namespace PrexoniteTests.Tests
             var closedArguments = new PValue[] { 1, 2 };
             var mappings = new[] { -1, 1, -1, 2, -2 };
             var pa = new PartialApplicationMock(mappings, closedArguments, nonArgc);
-            Assert.AreSame(mappings, pa.Mappings);
+            Assert.AreEqual(mappings, pa.Mappings.ToArray());
 
             var callArgs = new PValue[] { "a", "b", "c", "d", "e", "f", "g" };
 
@@ -215,7 +215,7 @@ namespace PrexoniteTests.Tests
             var closedArguments = new PValue[] { 1, 2 };
             var mappings = new[] { -1, 1, -1, 2, -2 };
             var pa = new PartialApplicationMock(mappings, closedArguments, nonArgc);
-            Assert.AreSame(mappings, pa.Mappings);
+            Assert.AreEqual(mappings, pa.Mappings.ToArray());
 
             var callArgs = new PValue[] { "a", "b", "c", "d", "e", "f", "g" };
 
@@ -255,7 +255,7 @@ namespace PrexoniteTests.Tests
             var closedArguments = new PValue[] { };
             var mappings = new int[] { };
             var pa = new PartialApplicationMock(mappings, closedArguments, nonArgc);
-            Assert.AreSame(mappings, pa.Mappings);
+            Assert.AreEqual(mappings, pa.Mappings.ToArray());
 
             var callArgs = new PValue[] { "a", "b", "c", "d", "e", "f", "g" };
 

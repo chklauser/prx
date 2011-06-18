@@ -18,7 +18,7 @@ namespace Prexonite.Commands.Core.PartialApplication
         /// <para>Mappings from effective argument position to closed and open arguments. </para>
         /// <para>Negative values indicate open arguments, positive values indicate closed arguments.</para>
         /// </summary>
-        private readonly int[] _mappings;
+        private readonly ArraySegment<int> _mappings;
 
         private readonly PValue[] _closedArguments;
 
@@ -27,11 +27,17 @@ namespace Prexonite.Commands.Core.PartialApplication
         /// <summary>
         /// <para>Copy of the mappings from effective argument position to closed and open arguments. </para>
         /// <para>Negative values indicate open arguments, positive values indicate closed arguments.</para>
+        /// <para>These values are not packed or compressed. Each array element represents one mapping.</para>
         /// </summary>
         public IEnumerable<int> Mappings
         {
             [DebuggerStepThrough]
-            get { return _mappings; }
+            get
+            {
+                return
+                    Enumerable.Range(_mappings.Offset, _mappings.Count).Select(
+                        i => _mappings.Array[i]);
+            }
         }
 
         /// <summary>
@@ -40,7 +46,17 @@ namespace Prexonite.Commands.Core.PartialApplication
         /// <param name="mappings">Mappings from effective argument position to closed and open arguments. See <see cref="Mappings"/>.</param>
         /// <param name="closedArguments">Already provided (closed) arguments.</param>
         /// <param name="nonArgumentPrefix">Indicates how many of the effective arguments should be isolated and not packed into the arguments array. See remarks on <see cref="NonArgumentPrefix"/>.</param>
-        protected PartialApplicationBase(int[] mappings, PValue[] closedArguments, int nonArgumentPrefix)
+        protected PartialApplicationBase(int[] mappings, PValue[] closedArguments, int nonArgumentPrefix) : this(new ArraySegment<int>(mappings), closedArguments, nonArgumentPrefix)
+        {
+        }
+
+        /// <summary>
+        /// Initializes the partial application.
+        /// </summary>
+        /// <param name="mappings">Mappings from effective argument position to closed and open arguments. See <see cref="Mappings"/>.</param>
+        /// <param name="closedArguments">Already provided (closed) arguments.</param>
+        /// <param name="nonArgumentPrefix">Indicates how many of the effective arguments should be isolated and not packed into the arguments array. See remarks on <see cref="NonArgumentPrefix"/>.</param>
+        protected PartialApplicationBase(ArraySegment<int> mappings, PValue[] closedArguments, int nonArgumentPrefix)
         {
             if (nonArgumentPrefix < 0)
                 throw new ArgumentOutOfRangeException(
@@ -64,8 +80,10 @@ namespace Prexonite.Commands.Core.PartialApplication
         {
             var mapped = new bool[argc];
             var count = 0;
-            foreach (var m in _mappings)
+            var end = _mappings.Offset + _mappings.Count;
+            for(var i = _mappings.Offset; i < end; i++)
             {
+                var m = _mappings.Array[i];
                 int idx;
                 if (0 <= m || (idx = -m - 1) >= mapped.Length)
                     continue;
@@ -108,20 +126,21 @@ namespace Prexonite.Commands.Core.PartialApplication
             var countExcessArguments = System.Math.Max(
                 argc - _computeCountOpenArgumentsMapped(argc), 0);
             var nonArgumentPrefix = NonArgumentPrefix;
+            var mappingLength = _mappings.Count;
             var countEffectiveArguments =
-                System.Math.Max(_mappings.Length + countExcessArguments - nonArgumentPrefix, 0);
+                System.Math.Max(mappingLength + countExcessArguments - nonArgumentPrefix, 0);
 
             nonArguments = new PValue[nonArgumentPrefix];
             effectiveArguments = new PValue[countEffectiveArguments];
             System.Diagnostics.Debug.Assert(effectiveArguments.Length + nonArgumentPrefix >=
-                                            _mappings.Length);
+                                            mappingLength);
 
             //Apply mapping
             var openArgumentUsed = new bool[argc];
             var absoluteIndex = 0;
-            for (; absoluteIndex < _mappings.Length; absoluteIndex++)
+            for (; absoluteIndex < mappingLength; absoluteIndex++)
             {
-                var mapping = _mappings[absoluteIndex];
+                var mapping = _mappings.Array[_mappings.Offset + absoluteIndex];
                 System.Diagnostics.Debug.Assert(mapping != 0, "Mapping contains zero");
 
                 int relativeIndex;

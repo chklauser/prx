@@ -134,7 +134,10 @@
     <Compile Include="Commands\Core\PartialApplication\FlippedFunctionalPartialCallCommand.cs" />
     <Compile Include="Commands\Core\PartialApplication\FunctionalPartialCall.cs" />
     <Compile Include="Commands\Core\PartialApplication\FunctionalPartialCallCommand.cs" />
+    <Compile Include="Commands\Core\PartialApplication\PartialCallStar.cs" />
+    <Compile Include="Commands\Core\PartialApplication\PartialCallStarImplCommand.cs" />
     <Compile Include="Compiler\Macro\Commands\CallMacro.cs" />
+    <Compile Include="Compiler\Macro\Commands\CallStar.cs" />
     <Compile Include="Compiler\Macro\Commands\Pack.cs" />
     <Compile Include="Compiler\Macro\Commands\Reference.cs" />
     <Compile Include="Compiler\Macro\Commands\Unpack.cs" />

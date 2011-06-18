@@ -170,7 +170,7 @@ namespace Prexonite.Compiler.Ast
                 //Check for optional open argument
                 if(p != null)
                 {
-                    //There is an open argument front. This is handled by FlippedFunctionalPartialCall
+                    //There is an open argument in front. This is handled by FlippedFunctionalPartialCall
                     argv[0].EmitCode(target);
                     foreach (var arg in argv.Skip(2))
                         arg.EmitCode(target);

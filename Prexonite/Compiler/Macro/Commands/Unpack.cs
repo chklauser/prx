@@ -97,7 +97,7 @@ namespace Prexonite.Compiler.Macro.Commands
                 return context.RetrieveFromTransport((int) constant.Constant);
             }
 
-            private string _getUsage()
+            private static string _getUsage()
             {
                 return string.Format("usage {0}(context, id)", Alias);
             }

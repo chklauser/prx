@@ -196,5 +196,23 @@ function main(xs)
 
             Expect(">1>2>3", (PValue)new List<PValue> { 1, 2, 3 });
         }
+
+        #region Call\*
+
+        [Test]
+        public void CallStarSimple()
+        {
+            Compile(@"
+function main(x, xs)
+{
+    var f = call\star([?],?,[?]);
+    return f.(xs,x);
+}
+");
+
+            Expect((PValue) new List<PValue> {1, 2, 3}, (PValue) new List<PValue> {2, 3}, 1);
+        }
+
+        #endregion
     }
 }
