@@ -684,7 +684,11 @@ namespace Prexonite
 
             Commands.AddEngineCommand(DisposeAlias, Dispose.Instance);
 
+            // There is a macro that uses the same alias (CallAlias)
+            //  it has the same purpose. For backwards compatibility,
+            //  the command table will retain the old binding.
             Commands.AddEngineCommand(CallAlias, Call.Instance);
+            Commands.AddEngineCommand(Call.Alias, Call.Instance);
 
             Commands.AddEngineCommand(ThunkAlias, ThunkCommand.Instance);
             Commands.AddEngineCommand(AsThunkAlias, AsThunkCommand.Instance);
@@ -865,7 +869,7 @@ namespace Prexonite
         public const string DisposeAlias = "dispose";
 
         /// <summary>
-        /// Alias used for the <c>call</c> command.
+        /// Alias used for the <c>call</c> command (macro). If you intend to refer to the <see cref="Call"/> command, use <see cref="Call.Alias"/>.
         /// </summary>
         public const string CallAlias = "call";
 
@@ -1169,6 +1173,15 @@ namespace Prexonite
         /// Alias used for the then command (constructor for function composition)
         /// </summary>
         public const string ThenAlias = @"then";
+
+        #endregion
+
+        #region Version
+
+        public static Version PrexoniteVersion
+        {
+            get { return typeof (Engine).Assembly.GetName().Version; }
+        }
 
         #endregion
     }

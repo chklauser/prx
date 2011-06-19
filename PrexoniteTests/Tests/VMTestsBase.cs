@@ -98,9 +98,11 @@ namespace Prx.Tests
             finally
             {
                 foreach (var s in ldr.Errors)
-                {
-                    Console.WriteLine(s);
-                }
+                    Console.WriteLine("ERROR: " + s);
+                foreach (var s in ldr.Warnings)
+                    Console.WriteLine("WARNING: " + s);
+                foreach (var s in ldr.Infos)
+                    Console.WriteLine("INFO: " + s);
                 Console.WriteLine(ldr.StoreInString());
             }
         }

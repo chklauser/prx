@@ -89,6 +89,29 @@ namespace Prexonite.Compiler.Ast
                 case SymbolInterpretations.LocalReferenceVariable:
                     target.Emit(this, OpCode.ldloc, Id);
                     break;
+                case SymbolInterpretations.MacroCommand:
+                    target.Loader.ReportMessage(new ParseMessage(ParseMessageSeverity.Warning,
+                        string.Format(
+                            "Reference to macro command {0} detected. Prexonite version {1} treats this " +
+                                "as a partial application. This behavior might change in the future. " +
+                                    "Use partial application syntax explicitly {0}(?) or use the {2} command " +
+                                        "to obtain a reference to the macro.",
+                            Id, Engine.PrexoniteVersion, Macro.Commands.Reference.Alias), this));
+
+                    var pa = new AstMacroInvocation(File, Line, Column, Id, Interpretation);
+                    pa.Call = Call;
+                    pa.Arguments.Add(new AstPlaceholder(File,Line,Column,0));
+                    var ipa = (IAstExpression) pa;
+                    _OptimizeNode(target, ref ipa);
+                    ipa.EmitCode(target);
+
+                    break;
+                default:
+                    target.Loader.ReportMessage(new ParseMessage(ParseMessageSeverity.Error,
+                        string.Format("Cannot create a reference to {0} {1}.",
+                            Enum.GetName(typeof (SymbolInterpretations), Interpretation), Id), this));
+                    target.EmitNull(this);
+                    break;
             }
         }
 

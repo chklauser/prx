@@ -118,6 +118,40 @@ function main()
         }
 
         [Test]
+        public void CallCommandImplementationForPa()
+        {
+            Compile(
+                @"
+function sum()
+{
+    var s = 0;
+    foreach(var x in var args)
+        s += x~Int;
+    return s;
+}
+
+function main()
+{
+    return call(call(?), [sum(?)], var args);
+}
+");
+            const int a = 3;
+            const int b = 7;
+            const int c = 9;
+            const int d = 13;
+            const int e = 14;
+            const int f = 99;
+            const int g = 101;
+
+            Expect(
+                a + b + c + d + e + f + g,
+                PType.List.CreatePValue(new PValue[] { a, b, c }),
+                PType.List.CreatePValue(new PValue[] { d, e }),
+                PType.List.CreatePValue(new PValue[] { f }),
+                PType.List.CreatePValue(new PValue[] { g }));
+        }
+
+        [Test]
         public void UnbindCommandImplementation()
         {
             Compile(

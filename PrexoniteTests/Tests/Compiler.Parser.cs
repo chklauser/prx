@@ -2865,7 +2865,7 @@ ldc.int 3
 ldc.int 7
 cmd.2   concat
 ldc.int 15
-@cmd.2  call  
+@cmd.2  call\perform
 ldnull
 ret.val
 ");
@@ -2898,9 +2898,9 @@ ldc.int 7
 ldc.int 3
 cmd.2   concat
 ldc.int 15
-@cmd.2  call
+@cmd.2  call\perform
 ldc.int 5
-cmd.1   call
+cmd.1   call\perform
 @cmd.1  println
 ldnull
 ret.val
@@ -2926,7 +2926,7 @@ function main(x)
 var r
 ldloc   x
 ldc.int 5
-cmd.2   call
+cmd.2   call\perform
 stloc   r
 
 ldloc   x
@@ -2935,7 +2935,7 @@ mul
 ldc.int 5
 ldloc   x
 cmd.2   pair
-cmd.2   call
+cmd.2   call\perform
 stloc   r
 
 ldnull
