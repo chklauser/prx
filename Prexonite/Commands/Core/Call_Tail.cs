@@ -23,13 +23,19 @@
 
 using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.Text;
+using Prexonite.Compiler;
+using Prexonite.Compiler.Macro;
+using Prexonite.Compiler.Macro.Commands;
 using Prexonite.Types;
 
 namespace Prexonite.Commands.Core
 {
     public sealed class Call_Tail : StackAwareCommand
     {
+        #region Singleton
+
         private Call_Tail()
         {
         }
@@ -40,6 +46,11 @@ namespace Prexonite.Commands.Core
         {
             get { return _instance; }
         }
+
+        #endregion
+
+        public const string Alias = @"call\tail\perform";
+
 
         /// <summary>
         /// Executes the command.
@@ -79,8 +90,53 @@ namespace Prexonite.Commands.Core
 
             //remove caller from stack
             var stack = sctx.ParentEngine.Stack;
-            stack.Remove(stack.FindLast(sctx));
+            var node = stack.FindLast(sctx);
+            if(node == null)
+            {
+                throw new PrexoniteException(string.Format("{0} only works on the interpreted stack.", Engine.Call_TailAlias));
+            }
+            stack.Remove(node);
             return iargs;
         }
+
+        #region Partial application via call\star
+
+        private readonly PartialTailCall _partial = new PartialTailCall();
+
+        public PartialTailCall Partial
+        {
+            [DebuggerStepThrough]
+            get { return _partial; }
+        }
+
+        public class PartialTailCall : PartialCallWrapper
+        {
+            protected PartialTailCall(string alias, string callImplementationId, SymbolInterpretations callImplementetaionInterpretation) : base(alias, callImplementationId, callImplementetaionInterpretation)
+            {
+            }
+
+            public PartialTailCall() : this(Engine.Call_TailAlias, Alias, SymbolInterpretations.Command)
+            {
+            }
+
+            protected override void DoExpand(MacroContext context)
+            {
+                _specifyDeficiency(context);
+
+                base.DoExpand(context);
+            }
+
+            private static void _specifyDeficiency(MacroContext context)
+            {
+                context.Function.Meta[PFunction.VolatileKey] = true;
+                MetaEntry deficiency;
+                if (!context.Function.Meta.TryGetValue(PFunction.DeficiencyKey, out deficiency) ||
+                    deficiency.Text == "")
+                    context.Function.Meta[PFunction.DeficiencyKey] = string.Format("Uses {0}.",
+                        Engine.Call_TailAlias);
+            }
+        }
+
+        #endregion
     }
 }

@@ -532,6 +532,7 @@ namespace Prexonite.Compiler
             _addMacroCommand(Macro.Commands.CallMacro.Instance);
             _addHelperCommands(Macro.Commands.CallMacro.GetHelperCommands(this));
             _addMacroCommand(Call_Member.Instance.Partial);
+            _addMacroCommand(Call_Tail.Instance.Partial);
         }
 
         private void _addHelperCommands(IEnumerable<KeyValuePair<string, PCommand>> helpers)

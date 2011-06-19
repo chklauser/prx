@@ -247,6 +247,65 @@ function main(obj, x, xs, y1, y2)
         }
 
         [Test]
+        public void CallTailImplementation()
+        {
+            Compile(@"
+ref check_stack;
+
+var result;
+
+function factorial(n,r)
+{
+    r ??= 1;
+    if(n <= 1)
+    {
+        check_stack();
+        result = r;
+    }
+    else
+    {
+        call\tail(factorial(?,?),[n-1,r*n]);
+    }
+}
+
+function tailed(ref f, n)[is volatile;]
+{
+    return f(n);
+}
+
+function main(check, n)
+{
+    ->check_stack = check;
+    
+    var f = call\tail(factorial(?,?),[?]);
+    tailed(f, n);
+    return result;
+}
+");
+
+            var check = CompilerTarget.CreateFunctionValue((s, args) =>
+                {
+                    if (s.ParentEngine.Stack.Count > 2)
+                    {
+                        foreach (var stackContext in s.ParentEngine.Stack)
+                            Console.WriteLine(" - " + stackContext);
+
+                        throw new PrexoniteException("Stack size is not constant.");
+                    }
+                    return PType.Null;
+                });
+
+            var fac = target.Functions["factorial"];
+            Assert.IsTrue(fac.Meta[PFunction.VolatileKey].Switch,
+                "The factorial function should be volatile.");
+            Assert.IsTrue(fac.Meta[PFunction.DeficiencyKey].Text.Contains(Engine.Call_TailAlias),
+                "Deficiency of factorial function must mention " + Engine.Call_TailAlias);
+
+            Expect(1, check, 1);
+            //Expect(40320,check,8);
+        }
+
+        [Test]
         public void UnbindCommandImplementation()
         {
             Compile(
