@@ -306,6 +306,39 @@ function main(check, n)
         }
 
         [Test]
+        public void CallAsyncCommandImplementation()
+        {
+            Compile(@"
+function fib_rec(n, /*lazy*/ fibT, ref combine) = 
+    if(n <= 0) 0 else if(n <= 2) 1 else combine(force(fibT).(n-1), force(fibT).(n-2));
+
+function main(n,m, i)
+{
+    //Simple, background
+    let simple_fib = fib_rec(?, simple_fib, ? + ?);
+    var f1 = call\async(fib_rec(?),[?, simple_fib, ? + ?]);
+    println(var c1 = f1.(n));
+    
+    //Recursive, background
+    let rec_fib = call\async(fib_rec(?), [?, rec_fib, (ca,cb) => ca.receive + cb.receive]);
+    var f2 = force(rec_fib);
+    println(var c2 = f2.(m));
+
+    //No lazyness involved
+    function sfib(n) = if(n <= 0) 0 else if(n <= 2) 1 else sfib(n-1) + sfib(n-2);
+    var c3 = call\async(sfib(?),[i]);
+
+    println(var r = [c1.receive, c2.receive, c3.receive]);
+    return r;
+}
+");
+            //fib 8 = 21
+            //fib 7 = 13
+            //fib 6 = 8
+            Expect(new List<PValue> {8, 13, 21}, 6, 7, 8);
+        }
+
+        [Test]
         public void UnbindCommandImplementation()
         {
             Compile(

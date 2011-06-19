@@ -805,6 +805,7 @@ namespace Prexonite
             Commands.AddEngineCommand(SelectAlias, Select.Instance);
 
             Commands.AddEngineCommand(Call_AsyncAlias, CallAsync.Instance);
+            Commands.AddEngineCommand(CallAsync.Alias, CallAsync.Instance);
 
             Commands.AddEngineCommand(AsyncSeqAlias, AsyncSeq.Instance);
 

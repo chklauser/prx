@@ -1,10 +1,13 @@
 using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.Linq;
 using System.Text;
 using System.Threading;
 using Prexonite.Commands.Core;
+using Prexonite.Compiler;
 using Prexonite.Compiler.Cil;
+using Prexonite.Compiler.Macro.Commands;
 using Prexonite.Concurrency;
 using Prexonite.Types;
 
@@ -26,6 +29,8 @@ namespace Prexonite.Commands.Concurrency
         }
 
         #endregion
+
+        public const string Alias = @"call\async\perform";
 
         #region Overrides of PCommand
 
@@ -93,6 +98,19 @@ namespace Prexonite.Commands.Concurrency
         void ICilCompilerAware.ImplementInCil(CompilerState state, Instruction ins)
         {
             throw new NotImplementedException();
+        }
+
+        #endregion
+
+        #region Partial application via call\star
+
+        private readonly PartialCallWrapper _partial = new PartialCallWrapper(
+            Engine.Call_AsyncAlias, Alias, SymbolInterpretations.Command);
+
+        public PartialCallWrapper Partial
+        {
+            [DebuggerStepThrough]
+            get { return _partial; }
         }
 
         #endregion

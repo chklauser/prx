@@ -32,6 +32,7 @@ using System.IO;
 using System.Reflection;
 using System.Text;
 using Prexonite.Commands;
+using Prexonite.Commands.Concurrency;
 using Prexonite.Commands.Core;
 using Prexonite.Compiler.Ast;
 using Prexonite.Compiler.Macro;
@@ -533,6 +534,7 @@ namespace Prexonite.Compiler
             _addHelperCommands(Macro.Commands.CallMacro.GetHelperCommands(this));
             _addMacroCommand(Call_Member.Instance.Partial);
             _addMacroCommand(Call_Tail.Instance.Partial);
+            _addMacroCommand(CallAsync.Instance.Partial);
         }
 
         private void _addHelperCommands(IEnumerable<KeyValuePair<string, PCommand>> helpers)
