@@ -26,12 +26,11 @@
 using System;
 using System.Collections.Generic;
 using System.Diagnostics;
-using System.Linq;
 using Prexonite.Commands.List;
 using Prexonite.Compiler;
-using Prexonite.Compiler.Ast;
 using Prexonite.Compiler.Cil;
 using Prexonite.Compiler.Macro;
+using Prexonite.Compiler.Macro.Commands;
 using Prexonite.Types;
 
 namespace Prexonite.Commands.Core
@@ -214,97 +213,13 @@ namespace Prexonite.Commands.Core
 
         #region Macro for partial application
 
-        public class Partial : PartialMacroCommand
+        private readonly PartialCallWrapper _partialCall = new PartialCallWrapper(Engine.CallAlias,
+            Alias,
+            SymbolInterpretations.Command);
+
+        public PartialMacroCommand Partial
         {
-            public const string Alias = Engine.CallAlias;
-
-            #region Singleton pattern
-
-            private static readonly Partial _instance = new Partial();
-
-            public static Partial Instance
-            {
-                get { return _instance; }
-            }
-
-            private Partial() : base(Alias)
-            {
-            }
-
-            #endregion
-
-            #region Overrides of MacroCommand
-
-            private static bool _hasPlaceholder(IAstExpression expr)
-            {
-                var lit = expr as AstListLiteral;
-                return expr.IsPlaceholder() || (lit != null && lit.CheckForPlaceholders());
-            }
-
-            protected override void DoExpand(MacroContext context)
-            {
-                if(context.Invocation.Arguments.Count == 0)
-                {
-                    // Call with no arguments returns null.
-                    // The macro system will supply that null.
-                    return;
-                }
-
-                var p = context.Invocation.Arguments[0] as AstPlaceholder;
-                if(p != null && (p.Index.GetValueOrDefault(0) == 0))
-                {
-                    // call(?0) ⇒ call\perform(?0)
-
-                    var cp = new AstGetSetSymbol(context.Invocation.File, context.Invocation.Line,
-                        context.Invocation.Column, context.Invocation.Call, Call.Alias,
-                        SymbolInterpretations.Command);
-                    cp.Arguments.Add(new AstPlaceholder(context.Invocation.File, context.Invocation.Line, context.Invocation.Column,0));
-                    context.Block.Expression = cp;
-                    return;
-                }
-
-                if(!context.Invocation.Arguments.Any(_hasPlaceholder))
-                {
-                    // no placeholders, invoke call\perform directly
-
-                    var call = context.CreateGetSetSymbol(SymbolInterpretations.Command,
-                        context.Call, Call.Alias, context.Invocation.Arguments.ToArray());
-                    context.Block.Expression = call;
-                    return;
-                }
-
-                var inv = new AstMacroInvocation(context.Invocation.File, context.Invocation.Line,
-                    context.Invocation.Column,
-                    Compiler.Macro.Commands.CallStar.Instance.Id,
-                    SymbolInterpretations.MacroCommand);
-
-                // Protected the first two arguments
-                inv.Arguments.Add(context.CreateConstant(2));
-
-                // Indicate the kind of call by passing `call(?)`, a partial application of call
-                var paCall = context.CreateGetSetSymbol(SymbolInterpretations.Command,
-                    context.Invocation.Call, Engine.CallAlias,
-                    new AstPlaceholder(context.Invocation.File, context.Invocation.Line,
-                        context.Invocation.Column, 0));
-                inv.Arguments.Add(paCall);
-
-                // Pass all the other arguments through
-                inv.Arguments.AddRange(context.Invocation.Arguments);
-
-                context.Block.Expression = inv;
-            }
-
-            #endregion
-
-            #region Overrides of PartialMacroCommand
-
-            protected override bool DoExpandPartialApplication(MacroContext context)
-            {
-                DoExpand(context);
-                return true;
-            }
-
-            #endregion
+            get { return _partialCall; }
         }
 
         #endregion

@@ -695,7 +695,11 @@ namespace Prexonite
             Commands.AddEngineCommand(ForceAlias, ForceCommand.Instance);
             Commands.AddEngineCommand(ToSeqAlias, ToSeqCommand.Instance);
 
+            // There is a macro that uses the same alias (Call_MemberAlias)
+            //  it has the same purpose. For backwards compatibility,
+            //  the command table will retain the old binding.
             Commands.AddEngineCommand(Call_MemberAlias, Call_Member.Instance);
+            Commands.AddEngineCommand(Call_Member.Alias, Call_Member.Instance);
 
             Commands.AddEngineCommand(CallerAlias, Caller.Instance);
 
@@ -869,7 +873,9 @@ namespace Prexonite
         public const string DisposeAlias = "dispose";
 
         /// <summary>
-        /// Alias used for the <c>call</c> command (macro). If you intend to refer to the <see cref="Call"/> command, use <see cref="Call.Alias"/>.
+        /// Alias used for the <c>call</c> command (macro). 
+        /// If you intend to refer to the <see cref="Call"/> command, 
+        ///     use <see cref="Call.Alias"/>.
         /// </summary>
         public const string CallAlias = "call";
 
@@ -894,7 +900,9 @@ namespace Prexonite
         public const string SelectAlias = "select";
 
         /// <summary>
-        /// Alias used for the <c>callmember</c> command.
+        /// Alias used for the <c>callmember</c> command (macro). 
+        /// If you intend to refer to the <see cref="Call_Member"/> command, 
+        ///     use <see cref="Call_Member.Alias"/>.
         /// </summary>
         public const string Call_MemberAlias = @"call\member";
 

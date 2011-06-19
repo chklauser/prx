@@ -32,9 +32,11 @@ using System.IO;
 using System.Reflection;
 using System.Text;
 using Prexonite.Commands;
+using Prexonite.Commands.Core;
 using Prexonite.Compiler.Ast;
 using Prexonite.Compiler.Macro;
 using Prexonite.Types;
+using Debug = System.Diagnostics.Debug;
 
 namespace Prexonite.Compiler
 {
@@ -526,9 +528,10 @@ namespace Prexonite.Compiler
             _addMacroCommand(Macro.Commands.CallStar.Instance);
 
             // Call/* macros
-            _addMacroCommand(Commands.Core.Call.Partial.Instance);
+            _addMacroCommand(Call.Instance.Partial);
             _addMacroCommand(Macro.Commands.CallMacro.Instance);
             _addHelperCommands(Macro.Commands.CallMacro.GetHelperCommands(this));
+            _addMacroCommand(Call_Member.Instance.Partial);
         }
 
         private void _addHelperCommands(IEnumerable<KeyValuePair<string, PCommand>> helpers)

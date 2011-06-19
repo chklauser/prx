@@ -152,6 +152,101 @@ function main()
         }
 
         [Test]
+        public void PartialCallCommand()
+        {
+            Compile(
+                @"
+function sum()
+{
+    var s = 0;
+    foreach(var x in var args)
+        s += x~Int;
+    return s;
+}
+
+function main()
+{
+    var f = call(call(?), [?], ?);
+    println(var x = f.(sum(?), var args));
+    return x;
+}
+");
+            const int a = 3;
+            const int b = 7;
+            const int c = 9;
+            const int d = 13;
+            const int e = 14;
+            const int f = 99;
+            const int g = 101;
+
+            Expect(
+                a + b + c + d + e + f + g,
+                PType.List.CreatePValue(new PValue[] { a, b, c }),
+                PType.List.CreatePValue(new PValue[] { d, e }),
+                PType.List.CreatePValue(new PValue[] { f }),
+                PType.List.CreatePValue(new PValue[] { g }));
+        }
+
+        [Test]
+        public void PartialCallCommandPa()
+        {
+            Compile(
+                @"
+function sum()
+{
+    var s = 0;
+    foreach(var x in var args)
+        s += x~Int;
+    return s;
+}
+
+function main()
+{
+    var f = call(call(sum(?),?), ?);
+    println(var x = f.(var args));
+    return x;
+}
+");
+            const int a = 3;
+            const int b = 7;
+            const int c = 9;
+            const int d = 13;
+            const int e = 14;
+            const int f = 99;
+            const int g = 101;
+
+            Expect(
+                a + b + c + d + e + f + g,
+                PType.List.CreatePValue(new PValue[] { a, b, c }),
+                PType.List.CreatePValue(new PValue[] { d, e }),
+                PType.List.CreatePValue(new PValue[] { f }),
+                PType.List.CreatePValue(new PValue[] { g }));
+        }
+
+        [Test]
+        public void CallMemberCommandImplementation()
+        {
+            var obj = new PrexoniteTests.Tests.MemberCallable();
+            obj.Name = "obj";
+            obj.Expect("m", new PValue[]{1,2,3}, PCall.Get, 6);
+            obj.Expect("", new PValue[]{4,"a"},PCall.Set);
+
+            Compile(@"
+function main(obj, x, xs, y1, y2)
+{
+    var f1 = call\member(?,""m"",[?],?);
+    var f2 = call\member(?,?,?) = [?];
+
+    f1.(obj,x,xs);
+    f2.(obj,"""",y1, y2);
+}
+");
+            ExpectNull(sctx.CreateNativePValue(obj), 1, (PValue) new List<PValue> {2, 3},
+                (PValue) new List<PValue> {4}, "a");
+            obj.AssertCalledAll();
+        }
+
+        [Test]
         public void UnbindCommandImplementation()
         {
             Compile(

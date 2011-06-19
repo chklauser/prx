@@ -99,6 +99,7 @@
     <Compile Include="Tests\Compiler.cs" />
     <Compile Include="Tests\Compiler.Global.cs" />
     <Compile Include="Tests\Compiler.Parser.cs" />
+    <Compile Include="Tests\MemberCallable.cs" />
     <Compile Include="Tests\VMTests.Macro.cs" />
     <Compile Include="Tests\VMTests.Exception.cs" />
     <Compile Include="Tests\VMTests.Commands.cs" />

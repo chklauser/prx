@@ -1,4 +1,4 @@
-/*
+﻿/*
  * Prx, a standalone command line interface to the Prexonite scripting engine.
  * Prexonite, a scripting engine (Scripting Language -> Bytecode -> Virtual Machine)
  *  Copyright (C) 2007  Christian "SealedSun" Klauser
@@ -25,7 +25,13 @@
 
 using System;
 using System.Collections.Generic;
+using System.Diagnostics;
+using System.Linq;
 using Prexonite.Commands.List;
+using Prexonite.Compiler;
+using Prexonite.Compiler.Ast;
+using Prexonite.Compiler.Macro;
+using Prexonite.Compiler.Macro.Commands;
 using Prexonite.Types;
 
 namespace Prexonite.Commands.Core
@@ -35,6 +41,8 @@ namespace Prexonite.Commands.Core
     /// </summary>
     public sealed class Call_Member : PCommand
     {
+        #region Singleton
+
         private Call_Member()
         {
         }
@@ -46,8 +54,12 @@ namespace Prexonite.Commands.Core
             get { return _instance; }
         }
 
+        #endregion
+
+        public const string Alias = @"call\member\perform";
+
         /// <summary>
-        /// Implementation of (obj, [isSet, ] id, arg1, arg2, arg3, ..., argn) => obj.id(arg1, arg2, arg3, ..., argn);
+        /// Implementation of (obj, [isSet, ] id, arg1, arg2, arg3, ..., argn) ⇒ obj.id(arg1, arg2, arg3, ..., argn);
         /// </summary>
         /// <remarks>
         /// <para>
@@ -56,7 +68,7 @@ namespace Prexonite.Commands.Core
         /// function main()
         /// {   var myList = [1, 2];
         ///     var obj = "{1}hell{0}";
-        ///     print( callmember(obj, "format",  [ myList ]) );
+        ///     print( call\member(obj, "format",  [ myList ]) );
         /// }
         /// 
         /// //Prints "2hell1"
@@ -144,6 +156,53 @@ namespace Prexonite.Commands.Core
 
             return obj.DynamicCall(sctx, iargs.ToArray(), isSet ? PCall.Set : PCall.Get, id);
         }
+
+        #region Partial application via call\star
+
+        private readonly PartialMemberCall _partial = new PartialMemberCall();
+
+        public PartialMemberCall Partial
+        {
+            [DebuggerStepThrough]
+            get { return _partial; }
+        }
+
+        public class PartialMemberCall : PartialCallWrapper
+        {
+            protected PartialMemberCall(string alias, string callImplementationId, SymbolInterpretations callImplementetaionInterpretation) : base(alias, callImplementationId, callImplementetaionInterpretation)
+            {
+            }
+
+            public PartialMemberCall() : this(Engine.Call_MemberAlias, Alias, SymbolInterpretations.Command)
+            {
+            }
+
+            protected override IEnumerable<IAstExpression> GetCallArguments(MacroContext context)
+            {
+                var argv = context.Invocation.Arguments;
+                return
+                    argv.Take(1).Append(_getIsSetExpr(context)).Append(argv.Skip(1));
+            }
+
+            private static AstConstant _getIsSetExpr(MacroContext context)
+            {
+                return context.CreateConstant(context.Invocation.Call == PCall.Set);
+            }
+
+            protected override AstGetSetSymbol GetTrivialPartialApplication(MacroContext context)
+            {
+                var pa = base.GetTrivialPartialApplication(context);
+                pa.Arguments.Insert(1,_getIsSetExpr(context));
+                return pa;
+            }
+
+            protected override int GetPassThroughArguments(MacroContext context)
+            {
+                return 3;
+            }
+        }
+
+        #endregion
 
     }
 }
