@@ -74,6 +74,12 @@ namespace Prexonite.Compiler.Macro.Commands
 
         protected override void DoExpand(MacroContext context)
         {
+            if(!context.CallerIsMacro())
+            {
+                context.ReportMessage(ParseMessageSeverity.Error, string.Format("{0} can only be used in a macro context.", Alias));
+                return;
+            }
+
             if(context.Invocation.Arguments.Count == 0)
             {
                 context.ReportMessage(ParseMessageSeverity.Error, "{0} requires at least one argument.");
