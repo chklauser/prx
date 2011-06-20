@@ -53,7 +53,6 @@ function remove_control does foreach(var arg in var args)
 function update_controls does shared_container.update;
         
 function clear_controls does shared_container.clear;
-build does println("Compiled clear controls into app " + asm(ldr.app).Id);
 
 function registered_control control = shared_container.registered(control);
 

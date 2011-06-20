@@ -41,7 +41,7 @@ var sourceFiles;
 
 declare var app, ldr;
 	
-function printHead does println("** PREXONITE v$(asm(ldr.app).Meta["Version"].Text) **");
+function printHead does println("** PREXONITE v" + asm(ldr.app).Meta["Version"].Text + " ** (Runtime version $(Prexonite::Engine.PrexoniteVersion))");
 
 var originalArgs;
 
