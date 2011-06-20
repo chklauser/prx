@@ -78,6 +78,9 @@ namespace Prexonite.Compiler.Macro
         /// <returns>An AST node that represents the specified enumeration value</returns>
         public static IAstExpression EnumToExpression<T>(this T enumerationValue, ISourcePosition position) where T : struct
         {
+            if (position == null)
+                throw new ArgumentNullException("position");
+
             var member = Enum.GetName(typeof (T), enumerationValue);
             var pcallT = new AstConstantTypeExpression(position.File,
                                                        position.Line,

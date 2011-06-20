@@ -297,5 +297,100 @@ function main(x,y)
                     "a__xXx__=b"
                 }, "a", "b");
         }
+
+
+        [Test]
+        public void PartialCallMacroOnFunction()
+        {
+            Compile(
+                @"
+macro __append(con)
+{
+    var c = con.Constant + ""__"";
+
+    if(context.IsJustEffect)
+        c += ""je"";
+
+    if(context.Call~Int == Prexonite::Types::PCall.Set~Int)
+        c += ""="";
+
+    var con = new Prexonite::Compiler::Ast::AstConstant(context.Invocation.File,
+        context.Invocation.Line,context.Invocation.Column,c);
+    return con;
+}
+
+macro __surround\create_pa(con, idx)
+{
+    var idx = idx.Constant~Int;
+    con.Constant = ""__"" + con.Constant;
+    var f = [ call\macro([?],[?])                       // 20
+            , call\macro([__append(?0)])
+            , call\macro([__append = ?0])                // 22
+            , call\macro([__append,?],[con])
+            , call\macro([?,?],[?])
+            , call\macro([__append(con),?])             // 25
+            , call\macro([__append(?0),?])
+            , call\macro([__append = ?0, ?])             // 27
+            , call\macro([__append = con, ?]) ][idx];
+
+    var fc = macro\pack(f);
+    return new Prexonite::Compiler::Ast::AstConstant(context.Invocation.File,
+        context.Invocation.Line,context.Invocation.Column,fc);
+}
+
+macro __surround(con, idx)
+{
+    var i = idx.Constant~Int;                                           //37
+    var fc = call\macro([__surround\create_pa(con, idx)]).Expression;
+    var f = macro\unpack(fc.Constant~Int);
+    if(i == 0)
+        return f.(macro\reference(__append),con);
+    else if(i == 1)
+        return f.(con);
+    else if(i == 2)
+        return f.(con);
+    else if(i == 3)
+        return f.(true);
+    else if(i == 4)
+        return f.(macro\reference(__append),false,con);
+    else if(i == 5)                                                 // 50
+        return f.(true);
+    else if(i == 6)
+        return f.(con, false);
+    else if(i == 7)
+        return f.(con,true);
+    else if(i == 8)
+        return f.(false);
+    else
+        throw ""ZOMG! (invalid index to macro __surround)"";
+} // 60
+
+function main(x,y)
+{
+    return  [ x + __surround(""xXx"", 0) + y
+            , x + __surround(""xXx"", 1) + y
+            , x + __surround(""xXx"", 2) + y
+            , x + __surround(""xXx"", 3) + y
+            , x + __surround(""xXx"", 4) + y
+            , x + __surround(""xXx"", 5) + y
+            , x + __surround(""xXx"", 6) + y // 70
+            , x + __surround(""xXx"", 7) + y // 71
+            , x + __surround(""xXx"", 8) + y]; // 72
+}
+");
+
+            Expect(new List<PValue>
+                {
+                    "a__xXx__b",
+                    "a__xXx__b",
+                    "a__xXx__=b",
+                    "a__xXx__jeb",
+                    "a__xXx__b",
+                    "a__xXx__jeb",
+                    "a__xXx__b",
+                    "a__xXx__je=b",
+                    "a__xXx__=b"
+                }, "a", "b");
+        }
     }
 }
