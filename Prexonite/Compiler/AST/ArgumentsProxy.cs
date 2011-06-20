@@ -26,6 +26,7 @@ using System.Collections;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.Linq;
+using System.Text;
 using Prexonite.Types;
 
 namespace Prexonite.Compiler.Ast
@@ -73,10 +74,13 @@ namespace Prexonite.Compiler.Ast
 
         public void ReleaseRightAppend()
         {
-            _arguments.InsertRange(
-                (_rightAppendPosition < 0) ? _arguments.Count : _rightAppendPosition,
-                _rightAppends);
+            _arguments.InsertRange(_getEffectiveRightAppendPosition(),_rightAppends);
             _rightAppends.Clear();
+        }
+
+        private int _getEffectiveRightAppendPosition()
+        {
+            return (_rightAppendPosition < 0) ? _arguments.Count : _rightAppendPosition;
         }
 
         #region IList<IAstExpression> Members
@@ -336,5 +340,40 @@ namespace Prexonite.Compiler.Ast
         }
 
         #endregion
+
+        #region ToString
+
+        public override string ToString()
+        {
+            var sb = new StringBuilder();
+            var rap = _getEffectiveRightAppendPosition();
+            int i;
+            for(i = 0; i < _arguments.Count; i++)
+            {
+                if (i == rap)
+                    _writeRightAppends(sb);
+                else
+                    _writeArgument(sb, _arguments[i]);
+            }
+
+            if (i == rap)
+                _writeRightAppends(sb);
+
+            return sb.ToString(0, Math.Max(0,sb.Length - 2));
+        }
+
+        private void _writeRightAppends(StringBuilder sb)
+        {
+            foreach (var rightExpr in _rightAppends)
+                _writeArgument(sb, rightExpr);
+        }
+
+        private static void _writeArgument(StringBuilder sb, IAstExpression expr)
+        {
+            sb.AppendFormat("{0}, ", expr);
+        }
+
+        #endregion
+
     }
 }

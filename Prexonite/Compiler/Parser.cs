@@ -2195,7 +2195,7 @@ internal partial class Parser {
 		        Loader._EmitPartialInitializationCode();
 		        //Initialize function gets finished at the end of Loader.Load
 		        } catch(Exception e) {
-		            SemErr("Exception during compilation of initialization code." + e.Message);
+		            SemErr("Exception during compilation of initialization code." + e);
 		        }
 		    }
 		    else
@@ -2207,7 +2207,7 @@ internal partial class Parser {
 		                                    Ast[func].EmitCode(FunctionTargets[func], true);
 		                                    FunctionTargets[func].FinishTarget();
 		                                    } catch(Exception e) {
-		                                        SemErr("Exception during compilation of function body of " + id + ". " + e.Message);
+		                                        SemErr("Exception during compilation of function body of " + id + ". " + e);
 		                                    }
 		                                }                                       
 		                                
@@ -2226,7 +2226,7 @@ internal partial class Parser {
 			    cst.Ast.EmitCode(cst,true);
 			    cst.FinishTarget();
 		                                     } catch(Exception e) {
-		                                         SemErr("Exception during compilation of coroutine stub for " + id + ". " + e.Message);
+		                                         SemErr("Exception during compilation of coroutine stub for " + id + ". " + e);
 		                                     }
 		}
 		else if(isLazy)
@@ -2293,7 +2293,7 @@ internal partial class Parser {
 		    cst.Ast.EmitCode(cst,true);
 		    cst.FinishTarget();
 		                                     } catch(Exception e) {
-		                                         SemErr("Exception during compilation of lazy function stub for " + id + ". " + e.Message);
+		                                         SemErr("Exception during compilation of lazy function stub for " + id + ". " + e);
 		                                     }
 		}                                        
 		                             }

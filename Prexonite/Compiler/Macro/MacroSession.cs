@@ -451,18 +451,10 @@ namespace Prexonite.Compiler.Macro
                             return CreateNeutralExpression(invocation);
                         }
                     }
-                    catch (Exception
-#if !DEBUG
-                        e
-#endif
-)
+                    catch (Exception e)
                     {
                         _setupDefaultExpression(context);
-#if DEBUG
-                        throw;
-#else
                         _reportException(context, expander, e);
-#endif
                     }
                 }
                 else
@@ -472,18 +464,10 @@ namespace Prexonite.Compiler.Macro
                     {
                         expander.Expand(target, context);
                     }
-                    catch (Exception 
-#if !DEBUG
-                        e
-#endif
-                        )
+                    catch (Exception e)
                     {
                         _setupDefaultExpression(context);
-#if DEBUG
-                        throw;
-#else
                         _reportException(context, expander, e);
-#endif
                     }
                 }
             }

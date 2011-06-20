@@ -57,5 +57,10 @@ namespace Prexonite.Compiler.Ast
         }
 
         #endregion
+
+        public override string ToString()
+        {
+            return "~" + TypeExpression;
+        }
     }
 }

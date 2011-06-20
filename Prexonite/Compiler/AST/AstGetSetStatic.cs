@@ -135,5 +135,10 @@ namespace Prexonite.Compiler.Ast
             target.EmitConstant(this, _memberId);
             target.EmitCommandCall(this, ctorArgc + 3, Engine.PartialStaticCallAlias);
         }
+
+        public override string ToString()
+        {
+            return string.Format("{0} {1}::{2}({3})", Enum.GetName(typeof (PCall), Call).ToLowerInvariant(), TypeExpr, MemberId, Arguments);
+        }
     }
 }

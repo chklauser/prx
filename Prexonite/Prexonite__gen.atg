@@ -1417,7 +1417,7 @@ FunctionDefinition<out PFunction func>
                                                 Loader._EmitPartialInitializationCode();
                                                 //Initialize function gets finished at the end of Loader.Load
                                                 } catch(Exception e) {
-                                                    SemErr("Exception during compilation of initialization code." + e.Message);
+                                                    SemErr("Exception during compilation of initialization code." + e);
                                                 }
                                             }
                                             else
@@ -1429,7 +1429,7 @@ FunctionDefinition<out PFunction func>
                                                 Ast[func].EmitCode(FunctionTargets[func], true);
                                                 FunctionTargets[func].FinishTarget();
                                                 } catch(Exception e) {
-                                                    SemErr("Exception during compilation of function body of " + id + ". " + e.Message);
+                                                    SemErr("Exception during compilation of function body of " + id + ". " + e);
                                                 }
                                             }                                       
                                             
@@ -1448,7 +1448,7 @@ FunctionDefinition<out PFunction func>
 												    cst.Ast.EmitCode(cst,true);
 												    cst.FinishTarget();
                                                 } catch(Exception e) {
-                                                    SemErr("Exception during compilation of coroutine stub for " + id + ". " + e.Message);
+                                                    SemErr("Exception during compilation of coroutine stub for " + id + ". " + e);
                                                 }
 											}
 											else if(isLazy)
@@ -1515,7 +1515,7 @@ FunctionDefinition<out PFunction func>
 											    cst.Ast.EmitCode(cst,true);
 											    cst.FinishTarget();
                                                 } catch(Exception e) {
-                                                    SemErr("Exception during compilation of lazy function stub for " + id + ". " + e.Message);
+                                                    SemErr("Exception during compilation of lazy function stub for " + id + ". " + e);
                                                 }
 											}                                        
                                         }
