@@ -140,6 +140,8 @@ namespace Prx.Benchmarking
                         m.ClearedPassMicroseconds);
             }
 
+            GC.Collect(GC.MaxGeneration,GCCollectionMode.Forced);
+
             return m;
         }
 
