@@ -112,5 +112,21 @@ namespace Prexonite.Compiler.Macro
             if(!context.OuterVariables.Contains(MacroAliases.ContextAlias,Engine.DefaultStringComparer))
                 context.RequireOuterVariable(MacroAliases.ContextAlias);
         }
+
+        /// <summary>
+        /// Creates a macro invocation node
+        /// </summary>
+        /// <param name="context">The context for which to generate the AST node.</param>
+        /// <param name="callType">The call type (get or set)</param>
+        /// <param name="macroId">The (physical) id of the macro to expand.</param>
+        /// <param name="macroInterpretation">The interpretation of the macro symbol to apply (macro function, macro command, etc.)</param>
+        /// <param name="args">The arguments to pass as part of teh access (optional)</param>
+        /// <returns>A symbol access node.</returns>
+        public static AstMacroInvocation CreateMacroInvocation(this MacroContext context, PCall callType, string macroId, SymbolInterpretations macroInterpretation, params IAstExpression[] args)
+        {
+            var m = new AstMacroInvocation(context.Invocation.File, context.Invocation.Line, context.Invocation.Column, macroId,macroInterpretation){Call = callType};
+            m.Arguments.AddRange(args);
+            return m;
+        }
     }
 }

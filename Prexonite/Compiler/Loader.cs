@@ -530,11 +530,18 @@ namespace Prexonite.Compiler
 
             // Call/* macros
             _addMacroCommand(Call.Instance.Partial);
-            _addMacroCommand(Macro.Commands.CallMacro.Instance);
-            _addHelperCommands(Macro.Commands.CallMacro.GetHelperCommands(this));
             _addMacroCommand(Call_Member.Instance.Partial);
             _addMacroCommand(Call_Tail.Instance.Partial);
             _addMacroCommand(CallAsync.Instance.Partial);
+            _addCallMacro();
+        }
+
+        private void _addCallMacro()
+        {
+            _addMacroCommand(Macro.Commands.CallMacro.Instance);
+            var callMacroHelper = Macro.Commands.CallMacro.GetHelperCommands(this);
+            _buildCommands.AddCompilerCommand(callMacroHelper.Key, callMacroHelper.Value);
+            _addMacroCommand(callMacroHelper.Value.Partial);
         }
 
         private void _addHelperCommands(IEnumerable<KeyValuePair<string, PCommand>> helpers)
