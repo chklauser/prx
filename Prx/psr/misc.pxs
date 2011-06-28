@@ -76,4 +76,62 @@ function create_terminator (obj, termination)
     return struct;   
 }
 
-function create_lazy(factory) = lazy factory.();
+function create_lazy\impl(factory) = lazy factory.();
+macro create_lazy()
+{
+    macro\report_warning("create_lazy is deprecated, use the lazy keyword instead.");
+    var f = ast\func(->create_lazy\impl.Id);
+    f.Arguments.AddRange(var args);
+    return f;
+}
+
+macro swap(x,y)
+{
+    if(not (ast_is_GetSet(x) and ast_is_GetSet(y)))
+    {
+        macro\report_error("Can only swap between two assignable expressions");
+        return;
+    }
+    
+    var tempV = tempalloc;
+    
+    var assignTemp = ast\lvar(SI.Set, tempV);
+    assignTemp.Call = SI.set;  
+    
+    var assignY = y.GetCopy;
+    assignY.Call = SI.set;
+    
+    var assignX = x.GetCopy;
+    assignX.Call = SI.set;
+    
+    var overAssign;
+    var finalAssign;
+    var varA;
+    var varB;
+    
+    if(SI.eq(context.Call,SI.get))
+    {
+        //Make sure, "x" is returned
+        varA = x;
+        varB = y;
+        overAssign = assignX;
+        finalAssign = assignY;
+    }
+    else 
+    {
+        varA = y;
+        varB = x;
+        overAssign = assignY;
+        finalAssign = assignX;
+    }
+    
+    assignTemp.Arguments.Add(varA);
+    overAssign.Arguments.Add(varB);
+    finalAssign.Arguments.Add(ast\lvar(tempV));
+    
+    context.Block.Add(assignTemp);
+    context.Block.Add(overAssign);
+    context.Block.Expression = finalAssign;
+    
+    tempfree(tempV);
+}
