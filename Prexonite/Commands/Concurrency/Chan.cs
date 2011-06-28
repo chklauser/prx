@@ -56,7 +56,7 @@ namespace Prexonite.Commands.Concurrency
         {
             state.EmitIgnoreArguments(ins.Arguments);
             state.Il.Emit(OpCodes.Newobj, _channelCtor);
-            PType.PrexoniteObjectTypeProxy.ImplementInCil(state, typeof (Channel));
+            PType.PrexoniteObjectTypeProxy._ImplementInCil(state, typeof (Channel));
             state.Il.Emit(OpCodes.Newobj, _newPValue);
         }
 

@@ -1440,7 +1440,7 @@ namespace Prexonite.Types
         /// <param name="ins">The instruction to compile.</param>
         void ICilCompilerAware.ImplementInCil(CompilerState state, Instruction ins)
         {
-            PrexoniteObjectTypeProxy.ImplementInCil(state, ClrType);
+            PrexoniteObjectTypeProxy._ImplementInCil(state, ClrType);
         }
 
         #endregion

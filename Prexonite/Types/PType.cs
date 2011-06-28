@@ -253,7 +253,7 @@ namespace Prexonite.Types
                 return this[value.GetType()].CreatePValue(value);
             }
 
-            internal static void ImplementInCil(CompilerState state, Type clrType)
+            internal static void _ImplementInCil(CompilerState state, Type clrType)
             {
                 if (clrType == typeof (PValueHashtable))
                 {

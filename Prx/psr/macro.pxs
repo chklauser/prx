@@ -163,7 +163,7 @@ build
     
     //Create check function for each type that inherits from AstNode
     AstNode_t.Assembly.GetTypes() 
-    >> where(t => astnode_t.IsAssignableFrom(t))
+    >> where(astnode_t.IsAssignableFrom(?))
     >> var node_ts;
     
     foreach(new var node_t in node_ts)
