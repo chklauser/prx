@@ -744,12 +744,19 @@ ListLiteral<out IAstExpression expr>
                                         (.  IAstExpression iexpr = null; 
                                             AstListLiteral lst = new AstListLiteral(this);
                                             expr = lst;
+                                            bool missingExpr = false;
                                         .)
 =
     lbrack
     [   Expr<out iexpr>                 (.  lst.Elements.Add(iexpr); .)
-        {   comma
-            Expr<out iexpr>             (.  lst.Elements.Add(iexpr); .)
+        {   comma                       (.  if(missingExpr)
+                                                SemErr("Missing expression in list literal (two consecutive commas).");
+                                        .)
+            (   Expr<out iexpr>         (.  lst.Elements.Add(iexpr); 
+                                            missingExpr = false; 
+                                        .)
+            |                           (.  missingExpr = true; .)
+            )
         }
     ]
     rbrack
@@ -759,12 +766,19 @@ HashLiteral<out IAstExpression expr>
 										(.	IAstExpression iexpr = null; 
 											AstHashLiteral hash = new AstHashLiteral(this);
 											expr = hash;
+                                            bool missingExpr = false;
 										.)
 =
 	lbrace
 	[	Expr<out iexpr>					(.	hash.Elements.Add(iexpr); .)
-		{	comma
-			Expr<out iexpr>				(.	hash.Elements.Add(iexpr); .)
+		{	comma                       (.  if(missingExpr)
+                                                SemErr("Missing expression in list literal (two consecutive commas).");
+                                        .)
+            (   Expr<out iexpr>			(.	hash.Elements.Add(iexpr); 
+                                            missingExpr = false;
+                                        .)
+            |                           (.  missingExpr = true; .)
+            )
 		}
 	]
 	rbrace
@@ -1003,6 +1017,7 @@ MetaAssignment<IHasMetaTable target>	(. string key = null; MetaEntry entry = nul
 	( enabled				(. entry = true; .)
 	| disabled  			(. entry = false; .)
 	| MetaExpr<out entry>
+    |                       (. entry = true; .)
 	)
 |   add                     (. MetaEntry subEntry; .)
     MetaExpr<out subEntry>  (. if(!subEntry.IsList) subEntry = (MetaEntry) subEntry.List; .)
@@ -1072,8 +1087,11 @@ GlobalVariableDefinition	(.
 	                            }
 	                        .)
 	[	lbrack  		    //Meta block for variables
-		{	MetaAssignment<vari> SYNC semicolon
-		}
+		[   MetaAssignment<vari>
+            {	semicolon
+                [ MetaAssignment<vari> ]
+		    }
+        ]
 		rbrack
 	]
 	[	                    (.  _pushLexerState(Lexer.Local); .)
@@ -1101,7 +1119,8 @@ GlobalVariableAliasList<. IList<string> aliases .>
 =
     as GlobalId<out id>     (.  aliases.Add(id); .)
     {   comma
-        GlobalId<out id>    (.  aliases.Add(id); .)
+        [ GlobalId<out id>  (.  aliases.Add(id); .) 
+        ]
     }
 .
 
@@ -1118,7 +1137,7 @@ SYNC
 	|   command             (. type = SymbolInterpretations.Command; .)
 	]
 	DeclarationInstance<type>
-	{WEAK comma DeclarationInstance<type>}
+	{comma [ DeclarationInstance<type> ] }
 .
 	
 DeclarationInstance<SymbolInterpretations type>
@@ -1214,8 +1233,10 @@ FunctionAliasList<. IList<string> aliases .>
                                     (.  String id; .)
 =
     as Id<out id>                   (.  aliases.Add(id); .)
-    [   comma Id<out id>            (.  aliases.Add(id); .)
-    ]
+    {   comma 
+        [   Id<out id>              (.  aliases.Add(id); .)
+        ]
+    }
 .
 
 FunctionDefinition<out PFunction func>
@@ -1233,6 +1254,8 @@ FunctionDefinition<out PFunction func>
                                         string derId = null; //The name of the derived stub
                                         CompilerTarget ct = null;   //The compiler target for the function (as mentioned in the source code)
                                         CompilerTarget cst = null;  //The compiler target for a stub (coroutine/lazy)
+
+                                        bool missingArg = false; //Allow trailing comma, but not (,,) in formal arg list
                                     .)         
 =	
 	(   lazy [function]             (.  isLazy = true; .)
@@ -1331,8 +1354,14 @@ FunctionDefinition<out PFunction func>
 	                                .)
     [   lpar
 	    [	FormalArg<ft> 
-		    {	[comma]
-			    FormalArg<ft>
+		    {	comma               (.  if(missingArg)
+                                        {
+                                            SemErr("Missing formal argument (two consecutive commas).");
+                                        } 
+                                    .)
+			    (   FormalArg<ft>   (.  missingArg = false; .)
+                |                   (.  missingArg = true; .)
+                )
 		    }
 	    ]
 	    rpar
@@ -1363,8 +1392,11 @@ FunctionDefinition<out PFunction func>
 	                                .)
     [                               (.  _pushLexerState(Lexer.YYINITIAL); .)
         lbrack
-        {   MetaAssignment<func> SYNC semicolon
-        }
+        [   MetaAssignment<func>
+            {   semicolon
+                [MetaAssignment<func>]
+            }
+        ]
                                     (.  _popLexerState(); .)
         rbrack
     ]
@@ -2108,6 +2140,7 @@ ForLoop<AstBlock block>         (.  AstForLoop loop;
         Expr<out loop.Condition> 
         semicolon
         SimpleStatement<loop.NextIteration>
+        [ semicolon ]
     )
     rpar
     StatementBlock<loop.Block>  (.  target.EndBlock(); block.Add(loop); .) // */
@@ -2311,13 +2344,23 @@ Using<AstBlock block>
 Arguments<ArgumentsProxy args>
                                 (.  
 									IAstExpression expr;
+                                    bool missingArg = false;
                                 .)
 =
 	[
 		lpar
 		[	Expr<out expr>      (.  args.Add(expr); .)
-			{	WEAK comma
-				Expr<out expr>  (.  args.Add(expr); .)
+			{	comma           (.  if(missingArg)
+                                    {   
+                                        args.Add(new AstNull(this));
+                                    }
+                                .)
+				(   Expr<out expr>  
+                                (.  args.Add(expr);
+                                    missingArg = false;
+                                .)
+                |               (.  missingArg = true; .)
+                )
 			}
 		]
 		rpar

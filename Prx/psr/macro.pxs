@@ -108,7 +108,7 @@ macro establish_macro_context()
 }
 
 function macro\report_any(message, severity)
-    [\sharedNames {context};]
+    [\sharedNames {context}; is compiler;]
 {
     var getContext = ast("GetSetSymbol", SI.get, Prexonite::Compiler::MacroAliases.ContextAlias, SI.lref);
     var parseMessageSeverity_t = ast("ConstantTypeExpression", "Object(\"Prexonite.Compiler.ParseMessageSeverity\")");

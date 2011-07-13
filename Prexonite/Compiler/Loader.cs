@@ -159,7 +159,7 @@ namespace Prexonite.Compiler
             }
         }
 
-        [DebuggerStepThrough]
+        //[DebuggerStepThrough]
         public CompilerTarget CreateFunctionTarget(PFunction func, AstBlock block)
         {
             if (func == null)

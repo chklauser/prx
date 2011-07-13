@@ -465,6 +465,7 @@ ForLoop<AstBlock block>         (.  AstForLoop loop;
         Expr<out loop.Condition> 
         semicolon
         SimpleStatement<loop.NextIteration>
+        [ semicolon ]
     )
     rpar
     StatementBlock<loop.Block>  (.  target.EndBlock(); block.Add(loop); .) // */
@@ -668,13 +669,23 @@ Using<AstBlock block>
 Arguments<ArgumentsProxy args>
                                 (.  
 									IAstExpression expr;
+                                    bool missingArg = false;
                                 .)
 =
 	[
 		lpar
 		[	Expr<out expr>      (.  args.Add(expr); .)
-			{	WEAK comma
-				Expr<out expr>  (.  args.Add(expr); .)
+			{	comma           (.  if(missingArg)
+                                    {   
+                                        args.Add(new AstNull(this));
+                                    }
+                                .)
+				(   Expr<out expr>  
+                                (.  args.Add(expr);
+                                    missingArg = false;
+                                .)
+                |               (.  missingArg = true; .)
+                )
 			}
 		]
 		rpar

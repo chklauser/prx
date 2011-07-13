@@ -303,12 +303,19 @@ ListLiteral<out IAstExpression expr>
                                         (.  IAstExpression iexpr = null; 
                                             AstListLiteral lst = new AstListLiteral(this);
                                             expr = lst;
+                                            bool missingExpr = false;
                                         .)
 =
     lbrack
     [   Expr<out iexpr>                 (.  lst.Elements.Add(iexpr); .)
-        {   comma
-            Expr<out iexpr>             (.  lst.Elements.Add(iexpr); .)
+        {   comma                       (.  if(missingExpr)
+                                                SemErr("Missing expression in list literal (two consecutive commas).");
+                                        .)
+            (   Expr<out iexpr>         (.  lst.Elements.Add(iexpr); 
+                                            missingExpr = false; 
+                                        .)
+            |                           (.  missingExpr = true; .)
+            )
         }
     ]
     rbrack
@@ -318,12 +325,19 @@ HashLiteral<out IAstExpression expr>
 										(.	IAstExpression iexpr = null; 
 											AstHashLiteral hash = new AstHashLiteral(this);
 											expr = hash;
+                                            bool missingExpr = false;
 										.)
 =
 	lbrace
 	[	Expr<out iexpr>					(.	hash.Elements.Add(iexpr); .)
-		{	comma
-			Expr<out iexpr>				(.	hash.Elements.Add(iexpr); .)
+		{	comma                       (.  if(missingExpr)
+                                                SemErr("Missing expression in list literal (two consecutive commas).");
+                                        .)
+            (   Expr<out iexpr>			(.	hash.Elements.Add(iexpr); 
+                                            missingExpr = false;
+                                        .)
+            |                           (.  missingExpr = true; .)
+            )
 		}
 	]
 	rbrace
