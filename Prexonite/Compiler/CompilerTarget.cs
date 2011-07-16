@@ -1642,7 +1642,7 @@ namespace Prexonite.Compiler
                 return;
 
             var code = Function.Code;
-            Function.CreateLocalVariableMapping(); //Force (re)creation of the mapping
+
             var map = Function.LocalVariableMapping;
             if(map == null)
                 throw new PrexoniteException("Local variable mapping of function " + Function.Id + " does not exist.");

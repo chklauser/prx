@@ -401,9 +401,14 @@ namespace Prexonite.Types
                                 else
                                     result = method.Invoke(subject.Value, cargs);
                             } 
-                            catch(TargetException exc)
+                            catch(TargetInvocationException exc)
                             {
-                                throw new PrexoniteException("Exception while calling " + method.ToString() + " with " + cargs.ToEnumerationString(), exc);
+                                var innerRt = exc.InnerException as PrexoniteRuntimeException;
+
+                                if (innerRt != null)
+                                    throw innerRt;
+                                else
+                                    throw;
                             }
                         }
                         goto success;
