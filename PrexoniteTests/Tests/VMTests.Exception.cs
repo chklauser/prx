@@ -15,6 +15,7 @@ using Prexonite;
 using Prexonite.Commands;
 using Prexonite.Compiler;
 using Prexonite.Types;
+using PrexoniteTests.Tests;
 
 namespace Prx.Tests
 {
@@ -156,7 +157,7 @@ function main()
             }
 
             var pxs = target.Variables["xs"].Value;
-            Assert.IsInstanceOfType(typeof(ListPType), pxs.Type, "xs must be a ~List.");
+            Assert.IsInstanceOf(typeof(ListPType), pxs.Type, "xs must be a ~List.");
             var xs = (List<PValue>)pxs.Value;
             Assert.AreEqual("0", xs[0].CallToString(sctx));
             Assert.AreEqual("1", xs[1].CallToString(sctx));

@@ -132,12 +132,12 @@ function instruction {}
 
             //label begin
             int i = 0;
-            Assert.IsInstanceOfType(typeof(AstExplicitLabel), block[i]);
+            Assert.IsInstanceOf(typeof(AstExplicitLabel), block[i]);
             Assert.AreEqual("begin", ((AstExplicitLabel) block[i]).Label);
 
             //instruction
             i++;
-            Assert.IsInstanceOfType(typeof(AstGetSetSymbol), block[i]);
+            Assert.IsInstanceOf(typeof(AstGetSetSymbol), block[i]);
             Assert.AreEqual(
                 SymbolInterpretations.Function, ((AstGetSetSymbol) block[i]).Interpretation);
             Assert.AreEqual("instruction", ((AstGetSetSymbol) block[i]).Id);
@@ -146,17 +146,17 @@ function instruction {}
 
             //goto fith
             i++;
-            Assert.IsInstanceOfType(typeof(AstExplicitGoTo), block[i]);
+            Assert.IsInstanceOf(typeof(AstExplicitGoTo), block[i]);
             Assert.AreEqual("fifth", ((AstExplicitGoTo) block[i]).Destination);
 
             //label third
             i++;
-            Assert.IsInstanceOfType(typeof(AstExplicitLabel), block[i]);
+            Assert.IsInstanceOf(typeof(AstExplicitLabel), block[i]);
             Assert.AreEqual("third", ((AstExplicitLabel) block[i]).Label);
 
             //instruction
             i++;
-            Assert.IsInstanceOfType(typeof(AstGetSetSymbol), block[i]);
+            Assert.IsInstanceOf(typeof(AstGetSetSymbol), block[i]);
             Assert.AreEqual(
                 SymbolInterpretations.Function, ((AstGetSetSymbol) block[i]).Interpretation);
             Assert.AreEqual("instruction", ((AstGetSetSymbol) block[i]).Id);
@@ -165,32 +165,32 @@ function instruction {}
 
             //label fourth
             i++;
-            Assert.IsInstanceOfType(typeof(AstExplicitLabel), block[i]);
+            Assert.IsInstanceOf(typeof(AstExplicitLabel), block[i]);
             Assert.AreEqual("fourth", ((AstExplicitLabel) block[i]).Label);
 
             //goto sixth
             i++;
-            Assert.IsInstanceOfType(typeof(AstExplicitGoTo), block[i]);
+            Assert.IsInstanceOf(typeof(AstExplicitGoTo), block[i]);
             Assert.AreEqual("sixth", ((AstExplicitGoTo) block[i]).Destination);
 
             //label fifth
             i++;
-            Assert.IsInstanceOfType(typeof(AstExplicitLabel), block[i]);
+            Assert.IsInstanceOf(typeof(AstExplicitLabel), block[i]);
             Assert.AreEqual("fifth", ((AstExplicitLabel) block[i]).Label);
 
             //goto fourth
             i++;
-            Assert.IsInstanceOfType(typeof(AstExplicitGoTo), block[i]);
+            Assert.IsInstanceOf(typeof(AstExplicitGoTo), block[i]);
             Assert.AreEqual("fourth", ((AstExplicitGoTo) block[i]).Destination);
 
             //label sixth
             i++;
-            Assert.IsInstanceOfType(typeof(AstExplicitLabel), block[i]);
+            Assert.IsInstanceOf(typeof(AstExplicitLabel), block[i]);
             Assert.AreEqual("sixth", ((AstExplicitLabel) block[i]).Label);
 
             //goto begin
             i++;
-            Assert.IsInstanceOfType(typeof(AstExplicitGoTo), block[i]);
+            Assert.IsInstanceOf(typeof(AstExplicitGoTo), block[i]);
             Assert.AreEqual("begin", ((AstExplicitGoTo) block[i]).Destination);
 
             Console.WriteLine(target.StoreInString());
@@ -3561,7 +3561,7 @@ function parent
 
             var copy = unr.GetCopy();
             Assert.AreEqual(2, unr.Arguments.Count);
-            Assert.IsInstanceOfType(typeof(AstNull),copy.Arguments[0]);
+            Assert.IsInstanceOf(typeof(AstNull), copy.Arguments[0]);
             Assert.AreEqual("file3",copy.Arguments[1].File);
             Assert.AreEqual(PCall.Set,unr.Call);
             Assert.AreNotSame(unr,copy);

@@ -676,9 +676,7 @@ Arguments<ArgumentsProxy args>
 		lpar
 		[	Expr<out expr>      (.  args.Add(expr); .)
 			{	comma           (.  if(missingArg)
-                                    {   
-                                        args.Add(new AstNull(this));
-                                    }
+                                        SemErr("Missing argument expression (two consecutive commas)");
                                 .)
 				(   Expr<out expr>  
                                 (.  args.Add(expr);

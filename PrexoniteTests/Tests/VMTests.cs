@@ -16,9 +16,7 @@ using Prexonite.Compiler;
 using Prexonite.Compiler.Ast;
 using Prexonite.Types;
 
-// ReSharper disable CheckNamespace
 namespace Prx.Tests
-// ReSharper restore CheckNamespace
 {
 // ReSharper disable InconsistentNaming
     public abstract partial class VMTests 

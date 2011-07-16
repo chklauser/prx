@@ -10,9 +10,9 @@ using Prexonite;
 using Prexonite.Compiler;
 using Prexonite.Compiler.Cil;
 using Prexonite.Types;
+using Prx.Tests;
 
-
-namespace Prx.Tests
+namespace PrexoniteTests.Tests
 {
     public class VMTestsBase
     {

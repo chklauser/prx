@@ -84,14 +84,18 @@
     <CodeAnalysisFailOnMissingRules>false</CodeAnalysisFailOnMissingRules>
   </PropertyGroup>
   <ItemGroup>
-    <Reference Include="nunit.framework, Version=2.2.8.0, Culture=neutral, PublicKeyToken=96d09a1eb7f44a77, processorArchitecture=MSIL">
+    <Reference Include="nunit.framework, Version=2.6.0.11089, Culture=neutral, PublicKeyToken=96d09a1eb7f44a77, processorArchitecture=MSIL">
       <SpecificVersion>False</SpecificVersion>
       <HintPath>..\Tools\nunit.framework.dll</HintPath>
-      <Private>True</Private>
+    </Reference>
+    <Reference Include="nunit.mocks, Version=2.6.0.11089, Culture=neutral, PublicKeyToken=96d09a1eb7f44a77, processorArchitecture=MSIL">
+      <SpecificVersion>False</SpecificVersion>
+      <HintPath>..\Tools\nunit.mocks.dll</HintPath>
     </Reference>
     <Reference Include="System" />
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="Meta.cs" />
     <Compile Include="Program.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
     <Compile Include="Tests\AstTests.cs" />
@@ -100,6 +104,7 @@
     <Compile Include="Tests\Compiler.Global.cs" />
     <Compile Include="Tests\Compiler.Parser.cs" />
     <Compile Include="Tests\MemberCallable.cs" />
+    <Compile Include="Tests\Translation.cs" />
     <Compile Include="Tests\VMTests.Macro.cs" />
     <Compile Include="Tests\VMTests.Exception.cs" />
     <Compile Include="Tests\VMTests.Commands.cs" />

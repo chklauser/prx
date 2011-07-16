@@ -15,6 +15,7 @@ using Prexonite;
 using Prexonite.Commands;
 using Prexonite.Compiler;
 using Prexonite.Types;
+using PrexoniteTests.Tests;
 
 namespace Prx.Tests
 {

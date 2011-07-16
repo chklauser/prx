@@ -43,6 +43,8 @@ MetaAssignment<IHasMetaTable target>	(. string key = null; MetaEntry entry = nul
 	[not					(. entry = false; .)
 	]
 	GlobalId<out key>
+|   not                     (. entry = false; .)
+    GlobalId<out key>
 |
 	GlobalId<out key>
 	( enabled				(. entry = true; .)
@@ -78,10 +80,20 @@ MetaExpr<out MetaEntry entry>
 |	Real<out r>				(. entry = r.ToString(); .)
 |   String<out str>         (. entry = str; .)
 |   GlobalQualifiedId<out str>       (. entry = str; .)
-|   lbrace                  (. List<MetaEntry> lst = new List<MetaEntry>(); MetaEntry subEntry; .)
+|   lbrace                  (. List<MetaEntry> lst = new List<MetaEntry>(); 
+                               MetaEntry subEntry; 
+                               bool lastWasEmpty = false;
+                            .)
     [   MetaExpr<out subEntry> (.  lst.Add(subEntry); .)
-        {   WEAK comma
-            MetaExpr<out subEntry> (. lst.Add(subEntry); .)
+        {   comma           (. if(lastWasEmpty)
+                                    SemErr("Missing meta expression in list (two consecutive commas).");
+                            .)
+            (   MetaExpr<out subEntry> 
+                            (. lst.Add(subEntry); 
+                               lastWasEmpty = false;
+                            .)
+            |               (. lastWasEmpty = true; .)   
+            )
         }
     ]
     rbrace                  (. entry = (MetaEntry) lst.ToArray(); .)

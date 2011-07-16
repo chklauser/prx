@@ -31,7 +31,7 @@ using System.Linq;
 
 namespace Prexonite
 {
-    [DebuggerNonUserCode]
+    //[DebuggerNonUserCode]
     public sealed class MetaEntry
     {
         #region Fields
@@ -288,11 +288,11 @@ namespace Prexonite
                 return false;
             else
             {
-                /*       T  S   L
-                 *   ------------
-                 *   T | T  T   T
-                 *   S | T  S   L
-                 *   L | T  L   L
+                /*       T  S  L
+                 *   -----------
+                 *   T | T  T  T
+                 *   S | T  S  L
+                 *   L | T  L  L
                  */
 
                 if (a.IsText || b.IsText)
@@ -311,7 +311,7 @@ namespace Prexonite
                         if (ar[i] != br[i])
                             break;
 
-                    return i < ar.Length;
+                    return i == ar.Length;
                 }
                 else //S S
                     return a._switch == b.Switch;

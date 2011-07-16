@@ -12,7 +12,7 @@ using Prexonite.Types;
 
 namespace PrexoniteTests.Tests
 {
-    public abstract class PartialApplication : Prx.Tests.VMTestsBase
+    public abstract class PartialApplication : VMTestsBase
     {
 
         #region Mock implementation of partial application

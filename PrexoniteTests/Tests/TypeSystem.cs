@@ -137,7 +137,7 @@ namespace PrexoniteTests.Tests
         {
             string str = "Hello ";
             PValue nStr = engine.CreateNativePValue(str);
-            Assert.IsInstanceOfType(typeof(StringPType), nStr.Type);
+            Assert.IsInstanceOf(typeof(StringPType), nStr.Type);
             Assert.AreSame(str, nStr.Value);
         }
 

@@ -210,7 +210,7 @@ function main()
             Assert.IsFalse(func.Meta[PFunction.VolatileKey].Switch,functionId + " must not be volatile.");
         }
 
-        [Test,ExpectedException(typeof(PrexoniteRuntimeException),"e")]
+        [Test,ExpectedException(typeof(PrexoniteRuntimeException))]
         public void TryFinallyCondCompiles()
         {
             Compile(@"
@@ -443,7 +443,7 @@ function main(x) //[store_debug_implementation enabled;]
             Expect("tfce", true);
         }
 
-        [Test, ExpectedException(typeof(PrexoniteRuntimeException), @"Unexpected leave instruction. This happens when jumping to an instruction in a try block from the outside.")]
+        [Test, ExpectedException(typeof(PrexoniteRuntimeException), ExpectedMessage = @"Unexpected leave instruction. This happens when jumping to an instruction in a try block from the outside.")]
         public void LabelOnFirstNeLabelOnTry()
         {
             Compile(@"
