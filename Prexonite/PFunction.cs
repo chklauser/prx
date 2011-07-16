@@ -332,6 +332,10 @@ namespace Prexonite
         /// <param name="writer">The writer to which to write the string representation.</param>
         public void StoreCode(TextWriter writer)
         {
+            var reverseLocalMapping = new string[LocalVariableMapping.Count];
+            foreach (var kvp in LocalVariableMapping)
+                reverseLocalMapping[kvp.Value] = kvp.Key;
+
             var buffer = new StringBuilder();
             if (Variables.Count > 0)
             {
@@ -359,11 +363,40 @@ namespace Prexonite
 
                 appendAddress(buffer, idx, digits);
 
-                foreach (var ins in Code)
+                foreach (var rawIns in Code)
                 {
 #if DEBUG || Verbose
                     int idxBeginning = buffer.Length;
 #endif
+
+                    //Rewrite index-based op-codes back
+                    //  to names
+                    Instruction ins;
+                    switch (rawIns.OpCode)
+                    {
+                        case OpCode.ldloci:
+                            ins = new Instruction(OpCode.ldloc, reverseLocalMapping[rawIns.Arguments]);
+                            break;
+                        case OpCode.stloci:
+                            ins = new Instruction(OpCode.stloc, reverseLocalMapping[rawIns.Arguments]);
+                            break;
+                        case OpCode.incloci:
+                            ins = new Instruction(OpCode.incloc, reverseLocalMapping[rawIns.Arguments]);
+                            break;
+                        case OpCode.decloci:
+                            ins = new Instruction(OpCode.decloc, reverseLocalMapping[rawIns.Arguments]);
+                            break;
+                        case OpCode.indloci:
+                            int index;
+                            int argc;
+                            rawIns.DecodeIndLocIndex(out index, out argc);
+                            ins = new Instruction(OpCode.indloc,argc, reverseLocalMapping[index]);
+                            break;
+                        default:
+                            ins = rawIns;
+                            break;
+                    }
+
                     ins.ToString(buffer);
 #if DEBUG || Verbose
                     if (buffer[idxBeginning] != '@')
@@ -371,7 +404,6 @@ namespace Prexonite
                     buffer.AppendLine();
                     appendAddress(buffer, ++idx, digits);
 #else
-                    //buffer.Append(' ');
                     buffer.AppendLine();
                     appendAddress(buffer, ++idx, digits);
 
