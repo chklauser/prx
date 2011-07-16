@@ -147,11 +147,8 @@ function unload_compiler(GetLoader\cmd)
     var comp_vars = [];
     foreach(var kvp in app.Variables)
         if(kvp.Value.Meta["compiler"].Switch)
-            comp_vars[] = kvp.Key;
+            comp_vars[] = kvp;
             
-    foreach(var comp_var in comp_vars)
-        app.Variables.Remove(comp_var);        
-    
     //Functions
     var ordinalIc = System::StringComparison.OrdinalIgnoreCase;
     var comp_funcs = [];
@@ -184,11 +181,32 @@ function unload_compiler(GetLoader\cmd)
             mark_comp_func(func);
         }
             
-    //Remove functions
+    //Remove symbols
+    var revSet = {};
+    var revRefSet = {};
+    foreach(var comp_func in comp_funcs)
+        revSet.Add(comp_func.Id: SI.func);
+    foreach(var comp_var in comp_vars)
+    {
+        revSet.Add(comp_var.Key:  SI.gvar);
+        revRefSet.Add(comp_var.Key: SI.gref);
+    }   
+    function get_symbols(reverseSet) =
+        GetLoader.Symbols >> where(kvp => SI.eq(reverseSet[kvp.Value.Id],kvp.Value.Interpretation)) >> map(?.Key);
+    var comp_syms = append(get_symbols(revSet), get_symbols(revRefSet)) >> all;
+    var ldrSyms = GetLoader.Symbols;
+    foreach(var comp_sym in comp_syms)
+        ldrSyms.Remove(comp_sym);
+    ldrSyms.Remove("unload_compiler");
+    
+    //Remove physical functions and variables
     foreach(var comp_func in comp_funcs)
         app.Functions.Remove(comp_func);
+    foreach(var comp_var in comp_vars)
+        app.Variables.Remove(comp_var.Key);
         
     app.Functions.Remove(->unload_compiler);
     app.Functions.Remove(->mark_comp_func.Function.Id);
+    app.Functions.Remove(->get_symbols.Function.Id);
     app.Meta["compiler_loaded"] = false;
     }

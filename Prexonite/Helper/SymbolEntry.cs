@@ -28,8 +28,8 @@ namespace Prexonite.Compiler
 {
     public class SymbolEntry : IEquatable<SymbolEntry>
     {
-        private SymbolInterpretations _interpretation;
-        private string _id;
+        private readonly SymbolInterpretations _interpretation;
+        private readonly string _id;
         /// <summary>
         /// Optional integer parameter for this symbol.
         /// 
