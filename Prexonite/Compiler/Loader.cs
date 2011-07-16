@@ -45,6 +45,8 @@ namespace Prexonite.Compiler
     {
         #region Static
 
+        public const string SuppressPrimarySymbol = "\\sps";
+
         #endregion
 
         #region Construction
@@ -1078,7 +1080,7 @@ namespace Prexonite.Compiler
 #if DEBUG || Verbose
                     writer.WriteLine();
 #endif
-                    writer.Write("[");
+                    writer.Write(@"[\sps;");
 #if DEBUG || Verbose
                     writer.WriteLine();
 #endif

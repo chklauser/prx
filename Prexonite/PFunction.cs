@@ -431,7 +431,7 @@ namespace Prexonite
             #region Metainformation
 
             //Metainformation
-            writer.Write("[");
+            writer.Write(@"[\sps;");
 #if DEBUG || Verbose
             writer.WriteLine();
 #endif

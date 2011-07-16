@@ -676,6 +676,11 @@ namespace Prexonite.Compiler
             }
         }
 
+        private bool _suppressPrimarySymbol(IHasMetaTable ihmt)
+        {
+            return ihmt.Meta[Loader.SuppressPrimarySymbol].Switch;
+        }
+
         #region Assembler
 
         [DebuggerStepThrough]

@@ -4,6 +4,7 @@ using System.Linq;
 using System.Text;
 using NUnit.Framework;
 using Prexonite;
+using Prexonite.Compiler;
 using Prx.Tests;
 
 namespace PrexoniteTests.Tests
@@ -116,6 +117,55 @@ function main(x,y)
 ");
 
             Expect(2 + 6, 2,3);
+        }
+
+        [Test]
+        public void SuppressSymbols()
+        {
+            var ldr = Compile(@"
+function g = 5;
+var f = 7;
+
+var g[\sps] = 3;
+
+function f as p(x) [\sps]
+{
+    declare var g;
+    return g*x;
+}
+
+function main(x)
+{
+    var f' = f;
+
+    declare function f;
+    return g + f' + f(x);
+}
+");
+
+            Expect(3*2 + 5 + 7, 2);
+            Expect(3 * 11 + 5 + 7, 11);
+
+            {
+                Assert.That(ldr.Symbols.ContainsKey("f"),Is.True,"Symbol table must contain an entry for 'f'.");
+                var entry = ldr.Symbols["f"];
+                Assert.That(entry.Interpretation,Is.EqualTo(SymbolInterpretations.GlobalObjectVariable));
+                Assert.That(entry.Id, Is.EqualTo("f"));
+            }
+
+            {
+                Assert.That(ldr.Symbols.ContainsKey("g"), Is.True, "Symbol table must contain an entry for 'g'.");
+                var entry = ldr.Symbols["g"];
+                Assert.That(entry.Interpretation, Is.EqualTo(SymbolInterpretations.Function));
+                Assert.That(entry.Id, Is.EqualTo("g"));
+            }
+
+            {
+                Assert.That(ldr.Symbols.ContainsKey("p"), Is.True, "Symbol table must contain an entry for 'p'.");
+                var entry = ldr.Symbols["p"];
+                Assert.That(entry.Interpretation, Is.EqualTo(SymbolInterpretations.Function));
+                Assert.That(entry.Id, Is.EqualTo("f"));
+            }
         }
 
     }

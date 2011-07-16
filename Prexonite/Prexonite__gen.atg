@@ -1073,8 +1073,10 @@ MetaExpr<out MetaEntry entry>
 GlobalVariableDefinition	(.  
                                 string id = null; 
                                 List<string> aliases = new List<string>();
+                                string primaryAlias = null;
                                 PVariable vari; 
                                 SymbolInterpretations type = SymbolInterpretations.GlobalObjectVariable; 
+                                SymbolEntry entry;
                             .)
 =
 
@@ -1082,14 +1084,15 @@ GlobalVariableDefinition	(.
 	|   ref                 (.  type = SymbolInterpretations.GlobalReferenceVariable; .)
 	)
 	
-	(   GlobalId<out id>    (.  aliases.Add(id); .)
+	(   GlobalId<out id>    (.  primaryAlias = id; .)
 	    [ GlobalVariableAliasList<aliases> ]
 	|   GlobalVariableAliasList<aliases>
 	                        (.  id = Engine.GenerateName("v"); .)
 	)
 	                        (.
+                                entry = new SymbolEntry(type,id);
 	                            foreach(var alias in aliases)
-	                                Symbols[alias] = new SymbolEntry(type, id);
+	                                Symbols[alias] = entry;
 	                            if(TargetApplication.Variables.ContainsKey(id))
 	                                vari = TargetApplication.Variables[id];
 	                            else
@@ -1105,7 +1108,9 @@ GlobalVariableDefinition	(.
 		    }
         ]
 		rbrack
-	]
+	]                       (.  if(primaryAlias != null && !_suppressPrimarySymbol(vari))
+                                    Symbols[primaryAlias] = entry;
+                            .)
 	[	                    (.  _pushLexerState(Lexer.Local); .)
 	    assign              (.  CompilerTarget lastTarget = target;
                                 target=FunctionTargets[Application.InitializationId];
@@ -1254,6 +1259,7 @@ FunctionAliasList<. IList<string> aliases .>
 FunctionDefinition<out PFunction func>
                                     (.  
                                         func = null; 
+                                        string primaryAlias = null;
                                         List<string> funcAliases = new List<string>();
                                         string id = null; //The logical id (given in the source code)
                                         string funcId; //The "physical" function id
@@ -1266,6 +1272,7 @@ FunctionDefinition<out PFunction func>
                                         string derId = null; //The name of the derived stub
                                         CompilerTarget ct = null;   //The compiler target for the function (as mentioned in the source code)
                                         CompilerTarget cst = null;  //The compiler target for a stub (coroutine/lazy)
+                                        SymbolEntry symEntry = null;
 
                                         bool missingArg = false; //Allow trailing comma, but not (,,) in formal arg list
                                     .)         
@@ -1275,7 +1282,7 @@ FunctionDefinition<out PFunction func>
 	|   coroutine                   (.  isCoroutine = true; .)
 	|   macro [function]            (.  isMacro = true; .)
 	)
-	(   Id<out id>                  (.  funcAliases.Add(id); .)
+	(   Id<out id>                  (.  primaryAlias = id; .)
 	    [ FunctionAliasList<funcAliases> ]
 	|   FunctionAliasList<funcAliases>
 	)                               (.  
@@ -1390,13 +1397,18 @@ FunctionDefinition<out PFunction func>
 	                                        (!isNested))
 	                                    {
 	                                            //Add the name to the symboltable
+                                                symEntry = new SymbolEntry(SymbolInterpretations.Function, func.Id);
 	                                            foreach(var alias in funcAliases)	                                                
-	                                                Symbols[alias] = new SymbolEntry(SymbolInterpretations.Function, func.Id);
+	                                                Symbols[alias] = symEntry;
 	                                            
 	                                            //Store the original (logical id, mentioned in the source code)
 	                                            if((!string.IsNullOrEmpty(id)))
 	                                                func.Meta[PFunction.LogicalIdKey] = id ?? funcId;
 	                                    }
+                                        else
+                                        {
+                                            primaryAlias = null;
+                                        }
 	                                    
 	                                    //Target the derived (coroutine/lazy) body instead of the stub
                                         if(isCoroutine || isLazy)
@@ -1414,6 +1426,9 @@ FunctionDefinition<out PFunction func>
     ]
                                     (.  
                                     
+                                        if(primaryAlias != null && !_suppressPrimarySymbol(func))
+                                            Symbols[primaryAlias] = symEntry;
+
                                         //Imprint certain meta keys from parent function
                                         if(isNested)
                                         {
