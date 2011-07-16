@@ -390,7 +390,7 @@ namespace Prexonite
                             int index;
                             int argc;
                             rawIns.DecodeIndLocIndex(out index, out argc);
-                            ins = new Instruction(OpCode.indloc,argc, reverseLocalMapping[index]);
+                            ins = new Instruction(OpCode.indloc,argc, reverseLocalMapping[index],rawIns.JustEffect);
                             break;
                         default:
                             ins = rawIns;
