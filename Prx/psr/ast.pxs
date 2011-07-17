@@ -45,16 +45,16 @@ function subBlocks(block) [is compiler;] =
 
 var uniqueIdCounter [is compiler;];
 build does uniqueIdCounter =  0;
-function uniqueId(verb) [is compiler;] = "hook\\" + verb + uniqueIdCounter++;
+function uniqueId(verb) [is compiler;] = "uniq\\" + verb + uniqueIdCounter++;
 
 function isFunctionCall(id, node)[is compiler;] =
         node is ::AstGetSetSymbol And
         node.Interpretation~Int == ::SymbolInterpretations.Function~Int And
-        node.Id.ToLowerInvariant == id.ToString.ToLowerInvariant;
+        Prexonite::Engine.StringsAreEqual(node.Id, id.ToString);
         
 function isMemberAccess(id, node)[is compiler;] =
         node is ::AstGetSetMemberAccess And
-        node.Id.ToLowerInvariant == id.ToString.ToLowerInvariant;
+        Prexonite::Engine.StringsAreEqual(node.Id, id.ToString);
         
 function localMeta(key, context)[is compiler;] =
     if(context.Meta.ContainsKey(key))
@@ -66,7 +66,7 @@ var SI [is compiler;];
 function create_SI [is compiler;]
 {
     //Note: don't use struct here, because struct.pxs depends on ast.pxs!
-    SI = new Structure;
+    var SI = new Structure;
     SI.\("lvar") = ::SymbolInterpretations.LocalObjectVariable;
     SI.\("lref") = ::SymbolInterpretations.LocalReferenceVariable;
     SI.\("gvar") = ::SymbolInterpretations.GlobalObjectVariable;
@@ -87,6 +87,7 @@ function create_SI [is compiler;]
     SI.\\("is_gref") = (this, s) => s~Int == this.gref~Int;
     SI.\\("is_func") = (this, s) => s~Int == this.func~Int;
     SI.\\("is_cmd") = (this, s) => s~Int == this.cmd~Int;
+    SI.\\("is_mcmd") = (this, s) => s~Int == this.mcmd~Int;
     SI.\\("is_obj") = (this, s) => this.is_lvar(s) || this.is_gvar(s);
     SI.\\("is_ref") = (this, s) => this.is_lref(s) || this.is_gref(s);
     SI.\\("is_global") = (this, s) => this.is_gvar(s) || this.is_gref(s);
@@ -127,8 +128,10 @@ function create_SI [is compiler;]
     m.\\("is_func") = (this, s) => s~Int == this.func~Int;
     m.\\("is_cmd") = (this, s) => s~Int == this.cmd~Int;
     SI.\("m") = m;
+    
+    return SI;
 }
-build does create_SI;
+build does SI = new SI;
    
 //
 //  Removal of compiler related functions and variables from the final application

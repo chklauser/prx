@@ -1,0 +1,259 @@
+ 
+build does require(@"psr\ast.pxs");
+build does require(@"psr\test.pxs");
+ 
+function compiler_is_loaded[test]
+{
+    var mt = asm(ldr.app).Meta;
+    assert(mt["compiler_loaded"].Switch, "After loading psr\\ast.pxs, the application meta table should have 'compiler_loaded' enabled.");
+    assert(mt["psr_ast_pxs_open"].Switch, "The meta switch 'psr_ast_pxs_open' should be set.");
+} 
+
+function test_ast_withpos_null[test]
+{
+    var nt = ast\withPos("Null");
+    assert(nt is Prexonite::Compiler::Ast::AstNull, "ast\\withPos(\"Null\") is not an AstNull node.");
+    assert(nt.File is not null, "File should not be null");
+    assert(nt.Line == -1, "Line should default to -1");
+    assert(nt.Column == -1, "Column should default to -1");
+}
+
+function test_ast_withpos_memcall[test]
+{
+    var cv = 4;
+    var ct1 = ast\withPos("Constant",null,null,null,cv);
+    
+    assert(ct1 is Prexonite::Compiler::Ast::AstConstant,
+        "ast\\withPos(\"Constant\") is not an AstConstant node");
+    assert(ct1.Constant == cv, "Constant value should be $cv");
+    assert(ct1.File is not null, "File should not be null");
+    assert(ct1.Line == -1, "Line should default to -1");
+    assert(ct1.Column == -1, "Column should default to -1");
+    
+    var bf = "bfile.pxs";
+    var bl = 5;
+    var bc = 7;
+    var bt = ast\withPos("GetSetMemberAccess",bf,bl,bc,Prexonite::Types::PCall.set,ct1,"ToString");
+    assert(bt is Prexonite::Compiler::Ast::AstGetSetMemberAccess, 
+        "ast\\withPos(\"GetSetMemberAccess\") is not an AstGetSetMemberAccess node.");
+    assert(bt.File == bf, "File should be $bf");
+    assert(bt.Line == bl, "Line should be $bl");
+    assert(bt.Column == bc, "Column should be $bc");
+    assert(bt.Subject == ct1, "Subject should be $ct1");
+    assert(bt.Id == "ToString", "Id should be ToString");
+    assert(bt.Call~Int == Prexonite::Types::PCall.Set~Int, "Call should be PCall.Set");
+}
+
+function test_ast_simple_memcall[test]
+{
+    var cv = 4;
+    var ct1 = ast\simple("Constant",cv);
+    
+    assert(ct1 is Prexonite::Compiler::Ast::AstConstant,
+        "ast\\simple(\"Constant\") is not an AstConstant node");
+    assert(ct1.Constant == cv, "Constant value should be $cv");
+    assert(ct1.File is not null, "File should not be null");
+    assert(ct1.Line == -1, "Line should default to -1");
+    assert(ct1.Column == -1, "Column should default to -1");
+    
+    var bl = -1;
+    var bc = -1;
+    var bt = ast\simple("GetSetMemberAccess",Prexonite::Types::PCall.set,ct1,"ToString");
+    assert(bt is Prexonite::Compiler::Ast::AstGetSetMemberAccess, 
+        "ast\\simple(\"GetSetMemberAccess\") is not an AstGetSetMemberAccess node.");
+    assert(bt.File is not null, "File should not be null");
+    assert(bt.Line == bl, "Line should be $bl");
+    assert(bt.Line == bc, "Column should be $bc");
+    assert(bt.Subject == ct1, "Subject should be $ct1");
+    assert(bt.Id == "ToString", "Id should be ToString");
+    assert(bt.Call~Int == Prexonite::Types::PCall.Set~Int, "Call should be PCall.Set");
+}
+
+function test_ast_memcall[test]
+{
+    var cv = 4;
+    var ct1 = ast("Constant",cv);
+    
+    assert(ct1 is Prexonite::Compiler::Ast::AstConstant,
+        "ast(\"Constant\") is not an AstConstant node");
+    assert(ct1.Constant == cv, "Constant value should be $cv");
+    assert(ct1.File is not null, "File should not be null");
+    assert(ct1.Line == -1, "Line should default to -1");
+    assert(ct1.Column == -1, "Column should default to -1");
+    
+    var bl = -1;
+    var bc = -1;
+    var bt = ast("GetSetMemberAccess",Prexonite::Types::PCall.set,ct1,"ToString");
+    assert(bt is Prexonite::Compiler::Ast::AstGetSetMemberAccess, 
+        "ast(\"GetSetMemberAccess\") is not an AstGetSetMemberAccess node.");
+    assert(bt.File is not null, "File should not be null");
+    assert(bt.Line == bl, "Line should be $bl");
+    assert(bt.Line == bc, "Column should be $bc");
+    assert(bt.Subject == ct1, "Subject should be $ct1");
+    assert(bt.Id == "ToString", "Id should be ToString");
+    assert(bt.Call~Int == Prexonite::Types::PCall.Set~Int, "Call should be PCall.Set");
+}
+
+function test_unique_id_counter[test]
+{
+    var h = {};
+    var verb = "vvrb";
+    for(var i = 0; i < 50; i++)
+    {
+        h[var id = uniqueId(verb)] = true;
+        assert(id.Contains(verb),"Generated id '$(id)' must contain verb '$(verb)'.");
+    }
+    assert(h.Count == 50, "There are duplicate id's");
+}
+
+function test_is_function_call[
+    is test; 
+    Add Prexonite to Imports; 
+    Add Prexonite::Compiler to Imports;
+    Add Prexonite::Compiler::Ast to Imports;
+    Add Prexonite::Types to Imports;
+]
+{
+    var func = ast("GetSetSymbol", ->test_is_function_call.Id, ::SymbolInterpretations.Function);
+    var nonFunc = ast("GetSetSymbol", ->test_is_function_call.Id, ::SymbolInterpretations.Command);
+    var wrongFunc = ast("GetSetSymbol", ->test_unique_id_counter.Id, ::SymbolInterpretations.Function);
+    var notSym = ast("MacroInvocation", ->test_is_function_call.Id, ::SymbolInterpretations.Function);
+    
+    var id = ->test_is_function_call.Id;
+    assert(isFunctionCall(id, func), "Should recognize $func");
+    assert(not isFunctionCall(id, nonFunc), "Should reject $nonFunc");
+    assert(not isFunctionCall(id, wrongFunc), "Should reject $wrongFunc");
+    assert(not isFunctionCall(id, notSym), "Should reject $notSym");
+}
+
+function test_is_member_access[
+    is test; 
+    Add Prexonite to Imports; 
+    Add Prexonite::Compiler to Imports;
+    Add Prexonite::Compiler::Ast to Imports;
+    Add Prexonite::Types to Imports;
+]
+{
+    var nt = ast("Null");
+    var mem = "member";
+    var memacc = ast("GetSetMemberAccess", nt, mem);
+    var wrongmemacc = ast("GetSetMemberAccess", nt, "otherMember");
+    var notMemacc = ast("GetSetSymbol", mem, ::SymbolInterpretations.Function);
+    
+    assert(isMemberAccess(mem, memacc), "Should recognize $memacc");
+    assert(not isMemberAccess(mem, wrongmemacc), "Should reject $wrongmemacc");
+    assert(not isMemberAccess(mem, notMemacc), "Should reject $notMemacc");
+}
+
+test_glob glob1;
+test_glob2 glob2;
+
+function test_local_meta[
+    test;
+    test_glob2 glob3;
+]
+{
+    var ctx = ->test_local_meta;
+    var actual = localMeta("test_glob", ctx).Text;
+    assert(actual == "glob1", "Expected \"glob1\", actual $actual");
+    
+    actual = localMeta("test_glob2", ctx).Text;
+    assert(actual == "glob3", "Expected \"glob3\", actual $actual");
+}
+
+function assert_seq(actual,expected,msg) = assert_eq(actual~Int, expected~Int,msg);
+function assert_sneq(actual,expected,msg) = assert_neq(actual~Int, expected~Int,msg);
+
+function test_si_fields[
+    test;
+    Add Prexonite to Imports;
+    Add Prexonite::Types to Imports;
+    Add Prexonite::Compiler to Imports;
+    Add Prexonite::Compiler::Ast to Imports;
+]
+{
+    assert(SI is not null, "SI must not be null");
+    
+    assert_seq(SI.lvar, ::SymbolInterpretations.LocalObjectVariable);
+    assert_seq(SI.lref, ::SymbolInterpretations.LocalReferenceVariable);
+    assert_seq(SI.gvar, ::SymbolInterpretations.GlobalObjectVariable);
+    assert_seq(SI.gref, ::SymbolInterpretations.GlobalReferenceVariable);
+    assert_seq(SI.func, ::SymbolInterpretations.Function);
+    assert_seq(SI.cmd, ::SymbolInterpretations.Command);
+    assert_seq(SI.mcmd, ::SymbolInterpretations.MacroCommand);
+    assert_seq(SI.get, ::PCall.Get);
+    assert_seq(SI.set, ::PCall.Set);
+    assert_seq(SI.ret\exit, ::ReturnVariant.Exit);
+    assert_seq(SI.ret\set, ::ReturnVariant.Set);
+    assert_seq(SI.ret\continue, ::ReturnVariant.Continue);
+    assert_seq(SI.ret\break, ::ReturnVariant.Break);
+    
+    //macro specific
+    assert_seq(SI.m.func, ::SymbolInterpretations.Function);
+    assert_seq(SI.m.cmd, ::SymbolInterpretations.MacroCommand);
+}
+
+function test_si_is_star[
+    test;
+    Add Prexonite to Imports;
+    Add Prexonite::Types to Imports;
+    Add Prexonite::Compiler to Imports;
+    Add Prexonite::Compiler::Ast to Imports;
+]
+{
+    //SI.eq
+    assert(SI.eq(SI.lvar, SI.lvar), "SI.lvar must be the same as SI.lvar");
+    assert(not SI.eq(SI.lvar, SI.lref),"SI.lvar != SI.lref");
+    
+    //SI.is_*
+    var mms = ["lvar", "lref", "gvar", "gref", "func", "cmd", "mcmd"];
+    foreach(var x in mms)
+    foreach(var y in mms)
+    {
+        var actual = call\member(SI,"is_$x",[call\member(SI,y)]);
+        var expected = x == y;
+        assert_eq(actual,expected,"Evaluating SI.is_$x(SI.$y)");
+    }
+    
+    var cs = [
+        "obj": ?.EndsWith("var"), 
+        "ref": ?.EndsWith("ref"),
+        "global": ?.StartsWith("g"),
+        "local": ?.StartsWith("l"),
+    ];
+    foreach(var c in cs)
+    foreach(var x in mms)
+    {
+        var name = c.Key;
+        var constr = c.Value;
+        var actual = call\member(SI, "is_$name", [call\member(SI,x)]);
+        var expected = constr.(x);
+        assert_eq(actual,expected,"Evaluating SI.is_$name(SI.$x)");
+    }
+}
+
+function test_si_make_star[
+    test;
+    Add Prexonite to Imports;
+    Add Prexonite::Types to Imports;
+    Add Prexonite::Compiler to Imports;
+    Add Prexonite::Compiler::Ast to Imports;
+]
+{
+    var mms = ["lvar","lref","gvar","gref"];
+    var kind = ["local":"global","global":"local","obj":"ref","ref":"obj"];
+    
+    foreach(var m in mms)
+    foreach(var k in kind)
+    {
+        var x = call\member(SI,m);
+        var oldState = {};
+        foreach(var k' in kind)
+            oldState[k'.Key] = call\member(SI, "is_$(k'.Key)",[x]);
+        oldState[k.Key] = true;
+        oldState[k.Value] = false;
+        
+        var y = call\member(SI,"make_$(k.Key)",[x]);
+        kind >> each(k' => assert_eq(call\member(SI, "is_$(k'.Key)", [y]), oldState[k'.Key], "SI.is_$(k'.Key)($y) after make_$(k.Key)($x)"));
+    }    
+}
