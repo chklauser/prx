@@ -1,0 +1,129 @@
+
+test\version "0.1";
+
+function test\run_single_test as run_single_test(testFunc)
+{
+    var t = new Structure;
+    t.\("test") = testFunc;
+    try
+    {
+        testFunc.();
+        return true: t;
+    }
+    catch(var e)
+    {
+        t.\("e") = e;
+        return false: t;
+    }
+}
+
+declare function test\basic_ui;
+declare test\basic_ui as basic_ui;
+
+function test\run_test as run_test(ui, testFunc)
+{
+    ui ??= basic_ui;
+    ui.begin_running(testFunc);
+    var res = run_single_test(testFunc);
+    if(res.Key)
+        ui.success(res);
+    else
+        ui.failure(res);
+        
+    return res;
+}
+
+function test\list_tests as list_tests()
+{
+    var tags = append(["test"], var args >> map(?~String)) >> all;
+    
+    return asm(ldr.app).Functions 
+        >> where(f => tags >> forall(f.Meta[?] then ?.Switch));       
+}
+
+function test\run_tests as run_tests()
+{
+    var args;
+    var ui;
+    if(args.Count > 0)
+    {
+        ui = args[0];
+        if(ui is String or ui is Null)
+            ui = basic_ui;
+        else
+            args = args >> skip(1);
+    }
+    else
+    {
+        ui = basic_ui;
+    }
+    
+    ui.search_tests(args);
+    
+    var tests = call(list_tests(?),args) >> all;
+    
+    ui.begin_suite(tests);
+    
+    var results = tests >> map(run_test(ui, ?)) >> all;
+    
+    ui.end_suite(results);
+}
+
+function test\basic_ui
+{
+    var s = new Structure;
+    
+    s.\("tests") = [];
+    
+    s.\\("search_tests") = (self,tags) =>
+    {
+        println("Prexonite Tests v", asm(ldr.app).Meta[@"test\version"].Text);
+        print("Searching for tests marked with [" + (tags >> foldr(concat(?,"; ",?),"]...")) );
+    };
+    
+    s.\\("begin_suite") = (self,tests) =>
+    {
+        println(" done. $(tests.Count) tests found.");
+        self.tests = tests;
+    };
+    
+    s.\\("end_suite") = (self,results) =>
+    {
+        println("Testsuite complete, $(results.Count) tests run.");
+        var failures = results >> where(?.Key then not ?) >> map(?.Value) >> all;
+        println("\tpassed ", results.Count - failures.Count);
+        println("\tfailed ", failures.Count);
+        foreach(var r in failures)
+            println("\t\t", r.test);
+            
+        if(failures.Count <= 0)
+        {
+            println("SUCCESS");
+            
+        }
+        else
+        {
+            println("FAILURE");
+        }
+        println();
+    };
+    
+    s.\\("begin_running") = (self,testFunc) =>
+    {
+        println("Running test ",testFunc,"...");
+    };
+    
+    s.\\("success") = (self,result) =>
+    {
+        println("\tdone.");
+    };
+    
+    s.\\("failure") = (self,result) =>
+    {
+        println(result.test," failed:");
+        println(result.e);
+        println();
+    };
+    
+    return s;
+}
