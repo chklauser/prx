@@ -1,4 +1,8 @@
 
+//This is the first version of an automated testing -something- for Prexonite Script,
+// obviously inspired by xUnit.
+//
+
 test\version "0.1";
 
 function test\run_single_test as run_single_test(testFunc)
@@ -26,9 +30,9 @@ function test\run_test as run_test(ui, testFunc)
     ui.begin_running(testFunc);
     var res = run_single_test(testFunc);
     if(res.Key)
-        ui.success(res);
+        ui.success(res.Value);
     else
-        ui.failure(res);
+        ui.failure(res.Value);
         
     return res;
 }
@@ -87,8 +91,10 @@ function test\basic_ui
         self.tests = tests;
     };
     
+    var heavysep = "="*60;
     s.\\("end_suite") = (self,results) =>
     {
+        println(heavysep);
         println("Testsuite complete, $(results.Count) tests run.");
         var failures = results >> where(?.Key then not ?) >> map(?.Value) >> all;
         println("\tpassed ", results.Count - failures.Count);
@@ -108,8 +114,10 @@ function test\basic_ui
         println();
     };
     
+    var sep = "-"*60;
     s.\\("begin_running") = (self,testFunc) =>
     {
+        println(sep);
         println("Running test ",testFunc,"...");
     };
     
@@ -126,4 +134,28 @@ function test\basic_ui
     };
     
     return s;
+}
+
+function test\assert as assert(expr,msg)
+{
+    if(not expr)
+        throw "Assertion failure: $msg";
+}
+
+function test\assert_eq as assert_eq(actual,expected,msg)
+{
+    msg ??= "";
+    msg ~= String;
+    assert(actual == expected, (if(msg.Length > 0) msg + "." else "") + "\n" +
+        "\tExpected: $(expected)\n" + 
+        "\t  Actual: $actual");
+}
+
+function test\assert_neq as assert_neq(actual,expected, msg)
+{
+    msg ??= "";
+    msg ~= String;
+    assert(actual != expected, (if(msg.Length > 0) msg + "." else "") + "\n" +
+        "\tUnexpected: $(expected)\n" + 
+        "\t    Actual: $actual");
 }
