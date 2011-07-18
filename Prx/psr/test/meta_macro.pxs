@@ -1,26 +1,10 @@
 
 build does require(@"..\test.pxs");
 
-function test\run_single_macro as run_single_macro(testMacro)
-[
-    Add Prexonite to Imports;
-    Add Prexonite::Types to Imports;
-    Add Prexonite::Compiler to Imports;
-    Add Prexonite::Compiler::Ast to Imports;
-]
+function test\execute_single_macro as execute_single_macro(ldr, testMacro)
 {
-    while(testMacro is Structure)
-        testMacro = testMacro.self;
-    
-    if(testMacro is not Prexonite::PFunction)
-        throw "test\\run_single_macro expects a macro function, and not $(boxed(testMacro)).";
-    if(not testMacro.IsMacro)
-        throw "test\\run_single_macro expects a macro function. $testMacro is not a macro.";
-        
-    var app = asm(ldr.app);
-    var eng = asm(ldr.eng);
-    
-    var ldr = new ::Loader(eng, app);
+    var eng = ldr.ParentEngine;
+    var app = ldr.ParentApplication;
     
     var hostFuncId = @"test\run_single_macro\hostFuncId";
     var hostFunc = app.CreateFunction(hostFuncId);
@@ -53,6 +37,31 @@ function test\run_single_macro as run_single_macro(testMacro)
                 app.Functions.Remove(ct.Function);
         }
     }
+}
+
+function test\run_single_macro as run_single_macro(testMacro)
+[
+    Add Prexonite to Imports;
+    Add Prexonite::Types to Imports;
+    Add Prexonite::Compiler to Imports;
+    Add Prexonite::Compiler::Ast to Imports;
+]
+{
+    while(testMacro is Structure)
+        testMacro = testMacro.self;
+        
+    if(testMacro is not Prexonite::PFunction)
+        throw "test\\run_single_macro expects a macro function, and not $(boxed(testMacro)).";
+    if(not testMacro.IsMacro)
+        throw "test\\run_single_macro expects a macro function. $testMacro is not a macro.";
+        
+    var app = asm(ldr.app);
+    var eng = asm(ldr.eng);
+    
+    var ldr = new ::Loader(eng, app);
+    
+    execute_single_macro(ldr, testMacro);
+    
     ldr.Warnings >> each(println(?));
     if(ldr.Errors.Count > 0)
         throw ldr.Errors[0].ToString;

@@ -127,4 +127,93 @@ macro test_pos[test]
     
 }
 
+function is_in_macro_explicit(context) = is_in_macro(context);
+
+macro materialize_is_in_macro
+{
+    return new Prexonite::Compiler::Ast::AstConstant("--test--",-1,-1,is_in_macro);
+}
+
+function test\not_in_macro as not_in_macro = materialize_is_in_macro;
+
+macro test_is_in_macro[test]
+{
+    function in_macro = materialize_is_in_macro;
+    assert_eq(in_macro,true, "nested function is in macro");
+    assert_eq(not_in_macro,false, "top-level function is not in macro");
+    
+    assert_eq(is_in_macro_explicit(context), false, "test macro is not expanded in a macro");
+}
+
+macro do_establish_context
+{   
+    establish_macro_context;
+}
+
+macro test_establish_macro_context[test]
+{
+    function nested
+    {
+        do_establish_context;
+    }
+    
+    var sharedList = ->nested.Function.Meta[Prexonite::PFunction.SharedNamesKey].List;
+    assert(sharedList >> exists(e => e.Text == "context"),
+        "Establish macro context must make context available in nested function. Actual: " + 
+        foldl((l,r) => l + ", " + r.ToString, "", sharedList));
+}
+
+macro test_reports\macro
+{
+    macro\report_error("AN_ERRORE");
+    macro\report_warning("A_WARNINGW");
+    macro\report_info("INFOI");
+}
+
+function test_reports[test]
+{
+    var ldr = new Prexonite::Compiler::Loader(asm(ldr.eng),asm(ldr.app));
+    test\execute_single_macro(ldr,asm(ldr.app).Functions["test_reports\\macro"]);
+    assert_eq(ldr.Errors.Count,1,"Exactly one error expected.");
+    assert_eq(ldr.Warnings.Count,1,"Exactly one warning expected.");
+    assert_eq(ldr.Infos.Count,1,"Exactly one info expected.");
+    
+    assert_eq(ldr.Errors[0].Message,"AN_ERRORE");
+    assert_eq(ldr.Warnings[0].Message,"A_WARNINGW");
+    assert_eq(ldr.Infos[0].Message,"INFOI");
+}
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
