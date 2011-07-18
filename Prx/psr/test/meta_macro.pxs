@@ -1,0 +1,78 @@
+
+build does require(@"..\test.pxs");
+
+function test\run_single_macro as run_single_macro(testMacro)
+[
+    Add Prexonite to Imports;
+    Add Prexonite::Types to Imports;
+    Add Prexonite::Compiler to Imports;
+    Add Prexonite::Compiler::Ast to Imports;
+]
+{
+    while(testMacro is Structure)
+        testMacro = testMacro.self;
+    
+    if(testMacro is not Prexonite::PFunction)
+        throw "test\\run_single_macro expects a macro function, and not $(boxed(testMacro)).";
+    if(not testMacro.IsMacro)
+        throw "test\\run_single_macro expects a macro function. $testMacro is not a macro.";
+        
+    var app = asm(ldr.app);
+    var eng = asm(ldr.eng);
+    
+    var ldr = new ::Loader(eng, app);
+    
+    var hostFuncId = @"test\run_single_macro\hostFuncId";
+    var hostFunc = app.CreateFunction(hostFuncId);
+    var funcTar;
+    try
+    {
+        //Setup function hosting the macro invocation
+        var fakeFile = @"psr\test\meta_macro.pxs\test\run_single_macro\anonymous";
+        var block = new ::AstBlock(fakeFile,-1,-1);
+        app.Functions.Add(hostFunc);
+        funcTar = ldr.CreateFunctionTarget(hostFunc, block);
+        
+        //Setup invocation of test macro
+        var invocation = new ::AstMacroInvocation(fakeFile,-1,-1,testMacro.Id,::SymbolInterpretations.Function);
+        block.Add(invocation);
+        
+        //Compile host function
+        block.EmitCode(funcTar);
+        funcTar.FinishTarget(); 
+        //technically, finishing the host function isn't necessary (the test macro has already been executed)
+        //  but some error might only be detected during finishing.
+    }
+    finally
+    {
+        if(app.Functions.Contains(hostFuncId))
+            app.Functions.Remove(hostFuncId);
+        foreach(var ct in ldr.FunctionTargets)
+        {
+            if(app.Functions.Contains(ct.Function.Id))
+                app.Functions.Remove(ct.Function);
+        }
+    }
+}
+
+function test\create_macro_function_wrapper as create_macro_function_wrapper(testMacroFunc)
+{
+    var s = new Structure;
+    s.\("self") = testMacroFunc;
+    s.\\("Call") = (self,id) => call\member(self.self,id,var args >> skip(2));
+    s.\\("IndirectCall") = (self) => run_single_macro(self.self);
+    
+    return s;
+}
+
+function test\macro_filter as macro_filter(testFunc)
+{
+    if(testFunc.IsMacro)
+        return new macro_function_wrapper(testFunc);
+    else
+        return testFunc;
+}
+
+{
+    test_filters[] = macro_filter(?);
+}

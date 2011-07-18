@@ -1,0 +1,20 @@
+ 
+build does require(@"psr\macro.pxs");
+build does require(@"psr\test.pxs");
+build does require(@"psr\test\meta_macro.pxs");
+
+function test_file()[test]
+{
+    var file = "macro.test.pxs";
+    var actual = __FILE__;
+    assert(actual.Contains(file), "__FILE__ is expected to contain $file. Actual: $actual");
+    
+    var actual = CURRENT_FILE;
+    assert(actual.Contains(file), "CURRENT_FILE is expected to contain $file. Actual: $actual");
+}
+
+macro test_pos[test]
+{
+    var actual = call\macro([__FILE__]);
+    assert(actual is Prexonite::Compiler::Ast::AstConstant, "Expect __FILE__ to return a constant");
+}
