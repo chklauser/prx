@@ -257,3 +257,29 @@ function test_si_make_star[
         kind >> each(k' => assert_eq(call\member(SI, "is_$(k'.Key)", [y]), oldState[k'.Key], "SI.is_$(k'.Key)($y) after make_$(k.Key)($x)"));
     }    
 }
+
+function test_si_m_is_star[test]
+{
+    var mms = ["lvar", "lref", "gvar", "gref", "func", "cmd", "mcmd"];
+    var pps = ["func":"func","cmd":"mcmd"];
+    
+    foreach(var p in pps)
+    foreach(var xName in mms)
+    {
+        var x = call\member(SI, xName);
+        var actual = call\member(SI.m,"is_$(p.Key)",[x]);
+        var expected = call\member(SI, "is_$(p.Value)",[x]);
+        assert_eq(actual,expected,"is_$(p.Key) == is_$(p.Value)");
+    }
+}
+
+function test_sub_blocks[test]
+{
+    var ifBlock = ast("Condition",ast("Null"));
+    var acs = subBlocks(ifBlock);
+    assert_eq(acs[0], ifBlock.IfBlock);
+    assert_eq(acs[1], ifBlock.ElseBlock);
+    
+    var notIfBlock = ast("Constant", 2);
+    assert_eq(subBlocks(notIfBlock).Count, 0);
+}

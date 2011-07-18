@@ -1003,8 +1003,6 @@ macro __POSITION__ as POSITION, __POS__
 
 macro compile_macros\macro as compile_macros()
 {
-    if(is_in_macro)
-        establish_macro_context;
     var c = ast\cmd(SI.get, Prexonite::Engine.CompileToCilAlias);
     c.Arguments.Add(ast\const(false));
     return c;
