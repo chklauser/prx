@@ -972,29 +972,21 @@ macro macro\deprecated\macroInvocation as macroInvocation
 //Position report
 macro __FILE__ as CURRENT_FILE
 {
-    if(is_in_macro)
-        establish_macro_context;
     return ast("Constant",context.Invocation.File);
 }
 
 macro __LINE__ as CURRENT_LINE
 {
-    if(is_in_macro)
-        establish_macro_context;
     return ast("Constant",context.Invocation.Line);
 }
 
 macro __COLUMN__ as CURRENT_COLUMN, __COL__
 {
-    if(is_in_macro)
-        establish_macro_context;
     return ast("Constant",context.Invocation.Column);
 }
 
 macro __POSITION__ as POSITION, __POS__
 {
-    if(is_in_macro)
-        establish_macro_context;
     var file = System::IO::Path.GetFileName(context.Invocation.File);
     var line = context.Invocation.Line;
     var col = context.Invocation.Column;
