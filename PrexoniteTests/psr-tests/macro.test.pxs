@@ -15,6 +15,116 @@ function test_file()[test]
 
 macro test_pos[test]
 {
+    // -- FILE --
+    var file = "macro.test.pxs";
     var actual = call\macro([__FILE__]);
-    assert(actual is Prexonite::Compiler::Ast::AstConstant, "Expect __FILE__ to return a constant");
+    assert_eq(actual.Count,0,
+        "__FILE__ should not expand to any statements. Actual statements: " + actual.Count);
+    actual = actual.Expression;
+    assert(actual is Prexonite::Compiler::Ast::AstConstant, "Expect __FILE__ to return a constant. Actual: $(boxed(actual))");
+    assert(actual.Constant is String, "Expect __FILE__ to be a string constant");
+    var actual = __FILE__;
+    assert(actual.Contains(file), "__FILE__ is expected to contain $file. Actual: $actual");
+    
+    var actual = call\macro([CURRENT_FILE]);
+    assert_eq(actual.Count,0,
+        "CURRENT_FILE should not expand to any statements. Actual statements: " + actual.Count);
+    actual = actual.Expression;
+    assert(actual is Prexonite::Compiler::Ast::AstConstant, "Expect CURRENT_FILE to return a constant");
+    assert(actual.Constant is String, "Expect CURRENT_FILE to be a string constant");
+    var actual = CURRENT_FILE;
+    assert(actual.Contains(file), "CURRENT_FILE is expected to contain $file. Actual: $actual");
+    
+    // -- LINE --
+    var actual = call\macro([__LINE__]);
+    assert_eq(actual.Count,0,
+        "__LINE__ should not expand to any statements. Actual statements: " + actual.Count);
+    actual = actual.Expression;
+    assert(actual is Prexonite::Compiler::Ast::AstConstant, "Expect __LINE__ to return a constant");
+    assert(actual.Constant is Int, "Expect __LINE__ to be an integer constant");
+    var oldLine = actual = __LINE__;
+    assert(actual > 0, "__LINE__ is expected to be positive. Actual: $actual");
+    
+    var actual = call\macro([CURRENT_LINE]);
+    assert_eq(actual.Count,0,
+        "CURRENT_LINE should not expand to any statements. Actual statements: " + actual.Count);
+    actual = actual.Expression;
+    assert(actual is Prexonite::Compiler::Ast::AstConstant, "Expect CURRENT_LINE to return a constant");
+    assert(actual.Constant is Int, "Expect CURRENT_LINE to be an integer constant");
+    var actual = CURRENT_LINE;
+    assert(actual > oldLine, "CURRENT_LINE is expected to be larger than $oldLine. Actual: $actual");
+    
+    // -- COLUMN --
+    var actual = call\macro([__COLUMN__]);
+    assert_eq(actual.Count,0,
+        "__COLUMN__ should not expand to any statements. Actual statements: " + actual.Count);
+    actual = actual.Expression;
+    assert(actual is Prexonite::Compiler::Ast::AstConstant, "Expect __COLUMN__ to return a constant");
+    assert(actual.Constant is Int, "Expect __COLUMN__ to be an integer constant");
+    var oldColumn = //STOP!
+    var actual = __COLUMN__; // DO NOT MERGE LINES! 
+        //  __COLUMN__ is at the exact same column as CURRENT_COLUMN below!
+    assert(actual > 0, "__COLUMN__ is expected to be positive. Actual: $actual");
+    
+    var actual = call\macro([CURRENT_COLUMN]);
+    assert_eq(actual.Count,0,
+        "CURRENT_COLUMN should not expand to any statements. Actual statements: " + actual.Count);
+    actual = actual.Expression;
+    assert(actual is Prexonite::Compiler::Ast::AstConstant, "Expect CURRENT_COLUMN to return a constant");
+    assert(actual.Constant is Int, "Expect CURRENT_COLUMN to be an integer constant");
+    var actual = CURRENT_COLUMN;
+    assert_eq(actual,oldColumn);
+    
+    var actual = call\macro([__COL__]);
+    assert_eq(actual.Count,0,
+        "__COL__ should not expand to any statements. Actual statements: " + actual.Count);
+    actual = actual.Expression;
+    assert(actual is Prexonite::Compiler::Ast::AstConstant, "Expect __COL__ to return a constant");
+    assert(actual.Constant is Int, "Expect __COL__ to be an integer constant");
+    var actual = __COL__;
+    assert_eq(actual,oldColumn);
+    
+    // -- POSITION --
+    var actual = call\macro([__POSITION__]);
+    assert_eq(actual.Count,0,
+        "__POSITION__ should not expand to any statements. Actual statements: " + actual.Count);
+    actual = actual.Expression;
+    assert(actual is Prexonite::Compiler::Ast::AstConstant, "Expect __POSITION__ to return a constant. Actual: $(boxed(actual))");
+    assert(actual.Constant is String, "Expect __POSITION__ to be a string constant");
+    var actual = __POSITION__; var oldLine = __LINE__;
+    assert(actual.Contains(file), "__POSITION__ is expected to contain $file. Actual: $actual");
+    assert(actual.Contains(oldLine.ToString), 
+        "__POSITION__ is expected to contain line number $oldLine. Actual: $actual");
+    assert(actual.Contains(oldColumn.ToString), 
+        "__POSITION__ is expected to contain column number $oldColumn. Actual: $actual");
+    
+    var actual = call\macro([POSITION]);
+    assert_eq(actual.Count,0,
+        "POSITION should not expand to any statements. Actual statements: " + actual.Count);
+    actual = actual.Expression;
+    assert(actual is Prexonite::Compiler::Ast::AstConstant, "Expect POSITION to return a constant. Actual: $(boxed(actual))");
+    assert(actual.Constant is String, "Expect POSITION to be a string constant");
+    var actual = POSITION; var oldLine = __LINE__;
+    assert(actual.Contains(file), "POSITION is expected to contain $file. Actual: $actual");
+    assert(actual.Contains(oldLine.ToString), 
+        "POSITION is expected to contain line number $oldLine. Actual: $actual");
+    assert(actual.Contains(oldColumn.ToString), 
+        "POSITION is expected to contain column number $oldColumn. Actual: $actual");
+    
+    var actual = call\macro([__POS__]);
+    assert_eq(actual.Count,0,
+        "__POS__ should not expand to any statements. Actual statements: " + actual.Count);
+    actual = actual.Expression;
+    assert(actual is Prexonite::Compiler::Ast::AstConstant, "Expect __POS__ to return a constant. Actual: $(boxed(actual))");
+    assert(actual.Constant is String, "Expect __POS__ to be a string constant");
+    var actual = __POS__; var oldLine = __LINE__;
+    assert(actual.Contains(file), "__POS__ is expected to contain $file. Actual: $actual");
+    assert(actual.Contains(oldLine.ToString), 
+        "__POS__ is expected to contain line number $oldLine. Actual: $actual");
+    assert(actual.Contains(oldColumn.ToString), 
+        "__POS__ is expected to contain column number $oldColumn. Actual: $actual");
+    
+    
 }
+
+

@@ -53,6 +53,9 @@ function test\run_single_macro as run_single_macro(testMacro)
                 app.Functions.Remove(ct.Function);
         }
     }
+    ldr.Warnings >> each(println(?));
+    if(ldr.Errors.Count > 0)
+        throw ldr.Errors[0].ToString;
 }
 
 function test\create_macro_function_wrapper as create_macro_function_wrapper(testMacroFunc)
