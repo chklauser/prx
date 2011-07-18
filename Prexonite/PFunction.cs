@@ -117,7 +117,7 @@ namespace Prexonite
         /// Creates a new instance of PFunction.
         /// </summary>
         /// <param name="parentApplication">The application of which the new function is part of.</param>
-        /// <param name="id">The functions id.</param>
+        /// <param name="id">The function's id.</param>
         /// <remarks>The id does not have to be a legal Prexonite Script identifier.</remarks>
         [DebuggerStepThrough]
         internal PFunction(Application parentApplication, string id)

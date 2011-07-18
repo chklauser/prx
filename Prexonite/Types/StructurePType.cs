@@ -105,15 +105,15 @@ namespace Prexonite.Types
 
         #region PType implementation
 
-        internal static PValue[] _addThis(PValue Subject, PValue[] args)
+        internal static PValue[] _AddThis(PValue subject, PValue[] args)
         {
             var argst = new PValue[args.Length + 1];
-            argst[0] = Subject;
+            argst[0] = subject;
             Array.Copy(args, 0, argst, 1, args.Length);
             return argst;
         }
 
-        internal static PValue[] _addId(string id, PValue[] args)
+        private static PValue[] _addThisAndId(string id, PValue[] args)
         {
             var argst = new PValue[args.Length + 1];
             argst[0] = args[0]; //subject
@@ -135,7 +135,7 @@ namespace Prexonite.Types
             if (obj == null)
                 return false;
 
-            var argst = _addThis(subject, args);
+            var argst = _AddThis(subject, args);
 
             Member m;
             var isReference = false;
@@ -176,7 +176,7 @@ namespace Prexonite.Types
                     default:
                         //Try to call the generic "call" member
                         if (obj.TryGetValue(CallId, out m) && m != null)
-                            result = m.Invoke(sctx, _addId(id, argst), call);
+                            result = m.Invoke(sctx, _addThisAndId(id, argst), call);
                         else
                             return false;
                         break;
@@ -370,7 +370,7 @@ namespace Prexonite.Types
 
             Member m;
             if (obj.TryGetValue(IndirectCallId, out m) && m != null)
-                result = m.IndirectCall(sctx, _addThis(subject, args));
+                result = m.IndirectCall(sctx, _AddThis(subject, args));
 
             return result != null;
         }

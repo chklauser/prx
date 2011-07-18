@@ -24,9 +24,16 @@ function test\run_single_test as run_single_test(testFunc)
 declare function test\basic_ui;
 declare test\basic_ui as basic_ui;
 
+var test\test_filters as test_filters = [];
+
 function test\run_test as run_test(ui, testFunc)
 {
     ui ??= basic_ui;
+    if(testFunc is null)
+        throw "testFunc cannot be null.";
+        
+    testFunc = test_filters >> foldl(?1.(?0), testFunc);
+    
     ui.begin_running(testFunc);
     var res = run_single_test(testFunc);
     if(res.Key)
@@ -118,7 +125,7 @@ function test\basic_ui
     s.\\("begin_running") = (self,testFunc) =>
     {
         println(sep);
-        println("Running test ",testFunc,"...");
+        println("Running test ",(testFunc),"...");
     };
     
     s.\\("success") = (self,result) =>

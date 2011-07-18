@@ -192,7 +192,7 @@ namespace Prexonite.Types
         {
             result = null;
 
-            var argst = StructurePType._addThis(subject, args);
+            var argst = StructurePType._AddThis(subject, args);
 
             var reference = false;
             ExtensionMember m;
@@ -236,7 +236,7 @@ namespace Prexonite.Types
                             result =
                                 m.DynamicCall(
                                     sctx,
-                                    StructurePType._addThis(subject, argst),
+                                    StructurePType._AddThis(subject, argst),
                                     call);
                         else
                             return false;
@@ -295,7 +295,7 @@ namespace Prexonite.Types
                 throw new PrexoniteException(this + " does not support indirect calls.");
             return
                 m.DynamicCall(
-                    sctx, StructurePType._addThis(subject, args), PCall.Get);
+                    sctx, StructurePType._AddThis(subject, args), PCall.Get);
         }
 
         #endregion
