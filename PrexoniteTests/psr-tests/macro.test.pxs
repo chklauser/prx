@@ -327,8 +327,9 @@ macro test_read[test]
     assert_eq(r1, a+b, "Constant folding of r1 → $(boxed(t1)) expected.");
     
     var myCtx = context;
-    var r1 = ast\read(myCtx, t1);
-    assert_eq(r1, a+b, "Constant folding of r2 → $(boxed(t1)) expected.");
+    var t2 = mk_test();
+    var r2 = ast\read(myCtx, t2);
+    assert_eq(r2, a+b, "Constant folding of r2 → $(boxed(t2)) expected.");
     
     function assert_listeq(xs,ys,msg)
     {
@@ -363,8 +364,38 @@ macro test_read[test]
     assert_kvpeq(rh[0],a:b,"Should contain a → b @ index 0");
     assert_kvpeq(rh[1],b:a,"Should contain b → a @ index 1");
     
+    //partial application
+    var t3 = mk_test();
+    var r3 = ast\read(?);
     
+    function ext_test
+    {
+        assert_eq(r3.(t3), a+b, "Constant folding of r3 → $(boxed(t3)) expected.");
+    }
+    
+    assert_eq(->ext_test.Function.Meta[Prexonite::PFunction.SharedNamesKey].List >> count,4,"Only share necessary variables with ext_test.");
+    
+    ext_test();
 }
+
+function test_macro_id_static[test]
+{
+    assert_eq(macro\id(ast),"ast\\macro");
+    
+    assert_eq(macro\id(call\macro),"call\\macro");
+}
+
+macro test_macro_id[test]
+{   
+    var invk = ast("MacroInvocation", "ast\\macro", SI.m.func);
+    
+    var c = call\macro([macro\id(invk)]).Expression;
+    assert(ast_is_Constant(c),"$(boxed(c)) should be constant");
+    
+    assert_eq(ast\read(c),"ast\\macro");
+}
+
+
 
 
 
