@@ -395,6 +395,29 @@ macro test_macro_id[test]
     assert_eq(ast\read(c),"ast\\macro");
 }
 
+macro test_macro_interpretation[test]
+{
+    var invk1 = ast("MacroInvocation", "ast\\macro", SI.m.func);
+    
+    var c1 = call\macro([macro\interpretation(invk1)]).Expression;
+    assert(ast_is_GetSetMemberAccess(c1),"$(boxed(c1)) should be get set member access");
+    assert_eq(c1.Id,"func","ast\\macro is implemented as a function");
+    
+    var invk2 = ast("MacroInvocation", "call\\macro", SI.m.cmd);
+    
+    var c2 = call\macro([macro\interpretation(invk2)]).Expression;
+    assert(ast_is_GetSetMemberAccess(c2),"$(boxed(c2)) should be get set member access");
+    assert_eq(c2.Id,"cmd","ast\\macro is implemented as a macro command");
+}
+
+function test_macro_interpretation_static[test]
+{
+    var c1 = macro\interpretation(ast);
+    assert(SI.eq(c1,SI.m.func),"ast\\macro is implemented as a function");
+    
+    var c2 = macro\interpretation(call\macro);
+    assert(SI.eq(c2, SI.m.cmd), "call\\macro is implemented as a macro command");
+}
 
 
 
