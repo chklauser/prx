@@ -1,0 +1,33 @@
+﻿build
+{
+    function req_ex(path)
+    {
+        print("Begin compiling $path ...");
+        timer\start;
+        require(path);
+        timer\stop;
+        println("done.\n\t",timer\elapsed,"ms");
+        timer\reset;
+    }
+
+    ([  @"psr\ast.pxs",
+        @"psr\test.pxs",
+        @"ast.test.pxs",
+        @"psr\macro.pxs",
+        @"psr\test\meta_macro.pxs",
+        @"macro.test.pxs",
+    ]) >> each(req_ex(?));
+    
+    (asm(ldr.app)).Functions.Remove(->req_ex);
+}
+
+function main 
+{
+    if(var args >> exists(?.Contains("cil")))
+    {
+        print("Compiling to CIL...");
+        CompileToCil;
+        println("done.");
+    }
+    run_tests;
+}
