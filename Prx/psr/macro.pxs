@@ -474,6 +474,10 @@ macro macro\interpretation(prototype)
         
         return getSI\i;
     }
+    else
+    {
+        return ast("Null");
+    }
 }
 
 //ast helper

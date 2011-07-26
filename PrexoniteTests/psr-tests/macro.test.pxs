@@ -401,25 +401,159 @@ macro test_macro_interpretation[test]
     
     var c1 = call\macro([macro\interpretation(invk1)]).Expression;
     assert(ast_is_GetSetMemberAccess(c1),"$(boxed(c1)) should be get set member access");
-    assert_eq(c1.Id,"func","ast\\macro is implemented as a function");
+    assert_eq(c1.Id,"func","ast\\macro is implemented as a function (macro)");
     
     var invk2 = ast("MacroInvocation", "call\\macro", SI.m.cmd);
     
     var c2 = call\macro([macro\interpretation(invk2)]).Expression;
     assert(ast_is_GetSetMemberAccess(c2),"$(boxed(c2)) should be get set member access");
     assert_eq(c2.Id,"cmd","ast\\macro is implemented as a macro command");
+    
+    var invk3 = ast("GetSetSymbol", SI.get, "test_macro_id_static", SI.func);
+    
+    var c3 = call\macro([macro\interpretation(invk3)]).Expression;
+    assert(ast_is_GetSetMemberAccess(c3),"$(boxed(c3)) should be get set member access");
+    assert_eq(c3.Id,"func","test_macro_id_static is implemented as a function");
 }
 
 function test_macro_interpretation_static[test]
 {
     var c1 = macro\interpretation(ast);
-    assert(SI.eq(c1,SI.m.func),"ast\\macro is implemented as a function");
+    assert(SI.eq(c1,SI.m.func),"ast\\macro is implemented as a function (macro)");
     
     var c2 = macro\interpretation(call\macro);
     assert(SI.eq(c2, SI.m.cmd), "call\\macro is implemented as a macro command");
+    
+    var c3 = macro\interpretation(test_macro_interpretation_static);
+    assert(SI.eq(c3,SI.func), "test_macro_interpretation_static is implemented as a function");
 }
 
+//ast helper
+macro test_invoke_macro[test]
+{
+    var invk = ast\invoke_macro("ast\\macro", SI.m.func);
+    function assert_ast
+    {
+        assert(ast_is_MacroInvocation(invk),"$(boxed(invk)) is macro invocation");
+        assert_eq(invk.MacroId,"ast\\macro");
+        assert(SI.eq(invk.Interpretation,SI.m.func), "Should be function (macro). Actual $(boxed(invk))");
+    }
+    assert_ast();
+    
+    var invk = ast\invoke_macro("call\\macro", SI.m.cmd);
+    function assert_call\macro
+    {
+        assert(ast_is_MacroInvocation(invk),"$(boxed(invk)) is macro invocation");
+        assert_eq(invk.MacroId,"call\\macro");
+        assert(SI.eq(invk.Interpretation,SI.m.cmd), "Should be function (macro). Actual $(boxed(invk))");
+    }
+    
+    // infer interpretation from macro\id call
+    var invk = ast\invoke_macro(macro\id(ast));
+    assert_ast();
+    
+    var invk = ast\invoke_macro(macro\id(call\macro));
+    assert_call\macro();
+}
 
+macro test_ast_symbol[test]
+{
+    var file = call\macro([__FILE__]).Expression >> ast\read;
+    var line = call\macro([__LINE__]).Expression >> ast\read;
+    var col  = call\macro([__COL__ ]).Expression >> ast\read;
+
+    var c = ast\cmd("println");
+    assert(ast_is_GetSetSymbol(c),"$(boxed(c)) is expected to be a GetSetSymbol node");
+    assert(SI.eq(c.Call,SI.get), "$(boxed(c)) is expected to be a Get call");
+    assert(SI.eq(c.Interpretation,SI.cmd), "$(boxed(c)) is expected to be a command call");
+    assert_eq(c.Id,"println","Id doesn't match.");
+    assert_eq(c.File,file);
+    assert_eq(c.Line,line);
+    assert_eq(c.Column,col);
+    
+    var c = ast\func(SI.set, "someFunc");
+    assert(ast_is_GetSetSymbol(c),"$(boxed(c)) is expected to be a GetSetSymbol node");
+    assert(SI.eq(c.Call,SI.set), "$(boxed(c)) is expected to be a Set call");
+    assert(SI.eq(c.Interpretation,SI.func), "$(boxed(c)) is expected to be a function call");
+    assert_eq(c.Id,"someFunc","Id doesn't match.");
+    assert_eq(c.File,file);
+    assert_eq(c.Line,line);
+    assert_eq(c.Column,col);
+    
+    var c = ast\lvar("x");
+    assert(ast_is_GetSetSymbol(c),"$(boxed(c)) is expected to be a GetSetSymbol node");
+    assert(SI.eq(c.Call,SI.get), "$(boxed(c)) is expected to be a Get call");
+    assert(SI.eq(c.Interpretation,SI.lvar), "$(boxed(c)) is expected to be a local variable access");
+    assert_eq(c.Id,"x","Id doesn't match.");
+    assert_eq(c.File,file);
+    assert_eq(c.Line,line);
+    assert_eq(c.Column,col);
+    
+    var c = ast\lref(SI.set, "y");
+    assert(ast_is_GetSetSymbol(c),"$(boxed(c)) is expected to be a GetSetSymbol node");
+    assert(SI.eq(c.Call,SI.set), "$(boxed(c)) is expected to be a Set call");
+    assert(SI.eq(c.Interpretation,SI.lref), "$(boxed(c)) is expected to be local reference variable access.");
+    assert_eq(c.Id,"y","Id doesn't match.");
+    assert_eq(c.File,file);
+    assert_eq(c.Line,line);
+    assert_eq(c.Column,col);
+    
+    var c = ast\gvar(SI.get, "gx");
+    assert(ast_is_GetSetSymbol(c),"$(boxed(c)) is expected to be a GetSetSymbol node");
+    assert(SI.eq(c.Call,SI.get), "$(boxed(c)) is expected to be a Get call");
+    assert(SI.eq(c.Interpretation,SI.gvar), "$(boxed(c)) is expected to be a global variable access");
+    assert_eq(c.Id,"gx","Id doesn't match.");
+    assert_eq(c.File,file);
+    assert_eq(c.Line,line);
+    assert_eq(c.Column,col);
+    
+    var c = ast\gref("gy");
+    assert(ast_is_GetSetSymbol(c),"$(boxed(c)) is expected to be a GetSetSymbol node");
+    assert(SI.eq(c.Call,SI.get), "$(boxed(c)) is expected to be a Get call");
+    assert(SI.eq(c.Interpretation,SI.gref), "$(boxed(c)) is expected to be a global reference variable access.");
+    assert_eq(c.Id,"gy","Id doesn't match.");
+    assert_eq(c.File,file);
+    assert_eq(c.Line,line);
+    assert_eq(c.Column,col);
+}
+
+macro test_ast_member[test]
+{
+    var file = call\macro([__FILE__]).Expression >> ast\read;
+    var line = call\macro([__LINE__]).Expression >> ast\read;
+    var col  = call\macro([__COL__ ]).Expression >> ast\read;
+    function assert_position(n)
+    {
+        assert_eq(n.File, file, "Associated file name does not match.");
+        assert_eq(n.Line, line, "Associated line number does not match.");
+        assert_eq(n.Column, col, "Associated column number does not match.");
+    }
+    
+    var s = ast\lvar("x");
+    var c = ast\member(s);
+    assert(ast_is_GetSetMemberAccess(c),"$(boxed(c)) is expected to be a member access node.");
+    assert(ast_is_GetSetSymbol(c.Subject),"$(boxed(c)) has symbol access as subject");
+    assert_eq(c.Id,"","$(boxed(c)) id defaults to empty string.");
+    assert(SI.eq(c.Call,SI.get),"$(boxed(c)) call defaults to get"); 
+    
+    var c = ast\member(s, SI.get, "nope");
+    assert(ast_is_GetSetMemberAccess(c),"$(boxed(c)) is expected to be a member access node.");
+    assert(ast_is_GetSetSymbol(c.Subject),"$(boxed(c)) has symbol access as subject");
+    assert_eq(c.Id,"nope","$(boxed(c)) id doesn't match.");
+    assert(SI.eq(c.Call,SI.get),"$(boxed(c)) call doesn't match.");
+    
+    var c = ast\member(s, SI.set, "nope");
+    assert(ast_is_GetSetMemberAccess(c),"$(boxed(c)) is expected to be a member access node.");
+    assert(ast_is_GetSetSymbol(c.Subject),"$(boxed(c)) has symbol access as subject");
+    assert_eq(c.Id,"nope","$(boxed(c)) id doesn't match.");
+    assert(SI.eq(c.Call,SI.set),"$(boxed(c)) call doesn't match.");
+    
+    var c = ast\member(s, "nope");
+    assert(ast_is_GetSetMemberAccess(c),"$(boxed(c)) is expected to be a member access node.");
+    assert(ast_is_GetSetSymbol(c.Subject),"$(boxed(c)) has symbol access as subject");
+    assert_eq(c.Id,"nope","$(boxed(c)) id doesn't match");
+    assert(SI.eq(c.Call,SI.get),"$(boxed(c)) call doesn't match.");
+}
 
 
 
