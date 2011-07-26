@@ -1,4 +1,4 @@
- 
+﻿ 
 build does require(@"psr\macro.pxs");
 build does require(@"psr\test.pxs");
 build does require(@"psr\test\meta_macro.pxs");
@@ -183,7 +183,188 @@ function test_reports[test]
     assert_eq(ldr.Infos[0].Message,"INFOI");
 }
 
+function test_ast_is_expression[test]
+{
+    var constN = ast("Constant",3);
+    var condN = ast("Condition", constN);
+    
+    assert_eq(ast_is_expression(constN),true,"Constant node should be expression");
+    assert_eq(ast_is_expression(condN),false,"Condition node should not be expression");
+    
+    assert_eq(ast_is_expression(true),false,"$(boxed(true)) is not an expression");
+}
 
+function test_ast_is_effect[test]
+{
+    var isEffect = ast("GetSetSymbol", SI.get, ->test_ast_is_effect.Id, SI.func);
+    var notEffect = ast("CreateClosure",->test_ast_is_effect.Id);
+    
+    assert_eq(ast_is_effect(isEffect), true, "$(boxed(isEffect)) is an IAstEffect node.");
+    assert_eq(ast_is_effect(notEffect), false, "$(boxed(notEffect)) is not an IAstEffect node.");
+    
+    assert_eq(ast_is_effect(true),false,"$(boxed(true)) is not an IAstEffect node.");
+}
+
+function test_ast_is_partially_applicable[test]
+{
+    var pa = ast("GetSetSymbol", SI.get,  ->test_ast_is_partially_applicable.Id, SI.func);
+    var npa = ast("CreateClosure", ->test_ast_is_partially_applicable.Id);
+    
+    assert_eq(ast_is_partially_applicable(pa), true, "$(boxed(pa)) is partially applicable");
+    assert_eq(ast_is_partially_applicable(npa), false, "$(boxed(npa)) is not partially applicable");
+    
+    assert_eq(ast_is_partially_applicable(true), false, "$(boxed(true)) is not partially applicable");
+}
+
+function test_ast_is_partial_application[test]
+{
+    var pa = ast("GetSetSymbol", SI.get, ->test_ast_is_partial_application.Id, SI.func);
+    pa.Arguments.Add(ast("Null"));
+    
+    assert_eq(ast_is_partial_application(pa), false, "$(boxed(pa)) is not a partial application (no placeholders)");
+    
+    pa.Arguments.Add(ast("Placeholder"));
+    
+    assert_eq(ast_is_partial_application(pa),true, "$(boxed(pa)) is a partial application");
+    
+    assert_eq(ast_is_partial_application(true),false, "$(boxed(true)) is not a partial application");
+}
+
+function test_ast_is_CreateClosure[test]
+{
+    var cc = ast("CreateClosure", ->test_ast_is_CreateClosure.Id);
+    var ncc = ast("GetSetSymbol", SI.get, ->test_ast_is_CreateClosure.Id, SI.func);
+    
+    assert_eq(ast_is_CreateClosure(cc),true,"$(boxed(cc)) is a CreateClosure node");
+    assert_eq(ast_is_CreateClosure(ncc),false,"$(boxed(ncc)) is not a CreateClosure node");
+    assert_eq(ast_is_CreateClosure(true),false,"$(boxed(true)) is not a CreateClosure node");
+}
+
+function test_ast_is_node[test]
+{
+    var node = ast("Null");
+    var nonNode = new Structure;
+    var nonNode2 = new System::Object;
+    
+    assert_eq(ast_is_Node(node),true,"$(boxed(node)) is an AST node");
+    assert_eq(ast_is_Node(nonNode),false,"$(boxed(nonNode)) is not an AST node");
+    assert_eq(ast_is_node(nonNode2),false,"$(boxed(nonNode)) is not an AST node");
+}
+
+macro test_temp_51
+{
+    var t;
+    var ts = [];
+    
+    for(var i = 0; i < 51; i++)
+        ts[] = t = tempalloc;
+        
+    for(var i = 0; i < 50; i++)
+        tempfree(ts[i]);
+        
+    return ast("Constant",t);
+}
+
+function test_temp[test]
+{
+    var t1 = test_temp_51;
+    var t2 = test_temp_51;
+    
+    assert_neq(t1,t2,"Variable should be unique");
+    
+    assert_eq(->test_temp.Variables.Count,54,"Function should have 54 local variables.");
+}
+
+function test_mk_constant_expr(a,b) =
+        ast("BinaryOperator",
+            ast("Constant",a), Prexonite::Compiler::Ast::BinaryOperator.Addition,  ast("Constant", b), 
+            SI.cmd, ~Object<"Prexonite.OperatorNames+Prexonite">.Addition
+        );
+
+macro test_optimize[test]
+{
+    var a = 3;
+    var b = 5;
+    
+    function mk_test = test_mk_constant_expr(a,b);
+        
+    var t = mk_test();
+    
+    optimize(t);
+    
+    assert(ast_is_Constant(t),"Expect t=$(boxed(t)) to be a constant node.");
+    assert_eq(t.Constant,a+b,"$a + $b == $(a+b)");
+    
+    var myCtx = context;
+    var t2 = mk_test();
+    
+    optimize(myCtx,t2);
+    
+    assert(ast_is_Constant(t2),"Expect t2=$(boxed(t2)) to be a constant node.");
+    assert_eq(t2.Constant,a+b,"$a + $b == $(a+b)");
+    
+    var t3_i = null;
+    function t3(nt3) = t3_i = nt3 ?? t3_i ?? mk_test();
+    
+    optimize(t3);
+    
+    assert_eq(ast_is_Constant(t3),true,"Expect t3=$(boxed(t3)) to be a constant node.");
+    assert_eq(t3.Constant,a+b,"$a + $b == $(a+b)");
+}
+
+macro test_read[test]
+{
+    assert_eq(ast\read(null) is Null, true, "ast\\read(null) is null");
+    
+    var a = 3;
+    var b = 5;
+    
+    function mk_test = test_mk_constant_expr(a,b);
+    
+    var t1 = mk_test();
+    
+    var r1 = ast\read(t1);
+    assert_eq(r1, a+b, "Constant folding of r1 → $(boxed(t1)) expected.");
+    
+    var myCtx = context;
+    var r1 = ast\read(myCtx, t1);
+    assert_eq(r1, a+b, "Constant folding of r2 → $(boxed(t1)) expected.");
+    
+    function assert_listeq(xs,ys,msg)
+    {
+        if(ys is not List)
+            ys = ys >> all;
+            
+        assert_eq(xs is List, true, "$msg List value expected, encountered $(boxed(xs))");
+        assert_eq(var c = xs.Count,ys.Count,"$msg List length mismatch");
+        for(var i = 0; i < c; i++)
+            assert_eq(xs[i],ys[i], "$msg Lists differ at index $i");
+    }
+    
+    var listlit = ast("ListLiteral");
+    ([1,2,3] )>> each(ast("Constant",?) then listlit.Elements.Add(?));
+    assert_listeq(ast\read(listlit),[1,2,3],"List literal should be recognized.");
+    
+    function assert_kvpeq(x,y,msg)
+    {
+        assert_eq(x is Prexonite::Types::PValueKeyValuePair,true,"$msg Key value pair expected, encountered $(boxed(x))");
+        assert_eq(x.Key, y.Key, "$msg Keys should be equal");
+        assert_eq(x.Value, y.Value, "$msg Values should be equal");
+    }
+    
+    var kvp = ast("KeyValuePair", ast("Constant", a), ast("Constant", b));
+    assert_kvpeq(ast\read(kvp), a:b, "Key value pair should be recognized");
+    
+    var hashlit = ast("HashLiteral");
+    hashlit.Elements.Add(kvp);
+    hashlit.Elements.Add(ast("KeyValuePair", ast("Constant", b), ast("Constant", a)));
+    var rh = ast\read(hashlit);
+    assert_eq(rh.Count,2,"Hash table literal should contain two entries");
+    assert_kvpeq(rh[0],a:b,"Should contain a → b @ index 0");
+    assert_kvpeq(rh[1],b:a,"Should contain b → a @ index 1");
+    
+    
+}
 
 
 

@@ -154,8 +154,8 @@ function test\assert_eq as assert_eq(actual,expected,msg)
     msg ??= "";
     msg ~= String;
     assert(actual == expected, (if(msg.Length > 0) msg + "." else "") + "\n" +
-        "\tExpected: $(expected)\n" + 
-        "\t  Actual: $actual");
+        "\tExpected: $(boxed(expected))\n" + 
+        "\t  Actual: $(boxed(actual))");
 }
 
 function test\assert_neq as assert_neq(actual,expected, msg)
@@ -163,6 +163,6 @@ function test\assert_neq as assert_neq(actual,expected, msg)
     msg ??= "";
     msg ~= String;
     assert(actual != expected, (if(msg.Length > 0) msg + "." else "") + "\n" +
-        "\tUnexpected: $(expected)\n" + 
-        "\t    Actual: $actual");
+        "\tUnexpected: $(boxed(expected))\n" + 
+        "\t    Actual: $(boxed(actual))");
 }

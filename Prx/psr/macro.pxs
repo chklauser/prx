@@ -26,9 +26,17 @@ function establish_macro_context\impl as establish_macro_context(context) [is co
 
 /* ast\macro - Works like ast from psr\ast.pxs but automatically supplies file, line and column information 
     taken from the macro invocation. */
-macro ast\macro(type)
+macro ast\macro(type)[partial\macro]
 {   
     var macroInvocation = context.Invocation;
+    
+    if(SI.eq(context.Call,SI.set))
+    {
+        context.ReportMessage(Prexonite::Compiler::ParseMessageSeverity.Error,
+            "AST node construction has no side-effects. Ignoring the return value doesn't make sense.",
+            context.Invocation);
+        return false;
+    }
     
     var astCall = ast\withPos("GetSetSymbol",
         macroInvocation.File, macroInvocation.Line,macroInvocation.Column,
@@ -68,7 +76,8 @@ macro ast\macro(type)
     astCall.Arguments.AddRange([type,nodeFile, nodeLine, nodeColumn ]);
     astCall.Arguments.AddRange(var args >> skip(1));
     
-    return astCall;
+    context.Block.Expression = astCall;
+    return true;
 }
 
 declare ast\macro as ast;
@@ -337,8 +346,11 @@ macro optimize(contextRef, node)
 }
 
 //Safe "evaluation" of constant arguments
-function ast\read(context, expr) [is compiler;]
+function ast\read\impl(context, expr) [is compiler;]
 {
+    if(context is not Prexonite::Compiler::Macro::MacroContext)
+        throw "Context cannot be set for ast\\read.";
+    
     if(expr is Null)
         return null;
         
@@ -362,6 +374,38 @@ function ast\read(context, expr) [is compiler;]
     }
     
     return convert(expr);
+}
+
+macro ast\read\macro as ast\read(contextRef, expr)[\sps;partial\macro]
+{
+    if(expr is null)
+    {
+        expr = contextRef;
+        contextRef = null;
+    }
+    
+    if(expr is null)
+    {
+        macro\report_error("ast\\read requires a constant expression to read.");
+        return false;
+    }
+
+    if(contextRef is null and not is_in_macro)
+    {
+        macro\report_error("ast\\read must either be used as part of another macro or be provided a macro context (as its first argument).");
+        return false;
+    }
+    
+    if(contextRef is null)
+    {
+        establish_macro_context;
+        contextRef = ast("GetSetSymbol", SI.get, Prexonite::Compiler::MacroAliases.ContextAlias, SI.lref);
+    }
+    
+    var fcall = context.Block.Expression = ast("GetSetSymbol", context.Call, ->ast\read\impl.Id, SI.func); 
+    fcall.Arguments.Add(contextRef);
+    fcall.Arguments.Add(expr);
+    return true;
 }
 
 function macro\_extract_id(prototype)[is compiler;]
