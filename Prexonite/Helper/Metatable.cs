@@ -216,9 +216,19 @@ namespace Prexonite
                 if (entry.EntryType == MetaEntry.Type.Switch)
                 {
                     if (kvp.Key.EndsWith("ation"))
-                        writer.Write("{0} {1};", StringPType.ToIdLiteral(kvp.Key), entry.Switch ? "enabled" : "disabled");
-                    else
-                        writer.Write("is {1} {0};", StringPType.ToIdLiteral(kvp.Key), entry.Switch ? "" : "not");
+                    {
+                        writer.Write("{0} {1};", StringPType.ToIdLiteral(kvp.Key),
+                            entry.Switch ? "enabled" : "disabled");
+                    }
+                    else 
+                    {
+                        if (!entry.Switch)
+                        {
+                            writer.Write("is not ");   
+                        }
+                        writer.Write(StringPType.ToIdLiteral(kvp.Key));
+                        writer.Write(";");
+                    }
                 }
                 else
                 {
