@@ -14,3 +14,4 @@ Prexonite/Scanner.cs
 *.csproj.user
 *.vsp
 *.psess
+PrexoniteTests/psr-tests/run_tests.c.pxs

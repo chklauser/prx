@@ -26,8 +26,14 @@ function main
     if(var args >> exists(?.Contains("cil")))
     {
         print("Compiling to CIL...");
+        timer\start;
         CompileToCil;
-        println("done.");
+        timer\stop;
+        println("done.\n\t",timer\elapsed,"ms");
+        timer\reset;
     }
+    timer\start;
     run_tests;
+    timer\stop;
+    println("\tTotal: ",timer\elapsed,"ms");
 }
