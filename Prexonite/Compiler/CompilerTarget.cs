@@ -1,4 +1,4 @@
-// /*
+﻿// /*
 //  * Prexonite, a scripting engine (Scripting Language -> Bytecode -> Virtual Machine)
 //  *  Copyright (C) 2007  Christian "SealedSun" Klauser
 //  *  E-mail  sealedsun a.t gmail d.ot com
@@ -271,7 +271,9 @@ namespace Prexonite.Compiler
             if (_freeTemporaryVariables.Count == 0)
             {
                 //Allocate temporary variable
-                var tempName = Engine.GenerateName("tmp" + _usedTemporaryVariables.Count);
+                var tempName = "tmpπ" + _usedTemporaryVariables.Count;
+                while (_function.Variables.Contains(tempName))
+                    tempName = tempName + "'";
                 _function.Variables.Add(tempName);
                 _freeTemporaryVariables.Push(tempName);
             }

@@ -30,6 +30,8 @@ macro ast\macro(type)[partial\macro]
 {   
     var macroInvocation = context.Invocation;
     
+    ref ast = ast\withPos(?,macroInvocation.File, macroInvocation.Line,macroInvocation.Column,?);
+    
     if(SI.eq(context.Call,SI.set))
     {
         context.ReportMessage(Prexonite::Compiler::ParseMessageSeverity.Error,
@@ -38,45 +40,49 @@ macro ast\macro(type)[partial\macro]
         return false;
     }
     
-    var astCall = ast\withPos("GetSetSymbol",
-        macroInvocation.File, macroInvocation.Line,macroInvocation.Column,
-        SI.get, ->ast\withPos.Id, SI.func);
+    var astCall = ast("GetSetSymbol", SI.get, ->ast\withPos.Id, SI.func);
     
     var nodeFile;
     var nodeLine;
     var nodeColumn;
     
+    var invkV = null;
+    
     if(is_in_macro(context))
     {
         establish_macro_context(context);
         
-        var getContext = ast\withPos("GetSetSymbol",
-            macroInvocation.File, macroInvocation.Line,macroInvocation.Column ,
+        var getContext = ast("GetSetSymbol",
             SI.get,Prexonite::Compiler::MacroAliases.ContextAlias,SI.lref);
         
-        var getInv = ast\withPos("GetSetMemberAccess",
-            macroInvocation.File, macroInvocation.Line,macroInvocation.Column ,SI.get,getContext,"Invocation");
-        nodeFile = ast\withPos("GetSetMemberAccess",
-            macroInvocation.File, macroInvocation.Line,macroInvocation.Column, SI.get, getInv, "File");
-        nodeLine = ast\withPos("GetSetMemberAccess",
-            macroInvocation.File, macroInvocation.Line,macroInvocation.Column, SI.get, getInv, "Line");
-        nodeColumn = ast\withPos("GetSetMemberAccess",
-            macroInvocation.File, macroInvocation.Line,macroInvocation.Column, SI.get, getInv, "Column");
+        var getInvComp = ast("GetSetMemberAccess",SI.get,getContext,"Invocation");
+            
+        var invkV = context.AllocateTemporaryVariable();
+        var storeInvk = ast("GetSetSymbol",
+            SI.set, invkV, SI.lvar);
+        storeInvk.Arguments.Add(getInvComp);
+        
+        var getInv = ast("GetSetSymbol",SI.get,invkV,SI.lvar);
+            
+        nodeFile = ast("GetSetMemberAccess", SI.get, storeInvk, "File");
+        nodeLine = ast("GetSetMemberAccess", SI.get, getInv, "Line");
+        nodeColumn = ast("GetSetMemberAccess", SI.get, getInv, "Column");
     }
     else 
     {
-        nodeFile = ast\withPos("Constant",
-            macroInvocation.File, macroInvocation.Line,macroInvocation.Column,macroInvocation.File);
-        nodeLine = ast\withPos("Constant",
-            macroInvocation.File, macroInvocation.Line,macroInvocation.Column,macroInvocation.Line);
-        nodeColumn = ast\withPos("Constant",
-            macroInvocation.File, macroInvocation.Line,macroInvocation.Column,macroInvocation.Column);
+        nodeFile = ast("Constant",macroInvocation.File);
+        nodeLine = ast("Constant",macroInvocation.Line);
+        nodeColumn = ast("Constant",macroInvocation.Column);
     }
     
     astCall.Arguments.AddRange([type,nodeFile, nodeLine, nodeColumn ]);
     astCall.Arguments.AddRange(var args >> skip(1));
     
     context.Block.Expression = astCall;
+    
+    if(invkV is not null)
+        context.FreeTemporaryVariable(invkV);
+    
     return true;
 }
 
