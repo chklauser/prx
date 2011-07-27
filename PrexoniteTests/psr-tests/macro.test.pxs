@@ -518,17 +518,7 @@ macro test_ast_symbol[test]
 }
 
 macro test_ast_member[test]
-{
-    var file = call\macro([__FILE__]).Expression >> ast\read;
-    var line = call\macro([__LINE__]).Expression >> ast\read;
-    var col  = call\macro([__COL__ ]).Expression >> ast\read;
-    function assert_position(n)
-    {
-        assert_eq(n.File, file, "Associated file name does not match.");
-        assert_eq(n.Line, line, "Associated line number does not match.");
-        assert_eq(n.Column, col, "Associated column number does not match.");
-    }
-    
+{    
     var s = ast\lvar("x");
     var c = ast\member(s);
     assert(ast_is_GetSetMemberAccess(c),"$(boxed(c)) is expected to be a member access node.");
@@ -553,6 +543,96 @@ macro test_ast_member[test]
     assert(ast_is_GetSetSymbol(c.Subject),"$(boxed(c)) has symbol access as subject");
     assert_eq(c.Id,"nope","$(boxed(c)) id doesn't match");
     assert(SI.eq(c.Call,SI.get),"$(boxed(c)) call doesn't match.");
+}
+
+macro test_ast_const[test]
+{    
+    //null, test with both null literal and null value
+    //  because ast\const is implemented as a macro that handles the null literal directly
+    var n = ast\const(null);
+    assert(ast_is_Null(n),"$(boxed(n)) is expected to be a Null node");
+    
+    var _null = null;
+    var n = ast\const(_null);
+    assert(ast_is_Null(n),"$(boxed(n)) is expected to be a Null node");
+    
+    //constant integer
+    var a = 3;
+    var n = ast\const(a);
+    assert(ast_is_Constant(n),"$(boxed(n)) is expected to be a Constant node");
+    assert_eq(n.Constant,a,"Constant doesn't match");
+    
+    //again also test for constant literal
+    var n = ast\const(3);
+    assert(ast_is_Constant(n),"$(boxed(n)) is expected to be a Constant node");
+    assert_eq(n.Constant,a,"Constant doesn't match");
+    
+    //constant string
+    var a = "a";
+    var n = ast\const(a);
+    assert(ast_is_Constant(n),"$(boxed(n)) is expected to be a Constant node");
+    assert_eq(n.Constant,a,"Constant doesn't match");
+    
+    var n = ast\const("a");
+    assert(ast_is_Constant(n),"$(boxed(n)) is expected to be a Constant node");
+    assert_eq(n.Constant,a,"Constant doesn't match");
+    
+    //constant boolean
+    var a = true;
+    var n = ast\const(a);
+    assert(ast_is_Constant(n),"$(boxed(n)) is expected to be a Constant node");
+    assert_eq(n.Constant,a,"Constant doesn't match");
+    
+    var n = ast\const(true);
+    assert(ast_is_Constant(n),"$(boxed(n)) is expected to be a Constant node");
+    assert_eq(n.Constant,a,"Constant doesn't match");
+    
+    //constant real
+    var a = 1.4;
+    var n = ast\const(a);
+    assert(ast_is_Constant(n),"$(boxed(n)) is expected to be a Constant node");
+    assert_eq(n.Constant,a,"Constant doesn't match");
+    
+    var n = ast\const(1.4);
+    assert(ast_is_Constant(n),"$(boxed(n)) is expected to be a Constant node");
+    assert_eq(n.Constant,a,"Constant doesn't match");
+    
+    //key value pair
+    var a = 3:5;
+    var n = ast\const(a);
+    assert(ast_is_KeyValuePair(n),"$(boxed(n)) is expected to be a KeyValuePair node");
+    assert(ast_is_Constant(n.Key),"Key of $(boxed(n)) is expected to be a Constant node");
+    assert_eq(n.Key.Constant,a.Key,"Key of $(boxed(n)) doesn't match.");
+    assert(ast_is_Constant(n.Value),"Value of $(boxed(n)) is expected to be a Constant node");
+    assert_eq(n.Value.Constant, a.Value, "Value of $(boxed(n)) doesn't match.");
+    
+    var n = ast\const(a = 3:("a":true));
+    assert(ast_is_KeyValuePair(n),"$(boxed(n)) is expected to be a KeyValuePair node");
+    assert(ast_is_Constant(n.Key),"Key of $(boxed(n)) is expected to be a Constant node");
+    assert_eq(n.Key.Constant,a.Key,"Key of $(boxed(n)) doesn't match.");
+    assert(ast_is_KeyValuePair(var nv = n.Value),"Value of $(boxed(n)) is expected to be a KeyValuePair node");
+    assert(ast_is_KeyValuePair(nv),"$(boxed(nv)) is expected to be a KeyValuePair node");
+    assert(ast_is_Constant(nv.Key),"Key of $(boxed(nv)) is expected to be a Constant node");
+    assert_eq(nv.Key.Constant,a.Value.Key,"Key of $(boxed(nv)) doesn't match.");
+    assert(ast_is_Constant(nv.Value),"Value of $(boxed(nv)) is expected to be a Constant node");
+    assert_eq(nv.Value.Constant, a.Value.Value, "Value of $(boxed(nv)) doesn't match.");
+    
+    //list
+    var a = [1,2:3,4];
+    var n = ast\const(a);
+    assert(ast_is_ListLiteral(n),"$(boxed(n)) is expected to be a ListLiteral node");
+    var ns = n.Elements;
+    assert_eq(ns.Count,3,"List element count mismatch");    
+    assert(ast_is_Constant(ns[0]), "$(boxed(ns[0])) is expected to be a Constant node");
+    assert_eq(ns[0].Constant,1,"Value of element at index 0");
+    assert(ast_is_Constant(ns[2]), "$(boxed(ns[2])) is expected to be a Constant node");
+    assert_eq(ns[2].Constant,4,"Value of element at index 2");
+    
+    assert(ast_is_KeyValuePair(var kvp = ns[1]),"$(boxed(ns[1])) is expected to be a KeyValuePair node");
+    assert(ast_is_Constant(kvp.Key),"Key of $(boxed(kvp)) is expected to be a Constant node");
+    assert_eq(kvp.Key.Constant,2,"Key of $(boxed(kvp)) constant mismatch");
+    assert(ast_is_Constant(kvp.Value),"Value of $(boxed(kvp)) is expected to be a Constant node");
+    assert_eq(kvp.Value.Constant,3,"Value of $(boxed(kvp)) constant mismatch");
 }
 
 

@@ -113,5 +113,12 @@ namespace Prexonite.Compiler.Ast
         }
 
         #endregion
+
+        public override string ToString()
+        {
+            var key = Key == null ? "-null-" : Key.ToString();
+            var value = Value == null ? "-null-" : Value.ToString();
+            return String.Format("Key = ({0}): Value = ({1})", key, value);
+        }
     }
 }

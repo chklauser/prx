@@ -648,25 +648,25 @@ macro ast\const(value)
     if(is_in_macro)
         establish_macro_context;
  
-    if(value is ::AstNull)
+    if(ast_is_Null(value) or (ast_is_Constant(value) and value.Constant is null))
     {
         var c = ast\invoke_macro(macro\id(ast\macro));
         c.Arguments.Add(ast("Constant","Null"));
         return c;
     }
-    else if(value is ::AstConstant)
+    else if(ast_is_Constant(value))
     {
         var c = ast\invoke_macro(macro\id(ast\macro));
         c.Arguments.Add(ast("Constant","Constant"));
         c.Arguments.Add(value);
         return c;
     }
-    else if(value is ::AstKeyValuePair)
+    else if(ast_is_KeyValuePair(value))
     {
         var kvp = ast\invoke_macro(macro\id(ast\macro));
         kvp.Arguments.Add(ast("Constant","KeyValuePair"));
-        kvp.Arguments.Add(value.Key);
-        kvp.Arguments.Add(value.Value);
+        kvp.Arguments.Add(call\macro([ast\const(value.Key)]));
+        kvp.Arguments.Add(call\macro([ast\const(value.Value)]));
         return kvp;
     }
     else
