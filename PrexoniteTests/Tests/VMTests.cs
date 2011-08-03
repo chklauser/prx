@@ -1361,17 +1361,15 @@ var z = 20;
         [Test]
         public void ArgsFallback()
         {
-            Compile(@"
+            CompileInvalid(@"
 function main(args)
 {
-    foreach(var arg in var \args)
+    foreach(var arg in var args)
         args += arg;
 
     return args;
 }
-");
-            //note that the first argument gets added twice!
-            Expect("22abcdef","2", "a","b","c","d","e","f");
+","main",PFunction.ArgumentListId,"0","local");
         }
 
         [Test]

@@ -62,20 +62,13 @@ namespace Prexonite.Compiler.Cil
         private string _effectiveArgumentsListId;
 
         /// <summary>
-        /// The name of the arguments list variable. This will be <code>args</code> most of the time
-        /// but there are fallback rules for the case that there is already a parameter called <code>args</code>.
+        /// The name of the arguments list variable.
         /// </summary>
         public string EffectiveArgumentsListId
         {
-            get
-            {
-                if(_effectiveArgumentsListId == null)
-                {
-                    _effectiveArgumentsListId = PFunction.ArgumentListId;
-                    while (Source.Parameters.Contains(_effectiveArgumentsListId))
-                        _effectiveArgumentsListId = @"\" + _effectiveArgumentsListId;
-                }
-                return _effectiveArgumentsListId;
+            get {
+                return _effectiveArgumentsListId ??
+                    (_effectiveArgumentsListId = PFunction.ArgumentListId);
             }
         }
 

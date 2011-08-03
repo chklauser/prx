@@ -127,9 +127,6 @@ namespace Prexonite
         {
             //Create args variable
             var argVId = PFunction.ArgumentListId;
-            //Make sure the variable does not override any parameter or existing variable
-            while (_implementation.Parameters.Contains(argVId))
-                argVId = "\\" + argVId;
 
             if (_implementation.Variables.Contains(argVId))
             {
