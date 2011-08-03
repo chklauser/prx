@@ -45,11 +45,11 @@ function printHead does println("** PREXONITE v" + asm(ldr.app).Meta["Version"].
 
 var originalArgs;
 
-function prx\main(args)
+function prx\main(arguments)
 {
-    originalArgs = args;
+    originalArgs = arguments;
     
-	if(args == null or args.Length == 0)
+	if(arguments == null or arguments.Length == 0)
 	{
     	printHead;
 		println("NO ARGUMENTS DETECTED.");
@@ -76,7 +76,7 @@ function prx\main(args)
 	var scriptArgs = [];
 	
 	//Interpret arguments one by one
-	foreach(var current in args)
+	foreach(var current in arguments)
 	{
 		if(current == null or current.Length == 0)
 			continue;
