@@ -1,0 +1,41 @@
+﻿ 
+build does require(@"psr\struct.pxs");
+build does require(@"psr\test.pxs");
+
+function extract_symtab(obj)
+{
+    return boxed(obj).Value;
+}
+
+function test_struct[test]
+{
+    function create_test_obj(x)
+    {
+        function m(this,y) = x + y;
+        function m'(this,y) = this.m(y*x);
+        
+        function p(y)[private] = 2*x + 3*y;
+        function m''(this,y) = p(y);
+        
+        if(x >= 0)
+            function m3 = x;
+        else
+            function m3 = -x;
+        
+        return struct;
+    }
+    
+    var a = 11;
+    var b = 13;
+    var o1 = new test_obj(a);
+    assert(o1 is not null,"Struct doesn't return null.");
+    assert_eq(o1.\ctorId,->create_test_obj.Id,"\\ctorId doesn't match.");
+    assert_eq(o1.m(b),a+b,"Member m");
+    assert_eq(o1.m'(b),a + (b*a),"Member m'");
+    assert_eq(o1.m''(b),2*a + 3*b,"Member m''");
+    assert_eq(extract_symtab(o1).ContainsKey("p"),false,"There should not be a member p.");
+    assert_eq(o1.m3,a);
+    
+    var o2 = new test_obj(-a);
+    assert_eq(o1.m3,a);
+}

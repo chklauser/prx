@@ -695,7 +695,7 @@ macro ast\ret\generic_proc(expr, kind)
     mkRetNode.Arguments.Add(ast\member(getSI, SI.get, "ret\\$kind"));
     if(expr is Null)
     {
-        if(kind.ToLower == "set")
+        if(kind.ToLowerInvariant == "set")
             throw "Set return requires an expression.";
         return mkRetNode;
     }
@@ -816,8 +816,12 @@ macro ast\eval(loaderRef, expr)
 //Abbreviation for ast nodes with arguments
 macro ast\with_arguments as ast\args (astN)
 {
-    if(is_in_macro)
-        establish_macro_context;
+    var args;
+    if(args.Count < 1)
+        macro\report_error("ast\\with_arguments requires at least one argument, the node to add arguments to.");
+    
+    if(args.Count == 1)
+        return astN;
 
     var block = ast("BlockExpression");
     var astV = tempalloc;
@@ -826,7 +830,7 @@ macro ast\with_arguments as ast\args (astN)
     assignAst.Arguments.Add(astN);
     block.Add(assignAst);
     
-    var args;
+    
     if(args.Count > 1)
     {
         if(args.Count > 2)

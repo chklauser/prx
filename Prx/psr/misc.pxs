@@ -95,8 +95,7 @@ macro swap(x,y)
     
     var tempV = tempalloc;
     
-    var assignTemp = ast\lvar(SI.Set, tempV);
-    assignTemp.Call = SI.set;  
+    var assignTemp = ast\lvar(SI.Set, tempV); 
     
     var assignY = y.GetCopy;
     assignY.Call = SI.set;

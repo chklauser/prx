@@ -635,34 +635,81 @@ macro test_ast_const[test]
     assert_eq(kvp.Value.Constant,3,"Value of $(boxed(kvp)) constant mismatch");
 }
 
+macro test_ast_ret[test]
+{   
+    assert_eq(macro\reference(ast\ret\val),macro\reference(ast\ret));
+    assert_eq(macro\reference(ast\ret\continue),macro\reference(ast\yield));
+    
+    var a = ast\const(3);
+    var n = ast\ret(a);
+    assert(ast_is_Return(n),"$(boxed(n)) is expected to be a Return node");
+    assert(SI.eq(n.ReturnVariant,Prexonite::Compiler::Ast::ReturnVariant.Exit),"ast\\ret should use ReturnVariant.Exit. Actual $(boxed(n))");
+    assert_eq(n.Expression,a,"Expression of ast\\ret doesn't match.");
+    
+    var n = ast\yield;
+    assert(ast_is_Return(n),"$(boxed(n)) is expected to be a Return node");
+    assert(SI.eq(n.ReturnVariant,Prexonite::Compiler::Ast::ReturnVariant.Continue),"ast\\ret\\continue should use ReturnVariant.Continue. Actual $(boxed(n))");
+    assert(n.Expression is null,"Expression of ast\\ret\\continue isn't null.");
+    
+    var n = ast\ret\break;
+    assert(ast_is_Return(n),"$(boxed(n)) is expected to be a Return node");
+    assert(SI.eq(n.ReturnVariant,Prexonite::Compiler::Ast::ReturnVariant.Break),"ast\\ret\\break should use ReturnVariant.Break. Actual $(boxed(n))");
+    assert(n.Expression is null,"Expression of ast\\ret\\break isn't null.");
+    
+    var n = ast\ret\set(a);
+    assert(ast_is_Return(n),"$(boxed(n)) is expected to be a Return node");
+    assert(SI.eq(n.ReturnVariant, Prexonite::Compiler::Ast::ReturnVariant.Set),"ast\\ret\\set should use ReturnVariant.Set. Actual $(boxed(n))");
+    assert_eq(n.Expression,a,"Expression of ast\\ret\\set doesn't match.");
+}
 
+macro test_ast\with_arguments[test]
+{
+    var funcId = "someFunc";
+    function mkNode
+    {
+        var n = ast\func(funcId);
+        n.Arguments.Add(ast\const(3));
+        return n;
+    }
+    
+    var n = ast\with_arguments(var a = mkNode);
+    assert_eq(n,a,"Reference remains the same. #1");
+    assert_eq(n.Arguments.Count,1,"No additional arguments added.");
+    assert(ast_is_Constant(n.Arguments[0]),"First argument should be constant. #1");
+    assert_eq(n.Arguments[0].Constant,3,"First constant doesn't match. #1");
+    
+    var n = ast\with_arguments(var a = mkNode, ast\const(5));
+    assert_eq(n,a,"Reference remains the same. #2");
+    assert_eq(n.Arguments.Count,2,"One new argument added");
+    assert(ast_is_Constant(n.Arguments[0]),"First argument should be constant. #2");
+    assert_eq(n.Arguments[0].Constant,3,"First constant doesn't match. #2");
+    assert(ast_is_Constant(n.Arguments[1]),"Second argument should be constant. #2");
+    assert_eq(n.Arguments[1].Constant,5,"Second constant doesn't match. #2");
+    
+    var n = ast\with_arguments(var a = mkNode, ast\const(5), ast\with_arguments(ast\func(SI.set, funcId),ast\const(7)));
+    assert_eq(n,a,"Reference remains the same. #3");
+    assert_eq(n.Arguments.Count,3,"Two new argument added");
+    assert(ast_is_Constant(n.Arguments[0]),"First argument should be constant. #3");
+    assert_eq(n.Arguments[0].Constant,3,"First constant doesn't match. #3");
+    assert(ast_is_Constant(n.Arguments[1]),"Second argument should be constant. #3");
+    assert_eq(n.Arguments[1].Constant,5,"Second constant doesn't match. #3");
+    var n' = n.Arguments[2];
+    assert(ast_is_GetSetSymbol(n'),"Third argument should be symbol access");
+    assert_eq(n'.Id,funcId,"Function id in third argument");
+    assert(SI.eq(n'.Interpretation,SI.func),"Interpretation should be function, is $(boxed(n'))");
+    assert_eq(n'.Arguments.Count,1,"Third argument should have one argument of its own.");
+    assert(ast_is_Constant(n'.Arguments[0]),"Argument of third argument should be a Constant node.");
+    assert_eq(n'.Arguments[0].Constant,7,"Constant in argument of third argument doesn't match.");
+}
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
+macro test_ast\new[test]
+{
+    var typeExpr = "Object(\"System.Object\")";
+    
+    var n = ast\new(typeExpr);
+    
+    assert(ast_is_ObjectCreation(n),"$(boxed(n)) is expected to be an ObjectCreation node");
+    assert(ast_is_ConstantTypeExpression(n.TypeExpr),"$(boxed(n.TypeExpr)) is expected to be a ConstantTypeExpression node");
+    assert_eq(n.TypeExpr.TypeExpression,typeExpr,"The type expression doesn't match.");
+    assert_eq(n.Arguments.Count,0,"Argument count doesn't match.");
+}

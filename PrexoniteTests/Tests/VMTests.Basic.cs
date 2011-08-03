@@ -1455,5 +1455,34 @@ function main(lst)
             Expect("f4::" + av + "::s7", PType.List.CreatePValue(lst));
         }
 
+        [Test]
+        public void NoReturnTransformationInInit()
+        {
+            Compile(@"
+var x = 3;
+
+function f
+{
+    x = 4;
+}
+
+{
+    x = 5;
+    f();
+}
+
+{
+    x = 6;
+}
+
+function main()
+{
+    return x;
+}
+");
+
+            Expect(6);
+        }
+
     }
 }
