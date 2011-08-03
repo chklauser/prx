@@ -18,6 +18,8 @@
         @"macro.test.pxs",
         @"psr\struct.pxs",
         @"struct.test.pxs",
+        @"psr\prop.pxs",
+        @"prop.test.pxs",
     ]) >> each(req_ex(?));
     
     (asm(ldr.app)).Functions.Remove(->req_ex);

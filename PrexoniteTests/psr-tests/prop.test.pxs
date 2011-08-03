@@ -1,0 +1,15 @@
+﻿ 
+build does require(@"psr\struct.pxs");
+build does require(@"psr\test.pxs");
+
+function test_prop_simple[test]
+{
+    function p = prop;
+    
+    assert(p is null,"Property p should be initialized to null.");
+    var a = 13;
+    p(a);
+    assert_eq(p,a,"Assignment to p failed.");
+    p(null);
+    assert(p is null,"Cannot assign null");
+}

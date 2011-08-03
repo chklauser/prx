@@ -1,6 +1,7 @@
 using System;
 using Prexonite.Compiler.Ast;
 using Prexonite.Types;
+using Prexonite.Compiler.Macro;
 
 namespace Prexonite.Compiler
 {
@@ -136,16 +137,27 @@ namespace Prexonite.Compiler
                 }
 
                 //Create get or set check
+                var nullCheck = new AstTypecheck(
+                    stmt.File,
+                    stmt.Line,
+                    stmt.Column,
+                    prop_arg,
+                    new AstConstantTypeExpression(stmt.File, stmt.Line, stmt.Column, NullPType.Literal));
+                var getArgs = new AstGetSetSymbol(stmt.File, stmt.Line, stmt.Column,
+                    PFunction.ArgumentListId, SymbolInterpretations.LocalObjectVariable);
+                if(!target.Function.Variables.Contains(PFunction.ArgumentListId))
+                    target.Function.Variables.Add(PFunction.ArgumentListId);
+                var getArgc = new AstGetSetMemberAccess(stmt.File, stmt.Line, stmt.Column, getArgs,
+                    "Count");
+                var cmpEqZero = new AstBinaryOperator(stmt.File, stmt.Line, stmt.Column, getArgc,
+                    BinaryOperator.Equality, new AstConstant(stmt.File, stmt.Line, stmt.Column, 0),
+                    SymbolInterpretations.Command, OperatorNames.Prexonite.Equality);
+                var conj = new AstLogicalAnd(stmt.File, stmt.Line, stmt.Column, nullCheck, cmpEqZero);
                 var check = new AstConditionalExpression(
                     stmt.File,
                     stmt.Line,
                     stmt.Column,
-                    new AstTypecheck(
-                        stmt.File,
-                        stmt.Line,
-                        stmt.Column,
-                        prop_arg,
-                        new AstConstantTypeExpression(stmt.File, stmt.Line, stmt.Column, NullPType.Literal)));
+                    conj);
                 prop_set.Arguments.Add(prop_arg);
 
                 check.IfExpression = prop_get;
