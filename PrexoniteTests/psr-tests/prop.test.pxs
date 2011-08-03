@@ -1,4 +1,4 @@
-﻿ 
+ 
 build does require(@"psr\struct.pxs");
 build does require(@"psr\test.pxs");
 
@@ -37,10 +37,56 @@ function test_prop_proxy[test]
     
     assert(p is null,"Property p should be initialized to null.");
     var a  = 13;
-    p(13);
+    p(a);
     assert_eq(p,"True13");
     assert_eq(p,"False");
     p(null);
     assert_eq(p,"True");
     assert_eq(p,"False");
+}
+
+function test_prop_complex[test]
+{
+    var assert_flag = null;
+    var a = 11;
+    function p = prop(() => 
+        {
+            if(assert_flag is null) 
+            {
+                return null; 
+            }
+            else 
+            {
+                assert(assert_flag,"Unexpected call to getter");
+                assert_flag = false;
+                return a;
+            }
+        },
+        value => 
+        {
+            assert(not assert_flag~Bool,"Unexpected call to setter with $(boxed(value))");
+            assert_eq(value,a,"Unexpected value");
+            assert_flag = true;                
+        });
+        
+    assert(p is null,"Property p should be initialized to null");
+    p(a);
+    assert_eq(p,a);
+    a += 2;
+    p = a;
+    assert_eq(p,a);
+}
+
+function test_prop_glob = prop;
+
+function test_prop_simple_glob[test]
+{
+    declare test_prop_glob as p;
+    
+    assert(p is null,"Property p should be initialized to null.");
+    var a = 13;
+    p(a);
+    assert_eq(p,a,"Assignment to p failed.");
+    p(null);
+    assert(p is null,"Cannot assign null");
 }
