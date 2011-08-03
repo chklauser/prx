@@ -13,3 +13,34 @@ function test_prop_simple[test]
     p(null);
     assert(p is null,"Cannot assign null");
 }
+
+var test_prop_capset\store;
+
+function test_prop_capset\impl(isset,x)
+{
+    var old = test_prop_capset\store;
+    test_prop_capset\store = isset.ToString + x;
+    return old;
+}
+
+macro test_prop_capset
+{
+    var fc = ast\func(context.Call, ->test_prop_capset\impl.Id);
+    fc.Arguments.Add(ast\const(SI.eq(context.Call,SI.set)));
+    fc.Arguments.AddRange(var args);
+    context.Block.Expression = fc;
+}
+
+function test_prop_proxy[test]
+{
+    function p = prop(test_prop_capset);
+    
+    assert(p is null,"Property p should be initialized to null.");
+    var a  = 13;
+    p(13);
+    assert_eq(p,"True13");
+    assert_eq(p,"False");
+    p(null);
+    assert_eq(p,"True");
+    assert_eq(p,"False");
+}
