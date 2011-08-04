@@ -1,0 +1,256 @@
+ 
+build does require(@"psr\misc.pxs");
+build does require(@"psr\test.pxs");
+
+function test_cmp[test]
+{
+    var a = 11;
+    var b = 13;
+    
+    assert_eq(cmp(a,b),1);
+    assert_eq(cmp(b,a),-1);
+    assert_eq(cmp(a,a),0);
+    assert_eq(cmp(a,11),0);
+}
+
+function test_cmp_values[test]
+{
+    var a = 11;
+    var b = 13;
+    var a' = 11;
+    var x = 3;
+    
+    assert_eq(cmp_values(x:a,x:b),1);
+    assert_eq(cmp_values(b:a,a:b),1);
+    assert_eq(cmp_values(a:b,b:a),-1);
+    assert_eq(cmp_values(a:a,b:a'),0);
+    
+    assert_eq(cmp_values(x:a,x:b,(p,q) => {
+        assert_eq(p,a);
+        assert_eq(q,b);
+        return cmp(p,q);
+    }),1);
+}
+
+function test_cmp_keys[test]
+{
+    var a = 11;
+    var b = 13;
+    var a' = 11;
+    var x = 3;
+    
+    assert_eq(cmp_keys(a:x,b:x),1, "cmp_keys($a:$x, $b:$x)");
+    assert_eq(cmp_keys(a:b,b:a),1, "cmp_keys($a:$b, $b:$a)");
+    assert_eq(cmp_keys(b:a,a:b),-1);
+    assert_eq(cmp_keys(a:a,a':b),0);
+    
+    assert_eq(cmp_keys(a:x,b:x,(p,q) => {
+        assert_eq(p,a);
+        assert_eq(q,b);
+        return cmp(p,q);
+    }),1);
+}
+
+function test_cmp_with[test]
+{
+    var a = 11;
+    var b = 13;
+    var a' = 11;
+    var x = 3;
+    
+    assert_eq(cmp_with(-?).(a,b),-cmp(a,b));
+    assert_eq(cmp_with(-?).(a,a'),-cmp(a,a'));
+    assert_eq(cmp_with(-?).(b,a),-cmp(b,a));
+    
+    assert_eq(cmp_with(x => "m" + x,(p,q) =>{
+        assert(p.StartsWith("m"));
+        assert(p.StartsWith("m"));
+        return cmp(p,q);
+    }).("a","b"),cmp("a","b"));
+}
+
+function test_cmp_then[test]
+{
+    ref mycmp = cmp_then((p,q) => cmp(p.Key+p.Value,q.Key+q.Value),cmp_keys(?,?),cmp_values(?,?),(p,q) =>
+    {
+        assert_eq(cmp(p.Key,q.Key),0);
+        assert_eq(cmp(p.Value,q.Value),0);
+        return 0;
+    });
+    var a = 13;
+    var b = 11;
+    var x = 3;
+    assert_eq(mycmp(a:b,a:b),0);
+    assert_eq(mycmp(a:b,b:a),cmp(a,b));
+    assert_eq(mycmp(b:a,a:b),cmp(b,a));
+    assert_eq(mycmp(a:x,a:b),cmp(x,b));
+}
+
+function test_cmpr[test]
+{
+    var a = 11;
+    var a' = 11;
+    var b = 13;
+    var x = 3;
+    
+    assert_eq(cmpr(a,b),-cmp(a,b));
+    assert_eq(cmpr(a,a'),-cmp(a,a'));
+    assert_eq(cmpr(b,a),-cmp(b,a));
+    assert_eq(cmpr(a,b,(p,q) =>
+    {
+        assert_eq(p,b);
+        assert_eq(q,a);
+        return cmp(p,q);
+    }),-cmp(a,b));
+}
+
+function test_ieq[test]
+{
+    assert_eq(ieq(Prexonite::Compiler::SymbolInterpretations.LocalObjectVariable,Prexonite::Compiler::SymbolInterpretations.LocalObjectVariable),true);
+    assert_eq(ieq(Prexonite::Compiler::SymbolInterpretations.LocalObjectVariable,Prexonite::Compiler::SymbolInterpretations.GlobalObjectVariable),false);
+    var x = Prexonite::Compiler::SymbolInterpretations.LocalObjectVariable;
+    assert_eq(ieq(x,x),true);
+}
+
+function test_ieq_any[test]
+{
+    var func = Prexonite::Compiler::SymbolInterpretations.Function;
+    var lvar = Prexonite::Compiler::SymbolInterpretations.LocalObjectVariable;
+    var lref = Prexonite::Compiler::SymbolInterpretations.LocalReferenceVariable;
+    var lvar' = Prexonite::Compiler::SymbolInterpretations.LocalObjectVariable;
+    var cmd = Prexonite::Compiler::SymbolInterpretations.Command;
+    
+    assert_eq(ieq_any(lvar',func,lref,cmd,lvar),true);
+    assert_eq(ieq_any(lvar',lvar,func,lref,cmd,"abc"),true);
+    assert_eq(ieq_any(lvar'),false);
+    assert_eq(ieq_any(lvar',func,lref,cmd),false);
+}
+
+function test_ieq_all[test]
+{
+    var cmd = Prexonite::Compiler::SymbolInterpretations.Command;
+    var func = Prexonite::Compiler::SymbolInterpretations.Function;
+    var lvar = Prexonite::Compiler::SymbolInterpretations.LocalObjectVariable;
+    var lref = Prexonite::Compiler::SymbolInterpretations.LocalReferenceVariable;
+    var lvar' = Prexonite::Compiler::SymbolInterpretations.LocalObjectVariable;
+    var lvar'' = Prexonite::Compiler::SymbolInterpretations.LocalObjectVariable;
+    var lvar''' = Prexonite::Compiler::SymbolInterpretations.LocalObjectVariable;
+    var lvar''''= Prexonite::Compiler::SymbolInterpretations.LocalObjectVariable;
+    var cmd = Prexonite::Compiler::SymbolInterpretations.Command;
+    
+    assert_eq(ieq_all(lvar',func,lref,cmd,lvar),false);
+    assert_eq(ieq_all(lvar',lvar,func,lref,cmd,"abc"),false);
+    assert_eq(ieq_all(lvar'),true);
+    assert_eq(ieq_all(lvar,lvar'),true);
+    assert_eq(ieq_all(lvar,lvar',lvar'',lvar''',lvar''''),true);
+}
+
+function test_refeq[test]
+{
+    var a = 13;
+    var a' = boxed(a).Value;
+    var a'' = 13;
+    var b = 11;
+    
+    assert_eq(refeq(a,a),true);
+    assert_eq(refeq(a,b),false);
+    assert_eq(refeq(a,a'),true);
+    assert_eq(refeq(a,a''),false);
+}
+
+function test_nrefeq[test]
+{
+var a = 13;
+    var a' = boxed(a).Value;
+    var a'' = 13;
+    var b = 11;
+    
+    assert_eq(nrefeq(a,a),not true);
+    assert_eq(nrefeq(a,b),not false);
+    assert_eq(nrefeq(a,a'),not true);
+    assert_eq(nrefeq(a,a''),not false);
+}
+
+function test_create_terminator[test]
+{
+    var a = 11;
+    var called = false;
+    var disposed = false;
+    
+    function create_obj
+    {
+        function m(this,p)
+        {
+            assert_eq(a,p);
+            assert(not called,"obj.m already called");
+            called = true;
+        }
+        return struct;
+    }
+    
+    var o1 = new obj;
+    using(var o2 = new terminator(o1,() =>
+    {
+        assert(not disposed,"obj already disposed");
+        disposed = true;
+    }))
+    {
+        assert(not disposed,"obj already disposed");
+        o1.m(a);
+        assert(called,"obj.m not called");
+    }
+    assert(disposed,"obj not disposed");
+}
+
+function test_swap[test]
+{
+    var a = var a' = 11;
+    var b = var b' = 11;
+    
+    assert_eq(swap(a,b),a');
+    assert_eq(a,b');
+    assert_eq(b,a');
+    assert_eq(swap(a) = b,a');
+    assert_eq(a,a');
+    assert_eq(b,b');
+    
+    var acalledget = false;
+    var acalledset = false;
+    function ra(x)
+    {        
+        if(x is null)
+        {
+            assert(not acalledget);
+            acalledget = true;
+            return a;
+        }
+        else
+        {
+            assert(not acalledset);
+            acalledset = true;
+            a = x;
+        }
+    }
+    
+    var bcalledget = false;
+    var bcalledset = false;
+    function rb(x)
+    {
+        if(x is null)
+        {
+            assert(not bcalledget);
+            bcalledget = true;
+            return b;
+        }
+        else
+        {
+            assert(not bcalledset);
+            bcalledset = true;
+            b = x;
+        }
+    }
+    
+    swap(ra,rb);
+    assert_eq(a,b');
+    assert_eq(b,a');
+}

@@ -39,7 +39,7 @@ function cmp_then
     };
 }
 
-function cmpr(a,b,ccmp) = (ccmp ?? ->cmp).(b,a);
+function cmpr(a,b,ccmp) = (ccmp ?? cmp(?,?)).(b,a);
 
 function ieq(a,b) = a~Int == b~Int;
 function ieq_any(a) = 
