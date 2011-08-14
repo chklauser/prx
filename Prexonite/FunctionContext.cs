@@ -38,7 +38,7 @@ using NoDebug = System.Diagnostics.DebuggerNonUserCodeAttribute;
 
 namespace Prexonite
 {
-    public class FunctionContext : StackContext
+    public class FunctionContext : StackContext, IDisposable
     {
         #region Creation
 
@@ -106,6 +106,8 @@ namespace Prexonite
             _localVariableArray = new PVariable[_localVariables.Count];
             foreach (var mapping in _implementation.LocalVariableMapping)
                 _localVariableArray[mapping.Value] = _localVariables[mapping.Key];
+
+            _resetRegisters();
         }
 
         public FunctionContext(StackContext sctx, PFunction implementation, PValue[] args)
@@ -204,6 +206,99 @@ namespace Prexonite
             return "context of " + _implementation;
         }
 
+        /// <summary>
+        /// Performs application-defined tasks associated with freeing, releasing, or resetting unmanaged resources.
+        /// </summary>
+        /// <filterpriority>2</filterpriority>
+        public void Dispose()
+        {
+            GC.SuppressFinalize(this);
+            Dispose(true);
+        }
+
+        ~FunctionContext()
+        {
+            Dispose(false);
+        }
+
+        protected virtual void Dispose(bool disposing)
+        {
+            if(disposing)
+            {
+                
+            }
+
+            //Threads spawned by call\async (and similar mechanisms) won't be 
+            //  GCed, therefor the finally code must also run when the
+            //  FunctionContext is disposed by the runtime
+            if (!_PerformingCleanup)
+            {
+                if (_SetupCleanup())
+                {
+                    _parentEngine.Process(this);
+                }
+            }
+        }
+
+        /// <summary>
+        /// Setup the function context for cleanup. Indicates whether cleanup is necessary.
+        /// </summary>
+        /// <returns>True if cleanup is necessary (the context needs to be executed), false otherwise</returns>
+        internal bool _SetupCleanup()
+        {
+            if (_TryFindCleanupSection())
+            {
+                _resetRegisters();
+                _performingCleanup = true;
+                _isHandlingException.Push(false);
+                return true;
+            }
+            else
+            {
+                return false;
+            }
+        }
+
+        /// <summary>
+        /// From the current location, jump to the next enclosing finally block.
+        /// </summary>
+        /// <returns>True if there is a cleanup section, false if cleanup is done.</returns>
+        private bool _TryFindCleanupSection()
+        {
+            int insCount = _implementation.Code.Count;
+            if(_pointer >= insCount)
+                return false;
+
+            var tcfbs = _implementation.TryCatchFinallyBlocks;
+            var address = _pointer;
+
+            TryCatchFinallyBlock tcfb = null;
+            while(true)
+            {
+                tcfb = TryCatchFinallyBlock.Closest(address, tcfbs);
+                if(tcfb == null || tcfb.HasFinally)
+                    break;
+
+                //surrounding try-catch-finally block has no finally clause
+                address = tcfb.SkipTry;
+                if (address >= insCount)
+                {
+                    tcfb = null;
+                    break;
+                }
+            }
+
+            if (tcfb == null || !tcfb.HasFinally)
+            {
+                return false;
+            }
+            else
+            {
+                _pointer = tcfb.BeginFinally;
+                return true;
+            }
+        }
+
         #endregion
 
         #region Local variables
@@ -243,6 +338,18 @@ namespace Prexonite
             set { _pointer = value; }
         }
 
+        private bool _performingCleanup = false;
+
+        /// <summary>
+        /// Indicates whether the function context is currently in cleanup mode. In cleanup mode, the function
+        /// skips all non-finally-block code, trying to exit as if an exception had been thrown.
+        /// </summary>
+        internal bool _PerformingCleanup
+        {
+            get { return _performingCleanup; }
+            set { _performingCleanup = value; }
+        }
+
         private readonly Stack<PValue> _stack = new Stack<PValue>();
 
         [DebuggerStepThrough]
@@ -272,7 +379,7 @@ namespace Prexonite
             get { return _stack.Count; }
         }
 
-        private void throwInvalidStackException(int argc)
+        private void _throwInvalidStackException(int argc)
         {
             throw new PrexoniteInvalidStackException
                 (
@@ -281,16 +388,24 @@ namespace Prexonite
         }
 
         [DebuggerNonUserCode]
-        private void fillArgs(int argc, out PValue[] argv)
+        private void _fillArgs(int argc, out PValue[] argv)
         {
             argv = new PValue[argc];
             if (_stack.Count < argc)
-                throwInvalidStackException(argc);
+                _throwInvalidStackException(argc);
             for (var i = argc - 1; i >= 0; i--)
                 argv[i] = Pop();
         }
 
         private bool _fetchReturnValue;
+
+        private void _resetRegisters()
+        {
+            _fetchReturnValue = false;
+            _useVirtualStackInstead = false;
+            _currentException = null;
+            _currentTry = null;
+        }
 
         protected override bool PerformNextCycle(StackContext lastContext)
         {
@@ -339,7 +454,7 @@ namespace Prexonite
             {
                 if (_pointer >= codeLength)
                 {
-                    ReturnMode = Prexonite.ReturnMode.Exit;
+                    ReturnMode = ReturnMode.Exit;
                     return false;
                 }
 
@@ -563,12 +678,12 @@ namespace Prexonite
                             t = ConstructPType(id);
                             ins.GenericArgument = t;
                         }
-                        fillArgs(argc, out argv);
+                        _fillArgs(argc, out argv);
                         Push(t.Construct(this, argv));
                         break;
                     case OpCode.newtype:
                         //assemble type expression
-                        fillArgs(argc, out argv);
+                        _fillArgs(argc, out argv);
                         Push(CreateNativePValue(ParentEngine.CreatePType(this, id, argv)));
                         break;
 
@@ -601,7 +716,7 @@ namespace Prexonite
                         break;
 
                     case OpCode.newcor:
-                        fillArgs(argc, out argv);
+                        _fillArgs(argc, out argv);
 
                         var routine = Pop();
                         var routineobj = routine.Value;
@@ -739,7 +854,7 @@ namespace Prexonite
                         #region DYNAMIC
 
                     case OpCode.get:
-                        fillArgs(argc, out argv);
+                        _fillArgs(argc, out argv);
                         left = Pop();
                         right = left.DynamicCall(this, argv, PCall.Get, id);
                         if (!justEffect)
@@ -747,7 +862,7 @@ namespace Prexonite
                         needToReturn = true;
                         break;
                     case OpCode.set:
-                        fillArgs(argc, out argv);
+                        _fillArgs(argc, out argv);
                         left = Pop();
                         left.DynamicCall(this, argv, PCall.Set, id);
                         needToReturn = true;
@@ -758,7 +873,7 @@ namespace Prexonite
                         #region STATIC
 
                     case OpCode.sget:
-                        fillArgs(argc, out argv);
+                        _fillArgs(argc, out argv);
                         idx = id.LastIndexOf("::");
                         if (idx < 0)
                             throw new PrexoniteException
@@ -804,7 +919,7 @@ namespace Prexonite
                         break;
 
                     case OpCode.sset:
-                        fillArgs(argc, out argv);
+                        _fillArgs(argc, out argv);
                         idx = id.LastIndexOf("::");
                         if (idx < 0)
                             throw new PrexoniteException
@@ -850,7 +965,7 @@ namespace Prexonite
                         #region INDIRECT CALLS
 
                     case OpCode.indloc:
-                        fillArgs(argc, out argv);
+                        _fillArgs(argc, out argv);
                         pvar = _localVariables[id];
                         if(pvar == null)
                             throw new PrexoniteException("The local variable " + id + " resolved to null in function " + Implementation.Id);
@@ -886,11 +1001,11 @@ namespace Prexonite
                     case OpCode.indloci:
                         idx = argc & ushort.MaxValue;
                         argc = (argc & (ushort.MaxValue << 16)) >> 16;
-                        fillArgs(argc, out argv);
+                        _fillArgs(argc, out argv);
                         left = _localVariableArray[idx].Value;
                         goto doIndloc;
                     case OpCode.indglob:
-                        fillArgs(argc, out argv);
+                        _fillArgs(argc, out argv);
                         app = ParentApplication;
                         pvar = app.Variables[id];
                         app.EnsureInitialization(ParentEngine, pvar);
@@ -907,12 +1022,12 @@ namespace Prexonite
                         goto doIndloc;
 
                     case OpCode.indarg:
-                        fillArgs(argc, out argv);
+                        _fillArgs(argc, out argv);
                         left = Pop();
                         goto doIndloc;
 
                     case OpCode.tail:
-                        fillArgs(argc, out argv);
+                        _fillArgs(argc, out argv);
                         left = Pop();
 
                         var stack = _parentEngine.Stack;
@@ -928,7 +1043,7 @@ namespace Prexonite
                         #region ENGINE CALLS
 
                     case OpCode.func:
-                        fillArgs(argc, out argv);
+                        _fillArgs(argc, out argv);
                         if (ParentEngine.CacheFunctions)
                         {
                             func = (ins.GenericArgument as PFunction) ??
@@ -980,7 +1095,7 @@ namespace Prexonite
                         return true;
                         //Force the engine to keep this context on the stack for another cycle
                     case OpCode.cmd:
-                        fillArgs(argc, out argv);
+                        _fillArgs(argc, out argv);
                         needToReturn = true;
                         PCommand cmd;
                         if (ParentEngine.CacheCommands)
@@ -1129,7 +1244,20 @@ namespace Prexonite
                         break;
 
                     case OpCode.leave:
-                        if(_isHandlingException.Count == 0)
+                        if(_performingCleanup)
+                        {
+                            if(_TryFindCleanupSection())
+                            {
+                                _resetRegisters();
+                            }
+                            else
+                            {
+                                //Cleanup is done.
+                                _pointer = codeLength;
+                                return false;
+                            }
+                        }
+                        else if(_isHandlingException.Count == 0)
                         {
                             throw new PrexoniteException("Unexpected leave instruction. This happens when jumping to an instruction in a try block from the outside.");
                         }
@@ -1143,11 +1271,10 @@ namespace Prexonite
                         }
                         else
                         {
-                            if (currentTry.HasCatch)
+                            if (_currentTry.HasCatch)
                             {
                                 //Exception handled by user code
 #if Verbose
-
                                 Console.Write(" => execute catch({0}:{1})", 
                                     _currentException.GetType().Name, _currentException.Message);
 #endif
@@ -1178,7 +1305,7 @@ namespace Prexonite
                         //STACK MANIPULATION
                     case OpCode.pop:
                         if (_stack.Count < argc)
-                            throwInvalidStackException(argc);
+                            _throwInvalidStackException(argc);
                         for (var i = 0; i < argc; i++)
                             Pop(); //Pop to nirvana
                         break;
@@ -1229,7 +1356,7 @@ namespace Prexonite
             get { return _isHandlingException.Peek(); }
         }
 
-        private TryCatchFinallyBlock currentTry;
+        private TryCatchFinallyBlock _currentTry;
 
         public override bool TryHandleException(Exception exc)
         {
@@ -1252,7 +1379,7 @@ namespace Prexonite
                 _isHandlingException.Pop();
                 _isHandlingException.Push(true);
                 _pointer = block.BeginFinally;
-                currentTry = block;
+                _currentTry = block;
             }
             else if (block.HasCatch)
             {
