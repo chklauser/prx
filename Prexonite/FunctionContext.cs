@@ -76,7 +76,7 @@ namespace Prexonite
             _implementation = implementation;
             _bindArguments(args);
             _createLocalVariables();
-            ReturnMode = Prexonite.ReturnMode.Exit;
+            ReturnMode = ReturnMode.Exit;
             if (_implementation.Meta.ContainsKey(PFunction.SharedNamesKey))
             {
                 var sharedNames = _implementation.Meta[PFunction.SharedNamesKey].List;
@@ -126,7 +126,7 @@ namespace Prexonite
         private void _bindArguments(PValue[] args)
         {
             //Create args variable
-            var argVId = PFunction.ArgumentListId;
+            const string argVId = PFunction.ArgumentListId;
 
             if (_implementation.Variables.Contains(argVId))
             {
@@ -272,7 +272,7 @@ namespace Prexonite
             get { return _stack.Count; }
         }
 
-        private void throwInvalidStackException(int argc)
+        private void _throwInvalidStackException(int argc)
         {
             throw new PrexoniteInvalidStackException
                 (
@@ -281,11 +281,11 @@ namespace Prexonite
         }
 
         [DebuggerNonUserCode]
-        private void fillArgs(int argc, out PValue[] argv)
+        private void _fillArgs(int argc, out PValue[] argv)
         {
             argv = new PValue[argc];
             if (_stack.Count < argc)
-                throwInvalidStackException(argc);
+                _throwInvalidStackException(argc);
             for (var i = argc - 1; i >= 0; i--)
                 argv[i] = Pop();
         }
@@ -339,7 +339,7 @@ namespace Prexonite
             {
                 if (_pointer >= codeLength)
                 {
-                    ReturnMode = Prexonite.ReturnMode.Exit;
+                    ReturnMode = ReturnMode.Exit;
                     return false;
                 }
 
@@ -563,12 +563,12 @@ namespace Prexonite
                             t = ConstructPType(id);
                             ins.GenericArgument = t;
                         }
-                        fillArgs(argc, out argv);
+                        _fillArgs(argc, out argv);
                         Push(t.Construct(this, argv));
                         break;
                     case OpCode.newtype:
                         //assemble type expression
-                        fillArgs(argc, out argv);
+                        _fillArgs(argc, out argv);
                         Push(CreateNativePValue(ParentEngine.CreatePType(this, id, argv)));
                         break;
 
@@ -601,7 +601,7 @@ namespace Prexonite
                         break;
 
                     case OpCode.newcor:
-                        fillArgs(argc, out argv);
+                        _fillArgs(argc, out argv);
 
                         var routine = Pop();
                         var routineobj = routine.Value;
@@ -739,7 +739,7 @@ namespace Prexonite
                         #region DYNAMIC
 
                     case OpCode.get:
-                        fillArgs(argc, out argv);
+                        _fillArgs(argc, out argv);
                         left = Pop();
                         right = left.DynamicCall(this, argv, PCall.Get, id);
                         if (!justEffect)
@@ -747,7 +747,7 @@ namespace Prexonite
                         needToReturn = true;
                         break;
                     case OpCode.set:
-                        fillArgs(argc, out argv);
+                        _fillArgs(argc, out argv);
                         left = Pop();
                         left.DynamicCall(this, argv, PCall.Set, id);
                         needToReturn = true;
@@ -758,7 +758,7 @@ namespace Prexonite
                         #region STATIC
 
                     case OpCode.sget:
-                        fillArgs(argc, out argv);
+                        _fillArgs(argc, out argv);
                         idx = id.LastIndexOf("::");
                         if (idx < 0)
                             throw new PrexoniteException
@@ -804,7 +804,7 @@ namespace Prexonite
                         break;
 
                     case OpCode.sset:
-                        fillArgs(argc, out argv);
+                        _fillArgs(argc, out argv);
                         idx = id.LastIndexOf("::");
                         if (idx < 0)
                             throw new PrexoniteException
@@ -850,7 +850,7 @@ namespace Prexonite
                         #region INDIRECT CALLS
 
                     case OpCode.indloc:
-                        fillArgs(argc, out argv);
+                        _fillArgs(argc, out argv);
                         pvar = _localVariables[id];
                         if(pvar == null)
                             throw new PrexoniteException("The local variable " + id + " resolved to null in function " + Implementation.Id);
@@ -886,11 +886,11 @@ namespace Prexonite
                     case OpCode.indloci:
                         idx = argc & ushort.MaxValue;
                         argc = (argc & (ushort.MaxValue << 16)) >> 16;
-                        fillArgs(argc, out argv);
+                        _fillArgs(argc, out argv);
                         left = _localVariableArray[idx].Value;
                         goto doIndloc;
                     case OpCode.indglob:
-                        fillArgs(argc, out argv);
+                        _fillArgs(argc, out argv);
                         app = ParentApplication;
                         pvar = app.Variables[id];
                         app.EnsureInitialization(ParentEngine, pvar);
@@ -907,12 +907,12 @@ namespace Prexonite
                         goto doIndloc;
 
                     case OpCode.indarg:
-                        fillArgs(argc, out argv);
+                        _fillArgs(argc, out argv);
                         left = Pop();
                         goto doIndloc;
 
                     case OpCode.tail:
-                        fillArgs(argc, out argv);
+                        _fillArgs(argc, out argv);
                         left = Pop();
 
                         var stack = _parentEngine.Stack;
@@ -928,7 +928,7 @@ namespace Prexonite
                         #region ENGINE CALLS
 
                     case OpCode.func:
-                        fillArgs(argc, out argv);
+                        _fillArgs(argc, out argv);
                         if (ParentEngine.CacheFunctions)
                         {
                             func = (ins.GenericArgument as PFunction) ??
@@ -980,7 +980,7 @@ namespace Prexonite
                         return true;
                         //Force the engine to keep this context on the stack for another cycle
                     case OpCode.cmd:
-                        fillArgs(argc, out argv);
+                        _fillArgs(argc, out argv);
                         needToReturn = true;
                         PCommand cmd;
                         if (ParentEngine.CacheCommands)
@@ -1059,26 +1059,26 @@ namespace Prexonite
                         #region RETURNS
 
                     case OpCode.ret_exit:
-                        ReturnMode = Prexonite.ReturnMode.Exit;
+                        ReturnMode = ReturnMode.Exit;
 #if Verbose
                     Console.WriteLine();
 #endif
                         return false;
                     case OpCode.ret_value:
                         _returnValue = Pop();
-                        ReturnMode = Prexonite.ReturnMode.Exit;
+                        ReturnMode = ReturnMode.Exit;
 #if Verbose
                     Console.WriteLine("=" + _toDebug(_returnValue));
 #endif
                         return false;
                     case OpCode.ret_break:
-                        ReturnMode = Prexonite.ReturnMode.Break;
+                        ReturnMode = ReturnMode.Break;
 #if Verbose
                     Console.WriteLine();
 #endif
                         return false;
                     case OpCode.ret_continue:
-                        ReturnMode = Prexonite.ReturnMode.Continue;
+                        ReturnMode = ReturnMode.Continue;
 #if Verbose
                     Console.WriteLine();
 #endif
@@ -1143,7 +1143,7 @@ namespace Prexonite
                         }
                         else
                         {
-                            if (currentTry.HasCatch)
+                            if (_currentTry.HasCatch)
                             {
                                 //Exception handled by user code
 #if Verbose
@@ -1178,7 +1178,7 @@ namespace Prexonite
                         //STACK MANIPULATION
                     case OpCode.pop:
                         if (_stack.Count < argc)
-                            throwInvalidStackException(argc);
+                            _throwInvalidStackException(argc);
                         for (var i = 0; i < argc; i++)
                             Pop(); //Pop to nirvana
                         break;
@@ -1229,7 +1229,7 @@ namespace Prexonite
             get { return _isHandlingException.Peek(); }
         }
 
-        private TryCatchFinallyBlock currentTry;
+        private TryCatchFinallyBlock _currentTry;
 
         public override bool TryHandleException(Exception exc)
         {
@@ -1252,7 +1252,7 @@ namespace Prexonite
                 _isHandlingException.Pop();
                 _isHandlingException.Push(true);
                 _pointer = block.BeginFinally;
-                currentTry = block;
+                _currentTry = block;
             }
             else if (block.HasCatch)
             {
