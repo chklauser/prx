@@ -76,7 +76,7 @@ namespace Prexonite
             _implementation = implementation;
             _bindArguments(args);
             _createLocalVariables();
-            ReturnMode = Prexonite.ReturnMode.Exit;
+            ReturnMode = ReturnMode.Exit;
             if (_implementation.Meta.ContainsKey(PFunction.SharedNamesKey))
             {
                 var sharedNames = _implementation.Meta[PFunction.SharedNamesKey].List;
@@ -128,7 +128,7 @@ namespace Prexonite
         private void _bindArguments(PValue[] args)
         {
             //Create args variable
-            var argVId = PFunction.ArgumentListId;
+            const string argVId = PFunction.ArgumentListId;
 
             if (_implementation.Variables.Contains(argVId))
             {
@@ -1174,26 +1174,26 @@ namespace Prexonite
                         #region RETURNS
 
                     case OpCode.ret_exit:
-                        ReturnMode = Prexonite.ReturnMode.Exit;
+                        ReturnMode = ReturnMode.Exit;
 #if Verbose
                     Console.WriteLine();
 #endif
                         return false;
                     case OpCode.ret_value:
                         _returnValue = Pop();
-                        ReturnMode = Prexonite.ReturnMode.Exit;
+                        ReturnMode = ReturnMode.Exit;
 #if Verbose
                     Console.WriteLine("=" + _toDebug(_returnValue));
 #endif
                         return false;
                     case OpCode.ret_break:
-                        ReturnMode = Prexonite.ReturnMode.Break;
+                        ReturnMode = ReturnMode.Break;
 #if Verbose
                     Console.WriteLine();
 #endif
                         return false;
                     case OpCode.ret_continue:
-                        ReturnMode = Prexonite.ReturnMode.Continue;
+                        ReturnMode = ReturnMode.Continue;
 #if Verbose
                     Console.WriteLine();
 #endif
