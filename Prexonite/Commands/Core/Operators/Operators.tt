@@ -121,10 +121,10 @@ namespace Prexonite.Commands.Core.Operators{
 #>
 		}
 		
-		private static bool _reverseLiteralMapInitialized;
-		private static readonly Dictionary<string,string> _reverseLiteralMap = new Dictionary<string,string>(<#=_operators.Length#>);
-		private static void _initReverseLiteralMap()
-		{
+		private static readonly Lazy<Dictionary<string,string>> _reverseLiteralMap = 
+			new Lazy<Dictionary<string,string>>(() => 
+				new Dictionary<string,string>
+				{
 <# foreach(var op in _operators)
 {
 	var className = op.PrxName;
@@ -134,19 +134,14 @@ namespace Prexonite.Commands.Core.Operators{
 	else
 		literal = String.Format("\"$\" + OperatorNames.Prexonite.{0}", op.PrxName); 
 	#>
-			_reverseLiteralMap.Add(OperatorNames.Prexonite.<#=op.PrxName#>, <#=literal#>);
+					{OperatorNames.Prexonite.<#=op.PrxName#>, <#=literal#>},
 <#
 }
 #>
-		}
+				}, System.Threading.LazyThreadSafetyMode.PublicationOnly);
 		public static bool TryGetLiteral(string id, out string literal)
 		{
-			if(!_reverseLiteralMapInitialized)
-			{
-				_initReverseLiteralMap();
-				_reverseLiteralMapInitialized = true;
-			}
-			return _reverseLiteralMap.TryGetValue(id, out literal);
+			return _reverseLiteralMap.Value.TryGetValue(id, out literal);
 		}
 	}
 }

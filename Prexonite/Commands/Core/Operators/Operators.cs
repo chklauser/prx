@@ -892,37 +892,32 @@ namespace Prexonite.Commands.Core.Operators{
 			cs.AddEngineCommand(LogicalNot.DefaultAlias, LogicalNot.Instance);
 		}
 		
-		private static bool _reverseLiteralMapInitialized;
-		private static readonly Dictionary<string,string> _reverseLiteralMap = new Dictionary<string,string>(18);
-		private static void _initReverseLiteralMap()
-		{
-			_reverseLiteralMap.Add(OperatorNames.Prexonite.Addition, "(+)");
-			_reverseLiteralMap.Add(OperatorNames.Prexonite.Subtraction, "(-)");
-			_reverseLiteralMap.Add(OperatorNames.Prexonite.Multiplication, "(*)");
-			_reverseLiteralMap.Add(OperatorNames.Prexonite.Division, "(/)");
-			_reverseLiteralMap.Add(OperatorNames.Prexonite.Modulus, "$" + OperatorNames.Prexonite.Modulus);
-			_reverseLiteralMap.Add(OperatorNames.Prexonite.Power, "(^)");
-			_reverseLiteralMap.Add(OperatorNames.Prexonite.BitwiseAnd, "(&)");
-			_reverseLiteralMap.Add(OperatorNames.Prexonite.BitwiseOr, "(|)");
-			_reverseLiteralMap.Add(OperatorNames.Prexonite.ExclusiveOr, "$" + OperatorNames.Prexonite.ExclusiveOr);
-			_reverseLiteralMap.Add(OperatorNames.Prexonite.Equality, "(==)");
-			_reverseLiteralMap.Add(OperatorNames.Prexonite.Inequality, "(!=)");
-			_reverseLiteralMap.Add(OperatorNames.Prexonite.GreaterThan, "(>)");
-			_reverseLiteralMap.Add(OperatorNames.Prexonite.GreaterThanOrEqual, "(>=)");
-			_reverseLiteralMap.Add(OperatorNames.Prexonite.LessThan, "(<)");
-			_reverseLiteralMap.Add(OperatorNames.Prexonite.LessThanOrEqual, "(<=)");
-			_reverseLiteralMap.Add(OperatorNames.Prexonite.UnaryNegation, "(-.)");
-			_reverseLiteralMap.Add(OperatorNames.Prexonite.OnesComplement, "$" + OperatorNames.Prexonite.OnesComplement);
-			_reverseLiteralMap.Add(OperatorNames.Prexonite.LogicalNot, "$" + OperatorNames.Prexonite.LogicalNot);
-		}
+		private static readonly Lazy<Dictionary<string,string>> _reverseLiteralMap = 
+			new Lazy<Dictionary<string,string>>(() => 
+				new Dictionary<string,string>
+				{
+					{OperatorNames.Prexonite.Addition, "(+)"},
+					{OperatorNames.Prexonite.Subtraction, "(-)"},
+					{OperatorNames.Prexonite.Multiplication, "(*)"},
+					{OperatorNames.Prexonite.Division, "(/)"},
+					{OperatorNames.Prexonite.Modulus, "$" + OperatorNames.Prexonite.Modulus},
+					{OperatorNames.Prexonite.Power, "(^)"},
+					{OperatorNames.Prexonite.BitwiseAnd, "(&)"},
+					{OperatorNames.Prexonite.BitwiseOr, "(|)"},
+					{OperatorNames.Prexonite.ExclusiveOr, "$" + OperatorNames.Prexonite.ExclusiveOr},
+					{OperatorNames.Prexonite.Equality, "(==)"},
+					{OperatorNames.Prexonite.Inequality, "(!=)"},
+					{OperatorNames.Prexonite.GreaterThan, "(>)"},
+					{OperatorNames.Prexonite.GreaterThanOrEqual, "(>=)"},
+					{OperatorNames.Prexonite.LessThan, "(<)"},
+					{OperatorNames.Prexonite.LessThanOrEqual, "(<=)"},
+					{OperatorNames.Prexonite.UnaryNegation, "(-.)"},
+					{OperatorNames.Prexonite.OnesComplement, "$" + OperatorNames.Prexonite.OnesComplement},
+					{OperatorNames.Prexonite.LogicalNot, "$" + OperatorNames.Prexonite.LogicalNot},
+				}, System.Threading.LazyThreadSafetyMode.PublicationOnly);
 		public static bool TryGetLiteral(string id, out string literal)
 		{
-			if(!_reverseLiteralMapInitialized)
-			{
-				_initReverseLiteralMap();
-				_reverseLiteralMapInitialized = true;
-			}
-			return _reverseLiteralMap.TryGetValue(id, out literal);
+			return _reverseLiteralMap.Value.TryGetValue(id, out literal);
 		}
 	}
 }
