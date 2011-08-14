@@ -35,7 +35,7 @@ namespace Prexonite
     /// Represents a try-catch-finally block
     /// </summary>
     //[DebuggerNonUserCode]
-    public class TryCatchFinallyBlock
+    public class TryCatchFinallyBlock : IEquatable<TryCatchFinallyBlock>
     {
         /// <summary>
         /// Creates a new try-catch-finally block. 
@@ -365,26 +365,32 @@ namespace Prexonite
 
         public override bool Equals(object obj)
         {
-            if (obj == null)
-                return false;
-            var block = obj as TryCatchFinallyBlock;
-
-            if (block == null)
-                return false;
-            else
-                return
-                    BeginTry == block.BeginTry &&
-                    BeginFinally == block.BeginFinally &&
-                    BeginCatch == block.BeginCatch &&
-                    EndTry == block.EndTry;
+            if (ReferenceEquals(null, obj)) return false;
+            if (ReferenceEquals(this, obj)) return true;
+            if (obj.GetType() != typeof (TryCatchFinallyBlock)) return false;
+            return Equals((TryCatchFinallyBlock) obj);
         }
 
         public override int GetHashCode()
         {
-            var prod = Math.BigMul(_beginTry, _endTry);
-            while (prod > Int32.MaxValue)
-                prod = prod%(Int32.MaxValue/3);
-            return Convert.ToInt32(prod);
+            unchecked
+            {
+                int result = _beginTry;
+                result = (result*397) ^ _beginFinally;
+                result = (result*397) ^ _beginCatch;
+                result = (result*397) ^ _endTry;
+                result = (result*397) ^ UsesException.GetHashCode();
+                return result;
+            }
+        }
+
+        public bool Equals(TryCatchFinallyBlock other)
+        {
+            if (ReferenceEquals(null, other)) return false;
+            if (ReferenceEquals(this, other)) return true;
+            return other._beginTry == _beginTry && other._beginFinally == _beginFinally &&
+                other._beginCatch == _beginCatch && other._endTry == _endTry &&
+                    other.UsesException.Equals(UsesException);
         }
 
         public static bool operator ==(TryCatchFinallyBlock a, TryCatchFinallyBlock b)
