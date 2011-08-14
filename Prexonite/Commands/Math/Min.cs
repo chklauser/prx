@@ -71,8 +71,11 @@ namespace Prexonite.Commands.Math
             if (args == null)
                 throw new ArgumentNullException("args");
 
-            if (args.Length < 2)
-                throw new PrexoniteException("Min requires at least two arguments.");
+            if (args.Length < 1)
+                throw new PrexoniteException("Min requires at least one argument.");
+
+            if (args.Length == 1)
+                return args[0];
 
             var arg0 = args[0];
             var arg1 = args[1];
