@@ -59,7 +59,7 @@ namespace Prexonite.Commands.Concurrency
                     rawCases.AddRange(set);
             }
 
-            var appCases = _extract(rawCases.Where(c => isApplicable(sctx, c))).ToArray();
+            var appCases = rawCases.Select(c => _isApplicable(sctx, c)).Where(x => x != null).Select(_extract).ToArray();
 
             return RunStatically(sctx, appCases, performSubCall);
         }
@@ -114,57 +114,66 @@ namespace Prexonite.Commands.Concurrency
 
         private static readonly PType _chanType = PType.Object[typeof (Channel)];
 
-        private static bool isApplicable(StackContext sctx, PValue selectCase)
+        private static PValue _isApplicable(StackContext sctx, PValue selectCase)
         {
             if (selectCase.Type == PValueKeyValuePair.ObjectType)
             {
-                var key = ((PValueKeyValuePair) selectCase.Value).Key;
+                var kvp = ((PValueKeyValuePair) selectCase.Value);
+                var key = kvp.Key;
                 if (key.Type == _chanType)
-                    return true;
-                else if (key.Type.ToBuiltIn() == PType.BuiltIn.Bool)
-                    return (bool) key.Value;
-                else if (key.Value == null)
-                    return false;
+                    return selectCase;
                 else
-                    return Runtime.ExtractBool(key.IndirectCall(sctx, Runtime.EmptyPValueArray), sctx);
+                {
+                    if (key.Type.ToBuiltIn() == PType.BuiltIn.Bool)
+                        if ((bool) key.Value)
+                            return kvp.Value;
+                        else
+                            return null;
+                    else if (key.Value == null)
+                        return null;
+                    else if (Runtime.ExtractBool(key.IndirectCall(sctx, Runtime.EmptyPValueArray), sctx))
+                        return kvp.Value;
+                    else
+                        return null;
+                }
             }
             else
             {
-                return true;
+                return selectCase;
             }
         }
 
-        private static IEnumerable<KeyValuePair<Channel, PValue>> _extract(IEnumerable<PValue> cases)
+        private static KeyValuePair<Channel, PValue> _extract(PValue c)
         {
-            foreach (var c in cases)
+            if (c.Type == PValueKeyValuePair.ObjectType)
             {
-                if (c.Type == PValueKeyValuePair.ObjectType)
-                {
-                    var kvp = ((PValueKeyValuePair) c.Value);
-                    
-                    if( kvp.Value.Type == PValueKeyValuePair.ObjectType)
-                    {
-                        kvp = (PValueKeyValuePair) kvp.Value.Value;
-                    }
+                var kvp = ((PValueKeyValuePair) c.Value);
 
-                    var key = kvp.Key;
-
-                    if (key.Type == _chanType)
-                        yield return new KeyValuePair<Channel, PValue>((Channel) kvp.Key.Value, kvp.Value);
-                    else
-                        throw new PrexoniteException(
-                            "Invalid select clause. Syntax: select( [channel:handler] ) or select( [cond:channel:handler] ). Offending value " + c.Value);
-                }
-                else if (c.Type == _chanType)
+                if (kvp.Value.Type == PValueKeyValuePair.ObjectType)
                 {
-                    throw new PrexoniteException(
-                        "Missing handler in select clause. Syntax: select( [channel: handler] ) or select( [cond:channel:handler] )");
+                    kvp = (PValueKeyValuePair) kvp.Value.Value;
                 }
+
+                var key = kvp.Key;
+
+                if (key.Type == _chanType)
+                    return new KeyValuePair<Channel, PValue>((Channel) kvp.Key.Value, kvp.Value);
+                else if(key.Value == null)
+                    return new KeyValuePair<Channel, PValue>(null, kvp.Value);
                 else
-                {
-                    //A default handler or a handler that just doesn't have input (but possibly a condition)
-                    yield return new KeyValuePair<Channel, PValue>(null, c);
-                }
+                    throw new PrexoniteException(
+                        "Invalid select clause. Syntax: select( [channel:handler] ) or select( [cond:channel:handler] ). Offending value " +
+                            c.Value);
+            }
+            else if (c.Type == _chanType)
+            {
+                throw new PrexoniteException(
+                    "Missing handler in select clause. Syntax: select( [channel: handler] ) or select( [cond:channel:handler] )");
+            }
+            else
+            {
+                //A default handler or a handler that just doesn't have input (but possibly a condition)
+                return new KeyValuePair<Channel, PValue>(null, c);
             }
         }
 
