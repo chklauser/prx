@@ -7,7 +7,7 @@ macro select\sub
     perform.Arguments.Add(ast\const(true));
     perform.Arguments.AddRange(var args);
     
-    return call\macro([call\sub\interpret(perform)]);
+    return call\macro([call\sub\interpret(perform),context.IsJustEffect]);
 }
 
 macro chans
@@ -38,4 +38,3 @@ macro chans
 
 declare select as select\cmd;
 declare select\sub as select;
-
