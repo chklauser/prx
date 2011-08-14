@@ -385,6 +385,7 @@ FunctionDefinition<out PFunction func>
                                             {
                                                 derBody.Meta[PFunction.VolatileKey] = true;
                                                 derBody.Meta[PFunction.DeficiencyKey] = "Coroutine body can only be executed by VM anyway.";
+                                                derBody.Meta[Coroutine.IsCoroutineKey] = true;
                                             }
 
                                             //Swap compiler target references

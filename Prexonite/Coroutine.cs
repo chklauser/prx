@@ -219,6 +219,11 @@ namespace Prexonite
         #endregion
 
         /// <summary>
+        /// The meta key used to mark designated coroutine functions.
+        /// </summary>
+        public const string IsCoroutineKey = @"_\iscoroutine";
+
+        /// <summary>
         /// Returns a list with all results returned by the coroutine.
         /// </summary>
         /// <returns>Do not use with infinite lists!</returns>

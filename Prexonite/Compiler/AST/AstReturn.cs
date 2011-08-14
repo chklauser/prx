@@ -24,6 +24,7 @@
 using System;
 using System.Collections.Generic;
 using Prexonite.Types;
+using System.Linq;
 
 namespace Prexonite.Compiler.Ast
 {
@@ -55,6 +56,10 @@ namespace Prexonite.Compiler.Ast
 
         protected override void DoEmitCode(CompilerTarget target)
         {
+            var warned = false;
+            if (target.Function.Meta[Coroutine.IsCoroutineKey].Switch)
+                _warnInCoroutines(target, ref warned);
+
             if (Expression != null)
             {
                 _OptimizeNode(target, ref Expression);
@@ -80,6 +85,7 @@ namespace Prexonite.Compiler.Ast
                     {
                         Expression.EmitCode(target);
                         target.Emit(this, OpCode.ret_set);
+                        _warnInCoroutines(target, ref warned);
                     }
                     target.Emit(this, OpCode.ret_continue);
                     break;
@@ -87,6 +93,25 @@ namespace Prexonite.Compiler.Ast
                     target.Emit(this, OpCode.ret_break);
                     break;
             }
+        }
+
+        private void _warnInCoroutines(CompilerTarget target, ref bool warned)
+        {
+            if(!warned && _isInProtectedBlock(target))
+            {
+                target.Loader.ReportMessage(new ParseMessage(ParseMessageSeverity.Warning,
+                    "Detected possible return (yield) from within a protected block " +
+                        "(try-catch-finally, using, foreach). " +
+                            "This Prexonite implementation cannot guarantee that cleanup code is executed. ",
+                    this));
+                warned = true;
+            }
+        }
+
+        private static bool _isInProtectedBlock(CompilerTarget target)
+        {
+            return target.ScopeBlocks.OfType<AstSubBlock>().Any(sb => (sb.ParentNode is AstForeachLoop) ||
+                (sb.ParentNode is AstTryCatchFinally) || (sb.ParentNode is AstUsing));
         }
 
         private void emit_tail_call_exit(CompilerTarget target)

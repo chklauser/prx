@@ -63,6 +63,15 @@ namespace Prx.Tests
                 Console.Error.WriteLine(line);
             Assert.AreEqual(0, ldr.ErrorCount, "Test code did not compile without errors.");
 
+            if (ldr.Warnings.Count > 0)
+            {
+                Console.WriteLine();
+                Console.WriteLine("Warnings:");
+                foreach (var warning in ldr.Warnings)
+                    Console.WriteLine(warning);
+                Console.WriteLine();
+            }
+
             Console.WriteLine(target.StoreInString());
             return ldr;
         }
