@@ -30,35 +30,22 @@ namespace Prexonite.Compiler.Ast
     public class AstWhileLoop : AstLoop
     {
         [DebuggerStepThrough]
-        public AstWhileLoop(string file, int line, int column, bool isPrecondition, bool isNegative)
+        public AstWhileLoop(string file, int line, int column, bool isPrecondition = true, bool isPositive = true)
             : base(file, line, column)
         {
             IsPrecondition = isPrecondition;
-            IsPositive = isNegative;
-            Block = new AstLoopBlock(file, line, column);
+            IsPositive = isPositive;
         }
 
         [DebuggerStepThrough]
-        public AstWhileLoop(string file, int line, int column, bool isPrecondition)
-            : this(file, line, column, isPrecondition, false)
-        {
-        }
-
-        [DebuggerStepThrough]
-        internal AstWhileLoop(Parser p, bool isPrecondition, bool isNegative)
-            : this(p.scanner.File, p.t.line, p.t.col, isPrecondition, isNegative)
-        {
-        }
-
-        [DebuggerStepThrough]
-        internal AstWhileLoop(Parser p, bool isPrecondition)
-            : this(p, isPrecondition, false)
+        internal AstWhileLoop(Parser p, bool isPrecondition = true, bool isPositive = true)
+            : this(p.scanner.File, p.t.line, p.t.col, isPrecondition, isPositive)
         {
         }
 
         public IAstExpression Condition;
-        public bool IsPrecondition;
-        public bool IsPositive;
+        public bool IsPrecondition { get; set; }
+        public bool IsPositive { get; set; }
 
         public override IAstExpression[] Expressions
         {

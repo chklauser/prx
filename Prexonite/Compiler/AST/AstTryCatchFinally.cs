@@ -29,25 +29,25 @@ namespace Prexonite.Compiler.Ast
     public class AstTryCatchFinally : AstNode,
                                       IAstHasBlocks
     {
-        public AstBlock TryBlock;
-        public AstBlock CatchBlock;
-        public AstBlock FinallyBlock;
-        public AstGetSet ExceptionVar;
+        public AstBlock TryBlock { get; set; }
+        public AstBlock CatchBlock { get; set; }
+        public AstBlock FinallyBlock { get; set; }
+        public AstGetSet ExceptionVar { get; set; }
 
         public AstTryCatchFinally(string file, int line, int column)
             : base(file, line, column)
         {
-            TryBlock = new AstBlock(file, line, column);
-            CatchBlock = new AstBlock(file, line, column);
-            FinallyBlock = new AstBlock(file, line, column);
+            TryBlock = new AstSubBlock(file, line, column,this);
+            CatchBlock = new AstSubBlock(file, line, column,this);
+            FinallyBlock = new AstSubBlock(file, line, column,this);
         }
 
         internal AstTryCatchFinally(Parser p)
             : base(p)
         {
-            TryBlock = new AstBlock(p);
-            CatchBlock = new AstBlock(p);
-            FinallyBlock = new AstBlock(p);
+            TryBlock = new AstSubBlock(p,this);
+            CatchBlock = new AstSubBlock(p,this);
+            FinallyBlock = new AstSubBlock(p,this);
         }
 
         #region IAstHasBlocks Members

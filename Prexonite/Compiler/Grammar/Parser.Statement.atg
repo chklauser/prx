@@ -425,24 +425,21 @@ Condition<AstBlock block>
 .
 
 WhileLoop<AstBlock block>
-                                (.  AstWhileLoop loop = null;
-                                    bool isPositive = true; 
-                                .)
+                                (.  AstWhileLoop loop = new AstWhileLoop(this); .)
 =
-(   (   while  | until          (.  isPositive = false; .)    
-    )                           (.  loop = new AstWhileLoop(this, true, isPositive); .)
+(   (   while  | until          (.  loop.IsPositive = false; .)    
+    )                           
     lpar Expr<out loop.Condition> rpar
-                                (.  target.BeginBlock(loop.Block); .)
+                                (.  target.BeginBlock(loop.Block); //EndBlock is common for both loops
+                                .)
     StatementBlock<loop.Block> 
     
-|   do                          (.  AstLoopBlock loopBody = new AstLoopBlock(this, null, "while"); 
-                                    target.BeginBlock(loopBody);
+|   do                          (.  target.BeginBlock(loop.Block); 
+                                    loop.IsPrecondition = false;
                                 .)
-    StatementBlock<loopBody>
-    (   while  | until          (.  isPositive = false; .)    
-    )                           (.  loop = new AstWhileLoop(this, false, isPositive); 
-                                    loop.Block = loopBody;
-                                .)
+    StatementBlock<loop.Block>
+    (   while  | until          (.  loop.IsPositive = false; .)    
+    )                           
     lpar Expr<out loop.Condition> rpar
 )                               (.  target.EndBlock(); block.Add(loop); .)
 .
@@ -599,7 +596,9 @@ LetBinder<AstBlock block>
 .
 
 TryCatchFinally<AstBlock block>
-                                (.  AstTryCatchFinally a = new AstTryCatchFinally(this); .)
+                                (.  AstTryCatchFinally a = new AstTryCatchFinally(this);
+                                    AstGetSet excVar = null;
+                                .)
 =
     try                         (.  target.BeginBlock(a.TryBlock); .)
     lbrace
@@ -608,7 +607,7 @@ TryCatchFinally<AstBlock block>
     rbrace                      (. target.EndBlock(); .)
     [	catch                   (. target.BeginBlock(a.CatchBlock); .)
 		(   lpar
-			GetCall<out a.ExceptionVar>
+			GetCall<out excVar> (. a.ExceptionVar = excVar; .)
 			rpar
 	    |                       (.  SemErr(la,"catch-clauses that don't store the exception are illegal."); .)
 		)
@@ -634,7 +633,8 @@ TryCatchFinally<AstBlock block>
 		[	                    (.  target.BeginBlock(a.CatchBlock); .)
 		    catch
 			(   lpar
-				GetCall<out a.ExceptionVar>
+				GetCall<out excVar>
+                                (. a.ExceptionVar = excVar; .)
 				rpar
 			|                   (.  SemErr(la,"catch-clauses that don't store the exception are illegal."); .)
 			)
