@@ -830,6 +830,8 @@ namespace Prexonite
             Commands.AddEngineCommand(Const.Alias, Const.Instance);
 
             Prexonite.Commands.Core.Operators.OperatorCommands.AddToEngine(this);
+
+            Commands.AddEngineCommand(CreateEnumerator.Alias, CreateEnumerator.Instance);
         }
 
         /// <summary>

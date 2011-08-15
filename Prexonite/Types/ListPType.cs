@@ -112,7 +112,7 @@ namespace Prexonite.Types
                         break;
 
                     case "getenumerator":
-                        result = sctx.CreateNativePValue(new PValueEnumerator(lst.GetEnumerator()));
+                        result = sctx.CreateNativePValue(new PValueEnumeratorWrapper(lst.GetEnumerator()));
                         break;
                     case "add":
                         lst.AddRange(args);

@@ -227,8 +227,7 @@ function main()
         [Test]
         public void CallMemberCommandImplementation()
         {
-            var obj = new PrexoniteTests.Tests.MemberCallable();
-            obj.Name = "obj";
+            var obj = new MemberCallable {Name = "obj"};
             obj.Expect("m", new PValue[]{1,2,3}, PCall.Get, 6);
             obj.Expect("", new PValue[]{4,"a"},PCall.Set);
 
@@ -529,5 +528,32 @@ function main(x, xs)
         }
 
         #endregion
+
+        [Test]
+        public void CreateEnumeratorCommand()
+        {
+            Compile(@"
+function main(xs)
+{
+    var s = new Structure;
+    var cM = 0;
+    var cC = 0;
+    var cD = 0;
+    s.\\(""GetEnumerator"") = () =>
+    {
+        var e = xs.GetEnumerator;
+        return new enumerator(
+            () => {cM++; return e.MoveNext;},
+            () => {cC++; return e.Current; },
+            () => {cD++; dispose(e);       },
+        );
+    };
+
+    return ""M$cM.C$cC.D$cD: "" + foldl(?+?,"""",s) + "" :M$cM.C$cC.D$cD"";
+}
+");
+
+            Expect("M0.C0.D0: abc :M4.C3.D1",(PValue)new List<PValue>{"a","b","c"});
+        }
     }
 }

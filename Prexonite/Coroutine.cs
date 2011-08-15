@@ -76,7 +76,7 @@ namespace Prexonite
         ///<filterpriority>1</filterpriority>
         public IEnumerator<PValue> GetEnumerator()
         {
-            return new PValueEnumerator(_internalEnumerator());
+            return new PValueEnumeratorWrapper(_internalEnumerator());
         }
 
         private IEnumerator<PValue> _internalEnumerator()

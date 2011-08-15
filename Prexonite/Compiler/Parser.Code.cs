@@ -1015,7 +1015,7 @@ namespace Prexonite.Compiler
                 && !ParentEngine.PTypeRegistry.Contains(typeExpr.TypeId) 
                 //in case neither the built-in type nor the struct constructor exists, 
                 //  stay with built-in types for predictibility
-                && target.Symbols.TryGetValue("create_" + typeExpr.TypeId, out fallbackSymbol))
+                && target.Symbols.TryGetValue(Loader.ObjectCreationFallbackPrefix + typeExpr.TypeId, out fallbackSymbol))
             {
                 var call = new AstGetSetSymbol(parser, PCall.Get, fallbackSymbol.Id, fallbackSymbol.Interpretation);
                 expr = call;

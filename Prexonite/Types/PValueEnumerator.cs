@@ -1,60 +1,24 @@
-#region
-
-using System;
+﻿using System;
 using System.Collections;
 using System.Collections.Generic;
 
-#endregion
-
 namespace Prexonite.Types
 {
-    /// <summary>
-    /// An enumerator proxyy that returns the values instead of PValue objects of an <see cref="IEnumerable{PValue}"/>
-    /// </summary>
-    public sealed class PValueEnumerator : IEnumerator<PValue>,
-                                    IObject
+    public abstract class PValueEnumerator : IEnumerator<PValue>, IObject
     {
-        #region Class
-
-        private readonly IEnumerator<PValue> _baseEnumerator;
-
-        /// <summary>
-        /// Creates a new proxy for the IEnumerator of the supplied <paramref name="enumerable"/>.
-        /// </summary>
-        /// <param name="enumerable">An IEnumerable.</param>
-        public PValueEnumerator(IEnumerable<PValue> enumerable)
-            : this(enumerable.GetEnumerator())
-        {
-        }
-
-        /// <summary>
-        /// Creates a new prox for the supplied enumerator.
-        /// </summary>
-        /// <param name="baseEnumerator">An IEnumerator</param>
-        public PValueEnumerator(IEnumerator<PValue> baseEnumerator)
-        {
-            if (baseEnumerator == null)
-                throw new ArgumentNullException("baseEnumerator");
-            _baseEnumerator = baseEnumerator;
-        }
-
-        #endregion
-
-        #region IEnumerator<PValue> Members
-
         /// <summary>
         /// Returns the current element
         /// </summary>
-        public PValue Current
+        public abstract PValue Current { get; }
+
+        /// <summary>
+        /// Returns the current PValue (as an object)
+        /// </summary>
+        object IEnumerator.Current
         {
-            get { return _baseEnumerator.Current; }
+            get { return Current; }
         }
 
-        #endregion
-
-        #region IDisposable Members
-
-        // Dispose() calls Dispose(true)
         /// <summary>
         /// Releases all managed and unmanaged resources held by this instance.
         /// </summary>
@@ -64,53 +28,26 @@ namespace Prexonite.Types
             GC.SuppressFinalize(this);
         }
 
-        // The bulk of the clean-up code is implemented in Dispose(bool)
-        private void Dispose(bool disposing)
-        {
-            if (!disposing)
-                return;
-            // free managed resources 
-            if (_baseEnumerator != null)
-                _baseEnumerator.Dispose();
-        }
-
-        #endregion
-
-        #region IEnumerator Members
-
-        /// <summary>
-        /// Returns the current PValue (as an object)
-        /// </summary>
-        object IEnumerator.Current
-        {
-            get { return _baseEnumerator.Current; }
-        }
+        protected abstract void Dispose(bool disposing);
 
         /// <summary>
         /// Moves on to the next value.
         /// </summary>
         /// <returns>True if that next value exists; false otherwise.</returns>
-        public bool MoveNext()
-        {
-            return _baseEnumerator.MoveNext();
-        }
+        public abstract bool MoveNext();
 
         /// <summary>
         /// Resets the base enumerator.
         /// </summary>
         /// <remarks>Some enumerators may not support the <see cref="IEnumerator.Reset"/> method.</remarks>
         /// <exception cref="NotSupportedException">The base enumerator does not support resetting.</exception>
-        public void Reset()
+        public virtual void Reset()
         {
-            _baseEnumerator.Reset();
+            throw new NotSupportedException(GetType().Name + " does not support System.Collections.IEnumerator.Reset()");
         }
 
-        #endregion
-
-        #region IObject Members
-
         /// <summary>
-        /// Dynamically calls members of <see cref="PValueEnumerator"/>.
+        /// Dynamically calls members of <see cref="PValueEnumeratorWrapper"/>.
         /// </summary>
         /// <param name="sctx">The stack context in which to call the memeber.</param>
         /// <param name="args">The array of arguments to be passed to the member call.</param>
@@ -148,7 +85,5 @@ namespace Prexonite.Types
 
             return result != null;
         }
-
-        #endregion
     }
 }

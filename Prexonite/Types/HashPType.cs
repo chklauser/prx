@@ -61,7 +61,7 @@ namespace Prexonite.Types
 
             if (argc == 0)
             {
-                result = sctx.CreateNativePValue(new PValueEnumerator(pvht.GetPValueEnumerator()));
+                result = sctx.CreateNativePValue(new PValueEnumeratorWrapper(pvht.GetPValueEnumerator()));
             }
             else if (argc == 1)
             {
@@ -204,7 +204,7 @@ namespace Prexonite.Types
                     break;
 
                 case "getenumerator":
-                    result = Object.CreatePValue(new PValueEnumerator(pvht.GetPValueEnumerator()));
+                    result = Object.CreatePValue(new PValueEnumeratorWrapper(pvht.GetPValueEnumerator()));
                     break;
 
                 case "gethashcode":
