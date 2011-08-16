@@ -342,10 +342,10 @@ namespace Prexonite.Compiler.Cil
                 {
                     case OpCode.cmd:
                         //Check for commands that are not compatible.
-                        PCommand cmd;
-                        if (!targetEngine.Commands.TryGetValue(ins.Id, out cmd))
+                        ICommandInfo cmd;
+                        if (!targetEngine.Commands.TryGetInfo(ins.Id, out cmd))
                         {
-                            reason = "Cannot find command " + ins.Id;
+                            reason = "Cannot find information about command " + ins.Id;
                             return false;
                         }
 
@@ -354,18 +354,18 @@ namespace Prexonite.Compiler.Cil
                         CompileTimeValue[] staticArgv;
 
                         //First allow CIL extensions to kick in, and only if they don't apply, check for CIL awareness.
-                        if ((extension = cmd as ICilExtension) != null //
+                        if (cmd.TryGetCilExtension(out extension) 
                             && !_rangeInSet(insOffset - (staticArgv = CompileTimeValue.ParseSequenceReverse(source.Code, localVariableMapping, address - 1)).Length + 1, staticArgv.Length, jumpTargets)
                             && extension.ValidateArguments(staticArgv, ins.Arguments - staticArgv.Length))
                         {
                             cilExtensions.Add(address - staticArgv.Length);
                         }
-                        else if ((aware = cmd as ICilCompilerAware) != null)
+                        else if (cmd.TryGetCilCompilerAware(out aware))
                         {
                             var flags = aware.CheckQualification(ins);
                             if (flags == CompilationFlags.IsIncompatible) //Incompatible and no workaround
                             {
-                                reason = "Incompatible command " + cmd;
+                                reason = "Incompatible command " + ins.Id;
                                 return false;
                             }
                         }

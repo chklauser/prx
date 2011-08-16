@@ -1,0 +1,13 @@
+
+build does require("run_tests.pxs");
+
+function main
+{
+    println;
+    println("================= DEFICIENCIES ================");
+    (asm(ldr.app).Functions)
+    >> where(?.Meta then ?[Prexonite::PFunction.VolatileKey] then ?.Switch)
+    >> each(f => println(f,"\n\t",f.Meta[Prexonite::PFunction.DeficiencyKey].Text,"\n"));
+}
+
+{ CompileToCil; }

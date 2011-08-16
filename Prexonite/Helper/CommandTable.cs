@@ -28,6 +28,59 @@ namespace Prexonite.Commands
 {
     public class CommandTable : SymbolTable<PCommand>
     {
+        private readonly SymbolTable<ICommandInfo> _fallbackCommandInfos = new SymbolTable<ICommandInfo>();
+
+        /// <summary>
+        /// Returns information about the specified command's capabilities. The command might not be installed
+        /// in the symbol table.
+        /// </summary>
+        /// <param name="id">The id of the command to get information about.</param>
+        /// <param name="commandInfo">Contains the command info on success. Undefined on failure.</param>
+        /// <returns>True on success; false on failure.</returns>
+        public bool TryGetInfo(string id, out ICommandInfo commandInfo)
+        {
+            PCommand command;
+            if (TryGetValue(id, out command))
+            {
+                commandInfo = command.ToCommandInfo();
+                return true;
+            }
+            else if(_fallbackCommandInfos.TryGetValue(id, out commandInfo))
+            {
+                return true;
+            }
+
+            return false;
+        }
+
+        /// <summary>
+        /// Adds a fallback command info to the command table. This will be returned by <see cref="TryGetInfo"/> if 
+        /// no corresponding command is stored in the table at the moment.
+        /// </summary>
+        /// <param name="id">The id of the command to provide fallback info for.</param>
+        /// <param name="commandInfo">The fallback command info.</param>
+        public void ProvideFallbackInfo(string id, ICommandInfo commandInfo)
+        {
+            if (id == null)
+                throw new ArgumentNullException("id");
+            if (commandInfo == null)
+                throw new ArgumentNullException("commandInfo");
+
+            _fallbackCommandInfos[id] = commandInfo;
+        }
+
+        /// <summary>
+        /// Removes an <see cref="ICommandInfo"/> from the fallback command info table.
+        /// </summary>
+        /// <param name="id">The id of the command to remove fallback info from.</param>
+        /// <returns>True if a fallback command info was removed. False otherwise.</returns>
+        public bool RemoveFallbackInfo(string id)
+        {
+            if (id == null)
+                throw new ArgumentNullException("id");
+            return _fallbackCommandInfos.Remove(id);
+        }
+
         /// <summary>
         /// Determines whether a particular name is registered for a command.
         /// </summary>

@@ -297,6 +297,16 @@ function main(x,y)
                     "a__xXx__je=b",
                     "a__xXx__=b"
                 }, "a", "b");
+
+            if(CompileToCil)
+            {
+                var surround = target.Functions["__surround"];
+                Assert.That(surround,Is.Not.Null,"Function __surround does not exist.");
+                Assert.That(surround.Meta[PFunction.VolatileKey].Switch,
+                    Is.False,
+                    string.Format("Function {0} is volatile. Reason: {1}", surround.Id,
+                        surround.Meta[PFunction.DeficiencyKey].Text));
+            }
         }
 
 

@@ -85,6 +85,16 @@ namespace Prexonite.Compiler
 
             //Macro commands
             _initializeMacroCommands();
+
+            //Provide fallback command info for CIL compilation
+            _imprintCommandInfo();
+        }
+
+        private void _imprintCommandInfo()
+        {
+            foreach (var buildCommand in _buildCommands)
+                ParentEngine.Commands.ProvideFallbackInfo(buildCommand.Key,
+                    buildCommand.Value.ToCommandInfo());
         }
 
         public void RegisterExistingCommands()
