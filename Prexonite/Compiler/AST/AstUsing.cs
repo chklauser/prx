@@ -34,23 +34,23 @@ namespace Prexonite.Compiler.Ast
         internal AstUsing(Parser p)
             : base(p)
         {
-            Block = new AstBlock(File, Line, Column);
+            _block = new AstSubBlock(File, Line, Column,this);
         }
 
         public AstUsing(string file, int line, int column)
             : base(file, line, column)
         {
-            Block = new AstBlock(File, Line, Column);
+            _block = new AstSubBlock(File, Line, Column,this);
         }
 
         public IAstExpression Expression;
-        public AstBlock Block;
+        private readonly AstSubBlock _block;
 
         #region IAstHasBlocks Members
 
         public AstBlock[] Blocks
         {
-            get { return new[] {Block}; }
+            get { return new[] {_block}; }
         }
 
         #region IAstHasExpressions Members
@@ -58,6 +58,11 @@ namespace Prexonite.Compiler.Ast
         public IAstExpression[] Expressions
         {
             get { return new[] {Expression}; }
+        }
+
+        public AstBlock Block
+        {
+            get { return _block; }
         }
 
         #endregion
@@ -70,7 +75,7 @@ namespace Prexonite.Compiler.Ast
                 throw new PrexoniteException("AstUsing requires Expression to be initialized.");
 
             var tryNode = new AstTryCatchFinally(File, Line, Column);
-            var vContainer = Block.CreateLabel("container");
+            var vContainer = _block.CreateLabel("container");
             target.Function.Variables.Add(vContainer);
             //Try block => Container = {Expression}; {Block};
             var setCont =
@@ -94,7 +99,7 @@ namespace Prexonite.Compiler.Ast
 
             var tryBlock = tryNode.TryBlock;
             tryBlock.Add(setCont);
-            tryBlock.AddRange(Block);
+            tryBlock.AddRange(_block);
 
             //Finally block => dispose( Container );
             var dispose =

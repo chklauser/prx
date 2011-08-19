@@ -354,7 +354,6 @@ namespace Prexonite.Compiler.Ast
 
         #region Block labels
 
-
         public bool JumpLabelsEnabled { get; set; }
         public AstBlock LexicalParentBlock { get; set; }
 
@@ -382,7 +381,7 @@ namespace Prexonite.Compiler.Ast
         #endregion
     }
 
-    public class AstLoopBlock : AstBlock, ILoopBlock
+    public class AstLoopBlock : AstSubBlock, ILoopBlock
     {
         public const string ContinueWord = "continue";
         public const string BreakWord = "break";
@@ -392,20 +391,8 @@ namespace Prexonite.Compiler.Ast
         private readonly string _beginLabel;
 
         [DebuggerStepThrough]
-        public AstLoopBlock(string file, int line, int column)
-            : this(file, line, column, null)
-        {
-        }
-
-        [DebuggerStepThrough]
-        public AstLoopBlock(string file, int line, int column, string uid)
-            : this(file, line, column, uid, null)
-        {
-        }
-
-        [DebuggerStepThrough]
-        public AstLoopBlock(string file, int line, int column, string uid, string prefix)
-            : base(file, line, column, uid, prefix)
+        public AstLoopBlock(string file, int line, int column, string uid = null, string prefix = null, AstNode parentNode = null)
+            : base(file, line, column, uid, prefix, parentNode)
         {
             //See other ctor!
             _continueLabel = CreateLabel(ContinueWord);
@@ -414,20 +401,8 @@ namespace Prexonite.Compiler.Ast
         }
 
         [DebuggerStepThrough]
-        internal AstLoopBlock(Parser p, string uid, string prefix)
-            : this(p.scanner.File,p.t.line, p.t.col, uid, prefix)
-        {
-        }
-
-        [DebuggerStepThrough]
-        internal AstLoopBlock(Parser p)
-            : this(p, null)
-        {
-        }
-
-        [DebuggerStepThrough]
-        internal AstLoopBlock(Parser p, string uid)
-            : this(p, uid, null)
+        internal AstLoopBlock(Parser p, string uid = null, string prefix = null, AstNode parentNode = null)
+            : this(p.scanner.File,p.t.line, p.t.col, uid, prefix, parentNode)
         {
         }
 
@@ -444,6 +419,50 @@ namespace Prexonite.Compiler.Ast
         public string BeginLabel
         {
             get { return _beginLabel; }
+        }
+    }
+
+    public class AstSubBlock : AstBlock
+    {
+        private readonly AstNode _parentNode;
+
+        public AstSubBlock(string file, int line, int column, AstNode parentNode) : base(file, line, column)
+        {
+            _parentNode = parentNode;
+        }
+
+        public AstSubBlock(string file, int line, int column, string uid, AstNode parentNode) : base(file, line, column, uid)
+        {
+            _parentNode = parentNode;
+        }
+
+        public AstSubBlock(string file, int line, int column, string uid, string prefix, AstNode parentNode) : base(file, line, column, uid, prefix)
+        {
+            _parentNode = parentNode;
+        }
+
+        internal AstSubBlock(Parser p, string uid, string prefix, AstNode parentNode) : base(p, uid, prefix)
+        {
+            _parentNode = parentNode;
+        }
+
+        internal AstSubBlock(Parser p, AstNode parentNode) : base(p)
+        {
+            _parentNode = parentNode;
+        }
+
+        internal AstSubBlock(Parser p, string uid, AstNode parentNode) : base(p, uid)
+        {
+            _parentNode = parentNode;
+        }
+
+        /// <summary>
+        /// The node this block is a part of. Can be null.
+        /// </summary>
+        public AstNode ParentNode
+        {
+            [DebuggerStepThrough]
+            get { return _parentNode; }
         }
     }
 }

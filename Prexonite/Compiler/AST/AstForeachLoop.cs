@@ -35,7 +35,6 @@ namespace Prexonite.Compiler.Ast
         public AstForeachLoop(string file, int line, int column)
             : base(file, line, column)
         {
-            Block = new AstLoopBlock(file, line, column);
         }
 
         [DebuggerStepThrough]
@@ -106,6 +105,7 @@ namespace Prexonite.Compiler.Ast
 
             //Get the enumerator
             target.BeginBlock(Block);
+
             List.EmitCode(target);
             target.EmitGetCall(List, 0, "GetEnumerator");
             var castAddr = target.Code.Count;

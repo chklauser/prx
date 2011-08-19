@@ -76,7 +76,7 @@ namespace Prexonite
         ///<filterpriority>1</filterpriority>
         public IEnumerator<PValue> GetEnumerator()
         {
-            return new PValueEnumerator(_internalEnumerator());
+            return new PValueEnumeratorWrapper(_internalEnumerator());
         }
 
         private IEnumerator<PValue> _internalEnumerator()
@@ -217,6 +217,11 @@ namespace Prexonite
         }
 
         #endregion
+
+        /// <summary>
+        /// The meta key used to mark designated coroutine functions.
+        /// </summary>
+        public const string IsCoroutineKey = @"_\iscoroutine";
 
         /// <summary>
         /// Returns a list with all results returned by the coroutine.

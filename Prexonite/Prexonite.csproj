@@ -136,6 +136,8 @@
     <Compile Include="Commands\Core\PartialApplication\FunctionalPartialCallCommand.cs" />
     <Compile Include="Commands\Core\PartialApplication\PartialCallStar.cs" />
     <Compile Include="Commands\Core\PartialApplication\PartialCallStarImplCommand.cs" />
+    <Compile Include="Commands\List\CreateEnumerator.cs" />
+    <Compile Include="Commands\PCommandInfo.cs" />
     <Compile Include="Compiler\Macro\Commands\PartialCallWrapper.cs" />
     <Compile Include="Compiler\Macro\Commands\CallMacro.cs" />
     <Compile Include="Compiler\Macro\Commands\CallStar.cs" />
@@ -369,6 +371,7 @@
     <Compile Include="Types\NullPType.cs" />
     <Compile Include="Types\PType.cs" />
     <Compile Include="Types\PValueEnumerator.cs" />
+    <Compile Include="Types\PValueEnumeratorWrapper.cs" />
     <Compile Include="Types\PValueHashtable.cs" />
     <Compile Include="Types\PValueKeyValuePair.cs" />
     <Compile Include="Types\RealPType.cs" />

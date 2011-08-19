@@ -7,14 +7,16 @@ namespace Prexonite.Compiler.Ast
         protected AstLoop(string file, int line, int column)
             : base(file, line, column)
         {
+            _block = new AstLoopBlock(file, line, column,parentNode:this);
         }
 
         internal AstLoop(Parser p)
             : base(p)
         {
+            _block = new AstLoopBlock(p,parentNode:this);
         }
 
-        public AstLoopBlock Block;
+        private readonly AstLoopBlock _block;
 
         #region IAstHasBlocks Members
 
@@ -28,6 +30,11 @@ namespace Prexonite.Compiler.Ast
         #region IAstHasExpressions Members
 
         public abstract IAstExpression[] Expressions { get; }
+
+        public AstLoopBlock Block
+        {
+            get { return _block; }
+        }
 
         #endregion
     }

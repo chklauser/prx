@@ -97,15 +97,24 @@ namespace Prexonite.Commands.List
             var pvEnumerator = psource.DynamicCall(sctx, Runtime.EmptyPValueArray, PCall.Get, "GetEnumerator").ConvertTo(sctx, typeof(IEnumerator));
             var enumerator = (IEnumerator) pvEnumerator.Value;
             PValueEnumerator pvEnum;
-            if((pvEnum = enumerator as PValueEnumerator) != null)
+            try
             {
-                while (pvEnum.MoveNext())
-                    yield return pvEnum.Current;
+                if ((pvEnum = enumerator as PValueEnumerator) != null)
+                {
+                    while (pvEnum.MoveNext())
+                        yield return pvEnum.Current;
+                }
+                else
+                {
+                    while (enumerator.MoveNext())
+                        yield return sctx.CreateNativePValue(enumerator.Current);
+                }
             }
-            else
+            finally
             {
-                while (enumerator.MoveNext())
-                    yield return sctx.CreateNativePValue(enumerator.Current);                
+                var disposable = enumerator as IDisposable;
+                if(disposable != null)
+                    disposable.Dispose();
             }
         }
 

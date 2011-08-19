@@ -34,7 +34,6 @@ namespace Prexonite.Compiler.Ast
         public AstForLoop(string file, int line, int column)
             : base(file, line, column)
         {
-            Block = new AstLoopBlock(file, line, column);
             Initialize = new AstBlock(file, line, column);
             NextIteration = new AstBlock(file, line, column);
         }

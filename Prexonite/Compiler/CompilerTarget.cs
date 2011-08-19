@@ -638,6 +638,11 @@ namespace Prexonite.Compiler
 
         private readonly Stack<AstBlock> _scopeBlocks = new Stack<AstBlock>();
 
+        public IEnumerable<AstBlock> ScopeBlocks
+        {
+            get { return _scopeBlocks; }
+        }
+
         public AstBlock CurrentBlock
         {
             [DebuggerStepThrough]

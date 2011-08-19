@@ -28,6 +28,7 @@ using System;
 using System.Collections;
 using System.Collections.Generic;
 using System.Diagnostics;
+using System.Diagnostics.CodeAnalysis;
 using System.IO;
 using System.Reflection;
 using System.Text;
@@ -36,6 +37,7 @@ using Prexonite.Commands.Concurrency;
 using Prexonite.Commands.Core;
 using Prexonite.Compiler.Ast;
 using Prexonite.Compiler.Macro;
+using Prexonite.Compiler.Macro.Commands;
 using Prexonite.Types;
 using Debug = System.Diagnostics.Debug;
 
@@ -83,6 +85,16 @@ namespace Prexonite.Compiler
 
             //Macro commands
             _initializeMacroCommands();
+
+            //Provide fallback command info for CIL compilation
+            _imprintCommandInfo();
+        }
+
+        private void _imprintCommandInfo()
+        {
+            foreach (var buildCommand in _buildCommands)
+                ParentEngine.Commands.ProvideFallbackInfo(buildCommand.Key,
+                    buildCommand.Value.ToCommandInfo());
         }
 
         public void RegisterExistingCommands()
@@ -549,14 +561,14 @@ namespace Prexonite.Compiler
 
         private void _initializeMacroCommands()
         {
-            _addMacroCommand(Macro.Commands.CallSub.Instance);
-            _addMacroCommand(Macro.Commands.CallSubInterpret.Instance);
-            _addMacroCommand(Macro.Commands.Pack.Instance);
-            _addMacroCommand(Macro.Commands.Unpack.Instance);
-            _addHelperCommands(Macro.Commands.Unpack.GetHelperCommands(this));
-            _addMacroCommand(Macro.Commands.Reference.Instance);
-            _addHelperCommands(Macro.Commands.Reference.GetHelperCommands(this));
-            _addMacroCommand(Macro.Commands.CallStar.Instance);
+            _addMacroCommand(CallSub.Instance);
+            _addMacroCommand(CallSubInterpret.Instance);
+            _addMacroCommand(Pack.Instance);
+            _addMacroCommand(Unpack.Instance);
+            _addHelperCommands(Unpack.GetHelperCommands(this));
+            _addMacroCommand(Reference.Instance);
+            _addHelperCommands(Reference.GetHelperCommands(this));
+            _addMacroCommand(CallStar.Instance);
 
             // Call/* macros
             _addMacroCommand(Call.Instance.Partial);
@@ -568,8 +580,8 @@ namespace Prexonite.Compiler
 
         private void _addCallMacro()
         {
-            _addMacroCommand(Macro.Commands.CallMacro.Instance);
-            var callMacroHelper = Macro.Commands.CallMacro.GetHelperCommands(this);
+            _addMacroCommand(CallMacro.Instance);
+            var callMacroHelper = CallMacro.GetHelperCommands(this);
             _buildCommands.AddCompilerCommand(callMacroHelper.Key, callMacroHelper.Value);
             _addMacroCommand(callMacroHelper.Value.Partial);
         }
@@ -1285,8 +1297,9 @@ namespace Prexonite.Compiler
 
         #endregion
 
-        [System.Diagnostics.CodeAnalysis.SuppressMessage("Microsoft.Naming", "CA1704:IdentifiersShouldBeSpelledCorrectly", MessageId = "Cil")]
+        [SuppressMessage("Microsoft.Naming", "CA1704:IdentifiersShouldBeSpelledCorrectly", MessageId = "Cil")]
         public const string CilHintsKey = "cilhints";
 
+        public const string ObjectCreationFallbackPrefix = "create_";
     }
 }
