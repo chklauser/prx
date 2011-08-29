@@ -428,8 +428,8 @@ namespace Prexonite
                         Push(CreateNativePValue(_localVariableArray[argc]));
                         break;
                     case OpCode.ldr_glob:
-                        if (ParentApplication.Variables.ContainsKey(id))
-                            Push(CreateNativePValue(ParentApplication.Variables[id]));
+                        if (ParentApplication.Variables.TryGetValue(id, out pvar))
+                            Push(CreateNativePValue(pvar));
                         else
                             throw new PrexoniteException
                                 (
@@ -527,11 +527,9 @@ namespace Prexonite
                         //LOAD GLOBAL VARIABLE
                     case OpCode.ldglob:
                         var app = ParentApplication;
-                        pvar = app.Variables[id];
-                        if (pvar == null)
-                            throw new PrexoniteException
-                                (
-                                "The global variable " + id + " does not exist.");
+                        
+                        if (!app.Variables.TryGetValue(id,out pvar))
+                            throw _globalVariableDoesNotExistException(id);
                         app.EnsureInitialization(ParentEngine, pvar);
 #if Verbose
                     val = pvar.Value;
@@ -542,11 +540,8 @@ namespace Prexonite
 #endif
                         break;
                     case OpCode.stglob:
-                        pvar = ParentApplication.Variables[id];
-                        if (pvar == null)
-                            throw new PrexoniteException
-                                (
-                                "The global variable " + id + " does not exist.");
+                        if (!ParentApplication.Variables.TryGetValue(id, out pvar))
+                            throw _globalVariableDoesNotExistException(id);
                         pvar.Value = Pop();
                         break;
 
@@ -655,7 +650,8 @@ namespace Prexonite
                         goto doIncrement;
 
                     case OpCode.incglob:
-                        pvar = ParentApplication.Variables[id];
+                        if (!ParentApplication.Variables.TryGetValue(id, out pvar))
+                            throw _globalVariableDoesNotExistException(id); 
                         pvar.Value = pvar.Value.Increment(this);
 #if Verbose
                     Console.Write("=" + _toDebug(pvar.Value));
@@ -674,7 +670,8 @@ namespace Prexonite
                         goto doDecrement;
 
                     case OpCode.decglob:
-                        pvar = ParentApplication.Variables[id];
+                        if (!ParentApplication.Variables.TryGetValue(id, out pvar))
+                            throw _globalVariableDoesNotExistException(id); 
                         pvar.Value = pvar.Value.Decrement(this);
 #if Verbose
                     Console.Write("=" + _toDebug(pvar.Value));
@@ -892,7 +889,8 @@ namespace Prexonite
                     case OpCode.indglob:
                         _fillArgs(argc, out argv);
                         app = ParentApplication;
-                        pvar = app.Variables[id];
+                        if (!ParentApplication.Variables.TryGetValue(id, out pvar))
+                            throw _globalVariableDoesNotExistException(id); 
                         app.EnsureInitialization(ParentEngine, pvar);
                         left = pvar.Value;
 
@@ -1211,6 +1209,13 @@ namespace Prexonite
             } while (!needToReturn);
 
             return _pointer < codeLength;
+        }
+
+        private PrexoniteException _globalVariableDoesNotExistException(string id)
+        {
+            return new PrexoniteException
+                (
+                "The global variable " + id + " does not exist.");
         }
 
         #region Exception Handling

@@ -1,0 +1,57 @@
+ 
+build does require(@"psr\pattern.pxs");
+build does require(@"psr\test.pxs");
+
+function test_con[test]
+{
+    var a = 11;
+    var b = 13;
+    
+    var x = kvp(a,b);
+    assert(x is Prexonite::Types::PValueKeyValuePair,"$(boxed(x)) is not a PValueKeyValuePair");
+    assert_eq(x.Key,a,"Key of $(boxed(x)) doesn't match");
+    assert_eq(x.Value,b,"Value of $(boxed(x)) doesn't match");
+    
+    //nested
+    var c = 17;
+    var d = 19;
+    var x = kvp(kvp(a,b),kvp(c,d));
+    assert(x is Prexonite::Types::PValueKeyValuePair,"$(boxed(x)) is not a PValueKeyValuePair (nested)");
+    var xa = x.Key;
+    assert(xa is Prexonite::Types::PValueKeyValuePair,"$(boxed(xa)) should be PValueKeyValuePair (key of nested)");
+    assert_eq(xa.Key,a,"Key of $(boxed(xa)) doesn't match");
+    assert_eq(xa.Value,b,"Value of $(boxed(xa)) doesn't match");
+    var xb = x.Value;
+    assert(xb is Prexonite::Types::PValueKeyValuePair,"$(boxed(xb)) should be PValueKeyValuePair (key of nested)");
+    assert_eq(xb.Key,c,"Key of $(boxed(xb)) doesn't match");
+    assert_eq(xb.Value,d,"Value of $(boxed(xb)) doesn't match");
+}
+
+function test_dcon[test]
+{
+    var a = 11;
+    var b = 13;
+    
+    var p = a:b;
+    kvp(var x,var y) = p;
+    assert_eq(x,a,"Key doesn't match");
+    assert_eq(y,b,"Value doesn't match");
+    
+    var c = 17;
+    var s = new Structure;
+    var mem_called = false;
+    s.\\("mem") = (this,z) => {
+        assert_eq(mem_called,false,"s.mem already called");
+        mem_called = true;
+        assert_eq(z,c,"mem arg doesn't match");
+    };   
+    
+    var q = p:c;
+    
+    var x = y = null;
+    kvp(kvp(var x, var y),s.mem) = q;
+    
+    assert_eq(x,a,"Key doesn't match #2");
+    assert_eq(y,b,"Value doesn't match #2");
+    
+}

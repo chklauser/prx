@@ -1,4 +1,6 @@
-﻿build
+﻿var totalCompTime;
+
+build
 {
     function req_ex(path)
     {
@@ -7,6 +9,7 @@
         require(path);
         timer\stop;
         println("done.\n\t",timer\elapsed,"ms");
+        totalCompTime += timer\elapsed;
         timer\reset;
     }
 
@@ -22,24 +25,55 @@
         @"prop.test.pxs",
         @"psr\misc.pxs",
         @"misc.test.pxs",
+        @"psr\pattern.pxs",
+        @"pattern-kvp.test.pxs",
+        @"psr\stack.pxs",
+        @"stack.test.pxs",
     ]) >> each(req_ex(?));
+    
+    println("Total compilation time: $(totalCompTime)ms");
     
     (asm(ldr.app)).Functions.Remove(->req_ex);
 }
 
 function main 
 {
+    var cilTime = null;
     if(var args >> exists(?.Contains("cil")))
     {
         print("Compiling to CIL...");
         timer\start;
         CompileToCil;
         timer\stop;
-        println("done.\n\t",timer\elapsed,"ms");
+        println("done.\n\t",cilTime = timer\elapsed,"ms");
         timer\reset;
     }
     timer\start;
     run_tests;
     timer\stop;
-    println("\tTotal: ",timer\elapsed,"ms");
+    var displayTotal = false;
+    var total = 0;
+    var fieldWidth = 6;
+    
+    if(totalCompTime is not null)
+    {
+        println("\tBuild  : ",setright(fieldWidth,totalCompTime),"ms");
+        total += totalCompTime;
+        displayTotal = true;
+    }
+    
+    if(cilTime is not null)
+    {
+        println("\tCil    : ",setright(fieldWidth,cilTime),"ms");
+        total += cilTime;
+        displayTotal = true;
+    }
+    
+    println("\tTests  : ",setright(fieldWidth,timer\elapsed),"ms");
+    total += timer\elapsed;
+    
+    if(displayTotal)
+    {
+        println("\tOverall: ",setright(fieldWidth,total),"ms");
+    }
 }
