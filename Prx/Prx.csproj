@@ -175,6 +175,12 @@
     <Content Include="psr\dependency_analysis.pxs">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </Content>
+    <None Include="psr\test.pxs">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </None>
+    <None Include="psr\test\meta_macro.pxs">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </None>
     <None Include="samples\beer.pxs">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </None>
