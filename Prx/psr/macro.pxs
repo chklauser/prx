@@ -164,6 +164,23 @@ macro macro\report_info(message)
     return impl(message, "Info");
 }
 
+//Returns an AST node that represents an access to SI
+macro macro\getSI
+{
+    if(context.IsJustEffect)
+        return;
+        
+    function create_getSI = ast("GetSetSymbol",SI.get,->SI.Id, SI.func);
+    
+    var mi = ast("MacroInvocation", "ast\\macro", SI.m.func);
+    mi.Arguments.Add(ast("Constant","GetSetSymbol"));    
+    mi.Arguments.Add(ast("GetSetMemberAccess",new getSI,"get"));
+    mi.Arguments.Add(ast("Constant",->SI.Id));
+    mi.Arguments.Add(ast("GetSetMemberAccess",new getSI,"func"));
+    
+    context.Block.Expression = mi;
+}
+
 //Create node type check functions (to separate macro implementations from the CLR ast node types.
 var ast_is_expression [is compiler;];
 var ast_is_effect [is compiler;];
@@ -434,7 +451,7 @@ macro macro\interpretation(prototype)
     if(context.IsJustEffect)
         return;
     
-    var getSI = ast("GetSetSymbol",SI.get,"SI",SI.gvar);
+    var getSI = macro\getSI;
     
     var siMem;
     if(ast_is_MacroInvocation(prototype))
@@ -515,8 +532,7 @@ macro ast\invoke_macro(macroId, symbolInterpretation)
                 siMem = "func";
             }
             
-            var getSI = ast("GetSetSymbol",SI.get,"SI",SI.gvar);
-            var getSI\m = ast("GetSetMemberAccess",SI.get,getSI,"m");
+            var getSI\m = ast("GetSetMemberAccess",SI.get,macro\getSI,"m");
             var getSI\m\i = ast("GetSetMemberAccess",SI.get,getSI\m,siMem);
             if((var args).Count > 1)
                 args[1] = getSI\m\i;
@@ -537,8 +553,7 @@ macro ast\invoke_macro(macroId, symbolInterpretation)
 macro ast\symbol(symbolInterpretation)
 {
     var c = ast\invoke_macro(macro\id(ast\macro));
-    var getSI = ast("GetSetSymbol",SI.get,"SI",SI.gvar);
-    var getSI\cmd = ast("GetSetMemberAccess",SI.get,getSI,ast\read(context, symbolInterpretation));
+    var getSI\cmd = ast("GetSetMemberAccess",SI.get,macro\getSI,ast\read(context, symbolInterpretation));
     c.Arguments.Add(ast("Constant", "GetSetSymbol"));
     c.Arguments.AddRange(var args >> skip(1));
     c.Arguments.Add(getSI\cmd);
@@ -609,7 +624,7 @@ macro ast\member(subject, call_type, id)
         establish_macro_context;
     
     id ??= ast("Constant","");
-    call_type ??= ast("GetSetMemberAccess",SI.get,ast\gvar(SI.get,"SI"),"get");
+    call_type ??= ast("GetSetMemberAccess",SI.get,macro\getSI,"get");
     
     var c = ast\invoke_macro(macro\id(ast\macro));
     c.Arguments.Add(ast("Constant","GetSetMemberAccess"));
@@ -689,10 +704,9 @@ macro ast\ret\generic_proc(expr, kind)
     if(is_in_macro)
         establish_macro_context;
  
-    var getSI = ast\gvar(SI.get, "SI");
     var mkRetNode = ast\invoke_macro(macro\id(ast\macro));
     mkRetNode.Arguments.Add(ast\const("Return"));
-    mkRetNode.Arguments.Add(ast\member(getSI, SI.get, "ret\\$kind"));
+    mkRetNode.Arguments.Add(ast\member(macro\getSI, SI.get, "ret\\$kind"));
     if(expr is Null)
     {
         if(kind.ToLowerInvariant == "set")
