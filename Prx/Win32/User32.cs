@@ -16,16 +16,24 @@ namespace Prx.Win32
 
         public static string ToUnicode(ConsoleKeyInfo key, bool relaxed)
         {
-            const int bufferLength = 16;
-            var outputBuilder = new StringBuilder(bufferLength);
-            var modifiers = GetKeyState(key.Modifiers);
-            var result = ToUnicode((uint) key.Key, 0, modifiers, outputBuilder, bufferLength, 0);
-            if (result > 0)
-                return outputBuilder.ToString(0, result);
-            else if (relaxed)
-                return String.Empty;
+            if (key.Key == ConsoleKey.Packet)
+            {
+                return key.KeyChar.ToString();
+            }
             else
-                throw new Exception("Invalid key (" + key.KeyChar + "/" + result + "/" + outputBuilder +")");
+            {
+                const int bufferLength = 16;
+                var outputBuilder = new StringBuilder(bufferLength);
+                var modifiers = GetKeyState(key.Modifiers);
+                var result = ToUnicode((uint) key.Key, 0, modifiers, outputBuilder, bufferLength, 0);
+                if (result > 0 && result <= outputBuilder.Length)
+                    return outputBuilder.ToString(0, result);
+                else if (relaxed)
+                    return String.Empty;
+                else
+                    throw new Exception("Invalid key (" + key.KeyChar + "/" + result + "/" +
+                        outputBuilder + ")");
+            }
         }
 
         public static string ToAscii(ConsoleKeyInfo key)
