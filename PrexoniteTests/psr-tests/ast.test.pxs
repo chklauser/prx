@@ -78,17 +78,11 @@ function test_ast_memcall[test]
         "ast(\"Constant\") is not an AstConstant node");
     assert(ct1.Constant == cv, "Constant value should be $cv");
     assert(ct1.File is not null, "File should not be null");
-    assert(ct1.Line == -1, "Line should default to -1");
-    assert(ct1.Column == -1, "Column should default to -1");
     
-    var bl = -1;
-    var bc = -1;
     var bt = ast("GetSetMemberAccess",Prexonite::Types::PCall.set,ct1,"ToString");
     assert(bt is Prexonite::Compiler::Ast::AstGetSetMemberAccess, 
         "ast(\"GetSetMemberAccess\") is not an AstGetSetMemberAccess node.");
     assert(bt.File is not null, "File should not be null");
-    assert(bt.Line == bl, "Line should be $bl");
-    assert(bt.Line == bc, "Column should be $bc");
     assert(bt.Subject == ct1, "Subject should be $ct1");
     assert(bt.Id == "ToString", "Id should be ToString");
     assert(bt.Call~Int == Prexonite::Types::PCall.Set~Int, "Call should be PCall.Set");

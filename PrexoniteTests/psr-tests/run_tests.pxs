@@ -76,4 +76,6 @@ function main
     {
         println("\tOverall: ",setright(fieldWidth,total),"ms");
     }
+    
+    timer\reset;
 }
