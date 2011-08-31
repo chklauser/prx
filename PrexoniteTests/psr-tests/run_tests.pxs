@@ -29,6 +29,8 @@ build
         @"pattern-kvp.test.pxs",
         @"psr\stack.pxs",
         @"stack.test.pxs",
+        @"psr\queue.pxs",
+        @"queue.test.pxs",
     ]) >> each(req_ex(?));
     
     println("Total compilation time: $(totalCompTime)ms");

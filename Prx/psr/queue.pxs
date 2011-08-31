@@ -34,9 +34,10 @@ function create_mutable_queue(lst)
 {
     var q = create_queue(lst);
     
-    function enqueue this x
+    function enqueue this
     {
-        q = q.enqueue(x);
+        foreach(var x in var args >> skip(1))
+            q = q.enqueue(x);
     }
     
     function peek this = q.peek;
@@ -50,7 +51,20 @@ function create_mutable_queue(lst)
         return item;
     }
     
+    function clear does q = new queue;
+    
     function ToString this = "mutable $q";
+    
+    function GetEnumerator
+    {
+        coroutine dq'ing_sequence
+        {
+            var z;
+            while(q.count > 0)
+                yield dequeue;
+        }
+        return dq'ing_sequence.GetEnumerator;
+    }
     
     return struct;
 }

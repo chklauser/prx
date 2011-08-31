@@ -12,13 +12,13 @@ function create_set()
     
     function add(this) =
         (var args) >> skip(1) >>
-            each(arg => store[arg] = true);
+            each(arg => store[arg] = tag);
     
     function remove(this) = 
         (var args) >> skip(1) >>
             forall(arg => store.Remove(arg));
             
-    function contains(this) = 
+    function contains(this) =  
         (var args) >> skip(1) >>
             forall(arg => { println(arg); return store.Contains(arg); });
         

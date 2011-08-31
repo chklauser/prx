@@ -1,0 +1,153 @@
+﻿
+build does require(@"psr\queue.pxs");
+build does require(@"psr\test.pxs");
+
+function tqm_count[test]
+{
+    var a = 11;
+    var b = 13;
+    var c = 17;
+    var d = 19;
+    
+    var s = new mutable_queue;
+    
+    assert_eq(s.Count,0,"initial count");
+    s.enqueue(a);
+    assert_eq(s.Count,1,"count after enqueue");
+    s.enqueue(b,c);
+    assert_eq(s.Count,3,"count after multi-enqueue");
+    s.dequeue;
+    assert_eq(s.Count,2,"count after dequeue");
+    s.clear;
+    assert_eq(s.Count,0,"count after clear");
+}
+
+function tqm_peek[test]
+{
+    var a = 11;
+    var b = 13;
+    var c = 17;
+    var d = 19;
+    
+    var s = new mutable_queue;
+    
+    assert_eq(s.Count,0,"initial count");
+    s.enqueue(a);
+    assert_eq(s.peek,a,"peek after enqueue(a)");
+    s.enqueue(b,c);
+    assert_eq(s.peek,a,"peek after multi-enqueue");
+    s.dequeue;
+    assert_eq(s.peek,b,"peek after dequeue");
+    s.clear;
+    s.enqueue(d);
+    assert_eq(s.peek,d,"peek after clear/enqueue(d)");
+}
+
+function tqm_dequeue[test]
+{
+    var a = 11;
+    var b = 13;
+    var c = 17;
+    var d = 19;
+    
+    var s = new mutable_queue;
+    
+    assert_eq(s.Count,0,"initial count");
+    s.enqueue(a);
+    assert_eq(s.peek,a,"peek after enqueue(a)");
+    s.enqueue(b,c);
+    assert_eq(s.peek,a,"peek after multi-enqueue");
+    assert_eq(s.dequeue,a,"dequeue(a)");
+    assert_eq(s.peek,b,"peek after dequeue");
+    assert_eq(s.dequeue,b,"dequeue(b)");
+    assert_eq(s.count,1,"count: only 1 left (a)");
+    assert_eq(s.dequeue,c,"dequeue(c)");
+}
+
+function tqm_enumarte_dequeues[test]
+{
+    var a = 11;
+    var b = 13;
+    var c = 17;
+    var d = 19;
+    
+    var s = new mutable_queue;
+    s.enqueue(a,b,c,d);
+    assert_eq(s.count,4,"count after 4×enqueue");
+    
+    s >> all >> var ss;
+    assert_eq(ss.Count,4,"length of list");
+    assert_eq(s.Count,0,"queue empty after enumerate");
+    assert_eq(ss[3],d,"ss[3]");
+    assert_eq(ss[2],c,"ss[2]");
+    assert_eq(ss[1],b,"ss[1]");
+    assert_eq(ss[0],a,"ss[0]");
+    
+    s.enqueue(a,b);
+    assert_eq(s.Count,2,"count after enqueue(a,b)");
+    s.enqueue(c,d);
+    
+    foreach(var x in s)
+    {
+        if(x > 15)
+        {
+            assert_eq(x,c,"c is first > 15");
+            break;
+        }
+        if(s.count == 3)
+            assert_eq(x,a,"first element");
+        else
+            assert_eq(x,b,"second element");
+    }
+    
+    assert_eq(s.Count,1,"one element left");
+    assert_eq(s.Peek,d,"last element = d");
+}
+
+function tqi_create[test]
+{
+    var a = 11; var b = 13; var c = 17; var d = 19;
+    
+    ref ns = new queue(?);
+    assert_eq((ns).count,0,"empty queue");
+    assert_eq(ns([a]).count,1,"singleton queue");
+    assert_eq(ns([a]).peek,a,"peek(a)");
+    assert_eq((var x = ns([a,b,c,d] >> reverse)).count,4,"4 elements");
+    var z;
+    var x' = x.dequeue(->z);
+    assert_eq(z,d,"dequeue(d)");
+    assert_eq(x'.count,x.count-1,"count of dequeue(d)");
+    assert_eq(x'.peek,c,"peek(c)");
+    z = null;
+    var x'' = x'.dequeue(->z);
+    assert_eq(z,c,"dequeue(c)");
+    assert_eq(x''.count,x'.count-1,"count after dequeue(c)");
+    assert_eq(x''.peek,b,"peek(b)");
+    z = null;
+    var x''' = x''.dequeue(->z);
+    assert_eq(z,b,"dequeue(b)");
+    assert_eq(x'''.count,x''.count-1,"count after dequeue(b)");
+    assert_eq(x'''.count,1,"count after dequeue(b) const");
+    assert_eq(x'''.peek,a,"$(x''').peek(a)");
+    z = null;
+    var x4 = x'''.dequeue(->z);
+    assert_eq(z,a,"dequeue(a)");
+    assert_eq(x4.count,0,"count after dequeue(a)");
+    assert(x4.peek is null,"peek(b)=$(boxed(x4.peek)) is null");
+}
+
+function tqi_enqueuedequeue[test]
+{
+    var a = 11; var b = 13; var c = 17; var d = 19;
+    ref nil = new queue(?);
+    
+    assert_eq(nil.enqueue(a).count,1,"enqueue(a).count == 1");
+    assert_eq(nil.enqueue(a).enqueue(b).count,2,"enqueue(a).enqueue(b).count == 2");
+    assert_eq(nil.enqueue(a).enqueue(b).peek,a,"peek(a)");
+    var z = null;
+    assert_eq(nil.enqueue(a).enqueue(b).dequeue(->z).peek,b,"dequeue(a).peek(b)");
+    assert_eq(z,a,"dequeue(a)");
+    var z = null;
+    assert_eq(nil.enqueue(a).enqueue(b).dequeue.dequeue(->z).count,0,"dequeue(a).dequeue(b).count");
+    assert_eq(z,b,"dequeue(b)");
+}
