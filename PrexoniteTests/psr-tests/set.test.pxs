@@ -1,0 +1,159 @@
+
+
+build does require(@"psr\set.pxs");
+build does require(@"psr\test.pxs");
+
+function tsm_create[test]
+{
+    var a = 11; var b = 13; var c = 17; var d = 19;
+    
+    var s = new mutable_set([a,b],[d,c]>>reverse);
+    
+    assert_eq(s.count,4,"count");
+    
+    ([a,b,c,d]) >> each(i => assert_eq(s.contains(i),true,"$s.contains($i)"));
+    
+    assert_eq(s.count,4,"count, 2");
+    
+    ([c,a,d,b,c,b,a,d]) >> each(i => assert_eq(s.contains(i),true,"contains($i), multi"));
+    
+    assert_eq(s.count,4,"count, 3");
+}
+
+function tsm_add_remove[test]
+{
+    var a = 11; var b = 13; var c = 17; var d = 19;
+    var data = [a,b,c,d];
+    
+    var s = new mutable_set;
+    
+    assert_eq(s.count,0,"inital count empty");
+    
+    data >> each(i => assert_eq(s.contains(i),false,"$s.contains($i)"));
+    
+    s.add(a);
+    assert_eq(s.count,1,"count(a)");
+    assert_eq(s.contains(a),true,"contains(just a)");
+    data >> skip(1) >> each(i => assert_eq(s.contains(i),false,"$s.contains($i), no a"));
+    
+    s.add(a);
+    assert_eq(s.count,1,"count(a idem)");
+    assert_eq(s.contains(a),true,"contains(just a, idem)");
+    data >> skip(1) >> each(i => assert_eq(s.contains(i),false,"$s.contains($i), no a, idem"));
+    
+    s.add(b);
+    assert_eq(s.count,2,"count(a+b)");
+    assert_eq(s.contains(a),true,"contains(a)+b");
+    data >> skip(2) >> each(i => assert_eq(s.contains(i),false,"$s.contains($i), no a+b"));
+    
+    var cs = s >> all;
+    assert_eq(cs.Count,2,"cs.count");
+    assert_eq(cs.contains(a),true,"cs=$cs.contains(a=$a)");
+    assert_eq(cs.contains(b),true,"cs=$cs.contains(b=$b)");
+    
+    s.remove(a);
+    assert_eq(s.count,1,"count(-a+b)");
+    assert_eq(s.contains(a),false,"¬contains(a)+b");
+    assert_eq(s.contains(b),true,"contains(-a+b)");
+    data >> skip(2) >> each(i => assert_eq(s.contains(i),false,"$s.contains($i), no b"));
+}
+
+function tsi_create[test]
+{
+    var a = 11; var b = 13; var c = 17; var d = 19;
+    
+    var s = new immutable_set(append([a,b],[d,c]>>reverse));
+    
+    assert_eq(s.count,4,"count");
+    
+    ([a,b,c,d]) >> each(i => assert_eq(s.contains(i),true,"$s.contains($i)"));
+    
+    assert_eq(s.count,4,"count, 2");
+    
+    ([c,a,d,b,c,b,a,d]) >> each(i => assert_eq(s.contains(i),true,"contains($i), multi"));
+    
+    assert_eq(s.count,4,"count, 3");
+}
+
+function tsi_add_remove[test]
+{
+    var a = 11; var b = 13; var c = 17; var d = 19;
+    var data = [a,b,c,d];
+    
+    var s = new immutable_set;
+    
+    assert_eq(s.count,0,"inital count empty");
+    
+    data >> each(i => assert_eq(s.contains(i),false,"s=$s.contains($i)"));
+    
+    var s2 = s.add(a);
+    assert_eq(s2.count,1,"count(a)");
+    assert_eq(s2.contains(a),true,"s2=$s2.contains(just a)");
+    data >> skip(1) >> each(i => assert_eq(s2.contains(i),false,"s2=$s2.contains($i), no a"));
+    //verify that old set was not mutated
+    data >> each(i => assert_eq(s.contains(i),false,"s=$s.contains($i)"));
+    
+    var s3 = s2.add(a);
+    assert_eq(s3.count,1,"s3=$s3.count(a idem)");
+    assert_eq(s3.contains(a),true,"s3=$s3.contains(just a, idem)");
+    data >> skip(1) >> each(i => assert_eq(s3.contains(i),false,"s3=$s3.contains($i), no a, idem"));
+    //verify that old sets were not mutated
+    assert_eq(s2.count,1,"s2=$s2.count(a)");
+    assert_eq(s2.contains(a),true,"s2=$s2.contains(just a)");
+    data >> skip(1) >> each(i => assert_eq(s2.contains(i),false,"s2=$s2.contains($i), no a"));
+    data >> each(i => assert_eq(s.contains(i),false,"s=$s.contains($i)"));
+    
+    var s4 = s3.add(b);
+    assert_eq(s4.count,2,"s4=$s4.count(a+b)");
+    assert_eq(s4.contains(a),true,"s4=$s4.contains(a)+b");
+    assert_eq(s4.contains(b),true,"s4=$s4.contains(b)+a");
+    data >> skip(2) >> each(i => assert_eq(s4.contains(i),false,"s4=$s4.contains($i), no a+b"));
+    //verify that old sets were not mutated
+    assert_eq(s3.count,1,"s3=$s3.count(a idem)");
+    assert_eq(s3.contains(a),true,"s3=$s3.contains(just a, idem)");
+    data >> skip(1) >> each(i => assert_eq(s3.contains(i),false,"s3=$s3.contains($i), no a, idem"));
+    assert_eq(s2.count,1,"s2=$s2.count(a)");
+    assert_eq(s2.contains(a),true,"s2=$s2.contains(just a)");
+    data >> skip(1) >> each(i => assert_eq(s2.contains(i),false,"s2=$s2.contains($i), no a"));
+    data >> each(i => assert_eq(s.contains(i),false,"s=$s.contains($i)"));
+    
+    var s4' = s3.add(c);
+    assert_eq(s4'.count,2,"s4'=$(s4').count(a+c)");
+    assert_eq(s4'.contains(a),true,"s4'=$(s4')contains(a)+c");
+    assert_eq(s4'.contains(c),true,"s4'=$(s4')contains(c)+a");
+    ([b,d]) >> each(i => assert_eq(s4'.contains(i),false,"s4'=$(s4').contains($i), no a+c; prim"));
+    //verify that old sets were not mutated
+    assert_eq(s3.count,1,"s3=$s3.count(a idem)");
+    assert_eq(s3.contains(a),true,"s3=$s3.contains(just a, idem)");
+    data >> skip(1) >> each(i => assert_eq(s3.contains(i),false,"s3=$s3.contains($i), no a, idem"));
+    assert_eq(s2.count,1,"s2=$s2.count(a)");
+    assert_eq(s2.contains(a),true,"s2=$s2.contains(just a)");
+    data >> skip(1) >> each(i => assert_eq(s2.contains(i),false,"s2=$s2.contains($i), no a"));
+    data >> each(i => assert_eq(s.contains(i),false,"s=$s.contains($i)"));
+    
+    var cs = s4 >> all;
+    assert_eq(cs.Count,2,"cs=$cs.count");
+    assert_eq(cs.contains(a),true,"cs=$cs.contains(a=$a)");
+    assert_eq(cs.contains(b),true,"cs=$cs.contains(b=$b)");
+    
+    var s5 = s4.remove(a);
+    assert_eq(s5.count,1,"s5=$s5.count(-a+b); s4=$s4");
+    assert_eq(s5.contains(a),false,"s5=$s5.contains(a)+b");
+    assert_eq(s5.contains(b),true,"s5=$s5.contains(-a+b)");
+    data >> skip(2) >> each(i => assert_eq(s5.contains(i),false,"s5=$s5.contains($i), no b"));
+    //verify that old sets were not mutated
+    assert_eq(s4.count,2,"s4=$s4.count(a+b)");
+    assert_eq(s4.contains(a),true,"s4=$s4.contains(a)+b");
+    data >> skip(2) >> each(i => assert_eq(s4.contains(i),false,"s4=$s4.contains($i), no a+b"));
+    assert_eq(s3.count,1,"count(a idem)");
+    assert_eq(s3.contains(a),true,"contains(just a, idem)");
+    data >> skip(1) >> each(i => assert_eq(s3.contains(i),false,"s3=$s3.contains($i), no a, idem"));
+    assert_eq(s2.count,1,"s2=$s2.count(a)");
+    assert_eq(s2.contains(a),true,"s2=$s2.contains(just a)");
+    data >> skip(1) >> each(i => assert_eq(s2.contains(i),false,"s2=$s2.contains($i), no a"));
+    data >> each(i => assert_eq(s.contains(i),false,"s=$s.contains($i)"));
+    assert_eq(s4'.count,2,"s4'=$(s4')count(a+c)");
+    assert_eq(s4'.contains(a),true,"s4'=$(s4').contains(a)+c");
+    assert_eq(s4'.contains(c),true,"s4'=$(s4').contains(c)+a");
+    ([b,d]) >> each(i => assert_eq(s4.contains(i),false,"s4'=$(s4').contains($i), no a+c; nonlinear"));
+}

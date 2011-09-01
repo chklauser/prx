@@ -108,7 +108,7 @@ function ti_create[test]
 {
     var a = 11; var b = 13; var c = 17; var d = 19;
     
-    ref ns = new stack_immutable(?);
+    ref ns = new immutable_stack(?);
     assert_eq((ns).count,0,"empty stack");
     assert_eq(ns([a]).count,1,"singleton stack");
     assert_eq(ns([a]).peek,a,"peek(a)");
@@ -139,7 +139,7 @@ function ti_create[test]
 function ti_pushpop[test]
 {
     var a = 11; var b = 13; var c = 17; var d = 19;
-    ref nil = new stack_immutable(?);
+    ref nil = new immutable_stack(?);
     
     assert_eq(nil.push(a).count,1,"push(a).count == 1");
     assert_eq(nil.push(a).push(b).count,2,"push(a).push(b).count == 2");
@@ -149,5 +149,28 @@ function ti_pushpop[test]
     assert_eq(z,b,"pop(b)");
     var z = null;
     assert_eq(nil.push(a).push(b).pop.pop(->z).count,0,"pop(b).pop(a).count");
+    assert_eq(z,a,"pop(a)");
+}
+
+function ti_nonserial[test]
+{
+    var a = 11; var b = 13; var c = 17; var d = 19;
+    ref nil = new immutable_stack(?);
+    
+    assert_eq((var x = nil.push(a)).count,1,"push(a).count == 1");
+    assert_eq((var y1 = x.push(b)).count,2,"push(a).push(b).count == 2");
+    assert_eq(y1.peek,b,"peek(b)");
+    var z = null;
+    assert_eq(y1.pop(->z).peek,a,"pop(b).peek(a)");
+    assert_eq(z,b,"pop(b)");
+    
+    var z = null;
+    assert_eq((var y2 = x.push(c)).count,2,"push(a).push(c).count == 2");
+    assert_eq(y2.peek,c,"peek(c)");
+    assert_eq(y2.pop(->z).peek,a,"push(a).push(c).pop.peek(a)");
+    assert_eq(z,c,"pop(c)");
+    
+    var z = null;
+    assert_eq(y1.pop.pop(->z).count,0,"pop(b).pop(a).count");
     assert_eq(z,a,"pop(a)");
 }

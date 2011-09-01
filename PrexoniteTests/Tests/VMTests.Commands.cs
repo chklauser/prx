@@ -555,5 +555,41 @@ function main(xs)
 
             Expect("M0.C0.D0: abc :M4.C3.D1",(PValue)new List<PValue>{"a","b","c"});
         }
+
+        [Test]
+        public void ListExceptCommand()
+        {
+            Compile(@"
+function main(xs,ys)
+{
+    xs >> except(ys) >> all >> var r;
+    println(""RESULT = "",r);
+    return r;
+}
+");
+            PValue a = 11, b = 13, c = 17, d = 19;
+            var xs = (PValue) new List<PValue> {a,c,d};
+            var ys = (PValue) new List<PValue> {a, b};
+
+            Expect(new List<PValue>{c,d},xs,ys);
+        }
+
+        [Test]
+        public void AppendCommand()
+        {
+            Compile(@"
+function main(xs,ys)
+{
+    append(xs,ys) >> all >> var r;
+    println(""RESULT = "",r);
+    return r;
+}
+");
+            PValue a = 11, b = 13, c = 17, d = 19;
+            var xs = (PValue)new List<PValue> { a, c, d };
+            var ys = (PValue)new List<PValue> { a, b };
+
+            Expect(new List<PValue> { a,c,d, a,b }, xs, ys);
+        }
     }
 }

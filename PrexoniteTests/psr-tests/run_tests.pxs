@@ -31,6 +31,8 @@ build
         @"stack.test.pxs",
         @"psr\queue.pxs",
         @"queue.test.pxs",
+        @"psr\set.pxs",
+        @"set.test.pxs",
     ]) >> each(req_ex(?));
     
     println("Total compilation time: $(totalCompTime)ms");
