@@ -1,0 +1,108 @@
+ 
+function get_test_file_names(path,pattern)[import System::IO] = 
+    ::Directory.EnumerateFiles(path ?? ".", pattern ?? "*.test.pxs", ::SearchOption.AllDirectories);
+    
+function under_test = "under_test";
+function config_file_separator = "|";
+function config_section_separator = ">";
+    
+function read_metadata(file_name)[import {Prexonite, Prexonite::Compiler}]
+{
+    var eng = new ::Engine;
+    var app = new ::Application("read_metadata");
+    var ldr = new ::Loader(eng,app);
+    
+    print("Reading $file_name ...");
+    try {        
+        ldr.LoadFromFile(file_name);        
+    } catch(var e) {
+        //ignore
+    }
+    print("done. ");
+    
+    var deps;
+    if(app.Meta.ContainsKey(under_test))
+        deps = app.Meta[under_test].List >> map(?.Text) >> all;
+    else
+        deps = [];
+    
+    var testCases = app.Functions >> where(?.Meta then ?["test"] then ?.Switch) >> map(?.Id) >> all;
+    
+    dispose(eng,app,ldr);
+    
+    println(deps," ",testCases.Count," test cases");
+    
+    return deps:testCases;
+}
+
+//write_config writes the configuration <config> to the supplied <textWriter>.
+//  - textWriter, an object that behaves like a System.IO.TextWriter
+//  - config, [test_file_name:([dependency_name]:[test_case_name])]
+function write_config(textWriter, config)
+{
+    foreach(var kvp in config)
+    {
+        textWriter.Write(kvp.Key);
+        textWriter.Write(config_section_separator);
+        foreach(var d in kvp.Value.Key)
+            textWriter.Write("$(config_file_separator)$(d)");
+        textWriter.Write(config_section_separator);
+        foreach(var d in kvp.Value.Value)
+            textWriter.Write("$(config_file_separator)$(d)");
+        textWriter.WriteLine;
+    }
+}
+
+function write_config_file(file_name, config)[import {System::IO, System::Text}]
+{
+    using(var tw = new ::StreamWriter(
+            new ::FileStream(file_name,::FileMode.Create,::FileAccess.Write),
+            ::Encoding.UTF8))
+        write_config(tw, config);
+}
+
+function to_config(config)
+{
+    var s;
+    using(var sw = new ::StringWriter)
+    {
+        write_config(sw,config);
+        s = sw.ToString;
+    }
+    return s;
+}
+
+function get_config(path) =
+    get_test_file_names(path) >> map(tfn => tfn: read_metadata(tfn));
+
+function main(path)
+{
+    write_config_file("testconfig.txt",get_config(path));
+}
+
+function read_config(textReader)
+{
+    var config = [];
+    var line;
+    for(; do line = textReader.ReadLine; while line is not null and line.Length > 0)
+    {
+        var fs = line.Split(config_section_separator);
+        if(fs.Count != 3)
+            continue;
+        
+        config[] = fs[0]:
+            (fs[1].Split(config_file_separator) >> skip(1) >> all):
+            (fs[2].Split(config_file_separator) >> skip(1) >> all);
+    }
+}
+
+function read_config_file(fileName)[import {System::IO, System::Text}]
+{
+    var c;
+    using(var tr = new ::StreamReader(
+            new ::FileStream(fileName, ::FileMode.Open, ::FileAccess.Read), 
+            ::Encoding.UTF8))
+        c = read_config_file(tr);
+    
+    return c;
+}

@@ -1,6 +1,5 @@
 ﻿
-build does require(@"psr\queue.pxs");
-build does require(@"psr\test.pxs");
+under_test @"psr\queue.pxs";
 
 function tqm_count[test]
 {

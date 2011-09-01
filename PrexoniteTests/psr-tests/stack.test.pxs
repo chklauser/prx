@@ -1,6 +1,5 @@
 ﻿
-build does require(@"psr\stack.pxs");
-build does require(@"psr\test.pxs");
+under_test @"psr\stack.pxs";
 
 function tm_count[test]
 {

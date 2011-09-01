@@ -1,6 +1,5 @@
  
-build does require(@"psr\pattern.pxs");
-build does require(@"psr\test.pxs");
+under_test @"psr\pattern.pxs";
 
 function test_con[test]
 {

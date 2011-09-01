@@ -1,0 +1,9 @@
+﻿.\ast.test.pxs>|psr\ast.pxs>|compiler_is_loaded|test_ast_withpos_null|test_ast_withpos_memcall|test_ast_simple_memcall|test_ast_memcall|test_unique_id_counter|test_is_function_call|test_is_member_access|test_local_meta|test_si_fields|test_si_is_star|test_si_make_star|test_si_m_is_star|test_sub_blocks
+.\macro.test.pxs>|psr\macro.pxs|psr\test\meta_macro.pxs>|test_file|test_pos|test_is_in_macro|test_establish_macro_context|test_reports|test_ast_is_expression|test_ast_is_effect|test_ast_is_partially_applicable|test_ast_is_partial_application|test_ast_is_CreateClosure|test_ast_is_node|test_temp|test_optimize|test_read|test_macro_id_static|test_macro_id|test_macro_interpretation|test_macro_interpretation_static|test_invoke_macro|test_ast_symbol|test_ast_member|test_ast_const|test_ast_ret|test_ast\with_arguments|test_ast\new
+.\misc.test.pxs>|psr\misc.pxs>|test_cmp|test_cmp_values|test_cmp_keys|test_cmp_with|test_cmp_then|test_cmpr|test_ieq|test_ieq_any|test_ieq_all|test_refeq|test_nrefeq|test_create_terminator|test_swap
+.\pattern-kvp.test.pxs>|psr\pattern.pxs>|test_con|test_dcon
+.\prop.test.pxs>|psr\prop.pxs|psr\test\meta_macro.pxs|psr\macro.pxs>|test_prop_simple|test_prop_proxy|test_prop_complex|test_prop_simple_glob
+.\queue.test.pxs>|psr\queue.pxs>|tqm_count|tqm_peek|tqm_dequeue|tqm_enumarte_dequeues|tqi_create|tqi_enqueuedequeue|tqi_nonserial
+.\set.test.pxs>|psr\set.pxs>|tsm_create|tsm_add_remove|tsi_create|tsi_add_remove
+.\stack.test.pxs>|psr\stack.pxs>|tm_count|tm_peek|tm_pop|tm_enumarte_pops|ti_create|ti_pushpop|ti_nonserial
+.\struct.test.pxs>|psr\struct.pxs>|test_struct

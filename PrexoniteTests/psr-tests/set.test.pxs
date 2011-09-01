@@ -1,7 +1,5 @@
 
-
-build does require(@"psr\set.pxs");
-build does require(@"psr\test.pxs");
+under_test @"psr\set.pxs";
 
 function tsm_create[test]
 {
@@ -155,5 +153,5 @@ function tsi_add_remove[test]
     assert_eq(s4'.count,2,"s4'=$(s4')count(a+c)");
     assert_eq(s4'.contains(a),true,"s4'=$(s4').contains(a)+c");
     assert_eq(s4'.contains(c),true,"s4'=$(s4').contains(c)+a");
-    ([b,d]) >> each(i => assert_eq(s4.contains(i),false,"s4'=$(s4').contains($i), no a+c; nonlinear"));
+    ([b,d]) >> each(i => assert_eq(s4'.contains(i),false,"s4'=$(s4').contains($i), no a+c; nonlinear"));
 }

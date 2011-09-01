@@ -1,6 +1,5 @@
 ﻿ 
-build does require(@"psr\ast.pxs");
-build does require(@"psr\test.pxs");
+under_test @"psr\ast.pxs";
  
 function compiler_is_loaded[test]
 {

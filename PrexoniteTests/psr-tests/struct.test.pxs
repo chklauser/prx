@@ -1,6 +1,5 @@
 ﻿ 
-build does require(@"psr\struct.pxs");
-build does require(@"psr\test.pxs");
+under_test @"psr\struct.pxs";
 
 function extract_symtab(obj)
 {

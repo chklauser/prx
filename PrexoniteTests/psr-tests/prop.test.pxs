@@ -1,6 +1,9 @@
  
-build does require(@"psr\struct.pxs");
-build does require(@"psr\test.pxs");
+under_test {
+    @"psr\prop.pxs",
+    @"psr\test\meta_macro.pxs",
+    @"psr\macro.pxs",
+};
 
 function test_prop_simple[test]
 {
