@@ -1,5 +1,10 @@
 ﻿ 
-under_test @"psr\struct.pxs";
+under_test {
+    @"psr\struct.pxs",
+    @"psr\set.pxs",
+    @"psr\queue.pxs",
+    @"psr\stack.pxs",
+};
 
 function extract_symtab(obj)
 {
@@ -37,4 +42,508 @@ function test_struct[test]
     
     var o2 = new test_obj(-a);
     assert_eq(o1.m3,a);
+}
+
+function tsm_create[test]
+{
+    var a = 11; var b = 13; var c = 17; var d = 19;
+    
+    var s = new mutable_set([a,b],[d,c]>>reverse);
+    
+    assert_eq(s.count,4,"count");
+    
+    ([a,b,c,d]) >> each(i => assert_eq(s.contains(i),true,"$s.contains($i)"));
+    
+    assert_eq(s.count,4,"count, 2");
+    
+    ([c,a,d,b,c,b,a,d]) >> each(i => assert_eq(s.contains(i),true,"contains($i), multi"));
+    
+    assert_eq(s.count,4,"count, 3");
+}
+
+function tsm_add_remove[test]
+{
+    var a = 11; var b = 13; var c = 17; var d = 19;
+    var data = [a,b,c,d];
+    
+    var s = new mutable_set;
+    
+    assert_eq(s.count,0,"inital count empty");
+    
+    data >> each(i => assert_eq(s.contains(i),false,"$s.contains($i)"));
+    
+    s.add(a);
+    assert_eq(s.count,1,"count(a)");
+    assert_eq(s.contains(a),true,"contains(just a)");
+    data >> skip(1) >> each(i => assert_eq(s.contains(i),false,"$s.contains($i), no a"));
+    
+    s.add(a);
+    assert_eq(s.count,1,"count(a idem)");
+    assert_eq(s.contains(a),true,"contains(just a, idem)");
+    data >> skip(1) >> each(i => assert_eq(s.contains(i),false,"$s.contains($i), no a, idem"));
+    
+    s.add(b);
+    assert_eq(s.count,2,"count(a+b)");
+    assert_eq(s.contains(a),true,"contains(a)+b");
+    data >> skip(2) >> each(i => assert_eq(s.contains(i),false,"$s.contains($i), no a+b"));
+    
+    var cs = s >> all;
+    assert_eq(cs.Count,2,"cs.count");
+    assert_eq(cs.contains(a),true,"cs=$cs.contains(a=$a)");
+    assert_eq(cs.contains(b),true,"cs=$cs.contains(b=$b)");
+    
+    s.remove(a);
+    assert_eq(s.count,1,"count(-a+b)");
+    assert_eq(s.contains(a),false,"¬contains(a)+b");
+    assert_eq(s.contains(b),true,"contains(-a+b)");
+    data >> skip(2) >> each(i => assert_eq(s.contains(i),false,"$s.contains($i), no b"));
+}
+
+function tsi_create[test]
+{
+    var a = 11; var b = 13; var c = 17; var d = 19;
+    
+    var s = new immutable_set(append([a,b],[d,c]>>reverse));
+    
+    assert_eq(s.count,4,"count");
+    
+    ([a,b,c,d]) >> each(i => assert_eq(s.contains(i),true,"$s.contains($i)"));
+    
+    assert_eq(s.count,4,"count, 2");
+    
+    ([c,a,d,b,c,b,a,d]) >> each(i => assert_eq(s.contains(i),true,"contains($i), multi"));
+    
+    assert_eq(s.count,4,"count, 3");
+}
+
+function tsi_add_remove[test]
+{
+    var a = 11; var b = 13; var c = 17; var d = 19;
+    var data = [a,b,c,d];
+    
+    var s = new immutable_set;
+    
+    assert_eq(s.count,0,"inital count empty");
+    
+    data >> each(i => assert_eq(s.contains(i),false,"s=$s.contains($i)"));
+    
+    var s2 = s.add(a);
+    assert_eq(s2.count,1,"count(a)");
+    assert_eq(s2.contains(a),true,"s2=$s2.contains(just a)");
+    data >> skip(1) >> each(i => assert_eq(s2.contains(i),false,"s2=$s2.contains($i), no a"));
+    //verify that old set was not mutated
+    data >> each(i => assert_eq(s.contains(i),false,"s=$s.contains($i)"));
+    
+    var s3 = s2.add(a);
+    assert_eq(s3.count,1,"s3=$s3.count(a idem)");
+    assert_eq(s3.contains(a),true,"s3=$s3.contains(just a, idem)");
+    data >> skip(1) >> each(i => assert_eq(s3.contains(i),false,"s3=$s3.contains($i), no a, idem"));
+    //verify that old sets were not mutated
+    assert_eq(s2.count,1,"s2=$s2.count(a)");
+    assert_eq(s2.contains(a),true,"s2=$s2.contains(just a)");
+    data >> skip(1) >> each(i => assert_eq(s2.contains(i),false,"s2=$s2.contains($i), no a"));
+    data >> each(i => assert_eq(s.contains(i),false,"s=$s.contains($i)"));
+    
+    var s4 = s3.add(b);
+    assert_eq(s4.count,2,"s4=$s4.count(a+b)");
+    assert_eq(s4.contains(a),true,"s4=$s4.contains(a)+b");
+    assert_eq(s4.contains(b),true,"s4=$s4.contains(b)+a");
+    data >> skip(2) >> each(i => assert_eq(s4.contains(i),false,"s4=$s4.contains($i), no a+b"));
+    //verify that old sets were not mutated
+    assert_eq(s3.count,1,"s3=$s3.count(a idem)");
+    assert_eq(s3.contains(a),true,"s3=$s3.contains(just a, idem)");
+    data >> skip(1) >> each(i => assert_eq(s3.contains(i),false,"s3=$s3.contains($i), no a, idem"));
+    assert_eq(s2.count,1,"s2=$s2.count(a)");
+    assert_eq(s2.contains(a),true,"s2=$s2.contains(just a)");
+    data >> skip(1) >> each(i => assert_eq(s2.contains(i),false,"s2=$s2.contains($i), no a"));
+    data >> each(i => assert_eq(s.contains(i),false,"s=$s.contains($i)"));
+    
+    var s4' = s3.add(c);
+    assert_eq(s4'.count,2,"s4'=$(s4').count(a+c)");
+    assert_eq(s4'.contains(a),true,"s4'=$(s4')contains(a)+c");
+    assert_eq(s4'.contains(c),true,"s4'=$(s4')contains(c)+a");
+    ([b,d]) >> each(i => assert_eq(s4'.contains(i),false,"s4'=$(s4').contains($i), no a+c; prim"));
+    //verify that old sets were not mutated
+    assert_eq(s3.count,1,"s3=$s3.count(a idem)");
+    assert_eq(s3.contains(a),true,"s3=$s3.contains(just a, idem)");
+    data >> skip(1) >> each(i => assert_eq(s3.contains(i),false,"s3=$s3.contains($i), no a, idem"));
+    assert_eq(s2.count,1,"s2=$s2.count(a)");
+    assert_eq(s2.contains(a),true,"s2=$s2.contains(just a)");
+    data >> skip(1) >> each(i => assert_eq(s2.contains(i),false,"s2=$s2.contains($i), no a"));
+    data >> each(i => assert_eq(s.contains(i),false,"s=$s.contains($i)"));
+    
+    var cs = s4 >> all;
+    assert_eq(cs.Count,2,"cs=$cs.count");
+    assert_eq(cs.contains(a),true,"cs=$cs.contains(a=$a)");
+    assert_eq(cs.contains(b),true,"cs=$cs.contains(b=$b)");
+    
+    var s5 = s4.remove(a);
+    assert_eq(s5.count,1,"s5=$s5.count(-a+b); s4=$s4");
+    assert_eq(s5.contains(a),false,"s5=$s5.contains(a)+b");
+    assert_eq(s5.contains(b),true,"s5=$s5.contains(-a+b)");
+    data >> skip(2) >> each(i => assert_eq(s5.contains(i),false,"s5=$s5.contains($i), no b"));
+    //verify that old sets were not mutated
+    assert_eq(s4.count,2,"s4=$s4.count(a+b)");
+    assert_eq(s4.contains(a),true,"s4=$s4.contains(a)+b");
+    data >> skip(2) >> each(i => assert_eq(s4.contains(i),false,"s4=$s4.contains($i), no a+b"));
+    assert_eq(s3.count,1,"count(a idem)");
+    assert_eq(s3.contains(a),true,"contains(just a, idem)");
+    data >> skip(1) >> each(i => assert_eq(s3.contains(i),false,"s3=$s3.contains($i), no a, idem"));
+    assert_eq(s2.count,1,"s2=$s2.count(a)");
+    assert_eq(s2.contains(a),true,"s2=$s2.contains(just a)");
+    data >> skip(1) >> each(i => assert_eq(s2.contains(i),false,"s2=$s2.contains($i), no a"));
+    data >> each(i => assert_eq(s.contains(i),false,"s=$s.contains($i)"));
+    assert_eq(s4'.count,2,"s4'=$(s4')count(a+c)");
+    assert_eq(s4'.contains(a),true,"s4'=$(s4').contains(a)+c");
+    assert_eq(s4'.contains(c),true,"s4'=$(s4').contains(c)+a");
+    ([b,d]) >> each(i => assert_eq(s4'.contains(i),false,"s4'=$(s4').contains($i), no a+c; nonlinear"));
+}
+
+function tqm_count[test]
+{
+    var a = 11;
+    var b = 13;
+    var c = 17;
+    var d = 19;
+    
+    var s = new mutable_queue;
+    
+    assert_eq(s.Count,0,"initial count");
+    s.enqueue(a);
+    assert_eq(s.Count,1,"count after enqueue");
+    s.enqueue(b,c);
+    assert_eq(s.Count,3,"count after multi-enqueue");
+    s.dequeue;
+    assert_eq(s.Count,2,"count after dequeue");
+    s.clear;
+    assert_eq(s.Count,0,"count after clear");
+}
+
+function tqm_peek[test]
+{
+    var a = 11;
+    var b = 13;
+    var c = 17;
+    var d = 19;
+    
+    var s = new mutable_queue;
+    
+    assert_eq(s.Count,0,"initial count");
+    s.enqueue(a);
+    assert_eq(s.peek,a,"peek after enqueue(a)");
+    s.enqueue(b,c);
+    assert_eq(s.peek,a,"peek after multi-enqueue");
+    s.dequeue;
+    assert_eq(s.peek,b,"peek after dequeue");
+    s.clear;
+    s.enqueue(d);
+    assert_eq(s.peek,d,"peek after clear/enqueue(d)");
+}
+
+function tqm_dequeue[test]
+{
+    var a = 11;
+    var b = 13;
+    var c = 17;
+    var d = 19;
+    
+    var s = new mutable_queue;
+    
+    assert_eq(s.Count,0,"initial count");
+    s.enqueue(a);
+    assert_eq(s.peek,a,"peek after enqueue(a)");
+    s.enqueue(b,c);
+    assert_eq(s.peek,a,"peek after multi-enqueue");
+    assert_eq(s.dequeue,a,"dequeue(a)");
+    assert_eq(s.peek,b,"peek after dequeue");
+    assert_eq(s.dequeue,b,"dequeue(b)");
+    assert_eq(s.count,1,"count: only 1 left (a)");
+    assert_eq(s.dequeue,c,"dequeue(c)");
+}
+
+function tqm_enumarte_dequeues[test]
+{
+    var a = 11;
+    var b = 13;
+    var c = 17;
+    var d = 19;
+    
+    var s = new mutable_queue;
+    s.enqueue(a,b,c,d);
+    assert_eq(s.count,4,"count after 4×enqueue");
+    
+    s >> all >> var ss;
+    assert_eq(ss.Count,4,"length of list");
+    assert_eq(s.Count,0,"queue empty after enumerate");
+    assert_eq(ss[3],d,"ss[3]");
+    assert_eq(ss[2],c,"ss[2]");
+    assert_eq(ss[1],b,"ss[1]");
+    assert_eq(ss[0],a,"ss[0]");
+    
+    s.enqueue(a,b);
+    assert_eq(s.Count,2,"count after enqueue(a,b)");
+    s.enqueue(c,d);
+    
+    foreach(var x in s)
+    {
+        if(x > 15)
+        {
+            assert_eq(x,c,"c is first > 15");
+            break;
+        }
+        if(s.count == 3)
+            assert_eq(x,a,"first element");
+        else
+            assert_eq(x,b,"second element");
+    }
+    
+    assert_eq(s.Count,1,"one element left");
+    assert_eq(s.Peek,d,"last element = d");
+}
+
+function tqi_create[test]
+{
+    var a = 11; var b = 13; var c = 17; var d = 19;
+    
+    ref ns = new queue(?);
+    assert_eq((ns).count,0,"empty queue");
+    assert_eq(ns([a]).count,1,"singleton queue");
+    assert_eq(ns([a]).peek,a,"peek(a)");
+    assert_eq((var x = ns([a,b,c,d] >> reverse)).count,4,"4 elements");
+    var z;
+    var x' = x.dequeue(->z);
+    assert_eq(z,d,"dequeue(d)");
+    assert_eq(x'.count,x.count-1,"count of dequeue(d)");
+    assert_eq(x'.peek,c,"peek(c)");
+    z = null;
+    var x'' = x'.dequeue(->z);
+    assert_eq(z,c,"dequeue(c)");
+    assert_eq(x''.count,x'.count-1,"count after dequeue(c)");
+    assert_eq(x''.peek,b,"peek(b)");
+    z = null;
+    var x''' = x''.dequeue(->z);
+    assert_eq(z,b,"dequeue(b)");
+    assert_eq(x'''.count,x''.count-1,"count after dequeue(b)");
+    assert_eq(x'''.count,1,"count after dequeue(b) const");
+    assert_eq(x'''.peek,a,"$(x''').peek(a)");
+    z = null;
+    var x4 = x'''.dequeue(->z);
+    assert_eq(z,a,"dequeue(a)");
+    assert_eq(x4.count,0,"count after dequeue(a)");
+    assert(x4.peek is null,"peek(b)=$(boxed(x4.peek)) is null");
+}
+
+function tqi_enqueuedequeue[test]
+{
+    var a = 11; var b = 13; var c = 17; var d = 19;
+    ref nil = new queue(?);
+    
+    assert_eq(nil.enqueue(a).count,1,"enqueue(a).count == 1");
+    assert_eq(nil.enqueue(a).enqueue(b).count,2,"enqueue(a).enqueue(b).count == 2");
+    assert_eq(nil.enqueue(a).enqueue(b).peek,a,"peek(a)");
+    var z = null;
+    assert_eq(nil.enqueue(a).enqueue(b).dequeue(->z).peek,b,"dequeue(a).peek(b)");
+    assert_eq(z,a,"dequeue(a)");
+    var z = null;
+    assert_eq(nil.enqueue(a).enqueue(b).dequeue.dequeue(->z).count,0,"dequeue(a).dequeue(b).count");
+    assert_eq(z,b,"dequeue(b)");
+}
+
+function tqi_nonserial[test]
+{
+    var a = 11; var b = 13; var c = 17; var d = 19;
+    ref nil = new queue(?);
+    
+    assert_eq(nil.enqueue(a).count,1,"enqueue(a).count == 1");
+    assert_eq(nil.enqueue(a).enqueue(b).count,2,"enqueue(a).enqueue(b).count == 2");
+    assert_eq((var q1 = nil.enqueue(a).enqueue(b)).peek,a,"peek(a)");
+    var z = null;
+    assert_eq((var q2 = q1.dequeue(->z)).peek,b,"dequeue(a).peek(b)");
+    assert_eq(z,a,"dequeue(a)");
+    var z = null;
+    
+    assert_eq(q1.peek,a,"q1.peek(a)");
+    var q1' = q1.enqueue(c);
+    assert_eq(q1'.count,q1.count+1,"q1'.count");
+    q1.dequeue(->z);
+    assert_eq(z,a,"q1.dequeue(a)");
+    
+    assert_eq(q2.peek,b,"q2.peek");
+    
+    assert_eq(q2.dequeue(->z).count,0,"dequeue(a).dequeue(b).count");
+    assert_eq(z,b,"dequeue(b)");
+    
+}
+
+function tm_count[test]
+{
+    var a = 11;
+    var b = 13;
+    var c = 17;
+    var d = 19;
+    
+    var s = new stack;
+    
+    assert_eq(s.Count,0,"initial count");
+    s.push(a);
+    assert_eq(s.Count,1,"count after push");
+    s.push(b,c);
+    assert_eq(s.Count,3,"count after multi-push");
+    s.pop;
+    assert_eq(s.Count,2,"count after pop");
+    s.clear;
+    assert_eq(s.Count,0,"count after clear");
+}
+
+function tm_peek[test]
+{
+    var a = 11;
+    var b = 13;
+    var c = 17;
+    var d = 19;
+    
+    var s = new stack;
+    
+    assert_eq(s.Count,0,"initial count");
+    s.push(a);
+    assert_eq(s.peek,a,"peek after push(a)");
+    s.push(b,c);
+    assert_eq(s.peek,c,"peek after multi-push");
+    s.pop;
+    assert_eq(s.peek,b,"peek after pop");
+    s.clear;
+    s.push(d);
+    assert_eq(s.peek,d,"peek after clear/push(d)");
+}
+
+function tm_pop[test]
+{
+    var a = 11;
+    var b = 13;
+    var c = 17;
+    var d = 19;
+    
+    var s = new stack;
+    
+    assert_eq(s.Count,0,"initial count");
+    s.push(a);
+    assert_eq(s.peek,a,"peek after push(a)");
+    s.push(b,c);
+    assert_eq(s.peek,c,"peek after multi-push");
+    assert_eq(s.pop,c,"pop(c)");
+    assert_eq(s.peek,b,"peek after pop");
+    assert_eq(s.pop,b,"pop(b)");
+    assert_eq(s.count,1,"count: only 1 left (a)");
+    assert_eq(s.pop,a,"pop(a)");
+}
+
+function tm_enumarte_pops[test]
+{
+    var a = 11;
+    var b = 13;
+    var c = 17;
+    var d = 19;
+    
+    var s = new stack;
+    s.push(a,b,c,d);
+    assert_eq(s.count,4,"count after 4×push");
+    
+    s >> all >> var ss;
+    assert_eq(ss.Count,4,"length of list");
+    assert_eq(s.Count,0,"stack empty after enumerate");
+    assert_eq(ss[0],d,"ss[0]");
+    assert_eq(ss[1],c,"ss[1]");
+    assert_eq(ss[2],b,"ss[2]");
+    assert_eq(ss[3],a,"ss[3]");
+    
+    s.push(a,b);
+    assert_eq(s.Count,2,"count after push(a,b)");
+    s.push(c,d);
+    
+    foreach(var x in s)
+    {
+        if(x < 15)
+        {
+            assert_eq(x,b,"b is first < 15");
+            break;
+        }
+        if(s.count == 3)
+            assert_eq(x,d,"first element");
+        else
+            assert_eq(x,c,"second element");
+    }
+    
+    assert_eq(s.Count,1,"one element left");
+    assert_eq(s.Peek,a,"last element = a");
+}
+
+function ti_create[test]
+{
+    var a = 11; var b = 13; var c = 17; var d = 19;
+    
+    ref ns = new immutable_stack(?);
+    assert_eq((ns).count,0,"empty stack");
+    assert_eq(ns([a]).count,1,"singleton stack");
+    assert_eq(ns([a]).peek,a,"peek(a)");
+    assert_eq((var x = ns([a,b,c,d] >> reverse)).count,4,"4 elements");
+    var z;
+    var x' = x.pop(->z);
+    assert_eq(z,d,"pop(d)");
+    assert_eq(x'.count,x.count-1,"count of pop(d)");
+    assert_eq(x'.peek,c,"peek(c)");
+    z = null;
+    var x'' = x'.pop(->z);
+    assert_eq(z,c,"pop(c)");
+    assert_eq(x''.count,x'.count-1,"count after pop(c)");
+    assert_eq(x''.peek,b,"peek(b)");
+    z = null;
+    var x''' = x''.pop(->z);
+    assert_eq(z,b,"pop(b)");
+    assert_eq(x'''.count,x''.count-1,"count after pop(b)");
+    assert_eq(x'''.count,1,"count after pop(b) const");
+    assert_eq(x'''.peek,a,"$(x''').peek(a)");
+    z = null;
+    var x4 = x'''.pop(->z);
+    assert_eq(z,a,"pop(a)");
+    assert_eq(x4.count,0,"count after pop(a)");
+    assert(x4.peek is null,"peek(b)=$(boxed(x4.peek)) is null");
+}
+
+function ti_pushpop[test]
+{
+    var a = 11; var b = 13; var c = 17; var d = 19;
+    ref nil = new immutable_stack(?);
+    
+    assert_eq(nil.push(a).count,1,"push(a).count == 1");
+    assert_eq(nil.push(a).push(b).count,2,"push(a).push(b).count == 2");
+    assert_eq(nil.push(a).push(b).peek,b,"peek(b)");
+    var z = null;
+    assert_eq(nil.push(a).push(b).pop(->z).peek,a,"pop(b).peek(a)");
+    assert_eq(z,b,"pop(b)");
+    var z = null;
+    assert_eq(nil.push(a).push(b).pop.pop(->z).count,0,"pop(b).pop(a).count");
+    assert_eq(z,a,"pop(a)");
+}
+
+function ti_nonserial[test]
+{
+    var a = 11; var b = 13; var c = 17; var d = 19;
+    ref nil = new immutable_stack(?);
+    
+    assert_eq((var x = nil.push(a)).count,1,"push(a).count == 1");
+    assert_eq((var y1 = x.push(b)).count,2,"push(a).push(b).count == 2");
+    assert_eq(y1.peek,b,"peek(b)");
+    var z = null;
+    assert_eq(y1.pop(->z).peek,a,"pop(b).peek(a)");
+    assert_eq(z,b,"pop(b)");
+    
+    var z = null;
+    assert_eq((var y2 = x.push(c)).count,2,"push(a).push(c).count == 2");
+    assert_eq(y2.peek,c,"peek(c)");
+    assert_eq(y2.pop(->z).peek,a,"push(a).push(c).pop.peek(a)");
+    assert_eq(z,c,"pop(c)");
+    
+    var z = null;
+    assert_eq(y1.pop.pop(->z).count,0,"pop(b).pop(a).count");
+    assert_eq(z,a,"pop(a)");
 }
