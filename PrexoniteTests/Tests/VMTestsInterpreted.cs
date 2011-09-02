@@ -6,7 +6,7 @@ using NUnit.Framework;
 
 namespace PrexoniteTests.Tests
 {
-    [TestFixture]
+    [TestFixture,Explicit]
     public class VMTestsInterpreted : Prx.Tests.VMTests
     {
         public VMTestsInterpreted()

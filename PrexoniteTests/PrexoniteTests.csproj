@@ -108,10 +108,15 @@
     <Compile Include="Tests\Configurations\PsrUnitTests.cs">
       <AutoGen>True</AutoGen>
       <DesignTime>True</DesignTime>
-      <DependentUpon>PsrUnitTests.tt</DependentUpon>
+      <DependentUpon>psr-tests\testconfig.txt</DependentUpon>
       <DependentUpon>PsrUnitTests.tt</DependentUpon>
     </Compile>
     <Compile Include="Tests\Configurations\ScriptedUnitTestContainer.cs" />
+    <Compile Include="Tests\Configurations\VMTestConfigurations.cs">
+      <AutoGen>True</AutoGen>
+      <DesignTime>True</DesignTime>
+      <DependentUpon>VMTestConfigurations.tt</DependentUpon>
+    </Compile>
     <Compile Include="Tests\MemberCallable.cs" />
     <Compile Include="Tests\Translation.cs" />
     <Compile Include="Tests\VMTests.Macro.cs" />
@@ -158,9 +163,16 @@
     </BootstrapperPackage>
   </ItemGroup>
   <ItemGroup>
+    <None Include="Tests\Configurations\LoadConfiguration.t4">
+      <LastGenOutput>LoadConfiguration1.cs</LastGenOutput>
+    </None>
     <None Include="Tests\Configurations\PsrUnitTests.tt">
       <Generator>TextTemplatingFileGenerator</Generator>
       <LastGenOutput>PsrUnitTests.cs</LastGenOutput>
+    </None>
+    <None Include="Tests\Configurations\VMTestConfigurations.tt">
+      <Generator>TextTemplatingFileGenerator</Generator>
+      <LastGenOutput>VMTestConfigurations.cs</LastGenOutput>
     </None>
   </ItemGroup>
   <Import Project="$(MSBuildBinPath)\Microsoft.CSharp.targets" />

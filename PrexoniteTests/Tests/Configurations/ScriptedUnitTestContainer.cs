@@ -26,7 +26,7 @@ namespace PrexoniteTests.Tests.Configurations
 
         protected abstract UnitTestConfiguration Runner { get; }
 
-        protected void SetUpLoader()
+        public void SetUpLoader()
         {
             Application = new Application(this.GetType().Name);
             Engine = new Engine();
@@ -68,6 +68,10 @@ namespace PrexoniteTests.Tests.Configurations
 
         protected void RunUnitTest(string testCaseId)
         {
+            Debug.WriteLine("----  begin of stored representation   ----");
+            Debug.WriteLine(Loader.StoreInString());
+            Debug.WriteLine("---- SNIP end of stored representation ----");
+
             foreach (var error in Loader.Errors)
                 Debug.Print("Error: {0}", error);
             foreach (var warning in Loader.Warnings)

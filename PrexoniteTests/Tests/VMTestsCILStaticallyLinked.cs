@@ -7,7 +7,7 @@ using Prexonite.Compiler.Cil;
 
 namespace PrexoniteTests.Tests
 {
-    [TestFixture]
+    [TestFixture,Explicit]
     public class VMTestsCILStaticallyLinked : Prx.Tests.VMTests
     {
         public VMTestsCILStaticallyLinked()
@@ -18,7 +18,7 @@ namespace PrexoniteTests.Tests
         
     }
 
-    [TestFixture]
+    [TestFixture,Explicit]
     public class VMTestsCILDynamicallyLinked : Prx.Tests.VMTests
     {
         public VMTestsCILDynamicallyLinked()

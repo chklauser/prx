@@ -1,0 +1,181 @@
+﻿<#@ template debug="true" hostSpecific="true" #>
+<#@ output extension=".cs" #>
+<#@ Assembly Name="System.Core.dll" #>
+<#@ import namespace="System" #>
+<#@ import namespace="System.IO" #>
+<#@ import namespace="System.Diagnostics" #>
+<#@ import namespace="System.Linq" #>
+<#@ import namespace="System.Collections.Generic" #> 
+// ReSharper disable RedundantUsingDirective
+using System;
+using System.Reflection;
+using System.Collections.Generic;
+using Prexonite.Types;
+using Prexonite.Compiler.Cil;
+using NUnit.Framework;
+// ReSharper restore RedundantUsingDirective
+
+// ReSharper disable RedundantExplicitArrayCreation
+// ReSharper disable InconsistentNaming
+
+namespace PrexoniteTests.Tests.Configurations
+{
+<# foreach(var testFile in _getTestConfiguration()) {
+    var className = /* "PrexoniteTests.Tests.Configurations." + /* */ _toPsrClassName(testFile.Item1);
+    var baseName = _toIdentifier(testFile.Item1); #>
+
+    [TestFixture]
+    public class <#=baseName#>_Interpreted : <#=className#>
+    {
+        private readonly UnitTestConfiguration _runner = new UnitTestConfiguration.InMemory();
+        protected override UnitTestConfiguration Runner
+        {
+            get 
+            {
+                return _runner;
+            }
+        }
+    }
+
+    [TestFixture]
+    public class <#=baseName#>_CilStatic : <#=className#>
+    {
+        private readonly UnitTestConfiguration _runner = new UnitTestConfiguration.InMemory{CompileToCil=true};
+        protected override UnitTestConfiguration Runner
+        {
+            get 
+            {
+                return _runner;
+            }
+        }
+    }
+
+    [TestFixture]
+    public class <#=baseName#>_CilIsolated : <#=className#>
+    {
+        private readonly UnitTestConfiguration _runner = new UnitTestConfiguration.InMemory{
+            CompileToCil=true,
+            Linking = FunctionLinking.FullyIsolated
+        };
+        protected override UnitTestConfiguration Runner
+        {
+            get 
+            {
+                return _runner;
+            }
+        }
+    }
+
+    [TestFixture]
+    public class <#=baseName#>_StoredInterpreted : <#=className#>
+    {
+        private readonly UnitTestConfiguration _runner = new UnitTestConfiguration.FromStored();
+        protected override UnitTestConfiguration Runner
+        {
+            get 
+            {
+                return _runner;
+            }
+        }
+    }
+
+    [TestFixture]
+    public class <#=baseName#>_StoredCilStatic : <#=className#>
+    {
+        private readonly UnitTestConfiguration _runner = new UnitTestConfiguration.FromStored{CompileToCil=true};
+        protected override UnitTestConfiguration Runner
+        {
+            get 
+            {
+                return _runner;
+            }
+        }
+    }
+
+    /*
+    [TestFixture]
+    public class <#=baseName#>_StoredCilIsolated : <#=className#>
+    {
+        private readonly UnitTestConfiguration _runner = new UnitTestConfiguration.FromStored{
+            CompileToCil=true,
+            Linking = FunctionLinking.FullyIsolated
+        };
+        protected override UnitTestConfiguration Runner
+        {
+            get 
+            {
+                return _runner;
+            }
+        }
+    } */
+<# } #>
+
+<# foreach(var vmClass in _getVMTestClasses()) { 
+    var baseName = vmClass.Substring(vmClass.LastIndexOf('.')+1); #>
+
+    [TestFixture]
+    public class <#=baseName#>_Interpreted : <#=vmClass#>
+    {
+        public <#=baseName#>_Interpreted()
+        {
+            CompileToCil = false;
+        } 
+    }
+
+    [TestFixture]
+    public class <#=baseName#>_CilStatic : <#=vmClass#>
+    {
+        public <#=baseName#>_CilStatic()
+        {
+            CompileToCil = true;
+            StaticLinking = FunctionLinking.FullyStatic;
+        } 
+    }
+
+    [TestFixture]
+    public class <#=baseName#>_CilIsolated : <#=vmClass#>
+    {
+        public <#=baseName#>_CilIsolated()
+        {
+            CompileToCil = true;
+            StaticLinking = FunctionLinking.FullyIsolated;
+        } 
+    }
+
+<# } #>
+}
+
+// ReSharper enable RedundantExplicitArrayCreation
+// ReSharper enable InconsistentNaming
+
+<#@ include file="LoadConfiguration.t4" #>
+
+<#+ 
+
+private IEnumerable<string> _getVMTestClasses()
+{
+    return new []{
+        "Prx.Tests.VMTests",
+        "PrexoniteTests.Tests.PartialApplication",
+        "PrexoniteTests.Tests.Lazy",
+        "PrexoniteTests.Tests.Translation",
+    };
+}
+
+// :: [(qualified_type_name,derived_class_base_name)]
+private IEnumerable<Tuple<string,string>> _getTestClasses()
+{
+    foreach(var t in _getVMTestClasses())
+    {
+        var baseName = t.Substring(t.LastIndexOf('.')+1);
+        yield return Tuple.Create(t,baseName);
+    }
+
+    foreach(var testFile in _getTestConfiguration())
+    {
+        var className = /* "PrexoniteTests.Tests.Configurations." + /* */ _toPsrClassName(testFile.Item1);
+        var baseName = _toIdentifier(testFile.Item1);
+        yield return Tuple.Create(className, baseName);
+    }
+}
+#>

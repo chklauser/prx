@@ -633,7 +633,13 @@ namespace Prexonite.Compiler
 
             compile:
 #endif
-            var lex = new Lexer(new StreamReader(str, Encoding.UTF8));
+            var reader = new StreamReader(str, Encoding.UTF8);
+            _loadFromReader(reader, filePath);
+        }
+
+        private void _loadFromReader(TextReader reader, string filePath)
+        {
+            var lex = new Lexer(reader);
             if (filePath != null)
             {
                 lex.File = filePath;
@@ -646,7 +652,16 @@ namespace Prexonite.Compiler
         [DebuggerStepThrough]
         public void LoadFromStream(Stream str)
         {
+            if (str == null)
+                throw new ArgumentNullException("str");
             _loadFromStream(str, null);
+        }
+
+        public void LoadFromReader(TextReader reader)
+        {
+            if (reader == null)
+                throw new ArgumentNullException("reader");
+            _loadFromReader(reader, null);
         }
 
 #if DEBUG
@@ -1115,12 +1130,13 @@ namespace Prexonite.Compiler
                 var metaTable = kvp.Value.Meta.Clone();
                 metaTable.Remove(Application.IdKey);
                 metaTable.Remove(Application.InitializationGeneration);
-                if (metaTable.Count > 0)
-                {
+                metaTable.Remove(Loader.SuppressPrimarySymbol);
 #if DEBUG || Verbose
                     writer.WriteLine();
 #endif
-                    writer.Write(@"[\sps;");
+                    writer.Write(@"[");
+                    writer.Write(Loader.SuppressPrimarySymbol);
+                    writer.Write(";");
 #if DEBUG || Verbose
                     writer.WriteLine();
 #endif
@@ -1129,7 +1145,6 @@ namespace Prexonite.Compiler
 #if DEBUG || Verbose
                     writer.WriteLine();
 #endif
-                }
                 writer.Write(";");
 #if DEBUG || Verbose
                 writer.WriteLine();

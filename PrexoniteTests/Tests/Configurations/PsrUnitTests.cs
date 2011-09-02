@@ -23,6 +23,7 @@ namespace PrexoniteTests.Tests.Configurations
                         @"psr\ast.pxs",
                 });
                 LoadUnitTestingFramework();
+                Runner.PrepareTestCompilation(this);
                 RequireFile(@".\ast.test.pxs");                
                 Runner.PrepareExecution(this);
             }
@@ -98,32 +99,6 @@ namespace PrexoniteTests.Tests.Configurations
                 RunUnitTest(@"test_sub_blocks");
             } 
         }
-
-        [TestFixture]
-        public class Unit_ast_Interpreted : Unit_ast
-        {
-            private readonly UnitTestConfiguration _runner = new UnitTestConfiguration.InMemory();
-            protected override UnitTestConfiguration Runner
-            {
-                get 
-                {
-                    return _runner;
-                }
-            }
-        }
-
-        [TestFixture]
-        public class Unit_ast_CilStatic : Unit_ast
-        {
-            private readonly UnitTestConfiguration _runner = new UnitTestConfiguration.InMemory(){CompileToCil=true};
-            protected override UnitTestConfiguration Runner
-            {
-                get 
-                {
-                    return _runner;
-                }
-            }
-        }
         public abstract class Unit_lang_ext : ScriptedUnitTestContainer
         {
             [TestFixtureSetUp]
@@ -137,6 +112,7 @@ namespace PrexoniteTests.Tests.Configurations
                         @"psr\macro.pxs",
                 });
                 LoadUnitTestingFramework();
+                Runner.PrepareTestCompilation(this);
                 RequireFile(@".\lang-ext.test.pxs");                
                 Runner.PrepareExecution(this);
             }
@@ -172,32 +148,6 @@ namespace PrexoniteTests.Tests.Configurations
                 RunUnitTest(@"test_prop_simple_glob");
             } 
         }
-
-        [TestFixture]
-        public class Unit_lang_ext_Interpreted : Unit_lang_ext
-        {
-            private readonly UnitTestConfiguration _runner = new UnitTestConfiguration.InMemory();
-            protected override UnitTestConfiguration Runner
-            {
-                get 
-                {
-                    return _runner;
-                }
-            }
-        }
-
-        [TestFixture]
-        public class Unit_lang_ext_CilStatic : Unit_lang_ext
-        {
-            private readonly UnitTestConfiguration _runner = new UnitTestConfiguration.InMemory(){CompileToCil=true};
-            protected override UnitTestConfiguration Runner
-            {
-                get 
-                {
-                    return _runner;
-                }
-            }
-        }
         public abstract class Unit_macro : ScriptedUnitTestContainer
         {
             [TestFixtureSetUp]
@@ -209,6 +159,7 @@ namespace PrexoniteTests.Tests.Configurations
                         @"psr\test\meta_macro.pxs",
                 });
                 LoadUnitTestingFramework();
+                Runner.PrepareTestCompilation(this);
                 RequireFile(@".\macro.test.pxs");                
                 Runner.PrepareExecution(this);
             }
@@ -339,32 +290,6 @@ namespace PrexoniteTests.Tests.Configurations
                 RunUnitTest(@"test_ast\new");
             } 
         }
-
-        [TestFixture]
-        public class Unit_macro_Interpreted : Unit_macro
-        {
-            private readonly UnitTestConfiguration _runner = new UnitTestConfiguration.InMemory();
-            protected override UnitTestConfiguration Runner
-            {
-                get 
-                {
-                    return _runner;
-                }
-            }
-        }
-
-        [TestFixture]
-        public class Unit_macro_CilStatic : Unit_macro
-        {
-            private readonly UnitTestConfiguration _runner = new UnitTestConfiguration.InMemory(){CompileToCil=true};
-            protected override UnitTestConfiguration Runner
-            {
-                get 
-                {
-                    return _runner;
-                }
-            }
-        }
         public abstract class Unit_misc : ScriptedUnitTestContainer
         {
             [TestFixtureSetUp]
@@ -375,6 +300,7 @@ namespace PrexoniteTests.Tests.Configurations
                         @"psr\misc.pxs",
                 });
                 LoadUnitTestingFramework();
+                Runner.PrepareTestCompilation(this);
                 RequireFile(@".\misc.test.pxs");                
                 Runner.PrepareExecution(this);
             }
@@ -445,32 +371,6 @@ namespace PrexoniteTests.Tests.Configurations
                 RunUnitTest(@"test_swap");
             } 
         }
-
-        [TestFixture]
-        public class Unit_misc_Interpreted : Unit_misc
-        {
-            private readonly UnitTestConfiguration _runner = new UnitTestConfiguration.InMemory();
-            protected override UnitTestConfiguration Runner
-            {
-                get 
-                {
-                    return _runner;
-                }
-            }
-        }
-
-        [TestFixture]
-        public class Unit_misc_CilStatic : Unit_misc
-        {
-            private readonly UnitTestConfiguration _runner = new UnitTestConfiguration.InMemory(){CompileToCil=true};
-            protected override UnitTestConfiguration Runner
-            {
-                get 
-                {
-                    return _runner;
-                }
-            }
-        }
         public abstract class Unit_struct : ScriptedUnitTestContainer
         {
             [TestFixtureSetUp]
@@ -484,6 +384,7 @@ namespace PrexoniteTests.Tests.Configurations
                         @"psr\stack.pxs",
                 });
                 LoadUnitTestingFramework();
+                Runner.PrepareTestCompilation(this);
                 RequireFile(@".\struct.test.pxs");                
                 Runner.PrepareExecution(this);
             }
@@ -583,32 +484,6 @@ namespace PrexoniteTests.Tests.Configurations
             {
                 RunUnitTest(@"ti_nonserial");
             } 
-        }
-
-        [TestFixture]
-        public class Unit_struct_Interpreted : Unit_struct
-        {
-            private readonly UnitTestConfiguration _runner = new UnitTestConfiguration.InMemory();
-            protected override UnitTestConfiguration Runner
-            {
-                get 
-                {
-                    return _runner;
-                }
-            }
-        }
-
-        [TestFixture]
-        public class Unit_struct_CilStatic : Unit_struct
-        {
-            private readonly UnitTestConfiguration _runner = new UnitTestConfiguration.InMemory(){CompileToCil=true};
-            protected override UnitTestConfiguration Runner
-            {
-                get 
-                {
-                    return _runner;
-                }
-            }
         }
 }
 
