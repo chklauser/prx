@@ -82,13 +82,13 @@ namespace PrexoniteTests.Tests.Configurations
         }
     }
 
-    /*
+    
     [TestFixture]
     public class ast_StoredCilIsolated : Unit_ast
     {
         private readonly UnitTestConfiguration _runner = new UnitTestConfiguration.FromStored{
             CompileToCil=true,
-            Linking = FunctionLinking.FullyIsolated
+            Linking = FunctionLinking.JustAvailableForLinking
         };
         protected override UnitTestConfiguration Runner
         {
@@ -97,7 +97,7 @@ namespace PrexoniteTests.Tests.Configurations
                 return _runner;
             }
         }
-    } */
+    } 
 
     [TestFixture]
     public class lang_ext_Interpreted : Unit_lang_ext
@@ -167,13 +167,13 @@ namespace PrexoniteTests.Tests.Configurations
         }
     }
 
-    /*
+    
     [TestFixture]
     public class lang_ext_StoredCilIsolated : Unit_lang_ext
     {
         private readonly UnitTestConfiguration _runner = new UnitTestConfiguration.FromStored{
             CompileToCil=true,
-            Linking = FunctionLinking.FullyIsolated
+            Linking = FunctionLinking.JustAvailableForLinking
         };
         protected override UnitTestConfiguration Runner
         {
@@ -182,7 +182,7 @@ namespace PrexoniteTests.Tests.Configurations
                 return _runner;
             }
         }
-    } */
+    } 
 
     [TestFixture]
     public class macro_Interpreted : Unit_macro
@@ -252,13 +252,13 @@ namespace PrexoniteTests.Tests.Configurations
         }
     }
 
-    /*
+    
     [TestFixture]
     public class macro_StoredCilIsolated : Unit_macro
     {
         private readonly UnitTestConfiguration _runner = new UnitTestConfiguration.FromStored{
             CompileToCil=true,
-            Linking = FunctionLinking.FullyIsolated
+            Linking = FunctionLinking.JustAvailableForLinking
         };
         protected override UnitTestConfiguration Runner
         {
@@ -267,7 +267,7 @@ namespace PrexoniteTests.Tests.Configurations
                 return _runner;
             }
         }
-    } */
+    } 
 
     [TestFixture]
     public class misc_Interpreted : Unit_misc
@@ -337,13 +337,13 @@ namespace PrexoniteTests.Tests.Configurations
         }
     }
 
-    /*
+    
     [TestFixture]
     public class misc_StoredCilIsolated : Unit_misc
     {
         private readonly UnitTestConfiguration _runner = new UnitTestConfiguration.FromStored{
             CompileToCil=true,
-            Linking = FunctionLinking.FullyIsolated
+            Linking = FunctionLinking.JustAvailableForLinking
         };
         protected override UnitTestConfiguration Runner
         {
@@ -352,7 +352,7 @@ namespace PrexoniteTests.Tests.Configurations
                 return _runner;
             }
         }
-    } */
+    } 
 
     [TestFixture]
     public class struct_Interpreted : Unit_struct
@@ -422,13 +422,13 @@ namespace PrexoniteTests.Tests.Configurations
         }
     }
 
-    /*
+    
     [TestFixture]
     public class struct_StoredCilIsolated : Unit_struct
     {
         private readonly UnitTestConfiguration _runner = new UnitTestConfiguration.FromStored{
             CompileToCil=true,
-            Linking = FunctionLinking.FullyIsolated
+            Linking = FunctionLinking.JustAvailableForLinking
         };
         protected override UnitTestConfiguration Runner
         {
@@ -437,7 +437,7 @@ namespace PrexoniteTests.Tests.Configurations
                 return _runner;
             }
         }
-    } */
+    } 
 
 
     [TestFixture]

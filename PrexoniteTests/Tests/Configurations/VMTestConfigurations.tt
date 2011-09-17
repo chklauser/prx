@@ -92,13 +92,13 @@ namespace PrexoniteTests.Tests.Configurations
         }
     }
 
-    /*
+    
     [TestFixture]
     public class <#=baseName#>_StoredCilIsolated : <#=className#>
     {
         private readonly UnitTestConfiguration _runner = new UnitTestConfiguration.FromStored{
             CompileToCil=true,
-            Linking = FunctionLinking.FullyIsolated
+            Linking = FunctionLinking.JustAvailableForLinking
         };
         protected override UnitTestConfiguration Runner
         {
@@ -107,7 +107,7 @@ namespace PrexoniteTests.Tests.Configurations
                 return _runner;
             }
         }
-    } */
+    } 
 <# } #>
 
 <# foreach(var vmClass in _getVMTestClasses()) { 

@@ -40,15 +40,15 @@ namespace PrexoniteTests.Tests.Configurations
             if (Directory.Exists(slnPath))
             {
                 var psrTestsPath = Path.GetFullPath(Path.Combine(slnPath, @"PrexoniteTests\psr-tests"));
-                Debug.WriteLine("inferred psr-tests path: " + psrTestsPath, "Engine.Path");
+                Console.WriteLine("inferred psr-tests path: " + psrTestsPath, "Engine.Path");
                 Engine.Paths.Add(psrTestsPath);
                 var prxPath = Path.GetFullPath(Path.Combine(slnPath, @"Prx"));
-                Debug.WriteLine("inferred prx path: " + prxPath,"Engine.Path");
+                Console.WriteLine("inferred prx path: " + prxPath,"Engine.Path");
                 Engine.Paths.Add(prxPath);
             }
             else
             {
-                Debug.WriteLine("CANNOT INFER psr-tests PATH: " + slnPath, "Engine.Path");
+                Console.WriteLine("CANNOT INFER psr-tests PATH: " + slnPath, "Engine.Path");
             }
         }
 
@@ -68,16 +68,16 @@ namespace PrexoniteTests.Tests.Configurations
 
         protected void RunUnitTest(string testCaseId)
         {
-            Debug.WriteLine("----  begin of stored representation   ----");
-            Debug.WriteLine(Loader.StoreInString());
-            Debug.WriteLine("---- SNIP end of stored representation ----");
+            Console.WriteLine("----  begin of stored representation   ----");
+            Console.WriteLine(Loader.StoreInString());
+            Console.WriteLine("---- SNIP end of stored representation ----");
 
             foreach (var error in Loader.Errors)
-                Debug.Print("Error: {0}", error);
+                Console.WriteLine("Error: {0}", error);
             foreach (var warning in Loader.Warnings)
-                Debug.Print("Warning: {0}", warning);
+                Console.WriteLine("Warning: {0}", warning);
             foreach (var info in Loader.Infos)
-                Debug.Print("Info: {0}", info);
+                Console.WriteLine("Info: {0}", info);
 
 
             Assert.That(Loader.ErrorCount,Is.EqualTo(0),"Errors during compilation");
@@ -104,8 +104,8 @@ namespace PrexoniteTests.Tests.Configurations
             }
             else
             {
-                Debug.WriteLine("Test failed. Result:");
-                Debug.WriteLine(eObj);
+                Console.WriteLine("Test failed. Result:");
+                Console.WriteLine(eObj);
                 Assert.Fail("Test failed");
             }
         }
