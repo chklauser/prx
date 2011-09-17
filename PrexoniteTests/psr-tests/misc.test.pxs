@@ -1,6 +1,5 @@
  
-build does require(@"psr\misc.pxs");
-build does require(@"psr\test.pxs");
+under_test @"psr\misc.pxs";
 
 function test_cmp[test]
 {

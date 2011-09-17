@@ -69,12 +69,12 @@ namespace Prexonite.Commands.List
                 throw new PrexoniteException("Except requires at least two sources.");
 
             var t = new Dictionary<PValue, bool>();
-            //All elements of the first source are considered candidates
-            foreach (var x in xss[0])
+            //All elements of the last source are considered candidates
+            foreach (var x in xss[n-1])
                 if (!t.ContainsKey(x))
                     t.Add(x, true);
 
-            for (var i = 1; i < n; i++)
+            for (var i = 0; i < n-1; i++)
                 foreach (var x in xss[i])
                     if (t.ContainsKey(x))
                         t.Remove(x);

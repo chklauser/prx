@@ -491,6 +491,9 @@ namespace Prexonite.Compiler.Macro
                     "Exception during expansion of macro {0} in function {1}: {2}",
                     expander.HumanId, context.Function.LogicalId,
                     e.Message), context.Invocation);
+#if DEBUG
+            Console.WriteLine(e);
+#endif
         }
 
         private static void _setupDefaultExpression(MacroContext context)

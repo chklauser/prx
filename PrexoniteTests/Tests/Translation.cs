@@ -9,7 +9,7 @@ using Prx.Tests;
 
 namespace PrexoniteTests.Tests
 {
-    [TestFixture]
+    [TestFixture,Explicit]
     public class Translation : VMTestsBase
     {
 

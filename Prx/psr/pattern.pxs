@@ -14,12 +14,42 @@ function repeatable(xs)
 
     var rep = [];
 
-    coroutine tee\cor
+    // coroutine tee\cor
+    // {
+        // foreach(var x in xs)
+        // {
+            // yield rep[] = x;            
+        // }
+    // }
+    
+    function tee\cor
     {
-        foreach(var x in xs)
+        var e = xs.GetEnumerator;
+        var s = new Structure;
+        s.\\("GetEnumerator") = new enumerator(
+            () => {
+                if(e is null or not e.MoveNext)
+                {
+                    return false;
+                }
+                else
+                {
+                    rep[] = e.Current;
+                    return true;                    
+                }
+            },
+            e.Current(?),
+            () => s.Dispose(),
+        ?);
+        s.\\("Dispose") = () =>
         {
-            yield rep[] = x;            
-        }
+            if(e is not null)
+            {
+                dispose(e);
+                e = null;
+            }
+        };
+        return s;
     }
     
     var tee = tee\cor();

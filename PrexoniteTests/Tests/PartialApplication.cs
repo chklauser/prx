@@ -892,7 +892,7 @@ function main(a,c,d)
         }
     }
 
-    [TestFixture]
+    [TestFixture,Explicit]
     public class PartialApplicationCil : PartialApplication
     {
         public PartialApplicationCil()
@@ -901,7 +901,7 @@ function main(a,c,d)
         }
     }
 
-    [TestFixture]
+    [TestFixture,Explicit]
     public class PartialApplicationInterpreted : PartialApplication
     {
         public PartialApplicationInterpreted()

@@ -1,7 +1,5 @@
 ﻿ 
-build does require(@"psr\macro.pxs");
-build does require(@"psr\test.pxs");
-build does require(@"psr\test\meta_macro.pxs");
+under_test {@"psr\macro.pxs", @"psr\test\meta_macro.pxs"};
 
 function test_file()[test]
 {

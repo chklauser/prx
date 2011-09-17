@@ -309,8 +309,6 @@ namespace Prexonite.Compiler.Macro.Commands
                 // - Macro reference specified as expression that evaluates to an actual macro reference
                 // - followed by a list of options
 
-                macroSpec = invokeSpec;
-
                 AstListLiteral optionsRaw;
                 if (inv.Arguments.Count < 3 ||
                     (optionsRaw = inv.Arguments[2] as AstListLiteral) == null)
@@ -320,6 +318,8 @@ namespace Prexonite.Compiler.Macro.Commands
                     macroSpec = null;
                     return false;
                 }
+
+                macroSpec = inv.Arguments[1];
 
                 //first option: justEffect
                 if (optionsRaw.Elements.Count >= 1)

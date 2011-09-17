@@ -12,18 +12,182 @@
 //          newAmount => Something.SetAmount(newAmount)
 //      );
 
-Import
+
+
+build does require(@"psr\ast.pxs", @"psr\macro.pxs");
+
+function prop\meta_entry = "psr\\prop";
+
+macro prop\macro\assemble(dummyArgs,prop_get,prop_set)
+[
+    Import
+    {
+        System,
+        Prexonite,
+        Prexonite::Types,
+        Prexonite::Compiler,
+        Prexonite::Compiler::Ast
+    };
+]
 {
-    System,
-    Prexonite,
-    Prexonite::Types,
-    Prexonite::Compiler,
-    Prexonite::Compiler::Ast
-};
+    if(not ast_is_GetSet(prop_set))
+    {
+        macro\report_error(
+            "auto-properties (psr\\prop.pxs) requires the node prop_set=$(boxed(prop_set)) to be a GetSet complex.");
+        return;
+    }
+    
+    if(not ast_is_Expression(prop_get))
+    {
+        macro\report_error("auto-properties (psr\\prop.pxs) requires the node prop_get=$(boxed(prop_get)) to be an expression node.");
+        return;
+    }
 
-//In case prop is used with the application used with a different loader.
-function prop => throw "Autoproperty has not been converted by the compiler. Have you forgotten to import psr\\prop.pxs?";
+    dummyArgs = ast\read(dummyArgs)~Int;
+    var parameters = context.Function.Parameters;
+    while(parameters.Count <= dummyArgs)
+        parameters.Add(uniqueId("arg"));
+    
+    var prop_arg = ast\lvar(parameters[dummyArgs]);
 
-function struct_prop => prop;
+    var nullCheck = ast("Typecheck",prop_arg,ast("ConstantTypeExpression",::NullPType.Literal));
+    var varargsId = ::PFunction.ArgumentListId;
+    var getArgs = ast\lvar(varargsId);
+    if(not context.Function.Variables.Contains(varargsId))
+        context.Function.Variables.Add(varargsId);
+    var getArgc = ast\member(getArgs,"Count");
+    var cmpEqZero = ast("BinaryOperator",getArgc,::BinaryOperator.Equality,ast\const(0),SI.cmd, 
+        ~Object<"Prexonite.OperatorNames+Prexonite">.Equality);
+    var conj = ast("LogicalAnd",nullCheck,cmpEqZero);
+    var check = ast("ConditionalExpression",conj);
+    
+    prop_set.Arguments.Add(prop_arg);
+    
+    check.IfExpression = prop_get;
+    check.ElseExpression = prop_set;
+    
+    context.Block.Expression = check;
+    
+    return null;
+}
 
-build does Prexonite::Compiler::PropHook.InstallHook(getloader); 
+macro prop\macro\simple(dummyArgs)
+{
+    
+    var backingField;
+    var storeId = uniqueId("$(context.Function.Id)_prop_store");
+    if((context.GetParentFunctions >> limit(1) >> count) > 0)
+    {
+        //is nested function ↔ define variable in parent function
+        var parentFunc = (context.GetParentFunctions >> limit(1) >> all)[0];
+        parentFunc.Variables.Add(storeId);
+        context.RequireOuterVariable(storeId);
+        backingField = ast\lvar(storeId);        
+    }
+    else
+    {
+        //is global function ↔ define global variable
+        context.Application.Variables.Add(storeId,new ::PVariable);
+        backingField = ast\gvar(storeId);
+    }
+    
+    var prop_get = backingField;
+    var prop_set = backingField.GetCopy;
+    prop_set.Call = SI.set;
+    
+    context.Block.Expression = var invk = ast\invoke_macro(macro\id(prop\macro\assemble));
+    invk.Arguments.Add(dummyArgs);
+    invk.Arguments.Add(prop_get);
+    invk.Arguments.Add(prop_set);
+    
+    return null;
+}
+
+macro prop\macro\complex(dummyArgs,getter,setter)
+{
+    context.Block.Expression = var invk = ast\invoke_macro(macro\id(prop\macro\assemble));
+    (var iargs = invk.Arguments).Add(dummyArgs);
+    iargs.Add(ast("IndirectCall",SI.get,getter));
+    iargs.Add(ast("IndirectCall",SI.set,setter));
+    
+    return null;
+}
+
+macro prop\macro\proxy(dummyArgs,prop_get)
+{
+    if(not ast_is_GetSet(prop_get))
+    {
+        macro\report_error("The target of a proxy property must be a GetSet node.");
+        return;
+    }
+    
+    var prop_set = prop_get.GetCopy();
+    prop_set.Call = SI.set;
+    
+    context.Block.Expression = var invk = ast\invoke_macro(macro\id(prop\macro\assemble));
+    invk.Arguments.Add(dummyArgs);
+    invk.Arguments.Add(prop_get);
+    invk.Arguments.Add(prop_set);
+    
+    return null;
+}
+
+macro prop\macro(dummayArgs)[
+    Import
+    {
+        System,
+        Prexonite,
+        Prexonite::Types,
+        Prexonite::Compiler,
+        Prexonite::Compiler::Ast
+    }
+]
+{
+    if(context.IsJustEffect or not SI.eq(context.Call,SI.get))
+    {
+        macro\report_error("auto-property (psr\\prop.pxs) must be used as a RHS. Its value must not be ignored.");
+        return;
+    }
+    
+    if(context.Function.Meta.ContainsKey(prop\meta_entry))
+    {
+        macro\report_error("auto-property (psr\\prop.pxs) can only be used once per function.");
+        return;
+    }
+    context.Function.Meta[prop\meta_entry] = true;
+
+    var argc = var args.Count;
+    if(argc == 0)
+    {
+        macro\report_error("$(macro\id(prop\macro))(dummyArgs) requires at least one argument.");
+        return;
+    }
+    
+    var impl;
+    if(argc == 1)
+        impl = macro\reference(prop\macro\simple);
+    else if(argc == 2)
+        impl = macro\reference(prop\macro\proxy);
+    else if(argc >= 3)
+        impl = macro\reference(prop\macro\complex);
+    
+    context.Block.Expression = call\macro([],impl,[context.IsJustEffect,context.Call],args);
+    
+    return null;
+}
+
+macro prop
+{
+    context.Block.Expression = var invk = ast\invoke_macro(macro\id(prop\macro));
+    invk.Arguments.Add(ast\const(0));
+    invk.Arguments.AddRange(var args);
+    return null;
+}
+
+macro struct_prop
+{
+    context.Block.Expression = var invk = ast\invoke_macro(macro\id(prop\macro));
+    invk.Arguments.Add(ast\const(1));
+    invk.Arguments.AddRange(var args);
+    return null;
+}

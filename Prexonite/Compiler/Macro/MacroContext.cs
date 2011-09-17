@@ -147,7 +147,7 @@ namespace Prexonite.Compiler.Macro
         }
 
         /// <summary>
-        /// Returns the functions direct parent (outer) function.
+        /// Returns the functions proper parent functions in reverse order (closest parent first).
         /// </summary>
         public IEnumerable<PFunction> GetParentFunctions()
         {

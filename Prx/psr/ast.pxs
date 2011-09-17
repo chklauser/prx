@@ -43,8 +43,13 @@ function subBlocks(block) [is compiler;] =
     else
         [];
 
-var uniqueIdCounter [is compiler;];
-build does uniqueIdCounter =  0;
+function uniqueIdCounter(x)[compiler]
+{
+    static var counter ??= 0;
+    if((var args).Count > 0)
+        counter = x;
+    return counter;
+}
 function uniqueId(verb) [is compiler;] = "uniq\\" + verb + uniqueIdCounter++;
 
 function isFunctionCall(id, node)[is compiler;] =
@@ -62,7 +67,6 @@ function localMeta(key, context)[is compiler;] =
     else
         context.ParentApplication.Meta[key];
         
-var SI [is compiler;];
 function create_SI [is compiler;]
 {
     //Note: don't use struct here, because struct.pxs depends on ast.pxs!
@@ -131,7 +135,12 @@ function create_SI [is compiler;]
     
     return SI;
 }
-build does SI = new SI;
+
+function SI(x)[compiler]
+{
+    static var field ??= new SI;
+    return field;
+}
    
 //
 //  Removal of compiler related functions and variables from the final application

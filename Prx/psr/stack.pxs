@@ -2,7 +2,7 @@
 //Stack implementation using []
 build does require(@"psr\struct.pxs",@"psr\debug.pxs");
 
-function create_stack() 
+function create_stack as create_mutable_stack() 
 [debugging disabled;]
 {
     var xs = [];
@@ -61,7 +61,7 @@ function create_stack()
     return struct;
 }
 
-function create_stack_immutable(lst)
+function create_stack_immutable as create_immutable_stack(lst)
 {
     if(lst is Null)
         lst = [];
