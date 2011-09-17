@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.IO;
 using System.Linq;
 using System.Text;
 using Prexonite.Compiler;
@@ -9,35 +10,55 @@ namespace PrexoniteTests.Tests.Configurations
 {
     public abstract class UnitTestConfiguration
     {
-        public abstract void SetupTestFile(ScriptedUnitTestContainer runner,  IEnumerable<string> filesUnderTest);
-        public abstract void PrepareExecution(ScriptedUnitTestContainer runner);
-
         public class InMemory : UnitTestConfiguration
         {
-            public FunctionLinking Linking { get; set; }
-            public bool CompileToCil { get; set; }
+        }
 
-            public InMemory()
+        public class FromStored : UnitTestConfiguration
+        {
+            public override void PrepareTestCompilation(ScriptedUnitTestContainer runner)
             {
-                Linking = FunctionLinking.FullyStatic;
-                CompileToCil = false;
+                base.PrepareTestCompilation(runner);
+                using(var buffer = new MemoryStream(512*1024))
+                {
+                    //we don't need to wrap reader/writer in using because 
+                    // we can dispose of the buffer directly
+                    var writer = new StreamWriter(buffer, Encoding.UTF8);
+                    var reader = new StreamReader(buffer, Encoding.UTF8);
+
+                    runner.Loader.Store(writer);
+                    writer.Flush();
+                    runner.SetUpLoader(); //throws away old engine,loader,application; creates new one
+                    buffer.Seek(0, SeekOrigin.Begin);
+                    runner.Loader.LoadFromReader(reader);
+                }
             }
+        }
 
-            #region Overrides of ConfigurationRunner
+        protected  UnitTestConfiguration()
+        {
+            Linking = FunctionLinking.FullyStatic;
+            CompileToCil = false;
+        }
 
-            public override void SetupTestFile(ScriptedUnitTestContainer runner, IEnumerable<string> filesUnderTest)
-            {
-                foreach (var fut in filesUnderTest)
-                    runner.RequireFile(fut);
-            }
+        public FunctionLinking Linking { get; set; }
+        public bool CompileToCil { get; set; }
 
-            public override void PrepareExecution(ScriptedUnitTestContainer runner)
-            {
-                if (CompileToCil)
-                    Compiler.Compile(runner.Application, runner.Engine, Linking);
-            }
+        public virtual void SetupTestFile(ScriptedUnitTestContainer runner, IEnumerable<string> filesUnderTest)
+        {
+            foreach (var fut in filesUnderTest)
+                runner.RequireFile(fut);
+        }
 
-            #endregion
+        public virtual void PrepareExecution(ScriptedUnitTestContainer runner)
+        {
+            if (CompileToCil)
+                Compiler.Compile(runner.Application, runner.Engine, Linking);
+        }
+
+        public virtual void PrepareTestCompilation(ScriptedUnitTestContainer runner)
+        {
+            // do nothing
         }
     }
 }

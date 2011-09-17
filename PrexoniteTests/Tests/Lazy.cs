@@ -6,8 +6,7 @@ using Prx.Tests;
 namespace PrexoniteTests.Tests
 {
 
-    [TestFixture]
-    public class Lazy : VMTestsBase
+    public abstract class Lazy : VMTestsBase
     {
 
         public Lazy()

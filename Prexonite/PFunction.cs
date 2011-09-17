@@ -463,7 +463,9 @@ namespace Prexonite
             #region Metainformation
 
             //Metainformation
-            writer.Write(@"[\sps;");
+            writer.Write(@"[");
+            writer.Write(Loader.SuppressPrimarySymbol);
+            writer.Write(";");
 #if DEBUG || Verbose
             writer.WriteLine();
 #endif
@@ -471,6 +473,7 @@ namespace Prexonite
             meta.Remove(Application.ImportKey); //to be added separately
             meta.Remove(Application.IdKey); //implied
             meta.Remove(Application.InitializationGeneration); //must be set to default
+            meta.Remove(Loader.SuppressPrimarySymbol); //stored functions always have their symbol declared separately
             meta.Store(writer);
             var lst = new List<MetaEntry>();
 // ReSharper disable LoopCanBeConvertedToQuery
