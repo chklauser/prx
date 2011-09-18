@@ -1,2 +1,104 @@
  
-//do try to avoid dependence on psr
+build does require(
+    
+);
+
+function create_args_option_base as create_option_base(aliases,desc)
+{
+    var s = new Structure;
+    s.\("aliases") = if(aliases is String) [aliases] else all(aliases);
+    s.\("description") = desc;
+    s.\("trigger") = null; //(opt,state,arg) => 
+    s.\\("with_trigger") = (self,t) => {self.trigger = t; return self;}
+    return s;
+}
+
+function create_args_switch as create_switch(aliases,desc)
+{
+    var opt = new option_base(aliases,desc);
+    opt.\("kind") = ->create_switch.Id;
+    return opt;
+}
+
+function create_args_argument as create_argument(aliases,desc)
+{
+    var opt = new option_base(aliases,desc);
+    opt.\("kind") = ->create_argument.Id;
+    return opt;
+}
+
+function create_args_namespace as create_namespace(aliases,desc,parser)
+{
+    var opt = new option_base(aliases,desc);
+    opt.\("kind") = ->create_namespace.Id;
+    opt.\("parser") = parser;
+    return opt;
+}
+
+function create_args_table(argv)
+{
+
+}
+
+/*
+    Kinds of options:
+    
+    * Switch
+        -s
+        --some-switch
+    * Argument
+        -a value
+        --some-arg "some file.txt"
+    * Namespace
+        -Xs (a switch)
+        --Xsome-arg "some file.txt" (an argument)
+        +X ... [-X]
+        +RTS ... [-RTS]
+*/
+
+function create_args_parser()
+{
+    function create_parser_state(parser, argv)
+    {
+        var s = new Structure;
+        
+        s.\("\argv") = argv;
+        s.\("\index") = 0;
+        s.\("\passthrough") = false;
+        s.\("\parser") = parser;
+        s.\("\arguments") = {};
+        s.\("\positionals") = [];
+        s.\("\skipped") = [];
+    }
+
+
+    var s = new Structure;
+    
+    s.\("\\dash") = "-";
+    
+    s.\("\\options") = {};
+    s.\("\\namespaces") = {};
+    
+    s.\\("get_options") = self => self.\options >> where(?.Value then ?.kind then ? != ->create_namespace.Id);
+    s.\\("get_namespaces") = self => self.\namespaces;
+    
+    s.\\("add_option") = (self,opt) => {
+        var isNamespace = opt.kind == ->create_namespace.Id;
+        foreach(var alias in opt.aliases)
+        {
+            if(not isNamespace or alias.Length == 1)
+                self.\options[alias] = opt;
+            if(isNamespace)
+                self.\namespaces[alias] = opt;
+        }
+    };
+    s.\\("add_options") = (self) => {
+        foreach(var arg in var new args >> skip(1))
+            foreach(var opt in arg)
+                self.add_option(opt);
+    };
+    
+    s.\("positional") = new argument("positional","positional");
+    
+    return s;
+}
