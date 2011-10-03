@@ -151,6 +151,9 @@
     <Content Include="psr\macro.pxs">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </Content>
+    <Content Include="psr\experimental\args.pxs">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </Content>
     <Content Include="psr\misc.pxs">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </Content>
