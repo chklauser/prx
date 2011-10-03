@@ -1,4 +1,4 @@
- 
+﻿ 
 build does require(
     
 );
@@ -9,7 +9,10 @@ function create_args_option_base as create_option_base(aliases,desc)
     s.\("aliases") = if(aliases is String) [aliases] else all(aliases);
     s.\("description") = desc;
     s.\("trigger") = null; //(opt,state,arg) => 
-    s.\\("with_trigger") = (self,t) => {self.trigger = t; return self;}
+    s.\\("with_trigger") = (self,t) => {
+        self.trigger = t;
+        return self;
+    };
     return s;
 }
 
@@ -35,10 +38,6 @@ function create_args_namespace as create_namespace(aliases,desc,parser)
     return opt;
 }
 
-function create_args_table(argv)
-{
-
-}
 
 /*
     Kinds of options:
@@ -56,19 +55,30 @@ function create_args_table(argv)
         +RTS ... [-RTS]
 */
 
+function create_args_table()
+{
+    var s = new Structure;
+    
+    function 
+    
+    return s;
+}
+
 function create_args_parser()
 {
     function create_parser_state(parser, argv)
     {
         var s = new Structure;
         
-        s.\("\argv") = argv;
-        s.\("\index") = 0;
-        s.\("\passthrough") = false;
-        s.\("\parser") = parser;
-        s.\("\arguments") = {};
-        s.\("\positionals") = [];
-        s.\("\skipped") = [];
+        s.\(@"\argv") = argv;
+        s.\(@"\argc") = argc;
+        s.\(@"\index") = 0;
+        s.\(@"\passthrough") = false;
+        s.\(@"\parser") = parser;
+        s.\(@"\arguments") = {};
+        s.\(@"\positionals") = [];
+        s.\(@"\skipped") = [];
+        s.\(@"\table") = new args_table;
     }
 
 
@@ -99,6 +109,13 @@ function create_args_parser()
     };
     
     s.\("positional") = new argument("positional","positional");
+    
+    s.\\("parse") = (self,argv) => 
+    {
+        var new s = new parser_state(self,argv);
+        s.parse;
+        return s.table;
+    };   
     
     return s;
 }
