@@ -1,0 +1,136 @@
+﻿
+function create_indented_writer(buffer, indentation)
+{
+    if(buffer is String)
+    {
+        indentation = buffer;
+        buffer = null;
+    }
+    
+    if(buffer is System::Text::StringBuilder)
+        buffer = new System::IO::StringWriter(buffer);
+    
+    buffer ??= new System::IO::StringWriter;
+    buffer ~= System::IO::TextWriter;
+    indentation ??= "  ";
+    
+    var s = new Structure;
+    
+    s.\\(@"\make_indentation") = (self,i) => 
+    {
+        self.\icachestr = self.\indentation*(i ?? 0);
+    };
+    
+    s.\(@"\indentation") = indentation;
+    s.\(@"\icachestr") = "";
+    s.\(@"\icachelen") = 0;
+    s.\(@"\writer") = buffer;
+    
+    s.\(@"\level") = 0;
+    s.\\("set_level") = (self,newLevel) => 
+    {
+        if(newLevel < 0)
+            throw "indented writer cannot have a negative indentation";
+        self.\level = newLevel;
+        self.\make_indentation(newLevel);
+    };
+    s.\\("get_level") = (self) => self.\level;
+    s.\(@"\delayed_indent") = false;
+    
+    s.\\(@"\dent") = (self,deltaLevel) =>
+    {
+        self.set_level(self.get_level() + deltaLevel);
+    };
+    s.\\("indent") = (self,deltaLevel) => 
+    {
+        self.\dent(deltaLevel ?? 1);
+    };
+    s.\\("unindent") = (self,deltaLevel) => 
+    {
+        self.\dent(-(deltaLevel ?? 1));
+    };
+    
+    s.\\(@"\iprintindent") = (self) =>
+    {
+        self.\writer.Write(self.\icachestr);
+    };
+    s.\\(@"\iensureindent") = (self) =>
+    {
+        if(self.\delayed_indent)
+        {
+            self.\iprintindent();
+            self.\delayed_indent = false;
+        }
+    };
+    s.\\(@"\inewline") = (self) =>
+    {
+        self.\writer.Write(char("\n"));
+        self.\delayed_indent = true;
+    };
+    s.\\(@"\iprint") = (self,txt) => 
+    {
+        var lines = txt.Split(char("\n"));
+        var lc = lines.Count;
+        if(lc == 1 and lines[0] == "")
+            return;
+        for(var i = 0; i < lc; i++)
+        {
+            var line = lines[i];
+            
+            if(line != "" and line != "\r")
+                self.\iensureindent();
+            
+            self.\writer.Write(line);
+            
+            if(i < lc-1)
+                self.\inewline();
+        }        
+    };
+    
+    s.\\("Write") = (self,fmt) =>
+    {
+        var argc = var args.Count;
+        if(argc <= 1)
+            return;
+            
+        if(argc == 2)
+            self.\iprint(fmt);
+        else
+            self.\iprint(call\member(fmt,"Format",args >> skip(2)));
+    };
+    
+    s.\\("WriteLine") = (self,fmt) =>
+    {
+        call\member(self,"Write",var args >> skip(1));
+        self.\inewline();
+    };
+    
+    s.\\("FlushIndentation") = (self, deltaLevel) =>
+    {
+        if(deltaLevel is null)
+        {
+            self.\iensureindent();
+        }
+        else
+        {
+            using(self.indented(deltaLevel))
+                self.\iensureindent();
+        }
+    };
+    
+    s.\\("Writer") = (self) => s.\writer;
+    s.\\("ToString") = (self) => s.\writer.ToString();
+    s.\\("indented") = (self,deltaLevel) =>
+    {
+        deltaLevel ??= 1;
+        var d = new Structure;
+        d.\(@"\iw") = self;
+        d.\(@"\dl") = deltaLevel;
+        d.\\("Dispose") = self => self.\iw.unindent(self.\dl);
+        
+        self.indent(deltaLevel);
+        return d;
+    };
+    
+    return s;
+}

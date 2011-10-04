@@ -178,6 +178,9 @@
     <Content Include="psr\dependency_analysis.pxs">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </Content>
+    <None Include="psr\experimental\indentation.pxs">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </None>
     <None Include="psr\test.pxs">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </None>
