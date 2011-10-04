@@ -1472,6 +1472,8 @@ namespace Prexonite.Compiler.Cil
 
                     case OpCode.indloc:
                         sym = state.Symbols[id];
+                        if(sym == null)
+                            throw new PrexoniteException("Internal CIL compiler error. Information about local entity " + id + " missing.");
                         state.FillArgv(argc);
                         sym.EmitLoad(state);
                         state.EmitIndirectCall(argc, justEffect);

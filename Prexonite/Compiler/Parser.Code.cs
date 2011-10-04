@@ -1017,6 +1017,8 @@ namespace Prexonite.Compiler
                 //  stay with built-in types for predictibility
                 && target.Symbols.TryGetValue(Loader.ObjectCreationFallbackPrefix + typeExpr.TypeId, out fallbackSymbol))
             {
+                if(isOuterVariable(fallbackSymbol.Id))
+                    target.RequireOuterVariable(fallbackSymbol.Id);
                 var call = new AstGetSetSymbol(parser, PCall.Get, fallbackSymbol.Id, fallbackSymbol.Interpretation);
                 expr = call;
                 args = call.Arguments;

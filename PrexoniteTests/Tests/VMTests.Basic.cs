@@ -1484,5 +1484,30 @@ function main()
             Expect(6);
         }
 
+        [Test]
+        public void FakeSharedCtor()
+        {
+            Compile(@"
+    function main(x)
+    {
+        function create_obj()
+        {
+            var s = new Structure;
+            s.\(""x"") = x;
+            return s;
+        }
+        function inner()
+        {
+            return (new obj).x + 1;
+        }
+
+        return inner() * 2;
+    }
+");
+
+            Expect(12,5);
+            Expect(14,6);
+        }
+
     }
 }
