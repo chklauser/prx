@@ -100,7 +100,7 @@ function create_args_parser()
     
     s.\\("get_options") = self => self.\options >> where(?.Value then ?.kind then ? != ->create_namespace.Id);
     s.\\("get_namespaces") = self => self.\namespaces;
-    s.\\("get_title") = self => self.\title;
+    s.\\("get_title") = ?.\title;
     s.\\("set_title") = (self,value) => self.\title = value;
     
     s.\\("add_option") = (self,opt) => {
@@ -119,7 +119,8 @@ function create_args_parser()
                 self.add_option(opt);
     };
     
-    s.\("positional") = new argument("positional","positional");
+    s.\(@"\positional") = new argument("positional","positional");
+    s.\\("positional") = ?.\positional;
     
     s.\\("parse") = (self,argv) => 
     {
