@@ -5,6 +5,7 @@ using System.Linq;
 using System.Text;
 using Prexonite.Compiler.Macro;
 using Prexonite.Types;
+using NotSupportedException = Prexonite.Commands.Concurrency.NotSupportedException;
 
 namespace Prexonite.Compiler.Ast
 {
@@ -41,12 +42,12 @@ namespace Prexonite.Compiler.Ast
 
         protected override void EmitGetCode(CompilerTarget target, bool justEffect)
         {
-            throw new NotImplementedException("Macro invocation requires a different mechanic. Use AstGetSet.EmitCode instead.");
+            throw new NotSupportedException("Macro invocation requires a different mechanic. Use AstGetSet.EmitCode instead.");
         }
 
         protected override void EmitSetCode(CompilerTarget target)
         {
-            throw new NotImplementedException("Macro invocation requires a different mechanic. Use AstGetSet.EmitCode instead.");
+            throw new NotSupportedException("Macro invocation requires a different mechanic. Use AstGetSet.EmitCode instead.");
         }
 
         protected override void EmitCode(CompilerTarget target, bool justEffect)

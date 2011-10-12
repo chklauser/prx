@@ -76,7 +76,7 @@ namespace Prexonite.Commands.Lazy
 
         void ICilCompilerAware.ImplementInCil(CompilerState state, Instruction ins)
         {
-            throw new NotImplementedException();
+            throw new NotSupportedException("The command " + GetType().Name + " does not support CIL compilation via ICilCompilerAware.");
         }
 
         #endregion

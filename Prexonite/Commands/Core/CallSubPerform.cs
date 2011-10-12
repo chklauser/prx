@@ -130,14 +130,9 @@ namespace Prexonite.Commands.Core
             return CompilationFlags.PrefersRunStatically;
         }
 
-        /// <summary>
-        /// Provides a custom compiler routine for emitting CIL byte code for a specific instruction.
-        /// </summary>
-        /// <param name="state">The compiler state.</param>
-        /// <param name="ins">The instruction to compile.</param>
         void ICilCompilerAware.ImplementInCil(CompilerState state, Instruction ins)
         {
-            throw new NotImplementedException();
+            throw new NotSupportedException("The command " + GetType().Name + " does not support CIL compilation via ICilCompilerAware.");
         }
 
         #endregion
