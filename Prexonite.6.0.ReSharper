@@ -1,0 +1,14 @@
+<Configuration>
+  <CustomStructuralPatterns>
+    <Pattern Severity="ERROR" FormatAfterReplace="True" ShortenReferences="True" Language="CSHARP">
+      <Comment>IsInstanceOfType is obsolete</Comment>
+      <ReplaceComment>Use IsInstanceOf instead</ReplaceComment>
+      <ReplacePattern>Assert.IsInstanceOf($args$);</ReplacePattern>
+      <SearchPattern>Assert.IsInstanceOfType($args$);</SearchPattern>
+      <Params />
+      <Placeholders>
+        <ArgumentPlaceholder Name="args" Minimal="-1" Maximal="-1" />
+      </Placeholders>
+    </Pattern>
+  </CustomStructuralPatterns>
+</Configuration>

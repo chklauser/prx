@@ -25,6 +25,7 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using Prexonite.Types;
+using NotSupportedException = Prexonite.Commands.Concurrency.NotSupportedException;
 
 namespace Prexonite.Compiler.Ast
 {
@@ -336,7 +337,7 @@ namespace Prexonite.Compiler.Ast
 
         protected virtual IAstExpression CreatePrefix(ISourcePosition position, IEnumerable<IAstExpression> clauses)
         {
-            throw new NotImplementedException("The lazy logical expression " + GetType().Name + " must implement this method/property to support partial application.");
+            throw new NotSupportedException("The lazy logical expression " + GetType().Name + " must implement this method/property to support partial application.");
         }
 
         public virtual bool TryOptimize(CompilerTarget target, out IAstExpression expr)

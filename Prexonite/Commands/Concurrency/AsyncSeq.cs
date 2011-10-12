@@ -4,6 +4,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using Prexonite.Commands.List;
+using Prexonite.Compiler.Ast;
 using Prexonite.Compiler.Cil;
 using Prexonite.Concurrency;
 using Prexonite.Types;
@@ -303,7 +304,7 @@ namespace Prexonite.Commands.Concurrency
 
         void ICilCompilerAware.ImplementInCil(CompilerState state, Instruction ins)
         {
-            throw new NotImplementedException();
+            throw new NotSupportedException();
         }
 
         #endregion

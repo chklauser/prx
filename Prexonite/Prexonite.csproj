@@ -104,6 +104,7 @@
     <Compile Include="Commands\Concurrency\AsyncSeq.cs" />
     <Compile Include="Commands\Concurrency\CallAsync.cs" />
     <Compile Include="Commands\Concurrency\Chan.cs" />
+    <Compile Include="Commands\Concurrency\NotSupportedException.cs" />
     <Compile Include="Commands\Concurrency\Select.cs" />
     <Compile Include="Commands\Core\Boxed.cs" />
     <Compile Include="Commands\Core\Call.cs" />

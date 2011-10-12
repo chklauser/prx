@@ -99,14 +99,9 @@ namespace Prexonite.Commands.Core
             return CompilationFlags.PrefersRunStatically;
         }
 
-        /// <summary>
-        /// Provides a custom compiler routine for emitting CIL byte code for a specific instruction.
-        /// </summary>
-        /// <param name="state">The compiler state.</param>
-        /// <param name="ins">The instruction to compile.</param>
         public void ImplementInCil(CompilerState state, Instruction ins)
         {
-            throw new NotImplementedException();
+            throw new NotSupportedException("The command " + GetType().Name + " does not support CIL compilation via ICilCompilerAware.");
         }
 
         #endregion
@@ -117,13 +112,17 @@ namespace Prexonite.Commands.Core
         {
             string literal;
             int code;
-            return dynamicArgc == 0 && staticArgv.Length == 1 && (staticArgv[0].TryGetString(out literal) && literal.Length > 0 || staticArgv[0].TryGetInt(out code) && code >= 0);
+            return dynamicArgc == 0 && staticArgv.Length == 1 &&
+                (staticArgv[0].TryGetString(out literal) && literal.Length > 0 ||
+                    staticArgv[0].TryGetInt(out code) && code >= 0);
         }
 
         void ICilExtension.Implement(CompilerState state, Instruction ins, CompileTimeValue[] staticArgv, int dynamicArgc)
         {
             if (ins.JustEffect)
-                return; //ValidateArguments proved that there are no arguments on the stack.
+                return; // Usually for commands without side-effects you have to at least
+                        //  pop dynamic arguments from the stack.
+                        // ValidateArguments proved that there are no arguments on the stack.
             string literal;
             int code;
             if (staticArgv[0].TryGetString(out literal))

@@ -1,0 +1,224 @@
+﻿ 
+build does require(
+    @"psr\experimental\indentation.pxs"
+);
+
+function create_args_option_base as create_option_base(aliases,desc)
+{
+    var s = new Structure;
+    s.\("aliases") = if(aliases is String) [aliases] else all(aliases);
+    s.\("description") = desc;
+    s.\("trigger") = null; //(opt,state,arg) => 
+    s.\\("with_trigger") = (self,t) => {
+        self.trigger = t;
+        return self;
+    };
+    return s;
+}
+
+function create_args_switch as create_switch(aliases,desc)
+{
+    var opt = new option_base(aliases,desc);
+    opt.\("kind") = ->create_args_switch.Id;
+    return opt;
+}
+
+function create_args_argument as create_argument(aliases,desc)
+{
+    var opt = new option_base(aliases,desc);
+    opt.\("kind") = ->create_args_argument.Id;
+    return opt;
+}
+
+function create_args_namespace as create_namespace(aliases,parser,desc)
+{
+    function to_lowercase(s)
+    {
+        if(s.Length == 0)
+            return s;
+        else if(s.Length == 1)
+            return s.ToLowerInvariant();
+        else
+            return s.Substring(0,1).ToLowerInvariant() + s.Substring(1);
+    }
+    var opt = new option_base(aliases,desc ?? "Common prefix for " + to_lowercase(parser.get_title()));
+    opt.\("kind") = ->create_args_namespace.Id;
+    opt.\("parser") = parser;
+    return opt;
+}
+
+
+/*
+    Kinds of options:
+    
+    * Switch
+        -s
+        --some-switch
+    * Argument
+        -a value
+        --some-arg "some file.txt"
+    * Namespace
+        -Xs (a switch)
+        --Xsome-arg "some file.txt" (an argument)
+        +X ... [-X]
+        +RTS ... [-RTS]
+*/
+
+function create_args_table()
+{
+    var s = new Structure;
+    
+     
+    
+    return s;
+}
+
+function create_args_parser()
+{
+    function create_parser_state(parser, argv)
+    {
+        var s = new Structure;
+        
+        s.\(@"\argv") = argv;
+        s.\(@"\argc") = argv.Count;
+        s.\(@"\index") = 0;
+        s.\(@"\passthrough") = false;
+        s.\(@"\parser") = parser;
+        s.\(@"\arguments") = {};
+        s.\(@"\positionals") = [];
+        s.\(@"\skipped") = [];
+        s.\(@"\table") = new args_table;
+    }
+
+    var s = new Structure;
+    
+    s.\("\\dash") = "-";
+    
+    s.\("\\options") = {};
+    s.\("\\namespaces") = {};
+    s.\("\\title") = "Command line parameters";
+    
+    s.\\("get_options") = self => self.\options >> where(?.Value then ?.kind then ? != ->create_namespace.Id);
+    s.\\("get_namespaces") = self => self.\namespaces;
+    s.\\("get_title") = ?.\title;
+    s.\\("set_title") = (self,value) => self.\title = value;
+    
+    s.\\("add_option") = (self,opt) => {
+        var isNamespace = opt.kind == ->create_namespace.Id;
+        foreach(var alias in opt.aliases)
+        {
+            if(not isNamespace or alias.Length == 1)
+                self.\options[alias] = opt;
+            if(isNamespace)
+                self.\namespaces[alias] = opt;
+        }
+    };
+    s.\\("add_options") = (self) => {
+        foreach(var arg in var new args >> skip(1))
+            foreach(var opt in arg)
+                self.add_option(opt);
+    };
+    
+    s.\(@"\positional") = new argument("positional","positional");
+    s.\\("positional") = ?.\positional;
+    
+    s.\\("parse") = (self,argv) => 
+    {
+        var new s = create_parser_state(self,argv);
+        s.parse;
+        return s.table;
+    };   
+    
+    s.\\("ToString") = (self) =>
+    {
+        var iw = new indented_writer("   ");
+        return self.WriteDoc(iw,"");
+    };
+    
+    s.\\("WriteDoc") = (self,iw,nsprefix) => 
+    {
+        function make_alias(a) =
+            if(a.Length == 1)
+                "-" + nsprefix + a
+            else
+                "--" + nsprefix + a;
+        function make_ns(a) =
+            if(a.Length == 1)
+                "-" + nsprefix + a + "_"
+            else
+                "+" + nsprefix + a;
+    
+        var descOffset = 24;
+        var alen = 0;
+        
+        function write_desc(desc)
+        {
+            using(iw.indented(descOffset / iw.\indentation.Length))
+            {
+                var diff = descOffset - alen;
+                if(alen >= descOffset - 1)
+                {
+                    iw.WriteLine();
+                    iw.FlushIndentation();
+                }
+                else if(diff <= 3)
+                {
+                    iw.Write(" "*diff);
+                }
+                else
+                {
+                    iw.Write("."*(diff-1));
+                    iw.Write(" ");
+                }
+                using(iw.indented)
+                    iw.WriteLine(desc + alen);
+            }
+        }
+        
+        function write_aliases(aliases, ref printer)
+        {
+            alen = 0;
+            foreach(var a in aliases)
+            {
+                iw.Write(var ma = printer(a));
+                iw.Write(" ");
+                alen += ma.Length + 1;
+            }
+        }
+            
+        iw.WriteLine(self.get_title());
+        using(iw.indented(2))
+        {
+            foreach(var opt in self.get_options() >> where(opt => opt.Key == opt.Value.aliases[0]) >> map(?.Value))
+            {
+                write_aliases(opt.aliases, make_alias(?));
+                write_desc(opt.description);
+            }
+            foreach(var ns in self.get_namespaces() >> where(ns => ns.Key == ns.Value.aliases[0]) >> map(?.Value))
+            {
+                write_aliases(ns.aliases, make_ns(?));
+                write_desc(ns.description);
+                
+                //find prefix
+                var newprefix;
+                {
+                    newprefix = (ns.aliases >> where(?.Length then ? == 1) >> take(1) >> all);
+                    if(newprefix.Count == 0)
+                        newprefix = "";
+                    else
+                        newprefix = newprefix[0];
+                }
+                using(iw.indented(-2))
+                {
+                    iw.WriteLine();
+                    iw.FlushIndentation(1);
+                    ns.parser.WriteDoc(iw,nsprefix+newprefix);
+                }
+            }
+        }
+        
+        return iw.ToString();
+    };
+    
+    return s;
+}
