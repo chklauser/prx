@@ -1,31 +1,22 @@
-// /*
-//  * Prexonite, a scripting engine (Scripting Language -> Bytecode -> Virtual Machine)
-//  *  Copyright (C) 2007  Christian "SealedSun" Klauser
-//  *  E-mail  sealedsun a.t gmail d.ot com
-//  *  Web     http://www.sealedsun.ch/
-//  *
-//  *  This program is free software; you can redistribute it and/or modify
-//  *  it under the terms of the GNU General Public License as published by
-//  *  the Free Software Foundation; either version 2 of the License, or
-//  *  (at your option) any later version.
-//  *
-//  *  Please contact me (sealedsun a.t gmail do.t com) if you need a different license.
-//  * 
-//  *  This program is distributed in the hope that it will be useful,
-//  *  but WITHOUT ANY WARRANTY; without even the implied warranty of
-//  *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-//  *  GNU General Public License for more details.
-//  *
-//  *  You should have received a copy of the GNU General Public License along
-//  *  with this program; if not, write to the Free Software Foundation, Inc.,
-//  *  51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
-//  */
+// Prexonite
+// 
+// Copyright (c) 2011, Christian Klauser
+// All rights reserved.
+// 
+// Redistribution and use in source and binary forms, with or without modification, are permitted provided that the following conditions are met:
+// 
+//     Redistributions of source code must retain the above copyright notice, this list of conditions and the following disclaimer.
+//     Redistributions in binary form must reproduce the above copyright notice, this list of conditions and the following disclaimer in the documentation and/or other materials provided with the distribution.
+//     The names of the contributors may be used to endorse or promote products derived from this software without specific prior written permission.
+// 
+// THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT HOLDER OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #region Namespace Imports
 
 using System;
 using System.Collections;
 using System.Collections.Generic;
+using System.Diagnostics.CodeAnalysis;
 using System.Reflection;
 using Prexonite.Commands;
 using Prexonite.Types;
@@ -36,15 +27,20 @@ namespace Prexonite.Compiler.Cil
 {
     public static class Runtime
     {
-        private static readonly MethodInfo _CallCommandMethod = typeof (Runtime).GetMethod("CallCommand");
-        private static readonly MethodInfo _CallFunctionMethod = typeof (Runtime).GetMethod("CallFunction");
+        private static readonly MethodInfo _CallCommandMethod =
+            typeof (Runtime).GetMethod("CallCommand");
+
+        private static readonly MethodInfo _CallFunctionMethod =
+            typeof (Runtime).GetMethod("CallFunction");
+
         private static readonly MethodInfo _CastMethod = typeof (Runtime).GetMethod("Cast");
         private static readonly MethodInfo _CheckTypeMethod = typeof (Runtime).GetMethod("CheckType");
 
         private static readonly MethodInfo _ConstructPTypeAsPValueMethod =
             typeof (Runtime).GetMethod("ConstructPTypeAsPValue");
 
-        private static readonly MethodInfo _ExtractBoolMethod = typeof (Runtime).GetMethod("ExtractBool");
+        private static readonly MethodInfo _ExtractBoolMethod =
+            typeof (Runtime).GetMethod("ExtractBool");
 
         private static readonly MethodInfo _LoadApplicationReferenceMethod =
             typeof (Runtime).GetMethod("LoadApplicationReference");
@@ -64,21 +60,29 @@ namespace Prexonite.Compiler.Cil
         private static readonly MethodInfo _NewClosureMethod_LateBound = typeof (Runtime).GetMethod(
             "NewClosure", new[] {typeof (StackContext), typeof (PVariable[]), typeof (string)});
 
-        private static readonly MethodInfo _NewClosureMethod_StaticallyBound = typeof (Runtime).GetMethod(
-            "NewClosure", new[] {typeof (StackContext), typeof (PVariable[]), typeof (PFunction)});
+        private static readonly MethodInfo _NewClosureMethod_StaticallyBound = typeof (Runtime).
+            GetMethod(
+                "NewClosure",
+                new[] {typeof (StackContext), typeof (PVariable[]), typeof (PFunction)});
 
         private static readonly MethodInfo _NewObjMethod = typeof (Runtime).GetMethod("NewObj");
         private static readonly MethodInfo _NewTypeMethod = typeof (Runtime).GetMethod("NewType");
-        private static readonly MethodInfo _ParseExceptionMethod = typeof (Runtime).GetMethod("ParseException");
-        private static readonly MethodInfo _RaiseToPowerMethod = typeof (Runtime).GetMethod("RaiseToPower");
+
+        private static readonly MethodInfo _ParseExceptionMethod =
+            typeof (Runtime).GetMethod("ParseException");
+
+        private static readonly MethodInfo _RaiseToPowerMethod =
+            typeof (Runtime).GetMethod("RaiseToPower");
 
         private static readonly MethodInfo _StaticCallMethod =
             typeof (PType).GetMethod
                 (
-                "StaticCall",
-                new[] {typeof (StackContext), typeof (PValue[]), typeof (PCall), typeof (string)});
+                    "StaticCall",
+                    new[]
+                        {typeof (StackContext), typeof (PValue[]), typeof (PCall), typeof (string)});
 
-        private static readonly MethodInfo _ThrowExceptionMethod = typeof (Runtime).GetMethod("ThrowException");
+        private static readonly MethodInfo _ThrowExceptionMethod =
+            typeof (Runtime).GetMethod("ThrowException");
 
         public static readonly MethodInfo CheckTypeConstMethod =
             typeof (Runtime).GetMethod("CheckTypeConst", new[] {typeof (PValue), typeof (PType)});
@@ -90,22 +94,32 @@ namespace Prexonite.Compiler.Cil
             typeof (Runtime).GetMethod("DisposeIfPossible", new[] {typeof (object)});
 
         public static readonly PValue[] EmptyPValueArray = new PValue[0];
-        public static readonly FieldInfo EmptyPValueArrayField = typeof (Runtime).GetField("EmptyPValueArray");
+
+        public static readonly FieldInfo EmptyPValueArrayField =
+            typeof (Runtime).GetField("EmptyPValueArray");
+
         public static readonly PVariable[] EmptyPVariableArray = new PVariable[0];
-        public static readonly FieldInfo EmptyPVariableArrayField = typeof (Runtime).GetField("EmptyPVariableArray");
+
+        public static readonly FieldInfo EmptyPVariableArrayField =
+            typeof (Runtime).GetField("EmptyPVariableArray");
 
         public static readonly MethodInfo ExtractEnumeratorMethod =
-            typeof (Runtime).GetMethod("ExtractEnumerator", new[] {typeof (PValue), typeof (StackContext)});
+            typeof (Runtime).GetMethod("ExtractEnumerator",
+                new[] {typeof (PValue), typeof (StackContext)});
 
         public static readonly MethodInfo LoadGlobalVariableReferenceMethod =
             typeof (Runtime).GetMethod("LoadGlobalVariableReference");
 
-        [System.Diagnostics.CodeAnalysis.SuppressMessage("Microsoft.Naming", "CA1704:IdentifiersShouldBeSpelledCorrectly", MessageId = "Coroutine")]
-        public static readonly MethodInfo NewCoroutineMethod = typeof (Runtime).GetMethod("NewCoroutine");
-        public static readonly MethodInfo WrapPVariableMethod = typeof (Runtime).GetMethod("WrapPVariable");
+        [SuppressMessage("Microsoft.Naming", "CA1704:IdentifiersShouldBeSpelledCorrectly",
+            MessageId = "Coroutine")] public static readonly MethodInfo NewCoroutineMethod =
+                typeof (Runtime).GetMethod("NewCoroutine");
+
+        public static readonly MethodInfo WrapPVariableMethod =
+            typeof (Runtime).GetMethod("WrapPVariable");
 
         public static readonly MethodInfo CastConstMethod =
-            typeof (Runtime).GetMethod("CastConst", new[] {typeof (PValue), typeof (PType), typeof (StackContext)});
+            typeof (Runtime).GetMethod("CastConst",
+                new[] {typeof (PValue), typeof (PType), typeof (StackContext)});
 
         public static MethodInfo LoadGlobalVariableReferenceAsPValueMethod
         {
@@ -220,7 +234,7 @@ namespace Prexonite.Compiler.Cil
                 throw new PrexoniteException
                     (
                     "Cannot load reference to non existant global variable " + id);
-            sctx.ParentApplication.EnsureInitialization(sctx.ParentEngine,pv);
+            sctx.ParentApplication.EnsureInitialization(sctx.ParentEngine, pv);
             return pv;
         }
 
@@ -265,23 +279,30 @@ namespace Prexonite.Compiler.Cil
             return sctx.CreateNativePValue(sctx.ParentEngine.CreatePType(sctx, name, args));
         }
 
-        public static PValue NewClosure(StackContext sctx, PVariable[] sharedVariables, string funcId)
+        public static PValue NewClosure(StackContext sctx, PVariable[] sharedVariables,
+            string funcId)
         {
             PFunction func;
             if (!sctx.ParentApplication.Functions.TryGetValue(funcId, out func))
-                throw new PrexoniteException("Cannot create closure for non existant function " + funcId);
+                throw new PrexoniteException("Cannot create closure for non existant function " +
+                    funcId);
             return NewClosure(sctx, sharedVariables, func);
         }
 
-        public static PValue NewClosure(StackContext sctx, PVariable[] sharedVariables, PFunction function)
+        public static PValue NewClosure(StackContext sctx, PVariable[] sharedVariables,
+            PFunction function)
         {
             if (function.HasCilImplementation)
             {
-                return sctx.CreateNativePValue(new CilClosure(function, sharedVariables ?? EmptyPVariableArray));
+                return
+                    sctx.CreateNativePValue(new CilClosure(function,
+                        sharedVariables ?? EmptyPVariableArray));
             }
             else
             {
-                return sctx.CreateNativePValue(new Closure(function, sharedVariables ?? EmptyPVariableArray));
+                return
+                    sctx.CreateNativePValue(new Closure(function,
+                        sharedVariables ?? EmptyPVariableArray));
             }
         }
 
@@ -291,7 +312,7 @@ namespace Prexonite.Compiler.Cil
                    rright;
             if (
                 !(left.TryConvertTo(sctx, PType.Real, out rleft) &&
-                  right.TryConvertTo(sctx, PType.Real, out rright)))
+                    right.TryConvertTo(sctx, PType.Real, out rright)))
                 throw new PrexoniteException
                     (
                     "The arguments supplied to the power operator are invalid (cannot be converted to Real).");
@@ -363,19 +384,19 @@ namespace Prexonite.Compiler.Cil
                 prexc =
                     PrexoniteRuntimeException.CreateRuntimeException
                         (
-                        sctx, (string) obj.Value);
+                            sctx, (string) obj.Value);
             else if (t is ObjectPType && obj.Value is Exception)
                 prexc =
                     PrexoniteRuntimeException.CreateRuntimeException
                         (
-                        sctx,
-                        ((Exception) obj.Value).Message,
-                        (Exception) obj.Value);
+                            sctx,
+                            ((Exception) obj.Value).Message,
+                            (Exception) obj.Value);
             else
                 prexc =
                     PrexoniteRuntimeException.CreateRuntimeException
                         (
-                        sctx, obj.CallToString(sctx));
+                            sctx, obj.CallToString(sctx));
 
             throw prexc;
         }
@@ -392,34 +413,34 @@ namespace Prexonite.Compiler.Cil
             return PType.List.CreatePValue(args);
         }
 
-        [System.Diagnostics.CodeAnalysis.SuppressMessage("Microsoft.Naming", "CA1704:IdentifiersShouldBeSpelledCorrectly", MessageId = "Coroutine")]
+        [SuppressMessage("Microsoft.Naming", "CA1704:IdentifiersShouldBeSpelledCorrectly",
+            MessageId = "Coroutine")]
         public static PValue NewCoroutine(PValue routine, StackContext sctx, PValue[] argv)
         {
             var routineobj = routine.Value;
             IStackAware routinesa;
-            
+
             if (routineobj == null)
             {
                 return PType.Null.CreatePValue();
             }
             else
             {
-
                 StackContext corctx;
                 if ((routinesa = routineobj as IStackAware) != null)
                     corctx = routinesa.CreateStackContext(sctx, argv);
                 else
                     corctx = (StackContext)
-                             routine.DynamicCall
-                                 (
-                                 sctx,
-                                 new[]
-                                 {
-                                     PType.Object.CreatePValue(sctx.ParentEngine),
-                                     PType.Object.CreatePValue(argv)
-                                 },
-                                 PCall.Get,
-                                 "CreateStackContext").Value;
+                        routine.DynamicCall
+                            (
+                                sctx,
+                                new[]
+                                    {
+                                        PType.Object.CreatePValue(sctx.ParentEngine),
+                                        PType.Object.CreatePValue(argv)
+                                    },
+                                PCall.Get,
+                                "CreateStackContext").Value;
 
                 return
                     PType.Object[typeof (Coroutine)].CreatePValue(new Coroutine(corctx));
@@ -442,11 +463,11 @@ namespace Prexonite.Compiler.Cil
         }
 
         /// <summary>
-        /// Extracts an IEnumerator[PValue] from the supplied value. The input can either directly supply a 
-        /// sequence of PValue objects or arbitrary CLR objects that will be transparently mapped to PValues with respect to the stack context.
+        ///     Extracts an IEnumerator[PValue] from the supplied value. The input can either directly supply a 
+        ///     sequence of PValue objects or arbitrary CLR objects that will be transparently mapped to PValues with respect to the stack context.
         /// </summary>
-        /// <param name="value">The value sequence (implements IEnumerator or IEnumerator[PValue].</param>
-        /// <param name="sctx">The stack context-</param>
+        /// <param name = "value">The value sequence (implements IEnumerator or IEnumerator[PValue].</param>
+        /// <param name = "sctx">The stack context-</param>
         /// <returns>A sequence of PValue objects.</returns>
         public static IEnumerator<PValue> ExtractEnumerator(PValue value, StackContext sctx)
         {
@@ -472,7 +493,8 @@ namespace Prexonite.Compiler.Cil
             }
         }
 
-        [System.Diagnostics.CodeAnalysis.SuppressMessage("Microsoft.Naming", "CA1720:IdentifiersShouldNotContainTypeNames", MessageId = "obj")]
+        [SuppressMessage("Microsoft.Naming", "CA1720:IdentifiersShouldNotContainTypeNames",
+            MessageId = "obj")]
         public static void DisposeIfPossible(object obj)
         {
             var disposable = obj as IDisposable;
@@ -484,7 +506,7 @@ namespace Prexonite.Compiler.Cil
         #region Nested type: EnumeratorWrapper
 
         /// <summary>
-        /// Used to transparently convert arbitrary sequences to PValue sequences
+        ///     Used to transparently convert arbitrary sequences to PValue sequences
         /// </summary>
         public sealed class EnumeratorWrapper
             : IEnumerator<PValue>

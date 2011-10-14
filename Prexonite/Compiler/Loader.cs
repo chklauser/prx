@@ -1,25 +1,15 @@
-/*
- * Prexonite, a scripting engine (Scripting Language -> Bytecode -> Virtual Machine)
- *  Copyright (C) 2007  Christian "SealedSun" Klauser
- *  E-mail  sealedsun a.t gmail d.ot com
- *  Web     http://www.sealedsun.ch/
- *
- *  This program is free software; you can redistribute it and/or modify
- *  it under the terms of the GNU General Public License as published by
- *  the Free Software Foundation; either version 2 of the License, or
- *  (at your option) any later version.
- *
- *  Please contact me (sealedsun a.t gmail do.t com) if you need a different license.
- * 
- *  This program is distributed in the hope that it will be useful,
- *  but WITHOUT ANY WARRANTY; without even the implied warranty of
- *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- *  GNU General Public License for more details.
- *
- *  You should have received a copy of the GNU General Public License along
- *  with this program; if not, write to the Free Software Foundation, Inc.,
- *  51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
- */
+// Prexonite
+// 
+// Copyright (c) 2011, Christian Klauser
+// All rights reserved.
+// 
+// Redistribution and use in source and binary forms, with or without modification, are permitted provided that the following conditions are met:
+// 
+//     Redistributions of source code must retain the above copyright notice, this list of conditions and the following disclaimer.
+//     Redistributions in binary form must reproduce the above copyright notice, this list of conditions and the following disclaimer in the documentation and/or other materials provided with the distribution.
+//     The names of the contributors may be used to endorse or promote products derived from this software without specific prior written permission.
+// 
+// THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT HOLDER OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #if Compress
 using System.IO.Compression;
@@ -176,10 +166,10 @@ namespace Prexonite.Compiler
             #region Implementation of IEnumerable
 
             /// <summary>
-            /// Returns an enumerator that iterates through the collection.
+            ///     Returns an enumerator that iterates through the collection.
             /// </summary>
             /// <returns>
-            /// A <see cref="T:System.Collections.Generic.IEnumerator`1"/> that can be used to iterate through the collection.
+            ///     A <see cref = "T:System.Collections.Generic.IEnumerator`1" /> that can be used to iterate through the collection.
             /// </returns>
             /// <filterpriority>1</filterpriority>
             public IEnumerator<CompilerTarget> GetEnumerator()
@@ -188,10 +178,10 @@ namespace Prexonite.Compiler
             }
 
             /// <summary>
-            /// Returns an enumerator that iterates through a collection.
+            ///     Returns an enumerator that iterates through a collection.
             /// </summary>
             /// <returns>
-            /// An <see cref="T:System.Collections.IEnumerator"/> object that can be used to iterate through the collection.
+            ///     An <see cref = "T:System.Collections.IEnumerator" /> object that can be used to iterate through the collection.
             /// </returns>
             /// <filterpriority>2</filterpriority>
             IEnumerator IEnumerable.GetEnumerator()
@@ -212,9 +202,9 @@ namespace Prexonite.Compiler
             if (_functionTargets.ContainsKey(func.Id) &&
                 (!ParentApplication.Meta.GetDefault(Application.AllowOverridingKey, true).Switch))
                 throw new PrexoniteException(
-                    String.Format("The application {0} does not allow overriding of function {1}.", 
-                                  ParentApplication.Id,
-                                  func.Id));
+                    String.Format("The application {0} does not allow overriding of function {1}.",
+                        ParentApplication.Id,
+                        func.Id));
 
             //The function target is added nontheless in order not to confuse the compiler
             _functionTargets[func.Id] = target;
@@ -249,11 +239,10 @@ namespace Prexonite.Compiler
             #region ICollection<CompilerHook> Members
 
             ///<summary>
-            ///Adds an item to the <see cref="T:System.Collections.Generic.ICollection`1"></see>.
+            ///    Adds an item to the <see cref = "T:System.Collections.Generic.ICollection`1"></see>.
             ///</summary>
-            ///
-            ///<param name="item">The object to add to the <see cref="T:System.Collections.Generic.ICollection`1"></see>.</param>
-            ///<exception cref="T:System.NotSupportedException">The <see cref="T:System.Collections.Generic.ICollection`1"></see> is read-only.</exception>
+            ///<param name = "item">The object to add to the <see cref = "T:System.Collections.Generic.ICollection`1"></see>.</param>
+            ///<exception cref = "T:System.NotSupportedException">The <see cref = "T:System.Collections.Generic.ICollection`1"></see> is read-only.</exception>
             public void Add(CompilerHook item)
             {
                 if (item == null)
@@ -262,18 +251,18 @@ namespace Prexonite.Compiler
             }
 
             /// <summary>
-            /// Adds a managed transformation to the collection.
+            ///     Adds a managed transformation to the collection.
             /// </summary>
-            /// <param name="transformation">A managed transformation.</param>
+            /// <param name = "transformation">A managed transformation.</param>
             public void Add(AstTransformation transformation)
             {
                 _lst.Add(new CompilerHook(transformation));
             }
 
             /// <summary>
-            /// Adds an interpreted transformation to the collection.
+            ///     Adds an interpreted transformation to the collection.
             /// </summary>
-            /// <param name="transformation">An interpreted transformation.</param>
+            /// <param name = "transformation">An interpreted transformation.</param>
             public void Add(PValue transformation)
             {
                 if (transformation.Type.ToBuiltIn() == PType.BuiltIn.Object &&
@@ -284,24 +273,21 @@ namespace Prexonite.Compiler
             }
 
             ///<summary>
-            ///Removes all items from the <see cref="T:System.Collections.Generic.ICollection`1"></see>.
+            ///    Removes all items from the <see cref = "T:System.Collections.Generic.ICollection`1"></see>.
             ///</summary>
-            ///
-            ///<exception cref="T:System.NotSupportedException">The <see cref="T:System.Collections.Generic.ICollection`1"></see> is read-only. </exception>
+            ///<exception cref = "T:System.NotSupportedException">The <see cref = "T:System.Collections.Generic.ICollection`1"></see> is read-only. </exception>
             public void Clear()
             {
                 _lst.Clear();
             }
 
             ///<summary>
-            ///Determines whether the <see cref="T:System.Collections.Generic.ICollection`1"></see> contains a specific value.
+            ///    Determines whether the <see cref = "T:System.Collections.Generic.ICollection`1"></see> contains a specific value.
             ///</summary>
-            ///
             ///<returns>
-            ///true if item is found in the <see cref="T:System.Collections.Generic.ICollection`1"></see>; otherwise, false.
+            ///    true if item is found in the <see cref = "T:System.Collections.Generic.ICollection`1"></see>; otherwise, false.
             ///</returns>
-            ///
-            ///<param name="item">The object to locate in the <see cref="T:System.Collections.Generic.ICollection`1"></see>.</param>
+            ///<param name = "item">The object to locate in the <see cref = "T:System.Collections.Generic.ICollection`1"></see>.</param>
             public bool Contains(CompilerHook item)
             {
                 if (item == null)
@@ -310,14 +296,16 @@ namespace Prexonite.Compiler
             }
 
             ///<summary>
-            ///Copies the elements of the <see cref="T:System.Collections.Generic.ICollection`1"></see> to an <see cref="T:System.Array"></see>, starting at a particular <see cref="T:System.Array"></see> index.
+            ///    Copies the elements of the <see cref = "T:System.Collections.Generic.ICollection`1"></see> to an <see
+            ///     cref = "T:System.Array"></see>, starting at a particular <see cref = "T:System.Array"></see> index.
             ///</summary>
-            ///
-            ///<param name="array">The one-dimensional <see cref="T:System.Array"></see> that is the destination of the elements copied from <see cref="T:System.Collections.Generic.ICollection`1"></see>. The <see cref="T:System.Array"></see> must have zero-based indexing.</param>
-            ///<param name="arrayIndex">The zero-based index in array at which copying begins.</param>
-            ///<exception cref="T:System.ArgumentOutOfRangeException">arrayIndex is less than 0.</exception>
-            ///<exception cref="T:System.ArgumentNullException">array is null.</exception>
-            ///<exception cref="T:System.ArgumentException">array is multidimensional.-or-arrayIndex is equal to or greater than the length of array.-or-The number of elements in the source <see cref="T:System.Collections.Generic.ICollection`1"></see> is greater than the available space from arrayIndex to the end of the destination array.-or-Type T cannot be cast automatically to the type of the destination array.</exception>
+            ///<param name = "array">The one-dimensional <see cref = "T:System.Array"></see> that is the destination of the elements copied from <see
+            ///     cref = "T:System.Collections.Generic.ICollection`1"></see>. The <see cref = "T:System.Array"></see> must have zero-based indexing.</param>
+            ///<param name = "arrayIndex">The zero-based index in array at which copying begins.</param>
+            ///<exception cref = "T:System.ArgumentOutOfRangeException">arrayIndex is less than 0.</exception>
+            ///<exception cref = "T:System.ArgumentNullException">array is null.</exception>
+            ///<exception cref = "T:System.ArgumentException">array is multidimensional.-or-arrayIndex is equal to or greater than the length of array.-or-The number of elements in the source <see
+            ///     cref = "T:System.Collections.Generic.ICollection`1"></see> is greater than the available space from arrayIndex to the end of the destination array.-or-Type T cannot be cast automatically to the type of the destination array.</exception>
             public void CopyTo(CompilerHook[] array, int arrayIndex)
             {
                 if (array == null)
@@ -326,15 +314,14 @@ namespace Prexonite.Compiler
             }
 
             ///<summary>
-            ///Removes the first occurrence of a specific object from the <see cref="T:System.Collections.Generic.ICollection`1"></see>.
+            ///    Removes the first occurrence of a specific object from the <see cref = "T:System.Collections.Generic.ICollection`1"></see>.
             ///</summary>
-            ///
             ///<returns>
-            ///true if item was successfully removed from the <see cref="T:System.Collections.Generic.ICollection`1"></see>; otherwise, false. This method also returns false if item is not found in the original <see cref="T:System.Collections.Generic.ICollection`1"></see>.
+            ///    true if item was successfully removed from the <see cref = "T:System.Collections.Generic.ICollection`1"></see>; otherwise, false. This method also returns false if item is not found in the original <see
+            ///     cref = "T:System.Collections.Generic.ICollection`1"></see>.
             ///</returns>
-            ///
-            ///<param name="item">The object to remove from the <see cref="T:System.Collections.Generic.ICollection`1"></see>.</param>
-            ///<exception cref="T:System.NotSupportedException">The <see cref="T:System.Collections.Generic.ICollection`1"></see> is read-only.</exception>
+            ///<param name = "item">The object to remove from the <see cref = "T:System.Collections.Generic.ICollection`1"></see>.</param>
+            ///<exception cref = "T:System.NotSupportedException">The <see cref = "T:System.Collections.Generic.ICollection`1"></see> is read-only.</exception>
             public bool Remove(CompilerHook item)
             {
                 if (item == null)
@@ -344,26 +331,22 @@ namespace Prexonite.Compiler
             }
 
             ///<summary>
-            ///Gets the number of elements contained in the <see cref="T:System.Collections.Generic.ICollection`1"></see>.
+            ///    Gets the number of elements contained in the <see cref = "T:System.Collections.Generic.ICollection`1"></see>.
             ///</summary>
-            ///
             ///<returns>
-            ///The number of elements contained in the <see cref="T:System.Collections.Generic.ICollection`1"></see>.
+            ///    The number of elements contained in the <see cref = "T:System.Collections.Generic.ICollection`1"></see>.
             ///</returns>
-            ///
             public int Count
             {
                 get { return _lst.Count; }
             }
 
             ///<summary>
-            ///Gets a value indicating whether the <see cref="T:System.Collections.Generic.ICollection`1"></see> is read-only.
+            ///    Gets a value indicating whether the <see cref = "T:System.Collections.Generic.ICollection`1"></see> is read-only.
             ///</summary>
-            ///
             ///<returns>
-            ///true if the <see cref="T:System.Collections.Generic.ICollection`1"></see> is read-only; otherwise, false.
+            ///    true if the <see cref = "T:System.Collections.Generic.ICollection`1"></see> is read-only; otherwise, false.
             ///</returns>
-            ///
             public bool IsReadOnly
             {
                 get { return ((ICollection<CompilerHook>) _lst).IsReadOnly; }
@@ -374,11 +357,10 @@ namespace Prexonite.Compiler
             #region IEnumerable<CompilerHook> Members
 
             ///<summary>
-            ///Returns an enumerator that iterates through the collection.
+            ///    Returns an enumerator that iterates through the collection.
             ///</summary>
-            ///
             ///<returns>
-            ///A <see cref="T:System.Collections.Generic.IEnumerator`1"></see> that can be used to iterate through the collection.
+            ///    A <see cref = "T:System.Collections.Generic.IEnumerator`1"></see> that can be used to iterate through the collection.
             ///</returns>
             ///<filterpriority>1</filterpriority>
             IEnumerator<CompilerHook> IEnumerable<CompilerHook>.GetEnumerator()
@@ -391,11 +373,10 @@ namespace Prexonite.Compiler
             #region IEnumerable Members
 
             ///<summary>
-            ///Returns an enumerator that iterates through a collection.
+            ///    Returns an enumerator that iterates through a collection.
             ///</summary>
-            ///
             ///<returns>
-            ///An <see cref="T:System.Collections.IEnumerator"></see> object that can be used to iterate through the collection.
+            ///    An <see cref = "T:System.Collections.IEnumerator"></see> object that can be used to iterate through the collection.
             ///</returns>
             ///<filterpriority>2</filterpriority>
             public IEnumerator GetEnumerator()
@@ -445,10 +426,10 @@ namespace Prexonite.Compiler
             #region Implementation of IEnumerable
 
             /// <summary>
-            /// Returns an enumerator that iterates through a collection.
+            ///     Returns an enumerator that iterates through a collection.
             /// </summary>
             /// <returns>
-            /// An <see cref="T:System.Collections.IEnumerator" /> object that can be used to iterate through the collection.
+            ///     An <see cref = "T:System.Collections.IEnumerator" /> object that can be used to iterate through the collection.
             /// </returns>
             /// <filterpriority>2</filterpriority>
             IEnumerator IEnumerable.GetEnumerator()
@@ -461,10 +442,10 @@ namespace Prexonite.Compiler
             #region Implementation of ICollection<CustomResolver>
 
             /// <summary>
-            /// Adds an item to the <see cref="T:System.Collections.Generic.ICollection`1" />.
+            ///     Adds an item to the <see cref = "T:System.Collections.Generic.ICollection`1" />.
             /// </summary>
-            /// <param name="item">The object to add to the <see cref="T:System.Collections.Generic.ICollection`1" />.</param>
-            /// <exception cref="T:System.NotSupportedException">The <see cref="T:System.Collections.Generic.ICollection`1" /> is read-only.</exception>
+            /// <param name = "item">The object to add to the <see cref = "T:System.Collections.Generic.ICollection`1" />.</param>
+            /// <exception cref = "T:System.NotSupportedException">The <see cref = "T:System.Collections.Generic.ICollection`1" /> is read-only.</exception>
             public void Add(CustomResolver item)
             {
                 if (item == null)
@@ -473,57 +454,65 @@ namespace Prexonite.Compiler
             }
 
             /// <summary>
-            /// Removes all items from the <see cref="T:System.Collections.Generic.ICollection`1" />.
+            ///     Removes all items from the <see cref = "T:System.Collections.Generic.ICollection`1" />.
             /// </summary>
-            /// <exception cref="T:System.NotSupportedException">The <see cref="T:System.Collections.Generic.ICollection`1" /> is read-only. </exception>
+            /// <exception cref = "T:System.NotSupportedException">The <see cref = "T:System.Collections.Generic.ICollection`1" /> is read-only. </exception>
             public void Clear()
             {
                 _resolvers.Clear();
             }
 
             /// <summary>
-            /// Determines whether the <see cref="T:System.Collections.Generic.ICollection`1" /> contains a specific value.
+            ///     Determines whether the <see cref = "T:System.Collections.Generic.ICollection`1" /> contains a specific value.
             /// </summary>
             /// <returns>
-            /// true if <paramref name="item" /> is found in the <see cref="T:System.Collections.Generic.ICollection`1" />; otherwise, false.
+            ///     true if <paramref name = "item" /> is found in the <see cref = "T:System.Collections.Generic.ICollection`1" />; otherwise, false.
             /// </returns>
-            /// <param name="item">The object to locate in the <see cref="T:System.Collections.Generic.ICollection`1" />.</param>
+            /// <param name = "item">The object to locate in the <see cref = "T:System.Collections.Generic.ICollection`1" />.</param>
             public bool Contains(CustomResolver item)
             {
                 return item != null && Count > 0 && _resolvers.Contains(item);
             }
 
             /// <summary>
-            /// Copies the elements of the <see cref="T:System.Collections.Generic.ICollection`1" /> to an <see cref="T:System.Array" />, starting at a particular <see cref="T:System.Array" /> index.
+            ///     Copies the elements of the <see cref = "T:System.Collections.Generic.ICollection`1" /> to an <see
+            ///      cref = "T:System.Array" />, starting at a particular <see cref = "T:System.Array" /> index.
             /// </summary>
-            /// <param name="array">The one-dimensional <see cref="T:System.Array" /> that is the destination of the elements copied from <see cref="T:System.Collections.Generic.ICollection`1" />. The <see cref="T:System.Array" /> must have zero-based indexing.</param>
-            /// <param name="arrayIndex">The zero-based index in <paramref name="array" /> at which copying begins.</param>
-            /// <exception cref="T:System.ArgumentNullException"><paramref name="array" /> is null.</exception>
-            /// <exception cref="T:System.ArgumentOutOfRangeException"><paramref name="arrayIndex" /> is less than 0.</exception>
-            /// <exception cref="T:System.ArgumentException"><paramref name="array" /> is multidimensional.-or-<paramref name="arrayIndex" /> is equal to or greater than the length of <paramref name="array" />.-or-The number of elements in the source <see cref="T:System.Collections.Generic.ICollection`1" /> is greater than the available space from <paramref name="arrayIndex" /> to the end of the destination <paramref name="array" />.-or-Type cannot be cast automatically to the type of the destination <paramref name="array" />.</exception>
+            /// <param name = "array">The one-dimensional <see cref = "T:System.Array" /> that is the destination of the elements copied from <see
+            ///      cref = "T:System.Collections.Generic.ICollection`1" />. The <see cref = "T:System.Array" /> must have zero-based indexing.</param>
+            /// <param name = "arrayIndex">The zero-based index in <paramref name = "array" /> at which copying begins.</param>
+            /// <exception cref = "T:System.ArgumentNullException"><paramref name = "array" /> is null.</exception>
+            /// <exception cref = "T:System.ArgumentOutOfRangeException"><paramref name = "arrayIndex" /> is less than 0.</exception>
+            /// <exception cref = "T:System.ArgumentException"><paramref name = "array" /> is multidimensional.-or-<paramref
+            ///     name = "arrayIndex" /> is equal to or greater than the length of <paramref name = "array" />.-or-The number of elements in the source <see
+            ///      cref = "T:System.Collections.Generic.ICollection`1" /> is greater than the available space from <paramref
+            ///      name = "arrayIndex" /> to the end of the destination <paramref name = "array" />.-or-Type cannot be cast automatically to the type of the destination <paramref
+            ///      name = "array" />.</exception>
             public void CopyTo(CustomResolver[] array, int arrayIndex)
             {
                 _resolvers.CopyTo(array, arrayIndex);
             }
 
             /// <summary>
-            /// Removes the first occurrence of a specific object from the <see cref="T:System.Collections.Generic.ICollection`1" />.
+            ///     Removes the first occurrence of a specific object from the <see cref = "T:System.Collections.Generic.ICollection`1" />.
             /// </summary>
             /// <returns>
-            /// true if <paramref name="item" /> was successfully removed from the <see cref="T:System.Collections.Generic.ICollection`1" />; otherwise, false. This method also returns false if <paramref name="item" /> is not found in the original <see cref="T:System.Collections.Generic.ICollection`1" />.
+            ///     true if <paramref name = "item" /> was successfully removed from the <see
+            ///      cref = "T:System.Collections.Generic.ICollection`1" />; otherwise, false. This method also returns false if <paramref
+            ///      name = "item" /> is not found in the original <see cref = "T:System.Collections.Generic.ICollection`1" />.
             /// </returns>
-            /// <param name="item">The object to remove from the <see cref="T:System.Collections.Generic.ICollection`1" />.</param>
-            /// <exception cref="T:System.NotSupportedException">The <see cref="T:System.Collections.Generic.ICollection`1" /> is read-only.</exception>
+            /// <param name = "item">The object to remove from the <see cref = "T:System.Collections.Generic.ICollection`1" />.</param>
+            /// <exception cref = "T:System.NotSupportedException">The <see cref = "T:System.Collections.Generic.ICollection`1" /> is read-only.</exception>
             public bool Remove(CustomResolver item)
             {
                 return item != null && _resolvers.Remove(item);
             }
 
             /// <summary>
-            /// Gets the number of elements contained in the <see cref="T:System.Collections.Generic.ICollection`1" />.
+            ///     Gets the number of elements contained in the <see cref = "T:System.Collections.Generic.ICollection`1" />.
             /// </summary>
             /// <returns>
-            /// The number of elements contained in the <see cref="T:System.Collections.Generic.ICollection`1" />.
+            ///     The number of elements contained in the <see cref = "T:System.Collections.Generic.ICollection`1" />.
             /// </returns>
             public int Count
             {
@@ -531,10 +520,10 @@ namespace Prexonite.Compiler
             }
 
             /// <summary>
-            /// Gets a value indicating whether the <see cref="T:System.Collections.Generic.ICollection`1" /> is read-only.
+            ///     Gets a value indicating whether the <see cref = "T:System.Collections.Generic.ICollection`1" /> is read-only.
             /// </summary>
             /// <returns>
-            /// true if the <see cref="T:System.Collections.Generic.ICollection`1" /> is read-only; otherwise, false.
+            ///     true if the <see cref = "T:System.Collections.Generic.ICollection`1" /> is read-only; otherwise, false.
             /// </returns>
             public bool IsReadOnly
             {
@@ -551,8 +540,8 @@ namespace Prexonite.Compiler
         private readonly MacroCommandTable _macroCommands = new MacroCommandTable();
 
         /// <summary>
-        /// Table of macro commands supported by this loader. Macro commands are referenced 
-        /// by <see cref="SymbolInterpretations.MacroCommand"/> symbols and applied at compile time.
+        ///     Table of macro commands supported by this loader. Macro commands are referenced 
+        ///     by <see cref = "SymbolInterpretations.MacroCommand" /> symbols and applied at compile time.
         /// </summary>
         public MacroCommandTable MacroCommands
         {
@@ -598,7 +587,7 @@ namespace Prexonite.Compiler
             MacroCommands.Add(macroCommand);
             if (Options.RegisterCommands)
                 Symbols[macroCommand.Id] = new SymbolEntry(SymbolInterpretations.MacroCommand,
-                                                           macroCommand.Id);
+                    macroCommand.Id);
         }
 
         #endregion
@@ -688,7 +677,7 @@ namespace Prexonite.Compiler
             _loadedFiles.Add(file.FullName);
             _loadPaths.Push(file.DirectoryName);
             using (Stream str = new FileStream(
-                file.FullName, 
+                file.FullName,
                 FileMode.Open,
                 FileSystemRights.ReadData,
                 FileShare.Read,
@@ -719,7 +708,7 @@ namespace Prexonite.Compiler
                 return;
             }
 
-            if(_loadedFiles.Contains(file.FullName))
+            if (_loadedFiles.Contains(file.FullName))
                 return;
 
             _loadFromFile(file);
@@ -740,17 +729,18 @@ namespace Prexonite.Compiler
         private Action<int, int, string> _reportSemError;
 
         /// <summary>
-        /// Reports a semantic error to the current parsers error stream. 
-        /// Can only be used while Loader is actively parsing.
+        ///     Reports a semantic error to the current parsers error stream. 
+        ///     Can only be used while Loader is actively parsing.
         /// </summary>
-        /// <param name="line">The line on which the error occurred.</param>
-        /// <param name="column">The column in which the error occurred.</param>
-        /// <param name="message">The error message.</param>
-        /// <exception cref="InvalidOperationException">when the Loader is not actively parsing.</exception>
+        /// <param name = "line">The line on which the error occurred.</param>
+        /// <param name = "column">The column in which the error occurred.</param>
+        /// <param name = "message">The error message.</param>
+        /// <exception cref = "InvalidOperationException">when the Loader is not actively parsing.</exception>
         public void ReportSemanticError(int line, int column, string message)
         {
             if (_reportSemError == null)
-                throw new InvalidOperationException("The Loader must be parsing when this method is called.");
+                throw new InvalidOperationException(
+                    "The Loader must be parsing when this method is called.");
 
             _reportSemError(line, column, message);
         }
@@ -779,6 +769,7 @@ namespace Prexonite.Compiler
         }
 
         private EventHandler<ParseMessageEventArgs> _messageHandler;
+
         private EventHandler<ParseMessageEventArgs> _getMessageHandler()
         {
             return _messageHandler ?? (_messageHandler = _messageHook);
@@ -807,7 +798,8 @@ namespace Prexonite.Compiler
         {
             var target = FunctionTargets[Application.InitializationId];
             target.ExecuteCompilerHooks();
-            target.Ast.EmitCode(target, false); //do not treat initialization blocks as top-level ones.
+            target.Ast.EmitCode(target, false);
+                //do not treat initialization blocks as top-level ones.
             target.Ast.Clear();
         }
 
@@ -903,12 +895,13 @@ namespace Prexonite.Compiler
         private readonly CommandTable _buildCommands = new CommandTable();
 
         /// <summary>
-        /// Request that build commands be added to the <see cref="ParentEngine"/>. Must be matched with a call to <see cref="ReleaseBuildCommands"/>.
+        ///     Request that build commands be added to the <see cref = "ParentEngine" />. Must be matched with a call to <see
+        ///      cref = "ReleaseBuildCommands" />.
         /// </summary>
-        /// <returns>A unique token that must be passed to <see cref="ReleaseBuildCommands"/></returns>
+        /// <returns>A unique token that must be passed to <see cref = "ReleaseBuildCommands" /></returns>
         public object RequestBuildCommands()
         {
-            if(_buildCommandsRequests.Count == 0)
+            if (_buildCommandsRequests.Count == 0)
                 _enableBuildCommands();
             var token = new object();
             _buildCommandsRequests.Push(token);
@@ -917,52 +910,53 @@ namespace Prexonite.Compiler
         }
 
         /// <summary>
-        /// Notifies the loader that a caller of <see cref="RequestBuildCommands"/> no longer requires build commands.
+        ///     Notifies the loader that a caller of <see cref = "RequestBuildCommands" /> no longer requires build commands.
         /// </summary>
-        /// <param name="token">The token returned from the corresponding call to <see cref="RequestBuildCommands"/></param>
+        /// <param name = "token">The token returned from the corresponding call to <see cref = "RequestBuildCommands" /></param>
         public void ReleaseBuildCommands(object token)
         {
-            if (_buildCommandsRequests.Count <= 0 || !ReferenceEquals(_buildCommandsRequests.Peek(),token))
+            if (_buildCommandsRequests.Count <= 0 ||
+                !ReferenceEquals(_buildCommandsRequests.Peek(), token))
                 throw new InvalidOperationException(
                     "Cannot release build commands more often than they were requested.");
             _buildCommandsRequests.Pop();
-            
-            if(_buildCommandsRequests.Count == 0)
+
+            if (_buildCommandsRequests.Count == 0)
                 _disableBuildBlockCommands();
         }
 
         /// <summary>
-        /// The name of the add command in build blocks.
+        ///     The name of the add command in build blocks.
         /// </summary>
         public const string BuildAddCommand = @"Add";
 
         /// <summary>
-        /// The name of the require command in build blocks
+        ///     The name of the require command in build blocks
         /// </summary>
         public const string BuildRequireCommand = @"Require";
 
         /// <summary>
-        /// The name of the default command in build blocks
+        ///     The name of the default command in build blocks
         /// </summary>
         public const string BuildDefaultCommand = @"Default";
 
         /// <summary>
-        /// The name of the hook command for build blocks.
+        ///     The name of the hook command for build blocks.
         /// </summary>
         public const string BuildHookCommand = @"Hook";
 
         /// <summary>
-        /// The name of the resolver command for build blocks.
+        ///     The name of the resolver command for build blocks.
         /// </summary>
         public const string BuildResolveCommand = "Resolve";
 
         /// <summary>
-        /// The name of the getloader command for build blocks
+        ///     The name of the getloader command for build blocks
         /// </summary>
         public const string BuildGetLoaderCommand = @"GetLoader";
 
         /// <summary>
-        /// The name of the default script file
+        ///     The name of the default script file
         /// </summary>
         public const string DefaultScriptName = "_default.pxs";
 
@@ -972,79 +966,79 @@ namespace Prexonite.Compiler
             _buildCommands.AddCompilerCommand(
                 BuildAddCommand,
                 delegate(StackContext sctx, PValue[] args)
-                {
-                    foreach (var arg in args)
                     {
-                        var path = arg.CallToString(sctx);
-                        LoadFromFile(path);
-                    }
-                    return null;
-                });
+                        foreach (var arg in args)
+                        {
+                            var path = arg.CallToString(sctx);
+                            LoadFromFile(path);
+                        }
+                        return null;
+                    });
 
             _buildCommands.AddCompilerCommand(
                 BuildRequireCommand,
                 delegate(StackContext sctx, PValue[] args)
-                {
-                    var allLoaded = true;
-                    foreach (var arg in args)
                     {
-                        var path = arg.CallToString(sctx);
-                        var file = ApplyLoadPaths(path);
-                        if (file == null)
+                        var allLoaded = true;
+                        foreach (var arg in args)
                         {
-                            _throwCannotFindScriptFile(path);
-                            return PType.Null;
+                            var path = arg.CallToString(sctx);
+                            var file = ApplyLoadPaths(path);
+                            if (file == null)
+                            {
+                                _throwCannotFindScriptFile(path);
+                                return PType.Null;
+                            }
+                            if (_loadedFiles.Contains(file.FullName))
+                                allLoaded = false;
+                            else
+                                _loadFromFile(file);
                         }
-                        if (_loadedFiles.Contains(file.FullName))
-                            allLoaded = false;
-                        else
-                            _loadFromFile(file);
-                    }
-                    return
-                        PType.Bool.CreatePValue(allLoaded);
-                });
+                        return
+                            PType.Bool.CreatePValue(allLoaded);
+                    });
 
             _buildCommands.AddCompilerCommand(
                 BuildDefaultCommand,
                 delegate
-                {
-                    var defaultFile = ApplyLoadPaths(DefaultScriptName);
-                    if (defaultFile == null)
-                        return DefaultScriptName;
-                    else
-                        return defaultFile.FullName;
-                });
+                    {
+                        var defaultFile = ApplyLoadPaths(DefaultScriptName);
+                        if (defaultFile == null)
+                            return DefaultScriptName;
+                        else
+                            return defaultFile.FullName;
+                    });
 
             _buildCommands.AddCompilerCommand(
                 BuildHookCommand,
                 delegate(StackContext sctx, PValue[] args)
-                {
-                    foreach (var arg in args)
                     {
-                        if (arg != null && !arg.IsNull)
+                        foreach (var arg in args)
                         {
-                            if (arg.Type == PType.Object[typeof (AstTransformation)])
-                                CompilerHooks.Add((AstTransformation) arg.Value);
-                            else
-                                CompilerHooks.Add(arg);
+                            if (arg != null && !arg.IsNull)
+                            {
+                                if (arg.Type == PType.Object[typeof (AstTransformation)])
+                                    CompilerHooks.Add((AstTransformation) arg.Value);
+                                else
+                                    CompilerHooks.Add(arg);
+                            }
                         }
-                    }
-                    return PType.Null.CreatePValue();
-                });
+                        return PType.Null.CreatePValue();
+                    });
 
             _buildCommands.AddCompilerCommand(
                 BuildResolveCommand,
                 delegate(StackContext sctx, PValue[] args)
-                {
-                    foreach (var arg in args)
                     {
-                        if (arg.Type == PType.Object[typeof (ResolveSymbol)])
-                            CustomResolvers.Add(new CustomResolver((ResolveSymbol) arg.Value));
-                        else
-                            CustomResolvers.Add(new CustomResolver(arg));
-                    }
-                    return PType.Null.CreatePValue();
-                });
+                        foreach (var arg in args)
+                        {
+                            if (arg.Type == PType.Object[typeof (ResolveSymbol)])
+                                CustomResolvers.Add(new CustomResolver((ResolveSymbol) arg.Value));
+                            else
+                                CustomResolvers.Add(new CustomResolver(arg));
+                        }
+                        return PType.Null.CreatePValue();
+                    });
 
             _buildCommands.AddCompilerCommand(
                 BuildGetLoaderCommand,
@@ -1137,18 +1131,18 @@ namespace Prexonite.Compiler
                 var metaTable = kvp.Value.Meta.Clone();
                 metaTable.Remove(Application.IdKey);
                 metaTable.Remove(Application.InitializationGeneration);
-                metaTable.Remove(Loader.SuppressPrimarySymbol);
+                metaTable.Remove(SuppressPrimarySymbol);
 #if DEBUG || Verbose
                     writer.WriteLine();
 #endif
-                    writer.Write(@"[");
-                    writer.Write(Loader.SuppressPrimarySymbol);
-                    writer.Write(";");
+                writer.Write(@"[");
+                writer.Write(SuppressPrimarySymbol);
+                writer.Write(";");
 #if DEBUG || Verbose
                     writer.WriteLine();
 #endif
-                    metaTable.Store(writer);
-                    writer.Write("]");
+                metaTable.Store(writer);
+                writer.Write("]");
 #if DEBUG || Verbose
                     writer.WriteLine();
 #endif
@@ -1172,9 +1166,9 @@ namespace Prexonite.Compiler
         }
 
         /// <summary>
-        /// Writes only the symbol declarations to the text writer (regardless of the <see cref="LoaderOptions.StoreSymbols"/> property.)
+        ///     Writes only the symbol declarations to the text writer (regardless of the <see cref = "LoaderOptions.StoreSymbols" /> property.)
         /// </summary>
-        /// <param name="writer">The writer to write the declarations to.</param>
+        /// <param name = "writer">The writer to write the declarations to.</param>
         public void StoreSymbols(TextWriter writer)
         {
             writer.WriteLine("\n//--SYMBOLS");
@@ -1211,9 +1205,9 @@ namespace Prexonite.Compiler
         }
 
         /// <summary>
-        /// Writes only meta information to the specified stream.
+        ///     Writes only meta information to the specified stream.
         /// </summary>
-        /// <param name="writer">The writer to write meta information to.</param>
+        /// <param name = "writer">The writer to write meta information to.</param>
         public void StoreMetaInformation(TextWriter writer)
         {
             writer.WriteLine("\n//--META INFORMATION");
@@ -1297,15 +1291,15 @@ namespace Prexonite.Compiler
         private readonly Dictionary<string, string> _stringCache = new Dictionary<string, string>();
 
         /// <summary>
-        /// Caches strings encountered while loading code.
+        ///     Caches strings encountered while loading code.
         /// </summary>
-        /// <param name="toCache">The string to cache.</param>
+        /// <param name = "toCache">The string to cache.</param>
         /// <returns>The cached instance of the supplied string. </returns>
         [DebuggerStepThrough]
         public string CacheString(string toCache)
         {
             string cached;
-            if(_stringCache.TryGetValue(toCache, out cached))
+            if (_stringCache.TryGetValue(toCache, out cached))
             {
                 return cached;
             }
@@ -1319,8 +1313,8 @@ namespace Prexonite.Compiler
 
         #endregion
 
-        [SuppressMessage("Microsoft.Naming", "CA1704:IdentifiersShouldBeSpelledCorrectly", MessageId = "Cil")]
-        public const string CilHintsKey = "cilhints";
+        [SuppressMessage("Microsoft.Naming", "CA1704:IdentifiersShouldBeSpelledCorrectly",
+            MessageId = "Cil")] public const string CilHintsKey = "cilhints";
 
         public const string ObjectCreationFallbackPrefix = "create_";
     }

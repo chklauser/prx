@@ -1,3 +1,16 @@
+// Prexonite
+// 
+// Copyright (c) 2011, Christian Klauser
+// All rights reserved.
+// 
+// Redistribution and use in source and binary forms, with or without modification, are permitted provided that the following conditions are met:
+// 
+//     Redistributions of source code must retain the above copyright notice, this list of conditions and the following disclaimer.
+//     Redistributions in binary form must reproduce the above copyright notice, this list of conditions and the following disclaimer in the documentation and/or other materials provided with the distribution.
+//     The names of the contributors may be used to endorse or promote products derived from this software without specific prior written permission.
+// 
+// THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT HOLDER OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+
 #region
 
 using System;
@@ -102,7 +115,8 @@ namespace Prexonite.Types
                     var step = (int) stepPV.Value;
 
                     result = sctx.CreateNativePValue
-                        (new Coroutine(new CoroutineContext(sctx, _generateIntegerRange(lowerLimit, step, upperLimit))));
+                        (new Coroutine(new CoroutineContext(sctx,
+                            _generateIntegerRange(lowerLimit, step, upperLimit))));
                     break;
             }
 
@@ -114,7 +128,8 @@ namespace Prexonite.Types
             return clrint.TryDynamicCall(sctx, subject, args, call, id, out result);
         }
 
-        private static IEnumerable<PValue> _generateIntegerRange(int lowerLimit, int step, int upperLimit)
+        private static IEnumerable<PValue> _generateIntegerRange(int lowerLimit, int step,
+            int upperLimit)
         {
             for (var i = lowerLimit; i <= upperLimit; i += step)
                 yield return i;
@@ -229,7 +244,7 @@ namespace Prexonite.Types
 
                 if (result != null)
                 {
-//(!useExplicit || useExplicit)
+                    //(!useExplicit || useExplicit)
                     switch (Type.GetTypeCode((subjectType as ObjectPType).ClrType))
                     {
                         case TypeCode.Byte:
@@ -555,20 +570,20 @@ namespace Prexonite.Types
         #region ICilCompilerAware Members
 
         /// <summary>
-        /// Asses qualification and preferences for a certain instruction.
+        ///     Asses qualification and preferences for a certain instruction.
         /// </summary>
-        /// <param name="ins">The instruction that is about to be compiled.</param>
-        /// <returns>A set of <see cref="CompilationFlags"/>.</returns>
+        /// <param name = "ins">The instruction that is about to be compiled.</param>
+        /// <returns>A set of <see cref = "CompilationFlags" />.</returns>
         CompilationFlags ICilCompilerAware.CheckQualification(Instruction ins)
         {
             return CompilationFlags.PrefersCustomImplementation;
         }
 
         /// <summary>
-        /// Provides a custom compiler routine for emitting CIL byte code for a specific instruction.
+        ///     Provides a custom compiler routine for emitting CIL byte code for a specific instruction.
         /// </summary>
-        /// <param name="state">The compiler state.</param>
-        /// <param name="ins">The instruction to compile.</param>
+        /// <param name = "state">The compiler state.</param>
+        /// <param name = "ins">The instruction to compile.</param>
         void ICilCompilerAware.ImplementInCil(CompilerState state, Instruction ins)
         {
             state.EmitCall(Compiler.Cil.Compiler.GetIntPType);

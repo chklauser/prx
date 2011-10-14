@@ -1,25 +1,15 @@
-/*
- * Prexonite, a scripting engine (Scripting Language -> Bytecode -> Virtual Machine)
- *  Copyright (C) 2007  Christian "SealedSun" Klauser
- *  E-mail  sealedsun a.t gmail d.ot com
- *  Web     http://www.sealedsun.ch/
- *
- *  This program is free software; you can redistribute it and/or modify
- *  it under the terms of the GNU General Public License as published by
- *  the Free Software Foundation; either version 2 of the License, or
- *  (at your option) any later version.
- *
- *  Please contact me (sealedsun a.t gmail do.t com) if you need a different license.
- * 
- *  This program is distributed in the hope that it will be useful,
- *  but WITHOUT ANY WARRANTY; without even the implied warranty of
- *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- *  GNU General Public License for more details.
- *
- *  You should have received a copy of the GNU General Public License along
- *  with this program; if not, write to the Free Software Foundation, Inc.,
- *  51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
- */
+// Prexonite
+// 
+// Copyright (c) 2011, Christian Klauser
+// All rights reserved.
+// 
+// Redistribution and use in source and binary forms, with or without modification, are permitted provided that the following conditions are met:
+// 
+//     Redistributions of source code must retain the above copyright notice, this list of conditions and the following disclaimer.
+//     Redistributions in binary form must reproduce the above copyright notice, this list of conditions and the following disclaimer in the documentation and/or other materials provided with the distribution.
+//     The names of the contributors may be used to endorse or promote products derived from this software without specific prior written permission.
+// 
+// THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT HOLDER OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 using System;
 using System.Diagnostics;
@@ -28,7 +18,7 @@ using NoDebug = System.Diagnostics.DebuggerNonUserCodeAttribute;
 namespace Prexonite
 {
     /// <summary>
-    /// Represents a closure, a nested function bound to a set of shared variables.
+    ///     Represents a closure, a nested function bound to a set of shared variables.
     /// </summary>
     [DebuggerStepThrough]
     public class Closure : IIndirectCall,
@@ -39,7 +29,7 @@ namespace Prexonite
         private readonly PFunction _function;
 
         /// <summary>
-        /// Provides readonly access to the function that makes up this closure.
+        ///     Provides readonly access to the function that makes up this closure.
         /// </summary>
         public PFunction Function
         {
@@ -49,7 +39,7 @@ namespace Prexonite
         private readonly PVariable[] _sharedVariables;
 
         /// <summary>
-        /// Provides readonly access to the list of variables the closure binds to the function.
+        ///     Provides readonly access to the list of variables the closure binds to the function.
         /// </summary>
         public PVariable[] SharedVariables
         {
@@ -61,11 +51,11 @@ namespace Prexonite
         #region Construction
 
         /// <summary>
-        /// Creates a new closure.
+        ///     Creates a new closure.
         /// </summary>
-        /// <param name="func">A (nested) function, that has shared variables.</param>
-        /// <param name="sharedVariables">A list of variables to share with the function.</param>
-        /// <exception cref="ArgumentNullException">Either <paramref name="func"/> or <paramref name="sharedVariables"/> is null.</exception>
+        /// <param name = "func">A (nested) function, that has shared variables.</param>
+        /// <param name = "sharedVariables">A list of variables to share with the function.</param>
+        /// <exception cref = "ArgumentNullException">Either <paramref name = "func" /> or <paramref name = "sharedVariables" /> is null.</exception>
         public Closure(PFunction func, PVariable[] sharedVariables)
         {
             if (func == null)
@@ -82,10 +72,10 @@ namespace Prexonite
         #region IIndirectCall Members
 
         /// <summary>
-        /// Invokes the function with the shared variables.
+        ///     Invokes the function with the shared variables.
         /// </summary>
-        /// <param name="sctx">The stack context in which to invoke the function.</param>
-        /// <param name="args">A list of arguments to pass to the function.</param>
+        /// <param name = "sctx">The stack context in which to invoke the function.</param>
+        /// <param name = "args">A list of arguments to pass to the function.</param>
         /// <returns>The value returned by the function.</returns>
         public virtual PValue IndirectCall(StackContext sctx, PValue[] args)
         {
@@ -94,10 +84,10 @@ namespace Prexonite
         }
 
         /// <summary>
-        /// Creates a stack context from the wrapped function.
+        ///     Creates a stack context from the wrapped function.
         /// </summary>
-        /// <param name="sctx">The engine to bind to.</param>
-        /// <param name="args">A list of arguments to pass to the function.</param>
+        /// <param name = "sctx">The engine to bind to.</param>
+        /// <param name = "args">A list of arguments to pass to the function.</param>
         /// <returns>A stack context for that function.</returns>
         public StackContext CreateStackContext(StackContext sctx, PValue[] args)
         {
@@ -105,13 +95,15 @@ namespace Prexonite
         }
 
         /// <summary>
-        /// Creates a function context from the wrapped function.
+        ///     Creates a function context from the wrapped function.
         /// </summary>
-        /// <param name="sctx">The stack context to bind to.</param>
-        /// <param name="args">A list of arguments to pass to the function.</param>
+        /// <param name = "sctx">The stack context to bind to.</param>
+        /// <param name = "args">A list of arguments to pass to the function.</param>
         /// <returns>A stack context for that function.</returns>
-        /// <remarks>Implementation may throw <see cref="NotSupportedException"/>.</remarks>
-        /// <exception cref="NotSupportedException">May be thrown by implementations</exception>
+        /// <remarks>
+        ///     Implementation may throw <see cref = "NotSupportedException" />.
+        /// </remarks>
+        /// <exception cref = "NotSupportedException">May be thrown by implementations</exception>
         public virtual FunctionContext CreateFunctionContext(StackContext sctx, PValue[] args)
         {
             return _function.CreateFunctionContext(sctx.ParentEngine, args, _sharedVariables);
@@ -122,10 +114,10 @@ namespace Prexonite
         #region Equality
 
         /// <summary>
-        /// Determines whether two closures are equal.
+        ///     Determines whether two closures are equal.
         /// </summary>
-        /// <param name="a">A closure</param>
-        /// <param name="b">A closure</param>
+        /// <param name = "a">A closure</param>
+        /// <param name = "b">A closure</param>
         /// <returns>True, if the two closures use to the same function and the same shared variables; false otherwise.</returns>
         public static bool operator ==(Closure a, Closure b)
         {
@@ -149,10 +141,10 @@ namespace Prexonite
         }
 
         /// <summary>
-        /// Determines whether two closures are not equal.
+        ///     Determines whether two closures are not equal.
         /// </summary>
-        /// <param name="a">A closure</param>
-        /// <param name="b">A closure</param>
+        /// <param name = "a">A closure</param>
+        /// <param name = "b">A closure</param>
         /// <returns>True, if the two closures do not use to the same function and the same shared variables; false otherwise.</returns>
         public static bool operator !=(Closure a, Closure b)
         {
@@ -160,11 +152,11 @@ namespace Prexonite
         }
 
         /// <summary>
-        /// Determines if the closure is equal to <paramref name="obj"/>.<br />
-        /// Closures can only be compared to other closures.
+        ///     Determines if the closure is equal to <paramref name = "obj" />.<br />
+        ///     Closures can only be compared to other closures.
         /// </summary>
-        /// <param name="obj">Any object.</param>
-        /// <returns>True if <paramref name="obj"/> is a closure that is equal to the current instance.</returns>
+        /// <param name = "obj">Any object.</param>
+        /// <returns>True if <paramref name = "obj" /> is a closure that is equal to the current instance.</returns>
         public override bool Equals(object obj)
         {
             var clo = obj as Closure;
@@ -174,7 +166,7 @@ namespace Prexonite
         }
 
         ///<summary>
-        /// Returns a hashcode.
+        ///    Returns a hashcode.
         ///</summary>
         ///<returns>The function's hashcode.</returns>
         public override int GetHashCode()
@@ -183,7 +175,7 @@ namespace Prexonite
         }
 
         /// <summary>
-        /// Returns a string that represents the closure.
+        ///     Returns a string that represents the closure.
         /// </summary>
         /// <returns>A string that represents the closure.</returns>
         public override string ToString()

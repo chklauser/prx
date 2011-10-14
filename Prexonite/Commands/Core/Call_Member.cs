@@ -1,27 +1,15 @@
-﻿/*
- * Prx, a standalone command line interface to the Prexonite scripting engine.
- * Prexonite, a scripting engine (Scripting Language -> Bytecode -> Virtual Machine)
- *  Copyright (C) 2007  Christian "SealedSun" Klauser
- *  E-mail  sealedsun a.t gmail d.ot com
- *  Web     http://www.sealedsun.ch/
- *
- *  This program is free software; you can redistribute it and/or modify
- *  it under the terms of the GNU General Public License as published by
- *  the Free Software Foundation; either version 2 of the License, or
- *  (at your option) any later version.
- *
- *  Please contact me (sealedsun a.t gmail do.t com) if you need a different license.
- * 
- *  This program is distributed in the hope that it will be useful,
- *  but WITHOUT ANY WARRANTY; without even the implied warranty of
- *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- *  GNU General Public License for more details.
- *
- *  You should have received a copy of the GNU General Public License along
- *  with this program; if not, write to the Free Software Foundation, Inc.,
- *  51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
- */
-
+﻿// Prexonite
+// 
+// Copyright (c) 2011, Christian Klauser
+// All rights reserved.
+// 
+// Redistribution and use in source and binary forms, with or without modification, are permitted provided that the following conditions are met:
+// 
+//     Redistributions of source code must retain the above copyright notice, this list of conditions and the following disclaimer.
+//     Redistributions in binary form must reproduce the above copyright notice, this list of conditions and the following disclaimer in the documentation and/or other materials provided with the distribution.
+//     The names of the contributors may be used to endorse or promote products derived from this software without specific prior written permission.
+// 
+// THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT HOLDER OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 using System;
 using System.Collections.Generic;
@@ -37,7 +25,7 @@ using Prexonite.Types;
 namespace Prexonite.Commands.Core
 {
     /// <summary>
-    /// Implementation of (obj, [isSet, ] id, arg1, arg2, arg3, ..., argn) => obj.id(arg1, arg2, arg3, ..., argn);
+    ///     Implementation of (obj, [isSet, ] id, arg1, arg2, arg3, ..., argn) => obj.id(arg1, arg2, arg3, ..., argn);
     /// </summary>
     public sealed class Call_Member : PCommand
     {
@@ -59,25 +47,25 @@ namespace Prexonite.Commands.Core
         public const string Alias = @"call\member\perform";
 
         /// <summary>
-        /// Implementation of (obj, [isSet, ] id, arg1, arg2, arg3, ..., argn) ⇒ obj.id(arg1, arg2, arg3, ..., argn);
+        ///     Implementation of (obj, [isSet, ] id, arg1, arg2, arg3, ..., argn) ⇒ obj.id(arg1, arg2, arg3, ..., argn);
         /// </summary>
         /// <remarks>
-        /// <para>
-        ///     Wrap Lists in other lists, if you want to pass them without being unfolded: 
-        /// <code>
-        /// function main()
-        /// {   var myList = [1, 2];
-        ///     var obj = "{1}hell{0}";
-        ///     print( call\member(obj, "format",  [ myList ]) );
-        /// }
+        ///     <para>
+        ///         Wrap Lists in other lists, if you want to pass them without being unfolded: 
+        ///         <code>
+        ///             function main()
+        ///             {   var myList = [1, 2];
+        ///             var obj = "{1}hell{0}";
+        ///             print( call\member(obj, "format",  [ myList ]) );
+        ///             }
         /// 
-        /// //Prints "2hell1"
-        /// </code>
-        /// </para>
+        ///             //Prints "2hell1"
+        ///         </code>
+        ///     </para>
         /// </remarks>
-        /// <param name="sctx">The stack context in which to call the callable argument.</param>
-        /// <param name="args">A list of the form [ obj, id, arg1, arg2, arg3, ..., argn].<br />
-        /// Lists and coroutines are expanded.</param>
+        /// <param name = "sctx">The stack context in which to call the callable argument.</param>
+        /// <param name = "args">A list of the form [ obj, id, arg1, arg2, arg3, ..., argn].<br />
+        ///     Lists and coroutines are expanded.</param>
         /// <returns>The result returned by the member call.</returns>
         public override PValue Run(StackContext sctx, PValue[] args)
         {
@@ -109,31 +97,31 @@ namespace Prexonite.Commands.Core
         }
 
         /// <summary>
-        /// Implementation of (obj, id, arg1, arg2, arg3, ..., argn) => obj.id(arg1, arg2, arg3, ..., argn);
+        ///     Implementation of (obj, id, arg1, arg2, arg3, ..., argn) => obj.id(arg1, arg2, arg3, ..., argn);
         /// </summary>
-        /// <param name="sctx">The stack context in which to call the member of <paramref name="obj"/>.</param>
-        /// <param name="obj">The obj to call.</param>
-        /// <param name="id">The id of the member to call.</param>
-        /// <param name="args">The array of arguments to pass to the member call.<br />
-        /// Lists and coroutines are expanded.</param>
+        /// <param name = "sctx">The stack context in which to call the member of <paramref name = "obj" />.</param>
+        /// <param name = "obj">The obj to call.</param>
+        /// <param name = "id">The id of the member to call.</param>
+        /// <param name = "args">The array of arguments to pass to the member call.<br />
+        ///     Lists and coroutines are expanded.</param>
         /// <returns>The result returned by the member call.</returns>
-        /// <exception cref="ArgumentNullException"><paramref name="sctx"/> is null.</exception>
+        /// <exception cref = "ArgumentNullException"><paramref name = "sctx" /> is null.</exception>
         public PValue Run(StackContext sctx, PValue obj, string id, params PValue[] args)
         {
             return Run(sctx, obj, false, id, args);
         }
 
         /// <summary>
-        /// Implementation of (obj, id, arg1, arg2, arg3, ..., argn) => obj.id(arg1, arg2, arg3, ..., argn);
+        ///     Implementation of (obj, id, arg1, arg2, arg3, ..., argn) => obj.id(arg1, arg2, arg3, ..., argn);
         /// </summary>
-        /// <param name="sctx">The stack context in which to call the member of <paramref name="obj"/>.</param>
-        /// <param name="obj">The obj to call.</param>
-        /// <param name="isSet">Indicates whether to perform a Set-call.</param>
-        /// <param name="id">The id of the member to call.</param>
-        /// <param name="args">The array of arguments to pass to the member call.<br />
-        /// Lists and coroutines are expanded.</param>
+        /// <param name = "sctx">The stack context in which to call the member of <paramref name = "obj" />.</param>
+        /// <param name = "obj">The obj to call.</param>
+        /// <param name = "isSet">Indicates whether to perform a Set-call.</param>
+        /// <param name = "id">The id of the member to call.</param>
+        /// <param name = "args">The array of arguments to pass to the member call.<br />
+        ///     Lists and coroutines are expanded.</param>
         /// <returns>The result returned by the member call.</returns>
-        /// <exception cref="ArgumentNullException"><paramref name="sctx"/> is null.</exception>
+        /// <exception cref = "ArgumentNullException"><paramref name = "sctx" /> is null.</exception>
         public PValue Run(StackContext sctx, PValue obj, bool isSet, string id, params PValue[] args)
         {
             if (obj == null)
@@ -169,11 +157,14 @@ namespace Prexonite.Commands.Core
 
         public class PartialMemberCall : PartialCallWrapper
         {
-            protected PartialMemberCall(string alias, string callImplementationId, SymbolInterpretations callImplementetaionInterpretation) : base(alias, callImplementationId, callImplementetaionInterpretation)
+            protected PartialMemberCall(string alias, string callImplementationId,
+                SymbolInterpretations callImplementetaionInterpretation)
+                : base(alias, callImplementationId, callImplementetaionInterpretation)
             {
             }
 
-            public PartialMemberCall() : this(Engine.Call_MemberAlias, Alias, SymbolInterpretations.Command)
+            public PartialMemberCall()
+                : this(Engine.Call_MemberAlias, Alias, SymbolInterpretations.Command)
             {
             }
 
@@ -192,7 +183,7 @@ namespace Prexonite.Commands.Core
             protected override AstGetSetSymbol GetTrivialPartialApplication(MacroContext context)
             {
                 var pa = base.GetTrivialPartialApplication(context);
-                pa.Arguments.Insert(1,_getIsSetExpr(context));
+                pa.Arguments.Insert(1, _getIsSetExpr(context));
                 return pa;
             }
 
@@ -203,6 +194,5 @@ namespace Prexonite.Commands.Core
         }
 
         #endregion
-
     }
 }

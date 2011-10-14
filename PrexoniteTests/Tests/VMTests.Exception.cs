@@ -1,19 +1,27 @@
-﻿#if ((!(DEBUG || Verbose)) || forceIndex) && allowIndex
+﻿// Prexonite
+// 
+// Copyright (c) 2011, Christian Klauser
+// All rights reserved.
+// 
+// Redistribution and use in source and binary forms, with or without modification, are permitted provided that the following conditions are met:
+// 
+//     Redistributions of source code must retain the above copyright notice, this list of conditions and the following disclaimer.
+//     Redistributions in binary form must reproduce the above copyright notice, this list of conditions and the following disclaimer in the documentation and/or other materials provided with the distribution.
+//     The names of the contributors may be used to endorse or promote products derived from this software without specific prior written permission.
+// 
+// THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT HOLDER OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+
+#if ((!(DEBUG || Verbose)) || forceIndex) && allowIndex
 #define useIndex
 #endif
 
-#define UseCil //need to change this in VMTestsBase.cs too!
+#define UseCil
+//need to change this in VMTestsBase.cs too!
 
 using System;
-using System.Collections;
 using System.Collections.Generic;
-using System.Diagnostics;
-using System.Linq;
-using System.Text;
 using NUnit.Framework;
 using Prexonite;
-using Prexonite.Commands;
-using Prexonite.Compiler;
 using Prexonite.Types;
 using PrexoniteTests.Tests;
 
@@ -157,8 +165,8 @@ function main()
             }
 
             var pxs = target.Variables["xs"].Value;
-            Assert.IsInstanceOf(typeof(ListPType), pxs.Type, "xs must be a ~List.");
-            var xs = (List<PValue>)pxs.Value;
+            Assert.IsInstanceOf(typeof (ListPType), pxs.Type, "xs must be a ~List.");
+            var xs = (List<PValue>) pxs.Value;
             Assert.AreEqual("0", xs[0].CallToString(sctx));
             Assert.AreEqual("1", xs[1].CallToString(sctx));
             Assert.AreEqual("2", xs[2].CallToString(sctx));
@@ -391,7 +399,7 @@ function main(sum)
     return sum;
 }
 ");
-            Expect((1 + 4 + 2 + 5 + 1) * 20, 1);
+            Expect((1 + 4 + 2 + 5 + 1)*20, 1);
         }
 
         [Test]
@@ -458,7 +466,7 @@ function main()
 }
 ");
 
-            var xs = new List<PValue> { 4, "Hello", 3.4 };
+            var xs = new List<PValue> {4, "Hello", 3.4};
 
             Expect("EXC(I don't like 4.) BEGIN NP(4) NP(Hello) NP(3.4)", xs.ToArray());
         }
@@ -466,7 +474,8 @@ function main()
         [Test]
         public void ReturnFromForeach()
         {
-            Compile(@"
+            Compile(
+                @"
 function main(xs)
 {
     foreach(var x in xs)
@@ -475,7 +484,7 @@ function main(xs)
     return -1;
 }
 ");
-            var xs = (PValue)new List<PValue> { 1, 2, 3, 4, 7, 15 };
+            var xs = (PValue) new List<PValue> {1, 2, 3, 4, 7, 15};
 
             Expect(7, xs);
         }
@@ -483,7 +492,8 @@ function main(xs)
         [Test]
         public void ForeachLastInConditionCil()
         {
-            Compile(@"
+            Compile(
+                @"
 function main(cond, xs)
 {
     var z = 0;
@@ -504,17 +514,19 @@ function main(cond, xs)
             {
                 var main = target.Functions["main"];
                 Assert.IsFalse(main.Meta[PFunction.VolatileKey], "main must not be volatile.");
-                Assert.IsFalse(main.Meta.ContainsKey(PFunction.DeficiencyKey), "main must not have a deficiency");
+                Assert.IsFalse(main.Meta.ContainsKey(PFunction.DeficiencyKey),
+                    "main must not have a deficiency");
                 Assert.IsTrue(main.HasCilImplementation, "main must have CIL implementation.");
             }
 
-            Expect(6, true, (PValue)new List<PValue> { 1, 2, 3 });
+            Expect(6, true, (PValue) new List<PValue> {1, 2, 3});
         }
 
         [Test]
         public void ReturnContinueFormTryFinally()
         {
-            Compile(@"
+            Compile(
+                @"
 function main()
 {
     try
@@ -554,7 +566,8 @@ function main()
         [Test]
         public void JumpToAfterEmptyFinally()
         {
-            Compile(@"
+            Compile(
+                @"
 function main()
 {
     try
@@ -584,7 +597,8 @@ after:
         [Test]
         public void ReturnFromFinally()
         {
-            Compile(@"
+            Compile(
+                @"
 var t = """";
 function trace x = t += x;
 
@@ -607,9 +621,10 @@ function main(x)
 
             if (CompileToCil)
             {
-                Assert.IsTrue(mainTable[PFunction.VolatileKey].Switch, "return from finally is illegal in CIL");
+                Assert.IsTrue(mainTable[PFunction.VolatileKey].Switch,
+                    "return from finally is illegal in CIL");
                 Assert.IsTrue(mainTable[PFunction.DeficiencyKey].Text.Contains("SEH"),
-                              "deficiency must be related to SEH.");
+                    "deficiency must be related to SEH.");
             }
             Expect("tn", false);
         }
@@ -635,7 +650,8 @@ function main()
 ");
 
             ExpectNull();
-            Assert.IsTrue((bool)((PValue)"t").Equality(sctx, target.Variables["t"].Value).Value, "trace does not match");
+            Assert.IsTrue((bool) ((PValue) "t").Equality(sctx, target.Variables["t"].Value).Value,
+                "trace does not match");
         }
 
         [Test]
@@ -654,7 +670,8 @@ function main(x)
 }");
 
             ExpectNull();
-            Assert.IsTrue((bool)target.Variables["t"].Value.Equality(sctx, "tf").Value, "Unexpected trace");
+            Assert.IsTrue((bool) target.Variables["t"].Value.Equality(sctx, "tf").Value,
+                "Unexpected trace");
         }
 
         [Test]

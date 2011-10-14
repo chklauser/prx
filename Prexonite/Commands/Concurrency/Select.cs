@@ -1,7 +1,19 @@
+// Prexonite
+// 
+// Copyright (c) 2011, Christian Klauser
+// All rights reserved.
+// 
+// Redistribution and use in source and binary forms, with or without modification, are permitted provided that the following conditions are met:
+// 
+//     Redistributions of source code must retain the above copyright notice, this list of conditions and the following disclaimer.
+//     Redistributions in binary form must reproduce the above copyright notice, this list of conditions and the following disclaimer in the documentation and/or other materials provided with the distribution.
+//     The names of the contributors may be used to endorse or promote products derived from this software without specific prior written permission.
+// 
+// THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT HOLDER OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+
 using System;
 using System.Collections.Generic;
 using System.Linq;
-using System.Text;
 using System.Threading;
 using Prexonite.Commands.Core;
 using Prexonite.Commands.List;
@@ -45,7 +57,7 @@ namespace Prexonite.Commands.Concurrency
         {
             bool performSubCall;
             if (args.Length > 0 && args[0].Type.ToBuiltIn() == PType.BuiltIn.Bool)
-                performSubCall = (bool)args[0].Value;
+                performSubCall = (bool) args[0].Value;
             else
                 performSubCall = false;
 
@@ -59,12 +71,15 @@ namespace Prexonite.Commands.Concurrency
                     rawCases.AddRange(set);
             }
 
-            var appCases = rawCases.Select(c => _isApplicable(sctx, c)).Where(x => x != null).Select(_extract).ToArray();
+            var appCases =
+                rawCases.Select(c => _isApplicable(sctx, c)).Where(x => x != null).Select(_extract).
+                    ToArray();
 
             return RunStatically(sctx, appCases, performSubCall);
         }
 
-        public static PValue RunStatically(StackContext sctx, KeyValuePair<Channel, PValue>[] appCases, bool performSubCall)
+        public static PValue RunStatically(StackContext sctx,
+            KeyValuePair<Channel, PValue>[] appCases, bool performSubCall)
         {
             //Check if there data is already available (i.e. if the select can be processed non-blocking)
             foreach (var kvp in appCases)
@@ -104,11 +119,13 @@ namespace Prexonite.Commands.Concurrency
             }
         }
 
-        private static PValue _invokeHandler(StackContext sctx, PValue handler, PValue datum, bool performSubCall)
+        private static PValue _invokeHandler(StackContext sctx, PValue handler, PValue datum,
+            bool performSubCall)
         {
-            var handlerArgv = datum != null ? new[] { datum } : Runtime.EmptyPValueArray;
-            return performSubCall 
-                ? CallSubPerform.RunStatically(sctx, handler, handlerArgv, useIndirectCallAsFallback: true) 
+            var handlerArgv = datum != null ? new[] {datum} : Runtime.EmptyPValueArray;
+            return performSubCall
+                ? CallSubPerform.RunStatically(sctx, handler, handlerArgv,
+                    useIndirectCallAsFallback: true)
                 : handler.IndirectCall(sctx, handlerArgv);
         }
 
@@ -131,7 +148,8 @@ namespace Prexonite.Commands.Concurrency
                             return null;
                     else if (key.Value == null)
                         return null;
-                    else if (Runtime.ExtractBool(key.IndirectCall(sctx, Runtime.EmptyPValueArray), sctx))
+                    else if (Runtime.ExtractBool(key.IndirectCall(sctx, Runtime.EmptyPValueArray),
+                        sctx))
                         return kvp.Value;
                     else
                         return null;
@@ -158,7 +176,7 @@ namespace Prexonite.Commands.Concurrency
 
                 if (key.Type == _chanType)
                     return new KeyValuePair<Channel, PValue>((Channel) kvp.Key.Value, kvp.Value);
-                else if(key.Value == null)
+                else if (key.Value == null)
                     return new KeyValuePair<Channel, PValue>(null, kvp.Value);
                 else
                     throw new PrexoniteException(
@@ -177,7 +195,8 @@ namespace Prexonite.Commands.Concurrency
             }
         }
 
-        private static void _split(IEnumerable<KeyValuePair<Channel, PValue>> cases, out Channel[] channels, out PValue[] handlers)
+        private static void _split(IEnumerable<KeyValuePair<Channel, PValue>> cases,
+            out Channel[] channels, out PValue[] handlers)
         {
             var chanCases = cases.Where(kvp => kvp.Key != null).ToArray();
             var count = chanCases.Length;
@@ -201,7 +220,8 @@ namespace Prexonite.Commands.Concurrency
 
         public void ImplementInCil(CompilerState state, Instruction ins)
         {
-            throw new NotSupportedException("The command " + GetType().Name + " does not support CIL compilation via ICilCompilerAware.");
+            throw new NotSupportedException("The command " + GetType().Name +
+                " does not support CIL compilation via ICilCompilerAware.");
         }
 
         #endregion

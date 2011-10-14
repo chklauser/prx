@@ -1,3 +1,16 @@
+// Prexonite
+// 
+// Copyright (c) 2011, Christian Klauser
+// All rights reserved.
+// 
+// Redistribution and use in source and binary forms, with or without modification, are permitted provided that the following conditions are met:
+// 
+//     Redistributions of source code must retain the above copyright notice, this list of conditions and the following disclaimer.
+//     Redistributions in binary form must reproduce the above copyright notice, this list of conditions and the following disclaimer in the documentation and/or other materials provided with the distribution.
+//     The names of the contributors may be used to endorse or promote products derived from this software without specific prior written permission.
+// 
+// THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT HOLDER OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+
 #region
 
 using System;
@@ -10,8 +23,8 @@ using System.Reflection;
 namespace Prexonite.Types
 {
     /// <summary>
-    /// Implements the interfaces <see cref="IObject"/> and <see cref="IIndirectCall"/> in 
-    /// such a way that the object acts like a Prexonite structure (e.g., members can be added at runtime).
+    ///     Implements the interfaces <see cref = "IObject" /> and <see cref = "IIndirectCall" /> in 
+    ///     such a way that the object acts like a Prexonite structure (e.g., members can be added at runtime).
     /// </summary>
     [DebuggerNonUserCode]
     public class ExtendableObject : IObject, IIndirectCall
@@ -21,16 +34,17 @@ namespace Prexonite.Types
         protected void InitializeExtensionTable()
         {
             if (_et != null)
-                throw new InvalidOperationException("The extension table for this object has already been created.");
+                throw new InvalidOperationException(
+                    "The extension table for this object has already been created.");
             _et = new ExtensionTable();
         }
 
         /// <summary>
-        /// Creates a new instance of ExtendableObject.
+        ///     Creates a new instance of ExtendableObject.
         /// </summary>
-        /// <param name="tableIsInitialized">Indicates whether the initialization of the 
-        /// extension table (<see cref="InitializeExtensionTable"/>) should be performed by this 
-        /// constructor overload.</param>
+        /// <param name = "tableIsInitialized">Indicates whether the initialization of the 
+        ///     extension table (<see cref = "InitializeExtensionTable" />) should be performed by this 
+        ///     constructor overload.</param>
         protected ExtendableObject(bool tableIsInitialized)
         {
             if (!tableIsInitialized)
@@ -45,72 +59,78 @@ namespace Prexonite.Types
         #region IObject Members
 
         /// <summary>
-        /// Tries to call an instance member of the object (CLR).
+        ///     Tries to call an instance member of the object (CLR).
         /// </summary>
-        /// <param name="sctx">The context in which to perform the call.</param>
-        /// <param name="subject">The subject to substitute for this</param>
-        /// <param name="args">The arguments for the call.</param>
-        /// <param name="call">The type of call.</param>
-        /// <param name="id">The id of the member. The empty string represents the default member.</param>
-        /// <param name="result">The result of the call.</param>
+        /// <param name = "sctx">The context in which to perform the call.</param>
+        /// <param name = "subject">The subject to substitute for this</param>
+        /// <param name = "args">The arguments for the call.</param>
+        /// <param name = "call">The type of call.</param>
+        /// <param name = "id">The id of the member. The empty string represents the default member.</param>
+        /// <param name = "result">The result of the call.</param>
         /// <returns>True if the call was successful, false otherwise.</returns>
         /// <remarks>
         ///     <para>
-        ///         <paramref name="result"/> is only defined if the method returns true.
+        ///         <paramref name = "result" /> is only defined if the method returns true.
         ///     </para>
         ///     <para>
-        ///         If you want to intercept object member calls yourself, overwrite <see cref="TryDynamicCall(StackContext,PValue,PValue[],PCall,string,out PValue)"/> instead.
+        ///         If you want to intercept object member calls yourself, overwrite <see
+        ///      cref = "TryDynamicCall(StackContext,PValue,PValue[],PCall,string,out PValue)" /> instead.
         ///     </para>
         /// </remarks>
         protected virtual bool TryDynamicClrCall(
-            StackContext sctx, PValue subject, PValue[] args, PCall call, string id, out PValue result)
+            StackContext sctx, PValue subject, PValue[] args, PCall call, string id,
+            out PValue result)
         {
             MemberInfo dummyInfo;
             var objT = subject.Type as ObjectPType;
             if ((object) objT != null)
-                return objT.TryDynamicCall(sctx, subject, args, call, id, out result, out dummyInfo, true);
+                return objT.TryDynamicCall(sctx, subject, args, call, id, out result, out dummyInfo,
+                    true);
             else
                 return subject.TryDynamicCall(sctx, args, call, id, out result);
         }
 
         /// <summary>
-        /// Tries to call an instance member of the object (CLR). Overwrite this method to intercept object member calls.
+        ///     Tries to call an instance member of the object (CLR). Overwrite this method to intercept object member calls.
         /// </summary>
-        /// <param name="sctx">The context in which to perform the call.</param>
-        /// <param name="args">The arguments for the call.</param>
-        /// <param name="call">The type of call.</param>
-        /// <param name="id">The id of the member. The empty string represents the default member.</param>
-        /// <param name="result">The result of the call.</param>
+        /// <param name = "sctx">The context in which to perform the call.</param>
+        /// <param name = "args">The arguments for the call.</param>
+        /// <param name = "call">The type of call.</param>
+        /// <param name = "id">The id of the member. The empty string represents the default member.</param>
+        /// <param name = "result">The result of the call.</param>
         /// <returns>True if the call was successful, false otherwise.</returns>
         /// <remarks>
         ///     <para>
-        ///         <paramref name="result"/> is only defined if the method returns true.
+        ///         <paramref name = "result" /> is only defined if the method returns true.
         ///     </para>
         ///     <para>
-        ///         If you want to intercept object member calls yourself, overwrite <see cref="TryDynamicClrCall(StackContext,PValue,PValue[],PCall,string,out PValue)"/> instead.
+        ///         If you want to intercept object member calls yourself, overwrite <see
+        ///      cref = "TryDynamicClrCall(StackContext,PValue,PValue[],PCall,string,out PValue)" /> instead.
         ///     </para>
         /// </remarks>
-        protected bool TryDynamicClrCall(StackContext sctx, PValue[] args, PCall call, string id, out PValue result)
+        protected bool TryDynamicClrCall(StackContext sctx, PValue[] args, PCall call, string id,
+            out PValue result)
         {
             return
                 TryDynamicClrCall(sctx, sctx.CreateNativePValue(this), args, call, id, out result);
         }
 
         /// <summary>
-        /// Tries to call instance members of the object or members of the extended part.
+        ///     Tries to call instance members of the object or members of the extended part.
         /// </summary>
-        /// <param name="sctx">The context in which to perform the call.</param>
-        /// <param name="args">The arguments for the call.</param>
-        /// <param name="call">The type of call.</param>
-        /// <param name="id">The id of the member. The empty string represents the default member.</param>
-        /// <param name="result">The result of the call.</param>
+        /// <param name = "sctx">The context in which to perform the call.</param>
+        /// <param name = "args">The arguments for the call.</param>
+        /// <param name = "call">The type of call.</param>
+        /// <param name = "id">The id of the member. The empty string represents the default member.</param>
+        /// <param name = "result">The result of the call.</param>
         /// <returns>True if the call was successful, false otherwise.</returns>
         /// <remarks>
         ///     <para>
-        ///         <paramref name="result"/> is only defined if the method returns true.
+        ///         <paramref name = "result" /> is only defined if the method returns true.
         ///     </para>
         ///     <para>
-        ///         If you want to intercept object member calls yourself, overwrite <see cref="TryDynamicClrCall(StackContext,PValue,PValue[],PCall,string,out PValue)"/> instead.
+        ///         If you want to intercept object member calls yourself, overwrite <see
+        ///      cref = "TryDynamicClrCall(StackContext,PValue,PValue[],PCall,string,out PValue)" /> instead.
         ///     </para>
         /// </remarks>
         public bool TryDynamicCall(
@@ -120,25 +140,27 @@ namespace Prexonite.Types
         }
 
         /// <summary>
-        /// Tries to call instance members of the object or members of the extended part.
+        ///     Tries to call instance members of the object or members of the extended part.
         /// </summary>
-        /// <param name="sctx">The context in which to perform the call.</param>
-        /// <param name="subject">The subject to substitue for <value>this</value>.</param>
-        /// <param name="args">The arguments for the call.</param>
-        /// <param name="call">The type of call.</param>
-        /// <param name="id">The id of the member. The empty string represents the default member.</param>
-        /// <param name="result">The result of the call.</param>
+        /// <param name = "sctx">The context in which to perform the call.</param>
+        /// <param name = "subject">The subject to substitue for <value>this</value>.</param>
+        /// <param name = "args">The arguments for the call.</param>
+        /// <param name = "call">The type of call.</param>
+        /// <param name = "id">The id of the member. The empty string represents the default member.</param>
+        /// <param name = "result">The result of the call.</param>
         /// <returns>True if the call was successful, false otherwise.</returns>
         /// <remarks>
         ///     <para>
-        ///         <paramref name="result"/> is only defined if the method returns true.
+        ///         <paramref name = "result" /> is only defined if the method returns true.
         ///     </para>
         ///     <para>
-        ///         If you want to intercept object member calls yourself, overwrite <see cref="TryDynamicClrCall(StackContext,PValue,PValue[],PCall,string,out PValue)"/> instead.
+        ///         If you want to intercept object member calls yourself, overwrite <see
+        ///      cref = "TryDynamicClrCall(StackContext,PValue,PValue[],PCall,string,out PValue)" /> instead.
         ///     </para>
         /// </remarks>
         public bool TryDynamicCall(
-            StackContext sctx, PValue subject, PValue[] args, PCall call, string id, out PValue result)
+            StackContext sctx, PValue subject, PValue[] args, PCall call, string id,
+            out PValue result)
         {
             if (sctx == null)
                 throw new ArgumentNullException("sctx");
@@ -150,8 +172,10 @@ namespace Prexonite.Types
             if (_et == null)
                 _et = new ExtensionTable();
 
-            if (TryDynamicClrCall(sctx, subject, args, call, id, out result) || //Try conventional call
-                _tryDynamicExtensionCall(sctx, subject, args, call, id, out result)) //Try extension call
+            if (TryDynamicClrCall(sctx, subject, args, call, id, out result) ||
+                //Try conventional call
+                _tryDynamicExtensionCall(sctx, subject, args, call, id, out result))
+                //Try extension call
                 return true;
             else if (call == PCall.Set && args.Length > 0) //Add field if it does not exist
                 result = _dynamicCall(
@@ -188,7 +212,8 @@ namespace Prexonite.Types
         }
 
         private bool _tryDynamicExtensionCall(
-            StackContext sctx, PValue subject, PValue[] args, PCall call, string id, out PValue result)
+            StackContext sctx, PValue subject, PValue[] args, PCall call, string id,
+            out PValue result)
         {
             result = null;
 
@@ -251,7 +276,8 @@ namespace Prexonite.Types
             return _dynamicCall(sctx, sctx.CreateNativePValue(this), args, call, id);
         }
 
-        private PValue _dynamicCall(StackContext sctx, PValue subject, PValue[] args, PCall call, string id)
+        private PValue _dynamicCall(StackContext sctx, PValue subject, PValue[] args, PCall call,
+            string id)
         {
             PValue result;
             if (!_tryDynamicExtensionCall(sctx, subject, args, call, id, out result))
@@ -263,10 +289,10 @@ namespace Prexonite.Types
         #region IIndirectCall Members
 
         /// <summary>
-        /// Indirectly calls the extended part of the object.
+        ///     Indirectly calls the extended part of the object.
         /// </summary>
-        /// <param name="sctx">The stack context in which to perform the call.</param>
-        /// <param name="args">The arguments to pass to the handling function.</param>
+        /// <param name = "sctx">The stack context in which to perform the call.</param>
+        /// <param name = "args">The arguments to pass to the handling function.</param>
         /// <returns>The value returned by the extended part of the object.</returns>
         public virtual PValue IndirectCall(StackContext sctx, PValue[] args)
         {
@@ -274,11 +300,11 @@ namespace Prexonite.Types
         }
 
         /// <summary>
-        /// Indirectly calls the extended part of this object using a different subject (used together with object facades).
+        ///     Indirectly calls the extended part of this object using a different subject (used together with object facades).
         /// </summary>
-        /// <param name="sctx">The stack context in which to perform the call.</param>
-        /// <param name="subject">The subject to substitute for this.</param>
-        /// <param name="args">The arguments to pass to the handling function.</param>
+        /// <param name = "sctx">The stack context in which to perform the call.</param>
+        /// <param name = "subject">The subject to substitute for this.</param>
+        /// <param name = "args">The arguments to pass to the handling function.</param>
         /// <returns>The value returned by the extended part of the object.</returns>
         public PValue IndirectCall(StackContext sctx, PValue subject, PValue[] args)
         {
@@ -386,14 +412,12 @@ namespace Prexonite.Types
         }
 
         ///<summary>
-        ///When implemented in a derived class, extracts the key from the specified element.
+        ///    When implemented in a derived class, extracts the key from the specified element.
         ///</summary>
-        ///
         ///<returns>
-        ///The key for the specified element.
+        ///    The key for the specified element.
         ///</returns>
-        ///
-        ///<param name="item">The element from which to extract the key.</param>
+        ///<param name = "item">The element from which to extract the key.</param>
         protected override string GetKeyForItem(ExtensionMember item)
         {
             if (item == null)

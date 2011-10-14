@@ -1,25 +1,15 @@
-/*
- * Prexonite, a scripting engine (Scripting Language -> Bytecode -> Virtual Machine)
- *  Copyright (C) 2007  Christian "SealedSun" Klauser
- *  E-mail  sealedsun a.t gmail d.ot com
- *  Web     http://www.sealedsun.ch/
- *
- *  This program is free software; you can redistribute it and/or modify
- *  it under the terms of the GNU General Public License as published by
- *  the Free Software Foundation; either version 2 of the License, or
- *  (at your option) any later version.
- *
- *  Please contact me (sealedsun a.t gmail do.t com) if you need a different license.
- * 
- *  This program is distributed in the hope that it will be useful,
- *  but WITHOUT ANY WARRANTY; without even the implied warranty of
- *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- *  GNU General Public License for more details.
- *
- *  You should have received a copy of the GNU General Public License along
- *  with this program; if not, write to the Free Software Foundation, Inc.,
- *  51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
- */
+// Prexonite
+// 
+// Copyright (c) 2011, Christian Klauser
+// All rights reserved.
+// 
+// Redistribution and use in source and binary forms, with or without modification, are permitted provided that the following conditions are met:
+// 
+//     Redistributions of source code must retain the above copyright notice, this list of conditions and the following disclaimer.
+//     Redistributions in binary form must reproduce the above copyright notice, this list of conditions and the following disclaimer in the documentation and/or other materials provided with the distribution.
+//     The names of the contributors may be used to endorse or promote products derived from this software without specific prior written permission.
+// 
+// THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT HOLDER OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 using System;
 using System.Collections;
@@ -74,7 +64,7 @@ namespace Prexonite.Compiler.Ast
 
         public void ReleaseRightAppend()
         {
-            _arguments.InsertRange(_getEffectiveRightAppendPosition(),_rightAppends);
+            _arguments.InsertRange(_getEffectiveRightAppendPosition(), _rightAppends);
             _rightAppends.Clear();
         }
 
@@ -86,55 +76,53 @@ namespace Prexonite.Compiler.Ast
         #region IList<IAstExpression> Members
 
         ///<summary>
-        ///Determines the index of a specific item in the <see cref="T:System.Collections.Generic.IList`1"></see>.
+        ///    Determines the index of a specific item in the <see cref = "T:System.Collections.Generic.IList`1"></see>.
         ///</summary>
-        ///
         ///<returns>
-        ///The index of item if found in the list; otherwise, -1.
+        ///    The index of item if found in the list; otherwise, -1.
         ///</returns>
-        ///
-        ///<param name="item">The object to locate in the <see cref="T:System.Collections.Generic.IList`1"></see>.</param>
+        ///<param name = "item">The object to locate in the <see cref = "T:System.Collections.Generic.IList`1"></see>.</param>
         public int IndexOf(IAstExpression item)
         {
             return _arguments.IndexOf(item);
         }
 
         ///<summary>
-        ///Inserts an item to the <see cref="T:System.Collections.Generic.IList`1"></see> at the specified index.
+        ///    Inserts an item to the <see cref = "T:System.Collections.Generic.IList`1"></see> at the specified index.
         ///</summary>
-        ///
-        ///<param name="item">The object to insert into the <see cref="T:System.Collections.Generic.IList`1"></see>.</param>
-        ///<param name="index">The zero-based index at which item should be inserted.</param>
-        ///<exception cref="T:System.NotSupportedException">The <see cref="T:System.Collections.Generic.IList`1"></see> is read-only.</exception>
-        ///<exception cref="T:System.ArgumentOutOfRangeException">index is not a valid index in the <see cref="T:System.Collections.Generic.IList`1"></see>.</exception>
+        ///<param name = "item">The object to insert into the <see cref = "T:System.Collections.Generic.IList`1"></see>.</param>
+        ///<param name = "index">The zero-based index at which item should be inserted.</param>
+        ///<exception cref = "T:System.NotSupportedException">The <see cref = "T:System.Collections.Generic.IList`1"></see> is read-only.</exception>
+        ///<exception cref = "T:System.ArgumentOutOfRangeException">index is not a valid index in the <see
+        ///     cref = "T:System.Collections.Generic.IList`1"></see>.</exception>
         public void Insert(int index, IAstExpression item)
         {
             _arguments.Insert(index, item);
         }
 
         ///<summary>
-        ///Removes the <see cref="T:System.Collections.Generic.IList`1"></see> item at the specified index.
+        ///    Removes the <see cref = "T:System.Collections.Generic.IList`1"></see> item at the specified index.
         ///</summary>
-        ///
-        ///<param name="index">The zero-based index of the item to remove.</param>
-        ///<exception cref="T:System.NotSupportedException">The <see cref="T:System.Collections.Generic.IList`1"></see> is read-only.</exception>
-        ///<exception cref="T:System.ArgumentOutOfRangeException">index is not a valid index in the <see cref="T:System.Collections.Generic.IList`1"></see>.</exception>
+        ///<param name = "index">The zero-based index of the item to remove.</param>
+        ///<exception cref = "T:System.NotSupportedException">The <see cref = "T:System.Collections.Generic.IList`1"></see> is read-only.</exception>
+        ///<exception cref = "T:System.ArgumentOutOfRangeException">index is not a valid index in the <see
+        ///     cref = "T:System.Collections.Generic.IList`1"></see>.</exception>
         public void RemoveAt(int index)
         {
             _arguments.RemoveAt(index);
         }
 
         ///<summary>
-        ///Gets or sets the element at the specified index.
+        ///    Gets or sets the element at the specified index.
         ///</summary>
-        ///
         ///<returns>
-        ///The element at the specified index.
+        ///    The element at the specified index.
         ///</returns>
-        ///
-        ///<param name="index">The zero-based index of the element to get or set.</param>
-        ///<exception cref="T:System.ArgumentOutOfRangeException">index is not a valid index in the <see cref="T:System.Collections.Generic.IList`1"></see>.</exception>
-        ///<exception cref="T:System.NotSupportedException">The property is set and the <see cref="T:System.Collections.Generic.IList`1"></see> is read-only.</exception>
+        ///<param name = "index">The zero-based index of the element to get or set.</param>
+        ///<exception cref = "T:System.ArgumentOutOfRangeException">index is not a valid index in the <see
+        ///     cref = "T:System.Collections.Generic.IList`1"></see>.</exception>
+        ///<exception cref = "T:System.NotSupportedException">The property is set and the <see
+        ///     cref = "T:System.Collections.Generic.IList`1"></see> is read-only.</exception>
         public IAstExpression this[int index]
         {
             get { return _arguments[index]; }
@@ -146,99 +134,92 @@ namespace Prexonite.Compiler.Ast
         #region ICollection<IAstExpression> Members
 
         ///<summary>
-        ///Adds an item to the <see cref="T:System.Collections.Generic.ICollection`1"></see>.
+        ///    Adds an item to the <see cref = "T:System.Collections.Generic.ICollection`1"></see>.
         ///</summary>
-        ///
-        ///<param name="item">The object to add to the <see cref="T:System.Collections.Generic.ICollection`1"></see>.</param>
-        ///<exception cref="T:System.NotSupportedException">The <see cref="T:System.Collections.Generic.ICollection`1"></see> is read-only.</exception>
+        ///<param name = "item">The object to add to the <see cref = "T:System.Collections.Generic.ICollection`1"></see>.</param>
+        ///<exception cref = "T:System.NotSupportedException">The <see cref = "T:System.Collections.Generic.ICollection`1"></see> is read-only.</exception>
         public void Add(IAstExpression item)
         {
             _arguments.Add(item);
         }
 
         /// <summary>
-        /// Adds a number of items to the list of arguments.
+        ///     Adds a number of items to the list of arguments.
         /// </summary>
-        /// <param name="items">A collection of arguments.</param>
+        /// <param name = "items">A collection of arguments.</param>
         public void AddRange(IEnumerable<IAstExpression> items)
         {
             _arguments.AddRange(items);
         }
 
         ///<summary>
-        ///Removes all items from the <see cref="T:System.Collections.Generic.ICollection`1"></see>.
+        ///    Removes all items from the <see cref = "T:System.Collections.Generic.ICollection`1"></see>.
         ///</summary>
-        ///
-        ///<exception cref="T:System.NotSupportedException">The <see cref="T:System.Collections.Generic.ICollection`1"></see> is read-only. </exception>
+        ///<exception cref = "T:System.NotSupportedException">The <see cref = "T:System.Collections.Generic.ICollection`1"></see> is read-only. </exception>
         public void Clear()
         {
             _arguments.Clear();
         }
 
         ///<summary>
-        ///Determines whether the <see cref="T:System.Collections.Generic.ICollection`1"></see> contains a specific value.
+        ///    Determines whether the <see cref = "T:System.Collections.Generic.ICollection`1"></see> contains a specific value.
         ///</summary>
-        ///
         ///<returns>
-        ///true if item is found in the <see cref="T:System.Collections.Generic.ICollection`1"></see>; otherwise, false.
+        ///    true if item is found in the <see cref = "T:System.Collections.Generic.ICollection`1"></see>; otherwise, false.
         ///</returns>
-        ///
-        ///<param name="item">The object to locate in the <see cref="T:System.Collections.Generic.ICollection`1"></see>.</param>
+        ///<param name = "item">The object to locate in the <see cref = "T:System.Collections.Generic.ICollection`1"></see>.</param>
         public bool Contains(IAstExpression item)
         {
             return _arguments.Contains(item);
         }
 
         ///<summary>
-        ///Copies the elements of the <see cref="T:System.Collections.Generic.ICollection`1"></see> to an <see cref="T:System.Array"></see>, starting at a particular <see cref="T:System.Array"></see> index.
+        ///    Copies the elements of the <see cref = "T:System.Collections.Generic.ICollection`1"></see> to an <see
+        ///     cref = "T:System.Array"></see>, starting at a particular <see cref = "T:System.Array"></see> index.
         ///</summary>
-        ///
-        ///<param name="array">The one-dimensional <see cref="T:System.Array"></see> that is the destination of the elements copied from <see cref="T:System.Collections.Generic.ICollection`1"></see>. The <see cref="T:System.Array"></see> must have zero-based indexing.</param>
-        ///<param name="arrayIndex">The zero-based index in array at which copying begins.</param>
-        ///<exception cref="T:System.ArgumentOutOfRangeException">arrayIndex is less than 0.</exception>
-        ///<exception cref="T:System.ArgumentNullException">array is null.</exception>
-        ///<exception cref="T:System.ArgumentException">array is multidimensional.-or-arrayIndex is equal to or greater than the length of array.-or-The number of elements in the source <see cref="T:System.Collections.Generic.ICollection`1"></see> is greater than the available space from arrayIndex to the end of the destination array.-or-Type T cannot be cast automatically to the type of the destination array.</exception>
+        ///<param name = "array">The one-dimensional <see cref = "T:System.Array"></see> that is the destination of the elements copied from <see
+        ///     cref = "T:System.Collections.Generic.ICollection`1"></see>. The <see cref = "T:System.Array"></see> must have zero-based indexing.</param>
+        ///<param name = "arrayIndex">The zero-based index in array at which copying begins.</param>
+        ///<exception cref = "T:System.ArgumentOutOfRangeException">arrayIndex is less than 0.</exception>
+        ///<exception cref = "T:System.ArgumentNullException">array is null.</exception>
+        ///<exception cref = "T:System.ArgumentException">array is multidimensional.-or-arrayIndex is equal to or greater than the length of array.-or-The number of elements in the source <see
+        ///     cref = "T:System.Collections.Generic.ICollection`1"></see> is greater than the available space from arrayIndex to the end of the destination array.-or-Type T cannot be cast automatically to the type of the destination array.</exception>
         public void CopyTo(IAstExpression[] array, int arrayIndex)
         {
             _arguments.CopyTo(array, arrayIndex);
         }
 
         ///<summary>
-        ///Removes the first occurrence of a specific object from the <see cref="T:System.Collections.Generic.ICollection`1"></see>.
+        ///    Removes the first occurrence of a specific object from the <see cref = "T:System.Collections.Generic.ICollection`1"></see>.
         ///</summary>
-        ///
         ///<returns>
-        ///true if item was successfully removed from the <see cref="T:System.Collections.Generic.ICollection`1"></see>; otherwise, false. This method also returns false if item is not found in the original <see cref="T:System.Collections.Generic.ICollection`1"></see>.
+        ///    true if item was successfully removed from the <see cref = "T:System.Collections.Generic.ICollection`1"></see>; otherwise, false. This method also returns false if item is not found in the original <see
+        ///     cref = "T:System.Collections.Generic.ICollection`1"></see>.
         ///</returns>
-        ///
-        ///<param name="item">The object to remove from the <see cref="T:System.Collections.Generic.ICollection`1"></see>.</param>
-        ///<exception cref="T:System.NotSupportedException">The <see cref="T:System.Collections.Generic.ICollection`1"></see> is read-only.</exception>
+        ///<param name = "item">The object to remove from the <see cref = "T:System.Collections.Generic.ICollection`1"></see>.</param>
+        ///<exception cref = "T:System.NotSupportedException">The <see cref = "T:System.Collections.Generic.ICollection`1"></see> is read-only.</exception>
         public bool Remove(IAstExpression item)
         {
             return _arguments.Remove(item);
         }
 
         ///<summary>
-        ///Gets the number of elements contained in the <see cref="T:System.Collections.Generic.ICollection`1"></see>.
+        ///    Gets the number of elements contained in the <see cref = "T:System.Collections.Generic.ICollection`1"></see>.
         ///</summary>
-        ///
         ///<returns>
-        ///The number of elements contained in the <see cref="T:System.Collections.Generic.ICollection`1"></see>.
+        ///    The number of elements contained in the <see cref = "T:System.Collections.Generic.ICollection`1"></see>.
         ///</returns>
-        ///
         public int Count
         {
             get { return _arguments.Count; }
         }
 
         ///<summary>
-        ///Gets a value indicating whether the <see cref="T:System.Collections.Generic.ICollection`1"></see> is read-only.
+        ///    Gets a value indicating whether the <see cref = "T:System.Collections.Generic.ICollection`1"></see> is read-only.
         ///</summary>
-        ///
         ///<returns>
-        ///true if the <see cref="T:System.Collections.Generic.ICollection`1"></see> is read-only; otherwise, false.
+        ///    true if the <see cref = "T:System.Collections.Generic.ICollection`1"></see> is read-only; otherwise, false.
         ///</returns>
-        ///
         public bool IsReadOnly
         {
             get { return ((ICollection<IAstExpression>) _arguments).IsReadOnly; }
@@ -249,11 +230,10 @@ namespace Prexonite.Compiler.Ast
         #region IEnumerable<IAstExpression> Members
 
         ///<summary>
-        ///Returns an enumerator that iterates through the collection.
+        ///    Returns an enumerator that iterates through the collection.
         ///</summary>
-        ///
         ///<returns>
-        ///A <see cref="T:System.Collections.Generic.IEnumerator`1"></see> that can be used to iterate through the collection.
+        ///    A <see cref = "T:System.Collections.Generic.IEnumerator`1"></see> that can be used to iterate through the collection.
         ///</returns>
         ///<filterpriority>1</filterpriority>
         IEnumerator<IAstExpression> IEnumerable<IAstExpression>.GetEnumerator()
@@ -266,11 +246,10 @@ namespace Prexonite.Compiler.Ast
         #region IEnumerable Members
 
         ///<summary>
-        ///Returns an enumerator that iterates through a collection.
+        ///    Returns an enumerator that iterates through a collection.
         ///</summary>
-        ///
         ///<returns>
-        ///An <see cref="T:System.Collections.IEnumerator"></see> object that can be used to iterate through the collection.
+        ///    An <see cref = "T:System.Collections.IEnumerator"></see> object that can be used to iterate through the collection.
         ///</returns>
         ///<filterpriority>2</filterpriority>
         public IEnumerator GetEnumerator()
@@ -298,7 +277,8 @@ namespace Prexonite.Compiler.Ast
 
         #region Implementation of IObject
 
-        public bool TryDynamicCall(StackContext sctx, PValue[] args, PCall call, string id, out PValue result)
+        public bool TryDynamicCall(StackContext sctx, PValue[] args, PCall call, string id,
+            out PValue result)
         {
             switch (id.ToUpperInvariant())
             {
@@ -319,7 +299,7 @@ namespace Prexonite.Compiler.Ast
                             AddRange(
                                 from x in xs
                                 select (IAstExpression)
-                                       x.ConvertTo(sctx, typeof (IAstExpression), true).Value
+                                    x.ConvertTo(sctx, typeof (IAstExpression), true).Value
                                 );
                             result = PType.Null;
                             return true;
@@ -348,7 +328,7 @@ namespace Prexonite.Compiler.Ast
             var sb = new StringBuilder();
             var rap = _getEffectiveRightAppendPosition();
             int i;
-            for(i = 0; i < _arguments.Count; i++)
+            for (i = 0; i < _arguments.Count; i++)
             {
                 if (i == rap)
                     _writeRightAppends(sb);
@@ -359,7 +339,7 @@ namespace Prexonite.Compiler.Ast
             if (i == rap)
                 _writeRightAppends(sb);
 
-            return sb.ToString(0, Math.Max(0,sb.Length - 2));
+            return sb.ToString(0, Math.Max(0, sb.Length - 2));
         }
 
         private void _writeRightAppends(StringBuilder sb)
@@ -374,6 +354,5 @@ namespace Prexonite.Compiler.Ast
         }
 
         #endregion
-
     }
 }

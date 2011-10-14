@@ -1,37 +1,26 @@
-/*
- * Prexonite, a scripting engine (Scripting Language -> Bytecode -> Virtual Machine)
- *  Copyright (C) 2007  Christian "SealedSun" Klauser
- *  E-mail  sealedsun a.t gmail d.ot com
- *  Web     http://www.sealedsun.ch/
- *
- *  This program is free software; you can redistribute it and/or modify
- *  it under the terms of the GNU General Public License as published by
- *  the Free Software Foundation; either version 2 of the License, or
- *  (at your option) any later version.
- *
- *  Please contact me (sealedsun a.t gmail do.t com) if you need a different license.
- * 
- *  This program is distributed in the hope that it will be useful,
- *  but WITHOUT ANY WARRANTY; without even the implied warranty of
- *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- *  GNU General Public License for more details.
- *
- *  You should have received a copy of the GNU General Public License along
- *  with this program; if not, write to the Free Software Foundation, Inc.,
- *  51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
- */
+// Prexonite
+// 
+// Copyright (c) 2011, Christian Klauser
+// All rights reserved.
+// 
+// Redistribution and use in source and binary forms, with or without modification, are permitted provided that the following conditions are met:
+// 
+//     Redistributions of source code must retain the above copyright notice, this list of conditions and the following disclaimer.
+//     Redistributions in binary form must reproduce the above copyright notice, this list of conditions and the following disclaimer in the documentation and/or other materials provided with the distribution.
+//     The names of the contributors may be used to endorse or promote products derived from this software without specific prior written permission.
+// 
+// THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT HOLDER OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 using System;
 using System.Collections.Generic;
-using System.Text;
 using Prexonite.Compiler.Cil;
 using Prexonite.Types;
 
 namespace Prexonite.Commands.List
 {
     /// <summary>
-    /// Restricts sequences  to a given range. <br />
-    /// <code>range(index, count, xs) = xs >> skip(index) >> limit(count);</code>
+    ///     Restricts sequences  to a given range. <br />
+    ///     <code>range(index, count, xs) = xs >> skip(index) >> limit(count);</code>
     /// </summary>
     public class Range : CoroutineCommand, ICilCompilerAware
     {
@@ -41,20 +30,23 @@ namespace Prexonite.Commands.List
         {
         }
 
-        protected override IEnumerable<PValue> CoroutineRun(ContextCarrier sctxCarrier, PValue[] args)
+        protected override IEnumerable<PValue> CoroutineRun(ContextCarrier sctxCarrier,
+            PValue[] args)
         {
             return CoroutineRunStatically(sctxCarrier, args);
         }
 
         //function range(index, count, xs) = xs >> skip(index) >> limit(count);
-        private static IEnumerable<PValue> CoroutineRunStatically(ContextCarrier sctxCarrier, PValue[] args)
+        private static IEnumerable<PValue> CoroutineRunStatically(ContextCarrier sctxCarrier,
+            PValue[] args)
         {
             if (sctxCarrier == null)
                 throw new ArgumentNullException("sctxCarrier");
             if (args == null)
                 throw new ArgumentNullException("args");
             if (args.Length < 3)
-                throw new PrexoniteException("The command range requires at least 3 arguments: [index], [count] and the [list].");
+                throw new PrexoniteException(
+                    "The command range requires at least 3 arguments: [index], [count] and the [list].");
 
             var sctx = sctxCarrier.StackContext;
 
@@ -98,9 +90,11 @@ namespace Prexonite.Commands.List
         }
 
         /// <summary>
-        /// A flag indicating whether the command acts like a pure function.
+        ///     A flag indicating whether the command acts like a pure function.
         /// </summary>
-        /// <remarks>Pure commands can be applied at compile time.</remarks>
+        /// <remarks>
+        ///     Pure commands can be applied at compile time.
+        /// </remarks>
         [Obsolete]
         public override bool IsPure
         {
@@ -115,20 +109,20 @@ namespace Prexonite.Commands.List
         #region ICilCompilerAware Members
 
         /// <summary>
-        /// Asses qualification and preferences for a certain instruction.
+        ///     Asses qualification and preferences for a certain instruction.
         /// </summary>
-        /// <param name="ins">The instruction that is about to be compiled.</param>
-        /// <returns>A set of <see cref="CompilationFlags"/>.</returns>
+        /// <param name = "ins">The instruction that is about to be compiled.</param>
+        /// <returns>A set of <see cref = "CompilationFlags" />.</returns>
         CompilationFlags ICilCompilerAware.CheckQualification(Instruction ins)
         {
             return CompilationFlags.PrefersRunStatically;
         }
 
         /// <summary>
-        /// Provides a custom compiler routine for emitting CIL byte code for a specific instruction.
+        ///     Provides a custom compiler routine for emitting CIL byte code for a specific instruction.
         /// </summary>
-        /// <param name="state">The compiler state.</param>
-        /// <param name="ins">The instruction to compile.</param>
+        /// <param name = "state">The compiler state.</param>
+        /// <param name = "ins">The instruction to compile.</param>
         void ICilCompilerAware.ImplementInCil(CompilerState state, Instruction ins)
         {
             throw new NotSupportedException();

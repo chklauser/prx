@@ -1,25 +1,15 @@
-/*
- * Prexonite, a scripting engine (Scripting Language -> Bytecode -> Virtual Machine)
- *  Copyright (C) 2007  Christian "SealedSun" Klauser
- *  E-mail  sealedsun a.t gmail d.ot com
- *  Web     http://www.sealedsun.ch/
- *
- *  This program is free software; you can redistribute it and/or modify
- *  it under the terms of the GNU General Public License as published by
- *  the Free Software Foundation; either version 2 of the License, or
- *  (at your option) any later version.
- *
- *  Please contact me (sealedsun a.t gmail do.t com) if you need a different license.
- * 
- *  This program is distributed in the hope that it will be useful,
- *  but WITHOUT ANY WARRANTY; without even the implied warranty of
- *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- *  GNU General Public License for more details.
- *
- *  You should have received a copy of the GNU General Public License along
- *  with this program; if not, write to the Free Software Foundation, Inc.,
- *  51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
- */
+// Prexonite
+// 
+// Copyright (c) 2011, Christian Klauser
+// All rights reserved.
+// 
+// Redistribution and use in source and binary forms, with or without modification, are permitted provided that the following conditions are met:
+// 
+//     Redistributions of source code must retain the above copyright notice, this list of conditions and the following disclaimer.
+//     Redistributions in binary form must reproduce the above copyright notice, this list of conditions and the following disclaimer in the documentation and/or other materials provided with the distribution.
+//     The names of the contributors may be used to endorse or promote products derived from this software without specific prior written permission.
+// 
+// THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT HOLDER OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 using System;
 using System.Collections.Generic;
@@ -28,14 +18,15 @@ namespace Prexonite.Commands
 {
     public class CommandTable : SymbolTable<PCommand>
     {
-        private readonly SymbolTable<ICommandInfo> _fallbackCommandInfos = new SymbolTable<ICommandInfo>();
+        private readonly SymbolTable<ICommandInfo> _fallbackCommandInfos =
+            new SymbolTable<ICommandInfo>();
 
         /// <summary>
-        /// Returns information about the specified command's capabilities. The command might not be installed
-        /// in the symbol table.
+        ///     Returns information about the specified command's capabilities. The command might not be installed
+        ///     in the symbol table.
         /// </summary>
-        /// <param name="id">The id of the command to get information about.</param>
-        /// <param name="commandInfo">Contains the command info on success. Undefined on failure.</param>
+        /// <param name = "id">The id of the command to get information about.</param>
+        /// <param name = "commandInfo">Contains the command info on success. Undefined on failure.</param>
         /// <returns>True on success; false on failure.</returns>
         public bool TryGetInfo(string id, out ICommandInfo commandInfo)
         {
@@ -45,7 +36,7 @@ namespace Prexonite.Commands
                 commandInfo = command.ToCommandInfo();
                 return true;
             }
-            else if(_fallbackCommandInfos.TryGetValue(id, out commandInfo))
+            else if (_fallbackCommandInfos.TryGetValue(id, out commandInfo))
             {
                 return true;
             }
@@ -54,11 +45,11 @@ namespace Prexonite.Commands
         }
 
         /// <summary>
-        /// Adds a fallback command info to the command table. This will be returned by <see cref="TryGetInfo"/> if 
-        /// no corresponding command is stored in the table at the moment.
+        ///     Adds a fallback command info to the command table. This will be returned by <see cref = "TryGetInfo" /> if 
+        ///     no corresponding command is stored in the table at the moment.
         /// </summary>
-        /// <param name="id">The id of the command to provide fallback info for.</param>
-        /// <param name="commandInfo">The fallback command info.</param>
+        /// <param name = "id">The id of the command to provide fallback info for.</param>
+        /// <param name = "commandInfo">The fallback command info.</param>
         public void ProvideFallbackInfo(string id, ICommandInfo commandInfo)
         {
             if (id == null)
@@ -70,9 +61,9 @@ namespace Prexonite.Commands
         }
 
         /// <summary>
-        /// Removes an <see cref="ICommandInfo"/> from the fallback command info table.
+        ///     Removes an <see cref = "ICommandInfo" /> from the fallback command info table.
         /// </summary>
-        /// <param name="id">The id of the command to remove fallback info from.</param>
+        /// <param name = "id">The id of the command to remove fallback info from.</param>
         /// <returns>True if a fallback command info was removed. False otherwise.</returns>
         public bool RemoveFallbackInfo(string id)
         {
@@ -82,9 +73,9 @@ namespace Prexonite.Commands
         }
 
         /// <summary>
-        /// Determines whether a particular name is registered for a command.
+        ///     Determines whether a particular name is registered for a command.
         /// </summary>
-        /// <param name="name">A name.</param>
+        /// <param name = "name">A name.</param>
         /// <returns>True if a command with the supplied name exists; false otherwise.</returns>
         public bool Contains(string name)
         {
@@ -99,9 +90,9 @@ namespace Prexonite.Commands
         }
 
         /// <summary>
-        /// Index based access to the dictionary of available commands.
+        ///     Index based access to the dictionary of available commands.
         /// </summary>
-        /// <param name="key">The name of the command to retrieve.</param>
+        /// <param name = "key">The name of the command to retrieve.</param>
         /// <returns>The command registered with the supplied name.</returns>
         public override PCommand this[string key]
         {
@@ -132,12 +123,12 @@ namespace Prexonite.Commands
         }
 
         /// <summary>
-        /// Adds a new command in the user space.
+        ///     Adds a new command in the user space.
         /// </summary>
-        /// <param name="alias">The alias that shall refer to the supplied command.</param>
-        /// <param name="command">A command instance.</param>
-        /// <exception cref="ArgumentNullException">If either <paramref name="alias"/> 
-        /// or <paramref name="command"/> is null.</exception>
+        /// <param name = "alias">The alias that shall refer to the supplied command.</param>
+        /// <param name = "command">A command instance.</param>
+        /// <exception cref = "ArgumentNullException">If either <paramref name = "alias" /> 
+        ///     or <paramref name = "command" /> is null.</exception>
         public void AddUserCommand(string alias, PCommand command)
         {
             if (alias == null)
@@ -149,12 +140,12 @@ namespace Prexonite.Commands
         }
 
         /// <summary>
-        /// Adds a new command in the user space.
+        ///     Adds a new command in the user space.
         /// </summary>
-        /// <param name="alias">The alias that shall refer to the supplied command.</param>
-        /// <param name="action">An action to be turned into a command.</param>
-        /// <exception cref="ArgumentNullException">If either <paramref name="alias"/> 
-        /// or <paramref name="action"/> is null.</exception>
+        /// <param name = "alias">The alias that shall refer to the supplied command.</param>
+        /// <param name = "action">An action to be turned into a command.</param>
+        /// <exception cref = "ArgumentNullException">If either <paramref name = "alias" /> 
+        ///     or <paramref name = "action" /> is null.</exception>
         public void AddUserCommand(string alias, PCommandAction action)
         {
             if (alias == null)
@@ -165,12 +156,12 @@ namespace Prexonite.Commands
         }
 
         /// <summary>
-        /// Adds a new command in the user space.
+        ///     Adds a new command in the user space.
         /// </summary>
-        /// <param name="alias">The alias that shall refer to the supplied command.</param>
-        /// <param name="action">An action to be turned into a command.</param>
-        /// <exception cref="ArgumentNullException">If either <paramref name="alias"/> 
-        /// or <paramref name="action"/> is null.</exception>
+        /// <param name = "alias">The alias that shall refer to the supplied command.</param>
+        /// <param name = "action">An action to be turned into a command.</param>
+        /// <exception cref = "ArgumentNullException">If either <paramref name = "alias" /> 
+        ///     or <paramref name = "action" /> is null.</exception>
         public void AddUserCommand(string alias, ICommand action)
         {
             if (alias == null)
@@ -237,12 +228,12 @@ namespace Prexonite.Commands
         }
 
         /// <summary>
-        /// Adds a new command in the host space.
+        ///     Adds a new command in the host space.
         /// </summary>
-        /// <param name="alias">The alias that shall refer to the supplied command.</param>
-        /// <param name="command">A command instance.</param>
-        /// <exception cref="ArgumentNullException">If either <paramref name="alias"/> 
-        /// or <paramref name="command"/> is null.</exception>
+        /// <param name = "alias">The alias that shall refer to the supplied command.</param>
+        /// <param name = "command">A command instance.</param>
+        /// <exception cref = "ArgumentNullException">If either <paramref name = "alias" /> 
+        ///     or <paramref name = "command" /> is null.</exception>
         public void AddHostCommand(string alias, PCommand command)
         {
             if (alias == null)
@@ -254,12 +245,12 @@ namespace Prexonite.Commands
         }
 
         /// <summary>
-        /// Adds a new command in the host space.
+        ///     Adds a new command in the host space.
         /// </summary>
-        /// <param name="alias">The alias that shall refer to the supplied command.</param>
-        /// <param name="action">An action to be turned into a command.</param>
-        /// <exception cref="ArgumentNullException">If either <paramref name="alias"/> 
-        /// or <paramref name="action"/> is null.</exception>
+        /// <param name = "alias">The alias that shall refer to the supplied command.</param>
+        /// <param name = "action">An action to be turned into a command.</param>
+        /// <exception cref = "ArgumentNullException">If either <paramref name = "alias" /> 
+        ///     or <paramref name = "action" /> is null.</exception>
         public void AddHostCommand(string alias, PCommandAction action)
         {
             if (alias == null)
@@ -270,12 +261,12 @@ namespace Prexonite.Commands
         }
 
         /// <summary>
-        /// Adds a new command in the host space.
+        ///     Adds a new command in the host space.
         /// </summary>
-        /// <param name="alias">The alias that shall refer to the supplied command.</param>
-        /// <param name="action">An action to be turned into a command.</param>
-        /// <exception cref="ArgumentNullException">If either <paramref name="alias"/> 
-        /// or <paramref name="action"/> is null.</exception>
+        /// <param name = "alias">The alias that shall refer to the supplied command.</param>
+        /// <param name = "action">An action to be turned into a command.</param>
+        /// <exception cref = "ArgumentNullException">If either <paramref name = "alias" /> 
+        ///     or <paramref name = "action" /> is null.</exception>
         public void AddHostCommand(string alias, ICommand action)
         {
             if (alias == null)
@@ -286,7 +277,7 @@ namespace Prexonite.Commands
         }
 
         /// <summary>
-        /// Removes all command previously added to the user space.
+        ///     Removes all command previously added to the user space.
         /// </summary>
         public void RemoveUserCommands()
         {
@@ -294,7 +285,7 @@ namespace Prexonite.Commands
         }
 
         /// <summary>
-        /// Removes all commands previously added to the host space.
+        ///     Removes all commands previously added to the host space.
         /// </summary>
         public void RemoveHostCommands()
         {

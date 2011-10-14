@@ -1,3 +1,16 @@
+// Prexonite
+// 
+// Copyright (c) 2011, Christian Klauser
+// All rights reserved.
+// 
+// Redistribution and use in source and binary forms, with or without modification, are permitted provided that the following conditions are met:
+// 
+//     Redistributions of source code must retain the above copyright notice, this list of conditions and the following disclaimer.
+//     Redistributions in binary form must reproduce the above copyright notice, this list of conditions and the following disclaimer in the documentation and/or other materials provided with the distribution.
+//     The names of the contributors may be used to endorse or promote products derived from this software without specific prior written permission.
+// 
+// THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT HOLDER OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+
 using System;
 using System.Collections;
 using System.Collections.Generic;
@@ -15,7 +28,7 @@ namespace Prexonite
         {
         }
 
-        public static Func<TB,TA,TC> Flip<TA,TB,TC>(this Func<TA,TB,TC> func)
+        public static Func<TB, TA, TC> Flip<TA, TB, TC>(this Func<TA, TB, TC> func)
         {
             return (b, a) => func(a, b);
         }
@@ -59,7 +72,7 @@ namespace Prexonite
                 collection.Add(item);
         }
 
-        public  static string ToEnumerationString<T>(this IEnumerable<T> source)
+        public static string ToEnumerationString<T>(this IEnumerable<T> source)
         {
             Contract.Requires(source != null, "source must not be null.");
 
@@ -68,8 +81,8 @@ namespace Prexonite
             string hold = null;
             foreach (var x in source)
             {
-                if(hold != null)
-                    if(hasStarted)
+                if (hold != null)
+                    if (hasStarted)
                     {
                         s.Append(", ");
                         s.Append(hold);
@@ -82,7 +95,7 @@ namespace Prexonite
                 hold = x.ToString();
             }
 
-            if(hasStarted)
+            if (hasStarted)
             {
                 s.Append(" and ");
                 s.Append(hold);
@@ -94,7 +107,7 @@ namespace Prexonite
             }
         }
 
-        public static void MapInPlace<T>(this List<T> source, Func<T,T> func)
+        public static void MapInPlace<T>(this List<T> source, Func<T, T> func)
         {
             if (func == null)
                 throw new ArgumentNullException("func");
@@ -105,9 +118,9 @@ namespace Prexonite
         }
 
         [DebuggerNonUserCode]
-        public  static IEnumerable<T> InReverse<T>(this LinkedList<T> source)
+        public static IEnumerable<T> InReverse<T>(this LinkedList<T> source)
         {
-            for(var node = source.Last; node != null; node = node.Previous)
+            for (var node = source.Last; node != null; node = node.Previous)
                 yield return node.Value;
         }
 
@@ -123,7 +136,7 @@ namespace Prexonite
             if (func == null)
                 throw new ArgumentNullException("func");
             Contract.Requires(xs != null, "xs must not be null.");
-            
+
 
             var seed = default(T);
             var haveSeed = false;
@@ -154,24 +167,26 @@ namespace Prexonite
         }
 
         /// <summary>
-        /// Applies <paramref name="func"/> to every element of <paramref name="source"/> and then filters out any <code>null</code> results.
+        ///     Applies <paramref name = "func" /> to every element of <paramref name = "source" /> and then filters out any <code>null</code> results.
         /// </summary>
-        /// <typeparam name="TSource">The type of the input elements</typeparam>
-        /// <typeparam name="TResult">The type of the output elements</typeparam>
-        /// <param name="source">The sequence of input elements to map and filter.</param>
-        /// <param name="func">The mapping function. <code>null</code> return values will be filtered out and not returned by <see cref="MapMaybe{TSource,TResult}(System.Collections.Generic.IEnumerable{TSource},System.Func{TSource,TResult})"/>.</param>
+        /// <typeparam name = "TSource">The type of the input elements</typeparam>
+        /// <typeparam name = "TResult">The type of the output elements</typeparam>
+        /// <param name = "source">The sequence of input elements to map and filter.</param>
+        /// <param name = "func">The mapping function. <code>null</code> return values will be filtered out and not returned by <see
+        ///      cref = "MapMaybe{TSource,TResult}(System.Collections.Generic.IEnumerable{TSource},System.Func{TSource,TResult})" />.</param>
         /// <returns>The sequence of mapped elements that are not <code>null</code></returns>
         [DebuggerNonUserCode]
-        public static IEnumerable<TResult> MapMaybe<TSource, TResult>(this IEnumerable<TSource> source, Func<TSource, TResult> func) where TResult : class
+        public static IEnumerable<TResult> MapMaybe<TSource, TResult>(
+            this IEnumerable<TSource> source, Func<TSource, TResult> func) where TResult : class
         {
             if (func == null)
                 throw new ArgumentNullException("func");
             Contract.Requires(source != null);
             Contract.EndContractBlock();
 
-// ReSharper disable LoopCanBeConvertedToQuery
+            // ReSharper disable LoopCanBeConvertedToQuery
             foreach (var item in source)
-// ReSharper restore LoopCanBeConvertedToQuery
+                // ReSharper restore LoopCanBeConvertedToQuery
             {
                 var y = func(item);
                 if (y != null)
@@ -180,55 +195,58 @@ namespace Prexonite
         }
 
         [DebuggerNonUserCode]
-        public static IEnumerable<TResult> MapMaybe<TSource, TResult>(this IEnumerable<TSource> source, Func<TSource, TResult?> func) where TResult : struct 
+        public static IEnumerable<TResult> MapMaybe<TSource, TResult>(
+            this IEnumerable<TSource> source, Func<TSource, TResult?> func) where TResult : struct
         {
             if (func == null)
                 throw new ArgumentNullException("func");
             Contract.Requires(source != null);
             Contract.EndContractBlock();
 
-// ReSharper disable LoopCanBeConvertedToQuery
+            // ReSharper disable LoopCanBeConvertedToQuery
             foreach (var item in source)
             {
                 var y = func(item);
                 if (y != null)
                     yield return y.Value;
             }
-// ReSharper restore LoopCanBeConvertedToQuery
+            // ReSharper restore LoopCanBeConvertedToQuery
         }
 
         [DebuggerNonUserCode]
-        public static IEnumerable<TResult> Map<TSource, TResult>(this IEnumerable<TSource> source, IDictionary<TSource, TResult> mapping)
+        public static IEnumerable<TResult> Map<TSource, TResult>(this IEnumerable<TSource> source,
+            IDictionary<TSource, TResult> mapping)
         {
             if (mapping == null)
                 throw new ArgumentNullException("mapping");
             Contract.Requires(source != null);
             Contract.EndContractBlock();
 
-// ReSharper disable LoopCanBeConvertedToQuery
+            // ReSharper disable LoopCanBeConvertedToQuery
             foreach (var item in source)
                 yield return mapping[item];
-// ReSharper restore LoopCanBeConvertedToQuery
+            // ReSharper restore LoopCanBeConvertedToQuery
         }
 
         [DebuggerNonUserCode]
-        public static IEnumerable<T> MapSome<T>(this IEnumerable<T> source, IDictionary<T, T> mapping)
+        public static IEnumerable<T> MapSome<T>(this IEnumerable<T> source,
+            IDictionary<T, T> mapping)
         {
             if (mapping == null)
                 throw new ArgumentNullException("mapping");
             Contract.Requires(source != null);
             Contract.EndContractBlock();
-            
+
             foreach (var item in source)
             {
                 T newValue;
-                yield return mapping.TryGetValue(item, out newValue) 
-                    ? newValue 
+                yield return mapping.TryGetValue(item, out newValue)
+                    ? newValue
                     : item;
             }
         }
 
-        public static T TransformSome<T>(this IDictionary<T,T> mapping, T value)
+        public static T TransformSome<T>(this IDictionary<T, T> mapping, T value)
         {
             Contract.Requires(mapping != null);
 
@@ -283,7 +301,8 @@ namespace Prexonite
 
         public static IEnumerable<T> Singleton<T>(this T element)
         {
-            Contract.Ensures(Contract.Result<IEnumerable<T>>() != null, "Return value must not be null");
+            Contract.Ensures(Contract.Result<IEnumerable<T>>() != null,
+                "Return value must not be null");
             return new SingletonEnum<T>(element);
         }
 
@@ -319,7 +338,7 @@ namespace Prexonite
                 throw new ArgumentNullException("func");
             Contract.Requires(xs != null);
             Contract.Ensures(Contract.Result<TResult[]>() != null);
-            
+
             Contract.EndContractBlock();
 
 

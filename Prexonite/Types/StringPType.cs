@@ -1,3 +1,16 @@
+// Prexonite
+// 
+// Copyright (c) 2011, Christian Klauser
+// All rights reserved.
+// 
+// Redistribution and use in source and binary forms, with or without modification, are permitted provided that the following conditions are met:
+// 
+//     Redistributions of source code must retain the above copyright notice, this list of conditions and the following disclaimer.
+//     Redistributions in binary form must reproduce the above copyright notice, this list of conditions and the following disclaimer in the documentation and/or other materials provided with the distribution.
+//     The names of the contributors may be used to endorse or promote products derived from this software without specific prior written permission.
+// 
+// THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT HOLDER OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+
 #region
 
 using System;
@@ -8,6 +21,7 @@ using System.Linq;
 using System.Text;
 using System.Text.RegularExpressions;
 using Prexonite.Commands;
+using Prexonite.Commands.Core.Operators;
 using Prexonite.Compiler.Cil;
 using NoDebug = System.Diagnostics.DebuggerNonUserCodeAttribute;
 using UInt8 = System.Byte;
@@ -66,12 +80,12 @@ namespace Prexonite.Types
             {
                 var curr = unescaped[i];
                 bool nextIsHex;
-                if(i+1 < unescaped.Length)
+                if (i + 1 < unescaped.Length)
                 {
                     var c = unescaped[i + 1];
                     nextIsHex = '0' <= c && c <= '9'
-                                || 'a' <= c && c <= 'f'
-                                || 'A' <= c && c <= 'F';
+                        || 'a' <= c && c <= 'f'
+                            || 'A' <= c && c <= 'F';
                 }
                 else
                 {
@@ -198,8 +212,8 @@ namespace Prexonite.Types
                                 var curr = esc[i];
                                 if (
                                     !(char.IsDigit(curr) ||
-                                      (char.IsLetter(curr) &&
-                                       ((char.IsLower(curr) && curr < 'g') || curr < 'G'))))
+                                        (char.IsLetter(curr) &&
+                                            ((char.IsLower(curr) && curr < 'g') || curr < 'G'))))
                                 {
                                     i--;
                                     break;
@@ -208,13 +222,13 @@ namespace Prexonite.Types
                             }
                             if (
                                 !int.TryParse(
-                                     hex.ToString(),
-                                     NumberStyles.HexNumber,
-                                     CultureInfo.InvariantCulture,
-                                     out utf32))
+                                    hex.ToString(),
+                                    NumberStyles.HexNumber,
+                                    CultureInfo.InvariantCulture,
+                                    out utf32))
                                 throw new ArgumentException(
                                     "Invalid escape character sequence. (\"\\x" +
-                                    hex.ToString().Substring(2) + "\")");
+                                        hex.ToString().Substring(2) + "\")");
                             buffer.Append(char.ConvertFromUtf32(utf32));
                             break;
                         case 'u':
@@ -226,13 +240,13 @@ namespace Prexonite.Types
                                 hex.Append(esc[i]);
                             if (
                                 !int.TryParse(
-                                     hex.ToString(),
-                                     NumberStyles.HexNumber,
-                                     CultureInfo.InvariantCulture,
-                                     out utf32))
+                                    hex.ToString(),
+                                    NumberStyles.HexNumber,
+                                    CultureInfo.InvariantCulture,
+                                    out utf32))
                                 throw new ArgumentException(
                                     "Invalid escape character sequence. (\"\\u" +
-                                    hex.ToString().Substring(2) + "\")");
+                                        hex.ToString().Substring(2) + "\")");
                             buffer.Append(char.ConvertFromUtf32(utf32));
                             i--; //i will be incremented by the for-loop
                             break;
@@ -247,13 +261,13 @@ namespace Prexonite.Types
                             }
                             if (
                                 !int.TryParse(
-                                     hex.ToString(),
-                                     NumberStyles.HexNumber,
-                                     CultureInfo.InvariantCulture,
-                                     out utf32))
+                                    hex.ToString(),
+                                    NumberStyles.HexNumber,
+                                    CultureInfo.InvariantCulture,
+                                    out utf32))
                                 throw new ArgumentException(
                                     "Invalid escape character sequence. (\"\\U" +
-                                    hex.ToString().Substring(2) + "\")");
+                                        hex.ToString().Substring(2) + "\")");
                             buffer.Append(char.ConvertFromUtf32(utf32));
                             i--; //i will be incremented by the for-loop
                             break;
@@ -262,7 +276,7 @@ namespace Prexonite.Types
                 }
                 add: //Add verbatim
                 buffer.Append(esc[i]);
-        next:
+                next:
                 ;
             }
             return buffer.ToString();
@@ -288,9 +302,9 @@ namespace Prexonite.Types
                 return "\"\"";
             if (
                 raw.Length > anArbitraryIdLengthLimit ||
-                !idLetters.IsMatch(raw) ||
-                IsReservedWord(raw) ||
-                char.IsDigit(raw, 0)
+                    !idLetters.IsMatch(raw) ||
+                        IsReservedWord(raw) ||
+                            char.IsDigit(raw, 0)
                 )
                 return "\"" + Escape(raw) + "\"";
             return raw;
@@ -299,7 +313,7 @@ namespace Prexonite.Types
         public static string ToIdLiteral(string physicalId)
         {
             string literal;
-            if (Commands.Core.Operators.OperatorCommands.TryGetLiteral(physicalId, out literal))
+            if (OperatorCommands.TryGetLiteral(physicalId, out literal))
                 return literal;
             else
                 return physicalId;
@@ -316,61 +330,62 @@ namespace Prexonite.Types
             if (word.Length < 1 || word.Length > 9 || word.Contains(" "))
                 return false;
             var reservedWords = new[]
-            {
-                #region list of reserved words
-                "add",
-                "and",
-                "as",
-                "asm",
-                "break",
-                "build",
-                "command",
-                "continue",
-                "coroutine",
-                "catch",
-                "declare",
-                "disabled",
-                "do",
-                "does",
-                "enabled",
-                "else",
-                "false",
-                "finally",
-                "for",
-                "foreach",
-                "function",
-                "goto",
-                "if",
-                "in",
-                "inline",
-                "is",
-                "label",
-                "lazy",
-                "let",
-                "local",
-                "macro",
-                "mod",
-                "not",
-                "null",
-                "new",
-                "or",
-                "ref",
-                "return",
-                "static",
-                "to",
-                "true",
-                "try",
-                "then",
-                "throw",
-                "unless",
-                "until",
-                "using",
-                "var",
-                "while",
-                "xor",
-                "yield",
-                #endregion
-            };
+                {
+                    #region list of reserved words
+                    "add",
+                    "and",
+                    "as",
+                    "asm",
+                    "break",
+                    "build",
+                    "command",
+                    "continue",
+                    "coroutine",
+                    "catch",
+                    "declare",
+                    "disabled",
+                    "do",
+                    "does",
+                    "enabled",
+                    "else",
+                    "false",
+                    "finally",
+                    "for",
+                    "foreach",
+                    "function",
+                    "goto",
+                    "if",
+                    "in",
+                    "inline",
+                    "is",
+                    "label",
+                    "lazy",
+                    "let",
+                    "local",
+                    "macro",
+                    "mod",
+                    "not",
+                    "null",
+                    "new",
+                    "or",
+                    "ref",
+                    "return",
+                    "static",
+                    "to",
+                    "true",
+                    "try",
+                    "then",
+                    "throw",
+                    "unless",
+                    "until",
+                    "using",
+                    "var",
+                    "while",
+                    "xor",
+                    "yield",
+
+                    #endregion
+                };
             return reservedWords.Any(reservedWord => Engine.StringsAreEqual(word, reservedWord));
         }
 
@@ -462,7 +477,7 @@ namespace Prexonite.Types
                     {
                         result =
                             (PValue)
-                            _wrap_strings(str.Split(null));
+                                _wrap_strings(str.Split(null));
                         return true;
                     }
                     //Try to interpret as params char[] or fall back to params string[]
@@ -479,15 +494,15 @@ namespace Prexonite.Types
                         {
                             result =
                                 (PValue)
-                                _wrap_strings(
-                                    str.Split(sst.ToArray(), StringSplitOptions.None));
+                                    _wrap_strings(
+                                        str.Split(sst.ToArray(), StringSplitOptions.None));
                         }
                         else
                         {
                             result =
                                 (PValue)
-                                _wrap_strings(
-                                    str.Split(sch.ToArray(), StringSplitOptions.None));
+                                    _wrap_strings(
+                                        str.Split(sch.ToArray(), StringSplitOptions.None));
                         }
                         return true;
                     }
@@ -500,24 +515,26 @@ namespace Prexonite.Types
                     sch.Clear();
                     sst = null;
                     var isValid = true;
-                    _resolve_params(sctx, ((List<PValue>) list.Value).ToArray(), ref isValid, sch, ref sst, true);
+                    _resolve_params(sctx, ((List<PValue>) list.Value).ToArray(), ref isValid, sch,
+                        ref sst, true);
 
                     if (!isValid)
-                        throw new PrexoniteException("String.Split only accepts lists of strings or chars.");
+                        throw new PrexoniteException(
+                            "String.Split only accepts lists of strings or chars.");
 
                     if (sst != null)
                     {
                         result =
                             (PValue)
-                            _wrap_strings(
-                                str.Split(sst.ToArray(), StringSplitOptions.None));
+                                _wrap_strings(
+                                    str.Split(sst.ToArray(), StringSplitOptions.None));
                     }
                     else
                     {
                         result =
                             (PValue)
-                            _wrap_strings(
-                                str.Split(sch.ToArray(), StringSplitOptions.None));
+                                _wrap_strings(
+                                    str.Split(sch.ToArray(), StringSplitOptions.None));
                     }
                     return true;
                 default:
@@ -644,7 +661,9 @@ namespace Prexonite.Types
             var sop = operand.Value as String;
             if (sop == null)
                 throw new PrexoniteException(operand + " cannot be supplied to ~String.Increment");
-            result = sop.Length == 0 ? String.CreatePValue("") : String.CreatePValue(System.String.Concat(sop, sop));
+            result = sop.Length == 0
+                ? String.CreatePValue("")
+                : String.CreatePValue(System.String.Concat(sop, sop));
             return true;
         }
 
@@ -653,7 +672,9 @@ namespace Prexonite.Types
             var sop = operand.Value as String;
             if (sop == null)
                 throw new PrexoniteException(operand + " cannot be supplied to ~String.Decrement");
-            result = sop.Length == 0 ? String.CreatePValue("") : String.CreatePValue(sop.Substring(0, sop.Length - 1));
+            result = sop.Length == 0
+                ? String.CreatePValue("")
+                : String.CreatePValue(sop.Substring(0, sop.Length - 1));
             return true;
         }
 
@@ -702,7 +723,8 @@ namespace Prexonite.Types
                 result = res.ToString();
                 return true;
             }
-            throw new PrexoniteException("String multiplication requires positive values. (Not " + right + ")");
+            throw new PrexoniteException("String multiplication requires positive values. (Not " +
+                right + ")");
         }
 
         public override bool Equality(
@@ -802,9 +824,9 @@ namespace Prexonite.Types
                                 if (clrType == typeof (IEnumerable<PValue>))
                                     result = (PValue) _toPCharList(s);
                                 else if (clrType == typeof (char[]) ||
-                                         clrType == typeof (IEnumerable<char>) ||
-                                         clrType == typeof (ICollection<char>) ||
-                                         clrType == typeof (IList<char>))
+                                    clrType == typeof (IEnumerable<char>) ||
+                                        clrType == typeof (ICollection<char>) ||
+                                            clrType == typeof (IList<char>))
                                     result = new PValue(s.ToCharArray(), target);
                                 break;
                         }
@@ -867,20 +889,20 @@ namespace Prexonite.Types
         #region ICilCompilerAware Members
 
         /// <summary>
-        /// Asses qualification and preferences for a certain instruction.
+        ///     Asses qualification and preferences for a certain instruction.
         /// </summary>
-        /// <param name="ins">The instruction that is about to be compiled.</param>
-        /// <returns>A set of <see cref="CompilationFlags"/>.</returns>
+        /// <param name = "ins">The instruction that is about to be compiled.</param>
+        /// <returns>A set of <see cref = "CompilationFlags" />.</returns>
         CompilationFlags ICilCompilerAware.CheckQualification(Instruction ins)
         {
             return CompilationFlags.PrefersCustomImplementation;
         }
 
         /// <summary>
-        /// Provides a custom compiler routine for emitting CIL byte code for a specific instruction.
+        ///     Provides a custom compiler routine for emitting CIL byte code for a specific instruction.
         /// </summary>
-        /// <param name="state">The compiler state.</param>
-        /// <param name="ins">The instruction to compile.</param>
+        /// <param name = "state">The compiler state.</param>
+        /// <param name = "ins">The instruction to compile.</param>
         void ICilCompilerAware.ImplementInCil(CompilerState state, Instruction ins)
         {
             state.EmitCall(Compiler.Cil.Compiler.GetStringPType);

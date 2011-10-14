@@ -1,3 +1,16 @@
+// Prexonite
+// 
+// Copyright (c) 2011, Christian Klauser
+// All rights reserved.
+// 
+// Redistribution and use in source and binary forms, with or without modification, are permitted provided that the following conditions are met:
+// 
+//     Redistributions of source code must retain the above copyright notice, this list of conditions and the following disclaimer.
+//     Redistributions in binary form must reproduce the above copyright notice, this list of conditions and the following disclaimer in the documentation and/or other materials provided with the distribution.
+//     The names of the contributors may be used to endorse or promote products derived from this software without specific prior written permission.
+// 
+// THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT HOLDER OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+
 #region
 
 using System;
@@ -46,7 +59,7 @@ namespace Prexonite.Types
             else
                 throw new PrexoniteException(
                     "The supplied argument (" + arg +
-                    ") cannot be used to create an Object<T> type.");
+                        ") cannot be used to create an Object<T> type.");
         }
 
         public ObjectPType(StackContext sctx, string clrTypeName)
@@ -83,7 +96,8 @@ namespace Prexonite.Types
             return false;
         }
 
-        private static Type _getType_forNamesapce(string clrTypeName, IEnumerable<Assembly> assemblies)
+        private static Type _getType_forNamesapce(string clrTypeName,
+            IEnumerable<Assembly> assemblies)
         {
             //Try Prexonite and mscorlib
             var result = Type.GetType(clrTypeName, false, true);
@@ -140,7 +154,8 @@ namespace Prexonite.Types
             out PValue result,
             out MemberInfo resolvedMember)
         {
-            return TryDynamicCall(sctx, subject, args, call, id, out result, out resolvedMember, false);
+            return TryDynamicCall(sctx, subject, args, call, id, out result, out resolvedMember,
+                false);
         }
 
         internal bool TryDynamicCall(
@@ -160,7 +175,8 @@ namespace Prexonite.Types
                 id = "";
 
             var iobj = subject.Value as IObject;
-            if ((!suppressIObject) && iobj != null && iobj.TryDynamicCall(sctx, args, call, id, out result))
+            if ((!suppressIObject) && iobj != null &&
+                iobj.TryDynamicCall(sctx, args, call, id, out result))
                 return true;
 
             //Special interop members
@@ -199,7 +215,7 @@ namespace Prexonite.Types
                 if (id.LastIndexOf('\\') == 0)
                     return false; //Default index accessors do not accept calling directives
                 mtypes = MemberTypes.Event | MemberTypes.Field | MemberTypes.Method |
-                         MemberTypes.Property;
+                    MemberTypes.Property;
             }
             else
             {
@@ -279,7 +295,7 @@ namespace Prexonite.Types
                 if (id.LastIndexOf('\\') == 0)
                     return false; //Default index accessors do not accept calling directives
                 mtypes = MemberTypes.Event | MemberTypes.Field | MemberTypes.Method |
-                         MemberTypes.Property;
+                    MemberTypes.Property;
             }
             else
             {
@@ -322,9 +338,9 @@ namespace Prexonite.Types
                 throw new ArgumentException("id may not be null or empty.");
 
             var cond = new call_conditions(sctx, args, call, id)
-            {
-                returnType = targetType
-            };
+                {
+                    returnType = targetType
+                };
 
             //Get member candidates            
             var candidates = new Stack<MemberInfo>(
@@ -400,8 +416,8 @@ namespace Prexonite.Types
                                     result = method.Invoke(null, cargs);
                                 else
                                     result = method.Invoke(subject.Value, cargs);
-                            } 
-                            catch(TargetInvocationException exc)
+                            }
+                            catch (TargetInvocationException exc)
                             {
                                 var innerRt = exc.InnerException as PrexoniteRuntimeException;
 
@@ -496,7 +512,7 @@ namespace Prexonite.Types
             PValue ret;
             if (
                 !_try_execute(
-                     candidates, new call_conditions(sctx, args, call, id), subject, out ret))
+                    candidates, new call_conditions(sctx, args, call, id), subject, out ret))
             {
                 var sb = new StringBuilder();
                 sb.Append("Cannot call '");
@@ -559,11 +575,11 @@ namespace Prexonite.Types
 
             //Criteria No.1: Default indices are called "Item" by convention
             if (!(
-                     //Is default member or...
-                 (cond.memberRestriction != null && cond.memberRestriction.Contains(candidate)) ||
-                 //is called "item"
-                 candidate.Name.Equals("Item", StringComparison.OrdinalIgnoreCase)
-                 ))
+                //Is default member or...
+                (cond.memberRestriction != null && cond.memberRestriction.Contains(candidate)) ||
+                    //is called "item"
+                    candidate.Name.Equals("Item", StringComparison.OrdinalIgnoreCase)
+                ))
                 return false;
 
             if (property != null)
@@ -588,7 +604,7 @@ namespace Prexonite.Types
             else
                 throw new InvalidCallException(
                     "_default_member_filter cannot process anything but properties and methods. Candidate however was of type " +
-                    candidate.GetType() + ".");
+                        candidate.GetType() + ".");
         }
 
         private static bool _member_filter(MemberInfo candidate, object arg)
@@ -597,7 +613,7 @@ namespace Prexonite.Types
             //Criteria No.1: The members name (may be supressed)
             if (
                 !(cond.IgnoreId ||
-                  candidate.Name.Equals(cond.Id, StringComparison.OrdinalIgnoreCase)))
+                    candidate.Name.Equals(cond.Id, StringComparison.OrdinalIgnoreCase)))
                 return false;
 
             //Criteria No.2: The number of formal parameters
@@ -680,10 +696,10 @@ namespace Prexonite.Types
         }
 
         /// <summary>
-        /// Checks whether the StackContext hack can be applied.
+        ///     Checks whether the StackContext hack can be applied.
         /// </summary>
-        /// <param name="parameters">The parameters array to check.</param>
-        /// <param name="cond">The call_condition object for the current call.</param>
+        /// <param name = "parameters">The parameters array to check.</param>
+        /// <param name = "cond">The call_condition object for the current call.</param>
         /// <returns>True if the the hack can be applied, otherwise false.</returns>
         private static bool _sctx_hack(ParameterInfo[] parameters, call_conditions cond)
         {
@@ -692,12 +708,12 @@ namespace Prexonite.Types
             //If the one argument is missing and the first formal parameter is a StackContext,
             //supply the StackContext received in cond.sctx.
             return (
-                       //There have to be parameters
-                   parameters.Length > 0 &&
-                   //One argument must be missing
-                   cond.Args.Length + 1 == parameters.Length &&
-                   //First parameter must be a StackContext
-                   typeof (StackContext).IsAssignableFrom(parameters[0].ParameterType));
+                //There have to be parameters
+                parameters.Length > 0 &&
+                    //One argument must be missing
+                    cond.Args.Length + 1 == parameters.Length &&
+                        //First parameter must be a StackContext
+                        typeof (StackContext).IsAssignableFrom(parameters[0].ParameterType));
         }
 
         private static bool _method_filter(MethodBase method, call_conditions cond)
@@ -733,7 +749,7 @@ namespace Prexonite.Types
             {
                 var methodEx = method as MethodInfo;
                 if (!(methodEx.ReturnType.Equals(cond.returnType) ||
-                      cond.returnType.IsAssignableFrom(methodEx.ReturnType)))
+                    cond.returnType.IsAssignableFrom(methodEx.ReturnType)))
                 {
                     return false;
                 }
@@ -836,9 +852,9 @@ namespace Prexonite.Types
             StackContext sctx, PValue[] args, out PValue result, out MemberInfo resolvedMember)
         {
             var cond = new call_conditions(sctx, args, PCall.Get, "")
-            {
-                IgnoreId = true
-            };
+                {
+                    IgnoreId = true
+                };
 
             //Get member candidates            
             var candidates = new Stack<MemberInfo>();
@@ -869,26 +885,26 @@ namespace Prexonite.Types
             return
                 TryStaticCall
                     (
-                    sctx,
-                    new[] {leftOperand, rightOperand},
-                    PCall.Get,
-                    "op_Addition",
-                    out result) ||
-                rightOperand.Type.TryStaticCall
-                    (
-                    sctx,
-                    new[] {rightOperand, leftOperand},
-                    PCall.Get,
-                    "op_Addition",
-                    out result) ||
-                TryDynamicCall
-                    (
-                    sctx,
-                    leftOperand,
-                    new[] {rightOperand},
-                    PCall.Get,
-                    OperatorNames.Prexonite.Addition,
-                    out result);
+                        sctx,
+                        new[] {leftOperand, rightOperand},
+                        PCall.Get,
+                        "op_Addition",
+                        out result) ||
+                            rightOperand.Type.TryStaticCall
+                                (
+                                    sctx,
+                                    new[] {rightOperand, leftOperand},
+                                    PCall.Get,
+                                    "op_Addition",
+                                    out result) ||
+                                        TryDynamicCall
+                                            (
+                                                sctx,
+                                                leftOperand,
+                                                new[] {rightOperand},
+                                                PCall.Get,
+                                                OperatorNames.Prexonite.Addition,
+                                                out result);
         }
 
         public override bool Subtraction(
@@ -901,20 +917,20 @@ namespace Prexonite.Types
                     PCall.Get,
                     "op_Subtraction",
                     out result) ||
-                rightOperand.Type.TryStaticCall(
-                    sctx,
-                    new[] {rightOperand, leftOperand},
-                    PCall.Get,
-                    "op_Subtraction",
-                    out result) ||
-                TryDynamicCall
-                    (
-                    sctx,
-                    leftOperand,
-                    new[] {rightOperand},
-                    PCall.Get,
-                    OperatorNames.Prexonite.Subtraction,
-                    out result);
+                        rightOperand.Type.TryStaticCall(
+                            sctx,
+                            new[] {rightOperand, leftOperand},
+                            PCall.Get,
+                            "op_Subtraction",
+                            out result) ||
+                                TryDynamicCall
+                                    (
+                                        sctx,
+                                        leftOperand,
+                                        new[] {rightOperand},
+                                        PCall.Get,
+                                        OperatorNames.Prexonite.Subtraction,
+                                        out result);
         }
 
         public override bool Multiply(
@@ -927,20 +943,20 @@ namespace Prexonite.Types
                     PCall.Get,
                     "op_Multiply",
                     out result) ||
-                rightOperand.Type.TryStaticCall(
-                    sctx,
-                    new[] {rightOperand, leftOperand},
-                    PCall.Get,
-                    "op_Multiply",
-                    out result) ||
-                TryDynamicCall
-                    (
-                    sctx,
-                    leftOperand,
-                    new[] {rightOperand},
-                    PCall.Get,
-                    OperatorNames.Prexonite.Multiplication,
-                    out result);
+                        rightOperand.Type.TryStaticCall(
+                            sctx,
+                            new[] {rightOperand, leftOperand},
+                            PCall.Get,
+                            "op_Multiply",
+                            out result) ||
+                                TryDynamicCall
+                                    (
+                                        sctx,
+                                        leftOperand,
+                                        new[] {rightOperand},
+                                        PCall.Get,
+                                        OperatorNames.Prexonite.Multiplication,
+                                        out result);
         }
 
         public override bool Division(
@@ -953,20 +969,20 @@ namespace Prexonite.Types
                     PCall.Get,
                     "op_Division",
                     out result) ||
-                rightOperand.Type.TryStaticCall(
-                    sctx,
-                    new[] {rightOperand, leftOperand},
-                    PCall.Get,
-                    "op_Division",
-                    out result) ||
-                TryDynamicCall
-                    (
-                    sctx,
-                    leftOperand,
-                    new[] {rightOperand},
-                    PCall.Get,
-                    OperatorNames.Prexonite.Division,
-                    out result);
+                        rightOperand.Type.TryStaticCall(
+                            sctx,
+                            new[] {rightOperand, leftOperand},
+                            PCall.Get,
+                            "op_Division",
+                            out result) ||
+                                TryDynamicCall
+                                    (
+                                        sctx,
+                                        leftOperand,
+                                        new[] {rightOperand},
+                                        PCall.Get,
+                                        OperatorNames.Prexonite.Division,
+                                        out result);
         }
 
         public override bool Modulus(
@@ -979,20 +995,20 @@ namespace Prexonite.Types
                     PCall.Get,
                     "op_Modulus",
                     out result) ||
-                rightOperand.Type.TryStaticCall(
-                    sctx,
-                    new[] {rightOperand, leftOperand},
-                    PCall.Get,
-                    "op_Modulus",
-                    out result) ||
-                TryDynamicCall
-                    (
-                    sctx,
-                    leftOperand,
-                    new[] {rightOperand},
-                    PCall.Get,
-                    OperatorNames.Prexonite.Modulus,
-                    out result);
+                        rightOperand.Type.TryStaticCall(
+                            sctx,
+                            new[] {rightOperand, leftOperand},
+                            PCall.Get,
+                            "op_Modulus",
+                            out result) ||
+                                TryDynamicCall
+                                    (
+                                        sctx,
+                                        leftOperand,
+                                        new[] {rightOperand},
+                                        PCall.Get,
+                                        OperatorNames.Prexonite.Modulus,
+                                        out result);
         }
 
         public override bool BitwiseAnd(
@@ -1005,20 +1021,20 @@ namespace Prexonite.Types
                     PCall.Get,
                     "op_BitwiseAnd",
                     out result) ||
-                rightOperand.Type.TryStaticCall(
-                    sctx,
-                    new[] {rightOperand, leftOperand},
-                    PCall.Get,
-                    "op_BitwiseAnd",
-                    out result) ||
-                TryDynamicCall
-                    (
-                    sctx,
-                    leftOperand,
-                    new[] {rightOperand},
-                    PCall.Get,
-                    OperatorNames.Prexonite.BitwiseAnd,
-                    out result);
+                        rightOperand.Type.TryStaticCall(
+                            sctx,
+                            new[] {rightOperand, leftOperand},
+                            PCall.Get,
+                            "op_BitwiseAnd",
+                            out result) ||
+                                TryDynamicCall
+                                    (
+                                        sctx,
+                                        leftOperand,
+                                        new[] {rightOperand},
+                                        PCall.Get,
+                                        OperatorNames.Prexonite.BitwiseAnd,
+                                        out result);
         }
 
         public override bool BitwiseOr(
@@ -1031,20 +1047,20 @@ namespace Prexonite.Types
                     PCall.Get,
                     "op_BitwiseOr",
                     out result) ||
-                rightOperand.Type.TryStaticCall(
-                    sctx,
-                    new[] {rightOperand, leftOperand},
-                    PCall.Get,
-                    "op_BitwiseOr",
-                    out result) ||
-                TryDynamicCall
-                    (
-                    sctx,
-                    leftOperand,
-                    new[] {rightOperand},
-                    PCall.Get,
-                    OperatorNames.Prexonite.BitwiseOr,
-                    out result);
+                        rightOperand.Type.TryStaticCall(
+                            sctx,
+                            new[] {rightOperand, leftOperand},
+                            PCall.Get,
+                            "op_BitwiseOr",
+                            out result) ||
+                                TryDynamicCall
+                                    (
+                                        sctx,
+                                        leftOperand,
+                                        new[] {rightOperand},
+                                        PCall.Get,
+                                        OperatorNames.Prexonite.BitwiseOr,
+                                        out result);
         }
 
         public override bool ExclusiveOr(
@@ -1057,20 +1073,20 @@ namespace Prexonite.Types
                     PCall.Get,
                     "op_ExclusiveOr",
                     out result) ||
-                rightOperand.Type.TryStaticCall(
-                    sctx,
-                    new[] {rightOperand, leftOperand},
-                    PCall.Get,
-                    "op_ExclusiveOr",
-                    out result) ||
-                TryDynamicCall
-                    (
-                    sctx,
-                    leftOperand,
-                    new[] {rightOperand},
-                    PCall.Get,
-                    OperatorNames.Prexonite.ExclusiveOr,
-                    out result);
+                        rightOperand.Type.TryStaticCall(
+                            sctx,
+                            new[] {rightOperand, leftOperand},
+                            PCall.Get,
+                            "op_ExclusiveOr",
+                            out result) ||
+                                TryDynamicCall
+                                    (
+                                        sctx,
+                                        leftOperand,
+                                        new[] {rightOperand},
+                                        PCall.Get,
+                                        OperatorNames.Prexonite.ExclusiveOr,
+                                        out result);
         }
 
         public override bool Equality(
@@ -1086,20 +1102,20 @@ namespace Prexonite.Types
                     PCall.Get,
                     "op_Equality",
                     out result) ||
-                rightOperand.Type.TryStaticCall(
-                    sctx,
-                    new[] {rightOperand, leftOperand},
-                    PCall.Get,
-                    "op_Equality",
-                    out result) ||
-                TryDynamicCall
-                    (
-                    sctx,
-                    leftOperand,
-                    new[] {rightOperand},
-                    PCall.Get,
-                    OperatorNames.Prexonite.Equality,
-                    out result);
+                        rightOperand.Type.TryStaticCall(
+                            sctx,
+                            new[] {rightOperand, leftOperand},
+                            PCall.Get,
+                            "op_Equality",
+                            out result) ||
+                                TryDynamicCall
+                                    (
+                                        sctx,
+                                        leftOperand,
+                                        new[] {rightOperand},
+                                        PCall.Get,
+                                        OperatorNames.Prexonite.Equality,
+                                        out result);
         }
 
         public override bool Inequality(
@@ -1115,20 +1131,20 @@ namespace Prexonite.Types
                     PCall.Get,
                     "op_Inequality",
                     out result) ||
-                rightOperand.Type.TryStaticCall(
-                    sctx,
-                    new[] {rightOperand, leftOperand},
-                    PCall.Get,
-                    "op_Inequality",
-                    out result) ||
-                TryDynamicCall
-                    (
-                    sctx,
-                    leftOperand,
-                    new[] {rightOperand},
-                    PCall.Get,
-                    OperatorNames.Prexonite.Inequality,
-                    out result);
+                        rightOperand.Type.TryStaticCall(
+                            sctx,
+                            new[] {rightOperand, leftOperand},
+                            PCall.Get,
+                            "op_Inequality",
+                            out result) ||
+                                TryDynamicCall
+                                    (
+                                        sctx,
+                                        leftOperand,
+                                        new[] {rightOperand},
+                                        PCall.Get,
+                                        OperatorNames.Prexonite.Inequality,
+                                        out result);
         }
 
         public override bool GreaterThan(
@@ -1141,20 +1157,20 @@ namespace Prexonite.Types
                     PCall.Get,
                     "op_GreaterThan",
                     out result) ||
-                rightOperand.Type.TryStaticCall(
-                    sctx,
-                    new[] {rightOperand, leftOperand},
-                    PCall.Get,
-                    "op_GreaterThan",
-                    out result) ||
-                TryDynamicCall
-                    (
-                    sctx,
-                    leftOperand,
-                    new[] {rightOperand},
-                    PCall.Get,
-                    OperatorNames.Prexonite.GreaterThan,
-                    out result);
+                        rightOperand.Type.TryStaticCall(
+                            sctx,
+                            new[] {rightOperand, leftOperand},
+                            PCall.Get,
+                            "op_GreaterThan",
+                            out result) ||
+                                TryDynamicCall
+                                    (
+                                        sctx,
+                                        leftOperand,
+                                        new[] {rightOperand},
+                                        PCall.Get,
+                                        OperatorNames.Prexonite.GreaterThan,
+                                        out result);
         }
 
         public override bool GreaterThanOrEqual(
@@ -1170,20 +1186,20 @@ namespace Prexonite.Types
                     PCall.Get,
                     "op_GreaterThanOrEqual",
                     out result) ||
-                rightOperand.Type.TryStaticCall(
-                    sctx,
-                    new[] {rightOperand, leftOperand},
-                    PCall.Get,
-                    "op_GreaterThanOrEqual",
-                    out result) ||
-                TryDynamicCall
-                    (
-                    sctx,
-                    leftOperand,
-                    new[] {rightOperand},
-                    PCall.Get,
-                    OperatorNames.Prexonite.GreaterThanOrEqual,
-                    out result);
+                        rightOperand.Type.TryStaticCall(
+                            sctx,
+                            new[] {rightOperand, leftOperand},
+                            PCall.Get,
+                            "op_GreaterThanOrEqual",
+                            out result) ||
+                                TryDynamicCall
+                                    (
+                                        sctx,
+                                        leftOperand,
+                                        new[] {rightOperand},
+                                        PCall.Get,
+                                        OperatorNames.Prexonite.GreaterThanOrEqual,
+                                        out result);
         }
 
         public override bool LessThan(
@@ -1196,20 +1212,20 @@ namespace Prexonite.Types
                     PCall.Get,
                     "op_LessThan",
                     out result) ||
-                rightOperand.Type.TryStaticCall(
-                    sctx,
-                    new[] {rightOperand, leftOperand},
-                    PCall.Get,
-                    "op_LessThan",
-                    out result) ||
-                TryDynamicCall
-                    (
-                    sctx,
-                    leftOperand,
-                    new[] {rightOperand},
-                    PCall.Get,
-                    OperatorNames.Prexonite.LessThan,
-                    out result);
+                        rightOperand.Type.TryStaticCall(
+                            sctx,
+                            new[] {rightOperand, leftOperand},
+                            PCall.Get,
+                            "op_LessThan",
+                            out result) ||
+                                TryDynamicCall
+                                    (
+                                        sctx,
+                                        leftOperand,
+                                        new[] {rightOperand},
+                                        PCall.Get,
+                                        OperatorNames.Prexonite.LessThan,
+                                        out result);
         }
 
         public override bool LessThanOrEqual(
@@ -1225,20 +1241,20 @@ namespace Prexonite.Types
                     PCall.Get,
                     "op_LessThanOrEqual",
                     out result) ||
-                rightOperand.Type.TryStaticCall(
-                    sctx,
-                    new[] {rightOperand, leftOperand},
-                    PCall.Get,
-                    "op_LessThanOrEqual",
-                    out result) ||
-                TryDynamicCall
-                    (
-                    sctx,
-                    leftOperand,
-                    new[] {rightOperand},
-                    PCall.Get,
-                    OperatorNames.Prexonite.LessThanOrEqual,
-                    out result);
+                        rightOperand.Type.TryStaticCall(
+                            sctx,
+                            new[] {rightOperand, leftOperand},
+                            PCall.Get,
+                            "op_LessThanOrEqual",
+                            out result) ||
+                                TryDynamicCall
+                                    (
+                                        sctx,
+                                        leftOperand,
+                                        new[] {rightOperand},
+                                        PCall.Get,
+                                        OperatorNames.Prexonite.LessThanOrEqual,
+                                        out result);
         }
 
         public override bool UnaryNegation(StackContext sctx, PValue operand, out PValue result)
@@ -1246,9 +1262,10 @@ namespace Prexonite.Types
             return
                 TryStaticCall
                     (
-                    sctx, new[] {operand}, PCall.Get, "op_UnaryNegation", out result) ||
-                TryDynamicCall
-                    (sctx, operand, new PValue[] {}, PCall.Get, OperatorNames.Prexonite.UnaryNegation, out result);
+                        sctx, new[] {operand}, PCall.Get, "op_UnaryNegation", out result) ||
+                            TryDynamicCall
+                                (sctx, operand, new PValue[] {}, PCall.Get,
+                                    OperatorNames.Prexonite.UnaryNegation, out result);
         }
 
         public override bool LogicalNot(StackContext sctx, PValue operand, out PValue result)
@@ -1262,24 +1279,27 @@ namespace Prexonite.Types
             return
                 TryStaticCall(
                     sctx, new[] {operand}, PCall.Get, "op_OnesComplement", out result) ||
-                TryDynamicCall
-                    (sctx, operand, new PValue[] {}, PCall.Get, OperatorNames.Prexonite.OnesComplement, out result);
+                        TryDynamicCall
+                            (sctx, operand, new PValue[] {}, PCall.Get,
+                                OperatorNames.Prexonite.OnesComplement, out result);
         }
 
         public override bool Increment(StackContext sctx, PValue operand, out PValue result)
         {
             return
                 TryStaticCall(sctx, new[] {operand}, PCall.Get, "op_Increment", out result) ||
-                TryDynamicCall
-                    (sctx, operand, new PValue[] {}, PCall.Get, OperatorNames.Prexonite.Increment, out result);
+                    TryDynamicCall
+                        (sctx, operand, new PValue[] {}, PCall.Get,
+                            OperatorNames.Prexonite.Increment, out result);
         }
 
         public override bool Decrement(StackContext sctx, PValue operand, out PValue result)
         {
             return
                 TryStaticCall(sctx, new[] {operand}, PCall.Get, "op_Decrement", out result) ||
-                TryDynamicCall
-                    (sctx, operand, new PValue[] {}, PCall.Get, OperatorNames.Prexonite.Decrement, out result);
+                    TryDynamicCall
+                        (sctx, operand, new PValue[] {}, PCall.Get,
+                            OperatorNames.Prexonite.Decrement, out result);
         }
 
         #endregion
@@ -1356,7 +1376,7 @@ namespace Prexonite.Types
             }
             else if ((object) objT != null)
             {
-                if(subject.Value == null)
+                if (subject.Value == null)
                     return false;
 
                 if (objT.ClrType.IsAssignableFrom(subject.Value.GetType()))
@@ -1382,9 +1402,9 @@ namespace Prexonite.Types
             if (
                 _try_call_conversion_operator(
                     sctx, arg, PCall.Get, "op_Implicit", target, out result) ||
-                (useExplicit &&
-                 _try_call_conversion_operator(
-                     sctx, arg, PCall.Get, "op_Explicit", target, out result)))
+                        (useExplicit &&
+                            _try_call_conversion_operator(
+                                sctx, arg, PCall.Get, "op_Explicit", target, out result)))
                 return true;
             else
                 return false;
@@ -1429,20 +1449,20 @@ namespace Prexonite.Types
         #region ICilCompilerAware Members
 
         /// <summary>
-        /// Asses qualification and preferences for a certain instruction.
+        ///     Asses qualification and preferences for a certain instruction.
         /// </summary>
-        /// <param name="ins">The instruction that is about to be compiled.</param>
-        /// <returns>A set of <see cref="CompilationFlags"/>.</returns>
+        /// <param name = "ins">The instruction that is about to be compiled.</param>
+        /// <returns>A set of <see cref = "CompilationFlags" />.</returns>
         CompilationFlags ICilCompilerAware.CheckQualification(Instruction ins)
         {
             return CompilationFlags.PrefersCustomImplementation;
         }
 
         /// <summary>
-        /// Provides a custom compiler routine for emitting CIL byte code for a specific instruction.
+        ///     Provides a custom compiler routine for emitting CIL byte code for a specific instruction.
         /// </summary>
-        /// <param name="state">The compiler state.</param>
-        /// <param name="ins">The instruction to compile.</param>
+        /// <param name = "state">The compiler state.</param>
+        /// <param name = "ins">The instruction to compile.</param>
         void ICilCompilerAware.ImplementInCil(CompilerState state, Instruction ins)
         {
             PrexoniteObjectTypeProxy._ImplementInCil(state, ClrType);

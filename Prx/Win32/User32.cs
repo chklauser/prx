@@ -1,5 +1,17 @@
-﻿using System;
-using System.Collections.Generic;
+﻿// Prexonite
+// 
+// Copyright (c) 2011, Christian Klauser
+// All rights reserved.
+// 
+// Redistribution and use in source and binary forms, with or without modification, are permitted provided that the following conditions are met:
+// 
+//     Redistributions of source code must retain the above copyright notice, this list of conditions and the following disclaimer.
+//     Redistributions in binary form must reproduce the above copyright notice, this list of conditions and the following disclaimer in the documentation and/or other materials provided with the distribution.
+//     The names of the contributors may be used to endorse or promote products derived from this software without specific prior written permission.
+// 
+// THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT HOLDER OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+
+using System;
 using System.Runtime.InteropServices;
 using System.Text;
 
@@ -7,11 +19,11 @@ namespace Prx.Win32
 {
     public static class User32
     {
-
         private const uint
             VK_SHIFT = 0x10,
             VK_CONTROL = 0x11,
-            VK_ALT = 0x12, //a.k.a. "VK_MENU"
+            VK_ALT = 0x12,
+            //a.k.a. "VK_MENU"
             VK_CAPITAL = 0x14; //CAPS LOCK
 
         public static string ToUnicode(ConsoleKeyInfo key, bool relaxed)
@@ -40,15 +52,16 @@ namespace Prx.Win32
         {
             var outputBuilder = new StringBuilder(2);
             var modifiers = GetKeyState(key.Modifiers);
-            var result = ToAscii((uint)key.Key, 0, modifiers,
-                                     outputBuilder, 0);
+            var result = ToAscii((uint) key.Key, 0, modifiers,
+                outputBuilder, 0);
             if (result > 0)
-                return outputBuilder.ToString(0,result);
+                return outputBuilder.ToString(0, result);
             else
                 throw new Exception("Invalid key (" + key + ")");
         }
 
         private const byte HighBit = 0x80;
+
         private static byte[] GetKeyState(ConsoleModifiers modifiers)
         {
             var keyState = new byte[256];
@@ -65,19 +78,19 @@ namespace Prx.Win32
             return keyState;
         }
 
-        [DllImport("user32.dll",EntryPoint = "GetKeyState")]
+        [DllImport("user32.dll", EntryPoint = "GetKeyState")]
         private static extern short _queryKeyState(uint nVirtKey);
 
         [DllImport("user32.dll")]
         private static extern int ToAscii(uint uVirtKey, uint uScanCode,
-                                          byte[] lpKeyState,
-                                          [Out] StringBuilder lpChar,
-                                          uint uFlags);
+            byte[] lpKeyState,
+            [Out] StringBuilder lpChar,
+            uint uFlags);
 
         [DllImport("user32.dll")]
         private static extern int ToUnicode(uint wVirtKey, uint wScanCode, byte[] lpKeyState,
-           [Out, MarshalAs(UnmanagedType.LPWStr, SizeConst = 64)] StringBuilder pwszBuff, int cchBuff,
-           uint wFlags);
-
+            [Out, MarshalAs(UnmanagedType.LPWStr, SizeConst = 64)] StringBuilder pwszBuff,
+            int cchBuff,
+            uint wFlags);
     }
 }

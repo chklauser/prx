@@ -1,11 +1,23 @@
-﻿using System;
+﻿// Prexonite
+// 
+// Copyright (c) 2011, Christian Klauser
+// All rights reserved.
+// 
+// Redistribution and use in source and binary forms, with or without modification, are permitted provided that the following conditions are met:
+// 
+//     Redistributions of source code must retain the above copyright notice, this list of conditions and the following disclaimer.
+//     Redistributions in binary form must reproduce the above copyright notice, this list of conditions and the following disclaimer in the documentation and/or other materials provided with the distribution.
+//     The names of the contributors may be used to endorse or promote products derived from this software without specific prior written permission.
+// 
+// THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT HOLDER OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.Linq;
-using System.Text;
 using Prexonite.Commands;
 using Prexonite.Commands.Core;
 using Prexonite.Compiler.Ast;
+using Prexonite.Compiler.Cil;
 using Prexonite.Types;
 
 namespace Prexonite.Compiler.Macro.Commands
@@ -29,19 +41,20 @@ namespace Prexonite.Compiler.Macro.Commands
 
         #endregion
 
-        public static KeyValuePair<string,CallMacroPerform> GetHelperCommands(Loader ldr)
+        public static KeyValuePair<string, CallMacroPerform> GetHelperCommands(Loader ldr)
         {
             return
-                new KeyValuePair<string, CallMacroPerform>(CallMacroPerform.Alias, new CallMacroPerform(ldr));
+                new KeyValuePair<string, CallMacroPerform>(CallMacroPerform.Alias,
+                    new CallMacroPerform(ldr));
         }
 
         #region Call\Macro\Perform
 
         public class CallMacroPerform : PCommand
         {
-// ReSharper disable MemberHidesStaticFromOuterClass
+            // ReSharper disable MemberHidesStaticFromOuterClass
             public const string Alias = @"call\macro\perform";
-// ReSharper restore MemberHidesStaticFromOuterClass
+            // ReSharper restore MemberHidesStaticFromOuterClass
             private readonly Loader _loader;
 
             public CallMacroPerform(Loader loader)
@@ -77,7 +90,8 @@ namespace Prexonite.Compiler.Macro.Commands
             public override PValue Run(StackContext sctx, PValue[] args)
             {
                 if (args.Length < _callingConventionArgumentsCount)
-                    throw new PrexoniteException("Id of macro implementation, effect flag, call type and/or context missing.");
+                    throw new PrexoniteException(
+                        "Id of macro implementation, effect flag, call type and/or context missing.");
 
                 string id;
                 SymbolInterpretations macroInterpretation;
@@ -94,8 +108,8 @@ namespace Prexonite.Compiler.Macro.Commands
                 _detectRuntimeValues(argList);
 
                 var inv = new AstMacroInvocation(context.Invocation.File, context.Invocation.Line,
-                                                 context.Invocation.Column, id,
-                                                 macroInterpretation);
+                    context.Invocation.Column, id,
+                    macroInterpretation);
                 inv.Arguments.AddRange(argList.Select(p => (IAstExpression) p.Value));
                 inv.Call = call;
 
@@ -110,10 +124,9 @@ namespace Prexonite.Compiler.Macro.Commands
                 }
                 finally
                 {
-                    if(macroSession != null)
+                    if (macroSession != null)
                         target.ReleaseMacroSession(macroSession);
                 }
-            
             }
 
             private static void _detectRuntimeValues(IEnumerable<PValue> argList)
@@ -125,35 +138,39 @@ namespace Prexonite.Compiler.Macro.Commands
                     throw new PrexoniteException(
                         string.Format(
                             "Macros cannot have runtime values as arguments in call to {1}. {0} is not an AST node.",
-                            offender,Alias));
+                            offender, Alias));
             }
 
             private static bool _getEffectFlag(PValue rawEffectFlag)
             {
-                if(rawEffectFlag.Type != PType.Bool)
-                    throw new PrexoniteException(string.Format("Effect flag is missing in call to {0}.", Alias));
+                if (rawEffectFlag.Type != PType.Bool)
+                    throw new PrexoniteException(
+                        string.Format("Effect flag is missing in call to {0}.", Alias));
                 return (bool) rawEffectFlag.Value;
             }
 
             private static PCall _getCallType(PValue rawCallType)
             {
-                if(!(rawCallType.Type is ObjectPType && rawCallType.Value is PCall))
-                    throw new PrexoniteException(string.Format("Call type is missing in call to {0}.", Alias));
+                if (!(rawCallType.Type is ObjectPType && rawCallType.Value is PCall))
+                    throw new PrexoniteException(
+                        string.Format("Call type is missing in call to {0}.", Alias));
                 return (PCall) rawCallType.Value;
             }
 
             private static MacroContext _getContext(PValue rawContext)
             {
                 var context = rawContext.Value as MacroContext;
-                if(!(rawContext.Type is ObjectPType) || context == null)
-                    throw new PrexoniteException(string.Format("Macro context is missing in call to {0}.", Alias));
+                if (!(rawContext.Type is ObjectPType) || context == null)
+                    throw new PrexoniteException(
+                        string.Format("Macro context is missing in call to {0}.", Alias));
                 return context;
             }
 
-            private static void _getMacro(StackContext sctx, PValue rawMacro, out string id, out SymbolInterpretations macroInterpretation)
+            private static void _getMacro(StackContext sctx, PValue rawMacro, out string id,
+                out SymbolInterpretations macroInterpretation)
             {
                 var list = rawMacro.Value as List<PValue>;
-                if(rawMacro.Type == PType.List && list != null)
+                if (rawMacro.Type == PType.List && list != null)
                 {
                     if (list.Count < 2)
                         throw new PrexoniteException(
@@ -163,15 +180,19 @@ namespace Prexonite.Compiler.Macro.Commands
 
                     id = list[0].Value as string;
                     if (list[0].Type != PType.String || id == null)
-                        throw new PrexoniteException(string.Format("First argument must be id in call to {0}.", Alias));
+                        throw new PrexoniteException(
+                            string.Format("First argument must be id in call to {0}.", Alias));
 
                     if (!(list[1].Type is ObjectPType) || !(list[1].Value is SymbolInterpretations))
-                        throw new PrexoniteException(string.Format("Second argument must be symbol interpretation in call to {0}.", Alias));
-                    macroInterpretation = (SymbolInterpretations)list[1].Value;
+                        throw new PrexoniteException(
+                            string.Format(
+                                "Second argument must be symbol interpretation in call to {0}.",
+                                Alias));
+                    macroInterpretation = (SymbolInterpretations) list[1].Value;
                 }
                 else
                 {
-                    id = rawMacro.DynamicCall(sctx, Cil.Runtime.EmptyPValueArray, PCall.Get,
+                    id = rawMacro.DynamicCall(sctx, Runtime.EmptyPValueArray, PCall.Get,
                         PFunction.IdKey).ConvertTo<string>(sctx, false);
                     macroInterpretation = _inferInterpretation(rawMacro);
                 }
@@ -189,19 +210,19 @@ namespace Prexonite.Compiler.Macro.Commands
 
             public class PartialCallMacroPerform : PartialCallWrapper
             {
-// ReSharper disable MemberHidesStaticFromOuterClass
+                // ReSharper disable MemberHidesStaticFromOuterClass
                 public const string Alias = @"call\macro\impl";
-// ReSharper restore MemberHidesStaticFromOuterClass
+                // ReSharper restore MemberHidesStaticFromOuterClass
 
                 public PartialCallMacroPerform()
-                    : base(Alias,CallMacroPerform.Alias,SymbolInterpretations.Command)
+                    : base(Alias, CallMacroPerform.Alias, SymbolInterpretations.Command)
                 {
-                    
                 }
 
                 protected override int GetPassThroughArguments(MacroContext context)
                 {
-                    return _callingConventionArgumentsCount + 1; //Take reference to call\macro\perform into account.
+                    return _callingConventionArgumentsCount + 1;
+                        //Take reference to call\macro\perform into account.
                 }
             }
         }
@@ -215,7 +236,7 @@ namespace Prexonite.Compiler.Macro.Commands
             var prepareCall = _assembleCallPerform(context);
 
             //null indicates failure, error has already been reported.
-            if(prepareCall == null)
+            if (prepareCall == null)
                 return;
 
             context.Block.Expression = prepareCall;
@@ -224,9 +245,9 @@ namespace Prexonite.Compiler.Macro.Commands
         #region Helper routines
 
         /// <summary>
-        /// Establishes macro context and parses arguments.
+        ///     Establishes macro context and parses arguments.
         /// </summary>
-        /// <param name="context">The macro context.</param>
+        /// <param name = "context">The macro context.</param>
         /// <returns>The call to call\macro\perform expression on success; null otherwise.</returns>
         private static AstMacroInvocation _assembleCallPerform(MacroContext context)
         {
@@ -261,19 +282,24 @@ namespace Prexonite.Compiler.Macro.Commands
             return _prepareMacro(context, macroSpec, call, justEffect, args);
         }
 
-        private static AstMacroInvocation _prepareMacro(MacroContext context, IAstExpression macroSpec, IAstExpression call, IAstExpression justEffect, IEnumerable<IAstExpression> args)
+        private static AstMacroInvocation _prepareMacro(MacroContext context,
+            IAstExpression macroSpec, IAstExpression call, IAstExpression justEffect,
+            IEnumerable<IAstExpression> args)
         {
             var getContext = context.CreateGetSetSymbol(
                 SymbolInterpretations.LocalReferenceVariable, PCall.Get, MacroAliases.ContextAlias);
             var prepareCall = context.CreateMacroInvocation(context.Call,
-                CallMacroPerform.PartialCallMacroPerform.Alias, SymbolInterpretations.MacroCommand, macroSpec,
+                CallMacroPerform.PartialCallMacroPerform.Alias, SymbolInterpretations.MacroCommand,
+                macroSpec,
                 getContext, call,
                 justEffect);
             prepareCall.Arguments.AddRange(args);
             return prepareCall;
         }
 
-        private static bool _parseArguments(MacroContext context, out IAstExpression call, out IAstExpression justEffect, out IAstExpression[] args, bool isPartialApplication, out IAstExpression macroSpec)
+        private static bool _parseArguments(MacroContext context, out IAstExpression call,
+            out IAstExpression justEffect, out IAstExpression[] args, bool isPartialApplication,
+            out IAstExpression macroSpec)
         {
             /* call(macroRef,...) = call([],macroRef,[false],...);
              * call([],macroRef,[je],...) = call([],macroRef,[je,context.Call],...);
@@ -372,19 +398,21 @@ namespace Prexonite.Compiler.Macro.Commands
                     ? protoArguments.Take(protoArguments.Count - 1)
                     : protoArguments;
 
-                if(getArgs.Any(a => !_ensureExplicitPlaceholder(context, a)))
+                if (getArgs.Any(a => !_ensureExplicitPlaceholder(context, a)))
                 {
                     args = new IAstExpression[] {};
                     return false;
                 }
 
                 IEnumerable<IAstExpression> getArgsLit;
-                if(getArgs.Count() > 0){
+                if (getArgs.Count() > 0)
+                {
                     var getArgsLitNode = new AstListLiteral(specProto.File, specProto.Line,
                         specProto.Column);
                     getArgsLitNode.Elements.AddRange(getArgs);
                     getArgsLit = getArgsLitNode.Singleton();
-                } else
+                }
+                else
                 {
                     getArgsLit = Enumerable.Empty<IAstExpression>();
                 }
@@ -417,7 +445,7 @@ namespace Prexonite.Compiler.Macro.Commands
         private static bool _ensureExplicitPlaceholder(MacroContext context, IAstExpression arg)
         {
             var setPlaceholder = arg as AstPlaceholder;
-            if(setPlaceholder != null && !setPlaceholder.Index.HasValue)
+            if (setPlaceholder != null && !setPlaceholder.Index.HasValue)
             {
                 context.ReportMessage(ParseMessageSeverity.Error,
                     string.Format(
@@ -430,7 +458,9 @@ namespace Prexonite.Compiler.Macro.Commands
             return true;
         }
 
-        private static bool _parsePrototype(MacroContext context, bool isPartialApplication, IAstExpression specProto, out PCall protoCall, out IList<IAstExpression> protoArguments, out IAstExpression macroSpec)
+        private static bool _parsePrototype(MacroContext context, bool isPartialApplication,
+            IAstExpression specProto, out PCall protoCall, out IList<IAstExpression> protoArguments,
+            out IAstExpression macroSpec)
         {
             var proto = specProto as AstMacroInvocation;
             if (proto != null)
@@ -457,7 +487,8 @@ namespace Prexonite.Compiler.Macro.Commands
             return true;
         }
 
-        private static IAstExpression _getMacroSpecExpr(MacroContext context, AstMacroInvocation proto)
+        private static IAstExpression _getMacroSpecExpr(MacroContext context,
+            AstMacroInvocation proto)
         {
             //macroId: as a constant
             var macroId = context.CreateConstant(proto.MacroId);
@@ -481,11 +512,13 @@ namespace Prexonite.Compiler.Macro.Commands
                     Alias));
         }
 
-        private static bool _parseReference(MacroContext context, IAstExpression macroRef, bool isPartialApplication)
+        private static bool _parseReference(MacroContext context, IAstExpression macroRef,
+            bool isPartialApplication)
         {
-            if(macroRef.IsPlaceholder())
+            if (macroRef.IsPlaceholder())
             {
-                context.ReportMessage(ParseMessageSeverity.Error, "The macro prototype must be known at compile-time, it must not be a placeholder.");
+                context.ReportMessage(ParseMessageSeverity.Error,
+                    "The macro prototype must be known at compile-time, it must not be a placeholder.");
                 return false;
             }
 
@@ -494,11 +527,12 @@ namespace Prexonite.Compiler.Macro.Commands
 
         private static void _errorUsageFullRef(MacroContext context, bool isPartialApplication)
         {
-            context.ReportMessage(ParseMessageSeverity.Error, "Used in this way, {0} has the form {0}([],macroRef,[justEffect?,call?],...).");
+            context.ReportMessage(ParseMessageSeverity.Error,
+                "Used in this way, {0} has the form {0}([],macroRef,[justEffect?,call?],...).");
         }
 
         #endregion
-        
+
         #endregion
 
         #region Overrides of PartialMacroCommand

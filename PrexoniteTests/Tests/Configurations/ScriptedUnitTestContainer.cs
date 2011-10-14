@@ -1,14 +1,21 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Diagnostics;
+﻿// Prexonite
+// 
+// Copyright (c) 2011, Christian Klauser
+// All rights reserved.
+// 
+// Redistribution and use in source and binary forms, with or without modification, are permitted provided that the following conditions are met:
+// 
+//     Redistributions of source code must retain the above copyright notice, this list of conditions and the following disclaimer.
+//     Redistributions in binary form must reproduce the above copyright notice, this list of conditions and the following disclaimer in the documentation and/or other materials provided with the distribution.
+//     The names of the contributors may be used to endorse or promote products derived from this software without specific prior written permission.
+// 
+// THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT HOLDER OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+
+using System;
 using System.IO;
-using System.Linq;
-using System.Text;
+using NUnit.Framework;
 using Prexonite;
 using Prexonite.Compiler;
-
-using NUnit.Framework;
-using Prexonite.Compiler.Cil;
 using Prexonite.Types;
 
 namespace PrexoniteTests.Tests.Configurations
@@ -28,22 +35,23 @@ namespace PrexoniteTests.Tests.Configurations
 
         public void SetUpLoader()
         {
-            Application = new Application(this.GetType().Name);
+            Application = new Application(GetType().Name);
             Engine = new Engine();
             Loader = new Loader(Engine, Application);
             Root = new NullContext(Engine, Application, new string[0]);
 
             var slnPath = Environment.CurrentDirectory;
             while (Directory.Exists(slnPath) && !File.Exists(Path.Combine(slnPath, "Prexonite.sln")))
-                slnPath = Path.Combine(slnPath,@"..\");
+                slnPath = Path.Combine(slnPath, @"..\");
 
             if (Directory.Exists(slnPath))
             {
-                var psrTestsPath = Path.GetFullPath(Path.Combine(slnPath, @"PrexoniteTests\psr-tests"));
+                var psrTestsPath =
+                    Path.GetFullPath(Path.Combine(slnPath, @"PrexoniteTests\psr-tests"));
                 Console.WriteLine("inferred psr-tests path: " + psrTestsPath, "Engine.Path");
                 Engine.Paths.Add(psrTestsPath);
                 var prxPath = Path.GetFullPath(Path.Combine(slnPath, @"Prx"));
-                Console.WriteLine("inferred prx path: " + prxPath,"Engine.Path");
+                Console.WriteLine("inferred prx path: " + prxPath, "Engine.Path");
                 Engine.Paths.Add(prxPath);
             }
             else
@@ -80,17 +88,17 @@ namespace PrexoniteTests.Tests.Configurations
                 Console.WriteLine("Info: {0}", info);
 
 
-            Assert.That(Loader.ErrorCount,Is.EqualTo(0),"Errors during compilation");
+            Assert.That(Loader.ErrorCount, Is.EqualTo(0), "Errors during compilation");
 
             var tc = Application.Functions[testCaseId];
-            Assert.That(tc,Is.Not.Null,"Test case " + testCaseId + " not found.");
+            Assert.That(tc, Is.Not.Null, "Test case " + testCaseId + " not found.");
 
             var rt = Application.Functions[RunTestId];
-            Assert.That(rt,Is.Not.Null);
+            Assert.That(rt, Is.Not.Null);
 
             var resP = rt.Run(Engine, new[] {PType.Null, Root.CreateNativePValue(tc)});
-            var success = (bool)resP.DynamicCall(Root,new PValue[0], PCall.Get,"Key").Value;
-            if(success)
+            var success = (bool) resP.DynamicCall(Root, new PValue[0], PCall.Get, "Key").Value;
+            if (success)
                 return;
 
             var eObj = resP
@@ -98,7 +106,7 @@ namespace PrexoniteTests.Tests.Configurations
                 .DynamicCall(Root, new PValue[0], PCall.Get, "e")
                 .Value;
             var e = eObj as Exception;
-            if(e != null)
+            if (e != null)
             {
                 throw e;
             }

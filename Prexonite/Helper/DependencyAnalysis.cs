@@ -1,3 +1,16 @@
+// Prexonite
+// 
+// Copyright (c) 2011, Christian Klauser
+// All rights reserved.
+// 
+// Redistribution and use in source and binary forms, with or without modification, are permitted provided that the following conditions are met:
+// 
+//     Redistributions of source code must retain the above copyright notice, this list of conditions and the following disclaimer.
+//     Redistributions in binary form must reproduce the above copyright notice, this list of conditions and the following disclaimer in the documentation and/or other materials provided with the distribution.
+//     The names of the contributors may be used to endorse or promote products derived from this software without specific prior written permission.
+// 
+// THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT HOLDER OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+
 #undef DEBUG
 
 using System;
@@ -5,38 +18,37 @@ using System.Collections;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.Linq;
-using System.Text;
 using Prexonite.Types;
 
 namespace Prexonite
 {
     /// <summary>
-    /// 
     /// </summary>
-    /// <typeparam name="TKey"></typeparam>
-    /// <typeparam name="TValue"></typeparam>
-    public class DependencyAnalysis<TKey, TValue> where 
-        TValue : class, IDependent<TKey>
+    /// <typeparam name = "TKey"></typeparam>
+    /// <typeparam name = "TValue"></typeparam>
+    public class DependencyAnalysis<TKey, TValue> where
+                                                      TValue : class, IDependent<TKey>
     {
-         private readonly Dictionary<TKey, Node> _nodes = new Dictionary<TKey, Node>();
+        private readonly Dictionary<TKey, Node> _nodes = new Dictionary<TKey, Node>();
 
         /// <summary>
-        /// Creates a new dependency analysis object from the supplied set of items.
+        ///     Creates a new dependency analysis object from the supplied set of items.
         /// </summary>
-        /// <param name="query">The set of (possibly) interdependent items.</param>
-        /// <exception cref="ArgumentNullException">query is null</exception>
-        public DependencyAnalysis( IEnumerable<TValue> query) : this(query, true)
+        /// <param name = "query">The set of (possibly) interdependent items.</param>
+        /// <exception cref = "ArgumentNullException">query is null</exception>
+        public DependencyAnalysis(IEnumerable<TValue> query) : this(query, true)
         {
         }
 
         /// <summary>
-        /// Creates a new dependency analysis object from the supplied set of items.
+        ///     Creates a new dependency analysis object from the supplied set of items.
         /// </summary>
-        /// <param name="query">The set of (possibly) interdependent items.</param>
-        /// <param name="ignoreUnknownDependencies">Indicates whether to ignore dependencies to items not included in the set. Enabled by default.</param>
-        /// <exception cref="ArgumentNullException">query is null</exception>
-        /// <exception cref="ArgumentException">Set contains dependency one element not in the set AND <paramref name="ignoreUnknownDependencies"/> is false.</exception>
-        public DependencyAnalysis( IEnumerable<TValue> query, bool ignoreUnknownDependencies)
+        /// <param name = "query">The set of (possibly) interdependent items.</param>
+        /// <param name = "ignoreUnknownDependencies">Indicates whether to ignore dependencies to items not included in the set. Enabled by default.</param>
+        /// <exception cref = "ArgumentNullException">query is null</exception>
+        /// <exception cref = "ArgumentException">Set contains dependency one element not in the set AND <paramref
+        ///      name = "ignoreUnknownDependencies" /> is false.</exception>
+        public DependencyAnalysis(IEnumerable<TValue> query, bool ignoreUnknownDependencies)
         {
             if (query == null) throw new ArgumentNullException("query");
 
@@ -46,8 +58,9 @@ namespace Prexonite
 
             //Find dependencies
             foreach (var node in _nodes.Values)
-            {               
-                var dependencies = _nodes.Keys.Intersect(node.Subject.GetDependencies()).ToLinkedList();
+            {
+                var dependencies =
+                    _nodes.Keys.Intersect(node.Subject.GetDependencies()).ToLinkedList();
                 foreach (var dependencyName in dependencies)
                 {
                     Node dependency;
@@ -57,7 +70,8 @@ namespace Prexonite
                         dependency.Clients.Add(node);
                     }
                     else if (!ignoreUnknownDependencies)
-                        throw new ArgumentException("Cannot resolve dependency " + dependencyName + " of " + node.Subject + "."); 
+                        throw new ArgumentException("Cannot resolve dependency " + dependencyName +
+                            " of " + node.Subject + ".");
                     //else ignore
                 }
             }
@@ -71,7 +85,7 @@ namespace Prexonite
         private static IEnumerable<TValue> _acceptPValueSequence(IEnumerable<PValue> query)
         {
             return from pv in query
-                   select (TValue)pv.Value;
+                   select (TValue) pv.Value;
         }
 
         public DependencyAnalysis(IEnumerable<PValue> query, bool ignoreUnknownDependencies)
@@ -84,9 +98,11 @@ namespace Prexonite
         {
             public readonly Stack<Node> Unassigned = new Stack<Node>();
             public int CurrentDfbi;
+
             public override string ToString()
             {
-                return String.Format("DFBI: {0}; {1}", CurrentDfbi, Unassigned.Select(n => n.Name).ToEnumerationString());
+                return String.Format("DFBI: {0}; {1}", CurrentDfbi,
+                    Unassigned.Select(n => n.Name).ToEnumerationString());
             }
         }
 
@@ -97,7 +113,7 @@ namespace Prexonite
             //Search for groups from each node in turn to reach the whole graph
             foreach (var node in _nodes.Values)
             {
-                if(!node.HasBeenVisited)
+                if (!node.HasBeenVisited)
                     foreach (var group in node._Search(env))
                         yield return group;
             }
@@ -108,9 +124,9 @@ namespace Prexonite
         [DebuggerStepThrough, DebuggerDisplay("{Extensions.ToEnumerationString(GetNames())}")]
         public class Group : ExtendableObject, ICollection<Node>
         {
-             private readonly LinkedList<Node> _list;
+            private readonly LinkedList<Node> _list;
 
-            public Group( LinkedList<Node> list)
+            public Group(LinkedList<Node> list)
             {
                 if (list == null) throw new ArgumentNullException("list");
                 _list = list;
@@ -137,7 +153,7 @@ namespace Prexonite
 
             public bool IsReadOnly
             {
-                get { return ((ICollection<Node>)_list).IsReadOnly; }
+                get { return ((ICollection<Node>) _list).IsReadOnly; }
             }
 
             public IEnumerator<Node> GetEnumerator()
@@ -208,7 +224,7 @@ namespace Prexonite
         [DebuggerStepThrough, DebuggerDisplay("{Subject}")]
         public class Node : ExtendableObject, IEquatable<Node>, INamed<TKey>
         {
-             private readonly TValue _subject;
+            private readonly TValue _subject;
             private readonly HashSet<Node> _dependencies = new HashSet<Node>();
             private readonly HashSet<Node> _clients = new HashSet<Node>();
             private bool _hasBeenVisited, _assignmentPending;
@@ -220,7 +236,7 @@ namespace Prexonite
                 get { return _hasBeenVisited; }
             }
 
-            public Node( TValue subject)
+            public Node(TValue subject)
             {
                 if (subject == null) throw new ArgumentNullException("subject");
                 _subject = subject;
@@ -243,7 +259,7 @@ namespace Prexonite
                 get { return _clients; }
             }
 
-            
+
             public TValue Subject
             {
                 [DebuggerStepThrough]
@@ -253,12 +269,12 @@ namespace Prexonite
             #region Class
 
             /// <summary>
-            /// Indicates whether the current object is equal to another object of the same type.
+            ///     Indicates whether the current object is equal to another object of the same type.
             /// </summary>
             /// <returns>
-            /// true if the current object is equal to the <paramref name="other"/> parameter; otherwise, false.
+            ///     true if the current object is equal to the <paramref name = "other" /> parameter; otherwise, false.
             /// </returns>
-            /// <param name="other">An object to compare with this object.</param>
+            /// <param name = "other">An object to compare with this object.</param>
             public bool Equals(Node other)
             {
                 if (ReferenceEquals(null, other)) return false;
@@ -267,12 +283,14 @@ namespace Prexonite
             }
 
             /// <summary>
-            /// Determines whether the specified <see cref="object"/> is equal to the current <see cref="object"/>.
+            ///     Determines whether the specified <see cref = "object" /> is equal to the current <see cref = "object" />.
             /// </summary>
             /// <returns>
-            /// true if the specified <see cref="object"/> is equal to the current <see cref="object"/>; otherwise, false.
+            ///     true if the specified <see cref = "object" /> is equal to the current <see cref = "object" />; otherwise, false.
             /// </returns>
-            /// <param name="obj">The <see cref="object"/> to compare with the current <see cref="object"/>. </param><exception cref="NullReferenceException">The <paramref name="obj"/> parameter is null.</exception><filterpriority>2</filterpriority>
+            /// <param name = "obj">The <see cref = "object" /> to compare with the current <see cref = "object" />. </param>
+            /// <exception cref = "NullReferenceException">The <paramref name = "obj" /> parameter is null.</exception>
+            /// <filterpriority>2</filterpriority>
             public override bool Equals(object obj)
             {
                 if (ReferenceEquals(null, obj)) return false;
@@ -282,10 +300,10 @@ namespace Prexonite
             }
 
             /// <summary>
-            /// Serves as a hash function for a particular type. 
+            ///     Serves as a hash function for a particular type.
             /// </summary>
             /// <returns>
-            /// A hash code for the current <see cref="object"/>.
+            ///     A hash code for the current <see cref = "object" />.
             /// </returns>
             /// <filterpriority>2</filterpriority>
             public override int GetHashCode()
@@ -346,6 +364,5 @@ namespace Prexonite
         }
 
         #endregion
-
     }
 }

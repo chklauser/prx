@@ -1,4 +1,17 @@
-﻿using System;
+﻿// Prexonite
+// 
+// Copyright (c) 2011, Christian Klauser
+// All rights reserved.
+// 
+// Redistribution and use in source and binary forms, with or without modification, are permitted provided that the following conditions are met:
+// 
+//     Redistributions of source code must retain the above copyright notice, this list of conditions and the following disclaimer.
+//     Redistributions in binary form must reproduce the above copyright notice, this list of conditions and the following disclaimer in the documentation and/or other materials provided with the distribution.
+//     The names of the contributors may be used to endorse or promote products derived from this software without specific prior written permission.
+// 
+// THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT HOLDER OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+
+using System;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.Linq;
@@ -9,7 +22,7 @@ using Prexonite.Types;
 namespace Prexonite.Compiler.Macro
 {
     /// <summary>
-    /// Provides information associated with a macro expansion session.
+    ///     Provides information associated with a macro expansion session.
     /// </summary>
     public class MacroSession : IDisposable
     {
@@ -20,14 +33,17 @@ namespace Prexonite.Compiler.Macro
         private readonly ReadOnlyCollectionView<string> _outerVariables;
         private readonly SymbolCollection _releaseList = new SymbolCollection();
         private readonly SymbolCollection _allocationList = new SymbolCollection();
-        private readonly HashSet<AstMacroInvocation> _invocations = new HashSet<AstMacroInvocation>();
+
+        private readonly HashSet<AstMacroInvocation> _invocations =
+            new HashSet<AstMacroInvocation>();
+
         private readonly object _buildCommandToken;
         private readonly List<PValue> _transportStore = new List<PValue>();
 
         /// <summary>
-        /// Creates a new macro expansion session for the specified compiler target.
+        ///     Creates a new macro expansion session for the specified compiler target.
         /// </summary>
-        /// <param name="target">The target to expand macros in.</param>
+        /// <param name = "target">The target to expand macros in.</param>
         public MacroSession(CompilerTarget target)
         {
             if (target == null)
@@ -41,7 +57,7 @@ namespace Prexonite.Compiler.Macro
         }
 
         /// <summary>
-        /// Provides read-only access to the local symbol table.
+        ///     Provides read-only access to the local symbol table.
         /// </summary>
         public ReadOnlyDictionaryView<string, SymbolEntry> LocalSymbols
         {
@@ -49,7 +65,7 @@ namespace Prexonite.Compiler.Macro
         }
 
         /// <summary>
-        /// Provides read-only access to the global symbol table.
+        ///     Provides read-only access to the global symbol table.
         /// </summary>
         public ReadOnlyDictionaryView<string, SymbolEntry> GlobalSymbols
         {
@@ -57,7 +73,7 @@ namespace Prexonite.Compiler.Macro
         }
 
         /// <summary>
-        /// The target the macro expansion session covers.
+        ///     The target the macro expansion session covers.
         /// </summary>
         public CompilerTarget Target
         {
@@ -71,7 +87,7 @@ namespace Prexonite.Compiler.Macro
         }
 
         /// <summary>
-        /// A copy of the loader options in effect during this macro expansion.
+        ///     A copy of the loader options in effect during this macro expansion.
         /// </summary>
         public LoaderOptions LoaderOptions
         {
@@ -79,7 +95,8 @@ namespace Prexonite.Compiler.Macro
             {
                 if (_options == null)
                 {
-                    _options = new LoaderOptions(_target.Loader.ParentEngine, _target.Loader.ParentApplication);
+                    _options = new LoaderOptions(_target.Loader.ParentEngine,
+                        _target.Loader.ParentApplication);
                     _options.InheritFrom(_target.Loader.Options);
                 }
                 return _target.Loader.Options;
@@ -92,12 +109,14 @@ namespace Prexonite.Compiler.Macro
         }
 
         /// <summary>
-        /// Allocates a temporary variable for this macro expansion session.
+        ///     Allocates a temporary variable for this macro expansion session.
         /// </summary>
         /// <returns>The (physical) id of a free temporary variable.</returns>
-        /// <remarks>If a temporary variable is not freed during a macro expansion session, 
-        /// it will no longer be considered a temporary variable and cannot be freed in 
-        /// subsequent expansions</remarks>
+        /// <remarks>
+        ///     If a temporary variable is not freed during a macro expansion session, 
+        ///     it will no longer be considered a temporary variable and cannot be freed in 
+        ///     subsequent expansions
+        /// </remarks>
         public string AllocateTemporaryVariable()
         {
             var temp = _target.RequestTemporaryVariable();
@@ -108,21 +127,21 @@ namespace Prexonite.Compiler.Macro
         }
 
         /// <summary>
-        /// Marks the temporary variable for freeing at the end of this expansion session.
+        ///     Marks the temporary variable for freeing at the end of this expansion session.
         /// </summary>
-        /// <param name="temporaryVariable">The temporary variable to be freed.</param>
+        /// <param name = "temporaryVariable">The temporary variable to be freed.</param>
         public void FreeTemporaryVariable(string temporaryVariable)
         {
             if (_releaseList.Contains(temporaryVariable))
             {
                 throw new PrexoniteException("Cannot release temporary variable " +
-                                             temporaryVariable + " twice!");
+                    temporaryVariable + " twice!");
             }
             _releaseList.Add(temporaryVariable);
         }
 
         /// <summary>
-        /// Releases managed resources bound by the macro expansion session, such as temporary variables.
+        ///     Releases managed resources bound by the macro expansion session, such as temporary variables.
         /// </summary>
         public void Dispose()
         {
@@ -168,7 +187,8 @@ namespace Prexonite.Compiler.Macro
         {
             private MacroCommand _macroCommand;
 
-            public void Initialize(CompilerTarget target, AstMacroInvocation invocation, bool justEffect)
+            public void Initialize(CompilerTarget target, AstMacroInvocation invocation,
+                bool justEffect)
             {
                 _macroCommand = null;
 
@@ -177,8 +197,8 @@ namespace Prexonite.Compiler.Macro
                 else
                 {
                     target.Loader.ReportMessage(new ParseMessage(ParseMessageSeverity.Error,
-                                                                 String.Format("Cannot find macro command named `{0}`", invocation.MacroId),
-                                                                 invocation));
+                        String.Format("Cannot find macro command named `{0}`", invocation.MacroId),
+                        invocation));
                     HumanId = "cannot_find_macro_command";
                     return;
                 }
@@ -190,7 +210,7 @@ namespace Prexonite.Compiler.Macro
 
             public void Expand(CompilerTarget target, MacroContext context)
             {
-                if(_macroCommand == null)
+                if (_macroCommand == null)
                     return;
 
                 _macroCommand.Expand(context);
@@ -209,12 +229,15 @@ namespace Prexonite.Compiler.Macro
 
         private class MacroFunctionExpander : IMacroExpander
         {
-            public void Initialize(CompilerTarget target, AstMacroInvocation invocation, bool justEffect)
+            public void Initialize(CompilerTarget target, AstMacroInvocation invocation,
+                bool justEffect)
             {
                 _macroFunction = null;
 
                 PFunction macroFunc;
-                if (!target.Loader.Options.TargetApplication.Functions.TryGetValue(invocation.MacroId, out macroFunc))
+                if (
+                    !target.Loader.Options.TargetApplication.Functions.TryGetValue(
+                        invocation.MacroId, out macroFunc))
                 {
                     target.Loader.ReportMessage(
                         new ParseMessage(
@@ -288,7 +311,7 @@ namespace Prexonite.Compiler.Macro
                     fe = expr;
 
                     //cannot be statement at the same time, set ast to null.
-                    ast = null; 
+                    ast = null;
                 }
                 else
                     fe = null;
@@ -306,11 +329,11 @@ namespace Prexonite.Compiler.Macro
 
             public bool TryExpandPartially(CompilerTarget target, MacroContext context)
             {
-                if(!_macroFunction.Meta[@"partial\macro"].Switch)
+                if (!_macroFunction.Meta[@"partial\macro"].Switch)
                     return false;
 
                 var successRaw = _invokeMacroFunction(target, context);
-                if(successRaw.Type != PType.Bool)
+                if (successRaw.Type != PType.Bool)
                 {
                     context.ReportMessage(ParseMessageSeverity.Error,
                         "Partial macro must return a boolean value, indicating whether it can handle the partial application. Assuming it cannot.");
@@ -321,7 +344,8 @@ namespace Prexonite.Compiler.Macro
                 return (bool) successRaw.Value;
             }
 
-            private void _implementMergeRules(MacroContext context, IAstExpression ce, IEnumerable<AstNode> fs, IAstExpression fe)
+            private void _implementMergeRules(MacroContext context, IAstExpression ce,
+                IEnumerable<AstNode> fs, IAstExpression fe)
             {
                 var contextBlock = context.Block;
                 //cs  is already stored in contextBlock, 
@@ -341,29 +365,29 @@ namespace Prexonite.Compiler.Macro
                     {
                         //Might at a later point become a warning
                         context.ReportMessage(ParseMessageSeverity.Info,
-                                              String.Format(
-                                                  "Macro {0} uses temporary variable to ensure that expression from `context.Block` is evaluated before statements from macro return value.",
-                                                  HumanId),
-                                              context.Invocation);
+                            String.Format(
+                                "Macro {0} uses temporary variable to ensure that expression from `context.Block` is evaluated before statements from macro return value.",
+                                HumanId),
+                            context.Invocation);
 
                         var tmpV = context.AllocateTemporaryVariable();
 
                         //Generate assignment to temporary variable
                         var assignTmpV = new AstGetSetSymbol(context.Invocation.File,
-                                                             context.Invocation.Line,
-                                                             context.Invocation.Column,
-                                                             PCall.Set,
-                                                             tmpV,
-                                                             SymbolInterpretations.LocalObjectVariable);
+                            context.Invocation.Line,
+                            context.Invocation.Column,
+                            PCall.Set,
+                            tmpV,
+                            SymbolInterpretations.LocalObjectVariable);
                         assignTmpV.Arguments.Add(ce);
                         contextBlock.Add(assignTmpV);
 
                         //Generate lookup of computed value
                         ce = new AstGetSetSymbol(context.Invocation.File,
-                                                 context.Invocation.Line,
-                                                 context.Invocation.Column, PCall.Get,
-                                                 tmpV,
-                                                 SymbolInterpretations.LocalObjectVariable);
+                            context.Invocation.Line,
+                            context.Invocation.Column, PCall.Get,
+                            tmpV,
+                            SymbolInterpretations.LocalObjectVariable);
                     }
                 }
 
@@ -396,7 +420,8 @@ namespace Prexonite.Compiler.Macro
 
                 //Execute macro (argument nodes of the invocation node are passed as arguments to the macro)
                 var macroInvocation = context.Invocation;
-                var arguments = macroInvocation.Arguments.Select(target.Loader.CreateNativePValue).ToArray();
+                var arguments =
+                    macroInvocation.Arguments.Select(target.Loader.CreateNativePValue).ToArray();
                 var parentApplication = _macroFunction.ParentApplication;
                 PValue astRaw;
                 try
@@ -422,7 +447,7 @@ namespace Prexonite.Compiler.Macro
             //Delegate actual expansion to approriate expander
             var expander = _getExpander(invocation, target);
 
-            if(expander != null)
+            if (expander != null)
             {
                 expander.Initialize(target, invocation, justEffect);
 
@@ -431,10 +456,10 @@ namespace Prexonite.Compiler.Macro
                 {
                     target.Loader.ReportMessage(
                         new ParseMessage(ParseMessageSeverity.Error,
-                                         String.Format(
-                                             "AstMacroInvocation.EmitCode is not reentrant. The invocation node for the macro {0} has been expanded already. Use GetCopy() to operate on a copy of this macro invocation.",
-                                             expander.HumanId),
-                                         invocation));
+                            String.Format(
+                                "AstMacroInvocation.EmitCode is not reentrant. The invocation node for the macro {0} has been expanded already. Use GetCopy() to operate on a copy of this macro invocation.",
+                                expander.HumanId),
+                            invocation));
                     return CreateNeutralExpression(invocation);
                 }
                 _invocations.Add(invocation);
@@ -445,9 +470,10 @@ namespace Prexonite.Compiler.Macro
                     //Attempt to expand partial macro
                     try
                     {
-                        if(!expander.TryExpandPartially(target, context))
+                        if (!expander.TryExpandPartially(target, context))
                         {
-                            target.Loader.ReportSemanticError(invocation.Line, invocation.Column, "The macro " + expander.HumanId + " cannot be applied partially.");
+                            target.Loader.ReportSemanticError(invocation.Line, invocation.Column,
+                                "The macro " + expander.HumanId + " cannot be applied partially.");
                             return CreateNeutralExpression(invocation);
                         }
                     }
@@ -484,7 +510,8 @@ namespace Prexonite.Compiler.Macro
             return (AstNode) node;
         }
 
-        private static void _reportException(MacroContext context, IMacroExpander expander, Exception e)
+        private static void _reportException(MacroContext context, IMacroExpander expander,
+            Exception e)
         {
             context.ReportMessage(ParseMessageSeverity.Error,
                 String.Format(
@@ -507,7 +534,7 @@ namespace Prexonite.Compiler.Macro
         {
             var nullLiteral = new AstNull(invocation.File, invocation.Line, invocation.Column);
             var call = new AstIndirectCall(invocation.File, invocation.Line, invocation.Column,
-                                           invocation.Call, nullLiteral);
+                invocation.Call, nullLiteral);
             if (invocation.Call == PCall.Set)
                 call.Arguments.Add(new AstNull(invocation.File, invocation.Line, invocation.Column));
 
@@ -528,27 +555,28 @@ namespace Prexonite.Compiler.Macro
                 default:
                     target.Loader.ReportMessage(
                         new ParseMessage(ParseMessageSeverity.Error,
-                                         String.Format(
-                                             "Cannot apply {0} as a macro at compile time.",
-                                             Enum.GetName(
-                                                 typeof (
-                                                     SymbolInterpretations),
-                                                 invocation.Interpretation)),
-                                         invocation));
+                            String.Format(
+                                "Cannot apply {0} as a macro at compile time.",
+                                Enum.GetName(
+                                    typeof (
+                                        SymbolInterpretations),
+                                    invocation.Interpretation)),
+                            invocation));
                     break;
             }
             return expander;
         }
 
         /// <summary>
-        /// Provides macro environment to its implementing function. The resulting closure 
-        /// implements the expansion of the macro.
+        ///     Provides macro environment to its implementing function. The resulting closure 
+        ///     implements the expansion of the macro.
         /// </summary>
-        /// <param name="sctx">The stack context to use for wrapping the context.</param>
-        /// <param name="func">The implementation of the macro.</param>
-        /// <param name="context">The macro context for this expansion.</param>
+        /// <param name = "sctx">The stack context to use for wrapping the context.</param>
+        /// <param name = "func">The implementation of the macro.</param>
+        /// <param name = "context">The macro context for this expansion.</param>
         /// <returns>A closure that implements the expansion of this macro.</returns>
-        public static Closure PrepareMacroImplementation(StackContext sctx, PFunction func, MacroContext context)
+        public static Closure PrepareMacroImplementation(StackContext sctx, PFunction func,
+            MacroContext context)
         {
             var contextVar =
                 CompilerTarget.CreateReadonlyVariable(sctx.CreateNativePValue(context));
@@ -563,9 +591,9 @@ namespace Prexonite.Compiler.Macro
         }
 
         /// <summary>
-        /// Stores an object in the macro session. It can later be retrieved via <see cref="RetrieveFromTransport"/>.
+        ///     Stores an object in the macro session. It can later be retrieved via <see cref = "RetrieveFromTransport" />.
         /// </summary>
-        /// <param name="obj">The object to be stored.</param>
+        /// <param name = "obj">The object to be stored.</param>
         /// <returns>The id with which to retrieve the object later.</returns>
         public int StoreForTransport(PValue obj)
         {
@@ -577,9 +605,9 @@ namespace Prexonite.Compiler.Macro
         }
 
         /// <summary>
-        /// Returns an object previously stored via <see cref="StoreForTransport"/>.
+        ///     Returns an object previously stored via <see cref = "StoreForTransport" />.
         /// </summary>
-        /// <param name="id">The id as returned by <see cref="StoreForTransport"/></param>
+        /// <param name = "id">The id as returned by <see cref = "StoreForTransport" /></param>
         /// <returns>The obejct stored before.</returns>
         public PValue RetrieveFromTransport(int id)
         {

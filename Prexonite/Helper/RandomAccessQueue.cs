@@ -1,25 +1,15 @@
-/*
- * Prexonite, a scripting engine (Scripting Language -> Bytecode -> Virtual Machine)
- *  Copyright (C) 2007  Christian "SealedSun" Klauser
- *  E-mail  sealedsun a.t gmail d.ot com
- *  Web     http://www.sealedsun.ch/
- *
- *  This program is free software; you can redistribute it and/or modify
- *  it under the terms of the GNU General Public License as published by
- *  the Free Software Foundation; either version 2 of the License, or
- *  (at your option) any later version.
- *
- *  Please contact me (sealedsun a.t gmail do.t com) if you need a different license.
- * 
- *  This program is distributed in the hope that it will be useful,
- *  but WITHOUT ANY WARRANTY; without even the implied warranty of
- *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- *  GNU General Public License for more details.
- *
- *  You should have received a copy of the GNU General Public License along
- *  with this program; if not, write to the Free Software Foundation, Inc.,
- *  51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
- */
+// Prexonite
+// 
+// Copyright (c) 2011, Christian Klauser
+// All rights reserved.
+// 
+// Redistribution and use in source and binary forms, with or without modification, are permitted provided that the following conditions are met:
+// 
+//     Redistributions of source code must retain the above copyright notice, this list of conditions and the following disclaimer.
+//     Redistributions in binary form must reproduce the above copyright notice, this list of conditions and the following disclaimer in the documentation and/or other materials provided with the distribution.
+//     The names of the contributors may be used to endorse or promote products derived from this software without specific prior written permission.
+// 
+// THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT HOLDER OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 using System;
 using System.Collections;
@@ -29,9 +19,9 @@ using System.Diagnostics;
 namespace Prexonite.Helper
 {
     /// <summary>
-    /// Custom implementation of a queue that allows random access.
+    ///     Custom implementation of a queue that allows random access.
     /// </summary>
-    /// <typeparam name="T">The type of the elements the queue is supposed to manage.</typeparam>
+    /// <typeparam name = "T">The type of the elements the queue is supposed to manage.</typeparam>
     public class RandomAccessQueue<T> : IList<T>
     {
         #region Constructors
@@ -39,9 +29,11 @@ namespace Prexonite.Helper
         private const int DEFAULT_INITIAL_CAPACITY = 10;
 
         /// <summary>
-        /// Creates a new RandomAccessQueue
+        ///     Creates a new RandomAccessQueue
         /// </summary>
-        /// <remarks>This overload uses a default value for the capacity of it's data store.</remarks>
+        /// <remarks>
+        ///     This overload uses a default value for the capacity of it's data store.
+        /// </remarks>
         [DebuggerStepThrough]
         public RandomAccessQueue()
         {
@@ -49,9 +41,9 @@ namespace Prexonite.Helper
         }
 
         /// <summary>
-        /// Creates a new RandomAccessQueue.
+        ///     Creates a new RandomAccessQueue.
         /// </summary>
-        /// <param name="collection">Elements to copy to the queue upon creation.</param>
+        /// <param name = "collection">Elements to copy to the queue upon creation.</param>
         [DebuggerStepThrough]
         public RandomAccessQueue(IEnumerable<T> collection)
         {
@@ -61,11 +53,13 @@ namespace Prexonite.Helper
         }
 
         /// <summary>
-        /// Creates a new RandomAccessQueue
+        ///     Creates a new RandomAccessQueue
         /// </summary>
-        /// <param name="capacity">The initial capacity of the queue.</param>
-        /// <remarks>Although the queue increases the size of it's data store as required, setting an 
-        /// initial capacity can reduce the number of resize operations, when filling the queue.</remarks>
+        /// <param name = "capacity">The initial capacity of the queue.</param>
+        /// <remarks>
+        ///     Although the queue increases the size of it's data store as required, setting an 
+        ///     initial capacity can reduce the number of resize operations, when filling the queue.
+        /// </remarks>
         [DebuggerStepThrough]
         public RandomAccessQueue(int capacity)
         {
@@ -139,9 +133,9 @@ namespace Prexonite.Helper
         #region Queue Members
 
         /// <summary>
-        /// Adds an element to the end of the queue.
+        ///     Adds an element to the end of the queue.
         /// </summary>
-        /// <param name="item">The element to be added to the end of the queue.</param>
+        /// <param name = "item">The element to be added to the end of the queue.</param>
         public void Enqueue(T item)
         {
             if (_rear == -1)
@@ -188,7 +182,7 @@ namespace Prexonite.Helper
         }
 
         /// <summary>
-        /// Returns the element in front of the queue (to be dequeued next).
+        ///     Returns the element in front of the queue (to be dequeued next).
         /// </summary>
         /// <returns>The element in front of the queue (to be dequeued next).</returns>
         [DebuggerStepThrough]
@@ -198,7 +192,7 @@ namespace Prexonite.Helper
         }
 
         /// <summary>
-        /// Removes and returns the element in front of the queue.
+        ///     Removes and returns the element in front of the queue.
         /// </summary>
         /// <returns>The element in front of the queue.</returns>
         public T Dequeue()
@@ -222,9 +216,9 @@ namespace Prexonite.Helper
         #region IList<T> Members
 
         /// <summary>
-        /// Returns the index at which <paramref name="item"/> is located.
+        ///     Returns the index at which <paramref name = "item" /> is located.
         /// </summary>
-        /// <param name="item">The item to search for.</param>
+        /// <param name = "item">The item to search for.</param>
         /// <returns>The index in the queue where the item is stored or -1 if the item cannot be found.</returns>
         [DebuggerStepThrough]
         public int IndexOf(T item)
@@ -240,10 +234,10 @@ namespace Prexonite.Helper
         }
 
         /// <summary>
-        /// Inserts an item at a random position in the queue.
+        ///     Inserts an item at a random position in the queue.
         /// </summary>
-        /// <param name="index">Where to insert <paramref name="item"/>.</param>
-        /// <param name="item">What to insert at <paramref name="index"/>.</param>
+        /// <param name = "index">Where to insert <paramref name = "item" />.</param>
+        /// <param name = "item">What to insert at <paramref name = "index" />.</param>
         [DebuggerStepThrough]
         public void Insert(int index, T item)
         {
@@ -251,9 +245,9 @@ namespace Prexonite.Helper
         }
 
         /// <summary>
-        /// Removes the element at a supplied index.
+        ///     Removes the element at a supplied index.
         /// </summary>
-        /// <param name="index">The index of the element to remove.</param>
+        /// <param name = "index">The index of the element to remove.</param>
         [DebuggerStepThrough]
         public void RemoveAt(int index)
         {
@@ -261,9 +255,9 @@ namespace Prexonite.Helper
         }
 
         /// <summary>
-        /// Random access to the queue.
+        ///     Random access to the queue.
         /// </summary>
-        /// <param name="index">The index of the element to retrieve or set.</param>
+        /// <param name = "index">The index of the element to retrieve or set.</param>
         /// <returns>The element at the supplied index.</returns>
         public T this[int index]
         {
@@ -278,9 +272,9 @@ namespace Prexonite.Helper
         #region ICollection<T> Members
 
         /// <summary>
-        /// Adds an element to the queue. Synonym to <see cref="Enqueue"/>.
+        ///     Adds an element to the queue. Synonym to <see cref = "Enqueue" />.
         /// </summary>
-        /// <param name="item">The item to add (enqueue).</param>
+        /// <param name = "item">The item to add (enqueue).</param>
         [DebuggerStepThrough]
         public void Add(T item)
         {
@@ -288,7 +282,7 @@ namespace Prexonite.Helper
         }
 
         /// <summary>
-        /// Removes all elements from the queue.
+        ///     Removes all elements from the queue.
         /// </summary>
         [DebuggerStepThrough]
         public void Clear()
@@ -299,9 +293,9 @@ namespace Prexonite.Helper
         }
 
         /// <summary>
-        /// Indicates whether the queue contains a specific element.
+        ///     Indicates whether the queue contains a specific element.
         /// </summary>
-        /// <param name="item">The element to look for.</param>
+        /// <param name = "item">The element to look for.</param>
         /// <returns>True, if the queue contains the element; false otherwise.</returns>
         [DebuggerStepThrough]
         public bool Contains(T item)
@@ -310,11 +304,11 @@ namespace Prexonite.Helper
         }
 
         /// <summary>
-        /// Copies the contents of the queue to the specified array.
+        ///     Copies the contents of the queue to the specified array.
         /// </summary>
-        /// <param name="array">An array, that is big enough to hold all elements in the queue.</param>
-        /// <param name="arrayIndex">The index in the supplied array, that indicates where to start writing.</param>
-        /// <exception cref="ArgumentOutOfRangeException"><paramref name="array"/> is not big enough.</exception>
+        /// <param name = "array">An array, that is big enough to hold all elements in the queue.</param>
+        /// <param name = "arrayIndex">The index in the supplied array, that indicates where to start writing.</param>
+        /// <exception cref = "ArgumentOutOfRangeException"><paramref name = "array" /> is not big enough.</exception>
         [DebuggerStepThrough]
         public void CopyTo(T[] array, int arrayIndex)
         {
@@ -328,7 +322,7 @@ namespace Prexonite.Helper
         }
 
         /// <summary>
-        /// Retuns the number of elements in the queue
+        ///     Retuns the number of elements in the queue
         /// </summary>
         public int Count
         {
@@ -336,7 +330,7 @@ namespace Prexonite.Helper
         }
 
         /// <summary>
-        /// Queues are never readonly. Always returns false.
+        ///     Queues are never readonly. Always returns false.
         /// </summary>
         public bool IsReadOnly
         {
@@ -345,9 +339,9 @@ namespace Prexonite.Helper
         }
 
         /// <summary>
-        /// Removes an element from the queue.
+        ///     Removes an element from the queue.
         /// </summary>
-        /// <param name="item">The element to remove.</param>
+        /// <param name = "item">The element to remove.</param>
         /// <returns>True if an element has been removed; false otherwise.</returns>
         [DebuggerStepThrough]
         public bool Remove(T item)
@@ -365,7 +359,7 @@ namespace Prexonite.Helper
         #region IEnumerable<T> Members
 
         /// <summary>
-        /// Returns an IEnumerator that enumerates over all elements in the queue.
+        ///     Returns an IEnumerator that enumerates over all elements in the queue.
         /// </summary>
         /// <returns></returns>
         [DebuggerStepThrough]

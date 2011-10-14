@@ -1,7 +1,20 @@
+// Prexonite
+// 
+// Copyright (c) 2011, Christian Klauser
+// All rights reserved.
+// 
+// Redistribution and use in source and binary forms, with or without modification, are permitted provided that the following conditions are met:
+// 
+//     Redistributions of source code must retain the above copyright notice, this list of conditions and the following disclaimer.
+//     Redistributions in binary form must reproduce the above copyright notice, this list of conditions and the following disclaimer in the documentation and/or other materials provided with the distribution.
+//     The names of the contributors may be used to endorse or promote products derived from this software without specific prior written permission.
+// 
+// THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT HOLDER OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+
 using System;
-using System.Collections.Generic;
 using NUnit.Framework;
 using Prexonite;
+using Prexonite.Commands.Core.Operators;
 using Prexonite.Compiler;
 using Prx.Tests;
 
@@ -32,10 +45,10 @@ multi line // comment */
 ");
         }
 
-        [Test()]
+        [Test]
         public void Metadata()
         {
-            Loader ldr =
+            var ldr =
                 _compile(
                     @"
 //This is a text fixture for metadata
@@ -75,15 +88,15 @@ Add {
             Assert.IsFalse(target.Meta["finaL"]);
         }
 
-        [Test()]
+        [Test]
         public void NestedMetadata()
         {
             const string input1 =
                 "FirstList { \"first String\", firstId, true, 55 } ;" +
-                "SecondList { \"second String\", { \"first }}Nested{ string\", secondNestedId }, thirdId }; ";
-            LoaderOptions opt = new LoaderOptions(engine, target);
+                    "SecondList { \"second String\", { \"first }}Nested{ string\", secondNestedId }, thirdId }; ";
+            var opt = new LoaderOptions(engine, target);
             opt.UseIndicesLocally = false;
-            Loader ldr = new Loader(opt);
+            var ldr = new Loader(opt);
             ldr.LoadFromString(input1);
 
             Assert.AreEqual(0, ldr.ErrorCount);
@@ -108,14 +121,14 @@ Add {
             Assert.AreEqual("thirdId", target.Meta["secondList"].List[2].Text);
         }
 
-        [Test()]
+        [Test]
         public void AddingMetadata()
         {
             const string input1 =
                 "MyList { elem1, elem2, elem3 };";
-            LoaderOptions opt = new LoaderOptions(engine, target);
+            var opt = new LoaderOptions(engine, target);
             opt.UseIndicesLocally = false;
-            Loader ldr = new Loader(opt);
+            var ldr = new Loader(opt);
             ldr.LoadFromString(input1);
 
             Assert.AreEqual(0, ldr.ErrorCount);
@@ -170,20 +183,20 @@ Add System::Xml to Imports;
             Assert.AreEqual("System.Xml", target.Meta["Import"].List[2].Text);
         }
 
-        [Test()]
+        [Test]
         public void Declare()
         {
             const string input =
                 @"declare function f\1; " +
-                @"declare var go\1; " +
-                @"declare ref gf\1, gf\2; " +
-                @"declare function if\1;";
-            LoaderOptions opt = new LoaderOptions(engine, target);
+                    @"declare var go\1; " +
+                        @"declare ref gf\1, gf\2; " +
+                            @"declare function if\1;";
+            var opt = new LoaderOptions(engine, target);
             opt.UseIndicesLocally = false;
-            Loader ldr = new Loader(opt);
+            var ldr = new Loader(opt);
             ldr.LoadFromString(input);
             Assert.AreEqual(0, ldr.ErrorCount);
-            SymbolTable<SymbolEntry> symbols = ldr.Symbols;
+            var symbols = ldr.Symbols;
 
             Assert.AreEqual(
                 new SymbolEntry(SymbolInterpretations.Function, "f\\1"), symbols[@"f\1"]);
@@ -200,20 +213,20 @@ Add System::Xml to Imports;
                 new SymbolEntry(SymbolInterpretations.Function, "if\\1"), symbols[@"if\1"]);
         }
 
-        [Test()]
+        [Test]
         public void Redeclare()
         {
             const string input =
                 "declare function name1; " +
-                "declare var name2; " +
-                "declare ref name1, name2; " +
-                "declare function name1;";
-            LoaderOptions opt = new LoaderOptions(engine, target);
+                    "declare var name2; " +
+                        "declare ref name1, name2; " +
+                            "declare function name1;";
+            var opt = new LoaderOptions(engine, target);
             opt.UseIndicesLocally = false;
-            Loader ldr = new Loader(opt);
+            var ldr = new Loader(opt);
             ldr.LoadFromString(input);
             Assert.AreEqual(0, ldr.ErrorCount);
-            SymbolTable<SymbolEntry> symbols = ldr.Symbols;
+            var symbols = ldr.Symbols;
 
             Assert.AreEqual(
                 new SymbolEntry(SymbolInterpretations.Function, "name1"), symbols["name1"]);
@@ -231,7 +244,7 @@ Add System::Xml to Imports;
 
             const string input2 =
                 "declare function name1; " +
-                "declare function name2; ";
+                    "declare function name2; ";
 
             ldr.LoadFromString(input2);
             Assert.AreEqual(0, ldr.ErrorCount);
@@ -241,22 +254,22 @@ Add System::Xml to Imports;
                 new SymbolEntry(SymbolInterpretations.Function, "name2"), symbols["name2"]);
         }
 
-        [Test()]
+        [Test]
         public void DefineGlobal()
         {
             //First declare the variables
 
             const string input1 =
                 "declare var name1; " +
-                "declare ref name2; " +
-                "declare var value;";
-            LoaderOptions opt = new LoaderOptions(engine, target);
+                    "declare ref name2; " +
+                        "declare var value;";
+            var opt = new LoaderOptions(engine, target);
             opt.UseIndicesLocally = false;
-            Loader ldr = new Loader(opt);
+            var ldr = new Loader(opt);
             ldr.LoadFromString(input1);
             Assert.AreEqual(
                 0, ldr.ErrorCount, "The compiler reported errors in the first chunk of code.");
-            SymbolTable<SymbolEntry> symbols = ldr.Symbols;
+            var symbols = ldr.Symbols;
 
             Assert.AreEqual(
                 new SymbolEntry(SymbolInterpretations.GlobalObjectVariable, "name1"),
@@ -271,8 +284,8 @@ Add System::Xml to Imports;
             //Then define them
             const string input2 =
                 "var name1; " +
-                "ref name2 [ Description NotUseful; ]; " +
-                "var name3;";
+                    "ref name2 [ Description NotUseful; ]; " +
+                        "var name3;";
 
             ldr.LoadFromString(input2);
             Assert.AreEqual(
@@ -292,7 +305,7 @@ Add System::Xml to Imports;
             Assert.IsNotNull(target.Variables["name3"]);
         }
 
-        [Test()]
+        [Test]
         public void Unicode()
         {
             _compile(@"
@@ -315,15 +328,15 @@ Description ""Künste des Überredens von Krähen."";
 function twice(x) = 2*x;
 function megabyte = 1024*1024;
 ";
-            LoaderOptions opt = new LoaderOptions(engine, target);
+            var opt = new LoaderOptions(engine, target);
             opt.UseIndicesLocally = false;
-            Loader ldr = new Loader(opt);
+            var ldr = new Loader(opt);
             ldr.LoadFromString(input1);
             Assert.AreEqual(0, ldr.ErrorCount, "Errors during compilation.");
 
             //check "twice"
-            List<Instruction> actual = target.Functions["twice"].Code;
-            List<Instruction> expected = getInstructions(@"
+            var actual = target.Functions["twice"].Code;
+            var expected = getInstructions(@"
 ldc.int 2
 ldloc x
 mul
@@ -337,7 +350,7 @@ ret.value
                 actual.Count,
                 "Expected and actual instruction count missmatch in twice.");
 
-            for (int i = 0; i < actual.Count; i++)
+            for (var i = 0; i < actual.Count; i++)
                 Assert.AreEqual(
                     expected[i],
                     actual[i],
@@ -359,7 +372,7 @@ ret.value
                 actual.Count,
                 "Expected and actual instruction count missmatch in megabyte.");
 
-            for (int i = 0; i < actual.Count; i++)
+            for (var i = 0; i < actual.Count; i++)
                 Assert.AreEqual(
                     expected[i],
                     actual[i],
@@ -508,7 +521,7 @@ label   fe  nop+fe
 ");
         }
 
-        [Test()]
+        [Test]
         public void EmptyAsmFunction()
         {
             const string input1 =
@@ -526,9 +539,9 @@ function func3(param1, param2)
 { 
 
     }";
-            LoaderOptions opt = new LoaderOptions(engine, target);
+            var opt = new LoaderOptions(engine, target);
             opt.UseIndicesLocally = false;
-            Loader ldr = new Loader(opt);
+            var ldr = new Loader(opt);
             ldr.LoadFromString(input1);
             Assert.AreEqual(0, ldr.ErrorCount);
 
@@ -549,7 +562,7 @@ function func3(param1, param2)
             Assert.AreEqual(1, target.Functions["func3"].ImportedNamespaces.Count);
         }
 
-        [Test()]
+        [Test]
         public void AsmLocalVariableDeclaration()
         {
             const string input1 = @"
@@ -559,9 +572,9 @@ function func1() does asm
     ref loc2
 }
 ";
-            LoaderOptions opt = new LoaderOptions(engine, target);
+            var opt = new LoaderOptions(engine, target);
             opt.UseIndicesLocally = false;
-            Loader ldr = new Loader(opt);
+            var ldr = new Loader(opt);
             ldr.LoadFromString(input1);
             Assert.AreEqual(0, ldr.ErrorCount);
 
@@ -576,7 +589,7 @@ function func1() does asm
                 ldr.FunctionTargets["func1"].Symbols["loc2"].Interpretation);
         }
 
-        [Test()]
+        [Test]
         public void AsmNullInstructions()
         {
             const string input1 =
@@ -623,70 +636,70 @@ function func1() does asm
 }
 ";
 
-            LoaderOptions opt = new LoaderOptions(engine, target);
+            var opt = new LoaderOptions(engine, target);
             opt.UseIndicesLocally = false;
-            Loader ldr = new Loader(opt);
+            var ldr = new Loader(opt);
             ldr.LoadFromString(input1);
             Assert.AreEqual(0, ldr.ErrorCount);
 
-            List<Instruction> code = target.Functions["func1"].Code;
-            int i = 0;
+            var code = target.Functions["func1"].Code;
+            var i = 0;
             Assert.AreEqual(OpCode.nop, code[i++].OpCode);
             Assert.AreEqual(OpCode.ldc_null, code[i++].OpCode);
             Assert.AreEqual(OpCode.nop, code[i++].OpCode);
             Assert.AreEqual(OpCode.nop, code[i++].OpCode);
             //operator aliases
             Assert.AreEqual(OpCode.cmd, code[i].OpCode);
-            Assert.AreEqual(1,code[i].Arguments);
-            Assert.AreEqual(Prexonite.Commands.Core.Operators.UnaryNegation.DefaultAlias, code[i++].Id);
+            Assert.AreEqual(1, code[i].Arguments);
+            Assert.AreEqual(UnaryNegation.DefaultAlias, code[i++].Id);
             Assert.AreEqual(1, code[i].Arguments);
             Assert.AreEqual(OpCode.cmd, code[i].OpCode);
-            Assert.AreEqual(Prexonite.Commands.Core.Operators.LogicalNot.DefaultAlias, code[i++].Id);
+            Assert.AreEqual(LogicalNot.DefaultAlias, code[i++].Id);
             Assert.AreEqual(2, code[i].Arguments);
             Assert.AreEqual(OpCode.cmd, code[i].OpCode);
-            Assert.AreEqual(Prexonite.Commands.Core.Operators.Addition.DefaultAlias, code[i++].Id);
+            Assert.AreEqual(Addition.DefaultAlias, code[i++].Id);
             Assert.AreEqual(OpCode.cmd, code[i].OpCode);
             Assert.AreEqual(2, code[i].Arguments);
-            Assert.AreEqual(Prexonite.Commands.Core.Operators.Subtraction.DefaultAlias, code[i++].Id);
+            Assert.AreEqual(Subtraction.DefaultAlias, code[i++].Id);
             Assert.AreEqual(OpCode.cmd, code[i].OpCode);
             Assert.AreEqual(2, code[i].Arguments);
-            Assert.AreEqual(Prexonite.Commands.Core.Operators.Multiplication.DefaultAlias, code[i++].Id);
+            Assert.AreEqual(Multiplication.DefaultAlias, code[i++].Id);
             Assert.AreEqual(OpCode.cmd, code[i].OpCode);
             Assert.AreEqual(2, code[i].Arguments);
-            Assert.AreEqual(Prexonite.Commands.Core.Operators.Division.DefaultAlias, code[i++].Id);
+            Assert.AreEqual(Division.DefaultAlias, code[i++].Id);
             Assert.AreEqual(OpCode.cmd, code[i].OpCode);
             Assert.AreEqual(2, code[i].Arguments);
-            Assert.AreEqual(Prexonite.Commands.Core.Operators.Modulus.DefaultAlias, code[i++].Id);
+            Assert.AreEqual(Modulus.DefaultAlias, code[i++].Id);
             Assert.AreEqual(OpCode.cmd, code[i].OpCode);
             Assert.AreEqual(2, code[i].Arguments);
-            Assert.AreEqual(Prexonite.Commands.Core.Operators.Power.DefaultAlias, code[i++].Id);
+            Assert.AreEqual(Power.DefaultAlias, code[i++].Id);
             Assert.AreEqual(OpCode.cmd, code[i].OpCode);
             Assert.AreEqual(2, code[i].Arguments);
-            Assert.AreEqual(Prexonite.Commands.Core.Operators.Equality.DefaultAlias, code[i++].Id);
+            Assert.AreEqual(Equality.DefaultAlias, code[i++].Id);
             Assert.AreEqual(OpCode.cmd, code[i].OpCode);
             Assert.AreEqual(2, code[i].Arguments);
-            Assert.AreEqual(Prexonite.Commands.Core.Operators.Inequality.DefaultAlias, code[i++].Id);
+            Assert.AreEqual(Inequality.DefaultAlias, code[i++].Id);
             Assert.AreEqual(OpCode.cmd, code[i].OpCode);
             Assert.AreEqual(2, code[i].Arguments);
-            Assert.AreEqual(Prexonite.Commands.Core.Operators.GreaterThan.DefaultAlias, code[i++].Id);
+            Assert.AreEqual(GreaterThan.DefaultAlias, code[i++].Id);
             Assert.AreEqual(OpCode.cmd, code[i].OpCode);
             Assert.AreEqual(2, code[i].Arguments);
-            Assert.AreEqual(Prexonite.Commands.Core.Operators.GreaterThanOrEqual.DefaultAlias, code[i++].Id);
+            Assert.AreEqual(GreaterThanOrEqual.DefaultAlias, code[i++].Id);
             Assert.AreEqual(OpCode.cmd, code[i].OpCode);
             Assert.AreEqual(2, code[i].Arguments);
-            Assert.AreEqual(Prexonite.Commands.Core.Operators.LessThan.DefaultAlias, code[i++].Id);
+            Assert.AreEqual(LessThan.DefaultAlias, code[i++].Id);
             Assert.AreEqual(OpCode.cmd, code[i].OpCode);
             Assert.AreEqual(2, code[i].Arguments);
-            Assert.AreEqual(Prexonite.Commands.Core.Operators.LessThanOrEqual.DefaultAlias, code[i++].Id);
+            Assert.AreEqual(LessThanOrEqual.DefaultAlias, code[i++].Id);
             Assert.AreEqual(OpCode.cmd, code[i].OpCode);
             Assert.AreEqual(2, code[i].Arguments);
-            Assert.AreEqual(Prexonite.Commands.Core.Operators.BitwiseOr.DefaultAlias, code[i++].Id);
+            Assert.AreEqual(BitwiseOr.DefaultAlias, code[i++].Id);
             Assert.AreEqual(OpCode.cmd, code[i].OpCode);
             Assert.AreEqual(2, code[i].Arguments);
-            Assert.AreEqual(Prexonite.Commands.Core.Operators.BitwiseAnd.DefaultAlias, code[i++].Id);
+            Assert.AreEqual(BitwiseAnd.DefaultAlias, code[i++].Id);
             Assert.AreEqual(OpCode.cmd, code[i].OpCode);
             Assert.AreEqual(2, code[i].Arguments);
-            Assert.AreEqual(Prexonite.Commands.Core.Operators.ExclusiveOr.DefaultAlias, code[i++].Id);
+            Assert.AreEqual(ExclusiveOr.DefaultAlias, code[i++].Id);
             //other nullary instructions
             Assert.AreEqual(OpCode.check_arg, code[i++].OpCode);
             Assert.AreEqual(OpCode.cast_arg, code[i++].OpCode);
@@ -705,7 +718,7 @@ function func1() does asm
             Assert.AreEqual(OpCode.ret_exit, code[i++].OpCode);
         }
 
-        [Test()]
+        [Test]
         public void AsmIdInstructions()
         {
             const string input1 =
@@ -727,14 +740,14 @@ function func1 does asm
     cast.const      Int
 }
 ";
-            LoaderOptions opt = new LoaderOptions(engine, target);
+            var opt = new LoaderOptions(engine, target);
             opt.UseIndicesLocally = false;
-            Loader ldr = new Loader(opt);
+            var ldr = new Loader(opt);
             ldr.LoadFromString(input1);
             Assert.AreEqual(0, ldr.ErrorCount, "There were errors during compilation.");
 
-            List<Instruction> code = target.Functions["func1"].Code;
-            int i = 0;
+            var code = target.Functions["func1"].Code;
+            var i = 0;
 
             Assert.AreEqual(OpCode.ldc_string, code[i].OpCode);
             Assert.AreEqual("Hello World", code[i++].Id);
@@ -770,7 +783,7 @@ function func1 does asm
             Assert.AreEqual("Int", code[i++].Id);
         }
 
-        [Test()]
+        [Test]
         public void AsmSpecialInstructions()
         {
             const string input1 =
@@ -787,14 +800,14 @@ function func1(param1)  [ key value; ] does asm
     inda.0
 }
 ";
-            LoaderOptions opt = new LoaderOptions(engine, target);
+            var opt = new LoaderOptions(engine, target);
             opt.UseIndicesLocally = false;
-            Loader ldr = new Loader(opt);
+            var ldr = new Loader(opt);
             ldr.LoadFromString(input1);
             Assert.AreEqual(0, ldr.ErrorCount, "There were errors during compilation.");
 
-            List<Instruction> code = target.Functions["func1"].Code;
-            int i = 0;
+            var code = target.Functions["func1"].Code;
+            var i = 0;
 
             Assert.AreEqual(OpCode.rot, code[i].OpCode);
             Assert.AreEqual(2, code[i].Arguments);
@@ -823,7 +836,7 @@ function func1(param1)  [ key value; ] does asm
             Assert.AreEqual(0, code[i++].Arguments);
         }
 
-        [Test()]
+        [Test]
         public void AsmIdArgInstructions()
         {
             const string input1 =
@@ -841,14 +854,14 @@ function func1 does asm
     indglob.3   anotherFunction
 }
 ";
-            LoaderOptions opt = new LoaderOptions(engine, target);
+            var opt = new LoaderOptions(engine, target);
             opt.UseIndicesLocally = false;
-            Loader ldr = new Loader(opt);
+            var ldr = new Loader(opt);
             ldr.LoadFromString(input1);
             Assert.AreEqual(0, ldr.ErrorCount, "There were errors during compilation.");
 
-            List<Instruction> code = target.Functions["func1"].Code;
-            int i = 0;
+            var code = target.Functions["func1"].Code;
+            var i = 0;
 
             Assert.AreEqual(OpCode.newobj, code[i].OpCode);
             Assert.AreEqual("Object(\"System.Text.StringBuilder\")", code[i].Id);
@@ -887,7 +900,7 @@ function func1 does asm
             Assert.AreEqual(3, code[i++].Arguments);
         }
 
-        [Test()]
+        [Test]
         public void AsmIntInstructions()
         {
             const string input1 =
@@ -902,14 +915,14 @@ function func1 does asm
     dup     10          //5
 }
 ";
-            LoaderOptions opt = new LoaderOptions(engine, target);
+            var opt = new LoaderOptions(engine, target);
             opt.UseIndicesLocally = false;
-            Loader ldr = new Loader(opt);
+            var ldr = new Loader(opt);
             ldr.LoadFromString(input1);
             Assert.AreEqual(0, ldr.ErrorCount, "Errors during compilation.");
 
-            List<Instruction> code = target.Functions["func1"].Code;
-            int i = 0;
+            var code = target.Functions["func1"].Code;
+            var i = 0;
 
             Assert.AreEqual(OpCode.ldc_int, code[i].OpCode);
             Assert.AreEqual(1, code[i++].Arguments);
@@ -930,7 +943,7 @@ function func1 does asm
             Assert.AreEqual(10, code[i++].Arguments);
         }
 
-        [Test()]
+        [Test]
         public void AsmLabelsAndJumps()
         {
             const string input1 =
@@ -958,13 +971,13 @@ function func1 does asm
     label       endwhile0
 }
 ";
-            LoaderOptions opt = new LoaderOptions(engine, target);
+            var opt = new LoaderOptions(engine, target);
             opt.UseIndicesLocally = false;
-            Loader ldr = new Loader(opt);
+            var ldr = new Loader(opt);
             ldr.LoadFromString(input1);
             Assert.AreEqual(0, ldr.ErrorCount, "Errors during compilation.");
 
-            List<Instruction> code = target.Functions["func1"].Code;
+            var code = target.Functions["func1"].Code;
 
             Assert.AreEqual(OpCode.jump, code[0].OpCode);
             Assert.AreEqual(14, code[0].Arguments);
@@ -983,7 +996,7 @@ function func1 does asm
             Assert.AreEqual(14, code[9].Arguments);
         }
 
-        [Test()]
+        [Test]
         public void AsmBugNullFollwedByInteger()
         {
             _compile(@"
@@ -1009,46 +1022,55 @@ var d as e, f;
 
 ");
 
-            Assert.IsTrue(target.Variables.ContainsKey("a"),"Variable a must exist.");
-            Assert.IsFalse(target.Variables.ContainsKey("b"),"No Variable b must exist.");
+            Assert.IsTrue(target.Variables.ContainsKey("a"), "Variable a must exist.");
+            Assert.IsFalse(target.Variables.ContainsKey("b"), "No Variable b must exist.");
             Assert.IsFalse(target.Variables.ContainsKey("c"), "No Variable c must exist.");
             Assert.IsTrue(target.Variables.ContainsKey("d"), "Variable d must exist.");
             Assert.IsFalse(target.Variables.ContainsKey("e"), "No Variable e must exist.");
             Assert.IsFalse(target.Variables.ContainsKey("f"), "No Variable f must exist.");
 
 
-            Assert.IsTrue(ldr.Symbols.ContainsKey("a"),"Symbol a must exist.");
+            Assert.IsTrue(ldr.Symbols.ContainsKey("a"), "Symbol a must exist.");
             var a = ldr.Symbols["a"];
-            Assert.IsTrue(a.Interpretation == SymbolInterpretations.GlobalObjectVariable,"Symbol a must be global object variable.");
+            Assert.IsTrue(a.Interpretation == SymbolInterpretations.GlobalObjectVariable,
+                "Symbol a must be global object variable.");
 
             Assert.IsTrue(ldr.Symbols.ContainsKey("b"), "Symbol b must exist.");
             var b = ldr.Symbols["b"];
-            Assert.IsTrue(b.Interpretation == SymbolInterpretations.GlobalObjectVariable, "Symbol b must be global object variable.");
-            Assert.IsTrue(target.Variables.ContainsKey(b.Id),"Symbol b must point to a physical variable.");
+            Assert.IsTrue(b.Interpretation == SymbolInterpretations.GlobalObjectVariable,
+                "Symbol b must be global object variable.");
+            Assert.IsTrue(target.Variables.ContainsKey(b.Id),
+                "Symbol b must point to a physical variable.");
 
             Assert.IsTrue(ldr.Symbols.ContainsKey("c"), "Symbol c must exist.");
             var c = ldr.Symbols["c"];
-            Assert.IsTrue(c.Interpretation == SymbolInterpretations.GlobalObjectVariable, "Symbol c must be global object variable.");
-            Assert.IsTrue(target.Variables.ContainsKey(c.Id), "Symbol c must point to a physical variable.");   
+            Assert.IsTrue(c.Interpretation == SymbolInterpretations.GlobalObjectVariable,
+                "Symbol c must be global object variable.");
+            Assert.IsTrue(target.Variables.ContainsKey(c.Id),
+                "Symbol c must point to a physical variable.");
             Assert.IsTrue(b.Id == c.Id, "Symbols b and c must point to the same variable.");
 
             Assert.IsTrue(ldr.Symbols.ContainsKey("d"), "Symbol d must exist.");
             var d = ldr.Symbols["d"];
-            Assert.IsTrue(d.Interpretation == SymbolInterpretations.GlobalObjectVariable, "Symbol d must be global object variable.");
+            Assert.IsTrue(d.Interpretation == SymbolInterpretations.GlobalObjectVariable,
+                "Symbol d must be global object variable.");
 
             Assert.IsTrue(ldr.Symbols.ContainsKey("e"), "Symbol e must exist.");
             var e = ldr.Symbols["e"];
-            Assert.IsTrue(e.Interpretation == SymbolInterpretations.GlobalObjectVariable, "Symbol e must be global object variable.");
-            Assert.IsTrue(target.Variables.ContainsKey(e.Id), "Symbol e must point to a physical variable.");
+            Assert.IsTrue(e.Interpretation == SymbolInterpretations.GlobalObjectVariable,
+                "Symbol e must be global object variable.");
+            Assert.IsTrue(target.Variables.ContainsKey(e.Id),
+                "Symbol e must point to a physical variable.");
 
             Assert.IsTrue(ldr.Symbols.ContainsKey("f"), "Symbol f must exist.");
             var f = ldr.Symbols["f"];
-            Assert.IsTrue(f.Interpretation == SymbolInterpretations.GlobalObjectVariable, "Symbol f must be global object variable.");
-            Assert.IsTrue(target.Variables.ContainsKey(f.Id), "Symbol f must point to a physical variable.");
+            Assert.IsTrue(f.Interpretation == SymbolInterpretations.GlobalObjectVariable,
+                "Symbol f must be global object variable.");
+            Assert.IsTrue(target.Variables.ContainsKey(f.Id),
+                "Symbol f must point to a physical variable.");
             Assert.IsTrue(e.Id == f.Id, "Symbols e and f must point to the same variable.");
 
-            Assert.IsTrue(e.Id == "d","Symbols e and f must point to variable d");
+            Assert.IsTrue(e.Id == "d", "Symbols e and f must point to variable d");
         }
-
     }
 }

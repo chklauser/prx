@@ -1,30 +1,17 @@
-/*
- * Prx, a standalone command line interface to the Prexonite scripting engine.
- * Prexonite, a scripting engine (Scripting Language -> Bytecode -> Virtual Machine)
- *  Copyright (C) 2007  Christian "SealedSun" Klauser
- *  E-mail  sealedsun a.t gmail d.ot com
- *  Web     http://www.sealedsun.ch/
- *
- *  This program is free software; you can redistribute it and/or modify
- *  it under the terms of the GNU General Public License as published by
- *  the Free Software Foundation; either version 2 of the License, or
- *  (at your option) any later version.
- *
- *  Please contact me (sealedsun a.t gmail do.t com) if you need a different license.
- * 
- *  This program is distributed in the hope that it will be useful,
- *  but WITHOUT ANY WARRANTY; without even the implied warranty of
- *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- *  GNU General Public License for more details.
- *
- *  You should have received a copy of the GNU General Public License along
- *  with this program; if not, write to the Free Software Foundation, Inc.,
- *  51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
- */
-
+// Prexonite
+// 
+// Copyright (c) 2011, Christian Klauser
+// All rights reserved.
+// 
+// Redistribution and use in source and binary forms, with or without modification, are permitted provided that the following conditions are met:
+// 
+//     Redistributions of source code must retain the above copyright notice, this list of conditions and the following disclaimer.
+//     Redistributions in binary form must reproduce the above copyright notice, this list of conditions and the following disclaimer in the documentation and/or other materials provided with the distribution.
+//     The names of the contributors may be used to endorse or promote products derived from this software without specific prior written permission.
+// 
+// THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT HOLDER OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 using System;
-using System.Collections.Generic;
 using System.Linq;
 using System.Reflection.Emit;
 using Prexonite.Compiler.Cil;
@@ -33,37 +20,41 @@ using Prexonite.Types;
 namespace Prexonite.Commands.Core
 {
     /// <summary>
-    /// Unbinds a variable from closures using it.
+    ///     Unbinds a variable from closures using it.
     /// </summary>
-    /// <example><code>function main()
-    /// {
-    ///     var n = 15;
-    ///     function f1()
-    ///     {
+    /// <example>
+    ///     <code>function main()
+    ///         {
+    ///         var n = 15;
+    ///         function f1()
+    ///         {
     ///         while(n > 4)
-    ///             println(n--);
-    ///     }
+    ///         println(n--);
+    ///         }
     ///     
-    ///     f1();
-    ///     println(n); //"4"
+    ///         f1();
+    ///         println(n); //"4"
     /// 
-    ///     n = 13;
-    ///     unbind(->n);
-    ///     f1();
-    ///     println(n); //"13"
-    /// }</code>After the call to unbind, $n does no longer 
-    /// refer to the same variable as the closure but 
-    /// still represents the same value.</example>
-    /// <remarks><para>What unbind does, is to copy the contents of the 
-    /// supplied variable to a new memory location and associate 
-    /// all references <b>inside the calling function</b> with this 
-    /// new memory location. Should a function create two closures before 
-    /// calling unbind on a shared variable, those two closures will still 
-    /// use the same memory location. Only the references in the calling 
-    /// function change.</para>
-    /// <para>Important: that the value of the variable remains untouched. 
-    /// The <see cref="PValue"/> object reference is just copied to 
-    /// the new memory location.</para></remarks>
+    ///         n = 13;
+    ///         unbind(->n);
+    ///         f1();
+    ///         println(n); //"13"
+    ///         }</code>After the call to unbind, $n does no longer 
+    ///     refer to the same variable as the closure but 
+    ///     still represents the same value.
+    /// </example>
+    /// <remarks>
+    ///     <para>What unbind does, is to copy the contents of the 
+    ///         supplied variable to a new memory location and associate 
+    ///         all references <b>inside the calling function</b> with this 
+    ///         new memory location. Should a function create two closures before 
+    ///         calling unbind on a shared variable, those two closures will still 
+    ///         use the same memory location. Only the references in the calling 
+    ///         function change.</para>
+    ///     <para>Important: that the value of the variable remains untouched. 
+    ///         The <see cref = "PValue" /> object reference is just copied to 
+    ///         the new memory location.</para>
+    /// </remarks>
     public sealed class Unbind : PCommand, ICilCompilerAware, ICilExtension
     {
         private Unbind()
@@ -78,13 +69,15 @@ namespace Prexonite.Commands.Core
         }
 
         /// <summary>
-        /// Executes the unbind command on each of the arguments supplied.
+        ///     Executes the unbind command on each of the arguments supplied.
         /// </summary>
-        /// <param name="sctx">The <see cref="FunctionContext"/> to modify.</param>
-        /// <param name="args">A list of local variable names or references.</param>
+        /// <param name = "sctx">The <see cref = "FunctionContext" /> to modify.</param>
+        /// <param name = "args">A list of local variable names or references.</param>
         /// <returns>Always {~Null}.</returns>
-        /// <remarks>Each of the supplied arguments is processed individually.</remarks>
-        /// <exception cref="ArgumentNullException">args is null</exception>
+        /// <remarks>
+        ///     Each of the supplied arguments is processed individually.
+        /// </remarks>
+        /// <exception cref = "ArgumentNullException">args is null</exception>
         public override PValue Run(StackContext sctx, PValue[] args)
         {
             if (args == null)
@@ -95,17 +88,17 @@ namespace Prexonite.Commands.Core
         }
 
         /// <summary>
-        /// Executes the unbind command on a <see cref="PValue"/> argument.
-        ///  The argument must either be the variable's name as a string or a 
-        /// reference to the <see cref="PVariable"/> object.
+        ///     Executes the unbind command on a <see cref = "PValue" /> argument.
+        ///     The argument must either be the variable's name as a string or a 
+        ///     reference to the <see cref = "PVariable" /> object.
         /// </summary>
-        /// <param name="sctx">The <see cref="FunctionContext"/> to modify.</param>
-        /// <param name="arg">A variable reference or name.</param>
+        /// <param name = "sctx">The <see cref = "FunctionContext" /> to modify.</param>
+        /// <param name = "arg">A variable reference or name.</param>
         /// <returns>Always {~Null}</returns>
-        /// <exception cref="ArgumentNullException"><paramref name="sctx"/> is null</exception>
-        /// <exception cref="ArgumentNullException"><paramref name="arg"/> is null</exception>
-        /// <exception cref="PrexoniteException"><paramref name="arg"/> contains null</exception>
-        /// <exception cref="PrexoniteException"><paramref name="sctx"/> is not a <see cref="FunctionContext"/></exception>
+        /// <exception cref = "ArgumentNullException"><paramref name = "sctx" /> is null</exception>
+        /// <exception cref = "ArgumentNullException"><paramref name = "arg" /> is null</exception>
+        /// <exception cref = "PrexoniteException"><paramref name = "arg" /> contains null</exception>
+        /// <exception cref = "PrexoniteException"><paramref name = "sctx" /> is not a <see cref = "FunctionContext" /></exception>
         public static PValue Run(StackContext sctx, PValue arg)
         {
             if (sctx == null)
@@ -130,7 +123,7 @@ namespace Prexonite.Commands.Core
                 id = (from pair in fctx.LocalVariables
                       where ReferenceEquals(pair.Value, arg.Value)
                       select pair.Key
-                     ).FirstOrDefault();
+                    ).FirstOrDefault();
             }
             else
             {
@@ -156,7 +149,6 @@ namespace Prexonite.Commands.Core
 
         public void ImplementInCil(CompilerState state, Instruction ins)
         {
-            
             throw new NotSupportedException();
         }
 
@@ -167,20 +159,28 @@ namespace Prexonite.Commands.Core
         bool ICilExtension.ValidateArguments(CompileTimeValue[] staticArgv, int dynamicArgc)
         {
             return dynamicArgc == 0
-                   && staticArgv.All(arg => arg.Interpretation == CompileTimeInterpretation.LocalVariableReference);
+                &&
+                staticArgv.All(
+                    arg => arg.Interpretation == CompileTimeInterpretation.LocalVariableReference);
         }
 
-        void ICilExtension.Implement(CompilerState state, Instruction ins, CompileTimeValue[] staticArgv, int dynamicArgc)
+        void ICilExtension.Implement(CompilerState state, Instruction ins,
+            CompileTimeValue[] staticArgv, int dynamicArgc)
         {
             foreach (var compileTimeValue in staticArgv)
             {
                 string localVariableId;
-                if(!compileTimeValue.TryGetLocalVariableReference(out localVariableId))
-                    throw new ArgumentException("CIL implementation of Core.Unbind command only accepts local variable references.","staticArgv");
+                if (!compileTimeValue.TryGetLocalVariableReference(out localVariableId))
+                    throw new ArgumentException(
+                        "CIL implementation of Core.Unbind command only accepts local variable references.",
+                        "staticArgv");
 
                 Symbol symbol;
-                if(!state.Symbols.TryGetValue(localVariableId, out symbol) || symbol.Kind != SymbolKind.LocalRef)
-                    throw new PrexoniteException("CIL implementation of Core.Unbind cannot find local explicit variable " + localVariableId);
+                if (!state.Symbols.TryGetValue(localVariableId, out symbol) ||
+                    symbol.Kind != SymbolKind.LocalRef)
+                    throw new PrexoniteException(
+                        "CIL implementation of Core.Unbind cannot find local explicit variable " +
+                            localVariableId);
 
                 //Create new PVariable
                 state.Il.Emit(OpCodes.Newobj, Compiler.Cil.Compiler.NewPVariableCtor);
@@ -194,7 +194,7 @@ namespace Prexonite.Commands.Core
                 state.EmitStoreLocal(symbol.Local);
             }
 
-            if(!ins.JustEffect)
+            if (!ins.JustEffect)
                 state.EmitLoadNullAsPValue();
         }
 
