@@ -31,6 +31,7 @@ using System.Diagnostics;
 using System.Diagnostics.CodeAnalysis;
 using System.IO;
 using System.Reflection;
+using System.Security.AccessControl;
 using System.Text;
 using Prexonite.Commands;
 using Prexonite.Commands.Concurrency;
@@ -686,7 +687,13 @@ namespace Prexonite.Compiler
                 throw new ArgumentNullException("file");
             _loadedFiles.Add(file.FullName);
             _loadPaths.Push(file.DirectoryName);
-            using (Stream str = new FileStream(file.FullName, FileMode.Open))
+            using (Stream str = new FileStream(
+                file.FullName, 
+                FileMode.Open,
+                FileSystemRights.ReadData,
+                FileShare.Read,
+                4*1024,
+                FileOptions.SequentialScan))
             {
 #if DEBUG
                 var indent = new StringBuilder(_load_indent);
