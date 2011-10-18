@@ -3,13 +3,26 @@
 // Copyright (c) 2011, Christian Klauser
 // All rights reserved.
 // 
-// Redistribution and use in source and binary forms, with or without modification, are permitted provided that the following conditions are met:
+// Redistribution and use in source and binary forms, with or without modification, 
+//  are permitted provided that the following conditions are met:
 // 
-//     Redistributions of source code must retain the above copyright notice, this list of conditions and the following disclaimer.
-//     Redistributions in binary form must reproduce the above copyright notice, this list of conditions and the following disclaimer in the documentation and/or other materials provided with the distribution.
-//     The names of the contributors may be used to endorse or promote products derived from this software without specific prior written permission.
+//     Redistributions of source code must retain the above copyright notice, 
+//          this list of conditions and the following disclaimer.
+//     Redistributions in binary form must reproduce the above copyright notice, 
+//          this list of conditions and the following disclaimer in the 
+//          documentation and/or other materials provided with the distribution.
+//     The names of the contributors may be used to endorse or 
+//          promote products derived from this software without specific prior written permission.
 // 
-// THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT HOLDER OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+// THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND 
+//  ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED 
+//  WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED. 
+//  IN NO EVENT SHALL THE COPYRIGHT HOLDER OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT, 
+//  INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES 
+//  (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, 
+//  DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, 
+//  WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING 
+//  IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 using System;
 using System.Collections.Generic;
@@ -939,7 +952,8 @@ namespace Prexonite
         ///     Performs the addition of the instance as the left operand and the supplied <paramref name = "rightOperand" /> as the right operand.
         ///     This method first gives the left operand's <see cref = "Type" /> the chance to carry out the addition. Should that fail, the right operands <see
         ///      cref = "Type" /> is used.
-        ///     In case neither the left nor the right operand's type can handle the operation, an <see cref = "InvalidCallException" /> is thrown.
+        ///     In case neither the left nor the right operand's type can handle the operation, an <see
+        ///      cref = "InvalidCallException" /> is thrown.
         ///     You should use <see cref = "Addition(StackContext,PValue,out PValue)" /> whenever possible to prevent <see
         ///      cref = "InvalidCallException">InvalidCallExceptions</see> from being thrown too often.
         /// </summary>
@@ -967,7 +981,8 @@ namespace Prexonite
         ///     Performs the subtraction of the instance as the left operand and the supplied <paramref name = "rightOperand" /> as the right operand.
         ///     This method first gives the left operand's <see cref = "Type" /> the chance to carry out the subtraction. Should that fail, the right operands <see
         ///      cref = "Type" /> is used.
-        ///     In case neither the left nor the right operand's type can handle the operation, an <see cref = "InvalidCallException" /> is thrown.
+        ///     In case neither the left nor the right operand's type can handle the operation, an <see
+        ///      cref = "InvalidCallException" /> is thrown.
         ///     You should use <see cref = "Subtraction(StackContext,PValue,out PValue)" /> whenever possible to prevent <see
         ///      cref = "InvalidCallException">InvalidCallExceptions</see> from being thrown too often.
         /// </summary>
@@ -995,7 +1010,8 @@ namespace Prexonite
         ///     Performs the multiplication of the instance as the left operand and the supplied <paramref name = "rightOperand" /> as the right operand.
         ///     This method first gives the left operand's <see cref = "Type" /> the chance to carry out the multiplication. Should that fail, the right operands <see
         ///      cref = "Type" /> is used.
-        ///     In case neither the left nor the right operand's type can handle the operation, an <see cref = "InvalidCallException" /> is thrown.
+        ///     In case neither the left nor the right operand's type can handle the operation, an <see
+        ///      cref = "InvalidCallException" /> is thrown.
         ///     You should use <see cref = "Multiply(StackContext,PValue,out PValue)" /> whenever possible to prevent <see
         ///      cref = "InvalidCallException">InvalidCallExceptions</see> from being thrown too often.
         /// </summary>
@@ -1023,7 +1039,8 @@ namespace Prexonite
         ///     Performs the division of the instance as the left operand and the supplied <paramref name = "rightOperand" /> as the right operand.
         ///     This method first gives the left operand's <see cref = "Type" /> the chance to carry out the division. Should that fail, the right operands <see
         ///      cref = "Type" /> is used.
-        ///     In case neither the left nor the right operand's type can handle the operation, an <see cref = "InvalidCallException" /> is thrown.
+        ///     In case neither the left nor the right operand's type can handle the operation, an <see
+        ///      cref = "InvalidCallException" /> is thrown.
         ///     You should use <see cref = "Division(StackContext,PValue,out PValue)" /> whenever possible to prevent <see
         ///      cref = "InvalidCallException">InvalidCallExceptions</see> from being thrown too often.
         /// </summary>
@@ -1051,7 +1068,8 @@ namespace Prexonite
         ///     Performs the modulus division of the instance as the left operand and the supplied <paramref name = "rightOperand" /> as the right operand.
         ///     This method first gives the left operand's <see cref = "Type" /> the chance to carry out the modulus division. Should that fail, the right operands <see
         ///      cref = "Type" /> is used.
-        ///     In case neither the left nor the right operand's type can handle the operation, an <see cref = "InvalidCallException" /> is thrown.
+        ///     In case neither the left nor the right operand's type can handle the operation, an <see
+        ///      cref = "InvalidCallException" /> is thrown.
         ///     You should use <see cref = "Modulus(StackContext,PValue,out PValue)" /> whenever possible to prevent <see
         ///      cref = "InvalidCallException">InvalidCallExceptions</see> from being thrown too often.
         /// </summary>
@@ -1079,7 +1097,8 @@ namespace Prexonite
         ///     Performs the bitwise AND operation on the instance as the left operand and the supplied <paramref name = "rightOperand" /> as the right operand.
         ///     This method first gives the left operand's <see cref = "Type" /> the chance to carry out the bitwise AND operation. Should that fail, the right operands <see
         ///      cref = "Type" /> is used.
-        ///     In case neither the left nor the right operand's type can handle the operation, an <see cref = "InvalidCallException" /> is thrown.
+        ///     In case neither the left nor the right operand's type can handle the operation, an <see
+        ///      cref = "InvalidCallException" /> is thrown.
         ///     You should use <see cref = "BitwiseAnd(StackContext,PValue,out PValue)" /> whenever possible to prevent <see
         ///      cref = "InvalidCallException">InvalidCallExceptions</see> from being thrown too often.
         /// </summary>
@@ -1107,7 +1126,8 @@ namespace Prexonite
         ///     Performs the bitwise OR operation on the instance as the left operand and the supplied <paramref name = "rightOperand" /> as the right operand.
         ///     This method first gives the left operand's <see cref = "Type" /> the chance to carry out the bitwise OR operation. Should that fail, the right operands <see
         ///      cref = "Type" /> is used.
-        ///     In case neither the left nor the right operand's type can handle the operation, an <see cref = "InvalidCallException" /> is thrown.
+        ///     In case neither the left nor the right operand's type can handle the operation, an <see
+        ///      cref = "InvalidCallException" /> is thrown.
         ///     You should use <see cref = "BitwiseOr(StackContext,PValue,out PValue)" /> whenever possible to prevent <see
         ///      cref = "InvalidCallException">InvalidCallExceptions</see> from being thrown too often.
         /// </summary>
@@ -1135,7 +1155,8 @@ namespace Prexonite
         ///     Performs the bitwise XOR operation on the instance as the left operand and the supplied <paramref name = "rightOperand" /> as the right operand.
         ///     This method first gives the left operand's <see cref = "Type" /> the chance to carry out the bitwise XOR operation. Should that fail, the right operands <see
         ///      cref = "Type" /> is used.
-        ///     In case neither the left nor the right operand's type can handle the operation, an <see cref = "InvalidCallException" /> is thrown.
+        ///     In case neither the left nor the right operand's type can handle the operation, an <see
+        ///      cref = "InvalidCallException" /> is thrown.
         ///     You should use <see cref = "ExclusiveOr(StackContext,PValue,out PValue)" /> whenever possible to prevent <see
         ///      cref = "InvalidCallException">InvalidCallExceptions</see> from being thrown too often.
         /// </summary>
@@ -1163,7 +1184,8 @@ namespace Prexonite
         ///     Tests the instance as the left operand and the supplied <paramref name = "rightOperand" /> as the right operand for equality.
         ///     This method first gives the left operand's <see cref = "Type" /> the chance to carry out the test for equality. Should that fail, the right operands <see
         ///      cref = "Type" /> is used.
-        ///     In case neither the left nor the right operand's type can handle the operation, an <see cref = "InvalidCallException" /> is thrown.
+        ///     In case neither the left nor the right operand's type can handle the operation, an <see
+        ///      cref = "InvalidCallException" /> is thrown.
         ///     You should use <see cref = "Equality(StackContext,PValue,out PValue)" /> whenever possible to prevent <see
         ///      cref = "InvalidCallException">InvalidCallExceptions</see> from being thrown too often.
         /// </summary>
@@ -1191,7 +1213,8 @@ namespace Prexonite
         ///     Tests the instance as the left operand and the supplied <paramref name = "rightOperand" /> as the right operand for inequality.
         ///     This method first gives the left operand's <see cref = "Type" /> the chance to carry out the test for inequality. Should that fail, the right operands <see
         ///      cref = "Type" /> is used.
-        ///     In case neither the left nor the right operand's type can handle the operation, an <see cref = "InvalidCallException" /> is thrown.
+        ///     In case neither the left nor the right operand's type can handle the operation, an <see
+        ///      cref = "InvalidCallException" /> is thrown.
         ///     You should use <see cref = "Inequality(StackContext,PValue,out PValue)" /> whenever possible to prevent <see
         ///      cref = "InvalidCallException">InvalidCallExceptions</see> from being thrown too often.
         /// </summary>
@@ -1219,7 +1242,8 @@ namespace Prexonite
         ///     Tests if the instance as the left operand is greater than the supplied <paramref name = "rightOperand" /> as the right operand.
         ///     This method first gives the left operand's <see cref = "Type" /> the chance to carry out the greater than-test. Should that fail, the right operands <see
         ///      cref = "Type" /> is used.
-        ///     In case neither the left nor the right operand's type can handle the operation, an <see cref = "InvalidCallException" /> is thrown.
+        ///     In case neither the left nor the right operand's type can handle the operation, an <see
+        ///      cref = "InvalidCallException" /> is thrown.
         ///     You should use <see cref = "GreaterThan(StackContext,PValue,out PValue)" /> whenever possible to prevent <see
         ///      cref = "InvalidCallException">InvalidCallExceptions</see> from being thrown too often.
         /// </summary>
@@ -1247,7 +1271,8 @@ namespace Prexonite
         ///     Tests if the instance as the left operand is greater than or equal the supplied <paramref name = "rightOperand" /> as the right operand.
         ///     This method first gives the left operand's <see cref = "Type" /> the chance to carry out the greater than or equal-test. Should that fail, the right operands <see
         ///      cref = "Type" /> is used.
-        ///     In case neither the left nor the right operand's type can handle the operation, an <see cref = "InvalidCallException" /> is thrown.
+        ///     In case neither the left nor the right operand's type can handle the operation, an <see
+        ///      cref = "InvalidCallException" /> is thrown.
         ///     You should use <see cref = "GreaterThanOrEqual(StackContext,PValue,out PValue)" /> whenever possible to prevent <see
         ///      cref = "InvalidCallException">InvalidCallExceptions</see> from being thrown too often.
         /// </summary>
@@ -1275,7 +1300,8 @@ namespace Prexonite
         ///     Tests if the instance as the left operand is less than the supplied <paramref name = "rightOperand" /> as the right operand.
         ///     This method first gives the left operand's <see cref = "Type" /> the chance to carry out the less than-test. Should that fail, the right operands <see
         ///      cref = "Type" /> is used.
-        ///     In case neither the left nor the right operand's type can handle the operation, an <see cref = "InvalidCallException" /> is thrown.
+        ///     In case neither the left nor the right operand's type can handle the operation, an <see
+        ///      cref = "InvalidCallException" /> is thrown.
         ///     You should use <see cref = "LessThan(StackContext,PValue,out PValue)" /> whenever possible to prevent <see
         ///      cref = "InvalidCallException">InvalidCallExceptions</see> from being thrown too often.
         /// </summary>
@@ -1303,7 +1329,8 @@ namespace Prexonite
         ///     Tests if the instance as the left operand is less than the supplied <paramref name = "rightOperand" /> as the right operand.
         ///     This method first gives the left operand's <see cref = "Type" /> the chance to carry out the less than-test. Should that fail, the right operands <see
         ///      cref = "Type" /> is used.
-        ///     In case neither the left nor the right operand's type can handle the operation, an <see cref = "InvalidCallException" /> is thrown.
+        ///     In case neither the left nor the right operand's type can handle the operation, an <see
+        ///      cref = "InvalidCallException" /> is thrown.
         ///     You should use <see cref = "LessThanOrEqual(StackContext,PValue,out PValue)" /> whenever possible to prevent <see
         ///      cref = "InvalidCallException">InvalidCallExceptions</see> from being thrown too often.
         /// </summary>
