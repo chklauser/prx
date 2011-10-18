@@ -1,10 +1,34 @@
-﻿using System;
+﻿// Prexonite
+// 
+// Copyright (c) 2011, Christian Klauser
+// All rights reserved.
+// 
+// Redistribution and use in source and binary forms, with or without modification, 
+//  are permitted provided that the following conditions are met:
+// 
+//     Redistributions of source code must retain the above copyright notice, 
+//          this list of conditions and the following disclaimer.
+//     Redistributions in binary form must reproduce the above copyright notice, 
+//          this list of conditions and the following disclaimer in the 
+//          documentation and/or other materials provided with the distribution.
+//     The names of the contributors may be used to endorse or 
+//          promote products derived from this software without specific prior written permission.
+// 
+// THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND 
+//  ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED 
+//  WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED. 
+//  IN NO EVENT SHALL THE COPYRIGHT HOLDER OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT, 
+//  INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES 
+//  (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, 
+//  DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, 
+//  WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING 
+//  IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+
+using System;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.Linq;
 using System.Reflection.Emit;
-using System.Text;
-using System.Threading.Tasks;
 using Prexonite.Compiler.Cil.Seh;
 
 namespace Prexonite.Compiler.Cil.Seh
@@ -14,8 +38,8 @@ namespace Prexonite.Compiler.Cil.Seh
 namespace Prexonite.Compiler.Cil
 {
     /// <summary>
-    /// <para>Prepares information required to translate structured exception handling in CIL. Handles implementation of all jump instructions.</para>
-    /// <para>Each instance of <see cref="StructuredExceptionHandling"/> is tied to one <see cref="CompilerState"/> and vice-versa.</para>
+    ///     <para>Prepares information required to translate structured exception handling in CIL. Handles implementation of all jump instructions.</para>
+    ///     <para>Each instance of <see cref = "StructuredExceptionHandling" /> is tied to one <see cref = "CompilerState" /> and vice-versa.</para>
     /// </summary>
     [DebuggerDisplay("SEH for {State}")]
     public sealed class StructuredExceptionHandling
@@ -24,9 +48,9 @@ namespace Prexonite.Compiler.Cil
         private readonly InstructionInfo[] _loci;
 
         /// <summary>
-        /// Creates a new instance of structured exception handling. 
+        ///     Creates a new instance of structured exception handling.
         /// </summary>
-        /// <param name="state">The compiler state, this instance of <see cref="StructuredExceptionHandling"/> is tied to.</param>
+        /// <param name = "state">The compiler state, this instance of <see cref = "StructuredExceptionHandling" /> is tied to.</param>
         internal StructuredExceptionHandling(CompilerState state) : this(state.Source)
         {
             _state = state;
@@ -39,8 +63,8 @@ namespace Prexonite.Compiler.Cil
 
             var regions =
                 source.TryCatchFinallyBlocks
-                .Select(CompiledTryCatchFinallyBlock.Create)
-                .SelectMany(Region.FromBlock).ToList();
+                    .Select(CompiledTryCatchFinallyBlock.Create)
+                    .SelectMany(Region.FromBlock).ToList();
             for (var instructionOffset = 0; instructionOffset < _loci.Length; instructionOffset++)
             {
                 var address = instructionOffset; //make sure that we don't access a modified closure
@@ -53,7 +77,7 @@ namespace Prexonite.Compiler.Cil
         }
 
         /// <summary>
-        /// The compiler state, this instance of <see cref="StructuredExceptionHandling"/> is tied to.
+        ///     The compiler state, this instance of <see cref = "StructuredExceptionHandling" /> is tied to.
         /// </summary>
         public CompilerState State
         {
@@ -62,20 +86,22 @@ namespace Prexonite.Compiler.Cil
         }
 
         /// <summary>
-        /// Determines the handling for a branching instruction, depending on source and target address.
+        ///     Determines the handling for a branching instruction, depending on source and target address.
         /// </summary>
-        /// <param name="sourceAddr">The address of the jump instruction-</param>
-        /// <param name="targetAddr">The address the jump instruction targets</param>
+        /// <param name = "sourceAddr">The address of the jump instruction-</param>
+        /// <param name = "targetAddr">The address the jump instruction targets</param>
         /// <returns>The handling required to implement this jump.</returns>
         public BranchHandling AssessJump(int sourceAddr, int targetAddr)
         {
-            var decisions = (from st in _involvedRegions(_loci[sourceAddr].Regions, _loci[targetAddr].Regions)
-                             select _assesJumpForTwoRegions(st.Item1, st.Item2, sourceAddr, targetAddr));
+            var decisions =
+                (from st in _involvedRegions(_loci[sourceAddr].Regions, _loci[targetAddr].Regions)
+                 select _assesJumpForTwoRegions(st.Item1, st.Item2, sourceAddr, targetAddr));
 
             return decisions.Aggregate(_integrateBranchHandling);
         }
 
-        private static IEnumerable<Tuple<Region,Region>> _involvedRegions(List<Region> source, List<Region> target)
+        private static IEnumerable<Tuple<Region, Region>> _involvedRegions(List<Region> source,
+            List<Region> target)
         {
             //Find common ancestor
             var areParallel = false; //have regions of same try-catch-finally construct
@@ -92,7 +118,7 @@ namespace Prexonite.Compiler.Cil
                         ss = s;
                         tt = t;
                     }
-                    else if(sourceRegion.Block == targetRegion.Block)
+                    else if (sourceRegion.Block == targetRegion.Block)
                     {
                         ss = s;
                         tt = t;
@@ -102,10 +128,10 @@ namespace Prexonite.Compiler.Cil
             }
 
             //Return pairs up to common ancestor
-            for(var s = ss; s >= 0; s--)
+            for (var s = ss; s >= 0; s--)
             {
                 Region sourceRegion;
-                if(s == ss && (!areParallel || s == source.Count))
+                if (s == ss && (!areParallel || s == source.Count))
                     sourceRegion = null;
                 else
                     sourceRegion = source[s];
@@ -139,7 +165,7 @@ namespace Prexonite.Compiler.Cil
             else if (h1 == BranchHandling.EndFinally || h2 == BranchHandling.EndFinally)
                 return BranchHandling.Invalid; //end finally is only compatible with itself
             else if (h1 == BranchHandling.Leave && h2 == BranchHandling.LeaveSkipTry ||
-                     h2 == BranchHandling.Leave && h1 == BranchHandling.LeaveSkipTry)
+                h2 == BranchHandling.Leave && h1 == BranchHandling.LeaveSkipTry)
                 return BranchHandling.LeaveSkipTry;
             else
             {
@@ -151,14 +177,15 @@ namespace Prexonite.Compiler.Cil
             }
         }
 
-        private BranchHandling _assesJumpForTwoRegions(Region sourceRegion, Region targetRegion, int sourceAddr, int targetAddr)
+        private BranchHandling _assesJumpForTwoRegions(Region sourceRegion, Region targetRegion,
+            int sourceAddr, int targetAddr)
         {
-            if(sourceRegion == targetRegion)
+            if (sourceRegion == targetRegion)
                 return BranchHandling.Branch;
 
-            if(sourceRegion == null)
+            if (sourceRegion == null)
             {
-                if(targetRegion == null)
+                if (targetRegion == null)
                     return BranchHandling.Branch;
                 switch (targetRegion.Kind)
                 {
@@ -203,7 +230,7 @@ namespace Prexonite.Compiler.Cil
                             throw new ArgumentOutOfRangeException();
                     }
                 case RegionKind.Catch:
-                    if(targetRegion == null)
+                    if (targetRegion == null)
                         return BranchHandling.Leave;
                     switch (targetRegion.Kind)
                     {
@@ -238,7 +265,8 @@ namespace Prexonite.Compiler.Cil
                         switch (targetRegion.Kind)
                         {
                             case RegionKind.Try:
-                                if (targetAddr == targetRegion.Begin || sourceRegion.IsIn(targetRegion))
+                                if (targetAddr == targetRegion.Begin ||
+                                    sourceRegion.IsIn(targetRegion))
                                     return BranchHandling.Leave;
                                 else
                                     return BranchHandling.Invalid;
@@ -256,16 +284,17 @@ namespace Prexonite.Compiler.Cil
         }
 
         /// <summary>
-        /// Emits the jump or return using the appropriate equivalent in CIL.
+        ///     Emits the jump or return using the appropriate equivalent in CIL.
         /// </summary>
-        /// <param name="sourceAddr">The address where the jump originates (the address of the jump/leave instruction normally)</param>
-        /// <param name="ins">The instruction for this jump. Must be a jump/leave instruction.</param>
-        /// <exception cref="PrexoniteException">when the jump is invalid in CIL (as per <see cref="BranchHandling.Invalid"/>)</exception>
-        /// <exception cref="ArgumentException">when the instruction supplied is not a jump/leave instruction.</exception>
+        /// <param name = "sourceAddr">The address where the jump originates (the address of the jump/leave instruction normally)</param>
+        /// <param name = "ins">The instruction for this jump. Must be a jump/leave instruction.</param>
+        /// <exception cref = "PrexoniteException">when the jump is invalid in CIL (as per <see cref = "BranchHandling.Invalid" />)</exception>
+        /// <exception cref = "ArgumentException">when the instruction supplied is not a jump/leave instruction.</exception>
         public void EmitJump(int sourceAddr, Instruction ins)
         {
-            if(_state == null)
-                throw new InvalidOperationException("Cannot emit code on a SEH instance that is not tied to a compiler state.");
+            if (_state == null)
+                throw new InvalidOperationException(
+                    "Cannot emit code on a SEH instance that is not tied to a compiler state.");
             int targetAddr;
             var returning = false;
             switch (ins.OpCode)
@@ -284,7 +313,8 @@ namespace Prexonite.Compiler.Cil
                     returning = true;
                     break;
                 default:
-                    throw new ArgumentException("The supplied instruction does not involve branching.", "ins");
+                    throw new ArgumentException(
+                        "The supplied instruction does not involve branching.", "ins");
             }
 
             var handling = AssessJump(sourceAddr, targetAddr);
@@ -292,7 +322,7 @@ namespace Prexonite.Compiler.Cil
             switch (handling)
             {
                 case BranchHandling.Branch:
-                    _emitBranch(sourceAddr,targetAddr,ins);
+                    _emitBranch(sourceAddr, targetAddr, ins);
                     break;
                 case BranchHandling.Leave:
                     _emitLeave(sourceAddr, targetAddr, ins);
@@ -302,10 +332,11 @@ namespace Prexonite.Compiler.Cil
                     _emitEndFinally(sourceAddr, ins);
                     break;
                 case BranchHandling.LeaveSkipTry:
-                    _emitLeave(sourceAddr,_loci[sourceAddr].InnerMostRegion.Block.EndTry, ins);
+                    _emitLeave(sourceAddr, _loci[sourceAddr].InnerMostRegion.Block.EndTry, ins);
                     break;
                 case BranchHandling.Invalid:
-                    throw new PrexoniteException("Attempted to compile function with invalid SEH construct");
+                    throw new PrexoniteException(
+                        "Attempted to compile function with invalid SEH construct");
                 default:
                     throw new ArgumentOutOfRangeException();
             }
@@ -369,15 +400,15 @@ namespace Prexonite.Compiler.Cil
             {
                 case OpCode.jump:
                 case OpCode.leave:
-                    _state.Il.Emit(OpCodes.Br,_state.InstructionLabels[targetAddr]);
+                    _state.Il.Emit(OpCodes.Br, _state.InstructionLabels[targetAddr]);
                     break;
                 case OpCode.jump_f:
                     _emitUnboxBool();
-                    _state.Il.Emit(OpCodes.Brfalse,_state.InstructionLabels[targetAddr]);
+                    _state.Il.Emit(OpCodes.Brfalse, _state.InstructionLabels[targetAddr]);
                     break;
                 case OpCode.jump_t:
                     _emitUnboxBool();
-                    _state.Il.Emit(OpCodes.Brtrue,_state.InstructionLabels[targetAddr]);
+                    _state.Il.Emit(OpCodes.Brtrue, _state.InstructionLabels[targetAddr]);
                     break;
                 case OpCode.ret_value:
                     _state.EmitSetReturnValue();
@@ -390,7 +421,7 @@ namespace Prexonite.Compiler.Cil
                 case OpCode.ret_continue:
                     _state._EmitAssignReturnMode(ReturnMode.Continue);
                     goto case OpCode.ret_exit;
-                case OpCode.ret_break: 
+                case OpCode.ret_break:
                     _state._EmitAssignReturnMode(ReturnMode.Break);
                     goto case OpCode.ret_exit;
             }
@@ -427,9 +458,9 @@ namespace Prexonite.Compiler.Cil
         }
 
         /// <summary>
-        /// Returns the try blocks opening at this instruction in reverse order (closest block comes last)
+        ///     Returns the try blocks opening at this instruction in reverse order (closest block comes last)
         /// </summary>
-        /// <param name="address">The address of the instruction.</param>
+        /// <param name = "address">The address of the instruction.</param>
         /// <returns>The try blocks opening at this instruction in reverse order (closest block comes last)</returns>
         public IEnumerable<CompiledTryCatchFinallyBlock> GetOpeningTryBlocks(int address)
         {
@@ -438,7 +469,8 @@ namespace Prexonite.Compiler.Cil
             return _loci[address].OpeningTryBlocks();
         }
 
-        [DebuggerDisplay("{_address}: {Instruction} [Regions: {Regions.Count}, Innermost: {InnerMostRegion}]")]
+        [DebuggerDisplay(
+            "{_address}: {Instruction} [Regions: {Regions.Count}, Innermost: {InnerMostRegion}]")]
         private sealed class InstructionInfo
         {
             private readonly int _address;
@@ -485,7 +517,7 @@ namespace Prexonite.Compiler.Cil
                 [DebuggerStepThrough]
                 get
                 {
-                    if(_seh._state == null)
+                    if (_seh._state == null)
                         return new Instruction(OpCode.nop);
 
                     if (_address >= _seh._state.Source.Code.Count)

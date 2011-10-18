@@ -1,31 +1,35 @@
-// /*
-//  * Prexonite, a scripting engine (Scripting Language -> Bytecode -> Virtual Machine)
-//  *  Copyright (C) 2007  Christian "SealedSun" Klauser
-//  *  E-mail  sealedsun a.t gmail d.ot com
-//  *  Web     http://www.sealedsun.ch/
-//  *
-//  *  This program is free software; you can redistribute it and/or modify
-//  *  it under the terms of the GNU General Public License as published by
-//  *  the Free Software Foundation; either version 2 of the License, or
-//  *  (at your option) any later version.
-//  *
-//  *  Please contact me (sealedsun a.t gmail do.t com) if you need a different license.
-//  * 
-//  *  This program is distributed in the hope that it will be useful,
-//  *  but WITHOUT ANY WARRANTY; without even the implied warranty of
-//  *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-//  *  GNU General Public License for more details.
-//  *
-//  *  You should have received a copy of the GNU General Public License along
-//  *  with this program; if not, write to the Free Software Foundation, Inc.,
-//  *  51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
-//  */
+// Prexonite
+// 
+// Copyright (c) 2011, Christian Klauser
+// All rights reserved.
+// 
+// Redistribution and use in source and binary forms, with or without modification, 
+//  are permitted provided that the following conditions are met:
+// 
+//     Redistributions of source code must retain the above copyright notice, 
+//          this list of conditions and the following disclaimer.
+//     Redistributions in binary form must reproduce the above copyright notice, 
+//          this list of conditions and the following disclaimer in the 
+//          documentation and/or other materials provided with the distribution.
+//     The names of the contributors may be used to endorse or 
+//          promote products derived from this software without specific prior written permission.
+// 
+// THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND 
+//  ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED 
+//  WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED. 
+//  IN NO EVENT SHALL THE COPYRIGHT HOLDER OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT, 
+//  INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES 
+//  (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, 
+//  DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, 
+//  WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING 
+//  IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #region Namespace Imports
 
 using System;
 using System.Collections.Generic;
 using System.Diagnostics;
+using System.Diagnostics.CodeAnalysis;
 using System.Reflection;
 using System.Reflection.Emit;
 using Prexonite.Commands;
@@ -62,18 +66,20 @@ namespace Prexonite.Compiler.Cil
         private string _effectiveArgumentsListId;
 
         /// <summary>
-        /// The name of the arguments list variable.
+        ///     The name of the arguments list variable.
         /// </summary>
         public string EffectiveArgumentsListId
         {
-            get {
+            get
+            {
                 return _effectiveArgumentsListId ??
                     (_effectiveArgumentsListId = PFunction.ArgumentListId);
             }
         }
 
         public CompilerState
-            (PFunction source, Engine targetEngine, ILGenerator il, CompilerPass pass, FunctionLinking linking)
+            (PFunction source, Engine targetEngine, ILGenerator il, CompilerPass pass,
+                FunctionLinking linking)
         {
             if (source == null)
                 throw new ArgumentNullException("source");
@@ -109,7 +115,7 @@ namespace Prexonite.Compiler.Cil
                     switch (hint[0].Text)
                     {
                         case CilExtensionHint.Key:
-                            if(cilExtensionOffsets == null)
+                            if (cilExtensionOffsets == null)
                                 cilExtensionOffsets = new SortedSet<int>();
                             var cilExt = CilExtensionHint.FromMetaEntry(hint);
                             foreach (var offset in cilExt.Offsets)
@@ -120,7 +126,7 @@ namespace Prexonite.Compiler.Cil
                             break;
                     }
                 }
-                if(cilExtensionOffsets != null)
+                if (cilExtensionOffsets != null)
                 {
                     foreach (var offset in cilExtensionOffsets)
                         _cilExtensionOffsets.Enqueue(offset);
@@ -133,7 +139,8 @@ namespace Prexonite.Compiler.Cil
 
         #region Accessors
 
-        [System.Diagnostics.CodeAnalysis.SuppressMessage("Microsoft.Naming", "CA1704:IdentifiersShouldBeSpelledCorrectly", MessageId = "Argc")]
+        [SuppressMessage("Microsoft.Naming", "CA1704:IdentifiersShouldBeSpelledCorrectly",
+            MessageId = "Argc")]
         public LocalBuilder ArgcLocal { get; internal set; }
 
         public PFunction Source
@@ -141,7 +148,8 @@ namespace Prexonite.Compiler.Cil
             get { return _source; }
         }
 
-        [System.Diagnostics.CodeAnalysis.SuppressMessage("Microsoft.Naming", "CA1704:IdentifiersShouldBeSpelledCorrectly", MessageId = "Argv")]
+        [SuppressMessage("Microsoft.Naming", "CA1704:IdentifiersShouldBeSpelledCorrectly",
+            MessageId = "Argv")]
         public LocalBuilder ArgvLocal { get; internal set; }
 
         public ILGenerator Il
@@ -150,7 +158,7 @@ namespace Prexonite.Compiler.Cil
         }
 
         /// <summary>
-        /// Maps from local variable indices to local variable phyical ids
+        ///     Maps from local variable indices to local variable phyical ids
         /// </summary>
         public Dictionary<int, string> IndexMap
         {
@@ -158,8 +166,8 @@ namespace Prexonite.Compiler.Cil
         }
 
         /// <summary>
-        /// <para>Maps from instruction addresses to the corresponding logical labels</para>
-        /// <para>Use these labels to jump to Prexonite Instructions.</para>
+        ///     <para>Maps from instruction addresses to the corresponding logical labels</para>
+        ///     <para>Use these labels to jump to Prexonite Instructions.</para>
         /// </summary>
         public Label[] InstructionLabels
         {
@@ -167,7 +175,7 @@ namespace Prexonite.Compiler.Cil
         }
 
         /// <summary>
-        /// <para>The label that marks the exit of the function. Jump here to return.</para>
+        ///     <para>The label that marks the exit of the function. Jump here to return.</para>
         /// </summary>
         public Label ReturnLabel
         {
@@ -175,17 +183,17 @@ namespace Prexonite.Compiler.Cil
         }
 
         /// <summary>
-        /// The local variable that holds the CIL stack context
+        ///     The local variable that holds the CIL stack context
         /// </summary>
         public LocalBuilder SctxLocal { get; internal set; }
 
         /// <summary>
-        /// <para>The local variable that holds arrays of shared variables immediately before closure instantiation</para>
+        ///     <para>The local variable that holds arrays of shared variables immediately before closure instantiation</para>
         /// </summary>
         public LocalBuilder SharedLocal { get; internal set; }
 
         /// <summary>
-        /// Symbol table for the CIL compiler. See <see cref="Symbol"/> for details.
+        ///     Symbol table for the CIL compiler. See <see cref = "Symbol" /> for details.
         /// </summary>
         public SymbolTable<Symbol> Symbols
         {
@@ -193,7 +201,8 @@ namespace Prexonite.Compiler.Cil
         }
 
         /// <summary>
-        /// <para>Array of temporary variables. They are not preserved across Prexonite instructions. You are free to use them within <see cref="ICilCompilerAware.ImplementInCil"/> or <see cref="ICilExtension.Implement"/></para>.
+        ///     <para>Array of temporary variables. They are not preserved across Prexonite instructions. You are free to use them within <see
+        ///      cref = "ICilCompilerAware.ImplementInCil" /> or <see cref = "ICilExtension.Implement" /></para>.
         /// </summary>
         public LocalBuilder[] TempLocals
         {
@@ -202,7 +211,7 @@ namespace Prexonite.Compiler.Cil
         }
 
         /// <summary>
-        /// The stack of try blocks currently in effect. The innermost try block is on top.
+        ///     The stack of try blocks currently in effect. The innermost try block is on top.
         /// </summary>
         public Stack<CompiledTryCatchFinallyBlock> TryBlocks
         {
@@ -210,7 +219,7 @@ namespace Prexonite.Compiler.Cil
         }
 
         /// <summary>
-        /// The engine in which the function is compiled to CIL. It can be assumed that engine configuration (such as command aliases) will not change anymore.
+        ///     The engine in which the function is compiled to CIL. It can be assumed that engine configuration (such as command aliases) will not change anymore.
         /// </summary>
         public Engine TargetEngine
         {
@@ -218,7 +227,7 @@ namespace Prexonite.Compiler.Cil
         }
 
         /// <summary>
-        /// List of foreach CIL hints associated with this function. 
+        ///     List of foreach CIL hints associated with this function.
         /// </summary>
         internal List<ForeachHint> _ForeachHints
         {
@@ -226,7 +235,7 @@ namespace Prexonite.Compiler.Cil
         }
 
         /// <summary>
-        /// List of addresses where valid CIL extension code begins.
+        ///     List of addresses where valid CIL extension code begins.
         /// </summary>
         internal Queue<int> _CilExtensionOffsets
         {
@@ -237,16 +246,20 @@ namespace Prexonite.Compiler.Cil
         private LocalBuilder _partialApplicationMapping;
 
         /// <summary>
-        /// <para>Local <code>System.Int32[]</code> variable. Used for temporarily holding arguments for partial application constructors.</para>
-        /// <para>Is not guaranteed to retain its value across instructions</para>
+        ///     <para>Local <code>System.Int32[]</code> variable. Used for temporarily holding arguments for partial application constructors.</para>
+        ///     <para>Is not guaranteed to retain its value across instructions</para>
         /// </summary>
         public LocalBuilder PartialApplicationMappingLocal
         {
-            get { return _partialApplicationMapping ?? (_partialApplicationMapping = Il.DeclareLocal(typeof(int[]))); }
+            get
+            {
+                return _partialApplicationMapping ??
+                    (_partialApplicationMapping = Il.DeclareLocal(typeof (int[])));
+            }
         }
 
         /// <summary>
-        /// Represents the engine this context is part of.
+        ///     Represents the engine this context is part of.
         /// </summary>
         public override Engine ParentEngine
         {
@@ -254,7 +267,7 @@ namespace Prexonite.Compiler.Cil
         }
 
         /// <summary>
-        /// The parent application.
+        ///     The parent application.
         /// </summary>
         public override Application ParentApplication
         {
@@ -262,7 +275,7 @@ namespace Prexonite.Compiler.Cil
         }
 
         /// <summary>
-        /// Collection of imported namespaces. Serves the same function as <see cref="StackContext.ImportedNamespaces"/>.
+        ///     Collection of imported namespaces. Serves the same function as <see cref = "StackContext.ImportedNamespaces" />.
         /// </summary>
         public override SymbolCollection ImportedNamespaces
         {
@@ -270,7 +283,7 @@ namespace Prexonite.Compiler.Cil
         }
 
         /// <summary>
-        /// Indicates whether the context still has code/work to do.
+        ///     Indicates whether the context still has code/work to do.
         /// </summary>
         /// <returns>True if the context has additional work to perform in the next cycle, False if it has finished it's work and can be removed from the stack</returns>
         protected override bool PerformNextCycle(StackContext lastContext)
@@ -279,9 +292,9 @@ namespace Prexonite.Compiler.Cil
         }
 
         /// <summary>
-        /// Tries to handle the supplied exception.
+        ///     Tries to handle the supplied exception.
         /// </summary>
-        /// <param name="exc">The exception to be handled.</param>
+        /// <param name = "exc">The exception to be handled.</param>
         /// <returns>True if the exception has been handled, false otherwise.</returns>
         public override bool TryHandleException(Exception exc)
         {
@@ -289,9 +302,9 @@ namespace Prexonite.Compiler.Cil
         }
 
         /// <summary>
-        /// Represents the return value of the context.
-        /// Just providing a value here does not mean that it gets consumed by the caller.
-        /// If the context does not provide a return value, this property should return null (not NullPType).
+        ///     Represents the return value of the context.
+        ///     Just providing a value here does not mean that it gets consumed by the caller.
+        ///     If the context does not provide a return value, this property should return null (not NullPType).
         /// </summary>
         public override PValue ReturnValue
         {
@@ -299,7 +312,7 @@ namespace Prexonite.Compiler.Cil
         }
 
         /// <summary>
-        /// Returns a reference to the current compiler pass.
+        ///     Returns a reference to the current compiler pass.
         /// </summary>
         public CompilerPass Pass
         {
@@ -332,10 +345,11 @@ namespace Prexonite.Compiler.Cil
         #region Emit-helper methods
 
         /// <summary>
-        /// <para>Emits the shortest possible ldc.i4 opcode.</para>
+        ///     <para>Emits the shortest possible ldc.i4 opcode.</para>
         /// </summary>
-        /// <param name="i"></param>
-        [System.Diagnostics.CodeAnalysis.SuppressMessage("Microsoft.Naming", "CA1704:IdentifiersShouldBeSpelledCorrectly", MessageId = "Ldc")]
+        /// <param name = "i"></param>
+        [SuppressMessage("Microsoft.Naming", "CA1704:IdentifiersShouldBeSpelledCorrectly",
+            MessageId = "Ldc")]
         public void EmitLdcI4(int i)
         {
             switch (i)
@@ -380,11 +394,12 @@ namespace Prexonite.Compiler.Cil
         }
 
         /// <summary>
-        /// Shove arguments from the stack into the argument array (`argv`). This way the arguments can later be
-        /// passed to methods. Use <see cref="ReadArgv"/> to load that array onto the stack.
+        ///     Shove arguments from the stack into the argument array (`argv`). This way the arguments can later be
+        ///     passed to methods. Use <see cref = "ReadArgv" /> to load that array onto the stack.
         /// </summary>
-        /// <param name="argc">The number of arguments to load from the stack.</param>
-        [System.Diagnostics.CodeAnalysis.SuppressMessage("Microsoft.Naming", "CA1704:IdentifiersShouldBeSpelledCorrectly", MessageId = "Argv")]
+        /// <param name = "argc">The number of arguments to load from the stack.</param>
+        [SuppressMessage("Microsoft.Naming", "CA1704:IdentifiersShouldBeSpelledCorrectly",
+            MessageId = "Argv")]
         public void FillArgv(int argc)
         {
             if (argc == 0)
@@ -413,10 +428,11 @@ namespace Prexonite.Compiler.Cil
         }
 
         /// <summary>
-        /// Load previously perpared argument array (<see cref="FillArgv"/>) onto the stack. 
+        ///     Load previously perpared argument array (<see cref = "FillArgv" />) onto the stack.
         /// </summary>
-        /// <param name="argc">The number of elements in that argument array.</param>
-        [System.Diagnostics.CodeAnalysis.SuppressMessage("Microsoft.Naming", "CA1704:IdentifiersShouldBeSpelledCorrectly", MessageId = "Argv")]
+        /// <param name = "argc">The number of elements in that argument array.</param>
+        [SuppressMessage("Microsoft.Naming", "CA1704:IdentifiersShouldBeSpelledCorrectly",
+            MessageId = "Argv")]
         public void ReadArgv(int argc)
         {
             if (argc == 0)
@@ -430,9 +446,9 @@ namespace Prexonite.Compiler.Cil
         }
 
         /// <summary>
-        /// Emits the shortest possible ldarg instruction.
+        ///     Emits the shortest possible ldarg instruction.
         /// </summary>
-        /// <param name="index">The index of the argument to load.</param>
+        /// <param name = "index">The index of the argument to load.</param>
         public void EmitLoadArg(int index)
         {
             switch (index)
@@ -459,18 +475,18 @@ namespace Prexonite.Compiler.Cil
         }
 
         /// <summary>
-        /// Emits the shortest possible ldloc instruction for the supplied local variable.
+        ///     Emits the shortest possible ldloc instruction for the supplied local variable.
         /// </summary>
-        /// <param name="local">The local variable to load.</param>
+        /// <param name = "local">The local variable to load.</param>
         public void EmitLoadLocal(LocalBuilder local)
         {
             EmitLoadLocal(local.LocalIndex);
         }
 
         /// <summary>
-        /// Emits the shortest possible ldloc instruction for the supplied local variable.
+        ///     Emits the shortest possible ldloc instruction for the supplied local variable.
         /// </summary>
-        /// <param name="index">The index of the local variable to load.</param>
+        /// <param name = "index">The index of the local variable to load.</param>
         public void EmitLoadLocal(int index)
         {
             switch (index)
@@ -531,7 +547,8 @@ namespace Prexonite.Compiler.Cil
             if (i >= _tempLocals.Length)
                 throw new ArgumentOutOfRangeException
                     (
-                    "i", i, "This particular cil implementation does not use that many temporary variables.");
+                    "i", i,
+                    "This particular cil implementation does not use that many temporary variables.");
             EmitStoreLocal(_tempLocals[i]);
         }
 
@@ -540,7 +557,8 @@ namespace Prexonite.Compiler.Cil
             if (i >= _tempLocals.Length)
                 throw new ArgumentOutOfRangeException
                     (
-                    "i", i, "This particular cil implementation does not use that many temporary variables.");
+                    "i", i,
+                    "This particular cil implementation does not use that many temporary variables.");
             EmitLoadLocal(_tempLocals[i]);
         }
 
@@ -562,11 +580,11 @@ namespace Prexonite.Compiler.Cil
         }
 
         /// <summary>
-        /// <para>Write the value produced by <paramref name="action"/> into the local variable behind <paramref name="sym"/>.</para>
-        /// <para>Warning: Action must work with an empty stack</para>
+        ///     <para>Write the value produced by <paramref name = "action" /> into the local variable behind <paramref name = "sym" />.</para>
+        ///     <para>Warning: Action must work with an empty stack</para>
         /// </summary>
-        /// <param name="sym">The local variable to write to.</param>
-        /// <param name="action">The action that produces the value.</param>
+        /// <param name = "sym">The local variable to write to.</param>
+        /// <param name = "action">The action that produces the value.</param>
         public void EmitStorePValue(Symbol sym, Action action)
         {
             if (sym.Kind == SymbolKind.Local)
@@ -587,9 +605,9 @@ namespace Prexonite.Compiler.Cil
         }
 
         /// <summary>
-        /// <para>Load a value from the specified local variable.</para>
+        ///     <para>Load a value from the specified local variable.</para>
         /// </summary>
-        /// <param name="sym">The variable to load.</param>
+        /// <param name = "sym">The variable to load.</param>
         public void EmitLoadPValue(Symbol sym)
         {
             if (sym.Kind == SymbolKind.Local)
@@ -608,7 +626,7 @@ namespace Prexonite.Compiler.Cil
         }
 
         /// <summary>
-        /// Creates a PValue null value.
+        ///     Creates a PValue null value.
         /// </summary>
         public void EmitLoadNullAsPValue()
         {
@@ -660,7 +678,7 @@ namespace Prexonite.Compiler.Cil
 
         public void EmitWrapChar()
         {
-            Il.Emit(OpCodes.Box, typeof(char));
+            Il.Emit(OpCodes.Box, typeof (char));
             Il.EmitCall(OpCodes.Call, Compiler.GetCharPType, null);
             Il.Emit(OpCodes.Newobj, Compiler.NewPValue);
         }
@@ -671,12 +689,13 @@ namespace Prexonite.Compiler.Cil
             var cilT = T as ICilCompilerAware;
 
             var virtualInstruction = new Instruction(OpCode.cast_const, typeExpr);
-            var cf = cilT != null ? 
-                    cilT.CheckQualification(virtualInstruction) 
-                :   CompilationFlags.IsCompatible;
+            var cf = cilT != null
+                ? cilT.CheckQualification(virtualInstruction)
+                : CompilationFlags.IsCompatible;
 
-            if ((cf & CompilationFlags.HasCustomImplementation) == CompilationFlags.HasCustomImplementation &&
-                cilT != null)
+            if ((cf & CompilationFlags.HasCustomImplementation) ==
+                CompilationFlags.HasCustomImplementation &&
+                    cilT != null)
             {
                 cilT.ImplementInCil(this, virtualInstruction);
             }
@@ -709,36 +728,35 @@ namespace Prexonite.Compiler.Cil
         private static readonly MethodInfo _typeGetTypeFromHandle =
             typeof (Type).GetMethod("GetTypeFromHandle", new[] {typeof (RuntimeTypeHandle)});
 
-
         #region Early bound command call
 
         /// <summary>
-        /// Emits a call to the static method "RunStatically(StackContext sctx, PValue[] args)" of the supplied type.
+        ///     Emits a call to the static method "RunStatically(StackContext sctx, PValue[] args)" of the supplied type.
         /// </summary>
-        /// <param name="target">The type, that declares the RunStatically to call.</param>
-        /// <param name="ins">The call to the command for which code is to be emitted.</param>
+        /// <param name = "target">The type, that declares the RunStatically to call.</param>
+        /// <param name = "ins">The call to the command for which code is to be emitted.</param>
         public void EmitEarlyBoundCommandCall(Type target, Instruction ins)
         {
             EmitEarlyBoundCommandCall(target, ins.Arguments, ins.JustEffect);
         }
 
         /// <summary>
-        /// Emits a call to the static method "RunStatically(StackContext sctx, PValue[] args)" of the supplied type.
+        ///     Emits a call to the static method "RunStatically(StackContext sctx, PValue[] args)" of the supplied type.
         /// </summary>
-        /// <param name="target">The type, that declares the RunStatically to call.</param>
-        /// <param name="argc">The number of arguments to pass to the command.</param>
-        /// <param name="justEffect">Indicates whether or not to ignore the return value.</param>
+        /// <param name = "target">The type, that declares the RunStatically to call.</param>
+        /// <param name = "argc">The number of arguments to pass to the command.</param>
+        /// <param name = "justEffect">Indicates whether or not to ignore the return value.</param>
         public void EmitEarlyBoundCommandCall(Type target, int argc)
         {
             EmitEarlyBoundCommandCall(target, argc, false);
         }
 
         /// <summary>
-        /// Emits a call to the static method "RunStatically(StackContext sctx, PValue[] args)" of the supplied type.
+        ///     Emits a call to the static method "RunStatically(StackContext sctx, PValue[] args)" of the supplied type.
         /// </summary>
-        /// <param name="target">The type, that declares the RunStatically to call.</param>
-        /// <param name="argc">The number of arguments to pass to the command.</param>
-        /// <param name="justEffect">Indicates whether or not to ignore the return value.</param>
+        /// <param name = "target">The type, that declares the RunStatically to call.</param>
+        /// <param name = "argc">The number of arguments to pass to the command.</param>
+        /// <param name = "justEffect">Indicates whether or not to ignore the return value.</param>
         public void EmitEarlyBoundCommandCall(Type target, int argc, bool justEffect)
         {
             var run =
@@ -747,11 +765,14 @@ namespace Prexonite.Compiler.Cil
             if (run == null)
                 throw new PrexoniteException
                     (
-                    String.Format("{0} does not provide a static method RunStatically(StackContext, PValue[])", target));
+                    String.Format(
+                        "{0} does not provide a static method RunStatically(StackContext, PValue[])",
+                        target));
             if (run.ReturnType != typeof (PValue))
                 throw new PrexoniteException
                     (
-                    String.Format("{0}'s RunStatically method does not return PValue but {1}.", target, run.ReturnType));
+                    String.Format("{0}'s RunStatically method does not return PValue but {1}.",
+                        target, run.ReturnType));
             FillArgv(argc);
 
             EmitLoadLocal(SctxLocal);
@@ -766,15 +787,14 @@ namespace Prexonite.Compiler.Cil
         #endregion
 
         /// <summary>
-        /// Pops the specified number of arguments off the stack.
+        ///     Pops the specified number of arguments off the stack.
         /// </summary>
-        /// <param name="argc">The number of arguments to pop off the stack.</param>
+        /// <param name = "argc">The number of arguments to pop off the stack.</param>
         public void EmitIgnoreArguments(int argc)
         {
             for (var i = 0; i < argc; i++)
                 Il.Emit(OpCodes.Pop);
         }
-
 
 
         public void EmitPTypeAsPValue(string expr)
@@ -788,7 +808,7 @@ namespace Prexonite.Compiler.Cil
         {
             targetMethod = null;
             return (Linking & FunctionLinking.Static) == FunctionLinking.Static &&
-                   Pass.Implementations.TryGetValue(id, out targetMethod);
+                Pass.Implementations.TryGetValue(id, out targetMethod);
         }
 
         public void EmitCommandCall(Instruction ins)
@@ -801,7 +821,7 @@ namespace Prexonite.Compiler.Cil
             CompilationFlags flags;
             if (
                 TargetEngine.Commands.TryGetValue(id, out cmd) &&
-                (aware = cmd as ICilCompilerAware) != null)
+                    (aware = cmd as ICilCompilerAware) != null)
                 flags = aware.CheckQualification(ins);
             else
                 flags = CompilationFlags.IsCompatible;
@@ -809,16 +829,16 @@ namespace Prexonite.Compiler.Cil
             if (
                 (
                     (flags & CompilationFlags.PrefersCustomImplementation) ==
-                    CompilationFlags.PrefersCustomImplementation ||
-                    (flags & CompilationFlags.RequiresCustomImplementation)
-                    == CompilationFlags.RequiresCustomImplementation
-                ) && aware != null)
+                        CompilationFlags.PrefersCustomImplementation ||
+                            (flags & CompilationFlags.RequiresCustomImplementation)
+                                == CompilationFlags.RequiresCustomImplementation
+                    ) && aware != null)
             {
                 //Let the command handle the call
                 aware.ImplementInCil(this, ins);
             }
             else if ((flags & CompilationFlags.PrefersRunStatically)
-                     == CompilationFlags.PrefersRunStatically)
+                == CompilationFlags.PrefersRunStatically)
             {
                 //Emit a static call to $commandType$.RunStatically
                 EmitEarlyBoundCommandCall(cmd.GetType(), ins);
@@ -893,7 +913,7 @@ namespace Prexonite.Compiler.Cil
             EmitLoadLocal(SctxLocal);
             if (TryGetStaticallyLinkedFunction(id, out dummyMethodInfo))
             {
-                Il.Emit(OpCodes.Ldsfld, Pass.FunctionFields[id]);   
+                Il.Emit(OpCodes.Ldsfld, Pass.FunctionFields[id]);
                 EmitVirtualCall(Compiler.CreateNativePValue);
             }
             else
@@ -940,7 +960,7 @@ namespace Prexonite.Compiler.Cil
 
         public void EmitLoadRealAsPValue(Instruction ins)
         {
-            EmitLoadRealAsPValue((double)ins.GenericArgument);
+            EmitLoadRealAsPValue((double) ins.GenericArgument);
         }
 
         public void EmitLoadIntAsPValue(int argc)

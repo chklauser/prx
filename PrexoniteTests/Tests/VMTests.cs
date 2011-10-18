@@ -1,28 +1,53 @@
+// Prexonite
+// 
+// Copyright (c) 2011, Christian Klauser
+// All rights reserved.
+// 
+// Redistribution and use in source and binary forms, with or without modification, 
+//  are permitted provided that the following conditions are met:
+// 
+//     Redistributions of source code must retain the above copyright notice, 
+//          this list of conditions and the following disclaimer.
+//     Redistributions in binary form must reproduce the above copyright notice, 
+//          this list of conditions and the following disclaimer in the 
+//          documentation and/or other materials provided with the distribution.
+//     The names of the contributors may be used to endorse or 
+//          promote products derived from this software without specific prior written permission.
+// 
+// THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND 
+//  ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED 
+//  WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED. 
+//  IN NO EVENT SHALL THE COPYRIGHT HOLDER OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT, 
+//  INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES 
+//  (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, 
+//  DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, 
+//  WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING 
+//  IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+
 #if ((!(DEBUG || Verbose)) || forceIndex) && allowIndex
 #define useIndex
 #endif
 
-#define UseCil //need to change this in VMTestsBase.cs too!
+#define UseCil
+//need to change this in VMTestsBase.cs too!
 
 using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
-
 using NUnit.Framework;
-
 using Prexonite;
+using Prexonite.Commands.Core.Operators;
 using Prexonite.Compiler;
 using Prexonite.Compiler.Ast;
 using Prexonite.Types;
 
 namespace Prx.Tests
 {
-// ReSharper disable InconsistentNaming
-    public abstract partial class VMTests 
-// ReSharper restore InconsistentNaming
+    // ReSharper disable InconsistentNaming
+    public abstract partial class VMTests
+        // ReSharper restore InconsistentNaming
     {
-
         #region Setup
 
         #endregion
@@ -30,7 +55,8 @@ namespace Prx.Tests
         [Test]
         public virtual void CilVersusInterpreted()
         {
-            Compile(@"
+            Compile(
+                @"
 function main()
 {
     var interpreter_stack = asm(ldr.eng).Stack.Count;
@@ -41,7 +67,6 @@ function main()
             Expect(CompileToCil);
         }
 
-        
 
         [Test]
         public void DataStructure()
@@ -90,8 +115,8 @@ function main(seed)
     return ch(seed);
 }
 ");
-            int seed = (new Random()).Next(400, 500);
-            int expected = seed;
+            var seed = (new Random()).Next(400, 500);
+            var expected = seed;
             expected = expected + 2;
             expected = expected*2;
             expected = expected%3;
@@ -282,10 +307,9 @@ function main()
             Expect(buffer.ToString(), lst.ToArray());
         }
 
-       
 
         /// <summary>
-        /// Makes sure that coroutines do not return an unnecessary null at the end.
+        ///     Makes sure that coroutines do not return an unnecessary null at the end.
         /// </summary>
         [Test]
         public void CoroutineNoNull()
@@ -461,15 +485,14 @@ function main()
 }
 ");
 
-//#if UseCil
-//            Expect("bs.CilClosure(function main\\A0( xa))b", "s");
-//#else
-//            Expect("bs.Closure(function main\\A0( xa))b", "s");
-//#endif
+            //#if UseCil
+            //            Expect("bs.CilClosure(function main\\A0( xa))b", "s");
+            //#else
+            //            Expect("bs.Closure(function main\\A0( xa))b", "s");
+            //#endif
             Expect("bs.function main\\A0(xa)b", "s");
         }
 
-        
 
         [Test]
         public void StructureToString()
@@ -514,12 +537,12 @@ function main(var lst)
 }
 ");
             var lst = new List<PValue>(4)
-            {
-                new PValueKeyValuePair("apple", 1),
-                new PValueKeyValuePair("pencil", 5),
-                new PValueKeyValuePair("juice", 2),
-                new PValueKeyValuePair("apple", 2)
-            };
+                {
+                    new PValueKeyValuePair("apple", 1),
+                    new PValueKeyValuePair("pencil", 5),
+                    new PValueKeyValuePair("juice", 2),
+                    new PValueKeyValuePair("apple", 2)
+                };
 
             Expect(3*3*2 + 5*1 + 2*4, PType.List.CreatePValue(lst));
         }
@@ -876,7 +899,8 @@ function main()
         [Test]
         public void CastAssign()
         {
-            Compile(@"
+            Compile(
+                @"
 function main(a,b,c)
 {
     a~=Int;
@@ -891,13 +915,14 @@ function main(a,b,c)
             const int b = 27;
             const bool c = true;
 
-            Expect("2TrueTrueTrue",a,b,c);
+            Expect("2TrueTrueTrue", a, b, c);
         }
 
         [Test]
         public void StoreBasic()
         {
-            CompileStore(@"
+            CompileStore(
+                @"
 function main(a,b,c)
 {
     //string int bool
@@ -911,7 +936,7 @@ function main(a,b,c)
 }
 ");
 
-            Expect("cd50x","abcd",10,true);
+            Expect("cd50x", "abcd", 10, true);
         }
 
 #if useIndex && false
@@ -941,19 +966,20 @@ function main(a,b)
         [Test]
         public void RotateIns()
         {
-            Compile(@"
+            Compile(
+                @"
 function main(a)
 {   
     var s = new Structure;
     return s.\(""text"") = a;
 }
 ");
-            Expect("ham","ham");
+            Expect("ham", "ham");
         }
 
         private static int _fac(int n)
         {
-            int r = 1;
+            var r = 1;
             while (n > 1)
                 r *= n--;
             return r;
@@ -962,7 +988,8 @@ function main(a)
         [Test]
         public void DirectTailRecursion()
         {
-            Compile(@"
+            Compile(
+                @"
 function fac n r =
     if(n == 1)
         r
@@ -970,13 +997,14 @@ function fac n r =
         fac(n-1, n*r);
 ");
 
-            ExpectNamed("fac",_fac(6),6,1);
+            ExpectNamed("fac", _fac(6), 6, 1);
         }
 
         [Test]
         public void IsNotSyntax()
         {
-            Compile(@"
+            Compile(
+                @"
 function main(a,b)
 {
     if(a is not String)
@@ -986,12 +1014,11 @@ function main(a,b)
 }
 ");
 
-            Expect(125,125, "s-b-s");
+            Expect(125, 125, "s-b-s");
             Expect(125.0, 125.0, "s-b-s");
             Expect(true, true, "s-b-s");
         }
 
-        
 
         [Test]
         public void SuperFastPrintLn()
@@ -1007,7 +1034,8 @@ function main = println;
         [Test]
         public void MacroTemporaryAllocateFree()
         {
-            Compile(@"
+            Compile(
+                @"
 macro acquire_free()
 {
     var v = context.AllocateTemporaryVariable;
@@ -1021,7 +1049,7 @@ function main = acquire_free;
 
             var mainFunc = target.Functions["main"];
 
-            Assert.AreEqual(1,mainFunc.Variables.Count);
+            Assert.AreEqual(1, mainFunc.Variables.Count);
             var v = mainFunc.Variables.First();
             Expect(v);
         }
@@ -1029,7 +1057,8 @@ function main = acquire_free;
         [Test]
         public void ConstantFoldingReferenceEquality()
         {
-            Compile(@"
+            Compile(
+                @"
 function interpreted [is volatile;] = System::Object.ReferenceEquals(""ab"", ""a"" + ""b"");
 function compiled [is volatile;] = System::Object.ReferenceEquals(""ab"", ""a"" + ""b"");
 ");
@@ -1048,14 +1077,14 @@ function main()
 }
 ");
 
-            Expect(2,new PValue[0]);
-
+            Expect(2, new PValue[0]);
         }
 
         [Test]
         public void BuildBlockDoesNotTriggerInitialization()
         {
-            Compile(@"
+            Compile(
+                @"
 var flag = true;
 
 function write does print(var args);
@@ -1069,7 +1098,8 @@ build does write(""nothing"");
         [Test]
         public void NestedVariableShadowing()
         {
-            Compile(@"
+            Compile(
+                @"
 function main(x,y)
 {
     var a = x;
@@ -1094,7 +1124,7 @@ function main(x,y)
 }
 ");
 
-            Expect("x,y; x,y; y","x","y");
+            Expect("x,y; x,y; y", "x", "y");
         }
 
         [Test]
@@ -1128,7 +1158,8 @@ function main()
         [Test]
         public void ObjectCreationFallback()
         {
-            Compile(@"
+            Compile(
+                @"
 declare function make_foo as create_foo;
 
 function main(x,y)
@@ -1153,24 +1184,26 @@ function eq(x) = x == x;
 function neq(x) = x != x;
 ");
 
-            ExpectNamed("eq", true, new PValue(new object(), PType.Object[typeof(object)]));
-            ExpectNamed("neq",false, new PValue(new object(), PType.Object[typeof(object)]));
+            ExpectNamed("eq", true, new PValue(new object(), PType.Object[typeof (object)]));
+            ExpectNamed("neq", false, new PValue(new object(), PType.Object[typeof (object)]));
         }
 
         [Test] //#18
         public void HexEscapeSequences()
         {
-            Compile(@"
+            Compile(
+                @"
 function main = ""\x20\x21\x9\x0020\x020\xAAAA\uABCD\U0000ABCD"".ToCharArray() >> map(x => x~Int) >> all;
 ");
 
-            Expect(new List<PValue>{0x20, 0x21, 0x9, 0x0020, 0x020, 0xAAAA, 0xABCD, 0x0000ABCD});
+            Expect(new List<PValue> {0x20, 0x21, 0x9, 0x0020, 0x020, 0xAAAA, 0xABCD, 0x0000ABCD});
         }
 
         [Test]
         public void InnerFunctionNamespaceImport()
         {
-            Compile(@"
+            Compile(
+                @"
 Import {
     System,
     Prexonite
@@ -1184,7 +1217,7 @@ function main(x)[ Add Prexonite::Types to Import; ]
 }
 ");
 
-            Expect(true, new PValueKeyValuePair(1,2));
+            Expect(true, new PValueKeyValuePair(1, 2));
             Expect(false, 1);
         }
 
@@ -1205,7 +1238,7 @@ function main(x,y,z) = if(x) x else y:z;
 function main(x,y,z) = (x : y : z).Key;
 ");
 
-            Expect(1,1,2,3);
+            Expect(1, 1, 2, 3);
         }
 
         private class Callable : IIndirectCall
@@ -1221,7 +1254,6 @@ function main(x,y,z) = (x : y : z).Key;
 
             #region Implementation of IIndirectCall
 
-
             public PValue IndirectCall(StackContext sctx, PValue[] args)
             {
                 return _impl(sctx, args);
@@ -1233,7 +1265,8 @@ function main(x,y,z) = (x : y : z).Key;
         [Test]
         public void ReturnModes()
         {
-            Compile(@"
+            Compile(
+                @"
 function ret_exit()
 {
     return 5;
@@ -1255,24 +1288,27 @@ function ret_break()
 }
 ");
 
-            _testReturnMode("ret_exit",ReturnMode.Exit,5);
+            _testReturnMode("ret_exit", ReturnMode.Exit, 5);
             _testReturnMode("ret_yield", ReturnMode.Continue, 6);
-            _testReturnMode("ret_continue",ReturnMode.Continue, PType.Null);
-            _testReturnMode("ret_break",ReturnMode.Break, PType.Null);
+            _testReturnMode("ret_continue", ReturnMode.Continue, PType.Null);
+            _testReturnMode("ret_break", ReturnMode.Break, PType.Null);
         }
 
         private void _testReturnMode(string id, ReturnMode mode, PValue retVal)
         {
             var fctx = target.Functions[id].CreateFunctionContext(engine);
             engine.Process(fctx);
-            Assert.AreEqual(fctx.ReturnMode, mode, "Return mode for function " + id + " does not match.");
-            Assert.IsTrue((bool) retVal.Equality(fctx, fctx.ReturnValue).Value, "Return value for function " + id + " does not match.");
+            Assert.AreEqual(fctx.ReturnMode, mode,
+                "Return mode for function " + id + " does not match.");
+            Assert.IsTrue((bool) retVal.Equality(fctx, fctx.ReturnValue).Value,
+                "Return value for function " + id + " does not match.");
         }
 
         [Test]
         public void FunctionCompositionSyntax()
         {
-            Compile(@"
+            Compile(
+                @"
 function closed(x,y) 
 {   
     var f = x then y;
@@ -1309,15 +1345,18 @@ function chainedPrio(x,y,z)
 
             var x =
                 sctx.CreateNativePValue(
-                    new Callable((stackContext, args) => "x" + args[0].CallToString(stackContext) + "x"));
+                    new Callable(
+                        (stackContext, args) => "x" + args[0].CallToString(stackContext) + "x"));
             var y =
                 sctx.CreateNativePValue(
-                    new Callable((stackContext, args) => "y" + args[0].CallToString(stackContext) + "y"));
+                    new Callable(
+                        (stackContext, args) => "y" + args[0].CallToString(stackContext) + "y"));
             var z =
                 sctx.CreateNativePValue(
-                    new Callable((stackContext, args) => "z" + args[0].CallToString(stackContext) + "z"));
+                    new Callable(
+                        (stackContext, args) => "z" + args[0].CallToString(stackContext) + "z"));
 
-            ExpectNamed("closed","yxxy",x,y);
+            ExpectNamed("closed", "yxxy", x, y);
             ExpectNamed("partialLeft", "yxxy", x, y);
             ExpectNamed("partialRight", "yxxy", x, y);
             ExpectNamed("partialFull", "yxxy", x, y);
@@ -1338,7 +1377,8 @@ function main(y)
 
             Expect(11, 6);
 
-            Compile(ldr, @"
+            Compile(ldr,
+                @"
 var x = 17;
 var z = 9;
 
@@ -1348,20 +1388,21 @@ function main2(x)
 }
 ");
 
-            ExpectNamed("main2",20+9, 3);
+            ExpectNamed("main2", 20 + 9, 3);
 
             Compile(ldr, @"
 var x = 22;
 var z = 20;
 ");
 
-            ExpectNamed("main2",20+22+4,4);
+            ExpectNamed("main2", 20 + 22 + 4, 4);
         }
 
         [Test]
         public void ArgsFallback()
         {
-            CompileInvalid(@"
+            CompileInvalid(
+                @"
 function main(args)
 {
     foreach(var arg in var args)
@@ -1369,7 +1410,8 @@ function main(args)
 
     return args;
 }
-","main",PFunction.ArgumentListId,"0","local");
+",
+                "main", PFunction.ArgumentListId, "0", "local");
         }
 
         [Test]
@@ -1382,7 +1424,7 @@ function main(x,y)
 }
 ");
 
-            ExpectNull("main","z");
+            ExpectNull("main", "z");
         }
 
         [Test]
@@ -1423,7 +1465,7 @@ function main(x,t)
             var y = x*1.5;
             var t = 0.75;
 
-            Expect((x+(y-x)*t),x,t);
+            Expect((x + (y - x)*t), x, t);
         }
 
         [Test]
@@ -1453,7 +1495,7 @@ function main(x,t)
             var y = x*1.5;
             var t = 0.75;
 
-            Expect((x+(y-x)*t),x,t);
+            Expect((x + (y - x)*t), x, t);
         }
 
         [Test]
@@ -1472,19 +1514,20 @@ function main(x,t)
             var y = x*2.5;
             var z = y/1.4;
             var a = Math.Pow(z, y);
-            Expect(a,x);
+            Expect(a, x);
         }
 
         [Test]
         public void AsmLdrApp()
         {
-            Compile(@"
+            Compile(
+                @"
 function foo(x) = 2*x;
 function main(x)
 {
     return asm(ldr.app).Functions[""foo""].(x);
 }");
-            Expect(4,2);
+            Expect(4, 2);
         }
 
         [Test]
@@ -1496,14 +1539,15 @@ function main(x,type)
     return x is Object<(type + ""[]"")>;
 }
 ");
-            Expect(false, 4,"System.String");
-            Expect(true, sctx.CreateNativePValue(new int[]{1,2,3}),"System.Int32");
+            Expect(false, 4, "System.String");
+            Expect(true, sctx.CreateNativePValue(new[] {1, 2, 3}), "System.Int32");
         }
 
         [Test]
         public void PostIncDecGlobal()
         {
-            Compile(@"
+            Compile(
+                @"
 var i = 0;
 function main(x)
 {
@@ -1514,16 +1558,17 @@ function main(x)
 }
 ");
             var i = 0;
-            Expect(i++,2);
+            Expect(i++, 2);
             Expect(i++, 4);
-            Expect(i--,3);
+            Expect(i--, 3);
             Expect(i++, -2);
         }
 
         [Test]
         public void PreIncDecGlobal()
         {
-            Compile(@"
+            Compile(
+                @"
 var i = 0;
 function main(x)
 {
@@ -1534,7 +1579,7 @@ function main(x)
 }
 ");
             var i = 0;
-            Expect(++i,2);
+            Expect(++i, 2);
             Expect(++i, 4);
             Expect(--i, 3);
             Expect(++i, 4);
@@ -1561,13 +1606,14 @@ function main(y,x)
 }
 ");
             var x = "500";
-            Expect(x,10,x);
+            Expect(x, 10, x);
         }
 
         [Test]
         public void BitwiseOperators()
         {
-            Compile(@"
+            Compile(
+                @"
 function main(x,y,z)
 {
     var a = x | y | z;
@@ -1593,15 +1639,15 @@ function main(x,y,z)
             var f = x & y | z;
             var g = x | y & z;
 
-            Expect(new List<PValue>{a,b,c,d,e,f,g}, x,y,z);
+            Expect(new List<PValue> {a, b, c, d, e, f, g}, x, y, z);
         }
 
-        
 
         [Test]
         public void LazyAndOptimization()
         {
-            Compile(@"
+            Compile(
+                @"
 var x = true;
 var y = false;
 
@@ -1636,21 +1682,22 @@ function main(z)
             const string valueEqTrue = "TrueFalseTrueFalse";
             const string valueEqFalse = "FalseFalseFalseFalse";
 
-            Expect(prefix + valueEqTrue,true);
+            Expect(prefix + valueEqTrue, true);
             Expect(prefix + valueEqFalse, false);
-            Expect(prefix + valueEqTrue,6);
+            Expect(prefix + valueEqTrue, 6);
             Expect(prefix + valueEqFalse, 0);
             Expect(prefix + valueEqFalse, PType.Null);
         }
 
         /// <summary>
-        /// This test checks whether optimizations of lazy logical expression 
-        /// can alter semantics (e.g., conversion to bool still necessary)
+        ///     This test checks whether optimizations of lazy logical expression 
+        ///     can alter semantics (e.g., conversion to bool still necessary)
         /// </summary>
         [Test]
         public void LazyOrOptimization()
         {
-            Compile(@"
+            Compile(
+                @"
 var x = true;
 var y = false;
 
@@ -1695,7 +1742,8 @@ function main(z)
         [Test]
         public void StringEscapeCollision()
         {
-            Compile(@"
+            Compile(
+                @"
 function main(s)
 {
     var es = s.Escape;
@@ -1715,13 +1763,14 @@ function main(s)
 
         private void _expectRoundtrip(string text, string escaped)
         {
-            Expect(string.Format("{0}:{0}:{1}", text, escaped),text);
+            Expect(string.Format("{0}:{0}:{1}", text, escaped), text);
         }
 
         [Test]
         public void NullStringEscapeSequence()
         {
-            Compile(@"
+            Compile(
+                @"
 function main(x,y)
 {
     var z = x;
@@ -1750,16 +1799,17 @@ function unharmed(x,y)
             const string expected = "A_B;A&:0";
             const string x = "A";
             const string y = "B";
-            Expect(expected,x,y);
-            ExpectNamed("main_vs",expected,x,y);
-            ExpectNamed("unharmed",true,x,x);
-            ExpectNamed("unharmed",false,x,y);
+            Expect(expected, x, y);
+            ExpectNamed("main_vs", expected, x, y);
+            ExpectNamed("unharmed", true, x, x);
+            ExpectNamed("unharmed", false, x, y);
         }
 
         [Test]
         public void SingleQuotes()
         {
-            Compile(@"
+            Compile(
+                @"
 function al'gebra_f(x'') = x'' + 6'000'';
 
 function main(x,x')
@@ -1769,14 +1819,15 @@ function main(x,x')
 }
 ");
 
-            Expect("A 7000 1000:5408.9","A",1000);
+            Expect("A 7000 1000:5408.9", "A", 1000);
         }
 
         [Test]
         public void ObjectCreationOptimizeReorder()
         {
-            engine.RegisterAssembly(typeof(StaticClassMock).Assembly);
-            Compile(@"
+            engine.RegisterAssembly(typeof (StaticClassMock).Assembly);
+            Compile(
+                @"
 function main()
 {
     var x = ""xXx"";
@@ -1792,7 +1843,8 @@ function main()
         [Test]
         public void DuplicatingJustEffectBlockExpression()
         {
-            var ldr = Compile(@"
+            var ldr =
+                Compile(@"
 var s;
 function main()[is volatile;]
 {
@@ -1800,36 +1852,34 @@ function main()[is volatile;]
 }
 ");
             var ct = ldr.FunctionTargets["main"];
-            ct.Function.Code.RemoveAt(ct.Function.Code.Count-1);
+            ct.Function.Code.RemoveAt(ct.Function.Code.Count - 1);
             var block = new AstBlockExpression("file", -1, -2);
 
             var assignStmt = new AstGetSetSymbol("file", -1, -2, PCall.Set,
-                                                                       "s",
-                                                                       SymbolInterpretations.
-                                                                           GlobalObjectVariable);
-            assignStmt.Arguments.Add(new AstConstant("file",-1,-2,"stmt."));
+                "s",
+                SymbolInterpretations.
+                    GlobalObjectVariable);
+            assignStmt.Arguments.Add(new AstConstant("file", -1, -2, "stmt."));
             var incStmt = new AstModifyingAssignment("file", -1, -2,
-                                                                            BinaryOperator.Addition,
-                                                                            assignStmt,
-                                                                            SymbolInterpretations.
-                                                                                Command,
-                                                                            Prexonite.Commands.Core.
-                                                                                Operators.Addition.
-                                                                                DefaultAlias);
+                BinaryOperator.Addition,
+                assignStmt,
+                SymbolInterpretations.
+                    Command,
+                Addition.
+                    DefaultAlias);
 
             var assignExpr = new AstGetSetSymbol("file", -1, -2, PCall.Set,
-                                                                       "s",
-                                                                       SymbolInterpretations.
-                                                                           GlobalObjectVariable);
+                "s",
+                SymbolInterpretations.
+                    GlobalObjectVariable);
             assignExpr.Arguments.Add(new AstConstant("file", -1, -2, "expr."));
             var incExpr = new AstModifyingAssignment("file", -1, -2,
-                                                                            BinaryOperator.Addition,
-                                                                            assignExpr,
-                                                                            SymbolInterpretations.
-                                                                                Command,
-                                                                            Prexonite.Commands.Core.
-                                                                                Operators.Addition.
-                                                                                DefaultAlias);
+                BinaryOperator.Addition,
+                assignExpr,
+                SymbolInterpretations.
+                    Command,
+                Addition.
+                    DefaultAlias);
 
             block.Statements.Add(incStmt);
             block.Expression = incExpr;

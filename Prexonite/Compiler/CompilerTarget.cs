@@ -1,25 +1,29 @@
-﻿// /*
-//  * Prexonite, a scripting engine (Scripting Language -> Bytecode -> Virtual Machine)
-//  *  Copyright (C) 2007  Christian "SealedSun" Klauser
-//  *  E-mail  sealedsun a.t gmail d.ot com
-//  *  Web     http://www.sealedsun.ch/
-//  *
-//  *  This program is free software; you can redistribute it and/or modify
-//  *  it under the terms of the GNU General Public License as published by
-//  *  the Free Software Foundation; either version 2 of the License, or
-//  *  (at your option) any later version.
-//  *
-//  *  Please contact me (sealedsun a.t gmail do.t com) if you need a different license.
-//  * 
-//  *  This program is distributed in the hope that it will be useful,
-//  *  but WITHOUT ANY WARRANTY; without even the implied warranty of
-//  *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-//  *  GNU General Public License for more details.
-//  *
-//  *  You should have received a copy of the GNU General Public License along
-//  *  with this program; if not, write to the Free Software Foundation, Inc.,
-//  *  51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
-//  */
+﻿// Prexonite
+// 
+// Copyright (c) 2011, Christian Klauser
+// All rights reserved.
+// 
+// Redistribution and use in source and binary forms, with or without modification, 
+//  are permitted provided that the following conditions are met:
+// 
+//     Redistributions of source code must retain the above copyright notice, 
+//          this list of conditions and the following disclaimer.
+//     Redistributions in binary form must reproduce the above copyright notice, 
+//          this list of conditions and the following disclaimer in the 
+//          documentation and/or other materials provided with the distribution.
+//     The names of the contributors may be used to endorse or 
+//          promote products derived from this software without specific prior written permission.
+// 
+// THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND 
+//  ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED 
+//  WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED. 
+//  IN NO EVENT SHALL THE COPYRIGHT HOLDER OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT, 
+//  INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES 
+//  (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, 
+//  DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, 
+//  WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING 
+//  IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+
 #if ((!(DEBUG || Verbose)) || forceIndex) && allowIndex
 #define UseIndex
 #endif
@@ -30,6 +34,7 @@ using System;
 using System.Collections;
 using System.Collections.Generic;
 using System.Diagnostics;
+using System.Diagnostics.CodeAnalysis;
 using System.Linq;
 using Prexonite.Compiler.Ast;
 using Prexonite.Compiler.Macro;
@@ -42,7 +47,8 @@ namespace Prexonite.Compiler
 {
     public class CompilerTarget : IHasMetaTable
     {
-        private readonly LinkedList<AddressChangeHook> _addressChangeHooks = new LinkedList<AddressChangeHook>();
+        private readonly LinkedList<AddressChangeHook> _addressChangeHooks =
+            new LinkedList<AddressChangeHook>();
 
         public ICollection<AddressChangeHook> AddressChangeHooks
         {
@@ -52,7 +58,7 @@ namespace Prexonite.Compiler
         #region IHasMetaTable Members
 
         /// <summary>
-        /// Provides access to the <see cref="Function"/>'s metatable.
+        ///     Provides access to the <see cref = "Function" />'s metatable.
         /// </summary>
         public MetaTable Meta
         {
@@ -63,9 +69,9 @@ namespace Prexonite.Compiler
         #endregion
 
         /// <summary>
-        /// Returns the <see cref="Function"/>'s string representation.
+        ///     Returns the <see cref = "Function" />'s string representation.
         /// </summary>
-        /// <returns>The <see cref="Function"/>'s string representation.</returns>
+        /// <returns>The <see cref = "Function" />'s string representation.</returns>
         [DebuggerStepThrough]
         public override string ToString()
         {
@@ -85,7 +91,8 @@ namespace Prexonite.Compiler
         private int _macroSessionReferenceCounter;
 
         /// <summary>
-        /// Returns the current macro session, or creates one if necessary. Must always be paired with a call to <see cref="ReleaseMacroSession"/>. Do not call <see cref="MacroSession.Dispose"/>.
+        ///     Returns the current macro session, or creates one if necessary. Must always be paired with a call to <see
+        ///      cref = "ReleaseMacroSession" />. Do not call <see cref = "MacroSession.Dispose" />.
         /// </summary>
         /// <returns>The current macro session.</returns>
         public MacroSession AcquireMacroSession()
@@ -96,9 +103,9 @@ namespace Prexonite.Compiler
         }
 
         /// <summary>
-        /// Releases the macro session acquired via <see cref="AcquireMacroSession"/>. Will dispose of the session, if no other release is pending.
+        ///     Releases the macro session acquired via <see cref = "AcquireMacroSession" />. Will dispose of the session, if no other release is pending.
         /// </summary>
-        /// <param name="acquiredSession">A session previously acquired through <see cref="AcquireMacroSession"/>.</param>
+        /// <param name = "acquiredSession">A session previously acquired through <see cref = "AcquireMacroSession" />.</param>
         public void ReleaseMacroSession(MacroSession acquiredSession)
         {
             if (_macroSession != acquiredSession)
@@ -116,7 +123,6 @@ namespace Prexonite.Compiler
         }
 
         #endregion
-
 
         public Loader Loader
         {
@@ -175,7 +181,7 @@ namespace Prexonite.Compiler
         #region Macro system
 
         /// <summary>
-        /// Setup function as macro (symbol declarations etc.)
+        ///     Setup function as macro (symbol declarations etc.)
         /// </summary>
         public void SetupAsMacro()
         {
@@ -191,12 +197,13 @@ namespace Prexonite.Compiler
             foreach (var localRefId in MacroAliases.Aliases())
             {
                 Declare(SymbolInterpretations.LocalReferenceVariable, localRefId);
-                _outerVariables.Add(localRefId); //remember: outer variables are not added as local variables
+                _outerVariables.Add(localRefId);
+                //remember: outer variables are not added as local variables
             }
         }
 
         /// <summary>
-        /// The boolean macro meta key indicates that a function is a macro and to be executed at compile time. 
+        ///     The boolean macro meta key indicates that a function is a macro and to be executed at compile time.
         /// </summary>
         public const string MacroMetaKey = @"\macro";
 
@@ -207,10 +214,10 @@ namespace Prexonite.Compiler
         }
 
         /// <summary>
-        /// The boolean compiler meta key indicates that a function is part of the compiler and might not work outside of the original loader environment.
+        ///     The boolean compiler meta key indicates that a function is part of the compiler and might not work outside of the original loader environment.
         /// </summary>
-        [System.Diagnostics.CodeAnalysis.SuppressMessage("Microsoft.Naming", "CA1704:IdentifiersShouldBeSpelledCorrectly", MessageId = "Metakey")]
-        public const string CompilerMetakey = "compiler";
+        [SuppressMessage("Microsoft.Naming", "CA1704:IdentifiersShouldBeSpelledCorrectly",
+            MessageId = "Metakey")] public const string CompilerMetakey = "compiler";
 
         private class ProvidedValue : IIndirectCall
         {
@@ -247,9 +254,9 @@ namespace Prexonite.Compiler
         }
 
         /// <summary>
-        /// Creates a PVariable object that contains a reference to the supplied value.
+        ///     Creates a PVariable object that contains a reference to the supplied value.
         /// </summary>
-        /// <param name="value">The value to reference.</param>
+        /// <param name = "value">The value to reference.</param>
         /// <returns>A PVariable object that contains a reference to the supplied value (needs to be de-referenced)</returns>
         public static PVariable CreateReadonlyVariable(PValue value)
         {
@@ -258,7 +265,8 @@ namespace Prexonite.Compiler
 
         public static PValue CreateFunctionValue(Func<StackContext, PValue[], PValue> implementation)
         {
-            return new PValue(new ProvidedFunction(implementation),PType.Object[typeof(IIndirectCall)]);
+            return new PValue(new ProvidedFunction(implementation),
+                PType.Object[typeof (IIndirectCall)]);
         }
 
         #region Temporary variables
@@ -287,7 +295,8 @@ namespace Prexonite.Compiler
         public void FreeTemporaryVariable(string temporaryVariableId)
         {
             if (!_usedTemporaryVariables.Contains(temporaryVariableId))
-                throw new PrexoniteException("The variable " + temporaryVariableId + " is not a temporary variable managed by " + this);
+                throw new PrexoniteException("The variable " + temporaryVariableId +
+                    " is not a temporary variable managed by " + this);
 
             _usedTemporaryVariables.Remove(temporaryVariableId);
             _freeTemporaryVariables.Push(temporaryVariableId);
@@ -296,7 +305,8 @@ namespace Prexonite.Compiler
         public void PromoteTemporaryVariable(string temporaryVariableId)
         {
             if (!_usedTemporaryVariables.Contains(temporaryVariableId))
-                throw new PrexoniteException("The variable " + temporaryVariableId + " is not a temporary variable managed by " + this);
+                throw new PrexoniteException("The variable " + temporaryVariableId +
+                    " is not a temporary variable managed by " + this);
 
             _usedTemporaryVariables.Remove(temporaryVariableId);
         }
@@ -410,7 +420,9 @@ namespace Prexonite.Compiler
                     var localValues = _symbols.Values;
                     var values = new List<SymbolEntry>(localValues);
                     values.AddRange(
-                        from kvp in ((IEnumerable<KeyValuePair<string, SymbolEntry>>) _parent ?? _loaderSymbols)
+                        from kvp in
+                            ((IEnumerable<KeyValuePair<string, SymbolEntry>>) _parent ??
+                                _loaderSymbols)
                         where !localValues.Contains(kvp.Value)
                         select kvp.Value);
                     return values;
@@ -442,8 +454,9 @@ namespace Prexonite.Compiler
                 var lst =
                     new List<KeyValuePair<string, SymbolEntry>>(_symbols);
                 lst.AddRange(
-                    ((IEnumerable<KeyValuePair<string, SymbolEntry>>) _parent ?? _loaderSymbols).Where(
-                        kvp => !_symbols.ContainsKey(kvp.Key)));
+                    ((IEnumerable<KeyValuePair<string, SymbolEntry>>) _parent ?? _loaderSymbols).
+                        Where(
+                            kvp => !_symbols.ContainsKey(kvp.Key)));
                 lst.CopyTo(array, arrayIndex);
             }
 
@@ -556,10 +569,10 @@ namespace Prexonite.Compiler
         #region Symbols
 
         /// <summary>
-        /// (Re)declares a local symbol.
+        ///     (Re)declares a local symbol.
         /// </summary>
-        /// <param name="kind">The new interpretation for this symbol.</param>
-        /// <param name="id">The symbols id.</param>
+        /// <param name = "kind">The new interpretation for this symbol.</param>
+        /// <param name = "id">The symbols id.</param>
         [DebuggerStepThrough]
         public void Declare(SymbolInterpretations kind, string id)
         {
@@ -567,11 +580,12 @@ namespace Prexonite.Compiler
         }
 
         /// <summary>
-        /// (Re)declares a local symbol.
+        ///     (Re)declares a local symbol.
         /// </summary>
-        /// <param name="kind">The new interpretation for this symbol.</param>
-        /// <param name="id">The id entered into the symbol table.</param>
-        /// <param name="translatedId">The (physical) id used when translating the program. (Use for aliases or set to <paramref name="id"/>)</param>
+        /// <param name = "kind">The new interpretation for this symbol.</param>
+        /// <param name = "id">The id entered into the symbol table.</param>
+        /// <param name = "translatedId">The (physical) id used when translating the program. (Use for aliases or set to <paramref
+        ///      name = "id" />)</param>
         [DebuggerStepThrough]
         public void Declare(SymbolInterpretations kind, string id, string translatedId)
         {
@@ -587,11 +601,13 @@ namespace Prexonite.Compiler
         }
 
         /// <summary>
-        /// Creates local variables or declares global variables locally.
+        ///     Creates local variables or declares global variables locally.
         /// </summary>
-        /// <param name="kind">The (new) interpretation for the local variable.</param>
-        /// <param name="id">The id for the local variable.</param>
-        /// <remarks>Local object and reference variables are created in addition to being registered in the symbol table. Global object and reference variables are only declared, not created.</remarks>
+        /// <param name = "kind">The (new) interpretation for the local variable.</param>
+        /// <param name = "id">The id for the local variable.</param>
+        /// <remarks>
+        ///     Local object and reference variables are created in addition to being registered in the symbol table. Global object and reference variables are only declared, not created.
+        /// </remarks>
         [DebuggerStepThrough]
         public void Define(SymbolInterpretations kind, string id)
         {
@@ -599,12 +615,15 @@ namespace Prexonite.Compiler
         }
 
         /// <summary>
-        /// Creates local variables or declares global variables locally.
+        ///     Creates local variables or declares global variables locally.
         /// </summary>
-        /// <param name="kind">The (new) interpretation for the local variable.</param>
-        /// <param name="id">The id for the local variable.</param>
-        /// <param name="translatedId">The (physical) id used when translating the program. (Use for aliases or set to <paramref name="id"/>). This is the name used for the variable created.</param>
-        /// <remarks>Local object and reference variables are created in addition to being registered in the symbol table. Global object and reference variables are only declared, not created.</remarks>
+        /// <param name = "kind">The (new) interpretation for the local variable.</param>
+        /// <param name = "id">The id for the local variable.</param>
+        /// <param name = "translatedId">The (physical) id used when translating the program. (Use for aliases or set to <paramref
+        ///      name = "id" />). This is the name used for the variable created.</param>
+        /// <remarks>
+        ///     Local object and reference variables are created in addition to being registered in the symbol table. Global object and reference variables are only declared, not created.
+        /// </remarks>
         [DebuggerStepThrough]
         public void Define(SymbolInterpretations kind, string id, string translatedId)
         {
@@ -681,7 +700,8 @@ namespace Prexonite.Compiler
         public AstBlock BeginBlock(string prefix)
         {
             var prototype = _scopeBlocks.Count > 0 ? _scopeBlocks.Peek() : _ast;
-            var bl = new AstBlock(prototype.File, prototype.Line, prototype.Column, GenerateLocalId(), prefix);
+            var bl = new AstBlock(prototype.File, prototype.Line, prototype.Column,
+                GenerateLocalId(), prefix);
             _scopeBlocks.Push(bl);
             return bl;
         }
@@ -706,9 +726,9 @@ namespace Prexonite.Compiler
         #region Code
 
         /// <summary>
-        /// Safely removes an instruction without invalidating jumps or try-blocks. Notifies <see cref="AddressChangeHooks"/>.
+        ///     Safely removes an instruction without invalidating jumps or try-blocks. Notifies <see cref = "AddressChangeHooks" />.
         /// </summary>
-        /// <param name="index">The address of the instruction to remove.</param>
+        /// <param name = "index">The address of the instruction to remove.</param>
         [DebuggerStepThrough]
         public void RemoveInstructionAt(int index)
         {
@@ -716,10 +736,11 @@ namespace Prexonite.Compiler
         }
 
         /// <summary>
-        /// Safely remoes a range of instructions without invalidating jumps or try-blocks. Notifies <see cref="AddressChangeHooks"/>.
+        ///     Safely remoes a range of instructions without invalidating jumps or try-blocks. Notifies <see
+        ///      cref = "AddressChangeHooks" />.
         /// </summary>
-        /// <param name="index">The address of the first instruction to remove.</param>
-        /// <param name="count">The number of instructions to remove.</param>
+        /// <param name = "index">The address of the first instruction to remove.</param>
+        /// <param name = "count">The number of instructions to remove.</param>
         public void RemoveInstructionRange(int index, int count)
         {
             var code = Code;
@@ -763,7 +784,7 @@ namespace Prexonite.Compiler
                     throw new PrexoniteException
                         (
                         "The try-catch-finally block (" + block +
-                        ") is not valid after optimization.");
+                            ") is not valid after optimization.");
 
                 modifiedBlocks[i++] = block;
             }
@@ -788,15 +809,17 @@ namespace Prexonite.Compiler
         }
 
         /// <summary>
-        /// Requests an outer function to share a variable with this inner function.
+        ///     Requests an outer function to share a variable with this inner function.
         /// </summary>
-        /// <param name="id">The (physical) id of the variable or parameter to require from the outer function.</param>
-        /// <exception cref="PrexoniteException">Outer function(s) don't contain a variable or parameter named <paramref name="id"/>.</exception>
+        /// <param name = "id">The (physical) id of the variable or parameter to require from the outer function.</param>
+        /// <exception cref = "PrexoniteException">Outer function(s) don't contain a variable or parameter named <paramref
+        ///      name = "id" />.</exception>
         [DebuggerStepThrough]
         public void RequireOuterVariable(string id)
         {
             if (_parentTarget == null)
-                throw new PrexoniteException("Cannot require outer variable from top-level function.");
+                throw new PrexoniteException(
+                    "Cannot require outer variable from top-level function.");
 
             _outerVariables.Add(id);
             //Make parent functions hand down the variable, even if they don't use them themselves.
@@ -806,7 +829,8 @@ namespace Prexonite.Compiler
 
             {
                 var func = T.Function;
-                if (func.Variables.Contains(id) || func.Parameters.Contains(id) || T.OuterVariables.Contains(id))
+                if (func.Variables.Contains(id) || func.Parameters.Contains(id) ||
+                    T.OuterVariables.Contains(id))
                     return; //Parent can supply the variable/parameter. Stop search here.
                 else if (T._parentTarget != null)
                     T.RequireOuterVariable(id); //Order parent function to request outer variable
@@ -815,10 +839,10 @@ namespace Prexonite.Compiler
                         (
                         String.Format
                             (
-                            "{0} references outer variable {1} which cannot be supplied by top-level function {2}",
-                            Function,
-                            id,
-                            func));
+                                "{0} references outer variable {1} which cannot be supplied by top-level function {2}",
+                                Function,
+                                id,
+                                func));
             }
         }
 
@@ -827,7 +851,7 @@ namespace Prexonite.Compiler
         #region Lambda lifting (capture by value)
 
         /// <summary>
-        /// Promotes captured variables to function parameters.
+        ///     Promotes captured variables to function parameters.
         /// </summary>
         /// <returns>A list of expressions (get symbol) that should be added to the arguments list of any call to the lifted function.</returns>
         internal Func<Parser, IList<IAstExpression>> ToCaptureByValue()
@@ -836,9 +860,9 @@ namespace Prexonite.Compiler
         }
 
         /// <summary>
-        /// Promotes captured variables to function parameters.
+        ///     Promotes captured variables to function parameters.
         /// </summary>
-        /// <param name="keepByRef">The set of captured variables that should be kept captured by reference (i.e. not promoted to parameters)</param>
+        /// <param name = "keepByRef">The set of captured variables that should be kept captured by reference (i.e. not promoted to parameters)</param>
         /// <returns>A list of expressions (get symbol) that should be added to the arguments list of any call to the lifted function.</returns>
         internal Func<Parser, IList<IAstExpression>> ToCaptureByValue(IEnumerable<string> keepByRef)
         {
@@ -858,7 +882,10 @@ namespace Prexonite.Compiler
                 {
                     //Copy the value for capture by value in closure
                     var byValOuter = outer;
-                    exprs.Add(p => new AstGetSetSymbol(p, byValOuter, SymbolInterpretations.LocalObjectVariable));
+                    exprs.Add(
+                        p =>
+                            new AstGetSetSymbol(p, byValOuter,
+                                SymbolInterpretations.LocalObjectVariable));
                 }
             }
 
@@ -965,7 +992,7 @@ namespace Prexonite.Compiler
         [DebuggerStepThrough]
         public void EmitLoadLocal(ISourcePosition position, string id)
         {
-            Emit( position,  Instruction.CreateLoadLocal(id));
+            Emit(position, Instruction.CreateLoadLocal(id));
         }
 
         public void EmitStoreLocal(ISourcePosition position, string id)
@@ -1006,7 +1033,8 @@ namespace Prexonite.Compiler
         }
 
         [DebuggerStepThrough]
-        public void EmitStaticGetCall(ISourcePosition position, int args, string callExpr, bool justEffect)
+        public void EmitStaticGetCall(ISourcePosition position, int args, string callExpr,
+            bool justEffect)
         {
             Emit(position, Instruction.CreateStaticGetCall(args, callExpr, justEffect));
         }
@@ -1018,13 +1046,15 @@ namespace Prexonite.Compiler
         }
 
         [DebuggerStepThrough]
-        public void EmitStaticGetCall(ISourcePosition position, int args, string typeId, string memberId, bool justEffect)
+        public void EmitStaticGetCall(ISourcePosition position, int args, string typeId,
+            string memberId, bool justEffect)
         {
             Emit(position, Instruction.CreateStaticGetCall(args, typeId, memberId, justEffect));
         }
 
         [DebuggerStepThrough]
-        public void EmitStaticGetCall(ISourcePosition position, int args, string typeId, string memberId)
+        public void EmitStaticGetCall(ISourcePosition position, int args, string typeId,
+            string memberId)
         {
             EmitStaticGetCall(position, args, typeId, memberId, false);
         }
@@ -1241,11 +1271,12 @@ namespace Prexonite.Compiler
             address = -1;
             var labelNs = label + LabelSymbolPostfix;
             SymbolEntry sym;
-            if(!LocalSymbols.TryGetValue(labelNs, out sym))
+            if (!LocalSymbols.TryGetValue(labelNs, out sym))
                 return false;
 
             if (sym.Argument == null)
-                throw new PrexoniteException("The label symbol " + labelNs + " does not provide an adress.");
+                throw new PrexoniteException("The label symbol " + labelNs +
+                    " does not provide an adress.");
 
             address = sym.Argument.Value;
             return true;
@@ -1260,21 +1291,23 @@ namespace Prexonite.Compiler
         }
 
         /// <summary>
-        /// <para>Adds a new label entry to the symbol table and resolves any symbolic jumps to this label.</para>
-        /// <para>If the destination is an unconditional jump, it's destination address will 
-        /// used instead of the supplied address.</para>
-        /// <para>If the last instruction was a jump (conditional or unconditional) to this label, it 
-        /// is considered redundant and will be removed.</para>
+        ///     <para>Adds a new label entry to the symbol table and resolves any symbolic jumps to this label.</para>
+        ///     <para>If the destination is an unconditional jump, it's destination address will 
+        ///         used instead of the supplied address.</para>
+        ///     <para>If the last instruction was a jump (conditional or unconditional) to this label, it 
+        ///         is considered redundant and will be removed.</para>
         /// </summary>
-        /// <param name="position">The position in source code where this label originated.</param>
-        /// <param name="label">The label's symbolic name.</param>
-        /// <param name="address">The label's address.</param>
+        /// <param name = "position">The position in source code where this label originated.</param>
+        /// <param name = "label">The label's symbolic name.</param>
+        /// <param name = "address">The label's address.</param>
         //[DebuggerStepThrough]
         public void EmitLabel(ISourcePosition position, string label, int address)
         {
             //Safety check
             var labelKey = label + LabelSymbolPostfix;
-            Debug.Assert(!Symbols.ContainsKey(labelKey), string.Format("Error, label {0} defined multiple times in {1}, {2}", label, Function, position.File));
+            Debug.Assert(!Symbols.ContainsKey(labelKey),
+                string.Format("Error, label {0} defined multiple times in {1}, {2}", label, Function,
+                    position.File));
 
             //resolve any unresolved jumps);
             foreach (var ins in _unresolvedInstructions.ToArray())
@@ -1314,10 +1347,12 @@ namespace Prexonite.Compiler
         }
 
         /// <summary>
-        /// Deletes all information about a symbolic label.
+        ///     Deletes all information about a symbolic label.
         /// </summary>
-        /// <param name="label">The name of the label to delete.</param>
-        /// <remarks>This method just deletes the symbol table entry for the specified label and does not alter code in any way.</remarks>
+        /// <param name = "label">The name of the label to delete.</param>
+        /// <remarks>
+        ///     This method just deletes the symbol table entry for the specified label and does not alter code in any way.
+        /// </remarks>
         public void FreeLabel(string label)
         {
             LocalSymbols.Remove(label + LabelSymbolPostfix);
@@ -1337,7 +1372,7 @@ namespace Prexonite.Compiler
         //
 
         /// <summary>
-        /// Performs checks and block level optimizations on the target.
+        ///     Performs checks and block level optimizations on the target.
         /// </summary>
         /// <remarks>
         ///     Calling FinishTarget is <strong>>not</strong> optional, especially
@@ -1345,7 +1380,7 @@ namespace Prexonite.Compiler
         /// </remarks>
         public void FinishTarget()
         {
-            if(_function.Parameters.Contains(PFunction.ArgumentListId))
+            if (_function.Parameters.Contains(PFunction.ArgumentListId))
             {
                 ISourcePosition pos;
                 if (Ast.Count == 0)
@@ -1372,16 +1407,16 @@ namespace Prexonite.Compiler
             _removeUnconditionalJumpSequences();
 
             //nops used by try-catch-finally with degenerate finally clause
-//#if !(DEBUG || Verbose)
-//            _removeNop();
-//#endif
+            //#if !(DEBUG || Verbose)
+            //            _removeNop();
+            //#endif
 
 #if UseIndex
             if (Loader.Options.UseIndicesLocally)
                 _byIndex();
 #endif
 
-            if(Loader.Options.StoreSourceInformation)
+            if (Loader.Options.StoreSourceInformation)
                 SourceMapping.Store(Function);
         }
 
@@ -1404,7 +1439,7 @@ namespace Prexonite.Compiler
                 throw new PrexoniteException
                     (
                     "The instruction [ " + _unresolvedInstructions[0] +
-                    " ] has not been resolved.");
+                        " ] has not been resolved.");
         }
 
         #endregion
@@ -1412,7 +1447,7 @@ namespace Prexonite.Compiler
         #region Unconditional jump target propagation
 
         /// <summary>
-        /// Searches for jumps targeting unconditional jumps and propagates the final target back to the initial jump.
+        ///     Searches for jumps targeting unconditional jumps and propagates the final target back to the initial jump.
         /// </summary>
         private void _unconditionalJumpTargetPropagation()
         {
@@ -1462,24 +1497,24 @@ namespace Prexonite.Compiler
         private static bool _targetIsInRange(Instruction jump, int count)
         {
             return jump.Arguments >= 0
-                   && jump.Arguments < count;
+                && jump.Arguments < count;
         }
 
         private static bool _isValidJump(Instruction jump, int count)
         {
             return
                 (jump.OpCode == OpCode.jump ||
-                 jump.OpCode == OpCode.jump_f ||
-                 jump.OpCode == OpCode.jump_t ||
-                 jump.OpCode == OpCode.leave)
-                && _targetIsInRange(jump, count);
+                    jump.OpCode == OpCode.jump_f ||
+                        jump.OpCode == OpCode.jump_t ||
+                            jump.OpCode == OpCode.leave)
+                                && _targetIsInRange(jump, count);
         }
 
         private static bool _isValidUnconditionalJump(Instruction jump, int count)
         {
             return
                 jump.OpCode == OpCode.jump
-                && _targetIsInRange(jump, count);
+                    && _targetIsInRange(jump, count);
         }
 
         #endregion
@@ -1487,30 +1522,30 @@ namespace Prexonite.Compiler
         #region Remove unconditional jump sequences
 
         /// <summary>
-        /// Detects and removes consecutive unconditional jumps.
+        ///     Detects and removes consecutive unconditional jumps.
         /// </summary>
         /// <remarks>
-        /// <para>Since all jumps targeting unconditional jumps have been redirected by 
-        /// <see cref="_unconditionalJumpTargetPropagation"/>, unconditional jumps that are preceded by an unconditional jump can no longer be reached directly.</para>
-        /// <code>
-        /// jump.f b
-        /// ...
-        /// jump a
-        /// jump b
-        /// jump c
-        /// ...
-        /// label a
-        /// ...
-        /// </code>
-        /// <para>The above can be shortened to:</para>
-        /// <code>
-        /// jump.f b
-        /// ...
-        /// jump a
-        /// ...
-        /// label a
-        /// ...
-        /// </code>
+        ///     <para>Since all jumps targeting unconditional jumps have been redirected by 
+        ///         <see cref = "_unconditionalJumpTargetPropagation" />, unconditional jumps that are preceded by an unconditional jump can no longer be reached directly.</para>
+        ///     <code>
+        ///         jump.f b
+        ///         ...
+        ///         jump a
+        ///         jump b
+        ///         jump c
+        ///         ...
+        ///         label a
+        ///         ...
+        ///     </code>
+        ///     <para>The above can be shortened to:</para>
+        ///     <code>
+        ///         jump.f b
+        ///         ...
+        ///         jump a
+        ///         ...
+        ///         label a
+        ///         ...
+        ///     </code>
         /// </remarks>
         private void _removeUnconditionalJumpSequences()
         {
@@ -1536,16 +1571,17 @@ namespace Prexonite.Compiler
         #region RemoveJumpsToNextInstruction
 
         /// <summary>
-        /// Detects and removes unconditional jumps to the following instruction.
+        ///     Detects and removes unconditional jumps to the following instruction.
         /// </summary>
         /// <remarks>
-        /// <code>
-        /// jump b
-        /// label b
-        /// ...
-        /// </code> is shortened to <code>
-        /// ...
-        /// </code></remarks>
+        ///     <code>
+        ///         jump b
+        ///         label b
+        ///         ...
+        ///     </code> is shortened to <code>
+        ///                                 ...
+        ///                             </code>
+        /// </remarks>
         private void _removeJumpsToNextInstruction()
         {
             var code = Code;
@@ -1568,7 +1604,7 @@ namespace Prexonite.Compiler
                         throw new PrexoniteException
                             (
                             "Redundant conditional jump to following instruction at address " +
-                            i);
+                                i);
                     }
                 }
             }
@@ -1580,17 +1616,18 @@ namespace Prexonite.Compiler
         #region Jump re-inversion
 
         /// <summary>
-        /// Detects conditional jumps skipping unconditional jumps and combines them into an inverted conditional jump.
+        ///     Detects conditional jumps skipping unconditional jumps and combines them into an inverted conditional jump.
         /// </summary>
         /// <remarks>
-        /// <code>
-        /// jump.f  after
-        /// jump    somewhere
-        /// label   after
-        /// </code><para>is equal to</para>
-        /// <code>
-        /// jump.t  somewhere
-        /// </code></remarks>
+        ///     <code>
+        ///         jump.f  after
+        ///         jump    somewhere
+        ///         label   after
+        ///     </code><para>is equal to</para>
+        ///     <code>
+        ///         jump.t  somewhere
+        ///     </code>
+        /// </remarks>
         private void _jumpReInversion()
         {
             var code = Code;
@@ -1652,7 +1689,7 @@ namespace Prexonite.Compiler
 #if UseIndex
 
         /// <summary>
-        /// Replaces by-name opcodes with by-index ones. Ignores variables with no mapping.
+        ///     Replaces by-name opcodes with by-index ones. Ignores variables with no mapping.
         /// </summary>
         private void _byIndex()
         {
@@ -1665,8 +1702,9 @@ namespace Prexonite.Compiler
             var code = Function.Code;
 
             var map = Function.LocalVariableMapping;
-            if(map == null)
-                throw new PrexoniteException("Local variable mapping of function " + Function.Id + " does not exist.");
+            if (map == null)
+                throw new PrexoniteException("Local variable mapping of function " + Function.Id +
+                    " does not exist.");
 
             for (var i = 0; i < code.Count; i++)
             {
@@ -1689,9 +1727,12 @@ namespace Prexonite.Compiler
                         goto replaceInt;
                     case OpCode.ldr_loc:
                         nopc = OpCode.ldr_loci;
-                    replaceInt:
+                        replaceInt:
                         if (ins.Id == null)
-                            throw new PrexoniteException(string.Format("Invalid instruction ({1}) in function {0}. Id missing.", Function.Id, ins));
+                            throw new PrexoniteException(
+                                string.Format(
+                                    "Invalid instruction ({1}) in function {0}. Id missing.",
+                                    Function.Id, ins));
                         if (!map.TryGetValue(ins.Id, out idx))
                             continue;
                         code[i] = new Instruction(nopc, idx);
@@ -1724,7 +1765,7 @@ namespace Prexonite.Compiler
                 prefix = "";
             return
                 Function.Id + "\\" + prefix +
-                (_nestedIdCounter++);
+                    (_nestedIdCounter++);
         }
     }
 }

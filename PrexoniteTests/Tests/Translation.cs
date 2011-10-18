@@ -1,22 +1,44 @@
-﻿using System;
+﻿// Prexonite
+// 
+// Copyright (c) 2011, Christian Klauser
+// All rights reserved.
+// 
+// Redistribution and use in source and binary forms, with or without modification, 
+//  are permitted provided that the following conditions are met:
+// 
+//     Redistributions of source code must retain the above copyright notice, 
+//          this list of conditions and the following disclaimer.
+//     Redistributions in binary form must reproduce the above copyright notice, 
+//          this list of conditions and the following disclaimer in the 
+//          documentation and/or other materials provided with the distribution.
+//     The names of the contributors may be used to endorse or 
+//          promote products derived from this software without specific prior written permission.
+// 
+// THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND 
+//  ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED 
+//  WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED. 
+//  IN NO EVENT SHALL THE COPYRIGHT HOLDER OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT, 
+//  INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES 
+//  (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, 
+//  DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, 
+//  WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING 
+//  IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+
 using System.Collections.Generic;
-using System.Linq;
-using System.Text;
 using NUnit.Framework;
 using Prexonite;
 using Prexonite.Compiler;
-using Prx.Tests;
 
 namespace PrexoniteTests.Tests
 {
-    [TestFixture,Explicit]
+    [TestFixture, Explicit]
     public class Translation : VMTestsBase
     {
-
         [Test]
         public void SimpleSwitchMetaEntry()
         {
-            Compile(@"
+            Compile(
+                @"
 globalSwitch;
 is gloS;
 is not gloS2;
@@ -42,11 +64,11 @@ not loc4]
             Assert.That(target, Meta.ContainsExact("globalSwitch", true));
             Assert.That(target, Meta.ContainsExact("gloS", true));
             Assert.That(target, Meta.ContainsExact("gloS2", false));
-            Assert.That(target, Meta.ContainsExact("glos3",false));
+            Assert.That(target, Meta.ContainsExact("glos3", false));
 
             //First function
-            Assert.That(main,Is.Not.Null);
-            Assert.That(main, Meta.ContainsExact("loc",true));
+            Assert.That(main, Is.Not.Null);
+            Assert.That(main, Meta.ContainsExact("loc", true));
 
             //Second function
             Assert.That(main2, Is.Not.Null);
@@ -67,12 +89,12 @@ function main [loc {1,2,3,}]
 ");
 
             var entry = new MetaEntry(new MetaEntry[] {"1", "2", "3"});
-            
+
             Assert.That(target, Meta.Contains("glob", entry));
             var main = target.Functions["main"];
 
             Assert.That(main, Is.Not.Null);
-            Assert.That(main, Meta.Contains("loc",entry));
+            Assert.That(main, Meta.Contains("loc", entry));
         }
 
         [Test]
@@ -82,13 +104,14 @@ function main [loc {1,2,3,}]
 function main = [1,2,3,];
 ");
 
-            Expect(new List<PValue>{1,2,3});
+            Expect(new List<PValue> {1, 2, 3});
         }
 
         [Test]
         public void TrailingCommaHashLiteral()
         {
-            Compile(@"
+            Compile(
+                @"
 function main(ks,vs)
 {
     var h = {1: ""a"", 2: ""b"", 3: ""c"",};
@@ -102,13 +125,15 @@ function main(ks,vs)
 }
 ");
 
-            Expect("110101", (PValue) new List<PValue>{1,2,4,3,2,1}, (PValue) new List<PValue>{"a", "b", "d", "c", "a", "a"});
+            Expect("110101", (PValue) new List<PValue> {1, 2, 4, 3, 2, 1},
+                (PValue) new List<PValue> {"a", "b", "d", "c", "a", "a"});
         }
 
         [Test]
         public void TrailingArgumentList()
         {
-            Compile(@"
+            Compile(
+                @"
 function f(a,b,) = a + 2*b;
 function main(x,y)
 {
@@ -116,13 +141,15 @@ function main(x,y)
 }
 ");
 
-            Expect(2 + 6, 2,3);
+            Expect(2 + 6, 2, 3);
         }
 
         [Test]
         public void SuppressSymbols()
         {
-            var ldr = Compile(@"
+            var ldr =
+                Compile(
+                    @"
 function g = 5;
 var f = 7;
 
@@ -144,29 +171,32 @@ function main(x)
 ");
 
             Expect(3*2 + 5 + 7, 2);
-            Expect(3 * 11 + 5 + 7, 11);
+            Expect(3*11 + 5 + 7, 11);
 
             {
-                Assert.That(ldr.Symbols.ContainsKey("f"),Is.True,"Symbol table must contain an entry for 'f'.");
+                Assert.That(ldr.Symbols.ContainsKey("f"), Is.True,
+                    "Symbol table must contain an entry for 'f'.");
                 var entry = ldr.Symbols["f"];
-                Assert.That(entry.Interpretation,Is.EqualTo(SymbolInterpretations.GlobalObjectVariable));
+                Assert.That(entry.Interpretation,
+                    Is.EqualTo(SymbolInterpretations.GlobalObjectVariable));
                 Assert.That(entry.Id, Is.EqualTo("f"));
             }
 
             {
-                Assert.That(ldr.Symbols.ContainsKey("g"), Is.True, "Symbol table must contain an entry for 'g'.");
+                Assert.That(ldr.Symbols.ContainsKey("g"), Is.True,
+                    "Symbol table must contain an entry for 'g'.");
                 var entry = ldr.Symbols["g"];
                 Assert.That(entry.Interpretation, Is.EqualTo(SymbolInterpretations.Function));
                 Assert.That(entry.Id, Is.EqualTo("g"));
             }
 
             {
-                Assert.That(ldr.Symbols.ContainsKey("p"), Is.True, "Symbol table must contain an entry for 'p'.");
+                Assert.That(ldr.Symbols.ContainsKey("p"), Is.True,
+                    "Symbol table must contain an entry for 'p'.");
                 var entry = ldr.Symbols["p"];
                 Assert.That(entry.Interpretation, Is.EqualTo(SymbolInterpretations.Function));
                 Assert.That(entry.Id, Is.EqualTo("f"));
             }
         }
-
     }
 }

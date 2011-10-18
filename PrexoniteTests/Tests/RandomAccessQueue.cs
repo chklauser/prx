@@ -1,3 +1,29 @@
+// Prexonite
+// 
+// Copyright (c) 2011, Christian Klauser
+// All rights reserved.
+// 
+// Redistribution and use in source and binary forms, with or without modification, 
+//  are permitted provided that the following conditions are met:
+// 
+//     Redistributions of source code must retain the above copyright notice, 
+//          this list of conditions and the following disclaimer.
+//     Redistributions in binary form must reproduce the above copyright notice, 
+//          this list of conditions and the following disclaimer in the 
+//          documentation and/or other materials provided with the distribution.
+//     The names of the contributors may be used to endorse or 
+//          promote products derived from this software without specific prior written permission.
+// 
+// THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND 
+//  ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED 
+//  WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED. 
+//  IN NO EVENT SHALL THE COPYRIGHT HOLDER OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT, 
+//  INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES 
+//  (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, 
+//  DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, 
+//  WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING 
+//  IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+
 using NUnit.Framework;
 using Prexonite.Helper;
 
@@ -14,29 +40,29 @@ namespace PrexoniteTests.Tests
         [Test]
         public void Count()
         {
-            RandomAccessQueue<int> raq = new RandomAccessQueue<int>();
+            var raq = new RandomAccessQueue<int>();
 
             Assert.AreEqual(0, raq.Count);
 
-            int[] d = generateData();
+            var d = generateData();
             raq.Enqueue(d[0]);
 
             Assert.AreEqual(1, raq.Count);
 
-            int cnt = 15;
-            for (int i = cnt; i > 0; i--)
+            var cnt = 15;
+            for (var i = cnt; i > 0; i--)
                 raq.Enqueue(d[i]);
 
             Assert.AreEqual(cnt + 1, raq.Count);
 
-            int cnt2 = 13;
-            for (int i = 13; i > 0; i--)
+            var cnt2 = 13;
+            for (var i = 13; i > 0; i--)
                 raq.Dequeue();
 
             Assert.AreEqual(cnt + 1 - cnt2, raq.Count);
 
-            int cnt3 = 18;
-            for (int i = cnt3; i > 0; i--)
+            var cnt3 = 18;
+            for (var i = cnt3; i > 0; i--)
                 raq.Enqueue(d[i]);
 
             Assert.AreEqual(cnt + 1 - cnt2 + cnt3, raq.Count);
@@ -45,11 +71,11 @@ namespace PrexoniteTests.Tests
         [Test]
         public void OrderSimple()
         {
-            RandomAccessQueue<int> raq = new RandomAccessQueue<int>();
+            var raq = new RandomAccessQueue<int>();
 
             Assert.AreEqual(0, raq.Count);
 
-            int[] d = generateData(13);
+            var d = generateData(13);
             int i;
 
             for (i = 0; i < d.Length; i++)
@@ -67,11 +93,11 @@ namespace PrexoniteTests.Tests
         [Test]
         public void Order()
         {
-            RandomAccessQueue<int> raq = new RandomAccessQueue<int>();
+            var raq = new RandomAccessQueue<int>();
 
             Assert.AreEqual(0, raq.Count);
 
-            int[] d = generateData(20);
+            var d = generateData(20);
             int i;
 
             for (i = 0; i < 15; i++)
@@ -95,11 +121,11 @@ namespace PrexoniteTests.Tests
         [Test]
         public void RandomAccess()
         {
-            RandomAccessQueue<int> raq = new RandomAccessQueue<int>();
+            var raq = new RandomAccessQueue<int>();
 
             Assert.AreEqual(0, raq.Count);
 
-            int[] d = generateData(20);
+            var d = generateData(20);
             int i;
 
             for (i = 0; i < 15; i++)
@@ -127,7 +153,7 @@ namespace PrexoniteTests.Tests
         [Test]
         public void SingleElement()
         {
-            RandomAccessQueue<int> raq = new RandomAccessQueue<int>();
+            var raq = new RandomAccessQueue<int>();
 
             Assert.AreEqual(0, raq.Count);
 
@@ -145,11 +171,11 @@ namespace PrexoniteTests.Tests
         [Test]
         public void Used()
         {
-            RandomAccessQueue<int> raq = new RandomAccessQueue<int>();
+            var raq = new RandomAccessQueue<int>();
 
-            int[] d = generateData(30);
+            var d = generateData(30);
             //Fill the queue
-            foreach (int data in d)
+            foreach (var data in d)
             {
                 raq.Enqueue(data);
             }
@@ -193,8 +219,8 @@ namespace PrexoniteTests.Tests
 
         private static int[] generateData(int k)
         {
-            int[] d = new int[k];
-            for (int i = 0; i < k; i++)
+            var d = new int[k];
+            for (var i = 0; i < k; i++)
                 d[i] = i + 1;
             return d;
         }

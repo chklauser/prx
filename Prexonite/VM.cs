@@ -1,25 +1,28 @@
-/*
- * Prexonite, a scripting engine (Scripting Language -> Bytecode -> Virtual Machine)
- *  Copyright (C) 2007  Christian "SealedSun" Klauser
- *  E-mail  sealedsun a.t gmail d.ot com
- *  Web     http://www.sealedsun.ch/
- *
- *  This program is free software; you can redistribute it and/or modify
- *  it under the terms of the GNU General Public License as published by
- *  the Free Software Foundation; either version 2 of the License, or
- *  (at your option) any later version.
- *
- *  Please contact me (sealedsun a.t gmail do.t com) if you need a different license.
- * 
- *  This program is distributed in the hope that it will be useful,
- *  but WITHOUT ANY WARRANTY; without even the implied warranty of
- *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- *  GNU General Public License for more details.
- *
- *  You should have received a copy of the GNU General Public License along
- *  with this program; if not, write to the Free Software Foundation, Inc.,
- *  51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
- */
+// Prexonite
+// 
+// Copyright (c) 2011, Christian Klauser
+// All rights reserved.
+// 
+// Redistribution and use in source and binary forms, with or without modification, 
+//  are permitted provided that the following conditions are met:
+// 
+//     Redistributions of source code must retain the above copyright notice, 
+//          this list of conditions and the following disclaimer.
+//     Redistributions in binary form must reproduce the above copyright notice, 
+//          this list of conditions and the following disclaimer in the 
+//          documentation and/or other materials provided with the distribution.
+//     The names of the contributors may be used to endorse or 
+//          promote products derived from this software without specific prior written permission.
+// 
+// THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND 
+//  ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED 
+//  WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED. 
+//  IN NO EVENT SHALL THE COPYRIGHT HOLDER OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT, 
+//  INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES 
+//  (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, 
+//  DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, 
+//  WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING 
+//  IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 using System;
 using System.Collections.Generic;
@@ -35,7 +38,8 @@ using Prexonite.Types;
 namespace Prexonite
 {
     /// <summary>
-    /// Prexonite virtual machines. Engines manage available <see cref="PType">PTypes</see>, assemblies accessible by the virtual machine as well as available <see cref="Commands" />.
+    ///     Prexonite virtual machines. Engines manage available <see cref = "PType">PTypes</see>, assemblies accessible by the virtual machine as well as available <see
+    ///      cref = "Commands" />.
     /// </summary>
     public partial class Engine
     {
@@ -44,7 +48,7 @@ namespace Prexonite
         //private readonly LinkedList<StackContext> _stack = new LinkedList<StackContext>();
 
         /// <summary>
-        /// Provides access to the virtual machine's call stack.
+        ///     Provides access to the virtual machine's call stack.
         /// </summary>
         public LinkedList<StackContext> Stack
         {
@@ -63,19 +67,20 @@ namespace Prexonite
         #region Processor
 
         /// <summary>
-        /// Executes the context on top of the stack.
+        ///     Executes the context on top of the stack.
         /// </summary>
         /// <remarks>
-        /// <para>
-        ///     This function executes the context on top of the stack until that context gets popped, 
-        ///     regardless of any other contexts that have been pushed by the code.
-        /// </para>
-        /// <para>
-        ///     If the stack is empty, this method returns immediately.
-        /// </para></remarks>
-        /// <exception cref="ExecutionProhibitedException">The engine does is not permitted to execute code.</exception>
-        /// <seealso cref="ExecutionProhibited"/>
-        /// <seealso cref="StackContext"/>
+        ///     <para>
+        ///         This function executes the context on top of the stack until that context gets popped, 
+        ///         regardless of any other contexts that have been pushed by the code.
+        ///     </para>
+        ///     <para>
+        ///         If the stack is empty, this method returns immediately.
+        ///     </para>
+        /// </remarks>
+        /// <exception cref = "ExecutionProhibitedException">The engine does is not permitted to execute code.</exception>
+        /// <seealso cref = "ExecutionProhibited" />
+        /// <seealso cref = "StackContext" />
         public PValue Process()
         {
             if (ExecutionProhibited)
@@ -84,7 +89,8 @@ namespace Prexonite
             var localStack = Stack;
             var level = localStack.Count;
             if (level < 1)
-                throw new PrexoniteException("The VM stack is empty. Return value cannot be computed.");
+                throw new PrexoniteException(
+                    "The VM stack is empty. Return value cannot be computed.");
 
             PrexoniteRuntimeException currentException = null;
             StackContext lastContext = null;
@@ -157,10 +163,10 @@ namespace Prexonite
         }
 
         /// <summary>
-        /// Executes a give stack context.
+        ///     Executes a give stack context.
         /// </summary>
-        /// <param name="sctx">Any stack context.</param>
-        /// <exception cref="ArgumentNullException"><paramref name="sctx"/> is null.</exception>
+        /// <param name = "sctx">Any stack context.</param>
+        /// <exception cref = "ArgumentNullException"><paramref name = "sctx" /> is null.</exception>
         public PValue Process(StackContext sctx)
         {
             if (sctx == null)
@@ -178,39 +184,43 @@ namespace Prexonite
         #region Runtime Settings
 
         /// <summary>
-        /// Controls whether function references are cached to skip the string comparison based lookup.
+        ///     Controls whether function references are cached to skip the string comparison based lookup.
         /// </summary>
-        /// <remarks>If you enabled caching and replace a function at runtime, instructions that 
-        /// maintain a cached reference will still call the original function.</remarks>
+        /// <remarks>
+        ///     If you enabled caching and replace a function at runtime, instructions that 
+        ///     maintain a cached reference will still call the original function.
+        /// </remarks>
         public bool CacheFunctions { get; set; }
 
         /// <summary>
-        /// Controls wether command references are cached to skip the string comparison based lookup.
+        ///     Controls wether command references are cached to skip the string comparison based lookup.
         /// </summary>
-        /// <remarks>If you enabled caching and replace a commanc at runtime, instructions that 
-        /// maintain a cached reference will still call the original command.</remarks>
+        /// <remarks>
+        ///     If you enabled caching and replace a commanc at runtime, instructions that 
+        ///     maintain a cached reference will still call the original command.
+        /// </remarks>
         public bool CacheCommands { get; set; }
 
         /// <summary>
-        /// You can prevent an engine from accidentially executing code by setting this property to true.
+        ///     You can prevent an engine from accidentially executing code by setting this property to true.
         /// </summary>
         /// <remarks>
-        /// <para>
-        ///     Only calls to <see cref="Process()"/> are blocked. 
-        ///     More specifically they will result in a <see cref="ExecutionProhibitedException"/> if called.
-        /// </para>
-        /// <para>
-        ///     The engine can still be used to dispatch calls in the type system.
-        /// </para>
-        /// <para>
-        ///     This can be usefull if you want to prevent a script from executing it's build block upon loading.<br />
-        /// </para>
+        ///     <para>
+        ///         Only calls to <see cref = "Process()" /> are blocked. 
+        ///         More specifically they will result in a <see cref = "ExecutionProhibitedException" /> if called.
+        ///     </para>
+        ///     <para>
+        ///         The engine can still be used to dispatch calls in the type system.
+        ///     </para>
+        ///     <para>
+        ///         This can be usefull if you want to prevent a script from executing it's build block upon loading.<br />
+        ///     </para>
         /// </remarks>
         public bool ExecutionProhibited { get; set; }
 
         /// <summary>
-        /// Indicates whether the <see cref="CompileToCil"/> command is allowed to link statically. 
-        /// This setting overrides any arguments passed to CompileToCil.
+        ///     Indicates whether the <see cref = "CompileToCil" /> command is allowed to link statically. 
+        ///     This setting overrides any arguments passed to CompileToCil.
         /// </summary>
         public bool StaticLinkingAllowed { get; set; }
 

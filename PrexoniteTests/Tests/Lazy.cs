@@ -1,14 +1,37 @@
-﻿using System.Collections.Generic;
+﻿// Prexonite
+// 
+// Copyright (c) 2011, Christian Klauser
+// All rights reserved.
+// 
+// Redistribution and use in source and binary forms, with or without modification, 
+//  are permitted provided that the following conditions are met:
+// 
+//     Redistributions of source code must retain the above copyright notice, 
+//          this list of conditions and the following disclaimer.
+//     Redistributions in binary form must reproduce the above copyright notice, 
+//          this list of conditions and the following disclaimer in the 
+//          documentation and/or other materials provided with the distribution.
+//     The names of the contributors may be used to endorse or 
+//          promote products derived from this software without specific prior written permission.
+// 
+// THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND 
+//  ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED 
+//  WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED. 
+//  IN NO EVENT SHALL THE COPYRIGHT HOLDER OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT, 
+//  INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES 
+//  (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, 
+//  DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, 
+//  WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING 
+//  IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+
+using System.Collections.Generic;
 using NUnit.Framework;
 using Prexonite;
-using Prx.Tests;
 
 namespace PrexoniteTests.Tests
 {
-
     public abstract class Lazy : VMTestsBase
     {
-
         public Lazy()
         {
             CompileToCil = false;
@@ -18,7 +41,8 @@ namespace PrexoniteTests.Tests
         [Test]
         public void SingularThunk()
         {
-            Compile(@"
+            Compile(
+                @"
 function _idT xT = xT.force;
 
 function main(n)
@@ -28,13 +52,14 @@ function main(n)
 }
 ");
             const int n = 77;
-            Expect(n,n);
+            Expect(n, n);
         }
 
         [Test]
         public void BasicThunk()
         {
-            Compile(@"
+            Compile(
+                @"
 function _addT xT yT = xT.force + yT.force;
 function _mulT xT yT = xT.force * yT.force;
 
@@ -50,13 +75,14 @@ function main(x1,y1,x2,y2)
             const int y1 = 5;
             const int y2 = -8;
             const int dot = x1*x2 + y1*y2;
-            Expect(dot,x1,y1,x2,y2);
+            Expect(dot, x1, y1, x2, y2);
         }
 
         [Test]
         public void NotExecuted()
         {
-            Compile(@"
+            Compile(
+                @"
 function _divT xT yT = xT.force / yT.force;
 function _throwT = throw ""Invalid computation"";
 function _consT hT tT = [hT,tT];
@@ -73,13 +99,14 @@ function main(x1)
 }
 ");
 
-            Expect(15,15);
+            Expect(15, 15);
         }
 
         [Test]
         public void Repeat()
         {
-            Compile(@"
+            Compile(
+                @"
 function _consT hT tT = [hT,tT];
 function _headT xsT = xsT.force[0];
 function _tailT xsT = xsT.force[1];
@@ -108,13 +135,14 @@ function main(x1)
 }
 ");
 
-            Expect(3*4,4);
+            Expect(3*4, 4);
         }
 
         [Test]
         public void ByValueCapture()
         {
-            Compile(@"
+            Compile(
+                @"
 function main(xs)
 {
     var ys = [];
@@ -127,13 +155,14 @@ function main(xs)
 ");
 
             var xs = new List<PValue> {1, 2, 3};
-            Expect("123",(PValue)xs);
+            Expect("123", (PValue) xs);
         }
 
         [Test]
         public void AppendLazyFunction()
         {
-            Compile(@"
+            Compile(
+                @"
 
 lazy function cons hdT tlT = hdT : tlT;
 lazy function head xsT = xsT.force.Key;
@@ -208,7 +237,8 @@ function main(xs, ys, seed)
         [Test]
         public void SimpleLetBindingStmt()
         {
-            Compile(@"
+            Compile(
+                @"
 lazy function cons x xs = x : xs;
 
 lazy function repeat x
@@ -236,13 +266,14 @@ function main(x,n)
 
 ");
 
-            Expect("<<xxx","x",3);
+            Expect("<<xxx", "x", 3);
         }
 
         [Test]
         public void ArgumentLetBindingStmt()
         {
-            Compile(@"
+            Compile(
+                @"
 lazy function cons x xs = x : xs;
 
 coroutine to_seq xsT
@@ -270,13 +301,14 @@ function main(n)
 }
 ");
 
-            Expect("<<11235813",7);
+            Expect("<<11235813", 7);
         }
 
         [Test]
         public void OutOfOrder()
         {
-            Compile(@"
+            Compile(
+                @"
 function main(a)
 {
     let b;
@@ -289,13 +321,14 @@ function main(a)
 }
 ");
 
-            Expect(8,3);
+            Expect(8, 3);
         }
 
         [Test]
         public void MutuallyRecursive()
         {
-            Compile(@"
+            Compile(
+                @"
 function main(n)
 {
     let flip, flop,
@@ -305,7 +338,7 @@ function main(n)
 }
 ");
 
-            Expect("<<101010",6);
+            Expect("<<101010", 6);
         }
     }
 }

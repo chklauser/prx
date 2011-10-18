@@ -1,97 +1,106 @@
-/*
- * Prexonite, a scripting engine (Scripting Language -> Bytecode -> Virtual Machine)
- *  Copyright (C) 2007  Christian "SealedSun" Klauser
- *  E-mail  sealedsun a.t gmail d.ot com
- *  Web     http://www.sealedsun.ch/
- *
- *  This program is free software; you can redistribute it and/or modify
- *  it under the terms of the GNU General Public License as published by
- *  the Free Software Foundation; either version 2 of the License, or
- *  (at your option) any later version.
- *
- *  Please contact me (sealedsun a.t gmail do.t com) if you need a different license.
- * 
- *  This program is distributed in the hope that it will be useful,
- *  but WITHOUT ANY WARRANTY; without even the implied warranty of
- *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- *  GNU General Public License for more details.
- *
- *  You should have received a copy of the GNU General Public License along
- *  with this program; if not, write to the Free Software Foundation, Inc.,
- *  51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
- */
+// Prexonite
+// 
+// Copyright (c) 2011, Christian Klauser
+// All rights reserved.
+// 
+// Redistribution and use in source and binary forms, with or without modification, 
+//  are permitted provided that the following conditions are met:
+// 
+//     Redistributions of source code must retain the above copyright notice, 
+//          this list of conditions and the following disclaimer.
+//     Redistributions in binary form must reproduce the above copyright notice, 
+//          this list of conditions and the following disclaimer in the 
+//          documentation and/or other materials provided with the distribution.
+//     The names of the contributors may be used to endorse or 
+//          promote products derived from this software without specific prior written permission.
+// 
+// THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND 
+//  ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED 
+//  WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED. 
+//  IN NO EVENT SHALL THE COPYRIGHT HOLDER OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT, 
+//  INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES 
+//  (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, 
+//  DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, 
+//  WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING 
+//  IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 using System;
 using System.Diagnostics;
+using System.Diagnostics.CodeAnalysis;
 using System.Text;
+using Prexonite.Commands.Core.Operators;
 using Prexonite.Types;
 
 namespace Prexonite
 {
     //Behaves like a union. Not all fields are used by all instructions
     /// <summary>
-    /// Represents a single Prexonite VM instruction
+    ///     Represents a single Prexonite VM instruction
     /// </summary>
     //[DebuggerStepThrough]
     public class Instruction : ICloneable
     {
         /// <summary>
-        /// The instructions opcode. Determines the VMs behaviour at runtime.
+        ///     The instructions opcode. Determines the VMs behaviour at runtime.
         /// </summary>
         public OpCode OpCode;
 
         //Common arguments
         /// <summary>
-        /// One of the instructions operands. Arguments is commonly used to hold the number of arguments take from 
-        /// the stack. The field is also used to store other integer 
-        /// operands like the target of a jump or the number of values to rotate, pop or duplicate from the stack.
+        ///     One of the instructions operands. Arguments is commonly used to hold the number of arguments take from 
+        ///     the stack. The field is also used to store other integer 
+        ///     operands like the target of a jump or the number of values to rotate, pop or duplicate from the stack.
         /// </summary>
         public int Arguments;
 
         /// <summary>
-        /// One of the instructions operands. Id is commonly used to store identifiers but also more 
-        /// general call targets or type expressions.
+        ///     One of the instructions operands. Id is commonly used to store identifiers but also more 
+        ///     general call targets or type expressions.
         /// </summary>
         public string Id;
 
         /// <summary>
-        /// One of the instructions operands. Statically, GenericArgument is only used by ldc.real 
-        /// to store a boxed double value. The VM however uses this field to cache constant data 
-        /// like evaluated type expressions or resolved call targets.
+        ///     One of the instructions operands. Statically, GenericArgument is only used by ldc.real 
+        ///     to store a boxed double value. The VM however uses this field to cache constant data 
+        ///     like evaluated type expressions or resolved call targets.
         /// </summary>
         public object GenericArgument;
 
         /// <summary>
-        /// The just effect flag prevents certain operations from pushing their result back on the stack.
-        /// This is useful in situations where only the side effect of an operation but not it's return value 
-        /// is interesting, eliminating the need for an additional pop instruction.
+        ///     The just effect flag prevents certain operations from pushing their result back on the stack.
+        ///     This is useful in situations where only the side effect of an operation but not it's return value 
+        ///     is interesting, eliminating the need for an additional pop instruction.
         /// </summary>
-// ReSharper disable FieldCanBeMadeReadOnly.Global
-// For consistency with the rest of instruction data type
+        // ReSharper disable FieldCanBeMadeReadOnly.Global
+        // For consistency with the rest of instruction data type
         public bool JustEffect;
 
-// ReSharper restore FieldCanBeMadeReadOnly.Global
+        // ReSharper restore FieldCanBeMadeReadOnly.Global
 
         #region Construction
 
         #region Low-Level
 
         /// <summary>
-        /// Creates a new Instruction with a given OpCode. Operands are initialized to default values.
+        ///     Creates a new Instruction with a given OpCode. Operands are initialized to default values.
         /// </summary>
-        /// <param name="opCode">The opcode of the instruction.</param>
-        /// <remarks>See the actual <see cref="OpCode"/>s for details on how to construct valid instruction.</remarks>
+        /// <param name = "opCode">The opcode of the instruction.</param>
+        /// <remarks>
+        ///     See the actual <see cref = "OpCode" />s for details on how to construct valid instruction.
+        /// </remarks>
         public Instruction(OpCode opCode)
         {
             OpCode = opCode;
         }
 
         /// <summary>
-        /// Creates a new Instruction with a given OpCode and an identifier as its operand.
+        ///     Creates a new Instruction with a given OpCode and an identifier as its operand.
         /// </summary>
-        /// <param name="opCode">The opcode of the instruction.</param>
-        /// <param name="id">The id operand.</param>
-        /// <remarks>See the actual <see cref="OpCode"/>s for details on how to construct valid instruction.</remarks>
+        /// <param name = "opCode">The opcode of the instruction.</param>
+        /// <param name = "id">The id operand.</param>
+        /// <remarks>
+        ///     See the actual <see cref = "OpCode" />s for details on how to construct valid instruction.
+        /// </remarks>
         public Instruction(OpCode opCode, string id)
             : this(opCode)
         {
@@ -99,11 +108,13 @@ namespace Prexonite
         }
 
         /// <summary>
-        /// Creates a new Instruction with a given OpCode and an identifier as its operand.
+        ///     Creates a new Instruction with a given OpCode and an identifier as its operand.
         /// </summary>
-        /// <param name="opCode">The opcode of the instruction.</param>
-        /// <param name="arguments">The arguments operand.</param>
-        /// <remarks>See the actual <see cref="OpCode"/>s for details on how to construct valid instruction.</remarks>
+        /// <param name = "opCode">The opcode of the instruction.</param>
+        /// <param name = "arguments">The arguments operand.</param>
+        /// <remarks>
+        ///     See the actual <see cref = "OpCode" />s for details on how to construct valid instruction.
+        /// </remarks>
         public Instruction(OpCode opCode, int arguments)
             : this(opCode)
         {
@@ -111,12 +122,14 @@ namespace Prexonite
         }
 
         /// <summary>
-        /// Creates a new Instruction with a given OpCode and an identifier as its operand.
+        ///     Creates a new Instruction with a given OpCode and an identifier as its operand.
         /// </summary>
-        /// <param name="opCode">The opcode of the instruction.</param>
-        /// <param name="id">The id operand.</param>
-        /// <param name="arguments">The arguments operand.</param>
-        /// <remarks>See the actual <see cref="OpCode"/>s for details on how to construct valid instruction.</remarks>
+        /// <param name = "opCode">The opcode of the instruction.</param>
+        /// <param name = "id">The id operand.</param>
+        /// <param name = "arguments">The arguments operand.</param>
+        /// <remarks>
+        ///     See the actual <see cref = "OpCode" />s for details on how to construct valid instruction.
+        /// </remarks>
         public Instruction(OpCode opCode, int arguments, string id)
             : this(opCode)
         {
@@ -125,13 +138,15 @@ namespace Prexonite
         }
 
         /// <summary>
-        /// Creates a new Instruction with a given OpCode and an identifier as its operand.
+        ///     Creates a new Instruction with a given OpCode and an identifier as its operand.
         /// </summary>
-        /// <param name="opCode">The opcode of the instruction.</param>
-        /// <param name="id">The id operand.</param>
-        /// <param name="arguments">The arguments operand.</param>
-        /// <param name="justEffect">Indicates whether or not the return value is thrown away.</param>
-        /// <remarks>See the actual <see cref="OpCode"/>s for details on how to construct valid instruction.</remarks>
+        /// <param name = "opCode">The opcode of the instruction.</param>
+        /// <param name = "id">The id operand.</param>
+        /// <param name = "arguments">The arguments operand.</param>
+        /// <param name = "justEffect">Indicates whether or not the return value is thrown away.</param>
+        /// <remarks>
+        ///     See the actual <see cref = "OpCode" />s for details on how to construct valid instruction.
+        /// </remarks>
         public Instruction(OpCode opCode, int arguments, string id, bool justEffect)
             : this(opCode, arguments, id)
         {
@@ -162,9 +177,9 @@ namespace Prexonite
         public static Instruction CreateConstant(double r)
         {
             var ins = new Instruction(OpCode.ldc_real)
-            {
-                GenericArgument = r
-            };
+                {
+                    GenericArgument = r
+                };
             return ins;
         }
 
@@ -399,9 +414,9 @@ namespace Prexonite
                 return new Instruction(OpCode.nop);
 
             var ins = new Instruction(OpCode.rot, rotations)
-            {
-                GenericArgument = values
-            };
+                {
+                    GenericArgument = values
+                };
             return ins;
         }
 
@@ -456,10 +471,12 @@ namespace Prexonite
         #region ToString
 
         /// <summary>
-        /// Returns a human- and machine-readable string representation of the instruction.
+        ///     Returns a human- and machine-readable string representation of the instruction.
         /// </summary>
         /// <returns></returns>
-        /// <remarks>Use the <see cref="ToString(StringBuilder)"/> overload if you are building up a more complex string.</remarks>
+        /// <remarks>
+        ///     Use the <see cref = "ToString(StringBuilder)" /> overload if you are building up a more complex string.
+        /// </remarks>
         public override string ToString()
         {
             var buffer = new StringBuilder();
@@ -468,15 +485,15 @@ namespace Prexonite
         }
 
         /// <summary>
-        /// Writes a human- and machine-readable string representation of the instruction to the supplied <paramref name="buffer"/>.
+        ///     Writes a human- and machine-readable string representation of the instruction to the supplied <paramref name = "buffer" />.
         /// </summary>
-        /// <param name="buffer">The buffer to write the representation to.</param>
+        /// <param name = "buffer">The buffer to write the representation to.</param>
         public void ToString(StringBuilder buffer)
         {
             string escId;
             if (Id != null)
             {
-                if(!Commands.Core.Operators.OperatorCommands.TryGetLiteral(Id,out escId))
+                if (!OperatorCommands.TryGetLiteral(Id, out escId))
                     escId = StringPType.ToIdOrLiteral(Id);
             }
             else escId = "\"\"";
@@ -644,10 +661,10 @@ namespace Prexonite
         }
 
         /// <summary>
-        /// Retrieves actual index and argument count values from the <see cref="Arguments"/> field of an instruction.
+        ///     Retrieves actual index and argument count values from the <see cref = "Arguments" /> field of an instruction.
         /// </summary>
-        /// <param name="index">The address at which to store the actual index.</param>
-        /// <param name="argc">The address at which to store the actual arguments count.</param>
+        /// <param name = "index">The address at which to store the actual index.</param>
+        /// <param name = "argc">The address at which to store the actual arguments count.</param>
         public void DecodeIndLocIndex(out int index, out int argc)
         {
             if (OpCode != OpCode.indloci)
@@ -669,9 +686,9 @@ namespace Prexonite
         #region Equality
 
         /// <summary>
-        /// Determines whether the instruction is equal to an object (possibly another instruction).
+        ///     Determines whether the instruction is equal to an object (possibly another instruction).
         /// </summary>
-        /// <param name="obj">Any object (possibly an instruction).</param>
+        /// <param name = "obj">Any object (possibly an instruction).</param>
         /// <returns>True if the instruction is equal to the object (possibly another instruction).</returns>
         [DebuggerStepThrough]
         public override bool Equals(object obj)
@@ -764,29 +781,29 @@ namespace Prexonite
                 case OpCode.indloc:
                     return
                         Arguments == ins.Arguments &&
-                        Engine.StringsAreEqual(Id, ins.Id) &&
-                        JustEffect == ins.JustEffect;
+                            Engine.StringsAreEqual(Id, ins.Id) &&
+                                JustEffect == ins.JustEffect;
                     //ARG INSTRUCTIONS
                 case OpCode.indarg:
                 case OpCode.newcor:
                 case OpCode.tail:
                     return
                         Arguments == ins.Arguments &&
-                        JustEffect == ins.JustEffect;
+                            JustEffect == ins.JustEffect;
                 case OpCode.rot:
                     return
                         Arguments == ins.Arguments &&
-                        (int) GenericArgument == (int) ins.GenericArgument;
+                            (int) GenericArgument == (int) ins.GenericArgument;
                 default:
                     throw new PrexoniteException("Invalid opcode " + OpCode);
             }
         }
 
         /// <summary>
-        /// Determines whether two instructions are equal.
+        ///     Determines whether two instructions are equal.
         /// </summary>
-        /// <param name="left">One instruction</param>
-        /// <param name="right">Another instruction</param>
+        /// <param name = "left">One instruction</param>
+        /// <param name = "right">Another instruction</param>
         /// <returns>True if the instructions are equal, false otherwise.</returns>
         [DebuggerStepThrough]
         public static bool operator ==(Instruction left, Instruction right)
@@ -797,10 +814,10 @@ namespace Prexonite
         }
 
         /// <summary>
-        /// Determines whether two instructions are not equal.
+        ///     Determines whether two instructions are not equal.
         /// </summary>
-        /// <param name="left">One instruction</param>
-        /// <param name="right">Another instruction</param>
+        /// <param name = "left">One instruction</param>
+        /// <param name = "right">Another instruction</param>
         /// <returns>True if the instructions are not equal, false otherwise.</returns>
         [DebuggerStepThrough]
         public static bool operator !=(Instruction left, Instruction right)
@@ -811,7 +828,7 @@ namespace Prexonite
         }
 
         /// <summary>
-        /// Returns a hash code based on <see cref="OpCode"/>, <see cref="Arguments"/> and <see cref="Id"/>.
+        ///     Returns a hash code based on <see cref = "OpCode" />, <see cref = "Arguments" /> and <see cref = "Id" />.
         /// </summary>
         /// <returns>A hash code.</returns>
         public override int GetHashCode()
@@ -824,11 +841,10 @@ namespace Prexonite
         #region ICloneable Members
 
         ///<summary>
-        ///Creates a new object that is a copy of the current instance.
+        ///    Creates a new object that is a copy of the current instance.
         ///</summary>
-        ///
         ///<returns>
-        ///A new object that is a copy of this instance.
+        ///    A new object that is a copy of this instance.
         ///</returns>
         ///<filterpriority>2</filterpriority>
         object ICloneable.Clone()
@@ -837,7 +853,7 @@ namespace Prexonite
         }
 
         /// <summary>
-        /// Retuns a shallow clone of the instruction.
+        ///     Retuns a shallow clone of the instruction.
         /// </summary>
         /// <returns>A shallow clone of the instruction</returns>
         public Instruction Clone()
@@ -961,45 +977,45 @@ namespace Prexonite
 
     // ReSharper disable InconsistentNaming
     /// <summary>
-    /// The opcodes interpreted by the virtual machine.
+    ///     The opcodes interpreted by the virtual machine.
     /// </summary>
-    [System.Diagnostics.CodeAnalysis.SuppressMessage("Microsoft.Naming", "CA1704:IdentifiersShouldBeSpelledCorrectly")]
+    [SuppressMessage("Microsoft.Naming", "CA1704:IdentifiersShouldBeSpelledCorrectly")]
     public enum OpCode
     {
         /// <summary>
-        /// A non-existant opcode. Will result in exceptions when fed into the virtual machine.
+        ///     A non-existant opcode. Will result in exceptions when fed into the virtual machine.
         /// </summary>
         invalid = -1,
 
         /// <summary>
-        /// No operation. Stack: 0->0. Will be removed in optimization pass.
+        ///     No operation. Stack: 0->0. Will be removed in optimization pass.
         /// </summary>
         nop = 0,
 
         //Loading (13)
         //  - constants
         /// <summary>
-        /// Loads a constant <see cref="PType.Int"/> onto the stack. Stack: 0->1.
+        ///     Loads a constant <see cref = "PType.Int" /> onto the stack. Stack: 0->1.
         /// </summary>
         ldc_int, //ldc.int       loads an integer value
 
         /// <summary>
-        /// Loads a constant <see cref="PType.Real"/> onto the stack. Stack: 0->1.
+        ///     Loads a constant <see cref = "PType.Real" /> onto the stack. Stack: 0->1.
         /// </summary>
         ldc_real, //ldc.real      loads a floating point value
 
         /// <summary>
-        /// Loads a constant <see cref="PType.Bool"/> onto the stack. Stack: 0->1.
+        ///     Loads a constant <see cref = "PType.Bool" /> onto the stack. Stack: 0->1.
         /// </summary>
         ldc_bool, //ldc.bool      loads a boolean value
 
         /// <summary>
-        /// Loads a constant <see cref="PType.String"/> onto the stack. Stack: 0->1.
+        ///     Loads a constant <see cref = "PType.String" /> onto the stack. Stack: 0->1.
         /// </summary>
         ldc_string, //ldc.string    loads a string value
 
         /// <summary>
-        /// Loads the <see cref="PType.Null"/> value onto the stack. Stack: 0->
+        ///     Loads the <see cref = "PType.Null" /> value onto the stack. Stack: 0->
         /// </summary>
         ldc_null, //ldc.null      loads a null value
 
@@ -1046,15 +1062,15 @@ namespace Prexonite
         //  - exponential
         pow, //pow           binary power operator
         //  - comparision
-        [System.Diagnostics.CodeAnalysis.SuppressMessage("Microsoft.Naming", "CA1704:IdentifiersShouldBeSpelledCorrectly", MessageId = "ceq")]
-        ceq, //ceq           binary equality operator
+        [SuppressMessage("Microsoft.Naming", "CA1704:IdentifiersShouldBeSpelledCorrectly",
+            MessageId = "ceq")] ceq, //ceq           binary equality operator
         cne, //cne           binary inequality operator
         clt, //clt           binary less-than operator
         cle, //cle           binary less-than-or-equal operator
-        [System.Diagnostics.CodeAnalysis.SuppressMessage("Microsoft.Naming", "CA1704:IdentifiersShouldBeSpelledCorrectly", MessageId = "cgt")]
-        cgt, //cgt           binary greater-than operator
-        [System.Diagnostics.CodeAnalysis.SuppressMessage("Microsoft.Naming", "CA1704:IdentifiersShouldBeSpelledCorrectly", MessageId = "cge")]
-        cge, //cge           binary greater-than-or-equal operator
+        [SuppressMessage("Microsoft.Naming", "CA1704:IdentifiersShouldBeSpelledCorrectly",
+            MessageId = "cgt")] cgt, //cgt           binary greater-than operator
+        [SuppressMessage("Microsoft.Naming", "CA1704:IdentifiersShouldBeSpelledCorrectly",
+            MessageId = "cge")] cge, //cge           binary greater-than-or-equal operator
         //  - bitwise
         or, //or            binary bitwise or operator
         and, //and           binary bitwise and operator
@@ -1074,7 +1090,8 @@ namespace Prexonite
         func, //func          performs a function call
         cmd, //cmd           performs a command call
         indarg, //indarg        performs an indirect call on an operand
-        tail, //tail            performs an indirect call (tries to turn it into an optimized tail call)
+        tail,
+        //tail            performs an indirect call (tries to turn it into an optimized tail call)
         //Indirect calls (3)
         indloc, //indloc        performs an indirect call on a local variable by name
         indloci, //indloci      performs an indriect call on a local variable by index

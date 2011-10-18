@@ -1,25 +1,28 @@
-// /*
-//  * Prexonite, a scripting engine (Scripting Language -> Bytecode -> Virtual Machine)
-//  *  Copyright (C) 2007  Christian "SealedSun" Klauser
-//  *  E-mail  sealedsun a.t gmail d.ot com
-//  *  Web     http://www.sealedsun.ch/
-//  *
-//  *  This program is free software; you can redistribute it and/or modify
-//  *  it under the terms of the GNU General Public License as published by
-//  *  the Free Software Foundation; either version 2 of the License, or
-//  *  (at your option) any later version.
-//  *
-//  *  Please contact me (sealedsun a.t gmail do.t com) if you need a different license.
-//  * 
-//  *  This program is distributed in the hope that it will be useful,
-//  *  but WITHOUT ANY WARRANTY; without even the implied warranty of
-//  *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-//  *  GNU General Public License for more details.
-//  *
-//  *  You should have received a copy of the GNU General Public License along
-//  *  with this program; if not, write to the Free Software Foundation, Inc.,
-//  *  51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
-//  */
+// Prexonite
+// 
+// Copyright (c) 2011, Christian Klauser
+// All rights reserved.
+// 
+// Redistribution and use in source and binary forms, with or without modification, 
+//  are permitted provided that the following conditions are met:
+// 
+//     Redistributions of source code must retain the above copyright notice, 
+//          this list of conditions and the following disclaimer.
+//     Redistributions in binary form must reproduce the above copyright notice, 
+//          this list of conditions and the following disclaimer in the 
+//          documentation and/or other materials provided with the distribution.
+//     The names of the contributors may be used to endorse or 
+//          promote products derived from this software without specific prior written permission.
+// 
+// THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND 
+//  ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED 
+//  WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED. 
+//  IN NO EVENT SHALL THE COPYRIGHT HOLDER OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT, 
+//  INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES 
+//  (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, 
+//  DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, 
+//  WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING 
+//  IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #region Namespace Imports
 
@@ -27,10 +30,10 @@ using System;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.Diagnostics;
+using System.Diagnostics.CodeAnalysis;
 using System.IO;
 using System.Text;
 using Prexonite.Compiler;
-using Prexonite.Compiler.Ast;
 using Prexonite.Compiler.Cil;
 using Prexonite.Types;
 using NoDebug = System.Diagnostics.DebuggerNonUserCodeAttribute;
@@ -40,7 +43,7 @@ using NoDebug = System.Diagnostics.DebuggerNonUserCodeAttribute;
 namespace Prexonite
 {
     /// <summary>
-    /// A function in the Prexonite Script VM.
+    ///     A function in the Prexonite Script VM.
     /// </summary>
     public class PFunction : IMetaFilter,
                              IHasMetaTable,
@@ -49,64 +52,66 @@ namespace Prexonite
                              IDependent<string>
     {
         /// <summary>
-        /// The meta key under which the function's id is stored.
+        ///     The meta key under which the function's id is stored.
         /// </summary>
         public const string IdKey = "id";
 
         /// <summary>
-        /// The meta key under which the list of shared names is stored.
+        ///     The meta key under which the list of shared names is stored.
         /// </summary>
         public const string SharedNamesKey = @"\sharedNames";
 
         /// <summary>
-        /// The name of the variable that holds the list of arguments.
+        ///     The name of the variable that holds the list of arguments.
         /// </summary>
         public const string ArgumentListId = "args";
 
         public const string SymbolMappingKey = @"\symbol_mapping";
 
         /// <summary>
-        /// Signals that the function cannot be compiled to CIL.
+        ///     Signals that the function cannot be compiled to CIL.
         /// </summary>
         public const string VolatileKey = "volatile";
 
         /// <summary>
-        /// Signals that the function operates on its caller and thus causes the caller to be volatile (<see cref="VolatileKey"/>).
+        ///     Signals that the function operates on its caller and thus causes the caller to be volatile (<see cref = "VolatileKey" />).
         /// </summary>
         public const string DynamicKey = "dynamic";
 
         /// <summary>
-        /// The reason why a function was marked volatile by the CIL compiler.
+        ///     The reason why a function was marked volatile by the CIL compiler.
         /// </summary>
         public const string DeficiencyKey = "deficiency";
 
         /// <summary>
-        /// The id used in the source code. (As the nested function)
+        ///     The id used in the source code. (As the nested function)
         /// </summary>
         public const string LogicalIdKey = "LogicalId";
 
         /// <summary>
-        /// The name of the functions logical parent.
+        ///     The name of the functions logical parent.
         /// </summary>
         public const string ParentFunctionKey = "ParentFunction";
 
         /// <summary>
-        /// Indicates whether a function requires its arguments to be lazy.
+        ///     Indicates whether a function requires its arguments to be lazy.
         /// </summary>
         public const string LazyKey = "lazy";
 
         /// <summary>
-        /// The list of let-bound local names (local variables and shared variables)
+        ///     The list of let-bound local names (local variables and shared variables)
         /// </summary>
         public const string LetKey = "let";
 
         #region Construction
 
         /// <summary>
-        /// Creates a new instance of PFunction.
+        ///     Creates a new instance of PFunction.
         /// </summary>
-        /// <param name="parentApplication">The application of which the new function is part of.</param>
-        /// <remarks>The id is randomly generated using a GUID.</remarks>
+        /// <param name = "parentApplication">The application of which the new function is part of.</param>
+        /// <remarks>
+        ///     The id is randomly generated using a GUID.
+        /// </remarks>
         [DebuggerStepThrough]
         public PFunction(Application parentApplication)
             : this(parentApplication, "F\\" + Guid.NewGuid().ToString("N"))
@@ -114,11 +119,13 @@ namespace Prexonite
         }
 
         /// <summary>
-        /// Creates a new instance of PFunction.
+        ///     Creates a new instance of PFunction.
         /// </summary>
-        /// <param name="parentApplication">The application of which the new function is part of.</param>
-        /// <param name="id">The function's id.</param>
-        /// <remarks>The id does not have to be a legal Prexonite Script identifier.</remarks>
+        /// <param name = "parentApplication">The application of which the new function is part of.</param>
+        /// <param name = "id">The function's id.</param>
+        /// <remarks>
+        ///     The id does not have to be a legal Prexonite Script identifier.
+        /// </remarks>
         [DebuggerStepThrough]
         internal PFunction(Application parentApplication, string id)
         {
@@ -145,7 +152,7 @@ namespace Prexonite
         #region Properties
 
         /// <summary>
-        /// The functions id
+        ///     The functions id
         /// </summary>
         public string Id
         {
@@ -159,7 +166,7 @@ namespace Prexonite
             get
             {
                 MetaEntry logicalIdEntry;
-                if (_meta.TryGetValue(PFunction.LogicalIdKey, out logicalIdEntry))
+                if (_meta.TryGetValue(LogicalIdKey, out logicalIdEntry))
                     return logicalIdEntry.Text;
                 else
                     return Id;
@@ -169,7 +176,7 @@ namespace Prexonite
         private readonly Application _parentApplication;
 
         /// <summary>
-        /// The application the function belongs to.
+        ///     The application the function belongs to.
         /// </summary>
         public Application ParentApplication
         {
@@ -180,7 +187,7 @@ namespace Prexonite
         private readonly SymbolCollection _importedNamesapces = new SymbolCollection();
 
         /// <summary>
-        /// The set of namespaces imported by this particular function.
+        ///     The set of namespaces imported by this particular function.
         /// </summary>
         public SymbolCollection ImportedNamespaces
         {
@@ -191,7 +198,7 @@ namespace Prexonite
         private readonly List<Instruction> _code = new List<Instruction>();
 
         /// <summary>
-        /// The bytecode for this function.
+        ///     The bytecode for this function.
         /// </summary>
         public List<Instruction> Code
         {
@@ -202,7 +209,7 @@ namespace Prexonite
         private readonly List<string> _parameters = new List<string>();
 
         /// <summary>
-        /// The list of formal parameters for this function.
+        ///     The list of formal parameters for this function.
         /// </summary>
         public List<string> Parameters
         {
@@ -213,7 +220,7 @@ namespace Prexonite
         private readonly SymbolCollection _variables = new SymbolCollection();
 
         /// <summary>
-        /// The collection of variable names used by this function.
+        ///     The collection of variable names used by this function.
         /// </summary>
         public SymbolCollection Variables
         {
@@ -224,7 +231,7 @@ namespace Prexonite
         private SymbolTable<int> _localVariableMapping;
 
         /// <summary>
-        /// Updates the mapping of local names.
+        ///     Updates the mapping of local names.
         /// </summary>
         internal void CreateLocalVariableMapping()
         {
@@ -249,7 +256,7 @@ namespace Prexonite
         }
 
         /// <summary>
-        /// The table that maps indices to local names.
+        ///     The table that maps indices to local names.
         /// </summary>
         public SymbolTable<int> LocalVariableMapping
         {
@@ -262,12 +269,14 @@ namespace Prexonite
             }
         }
 
-        [System.Diagnostics.CodeAnalysis.SuppressMessage("Microsoft.Naming", "CA1704:IdentifiersShouldBeSpelledCorrectly", MessageId = "Cil")]
+        [SuppressMessage("Microsoft.Naming", "CA1704:IdentifiersShouldBeSpelledCorrectly",
+            MessageId = "Cil")]
         public CilFunction CilImplementation { [DebuggerStepThrough]
         get; [DebuggerStepThrough]
         internal set; }
 
-        [System.Diagnostics.CodeAnalysis.SuppressMessage("Microsoft.Naming", "CA1704:IdentifiersShouldBeSpelledCorrectly", MessageId = "Cil")]
+        [SuppressMessage("Microsoft.Naming", "CA1704:IdentifiersShouldBeSpelledCorrectly",
+            MessageId = "Cil")]
         public bool HasCilImplementation
         {
             [DebuggerStepThrough]
@@ -285,10 +294,12 @@ namespace Prexonite
         #region Storage
 
         /// <summary>
-        /// Returns a string describing the function.
+        ///     Returns a string describing the function.
         /// </summary>
         /// <returns>A string describing the function.</returns>
-        /// <remarks>If you need a complete string representation, use <see cref="Store(StringBuilder)"/>.</remarks>
+        /// <remarks>
+        ///     If you need a complete string representation, use <see cref = "Store(StringBuilder)" />.
+        /// </remarks>
         public override string ToString()
         {
             var buffer = new StringBuilder();
@@ -306,19 +317,21 @@ namespace Prexonite
         }
 
         /// <summary>
-        /// Creates a complete string representation of the function.
+        ///     Creates a complete string representation of the function.
         /// </summary>
-        /// <param name="buffer">The buffer to which to write the string representation.</param>
+        /// <param name = "buffer">The buffer to which to write the string representation.</param>
         public void Store(StringBuilder buffer)
         {
             Store(new StringWriter(buffer));
         }
 
         /// <summary>
-        /// Creates a complete string representation of the function.
+        ///     Creates a complete string representation of the function.
         /// </summary>
         /// <returns>A string containing the complete representation of the function.</returns>
-        /// <remarks>Use buffer or stream based overloads where possible.</remarks>
+        /// <remarks>
+        ///     Use buffer or stream based overloads where possible.
+        /// </remarks>
         public string Store()
         {
             var sb = new StringBuilder();
@@ -327,9 +340,9 @@ namespace Prexonite
         }
 
         /// <summary>
-        /// Creates a complete string representation of the function.
+        ///     Creates a complete string representation of the function.
         /// </summary>
-        /// <param name="writer">The writer to which to write the string representation.</param>
+        /// <param name = "writer">The writer to which to write the string representation.</param>
         public void StoreCode(TextWriter writer)
         {
             var reverseLocalMapping = new string[LocalVariableMapping.Count];
@@ -354,9 +367,9 @@ namespace Prexonite
                 buffer.Length = 0;
             }
 
-//#if DEBUG || Verbose
+            //#if DEBUG || Verbose
             var idx = 0;
-//#endif
+            //#endif
             if (Code.Count > 0)
             {
                 var digits = (int) Math.Ceiling(Math.Log10(Code.Count));
@@ -375,22 +388,27 @@ namespace Prexonite
                     switch (rawIns.OpCode)
                     {
                         case OpCode.ldloci:
-                            ins = new Instruction(OpCode.ldloc, reverseLocalMapping[rawIns.Arguments]);
+                            ins = new Instruction(OpCode.ldloc,
+                                reverseLocalMapping[rawIns.Arguments]);
                             break;
                         case OpCode.stloci:
-                            ins = new Instruction(OpCode.stloc, reverseLocalMapping[rawIns.Arguments]);
+                            ins = new Instruction(OpCode.stloc,
+                                reverseLocalMapping[rawIns.Arguments]);
                             break;
                         case OpCode.incloci:
-                            ins = new Instruction(OpCode.incloc, reverseLocalMapping[rawIns.Arguments]);
+                            ins = new Instruction(OpCode.incloc,
+                                reverseLocalMapping[rawIns.Arguments]);
                             break;
                         case OpCode.decloci:
-                            ins = new Instruction(OpCode.decloc, reverseLocalMapping[rawIns.Arguments]);
+                            ins = new Instruction(OpCode.decloc,
+                                reverseLocalMapping[rawIns.Arguments]);
                             break;
                         case OpCode.indloci:
                             int index;
                             int argc;
                             rawIns.DecodeIndLocIndex(out index, out argc);
-                            ins = new Instruction(OpCode.indloc,argc, reverseLocalMapping[index],rawIns.JustEffect);
+                            ins = new Instruction(OpCode.indloc, argc, reverseLocalMapping[index],
+                                rawIns.JustEffect);
                             break;
                         default:
                             ins = rawIns;
@@ -422,18 +440,18 @@ namespace Prexonite
         }
 
         /// <summary>
-        /// Creates a string representation of the functions byte code in Prexonite Assembler
+        ///     Creates a string representation of the functions byte code in Prexonite Assembler
         /// </summary>
-        /// <param name="buffer">The buffer to which to write the string representation to.</param>
+        /// <param name = "buffer">The buffer to which to write the string representation to.</param>
         public void StoreCode(StringBuilder buffer)
         {
             StoreCode(new StringWriter(buffer));
         }
 
         /// <summary>
-        /// Creates a string representation of the functions byte code in Prexonite Assembler
+        ///     Creates a string representation of the functions byte code in Prexonite Assembler
         /// </summary>
-        /// <param name="writer">The writer to which to write the string representation to.</param>
+        /// <param name = "writer">The writer to which to write the string representation to.</param>
         public void Store(TextWriter writer)
         {
             #region Head
@@ -473,12 +491,13 @@ namespace Prexonite
             meta.Remove(Application.ImportKey); //to be added separately
             meta.Remove(Application.IdKey); //implied
             meta.Remove(Application.InitializationGeneration); //must be set to default
-            meta.Remove(Loader.SuppressPrimarySymbol); //stored functions always have their symbol declared separately
+            meta.Remove(Loader.SuppressPrimarySymbol);
+            //stored functions always have their symbol declared separately
             meta.Store(writer);
             var lst = new List<MetaEntry>();
-// ReSharper disable LoopCanBeConvertedToQuery
+            // ReSharper disable LoopCanBeConvertedToQuery
             foreach (var ns in ImportedNamespaces)
-// ReSharper restore LoopCanBeConvertedToQuery
+                // ReSharper restore LoopCanBeConvertedToQuery
                 lst.Add(ns);
             if (lst.Count > 0)
             {
@@ -543,7 +562,7 @@ namespace Prexonite
         private readonly MetaTable _meta;
 
         /// <summary>
-        /// Returns a reference to the meta table associated with this function.
+        ///     Returns a reference to the meta table associated with this function.
         /// </summary>
         public MetaTable Meta
         {
@@ -556,9 +575,9 @@ namespace Prexonite
         #region IMetaFilter Members
 
         /// <summary>
-        /// Transforms requests to the meta table.
+        ///     Transforms requests to the meta table.
         /// </summary>
-        /// <param name="key">The key to transform.</param>
+        /// <param name = "key">The key to transform.</param>
         /// <returns>The transformed key.</returns>
         [DebuggerNonUserCode]
         string IMetaFilter.GetTransform(string key)
@@ -570,19 +589,20 @@ namespace Prexonite
         }
 
         /// <summary>
-        /// Transforms storage requests to the meta table.
+        ///     Transforms storage requests to the meta table.
         /// </summary>
-        /// <param name="item">The item to update/store.</param>
+        /// <param name = "item">The item to update/store.</param>
         /// <returns>The transformed item or null if nothing is to be stored.</returns>
         [DebuggerNonUserCode]
-        KeyValuePair<string, MetaEntry>? IMetaFilter.SetTransform(KeyValuePair<string, MetaEntry> item)
+        KeyValuePair<string, MetaEntry>? IMetaFilter.SetTransform(
+            KeyValuePair<string, MetaEntry> item)
         {
             //Prevent changing the name of the function;
             if (Engine.StringsAreEqual(item.Key, IdKey) ||
                 Engine.StringsAreEqual(item.Key, "name"))
                 return null;
             else if (Engine.StringsAreEqual(item.Key, Application.ImportKey) ||
-                     Engine.StringsAreEqual(item.Key, "imports"))
+                Engine.StringsAreEqual(item.Key, "imports"))
             {
                 //
                 _importedNamesapces.Clear();
@@ -617,12 +637,12 @@ namespace Prexonite
         #region Invocation
 
         /// <summary>
-        /// Creates a new function context for execution.
+        ///     Creates a new function context for execution.
         /// </summary>
-        /// <param name="engine">The engine in which to execute the function.</param>
-        /// <param name="args">The arguments to pass to the function.</param>
-        /// <param name="sharedVariables">The list of variables shared with the caller.</param>
-        /// <param name="suppressInitialization">A boolean indicating whether to suppress initialization of the parent application.</param>
+        /// <param name = "engine">The engine in which to execute the function.</param>
+        /// <param name = "args">The arguments to pass to the function.</param>
+        /// <param name = "sharedVariables">The list of variables shared with the caller.</param>
+        /// <param name = "suppressInitialization">A boolean indicating whether to suppress initialization of the parent application.</param>
         /// <returns>A function context for the execution of this function.</returns>
         internal FunctionContext CreateFunctionContext
             (
@@ -638,11 +658,11 @@ namespace Prexonite
         }
 
         /// <summary>
-        /// Creates a new function context for execution.
+        ///     Creates a new function context for execution.
         /// </summary>
-        /// <param name="engine">The engine in which to execute the function.</param>
-        /// <param name="args">The arguments to pass to the function.</param>
-        /// <param name="sharedVariables">The list of variables shared with the caller.</param>
+        /// <param name = "engine">The engine in which to execute the function.</param>
+        /// <param name = "args">The arguments to pass to the function.</param>
+        /// <param name = "sharedVariables">The list of variables shared with the caller.</param>
         /// <returns>A function context for the execution of this function.</returns>
         public FunctionContext CreateFunctionContext
             (
@@ -652,10 +672,10 @@ namespace Prexonite
         }
 
         /// <summary>
-        /// Creates a new function context for execution.
+        ///     Creates a new function context for execution.
         /// </summary>
-        /// <param name="sctx">The stack context in which to create the new context.</param>
-        /// <param name="args">The arguments to pass to the function.</param>
+        /// <param name = "sctx">The stack context in which to create the new context.</param>
+        /// <param name = "args">The arguments to pass to the function.</param>
         /// <returns>A function context for the execution of this function.</returns>
         public FunctionContext CreateFunctionContext(StackContext sctx, PValue[] args)
         {
@@ -664,10 +684,10 @@ namespace Prexonite
 
 
         /// <summary>
-        /// Creates a new function context for execution.
+        ///     Creates a new function context for execution.
         /// </summary>
-        /// <param name="engine">The engine for which to create the new context.</param>
-        /// <param name="args">The arguments to pass to the function.</param>
+        /// <param name = "engine">The engine for which to create the new context.</param>
+        /// <param name = "args">The arguments to pass to the function.</param>
         /// <returns>A function context for the execution of this function.</returns>
         public FunctionContext CreateFunctionContext(Engine engine, PValue[] args)
         {
@@ -675,9 +695,9 @@ namespace Prexonite
         }
 
         /// <summary>
-        /// Creates a new function context for execution.
+        ///     Creates a new function context for execution.
         /// </summary>
-        /// <param name="engine">The engine in which to execute the function.</param>
+        /// <param name = "engine">The engine in which to execute the function.</param>
         /// <returns>A function context for the execution of this function.</returns>
         public FunctionContext CreateFunctionContext(Engine engine)
         {
@@ -685,11 +705,11 @@ namespace Prexonite
         }
 
         /// <summary>
-        /// Executes the function on the supplied engine and returns the result.
+        ///     Executes the function on the supplied engine and returns the result.
         /// </summary>
-        /// <param name="engine">The engine in which to execute the function.</param>
-        /// <param name="args">The arguments to pass to the function.</param>
-        /// <param name="sharedVariables">The list of variables shared with the caller.</param>
+        /// <param name = "engine">The engine in which to execute the function.</param>
+        /// <param name = "args">The arguments to pass to the function.</param>
+        /// <param name = "sharedVariables">The list of variables shared with the caller.</param>
         /// <returns>The value returned by the function or {null~Null}</returns>
         public PValue Run(Engine engine, PValue[] args, PVariable[] sharedVariables)
         {
@@ -701,11 +721,11 @@ namespace Prexonite
                 ReturnMode returnMode;
                 CilImplementation
                     (
-                    this,
-                    new NullContext(engine, ParentApplication, ImportedNamespaces),
-                    args,
-                    sharedVariables,
-                    out result, out returnMode);
+                        this,
+                        new NullContext(engine, ParentApplication, ImportedNamespaces),
+                        args,
+                        sharedVariables,
+                        out result, out returnMode);
                 return result;
             }
             else
@@ -717,10 +737,10 @@ namespace Prexonite
         }
 
         /// <summary>
-        /// Executes the function on the supplied engine and returns the result.
+        ///     Executes the function on the supplied engine and returns the result.
         /// </summary>
-        /// <param name="engine">The engine in which to execute the function.</param>
-        /// <param name="args">The arguments to pass to the function.</param>
+        /// <param name = "engine">The engine in which to execute the function.</param>
+        /// <param name = "args">The arguments to pass to the function.</param>
         /// <returns>A function context for the execution of this function.</returns>
         /// <returns>The value returned by the function or {null~Null}</returns>
         public PValue Run(Engine engine, PValue[] args)
@@ -729,9 +749,9 @@ namespace Prexonite
         }
 
         /// <summary>
-        /// Executes the function on the supplied engine and returns the result.
+        ///     Executes the function on the supplied engine and returns the result.
         /// </summary>
-        /// <param name="engine">The engine in which to execute the function.</param>
+        /// <param name = "engine">The engine in which to execute the function.</param>
         /// <returns>A function context for the execution of this function.</returns>
         /// <returns>The value returned by the function or {null~Null}</returns>
         public PValue Run(Engine engine)
@@ -744,10 +764,10 @@ namespace Prexonite
         #region IIndirectCall Members
 
         /// <summary>
-        /// Executes the function and returns its result.
+        ///     Executes the function and returns its result.
         /// </summary>
-        /// <param name="sctx">The stack context from which the function is called.</param>
-        /// <param name="args">The list of arguments to be passed to the function.</param>
+        /// <param name = "sctx">The stack context from which the function is called.</param>
+        /// <param name = "args">The list of arguments to be passed to the function.</param>
         /// <returns>The value returned by the function or {null~Null}</returns>
         PValue IIndirectCall.IndirectCall(StackContext sctx, PValue[] args)
         {
@@ -759,10 +779,10 @@ namespace Prexonite
         #region IStackAware Members
 
         /// <summary>
-        /// Creates a new stack context for the execution of this function.
+        ///     Creates a new stack context for the execution of this function.
         /// </summary>
-        /// <param name="sctx">The engine in which to execute the function.</param>
-        /// <param name="args">The arguments to pass to the function.</param>
+        /// <param name = "sctx">The engine in which to execute the function.</param>
+        /// <param name = "args">The arguments to pass to the function.</param>
         /// <returns>A function context for the execution of this function.</returns>
         [DebuggerNonUserCode]
         StackContext IStackAware.CreateStackContext(StackContext sctx, PValue[] args)
@@ -775,7 +795,7 @@ namespace Prexonite
         #region Exception Handling
 
         /// <summary>
-        /// Causes the set of try-catch-finally blocks to be re-read on the next occurance of an exception.
+        ///     Causes the set of try-catch-finally blocks to be re-read on the next occurance of an exception.
         /// </summary>
         public void InvalidateTryCatchFinallyBlocks()
         {
@@ -785,7 +805,7 @@ namespace Prexonite
         private List<TryCatchFinallyBlock> _tryCatchFinallyBlocks;
 
         /// <summary>
-        /// The cached set of try-catch-finally blocks.
+        ///     The cached set of try-catch-finally blocks.
         /// </summary>
         public ReadOnlyCollection<TryCatchFinallyBlock> TryCatchFinallyBlocks
         {
@@ -811,19 +831,21 @@ namespace Prexonite
 
                             if (!int.TryParse(blockLst[0], out beginTry)) //beginTry, required
                                 continue;
-                            if (!int.TryParse(blockLst[1], out beginFinally)) //beginFinally, default: -1
+                            if (!int.TryParse(blockLst[1], out beginFinally))
+                                //beginFinally, default: -1
                                 beginFinally = -1;
-                            if (!int.TryParse(blockLst[2], out beginCatch)) //beginCatch, default: -1
+                            if (!int.TryParse(blockLst[2], out beginCatch))
+                                //beginCatch, default: -1
                                 beginCatch = -1;
                             if (!int.TryParse(blockLst[3], out endTry)) //endTry, required
                                 continue;
 
                             var block = new TryCatchFinallyBlock(beginTry, endTry)
-                            {
-                                BeginFinally = beginFinally,
-                                BeginCatch = beginCatch,
-                                UsesException = blockLst[4].Switch
-                            };
+                                {
+                                    BeginFinally = beginFinally,
+                                    BeginCatch = beginCatch,
+                                    UsesException = blockLst[4].Switch
+                                };
 
                             _tryCatchFinallyBlocks.Add(block);
                         }

@@ -1,25 +1,28 @@
-/*
- * Prexonite, a scripting engine (Scripting Language -> Bytecode -> Virtual Machine)
- *  Copyright (C) 2007  Christian "SealedSun" Klauser
- *  E-mail  sealedsun a.t gmail d.ot com
- *  Web     http://www.sealedsun.ch/
- *
- *  This program is free software; you can redistribute it and/or modify
- *  it under the terms of the GNU General Public License as published by
- *  the Free Software Foundation; either version 2 of the License, or
- *  (at your option) any later version.
- *
- *  Please contact me (sealedsun a.t gmail do.t com) if you need a different license.
- * 
- *  This program is distributed in the hope that it will be useful,
- *  but WITHOUT ANY WARRANTY; without even the implied warranty of
- *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- *  GNU General Public License for more details.
- *
- *  You should have received a copy of the GNU General Public License along
- *  with this program; if not, write to the Free Software Foundation, Inc.,
- *  51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
- */
+// Prexonite
+// 
+// Copyright (c) 2011, Christian Klauser
+// All rights reserved.
+// 
+// Redistribution and use in source and binary forms, with or without modification, 
+//  are permitted provided that the following conditions are met:
+// 
+//     Redistributions of source code must retain the above copyright notice, 
+//          this list of conditions and the following disclaimer.
+//     Redistributions in binary form must reproduce the above copyright notice, 
+//          this list of conditions and the following disclaimer in the 
+//          documentation and/or other materials provided with the distribution.
+//     The names of the contributors may be used to endorse or 
+//          promote products derived from this software without specific prior written permission.
+// 
+// THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND 
+//  ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED 
+//  WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED. 
+//  IN NO EVENT SHALL THE COPYRIGHT HOLDER OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT, 
+//  INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES 
+//  (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, 
+//  DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, 
+//  WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING 
+//  IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 using System;
 using System.Collections.Generic;
@@ -27,7 +30,6 @@ using System.Diagnostics;
 using System.Globalization;
 using System.Text;
 using Prexonite.Types;
-using System.Linq;
 
 namespace Prexonite
 {
@@ -37,7 +39,7 @@ namespace Prexonite
         #region Fields
 
         /// <summary>
-        /// The possible kinds of meta entries
+        ///     The possible kinds of meta entries
         /// </summary>
         public enum Type
         {
@@ -48,22 +50,22 @@ namespace Prexonite
         }
 
         /// <summary>
-        /// Holds a list in case the meta entry is a list entry
+        ///     Holds a list in case the meta entry is a list entry
         /// </summary>
         private readonly MetaEntry[] _list;
 
         /// <summary>
-        /// Indicates the kind of meta entry
+        ///     Indicates the kind of meta entry
         /// </summary>
         private readonly Type _mtype;
 
         /// <summary>
-        /// Holds a switch in case the meta entry is a switch entry
+        ///     Holds a switch in case the meta entry is a switch entry
         /// </summary>
         private readonly bool _switch;
 
         /// <summary>
-        /// Holds text in case the meta entry is a text entry
+        ///     Holds text in case the meta entry is a text entry
         /// </summary>
         private readonly string _text;
 
@@ -164,7 +166,8 @@ namespace Prexonite
             foreach (var entry in list)
             {
                 if (entry == null)
-                    throw new ArgumentException("A MetaEntry list must not contain null references.", "list");
+                    throw new ArgumentException(
+                        "A MetaEntry list must not contain null references.", "list");
             }
             _mtype = Type.List;
             _text = null;
@@ -217,7 +220,8 @@ namespace Prexonite
         public static implicit operator string(MetaEntry item)
         {
             if (item == null)
-                throw new ArgumentNullException("item", "A null reference cannot be implicitly converted to a meta entry.");
+                throw new ArgumentNullException("item",
+                    "A null reference cannot be implicitly converted to a meta entry.");
             return item.Text;
         }
 
@@ -225,7 +229,8 @@ namespace Prexonite
         public static implicit operator bool(MetaEntry item)
         {
             if (item == null)
-                throw new ArgumentNullException("item", "A null reference cannot be implicitly converted to a meta entry.");
+                throw new ArgumentNullException("item",
+                    "A null reference cannot be implicitly converted to a meta entry.");
             return item.Switch;
         }
 
@@ -233,7 +238,8 @@ namespace Prexonite
         public static explicit operator MetaEntry[](MetaEntry item)
         {
             if (item == null)
-                throw new ArgumentNullException("item", "A null reference cannot be explicitly converted to a meta entry.");
+                throw new ArgumentNullException("item",
+                    "A null reference cannot be explicitly converted to a meta entry.");
             return item.List;
         }
 
@@ -247,7 +253,8 @@ namespace Prexonite
         public static implicit operator MetaEntry(string item)
         {
             if (item == null)
-                throw new ArgumentNullException("item", "A null reference cannot be implicitly converted to a meta entry.");
+                throw new ArgumentNullException("item",
+                    "A null reference cannot be implicitly converted to a meta entry.");
             return new MetaEntry(item);
         }
 
@@ -255,14 +262,16 @@ namespace Prexonite
         public static explicit operator MetaEntry(MetaEntry[] item)
         {
             if (item == null)
-                throw new ArgumentNullException("item", "A null reference cannot be explicitly converted to a meta entry.");
+                throw new ArgumentNullException("item",
+                    "A null reference cannot be explicitly converted to a meta entry.");
             return new MetaEntry(item);
         }
 
         public static implicit operator PValue(MetaEntry item)
         {
             if (item == null)
-                throw new ArgumentNullException("item", "A null reference cannot be implicitly converted to a meta entry.");
+                throw new ArgumentNullException("item",
+                    "A null reference cannot be implicitly converted to a meta entry.");
             switch (item._mtype)
             {
                 case Type.Text:
@@ -408,8 +417,8 @@ namespace Prexonite
                 throw new ArgumentOutOfRangeException(
                     "index",
                     "The supplied index and length " + index +
-                    " are out of the range of 0.." + (list.Length - 1) +
-                    ".");
+                        " are out of the range of 0.." + (list.Length - 1) +
+                            ".");
             var newList = new MetaEntry[list.Length - 1];
             //Copy the elements before the ones to remove
             if (index > 0)
@@ -472,7 +481,8 @@ namespace Prexonite
                 case Type.Text:
                     //Special case: allow integer numbers
                     long num;
-                    if (_text.Length <= LengthOfInt32MaxValue && _looksLikeNumber(_text) && Int64.TryParse(_text, out num))
+                    if (_text.Length <= LengthOfInt32MaxValue && _looksLikeNumber(_text) &&
+                        Int64.TryParse(_text, out num))
                     {
                         var format = NumberFormatInfo.InvariantInfo;
                         var numStr = num.ToString(format);
@@ -487,19 +497,19 @@ namespace Prexonite
             }
         }
 
-        private const int LengthOfInt32MaxValue = 10+1; //sign allowed
+        private const int LengthOfInt32MaxValue = 10 + 1; //sign allowed
 
         private static bool _looksLikeNumber(string text)
         {
             var end = Math.Min(text.Length, LengthOfInt32MaxValue);
-            for(var i = 0; i < end; i++)
-                if(!Char.IsDigit(text[i]))
+            for (var i = 0; i < end; i++)
+                if (!Char.IsDigit(text[i]))
                     return false;
             return true;
         }
 
         /// <summary>
-        /// Returns the default meta entry.
+        ///     Returns the default meta entry.
         /// </summary>
         /// <returns>The default meta entry.</returns>
         public static MetaEntry CreateDefaultEntry()

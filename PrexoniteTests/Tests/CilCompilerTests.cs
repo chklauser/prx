@@ -1,20 +1,41 @@
-﻿using System;
+﻿// Prexonite
+// 
+// Copyright (c) 2011, Christian Klauser
+// All rights reserved.
+// 
+// Redistribution and use in source and binary forms, with or without modification, 
+//  are permitted provided that the following conditions are met:
+// 
+//     Redistributions of source code must retain the above copyright notice, 
+//          this list of conditions and the following disclaimer.
+//     Redistributions in binary form must reproduce the above copyright notice, 
+//          this list of conditions and the following disclaimer in the 
+//          documentation and/or other materials provided with the distribution.
+//     The names of the contributors may be used to endorse or 
+//          promote products derived from this software without specific prior written permission.
+// 
+// THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND 
+//  ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED 
+//  WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED. 
+//  IN NO EVENT SHALL THE COPYRIGHT HOLDER OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT, 
+//  INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES 
+//  (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, 
+//  DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, 
+//  WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING 
+//  IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+
 using System.Collections.Generic;
 using System.Linq;
-using System.Text;
 using NUnit.Framework;
 using Prexonite;
 using Prexonite.Compiler;
 using Prexonite.Compiler.Cil;
-using Prx.Tests;
-using Compiler = Prexonite.Compiler.Cil.Compiler;
 
 namespace PrexoniteTests.Tests
 {
     [TestFixture]
     public class CilCompilerTests : VMTestsBase
     {
-
         [Test]
         public void SetCilHintTest()
         {
@@ -26,7 +47,7 @@ function main() {
 
             var main = target.Functions["main"];
 
-            var cilExt1 = new CilExtensionHint(new List<int> { 1, 5, 9 });
+            var cilExt1 = new CilExtensionHint(new List<int> {1, 5, 9});
             var existingHints = _getCilHints(main, true);
             Assert.AreEqual(1, existingHints.Length);
 
@@ -44,7 +65,7 @@ function main() {
                 "original contains elements not in deserialized");
 
             //Add, one existing
-            var cilExt2 = new CilExtensionHint(new List<int> { 2, 4, 8, 16 });
+            var cilExt2 = new CilExtensionHint(new List<int> {2, 4, 8, 16});
             Compiler.SetCilHint(main, cilExt2);
             var hints2 = _getCilHints(main, true);
             Assert.AreSame(hints1, hints2);
@@ -59,11 +80,11 @@ function main() {
 
             //Add, many existing
             var cilExts = new List<CilExtensionHint>
-            {
-                new CilExtensionHint(new List<int> {1, 6, 16, 66}),
-                new CilExtensionHint(new List<int>{7,77,777}),
-                new CilExtensionHint(new List<int>{9,88,777,6666}),
-            };
+                {
+                    new CilExtensionHint(new List<int> {1, 6, 16, 66}),
+                    new CilExtensionHint(new List<int> {7, 77, 777}),
+                    new CilExtensionHint(new List<int> {9, 88, 777, 6666}),
+                };
             foreach (var cilExt in cilExts)
                 Compiler.AddCilHint(main, cilExt);
             var hints3 = _getCilHints(main, true);
@@ -97,7 +118,6 @@ function main() {
                 "deserialized contains elements not in original");
             Assert.IsTrue(cilExt3.Offsets.All(offset => cilExt4P.Offsets.Contains(offset)),
                 "original contains elements not in deserialized");
-
         }
 
         private static MetaEntry[] _getCilHints(IHasMetaTable table, bool keyMustExist)
@@ -115,7 +135,7 @@ function main() {
             }
             else
             {
-                table.Meta[Loader.CilHintsKey] = (MetaEntry)new MetaEntry[0];
+                table.Meta[Loader.CilHintsKey] = (MetaEntry) new MetaEntry[0];
                 return _getCilHints(table, true);
             }
         }
@@ -123,7 +143,8 @@ function main() {
         [Test]
         public void UnbindCommandTest()
         {
-            Compile(@"
+            Compile(
+                @"
 function main()
 {
     var result = [];
@@ -148,14 +169,15 @@ function main()
 }
 ");
             _expectCil();
-            Expect(Enumerable.Range(1,10).Select(_ => (PValue) true).ToList());
+            Expect(Enumerable.Range(1, 10).Select(_ => (PValue) true).ToList());
         }
 
 
         [Test]
         public void JumpBreaksCilExtensions()
         {
-            Compile(@"
+            Compile(
+                @"
 function main(b)
 {asm{
                 ldloc b
@@ -180,7 +202,8 @@ label L_endif   ldc.string ""-branch""
         [Test]
         public void TryCatchFinallyCompiles()
         {
-            Compile(@"
+            Compile(
+                @"
 var t = """";
 function trace(x) = t+=x;
 
@@ -207,13 +230,15 @@ function main()
         {
             var func = target.Functions[functionId];
             Assert.IsNotNull(func, "Function " + functionId + " must exist");
-            Assert.IsFalse(func.Meta[PFunction.VolatileKey].Switch,functionId + " must not be volatile.");
+            Assert.IsFalse(func.Meta[PFunction.VolatileKey].Switch,
+                functionId + " must not be volatile.");
         }
 
-        [Test,ExpectedException(typeof(PrexoniteRuntimeException))]
+        [Test, ExpectedException(typeof (PrexoniteRuntimeException))]
         public void TryFinallyCondCompiles()
         {
-            Compile(@"
+            Compile(
+                @"
 var t = """";
 function trace(x) = t+=x;
 
@@ -237,7 +262,8 @@ function main(x)
         [Test]
         public void TryCatchCondCompiles()
         {
-            Compile(@"
+            Compile(
+                @"
 var t = """";
 function trace(x) = t+=x;
 
@@ -262,7 +288,8 @@ function main(x)
         [Test]
         public void CatchInFinally1()
         {
-            Compile(@"
+            Compile(
+                @"
 var t = """";
 function trace(x) = t+=x;
 
@@ -291,7 +318,8 @@ function main(x)
         [Test]
         public void CatchInFinally2()
         {
-            Compile(@"
+            Compile(
+                @"
 var t = """";
 function trace(x) = t+=x;
 
@@ -320,7 +348,8 @@ function main(x)
         [Test]
         public void CatchInFinally3()
         {
-            Compile(@"
+            Compile(
+                @"
 var t = """";
 function trace(x) = t+=x;
 
@@ -350,7 +379,8 @@ function main(x)
         [Test]
         public void CatchInFinally4()
         {
-            Compile(@"
+            Compile(
+                @"
 var t = """";
 function trace(x) = t+=x;
 
@@ -387,7 +417,8 @@ function main(x)  [store_debug_implementation enabled;]
         [Test]
         public void CatchInFinally5()
         {
-            Compile(@"
+            Compile(
+                @"
 var t = """";
 function trace(x) = t+=x;
 
@@ -413,13 +444,14 @@ function main(x,y)  [store_debug_implementation enabled;]
 }
 ");
             _expectCil();
-            Expect("f", true,true);
+            Expect("f", true, true);
         }
 
         [Test]
         public void TryCatchFinallyCondCompiles()
         {
-            Compile(@"
+            Compile(
+                @"
 var t = """";
 function trace(x) = t+=x;
 
@@ -443,10 +475,15 @@ function main(x) //[store_debug_implementation enabled;]
             Expect("tfce", true);
         }
 
-        [Test, ExpectedException(typeof(PrexoniteRuntimeException), ExpectedMessage = @"Unexpected leave instruction. This happens when jumping to an instruction in a try block from the outside.")]
+        [Test,
+         ExpectedException(typeof (PrexoniteRuntimeException),
+             ExpectedMessage =
+                 @"Unexpected leave instruction. This happens when jumping to an instruction in a try block from the outside."
+             )]
         public void LabelOnFirstNeLabelOnTry()
         {
-            Compile(@"
+            Compile(
+                @"
 var t = """";
 function trace(x) = t+=x;
 
@@ -476,12 +513,13 @@ L1:         trace(""b"");
 ");
             _expectSehDeficiency();
             Expect("undefined", true);
-        }        
-        
+        }
+
         [Test]
         public void TryFinallyShadowingNoBridge()
         {
-            Compile(@"
+            Compile(
+                @"
 var t = """";
 function trace(x) = t+=x;
 
@@ -512,12 +550,13 @@ L1:     try {
 ");
             _expectSehDeficiency();
             Expect("tbrv", true);
-        }        
-        
+        }
+
         [Test]
         public void TryFinallyShadowingBridge()
         {
-            Compile(@"
+            Compile(
+                @"
 var t = """";
 function trace(x) = t+=x;
 
@@ -548,12 +587,13 @@ L1:     try {
 ");
             _expectCil();
             Expect("ktfbrv", true);
-        }       
-        
+        }
+
         [Test]
         public void ReturnFromFinally()
         {
-            Compile(@"
+            Compile(
+                @"
 var t = """";
 function trace(x) = t+=x;
 
@@ -582,14 +622,17 @@ function main(x) //[store_debug_implementation enabled;]
         private static void _expectSehDeficiency(PFunction function)
         {
             Assert.IsNotNull(function, "function not found");
-            Assert.IsTrue(function.Meta[PFunction.VolatileKey].Switch, "Function is expected to be volatile.");
-            Assert.IsTrue(function.Meta[PFunction.DeficiencyKey].Text.Contains("SEH"),"CIL deficiency is expected to be related to SEH.");
+            Assert.IsTrue(function.Meta[PFunction.VolatileKey].Switch,
+                "Function is expected to be volatile.");
+            Assert.IsTrue(function.Meta[PFunction.DeficiencyKey].Text.Contains("SEH"),
+                "CIL deficiency is expected to be related to SEH.");
         }
 
         [Test]
         public void MinimalTryCatch()
         {
-            Compile(@"
+            Compile(
+                @"
 var t; 
 function trace(x) = t+=x~String; 
 function main(x) [store_debug_implementation enabled;]
@@ -599,7 +642,7 @@ function main(x) [store_debug_implementation enabled;]
     return t;
 }");
 
-            Expect("12",true);
+            Expect("12", true);
         }
     }
 }

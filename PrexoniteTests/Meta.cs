@@ -1,7 +1,30 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
+﻿// Prexonite
+// 
+// Copyright (c) 2011, Christian Klauser
+// All rights reserved.
+// 
+// Redistribution and use in source and binary forms, with or without modification, 
+//  are permitted provided that the following conditions are met:
+// 
+//     Redistributions of source code must retain the above copyright notice, 
+//          this list of conditions and the following disclaimer.
+//     Redistributions in binary form must reproduce the above copyright notice, 
+//          this list of conditions and the following disclaimer in the 
+//          documentation and/or other materials provided with the distribution.
+//     The names of the contributors may be used to endorse or 
+//          promote products derived from this software without specific prior written permission.
+// 
+// THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND 
+//  ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED 
+//  WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED. 
+//  IN NO EVENT SHALL THE COPYRIGHT HOLDER OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT, 
+//  INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES 
+//  (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, 
+//  DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, 
+//  WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING 
+//  IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+
+using System;
 using NUnit.Framework.Constraints;
 using Prexonite;
 
@@ -21,7 +44,8 @@ namespace PrexoniteTests
 
         public static Constraint ContainsExact(string key, MetaEntry value)
         {
-            return new ContainsKeyConstraint(key).And.Matches(new ExactEqualityConstraint(key,value));
+            return
+                new ContainsKeyConstraint(key).And.Matches(new ExactEqualityConstraint(key, value));
         }
 
         private class ExactEqualityConstraint : Constraint
@@ -57,7 +81,7 @@ namespace PrexoniteTests
 
                 _actualEntry = ihmt.Meta[_key];
 
-                if(_actualEntry.EntryType != _expectedEntry.EntryType)
+                if (_actualEntry.EntryType != _expectedEntry.EntryType)
                 {
                     _typeMismatch = true;
                     return false;
@@ -69,11 +93,11 @@ namespace PrexoniteTests
 
             public override void WriteDescriptionTo(MessageWriter writer)
             {
-                if(actual == null)
+                if (actual == null)
                 {
                     writer.WriteMessageLine("Actual value does not have a meta table.");
                 }
-                else if(_typeMismatch)
+                else if (_typeMismatch)
                 {
                     writer.WriteMessageLine("Meta entry type doesn't match.");
                     writer.WriteExpectedValue(_expectedEntry.EntryType);
@@ -81,7 +105,9 @@ namespace PrexoniteTests
                 }
                 else
                 {
-                    writer.WriteMessageLine("actual meta entry {0} should match expected entry {1}", _actualEntry, _expectedEntry);
+                    writer.WriteMessageLine(
+                        "actual meta entry {0} should match expected entry {1}", _actualEntry,
+                        _expectedEntry);
                 }
             }
 
@@ -107,7 +133,7 @@ namespace PrexoniteTests
 
                 IHasMetaTable ihmt;
                 MetaTable mt;
-                if((ihmt = actual as IHasMetaTable) != null)
+                if ((ihmt = actual as IHasMetaTable) != null)
                     mt = ihmt.Meta;
                 else
                     return false;
@@ -115,11 +141,11 @@ namespace PrexoniteTests
                 return mt.ContainsKey(_key);
             }
 
-            override 
-
-            public void WriteDescriptionTo(MessageWriter writer)
+            public
+                override void WriteDescriptionTo(MessageWriter writer)
             {
-                writer.WriteMessageLine("meta table of object {0} should contain an entry for key \"{1}\"", actual, _key);
+                writer.WriteMessageLine(
+                    "meta table of object {0} should contain an entry for key \"{1}\"", actual, _key);
             }
 
             #endregion

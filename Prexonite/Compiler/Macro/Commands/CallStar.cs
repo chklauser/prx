@@ -1,7 +1,31 @@
-﻿using System;
+﻿// Prexonite
+// 
+// Copyright (c) 2011, Christian Klauser
+// All rights reserved.
+// 
+// Redistribution and use in source and binary forms, with or without modification, 
+//  are permitted provided that the following conditions are met:
+// 
+//     Redistributions of source code must retain the above copyright notice, 
+//          this list of conditions and the following disclaimer.
+//     Redistributions in binary form must reproduce the above copyright notice, 
+//          this list of conditions and the following disclaimer in the 
+//          documentation and/or other materials provided with the distribution.
+//     The names of the contributors may be used to endorse or 
+//          promote products derived from this software without specific prior written permission.
+// 
+// THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND 
+//  ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED 
+//  WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED. 
+//  IN NO EVENT SHALL THE COPYRIGHT HOLDER OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT, 
+//  INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES 
+//  (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, 
+//  DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, 
+//  WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING 
+//  IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+
 using System.Collections.Generic;
 using System.Linq;
-using System.Text;
 using Prexonite.Commands.Core.PartialApplication;
 using Prexonite.Compiler.Ast;
 
@@ -31,7 +55,8 @@ namespace Prexonite.Compiler.Macro.Commands
         {
             if (context.Invocation.Arguments.Count < 1)
             {
-                context.ReportMessage(ParseMessageSeverity.Error, "{0} requires at least one argument, the call\\* command/function to invoke.");
+                context.ReportMessage(ParseMessageSeverity.Error,
+                    "{0} requires at least one argument, the call\\* command/function to invoke.");
                 return true;
             }
 
@@ -44,7 +69,8 @@ namespace Prexonite.Compiler.Macro.Commands
             return true;
         }
 
-        private void _expandPartialApplication(MacroContext context, int passThrough, List<IAstExpression> arguments)
+        private void _expandPartialApplication(MacroContext context, int passThrough,
+            List<IAstExpression> arguments)
         {
             var flatArgs = new List<IAstExpression>(arguments.Count);
             var directives = new List<int>(arguments.Count);
@@ -54,11 +80,11 @@ namespace Prexonite.Compiler.Macro.Commands
             flatArgs.Add(arguments[0]);
 
             var opaqueSpan = 0;
-            for(var i = 1; i < arguments.Count; i++)
+            for (var i = 1; i < arguments.Count; i++)
             {
                 var arg = arguments[i];
                 AstListLiteral lit;
-                if(i < passThrough || !_isPartialList(arg, out lit))
+                if (i < passThrough || !_isPartialList(arg, out lit))
                 {
                     flatArgs.Add(arg);
                     opaqueSpan++;
@@ -66,7 +92,7 @@ namespace Prexonite.Compiler.Macro.Commands
                 else
                 {
                     flatArgs.AddRange(lit.Elements);
-                    if(opaqueSpan > 0)
+                    if (opaqueSpan > 0)
                     {
                         directives.Add(opaqueSpan);
                         opaqueSpan = 0;
@@ -88,13 +114,14 @@ namespace Prexonite.Compiler.Macro.Commands
             var implCall = context.CreateGetSetSymbol(SymbolInterpretations.Command, context.Call,
                 PartialCallStarImplCommand.Alias);
             implCall.Arguments.AddRange(closedArguments);
-            
+
             implCall.Arguments.AddRange(mappings32.Select(m => context.CreateConstant(m)));
 
             context.Block.Expression = implCall;
         }
 
-        private static void _mergeDirectivesIntoMappings(List<int> directives, int[] mappings8, int argc)
+        private static void _mergeDirectivesIntoMappings(List<int> directives, int[] mappings8,
+            int argc)
         {
             var mi = argc;
             foreach (var directive in directives)
@@ -123,9 +150,10 @@ namespace Prexonite.Compiler.Macro.Commands
 
         protected override void DoExpand(MacroContext context)
         {
-            if(context.Invocation.Arguments.Count < 1)
+            if (context.Invocation.Arguments.Count < 1)
             {
-                context.ReportMessage(ParseMessageSeverity.Error, "{0} requires at least one argument, the call\\* command/function to invoke.");
+                context.ReportMessage(ParseMessageSeverity.Error,
+                    "{0} requires at least one argument, the call\\* command/function to invoke.");
                 return;
             }
 
@@ -133,7 +161,7 @@ namespace Prexonite.Compiler.Macro.Commands
             List<IAstExpression> arguments;
             _determinePassThrough(context, out passThrough, out arguments);
 
-            if(arguments.Skip(passThrough).Any(_isPartialList))
+            if (arguments.Skip(passThrough).Any(_isPartialList))
             {
                 _expandPartialApplication(context, passThrough, arguments);
                 return;
@@ -146,14 +174,15 @@ namespace Prexonite.Compiler.Macro.Commands
             context.Block.Expression = ic;
         }
 
-        private static void _determinePassThrough(MacroContext context, out int passThrough, out List<IAstExpression> arguments)
+        private static void _determinePassThrough(MacroContext context, out int passThrough,
+            out List<IAstExpression> arguments)
         {
             var arg0 = context.Invocation.Arguments[0];
             var passThroughNode = arg0 as AstConstant;
             if (passThroughNode != null && passThroughNode.Constant is int)
             {
                 arguments = new List<IAstExpression>(context.Invocation.Arguments.Skip(1));
-                passThrough = (int)passThroughNode.Constant;
+                passThrough = (int) passThroughNode.Constant;
             }
             else
             {

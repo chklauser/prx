@@ -1,4 +1,30 @@
-﻿using System;
+﻿// Prexonite
+// 
+// Copyright (c) 2011, Christian Klauser
+// All rights reserved.
+// 
+// Redistribution and use in source and binary forms, with or without modification, 
+//  are permitted provided that the following conditions are met:
+// 
+//     Redistributions of source code must retain the above copyright notice, 
+//          this list of conditions and the following disclaimer.
+//     Redistributions in binary form must reproduce the above copyright notice, 
+//          this list of conditions and the following disclaimer in the 
+//          documentation and/or other materials provided with the distribution.
+//     The names of the contributors may be used to endorse or 
+//          promote products derived from this software without specific prior written permission.
+// 
+// THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND 
+//  ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED 
+//  WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED. 
+//  IN NO EVENT SHALL THE COPYRIGHT HOLDER OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT, 
+//  INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES 
+//  (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, 
+//  DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, 
+//  WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING 
+//  IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+
+using System;
 using System.Collections.Generic;
 using System.Diagnostics;
 
@@ -34,7 +60,8 @@ namespace Prexonite.Compiler.Cil.Seh
     [DebuggerDisplay("{Kind}-block from {Begin} to {End}")]
     internal sealed class Region : IEquatable<Region>
     {
-        public const RegionKind AnyRegionKind = RegionKind.Try | RegionKind.Catch | RegionKind.Finally;
+        public const RegionKind AnyRegionKind =
+            RegionKind.Try | RegionKind.Catch | RegionKind.Finally;
 
         public readonly CompiledTryCatchFinallyBlock Block;
         public readonly RegionKind Kind;
@@ -106,10 +133,10 @@ namespace Prexonite.Compiler.Cil.Seh
         [DebuggerStepThrough]
         public static IEnumerable<Region> FromBlock(CompiledTryCatchFinallyBlock block)
         {
-            yield return new Region(block,RegionKind.Try);
-            if(block.HasFinally)
+            yield return new Region(block, RegionKind.Try);
+            if (block.HasFinally)
                 yield return new Region(block, RegionKind.Finally);
-            if(block.HasCatch)
+            if (block.HasCatch)
                 yield return new Region(block, RegionKind.Catch);
         }
 
@@ -125,7 +152,8 @@ namespace Prexonite.Compiler.Cil.Seh
 
             //here, r1 and r2 must cover the same region
             //   this can only be the case for try-blocks
-            Debug.Assert(r1.Kind == RegionKind.Try && r2.Kind == RegionKind.Try, "Exactly overlapping finally/catch regions are illegal.");
+            Debug.Assert(r1.Kind == RegionKind.Try && r2.Kind == RegionKind.Try,
+                "Exactly overlapping finally/catch regions are illegal.");
 
             //in this case, the total span of the block is the indicator
             var cmp = r1.Block.Range.CompareTo(r2.Block.Range);
@@ -140,7 +168,7 @@ namespace Prexonite.Compiler.Cil.Seh
 
         public bool IsIn(Region r)
         {
-            if(!(Begin <= r.Begin && r.End <= End))
+            if (!(Begin <= r.Begin && r.End <= End))
                 return false;
 
             return CompareRegions(this, r) < 0;

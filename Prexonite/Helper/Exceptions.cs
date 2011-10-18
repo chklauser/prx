@@ -1,25 +1,28 @@
-/*
- * Prexonite, a scripting engine (Scripting Language -> Bytecode -> Virtual Machine)
- *  Copyright (C) 2007  Christian "SealedSun" Klauser
- *  E-mail  sealedsun a.t gmail d.ot com
- *  Web     http://www.sealedsun.ch/
- *
- *  This program is free software; you can redistribute it and/or modify
- *  it under the terms of the GNU General Public License as published by
- *  the Free Software Foundation; either version 2 of the License, or
- *  (at your option) any later version.
- *
- *  Please contact me (sealedsun a.t gmail do.t com) if you need a different license.
- * 
- *  This program is distributed in the hope that it will be useful,
- *  but WITHOUT ANY WARRANTY; without even the implied warranty of
- *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- *  GNU General Public License for more details.
- *
- *  You should have received a copy of the GNU General Public License along
- *  with this program; if not, write to the Free Software Foundation, Inc.,
- *  51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
- */
+// Prexonite
+// 
+// Copyright (c) 2011, Christian Klauser
+// All rights reserved.
+// 
+// Redistribution and use in source and binary forms, with or without modification, 
+//  are permitted provided that the following conditions are met:
+// 
+//     Redistributions of source code must retain the above copyright notice, 
+//          this list of conditions and the following disclaimer.
+//     Redistributions in binary form must reproduce the above copyright notice, 
+//          this list of conditions and the following disclaimer in the 
+//          documentation and/or other materials provided with the distribution.
+//     The names of the contributors may be used to endorse or 
+//          promote products derived from this software without specific prior written permission.
+// 
+// THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND 
+//  ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED 
+//  WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED. 
+//  IN NO EVENT SHALL THE COPYRIGHT HOLDER OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT, 
+//  INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES 
+//  (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, 
+//  DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, 
+//  WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING 
+//  IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 using System;
 using System.Collections.Generic;
@@ -33,8 +36,8 @@ namespace Prexonite
     namespace Compiler
     {
         /// <summary>
-        /// Thrown when the compiler detected an invalid state. 
-        /// You must consider both the <see cref="Loader"/> and the <see cref="Application"/> to be corrupt.
+        ///     Thrown when the compiler detected an invalid state. 
+        ///     You must consider both the <see cref = "Loader" /> and the <see cref = "Application" /> to be corrupt.
         /// </summary>
         [Serializable]
         public class FatalCompilerException : PrexoniteException
@@ -47,36 +50,36 @@ namespace Prexonite
             //
 
             /// <summary>
-            /// Creates a new instance of <see cref="FatalCompilerException"/>.
+            ///     Creates a new instance of <see cref = "FatalCompilerException" />.
             /// </summary>
             public FatalCompilerException()
             {
             }
 
             /// <summary>
-            /// Creates a new instance of <see cref="FatalCompilerException"/> with a custom message.
+            ///     Creates a new instance of <see cref = "FatalCompilerException" /> with a custom message.
             /// </summary>
-            /// <param name="message">The message to report.</param>
+            /// <param name = "message">The message to report.</param>
             public FatalCompilerException(string message)
                 : base(message)
             {
             }
 
             /// <summary>
-            /// Creates a new instance of <see cref="FatalCompilerException"/> with a custom message and and an inner exception.
+            ///     Creates a new instance of <see cref = "FatalCompilerException" /> with a custom message and and an inner exception.
             /// </summary>
-            /// <param name="message">The message to report.</param>
-            /// <param name="inner">The exception that caused this exception.</param>
+            /// <param name = "message">The message to report.</param>
+            /// <param name = "inner">The exception that caused this exception.</param>
             public FatalCompilerException(string message, Exception inner)
                 : base(message, inner)
             {
             }
 
             /// <summary>
-            /// Creates an in-memory instance from an already existing but serialized instance of <see cref="FatalCompilerException"/>.
+            ///     Creates an in-memory instance from an already existing but serialized instance of <see cref = "FatalCompilerException" />.
             /// </summary>
-            /// <param name="info">The <see cref="SerializationInfo"/>.</param>
-            /// <param name="context">The <see cref="StreamingContext"/> of this particular instance.</param>
+            /// <param name = "info">The <see cref = "SerializationInfo" />.</param>
+            /// <param name = "context">The <see cref = "StreamingContext" /> of this particular instance.</param>
             protected FatalCompilerException(
                 SerializationInfo info,
                 StreamingContext context)
@@ -87,43 +90,45 @@ namespace Prexonite
     }
 
     /// <summary>
-    /// The generic base class of all exceptions rised by the Prexonite library.
+    ///     The generic base class of all exceptions rised by the Prexonite library.
     /// </summary>
-    /// <remarks>Even exceptional errors during compilation are reported as <see cref="PrexoniteException"/> if they are not considerer 'fatal'.</remarks>
+    /// <remarks>
+    ///     Even exceptional errors during compilation are reported as <see cref = "PrexoniteException" /> if they are not considerer 'fatal'.
+    /// </remarks>
     [Serializable]
     public class PrexoniteException : Exception
     {
         /// <summary>
-        /// Creates a new instance of <see cref="PrexoniteException"/>.
+        ///     Creates a new instance of <see cref = "PrexoniteException" />.
         /// </summary>
         public PrexoniteException()
         {
         }
 
         /// <summary>
-        /// Creates a new instance of <see cref="PrexoniteException"/> with a custom message.
+        ///     Creates a new instance of <see cref = "PrexoniteException" /> with a custom message.
         /// </summary>
-        /// <param name="message">The custom message.</param>
+        /// <param name = "message">The custom message.</param>
         public PrexoniteException(string message)
             : base(message)
         {
         }
 
         /// <summary>
-        /// Creates a new instance of <see cref="PrexoniteException"/> with a custom message as well as an inner exception.
+        ///     Creates a new instance of <see cref = "PrexoniteException" /> with a custom message as well as an inner exception.
         /// </summary>
-        /// <param name="message">The custom message.</param>
-        /// <param name="innerException">The inner exception.</param>
+        /// <param name = "message">The custom message.</param>
+        /// <param name = "innerException">The inner exception.</param>
         public PrexoniteException(string message, Exception innerException)
             : base(message, innerException)
         {
         }
 
         /// <summary>
-        /// Creates an in-memory instance from an already existing but serialized instance of <see cref="PrexoniteException"/>.
+        ///     Creates an in-memory instance from an already existing but serialized instance of <see cref = "PrexoniteException" />.
         /// </summary>
-        /// <param name="info">The <see cref="SerializationInfo"/>.</param>
-        /// <param name="context">The <see cref="StreamingContext"/> of this particular instance.</param>
+        /// <param name = "info">The <see cref = "SerializationInfo" />.</param>
+        /// <param name = "context">The <see cref = "StreamingContext" /> of this particular instance.</param>
         protected PrexoniteException(
             SerializationInfo info,
             StreamingContext context)
@@ -133,35 +138,37 @@ namespace Prexonite
     }
 
     /// <summary>
-    /// A wrapper around exceptions caused by the code executed by the virtual machine.
-    /// It provides a stack trace of Prexonite <see cref="StackContext"/>s.
+    ///     A wrapper around exceptions caused by the code executed by the virtual machine.
+    ///     It provides a stack trace of Prexonite <see cref = "StackContext" />s.
     /// </summary>
-    /// <remarks>Use an overload of the static method CreateRuntimeException to create an instance with a stack trace.</remarks>
+    /// <remarks>
+    ///     Use an overload of the static method CreateRuntimeException to create an instance with a stack trace.
+    /// </remarks>
     [Serializable]
     public class PrexoniteRuntimeException : PrexoniteException
     {
         /// <summary>
-        /// Creates a new instance of PrexoniteRuntimeException without a stack trace and a custom message.
+        ///     Creates a new instance of PrexoniteRuntimeException without a stack trace and a custom message.
         /// </summary>
-        /// <param name="message">A custom message</param>
+        /// <param name = "message">A custom message</param>
         protected PrexoniteRuntimeException(string message)
             : base(message)
         {
         }
 
         /// <summary>
-        /// Creates a new instance of PrexoniteRuntimeException without a stack trace and a custom message.
+        ///     Creates a new instance of PrexoniteRuntimeException without a stack trace and a custom message.
         /// </summary>
-        /// <param name="message">A custom message</param>
-        /// <param name="innerException">The inner exception</param>
+        /// <param name = "message">A custom message</param>
+        /// <param name = "innerException">The inner exception</param>
         protected PrexoniteRuntimeException(string message, Exception innerException)
             : base(message, innerException)
         {
         }
 
         /// <summary>
-        /// Provides access to the stack trace recorded when creating the exception.
-        /// This field can be null if the instance has beeen created without a stack trace.
+        ///     Provides access to the stack trace recorded when creating the exception.
+        ///     This field can be null if the instance has beeen created without a stack trace.
         /// </summary>
         public string PrexoniteStackTrace
         {
@@ -178,12 +185,13 @@ namespace Prexonite
         }
 
         /// <summary>
-        /// Creates a new instance of <see cref="PrexoniteRuntimeException"/> with a stack trace based on <paramref name="esctx"/>.
+        ///     Creates a new instance of <see cref = "PrexoniteRuntimeException" /> with a stack trace based on <paramref
+        ///      name = "esctx" />.
         /// </summary>
-        /// <param name="esctx">The stack context that caused the exception.</param>
-        /// <param name="message">The custom message to be displayed.</param>
-        /// <param name="innerException">The inner exception.</param>
-        /// <returns>An instance of <see cref="PrexoniteRuntimeException"/> with a stack trace.</returns>
+        /// <param name = "esctx">The stack context that caused the exception.</param>
+        /// <param name = "message">The custom message to be displayed.</param>
+        /// <param name = "innerException">The inner exception.</param>
+        /// <returns>An instance of <see cref = "PrexoniteRuntimeException" /> with a stack trace.</returns>
         public static PrexoniteRuntimeException CreateRuntimeException(
             StackContext esctx, string message, Exception innerException)
         {
@@ -223,9 +231,10 @@ namespace Prexonite
 
                         var sm = SourceMapping.Load(fctx.Implementation);
                         ISourcePosition pos;
-                        if(sm.TryGetValue(pointer, out pos))
+                        if (sm.TryGetValue(pointer, out pos))
                         {
-                            builder.AppendFormat(" (in {0}, on line {1}, col {2})", pos.File, pos.Line, pos.Column);
+                            builder.AppendFormat(" (in {0}, on line {1}, col {2})", pos.File,
+                                pos.Line, pos.Column);
                         }
                     }
                 }
@@ -236,11 +245,12 @@ namespace Prexonite
         }
 
         /// <summary>
-        /// Creates a new instance of <see cref="PrexoniteRuntimeException"/> with a stack trace based on <paramref name="sctx"/>.
+        ///     Creates a new instance of <see cref = "PrexoniteRuntimeException" /> with a stack trace based on <paramref
+        ///      name = "sctx" />.
         /// </summary>
-        /// <param name="sctx">The stack context that caused the exception.</param>
-        /// <param name="message">The custom message to be displayed.</param>
-        /// <returns>An instance of <see cref="PrexoniteRuntimeException"/> with a stack trace.</returns>
+        /// <param name = "sctx">The stack context that caused the exception.</param>
+        /// <param name = "message">The custom message to be displayed.</param>
+        /// <returns>An instance of <see cref = "PrexoniteRuntimeException" /> with a stack trace.</returns>
         public static PrexoniteRuntimeException CreateRuntimeException(
             StackContext sctx, string message)
         {
@@ -248,11 +258,12 @@ namespace Prexonite
         }
 
         /// <summary>
-        /// Creates a new instance of <see cref="PrexoniteRuntimeException"/> with a stack trace based on <paramref name="sctx"/>.
+        ///     Creates a new instance of <see cref = "PrexoniteRuntimeException" /> with a stack trace based on <paramref
+        ///      name = "sctx" />.
         /// </summary>
-        /// <param name="sctx">The stack context that caused the exception.</param>
-        /// <param name="innerException">The inner exception.</param>
-        /// <returns>An instance of <see cref="PrexoniteRuntimeException"/> with a stack trace.</returns>
+        /// <param name = "sctx">The stack context that caused the exception.</param>
+        /// <param name = "innerException">The inner exception.</param>
+        /// <returns>An instance of <see cref = "PrexoniteRuntimeException" /> with a stack trace.</returns>
         public static PrexoniteRuntimeException CreateRuntimeException(
             StackContext sctx, Exception innerException)
         {
@@ -260,7 +271,7 @@ namespace Prexonite
         }
 
         /// <summary>
-        /// Returns the standard string representation of <see cref="PrexoniteException"/> with the stack trace appended.
+        ///     Returns the standard string representation of <see cref = "PrexoniteException" /> with the stack trace appended.
         /// </summary>
         /// <returns></returns>
         public override string ToString()
@@ -269,14 +280,16 @@ namespace Prexonite
         }
 
         /// <summary>
-        /// Tries to unwrap the inner exception of the supplied <see cref="PrexoniteRuntimeException"/> so
-        /// the inner exception of the returned <see cref="PrexoniteRuntimeException"/> contains relevant information.
+        ///     Tries to unwrap the inner exception of the supplied <see cref = "PrexoniteRuntimeException" /> so
+        ///     the inner exception of the returned <see cref = "PrexoniteRuntimeException" /> contains relevant information.
         /// </summary>
-        /// <remarks>The method replaces <see cref="PrexoniteRuntimeException"/>s as well as 
-        /// <see cref="TargetInvocationException"/>s with their inner exceptions (unless they are null). 
-        /// In some cases, a new <see cref="PrexoniteRuntimeException"/> instance is created.</remarks>
-        /// <param name="pExc">Any <see cref="PrexoniteRuntimeException"/>.</param>
-        /// <returns>An instance of <see cref="PrexoniteRuntimeException"/> with a relevant inner exception.</returns>
+        /// <remarks>
+        ///     The method replaces <see cref = "PrexoniteRuntimeException" />s as well as 
+        ///     <see cref = "TargetInvocationException" />s with their inner exceptions (unless they are null). 
+        ///     In some cases, a new <see cref = "PrexoniteRuntimeException" /> instance is created.
+        /// </remarks>
+        /// <param name = "pExc">Any <see cref = "PrexoniteRuntimeException" />.</param>
+        /// <returns>An instance of <see cref = "PrexoniteRuntimeException" /> with a relevant inner exception.</returns>
         public static PrexoniteRuntimeException UnpackException(PrexoniteRuntimeException pExc)
         {
             if (pExc == null)
@@ -315,21 +328,25 @@ namespace Prexonite
             _unpack(pExc, out lowestException, out lowestRuntimeException);
 
             //Check if something changed
-            if (ReferenceEquals(lowestException, pExc.InnerException) && ReferenceEquals(lowestRuntimeException, pExc))
+            if (ReferenceEquals(lowestException, pExc.InnerException) &&
+                ReferenceEquals(lowestRuntimeException, pExc))
                 return pExc;
 
-            return new PrexoniteRuntimeException(lowestException.Message, lowestException, lowestRuntimeException._prexoniteStackTrace);
+            return new PrexoniteRuntimeException(lowestException.Message, lowestException,
+                lowestRuntimeException._prexoniteStackTrace);
         }
 
-        private static void _unpack(PrexoniteRuntimeException originalException, out Exception lowestException, out PrexoniteRuntimeException lowestRuntimeException)
+        private static void _unpack(PrexoniteRuntimeException originalException,
+            out Exception lowestException, out PrexoniteRuntimeException lowestRuntimeException)
         {
             Exception exc = originalException;
             TargetInvocationException targetInvocationExc = null;
             lowestRuntimeException = originalException;
 
             while (
-                    (exc is PrexoniteRuntimeException || (targetInvocationExc = exc as TargetInvocationException) != null)
-                    && exc.InnerException != null)
+                (exc is PrexoniteRuntimeException ||
+                    (targetInvocationExc = exc as TargetInvocationException) != null)
+                        && exc.InnerException != null)
             {
                 if (targetInvocationExc == null)
                     lowestRuntimeException = (PrexoniteRuntimeException) exc;
@@ -351,7 +368,7 @@ namespace Prexonite
     [Serializable]
     public class InvalidCallException : PrexoniteException
     {
-        public InvalidCallException() : base()
+        public InvalidCallException()
         {
         }
 
@@ -376,9 +393,8 @@ namespace Prexonite
     [Serializable]
     public class InvalidConversionException : PrexoniteException
     {
-        public InvalidConversionException() : base()
+        public InvalidConversionException()
         {
-            
         }
 
         public InvalidConversionException(string message)

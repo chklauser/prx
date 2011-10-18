@@ -1,4 +1,29 @@
-//comment the following line to temporarily disable CIL compilation tests.
+// Prexonite
+// 
+// Copyright (c) 2011, Christian Klauser
+// All rights reserved.
+// 
+// Redistribution and use in source and binary forms, with or without modification, 
+//  are permitted provided that the following conditions are met:
+// 
+//     Redistributions of source code must retain the above copyright notice, 
+//          this list of conditions and the following disclaimer.
+//     Redistributions in binary form must reproduce the above copyright notice, 
+//          this list of conditions and the following disclaimer in the 
+//          documentation and/or other materials provided with the distribution.
+//     The names of the contributors may be used to endorse or 
+//          promote products derived from this software without specific prior written permission.
+// 
+// THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND 
+//  ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED 
+//  WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED. 
+//  IN NO EVENT SHALL THE COPYRIGHT HOLDER OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT, 
+//  INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES 
+//  (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, 
+//  DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, 
+//  WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING 
+//  IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+
 #define UseCil
 
 using System;
@@ -11,6 +36,7 @@ using Prexonite.Compiler;
 using Prexonite.Compiler.Cil;
 using Prexonite.Types;
 using Prx.Tests;
+using Compiler = Prexonite.Compiler.Cil.Compiler;
 
 namespace PrexoniteTests.Tests
 {
@@ -78,12 +104,13 @@ namespace PrexoniteTests.Tests
         protected void CompileInvalid(Loader ldr, string input, params string[] keywords)
         {
             _compile(ldr, input);
-            Assert.AreNotEqual(0,ldr.Errors.Count(m => m.Severity == ParseMessageSeverity.Error), "Errors expected, but none were raised.");
+            Assert.AreNotEqual(0, ldr.Errors.Count(m => m.Severity == ParseMessageSeverity.Error),
+                "Errors expected, but none were raised.");
             foreach (var keyword in keywords)
             {
                 var word = keyword;
                 Assert.IsTrue(ldr.Errors.Any(m => m.Message.Contains(word)),
-                              "Expected keyword " + word + " in one of the error messages.");
+                    "Expected keyword " + word + " in one of the error messages.");
             }
         }
 
@@ -92,8 +119,8 @@ namespace PrexoniteTests.Tests
             try
             {
                 ldr.LoadFromString(input);
-                if(CompileToCil)
-                    Prexonite.Compiler.Cil.Compiler.Compile(ldr.ParentApplication, ldr.ParentEngine,StaticLinking);
+                if (CompileToCil)
+                    Compiler.Compile(ldr.ParentApplication, ldr.ParentEngine, StaticLinking);
             }
             finally
             {
@@ -109,17 +136,17 @@ namespace PrexoniteTests.Tests
 
         protected Loader Compile(string input)
         {
-            Loader ldr = new Loader(options);
+            var ldr = new Loader(options);
             Compile(ldr, input);
             return ldr;
         }
 
         protected Loader Store(Loader ldr)
         {
-            StringBuilder sb = new StringBuilder();
+            var sb = new StringBuilder();
             ldr.Store(sb);
 
-            
+
             //Create a new engine
             SetupCompilerEngine();
 
@@ -163,8 +190,9 @@ namespace PrexoniteTests.Tests
 
         protected void ExpectReturnValue<T>(string functionId, T expectedReturnValue, PValue[] args)
         {
-            if(!args.All(value => value != null))
-                throw new ArgumentException("Arguments must not contain naked CLR null references. Use `PType.Null`.");
+            if (!args.All(value => value != null))
+                throw new ArgumentException(
+                    "Arguments must not contain naked CLR null references. Use `PType.Null`.");
 
             var expected = engine.CreateNativePValue(expectedReturnValue);
             if (!target.Functions.Contains(functionId))
@@ -174,23 +202,25 @@ namespace PrexoniteTests.Tests
 
             var func = target.Functions[functionId];
             if (func.Meta[StoreDebugImplementationKey].Switch)
-                Prexonite.Compiler.Cil.Compiler.StoreDebugImplementation(target, engine);
+                Compiler.StoreDebugImplementation(target, engine);
 
             PValue rv;
             try
             {
                 rv = func.Run(engine, args);
             }
-            catch(AccessViolationException)
+            catch (AccessViolationException)
             {
-                Console.WriteLine("Detected AccessViolationException. Trying to store debug implementation (Repeats CIL compilation)");
-                Prexonite.Compiler.Cil.Compiler.StoreDebugImplementation(target, engine);
-                throw; 
+                Console.WriteLine(
+                    "Detected AccessViolationException. Trying to store debug implementation (Repeats CIL compilation)");
+                Compiler.StoreDebugImplementation(target, engine);
+                throw;
             }
-            catch(InvalidProgramException)
+            catch (InvalidProgramException)
             {
-                Console.WriteLine("Detected InvalidProgramException. Trying to store debug implementation (Repeats CIL compilation)");
-                Prexonite.Compiler.Cil.Compiler.StoreDebugImplementation(target, engine);
+                Console.WriteLine(
+                    "Detected InvalidProgramException. Trying to store debug implementation (Repeats CIL compilation)");
+                Compiler.StoreDebugImplementation(target, engine);
                 throw;
             }
 
@@ -210,8 +240,10 @@ namespace PrexoniteTests.Tests
             if (expected.Type == PType.List)
             {
                 var expectedL = (List<PValue>) expected.Value;
-                var rvL = (List<PValue>)rv.Value;
-                Assert.AreEqual(expectedL.Count, rvL.Count, string.Format("Returned list differs in length. Elements returned {0}", rvL.ToEnumerationString()));
+                var rvL = (List<PValue>) rv.Value;
+                Assert.AreEqual(expectedL.Count, rvL.Count,
+                    string.Format("Returned list differs in length. Elements returned {0}",
+                        rvL.ToEnumerationString()));
 
                 for (var i = 0; i < expectedL.Count; i++)
                 {
@@ -226,7 +258,7 @@ namespace PrexoniteTests.Tests
                     expected.Value,
                     rv.Value,
                     "Return value is expected to be " + expected + " and not " +
-                    rv);
+                        rv);
             }
         }
 
@@ -249,7 +281,7 @@ namespace PrexoniteTests.Tests
         {
             if (!target.Functions.Contains(functionId))
                 throw new PrexoniteException("Function " + functionId + " cannot be found.");
-            FunctionContext fctx = target.Functions[functionId].CreateFunctionContext(engine, args);
+            var fctx = target.Functions[functionId].CreateFunctionContext(engine, args);
             engine.Stack.AddLast(fctx);
             return engine.Process();
         }
@@ -259,7 +291,8 @@ namespace PrexoniteTests.Tests
             return GetReturnValueNamedExplicit(target.Meta[Application.EntryKey], args);
         }
 
-        protected void BoolTable4(Func<bool, bool, bool, bool, string> main, PValue pTrue, PValue pFalse)
+        protected void BoolTable4(Func<bool, bool, bool, bool, string> main, PValue pTrue,
+            PValue pFalse)
         {
             Expect(main(false, false, false, false), pFalse, pFalse, pFalse, pFalse);
             Expect(main(false, false, false, true), pFalse, pFalse, pFalse, pTrue);

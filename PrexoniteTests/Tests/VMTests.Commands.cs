@@ -1,18 +1,40 @@
-﻿#if ((!(DEBUG || Verbose)) || forceIndex) && allowIndex
+﻿// Prexonite
+// 
+// Copyright (c) 2011, Christian Klauser
+// All rights reserved.
+// 
+// Redistribution and use in source and binary forms, with or without modification, 
+//  are permitted provided that the following conditions are met:
+// 
+//     Redistributions of source code must retain the above copyright notice, 
+//          this list of conditions and the following disclaimer.
+//     Redistributions in binary form must reproduce the above copyright notice, 
+//          this list of conditions and the following disclaimer in the 
+//          documentation and/or other materials provided with the distribution.
+//     The names of the contributors may be used to endorse or 
+//          promote products derived from this software without specific prior written permission.
+// 
+// THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND 
+//  ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED 
+//  WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED. 
+//  IN NO EVENT SHALL THE COPYRIGHT HOLDER OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT, 
+//  INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES 
+//  (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, 
+//  DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, 
+//  WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING 
+//  IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+
+#if ((!(DEBUG || Verbose)) || forceIndex) && allowIndex
 #define useIndex
 #endif
 
-#define UseCil //need to change this in VMTestsBase.cs too!
+#define UseCil
+//need to change this in VMTestsBase.cs too!
 
 using System;
-using System.Collections;
 using System.Collections.Generic;
-using System.Diagnostics;
-using System.Linq;
-using System.Text;
 using NUnit.Framework;
 using Prexonite;
-using Prexonite.Commands;
 using Prexonite.Compiler;
 using Prexonite.Types;
 using PrexoniteTests.Tests;
@@ -112,10 +134,10 @@ function main()
 
             Expect(
                 a + b + c + d + e + f + g,
-                PType.List.CreatePValue(new PValue[] { a, b, c }),
-                PType.List.CreatePValue(new PValue[] { d, e }),
-                PType.List.CreatePValue(new PValue[] { f }),
-                PType.List.CreatePValue(new PValue[] { g }));
+                PType.List.CreatePValue(new PValue[] {a, b, c}),
+                PType.List.CreatePValue(new PValue[] {d, e}),
+                PType.List.CreatePValue(new PValue[] {f}),
+                PType.List.CreatePValue(new PValue[] {g}));
         }
 
         [Test]
@@ -146,10 +168,10 @@ function main()
 
             Expect(
                 a + b + c + d + e + f + g,
-                PType.List.CreatePValue(new PValue[] { a, b, c }),
-                PType.List.CreatePValue(new PValue[] { d, e }),
-                PType.List.CreatePValue(new PValue[] { f }),
-                PType.List.CreatePValue(new PValue[] { g }));
+                PType.List.CreatePValue(new PValue[] {a, b, c}),
+                PType.List.CreatePValue(new PValue[] {d, e}),
+                PType.List.CreatePValue(new PValue[] {f}),
+                PType.List.CreatePValue(new PValue[] {g}));
         }
 
         [Test]
@@ -182,10 +204,10 @@ function main()
 
             Expect(
                 a + b + c + d + e + f + g,
-                PType.List.CreatePValue(new PValue[] { a, b, c }),
-                PType.List.CreatePValue(new PValue[] { d, e }),
-                PType.List.CreatePValue(new PValue[] { f }),
-                PType.List.CreatePValue(new PValue[] { g }));
+                PType.List.CreatePValue(new PValue[] {a, b, c}),
+                PType.List.CreatePValue(new PValue[] {d, e}),
+                PType.List.CreatePValue(new PValue[] {f}),
+                PType.List.CreatePValue(new PValue[] {g}));
         }
 
         [Test]
@@ -218,20 +240,21 @@ function main()
 
             Expect(
                 a + b + c + d + e + f + g,
-                PType.List.CreatePValue(new PValue[] { a, b, c }),
-                PType.List.CreatePValue(new PValue[] { d, e }),
-                PType.List.CreatePValue(new PValue[] { f }),
-                PType.List.CreatePValue(new PValue[] { g }));
+                PType.List.CreatePValue(new PValue[] {a, b, c}),
+                PType.List.CreatePValue(new PValue[] {d, e}),
+                PType.List.CreatePValue(new PValue[] {f}),
+                PType.List.CreatePValue(new PValue[] {g}));
         }
 
         [Test]
         public void CallMemberCommandImplementation()
         {
             var obj = new MemberCallable {Name = "obj"};
-            obj.Expect("m", new PValue[]{1,2,3}, PCall.Get, 6);
-            obj.Expect("", new PValue[]{4,"a"},PCall.Set);
+            obj.Expect("m", new PValue[] {1, 2, 3}, PCall.Get, 6);
+            obj.Expect("", new PValue[] {4, "a"}, PCall.Set);
 
-            Compile(@"
+            Compile(
+                @"
 function main(obj, x, xs, y1, y2)
 {
     var f1 = call\member(?,""m"",[?],?);
@@ -249,7 +272,8 @@ function main(obj, x, xs, y1, y2)
         [Test]
         public void CallTailImplementation()
         {
-            Compile(@"
+            Compile(
+                @"
 ref check_stack;
 
 var result;
@@ -308,7 +332,8 @@ function main(check, n)
         [Test]
         public void CallAsyncCommandImplementation()
         {
-            Compile(@"
+            Compile(
+                @"
 function fib_rec(n, /*lazy*/ fibT, ref combine) = 
     if(n <= 0) 0 else if(n <= 2) 1 else combine(force(fibT).(n-1), force(fibT).(n-2));
 
@@ -408,14 +433,15 @@ function main = pi;
         [Test]
         public void AsyncSeqSemantics()
         {
-            Compile(@"
+            Compile(
+                @"
 function main(xs)
 {
     return foldl((a,b) => a + "">"" + b, """") << async_seq(xs);
 }
 ");
 
-            Expect(">1>2>3", (PValue)new List<PValue> { 1, 2, 3 });
+            Expect(">1>2>3", (PValue) new List<PValue> {1, 2, 3});
         }
 
         #region Call\*
@@ -423,7 +449,8 @@ function main(xs)
         [Test]
         public void CallStarSimple()
         {
-            Compile(@"
+            Compile(
+                @"
 function main(x, xs)
 {
     var f = call\star(call([?],?),?,[?]);
@@ -438,7 +465,8 @@ function main(x, xs)
         [Test]
         public void CallStarAllArgumentsUndirected()
         {
-            Compile(@"
+            Compile(
+                @"
 function main(x, xs)
 {
     var f = call\star(call([?],?),?,?);
@@ -447,13 +475,15 @@ function main(x, xs)
 }
 ");
 
-            Expect(new List<PValue> { 1, 2, 3 }, (PValue)new List<PValue>{3}, (PValue)new List<PValue> { 1, 2 });
+            Expect(new List<PValue> {1, 2, 3}, (PValue) new List<PValue> {3},
+                (PValue) new List<PValue> {1, 2});
         }
 
         [Test]
         public void CallStarAllArgumentsDirected()
         {
-            Compile(@"
+            Compile(
+                @"
 function main(x, y, z)
 {
     var f = call\star(call([?],?),[?,?],[?]);
@@ -462,13 +492,14 @@ function main(x, y, z)
 }
 ");
 
-            Expect(new List<PValue> { 1, 2, 3 }, 1, 2, 3 );
+            Expect(new List<PValue> {1, 2, 3}, 1, 2, 3);
         }
 
         [Test]
         public void CallStarCustom()
         {
-            Compile(@"
+            Compile(
+                @"
 function main(x, xs)
 {
     var f = call\star(2,call(?),[?],?,[?]);
@@ -477,7 +508,7 @@ function main(x, xs)
 }
 ");
 
-            Expect(new List<PValue> { 1, 2, 3 }, 3, (PValue)new List<PValue> { 1, 2 });
+            Expect(new List<PValue> {1, 2, 3}, 3, (PValue) new List<PValue> {1, 2});
         }
 
         [Test]
@@ -492,13 +523,14 @@ function main(x, xs1,xs2)
 }
 ");
 
-            Expect(new List<PValue> { 1, 2, 3 }, (PValue)new List<PValue> { 3 }, 1, 2);
+            Expect(new List<PValue> {1, 2, 3}, (PValue) new List<PValue> {3}, 1, 2);
         }
 
         [Test]
         public void CallStarMapped()
         {
-            Compile(@"
+            Compile(
+                @"
 function main(x, xs)
 {
     var f = call\star(call([?],?),?1,[?0]);
@@ -507,15 +539,15 @@ function main(x, xs)
 }
 ");
 
-            Expect(new List<PValue> { 1, 2, 3 }, 3, (PValue)new List<PValue> { 1, 2 });
+            Expect(new List<PValue> {1, 2, 3}, 3, (PValue) new List<PValue> {1, 2});
         }
-
 
 
         [Test]
         public void CallStarCustomMapped()
         {
-            Compile(@"
+            Compile(
+                @"
 function main(x, xs)
 {
     var f = call\star(2, call(?), [?], ?1, [?0]);
@@ -524,7 +556,7 @@ function main(x, xs)
 }
 ");
 
-            Expect(new List<PValue> { 1, 2, 3 }, 3, (PValue)new List<PValue> { 1, 2 });
+            Expect(new List<PValue> {1, 2, 3}, 3, (PValue) new List<PValue> {1, 2});
         }
 
         #endregion
@@ -532,7 +564,8 @@ function main(x, xs)
         [Test]
         public void CreateEnumeratorCommand()
         {
-            Compile(@"
+            Compile(
+                @"
 function main(xs)
 {
     var s = new Structure;
@@ -553,13 +586,14 @@ function main(xs)
 }
 ");
 
-            Expect("M0.C0.D0: abc :M4.C3.D1",(PValue)new List<PValue>{"a","b","c"});
+            Expect("M0.C0.D0: abc :M4.C3.D1", (PValue) new List<PValue> {"a", "b", "c"});
         }
 
         [Test]
         public void ListExceptCommand()
         {
-            Compile(@"
+            Compile(
+                @"
 function main(xs,ys)
 {
     xs >> except(ys) >> all >> var r;
@@ -568,16 +602,17 @@ function main(xs,ys)
 }
 ");
             PValue a = 11, b = 13, c = 17, d = 19;
-            var xs = (PValue) new List<PValue> {a,c,d};
+            var xs = (PValue) new List<PValue> {a, c, d};
             var ys = (PValue) new List<PValue> {a, b};
 
-            Expect(new List<PValue>{c,d},xs,ys);
+            Expect(new List<PValue> {c, d}, xs, ys);
         }
 
         [Test]
         public void AppendCommand()
         {
-            Compile(@"
+            Compile(
+                @"
 function main(xs,ys)
 {
     append(xs,ys) >> all >> var r;
@@ -586,10 +621,10 @@ function main(xs,ys)
 }
 ");
             PValue a = 11, b = 13, c = 17, d = 19;
-            var xs = (PValue)new List<PValue> { a, c, d };
-            var ys = (PValue)new List<PValue> { a, b };
+            var xs = (PValue) new List<PValue> {a, c, d};
+            var ys = (PValue) new List<PValue> {a, b};
 
-            Expect(new List<PValue> { a,c,d, a,b }, xs, ys);
+            Expect(new List<PValue> {a, c, d, a, b}, xs, ys);
         }
     }
 }

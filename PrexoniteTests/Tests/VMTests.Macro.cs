@@ -1,20 +1,42 @@
-﻿#if ((!(DEBUG || Verbose)) || forceIndex) && allowIndex
+﻿// Prexonite
+// 
+// Copyright (c) 2011, Christian Klauser
+// All rights reserved.
+// 
+// Redistribution and use in source and binary forms, with or without modification, 
+//  are permitted provided that the following conditions are met:
+// 
+//     Redistributions of source code must retain the above copyright notice, 
+//          this list of conditions and the following disclaimer.
+//     Redistributions in binary form must reproduce the above copyright notice, 
+//          this list of conditions and the following disclaimer in the 
+//          documentation and/or other materials provided with the distribution.
+//     The names of the contributors may be used to endorse or 
+//          promote products derived from this software without specific prior written permission.
+// 
+// THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND 
+//  ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED 
+//  WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED. 
+//  IN NO EVENT SHALL THE COPYRIGHT HOLDER OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT, 
+//  INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES 
+//  (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, 
+//  DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, 
+//  WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING 
+//  IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+
+#if ((!(DEBUG || Verbose)) || forceIndex) && allowIndex
 #define useIndex
 #endif
 
-#define UseCil //need to change this in VMTestsBase.cs too!
+#define UseCil
+//need to change this in VMTestsBase.cs too!
 
 using System;
-using System.Collections;
 using System.Collections.Generic;
-using System.Diagnostics;
-using System.Linq;
-using System.Text;
 using NUnit.Framework;
 using Prexonite;
-using Prexonite.Commands;
 using Prexonite.Compiler;
-using Prexonite.Types;
+using Prexonite.Compiler.Macro.Commands;
 using PrexoniteTests.Tests;
 
 namespace Prx.Tests
@@ -24,7 +46,8 @@ namespace Prx.Tests
         [Test]
         public void CallSubMacroCommandNested()
         {
-            CompileInvalid(@"
+            CompileInvalid(
+                @"
 function main(xs)
 {
     var zs = [];
@@ -43,7 +66,8 @@ function main(xs)
 
     return zs.ToString();
 }
-", Prexonite.Compiler.Macro.Commands.CallSub.Alias, "expression");
+",
+                CallSub.Alias, "expression");
 
             //var xs = new List<PValue> { 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14 };
             //Expect("[ 4, 10, 16 ]", (PValue)xs);
@@ -52,7 +76,8 @@ function main(xs)
         [Test]
         public void CallSubMacroCommandTopLevel()
         {
-            Compile(@"
+            Compile(
+                @"
 var zs = [];
 function main(x1,x2,x3)
 {
@@ -73,10 +98,10 @@ function main(x1,x2,x3)
 }
 ");
             Func<List<PValue>> getZs = () =>
-            {
-                var pv = target.Variables["zs"].Value.Value as List<PValue>;
-                return pv ?? new List<PValue>(0);
-            };
+                {
+                    var pv = target.Variables["zs"].Value.Value as List<PValue>;
+                    return pv ?? new List<PValue>(0);
+                };
             Action resetZs = () => getZs().Clear();
 
             Expect("[ 4, 10 ]", 1, 3);
@@ -98,13 +123,13 @@ function main(x1,x2,x3)
             AssertPValuesAreEqual(4, zs[0]);
             AssertPValuesAreEqual(10, zs[1]);
             resetZs();
-
         }
 
         [Test]
         public void CallSubMinimal()
         {
-            Compile(@"
+            Compile(
+                @"
 function f(x)
 {
     return x;
@@ -123,7 +148,8 @@ function main()
         [Test]
         public void CallSubMinimalReturn()
         {
-            Compile(@"
+            Compile(
+                @"
 function f()
 {
     return 1;
@@ -145,7 +171,8 @@ function main()
         [Test]
         public void CallSubOfPartial()
         {
-            CompileInvalid(@"
+            CompileInvalid(
+                @"
 function main(xs,y)
 {
     var zs = [];
@@ -164,7 +191,8 @@ function main(xs,y)
 
     return zs.ToString();
 }
-", Prexonite.Compiler.Macro.Commands.CallSub.Alias, "expression");
+",
+                CallSub.Alias, "expression");
 
             //var xs = new List<PValue> { 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14 };
             //Expect("[ 4, 10, 16 ]", (PValue)xs, 6);
@@ -174,7 +202,8 @@ function main(xs,y)
         [Test]
         public void CaptureUnmentionedMacroVariable()
         {
-            Compile(@"
+            Compile(
+                @"
     macro echo() 
     {
         var f = (x) => 
@@ -196,7 +225,8 @@ function main(xs,y)
             Assert.IsNotNull(clo, "Closure must exist.");
             Assert.IsTrue(clo.Meta.ContainsKey(PFunction.SharedNamesKey));
             Assert.AreEqual(clo.Meta[PFunction.SharedNamesKey].List.Length, 1);
-            Assert.AreEqual(clo.Meta[PFunction.SharedNamesKey].List[0].Text, MacroAliases.ContextAlias);
+            Assert.AreEqual(clo.Meta[PFunction.SharedNamesKey].List[0].Text,
+                MacroAliases.ContextAlias);
 
             Expect(15, new PValue[0]);
         }
@@ -204,7 +234,8 @@ function main(xs,y)
         [Test]
         public void MacroTransport()
         {
-            Compile(@"
+            Compile(
+                @"
 macro echo(lst)
 {
     lst = macro\unpack(lst);
@@ -232,8 +263,8 @@ function main2()
 }
 ");
 
-            Expect(1+2+3+4+4);
-            ExpectNamed("main2",1+2+3+4+5+5);
+            Expect(1 + 2 + 3 + 4 + 4);
+            ExpectNamed("main2", 1 + 2 + 3 + 4 + 5 + 5);
         }
 
         [Test]
@@ -298,10 +329,10 @@ function main(x,y)
                     "a__xXx__=b"
                 }, "a", "b");
 
-            if(CompileToCil)
+            if (CompileToCil)
             {
                 var surround = target.Functions["__surround"];
-                Assert.That(surround,Is.Not.Null,"Function __surround does not exist.");
+                Assert.That(surround, Is.Not.Null, "Function __surround does not exist.");
                 Assert.That(surround.Meta[PFunction.VolatileKey].Switch,
                     Is.False,
                     string.Format("Function {0} is volatile. Reason: {1}", surround.Id,

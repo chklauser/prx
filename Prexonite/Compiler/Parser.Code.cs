@@ -1,35 +1,40 @@
-/*
- * Prexonite, a scripting engine (Scripting Language -> Bytecode -> Virtual Machine)
- *  Copyright (C) 2007  Christian "SealedSun" Klauser
- *  E-mail  sealedsun a.t gmail d.ot com
- *  Web     http://www.sealedsun.ch/
- *
- *  This program is free software; you can redistribute it and/or modify
- *  it under the terms of the GNU General Public License as published by
- *  the Free Software Foundation; either version 2 of the License, or
- *  (at your option) any later version.
- *
- *  Please contact me (sealedsun a.t gmail do.t com) if you need a different license.
- * 
- *  This program is distributed in the hope that it will be useful,
- *  but WITHOUT ANY WARRANTY; without even the implied warranty of
- *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- *  GNU General Public License for more details.
- *
- *  You should have received a copy of the GNU General Public License along
- *  with this program; if not, write to the Free Software Foundation, Inc.,
- *  51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
- */
+// Prexonite
+// 
+// Copyright (c) 2011, Christian Klauser
+// All rights reserved.
+// 
+// Redistribution and use in source and binary forms, with or without modification, 
+//  are permitted provided that the following conditions are met:
+// 
+//     Redistributions of source code must retain the above copyright notice, 
+//          this list of conditions and the following disclaimer.
+//     Redistributions in binary form must reproduce the above copyright notice, 
+//          this list of conditions and the following disclaimer in the 
+//          documentation and/or other materials provided with the distribution.
+//     The names of the contributors may be used to endorse or 
+//          promote products derived from this software without specific prior written permission.
+// 
+// THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND 
+//  ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED 
+//  WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED. 
+//  IN NO EVENT SHALL THE COPYRIGHT HOLDER OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT, 
+//  INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES 
+//  (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, 
+//  DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, 
+//  WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING 
+//  IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 using System;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.Globalization;
 using System.Linq;
+using Prexonite.Commands.Core.Operators;
 using Prexonite.Compiler.Ast;
 using Prexonite.Types;
 
 // ReSharper disable InconsistentNaming
+
 namespace Prexonite.Compiler
 {
     internal partial class Parser
@@ -119,7 +124,6 @@ namespace Prexonite.Compiler
         #region String cache
 
         [DebuggerStepThrough]
-
         internal string cache(string toCache)
 
         {
@@ -139,12 +143,14 @@ namespace Prexonite.Compiler
 
         public static bool TryParseInteger(string s, out int i)
         {
-            return Int32.TryParse(_removeSingleQuotes(s), IntegerStyle, CultureInfo.InvariantCulture, out i);
+            return Int32.TryParse(_removeSingleQuotes(s), IntegerStyle, CultureInfo.InvariantCulture,
+                out i);
         }
 
         public static bool TryParseReal(string s, out double d)
         {
-            return Double.TryParse(_removeSingleQuotes(s), RealStyle, CultureInfo.InvariantCulture, out d);
+            return Double.TryParse(_removeSingleQuotes(s), RealStyle, CultureInfo.InvariantCulture,
+                out d);
         }
 
         public static NumberStyles RealStyle
@@ -174,7 +180,7 @@ namespace Prexonite.Compiler
         {
             return
                 InterpretationIsGlobalVariable(interpretation) ||
-                InterpretationIsLocalVariable(interpretation);
+                    InterpretationIsLocalVariable(interpretation);
         }
 
         [DebuggerStepThrough]
@@ -182,7 +188,7 @@ namespace Prexonite.Compiler
         {
             return
                 interpretation == SymbolInterpretations.LocalReferenceVariable ||
-                interpretation == SymbolInterpretations.LocalObjectVariable;
+                    interpretation == SymbolInterpretations.LocalObjectVariable;
         }
 
         [DebuggerStepThrough]
@@ -190,7 +196,7 @@ namespace Prexonite.Compiler
         {
             return
                 interpretation == SymbolInterpretations.GlobalReferenceVariable ||
-                interpretation == SymbolInterpretations.GlobalObjectVariable;
+                    interpretation == SymbolInterpretations.GlobalObjectVariable;
         }
 
         [DebuggerStepThrough]
@@ -198,7 +204,7 @@ namespace Prexonite.Compiler
         {
             return
                 interpretation == SymbolInterpretations.LocalObjectVariable ||
-                interpretation == SymbolInterpretations.GlobalObjectVariable;
+                    interpretation == SymbolInterpretations.GlobalObjectVariable;
         }
 
         [DebuggerStepThrough]
@@ -249,10 +255,10 @@ namespace Prexonite.Compiler
             if (val == null)
                 throw new ArgumentNullException("val");
             var c = new Token
-            {
-                kind = kind,
-                val = val
-            };
+                {
+                    kind = kind,
+                    val = val
+                };
             _inject(c);
         }
 
@@ -293,7 +299,7 @@ namespace Prexonite.Compiler
 
             scanner.ResetPeek();
             //current might optionally be `new`
-            Token c = la;
+            var c = la;
             if (c.kind == _new)
                 c = scanner.Peek();
 
@@ -376,9 +382,9 @@ namespace Prexonite.Compiler
             var kind = target.Symbols[id].Interpretation;
             return
                 kind == SymbolInterpretations.LocalObjectVariable ||
-                kind == SymbolInterpretations.GlobalObjectVariable ||
-                kind == SymbolInterpretations.LocalReferenceVariable ||
-                kind == SymbolInterpretations.GlobalReferenceVariable;
+                    kind == SymbolInterpretations.GlobalObjectVariable ||
+                        kind == SymbolInterpretations.LocalReferenceVariable ||
+                            kind == SymbolInterpretations.GlobalReferenceVariable;
         }
 
         //id is like a function
@@ -388,9 +394,11 @@ namespace Prexonite.Compiler
             var id = la.val;
             return
                 la.kind == _id &&
-                target.Symbols.ContainsKey(id) &&
-                isLikeFunction(target.Symbols[id].Interpretation);
-        } //context
+                    target.Symbols.ContainsKey(id) &&
+                        isLikeFunction(target.Symbols[id].Interpretation);
+        }
+
+        //context
 
         //interpretation is like function
         [DebuggerStepThrough]
@@ -398,11 +406,13 @@ namespace Prexonite.Compiler
         {
             return
                 interpretation == SymbolInterpretations.Function ||
-                interpretation == SymbolInterpretations.Command ||
-                interpretation == SymbolInterpretations.LocalReferenceVariable ||
-                interpretation == SymbolInterpretations.GlobalReferenceVariable ||
-                interpretation == SymbolInterpretations.MacroCommand;
-        } //context
+                    interpretation == SymbolInterpretations.Command ||
+                        interpretation == SymbolInterpretations.LocalReferenceVariable ||
+                            interpretation == SymbolInterpretations.GlobalReferenceVariable ||
+                                interpretation == SymbolInterpretations.MacroCommand;
+        }
+
+        //context
 
         [DebuggerStepThrough]
         public bool isUnknownId()
@@ -430,7 +440,8 @@ namespace Prexonite.Compiler
             if (staticPrefix) //already marked as CLR call
                 return ObjectPType.Literal + "(\"" + StringPType.Escape(typeId) + "\")";
             else if (target.Function.ImportedNamespaces.Any(
-                importedNamespace => typeId.StartsWith(importedNamespace, StringComparison.OrdinalIgnoreCase)))
+                importedNamespace =>
+                    typeId.StartsWith(importedNamespace, StringComparison.OrdinalIgnoreCase)))
                 return ObjectPType.Literal + "(\"" + StringPType.Escape(typeId) + "\")";
             return typeId;
         }
@@ -456,7 +467,7 @@ namespace Prexonite.Compiler
             {
                 requirePar = true;
                 current = next;
-                 next = scanner.Peek();
+                next = scanner.Peek();
 
                 //Check for lambda expression without arguments
                 if (current.kind == _rpar && next.kind == _implementation)
@@ -468,7 +479,7 @@ namespace Prexonite.Compiler
                 //break if lookahead is not valid to save tokens
                 if (
                     !(next.kind == _comma || next.kind == _implementation ||
-                      (next.kind == _rpar && requirePar)))
+                        (next.kind == _rpar && requirePar)))
                     return false;
                 //Consume 1
                 current = next;
@@ -481,7 +492,7 @@ namespace Prexonite.Compiler
                 //break if lookahead is not valid to save tokens
                 if (
                     !(current.kind == _comma || current.kind == _implementation ||
-                      (current.kind == _rpar && requirePar)))
+                        (current.kind == _rpar && requirePar)))
                     return false;
                 next = scanner.Peek();
             }
@@ -526,7 +537,9 @@ namespace Prexonite.Compiler
                 }
 
             return current.kind == _implementation;
-        } //LL(*)
+        }
+
+        //LL(*)
 
         [DebuggerStepThrough]
         private bool isIndirectCall() //LL(2)
@@ -552,7 +565,8 @@ namespace Prexonite.Compiler
                  parent = parent.ParentTarget)
             {
                 func = parent.Function;
-                if (func.Variables.Contains(id) || func.Parameters.Contains(id) || parent.OuterVariables.Contains(id))
+                if (func.Variables.Contains(id) || func.Parameters.Contains(id) ||
+                    parent.OuterVariables.Contains(id))
                     return true;
             }
             return false;
@@ -573,9 +587,11 @@ namespace Prexonite.Compiler
             SmartDeclareLocal(id, id, kind, isOverrideDecl);
         }
 
-        private void SmartDeclareLocal(string logicalId, string physicalId, SymbolInterpretations kind, bool isOverrideDecl)
+        private void SmartDeclareLocal(string logicalId, string physicalId,
+            SymbolInterpretations kind, bool isOverrideDecl)
         {
-            if (!isOverrideDecl && !target.Function.Variables.Contains(physicalId) && isOuterVariable(physicalId))
+            if (!isOverrideDecl && !target.Function.Variables.Contains(physicalId) &&
+                isOuterVariable(physicalId))
             {
                 target.RequireOuterVariable(physicalId);
                 target.Declare(kind, logicalId, physicalId);
@@ -633,9 +649,9 @@ namespace Prexonite.Compiler
         private static void mark_as_let(PFunction f, string local)
         {
             f.Meta[PFunction.LetKey] = (MetaEntry)
-                                       f.Meta[PFunction.LetKey].List
-                                           .Union(new[] {(MetaEntry) local})
-                                           .ToArray();
+                f.Meta[PFunction.LetKey].List
+                    .Union(new[] {(MetaEntry) local})
+                    .ToArray();
         }
 
         private void _compileAndExecuteBuildBlock(CompilerTarget buildBlockTarget)
@@ -654,8 +670,9 @@ namespace Prexonite.Compiler
                 buildBlockTarget.Function.Meta["File"] = scanner.File;
                 buildBlockTarget.FinishTarget();
                 //Run the build block 
-                var fctx = buildBlockTarget.Function.CreateFunctionContext(ParentEngine, new PValue[] {},
-                                                                 new PVariable[] {}, true);
+                var fctx = buildBlockTarget.Function.CreateFunctionContext(ParentEngine,
+                    new PValue[] {},
+                    new PVariable[] {}, true);
                 object token = null;
                 try
                 {
@@ -665,7 +682,7 @@ namespace Prexonite.Compiler
                 }
                 finally
                 {
-                    if(token != null)
+                    if (token != null)
                         Loader.ReleaseBuildCommands(token);
                     TargetApplication._SuppressInitialization = false;
                 }
@@ -693,9 +710,10 @@ namespace Prexonite.Compiler
         {
             int argc;
             var alias = getOpAlias(insBase, detail, out argc);
-            if(alias == null)
+            if (alias == null)
             {
-                SemErr(string.Format("Unknown operator alias in assembler code: {0}.{1}", insBase, detail));
+                SemErr(string.Format("Unknown operator alias in assembler code: {0}.{1}", insBase,
+                    detail));
                 block.Add(new AstAsmInstruction(this, new Instruction(OpCode.nop)));
                 return;
             }
@@ -724,12 +742,11 @@ namespace Prexonite.Compiler
         {
             return
                 la1.kind != _string && Engine.StringsAreEqual(la1.val, insBase) &&
-                (detail == null
-                     ?
-                         (la2.kind == _dot ? la3.kind == _integer : true)
-                     :
-                         (la2.kind == _dot && la3.kind != _string && Engine.StringsAreEqual(la3.val, detail))
-                );
+                    (detail == null
+                        ? (la2.kind == _dot ? la3.kind == _integer : true)
+                        : (la2.kind == _dot && la3.kind != _string &&
+                            Engine.StringsAreEqual(la3.val, detail))
+                        );
         }
 
         [DebuggerStepThrough]
@@ -793,7 +810,9 @@ namespace Prexonite.Compiler
         }
 
         private readonly SymbolTable<OpCode> _instructionNameTable = new SymbolTable<OpCode>(60);
-        private readonly SymbolTable<Tuple<string, int>> _opAliasTable = new SymbolTable<Tuple<string, int>>(32);
+
+        private readonly SymbolTable<Tuple<string, int>> _opAliasTable =
+            new SymbolTable<Tuple<string, int>>(32);
 
         [DebuggerStepThrough]
         private void _createTableOfInstructions()
@@ -826,23 +845,23 @@ namespace Prexonite.Compiler
 
             //Add operator aliases
             var ops = _opAliasTable;
-            ops.Add("neg",Tuple.Create(Commands.Core.Operators.UnaryNegation.DefaultAlias, 1));
-            ops.Add("not",Tuple.Create(Commands.Core.Operators.LogicalNot.DefaultAlias, 1));
-            ops.Add("add",Tuple.Create(Commands.Core.Operators.Addition.DefaultAlias,2));
-            ops.Add("sub",Tuple.Create(Commands.Core.Operators.Subtraction.DefaultAlias,2));
-            ops.Add("mul",Tuple.Create(Commands.Core.Operators.Multiplication.DefaultAlias,2));
-            ops.Add("div",Tuple.Create(Commands.Core.Operators.Division.DefaultAlias,2));
-            ops.Add("mod",Tuple.Create(Commands.Core.Operators.Modulus.DefaultAlias,2));
-            ops.Add("pow",Tuple.Create(Commands.Core.Operators.Power.DefaultAlias,2));
-            ops.Add("ceq",Tuple.Create(Commands.Core.Operators.Equality.DefaultAlias,2));
-            ops.Add("cne",Tuple.Create(Commands.Core.Operators.Inequality.DefaultAlias,2));
-            ops.Add("clt",Tuple.Create(Commands.Core.Operators.LessThan.DefaultAlias,2));
-            ops.Add("cle",Tuple.Create(Commands.Core.Operators.LessThanOrEqual.DefaultAlias,2));
-            ops.Add("cgt",Tuple.Create(Commands.Core.Operators.GreaterThan.DefaultAlias,2));
-            ops.Add("cge",Tuple.Create(Commands.Core.Operators.GreaterThanOrEqual.DefaultAlias,2));
-            ops.Add("or" ,Tuple.Create(Commands.Core.Operators.BitwiseOr.DefaultAlias,2));
-            ops.Add("and",Tuple.Create(Commands.Core.Operators.BitwiseAnd.DefaultAlias,2));
-            ops.Add("xor",Tuple.Create(Commands.Core.Operators.ExclusiveOr.DefaultAlias,2));
+            ops.Add("neg", Tuple.Create(UnaryNegation.DefaultAlias, 1));
+            ops.Add("not", Tuple.Create(LogicalNot.DefaultAlias, 1));
+            ops.Add("add", Tuple.Create(Addition.DefaultAlias, 2));
+            ops.Add("sub", Tuple.Create(Subtraction.DefaultAlias, 2));
+            ops.Add("mul", Tuple.Create(Multiplication.DefaultAlias, 2));
+            ops.Add("div", Tuple.Create(Division.DefaultAlias, 2));
+            ops.Add("mod", Tuple.Create(Modulus.DefaultAlias, 2));
+            ops.Add("pow", Tuple.Create(Power.DefaultAlias, 2));
+            ops.Add("ceq", Tuple.Create(Equality.DefaultAlias, 2));
+            ops.Add("cne", Tuple.Create(Inequality.DefaultAlias, 2));
+            ops.Add("clt", Tuple.Create(LessThan.DefaultAlias, 2));
+            ops.Add("cle", Tuple.Create(LessThanOrEqual.DefaultAlias, 2));
+            ops.Add("cgt", Tuple.Create(GreaterThan.DefaultAlias, 2));
+            ops.Add("cge", Tuple.Create(GreaterThanOrEqual.DefaultAlias, 2));
+            ops.Add("or", Tuple.Create(BitwiseOr.DefaultAlias, 2));
+            ops.Add("and", Tuple.Create(BitwiseAnd.DefaultAlias, 2));
+            ops.Add("xor", Tuple.Create(ExclusiveOr.DefaultAlias, 2));
         }
 
         //[DebuggerStepThrough]
@@ -850,7 +869,7 @@ namespace Prexonite.Compiler
         {
             var combined = insBase + (detail == null ? "" : "." + detail);
             var entry = _opAliasTable.GetDefault(combined, null);
-            if(entry == null)
+            if (entry == null)
             {
                 argc = -1;
                 return null;
@@ -921,7 +940,7 @@ namespace Prexonite.Compiler
             };
 
         private readonly string[,] asmOpAliasGroup =
-             {
+            {
                 {"neg", null},
                 {"not", null},
                 {"add", null},
@@ -1000,35 +1019,41 @@ namespace Prexonite.Compiler
 
         #endregion
 
-        private void _fallbackObjectCreation(Parser parser, IAstType type, out IAstExpression expr, out ArgumentsProxy args)
+        private void _fallbackObjectCreation(Parser parser, IAstType type, out IAstExpression expr,
+            out ArgumentsProxy args)
         {
             var typeExpr = type as AstDynamicTypeExpression;
             SymbolEntry fallbackSymbol;
-            if (//is a type expression we understand (Parser currently only generates dynamic type expressions)
+            if (
+                //is a type expression we understand (Parser currently only generates dynamic type expressions)
                 //  constant type expressions are recognized during optimization
-                typeExpr != null 
-                //happens in case of parse failure
-                && typeExpr.TypeId != null
-                //there is no such thing as a parametrized struct
-                && typeExpr.Arguments.Count == 0 
-                //built-in types take precedence
-                && !ParentEngine.PTypeRegistry.Contains(typeExpr.TypeId) 
-                //in case neither the built-in type nor the struct constructor exists, 
-                //  stay with built-in types for predictibility
-                && target.Symbols.TryGetValue(Loader.ObjectCreationFallbackPrefix + typeExpr.TypeId, out fallbackSymbol))
+                typeExpr != null
+                    //happens in case of parse failure
+                    && typeExpr.TypeId != null
+                        //there is no such thing as a parametrized struct
+                        && typeExpr.Arguments.Count == 0
+                            //built-in types take precedence
+                            && !ParentEngine.PTypeRegistry.Contains(typeExpr.TypeId)
+                                //in case neither the built-in type nor the struct constructor exists, 
+                                //  stay with built-in types for predictibility
+                                &&
+                                target.Symbols.TryGetValue(
+                                    Loader.ObjectCreationFallbackPrefix + typeExpr.TypeId,
+                                    out fallbackSymbol))
             {
-                if(isOuterVariable(fallbackSymbol.Id))
+                if (isOuterVariable(fallbackSymbol.Id))
                     target.RequireOuterVariable(fallbackSymbol.Id);
-                var call = new AstGetSetSymbol(parser, PCall.Get, fallbackSymbol.Id, fallbackSymbol.Interpretation);
+                var call = new AstGetSetSymbol(parser, PCall.Get, fallbackSymbol.Id,
+                    fallbackSymbol.Interpretation);
                 expr = call;
                 args = call.Arguments;
             }
-            else if(type != null)
+            else if (type != null)
             {
                 var creation = new AstObjectCreation(parser, type);
                 expr = creation;
                 args = creation.Arguments;
-            } 
+            }
             else
             {
                 SemErr("Failed to transform object creation expression.");
@@ -1038,4 +1063,5 @@ namespace Prexonite.Compiler
         }
     }
 }
+
 // ReSharper restore InconsistentNaming

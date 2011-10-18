@@ -1,25 +1,28 @@
-// /*
-//  * Prexonite, a scripting engine (Scripting Language -> Bytecode -> Virtual Machine)
-//  *  Copyright (C) 2007  Christian "SealedSun" Klauser
-//  *  E-mail  sealedsun a.t gmail d.ot com
-//  *  Web     http://www.sealedsun.ch/
-//  *
-//  *  This program is free software; you can redistribute it and/or modify
-//  *  it under the terms of the GNU General Public License as published by
-//  *  the Free Software Foundation; either version 2 of the License, or
-//  *  (at your option) any later version.
-//  *
-//  *  Please contact me (sealedsun a.t gmail do.t com) if you need a different license.
-//  * 
-//  *  This program is distributed in the hope that it will be useful,
-//  *  but WITHOUT ANY WARRANTY; without even the implied warranty of
-//  *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-//  *  GNU General Public License for more details.
-//  *
-//  *  You should have received a copy of the GNU General Public License along
-//  *  with this program; if not, write to the Free Software Foundation, Inc.,
-//  *  51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
-//  */
+// Prexonite
+// 
+// Copyright (c) 2011, Christian Klauser
+// All rights reserved.
+// 
+// Redistribution and use in source and binary forms, with or without modification, 
+//  are permitted provided that the following conditions are met:
+// 
+//     Redistributions of source code must retain the above copyright notice, 
+//          this list of conditions and the following disclaimer.
+//     Redistributions in binary form must reproduce the above copyright notice, 
+//          this list of conditions and the following disclaimer in the 
+//          documentation and/or other materials provided with the distribution.
+//     The names of the contributors may be used to endorse or 
+//          promote products derived from this software without specific prior written permission.
+// 
+// THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND 
+//  ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED 
+//  WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED. 
+//  IN NO EVENT SHALL THE COPYRIGHT HOLDER OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT, 
+//  INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES 
+//  (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, 
+//  DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, 
+//  WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING 
+//  IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #region Namespace Imports
 
@@ -28,7 +31,6 @@ using System.Collections.Generic;
 using System.Diagnostics;
 using System.Reflection;
 using System.Runtime.Serialization;
-using System.Text;
 using Prexonite.Commands;
 using Prexonite.Commands.Core;
 using Prexonite.Types;
@@ -69,7 +71,8 @@ namespace Prexonite
             if (args == null)
                 args = new PValue[] {};
 
-            if (!(suppressInitialization || implementation.ParentApplication._SuppressInitialization))
+            if (
+                !(suppressInitialization || implementation.ParentApplication._SuppressInitialization))
                 implementation.ParentApplication.EnsureInitialization(parentEngine, implementation);
 
             _parentEngine = parentEngine;
@@ -85,7 +88,7 @@ namespace Prexonite
                     throw new ArgumentException
                         (
                         "The function " + _implementation.Id + " requires " +
-                        sharedNames.Length + " variables to be shared.");
+                            sharedNames.Length + " variables to be shared.");
 
 
                 for (var i = 0; i < sharedNames.Length; i++)
@@ -94,7 +97,9 @@ namespace Prexonite
                         throw new ArgumentNullException
                             (
                             "sharedVariables",
-                            String.Format("The element at index {0} passed in sharedVariables is null for function {1}.", i, implementation));
+                            String.Format(
+                                "The element at index {0} passed in sharedVariables is null for function {1}.",
+                                i, implementation));
 
                     if (_localVariables.ContainsKey(sharedNames[i]))
                         continue; //Arguments are redeclarations, that is not shared 
@@ -133,9 +138,9 @@ namespace Prexonite
             if (_implementation.Variables.Contains(argVId))
             {
                 var argsV = new PVariable
-                {
-                    Value = _parentEngine.CreateNativePValue(args)
-                };
+                    {
+                        Value = _parentEngine.CreateNativePValue(args)
+                    };
                 _localVariables.Add(argVId, argsV);
             }
 
@@ -384,7 +389,7 @@ namespace Prexonite
             throw new PrexoniteInvalidStackException
                 (
                 "Code expects " + argc +
-                " values on the stack but finds " + _stack.Count);
+                    " values on the stack but finds " + _stack.Count);
         }
 
         [DebuggerNonUserCode]
@@ -413,9 +418,9 @@ namespace Prexonite
         }
 
         /// <summary>
-        /// Same as <see cref="PerformNextCycle"/> but guarantees to only execute a single instruction.
+        ///     Same as <see cref = "PerformNextCycle" /> but guarantees to only execute a single instruction.
         /// </summary>
-        /// <param name="lastContext">Stack context of a called function that just returned. Must be set if the last step called a function/pushed a new context onto the VM stack. Is ignored otherwise.</param>
+        /// <param name = "lastContext">Stack context of a called function that just returned. Must be set if the last step called a function/pushed a new context onto the VM stack. Is ignored otherwise.</param>
         /// <returns></returns>
         public bool Step(StackContext lastContext)
         {
@@ -423,13 +428,13 @@ namespace Prexonite
         }
 
         /// <summary>
-        /// <see cref="_UseVirtualMachineStackInstead"/>
+        ///     <see cref = "_UseVirtualMachineStackInstead" />
         /// </summary>
         private bool _useVirtualStackInstead;
 
         /// <summary>
-        /// When the function context calls into managed code, that code can push itself onto the virtual machine stack and then use this 
-        /// method to instruct the calling function context to use the result of the virtual machine stack successor instead. (The return value of the managed code is discarded)
+        ///     When the function context calls into managed code, that code can push itself onto the virtual machine stack and then use this 
+        ///     method to instruct the calling function context to use the result of the virtual machine stack successor instead. (The return value of the managed code is discarded)
         /// </summary>
         internal void _UseVirtualMachineStackInstead()
         {
@@ -438,10 +443,10 @@ namespace Prexonite
         }
 
         /// <summary>
-        /// Implementation of <see cref="PerformNextCycle"/>.
+        ///     Implementation of <see cref = "PerformNextCycle" />.
         /// </summary>
-        /// <param name="lastContext">Stack context of a called function that just returned. Must be set if the last step called a function/pushed a new context onto the VM stack. Is ignored otherwise.</param>
-        /// <param name="needToReturn">Indicates whether to return after executing one instruction, even if more instructions could be combined into the cycle.</param>
+        /// <param name = "lastContext">Stack context of a called function that just returned. Must be set if the last step called a function/pushed a new context onto the VM stack. Is ignored otherwise.</param>
+        /// <param name = "needToReturn">Indicates whether to return after executing one instruction, even if more instructions could be combined into the cycle.</param>
         /// <returns>True if the context is not done yet, i.e., is to be kept on the VM stack; False if it is done, has produced a return value and should be removed from the VM stack.</returns>
         private bool _performNextCylce(StackContext lastContext, bool needToReturn)
         {
@@ -535,9 +540,9 @@ namespace Prexonite
                                 (
                                 string.Format
                                     (
-                                    "Cannot load reference to local variable {0} in function {1}.",
-                                    id,
-                                    _implementation.Id));
+                                        "Cannot load reference to local variable {0} in function {1}.",
+                                        id,
+                                        _implementation.Id));
                         break;
                     case OpCode.ldr_loci:
                         Push(CreateNativePValue(_localVariableArray[argc]));
@@ -550,9 +555,9 @@ namespace Prexonite
                                 (
                                 string.Format
                                     (
-                                    "Cannot load reference to global variable {0} in application {1}.",
-                                    id,
-                                    ParentApplication.Id));
+                                        "Cannot load reference to global variable {0} in application {1}.",
+                                        id,
+                                        ParentApplication.Id));
                         break;
                     case OpCode.ldr_func:
                         if (ParentApplication.Functions.Contains(id))
@@ -562,9 +567,9 @@ namespace Prexonite
                                 (
                                 string.Format
                                     (
-                                    "Cannot load reference to function {0} in application {1}.",
-                                    id,
-                                    ParentApplication.Id));
+                                        "Cannot load reference to function {0} in application {1}.",
+                                        id,
+                                        ParentApplication.Id));
                         break;
                     case OpCode.ldr_cmd:
                         if (ParentEngine.Commands.Contains(id))
@@ -574,8 +579,8 @@ namespace Prexonite
                                 (
                                 string.Format
                                     (
-                                    "Cannot load reference to command {0}.",
-                                    id));
+                                        "Cannot load reference to command {0}.",
+                                        id));
                         break;
                     case OpCode.ldr_app:
                         Push(CreateNativePValue(ParentApplication));
@@ -607,7 +612,7 @@ namespace Prexonite
                             throw new PrexoniteException
                                 (
                                 "The local variable " + id + " in function " + _implementation.Id +
-                                " does not exist.");
+                                    " does not exist.");
 #if Verbose
                     val = pvar.Value;
                     Console.Write("=" + _toDebug(val));
@@ -622,7 +627,7 @@ namespace Prexonite
                             throw new PrexoniteException
                                 (
                                 "The local variable " + id + " in function " + _implementation.Id +
-                                " does not exist.");
+                                    " does not exist.");
 
                         pvar.Value = Pop();
                         break;
@@ -642,8 +647,8 @@ namespace Prexonite
                         //LOAD GLOBAL VARIABLE
                     case OpCode.ldglob:
                         var app = ParentApplication;
-                        
-                        if (!app.Variables.TryGetValue(id,out pvar))
+
+                        if (!app.Variables.TryGetValue(id, out pvar))
                             throw _globalVariableDoesNotExistException(id);
                         app.EnsureInitialization(ParentEngine, pvar);
 #if Verbose
@@ -727,20 +732,21 @@ namespace Prexonite
                                 corctx = routinesa.CreateStackContext(this, argv);
                             else
                                 corctx = (StackContext)
-                                         routine.DynamicCall
-                                             (
-                                             this,
-                                             new[]
-                                             {
-                                                 PType.Object.CreatePValue(ParentEngine),
-                                                 PType.Object.CreatePValue(argv)
-                                             },
-                                             PCall.Get,
-                                             "CreateStackContext").Value;
+                                    routine.DynamicCall
+                                        (
+                                            this,
+                                            new[]
+                                                {
+                                                    PType.Object.CreatePValue(ParentEngine),
+                                                    PType.Object.CreatePValue(argv)
+                                                },
+                                            PCall.Get,
+                                            "CreateStackContext").Value;
 
                             Push
                                 (
-                                PType.Object[typeof (Coroutine)].CreatePValue(new Coroutine(corctx)));
+                                    PType.Object[typeof (Coroutine)].CreatePValue(
+                                        new Coroutine(corctx)));
                         }
                         break;
 
@@ -766,7 +772,7 @@ namespace Prexonite
 
                     case OpCode.incglob:
                         if (!ParentApplication.Variables.TryGetValue(id, out pvar))
-                            throw _globalVariableDoesNotExistException(id); 
+                            throw _globalVariableDoesNotExistException(id);
                         pvar.Value = pvar.Value.Increment(this);
 #if Verbose
                     Console.Write("=" + _toDebug(pvar.Value));
@@ -786,7 +792,7 @@ namespace Prexonite
 
                     case OpCode.decglob:
                         if (!ParentApplication.Variables.TryGetValue(id, out pvar))
-                            throw _globalVariableDoesNotExistException(id); 
+                            throw _globalVariableDoesNotExistException(id);
                         pvar.Value = pvar.Value.Decrement(this);
 #if Verbose
                     Console.Write("=" + _toDebug(pvar.Value));
@@ -964,8 +970,9 @@ namespace Prexonite
                     case OpCode.indloc:
                         _fillArgs(argc, out argv);
                         pvar = _localVariables[id];
-                        if(pvar == null)
-                            throw new PrexoniteException("The local variable " + id + " resolved to null in function " + Implementation.Id);
+                        if (pvar == null)
+                            throw new PrexoniteException("The local variable " + id +
+                                " resolved to null in function " + Implementation.Id);
                         left = _localVariables[id].Value;
 
 #if Verbose
@@ -975,7 +982,7 @@ namespace Prexonite
                     Console.WriteLine(")");
 #endif
 
-//Perform indirect call
+                        //Perform indirect call
                         doIndloc:
                         {
                             var stackAware = left.Value as IStackAware;
@@ -1005,7 +1012,7 @@ namespace Prexonite
                         _fillArgs(argc, out argv);
                         app = ParentApplication;
                         if (!ParentApplication.Variables.TryGetValue(id, out pvar))
-                            throw _globalVariableDoesNotExistException(id); 
+                            throw _globalVariableDoesNotExistException(id);
                         app.EnsureInitialization(ParentEngine, pvar);
                         left = pvar.Value;
 
@@ -1016,7 +1023,7 @@ namespace Prexonite
                     Console.WriteLine(")");
 #endif
 
-//Perform indirect call
+                        //Perform indirect call
                         goto doIndloc;
 
                     case OpCode.indarg:
@@ -1029,9 +1036,9 @@ namespace Prexonite
                         left = Pop();
 
                         var stack = _parentEngine.Stack;
-// ReSharper disable AssignNullToNotNullAttribute
+                        // ReSharper disable AssignNullToNotNullAttribute
                         stack.Remove(stack.FindLast(this));
-// ReSharper restore AssignNullToNotNullAttribute
+                        // ReSharper restore AssignNullToNotNullAttribute
 
                         stack.AddLast(Call.CreateStackContext(this, left, argv));
                         return false;
@@ -1045,7 +1052,7 @@ namespace Prexonite
                         if (ParentEngine.CacheFunctions)
                         {
                             func = (ins.GenericArgument as PFunction) ??
-                                   ParentApplication.Functions[id];
+                                ParentApplication.Functions[id];
                             ins.GenericArgument = func;
                         }
                         else
@@ -1055,7 +1062,7 @@ namespace Prexonite
                         if (func == null)
                             throw PrexoniteRuntimeException.CreateRuntimeException
                                 (
-                                this, "No function with the physical name " + id + " exists.");
+                                    this, "No function with the physical name " + id + " exists.");
 #if NoCil
                         FunctionContext fctx =
                             new FunctionContext(
@@ -1215,19 +1222,19 @@ namespace Prexonite
                             prexc =
                                 PrexoniteRuntimeException.CreateRuntimeException
                                     (
-                                    this, (string) left.Value);
+                                        this, (string) left.Value);
                         else if (t is ObjectPType && left.Value is Exception)
                             prexc =
                                 PrexoniteRuntimeException.CreateRuntimeException
                                     (
-                                    this,
-                                    ((Exception) left.Value).Message,
-                                    (Exception) left.Value);
+                                        this,
+                                        ((Exception) left.Value).Message,
+                                        (Exception) left.Value);
                         else
                             prexc =
                                 PrexoniteRuntimeException.CreateRuntimeException
                                     (
-                                    this, left.CallToString(this));
+                                        this, left.CallToString(this));
 #if Verbose
                     Console.WriteLine();
 #endif
@@ -1242,7 +1249,7 @@ namespace Prexonite
                         break;
 
                     case OpCode.leave:
-                        if(_performingCleanup)
+                        if (_performingCleanup)
                         {
                             if(_TryFindCleanupSection())
                             {
@@ -1257,7 +1264,8 @@ namespace Prexonite
                         }
                         else if(_isHandlingException.Count == 0)
                         {
-                            throw new PrexoniteException("Unexpected leave instruction. This happens when jumping to an instruction in a try block from the outside.");
+                            throw new PrexoniteException(
+                                "Unexpected leave instruction. This happens when jumping to an instruction in a try block from the outside.");
                         }
                         else if (!_isHandlingException.Pop())
                         {
@@ -1352,10 +1360,10 @@ namespace Prexonite
         private readonly Stack<bool> _isHandlingException = new Stack<bool>();
 
         /// <summary>
-        /// Indicates whether the function context is currently handling an exception or not.
+        ///     Indicates whether the function context is currently handling an exception or not.
         /// </summary>
         /// <value>True, if the function is currently handling an exception.<br />
-        /// False, if the function runs normally.</value>
+        ///     False, if the function runs normally.</value>
         public bool IsHandlingException
         {
             get { return _isHandlingException.Peek(); }

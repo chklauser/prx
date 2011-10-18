@@ -1,15 +1,39 @@
-﻿using System;
+﻿// Prexonite
+// 
+// Copyright (c) 2011, Christian Klauser
+// All rights reserved.
+// 
+// Redistribution and use in source and binary forms, with or without modification, 
+//  are permitted provided that the following conditions are met:
+// 
+//     Redistributions of source code must retain the above copyright notice, 
+//          this list of conditions and the following disclaimer.
+//     Redistributions in binary form must reproduce the above copyright notice, 
+//          this list of conditions and the following disclaimer in the 
+//          documentation and/or other materials provided with the distribution.
+//     The names of the contributors may be used to endorse or 
+//          promote products derived from this software without specific prior written permission.
+// 
+// THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND 
+//  ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED 
+//  WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED. 
+//  IN NO EVENT SHALL THE COPYRIGHT HOLDER OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT, 
+//  INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES 
+//  (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, 
+//  DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, 
+//  WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING 
+//  IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+
+using System;
 using System.Collections.Generic;
 using System.Diagnostics;
-using System.Linq;
 using System.Runtime.Serialization;
-using System.Text;
 using Prexonite.Types;
 
 namespace Prexonite.Compiler.Ast
 {
     /// <summary>
-    /// AST node that represents a partial application placeholder ('?'). Optionally has an index assigned (e.g., '?5')
+    ///     AST node that represents a partial application placeholder ('?'). Optionally has an index assigned (e.g., '?5')
     /// </summary>
     public class AstPlaceholder : AstGetSet
     {
@@ -18,15 +42,16 @@ namespace Prexonite.Compiler.Ast
         private int? _index;
 
         /// <summary>
-        /// The explicit argument index, if one is set. 0-based.
+        ///     The explicit argument index, if one is set. 0-based.
         /// </summary>
         public int? Index
         {
             get { return _index; }
             set
             {
-                if(value.HasValue && value.Value < 0)
-                    throw new ArgumentOutOfRangeException("value","A placeholder index cannot be negtive");
+                if (value.HasValue && value.Value < 0)
+                    throw new ArgumentOutOfRangeException("value",
+                        "A placeholder index cannot be negtive");
                 _index = value;
             }
         }
@@ -35,12 +60,13 @@ namespace Prexonite.Compiler.Ast
         {
         }
 
-        public AstPlaceholder(string file, int line, int column, int? index) : base(file, line, column, PCall.Get)
+        public AstPlaceholder(string file, int line, int column, int? index)
+            : base(file, line, column, PCall.Get)
         {
             Index = index;
         }
 
-        internal AstPlaceholder(Parser p, int? index = null) : base(p,PCall.Get)
+        internal AstPlaceholder(Parser p, int? index = null) : base(p, PCall.Get)
         {
             Index = index;
         }
@@ -55,8 +81,10 @@ namespace Prexonite.Compiler.Ast
         private void _throwSyntaxNotSupported()
         {
             throw new PartialApplicationSyntaxNotSupportedException(
-                string.Format("This syntax does not support placeholders. (Position {0}:{1} col {2})", File, Line,
-                              Column));
+                string.Format(
+                    "This syntax does not support placeholders. (Position {0}:{1} col {2})", File,
+                    Line,
+                    Column));
         }
 
         protected override void EmitSetCode(CompilerTarget target)
@@ -84,7 +112,7 @@ namespace Prexonite.Compiler.Ast
             {
                 if (placeholder.Index.HasValue)
                 {
-                    if(placeholder.Index.Value > 127)
+                    if (placeholder.Index.Value > 127)
                     {
                         throw new PrexoniteException(
                             string.Format(
@@ -102,7 +130,8 @@ namespace Prexonite.Compiler.Ast
                     {
                         assigned[placeholder.Index.Value] = placeholder;
                     }
-                    Debug.Assert(ReferenceEquals(assigned[placeholder.Index.Value], placeholder), "placeholder was not inserted at the right spot.");
+                    Debug.Assert(ReferenceEquals(assigned[placeholder.Index.Value], placeholder),
+                        "placeholder was not inserted at the right spot.");
                 }
                 else
                 {
@@ -122,11 +151,11 @@ namespace Prexonite.Compiler.Ast
                 //  instead we just assign the index it would occupy
                 placeholder.Index = index++;
 
-                if(index > MaxPlaceholderIndex)
+                if (index > MaxPlaceholderIndex)
                     throw new PrexoniteException(
-                            string.Format(
-                                "The placeholder (at {0}) would be assigned an index that exceeds the maxmimum mappable index.",
-                                placeholder.GetSourcePositionString()));
+                        string.Format(
+                            "The placeholder (at {0}) would be assigned an index that exceeds the maxmimum mappable index.",
+                            placeholder.GetSourcePositionString()));
             }
         }
 
@@ -137,13 +166,11 @@ namespace Prexonite.Compiler.Ast
             else
                 return "?";
         }
-
     }
 
     [Serializable]
     public class PartialApplicationSyntaxNotSupportedException : PrexoniteException
     {
-
         public PartialApplicationSyntaxNotSupportedException()
         {
         }
@@ -152,7 +179,8 @@ namespace Prexonite.Compiler.Ast
         {
         }
 
-        public PartialApplicationSyntaxNotSupportedException(string message, Exception inner) : base(message, inner)
+        public PartialApplicationSyntaxNotSupportedException(string message, Exception inner)
+            : base(message, inner)
         {
         }
 

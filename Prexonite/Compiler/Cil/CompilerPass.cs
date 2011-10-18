@@ -1,25 +1,28 @@
-// /*
-//  * Prexonite, a scripting engine (Scripting Language -> Bytecode -> Virtual Machine)
-//  *  Copyright (C) 2007  Christian "SealedSun" Klauser
-//  *  E-mail  sealedsun a.t gmail d.ot com
-//  *  Web     http://www.sealedsun.ch/
-//  *
-//  *  This program is free software; you can redistribute it and/or modify
-//  *  it under the terms of the GNU General Public License as published by
-//  *  the Free Software Foundation; either version 2 of the License, or
-//  *  (at your option) any later version.
-//  *
-//  *  Please contact me (sealedsun a.t gmail do.t com) if you need a different license.
-//  * 
-//  *  This program is distributed in the hope that it will be useful,
-//  *  but WITHOUT ANY WARRANTY; without even the implied warranty of
-//  *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-//  *  GNU General Public License for more details.
-//  *
-//  *  You should have received a copy of the GNU General Public License along
-//  *  with this program; if not, write to the Free Software Foundation, Inc.,
-//  *  51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
-//  */
+// Prexonite
+// 
+// Copyright (c) 2011, Christian Klauser
+// All rights reserved.
+// 
+// Redistribution and use in source and binary forms, with or without modification, 
+//  are permitted provided that the following conditions are met:
+// 
+//     Redistributions of source code must retain the above copyright notice, 
+//          this list of conditions and the following disclaimer.
+//     Redistributions in binary form must reproduce the above copyright notice, 
+//          this list of conditions and the following disclaimer in the 
+//          documentation and/or other materials provided with the distribution.
+//     The names of the contributors may be used to endorse or 
+//          promote products derived from this software without specific prior written permission.
+// 
+// THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND 
+//  ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED 
+//  WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED. 
+//  IN NO EVENT SHALL THE COPYRIGHT HOLDER OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT, 
+//  INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES 
+//  (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, 
+//  DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, 
+//  WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING 
+//  IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #region Namespace Imports
 
@@ -98,8 +101,10 @@ namespace Prexonite.Compiler.Cil
                 var sequenceName = _createNextTypeName(app != null ? app.Id : null);
                 var asmName = new AssemblyName(sequenceName);
                 _assemblyBuilder =
-                    AppDomain.CurrentDomain.DefineDynamicAssembly(asmName, AssemblyBuilderAccess.RunAndSave);
-                _moduleBuilder = _assemblyBuilder.DefineDynamicModule(asmName.Name, asmName.Name + ".dll");
+                    AppDomain.CurrentDomain.DefineDynamicAssembly(asmName,
+                        AssemblyBuilderAccess.RunAndSave);
+                _moduleBuilder = _assemblyBuilder.DefineDynamicModule(asmName.Name,
+                    asmName.Name + ".dll");
                 _typeBuilder = _moduleBuilder.DefineType(sequenceName);
             }
         }
@@ -121,13 +126,13 @@ namespace Prexonite.Compiler.Cil
             if (MakeAvailableForLinking)
             {
                 //Create method stub
-                
+
                 var dm = TargetType.DefineMethod
                     (
-                    id,
-                    MethodAttributes.Static | MethodAttributes.Public,
-                    typeof (void),
-                    parameterTypes);
+                        id,
+                        MethodAttributes.Static | MethodAttributes.Public,
+                        typeof (void),
+                        parameterTypes);
                 dm.DefineParameter(1, ParameterAttributes.In, "source");
                 dm.DefineParameter(2, ParameterAttributes.In, "sctx");
                 dm.DefineParameter(3, ParameterAttributes.In, "args");
@@ -140,7 +145,8 @@ namespace Prexonite.Compiler.Cil
                 //Create function field
                 var fb =
                     TargetType.DefineField
-                        (_mkFieldName(id), typeof (PFunction), FieldAttributes.Public | FieldAttributes.Static);
+                        (_mkFieldName(id), typeof (PFunction),
+                            FieldAttributes.Public | FieldAttributes.Static);
                 FunctionFields.Add(id, fb);
 
                 return dm;
@@ -182,7 +188,8 @@ namespace Prexonite.Compiler.Cil
             }
         }
 
-        private readonly SymbolTable<MethodInfo> _implementationTable = new SymbolTable<MethodInfo>();
+        private readonly SymbolTable<MethodInfo> _implementationTable =
+            new SymbolTable<MethodInfo>();
 
         public SymbolTable<MethodInfo> Implementations
         {
@@ -196,7 +203,8 @@ namespace Prexonite.Compiler.Cil
                 throw new ArgumentNullException("id");
             MethodInfo m;
             if (!_implementationTable.TryGetValue(id, out m))
-                throw new PrexoniteException("No implementation stub for a function named " + id + " exists.");
+                throw new PrexoniteException("No implementation stub for a function named " + id +
+                    " exists.");
 
             return GetIlGenerator(m);
         }
@@ -211,8 +219,9 @@ namespace Prexonite.Compiler.Cil
                 return mb.GetILGenerator();
             throw new PrexoniteException
                 (
-                "CIL Implementation " + m.Name + " is neither a dynamic method nor a method builder but a " +
-                m.GetType());
+                "CIL Implementation " + m.Name +
+                    " is neither a dynamic method nor a method builder but a " +
+                        m.GetType());
         }
 
         public bool MakeAvailableForLinking
@@ -231,11 +240,16 @@ namespace Prexonite.Compiler.Cil
         }
 
         public CompilerPass(Application app, FunctionLinking linking)
-            : this(app, (linking & FunctionLinking.AvailableForLinking) == FunctionLinking.AvailableForLinking)
+            : this(
+                app,
+                (linking & FunctionLinking.AvailableForLinking) ==
+                    FunctionLinking.AvailableForLinking)
         {
         }
 
-        private readonly Dictionary<MethodInfo, CilFunction> _delegateCache = new Dictionary<MethodInfo, CilFunction>();
+        private readonly Dictionary<MethodInfo, CilFunction> _delegateCache =
+            new Dictionary<MethodInfo, CilFunction>();
+
         private Type _cachedTypeReference;
 
         public CilFunction GetDelegate(string id)
@@ -244,7 +258,8 @@ namespace Prexonite.Compiler.Cil
                 throw new ArgumentNullException("id");
             MethodInfo m;
             if (!_implementationTable.TryGetValue(id, out m))
-                throw new PrexoniteException("No implementation for a function named " + id + " exists.");
+                throw new PrexoniteException("No implementation for a function named " + id +
+                    " exists.");
 
             return GetDelegate(m);
         }
@@ -259,12 +274,12 @@ namespace Prexonite.Compiler.Cil
                 return _delegateCache[m] = (CilFunction) dm.CreateDelegate(typeof (CilFunction));
             return
                 _delegateCache[m] =
-                (CilFunction)
-                Delegate.CreateDelegate
-                    (
-                    typeof (CilFunction),
-                    (_getRuntimeType()).GetMethod(m.Name),
-                    true);
+                    (CilFunction)
+                        Delegate.CreateDelegate
+                            (
+                                typeof (CilFunction),
+                                (_getRuntimeType()).GetMethod(m.Name),
+                                true);
         }
 
         private Type _getRuntimeType()

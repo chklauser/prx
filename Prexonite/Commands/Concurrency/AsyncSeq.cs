@@ -1,10 +1,34 @@
+// Prexonite
+// 
+// Copyright (c) 2011, Christian Klauser
+// All rights reserved.
+// 
+// Redistribution and use in source and binary forms, with or without modification, 
+//  are permitted provided that the following conditions are met:
+// 
+//     Redistributions of source code must retain the above copyright notice, 
+//          this list of conditions and the following disclaimer.
+//     Redistributions in binary form must reproduce the above copyright notice, 
+//          this list of conditions and the following disclaimer in the 
+//          documentation and/or other materials provided with the distribution.
+//     The names of the contributors may be used to endorse or 
+//          promote products derived from this software without specific prior written permission.
+// 
+// THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND 
+//  ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED 
+//  WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED. 
+//  IN NO EVENT SHALL THE COPYRIGHT HOLDER OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT, 
+//  INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES 
+//  (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, 
+//  DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, 
+//  WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING 
+//  IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+
 using System;
 using System.Collections;
 using System.Collections.Generic;
-using System.Linq;
-using System.Text;
+using System.Diagnostics.CodeAnalysis;
 using Prexonite.Commands.List;
-using Prexonite.Compiler.Ast;
 using Prexonite.Compiler.Cil;
 using Prexonite.Concurrency;
 using Prexonite.Types;
@@ -40,13 +64,16 @@ namespace Prexonite.Commands.Concurrency
 
         #region Overrides of CoroutineCommand
 
-        protected override IEnumerable<PValue> CoroutineRun(ContextCarrier sctxCarrier, PValue[] args)
+        protected override IEnumerable<PValue> CoroutineRun(ContextCarrier sctxCarrier,
+            PValue[] args)
         {
             return CoroutineRunStatically(sctxCarrier, args);
         }
 
-        [System.Diagnostics.CodeAnalysis.SuppressMessage("Microsoft.Naming", "CA1704:IdentifiersShouldBeSpelledCorrectly", MessageId = "Coroutine")]
-        protected static IEnumerable<PValue> CoroutineRunStatically(ContextCarrier sctxCarrier, PValue[] args)
+        [SuppressMessage("Microsoft.Naming", "CA1704:IdentifiersShouldBeSpelledCorrectly",
+            MessageId = "Coroutine")]
+        protected static IEnumerable<PValue> CoroutineRunStatically(ContextCarrier sctxCarrier,
+            PValue[] args)
         {
             if (sctxCarrier == null)
                 throw new ArgumentNullException("sctxCarrier");
@@ -54,7 +81,8 @@ namespace Prexonite.Commands.Concurrency
                 throw new ArgumentNullException("args");
 
             if (args.Length < 1)
-                throw new PrexoniteException("async_seq requires one parameter: The sequence to be computed.");
+                throw new PrexoniteException(
+                    "async_seq requires one parameter: The sequence to be computed.");
 
             return new ChannelEnumerable(sctxCarrier, args[0]);
         }
@@ -85,73 +113,77 @@ namespace Prexonite.Commands.Concurrency
 
                 Func<PValue> producer =
                     () =>
-                    {
-                        using (var e = Map._ToEnumerable(_sctxCarrier.StackContext, _arg).GetEnumerator())
                         {
-                            var doCont = true;
-                            var doDisp = false;
-
-                            cont:
-                            if (e.MoveNext())
+                            using (
+                                var e =
+                                    Map._ToEnumerable(_sctxCarrier.StackContext, _arg).GetEnumerator
+                                        ())
                             {
-                                peek.Send(true);
-                                data.Send(e.Current);
-                            }
-                            else
-                            {
-                                peek.Send(false);
-                                //doCont = false;
-                                goto shutDown;
-                            }
+                                var doCont = true;
+                                var doDisp = false;
 
-                            wait:
-                            Select.RunStatically(
-                                _sctxCarrier.StackContext, new[]
+                                cont:
+                                if (e.MoveNext())
                                 {
-                                    new KeyValuePair<Channel, PValue>
-                                        (
-                                        rset, pfunc(
-                                            (s, a) =>
-                                            {
-                                                doCont = true;
-                                                try
-                                                {
-                                                    e.Reset();
-                                                }
-                                                catch (Exception exc)
-                                                {
-                                                    rset.Send(PType.Object.CreatePValue(exc));
-                                                }
-                                                rset.Send(PType.Null);
-                                                return PType.Null;
-                                            })),
-                                    new KeyValuePair<Channel, PValue>
-                                        (
-                                        disp, pfunc(
-                                            (s, a) =>
-                                            {
-                                                doCont = false;
-                                                doDisp = true;
-                                                return PType.Null;
-                                            })),
-                                    new KeyValuePair<Channel, PValue>
-                                        (null, PType.Null),
-                                }, false);
+                                    peek.Send(true);
+                                    data.Send(e.Current);
+                                }
+                                else
+                                {
+                                    peek.Send(false);
+                                    //doCont = false;
+                                    goto shutDown;
+                                }
 
-                            //We loop until the dispose command is explicitly given. 
-                            //  -> This way, a reset command can be issued after
-                            //  the complete enumeration has been computed
-                            //  without the enumerator being disposed of prematurely
-                            if (doCont)
-                                goto cont;
-                            else if (! doDisp)
-                                goto wait;
-                        } //end using (disposes enumerator)
+                                wait:
+                                Select.RunStatically(
+                                    _sctxCarrier.StackContext, new[]
+                                        {
+                                            new KeyValuePair<Channel, PValue>
+                                                (
+                                                rset, pfunc(
+                                                    (s, a) =>
+                                                        {
+                                                            doCont = true;
+                                                            try
+                                                            {
+                                                                e.Reset();
+                                                            }
+                                                            catch (Exception exc)
+                                                            {
+                                                                rset.Send(
+                                                                    PType.Object.CreatePValue(exc));
+                                                            }
+                                                            rset.Send(PType.Null);
+                                                            return PType.Null;
+                                                        })),
+                                            new KeyValuePair<Channel, PValue>
+                                                (
+                                                disp, pfunc(
+                                                    (s, a) =>
+                                                        {
+                                                            doCont = false;
+                                                            doDisp = true;
+                                                            return PType.Null;
+                                                        })),
+                                            new KeyValuePair<Channel, PValue>
+                                                (null, PType.Null),
+                                        }, false);
 
-                        //Ignored (part of CallAsync interface)
-                        shutDown:
-                        return PType.Null;
-                    };
+                                //We loop until the dispose command is explicitly given. 
+                                //  -> This way, a reset command can be issued after
+                                //  the complete enumeration has been computed
+                                //  without the enumerator being disposed of prematurely
+                                if (doCont)
+                                    goto cont;
+                                else if (! doDisp)
+                                    goto wait;
+                            } //end using (disposes enumerator)
+
+                            //Ignored (part of CallAsync interface)
+                            shutDown:
+                            return PType.Null;
+                        };
 
                 #endregion
 

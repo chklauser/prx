@@ -1,13 +1,38 @@
+// Prexonite
+// 
+// Copyright (c) 2011, Christian Klauser
+// All rights reserved.
+// 
+// Redistribution and use in source and binary forms, with or without modification, 
+//  are permitted provided that the following conditions are met:
+// 
+//     Redistributions of source code must retain the above copyright notice, 
+//          this list of conditions and the following disclaimer.
+//     Redistributions in binary form must reproduce the above copyright notice, 
+//          this list of conditions and the following disclaimer in the 
+//          documentation and/or other materials provided with the distribution.
+//     The names of the contributors may be used to endorse or 
+//          promote products derived from this software without specific prior written permission.
+// 
+// THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND 
+//  ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED 
+//  WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED. 
+//  IN NO EVENT SHALL THE COPYRIGHT HOLDER OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT, 
+//  INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES 
+//  (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, 
+//  DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, 
+//  WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING 
+//  IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+
 using System;
 using Prexonite.Compiler.Ast;
 using Prexonite.Types;
-using Prexonite.Compiler.Macro;
 
 namespace Prexonite.Compiler
 {
     /// <summary>
-    /// Implementation of auto-properties via 
-    /// transformations of calls to the non-existant function "prop". 
+    ///     Implementation of auto-properties via 
+    ///     transformations of calls to the non-existant function "prop".
     /// </summary>
     public static class PropHook
     {
@@ -16,9 +41,9 @@ namespace Prexonite.Compiler
         public const string StrucPropFunctionId = "struct_prop";
 
         /// <summary>
-        /// Installs the auto-property compiler hook.
+        ///     Installs the auto-property compiler hook.
         /// </summary>
-        /// <param name="ldr">The loader to add the hook to.</param>
+        /// <param name = "ldr">The loader to add the hook to.</param>
         public static void InstallHook(Loader ldr)
         {
             if (ldr == null)
@@ -27,9 +52,9 @@ namespace Prexonite.Compiler
         }
 
         /// <summary>
-        /// Uninstalls the auto-property compiler hook.
+        ///     Uninstalls the auto-property compiler hook.
         /// </summary>
-        /// <param name="ldr">The loader that contains the hook.</param>
+        /// <param name = "ldr">The loader that contains the hook.</param>
         public static void UninstallHook(Loader ldr)
         {
             if (ldr == null)
@@ -48,9 +73,9 @@ namespace Prexonite.Compiler
 
                 if (stmt_ret == null || stmt_ret.Expression == null ||
                     (stmt = stmt_ret.Expression as AstGetSetSymbol) == null ||
-                    stmt.Interpretation != SymbolInterpretations.Function ||
-                    (!Engine.StringsAreEqual(stmt.Id, PropFunctionId) &&
-                     !Engine.StringsAreEqual(stmt.Id, StrucPropFunctionId)))
+                        stmt.Interpretation != SymbolInterpretations.Function ||
+                            (!Engine.StringsAreEqual(stmt.Id, PropFunctionId) &&
+                                !Engine.StringsAreEqual(stmt.Id, StrucPropFunctionId)))
                     continue;
 
                 var args_offset = 0;
@@ -122,7 +147,8 @@ namespace Prexonite.Compiler
                     case 1:
                         var proxy_expr = stmt.Arguments[0] as AstGetSet;
                         if (proxy_expr == null)
-                            throw new PrexoniteException("prop requires an assignable expression as its argument.");
+                            throw new PrexoniteException(
+                                "prop requires an assignable expression as its argument.");
                         prop_get = proxy_expr;
                         prop_set = proxy_expr.GetCopy();
                         prop_set.Call = PCall.Set;
@@ -131,8 +157,10 @@ namespace Prexonite.Compiler
                         var get_action = stmt.Arguments[0];
                         var set_action = stmt.Arguments[1];
 
-                        prop_get = new AstIndirectCall(stmt.File, stmt.Line, stmt.Column, PCall.Get, get_action);
-                        prop_set = new AstIndirectCall(stmt.File, stmt.Line, stmt.Column, PCall.Set, set_action);
+                        prop_get = new AstIndirectCall(stmt.File, stmt.Line, stmt.Column, PCall.Get,
+                            get_action);
+                        prop_set = new AstIndirectCall(stmt.File, stmt.Line, stmt.Column, PCall.Set,
+                            set_action);
                         break;
                 }
 
@@ -142,10 +170,11 @@ namespace Prexonite.Compiler
                     stmt.Line,
                     stmt.Column,
                     prop_arg,
-                    new AstConstantTypeExpression(stmt.File, stmt.Line, stmt.Column, NullPType.Literal));
+                    new AstConstantTypeExpression(stmt.File, stmt.Line, stmt.Column,
+                        NullPType.Literal));
                 var getArgs = new AstGetSetSymbol(stmt.File, stmt.Line, stmt.Column,
                     PFunction.ArgumentListId, SymbolInterpretations.LocalObjectVariable);
-                if(!target.Function.Variables.Contains(PFunction.ArgumentListId))
+                if (!target.Function.Variables.Contains(PFunction.ArgumentListId))
                     target.Function.Variables.Add(PFunction.ArgumentListId);
                 var getArgc = new AstGetSetMemberAccess(stmt.File, stmt.Line, stmt.Column, getArgs,
                     "Count");

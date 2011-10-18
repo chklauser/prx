@@ -1,42 +1,45 @@
-/*
- * Prexonite, a scripting engine (Scripting Language -> Bytecode -> Virtual Machine)
- *  Copyright (C) 2007  Christian "SealedSun" Klauser
- *  E-mail  sealedsun a.t gmail d.ot com
- *  Web     http://www.sealedsun.ch/
- *
- *  This program is free software; you can redistribute it and/or modify
- *  it under the terms of the GNU General Public License as published by
- *  the Free Software Foundation; either version 2 of the License, or
- *  (at your option) any later version.
- *
- *  Please contact me (sealedsun a.t gmail do.t com) if you need a different license.
- * 
- *  This program is distributed in the hope that it will be useful,
- *  but WITHOUT ANY WARRANTY; without even the implied warranty of
- *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- *  GNU General Public License for more details.
- *
- *  You should have received a copy of the GNU General Public License along
- *  with this program; if not, write to the Free Software Foundation, Inc.,
- *  51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
- */
+// Prexonite
+// 
+// Copyright (c) 2011, Christian Klauser
+// All rights reserved.
+// 
+// Redistribution and use in source and binary forms, with or without modification, 
+//  are permitted provided that the following conditions are met:
+// 
+//     Redistributions of source code must retain the above copyright notice, 
+//          this list of conditions and the following disclaimer.
+//     Redistributions in binary form must reproduce the above copyright notice, 
+//          this list of conditions and the following disclaimer in the 
+//          documentation and/or other materials provided with the distribution.
+//     The names of the contributors may be used to endorse or 
+//          promote products derived from this software without specific prior written permission.
+// 
+// THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND 
+//  ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED 
+//  WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED. 
+//  IN NO EVENT SHALL THE COPYRIGHT HOLDER OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT, 
+//  INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES 
+//  (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, 
+//  DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, 
+//  WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING 
+//  IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 using System;
 
 namespace Prexonite.Commands
 {
     /// <summary>
-    /// Implementation of <see cref="PCommand"/> that forwards the run call to 
-    /// a class that implements <see cref="ICommand"/>.
+    ///     Implementation of <see cref = "PCommand" /> that forwards the run call to 
+    ///     a class that implements <see cref = "ICommand" />.
     /// </summary>
-    /// <seealso cref="PCommand"/>
-    /// <seealso cref="ICommand"/>
+    /// <seealso cref = "PCommand" />
+    /// <seealso cref = "ICommand" />
     public sealed class NestedPCommand : PCommand
     {
         private readonly ICommand _action;
 
         /// <summary>
-        /// Provides access to the implementation of this specific instance of <see cref="NestedPCommand"/>.
+        ///     Provides access to the implementation of this specific instance of <see cref = "NestedPCommand" />.
         /// </summary>
         public ICommand Action
         {
@@ -44,10 +47,10 @@ namespace Prexonite.Commands
         }
 
         /// <summary>
-        /// Creates a new <see cref="NestedPCommand"/>.
+        ///     Creates a new <see cref = "NestedPCommand" />.
         /// </summary>
-        /// <param name="action">Any implementation of <see cref="ICommand"/>.</param>
-        /// <exception cref="ArgumentNullException"><paramref name="action"/> is null.</exception>
+        /// <param name = "action">Any implementation of <see cref = "ICommand" />.</param>
+        /// <exception cref = "ArgumentNullException"><paramref name = "action" /> is null.</exception>
         public NestedPCommand(ICommand action)
         {
             if (action == null)
@@ -56,18 +59,18 @@ namespace Prexonite.Commands
         }
 
         /// <summary>
-        /// Executes <see cref="ICommand.Run"/> on <see cref="Action"/>.
+        ///     Executes <see cref = "ICommand.Run" /> on <see cref = "Action" />.
         /// </summary>
-        /// <param name="sctx">The stack context in which to execute the command.</param>
-        /// <param name="args">The arguments to pass to the command invocation.</param>
-        /// <returns>The value returned by <c><see cref="Action"/>.Run</c>.</returns>
+        /// <param name = "sctx">The stack context in which to execute the command.</param>
+        /// <param name = "args">The arguments to pass to the command invocation.</param>
+        /// <returns>The value returned by <c><see cref = "Action" />.Run</c>.</returns>
         public override PValue Run(StackContext sctx, PValue[] args)
         {
             return _action.Run(sctx, args);
         }
 
         /// <summary>
-        /// Returns a description of the nested command instance.
+        ///     Returns a description of the nested command instance.
         /// </summary>
         /// <returns>A description of the nested command instance.</returns>
         public override string ToString()
@@ -77,20 +80,24 @@ namespace Prexonite.Commands
     }
 
     /// <summary>
-    /// Interface to be implemented by a class to be used as a command.
+    ///     Interface to be implemented by a class to be used as a command.
     /// </summary>
-    /// <seealso cref="PCommand"/>
-    /// <seealso cref="NestedPCommand"/>
-    /// <remarks>In order to be used as a command, <see cref="NestedPCommand"/> need to be wrapped around instances of types that implement this interface.</remarks>
+    /// <seealso cref = "PCommand" />
+    /// <seealso cref = "NestedPCommand" />
+    /// <remarks>
+    ///     In order to be used as a command, <see cref = "NestedPCommand" /> need to be wrapped around instances of types that implement this interface.
+    /// </remarks>
     public interface ICommand
     {
         /// <summary>
-        /// Actual implementation of a command.
+        ///     Actual implementation of a command.
         /// </summary>
-        /// <param name="sctx">The stack context in which the command is executed.</param>
-        /// <param name="args">The array of arguments supplied to the command.</param>
+        /// <param name = "sctx">The stack context in which the command is executed.</param>
+        /// <param name = "args">The array of arguments supplied to the command.</param>
         /// <returns>The value returned by the command.</returns>
-        /// <remarks>If your implementation does not return a value, you have to return <c>PType.Null.CreatePValue()</c> and <strong>not</strong> <c>null</c>!</remarks>
+        /// <remarks>
+        ///     If your implementation does not return a value, you have to return <c>PType.Null.CreatePValue()</c> and <strong>not</strong> <c>null</c>!
+        /// </remarks>
         PValue Run(StackContext sctx, PValue[] args);
     }
 }

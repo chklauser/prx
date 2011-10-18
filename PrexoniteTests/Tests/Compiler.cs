@@ -1,3 +1,29 @@
+// Prexonite
+// 
+// Copyright (c) 2011, Christian Klauser
+// All rights reserved.
+// 
+// Redistribution and use in source and binary forms, with or without modification, 
+//  are permitted provided that the following conditions are met:
+// 
+//     Redistributions of source code must retain the above copyright notice, 
+//          this list of conditions and the following disclaimer.
+//     Redistributions in binary form must reproduce the above copyright notice, 
+//          this list of conditions and the following disclaimer in the 
+//          documentation and/or other materials provided with the distribution.
+//     The names of the contributors may be used to endorse or 
+//          promote products derived from this software without specific prior written permission.
+// 
+// THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND 
+//  ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED 
+//  WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED. 
+//  IN NO EVENT SHALL THE COPYRIGHT HOLDER OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT, 
+//  INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES 
+//  (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, 
+//  DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, 
+//  WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING 
+//  IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+
 using System;
 using System.Collections.Generic;
 using NUnit.Framework;
@@ -15,7 +41,7 @@ namespace Prx.Tests
         protected internal Application target;
         protected internal PFunction root;
 
-        [SetUp()]
+        [SetUp]
         public void SetupCompilerEngine()
         {
             engine = new Engine();
@@ -23,7 +49,7 @@ namespace Prx.Tests
             sctx = new TestStackContext(engine, target);
         }
 
-        [TearDown()]
+        [TearDown]
         public void TeardownCompilerEngine()
         {
             engine = null;
@@ -38,10 +64,10 @@ namespace Prx.Tests
 
         protected internal List<Instruction> getInstructions(string assemblerCode)
         {
-            Application app = new Application("getInstructions");
-            LoaderOptions opt = new LoaderOptions(engine, app);
+            var app = new Application("getInstructions");
+            var opt = new LoaderOptions(engine, app);
             opt.UseIndicesLocally = false;
-            Loader ldr = new Loader(opt);
+            var ldr = new Loader(opt);
             ldr.LoadFromString("function MyAssemblerFunction does asm {" + assemblerCode + "\n}");
             if (ldr.ErrorCount != 0)
             {
@@ -83,10 +109,11 @@ namespace Prx.Tests
 
         protected internal void _expect(string functionId, string assemblerCode)
         {
-            PFunction func = target.Functions[functionId];
-            if(func == null)
-                throw new ArgumentException(string.Format("No function with the id {0} exists", functionId)); 
-            List<Instruction> actual = func.Code;
+            var func = target.Functions[functionId];
+            if (func == null)
+                throw new ArgumentException(string.Format("No function with the id {0} exists",
+                    functionId));
+            var actual = func.Code;
             _expect(actual, assemblerCode);
         }
 
@@ -97,7 +124,7 @@ namespace Prx.Tests
 
         protected internal void _expect(List<Instruction> actual, string assemblerCode)
         {
-            List<Instruction> expected = getInstructions(assemblerCode);
+            var expected = getInstructions(assemblerCode);
             int i;
             for (i = 0; i < actual.Count; i++)
             {
@@ -106,7 +133,7 @@ namespace Prx.Tests
                         expected.Count,
                         actual.Count,
                         "Expected and actual instruction count missmatch detected at actual instruction " +
-                        actual[i]);
+                            actual[i]);
                 Assert.AreEqual(
                     expected[i],
                     actual[i],
@@ -120,7 +147,7 @@ namespace Prx.Tests
                 expected.Count,
                 actual.Count,
                 "Expected and actual instruction count missmatch" +
-                (i < expected.Count ? " detected at expected instruction " + expected[i] : ""));
+                    (i < expected.Count ? " detected at expected instruction " + expected[i] : ""));
         }
 
         protected internal static void _expectSharedVariables(
@@ -137,7 +164,7 @@ namespace Prx.Tests
         protected internal static void _expectSharedVariables_(PFunction func, string[] shared)
         {
             MetaEntry entry;
-            bool hasShared = func.Meta.TryGetValue(PFunction.SharedNamesKey, out entry);
+            var hasShared = func.Meta.TryGetValue(PFunction.SharedNamesKey, out entry);
             if (shared.Length == 0 && hasShared)
                 Assert.Fail("The function {0} is not expected to share variables.", func.Id);
             else if ((!hasShared) && shared.Length != 0)
@@ -145,13 +172,13 @@ namespace Prx.Tests
             else if ((!hasShared) && shared.Length == 0)
                 return;
 
-            MetaEntry[] entries = entry.List;
+            var entries = entry.List;
             Assert.AreEqual(
                 shared.Length,
                 entries.Length,
                 "The function {0} is expected to have a different number of shared variables.",
                 func.Id);
-            for (int i = 0; i < entries.Length; i++)
+            for (var i = 0; i < entries.Length; i++)
                 Assert.IsTrue(
                     Engine.StringsAreEqual(shared[i], entries[i] == null ? "" : entries[i].Text),
                     "The function {0} is expected to require sharing of variable {1}.",

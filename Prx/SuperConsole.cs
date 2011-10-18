@@ -1,3 +1,36 @@
+// Prexonite
+// 
+// Copyright (c) 2011, Christian Klauser
+// All rights reserved.
+// 
+// Redistribution and use in source and binary forms, with or without modification, 
+//  are permitted provided that the following conditions are met:
+// 
+//     Redistributions of source code must retain the above copyright notice, 
+//          this list of conditions and the following disclaimer.
+//     Redistributions in binary form must reproduce the above copyright notice, 
+//          this list of conditions and the following disclaimer in the 
+//          documentation and/or other materials provided with the distribution.
+//     The names of the contributors may be used to endorse or 
+//          promote products derived from this software without specific prior written permission.
+// 
+// THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND 
+//  ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED 
+//  WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED. 
+//  IN NO EVENT SHALL THE COPYRIGHT HOLDER OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT, 
+//  INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES 
+//  (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, 
+//  DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, 
+//  WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING 
+//  IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+
+#line 15
+
+#region Shared Source License
+
+// The above license text has been added by an automated tool. 
+//  However, for this particular file a different license is in effect:
+
 /* **********************************************************************************
 *
 * Copyright (c) Microsoft Corporation. All rights reserved.
@@ -13,6 +46,8 @@
 *
 * **********************************************************************************/
 
+#endregion
+
 /*
  * Adaption for use as a general purpose console wrapper.
  * Copyright of changes Christian Klauser
@@ -25,6 +60,8 @@ using System.Collections.Generic;
 using System.Diagnostics;
 using System.Text;
 using System.Threading;
+using Prx.Win32;
+
 //Removed references to IronPython (-P)
 
 namespace Prx
@@ -44,13 +81,13 @@ namespace Prx
         }
 
         /// <summary>
-        /// Class managing the command history.
+        ///     Class managing the command history.
         /// </summary>
         private class History
         {
             private ArrayList list = new ArrayList();
-            private int current = 0;
-            private bool increment = false; // increment on Next()
+            private int current;
+            private bool increment; // increment on Next()
 
             private string Current
             {
@@ -65,7 +102,7 @@ namespace Prx
             {
                 if (line != null && line.Length > 0)
                 {
-                    int oldCount = list.Count;
+                    var oldCount = list.Count;
                     list.Add(line);
                     if (setCurrentAsLast || current == oldCount)
                     {
@@ -103,12 +140,12 @@ namespace Prx
         }
 
         /// <summary>
-        /// List of available options
+        ///     List of available options
         /// </summary>
         private class SuperConsoleOptions
         {
             private ArrayList list = new ArrayList();
-            private int current = 0;
+            private int current;
             private string root;
 
             public int Count
@@ -165,17 +202,17 @@ namespace Prx
         }
 
         /// <summary>
-        /// Cursor position management
+        ///     Cursor position management
         /// </summary>
         private struct Cursor
         {
             /// <summary>
-            /// Beginning position of the cursor - top coordinate.
+            ///     Beginning position of the cursor - top coordinate.
             /// </summary>
             private int anchorTop;
 
             /// <summary>
-            /// Beginning position of the cursor - left coordinate.
+            ///     Beginning position of the cursor - left coordinate.
             /// </summary>
             private int anchorLeft;
 
@@ -204,7 +241,7 @@ namespace Prx
             public void Place(int index)
             {
                 Console.CursorLeft = (anchorLeft + index)%Console.BufferWidth;
-                int cursorTop = anchorTop + (anchorLeft + index)/Console.BufferWidth;
+                var cursorTop = anchorTop + (anchorLeft + index)/Console.BufferWidth;
                 if (cursorTop >= Console.BufferHeight)
                 {
                     anchorTop -= cursorTop - Console.BufferHeight + 1;
@@ -215,46 +252,46 @@ namespace Prx
 
             public void Move(int delta)
             {
-                int position = Console.CursorTop*Console.BufferWidth + Console.CursorLeft + delta;
+                var position = Console.CursorTop*Console.BufferWidth + Console.CursorLeft + delta;
 
                 Console.CursorLeft = position%Console.BufferWidth;
                 Console.CursorTop = position/Console.BufferWidth;
             }
-        } ;
+        };
 
         /// <summary>
-        /// The console input buffer.
+        ///     The console input buffer.
         /// </summary>
         private StringBuilder input = new StringBuilder();
 
         /// <summary>
-        /// Current position - index into the input buffer
+        ///     Current position - index into the input buffer
         /// </summary>
-        private int current = 0;
+        private int current;
 
         //removed autoIndentSize  (-P)
 
         /// <summary>
-        /// Length of the output currently rendered on screen.
+        ///     Length of the output currently rendered on screen.
         /// </summary>
-        private int rendered = 0;
+        private int rendered;
 
-        /// <summary>
-        /// Input has changed.
-        /// </summary>
         //private bool changed = true;
         /// <summary>
-        /// Command history
+        ///     Input has changed.
+        /// </summary>
+        /// <summary>
+        ///     Command history
         /// </summary>
         private History history = new History();
 
         /// <summary>
-        /// Tab options available in current context
+        ///     Tab options available in current context
         /// </summary>
         private SuperConsoleOptions options = new SuperConsoleOptions();
 
         /// <summary>
-        /// Cursort anchor - position of cursor when the routine was called
+        ///     Cursort anchor - position of cursor when the routine was called
         /// </summary>
         private Cursor cursor;
 
@@ -290,7 +327,7 @@ namespace Prx
             int len;
             for (len = input.Length; len > 0; len--)
             {
-                char c = input[len - 1];
+                var c = input[len - 1];
                 if (IsPartOfIdentifier(c))
                 {
                     continue;
@@ -301,10 +338,10 @@ namespace Prx
                 }
             }
 
-            string name = input.ToString(len, input.Length - len);
+            var name = input.ToString(len, input.Length - len);
             if (name.Trim().Length > 0)
             {
-                int lastDot = name.LastIndexOf('.');
+                var lastDot = name.LastIndexOf('.');
                 string attr,
                        pref,
                        root;
@@ -325,7 +362,7 @@ namespace Prx
                 {
                     //Moved tab handling to abstract method (-P)
                     options.Root = root;
-                    foreach (string option in OnTab(attr, pref, root))
+                    foreach (var option in OnTab(attr, pref, root))
                     {
                         //Console.Write("{0} proposed and ", option);
 
@@ -407,8 +444,8 @@ namespace Prx
             else
             {
                 //c = key.KeyChar;
-                var us = Win32.User32.ToUnicode(key,true);
-                if(us.Length > 0)
+                var us = User32.ToUnicode(key, true);
+                if (us.Length > 0)
                     Insert(us[0]);
             }
         }
@@ -419,7 +456,7 @@ namespace Prx
             {
                 if (Char.IsControl(c))
                 {
-                    string s = MapCharacter(c);
+                    var s = MapCharacter(c);
                     current++;
                     input.Append(c);
                     Console.Write(s);
@@ -469,15 +506,15 @@ namespace Prx
         private void Render()
         {
             cursor.Reset();
-            StringBuilder output = new StringBuilder();
-            int position = -1;
-            for (int i = 0; i < input.Length; i++)
+            var output = new StringBuilder();
+            var position = -1;
+            for (var i = 0; i < input.Length; i++)
             {
                 if (i == current)
                 {
                     position = output.Length;
                 }
-                char c = input[i];
+                var c = input[i];
                 if (Char.IsControl(c))
                 {
                     output.Append(MapCharacter(c));
@@ -493,7 +530,7 @@ namespace Prx
                 position = output.Length;
             }
 
-            string text = output.ToString();
+            var text = output.ToString();
             Console.Write(text);
 
             if (text.Length < rendered)
@@ -511,7 +548,7 @@ namespace Prx
                 // move back to the start of the previous word
                 if (input.Length > 0 && current != 0)
                 {
-                    bool nonLetter = IsSeperator(input[current - 1]);
+                    var nonLetter = IsSeperator(input[current - 1]);
                     while (current > 0 && (current - 1 < input.Length))
                     {
                         MoveLeft();
@@ -549,7 +586,7 @@ namespace Prx
                 // move to the next word
                 if (input.Length != 0 && current < input.Length)
                 {
-                    bool nonLetter = IsSeperator(input[current]);
+                    var nonLetter = IsSeperator(input[current]);
                     while (current < input.Length)
                     {
                         MoveRight();
@@ -576,7 +613,7 @@ namespace Prx
         {
             if (current < input.Length)
             {
-                char c = input[current];
+                var c = input[current];
                 current++;
                 cursor.Move(GetCharacterSize(c));
             }
@@ -587,7 +624,7 @@ namespace Prx
             if (current > 0 && (current - 1 < input.Length))
             {
                 current--;
-                char c = input[current];
+                var c = input[current];
                 cursor.Move(-GetCharacterSize(c));
             }
         }
@@ -596,7 +633,7 @@ namespace Prx
 
         private void InsertTab()
         {
-            for (int i = TabSize - (current%TabSize); i > 0; i--)
+            for (var i = TabSize - (current%TabSize); i > 0; i--)
             {
                 Insert(' ');
             }
@@ -620,7 +657,7 @@ namespace Prx
             set { _doBeep = value; }
         }
 
-        private bool _doBeep = false;
+        private bool _doBeep;
 
         //Removed autoIndentSizeInput parameter and usages (-P)
 
@@ -628,12 +665,12 @@ namespace Prx
         {
             Initialize();
 
-            bool inputChanged = false;
-            bool optionsObsolete = false;
+            var inputChanged = false;
+            var optionsObsolete = false;
 
             for (;;)
             {
-                ConsoleKeyInfo key = Console.ReadKey(true);
+                var key = Console.ReadKey(true);
 
                 switch (key.Key)
                 {
@@ -647,7 +684,7 @@ namespace Prx
                         break;
                     case ConsoleKey.Enter:
                         Console.Write("\n");
-                        string line = input.ToString();
+                        var line = input.ToString();
                         if (line == FinalLineText)
                             return null;
                         if (line.Length > 0)
@@ -657,7 +694,7 @@ namespace Prx
                         return line;
                     case ConsoleKey.Tab:
                         {
-                            bool prefix = false;
+                            var prefix = false;
                             if (optionsObsolete)
                             {
                                 prefix = GetOptions();
@@ -666,9 +703,9 @@ namespace Prx
 
                             if (options.Count > 0)
                             {
-                                string part = (key.Modifiers & ConsoleModifiers.Shift) != 0
-                                                  ? options.Previous()
-                                                  : options.Next();
+                                var part = (key.Modifiers & ConsoleModifiers.Shift) != 0
+                                    ? options.Previous()
+                                    : options.Next();
                                 SetInput(options.Root + part);
                             }
                             else
@@ -736,12 +773,12 @@ namespace Prx
         {
             Initialize();
 
-            bool inputChanged = false;
-            bool optionsObsolete = false;
+            var inputChanged = false;
+            var optionsObsolete = false;
 
-            for (; ; )
+            for (;;)
             {
-                ConsoleKeyInfo key = Console.ReadKey(true);
+                var key = Console.ReadKey(true);
 
                 switch (key.Key)
                 {
@@ -757,7 +794,7 @@ namespace Prx
                         break;
                     case ConsoleKey.Enter:
                         Console.Write("\n");
-                        string line = input.ToString();
+                        var line = input.ToString();
                         if (line == FinalLineText)
                             return null;
                         if (line.Length > 0)
@@ -767,7 +804,7 @@ namespace Prx
                         return line;
                     case ConsoleKey.Tab:
                         {
-                            bool prefix = false;
+                            var prefix = false;
                             if (optionsObsolete)
                             {
                                 prefix = GetOptions();
@@ -776,9 +813,9 @@ namespace Prx
 
                             if (options.Count > 0)
                             {
-                                string part = (key.Modifiers & ConsoleModifiers.Shift) != 0
-                                                  ? options.Previous()
-                                                  : options.Next();
+                                var part = (key.Modifiers & ConsoleModifiers.Shift) != 0
+                                    ? options.Previous()
+                                    : options.Next();
                                 SetInput(options.Root + part);
                             }
                             else

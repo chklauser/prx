@@ -1,25 +1,28 @@
-/*
- * Prexonite, a scripting engine (Scripting Language -> Bytecode -> Virtual Machine)
- *  Copyright (C) 2007  Christian "SealedSun" Klauser
- *  E-mail  sealedsun a.t gmail d.ot com
- *  Web     http://www.sealedsun.ch/
- *
- *  This program is free software; you can redistribute it and/or modify
- *  it under the terms of the GNU General Public License as published by
- *  the Free Software Foundation; either version 2 of the License, or
- *  (at your option) any later version.
- *
- *  Please contact me (sealedsun a.t gmail do.t com) if you need a different license.
- * 
- *  This program is distributed in the hope that it will be useful,
- *  but WITHOUT ANY WARRANTY; without even the implied warranty of
- *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- *  GNU General Public License for more details.
- *
- *  You should have received a copy of the GNU General Public License along
- *  with this program; if not, write to the Free Software Foundation, Inc.,
- *  51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
- */
+// Prexonite
+// 
+// Copyright (c) 2011, Christian Klauser
+// All rights reserved.
+// 
+// Redistribution and use in source and binary forms, with or without modification, 
+//  are permitted provided that the following conditions are met:
+// 
+//     Redistributions of source code must retain the above copyright notice, 
+//          this list of conditions and the following disclaimer.
+//     Redistributions in binary form must reproduce the above copyright notice, 
+//          this list of conditions and the following disclaimer in the 
+//          documentation and/or other materials provided with the distribution.
+//     The names of the contributors may be used to endorse or 
+//          promote products derived from this software without specific prior written permission.
+// 
+// THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND 
+//  ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED 
+//  WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED. 
+//  IN NO EVENT SHALL THE COPYRIGHT HOLDER OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT, 
+//  INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES 
+//  (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, 
+//  DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, 
+//  WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING 
+//  IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 using System;
 using System.Collections.Generic;
@@ -31,9 +34,9 @@ using NoDebug = System.Diagnostics.DebuggerNonUserCodeAttribute;
 namespace Prexonite
 {
     /// <summary>
-    /// An application can be compared to an assembly in the .NET framework. 
-    /// It holds functions and variables together, provides a <see cref="MetaTable"/> and 
-    /// manages the initialization of global variables.
+    ///     An application can be compared to an assembly in the .NET framework. 
+    ///     It holds functions and variables together, provides a <see cref = "MetaTable" /> and 
+    ///     manages the initialization of global variables.
     /// </summary>
     public class Application : IMetaFilter,
                                IHasMetaTable,
@@ -42,43 +45,43 @@ namespace Prexonite
         #region Construction
 
         /// <summary>
-        /// Key used to store the id of applications, functions and variables.
+        ///     Key used to store the id of applications, functions and variables.
         /// </summary>
         public const string IdKey = "id";
 
         /// <summary>
-        /// Key used to store the name of the <see cref="EntryFunction"/>.
+        ///     Key used to store the name of the <see cref = "EntryFunction" />.
         /// </summary>
         public const string EntryKey = "entry";
 
         /// <summary>
-        /// Key used to store the list of namespace imports.
+        ///     Key used to store the list of namespace imports.
         /// </summary>
         public const string ImportKey = "import";
 
         /// <summary>
-        /// Default name for the <see cref="EntryFunction"/>.
+        ///     Default name for the <see cref = "EntryFunction" />.
         /// </summary>
         public const string DefaultEntryFunction = "main";
 
         /// <summary>
-        /// Id of the initialization function.
+        ///     Id of the initialization function.
         /// </summary>
         public const string InitializationId = @"\init";
 
         /// <summary>
-        /// Meta table key used for storing initialization generation.
+        ///     Meta table key used for storing initialization generation.
         /// </summary>
         public const string InitializationGeneration = InitializationId;
 
         /// <summary>
-        /// Meta table key used for stroing the offset in the initialization function where
-        /// execution should continue to complete initialization.
+        ///     Meta table key used for stroing the offset in the initialization function where
+        ///     execution should continue to complete initialization.
         /// </summary>
         public const string InitializationOffset = InitializationId;
 
         /// <summary>
-        /// Meta table key used as an alias for <see cref="Application.IdKey"/>
+        ///     Meta table key used as an alias for <see cref = "Application.IdKey" />
         /// </summary>
         public const string NameKey = "name";
 
@@ -87,7 +90,7 @@ namespace Prexonite
         public static readonly MetaEntry DefaultImport = new MetaEntry(new MetaEntry[] {"System"});
 
         /// <summary>
-        /// Creates a new application with a GUID as its Id.
+        ///     Creates a new application with a GUID as its Id.
         /// </summary>
         [DebuggerStepThrough]
         public Application()
@@ -96,9 +99,9 @@ namespace Prexonite
         }
 
         /// <summary>
-        /// Creates a new application with a given Id.
+        ///     Creates a new application with a given Id.
         /// </summary>
-        /// <param name="id">An arbitrary id for identifying the application. Prefereably a valid identifier.</param>
+        /// <param name = "id">An arbitrary id for identifying the application. Prefereably a valid identifier.</param>
         public Application(string id)
         {
             _meta = new MetaTable(this);
@@ -126,7 +129,7 @@ namespace Prexonite
         private readonly SymbolTable<PVariable> _variables;
 
         /// <summary>
-        /// Provides access to the table of global variables.
+        ///     Provides access to the table of global variables.
         /// </summary>
         public SymbolTable<PVariable> Variables
         {
@@ -141,7 +144,7 @@ namespace Prexonite
         private readonly PFunctionTable _functions;
 
         /// <summary>
-        /// Provides access to the table of registered functions.
+        ///     Provides access to the table of registered functions.
         /// </summary>
         public PFunctionTable Functions
         {
@@ -150,10 +153,10 @@ namespace Prexonite
         }
 
         /// <summary>
-        /// Provides direct access to the application's entry function.
+        ///     Provides direct access to the application's entry function.
         /// </summary>
         /// <value>
-        /// A reference to the application's entry function or null, if no such function does not exists.
+        ///     A reference to the application's entry function or null, if no such function does not exists.
         /// </value>
         public PFunction EntryFunction
         {
@@ -162,7 +165,7 @@ namespace Prexonite
         }
 
         /// <summary>
-        /// Creates a new function for the application with a random Id.
+        ///     Creates a new function for the application with a random Id.
         /// </summary>
         /// <returns>An unregistered function with a random Id, bound to the current application instance.</returns>
         [DebuggerStepThrough]
@@ -172,9 +175,9 @@ namespace Prexonite
         }
 
         /// <summary>
-        /// Creates a new function for the application with a given <paramref name="id"/>.
+        ///     Creates a new function for the application with a given <paramref name = "id" />.
         /// </summary>
-        /// <param name="id">An identifier to name the function.</param>
+        /// <param name = "id">An identifier to name the function.</param>
         /// <returns>An unregistered function with a given Id, bound to the current application instance.</returns>
         [DebuggerStepThrough]
         public PFunction CreateFunction(string id)
@@ -190,11 +193,12 @@ namespace Prexonite
             ApplicationInitializationState.None;
 
         /// <summary>
-        /// Provides readonly access to the application's <see cref="ApplicationInitializationState">initialization state</see>.
-        /// <br />
-        /// The <see cref="InitializationState"/> is only changed by the <see cref="Loader"/> or by <see cref="EnsureInitialization"/>.
+        ///     Provides readonly access to the application's <see cref = "ApplicationInitializationState">initialization state</see>.
+        ///     <br />
+        ///     The <see cref = "InitializationState" /> is only changed by the <see cref = "Loader" /> or by <see
+        ///      cref = "EnsureInitialization" />.
         /// </summary>
-        /// <value>A <see cref="ApplicationInitializationState"/> that indicates the initialization state the application is currently in.</value>
+        /// <value>A <see cref = "ApplicationInitializationState" /> that indicates the initialization state the application is currently in.</value>
         public ApplicationInitializationState InitializationState
         {
             get { return _initializationState; }
@@ -204,7 +208,7 @@ namespace Prexonite
         private readonly PFunction _initializationFunction;
 
         /// <summary>
-        /// Provides access to the initialization function.
+        ///     Provides access to the initialization function.
         /// </summary>
         internal PFunction _InitializationFunction
         {
@@ -216,7 +220,7 @@ namespace Prexonite
         private bool _suppressInitialization;
 
         /// <summary>
-        /// Allows you to suppress initialization of the application.
+        ///     Allows you to suppress initialization of the application.
         /// </summary>
         internal bool _SuppressInitialization
         {
@@ -225,7 +229,7 @@ namespace Prexonite
         }
 
         /// <summary>
-        /// Notifies the application of a change in it's code (more specifically the initialize function)
+        ///     Notifies the application of a change in it's code (more specifically the initialize function)
         /// </summary>
         /// <returns>The initialization generation that is required to trigger initialization.</returns>
         internal int _RegisterInitializationUpdate()
@@ -237,7 +241,7 @@ namespace Prexonite
         }
 
         /// <summary>
-        /// Notifies the application that a complete initialization absolutely necessary.
+        ///     Notifies the application that a complete initialization absolutely necessary.
         /// </summary>
         internal void _RequireInitialization()
         {
@@ -245,34 +249,34 @@ namespace Prexonite
         }
 
         /// <summary>
-        /// <para>Makes the application ensure that it is initialized to the point where <paramref name="context"/> can be safely accessed.</para>
+        ///     <para>Makes the application ensure that it is initialized to the point where <paramref name = "context" /> can be safely accessed.</para>
         /// </summary>
-        /// <param name="targetEngine">The engine in which to perform initialization.</param>
-        /// <param name="context">The object that triggered this method call. Normally a global variable or a function.</param>
+        /// <param name = "targetEngine">The engine in which to perform initialization.</param>
+        /// <param name = "context">The object that triggered this method call. Normally a global variable or a function.</param>
         /// <remarks>
-        /// <para>
-        ///     <ul>
-        ///         <list type="table">
-        ///             <listheader>
-        ///                 <term><see cref="InitializationState"/></term>
-        ///                 <description>Behaviour</description>
-        ///             </listheader>
-        ///             <item>
-        ///                 <term><see cref="ApplicationInitializationState.None"/></term>
-        ///                 <description>Initialization always required.</description>
-        ///             </item>
-        ///             <item>
-        ///                 <term><see cref="ApplicationInitializationState.Partial"/></term>
-        ///                 <description>The method checks if the initialization code for <paramref name="context"/> has already run. 
-        ///                 <br />Initialization is only required if that is not the case.</description>
-        ///             </item>
-        ///             <item>
-        ///                 <term><see cref="ApplicationInitializationState.Complete"/></term>
-        ///                 <description>No initialization required.</description>
-        ///             </item>
-        ///         </list>
-        ///     </ul>
-        /// </para>
+        ///     <para>
+        ///         <ul>
+        ///             <list type = "table">
+        ///                 <listheader>
+        ///                     <term><see cref = "InitializationState" /></term>
+        ///                     <description>Behaviour</description>
+        ///                 </listheader>
+        ///                 <item>
+        ///                     <term><see cref = "ApplicationInitializationState.None" /></term>
+        ///                     <description>Initialization always required.</description>
+        ///                 </item>
+        ///                 <item>
+        ///                     <term><see cref = "ApplicationInitializationState.Partial" /></term>
+        ///                     <description>The method checks if the initialization code for <paramref name = "context" /> has already run. 
+        ///                         <br />Initialization is only required if that is not the case.</description>
+        ///                 </item>
+        ///                 <item>
+        ///                     <term><see cref = "ApplicationInitializationState.Complete" /></term>
+        ///                     <description>No initialization required.</description>
+        ///                 </item>
+        ///             </list>
+        ///         </ul>
+        ///     </para>
         /// </remarks>
         public void EnsureInitialization(Engine targetEngine, IHasMetaTable context)
         {
@@ -289,19 +293,20 @@ namespace Prexonite
                         var fctx =
                             _initializationFunction.CreateFunctionContext
                                 (
-                                targetEngine,
-                                new PValue[0], // \init has no arguments
-                                new PVariable[0], // \init is not a closure
-                                true // don't initialize. That's what WE are trying to do here.
+                                    targetEngine,
+                                    new PValue[0], // \init has no arguments
+                                    new PVariable[0], // \init is not a closure
+                                    true // don't initialize. That's what WE are trying to do here.
                                 );
                         int offset;
-                        
+
                         //Find offset at which to continue initialization. 
                         //  Stored in \init key of \init function
                         //  Default to 0 if anything goes wrong
                         if (
-                            (!(_initializationFunction.Meta.TryGetValue(InitializationOffset, out init) &&
-                               int.TryParse(init.Text, out offset))) || offset < 0)
+                            (!(_initializationFunction.Meta.TryGetValue(InitializationOffset,
+                                out init) &&
+                                    int.TryParse(init.Text, out offset))) || offset < 0)
                             offset = 0;
                         fctx.Pointer = offset;
 #if Verbose
@@ -351,10 +356,11 @@ namespace Prexonite
         #region Execution
 
         /// <summary>
-        /// Executes the application's <see cref="EntryFunction">entry function</see> in the given <paramref name="parentEngine">Engine</paramref> and returns it's result.
+        ///     Executes the application's <see cref = "EntryFunction">entry function</see> in the given <paramref
+        ///      name = "parentEngine">Engine</paramref> and returns it's result.
         /// </summary>
-        /// <param name="parentEngine">The engine in which execute the entry function.</param>
-        /// <param name="args">The actual arguments for the entry function.</param>
+        /// <param name = "parentEngine">The engine in which execute the entry function.</param>
+        /// <param name = "args">The actual arguments for the entry function.</param>
         /// <returns>The value returned by the entry function.</returns>
         public PValue Run(Engine parentEngine, PValue[] args)
         {
@@ -371,10 +377,11 @@ namespace Prexonite
         }
 
         /// <summary>
-        /// Executes the application's <see cref="EntryFunction">entry function</see> in the given <paramref name="parentEngine">Engine</paramref> and returns it's result.<br />
-        /// This overload does not supply any arguments.
+        ///     Executes the application's <see cref = "EntryFunction">entry function</see> in the given <paramref
+        ///      name = "parentEngine">Engine</paramref> and returns it's result.<br />
+        ///     This overload does not supply any arguments.
         /// </summary>
-        /// <param name="parentEngine">The engine in which execute the entry function.</param>
+        /// <param name = "parentEngine">The engine in which execute the entry function.</param>
         /// <returns>The value returned by the entry function.</returns>
         public PValue Run(Engine parentEngine)
         {
@@ -386,10 +393,12 @@ namespace Prexonite
         #region Storage
 
         /// <summary>
-        /// Writes the application to a file using the default settings.
+        ///     Writes the application to a file using the default settings.
         /// </summary>
-        /// <param name="path">Path to the file to (over) write.</param>
-        /// <remarks>Use a <see cref="Loader"/> for more control over the amount of information stored in the file.</remarks>
+        /// <param name = "path">Path to the file to (over) write.</param>
+        /// <remarks>
+        ///     Use a <see cref = "Loader" /> for more control over the amount of information stored in the file.
+        /// </remarks>
         [DebuggerStepThrough]
         public void StoreInFile(string path)
         {
@@ -400,18 +409,19 @@ namespace Prexonite
         }
 
         /// <summary>
-        /// Writes the application to a string using the default settings.
+        ///     Writes the application to a string using the default settings.
         /// </summary>
         /// <remarks>
-        /// <para>
-        ///     If you need more control over the amount of information stored in the string, use the <see cref="Loader"/> class and a customized <see cref="LoaderOptions"/> instance.
-        /// </para>
-        /// <para>
-        ///     Use <see cref="Store"/> if possible as it far more memory friendly than strings in some cases.
-        /// </para>
+        ///     <para>
+        ///         If you need more control over the amount of information stored in the string, use the <see cref = "Loader" /> class and a customized <see
+        ///      cref = "LoaderOptions" /> instance.
+        ///     </para>
+        ///     <para>
+        ///         Use <see cref = "Store" /> if possible as it far more memory friendly than strings in some cases.
+        ///     </para>
         /// </remarks>
         /// <returns>A string that contains the serialized application.</returns>
-        /// <seealso cref="Store">Includes a more efficient way to write the application to stdout.</seealso>
+        /// <seealso cref = "Store">Includes a more efficient way to write the application to stdout.</seealso>
         [DebuggerStepThrough]
         public string StoreInString()
         {
@@ -421,29 +431,30 @@ namespace Prexonite
         }
 
         /// <summary>
-        /// Writes the application to the supplied <paramref name="writer"/> using the default settings.
+        ///     Writes the application to the supplied <paramref name = "writer" /> using the default settings.
         /// </summary>
-        /// <param name="writer">The <see cref="TextWriter"/> to write the application to.</param>
+        /// <param name = "writer">The <see cref = "TextWriter" /> to write the application to.</param>
         /// <remarks>
-        /// <para>
-        ///     <c>Store</c> is always superior to <see cref="StoreInString"/>.
-        /// </para>
-        /// <example>
-        /// <para>
-        ///     If you want to write the application to stdout, use <see cref="Store"/> and not <see cref="StoreInString"/> like in the following example:
-        /// </para>
-        /// <code>
-        /// public void WriteApplicationToStdOut(Application app)
-        /// {
-        ///     app.Store(Console.Out);
-        ///     //instead of
-        ///     //  Console.Write(app.StoreInString());
-        /// }
-        /// </code>
-        /// <para>
-        ///     By using the <see cref="Store"/>, everything Prexonite assembles is immedeately sent to stdout.
-        /// </para>
-        /// </example>
+        ///     <para>
+        ///         <c>Store</c> is always superior to <see cref = "StoreInString" />.
+        ///     </para>
+        ///     <example>
+        ///         <para>
+        ///             If you want to write the application to stdout, use <see cref = "Store" /> and not <see
+        ///      cref = "StoreInString" /> like in the following example:
+        ///         </para>
+        ///         <code>
+        ///             public void WriteApplicationToStdOut(Application app)
+        ///             {
+        ///             app.Store(Console.Out);
+        ///             //instead of
+        ///             //  Console.Write(app.StoreInString());
+        ///             }
+        ///         </code>
+        ///         <para>
+        ///             By using the <see cref = "Store" />, everything Prexonite assembles is immedeately sent to stdout.
+        ///         </para>
+        ///     </example>
         /// </remarks>
         public void Store(TextWriter writer)
         {
@@ -487,7 +498,7 @@ namespace Prexonite
         private readonly MetaTable _meta;
 
         /// <summary>
-        /// The applications metadata structure.
+        ///     The applications metadata structure.
         /// </summary>
         public MetaTable Meta
         {
@@ -498,7 +509,7 @@ namespace Prexonite
         #endregion
 
         /// <summary>
-        /// The id of the application. In many cases just a random (using <see cref="Guid"/>) identifier.
+        ///     The id of the application. In many cases just a random (using <see cref = "Guid" />) identifier.
         /// </summary>
         public string Id
         {
@@ -509,13 +520,13 @@ namespace Prexonite
         #region IIndirectCall Members
 
         /// <summary>
-        /// Invokes the application's entry function with the supplied <paramref name="args">arguments</paramref>.
+        ///     Invokes the application's entry function with the supplied <paramref name = "args">arguments</paramref>.
         /// </summary>
-        /// <param name="sctx">The stack context in which to invoke the entry function.</param>
-        /// <param name="args">The arguments to pass to the function call.</param>
+        /// <param name = "sctx">The stack context in which to invoke the entry function.</param>
+        /// <param name = "args">The arguments to pass to the function call.</param>
         /// <returns>The value returned by the entry function.</returns>
-        /// <seealso cref="EntryKey"/>
-        /// <seealso cref="EntryFunction"/>
+        /// <seealso cref = "EntryKey" />
+        /// <seealso cref = "EntryFunction" />
         [DebuggerStepThrough]
         public PValue IndirectCall(StackContext sctx, PValue[] args)
         {
@@ -526,20 +537,22 @@ namespace Prexonite
     }
 
     /// <summary>
-    /// Defines the possible states of initialization a application can be in.
+    ///     Defines the possible states of initialization a application can be in.
     /// </summary>
     public enum ApplicationInitializationState
     {
         /// <summary>
-        /// The application has not benn initialized or needs a complete re-initialization.
+        ///     The application has not benn initialized or needs a complete re-initialization.
         /// </summary>
         None = 0,
+
         /// <summary>
-        /// The application is only partially initialized.
+        ///     The application is only partially initialized.
         /// </summary>
         Partial = 1,
+
         /// <summary>
-        /// The application is completely initialized.
+        ///     The application is completely initialized.
         /// </summary>
         Complete = 2
     }

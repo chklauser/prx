@@ -1,25 +1,28 @@
-/*
- * Prexonite, a scripting engine (Scripting Language -> Bytecode -> Virtual Machine)
- *  Copyright (C) 2007  Christian "SealedSun" Klauser
- *  E-mail  sealedsun a.t gmail d.ot com
- *  Web     http://www.sealedsun.ch/
- *
- *  This program is free software; you can redistribute it and/or modify
- *  it under the terms of the GNU General Public License as published by
- *  the Free Software Foundation; either version 2 of the License, or
- *  (at your option) any later version.
- *
- *  Please contact me (sealedsun a.t gmail do.t com) if you need a different license.
- * 
- *  This program is distributed in the hope that it will be useful,
- *  but WITHOUT ANY WARRANTY; without even the implied warranty of
- *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- *  GNU General Public License for more details.
- *
- *  You should have received a copy of the GNU General Public License along
- *  with this program; if not, write to the Free Software Foundation, Inc.,
- *  51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
- */
+// Prexonite
+// 
+// Copyright (c) 2011, Christian Klauser
+// All rights reserved.
+// 
+// Redistribution and use in source and binary forms, with or without modification, 
+//  are permitted provided that the following conditions are met:
+// 
+//     Redistributions of source code must retain the above copyright notice, 
+//          this list of conditions and the following disclaimer.
+//     Redistributions in binary form must reproduce the above copyright notice, 
+//          this list of conditions and the following disclaimer in the 
+//          documentation and/or other materials provided with the distribution.
+//     The names of the contributors may be used to endorse or 
+//          promote products derived from this software without specific prior written permission.
+// 
+// THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND 
+//  ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED 
+//  WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED. 
+//  IN NO EVENT SHALL THE COPYRIGHT HOLDER OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT, 
+//  INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES 
+//  (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, 
+//  DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, 
+//  WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING 
+//  IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 using System;
 using System.Linq;
@@ -112,10 +115,8 @@ namespace Prexonite.Compiler.Ast
             {
                 var kind =
                     symbol.Interpretation == SymbolInterpretations.GlobalObjectVariable
-                        ?
-                            SymbolInterpretations.GlobalReferenceVariable
-                        :
-                            SymbolInterpretations.LocalReferenceVariable;
+                        ? SymbolInterpretations.GlobalReferenceVariable
+                        : SymbolInterpretations.LocalReferenceVariable;
                 var refcall =
                     new AstGetSetSymbol(File, Line, Column, Call, symbol.Id, kind);
                 refcall.Arguments.AddRange(Arguments);
@@ -143,22 +144,22 @@ namespace Prexonite.Compiler.Ast
                     Subject.Singleton().Append(Arguments));
             var argc = argv.Count;
             AstPlaceholder p;
-            if(argc == 0)
+            if (argc == 0)
             {
                 //There are no mappings at all, use default constructor
                 target.EmitConstant(this, 0);
                 target.EmitCommandCall(this, 1, Engine.PartialCallAlias);
             }
-            else if(argc == 1 && !argv[0].IsPlaceholder())
+            else if (argc == 1 && !argv[0].IsPlaceholder())
             {
                 //We have just a call target, this is actually the identity function
                 Subject.EmitCode(target);
             }
-            else if(
-                argc >= 2 
-                && !argv[0].IsPlaceholder() 
-                && argv.Skip(2).All(expr => !expr.IsPlaceholder())
-                && ((p = argv[1] as AstPlaceholder) == null || p.Index == 0))
+            else if (
+                argc >= 2
+                    && !argv[0].IsPlaceholder()
+                        && argv.Skip(2).All(expr => !expr.IsPlaceholder())
+                            && ((p = argv[1] as AstPlaceholder) == null || p.Index == 0))
                 //Matches the patterns 
                 //  subj.(c_1, c_2,...,c_n, ?0,?1,?2,...,?m) 
                 //and 
@@ -166,29 +167,29 @@ namespace Prexonite.Compiler.Ast
             {
                 //This partial application was reduced to just closed arguments in prefix position
                 //  with an optional open argument in front. No mapping is necessary in this case. 
-                
+
                 //Check for optional open argument
-                if(p != null)
+                if (p != null)
                 {
                     //There is an open argument in front. This is handled by FlippedFunctionalPartialCall
                     argv[0].EmitCode(target);
                     foreach (var arg in argv.Skip(2))
                         arg.EmitCode(target);
-                    target.EmitCommandCall(this, argc-1,FlippedFunctionalPartialCallCommand.Alias);
+                    target.EmitCommandCall(this, argc - 1, FlippedFunctionalPartialCallCommand.Alias);
                 }
                 else
                 {
                     //There is no open argument in front. This is implemented by FunctionalPartialCall
                     foreach (var arg in argv)
                         arg.EmitCode(target);
-                    target.EmitCommandCall(this, argc, FunctionalPartialCallCommand.Alias);   
+                    target.EmitCommandCall(this, argc, FunctionalPartialCallCommand.Alias);
                 }
             }
             else
             {
                 //Use full-blown partial application mechanism for indirect calls.
                 var ctorArgc = this.EmitConstructorArguments(target, argv);
-                target.EmitCommandCall(this,ctorArgc, Engine.PartialCallAlias);
+                target.EmitCommandCall(this, ctorArgc, Engine.PartialCallAlias);
             }
         }
 
@@ -200,8 +201,8 @@ namespace Prexonite.Compiler.Ast
         public override string ToString()
         {
             return string.Format("{0}: ({1}).{2}",
-                                 Enum.GetName(typeof(PCall), Call).ToLowerInvariant(),
-                                 Subject, ArgumentsToString());
+                Enum.GetName(typeof (PCall), Call).ToLowerInvariant(),
+                Subject, ArgumentsToString());
         }
 
         #endregion
