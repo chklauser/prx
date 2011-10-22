@@ -72,7 +72,7 @@ namespace Prexonite.Compiler
             get { return _interpretation; }
         }
 
-        public string Id
+        public string LocalId
         {
             get { return _id; }
         }
@@ -92,14 +92,14 @@ namespace Prexonite.Compiler
 
         public SymbolEntry With(SymbolInterpretations interpretation)
         {
-            return new SymbolEntry(interpretation, Id, Argument);
+            return new SymbolEntry(interpretation, LocalId, Argument);
         }
 
         public override string ToString()
         {
             return Enum.GetName(
                 typeof (SymbolInterpretations), Interpretation) +
-                    (Id == null ? "" : "->" + Id) +
+                    (LocalId == null ? "" : "->" + LocalId) +
                         (_argument.HasValue ? "#" + _argument.Value : ""
                             );
         }
