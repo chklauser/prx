@@ -367,6 +367,30 @@ namespace Prexonite
                 yield return arraySegment.Array[i];
         }
 
+        public static IEnumerable<LinkedListNode<T>> ToNodeSequence<T>(this LinkedList<T> list)
+        {
+            Contract.Requires(list != null);
+            Contract.Ensures(Contract.Result<IEnumerable<LinkedListNode<T>>>() != null);
+
+            if(list.Count == 0)
+                yield break;
+
+            var node = list.First;
+            while(node != null)
+            {
+#if !DEBUG
+                yield return node;
+#else
+                var prev = node.Previous;
+                var next = node.Next;
+                yield return node;
+                Debug.Assert(ReferenceEquals(node.Next,next),"Linked list has changed while enumerating over elements. (next node)");
+                Debug.Assert(ReferenceEquals(node.Previous, prev), "Linked list has changed while enumerating over elements. (prev node)");
+#endif
+                node = node.Next;
+            }
+        }
+
         #region Nested type: SingletonEnum
 
         private class SingletonEnum<T> : IEnumerable<T>

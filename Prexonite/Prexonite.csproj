@@ -322,6 +322,8 @@
     <Compile Include="Helper\Extensions.cs" />
     <Compile Include="Helper\IDependent.cs" />
     <Compile Include="Helper\INamed.cs" />
+    <Compile Include="Modular\ModuleName.cs" />
+    <Compile Include="Modular\ModuleNameCache.cs" />
     <Compile Include="OperatorNames.cs" />
     <Compile Include="Compiler\Parser.cs" />
     <Compile Include="Application.cs" />
@@ -384,6 +386,7 @@
       <Generator>TextTemplatingFileGenerator</Generator>
       <LastGenOutput>Operators.cs</LastGenOutput>
     </None>
+    <None Include="Helper\Prexonite.Modular.ModuleName" />
     <None Include="ObjectModel.cd" />
     <None Include="Prexonite.snk" />
     <Content Include="Compiler\Grammar\Grammar.Readme.txt" />
