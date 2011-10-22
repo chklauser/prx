@@ -99,6 +99,8 @@ function create_args_table()
     return s;
 }
 
+function args\stringcomp = static var stringcomp ??= System::StringComparison.InvariantCulture;
+
 function create_args_parser()
 {
     function create_parser_state(parser, argv)
@@ -114,6 +116,42 @@ function create_args_parser()
         s.\(@"\positionals") = [];
         s.\(@"\skipped") = [];
         s.\(@"\table") = new args_table;
+        s.\(@"\nextPositional") = null;
+        s.\(@"\errors") = [];
+        s.\\(@"Call") = (?.\(?) = ?);
+        
+        s.\\("argc") = ?.\argc;
+        s.\\("index") = ?.\index;
+        s.\\("table") = ?.\table;
+        
+        s.\\("parse") = (self) =>
+        {
+            var arg = self.\argv[self.\index];
+            
+            var opt;
+            if(self.\nextPositional is not null)
+            {
+                opt = self.\nextPositional;
+            }
+            else if(arg.StartsWith(self.\parser.\dash, args\stringcomp))
+            {
+                if(arg.StartsWith(self.\parser.\dash, args\stringcomp))
+                {
+                    //double --
+                }
+                else
+                {
+                    //single -
+                }
+            }
+            else
+            {
+                opt = self.\nextPositional ?? self.\parser.positional;
+                
+            }
+        };
+        
+        return s;
     }
 
     var s = new Structure;
@@ -151,7 +189,13 @@ function create_args_parser()
     s.\\("parse") = (self,argv) => 
     {
         var new s = create_parser_state(self,argv);
-        s.parse;
+        var variant = s.index;
+        while(variant < s.argc)
+        {
+            s.parse;
+            if(variant <= (variant = s.index))
+                throw "Parser is stuck.";
+        }
         return s.table;
     };   
     
@@ -197,7 +241,7 @@ function create_args_parser()
                     iw.Write(" ");
                 }
                 using(iw.indented)
-                    iw.WriteLine(desc + alen);
+                    iw.WriteLine(desc);
             }
         }
         
