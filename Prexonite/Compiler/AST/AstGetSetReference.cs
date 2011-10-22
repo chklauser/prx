@@ -33,47 +33,43 @@ namespace Prexonite.Compiler.Ast
 {
     public class AstGetSetReference : AstGetSetSymbol, ICanBeReferenced
     {
-        public AstGetSetReference(
-            string file,
-            int line,
-            int column,
-            PCall call,
-            string id,
-            SymbolInterpretations interpretation)
-            : base(file, line, column, call, id, interpretation)
+        public AstGetSetReference(string file, int line, int column, PCall call, SymbolEntry implementation)
+            : base(file, line, column, call, implementation)
         {
         }
 
-        public AstGetSetReference(
-            string file, int line, int column, string id, SymbolInterpretations interpretation)
-            : base(file, line, column, PCall.Get, id, interpretation)
+        public AstGetSetReference(string file, int line, int column, SymbolEntry implementation)
+            : base(file, line, column, PCall.Get, implementation)
         {
         }
 
-        internal AstGetSetReference(
-            Parser p, PCall call, string id, SymbolInterpretations interpretation)
-            : base(p.scanner.File, p.t.line, p.t.col, call, id, interpretation)
+        internal AstGetSetReference(Parser p, PCall call, SymbolEntry implementation)
+            : base(p.scanner.File, p.t.line, p.t.col, call, implementation)
         {
         }
 
-        internal AstGetSetReference(Parser p, string id, SymbolInterpretations interpretation)
-            : base(p, PCall.Get, id, interpretation)
+        internal AstGetSetReference(Parser p, SymbolEntry implementation)
+            : base(p, PCall.Get, implementation)
         {
         }
 
         protected override void EmitGetCode(CompilerTarget target, bool justEffect)
         {
+            if (Implementation.Module != null)
+                throw new NotImplementedException(
+                    "Emit code for cross module references not implemented");
+
             if (justEffect)
                 return;
-            switch (Interpretation)
+            switch (Implementation.Interpretation)
             {
                 case SymbolInterpretations.Command:
-                    target.Emit(this, OpCode.ldr_cmd, Id);
+                    target.Emit(this, OpCode.ldr_cmd, Implementation.LocalId);
                     break;
                 case SymbolInterpretations.Function:
                     PFunction func;
                     //Check if the function is a macro (Cannot create references to macros)
-                    if (target.Loader.ParentApplication.Functions.TryGetValue(Id, out func) &&
+                    if (target.Loader.ParentApplication.Functions.TryGetValue(Implementation.LocalId, out func) &&
                         func.IsMacro)
                     {
                         target.Loader.ReportSemanticError(Line, Column,
@@ -81,19 +77,19 @@ namespace Prexonite.Compiler.Ast
                         (new AstNull(File, Line, Column)).EmitCode(target);
                         return;
                     }
-                    target.Emit(this, OpCode.ldr_func, Id);
+                    target.Emit(this, OpCode.ldr_func, Implementation.LocalId);
                     break;
                 case SymbolInterpretations.GlobalObjectVariable:
-                    target.Emit(this, OpCode.ldr_glob, Id);
+                    target.Emit(this, OpCode.ldr_glob, Implementation.LocalId);
                     break;
                 case SymbolInterpretations.GlobalReferenceVariable:
-                    target.Emit(this, OpCode.ldglob, Id);
+                    target.Emit(this, OpCode.ldglob, Implementation.LocalId);
                     break;
                 case SymbolInterpretations.LocalObjectVariable:
-                    target.Emit(this, OpCode.ldr_loc, Id);
+                    target.Emit(this, OpCode.ldr_loc, Implementation.LocalId);
                     break;
                 case SymbolInterpretations.LocalReferenceVariable:
-                    target.Emit(this, OpCode.ldloc, Id);
+                    target.Emit(this, OpCode.ldloc, Implementation.LocalId);
                     break;
                 case SymbolInterpretations.MacroCommand:
                     target.Loader.ReportMessage(new ParseMessage(ParseMessageSeverity.Warning,
@@ -102,9 +98,9 @@ namespace Prexonite.Compiler.Ast
                                 "as a partial application. This behavior might change in the future. " +
                                     "Use partial application syntax explicitly {0}(?) or use the {2} command " +
                                         "to obtain a reference to the macro.",
-                            Id, Engine.PrexoniteVersion, Reference.Alias), this));
+                            Implementation.LocalId, Engine.PrexoniteVersion, Reference.Alias), this));
 
-                    var pa = new AstMacroInvocation(File, Line, Column, Id, Interpretation);
+                    var pa = new AstMacroInvocation(File, Line, Column, Implementation.LocalId, Implementation.Interpretation);
                     pa.Call = Call;
                     pa.Arguments.Add(new AstPlaceholder(File, Line, Column, 0));
                     var ipa = (IAstExpression) pa;
@@ -115,7 +111,7 @@ namespace Prexonite.Compiler.Ast
                 default:
                     target.Loader.ReportMessage(new ParseMessage(ParseMessageSeverity.Error,
                         string.Format("Cannot create a reference to {0} {1}.",
-                            Enum.GetName(typeof (SymbolInterpretations), Interpretation), Id), this));
+                            Enum.GetName(typeof (SymbolInterpretations), Implementation.Interpretation), Implementation.LocalId), this));
                     target.EmitNull(this);
                     break;
             }
@@ -124,7 +120,11 @@ namespace Prexonite.Compiler.Ast
         //"Assigning to a reference"
         protected override void EmitSetCode(CompilerTarget target)
         {
-            switch (Interpretation)
+            if (Implementation.Module != null)
+                throw new NotImplementedException(
+                    "Emit code for cross module references not implemented");
+
+            switch (Implementation.Interpretation)
             {
                 case SymbolInterpretations.Command:
                 case SymbolInterpretations.Function:
@@ -132,16 +132,16 @@ namespace Prexonite.Compiler.Ast
                 case SymbolInterpretations.KnownType:
                     throw new PrexoniteException(
                         "Cannot assign to a reference to a " +
-                            Enum.GetName(typeof (SymbolInterpretations), Interpretation).ToLower());
+                            Enum.GetName(typeof(SymbolInterpretations), Implementation.Interpretation).ToLower());
 
                     //Variables are not automatically dereferenced
                 case SymbolInterpretations.GlobalObjectVariable:
                 case SymbolInterpretations.GlobalReferenceVariable:
-                    target.EmitStoreGlobal(this, Id);
+                    target.EmitStoreGlobal(this, Implementation.LocalId);
                     break;
                 case SymbolInterpretations.LocalObjectVariable:
                 case SymbolInterpretations.LocalReferenceVariable:
-                    target.EmitStoreLocal(this, Id);
+                    target.EmitStoreLocal(this, Implementation.LocalId);
                     break;
             }
         }
@@ -155,8 +155,12 @@ namespace Prexonite.Compiler.Ast
 
         public override bool TryToReference(out AstGetSet reference)
         {
+            if (Implementation.Module != null)
+                throw new NotImplementedException(
+                    "Emit code for cross module references not implemented");
+
             reference = null;
-            switch (Interpretation)
+            switch (Implementation.Interpretation)
             {
                 case SymbolInterpretations.Command:
                 case SymbolInterpretations.Function:
@@ -174,9 +178,7 @@ namespace Prexonite.Compiler.Ast
                             File,
                             Line,
                             Column,
-                            PCall.Get,
-                            Id,
-                            SymbolInterpretations.GlobalObjectVariable);
+                            PCall.Get, Implementation.With(SymbolInterpretations.GlobalObjectVariable));
                     break;
 
                 case SymbolInterpretations.LocalReferenceVariable:
@@ -185,9 +187,7 @@ namespace Prexonite.Compiler.Ast
                             File,
                             Line,
                             Column,
-                            PCall.Get,
-                            Id,
-                            SymbolInterpretations.LocalObjectVariable);
+                            PCall.Get, Implementation.With(SymbolInterpretations.LocalObjectVariable));
                     break;
             }
 

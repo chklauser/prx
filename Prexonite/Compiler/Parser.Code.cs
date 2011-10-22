@@ -387,6 +387,12 @@ namespace Prexonite.Compiler
                             kind == SymbolInterpretations.GlobalReferenceVariable;
         }
 
+        public bool isLocalVariable(SymbolInterpretations interpretations)
+        {
+            return interpretations == SymbolInterpretations.LocalObjectVariable
+                || interpretations == SymbolInterpretations.LocalReferenceVariable;
+        }
+
         //id is like a function
         [DebuggerStepThrough]
         public bool isLikeFunction() //Context
@@ -421,14 +427,27 @@ namespace Prexonite.Compiler
             return la.kind == _id && !target.Symbols.ContainsKey(id);
         }
 
+        private bool _tryResolveFunction(SymbolEntry entry, out PFunction func)
+        {
+            func = null;
+            if(entry.Interpretation != SymbolInterpretations.Function)
+                return false;
+
+            if(entry.Module == null)
+            {
+                return TargetApplication.Functions.TryGetValue(entry.LocalId, out func);
+            }
+            else
+            {
+                throw new NotImplementedException("Module lookup not implemented.");
+            }
+        }
+
         [DebuggerStepThrough]
         public bool isKnownMacroFunction(SymbolEntry symbol)
         {
-            if (symbol.Interpretation != SymbolInterpretations.Function)
-                return false;
-
             PFunction func;
-            if (!TargetApplication.Functions.TryGetValue(symbol.Id, out func))
+            if (!_tryResolveFunction(symbol, out func))
                 return false;
 
             return func.Meta[CompilerTarget.MacroMetaKey].Switch;
@@ -1041,10 +1060,9 @@ namespace Prexonite.Compiler
                                     Loader.ObjectCreationFallbackPrefix + typeExpr.TypeId,
                                     out fallbackSymbol))
             {
-                if (isOuterVariable(fallbackSymbol.Id))
-                    target.RequireOuterVariable(fallbackSymbol.Id);
-                var call = new AstGetSetSymbol(parser, PCall.Get, fallbackSymbol.Id,
-                    fallbackSymbol.Interpretation);
+                if (isLocalVariable(fallbackSymbol.Interpretation) && isOuterVariable(fallbackSymbol.LocalId))
+                    target.RequireOuterVariable(fallbackSymbol.LocalId);
+                var call = new AstGetSetSymbol(parser, PCall.Get, fallbackSymbol);
                 expr = call;
                 args = call.Arguments;
             }

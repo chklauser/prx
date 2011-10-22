@@ -78,7 +78,7 @@ namespace Prexonite.Compiler.Ast
                 throw new ArgumentNullException("target");
 
             var call = new AstGetSetSymbol(
-                File, Line, Column, PCall.Get, Engine.PairAlias, SymbolInterpretations.Command);
+                File, Line, Column, PCall.Get, new SymbolEntry(SymbolInterpretations.Command, Engine.PairAlias,null));
             call.Arguments.Add(Key);
             call.Arguments.Add(Value);
             call.EmitCode(target);

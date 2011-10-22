@@ -99,9 +99,9 @@ namespace Prexonite.Compiler.Ast
             //create command call
             //  unbind(->variable)
             var unlinkCall = new AstGetSetSymbol(File, Line, Column,
-                PCall.Get, Engine.UnbindAlias, SymbolInterpretations.Command);
+                PCall.Get, new SymbolEntry(SymbolInterpretations.Command, Engine.UnbindAlias,null));
             var targetRef = new AstGetSetReference(File, Line, Column,
-                Id, SymbolInterpretations.LocalObjectVariable);
+                new SymbolEntry(SymbolInterpretations.LocalObjectVariable, Id, null));
             unlinkCall.Arguments.Add(targetRef);
 
             //Optimize call and emit code

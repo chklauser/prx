@@ -46,33 +46,33 @@ function func0
             CompilerTarget tar = ldr.FunctionTargets["func0"];
 
             Assert.AreEqual(
-                new SymbolEntry(SymbolInterpretations.LocalObjectVariable, "obj0"),
+                new SymbolEntry(SymbolInterpretations.LocalObjectVariable, "obj0", null),
                 tar.Symbols["obj0"]);
             Assert.IsTrue(tar.Function.Variables.Contains("obj0"));
             Assert.AreEqual(
-                new SymbolEntry(SymbolInterpretations.LocalObjectVariable, "obj1"),
+                new SymbolEntry(SymbolInterpretations.LocalObjectVariable, "obj1", null),
                 tar.Symbols["obj1"]);
             Assert.IsTrue(tar.Function.Variables.Contains("obj1"));
             Assert.AreEqual(
-                new SymbolEntry(SymbolInterpretations.LocalObjectVariable, "obj2"),
+                new SymbolEntry(SymbolInterpretations.LocalObjectVariable, "obj2", null),
                 tar.Symbols["obj2"]);
             Assert.IsTrue(tar.Function.Variables.Contains("obj2"));
 
             Assert.AreEqual(
-                new SymbolEntry(SymbolInterpretations.LocalReferenceVariable, "func1"),
+                new SymbolEntry(SymbolInterpretations.LocalReferenceVariable, "func1", null),
                 tar.Symbols["func1"]);
             Assert.IsTrue(tar.Function.Variables.Contains("func1"));
             Assert.AreEqual(
-                new SymbolEntry(SymbolInterpretations.LocalReferenceVariable, "ifunc0"),
+                new SymbolEntry(SymbolInterpretations.LocalReferenceVariable, "ifunc0", null),
                 tar.Symbols["ifunc0"]);
             Assert.IsTrue(tar.Function.Variables.Contains("ifunc0"));
             Assert.AreEqual(
-                new SymbolEntry(SymbolInterpretations.LocalReferenceVariable, "cor0"),
+                new SymbolEntry(SymbolInterpretations.LocalReferenceVariable, "cor0", null),
                 tar.Symbols["cor0"]);
             Assert.IsTrue(tar.Function.Variables.Contains("cor0"));
 
             Assert.AreEqual(
-                new SymbolEntry(SymbolInterpretations.GlobalObjectVariable, "gobj0"),
+                new SymbolEntry(SymbolInterpretations.GlobalObjectVariable, "gobj0", null),
                 tar.Symbols["gobj0"]);
             Assert.IsFalse(
                 tar.Function.Variables.Contains("gobj0"),
@@ -81,7 +81,7 @@ function func0
                 ldr.Options.TargetApplication.Variables.ContainsKey("gobj0"),
                 "\"global <id>;\" only declares a global variable.");
             Assert.AreEqual(
-                new SymbolEntry(SymbolInterpretations.GlobalObjectVariable, "gobj1"),
+                new SymbolEntry(SymbolInterpretations.GlobalObjectVariable, "gobj1", null),
                 tar.Symbols["gobj1"]);
             Assert.IsFalse(
                 tar.Function.Variables.Contains("gobj1"),
@@ -91,12 +91,12 @@ function func0
                 "\"declare var <id>;\" only declares a global variable.");
 
             Assert.AreEqual(
-                new SymbolEntry(SymbolInterpretations.GlobalObjectVariable, "func0\\static\\sobj0"),
+                new SymbolEntry(SymbolInterpretations.GlobalObjectVariable, "func0\\static\\sobj0", null),
                 tar.Symbols["sobj0"]);
             Assert.IsTrue(
                 ldr.Options.TargetApplication.Variables.ContainsKey("func0\\static\\sobj0"));
             Assert.AreEqual(
-                new SymbolEntry(SymbolInterpretations.GlobalObjectVariable, "func0\\static\\sobj1"),
+                new SymbolEntry(SymbolInterpretations.GlobalObjectVariable, "func0\\static\\sobj1", null),
                 tar.Symbols["sobj1"]);
             Assert.IsTrue(
                 ldr.Options.TargetApplication.Variables.ContainsKey("func0\\static\\sobj1"));
@@ -139,8 +139,8 @@ function instruction {}
             i++;
             Assert.IsInstanceOf(typeof(AstGetSetSymbol), block[i]);
             Assert.AreEqual(
-                SymbolInterpretations.Function, ((AstGetSetSymbol) block[i]).Interpretation);
-            Assert.AreEqual("instruction", ((AstGetSetSymbol) block[i]).Id);
+                SymbolInterpretations.Function, ((AstGetSetSymbol) block[i]).Implementation.Interpretation);
+            Assert.AreEqual("instruction", ((AstGetSetSymbol)block[i]).Implementation.LocalId);
             Assert.AreEqual(PCall.Get, ((AstGetSetSymbol) block[i]).Call);
             Assert.AreEqual(0, ((AstGetSetSymbol) block[i]).Arguments.Count);
 
@@ -158,8 +158,8 @@ function instruction {}
             i++;
             Assert.IsInstanceOf(typeof(AstGetSetSymbol), block[i]);
             Assert.AreEqual(
-                SymbolInterpretations.Function, ((AstGetSetSymbol) block[i]).Interpretation);
-            Assert.AreEqual("instruction", ((AstGetSetSymbol) block[i]).Id);
+                SymbolInterpretations.Function, ((AstGetSetSymbol) block[i]).Implementation.Interpretation);
+            Assert.AreEqual("instruction", ((AstGetSetSymbol)block[i]).Implementation.LocalId);
             Assert.AreEqual(PCall.Get, ((AstGetSetSymbol) block[i]).Call);
             Assert.AreEqual(0, ((AstGetSetSymbol) block[i]).Arguments.Count);
 

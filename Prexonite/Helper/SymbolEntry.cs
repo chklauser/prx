@@ -25,6 +25,7 @@
 //  IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 using System;
+using Prexonite.Modular;
 using NoDebug = System.Diagnostics.DebuggerNonUserCodeAttribute;
 
 namespace Prexonite.Compiler
@@ -33,6 +34,12 @@ namespace Prexonite.Compiler
     {
         private readonly SymbolInterpretations _interpretation;
         private readonly string _id;
+        private readonly ModuleName _module;
+
+        public ModuleName Module
+        {
+            get { return _module; }
+        }
 
         /// <summary>
         ///     Optional integer parameter for this symbol.
@@ -41,28 +48,29 @@ namespace Prexonite.Compiler
         /// </summary>
         private int? _argument;
 
-        public SymbolEntry(SymbolInterpretations interpretation)
+        public SymbolEntry(SymbolInterpretations interpretation, ModuleName module)
         {
             _interpretation = interpretation;
+            _module = module;
             _id = null;
         }
 
-        public SymbolEntry(SymbolInterpretations interpretation, string id)
-            : this(interpretation)
+        public SymbolEntry(SymbolInterpretations interpretation, string id, ModuleName module)
+            : this(interpretation, module)
         {
             if (id != null && id.Length <= 0)
                 id = null;
             _id = id;
         }
 
-        public SymbolEntry(SymbolInterpretations interpretation, int? argument)
-            : this(interpretation)
+        public SymbolEntry(SymbolInterpretations interpretation, int? argument, ModuleName module)
+            : this(interpretation, module)
         {
             _argument = argument;
         }
 
-        public SymbolEntry(SymbolInterpretations interpretation, string id, int? argument)
-            : this(interpretation, id)
+        public SymbolEntry(SymbolInterpretations interpretation, string id, int? argument, ModuleName module)
+            : this(interpretation, id, module)
         {
             _argument = argument;
         }
@@ -87,12 +95,12 @@ namespace Prexonite.Compiler
 
         public SymbolEntry With(SymbolInterpretations interpretation, string translatedId)
         {
-            return new SymbolEntry(interpretation, translatedId, Argument);
+            return new SymbolEntry(interpretation, translatedId, Argument, Module);
         }
 
         public SymbolEntry With(SymbolInterpretations interpretation)
         {
-            return new SymbolEntry(interpretation, LocalId, Argument);
+            return new SymbolEntry(interpretation, LocalId, Argument, Module);
         }
 
         public override string ToString()

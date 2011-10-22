@@ -34,12 +34,10 @@ namespace Prexonite.Compiler.Ast
         private BinaryOperator _setModifier;
         private AstGetSet _modifyingAssignment;
 
-        public SymbolInterpretations ImplementationInterpretation { get; set; }
-        public string ImplementationId { get; set; }
+        public SymbolEntry Implementation { get; set; }
 
         public AstModifyingAssignment(string file, int line, int column, BinaryOperator setModifier,
-            AstGetSet complex, SymbolInterpretations implementationInterpretation,
-            string implementationId)
+            AstGetSet complex, SymbolEntry implementation)
             : base(file, line, column)
         {
             _setModifier = setModifier;
@@ -62,26 +60,24 @@ namespace Prexonite.Compiler.Ast
                 case BinaryOperator.GreaterThanOrEqual:
                 case BinaryOperator.LessThan:
                 case BinaryOperator.LessThanOrEqual:
-                    if (implementationId == null)
+                    if (implementation == null)
                         throw new PrexoniteException(
                             "An implementation id is required for the operator " +
                                 Enum.GetName(typeof (BinaryOperator), setModifier));
                     break;
             }
-            ImplementationInterpretation = implementationInterpretation;
-            ImplementationId = implementationId;
+            Implementation = implementation;
         }
 
         internal static AstModifyingAssignment Create(Parser p, BinaryOperator setModifier,
             AstGetSet complex)
         {
             var id = OperatorNames.Prexonite.GetName(setModifier);
-            var interpretation = id == null
-                ? SymbolInterpretations.Undefined
-                : Resolve(p, id, out id);
+            var impl = id == null
+                ? new SymbolEntry(SymbolInterpretations.Undefined,null)
+                : Resolve(p, id);
             return new AstModifyingAssignment(p.scanner.File, p.t.line, p.t.col, setModifier,
-                complex, interpretation,
-                id);
+                complex, impl);
         }
 
         #region IAstHasExpressions Members
@@ -201,7 +197,7 @@ namespace Prexonite.Compiler.Ast
                     break;
                 default: // +=, *= etc.
                     {
-                        if (ImplementationId == null)
+                        if (Implementation == null)
                         {
                             target.Loader.Errors.Add(new ParseMessage(ParseMessageSeverity.Error,
                                 string.Format(
@@ -237,7 +233,7 @@ namespace Prexonite.Compiler.Ast
                                 _setModifier,
                                 _modifyingAssignment.Arguments[
                                     _modifyingAssignment.Arguments.Count - 1],
-                                ImplementationInterpretation, ImplementationId);
+                                Implementation);
                         if (justEffect)
                             assignment.EmitEffectCode(target);
                         else

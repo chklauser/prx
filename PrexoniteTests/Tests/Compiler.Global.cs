@@ -212,18 +212,18 @@ Add System::Xml to Imports;
             var symbols = ldr.Symbols;
 
             Assert.AreEqual(
-                new SymbolEntry(SymbolInterpretations.Function, "f\\1"), symbols[@"f\1"]);
+                new SymbolEntry(SymbolInterpretations.Function, "f\\1", null), symbols[@"f\1"]);
             Assert.AreEqual(
-                new SymbolEntry(SymbolInterpretations.GlobalObjectVariable, "go\\1"),
+                new SymbolEntry(SymbolInterpretations.GlobalObjectVariable, "go\\1", null),
                 symbols[@"go\1"]);
             Assert.AreEqual(
-                new SymbolEntry(SymbolInterpretations.GlobalReferenceVariable, "gf\\1"),
+                new SymbolEntry(SymbolInterpretations.GlobalReferenceVariable, "gf\\1", null),
                 symbols[@"gf\1"]);
             Assert.AreEqual(
-                new SymbolEntry(SymbolInterpretations.GlobalReferenceVariable, "gf\\2"),
+                new SymbolEntry(SymbolInterpretations.GlobalReferenceVariable, "gf\\2", null),
                 symbols[@"gf\2"]);
             Assert.AreEqual(
-                new SymbolEntry(SymbolInterpretations.Function, "if\\1"), symbols[@"if\1"]);
+                new SymbolEntry(SymbolInterpretations.Function, "if\\1", null), symbols[@"if\1"]);
         }
 
         [Test]
@@ -242,18 +242,18 @@ Add System::Xml to Imports;
             var symbols = ldr.Symbols;
 
             Assert.AreEqual(
-                new SymbolEntry(SymbolInterpretations.Function, "name1"), symbols["name1"]);
+                new SymbolEntry(SymbolInterpretations.Function, "name1", null), symbols["name1"]);
             Assert.AreNotEqual(
-                new SymbolEntry(SymbolInterpretations.GlobalObjectVariable, "name2"),
+                new SymbolEntry(SymbolInterpretations.GlobalObjectVariable, "name2", null),
                 symbols["name2"]);
             Assert.AreNotEqual(
-                new SymbolEntry(SymbolInterpretations.GlobalReferenceVariable, "name1"),
+                new SymbolEntry(SymbolInterpretations.GlobalReferenceVariable, "name1", null),
                 symbols["name1"]);
             Assert.AreEqual(
-                new SymbolEntry(SymbolInterpretations.GlobalReferenceVariable, "name2"),
+                new SymbolEntry(SymbolInterpretations.GlobalReferenceVariable, "name2", null),
                 symbols["name2"]);
             Assert.AreEqual(
-                new SymbolEntry(SymbolInterpretations.Function, "name1"), symbols["name1"]);
+                new SymbolEntry(SymbolInterpretations.Function, "name1", null), symbols["name1"]);
 
             const string input2 =
                 "declare function name1; " +
@@ -262,9 +262,9 @@ Add System::Xml to Imports;
             ldr.LoadFromString(input2);
             Assert.AreEqual(0, ldr.ErrorCount);
             Assert.AreEqual(
-                new SymbolEntry(SymbolInterpretations.Function, "name1"), symbols["name1"]);
+                new SymbolEntry(SymbolInterpretations.Function, "name1", null), symbols["name1"]);
             Assert.AreEqual(
-                new SymbolEntry(SymbolInterpretations.Function, "name2"), symbols["name2"]);
+                new SymbolEntry(SymbolInterpretations.Function, "name2", null), symbols["name2"]);
         }
 
         [Test]
@@ -285,13 +285,13 @@ Add System::Xml to Imports;
             var symbols = ldr.Symbols;
 
             Assert.AreEqual(
-                new SymbolEntry(SymbolInterpretations.GlobalObjectVariable, "name1"),
+                new SymbolEntry(SymbolInterpretations.GlobalObjectVariable, "name1", null),
                 symbols["name1"]);
             Assert.AreEqual(
-                new SymbolEntry(SymbolInterpretations.GlobalReferenceVariable, "name2"),
+                new SymbolEntry(SymbolInterpretations.GlobalReferenceVariable, "name2", null),
                 symbols["name2"]);
             Assert.AreEqual(
-                new SymbolEntry(SymbolInterpretations.GlobalObjectVariable, "value"),
+                new SymbolEntry(SymbolInterpretations.GlobalObjectVariable, "value", null),
                 symbols["value"]);
 
             //Then define them
@@ -304,16 +304,16 @@ Add System::Xml to Imports;
             Assert.AreEqual(
                 0, ldr.ErrorCount, "The compiler reported errors in the second chunk of code.");
             Assert.AreEqual(
-                new SymbolEntry(SymbolInterpretations.GlobalObjectVariable, "name1"),
+                new SymbolEntry(SymbolInterpretations.GlobalObjectVariable, "name1", null),
                 symbols["name1"]);
             Assert.IsNotNull(target.Variables["name1"]);
             Assert.AreEqual(
-                new SymbolEntry(SymbolInterpretations.GlobalReferenceVariable, "name2"),
+                new SymbolEntry(SymbolInterpretations.GlobalReferenceVariable, "name2", null),
                 symbols["name2"]);
             Assert.IsNotNull(target.Variables["name2"]);
             Assert.AreEqual("NotUseful", target.Variables["name2"].Meta["description"].Text);
             Assert.AreEqual(
-                new SymbolEntry(SymbolInterpretations.GlobalObjectVariable, "name3"),
+                new SymbolEntry(SymbolInterpretations.GlobalObjectVariable, "name3", null),
                 symbols["name3"]);
             Assert.IsNotNull(target.Variables["name3"]);
         }

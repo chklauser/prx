@@ -172,8 +172,7 @@ namespace Prexonite.Compiler
                     prop_arg,
                     new AstConstantTypeExpression(stmt.File, stmt.Line, stmt.Column,
                         NullPType.Literal));
-                var getArgs = new AstGetSetSymbol(stmt.File, stmt.Line, stmt.Column,
-                    PFunction.ArgumentListId, SymbolInterpretations.LocalObjectVariable);
+                var getArgs = new AstGetSetSymbol(stmt.File, stmt.Line, stmt.Column, TODO);
                 if (!target.Function.Variables.Contains(PFunction.ArgumentListId))
                     target.Function.Variables.Add(PFunction.ArgumentListId);
                 var getArgc = new AstGetSetMemberAccess(stmt.File, stmt.Line, stmt.Column, getArgs,

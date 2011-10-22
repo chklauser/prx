@@ -884,8 +884,7 @@ namespace Prexonite.Compiler
                     var byValOuter = outer;
                     exprs.Add(
                         p =>
-                            new AstGetSetSymbol(p, byValOuter,
-                                SymbolInterpretations.LocalObjectVariable));
+                            new AstGetSetSymbol(p, TODO));
                 }
             }
 

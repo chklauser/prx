@@ -114,11 +114,11 @@ namespace Prexonite.Compiler.Ast
             if (symbol != null && symbol.IsObjectVariable)
             {
                 var kind =
-                    symbol.Interpretation == SymbolInterpretations.GlobalObjectVariable
+                    symbol.Implementation.Interpretation == SymbolInterpretations.GlobalObjectVariable
                         ? SymbolInterpretations.GlobalReferenceVariable
                         : SymbolInterpretations.LocalReferenceVariable;
                 var refcall =
-                    new AstGetSetSymbol(File, Line, Column, Call, symbol.Id, kind);
+                    new AstGetSetSymbol(File, Line, Column, Call, symbol.Implementation.With(kind));
                 refcall.Arguments.AddRange(Arguments);
                 expr = refcall;
                 return true;

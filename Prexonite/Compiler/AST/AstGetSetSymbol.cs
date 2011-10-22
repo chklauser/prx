@@ -33,72 +33,71 @@ namespace Prexonite.Compiler.Ast
 {
     public class AstGetSetSymbol : AstGetSet, ICanBeReferenced, IAstPartiallyApplicable
     {
-        public SymbolInterpretations Interpretation;
-        public string Id;
+        public SymbolEntry Implementation { get; set; }
 
         public AstGetSetSymbol(
             string file,
             int line,
             int column,
             PCall call,
-            string id,
-            SymbolInterpretations interpretation)
+            SymbolEntry symbol)
             : base(file, line, column, call)
         {
-            if (id == null)
-                throw new ArgumentNullException("id");
-
-            Interpretation = interpretation;
-            Id = id;
+            if (symbol == null)
+                throw new ArgumentNullException("symbol");
+            
+            Implementation = symbol;
         }
 
-        public AstGetSetSymbol(
-            string file, int line, int column, string id, SymbolInterpretations interpretation)
-            : this(file, line, column, PCall.Get, id, interpretation)
+        public AstGetSetSymbol(string file, int line, int column, SymbolEntry symbol)
+            : this(file, line, column, PCall.Get, symbol)
         {
         }
 
-        internal AstGetSetSymbol(
-            Parser p, PCall call, string id, SymbolInterpretations interpretation)
-            : this(p.scanner.File, p.t.line, p.t.col, call, id, interpretation)
+        internal AstGetSetSymbol(Parser p, PCall call, SymbolEntry symbol)
+            : this(p.scanner.File, p.t.line, p.t.col, call, symbol)
         {
         }
 
-        internal AstGetSetSymbol(Parser p, string id, SymbolInterpretations interpretation)
-            : this(p, PCall.Get, id, interpretation)
+        internal AstGetSetSymbol(Parser p, SymbolEntry symbol)
+            : this(p, PCall.Get, symbol)
         {
         }
 
         protected override void EmitGetCode(CompilerTarget target, bool justEffect)
         {
-            switch (Interpretation)
+            if (Implementation.Module != null)
+                throw new NotImplementedException(
+                    "Compiling cross-module calls is not implemented yet.");
+
+            switch (Implementation.Interpretation)
             {
                 case SymbolInterpretations.Command:
-                    target.EmitCommandCall(this, Arguments.Count, Id, justEffect);
+                    target.EmitCommandCall(this, Arguments.Count, Implementation.LocalId, justEffect);
                     break;
                 case SymbolInterpretations.Function:
-                    target.EmitFunctionCall(this, Arguments.Count, Id, justEffect);
+                    target.EmitFunctionCall(this, Arguments.Count, Implementation.LocalId, justEffect);
                     break;
                 case SymbolInterpretations.GlobalObjectVariable:
                     if (!justEffect)
-                        target.EmitLoadGlobal(this, Id);
+                        target.EmitLoadGlobal(this, Implementation.LocalId);
                     break;
                 case SymbolInterpretations.LocalObjectVariable:
                     if (!justEffect)
-                        target.EmitLoadLocal(this, Id);
+                        target.EmitLoadLocal(this, Implementation.LocalId);
                     break;
                 case SymbolInterpretations.LocalReferenceVariable:
                     target.Emit(this,
-                        Instruction.CreateLocalIndirectCall(Arguments.Count, Id, justEffect));
+                        Instruction.CreateLocalIndirectCall(Arguments.Count, Implementation.LocalId, justEffect));
                     break;
                 case SymbolInterpretations.GlobalReferenceVariable:
                     target.Emit(this,
-                        Instruction.CreateGlobalIndirectCall(Arguments.Count, Id, justEffect));
+                        Instruction.CreateGlobalIndirectCall(Arguments.Count, Implementation.LocalId, justEffect));
                     break;
                 default:
                     throw new PrexoniteException(
                         "Invalid symbol " +
-                            Enum.GetName(typeof (SymbolInterpretations), Interpretation) +
+                            Enum.GetName(typeof (SymbolInterpretations), Implementation.Interpretation) +
                                 " in AST.");
             }
         }
@@ -106,32 +105,36 @@ namespace Prexonite.Compiler.Ast
         protected override void EmitSetCode(CompilerTarget target)
         {
             const bool justEffect = true;
-            switch (Interpretation)
+            if (Implementation.Module != null)
+                throw new NotImplementedException(
+                    "Compiling cross-module calls is not implemented yet.");
+
+            switch (Implementation.Interpretation)
             {
                 case SymbolInterpretations.Command:
-                    target.EmitCommandCall(this, Arguments.Count, Id, justEffect);
+                    target.EmitCommandCall(this, Arguments.Count, Implementation.LocalId, justEffect);
                     break;
                 case SymbolInterpretations.Function:
-                    target.EmitFunctionCall(this, Arguments.Count, Id, justEffect);
+                    target.EmitFunctionCall(this, Arguments.Count, Implementation.LocalId, justEffect);
                     break;
                 case SymbolInterpretations.GlobalObjectVariable:
-                    target.EmitStoreGlobal(this, Id);
+                    target.EmitStoreGlobal(this, Implementation.LocalId);
                     break;
                 case SymbolInterpretations.LocalReferenceVariable:
                     target.Emit(this,
-                        Instruction.CreateLocalIndirectCall(Arguments.Count, Id, justEffect));
+                        Instruction.CreateLocalIndirectCall(Arguments.Count, Implementation.LocalId, justEffect));
                     break;
                 case SymbolInterpretations.GlobalReferenceVariable:
                     target.Emit(this,
-                        Instruction.CreateGlobalIndirectCall(Arguments.Count, Id, justEffect));
+                        Instruction.CreateGlobalIndirectCall(Arguments.Count, Implementation.LocalId, justEffect));
                     break;
                 case SymbolInterpretations.LocalObjectVariable:
-                    target.EmitStoreLocal(this, Id);
+                    target.EmitStoreLocal(this, Implementation.LocalId);
                     break;
                 default:
                     throw new PrexoniteException(
                         "Invalid symbol " +
-                            Enum.GetName(typeof (SymbolInterpretations), Interpretation) +
+                            Enum.GetName(typeof (SymbolInterpretations), Implementation.Interpretation) +
                                 " in AST.");
             }
         }
@@ -141,8 +144,8 @@ namespace Prexonite.Compiler.Ast
             get
             {
                 return
-                    Interpretation == SymbolInterpretations.GlobalObjectVariable ||
-                        Interpretation == SymbolInterpretations.LocalObjectVariable;
+                    Implementation.Interpretation == SymbolInterpretations.GlobalObjectVariable ||
+                        Implementation.Interpretation == SymbolInterpretations.LocalObjectVariable;
             }
         }
 
@@ -151,16 +154,16 @@ namespace Prexonite.Compiler.Ast
             get
             {
                 return
-                    Interpretation == SymbolInterpretations.GlobalObjectVariable ||
-                        Interpretation == SymbolInterpretations.GlobalReferenceVariable ||
-                            Interpretation == SymbolInterpretations.LocalObjectVariable ||
-                                Interpretation == SymbolInterpretations.LocalReferenceVariable;
+                    Implementation.Interpretation == SymbolInterpretations.GlobalObjectVariable ||
+                        Implementation.Interpretation == SymbolInterpretations.GlobalReferenceVariable ||
+                            Implementation.Interpretation == SymbolInterpretations.LocalObjectVariable ||
+                                Implementation.Interpretation == SymbolInterpretations.LocalReferenceVariable;
             }
         }
 
         public override AstGetSet GetCopy()
         {
-            AstGetSet copy = new AstGetSetSymbol(File, Line, Column, Call, Id, Interpretation);
+            AstGetSet copy = new AstGetSetSymbol(File, Line, Column, Call, Implementation);
             CopyBaseMembers(copy);
             return copy;
         }
@@ -170,10 +173,10 @@ namespace Prexonite.Compiler.Ast
             return
                 base.ToString() +
                     String.Format(
-                        " {0}-{1} {2}",
-                        Enum.GetName(typeof (SymbolInterpretations), Interpretation),
-                        Id,
-                        ArgumentsToString());
+                        " {0}-{1} {2}{3}",
+                        Enum.GetName(typeof (SymbolInterpretations), Implementation.Interpretation),
+                        Implementation.LocalId,
+                        ArgumentsToString(), Implementation.Module == null ? "" : (" from " + Implementation.Module));
         }
 
         #region ICanBeReferenced Members
@@ -186,7 +189,7 @@ namespace Prexonite.Compiler.Ast
         public virtual bool TryToReference(out AstGetSet result)
         {
             result = null;
-            switch (Interpretation)
+            switch (Implementation.Interpretation)
             {
                 case SymbolInterpretations.Function:
                 case SymbolInterpretations.GlobalObjectVariable:
@@ -195,7 +198,7 @@ namespace Prexonite.Compiler.Ast
                 case SymbolInterpretations.GlobalReferenceVariable:
                 case SymbolInterpretations.Command:
                     result =
-                        new AstGetSetReference(File, Line, Column, PCall.Get, Id, Interpretation);
+                        new AstGetSetReference(File, Line, Column, PCall.Get, Implementation);
                     break;
             }
 

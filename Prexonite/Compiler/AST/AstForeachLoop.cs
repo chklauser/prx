@@ -95,7 +95,7 @@ namespace Prexonite.Compiler.Ast
             }
             var ldEnumVar =
                 new AstGetSetSymbol(
-                    File, Line, Column, enumVar, SymbolInterpretations.LocalObjectVariable);
+                    File, Line, Column, new SymbolEntry(SymbolInterpretations.LocalObjectVariable, enumVar, null));
             var getCurrent =
                 new AstGetSetMemberAccess(File, Line, Column, ldEnumVar, "Current");
             element.Arguments.Add(getCurrent);

@@ -1856,30 +1856,20 @@ function main()[is volatile;]
             var block = new AstBlockExpression("file", -1, -2);
 
             var assignStmt = new AstGetSetSymbol("file", -1, -2, PCall.Set,
-                "s",
-                SymbolInterpretations.
-                    GlobalObjectVariable);
+                new SymbolEntry(SymbolInterpretations.GlobalObjectVariable, "s",null));
             assignStmt.Arguments.Add(new AstConstant("file", -1, -2, "stmt."));
             var incStmt = new AstModifyingAssignment("file", -1, -2,
                 BinaryOperator.Addition,
                 assignStmt,
-                SymbolInterpretations.
-                    Command,
-                Addition.
-                    DefaultAlias);
+                new SymbolEntry(SymbolInterpretations.Command, Addition.DefaultAlias, null));
 
             var assignExpr = new AstGetSetSymbol("file", -1, -2, PCall.Set,
-                "s",
-                SymbolInterpretations.
-                    GlobalObjectVariable);
+                new SymbolEntry(SymbolInterpretations.GlobalObjectVariable, "s", null));
             assignExpr.Arguments.Add(new AstConstant("file", -1, -2, "expr."));
             var incExpr = new AstModifyingAssignment("file", -1, -2,
                 BinaryOperator.Addition,
                 assignExpr,
-                SymbolInterpretations.
-                    Command,
-                Addition.
-                    DefaultAlias);
+                new SymbolEntry(SymbolInterpretations.Command, Addition.DefaultAlias, null));
 
             block.Statements.Add(incStmt);
             block.Expression = incExpr;

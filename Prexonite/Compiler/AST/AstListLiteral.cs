@@ -85,7 +85,8 @@ namespace Prexonite.Compiler.Ast
         protected override void DoEmitCode(CompilerTarget target)
         {
             var call = new AstGetSetSymbol(
-                File, Line, Column, PCall.Get, Engine.ListAlias, SymbolInterpretations.Command);
+                File, Line, Column, PCall.Get,
+                new SymbolEntry(SymbolInterpretations.Command, Engine.ListAlias, null));
             call.Arguments.AddRange(Elements);
             call.EmitCode(target);
         }

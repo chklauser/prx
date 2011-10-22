@@ -178,24 +178,19 @@ namespace Prexonite.Compiler.Ast
 
         #endregion
 
-        internal static SymbolInterpretations Resolve(Parser parser, string symbolicId,
-            out string physicalId)
+        internal static SymbolEntry Resolve(Parser parser, string symbolicId)
         {
-            SymbolInterpretations interpretation;
             SymbolEntry symbolEntry;
             if (!parser.target.Symbols.TryGetValue(symbolicId, out symbolEntry))
             {
-                physicalId = symbolicId;
-                interpretation = SymbolInterpretations.Command;
                 parser.SemErr(string.Format("No implementation defined for operator `{0}`",
-                    physicalId));
+                    symbolEntry));
+                return new SymbolEntry(SymbolInterpretations.Command, symbolicId, null);
             }
             else
             {
-                interpretation = symbolEntry.Interpretation;
-                physicalId = symbolEntry.Id;
+                return symbolEntry;
             }
-            return interpretation;
         }
     }
 }

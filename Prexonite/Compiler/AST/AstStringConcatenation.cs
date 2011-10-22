@@ -45,9 +45,7 @@ namespace Prexonite.Compiler.Ast
                                           IAstExpression,
                                           IAstHasExpressions
     {
-        public SymbolInterpretations OperatorInterpretation { get; set; }
-
-        public string OperatorId { get; set; }
+        public SymbolEntry Implementation { get; set; }
 
         /// <summary>
         ///     The list of arguments for the string concatenation.
@@ -60,26 +58,24 @@ namespace Prexonite.Compiler.Ast
         /// <param name = "file">The file that caused this node to be created.</param>
         /// <param name = "line">The line that caused this node to be created.</param>
         /// <param name = "column">The column that caused this node to be created.</param>
+        /// <param name="operatorImplementation"></param>
         /// <param name = "arguments">A list of expressions to be added to the <see cref = "Arguments" /> list.</param>
         [DebuggerNonUserCode]
-        public AstStringConcatenation(
-            string file, int line, int column, SymbolInterpretations operatorImplementation,
-            string operatorId, params IAstExpression[] arguments)
+        public AstStringConcatenation(string file, int line, int column, SymbolEntry operatorImplementation, params IAstExpression[] arguments)
             : base(file, line, column)
         {
             if (arguments == null)
                 arguments = new IAstExpression[] {};
 
             Arguments.AddRange(arguments);
-            OperatorId = operatorId;
-            OperatorInterpretation = operatorImplementation;
+            Implementation = operatorImplementation;
         }
 
         internal AstStringConcatenation Create(Parser p, params IAstExpression[] arguments)
         {
             string id;
-            var interpretation = Resolve(p, OperatorNames.Prexonite.Addition, out id);
-            return new AstStringConcatenation(p.scanner.File, p.t.line, p.t.col, interpretation, id,
+            var interpretation = Resolve(p, OperatorNames.Prexonite.Addition);
+            return new AstStringConcatenation(p.scanner.File, p.t.line, p.t.col, interpretation,
                 arguments);
         }
 
@@ -128,12 +124,12 @@ namespace Prexonite.Compiler.Ast
         protected override void DoEmitCode(CompilerTarget target)
         {
             if (Arguments.Count > 2
-                && OperatorInterpretation == SymbolInterpretations.Command
-                    && OperatorId == Addition.DefaultAlias)
+                && Implementation.Module == null
+                && Implementation.Interpretation == SymbolInterpretations.Command
+                    && Implementation.LocalId == Addition.DefaultAlias)
             {
                 var call = new AstGetSetSymbol(File, Line, Column, PCall.Get,
-                    Engine.ConcatenateAlias,
-                    SymbolInterpretations.Command);
+                    Implementation.With(SymbolInterpretations.Command,Engine.ConcatenateAlias));
                 call.Arguments.AddRange(Arguments);
                 call.EmitCode(target);
             }
@@ -143,7 +139,7 @@ namespace Prexonite.Compiler.Ast
                     (aggregate, right) =>
                         new AstBinaryOperator(File, Line, Column, aggregate, BinaryOperator.Addition,
                             right,
-                            OperatorInterpretation, OperatorId));
+                            Implementation));
                 op.EmitCode(target);
             }
             else if (Arguments.Count == 1)

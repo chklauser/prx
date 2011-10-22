@@ -182,10 +182,12 @@ namespace Prexonite.Commands
                     return false;
             }
 
+            //TODO Can only return local symbol entries at the moment
+
             var id = Value as string;
             if (id != null)
             {
-                entry = new SymbolEntry(symKind, id);
+                entry = new SymbolEntry(symKind, id, null);
                 return true;
             }
             else

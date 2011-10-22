@@ -176,9 +176,11 @@ namespace Prexonite.Compiler.Ast
         private static bool _isStacklessRecursionPossible(CompilerTarget target,
             AstGetSetSymbol symbol)
         {
-            if (symbol.Interpretation != SymbolInterpretations.Function) //must be function call
+            if (symbol.Implementation.Interpretation != SymbolInterpretations.Function) //must be function call
                 return false;
-            if (!Engine.StringsAreEqual(target.Function.Id, symbol.Id))
+            if(symbol.Implementation.Module != null) //must be direct recursive iteration
+                return false;
+            if (!Engine.StringsAreEqual(target.Function.Id, symbol.Implementation.LocalId))
                 //must be direct recursive iteration
                 return false;
             if (target.Function.Variables.Contains(PFunction.ArgumentListId))

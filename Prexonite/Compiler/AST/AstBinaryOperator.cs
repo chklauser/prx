@@ -39,18 +39,17 @@ namespace Prexonite.Compiler.Ast
         private IAstExpression _leftOperand;
         private IAstExpression _rightOperand;
         private BinaryOperator _operator;
-        private SymbolInterpretations _implementationInterpretation;
-        private string _implementationId;
+        private SymbolEntry _implementation;
 
         internal static AstBinaryOperator Create(Parser parser, IAstExpression leftOperand,
             BinaryOperator op,
             IAstExpression rightOperand)
         {
             string id;
-            var interpretation = Resolve(parser, OperatorNames.Prexonite.GetName(op), out id);
+            var impl = Resolve(parser, OperatorNames.Prexonite.GetName(op));
             return new AstBinaryOperator(parser.scanner.File, parser.t.line, parser.t.col,
                 leftOperand, op,
-                rightOperand, interpretation, id);
+                rightOperand,impl);
         }
 
         /// <summary>
@@ -62,8 +61,7 @@ namespace Prexonite.Compiler.Ast
         /// <param name = "leftOperand">The left operand of the expression.</param>
         /// <param name = "op">The operator.</param>
         /// <param name = "rightOperand">The right operand of the expression.</param>
-        /// <param name = "implementationInterpretation">The interpretation of the implementation id (command or function in most cases)</param>
-        /// <param name = "implementationId">The id of the Prexonite entity that is used for the implementation (a command or funciton id in most cases)</param>
+        /// <param name = "implementation">Describes the Prexonite entity that is used for the implementation (a command or function entry in most cases)</param>
         /// <seealso cref = "BinaryOperator" />
         /// <seealso cref = "IAstExpression" />
         public AstBinaryOperator(
@@ -73,17 +71,15 @@ namespace Prexonite.Compiler.Ast
             IAstExpression leftOperand,
             BinaryOperator op,
             IAstExpression rightOperand,
-            SymbolInterpretations implementationInterpretation,
-            string implementationId)
+            SymbolEntry implementation)
             : base(file, line, column)
         {
-            if (implementationId == null)
-                throw new ArgumentNullException("implementationId");
+            if (implementation == null)
+                throw new ArgumentNullException("implementation");
 
             _leftOperand = leftOperand;
             _rightOperand = rightOperand;
-            _implementationInterpretation = implementationInterpretation;
-            _implementationId = implementationId;
+            _implementation = implementation;
             _operator = op;
         }
 
@@ -112,16 +108,9 @@ namespace Prexonite.Compiler.Ast
             set { _operator = value; }
         }
 
-        public SymbolInterpretations ImplementationInterpretation
+        public SymbolEntry Implementation
         {
-            get { return _implementationInterpretation; }
-            set { _implementationInterpretation = value; }
-        }
-
-        public string ImplementationId
-        {
-            get { return _implementationId; }
-            set { _implementationId = value; }
+            get { return _implementation; }
         }
 
         #endregion
@@ -132,8 +121,7 @@ namespace Prexonite.Compiler.Ast
         /// <param name = "target">The target to which to write the code to.</param>
         protected override void DoEmitCode(CompilerTarget target)
         {
-            var call = new AstGetSetSymbol(File, Line, Column, PCall.Get, _implementationId,
-                _implementationInterpretation);
+            var call = new AstGetSetSymbol(File, Line, Column, PCall.Get, Implementation);
             call.Arguments.Add(_leftOperand);
             call.Arguments.Add(_rightOperand);
             call.EmitCode(target);
@@ -256,9 +244,7 @@ namespace Prexonite.Compiler.Ast
                                 File,
                                 Line,
                                 Column,
-                                ImplementationInterpretation,
-                                ImplementationId,
-                                leftConstant,
+                                Implementation,
                                 rightConstant ?? _rightOperand));
 
                         return true;
@@ -272,9 +258,7 @@ namespace Prexonite.Compiler.Ast
                                 File,
                                 Line,
                                 Column,
-                                ImplementationInterpretation,
-                                ImplementationId,
-                                leftConstant ?? _leftOperand,
+                                Implementation,
                                 rightConstant));
                         return true;
                     }

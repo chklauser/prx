@@ -744,7 +744,7 @@ internal partial class Parser {
 		while (la.kind == _then) {
 			Get();
 			AppendRightExpr(/*Parser.Expression.atg:46*/out outerExpr);
-			/*Parser.Expression.atg:46*/AstGetSetSymbol thenExpr = new AstGetSetSymbol(this, PCall.Get, Engine.ThenAlias, SymbolInterpretations.Command);
+			/*Parser.Expression.atg:46*/AstGetSetSymbol thenExpr = new AstGetSetSymbol(this, PCall.Get, TODO);
 			thenExpr.Arguments.Add(expr);
 			thenExpr.Arguments.Add(outerExpr);
 			expr = thenExpr;
@@ -973,8 +973,7 @@ internal partial class Parser {
 			{
 			    SemErr(string.Format("Cannot assign to a {0}",
 			        expr.GetType().Name));
-			    assignment = new AstGetSetSymbol(this, PCall.Get, "SEMANTIC_ERROR",
-			        SymbolInterpretations.LocalObjectVariable); //to prevent null references
+			    assignment = new AstGetSetSymbol(this, PCall.Get, TODO); //to prevent null references
 			}
 			assignment.Call = PCall.Set;
 			
@@ -1403,7 +1402,7 @@ internal partial class Parser {
 		
 		//Construct expr (appears in the place of lazy expression)
 		var clo = new AstCreateClosure(this, func.Id);
-		var thunk = new AstGetSetSymbol(this, Engine.ThunkAlias, SymbolInterpretations.Command);
+		var thunk = new AstGetSetSymbol(this, TODO);
 		thunk.Arguments.Add(clo);
 		thunk.Arguments.AddRange(cap(this)); //Add captured values
 		expr = thunk;
@@ -1491,7 +1490,7 @@ internal partial class Parser {
 			    else
 			        SemErr("Only reference variables can be dereferenced twice.");
 			}
-			complex = new AstGetSetReference(this, s.Id, kind);
+			complex = new AstGetSetReference(this, TODO);
 			
 		} else if (la.kind == _pointer) {
 			Get();
@@ -1507,7 +1506,7 @@ internal partial class Parser {
 			    if(isOuterVariable(s.Id))
 			        target.RequireOuterVariable(s.Id);
 			}
-			complex = new AstGetSetReference(this, s.Id, s.Interpretation);
+			complex = new AstGetSetReference(this, TODO);
 			
 		} else if (la.kind == _question) {
 			Get();
@@ -1863,7 +1862,7 @@ internal partial class Parser {
 			/*Parser.GlobalScope.atg:152*/_popLexerState();
 			if(errors.count == 0)
 			{
-				AstGetSet complex = new AstGetSetSymbol(this, PCall.Set, id, InterpretAsObjectVariable(type));
+				AstGetSet complex = new AstGetSetSymbol(this, PCall.Set, TODO);
 				complex.Arguments.Add(expr);
 				target.Ast.Add(complex);
 				vari.Meta[Application.InitializationId] = TargetApplication._RegisterInitializationUpdate().ToString();
@@ -2325,12 +2324,12 @@ internal partial class Parser {
 		           var inject = derStub.Parameters.Select(par => 
 		           {
 		               var getParam =
-		                   new AstGetSetSymbol(this, PCall.Get, par, SymbolInterpretations.LocalObjectVariable);
+		                   new AstGetSetSymbol(this, PCall.Get, TODO);
 		               var asThunkCall = 
-		                new AstGetSetSymbol(this, PCall.Get, Engine.AsThunkAlias, SymbolInterpretations.Command);
+		                new AstGetSetSymbol(this, PCall.Get, TODO);
 		            asThunkCall.Arguments.Add(getParam);
 		            var setParam =
-		                new AstGetSetSymbol(this, PCall.Set, par, SymbolInterpretations.LocalObjectVariable);
+		                new AstGetSetSymbol(this, PCall.Set, TODO);
 		            setParam.Arguments.Add(asThunkCall);
 		            return (AstNode) setParam;
 		           });
@@ -2339,15 +2338,15 @@ internal partial class Parser {
 		       else
 		       {										            
 		           //Global lazy functions don't technically need a stub. Might be removed later on
-		           var call = new AstGetSetSymbol(this, ct.Function.Id, SymbolInterpretations.Function);
+		           var call = new AstGetSetSymbol(this, TODO);
 		           
 		           //Generate code for arguments (each wrapped in a `asThunk` command call)
 		        foreach(var par in derStub.Parameters)
 		        {
 		            var getParam = 
-		                new AstGetSetSymbol(this, PCall.Get, par, SymbolInterpretations.LocalObjectVariable);
+		                new AstGetSetSymbol(this, PCall.Get, TODO);
 		            var asThunkCall = 
-		                new AstGetSetSymbol(this, PCall.Get, Engine.AsThunkAlias, SymbolInterpretations.Command);
+		                new AstGetSetSymbol(this, PCall.Get, TODO);
 		            asThunkCall.Arguments.Add(getParam);
 		            call.Arguments.Add(asThunkCall);
 		        }
@@ -2762,7 +2761,7 @@ internal partial class Parser {
 		string physicalId = func.Id;
 		
 		CompilerTarget ft = FunctionTargets[func];
-		AstGetSetSymbol setVar = new AstGetSetSymbol(this, PCall.Set, logicalId, SymbolInterpretations.LocalObjectVariable);
+		AstGetSetSymbol setVar = new AstGetSetSymbol(this, PCall.Set, TODO);
 		if(func.Meta[PFunction.LazyKey].Switch)
 		{
 		    //Capture environment by value                                        
@@ -2780,7 +2779,7 @@ internal partial class Parser {
 		}
 		else
 		{
-		    setVar.Arguments.Add( new AstGetSetReference(this, physicalId, SymbolInterpretations.Function) );
+		    setVar.Arguments.Add( new AstGetSetReference(this, TODO) );
 		}
 		block.Add(setVar);
 		
@@ -2972,7 +2971,7 @@ internal partial class Parser {
 		    } 
 		    else
 		    {
-		        function = new AstGetSetSymbol(this, sym.Id, sym.Interpretation);
+		        function = new AstGetSetSymbol(this, TODO);
 		    }
 		}
 		
@@ -3007,13 +3006,13 @@ internal partial class Parser {
 			        SemErr(t.line, t.col, "Variable name expected but was " + 
 			            Enum.GetName(typeof(SymbolInterpretations),varSym.Interpretation));
 			    }
-			    complex = new AstGetSetSymbol(this, varSym.Id, varSym.Interpretation);;
+			    complex = new AstGetSetSymbol(this, TODO);;
 			}
 			else
 			{
 			    //Unknown symbols are treated as functions. See production Function for details.
 			    SemErr(t.line, t.col, "Internal compiler error. Did not catch unknown identifier.");
-			    complex = new AstGetSetSymbol(this, "Not a Variable Id", SymbolInterpretations.LocalObjectVariable);
+			    complex = new AstGetSetSymbol(this, TODO);
 			}
 			
 		} else SynErr(157);
@@ -3073,9 +3072,9 @@ internal partial class Parser {
 			
 		} else SynErr(158);
 		/*Parser.Statement.atg:246*/variable = InterpretationIsObjectVariable(kind) ?
-		new AstGetSetSymbol(this, PCall.Get, staticId, kind)
+		new AstGetSetSymbol(this, PCall.Get, TODO)
 		:
-			new AstGetSetReference(this, PCall.Get, staticId, InterpretAsObjectVariable(kind)); 
+			new AstGetSetReference(this, PCall.Get, TODO); 
 		                                     
 		                                 if(isNewDecl)
 		                                     variable = new AstGetSetNewDecl(this)
@@ -3099,7 +3098,7 @@ internal partial class Parser {
 		if (la.kind == _assign) {
 			Get();
 			LazyExpression(/*Parser.Statement.atg:589*/out thunk);
-			/*Parser.Statement.atg:592*/var assign = new AstGetSetSymbol(this, PCall.Set, id, SymbolInterpretations.LocalObjectVariable);
+			/*Parser.Statement.atg:592*/var assign = new AstGetSetSymbol(this, PCall.Set, TODO);
 			assign.Arguments.Add(thunk);
 			block.Add(assign);
 			
