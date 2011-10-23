@@ -228,7 +228,7 @@ namespace Prexonite.Compiler.Macro.Commands
                 // ReSharper restore MemberHidesStaticFromOuterClass
 
                 public PartialCallMacroPerform()
-                    : base(Alias, CallMacroPerform.Alias, SymbolInterpretations.Command)
+                    : base(Alias, TODO)
                 {
                 }
 
@@ -300,7 +300,7 @@ namespace Prexonite.Compiler.Macro.Commands
             IEnumerable<IAstExpression> args)
         {
             var getContext = context.CreateGetSetSymbol(
-                SymbolInterpretations.LocalReferenceVariable, PCall.Get, MacroAliases.ContextAlias);
+                SymbolInterpretations.LocalReferenceVariable, PCall.Get);
             var prepareCall = context.CreateMacroInvocation(context.Call,
                 CallMacroPerform.PartialCallMacroPerform.Alias, SymbolInterpretations.MacroCommand,
                 macroSpec,

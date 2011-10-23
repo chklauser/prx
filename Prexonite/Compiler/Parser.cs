@@ -860,7 +860,7 @@ internal partial class Parser {
 			/*Parser.Expression.atg:124*/isNot = true; 
 		}
 		EqlExpr(/*Parser.Expression.atg:126*/out lhs);
-		/*Parser.Expression.atg:126*/expr = isNot ? AstUnaryOperator.Create(this, UnaryOperator.LogicalNot, lhs) : lhs; 
+		/*Parser.Expression.atg:126*/expr = isNot ? AstUnaryOperator._Create(this, UnaryOperator.LogicalNot, lhs) : lhs; 
 	}
 
 	void EqlExpr(/*Parser.Expression.atg:130*/out IAstExpression expr) {
@@ -1064,15 +1064,15 @@ internal partial class Parser {
 				if(isInverted)
 				                              {
 				                                  ((AstTypecheck)expr).IsInverted = true;
-					expr = AstUnaryOperator.Create(this, UnaryOperator.LogicalNot, expr);
+					expr = AstUnaryOperator._Create(this, UnaryOperator.LogicalNot, expr);
 				                              }
 				
 			} else if (la.kind == _inc) {
 				Get();
-				/*Parser.Expression.atg:242*/expr = AstUnaryOperator.Create(this, UnaryOperator.PostIncrement, expr); 
+				/*Parser.Expression.atg:242*/expr = AstUnaryOperator._Create(this, UnaryOperator.PostIncrement, expr); 
 			} else if (la.kind == _dec) {
 				Get();
-				/*Parser.Expression.atg:243*/expr = AstUnaryOperator.Create(this, UnaryOperator.PostDecrement, expr); 
+				/*Parser.Expression.atg:243*/expr = AstUnaryOperator._Create(this, UnaryOperator.PostDecrement, expr); 
 			} else {
 				GetSetExtension(/*Parser.Expression.atg:244*/expr, out extension);
 				/*Parser.Expression.atg:245*/expr = extension; 
@@ -1107,7 +1107,7 @@ internal partial class Parser {
 		}
 		Primary(/*Parser.Expression.atg:257*/out expr);
 		/*Parser.Expression.atg:258*/while(prefixes.Count > 0)
-		   expr = AstUnaryOperator.Create(this, prefixes.Pop(), expr);
+		   expr = AstUnaryOperator._Create(this, prefixes.Pop(), expr);
 		
 	}
 
@@ -2648,10 +2648,10 @@ internal partial class Parser {
 			/*Parser.Statement.atg:87*/block.Add(complex); 
 		} else if (la.kind == _inc) {
 			Get();
-			/*Parser.Statement.atg:88*/block.Add(AstUnaryOperator.Create(this, UnaryOperator.PostIncrement, complex)); 
+			/*Parser.Statement.atg:88*/block.Add(AstUnaryOperator._Create(this, UnaryOperator.PostIncrement, complex)); 
 		} else if (la.kind == _dec) {
 			Get();
-			/*Parser.Statement.atg:89*/block.Add(AstUnaryOperator.Create(this, UnaryOperator.PostDecrement, complex)); 
+			/*Parser.Statement.atg:89*/block.Add(AstUnaryOperator._Create(this, UnaryOperator.PostDecrement, complex)); 
 		} else if (StartOf(37)) {
 			Assignment(/*Parser.Statement.atg:90*/complex, out node);
 			/*Parser.Statement.atg:90*/symbol = node as AstGetSetSymbol;

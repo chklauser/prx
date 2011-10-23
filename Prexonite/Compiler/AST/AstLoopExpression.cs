@@ -120,8 +120,8 @@ namespace Prexonite.Compiler.Ast
                                         ret.Line,
                                         ret.Column,
                                         PCall.Get,
-                                        lstVar,
-                                        SymbolInterpretations.LocalObjectVariable),
+                                        new SymbolEntry(SymbolInterpretations.LocalObjectVariable,
+                                            lstVar, null)),
                                     "");
                             addTmpToList.Arguments.Add(
                                 new AstGetSetSymbol(
@@ -129,8 +129,8 @@ namespace Prexonite.Compiler.Ast
                                     ret.Line,
                                     ret.Column,
                                     PCall.Get,
-                                    tmpVar,
-                                    SymbolInterpretations.LocalObjectVariable));
+                                    new SymbolEntry(SymbolInterpretations.LocalObjectVariable,
+                                        tmpVar, null)));
                             block[i] = addTmpToList;
                         }
                         else
@@ -146,8 +146,8 @@ namespace Prexonite.Compiler.Ast
                                         ret.Line,
                                         ret.Column,
                                         PCall.Set,
-                                        tmpVar,
-                                        SymbolInterpretations.LocalObjectVariable);
+                                        new SymbolEntry(SymbolInterpretations.LocalObjectVariable,
+                                        tmpVar, null));
                                 setTmp.Arguments.Add(ret.Expression);
                                 AstGetSet addExprToList =
                                     new AstGetSetMemberAccess(
@@ -160,8 +160,8 @@ namespace Prexonite.Compiler.Ast
                                             ret.Line,
                                             ret.Column,
                                             PCall.Get,
-                                            lstVar,
-                                            SymbolInterpretations.LocalObjectVariable),
+                                            new SymbolEntry(SymbolInterpretations.LocalObjectVariable,
+                                            lstVar, null)),
                                         "");
                                 addExprToList.Arguments.Add(
                                     new AstGetSetSymbol(
@@ -169,8 +169,8 @@ namespace Prexonite.Compiler.Ast
                                         ret.Line,
                                         ret.Column,
                                         PCall.Get,
-                                        tmpVar,
-                                        SymbolInterpretations.LocalObjectVariable));
+                                        new SymbolEntry(SymbolInterpretations.LocalObjectVariable,
+                                        tmpVar, null)));
 
                                 replacement.Add(setTmp);
                                 replacement.Add(addExprToList);
@@ -190,8 +190,8 @@ namespace Prexonite.Compiler.Ast
                                             ret.Line,
                                             ret.Column,
                                             PCall.Get,
-                                            lstVar,
-                                            SymbolInterpretations.LocalObjectVariable),
+                                            new SymbolEntry(SymbolInterpretations.LocalObjectVariable,
+                                            lstVar, null)),
                                         "");
                                 addExprToList.Arguments.Add(ret.Expression);
                                 block[i] = addExprToList;
@@ -207,8 +207,8 @@ namespace Prexonite.Compiler.Ast
                                 ret.Line,
                                 ret.Column,
                                 PCall.Set,
-                                tmpVar,
-                                SymbolInterpretations.LocalObjectVariable);
+                                new SymbolEntry(SymbolInterpretations.LocalObjectVariable,
+                                        tmpVar, null));
                         setTmp.Arguments.Add(ret.Expression);
                         block[i] = setTmp;
                     }

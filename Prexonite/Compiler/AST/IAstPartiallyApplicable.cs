@@ -242,8 +242,7 @@ namespace Prexonite.Compiler.Ast
         public static IAstExpression ConstFunc<T>(this T expr) where T : AstNode, IAstExpression
         {
             var constCmd = new AstGetSetSymbol(expr.File, expr.Line, expr.Column, PCall.Get,
-                Const.Alias,
-                SymbolInterpretations.Command);
+                new SymbolEntry(SymbolInterpretations.Command, Const.Alias, null));
             constCmd.Arguments.Add(expr);
             return constCmd;
         }
@@ -270,7 +269,7 @@ namespace Prexonite.Compiler.Ast
                     "placeholder");
 
             var call = new AstGetSetSymbol(placeholder.File, placeholder.Line, placeholder.Column,
-                PCall.Get, Id.Alias, SymbolInterpretations.Command);
+                PCall.Get, new SymbolEntry(SymbolInterpretations.Command, Id.Alias, null));
             call.Arguments.Add(placeholder.GetCopy());
             return call;
         }

@@ -37,44 +37,36 @@ namespace Prexonite.Compiler.Ast
         private IAstExpression _operand;
         private UnaryOperator _operator;
 
-        public SymbolInterpretations ImplementationInterpretation { get; set; }
+        public SymbolEntry Implementation { get; set; }
 
-        public string ImplementationId { get; set; }
-
-        public AstUnaryOperator(
-            string file, int line, int column, UnaryOperator op, IAstExpression operand,
-            SymbolInterpretations implementationInterpretation, string implementationId)
+        public AstUnaryOperator(string file, int line, int column, UnaryOperator op, IAstExpression operand, SymbolEntry implementation)
             : base(file, line, column)
         {
             if (operand == null)
                 throw new ArgumentNullException("operand");
             _operator = op;
             _operand = operand;
-            ImplementationInterpretation = implementationInterpretation;
-            ImplementationId = implementationId;
         }
 
-        internal static AstUnaryOperator Create(Parser p, UnaryOperator op, IAstExpression operand)
+        internal static AstUnaryOperator _Create(Parser p, UnaryOperator op, IAstExpression operand)
         {
-            string id;
-            SymbolInterpretations interpretation;
+            SymbolEntry impl;
 
             switch (op)
             {
                 case UnaryOperator.PreIncrement:
                 case UnaryOperator.PostIncrement:
-                    interpretation = Resolve(p, OperatorNames.Prexonite.Addition);
+                    impl = Resolve(p, OperatorNames.Prexonite.Addition);
                     break;
                 case UnaryOperator.PreDecrement:
                 case UnaryOperator.PostDecrement:
-                    interpretation = Resolve(p, OperatorNames.Prexonite.Subtraction);
+                    impl = Resolve(p, OperatorNames.Prexonite.Subtraction);
                     break;
                 default:
-                    interpretation = Resolve(p, OperatorNames.Prexonite.GetName(op));
+                    impl = Resolve(p, OperatorNames.Prexonite.GetName(op));
                     break;
             }
-            return new AstUnaryOperator(p.scanner.File, p.t.line, p.t.col, op, operand,
-                interpretation, id);
+            return new AstUnaryOperator(p.scanner.File, p.t.line, p.t.col, op, operand, impl);
         }
 
         #region IAstHasExpressions Members
@@ -187,15 +179,18 @@ namespace Prexonite.Compiler.Ast
                         OpCode opc;
                         if (_operator == UnaryOperator.PostIncrement ||
                             _operator == UnaryOperator.PreIncrement)
-                            if (symbol.Interpretation == SymbolInterpretations.GlobalObjectVariable)
+                            if (symbol.Implementation.Interpretation == SymbolInterpretations.GlobalObjectVariable)
                                 opc = OpCode.incglob;
                             else
                                 opc = OpCode.incloc;
-                        else if (symbol.Interpretation == SymbolInterpretations.GlobalObjectVariable)
+                        else if (symbol.Implementation.Interpretation == SymbolInterpretations.GlobalObjectVariable)
                             opc = OpCode.decglob;
                         else
                             opc = OpCode.decloc;
-                        target.Emit(this, opc, symbol.Id);
+                        if (symbol.Implementation.Module != null)
+                            throw new NotImplementedException(
+                                "Increment/Decremet across module boundaries is not implemented.");
+                        target.Emit(this, opc, symbol.Implementation.LocalId);
                     }
                     else if (isAssignable)
                     {
@@ -206,8 +201,7 @@ namespace Prexonite.Compiler.Ast
                                 UnaryOperator.PostIncrement ||
                                     _operator == UnaryOperator.PreIncrement
                                 ? BinaryOperator.Addition
-                                : BinaryOperator.Subtraction, complex, ImplementationInterpretation,
-                            ImplementationId);
+                                : BinaryOperator.Subtraction, complex, Implementation);
                         if (complex.Call == PCall.Get)
                             complex.Arguments.Add(new AstConstant(File, Line, Column, 1));
                         else
@@ -236,8 +230,7 @@ namespace Prexonite.Compiler.Ast
                 case UnaryOperator.LogicalNot:
                 case UnaryOperator.UnaryNegation:
                 case UnaryOperator.OnesComplement:
-                    var call = new AstGetSetSymbol(File, Line, Column, PCall.Get, ImplementationId,
-                        ImplementationInterpretation);
+                    var call = new AstGetSetSymbol(File, Line, Column, PCall.Get, Implementation);
                     call.Arguments.Add(_operand);
                     call.EmitCode(target);
                     break;
@@ -276,11 +269,10 @@ namespace Prexonite.Compiler.Ast
             {
                 //Expression is something like (? is not T)
                 //emit ((? is T) then (not ?))
-                var thenCmd = new AstGetSetSymbol(File, Line, Column, PCall.Get, Engine.ThenAlias,
-                    SymbolInterpretations.Command);
+                var thenCmd = new AstGetSetSymbol(File, Line, Column, PCall.Get,
+                    new SymbolEntry(SymbolInterpretations.Command, Engine.ThenAlias, null));
                 var notOp = new AstUnaryOperator(File, Line, Column, UnaryOperator.LogicalNot,
-                    new AstPlaceholder(File, Line, Column, 0), ImplementationInterpretation,
-                    ImplementationId);
+                    new AstPlaceholder(File, Line, Column, 0), Implementation);
                 var partialTypecheck = new AstTypecheck(File, Line, Column, typecheck.Subject,
                     typecheck.Type);
                 thenCmd.Arguments.Add(partialTypecheck);

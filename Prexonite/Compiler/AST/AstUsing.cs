@@ -87,8 +87,7 @@ namespace Prexonite.Compiler.Ast
                     Line,
                     Column,
                     PCall.Set,
-                    vContainer,
-                    SymbolInterpretations.LocalObjectVariable);
+                    new SymbolEntry(SymbolInterpretations.LocalObjectVariable, vContainer, null));
             setCont.Arguments.Add(Expression);
 
             var getCont =
@@ -97,8 +96,7 @@ namespace Prexonite.Compiler.Ast
                     Line,
                     Column,
                     PCall.Get,
-                    vContainer,
-                    SymbolInterpretations.LocalObjectVariable);
+                    new SymbolEntry(SymbolInterpretations.LocalObjectVariable, vContainer, null));
 
             var tryBlock = tryNode.TryBlock;
             tryBlock.Add(setCont);
@@ -111,8 +109,7 @@ namespace Prexonite.Compiler.Ast
                     Line,
                     Column,
                     PCall.Get,
-                    Engine.DisposeAlias,
-                    SymbolInterpretations.Command);
+                    new SymbolEntry(SymbolInterpretations.Command, Engine.DisposeAlias, null));
 
             dispose.Arguments.Add(getCont);
 

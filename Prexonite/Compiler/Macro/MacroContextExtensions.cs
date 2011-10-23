@@ -37,17 +37,14 @@ namespace Prexonite.Compiler.Macro
         ///     Creates a symbol access node.
         /// </summary>
         /// <param name = "context">The context for which to generate the AST node.</param>
-        /// <param name = "interpretation">The interpretation of the symbol to apply (function, command, etc.)</param>
+        /// <param name="implementation"></param>
         /// <param name = "call">The call type (get or set)</param>
-        /// <param name = "id">The (physical) id of the entity to access</param>
         /// <param name = "args">The arguments to pass as part of teh access (optional)</param>
         /// <returns>A symbol access node.</returns>
-        public static AstGetSetSymbol CreateGetSetSymbol(this MacroContext context,
-            SymbolInterpretations interpretation, PCall call, string id,
-            params IAstExpression[] args)
+        public static AstGetSetSymbol CreateGetSetSymbol(this MacroContext context, SymbolEntry implementation, PCall call, params IAstExpression[] args)
         {
             var sym = new AstGetSetSymbol(context.Invocation.File, context.Invocation.Line,
-                context.Invocation.Column, call, id, interpretation);
+                context.Invocation.Column, call, implementation);
             sym.Arguments.AddRange(args);
 
             return sym;
@@ -63,7 +60,7 @@ namespace Prexonite.Compiler.Macro
         public static AstGetSetSymbol CreateGetSetLocal(this MacroContext context, string id,
             PCall call = PCall.Get)
         {
-            return CreateGetSetSymbol(context, SymbolInterpretations.LocalObjectVariable, call, id);
+            return CreateGetSetSymbol(context, new SymbolEntry(SymbolInterpretations.LocalObjectVariable,id,null), call);
         }
 
         /// <summary>

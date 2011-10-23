@@ -73,10 +73,10 @@ namespace Prexonite.Compiler.Macro.Commands
             // [| macro\unpack\impl(context, $arg0) |]
 
             var getContext = context.CreateGetSetSymbol(
-                SymbolInterpretations.LocalReferenceVariable, PCall.Get, MacroAliases.ContextAlias);
+                SymbolInterpretations.LocalReferenceVariable, PCall.Get);
 
             context.Block.Expression = context.CreateGetSetSymbol(SymbolInterpretations.Command,
-                PCall.Get, Impl.Alias, getContext, context.Invocation.Arguments[0]);
+                PCall.Get, getContext, context.Invocation.Arguments[0]);
         }
 
         #endregion

@@ -79,8 +79,7 @@ namespace Prexonite.Compiler.Macro.Commands
 
             Func<AstGetSetSymbol> retVar =
                 () =>
-                    context.CreateGetSetSymbol(SymbolInterpretations.LocalObjectVariable, PCall.Get,
-                        retVarV);
+                    context.CreateGetSetSymbol(SymbolInterpretations.LocalObjectVariable, PCall.Get);
 
             //Extract return value into retValueV (which happens to be the same as resultV)
             var retValueV = resultV;
@@ -88,8 +87,7 @@ namespace Prexonite.Compiler.Macro.Commands
 
             Func<AstGetSetSymbol> retValue =
                 () =>
-                    context.CreateGetSetSymbol(SymbolInterpretations.LocalObjectVariable, PCall.Get,
-                        retValueV);
+                    context.CreateGetSetSymbol(SymbolInterpretations.LocalObjectVariable, PCall.Get);
 
             //Break and Continue behave differently outside loop blocks
             AstNode contStmt, breakStmt;
@@ -155,11 +153,10 @@ namespace Prexonite.Compiler.Macro.Commands
             var getRetValue =
                 context.CreateGetSetMember(
                     context.CreateGetSetSymbol(SymbolInterpretations.LocalObjectVariable,
-                        PCall.Get,
-                        resultV), PCall.Get, "Value");
+                        PCall.Get), PCall.Get, "Value");
             var setRetValue =
                 context.CreateGetSetSymbol(SymbolInterpretations.LocalObjectVariable,
-                    PCall.Set, retValueV, getRetValue);
+                    PCall.Set, getRetValue);
             context.Block.Add(setRetValue);
         }
 
@@ -172,10 +169,10 @@ namespace Prexonite.Compiler.Macro.Commands
             var getRetVar =
                 context.CreateGetSetMember(
                     context.CreateGetSetSymbol(SymbolInterpretations.LocalObjectVariable,
-                        PCall.Get, resultV), PCall.Get, "Key");
+                        PCall.Get), PCall.Get, "Key");
             var asInt = new AstTypecast(inv.File, inv.Line, inv.Column, getRetVar, intT);
             var setRetVar = context.CreateGetSetSymbol(
-                SymbolInterpretations.LocalObjectVariable, PCall.Set, retVarV, asInt);
+                SymbolInterpretations.LocalObjectVariable, PCall.Set, asInt);
             context.Block.Add(setRetVar);
         }
 
@@ -184,7 +181,7 @@ namespace Prexonite.Compiler.Macro.Commands
             var computeKvp = context.Invocation.Arguments[0];
             var setResult = context.CreateGetSetSymbol(
                 SymbolInterpretations.LocalObjectVariable,
-                PCall.Set, resultV, computeKvp);
+                PCall.Set, computeKvp);
             context.Block.Add(setResult);
         }
 
@@ -200,8 +197,7 @@ namespace Prexonite.Compiler.Macro.Commands
                 inv.Column, (int) expected);
             var cmp = new AstBinaryOperator(inv.File, inv.Line,
                 inv.Column, retVar, eq, expectedNode,
-                SymbolInterpretations.Command,
-                Equality.DefaultAlias);
+                new SymbolEntry(SymbolInterpretations.Command, Equality.DefaultAlias, null));
             return cmp;
         }
     }

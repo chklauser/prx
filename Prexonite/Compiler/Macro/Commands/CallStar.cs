@@ -111,8 +111,7 @@ namespace Prexonite.Compiler.Macro.Commands
             _mergeDirectivesIntoMappings(directives, mappings8, argc);
             var mappings32 = PartialApplicationCommandBase.PackMappings32(mappings8);
 
-            var implCall = context.CreateGetSetSymbol(SymbolInterpretations.Command, context.Call,
-                PartialCallStarImplCommand.Alias);
+            var implCall = context.CreateGetSetSymbol(SymbolInterpretations.Command, context.Call);
             implCall.Arguments.AddRange(closedArguments);
 
             implCall.Arguments.AddRange(mappings32.Select(m => context.CreateConstant(m)));

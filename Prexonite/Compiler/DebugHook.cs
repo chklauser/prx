@@ -96,8 +96,8 @@ namespace Prexonite.Compiler
             {
                 var stmt = block[i] as AstGetSetSymbol;
                 //look for calls
-                if (stmt != null && stmt.Interpretation == SymbolInterpretations.Command &&
-                    Engine.StringsAreEqual(stmt.Id, Engine.DebugAlias))
+                if (stmt != null && stmt.Implementation.Interpretation == SymbolInterpretations.Command &&
+                    Engine.StringsAreEqual(stmt.Implementation.LocalId, Engine.DebugAlias))
                 {
                     //Found a call to debug
                     block.RemoveAt(i);
@@ -114,23 +114,22 @@ namespace Prexonite.Compiler
                                         stmt.Line,
                                         stmt.Column,
                                         PCall.Get,
-                                        Engine.PrintLineAlias,
-                                        SymbolInterpretations.Command);
+                                        new SymbolEntry(SymbolInterpretations.Command,
+                                            Engine.PrintLineAlias, null));
                                 var concatCall =
                                     new AstGetSetSymbol(
                                         stmt.File,
                                         stmt.Line,
                                         stmt.Column,
                                         PCall.Get,
-                                        Engine.ConcatenateAlias,
-                                        SymbolInterpretations.Command);
-
+                                        new SymbolEntry(SymbolInterpretations.Command,
+                                            Engine.ConcatenateAlias, null));
                                 var consts =
                                     new AstConstant(
                                         stmt.File,
                                         stmt.Line,
                                         stmt.Column,
-                                        String.Concat("DEBUG ", arg.Id, " = "));
+                                        String.Concat("DEBUG ", arg.Implementation.LocalId, " = "));
                                 concatCall.Arguments.Add(consts);
                                 concatCall.Arguments.Add(arg);
                                 printlnCall.Arguments.Add(concatCall);
@@ -150,8 +149,8 @@ namespace Prexonite.Compiler
                 if (cond != null)
                 {
                     var expr = cond.Condition as AstGetSetSymbol;
-                    if (expr != null && expr.Interpretation == SymbolInterpretations.Command &&
-                        Engine.StringsAreEqual(expr.Id, Engine.DebugAlias))
+                    if (expr != null && expr.Implementation.Interpretation == SymbolInterpretations.Command &&
+                        Engine.StringsAreEqual(expr.Implementation.LocalId, Engine.DebugAlias))
                         cond.Condition =
                             new AstConstant(expr.File, expr.Line, expr.Column, debugging);
                 }

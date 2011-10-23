@@ -215,9 +215,7 @@ namespace Prexonite.Commands.Core
 
         #region Macro for partial application
 
-        private readonly PartialCallWrapper _partialCall = new PartialCallWrapper(Engine.CallAlias,
-            Alias,
-            SymbolInterpretations.Command);
+        private readonly PartialCallWrapper _partialCall = new PartialCallWrapper(Engine.CallAlias, TODO);
 
         public PartialMacroCommand Partial
         {

@@ -63,9 +63,8 @@ namespace Prexonite.Compiler.Macro.Commands
             // [| context.StoreForTransport(boxed($arg0)) |]
 
             var getContext = context.CreateGetSetSymbol(
-                SymbolInterpretations.LocalReferenceVariable, PCall.Get, MacroAliases.ContextAlias);
-            var boxedArg0 = context.CreateGetSetSymbol(SymbolInterpretations.Command, PCall.Get,
-                Engine.BoxedAlias, context.Invocation.Arguments[0]);
+                SymbolInterpretations.LocalReferenceVariable, PCall.Get);
+            var boxedArg0 = context.CreateGetSetSymbol(SymbolInterpretations.Command, PCall.Get, context.Invocation.Arguments[0]);
             context.Block.Expression = context.CreateGetSetMember(getContext, PCall.Get,
                 "StoreForTransport", boxedArg0);
         }

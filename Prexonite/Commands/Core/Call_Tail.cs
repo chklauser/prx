@@ -116,7 +116,7 @@ namespace Prexonite.Commands.Core
         {
             protected PartialTailCall(string alias, string callImplementationId,
                 SymbolInterpretations callImplementetaionInterpretation)
-                : base(alias, callImplementationId, callImplementetaionInterpretation)
+                : base(alias, TODO)
             {
             }
 

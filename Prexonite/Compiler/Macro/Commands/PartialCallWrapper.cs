@@ -34,30 +34,20 @@ namespace Prexonite.Compiler.Macro.Commands
 {
     public class PartialCallWrapper : PartialMacroCommand
     {
-        private readonly string _callImplementationId;
-        private readonly SymbolInterpretations _callImplementetaionInterpretation;
+        private readonly SymbolEntry _callImplementation;
 
-        public string CallImplementationId
+        public SymbolEntry CallImplementation
         {
-            [DebuggerStepThrough]
-            get { return _callImplementationId; }
+            get { return _callImplementation; }
         }
 
-        public SymbolInterpretations CallImplementetaionInterpretation
-        {
-            [DebuggerStepThrough]
-            get { return _callImplementetaionInterpretation; }
-        }
-
-        public PartialCallWrapper(string alias, string callImplementationId,
-            SymbolInterpretations callImplementetaionInterpretation)
+        public PartialCallWrapper(string alias, SymbolEntry callImplementation)
             : base(alias)
         {
-            if (callImplementationId == null)
-                throw new ArgumentNullException("callImplementationId");
+            if (callImplementation == null)
+                throw new ArgumentNullException("callImplementation");
 
-            _callImplementationId = callImplementationId;
-            _callImplementetaionInterpretation = callImplementetaionInterpretation;
+            _callImplementation = callImplementation;
         }
 
         #region Overrides of MacroCommand
@@ -93,8 +83,8 @@ namespace Prexonite.Compiler.Macro.Commands
             {
                 // no placeholders, invoke call\perform directly
 
-                var call = context.CreateGetSetSymbol(_callImplementetaionInterpretation,
-                    context.Call, _callImplementationId, GetCallArguments(context).ToArray());
+                var call = context.CreateGetSetSymbol(_callImplementation,
+                    context.Call, GetCallArguments(context).ToArray());
                 context.Block.Expression = call;
                 return;
             }
@@ -108,8 +98,8 @@ namespace Prexonite.Compiler.Macro.Commands
             inv.Arguments.Add(context.CreateConstant(GetPassThroughArguments(context)));
 
             // Indicate the kind of call by passing `call(?)`, a partial application of call
-            var paCall = context.CreateGetSetSymbol(_callImplementetaionInterpretation,
-                context.Invocation.Call, _callImplementationId,
+            var paCall = context.CreateGetSetSymbol(_callImplementation,
+                context.Invocation.Call,
                 new AstPlaceholder(context.Invocation.File, context.Invocation.Line,
                     context.Invocation.Column, 0));
             inv.Arguments.Add(paCall);
@@ -123,8 +113,7 @@ namespace Prexonite.Compiler.Macro.Commands
         protected virtual AstGetSetSymbol GetTrivialPartialApplication(MacroContext context)
         {
             var cp = new AstGetSetSymbol(context.Invocation.File, context.Invocation.Line,
-                context.Invocation.Column, context.Invocation.Call, _callImplementationId,
-                _callImplementetaionInterpretation);
+                context.Invocation.Column, context.Invocation.Call, _callImplementation);
             cp.Arguments.Add(new AstPlaceholder(context.Invocation.File, context.Invocation.Line,
                 context.Invocation.Column, 0));
             return cp;
