@@ -28,10 +28,32 @@ using System;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.Linq;
+using Prexonite.Commands.Core;
 using Prexonite.Compiler.Ast;
 
 namespace Prexonite.Compiler.Macro.Commands
 {
+    /// <summary>
+    /// Wraps invocations of call\* commands (or functions), handling partial applications where
+    /// placeholders occur in list literals.
+    /// </summary>
+    /// <remarks>
+    /// <para>In the following example, <c>pcw</c> is a <see cref="PartialCallWrapper"/> 
+    /// for the <see cref="Call"/> command.</para>
+    /// <code>pcw(f(?),?,[1,?,2])</code>
+    /// <para>becomes</para>
+    /// <code>call\star(2,call(?),f(?),?,[1,?,2])</code>
+    /// <para>But if there are no placeholders, the macro removes itself:</para>
+    /// <code>pcw(f(?),x,[1,2,3])</code>
+    /// <para>becomes</para>
+    /// <code>call(f(?),x,[1,2,3])</code>
+    /// <para>In most cases, <see cref="PartialCallWrapper"/> can be used directly, just by supplying the 
+    /// underlying call implementation (doesn't need to be a command).</para>
+    /// <para> In case your call\* has special
+    /// requirement (e.g., like call\member, it has the member id as an additional parameter), you can
+    /// inherit from <see cref="PartialCallWrapper"/> and override <see cref="GetTrivialPartialApplication"/>, 
+    /// <see cref="GetCallArguments"/> and <see cref="GetPassThroughArguments"/>.</para>
+    /// </remarks>
     public class PartialCallWrapper : PartialMacroCommand
     {
         private readonly string _callImplementationId;
@@ -49,6 +71,12 @@ namespace Prexonite.Compiler.Macro.Commands
             get { return _callImplementetaionInterpretation; }
         }
 
+        /// <summary>
+        /// Creates a new instance of <see cref="PartialCallWrapper"/> around the specified call implementation.
+        /// </summary>
+        /// <param name="alias">The name of this macro command.</param>
+        /// <param name="callImplementationId">The physical id of the call implementation.</param>
+        /// <param name="callImplementetaionInterpretation">The interpretation of the call implementation.</param>
         public PartialCallWrapper(string alias, string callImplementationId,
             SymbolInterpretations callImplementetaionInterpretation)
             : base(alias)
@@ -84,8 +112,7 @@ namespace Prexonite.Compiler.Macro.Commands
             {
                 // call(?0) ⇒ call\perform(?0)
 
-                var cp = GetTrivialPartialApplication(context);
-                context.Block.Expression = cp;
+                context.Block.Expression = GetTrivialPartialApplication(context);
                 return;
             }
 
@@ -104,10 +131,10 @@ namespace Prexonite.Compiler.Macro.Commands
                 CallStar.Instance.Id,
                 SymbolInterpretations.MacroCommand);
 
-            // Protected the first two arguments
+            // Protect the first two arguments
             inv.Arguments.Add(context.CreateConstant(GetPassThroughArguments(context)));
 
-            // Indicate the kind of call by passing `call(?)`, a partial application of call
+            // Indicate the kind of call by passing `call\perform(?)`, a partial application of call
             var paCall = context.CreateGetSetSymbol(_callImplementetaionInterpretation,
                 context.Invocation.Call, _callImplementationId,
                 new AstPlaceholder(context.Invocation.File, context.Invocation.Line,
@@ -120,6 +147,11 @@ namespace Prexonite.Compiler.Macro.Commands
             context.Block.Expression = inv;
         }
 
+        /// <summary>
+        /// Returns a trivial partial application of the call implementation (call\perform(?))
+        /// </summary>
+        /// <param name="context">The macro context in which to create the AST node.</param>
+        /// <returns>A trivial partial application of the call implementation.</returns>
         protected virtual AstGetSetSymbol GetTrivialPartialApplication(MacroContext context)
         {
             var cp = new AstGetSetSymbol(context.Invocation.File, context.Invocation.Line,
@@ -130,11 +162,28 @@ namespace Prexonite.Compiler.Macro.Commands
             return cp;
         }
 
+        /// <summary>
+        /// Provides access to the call arguments, including the call target and any other 
+        /// parameters (like the member id for call\member).
+        /// </summary>
+        /// <param name="context">The context from which to derive the arguments.</param>
+        /// <returns>The arguments to the call invocation.</returns>
         protected virtual IEnumerable<IAstExpression> GetCallArguments(MacroContext context)
         {
             return context.Invocation.Arguments;
         }
 
+        /// <summary>
+        /// Determines the number of arguments that need to be protected when passed to call\star.
+        /// </summary>
+        /// <param name="context"></param>
+        /// <returns></returns>
+        /// <remarks>
+        /// <para>For call and call\async, for instance, two arguments need to be passed to call\star 
+        /// unprocessed: the reference to the call implementation (<c>call(?)</c> or <c>call\async(?)</c>) 
+        /// and the call target.</para>
+        /// <para>In the case of <c>call\member</c>, however, there is an additional argument to be 
+        /// protected: the member id.</para></remarks>
         protected virtual int GetPassThroughArguments(MacroContext context)
         {
             return 2;
