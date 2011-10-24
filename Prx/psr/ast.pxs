@@ -79,8 +79,8 @@ function uniqueId(verb) [is compiler;] = "uniq\\" + verb + uniqueIdCounter++;
 
 function isFunctionCall(id, node)[is compiler;] =
         node is ::AstGetSetSymbol And
-        node.Interpretation~Int == ::SymbolInterpretations.Function~Int And
-        Prexonite::Engine.StringsAreEqual(node.Id, id.ToString);
+        node.Implementation.Interpretation~Int == ::SymbolInterpretations.Function~Int And
+        Prexonite::Engine.StringsAreEqual(node.Implementation.InternalId, id.ToString);
         
 function isMemberAccess(id, node)[is compiler;] =
         node is ::AstGetSetMemberAccess And

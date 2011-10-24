@@ -107,10 +107,13 @@ function test_is_function_call[
     Add Prexonite::Types to Imports;
 ]
 {
-    var func = ast("GetSetSymbol", ->test_is_function_call.Id, ::SymbolInterpretations.Function);
-    var nonFunc = ast("GetSetSymbol", ->test_is_function_call.Id, ::SymbolInterpretations.Command);
-    var wrongFunc = ast("GetSetSymbol", ->test_unique_id_counter.Id, ::SymbolInterpretations.Function);
-    var notSym = ast("MacroInvocation", ->test_is_function_call.Id, ::SymbolInterpretations.Function);
+    var func = ast("GetSetSymbol", 
+        new ::SymbolEntry(::SymbolInterpretations.Function,->test_is_function_call.Id, null));
+    var nonFunc = ast("GetSetSymbol", ::SymbolEntry.Command(->test_is_function_call.Id));
+    var wrongFunc = ast("GetSetSymbol", 
+        new ::SymbolEntry(::SymbolInterpretations.Function,->test_unique_id_counter.Id, null));
+    var notSym = ast("MacroInvocation", 
+        new ::SymbolEntry(::SymbolInterpretations.Function,->test_is_function_call.Id, null));
     
     var id = ->test_is_function_call.Id;
     assert(isFunctionCall(id, func), "Should recognize $func");
@@ -131,7 +134,7 @@ function test_is_member_access[
     var mem = "member";
     var memacc = ast("GetSetMemberAccess", nt, mem);
     var wrongmemacc = ast("GetSetMemberAccess", nt, "otherMember");
-    var notMemacc = ast("GetSetSymbol", mem, ::SymbolInterpretations.Function);
+    var notMemacc = ast("GetSetSymbol", new ::SymbolEntry(::SymbolInterpretations.Function, mem, null));
     
     assert(isMemberAccess(mem, memacc), "Should recognize $memacc");
     assert(not isMemberAccess(mem, wrongmemacc), "Should reject $wrongmemacc");
