@@ -172,7 +172,7 @@ namespace Prexonite.Commands.Core
         {
             protected PartialMemberCall(string alias, string callImplementationId,
                 SymbolInterpretations callImplementetaionInterpretation)
-                : base(alias, TODO)
+                : base(alias, new SymbolEntry(SymbolInterpretations.Command,Alias, null))
             {
             }
 

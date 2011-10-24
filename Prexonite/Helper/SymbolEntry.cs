@@ -32,14 +32,11 @@ namespace Prexonite.Compiler
 {
     public class SymbolEntry : IEquatable<SymbolEntry>
     {
+        #region Representation
+
         private readonly SymbolInterpretations _interpretation;
         private readonly string _id;
         private readonly ModuleName _module;
-
-        public ModuleName Module
-        {
-            get { return _module; }
-        }
 
         /// <summary>
         ///     Optional integer parameter for this symbol.
@@ -47,6 +44,10 @@ namespace Prexonite.Compiler
         ///     Label - Address of jump target (if known)
         /// </summary>
         private int? _argument;
+
+        #endregion
+
+        #region Constructor
 
         public SymbolEntry(SymbolInterpretations interpretation, ModuleName module)
         {
@@ -75,6 +76,10 @@ namespace Prexonite.Compiler
             _argument = argument;
         }
 
+        #endregion
+
+        #region Public accessors
+
         public SymbolInterpretations Interpretation
         {
             get { return _interpretation; }
@@ -85,12 +90,33 @@ namespace Prexonite.Compiler
             get { return _id; }
         }
 
+        public ModuleName Module
+        {
+            get { return _module; }
+        }
+
         /// <summary>
         ///     An optional intger parameter for this symbol. Use determined by symbol interpretation.
         /// </summary>
         public int? Argument
         {
             get { return _argument; }
+        }
+
+        #endregion
+
+        public SymbolEntry WithModule(ModuleName module, SymbolInterpretations? interpretation = null,
+            string translatedId = null, int? argument = null)
+        {
+            return new SymbolEntry(interpretation ?? Interpretation, translatedId ?? LocalId,
+                argument ?? Argument, module);
+        }
+
+        public SymbolEntry With(SymbolInterpretations? interpretation = null, 
+            string translatedId = null, int? argument = null)
+        {
+            return new SymbolEntry(interpretation ?? Interpretation, translatedId ?? LocalId,
+                argument ?? Argument, Module);
         }
 
         public SymbolEntry With(SymbolInterpretations interpretation, string translatedId)
@@ -107,19 +133,34 @@ namespace Prexonite.Compiler
         {
             return Enum.GetName(
                 typeof (SymbolInterpretations), Interpretation) +
-                    (LocalId == null ? "" : "->" + LocalId) +
+                    (LocalId == null ? "" : "->" + LocalId + (Module != null ? ("," + Module) : "")) +
                         (_argument.HasValue ? "#" + _argument.Value : ""
                             );
         }
 
+        #region Equality
+
+        /// <summary>
+        /// Indicates whether the current object is equal to another object of the same type.
+        /// </summary>
+        /// <returns>
+        /// true if the current object is equal to the <paramref name="other"/> parameter; otherwise, false.
+        /// </returns>
+        /// <param name="other">An object to compare with this object.</param>
         public bool Equals(SymbolEntry other)
         {
             if (ReferenceEquals(null, other)) return false;
             if (ReferenceEquals(this, other)) return true;
-            return Equals(other._interpretation, _interpretation) && Equals(other._id, _id) &&
-                other._argument.Equals(_argument);
+            return Equals(other._interpretation, _interpretation) && Equals(other._id, _id) && Equals(other._module, _module) && other._argument.Equals(_argument);
         }
 
+        /// <summary>
+        /// Determines whether the specified <see cref="T:System.Object"/> is equal to the current <see cref="T:System.Object"/>.
+        /// </summary>
+        /// <returns>
+        /// true if the specified <see cref="T:System.Object"/> is equal to the current <see cref="T:System.Object"/>; otherwise, false.
+        /// </returns>
+        /// <param name="obj">The <see cref="T:System.Object"/> to compare with the current <see cref="T:System.Object"/>. </param><filterpriority>2</filterpriority>
         public override bool Equals(object obj)
         {
             if (ReferenceEquals(null, obj)) return false;
@@ -128,13 +169,20 @@ namespace Prexonite.Compiler
             return Equals((SymbolEntry) obj);
         }
 
+        /// <summary>
+        /// Serves as a hash function for a particular type. 
+        /// </summary>
+        /// <returns>
+        /// A hash code for the current <see cref="T:System.Object"/>.
+        /// </returns>
+        /// <filterpriority>2</filterpriority>
         public override int GetHashCode()
         {
             unchecked
             {
-                var result = _interpretation.GetHashCode();
+                int result = _interpretation.GetHashCode();
                 result = (result*397) ^ (_id != null ? _id.GetHashCode() : 0);
-                result = (result*397) ^ (_argument.HasValue ? _argument.Value : 0);
+                result = (result*397) ^ (_module != null ? _module.GetHashCode() : 0);
                 return result;
             }
         }
@@ -148,6 +196,38 @@ namespace Prexonite.Compiler
         {
             return !Equals(left, right);
         }
+
+        #endregion
+
+#region Factory methods
+
+        public static SymbolEntry LocalObjectVariable(string id)
+        {
+            return new SymbolEntry(SymbolInterpretations.LocalObjectVariable, id,null);
+        }
+
+        public static SymbolEntry LocalReferenceVariable(string id)
+        {
+            return new SymbolEntry(SymbolInterpretations.LocalReferenceVariable, id, null);
+        }
+
+        public static SymbolEntry Command(string id)
+        {
+            return new SymbolEntry(SymbolInterpretations.Command,id,null);
+        }
+
+        public static SymbolEntry MacroCommand(string id)
+        {
+            return new SymbolEntry(SymbolInterpretations.MacroCommand, id, null);
+        }
+
+        public static SymbolEntry JumpLabel(int address)
+        {
+            return new SymbolEntry(SymbolInterpretations.JumpLabel, address, null);
+        }
+
+#endregion
+
     }
 
     /// <summary>

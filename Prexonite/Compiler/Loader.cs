@@ -104,7 +104,7 @@ namespace Prexonite.Compiler
         public void RegisterExistingCommands()
         {
             foreach (var kvp in ParentEngine.Commands)
-                Symbols.Add(kvp.Key, new SymbolEntry(SymbolInterpretations.Command, kvp.Key));
+                Symbols.Add(kvp.Key, SymbolEntry.Command(kvp.Key));
         }
 
         #endregion
@@ -599,8 +599,7 @@ namespace Prexonite.Compiler
         {
             MacroCommands.Add(macroCommand);
             if (Options.RegisterCommands)
-                Symbols[macroCommand.Id] = new SymbolEntry(SymbolInterpretations.MacroCommand,
-                    macroCommand.Id);
+                Symbols[macroCommand.Id] = SymbolEntry.MacroCommand(macroCommand.Id);
         }
 
         #endregion
@@ -1075,7 +1074,7 @@ namespace Prexonite.Compiler
         public void DeclareBuildBlockCommands(CompilerTarget target)
         {
             foreach (var cmdEntry in _buildCommands)
-                target.Declare(SymbolInterpretations.Command, cmdEntry.Key);
+                target.DeclareModuleLocal(SymbolInterpretations.Command, cmdEntry.Key);
         }
 
         #endregion
@@ -1240,8 +1239,13 @@ namespace Prexonite.Compiler
             var idx = 0;
             foreach (var kvp in entries)
             {
-                writer.Write(StringPType.ToIdLiteral(kvp.Value.Id));
-                if (!Engine.StringsAreEqual(kvp.Value.Id, kvp.Key))
+                var sym = kvp.Value;
+                if (sym.Module != null)
+                    throw new NotImplementedException(
+                        "Storing cross-module symbol entries is not implemented.");
+
+                writer.Write(StringPType.ToIdLiteral(sym.LocalId));
+                if (!Engine.StringsAreEqual(sym.LocalId, kvp.Key))
                 {
                     writer.Write(" as ");
                     writer.Write(StringPType.ToIdLiteral(kvp.Key));

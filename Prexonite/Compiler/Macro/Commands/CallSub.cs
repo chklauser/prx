@@ -52,8 +52,11 @@ namespace Prexonite.Compiler.Macro.Commands
 
         protected override void DoExpand(MacroContext context)
         {
-            var perform = context.CreateGetSetSymbol(SymbolInterpretations.Command, PCall.Get,
-                context.Invocation.Arguments.ToArray());
+            var perform =
+                context.CreateGetSetSymbol(
+                    new SymbolEntry(SymbolInterpretations.Command, Engine.CallSubPerformAlias, null),
+                    PCall.Get,
+                    context.Invocation.Arguments.ToArray());
             var interpret = new AstMacroInvocation(context.Invocation.File, context.Invocation.Line,
                 context.Invocation.Column, CallSubInterpret.Alias,
                 SymbolInterpretations.MacroCommand);

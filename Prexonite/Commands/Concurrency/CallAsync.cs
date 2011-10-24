@@ -129,7 +129,7 @@ namespace Prexonite.Commands.Concurrency
         #region Partial application via call\star
 
         private readonly PartialCallWrapper _partial = new PartialCallWrapper(
-            Engine.Call_AsyncAlias, TODO);
+            Engine.Call_AsyncAlias, new SymbolEntry(SymbolInterpretations.Command,Alias, null));
 
         public PartialCallWrapper Partial
         {

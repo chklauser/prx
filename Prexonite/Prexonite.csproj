@@ -330,8 +330,6 @@
     <Compile Include="Compiler\Loader.cs" />
     <Compile Include="Compiler\LoaderOptions.cs" />
     <Compile Include="Compiler\Parser.Code.cs" />
-    <Compile Include="Compiler\PropHook.cs" />
-    <Compile Include="Compiler\StructHook.cs" />
     <Compile Include="Compiler\Token.cs" />
     <Compile Include="Continuation.cs" />
     <Compile Include="Coroutine.cs" />

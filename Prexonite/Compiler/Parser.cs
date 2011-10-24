@@ -3066,7 +3066,7 @@ internal partial class Parser {
 			}
 			Id(/*Parser.Statement.atg:241*/out id);
 			/*Parser.Statement.atg:241*/staticId = target.Function.Id + "\\static\\" + id;
-			target.Declare(kind, id, staticId);
+			target.DeclareModuleLocal(kind, id, staticId);
 			if(!target.Loader.Options.TargetApplication.Variables.ContainsKey(staticId))
 			    target.Loader.Options.TargetApplication.Variables.Add(staticId, new PVariable(staticId));
 			

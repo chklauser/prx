@@ -79,7 +79,7 @@ namespace Prexonite.Compiler.Macro.Commands
 
             Func<AstGetSetSymbol> retVar =
                 () =>
-                    context.CreateGetSetSymbol(SymbolInterpretations.LocalObjectVariable, PCall.Get);
+                    context.CreateGetSetSymbol(SymbolEntry.LocalObjectVariable(retVarV), PCall.Get);
 
             //Extract return value into retValueV (which happens to be the same as resultV)
             var retValueV = resultV;
@@ -87,7 +87,7 @@ namespace Prexonite.Compiler.Macro.Commands
 
             Func<AstGetSetSymbol> retValue =
                 () =>
-                    context.CreateGetSetSymbol(SymbolInterpretations.LocalObjectVariable, PCall.Get);
+                    context.CreateGetSetSymbol(SymbolEntry.LocalObjectVariable(retValueV), PCall.Get);
 
             //Break and Continue behave differently outside loop blocks
             AstNode contStmt, breakStmt;
@@ -152,10 +152,10 @@ namespace Prexonite.Compiler.Macro.Commands
         {
             var getRetValue =
                 context.CreateGetSetMember(
-                    context.CreateGetSetSymbol(SymbolInterpretations.LocalObjectVariable,
+                    context.CreateGetSetSymbol(SymbolEntry.LocalObjectVariable(resultV), 
                         PCall.Get), PCall.Get, "Value");
             var setRetValue =
-                context.CreateGetSetSymbol(SymbolInterpretations.LocalObjectVariable,
+                context.CreateGetSetSymbol(SymbolEntry.LocalObjectVariable(retValueV), 
                     PCall.Set, getRetValue);
             context.Block.Add(setRetValue);
         }
@@ -168,11 +168,11 @@ namespace Prexonite.Compiler.Macro.Commands
                 IntPType.Literal);
             var getRetVar =
                 context.CreateGetSetMember(
-                    context.CreateGetSetSymbol(SymbolInterpretations.LocalObjectVariable,
+                    context.CreateGetSetSymbol(SymbolEntry.LocalObjectVariable(resultV), 
                         PCall.Get), PCall.Get, "Key");
             var asInt = new AstTypecast(inv.File, inv.Line, inv.Column, getRetVar, intT);
             var setRetVar = context.CreateGetSetSymbol(
-                SymbolInterpretations.LocalObjectVariable, PCall.Set, asInt);
+                SymbolEntry.LocalObjectVariable(retVarV), PCall.Set, asInt);
             context.Block.Add(setRetVar);
         }
 
@@ -180,7 +180,7 @@ namespace Prexonite.Compiler.Macro.Commands
         {
             var computeKvp = context.Invocation.Arguments[0];
             var setResult = context.CreateGetSetSymbol(
-                SymbolInterpretations.LocalObjectVariable,
+                SymbolEntry.LocalObjectVariable(resultV), 
                 PCall.Set, computeKvp);
             context.Block.Add(setResult);
         }

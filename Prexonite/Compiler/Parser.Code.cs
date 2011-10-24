@@ -613,11 +613,11 @@ namespace Prexonite.Compiler
                 isOuterVariable(physicalId))
             {
                 target.RequireOuterVariable(physicalId);
-                target.Declare(kind, logicalId, physicalId);
+                target.DeclareModuleLocal(kind, logicalId, physicalId);
             }
             else
             {
-                target.Define(kind, logicalId, physicalId);
+                target.DefineModuleLocal(kind, logicalId, physicalId);
             }
         }
 

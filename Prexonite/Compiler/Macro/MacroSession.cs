@@ -390,8 +390,7 @@ namespace Prexonite.Compiler.Macro
                             context.Invocation.Line,
                             context.Invocation.Column,
                             PCall.Set,
-                            tmpV,
-                            SymbolInterpretations.LocalObjectVariable);
+                            SymbolEntry.LocalObjectVariable(tmpV));
                         assignTmpV.Arguments.Add(ce);
                         contextBlock.Add(assignTmpV);
 
@@ -399,8 +398,7 @@ namespace Prexonite.Compiler.Macro
                         ce = new AstGetSetSymbol(context.Invocation.File,
                             context.Invocation.Line,
                             context.Invocation.Column, PCall.Get,
-                            tmpV,
-                            SymbolInterpretations.LocalObjectVariable);
+                            SymbolEntry.LocalObjectVariable(tmpV));
                     }
                 }
 

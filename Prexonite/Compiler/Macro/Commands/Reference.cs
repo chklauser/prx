@@ -121,7 +121,7 @@ namespace Prexonite.Compiler.Macro.Commands
                 return;
             }
 
-            context.Block.Expression = context.CreateGetSetSymbol(SymbolInterpretations.Command,
+            context.Block.Expression = context.CreateGetSetSymbol(SymbolEntry.Command(Impl.Alias), 
                 PCall.Get,
                 context.CreateConstant(prototype.MacroId),
                 prototype.Interpretation.EnumToExpression(prototype));

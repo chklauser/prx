@@ -85,8 +85,6 @@ namespace Prexonite.Compiler
         private readonly SymbolTable<SymbolEntry> _symbols = new SymbolTable<SymbolEntry>();
         private CompilerTarget _parentTarget;
 
-        #region Macro sessions
-
         private MacroSession _macroSession;
         private int _macroSessionReferenceCounter;
 
@@ -121,8 +119,6 @@ namespace Prexonite.Compiler
             Debug.Assert(_macroSessionReferenceCounter >= 0);
             Debug.Assert(_macroSessionReferenceCounter == 0 || _macroSession != null);
         }
-
-        #endregion
 
         public Loader Loader
         {
@@ -196,7 +192,7 @@ namespace Prexonite.Compiler
 
             foreach (var localRefId in MacroAliases.Aliases())
             {
-                Declare(SymbolInterpretations.LocalReferenceVariable, localRefId);
+                DeclareModuleLocal(SymbolInterpretations.LocalReferenceVariable, localRefId);
                 _outerVariables.Add(localRefId);
                 //remember: outer variables are not added as local variables
             }
@@ -574,9 +570,17 @@ namespace Prexonite.Compiler
         /// <param name = "kind">The new interpretation for this symbol.</param>
         /// <param name = "id">The symbols id.</param>
         [DebuggerStepThrough]
-        public void Declare(SymbolInterpretations kind, string id)
+        public void DeclareModuleLocal(SymbolInterpretations kind, string id)
         {
-            Declare(kind, id, id);
+            if(Symbols.IsKeyDefinedLocally(id))
+            {
+                var entry = Symbols[id];
+                Symbols[id] = entry.With(kind);
+            }
+            else
+            {
+                Symbols[id] = new SymbolEntry(kind, id, null);
+            }
         }
 
         /// <summary>
@@ -587,17 +591,9 @@ namespace Prexonite.Compiler
         /// <param name = "translatedId">The (physical) id used when translating the program. (Use for aliases or set to <paramref
         ///      name = "id" />)</param>
         [DebuggerStepThrough]
-        public void Declare(SymbolInterpretations kind, string id, string translatedId)
+        public void DeclareModuleLocal(SymbolInterpretations kind, string id, string translatedId)
         {
-            if (Symbols.IsKeyDefinedLocally(id))
-            {
-                var entry = Symbols[id];
-                Symbols[id] = new SymbolEntry(kind, translatedId, entry.Argument);
-            }
-            else
-            {
-                Symbols[id] = new SymbolEntry(kind, translatedId);
-            }
+            Symbols[id] = new SymbolEntry(kind, translatedId, null);
         }
 
         /// <summary>
@@ -609,9 +605,9 @@ namespace Prexonite.Compiler
         ///     Local object and reference variables are created in addition to being registered in the symbol table. Global object and reference variables are only declared, not created.
         /// </remarks>
         [DebuggerStepThrough]
-        public void Define(SymbolInterpretations kind, string id)
+        public void DefineModuleLocal(SymbolInterpretations kind, string id)
         {
-            Define(kind, id, id);
+            DefineModuleLocal(kind, id, id);
         }
 
         /// <summary>
@@ -619,13 +615,13 @@ namespace Prexonite.Compiler
         /// </summary>
         /// <param name = "kind">The (new) interpretation for the local variable.</param>
         /// <param name = "id">The id for the local variable.</param>
-        /// <param name = "translatedId">The (physical) id used when translating the program. (Use for aliases or set to <paramref
+        /// <param name = "moduleLocalId">The (physical) id used when translating the program. (Use for aliases or set to <paramref
         ///      name = "id" />). This is the name used for the variable created.</param>
         /// <remarks>
         ///     Local object and reference variables are created in addition to being registered in the symbol table. Global object and reference variables are only declared, not created.
         /// </remarks>
         [DebuggerStepThrough]
-        public void Define(SymbolInterpretations kind, string id, string translatedId)
+        public void DefineModuleLocal(SymbolInterpretations kind, string id, string moduleLocalId)
         {
             switch (kind)
             {
@@ -633,20 +629,20 @@ namespace Prexonite.Compiler
                 case SymbolInterpretations.GlobalObjectVariable:
                 case SymbolInterpretations.GlobalReferenceVariable:
                     if (Symbols.IsKeyDefinedLocally(id))
-                        Symbols[id] = Symbols[id].With(kind, translatedId);
+                        Symbols[id] = Symbols[id].WithModule(null, kind, moduleLocalId);
                     else
-                        Symbols[id] = new SymbolEntry(kind, translatedId);
+                        Symbols[id] = new SymbolEntry(kind, moduleLocalId, null);
                     break;
                     //Define local variables
                 case SymbolInterpretations.LocalObjectVariable:
                 case SymbolInterpretations.LocalReferenceVariable:
                     if (Symbols.IsKeyDefinedLocally(id))
-                        Symbols[id] = Symbols[id].With(kind, translatedId);
+                        Symbols[id] = Symbols[id].With(kind, moduleLocalId);
                     else
-                        Symbols[id] = new SymbolEntry(kind, translatedId);
+                        Symbols[id] = new SymbolEntry(kind, moduleLocalId, null);
 
-                    if (!Function.Variables.Contains(translatedId))
-                        Function.Variables.Add(translatedId);
+                    if (!Function.Variables.Contains(moduleLocalId))
+                        Function.Variables.Add(moduleLocalId);
                     break;
             }
         }
@@ -884,7 +880,7 @@ namespace Prexonite.Compiler
                     var byValOuter = outer;
                     exprs.Add(
                         p =>
-                            new AstGetSetSymbol(p, TODO));
+                            new AstGetSetSymbol(p, SymbolEntry.LocalObjectVariable(byValOuter)));
                 }
             }
 
@@ -1329,8 +1325,7 @@ namespace Prexonite.Compiler
             }
 
             //Add the label to the symbol table
-            Symbols[labelKey] =
-                new SymbolEntry(SymbolInterpretations.JumpLabel, address);
+            Symbols[labelKey] = SymbolEntry.JumpLabel(address);
         }
 
         [DebuggerStepThrough]
