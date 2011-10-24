@@ -42,7 +42,8 @@ AtomicExpr<out IAstExpression expr>
     AppendRightExpr<out expr>
     {
         then
-        AppendRightExpr<out outerExpr>  (.  AstGetSetSymbol thenExpr = new AstGetSetSymbol(this, PCall.Get, Engine.ThenAlias, SymbolInterpretations.Command);
+        AppendRightExpr<out outerExpr>  (.  AstGetSetSymbol thenExpr = new AstGetSetSymbol(
+                                                this, PCall.Get, SymbolEntry.Command(Engine.ThenAlias));
                                             thenExpr.Arguments.Add(expr);
                                             thenExpr.Arguments.Add(outerExpr);
                                             expr = thenExpr;
@@ -122,7 +123,7 @@ NotExpr<out IAstExpression expr>
 =
     [   not                             (.  isNot = true; .)
     ]
-    EqlExpr<out lhs>                    (.  expr = isNot ? AstUnaryOperator.Create(this, UnaryOperator.LogicalNot, lhs) : lhs; .)
+    EqlExpr<out lhs>                    (.  expr = isNot ? AstUnaryOperator._Create(this, UnaryOperator.LogicalNot, lhs) : lhs; .)
 .
 
 EqlExpr<out IAstExpression expr>
@@ -197,8 +198,8 @@ AssignExpr<out IAstExpression expr>     (.  AstGetSet assignment; BinaryOperator
                                             {
                                                 SemErr(string.Format("Cannot assign to a {0}",
                                                     expr.GetType().Name));
-                                                assignment = new AstGetSetSymbol(this, PCall.Get, "SEMANTIC_ERROR",
-                                                    SymbolInterpretations.LocalObjectVariable); //to prevent null references
+                                                assignment = new AstGetSetSymbol(this, PCall.Get, 
+                                                    SymbolEntry.LocalObjectVariable("SEMANTIC_ERROR")); //to prevent null references
                                             }
                                             assignment.Call = PCall.Set;
                                         .)
@@ -235,11 +236,11 @@ PostfixUnaryExpr<out IAstExpression expr>
     										if(isInverted)
                                             {
                                                 ((AstTypecheck)expr).IsInverted = true;
-    											expr = AstUnaryOperator.Create(this, UnaryOperator.LogicalNot, expr);
+    											expr = AstUnaryOperator._Create(this, UnaryOperator.LogicalNot, expr);
                                             }
     									.)
-    |   inc                             (.  expr = AstUnaryOperator.Create(this, UnaryOperator.PostIncrement, expr); .)
-    |   dec                             (.  expr = AstUnaryOperator.Create(this, UnaryOperator.PostDecrement, expr); .)
+    |   inc                             (.  expr = AstUnaryOperator._Create(this, UnaryOperator.PostIncrement, expr); .)
+    |   dec                             (.  expr = AstUnaryOperator._Create(this, UnaryOperator.PostDecrement, expr); .)
     |   GetSetExtension<expr, out extension>
                                         (.  expr = extension; .)
     }
@@ -255,7 +256,7 @@ PrefixUnaryExpr<out IAstExpression expr>
     }    
     Primary<out expr>                   
                                         (.  while(prefixes.Count > 0)
-                                                expr = AstUnaryOperator.Create(this, prefixes.Pop(), expr);
+                                                expr = AstUnaryOperator._Create(this, prefixes.Pop(), expr);
                                         .)
 .
 
@@ -463,7 +464,8 @@ lazy
                                             
                                             //Construct expr (appears in the place of lazy expression)
                                             var clo = new AstCreateClosure(this, func.Id);
-                                            var thunk = new AstGetSetSymbol(this, Engine.ThunkAlias, SymbolInterpretations.Command);
+                                            var thunk = new AstGetSetSymbol(this, 
+                                                SymbolEntry.Command(Engine.ThunkAlias));
                                             thunk.Arguments.Add(clo);
                                             thunk.Arguments.AddRange(cap(this)); //Add captured values
                                             expr = thunk;

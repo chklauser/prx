@@ -53,13 +53,13 @@ AsmInstruction<AstBlock block>          (.  int arguments = 0;
                                         
                                         (.  //Store variable
                                             target.Function.Variables.Add(id);
-                                            target.Symbols.Add(id, new SymbolEntry(kind, id));
+                                            target.DefineModuleLocal(kind, id);
                                         .)
     {   comma
         AsmId<out id>                                        
                                         (.  //Store variable
                                             target.Function.Variables.Add(id);
-                                            target.Symbols.Add(id, new SymbolEntry(kind, id));
+                                            target.DefineModuleLocal(kind, id);
                                         .)
     }
 |   //OP ALIAS INSTRUCTIONS

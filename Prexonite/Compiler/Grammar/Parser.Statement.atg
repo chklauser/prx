@@ -185,7 +185,7 @@ GetInitiator<out AstGetSet complex, out bool isDeclaration>
                                             if(s == null)
                                             {   
                                                 SemErr("The symbol " + id + " is not defined"); 
-                                                s = new SymbolEntry(SymbolInterpretations.LocalObjectVariable, id);
+                                                s = SymbolEntry.LocalObjectVariable(id);
                                                 kind = s.Interpretation;
                                             }
                                             else
@@ -198,20 +198,20 @@ GetInitiator<out AstGetSet complex, out bool isDeclaration>
                                                 else
                                                     SemErr("Only reference variables can be dereferenced twice.");
                                             }
-                                            complex = new AstGetSetReference(this, s.Id, kind);
+                                            complex = new AstGetSetReference(this, s.With(interpretation:kind));
                                         .)
 |   pointer Id<out id>                  (.  SymbolEntry s = target.Symbols[id];
                                             if(s == null)
                                             {   
                                                 SemErr("The symbol " + id + " is not defined"); 
-                                                s = new SymbolEntry(SymbolInterpretations.LocalObjectVariable, id);
+                                                s = SymbolEntry.LocalObjectVariable(id);
                                             }
-                                            else if(InterpretationIsVariable(s.Interpretation))
+                                            else if(InterpretationIsLocalVariable(s.Interpretation))
                                             {
-                                                if(isOuterVariable(s.Id))
-                                                    target.RequireOuterVariable(s.Id);
+                                                if(isOuterVariable(s.LocalId))
+                                                    target.RequireOuterVariable(s.LocalId);
                                             }
-                                            complex = new AstGetSetReference(this, s.Id, s.Interpretation);
+                                            complex = new AstGetSetReference(this, s);
                                         .)
 |   question
     [   Integer<out placeholderIndex> ] (.  complex = new AstPlaceholder(this, 0 <= placeholderIndex ? (int?)placeholderIndex : null); .)
@@ -497,9 +497,11 @@ GetCall<out AstGetSet complex>
                                     else
                                     {
                                         AstGetSetSymbol symbol = complex as AstGetSetSymbol;
-                                        if(symbol != null && InterpretationIsVariable(symbol.Interpretation) && isDeclaration)
+                                        if(symbol != null 
+                                            && InterpretationIsVariable(symbol.Implementation.Interpretation) 
+                                            && isDeclaration)
                                         {
-                                            symbol.Interpretation = InterpretAsObjectVariable(symbol.Interpretation);
+                                            symbol.Implementation = symbol.Implementation.With(InterpretAsObjectVariable(symbol.Implementation.Interpretation));
                                             complex = symbol;
                                         }                                        
                                     } .)

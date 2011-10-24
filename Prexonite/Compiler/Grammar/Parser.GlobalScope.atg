@@ -121,7 +121,7 @@ GlobalVariableDefinition	(.
 	                        (.  id = Engine.GenerateName("v"); .)
 	)
 	                        (.
-                                entry = new SymbolEntry(type,id);
+                                entry = new SymbolEntry(type,id, null);
 	                            foreach(var alias in aliases)
 	                                Symbols[alias] = entry;
 	                            if(TargetApplication.Variables.ContainsKey(id))
@@ -151,7 +151,8 @@ GlobalVariableDefinition	(.
 		                    (.  _popLexerState();
 								if(errors.count == 0)
 								{
-									AstGetSet complex = new AstGetSetSymbol(this, PCall.Set, id, InterpretAsObjectVariable(type));
+									AstGetSet complex = new AstGetSetSymbol(this, PCall.Set, 
+                                        new SymbolEntry(InterpretAsObjectVariable(type)));
 									complex.Arguments.Add(expr);
 									target.Ast.Add(complex);
 									vari.Meta[Application.InitializationId] = TargetApplication._RegisterInitializationUpdate().ToString();
@@ -429,7 +430,8 @@ FunctionDefinition<out PFunction func>
 	                                        (!isNested))
 	                                    {
 	                                            //Add the name to the symboltable
-                                                symEntry = new SymbolEntry(SymbolInterpretations.Function, func.Id);
+                                                symEntry = 
+                                                    new SymbolEntry(SymbolInterpretations.Function, func.Id, null);
 	                                            foreach(var alias in funcAliases)	                                                
 	                                                Symbols[alias] = symEntry;
 	                                            
@@ -477,7 +479,7 @@ FunctionDefinition<out PFunction func>
 	                                            //Lazy functions cannot have ref parameters
 	                                            if(s.Interpretation != SymbolInterpretations.LocalObjectVariable)
 	                                                SemErr("Lazy functions can only have value parameters (ref is not allowed)");
-	                                            ct.Function.Parameters.Add(s.Id);
+	                                            ct.Function.Parameters.Add(s.LocalId);
 	                                            ct.Symbols.Add(paramId, s);
 	                                        }
 	                                    }
@@ -564,12 +566,15 @@ FunctionDefinition<out PFunction func>
 										            var inject = derStub.Parameters.Select(par => 
 										            {
 										                var getParam =
-										                    new AstGetSetSymbol(this, PCall.Get, par, SymbolInterpretations.LocalObjectVariable);
+										                    new AstGetSetSymbol(this, PCall.Get, 
+                                                                SymbolEntry.LocalObjectVariable(par));
 										                var asThunkCall = 
-											                new AstGetSetSymbol(this, PCall.Get, Engine.AsThunkAlias, SymbolInterpretations.Command);
+											                new AstGetSetSymbol(this, PCall.Get, 
+                                                                SymbolEntry.Command(Engine.AsThunkAlias));
 											            asThunkCall.Arguments.Add(getParam);
 											            var setParam =
-											                new AstGetSetSymbol(this, PCall.Set, par, SymbolInterpretations.LocalObjectVariable);
+											                new AstGetSetSymbol(this, PCall.Set, 
+                                                                SymbolEntry.LocalObjectVariable(par));
 											            setParam.Arguments.Add(asThunkCall);
 											            return (AstNode) setParam;
 										            });
@@ -578,15 +583,18 @@ FunctionDefinition<out PFunction func>
 										        else
 										        {										            
 										            //Global lazy functions don't technically need a stub. Might be removed later on
-										            var call = new AstGetSetSymbol(this, ct.Function.Id, SymbolInterpretations.Function);
+										            var call = new AstGetSetSymbol(this, 
+                                                        new SymbolEntry(SymbolInterpretations.Function, ct.Function.Id, null);
 										            
 										            //Generate code for arguments (each wrapped in a `asThunk` command call)
 											        foreach(var par in derStub.Parameters)
 											        {
 											            var getParam = 
-											                new AstGetSetSymbol(this, PCall.Get, par, SymbolInterpretations.LocalObjectVariable);
+											                new AstGetSetSymbol(this, PCall.Get, 
+                                                                SymbolEntry.LocalObjectVariable(par));
 											            var asThunkCall = 
-											                new AstGetSetSymbol(this, PCall.Get, Engine.AsThunkAlias, SymbolInterpretations.Command);
+											                new AstGetSetSymbol(this, PCall.Get, 
+                                                                SymbolEntry.Command(Engine.AsThunkAlias));
 											            asThunkCall.Arguments.Add(getParam);
 											            call.Arguments.Add(asThunkCall);
 											        }
@@ -621,7 +629,7 @@ FormalArg<CompilerTarget ft>        (.  string id; SymbolInterpretations kind = 
 	                                    //Note: lazy functions need to copy the
 	                                    //  parameters of the stub to the body!
 	                                    ft.Function.Parameters.Add(id); 
-	                                    ft.Symbols.Add(id, new SymbolEntry(kind, id));
+	                                    ft.Symbols.Add(id, new SymbolEntry(kind, id, null));
 	                                .)
 .
 
