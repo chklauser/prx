@@ -85,7 +85,7 @@ namespace Prexonite.Compiler
             get { return _interpretation; }
         }
 
-        public string LocalId
+        public string InternalId
         {
             get { return _id; }
         }
@@ -108,14 +108,14 @@ namespace Prexonite.Compiler
         public SymbolEntry WithModule(ModuleName module, SymbolInterpretations? interpretation = null,
             string translatedId = null, int? argument = null)
         {
-            return new SymbolEntry(interpretation ?? Interpretation, translatedId ?? LocalId,
+            return new SymbolEntry(interpretation ?? Interpretation, translatedId ?? InternalId,
                 argument ?? Argument, module);
         }
 
         public SymbolEntry With(SymbolInterpretations? interpretation = null, 
             string translatedId = null, int? argument = null)
         {
-            return new SymbolEntry(interpretation ?? Interpretation, translatedId ?? LocalId,
+            return new SymbolEntry(interpretation ?? Interpretation, translatedId ?? InternalId,
                 argument ?? Argument, Module);
         }
 
@@ -126,16 +126,16 @@ namespace Prexonite.Compiler
 
         public SymbolEntry With(SymbolInterpretations interpretation)
         {
-            return new SymbolEntry(interpretation, LocalId, Argument, Module);
+            return new SymbolEntry(interpretation, InternalId, Argument, Module);
         }
 
         public override string ToString()
         {
             return Enum.GetName(
                 typeof (SymbolInterpretations), Interpretation) +
-                    (LocalId == null ? "" : "->" + LocalId + (Module != null ? ("," + Module) : "")) +
-                        (_argument.HasValue ? "#" + _argument.Value : ""
-                            );
+                    (InternalId == null ? "" : ":" + InternalId) + 
+                    (_argument.HasValue ? "#" + _argument.Value : "") +
+                    (Module != null ? ("," + Module) : "");
         }
 
         #region Equality

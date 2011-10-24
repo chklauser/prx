@@ -205,10 +205,10 @@ namespace Prexonite.Compiler.Macro
             {
                 _macroCommand = null;
 
-                if (!target.Loader.MacroCommands.TryGetValue(invocation.Implementation.LocalId, out _macroCommand))
+                if (!target.Loader.MacroCommands.TryGetValue(invocation.Implementation.InternalId, out _macroCommand))
                 {
                     target.Loader.ReportMessage(new ParseMessage(ParseMessageSeverity.Error,
-                        String.Format("Cannot find macro command named `{0}`", invocation.Implementation.LocalId),
+                        String.Format("Cannot find macro command named `{0}`", invocation.Implementation.InternalId),
                         invocation));
                     HumanId = "cannot_find_macro_command";
                     return;
@@ -251,14 +251,14 @@ namespace Prexonite.Compiler.Macro
                 PFunction macroFunc;
                 if (
                     !target.Loader.Options.TargetApplication.Functions.TryGetValue(
-                        invocation.Implementation.LocalId, out macroFunc))
+                        invocation.Implementation.InternalId, out macroFunc))
                 {
                     target.Loader.ReportMessage(
                         new ParseMessage(
                             ParseMessageSeverity.Error,
                             String.Format(
                                 "The macro function {0} was called from function {1} but is not available at compile time.",
-                                invocation.Implementation.LocalId,
+                                invocation.Implementation.InternalId,
                                 target.Function.Id), invocation));
                     HumanId = "could_not_resolve_macro_function";
                     return;
@@ -269,7 +269,7 @@ namespace Prexonite.Compiler.Macro
                 if (macroFunc.Meta.TryGetValue(PFunction.LogicalIdKey, out logicalIdEntry))
                     HumanId = logicalIdEntry.Text;
                 else
-                    HumanId = invocation.Implementation.LocalId;
+                    HumanId = invocation.Implementation.InternalId;
             }
 
             public string HumanId { get; private set; }

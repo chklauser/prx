@@ -244,6 +244,7 @@ namespace Prexonite.Compiler.Ast
                                 Line,
                                 Column,
                                 Implementation,
+                                leftConstant,
                                 rightConstant ?? _rightOperand));
 
                         return true;
@@ -258,6 +259,7 @@ namespace Prexonite.Compiler.Ast
                                 Line,
                                 Column,
                                 Implementation,
+                                leftConstant ?? _leftOperand,
                                 rightConstant));
                         return true;
                     }

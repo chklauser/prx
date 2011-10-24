@@ -64,12 +64,12 @@ namespace Prexonite.Compiler.Ast
             switch (Implementation.Interpretation)
             {
                 case SymbolInterpretations.Command:
-                    target.Emit(this, OpCode.ldr_cmd, Implementation.LocalId);
+                    target.Emit(this, OpCode.ldr_cmd, Implementation.InternalId);
                     break;
                 case SymbolInterpretations.Function:
                     PFunction func;
                     //Check if the function is a macro (Cannot create references to macros)
-                    if (target.Loader.ParentApplication.Functions.TryGetValue(Implementation.LocalId, out func) &&
+                    if (target.Loader.ParentApplication.Functions.TryGetValue(Implementation.InternalId, out func) &&
                         func.IsMacro)
                     {
                         target.Loader.ReportMessage(new ParseMessage(ParseMessageSeverity.Warning,
@@ -84,20 +84,20 @@ namespace Prexonite.Compiler.Ast
                     }
                     else
                     {
-                        target.Emit(this, OpCode.ldr_func, Implementation.LocalId);
+                        target.Emit(this, OpCode.ldr_func, Implementation.InternalId);
                     }
                     break;
                 case SymbolInterpretations.GlobalObjectVariable:
-                    target.Emit(this, OpCode.ldr_glob, Implementation.LocalId);
+                    target.Emit(this, OpCode.ldr_glob, Implementation.InternalId);
                     break;
                 case SymbolInterpretations.GlobalReferenceVariable:
-                    target.Emit(this, OpCode.ldglob, Implementation.LocalId);
+                    target.Emit(this, OpCode.ldglob, Implementation.InternalId);
                     break;
                 case SymbolInterpretations.LocalObjectVariable:
-                    target.Emit(this, OpCode.ldr_loc, Implementation.LocalId);
+                    target.Emit(this, OpCode.ldr_loc, Implementation.InternalId);
                     break;
                 case SymbolInterpretations.LocalReferenceVariable:
-                    target.Emit(this, OpCode.ldloc, Implementation.LocalId);
+                    target.Emit(this, OpCode.ldloc, Implementation.InternalId);
                     break;
                 case SymbolInterpretations.MacroCommand:
                     target.Loader.ReportMessage(new ParseMessage(ParseMessageSeverity.Warning,
@@ -106,7 +106,7 @@ namespace Prexonite.Compiler.Ast
                                 "as a partial application. This behavior might change in the future. " +
                                     "Use partial application syntax explicitly {0}(?) or use the {2} command " +
                                         "to obtain a reference to the macro.",
-                            Implementation.LocalId, Engine.PrexoniteVersion, Reference.Alias), this));
+                            Implementation.InternalId, Engine.PrexoniteVersion, Reference.Alias), this));
 
                     _emitAsPartialApplication(target);
 
@@ -114,7 +114,7 @@ namespace Prexonite.Compiler.Ast
                 default:
                     target.Loader.ReportMessage(new ParseMessage(ParseMessageSeverity.Error,
                         string.Format("Cannot create a reference to {0} {1}.",
-                            Enum.GetName(typeof (SymbolInterpretations), Implementation.Interpretation), Implementation.LocalId), this));
+                            Enum.GetName(typeof (SymbolInterpretations), Implementation.Interpretation), Implementation.InternalId), this));
                     target.EmitNull(this);
                     break;
             }
@@ -150,11 +150,11 @@ namespace Prexonite.Compiler.Ast
                     //Variables are not automatically dereferenced
                 case SymbolInterpretations.GlobalObjectVariable:
                 case SymbolInterpretations.GlobalReferenceVariable:
-                    target.EmitStoreGlobal(this, Implementation.LocalId);
+                    target.EmitStoreGlobal(this, Implementation.InternalId);
                     break;
                 case SymbolInterpretations.LocalObjectVariable:
                 case SymbolInterpretations.LocalReferenceVariable:
-                    target.EmitStoreLocal(this, Implementation.LocalId);
+                    target.EmitStoreLocal(this, Implementation.InternalId);
                     break;
             }
         }

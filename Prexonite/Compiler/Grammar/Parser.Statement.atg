@@ -213,8 +213,8 @@ GetInitiator<out AstGetSet complex, out bool isDeclaration>
                                             }
                                             else if(InterpretationIsLocalVariable(s.Interpretation))
                                             {
-                                                if(isOuterVariable(s.LocalId))
-                                                    target.RequireOuterVariable(s.LocalId);
+                                                if(isOuterVariable(s.InternalId))
+                                                    target.RequireOuterVariable(s.InternalId);
                                             }
                                             complex = new AstGetSetReference(this, s);
                                         .)
@@ -280,7 +280,7 @@ Variable<out AstGetSet complex, out bool isDeclared>
                                                     if(isOuterVariable(id))
                                                         target.RequireOuterVariable(id);                            
                                                 }
-                                                else
+                                                else if(!InterpretationIsVariable(varSym.Interpretation))
                                                 {
                                                     SemErr(t.line, t.col, "Variable name expected but was " + 
                                                         Enum.GetName(typeof(SymbolInterpretations),

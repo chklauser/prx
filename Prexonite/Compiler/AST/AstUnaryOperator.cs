@@ -44,8 +44,12 @@ namespace Prexonite.Compiler.Ast
         {
             if (operand == null)
                 throw new ArgumentNullException("operand");
+            if (implementation == null)
+                throw new ArgumentNullException("implementation");
+            
             _operator = op;
             _operand = operand;
+            Implementation = implementation;
         }
 
         internal static AstUnaryOperator _Create(Parser p, UnaryOperator op, IAstExpression operand)
@@ -190,7 +194,7 @@ namespace Prexonite.Compiler.Ast
                         if (symbol.Implementation.Module != null)
                             throw new NotImplementedException(
                                 "Increment/Decremet across module boundaries is not implemented.");
-                        target.Emit(this, opc, symbol.Implementation.LocalId);
+                        target.Emit(this, opc, symbol.Implementation.InternalId);
                     }
                     else if (isAssignable)
                     {
@@ -225,6 +229,9 @@ namespace Prexonite.Compiler.Ast
 
         protected override void DoEmitCode(CompilerTarget target)
         {
+            if (target == null)
+                throw new ArgumentNullException("target");
+            
             switch (_operator)
             {
                 case UnaryOperator.LogicalNot:

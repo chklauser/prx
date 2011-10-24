@@ -97,7 +97,7 @@ namespace Prexonite.Compiler
                 var stmt = block[i] as AstGetSetSymbol;
                 //look for calls
                 if (stmt != null && stmt.Implementation.Interpretation == SymbolInterpretations.Command &&
-                    Engine.StringsAreEqual(stmt.Implementation.LocalId, Engine.DebugAlias))
+                    Engine.StringsAreEqual(stmt.Implementation.InternalId, Engine.DebugAlias))
                 {
                     //Found a call to debug
                     block.RemoveAt(i);
@@ -129,7 +129,7 @@ namespace Prexonite.Compiler
                                         stmt.File,
                                         stmt.Line,
                                         stmt.Column,
-                                        String.Concat("DEBUG ", arg.Implementation.LocalId, " = "));
+                                        String.Concat("DEBUG ", arg.Implementation.InternalId, " = "));
                                 concatCall.Arguments.Add(consts);
                                 concatCall.Arguments.Add(arg);
                                 printlnCall.Arguments.Add(concatCall);
@@ -150,7 +150,7 @@ namespace Prexonite.Compiler
                 {
                     var expr = cond.Condition as AstGetSetSymbol;
                     if (expr != null && expr.Implementation.Interpretation == SymbolInterpretations.Command &&
-                        Engine.StringsAreEqual(expr.Implementation.LocalId, Engine.DebugAlias))
+                        Engine.StringsAreEqual(expr.Implementation.InternalId, Engine.DebugAlias))
                         cond.Condition =
                             new AstConstant(expr.File, expr.Line, expr.Column, debugging);
                 }

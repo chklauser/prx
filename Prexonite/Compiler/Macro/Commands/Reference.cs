@@ -138,7 +138,7 @@ namespace Prexonite.Compiler.Macro.Commands
 
             context.Block.Expression = context.CreateGetSetSymbol(SymbolEntry.Command(Impl.Alias), 
                 PCall.Get,
-                context.CreateConstant(prototype.Implementation.LocalId),
+                context.CreateConstant(prototype.Implementation.InternalId),
                 prototype.Implementation.Interpretation.EnumToExpression(prototype),
                 context.CreateConstantOrNull(prototype.Implementation.Module));
         }

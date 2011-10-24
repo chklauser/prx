@@ -24,6 +24,7 @@
 //  WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING 
 //  IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
+using System;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.Linq;
@@ -64,6 +65,9 @@ namespace Prexonite.Compiler.Ast
         public AstStringConcatenation(string file, int line, int column, SymbolEntry operatorImplementation, params IAstExpression[] arguments)
             : base(file, line, column)
         {
+            if (operatorImplementation == null)
+                throw new ArgumentNullException("operatorImplementation");
+            
             if (arguments == null)
                 arguments = new IAstExpression[] {};
 
@@ -125,7 +129,7 @@ namespace Prexonite.Compiler.Ast
             if (Arguments.Count > 2
                 && Implementation.Module == null
                 && Implementation.Interpretation == SymbolInterpretations.Command
-                    && Implementation.LocalId == Addition.DefaultAlias)
+                    && Implementation.InternalId == Addition.DefaultAlias)
             {
                 var call = new AstGetSetSymbol(File, Line, Column, PCall.Get,
                     Implementation.With(SymbolInterpretations.Command,Engine.ConcatenateAlias));

@@ -180,7 +180,7 @@ namespace Prexonite.Compiler.Ast
                 return false;
             if(symbol.Implementation.Module != null) //must be direct recursive iteration
                 return false;
-            if (!Engine.StringsAreEqual(target.Function.Id, symbol.Implementation.LocalId))
+            if (!Engine.StringsAreEqual(target.Function.Id, symbol.Implementation.InternalId))
                 //must be direct recursive iteration
                 return false;
             if (target.Function.Variables.Contains(PFunction.ArgumentListId))

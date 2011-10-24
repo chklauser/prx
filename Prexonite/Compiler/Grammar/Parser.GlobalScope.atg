@@ -481,7 +481,7 @@ FunctionDefinition<out PFunction func>
 	                                            //Lazy functions cannot have ref parameters
 	                                            if(s.Interpretation != SymbolInterpretations.LocalObjectVariable)
 	                                                SemErr("Lazy functions can only have value parameters (ref is not allowed)");
-	                                            ct.Function.Parameters.Add(s.LocalId);
+	                                            ct.Function.Parameters.Add(s.InternalId);
 	                                            ct.Symbols.Add(paramId, s);
 	                                        }
 	                                    }

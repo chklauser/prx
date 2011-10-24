@@ -73,26 +73,26 @@ namespace Prexonite.Compiler.Ast
             switch (Implementation.Interpretation)
             {
                 case SymbolInterpretations.Command:
-                    target.EmitCommandCall(this, Arguments.Count, Implementation.LocalId, justEffect);
+                    target.EmitCommandCall(this, Arguments.Count, Implementation.InternalId, justEffect);
                     break;
                 case SymbolInterpretations.Function:
-                    target.EmitFunctionCall(this, Arguments.Count, Implementation.LocalId, justEffect);
+                    target.EmitFunctionCall(this, Arguments.Count, Implementation.InternalId, justEffect);
                     break;
                 case SymbolInterpretations.GlobalObjectVariable:
                     if (!justEffect)
-                        target.EmitLoadGlobal(this, Implementation.LocalId);
+                        target.EmitLoadGlobal(this, Implementation.InternalId);
                     break;
                 case SymbolInterpretations.LocalObjectVariable:
                     if (!justEffect)
-                        target.EmitLoadLocal(this, Implementation.LocalId);
+                        target.EmitLoadLocal(this, Implementation.InternalId);
                     break;
                 case SymbolInterpretations.LocalReferenceVariable:
                     target.Emit(this,
-                        Instruction.CreateLocalIndirectCall(Arguments.Count, Implementation.LocalId, justEffect));
+                        Instruction.CreateLocalIndirectCall(Arguments.Count, Implementation.InternalId, justEffect));
                     break;
                 case SymbolInterpretations.GlobalReferenceVariable:
                     target.Emit(this,
-                        Instruction.CreateGlobalIndirectCall(Arguments.Count, Implementation.LocalId, justEffect));
+                        Instruction.CreateGlobalIndirectCall(Arguments.Count, Implementation.InternalId, justEffect));
                     break;
                 default:
                     throw new PrexoniteException(
@@ -112,30 +112,28 @@ namespace Prexonite.Compiler.Ast
             switch (Implementation.Interpretation)
             {
                 case SymbolInterpretations.Command:
-                    target.EmitCommandCall(this, Arguments.Count, Implementation.LocalId, justEffect);
+                    target.EmitCommandCall(this, Arguments.Count, Implementation.InternalId, justEffect);
                     break;
                 case SymbolInterpretations.Function:
-                    target.EmitFunctionCall(this, Arguments.Count, Implementation.LocalId, justEffect);
+                    target.EmitFunctionCall(this, Arguments.Count, Implementation.InternalId, justEffect);
                     break;
                 case SymbolInterpretations.GlobalObjectVariable:
-                    target.EmitStoreGlobal(this, Implementation.LocalId);
+                    target.EmitStoreGlobal(this, Implementation.InternalId);
                     break;
                 case SymbolInterpretations.LocalReferenceVariable:
                     target.Emit(this,
-                        Instruction.CreateLocalIndirectCall(Arguments.Count, Implementation.LocalId, justEffect));
+                        Instruction.CreateLocalIndirectCall(Arguments.Count, Implementation.InternalId, justEffect));
                     break;
                 case SymbolInterpretations.GlobalReferenceVariable:
                     target.Emit(this,
-                        Instruction.CreateGlobalIndirectCall(Arguments.Count, Implementation.LocalId, justEffect));
+                        Instruction.CreateGlobalIndirectCall(Arguments.Count, Implementation.InternalId, justEffect));
                     break;
                 case SymbolInterpretations.LocalObjectVariable:
-                    target.EmitStoreLocal(this, Implementation.LocalId);
+                    target.EmitStoreLocal(this, Implementation.InternalId);
                     break;
                 default:
                     throw new PrexoniteException(
-                        "Invalid symbol " +
-                            Enum.GetName(typeof (SymbolInterpretations), Implementation.Interpretation) +
-                                " in AST.");
+                        string.Format("Invalid symbol {0} in AST.", Implementation));
             }
         }
 
@@ -175,7 +173,7 @@ namespace Prexonite.Compiler.Ast
                     String.Format(
                         " {0}-{1} {2}{3}",
                         Enum.GetName(typeof (SymbolInterpretations), Implementation.Interpretation),
-                        Implementation.LocalId,
+                        Implementation.InternalId,
                         ArgumentsToString(), Implementation.Module == null ? "" : (" from " + Implementation.Module));
         }
 

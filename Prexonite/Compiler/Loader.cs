@@ -1244,8 +1244,8 @@ namespace Prexonite.Compiler
                     throw new NotImplementedException(
                         "Storing cross-module symbol entries is not implemented.");
 
-                writer.Write(StringPType.ToIdLiteral(sym.LocalId));
-                if (!Engine.StringsAreEqual(sym.LocalId, kvp.Key))
+                writer.Write(StringPType.ToIdLiteral(sym.InternalId));
+                if (!Engine.StringsAreEqual(sym.InternalId, kvp.Key))
                 {
                     writer.Write(" as ");
                     writer.Write(StringPType.ToIdLiteral(kvp.Key));

@@ -179,7 +179,7 @@ function main(x)
                 var entry = ldr.Symbols["f"];
                 Assert.That(entry.Interpretation,
                     Is.EqualTo(SymbolInterpretations.GlobalObjectVariable));
-                Assert.That(entry.LocalId, Is.EqualTo("f"));
+                Assert.That(entry.InternalId, Is.EqualTo("f"));
             }
 
             {
@@ -187,7 +187,7 @@ function main(x)
                     "Symbol table must contain an entry for 'g'.");
                 var entry = ldr.Symbols["g"];
                 Assert.That(entry.Interpretation, Is.EqualTo(SymbolInterpretations.Function));
-                Assert.That(entry.LocalId, Is.EqualTo("g"));
+                Assert.That(entry.InternalId, Is.EqualTo("g"));
             }
 
             {
@@ -195,7 +195,7 @@ function main(x)
                     "Symbol table must contain an entry for 'p'.");
                 var entry = ldr.Symbols["p"];
                 Assert.That(entry.Interpretation, Is.EqualTo(SymbolInterpretations.Function));
-                Assert.That(entry.LocalId, Is.EqualTo("f"));
+                Assert.That(entry.InternalId, Is.EqualTo("f"));
             }
         }
     }

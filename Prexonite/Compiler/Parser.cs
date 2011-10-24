@@ -1509,8 +1509,8 @@ internal partial class Parser {
 			}
 			else if(InterpretationIsLocalVariable(s.Interpretation))
 			{
-			    if(isOuterVariable(s.LocalId))
-			        target.RequireOuterVariable(s.LocalId);
+			    if(isOuterVariable(s.InternalId))
+			        target.RequireOuterVariable(s.InternalId);
 			}
 			complex = new AstGetSetReference(this, s);
 			
@@ -2236,7 +2236,7 @@ internal partial class Parser {
 			                                            //Lazy functions cannot have ref parameters
 			                                            if(s.Interpretation != SymbolInterpretations.LocalObjectVariable)
 			                                                SemErr("Lazy functions can only have value parameters (ref is not allowed)");
-			                                            ct.Function.Parameters.Add(s.LocalId);
+			                                            ct.Function.Parameters.Add(s.InternalId);
 			                                            ct.Symbols.Add(paramId, s);
 			                                        }
 			                                    }
@@ -3024,7 +3024,7 @@ internal partial class Parser {
 			        if(isOuterVariable(id))
 			            target.RequireOuterVariable(id);                            
 			    }
-			    else
+			    else if(!InterpretationIsVariable(varSym.Interpretation))
 			    {
 			        SemErr(t.line, t.col, "Variable name expected but was " + 
 			            Enum.GetName(typeof(SymbolInterpretations),

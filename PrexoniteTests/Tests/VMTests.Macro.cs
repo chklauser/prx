@@ -341,7 +341,7 @@ function main(x,y)
         }
 
 
-        [Test]
+        [Test,Ignore]
         public void PartialCallMacroOnFunction()
         {
             Compile(

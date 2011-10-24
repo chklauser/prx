@@ -140,7 +140,7 @@ function instruction {}
             Assert.IsInstanceOf(typeof(AstGetSetSymbol), block[i]);
             Assert.AreEqual(
                 SymbolInterpretations.Function, ((AstGetSetSymbol) block[i]).Implementation.Interpretation);
-            Assert.AreEqual("instruction", ((AstGetSetSymbol)block[i]).Implementation.LocalId);
+            Assert.AreEqual("instruction", ((AstGetSetSymbol)block[i]).Implementation.InternalId);
             Assert.AreEqual(PCall.Get, ((AstGetSetSymbol) block[i]).Call);
             Assert.AreEqual(0, ((AstGetSetSymbol) block[i]).Arguments.Count);
 
@@ -159,7 +159,7 @@ function instruction {}
             Assert.IsInstanceOf(typeof(AstGetSetSymbol), block[i]);
             Assert.AreEqual(
                 SymbolInterpretations.Function, ((AstGetSetSymbol) block[i]).Implementation.Interpretation);
-            Assert.AreEqual("instruction", ((AstGetSetSymbol)block[i]).Implementation.LocalId);
+            Assert.AreEqual("instruction", ((AstGetSetSymbol)block[i]).Implementation.InternalId);
             Assert.AreEqual(PCall.Get, ((AstGetSetSymbol) block[i]).Call);
             Assert.AreEqual(0, ((AstGetSetSymbol) block[i]).Arguments.Count);
 
@@ -3438,35 +3438,35 @@ function as alias3, alias4{}
             var entry_f = ldr.Symbols["F"];
             Assert.IsNotNull(entry_f,"No symbol table entry for `f` exists");
             Assert.IsTrue(entry_f.Interpretation == SymbolInterpretations.Function,"Symbol f is not declared as a function");
-            Assert.IsTrue(target.Functions.Contains(entry_f.LocalId));
+            Assert.IsTrue(target.Functions.Contains(entry_f.InternalId));
 
             var alias1 = ldr.Symbols["alias1"];
             Assert.IsNotNull(alias1, "No symbol table entry for `alias1` exists");
             Assert.IsTrue(alias1.Interpretation == SymbolInterpretations.Function, "Symbol alias1 is not declared as a function");
-            Assert.IsTrue(target.Functions.Contains(alias1.LocalId));
-            Assert.AreSame(target.Functions[entry_f.LocalId], target.Functions[alias1.LocalId]);
+            Assert.IsTrue(target.Functions.Contains(alias1.InternalId));
+            Assert.AreSame(target.Functions[entry_f.InternalId], target.Functions[alias1.InternalId]);
             Assert.IsFalse(target.Functions.Contains("alias1"));
 
             var alias2 = ldr.Symbols["alias2"];
             Assert.IsNotNull(alias2, "No symbol table entry for `alias2` exists");
             Assert.IsTrue(alias2.Interpretation == SymbolInterpretations.Function, "Symbol alias2 is not declared as a function");
-            Assert.IsTrue(target.Functions.Contains(alias2.LocalId));
-            Assert.AreSame(target.Functions[entry_f.LocalId], target.Functions[alias2.LocalId]);
+            Assert.IsTrue(target.Functions.Contains(alias2.InternalId));
+            Assert.AreSame(target.Functions[entry_f.InternalId], target.Functions[alias2.InternalId]);
             Assert.IsFalse(target.Functions.Contains("alias2"));
 
             var alias3 = ldr.Symbols["alias3"];
             Assert.IsNotNull(alias3, "No symbol table entry for `alias3` exists");
             Assert.IsTrue(alias3.Interpretation == SymbolInterpretations.Function, "Symbol alias3 is not declared as a function");
-            Assert.IsTrue(target.Functions.Contains(alias3.LocalId));
+            Assert.IsTrue(target.Functions.Contains(alias3.InternalId));
             Assert.IsFalse(target.Functions.Contains("alias3"));
 
             var alias4 = ldr.Symbols["alias4"];
             Assert.IsNotNull(alias4, "No symbol table entry for `alias4` exists");
             Assert.IsTrue(alias4.Interpretation == SymbolInterpretations.Function, "Symbol alias4 is not declared as a function");
-            Assert.IsTrue(target.Functions.Contains(alias4.LocalId));
+            Assert.IsTrue(target.Functions.Contains(alias4.InternalId));
             Assert.IsFalse(target.Functions.Contains("alias4"));
 
-            Assert.AreSame(target.Functions[alias3.LocalId], target.Functions[alias4.LocalId]);
+            Assert.AreSame(target.Functions[alias3.InternalId], target.Functions[alias4.InternalId]);
         }
 
         [Test]
@@ -3497,13 +3497,13 @@ function main()
             Assert.IsTrue(maint.Symbols.ContainsKey("alias1"));
             var alias1 = maint.Symbols["alias1"];
             Assert.AreEqual(alias1.Interpretation, SymbolInterpretations.LocalReferenceVariable);
-            Assert.AreEqual(f.LocalId, alias1.LocalId);
+            Assert.AreEqual(f.InternalId, alias1.InternalId);
 
             // `alias2`
             Assert.IsTrue(maint.Symbols.ContainsKey("alias2"));
             var alias2 = maint.Symbols["alias2"];
             Assert.AreEqual(alias2.Interpretation, SymbolInterpretations.LocalReferenceVariable);
-            Assert.AreEqual(f.LocalId, alias2.LocalId);
+            Assert.AreEqual(f.InternalId, alias2.InternalId);
 
             // `alias3`
             Assert.IsTrue(maint.Symbols.ContainsKey("alias3"));
@@ -3514,7 +3514,7 @@ function main()
             Assert.IsTrue(maint.Symbols.ContainsKey("alias4"));
             var alias4 = maint.Symbols["alias4"];
             Assert.AreEqual(alias4.Interpretation, SymbolInterpretations.LocalReferenceVariable);
-            Assert.AreEqual(alias3.LocalId, alias4.LocalId);
+            Assert.AreEqual(alias3.InternalId, alias4.InternalId);
         }
 
         [Test]

@@ -435,7 +435,7 @@ namespace Prexonite.Compiler
 
             if(entry.Module == null)
             {
-                return TargetApplication.Functions.TryGetValue(entry.LocalId, out func);
+                return TargetApplication.Functions.TryGetValue(entry.InternalId, out func);
             }
             else
             {
@@ -1060,8 +1060,8 @@ namespace Prexonite.Compiler
                                     Loader.ObjectCreationFallbackPrefix + typeExpr.TypeId,
                                     out fallbackSymbol))
             {
-                if (isLocalVariable(fallbackSymbol.Interpretation) && isOuterVariable(fallbackSymbol.LocalId))
-                    target.RequireOuterVariable(fallbackSymbol.LocalId);
+                if (isLocalVariable(fallbackSymbol.Interpretation) && isOuterVariable(fallbackSymbol.InternalId))
+                    target.RequireOuterVariable(fallbackSymbol.InternalId);
                 var call = new AstGetSetSymbol(parser, PCall.Get, fallbackSymbol);
                 expr = call;
                 args = call.Arguments;

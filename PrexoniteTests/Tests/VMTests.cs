@@ -709,7 +709,9 @@ build does hook (t =>
         //Append a return statement
         var ret = ast(""Return"", ::ReturnVariant.Exit);
         ret.Expression = ast(""GetSetMemberAccess"", ::PCall.Get, 
-            ast(""GetSetSymbol"", ::PCall.Get, ""sb"", ::SymbolInterpretations.GlobalObjectVariable), ""ToString"");
+            ast(""GetSetSymbol"", 
+                ::PCall.Get, 
+                new ::SymbolEntry(::SymbolInterpretations.GlobalObjectVariable, ""sb"", null)), ""ToString"");
         t.Ast.Add(ret);
     }
 
@@ -719,8 +721,8 @@ build does hook (t =>
         {
             var stmt = block[i];
             if( stmt is ::AstGetSetSymbol && 
-                stmt.Interpretation~Int == ::SymbolInterpretations.$Function~Int &&
-                stmt.Id == ""debug"")
+                stmt.Implementation.Interpretation~Int == ::SymbolInterpretations.$Function~Int &&
+                stmt.Implementation.InternalId == ""debug"")
             {
                 //Found a call to debug
                 block[i] = ast(""AsmInstruction"", new ::Instruction(::OpCode.nop));
@@ -729,9 +731,9 @@ build does hook (t =>
                     var arg = stmt.Arguments[j];
                     if(arg is ::AstGetSetSymbol)
                     {
-                        var printlnCall = ast(""GetSetSymbol"", ::PCall.Get, ""println"", ::SymbolInterpretations.$Function);
-                        var concatCall  = ast(""GetSetSymbol"", ::PCall.Get, ""concat"", ::SymbolInterpretations.$Command);
-                        concatCall.Arguments.Add(ast(""Constant"",""DEBUG $(arg.Id) = ""));
+                        var printlnCall = ast(""GetSetSymbol"", ::PCall.Get, new ::SymbolEntry(::SymbolInterpretations.$Function,""println"", null));
+                        var concatCall  = ast(""GetSetSymbol"", ::PCall.Get, ::SymbolEntry.Command(""concat""));
+                        concatCall.Arguments.Add(ast(""Constant"",""DEBUG $(arg.Implementation) = ""));
                         concatCall.Arguments.Add(arg);
                         printlnCall.Arguments.Add(concatCall);
 
@@ -774,7 +776,7 @@ function main(a)
 }
 ");
 
-            Expect("DEBUG x = 3\r\nDEBUG y = 4\r\nDEBUG z = 23\r\n", 4);
+            Expect("DEBUG LocalObjectVariable:x = 3\r\nDEBUG LocalObjectVariable:y = 4\r\nDEBUG LocalObjectVariable:z = 23\r\n", 4);
         }
 
         [Test]
@@ -868,11 +870,11 @@ build does hook(t =>
     foreach(var loc in toPromote)
     {
         loc = t.Symbols[loc];
-        var glob = new ::SymbolEntry(SI.make_global(loc.Interpretation), loc.Id);
-        t.Loader.Symbols[loc.Id] = glob;
-        t.Loader.Options.TargetApplication.Variables[loc.Id] = new ::PVariable(loc.Id);
-        var assignment = ast(""GetSetSymbol"", ::PCall.Set, glob.Id, glob.Interpretation);
-        assignment.Arguments.Add(ast(""GetSetSymbol"", ::PCall.Get, loc.Id, loc.Interpretation));
+        var glob = new ::SymbolEntry(SI.make_global(loc.Interpretation), loc.InternalId, null);
+        t.Loader.Symbols[loc.InternalId] = glob;
+        t.Loader.Options.TargetApplication.Variables[loc.InternalId] = new ::PVariable(loc.InternalId);
+        var assignment = ast(""GetSetSymbol"", ::PCall.Set, glob);
+        assignment.Arguments.Add(ast(""GetSetSymbol"", ::PCall.Get, loc));
         t.Ast.Add(assignment);        
         println(""Declared $glob"");
     }

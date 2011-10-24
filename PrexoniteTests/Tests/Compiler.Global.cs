@@ -1052,16 +1052,16 @@ var d as e, f;
             var b = ldr.Symbols["b"];
             Assert.IsTrue(b.Interpretation == SymbolInterpretations.GlobalObjectVariable,
                 "Symbol b must be global object variable.");
-            Assert.IsTrue(target.Variables.ContainsKey(b.LocalId),
+            Assert.IsTrue(target.Variables.ContainsKey(b.InternalId),
                 "Symbol b must point to a physical variable.");
 
             Assert.IsTrue(ldr.Symbols.ContainsKey("c"), "Symbol c must exist.");
             var c = ldr.Symbols["c"];
             Assert.IsTrue(c.Interpretation == SymbolInterpretations.GlobalObjectVariable,
                 "Symbol c must be global object variable.");
-            Assert.IsTrue(target.Variables.ContainsKey(c.LocalId),
+            Assert.IsTrue(target.Variables.ContainsKey(c.InternalId),
                 "Symbol c must point to a physical variable.");
-            Assert.IsTrue(b.LocalId == c.LocalId, "Symbols b and c must point to the same variable.");
+            Assert.IsTrue(b.InternalId == c.InternalId, "Symbols b and c must point to the same variable.");
 
             Assert.IsTrue(ldr.Symbols.ContainsKey("d"), "Symbol d must exist.");
             var d = ldr.Symbols["d"];
@@ -1072,18 +1072,18 @@ var d as e, f;
             var e = ldr.Symbols["e"];
             Assert.IsTrue(e.Interpretation == SymbolInterpretations.GlobalObjectVariable,
                 "Symbol e must be global object variable.");
-            Assert.IsTrue(target.Variables.ContainsKey(e.LocalId),
+            Assert.IsTrue(target.Variables.ContainsKey(e.InternalId),
                 "Symbol e must point to a physical variable.");
 
             Assert.IsTrue(ldr.Symbols.ContainsKey("f"), "Symbol f must exist.");
             var f = ldr.Symbols["f"];
             Assert.IsTrue(f.Interpretation == SymbolInterpretations.GlobalObjectVariable,
                 "Symbol f must be global object variable.");
-            Assert.IsTrue(target.Variables.ContainsKey(f.LocalId),
+            Assert.IsTrue(target.Variables.ContainsKey(f.InternalId),
                 "Symbol f must point to a physical variable.");
-            Assert.IsTrue(e.LocalId == f.LocalId, "Symbols e and f must point to the same variable.");
+            Assert.IsTrue(e.InternalId == f.InternalId, "Symbols e and f must point to the same variable.");
 
-            Assert.IsTrue(e.LocalId == "d", "Symbols e and f must point to variable d");
+            Assert.IsTrue(e.InternalId == "d", "Symbols e and f must point to variable d");
         }
     }
 }
