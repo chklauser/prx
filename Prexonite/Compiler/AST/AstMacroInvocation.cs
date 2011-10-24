@@ -34,35 +34,24 @@ namespace Prexonite.Compiler.Ast
 {
     public sealed class AstMacroInvocation : AstGetSet
     {
-        private readonly string _macroId;
-        private readonly SymbolInterpretations _interpretation;
+        private readonly SymbolEntry _implementation;
 
-        public AstMacroInvocation(string file, int line, int column, string macroId,
-            SymbolInterpretations interpretation) : base(file, line, column, PCall.Get)
+        public AstMacroInvocation(string file, int line, int column, SymbolEntry implementation) : base(file, line, column, PCall.Get)
         {
-            if (String.IsNullOrEmpty(macroId))
-                throw new ArgumentException("MacroId cannot be null or empty.");
-            _macroId = macroId;
-            _interpretation = interpretation;
+            if (implementation == null)
+                throw new ArgumentNullException("implementation");
+            _implementation = implementation;
         }
 
-        internal AstMacroInvocation(Parser p, string macroId, SymbolInterpretations interpretation)
+        internal AstMacroInvocation(Parser p, SymbolEntry implementation)
             : base(p, PCall.Get)
         {
-            _macroId = macroId;
-            _interpretation = interpretation;
+            _implementation = implementation;
         }
 
-        public SymbolInterpretations Interpretation
+        public SymbolEntry Implementation
         {
-            [DebuggerStepThrough]
-            get { return _interpretation; }
-        }
-
-        public string MacroId
-        {
-            [DebuggerStepThrough]
-            get { return _macroId; }
+            get { return _implementation; }
         }
 
         protected override void EmitGetCode(CompilerTarget target, bool justEffect)
@@ -114,14 +103,14 @@ namespace Prexonite.Compiler.Ast
 
         public override AstGetSet GetCopy()
         {
-            var macro = new AstMacroInvocation(File, Line, Column, _macroId, _interpretation);
+            var macro = new AstMacroInvocation(File, Line, Column, Implementation);
             CopyBaseMembers(macro);
             return macro;
         }
 
         public override string ToString()
         {
-            return string.Format("{0} {1}{2}", base.ToString(), MacroId, ArgumentsToString());
+            return string.Format("{0} {1}{2}", base.ToString(), Implementation, ArgumentsToString());
         }
     }
 }

@@ -34,6 +34,7 @@ using FatalError = Prexonite.Compiler.FatalCompilerException;
 using StringBuilder = System.Text.StringBuilder;
 using Prexonite.Compiler.Ast;
 using Prexonite.Types;
+using Prexonite.Modular;
 
 COMPILER Prexonite
 
@@ -1123,7 +1124,7 @@ GlobalVariableDefinition	(.
 								if(errors.count == 0)
 								{
 									AstGetSet complex = new AstGetSetSymbol(this, PCall.Set, 
-                                        new SymbolEntry(InterpretAsObjectVariable(type)));
+                                        new SymbolEntry(InterpretAsObjectVariable(type), id, null));
 									complex.Arguments.Add(expr);
 									target.Ast.Add(complex);
 									vari.Meta[Application.InitializationId] = TargetApplication._RegisterInitializationUpdate().ToString();
@@ -1147,7 +1148,9 @@ GlobalVariableAliasList<. IList<string> aliases .>
 /* ---- Global declaration ---- */
 
 Declaration
-                            (. SymbolInterpretations type = SymbolInterpretations.Undefined; .)
+                            (. SymbolInterpretations type = SymbolInterpretations.Undefined;
+                               ModuleName module = null;
+                            .)
 =
 SYNC
 	declare
@@ -1156,11 +1159,11 @@ SYNC
 	|	function			(. type = SymbolInterpretations.Function; .)
 	|   command             (. type = SymbolInterpretations.Command; .)
 	]
-	DeclarationInstance<type>
-	{comma [ DeclarationInstance<type> ] }
+	DeclarationInstance<type,module>
+	{comma [ DeclarationInstance<type,module> ] }
 .
 	
-DeclarationInstance<SymbolInterpretations type>
+DeclarationInstance<SymbolInterpretations type, ModuleName module>
                             (.  string id; string aId; .)
 =			
 	Id<out id>              (.  aId = id; .)
@@ -1175,7 +1178,7 @@ DeclarationInstance<SymbolInterpretations type>
 	                                        type = inferredType.Interpretation;
 	                                    else
 	                                        SemErr("Interpretation of symbol " + id + " as " + aId + " cannot be inferred.");
-	                                Symbols[aId] = new SymbolEntry(type, id);
+	                                Symbols[aId] = new SymbolEntry(type, id, module);
 	                            }
 	                            else
 	                            {
@@ -1186,7 +1189,7 @@ DeclarationInstance<SymbolInterpretations type>
 	                                        type = inferredType.Interpretation;
 	                                    else
 	                                        SemErr("Interpretation of symbol " + id + " as " + aId + " cannot be inferred.");
-	                                target.Symbols[aId] = new SymbolEntry(type, id);
+	                                target.Symbols[aId] = new SymbolEntry(type, id, module);
 	                            }
 	                        .)
 .
@@ -1555,7 +1558,7 @@ FunctionDefinition<out PFunction func>
 										        {										            
 										            //Global lazy functions don't technically need a stub. Might be removed later on
 										            var call = new AstGetSetSymbol(this, 
-                                                        new SymbolEntry(SymbolInterpretations.Function, ct.Function.Id, null);
+                                                        new SymbolEntry(SymbolInterpretations.Function, ct.Function.Id, null));
 										            
 										            //Generate code for arguments (each wrapped in a `asThunk` command call)
 											        foreach(var par in derStub.Parameters)
@@ -1797,11 +1800,16 @@ GetInitiator<out complex, out isDeclaration>
     }
 //GetSet Terminator
 (                                       (.  block.Add(complex); .)
-|   inc                                 (.  block.Add(AstUnaryOperator.Create(this, UnaryOperator.PostIncrement, complex)); .)
-|   dec                                 (.  block.Add(AstUnaryOperator.Create(this, UnaryOperator.PostDecrement, complex)); .)
+|   inc                                 (.  block.Add(AstUnaryOperator._Create(this, UnaryOperator.PostIncrement, complex)); .)
+|   dec                                 (.  block.Add(AstUnaryOperator._Create(this, UnaryOperator.PostDecrement, complex)); .)
 |   Assignment<complex, out node>       (.  symbol = node as AstGetSetSymbol;
-                                            if(symbol != null && InterpretationIsVariable(symbol.Interpretation) && isDeclaration)
-                                                symbol.Interpretation = InterpretAsObjectVariable(symbol.Interpretation);
+                                            if(symbol != null 
+                                                && InterpretationIsLocalVariable(symbol.Implementation.Interpretation) 
+                                                && isDeclaration)
+                                            {
+                                                symbol.Implementation = symbol.Implementation.With(
+                                                    interpretation:InterpretAsObjectVariable(symbol.Implementation.Interpretation));
+                                            }
                                             block.Add(node);
                                         .)
 |	AppendRightTermination<ref complex>
@@ -1951,14 +1959,14 @@ VariableDeclaration<out AstGetSet variable, bool isNewDecl>
     |   ref                             (.  kind = SymbolInterpretations.GlobalReferenceVariable; .)
     ]
     Id<out id>                          (.  staticId = target.Function.Id + "\\static\\" + id;
-                                            target.Declare(kind, id, staticId);
+                                            target.DeclareModuleLocal(kind, id, staticId);
                                             if(!target.Loader.Options.TargetApplication.Variables.ContainsKey(staticId))
                                                 target.Loader.Options.TargetApplication.Variables.Add(staticId, new PVariable(staticId));
                                         .)
 )                                       (.  variable = InterpretationIsObjectVariable(kind) ?
-												new AstGetSetSymbol(this, PCall.Get, staticId, kind)
+												new AstGetSetSymbol(this, PCall.Get, new SymbolEntry(kind, staticId, null))
 											:
-												new AstGetSetReference(this, PCall.Get, staticId, InterpretAsObjectVariable(kind)); 
+												new AstGetSetReference(this, PCall.Get, new SymbolEntry(InterpretAsObjectVariable(kind),staticId, null)); 
                                                 
                                             if(isNewDecl)
                                                 variable = new AstGetSetNewDecl(this)
@@ -1980,26 +1988,30 @@ Variable<out AstGetSet complex, out bool isDeclared>
     ]
     VariableDeclaration<out complex, isNewDecl>    (. isDeclared = true; .)
 |   Id<out id>                          (.  
-                                            if(target.Symbols.ContainsKey(id))
+                                            SymbolEntry varSym;
+                                            if(target.Symbols.TryGetValue(id, out varSym))
                                             {
-                                                SymbolEntry varSym = target.Symbols[id];
-                                                if(InterpretationIsVariable(varSym.Interpretation))
+                                                if(InterpretationIsLocalVariable(varSym.Interpretation))
                                                 {
                                                     if(isOuterVariable(id))
-                                                        target.RequireOuterVariable(id);                                                    
+                                                        target.RequireOuterVariable(id);                            
                                                 }
                                                 else
                                                 {
                                                     SemErr(t.line, t.col, "Variable name expected but was " + 
-                                                        Enum.GetName(typeof(SymbolInterpretations),varSym.Interpretation));
+                                                        Enum.GetName(typeof(SymbolInterpretations),
+                                                            varSym.Interpretation));
                                                 }
-                                                complex = new AstGetSetSymbol(this, varSym.Id, varSym.Interpretation);;
+                                                complex = new AstGetSetSymbol(this, varSym);
                                             }
                                             else
                                             {
-                                                //Unknown symbols are treated as functions. See production Function for details.
-                                                SemErr(t.line, t.col, "Internal compiler error. Did not catch unknown identifier.");
-                                                complex = new AstGetSetSymbol(this, "Not a Variable Id", SymbolInterpretations.LocalObjectVariable);
+                                                //Unknown symbols are treated as functions. 
+                                                //  See production Function for details.
+                                                SemErr(t.line, t.col, 
+                                                    "Internal compiler error. Did not catch unknown identifier.");
+                                                complex = new AstGetSetSymbol(this, 
+                                                    SymbolEntry.LocalObjectVariable("Not_a_Variable_Id"));
                                             }
                                         .)
 .
@@ -2037,11 +2049,11 @@ Function<out AstGetSet function>
                                         SymbolEntry sym = target.Symbols[id];
                                         if(isKnownMacroFunction(sym) || sym.Interpretation == SymbolInterpretations.MacroCommand) 
                                         {
-                                            function = new AstMacroInvocation(this, sym.Id, sym.Interpretation);
+                                            function = new AstMacroInvocation(this, sym);
                                         } 
                                         else
                                         {
-                                            function = new AstGetSetSymbol(this, sym.Id, sym.Interpretation);
+                                            function = new AstGetSetSymbol(this, sym);
                                         }
                                     }
                                 .)
@@ -2259,7 +2271,8 @@ NestedFunction<AstBlock block>
                                     string physicalId = func.Id;
                                     
                                     CompilerTarget ft = FunctionTargets[func];
-                                    AstGetSetSymbol setVar = new AstGetSetSymbol(this, PCall.Set, logicalId, SymbolInterpretations.LocalObjectVariable);
+                                    AstGetSetSymbol setVar = new AstGetSetSymbol(this, PCall.Set, 
+                                        SymbolEntry.LocalObjectVariable(logicalId));
                                     if(func.Meta[PFunction.LazyKey].Switch)
                                     {
                                         //Capture environment by value                                        
@@ -2277,7 +2290,8 @@ NestedFunction<AstBlock block>
                                     }
                                     else
                                     {
-                                        setVar.Arguments.Add( new AstGetSetReference(this, physicalId, SymbolInterpretations.Function) );
+                                        setVar.Arguments.Add( new AstGetSetReference(this, 
+                                            new SymbolEntry(SymbolInterpretations.Function, physicalId, null)) );
                                     }
                                     block.Add(setVar);
                                 .)
@@ -2303,7 +2317,8 @@ LetBinder<AstBlock block>
         LazyExpression<out thunk>   
                                 (.  
                                     //Assign thunk to that variable
-                                    var assign = new AstGetSetSymbol(this, PCall.Set, id, SymbolInterpretations.LocalObjectVariable);
+                                    var assign = new AstGetSetSymbol(this, PCall.Set, 
+                                        SymbolEntry.LocalObjectVariable(id));
                                     assign.Arguments.Add(thunk);
                                     block.Add(assign);
                                 .)

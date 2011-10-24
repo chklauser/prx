@@ -72,12 +72,20 @@ namespace Prexonite.Compiler.Ast
                     if (target.Loader.ParentApplication.Functions.TryGetValue(Implementation.LocalId, out func) &&
                         func.IsMacro)
                     {
-                        target.Loader.ReportSemanticError(Line, Column,
-                            "Cannot create a reference to a macro.");
-                        (new AstNull(File, Line, Column)).EmitCode(target);
-                        return;
+                        target.Loader.ReportMessage(new ParseMessage(ParseMessageSeverity.Warning,
+                        string.Format(
+                            "Reference to macro {0} detected. Prexonite version {1} treats this " +
+                                "as a partial application. This behavior might change in the future. " +
+                                    "Use partial application syntax explicitly {0}(?) or use the {2} command " +
+                                        "to obtain a reference to the macro.",
+                            Implementation, Engine.PrexoniteVersion, Reference.Alias), this));
+
+                        _emitAsPartialApplication(target);
                     }
-                    target.Emit(this, OpCode.ldr_func, Implementation.LocalId);
+                    else
+                    {
+                        target.Emit(this, OpCode.ldr_func, Implementation.LocalId);
+                    }
                     break;
                 case SymbolInterpretations.GlobalObjectVariable:
                     target.Emit(this, OpCode.ldr_glob, Implementation.LocalId);
@@ -100,12 +108,7 @@ namespace Prexonite.Compiler.Ast
                                         "to obtain a reference to the macro.",
                             Implementation.LocalId, Engine.PrexoniteVersion, Reference.Alias), this));
 
-                    var pa = new AstMacroInvocation(File, Line, Column, Implementation.LocalId, Implementation.Interpretation);
-                    pa.Call = Call;
-                    pa.Arguments.Add(new AstPlaceholder(File, Line, Column, 0));
-                    var ipa = (IAstExpression) pa;
-                    _OptimizeNode(target, ref ipa);
-                    ipa.EmitCode(target);
+                    _emitAsPartialApplication(target);
 
                     break;
                 default:
@@ -115,6 +118,16 @@ namespace Prexonite.Compiler.Ast
                     target.EmitNull(this);
                     break;
             }
+        }
+
+        private void _emitAsPartialApplication(CompilerTarget target)
+        {
+            var pa = new AstMacroInvocation(File, Line, Column, Implementation);
+            pa.Call = Call;
+            pa.Arguments.Add(new AstPlaceholder(File, Line, Column, 0));
+            var ipa = (IAstExpression) pa;
+            _OptimizeNode(target, ref ipa);
+            ipa.EmitCode(target);
         }
 
         //"Assigning to a reference"

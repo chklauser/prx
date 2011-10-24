@@ -121,8 +121,7 @@ namespace Prexonite.Compiler.Macro.Commands
                 _detectRuntimeValues(argList);
 
                 var inv = new AstMacroInvocation(context.Invocation.File, context.Invocation.Line,
-                    context.Invocation.Column, id,
-                    macroInterpretation);
+                    context.Invocation.Column, SymbolEntry.MacroCommand(id));
                 inv.Arguments.AddRange(argList.Select(p => (IAstExpression) p.Value));
                 inv.Call = call;
 
@@ -302,7 +301,7 @@ namespace Prexonite.Compiler.Macro.Commands
             var getContext = context.CreateGetSetSymbol(
                 SymbolEntry.MacroCommand(CallMacroPerform.PartialCallMacroPerform.Alias), PCall.Get);
             var prepareCall = context.CreateMacroInvocation(context.Call,
-                CallMacroPerform.PartialCallMacroPerform.Alias, SymbolInterpretations.MacroCommand,
+                SymbolEntry.MacroCommand(CallMacroPerform.PartialCallMacroPerform.Alias),
                 macroSpec,
                 getContext, call,
                 justEffect);
@@ -504,15 +503,19 @@ namespace Prexonite.Compiler.Macro.Commands
             AstMacroInvocation proto)
         {
             //macroId: as a constant
-            var macroId = context.CreateConstant(proto.MacroId);
+            var macroId = context.CreateConstant(proto.Implementation.LocalId);
 
             //macroInterpretation: as an expression
-            var macroInterpretation = proto.Interpretation.EnumToExpression(proto);
+            var macroInterpretation = proto.Implementation.Interpretation.EnumToExpression(proto);
+
+            //macroModule: as a constant (string or null)
+            var macroModule = context.CreateConstantOrNull(proto.Implementation.Module);
 
             var listLit = new AstListLiteral(context.Invocation.File, context.Invocation.Line,
                 context.Invocation.Column);
             listLit.Elements.Add(macroId);
             listLit.Elements.Add(macroInterpretation);
+            listLit.Elements.Add(macroModule);
 
             return listLit;
         }

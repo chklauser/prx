@@ -95,6 +95,16 @@ namespace Prexonite.Compiler.Macro
                 context.Invocation.Column, constant);
         }
 
+        public static IAstExpression CreateConstantOrNull(this MacroContext context, object constant)
+        {
+            if(ReferenceEquals(constant, null))
+                return new AstNull(context.Invocation.File, context.Invocation.Line, context.Invocation.Column);
+            else
+            {
+                return CreateConstant(context, constant);
+            }
+        }
+
         /// <summary>
         ///     Generates an AST node that, when compiled, loads the specified enumeration value.
         /// </summary>
@@ -150,16 +160,13 @@ namespace Prexonite.Compiler.Macro
         /// </summary>
         /// <param name = "context">The context for which to generate the AST node.</param>
         /// <param name = "callType">The call type (get or set)</param>
-        /// <param name = "macroId">The (physical) id of the macro to expand.</param>
-        /// <param name = "macroInterpretation">The interpretation of the macro symbol to apply (macro function, macro command, etc.)</param>
+        /// <param name="implementation"></param>
         /// <param name = "args">The arguments to pass as part of teh access (optional)</param>
         /// <returns>A symbol access node.</returns>
-        public static AstMacroInvocation CreateMacroInvocation(this MacroContext context,
-            PCall callType, string macroId, SymbolInterpretations macroInterpretation,
-            params IAstExpression[] args)
+        public static AstMacroInvocation CreateMacroInvocation(this MacroContext context, PCall callType, SymbolEntry implementation, params IAstExpression[] args)
         {
             var m = new AstMacroInvocation(context.Invocation.File, context.Invocation.Line,
-                context.Invocation.Column, macroId, macroInterpretation) {Call = callType};
+                context.Invocation.Column, implementation) {Call = callType};
             m.Arguments.AddRange(args);
             return m;
         }

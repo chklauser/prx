@@ -30,6 +30,7 @@ using FatalError = Prexonite.Compiler.FatalCompilerException;
 using StringBuilder = System.Text.StringBuilder;
 using Prexonite.Compiler.Ast;
 using Prexonite.Types;
+using Prexonite.Modular;
 
 COMPILER Prexonite
 

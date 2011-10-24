@@ -205,12 +205,10 @@ namespace Prexonite.Compiler.Macro
             {
                 _macroCommand = null;
 
-                if (target.Loader.MacroCommands.Contains(invocation.MacroId))
-                    _macroCommand = target.Loader.MacroCommands[invocation.MacroId];
-                else
+                if (!target.Loader.MacroCommands.TryGetValue(invocation.Implementation.LocalId, out _macroCommand))
                 {
                     target.Loader.ReportMessage(new ParseMessage(ParseMessageSeverity.Error,
-                        String.Format("Cannot find macro command named `{0}`", invocation.MacroId),
+                        String.Format("Cannot find macro command named `{0}`", invocation.Implementation.LocalId),
                         invocation));
                     HumanId = "cannot_find_macro_command";
                     return;
@@ -245,19 +243,22 @@ namespace Prexonite.Compiler.Macro
             public void Initialize(CompilerTarget target, AstMacroInvocation invocation,
                 bool justEffect)
             {
+                if (invocation.Implementation.Module != null)
+                    throw new NotImplementedException("Cross module macro invocation not supported.");
+
                 _macroFunction = null;
 
                 PFunction macroFunc;
                 if (
                     !target.Loader.Options.TargetApplication.Functions.TryGetValue(
-                        invocation.MacroId, out macroFunc))
+                        invocation.Implementation.LocalId, out macroFunc))
                 {
                     target.Loader.ReportMessage(
                         new ParseMessage(
                             ParseMessageSeverity.Error,
                             String.Format(
                                 "The macro function {0} was called from function {1} but is not available at compile time.",
-                                invocation.MacroId,
+                                invocation.Implementation.LocalId,
                                 target.Function.Id), invocation));
                     HumanId = "could_not_resolve_macro_function";
                     return;
@@ -268,7 +269,7 @@ namespace Prexonite.Compiler.Macro
                 if (macroFunc.Meta.TryGetValue(PFunction.LogicalIdKey, out logicalIdEntry))
                     HumanId = logicalIdEntry.Text;
                 else
-                    HumanId = invocation.MacroId;
+                    HumanId = invocation.Implementation.LocalId;
             }
 
             public string HumanId { get; private set; }
@@ -555,7 +556,7 @@ namespace Prexonite.Compiler.Macro
         private IMacroExpander _getExpander(AstMacroInvocation invocation, CompilerTarget target)
         {
             IMacroExpander expander = null;
-            switch (invocation.Interpretation)
+            switch (invocation.Implementation.Interpretation)
             {
                 case SymbolInterpretations.Function:
                     expander = new MacroFunctionExpander();
@@ -571,7 +572,7 @@ namespace Prexonite.Compiler.Macro
                                 Enum.GetName(
                                     typeof (
                                         SymbolInterpretations),
-                                    invocation.Interpretation)),
+                                    invocation.Implementation.Interpretation)),
                             invocation));
                     break;
             }

@@ -73,7 +73,6 @@ namespace Prexonite.Compiler.Ast
 
         internal AstStringConcatenation Create(Parser p, params IAstExpression[] arguments)
         {
-            string id;
             var interpretation = Resolve(p, OperatorNames.Prexonite.Addition);
             return new AstStringConcatenation(p.scanner.File, p.t.line, p.t.col, interpretation,
                 arguments);
@@ -183,7 +182,9 @@ namespace Prexonite.Compiler.Ast
                 if (arg == null)
                     throw new PrexoniteException(
                         "Invalid (null) argument in StringConcat node (" + ToString() +
+// ReSharper disable ConditionIsAlwaysTrueOrFalse
                             ") detected at position " + Arguments.IndexOf(arg) + ".");
+// ReSharper restore ConditionIsAlwaysTrueOrFalse
                 var oArg = _GetOptimizedNode(target, arg);
                 if (!ReferenceEquals(oArg, arg))
                 {

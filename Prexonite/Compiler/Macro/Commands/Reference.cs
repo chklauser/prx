@@ -28,6 +28,7 @@ using System;
 using System.Collections.Generic;
 using Prexonite.Commands;
 using Prexonite.Compiler.Ast;
+using Prexonite.Modular;
 using Prexonite.Types;
 
 namespace Prexonite.Compiler.Macro.Commands
@@ -72,16 +73,30 @@ namespace Prexonite.Compiler.Macro.Commands
 
             public override PValue Run(StackContext sctx, PValue[] args)
             {
-                if (args.Length < 2)
+                if (args.Length < 3)
                     throw new PrexoniteException(string.Format(
-                        "{0} requires at least 2 arguments.", Alias));
+                        "{0} requires at least 3 arguments.", Alias));
 
                 var id = args[0].CallToString(sctx);
                 var interpretation = (SymbolInterpretations) args[1].Value;
+                var moduleRaw = args[2].Value as string;
+                ModuleName module;
+                if (moduleRaw != null)
+                {
+                    if (!ModuleName.TryParse(moduleRaw, out module))
+                        throw new PrexoniteException("Invalid module name \"" + moduleRaw + "\".");
+                }
+                else
+                {
+                    module = null;
+                }
 
                 switch (interpretation)
                 {
                     case SymbolInterpretations.Function:
+                        if (module != null)
+                            throw new NotImplementedException(
+                                "Cross module macro references are not implemented yet.");
                         return sctx.CreateNativePValue(sctx.ParentApplication.Functions[id]);
                     case SymbolInterpretations.MacroCommand:
                         return sctx.CreateNativePValue(_loader.MacroCommands[id]);
@@ -123,8 +138,9 @@ namespace Prexonite.Compiler.Macro.Commands
 
             context.Block.Expression = context.CreateGetSetSymbol(SymbolEntry.Command(Impl.Alias), 
                 PCall.Get,
-                context.CreateConstant(prototype.MacroId),
-                prototype.Interpretation.EnumToExpression(prototype));
+                context.CreateConstant(prototype.Implementation.LocalId),
+                prototype.Implementation.Interpretation.EnumToExpression(prototype),
+                context.CreateConstantOrNull(prototype.Implementation.Module));
         }
 
         #endregion

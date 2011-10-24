@@ -58,8 +58,7 @@ namespace Prexonite.Compiler.Macro.Commands
                     PCall.Get,
                     context.Invocation.Arguments.ToArray());
             var interpret = new AstMacroInvocation(context.Invocation.File, context.Invocation.Line,
-                context.Invocation.Column, CallSubInterpret.Alias,
-                SymbolInterpretations.MacroCommand);
+                context.Invocation.Column, SymbolEntry.MacroCommand(CallSubInterpret.Alias));
             interpret.Arguments.Add(perform);
 
             context.Block.Expression = interpret;

@@ -152,7 +152,7 @@ GlobalVariableDefinition	(.
 								if(errors.count == 0)
 								{
 									AstGetSet complex = new AstGetSetSymbol(this, PCall.Set, 
-                                        new SymbolEntry(InterpretAsObjectVariable(type)));
+                                        new SymbolEntry(InterpretAsObjectVariable(type), id, null));
 									complex.Arguments.Add(expr);
 									target.Ast.Add(complex);
 									vari.Meta[Application.InitializationId] = TargetApplication._RegisterInitializationUpdate().ToString();
@@ -176,7 +176,9 @@ GlobalVariableAliasList<. IList<string> aliases .>
 /* ---- Global declaration ---- */
 
 Declaration
-                            (. SymbolInterpretations type = SymbolInterpretations.Undefined; .)
+                            (. SymbolInterpretations type = SymbolInterpretations.Undefined;
+                               ModuleName module = null;
+                            .)
 =
 SYNC
 	declare
@@ -185,11 +187,11 @@ SYNC
 	|	function			(. type = SymbolInterpretations.Function; .)
 	|   command             (. type = SymbolInterpretations.Command; .)
 	]
-	DeclarationInstance<type>
-	{comma [ DeclarationInstance<type> ] }
+	DeclarationInstance<type,module>
+	{comma [ DeclarationInstance<type,module> ] }
 .
 	
-DeclarationInstance<SymbolInterpretations type>
+DeclarationInstance<SymbolInterpretations type, ModuleName module>
                             (.  string id; string aId; .)
 =			
 	Id<out id>              (.  aId = id; .)
@@ -204,7 +206,7 @@ DeclarationInstance<SymbolInterpretations type>
 	                                        type = inferredType.Interpretation;
 	                                    else
 	                                        SemErr("Interpretation of symbol " + id + " as " + aId + " cannot be inferred.");
-	                                Symbols[aId] = new SymbolEntry(type, id);
+	                                Symbols[aId] = new SymbolEntry(type, id, module);
 	                            }
 	                            else
 	                            {
@@ -215,7 +217,7 @@ DeclarationInstance<SymbolInterpretations type>
 	                                        type = inferredType.Interpretation;
 	                                    else
 	                                        SemErr("Interpretation of symbol " + id + " as " + aId + " cannot be inferred.");
-	                                target.Symbols[aId] = new SymbolEntry(type, id);
+	                                target.Symbols[aId] = new SymbolEntry(type, id, module);
 	                            }
 	                        .)
 .
@@ -584,7 +586,7 @@ FunctionDefinition<out PFunction func>
 										        {										            
 										            //Global lazy functions don't technically need a stub. Might be removed later on
 										            var call = new AstGetSetSymbol(this, 
-                                                        new SymbolEntry(SymbolInterpretations.Function, ct.Function.Id, null);
+                                                        new SymbolEntry(SymbolInterpretations.Function, ct.Function.Id, null));
 										            
 										            //Generate code for arguments (each wrapped in a `asThunk` command call)
 											        foreach(var par in derStub.Parameters)

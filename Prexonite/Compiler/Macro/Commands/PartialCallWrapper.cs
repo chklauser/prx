@@ -117,9 +117,7 @@ namespace Prexonite.Compiler.Macro.Commands
             }
 
             var inv = new AstMacroInvocation(context.Invocation.File, context.Invocation.Line,
-                context.Invocation.Column,
-                CallStar.Instance.Id,
-                SymbolInterpretations.MacroCommand);
+                context.Invocation.Column, SymbolEntry.MacroCommand(CallStar.Instance.Id));
 
             // Protect the first two arguments
             inv.Arguments.Add(context.CreateConstant(GetPassThroughArguments(context)));
