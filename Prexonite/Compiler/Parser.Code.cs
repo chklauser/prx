@@ -1079,6 +1079,11 @@ namespace Prexonite.Compiler
                 args = new ArgumentsProxy(new List<IAstExpression>());
             }
         }
+
+        private IAstExpression _createUnknownExpr()
+        {
+            return new AstIndirectCall(this, new AstNull(this));
+        }
     }
 }
 

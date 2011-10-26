@@ -65,7 +65,7 @@ macro ast\macro(type)[partial\macro]
         return false;
     }
     
-    var astCall = ast("GetSetSymbol", SI.get, ->ast\withPos.Id, SI.func);
+    var astCall = ast("GetSetSymbol", SI.get, SI.func(->ast\withPos));
     
     var nodeFile;
     var nodeLine;
@@ -78,16 +78,16 @@ macro ast\macro(type)[partial\macro]
         establish_macro_context(context);
         
         var getContext = ast("GetSetSymbol",
-            SI.get,Prexonite::Compiler::MacroAliases.ContextAlias,SI.lref);
+            SI.get,SI.lref(Prexonite::Compiler::MacroAliases.ContextAlias));
         
         var getInvComp = ast("GetSetMemberAccess",SI.get,getContext,"Invocation");
             
         var invkV = context.AllocateTemporaryVariable();
         var storeInvk = ast("GetSetSymbol",
-            SI.set, invkV, SI.lvar);
+            SI.set, SI.lvar(invkV));
         storeInvk.Arguments.Add(getInvComp);
         
-        var getInv = ast("GetSetSymbol",SI.get,invkV,SI.lvar);
+        var getInv = ast("GetSetSymbol",SI.get,SI.lvar(invkV));
             
         nodeFile = ast("GetSetMemberAccess", SI.get, storeInvk, "File");
         nodeLine = ast("GetSetMemberAccess", SI.get, getInv, "Line");
@@ -126,14 +126,14 @@ macro is_in_macro(explicitContext)
     if(explicitContext is null)
     {
         establish_macro_context(context);
-        getContext = ast("GetSetSymbol",SI.get,Prexonite::Compiler::MacroAliases.ContextAlias,SI.lref);
+        getContext = ast("GetSetSymbol",SI.get,SI.lref(Prexonite::Compiler::MacroAliases.ContextAlias));
     }
     else
     {
         getContext = explicitContext;
     }
     
-    var funcCall = ast("GetSetSymbol",SI.get,->is_in_macro\impl.Id,SI.func);
+    var funcCall = ast("GetSetSymbol",SI.get,SI.func(->is_in_macro\impl));
     funcCall.Arguments.Add(getContext);
     return funcCall;
 }
@@ -142,15 +142,30 @@ macro establish_macro_context()
 {
     establish_macro_context\impl(context);
     
-    var estCall = ast("GetSetSymbol", SI.get, ->establish_macro_context\impl.Id, SI.func);
-    estCall.Arguments.Add(ast("GetSetSymbol", SI.get, Prexonite::Compiler::MacroAliases.ContextAlias, SI.lref));
+    var estCall = ast("GetSetSymbol", SI.get, SI.func(->establish_macro_context\impl));
+    estCall.Arguments.Add(ast("GetSetSymbol", SI.get, SI.lref(Prexonite::Compiler::MacroAliases.ContextAlias)));
     return estCall;
+}
+
+macro macro\get_context()
+{
+    function create_getSI = ast("GetSetSymbol",SI.get,SI.func(->SI));
+    var astCall = ast("MacroInvocation",SI.m.func(macro\reference(ast)));
+    astCall.Arguments.AddRange([
+        ast("Constant","GetSetSymbol"),
+        ast("GetSetMemberAccess",SI.get,new getSI,"get"),
+        var lref = ast("GetSetMemberAccess",SI.get,new getSI,"lref"),
+    ]);
+    lref.Arguments.Add(ast("Constant",Prexonite::Compiler::MacroAliases.ContextAlias));
+    
+    context.Block.Expression = astCall;
+    return null;
 }
 
 function macro\report_any(message, severity)
     [\sharedNames {context}; is compiler;]
 {
-    var getContext = ast("GetSetSymbol", SI.get, Prexonite::Compiler::MacroAliases.ContextAlias, SI.lref);
+    var getContext = macro\get_context;
     var parseMessageSeverity_t = ast("ConstantTypeExpression", "Object(\"Prexonite.Compiler.ParseMessageSeverity\")");
     var getSeverity = ast("GetSetStatic", SI.get, parseMessageSeverity_t, severity);
     var getInvocation = ast("GetSetMemberAccess", SI.get, getContext, "Invocation");
@@ -195,13 +210,13 @@ macro macro\getSI
     if(context.IsJustEffect)
         return;
         
-    function create_getSI = ast("GetSetSymbol",SI.get,->SI.Id, SI.func);
+    function create_getSI = ast("GetSetSymbol",SI.get,SI.func(->SI));
     
-    var mi = ast("MacroInvocation", "ast\\macro", SI.m.func);
+    var mi = ast("MacroInvocation", SI.m.i.func("ast\\macro"));
     mi.Arguments.Add(ast("Constant","GetSetSymbol"));    
     mi.Arguments.Add(ast("GetSetMemberAccess",new getSI,"get"));
-    mi.Arguments.Add(ast("Constant",->SI.Id));
-    mi.Arguments.Add(ast("GetSetMemberAccess",new getSI,"func"));
+    mi.Arguments.Add(var si_func = ast("GetSetMemberAccess",new getSI,"func"));
+    si_func.Arguments.Add(ast("GetSetReference", SI.func(->SI)));
     
     context.Block.Expression = mi;
 }
@@ -218,7 +233,7 @@ macro tempalloc(getContext)
         return;
     }
     
-    getContext ??= ast("GetSetSymbol",SI.get,Prexonite::Compiler::MacroAliases.ContextAlias,SI.lref);
+    getContext ??= macro\get_context;
     
     return ast("GetSetMemberAccess",SI.get,getContext,"AllocateTemporaryVariable");
 }
@@ -249,7 +264,7 @@ macro tempfree(getContext, tempId)
         return;
     }
     
-    getContext ??= ast("GetSetSymbol",SI.get,contextAlias,SI.lref);
+    getContext ??= macro\get_context;
     
     var c = ast("GetSetMemberAccess",SI.get,getContext,"FreeTemporaryVariable");
     c.Arguments.Add(tempId);
@@ -270,8 +285,8 @@ function macro\_expand_into_function(ldr, id, body)[compiler]
     //create function body {return <body>(node_arg, <args...>);}
     var block = new Prexonite::Compiler::Ast::AstBlock("macro.pxs\\derived",-1,-1);
     block.Add(var ret = ast("Return",Prexonite::Compiler::Ast::ReturnVariant.Exit));
-    ret.Expression = var bodyMi = ast("MacroInvocation", body, SI.m.func);
-    bodyMi.Arguments.Add(ast("GetSetSymbol",SI.get,node_arg,SI.lvar));
+    ret.Expression = var bodyMi = ast("MacroInvocation", body);
+    bodyMi.Arguments.Add(ast("GetSetSymbol",SI.get,SI.lvar(node_arg)));
     bodyMi.Arguments.AddRange(var args >> skip(3));
     
     //Have the body compiled
@@ -280,7 +295,7 @@ function macro\_expand_into_function(ldr, id, body)[compiler]
     target.FinishTarget();
     
     //Add symbol entry
-    ldr.Symbols.Add(id,new Prexonite::Compiler::SymbolEntry(SI.func,id));
+    ldr.Symbols.Add(id,SI.i.func(id));
     return null;
 }
 
@@ -305,10 +320,10 @@ macro macro\_check_is_node_t(node_arg,node_t_name,requirePlaceholder,requireAstN
 
     // //Ensure is object type in the first place
     var arg_pt = tempalloc;
-    function create_arg_pt(c) = ast("GetSetSymbol", c ?? SI.get, arg_pt, SI.lvar);
+    function create_arg_pt(c) = ast("GetSetSymbol", c ?? SI.get, SI.lvar(arg_pt));
     
     var node_t = uniqueId(id + @"\node_t");
-    function create_node_t(c) = ast("GetSetSymbol",c ?? SI.get,node_t,SI.gvar);
+    function create_node_t(c) = ast("GetSetSymbol",c ?? SI.get, SI.i.gvar(node_t));
     
     context.Application.Variables.Add(node_t, var node_t_var = new Prexonite::PVariable);
     node_t_var.Meta["compiler"] = true;
@@ -316,7 +331,7 @@ macro macro\_check_is_node_t(node_arg,node_t_name,requirePlaceholder,requireAstN
     // if((var arg_pt = boxed(node_arg).Type) is not Prexonite::Types::ObjectPType)
         // return false;
     {
-        var box_node_arg = ast("GetSetSymbol",SI.get,"boxed",SI.cmd);
+        var box_node_arg = ast("GetSetSymbol",SI.get,SI.cmd("boxed"));
         box_node_arg.Arguments.Add(new node_arg);
         var set_arg_pt = new arg_pt(SI.set);
         set_arg_pt.Arguments.Add(ast("GetSetMemberAccess", box_node_arg, "Type"));
@@ -357,7 +372,7 @@ macro macro\_check_is_node_t(node_arg,node_t_name,requirePlaceholder,requireAstN
         if(not requirePlaceholder)
         {
             var has_placeholders = ast("UnaryOperator",Prexonite::Compiler::Ast::UnaryOperator.LogicalNot,
-                has_placeholders,SI.cmd, ~Object<"Prexonite.OperatorNames+Prexonite">.LogicalNot);
+                has_placeholders,SI.cmd(~Object<"Prexonite.OperatorNames+Prexonite">.LogicalNot));
         }
         
         var conjunction;
@@ -368,7 +383,7 @@ macro macro\_check_is_node_t(node_arg,node_t_name,requirePlaceholder,requireAstN
         }
         else
         {
-            var assignableAstNode = ast("GetSetMemberAccess", ast("GetSetSymbol", SI.get, ->AstNode_t.Id, SI.func),
+            var assignableAstNode = ast("GetSetMemberAccess", ast("GetSetSymbol", SI.get, SI.i.func(->AstNode_t.Id)),
                 "IsAssignableFrom");
             assignableAstNode.Arguments.Add(ast("GetSetMemberAccess", new arg_pt, "ClrType"));
             
@@ -391,7 +406,7 @@ build
     >> where(AstNode_t.IsAssignableFrom(?))
     >> var node_ts;
     
-    var implId = @"macro\_check_is_node_t";
+    var impl = SI.m.func(asm(ldr.app).Functions[@"macro\_check_is_node_t"]);
     
     foreach(new var node_t in node_ts)
     {
@@ -400,14 +415,14 @@ build
         //create function, pass full name of type to check against
         macro\_expand_into_function(GetLoader,
             ref_name, //Id of the generated function
-            implId, //id of the macro that provides the implementation
+            impl, //id of the macro that provides the implementation
             ast("Constant",node_t.FullName), //name of the type to check against
         );
         
         //create function for partial applications of these types
         macro\_expand_into_function(GetLoader,
             "ast_is_partial_$(human_name(node_t))", //id of the generate function
-            implId, //id of the macro that provides the implementation
+            impl, //id of the macro that provides the implementation
             ast("Constant",node_t.FullName), //name of the type to check against
             ast("Constant",true), //true ↔ reject nodes *without* placeholders
         );
@@ -421,7 +436,7 @@ build
     {
         macro\_expand_into_function(GetLoader,
             entry.Value, //id of the generate function
-            implId, //id of the macro that provides the implementation
+            impl, //id of the macro that provides the implementation
             ast("Constant",entry.Key), //name of the type to check against
             ast("Constant",false), //false ↔ reject nodes with placeholders
             ast("Constant",true),  //require explicit check against AstNode_t
@@ -431,7 +446,7 @@ build
     //Create special check function for partial application (any)
     macro\_expand_into_function(GetLoader,
         "ast_is_partial_application", //id of the generate function
-        implId, //id of the macro that provides the implementation
+        impl, //id of the macro that provides the implementation
         ast("Constant",AstNode_t.FullName), //name of the type to check against
         ast("Constant",true), //true ↔ reject nodes *without* placeholders
     );
@@ -545,10 +560,10 @@ macro ast\read\macro as ast\read(contextRef, expr)[\sps;partial\macro]
     if(contextRef is null)
     {
         establish_macro_context;
-        contextRef = ast("GetSetSymbol", SI.get, Prexonite::Compiler::MacroAliases.ContextAlias, SI.lref);
+        contextRef = macro\get_context;
     }
     
-    var fcall = context.Block.Expression = ast("GetSetSymbol", context.Call, ->ast\read\impl.Id, SI.func); 
+    var fcall = context.Block.Expression = ast("GetSetSymbol", context.Call, SI.func(->ast\read\impl)); 
     fcall.Arguments.Add(contextRef);
     fcall.Arguments.Add(expr);
     return true;
@@ -556,13 +571,23 @@ macro ast\read\macro as ast\read(contextRef, expr)[\sps;partial\macro]
 
 function macro\_extract_id(prototype)[is compiler;]
 {
-    if(ast_is_MacroInvocation(prototype))
-        return prototype.MacroId;
-    else
-        return prototype.Id;
+    return prototype.Implementation.InternalId;
 }
 
 macro macro\id(prototype)
+{
+    if(context.IsJustEffect)
+        return;
+    
+    var sym = prototype.Implementation.Interpretation;
+    
+    if(SI.is_func(sym) or SI.is_gvar(sym) or SI.is_gref(sym))
+        macro\report_warning("The value returned by macro\\id is not sufficient to identify a macro, even in conjunction with macro\\interpretation. Either use macro\\internal_id to avoid this warning, or get the symbol entry corresponding to the macro via macro\\symbol.");
+        
+    return ast("Constant",macro\_extract_id(prototype));
+}
+
+macro macro\internal_id(prototype)
 {
     if(context.IsJustEffect)
         return;
@@ -574,12 +599,12 @@ macro macro\interpretation(prototype)
     if(context.IsJustEffect)
         return;
     
-    var getSI = macro\getSI;
+    declare macro\getSI as getSI;
     
     var siMem;
     if(ast_is_MacroInvocation(prototype))
     {
-        var i = prototype.Interpretation;
+        var i = prototype.Implementation.Interpretation;
         if(SI.m.is_func(i))
             siMem = "func";
         else if(SI.m.is_cmd(i))
@@ -596,7 +621,7 @@ macro macro\interpretation(prototype)
     }
     else if(ast_is_GetSetSymbol(prototype))
     {
-        var i = prototype.Interpretation;
+        var i = prototype.Implementation.Interpretation;
         if(SI.is_lvar(i))
             siMem = "lvar";
         else if(SI.is_lref(i))
@@ -626,8 +651,95 @@ macro macro\interpretation(prototype)
     }
 }
 
+macro macro\symbol(prototype)
+{
+    if(context.IsJustEffect)
+        return;
+    
+    declare macro\getSI as getSI;
+    var sym = prototype.Implementation;
+    
+    function mkModuleName
+    {
+        var mkModuleName = ast("GetSetSymbol", SI.get, SI.cmd(macro\internal_id(create_module_name)));
+        mkModuleName.Arguments.Add(ast("Constant",sym.Module.ToString));
+        return mkModuleName;
+    }
+    
+    var siMem;
+    var modReq = false;
+    if(ast_is_MacroInvocation(prototype))
+    {
+        var i = sym.Interpretation;
+        if(SI.m.is_func(i))
+        {
+            siMem = "func";
+            modReq = true;
+        }
+        else if(SI.m.is_cmd(i))
+        {
+            siMem = "cmd";
+        }
+        else {
+            macro\report_error("Unkown macro interpretation $i. Assuming function");
+            siMem = "func";
+        }
+        
+        var getSI\m = ast("GetSetMemberAccess",SI.get,getSI,"m");
+        var getSI\m\i = ast("GetSetMemberAccess",SI.get,getSI\m,siMem);
+        getSI\m\i.Arguments.Add(ast("Constant",sym.InternalId));
+        if(modReq)
+            getSI\m\i.Arguments.Add(mkModuleName);
+        
+        return getSI\m\i;
+    }
+    else if(ast_is_GetSetSymbol(prototype))
+    {
+        var i = sym.Interpretation;
+        
+        if(SI.is_lvar(i))
+            siMem = "lvar";
+        else if(SI.is_lref(i))
+            siMem = "lref";
+        else if(SI.is_gvar(i))
+        {
+            siMem = "gvar";
+            modReq = true;
+        }
+        else if(SI.is_gref(i))
+        {
+            siMem = "gref";
+            modReq = true;
+        }
+        else if(SI.is_func(i))
+        {
+            siMem = "func";
+            modReq = true;
+        }
+        else if(SI.is_cmd(i))
+            siMem = "cmd";
+        else if(SI.is_mcmd(i))
+            siMem = "mcmd";
+        else {
+            macro\report_error("Unkown symbol interpretation $i. Assuming function");
+            siMem = "func";
+        }
+        
+        var getSI\i = ast("GetSetMemberAccess",SI.get,getSI,siMem);
+        getSI\i.Arguments.Add(ast("Constant", sym.InternalId));
+        if(modReq)
+            getSI\i.Arguments.Add(mkModuleName);
+        
+        return getSI\i;
+    }
+    else
+    {
+        return ast("Null");
+    }
+}
+
 //ast helper
-macro ast\invoke_macro(macroId, symbolInterpretation)
+macro ast\invoke_macro(macroId, symbolInterpretation, moduleName)
 {
     if(context.IsJustEffect)
         return;
@@ -635,51 +747,67 @@ macro ast\invoke_macro(macroId, symbolInterpretation)
     if(is_in_macro)
         establish_macro_context;
 
-    var c = ast("MacroInvocation",macro\id(ast\macro), SI.m.func);
+    if(macroId is null)
+    {
+        macro\report_error("ast\\invoke_macro requires at least one argument. Usage: ast\\invoke_macro(macroSym) or ast\\invoke_macro(macroId, symbolInterpretation, moduleName)");
+        return null;
+    }
+    
+    var c = ast("MacroInvocation",macro\symbol(ast\macro));
     c.Arguments.Add(ast("Constant","MacroInvocation"));
+    c.Call = context.Call;
+    
+    if(symbolInterpretation is null)
+    {
+        //Just forward symbol entry expression
+        c.Arguments.Add(macroId);
+    }
+    else
+    {
+        //Assemble prototype to be analyzed by macro\symbol
+        var symEntry = ast("ObjectCreation", 
+            ast("ConstantTypeExpression", "Object(\"Prexonite.Compiler.SymbolEntry\")"));
+        symEntry.Arguments.Add(symbolInterpretation);
+        symEntry.Arguments.Add(macroId);
+        symEntry.Arguments.Add(moduleName);
+        
+        c.Arguments.Add(symEntry);
+    }
     
     //try parse ast\invoke_macro(macro\id($PROTOTYPE))
     if(symbolInterpretation is null)
     {   if(ast_is_MacroInvocation(macroId) 
-            and macroId.MacroId == macro\id(macro\id)
+            and macroId.Implementation == macro\symbol(macro\id)
             and macroId.Arguments.Count > 0)
         {
-            var i = macroId.Arguments[0].Interpretation;
-            var siMem;
-            if(SI.m.is_func(i))
-                siMem = "func";
-            else if(SI.m.is_cmd(i))
-                siMem = "cmd";
-            else {
-                macro\report_error("Unkown macro interpretation $i. Assuming function");
-                siMem = "func";
-            }
-            
-            var getSI\m = ast("GetSetMemberAccess",SI.get,macro\getSI,"m");
-            var getSI\m\i = ast("GetSetMemberAccess",SI.get,getSI\m,siMem);
-            if((var args).Count > 1)
-                args[1] = getSI\m\i;
-            else
-                args[] = getSI\m\i;
+            macro\report_error("No symbol interpretation provided for construction of ast\\invoke_macro node in function $(context.Function). Use macro\\symbol or provide macroId, macroInterpretation and macroModule individually.");
         }
-        else 
-        {
-            macro\report_warning("No symbol interpretation provided for construction of ast\\invoke_macro node in function $(context.Function).");
-        }
-    }
-    
-    c.Arguments.AddRange(var args);    
+    }    
         
     return c;
 }
 
 macro ast\symbol(symbolInterpretation)
 {
-    var c = ast\invoke_macro(macro\id(ast\macro));
-    var getSI\cmd = ast("GetSetMemberAccess",SI.get,macro\getSI,ast\read(context, symbolInterpretation));
+    var args; 
+    
+    if(args.Count < 2)
+    {
+        macro\report_error("Symbol description missing in symbol access node creation.");
+        return null;
+    }
+    
+    var c = ast\invoke_macro(macro\symbol(ast\macro));
+    var getSI\si = ast("GetSetMemberAccess",SI.get,macro\getSI,ast\read(context, symbolInterpretation));
+    var last = args[args.Count - 1];
+    if(ast_is_ListLiteral(last))
+        getSI\si.Arguments.AddRange(last.Elements);
+    else
+        getSI\si.Arguments.Add(last);
     c.Arguments.Add(ast("Constant", "GetSetSymbol"));
-    c.Arguments.AddRange(var args >> skip(1));
-    c.Arguments.Add(getSI\cmd);
+    c.Arguments.AddRange(args >> skip(1) >> take(args.Count-2));
+    c.Arguments.Add(getSI\si);
+    //println(context.Function," LINE ", context.Invocation.Line, " :: ", c);
     return c;
 }
 
@@ -688,22 +816,21 @@ macro ast\symbol\mk_macro(symbolInterpretation)
     var block = ast("BlockExpression");
     
     //Generation of
-    //  var c = ast\invoke_macro(->ast\symbol.Id);
+    //  var c = ast\invoke_macro(macro\symbol(ast\symbol));
     var varC = tempalloc;
-    var mc = ast\invoke_macro(macro\id(ast\invoke_macro));
-    mc.Arguments.Add(ast("Constant",macro\id(ast\symbol)));
-    var prototype = ast\invoke_macro(macro\id(ast\symbol));
-    mc.Arguments.Add(asm(newclo macro\interpretation).(prototype));
-    var setC = ast("GetSetSymbol",SI.set, varC, SI.lvar);
+    var mc = ast\invoke_macro(macro\symbol(ast\invoke_macro));
+    var prototype = ast\invoke_macro(macro\symbol(ast\symbol));
+    mc.Arguments.Add( call\macro([macro\symbol(prototype)]) );
+    var setC = ast("GetSetSymbol",SI.set, SI.lvar(varC));
     setC.Arguments.Add(mc);
     block.Add(setC);
     
     //Generation of
-    //  c.Arguments.Add(ast("Constant","func"));
-    var getC = ast("GetSetSymbol",SI.get,varC,SI.lvar);
+    //  c.Arguments.Add(ast("Constant","$symbolInterpretation"));
+    var getC = ast("GetSetSymbol",SI.get,SI.lvar(varC));
     var getC\Arguments = ast("GetSetMemberAccess",SI.get,getC,"Arguments");
     var getC\Arguments\Add = ast("GetSetMemberAccess",SI.get,getC\Arguments,"Add");
-    var constFunc = ast\invoke_macro(macro\id(ast\macro));
+    var constFunc = ast\invoke_macro(macro\symbol(ast\macro));
     constFunc.Arguments.Add(ast("Constant","Constant"));
     constFunc.Arguments.Add(symbolInterpretation);
     getC\Arguments\Add.Arguments.Add(constFunc);
@@ -715,7 +842,7 @@ macro ast\symbol\mk_macro(symbolInterpretation)
     var getC\Arguments\AddRange = ast("GetSetMemberAccess",SI.get,getC\Arguments,"AddRange");
     if(not (context.Function.Variables >> contains(Prexonite::PFunction.ArgumentListId)))
         context.Function.Variables.Add(Prexonite::PFunction.ArgumentListId);
-    getC\Arguments\AddRange.Arguments.Add(ast("GetSetSymbol",SI.get,Prexonite::PFunction.ArgumentListId,SI.lvar));
+    getC\Arguments\AddRange.Arguments.Add(ast("GetSetSymbol",SI.get,SI.lvar(Prexonite::PFunction.ArgumentListId)));
     block.Add(getC\Arguments\AddRange);
     
     //Generation of
@@ -749,7 +876,7 @@ macro ast\member(subject, call_type, id)
     id ??= ast("Constant","");
     call_type ??= ast("GetSetMemberAccess",SI.get,macro\getSI,"get");
     
-    var c = ast\invoke_macro(macro\id(ast\macro));
+    var c = ast\invoke_macro(macro\symbol(ast\macro));
     c.Arguments.Add(ast("Constant","GetSetMemberAccess"));
     c.Arguments.Add(call_type);
     c.Arguments.Add(subject);
@@ -794,20 +921,20 @@ macro ast\const(value)
  
     if(ast_is_Null(value) or (ast_is_Constant(value) and value.Constant is null))
     {
-        var c = ast\invoke_macro(macro\id(ast\macro));
+        var c = ast\invoke_macro(macro\symbol(ast\macro));
         c.Arguments.Add(ast("Constant","Null"));
         return c;
     }
     else if(ast_is_Constant(value))
     {
-        var c = ast\invoke_macro(macro\id(ast\macro));
+        var c = ast\invoke_macro(macro\symbol(ast\macro));
         c.Arguments.Add(ast("Constant","Constant"));
         c.Arguments.Add(value);
         return c;
     }
     else if(ast_is_KeyValuePair(value))
     {
-        var kvp = ast\invoke_macro(macro\id(ast\macro));
+        var kvp = ast\invoke_macro(macro\symbol(ast\macro));
         kvp.Arguments.Add(ast("Constant","KeyValuePair"));
         kvp.Arguments.Add(call\macro([ast\const(value.Key)]));
         kvp.Arguments.Add(call\macro([ast\const(value.Value)]));
@@ -815,7 +942,7 @@ macro ast\const(value)
     }
     else
     {
-        var c = ast\func(->ast\const\dynamic.Id);
+        var c = ast\func(macro\symbol(ast\const\dynamic));
         c.Arguments.Add(value);
         return c;        
     }
@@ -827,14 +954,20 @@ macro ast\ret\generic_proc(expr, kind)
     if(is_in_macro)
         establish_macro_context;
  
-    var mkRetNode = ast\invoke_macro(macro\id(ast\macro));
+    var mkRetNode = ast\invoke_macro(macro\symbol(ast\macro));
     mkRetNode.Arguments.Add(ast\const("Return"));
     mkRetNode.Arguments.Add(ast\member(macro\getSI, SI.get, "ret\\$kind"));
     if(expr is Null)
     {
         if(kind.ToLowerInvariant == "set")
-            throw "Set return requires an expression.";
-        return mkRetNode;
+        {
+            macro\report_error("Set return requires an expression.");
+            return null;
+        }
+        else
+        {
+            return mkRetNode;
+        }
     }
     else
     {
@@ -910,15 +1043,21 @@ macro ast\run(loaderRef, block)
         return;
     }
     
-    var c = ast\func(->ast\run\impl.Id);
+    var c = ast\func(macro\symbol(ast\run\impl));
     c.Arguments.Add(loaderRef);
     c.Arguments.Add(block);
     
     return c;
 }
 
+macro echo_ast_run
+{
+    println(macro\reference(ast\run).Store);
+}
+
 function ast\eval\impl(loader, expr) [is compiler;]
 {
+    echo_ast_run;
     var block = ast("Block");
     block.Add(ast\ret(expr));
     return ast\run(loader, block);
@@ -1012,9 +1151,9 @@ macro ast\new\const as ast\new(typename)
     
     //Create object creation node { $constructV = new ObjectCreation(new ConstantTypeExpression($typename)) }   
     block.Add(ast\args(ast\lvar(SI.set, constructV),
-        ast\args(ast\invoke_macro(macro\id(ast)),
+        ast\args(ast\invoke_macro(macro\symbol(ast)),
             ast\const("ObjectCreation"),
-            ast\args(ast\invoke_macro(macro\id(ast)),
+            ast\args(ast\invoke_macro(macro\symbol(ast)),
                 ast\const("ConstantTypeExpression"),
                 typename
             )

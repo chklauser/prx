@@ -419,7 +419,9 @@ Condition<AstBlock block>
     |   unless                  (.  isNegative = true; .)
     )
     
-    lpar Expr<out expr> rpar    (.  AstCondition cond = new AstCondition(this, expr, isNegative);
+    lpar Expr<out expr> rpar    (.  if(expr == null)
+                                        expr = _createUnknownExpr();
+                                    AstCondition cond = new AstCondition(this, expr, isNegative);
                                     target.BeginBlock(cond.IfBlock);
                                 .)
     

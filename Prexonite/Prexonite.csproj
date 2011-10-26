@@ -118,6 +118,7 @@
     <Compile Include="Commands\Core\ConsolePrint.cs" />
     <Compile Include="Commands\Core\ConsolePrintLine.cs" />
     <Compile Include="Commands\Core\Const.cs" />
+    <Compile Include="Commands\Core\CreateModuleName.cs" />
     <Compile Include="Commands\Core\Debug.cs" />
     <Compile Include="Commands\Core\Dispose.cs" />
     <Compile Include="Commands\Core\Id.cs" />

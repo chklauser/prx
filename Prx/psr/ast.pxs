@@ -96,13 +96,66 @@ function create_SI [is compiler;]
 {
     //Note: don't use struct here, because struct.pxs depends on ast.pxs!
     var SI = new Structure;
-    SI.\("lvar") = ::SymbolInterpretations.LocalObjectVariable;
-    SI.\("lref") = ::SymbolInterpretations.LocalReferenceVariable;
-    SI.\("gvar") = ::SymbolInterpretations.GlobalObjectVariable;
-    SI.\("gref") = ::SymbolInterpretations.GlobalReferenceVariable;
-    SI.\("func") = ::SymbolInterpretations.Function;
-    SI.\("cmd") =  ::SymbolInterpretations.Command;
-    SI.\("mcmd") = ::SymbolInterpretations.MacroCommand;
+    var si_lvar = ::SymbolInterpretations.LocalObjectVariable;
+    var si_lref = ::SymbolInterpretations.LocalReferenceVariable;
+    var si_gvar = ::SymbolInterpretations.GlobalObjectVariable;
+    var si_gref = ::SymbolInterpretations.GlobalReferenceVariable;
+    var si_func = ::SymbolInterpretations.Function;
+    var si_cmd = ::SymbolInterpretations.Command;
+    var si_mcmd = ::SymbolInterpretations.MacroCommand;
+    SI.\\("lvar") = (_,id) => if(id is null) 
+            si_lvar
+        else 
+            ::SymbolEntry.LocalObjectVariable(id);
+    SI.\\("lref") = (_,id) => if(id is null) 
+            si_lref
+        else 
+            ::SymbolEntry.LocalReferenceVariable(id);
+    SI.\\("gvar") = (self,id,m) =>
+        if(id is ::SymbolEntry)
+            if(self.is_gvar(id.Interpretation))
+                id
+            else
+                throw "Supplied symbol entry ($id) is not a global object variable, but was used in SI.gvar."
+        else if(var args.Count >= 3 and id is String)
+            new ::SymbolEntry(si_gvar, id, m)
+        else if(var args.Count == 1)
+            si_gvar
+        else
+            throw "Global variable symbol entry requires a module name.";
+    SI.\\("gref") = (self,id,m) => 
+        if(id is ::SymbolEntry)
+            if(self.is_gref(id.Interpretation))
+                id
+            else
+                throw "Supplied symbol entry ($id) is not a global reference variable, but was used in SI.gref."
+        else if(var args.Count >= 3 and id is String)
+            new ::SymbolEntry(si_gref, id, m)
+        else if(var args.Count == 1)
+            si_gref
+        else
+            throw "Global variable symbol entry requires a module name.";;
+    SI.\\("func") = (self,func,m) => 
+        if(func is ::PFunction)
+            //TODO: figure out how to get hold of the module
+            new ::SymbolEntry(si_func, func.Id, null)
+        else if(func is ::SymbolEntry)
+            if(self.is_func(func.Interpretation))
+                func
+            else
+                throw "Supplied symbol entry ($func) is not a function, but was used in SI.func."
+        else if(var args.Count >= 3 and func is String)
+            new ::SymbolEntry(si_func, func, m)
+        else
+            si_func;
+    SI.\\("cmd") =  (_,id) => if(id is null) 
+            si_cmd
+        else 
+            ::SymbolEntry.Command(id);
+    SI.\\("mcmd") = (_,id) => if(id is null) 
+            si_mcmd
+        else 
+            ::SymbolEntry.MacroCommand(id);
     SI.\("get") = Prexonite::Types::PCall.Get;
     SI.\("set") = Prexonite::Types::PCall.Set;
 	SI.\("ret\\exit") = Prexonite::Compiler::Ast::ReturnVariant.Exit;
@@ -151,12 +204,39 @@ function create_SI [is compiler;]
             throw "$s cannot be made reference.";
             
     //Macro specific
+    //Internal
+    function create_i(p)
+    {
+        var i = new Structure;
+        i.\("parent") = p;
+        i.\\("gvar") = (self,id) =>
+            if(id is not string)
+                "SI.i.gvar(id) requires an id~String, and not $(boxed(id))"
+            else 
+                self.parent.gvar(id,null);
+        i.\\("gref") = (self,id) =>
+            if(id is not string)
+                "SI.i.gref(id) requires an id~String, and not $(boxed(id))"
+            else 
+                self.parent.gref(id,null);
+        i.\\("func") = (self,id) =>
+            if(id is not string)
+                "SI.i.func(id) requires an id~String, and not $(boxed(id))"
+            else 
+                self.parent.func(id,null);
+        return i;
+    }
+    SI.\("i") = new i(SI); 
+    
     var m = new Structure;
-    m.\("func") = ::SymbolInterpretations.Function;
-    m.\("cmd")  = ::SymbolInterpretations.MacroCommand;
+    m.\\("func") = SI.func(?1,?2); //skip self argument
+    m.\\("cmd")  = SI.mcmd(?1);
     m.\\("is_func") = (this, s) => s~Int == this.func~Int;
     m.\\("is_cmd") = (this, s) => s~Int == this.cmd~Int;
+    m.\("i") = new i(m);
     SI.\("m") = m;
+    
+           
     
     return SI;
 }

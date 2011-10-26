@@ -57,7 +57,7 @@ namespace Prexonite.Modular
 
         public ModuleName(string id, Version version)
         {
-            if (!String.IsNullOrEmpty(id))
+            if (String.IsNullOrEmpty(id))
                 throw new ArgumentException("Module id cannot be null or empty.","id");
 
             if (version == null)

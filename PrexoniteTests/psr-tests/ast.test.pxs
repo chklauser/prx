@@ -184,9 +184,16 @@ function test_si_fields[
     assert_seq(SI.ret\continue, ::ReturnVariant.Continue);
     assert_seq(SI.ret\break, ::ReturnVariant.Break);
     
+    var x = "x";
+    assert_eq(SI.lvar(x), new ::SymbolEntry(::SymbolInterpretations.LocalObjectVariable,x,null));
+    assert_eq(SI.lref(x), new ::SymbolEntry(::SymbolInterpretations.LocalReferenceVariable,x,null));
+    assert_eq(SI.cmd(x), new ::SymbolEntry(::SymbolInterpretations.Command,x,null));
+    assert_eq(SI.mcmd(x), new ::SymbolEntry(::SymbolInterpretations.MacroCommand,x,null));
+    
     //macro specific
     assert_seq(SI.m.func, ::SymbolInterpretations.Function);
     assert_seq(SI.m.cmd, ::SymbolInterpretations.MacroCommand);
+    assert_eq(SI.m.cmd(x), new ::SymbolEntry(::SymbolInterpretations.MacroCommand,x,null));
 }
 
 function test_si_is_star[
