@@ -30,7 +30,7 @@ build does require("prx_interactive.pxs", "prx_lib.pxs");
 Name prx\main;
 Description "prx main logic.";
 Author SealedSun;
-Version "1.2.3.0";
+Version "1.2.9.0";
 
 Entry prx\main;
 
@@ -48,6 +48,12 @@ declare var app, ldr;
 function printHead does println("** PREXONITE v" + asm(ldr.app).Meta["Version"].Text + " ** (Runtime version $(Prexonite::Engine.PrexoniteVersion))");
 
 var originalArgs;
+
+function plurality(noun, n) =
+    if(n == 1)
+        noun + "s"
+    else
+        noun;
 
 function prx\main(arguments)
 {
@@ -188,7 +194,8 @@ function prx\main(arguments)
 	}
     
     //Display information
-    if(debugging and ldr.Infos.Count > 0)
+    var showInfos = debugging and ldr.Infos.Count > 0;
+    if(showInfos)
     {
         println("Information:");
         foreach(var info in ldr.Infos)
@@ -196,7 +203,8 @@ function prx\main(arguments)
     }
     
     //Display warnings
-    if(not suppressWarnings and ldr.Warnings.Count > 0)
+    var showWarnings = not suppressWarnings and ldr.Warnings.Count > 0;
+    if(showWarnings)
     {
         yellow(() =>
             {
@@ -216,6 +224,13 @@ function prx\main(arguments)
         		foreach(var err in ldr.Errors)
         			println(err);
         	});
+        println("Compilation summary:");
+        if(showInfos)
+            println("\t",ldr.Infos.Count," ",plurality("info",ldr.Infos.Count));
+        if(showWarnings)
+            yellow(println("\t",ldr.Warnings.Count," ",plurality("warnings",ldr.Warnings.Count),?));
+        red(println("\t",ldr.Errors.Count," ",plurality("errors",ldr.Errors.Count),?));
+        println;
         exc = null; 
     	if(debugging and state == state\interactive) //in debugging mode, allow the script to be examined
         {
