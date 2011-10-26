@@ -472,7 +472,7 @@ macro optimize(contextRef, node)
     if(is_in_macro)
     {
         establish_macro_context;
-        contextRef ??= ast("GetSetSymbol",SI.get,Prexonite::Compiler::MacroAliases.ContextAlias,SI.lref);
+        contextRef ??= ast("GetSetSymbol",SI.get,SI.lref(Prexonite::Compiler::MacroAliases.ContextAlias));
     }
     else if(contextRef is Null)
     {
@@ -499,7 +499,7 @@ macro optimize(contextRef, node)
     }
     else 
     {
-        var funCall = ast("GetSetSymbol",SI.get, ->optimize\ref.Id, SI.func);
+        var funCall = ast("GetSetSymbol",SI.get, SI.func(->optimize\ref));
         funCall.Arguments.Add(contextRef);
         funCall.Arguments.AddRange(var args);
         return funCall;

@@ -376,18 +376,18 @@ macro test_read[test]
     ext_test();
 }
 
-function test_macro_id_static[test]
+function test_macro_internal_id_static[test]
 {
-    assert_eq(macro\id(ast),"ast\\macro");
+    assert_eq(macro\internal_id(ast),"ast\\macro");
     
-    assert_eq(macro\id(call\macro),"call\\macro");
+    assert_eq(macro\internal_id(call\macro),"call\\macro");
 }
 
-macro test_macro_id[test]
+macro test_macro_internal_id[test]
 {   
     var invk = ast("MacroInvocation", "ast\\macro", SI.m.func);
     
-    var c = call\macro([macro\id(invk)]).Expression;
+    var c = call\macro([macro\internal_id(invk)]).Expression;
     assert(ast_is_Constant(c),"$(boxed(c)) should be constant");
     
     assert_eq(ast\read(c),"ast\\macro");
@@ -429,7 +429,7 @@ function test_macro_interpretation_static[test]
 //ast helper
 macro test_invoke_macro[test]
 {
-    var invk = ast\invoke_macro("ast\\macro", SI.m.func);
+    var invk = ast\invoke_macro(SI.m.func("ast\\macro",null));
     function assert_ast
     {
         assert(ast_is_MacroInvocation(invk),"$(boxed(invk)) is macro invocation");
@@ -438,7 +438,7 @@ macro test_invoke_macro[test]
     }
     assert_ast();
     
-    var invk = ast\invoke_macro("call\\macro", SI.m.cmd);
+    var invk = ast\invoke_macro(SI.m.cmd("call\\macro"));
     function assert_call\macro
     {
         assert(ast_is_MacroInvocation(invk),"$(boxed(invk)) is macro invocation");
@@ -446,11 +446,11 @@ macro test_invoke_macro[test]
         assert(SI.eq(invk.Interpretation,SI.m.cmd), "Should be function (macro). Actual $(boxed(invk))");
     }
     
-    // infer interpretation from macro\id call
-    var invk = ast\invoke_macro(macro\id(ast));
+    // infer interpretation from a prototype
+    var invk = ast\invoke_macro(macro\symbol(ast));
     assert_ast();
     
-    var invk = ast\invoke_macro(macro\id(call\macro));
+    var invk = ast\invoke_macro(macro\symbol(call\macro));
     assert_call\macro();
 }
 
