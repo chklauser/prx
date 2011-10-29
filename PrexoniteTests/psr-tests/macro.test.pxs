@@ -194,7 +194,7 @@ function test_ast_is_expression[test]
 
 function test_ast_is_effect[test]
 {
-    var isEffect = ast("GetSetSymbol", SI.get, ->test_ast_is_effect.Id, SI.func);
+    var isEffect = ast("GetSetSymbol", SI.get, SI.func(->test_ast_is_effect));
     var notEffect = ast("CreateClosure",->test_ast_is_effect.Id);
     
     assert_eq(ast_is_effect(isEffect), true, "$(boxed(isEffect)) is an IAstEffect node.");
@@ -205,7 +205,7 @@ function test_ast_is_effect[test]
 
 function test_ast_is_partially_applicable[test]
 {
-    var pa = ast("GetSetSymbol", SI.get,  ->test_ast_is_partially_applicable.Id, SI.func);
+    var pa = ast("GetSetSymbol", SI.get,  SI.func(->test_ast_is_partially_applicable));
     var npa = ast("CreateClosure", ->test_ast_is_partially_applicable.Id);
     
     assert_eq(ast_is_partially_applicable(pa), true, "$(boxed(pa)) is partially applicable");
@@ -216,7 +216,7 @@ function test_ast_is_partially_applicable[test]
 
 function test_ast_is_partial_application[test]
 {
-    var pa = ast("GetSetSymbol", SI.get, ->test_ast_is_partial_application.Id, SI.func);
+    var pa = ast("GetSetSymbol", SI.get, SI.func(->test_ast_is_partial_application));
     pa.Arguments.Add(ast("Null"));
     
     assert_eq(ast_is_partial_application(pa), false, "$(boxed(pa)) is not a partial application (no placeholders)");
@@ -231,7 +231,7 @@ function test_ast_is_partial_application[test]
 function test_ast_is_CreateClosure[test]
 {
     var cc = ast("CreateClosure", ->test_ast_is_CreateClosure.Id);
-    var ncc = ast("GetSetSymbol", SI.get, ->test_ast_is_CreateClosure.Id, SI.func);
+    var ncc = ast("GetSetSymbol", SI.get, Si.func(->test_ast_is_CreateClosure));
     
     assert_eq(ast_is_CreateClosure(cc),true,"$(boxed(cc)) is a CreateClosure node");
     assert_eq(ast_is_CreateClosure(ncc),false,"$(boxed(ncc)) is not a CreateClosure node");
@@ -276,7 +276,7 @@ function test_temp[test]
 function test_mk_constant_expr(a,b) =
         ast("BinaryOperator",
             ast("Constant",a), Prexonite::Compiler::Ast::BinaryOperator.Addition,  ast("Constant", b), 
-            SI.cmd, ~Object<"Prexonite.OperatorNames+Prexonite">.Addition
+            SI.cmd(~Object<"Prexonite.OperatorNames+Prexonite">.Addition)
         );
 
 macro test_optimize[test]
@@ -385,7 +385,7 @@ function test_macro_internal_id_static[test]
 
 macro test_macro_internal_id[test]
 {   
-    var invk = ast("MacroInvocation", "ast\\macro", SI.m.func);
+    var invk = ast("MacroInvocation", SI.m.i.func("ast\\macro"));
     
     var c = call\macro([macro\internal_id(invk)]).Expression;
     assert(ast_is_Constant(c),"$(boxed(c)) should be constant");
@@ -395,19 +395,19 @@ macro test_macro_internal_id[test]
 
 macro test_macro_interpretation[test]
 {
-    var invk1 = ast("MacroInvocation", "ast\\macro", SI.m.func);
+    var invk1 = ast("MacroInvocation", SI.m.func("ast\\macro"));
     
     var c1 = call\macro([macro\interpretation(invk1)]).Expression;
     assert(ast_is_GetSetMemberAccess(c1),"$(boxed(c1)) should be get set member access");
     assert_eq(c1.Id,"func","ast\\macro is implemented as a function (macro)");
     
-    var invk2 = ast("MacroInvocation", "call\\macro", SI.m.cmd);
+    var invk2 = ast("MacroInvocation", SI.m.cmd("call\\macro"));
     
     var c2 = call\macro([macro\interpretation(invk2)]).Expression;
     assert(ast_is_GetSetMemberAccess(c2),"$(boxed(c2)) should be get set member access");
     assert_eq(c2.Id,"cmd","ast\\macro is implemented as a macro command");
     
-    var invk3 = ast("GetSetSymbol", SI.get, "test_macro_id_static", SI.func);
+    var invk3 = ast("GetSetSymbol", SI.get, SI.i.func("test_macro_id_static"));
     
     var c3 = call\macro([macro\interpretation(invk3)]).Expression;
     assert(ast_is_GetSetMemberAccess(c3),"$(boxed(c3)) should be get set member access");
@@ -429,12 +429,11 @@ function test_macro_interpretation_static[test]
 //ast helper
 macro test_invoke_macro[test]
 {
-    var invk = ast\invoke_macro(SI.m.func("ast\\macro",null));
+    var invk = ast\invoke_macro(SI.m.i.func("ast\\macro"));
     function assert_ast
     {
         assert(ast_is_MacroInvocation(invk),"$(boxed(invk)) is macro invocation");
-        assert_eq(invk.MacroId,"ast\\macro");
-        assert(SI.eq(invk.Interpretation,SI.m.func), "Should be function (macro). Actual $(boxed(invk))");
+        assert_eq(invk.Implementation,SI.m.i.func("ast\\macro"), "Should be function (macro). Actual $(boxed(invk))");
     }
     assert_ast();
     
@@ -442,8 +441,7 @@ macro test_invoke_macro[test]
     function assert_call\macro
     {
         assert(ast_is_MacroInvocation(invk),"$(boxed(invk)) is macro invocation");
-        assert_eq(invk.MacroId,"call\\macro");
-        assert(SI.eq(invk.Interpretation,SI.m.cmd), "Should be function (macro). Actual $(boxed(invk))");
+        assert_eq(invk.Implementation,SI.m.cmd("call\\macro"), "Should be function (macro). Actual $(boxed(invk))");
     }
     
     // infer interpretation from a prototype
@@ -463,17 +461,19 @@ macro test_ast_symbol[test]
     var c = ast\cmd("println");
     assert(ast_is_GetSetSymbol(c),"$(boxed(c)) is expected to be a GetSetSymbol node");
     assert(SI.eq(c.Call,SI.get), "$(boxed(c)) is expected to be a Get call");
-    assert(SI.eq(c.Interpretation,SI.cmd), "$(boxed(c)) is expected to be a command call");
-    assert_eq(c.Id,"println","Id doesn't match.");
+    assert(SI.eq(c.Implementation.Interpretation,SI.cmd), "$(boxed(c)) is expected to be a command call");
+    assert_eq(c.Implementation.InternalId,"println","Id doesn't match.");
+    assert_eq(c.Implementation, SI.cmd("println"), "Symbol entry doesn't match.");
     assert_eq(c.File,file);
     assert_eq(c.Line,line);
     assert_eq(c.Column,col);
     
-    var c = ast\func(SI.set, "someFunc");
+    var c = ast\func(SI.set, SI.i.func("someFunc"));
     assert(ast_is_GetSetSymbol(c),"$(boxed(c)) is expected to be a GetSetSymbol node");
     assert(SI.eq(c.Call,SI.set), "$(boxed(c)) is expected to be a Set call");
-    assert(SI.eq(c.Interpretation,SI.func), "$(boxed(c)) is expected to be a function call");
-    assert_eq(c.Id,"someFunc","Id doesn't match.");
+    assert(SI.eq(c.Implementation.Interpretation,SI.func), "$(boxed(c)) is expected to be a function call");
+    assert_eq(c.Implementation.InternalId,"someFunc","Id doesn't match.");
+    assert_eq(c.Implementation, SI.i.func("someFunc"),"Symbol entry doesn't match.");
     assert_eq(c.File,file);
     assert_eq(c.Line,line);
     assert_eq(c.Column,col);
@@ -481,8 +481,9 @@ macro test_ast_symbol[test]
     var c = ast\lvar("x");
     assert(ast_is_GetSetSymbol(c),"$(boxed(c)) is expected to be a GetSetSymbol node");
     assert(SI.eq(c.Call,SI.get), "$(boxed(c)) is expected to be a Get call");
-    assert(SI.eq(c.Interpretation,SI.lvar), "$(boxed(c)) is expected to be a local variable access");
-    assert_eq(c.Id,"x","Id doesn't match.");
+    assert(SI.eq(c.Implementation.Interpretation,SI.lvar), "$(boxed(c)) is expected to be a local variable access");
+    assert_eq(c.Implementation.InternalId,"x","Id doesn't match.");
+    assert_eq(c.Implementation, SI.lvar("x"), "Symbol entries don't match.");
     assert_eq(c.File,file);
     assert_eq(c.Line,line);
     assert_eq(c.Column,col);
@@ -490,26 +491,30 @@ macro test_ast_symbol[test]
     var c = ast\lref(SI.set, "y");
     assert(ast_is_GetSetSymbol(c),"$(boxed(c)) is expected to be a GetSetSymbol node");
     assert(SI.eq(c.Call,SI.set), "$(boxed(c)) is expected to be a Set call");
-    assert(SI.eq(c.Interpretation,SI.lref), "$(boxed(c)) is expected to be local reference variable access.");
-    assert_eq(c.Id,"y","Id doesn't match.");
+    assert(SI.eq(c.Implementation.Interpretation,SI.lref), "$(boxed(c)) is expected to be local reference variable access.");
+    assert_eq(c.Implementation.InternalId,"y","Id doesn't match.");
+    assert_eq(c.Implementation, SI.lref("y"), "Symbol entries don't match.");
     assert_eq(c.File,file);
     assert_eq(c.Line,line);
     assert_eq(c.Column,col);
     
-    var c = ast\gvar(SI.get, "gx");
+    var c = ast\gvar(SI.get, SI.i.gvar("gx"));
     assert(ast_is_GetSetSymbol(c),"$(boxed(c)) is expected to be a GetSetSymbol node");
     assert(SI.eq(c.Call,SI.get), "$(boxed(c)) is expected to be a Get call");
-    assert(SI.eq(c.Interpretation,SI.gvar), "$(boxed(c)) is expected to be a global variable access");
-    assert_eq(c.Id,"gx","Id doesn't match.");
+    assert(SI.eq(c.Implementation.Interpretation,SI.gvar), "$(boxed(c)) is expected to be a global variable access");
+    assert_eq(c.Implementation.InternalId,"gx","Id doesn't match.");
+    assert_eq(c.Implementation, SI.i.gvar("gx"), "Symbol entries don't match.");
     assert_eq(c.File,file);
     assert_eq(c.Line,line);
     assert_eq(c.Column,col);
     
-    var c = ast\gref("gy");
+    var c = ast\gref(SI.i.gref("gy"));
     assert(ast_is_GetSetSymbol(c),"$(boxed(c)) is expected to be a GetSetSymbol node");
     assert(SI.eq(c.Call,SI.get), "$(boxed(c)) is expected to be a Get call");
-    assert(SI.eq(c.Interpretation,SI.gref), "$(boxed(c)) is expected to be a global reference variable access.");
-    assert_eq(c.Id,"gy","Id doesn't match.");
+    assert(SI.eq(c.Implementation.Interpretation,SI.gref), 
+        "$(boxed(c)) is expected to be a global reference variable access.");
+    assert_eq(c.Implementation.InternalId,"gy","Id doesn't match.");
+    assert_eq(c.Implementation, SI.i.gref("gy"), "Symbol entries don't match.");
     assert_eq(c.File,file);
     assert_eq(c.Line,line);
     assert_eq(c.Column,col);
@@ -665,7 +670,7 @@ macro test_ast\with_arguments[test]
     var funcId = "someFunc";
     function mkNode
     {
-        var n = ast\func(funcId);
+        var n = ast\func(SI.i.func(funcId));
         n.Arguments.Add(ast\const(3));
         return n;
     }
@@ -684,7 +689,7 @@ macro test_ast\with_arguments[test]
     assert(ast_is_Constant(n.Arguments[1]),"Second argument should be constant. #2");
     assert_eq(n.Arguments[1].Constant,5,"Second constant doesn't match. #2");
     
-    var n = ast\with_arguments(var a = mkNode, ast\const(5), ast\with_arguments(ast\func(SI.set, funcId),ast\const(7)));
+    var n = ast\with_arguments(var a = mkNode, ast\const(5), ast\with_arguments(ast\func(SI.set, SI.i.func(funcId)),ast\const(7)));
     assert_eq(n,a,"Reference remains the same. #3");
     assert_eq(n.Arguments.Count,3,"Two new argument added");
     assert(ast_is_Constant(n.Arguments[0]),"First argument should be constant. #3");
@@ -693,8 +698,7 @@ macro test_ast\with_arguments[test]
     assert_eq(n.Arguments[1].Constant,5,"Second constant doesn't match. #3");
     var n' = n.Arguments[2];
     assert(ast_is_GetSetSymbol(n'),"Third argument should be symbol access");
-    assert_eq(n'.Id,funcId,"Function id in third argument");
-    assert(SI.eq(n'.Interpretation,SI.func),"Interpretation should be function, is $(boxed(n'))");
+    assert_eq(n'.Implementation,SI.i.func(funcId),"Interpretation should be get-function $funcId, is $(boxed(n'))");
     assert_eq(n'.Arguments.Count,1,"Third argument should have one argument of its own.");
     assert(ast_is_Constant(n'.Arguments[0]),"Argument of third argument should be a Constant node.");
     assert_eq(n'.Arguments[0].Constant,7,"Constant in argument of third argument doesn't match.");
