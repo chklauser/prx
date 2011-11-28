@@ -141,10 +141,10 @@ namespace Prexonite
 
             //Note that function names do not have to be identifiers
 
-            _meta = new MetaTable(this);
-            _meta._SetDirect(IdKey, id);
-
-            Meta[Application.ImportKey] = parentApplication.Meta[Application.ImportKey];
+            var m = new MetaTable(this);
+            m[IdKey] = id;
+            m[Application.ImportKey] = parentApplication.Meta[Application.ImportKey];
+            _meta = m;
         }
 
         #endregion
@@ -582,7 +582,7 @@ namespace Prexonite
         [DebuggerNonUserCode]
         string IMetaFilter.GetTransform(string key)
         {
-            if (Engine.DefaultStringComparer.Compare(key, "name") == 0)
+            if (Engine.StringsAreEqual(key, Application.NameKey))
                 return IdKey;
             else
                 return key;
@@ -598,8 +598,10 @@ namespace Prexonite
             KeyValuePair<string, MetaEntry> item)
         {
             //Prevent changing the name of the function;
-            if (Engine.StringsAreEqual(item.Key, IdKey) ||
-                Engine.StringsAreEqual(item.Key, "name"))
+            if ((Engine.StringsAreEqual(item.Key, IdKey) ||
+                Engine.StringsAreEqual(item.Key, Application.NameKey)) 
+                && _meta != null) //this clauses causes the filter to skip this check 
+                                  // while the Function is still being constructed
                 return null;
             else if (Engine.StringsAreEqual(item.Key, Application.ImportKey) ||
                 Engine.StringsAreEqual(item.Key, "imports"))

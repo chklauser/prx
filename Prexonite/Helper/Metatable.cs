@@ -77,16 +77,16 @@ namespace Prexonite
         private IMetaFilter _filter;
 
         /// <summary>
-        ///     Returns a reference ti the object that filters requests to this mtea table.
+        ///     Returns a reference to the object that filters requests to this meta table. Can be null.
         /// </summary>
         public virtual IMetaFilter Filter
         {
             get { return _filter; }
             protected set
             {
-                if (_filter == this)
+                if (value == this)
                     throw new ArgumentException(
-                        "You cannot use a Metatable as its own _filter. (Recursion!)");
+                        "You cannot use a Metatable as its own _filter.");
                 _filter = value;
             }
         }
@@ -111,7 +111,7 @@ namespace Prexonite
         /// <param name = "item">The item to store in the meta table.</param>
         public override void Add(KeyValuePair<string, MetaEntry> item)
         {
-            var nentry = Filter.SetTransform(item);
+            var nentry = SetTransform(item);
             if (nentry.HasValue)
                 base.Add(nentry.Value);
         }
@@ -145,7 +145,7 @@ namespace Prexonite
         /// <returns>True if the the meta table contains an entry for the given key. False otherwise.</returns>
         public override bool ContainsKey(string key)
         {
-            return base.ContainsKey(Filter.GetTransform(key));
+            return base.ContainsKey(GetTransform(key));
         }
 
         /// <summary>
@@ -195,7 +195,7 @@ namespace Prexonite
         /// </remarks>
         public override bool TryGetValue(string key, out MetaEntry value)
         {
-            key = Filter.GetTransform(key);
+            key = GetTransform(key);
             if (base.ContainsKey(key))
             {
                 value = base[key];
@@ -203,28 +203,6 @@ namespace Prexonite
             }
             value = MetaEntry.CreateDefaultEntry();
             return false;
-        }
-
-        /// <summary>
-        ///     Sets a key directly, bypassing the filter.
-        /// </summary>
-        /// <param name = "item">The item to store in the meta table.</param>
-        internal void _SetDirect(KeyValuePair<string, MetaEntry> item)
-        {
-            if (ContainsKey(item.Key))
-                Remove(item.Key);
-            if (item.Value != null)
-                base[item.Key] = item.Value;
-        }
-
-        /// <summary>
-        ///     Sets a key directly, bypassing the filter.
-        /// </summary>
-        /// <param name = "entry">The entry to store in the meta table.</param>
-        /// <param name = "key">The key of the meta table entry.</param>
-        internal void _SetDirect(string key, MetaEntry entry)
-        {
-            _SetDirect(new KeyValuePair<string, MetaEntry>(key, entry));
         }
 
         #endregion
