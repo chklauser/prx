@@ -738,6 +738,17 @@ macro macro\symbol(prototype)
     }
 }
 
+macro ast\null
+{
+    if(context.IsJustEffect) 
+        return;
+    
+    var mi = ast("MacroInvocation", SI.m.i.func("ast\\macro"));
+    mi.Arguments.Add(ast("Constant","Null"));    
+    
+    context.Block.Expression = mi;
+}
+
 //ast helper
 macro ast\invoke_macro(macroId, symbolInterpretation, moduleName)
 {
@@ -764,6 +775,8 @@ macro ast\invoke_macro(macroId, symbolInterpretation, moduleName)
     }
     else
     {
+        moduleName ??= ast\null;
+        
         //Assemble prototype to be analyzed by macro\symbol
         var symEntry = ast("ObjectCreation", 
             ast("ConstantTypeExpression", "Object(\"Prexonite.Compiler.SymbolEntry\")"));
@@ -1050,14 +1063,8 @@ macro ast\run(loaderRef, block)
     return c;
 }
 
-macro echo_ast_run
-{
-    println(macro\reference(ast\run).Store);
-}
-
 function ast\eval\impl(loader, expr) [is compiler;]
 {
-    echo_ast_run;
     var block = ast("Block");
     block.Add(ast\ret(expr));
     return ast\run(loader, block);

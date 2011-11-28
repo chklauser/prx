@@ -82,8 +82,8 @@ macro prop\macro\assemble(dummyArgs,prop_get,prop_set)
     if(not context.Function.Variables.Contains(varargsId))
         context.Function.Variables.Add(varargsId);
     var getArgc = ast\member(getArgs,"Count");
-    var cmpEqZero = ast("BinaryOperator",getArgc,::BinaryOperator.Equality,ast\const(0),SI.cmd, 
-        ~Object<"Prexonite.OperatorNames+Prexonite">.Equality);
+    var cmpEqZero = ast("BinaryOperator",getArgc,::BinaryOperator.Equality,ast\const(0),
+        SI.cmd(~Object<"Prexonite.OperatorNames+Prexonite">.Equality));
     var conj = ast("LogicalAnd",nullCheck,cmpEqZero);
     var check = ast("ConditionalExpression",conj);
     
@@ -113,15 +113,16 @@ macro prop\macro\simple(dummyArgs)
     else
     {
         //is global function ↔ define global variable
+        //TODO store global variable in target module instead of internal one
         context.Application.Variables.Add(storeId,new ::PVariable);
-        backingField = ast\gvar(storeId);
+        backingField = ast\gvar(SI.i.gvar(storeId));
     }
     
     var prop_get = backingField;
     var prop_set = backingField.GetCopy;
     prop_set.Call = SI.set;
     
-    context.Block.Expression = var invk = ast\invoke_macro(macro\id(prop\macro\assemble));
+    context.Block.Expression = var invk = ast\invoke_macro(macro\symbol(prop\macro\assemble));
     invk.Arguments.Add(dummyArgs);
     invk.Arguments.Add(prop_get);
     invk.Arguments.Add(prop_set);
@@ -131,7 +132,7 @@ macro prop\macro\simple(dummyArgs)
 
 macro prop\macro\complex(dummyArgs,getter,setter)
 {
-    context.Block.Expression = var invk = ast\invoke_macro(macro\id(prop\macro\assemble));
+    context.Block.Expression = var invk = ast\invoke_macro(macro\symbol(prop\macro\assemble));
     (var iargs = invk.Arguments).Add(dummyArgs);
     iargs.Add(ast("IndirectCall",SI.get,getter));
     iargs.Add(ast("IndirectCall",SI.set,setter));
@@ -150,7 +151,7 @@ macro prop\macro\proxy(dummyArgs,prop_get)
     var prop_set = prop_get.GetCopy();
     prop_set.Call = SI.set;
     
-    context.Block.Expression = var invk = ast\invoke_macro(macro\id(prop\macro\assemble));
+    context.Block.Expression = var invk = ast\invoke_macro(macro\symbol(prop\macro\assemble));
     invk.Arguments.Add(dummyArgs);
     invk.Arguments.Add(prop_get);
     invk.Arguments.Add(prop_set);
@@ -158,6 +159,10 @@ macro prop\macro\proxy(dummyArgs,prop_get)
     return null;
 }
 
+/// prop\macro(dummyArgs) expands into a property with getter and setter code 
+/// (depending on the number of arguments passed to the surrounding function)
+/// @param dummyArgs indicates the number of paramters the property has, e.g.
+///     for struct properties, dummyArgs=1 because technically you'll have my_prop(this, newValue)
 macro prop\macro(dummayArgs)[
     Import
     {
@@ -175,7 +180,7 @@ macro prop\macro(dummayArgs)[
         return;
     }
     
-    if(context.Function.Meta.ContainsKey(prop\meta_entry))
+    if(context.Function.Meta[prop\meta_entry].Switch)
     {
         macro\report_error("auto-property (psr\\prop.pxs) can only be used once per function.");
         return;
@@ -185,26 +190,25 @@ macro prop\macro(dummayArgs)[
     var argc = var args.Count;
     if(argc == 0)
     {
-        macro\report_error("$(macro\id(prop\macro))(dummyArgs) requires at least one argument.");
+        macro\report_error("$(macro\internal_id(prop\macro))(dummyArgs) requires at least one argument.");
         return;
     }
     
-    var impl;
-    if(argc == 1)
-        impl = macro\reference(prop\macro\simple);
-    else if(argc == 2)
-        impl = macro\reference(prop\macro\proxy);
-    else if(argc >= 3)
-        impl = macro\reference(prop\macro\complex);
-    
-    context.Block.Expression = call\macro([],impl,[context.IsJustEffect,context.Call],args);
+    context.Block.Expression =
+        if(argc == 1)
+            call\macro([prop\macro\simple,context.IsJustEffect,context.Call],args)
+        else if(argc == 2)
+            call\macro([prop\macro\proxy,context.IsJustEffect,context.Call],args)
+        else
+            call\macro([prop\macro\complex,context.IsJustEffect,context.Call],args)
+    ;
     
     return null;
 }
 
 macro prop
 {
-    context.Block.Expression = var invk = ast\invoke_macro(macro\id(prop\macro));
+    context.Block.Expression = var invk = ast\invoke_macro(macro\symbol(prop\macro));
     invk.Arguments.Add(ast\const(0));
     invk.Arguments.AddRange(var args);
     return null;
@@ -212,7 +216,7 @@ macro prop
 
 macro struct_prop
 {
-    context.Block.Expression = var invk = ast\invoke_macro(macro\id(prop\macro));
+    context.Block.Expression = var invk = ast\invoke_macro(macro\symbol(prop\macro));
     invk.Arguments.Add(ast\const(1));
     invk.Arguments.AddRange(var args);
     return null;

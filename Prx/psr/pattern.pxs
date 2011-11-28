@@ -112,10 +112,10 @@ macro pattern\deconstruct(desc)
 	//Temporary variable used to hold RHS, if RHS is not an object variable itself
 	var tempV;
 	var useTemp;
-	if(the_object is Prexonite::Compiler::Ast::AstGetSetSymbol and SI.is_obj(the_object.Interpretation))
+	if(the_object is Prexonite::Compiler::Ast::AstGetSetSymbol and SI.is_lvar(the_object.Implementation.Interpretation))
     {
         useTemp = false;
-        tempV = the_object.Id;
+        tempV = the_object.Implementation.InternalId;
     }        
     else
     {
@@ -132,7 +132,7 @@ macro pattern\deconstruct(desc)
 		var binding = bpt.Key;
 		var bindingTarget = bpt.Value;
 		var binding_name = binding.Name;
-		if(not bindingTarget.\implements("Prexonite.Compiler.Ast.AstGetSet"))
+		if(not ast_is_GetSet(bindingTarget))
             throw "The target $binding_name of $(desc.name) must be assignable.";
         if(not SI.eq(bindingTarget.Call,SI.get))
             throw "The target $binding_name of $(desc.name) must not be a set-call";	

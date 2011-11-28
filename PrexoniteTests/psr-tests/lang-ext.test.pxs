@@ -83,7 +83,7 @@ function test_prop_capset\impl(isset,x)
 
 macro test_prop_capset
 {
-    var fc = ast\func(context.Call, ->test_prop_capset\impl.Id);
+    var fc = ast\func(context.Call, SI.i.func(->test_prop_capset\impl.Id));
     fc.Arguments.Add(ast\const(SI.eq(context.Call,SI.set)));
     fc.Arguments.AddRange(var args);
     context.Block.Expression = fc;

@@ -63,7 +63,6 @@ namespace Prexonite.Commands.Text
                 args = new PValue[] {};
 
             string s;
-            int w;
             string f;
 
             switch (args.Length)
@@ -76,7 +75,7 @@ namespace Prexonite.Commands.Text
             }
             s = args[1].CallToString(sctx);
             parseW:
-            w = (int) args[0].ConvertTo(sctx, PType.Int).Value;
+            var w = (int) args[0].ConvertTo(sctx, PType.Int).Value;
             if (args.Length > 2)
                 f = args[2].CallToString(sctx);
             else

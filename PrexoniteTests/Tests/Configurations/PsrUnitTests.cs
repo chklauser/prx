@@ -289,6 +289,11 @@ namespace PrexoniteTests.Tests.Configurations
             {
                 RunUnitTest(@"test_ast\new");
             } 
+            [Test]
+            public void test_ast_null()
+            {
+                RunUnitTest(@"test_ast\null");
+            } 
         }
         public abstract class Unit_misc : ScriptedUnitTestContainer
         {

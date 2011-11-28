@@ -715,3 +715,10 @@ macro test_ast\new[test]
     assert_eq(n.TypeExpr.TypeExpression,typeExpr,"The type expression doesn't match.");
     assert_eq(n.Arguments.Count,0,"Argument count doesn't match.");
 }
+
+macro test_ast\null[test]
+{
+    var n = ast\null;
+    
+    assert(ast_is_Null(n),"$(boxed(n)) is expected t be a Null node.");
+}

@@ -62,11 +62,17 @@ namespace Prexonite.Compiler.Ast
 
         public void RightAppend(IAstExpression item)
         {
+            if (item == null)
+                throw new ArgumentNullException("item");
+            
             _rightAppends.Add(item);
         }
 
         public void RightAppend(IEnumerable<IAstExpression> item)
         {
+            if (item == null)
+                throw new ArgumentNullException("item");
+            
             _rightAppends.AddRange(item);
         }
 
@@ -97,6 +103,9 @@ namespace Prexonite.Compiler.Ast
         ///<param name = "item">The object to locate in the <see cref = "T:System.Collections.Generic.IList`1"></see>.</param>
         public int IndexOf(IAstExpression item)
         {
+            if (item == null)
+                throw new ArgumentNullException("item");
+            
             return _arguments.IndexOf(item);
         }
 
@@ -110,6 +119,9 @@ namespace Prexonite.Compiler.Ast
         ///     cref = "T:System.Collections.Generic.IList`1"></see>.</exception>
         public void Insert(int index, IAstExpression item)
         {
+            if (item == null)
+                throw new ArgumentNullException("item");
+            
             _arguments.Insert(index, item);
         }
 
@@ -138,8 +150,20 @@ namespace Prexonite.Compiler.Ast
         ///     cref = "T:System.Collections.Generic.IList`1"></see> is read-only.</exception>
         public IAstExpression this[int index]
         {
-            get { return _arguments[index]; }
-            set { _arguments[index] = value; }
+            get
+            {
+                var value = _arguments[index];
+                Debug.Assert(value != null, "Arguments of Ast nodes cannot be null",
+                    "Found null entry at index {0}", index);
+                return value;
+            }
+            set
+            {
+                if (value == null)
+                    throw new ArgumentNullException("value");
+                
+                _arguments[index] = value;
+            }
         }
 
         #endregion
@@ -153,6 +177,9 @@ namespace Prexonite.Compiler.Ast
         ///<exception cref = "T:System.NotSupportedException">The <see cref = "T:System.Collections.Generic.ICollection`1"></see> is read-only.</exception>
         public void Add(IAstExpression item)
         {
+            if (item == null)
+                throw new ArgumentNullException("item");
+            
             _arguments.Add(item);
         }
 
@@ -162,6 +189,9 @@ namespace Prexonite.Compiler.Ast
         /// <param name = "items">A collection of arguments.</param>
         public void AddRange(IEnumerable<IAstExpression> items)
         {
+            if (items == null)
+                throw new ArgumentNullException("items");
+            
             _arguments.AddRange(items);
         }
 
@@ -183,6 +213,9 @@ namespace Prexonite.Compiler.Ast
         ///<param name = "item">The object to locate in the <see cref = "T:System.Collections.Generic.ICollection`1"></see>.</param>
         public bool Contains(IAstExpression item)
         {
+            if (item == null)
+                throw new ArgumentNullException("item");
+            
             return _arguments.Contains(item);
         }
 
@@ -213,6 +246,9 @@ namespace Prexonite.Compiler.Ast
         ///<exception cref = "T:System.NotSupportedException">The <see cref = "T:System.Collections.Generic.ICollection`1"></see> is read-only.</exception>
         public bool Remove(IAstExpression item)
         {
+            if (item == null)
+                throw new ArgumentNullException("item");
+            
             return _arguments.Remove(item);
         }
 

@@ -31,9 +31,9 @@ build does require(@"psr\macro.pxs");
 
 macro struct\as_macro as struct()
 {
-    var CTORID = Prexonite::Compiler::StructHook.CtorId;
-    var PRIVATEKEY = Prexonite::Compiler::StructHook.PrivateKey;
-    var STRUCTID = Prexonite::Compiler::StructHook.StructId;
+    var CTORID = @"\ctorId";
+    var PRIVATEKEY = "Private";
+    var STRUCTID = "SId";
     var LOGICALIDKEY = Prexonite::PFunction.LogicalIdKey;
     var PARENTFUNCTIONKEY = Prexonite::PFunction.ParentFunctionKey;
 
