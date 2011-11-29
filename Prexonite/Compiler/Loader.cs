@@ -1142,7 +1142,9 @@ namespace Prexonite.Compiler
                 writer.Write(StringPType.ToIdLiteral(kvp.Key));
                 var metaTable = kvp.Value.Meta.Clone();
                 metaTable.Remove(Application.IdKey);
+#pragma warning disable 612,618
                 metaTable.Remove(Application.InitializationGeneration);
+#pragma warning restore 612,618
                 metaTable.Remove(SuppressPrimarySymbol);
 #if DEBUG || Verbose
                     writer.WriteLine();

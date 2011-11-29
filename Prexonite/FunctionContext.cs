@@ -73,7 +73,7 @@ namespace Prexonite
 
             if (
                 !(suppressInitialization || implementation.ParentApplication._SuppressInitialization))
-                implementation.ParentApplication.EnsureInitialization(parentEngine, implementation);
+                implementation.ParentApplication.EnsureInitialization(parentEngine);
 
             _parentEngine = parentEngine;
             _implementation = implementation;
@@ -535,7 +535,7 @@ namespace Prexonite
 
                         if (!app.Variables.TryGetValue(id, out pvar))
                             throw _globalVariableDoesNotExistException(id);
-                        app.EnsureInitialization(ParentEngine, pvar);
+                        app.EnsureInitialization(ParentEngine);
 #if Verbose
                     val = pvar.Value;
                     Console.Write("=" + _toDebug(val));
@@ -898,7 +898,7 @@ namespace Prexonite
                         app = ParentApplication;
                         if (!ParentApplication.Variables.TryGetValue(id, out pvar))
                             throw _globalVariableDoesNotExistException(id);
-                        app.EnsureInitialization(ParentEngine, pvar);
+                        app.EnsureInitialization(ParentEngine);
                         left = pvar.Value;
 
 #if Verbose

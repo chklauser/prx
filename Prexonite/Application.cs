@@ -27,6 +27,7 @@
 using System;
 using System.Collections.Generic;
 using System.Diagnostics;
+using System.Globalization;
 using System.IO;
 using Prexonite.Compiler;
 using Prexonite.Internal;
@@ -72,12 +73,14 @@ namespace Prexonite
         /// <summary>
         ///     Meta table key used for storing initialization generation.
         /// </summary>
+        [Obsolete("Prexonite always completes partial initialization. This key has no effect.")]
         public const string InitializationGeneration = InitializationId;
 
         /// <summary>
         ///     Meta table key used for stroing the offset in the initialization function where
         ///     execution should continue to complete initialization.
         /// </summary>
+        [Obsolete("Prexonite no longer stores the initialization offset in a meta table.")]
         public const string InitializationOffset = InitializationId;
 
         /// <summary>
@@ -195,8 +198,8 @@ namespace Prexonite
         /// <summary>
         ///     Provides readonly access to the application's <see cref = "ApplicationInitializationState">initialization state</see>.
         ///     <br />
-        ///     The <see cref = "InitializationState" /> is only changed by the <see cref = "Loader" /> or by <see
-        ///      cref = "EnsureInitialization" />.
+    ///     The <see cref = "InitializationState" /> is only changed by the <see cref = "Loader" /> or by <see
+        ///      cref = "EnsureInitialization(Prexonite.Engine)" />.
         /// </summary>
         /// <value>A <see cref = "ApplicationInitializationState" /> that indicates the initialization state the application is currently in.</value>
         public ApplicationInitializationState InitializationState
@@ -217,28 +220,10 @@ namespace Prexonite
 
         private int _initializationGeneration = -1;
 
-        private bool _suppressInitialization;
-
         /// <summary>
         ///     Allows you to suppress initialization of the application.
         /// </summary>
-        internal bool _SuppressInitialization
-        {
-            get { return _suppressInitialization; }
-            set { _suppressInitialization = value; }
-        }
-
-        /// <summary>
-        ///     Notifies the application of a change in it's code (more specifically the initialize function)
-        /// </summary>
-        /// <returns>The initialization generation that is required to trigger initialization.</returns>
-        internal int _RegisterInitializationUpdate()
-        {
-            if (_initializationState == ApplicationInitializationState.Complete)
-                _initializationState = ApplicationInitializationState.Partial;
-
-            return _initializationGeneration + 1;
-        }
+        internal bool _SuppressInitialization { get; set; }
 
         /// <summary>
         ///     Notifies the application that a complete initialization absolutely necessary.
@@ -278,18 +263,50 @@ namespace Prexonite
         ///         </ul>
         ///     </para>
         /// </remarks>
+        [Obsolete("Initialization is no longer dependent on the context.")]
         public void EnsureInitialization(Engine targetEngine, IHasMetaTable context)
         {
-            if (_suppressInitialization)
+            EnsureInitialization(targetEngine);
+        }
+
+        /// <summary>
+        ///     <para>Makes the application ensure that it is initialized.</para>
+        /// </summary>
+        /// <param name = "targetEngine">The engine in which to perform initialization.</param>
+        /// <remarks>
+        ///     <para>
+        ///         <ul>
+        ///             <list type = "table">
+        ///                 <listheader>
+        ///                     <term><see cref = "InitializationState" /></term>
+        ///                     <description>Behaviour</description>
+        ///                 </listheader>
+        ///                 <item>
+        ///                     <term><see cref = "ApplicationInitializationState.None" /></term>
+        ///                     <description>Initialization always required.</description>
+        ///                 </item>
+        ///                 <item>
+        ///                     <term><see cref = "ApplicationInitializationState.Complete" /></term>
+        ///                     <description>No initialization required.</description>
+        ///                 </item>
+        ///             </list>
+        ///         </ul>
+        ///     </para>
+        /// </remarks>
+        public void EnsureInitialization(Engine targetEngine)
+        {
+            if (_SuppressInitialization)
                 return;
-            MetaEntry init;
             var generation = _initializationGeneration + 1;
             switch (_initializationState)
             {
+#pragma warning disable 612,618
+                case ApplicationInitializationState.Partial:
+#pragma warning restore 612,618
                 case ApplicationInitializationState.None:
                     try
                     {
-                        _suppressInitialization = true;
+                        _SuppressInitialization = true;
                         var fctx =
                             _initializationFunction.CreateFunctionContext
                                 (
@@ -298,17 +315,9 @@ namespace Prexonite
                                     new PVariable[0], // \init is not a closure
                                     true // don't initialize. That's what WE are trying to do here.
                                 );
-                        int offset;
 
                         //Find offset at which to continue initialization. 
-                        //  Stored in \init key of \init function
-                        //  Default to 0 if anything goes wrong
-                        if (
-                            (!(_initializationFunction.Meta.TryGetValue(InitializationOffset,
-                                out init) &&
-                                    int.TryParse(init.Text, out offset))) || offset < 0)
-                            offset = 0;
-                        fctx.Pointer = offset;
+                        fctx.Pointer = _initializationOffset;
 #if Verbose
                         Console.WriteLine("#Initialization for generation {0} (offset = {1}) required by {2}.", generation, offset, context);
 #endif
@@ -322,34 +331,25 @@ namespace Prexonite
                         finally
                         {
                             //Save the current initialization state (offset)
-                            //  to \init key in \init function
-                            _initializationFunction.Meta[InitializationOffset] =
-                                _initializationFunction.Code.Count.ToString();
+                            _initializationOffset = _initializationFunction.Code.Count;
                             _initializationGeneration = generation;
                             _initializationState = ApplicationInitializationState.Complete;
                         }
                     }
                     finally
                     {
-                        _suppressInitialization = false;
+                        _SuppressInitialization = false;
                     }
                     break;
                 case ApplicationInitializationState.Complete:
-                    break;
-                case ApplicationInitializationState.Partial:
-                    if (context.Meta.TryGetValue(InitializationGeneration, out init))
-                    {
-                        context.Meta.Remove(InitializationGeneration); //Entry no longer required
-                        if (int.TryParse(init.Text, out generation) &&
-                            generation > _initializationGeneration)
-                            goto case ApplicationInitializationState.None;
-                    }
                     break;
                 default:
                     throw new PrexoniteException(
                         "Invalid InitializationState " + _initializationState);
             }
         }
+
+        private int _initializationOffset;
 
         #endregion
 
@@ -371,7 +371,7 @@ namespace Prexonite
                     "Cannot find an entry function named \"" + entryName + "\"");
 
             //Make sure the functions environment is initialized.
-            EnsureInitialization(parentEngine, func);
+            EnsureInitialization(parentEngine);
 
             return func.Run(parentEngine, args);
         }
@@ -549,6 +549,7 @@ namespace Prexonite
         /// <summary>
         ///     The application is only partially initialized.
         /// </summary>
+        [Obsolete("Prexonite no longer distinguishes between partial and no initialization. Use None instead. The behaviour is the same.")]
         Partial = 1,
 
         /// <summary>

@@ -490,7 +490,9 @@ namespace Prexonite
             var meta = Meta.Clone();
             meta.Remove(Application.ImportKey); //to be added separately
             meta.Remove(Application.IdKey); //implied
+#pragma warning disable 612,618
             meta.Remove(Application.InitializationGeneration); //must be set to default
+#pragma warning restore 612,618
             meta.Remove(Loader.SuppressPrimarySymbol);
             //stored functions always have their symbol declared separately
             meta.Store(writer);
@@ -718,7 +720,7 @@ namespace Prexonite
             if (HasCilImplementation)
             {
                 //Fix #8
-                ParentApplication.EnsureInitialization(engine, this);
+                ParentApplication.EnsureInitialization(engine);
                 PValue result;
                 ReturnMode returnMode;
                 CilImplementation

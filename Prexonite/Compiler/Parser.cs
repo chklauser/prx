@@ -1872,7 +1872,7 @@ internal partial class Parser {
 			                                new SymbolEntry(InterpretAsObjectVariable(type), id, null));
 				complex.Arguments.Add(expr);
 				target.Ast.Add(complex);
-				vari.Meta[Application.InitializationId] = TargetApplication._RegisterInitializationUpdate().ToString();
+			                            TargetApplication._RequireInitialization();
 				Loader._EmitPartialInitializationCode();
 			                  }
 			                  target = lastTarget;
