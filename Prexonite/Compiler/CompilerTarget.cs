@@ -38,6 +38,7 @@ using System.Diagnostics.CodeAnalysis;
 using System.Linq;
 using Prexonite.Compiler.Ast;
 using Prexonite.Compiler.Macro;
+using Prexonite.Internal;
 using Prexonite.Types;
 using NoDebug = System.Diagnostics.DebuggerNonUserCodeAttribute;
 

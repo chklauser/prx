@@ -33,7 +33,7 @@ using Prexonite.Types;
 namespace Prexonite
 {
     /// <summary>
-    ///     Represents an "address" in the Prexonite VM.
+    ///     An instance of a <see cref="VariableDeclaration"/>, represents an "address" in the Prexonite VM.
     /// </summary>
     /// <remarks>
     ///     <para>
@@ -62,6 +62,20 @@ namespace Prexonite
         }
 
         /// <summary>
+        /// The variable declaration this variable instance is based on.
+        /// </summary>
+        public VariableDeclaration Declaration
+        {
+            get
+            {
+                if (_declaration == null)
+                    _declaration = VariableDeclaration.Create(Engine.GenerateName());
+                return _declaration;
+            }
+        }
+
+        //Meta and IHasMetaTable are on PVariable for historic reasons.
+        /// <summary>
         ///     Provides readonly access to the variable's <see cref = "MetaTable" />.
         /// </summary>
         /// <remarks>
@@ -71,11 +85,7 @@ namespace Prexonite
         {
             get
             {
-                if (_declaration == null)
-                {
-                    _declaration = VariableDeclaration.Create(Engine.GenerateName());
-                }
-                return _declaration.Meta;
+                return Declaration.Meta;
             }
         }
 

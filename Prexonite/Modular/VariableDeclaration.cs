@@ -66,7 +66,7 @@ namespace Prexonite.Modular
                 _metaTable[Application.IdKey] = id;
             }
 
-            private readonly MetaTable _metaTable = new MetaTable();
+            private readonly MetaTable _metaTable = MetaTable.Create();
 
             /// <summary>
             /// The id of the global variable. Not null and not empty.

@@ -30,8 +30,15 @@ using System.Diagnostics;
 
 namespace Prexonite
 {
+    public interface ISymbolTable<TValue> : IDictionary<string, TValue>
+    {
+        TValue DefaultValue { get; set; }
+        TValue GetDefault(string key, TValue defaultValue);
+        void AddRange(IEnumerable<KeyValuePair<string, TValue>> entries);
+    }
+
     [DebuggerNonUserCode]
-    public class SymbolTable<TValue> : IDictionary<string, TValue>
+    public class SymbolTable<TValue> : ISymbolTable<TValue>
     {
         private readonly Dictionary<string, TValue> _table;
         private TValue _defaultValue;
@@ -56,7 +63,7 @@ namespace Prexonite
 
         public virtual void Add(string key, TValue value)
         {
-            if (_table.ContainsKey(key) && value.Equals(_table[key]))
+            if (_table.ContainsKey(key) && Equals(value,_table[key]))
                 return;
             _table.Add(key, value);
         }
@@ -90,6 +97,11 @@ namespace Prexonite
                 return _table[key];
             else
                 return defaultValue;
+        }
+
+        public void AddRange(IEnumerable<KeyValuePair<string, TValue>> entries)
+        {
+            _table.AddRange(entries);
         }
 
         public ICollection<TValue> Values

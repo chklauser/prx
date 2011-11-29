@@ -141,7 +141,7 @@ namespace Prexonite
 
             //Note that function names do not have to be identifiers
 
-            var m = new MetaTable(this);
+            var m = MetaTable.Create(this);
             m[IdKey] = id;
             m[Application.ImportKey] = parentApplication.Meta[Application.ImportKey];
             _meta = m;

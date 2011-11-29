@@ -624,7 +624,7 @@ namespace Prexonite
             _stackSlot = Thread.AllocateDataSlot();
 
             //Metatable
-            _meta = new MetaTable();
+            _meta = MetaTable.Create();
 
             //PTypes
             _pTypeMap = new Dictionary<Type, PType>();

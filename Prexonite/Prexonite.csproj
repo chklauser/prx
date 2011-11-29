@@ -147,6 +147,8 @@
     <Compile Include="Compiler\Macro\Commands\Reference.cs" />
     <Compile Include="Compiler\Macro\Commands\Unpack.cs" />
     <Compile Include="Compiler\Macro\PartialMacroCommand.cs" />
+    <Compile Include="Helper\IHasMetaTable.cs" />
+    <Compile Include="Helper\IMetaFilter.cs" />
     <Compile Include="IMaybeStackAware.cs" />
     <Compile Include="Commands\Core\PartialApplication\PartialApplicationBase.cs" />
     <Compile Include="Commands\Core\PartialApplication\PartialApplicationCommandBase.cs" />
@@ -323,10 +325,13 @@
     <Compile Include="Helper\Extensions.cs" />
     <Compile Include="Helper\IDependent.cs" />
     <Compile Include="Helper\INamed.cs" />
+    <Compile Include="Internal\MetaTableImpl.cs" />
+    <Compile Include="Internal\PFunctionTableImpl.cs" />
     <Compile Include="Modular\Module.cs" />
     <Compile Include="Modular\ModuleName.cs" />
     <Compile Include="Modular\ModuleNameCache.cs" />
     <Compile Include="Modular\VariableDeclaration.cs" />
+    <Compile Include="Modular\VariableTable.cs" />
     <Compile Include="OperatorNames.cs" />
     <Compile Include="Compiler\Parser.cs" />
     <Compile Include="Application.cs" />
@@ -366,7 +371,7 @@
     <Compile Include="Types\ObjectPType.cs" />
     <Compile Include="Engine.cs" />
     <Compile Include="Helper\Exceptions.cs" />
-    <Compile Include="Helper\Metatable.cs" />
+    <Compile Include="Helper\MetaTable.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
     <Compile Include="PValue.cs" />
     <Compile Include="PVariable.cs" />
@@ -387,7 +392,6 @@
       <Generator>TextTemplatingFileGenerator</Generator>
       <LastGenOutput>Operators.cs</LastGenOutput>
     </None>
-    <None Include="Helper\Prexonite.Modular.ModuleName" />
     <None Include="ObjectModel.cd" />
     <None Include="Prexonite.snk" />
     <Content Include="Compiler\Grammar\Grammar.Readme.txt" />

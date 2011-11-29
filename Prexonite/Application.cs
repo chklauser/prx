@@ -29,6 +29,7 @@ using System.Collections.Generic;
 using System.Diagnostics;
 using System.IO;
 using Prexonite.Compiler;
+using Prexonite.Internal;
 
 namespace Prexonite
 {
@@ -103,7 +104,7 @@ namespace Prexonite
         /// <param name = "id">An arbitrary id for identifying the application. Prefereably a valid identifier.</param>
         public Application(string id)
         {
-            _meta = new MetaTable(this);
+            _meta = MetaTable.Create(this);
 
             if (id == null)
                 throw new ArgumentNullException("id", "Application id cannot be null.");
@@ -116,7 +117,7 @@ namespace Prexonite
 
             _variables = new SymbolTable<PVariable>();
 
-            _functions = new PFunctionTable();
+            _functions = new PFunctionTableImpl();
 
             _initializationFunction = new PFunction(this, InitializationId);
         }
@@ -470,10 +471,10 @@ namespace Prexonite
         [DebuggerStepThrough]
         string IMetaFilter.GetTransform(string key)
         {
-            if (Engine.StringsAreEqual(key, "name"))
+            if (Engine.StringsAreEqual(key, NameKey))
                 return IdKey;
             else if (Engine.StringsAreEqual(key, "imports"))
-                return "import";
+                return ImportKey;
             else
                 return key;
         }
@@ -483,10 +484,10 @@ namespace Prexonite
             KeyValuePair<string, MetaEntry> item)
         {
             //Unlike the function, the application allows name changes
-            if (Engine.StringsAreEqual(item.Key, "name"))
+            if (Engine.StringsAreEqual(item.Key, NameKey))
                 item = new KeyValuePair<string, MetaEntry>(IdKey, item.Value);
             else if (Engine.StringsAreEqual(item.Key, "imports"))
-                item = new KeyValuePair<string, MetaEntry>("import", item.Value);
+                item = new KeyValuePair<string, MetaEntry>(ImportKey, item.Value);
             return item;
         }
 
