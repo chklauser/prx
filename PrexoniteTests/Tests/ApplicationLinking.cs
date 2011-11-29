@@ -24,10 +24,13 @@
 //  WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING 
 //  IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
+using System;
 using System.Collections;
+using System.Diagnostics;
 using System.Linq;
 using NUnit.Framework;
 using Prexonite;
+using Prexonite.Modular;
 
 namespace PrexoniteTests.Tests
 {
@@ -194,6 +197,54 @@ namespace PrexoniteTests.Tests
                             "identical with that of application {1}.",
                         a, aps[1]));
             }
+        }
+
+        [Test]
+        public void DryCrossModuleCall()
+        {
+            var m1 = Module.Create(new ModuleName("dragon", new Version(1, 2)));
+            var m2 = Module.Create(new ModuleName("std", new Version(1, 3, 1)));
+
+            var a1 = new Application(m1);
+            var a2 = new Application(m2);
+
+            var f1 = a1.CreateFunction(Application.DefaultEntryFunction);
+            m1.Functions.Add(f1);
+
+            var f2 = a2.CreateFunction("sayHello");
+            m2.Functions.Add(f2);
+
+            f1.Code.Add(new Instruction(OpCode.func, 0, f2.Id) {ModuleName = m2.Name});
+            f1.Code.Add(new Instruction(OpCode.ret_value));
+
+            const string helloModules = "Hello Modules";
+            f2.Code.Add(new Instruction(OpCode.ldc_string,helloModules));
+            f2.Code.Add(new Instruction(OpCode.ret_value));
+
+            Console.WriteLine("=========== Module {0} ==========", m1.Name);
+            a1.Store(Console.Out);
+            Console.WriteLine();
+            Console.WriteLine("=========== Module {0} ==========", m2.Name);
+            a2.Store(Console.Out);
+
+            var eng = new Engine();
+
+            try
+            {
+                a1.Run(eng);
+                Assert.Fail("Should not succeed as applications are not linked.");
+            }
+            catch (PrexoniteRuntimeException e)
+            {
+                Console.WriteLine("EXPECTED EXCEPTION");
+                Console.WriteLine(e.Message);
+                Console.WriteLine("END OF EXPECTED EXCEPTION");
+            }
+
+            Application.Link(a1, a2);
+            var r = a1.Run(eng);
+            Expect(r.Value,Is.InstanceOf<string>());
+            Expect(r.Value,Is.EqualTo(helloModules));
         }
     }
 }
