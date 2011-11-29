@@ -636,8 +636,7 @@ namespace Prexonite
             _compound = null;
         }
 
-
-        #endregion
+        #region SingletonCompound class
 
         private class SingletonCompound : ApplicationCompound
         {
@@ -647,7 +646,7 @@ namespace Prexonite
             {
                 if (application == null)
                     throw new ArgumentNullException("application");
-                
+
                 _application = application;
             }
 
@@ -685,7 +684,8 @@ namespace Prexonite
                     return _application.Module.Name.Equals(item);
             }
 
-            public override bool TryGetApplication(ModuleName moduleName, out Application application)
+            public override bool TryGetApplication(ModuleName moduleName,
+                out Application application)
             {
                 if (_application == null || !_application.Module.Name.Equals(moduleName))
                 {
@@ -714,7 +714,7 @@ namespace Prexonite
 
             public override void CopyTo(Application[] array, int arrayIndex)
             {
-                if(_application == null)
+                if (_application == null)
                     return;
 
                 if (array == null)
@@ -731,6 +731,10 @@ namespace Prexonite
                 get { return _application == null ? 0 : 1; }
             }
         }
+
+        #endregion
+
+        #endregion
     }
 
     /// <summary>

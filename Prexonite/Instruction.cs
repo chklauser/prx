@@ -29,6 +29,7 @@ using System.Diagnostics;
 using System.Diagnostics.CodeAnalysis;
 using System.Text;
 using Prexonite.Commands.Core.Operators;
+using Prexonite.Modular;
 using Prexonite.Types;
 
 namespace Prexonite
@@ -38,7 +39,7 @@ namespace Prexonite
     ///     Represents a single Prexonite VM instruction
     /// </summary>
     //[DebuggerStepThrough]
-    public class Instruction : ICloneable
+    public sealed class Instruction : ICloneable
     {
         /// <summary>
         ///     The instructions opcode. Determines the VMs behaviour at runtime.
@@ -58,6 +59,12 @@ namespace Prexonite
         ///     general call targets or type expressions.
         /// </summary>
         public string Id;
+
+        /// <summary>
+        /// One of the instruction operands. The ModuleName is used for cross-module references 
+        /// to functions and variables.
+        /// </summary>
+        public ModuleName ModuleName;
 
         /// <summary>
         ///     One of the instructions operands. Statically, GenericArgument is only used by ldc.real 
@@ -151,6 +158,27 @@ namespace Prexonite
             : this(opCode, arguments, id)
         {
             JustEffect = justEffect;
+        }
+
+        /// <summary>
+        ///     Retrieves actual index and argument count values from the <see cref = "Arguments" /> field of an instruction.
+        /// </summary>
+        /// <param name = "index">The address at which to store the actual index.</param>
+        /// <param name = "argc">The address at which to store the actual arguments count.</param>
+        public void DecodeIndLocIndex(out int index, out int argc)
+        {
+            if (OpCode != OpCode.indloci)
+                throw new ArgumentException("Can only decode indloci instructions.");
+            index = (Arguments & ushort.MaxValue);
+            argc = ((Arguments & (ushort.MaxValue << 16)) >> 16);
+        }
+
+        public PValueKeyValuePair DecodeIndLocIndex()
+        {
+            int index;
+            int argc;
+            DecodeIndLocIndex(out index, out argc);
+            return new PValueKeyValuePair(index, argc);
         }
 
         #endregion
@@ -496,7 +524,21 @@ namespace Prexonite
                 if (!OperatorCommands.TryGetLiteral(Id, out escId))
                     escId = StringPType.ToIdOrLiteral(Id);
             }
-            else escId = "\"\"";
+            else
+            {
+                escId = "\"\"";
+            }
+
+            string escModuleName;
+            if(ModuleName != null)
+            {
+                escModuleName = StringPType.ToIdOrLiteral(ModuleName.Id) + "," + ModuleName.Version;
+            }
+            else
+            {
+                escModuleName = null;
+            }
+
             switch (OpCode)
             {
                 case OpCode.rot:
@@ -602,24 +644,33 @@ namespace Prexonite
                             return;
                             //ID INSTRUCTIONS
                         case OpCode.incloc:
-                        case OpCode.incglob:
                         case OpCode.decloc:
-                        case OpCode.decglob:
                         case OpCode.ldc_string:
-                        case OpCode.ldr_func:
                         case OpCode.ldr_cmd:
                         case OpCode.ldr_loc:
-                        case OpCode.ldr_glob:
                         case OpCode.ldr_type:
                         case OpCode.ldloc:
                         case OpCode.stloc:
-                        case OpCode.ldglob:
-                        case OpCode.stglob:
                         case OpCode.check_const:
                         case OpCode.cast_const:
+                            buffer.Append(" ");
+                            buffer.Append(escId);
+                            return;
+                            //ID+MODULE  INSTRUCTIONS
+                        case OpCode.ldr_func:
+                        case OpCode.incglob:
+                        case OpCode.decglob:
+                        case OpCode.ldr_glob:
+                        case OpCode.ldglob:
+                        case OpCode.stglob:
                         case OpCode.newclo:
                             buffer.Append(" ");
                             buffer.Append(escId);
+                            if (ModuleName != null)
+                            {
+                                buffer.Append('/');
+                                buffer.Append(escModuleName);
+                            }
                             return;
                             //ID+ARG INSTRUCTIONS
                         case OpCode.newtype:
@@ -629,13 +680,24 @@ namespace Prexonite
                         case OpCode.cmd:
                         case OpCode.sget:
                         case OpCode.sset:
-                        case OpCode.func:
                         case OpCode.indloc:
+                            buffer.Append(".");
+                            buffer.Append(Arguments.ToString());
+                            buffer.Append(" ");
+                            buffer.Append(escId);
+                            return;
+                            //ID+ARG+MODULE INSTRUCTIONS
+                        case OpCode.func:
                         case OpCode.indglob:
                             buffer.Append(".");
                             buffer.Append(Arguments.ToString());
                             buffer.Append(" ");
                             buffer.Append(escId);
+                            if (ModuleName != null)
+                            {
+                                buffer.Append('/');
+                                buffer.Append(escModuleName);
+                            }
                             return;
                             //ARG INSTRUCTIONS
                         case OpCode.indarg:
@@ -660,27 +722,6 @@ namespace Prexonite
             }
         }
 
-        /// <summary>
-        ///     Retrieves actual index and argument count values from the <see cref = "Arguments" /> field of an instruction.
-        /// </summary>
-        /// <param name = "index">The address at which to store the actual index.</param>
-        /// <param name = "argc">The address at which to store the actual arguments count.</param>
-        public void DecodeIndLocIndex(out int index, out int argc)
-        {
-            if (OpCode != OpCode.indloci)
-                throw new ArgumentException("Can only decode indloci instructions.");
-            index = (Arguments & ushort.MaxValue);
-            argc = ((Arguments & (ushort.MaxValue << 16)) >> 16);
-        }
-
-        public PValueKeyValuePair DecodeIndLocIndex()
-        {
-            int index;
-            int argc;
-            DecodeIndLocIndex(out index, out argc);
-            return new PValueKeyValuePair(index, argc);
-        }
-
         #endregion
 
         #region Equality
@@ -697,9 +738,9 @@ namespace Prexonite
                 return false;
             else if (ReferenceEquals(this, obj))
                 return true;
-            if (!(obj is Instruction))
-                return base.Equals(obj);
             var ins = obj as Instruction;
+            if (ins == null)
+                return false;
             if (ins.OpCode != OpCode)
                 return false;
 
@@ -751,23 +792,25 @@ namespace Prexonite
                         return Engine.StringsAreEqual(Id, ins.Id);
                     //ID INSTRUCTIONS
                 case OpCode.incloc:
-                case OpCode.incglob:
                 case OpCode.decloc:
-                case OpCode.decglob:
                 case OpCode.ldc_string:
-                case OpCode.ldr_func:
                 case OpCode.ldr_cmd:
                 case OpCode.ldr_loc:
                 case OpCode.ldr_glob:
                 case OpCode.ldr_type:
                 case OpCode.ldloc:
                 case OpCode.stloc:
-                case OpCode.ldglob:
-                case OpCode.stglob:
                 case OpCode.check_const:
                 case OpCode.cast_const:
-                case OpCode.newclo:
                     return Engine.StringsAreEqual(Id, ins.Id);
+                    //ID+MODULE INSTRUCTIONS
+                case OpCode.incglob:
+                case OpCode.decglob:
+                case OpCode.ldr_func:
+                case OpCode.ldglob:
+                case OpCode.stglob:
+                case OpCode.newclo:
+                    return Engine.StringsAreEqual(Id, ins.Id) && Equals(ModuleName, ins.ModuleName);
                     //ID+ARG INSTRUCTIONS
                 case OpCode.newtype:
                 case OpCode.newobj:
@@ -776,13 +819,19 @@ namespace Prexonite
                 case OpCode.cmd:
                 case OpCode.sget:
                 case OpCode.sset:
-                case OpCode.func:
-                case OpCode.indglob:
                 case OpCode.indloc:
                     return
                         Arguments == ins.Arguments &&
                             Engine.StringsAreEqual(Id, ins.Id) &&
                                 JustEffect == ins.JustEffect;
+                    //ID+ARG+MODULE INSTRUCTIONS
+                case OpCode.func:
+                case OpCode.indglob:
+                    return
+                        Arguments == ins.Arguments &&
+                            Engine.StringsAreEqual(Id, ins.Id) &&
+                                JustEffect == ins.JustEffect &&
+                                    Equals(ModuleName, ins.ModuleName);
                     //ARG INSTRUCTIONS
                 case OpCode.indarg:
                 case OpCode.newcor:
@@ -825,15 +874,6 @@ namespace Prexonite
             if ((object) left == null)
                 return (object) right != null;
             return !left.Equals(right);
-        }
-
-        /// <summary>
-        ///     Returns a hash code based on <see cref = "OpCode" />, <see cref = "Arguments" /> and <see cref = "Id" />.
-        /// </summary>
-        /// <returns>A hash code.</returns>
-        public override int GetHashCode()
-        {
-            return (int) OpCode ^ Arguments ^ (Id == null ? 0 : Id.GetHashCode());
         }
 
         #endregion
