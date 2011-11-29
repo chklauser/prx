@@ -185,8 +185,6 @@ meta_entry " + numberToStore + @";
             var stored = ldr.Options.TargetApplication.StoreInString();
             Console.WriteLine("//== 1st Store");
             Console.WriteLine(stored);
-            Assert.IsFalse(stored.Contains("\""));
-
 
             var reldr = new Loader(engine, new Application());
             reldr.LoadFromString(stored);

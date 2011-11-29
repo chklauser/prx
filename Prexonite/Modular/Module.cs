@@ -53,8 +53,13 @@ namespace Prexonite.Modular
                 item = new KeyValuePair<string, MetaEntry>(Application.ImportKey, item.Value);
             return item;
         }
-
+        
         #endregion
+
+        public static Module Create(ModuleName moduleName)
+        {
+            return new ModuleImpl(moduleName);
+        }
     }
 
     class ModuleImpl : Module

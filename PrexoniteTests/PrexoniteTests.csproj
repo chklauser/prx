@@ -98,6 +98,7 @@
     <Compile Include="Meta.cs" />
     <Compile Include="Program.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
+    <Compile Include="Tests\ApplicationLinking.cs" />
     <Compile Include="Tests\AstTests.cs" />
     <Compile Include="Tests\CilCompilerTests.cs" />
     <Compile Include="Tests\Compiler.cs" />

@@ -96,6 +96,8 @@
     </Reference>
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="ApplicationCompound.cs" />
+    <Compile Include="ApplicationCompoundImpl.cs" />
     <Compile Include="CilClosure.cs" />
     <Compile Include="CilFunctionContext.cs" />
     <Compile Include="Closure.cs" />
