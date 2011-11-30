@@ -98,6 +98,12 @@ namespace Prexonite.Compiler
         /// <summary>
         ///     An optional intger parameter for this symbol. Use determined by symbol interpretation.
         /// </summary>
+        /// <remarks>
+        ///     <para>Uses of the <see cref="Argument"/> property:</para>
+        ///     <list type="bullet">
+        ///         <item><description>Store resolved byte code addresses for labels.</description></item>
+        ///     </list>
+        /// </remarks>
         public int? Argument
         {
             get { return _argument; }
