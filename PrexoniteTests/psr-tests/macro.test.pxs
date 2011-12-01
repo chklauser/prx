@@ -197,10 +197,10 @@ function test_ast_is_effect[test]
     var isEffect = ast("GetSetSymbol", SI.get, SI.func(->test_ast_is_effect));
     var notEffect = ast("CreateClosure",->test_ast_is_effect.Id);
     
-    assert_eq(ast_is_effect(isEffect), true, "$(boxed(isEffect)) is an IAstEffect node.");
-    assert_eq(ast_is_effect(notEffect), false, "$(boxed(notEffect)) is not an IAstEffect node.");
+    assert_eq(ast_is_effect(isEffect), true, "$(boxed(isEffect)) is a node.");
+    assert_eq(ast_is_effect(notEffect), true, "$(boxed(notEffect)) is a node.");
     
-    assert_eq(ast_is_effect(true),false,"$(boxed(true)) is not an IAstEffect node.");
+    assert_eq(ast_is_effect(true),false,"$(boxed(true)) is not a node.");
 }
 
 function test_ast_is_partially_applicable[test]

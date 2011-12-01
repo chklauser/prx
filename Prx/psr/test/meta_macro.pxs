@@ -51,7 +51,7 @@ function test\execute_single_macro as execute_single_macro(ldr, testMacro)
         block.Add(invocation);
         
         //Compile host function
-        block.EmitCode(funcTar);
+        block.EmitCode(funcTar, true, ::StackSemantics.Effect);
         funcTar.FinishTarget(); 
         //technically, finishing the host function isn't necessary (the test macro has already been executed)
         //  but some error might only be detected during finishing.

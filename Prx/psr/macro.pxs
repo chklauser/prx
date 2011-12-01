@@ -272,7 +272,7 @@ macro tempfree(getContext, tempId)
     return c;
 }
 
-//Create node type check functions (to separate macro implementations from the CLR ast node types.
+//Create node type check functions (to separate macro implementations from the CLR ast node types).
 function macro\_expand_into_function(ldr, id, body)[compiler]
 {
     //create function meta data
@@ -291,7 +291,7 @@ function macro\_expand_into_function(ldr, id, body)[compiler]
     
     //Have the body compiled
     var target = ldr.CreateFunctionTarget(func,block);
-    target.Ast.EmitCode(target);
+    target.Ast.EmitCode(target, true, Prexonite::Compiler::Ast::StackSemantics.Effect);
     target.FinishTarget();
     
     //Add symbol entry
@@ -395,8 +395,6 @@ macro macro\_check_is_node_t(node_arg,node_t_name,requirePlaceholder,requireAstN
     }
 }
 
-
-
 build
 {
     function human_name(t) = if((var n = t.Name).StartsWith("Ast")) n.Substring(3) else n;
@@ -430,12 +428,11 @@ build
     
     //Create special check functions for expressions, partially applicables and effects
     var interfaces = ["Prexonite.Compiler.Ast.AstExpr": "ast_is_expression",
-                      "Prexonite.Compiler.Ast.IAstEffect": "ast_is_effect",
                       "Prexonite.Compiler.Ast.IAstPartiallyApplicable": "ast_is_partially_applicable"];
     foreach(var entry in interfaces)
     {
         macro\_expand_into_function(GetLoader,
-            entry.Value, //id of the generate function
+            entry.Value, //id of the generated function
             impl, //id of the macro that provides the implementation
             ast("Constant",entry.Key), //name of the type to check against
             ast("Constant",false), //false ↔ reject nodes with placeholders
@@ -445,7 +442,7 @@ build
     
     //Create special check function for partial application (any)
     macro\_expand_into_function(GetLoader,
-        "ast_is_partial_application", //id of the generate function
+        "ast_is_partial_application", //id of the generated function
         impl, //id of the macro that provides the implementation
         ast("Constant",AstNode_t.FullName), //name of the type to check against
         ast("Constant",true), //true ↔ reject nodes *without* placeholders
@@ -454,6 +451,8 @@ build
     //Remove helper functions
     GetLoader.ParentApplication.Functions.Remove(->human_name.Id);
 }
+
+function ast_is_effect(n) = ast_is_Node(n);
 
 //Optimization
 function optimize\ref(context, ref node) [is compiler;]
@@ -1029,7 +1028,7 @@ function ast\run\impl(loader, block) [is compiler;]
 {
     var func = new Prexonite::PFunction(loader.ParentApplication);
     var funcTarget = loader.CreateFunctionTarget(func, block);
-    funcTarget.Ast.EmitCode(funcTarget, true);
+    funcTarget.Ast.EmitCode(funcTarget, true, Prexonite::Compiler::Ast::StackSemantics.Effect);
     funcTarget.FinishTarget();
     var result = func.();
     loader.FunctionTargets.Remove(funcTarget);
