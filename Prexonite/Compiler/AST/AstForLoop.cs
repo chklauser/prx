@@ -24,6 +24,7 @@
 //  WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING 
 //  IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
+using System;
 using System.Collections.Generic;
 using System.Diagnostics;
 using Prexonite.Types;
@@ -47,7 +48,7 @@ namespace Prexonite.Compiler.Ast
         {
         }
 
-        public IAstExpression Condition;
+        public AstExpr Condition;
         public AstBlock Initialize;
         public AstBlock NextIteration;
         public bool IsPositive = true;
@@ -59,8 +60,11 @@ namespace Prexonite.Compiler.Ast
             get { return Condition != null; }
         }
 
-        protected override void DoEmitCode(CompilerTarget target)
+        protected override void DoEmitCode(CompilerTarget target, StackSemantics stackSemantics)
         {
+             if(stackSemantics == StackSemantics.Value)
+                throw new NotSupportedException("For loops don't produce values and can thus not be emitted with value semantics.");
+
             if (!IsInitialized)
                 throw new PrexoniteException("AstForLoop requires Condition to be set.");
 
@@ -108,13 +112,13 @@ namespace Prexonite.Compiler.Ast
                      *  jump -> begin
                      */
                     target.BeginBlock(Block);
-                    Initialize.EmitCode(target);
+                    Initialize.EmitValueCode(target);
                     if (!IsPrecondition) //start with nextIteration
                         target.EmitJump(this, Block.ContinueLabel);
                     target.EmitLabel(this, Block.BeginLabel);
-                    Block.EmitCode(target);
+                    Block.EmitEffectCode(target);
                     target.EmitLabel(this, Block.ContinueLabel);
-                    NextIteration.EmitCode(target);
+                    NextIteration.EmitValueCode(target);
                     target.EmitJump(this, Block.BeginLabel);
                     target.EndBlock();
                 }
@@ -131,15 +135,15 @@ namespace Prexonite.Compiler.Ast
                      *  jump if true -> begin
                      */
                     target.BeginBlock(Block);
-                    Initialize.EmitCode(target);
+                    Initialize.EmitValueCode(target);
                     if (IsPrecondition)
                         target.EmitJump(this, conditionLabel);
                     else
                         target.EmitJump(this, Block.ContinueLabel);
                     target.EmitLabel(this, Block.BeginLabel);
-                    Block.EmitCode(target);
+                    Block.EmitEffectCode(target);
                     target.EmitLabel(this, Block.ContinueLabel);
-                    NextIteration.EmitCode(target);
+                    NextIteration.EmitValueCode(target);
                     target.EmitLabel(this, conditionLabel);
                     AstLazyLogical.EmitJumpCondition(
                         target, Condition, Block.BeginLabel, IsPositive);
@@ -157,14 +161,14 @@ namespace Prexonite.Compiler.Ast
                  *  jump -> begin
                  */
                 target.BeginBlock(Block);
-                Initialize.EmitCode(target);
+                Initialize.EmitValueCode(target);
                 if (!IsPrecondition)
                     target.EmitJump(this, Block.ContinueLabel);
                 target.EmitLabel(this, Block.BeginLabel);
                 AstLazyLogical.EmitJumpCondition(target, Condition, Block.BreakLabel, !IsPositive);
                 if (IsPrecondition)
                     target.EmitLabel(this, Block.ContinueLabel);
-                NextIteration.EmitCode(target);
+                NextIteration.EmitValueCode(target);
                 target.EmitJump(this, Block.BeginLabel);
                 target.EndBlock();
             }
@@ -187,7 +191,7 @@ namespace Prexonite.Compiler.Ast
 
         #region IAstHasExpressions Members
 
-        public override IAstExpression[] Expressions
+        public override AstExpr[] Expressions
         {
             get { return new[] {Condition}; }
         }

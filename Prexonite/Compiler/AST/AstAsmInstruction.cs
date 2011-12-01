@@ -46,7 +46,7 @@ namespace Prexonite.Compiler.Ast
         {
         }
 
-        protected override void DoEmitCode(CompilerTarget target)
+        protected override void DoEmitCode(CompilerTarget target, StackSemantics stackSemantics)
         {
             //Jumps need special treatment for label resolution
 

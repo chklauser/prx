@@ -68,16 +68,18 @@ namespace Prexonite.Modular
     /// </remarks>
     public abstract class EntityRef
     {
-
         #region Pattern Matching
 
-        public virtual bool TryGetFunction(out Function func, bool? isRunTime = null, bool? isCompileTime = null, bool? isMacro = null)
+        public abstract T Match<T>(IEntityRefMatcher<T> matcher);
+
+        public virtual bool TryGetFunction(out Function func, bool? isRunTime = null,
+            bool? isCompileTime = null, bool? isMacro = null)
         {
             func = null;
             return false;
         }
 
-        public virtual bool TryGetRunTimeFunction(out Function.Runtime func)
+        public virtual bool TryGetRunTimeFunction(out Function.RunTime func)
         {
             func = null;
             return false;
@@ -89,7 +91,7 @@ namespace Prexonite.Modular
             return false;
         }
 
-        public virtual bool TryGetCompileTimeFunction(out  Function.CompileTime func)
+        public virtual bool TryGetCompileTimeFunction(out Function.CompileTime func)
         {
             func = null;
             return false;
@@ -127,22 +129,49 @@ namespace Prexonite.Modular
 
         #endregion
 
+        #region Referencing and Dereferencing
+
+        public virtual bool TryGetSymbolicReference(out EntityRef entity)
+        {
+            entity = null;
+            return false;
+        }
+
+        public virtual bool TrySymbolicDereference(out EntityRef entity)
+        {
+            entity = null;
+            return false;
+        }
+
+        #endregion
+
         #region Classification
 
-        public interface IRunTime
-        {
-            bool TryGetEntity(StackContext sctx, out PValue entity);
-        }
+        #region Nested type: ICompileTime
 
         public interface ICompileTime
         {
             bool TryGetEntity(Loader ldr, out PValue entity);
         }
 
+        #endregion
+
+        #region Nested type: IMacro
+
         public interface IMacro : ICompileTime
         {
-            
         }
+
+        #endregion
+
+        #region Nested type: IRunTime
+
+        public interface IRunTime
+        {
+            bool TryGetEntity(StackContext sctx, out PValue entity);
+        }
+
+        #endregion
 
         #endregion
 
@@ -152,9 +181,6 @@ namespace Prexonite.Modular
         {
             private readonly string _id;
             private readonly ModuleName _moduleName;
-
-            protected abstract bool Satisfies(bool? isRunTime = null, bool? isCompileTime = null,
-                bool? isMacro = null);
 
             private Function(string id, ModuleName moduleName)
             {
@@ -172,7 +198,11 @@ namespace Prexonite.Modular
                 get { return _moduleName; }
             }
 
-            public override bool TryGetFunction(out Function func, bool? isRunTime = null, bool? isCompileTime = null, bool? isMacro = null)
+            protected abstract bool Satisfies(bool? isRunTime = null, bool? isCompileTime = null,
+                bool? isMacro = null);
+
+            public override bool TryGetFunction(out Function func, bool? isRunTime = null,
+                bool? isCompileTime = null, bool? isMacro = null)
             {
                 if (!Satisfies(isRunTime, isCompileTime, isMacro))
                 {
@@ -200,12 +230,49 @@ namespace Prexonite.Modular
                 }
             }
 
+            #region Nested type: CompileTime
+
+            public class CompileTime : CompileTimeBase
+            {
+                private CompileTime(string id, ModuleName moduleName)
+                    : base(id, moduleName)
+                {
+                }
+
+                public static CompileTime Create(string id, ModuleName moduleName)
+                {
+                    return new CompileTime(id, moduleName);
+                }
+
+                protected override bool SatisfiesMacro(bool isMacro)
+                {
+                    return !isMacro;
+                }
+
+                public override T Match<T>(IEntityRefMatcher<T> matcher)
+                {
+                    return matcher.OnCompileTimeFunction(this);
+                }
+
+                public override bool TryGetCompileTimeFunction(out CompileTime func)
+                {
+                    func = this;
+                    return true;
+                }
+            }
+
+            #endregion
+
+            #region Nested type: CompileTimeBase
+
             public abstract class CompileTimeBase : Function, ICompileTime
             {
                 protected CompileTimeBase(string id, ModuleName moduleName)
                     : base(id, moduleName)
                 {
                 }
+
+                #region ICompileTime Members
 
                 public bool TryGetEntity(Loader ldr, out PValue entity)
                 {
@@ -222,9 +289,13 @@ namespace Prexonite.Modular
                     }
                 }
 
-                protected override bool Satisfies(bool? isRunTime = null, bool? isCompileTime = null, bool? isMacro = null)
+                #endregion
+
+                protected override bool Satisfies(bool? isRunTime = null, bool? isCompileTime = null,
+                    bool? isMacro = null)
                 {
-                    if (isRunTime.HasValue && isRunTime.Value || isCompileTime.HasValue && !isCompileTime.Value)
+                    if (isRunTime.HasValue && isRunTime.Value ||
+                        isCompileTime.HasValue && !isCompileTime.Value)
                         return false;
                     if (!isMacro.HasValue)
                         return true;
@@ -234,21 +305,30 @@ namespace Prexonite.Modular
                 protected abstract bool SatisfiesMacro(bool isMacro);
             }
 
+            #endregion
+
+            #region Nested type: Macro
+
             public sealed class Macro : CompileTimeBase, IMacro
             {
-                public static Macro Create(string id, ModuleName moduleName)
-                {
-                    return new Macro(id, moduleName);
-                }
-
                 private Macro(string id, ModuleName moduleName)
                     : base(id, moduleName)
                 {
                 }
 
+                public static Macro Create(string id, ModuleName moduleName)
+                {
+                    return new Macro(id, moduleName);
+                }
+
                 protected override bool SatisfiesMacro(bool isMacro)
                 {
                     return isMacro;
+                }
+
+                public override T Match<T>(IEntityRefMatcher<T> matcher)
+                {
+                    return matcher.OnMacroFunction(this);
                 }
 
                 public override bool TryGetMacroFunction(out Macro func)
@@ -258,47 +338,18 @@ namespace Prexonite.Modular
                 }
             }
 
-            public class CompileTime : CompileTimeBase
-            {
-                public static CompileTime Create(string id, ModuleName moduleName)
-                {
-                    return new CompileTime(id, moduleName);
-                }
+            #endregion
 
-                private CompileTime(string id, ModuleName moduleName)
+            #region Nested type: Runtime
+
+            public class RunTime : Function, IRunTime
+            {
+                private RunTime(string id, ModuleName moduleName)
                     : base(id, moduleName)
                 {
                 }
 
-                protected override bool SatisfiesMacro(bool isMacro)
-                {
-                    return !isMacro;
-                }
-
-                public override bool TryGetCompileTimeFunction(out CompileTime func)
-                {
-                    func = this;
-                    return true;
-                }
-            }
-
-            public class Runtime : Function, IRunTime
-            {
-                public override bool TryGetRunTimeFunction(out Runtime func)
-                {
-                    func = this;
-                    return true;
-                }
-
-                public static Runtime Create(string id, ModuleName moduleName)
-                {
-                    return new Runtime(id, moduleName);
-                }
-
-                private Runtime(string id, ModuleName moduleName)
-                    : base(id, moduleName)
-                {
-                }
+                #region IRunTime Members
 
                 public bool TryGetEntity(StackContext sctx, out PValue entity)
                 {
@@ -315,13 +366,34 @@ namespace Prexonite.Modular
                     }
                 }
 
-                protected override bool Satisfies(bool? isRunTime = null, bool? isCompileTime = null, bool? isMacro = null)
+                #endregion
+
+                public override T Match<T>(IEntityRefMatcher<T> matcher)
+                {
+                    return matcher.OnRunTimeFunction(this);
+                }
+
+                public override bool TryGetRunTimeFunction(out RunTime func)
+                {
+                    func = this;
+                    return true;
+                }
+
+                public static RunTime Create(string id, ModuleName moduleName)
+                {
+                    return new RunTime(id, moduleName);
+                }
+
+                protected override bool Satisfies(bool? isRunTime = null, bool? isCompileTime = null,
+                    bool? isMacro = null)
                 {
                     return (!isRunTime.HasValue || isRunTime.Value)
                         && (!isCompileTime.HasValue || !isCompileTime.Value)
                             && (!isMacro.HasValue || !isMacro.Value);
                 }
             }
+
+            #endregion
         }
 
         #endregion
@@ -330,17 +402,14 @@ namespace Prexonite.Modular
 
         public sealed class Command : EntityRef, IRunTime
         {
-            public static Command Create(string id)
-            {
-                return new Command(id);
-            }
-
             private readonly string _id;
 
             private Command(string id)
             {
                 _id = id;
             }
+
+            #region IRunTime Members
 
             public bool TryGetEntity(StackContext sctx, out PValue entity)
             {
@@ -357,6 +426,18 @@ namespace Prexonite.Modular
                 }
             }
 
+            #endregion
+
+            public static Command Create(string id)
+            {
+                return new Command(id);
+            }
+
+            public override T Match<T>(IEntityRefMatcher<T> matcher)
+            {
+                return matcher.OnCommand(this);
+            }
+
             public override bool TryGetCommand(out Command cmd)
             {
                 cmd = this;
@@ -371,7 +452,6 @@ namespace Prexonite.Modular
         public abstract class Variable : EntityRef, IRunTime
         {
             private readonly bool _isReference;
-            public abstract bool TryGetEntity(StackContext sctx, out PValue entity);
 
             private Variable(bool isReference)
             {
@@ -383,25 +463,135 @@ namespace Prexonite.Modular
                 get { return _isReference; }
             }
 
+            #region IRunTime Members
+
+            public abstract bool TryGetEntity(StackContext sctx, out PValue entity);
+
+            #endregion
+
+            protected abstract Variable With(bool isReference);
+
+            public override bool TryGetSymbolicReference(out EntityRef entity)
+            {
+                if (IsReference)
+                {
+                    entity = With(false);
+                    return true;
+                }
+                else
+                {
+                    entity = null;
+                    return false;
+                }
+            }
+
+            public override bool TrySymbolicDereference(out EntityRef entity)
+            {
+                if (!IsReference)
+                {
+                    entity = With(true);
+                    return true;
+                }
+                else
+                {
+                    entity = null;
+                    return false;
+                }
+            }
+
             public override bool TryGetVariable(out Variable variable)
             {
                 variable = this;
                 return true;
             }
 
-            public sealed class Local : Variable
+            #region Nested type: Global
+
+            public sealed class Global : Variable
             {
-                public static Local Create(string id, bool isReference = false)
+                private readonly string _id;
+                private readonly ModuleName _moduleName;
+
+                private Global(string id, ModuleName moduleName, bool isReference)
+                    : base(isReference)
                 {
-                    return new Local(id, isReference);
+                    _id = id;
+                    _moduleName = moduleName;
                 }
 
+                public string Id
+                {
+                    get { return _id; }
+                }
+
+                public ModuleName ModuleName
+                {
+                    get { return _moduleName; }
+                }
+
+                public override T Match<T>(IEntityRefMatcher<T> matcher)
+                {
+                    return matcher.OnGlobalVariable(this);
+                }
+
+                public override bool TryGetGlobalVariable(out Global variable)
+                {
+                    variable = this;
+                    return true;
+                }
+
+                public static Global Create(string id, ModuleName moduleName,
+                    bool isReference = false)
+                {
+                    return new Global(id, moduleName, isReference);
+                }
+
+                public override bool TryGetEntity(StackContext sctx, out PValue entity)
+                {
+                    Application application;
+                    PVariable v;
+                    if (sctx.ParentApplication.Compound.TryGetApplication(_moduleName,
+                        out application)
+                            && application.Variables.TryGetValue(_id, out v))
+                    {
+                        entity = sctx.CreateNativePValue(v);
+                        return true;
+                    }
+                    else
+                    {
+                        entity = null;
+                        return false;
+                    }
+                }
+
+                protected override Variable With(bool isReference)
+                {
+                    return Create(Id, ModuleName, isReference);
+                }
+            }
+
+            #endregion
+
+            #region Nested type: Local
+
+            public sealed class Local : Variable
+            {
                 private readonly string _id;
 
                 private Local(string id, bool isReference)
                     : base(isReference)
                 {
                     _id = id;
+                }
+
+                public string Id
+                {
+                    get { return _id; }
+                }
+
+                public static Local Create(string id, bool isReference = false)
+                {
+                    return new Local(id, isReference);
                 }
 
                 public override bool TryGetEntity(StackContext sctx, out PValue entity)
@@ -420,9 +610,14 @@ namespace Prexonite.Modular
                     }
                 }
 
-                public string Id
+                protected override Variable With(bool isReference)
                 {
-                    get { return _id; }
+                    return Create(Id, isReference);
+                }
+
+                public override T Match<T>(IEntityRefMatcher<T> matcher)
+                {
+                    return matcher.OnLocalVariable(this);
                 }
 
                 public override bool TryGetLocalVariable(out Local variable)
@@ -432,46 +627,7 @@ namespace Prexonite.Modular
                 }
             }
 
-            public sealed class Global : Variable
-            {
-                public override bool TryGetGlobalVariable(out Global variable)
-                {
-                    variable = this;
-                    return true;
-                }
-
-                public static Global Create(string id, ModuleName moduleName, bool isReference = false)
-                {
-                    return new Global(id, moduleName, isReference);
-                }
-
-                private readonly string _id;
-                private readonly ModuleName _moduleName;
-
-                private Global(string id, ModuleName moduleName, bool isReference)
-                    : base(isReference)
-                {
-                    _id = id;
-                    _moduleName = moduleName;
-                }
-
-                public override bool TryGetEntity(StackContext sctx, out PValue entity)
-                {
-                    Application application;
-                    PVariable v;
-                    if (sctx.ParentApplication.Compound.TryGetApplication(_moduleName, out application)
-                        && application.Variables.TryGetValue(_id, out v))
-                    {
-                        entity = sctx.CreateNativePValue(v);
-                        return true;
-                    }
-                    else
-                    {
-                        entity = null;
-                        return false;
-                    }
-                }
-            }
+            #endregion
         }
 
         #endregion
@@ -480,22 +636,19 @@ namespace Prexonite.Modular
 
         public class MacroCommand : EntityRef, ICompileTime, IMacro
         {
-            public static MacroCommand Create(string id)
-            {
-                return new MacroCommand(id);
-            }
-
             private readonly string _id;
+
+            private MacroCommand(string id)
+            {
+                _id = id;
+            }
 
             public string Id
             {
                 get { return _id; }
             }
 
-            private MacroCommand(string id)
-            {
-                _id = id;
-            }
+            #region ICompileTime Members
 
             public bool TryGetEntity(Loader ldr, out PValue entity)
             {
@@ -512,6 +665,18 @@ namespace Prexonite.Modular
                 }
             }
 
+            #endregion
+
+            public static MacroCommand Create(string id)
+            {
+                return new MacroCommand(id);
+            }
+
+            public override T Match<T>(IEntityRefMatcher<T> matcher)
+            {
+                return matcher.OnMacroCommand(this);
+            }
+
             public override bool TryGetMacroCommand(out MacroCommand mcmd)
             {
                 mcmd = this;
@@ -520,5 +685,98 @@ namespace Prexonite.Modular
         }
 
         #endregion
+    }
+
+    public interface IEntityRefMatcher<out T>
+    {
+        T OnRunTimeFunction(EntityRef.Function.RunTime function);
+        T OnCompileTimeFunction(EntityRef.Function.CompileTime function);
+        T OnMacroFunction(EntityRef.Function.Macro function);
+
+        T OnCommand(EntityRef.Command command);
+
+        T OnMacroCommand(EntityRef.MacroCommand macroCommand);
+
+        T OnLocalVariable(EntityRef.Variable.Local variable);
+        T OnGlobalVariable(EntityRef.Variable.Global variable);
+    }
+
+    public abstract class EntityRefMatcher<T> : IEntityRefMatcher<T>
+    {
+        #region IEntityRefMatcher implementation
+
+        T IEntityRefMatcher<T>.OnRunTimeFunction(EntityRef.Function.RunTime function)
+        {
+            return OnRunTimeFunction(function);
+        }
+
+        T IEntityRefMatcher<T>.OnCompileTimeFunction(EntityRef.Function.CompileTime function)
+        {
+            return OnCompileTimeFunction(function);
+        }
+
+        T IEntityRefMatcher<T>.OnMacroFunction(EntityRef.Function.Macro function)
+        {
+            return OnMacroFunction(function);
+        }
+
+        T IEntityRefMatcher<T>.OnCommand(EntityRef.Command command)
+        {
+            return OnCommand(command);
+        }
+
+        T IEntityRefMatcher<T>.OnMacroCommand(EntityRef.MacroCommand macroCommand)
+        {
+            return OnMacroCommand(macroCommand);
+        }
+
+        T IEntityRefMatcher<T>.OnLocalVariable(EntityRef.Variable.Local variable)
+        {
+            return OnLocalVariable(variable);
+        }
+
+        T IEntityRefMatcher<T>.OnGlobalVariable(EntityRef.Variable.Global variable)
+        {
+            return OnGlobalVariable(variable);
+        }
+
+        #endregion
+
+        protected abstract T OnNotMatched(EntityRef entity);
+
+        protected virtual T OnRunTimeFunction(EntityRef.Function.RunTime function)
+        {
+            return OnNotMatched(function);
+        }
+
+        protected virtual T OnCompileTimeFunction(EntityRef.Function.CompileTime function)
+        {
+            return OnNotMatched(function);
+        }
+
+        protected virtual T OnMacroFunction(EntityRef.Function.Macro function)
+        {
+            return OnNotMatched(function);
+        }
+
+        protected virtual T OnCommand(EntityRef.Command command)
+        {
+            return OnNotMatched(command);
+        }
+
+        protected virtual T OnMacroCommand(EntityRef.MacroCommand macroCommand)
+        {
+            return OnNotMatched(macroCommand);
+        }
+
+        protected virtual T OnLocalVariable(EntityRef.Variable.Local variable)
+        {
+            return OnNotMatched(variable);
+        }
+
+        protected virtual T OnGlobalVariable(EntityRef.Variable.Global variable)
+        {
+            return OnNotMatched(variable);
+        }
     }
 }

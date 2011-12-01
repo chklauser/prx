@@ -181,7 +181,7 @@ namespace Prexonite.Commands.Core
             {
             }
 
-            protected override IEnumerable<IAstExpression> GetCallArguments(MacroContext context)
+            protected override IEnumerable<AstExpr> GetCallArguments(MacroContext context)
             {
                 var argv = context.Invocation.Arguments;
                 return

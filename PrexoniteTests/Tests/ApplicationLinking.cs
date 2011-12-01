@@ -214,7 +214,7 @@ namespace PrexoniteTests.Tests
             var f2 = a2.CreateFunction("sayHello");
             m2.Functions.Add(f2);
 
-            f1.Code.Add(new Instruction(OpCode.func, 0, f2.Id) {ModuleName = m2.Name});
+            f1.Code.Add(new Instruction(OpCode.func, 0, f2.Id, m2.Name));
             f1.Code.Add(new Instruction(OpCode.ret_value));
 
             const string helloModules = "Hello Modules";

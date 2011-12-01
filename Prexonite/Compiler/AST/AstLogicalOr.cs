@@ -26,6 +26,7 @@
 
 using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 
 namespace Prexonite.Compiler.Ast
 {
@@ -35,18 +36,18 @@ namespace Prexonite.Compiler.Ast
             string file,
             int line,
             int column,
-            IAstExpression leftCondition,
-            IAstExpression rightCondition)
+            AstExpr leftCondition,
+            AstExpr rightCondition)
             : base(file, line, column, leftCondition, rightCondition)
         {
         }
 
-        internal AstLogicalOr(Parser p, IAstExpression leftCondition, IAstExpression rightCondition)
+        internal AstLogicalOr(Parser p, AstExpr leftCondition, AstExpr rightCondition)
             : base(p, leftCondition, rightCondition)
         {
         }
 
-        protected override void DoEmitCode(CompilerTarget target)
+        protected override void DoEmitCode(CompilerTarget target, StackSemantics stackSemantics)
         {
             var labelNs = @"Or\" + Guid.NewGuid().ToString("N");
             var trueLabel = @"True\" + labelNs;
@@ -55,12 +56,21 @@ namespace Prexonite.Compiler.Ast
 
             EmitCode(target, trueLabel, falseLabel);
 
-            target.EmitLabel(this, falseLabel);
-            target.EmitConstant(this, false);
-            target.EmitJump(this, evalLabel);
-            target.EmitLabel(this, trueLabel);
-            target.EmitConstant(this, true);
-            target.EmitLabel(this, evalLabel);
+            if (stackSemantics == StackSemantics.Value)
+            {
+                target.EmitLabel(this, falseLabel);
+                target.EmitConstant(this, false);
+                target.EmitJump(this, evalLabel);
+                target.EmitLabel(this, trueLabel);
+                target.EmitConstant(this, true);
+                target.EmitLabel(this, evalLabel);
+            }
+            else
+            {
+                Debug.Assert(stackSemantics == StackSemantics.Effect);
+                target.EmitLabel(this, falseLabel);
+                target.EmitLabel(this, trueLabel);
+            }
         }
 
         protected override void DoEmitCode(CompilerTarget target, string trueLabel,
@@ -81,7 +91,7 @@ namespace Prexonite.Compiler.Ast
                 }
                 else
                 {
-                    expr.EmitCode(target);
+                    expr.EmitValueCode(target);
                     target.EmitJumpIfTrue(this, trueLabel);
                 }
             }
@@ -95,8 +105,8 @@ namespace Prexonite.Compiler.Ast
             get { return true; }
         }
 
-        protected override IAstExpression CreatePrefix(ISourcePosition position,
-            IEnumerable<IAstExpression> clauses)
+        protected override AstExpr CreatePrefix(ISourcePosition position,
+            IEnumerable<AstExpr> clauses)
         {
             return CreateDisjunction(position, clauses);
         }

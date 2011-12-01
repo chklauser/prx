@@ -55,7 +55,7 @@ namespace Prexonite.Compiler.Ast
 
         #region IAstHasExpressions Members
 
-        public abstract IAstExpression[] Expressions { get; }
+        public abstract AstExpr[] Expressions { get; }
 
         public AstLoopBlock Block
         {

@@ -429,7 +429,7 @@ build
     }
     
     //Create special check functions for expressions, partially applicables and effects
-    var interfaces = ["Prexonite.Compiler.Ast.IAstExpression": "ast_is_expression",
+    var interfaces = ["Prexonite.Compiler.Ast.AstExpr": "ast_is_expression",
                       "Prexonite.Compiler.Ast.IAstEffect": "ast_is_effect",
                       "Prexonite.Compiler.Ast.IAstPartiallyApplicable": "ast_is_partially_applicable"];
     foreach(var entry in interfaces)

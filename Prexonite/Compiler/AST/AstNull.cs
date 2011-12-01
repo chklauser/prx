@@ -26,8 +26,7 @@
 
 namespace Prexonite.Compiler.Ast
 {
-    public class AstNull : AstNode,
-                           IAstExpression
+    public class AstNull : AstExpr
     {
         public AstNull(string file, int line, int column)
             : base(file, line, column)
@@ -39,14 +38,17 @@ namespace Prexonite.Compiler.Ast
         {
         }
 
-        public bool TryOptimize(CompilerTarget target, out IAstExpression expr)
+        public override bool TryOptimize(CompilerTarget target, out AstExpr expr)
         {
             expr = null;
             return false;
         }
 
-        protected override void DoEmitCode(CompilerTarget target)
+        protected override void DoEmitCode(CompilerTarget target, StackSemantics stackSemantics)
         {
+            if(stackSemantics == StackSemantics.Effect)
+                return;
+
             target.EmitNull(this);
         }
     }

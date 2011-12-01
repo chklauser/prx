@@ -32,18 +32,40 @@ using NoDebug = System.Diagnostics.DebuggerNonUserCodeAttribute;
 
 namespace Prexonite.Compiler.Ast
 {
+    /// <summary>
+    /// Indicates how an operation behaves with respect to the Prexonite evaluation stack.
+    /// </summary>
+    /// <remarks>WARNING: Do not extend this enumeration. Users assume that 
+    /// <see cref="Value"/> and <see cref="Effect"/> are its only two members.</remarks>
+    public enum StackSemantics
+    {
+
+        /// <summary>
+        /// Indicates that the operation pushes a single value onto the
+        /// evaluation stack.  May also have side effects.
+        /// </summary>
+        Value,
+        /// <summary>
+        /// Indicates that the operation does not modify the 
+        /// evaluation stack, but may have side effects.
+        /// </summary>
+        Effect
+    }
+
     [DebuggerStepThrough]
     public abstract class AstNode : IObject, ISourcePosition
     {
-        private readonly string _file;
-        private readonly int _line;
-        private readonly int _column;
+        private readonly ISourcePosition _position;
 
-        protected AstNode(string file, int line, int column)
+        protected AstNode(string file, int line, int column) : this(new SourcePosition(file, line,column))
         {
-            _file = file ?? "unknown~";
-            _line = line;
-            _column = column;
+        }
+
+        protected AstNode(ISourcePosition position)
+        {
+            if (position == null)
+                throw new ArgumentNullException("position");
+            _position = position;
         }
 
         internal AstNode(Parser p)
@@ -51,42 +73,45 @@ namespace Prexonite.Compiler.Ast
         {
         }
 
+        public ISourcePosition Position
+        {
+            get { return _position; }
+        }
+
         public string File
         {
-            get { return _file; }
+            get { return _position.File; }
         }
 
         public int Line
         {
-            get { return _line; }
+            get { return _position.Line; }
         }
 
         public int Column
         {
-            get { return _column; }
+            get { return _position.Column; }
         }
 
-        public void EmitCode(CompilerTarget target)
+        protected abstract void DoEmitCode(CompilerTarget target, StackSemantics semantics);
+
+        public void EmitValueCode(CompilerTarget target)
         {
-            _dispatchDoEmitCode(target, false);
+            EmitCode(target, StackSemantics.Value);
         }
 
-        protected abstract void DoEmitCode(CompilerTarget target);
-
-        [EditorBrowsable(EditorBrowsableState.Never)]
-        internal void _EmitEffectCode(CompilerTarget target)
+        public void EmitEffectCode(CompilerTarget target)
         {
-            _dispatchDoEmitCode(target, true);
+            EmitCode(target, StackSemantics.Effect);
         }
 
-        private void _dispatchDoEmitCode(CompilerTarget target, bool justEffectCode)
+        public void EmitCode(CompilerTarget target, StackSemantics justEffectCode)
         {
-            var effect = this as IAstEffect;
             var partiallyApplicabale = this as IAstPartiallyApplicable;
             var isPartialApplication = partiallyApplicabale != null &&
                 partiallyApplicabale.CheckForPlaceholders();
 
-            if (justEffectCode && effect != null)
+            if (justEffectCode == StackSemantics.Effect)
             {
                 if (isPartialApplication)
                 {
@@ -94,7 +119,7 @@ namespace Prexonite.Compiler.Ast
                 }
                 else
                 {
-                    effect.DoEmitEffectCode(target);
+                    DoEmitCode(target, StackSemantics.Effect);
                 }
             }
             else
@@ -105,7 +130,7 @@ namespace Prexonite.Compiler.Ast
                 }
                 else
                 {
-                    DoEmitCode(target);
+                    DoEmitCode(target, StackSemantics.Value);
                 }
             }
         }
@@ -120,18 +145,18 @@ namespace Prexonite.Compiler.Ast
             return false;
         }
 
-        internal static IAstExpression _GetOptimizedNode(CompilerTarget target, IAstExpression expr)
+        internal static AstExpr _GetOptimizedNode(CompilerTarget target, AstExpr expr)
         {
             if (target == null)
                 throw new ArgumentNullException("target", "Compiler target cannot be null.");
             if (expr == null)
                 throw new ArgumentNullException(
                     "expr", "Expression to be optimized can not be null.");
-            IAstExpression opt;
+            AstExpr opt;
             return expr.TryOptimize(target, out opt) ? opt : expr;
         }
 
-        internal static void _OptimizeNode(CompilerTarget target, ref IAstExpression expr)
+        internal static void _OptimizeNode(CompilerTarget target, ref AstExpr expr)
         {
             if (target == null)
                 throw new ArgumentNullException("target", "Compiler target cannot be null.");
@@ -155,20 +180,17 @@ namespace Prexonite.Compiler.Ast
                     if (args.Length < 1 || (target = args[0].Value as CompilerTarget) == null)
                         throw new PrexoniteException(
                             "_GetOptimizedNode(CompilerTarget target) requires target.");
-                    var expr = this as IAstExpression;
+                    var expr = this as AstExpr;
                     if (expr == null)
-                        throw new PrexoniteException("The node is not an IAstExpression.");
+                        throw new PrexoniteException("The node is not an AstExpr.");
 
                     result = target.Loader.CreateNativePValue(_GetOptimizedNode(target, expr));
                     break;
                 case "EMITEFFECTCODE":
                     if (args.Length < 1 || (target = args[0].Value as CompilerTarget) == null)
                         throw new PrexoniteException(
-                            "_GetOptimizedNode(CompilerTarget target) requires target.");
-                    var effect = this as IAstEffect;
-                    if (effect == null)
-                        throw new PrexoniteException("The node is not an IAstExpression.");
-                    effect.EmitEffectCode(target);
+                            "EmitEffectCode(CompilerTarget target) requires target.");
+                    EmitEffectCode(target);
                     result = PType.Null;
                     break;
             }

@@ -34,7 +34,7 @@ namespace Prexonite.Compiler.Ast
                              IAstHasExpressions
     {
         public ReturnVariant ReturnVariant;
-        public IAstExpression Expression;
+        public AstExpr Expression;
 
         public AstReturn(string file, int line, int column, ReturnVariant returnVariant)
             : base(file, line, column)
@@ -49,15 +49,18 @@ namespace Prexonite.Compiler.Ast
 
         #region IAstHasExpressions Members
 
-        public IAstExpression[] Expressions
+        public AstExpr[] Expressions
         {
             get { return new[] {Expression}; }
         }
 
         #endregion
 
-        protected override void DoEmitCode(CompilerTarget target)
+        protected override void DoEmitCode(CompilerTarget target, StackSemantics stackSemantics)
         {
+            if(stackSemantics == StackSemantics.Value)
+                throw new NotSupportedException("Return nodes cannot be used with value stack semantics. (They don't produce any values)");
+
             var warned = false;
             if (target.Function.Meta[Coroutine.IsCoroutineKey].Switch)
                 _warnInCoroutines(target, ref warned);
@@ -79,13 +82,13 @@ namespace Prexonite.Compiler.Ast
                 case ReturnVariant.Set:
                     if (Expression == null)
                         throw new PrexoniteException("Return assignment requires an expression.");
-                    Expression.EmitCode(target);
+                    Expression.EmitValueCode(target);
                     target.Emit(this, OpCode.ret_set);
                     break;
                 case ReturnVariant.Continue:
                     if (Expression != null)
                     {
-                        Expression.EmitCode(target);
+                        Expression.EmitValueCode(target);
                         target.Emit(this, OpCode.ret_set);
                         _warnInCoroutines(target, ref warned);
                     }
@@ -127,7 +130,7 @@ namespace Prexonite.Compiler.Ast
             var symbol = Expression as AstGetSetSymbol;
             var icbr = Expression as ICanBeReferenced;
 
-            AstGetSet reference;
+            AstExpr reference;
             if ((getset != null && getset.Call == PCall.Set ||
                 //the 'value' of set-expressions is not the return value of the call
                 (symbol != null && symbol.IsObjectVariable)) ||
@@ -135,7 +138,7 @@ namespace Prexonite.Compiler.Ast
                 //tail requires a reference to the continuation
             {
                 //Cannot be tail call optimized
-                Expression.EmitCode(target);
+                Expression.EmitValueCode(target);
                 target.Emit(this, OpCode.ret_value);
             }
             else //Will be tail called
@@ -152,9 +155,9 @@ namespace Prexonite.Compiler.Ast
                     for (var i = 0; i < symbolParams.Count; i++)
                     {
                         if (i < symbolArgs.Count)
-                            symbolArgs[i].EmitCode(target);
+                            symbolArgs[i].EmitValueCode(target);
                         else
-                            nullNode.EmitCode(target);
+                            nullNode.EmitValueCode(target);
                     }
                     //overwrite parameters
                     for (var i = symbolParams.Count - 1; i >= 0; i--)
@@ -166,7 +169,7 @@ namespace Prexonite.Compiler.Ast
                 }
                 else
                 {
-                    Expression.EmitCode(target);
+                    Expression.EmitValueCode(target);
                     target.Emit(this, OpCode.ret_value);
                     return;
                 }
@@ -216,9 +219,9 @@ namespace Prexonite.Compiler.Ast
                 };
             //not added to the condition
 
-            retif.EmitCode(target); //  if( cond )
+            retif.EmitEffectCode(target); //  if( cond )
             //      return expr1
-            ret2.EmitCode(target); //  return expr2
+            ret2.EmitEffectCode(target); //  return expr2
 
             //ret1 and ret2 will continue optimizing
             return true;

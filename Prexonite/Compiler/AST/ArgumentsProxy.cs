@@ -35,20 +35,20 @@ using Prexonite.Types;
 namespace Prexonite.Compiler.Ast
 {
     [DebuggerNonUserCode]
-    public class ArgumentsProxy : IList<IAstExpression>, IObject
+    public class ArgumentsProxy : IList<AstExpr>, IObject
     {
-        private List<IAstExpression> _arguments;
+        private List<AstExpr> _arguments;
         private int _rightAppendPosition = -1;
-        private readonly List<IAstExpression> _rightAppends = new List<IAstExpression>();
+        private readonly List<AstExpr> _rightAppends = new List<AstExpr>();
 
-        internal ArgumentsProxy(List<IAstExpression> arguments)
+        internal ArgumentsProxy(List<AstExpr> arguments)
         {
             if (arguments == null)
                 throw new ArgumentNullException("arguments");
             _arguments = arguments;
         }
 
-        internal void ResetProxy(List<IAstExpression> arguments)
+        internal void ResetProxy(List<AstExpr> arguments)
         {
             if (arguments == null)
                 throw new ArgumentNullException("arguments");
@@ -60,7 +60,7 @@ namespace Prexonite.Compiler.Ast
             get { return _rightAppendPosition; }
         }
 
-        public void RightAppend(IAstExpression item)
+        public void RightAppend(AstExpr item)
         {
             if (item == null)
                 throw new ArgumentNullException("item");
@@ -68,7 +68,7 @@ namespace Prexonite.Compiler.Ast
             _rightAppends.Add(item);
         }
 
-        public void RightAppend(IEnumerable<IAstExpression> item)
+        public void RightAppend(IEnumerable<AstExpr> item)
         {
             if (item == null)
                 throw new ArgumentNullException("item");
@@ -92,7 +92,7 @@ namespace Prexonite.Compiler.Ast
             return (_rightAppendPosition < 0) ? _arguments.Count : _rightAppendPosition;
         }
 
-        #region IList<IAstExpression> Members
+        #region IList<AstExpr> Members
 
         ///<summary>
         ///    Determines the index of a specific item in the <see cref = "T:System.Collections.Generic.IList`1"></see>.
@@ -101,7 +101,7 @@ namespace Prexonite.Compiler.Ast
         ///    The index of item if found in the list; otherwise, -1.
         ///</returns>
         ///<param name = "item">The object to locate in the <see cref = "T:System.Collections.Generic.IList`1"></see>.</param>
-        public int IndexOf(IAstExpression item)
+        public int IndexOf(AstExpr item)
         {
             if (item == null)
                 throw new ArgumentNullException("item");
@@ -117,7 +117,7 @@ namespace Prexonite.Compiler.Ast
         ///<exception cref = "T:System.NotSupportedException">The <see cref = "T:System.Collections.Generic.IList`1"></see> is read-only.</exception>
         ///<exception cref = "T:System.ArgumentOutOfRangeException">index is not a valid index in the <see
         ///     cref = "T:System.Collections.Generic.IList`1"></see>.</exception>
-        public void Insert(int index, IAstExpression item)
+        public void Insert(int index, AstExpr item)
         {
             if (item == null)
                 throw new ArgumentNullException("item");
@@ -148,7 +148,7 @@ namespace Prexonite.Compiler.Ast
         ///     cref = "T:System.Collections.Generic.IList`1"></see>.</exception>
         ///<exception cref = "T:System.NotSupportedException">The property is set and the <see
         ///     cref = "T:System.Collections.Generic.IList`1"></see> is read-only.</exception>
-        public IAstExpression this[int index]
+        public AstExpr this[int index]
         {
             get
             {
@@ -168,14 +168,14 @@ namespace Prexonite.Compiler.Ast
 
         #endregion
 
-        #region ICollection<IAstExpression> Members
+        #region ICollection<AstExpr> Members
 
         ///<summary>
         ///    Adds an item to the <see cref = "T:System.Collections.Generic.ICollection`1"></see>.
         ///</summary>
         ///<param name = "item">The object to add to the <see cref = "T:System.Collections.Generic.ICollection`1"></see>.</param>
         ///<exception cref = "T:System.NotSupportedException">The <see cref = "T:System.Collections.Generic.ICollection`1"></see> is read-only.</exception>
-        public void Add(IAstExpression item)
+        public void Add(AstExpr item)
         {
             if (item == null)
                 throw new ArgumentNullException("item");
@@ -187,7 +187,7 @@ namespace Prexonite.Compiler.Ast
         ///     Adds a number of items to the list of arguments.
         /// </summary>
         /// <param name = "items">A collection of arguments.</param>
-        public void AddRange(IEnumerable<IAstExpression> items)
+        public void AddRange(IEnumerable<AstExpr> items)
         {
             if (items == null)
                 throw new ArgumentNullException("items");
@@ -211,7 +211,7 @@ namespace Prexonite.Compiler.Ast
         ///    true if item is found in the <see cref = "T:System.Collections.Generic.ICollection`1"></see>; otherwise, false.
         ///</returns>
         ///<param name = "item">The object to locate in the <see cref = "T:System.Collections.Generic.ICollection`1"></see>.</param>
-        public bool Contains(IAstExpression item)
+        public bool Contains(AstExpr item)
         {
             if (item == null)
                 throw new ArgumentNullException("item");
@@ -230,7 +230,7 @@ namespace Prexonite.Compiler.Ast
         ///<exception cref = "T:System.ArgumentNullException">array is null.</exception>
         ///<exception cref = "T:System.ArgumentException">array is multidimensional.-or-arrayIndex is equal to or greater than the length of array.-or-The number of elements in the source <see
         ///     cref = "T:System.Collections.Generic.ICollection`1"></see> is greater than the available space from arrayIndex to the end of the destination array.-or-Type T cannot be cast automatically to the type of the destination array.</exception>
-        public void CopyTo(IAstExpression[] array, int arrayIndex)
+        public void CopyTo(AstExpr[] array, int arrayIndex)
         {
             _arguments.CopyTo(array, arrayIndex);
         }
@@ -244,7 +244,7 @@ namespace Prexonite.Compiler.Ast
         ///</returns>
         ///<param name = "item">The object to remove from the <see cref = "T:System.Collections.Generic.ICollection`1"></see>.</param>
         ///<exception cref = "T:System.NotSupportedException">The <see cref = "T:System.Collections.Generic.ICollection`1"></see> is read-only.</exception>
-        public bool Remove(IAstExpression item)
+        public bool Remove(AstExpr item)
         {
             if (item == null)
                 throw new ArgumentNullException("item");
@@ -271,12 +271,12 @@ namespace Prexonite.Compiler.Ast
         ///</returns>
         public bool IsReadOnly
         {
-            get { return ((ICollection<IAstExpression>) _arguments).IsReadOnly; }
+            get { return ((ICollection<AstExpr>) _arguments).IsReadOnly; }
         }
 
         #endregion
 
-        #region IEnumerable<IAstExpression> Members
+        #region IEnumerable<AstExpr> Members
 
         ///<summary>
         ///    Returns an enumerator that iterates through the collection.
@@ -285,7 +285,7 @@ namespace Prexonite.Compiler.Ast
         ///    A <see cref = "T:System.Collections.Generic.IEnumerator`1"></see> that can be used to iterate through the collection.
         ///</returns>
         ///<filterpriority>1</filterpriority>
-        IEnumerator<IAstExpression> IEnumerable<IAstExpression>.GetEnumerator()
+        IEnumerator<AstExpr> IEnumerable<AstExpr>.GetEnumerator()
         {
             return _arguments.GetEnumerator();
         }
@@ -308,7 +308,7 @@ namespace Prexonite.Compiler.Ast
 
         #endregion
 
-        public IAstExpression[] ToArray()
+        public AstExpr[] ToArray()
         {
             return _arguments.ToArray();
         }
@@ -335,7 +335,7 @@ namespace Prexonite.Compiler.Ast
                     if (args.Length > 0)
                     {
                         var arg0 = args[0];
-                        var exprs = arg0.Value as IEnumerable<IAstExpression>;
+                        var exprs = arg0.Value as IEnumerable<AstExpr>;
                         IEnumerable<PValue> xs;
                         if (exprs != null)
                         {
@@ -347,8 +347,8 @@ namespace Prexonite.Compiler.Ast
                         {
                             AddRange(
                                 from x in xs
-                                select (IAstExpression)
-                                    x.ConvertTo(sctx, typeof (IAstExpression), true).Value
+                                select (AstExpr)
+                                    x.ConvertTo(sctx, typeof (AstExpr), true).Value
                                 );
                             result = PType.Null;
                             return true;
@@ -397,7 +397,7 @@ namespace Prexonite.Compiler.Ast
                 _writeArgument(sb, rightExpr);
         }
 
-        private static void _writeArgument(StringBuilder sb, IAstExpression expr)
+        private static void _writeArgument(StringBuilder sb, AstExpr expr)
         {
             sb.AppendFormat("{0}, ", expr);
         }

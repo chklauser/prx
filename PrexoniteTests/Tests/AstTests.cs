@@ -104,7 +104,7 @@ namespace PrexoniteTests.Tests
             const int col = 555;
             //test case from MissingMapped
             var subject = new AstNull(file, line, col);
-            var argv = new List<IAstExpression>
+            var argv = new List<AstExpr>
                 {
                     subject,
                     _createPlaceholder(1),
@@ -119,7 +119,7 @@ namespace PrexoniteTests.Tests
                 Assert.AreSame(originalArgv[i], argv[i]);
         }
 
-        private static void _placeholderArgvProcessing(List<IAstExpression> argv)
+        private static void _placeholderArgvProcessing(List<AstExpr> argv)
         {
             Console.WriteLine("ARGV implicit:");
             foreach (var expr in argv)
@@ -146,7 +146,7 @@ namespace PrexoniteTests.Tests
             const int col = 555;
             //test case from MissingMapped
             var subject = new AstNull(file, line, col);
-            var argv = new List<IAstExpression>
+            var argv = new List<AstExpr>
                 {
                     subject,
                     _createPlaceholder(2),

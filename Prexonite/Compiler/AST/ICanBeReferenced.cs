@@ -30,7 +30,7 @@ namespace Prexonite.Compiler.Ast
 {
     internal interface ICanBeReferenced
     {
-        ICollection<IAstExpression> Arguments { get; }
-        bool TryToReference(out AstGetSet reference);
+        ICollection<AstExpr> Arguments { get; }
+        bool TryToReference(out AstExpr reference);
     }
 }

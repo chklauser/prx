@@ -1,4 +1,4 @@
-// Prexonite
+﻿// Prexonite
 // 
 // Copyright (c) 2011, Christian Klauser
 // All rights reserved.
@@ -26,7 +26,28 @@
 
 namespace Prexonite.Compiler.Ast
 {
-    public interface IAstType : IAstExpression
+    public abstract class AstExpr : AstNode
     {
+        protected AstExpr(ISourcePosition position)
+            : base(position)
+        {
+        }
+
+        internal AstExpr(Parser p)
+            : base(p)
+        {
+        }
+
+        protected AstExpr(string file, int line, int column)
+            : base(file, line, column)
+        {
+        }
+
+        #region Implementation of AstExpr
+
+        public abstract bool TryOptimize(CompilerTarget target, out AstExpr expr);
+
+        #endregion
+
     }
 }

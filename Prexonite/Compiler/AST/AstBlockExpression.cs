@@ -24,14 +24,19 @@
 //  WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING 
 //  IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
+using System;
+
 namespace Prexonite.Compiler.Ast
 {
-    public class AstBlockExpression : AstBlock,
-                                      IAstEffect,
-                                      IAstHasExpressions
+    /// <summary>
+    /// OBSOLETE. 
+    /// This class used to represent blocks with designated return value expressions. 
+    /// In order to simplify the AST, this functionality has been added to all block.
+    /// So just use <see cref="AstBlock"/> instead.
+    /// </summary>
+    [Obsolete("The functionality of AstBlockExpression has been pulled up into AstBlock. Use that class instead.")]
+    public sealed class AstBlockExpression : AstBlock
     {
-        public IAstExpression Expression;
-
         public AstBlockExpression(string file, int line, int column)
             : base(file, line, column)
         {
@@ -40,52 +45,6 @@ namespace Prexonite.Compiler.Ast
         internal AstBlockExpression(Parser p)
             : base(p)
         {
-        }
-
-        #region IAstExpression/IAstEffect Members
-
-        public bool TryOptimize(CompilerTarget target, out IAstExpression expr)
-        {
-            //Will be optimized after code generation, hopefully
-            if (Expression != null)
-                _OptimizeNode(target, ref Expression);
-
-            expr = null;
-            return false;
-        }
-
-        void IAstEffect.DoEmitEffectCode(CompilerTarget target)
-        {
-            base.DoEmitCode(target);
-            var effect = Expression as IAstEffect;
-            if (effect != null)
-                effect.EmitEffectCode(target);
-        }
-
-        #endregion
-
-        protected override void DoEmitCode(CompilerTarget target)
-        {
-            base.DoEmitCode(target);
-            if (Expression != null)
-                Expression.EmitCode(target);
-        }
-
-        #region Implementation of IAstHasExpressions
-
-        public IAstExpression[] Expressions
-        {
-            get { return new[] {Expression}; }
-        }
-
-        #endregion
-
-        public override string ToString()
-        {
-            if (Expression == null)
-                return base.ToString();
-            else
-                return string.Format("{0} (return {1})", base.ToString(), Expression);
         }
     }
 }

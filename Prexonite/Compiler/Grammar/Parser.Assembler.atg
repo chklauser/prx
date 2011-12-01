@@ -85,7 +85,7 @@ AsmInstruction<AstBlock block>          (.  int arguments = 0;
 |   //NOP/DATA INSTRUCTION
     IF(isAsmInstruction("nop", null))
     AsmId<out insbase>                  (.  Instruction ins = new Instruction(OpCode.nop); .)
-    [  plus AsmId<out id>               (.  ins.Id = id; .)
+    [  plus AsmId<out id>               (.  ins = ins.With(id: id); .)
     ]
                                         (.  addInstruction(block, ins); .)
     

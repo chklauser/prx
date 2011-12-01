@@ -289,7 +289,7 @@ namespace Prexonite.Compiler.Macro
                 else
                     ast = null;
 
-                var expr = ast as IAstExpression;
+                var expr = ast as AstExpr;
 
                 /*Merge with context expression block
                  *  cs = Statements from context
@@ -307,11 +307,11 @@ namespace Prexonite.Compiler.Macro
                  *      {fs} = fe
                  */
                 var contextBlock = context.Block;
-                var macroBlockExpr = ast as AstBlockExpression;
+                var macroBlockExpr = ast as AstBlock;
                 var macroBlock = ast as AstBlock;
 
                 // ReSharper disable JoinDeclarationAndInitializer
-                IAstExpression ce, fe;
+                AstExpr ce, fe;
                 IEnumerable<AstNode> fs;
                 // ReSharper restore JoinDeclarationAndInitializer
                 //determine ce
@@ -358,8 +358,8 @@ namespace Prexonite.Compiler.Macro
                 return (bool) successRaw.Value;
             }
 
-            private void _implementMergeRules(MacroContext context, IAstExpression ce,
-                IEnumerable<AstNode> fs, IAstExpression fe)
+            private void _implementMergeRules(MacroContext context, AstExpr ce,
+                IEnumerable<AstNode> fs, AstExpr fe)
             {
                 var contextBlock = context.Block;
                 //cs  is already stored in contextBlock, 

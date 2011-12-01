@@ -28,7 +28,6 @@ using System;
 using System.Diagnostics;
 using Prexonite.Compiler.Macro;
 using Prexonite.Types;
-using NotSupportedException = Prexonite.Commands.Concurrency.NotSupportedException;
 
 namespace Prexonite.Compiler.Ast
 {
@@ -54,7 +53,7 @@ namespace Prexonite.Compiler.Ast
             get { return _implementation; }
         }
 
-        protected override void EmitGetCode(CompilerTarget target, bool justEffect)
+        protected override void EmitGetCode(CompilerTarget target, StackSemantics stackSemantics)
         {
             throw new NotSupportedException(
                 "Macro invocation requires a different mechanic. Use AstGetSet.EmitCode instead.");
@@ -66,7 +65,7 @@ namespace Prexonite.Compiler.Ast
                 "Macro invocation requires a different mechanic. Use AstGetSet.EmitCode instead.");
         }
 
-        protected override void EmitCode(CompilerTarget target, bool justEffect)
+        protected override void DoEmitCode(CompilerTarget target, StackSemantics stackSemantics)
         {
             //instantiate macro for the current target
             MacroSession session = null;
@@ -77,14 +76,11 @@ namespace Prexonite.Compiler.Ast
                 session = target.AcquireMacroSession();
 
                 //Expand macro
+                var justEffect = stackSemantics == StackSemantics.Effect;
                 var node = session.ExpandMacro(this, justEffect);
 
                 //Emit generated code
-                var effect = node as IAstEffect;
-                if (justEffect)
-                    effect.EmitEffectCode(target);
-                else
-                    node.EmitCode(target);
+                node.EmitCode(target, stackSemantics);
             }
             finally
             {
@@ -93,7 +89,7 @@ namespace Prexonite.Compiler.Ast
             }
         }
 
-        public override bool TryOptimize(CompilerTarget target, out IAstExpression expr)
+        public override bool TryOptimize(CompilerTarget target, out AstExpr expr)
         {
             //Do not optimize the macros arguments! They should be passed to the macro in their original form.
             //  the macro should decide whether or not to apply AST-optimization to the arguments or not.

@@ -29,18 +29,17 @@ using Prexonite.Types;
 
 namespace Prexonite.Compiler.Ast
 {
-    public class AstTypecheck : AstNode,
-                                IAstExpression,
+    public class AstTypecheck : AstExpr,
                                 IAstHasExpressions,
                                 IAstPartiallyApplicable
     {
-        private IAstExpression _subject;
-        private IAstType _type;
+        private AstExpr _subject;
+        private AstTypeExpr _type;
 
         public bool IsInverted { get; set; }
 
         public AstTypecheck(
-            string file, int line, int column, IAstExpression subject, IAstType type)
+            string file, int line, int column, AstExpr subject, AstTypeExpr type)
             : base(file, line, column)
         {
             if (subject == null)
@@ -51,25 +50,25 @@ namespace Prexonite.Compiler.Ast
             _type = type;
         }
 
-        internal AstTypecheck(Parser p, IAstExpression subject, IAstType type)
+        internal AstTypecheck(Parser p, AstExpr subject, AstTypeExpr type)
             : this(p.scanner.File, p.t.line, p.t.col, subject, type)
         {
         }
 
         #region IAstHasExpressions Members
 
-        public IAstExpression[] Expressions
+        public AstExpr[] Expressions
         {
             get { return new[] {_subject}; }
         }
 
-        public IAstExpression Subject
+        public AstExpr Subject
         {
             get { return _subject; }
             set { _subject = value; }
         }
 
-        public IAstType Type
+        public AstTypeExpr Type
         {
             get { return _type; }
             set { _type = value; }
@@ -77,9 +76,12 @@ namespace Prexonite.Compiler.Ast
 
         #endregion
 
-        protected override void DoEmitCode(CompilerTarget target)
+        protected override void DoEmitCode(CompilerTarget target, StackSemantics stackSemantics)
         {
-            _subject.EmitCode(target);
+            if (stackSemantics == StackSemantics.Effect)
+                return;
+
+            _subject.EmitValueCode(target);
             var constType = _type as AstConstantTypeExpression;
             if (constType != null)
             {
@@ -99,15 +101,15 @@ namespace Prexonite.Compiler.Ast
             }
             else
             {
-                _type.EmitCode(target);
+                _type.EmitValueCode(target);
                 target.Emit(this, OpCode.check_arg);
             }
         }
 
-        public bool TryOptimize(CompilerTarget target, out IAstExpression expr)
+        public override bool TryOptimize(CompilerTarget target, out AstExpr expr)
         {
             _OptimizeNode(target, ref _subject);
-            _type = (IAstType) _GetOptimizedNode(target, _type);
+            _type = (AstTypeExpr) _GetOptimizedNode(target, _type);
 
             expr = null;
 
@@ -144,7 +146,7 @@ namespace Prexonite.Compiler.Ast
             if (constType != null)
                 target.EmitConstant(this, constType.TypeExpression);
             else
-                _type.EmitCode(target);
+                _type.EmitValueCode(target);
 
             target.EmitCommandCall(this, ctorArgc + 1, Engine.PartialTypeCheckAlias);
         }

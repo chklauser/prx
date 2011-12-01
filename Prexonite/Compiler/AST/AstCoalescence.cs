@@ -31,8 +31,7 @@ using Debug = System.Diagnostics.Debug;
 
 namespace Prexonite.Compiler.Ast
 {
-    public class AstCoalescence : AstNode,
-                                  IAstExpression,
+    public class AstCoalescence : AstExpr,
                                   IAstHasExpressions,
                                   IAstPartiallyApplicable
     {
@@ -46,25 +45,25 @@ namespace Prexonite.Compiler.Ast
         {
         }
 
-        private readonly List<IAstExpression> _expressions = new List<IAstExpression>(2);
+        private readonly List<AstExpr> _expressions = new List<AstExpr>(2);
 
         #region IAstHasExpressions Members
 
-        IAstExpression[] IAstHasExpressions.Expressions
+        AstExpr[] IAstHasExpressions.Expressions
         {
             get { return _expressions.ToArray(); }
         }
 
-        public List<IAstExpression> Expressions
+        public List<AstExpr> Expressions
         {
             get { return _expressions; }
         }
 
         #endregion
 
-        #region IAstExpression Members
+        #region AstExpr Members
 
-        public bool TryOptimize(CompilerTarget target, out IAstExpression expr)
+        public override bool TryOptimize(CompilerTarget target, out AstExpr expr)
         {
             expr = null;
 
@@ -102,7 +101,7 @@ namespace Prexonite.Compiler.Ast
             }
         }
 
-        private static bool _exprIsNotNull(IAstExpression iexpr)
+        private static bool _exprIsNotNull(AstExpr iexpr)
         {
             return !(iexpr is AstNull ||
                 (iexpr is AstConstant && ((AstConstant) iexpr).Constant == null));
@@ -113,28 +112,42 @@ namespace Prexonite.Compiler.Ast
         private static int _count = -1;
         private static readonly object _labelCountLock = new object();
 
-        protected override void DoEmitCode(CompilerTarget target)
+        protected override void DoEmitCode(CompilerTarget target, StackSemantics stackSemantics)
         {
             //Expressions contains at least two expressions
             var endLabel = _generateEndLabel();
-            _emitCode(target, endLabel);
+            _emitCode(target, endLabel, stackSemantics);
             target.EmitLabel(this, endLabel);
         }
 
-        private void _emitCode(CompilerTarget target, string endLabel)
+        private void _emitCode(CompilerTarget target, string endLabel, StackSemantics stackSemantics)
         {
             for (var i = 0; i < _expressions.Count; i++)
             {
                 var expr = _expressions[i];
 
-                if (i > 0)
+                // Value semantics: duplicate of previous, rejected value needs to be popped
+                // Effect semantics: no duplicates were created in the first place
+                if (i > 0 && stackSemantics == StackSemantics.Value)
                     target.EmitPop(this);
 
-                expr.EmitCode(target);
+                //For value semantics, we always generate a value
+                //For effect semantics, we only need the intermediate expressions to create a value
+                StackSemantics needValue;
+                if (stackSemantics == StackSemantics.Value || i < _expressions.Count - 1)
+                    needValue = StackSemantics.Value;
+                else 
+                    needValue = StackSemantics.Effect;
 
+                expr.EmitCode(target, needValue);
+
+                //The last element doesn't need special handling, control just 
+                //  falls into the surrounding code with the correct value on top of the stack
                 if (i + 1 >= _expressions.Count)
                     continue;
-                target.EmitDuplicate(this);
+
+                if(stackSemantics == StackSemantics.Value)
+                    target.EmitDuplicate(this);
                 target.Emit(this, OpCode.check_null);
                 target.EmitJumpIfFalse(this, endLabel);
             }
@@ -162,7 +175,7 @@ namespace Prexonite.Compiler.Ast
             var count = Expressions.Count;
             if (count == 0)
             {
-                this.ConstFunc(null).EmitCode(target);
+                this.ConstFunc(null).EmitValueCode(target);
                 return;
             }
 
@@ -177,7 +190,7 @@ namespace Prexonite.Compiler.Ast
                     {
                         //there is no placeholder at all, wrap expression in const
                         Debug.Assert(Expressions.All(e => !e.IsPlaceholder()));
-                        DoEmitCode(target);
+                        DoEmitCode(target,StackSemantics.Value);
                         target.EmitCommandCall(this, 1, Const.Alias);
                         return;
                     }
@@ -194,14 +207,14 @@ namespace Prexonite.Compiler.Ast
 
             if (count == 0)
             {
-                this.ConstFunc(null).EmitCode(target);
+                this.ConstFunc(null).EmitValueCode(target);
             }
             else if (count == 1)
             {
                 Debug.Assert(Expressions[0].IsPlaceholder(),
                     "Singleton ??-chain expected to consist of placeholder.");
                 var placeholder = (AstPlaceholder) Expressions[0];
-                placeholder.IdFunc().EmitCode(target);
+                placeholder.IdFunc().EmitValueCode(target);
             }
             else
             {
@@ -214,13 +227,13 @@ namespace Prexonite.Compiler.Ast
                 //check for null (keep a copy of prefix on stack)
                 var constLabel = _generateEndLabel();
                 var endLabel = _generateEndLabel();
-                prefix._emitCode(target, constLabel);
+                prefix._emitCode(target, constLabel, StackSemantics.Value);
                 target.EmitDuplicate(this);
                 target.Emit(this, OpCode.check_null);
                 target.EmitJumpIfFalse(this, constLabel);
                 //prefix is null, identity function
                 target.EmitPop(this);
-                placeholder.IdFunc().EmitCode(target);
+                placeholder.IdFunc().EmitValueCode(target);
                 target.EmitJump(this, endLabel);
                 //prefix is not null, const function
                 target.EmitLabel(this, constLabel);

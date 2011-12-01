@@ -64,12 +64,12 @@ namespace Prexonite.Compiler.Ast
         {
         }
 
-        protected override void EmitGetCode(CompilerTarget target, bool justEffect)
+        protected override void EmitGetCode(CompilerTarget target, StackSemantics stackSemantics)
         {
             if (Implementation.Module != null)
                 throw new NotImplementedException(
                     "Compiling cross-module calls is not implemented yet.");
-
+            var justEffect = stackSemantics == StackSemantics.Effect;
             switch (Implementation.Interpretation)
             {
                 case SymbolInterpretations.Command:
@@ -179,12 +179,12 @@ namespace Prexonite.Compiler.Ast
 
         #region ICanBeReferenced Members
 
-        ICollection<IAstExpression> ICanBeReferenced.Arguments
+        ICollection<AstExpr> ICanBeReferenced.Arguments
         {
             get { return Arguments; }
         }
 
-        public virtual bool TryToReference(out AstGetSet result)
+        public virtual bool TryToReference(out AstExpr result)
         {
             result = null;
             switch (Implementation.Interpretation)
@@ -209,7 +209,7 @@ namespace Prexonite.Compiler.Ast
 
         public void DoEmitPartialApplicationCode(CompilerTarget target)
         {
-            AstGetSet refNode;
+            AstExpr refNode;
             if (!TryToReference(out refNode))
                 throw new PrexoniteException("Cannot partially apply " + this +
                     " because it can't be converted to a reference.");
@@ -217,7 +217,7 @@ namespace Prexonite.Compiler.Ast
             var indTemplate = new AstIndirectCall(File, Line, Column, Call, refNode);
             indTemplate.Arguments.AddRange(Arguments);
             Debug.Assert(indTemplate.CheckForPlaceholders());
-            indTemplate.EmitCode(target);
+            indTemplate.EmitValueCode(target);
         }
 
         #endregion

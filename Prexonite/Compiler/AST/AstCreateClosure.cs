@@ -29,8 +29,7 @@ using System.Diagnostics;
 namespace Prexonite.Compiler.Ast
 {
     [DebuggerNonUserCode]
-    public class AstCreateClosure : AstNode,
-                                    IAstExpression
+    public class AstCreateClosure : AstExpr
     {
         public string FuncId;
 
@@ -46,8 +45,11 @@ namespace Prexonite.Compiler.Ast
             FuncId = funcId;
         }
 
-        protected override void DoEmitCode(CompilerTarget target)
+        protected override void DoEmitCode(CompilerTarget target, StackSemantics stackSemantics)
         {
+            if (stackSemantics == StackSemantics.Effect)
+                return;
+
             PFunction targetFunction;
             MetaEntry sharedNamesEntry;
             if (target.Loader.ParentApplication.Functions.TryGetValue(FuncId, out targetFunction)
@@ -59,9 +61,9 @@ namespace Prexonite.Compiler.Ast
                 target.Emit(this, OpCode.newclo, FuncId);
         }
 
-        #region IAstExpression Members
+        #region AstExpr Members
 
-        public bool TryOptimize(CompilerTarget target, out IAstExpression expr)
+        public override bool TryOptimize(CompilerTarget target, out AstExpr expr)
         {
             expr = null;
             return false;

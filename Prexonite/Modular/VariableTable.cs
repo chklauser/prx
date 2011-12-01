@@ -15,5 +15,19 @@ namespace Prexonite.Modular
         public VariableTable() : base(Engine.DefaultStringComparer)
         {
         }
+
+        public bool TryGetVariable(string id, out VariableDeclaration variable)
+        {
+            if (Contains(id))
+            {
+                variable = this[id];
+                return true;
+            }
+            else
+            {
+                variable = null;
+                return false;
+            }
+        }
     }
 }

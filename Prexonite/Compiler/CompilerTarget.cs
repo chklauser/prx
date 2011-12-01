@@ -755,17 +755,19 @@ namespace Prexonite.Compiler
             SourceMapping.RemoveRange(index, count);
 
             //Correct jump targets by...);
-            foreach (var ins in code)
+            int i;
+            for (i = 0; i < code.Count; i++)
             {
+                var ins = code[i];
                 if ((ins.IsJump || ins.OpCode == OpCode.leave)
                     && ins.Arguments > index) //decrementing target addresses pointing 
                     //behind the removed instruction
-                    ins.Arguments -= count;
+                    code[i] = ins.With(arguments: ins.Arguments - count);
             }
 
             //Correct try-catch-finally blocks
             var modifiedBlocks = new MetaEntry[_function.TryCatchFinallyBlocks.Count];
-            var i = 0;
+            i = 0;
             foreach (var block in _function.TryCatchFinallyBlocks)
             {
                 if (block.BeginTry > index)
@@ -851,7 +853,7 @@ namespace Prexonite.Compiler
         ///     Promotes captured variables to function parameters.
         /// </summary>
         /// <returns>A list of expressions (get symbol) that should be added to the arguments list of any call to the lifted function.</returns>
-        internal Func<Parser, IList<IAstExpression>> ToCaptureByValue()
+        internal Func<Parser, IList<AstExpr>> ToCaptureByValue()
         {
             return ToCaptureByValue(new string[0]);
         }
@@ -861,14 +863,14 @@ namespace Prexonite.Compiler
         /// </summary>
         /// <param name = "keepByRef">The set of captured variables that should be kept captured by reference (i.e. not promoted to parameters)</param>
         /// <returns>A list of expressions (get symbol) that should be added to the arguments list of any call to the lifted function.</returns>
-        internal Func<Parser, IList<IAstExpression>> ToCaptureByValue(IEnumerable<string> keepByRef)
+        internal Func<Parser, IList<AstExpr>> ToCaptureByValue(IEnumerable<string> keepByRef)
         {
             keepByRef = new HashSet<string>(keepByRef);
             var toPromote =
                 _outerVariables.Where(outer => !keepByRef.Contains(outer)).ToList();
 
             //Declare locally, remove from outer variables and add as parameter to the end
-            var exprs = new List<Func<Parser, IAstExpression>>();
+            var exprs = new List<Func<Parser, AstExpr>>();
             foreach (var outer in toPromote)
             {
                 SymbolEntry sym;
@@ -912,7 +914,7 @@ namespace Prexonite.Compiler
         {
             var index = Function.Code.Count;
             if (ins.Id != null)
-                ins.Id = Loader.CacheString(ins.Id);
+                ins = ins.With(id: Loader.CacheString(ins.Id));
 
             Function.Code.Add(ins);
             SourceMapping.Add(index, position);
@@ -1151,7 +1153,7 @@ namespace Prexonite.Compiler
         #region Jumps and Labels
 
         public const string LabelSymbolPostfix = @"\label\assembler";
-        private readonly List<Instruction> _unresolvedInstructions = new List<Instruction>();
+        private readonly HashSet<int> _unresolvedInstructions = new HashSet<int>();
 
         public void EmitLeave(ISourcePosition position, int address)
         {
@@ -1207,9 +1209,14 @@ namespace Prexonite.Compiler
             else
             {
                 var ins = new Instruction(OpCode.leave, label);
-                _unresolvedInstructions.Add(ins);
+                _unresolvedInstructions.Add(NextAddress);
                 Emit(position, ins);
             }
+        }
+
+        protected int NextAddress
+        {
+            get { return Function.Code.Count; }
         }
 
         public void EmitJump(ISourcePosition position, string label)
@@ -1222,7 +1229,7 @@ namespace Prexonite.Compiler
             else
             {
                 var ins = Instruction.CreateJump(label);
-                _unresolvedInstructions.Add(ins);
+                _unresolvedInstructions.Add(NextAddress);
                 Emit(position, ins);
             }
         }
@@ -1237,7 +1244,7 @@ namespace Prexonite.Compiler
             else
             {
                 var ins = Instruction.CreateJumpIfTrue(label);
-                _unresolvedInstructions.Add(ins);
+                _unresolvedInstructions.Add(NextAddress);
                 Emit(position, ins);
             }
         }
@@ -1252,14 +1259,9 @@ namespace Prexonite.Compiler
             else
             {
                 var ins = Instruction.CreateJumpIfFalse(label);
-                _unresolvedInstructions.Add(ins);
+                _unresolvedInstructions.Add(NextAddress);
                 Emit(position, ins);
             }
-        }
-
-        public void AddUnresolvedInstruction(Instruction jump)
-        {
-            _unresolvedInstructions.Add(jump);
         }
 
         public bool TryResolveLabel(string label, out int address)
@@ -1306,24 +1308,23 @@ namespace Prexonite.Compiler
                     position.File));
 
             //resolve any unresolved jumps);
-            foreach (var ins in _unresolvedInstructions.ToArray())
+            var resolved = new List<int>();
+            foreach (var idx in _unresolvedInstructions)
             {
+                var ins = Code[idx];
                 if (Engine.StringsAreEqual(ins.Id, label))
                 {
                     //Found a matching unresolved 
 
-                    //if (partialResolve != null)
-                    //{
-                    //    ins.Id = jump.Id;
-                    //    //keep the instruction unresolved
-                    //}
                     //else
                     {
-                        ins.Arguments = address;
-                        _unresolvedInstructions.Remove(ins);
+                        Code[idx] = ins.With(arguments: address);
+                        resolved.Add(idx);
                     }
                 }
             }
+
+            _unresolvedInstructions.ExceptWith(resolved);
 
             //Add the label to the symbol table
             Symbols[labelKey] = SymbolEntry.JumpLabel(address);
@@ -1433,7 +1434,7 @@ namespace Prexonite.Compiler
             if (_unresolvedInstructions.Count > 0)
                 throw new PrexoniteException
                     (
-                    "The instruction [ " + _unresolvedInstructions[0] +
+                    "The instruction [ " + Function.Code[_unresolvedInstructions.First()] +
                         " ] has not been resolved.");
         }
 
@@ -1470,8 +1471,7 @@ namespace Prexonite.Compiler
                             (
                             "Infinite loop in unconditional jump sequence detected.");
                     //Propagate address
-                    current.Arguments = target.Arguments;
-                    current.Id = target.Id;
+                    current = current.With(arguments: target.Arguments, id: target.Id);
 
                     //Prepare next step
                     if (_targetIsInRange(target, count))
@@ -1479,6 +1479,8 @@ namespace Prexonite.Compiler
                     else
                         break;
                 }
+
+                code[i] = current;
             }
             return;
         }
@@ -1646,9 +1648,7 @@ namespace Prexonite.Compiler
                  */
                 if (condJ.IsConditionalJump)
                 {
-                    condJ.OpCode = Instruction.InvertJumpCondition(condJ.OpCode);
-                    condJ.Arguments = uncondJ.Arguments;
-                    condJ.Id = uncondJ.Id;
+                    code[i] = new Instruction(Instruction.InvertJumpCondition(condJ.OpCode), uncondJ.Arguments, uncondJ.Id);
                     RemoveInstructionAt(i + 1);
                 }
                 else

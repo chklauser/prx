@@ -44,7 +44,7 @@ namespace Prexonite.Compiler.Ast
 
         #region Overrides of AstGetSet
 
-        protected override void EmitGetCode(CompilerTarget target, bool justEffect)
+        protected override void EmitGetCode(CompilerTarget target, StackSemantics stackSemantics)
         {
             _reportUnresolved(target);
         }
@@ -80,13 +80,13 @@ namespace Prexonite.Compiler.Ast
             return copy;
         }
 
-        public override bool TryOptimize(CompilerTarget target, out IAstExpression expr)
+        public override bool TryOptimize(CompilerTarget target, out AstExpr expr)
         {
             if (base.TryOptimize(target, out expr))
                 return true;
             else
             {
-                IAstExpression sol = this;
+                AstExpr sol = this;
                 do
                 {
                     foreach (var resolver in target.Loader.CustomResolvers)

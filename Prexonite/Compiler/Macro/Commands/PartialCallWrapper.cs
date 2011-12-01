@@ -80,7 +80,7 @@ namespace Prexonite.Compiler.Macro.Commands
 
         #region Overrides of MacroCommand
 
-        private static bool _hasPlaceholder(IAstExpression expr)
+        private static bool _hasPlaceholder(AstExpr expr)
         {
             var lit = expr as AstListLiteral;
             return expr.IsPlaceholder() || (lit != null && lit.CheckForPlaceholders());
@@ -155,7 +155,7 @@ namespace Prexonite.Compiler.Macro.Commands
         /// </summary>
         /// <param name="context">The context from which to derive the arguments.</param>
         /// <returns>The arguments to the call invocation.</returns>
-        protected virtual IEnumerable<IAstExpression> GetCallArguments(MacroContext context)
+        protected virtual IEnumerable<AstExpr> GetCallArguments(MacroContext context)
         {
             return context.Invocation.Arguments;
         }

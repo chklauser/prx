@@ -30,7 +30,7 @@ namespace Prexonite.Compiler.Ast
 {
     public delegate void AstAction(CompilerTarget target);
 
-    public class AstActionBlock : AstBlock, IAstExpression
+    public class AstActionBlock : AstBlock
     {
         public AstAction Action;
 
@@ -47,19 +47,9 @@ namespace Prexonite.Compiler.Ast
         {
         }
 
-        #region IAstExpression Members
-
-        public bool TryOptimize(CompilerTarget target, out IAstExpression expr)
+        protected override void DoEmitCode(CompilerTarget target, StackSemantics stackSemantics)
         {
-            expr = null;
-            return false;
-        }
-
-        #endregion
-
-        protected override void DoEmitCode(CompilerTarget target)
-        {
-            base.DoEmitCode(target);
+            base.DoEmitCode(target,stackSemantics);
             Action(target);
         }
 

@@ -33,12 +33,11 @@ using NoDebug = System.Diagnostics.DebuggerNonUserCodeAttribute;
 
 namespace Prexonite.Compiler.Ast
 {
-    public class AstObjectCreation : AstNode,
-                                     IAstExpression,
+    public class AstObjectCreation : AstExpr,
                                      IAstHasExpressions,
                                      IAstPartiallyApplicable
     {
-        private IAstType _typeExpr;
+        private AstTypeExpr _typeExpr;
         private readonly ArgumentsProxy _proxy;
 
         public ArgumentsProxy Arguments
@@ -48,12 +47,12 @@ namespace Prexonite.Compiler.Ast
 
         #region IAstHasExpressions Members
 
-        public IAstExpression[] Expressions
+        public AstExpr[] Expressions
         {
             get { return Arguments.ToArray(); }
         }
 
-        public IAstType TypeExpr
+        public AstTypeExpr TypeExpr
         {
             get { return _typeExpr; }
             set { _typeExpr = value; }
@@ -61,10 +60,10 @@ namespace Prexonite.Compiler.Ast
 
         #endregion
 
-        private readonly List<IAstExpression> _arguments = new List<IAstExpression>();
+        private readonly List<AstExpr> _arguments = new List<AstExpr>();
 
         [DebuggerStepThrough]
-        public AstObjectCreation(string file, int line, int col, IAstType type)
+        public AstObjectCreation(string file, int line, int col, AstTypeExpr type)
             : base(file, line, col)
         {
             if (type == null)
@@ -74,18 +73,18 @@ namespace Prexonite.Compiler.Ast
         }
 
         [DebuggerStepThrough]
-        internal AstObjectCreation(Parser p, IAstType type)
+        internal AstObjectCreation(Parser p, AstTypeExpr type)
             : this(p.scanner.File, p.t.line, p.t.col, type)
         {
         }
 
-        #region IAstExpression Members
+        #region AstExpr Members
 
-        public bool TryOptimize(CompilerTarget target, out IAstExpression expr)
+        public override bool TryOptimize(CompilerTarget target, out AstExpr expr)
         {
             expr = null;
 
-            _typeExpr = (IAstType) _GetOptimizedNode(target, _typeExpr);
+            _typeExpr = (AstTypeExpr) _GetOptimizedNode(target, _typeExpr);
 
             //Optimize arguments
             for (var i = 0; i < _arguments.Count; i++)
@@ -100,23 +99,26 @@ namespace Prexonite.Compiler.Ast
             return false;
         }
 
-        protected override void DoEmitCode(CompilerTarget target)
+        protected override void DoEmitCode(CompilerTarget target, StackSemantics stackSemantics)
         {
             var constType = _typeExpr as AstConstantTypeExpression;
 
             if (constType != null)
             {
                 foreach (var arg in _arguments)
-                    arg.EmitCode(target);
+                    arg.EmitValueCode(target);
                 target.Emit(this, OpCode.newobj, _arguments.Count, constType.TypeExpression);
+                if(stackSemantics == StackSemantics.Effect)
+                    target.Emit(this, Instruction.CreatePop());
             }
             else
             {
                 //Load type and call construct on it
-                _typeExpr.EmitCode(target);
+                _typeExpr.EmitValueCode(target);
                 foreach (var arg in _arguments)
-                    arg.EmitCode(target);
-                target.EmitGetCall(this, _arguments.Count, PType.ConstructFromStackId);
+                    arg.EmitValueCode(target);
+                var justEffect = stackSemantics == StackSemantics.Effect;
+                target.EmitGetCall(this, _arguments.Count, PType.ConstructFromStackId, justEffect);
             }
         }
 
@@ -139,7 +141,7 @@ namespace Prexonite.Compiler.Ast
             if (constType != null)
                 target.EmitConstant(this, constType.TypeExpression);
             else
-                _typeExpr.EmitCode(target);
+                _typeExpr.EmitValueCode(target);
             target.EmitCommandCall(this, ctorArgc + 1, Engine.PartialConstructionAlias);
         }
 

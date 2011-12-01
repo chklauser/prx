@@ -41,7 +41,7 @@ namespace Prexonite.Compiler.Macro
         /// <param name = "call">The call type (get or set)</param>
         /// <param name = "args">The arguments to pass as part of teh access (optional)</param>
         /// <returns>A symbol access node.</returns>
-        public static AstGetSetSymbol CreateGetSetSymbol(this MacroContext context, SymbolEntry implementation, PCall call, params IAstExpression[] args)
+        public static AstGetSetSymbol CreateGetSetSymbol(this MacroContext context, SymbolEntry implementation, PCall call, params AstExpr[] args)
         {
             var sym = new AstGetSetSymbol(context.Invocation.File, context.Invocation.Line,
                 context.Invocation.Column, call, implementation);
@@ -73,7 +73,7 @@ namespace Prexonite.Compiler.Macro
         /// <param name = "args">The arguments to pass as part of the member invocation (optional)</param>
         /// <returns>An instance member access node.</returns>
         public static AstGetSetMemberAccess CreateGetSetMember(this MacroContext context,
-            IAstExpression subject, PCall call, string id, params IAstExpression[] args)
+            AstExpr subject, PCall call, string id, params AstExpr[] args)
         {
             var mem = new AstGetSetMemberAccess(context.Invocation.File, context.Invocation.Line,
                 context.Invocation.Column, call, subject, id);
@@ -95,7 +95,7 @@ namespace Prexonite.Compiler.Macro
                 context.Invocation.Column, constant);
         }
 
-        public static IAstExpression CreateConstantOrNull(this MacroContext context, object constant)
+        public static AstExpr CreateConstantOrNull(this MacroContext context, object constant)
         {
             if(ReferenceEquals(constant, null))
                 return new AstNull(context.Invocation.File, context.Invocation.Line, context.Invocation.Column);
@@ -111,7 +111,7 @@ namespace Prexonite.Compiler.Macro
         /// <param name = "enumerationValue">The enumeration value to load</param>
         /// <param name = "position">The source position to associate with the node</param>
         /// <returns>An AST node that represents the specified enumeration value</returns>
-        public static IAstExpression EnumToExpression<T>(this T enumerationValue,
+        public static AstExpr EnumToExpression<T>(this T enumerationValue,
             ISourcePosition position) where T : struct
         {
             if (position == null)
@@ -163,7 +163,7 @@ namespace Prexonite.Compiler.Macro
         /// <param name="implementation"></param>
         /// <param name = "args">The arguments to pass as part of teh access (optional)</param>
         /// <returns>A symbol access node.</returns>
-        public static AstMacroInvocation CreateMacroInvocation(this MacroContext context, PCall callType, SymbolEntry implementation, params IAstExpression[] args)
+        public static AstMacroInvocation CreateMacroInvocation(this MacroContext context, PCall callType, SymbolEntry implementation, params AstExpr[] args)
         {
             var m = new AstMacroInvocation(context.Invocation.File, context.Invocation.Line,
                 context.Invocation.Column, implementation) {Call = callType};

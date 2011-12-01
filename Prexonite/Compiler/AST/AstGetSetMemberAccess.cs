@@ -33,14 +33,14 @@ namespace Prexonite.Compiler.Ast
                                          IAstPartiallyApplicable
     {
         public string Id { get; set; }
-        public IAstExpression Subject { get; set; }
+        public AstExpr Subject { get; set; }
 
-        public override IAstExpression[] Expressions
+        public override AstExpr[] Expressions
         {
             get
             {
                 var len = Arguments.Count;
-                var ary = new IAstExpression[len + 1];
+                var ary = new AstExpr[len + 1];
                 Array.Copy(Arguments.ToArray(), 0, ary, 1, len);
                 ary[0] = Subject;
                 return ary;
@@ -48,7 +48,7 @@ namespace Prexonite.Compiler.Ast
         }
 
         public AstGetSetMemberAccess(
-            string file, int line, int column, PCall call, IAstExpression subject, string id)
+            string file, int line, int column, PCall call, AstExpr subject, string id)
             : base(file, line, column, call)
         {
             if (subject == null)
@@ -59,7 +59,7 @@ namespace Prexonite.Compiler.Ast
             Id = id;
         }
 
-        internal AstGetSetMemberAccess(Parser p, PCall call, IAstExpression subject, string id)
+        internal AstGetSetMemberAccess(Parser p, PCall call, AstExpr subject, string id)
             : this(p.scanner.File, p.t.line, p.t.col, call, subject, id)
         {
         }
@@ -85,12 +85,12 @@ namespace Prexonite.Compiler.Ast
         }
 
         public AstGetSetMemberAccess(
-            string file, int line, int column, IAstExpression subject, string id)
+            string file, int line, int column, AstExpr subject, string id)
             : this(file, line, column, PCall.Get, subject, id)
         {
         }
 
-        internal AstGetSetMemberAccess(Parser p, IAstExpression subject, string id)
+        internal AstGetSetMemberAccess(Parser p, AstExpr subject, string id)
             : this(p, PCall.Get, subject, id)
         {
         }
@@ -101,15 +101,15 @@ namespace Prexonite.Compiler.Ast
             }
         }
 
-        protected override void EmitCode(CompilerTarget target, bool justEffect)
+        protected override void DoEmitCode(CompilerTarget target, StackSemantics stackSemantics)
         {
-            Subject.EmitCode(target);
-            base.EmitCode(target, justEffect);
+            Subject.EmitValueCode(target);
+            base.DoEmitCode(target, stackSemantics);
         }
 
-        protected override void EmitGetCode(CompilerTarget target, bool justEffect)
+        protected override void EmitGetCode(CompilerTarget target, StackSemantics stackSemantics)
         {
-            target.EmitGetCall(this, Arguments.Count, Id, justEffect);
+            target.EmitGetCall(this, Arguments.Count, Id, stackSemantics == StackSemantics.Effect);
         }
 
         protected override void EmitSetCode(CompilerTarget target)
@@ -117,7 +117,7 @@ namespace Prexonite.Compiler.Ast
             target.EmitSetCall(this, Arguments.Count, Id);
         }
 
-        public override bool TryOptimize(CompilerTarget target, out IAstExpression expr)
+        public override bool TryOptimize(CompilerTarget target, out AstExpr expr)
         {
             base.TryOptimize(target, out expr);
             var subject = Subject;

@@ -70,17 +70,17 @@ namespace Prexonite.Compiler.Ast
         /// <param name = "target">The compiler target to compile to.</param>
         /// <param name = "argv">Result of <see cref = "PreprocessPartialApplicationArguments" />.</param>
         public static int EmitConstructorArguments<T>(this T node, CompilerTarget target,
-            List<IAstExpression> argv) where T : AstNode, IAstPartiallyApplicable
+            List<AstExpr> argv) where T : AstNode, IAstPartiallyApplicable
         {
             var mappings8 = new int[argv.Count];
-            var closedArguments = new List<IAstExpression>(argv.Count);
+            var closedArguments = new List<AstExpr>(argv.Count);
             GetMapping(argv, mappings8, closedArguments);
 
             var mappings32 = PartialApplicationCommandBase.PackMappings32(mappings8);
 
             //Emit arguments and mapping
             foreach (var arg in closedArguments)
-                arg.EmitCode(target);
+                arg.EmitValueCode(target);
 
             foreach (var mapping in mappings32)
                 target.EmitConstant(node, mapping);
@@ -103,8 +103,8 @@ namespace Prexonite.Compiler.Ast
         ///         Use <see cref = "PartialApplicationCommandBase.PackMappings32" /> to pack the 
         ///         mappings into a more compact format.</para>
         /// </remarks>
-        public static void GetMapping(IList<IAstExpression> arguments, IList<int> mappings8,
-            List<IAstExpression> closedArguments)
+        public static void GetMapping(IList<AstExpr> arguments, IList<int> mappings8,
+            List<AstExpr> closedArguments)
         {
             for (var i = 0; i < arguments.Count; i++)
             {
@@ -131,8 +131,8 @@ namespace Prexonite.Compiler.Ast
         /// </summary>
         /// <param name = "arguments">Arguments for the partial call (including things like the call subject)</param>
         /// <returns>A preprocessed copy of the supplied arguments, ready for <see cref = "EmitConstructorArguments{T}" />.</returns>
-        public static List<IAstExpression> PreprocessPartialApplicationArguments(
-            IEnumerable<IAstExpression> arguments)
+        public static List<AstExpr> PreprocessPartialApplicationArguments(
+            IEnumerable<AstExpr> arguments)
         {
             var placeholders = arguments.MapMaybe(n => n as AstPlaceholder).ToList();
             AstPlaceholder.DeterminePlaceholderIndices(placeholders);
@@ -147,12 +147,12 @@ namespace Prexonite.Compiler.Ast
         ///      cref = "PreprocessPartialApplicationArguments" />. Use that method instead.</para>
         /// </summary>
         /// <param name = "argv"></param>
-        public static void RemoveRedundantPlaceholders(List<IAstExpression> argv)
+        public static void RemoveRedundantPlaceholders(List<AstExpr> argv)
         {
             _removeRedundantPlaceholders(argv, argv.MapMaybe(n => n as AstPlaceholder));
         }
 
-        private static void _removeRedundantPlaceholders(List<IAstExpression> argv,
+        private static void _removeRedundantPlaceholders(List<AstExpr> argv,
             IEnumerable<AstPlaceholder> placeholders)
         {
             //Placeholders are redundant iff they map an open argument that would be supplied 
@@ -213,7 +213,7 @@ namespace Prexonite.Compiler.Ast
                 if (placeholder == null)
                     continue;
 
-                Debug.Assert(placeholder.Index != null);
+                Debug.Assert(placeholder.Index.HasValue);
                 numUsages[placeholder.Index.Value]--;
             }
 
@@ -239,7 +239,7 @@ namespace Prexonite.Compiler.Ast
             argv.RemoveRange(redundantIndex, argv.Count - redundantIndex);
         }
 
-        public static IAstExpression ConstFunc<T>(this T expr) where T : AstNode, IAstExpression
+        public static AstExpr ConstFunc<T>(this T expr) where T : AstExpr
         {
             var constCmd = new AstGetSetSymbol(expr.File, expr.Line, expr.Column, PCall.Get,
                 new SymbolEntry(SymbolInterpretations.Command, Const.Alias, null));
@@ -247,7 +247,7 @@ namespace Prexonite.Compiler.Ast
             return constCmd;
         }
 
-        public static IAstExpression ConstFunc(this ISourcePosition position, object constantValue)
+        public static AstExpr ConstFunc(this ISourcePosition position, object constantValue)
         {
             if (constantValue != null)
                 return
@@ -257,12 +257,12 @@ namespace Prexonite.Compiler.Ast
                 return new AstNull(position.File, position.Line, position.Column).ConstFunc();
         }
 
-        public static IAstExpression IdFunc(this ISourcePosition node)
+        public static AstExpr IdFunc(this ISourcePosition node)
         {
             return IdFunc(new AstPlaceholder(node.File, node.Line, node.Column, 0));
         }
 
-        public static IAstExpression IdFunc(this AstPlaceholder placeholder)
+        public static AstExpr IdFunc(this AstPlaceholder placeholder)
         {
             if (!placeholder.Index.HasValue)
                 throw new ArgumentException("Placeholder must have its index assigned.",
@@ -274,7 +274,7 @@ namespace Prexonite.Compiler.Ast
             return call;
         }
 
-        public static bool IsPlaceholder(this IAstExpression expression)
+        public static bool IsPlaceholder(this AstExpr expression)
         {
             return expression is AstPlaceholder;
         }

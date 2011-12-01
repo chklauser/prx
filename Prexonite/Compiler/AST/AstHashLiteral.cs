@@ -29,11 +29,10 @@ using System.Collections.Generic;
 
 namespace Prexonite.Compiler.Ast
 {
-    public class AstHashLiteral : AstNode,
-                                  IAstExpression,
+    public class AstHashLiteral : AstExpr,
                                   IAstHasExpressions
     {
-        public List<IAstExpression> Elements = new List<IAstExpression>();
+        public List<AstExpr> Elements = new List<AstExpr>();
 
         internal AstHashLiteral(Parser p)
             : base(p)
@@ -47,18 +46,18 @@ namespace Prexonite.Compiler.Ast
 
         #region IAstHasExpressions Members
 
-        public IAstExpression[] Expressions
+        public AstExpr[] Expressions
         {
             get { return Elements.ToArray(); }
         }
 
         #endregion
 
-        #region IAstExpression Members
+        #region AstExpr Members
 
-        public bool TryOptimize(CompilerTarget target, out IAstExpression expr)
+        public override bool TryOptimize(CompilerTarget target, out AstExpr expr)
         {
-            IAstExpression oArg;
+            AstExpr oArg;
             foreach (var arg in Elements.ToArray())
             {
                 if (arg == null)
@@ -79,7 +78,7 @@ namespace Prexonite.Compiler.Ast
 
         #endregion
 
-        protected override void DoEmitCode(CompilerTarget target)
+        protected override void DoEmitCode(CompilerTarget target, StackSemantics stackSemantics)
         {
             if (Elements.Count == 0)
             {
@@ -99,8 +98,12 @@ namespace Prexonite.Compiler.Ast
                                 ", Line: ",
                                 Line,
                                 "]"));
-                    element.EmitCode(target);
+                    element.EmitCode(target,stackSemantics);
                 }
+
+                if(stackSemantics == StackSemantics.Effect)
+                    return;
+
                 target.EmitStaticGetCall(this, Elements.Count, "Hash", "Create", false);
             }
         }

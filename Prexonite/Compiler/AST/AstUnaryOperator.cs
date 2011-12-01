@@ -29,17 +29,16 @@ using Prexonite.Types;
 
 namespace Prexonite.Compiler.Ast
 {
-    public class AstUnaryOperator : AstNode,
-                                    IAstEffect,
+    public class AstUnaryOperator : AstExpr,
                                     IAstHasExpressions,
                                     IAstPartiallyApplicable
     {
-        private IAstExpression _operand;
+        private AstExpr _operand;
         private UnaryOperator _operator;
 
         public SymbolEntry Implementation { get; set; }
 
-        public AstUnaryOperator(string file, int line, int column, UnaryOperator op, IAstExpression operand, SymbolEntry implementation)
+        public AstUnaryOperator(string file, int line, int column, UnaryOperator op, AstExpr operand, SymbolEntry implementation)
             : base(file, line, column)
         {
             if (operand == null)
@@ -52,7 +51,7 @@ namespace Prexonite.Compiler.Ast
             Implementation = implementation;
         }
 
-        internal static AstUnaryOperator _Create(Parser p, UnaryOperator op, IAstExpression operand)
+        internal static AstUnaryOperator _Create(Parser p, UnaryOperator op, AstExpr operand)
         {
             SymbolEntry impl;
 
@@ -75,7 +74,7 @@ namespace Prexonite.Compiler.Ast
 
         #region IAstHasExpressions Members
 
-        public IAstExpression[] Expressions
+        public AstExpr[] Expressions
         {
             get { return new[] {_operand}; }
         }
@@ -86,7 +85,7 @@ namespace Prexonite.Compiler.Ast
             set { _operator = value; }
         }
 
-        public IAstExpression Operand
+        public AstExpr Operand
         {
             get { return _operand; }
             set { _operand = value; }
@@ -94,9 +93,9 @@ namespace Prexonite.Compiler.Ast
 
         #endregion
 
-        #region IAstExpression Members
+        #region AstExpr Members
 
-        public bool TryOptimize(CompilerTarget target, out IAstExpression expr)
+        public override bool TryOptimize(CompilerTarget target, out AstExpr expr)
         {
             expr = null;
             _OptimizeNode(target, ref _operand);
@@ -166,7 +165,7 @@ namespace Prexonite.Compiler.Ast
 
         #endregion
 
-        void IAstEffect.DoEmitEffectCode(CompilerTarget target)
+        private void _emitEffectCode(CompilerTarget target)
         {
             var symbol = _operand as AstGetSetSymbol;
             var isVariable = symbol != null && symbol.IsObjectVariable;
@@ -212,7 +211,7 @@ namespace Prexonite.Compiler.Ast
                             complex.Arguments[complex.Arguments.Count - 1] =
                                 new AstConstant(File, Line, Column, 1);
                         complex.Call = PCall.Set;
-                        assignment.EmitCode(target);
+                        assignment.EmitValueCode(target);
                     }
                     else
                         throw new PrexoniteException(
@@ -227,11 +226,26 @@ namespace Prexonite.Compiler.Ast
             }
         }
 
-        protected override void DoEmitCode(CompilerTarget target)
+        protected override void DoEmitCode(CompilerTarget target, StackSemantics stackSemantics)
         {
             if (target == null)
                 throw new ArgumentNullException("target");
-            
+
+            switch (stackSemantics)
+            {
+                case StackSemantics.Value:
+                    _emitValueCode(target);
+                    break;
+                case StackSemantics.Effect:
+                    _emitEffectCode(target);
+                    break;
+                default:
+                    throw new ArgumentOutOfRangeException("stackSemantics");
+            }
+        }
+
+        private void _emitValueCode(CompilerTarget target)
+        {
             switch (_operator)
             {
                 case UnaryOperator.LogicalNot:
@@ -239,17 +253,17 @@ namespace Prexonite.Compiler.Ast
                 case UnaryOperator.OnesComplement:
                     var call = new AstGetSetSymbol(File, Line, Column, PCall.Get, Implementation);
                     call.Arguments.Add(_operand);
-                    call.EmitCode(target);
+                    call.EmitValueCode(target);
                     break;
                 case UnaryOperator.PreDecrement:
                 case UnaryOperator.PreIncrement:
-                    ((IAstEffect) this).DoEmitEffectCode(target);
-                    _operand.EmitCode(target);
+                    EmitEffectCode(target);
+                    _operand.EmitValueCode(target);
                     break;
                 case UnaryOperator.PostDecrement:
                 case UnaryOperator.PostIncrement:
-                    _operand.EmitCode(target);
-                    ((IAstEffect) this).DoEmitEffectCode(target);
+                    _operand.EmitValueCode(target);
+                    EmitEffectCode(target);
                     break;
             }
         }
@@ -285,12 +299,13 @@ namespace Prexonite.Compiler.Ast
                 thenCmd.Arguments.Add(partialTypecheck);
                 thenCmd.Arguments.Add(notOp);
 
-                thenCmd.EmitCode(target);
+                thenCmd.EmitValueCode(target);
             }
             else
             {
                 //Just emit the operator normally, the appropriate mechanism will kick in
-                DoEmitCode(target);
+                // further down the AST
+                DoEmitCode(target,StackSemantics.Value);
             }
         }
     }

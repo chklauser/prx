@@ -128,7 +128,7 @@ namespace Prexonite.Compiler.Macro.Commands
 
                 var inv = new AstMacroInvocation(context.Invocation.File, context.Invocation.Line,
                     context.Invocation.Column, sym);
-                inv.Arguments.AddRange(argList.Select(p => (IAstExpression) p.Value));
+                inv.Arguments.AddRange(argList.Select(p => (AstExpr) p.Value));
                 inv.Call = call;
 
                 //Execute the macro
@@ -151,7 +151,7 @@ namespace Prexonite.Compiler.Macro.Commands
             {
                 var offender =
                     argList.FirstOrDefault(
-                        p => !(p.Type is ObjectPType) || !(p.Value is IAstExpression));
+                        p => !(p.Type is ObjectPType) || !(p.Value is AstExpr));
                 if (offender != null)
                     throw new PrexoniteException(
                         string.Format(
@@ -298,10 +298,10 @@ namespace Prexonite.Compiler.Macro.Commands
 
             context.EstablishMacroContext();
 
-            IAstExpression call;
-            IAstExpression justEffect;
-            IAstExpression[] args;
-            IAstExpression macroSpec;
+            AstExpr call;
+            AstExpr justEffect;
+            AstExpr[] args;
+            AstExpr macroSpec;
 
             if (!_parseArguments(context, out call, out justEffect, out args, false, out macroSpec))
                 return null;
@@ -311,8 +311,8 @@ namespace Prexonite.Compiler.Macro.Commands
         }
 
         private static AstMacroInvocation _prepareMacro(MacroContext context,
-            IAstExpression macroSpec, IAstExpression call, IAstExpression justEffect,
-            IEnumerable<IAstExpression> args)
+            AstExpr macroSpec, AstExpr call, AstExpr justEffect,
+            IEnumerable<AstExpr> args)
         {
             var getContext = context.CreateGetSetSymbol(
                 SymbolEntry.LocalReferenceVariable(MacroAliases.ContextAlias), PCall.Get);
@@ -325,9 +325,9 @@ namespace Prexonite.Compiler.Macro.Commands
             return prepareCall;
         }
 
-        private static bool _parseArguments(MacroContext context, out IAstExpression call,
-            out IAstExpression justEffect, out IAstExpression[] args, bool isPartialApplication,
-            out IAstExpression macroSpec)
+        private static bool _parseArguments(MacroContext context, out AstExpr call,
+            out AstExpr justEffect, out AstExpr[] args, bool isPartialApplication,
+            out AstExpr macroSpec)
         {
             /* call(macroRef,...) = call([],macroRef,[false],...);
              * call([],macroRef,[je],...) = call([],macroRef,[je,context.Call],...);
@@ -396,7 +396,7 @@ namespace Prexonite.Compiler.Macro.Commands
 
                 var specProto = listSpec.Elements[0];
                 PCall protoCall;
-                IList<IAstExpression> protoArguments;
+                IList<AstExpr> protoArguments;
                 if (
                     !_parsePrototype(context, isPartialApplication, specProto, out protoCall,
                         out protoArguments, out macroSpec))
@@ -428,11 +428,11 @@ namespace Prexonite.Compiler.Macro.Commands
 
                 if (getArgs.Any(a => !_ensureExplicitPlaceholder(context, a)))
                 {
-                    args = new IAstExpression[] {};
+                    args = new AstExpr[] {};
                     return false;
                 }
 
-                IEnumerable<IAstExpression> getArgsLit;
+                IEnumerable<AstExpr> getArgsLit;
                 if (getArgs.Any())
                 {
                     var getArgsLitNode = new AstListLiteral(specProto.File, specProto.Line,
@@ -442,15 +442,15 @@ namespace Prexonite.Compiler.Macro.Commands
                 }
                 else
                 {
-                    getArgsLit = Enumerable.Empty<IAstExpression>();
+                    getArgsLit = Enumerable.Empty<AstExpr>();
                 }
 
-                IEnumerable<IAstExpression> setArgsLit;
+                IEnumerable<AstExpr> setArgsLit;
                 if (setArgs != null)
                 {
                     if (!_ensureExplicitPlaceholder(context, setArgs))
                     {
-                        args = new IAstExpression[] {};
+                        args = new AstExpr[] {};
                         return false;
                     }
                     var lit = new AstListLiteral(setArgs.File, setArgs.Line, setArgs.Column);
@@ -459,7 +459,7 @@ namespace Prexonite.Compiler.Macro.Commands
                 }
                 else
                 {
-                    setArgsLit = Enumerable.Empty<IAstExpression>();
+                    setArgsLit = Enumerable.Empty<AstExpr>();
                 }
 
                 args = getArgsLit
@@ -470,7 +470,7 @@ namespace Prexonite.Compiler.Macro.Commands
             }
         }
 
-        private static bool _ensureExplicitPlaceholder(MacroContext context, IAstExpression arg)
+        private static bool _ensureExplicitPlaceholder(MacroContext context, AstExpr arg)
         {
             var setPlaceholder = arg as AstPlaceholder;
             if (setPlaceholder != null && !setPlaceholder.Index.HasValue)
@@ -487,8 +487,8 @@ namespace Prexonite.Compiler.Macro.Commands
         }
 
         private static bool _parsePrototype(MacroContext context, bool isPartialApplication,
-            IAstExpression specProto, out PCall protoCall, out IList<IAstExpression> protoArguments,
-            out IAstExpression macroSpec)
+            AstExpr specProto, out PCall protoCall, out IList<AstExpr> protoArguments,
+            out AstExpr macroSpec)
         {
             var proto = specProto as AstMacroInvocation;
             if (proto != null)
@@ -502,7 +502,7 @@ namespace Prexonite.Compiler.Macro.Commands
                 //As an exception, allow a placeholder here
                 macroSpec = specProto;
                 protoCall = PCall.Get;
-                protoArguments = new List<IAstExpression>();
+                protoArguments = new List<AstExpr>();
             }
             else
             {
@@ -515,7 +515,7 @@ namespace Prexonite.Compiler.Macro.Commands
             return true;
         }
 
-        private static IAstExpression _getMacroSpecExpr(MacroContext context,
+        private static AstExpr _getMacroSpecExpr(MacroContext context,
             AstMacroInvocation proto)
         {
             //macroId: as a constant
@@ -544,7 +544,7 @@ namespace Prexonite.Compiler.Macro.Commands
                     Alias));
         }
 
-        private static bool _parseReference(MacroContext context, IAstExpression macroRef,
+        private static bool _parseReference(MacroContext context, AstExpr macroRef,
             bool isPartialApplication)
         {
             if (macroRef.IsPlaceholder())

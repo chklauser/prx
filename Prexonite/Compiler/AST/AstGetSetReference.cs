@@ -53,12 +53,12 @@ namespace Prexonite.Compiler.Ast
         {
         }
 
-        protected override void EmitGetCode(CompilerTarget target, bool justEffect)
+        protected override void EmitGetCode(CompilerTarget target, StackSemantics stackSemantics)
         {
             if (Implementation.Module != null)
                 throw new NotImplementedException(
                     "Emit code for cross module references not implemented");
-
+            var justEffect = stackSemantics == StackSemantics.Effect;
             if (justEffect)
                 return;
             switch (Implementation.Interpretation)
@@ -125,9 +125,9 @@ namespace Prexonite.Compiler.Ast
             var pa = new AstMacroInvocation(File, Line, Column, Implementation);
             pa.Call = Call;
             pa.Arguments.Add(new AstPlaceholder(File, Line, Column, 0));
-            var ipa = (IAstExpression) pa;
+            var ipa = (AstExpr) pa;
             _OptimizeNode(target, ref ipa);
-            ipa.EmitCode(target);
+            ipa.EmitValueCode(target);
         }
 
         //"Assigning to a reference"
@@ -161,12 +161,12 @@ namespace Prexonite.Compiler.Ast
 
         #region ICanBeReferenced Members
 
-        ICollection<IAstExpression> ICanBeReferenced.Arguments
+        ICollection<AstExpr> ICanBeReferenced.Arguments
         {
             get { return Arguments; }
         }
 
-        public override bool TryToReference(out AstGetSet reference)
+        public override bool TryToReference(out AstExpr reference)
         {
             if (Implementation.Module != null)
                 throw new NotImplementedException(

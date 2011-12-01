@@ -77,7 +77,7 @@ namespace Prexonite.Compiler.Ast
 
         #region Overrides of AstGetSet
 
-        public override IAstExpression[] Expressions
+        public override AstExpr[] Expressions
         {
             get
             {
@@ -105,38 +105,31 @@ namespace Prexonite.Compiler.Ast
             unlinkCall.Arguments.Add(targetRef);
 
             //Optimize call and emit code
-            var call = (IAstExpression) unlinkCall;
+            var call = (AstExpr) unlinkCall;
             _OptimizeNode(target, ref call);
-            var optCall = call as IAstEffect;
-            if (optCall != null)
-                optCall.EmitEffectCode(target);
-            else
-                call.EmitCode(target);
+            call.EmitEffectCode(target);
         }
 
-        protected override void EmitGetCode(CompilerTarget target, bool justEffect)
+        protected override void EmitGetCode(CompilerTarget target, StackSemantics stackSemantics)
         {
-            _emitCode(target, justEffect);
+            _emitCode(target, stackSemantics);
         }
 
         protected override void EmitSetCode(CompilerTarget target)
         {
-            _emitCode(target, false);
+            _emitCode(target, StackSemantics.Effect);
         }
 
-        private void _emitCode(CompilerTarget target, bool justEffect)
+        private void _emitCode(CompilerTarget target, StackSemantics stackSemantics)
         {
             EmitNewDeclareCode(target);
             if (Expression != null)
-                if (justEffect)
-                    Expression.EmitEffectCode(target);
-                else
-                    Expression.EmitCode(target);
+                Expression.EmitCode(target, stackSemantics);
         }
 
-        public override bool TryOptimize(CompilerTarget target, out IAstExpression expr)
+        public override bool TryOptimize(CompilerTarget target, out AstExpr expr)
         {
-            var wrappedExpr = (IAstExpression) Expression;
+            var wrappedExpr = (AstExpr) Expression;
             if (wrappedExpr != null)
             {
                 _OptimizeNode(target, ref wrappedExpr);

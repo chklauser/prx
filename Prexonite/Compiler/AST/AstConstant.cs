@@ -29,8 +29,7 @@ using Prexonite.Types;
 
 namespace Prexonite.Compiler.Ast
 {
-    public class AstConstant : AstNode,
-                               IAstExpression
+    public class AstConstant : AstExpr
     {
         public object Constant;
 
@@ -49,7 +48,7 @@ namespace Prexonite.Compiler.Ast
             CompilerTarget target,
             ISourcePosition position,
             PValue value,
-            out IAstExpression expr)
+            out AstExpr expr)
         {
             expr = null;
             if (value.Type is ObjectPType)
@@ -70,8 +69,11 @@ namespace Prexonite.Compiler.Ast
             return target.Loader.Options.ParentEngine.CreateNativePValue(Constant);
         }
 
-        protected override void DoEmitCode(CompilerTarget target)
+        protected override void DoEmitCode(CompilerTarget target, StackSemantics stackSemantics)
         {
+            if(stackSemantics == StackSemantics.Effect)
+                return;
+
             if (Constant == null)
                 target.EmitNull(this);
             else
@@ -101,9 +103,9 @@ namespace Prexonite.Compiler.Ast
                 }
         }
 
-        #region IAstExpression Members
+        #region AstExpr Members
 
-        public bool TryOptimize(CompilerTarget target, out IAstExpression expr)
+        public override bool TryOptimize(CompilerTarget target, out AstExpr expr)
         {
             expr = null;
             return false;

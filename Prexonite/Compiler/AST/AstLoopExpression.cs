@@ -24,12 +24,12 @@
 //  WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING 
 //  IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
+using System.Linq;
 using Prexonite.Types;
 
 namespace Prexonite.Compiler.Ast
 {
-    public class AstLoopExpression : AstNode,
-                                     IAstExpression,
+    public class AstLoopExpression : AstExpr,
                                      IAstHasBlocks,
                                      IAstHasExpressions
     {
@@ -46,9 +46,9 @@ namespace Prexonite.Compiler.Ast
         }
 
         public AstLoop Loop;
-        private string lstVar;
-        private string tmpVar;
-        private bool useTmpVar;
+        private string _lstVar;
+        private string _tmpVar;
+        private bool _useTmpVar;
 
         #region IAstHasBlocks Members
 
@@ -59,7 +59,7 @@ namespace Prexonite.Compiler.Ast
 
         #region IAstHasExpressions Members
 
-        public IAstExpression[] Expressions
+        public AstExpr[] Expressions
         {
             get { return Loop.Expressions; }
         }
@@ -82,14 +82,8 @@ namespace Prexonite.Compiler.Ast
                 }
 
                 var hasBlocks = block[i] as IAstHasBlocks;
-                if (hasBlocks != null)
-                {
-                    foreach (var subBlock in hasBlocks.Blocks)
-                    {
-                        if (_tmpIsUsed(subBlock))
-                            return true;
-                    }
-                }
+                if (hasBlocks != null && hasBlocks.Blocks.Any(_tmpIsUsed)) 
+                    return true;
             }
 
             return false;
@@ -121,7 +115,7 @@ namespace Prexonite.Compiler.Ast
                                         ret.Column,
                                         PCall.Get,
                                         new SymbolEntry(SymbolInterpretations.LocalObjectVariable,
-                                            lstVar, null)),
+                                            _lstVar, null)),
                                     "");
                             addTmpToList.Arguments.Add(
                                 new AstGetSetSymbol(
@@ -130,14 +124,14 @@ namespace Prexonite.Compiler.Ast
                                     ret.Column,
                                     PCall.Get,
                                     new SymbolEntry(SymbolInterpretations.LocalObjectVariable,
-                                        tmpVar, null)));
+                                        _tmpVar, null)));
                             block[i] = addTmpToList;
                         }
                         else
                         {
                             //Replace {yield expr;} by {if($useTmpVar) tmp = expr; lst[] = if($useTmpVar) tmp else expr;}
 
-                            if (useTmpVar)
+                            if (_useTmpVar)
                             {
                                 var replacement = new AstBlock(ret.File, ret.Line, ret.Column);
                                 var setTmp =
@@ -147,7 +141,7 @@ namespace Prexonite.Compiler.Ast
                                         ret.Column,
                                         PCall.Set,
                                         new SymbolEntry(SymbolInterpretations.LocalObjectVariable,
-                                        tmpVar, null));
+                                        _tmpVar, null));
                                 setTmp.Arguments.Add(ret.Expression);
                                 AstGetSet addExprToList =
                                     new AstGetSetMemberAccess(
@@ -161,7 +155,7 @@ namespace Prexonite.Compiler.Ast
                                             ret.Column,
                                             PCall.Get,
                                             new SymbolEntry(SymbolInterpretations.LocalObjectVariable,
-                                            lstVar, null)),
+                                            _lstVar, null)),
                                         "");
                                 addExprToList.Arguments.Add(
                                     new AstGetSetSymbol(
@@ -170,7 +164,7 @@ namespace Prexonite.Compiler.Ast
                                         ret.Column,
                                         PCall.Get,
                                         new SymbolEntry(SymbolInterpretations.LocalObjectVariable,
-                                        tmpVar, null)));
+                                        _tmpVar, null)));
 
                                 replacement.Add(setTmp);
                                 replacement.Add(addExprToList);
@@ -191,7 +185,7 @@ namespace Prexonite.Compiler.Ast
                                             ret.Column,
                                             PCall.Get,
                                             new SymbolEntry(SymbolInterpretations.LocalObjectVariable,
-                                            lstVar, null)),
+                                            _lstVar, null)),
                                         "");
                                 addExprToList.Arguments.Add(ret.Expression);
                                 block[i] = addExprToList;
@@ -208,7 +202,7 @@ namespace Prexonite.Compiler.Ast
                                 ret.Column,
                                 PCall.Set,
                                 new SymbolEntry(SymbolInterpretations.LocalObjectVariable,
-                                        tmpVar, null));
+                                        _tmpVar, null));
                         setTmp.Arguments.Add(ret.Expression);
                         block[i] = setTmp;
                     }
@@ -232,19 +226,19 @@ namespace Prexonite.Compiler.Ast
             }
         }
 
-        public bool TryOptimize(CompilerTarget target, out IAstExpression expr)
+        public override bool TryOptimize(CompilerTarget target, out AstExpr expr)
         {
-            if (lstVar != null)
+            if (_lstVar != null)
                 goto leave;
 
             //Perform statement to expression transformation
-            lstVar = Loop.Block.CreateLabel("lst");
-            tmpVar = Loop.Block.CreateLabel("tmp");
+            _lstVar = Loop.Block.CreateLabel("lst");
+            _tmpVar = Loop.Block.CreateLabel("tmp");
 
             foreach (var block in Loop.Blocks)
             {
                 if (_tmpIsUsed(block))
-                    useTmpVar = true;
+                    _useTmpVar = true;
             }
 
             foreach (var block in Loop.Blocks)
@@ -257,28 +251,29 @@ namespace Prexonite.Compiler.Ast
             return false;
         }
 
-        protected override void DoEmitCode(CompilerTarget target)
+        protected override void DoEmitCode(CompilerTarget target, StackSemantics stackSemantics)
         {
-            if (lstVar == null)
+            if (_lstVar == null)
             {
-                IAstExpression dummy; //Won't return anything anyway...
+                AstExpr dummy; //Won't return anything anyway...
                 TryOptimize(target, out dummy);
             }
 
             //Register variables
-            target.Function.Variables.Add(lstVar);
-            if (useTmpVar)
-                target.Function.Variables.Add(tmpVar);
+            target.Function.Variables.Add(_lstVar);
+            if (_useTmpVar)
+                target.Function.Variables.Add(_tmpVar);
 
             //Initialize the list
             target.EmitStaticGetCall(this, 0, "List", "Create");
-            target.EmitStoreLocal(this, lstVar);
+            target.EmitStoreLocal(this, _lstVar);
 
             //Emit the modified loop
-            Loop.EmitCode(target);
+            Loop.EmitEffectCode(target);
 
             //Return the list
-            target.EmitLoadLocal(this, lstVar);
+            if(stackSemantics == StackSemantics.Value)
+                target.EmitLoadLocal(this, _lstVar);
 
             //Mark the function as volatile
             //  Using loop expressions with a non-empty stack causes verification errors in CIL implementations because of

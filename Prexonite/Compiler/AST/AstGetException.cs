@@ -26,8 +26,7 @@
 
 namespace Prexonite.Compiler.Ast
 {
-    public class AstGetException : AstNode,
-                                   IAstExpression
+    public class AstGetException : AstExpr
     {
         internal AstGetException(Parser p)
             : base(p)
@@ -39,14 +38,17 @@ namespace Prexonite.Compiler.Ast
         {
         }
 
-        protected override void DoEmitCode(CompilerTarget target)
+        protected override void DoEmitCode(CompilerTarget target, StackSemantics stackSemantics)
         {
+            if(stackSemantics == StackSemantics.Effect)
+                return;
+
             target.Emit(this, OpCode.exc);
         }
 
-        #region IAstExpression Members
+        #region AstExpr Members
 
-        public bool TryOptimize(CompilerTarget target, out IAstExpression expr)
+        public override bool TryOptimize(CompilerTarget target, out AstExpr expr)
         {
             expr = null;
             return false;

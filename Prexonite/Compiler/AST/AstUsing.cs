@@ -24,6 +24,7 @@
 //  WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING 
 //  IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
+using System;
 using Prexonite.Types;
 
 namespace Prexonite.Compiler.Ast
@@ -46,7 +47,7 @@ namespace Prexonite.Compiler.Ast
             _block = new AstSubBlock(File, Line, Column, this);
         }
 
-        public IAstExpression Expression;
+        public AstExpr Expression;
         private readonly AstSubBlock _block;
 
         #region IAstHasBlocks Members
@@ -58,7 +59,7 @@ namespace Prexonite.Compiler.Ast
 
         #region IAstHasExpressions Members
 
-        public IAstExpression[] Expressions
+        public AstExpr[] Expressions
         {
             get { return new[] {Expression}; }
         }
@@ -72,8 +73,11 @@ namespace Prexonite.Compiler.Ast
 
         #endregion
 
-        protected override void DoEmitCode(CompilerTarget target)
+        protected override void DoEmitCode(CompilerTarget target, StackSemantics stackSemantics)
         {
+            if(stackSemantics == StackSemantics.Value)
+                throw new NotSupportedException("Using blocks do not produce values and can thus not be used as expressions.");
+
             if (Expression == null)
                 throw new PrexoniteException("AstUsing requires Expression to be initialized.");
 
@@ -116,7 +120,7 @@ namespace Prexonite.Compiler.Ast
             tryNode.FinallyBlock.Add(dispose);
 
             //Emit code!
-            tryNode.EmitCode(target);
+            tryNode.EmitEffectCode(target);
         }
     }
 }

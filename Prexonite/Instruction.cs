@@ -39,12 +39,12 @@ namespace Prexonite
     ///     Represents a single Prexonite VM instruction
     /// </summary>
     //[DebuggerStepThrough]
-    public sealed class Instruction : ICloneable
+    public sealed class Instruction : ICloneable, IEquatable<Instruction>
     {
         /// <summary>
         ///     The instructions opcode. Determines the VMs behaviour at runtime.
         /// </summary>
-        public OpCode OpCode;
+        public readonly OpCode OpCode;
 
         //Common arguments
         /// <summary>
@@ -52,19 +52,19 @@ namespace Prexonite
         ///     the stack. The field is also used to store other integer 
         ///     operands like the target of a jump or the number of values to rotate, pop or duplicate from the stack.
         /// </summary>
-        public int Arguments;
+        public readonly int Arguments;
 
         /// <summary>
         ///     One of the instructions operands. Id is commonly used to store identifiers but also more 
         ///     general call targets or type expressions.
         /// </summary>
-        public string Id;
+        public readonly string Id;
 
         /// <summary>
         /// One of the instruction operands. The ModuleName is used for cross-module references 
         /// to functions and variables.
         /// </summary>
-        public ModuleName ModuleName;
+        public readonly ModuleName ModuleName;
 
         /// <summary>
         ///     One of the instructions operands. Statically, GenericArgument is only used by ldc.real 
@@ -80,7 +80,7 @@ namespace Prexonite
         /// </summary>
         // ReSharper disable FieldCanBeMadeReadOnly.Global
         // For consistency with the rest of instruction data type
-        public bool JustEffect;
+        public readonly bool JustEffect;
 
         // ReSharper restore FieldCanBeMadeReadOnly.Global
 
@@ -155,9 +155,41 @@ namespace Prexonite
         ///     See the actual <see cref = "OpCode" />s for details on how to construct valid instruction.
         /// </remarks>
         public Instruction(OpCode opCode, int arguments, string id, bool justEffect)
+            : this(opCode, arguments, id, justEffect, null)
+        {
+        }
+
+        /// <summary>
+        ///     Creates a new Instruction with a given OpCode and an identifier as its operand.
+        /// </summary>
+        /// <param name = "opCode">The opcode of the instruction.</param>
+        /// <param name = "arguments">The arguments operand.</param>
+        /// <param name = "id">The id operand.</param>
+        /// <param name="moduleName"></param>
+        /// <remarks>
+        ///     See the actual <see cref = "OpCode" />s for details on how to construct valid instruction.
+        /// </remarks>
+        public Instruction(OpCode opCode, int arguments, string id, ModuleName moduleName)
+            : this(opCode, arguments, id, false, moduleName)
+        {
+        }
+
+        /// <summary>
+        ///     Creates a new Instruction with a given OpCode and an identifier as its operand.
+        /// </summary>
+        /// <param name = "opCode">The opcode of the instruction.</param>
+        /// <param name = "arguments">The arguments operand.</param>
+        /// <param name = "id">The id operand.</param>
+        /// <param name = "justEffect">Indicates whether or not the return value is thrown away.</param>
+        /// <param name="moduleName"></param>
+        /// <remarks>
+        ///     See the actual <see cref = "OpCode" />s for details on how to construct valid instruction.
+        /// </remarks>
+        public Instruction(OpCode opCode, int arguments, string id, bool justEffect, ModuleName moduleName)
             : this(opCode, arguments, id)
         {
             JustEffect = justEffect;
+            ModuleName = moduleName;
         }
 
         /// <summary>
@@ -727,26 +759,23 @@ namespace Prexonite
         #region Equality
 
         /// <summary>
-        ///     Determines whether the instruction is equal to an object (possibly another instruction).
+        /// Indicates whether the current object is equal to another object of the same type.
         /// </summary>
-        /// <param name = "obj">Any object (possibly an instruction).</param>
-        /// <returns>True if the instruction is equal to the object (possibly another instruction).</returns>
-        [DebuggerStepThrough]
-        public override bool Equals(object obj)
+        /// <returns>
+        /// true if the current object is equal to the <paramref name="other"/> parameter; otherwise, false.
+        /// </returns>
+        /// <param name="other">An object to compare with this object.</param>
+        public bool Equals(Instruction other)
         {
-            if (obj == null)
-                return false;
-            else if (ReferenceEquals(this, obj))
-                return true;
-            var ins = obj as Instruction;
-            if (ins == null)
-                return false;
-            if (ins.OpCode != OpCode)
+            if (ReferenceEquals(null, other)) return false;
+            if (ReferenceEquals(this, other)) return true;
+
+            if (other.OpCode != OpCode)
                 return false;
 
             switch (OpCode)
             {
-                    //NULL INSTRUCTIONS
+                //NULL INSTRUCTIONS
                 case OpCode.nop:
                 case OpCode.ldc_null:
                 case OpCode.check_arg:
@@ -763,12 +792,12 @@ namespace Prexonite
                 case OpCode.exc:
                 case OpCode.@try:
                     return true;
-                    //LOAD CONSTANT . REAL
+                //LOAD CONSTANT . REAL
                 case OpCode.ldc_real:
-                    if (!(ins.GenericArgument is double))
+                    if (!(other.GenericArgument is double))
                         return false;
-                    return ((double) GenericArgument) == ((double) ins.GenericArgument);
-                    //INTEGER INSTRUCTIONS
+                    return ((double)GenericArgument) == ((double)other.GenericArgument);
+                //INTEGER INSTRUCTIONS
                 case OpCode.ldc_bool:
                 case OpCode.ldc_int:
                 case OpCode.ldr_loci:
@@ -778,19 +807,19 @@ namespace Prexonite
                 case OpCode.stloci:
                 case OpCode.incloci:
                 case OpCode.decloci:
-                    return Arguments == ins.Arguments;
+                    return Arguments == other.Arguments;
                 case OpCode.indloci: //two short int values encoded in one int.
-                    return Arguments == ins.Arguments && JustEffect == ins.JustEffect;
-                    //JUMP INSTRUCTIONS
+                    return Arguments == other.Arguments && JustEffect == other.JustEffect;
+                //JUMP INSTRUCTIONS
                 case OpCode.jump:
                 case OpCode.jump_t:
                 case OpCode.jump_f:
                 case OpCode.leave:
-                    if (Arguments > -1 && ins.Arguments > -1)
-                        return Arguments == ins.Arguments;
+                    if (Arguments > -1 && other.Arguments > -1)
+                        return Arguments == other.Arguments;
                     else
-                        return Engine.StringsAreEqual(Id, ins.Id);
-                    //ID INSTRUCTIONS
+                        return Engine.StringsAreEqual(Id, other.Id);
+                //ID INSTRUCTIONS
                 case OpCode.incloc:
                 case OpCode.decloc:
                 case OpCode.ldc_string:
@@ -802,16 +831,16 @@ namespace Prexonite
                 case OpCode.stloc:
                 case OpCode.check_const:
                 case OpCode.cast_const:
-                    return Engine.StringsAreEqual(Id, ins.Id);
-                    //ID+MODULE INSTRUCTIONS
+                    return Engine.StringsAreEqual(Id, other.Id);
+                //ID+MODULE INSTRUCTIONS
                 case OpCode.incglob:
                 case OpCode.decglob:
                 case OpCode.ldr_func:
                 case OpCode.ldglob:
                 case OpCode.stglob:
                 case OpCode.newclo:
-                    return Engine.StringsAreEqual(Id, ins.Id) && Equals(ModuleName, ins.ModuleName);
-                    //ID+ARG INSTRUCTIONS
+                    return Engine.StringsAreEqual(Id, other.Id) && Equals(ModuleName, other.ModuleName);
+                //ID+ARG INSTRUCTIONS
                 case OpCode.newtype:
                 case OpCode.newobj:
                 case OpCode.get:
@@ -821,59 +850,66 @@ namespace Prexonite
                 case OpCode.sset:
                 case OpCode.indloc:
                     return
-                        Arguments == ins.Arguments &&
-                            Engine.StringsAreEqual(Id, ins.Id) &&
-                                JustEffect == ins.JustEffect;
-                    //ID+ARG+MODULE INSTRUCTIONS
+                        Arguments == other.Arguments &&
+                            Engine.StringsAreEqual(Id, other.Id) &&
+                                JustEffect == other.JustEffect;
+                //ID+ARG+MODULE INSTRUCTIONS
                 case OpCode.func:
                 case OpCode.indglob:
                     return
-                        Arguments == ins.Arguments &&
-                            Engine.StringsAreEqual(Id, ins.Id) &&
-                                JustEffect == ins.JustEffect &&
-                                    Equals(ModuleName, ins.ModuleName);
-                    //ARG INSTRUCTIONS
+                        Arguments == other.Arguments &&
+                            Engine.StringsAreEqual(Id, other.Id) &&
+                                JustEffect == other.JustEffect &&
+                                    Equals(ModuleName, other.ModuleName);
+                //ARG INSTRUCTIONS
                 case OpCode.indarg:
                 case OpCode.newcor:
                 case OpCode.tail:
                     return
-                        Arguments == ins.Arguments &&
-                            JustEffect == ins.JustEffect;
+                        Arguments == other.Arguments &&
+                            JustEffect == other.JustEffect;
                 case OpCode.rot:
                     return
-                        Arguments == ins.Arguments &&
-                            (int) GenericArgument == (int) ins.GenericArgument;
+                        Arguments == other.Arguments &&
+                            (int)GenericArgument == (int)other.GenericArgument;
                 default:
                     throw new PrexoniteException("Invalid opcode " + OpCode);
             }
         }
 
         /// <summary>
-        ///     Determines whether two instructions are equal.
+        /// Serves as a hash function for a particular type. 
         /// </summary>
-        /// <param name = "left">One instruction</param>
-        /// <param name = "right">Another instruction</param>
-        /// <returns>True if the instructions are equal, false otherwise.</returns>
-        [DebuggerStepThrough]
-        public static bool operator ==(Instruction left, Instruction right)
+        /// <returns>
+        /// A hash code for the current <see cref="T:System.Object"/>.
+        /// </returns>
+        /// <filterpriority>2</filterpriority>
+        public override int GetHashCode()
         {
-            if ((object) left == null)
-                return (object) right == null;
-            return left.Equals(right);
+            unchecked
+            {
+                var result = OpCode.GetHashCode();
+                result = (result*397) ^ Arguments;
+                result = (result*397) ^ (Id != null ? Id.GetHashCode() : 0);
+                result = (result*397) ^ (ModuleName != null ? ModuleName.GetHashCode() : 0);
+                result = (result*397) ^ JustEffect.GetHashCode();
+                return result;
+            }
         }
 
         /// <summary>
-        ///     Determines whether two instructions are not equal.
+        ///     Determines whether the instruction is equal to an object (possibly another instruction).
         /// </summary>
-        /// <param name = "left">One instruction</param>
-        /// <param name = "right">Another instruction</param>
-        /// <returns>True if the instructions are not equal, false otherwise.</returns>
+        /// <param name = "obj">Any object (possibly an instruction).</param>
+        /// <returns>True if the instruction is equal to the object (possibly another instruction).</returns>
         [DebuggerStepThrough]
-        public static bool operator !=(Instruction left, Instruction right)
+        public override bool Equals(object obj)
         {
-            if ((object) left == null)
-                return (object) right != null;
-            return !left.Equals(right);
+            if (obj == null)
+                return false;
+            else if (ReferenceEquals(this, obj))
+                return true;
+            return Equals(obj as Instruction);
         }
 
         #endregion
@@ -1012,6 +1048,11 @@ namespace Prexonite
                         throw new ArgumentOutOfRangeException();
                 }
             }
+        }
+
+        public Instruction With(OpCode? opCode = null, int? arguments = null, string id = null, bool? justEffect = null, ModuleName moduleName = null)
+        {
+            return new Instruction(opCode ?? OpCode, arguments ?? Arguments, id ?? Id, justEffect ?? JustEffect, moduleName ?? ModuleName);
         }
     }
 

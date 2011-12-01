@@ -37,7 +37,7 @@ namespace Prexonite.Compiler
 
         public SourcePosition(string file, int line, int column)
         {
-            _file = file;
+            _file = file ?? "unknown~";
             _line = line;
             _column = column;
         }

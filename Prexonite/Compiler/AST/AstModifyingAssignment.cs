@@ -29,7 +29,7 @@ using Prexonite.Types;
 
 namespace Prexonite.Compiler.Ast
 {
-    public class AstModifyingAssignment : AstNode, IAstHasExpressions, IAstEffect
+    public class AstModifyingAssignment : AstExpr, IAstHasExpressions
     {
         private BinaryOperator _setModifier;
         private AstGetSet _modifyingAssignment;
@@ -82,9 +82,9 @@ namespace Prexonite.Compiler.Ast
 
         #region IAstHasExpressions Members
 
-        public IAstExpression[] Expressions
+        public AstExpr[] Expressions
         {
-            get { return new IAstExpression[] {_modifyingAssignment}; }
+            get { return new AstExpr[] {_modifyingAssignment}; }
         }
 
         public AstGetSet ModifyingAssignment
@@ -101,11 +101,11 @@ namespace Prexonite.Compiler.Ast
 
         #endregion
 
-        #region IAstExpression Members
+        #region AstExpr Members
 
-        public bool TryOptimize(CompilerTarget target, out IAstExpression expr)
+        public override bool TryOptimize(CompilerTarget target, out AstExpr expr)
         {
-            IAstExpression newAssignment;
+            AstExpr newAssignment;
             if (_modifyingAssignment.TryOptimize(target, out newAssignment) &&
                 newAssignment is AstGetSet)
                 _modifyingAssignment = (AstGetSet) newAssignment;
@@ -115,13 +115,9 @@ namespace Prexonite.Compiler.Ast
 
         #endregion
 
-        protected override void DoEmitCode(CompilerTarget target)
+        protected override void DoEmitCode(CompilerTarget target, StackSemantics stackSemantics)
         {
-            EmitCode(target, false);
-        }
-
-        public void EmitCode(CompilerTarget target, bool justEffect)
-        {
+            var justEffect = stackSemantics == StackSemantics.Effect;
             switch (_setModifier)
             {
                 case BinaryOperator.Coalescence:
@@ -146,18 +142,18 @@ namespace Prexonite.Compiler.Ast
                             //Create a traditional condition
                             var cond = new AstCondition(File, Line, Column, check);
                             cond.IfBlock.Add(assignment);
-                            cond.EmitCode(target);
+                            cond.EmitEffectCode(target);
                         }
                         else
                         {
                             //Create a conditional expression
                             var cond =
                                 new AstConditionalExpression(File, Line, Column, check)
-                                    {
-                                        IfExpression = assignment,
-                                        ElseExpression = getVariation
-                                    };
-                            cond.EmitCode(target);
+                                {
+                                    IfExpression = assignment,
+                                    ElseExpression = getVariation
+                                };
+                            cond.EmitValueCode(target);
                         }
                     }
                     break;
@@ -174,7 +170,7 @@ namespace Prexonite.Compiler.Ast
                         //a''(x,y)
 
                         var T =
-                            assignment.Arguments[assignment.Arguments.Count - 1] as IAstType; //~T
+                            assignment.Arguments[assignment.Arguments.Count - 1] as AstTypeExpr; //~T
                         if (T == null)
                             throw new PrexoniteException(
                                 String.Format(
@@ -183,17 +179,11 @@ namespace Prexonite.Compiler.Ast
                                     Line));
                         assignment.Arguments[assignment.Arguments.Count - 1] =
                             new AstTypecast(File, Line, Column, getVariation, T); //a(x,y,a(x,y)~T)=
-                        if (justEffect)
-                            assignment.EmitEffectCode(target);
-                        else
-                            assignment.EmitCode(target);
+                        assignment.EmitCode(target, stackSemantics);
                     }
                     break;
                 case BinaryOperator.None:
-                    if (justEffect)
-                        _modifyingAssignment.EmitEffectCode(target);
-                    else
-                        _modifyingAssignment.EmitCode(target);
+                    _modifyingAssignment.EmitCode(target, stackSemantics);
                     break;
                 default: // +=, *= etc.
                     {
@@ -202,7 +192,7 @@ namespace Prexonite.Compiler.Ast
                             target.Loader.Errors.Add(new ParseMessage(ParseMessageSeverity.Error,
                                 string.Format(
                                     "The assignment modifier {0} is not supported.",
-                                    Enum.GetName(typeof (BinaryOperator),
+                                    Enum.GetName(typeof(BinaryOperator),
                                         SetModifier)),
                                 _modifyingAssignment));
                             target.Emit(_modifyingAssignment, OpCode.nop);
@@ -234,22 +224,12 @@ namespace Prexonite.Compiler.Ast
                                 _modifyingAssignment.Arguments[
                                     _modifyingAssignment.Arguments.Count - 1],
                                 Implementation);
-                        if (justEffect)
-                            assignment.EmitEffectCode(target);
-                        else
-                            assignment.EmitCode(target);
+                        
+                        assignment.EmitCode(target, stackSemantics);
                     }
                     break;
             }
+
         }
-
-        #region IAstEffect Members
-
-        void IAstEffect.DoEmitEffectCode(CompilerTarget target)
-        {
-            EmitCode(target, true);
-        }
-
-        #endregion
     }
 }

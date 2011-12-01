@@ -29,12 +29,11 @@ using Prexonite.Types;
 
 namespace Prexonite.Compiler.Ast
 {
-    public class AstConditionalExpression : AstNode,
-                                            IAstExpression,
+    public class AstConditionalExpression : AstExpr,
                                             IAstHasExpressions
     {
         public AstConditionalExpression(
-            string file, int line, int column, IAstExpression condition, bool isNegative)
+            string file, int line, int column, AstExpr condition, bool isNegative)
             : base(file, line, column)
         {
             if (condition == null)
@@ -43,39 +42,39 @@ namespace Prexonite.Compiler.Ast
             IsNegative = isNegative;
         }
 
-        public AstConditionalExpression(string file, int line, int column, IAstExpression condition)
+        public AstConditionalExpression(string file, int line, int column, AstExpr condition)
             : this(file, line, column, condition, false)
         {
         }
 
-        internal AstConditionalExpression(Parser p, IAstExpression condition, bool isNegative)
+        internal AstConditionalExpression(Parser p, AstExpr condition, bool isNegative)
             : this(p.scanner.File, p.t.line, p.t.col, condition, isNegative)
         {
         }
 
-        internal AstConditionalExpression(Parser p, IAstExpression condition)
+        internal AstConditionalExpression(Parser p, AstExpr condition)
             : this(p, condition, false)
         {
         }
 
-        public IAstExpression IfExpression;
-        public IAstExpression ElseExpression;
-        public IAstExpression Condition;
+        public AstExpr IfExpression;
+        public AstExpr ElseExpression;
+        public AstExpr Condition;
         public bool IsNegative;
         private static int depth;
 
         #region IAstHasExpressions Members
 
-        public IAstExpression[] Expressions
+        public AstExpr[] Expressions
         {
             get { return new[] {Condition, IfExpression, ElseExpression}; }
         }
 
         #endregion
 
-        #region IAstExpression Members
+        #region AstExpr Members
 
-        public bool TryOptimize(CompilerTarget target, out IAstExpression expr)
+        public override bool TryOptimize(CompilerTarget target, out AstExpr expr)
         {
             //Optimize condition
             _OptimizeNode(target, ref Condition);
@@ -109,7 +108,7 @@ namespace Prexonite.Compiler.Ast
 
         #endregion
 
-        protected override void DoEmitCode(CompilerTarget target)
+        protected override void DoEmitCode(CompilerTarget target, StackSemantics stackSemantics)
         {
             //Optimize condition
             _OptimizeNode(target, ref Condition);
@@ -123,10 +122,10 @@ namespace Prexonite.Compiler.Ast
             //Emit
             //if => block / else => block
             AstLazyLogical.EmitJumpCondition(target, Condition, elseLabel, IsNegative);
-            IfExpression.EmitCode(target);
+            IfExpression.EmitCode(target, stackSemantics);
             target.EmitJump(this, endLabel);
             target.EmitLabel(this, elseLabel);
-            ElseExpression.EmitCode(target);
+            ElseExpression.EmitCode(target, stackSemantics);
             target.EmitLabel(this, endLabel);
 
             target.FreeLabel(elseLabel);

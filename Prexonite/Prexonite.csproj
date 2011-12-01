@@ -106,7 +106,6 @@
     <Compile Include="Commands\Concurrency\AsyncSeq.cs" />
     <Compile Include="Commands\Concurrency\CallAsync.cs" />
     <Compile Include="Commands\Concurrency\Chan.cs" />
-    <Compile Include="Commands\Concurrency\NotSupportedException.cs" />
     <Compile Include="Commands\Concurrency\Select.cs" />
     <Compile Include="Commands\Core\Boxed.cs" />
     <Compile Include="Commands\Core\Call.cs" />
@@ -142,6 +141,8 @@
     <Compile Include="Commands\Core\PartialApplication\PartialCallStarImplCommand.cs" />
     <Compile Include="Commands\List\CreateEnumerator.cs" />
     <Compile Include="Commands\PCommandInfo.cs" />
+    <Compile Include="Compiler\Ast\AstExpr.cs" />
+    <Compile Include="Compiler\Ast\AstGetSetEntity.cs" />
     <Compile Include="Compiler\Macro\Commands\PartialCallWrapper.cs" />
     <Compile Include="Compiler\Macro\Commands\CallMacro.cs" />
     <Compile Include="Compiler\Macro\Commands\CallStar.cs" />
@@ -273,15 +274,13 @@
     <Compile Include="Compiler\Ast\AstUsing.cs" />
     <Compile Include="Compiler\Ast\AstWhileLoop.cs" />
     <Compile Include="Compiler\Ast\AstForeachLoop.cs" />
-    <Compile Include="Compiler\Ast\IAstEffect.cs" />
-    <Compile Include="Compiler\Ast\IAstExpression.cs" />
     <Compile Include="Compiler\Ast\AstBlock.cs" />
     <Compile Include="Compiler\Ast\AstGetSetSymbol.cs" />
     <Compile Include="Compiler\Ast\AstNode.cs" />
     <Compile Include="Compiler\Ast\IAstHasBlocks.cs" />
     <Compile Include="Compiler\Ast\IAstHasExpressions.cs" />
     <Compile Include="Compiler\Ast\IAstPartiallyApplicable.cs" />
-    <Compile Include="Compiler\Ast\IAstType.cs" />
+    <Compile Include="Compiler\Ast\AstTypeExpr.cs" />
     <Compile Include="Compiler\Ast\ICanBeReferenced.cs" />
     <Compile Include="Compiler\Cil\BranchHandling.cs" />
     <Compile Include="Compiler\Cil\CilExtensionHint.cs" />
@@ -329,6 +328,7 @@
     <Compile Include="Helper\INamed.cs" />
     <Compile Include="Internal\MetaTableImpl.cs" />
     <Compile Include="Internal\PFunctionTableImpl.cs" />
+    <Compile Include="Modular\EntityRef.cs" />
     <Compile Include="Modular\Module.cs" />
     <Compile Include="Modular\ModuleConflictException.cs" />
     <Compile Include="Modular\ModuleName.cs" />

@@ -28,10 +28,9 @@ using System;
 
 namespace Prexonite.Compiler.Ast
 {
-    public class AstConstantTypeExpression : AstNode,
-                                             IAstType
+    public class AstConstantTypeExpression : AstTypeExpr
     {
-        #region IAstExpression Members
+        #region AstExpr Members
 
         public string TypeExpression;
 
@@ -48,14 +47,17 @@ namespace Prexonite.Compiler.Ast
         {
         }
 
-        public bool TryOptimize(CompilerTarget target, out IAstExpression expr)
+        public override bool TryOptimize(CompilerTarget target, out AstExpr expr)
         {
             expr = null;
             return false;
         }
 
-        protected override void DoEmitCode(CompilerTarget target)
+        protected override void DoEmitCode(CompilerTarget target, StackSemantics stackSemantics)
         {
+            if(stackSemantics == StackSemantics.Effect)
+                return;
+
             target.Emit(this, OpCode.ldr_type, TypeExpression);
         }
 

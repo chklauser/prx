@@ -1855,7 +1855,7 @@ function main()[is volatile;]
 ");
             var ct = ldr.FunctionTargets["main"];
             ct.Function.Code.RemoveAt(ct.Function.Code.Count - 1);
-            var block = new AstBlockExpression("file", -1, -2);
+            var block = new AstBlock("file", -1, -2);
 
             var assignStmt = new AstGetSetSymbol("file", -1, -2, PCall.Set,
                 new SymbolEntry(SymbolInterpretations.GlobalObjectVariable, "s",null));
@@ -1876,9 +1876,8 @@ function main()[is volatile;]
             block.Statements.Add(incStmt);
             block.Expression = incExpr;
 
-            var effect = block as IAstEffect;
-            Assert.IsNotNull(effect);
-            effect.EmitEffectCode(ct);
+            Assert.That(block,Is.InstanceOf<AstExpr>(),string.Format("{0} is expected to handle emission of effect code.", block));
+            block.EmitEffectCode(ct);
 
             var sourcePosition = new SourcePosition("file", -1, -2);
             ct.EmitLoadGlobal(sourcePosition, "s");

@@ -33,14 +33,14 @@ namespace Prexonite.Compiler.Ast
 {
     public class AstIndirectCall : AstGetSet, IAstPartiallyApplicable
     {
-        public IAstExpression Subject;
+        public AstExpr Subject;
 
-        public override IAstExpression[] Expressions
+        public override AstExpr[] Expressions
         {
             get
             {
                 var len = Arguments.Count;
-                var ary = new IAstExpression[len + 1];
+                var ary = new AstExpr[len + 1];
                 Array.Copy(Arguments.ToArray(), 0, ary, 1, len);
                 ary[0] = Subject;
                 return ary;
@@ -48,7 +48,7 @@ namespace Prexonite.Compiler.Ast
         }
 
         public AstIndirectCall(
-            string file, int line, int column, PCall call, IAstExpression subject)
+            string file, int line, int column, PCall call, AstExpr subject)
             : base(file, line, column, call)
         {
             if (subject == null)
@@ -56,7 +56,7 @@ namespace Prexonite.Compiler.Ast
             Subject = subject;
         }
 
-        internal AstIndirectCall(Parser p, PCall call, IAstExpression subject)
+        internal AstIndirectCall(Parser p, PCall call, AstExpr subject)
             : this(p.scanner.File, p.t.line, p.t.col, call, subject)
         {
         }
@@ -71,12 +71,12 @@ namespace Prexonite.Compiler.Ast
         {
         }
 
-        public AstIndirectCall(string file, int line, int column, IAstExpression subject)
+        public AstIndirectCall(string file, int line, int column, AstExpr subject)
             : this(file, line, column, PCall.Get, subject)
         {
         }
 
-        internal AstIndirectCall(Parser p, IAstExpression subject)
+        internal AstIndirectCall(Parser p, AstExpr subject)
             : this(p, PCall.Get, subject)
         {
         }
@@ -87,14 +87,15 @@ namespace Prexonite.Compiler.Ast
             }
         }
 
-        protected override void EmitCode(CompilerTarget target, bool justEffect)
+        protected override void DoEmitCode(CompilerTarget target, StackSemantics stackSemantics)
         {
-            Subject.EmitCode(target);
-            base.EmitCode(target, justEffect);
+            Subject.EmitValueCode(target);
+            base.DoEmitCode(target, stackSemantics);
         }
 
-        protected override void EmitGetCode(CompilerTarget target, bool justEffect)
+        protected override void EmitGetCode(CompilerTarget target, StackSemantics stackSemantics)
         {
+            var justEffect = stackSemantics == StackSemantics.Effect;
             target.EmitIndirectCall(this, Arguments.Count, justEffect);
         }
 
@@ -104,7 +105,7 @@ namespace Prexonite.Compiler.Ast
             target.EmitIndirectCall(this, Arguments.Count, true);
         }
 
-        public override bool TryOptimize(CompilerTarget target, out IAstExpression expr)
+        public override bool TryOptimize(CompilerTarget target, out AstExpr expr)
         {
             base.TryOptimize(target, out expr);
             _OptimizeNode(target, ref Subject);
@@ -153,7 +154,7 @@ namespace Prexonite.Compiler.Ast
             else if (argc == 1 && !argv[0].IsPlaceholder())
             {
                 //We have just a call target, this is actually the identity function
-                Subject.EmitCode(target);
+                Subject.EmitValueCode(target);
             }
             else if (
                 argc >= 2
@@ -172,16 +173,16 @@ namespace Prexonite.Compiler.Ast
                 if (p != null)
                 {
                     //There is an open argument in front. This is handled by FlippedFunctionalPartialCall
-                    argv[0].EmitCode(target);
+                    argv[0].EmitValueCode(target);
                     foreach (var arg in argv.Skip(2))
-                        arg.EmitCode(target);
+                        arg.EmitValueCode(target);
                     target.EmitCommandCall(this, argc - 1, FlippedFunctionalPartialCallCommand.Alias);
                 }
                 else
                 {
                     //There is no open argument in front. This is implemented by FunctionalPartialCall
                     foreach (var arg in argv)
-                        arg.EmitCode(target);
+                        arg.EmitValueCode(target);
                     target.EmitCommandCall(this, argc, FunctionalPartialCallCommand.Alias);
                 }
             }

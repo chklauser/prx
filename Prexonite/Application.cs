@@ -32,7 +32,6 @@ using System.Linq;
 using Prexonite.Compiler;
 using Prexonite.Internal;
 using Prexonite.Modular;
-using NotSupportedException = Prexonite.Commands.Concurrency.NotSupportedException;
 
 namespace Prexonite
 {

@@ -29,8 +29,7 @@ using Prexonite.Types;
 
 namespace Prexonite.Compiler.Ast
 {
-    public class AstKeyValuePair : AstNode,
-                                   IAstExpression,
+    public class AstKeyValuePair : AstExpr,
                                    IAstHasExpressions, IAstPartiallyApplicable
     {
         public AstKeyValuePair(string file, int line, int column)
@@ -39,7 +38,7 @@ namespace Prexonite.Compiler.Ast
         }
 
         public AstKeyValuePair(
-            string file, int line, int column, IAstExpression key, IAstExpression value)
+            string file, int line, int column, AstExpr key, AstExpr value)
             : base(file, line, column)
         {
             Key = key;
@@ -51,26 +50,26 @@ namespace Prexonite.Compiler.Ast
         {
         }
 
-        internal AstKeyValuePair(Parser p, IAstExpression key, IAstExpression value)
+        internal AstKeyValuePair(Parser p, AstExpr key, AstExpr value)
             : base(p)
         {
             Key = key;
             Value = value;
         }
 
-        public IAstExpression Key;
-        public IAstExpression Value;
+        public AstExpr Key;
+        public AstExpr Value;
 
         #region IAstHasExpressions Members
 
-        public IAstExpression[] Expressions
+        public AstExpr[] Expressions
         {
             get { return new[] {Key, Value}; }
         }
 
         #endregion
 
-        protected override void DoEmitCode(CompilerTarget target)
+        protected override void DoEmitCode(CompilerTarget target, StackSemantics stackSemantics)
         {
             if (Key == null)
                 throw new PrexoniteException("AstKeyValuePair.Key must be initialized.");
@@ -81,12 +80,12 @@ namespace Prexonite.Compiler.Ast
                 File, Line, Column, PCall.Get, new SymbolEntry(SymbolInterpretations.Command, Engine.PairAlias,null));
             call.Arguments.Add(Key);
             call.Arguments.Add(Value);
-            call.EmitCode(target);
+            call.EmitCode(target, stackSemantics);
         }
 
-        #region IAstExpression Members
+        #region AstExpr Members
 
-        public bool TryOptimize(CompilerTarget target, out IAstExpression expr)
+        public override bool TryOptimize(CompilerTarget target, out AstExpr expr)
         {
             if (Key == null)
                 throw new PrexoniteException("AstKeyValuePair.Key must be initialized.");
@@ -107,7 +106,7 @@ namespace Prexonite.Compiler.Ast
 
         public void DoEmitPartialApplicationCode(CompilerTarget target)
         {
-            DoEmitCode(target);
+            DoEmitCode(target,StackSemantics.Value);
             //Partial application is handled by AstGetSetSymbol. Code is the same
         }
 

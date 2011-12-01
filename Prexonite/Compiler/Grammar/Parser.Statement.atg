@@ -115,7 +115,7 @@ AppendRightTermination<ref AstGetSet complex>
 										.)
 .
 
-GetSetExtension<IAstExpression subject, out AstGetSet extension>
+GetSetExtension<AstExpr subject, out AstGetSet extension>
                                         (.  extension = null; string id;
 											if(subject == null)
 											{
@@ -132,7 +132,7 @@ GetSetExtension<IAstExpression subject, out AstGetSet extension>
     Id<out id>                          (.  extension = new AstGetSetMemberAccess(this, PCall.Get, subject, id); .)
     Arguments<extension.Arguments> 
 |                                       (.  
-                                            IAstExpression expr; 
+                                            AstExpr expr; 
                                             extension = new AstGetSetMemberAccess(this, PCall.Get, subject, ""); 
                                         .)
     lbrack [
@@ -148,8 +148,8 @@ GetInitiator<out AstGetSet complex, out bool isDeclaration>
                                             AstGetSetSymbol symbol = null;
                                             AstGetSetStatic staticCall = null;
                                             AstGetSet member = null;
-                                            IAstExpression expr;
-                                            List<IAstExpression> args = new List<IAstExpression>();
+                                            AstExpr expr;
+                                            List<AstExpr> args = new List<AstExpr>();
                                             isDeclaration = false;                                            
                                             string id;
                                             int placeholderIndex = -1;
@@ -345,7 +345,7 @@ Function<out AstGetSet function>
 .
 
 StaticCall<out AstGetSetStatic staticCall>
-                                (.  IAstType typeExpr;
+                                (.  AstTypeExpr typeExpr;
                                     string memberId;
                                     staticCall = null;
                                 .)
@@ -385,9 +385,9 @@ ExplicitGoTo<AstBlock block>    (.  string id; .)
 .
 
 Assignment<AstGetSet lvalue, out AstNode node>
-                                (.  IAstExpression expr = null;
+                                (.  AstExpr expr = null;
 									BinaryOperator setModifier = BinaryOperator.None;
-									IAstType T;
+									AstTypeExpr T;
 									node = lvalue;
 								.)
 =
@@ -413,7 +413,7 @@ Assignment<AstGetSet lvalue, out AstNode node>
 .
 
 Condition<AstBlock block>
-                                (. IAstExpression expr = null; bool isNegative = false; .)
+                                (. AstExpr expr = null; bool isNegative = false; .)
 =
     (   if                      (.  isNegative = false; .)
     |   unless                  (.  isNegative = true; .)
@@ -520,7 +520,7 @@ GetCall<out AstGetSet complex>
 
 Return<AstBlock block>          (.  AstReturn ret = null; 
                                     AstExplicitGoTo jump = null; 
-                                    IAstExpression expr = null; 
+                                    AstExpr expr = null; 
                                     AstLoopBlock bl = target.CurrentLoopBlock;
                                 .)
 =
@@ -590,7 +590,7 @@ LetBindingStmt<AstBlock block>
 
 LetBinder<AstBlock block>
                                 (.  string id = null;
-                                    IAstExpression thunk;
+                                    AstExpr thunk;
                                 .)
 =
     Id<out id>                  (.  //Declare local "let" variable
@@ -684,7 +684,7 @@ Using<AstBlock block>
 
 Arguments<ArgumentsProxy args>
                                 (.  
-									IAstExpression expr;
+									AstExpr expr;
                                     bool missingArg = false;
                                 .)
 =

@@ -31,6 +31,7 @@ using System.Globalization;
 using System.Linq;
 using Prexonite.Commands.Core.Operators;
 using Prexonite.Compiler.Ast;
+using Prexonite.Modular;
 using Prexonite.Types;
 
 // ReSharper disable InconsistentNaming
@@ -53,6 +54,12 @@ namespace Prexonite.Compiler
         {
             [DebuggerStepThrough]
             get { return _loader.Options.TargetApplication; }
+        }
+
+        public Module TargetModule
+        {
+            [DebuggerStepThrough]
+            get { return TargetApplication.Module; }
         }
 
         public LoaderOptions Options
@@ -684,7 +691,7 @@ namespace Prexonite.Compiler
             //Emit code for top-level build block
             try
             {
-                buildBlockTarget.Ast.EmitCode(buildBlockTarget, true);
+                buildBlockTarget.Ast.EmitCode(buildBlockTarget, true, StackSemantics.Effect);
 
                 buildBlockTarget.Function.Meta["File"] = scanner.File;
                 buildBlockTarget.FinishTarget();
@@ -1038,7 +1045,7 @@ namespace Prexonite.Compiler
 
         #endregion
 
-        private void _fallbackObjectCreation(Parser parser, IAstType type, out IAstExpression expr,
+        private void _fallbackObjectCreation(Parser parser, AstTypeExpr type, out AstExpr expr,
             out ArgumentsProxy args)
         {
             var typeExpr = type as AstDynamicTypeExpression;
@@ -1076,11 +1083,11 @@ namespace Prexonite.Compiler
             {
                 SemErr("Failed to transform object creation expression.");
                 expr = new AstNull(this);
-                args = new ArgumentsProxy(new List<IAstExpression>());
+                args = new ArgumentsProxy(new List<AstExpr>());
             }
         }
 
-        private IAstExpression _createUnknownExpr()
+        private AstExpr _createUnknownExpr()
         {
             return new AstIndirectCall(this, new AstNull(this));
         }

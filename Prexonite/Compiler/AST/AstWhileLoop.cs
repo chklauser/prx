@@ -24,6 +24,7 @@
 //  WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING 
 //  IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
+using System;
 using System.Diagnostics;
 using Prexonite.Types;
 using NoDebug = System.Diagnostics.DebuggerNonUserCodeAttribute;
@@ -47,11 +48,11 @@ namespace Prexonite.Compiler.Ast
         {
         }
 
-        public IAstExpression Condition;
+        public AstExpr Condition;
         public bool IsPrecondition { get; set; }
         public bool IsPositive { get; set; }
 
-        public override IAstExpression[] Expressions
+        public override AstExpr[] Expressions
         {
             get { return new[] {Condition}; }
         }
@@ -62,8 +63,10 @@ namespace Prexonite.Compiler.Ast
             get { return Condition != null; }
         }
 
-        protected override void DoEmitCode(CompilerTarget target)
+        protected override void DoEmitCode(CompilerTarget target, StackSemantics stackSemantics)
         {
+            if(stackSemantics == StackSemantics.Value)
+                throw new NotSupportedException("While loops do not produce values and can thus not be used as expressions.");
             if (!IsInitialized)
                 throw new PrexoniteException("AstWhileLoop requires Condition to be set.");
 
@@ -95,7 +98,7 @@ namespace Prexonite.Compiler.Ast
                     if (!IsPrecondition) //If do-while, emit the body without loop code
                     {
                         target.BeginBlock(Block);
-                        Block.EmitCode(target);
+                        Block.EmitEffectCode(target);
                         target.EndBlock();
                     }
                     return;
@@ -110,7 +113,7 @@ namespace Prexonite.Compiler.Ast
                 {
                     target.EmitLabel(this, Block.ContinueLabel);
                     target.EmitLabel(this, Block.BeginLabel);
-                    Block.EmitCode(target);
+                    Block.EmitEffectCode(target);
                     target.EmitJump(this, Block.ContinueLabel);
                 }
                 else
@@ -119,7 +122,7 @@ namespace Prexonite.Compiler.Ast
                         target.EmitJump(this, Block.ContinueLabel);
 
                     target.EmitLabel(this, Block.BeginLabel);
-                    Block.EmitCode(target);
+                    Block.EmitEffectCode(target);
 
                     _emitCondition(target);
                 }

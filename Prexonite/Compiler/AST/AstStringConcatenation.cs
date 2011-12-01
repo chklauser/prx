@@ -42,8 +42,7 @@ namespace Prexonite.Compiler.Ast
     ///         This node get's created as a replacement for <see cref = "AstBinaryOperator" /> nodes with string operands.
     ///     </para>
     /// </remarks>
-    public class AstStringConcatenation : AstNode,
-                                          IAstExpression,
+    public class AstStringConcatenation : AstExpr,
                                           IAstHasExpressions
     {
         public SymbolEntry Implementation { get; set; }
@@ -51,7 +50,7 @@ namespace Prexonite.Compiler.Ast
         /// <summary>
         ///     The list of arguments for the string concatenation.
         /// </summary>
-        public List<IAstExpression> Arguments = new List<IAstExpression>();
+        public List<AstExpr> Arguments = new List<AstExpr>();
 
         /// <summary>
         ///     Creates a new AstStringConcatenation AST node.
@@ -62,20 +61,20 @@ namespace Prexonite.Compiler.Ast
         /// <param name="operatorImplementation"></param>
         /// <param name = "arguments">A list of expressions to be added to the <see cref = "Arguments" /> list.</param>
         [DebuggerNonUserCode]
-        public AstStringConcatenation(string file, int line, int column, SymbolEntry operatorImplementation, params IAstExpression[] arguments)
+        public AstStringConcatenation(string file, int line, int column, SymbolEntry operatorImplementation, params AstExpr[] arguments)
             : base(file, line, column)
         {
             if (operatorImplementation == null)
                 throw new ArgumentNullException("operatorImplementation");
             
             if (arguments == null)
-                arguments = new IAstExpression[] {};
+                arguments = new AstExpr[] {};
 
             Arguments.AddRange(arguments);
             Implementation = operatorImplementation;
         }
 
-        internal AstStringConcatenation Create(Parser p, params IAstExpression[] arguments)
+        internal AstStringConcatenation Create(Parser p, params AstExpr[] arguments)
         {
             var interpretation = Resolve(p, OperatorNames.Prexonite.Addition);
             return new AstStringConcatenation(p.scanner.File, p.t.line, p.t.col, interpretation,
@@ -84,7 +83,7 @@ namespace Prexonite.Compiler.Ast
 
         #region IAstHasExpressions Members
 
-        public IAstExpression[] Expressions
+        public AstExpr[] Expressions
         {
             get { return Arguments.ToArray(); }
         }
@@ -95,6 +94,7 @@ namespace Prexonite.Compiler.Ast
         ///     Emits code for the AstStringConcatenation node.
         /// </summary>
         /// <param name = "target">The target to which to write the code to.</param>
+        /// <param name="stackSemantics">The stack semantics with which to emit code. </param>
         /// <remarks>
         ///     <para>
         ///         AstStringConcatenation tries to find the most efficient way to concatenate strings. StringBuilders are actually slower when concatenating only two arguments.
@@ -124,7 +124,7 @@ namespace Prexonite.Compiler.Ast
         ///         </list>
         ///     </para>
         /// </remarks>
-        protected override void DoEmitCode(CompilerTarget target)
+        protected override void DoEmitCode(CompilerTarget target, StackSemantics stackSemantics)
         {
             if (Arguments.Count > 2
                 && Implementation.Module == null
@@ -134,7 +134,7 @@ namespace Prexonite.Compiler.Ast
                 var call = new AstGetSetSymbol(File, Line, Column, PCall.Get,
                     Implementation.With(SymbolInterpretations.Command,Engine.ConcatenateAlias));
                 call.Arguments.AddRange(Arguments);
-                call.EmitCode(target);
+                call.EmitCode(target,stackSemantics);
             }
             else if (Arguments.Count >= 2)
             {
@@ -143,24 +143,32 @@ namespace Prexonite.Compiler.Ast
                         new AstBinaryOperator(File, Line, Column, aggregate, BinaryOperator.Addition,
                             right,
                             Implementation));
-                op.EmitCode(target);
+                op.EmitCode(target,stackSemantics);
             }
             else if (Arguments.Count == 1)
             {
-                Arguments[0].EmitCode(target);
+                if (stackSemantics == StackSemantics.Value)
+                {
+                    Arguments[0].EmitValueCode(target);
 
-                AstConstant constant;
-                if ((constant = Arguments[0] as AstConstant) != null &&
-                    !(constant.Constant is string))
-                    target.EmitGetCall(this, 1, "ToString");
+                    AstConstant constant;
+                    if ((constant = Arguments[0] as AstConstant) != null &&
+                        !(constant.Constant is string))
+                        target.EmitGetCall(this, 1, "ToString");
+                }
+                else
+                {
+                    Arguments[0].EmitEffectCode(target);
+                }
             }
             else if (Arguments.Count == 0)
             {
-                target.EmitConstant(this, "");
+                if(stackSemantics == StackSemantics.Value)
+                    target.EmitConstant(this, "");
             }
         }
 
-        #region IAstExpression Members
+        #region AstExpr Members
 
         /// <summary>
         ///     Tries to optimize the AstStringConcatenation node.
@@ -178,7 +186,7 @@ namespace Prexonite.Compiler.Ast
         ///         Also, <paramref name = "expr" /> is only defined if the method call returns <c>true</c>. Don't use it otherwise.
         ///     </para>
         /// </remarks>
-        public bool TryOptimize(CompilerTarget target, out IAstExpression expr)
+        public override bool TryOptimize(CompilerTarget target, out AstExpr expr)
         {
             //Optimize arguments
             foreach (var arg in Arguments.ToArray())
@@ -215,7 +223,7 @@ namespace Prexonite.Compiler.Ast
             }
 
             //Try to shorten argument list
-            var nlst = new List<IAstExpression>();
+            var nlst = new List<AstExpr>();
             string last = null;
             var buffer = new StringBuilder();
             foreach (var e in Arguments)
@@ -260,7 +268,7 @@ namespace Prexonite.Compiler.Ast
             if (nlst.Count == 1 && (collapsed = nlst[0] as AstConstant) != null)
             {
                 expr = collapsed.Constant is string
-                    ? (IAstExpression) collapsed
+                    ? (AstExpr) collapsed
                     : new AstGetSetMemberAccess(File, Line, Column, collapsed, "ToString");
             }
 

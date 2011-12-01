@@ -41,7 +41,7 @@ namespace Prexonite.Compiler.Ast
         {
         }
 
-        protected override void DoEmitCode(CompilerTarget target)
+        protected override void DoEmitCode(CompilerTarget target, StackSemantics stackSemantics)
         {
             target.EmitLabel(this, Label);
         }

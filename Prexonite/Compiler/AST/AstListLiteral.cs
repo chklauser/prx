@@ -32,12 +32,11 @@ using Prexonite.Types;
 
 namespace Prexonite.Compiler.Ast
 {
-    public class AstListLiteral : AstNode,
-                                  IAstExpression,
+    public class AstListLiteral : AstExpr,
                                   IAstHasExpressions,
                                   IAstPartiallyApplicable
     {
-        public List<IAstExpression> Elements = new List<IAstExpression>();
+        public List<AstExpr> Elements = new List<AstExpr>();
 
         internal AstListLiteral(Parser p)
             : base(p)
@@ -51,16 +50,16 @@ namespace Prexonite.Compiler.Ast
 
         #region IAstHasExpressions Members
 
-        public IAstExpression[] Expressions
+        public AstExpr[] Expressions
         {
             get { return Elements.ToArray(); }
         }
 
         #endregion
 
-        #region IAstExpression Members
+        #region AstExpr Members
 
-        public bool TryOptimize(CompilerTarget target, out IAstExpression expr)
+        public override bool TryOptimize(CompilerTarget target, out AstExpr expr)
         {
             foreach (var arg in Elements.ToArray())
             {
@@ -82,20 +81,20 @@ namespace Prexonite.Compiler.Ast
 
         #endregion
 
-        protected override void DoEmitCode(CompilerTarget target)
+        protected override void DoEmitCode(CompilerTarget target, StackSemantics stackSemantics)
         {
             var call = new AstGetSetSymbol(
                 File, Line, Column, PCall.Get,
                 new SymbolEntry(SymbolInterpretations.Command, Engine.ListAlias, null));
             call.Arguments.AddRange(Elements);
-            call.EmitCode(target);
+            call.EmitCode(target,stackSemantics);
         }
 
         #region Implementation of IAstPartiallyApplicable
 
         public void DoEmitPartialApplicationCode(CompilerTarget target)
         {
-            DoEmitCode(target);
+            DoEmitCode(target,StackSemantics.Value);
             //Code is the same. Partial application is handled by AstGetSetSymbol
         }
 

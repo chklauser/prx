@@ -73,7 +73,7 @@ namespace Prexonite.Compiler.Ast
 
         #region Overrides of AstNode
 
-        protected override void EmitGetCode(CompilerTarget target, bool justEffect)
+        protected override void EmitGetCode(CompilerTarget target, StackSemantics stackSemantics)
         {
             _throwSyntaxNotSupported();
         }

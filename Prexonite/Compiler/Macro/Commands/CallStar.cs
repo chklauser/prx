@@ -61,7 +61,7 @@ namespace Prexonite.Compiler.Macro.Commands
             }
 
             int passThrough;
-            List<IAstExpression> arguments;
+            List<AstExpr> arguments;
             _determinePassThrough(context, out passThrough, out arguments);
 
             _expandPartialApplication(context, passThrough, arguments);
@@ -70,9 +70,9 @@ namespace Prexonite.Compiler.Macro.Commands
         }
 
         private void _expandPartialApplication(MacroContext context, int passThrough,
-            List<IAstExpression> arguments)
+            List<AstExpr> arguments)
         {
-            var flatArgs = new List<IAstExpression>(arguments.Count);
+            var flatArgs = new List<AstExpr>(arguments.Count);
             var directives = new List<int>(arguments.Count);
 
             //The call target is a "non-argument" in partial application terms. Do not include it in the
@@ -105,7 +105,7 @@ namespace Prexonite.Compiler.Macro.Commands
 
             var argc = ppArgv.Count;
             var mappings8 = new int[argc + directives.Count + 1];
-            var closedArguments = new List<IAstExpression>(argc);
+            var closedArguments = new List<AstExpr>(argc);
 
             AstPartiallyApplicable.GetMapping(ppArgv, mappings8, closedArguments);
             _mergeDirectivesIntoMappings(directives, mappings8, argc);
@@ -138,13 +138,13 @@ namespace Prexonite.Compiler.Macro.Commands
 
         #region Overrides of MacroCommand
 
-        private static bool _isPartialList(IAstExpression expr)
+        private static bool _isPartialList(AstExpr expr)
         {
             AstListLiteral lit;
             return _isPartialList(expr, out lit);
         }
 
-        private static bool _isPartialList(IAstExpression expr, out AstListLiteral lit)
+        private static bool _isPartialList(AstExpr expr, out AstListLiteral lit)
         {
             lit = expr as AstListLiteral;
             return lit != null && lit.CheckForPlaceholders();
@@ -160,7 +160,7 @@ namespace Prexonite.Compiler.Macro.Commands
             }
 
             int passThrough;
-            List<IAstExpression> arguments;
+            List<AstExpr> arguments;
             _determinePassThrough(context, out passThrough, out arguments);
 
             if (arguments.Skip(passThrough).Any(_isPartialList))
@@ -177,18 +177,18 @@ namespace Prexonite.Compiler.Macro.Commands
         }
 
         private static void _determinePassThrough(MacroContext context, out int passThrough,
-            out List<IAstExpression> arguments)
+            out List<AstExpr> arguments)
         {
             var arg0 = context.Invocation.Arguments[0];
             var passThroughNode = arg0 as AstConstant;
             if (passThroughNode != null && passThroughNode.Constant is int)
             {
-                arguments = new List<IAstExpression>(context.Invocation.Arguments.Skip(1));
+                arguments = new List<AstExpr>(context.Invocation.Arguments.Skip(1));
                 passThrough = (int) passThroughNode.Constant;
             }
             else
             {
-                arguments = new List<IAstExpression>(context.Invocation.Arguments);
+                arguments = new List<AstExpr>(context.Invocation.Arguments);
                 passThrough = 1;
             }
 

@@ -29,15 +29,14 @@ using Prexonite.Types;
 
 namespace Prexonite.Compiler.Ast
 {
-    public class AstTypecast : AstNode,
-                               IAstExpression,
+    public class AstTypecast : AstExpr,
                                IAstHasExpressions,
                                IAstPartiallyApplicable
     {
-        public IAstExpression Subject { get; private set; }
-        public IAstType Type { get; private set; }
+        public AstExpr Subject { get; private set; }
+        public AstTypeExpr Type { get; private set; }
 
-        public AstTypecast(string file, int line, int column, IAstExpression subject, IAstType type)
+        public AstTypecast(string file, int line, int column, AstExpr subject, AstTypeExpr type)
             : base(file, line, column)
         {
             if (subject == null)
@@ -48,37 +47,40 @@ namespace Prexonite.Compiler.Ast
             Type = type;
         }
 
-        internal AstTypecast(Parser p, IAstExpression subject, IAstType type)
+        internal AstTypecast(Parser p, AstExpr subject, AstTypeExpr type)
             : this(p.scanner.File, p.t.line, p.t.col, subject, type)
         {
         }
 
         #region IAstHasExpressions Members
 
-        public IAstExpression[] Expressions
+        public AstExpr[] Expressions
         {
             get { return new[] {Subject}; }
         }
 
         #endregion
 
-        protected override void DoEmitCode(CompilerTarget target)
+        protected override void DoEmitCode(CompilerTarget target, StackSemantics stackSemantics)
         {
-            Subject.EmitCode(target);
+            if(stackSemantics == StackSemantics.Effect)
+                return;
+
+            Subject.EmitValueCode(target);
             var constType = Type as AstConstantTypeExpression;
             if (constType != null)
                 target.Emit(this, OpCode.cast_const, constType.TypeExpression);
             else
             {
-                Type.EmitCode(target);
+                Type.EmitValueCode(target);
                 target.Emit(this, OpCode.cast_arg);
             }
         }
 
-        public bool TryOptimize(CompilerTarget target, out IAstExpression expr)
+        public override bool TryOptimize(CompilerTarget target, out AstExpr expr)
         {
             Subject = _GetOptimizedNode(target, Subject);
-            Type = (IAstType) _GetOptimizedNode(target, Type);
+            Type = (AstTypeExpr) _GetOptimizedNode(target, Type);
 
             expr = null;
 
@@ -109,7 +111,7 @@ namespace Prexonite.Compiler.Ast
         }
 
         private bool _tryOptimizeConstCast(CompilerTarget target, AstConstant constSubject,
-            AstConstantTypeExpression constType, out IAstExpression expr)
+            AstConstantTypeExpression constType, out AstExpr expr)
         {
             expr = null;
             PType type;
@@ -143,7 +145,7 @@ namespace Prexonite.Compiler.Ast
             if (constType != null)
                 target.EmitConstant(this, constType.TypeExpression);
             else
-                Type.EmitCode(target);
+                Type.EmitValueCode(target);
 
             target.EmitCommandCall(this, ctorArgc + 1, Engine.PartialTypeCastAlias);
         }

@@ -810,7 +810,7 @@ namespace Prexonite.Compiler
         {
             var target = FunctionTargets[Application.InitializationId];
             target.ExecuteCompilerHooks();
-            target.Ast.EmitCode(target, false);
+            target.Ast.EmitCode(target, false, StackSemantics.Effect);
             //do not treat initialization blocks as top-level ones.
             target.Ast.Clear();
         }

@@ -62,8 +62,11 @@ namespace Prexonite.Compiler.Ast
 
         #endregion
 
-        protected override void DoEmitCode(CompilerTarget target)
+        protected override void DoEmitCode(CompilerTarget target, StackSemantics stackSemantics)
         {
+            if(stackSemantics == StackSemantics.Value)
+                throw new NotSupportedException("Try-catch-finally blocks cannot be used with value stack semantics (They don't produce values)");
+
             var prefix = "try\\" + Guid.NewGuid().ToString("N") + "\\";
             var beginTryLabel = prefix + "beginTry";
             var beginFinallyLabel = prefix + "beginFinally";
@@ -78,19 +81,19 @@ namespace Prexonite.Compiler.Ast
                     //The finally block is not protected
                     //  A trycatchfinally with just a finally block is equivalent to the contents of the finally block
                     //  " try {} finally { $code } " => " $code "
-                    FinallyBlock.EmitCode(target);
+                    FinallyBlock.EmitEffectCode(target);
                     return;
                 }
 
             //Emit try block
             target.EmitLabel(this, beginTryLabel);
             target.Emit(this, OpCode.@try);
-            TryBlock.EmitCode(target);
+            TryBlock.EmitEffectCode(target);
 
             //Emit finally block
             target.EmitLabel(FinallyBlock, beginFinallyLabel);
             var beforeEmit = target.Code.Count;
-            FinallyBlock.EmitCode(target);
+            FinallyBlock.EmitEffectCode(target);
             if (FinallyBlock.Count > 0 && target.Code.Count == beforeEmit)
                 target.Emit(FinallyBlock, OpCode.nop);
             target.EmitLeave(FinallyBlock, endTry);
@@ -112,7 +115,7 @@ namespace Prexonite.Compiler.Ast
             if (!justRethrow)
             {
                 //Exception handled
-                CatchBlock.EmitCode(target);
+                CatchBlock.EmitEffectCode(target);
             }
             else
             {

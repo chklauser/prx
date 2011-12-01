@@ -105,7 +105,7 @@ GlobalVariableDefinition	(.
                                 string id = null; 
                                 List<string> aliases = new List<string>();
                                 string primaryAlias = null;
-                                PVariable vari; 
+                                VariableDeclaration vari; 
                                 SymbolInterpretations type = SymbolInterpretations.GlobalObjectVariable; 
                                 SymbolEntry entry;
                             .)
@@ -124,12 +124,11 @@ GlobalVariableDefinition	(.
                                 entry = new SymbolEntry(type,id, null);
 	                            foreach(var alias in aliases)
 	                                Symbols[alias] = entry;
-	                            if(TargetApplication.Variables.ContainsKey(id))
-	                                vari = TargetApplication.Variables[id];
-	                            else
+                                if(!TargetModule.Variables.TryGetVariable(id, out vari))
 	                            {
-	                                vari = new PVariable(id);
-	                                TargetApplication.Variables[id] = vari;
+	                                vari = Modular.VariableDeclaration.Create(id);
+                                    TargetModule.Variables.Add(vari);
+	                                TargetApplication.Variables[id] = new PVariable(vari);
 	                            }
 	                        .)
 	[	lbrack  		    //Meta block for variables
@@ -145,7 +144,7 @@ GlobalVariableDefinition	(.
 	[	                    (.  _pushLexerState(Lexer.Local); .)
 	    assign              (.  CompilerTarget lastTarget = target;
                                 target=FunctionTargets[Application.InitializationId];
-                                IAstExpression expr;
+                                AstExpr expr;
                             .)
 		Expr<out expr>
 		                    (.  _popLexerState();
@@ -521,7 +520,7 @@ FunctionDefinition<out PFunction func>
                                                 //Apply compiler hooks for all kinds of functions (lazy/coroutine/macro)
 												FunctionTargets[func].ExecuteCompilerHooks();
 												//Emit code for top-level block
-                                                Ast[func].EmitCode(FunctionTargets[func], true);
+                                                Ast[func].EmitCode(FunctionTargets[func], true, StackSemantics.Effect);
                                                 FunctionTargets[func].FinishTarget();
                                                 } catch(Exception e) {
                                                     SemErr("Exception during compilation of function body of " + id + ". " + e);
@@ -540,7 +539,7 @@ FunctionDefinition<out PFunction func>
 												    retst.Expression = crcor;
 												    cst.Ast.Add(retst);
 												    //Emit code for top-level block
-												    cst.Ast.EmitCode(cst,true);
+												    cst.Ast.EmitCode(cst,true,StackSemantics.Effect);
 												    cst.FinishTarget();
                                                 } catch(Exception e) {
                                                     SemErr("Exception during compilation of coroutine stub for " + id + ". " + e);
@@ -555,7 +554,7 @@ FunctionDefinition<out PFunction func>
 											    func = derStub;
 											    
 											    //Generate code for the stub
-											    IAstExpression retVal;										    
+											    AstExpr retVal;										    
 										        
 										        if(isNested)
 										        {
@@ -613,7 +612,7 @@ FunctionDefinition<out PFunction func>
 											    
                                                 try {
 											    //Emit code for stub
-											    cst.Ast.EmitCode(cst,true);
+											    cst.Ast.EmitCode(cst,true,StackSemantics.Effect);
 											    cst.FinishTarget();
                                                 } catch(Exception e) {
                                                     SemErr("Exception during compilation of lazy function stub for " + id + ". " + e);

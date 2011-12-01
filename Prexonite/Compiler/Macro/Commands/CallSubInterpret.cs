@@ -187,12 +187,12 @@ namespace Prexonite.Compiler.Macro.Commands
 
         #endregion
 
-        private static IAstExpression _genCompare(MacroContext context, IAstExpression retVar,
+        private static AstExpr _genCompare(MacroContext context, AstExpr retVar,
             ReturnVariant expected)
         {
             const BinaryOperator eq = BinaryOperator.Equality;
             var inv = context.Invocation;
-            IAstExpression expectedNode = new AstConstant(inv.File,
+            AstExpr expectedNode = new AstConstant(inv.File,
                 inv.Line,
                 inv.Column, (int) expected);
             var cmp = new AstBinaryOperator(inv.File, inv.Line,

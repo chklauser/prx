@@ -36,7 +36,7 @@ namespace Prexonite.Compiler
     /// <param name = "t">The compiler target for which to compile code.</param>
     /// <param name = "unresolved">The unresolved AST node.</param>
     /// <returns>Null if no solution could be found. A compatibe node otherwise.</returns>
-    public delegate IAstExpression ResolveSymbol(CompilerTarget t, AstUnresolved unresolved);
+    public delegate AstExpr ResolveSymbol(CompilerTarget t, AstUnresolved unresolved);
 
     /// <summary>
     ///     Encapsulates a user provided resolver.
@@ -86,7 +86,7 @@ namespace Prexonite.Compiler
         /// <param name = "t">The compiler target for which to resolve the node.</param>
         /// <param name = "unresolved">The unresolved AST node.</param>
         /// <returns>Null if no solution has been found. A compatible AST node otherwise.</returns>
-        public IAstExpression Resolve(CompilerTarget t, AstUnresolved unresolved)
+        public AstExpr Resolve(CompilerTarget t, AstUnresolved unresolved)
         {
             if (IsManaged)
             {
@@ -102,7 +102,7 @@ namespace Prexonite.Compiler
                                 t.Loader.CreateNativePValue(unresolved)
                             });
                 if (presult.Type is ObjectPType)
-                    return (IAstExpression) presult.Value;
+                    return (AstExpr) presult.Value;
                 else
                     return null;
             }

@@ -254,6 +254,9 @@ namespace Prexonite
         [DebuggerStepThrough]
         public void Push(PValue val)
         {
+            if(_stack.Count > 2000)
+                throw new PrexoniteInvalidStackException(message: string.Format("Stack-overflow in Prexonite code: {0}", this));
+
             if (_useVirtualStackInstead)
                 _useVirtualStackInstead = false;
             else

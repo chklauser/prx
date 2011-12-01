@@ -31,11 +31,10 @@ namespace Prexonite.Compiler.Ast
 {
     [SuppressMessage("Microsoft.Naming", "CA1704:IdentifiersShouldBeSpelledCorrectly",
         MessageId = "Coroutine")]
-    public class AstCreateCoroutine : AstNode,
-                                      IAstExpression,
+    public class AstCreateCoroutine : AstExpr,
                                       IAstHasExpressions
     {
-        public IAstExpression Expression;
+        public AstExpr Expression;
 
         private ArgumentsProxy _proxy;
 
@@ -46,14 +45,14 @@ namespace Prexonite.Compiler.Ast
 
         #region IAstHasExpressions Members
 
-        public IAstExpression[] Expressions
+        public AstExpr[] Expressions
         {
             get { return Arguments.ToArray(); }
         }
 
         #endregion
 
-        private List<IAstExpression> _arguments = new List<IAstExpression>();
+        private List<AstExpr> _arguments = new List<AstExpr>();
 
         public AstCreateCoroutine(string file, int line, int col)
             : base(file, line, col)
@@ -67,26 +66,29 @@ namespace Prexonite.Compiler.Ast
             _proxy = new ArgumentsProxy(_arguments);
         }
 
-        protected override void DoEmitCode(CompilerTarget target)
+        protected override void DoEmitCode(CompilerTarget target, StackSemantics stackSemantics)
         {
+            if(stackSemantics == StackSemantics.Effect)
+                return;
+
             if (Expression == null)
                 throw new PrexoniteException("CreateCoroutine node requires an Expression.");
 
-            Expression.EmitCode(target);
+            Expression.EmitValueCode(target);
             foreach (var argument in _arguments)
-                argument.EmitCode(target);
+                argument.EmitValueCode(target);
 
             target.Emit(this, OpCode.newcor, _arguments.Count);
         }
 
-        #region IAstExpression Members
+        #region AstExpr Members
 
-        public bool TryOptimize(CompilerTarget target, out IAstExpression expr)
+        public override bool TryOptimize(CompilerTarget target, out AstExpr expr)
         {
             _OptimizeNode(target, ref Expression);
 
             //Optimize arguments
-            IAstExpression oArg;
+            AstExpr oArg;
             foreach (var arg in _arguments.ToArray())
             {
                 if (arg == null)

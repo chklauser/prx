@@ -34,7 +34,7 @@ namespace Prexonite.Compiler.Ast
                                 IAstHasExpressions
     {
         public AstCondition(
-            string file, int line, int column, IAstExpression condition, bool isNegative)
+            string file, int line, int column, AstExpr condition, bool isNegative)
             : base(file, line, column)
         {
             IfBlock = new AstBlock(file, line, column);
@@ -45,24 +45,24 @@ namespace Prexonite.Compiler.Ast
             IsNegative = isNegative;
         }
 
-        public AstCondition(string file, int line, int column, IAstExpression condition)
+        public AstCondition(string file, int line, int column, AstExpr condition)
             : this(file, line, column, condition, false)
         {
         }
 
-        internal AstCondition(Parser p, IAstExpression condition, bool isNegative)
+        internal AstCondition(Parser p, AstExpr condition, bool isNegative)
             : this(p.scanner.File, p.t.line, p.t.col, condition, isNegative)
         {
         }
 
-        internal AstCondition(Parser p, IAstExpression condition)
+        internal AstCondition(Parser p, AstExpr condition)
             : this(p, condition, false)
         {
         }
 
         public AstBlock IfBlock;
         public AstBlock ElseBlock;
-        public IAstExpression Condition;
+        public AstExpr Condition;
         public bool IsNegative;
         private static int _depth;
 
@@ -75,7 +75,7 @@ namespace Prexonite.Compiler.Ast
 
         #region IAstHasExpressions Members
 
-        public IAstExpression[] Expressions
+        public AstExpr[] Expressions
         {
             get { return new[] {Condition}; }
         }
@@ -84,7 +84,7 @@ namespace Prexonite.Compiler.Ast
 
         #endregion
 
-        protected override void DoEmitCode(CompilerTarget target)
+        protected override void DoEmitCode(CompilerTarget target, StackSemantics stackSemantics)
         {
             //Optimize condition
             _OptimizeNode(target, ref Condition);
@@ -106,22 +106,15 @@ namespace Prexonite.Compiler.Ast
                         target.Loader, PType.Bool, out condValue))
                     goto continueFull;
                 else if (((bool) condValue.Value) ^ IsNegative)
-                    IfBlock.EmitCode(target);
+                    IfBlock.EmitEffectCode(target);
                 else
-                    ElseBlock.EmitCode(target);
+                    ElseBlock.EmitEffectCode(target);
                 return;
             }
             //Conditions with empty blocks
             if (IfBlock.IsEmpty && ElseBlock.IsEmpty)
             {
-                var effect = Condition as IAstEffect;
-                if (effect != null)
-                    effect.EmitEffectCode(target);
-                else
-                {
-                    Condition.EmitCode(target);
-                    target.EmitPop(this);
-                }
+                Condition.EmitEffectCode(target);
                 return;
             }
             continueFull:
@@ -166,23 +159,23 @@ namespace Prexonite.Compiler.Ast
             {
                 //if => jump / else => block
                 AstLazyLogical.EmitJumpCondition(target, Condition, ifGoto.Destination, !IsNegative);
-                ElseBlock.EmitCode(target);
+                ElseBlock.EmitEffectCode(target);
             }
             else if (elseIsGoto)
             {
                 //if => block / else => jump
                 AstLazyLogical.EmitJumpCondition(
                     target, Condition, elseGoto.Destination, IsNegative); //inverted
-                IfBlock.EmitCode(target);
+                IfBlock.EmitEffectCode(target);
             }
             else
             {
                 //if => block / else => block
                 AstLazyLogical.EmitJumpCondition(target, Condition, elseLabel, IsNegative);
-                IfBlock.EmitCode(target);
+                IfBlock.EmitEffectCode(target);
                 target.EmitJump(this, endLabel);
                 target.EmitLabel(this, elseLabel);
-                ElseBlock.EmitCode(target);
+                ElseBlock.EmitEffectCode(target);
                 target.EmitLabel(this, endLabel);
             }
 

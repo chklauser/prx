@@ -33,11 +33,10 @@ using Prexonite.Types;
 
 namespace Prexonite.Compiler.Ast
 {
-    public abstract class AstGetSet : AstNode,
-                                      IAstEffect,
+    public abstract class AstGetSet : AstExpr,
                                       IAstHasExpressions
     {
-        private readonly List<IAstExpression> _arguments = new List<IAstExpression>();
+        private readonly List<AstExpr> _arguments = new List<AstExpr>();
         private readonly ArgumentsProxy _proxy;
 
         public ArgumentsProxy Arguments
@@ -48,7 +47,7 @@ namespace Prexonite.Compiler.Ast
 
         #region IAstHasExpressions Members
 
-        public virtual IAstExpression[] Expressions
+        public virtual AstExpr[] Expressions
         {
             get { return Arguments.ToArray(); }
         }
@@ -68,7 +67,12 @@ namespace Prexonite.Compiler.Ast
         #endregion
 
         protected AstGetSet(string file, int line, int column, PCall call)
-            : base(file, line, column)
+            : this(new SourcePosition(file,line,column), call)
+        {
+        }
+
+        protected AstGetSet(ISourcePosition position, PCall call)
+            : base(position)
         {
             _call = call;
             _proxy = new ArgumentsProxy(_arguments);
@@ -79,9 +83,9 @@ namespace Prexonite.Compiler.Ast
         {
         }
 
-        #region IAstExpression Members
+        #region AstExpr Members
 
-        public virtual bool TryOptimize(CompilerTarget target, out IAstExpression expr)
+        public override bool TryOptimize(CompilerTarget target, out AstExpr expr)
         {
             expr = null;
 
@@ -120,14 +124,14 @@ namespace Prexonite.Compiler.Ast
             int additionalArguments)
         {
             Object lastArg = null;
-            foreach (IAstExpression expr in Arguments)
+            foreach (AstExpr expr in Arguments)
             {
                 Debug.Assert(expr != null,
                     "Argument list of get-set-complex contains null reference");
                 if (ReferenceEquals(lastArg, expr))
                     target.EmitDuplicate(this);
                 else
-                    expr.EmitCode(target);
+                    expr.EmitValueCode(target);
                 lastArg = expr;
             }
             var argc = Arguments.Count;
@@ -139,31 +143,21 @@ namespace Prexonite.Compiler.Ast
             }
         }
 
-        void IAstEffect.DoEmitEffectCode(CompilerTarget target)
-        {
-            EmitCode(target, true);
-        }
-
-        protected virtual void EmitCode(CompilerTarget target, bool justEffect)
+        protected override void DoEmitCode(CompilerTarget target, StackSemantics stackSemantics)
         {
             if (Call == PCall.Get)
             {
                 EmitArguments(target);
-                EmitGetCode(target, justEffect);
+                EmitGetCode(target, stackSemantics);
             }
             else
             {
-                EmitArguments(target, !justEffect);
+                EmitArguments(target, stackSemantics == StackSemantics.Value);
                 EmitSetCode(target);
             }
         }
 
-        protected override sealed void DoEmitCode(CompilerTarget target)
-        {
-            EmitCode(target, false);
-        }
-
-        protected abstract void EmitGetCode(CompilerTarget target, bool justEffect);
+        protected abstract void EmitGetCode(CompilerTarget target, StackSemantics stackSemantics);
         protected abstract void EmitSetCode(CompilerTarget target);
 
         #endregion
@@ -186,7 +180,7 @@ namespace Prexonite.Compiler.Ast
             var buffer = new StringBuilder();
             buffer.Append("(");
             var i = 0;
-            foreach (IAstExpression expr in Arguments)
+            foreach (AstExpr expr in Arguments)
             {
                 i++;
 

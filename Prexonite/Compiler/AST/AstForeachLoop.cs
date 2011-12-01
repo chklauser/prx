@@ -46,7 +46,7 @@ namespace Prexonite.Compiler.Ast
         {
         }
 
-        public IAstExpression List;
+        public AstExpr List;
         public AstGetSet Element;
 
         public bool IsInitialized
@@ -57,15 +57,18 @@ namespace Prexonite.Compiler.Ast
 
         #region IAstHasExpressions Members
 
-        public override IAstExpression[] Expressions
+        public override AstExpr[] Expressions
         {
             get { return new[] {List}; }
         }
 
         #endregion
 
-        protected override void DoEmitCode(CompilerTarget target)
+        protected override void DoEmitCode(CompilerTarget target, StackSemantics stackSemantics)
         {
+            if(stackSemantics == StackSemantics.Value)
+                throw new NotSupportedException("Foreach loops don't produce values and can thus not be emitted with value semantics.");
+
             if (!IsInitialized)
                 throw new PrexoniteException("AstForeachLoop requires List and Element to be set.");
 
@@ -78,7 +81,7 @@ namespace Prexonite.Compiler.Ast
 
             //Create the element assignment statement
             var element = Element.GetCopy();
-            IAstExpression optElem;
+            AstExpr optElem;
             if (element.TryOptimize(target, out optElem))
             {
                 element = optElem as AstGetSet;
@@ -109,7 +112,7 @@ namespace Prexonite.Compiler.Ast
             //Get the enumerator
             target.BeginBlock(Block);
 
-            List.EmitCode(target);
+            List.EmitValueCode(target);
             target.EmitGetCall(List, 0, "GetEnumerator");
             var castAddr = target.Code.Count;
             target.Emit(List, OpCode.cast_const, "Object(\"System.Collections.IEnumerator\")");
@@ -138,7 +141,7 @@ namespace Prexonite.Compiler.Ast
                                 element.EmitEffectCode(target);
 
                                 //Code block
-                                Block.EmitCode(target);
+                                Block.EmitEffectCode(target);
 
                                 //Condition (continue)
                                 target.EmitLabel(this, Block.ContinueLabel);
@@ -161,7 +164,7 @@ namespace Prexonite.Compiler.Ast
                             })
                 };
 
-            @try.EmitCode(target);
+            @try.EmitEffectCode(target);
 
             target.EndBlock();
 

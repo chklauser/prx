@@ -33,8 +33,8 @@ using NoDebug = System.Diagnostics.DebuggerNonUserCodeAttribute;
 
 namespace Prexonite.Compiler.Ast
 {
-    public class AstBlock : AstNode,
-                            IList<AstNode>
+    public class AstBlock : AstExpr,
+                            IList<AstNode>, IAstHasExpressions
     {
         #region Construction
 
@@ -87,12 +87,12 @@ namespace Prexonite.Compiler.Ast
             set { _statements = value; }
         }
 
-        protected override void DoEmitCode(CompilerTarget target)
+        protected override void DoEmitCode(CompilerTarget target, StackSemantics stackSemantics)
         {
-            EmitCode(target, false);
+            EmitCode(target, false, stackSemantics);
         }
 
-        public void EmitCode(CompilerTarget target, bool isTopLevel)
+        public void EmitCode(CompilerTarget target, bool isTopLevel, StackSemantics stackSemantics)
         {
             if (target == null)
                 throw new ArgumentNullException("target", "The compiler target cannot be null");
@@ -103,15 +103,15 @@ namespace Prexonite.Compiler.Ast
             foreach (var node in _statements)
             {
                 var stmt = node;
-                var expr = stmt as IAstExpression;
+                var expr = stmt as AstExpr;
                 if (expr != null)
-                    stmt = (AstNode) _GetOptimizedNode(target, expr);
+                    stmt = _GetOptimizedNode(target, expr);
 
-                if (stmt is IAstEffect)
-                    ((IAstEffect) stmt).EmitEffectCode(target);
-                else
-                    stmt.EmitCode(target);
+                stmt.EmitEffectCode(target);
             }
+
+            if(Expression != null)
+                Expression.EmitCode(target, stackSemantics);
         }
 
         #region Tail call optimization
@@ -352,6 +352,8 @@ namespace Prexonite.Compiler.Ast
             var buffer = new StringBuilder();
             foreach (var node in _statements)
                 buffer.AppendFormat("{0}; ", node);
+            if (Expression != null)
+                buffer.AppendFormat(" (return {0})", Expression);
             return buffer.ToString();
         }
 
@@ -362,6 +364,7 @@ namespace Prexonite.Compiler.Ast
 
         private readonly string _prefix;
         private readonly string _uid;
+        public AstExpr Expression;
 
         public string Prefix
         {
@@ -373,6 +376,11 @@ namespace Prexonite.Compiler.Ast
             get { return _uid; }
         }
 
+        public AstExpr[] Expressions
+        {
+            get { return new[] {Expression}; }
+        }
+
         public const string DefaultPrefix = "_";
         public const string RootBlockName = "root";
 
@@ -382,6 +390,16 @@ namespace Prexonite.Compiler.Ast
         }
 
         #endregion
+
+        public override bool TryOptimize(CompilerTarget target, out AstExpr expr)
+        {
+            //Will be optimized after code generation, hopefully
+            if (Expression != null)
+                _OptimizeNode(target, ref Expression);
+
+            expr = null;
+            return false;
+        }
     }
 
     public class AstLoopBlock : AstSubBlock, ILoopBlock

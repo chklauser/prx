@@ -32,18 +32,17 @@ namespace Prexonite.Compiler.Ast
     /// <summary>
     ///     Represents all binary operators.
     /// </summary>
-    public class AstBinaryOperator : AstNode,
-                                     IAstExpression,
+    public class AstBinaryOperator : AstExpr,
                                      IAstHasExpressions
     {
-        private IAstExpression _leftOperand;
-        private IAstExpression _rightOperand;
+        private AstExpr _leftOperand;
+        private AstExpr _rightOperand;
         private BinaryOperator _operator;
         private SymbolEntry _implementation;
 
-        internal static AstBinaryOperator Create(Parser parser, IAstExpression leftOperand,
+        internal static AstBinaryOperator Create(Parser parser, AstExpr leftOperand,
             BinaryOperator op,
-            IAstExpression rightOperand)
+            AstExpr rightOperand)
         {
             var impl = Resolve(parser, OperatorNames.Prexonite.GetName(op));
             return new AstBinaryOperator(parser.scanner.File, parser.t.line, parser.t.col,
@@ -62,14 +61,14 @@ namespace Prexonite.Compiler.Ast
         /// <param name = "rightOperand">The right operand of the expression.</param>
         /// <param name = "implementation">Describes the Prexonite entity that is used for the implementation (a command or function entry in most cases)</param>
         /// <seealso cref = "BinaryOperator" />
-        /// <seealso cref = "IAstExpression" />
+        /// <seealso cref = "AstExpr" />
         public AstBinaryOperator(
             string file,
             int line,
             int column,
-            IAstExpression leftOperand,
+            AstExpr leftOperand,
             BinaryOperator op,
-            IAstExpression rightOperand,
+            AstExpr rightOperand,
             SymbolEntry implementation)
             : base(file, line, column)
         {
@@ -84,18 +83,18 @@ namespace Prexonite.Compiler.Ast
 
         #region IAstHasExpressions Members
 
-        public IAstExpression[] Expressions
+        public AstExpr[] Expressions
         {
             get { return new[] {_leftOperand, _rightOperand}; }
         }
 
-        public IAstExpression LeftOperand
+        public AstExpr LeftOperand
         {
             get { return _leftOperand; }
             set { _leftOperand = value; }
         }
 
-        public IAstExpression RightOperand
+        public AstExpr RightOperand
         {
             get { return _rightOperand; }
             set { _rightOperand = value; }
@@ -118,12 +117,13 @@ namespace Prexonite.Compiler.Ast
         ///     Emits the code for this node.
         /// </summary>
         /// <param name = "target">The target to which to write the code to.</param>
-        protected override void DoEmitCode(CompilerTarget target)
+        /// <param name="stackSemantics">The desired stack semantics for the code produced.</param>
+        protected override void DoEmitCode(CompilerTarget target, StackSemantics stackSemantics)
         {
             var call = new AstGetSetSymbol(File, Line, Column, PCall.Get, Implementation);
             call.Arguments.Add(_leftOperand);
             call.Arguments.Add(_rightOperand);
-            call.EmitCode(target);
+            call.EmitCode(target, stackSemantics);
         }
 
         #region Optimization
@@ -144,7 +144,7 @@ namespace Prexonite.Compiler.Ast
         ///         Also, <paramref name = "expr" /> is only defined if the method call returns <c>true</c>. Don't use it otherwise.
         ///     </para>
         /// </remarks>
-        public bool TryOptimize(CompilerTarget target, out IAstExpression expr)
+        public override bool TryOptimize(CompilerTarget target, out AstExpr expr)
         {
             //The coalecence and cast operators are handled separately.
             if (_operator == BinaryOperator.Coalescence)
@@ -158,7 +158,7 @@ namespace Prexonite.Compiler.Ast
             }
             else if (_operator == BinaryOperator.Cast)
             {
-                var T = _rightOperand as IAstType;
+                var T = _rightOperand as AstTypeExpr;
                 if (T == null)
                     throw new PrexoniteException(
                         String.Format(
@@ -488,7 +488,7 @@ namespace Prexonite.Compiler.Ast
     /// <seealso cref = "AstBinaryOperator" />
     /// <seealso cref = "AstUnaryOperator" />
     /// <seealso cref = "AstNode" />
-    /// <seealso cref = "IAstExpression" />
+    /// <seealso cref = "AstExpr" />
     public enum BinaryOperator
     {
         /// <summary>

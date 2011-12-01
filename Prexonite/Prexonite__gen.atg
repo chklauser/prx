@@ -275,7 +275,7 @@ AsmInstruction<AstBlock block>          (.  int arguments = 0;
 |   //NOP/DATA INSTRUCTION
     IF(isAsmInstruction("nop", null))
     AsmId<out insbase>                  (.  Instruction ins = new Instruction(OpCode.nop); .)
-    [  plus AsmId<out id>               (.  ins.Id = id; .)
+    [  plus AsmId<out id>               (.  ins = ins.With(id: id); .)
     ]
                                         (.  addInstruction(block, ins); .)
     
@@ -464,7 +464,7 @@ AsmQualid<out string qualid>
  */
 
 
-Expr<out IAstExpression expr>		    (.	AstConditionalExpression cexpr = null; expr = null; .)
+Expr<out AstExpr expr>		    (.	AstConditionalExpression cexpr = null; expr = null; .)
 =	
 	AtomicExpr<out expr>   
 |										(.	bool isNegated = false; .)
@@ -478,8 +478,8 @@ Expr<out IAstExpression expr>		    (.	AstConditionalExpression cexpr = null; exp
 .
 
 
-AtomicExpr<out IAstExpression expr>
-                                        (.  IAstExpression outerExpr = null; .)
+AtomicExpr<out AstExpr expr>
+                                        (.  AstExpr outerExpr = null; .)
 =
     AppendRightExpr<out expr>
     {
@@ -494,7 +494,7 @@ AtomicExpr<out IAstExpression expr>
 .
 
 
-AppendRightExpr<out IAstExpression expr>
+AppendRightExpr<out AstExpr expr>
 										(.	AstGetSet complex = null; .)
 =
 	KeyValuePairExpr<out expr>
@@ -509,16 +509,16 @@ AppendRightExpr<out IAstExpression expr>
 	}
 .
 
-KeyValuePairExpr<out IAstExpression expr>
+KeyValuePairExpr<out AstExpr expr>
 =
 	OrExpr<out expr>
-	[	colon							(.	IAstExpression value; .)
+	[	colon							(.	AstExpr value; .)
 		KeyValuePairExpr<out value>		(.	expr = new AstKeyValuePair(this, expr, value); .)
 	]
 .
 
-OrExpr<out IAstExpression expr>
-										(. IAstExpression lhs, rhs; .)
+OrExpr<out AstExpr expr>
+										(. AstExpr lhs, rhs; .)
 =
 	AndExpr<out lhs>                    (.  expr = lhs; .)
     [   or OrExpr<out rhs>              (.  expr = new AstLogicalOr(this, lhs, rhs); .)
@@ -526,24 +526,24 @@ OrExpr<out IAstExpression expr>
 
 .
 
-AndExpr<out IAstExpression expr>
-                                        (. IAstExpression lhs, rhs; .)
+AndExpr<out AstExpr expr>
+                                        (. AstExpr lhs, rhs; .)
 =
     BitOrExpr<out lhs>                  (.  expr = lhs; .)
     [   and AndExpr<out rhs>            (.  expr = new AstLogicalAnd(this, lhs, rhs); .)
     ]
 .
 
-BitOrExpr<out IAstExpression expr>
-                                        (. IAstExpression lhs, rhs; .)
+BitOrExpr<out AstExpr expr>
+                                        (. AstExpr lhs, rhs; .)
 =
     BitXorExpr<out lhs>                 (. expr = lhs; .)
     { bitOr BitXorExpr<out rhs>         (. expr = AstBinaryOperator.Create(this, expr, BinaryOperator.BitwiseOr, rhs); .)
     }
 .
 
-BitXorExpr<out IAstExpression expr>
-                                        (.  IAstExpression lhs, rhs; .)
+BitXorExpr<out AstExpr expr>
+                                        (.  AstExpr lhs, rhs; .)
 =
     BitAndExpr<out lhs>                 (.  expr = lhs; .)
     {   xor BitAndExpr<out rhs>
@@ -551,8 +551,8 @@ BitXorExpr<out IAstExpression expr>
     }
 .
 
-BitAndExpr<out IAstExpression expr>
-                                        (.  IAstExpression lhs, rhs; .)
+BitAndExpr<out AstExpr expr>
+                                        (.  AstExpr lhs, rhs; .)
 =
     NotExpr<out lhs>                    (.  expr = lhs; .)
     {   bitAnd NotExpr<out rhs>
@@ -560,16 +560,16 @@ BitAndExpr<out IAstExpression expr>
     }
 .
 
-NotExpr<out IAstExpression expr>
-                                        (. IAstExpression lhs; bool isNot = false; .)
+NotExpr<out AstExpr expr>
+                                        (. AstExpr lhs; bool isNot = false; .)
 =
     [   not                             (.  isNot = true; .)
     ]
     EqlExpr<out lhs>                    (.  expr = isNot ? AstUnaryOperator._Create(this, UnaryOperator.LogicalNot, lhs) : lhs; .)
 .
 
-EqlExpr<out IAstExpression expr>
-                                        (. IAstExpression lhs, rhs; BinaryOperator op = BinaryOperator.None; .)
+EqlExpr<out AstExpr expr>
+                                        (. AstExpr lhs, rhs; BinaryOperator op = BinaryOperator.None; .)
 =
     RelExpr<out lhs>                    (. expr = lhs; .)
     {   (   eq                          (.  op = BinaryOperator.Equality; .)
@@ -578,8 +578,8 @@ EqlExpr<out IAstExpression expr>
     }
 .
 
-RelExpr<out IAstExpression expr>
-                                        (.  IAstExpression lhs, rhs; BinaryOperator op = BinaryOperator.None;  .)
+RelExpr<out AstExpr expr>
+                                        (.  AstExpr lhs, rhs; BinaryOperator op = BinaryOperator.None;  .)
 =
     CoalExpr<out lhs>                   (.  expr = lhs; .)
     {   (   lt                          (.  op = BinaryOperator.LessThan;              .)
@@ -590,8 +590,8 @@ RelExpr<out IAstExpression expr>
     }
 .
 
-CoalExpr<out IAstExpression expr>
-										(.	IAstExpression lhs, rhs; AstCoalescence coal = new AstCoalescence(this); .)
+CoalExpr<out AstExpr expr>
+										(.	AstExpr lhs, rhs; AstCoalescence coal = new AstCoalescence(this); .)
 =
 	AddExpr<out lhs>					(.	expr = lhs; coal.Expressions.Add(lhs); .)
 	{
@@ -600,8 +600,8 @@ CoalExpr<out IAstExpression expr>
 	}
 .										
 
-AddExpr<out IAstExpression expr>
-                                        (.  IAstExpression lhs,rhs; BinaryOperator op = BinaryOperator.None; .)
+AddExpr<out AstExpr expr>
+                                        (.  AstExpr lhs,rhs; BinaryOperator op = BinaryOperator.None; .)
 =
     MulExpr<out lhs>                    (.  expr = lhs; .)
     {   (   plus                        (.  op = BinaryOperator.Addition;      .)
@@ -610,8 +610,8 @@ AddExpr<out IAstExpression expr>
     }
 .
 
-MulExpr<out IAstExpression expr>
-                                        (.  IAstExpression lhs, rhs; BinaryOperator op = BinaryOperator.None; .)
+MulExpr<out AstExpr expr>
+                                        (.  AstExpr lhs, rhs; BinaryOperator op = BinaryOperator.None; .)
 =
     PowExpr<out lhs>                    (.  expr = lhs; .)
     {   (   times                       (.  op = BinaryOperator.Multiply;      .)
@@ -621,16 +621,16 @@ MulExpr<out IAstExpression expr>
     }
 .
 
-PowExpr<out IAstExpression expr>
-                                        (.  IAstExpression lhs, rhs; .)
+PowExpr<out AstExpr expr>
+                                        (.  AstExpr lhs, rhs; .)
 =
     AssignExpr<out lhs>                  (.  expr = lhs; .)
     {   pow AssignExpr<out rhs>          (.  expr = AstBinaryOperator.Create(this, expr, BinaryOperator.Power, rhs); .)
     }
 .
 
-AssignExpr<out IAstExpression expr>     (.  AstGetSet assignment; BinaryOperator setModifier = BinaryOperator.None;
-                                            IAstType T;
+AssignExpr<out AstExpr expr>     (.  AstGetSet assignment; BinaryOperator setModifier = BinaryOperator.None;
+                                            AstTypeExpr T;
                                         .)
 =
     PostfixUnaryExpr<out expr>
@@ -668,8 +668,8 @@ AssignExpr<out IAstExpression expr>     (.  AstGetSet assignment; BinaryOperator
     |)
 .
 
-PostfixUnaryExpr<out IAstExpression expr>
-                                        (.  IAstType type = null; AstGetSet extension; bool isInverted = false; .)
+PostfixUnaryExpr<out AstExpr expr>
+                                        (.  AstTypeExpr type = null; AstGetSet extension; bool isInverted = false; .)
 =
     PrefixUnaryExpr<out expr>   
     {   tilde TypeExpr<out type>        (.  expr = new AstTypecast(this, expr, type); .)
@@ -688,7 +688,7 @@ PostfixUnaryExpr<out IAstExpression expr>
     }
 .
 
-PrefixUnaryExpr<out IAstExpression expr>
+PrefixUnaryExpr<out AstExpr expr>
                                         (.  var prefixes = new Stack<UnaryOperator>(); .)
 =
     {   plus
@@ -702,11 +702,11 @@ PrefixUnaryExpr<out IAstExpression expr>
                                         .)
 .
 
-Primary<out IAstExpression expr>
+Primary<out AstExpr expr>
                                         (.  expr = null;
                                             AstGetSet complex = null; bool declared; .)
 =
-	(.  _pushLexerState(Lexer.Asm); .)	(.	AstBlockExpression blockExpr = new AstBlockExpression(this); .)
+	(.  _pushLexerState(Lexer.Asm); .)	(.	AstBlock blockExpr = new AstBlock(this); .)
     asm lpar { AsmInstruction<blockExpr> } rpar
     (.  _popLexerState(); .)			(.	expr = blockExpr; .)
 |   Constant<out expr>
@@ -732,7 +732,7 @@ Primary<out IAstExpression expr>
     rpar
 .
 
-Constant<out IAstExpression expr>
+Constant<out AstExpr expr>
                                         (.  expr = null; int vi; double vr; bool vb; string vs; .)
 =
         Integer<out vi>                 (.  expr = new AstConstant(this, vi); .)
@@ -742,8 +742,8 @@ Constant<out IAstExpression expr>
     |   Null							(.  expr = new AstConstant(this, null); .)
 .
 
-ListLiteral<out IAstExpression expr>
-                                        (.  IAstExpression iexpr = null; 
+ListLiteral<out AstExpr expr>
+                                        (.  AstExpr iexpr = null; 
                                             AstListLiteral lst = new AstListLiteral(this);
                                             expr = lst;
                                             bool missingExpr = false;
@@ -764,8 +764,8 @@ ListLiteral<out IAstExpression expr>
     rbrack
 .
 
-HashLiteral<out IAstExpression expr>
-										(.	IAstExpression iexpr = null; 
+HashLiteral<out AstExpr expr>
+										(.	AstExpr iexpr = null; 
 											AstHashLiteral hash = new AstHashLiteral(this);
 											expr = hash;
                                             bool missingExpr = false;
@@ -786,7 +786,7 @@ HashLiteral<out IAstExpression expr>
 	rbrace
 .
 
-LoopExpr<out IAstExpression expr>
+LoopExpr<out AstExpr expr>
 										(.	AstBlock dummyBlock = new AstBlock(this);
 										.)
 =
@@ -797,18 +797,18 @@ LoopExpr<out IAstExpression expr>
 .										
 											
 
-ObjectCreation<out IAstExpression expr>
-                                        (.  IAstType type; expr = null;
+ObjectCreation<out AstExpr expr>
+                                        (.  AstTypeExpr type; expr = null;
                                             ArgumentsProxy args; .)
 =
     new TypeExpr<out type>              (.  _fallbackObjectCreation(this, type, out expr, out args); .)
     Arguments<args>
 .
 
-CoroutineCreation<out IAstExpression expr>
+CoroutineCreation<out AstExpr expr>
                                         (.  
                                             AstCreateCoroutine cor = new AstCreateCoroutine(this); 
-                                            IAstExpression iexpr;
+                                            AstExpr iexpr;
                                             expr = cor;
                                         .)
 =
@@ -816,7 +816,7 @@ CoroutineCreation<out IAstExpression expr>
     [ for Arguments<cor.Arguments> ]
 .
 
-LambdaExpression<out IAstExpression expr>
+LambdaExpression<out AstExpr expr>
                                         (.  expr = null;
                                             PFunction func = new PFunction(TargetApplication, generateLocalId());                                             
                                             func.Meta[Application.ImportKey] = target.Function.Meta[Application.ImportKey];
@@ -853,7 +853,7 @@ implementation
                                             {
                                                 try {
                                                     //Emit code for top-level block
-                                                    Ast[func].EmitCode(FunctionTargets[func],true);
+                                                    Ast[func].EmitCode(FunctionTargets[func],true,StackSemantics.Effect);
                                                     FunctionTargets[func].FinishTarget();
                                                 } catch(Exception e) {
                                                     SemErr("Exception during compilation of lambda expression.\n" + e.ToString());
@@ -864,7 +864,7 @@ implementation
                                         .)
 .
 
-LazyExpression<out IAstExpression expr>
+LazyExpression<out AstExpr expr>
                                         (.  expr = null;
                                             PFunction func = new PFunction(TargetApplication, generateLocalId());
                                             func.Meta[Application.ImportKey] = target.Function.Meta[Application.ImportKey];
@@ -897,7 +897,7 @@ lazy
                                             if(errors.count == 0)
                                             {
                                                 try {
-                                                Ast[func].EmitCode(FunctionTargets[func],true);
+                                                Ast[func].EmitCode(FunctionTargets[func],true,StackSemantics.Effect);
                                                 FunctionTargets[func].FinishTarget();
                                                 } catch(Exception e) {
                                                     SemErr("Exception during compilation of lazy expression.\n" + e.ToString());
@@ -920,19 +920,19 @@ ThrowExpression<out AstThrow th>		(.  th = new AstThrow(this); .)
     Expr<out th.Expression>
 .
 
-ExplicitTypeExpr<out IAstType type>     (.  type = null; .)
+ExplicitTypeExpr<out AstTypeExpr type>     (.  type = null; .)
 =
     tilde PrexoniteTypeExpr<out type>
 |   ClrTypeExpr<out type>
 .
 
-TypeExpr<out IAstType type>             (.  type = null; .)
+TypeExpr<out AstTypeExpr type>             (.  type = null; .)
 =
     PrexoniteTypeExpr<out type>
 |   ClrTypeExpr<out type>
 .
 
-ClrTypeExpr<out IAstType type>          
+ClrTypeExpr<out AstTypeExpr type>          
                                         (.  string id; .)
 =
                                         (.  StringBuilder typeId = new StringBuilder(); .)
@@ -947,7 +947,7 @@ ClrTypeExpr<out IAstType type>
                                         .)
 .
 
-PrexoniteTypeExpr<out IAstType type>
+PrexoniteTypeExpr<out AstTypeExpr type>
                                         (.  string id = null; type = null; .)
 =
     ( Id<out id> | null                 (.  id = NullPType.Literal; .)                          
@@ -962,8 +962,8 @@ PrexoniteTypeExpr<out IAstType type>
                                         (.  type = dType; .)
 .
 
-TypeExprElement<. List<IAstExpression> args .>
-                                        (.  IAstExpression expr; IAstType type; .)
+TypeExprElement<. List<AstExpr> args .>
+                                        (.  AstExpr expr; AstTypeExpr type; .)
 =
     Constant<out expr>                  (.  args.Add(expr); .)
 |   ExplicitTypeExpr<out type>          (.  args.Add(type); .)
@@ -1077,7 +1077,7 @@ GlobalVariableDefinition	(.
                                 string id = null; 
                                 List<string> aliases = new List<string>();
                                 string primaryAlias = null;
-                                PVariable vari; 
+                                VariableDeclaration vari; 
                                 SymbolInterpretations type = SymbolInterpretations.GlobalObjectVariable; 
                                 SymbolEntry entry;
                             .)
@@ -1096,12 +1096,11 @@ GlobalVariableDefinition	(.
                                 entry = new SymbolEntry(type,id, null);
 	                            foreach(var alias in aliases)
 	                                Symbols[alias] = entry;
-	                            if(TargetApplication.Variables.ContainsKey(id))
-	                                vari = TargetApplication.Variables[id];
-	                            else
+                                if(!TargetModule.Variables.TryGetVariable(id, out vari))
 	                            {
-	                                vari = new PVariable(id);
-	                                TargetApplication.Variables[id] = vari;
+	                                vari = Modular.VariableDeclaration.Create(id);
+                                    TargetModule.Variables.Add(vari);
+	                                TargetApplication.Variables[id] = new PVariable(vari);
 	                            }
 	                        .)
 	[	lbrack  		    //Meta block for variables
@@ -1117,7 +1116,7 @@ GlobalVariableDefinition	(.
 	[	                    (.  _pushLexerState(Lexer.Local); .)
 	    assign              (.  CompilerTarget lastTarget = target;
                                 target=FunctionTargets[Application.InitializationId];
-                                IAstExpression expr;
+                                AstExpr expr;
                             .)
 		Expr<out expr>
 		                    (.  _popLexerState();
@@ -1493,7 +1492,7 @@ FunctionDefinition<out PFunction func>
                                                 //Apply compiler hooks for all kinds of functions (lazy/coroutine/macro)
 												FunctionTargets[func].ExecuteCompilerHooks();
 												//Emit code for top-level block
-                                                Ast[func].EmitCode(FunctionTargets[func], true);
+                                                Ast[func].EmitCode(FunctionTargets[func], true, StackSemantics.Effect);
                                                 FunctionTargets[func].FinishTarget();
                                                 } catch(Exception e) {
                                                     SemErr("Exception during compilation of function body of " + id + ". " + e);
@@ -1512,7 +1511,7 @@ FunctionDefinition<out PFunction func>
 												    retst.Expression = crcor;
 												    cst.Ast.Add(retst);
 												    //Emit code for top-level block
-												    cst.Ast.EmitCode(cst,true);
+												    cst.Ast.EmitCode(cst,true,StackSemantics.Effect);
 												    cst.FinishTarget();
                                                 } catch(Exception e) {
                                                     SemErr("Exception during compilation of coroutine stub for " + id + ". " + e);
@@ -1527,7 +1526,7 @@ FunctionDefinition<out PFunction func>
 											    func = derStub;
 											    
 											    //Generate code for the stub
-											    IAstExpression retVal;										    
+											    AstExpr retVal;										    
 										        
 										        if(isNested)
 										        {
@@ -1585,7 +1584,7 @@ FunctionDefinition<out PFunction func>
 											    
                                                 try {
 											    //Emit code for stub
-											    cst.Ast.EmitCode(cst,true);
+											    cst.Ast.EmitCode(cst,true,StackSemantics.Effect);
 											    cst.FinishTarget();
                                                 } catch(Exception e) {
                                                     SemErr("Exception during compilation of lazy function stub for " + id + ". " + e);
@@ -1831,7 +1830,7 @@ AppendRightTermination<ref AstGetSet complex>
 										.)
 .
 
-GetSetExtension<IAstExpression subject, out AstGetSet extension>
+GetSetExtension<AstExpr subject, out AstGetSet extension>
                                         (.  extension = null; string id;
 											if(subject == null)
 											{
@@ -1848,7 +1847,7 @@ GetSetExtension<IAstExpression subject, out AstGetSet extension>
     Id<out id>                          (.  extension = new AstGetSetMemberAccess(this, PCall.Get, subject, id); .)
     Arguments<extension.Arguments> 
 |                                       (.  
-                                            IAstExpression expr; 
+                                            AstExpr expr; 
                                             extension = new AstGetSetMemberAccess(this, PCall.Get, subject, ""); 
                                         .)
     lbrack [
@@ -1864,8 +1863,8 @@ GetInitiator<out AstGetSet complex, out bool isDeclaration>
                                             AstGetSetSymbol symbol = null;
                                             AstGetSetStatic staticCall = null;
                                             AstGetSet member = null;
-                                            IAstExpression expr;
-                                            List<IAstExpression> args = new List<IAstExpression>();
+                                            AstExpr expr;
+                                            List<AstExpr> args = new List<AstExpr>();
                                             isDeclaration = false;                                            
                                             string id;
                                             int placeholderIndex = -1;
@@ -2061,7 +2060,7 @@ Function<out AstGetSet function>
 .
 
 StaticCall<out AstGetSetStatic staticCall>
-                                (.  IAstType typeExpr;
+                                (.  AstTypeExpr typeExpr;
                                     string memberId;
                                     staticCall = null;
                                 .)
@@ -2101,9 +2100,9 @@ ExplicitGoTo<AstBlock block>    (.  string id; .)
 .
 
 Assignment<AstGetSet lvalue, out AstNode node>
-                                (.  IAstExpression expr = null;
+                                (.  AstExpr expr = null;
 									BinaryOperator setModifier = BinaryOperator.None;
-									IAstType T;
+									AstTypeExpr T;
 									node = lvalue;
 								.)
 =
@@ -2129,7 +2128,7 @@ Assignment<AstGetSet lvalue, out AstNode node>
 .
 
 Condition<AstBlock block>
-                                (. IAstExpression expr = null; bool isNegative = false; .)
+                                (. AstExpr expr = null; bool isNegative = false; .)
 =
     (   if                      (.  isNegative = false; .)
     |   unless                  (.  isNegative = true; .)
@@ -2236,7 +2235,7 @@ GetCall<out AstGetSet complex>
 
 Return<AstBlock block>          (.  AstReturn ret = null; 
                                     AstExplicitGoTo jump = null; 
-                                    IAstExpression expr = null; 
+                                    AstExpr expr = null; 
                                     AstLoopBlock bl = target.CurrentLoopBlock;
                                 .)
 =
@@ -2306,7 +2305,7 @@ LetBindingStmt<AstBlock block>
 
 LetBinder<AstBlock block>
                                 (.  string id = null;
-                                    IAstExpression thunk;
+                                    AstExpr thunk;
                                 .)
 =
     Id<out id>                  (.  //Declare local "let" variable
@@ -2400,7 +2399,7 @@ Using<AstBlock block>
 
 Arguments<ArgumentsProxy args>
                                 (.  
-									IAstExpression expr;
+									AstExpr expr;
                                     bool missingArg = false;
                                 .)
 =
