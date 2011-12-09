@@ -25,6 +25,7 @@
 //  IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 using System;
+using System.ComponentModel;
 
 namespace Prexonite.Compiler.Ast
 {
@@ -35,6 +36,7 @@ namespace Prexonite.Compiler.Ast
     /// So just use <see cref="AstBlock"/> instead.
     /// </summary>
     [Obsolete("The functionality of AstBlockExpression has been pulled up into AstBlock. Use that class instead.")]
+    [EditorBrowsable(EditorBrowsableState.Never)]
     public sealed class AstBlockExpression : AstBlock
     {
         public AstBlockExpression(string file, int line, int column)

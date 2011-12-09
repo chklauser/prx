@@ -165,53 +165,78 @@ namespace Prexonite.Compiler.Ast
 
         #endregion
 
-        private void _emitEffectCode(CompilerTarget target)
+        private void _emitIncrementDecrementCode(CompilerTarget target, StackSemantics value)
         {
             var symbol = _operand as AstGetSetSymbol;
             var isVariable = symbol != null && symbol.IsObjectVariable;
             var complex = _operand as AstGetSet;
             var isAssignable = complex != null;
+            var isPre = _operator == UnaryOperator.PreDecrement || _operator == UnaryOperator.PreIncrement;
             switch (_operator)
             {
                 case UnaryOperator.PreIncrement:
                 case UnaryOperator.PostIncrement:
                 case UnaryOperator.PreDecrement:
                 case UnaryOperator.PostDecrement:
+                    var isIncrement = 
+                        _operator == UnaryOperator.PostIncrement ||
+                        _operator == UnaryOperator.PreIncrement;
                     if (isVariable) //The easy way
                     {
-                        OpCode opc;
-                        if (_operator == UnaryOperator.PostIncrement ||
-                            _operator == UnaryOperator.PreIncrement)
-                            if (symbol.Implementation.Interpretation == SymbolInterpretations.GlobalObjectVariable)
-                                opc = OpCode.incglob;
+                        var isGlobal = symbol.Implementation.Interpretation == SymbolInterpretations.GlobalObjectVariable;
+                        var sym = symbol.Implementation;
+
+                        if(!isPre && value == StackSemantics.Value)
+                        {
+                            if (isGlobal)
+                                target.EmitLoadGlobal(this, sym.InternalId,
+                                    sym.Module);
                             else
-                                opc = OpCode.incloc;
-                        else if (symbol.Implementation.Interpretation == SymbolInterpretations.GlobalObjectVariable)
-                            opc = OpCode.decglob;
+                                target.EmitLoadLocal(this, sym.InternalId);
+                        }
+
+                        OpCode opc;
+
+                        if (isIncrement)
+                            opc = isGlobal ? OpCode.incglob : OpCode.incloc;
                         else
-                            opc = OpCode.decloc;
-                        if (symbol.Implementation.Module != null)
-                            throw new NotImplementedException(
-                                "Increment/Decremet across module boundaries is not implemented.");
-                        target.Emit(this, opc, symbol.Implementation.InternalId);
+                            opc = isGlobal ? OpCode.decglob : OpCode.decloc;
+
+                        target.Emit(this, opc, symbol.Implementation.InternalId, target.ToInternalModule(symbol.Implementation.Module));
+                        
+                        if (isPre && value == StackSemantics.Value)
+                        {
+                            if (isGlobal)
+                                target.EmitLoadGlobal(this, sym.InternalId,
+                                    sym.Module);
+                            else
+                                target.EmitLoadLocal(this, sym.InternalId);
+                        }
                     }
                     else if (isAssignable)
                     {
                         //The get/set fallback
-                        complex = complex.GetCopy();
+                        var assignPrototype = complex.GetCopy();
                         var assignment = new AstModifyingAssignment(
-                            complex.File, complex.Line, complex.Column, _operator ==
-                                UnaryOperator.PostIncrement ||
-                                    _operator == UnaryOperator.PreIncrement
+                            assignPrototype.File, assignPrototype.Line, assignPrototype.Column, isIncrement
                                 ? BinaryOperator.Addition
-                                : BinaryOperator.Subtraction, complex, Implementation);
-                        if (complex.Call == PCall.Get)
-                            complex.Arguments.Add(new AstConstant(File, Line, Column, 1));
+                                : BinaryOperator.Subtraction, assignPrototype, Implementation);
+                        if (assignPrototype.Call == PCall.Get)
+                            assignPrototype.Arguments.Add(new AstConstant(File, Line, Column, 1));
                         else
-                            complex.Arguments[complex.Arguments.Count - 1] =
+                            assignPrototype.Arguments[assignPrototype.Arguments.Count - 1] =
                                 new AstConstant(File, Line, Column, 1);
-                        complex.Call = PCall.Set;
-                        assignment.EmitValueCode(target);
+                        assignPrototype.Call = PCall.Set;
+
+                        if (!isPre)
+                        {
+                            complex.EmitValueCode(target);
+                            assignment.EmitEffectCode(target);
+                        }
+                        else
+                        {
+                            assignment.EmitValueCode(target);
+                        }
                     }
                     else
                         throw new PrexoniteException(
@@ -237,7 +262,7 @@ namespace Prexonite.Compiler.Ast
                     _emitValueCode(target);
                     break;
                 case StackSemantics.Effect:
-                    _emitEffectCode(target);
+                    _emitIncrementDecrementCode(target, stackSemantics);
                     break;
                 default:
                     throw new ArgumentOutOfRangeException("stackSemantics");
@@ -257,13 +282,11 @@ namespace Prexonite.Compiler.Ast
                     break;
                 case UnaryOperator.PreDecrement:
                 case UnaryOperator.PreIncrement:
-                    EmitEffectCode(target);
-                    _operand.EmitValueCode(target);
+                    _emitIncrementDecrementCode(target, StackSemantics.Value);
                     break;
                 case UnaryOperator.PostDecrement:
                 case UnaryOperator.PostIncrement:
-                    _operand.EmitValueCode(target);
-                    EmitEffectCode(target);
+                    _emitIncrementDecrementCode(target, StackSemantics.Value);
                     break;
             }
         }

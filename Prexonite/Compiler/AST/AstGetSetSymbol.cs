@@ -66,9 +66,6 @@ namespace Prexonite.Compiler.Ast
 
         protected override void EmitGetCode(CompilerTarget target, StackSemantics stackSemantics)
         {
-            if (Implementation.Module != null)
-                throw new NotImplementedException(
-                    "Compiling cross-module calls is not implemented yet.");
             var justEffect = stackSemantics == StackSemantics.Effect;
             switch (Implementation.Interpretation)
             {
@@ -76,11 +73,11 @@ namespace Prexonite.Compiler.Ast
                     target.EmitCommandCall(this, Arguments.Count, Implementation.InternalId, justEffect);
                     break;
                 case SymbolInterpretations.Function:
-                    target.EmitFunctionCall(this, Arguments.Count, Implementation.InternalId, justEffect);
+                    target.EmitFunctionCall(this, Arguments.Count, Implementation.InternalId, Implementation.Module, justEffect);
                     break;
                 case SymbolInterpretations.GlobalObjectVariable:
                     if (!justEffect)
-                        target.EmitLoadGlobal(this, Implementation.InternalId);
+                        target.EmitLoadGlobal(this, Implementation.InternalId, Implementation.Module);
                     break;
                 case SymbolInterpretations.LocalObjectVariable:
                     if (!justEffect)
@@ -92,7 +89,7 @@ namespace Prexonite.Compiler.Ast
                     break;
                 case SymbolInterpretations.GlobalReferenceVariable:
                     target.Emit(this,
-                        Instruction.CreateGlobalIndirectCall(Arguments.Count, Implementation.InternalId, justEffect));
+                        Instruction.CreateGlobalIndirectCall(Arguments.Count, Implementation.InternalId, target.ToInternalModule(Implementation.Module), justEffect));
                     break;
                 default:
                     throw new PrexoniteException(
@@ -105,9 +102,6 @@ namespace Prexonite.Compiler.Ast
         protected override void EmitSetCode(CompilerTarget target)
         {
             const bool justEffect = true;
-            if (Implementation.Module != null)
-                throw new NotImplementedException(
-                    "Compiling cross-module calls is not implemented yet.");
 
             switch (Implementation.Interpretation)
             {
@@ -115,10 +109,10 @@ namespace Prexonite.Compiler.Ast
                     target.EmitCommandCall(this, Arguments.Count, Implementation.InternalId, justEffect);
                     break;
                 case SymbolInterpretations.Function:
-                    target.EmitFunctionCall(this, Arguments.Count, Implementation.InternalId, justEffect);
+                    target.EmitFunctionCall(this, Arguments.Count, Implementation.InternalId, Implementation.Module, justEffect);
                     break;
                 case SymbolInterpretations.GlobalObjectVariable:
-                    target.EmitStoreGlobal(this, Implementation.InternalId);
+                    target.EmitStoreGlobal(this, Implementation.InternalId, Implementation.Module);
                     break;
                 case SymbolInterpretations.LocalReferenceVariable:
                     target.Emit(this,
@@ -126,7 +120,7 @@ namespace Prexonite.Compiler.Ast
                     break;
                 case SymbolInterpretations.GlobalReferenceVariable:
                     target.Emit(this,
-                        Instruction.CreateGlobalIndirectCall(Arguments.Count, Implementation.InternalId, justEffect));
+                        Instruction.CreateGlobalIndirectCall(Arguments.Count, Implementation.InternalId, target.ToInternalModule(Implementation.Module), justEffect));
                     break;
                 case SymbolInterpretations.LocalObjectVariable:
                     target.EmitStoreLocal(this, Implementation.InternalId);

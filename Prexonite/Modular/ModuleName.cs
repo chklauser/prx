@@ -85,7 +85,7 @@ namespace Prexonite.Modular
         {
             if (ReferenceEquals(null, other)) return false;
             if (ReferenceEquals(this, other)) return true;
-            return Equals(other._id, _id) && Equals(other._version, _version);
+            return Engine.StringsAreEqual(other._id, _id) && Equals(other._version, _version);
         }
 
         /// <summary>

@@ -243,6 +243,11 @@ namespace Prexonite
             return ins;
         }
 
+        public static Instruction CreateConstant(ModuleName moduleName)
+        {
+            return new Instruction(OpCode.ldr_mod, 0, null, moduleName);
+        }
+
         public static Instruction CreateNull()
         {
             return new Instruction(OpCode.ldc_null);
@@ -318,14 +323,14 @@ namespace Prexonite
             return new Instruction(OpCode.sset, arguments, callExpr);
         }
 
-        public static Instruction CreateFunctionCall(int arguments, string id, bool justEffect)
+        public static Instruction CreateFunctionCall(int arguments, string id, bool justEffect, ModuleName moduleName)
         {
-            return new Instruction(OpCode.func, arguments, id, justEffect);
+            return new Instruction(OpCode.func, arguments, id, justEffect, moduleName);
         }
 
-        public static Instruction CreateFunctionCall(int arguments, string id)
+        public static Instruction CreateFunctionCall(int arguments, string id, ModuleName moduleName)
         {
-            return CreateFunctionCall(arguments, id, false);
+            return CreateFunctionCall(arguments, id, false, moduleName);
         }
 
         public static Instruction CreateCommandCall(int arguments, string id)
@@ -348,15 +353,14 @@ namespace Prexonite
             return CreateLocalIndirectCall(arguments, id, false);
         }
 
-        public static Instruction CreateGlobalIndirectCall(
-            int arguments, string id, bool justEffect)
+        public static Instruction CreateGlobalIndirectCall(int arguments, string id, ModuleName moduleName, bool justEffect)
         {
-            return new Instruction(OpCode.indglob, arguments, id, justEffect);
+            return new Instruction(OpCode.indglob, arguments, id, justEffect, moduleName);
         }
 
-        public static Instruction CreateGlobalIndirectCall(int arguments, string id)
+        public static Instruction CreateGlobalIndirectCall(int arguments, string id, ModuleName moduleName)
         {
-            return CreateGlobalIndirectCall(arguments, id, false);
+            return CreateGlobalIndirectCall(arguments, id, moduleName, false);
         }
 
         public static Instruction CreateIndirectCall(int arguments)
@@ -606,6 +610,11 @@ namespace Prexonite
                     buffer.Append("deci ");
                     buffer.Append(Arguments);
                     break;
+                case OpCode.ldr_mod:
+                    buffer.Append("ldr.mod/");
+                    Debug.Assert(escModuleName != null);
+                    buffer.Append(escModuleName);
+                    break;
                 default:
                     if (JustEffect)
                         buffer.Append("@");
@@ -825,7 +834,6 @@ namespace Prexonite
                 case OpCode.ldc_string:
                 case OpCode.ldr_cmd:
                 case OpCode.ldr_loc:
-                case OpCode.ldr_glob:
                 case OpCode.ldr_type:
                 case OpCode.ldloc:
                 case OpCode.stloc:
@@ -836,6 +844,7 @@ namespace Prexonite
                 case OpCode.incglob:
                 case OpCode.decglob:
                 case OpCode.ldr_func:
+                case OpCode.ldr_glob:
                 case OpCode.ldglob:
                 case OpCode.stglob:
                 case OpCode.newclo:
@@ -861,6 +870,9 @@ namespace Prexonite
                             Engine.StringsAreEqual(Id, other.Id) &&
                                 JustEffect == other.JustEffect &&
                                     Equals(ModuleName, other.ModuleName);
+                //MODULE INSTRUCTIONS
+                case OpCode.ldr_mod:
+                    return Equals(ModuleName, other.ModuleName);
                 //ARG INSTRUCTIONS
                 case OpCode.indarg:
                 case OpCode.newcor:
@@ -975,6 +987,7 @@ namespace Prexonite
                     case OpCode.ldr_glob:
                     case OpCode.ldr_func:
                     case OpCode.ldr_cmd:
+                    case OpCode.ldr_mod:
                     case OpCode.ldglob:
                     case OpCode.ldr_app:
                     case OpCode.ldloci:
@@ -1096,7 +1109,7 @@ namespace Prexonite
         ldc_string, //ldc.string    loads a string value
 
         /// <summary>
-        ///     Loads the <see cref = "PType.Null" /> value onto the stack. Stack: 0->
+        ///     Loads the <see cref = "PType.Null" /> value onto the stack. Stack: 0->1.
         /// </summary>
         ldc_null, //ldc.null      loads a null value
 
@@ -1109,6 +1122,7 @@ namespace Prexonite
         ldr_app, //ldr.app       loads a reference to the current application
         ldr_eng, //ldr.eng       loads a reference to the current engine
         ldr_type, //ldr.type      loads a reference to a type (from a type expression)
+        ldr_mod, //ldr.mod      loads a module name 
         // Variables (6)
         //  - local
         ldloc, //ldloc         loads the value of a local variable by name
@@ -1197,7 +1211,7 @@ namespace Prexonite
         pop, //pop           Pops x values from the stack
         dup, //dup           duplicates the top value x times
 
-        rot //rot           rotates the x top values y times
+        rot, //rot           rotates the x top values y times
     }
 
     // ReSharper restore InconsistentNaming

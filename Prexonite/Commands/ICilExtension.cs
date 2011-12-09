@@ -468,13 +468,16 @@ namespace Prexonite.Commands
                 case CompileTimeInterpretation.GlobalVariableReference:
                     if (!TryGetGlobalVariableReference(out id))
                         goto default;
-                    state.EmitLoadGlobalRefAsPValue(id);
-                    break;
+                    throw new NotImplementedException(
+                        "Global variable reference value are not implemented yet.");
+                    //state.EmitLoadGlobalRefAsPValue(id, TODO);
+                    //break;
                 case CompileTimeInterpretation.FunctionReference:
                     if (!TryGetFunctionReference(out id))
                         goto default;
-                    state.EmitLoadFuncRefAsPValue(id);
-                    break;
+                    throw new NotImplementedException("Function references are not implemented yet.");
+                    //state.EmitLoadFuncRefAsPValue(id, TODO);
+                    //break;
                 case CompileTimeInterpretation.CommandReference:
                     if (!TryGetCommandReference(out id))
                         goto default;

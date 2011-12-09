@@ -440,14 +440,7 @@ namespace Prexonite.Compiler
             if(entry.Interpretation != SymbolInterpretations.Function)
                 return false;
 
-            if(entry.Module == null)
-            {
-                return TargetApplication.Functions.TryGetValue(entry.InternalId, out func);
-            }
-            else
-            {
-                throw new NotImplementedException("Module lookup not implemented.");
-            }
+            return TargetApplication.TryGetFunction(entry.InternalId, entry.Module,out func);
         }
 
         [DebuggerStepThrough]

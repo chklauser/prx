@@ -48,14 +48,14 @@ namespace PrexoniteTests.Tests.Configurations
 
         public void SetUpLoader()
         {
-            Application = new Application(GetType().Name);
+            Application = new Application(ApplicationName);
             Engine = new Engine();
             Loader = new Loader(Engine, Application);
             Root = new NullContext(Engine, Application, new string[0]);
 
             var slnPath = Environment.CurrentDirectory;
             while (Directory.Exists(slnPath) && !File.Exists(Path.Combine(slnPath, "Prexonite.sln")))
-                slnPath = Path.Combine(slnPath, @"..\");
+                slnPath = Path.Combine(slnPath, @".." + Path.DirectorySeparatorChar);
 
             if (Directory.Exists(slnPath))
             {
@@ -63,14 +63,20 @@ namespace PrexoniteTests.Tests.Configurations
                     Path.GetFullPath(Path.Combine(slnPath, @"PrexoniteTests\psr-tests"));
                 Console.WriteLine("inferred psr-tests path: " + psrTestsPath, "Engine.Path");
                 Engine.Paths.Add(psrTestsPath);
+
                 var prxPath = Path.GetFullPath(Path.Combine(slnPath, @"Prx"));
                 Console.WriteLine("inferred prx path: " + prxPath, "Engine.Path");
                 Engine.Paths.Add(prxPath);
             }
             else
             {
-                Console.WriteLine("CANNOT INFER psr-tests PATH: " + slnPath, "Engine.Path");
+                Console.WriteLine("CANNOT INFER solution PATH: " + slnPath, "Engine.Path");
             }
+        }
+
+        public string ApplicationName
+        {
+            get { return GetType().Name; }
         }
 
         protected void LoadUnitTestingFramework()
@@ -99,7 +105,6 @@ namespace PrexoniteTests.Tests.Configurations
                 Console.WriteLine("Warning: {0}", warning);
             foreach (var info in Loader.Infos)
                 Console.WriteLine("Info: {0}", info);
-
 
             Assert.That(Loader.ErrorCount, Is.EqualTo(0), "Errors during compilation");
 

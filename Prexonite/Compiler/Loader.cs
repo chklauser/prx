@@ -1242,11 +1242,16 @@ namespace Prexonite.Compiler
             foreach (var kvp in entries)
             {
                 var sym = kvp.Value;
-                if (sym.Module != null)
-                    throw new NotImplementedException(
-                        "Storing cross-module symbol entries is not implemented.");
 
                 writer.Write(StringPType.ToIdLiteral(sym.InternalId));
+
+                if (sym.Module != null)
+                {
+                    writer.Write("/{0}/{1}", StringPType.ToIdOrLiteral(sym.Module.Id), 
+                        sym.Module.Version);
+                }
+
+                
                 if (!Engine.StringsAreEqual(sym.InternalId, kvp.Key))
                 {
                     writer.Write(" as ");

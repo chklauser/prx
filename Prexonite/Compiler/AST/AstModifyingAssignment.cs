@@ -25,6 +25,7 @@
 //  IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 using System;
+using System.Diagnostics;
 using Prexonite.Types;
 
 namespace Prexonite.Compiler.Ast
@@ -36,8 +37,16 @@ namespace Prexonite.Compiler.Ast
 
         public SymbolEntry Implementation { get; set; }
 
-        public AstModifyingAssignment(string file, int line, int column, BinaryOperator setModifier,
-            AstGetSet complex, SymbolEntry implementation)
+        /// <summary>
+        /// Creates a new instance of <see cref="AstModifyingAssignment"/>.
+        /// </summary>
+        /// <param name="file">The source file that contains the code that is the basis for this AST node.</param>
+        /// <param name="line">The line in the source file that contains the code that is the basis for this AST node.</param>
+        /// <param name="column">The offset at which the the code that is the basis for this AST node begins.</param>
+        /// <param name="setModifier">The operator used in the modifying assignment.</param>
+        /// <param name="complex">The left-hand side of the modifying assignment.</param>
+        /// <param name="implementation">The implementation for the operator (only for arithmetic operators)</param>
+        public AstModifyingAssignment(string file, int line, int column, BinaryOperator setModifier, AstGetSet complex, SymbolEntry implementation)
             : base(file, line, column)
         {
             _setModifier = setModifier;
@@ -212,18 +221,21 @@ namespace Prexonite.Compiler.Ast
                         //Note that code generator for this original node is completely bypassed.
                         var assignment = _modifyingAssignment.GetCopy();
                         var getVersion = _modifyingAssignment.GetCopy();
+                        Debug.Assert(getVersion.Call == PCall.Set,"Assuming that _modifyingAssignment is a Set call.");
                         getVersion.Call = PCall.Get;
                         getVersion.Arguments.RemoveAt(getVersion.Arguments.Count - 1);
-                        assignment.Arguments[assignment.Arguments.Count - 1] =
-                            new AstBinaryOperator(
-                                File,
-                                Line,
-                                Column,
-                                getVersion,
-                                _setModifier,
-                                _modifyingAssignment.Arguments[
-                                    _modifyingAssignment.Arguments.Count - 1],
-                                Implementation);
+
+                        var modification = new AstBinaryOperator(
+                            File,
+                            Line,
+                            Column,
+                            getVersion,
+                            _setModifier,
+                            _modifyingAssignment.Arguments[
+                                _modifyingAssignment.Arguments.Count - 1],
+                            Implementation);
+
+                        assignment.Arguments[assignment.Arguments.Count - 1] = modification;
                         
                         assignment.EmitCode(target, stackSemantics);
                     }

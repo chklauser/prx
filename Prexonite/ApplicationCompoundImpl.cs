@@ -16,6 +16,12 @@ namespace Prexonite
         }
 
         private readonly KeyedCollection<ModuleName,Application> _table = new AppTable();
+        private readonly IModuleNameCache _moduleNameCache = Modular.ModuleNameCache.Create();
+
+        protected override IModuleNameCache ModuleNameCache
+        {
+            get { return _moduleNameCache; }
+        }
 
         public override IEnumerator<Application> GetEnumerator()
         {

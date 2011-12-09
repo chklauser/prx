@@ -25,6 +25,7 @@
 //  IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 using System;
+using Prexonite.Modular;
 using Prexonite.Types;
 
 namespace Prexonite.Compiler.Ast
@@ -97,9 +98,19 @@ namespace Prexonite.Compiler.Ast
                         target.EmitConstant(this, (string) Constant);
                         break;
                     default:
-                        throw new PrexoniteException(
-                            "Prexonite does not support constants of type " +
-                                Constant.GetType().Name + ".");
+                        var moduleName = Constant as ModuleName;
+
+                        if (moduleName != null)
+                        {
+                            target.EmitConstant(Position, moduleName);
+                        }
+                        else
+                        {
+                            throw new PrexoniteException(
+                                "Prexonite does not support constants of type " +
+                                    Constant.GetType().Name + ".");
+                        }
+                        break;
                 }
         }
 

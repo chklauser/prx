@@ -3,9 +3,24 @@ under_test @"psr\ast.pxs";
  
 function compiler_is_loaded[test]
 {
-    var mt = asm(ldr.app).Meta;
-    assert(mt["compiler_loaded"].Switch, "After loading psr\\ast.pxs, the application meta table should have 'compiler_loaded' enabled.");
-    assert(mt["psr_ast_pxs_open"].Switch, "The meta switch 'psr_ast_pxs_open' should be set.");
+    var found = null;
+    foreach(var app in asm(ldr.app).Compound)
+    {
+        var mt = app.Meta;
+        if(mt["compiler_loaded"].Switch){
+            if(found is Null)
+            {
+                assert(mt["psr_ast_pxs_open"].Switch, "The meta switch 'psr_ast_pxs_open' should be set.");
+                found = app.Module.Name;
+            }
+            else
+            {
+                assert(false,"Found multiple modules that have ast.pxs loaded: $found and $(app.Module.Name)");
+            }
+        }
+    }
+    
+    assert(found is not Null, "After loading psr\\ast.pxs, one module in the compound should have 'compiler_loaded' enabled.");
 } 
 
 function test_ast_withpos_null[test]

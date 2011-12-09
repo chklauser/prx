@@ -145,6 +145,21 @@ namespace Prexonite
 
         #region Functions
 
+        public bool TryGetFunction(string id, ModuleName moduleName, out PFunction func)
+        {
+            var app = this;
+            if (moduleName != null && moduleName != Module.Name)
+            {
+                if (!Compound.TryGetApplication(moduleName, out app))
+                {
+                    func = null;
+                    return false;
+                }
+            }
+
+            return app.Functions.TryGetValue(id, out func);
+        }
+
         /// <summary>
         ///     Provides access to the table of registered functions.
         /// </summary>
@@ -316,7 +331,7 @@ namespace Prexonite
                         //Find offset at which to continue initialization. 
                         fctx.Pointer = _initializationOffset;
 #if Verbose
-                        Console.WriteLine("#Initialization for generation {0} (offset = {1}) required by {2}.", generation, offset, context);
+                        Console.WriteLine("#Initialization (offset = {0}).", _initializationOffset);
 #endif
 
                         //Execute the part of the initialize function that is missing
@@ -551,6 +566,11 @@ namespace Prexonite
             get { return _compound != null && _compound.Count > 1; }
         }
 
+        public IModuleNameCache CachedModuleNames
+        {
+            get { return Compound; }
+        }
+
         public static void Link(Application application1, Application application2)
         {
             if (application1 == null)
@@ -606,17 +626,22 @@ namespace Prexonite
             if(IsLinked)
             {
                 Debug.Assert(oldCompound != null);
+                oldCompound.LinkModuleNameCache(targetCompound);
                 foreach (var linkedApp in oldCompound)
                 {
                     linkedApp._compound = targetCompound;
                     targetCompound._Link(linkedApp);
                 }
+
                 oldCompound._Clear();
             }
             else
             {
-                if(oldCompound != null)
+                if (oldCompound != null)
+                {
+                    oldCompound.LinkModuleNameCache(targetCompound);
                     oldCompound._Clear();
+                }
                 _compound = targetCompound;
                 targetCompound._Link(this);
             }
@@ -640,6 +665,51 @@ namespace Prexonite
         private class SingletonCompound : ApplicationCompound
         {
             private Application _application;
+            private IModuleNameCache _cache;
+
+            protected override IModuleNameCache ModuleNameCache
+            {
+                get { return _cache ?? (_cache = Modular.ModuleNameCache.Create()); }
+            }
+
+            public override ModuleName CreateModuleName(string id, Version version)
+            {
+                if (String.IsNullOrEmpty(id))
+                    throw new ArgumentException("The module identifier is null or empty.", "id");
+                if (version == null)
+                    throw new ArgumentNullException("version");
+
+                ModuleName m;
+                if (_application != null &&
+                    Engine.StringsAreEqual((m = _application.Module.Name).Id, id) &&
+                        Equals(m.Version, version))
+                    return m;
+                else
+                    return base.CreateModuleName(id, version);
+            }
+
+            public override void LinkModuleNameCache(IModuleNameCache cache)
+            {
+                if (cache == null)
+                    throw new ArgumentNullException("cache");
+                
+                if (_cache == null)
+                    _cache = cache;
+                else
+                    base.LinkModuleNameCache(cache);
+            }
+
+            public override ModuleName GetCachedModuleName(ModuleName name)
+            {
+                if (name == null)
+                    throw new ArgumentNullException("name");
+                
+                ModuleName m;
+                if (_application != null && (m = _application.Module.Name).Equals(name))
+                    return m;
+                else
+                    return base.GetCachedModuleName(name);
+            }
 
             public SingletonCompound(Application application)
             {

@@ -1880,7 +1880,7 @@ function main()[is volatile;]
             block.EmitEffectCode(ct);
 
             var sourcePosition = new SourcePosition("file", -1, -2);
-            ct.EmitLoadGlobal(sourcePosition, "s");
+            ct.EmitLoadGlobal(sourcePosition, "s", null);
             ct.Emit(sourcePosition, OpCode.ret_value);
 
             if (CompileToCil)

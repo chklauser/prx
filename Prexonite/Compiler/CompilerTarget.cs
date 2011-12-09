@@ -39,6 +39,7 @@ using System.Linq;
 using Prexonite.Compiler.Ast;
 using Prexonite.Compiler.Macro;
 using Prexonite.Internal;
+using Prexonite.Modular;
 using Prexonite.Types;
 using NoDebug = System.Diagnostics.DebuggerNonUserCodeAttribute;
 
@@ -944,11 +945,28 @@ namespace Prexonite.Compiler
             Emit(position, new Instruction(code, arguments, id));
         }
 
+        [DebuggerStepThrough]
+        public void Emit(ISourcePosition position, OpCode code, string id, ModuleName modueName)
+        {
+            Emit(position, code, 0, id, modueName);
+        }
+
+        [DebuggerStepThrough]
+        public void Emit(ISourcePosition position, OpCode code, int arguments, string id, ModuleName modueName)
+        {
+            Emit(position, new Instruction(code,arguments,id,modueName));
+        }
+
         #endregion //Low Level
 
         #region High Level
 
         #region Constants
+
+        public void EmitConstant(ISourcePosition position, ModuleName moduleName)
+        {
+            Emit(position, Instruction.CreateConstant(moduleName));
+        }
 
         public void EmitConstant(ISourcePosition position, string value)
         {
@@ -998,13 +1016,17 @@ namespace Prexonite.Compiler
             Emit(position, Instruction.CreateStoreLocal(id));
         }
 
-        public void EmitLoadGlobal(ISourcePosition position, string id)
+        public void EmitLoadGlobal(ISourcePosition position, string id, ModuleName moduleName)
         {
+            if (moduleName == Loader.ParentApplication.Module.Name)
+                moduleName = null;
             Emit(position, Instruction.CreateLoadGlobal(id));
         }
 
-        public void EmitStoreGlobal(ISourcePosition position, string id)
+        public void EmitStoreGlobal(ISourcePosition position, string id, ModuleName moduleName)
         {
+            if (moduleName == Loader.ParentApplication.Module.Name)
+                moduleName = null;
             Emit(position, Instruction.CreateStoreGlobal(id));
         }
 
@@ -1086,15 +1108,17 @@ namespace Prexonite.Compiler
         #region Functions/Commands
 
         [DebuggerStepThrough]
-        public void EmitFunctionCall(ISourcePosition position, int args, string id)
+        public void EmitFunctionCall(ISourcePosition position, int args, string id, ModuleName moduleName)
         {
-            EmitFunctionCall(position, args, id, false);
+            EmitFunctionCall(position, args, id, moduleName, false);
         }
 
         [DebuggerStepThrough]
-        public void EmitFunctionCall(ISourcePosition position, int args, string id, bool justEffect)
+        public void EmitFunctionCall(ISourcePosition position, int args, string id, ModuleName moduleName, bool justEffect)
         {
-            Emit(position, Instruction.CreateFunctionCall(args, id, justEffect));
+            if(moduleName == Loader.ParentApplication.Module.Name)
+                moduleName = null;
+            Emit(position, Instruction.CreateFunctionCall(args, id, justEffect, moduleName));
         }
 
         [DebuggerStepThrough]
@@ -1761,6 +1785,14 @@ namespace Prexonite.Compiler
             return
                 Function.Id + "\\" + prefix +
                     (_nestedIdCounter++);
+        }
+
+        public ModuleName ToInternalModule(ModuleName moduleName)
+        {
+            if (moduleName == Function.ParentApplication.Module.Name)
+                return null;
+            else
+                return moduleName;
         }
     }
 }

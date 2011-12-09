@@ -26,81 +26,166 @@
 
 using System;
 using System.Collections.Generic;
-using System.Diagnostics;
-using System.Linq;
+using System.Threading;
 using Prexonite;
+using Prexonite.Helper;
 
 namespace Prexonite.Modular
 {
-    public sealed class ModuleNameCache
+    public interface IModuleNameCache : IObjectCache<ModuleName>
     {
-        private readonly LinkedList<ModuleName> _accessOrder = new LinkedList<ModuleName>();
+        void Link(IModuleNameCache cache);
+        ModuleName Create(string id, Version version);
+        ModuleNameCache ToModuleNameCache();
+    }
 
-        public int Capacity { get; set; }
-
-        public ModuleNameCache() : this(50)
+    public abstract class ModuleNameCache : IModuleNameCache
+    {
+        private ModuleNameCache()
         {
         }
 
-        public ModuleNameCache(int capacity)
+        public static ModuleNameCache Create(int capacity = 100)
         {
-            if (capacity <= 0)
-                throw new ArgumentException("Capacity must be strictly positive.", "capacity");
-
-            Capacity = capacity;
+            return new Impl(capacity);
         }
 
-        /// <summary>
-        /// Also acts as a synch root.
-        /// </summary>
-        private readonly Dictionary<ModuleName, LinkedListNode<ModuleName>> _pointerTable =
-            new Dictionary<ModuleName, LinkedListNode<ModuleName>>();
+        public abstract ModuleName GetCached(ModuleName name);
 
-
-        public ModuleName GetCached(ModuleName name)
-        {
-            lock (_pointerTable)
-            {
-                LinkedListNode<ModuleName> node;
-                if (_pointerTable.TryGetValue(name, out node))
-                {
-                    _accessOrder.Remove(node);
-                    _accessOrder.AddFirst(node);
-                    return node.Value;
-                }
-
-                _insert(name);
-            }
-            return name;
-        }
-
-        private void _insert(ModuleName name)
-        {
-            if (_accessOrder.Count > Capacity*2)
-                _truncate();
-            var node = _accessOrder.AddFirst(name);
-            _pointerTable.Add(name,node);
-        }
-
-        private void _truncate()
-        {
-            Debug.Assert(_accessOrder.Count >= Capacity,"Access order linked list of module name cache should be truncated but has less than $Capacity entries.");
-            
-            var buf = new ModuleName[Capacity];
-            var i = 0;
-            foreach (var n in _accessOrder.Take(Capacity))
-                buf[i++] = n;
-
-            _accessOrder.Clear();
-            _accessOrder.AddRange(buf);
-            _pointerTable.Clear();
-            foreach (var node in _accessOrder.ToNodeSequence())
-                _pointerTable.Add(node.Value, node);
-        }
+        public abstract void Link(IModuleNameCache cache);
 
         public ModuleName Create(string id, Version version)
         {
             return GetCached(new ModuleName(id, version));
+        }
+
+        public ModuleNameCache ToModuleNameCache()
+        {
+            return this;
+        }
+
+        private class Cache : LastAccessCache<ModuleName>
+        {
+            public Cache(int capacity) : base(capacity)
+            {
+            }
+
+            public new IEnumerable<ModuleName> Contents()
+            {
+                return base.Contents();
+            }
+
+            public new int Count
+            {
+                get { return base.Count; }
+            }
+        }
+
+        private class Impl : ModuleNameCache
+        {
+            private Cache _cache;
+
+            public Impl(int capacity)
+            {
+                _cache = new Cache(capacity);
+            }
+
+            public override ModuleName GetCached(ModuleName name)
+            {
+                return _cache.GetCached(name);
+            }
+
+            public override void Link(IModuleNameCache cache)
+            {
+                if (cache == null)
+                    throw new ArgumentNullException("cache");
+                
+                Merge(this, (Impl) cache.ToModuleNameCache());
+            }
+
+            public static void Merge(Impl left, Impl right)
+            {
+                while (true)
+                {
+                    var leftCache = left._cache;
+                    var rightCache = right._cache;
+                    const int moveThreshold = 15;
+                    if (leftCache.Count <= (moveThreshold*rightCache.Capacity)/100)
+                    {
+                        foreach (var moduleName in leftCache.Contents())
+                            rightCache.GetCached(moduleName);
+                        if(_trySwap(left, leftCache, rightCache))
+                            break;
+                    }
+                    else if (rightCache.Count <= (moveThreshold*leftCache.Capacity)/100)
+                    {
+                        foreach (var moduleName in rightCache.Contents())
+                            leftCache.GetCached(moduleName);
+                        if(_trySwap(right,rightCache,leftCache))
+                            break;
+                    }
+                    else
+                    {
+                        FullMerge(left, right);
+                        break;
+                    }
+                }
+            }
+
+            private static bool _trySwap(Impl victim, Cache victimCache, Cache targetCache)
+            {
+                return ReferenceEquals(Interlocked.CompareExchange(
+                    ref victim._cache, targetCache, victimCache),victimCache);
+            }
+
+            public static void FullMerge(Impl left, Impl right)
+            {
+                
+                var target = left; // a truly random selection
+                var victim = right;
+                
+                while(true)
+                {
+                    var targetCache = target._cache;
+                    var victimCache = victim._cache;
+                    var ls = targetCache.Contents();
+                    var rs = victimCache.Contents();
+
+                    using (var li = ls.GetEnumerator())
+                    using (var ri = rs.GetEnumerator())
+                    {
+                        bool hasLeft, hasRight;
+                        //iterate in-step
+                        while (true)
+                        {
+                            hasLeft = li.MoveNext();
+                            hasRight = ri.MoveNext();
+
+                            if (!hasLeft || !hasRight)
+                                break;
+
+                            targetCache.GetCached(li.Current);
+                            targetCache.GetCached(ri.Current);
+                        }
+
+                        //since we check the conditions at the same time, one might
+                        // have triggered the creation of a value
+                        if (hasLeft)
+                            targetCache.GetCached(li.Current);
+                        if (hasRight)
+                            targetCache.GetCached(ri.Current);
+
+                        //Add the rest of the longer stream (only one of the two loops will ever run)
+                        while (li.MoveNext())
+                            targetCache.GetCached(li.Current);
+                        while (ri.MoveNext())
+                            targetCache.GetCached(ri.Current);
+                    }
+
+                    if(_trySwap(victim,victimCache,targetCache))
+                        break;
+                }
+            }
         }
     }
 }

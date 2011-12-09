@@ -35,6 +35,7 @@ using Prexonite.Commands;
 using Prexonite.Commands.Core;
 using Prexonite.Modular;
 using Prexonite.Types;
+using Debug = System.Diagnostics.Debug;
 using NoDebug = System.Diagnostics.DebuggerNonUserCodeAttribute;
 
 #endregion
@@ -489,6 +490,11 @@ namespace Prexonite
                             ins.GenericArgument = t;
                         }
                         Push(CreateNativePValue(t));
+                        break;
+
+                    case OpCode.ldr_mod:
+                        Debug.Assert(moduleName != null);
+                        Push(CreateNativePValue(moduleName));
                         break;
 
                         #endregion //LOAD REFERENCE
@@ -988,7 +994,7 @@ namespace Prexonite
 #endif
 
 #if Verbose
-                    Console.Write("\n#PSH: " + id + "(");
+                    Console.Write("\n#PSH: {0}/{1},{2}(", id, ParentApplication.Module.Name.Id, ParentApplication.Module.Name.Version);
                     foreach (PValue arg in argv)
                         Console.Write(_toDebug(arg) + ", ");
                     Console.WriteLine(")");

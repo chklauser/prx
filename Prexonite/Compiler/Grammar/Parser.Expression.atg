@@ -418,7 +418,9 @@ implementation
                                                 }
                                             }
                                             
-                                            expr = new AstCreateClosure(this, func.Id);                                         
+                                            expr = new AstCreateClosure(this, 
+                                                new SymbolEntry(SymbolInterpretations.Function, func.Id, 
+                                                func.ParentApplication.Module.Name));                                         
                                         .)
 .
 
@@ -463,7 +465,9 @@ lazy
                                             }
                                             
                                             //Construct expr (appears in the place of lazy expression)
-                                            var clo = new AstCreateClosure(this, func.Id);
+                                            var clo = new AstCreateClosure(this,  
+                                                new SymbolEntry(SymbolInterpretations.Function, func.Id, 
+                                                func.ParentApplication.Module.Name));
                                             var thunk = new AstGetSetSymbol(this, 
                                                 SymbolEntry.Command(Engine.ThunkAlias));
                                             thunk.Arguments.Add(clo);

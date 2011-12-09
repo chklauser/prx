@@ -55,9 +55,6 @@ namespace Prexonite.Compiler.Ast
 
         protected override void EmitGetCode(CompilerTarget target, StackSemantics stackSemantics)
         {
-            if (Implementation.Module != null)
-                throw new NotImplementedException(
-                    "Emit code for cross module references not implemented");
             var justEffect = stackSemantics == StackSemantics.Effect;
             if (justEffect)
                 return;
@@ -69,8 +66,8 @@ namespace Prexonite.Compiler.Ast
                 case SymbolInterpretations.Function:
                     PFunction func;
                     //Check if the function is a macro (Cannot create references to macros)
-                    if (target.Loader.ParentApplication.Functions.TryGetValue(Implementation.InternalId, out func) &&
-                        func.IsMacro)
+                    if(target.Loader.ParentApplication.TryGetFunction(Implementation.InternalId, Implementation.Module, out func)
+                        && func.IsMacro)
                     {
                         target.Loader.ReportMessage(new ParseMessage(ParseMessageSeverity.Warning,
                         string.Format(
@@ -84,14 +81,14 @@ namespace Prexonite.Compiler.Ast
                     }
                     else
                     {
-                        target.Emit(this, OpCode.ldr_func, Implementation.InternalId);
+                        target.Emit(this, OpCode.ldr_func, Implementation.InternalId, target.ToInternalModule(Implementation.Module));
                     }
                     break;
                 case SymbolInterpretations.GlobalObjectVariable:
-                    target.Emit(this, OpCode.ldr_glob, Implementation.InternalId);
+                    target.Emit(this, OpCode.ldr_glob, Implementation.InternalId, target.ToInternalModule(Implementation.Module));
                     break;
                 case SymbolInterpretations.GlobalReferenceVariable:
-                    target.Emit(this, OpCode.ldglob, Implementation.InternalId);
+                    target.EmitLoadGlobal(this, Implementation.InternalId, Implementation.Module);
                     break;
                 case SymbolInterpretations.LocalObjectVariable:
                     target.Emit(this, OpCode.ldr_loc, Implementation.InternalId);
@@ -133,10 +130,6 @@ namespace Prexonite.Compiler.Ast
         //"Assigning to a reference"
         protected override void EmitSetCode(CompilerTarget target)
         {
-            if (Implementation.Module != null)
-                throw new NotImplementedException(
-                    "Emit code for cross module references not implemented");
-
             switch (Implementation.Interpretation)
             {
                 case SymbolInterpretations.Command:
@@ -150,7 +143,7 @@ namespace Prexonite.Compiler.Ast
                     //Variables are not automatically dereferenced
                 case SymbolInterpretations.GlobalObjectVariable:
                 case SymbolInterpretations.GlobalReferenceVariable:
-                    target.EmitStoreGlobal(this, Implementation.InternalId);
+                    target.EmitStoreGlobal(this, Implementation.InternalId, Implementation.Module);
                     break;
                 case SymbolInterpretations.LocalObjectVariable:
                 case SymbolInterpretations.LocalReferenceVariable:
@@ -168,10 +161,6 @@ namespace Prexonite.Compiler.Ast
 
         public override bool TryToReference(out AstExpr reference)
         {
-            if (Implementation.Module != null)
-                throw new NotImplementedException(
-                    "Emit code for cross module references not implemented");
-
             reference = null;
             switch (Implementation.Interpretation)
             {

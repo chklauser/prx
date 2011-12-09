@@ -24,26 +24,29 @@
 //  WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING 
 //  IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-#region Namespace Imports
-
 using System;
 using System.Collections;
 using System.Collections.Generic;
 using System.Diagnostics.CodeAnalysis;
 using System.Reflection;
 using Prexonite.Commands;
+using Prexonite.Modular;
 using Prexonite.Types;
-
-#endregion
 
 namespace Prexonite.Compiler.Cil
 {
+    // ReSharper disable InconsistentNaming
     public static class Runtime
     {
+
         private static readonly MethodInfo _CallCommandMethod =
+
             typeof (Runtime).GetMethod("CallCommand");
 
-        private static readonly MethodInfo _CallFunctionMethod =
+        private static readonly MethodInfo _callInternalFunctionMethod =
+            typeof (Runtime).GetMethod("CallInternalFunction");
+
+        public static readonly MethodInfo CallFunctionMethod =
             typeof (Runtime).GetMethod("CallFunction");
 
         private static readonly MethodInfo _CastMethod = typeof (Runtime).GetMethod("Cast");
@@ -64,19 +67,30 @@ namespace Prexonite.Compiler.Cil
         private static readonly MethodInfo _LoadEngineReferenceMethod = typeof (Runtime).GetMethod
             ("LoadEngineReference");
 
-        private static readonly MethodInfo _LoadFunctionReferenceMethod =
+        private static readonly MethodInfo _LoadFunctionReferenceInternalMethod =
+            typeof (Runtime).GetMethod("LoadFunctionReferenceInternal");
+
+        private static readonly MethodInfo _loadFunctionReferenceMethod =
             typeof (Runtime).GetMethod("LoadFunctionReference");
 
         private static readonly MethodInfo _LoadGlobalVariableReferenceAsPValueMethod =
             typeof (Runtime).GetMethod("LoadGlobalVariableReferenceAsPValue");
 
         private static readonly MethodInfo _NewClosureMethod_LateBound = typeof (Runtime).GetMethod(
-            "NewClosure", new[] {typeof (StackContext), typeof (PVariable[]), typeof (string)});
+            "NewClosureInternal", new[] {typeof (StackContext), typeof (PVariable[]), typeof (string)});
 
         private static readonly MethodInfo _NewClosureMethod_StaticallyBound = typeof (Runtime).
             GetMethod(
                 "NewClosure",
                 new[] {typeof (StackContext), typeof (PVariable[]), typeof (PFunction)});
+
+        private static readonly MethodInfo _newClosureMethodCrossModule =
+            typeof (Runtime).GetMethod("NewClosure",
+                new[]
+                    {
+                        typeof (StackContext), typeof (PVariable[]), typeof (string),
+                        typeof (ModuleName)
+                    });
 
         private static readonly MethodInfo _NewObjMethod = typeof (Runtime).GetMethod("NewObj");
         private static readonly MethodInfo _NewTypeMethod = typeof (Runtime).GetMethod("NewType");
@@ -134,14 +148,26 @@ namespace Prexonite.Compiler.Cil
             typeof (Runtime).GetMethod("CastConst",
                 new[] {typeof (PValue), typeof (PType), typeof (StackContext)});
 
+        private static readonly MethodInfo _loadModuleNameAsPValueMethod =
+            typeof (Runtime).GetMethod("LoadModuleNameAsPValue");
+
+        private static readonly MethodInfo _loadGlobalVariableReferenceInternalMethod =
+            typeof (Runtime).GetMethod("LoadGlobalVariableReferenceInternal");
+
+        private static readonly MethodInfo _loadModuleNameMethod =
+            typeof(Runtime).GetMethod("LoadModuleName");
+
+        private static readonly MethodInfo _loadGlobalReferenceAsPValueInternalMethod =
+            typeof (Runtime).GetMethod("LoadGlobalReferenceAsPValueInternal");
+
         public static MethodInfo LoadGlobalVariableReferenceAsPValueMethod
         {
             get { return _LoadGlobalVariableReferenceAsPValueMethod; }
         }
 
-        public static MethodInfo LoadFunctionReferenceMethod
+        public static MethodInfo LoadFunctionReferenceInternalMethod
         {
-            get { return _LoadFunctionReferenceMethod; }
+            get { return _LoadFunctionReferenceInternalMethod; }
         }
 
         public static MethodInfo LoadApplicationReferenceMethod
@@ -204,9 +230,9 @@ namespace Prexonite.Compiler.Cil
             get { return _StaticCallMethod; }
         }
 
-        public static MethodInfo CallFunctionMethod
+        public static MethodInfo CallInternalFunctionMethod
         {
-            get { return _CallFunctionMethod; }
+            get { return _callInternalFunctionMethod; }
         }
 
         public static MethodInfo CallCommandMethod
@@ -229,7 +255,59 @@ namespace Prexonite.Compiler.Cil
             get { return _ParseExceptionMethod; }
         }
 
-        public static PValue LoadGlobalVariableReferenceAsPValue(StackContext sctx, string id)
+        public static MethodInfo LoadModuleNameAsPValueMethod
+        {
+            get { return _loadModuleNameAsPValueMethod; }
+        }
+
+        public static MethodInfo LoadModuleNameMethod
+        {
+            get { return _loadModuleNameMethod; }
+        }
+
+        public static MethodInfo LoadGlobalVariableReferenceInternalMethod
+        {
+            get { return _loadGlobalVariableReferenceInternalMethod; }
+        }
+
+        public static MethodInfo LoadGlobalReferenceAsPValueInternalMethod
+        {
+            get { return _loadGlobalReferenceAsPValueInternalMethod; }
+        }
+
+        public static MethodInfo NewClosureMethodCrossModule
+        {
+            get { return _newClosureMethodCrossModule; }
+        }
+
+        public static MethodInfo LoadFunctionReferenceMethod
+        {
+            get { return _loadFunctionReferenceMethod; }
+        }
+
+        // ReSharper restore InconsistentNaming
+
+// ReSharper disable UnusedMember.Global
+        public static PValue LoadGlobalVariableReferenceAsPValue(StackContext sctx, string id, ModuleName  moduleName)
+        {
+            Application application;
+            if (!sctx.ParentApplication.Compound.TryGetApplication(moduleName, out application))
+                throw new PrexoniteException(
+                    string.Format(
+                        "Cannot find instance of module {0} containing global variable {1}.",
+                        moduleName, id));
+            PVariable pv;
+            if (!application.Variables.TryGetValue(id, out pv))
+                throw new PrexoniteException
+                    (
+                    string.Format(
+                        "Cannot load reference to non existant global variable {0} in module {1}.",
+                        id, moduleName));
+            sctx.ParentApplication.EnsureInitialization(sctx.ParentEngine);
+            return sctx.CreateNativePValue(pv);
+        }
+
+        public static PValue LoadGlobalVariableReferenceAsPValueInternal(StackContext sctx, string id)
         {
             PVariable pv;
             if (!sctx.ParentApplication.Variables.TryGetValue(id, out pv))
@@ -240,22 +318,56 @@ namespace Prexonite.Compiler.Cil
             return sctx.CreateNativePValue(pv);
         }
 
-        public static PVariable LoadGlobalVariableReference(StackContext sctx, string id)
+        public static PVariable LoadGlobalVariableReference(StackContext sctx, string id, ModuleName moduleName)
+        {
+            Application application;
+            if (!sctx.ParentApplication.Compound.TryGetApplication(moduleName, out application))
+                throw new PrexoniteException(
+                    string.Format(
+                        "Cannot find instance of module {0} containing global variable {1}.",
+                        moduleName, id));
+            PVariable pv;
+            if (!application.Variables.TryGetValue(id, out pv))
+                throw new PrexoniteException
+                    (
+                    string.Format(
+                        "Cannot load reference to non existant global variable {0} in module {1}.",
+                        id, moduleName));
+            sctx.ParentApplication.EnsureInitialization(sctx.ParentEngine);
+            return pv;
+        }
+
+        public static PVariable LoadGlobalVariableReferenceInternal(StackContext sctx, string id)
         {
             PVariable pv;
             if (!sctx.ParentApplication.Variables.TryGetValue(id, out pv))
                 throw new PrexoniteException
                     (
-                    "Cannot load reference to non existant global variable " + id);
+                    "Cannot load reference to non existant internal global variable " + id);
             sctx.ParentApplication.EnsureInitialization(sctx.ParentEngine);
             return pv;
         }
 
-        public static PValue LoadFunctionReference(StackContext sctx, string id)
+        public static PValue LoadFunctionReferenceInternal(StackContext sctx, string id)
         {
             PFunction func;
             if (!sctx.ParentApplication.Functions.TryGetValue(id, out func))
-                throw new PrexoniteException("Cannot load reference to non existing function " + id);
+                throw new PrexoniteException("Cannot load reference to non existing internal function " + id);
+            return sctx.CreateNativePValue(func);
+        }
+
+        public static PValue LoadFunctionReference(StackContext sctx, string internalId, ModuleName moduleName)
+        {
+            Application application;
+            if (!sctx.ParentApplication.Compound.TryGetApplication(moduleName, out application))
+                throw new PrexoniteException(
+                    string.Format(
+                        "Cannot find instance of module {0} containing function {1}.",
+                        moduleName, internalId));
+
+            PFunction func;
+            if (!application.Functions.TryGetValue(internalId, out func))
+                throw new PrexoniteException(string.Format("Cannot load reference to non existing function {0} in module {1}.", internalId, moduleName));
             return sctx.CreateNativePValue(func);
         }
 
@@ -292,13 +404,30 @@ namespace Prexonite.Compiler.Cil
             return sctx.CreateNativePValue(sctx.ParentEngine.CreatePType(sctx, name, args));
         }
 
-        public static PValue NewClosure(StackContext sctx, PVariable[] sharedVariables,
+        public static PValue NewClosureInternal(StackContext sctx, PVariable[] sharedVariables,
             string funcId)
         {
             PFunction func;
             if (!sctx.ParentApplication.Functions.TryGetValue(funcId, out func))
-                throw new PrexoniteException("Cannot create closure for non existant function " +
-                    funcId);
+                throw new PrexoniteException(string.Format("Cannot create closure for non existant function {0}", funcId));
+            return NewClosure(sctx, sharedVariables, func);
+        }
+
+        public static PValue NewClosure(StackContext sctx, PVariable[] sharedVariables, string internalId, ModuleName moduleName)
+        {
+            Application application;
+            if (!sctx.ParentApplication.Compound.TryGetApplication(moduleName, out application))
+                throw new PrexoniteException(
+                    string.Format(
+                        "Cannot find instance of module {0} containing function {1}.",
+                        moduleName, internalId));
+
+            PFunction func;
+            if (!application.Functions.TryGetValue(internalId, out func))
+                throw new PrexoniteException(
+                    string.Format(
+                        "Cannot create closure for non-existant function {0} in module {1}.",
+                        internalId, moduleName));
             return NewClosure(sctx, sharedVariables, func);
         }
 
@@ -354,11 +483,36 @@ namespace Prexonite.Compiler.Cil
         }
 
         //[System.Diagnostics.DebuggerHidden]
-        public static PValue CallFunction(StackContext sctx, PValue[] args, string id)
+        public static PValue CallInternalFunction(StackContext sctx, PValue[] args, string id)
         {
             PFunction func;
             if (!sctx.ParentApplication.Functions.TryGetValue(id, out func))
                 throw new PrexoniteException("Cannot call non existant function " + id);
+            if (func.HasCilImplementation)
+            {
+                PValue result;
+                ReturnMode returnMode;
+                func.CilImplementation(func, sctx, args, null, out result, out returnMode);
+                return result;
+            }
+            else
+            {
+                return func.Run(sctx.ParentEngine, args);
+            }
+        }
+
+        public static PValue CallFunction(StackContext sctx, PValue[] args, string internalId, ModuleName moduleName)
+        {
+            Application application;
+            if (!sctx.ParentApplication.Compound.TryGetApplication(moduleName, out application))
+                throw new PrexoniteException(
+                    string.Format(
+                        "Cannot find instance of module {0} containing function {1}.",
+                        moduleName, internalId));
+
+            PFunction func;
+            if (!application.Functions.TryGetValue(internalId, out func))
+                throw new PrexoniteException(string.Format("Cannot call non existant function {0} in module {1}.", internalId, moduleName));
             if (func.HasCilImplementation)
             {
                 PValue result;
@@ -431,7 +585,6 @@ namespace Prexonite.Compiler.Cil
         public static PValue NewCoroutine(PValue routine, StackContext sctx, PValue[] argv)
         {
             var routineobj = routine.Value;
-            IStackAware routinesa;
 
             if (routineobj == null)
             {
@@ -440,6 +593,7 @@ namespace Prexonite.Compiler.Cil
             else
             {
                 StackContext corctx;
+                IStackAware routinesa;
                 if ((routinesa = routineobj as IStackAware) != null)
                     corctx = routinesa.CreateStackContext(sctx, argv);
                 else
@@ -515,6 +669,18 @@ namespace Prexonite.Compiler.Cil
             if (disposable != null)
                 disposable.Dispose();
         }
+
+        public static PValue LoadModuleNameAsPValue(StackContext sctx, string id, Version version)
+        {
+            return sctx.CreateNativePValue(sctx.CachedModuleNames.Create(id, version));
+        }
+
+        public static ModuleName LoadModuleName(StackContext sctx, string id, Version version)
+        {
+            return sctx.CachedModuleNames.Create(id, version);
+        }
+
+        // ReSharper restore UnusedMember.Global
 
         #region Nested type: EnumeratorWrapper
 

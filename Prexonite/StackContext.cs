@@ -26,6 +26,7 @@
 
 using System;
 using System.Diagnostics.CodeAnalysis;
+using Prexonite.Modular;
 using Prexonite.Types;
 
 namespace Prexonite
@@ -62,7 +63,7 @@ namespace Prexonite
         /// <returns>True if the exception has been handled, false otherwise.</returns>
         public abstract bool TryHandleException(Exception exc);
 
-        internal bool NextCylce(StackContext lastContext)
+        internal bool _NextCylce(StackContext lastContext)
         {
             return PerformNextCycle(lastContext);
         }
@@ -78,6 +79,9 @@ namespace Prexonite
         ///     Gets or sets the mode of return.
         /// </summary>
         public ReturnMode ReturnMode { get; set; }
+
+        public virtual IModuleNameCache CachedModuleNames { get { return ParentApplication.CachedModuleNames; }
+        }
 
         #endregion
 

@@ -1285,19 +1285,19 @@ ret.val
                 @"
 declare function f, g, h;
 
-ref gprime = ->g;
+ref g' = ->g;
 
 function main
 {
-    var hprime = ->h;
-    ref fprime = ->f;
+    var h' = ->h;
+    ref f' = ->f;
 
-    ref primes = ~List.Create(->f, ->gprime, hprime);    
-    ref hprime;
+    ref primes = ~List.Create(->f, ->g', h');    
+    ref h';
 
-    print = fprime;
-    print = gprime;
-    print = hprime;
+    print = f';
+    print = g';
+    print = h';
     print = primes;
 
     return null;
@@ -1305,26 +1305,26 @@ function main
 ");
             _expect(
                 @"
-var fprime
-//declare var gprime
-var hprime
+var f'
+//declare var g'
+var h'
 
 ldr.func    h
-stloc       hprime
+stloc       h'
 ldr.func    f
-stloc       fprime
+stloc       f'
 
 ldr.func    f
-ldglob      gprime
-ldloc       hprime
+ldglob      g'
+ldloc       h'
 sget.3      ""List::Create""
 stloc       primes
 
-indloc.0    fprime
+indloc.0    f'
 @cmd.1      print
-indglob.0   gprime
+indglob.0   g'
 @cmd.1      print
-indloc.0    hprime
+indloc.0    h'
 @cmd.1      print
 indloc.0    primes
 @cmd.1      print
@@ -3256,6 +3256,30 @@ ret
 label elseBranch
 ldc.int 0
 ret
+");
+        }
+
+        [Test]
+        public void PostIncrementFunctionEmulation()
+        {
+            _compile(@"
+function propLike = 0;
+
+function main()
+{
+    return ""work"" * propLike++;
+}
+");
+
+            _expect(@"
+ldc.string work
+func.0 propLike
+func.0 propLike
+ldc.int 1
+add
+@func.1 propLike
+mul
+ret.value
 ");
         }
 

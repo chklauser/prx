@@ -243,15 +243,11 @@ namespace Prexonite.Compiler.Macro
             public void Initialize(CompilerTarget target, AstMacroInvocation invocation,
                 bool justEffect)
             {
-                if (invocation.Implementation.Module != null)
-                    throw new NotImplementedException("Cross module macro invocation not supported.");
-
                 _macroFunction = null;
 
                 PFunction macroFunc;
-                if (
-                    !target.Loader.Options.TargetApplication.Functions.TryGetValue(
-                        invocation.Implementation.InternalId, out macroFunc))
+                var sourceApp = target.Loader.Options.TargetApplication;
+                if (!sourceApp.TryGetFunction(invocation.Implementation.InternalId, invocation.Implementation.Module, out macroFunc))
                 {
                     target.Loader.ReportMessage(
                         new ParseMessage(

@@ -24,6 +24,7 @@
 //  WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING 
 //  IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
+using System;
 using System.Diagnostics;
 
 namespace Prexonite.Compiler.Ast
@@ -31,18 +32,30 @@ namespace Prexonite.Compiler.Ast
     [DebuggerNonUserCode]
     public class AstCreateClosure : AstExpr
     {
-        public string FuncId;
+        public SymbolEntry Implementation;
 
-        public AstCreateClosure(string file, int line, int column, string funcId)
+        public AstCreateClosure(string file, int line, int column, SymbolEntry implementation)
             : base(file, line, column)
         {
-            FuncId = funcId;
+            if (implementation.Interpretation != SymbolInterpretations.Function)
+                throw _createNonFuncException(implementation);
+            Implementation = implementation;
         }
 
-        internal AstCreateClosure(Parser p, string funcId)
+        private static ArgumentException _createNonFuncException(SymbolEntry implementation)
+        {
+            return new ArgumentException(
+                string.Format("Can only create closure for functions, not for a {0}.",
+                    Enum.GetName(typeof (SymbolInterpretations), implementation.Interpretation)),
+                "implementation");
+        }
+
+        internal AstCreateClosure(Parser p, SymbolEntry implementation)
             : base(p)
         {
-            FuncId = funcId;
+            if (implementation.Interpretation != SymbolInterpretations.Function)
+                throw _createNonFuncException(implementation);
+            Implementation = implementation;
         }
 
         protected override void DoEmitCode(CompilerTarget target, StackSemantics stackSemantics)
@@ -52,13 +65,13 @@ namespace Prexonite.Compiler.Ast
 
             PFunction targetFunction;
             MetaEntry sharedNamesEntry;
-            if (target.Loader.ParentApplication.Functions.TryGetValue(FuncId, out targetFunction)
+            if (target.Loader.ParentApplication.TryGetFunction(Implementation.InternalId, Implementation.Module, out targetFunction)
                 && (!targetFunction.Meta.TryGetValue(PFunction.SharedNamesKey, out sharedNamesEntry)
                     || !sharedNamesEntry.IsList
                         || sharedNamesEntry.List.Length == 0))
-                target.Emit(this, OpCode.ldr_func, FuncId);
+                target.Emit(this, OpCode.ldr_func, Implementation.InternalId, target.ToInternalModule(Implementation.Module));
             else
-                target.Emit(this, OpCode.newclo, FuncId);
+                target.Emit(this, OpCode.newclo, Implementation.InternalId, target.ToInternalModule(Implementation.Module));
         }
 
         #region AstExpr Members

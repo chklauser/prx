@@ -860,7 +860,9 @@ implementation
                                                 }
                                             }
                                             
-                                            expr = new AstCreateClosure(this, func.Id);                                         
+                                            expr = new AstCreateClosure(this, 
+                                                new SymbolEntry(SymbolInterpretations.Function, func.Id, 
+                                                func.ParentApplication.Module.Name));                                         
                                         .)
 .
 
@@ -905,7 +907,9 @@ lazy
                                             }
                                             
                                             //Construct expr (appears in the place of lazy expression)
-                                            var clo = new AstCreateClosure(this, func.Id);
+                                            var clo = new AstCreateClosure(this,  
+                                                new SymbolEntry(SymbolInterpretations.Function, func.Id, 
+                                                func.ParentApplication.Module.Name));
                                             var thunk = new AstGetSetSymbol(this, 
                                                 SymbolEntry.Command(Engine.ThunkAlias));
                                             thunk.Arguments.Add(clo);
@@ -1506,7 +1510,9 @@ FunctionDefinition<out PFunction func>
 												    func = derStub;
 												    //Generate code for the stub
 												    AstCreateCoroutine crcor = new AstCreateCoroutine(this);                                            
-												    crcor.Expression = new AstCreateClosure(this,derBody.Id);
+												    crcor.Expression = new AstCreateClosure(this, 
+                                                        new SymbolEntry(SymbolInterpretations.Function, derBody.Id, 
+                                                        derBody.ParentApplication.Module.Name));
 												    AstReturn retst = new AstReturn(this, ReturnVariant.Exit);
 												    retst.Expression = crcor;
 												    cst.Ast.Add(retst);
@@ -1533,7 +1539,8 @@ FunctionDefinition<out PFunction func>
 										            //Nested lazy functions need a stub to capture their environment by value (handled by NestedFunction)
 										            
 										            //Generate stub code
-										            retVal = new AstCreateClosure(this, ct.Function.Id);
+										            retVal = new AstCreateClosure(this,  new SymbolEntry(SymbolInterpretations.Function, ct.Function.Id, 
+                                                ct.Function.ParentApplication.Module.Name));
 										            
 										            //Inject asthunk-conversion code into body
 										            var inject = derStub.Parameters.Select(par => 
@@ -2269,7 +2276,6 @@ NestedFunction<AstBlock block>
                                 (.  
                                     string logicalId = func.Meta[PFunction.LogicalIdKey];
                                     func.Meta[PFunction.ParentFunctionKey] = target.Function.Id;
-                                    string physicalId = func.Id;
                                     
                                     CompilerTarget ft = FunctionTargets[func];
                                     AstGetSetSymbol setVar = new AstGetSetSymbol(this, PCall.Set, 
@@ -2280,19 +2286,22 @@ NestedFunction<AstBlock block>
                                         var ps = ft.ToCaptureByValue(let_bindings(ft));
                                         ft._DetermineSharedNames(); //Need to re-determine shared names since
                                                                     // ToCaptureByValue does not automatically modify shared names
-                                        var clos = new AstCreateClosure(this, func.Id);
+                                        var clos = new AstCreateClosure(this,  new SymbolEntry
+                                                (SymbolInterpretations.Function, func.Id, 
+                                                func.ParentApplication.Module.Name));
                                         var callStub = new AstIndirectCall(this, clos);
                                         callStub.Arguments.AddRange(ps(this));
                                         setVar.Arguments.Add(callStub);
                                     }
                                     else if(ft.OuterVariables.Count > 0)
                                     {                                        
-                                        setVar.Arguments.Add( new AstCreateClosure(this, physicalId) );                                        
+                                        setVar.Arguments.Add( new AstCreateClosure(this,  new SymbolEntry(SymbolInterpretations.Function, func.Id, 
+                                                func.ParentApplication.Module.Name)) );                                        
                                     }
                                     else
                                     {
                                         setVar.Arguments.Add( new AstGetSetReference(this, 
-                                            new SymbolEntry(SymbolInterpretations.Function, physicalId, null)) );
+                                            new SymbolEntry(SymbolInterpretations.Function, func.Id, func.ParentApplication.Module.Name)) );
                                     }
                                     block.Add(setVar);
                                 .)

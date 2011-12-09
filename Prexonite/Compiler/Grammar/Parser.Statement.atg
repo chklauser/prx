@@ -554,7 +554,6 @@ NestedFunction<AstBlock block>
                                 (.  
                                     string logicalId = func.Meta[PFunction.LogicalIdKey];
                                     func.Meta[PFunction.ParentFunctionKey] = target.Function.Id;
-                                    string physicalId = func.Id;
                                     
                                     CompilerTarget ft = FunctionTargets[func];
                                     AstGetSetSymbol setVar = new AstGetSetSymbol(this, PCall.Set, 
@@ -565,19 +564,22 @@ NestedFunction<AstBlock block>
                                         var ps = ft.ToCaptureByValue(let_bindings(ft));
                                         ft._DetermineSharedNames(); //Need to re-determine shared names since
                                                                     // ToCaptureByValue does not automatically modify shared names
-                                        var clos = new AstCreateClosure(this, func.Id);
+                                        var clos = new AstCreateClosure(this,  new SymbolEntry
+                                                (SymbolInterpretations.Function, func.Id, 
+                                                func.ParentApplication.Module.Name));
                                         var callStub = new AstIndirectCall(this, clos);
                                         callStub.Arguments.AddRange(ps(this));
                                         setVar.Arguments.Add(callStub);
                                     }
                                     else if(ft.OuterVariables.Count > 0)
                                     {                                        
-                                        setVar.Arguments.Add( new AstCreateClosure(this, physicalId) );                                        
+                                        setVar.Arguments.Add( new AstCreateClosure(this,  new SymbolEntry(SymbolInterpretations.Function, func.Id, 
+                                                func.ParentApplication.Module.Name)) );                                        
                                     }
                                     else
                                     {
                                         setVar.Arguments.Add( new AstGetSetReference(this, 
-                                            new SymbolEntry(SymbolInterpretations.Function, physicalId, null)) );
+                                            new SymbolEntry(SymbolInterpretations.Function, func.Id, func.ParentApplication.Module.Name)) );
                                     }
                                     block.Add(setVar);
                                 .)

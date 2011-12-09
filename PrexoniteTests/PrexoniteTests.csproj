@@ -104,6 +104,7 @@
     <Compile Include="Tests\Compiler.cs" />
     <Compile Include="Tests\Compiler.Global.cs" />
     <Compile Include="Tests\Compiler.Parser.cs" />
+    <Compile Include="Tests\Configurations\ModuleCache.cs" />
     <Compile Include="Tests\Configurations\UnitTestConfiguration.cs" />
     <Content Include="psr-tests\testconfig.txt" />
     <Compile Include="Tests\Configurations\PsrUnitTests.cs">

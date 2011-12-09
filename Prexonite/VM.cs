@@ -105,7 +105,7 @@ namespace Prexonite
                     //Execute code
                     try
                     {
-                        keepOnStack = sctx.NextCylce(lastContext);
+                        keepOnStack = sctx._NextCylce(lastContext);
                         lastContext = sctx;
                     }
                     catch (PrexoniteRuntimeException exc)

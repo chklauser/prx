@@ -38,8 +38,7 @@ namespace Prexonite
         {
         }
 
-        public NullContext(Engine parentEngine, Application parentApplication,
-            ICollection<string> importedNamespaces)
+        public NullContext(Engine parentEngine, Application parentApplication, IEnumerable<string> importedNamespaces)
         {
             if (parentEngine == null)
                 throw new ArgumentNullException("parentEngine");
