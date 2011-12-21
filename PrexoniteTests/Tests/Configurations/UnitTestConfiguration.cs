@@ -29,6 +29,7 @@ using System.Collections.Generic;
 using System.IO;
 using System.Text;
 using System.Linq;
+using NUnit.Framework;
 using Prexonite;
 using Prexonite.Compiler;
 using Prexonite.Compiler.Cil;
@@ -170,7 +171,20 @@ namespace PrexoniteTests.Tests.Configurations
         /// <param name="runner">The runner under which the test is being executed.</param>
         public virtual void PrepareTestCompilation(ScriptedUnitTestContainer runner)
         {
-            // do nothing
+            if(ModularCompilation)
+            {
+                foreach (var entry in runner.Loader.Symbols)
+                {
+                    var sym = entry.Value;
+                    if(sym.Interpretation == SymbolInterpretations.Function || sym.Interpretation == SymbolInterpretations.GlobalObjectVariable
+                        || sym.Interpretation == SymbolInterpretations.GlobalReferenceVariable)
+                    {
+                        Assert.That(sym.Module, Is.Not.Null,
+                            string.Format(
+                                "The module-specific symbol {0} does not have a module name.", sym));
+                    }
+                }
+            }
         }
 
         /// <summary>

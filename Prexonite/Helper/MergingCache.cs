@@ -65,17 +65,17 @@ namespace Prexonite
 
             public override ModuleName this[string internalId, Version version]
             {
-                get { return _moduleNameCache.GetCached(new ModuleName(internalId, version)); }
+                get { return ModuleNames.GetCached(new ModuleName(internalId, version)); }
             }
 
             public override ModuleName this[ModuleName moduleName]
             {
-                get { return _moduleNameCache.GetCached(moduleName); }
+                get { return ModuleNames.GetCached(moduleName); }
             }
 
             public override EntityRef this[EntityRef entityRef]
             {
-                get { return _entityRefCache.GetCached(entityRef); }
+                get { return EntityRefs.GetCached(entityRef); }
             }
 
             protected internal override CentralCache LinkInto(CentralCache cache)

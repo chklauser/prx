@@ -26,6 +26,8 @@
  
 build does require(@"psr\ast.pxs");
 
+function macro\macro_pxs_module[compiler] = asm(ldr.app).Module.Name;
+
 function is_in_macro\impl as is_in_macro(context) [is compiler;] = 
     ([context.Function]
     >> append(context.GetParentFunctions())
@@ -212,7 +214,7 @@ macro macro\getSI
         
     function create_getSI = ast("GetSetSymbol",SI.get,SI.func(->SI));
     
-    var mi = ast("MacroInvocation", SI.m.i.func("ast\\macro"));
+    var mi = ast("MacroInvocation", SI.m.func("ast\\macro", macro\macro_pxs_module));
     mi.Arguments.Add(ast("Constant","GetSetSymbol"));    
     mi.Arguments.Add(ast("GetSetMemberAccess",new getSI,"get"));
     mi.Arguments.Add(var si_func = ast("GetSetMemberAccess",new getSI,"func"));
@@ -291,11 +293,15 @@ function macro\_expand_into_function(ldr, id, body)[compiler]
     
     //Have the body compiled
     var target = ldr.CreateFunctionTarget(func,block);
-    target.Ast.EmitCode(target, true, Prexonite::Compiler::Ast::StackSemantics.Effect);
-    target.FinishTarget();
+    try {
+        target.Ast.EmitCode(target, true, Prexonite::Compiler::Ast::StackSemantics.Effect);
+        target.FinishTarget();
+    } catch(var exc) {
+        throw new Prexonite::PrexoniteException("An $(exc.GetType.Name) occurred while expanding the macro $body into $func.");
+    }
     
     //Add symbol entry
-    ldr.Symbols.Add(id,SI.i.func(id));
+    ldr.Symbols.Add(id,SI.func(id, ldr.ParentApplication.Module.Name));
     return null;
 }
 
@@ -323,7 +329,7 @@ macro macro\_check_is_node_t(node_arg,node_t_name,requirePlaceholder,requireAstN
     function create_arg_pt(c) = ast("GetSetSymbol", c ?? SI.get, SI.lvar(arg_pt));
     
     var node_t = uniqueId(id + @"\node_t");
-    function create_node_t(c) = ast("GetSetSymbol",c ?? SI.get, SI.i.gvar(node_t));
+    function create_node_t(c) = ast("GetSetSymbol",c ?? SI.get, SI.gvar(node_t, macro\macro_pxs_module));
     
     context.Application.Variables.Add(node_t, var node_t_var = new Prexonite::PVariable);
     node_t_var.Meta["compiler"] = true;
@@ -383,7 +389,7 @@ macro macro\_check_is_node_t(node_arg,node_t_name,requirePlaceholder,requireAstN
         }
         else
         {
-            var assignableAstNode = ast("GetSetMemberAccess", ast("GetSetSymbol", SI.get, SI.i.func(->AstNode_t.Id)),
+            var assignableAstNode = ast("GetSetMemberAccess", ast("GetSetSymbol", SI.get, SI.func(->AstNode_t)),
                 "IsAssignableFrom");
             assignableAstNode.Arguments.Add(ast("GetSetMemberAccess", new arg_pt, "ClrType"));
             
@@ -742,7 +748,7 @@ macro ast\null
     if(context.IsJustEffect) 
         return;
     
-    var mi = ast("MacroInvocation", SI.m.i.func("ast\\macro"));
+    var mi = ast("MacroInvocation", SI.m.func("ast\\macro",macro\macro_pxs_module));
     mi.Arguments.Add(ast("Constant","Null"));    
     
     context.Block.Expression = mi;

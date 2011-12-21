@@ -121,7 +121,7 @@ GlobalVariableDefinition	(.
 	                        (.  id = Engine.GenerateName("v"); .)
 	)
 	                        (.
-                                entry = new SymbolEntry(type,id, null);
+                                entry = new SymbolEntry(type,id, TargetModule.Name);
 	                            foreach(var alias in aliases)
 	                                Symbols[alias] = entry;
                                 if(!TargetModule.Variables.TryGetVariable(id, out vari))
@@ -151,7 +151,7 @@ GlobalVariableDefinition	(.
 								if(errors.count == 0)
 								{
 									AstGetSet complex = new AstGetSetSymbol(this, PCall.Set, 
-                                        new SymbolEntry(InterpretAsObjectVariable(type), id, null));
+                                        new SymbolEntry(InterpretAsObjectVariable(type), id, TargetModule.Name));
 									complex.Arguments.Add(expr);
 									target.Ast.Add(complex);
                                     TargetApplication._RequireInitialization();
@@ -176,7 +176,7 @@ GlobalVariableAliasList<. IList<string> aliases .>
 
 Declaration
                             (. SymbolInterpretations type = SymbolInterpretations.Undefined;
-                               ModuleName module = null;
+                               ModuleName module = TargetModule.Name;
                             .)
 =
 SYNC
@@ -200,24 +200,42 @@ DeclarationInstance<SymbolInterpretations type, ModuleName module>
 	                            {
 	                                if(type == SymbolInterpretations.Undefined)
 	                                    if(Symbols.TryGetValue(id, out inferredType))
+                                        {
 	                                        type = inferredType.Interpretation;
+                                            module = inferredType.Module;
+                                        }
 	                                    else if(Symbols.TryGetValue(aId, out inferredType))
+                                        {
 	                                        type = inferredType.Interpretation;
+                                            module = inferredType.Module;
+                                        }
 	                                    else
+                                        {
 	                                        SemErr("Interpretation of symbol " + id + " as " + aId + " cannot be inferred.");
+                                        }
 	                                Symbols[aId] = new SymbolEntry(type, id, module);
 	                            }
 	                            else
 	                            {
 	                                if(type == SymbolInterpretations.Undefined)
 	                                    if(target.Symbols.TryGetValue(id, out inferredType))
+                                        {
 	                                        type = inferredType.Interpretation;
+                                            module = inferredType.Module;
+                                        }
 	                                    else if(target.Symbols.TryGetValue(aId, out inferredType))
+                                        {
 	                                        type = inferredType.Interpretation;
-	                                    else
-	                                        SemErr("Interpretation of symbol " + id + " as " + aId + " cannot be inferred.");
+                                            module = inferredType.Module;
+                                        }
+	                                    else 
+                                        {
+	                                        SemErr("Interpretation of symbol " + id + " as " + aId + " cannot be inferred.");                            }
 	                                target.Symbols[aId] = new SymbolEntry(type, id, module);
 	                            }
+
+                                if(_requiresModule(type) && module == null)
+                                    SemErr("Module cannot be inferred for declaration " + id + " as + " + aId + ".");
 	                        .)
 .
 
@@ -432,7 +450,7 @@ FunctionDefinition<out PFunction func>
 	                                    {
 	                                            //Add the name to the symboltable
                                                 symEntry = 
-                                                    new SymbolEntry(SymbolInterpretations.Function, func.Id, null);
+                                                    new SymbolEntry(SymbolInterpretations.Function, func.Id, TargetModule.Name);
 	                                            foreach(var alias in funcAliases)	                                                
 	                                                Symbols[alias] = symEntry;
 	                                            
@@ -588,7 +606,7 @@ FunctionDefinition<out PFunction func>
 										        {										            
 										            //Global lazy functions don't technically need a stub. Might be removed later on
 										            var call = new AstGetSetSymbol(this, 
-                                                        new SymbolEntry(SymbolInterpretations.Function, ct.Function.Id, null));
+                                                        new SymbolEntry(SymbolInterpretations.Function, ct.Function.Id, TargetModule.Name));
 										            
 										            //Generate code for arguments (each wrapped in a `asThunk` command call)
 											        foreach(var par in derStub.Parameters)

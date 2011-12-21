@@ -137,8 +137,7 @@ function create_SI [is compiler;]
             throw "Global variable symbol entry requires a module name.";;
     SI.\\("func") = (self,func,m) => 
         if(func is ::PFunction)
-            //TODO: figure out how to get hold of the module
-            new ::SymbolEntry(si_func, func.Id, null)
+            new ::SymbolEntry(si_func, func.Id, func.ParentApplication.Module.Name)
         else if(func is ::SymbolEntry)
             if(self.is_func(func.Interpretation))
                 func

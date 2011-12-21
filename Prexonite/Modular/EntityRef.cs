@@ -74,26 +74,7 @@ namespace Prexonite.Modular
 
         public abstract T Match<T>(IEntityRefMatcher<T> matcher);
 
-        public virtual bool TryGetFunction(out Function func, bool? isRunTime = null,
-            bool? isCompileTime = null, bool? isMacro = null)
-        {
-            func = null;
-            return false;
-        }
-
-        public virtual bool TryGetRunTimeFunction(out Function.RunTime func)
-        {
-            func = null;
-            return false;
-        }
-
-        public virtual bool TryGetMacroFunction(out Function.Macro func)
-        {
-            func = null;
-            return false;
-        }
-
-        public virtual bool TryGetCompileTimeFunction(out Function.CompileTime func)
+        public virtual bool TryGetFunction(out Function func)
         {
             func = null;
             return false;
@@ -180,7 +161,7 @@ namespace Prexonite.Modular
 
         #region Functions
 
-        public abstract class Function : EntityRef, IEquatable<Function>
+        public class Function : EntityRef, IEquatable<Function>
         {
             private readonly string _id;
             private readonly ModuleName _moduleName;
@@ -188,6 +169,12 @@ namespace Prexonite.Modular
             bool IEquatable<Function>.Equals(Function other)
             {
                 return EqualsFunction(other);
+            }
+
+            public override bool TryGetFunction(out Function func)
+            {
+                func = this;
+                return true;
             }
 
             protected bool EqualsFunction(Function other)
@@ -239,24 +226,6 @@ namespace Prexonite.Modular
                 get { return _moduleName; }
             }
 
-            protected abstract bool Satisfies(bool? isRunTime = null, bool? isCompileTime = null,
-                bool? isMacro = null);
-
-            public override bool TryGetFunction(out Function func, bool? isRunTime = null,
-                bool? isCompileTime = null, bool? isMacro = null)
-            {
-                if (!Satisfies(isRunTime, isCompileTime, isMacro))
-                {
-                    func = null;
-                    return false;
-                }
-                else
-                {
-                    func = this;
-                    return true;
-                }
-            }
-
             public bool TryGetFunction(Application application, out PFunction func)
             {
                 if (!application.Compound.TryGetApplication(_moduleName, out application)
@@ -269,6 +238,16 @@ namespace Prexonite.Modular
                 {
                     return true;
                 }
+            }
+
+            public override T Match<T>(IEntityRefMatcher<T> matcher)
+            {
+                return matcher.OnFunction(this);
+            }
+
+            public override SymbolEntry ToSymbolEntry()
+            {
+                return new SymbolEntry(SymbolInterpretations.Function, Id, ModuleName);
             }
 
             internal override bool _TryLookup(StackContext sctx, out PValue entity)
@@ -291,200 +270,10 @@ namespace Prexonite.Modular
                 return true;
             }
 
-            #region Nested type: CompileTimeBase
-
-            public abstract class CompileTimeBase : Function, ICompileTime
+            public static Function Create(string internalId, ModuleName moduleName)
             {
-                protected CompileTimeBase(string id, ModuleName moduleName)
-                    : base(id, moduleName)
-                {
-                }
-
-                #region ICompileTime Members
-
-                public bool TryGetEntity(Loader ldr, out PValue entity)
-                {
-                    PFunction func;
-                    if (TryGetFunction(ldr.ParentApplication, out func))
-                    {
-                        entity = ldr.CreateNativePValue(func);
-                        return true;
-                    }
-                    else
-                    {
-                        entity = null;
-                        return false;
-                    }
-                }
-
-                #endregion
-
-                protected override bool Satisfies(bool? isRunTime = null, bool? isCompileTime = null,
-                    bool? isMacro = null)
-                {
-                    if (isRunTime.HasValue && isRunTime.Value ||
-                        isCompileTime.HasValue && !isCompileTime.Value)
-                        return false;
-                    if (!isMacro.HasValue)
-                        return true;
-                    return SatisfiesMacro(isMacro.Value);
-                }
-
-                protected abstract bool SatisfiesMacro(bool isMacro);
+                return new Function(internalId, moduleName);
             }
-
-            #endregion
-
-            #region Nested type: CompileTime
-
-            public class CompileTime : CompileTimeBase, IEquatable<CompileTime>
-            {
-                private CompileTime(string id, ModuleName moduleName)
-                    : base(id, moduleName)
-                {
-                }
-
-                public static CompileTime Create(string id, ModuleName moduleName)
-                {
-                    return new CompileTime(id, moduleName);
-                }
-
-                protected override bool SatisfiesMacro(bool isMacro)
-                {
-                    return !isMacro;
-                }
-
-                public override T Match<T>(IEntityRefMatcher<T> matcher)
-                {
-                    return matcher.OnCompileTimeFunction(this);
-                }
-
-                public override bool TryGetCompileTimeFunction(out CompileTime func)
-                {
-                    func = this;
-                    return true;
-                }
-
-                public override SymbolEntry ToSymbolEntry()
-                {
-                    return new SymbolEntry(SymbolInterpretations.Function, Id, ModuleName);
-                }
-
-                public bool Equals(CompileTime other)
-                {
-                    return EqualsFunction(other);
-                }
-            }
-
-            #endregion
-
-            #region Nested type: Macro
-
-            public sealed class Macro : CompileTimeBase, IMacro, IEquatable<Macro>
-            {
-                private Macro(string id, ModuleName moduleName)
-                    : base(id, moduleName)
-                {
-                }
-
-                public static Macro Create(string id, ModuleName moduleName)
-                {
-                    return new Macro(id, moduleName);
-                }
-
-                protected override bool SatisfiesMacro(bool isMacro)
-                {
-                    return isMacro;
-                }
-
-                public override T Match<T>(IEntityRefMatcher<T> matcher)
-                {
-                    return matcher.OnMacroFunction(this);
-                }
-
-                public override bool TryGetMacroFunction(out Macro func)
-                {
-                    func = this;
-                    return true;
-                }
-
-                public override SymbolEntry ToSymbolEntry()
-                {
-                    return new SymbolEntry(SymbolInterpretations.Function, Id, ModuleName);
-                }
-
-                public bool Equals(Macro other)
-                {
-                    return EqualsFunction(other);
-                }
-            }
-
-            #endregion
-
-            #region Nested type: Runtime
-
-            public class RunTime : Function, IRunTime, IEquatable<RunTime>
-            {
-                private RunTime(string id, ModuleName moduleName)
-                    : base(id, moduleName)
-                {
-                }
-
-                #region IRunTime Members
-
-                public bool TryGetEntity(StackContext sctx, out PValue entity)
-                {
-                    PFunction func;
-                    if (TryGetFunction(sctx.ParentApplication, out func))
-                    {
-                        entity = sctx.CreateNativePValue(func);
-                        return true;
-                    }
-                    else
-                    {
-                        entity = null;
-                        return false;
-                    }
-                }
-
-                #endregion
-
-                public override T Match<T>(IEntityRefMatcher<T> matcher)
-                {
-                    return matcher.OnRunTimeFunction(this);
-                }
-
-                public override bool TryGetRunTimeFunction(out RunTime func)
-                {
-                    func = this;
-                    return true;
-                }
-
-                public static RunTime Create(string id, ModuleName moduleName)
-                {
-                    return new RunTime(id, moduleName);
-                }
-
-                protected override bool Satisfies(bool? isRunTime = null, bool? isCompileTime = null,
-                    bool? isMacro = null)
-                {
-                    return (!isRunTime.HasValue || isRunTime.Value)
-                        && (!isCompileTime.HasValue || !isCompileTime.Value)
-                            && (!isMacro.HasValue || !isMacro.Value);
-                }
-
-                public override SymbolEntry ToSymbolEntry()
-                {
-                    return new SymbolEntry(SymbolInterpretations.Function, Id, ModuleName);
-                }
-
-                public bool Equals(RunTime other)
-                {
-                    return EqualsFunction(other);
-                }
-            }
-
-            #endregion
         }
 
         #endregion
@@ -1020,9 +809,7 @@ namespace Prexonite.Modular
 
     public interface IEntityRefMatcher<out T>
     {
-        T OnRunTimeFunction(EntityRef.Function.RunTime function);
-        T OnCompileTimeFunction(EntityRef.Function.CompileTime function);
-        T OnMacroFunction(EntityRef.Function.Macro function);
+        T OnFunction(EntityRef.Function function);
 
         T OnCommand(EntityRef.Command command);
 
@@ -1036,19 +823,9 @@ namespace Prexonite.Modular
     {
         #region IEntityRefMatcher implementation
 
-        T IEntityRefMatcher<T>.OnRunTimeFunction(EntityRef.Function.RunTime function)
+        T IEntityRefMatcher<T>.OnFunction(EntityRef.Function function)
         {
-            return OnRunTimeFunction(function);
-        }
-
-        T IEntityRefMatcher<T>.OnCompileTimeFunction(EntityRef.Function.CompileTime function)
-        {
-            return OnCompileTimeFunction(function);
-        }
-
-        T IEntityRefMatcher<T>.OnMacroFunction(EntityRef.Function.Macro function)
-        {
-            return OnMacroFunction(function);
+            return OnFunction(function);
         }
 
         T IEntityRefMatcher<T>.OnCommand(EntityRef.Command command)
@@ -1075,17 +852,7 @@ namespace Prexonite.Modular
 
         protected abstract T OnNotMatched(EntityRef entity);
 
-        protected virtual T OnRunTimeFunction(EntityRef.Function.RunTime function)
-        {
-            return OnNotMatched(function);
-        }
-
-        protected virtual T OnCompileTimeFunction(EntityRef.Function.CompileTime function)
-        {
-            return OnNotMatched(function);
-        }
-
-        protected virtual T OnMacroFunction(EntityRef.Function.Macro function)
+        public T OnFunction(EntityRef.Function function)
         {
             return OnNotMatched(function);
         }

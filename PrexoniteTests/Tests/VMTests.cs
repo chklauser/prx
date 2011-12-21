@@ -40,6 +40,7 @@ using Prexonite;
 using Prexonite.Commands.Core.Operators;
 using Prexonite.Compiler;
 using Prexonite.Compiler.Ast;
+using Prexonite.Compiler.Cil;
 using Prexonite.Types;
 
 namespace Prx.Tests
@@ -1473,6 +1474,9 @@ function main(x,t)
         [Test]
         public void GlobalRef()
         {
+            Assert.That(Runtime.WrapPVariableMethod, Is.Not.Null);
+            Assert.That(Runtime.LoadGlobalVariableReferenceAsPValueMethod, Is.Not.Null);
+
             Compile(
                 @"
 var result;

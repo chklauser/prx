@@ -57,7 +57,9 @@ function test\run_test as run_test(ui, testFunc)
     ui ??= basic_ui;
     if(testFunc is null)
         throw "testFunc cannot be null.";
-        
+    
+    println("::>>TEST-FILTERS");
+    test_filters >> each(println("\t-> ",?));
     testFunc = test_filters >> foldl(?1.(?0), testFunc);
     
     ui.begin_running(testFunc);

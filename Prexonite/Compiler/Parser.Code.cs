@@ -280,6 +280,19 @@ namespace Prexonite.Compiler
 
         public CompilerTarget target;
 
+        private bool _requiresModule(SymbolInterpretations kind)
+        {
+            switch (kind)
+            {
+               case SymbolInterpretations.Function:
+                    case SymbolInterpretations.GlobalObjectVariable:
+                    case SymbolInterpretations.GlobalReferenceVariable:
+                    return true;
+                    default:
+                    return false;
+            }
+        }
+
         [DebuggerStepThrough]
         public bool isLabel() //LL(2)
         {

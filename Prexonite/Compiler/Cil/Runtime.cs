@@ -74,7 +74,7 @@ namespace Prexonite.Compiler.Cil
             typeof (Runtime).GetMethod("LoadFunctionReference");
 
         private static readonly MethodInfo _LoadGlobalVariableReferenceAsPValueMethod =
-            typeof (Runtime).GetMethod("LoadGlobalVariableReferenceAsPValue");
+            typeof(Runtime).GetMethod("LoadGlobalVariableReferenceAsPValue");
 
         private static readonly MethodInfo _NewClosureMethod_LateBound = typeof (Runtime).GetMethod(
             "NewClosureInternal", new[] {typeof (StackContext), typeof (PVariable[]), typeof (string)});
@@ -142,7 +142,7 @@ namespace Prexonite.Compiler.Cil
                 typeof (Runtime).GetMethod("NewCoroutine");
 
         public static readonly MethodInfo WrapPVariableMethod =
-            typeof (Runtime).GetMethod("WrapPVariable");
+            typeof(Runtime).GetMethod("WrapPVariable");
 
         public static readonly MethodInfo CastConstMethod =
             typeof (Runtime).GetMethod("CastConst",
@@ -158,7 +158,7 @@ namespace Prexonite.Compiler.Cil
             typeof(Runtime).GetMethod("LoadModuleName");
 
         private static readonly MethodInfo _loadGlobalReferenceAsPValueInternalMethod =
-            typeof (Runtime).GetMethod("LoadGlobalReferenceAsPValueInternal");
+            typeof(Runtime).GetMethod("LoadGlobalVariableReferenceAsPValueInternal");
 
         public static MethodInfo LoadGlobalVariableReferenceAsPValueMethod
         {

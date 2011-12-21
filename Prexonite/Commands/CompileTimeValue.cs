@@ -195,10 +195,11 @@ namespace Prexonite.Commands
         /// </summary>
         /// <param name = "instruction">The instruction to parse.</param>
         /// <param name = "localVariableMapping">The local variable mapping to apply when confronted with index-instructions (e.g., <code>ldloci</code>)</param>
-        /// <param name = "compileTimeValue">The parsed compile time value, if parsing was successful; undefined otherwise</param>
         /// <param name="cache">The cache to use for module names and entity references.</param>
+        /// <param name="internalModule"> The module the instruction lives in. Necessary to create absolute entity references.</param>
+        /// <param name = "compileTimeValue">The parsed compile time value, if parsing was successful; undefined otherwise</param>
         /// <returns>True if parsing was successful; false otherwise</returns>
-        public static bool TryParse(Instruction instruction, IDictionary<int, string> localVariableMapping, out CompileTimeValue compileTimeValue, CentralCache cache)
+        public static bool TryParse(Instruction instruction, IDictionary<int, string> localVariableMapping, CentralCache cache, ModuleName internalModule, out CompileTimeValue compileTimeValue)
         {
             var argc = instruction.Arguments;
             switch (instruction.OpCode)
@@ -225,7 +226,7 @@ namespace Prexonite.Commands
                 case OpCode.ldr_loc:
                     compileTimeValue.Interpretation =
                         CompileTimeInterpretation.LocalVariableReference;
-                    compileTimeValue.Value = instruction.Id;
+                    compileTimeValue.Value = cache[EntityRef.Variable.Local.Create(instruction.Id)];
                     return true;
                 case OpCode.ldr_loci:
                     string id;
@@ -233,20 +234,20 @@ namespace Prexonite.Commands
                         goto default;
                     compileTimeValue.Interpretation =
                         CompileTimeInterpretation.LocalVariableReference;
-                    compileTimeValue.Value = id;
+                    compileTimeValue.Value = cache[EntityRef.Variable.Local.Create(id)];
                     return true;
                 case OpCode.ldr_glob:
                     compileTimeValue.Interpretation =
                         CompileTimeInterpretation.GlobalVariableReference;
-                    compileTimeValue.Value = instruction.Id;
+                    compileTimeValue.Value = cache[EntityRef.Variable.Global.Create(instruction.Id, instruction.ModuleName ?? internalModule)];
                     return true;
                 case OpCode.ldr_func:
                     compileTimeValue.Interpretation = CompileTimeInterpretation.FunctionReference;
-                    compileTimeValue.Value = instruction.Id;
+                    compileTimeValue.Value = cache[EntityRef.Function.Create(instruction.Id, instruction.ModuleName ?? internalModule)];
                     return true;
                 case OpCode.ldr_cmd:
                     compileTimeValue.Interpretation = CompileTimeInterpretation.CommandReference;
-                    compileTimeValue.Value = instruction.Id;
+                    compileTimeValue.Value = cache[EntityRef.Command.Create(instruction.Id)];
                     return true;
                 case OpCode.ldr_app:
                     compileTimeValue = default(CompileTimeValue);
@@ -270,14 +271,15 @@ namespace Prexonite.Commands
         /// <param name = "localVariableMapping">The local variable mapping to apply when confronted with index-instructions (e.g., <code>ldloci</code>)</param>
         /// <param name = "offset">The offset of the first possible compile time constant.</param>
         /// <param name="cache">The cache to use. See <see cref="StackContext"/> or <see cref="Module"/> on how to get one.</param>
+        /// <param name="internalModule">The module that contains the instructions.</param>
         /// <returns>the compile time values in the order they appear in the code (the "right" order).</returns>
         public static CompileTimeValue[] ParseSequenceReverse(IList<Instruction> instructions,
-            IDictionary<int, string> localVariableMapping, int offset, CentralCache cache)
+            IDictionary<int, string> localVariableMapping, int offset, CentralCache cache, ModuleName internalModule)
         {
             var compileTimeValues = new LinkedList<CompileTimeValue>();
             CompileTimeValue compileTimeValue;
             while (0 <= offset &&
-                TryParse(instructions[offset--], localVariableMapping, out compileTimeValue, cache))
+                TryParse(instructions[offset--], localVariableMapping, cache, internalModule, out compileTimeValue))
                 compileTimeValues.AddFirst(compileTimeValue);
             return compileTimeValues.ToArray();
         }

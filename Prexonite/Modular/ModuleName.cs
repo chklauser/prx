@@ -250,7 +250,7 @@ namespace Prexonite.Modular
 
         public override string ToString()
         {
-            return _id + ", " + _version;
+            return _id + "," + _version;
         }
 
         public MetaEntry ToMetaEntry()

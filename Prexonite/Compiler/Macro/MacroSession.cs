@@ -237,6 +237,14 @@ namespace Prexonite.Compiler.Macro
 
         #region Function Expander
 
+        private static string _toFunctionNameString(SymbolEntry si)
+        {
+            if (si.Module == null)
+                return si.InternalId;
+            else
+                return string.Format("{0}/{1},{2}", si.InternalId, si.Module.Id, si.Module.Version);
+        }
+
         private class MacroFunctionExpander : IMacroExpander
         {
             public void Initialize(CompilerTarget target, AstMacroInvocation invocation,
@@ -252,9 +260,9 @@ namespace Prexonite.Compiler.Macro
                         new ParseMessage(
                             ParseMessageSeverity.Error,
                             String.Format(
-                                "The macro function {0} was called from function {1} but is not available at compile time.",
-                                invocation.Implementation.InternalId,
-                                target.Function.Id), invocation));
+                                "The macro function {0} was called from function {1} but is not available at compile time (from module {2}).",
+                                _toFunctionNameString(invocation.Implementation),
+                                target.Function.Id, target.Loader.ParentApplication.Module.Name), invocation));
                     HumanId = "could_not_resolve_macro_function";
                     return;
                 }

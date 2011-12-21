@@ -101,6 +101,7 @@
     <Compile Include="Tests\ApplicationLinking.cs" />
     <Compile Include="Tests\AstTests.cs" />
     <Compile Include="Tests\CilCompilerTests.cs" />
+    <Compile Include="Tests\CilRuntime.cs" />
     <Compile Include="Tests\Compiler.cs" />
     <Compile Include="Tests\Compiler.Global.cs" />
     <Compile Include="Tests\Compiler.Parser.cs" />
