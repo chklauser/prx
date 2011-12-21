@@ -24,6 +24,8 @@
 //  WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING 
 //  IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
+using System;
+using System.Collections.Generic;
 using Prexonite.Commands;
 using Prexonite.Compiler;
 
@@ -129,18 +131,19 @@ namespace Prexonite.Modular
 
         #endregion
 
-        #region Referencing and Dereferencing
+        #region Conversion
 
-        public virtual bool TryGetSymbolicReference(out EntityRef entity)
-        {
-            entity = null;
-            return false;
-        }
+        /// <summary>
+        /// Creates a <see cref="SymbolEntry"/> that refers to the same entity as the <see cref="EntityRef"/>. This is a narrowing (lossy) conversion.
+        /// </summary>
+        /// <returns>A <see cref="SymbolEntry"/> that referes to the same entity as the <see cref="EntityRef"/>.</returns>
+        public abstract SymbolEntry ToSymbolEntry();
 
-        public virtual bool TrySymbolicDereference(out EntityRef entity)
+        public static explicit operator SymbolEntry(EntityRef entityRef)
         {
-            entity = null;
-            return false;
+            if (entityRef == null)
+                throw new ArgumentNullException("entityRef");
+            return entityRef.ToSymbolEntry();
         }
 
         #endregion
@@ -177,10 +180,48 @@ namespace Prexonite.Modular
 
         #region Functions
 
-        public abstract class Function : EntityRef
+        public abstract class Function : EntityRef, IEquatable<Function>
         {
             private readonly string _id;
             private readonly ModuleName _moduleName;
+
+            bool IEquatable<Function>.Equals(Function other)
+            {
+                return EqualsFunction(other);
+            }
+
+            protected bool EqualsFunction(Function other)
+            {
+                if (ReferenceEquals(null, other)) return false;
+                if (ReferenceEquals(this, other)) return true;
+                return Equals(other._id, _id) && Equals(other._moduleName, _moduleName);
+            }
+
+            public override bool Equals(object obj)
+            {
+                if (ReferenceEquals(null, obj)) return false;
+                if (ReferenceEquals(this, obj)) return true;
+                if (obj.GetType() != GetType()) return false;
+                return EqualsFunction((Function) obj);
+            }
+
+            public override int GetHashCode()
+            {
+                unchecked
+                {
+                    return (_id.GetHashCode()*397) ^ _moduleName.GetHashCode();
+                }
+            }
+
+            public static bool operator ==(Function left, Function right)
+            {
+                return Equals(left, right);
+            }
+
+            public static bool operator !=(Function left, Function right)
+            {
+                return !Equals(left, right);
+            }
 
             private Function(string id, ModuleName moduleName)
             {
@@ -230,38 +271,25 @@ namespace Prexonite.Modular
                 }
             }
 
-            #region Nested type: CompileTime
-
-            public class CompileTime : CompileTimeBase
+            internal override bool _TryLookup(StackContext sctx, out PValue entity)
             {
-                private CompileTime(string id, ModuleName moduleName)
-                    : base(id, moduleName)
+                var app = sctx.ParentApplication;
+                if (!app.Compound.TryGetApplication(ModuleName, out app))
                 {
+                    entity = null;
+                    return false;
                 }
 
-                public static CompileTime Create(string id, ModuleName moduleName)
+                PFunction func;
+                if(!app.Functions.TryGetValue(Id,out func))
                 {
-                    return new CompileTime(id, moduleName);
+                    entity = null;
+                    return false;
                 }
 
-                protected override bool SatisfiesMacro(bool isMacro)
-                {
-                    return !isMacro;
-                }
-
-                public override T Match<T>(IEntityRefMatcher<T> matcher)
-                {
-                    return matcher.OnCompileTimeFunction(this);
-                }
-
-                public override bool TryGetCompileTimeFunction(out CompileTime func)
-                {
-                    func = this;
-                    return true;
-                }
+                entity = sctx.CreateNativePValue(func);
+                return true;
             }
-
-            #endregion
 
             #region Nested type: CompileTimeBase
 
@@ -307,9 +335,52 @@ namespace Prexonite.Modular
 
             #endregion
 
+            #region Nested type: CompileTime
+
+            public class CompileTime : CompileTimeBase, IEquatable<CompileTime>
+            {
+                private CompileTime(string id, ModuleName moduleName)
+                    : base(id, moduleName)
+                {
+                }
+
+                public static CompileTime Create(string id, ModuleName moduleName)
+                {
+                    return new CompileTime(id, moduleName);
+                }
+
+                protected override bool SatisfiesMacro(bool isMacro)
+                {
+                    return !isMacro;
+                }
+
+                public override T Match<T>(IEntityRefMatcher<T> matcher)
+                {
+                    return matcher.OnCompileTimeFunction(this);
+                }
+
+                public override bool TryGetCompileTimeFunction(out CompileTime func)
+                {
+                    func = this;
+                    return true;
+                }
+
+                public override SymbolEntry ToSymbolEntry()
+                {
+                    return new SymbolEntry(SymbolInterpretations.Function, Id, ModuleName);
+                }
+
+                public bool Equals(CompileTime other)
+                {
+                    return EqualsFunction(other);
+                }
+            }
+
+            #endregion
+
             #region Nested type: Macro
 
-            public sealed class Macro : CompileTimeBase, IMacro
+            public sealed class Macro : CompileTimeBase, IMacro, IEquatable<Macro>
             {
                 private Macro(string id, ModuleName moduleName)
                     : base(id, moduleName)
@@ -336,13 +407,23 @@ namespace Prexonite.Modular
                     func = this;
                     return true;
                 }
+
+                public override SymbolEntry ToSymbolEntry()
+                {
+                    return new SymbolEntry(SymbolInterpretations.Function, Id, ModuleName);
+                }
+
+                public bool Equals(Macro other)
+                {
+                    return EqualsFunction(other);
+                }
             }
 
             #endregion
 
             #region Nested type: Runtime
 
-            public class RunTime : Function, IRunTime
+            public class RunTime : Function, IRunTime, IEquatable<RunTime>
             {
                 private RunTime(string id, ModuleName moduleName)
                     : base(id, moduleName)
@@ -391,6 +472,16 @@ namespace Prexonite.Modular
                         && (!isCompileTime.HasValue || !isCompileTime.Value)
                             && (!isMacro.HasValue || !isMacro.Value);
                 }
+
+                public override SymbolEntry ToSymbolEntry()
+                {
+                    return new SymbolEntry(SymbolInterpretations.Function, Id, ModuleName);
+                }
+
+                public bool Equals(RunTime other)
+                {
+                    return EqualsFunction(other);
+                }
             }
 
             #endregion
@@ -400,8 +491,38 @@ namespace Prexonite.Modular
 
         #region Commands
 
-        public sealed class Command : EntityRef, IRunTime
+        public sealed class Command : EntityRef, IRunTime, IEquatable<Command>
         {
+            public bool Equals(Command other)
+            {
+                if (ReferenceEquals(null, other)) return false;
+                if (ReferenceEquals(this, other)) return true;
+                return Equals(other._id, _id);
+            }
+
+            public override bool Equals(object obj)
+            {
+                if (ReferenceEquals(null, obj)) return false;
+                if (ReferenceEquals(this, obj)) return true;
+                if (obj.GetType() != typeof (Command)) return false;
+                return Equals((Command) obj);
+            }
+
+            public override int GetHashCode()
+            {
+                return (_id != null ? _id.GetHashCode() : 0);
+            }
+
+            public static bool operator ==(Command left, Command right)
+            {
+                return Equals(left, right);
+            }
+
+            public static bool operator !=(Command left, Command right)
+            {
+                return !Equals(left, right);
+            }
+
             private readonly string _id;
 
             private Command(string id)
@@ -409,12 +530,17 @@ namespace Prexonite.Modular
                 _id = id;
             }
 
+            public string Id
+            {
+                get { return _id; }
+            }
+
             #region IRunTime Members
 
             public bool TryGetEntity(StackContext sctx, out PValue entity)
             {
                 PCommand cmd;
-                if (sctx.ParentEngine.Commands.TryGetValue(_id, out cmd))
+                if (sctx.ParentEngine.Commands.TryGetValue(Id, out cmd))
                 {
                     entity = sctx.CreateNativePValue(cmd);
                     return true;
@@ -443,24 +569,36 @@ namespace Prexonite.Modular
                 cmd = this;
                 return true;
             }
+
+            public override SymbolEntry ToSymbolEntry()
+            {
+                return new SymbolEntry(SymbolInterpretations.Command, Id, null);
+            }
+
+            internal override bool _TryLookup(StackContext sctx, out PValue entity)
+            {
+                PCommand command;
+                if(sctx.ParentEngine.Commands.TryGetValue(Id,out command))
+                {
+                    entity = sctx.CreateNativePValue(command);
+                    return true;
+                }
+                else
+                {
+                    entity = null;
+                    return false;
+                }
+            }
         }
 
         #endregion
 
         #region Variables
 
-        public abstract class Variable : EntityRef, IRunTime
+        public abstract class Variable : EntityRef, IRunTime, IEquatable<Variable>
         {
-            private readonly bool _isReference;
-
-            private Variable(bool isReference)
+            private Variable()
             {
-                _isReference = isReference;
-            }
-
-            public bool IsReference
-            {
-                get { return _isReference; }
             }
 
             #region IRunTime Members
@@ -469,51 +607,27 @@ namespace Prexonite.Modular
 
             #endregion
 
-            protected abstract Variable With(bool isReference);
-
-            public override bool TryGetSymbolicReference(out EntityRef entity)
-            {
-                if (IsReference)
-                {
-                    entity = With(false);
-                    return true;
-                }
-                else
-                {
-                    entity = null;
-                    return false;
-                }
-            }
-
-            public override bool TrySymbolicDereference(out EntityRef entity)
-            {
-                if (!IsReference)
-                {
-                    entity = With(true);
-                    return true;
-                }
-                else
-                {
-                    entity = null;
-                    return false;
-                }
-            }
-
             public override bool TryGetVariable(out Variable variable)
             {
                 variable = this;
                 return true;
             }
 
+
+            protected abstract bool EqualsVariable(Variable other);
+            bool IEquatable<Variable>.Equals(Variable other)
+            {
+                return EqualsVariable(other);
+            }
+
             #region Nested type: Global
 
-            public sealed class Global : Variable
+            public sealed class Global : Variable, IEquatable<Global>
             {
                 private readonly string _id;
                 private readonly ModuleName _moduleName;
 
-                private Global(string id, ModuleName moduleName, bool isReference)
-                    : base(isReference)
+                private Global(string id, ModuleName moduleName)
                 {
                     _id = id;
                     _moduleName = moduleName;
@@ -540,10 +654,9 @@ namespace Prexonite.Modular
                     return true;
                 }
 
-                public static Global Create(string id, ModuleName moduleName,
-                    bool isReference = false)
+                public static Global Create(string id, ModuleName moduleName)
                 {
-                    return new Global(id, moduleName, isReference);
+                    return new Global(id, moduleName);
                 }
 
                 public override bool TryGetEntity(StackContext sctx, out PValue entity)
@@ -564,9 +677,69 @@ namespace Prexonite.Modular
                     }
                 }
 
-                protected override Variable With(bool isReference)
+                public override SymbolEntry ToSymbolEntry()
                 {
-                    return Create(Id, ModuleName, isReference);
+                    return new SymbolEntry(SymbolInterpretations.GlobalObjectVariable, Id,ModuleName);
+                }
+
+                internal override bool _TryLookup(StackContext sctx, out PValue entity)
+                {
+                    var app = sctx.ParentApplication;
+                    if (!app.Compound.TryGetApplication(ModuleName, out app))
+                    {
+                        entity = null;
+                        return false;
+                    }
+
+                    PVariable pvar;
+                    if (!app.Variables.TryGetValue(Id, out pvar))
+                    {
+                        entity = null;
+                        return false;
+                    }
+
+                    entity = sctx.CreateNativePValue(pvar);
+                    return true;
+                }
+
+                protected override bool EqualsVariable(Variable other)
+                {
+                    var g = other as Global;
+                    return g != null && Equals(g);
+                }
+
+                public bool Equals(Global other)
+                {
+                    if (ReferenceEquals(null, other)) return false;
+                    if (ReferenceEquals(this, other)) return true;
+                    
+                    return Equals(other._id, _id) && Equals(other._moduleName, _moduleName);
+                }
+
+                public override bool Equals(object obj)
+                {
+                    if (ReferenceEquals(null, obj)) return false;
+                    if (ReferenceEquals(this, obj)) return true;
+                    if (obj.GetType() != typeof (Global)) return false;
+                    return Equals((Global) obj);
+                }
+
+                public override int GetHashCode()
+                {
+                    unchecked
+                    {
+                        return ((_id != null ? _id.GetHashCode() : 0)*397) ^ (_moduleName != null ? _moduleName.GetHashCode() : 0);
+                    }
+                }
+
+                public static bool operator ==(Global left, Global right)
+                {
+                    return Equals(left, right);
+                }
+
+                public static bool operator !=(Global left, Global right)
+                {
+                    return !Equals(left, right);
                 }
             }
 
@@ -574,12 +747,11 @@ namespace Prexonite.Modular
 
             #region Nested type: Local
 
-            public sealed class Local : Variable
+            public sealed class Local : Variable, IEquatable<Local>
             {
                 private readonly string _id;
 
-                private Local(string id, bool isReference)
-                    : base(isReference)
+                private Local(string id)
                 {
                     _id = id;
                 }
@@ -589,9 +761,45 @@ namespace Prexonite.Modular
                     get { return _id; }
                 }
 
-                public static Local Create(string id, bool isReference = false)
+                public bool Equals(Local other)
                 {
-                    return new Local(id, isReference);
+                    if (ReferenceEquals(null, other)) return false;
+                    if (ReferenceEquals(this, other)) return true;
+                    return Equals(other._id, _id);
+                }
+
+                protected override bool EqualsVariable(Variable other)
+                {
+                    var local = other as Local;
+                    return local != null && Equals(local);
+                }
+
+                public override bool Equals(object obj)
+                {
+                    if (ReferenceEquals(null, obj)) return false;
+                    if (ReferenceEquals(this, obj)) return true;
+                    if (obj.GetType() != typeof (Local)) return false;
+                    return Equals((Local) obj);
+                }
+
+                public override int GetHashCode()
+                {
+                    return (_id != null ? _id.GetHashCode() : 0);
+                }
+
+                public static bool operator ==(Local left, Local right)
+                {
+                    return Equals(left, right);
+                }
+
+                public static bool operator !=(Local left, Local right)
+                {
+                    return !Equals(left, right);
+                }
+
+                public static Local Create(string id)
+                {
+                    return new Local(id);
                 }
 
                 public override bool TryGetEntity(StackContext sctx, out PValue entity)
@@ -610,11 +818,6 @@ namespace Prexonite.Modular
                     }
                 }
 
-                protected override Variable With(bool isReference)
-                {
-                    return Create(Id, isReference);
-                }
-
                 public override T Match<T>(IEntityRefMatcher<T> matcher)
                 {
                     return matcher.OnLocalVariable(this);
@@ -625,16 +828,44 @@ namespace Prexonite.Modular
                     variable = this;
                     return true;
                 }
+
+                public override SymbolEntry ToSymbolEntry()
+                {
+                    return new SymbolEntry(SymbolInterpretations.LocalObjectVariable, Id, null);
+                }
+
+                internal override bool _TryLookup(StackContext sctx, out PValue entity)
+                {
+                    var fctx = sctx as FunctionContext;
+                    if(fctx == null)
+                    {
+                        entity = null;
+                        return false;
+                    }
+
+                    PVariable pvar;
+                    if(fctx.LocalVariables.TryGetValue(Id, out pvar))
+                    {
+                        entity = sctx.CreateNativePValue(pvar);
+                        return true;
+                    }
+                    else
+                    {
+                        entity = null;
+                        return false;
+                    }
+                }
             }
 
             #endregion
+
         }
 
         #endregion
 
         #region MacroCommands
 
-        public class MacroCommand : EntityRef, ICompileTime, IMacro
+        public class MacroCommand : EntityRef, IMacro, IEquatable<MacroCommand>
         {
             private readonly string _id;
 
@@ -682,9 +913,109 @@ namespace Prexonite.Modular
                 mcmd = this;
                 return true;
             }
+
+            public override SymbolEntry ToSymbolEntry()
+            {
+                return new SymbolEntry(SymbolInterpretations.MacroCommand, Id, null);
+            }
+
+            internal override bool _TryLookup(StackContext sctx, out PValue entity)
+            {
+                //first: lookup in sctx (if it is a loader)
+                var ldr = sctx as Loader;
+                if (ldr != null)
+                    return _tryMcmdFromLoader(sctx, ldr, out entity);
+
+                //else: search stack beginning at sctx
+                bool foundEntity;
+                if (_tryMcmdFromStack(sctx, sctx.ParentEngine.Stack.FindLast(sctx), out foundEntity, out entity)) 
+                    return foundEntity;
+
+                //finally: search stack from bottom
+                return _tryMcmdFromStack(sctx, sctx.ParentEngine.Stack.Last, out foundEntity, out entity) && foundEntity;
+            }
+
+            private bool _tryMcmdFromStack(StackContext sctx, LinkedListNode<StackContext> node, out bool foundEntity, out PValue entity)
+            {
+                Loader ldr;
+                while (node != null)
+                {
+                    ldr = node.Value as Loader;
+                    if (ldr != null)
+                    {
+                        foundEntity = _tryMcmdFromLoader(sctx, ldr, out entity);
+                        return true;
+                    }
+                    node = node.Previous;
+                }
+
+                entity = null;
+                foundEntity = false;
+                return false;
+            }
+
+            private bool _tryMcmdFromLoader(StackContext sctx, Loader ldr, out PValue entity)
+            {
+                Compiler.Macro.MacroCommand mcmd;
+                if (ldr.MacroCommands.TryGetValue(Id, out mcmd))
+                {
+                    entity = sctx.CreateNativePValue(mcmd);
+                    return true;
+                }
+                else
+                {
+                    entity = null;
+                    return false;
+                }
+            }
+
+            public bool Equals(MacroCommand other)
+            {
+                if (ReferenceEquals(null, other)) return false;
+                if (ReferenceEquals(this, other)) return true;
+                return Equals(other._id, _id);
+            }
+
+            public override bool Equals(object obj)
+            {
+                if (ReferenceEquals(null, obj)) return false;
+                if (ReferenceEquals(this, obj)) return true;
+                if (obj.GetType() != typeof (MacroCommand)) return false;
+                return Equals((MacroCommand) obj);
+            }
+
+            public override int GetHashCode()
+            {
+                return (_id != null ? _id.GetHashCode() : 0);
+            }
+
+            public static bool operator ==(MacroCommand left, MacroCommand right)
+            {
+                return Equals(left, right);
+            }
+
+            public static bool operator !=(MacroCommand left, MacroCommand right)
+            {
+                return !Equals(left, right);
+            }
         }
 
         #endregion
+
+        #region Temporary
+
+        //TODO Find a better place for these methods
+
+        /// <summary>
+        /// Searches a <see cref="StackContext"/> for this entity and wraps it in a PValue, if found.
+        /// </summary>
+        /// <param name="sctx">The stack context to search.</param>
+        /// <param name="entity">Holds the wrapped reference to this entity on succes; undefined on failure.</param>
+        /// <returns>True if the entity was found in the context; false otherwise</returns>
+        internal abstract bool _TryLookup(StackContext sctx,out PValue  entity);
+
+        #endregion
+
     }
 
     public interface IEntityRefMatcher<out T>

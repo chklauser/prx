@@ -28,7 +28,7 @@ using System;
 using System.Collections;
 using System.Collections.Generic;
 
-namespace Prexonite.Helper
+namespace Prexonite
 {
     public class ReadOnlyCollectionView<T> : ICollection<T>
     {

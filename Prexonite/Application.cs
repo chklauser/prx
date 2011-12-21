@@ -566,11 +566,6 @@ namespace Prexonite
             get { return _compound != null && _compound.Count > 1; }
         }
 
-        public IModuleNameCache CachedModuleNames
-        {
-            get { return Compound; }
-        }
-
         public static void Link(Application application1, Application application2)
         {
             if (application1 == null)
@@ -598,7 +593,7 @@ namespace Prexonite
             }
             else
             {
-                Debug.Assert(application1.Compound is SingletonCompound, "Link(a,_): a is assumed to be part of a singleton compound.");
+                Debug.Assert(application1.Compound is SingletonCompound, "Link(a,_): `a` is assumed to be part of a singleton compound.");
                 if(application1._compound != null)
                     application1._compound._Clear();
                 application1._compound = ApplicationCompound.Create();
@@ -626,20 +621,23 @@ namespace Prexonite
             if(IsLinked)
             {
                 Debug.Assert(oldCompound != null);
-                oldCompound.LinkModuleNameCache(targetCompound);
+                var newCache = oldCompound.Cache.LinkInto(targetCompound.Cache);
+                oldCompound.Cache = newCache;
+                targetCompound.Cache = newCache;
+
                 foreach (var linkedApp in oldCompound)
                 {
                     linkedApp._compound = targetCompound;
                     targetCompound._Link(linkedApp);
                 }
-
+                
                 oldCompound._Clear();
             }
             else
             {
                 if (oldCompound != null)
                 {
-                    oldCompound.LinkModuleNameCache(targetCompound);
+                    targetCompound.Cache = oldCompound.Cache.LinkInto(targetCompound.Cache);
                     oldCompound._Clear();
                 }
                 _compound = targetCompound;
@@ -665,50 +663,12 @@ namespace Prexonite
         private class SingletonCompound : ApplicationCompound
         {
             private Application _application;
-            private IModuleNameCache _cache;
+            private CentralCache _cache;
 
-            protected override IModuleNameCache ModuleNameCache
+            public override CentralCache Cache
             {
-                get { return _cache ?? (_cache = Modular.ModuleNameCache.Create()); }
-            }
-
-            public override ModuleName CreateModuleName(string id, Version version)
-            {
-                if (String.IsNullOrEmpty(id))
-                    throw new ArgumentException("The module identifier is null or empty.", "id");
-                if (version == null)
-                    throw new ArgumentNullException("version");
-
-                ModuleName m;
-                if (_application != null &&
-                    Engine.StringsAreEqual((m = _application.Module.Name).Id, id) &&
-                        Equals(m.Version, version))
-                    return m;
-                else
-                    return base.CreateModuleName(id, version);
-            }
-
-            public override void LinkModuleNameCache(IModuleNameCache cache)
-            {
-                if (cache == null)
-                    throw new ArgumentNullException("cache");
-                
-                if (_cache == null)
-                    _cache = cache;
-                else
-                    base.LinkModuleNameCache(cache);
-            }
-
-            public override ModuleName GetCachedModuleName(ModuleName name)
-            {
-                if (name == null)
-                    throw new ArgumentNullException("name");
-                
-                ModuleName m;
-                if (_application != null && (m = _application.Module.Name).Equals(name))
-                    return m;
-                else
-                    return base.GetCachedModuleName(name);
+                get { return _cache ?? (_cache = CentralCache.Create()); }
+                internal set { _cache = value; }
             }
 
             public SingletonCompound(Application application)
@@ -765,19 +725,6 @@ namespace Prexonite
                 {
                     application = _application;
                     return true;
-                }
-            }
-
-            public override Application this[ModuleName name]
-            {
-                get
-                {
-                    if (_application == null || !_application.Module.Name.Equals(name))
-                        throw new KeyNotFoundException(
-                            "Application compound does not contain an instantiation of the module " +
-                                name);
-                    else
-                        return _application;
                 }
             }
 

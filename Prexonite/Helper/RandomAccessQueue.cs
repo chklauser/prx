@@ -29,7 +29,7 @@ using System.Collections;
 using System.Collections.Generic;
 using System.Diagnostics;
 
-namespace Prexonite.Helper
+namespace Prexonite
 {
     /// <summary>
     ///     Custom implementation of a queue that allows random access.

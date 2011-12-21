@@ -1,0 +1,26 @@
+﻿<wpf:ResourceDictionary xml:space="preserve" xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml" xmlns:s="clr-namespace:System;assembly=mscorlib" xmlns:ss="urn:shemas-jetbrains-com:settings-storage-xaml" xmlns:wpf="http://schemas.microsoft.com/winfx/2006/xaml/presentation">
+	<s:String x:Key="/Default/CodeStyle/FileHeader/FileHeaderText/@EntryValue">$SOLUTION$&#xD;
+&#xD;
+Copyright (c) $CURRENT_YEAR$, Christian Klauser&#xD;
+All rights reserved.&#xD;
+&#xD;
+Redistribution and use in source and binary forms, with or without modification, &#xD;
+ are permitted provided that the following conditions are met:&#xD;
+&#xD;
+    Redistributions of source code must retain the above copyright notice, &#xD;
+         this list of conditions and the following disclaimer.&#xD;
+    Redistributions in binary form must reproduce the above copyright notice, &#xD;
+         this list of conditions and the following disclaimer in the &#xD;
+         documentation and/or other materials provided with the distribution.&#xD;
+    The names of the contributors may be used to endorse or &#xD;
+         promote products derived from this software without specific prior written permission.&#xD;
+&#xD;
+THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND &#xD;
+ ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED &#xD;
+ WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED. &#xD;
+ IN NO EVENT SHALL THE COPYRIGHT HOLDER OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT, &#xD;
+ INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES &#xD;
+ (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, &#xD;
+ DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, &#xD;
+ WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING &#xD;
+ IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.</s:String></wpf:ResourceDictionary>

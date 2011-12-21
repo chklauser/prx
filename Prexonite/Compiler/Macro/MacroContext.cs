@@ -29,7 +29,6 @@ using System.Collections.Generic;
 using System.Diagnostics;
 using System.Linq;
 using Prexonite.Compiler.Ast;
-using Prexonite.Helper;
 using Prexonite.Types;
 
 namespace Prexonite.Compiler.Macro

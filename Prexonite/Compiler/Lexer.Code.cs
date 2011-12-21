@@ -30,7 +30,6 @@ using System.Globalization;
 using System.Text;
 using Prexonite;
 using Prexonite.Compiler;
-using Prexonite.Helper;
 
 internal partial class Lexer
 {

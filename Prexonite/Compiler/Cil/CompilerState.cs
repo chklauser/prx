@@ -575,6 +575,11 @@ namespace Prexonite.Compiler.Cil
             Il.EmitCall(OpCodes.Call, Compiler.GetValueMethod, null);
         }
 
+        public void EmitLoadGlobalRefAsPValue(EntityRef.Variable.Global globalVariable)
+        {
+            EmitLoadGlobalRefAsPValue(globalVariable.Id,globalVariable.ModuleName);
+        }
+
         /// <summary>
         /// Loads the <see cref="PVariable"/> object for the specified global variable onto the managed stack.
         /// </summary>
@@ -1033,6 +1038,11 @@ namespace Prexonite.Compiler.Cil
             Il.EmitCall(OpCodes.Call, Runtime.WrapPVariableMethod, null);
         }
 
+        public void EmitLoadLocalRefAsPValue(EntityRef.Variable.Local localVariable)
+        {
+            EmitLoadLocalRefAsPValue(localVariable.Id);
+        }
+
         public void EmitLoadStringAsPValue(string id)
         {
             Il.Emit(OpCodes.Ldstr, id);
@@ -1077,8 +1087,6 @@ namespace Prexonite.Compiler.Cil
             Il.Emit(OpCodes.Stind_Ref);
         }
 
-       
-
         private static readonly Lazy<ConstructorInfo[]> _versionCtors = new Lazy<ConstructorInfo[]>(() =>
             {
                 var cs = new ConstructorInfo[3];
@@ -1094,7 +1102,7 @@ namespace Prexonite.Compiler.Cil
                 return cs;
             },LazyThreadSafetyMode.None);
 
-        protected void EmitVersion(Version version)
+        public void EmitVersion(Version version)
         {
             EmitLdcI4(version.Major);
             EmitLdcI4(version.Minor);
@@ -1126,6 +1134,16 @@ namespace Prexonite.Compiler.Cil
             Il.Emit(OpCodes.Ldstr, moduleName.Id);
             EmitVersion(moduleName.Version);
             EmitCall(Runtime.LoadModuleNameMethod); 
+        }
+
+        public void EmitLoadFuncRefAsPValue(EntityRef.Function function)
+        {
+            EmitLoadFuncRefAsPValue(function.Id,function.ModuleName);
+        }
+
+        public void EmitLoadCmdRefAsPValue(EntityRef.Command command)
+        {
+            EmitLoadCmdRefAsPValue(command.Id);
         }
     }
 }

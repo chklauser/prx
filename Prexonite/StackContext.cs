@@ -80,8 +80,7 @@ namespace Prexonite
         /// </summary>
         public ReturnMode ReturnMode { get; set; }
 
-        public virtual IModuleNameCache CachedModuleNames { get { return ParentApplication.CachedModuleNames; }
-        }
+        public virtual CentralCache Cache { get { return ParentApplication.Module.Cache; } }
 
         #endregion
 

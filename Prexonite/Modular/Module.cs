@@ -7,6 +7,7 @@ using Prexonite.Internal;
 
 namespace Prexonite.Modular
 {
+
     /// <summary>
     /// A Prexonite module is a named container for  Prexonite functions and variable declarations.
     /// </summary>
@@ -19,6 +20,8 @@ namespace Prexonite.Modular
         public abstract PFunctionTable Functions { get; }
 
         public abstract VariableTable Variables { get; }
+
+        public abstract CentralCache Cache { get; internal set; }
 
         #region IMetaFilter Members
 
@@ -64,6 +67,8 @@ namespace Prexonite.Modular
 
     class ModuleImpl : Module
     {
+        private CentralCache _cache = CentralCache.Create();
+
         public ModuleImpl(ModuleName name)
         {
             if (name == null)
@@ -75,6 +80,18 @@ namespace Prexonite.Modular
             _meta = m;
             _meta[Application.EntryKey] = Application.DefaultEntryFunction;
             _meta[Application.ImportKey] = Application.DefaultImport;
+        }
+
+        public override CentralCache Cache
+        {
+            get { return _cache; }
+            internal set
+            {
+                if (value == null)
+                    throw new ArgumentNullException("value");
+                
+                _cache = value;
+            }
         }
 
         private readonly ModuleName _name;

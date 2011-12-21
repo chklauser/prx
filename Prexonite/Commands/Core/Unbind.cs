@@ -28,6 +28,7 @@ using System;
 using System.Linq;
 using System.Reflection.Emit;
 using Prexonite.Compiler.Cil;
+using Prexonite.Modular;
 using Prexonite.Types;
 
 namespace Prexonite.Commands.Core
@@ -182,18 +183,17 @@ namespace Prexonite.Commands.Core
         {
             foreach (var compileTimeValue in staticArgv)
             {
-                string localVariableId;
-                if (!compileTimeValue.TryGetLocalVariableReference(out localVariableId))
+                EntityRef.Variable.Local local;
+                if (!compileTimeValue.TryGetLocalVariableReference(out local))
                     throw new ArgumentException(
                         "CIL implementation of Core.Unbind command only accepts local variable references.",
                         "staticArgv");
 
                 Symbol symbol;
-                if (!state.Symbols.TryGetValue(localVariableId, out symbol) ||
+                if (!state.Symbols.TryGetValue(local.Id, out symbol) ||
                     symbol.Kind != SymbolKind.LocalRef)
                     throw new PrexoniteException(
-                        "CIL implementation of Core.Unbind cannot find local explicit variable " +
-                            localVariableId);
+                        string.Format("CIL implementation of {1} cannot find local explicit variable {0}", local.Id, GetType().FullName));
 
                 //Create new PVariable
                 state.Il.Emit(OpCodes.Newobj, Compiler.Cil.Compiler.NewPVariableCtor);

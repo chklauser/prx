@@ -1,3 +1,4 @@
+using System;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.Diagnostics;
@@ -16,11 +17,19 @@ namespace Prexonite
         }
 
         private readonly KeyedCollection<ModuleName,Application> _table = new AppTable();
-        private readonly IModuleNameCache _moduleNameCache = Modular.ModuleNameCache.Create();
 
-        protected override IModuleNameCache ModuleNameCache
+        private CentralCache _cache = CentralCache.Create();
+
+        public override CentralCache Cache
         {
-            get { return _moduleNameCache; }
+            get { return _cache; }
+            internal set
+            {
+                if (value == null)
+                    throw new ArgumentNullException("value");
+                
+                _cache = value;
+            }
         }
 
         public override IEnumerator<Application> GetEnumerator()
@@ -28,16 +37,13 @@ namespace Prexonite
             return _table.GetEnumerator();
         }
 
-        public override Application this[ModuleName name]
-        {
-            get { return _table[name]; }
-        }
-
         internal override void _Unlink(Application application)
         {
+            // ReSharper disable RedundantAssignment
             var r = _table.Remove(application);
             Debug.Assert(r,
                 "Tried to _Unlink an application that wasn't part of the compound. Probable cause of bugs");
+            // ReSharper restore RedundantAssignment
         }
 
         internal override void _Link(Application application)
@@ -57,6 +63,7 @@ namespace Prexonite
                         current.Module);
                 }
             }
+            application.Module.Cache = application.Module.Cache.LinkInto(Cache);
             _table.Add(application);
         }
 

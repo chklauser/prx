@@ -28,7 +28,7 @@ using System.Collections.Generic;
 
 namespace Prexonite
 {
-    public interface IDependent<T> : INamed<T>
+    public interface IDependent<out T> : INamed<T>
     {
         IEnumerable<T> GetDependencies();
     }

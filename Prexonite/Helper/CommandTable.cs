@@ -26,8 +26,9 @@
 
 using System;
 using System.Collections.Generic;
+using Prexonite.Commands;
 
-namespace Prexonite.Commands
+namespace Prexonite
 {
     public class CommandTable : SymbolTable<PCommand>
     {

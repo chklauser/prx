@@ -35,6 +35,7 @@ using System.Linq;
 using System.Reflection;
 using System.Reflection.Emit;
 using Prexonite.Commands;
+using Prexonite.Modular;
 using Prexonite.Types;
 using CilException = Prexonite.PrexoniteException;
 
@@ -365,13 +366,14 @@ namespace Prexonite.Compiler.Cil
                         CompileTimeValue[] staticArgv;
 
                         //First allow CIL extensions to kick in, and only if they don't apply, check for CIL awareness.
+                        var moduleNameCache = source.ParentApplication.Module.Cache.ModuleNames;
                         if (cmd.TryGetCilExtension(out extension)
                             &&
                             !_rangeInSet(
                                 insOffset -
                                     (staticArgv =
                                         CompileTimeValue.ParseSequenceReverse(source.Code,
-                                            localVariableMapping, address - 1)).Length + 1,
+                                            localVariableMapping, address - 1, moduleNameCache)).Length + 1,
                                 staticArgv.Length, jumpTargets)
                                     &&
                                     extension.ValidateArguments(staticArgv,
@@ -1005,7 +1007,7 @@ namespace Prexonite.Compiler.Cil
                     if (cilExtensionMode)
                     {
                         CompileTimeValue compileTimeValue;
-                        if (CompileTimeValue.TryParse(ins, state.IndexMap, out compileTimeValue))
+                        if (CompileTimeValue.TryParse(ins, state.IndexMap, out compileTimeValue, state.Cache.ModuleNames))
                         {
                             staticArgv.Add(compileTimeValue);
                         }

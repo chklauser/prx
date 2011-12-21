@@ -53,7 +53,7 @@
     <DebugType>pdbonly</DebugType>
     <Optimize>true</Optimize>
     <OutputPath>bin\</OutputPath>
-    <DefineConstants>TRACE;allowIndex</DefineConstants>
+    <DefineConstants>allowIndex</DefineConstants>
     <ErrorReport>prompt</ErrorReport>
     <WarningLevel>4</WarningLevel>
     <PlatformTarget>AnyCPU</PlatformTarget>
@@ -103,6 +103,8 @@
     <Compile Include="Closure.cs" />
     <Compile Include="Commands\CompilationFlags.cs" />
     <Compile Include="Commands\CilTestCommand.cs" />
+    <Compile Include="Commands\CompileTimeInterpretation.cs" />
+    <Compile Include="Commands\CompileTimeValue.cs" />
     <Compile Include="Commands\Concurrency\AsyncSeq.cs" />
     <Compile Include="Commands\Concurrency\CallAsync.cs" />
     <Compile Include="Commands\Concurrency\Chan.cs" />
@@ -150,9 +152,11 @@
     <Compile Include="Compiler\Macro\Commands\Reference.cs" />
     <Compile Include="Compiler\Macro\Commands\Unpack.cs" />
     <Compile Include="Compiler\Macro\PartialMacroCommand.cs" />
+    <Compile Include="Exceptions.cs" />
     <Compile Include="Helper\IHasMetaTable.cs" />
     <Compile Include="Helper\IMetaFilter.cs" />
     <Compile Include="Helper\LastAccessCache.cs" />
+    <Compile Include="Helper\MergingCache.cs" />
     <Compile Include="IMaybeStackAware.cs" />
     <Compile Include="Commands\Core\PartialApplication\PartialApplicationBase.cs" />
     <Compile Include="Commands\Core\PartialApplication\PartialApplicationCommandBase.cs" />
@@ -333,7 +337,6 @@
     <Compile Include="Modular\Module.cs" />
     <Compile Include="Modular\ModuleConflictException.cs" />
     <Compile Include="Modular\ModuleName.cs" />
-    <Compile Include="Modular\ModuleNameCache.cs" />
     <Compile Include="Modular\VariableDeclaration.cs" />
     <Compile Include="Modular\VariableTable.cs" />
     <Compile Include="OperatorNames.cs" />
@@ -374,7 +377,6 @@
     <Compile Include="Types\ListPType.cs" />
     <Compile Include="Types\ObjectPType.cs" />
     <Compile Include="Engine.cs" />
-    <Compile Include="Helper\Exceptions.cs" />
     <Compile Include="Helper\MetaTable.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
     <Compile Include="PValue.cs" />

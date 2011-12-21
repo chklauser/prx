@@ -28,12 +28,13 @@ using System;
 using System.Collections;
 using System.Collections.Generic;
 
-namespace Prexonite.Helper
+namespace Prexonite
 {
     /// <summary>
     ///     Provides a read-only view onto a symbol table. Does not protect the contents of the symbol table.
     /// </summary>
-    /// <typeparam name = "TValue">The type of values stored in the symbol table.</typeparam>
+    /// <typeparam name = "TValue">The type of values stored in the table.</typeparam>
+    /// <typeparam name="TKey">The type of keys used to access values in the table. </typeparam>
     public class ReadOnlyDictionaryView<TKey, TValue> : IDictionary<TKey, TValue>
     {
         private readonly IDictionary<TKey, TValue> _table;

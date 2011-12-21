@@ -672,12 +672,12 @@ namespace Prexonite.Compiler.Cil
 
         public static PValue LoadModuleNameAsPValue(StackContext sctx, string id, Version version)
         {
-            return sctx.CreateNativePValue(sctx.CachedModuleNames.Create(id, version));
+            return sctx.CreateNativePValue(sctx.Cache[id, version]);
         }
 
         public static ModuleName LoadModuleName(StackContext sctx, string id, Version version)
         {
-            return sctx.CachedModuleNames.Create(id, version);
+            return sctx.Cache[id, version];
         }
 
         // ReSharper restore UnusedMember.Global

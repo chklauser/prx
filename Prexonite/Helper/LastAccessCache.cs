@@ -3,7 +3,7 @@ using System.Collections.Generic;
 using System.Diagnostics;
 using System.Linq;
 
-namespace Prexonite.Helper
+namespace Prexonite
 {
     public interface IObjectCache<T>
     {
@@ -45,6 +45,11 @@ namespace Prexonite.Helper
                 _insert(name);
             }
             return name;
+        }
+
+        public int EstimateSize()
+        {
+            return _accessOrder.Count;
         }
 
         private void _insert(T name)
