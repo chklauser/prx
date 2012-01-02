@@ -198,5 +198,27 @@ function main(x)
                 Assert.That(entry.InternalId, Is.EqualTo("f"));
             }
         }
+
+        [Test]
+        public void AppendRightLocalFunc()
+        {
+            Compile(@"
+function main()
+{
+    var ys = [];
+    coroutine trace(t,xs)
+    {
+        foreach(var x in xs)
+        {
+            ys[] = t:x;
+            yield x;
+        }
+    } 
+    ([1,2]) >> trace(33) >> all >> println;
+    return (var args >> trace(77) >> map(?~String) >> foldl((l,r) => l + "" "" + r, """")) + ys;
+}
+");
+            Expect(" 1 2 3 4 5 6 7[ 33: 1, 33: 2, 77: 1, 77: 2, 77: 3, 77: 4, 77: 5, 77: 6, 77: 7 ]",1,2,3,4,5,6,7);
+        }
     }
 }

@@ -1912,7 +1912,9 @@ GetInitiator<out AstGetSet complex, out bool isDeclaration>
 		|	appendright
 			GetCall<out complex>		(.	complex.Arguments.RightAppend(args);
 											complex.Arguments.ReleaseRightAppend();
-											if(complex is AstGetSetSymbol && ((AstGetSetSymbol)complex).IsVariable)
+                                            //WARNING: the following code is duplicated in Parser.Expression.atg/RightAppendExpr
+											if(complex is AstGetSetSymbol 
+                                                    && ((AstGetSetSymbol)complex).IsObjectVariable)
 										        complex.Call = PCall.Set;
 											member = complex;
 										.)
