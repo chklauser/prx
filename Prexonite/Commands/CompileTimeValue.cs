@@ -288,7 +288,6 @@ namespace Prexonite.Commands
 
         public void EmitLoadAsPValue(CompilerState state)
         {
-            string id;
             switch (Interpretation)
             {
                 case CompileTimeInterpretation.Null:

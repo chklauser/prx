@@ -6,17 +6,9 @@ using Prexonite.Modular;
 
 namespace Prexonite
 {
-    class ApplicationCompoundImpl : ApplicationCompound
+    internal class ApplicationCompoundImpl : ApplicationCompound
     {
-        private class AppTable : KeyedCollection<ModuleName, Application>
-        {
-            protected override ModuleName GetKeyForItem(Application item)
-            {
-                return item.Module.Name;
-            }
-        }
-
-        private readonly KeyedCollection<ModuleName,Application> _table = new AppTable();
+        private readonly KeyedCollection<ModuleName, Application> _table = new AppTable();
 
         private CentralCache _cache = CentralCache.Create();
 
@@ -27,9 +19,14 @@ namespace Prexonite
             {
                 if (value == null)
                     throw new ArgumentNullException("value");
-                
+
                 _cache = value;
             }
+        }
+
+        public override int Count
+        {
+            get { return _table.Count; }
         }
 
         public override IEnumerator<Application> GetEnumerator()
@@ -40,7 +37,7 @@ namespace Prexonite
         internal override void _Unlink(Application application)
         {
             // ReSharper disable RedundantAssignment
-            var r = _table.Remove(application);
+            bool r = _table.Remove(application);
             Debug.Assert(r,
                 "Tried to _Unlink an application that wasn't part of the compound. Probable cause of bugs");
             // ReSharper restore RedundantAssignment
@@ -53,7 +50,7 @@ namespace Prexonite
             {
                 if (Equals(current, application))
                 {
-                    return;  //merging
+                    return; //merging
                 }
                 else
                 {
@@ -79,7 +76,7 @@ namespace Prexonite
 
         public override bool TryGetApplication(ModuleName moduleName, out Application application)
         {
-            if(_table.Contains(moduleName))
+            if (_table.Contains(moduleName))
             {
                 application = _table[moduleName];
                 return true;
@@ -96,9 +93,16 @@ namespace Prexonite
             _table.CopyTo(array, arrayIndex);
         }
 
-        public override int Count
+        #region Nested type: AppTable
+
+        private class AppTable : KeyedCollection<ModuleName, Application>
         {
-            get { return _table.Count; }
+            protected override ModuleName GetKeyForItem(Application item)
+            {
+                return item.Module.Name;
+            }
         }
+
+        #endregion
     }
 }

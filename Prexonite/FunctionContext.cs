@@ -29,6 +29,7 @@
 using System;
 using System.Collections.Generic;
 using System.Diagnostics;
+using System.Globalization;
 using System.Reflection;
 using System.Runtime.Serialization;
 using Prexonite.Commands;
@@ -365,7 +366,7 @@ namespace Prexonite
                 var ins = codeBase[_pointer++];
 
 #if Verbose
-            Console.Write("/* " + (_pointer-1).ToString().PadLeft(4, '0') + " */ " + ins);
+            Console.Write("/* " + (_pointer-1).ToString(CultureInfo.InvariantCulture).PadLeft(4, '0') + " */ " + ins);
             PValue val;
 #endif
 

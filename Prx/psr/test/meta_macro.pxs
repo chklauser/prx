@@ -27,6 +27,14 @@
 
 build does require(@"..\test.pxs");
 
+test\plugins {};
+
+build
+{
+    var app = asm(ldr.app);
+    app.Meta[@"test\plugins"] = app.Meta[@"test\plugins"].AddToList([app.Module.Name.ToMetaEntry()]~Object<"Prexonite.MetaEntry[]">);
+}
+
 function test\execute_single_macro as execute_single_macro(ldr, testMacro)
 [Import {System, Prexonite, Prexonite::Types, Prexonite::Compiler, Prexonite::Compiler::Ast}]
 {
@@ -112,6 +120,10 @@ function test\macro_filter as macro_filter(testFunc)
         return new macro_function_wrapper(testFunc);
     else
         return testFunc;
+}
+
+function test_meta_macro_init()
+{    
 }
 
 {

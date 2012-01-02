@@ -181,7 +181,7 @@ namespace Prexonite.Compiler.Ast
         {
             if (symbol.Implementation.Interpretation != SymbolInterpretations.Function) //must be function call
                 return false;
-            if(symbol.Implementation.Module != null) //must be direct recursive iteration
+            if(symbol.Implementation.Module != target.Loader.ParentApplication.Module.Name) //must be direct recursive iteration
                 return false;
             if (!Engine.StringsAreEqual(target.Function.Id, symbol.Implementation.InternalId))
                 //must be direct recursive iteration

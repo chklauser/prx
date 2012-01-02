@@ -72,7 +72,7 @@ function func0
             Assert.IsTrue(tar.Function.Variables.Contains("cor0"));
 
             Assert.AreEqual(
-                new SymbolEntry(SymbolInterpretations.GlobalObjectVariable, "gobj0", null),
+                new SymbolEntry(SymbolInterpretations.GlobalObjectVariable, "gobj0", target.Module.Name),
                 tar.Symbols["gobj0"]);
             Assert.IsFalse(
                 tar.Function.Variables.Contains("gobj0"),
@@ -81,7 +81,7 @@ function func0
                 ldr.Options.TargetApplication.Variables.ContainsKey("gobj0"),
                 "\"global <id>;\" only declares a global variable.");
             Assert.AreEqual(
-                new SymbolEntry(SymbolInterpretations.GlobalObjectVariable, "gobj1", null),
+                new SymbolEntry(SymbolInterpretations.GlobalObjectVariable, "gobj1", target.Module.Name),
                 tar.Symbols["gobj1"]);
             Assert.IsFalse(
                 tar.Function.Variables.Contains("gobj1"),
@@ -91,12 +91,12 @@ function func0
                 "\"declare var <id>;\" only declares a global variable.");
 
             Assert.AreEqual(
-                new SymbolEntry(SymbolInterpretations.GlobalObjectVariable, "func0\\static\\sobj0", null),
+                new SymbolEntry(SymbolInterpretations.GlobalObjectVariable, "func0\\static\\sobj0", target.Module.Name),
                 tar.Symbols["sobj0"]);
             Assert.IsTrue(
                 ldr.Options.TargetApplication.Variables.ContainsKey("func0\\static\\sobj0"));
             Assert.AreEqual(
-                new SymbolEntry(SymbolInterpretations.GlobalObjectVariable, "func0\\static\\sobj1", null),
+                new SymbolEntry(SymbolInterpretations.GlobalObjectVariable, "func0\\static\\sobj1", target.Module.Name),
                 tar.Symbols["sobj1"]);
             Assert.IsTrue(
                 ldr.Options.TargetApplication.Variables.ContainsKey("func0\\static\\sobj1"));
@@ -2560,8 +2560,8 @@ ret.val
             _compile(@"
 function main
 {
-    print = ref h;
-    return null;
+    print(ref h);
+    return var h;
 }
 ");
 
@@ -2570,7 +2570,7 @@ var h
 ldr.loc h
 @cmd.1  print
 
-ldnull
+ldloc h
 ret.val
 ");
         }

@@ -574,14 +574,15 @@ namespace Prexonite.Compiler
         [DebuggerStepThrough]
         public void DeclareModuleLocal(SymbolInterpretations kind, string id)
         {
+            var module = kind.AssociatedWithModule() ? Loader.ParentApplication.Module.Name : null;
             if(Symbols.IsKeyDefinedLocally(id))
             {
                 var entry = Symbols[id];
-                Symbols[id] = entry.With(kind);
+                Symbols[id] = entry.WithModule(module, kind);
             }
             else
             {
-                Symbols[id] = new SymbolEntry(kind, id, null);
+                Symbols[id] = new SymbolEntry(kind, id, module);
             }
         }
 
@@ -595,7 +596,8 @@ namespace Prexonite.Compiler
         [DebuggerStepThrough]
         public void DeclareModuleLocal(SymbolInterpretations kind, string id, string translatedId)
         {
-            Symbols[id] = new SymbolEntry(kind, translatedId, null);
+            var module = kind.AssociatedWithModule() ? Loader.ParentApplication.Module.Name : null;
+            Symbols[id] = new SymbolEntry(kind, translatedId, module);
         }
 
         /// <summary>
@@ -625,6 +627,7 @@ namespace Prexonite.Compiler
         [DebuggerStepThrough]
         public void DefineModuleLocal(SymbolInterpretations kind, string id, string moduleLocalId)
         {
+            var module = kind.AssociatedWithModule() ? Loader.ParentApplication.Module.Name : null;
             switch (kind)
             {
                     //Declare global variables
@@ -633,7 +636,7 @@ namespace Prexonite.Compiler
                     if (Symbols.IsKeyDefinedLocally(id))
                         Symbols[id] = Symbols[id].WithModule(null, kind, moduleLocalId);
                     else
-                        Symbols[id] = new SymbolEntry(kind, moduleLocalId, null);
+                        Symbols[id] = new SymbolEntry(kind, moduleLocalId, module);
                     break;
                     //Define local variables
                 case SymbolInterpretations.LocalObjectVariable:

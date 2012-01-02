@@ -187,6 +187,9 @@ namespace Prexonite.Compiler.Macro.Commands
             private static SymbolEntry _getMacro(StackContext sctx, PValue rawMacro)
             {
                 var list = rawMacro.Value as List<PValue>;
+                SymbolInterpretations macroInterpretation;
+                ModuleName moduleName;
+                string id;
                 if (rawMacro.Type == PType.List && list != null)
                 {
                     if (list.Count < 3)
@@ -195,7 +198,7 @@ namespace Prexonite.Compiler.Macro.Commands
                                 "First argument to {0} is a list, it must contain the macro id, its interpretation and containing module name.",
                                 CallMacro.Alias));
 
-                    var id = list[0].Value as string;
+                    id = list[0].Value as string;
                     if (list[0].Type != PType.String || id == null)
                         throw new PrexoniteException(
                             string.Format("First argument must be id in call to {0}.", Alias));
@@ -205,25 +208,27 @@ namespace Prexonite.Compiler.Macro.Commands
                             string.Format(
                                 "Second argument must be symbol interpretation in call to {0}.",
                                 Alias));
-                    var macroInterpretation = (SymbolInterpretations) list[1].Value;
+                    macroInterpretation = (SymbolInterpretations) list[1].Value;
 
                     var moduleNameRaw = list[2].Value as string;
-                    ModuleName moduleName;
                     if (moduleNameRaw != null)
                         ModuleName.TryParse(moduleNameRaw, out moduleName);
                     else
                         moduleName = null;
-
-                    return new SymbolEntry(macroInterpretation,id,moduleName);
                 }
                 else
                 {
-                    var id = rawMacro.DynamicCall(sctx, Runtime.EmptyPValueArray, PCall.Get,
+                    id = rawMacro.DynamicCall(sctx, Runtime.EmptyPValueArray, PCall.Get,
                         PFunction.IdKey).ConvertTo<string>(sctx, false);
-                    ModuleName moduleName;
-                    var macroInterpretation = _inferInterpretationAndModule(rawMacro, out moduleName);
-                    return new SymbolEntry(macroInterpretation, id, moduleName);
+                    macroInterpretation = _inferInterpretationAndModule(rawMacro, out moduleName);
                 }
+
+                if (macroInterpretation.AssociatedWithModule() && moduleName == null)
+                    throw new PrexoniteException(
+                        string.Format("Missing module name for {0} macro with internal name {1}.",
+                            Enum.GetName(typeof (SymbolInterpretations), macroInterpretation), id));
+
+                return new SymbolEntry(macroInterpretation, id, moduleName);
             }
 
             #endregion

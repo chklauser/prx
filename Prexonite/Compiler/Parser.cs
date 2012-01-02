@@ -3127,9 +3127,9 @@ internal partial class Parser {
 			
 		} else SynErr(158);
 		/*Parser.Statement.atg:251*/variable = InterpretationIsObjectVariable(kind) ?
-		new AstGetSetSymbol(this, PCall.Get, new SymbolEntry(kind, staticId, null))
+		new AstGetSetSymbol(this, PCall.Get, target.Symbols[id])
 		:
-			new AstGetSetReference(this, PCall.Get, new SymbolEntry(InterpretAsObjectVariable(kind),staticId, null)); 
+			new AstGetSetReference(this, PCall.Get, target.Symbols[id].With(interpretation: target.Symbols[id].Interpretation.ToObjectVariable())); 
 		                                     
 		                                 if(isNewDecl)
 		                                     variable = new AstGetSetNewDecl(this)

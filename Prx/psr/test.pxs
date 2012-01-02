@@ -50,6 +50,38 @@ function test\run_single_test as run_single_test(testFunc)
 declare function test\basic_ui;
 declare test\basic_ui as basic_ui;
 
+function test\load_plugins
+{
+    static var loaded ??= false;
+    if(loaded)
+        return;
+    
+    coroutine trace(f,xs)
+    {
+        foreach(var x in xs)
+        {
+            println(f.(x));
+            yield x;
+        }
+    }
+    
+    var plugins_key = @"test\plugins";
+    var app = asm(ldr.app);
+    app.Compound
+    >> trace(?.Module then ?.Name then "cmp: $(?)")
+    >> where(a => a.Meta.ContainsKey(plugins_key)) 
+    >> map(a => a.Meta[plugins_key].List) 
+    >> seqconcat
+    >> trace("raw: $(?)")
+    >> map(create_module_name(?))
+    >> trace("mod: $(?)")
+    >> where(? is not Null)
+    >> map(m => if(app.Compound.TryGetApplication(m,var a = ?)) [a] else [])
+    >> seqconcat
+    >> trace(?.Module then ?.Name then "init: $(?)")
+    >> each(?.EnsureInitialization(asm(ldr.eng)));
+}
+
 var test\test_filters as test_filters = [];
 
 function test\run_test as run_test(ui, testFunc)
@@ -57,6 +89,8 @@ function test\run_test as run_test(ui, testFunc)
     ui ??= basic_ui;
     if(testFunc is null)
         throw "testFunc cannot be null.";
+    
+    test\load_plugins;
     
     println("::>>TEST-FILTERS");
     test_filters >> each(println("\t-> ",?));

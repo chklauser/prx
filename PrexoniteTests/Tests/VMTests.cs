@@ -712,7 +712,7 @@ build does hook (t =>
         ret.Expression = ast(""GetSetMemberAccess"", ::PCall.Get, 
             ast(""GetSetSymbol"", 
                 ::PCall.Get, 
-                new ::SymbolEntry(::SymbolInterpretations.GlobalObjectVariable, ""sb"", null)), ""ToString"");
+                new ::SymbolEntry(::SymbolInterpretations.GlobalObjectVariable, ""sb"", asm(ldr.app).Module.Name)), ""ToString"");
         t.Ast.Add(ret);
     }
 
@@ -732,7 +732,7 @@ build does hook (t =>
                     var arg = stmt.Arguments[j];
                     if(arg is ::AstGetSetSymbol)
                     {
-                        var printlnCall = ast(""GetSetSymbol"", ::PCall.Get, new ::SymbolEntry(::SymbolInterpretations.$Function,""println"", null));
+                        var printlnCall = ast(""GetSetSymbol"", ::PCall.Get, new ::SymbolEntry(::SymbolInterpretations.$Function,""println"", asm(ldr.app).Module.Name));
                         var concatCall  = ast(""GetSetSymbol"", ::PCall.Get, ::SymbolEntry.Command(""concat""));
                         concatCall.Arguments.Add(ast(""Constant"",""DEBUG $(arg.Implementation) = ""));
                         concatCall.Arguments.Add(arg);
@@ -871,7 +871,7 @@ build does hook(t =>
     foreach(var loc in toPromote)
     {
         loc = t.Symbols[loc];
-        var glob = new ::SymbolEntry(SI.make_global(loc.Interpretation), loc.InternalId, null);
+        var glob = new ::SymbolEntry(SI.make_global(loc.Interpretation), loc.InternalId, asm(ldr.app).Module.Name);
         t.Loader.Symbols[loc.InternalId] = glob;
         t.Loader.Options.TargetApplication.Variables[loc.InternalId] = new ::PVariable(loc.InternalId);
         var assignment = ast(""GetSetSymbol"", ::PCall.Set, glob);
@@ -1862,7 +1862,7 @@ function main()[is volatile;]
             var block = new AstBlock("file", -1, -2);
 
             var assignStmt = new AstGetSetSymbol("file", -1, -2, PCall.Set,
-                new SymbolEntry(SymbolInterpretations.GlobalObjectVariable, "s",null));
+                new SymbolEntry(SymbolInterpretations.GlobalObjectVariable, "s",ldr.ParentApplication.Module.Name));
             assignStmt.Arguments.Add(new AstConstant("file", -1, -2, "stmt."));
             var incStmt = new AstModifyingAssignment("file", -1, -2,
                 BinaryOperator.Addition,
@@ -1870,7 +1870,7 @@ function main()[is volatile;]
                 new SymbolEntry(SymbolInterpretations.Command, Addition.DefaultAlias, null));
 
             var assignExpr = new AstGetSetSymbol("file", -1, -2, PCall.Set,
-                new SymbolEntry(SymbolInterpretations.GlobalObjectVariable, "s", null));
+                new SymbolEntry(SymbolInterpretations.GlobalObjectVariable, "s", ldr.ParentApplication.Module.Name));
             assignExpr.Arguments.Add(new AstConstant("file", -1, -2, "expr."));
             var incExpr = new AstModifyingAssignment("file", -1, -2,
                 BinaryOperator.Addition,

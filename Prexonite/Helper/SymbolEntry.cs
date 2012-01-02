@@ -25,6 +25,7 @@
 //  IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 using System;
+using System.Diagnostics;
 using Prexonite.Modular;
 using NoDebug = System.Diagnostics.DebuggerNonUserCodeAttribute;
 
@@ -43,37 +44,35 @@ namespace Prexonite.Compiler
         /// 
         ///     Label - Address of jump target (if known)
         /// </summary>
-        private int? _argument;
+        private readonly int? _argument;
 
         #endregion
 
         #region Constructor
 
         public SymbolEntry(SymbolInterpretations interpretation, ModuleName module)
+            : this(interpretation,null,module)
         {
-            _interpretation = interpretation;
-            _module = module;
-            _id = null;
         }
 
         public SymbolEntry(SymbolInterpretations interpretation, string id, ModuleName module)
-            : this(interpretation, module)
+            : this(interpretation,id, null,module)
+        {
+        }
+
+        private SymbolEntry(SymbolInterpretations interpretation, string id, int? argument, ModuleName module)
         {
             if (id != null && id.Length <= 0)
                 id = null;
+            _interpretation = interpretation;
+            _module = module;
             _id = id;
-        }
-
-        public SymbolEntry(SymbolInterpretations interpretation, int? argument, ModuleName module)
-            : this(interpretation, module)
-        {
             _argument = argument;
-        }
 
-        public SymbolEntry(SymbolInterpretations interpretation, string id, int? argument, ModuleName module)
-            : this(interpretation, id, module)
-        {
-            _argument = argument;
+            Debug.Assert(!_interpretation.AssociatedWithModule() || _module != null,
+                string.Format(
+                    "Attempted to create a {0} symbol pointing to {1} without supplying a module name.",
+                    Enum.GetName(typeof (SymbolInterpretations), interpretation), id));
         }
 
         #endregion
@@ -229,7 +228,7 @@ namespace Prexonite.Compiler
 
         public static SymbolEntry JumpLabel(int address)
         {
-            return new SymbolEntry(SymbolInterpretations.JumpLabel, address, null);
+            return new SymbolEntry(SymbolInterpretations.JumpLabel, null, address, null);
         }
 
 #endregion
@@ -297,5 +296,56 @@ namespace Prexonite.Compiler
         ///     Macro commands need to be applied at compile-time.
         /// </summary>
         MacroCommand
+    }
+
+    public static class SymbolEntryExtensions
+    {
+        public static bool AssociatedWithModule(this SymbolInterpretations symbolInterpretation)
+        {
+            switch (symbolInterpretation)
+            {
+                case SymbolInterpretations.Function:
+                case SymbolInterpretations.GlobalObjectVariable:
+                case SymbolInterpretations.GlobalReferenceVariable:
+                    return true;
+                case SymbolInterpretations.MacroCommand:
+                case SymbolInterpretations.Command:
+                case SymbolInterpretations.KnownType:
+                case SymbolInterpretations.JumpLabel:
+                case SymbolInterpretations.LocalObjectVariable:
+                case SymbolInterpretations.LocalReferenceVariable:
+                case SymbolInterpretations.Undefined:
+                case SymbolInterpretations.None:
+                    return false;
+                default:
+                    throw new ArgumentOutOfRangeException("symbolInterpretation");
+            }
+        }
+
+        public static SymbolInterpretations ToObjectVariable(this SymbolInterpretations symbolInterpretations)
+        {
+            switch (symbolInterpretations)
+            {
+                case SymbolInterpretations.LocalObjectVariable:
+                case SymbolInterpretations.LocalReferenceVariable:
+                    return SymbolInterpretations.LocalObjectVariable;
+
+                case SymbolInterpretations.GlobalObjectVariable:
+                case SymbolInterpretations.GlobalReferenceVariable:
+                    return SymbolInterpretations.GlobalObjectVariable;
+                
+                case SymbolInterpretations.Function:
+                case SymbolInterpretations.Command:
+                case SymbolInterpretations.MacroCommand:
+                    return symbolInterpretations;
+
+                case SymbolInterpretations.KnownType:
+                case SymbolInterpretations.JumpLabel:
+                case SymbolInterpretations.Undefined:
+                case SymbolInterpretations.None:
+                default:
+                    throw new ArgumentOutOfRangeException("symbolInterpretations");
+            }
+        }
     }
 }

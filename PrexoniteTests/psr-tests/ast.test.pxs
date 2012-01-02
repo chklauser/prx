@@ -114,6 +114,8 @@ function test_unique_id_counter[test]
     assert(h.Count == 50, "There are duplicate id's");
 }
 
+function test_h_thisModule as thisModule = asm(ldr.app).Module.Name;
+
 function test_is_function_call[
     is test; 
     Add Prexonite to Imports; 
@@ -123,12 +125,12 @@ function test_is_function_call[
 ]
 {
     var func = ast("GetSetSymbol", 
-        new ::SymbolEntry(::SymbolInterpretations.Function,->test_is_function_call.Id, null));
+        new ::SymbolEntry(::SymbolInterpretations.Function,->test_is_function_call.Id, ->test_is_function_call.ParentApplication.Module.Name));
     var nonFunc = ast("GetSetSymbol", ::SymbolEntry.Command(->test_is_function_call.Id));
     var wrongFunc = ast("GetSetSymbol", 
-        new ::SymbolEntry(::SymbolInterpretations.Function,->test_unique_id_counter.Id, null));
+        new ::SymbolEntry(::SymbolInterpretations.Function,->test_unique_id_counter.Id, ->test_unique_id_counter.ParentApplication.Module.Name));
     var notSym = ast("MacroInvocation", 
-        new ::SymbolEntry(::SymbolInterpretations.Function,->test_is_function_call.Id, null));
+        new ::SymbolEntry(::SymbolInterpretations.Function,->test_is_function_call.Id, ->test_is_function_call.ParentApplication.Module.Name));
     
     var id = ->test_is_function_call.Id;
     assert(isFunctionCall(id, func), "Should recognize $func");
@@ -149,7 +151,7 @@ function test_is_member_access[
     var mem = "member";
     var memacc = ast("GetSetMemberAccess", nt, mem);
     var wrongmemacc = ast("GetSetMemberAccess", nt, "otherMember");
-    var notMemacc = ast("GetSetSymbol", new ::SymbolEntry(::SymbolInterpretations.Function, mem, null));
+    var notMemacc = ast("GetSetSymbol", new ::SymbolEntry(::SymbolInterpretations.Function, mem, thisModule));
     
     assert(isMemberAccess(mem, memacc), "Should recognize $memacc");
     assert(not isMemberAccess(mem, wrongmemacc), "Should reject $wrongmemacc");

@@ -45,7 +45,7 @@ namespace Prexonite
     /// <summary>
     ///     A function in the Prexonite Script VM.
     /// </summary>
-    public class PFunction : IMetaFilter,
+    public class  PFunction : IMetaFilter,
                              IHasMetaTable,
                              IIndirectCall,
                              IStackAware,

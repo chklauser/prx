@@ -62,27 +62,44 @@ namespace Prexonite.Commands.Core
                 throw new PrexoniteException(Alias + "(...) requires at least one argument.");
 
             PValue rawVersion;
-            var raw = args[0].CallToString(sctx);
+            
             if(args.Length == 1)
             {
-                
-                ModuleName moduleName;
-                if (ModuleName.TryParse(raw, out moduleName))
-                    return sctx.CreateNativePValue(moduleName);
+                if(args[0].Type == PType.Object[typeof(MetaEntry)])
+                {
+                    var entry = (MetaEntry) args[0].Value;
+                    ModuleName moduleName;
+                    if (ModuleName.TryParse(entry, out moduleName))
+                        return sctx.CreateNativePValue(sctx.Cache[moduleName]);
+                    else
+                        return PType.Null;
+                }
                 else
-                    return PType.Null;
+                {
+                    var raw = args[0].CallToString(sctx);
+
+                    ModuleName moduleName;
+                    if (ModuleName.TryParse(raw, out moduleName))
+                        return sctx.CreateNativePValue(sctx.Cache[moduleName]);
+                    else
+                        return PType.Null;
+                }
             }
             else if((rawVersion = args[1]).Type.Equals(PType.Object[typeof(Version)]))
             {
+                var raw = args[0].CallToString(sctx);
+
                 return
-                    sctx.CreateNativePValue(new ModuleName(raw,
-                        (Version) rawVersion.Value));
+                    sctx.CreateNativePValue(sctx.Cache[new ModuleName(raw,
+                        (Version) rawVersion.Value)]);
             }
             else
             {
+                var raw = args[0].CallToString(sctx);
+
                 Version version;
                 if (Version.TryParse(rawVersion.CallToString(sctx), out version))
-                    return sctx.CreateNativePValue(new ModuleName(raw, version));
+                    return sctx.CreateNativePValue(sctx.Cache[new ModuleName(raw, version)]);
                 else
                     return PType.Null;
             }
