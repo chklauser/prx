@@ -26,6 +26,7 @@
 
 using System;
 using System.Linq;
+using Prexonite.Types;
 
 namespace Prexonite.Modular
 {
@@ -46,6 +47,7 @@ namespace Prexonite.Modular
         }
 
         private readonly Version _version;
+        public static readonly PType PType = PType.Object[typeof(ModuleName)];
 
         /// <summary>
         /// The version of the named module. Consists of four 32bit integers (signed, but non-negative).

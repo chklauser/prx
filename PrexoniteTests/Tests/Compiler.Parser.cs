@@ -6,6 +6,7 @@ using Prexonite.Compiler;
 using Prexonite.Compiler.Ast;
 using Prexonite.Types;
 using Prx.Tests;
+using System.Linq;
 
 namespace PrexoniteTests.Tests
 {
@@ -2943,12 +2944,47 @@ ret.val
 ");
         }
 
+        [Test]
+        public void AppendTraceRight()
+        {
+            _compile(
+                @"
+function main(app,f){
+    coroutine trace(f,xs)
+    {
+        foreach(var x in xs)
+        {
+            println(f.(x));
+            yield x;
+        }
+    }
+   println(app.Compound >> trace(f) >> all);
+}");
+
+            _expect(
+                string.Format(
+                    @"
+ ldr.func {0}
+ stloc trace
+ ldloc f
+ ldloc app
+ get.0 Compound
+ indloc.2 trace
+ cmd.1 all
+ cmd.1 println
+ ret.val
+",
+                    target.Functions.Single(
+                        f => f.Meta[PFunction.ParentFunctionKey].Text == target.Functions["main"].Id)
+                        .Id));
+        }
+
        
-        /*
+        /* not supported at the moment
         [Test]
         public void AppendLeftDirect()
         {
-            Compile(@"
+            _compile(@"
 function main()
 {
     var a;
@@ -2958,7 +2994,7 @@ function main()
 }
 ");
 
-            Expect(@"
+            _expect(@"
 var a
 
 ldc.int 5

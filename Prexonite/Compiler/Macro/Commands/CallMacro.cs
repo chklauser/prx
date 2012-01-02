@@ -210,11 +210,23 @@ namespace Prexonite.Compiler.Macro.Commands
                                 Alias));
                     macroInterpretation = (SymbolInterpretations) list[1].Value;
 
-                    var moduleNameRaw = list[2].Value as string;
-                    if (moduleNameRaw != null)
-                        ModuleName.TryParse(moduleNameRaw, out moduleName);
+                    //Read module name, first as Object<"Prexonite.Modular.ModuleName"> then as String
+                    string moduleNameRaw;
+                    if((moduleName = list[2].Value as ModuleName) != null 
+                        && list[2].Type == ModuleName.PType)
+                    {
+                        // moduleName already assigned
+                    }
+                    else if ((moduleNameRaw = list[2].Value as string) != null 
+                        && list[2].Type == PType.String 
+                        && ModuleName.TryParse(moduleNameRaw, out moduleName))
+                    {
+                        // moduleName already assigned
+                    }
                     else
+                    {
                         moduleName = null;
+                    }
                 }
                 else
                 {

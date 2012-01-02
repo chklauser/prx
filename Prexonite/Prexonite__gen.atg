@@ -502,7 +502,8 @@ AppendRightExpr<out AstExpr expr>
 		appendright
 		GetCall<out complex>		    (.	complex.Arguments.RightAppend(expr); 
 										    complex.Arguments.ReleaseRightAppend();
-										    if(complex is AstGetSetSymbol && ((AstGetSetSymbol)complex).IsVariable)
+										    if(complex is AstGetSetSymbol 
+                                                    && ((AstGetSetSymbol)complex).IsObjectVariable)
 										        complex.Call = PCall.Set;
 										    expr = complex;										    
 									    .)
