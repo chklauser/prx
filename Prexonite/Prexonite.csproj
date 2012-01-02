@@ -142,6 +142,7 @@
     <Compile Include="Commands\Core\PartialApplication\PartialCallStar.cs" />
     <Compile Include="Commands\Core\PartialApplication\PartialCallStarImplCommand.cs" />
     <Compile Include="Commands\List\CreateEnumerator.cs" />
+    <Compile Include="Commands\List\SeqConcat.cs" />
     <Compile Include="Commands\PCommandInfo.cs" />
     <Compile Include="Compiler\Ast\AstExpr.cs" />
     <Compile Include="Compiler\Ast\AstGetSetEntity.cs" />

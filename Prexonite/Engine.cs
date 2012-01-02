@@ -856,6 +856,8 @@ namespace Prexonite
             Commands.AddEngineCommand(CreateEnumerator.Alias, CreateEnumerator.Instance);
 
             Commands.AddEngineCommand(CreateModuleName.Alias, CreateModuleName.Instance);
+
+            Commands.AddEngineCommand(SeqConcat.Alias, SeqConcat.Instance);
         }
 
         /// <summary>
