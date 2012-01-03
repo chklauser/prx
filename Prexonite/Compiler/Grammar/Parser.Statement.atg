@@ -109,7 +109,9 @@ AppendRightTermination<ref AstGetSet complex>
 	appendright
 	GetCall<out actualComplex>			(.	actualComplex.Arguments.RightAppend(complex);
 											actualComplex.Arguments.ReleaseRightAppend();
-											if(actualComplex is AstGetSetSymbol && ((AstGetSetSymbol)actualComplex).IsVariable)
+                                            //WARNING: Code is duplicated in ./GetInitiator and Parser.Expression.atg/RightAppendExpr and 
+											if(actualComplex is AstGetSetSymbol 
+                                                    && ((AstGetSetSymbol)actualComplex).IsObjectVariable)
 										        actualComplex.Call = PCall.Set;
 										    complex = actualComplex;
 										.)

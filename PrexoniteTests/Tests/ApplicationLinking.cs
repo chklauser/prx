@@ -30,6 +30,7 @@ using System.Diagnostics;
 using System.Linq;
 using NUnit.Framework;
 using Prexonite;
+using Prexonite.Commands.Core;
 using Prexonite.Modular;
 
 namespace PrexoniteTests.Tests
@@ -245,6 +246,20 @@ namespace PrexoniteTests.Tests
             var r = a1.Run(eng);
             Expect(r.Value,Is.InstanceOf<string>());
             Expect(r.Value,Is.EqualTo(helloModules));
+        }
+
+        [Test]
+        public void CreateModuleNameCommand()
+        {
+            var cmd = CreateModuleName.Instance;
+            var eng = new Engine();
+            var app = new Application("cmnc");
+            var sctx = new NullContext(eng, app, Enumerable.Empty<string>());
+            var rawMn = cmd.Run(sctx, new[] {sctx.CreateNativePValue(new MetaEntry(new MetaEntry[]{"sys","1.0"}))});
+            Assert.That(rawMn.Value,Is.InstanceOf<ModuleName>());
+            var mn = (ModuleName) rawMn.Value;
+            Assert.That(mn.Id,Is.EqualTo("sys"));
+            Assert.That(mn.Version,Is.EqualTo(new Version(1,0)));
         }
     }
 }

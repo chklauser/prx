@@ -191,7 +191,7 @@ namespace Prexonite.Modular
             {
                 var lst = entry.List;
                 var c = lst.Length;
-                if (0 <= c || c > 2)
+                if (c <= 0 || 2 < c)
                     return false;
                 else if (c == 1)
                     if (lst[0].IsText)

@@ -56,30 +56,41 @@ function test\load_plugins
     if(loaded)
         return;
     
-    coroutine trace(f,xs)
+    function trace(f,xs)
     {
-        foreach(var x in xs)
-        {
-            println(f.(x));
-            yield x;
-        }
+        var cargs = var args;
+        return coroutine () => {
+            //println("TRACE.$(cargs >> count)(",cargs >> map(boxed(?)) >> foldl((l,r) => l + ", " + r,""),")");
+            foreach(var x in xs)
+            {
+                //print("ind [$(boxed(f))] of ($(boxed(x))) = ");
+                println(f.(x));
+                yield x;
+            }
+        };
     }
     
     var plugins_key = @"test\plugins";
     var app = asm(ldr.app);
+    println("::>>TEST-PLUGINS (",app.Compound >> count,")");
+    //println(all(trace(x => "->$x<-",app.Compound)));
+        
     app.Compound
-    >> trace(?.Module then ?.Name then "cmp: $(?)")
+    >> trace(x => "comp: $(x.Module.Name)")
     >> where(a => a.Meta.ContainsKey(plugins_key)) 
     >> map(a => a.Meta[plugins_key].List) 
     >> seqconcat
-    >> trace("raw: $(?)")
-    >> map(create_module_name(?))
-    >> trace("mod: $(?)")
+    >> trace(x => "raw : $(boxed(x))")
+    >> map(new module_name(?))
+    >> trace(x => "mod : $(boxed(x))")
     >> where(? is not Null)
     >> map(m => if(app.Compound.TryGetApplication(m,var a = ?)) [a] else [])
     >> seqconcat
-    >> trace(?.Module then ?.Name then "init: $(?)")
+    >> trace(x => "init: $(x.Module.Name)")
     >> each(?.EnsureInitialization(asm(ldr.eng)));
+    println("::<<END TEST-PLUGINS");
+    
+    loaded = true;
 }
 
 var test\test_filters as test_filters = [];
@@ -94,6 +105,7 @@ function test\run_test as run_test(ui, testFunc)
     
     println("::>>TEST-FILTERS");
     test_filters >> each(println("\t-> ",?));
+    println("::<<END TEST-FILTERS");
     testFunc = test_filters >> foldl(?1.(?0), testFunc);
     
     ui.begin_running(testFunc);

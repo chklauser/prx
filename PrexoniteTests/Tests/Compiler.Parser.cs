@@ -2949,23 +2949,20 @@ ret.val
         {
             _compile(
                 @"
-function main(app,f){
-    coroutine trace(f,xs)
-    {
-        foreach(var x in xs)
-        {
-            println(f.(x));
-            yield x;
-        }
-    }
+function main(app, f, ref trace){
    println(app.Compound >> trace(f) >> all);
+   app.Compound         >> trace(f)        >> all >> println;
 }");
 
             _expect(
-                string.Format(
-                    @"
- ldr.func {0}
- stloc trace
+                @"
+ ldloc f
+ ldloc app
+ get.0 Compound
+ indloc.2 trace
+ cmd.1 all
+ @cmd.1 println
+
  ldloc f
  ldloc app
  get.0 Compound
@@ -2973,10 +2970,7 @@ function main(app,f){
  cmd.1 all
  cmd.1 println
  ret.val
-",
-                    target.Functions.Single(
-                        f => f.Meta[PFunction.ParentFunctionKey].Text == target.Functions["main"].Id)
-                        .Id));
+");
         }
 
        

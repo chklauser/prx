@@ -53,7 +53,6 @@ function test\execute_single_macro as execute_single_macro(ldr, testMacro)
         funcTar = ldr.CreateFunctionTarget(hostFunc, block);
         
         //Setup invocation of test macro
-        //TODO: extract module from testMacro
         var invocation = new ::AstMacroInvocation(fakeFile,-1,-1,
             new ::SymbolEntry(::SymbolInterpretations.Function,testMacro.Id, testMacro.ParentApplication.Module.Name));
         block.Add(invocation);
@@ -122,10 +121,8 @@ function test\macro_filter as macro_filter(testFunc)
         return testFunc;
 }
 
-function test_meta_macro_init()
-{    
-}
-
 {
+    println(@"::>>INIT psr\test\meta_macro.pxs");
     test_filters[] = macro_filter(?);
+    println(@"::<<END INIT psr\test\meta_macro.pxs");
 }
