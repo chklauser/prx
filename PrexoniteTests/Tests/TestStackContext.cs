@@ -42,7 +42,7 @@ namespace Prx.Tests
             if (app == null)
                 throw new ArgumentNullException("app");
             _engine = engine;
-            _implementation = new PFunction(app);
+            _implementation = app.CreateFunction();
         }
 
         public override Engine ParentEngine

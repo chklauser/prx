@@ -1,6 +1,8 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.ComponentModel;
 using System.Diagnostics;
+using System.IO;
 using System.Linq;
 using System.Text;
 using Prexonite.Internal;
@@ -17,7 +19,7 @@ namespace Prexonite.Modular
 
         public abstract MetaTable Meta { get; }
 
-        public abstract PFunctionTable Functions { get; }
+        public abstract FunctionTable Functions { get; }
 
         public abstract VariableTable Variables { get; }
 
@@ -63,6 +65,97 @@ namespace Prexonite.Modular
         {
             return new ModuleImpl(moduleName);
         }
+
+        public FunctionDeclaration CreateFunction(string id)
+        {
+            var decl = FunctionDeclaration._Create(id,this);
+            Functions.Add(decl);
+            return decl;
+        }
+    }
+
+    public class FunctionTable : System.Collections.ObjectModel.KeyedCollection<string, FunctionDeclaration>
+    {
+        public FunctionTable() : base(StringComparer.InvariantCultureIgnoreCase)
+        {
+            _idChangingHandler = _onIdChanging;
+        }
+
+        protected override string GetKeyForItem(FunctionDeclaration item)
+        {
+            return item.Id;
+        }
+
+        private readonly EventHandler<FunctionIdChangingEventArgs> _idChangingHandler;
+
+        [EditorBrowsable(EditorBrowsableState.Never)]
+        private void _onIdChanging(object o, FunctionIdChangingEventArgs args)
+        {
+            var sender = (FunctionDeclaration) o;
+            if (Contains(sender))
+            {
+                ChangeItemKey(sender, args.NewId);
+            }
+            else
+            {
+                Debug.Assert(false,
+                    string.Format(
+                        "Function table is still registered to function declaration {0} even though it is no longer in the table.",
+                        sender));
+            }
+        }
+
+        protected override void ClearItems()
+        {
+            foreach (var funDecl in this)
+                funDecl.IdChanging -= _idChangingHandler;
+            base.ClearItems();
+        }
+
+        protected override void InsertItem(int index, FunctionDeclaration item)
+        {
+            item.IdChanging += _idChangingHandler;
+            base.InsertItem(index, item);
+        }
+
+        protected override void RemoveItem(int index)
+        {
+            this[index].IdChanging -= _idChangingHandler;
+            base.RemoveItem(index);
+        }
+
+        protected override void SetItem(int index, FunctionDeclaration item)
+        {
+            this[index].IdChanging -= _idChangingHandler;
+            base.SetItem(index, item);
+            this[index].IdChanging += _idChangingHandler;
+        }
+
+        /// <summary>
+        /// Returns the function declaration with the specified id, if it exists in the table.
+        /// </summary>
+        /// <param name="id">The physical id of the function declaration to return.</param>
+        /// <param name="declaration">On success, will contain the function declaration. Undefined on failure.</param>
+        /// <returns>True on success; false otherwise</returns>
+        public bool TryGetFunction(string id, out FunctionDeclaration declaration)
+        {
+            if(Contains(id))
+            {
+                declaration=this[id];
+                return true;
+            }
+            else
+            {
+                declaration = null;
+                return false;
+            }
+        }
+
+        public void Store(TextWriter writer)
+        {
+            foreach (var decl in this)
+                decl.Store(writer);
+        }
     }
 
     class ModuleImpl : Module
@@ -80,6 +173,8 @@ namespace Prexonite.Modular
             _meta = m;
             _meta[Application.EntryKey] = Application.DefaultEntryFunction;
             _meta[Application.ImportKey] = Application.DefaultImport;
+
+            _functions.Add(FunctionDeclaration._Create(Application.InitializationId,this));
         }
 
         public override CentralCache Cache
@@ -95,7 +190,7 @@ namespace Prexonite.Modular
         }
 
         private readonly ModuleName _name;
-        private readonly PFunctionTable _functions = new PFunctionTableImpl();
+        private readonly FunctionTable _functions = new FunctionTable();
         private readonly VariableTable _variables = new VariableTable();
         private readonly MetaTable _meta; // must be assigned in the constructor
 
@@ -109,7 +204,7 @@ namespace Prexonite.Modular
             get { return _meta; }
         }
 
-        public override PFunctionTable Functions
+        public override FunctionTable Functions
         {
             get { return _functions; }
         }

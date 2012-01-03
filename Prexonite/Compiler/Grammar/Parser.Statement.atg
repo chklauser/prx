@@ -248,20 +248,27 @@ VariableDeclaration<out AstGetSet variable, bool isNewDecl>
     ]
     Id<out id>                          (.  staticId = target.Function.Id + "\\static\\" + id;
                                             target.DeclareModuleLocal(kind, id, staticId);
-                                            if(!target.Loader.Options.TargetApplication.Variables.ContainsKey(staticId))
-                                                target.Loader.Options.TargetApplication.Variables.Add(staticId, new PVariable(staticId));
+                                            VariableDeclaration vari;
+                                            DefineGlobalVariable(staticId, out vari);
                                         .)
-)                                       (.  variable = InterpretationIsObjectVariable(kind) ?
-												new AstGetSetSymbol(this, PCall.Get, target.Symbols[id])
-											:
-												new AstGetSetReference(this, PCall.Get, target.Symbols[id].With(interpretation: target.Symbols[id].Interpretation.ToObjectVariable())); 
+)                                       (.  if(id == null)
+                                            { // there was an error parsing the variable kind/id; return a dummy node
+                                                variable = _createUnknownGetSet();
+                                            }
+                                            else
+                                            {
+                                                variable = InterpretationIsObjectVariable(kind) ?
+												    new AstGetSetSymbol(this, PCall.Get, target.Symbols[id])
+											    :
+												    new AstGetSetReference(this, PCall.Get, target.Symbols[id].With(interpretation: target.Symbols[id].Interpretation.ToObjectVariable())); 
                                                 
-                                            if(isNewDecl)
-                                                variable = new AstGetSetNewDecl(this)
-                                                {
-                                                    Expression = variable,
-                                                    Id = staticId
-                                                };
+                                                if(isNewDecl)
+                                                    variable = new AstGetSetNewDecl(this)
+                                                    {
+                                                        Expression = variable,
+                                                        Id = target.Symbols[id].InternalId
+                                                    };              
+                                            }
                                         .)
 .
 
@@ -335,14 +342,7 @@ Function<out AstGetSet function>
                                         if(isOuterVariable(id))
                                             target.RequireOuterVariable(id);
                                         SymbolEntry sym = target.Symbols[id];
-                                        if(isKnownMacroFunction(sym) || sym.Interpretation == SymbolInterpretations.MacroCommand) 
-                                        {
-                                            function = new AstMacroInvocation(this, sym);
-                                        } 
-                                        else
-                                        {
-                                            function = new AstGetSetSymbol(this, sym);
-                                        }
+                                        function = _assembleInvocation(sym);
                                     }
                                 .)
     Arguments<function.Arguments>    

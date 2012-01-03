@@ -26,6 +26,7 @@ using System.IO;
 using Prexonite;
 using System.Collections.Generic;
 using System.Linq;
+using System.Diagnostics;
 using FatalError = Prexonite.Compiler.FatalCompilerException;
 using StringBuilder = System.Text.StringBuilder;
 using Prexonite.Compiler.Ast;

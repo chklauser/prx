@@ -247,6 +247,8 @@ namespace Prexonite.Compiler.Macro
 
         private class MacroFunctionExpander : IMacroExpander
         {
+            public const string PartialMacroKey = @"partial\macro";
+
             public void Initialize(CompilerTarget target, AstMacroInvocation invocation,
                 bool justEffect)
             {
@@ -346,7 +348,7 @@ namespace Prexonite.Compiler.Macro
 
             public bool TryExpandPartially(CompilerTarget target, MacroContext context)
             {
-                if (!_macroFunction.Meta[@"partial\macro"].Switch)
+                if (!_macroFunction.Meta[PartialMacroKey].Switch)
                     return false;
 
                 var successRaw = _invokeMacroFunction(target, context);

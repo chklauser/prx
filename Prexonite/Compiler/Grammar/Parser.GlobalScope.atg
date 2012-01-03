@@ -124,12 +124,7 @@ GlobalVariableDefinition	(.
                                 entry = new SymbolEntry(type,id, TargetModule.Name);
 	                            foreach(var alias in aliases)
 	                                Symbols[alias] = entry;
-                                if(!TargetModule.Variables.TryGetVariable(id, out vari))
-	                            {
-	                                vari = Modular.VariableDeclaration.Create(id);
-                                    TargetModule.Variables.Add(vari);
-	                                TargetApplication.Variables[id] = new PVariable(vari);
-	                            }
+                                DefineGlobalVariable(id,out vari);
 	                        .)
 	[	lbrack  		    //Meta block for variables
 		[   MetaAssignment<vari>
@@ -243,7 +238,7 @@ DeclarationInstance<SymbolInterpretations type, ModuleName module>
 
 BuildBlock
 =
-	SYNC build                  (.  PFunction func = new PFunction(TargetApplication);
+	SYNC build                  (.  PFunction func = TargetApplication.CreateFunction();
                                     CompilerTarget lastTarget = target; 
                                     CompilerTarget buildBlockTarget = Loader.CreateFunctionTarget(func, new AstBlock(this));
                                     target = buildBlockTarget;
@@ -372,7 +367,12 @@ FunctionDefinition<out PFunction func>
                                                 
                                             }
                                             
-                                            func = new PFunction(TargetApplication, funcId);
+                                            //Add function to application
+                                            if(TargetApplication.Functions.Contains(funcId) && !TargetApplication.Meta.GetDefault(Application.AllowOverridingKey,true))
+												SemErr(t,"Application " + TargetApplication.Id + " does not allow overriding of function " + funcId + ".");
+                                            TargetApplication.Functions.Remove(funcId);
+
+                                            func = TargetApplication.CreateFunction(funcId);
                                             
                                             if(isNested)
                                             {
@@ -382,11 +382,6 @@ FunctionDefinition<out PFunction func>
                                             }
                                             
                                             Loader.CreateFunctionTarget(func, new AstBlock(this));
-                                            
-                                            //Add function to application
-                                            if(TargetApplication.Functions.Contains(func.Id) && !TargetApplication.Meta.GetDefault(Application.AllowOverridingKey,true))
-												SemErr(t,"Application " + TargetApplication.Id + " does not allow overriding of function " + func.Id + ".");
-                                            TargetApplication.Functions.AddOverride(func);
                                         }
                                         CompilerTarget ft = FunctionTargets[func];
                                         
@@ -397,9 +392,8 @@ FunctionDefinition<out PFunction func>
                                             
                                             //Create derived body function
                                             derId = ft.GenerateLocalId();
-                                            derBody = new PFunction(TargetApplication, derId);
+                                            derBody = TargetApplication.CreateFunction(derId);
                                             Loader.CreateFunctionTarget(derBody, new AstBlock(this));
-                                            TargetApplication.Functions.Add(derBody);
                                             derBody.Meta[PFunction.LogicalIdKey] = id ?? funcId;
                                             if(isCoroutine)
                                             {

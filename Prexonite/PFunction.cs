@@ -31,10 +31,12 @@ using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.Diagnostics;
 using System.Diagnostics.CodeAnalysis;
+using System.Globalization;
 using System.IO;
 using System.Text;
 using Prexonite.Compiler;
 using Prexonite.Compiler.Cil;
+using Prexonite.Modular;
 using Prexonite.Types;
 using NoDebug = System.Diagnostics.DebuggerNonUserCodeAttribute;
 
@@ -45,11 +47,10 @@ namespace Prexonite
     /// <summary>
     ///     A function in the Prexonite Script VM.
     /// </summary>
-    public class  PFunction : IMetaFilter,
-                             IHasMetaTable,
+    public class  PFunction : IHasMetaTable,
                              IIndirectCall,
                              IStackAware,
-                             IDependent<string>
+                                IDependent<string>
     {
         /// <summary>
         ///     The meta key under which the function's id is stored.
@@ -109,47 +110,33 @@ namespace Prexonite
         ///     Creates a new instance of PFunction.
         /// </summary>
         /// <param name = "parentApplication">The application of which the new function is part of.</param>
-        /// <remarks>
-        ///     The id is randomly generated using a GUID.
-        /// </remarks>
+        /// <param name="declaration">The declaration this PFunction is based on.</param>
         [DebuggerStepThrough]
-        public PFunction(Application parentApplication)
-            : this(parentApplication, "F\\" + Guid.NewGuid().ToString("N"))
-        {
-        }
-
-        /// <summary>
-        ///     Creates a new instance of PFunction.
-        /// </summary>
-        /// <param name = "parentApplication">The application of which the new function is part of.</param>
-        /// <param name = "id">The function's id.</param>
-        /// <remarks>
-        ///     The id does not have to be a legal Prexonite Script identifier.
-        /// </remarks>
-        [DebuggerStepThrough]
-        internal PFunction(Application parentApplication, string id)
+        internal PFunction(Application parentApplication, FunctionDeclaration declaration)
         {
             if (parentApplication == null)
                 throw new ArgumentNullException("parentApplication");
+            if (declaration == null)
+                throw new ArgumentNullException("declaration");
+
+            if (!parentApplication.Module.Functions.Contains(declaration))
+                throw new ArgumentException(
+                    string.Format(
+                        "The supplied application (instance of module {0}) does not define the function {1}.",
+                        parentApplication.Module.Name, declaration));
 
             _parentApplication = parentApplication;
-
-            if (id == null)
-                throw new ArgumentNullException("id");
-            else if (id.Length == 0)
-                throw new ArgumentException("Id cannot be empty");
-
-            //Note that function names do not have to be identifiers
-
-            var m = MetaTable.Create(this);
-            m[IdKey] = id;
-            m[Application.ImportKey] = parentApplication.Meta[Application.ImportKey];
-            _meta = m;
+            _declaration = declaration;
         }
 
         #endregion
 
         #region Properties
+
+        public FunctionDeclaration Declaration
+        {
+            get { return _declaration; }
+        }
 
         /// <summary>
         ///     The functions id
@@ -157,23 +144,17 @@ namespace Prexonite
         public string Id
         {
             [DebuggerStepThrough]
-            get { return _meta[IdKey]; }
+            get { return _declaration.Id; }
         }
 
         public string LogicalId
         {
             [DebuggerStepThrough]
-            get
-            {
-                MetaEntry logicalIdEntry;
-                if (_meta.TryGetValue(LogicalIdKey, out logicalIdEntry))
-                    return logicalIdEntry.Text;
-                else
-                    return Id;
-            }
+            get { return _declaration.Id; }
         }
 
         private readonly Application _parentApplication;
+        private readonly FunctionDeclaration _declaration;
 
         /// <summary>
         ///     The application the function belongs to.
@@ -184,18 +165,14 @@ namespace Prexonite
             get { return _parentApplication; }
         }
 
-        private readonly SymbolCollection _importedNamesapces = new SymbolCollection();
-
         /// <summary>
         ///     The set of namespaces imported by this particular function.
         /// </summary>
         public SymbolCollection ImportedNamespaces
         {
             [DebuggerStepThrough]
-            get { return _importedNamesapces; }
+            get { return _declaration.ImportedClrNamespaces; }
         }
-
-        private readonly List<Instruction> _code = new List<Instruction>();
 
         /// <summary>
         ///     The bytecode for this function.
@@ -203,10 +180,8 @@ namespace Prexonite
         public List<Instruction> Code
         {
             [DebuggerStepThrough]
-            get { return _code; }
+            get { return _declaration.Code; }
         }
-
-        private readonly List<string> _parameters = new List<string>();
 
         /// <summary>
         ///     The list of formal parameters for this function.
@@ -214,10 +189,8 @@ namespace Prexonite
         public List<string> Parameters
         {
             [DebuggerStepThrough]
-            get { return _parameters; }
+            get { return _declaration.Parameters; }
         }
-
-        private readonly SymbolCollection _variables = new SymbolCollection();
 
         /// <summary>
         ///     The collection of variable names used by this function.
@@ -225,34 +198,15 @@ namespace Prexonite
         public SymbolCollection Variables
         {
             [DebuggerStepThrough]
-            get { return _variables; }
+            get { return _declaration.LocalVariables; }
         }
-
-        private SymbolTable<int> _localVariableMapping;
 
         /// <summary>
         ///     Updates the mapping of local names.
         /// </summary>
         internal void CreateLocalVariableMapping()
         {
-            var idx = 0;
-            if (_localVariableMapping == null)
-                _localVariableMapping = new SymbolTable<int>();
-            else
-                _localVariableMapping.Clear();
-
-            foreach (var p in _parameters)
-                if (!_localVariableMapping.ContainsKey(p))
-                    _localVariableMapping.Add(p, idx++);
-
-            foreach (var v in _variables)
-                if (!_localVariableMapping.ContainsKey(v))
-                    _localVariableMapping.Add(v, idx++);
-
-            if (_meta.ContainsKey(SharedNamesKey))
-                foreach (var entry in _meta[SharedNamesKey].List)
-                    if (!_localVariableMapping.ContainsKey(entry))
-                        _localVariableMapping.Add(entry, idx++);
+            _declaration.CreateLocalVariableMapping();
         }
 
         /// <summary>
@@ -261,37 +215,32 @@ namespace Prexonite
         public SymbolTable<int> LocalVariableMapping
         {
             [DebuggerNonUserCode]
-            get
-            {
-                if (_localVariableMapping == null)
-                    CreateLocalVariableMapping();
-                return _localVariableMapping;
-            }
+            get { return _declaration.LocalVariableMapping; }
         }
 
-        [SuppressMessage("Microsoft.Naming", "CA1704:IdentifiersShouldBeSpelledCorrectly",
-            MessageId = "Cil")]
-        public CilFunction CilImplementation { [DebuggerStepThrough]
-        get; [DebuggerStepThrough]
-        internal set; }
+        public CilFunction CilImplementation
+        {
+            get { return _declaration.CilImplementation; }
+        }
 
-        [SuppressMessage("Microsoft.Naming", "CA1704:IdentifiersShouldBeSpelledCorrectly",
-            MessageId = "Cil")]
         public bool HasCilImplementation
         {
-            [DebuggerStepThrough]
-            get { return CilImplementation != null; }
+            get { return _declaration.HasCilImplementation; }
         }
 
         public bool IsMacro
         {
-            [DebuggerStepThrough]
-            get { return _meta[CompilerTarget.MacroMetaKey].Switch; }
+            get { return _declaration.IsMacro; }
         }
 
         #endregion
 
         #region Storage
+
+        public IEnumerable<string> GetDependencies()
+        {
+            return _declaration.GetDependencies();
+        }
 
         /// <summary>
         ///     Returns a string describing the function.
@@ -302,266 +251,27 @@ namespace Prexonite
         /// </remarks>
         public override string ToString()
         {
-            var buffer = new StringBuilder();
-            buffer.Append("function ");
-            buffer.Append(Id);
-            if (Parameters.Count > 0)
-            {
-                buffer.Append("(");
-                foreach (var param in Parameters)
-                    buffer.AppendFormat("{0}, ", param);
-                buffer.Remove(buffer.Length - 2, 2);
-                buffer.Append(")");
-            }
-            return buffer.ToString();
+            return _declaration.ToString();
         }
 
-        /// <summary>
-        ///     Creates a complete string representation of the function.
-        /// </summary>
-        /// <param name = "buffer">The buffer to which to write the string representation.</param>
         public void Store(StringBuilder buffer)
         {
-            Store(new StringWriter(buffer));
+            _declaration.Store(buffer);
         }
 
-        /// <summary>
-        ///     Creates a complete string representation of the function.
-        /// </summary>
-        /// <returns>A string containing the complete representation of the function.</returns>
-        /// <remarks>
-        ///     Use buffer or stream based overloads where possible.
-        /// </remarks>
         public string Store()
         {
-            var sb = new StringBuilder();
-            Store(sb);
-            return sb.ToString();
+            return _declaration.Store();
         }
 
-        /// <summary>
-        ///     Creates a complete string representation of the function.
-        /// </summary>
-        /// <param name = "writer">The writer to which to write the string representation.</param>
-        public void StoreCode(TextWriter writer)
-        {
-            var reverseLocalMapping = new string[LocalVariableMapping.Count];
-            foreach (var kvp in LocalVariableMapping)
-                reverseLocalMapping[kvp.Value] = kvp.Key;
-
-            var buffer = new StringBuilder();
-            if (Variables.Count > 0)
-            {
-                buffer.Append("var ");
-                foreach (var variable in Variables)
-                {
-                    buffer.Append(StringPType.ToIdLiteral(variable));
-                    buffer.Append(',');
-                }
-                buffer.Length -= 1;
-                buffer.Append(' ');
-                writer.Write(buffer);
-#if DEBUG || Verbose || true
-                writer.WriteLine();
-#endif
-                buffer.Length = 0;
-            }
-
-            //#if DEBUG || Verbose
-            var idx = 0;
-            //#endif
-            if (Code.Count > 0)
-            {
-                var digits = (int) Math.Ceiling(Math.Log10(Code.Count));
-
-                appendAddress(buffer, idx, digits);
-
-                foreach (var rawIns in Code)
-                {
-#if DEBUG || Verbose
-                    int idxBeginning = buffer.Length;
-#endif
-
-                    //Rewrite index-based op-codes back
-                    //  to names
-                    Instruction ins;
-                    switch (rawIns.OpCode)
-                    {
-                        case OpCode.ldloci:
-                            ins = new Instruction(OpCode.ldloc,
-                                reverseLocalMapping[rawIns.Arguments]);
-                            break;
-                        case OpCode.stloci:
-                            ins = new Instruction(OpCode.stloc,
-                                reverseLocalMapping[rawIns.Arguments]);
-                            break;
-                        case OpCode.incloci:
-                            ins = new Instruction(OpCode.incloc,
-                                reverseLocalMapping[rawIns.Arguments]);
-                            break;
-                        case OpCode.decloci:
-                            ins = new Instruction(OpCode.decloc,
-                                reverseLocalMapping[rawIns.Arguments]);
-                            break;
-                        case OpCode.indloci:
-                            int index;
-                            int argc;
-                            rawIns.DecodeIndLocIndex(out index, out argc);
-                            ins = new Instruction(OpCode.indloc, argc, reverseLocalMapping[index],
-                                rawIns.JustEffect);
-                            break;
-                        default:
-                            ins = rawIns;
-                            break;
-                    }
-
-                    ins.ToString(buffer);
-#if DEBUG || Verbose
-                    if (buffer[idxBeginning] != '@')
-                        buffer.Insert(idxBeginning, ' ');
-                    buffer.AppendLine();
-                    appendAddress(buffer, ++idx, digits);
-#else
-                    buffer.AppendLine();
-                    appendAddress(buffer, ++idx, digits);
-
-#endif
-                    writer.Write(buffer.ToString());
-                    buffer.Length = 0;
-                }
-            }
-        }
-
-        private static void appendAddress(StringBuilder buffer, int address, int digits)
-        {
-            buffer.Append("/* ");
-            buffer.Append(address.ToString().PadLeft(digits, '0'));
-            buffer.Append(" */ ");
-        }
-
-        /// <summary>
-        ///     Creates a string representation of the functions byte code in Prexonite Assembler
-        /// </summary>
-        /// <param name = "buffer">The buffer to which to write the string representation to.</param>
-        public void StoreCode(StringBuilder buffer)
-        {
-            StoreCode(new StringWriter(buffer));
-        }
-
-        /// <summary>
-        ///     Creates a string representation of the functions byte code in Prexonite Assembler
-        /// </summary>
-        /// <param name = "writer">The writer to which to write the string representation to.</param>
         public void Store(TextWriter writer)
         {
-            #region Head
-
-            writer.Write("function ");
-            writer.Write(StringPType.ToIdLiteral(Id));
-            StringBuilder buffer;
-            if (Parameters.Count > 0)
-            {
-                writer.Write("(");
-                buffer = new StringBuilder();
-                foreach (var param in Parameters)
-                {
-                    buffer.Append(StringPType.ToIdLiteral(param));
-                    buffer.Append(",");
-                }
-                buffer.Remove(buffer.Length - 1, 1);
-                writer.Write(buffer.ToString());
-                writer.Write(")");
-            }
-#if DEBUG || Verbose || true
-            writer.WriteLine();
-#endif
-
-            #endregion
-
-            #region Metainformation
-
-            //Metainformation
-            writer.Write(@"[");
-            writer.Write(Loader.SuppressPrimarySymbol);
-            writer.Write(";");
-#if DEBUG || Verbose
-            writer.WriteLine();
-#endif
-            var meta = Meta.Clone();
-            meta.Remove(Application.ImportKey); //to be added separately
-            meta.Remove(Application.IdKey); //implied
-#pragma warning disable 612,618
-            meta.Remove(Application.InitializationGeneration); //must be set to default
-#pragma warning restore 612,618
-            meta.Remove(Loader.SuppressPrimarySymbol);
-            //stored functions always have their symbol declared separately
-            meta.Store(writer);
-            var lst = new List<MetaEntry>();
-            // ReSharper disable LoopCanBeConvertedToQuery
-            foreach (var ns in ImportedNamespaces)
-                // ReSharper restore LoopCanBeConvertedToQuery
-                lst.Add(ns);
-            if (lst.Count > 0)
-            {
-                var imports = new MetaEntry(lst.ToArray());
-                writer.Write(Application.ImportKey);
-                writer.Write(" ");
-                buffer = new StringBuilder();
-                imports.ToString(buffer);
-                writer.Write(buffer.ToString());
-                writer.Write(";");
-#if DEBUG || Verbose
-                writer.WriteLine();
-#endif
-            }
-            //write symbol mapping information
-            writer.Write(SymbolMappingKey);
-            writer.Write(" {");
-            var map = new string[LocalVariableMapping.Count];
-            foreach (var mapping in LocalVariableMapping)
-                map[mapping.Value] = mapping.Key;
-            for (var i = 0; i < map.Length; i++)
-            {
-                writer.Write(StringPType.ToIdOrLiteral(map[i]));
-                if (i < map.Length - 1)
-                    writer.Write(',');
-            }
-            writer.Write("};");
-#if DEBUG || Verbose
-            writer.WriteLine();
-#endif
-            writer.Write("]");
-#if DEBUG || Verbose
-            writer.WriteLine();
-#endif
-            //End of Metadata
-
-            #endregion
-
-            #region Code
-
-            //write code
-            writer.Write("{asm{");
-#if DEBUG || Verbose || true
-            writer.WriteLine();
-#endif
-            StoreCode(writer);
-
-#if DEBUG || Verbose || true
-            writer.WriteLine("}}");
-            writer.WriteLine();
-#else
-            writer.Write("}}");
-#endif
-
-            #endregion
+            _declaration.Store(writer);
         }
 
         #endregion
 
         #region IHasMetaTable Members
-
-        private readonly MetaTable _meta;
 
         /// <summary>
         ///     Returns a reference to the meta table associated with this function.
@@ -569,72 +279,14 @@ namespace Prexonite
         public MetaTable Meta
         {
             [DebuggerNonUserCode]
-            get { return _meta; }
+            get { return _declaration.Meta; }
         }
 
         #endregion
 
         #region IMetaFilter Members
 
-        /// <summary>
-        ///     Transforms requests to the meta table.
-        /// </summary>
-        /// <param name = "key">The key to transform.</param>
-        /// <returns>The transformed key.</returns>
-        [DebuggerNonUserCode]
-        string IMetaFilter.GetTransform(string key)
-        {
-            if (Engine.StringsAreEqual(key, Application.NameKey))
-                return IdKey;
-            else
-                return key;
-        }
-
-        /// <summary>
-        ///     Transforms storage requests to the meta table.
-        /// </summary>
-        /// <param name = "item">The item to update/store.</param>
-        /// <returns>The transformed item or null if nothing is to be stored.</returns>
-        [DebuggerNonUserCode]
-        KeyValuePair<string, MetaEntry>? IMetaFilter.SetTransform(
-            KeyValuePair<string, MetaEntry> item)
-        {
-            //Prevent changing the name of the function;
-            if ((Engine.StringsAreEqual(item.Key, IdKey) ||
-                Engine.StringsAreEqual(item.Key, Application.NameKey)) 
-                && _meta != null) //this clauses causes the filter to skip this check 
-                                  // while the Function is still being constructed
-                return null;
-            else if (Engine.StringsAreEqual(item.Key, Application.ImportKey) ||
-                Engine.StringsAreEqual(item.Key, "imports"))
-            {
-                //
-                _importedNamesapces.Clear();
-                var entries = item.Value.List;
-                foreach (var entry in entries)
-                    _importedNamesapces.Add(entry.Text);
-                return item;
-            }
-            else if (Engine.StringsAreEqual(item.Key, TryCatchFinallyBlock.MetaKey))
-            {
-                //Make sure the list of blocks is refreshed.
-                InvalidateTryCatchFinallyBlocks();
-                return item;
-            }
-            else if (Engine.StringsAreEqual(item.Key, SymbolMappingKey))
-            {
-                var lst = item.Value.List;
-                _localVariableMapping = new SymbolTable<int>(lst.Length);
-                for (var i = 0; i < lst.Length; i++)
-                {
-                    var symbol = lst[i];
-                    _localVariableMapping.Add(symbol.Text, i);
-                }
-                return null;
-            }
-            else
-                return item;
-        }
+        
 
         #endregion
 
@@ -803,10 +455,8 @@ namespace Prexonite
         /// </summary>
         public void InvalidateTryCatchFinallyBlocks()
         {
-            _tryCatchFinallyBlocks = null;
+            _declaration.InvalidateTryCatchFinallyBlocks();
         }
-
-        private List<TryCatchFinallyBlock> _tryCatchFinallyBlocks;
 
         /// <summary>
         ///     The cached set of try-catch-finally blocks.
@@ -815,204 +465,15 @@ namespace Prexonite
         {
             get
             {
-                //Create the collection if it does not exist.
-                if (_tryCatchFinallyBlocks == null)
-                {
-                    _tryCatchFinallyBlocks = new List<TryCatchFinallyBlock>();
-                    MetaEntry tcfe;
-                    if (Meta.TryGetValue(TryCatchFinallyBlock.MetaKey, out tcfe))
-                    {
-                        foreach (var blockEntry in tcfe.List)
-                        {
-                            int beginTry,
-                                beginFinally,
-                                beginCatch,
-                                endTry;
-
-                            var blockLst = blockEntry.List;
-                            if (blockLst.Length != 5)
-                                continue;
-
-                            if (!int.TryParse(blockLst[0], out beginTry)) //beginTry, required
-                                continue;
-                            if (!int.TryParse(blockLst[1], out beginFinally))
-                                //beginFinally, default: -1
-                                beginFinally = -1;
-                            if (!int.TryParse(blockLst[2], out beginCatch))
-                                //beginCatch, default: -1
-                                beginCatch = -1;
-                            if (!int.TryParse(blockLst[3], out endTry)) //endTry, required
-                                continue;
-
-                            var block = new TryCatchFinallyBlock(beginTry, endTry)
-                                {
-                                    BeginFinally = beginFinally,
-                                    BeginCatch = beginCatch,
-                                    UsesException = blockLst[4].Switch
-                                };
-
-                            _tryCatchFinallyBlocks.Add(block);
-                        }
-                    }
-                }
-                return _tryCatchFinallyBlocks.AsReadOnly();
+                return _declaration.TryCatchFinallyBlocks;
             }
         }
 
         #endregion
-
-        #region Implementation of INamed<string>/IDependent<string>
 
         string INamed<string>.Name
         {
-            get { return Id; }
+            get { return ((INamed<string>) _declaration).Name; }
         }
-
-        public IEnumerable<string> GetDependencies()
-        {
-            foreach (var ins in Code)
-            {
-                var argc = ins.Arguments;
-                var id = ins.Id;
-                var justEffect = ins.JustEffect;
-                var genericArgument = ins.GenericArgument;
-                var opCode = ins.OpCode;
-
-                switch (opCode)
-                {
-                    case OpCode.invalid:
-                        break;
-                    case OpCode.nop:
-                        break;
-                    case OpCode.ldc_int:
-                        break;
-                    case OpCode.ldc_real:
-                        break;
-                    case OpCode.ldc_bool:
-                        break;
-                    case OpCode.ldc_string:
-                        break;
-                    case OpCode.ldc_null:
-                        break;
-                    case OpCode.ldr_loc:
-                        break;
-                    case OpCode.ldr_loci:
-                        break;
-                    case OpCode.ldr_glob:
-                        break;
-                    case OpCode.ldr_func:
-                        yield return id;
-                        break;
-                    case OpCode.ldr_cmd:
-                        break;
-                    case OpCode.ldr_app:
-                        break;
-                    case OpCode.ldr_eng:
-                        break;
-                    case OpCode.ldr_type:
-                        break;
-                    case OpCode.ldloc:
-                        break;
-                    case OpCode.stloc:
-                        break;
-                    case OpCode.ldloci:
-                        break;
-                    case OpCode.stloci:
-                        break;
-                    case OpCode.ldglob:
-                        break;
-                    case OpCode.stglob:
-                        break;
-                    case OpCode.newobj:
-                        break;
-                    case OpCode.newtype:
-                        break;
-                    case OpCode.newclo:
-                        yield return id;
-                        break;
-                    case OpCode.newcor:
-                        break;
-                    case OpCode.incloc:
-                        break;
-                    case OpCode.incglob:
-                        break;
-                    case OpCode.decloc:
-                        break;
-                    case OpCode.decglob:
-                        break;
-                    case OpCode.incloci:
-                        break;
-                    case OpCode.decloci:
-                        break;
-                    case OpCode.check_const:
-                        break;
-                    case OpCode.check_arg:
-                        break;
-                    case OpCode.check_null:
-                        break;
-                    case OpCode.cast_const:
-                        break;
-                    case OpCode.cast_arg:
-                        break;
-                    case OpCode.get:
-                        break;
-                    case OpCode.set:
-                        break;
-                    case OpCode.sget:
-                        break;
-                    case OpCode.sset:
-                        break;
-                    case OpCode.func:
-                        yield return id;
-                        break;
-                    case OpCode.cmd:
-                        break;
-                    case OpCode.indarg:
-                        break;
-                    case OpCode.tail:
-                        break;
-                    case OpCode.indloc:
-                        break;
-                    case OpCode.indloci:
-                        break;
-                    case OpCode.indglob:
-                        break;
-                    case OpCode.jump:
-                        break;
-                    case OpCode.jump_t:
-                        break;
-                    case OpCode.jump_f:
-                        break;
-                    case OpCode.ret_exit:
-                        break;
-                    case OpCode.ret_value:
-                        break;
-                    case OpCode.ret_break:
-                        break;
-                    case OpCode.ret_continue:
-                        break;
-                    case OpCode.ret_set:
-                        break;
-                    case OpCode.@throw:
-                        break;
-                    case OpCode.@try:
-                        break;
-                    case OpCode.leave:
-                        break;
-                    case OpCode.exc:
-                        break;
-                    case OpCode.pop:
-                        break;
-                    case OpCode.dup:
-                        break;
-                    case OpCode.rot:
-                        break;
-                    default:
-                        throw new ArgumentOutOfRangeException();
-                }
-            }
-        }
-
-        #endregion
     }
 }

@@ -25,6 +25,8 @@
 //  IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 using System;
+using System.Collections;
+using System.Collections.Generic;
 using NUnit.Framework;
 using Prexonite;
 using Prexonite.Compiler;
@@ -35,7 +37,7 @@ namespace PrexoniteTests.Tests
     [TestFixture]
     public class Storage : Compiler
     {
-        private const string StoredShouldBeEqual =
+        private const string _storedShouldBeEqual =
             "Since the in-memory and the restored application are the same, they should" +
                 " result in the same serialized form.";
 
@@ -56,9 +58,9 @@ namespace PrexoniteTests.Tests
             reldr.LoadFromString(stored);
             var restored = reldr.Options.TargetApplication.StoreInString();
 
-            Assert.IsTrue(
-                Engine.StringsAreEqual(stored, restored),
-                StoredShouldBeEqual);
+            Assert.That(stored,
+                Is.EqualTo(stored).Using((IEqualityComparer<string>) Engine.DefaultStringComparer),
+                _storedShouldBeEqual);
         }
 
         [Test]
@@ -91,9 +93,9 @@ Add System::Xml To Imports;
             reldr.LoadFromString(stored);
             var restored = reldr.Options.TargetApplication.StoreInString();
 
-            Assert.IsTrue(
-                Engine.StringsAreEqual(stored, restored),
-                StoredShouldBeEqual);
+            Assert.That(stored,
+                Is.EqualTo(stored).Using((IEqualityComparer<string>)Engine.DefaultStringComparer),
+                _storedShouldBeEqual);
         }
 
         [Test]

@@ -335,6 +335,7 @@
     <Compile Include="Internal\MetaTableImpl.cs" />
     <Compile Include="Internal\PFunctionTableImpl.cs" />
     <Compile Include="Modular\EntityRef.cs" />
+    <Compile Include="Modular\FunctionDeclaration.cs" />
     <Compile Include="Modular\Module.cs" />
     <Compile Include="Modular\ModuleConflictException.cs" />
     <Compile Include="Modular\ModuleName.cs" />

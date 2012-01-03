@@ -164,7 +164,11 @@ namespace Prexonite.Compiler
             if (loader == null)
                 throw new ArgumentNullException("loader");
             if (function == null)
-                function = new PFunction(loader.Options.TargetApplication);
+                function = loader.ParentApplication.CreateFunction();
+            if (!ReferenceEquals(function.ParentApplication, loader.ParentApplication))
+                throw new ArgumentException(
+                    "When creating a compiler target, the supplied function must match the application targetted by the loader.",
+                    "function");
 
             _loader = loader;
             _function = function;

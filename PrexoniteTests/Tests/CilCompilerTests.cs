@@ -105,9 +105,8 @@ function main() {
 
 
             //Add, no cil hints key yet
-            var emptyFunc = new PFunction(target);
+            var emptyFunc = target.CreateFunction();
             emptyFunc.Meta[PFunction.IdKey] = "empty";
-            target.Functions.Add(emptyFunc);
             Compiler.SetCilHint(main, cilExt3);
             var hints5 = _getCilHints(main, true);
             Assert.AreEqual(2, hints5.Length);

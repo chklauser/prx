@@ -158,7 +158,7 @@ namespace Prexonite.Compiler.Cil
             //Enable by name linking and link meta data to CIL implementations
             foreach (var func in qfuncs)
             {
-                func.CilImplementation = pass.GetDelegate(func.Id);
+                func.Declaration.CilImplementation = pass.GetDelegate(func.Id);
                 pass.LinkMetadata(func);
             }
         }
@@ -179,7 +179,7 @@ namespace Prexonite.Compiler.Cil
 
                 _compile(func, il, targetEngine, pass, linking);
 
-                func.CilImplementation = pass.GetDelegate(m);
+                func.Declaration.CilImplementation = pass.GetDelegate(m);
                 pass.LinkMetadata(func);
 
                 return true;

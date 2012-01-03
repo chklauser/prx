@@ -26,6 +26,7 @@
 
 using System;
 using System.Collections.Generic;
+using System.ComponentModel;
 using System.Diagnostics;
 using System.IO;
 using System.Linq;
@@ -74,14 +75,19 @@ namespace Prexonite
         /// <summary>
         ///     Meta table key used for storing initialization generation.
         /// </summary>
-        [Obsolete("Prexonite always completes partial initialization. This key has no effect.")] public const string InitializationGeneration = InitializationId;
+        [Obsolete("Prexonite always completes partial initialization. This key has no effect.")] 
+        [EditorBrowsable(EditorBrowsableState.Never)]
+        public const string InitializationGeneration = InitializationId;
 
         /// <summary>
         ///     Meta table key used for stroing the offset in the initialization function where
         ///     execution should continue to complete initialization.
         /// </summary>
-        [Obsolete("Prexonite no longer stores the initialization offset in a meta table.")] public
-            const string InitializationOffset = InitializationId;
+        [Obsolete("Prexonite no longer stores the initialization offset in a meta table.")]
+        [EditorBrowsable(EditorBrowsableState.Never)]
+// ReSharper disable UnusedMember.Global
+        public const string InitializationOffset = InitializationId;
+// ReSharper restore UnusedMember.Global
 
         /// <summary>
         ///     Meta table key used as an alias for <see cref = "Application.IdKey" />
@@ -119,18 +125,27 @@ namespace Prexonite
                 throw new ArgumentNullException("module");
 
             _module = module;
-            _initializationFunction = new PFunction(this, InitializationId);
 
             //instantiate variables
             foreach (var decl in _module.Variables)
-                _variables.Add(decl.Id, new PVariable(decl));
+                _variableTable.Add(decl.Id, new PVariable(decl));
+
+            //instantiate functions
+            foreach (var funDecl in _module.Functions)
+                _functionTable.Add(new PFunction(this, funDecl));
+
+            Debug.Assert(_functionTable.Contains(InitializationId),
+                string.Format(
+                    "Instantiating module {0} did not result in an instantiated initialization function.",
+                    _module.Name));
+            _initializationFunction = _functionTable[InitializationId];
         }
 
         #endregion
 
         #region Variables
 
-        private readonly SymbolTable<PVariable> _variables = new SymbolTable<PVariable>();
+        private readonly SymbolTable<PVariable> _variableTable = new SymbolTable<PVariable>();
 
         /// <summary>
         ///     Provides access to the table of global variables.
@@ -138,7 +153,7 @@ namespace Prexonite
         public SymbolTable<PVariable> Variables
         {
             [DebuggerStepThrough]
-            get { return _variables; }
+            get { return _variableTable; }
         }
 
         #endregion
@@ -160,13 +175,15 @@ namespace Prexonite
             return app.Functions.TryGetValue(id, out func);
         }
 
+        private readonly PFunctionTable _functionTable = new PFunctionTableImpl();
+
         /// <summary>
         ///     Provides access to the table of registered functions.
         /// </summary>
         public PFunctionTable Functions
         {
             [DebuggerStepThrough]
-            get { return _module.Functions; }
+            get { return _functionTable; }
         }
 
         /// <summary>
@@ -188,18 +205,21 @@ namespace Prexonite
         [DebuggerStepThrough]
         public PFunction CreateFunction()
         {
-            return new PFunction(this);
+            return CreateFunction(Engine.GenerateName("F"));
         }
 
         /// <summary>
-        ///     Creates a new function for the application with a given <paramref name = "id" />.
+        ///     Creates a new function for the application with a given <paramref name = "id" />. Also creates a corresponding <see cref="FunctionDeclaration"/> in the backing <see cref="Module"/>.
         /// </summary>
         /// <param name = "id">An identifier to name the function.</param>
         /// <returns>An unregistered function with a given Id, bound to the current application instance.</returns>
         [DebuggerStepThrough]
         public PFunction CreateFunction(string id)
         {
-            return new PFunction(this, id);
+            var decl = this.Module.CreateFunction(id);
+            var func = new PFunction(this, decl);
+            _functionTable.Add(func);
+            return func;
         }
 
         #endregion

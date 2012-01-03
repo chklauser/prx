@@ -282,7 +282,6 @@ function macro\_expand_into_function(ldr, id, body)[compiler]
     var func = ldr.ParentApplication.CreateFunction(id);
     func.Parameters.Add(node_arg);
     func.Meta["compiler"] = true;
-    ldr.ParentApplication.Functions.Add(func);
     
     //create function body {return <body>(node_arg, <args...>);}
     var block = new Prexonite::Compiler::Ast::AstBlock("macro.pxs\\derived",-1,-1);
@@ -311,6 +310,40 @@ function AstNode_t[compiler]
     return field;
 }
 
+function create_global_variable\impl(context, id, ref declRef)
+{
+    id ??= uniqueId;
+    id ~= String;
+    
+    var m = context.Application.Module;
+    
+    //Do not rely on declRef working like a variable, it is likely a null value.
+    declRef = var decl = if(m.Variables.Contains(id)) 
+                    m.Variables[id] 
+               else 
+                    (m.Variables.Add = Prexonite::Modular::VariableDeclaration.Create(id));
+                    
+    var a = context.Application;
+    var pvar = if(a.Variables.ContainsKey(id))
+                    a.Variables[id]
+               else
+                    (a.Variables.Add(id) = new Prexonite::PVariable(decl));
+                    
+    return pvar;
+}
+
+macro create_global_variable\macro as create_global_variable(id, declRef)[partial\macro]
+{
+    // TODO: make create_global_variable available to build block code.
+    establish_macro_context;
+    
+    context.Block.Expression = var implCall = ast("GetSetSymbol", context.Call, SI.func(->create_global_variable\impl));
+    implCall.Arguments.Add(macro\get_context);
+    implCall.Arguments.AddRange(var args);
+    
+    return true;
+}
+
 macro macro\_check_is_node_t(node_arg,node_t_name,requirePlaceholder,requireAstNode)
 {
     function create_node_arg(c)
@@ -331,7 +364,7 @@ macro macro\_check_is_node_t(node_arg,node_t_name,requirePlaceholder,requireAstN
     var node_t = uniqueId(id + @"\node_t");
     function create_node_t(c) = ast("GetSetSymbol",c ?? SI.get, SI.gvar(node_t, macro\macro_pxs_module));
     
-    context.Application.Variables.Add(node_t, var node_t_var = new Prexonite::PVariable);
+    var node_t_var = new global_variable(node_t);
     node_t_var.Meta["compiler"] = true;
     
     // if((var arg_pt = boxed(node_arg).Type) is not Prexonite::Types::ObjectPType)

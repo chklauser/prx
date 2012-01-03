@@ -210,10 +210,8 @@ namespace PrexoniteTests.Tests
             var a2 = new Application(m2);
 
             var f1 = a1.CreateFunction(Application.DefaultEntryFunction);
-            m1.Functions.Add(f1);
 
             var f2 = a2.CreateFunction("sayHello");
-            m2.Functions.Add(f2);
 
             f1.Code.Add(new Instruction(OpCode.func, 0, f2.Id, m2.Name));
             f1.Code.Add(new Instruction(OpCode.ret_value));

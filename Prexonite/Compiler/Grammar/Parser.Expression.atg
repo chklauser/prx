@@ -377,10 +377,9 @@ CoroutineCreation<out AstExpr expr>
 
 LambdaExpression<out AstExpr expr>
                                         (.  expr = null;
-                                            PFunction func = new PFunction(TargetApplication, generateLocalId());                                             
+                                            PFunction func = TargetApplication.CreateFunction(generateLocalId());                                             
                                             func.Meta[Application.ImportKey] = target.Function.Meta[Application.ImportKey];
                                             func.Meta[PFunction.ParentFunctionKey] = target.Function.Id;
-                                            TargetApplication.Functions.Add(func);
                                             Loader.CreateFunctionTarget(func, new AstBlock(this));
                                             CompilerTarget ft = FunctionTargets[func];
                                             ft.ParentTarget = target;
@@ -427,10 +426,9 @@ implementation
 
 LazyExpression<out AstExpr expr>
                                         (.  expr = null;
-                                            PFunction func = new PFunction(TargetApplication, generateLocalId());
+                                            PFunction func = TargetApplication.CreateFunction(generateLocalId());
                                             func.Meta[Application.ImportKey] = target.Function.Meta[Application.ImportKey];
                                             func.Meta[PFunction.ParentFunctionKey] = target.Function.Id;
-                                            TargetApplication.Functions.Add(func);
                                             Loader.CreateFunctionTarget(func, new AstBlock(this));
                                             CompilerTarget ft = FunctionTargets[func];
                                             ft.ParentTarget = target;

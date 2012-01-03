@@ -274,6 +274,25 @@ namespace Prexonite.Compiler
             _inject(kind, System.String.Empty);
         }
 
+        /// <summary>
+        /// Defines a new global variable (or returns the existing declaration and instance)
+        /// </summary>
+        /// <param name="id">The physical name of the new global variable.</param>
+        /// <param name="vari">The variable declaration for the new variable.</param>
+        protected PVariable DefineGlobalVariable(string id, out VariableDeclaration vari)
+        {
+            if (TargetModule.Variables.TryGetVariable(id, out vari))
+            {
+                return TargetApplication.Variables[vari.Id];
+            }
+            else
+            {
+                vari = Modular.VariableDeclaration.Create(id);
+                TargetModule.Variables.Add(vari);
+                return TargetApplication.Variables[id] = new PVariable(vari);
+            }
+        }
+
         #endregion //General
 
         #region Prexonite Script
@@ -1051,6 +1070,18 @@ namespace Prexonite.Compiler
 
         #endregion
 
+        private AstGetSet _assembleInvocation(SymbolEntry sym)
+        {
+            if (isKnownMacroFunction(sym) || sym.Interpretation == SymbolInterpretations.MacroCommand)
+            {
+                return new AstMacroInvocation(this, sym);
+            }
+            else
+            {
+                return new AstGetSetSymbol(this, sym);
+            }
+        }
+
         private void _fallbackObjectCreation(Parser parser, AstTypeExpr type, out AstExpr expr,
             out ArgumentsProxy args)
         {
@@ -1075,7 +1106,8 @@ namespace Prexonite.Compiler
             {
                 if (isLocalVariable(fallbackSymbol.Interpretation) && isOuterVariable(fallbackSymbol.InternalId))
                     target.RequireOuterVariable(fallbackSymbol.InternalId);
-                var call = new AstGetSetSymbol(parser, PCall.Get, fallbackSymbol);
+
+                var call = _assembleInvocation(fallbackSymbol);
                 expr = call;
                 args = call.Arguments;
             }
@@ -1094,6 +1126,11 @@ namespace Prexonite.Compiler
         }
 
         private AstExpr _createUnknownExpr()
+        {
+            return _createUnknownGetSet();
+        }
+
+        private AstGetSet _createUnknownGetSet()
         {
             return new AstIndirectCall(this, new AstNull(this));
         }
