@@ -3,8 +3,18 @@ function get_test_file_names(path,pattern)[import System::IO] =
     ::Directory.EnumerateFiles(path ?? ".", pattern ?? "*.test.pxs", ::SearchOption.AllDirectories);
     
 function under_test = "under_test";
+function test_dependencies = "test_dependencies";
 function config_file_separator = "|";
 function config_section_separator = ">";
+    
+function create_config(testUnits, deps, testCases)
+{
+    var s = new Structure;
+    s.\("under_test") = testUnits;
+    s.\("deps") = deps;
+    s.\("test_cases") = testCases;    
+    return s;
+}
     
 function read_metadata(file_name)[import {Prexonite, Prexonite::Compiler}]
 {
@@ -18,36 +28,43 @@ function read_metadata(file_name)[import {Prexonite, Prexonite::Compiler}]
     } catch(var e) {
         //ignore
     }
-    print("done. ");
+    println("done. ");
     
-    var deps;
-    if(app.Meta.ContainsKey(under_test))
-        deps = app.Meta[under_test].List >> map(?.Text) >> all;
-    else
-        deps = [];
+    function extract_list(key){
+        if(app.Meta.ContainsKey(key))
+            return app.Meta[key].List >> map(?.Text) >> all;
+        else
+            return [];
+    }
     
-    var testCases = app.Functions >> where(?.Meta then ?["test"] then ?.Switch) >> map(?.Id) >> all;
+    var deps = extract_list(test_dependencies);
+    var testUnits = extract_list(under_test);
+    
+    var testCases = app.Functions >> where(f => f.Meta["test"].Switch) >> map(?.Id) >> all;
     
     dispose(eng,app,ldr);
     
-    println(deps," ",testCases.Count," test cases");
+    println("\t", testUnits, " using ", deps," ",testCases.Count," test cases");
     
-    return deps:testCases;
+    return new config(testUnits, deps, testCases);
 }
 
 //write_config writes the configuration <config> to the supplied <textWriter>.
 //  - textWriter, an object that behaves like a System.IO.TextWriter
-//  - config, [test_file_name:([dependency_name]:[test_case_name])]
+//  - config, [test_file_name:{under_test,deps,test_cases}]
 function write_config(textWriter, config)
 {
     foreach(var kvp in config)
     {
         textWriter.Write(kvp.Key);
         textWriter.Write(config_section_separator);
-        foreach(var d in kvp.Value.Key)
+        foreach(var d in kvp.Value.under_test)
             textWriter.Write("$(config_file_separator)$(d)");
         textWriter.Write(config_section_separator);
-        foreach(var d in kvp.Value.Value)
+        foreach(var d in kvp.Value.deps)
+            textWriter.Write("$(config_file_separator)$(d)");
+        textWriter.Write(config_section_separator);
+        foreach(var d in kvp.Value.test_cases)
             textWriter.Write("$(config_file_separator)$(d)");
         textWriter.WriteLine;
     }
@@ -90,9 +107,11 @@ function read_config(textReader)
         if(fs.Count != 3)
             continue;
         
-        config[] = fs[0]:
-            (fs[1].Split(config_file_separator) >> skip(1) >> all):
-            (fs[2].Split(config_file_separator) >> skip(1) >> all);
+        config[] = fs[0]: new config(
+            (fs[1].Split(config_file_separator) >> skip(1) >> all),
+            (fs[2].Split(config_file_separator) >> skip(1) >> all),
+            (fs[3].Split(config_file_separator) >> skip(1) >> all),
+        );
     }
 }
 

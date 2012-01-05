@@ -2,9 +2,9 @@
 under_test {
     @"psr\pattern.pxs",
     @"psr\prop.pxs",
-    @"psr\test\meta_macro.pxs",
     @"psr\macro.pxs",
 };
+test_dependencies {@"psr\test\meta_macro.pxs"};
 
 function test_con[test]
 {

@@ -23,6 +23,9 @@ namespace PrexoniteTests.Tests.Configurations
                         @"psr\ast.pxs",
                 });
                 LoadUnitTestingFramework();
+                Runner.SetupTestFile(this, new string[] {
+                                            
+                });
                 Runner.PrepareTestCompilation(this);
                 RequireFile(@".\ast.test.pxs");                
                 Runner.PrepareExecution(this);
@@ -108,10 +111,13 @@ namespace PrexoniteTests.Tests.Configurations
                 Runner.SetupTestFile(this, new string[] {
                         @"psr\pattern.pxs",
                         @"psr\prop.pxs",
-                        @"psr\test\meta_macro.pxs",
                         @"psr\macro.pxs",
                 });
                 LoadUnitTestingFramework();
+                Runner.SetupTestFile(this, new string[] {
+                        @"psr\test\meta_macro.pxs",
+                                            
+                });
                 Runner.PrepareTestCompilation(this);
                 RequireFile(@".\lang-ext.test.pxs");                
                 Runner.PrepareExecution(this);
@@ -156,9 +162,12 @@ namespace PrexoniteTests.Tests.Configurations
                 SetUpLoader();
                 Runner.SetupTestFile(this, new string[] {
                         @"psr\macro.pxs",
-                        @"psr\test\meta_macro.pxs",
                 });
                 LoadUnitTestingFramework();
+                Runner.SetupTestFile(this, new string[] {
+                        @"psr\test\meta_macro.pxs",
+                                            
+                });
                 Runner.PrepareTestCompilation(this);
                 RequireFile(@".\macro.test.pxs");                
                 Runner.PrepareExecution(this);
@@ -305,6 +314,9 @@ namespace PrexoniteTests.Tests.Configurations
                         @"psr\misc.pxs",
                 });
                 LoadUnitTestingFramework();
+                Runner.SetupTestFile(this, new string[] {
+                                            
+                });
                 Runner.PrepareTestCompilation(this);
                 RequireFile(@".\misc.test.pxs");                
                 Runner.PrepareExecution(this);
@@ -389,6 +401,9 @@ namespace PrexoniteTests.Tests.Configurations
                         @"psr\stack.pxs",
                 });
                 LoadUnitTestingFramework();
+                Runner.SetupTestFile(this, new string[] {
+                                            
+                });
                 Runner.PrepareTestCompilation(this);
                 RequireFile(@".\struct.test.pxs");                
                 Runner.PrepareExecution(this);

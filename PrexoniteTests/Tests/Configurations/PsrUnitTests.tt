@@ -22,7 +22,7 @@ using NUnit.Framework;
 namespace PrexoniteTests.Tests.Configurations
 {
 <# 
-    foreach(var testFile in _getTestConfiguration())
+    foreach(var testFile in _getTestConfiguration()) 
     { 
 #>
         public abstract class <#=_toPsrClassName(testFile.Item1)#> : ScriptedUnitTestContainer
@@ -37,12 +37,17 @@ namespace PrexoniteTests.Tests.Configurations
 <#                  } #>
                 });
                 LoadUnitTestingFramework();
+                Runner.SetupTestFile(this, new string[] {
+<#                  foreach(var dep in testFile.Item3) { #>
+                        @"<#=dep#>",
+<#                  } #>                                            
+                });
                 Runner.PrepareTestCompilation(this);
                 RequireFile(@"<#=_toTestFilePath(testFile.Item1)#>");                
                 Runner.PrepareExecution(this);
             }
 
-<#      foreach(var testCase in testFile.Item3) { #>
+<#      foreach(var testCase in testFile.Item4) { #>
             [Test]
             public void <#=testCase.Replace(@"\","_").Replace("$","_").Replace("'","_")#>()
             {
