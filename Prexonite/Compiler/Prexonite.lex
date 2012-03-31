@@ -92,7 +92,9 @@ Noise               = "/*" ~"*/" | "//" ~{LineBreak} | {WhiteSpace}+
 
      {Noise}    { /* Comment/Whitespace: ignore */ }
        
-     {Integer} ( "." {Integer} {Exponent}? | {Exponent} ) { return tok(Parser._real, yytext()); }
+     {Integer} "." {Integer}  {Exponent} { return tok(Parser._real, yytext()); } //definite real
+     {Integer} "." {Integer}             { return tok(Parser._realLike, yytext()); } //could also be version literal
+     {Integer} "." {Integer} "." {Integer} ("." {Integer}) { return tok(Parser._version, yytext()); }
      
      {Integer}                  |
      0x{HexDigit}+              { return tok(Parser._integer, yytext()); }
@@ -107,6 +109,7 @@ Noise               = "/*" ~"*/" | "//" ~{LineBreak} | {WhiteSpace}+
                          
      //any identifier
      "$"    {Identifier} { return tok(Parser._id, yytext().Substring(1)); }
+     "$\""               { buffer.Length = 0; PushState(String); return tok(Parser._anyId); }
      
      {Identifier} { return tok(checkKeyword(yytext()), yytext()); }
      

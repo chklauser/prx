@@ -1,6 +1,6 @@
 ﻿// Prexonite
 // 
-// Copyright (c) 2011, Christian Klauser
+// Copyright (c) 2012, Christian Klauser
 // All rights reserved.
 // 
 // Redistribution and use in source and binary forms, with or without modification, 
@@ -24,55 +24,25 @@
 //  WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING 
 //  IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-using System;
-using System.Collections;
-using System.Diagnostics;
-using System.Linq;
-using System.Reflection;
-using NUnit.Framework;
-using Prexonite;
-using Prexonite.Compiler.Cil;
 using Prexonite.Modular;
 
-namespace PrexoniteTests.Tests
+namespace Prexonite.Compiler.Build
 {
-    [TestFixture]
-    public class CilRuntime
+    public sealed class TargetDescriptionSet 
+        : System.Collections.ObjectModel.KeyedCollection<ModuleName, ITargetDescription>
     {
-        [Test]
-        public void RuntimeMethodsLinked()
+        private TargetDescriptionSet()
         {
-            var rt = typeof (Runtime);
-            var cs = from m in rt.GetMembers(BindingFlags.Static | BindingFlags.Public)
-                     where m.Name.EndsWith("PrepareTargets") && m is PropertyInfo || m is FieldInfo
-                     let v = _invokeStatic(m) 
-                     select Tuple.Create(m,v);
-
-            foreach (var t in cs)
-                Assert.That(t.Item2, Is.Not.Null,
-                    string.Format("The field/property Runtime.{0} is null.", t.Item1.Name));
         }
 
-        private Object _invokeStatic(MemberInfo m)
+        public static TargetDescriptionSet Create()
         {
-            if(m is PropertyInfo)
-            {
-                var p = (PropertyInfo) m;
-                return p.GetValue(null, new object[0]);
-            }
-            else if(m is FieldInfo)
-            {
-                var f = (FieldInfo) m;
-                return f.GetValue(null);
-            }
-            else
-            {
-                var message = string.Format("The member {1}.{0} is not a property or field.", m.Name, m.DeclaringType);
-                Assert.Fail(message);
-// ReSharper disable HeuristicUnreachableCode
-                throw new Exception(message);
-// ReSharper restore HeuristicUnreachableCode
-            }
+            return new TargetDescriptionSet();
+        }
+
+        protected override ModuleName GetKeyForItem(ITargetDescription item)
+        {
+            return item.Name;
         }
     }
 }

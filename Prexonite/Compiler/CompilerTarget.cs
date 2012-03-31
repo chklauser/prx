@@ -77,7 +77,7 @@ namespace Prexonite.Compiler
         [DebuggerStepThrough]
         public override string ToString()
         {
-            return String.Format("Target({0})", Function);
+            return String.Format("ITarget({0})", Function);
         }
 
         #region Fields
@@ -1027,14 +1027,14 @@ namespace Prexonite.Compiler
         {
             if (moduleName == Loader.ParentApplication.Module.Name)
                 moduleName = null;
-            Emit(position, Instruction.CreateLoadGlobal(id));
+            Emit(position, Instruction.CreateLoadGlobal(id, moduleName));
         }
 
         public void EmitStoreGlobal(ISourcePosition position, string id, ModuleName moduleName)
         {
             if (moduleName == Loader.ParentApplication.Module.Name)
                 moduleName = null;
-            Emit(position, Instruction.CreateStoreGlobal(id));
+            Emit(position, Instruction.CreateStoreGlobal(id, moduleName));
         }
 
         #endregion
@@ -1433,10 +1433,8 @@ namespace Prexonite.Compiler
 
             _removeUnconditionalJumpSequences();
 
-            //nops used by try-catch-finally with degenerate finally clause
-            //#if !(DEBUG || Verbose)
-            //            _removeNop();
-            //#endif
+            //Do not remove nop instructions!
+            //nops used by try-catch-finally with degenerate finally clauses
 
 #if UseIndex
             if (Loader.Options.UseIndicesLocally)
@@ -1513,7 +1511,6 @@ namespace Prexonite.Compiler
 
                 code[i] = current;
             }
-            return;
         }
 
         private static void _reset(bool[] addresses)
@@ -1636,7 +1633,6 @@ namespace Prexonite.Compiler
                     }
                 }
             }
-            return;
         }
 
         #endregion
@@ -1687,26 +1683,14 @@ namespace Prexonite.Compiler
                     RemoveInstructionRange(i, 2);
                 }
             }
-
-            return;
         }
 
         #endregion
 
         #region Removal of nop's (only RELEASE) *not anymore*
 
-#if !(DEBUG || Verbose)
-        private void _removeNop()
-        {
-            var code = Code;
-            for (var i = 0; i < code.Count; i++)
-            {
-                var instruction = code[i];
-                if (instruction.OpCode == OpCode.nop)
-                    RemoveInstructionAt(i--);
-            }
-        }
-#endif
+        //Do not remove nop instructions!
+        //nops used by try-catch-finally with degenerate finally clauses
 
         #endregion
 
@@ -1771,7 +1755,6 @@ namespace Prexonite.Compiler
                         break;
                 }
             }
-            return;
         }
 
 #endif

@@ -43,7 +43,7 @@ namespace Prexonite.Modular
     ///     </listheader>
     ///     <item>
     ///         <term>Function</term>
-    ///         <description>Id, ModuleName</description>
+    ///         <description>Id, Name</description>
     ///         <description>IsInMacroContext, IsMacro</description>
     ///     </item>
     ///     <item>
@@ -58,7 +58,7 @@ namespace Prexonite.Modular
     ///     </item>
     ///     <item>
     ///         <term>GlobalVariable</term>
-    ///         <description>Id, ModuleName</description>
+    ///         <description>Id, Name</description>
     ///         <description>IsReference</description>
     ///     </item>
     ///     <item>

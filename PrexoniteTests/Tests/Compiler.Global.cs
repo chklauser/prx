@@ -409,7 +409,7 @@ function main does asm
 {
     var x
 
-//Constant Jump Target Propagation
+//Constant Jump ITarget Propagation
     
             ldloc   x
             jump.t  a

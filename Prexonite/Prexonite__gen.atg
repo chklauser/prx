@@ -68,21 +68,22 @@ COMPILER Prexonite
  */
 
 /*---- SCANNER ------*/
-/* Interface version */
 
 IGNORECASE
 	
 TOKENS
 		//Basic token
 		id
-		anyId
+		anyId // $ in some situations, e.g., $"non-Prexonite id"
 		lid
         ns
+        version     // 1.1.1, 1.2.3.4
 		
   /*--------------------------------------------------------------------------------*/
         integer
   /*--------------------------------------------------------------------------------*/
-        real
+        real        // 1e, 1e5, 1.0e, 1.0e-5, 1.0e+03
+        realLike    // 1.0, 2.0, 2.3 //could also be a version
   /*--------------------------------------------------------------------------------*/
         string
         
@@ -941,9 +942,9 @@ ClrTypeExpr<out AstTypeExpr type>
 =
                                         (.  StringBuilder typeId = new StringBuilder(); .)
     (   doublecolon
-    |   Ns<out id>                      (.  typeId.Append(id); typeId.Append('.'); .)
+    |   ns                              (.  typeId.Append(t.val); typeId.Append('.'); .)
     )
-    {   Ns<out id>                      (.  typeId.Append(id); typeId.Append('.'); .)
+    {   ns                              (.  typeId.Append(t.val); typeId.Append('.'); .)
     }
     Id<out id>                          (.  typeId.Append(id);
                                             type = new AstConstantTypeExpression(this, 
@@ -1152,19 +1153,38 @@ Declaration
 =
 SYNC
 	declare
-	[	var 		        (. type = SymbolInterpretations.GlobalObjectVariable; .)
-	|   ref                 (. type = SymbolInterpretations.GlobalReferenceVariable; .)
-	|	function			(. type = SymbolInterpretations.Function; .)
-	|   command             (. type = SymbolInterpretations.Command; .)
-	]
-	DeclarationInstance<type,module>
-	{comma [ DeclarationInstance<type,module> ] }
+    (   [   var             (. type = SymbolInterpretations.GlobalObjectVariable; .)
+	    |   ref             (. type = SymbolInterpretations.GlobalReferenceVariable; .)
+	    |   function        (. type = SymbolInterpretations.Function; .)
+	    |   command         (. type = SymbolInterpretations.Command; .)
+	    ]
+	    DeclarationInstance<type,module>
+	    { comma [ DeclarationInstance<type,module> ] }
+    |   lbrace
+        [   uusing ModuleName<ref module> ]
+        {
+            (   var         (. type = SymbolInterpretations.GlobalObjectVariable; .)
+	        |   ref         (. type = SymbolInterpretations.GlobalReferenceVariable; .)
+	        |   function    (. type = SymbolInterpretations.Function; .)
+	        |   command     (. type = SymbolInterpretations.Command; .)
+	        ) 
+            colon
+            DeclarationInstance<type,module>
+	        { comma [ DeclarationInstance<type,module> ] }
+        }
+        rbrace
+    )
 .
 	
-DeclarationInstance<SymbolInterpretations type, ModuleName module>
+DeclarationInstance<SymbolInterpretations type, ModuleName module, bool preventOverride = false>
                             (.  string id; string aId; .)
 =			
 	Id<out id>              (.  aId = id; .)
+    [ div ModuleName<ref module> 
+                            (.  if(preventOverride) 
+                                    SemErr("Specification of module name illegal at this point."); 
+                            .)
+    ]
 	[ as Id<out aId> ]
 	                        (.  SymbolEntry inferredType;
 	                            if(target == null) //global symbol
@@ -1208,6 +1228,20 @@ DeclarationInstance<SymbolInterpretations type, ModuleName module>
                                 if(_requiresModule(type) && module == null)
                                     SemErr("Module cannot be inferred for declaration " + id + " as + " + aId + ".");
 	                        .)
+.
+
+ModuleName<ref ModuleName moduleName> 
+                                (.  _pushLexerState(Lexer.YYINITIAL); //need global scope for Version
+                                    string id = null; 
+                                    Version version = default(Version);
+                                .)
+=
+    Id<out id>
+    [   div
+        Version<out version>    
+    ]                           (.  _popLexerState();
+                                    moduleName = Loader.Cache[new ModuleName(id,version)];
+                                .)
 .
 
 /* ---- Build Block ---- */
@@ -1628,17 +1662,17 @@ FormalArg<CompilerTarget ft>        (.  string id; SymbolInterpretations kind = 
 GlobalId<out string id>             (.  id = "...no freaking id..."; .)
 =
     id                              (.  id = cache(t.val); .)
-|   anyId                           (.  id = cache(t.val.Substring(1)); .)
+|   anyId  String<out id>           (.  id = cache(id); .)
 .
 
 GlobalQualifiedId<out string id>    (. id = "\\NoId\\"; .)  
 =
     GlobalId<out id>
-|   Ns<out id>                      (.  StringBuilder buffer = new StringBuilder(id); buffer.Append('.'); .)
-    {   Ns<out id>                 (.  buffer.Append(id); buffer.Append('.'); .)
+|   ns                              (.  StringBuilder buffer = new StringBuilder(t.val); buffer.Append('.'); .)
+    {   ns                          (.  buffer.Append(t.val); buffer.Append('.'); .)
     }
     GlobalId<out id>                (.  buffer.Append(id); .)
-                                    (.  id = buffer.ToString(); .)
+                                    (.  id = cache(buffer.ToString()); .)
 .
 #file:D:\DotNetProjects\Prexonite-Hg\prx-assembla-hg\Prexonite\Compiler\Grammar\Parser.Helper.atg#
 /*
@@ -1674,11 +1708,6 @@ Id<out string id>               (.  id = "\\NoId\\"; .) //<-- should never surfa
     )                           (.  id = cache(t.val); .)
 .
 
-Ns<out string ns>               (. ns = "\\NoId\\"; .)
-=
-    ns                          (. ns = cache(t.val); .)
-.
-
 Boolean<out bool value>         (.  value = true; .)
 =                   
 	true          
@@ -1701,18 +1730,18 @@ SignedInteger<out int value>    (. int modifier = 1; .)
 
 Real<out double value>  
 =
-	real            
-	/*
-	[   e                       (.  real += "e"; .)
-	    [   plus     
-	    |   minus               (.  real += "-"; .)
-	    ]
-	    real                    (.   real += t.val; .)
-	] */
-	                            (.  string real = t.val;
+	(real | realLike)           (.  string real = t.val;
 	                                if(!TryParseReal(real, out value))
 	                                    SemErr(t, "Cannot recognize real " + real);
 	                            .)
+.
+
+Version<out Version version>    // Cannot distinguish between Real and Version ↔ must not appear in the same context.
+=
+    (realLike | version)        (.  var raw = t.val;
+                                    if(!TryParseVersion(raw, out version))
+                                        SemErr(t,"Cannot recognize \"" + raw + "\" as a version literal.");
+                                .)
 .
 
 SignedReal<out double value>    (. value = 0.0; double modifier = 1.0; int ival; .)

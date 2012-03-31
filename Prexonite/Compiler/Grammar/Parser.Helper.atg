@@ -31,11 +31,6 @@ Id<out string id>               (.  id = "\\NoId\\"; .) //<-- should never surfa
     )                           (.  id = cache(t.val); .)
 .
 
-Ns<out string ns>               (. ns = "\\NoId\\"; .)
-=
-    ns                          (. ns = cache(t.val); .)
-.
-
 Boolean<out bool value>         (.  value = true; .)
 =                   
 	true          
@@ -58,18 +53,18 @@ SignedInteger<out int value>    (. int modifier = 1; .)
 
 Real<out double value>  
 =
-	real            
-	/*
-	[   e                       (.  real += "e"; .)
-	    [   plus     
-	    |   minus               (.  real += "-"; .)
-	    ]
-	    real                    (.   real += t.val; .)
-	] */
-	                            (.  string real = t.val;
+	(real | realLike)           (.  string real = t.val;
 	                                if(!TryParseReal(real, out value))
 	                                    SemErr(t, "Cannot recognize real " + real);
 	                            .)
+.
+
+Version<out Version version>    // Cannot distinguish between Real and Version ↔ must not appear in the same context.
+=
+    (realLike | version)        (.  var raw = t.val;
+                                    if(!TryParseVersion(raw, out version))
+                                        SemErr(t,"Cannot recognize \"" + raw + "\" as a version literal.");
+                                .)
 .
 
 SignedReal<out double value>    (. value = 0.0; double modifier = 1.0; int ival; .)

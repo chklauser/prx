@@ -146,6 +146,11 @@
     <Compile Include="Commands\PCommandInfo.cs" />
     <Compile Include="Compiler\Ast\AstExpr.cs" />
     <Compile Include="Compiler\Ast\AstGetSetEntity.cs" />
+    <Compile Include="Compiler\Build\IBuildEnvironment.cs" />
+    <Compile Include="Compiler\Build\IBuildWatcher.cs" />
+    <Compile Include="Compiler\Build\IResolver.cs" />
+    <Compile Include="Compiler\Build\ITargetDescription.cs" />
+    <Compile Include="Compiler\Build\TargetDescriptionSet.cs" />
     <Compile Include="Compiler\Macro\Commands\PartialCallWrapper.cs" />
     <Compile Include="Compiler\Macro\Commands\CallMacro.cs" />
     <Compile Include="Compiler\Macro\Commands\CallStar.cs" />
@@ -153,9 +158,12 @@
     <Compile Include="Compiler\Macro\Commands\Reference.cs" />
     <Compile Include="Compiler\Macro\Commands\Unpack.cs" />
     <Compile Include="Compiler\Macro\PartialMacroCommand.cs" />
+    <Compile Include="Compiler\SymbolStore.cs" />
     <Compile Include="Exceptions.cs" />
+    <Compile Include="Helper\CombinedSymbolProxy.cs" />
     <Compile Include="Helper\IHasMetaTable.cs" />
     <Compile Include="Helper\IMetaFilter.cs" />
+    <Compile Include="Helper\ISymbolView.cs" />
     <Compile Include="Helper\LastAccessCache.cs" />
     <Compile Include="Helper\MergingCache.cs" />
     <Compile Include="IMaybeStackAware.cs" />
@@ -336,9 +344,11 @@
     <Compile Include="Internal\PFunctionTableImpl.cs" />
     <Compile Include="Modular\EntityRef.cs" />
     <Compile Include="Modular\FunctionDeclaration.cs" />
+    <Compile Include="Modular\IResourceDescriptor.cs" />
     <Compile Include="Modular\Module.cs" />
     <Compile Include="Modular\ModuleConflictException.cs" />
     <Compile Include="Modular\ModuleName.cs" />
+    <Compile Include="Modular\ModuleNamePattern.cs" />
     <Compile Include="Modular\VariableDeclaration.cs" />
     <Compile Include="Modular\VariableTable.cs" />
     <Compile Include="OperatorNames.cs" />
@@ -367,8 +377,10 @@
     <Compile Include="PFunction.cs" />
     <Compile Include="Helper\PFunctionTable.cs" />
     <Compile Include="Helper\SymbolCollection.cs" />
+    <Compile Include="Compiler\Build\IPlan.cs" />
     <Compile Include="PTypeLiteralAttribute.cs" />
     <Compile Include="PValueComparer.cs" />
+    <Compile Include="Compiler\Build\ITarget.cs" />
     <Compile Include="TryCatchFinallyBlock.cs" />
     <Compile Include="Types\BoolPType.cs" />
     <Compile Include="Types\CharPType.cs" />
@@ -400,6 +412,7 @@
       <Generator>TextTemplatingFileGenerator</Generator>
       <LastGenOutput>Operators.cs</LastGenOutput>
     </None>
+    <None Include="Compiler\Build\Build.cd" />
     <None Include="ObjectModel.cd" />
     <None Include="Prexonite.snk" />
     <Content Include="Compiler\Grammar\Grammar.Readme.txt" />

@@ -63,8 +63,10 @@ namespace Prexonite
 
         public virtual void Add(string key, TValue value)
         {
-            if (_table.ContainsKey(key) && Equals(value,_table[key]))
+            TValue existingValue;
+            if(_table.TryGetValue(key, out existingValue) && Equals(existingValue,value))
                 return;
+
             _table.Add(key, value);
         }
 

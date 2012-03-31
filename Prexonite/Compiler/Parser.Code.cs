@@ -160,6 +160,11 @@ namespace Prexonite.Compiler
                 out d);
         }
 
+        public static bool TryParseVersion(string s, out Version version)
+        {
+            return System.Version.TryParse(s, out version);
+        }
+
         public static NumberStyles RealStyle
         {
             get { return NumberStyles.AllowDecimalPoint | NumberStyles.AllowExponent; }
@@ -287,7 +292,7 @@ namespace Prexonite.Compiler
             }
             else
             {
-                vari = Modular.VariableDeclaration.Create(id);
+                vari = global::Prexonite.Modular.VariableDeclaration.Create(id);
                 TargetModule.Variables.Add(vari);
                 return TargetApplication.Variables[id] = new PVariable(vari);
             }

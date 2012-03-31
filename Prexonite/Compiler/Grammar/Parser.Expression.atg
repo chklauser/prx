@@ -498,9 +498,9 @@ ClrTypeExpr<out AstTypeExpr type>
 =
                                         (.  StringBuilder typeId = new StringBuilder(); .)
     (   doublecolon
-    |   Ns<out id>                      (.  typeId.Append(id); typeId.Append('.'); .)
+    |   ns                              (.  typeId.Append(t.val); typeId.Append('.'); .)
     )
-    {   Ns<out id>                      (.  typeId.Append(id); typeId.Append('.'); .)
+    {   ns                              (.  typeId.Append(t.val); typeId.Append('.'); .)
     }
     Id<out id>                          (.  typeId.Append(id);
                                             type = new AstConstantTypeExpression(this, 

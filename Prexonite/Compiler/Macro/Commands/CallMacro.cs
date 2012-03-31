@@ -210,7 +210,7 @@ namespace Prexonite.Compiler.Macro.Commands
                                 Alias));
                     macroInterpretation = (SymbolInterpretations) list[1].Value;
 
-                    //Read module name, first as Object<"Prexonite.Modular.ModuleName"> then as String
+                    //Read module name, first as Object<"Prexonite.Modular.Name"> then as String
                     string moduleNameRaw;
                     if((moduleName = list[2].Value as ModuleName) != null 
                         && list[2].Type == ModuleName.PType)

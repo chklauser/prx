@@ -176,19 +176,38 @@ Declaration
 =
 SYNC
 	declare
-	[	var 		        (. type = SymbolInterpretations.GlobalObjectVariable; .)
-	|   ref                 (. type = SymbolInterpretations.GlobalReferenceVariable; .)
-	|	function			(. type = SymbolInterpretations.Function; .)
-	|   command             (. type = SymbolInterpretations.Command; .)
-	]
-	DeclarationInstance<type,module>
-	{comma [ DeclarationInstance<type,module> ] }
+    (   [   var             (. type = SymbolInterpretations.GlobalObjectVariable; .)
+	    |   ref             (. type = SymbolInterpretations.GlobalReferenceVariable; .)
+	    |   function        (. type = SymbolInterpretations.Function; .)
+	    |   command         (. type = SymbolInterpretations.Command; .)
+	    ]
+	    DeclarationInstance<type,module>
+	    { comma [ DeclarationInstance<type,module> ] }
+    |   lbrace
+        [   uusing ModuleName<ref module> ]
+        {
+            (   var         (. type = SymbolInterpretations.GlobalObjectVariable; .)
+	        |   ref         (. type = SymbolInterpretations.GlobalReferenceVariable; .)
+	        |   function    (. type = SymbolInterpretations.Function; .)
+	        |   command     (. type = SymbolInterpretations.Command; .)
+	        ) 
+            colon
+            DeclarationInstance<type,module>
+	        { comma [ DeclarationInstance<type,module> ] }
+        }
+        rbrace
+    )
 .
 	
-DeclarationInstance<SymbolInterpretations type, ModuleName module>
+DeclarationInstance<SymbolInterpretations type, ModuleName module, bool preventOverride = false>
                             (.  string id; string aId; .)
 =			
 	Id<out id>              (.  aId = id; .)
+    [ div ModuleName<ref module> 
+                            (.  if(preventOverride) 
+                                    SemErr("Specification of module name illegal at this point."); 
+                            .)
+    ]
 	[ as Id<out aId> ]
 	                        (.  SymbolEntry inferredType;
 	                            if(target == null) //global symbol
@@ -232,6 +251,20 @@ DeclarationInstance<SymbolInterpretations type, ModuleName module>
                                 if(_requiresModule(type) && module == null)
                                     SemErr("Module cannot be inferred for declaration " + id + " as + " + aId + ".");
 	                        .)
+.
+
+ModuleName<ref ModuleName moduleName> 
+                                (.  _pushLexerState(Lexer.YYINITIAL); //need global scope for Version
+                                    string id = null; 
+                                    Version version = default(Version);
+                                .)
+=
+    Id<out id>
+    [   div
+        Version<out version>    
+    ]                           (.  _popLexerState();
+                                    moduleName = Loader.Cache[new ModuleName(id,version)];
+                                .)
 .
 
 /* ---- Build Block ---- */
@@ -652,15 +685,15 @@ FormalArg<CompilerTarget ft>        (.  string id; SymbolInterpretations kind = 
 GlobalId<out string id>             (.  id = "...no freaking id..."; .)
 =
     id                              (.  id = cache(t.val); .)
-|   anyId                           (.  id = cache(t.val.Substring(1)); .)
+|   anyId  String<out id>           (.  id = cache(id); .)
 .
 
 GlobalQualifiedId<out string id>    (. id = "\\NoId\\"; .)  
 =
     GlobalId<out id>
-|   Ns<out id>                      (.  StringBuilder buffer = new StringBuilder(id); buffer.Append('.'); .)
-    {   Ns<out id>                 (.  buffer.Append(id); buffer.Append('.'); .)
+|   ns                              (.  StringBuilder buffer = new StringBuilder(t.val); buffer.Append('.'); .)
+    {   ns                          (.  buffer.Append(t.val); buffer.Append('.'); .)
     }
     GlobalId<out id>                (.  buffer.Append(id); .)
-                                    (.  id = buffer.ToString(); .)
+                                    (.  id = cache(buffer.ToString()); .)
 .

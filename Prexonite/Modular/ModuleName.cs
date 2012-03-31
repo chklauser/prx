@@ -142,10 +142,10 @@ namespace Prexonite.Modular
         /// <param name="name">Will contain the parsed module name on success; null on failure.</param>
         /// <returns>True when the string was successfully parsed; false otherwise</returns>
         /// <remarks>Valid formats are: 
-        /// <para>"ModuleName.With.Dots"</para>
-        /// <para>"ModuleName"</para> 
-        /// <para>"ModuleName, 1.0"</para>
-        /// <para>"ModuleName.Dots, 1.2.4"</para> 
+        /// <para>"Name.With.Dots"</para>
+        /// <para>"Name"</para> 
+        /// <para>"Name, 1.0"</para>
+        /// <para>"Name.Dots, 1.2.4"</para> 
         /// </remarks>
         public static bool TryParse(string rawName, out ModuleName name)
         {
@@ -159,12 +159,12 @@ namespace Prexonite.Modular
         /// <param name="name">Will contain the parsed module name on success; null on failure.</param>
         /// <returns>True when the meta entry was successfully parsed; false otherwise</returns>
         /// <remarks>Valid formats are: 
-        /// <para>"ModuleName.With.Dots"</para>
-        /// <para>ModuleName</para> 
-        /// <para>"ModuleName, 1.0"</para>
-        /// <para>{"ModuleName.Dots"}</para> 
-        /// <para>{ModuleName,"1.0.0"}</para> 
-        /// <para>{ModuleName,{"1","2","3","4"}}</para>
+        /// <para>"Name.With.Dots"</para>
+        /// <para>Name</para> 
+        /// <para>"Name, 1.0"</para>
+        /// <para>{"Name.Dots"}</para> 
+        /// <para>{Name,"1.0.0"}</para> 
+        /// <para>{Name,{"1","2","3","4"}}</para>
         /// </remarks>
         public static bool TryParse(MetaEntry entry, out ModuleName name)
         {

@@ -1,6 +1,6 @@
 ﻿// Prexonite
 // 
-// Copyright (c) 2011, Christian Klauser
+// Copyright (c) 2012, Christian Klauser
 // All rights reserved.
 // 
 // Redistribution and use in source and binary forms, with or without modification, 
@@ -25,54 +25,28 @@
 //  IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 using System;
-using System.Collections;
-using System.Diagnostics;
-using System.Linq;
-using System.Reflection;
-using NUnit.Framework;
-using Prexonite;
-using Prexonite.Compiler.Cil;
-using Prexonite.Modular;
+using System.Diagnostics.Contracts;
 
-namespace PrexoniteTests.Tests
+namespace Prexonite
 {
-    [TestFixture]
-    public class CilRuntime
+    public class CombinedSymbolProxy<T>
     {
-        [Test]
-        public void RuntimeMethodsLinked()
+        private CombinedSymbolProxy(ISymbolTable<T>[] tables)
         {
-            var rt = typeof (Runtime);
-            var cs = from m in rt.GetMembers(BindingFlags.Static | BindingFlags.Public)
-                     where m.Name.EndsWith("PrepareTargets") && m is PropertyInfo || m is FieldInfo
-                     let v = _invokeStatic(m) 
-                     select Tuple.Create(m,v);
+            Contract.Requires<ArgumentNullException>(tables != null);
+            Contract.Requires(tables.Length > 0,"A CombinedSymbolProxy needs to be backed by at least one SymbolTable. (Array was empty)");
 
-            foreach (var t in cs)
-                Assert.That(t.Item2, Is.Not.Null,
-                    string.Format("The field/property Runtime.{0} is null.", t.Item1.Name));
+            var copy = new ISymbolTable<T>[tables.Length];
+            Array.Copy(tables, copy, tables.Length);
+            _tables = tables;
         }
 
-        private Object _invokeStatic(MemberInfo m)
+        public static CombinedSymbolProxy<T> CreateHierarchy(params ISymbolTable<T>[] tableHierarchy)
         {
-            if(m is PropertyInfo)
-            {
-                var p = (PropertyInfo) m;
-                return p.GetValue(null, new object[0]);
-            }
-            else if(m is FieldInfo)
-            {
-                var f = (FieldInfo) m;
-                return f.GetValue(null);
-            }
-            else
-            {
-                var message = string.Format("The member {1}.{0} is not a property or field.", m.Name, m.DeclaringType);
-                Assert.Fail(message);
-// ReSharper disable HeuristicUnreachableCode
-                throw new Exception(message);
-// ReSharper restore HeuristicUnreachableCode
-            }
+            return new CombinedSymbolProxy<T>(tableHierarchy);
         }
+
+        private readonly ISymbolTable<T>[] _tables;
+        protected ISymbolTable<T> TargetTable { get { return _tables[_tables.Length - 1]; } }
     }
 }
