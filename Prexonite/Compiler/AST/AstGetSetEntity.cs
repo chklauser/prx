@@ -41,8 +41,6 @@ namespace Prexonite.Compiler.Ast
             get { return _entity; }
         }
 
-        
-
         private AstReferenceToEntity(ISourcePosition position, EntityRef entity) : base(position)
         {
             if (entity == null)
@@ -54,7 +52,7 @@ namespace Prexonite.Compiler.Ast
 
         protected override void DoEmitCode(CompilerTarget target, StackSemantics stackSemantics)
         {
-            
+            throw new NotImplementedException();
         }
 
         #endregion

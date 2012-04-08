@@ -146,8 +146,12 @@
     <Compile Include="Commands\PCommandInfo.cs" />
     <Compile Include="Compiler\Ast\AstExpr.cs" />
     <Compile Include="Compiler\Ast\AstGetSetEntity.cs" />
+    <Compile Include="Compiler\Build\BuildException.cs" />
     <Compile Include="Compiler\Build\IBuildEnvironment.cs" />
     <Compile Include="Compiler\Build\IBuildWatcher.cs" />
+    <Compile Include="Compiler\Build\Internal\DefaultPlan.cs" />
+    <Compile Include="Compiler\Build\Internal\DelayedDefaultBuildEnvironment.cs" />
+    <Compile Include="Compiler\Build\Plan.cs" />
     <Compile Include="Compiler\Build\IResolver.cs" />
     <Compile Include="Compiler\Build\ITargetDescription.cs" />
     <Compile Include="Compiler\Build\TargetDescriptionSet.cs" />
@@ -158,7 +162,8 @@
     <Compile Include="Compiler\Macro\Commands\Reference.cs" />
     <Compile Include="Compiler\Macro\Commands\Unpack.cs" />
     <Compile Include="Compiler\Macro\PartialMacroCommand.cs" />
-    <Compile Include="Compiler\SymbolStore.cs" />
+    <Compile Include="Compiler\Symbolic\Symbol.cs" />
+    <Compile Include="Compiler\Symbolic\SymbolStore.cs" />
     <Compile Include="Exceptions.cs" />
     <Compile Include="Helper\CombinedSymbolProxy.cs" />
     <Compile Include="Helper\IHasMetaTable.cs" />

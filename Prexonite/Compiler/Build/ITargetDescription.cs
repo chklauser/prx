@@ -25,6 +25,7 @@
 //  IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 using System.Collections.Generic;
+using System.Threading;
 using System.Threading.Tasks;
 using Prexonite.Modular;
 
@@ -42,7 +43,7 @@ namespace Prexonite.Compiler.Build
         {
             get;
         }
-    
-        Task<ITarget> Build(IBuildEnvironment build, IDictionary<ModuleName,Task<ITarget>> dependencies);
+
+        Task<ITarget> Build(IBuildEnvironment build, IDictionary<ModuleName, Task<ITarget>> dependencies, CancellationToken token);
     }
 }

@@ -1,4 +1,5 @@
 ﻿using System.Collections.Generic;
+using System.Threading;
 using System.Threading.Tasks;
 
 namespace Prexonite.Compiler.Build
@@ -26,8 +27,8 @@ namespace Prexonite.Compiler.Build
             get;
         }
 
-        Task Resolve();
+        Task Resolve(CancellationToken token);
 
-        Task<ITarget> Build(ITargetDescription targetDescription);
+        Task<ITarget> Build(ITargetDescription targetDescription, CancellationToken token);
     }
 }

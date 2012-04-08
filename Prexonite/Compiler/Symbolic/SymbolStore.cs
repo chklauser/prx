@@ -1,4 +1,4 @@
-﻿// Prexonite
+// Prexonite
 // 
 // Copyright (c) 2012, Christian Klauser
 // All rights reserved.
@@ -24,31 +24,22 @@
 //  WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING 
 //  IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
+using System.Collections;
 using System.Collections.Generic;
 
-namespace Prexonite
+namespace Prexonite.Compiler.Symbolic
 {
-    public interface ISymbolView<T> : IEnumerable<KeyValuePair<string,T>>
+    public abstract class SymbolStore : ISymbolView<Symbol>
     {
-        bool TryGet(string key, out T value);
-        int Count { get; }
-    }
-
-    public static class SymbolViewExtensions
-    {
-        public static T GetOrDefault<T>(this ISymbolView<T> view, string key, T defaultValue)
+        IEnumerator IEnumerable.GetEnumerator()
         {
-            T result;
-            if (view.TryGet(key, out result))
-                return result;
-            else
-                return defaultValue;
+            return GetEnumerator();
         }
 
-        public static bool Contains<T>(this ISymbolView<T> view, string key)
-        {
-            T dummy;
-            return view.TryGet(key, out dummy);
-        }
+        public abstract IEnumerator<KeyValuePair<string, Symbol>> GetEnumerator();
+
+        public abstract bool TryGet(string key, out Symbol value);
+
+        public abstract int Count { get; }
     }
 }

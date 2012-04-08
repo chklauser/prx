@@ -23,32 +23,10 @@
 //  DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, 
 //  WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING 
 //  IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
-
-using System.Collections.Generic;
-
-namespace Prexonite
+namespace Prexonite.Compiler.Build.Internal
 {
-    public interface ISymbolView<T> : IEnumerable<KeyValuePair<string,T>>
+    class DelayedDefaultBuildEnvironment : IBuildEnvironment
     {
-        bool TryGet(string key, out T value);
-        int Count { get; }
-    }
-
-    public static class SymbolViewExtensions
-    {
-        public static T GetOrDefault<T>(this ISymbolView<T> view, string key, T defaultValue)
-        {
-            T result;
-            if (view.TryGet(key, out result))
-                return result;
-            else
-                return defaultValue;
-        }
-
-        public static bool Contains<T>(this ISymbolView<T> view, string key)
-        {
-            T dummy;
-            return view.TryGet(key, out dummy);
-        }
+         
     }
 }

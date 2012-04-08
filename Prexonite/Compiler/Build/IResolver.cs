@@ -25,6 +25,7 @@
 //  IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 using System.Collections.Generic;
+using System.Threading;
 using System.Threading.Tasks;
 
 namespace Prexonite.Compiler.Build
@@ -32,7 +33,7 @@ namespace Prexonite.Compiler.Build
     public interface IResolver
     {
 
-        Task<IList<ITargetDescription>> PrepareTargets(IEnumerable<ITargetDescription> sourceTargets, IBuildWatcher watcher);
+        Task<IList<ITargetDescription>> PrepareTargets(IEnumerable<ITargetDescription> sourceTargets, IBuildWatcher watcher, CancellationToken token);
 
     }
 }

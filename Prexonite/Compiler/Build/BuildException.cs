@@ -24,31 +24,40 @@
 //  WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING 
 //  IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-using System.Collections.Generic;
+using System;
+using System.Runtime.Serialization;
 
-namespace Prexonite
+namespace Prexonite.Compiler.Build
 {
-    public interface ISymbolView<T> : IEnumerable<KeyValuePair<string,T>>
+    public class BuildException : PrexoniteException
     {
-        bool TryGet(string key, out T value);
-        int Count { get; }
-    }
+        //
+        // For guidelines regarding the creation of new exception types, see
+        //    http://msdn.microsoft.com/library/default.asp?url=/library/en-us/cpgenref/html/cpconerrorraisinghandlingguidelines.asp
+        // and
+        //    http://msdn.microsoft.com/library/default.asp?url=/library/en-us/dncscol/html/csharp07192001.asp
+        //
 
-    public static class SymbolViewExtensions
-    {
-        public static T GetOrDefault<T>(this ISymbolView<T> view, string key, T defaultValue)
+        private readonly ITargetDescription _relatedTarget;
+
+        public BuildException(ITargetDescription relatedTarget)
         {
-            T result;
-            if (view.TryGet(key, out result))
-                return result;
-            else
-                return defaultValue;
+            _relatedTarget = relatedTarget;
         }
 
-        public static bool Contains<T>(this ISymbolView<T> view, string key)
+        public BuildException(string message, ITargetDescription relatedTarget) : base(message)
         {
-            T dummy;
-            return view.TryGet(key, out dummy);
+            _relatedTarget = relatedTarget;
+        }
+
+        public BuildException(string message, ITargetDescription relatedTarget, Exception inner) : base(message, inner)
+        {
+            _relatedTarget = relatedTarget;
+        }
+
+        public ITargetDescription RelatedTarget
+        {
+            get { return _relatedTarget; }
         }
     }
 }

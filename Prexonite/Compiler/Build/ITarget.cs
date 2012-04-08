@@ -1,4 +1,5 @@
 ﻿using System.Collections.Generic;
+using Prexonite.Compiler.Symbolic;
 using Prexonite.Modular;
 
 namespace Prexonite.Compiler.Build
