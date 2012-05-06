@@ -116,14 +116,14 @@ namespace Prexonite.Compiler.Macro.Commands
         {
             if (!context.CallerIsMacro())
             {
-                context.ReportMessage(ParseMessageSeverity.Error,
+                context.ReportMessage(MessageSeverity.Error,
                     string.Format("{0} can only be used in a macro context.", Alias));
                 return;
             }
 
             if (context.Invocation.Arguments.Count == 0)
             {
-                context.ReportMessage(ParseMessageSeverity.Error,
+                context.ReportMessage(MessageSeverity.Error,
                     "{0} requires at least one argument.");
                 return;
             }
@@ -131,7 +131,7 @@ namespace Prexonite.Compiler.Macro.Commands
             var prototype = context.Invocation.Arguments[0] as AstMacroInvocation;
             if (prototype == null)
             {
-                context.ReportMessage(ParseMessageSeverity.Error,
+                context.ReportMessage(MessageSeverity.Error,
                     "{0} requires argument to be a prototype of a macro invocation.");
                 return;
             }

@@ -220,11 +220,11 @@ namespace Prexonite.Compiler.Macro
         /// <remarks>
         ///     Issuing an error message does not automatically abort execution of the macro.
         /// </remarks>
-        public void ReportMessage(ParseMessageSeverity severity, string message,
+        public void ReportMessage(MessageSeverity severity, string message,
             ISourcePosition position = null)
         {
             position = position ?? _invocation;
-            _target.Loader.ReportMessage(new ParseMessage(severity, message, position));
+            _target.Loader.ReportMessage(new Message(severity, message, position));
         }
 
         /// <summary>

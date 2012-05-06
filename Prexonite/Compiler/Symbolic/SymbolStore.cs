@@ -26,6 +26,7 @@
 
 using System.Collections;
 using System.Collections.Generic;
+using Prexonite.Compiler.Symbolic.Internal;
 
 namespace Prexonite.Compiler.Symbolic
 {
@@ -41,5 +42,13 @@ namespace Prexonite.Compiler.Symbolic
         public abstract bool TryGet(string id, out Symbol value);
 
         public abstract int Count { get; }
+
+        public static SymbolStore Create(SymbolStore parent = null, IEnumerable<SymbolInfo> conflictUnionSource = null)
+        {
+            return new ConflictUnionFallbackStore(parent,conflictUnionSource);
+        }
+
+        public abstract void Declare(string id, Symbol symbol);
+
     }
 }

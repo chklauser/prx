@@ -56,13 +56,13 @@ namespace Prexonite.Compiler.Macro.Commands
         {
             if (context.Invocation.Arguments.Count == 0)
             {
-                context.ReportMessage(ParseMessageSeverity.Error, Alias + " requires one argument.");
+                context.ReportMessage(MessageSeverity.Error, Alias + " requires one argument.");
                 return;
             }
 
             if (context.CurrentLoopBlock != null && !context.IsJustEffect)
             {
-                context.ReportMessage(ParseMessageSeverity.Error,
+                context.ReportMessage(MessageSeverity.Error,
                     "Due to an internal compiler limitation, " + CallSub.Alias +
                         " and " + Alias +
                             " cannot be used in an expression inside a loop, only as a statement.");

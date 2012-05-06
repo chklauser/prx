@@ -69,7 +69,7 @@ namespace Prexonite.Compiler.Ast
                     if(target.Loader.ParentApplication.TryGetFunction(Implementation.InternalId, Implementation.Module, out func)
                         && func.IsMacro)
                     {
-                        target.Loader.ReportMessage(new ParseMessage(ParseMessageSeverity.Warning,
+                        target.Loader.ReportMessage(new Message(MessageSeverity.Warning,
                         string.Format(
                             "Reference to macro {0} detected. Prexonite version {1} treats this " +
                                 "as a partial application. This behavior might change in the future. " +
@@ -97,7 +97,7 @@ namespace Prexonite.Compiler.Ast
                     target.Emit(this, OpCode.ldloc, Implementation.InternalId);
                     break;
                 case SymbolInterpretations.MacroCommand:
-                    target.Loader.ReportMessage(new ParseMessage(ParseMessageSeverity.Warning,
+                    target.Loader.ReportMessage(new Message(MessageSeverity.Warning,
                         string.Format(
                             "Reference to macro command {0} detected. Prexonite version {1} treats this " +
                                 "as a partial application. This behavior might change in the future. " +
@@ -109,7 +109,7 @@ namespace Prexonite.Compiler.Ast
 
                     break;
                 default:
-                    target.Loader.ReportMessage(new ParseMessage(ParseMessageSeverity.Error,
+                    target.Loader.ReportMessage(new Message(MessageSeverity.Error,
                         string.Format("Cannot create a reference to {0} {1}.",
                             Enum.GetName(typeof (SymbolInterpretations), Implementation.Interpretation), Implementation.InternalId), this));
                     target.EmitNull(this);

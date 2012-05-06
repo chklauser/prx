@@ -198,7 +198,7 @@ namespace Prexonite.Compiler.Ast
                     {
                         if (Implementation == null)
                         {
-                            target.Loader.Errors.Add(new ParseMessage(ParseMessageSeverity.Error,
+                            target.Loader.Errors.Add(new Message(MessageSeverity.Error,
                                 string.Format(
                                     "The assignment modifier {0} is not supported.",
                                     Enum.GetName(typeof(BinaryOperator),
@@ -210,7 +210,7 @@ namespace Prexonite.Compiler.Ast
 
                         if (_modifyingAssignment.Arguments.Count < 1)
                         {
-                            target.Loader.Errors.Add(new ParseMessage(ParseMessageSeverity.Error,
+                            target.Loader.Errors.Add(new Message(MessageSeverity.Error,
                                 "Invalid modifying assignment: No RHS.", _modifyingAssignment));
                             target.Emit(_modifyingAssignment, OpCode.nop);
                             return;

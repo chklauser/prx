@@ -55,7 +55,7 @@ namespace Prexonite.Compiler.Macro.Commands
         {
             if (context.Invocation.Arguments.Count < 1)
             {
-                context.ReportMessage(ParseMessageSeverity.Error,
+                context.ReportMessage(MessageSeverity.Error,
                     "{0} requires at least one argument, the call\\* command/function to invoke.");
                 return true;
             }
@@ -154,7 +154,7 @@ namespace Prexonite.Compiler.Macro.Commands
         {
             if (context.Invocation.Arguments.Count < 1)
             {
-                context.ReportMessage(ParseMessageSeverity.Error,
+                context.ReportMessage(MessageSeverity.Error,
                     "{0} requires at least one argument, the call\\* command/function to invoke.");
                 return;
             }
@@ -193,7 +193,7 @@ namespace Prexonite.Compiler.Macro.Commands
             }
 
             if (passThrough < 1)
-                context.ReportMessage(ParseMessageSeverity.Error,
+                context.ReportMessage(MessageSeverity.Error,
                     "call\\star must at least pass through one argument (the call target). It has been instructed to pass through " +
                         passThrough + " arguments.", passThroughNode);
         }

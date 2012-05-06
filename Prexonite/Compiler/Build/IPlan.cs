@@ -7,14 +7,6 @@ namespace Prexonite.Compiler.Build
     public interface IPlan
     {
         /// <summary>
-        /// List of Resolvers to try in that order to resolve unfulfilled dependencies.
-        /// </summary>
-        IList<IResolver> Resolvers
-        {
-            get;
-        }
-
-        /// <summary>
         /// Set of build watchers that will get access to events raised during building.
         /// </summary>
         ISet<IBuildWatcher> BuildWatchers
@@ -27,8 +19,6 @@ namespace Prexonite.Compiler.Build
             get;
         }
 
-        Task Resolve(CancellationToken token);
-
-        Task<ITarget> Build(ITargetDescription targetDescription, CancellationToken token);
+        Task<ITarget> BuildAsync(ITargetDescription targetDescription, CancellationToken token);
     }
 }

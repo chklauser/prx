@@ -24,6 +24,9 @@
 using Prexonite;
 using Prexonite.Types;
 using FatalError = Prexonite.Compiler.FatalCompilerException;
+using Message = Prexonite.Compiler.Message;
+using MessageEventArgs = Prexonite.Compiler.MessageEventArgs;
+using MessageSeverity = Prexonite.Compiler.MessageSeverity;
 COMPILER PTypeExpression
 
 /*-- Global scope --*/

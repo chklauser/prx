@@ -104,12 +104,12 @@ namespace PrexoniteTests.Tests
         protected void CompileInvalid(Loader ldr, string input, params string[] keywords)
         {
             _compile(ldr, input);
-            Assert.AreNotEqual(0, ldr.Errors.Count(m => m.Severity == ParseMessageSeverity.Error),
+            Assert.AreNotEqual(0, ldr.Errors.Count(m => m.Severity == MessageSeverity.Error),
                 "Errors expected, but none were raised.");
             foreach (var keyword in keywords)
             {
                 var word = keyword;
-                Assert.IsTrue(ldr.Errors.Any(m => m.Message.Contains(word)),
+                Assert.IsTrue(ldr.Errors.Any(m => m.Text.Contains(word)),
                     "Expected keyword " + word + " in one of the error messages.");
             }
         }

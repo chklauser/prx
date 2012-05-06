@@ -37,19 +37,8 @@ namespace Prexonite.Compiler
 
         public LoaderOptions(Engine parentEngine, Application targetApplication)
         {
-            if (parentEngine == null)
-                throw new ArgumentNullException("parentEngine");
-            if (targetApplication == null)
-                throw new ArgumentNullException("targetApplication");
-
             _parentEngine = parentEngine;
             _targetApplication = targetApplication;
-            StoreSymbols = true;
-            RegisterCommands = true;
-            ReconstructSymbols = true;
-            Compress = false;
-            UseIndicesLocally = true;
-            StoreSourceInformation = false;
         }
 
         #endregion
@@ -70,17 +59,40 @@ namespace Prexonite.Compiler
             get { return _targetApplication; }
         }
 
-        public bool RegisterCommands { get; set; }
+        private bool? _registerCommands;
+        public bool RegisterCommands
+        {
+            get { return _registerCommands ?? true; }
+            set { _registerCommands = value; }
+        }
 
-        public bool ReconstructSymbols { get; set; }
+        private bool? _reconstructSymbols;
+        public bool ReconstructSymbols
+        {
+            get { return _reconstructSymbols ?? true; }
+            set { _reconstructSymbols = value; }
+        }
 
-        public bool StoreSymbols { get; set; }
+        private bool? _storeSymbols;
+        public bool StoreSymbols
+        {
+            get { return _storeSymbols ?? true; }
+            set { _storeSymbols = value; }
+        }
 
-        public bool Compress { get; set; }
+        private bool? _useIndicesLocally;
+        public bool UseIndicesLocally
+        {
+            get { return _useIndicesLocally ?? true; }
+            set { _useIndicesLocally = value; }
+        }
 
-        public bool UseIndicesLocally { get; set; }
-
-        public bool StoreSourceInformation { get; set; }
+        private bool? _storeSourceInformation;
+        public bool StoreSourceInformation
+        {
+            get { return _storeSourceInformation ?? false; }
+            set { _storeSourceInformation = value; }
+        }
 
         #endregion
 
@@ -89,12 +101,11 @@ namespace Prexonite.Compiler
             if (options == null)
                 throw new ArgumentNullException("options");
 
-            RegisterCommands = options.RegisterCommands;
-            ReconstructSymbols = options.ReconstructSymbols;
-            StoreSymbols = options.StoreSymbols;
-            Compress = options.Compress;
-            UseIndicesLocally = options.UseIndicesLocally;
-            StoreSourceInformation = options.StoreSourceInformation;
+            RegisterCommands = _registerCommands ?? options.RegisterCommands;
+            ReconstructSymbols = _reconstructSymbols ?? options.ReconstructSymbols;
+            StoreSymbols = _storeSymbols ?? options.StoreSymbols;
+            UseIndicesLocally = _useIndicesLocally ?? options.UseIndicesLocally;
+            StoreSourceInformation = _storeSourceInformation ?? options.StoreSourceInformation;
         }
     }
 }

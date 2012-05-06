@@ -37,13 +37,13 @@ namespace Prexonite.Compiler.Build
 {
     public interface ITargetDescription
     {
-        ISet<ModuleNamePattern> Dependencies { get; }
+        ISet<ModuleName> Dependencies { get; }
 
         ModuleName Name
         {
             get;
         }
 
-        Task<ITarget> Build(IBuildEnvironment build, IDictionary<ModuleName, Task<ITarget>> dependencies, CancellationToken token);
+        Task<ITarget> BuildAsync(IBuildEnvironment build, IDictionary<ModuleName, Task<ITarget>> dependencies, CancellationToken token);
     }
 }

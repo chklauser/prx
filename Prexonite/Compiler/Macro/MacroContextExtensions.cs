@@ -144,7 +144,7 @@ namespace Prexonite.Compiler.Macro
         {
             if (!CallerIsMacro(context))
             {
-                context.ReportMessage(ParseMessageSeverity.Error,
+                context.ReportMessage(MessageSeverity.Error,
                     "Cannot establish macro context outside of macro.");
                 return;
             }

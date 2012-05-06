@@ -24,8 +24,10 @@
 //  WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING 
 //  IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
+using System;
 using System.Collections;
 using System.Collections.Generic;
+using System.IO;
 using System.Threading;
 using System.Threading.Tasks;
 using System.Linq;
@@ -35,14 +37,8 @@ namespace Prexonite.Compiler.Build.Internal
 {
     class DefaultPlan : IPlan
     {
-        private readonly List<IResolver> _resolvers = new List<IResolver>(10);
         private readonly HashSet<IBuildWatcher> _buildWatchers = new HashSet<IBuildWatcher>();
         private readonly TargetDescriptionSet _targetDescriptions = TargetDescriptionSet.Create();
-
-        public IList<IResolver> Resolvers
-        {
-            get { return _resolvers; }
-        }
 
         public ISet<IBuildWatcher> BuildWatchers
         {
@@ -54,23 +50,19 @@ namespace Prexonite.Compiler.Build.Internal
             get { return _targetDescriptions; }
         }
 
-        public Task Resolve(CancellationToken token)
+        /// <summary>
+        /// Creates an <see cref="ITargetDescription"/> from a <see cref="TextReader"/> with manually specified dependencies.
+        /// </summary>
+        /// <param name="moduleName">The name of module to be compiled.6</param>
+        /// <param name="reader">The text reader for reading the module contents.</param>
+        /// <param name="fileName">The file name to store in symbols derived from that reader.</param>
+        /// <param name="dependencies">The set of modules that need to be linked with this target.</param>
+        /// <returns></returns>
+        /// <exception cref="ArgumentException">Dependencies must not contain multiple versions of the same module.</exception>
+        /// <remarks>You will have to make sure that this plan contains a target description for each dependency before this target description can be built.</remarks>
+        public ITargetDescription CreateDescription(ModuleName moduleName, TextReader reader, string fileName, IEnumerable<ModuleName> dependencies)
         {
-            return Task.Factory.StartNew(() =>
-                {
-
-                }, token);
-        }
-
-        protected IEnumerable<ITargetDescription> FindUnresolvedDependencies()
-        {
-            return TargetDescriptions.Where(HasUnresolvedDependencies);
-        }
-
-        protected bool HasUnresolvedDependencies(ITargetDescription description)
-        {
-            return !description.Dependencies.All(
-                pat => TargetDescriptions.Any(other => pat.SatisfiedBy(other.Name)));
+            return new DefaultTargetDescription(moduleName, reader, fileName, dependencies);
         }
 
         protected void EnsureIsResolved(ITargetDescription description)
@@ -81,12 +73,17 @@ namespace Prexonite.Compiler.Build.Internal
                         description.Name), description);
         }
 
-        public Task<ITarget> Build(ITargetDescription targetDescription, CancellationToken token)
+        protected bool HasUnresolvedDependencies(ITargetDescription targetDescription)
+        {
+            return targetDescription.Dependencies.All(TargetDescriptions.Contains);
+        }
+
+        public Task<ITarget> BuildAsync(ITargetDescription targetDescription, CancellationToken token)
         {
             EnsureIsResolved(targetDescription);
             var taskMap =
                 new System.Collections.Concurrent.ConcurrentDictionary<ITargetDescription, Task<ITarget>>(5,TargetDescriptions.Count);
-            return BuildWithMap(targetDescription, taskMap, token);
+            return BuildWithMapAsync(targetDescription, taskMap, token);
         }
 
         protected Task<IBuildEnvironment> GetBuildEnvironment(Dictionary<ModuleName,Task<ITarget>> dependencies, CancellationToken token)
@@ -96,18 +93,18 @@ namespace Prexonite.Compiler.Build.Internal
                         new DefaultBuildEnvironment(deps.Select(d => d.Result), token));
         }
 
-        protected Task<ITarget> BuildWithMap(ITargetDescription targetDescription, System.Collections.Concurrent.ConcurrentDictionary<ITargetDescription,Task<ITarget>> taskMap, CancellationToken token)
+        protected Task<ITarget> BuildWithMapAsync(ITargetDescription targetDescription, System.Collections.Concurrent.ConcurrentDictionary<ITargetDescription,Task<ITarget>> taskMap, CancellationToken token)
         {
             return taskMap.GetOrAdd(targetDescription, desc =>
                 {
                     var deps =
                         desc.Dependencies.Select(
-                            pat =>
+                            name =>
                                 {
                                     var depDesc =
-                                        TargetDescriptions.First(d => pat.SatisfiedBy(d.Name));
+                                        TargetDescriptions[name];
                                     return new KeyValuePair<ModuleName, Task<ITarget>>(depDesc.Name,
-                                        BuildWithMap(depDesc, taskMap, token));
+                                        BuildWithMapAsync(depDesc, taskMap, token));
                                 });
 
                     var depMap = new Dictionary<ModuleName, Task<ITarget>>();
@@ -116,7 +113,7 @@ namespace Prexonite.Compiler.Build.Internal
                     token.ThrowIfCancellationRequested();
 
                     return GetBuildEnvironment(depMap, token)
-                        .ContinueWith(bet => desc.Build(bet.Result, depMap, token),token)
+                        .ContinueWith(bet => desc.BuildAsync(bet.Result, depMap, token),token)
                         .Unwrap();
                 });
         }

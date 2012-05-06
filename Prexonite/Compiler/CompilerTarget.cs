@@ -1414,7 +1414,7 @@ namespace Prexonite.Compiler
                     pos = new SourcePosition("-unknown-", -1, -1);
                 else
                     pos = Ast[0];
-                _loader.ReportMessage(new ParseMessage(ParseMessageSeverity.Error,
+                _loader.ReportMessage(new Message(MessageSeverity.Error,
                     string.Format(
                         "Parameter list of function {0} contains {1} at position {2}. The name {1} is reserved for the local variable holding the argument list.",
                         _function.LogicalId, PFunction.ArgumentListId,

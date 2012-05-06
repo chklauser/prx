@@ -35,5 +35,12 @@ namespace Prexonite.Compiler.Build
         {
             get;
         }
+
+        /// <summary>
+        /// Creates the loader instance for this target.
+        /// </summary>
+        /// <param name="defaults">The default values for the loader options.</param>
+        /// <returns></returns>
+        Loader CreateLoader(LoaderOptions defaults);
     }
 }

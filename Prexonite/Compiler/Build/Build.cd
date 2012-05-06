@@ -16,13 +16,6 @@
     </TypeIdentifier>
     <Lollipop Position="1.242" Collapsed="true" />
   </Class>
-  <Class Name="Prexonite.Modular.ModuleNamePattern" Collapsed="true">
-    <Position X="6" Y="5.75" Width="2.25" />
-    <TypeIdentifier>
-      <HashCode>AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAIAQA=</HashCode>
-      <FileName>Modular\ModuleNamePattern.cs</FileName>
-    </TypeIdentifier>
-  </Class>
   <Class Name="Prexonite.Compiler.Symbolic.SymbolStore" Collapsed="true">
     <Position X="6.5" Y="3" Width="1.5" />
     <TypeIdentifier>
@@ -35,7 +28,7 @@
     <Position X="0.5" Y="2.25" Width="2.5" />
     <AssociationLine Name="BuildWatchers" Type="Prexonite.Compiler.Build.IBuildWatcher" FixedFromPoint="true">
       <Path>
-        <Point X="0.708" Y="3.546" />
+        <Point X="0.708" Y="3.354" />
         <Point X="0.708" Y="5.75" />
       </Path>
       <MemberNameLabel ManuallyPlaced="true" ManuallySized="true">
@@ -44,7 +37,7 @@
     </AssociationLine>
     <AssociationLine Name="TargetDescriptions" Type="Prexonite.Compiler.Build.ITargetDescription" ManuallyRouted="true" FixedFromPoint="true" FixedToPoint="true">
       <Path>
-        <Point X="1.188" Y="3.546" />
+        <Point X="1.188" Y="3.354" />
         <Point X="1.188" Y="4.967" />
         <Point X="2.562" Y="4.967" />
         <Point X="2.562" Y="5.5" />
@@ -54,11 +47,10 @@
       </MemberNameLabel>
     </AssociationLine>
     <TypeIdentifier>
-      <HashCode>AAAAAAAAAACAAAAAAAAAAAAAAAAAgAAAAAQAAAAASAA=</HashCode>
+      <HashCode>AAAAAAAAAAAAAAAAAAAAABAAAAAAAAAAAAQAAAAAQAA=</HashCode>
       <FileName>Compiler\Build\IPlan.cs</FileName>
     </TypeIdentifier>
     <ShowAsCollectionAssociation>
-      <Property Name="Resolvers" />
       <Property Name="BuildWatchers" />
       <Property Name="TargetDescriptions" />
     </ShowAsCollectionAssociation>
@@ -104,8 +96,13 @@
   </Interface>
   <Interface Name="Prexonite.Compiler.Build.ITargetDescription">
     <Position X="2.25" Y="5.5" Width="2" />
+    <AssociationLine Name="Dependencies" Type="Prexonite.Modular.ModuleName">
+      <MemberNameLabel ManuallyPlaced="true">
+        <Position X="-1.044" Y="0.225" />
+      </MemberNameLabel>
+    </AssociationLine>
     <TypeIdentifier>
-      <HashCode>AAAAAAAAAAAAAACAAAAAAAQAAAAAgAAAAAAAAAAAAAA=</HashCode>
+      <HashCode>AAAAAAAAAAAAAACAAAAAABQAAAAAAAAAAAAAAAAAAAA=</HashCode>
       <FileName>Compiler\Build\ITargetDescription.cs</FileName>
     </TypeIdentifier>
     <ShowAsAssociation>
@@ -114,13 +111,6 @@
     <ShowAsCollectionAssociation>
       <Property Name="Dependencies" />
     </ShowAsCollectionAssociation>
-  </Interface>
-  <Interface Name="Prexonite.Compiler.Build.IResolver">
-    <Position X="0.5" Y="0.5" Width="1.5" />
-    <TypeIdentifier>
-      <HashCode>AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAABAAAAAAAAA=</HashCode>
-      <FileName>Compiler\Build\IResolver.cs</FileName>
-    </TypeIdentifier>
   </Interface>
   <Interface Name="Prexonite.Modular.IResourceDescriptor">
     <Position X="2.75" Y="0.5" Width="2" />

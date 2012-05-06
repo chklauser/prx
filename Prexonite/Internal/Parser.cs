@@ -1,7 +1,10 @@
 //SOURCE ARRAY
 /*PTypeExpression.atg:24*/using Prexonite;
 using Prexonite.Types;
-using FatalError = Prexonite.Compiler.FatalCompilerException;//END SOURCE ARRAY
+using FatalError = Prexonite.Compiler.FatalCompilerException;
+using Message = Prexonite.Compiler.Message;
+using MessageEventArgs = Prexonite.Compiler.MessageEventArgs;
+using MessageSeverity = Prexonite.Compiler.MessageSeverity;//END SOURCE ARRAY
 
 
 #line 27 "D:\DotNetProjects\Prexonite-Hg\prx-assembla-hg\Tools\Parser.frame" //FRAME
@@ -148,18 +151,18 @@ internal partial class Parser {
 #line default //END FRAME -->productions
 
 	void PTypeExpression() {
-		Type(/*PTypeExpression.atg:101*/out _lastType);
+		Type(/*PTypeExpression.atg:104*/out _lastType);
 	}
 
-	void Type(/*PTypeExpression.atg:142*/out PType value) {
-		/*PTypeExpression.atg:142*/string id; 
+	void Type(/*PTypeExpression.atg:145*/out PType value) {
+		/*PTypeExpression.atg:145*/string id; 
 		System.Collections.Generic.List<PValue> args = new System.Collections.Generic.List<PValue>();
 		
 		if (la.kind == _tilde) {
 			Get();
 		}
 		Expect(_id);
-		/*PTypeExpression.atg:147*/id = t.val; 
+		/*PTypeExpression.atg:150*/id = t.val; 
 		if(!_sctx.ParentEngine.PTypeRegistry.Contains(id))
 		{
 		    SemErr("Cannot find PType " + id + " referenced in PTypeExpression.");
@@ -167,18 +170,18 @@ internal partial class Parser {
 		
 		if (la.kind == 8) {
 			Get();
-			/*PTypeExpression.atg:153*/PValue obj; 
+			/*PTypeExpression.atg:156*/PValue obj; 
 			if (StartOf(1)) {
-				Expr(/*PTypeExpression.atg:154*/out obj);
-				/*PTypeExpression.atg:154*/args.Add(obj); 
+				Expr(/*PTypeExpression.atg:157*/out obj);
+				/*PTypeExpression.atg:157*/args.Add(obj); 
 				while (WeakSeparator(9,1,2) ) {
-					Expr(/*PTypeExpression.atg:156*/out obj);
-					/*PTypeExpression.atg:156*/args.Add(obj); 
+					Expr(/*PTypeExpression.atg:159*/out obj);
+					/*PTypeExpression.atg:159*/args.Add(obj); 
 				}
 			}
 			Expect(10);
 		}
-		/*PTypeExpression.atg:161*/if(id == null) //Error recovery.
+		/*PTypeExpression.atg:164*/if(id == null) //Error recovery.
 		{
 		    SemErr("Error in type expression.");
 		    value = PType.Object[typeof(object)];
@@ -188,53 +191,53 @@ internal partial class Parser {
 		
 	}
 
-	void Expr(/*PTypeExpression.atg:104*/out PValue value) {
-		/*PTypeExpression.atg:104*/PType vt; value = null; 
+	void Expr(/*PTypeExpression.atg:107*/out PValue value) {
+		/*PTypeExpression.atg:107*/PType vt; value = null; 
 		if (la.kind == _true || la.kind == _false) {
-			Boolean(/*PTypeExpression.atg:106*/out value);
+			Boolean(/*PTypeExpression.atg:109*/out value);
 		} else if (la.kind == _integer) {
-			Integer(/*PTypeExpression.atg:107*/out value);
+			Integer(/*PTypeExpression.atg:110*/out value);
 		} else if (la.kind == _real) {
-			Real(/*PTypeExpression.atg:108*/out value);
+			Real(/*PTypeExpression.atg:111*/out value);
 		} else if (la.kind == _string) {
-			String(/*PTypeExpression.atg:109*/out value);
+			String(/*PTypeExpression.atg:112*/out value);
 		} else if (la.kind == _id || la.kind == _tilde) {
-			Type(/*PTypeExpression.atg:110*/out vt);
-			/*PTypeExpression.atg:110*/value = PType.Object.CreatePValue(vt); 
+			Type(/*PTypeExpression.atg:113*/out vt);
+			/*PTypeExpression.atg:113*/value = PType.Object.CreatePValue(vt); 
 		} else SynErr(12);
 	}
 
-	void Boolean(/*PTypeExpression.atg:113*/out PValue value) {
-		/*PTypeExpression.atg:113*/value = true;  
+	void Boolean(/*PTypeExpression.atg:116*/out PValue value) {
+		/*PTypeExpression.atg:116*/value = true;  
 		if (la.kind == _true) {
 			Get();
 		} else if (la.kind == _false) {
 			Get();
-			/*PTypeExpression.atg:116*/value = false; 
+			/*PTypeExpression.atg:119*/value = false; 
 		} else SynErr(13);
 	}
 
-	void Integer(/*PTypeExpression.atg:119*/out PValue value) {
-		/*PTypeExpression.atg:119*/int i; 
+	void Integer(/*PTypeExpression.atg:122*/out PValue value) {
+		/*PTypeExpression.atg:122*/int i; 
 		Expect(_integer);
-		/*PTypeExpression.atg:122*/if(!Prexonite.Compiler.Parser.TryParseInteger(t.val, out i))
+		/*PTypeExpression.atg:125*/if(!Prexonite.Compiler.Parser.TryParseInteger(t.val, out i))
 		   SemErr("Cannot recognize integer " + t.val);
 		value = i;
 		
 	}
 
-	void Real(/*PTypeExpression.atg:128*/out PValue value) {
-		/*PTypeExpression.atg:128*/double d; 
+	void Real(/*PTypeExpression.atg:131*/out PValue value) {
+		/*PTypeExpression.atg:131*/double d; 
 		Expect(_real);
-		/*PTypeExpression.atg:130*/if(!Prexonite.Compiler.Parser.TryParseReal(t.val, out d))
+		/*PTypeExpression.atg:133*/if(!Prexonite.Compiler.Parser.TryParseReal(t.val, out d))
 		   SemErr("Cannot recognize real " + t.val);
 		value = d;
 		
 	}
 
-	void String(/*PTypeExpression.atg:137*/out PValue value) {
+	void String(/*PTypeExpression.atg:140*/out PValue value) {
 		Expect(_string);
-		/*PTypeExpression.atg:138*/value = StringPType.Unescape(t.val.Substring(1,t.val.Length-2));
+		/*PTypeExpression.atg:141*/value = StringPType.Unescape(t.val.Substring(1,t.val.Length-2));
 		
 	}
 
@@ -269,85 +272,16 @@ internal partial class Parser {
 	};
 } // end Parser
 
-public enum ParseMessageSeverity
-{
-    Error,
-    Warning,
-    Info
-}
-
-public partial class ParseMessage : Prexonite.Compiler.ISourcePosition {
-    private const string errMsgFormat = "-- ({3}) line {0} col {1}: {2}"; // 0=line, 1=column, 2=text, 3=file
-    private readonly string _message;
-    public string Message { get { return _message; } }
-    private readonly string _file;
-    private readonly int _line;
-    private readonly int _column;
-    public string File { get { return _file; } }
-    public int Line { get { return _line; } }
-    public int Column { get { return _column; } }
-    private readonly ParseMessageSeverity _severity;
-    public ParseMessageSeverity Severity { get { return _severity; } }
-
-    public ParseMessage(ParseMessageSeverity severity, string message, string file, int line, int column) 
-    {
-        if(message == null)
-            throw new ArgumentNullException();
-        _message = message;
-        _file = file;
-        _line = line;
-        _column = column;
-        _severity = severity;
-    }
-
-    public static ParseMessage Error(string message, string file, int line, int column) 
-    {
-        return new ParseMessage(ParseMessageSeverity.Error, message, file, line, column);
-    }
-
-    public static ParseMessage Warning(string message, string file, int line, int column) 
-    {
-        return new ParseMessage(ParseMessageSeverity.Warning, message, file, line, column);
-    }
-
-    public static ParseMessage Info(string message, string file, int line, int column) 
-    {
-        return new ParseMessage(ParseMessageSeverity.Info, message, file, line, column);
-    }
-
-    public ParseMessage(ParseMessageSeverity severity, string message, Prexonite.Compiler.ISourcePosition position)
-        : this(severity, message, position.File, position.Line, position.Column)
-    {
-    }
-
-    public override string ToString() 
-    {
-        return String.Format(errMsgFormat,Line, Column, Message, File);
-    }
-}
-
-internal class ParseMessageEventArgs : EventArgs
-{
-    private readonly ParseMessage _message;
-    public ParseMessage Message { get { return _message; } }
-    public ParseMessageEventArgs(ParseMessage message)
-    {
-        if(message == null)
-            throw new ArgumentNullException("message");
-        _message = message;
-    }
-}
-
 [System.Diagnostics.DebuggerStepThrough()]
-internal class Errors : System.Collections.Generic.LinkedList<ParseMessage> {
+internal class Errors : System.Collections.Generic.LinkedList<Message> {
     internal Parser parentParser;
   
-    internal event EventHandler<ParseMessageEventArgs> MessageReceived;
-    protected void OnMessageReceived(ParseMessage message)
+    internal event EventHandler<MessageEventArgs> MessageReceived;
+    protected void OnMessageReceived(Message message)
     {
         var handler = MessageReceived;
         if(handler != null)
-            handler(this, new ParseMessageEventArgs(message));
+            handler(this, new MessageEventArgs(message));
     }
 
     internal int count 
@@ -379,7 +313,7 @@ internal class Errors : System.Collections.Generic.LinkedList<ParseMessage> {
 			case 12: s = "invalid Expr"; break;
 			case 13: s = "invalid Boolean"; break;
 
-#line 229 "D:\DotNetProjects\Prexonite-Hg\prx-assembla-hg\Tools\Parser.frame" //FRAME
+#line 160 "D:\DotNetProjects\Prexonite-Hg\prx-assembla-hg\Tools\Parser.frame" //FRAME
 
 			default: s = "error " + n; break;
 		}
@@ -387,57 +321,57 @@ internal class Errors : System.Collections.Generic.LinkedList<ParseMessage> {
             s = "after \"" + parentParser.t.ToString(false) + "\", " + s.Replace("expected","is expected") + " and not \"" + parentParser.la.ToString(false) + "\"";
 		else if(s.StartsWith("this symbol "))
 		    s = "\"" + parentParser.t.val + "\"" + s.Substring(12);
-        var msg = ParseMessage.Error(s, parentParser.scanner.File, line, col);
+        var msg = Message.Error(s, parentParser.scanner.File, line, col, "E"+n);
 		AddLast(msg);
         OnMessageReceived(msg);
 	}
-
+	//TODO: enable message classes for semantic errors
 	internal void SemErr (int line, int col, string s) {
-        var msg = ParseMessage.Error(s, parentParser.scanner.File, line, col);
+        var msg = Message.Error(s, parentParser.scanner.File, line, col);
 		AddLast(msg);
         OnMessageReceived(msg);
 
 	}
 	
 	internal void SemErr (string s) {
-        var msg = ParseMessage.Error(s, parentParser.scanner.File, parentParser.la.line, parentParser.la.col);
+        var msg = Message.Error(s, parentParser.scanner.File, parentParser.la.line, parentParser.la.col);
 		AddLast(msg);
         OnMessageReceived(msg);
 	}
 	
 	internal void Warning (int line, int col, string s) {
-        var msg = ParseMessage.Warning(s, parentParser.scanner.File, line, col);
+        var msg = Message.Warning(s, parentParser.scanner.File, line, col);
 		AddLast(msg);
         OnMessageReceived(msg);
 
 	}
 
     internal void Info (int line, int col, string s) {
-        var msg = ParseMessage.Info(s, parentParser.scanner.File, line, col);
+        var msg = Message.Info(s, parentParser.scanner.File, line, col);
 		AddLast(msg);
         OnMessageReceived(msg);
 	}
 	
 	internal void Warning(string s) {
-        var msg = ParseMessage.Warning(s, parentParser.scanner.File, parentParser.la.line, parentParser.la.col);
+        var msg = Message.Warning(s, parentParser.scanner.File, parentParser.la.line, parentParser.la.col);
 		AddLast(msg);
         OnMessageReceived(msg);
 	}
 
     internal void Info(string s) {
-        var msg = ParseMessage.Info(s, parentParser.scanner.File, parentParser.la.line, parentParser.la.col);
+        var msg = Message.Info(s, parentParser.scanner.File, parentParser.la.line, parentParser.la.col);
 		AddLast(msg);
         OnMessageReceived(msg);
 	}
 
     public int GetErrorCount() 
     {
-        return System.Linq.Enumerable.Count(System.Linq.Enumerable.Where(this, pm => pm.Severity == ParseMessageSeverity.Error));
+        return System.Linq.Enumerable.Count(System.Linq.Enumerable.Where(this, pm => pm.Severity == MessageSeverity.Error));
     }
 
     public int GetWarningCount() 
     {
-         return System.Linq.Enumerable.Count(System.Linq.Enumerable.Where(this, pm => pm.Severity == ParseMessageSeverity.Warning));
+         return System.Linq.Enumerable.Count(System.Linq.Enumerable.Where(this, pm => pm.Severity == MessageSeverity.Warning));
     }
 } // Errors
 

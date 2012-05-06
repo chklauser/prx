@@ -134,85 +134,16 @@ internal partial class Parser {
 	};
 } // end Parser
 
-public enum ParseMessageSeverity
-{
-    Error,
-    Warning,
-    Info
-}
-
-public partial class ParseMessage : Prexonite.Compiler.ISourcePosition {
-    private const string errMsgFormat = "-- ({3}) line {0} col {1}: {2}"; // 0=line, 1=column, 2=text, 3=file
-    private readonly string _message;
-    public string Message { get { return _message; } }
-    private readonly string _file;
-    private readonly int _line;
-    private readonly int _column;
-    public string File { get { return _file; } }
-    public int Line { get { return _line; } }
-    public int Column { get { return _column; } }
-    private readonly ParseMessageSeverity _severity;
-    public ParseMessageSeverity Severity { get { return _severity; } }
-
-    public ParseMessage(ParseMessageSeverity severity, string message, string file, int line, int column) 
-    {
-        if(message == null)
-            throw new ArgumentNullException();
-        _message = message;
-        _file = file;
-        _line = line;
-        _column = column;
-        _severity = severity;
-    }
-
-    public static ParseMessage Error(string message, string file, int line, int column) 
-    {
-        return new ParseMessage(ParseMessageSeverity.Error, message, file, line, column);
-    }
-
-    public static ParseMessage Warning(string message, string file, int line, int column) 
-    {
-        return new ParseMessage(ParseMessageSeverity.Warning, message, file, line, column);
-    }
-
-    public static ParseMessage Info(string message, string file, int line, int column) 
-    {
-        return new ParseMessage(ParseMessageSeverity.Info, message, file, line, column);
-    }
-
-    public ParseMessage(ParseMessageSeverity severity, string message, Prexonite.Compiler.ISourcePosition position)
-        : this(severity, message, position.File, position.Line, position.Column)
-    {
-    }
-
-    public override string ToString() 
-    {
-        return String.Format(errMsgFormat,Line, Column, Message, File);
-    }
-}
-
-internal class ParseMessageEventArgs : EventArgs
-{
-    private readonly ParseMessage _message;
-    public ParseMessage Message { get { return _message; } }
-    public ParseMessageEventArgs(ParseMessage message)
-    {
-        if(message == null)
-            throw new ArgumentNullException("message");
-        _message = message;
-    }
-}
-
 [System.Diagnostics.DebuggerStepThrough()]
-internal class Errors : System.Collections.Generic.LinkedList<ParseMessage> {
+internal class Errors : System.Collections.Generic.LinkedList<Message> {
     internal Parser parentParser;
   
-    internal event EventHandler<ParseMessageEventArgs> MessageReceived;
-    protected void OnMessageReceived(ParseMessage message)
+    internal event EventHandler<MessageEventArgs> MessageReceived;
+    protected void OnMessageReceived(Message message)
     {
         var handler = MessageReceived;
         if(handler != null)
-            handler(this, new ParseMessageEventArgs(message));
+            handler(this, new MessageEventArgs(message));
     }
 
     internal int count 
@@ -233,57 +164,57 @@ internal class Errors : System.Collections.Generic.LinkedList<ParseMessage> {
             s = "after \"" + parentParser.t.ToString(false) + "\", " + s.Replace("expected","is expected") + " and not \"" + parentParser.la.ToString(false) + "\"";
 		else if(s.StartsWith("this symbol "))
 		    s = "\"" + parentParser.t.val + "\"" + s.Substring(12);
-        var msg = ParseMessage.Error(s, parentParser.scanner.File, line, col);
+        var msg = Message.Error(s, parentParser.scanner.File, line, col, "E"+n);
 		AddLast(msg);
         OnMessageReceived(msg);
 	}
-
+	//TODO: enable message classes for semantic errors
 	internal void SemErr (int line, int col, string s) {
-        var msg = ParseMessage.Error(s, parentParser.scanner.File, line, col);
+        var msg = Message.Error(s, parentParser.scanner.File, line, col);
 		AddLast(msg);
         OnMessageReceived(msg);
 
 	}
 	
 	internal void SemErr (string s) {
-        var msg = ParseMessage.Error(s, parentParser.scanner.File, parentParser.la.line, parentParser.la.col);
+        var msg = Message.Error(s, parentParser.scanner.File, parentParser.la.line, parentParser.la.col);
 		AddLast(msg);
         OnMessageReceived(msg);
 	}
 	
 	internal void Warning (int line, int col, string s) {
-        var msg = ParseMessage.Warning(s, parentParser.scanner.File, line, col);
+        var msg = Message.Warning(s, parentParser.scanner.File, line, col);
 		AddLast(msg);
         OnMessageReceived(msg);
 
 	}
 
     internal void Info (int line, int col, string s) {
-        var msg = ParseMessage.Info(s, parentParser.scanner.File, line, col);
+        var msg = Message.Info(s, parentParser.scanner.File, line, col);
 		AddLast(msg);
         OnMessageReceived(msg);
 	}
 	
 	internal void Warning(string s) {
-        var msg = ParseMessage.Warning(s, parentParser.scanner.File, parentParser.la.line, parentParser.la.col);
+        var msg = Message.Warning(s, parentParser.scanner.File, parentParser.la.line, parentParser.la.col);
 		AddLast(msg);
         OnMessageReceived(msg);
 	}
 
     internal void Info(string s) {
-        var msg = ParseMessage.Info(s, parentParser.scanner.File, parentParser.la.line, parentParser.la.col);
+        var msg = Message.Info(s, parentParser.scanner.File, parentParser.la.line, parentParser.la.col);
 		AddLast(msg);
         OnMessageReceived(msg);
 	}
 
     public int GetErrorCount() 
     {
-        return System.Linq.Enumerable.Count(System.Linq.Enumerable.Where(this, pm => pm.Severity == ParseMessageSeverity.Error));
+        return System.Linq.Enumerable.Count(System.Linq.Enumerable.Where(this, pm => pm.Severity == MessageSeverity.Error));
     }
 
     public int GetWarningCount() 
     {
-         return System.Linq.Enumerable.Count(System.Linq.Enumerable.Where(this, pm => pm.Severity == ParseMessageSeverity.Warning));
+         return System.Linq.Enumerable.Count(System.Linq.Enumerable.Where(this, pm => pm.Severity == MessageSeverity.Warning));
     }
 } // Errors
 

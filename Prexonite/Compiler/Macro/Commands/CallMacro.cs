@@ -298,14 +298,14 @@ namespace Prexonite.Compiler.Macro.Commands
         {
             if (context.Invocation.Arguments.Count == 0)
             {
-                context.ReportMessage(ParseMessageSeverity.Error,
+                context.ReportMessage(MessageSeverity.Error,
                     "call\\macro must be supplied a macro reference.");
                 return null;
             }
 
             if (!context.CallerIsMacro())
             {
-                context.ReportMessage(ParseMessageSeverity.Error,
+                context.ReportMessage(MessageSeverity.Error,
                     string.Format(
                         "call\\macro called from {0}. " +
                             "call\\macro can only be called from a macro context, i.e., from a macro function or an " +
@@ -492,7 +492,7 @@ namespace Prexonite.Compiler.Macro.Commands
             var setPlaceholder = arg as AstPlaceholder;
             if (setPlaceholder != null && !setPlaceholder.Index.HasValue)
             {
-                context.ReportMessage(ParseMessageSeverity.Error,
+                context.ReportMessage(MessageSeverity.Error,
                     string.Format(
                         "Due to an internal limitation, " +
                             "the index of a placeholder in the macro prototype's argument list inside {0} cannot be inferred. " +
@@ -555,7 +555,7 @@ namespace Prexonite.Compiler.Macro.Commands
 
         private static void _errorUsagePrototype(MacroContext context, bool isPartialApplication)
         {
-            context.ReportMessage(ParseMessageSeverity.Error,
+            context.ReportMessage(MessageSeverity.Error,
                 string.Format(
                     "Used in this way, {0} has the form {0}([macroPrototype(...),justEffect?,call?],...).",
                     Alias));
@@ -566,7 +566,7 @@ namespace Prexonite.Compiler.Macro.Commands
         {
             if (macroRef.IsPlaceholder())
             {
-                context.ReportMessage(ParseMessageSeverity.Error,
+                context.ReportMessage(MessageSeverity.Error,
                     "The macro prototype must be known at compile-time, it must not be a placeholder.");
                 return false;
             }
@@ -576,7 +576,7 @@ namespace Prexonite.Compiler.Macro.Commands
 
         private static void _errorUsageFullRef(MacroContext context, bool isPartialApplication)
         {
-            context.ReportMessage(ParseMessageSeverity.Error,
+            context.ReportMessage(MessageSeverity.Error,
                 "Used in this way, {0} has the form {0}([],macroRef,[justEffect?,call?],...).");
         }
 

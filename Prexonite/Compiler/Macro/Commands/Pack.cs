@@ -53,7 +53,7 @@ namespace Prexonite.Compiler.Macro.Commands
         {
             if (context.Invocation.Arguments.Count < 1)
             {
-                context.ReportMessage(ParseMessageSeverity.Error,
+                context.ReportMessage(MessageSeverity.Error,
                     string.Format("Must supply an object to be transported to {0}.", Alias));
                 return;
             }

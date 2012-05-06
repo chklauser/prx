@@ -27,6 +27,7 @@
 using System.Collections.Generic;
 using System.Threading;
 using System.Threading.Tasks;
+using Prexonite.Compiler.Symbolic;
 using Prexonite.Modular;
 
 namespace Prexonite.Compiler.Build.Internal
@@ -57,6 +58,16 @@ namespace Prexonite.Compiler.Build.Internal
             _dependencies = new Dictionary<ModuleName, ITarget>();
             foreach (var d in dependencies)
                 _dependencies.Add(d.Name, d);
+        }
+
+        public SymbolStore SymbolStore
+        {
+            get { throw new System.NotImplementedException(); }
+        }
+
+        public Loader CreateLoader(LoaderOptions defaults)
+        {
+            throw new System.NotImplementedException();
         }
     }
 }

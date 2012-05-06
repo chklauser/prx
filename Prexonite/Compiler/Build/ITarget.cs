@@ -16,7 +16,7 @@ namespace Prexonite.Compiler.Build
             get;
         }
 
-        SymbolStore SymbolStore
+        SymbolStore Symbols
         {
             get;
         }

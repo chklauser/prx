@@ -137,7 +137,7 @@ function test1(x)
                 Console.WriteLine(s);
             Assert.AreEqual(1, ldr.ErrorCount, "One error expected.");
             Assert.IsTrue(
-                ldr.Errors[0].Message.Contains("Return value assignment is no longer supported."),
+                ldr.Errors[0].Text.Contains("Return value assignment is no longer supported."),
                 "The compiler did not reject a return value assignment.");
         }
 

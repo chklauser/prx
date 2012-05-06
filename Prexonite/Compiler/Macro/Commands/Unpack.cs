@@ -62,7 +62,7 @@ namespace Prexonite.Compiler.Macro.Commands
         {
             if (context.Invocation.Arguments.Count < 1)
             {
-                context.ReportMessage(ParseMessageSeverity.Error,
+                context.ReportMessage(MessageSeverity.Error,
                     string.Format(
                         "{0} requires at least one argument, the id of the object to unpack.", Alias));
                 return;

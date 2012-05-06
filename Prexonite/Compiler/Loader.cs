@@ -661,9 +661,14 @@ namespace Prexonite.Compiler
 
         public void LoadFromReader(TextReader reader)
         {
+            LoadFromReader(reader, null);
+        }
+
+        public void LoadFromReader(TextReader reader, string fileName)
+        {
             if (reader == null)
                 throw new ArgumentNullException("reader");
-            _loadFromReader(reader, null);
+            _loadFromReader(reader, fileName);
         }
 
 #if DEBUG
@@ -757,22 +762,22 @@ namespace Prexonite.Compiler
             _reportSemError(line, column, message);
         }
 
-        private void _messageHook(Object sender, ParseMessageEventArgs e)
+        private void _messageHook(Object sender, MessageEventArgs e)
         {
             ReportMessage(e.Message);
         }
 
-        public void ReportMessage(ParseMessage message)
+        public void ReportMessage(Message message)
         {
             switch (message.Severity)
             {
-                case ParseMessageSeverity.Error:
+                case MessageSeverity.Error:
                     _errors.Add(message);
                     break;
-                case ParseMessageSeverity.Warning:
+                case MessageSeverity.Warning:
                     _warnings.Add(message);
                     break;
-                case ParseMessageSeverity.Info:
+                case MessageSeverity.Info:
                     _infos.Add(message);
                     break;
                 default:
@@ -780,9 +785,9 @@ namespace Prexonite.Compiler
             }
         }
 
-        private EventHandler<ParseMessageEventArgs> _messageHandler;
+        private EventHandler<MessageEventArgs> _messageHandler;
 
-        private EventHandler<ParseMessageEventArgs> _getMessageHandler()
+        private EventHandler<MessageEventArgs> _getMessageHandler()
         {
             return _messageHandler ?? (_messageHandler = _messageHook);
         }
@@ -821,24 +826,24 @@ namespace Prexonite.Compiler
             get { return _errors.Count; }
         }
 
-        public List<ParseMessage> Errors
+        public List<Message> Errors
         {
             get { return _errors; }
         }
 
-        public List<ParseMessage> Warnings
+        public List<Message> Warnings
         {
             get { return _warnings; }
         }
 
-        public List<ParseMessage> Infos
+        public List<Message> Infos
         {
             get { return _infos; }
         }
 
-        private readonly List<ParseMessage> _errors = new List<ParseMessage>();
-        private readonly List<ParseMessage> _warnings = new List<ParseMessage>();
-        private readonly List<ParseMessage> _infos = new List<ParseMessage>();
+        private readonly List<Message> _errors = new List<Message>();
+        private readonly List<Message> _warnings = new List<Message>();
+        private readonly List<Message> _infos = new List<Message>();
 
         #endregion
 
