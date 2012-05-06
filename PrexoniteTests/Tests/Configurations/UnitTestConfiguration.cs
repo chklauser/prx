@@ -81,14 +81,20 @@ namespace PrexoniteTests.Tests.Configurations
         public bool CompileToCil { get; set; }
         public bool ModularCompilation { get; set; }
 
-        public static ModuleName BuiltIn = new ModuleName("prx-built-in",Engine.PrexoniteVersion);
+        public static readonly ModuleName BuiltIn = new ModuleName("prx-built-in",Engine.PrexoniteVersion);
+
+        public virtual void SetupDependencies(ScriptedUnitTestContainer runner,
+            IEnumerable<string> dependencies)
+        {
+            SetupUnitsUnderTest(runner, dependencies);
+        }
 
         /// <summary>
         /// Loads dependencies into the application. Called just after <see cref="ScriptedUnitTestContainer.SetUpLoader"/> and before <see cref="ScriptedUnitTestContainer.LoadUnitTestingFramework"/>.
         /// </summary>
         /// <param name="runner">The runner under which the test is being executed.</param>
         /// <param name="dependencies">A list of dependencies for this test.</param>
-        public virtual void SetupTestFile(ScriptedUnitTestContainer runner,
+        public virtual void SetupUnitsUnderTest(ScriptedUnitTestContainer runner,
             IEnumerable<string> dependencies)
         {
             var originalApp = runner.Application;

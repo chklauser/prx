@@ -23,10 +23,40 @@
 //  DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, 
 //  WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING 
 //  IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+
+using System.Collections.Generic;
+using System.Threading;
+using System.Threading.Tasks;
+using Prexonite.Modular;
+
 namespace Prexonite.Compiler.Build.Internal
 {
-    class DelayedDefaultBuildEnvironment : IBuildEnvironment
+    class DefaultBuildEnvironment : IBuildEnvironment
     {
-         
+        private readonly CancellationToken _token;
+        private readonly Dictionary<ModuleName, ITarget> _dependencies; 
+
+        public bool TryGetModule(ModuleName moduleName, out Module module)
+        {
+            ITarget target;
+            if(_dependencies.TryGetValue(moduleName, out target))
+            {
+                module = target.Module;
+                return true;
+            }
+            else
+            {
+                module = null;
+                return false;
+            }
+        }
+
+        public DefaultBuildEnvironment(IEnumerable<ITarget> dependencies, CancellationToken token)
+        {
+            _token = token;
+            _dependencies = new Dictionary<ModuleName, ITarget>();
+            foreach (var d in dependencies)
+                _dependencies.Add(d.Name, d);
+        }
     }
 }

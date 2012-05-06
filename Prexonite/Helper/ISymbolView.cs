@@ -30,7 +30,7 @@ namespace Prexonite
 {
     public interface ISymbolView<T> : IEnumerable<KeyValuePair<string,T>>
     {
-        bool TryGet(string key, out T value);
+        bool TryGet(string id, out T value);
         int Count { get; }
     }
 

@@ -89,14 +89,16 @@ namespace Prexonite.Compiler.Build.Internal
             return BuildWithMap(targetDescription, taskMap, token);
         }
 
-        protected IBuildEnvironment GetBuildEnvironment(Dictionary<ModuleName,Task<ITarget>> dependencies)
+        protected Task<IBuildEnvironment> GetBuildEnvironment(Dictionary<ModuleName,Task<ITarget>> dependencies, CancellationToken token)
         {
-            return null;
+            return Task.Factory.ContinueWhenAll(dependencies.Values.ToArray(),
+                deps => (IBuildEnvironment)
+                        new DefaultBuildEnvironment(deps.Select(d => d.Result), token));
         }
 
         protected Task<ITarget> BuildWithMap(ITargetDescription targetDescription, System.Collections.Concurrent.ConcurrentDictionary<ITargetDescription,Task<ITarget>> taskMap, CancellationToken token)
         {
-            return taskMap.GetOrAdd(targetDescription, desc => new Task<ITarget>(() =>
+            return taskMap.GetOrAdd(targetDescription, desc =>
                 {
                     var deps =
                         desc.Dependencies.Select(
@@ -113,10 +115,10 @@ namespace Prexonite.Compiler.Build.Internal
 
                     token.ThrowIfCancellationRequested();
 
-                    var buildTask = desc.Build(GetBuildEnvironment(depMap), depMap, token);
-                    buildTask.Wait(token);
-                    return buildTask.Result;
-                }));
+                    return GetBuildEnvironment(depMap, token)
+                        .ContinueWith(bet => desc.Build(bet.Result, depMap, token),token)
+                        .Unwrap();
+                });
         }
     }
 }

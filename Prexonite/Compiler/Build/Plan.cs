@@ -23,13 +23,16 @@
 //  DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, 
 //  WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING 
 //  IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+
+using Prexonite.Compiler.Build.Internal;
+
 namespace Prexonite.Compiler.Build
 {
     public static class Plan
     {
          public static IPlan CreateDefault()
          {
-             
+             return new DefaultPlan();
          }
     }
 }

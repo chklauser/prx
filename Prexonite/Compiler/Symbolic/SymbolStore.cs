@@ -38,7 +38,7 @@ namespace Prexonite.Compiler.Symbolic
 
         public abstract IEnumerator<KeyValuePair<string, Symbol>> GetEnumerator();
 
-        public abstract bool TryGet(string key, out Symbol value);
+        public abstract bool TryGet(string id, out Symbol value);
 
         public abstract int Count { get; }
     }

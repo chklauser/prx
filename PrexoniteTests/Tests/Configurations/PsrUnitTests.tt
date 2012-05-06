@@ -22,6 +22,7 @@ using NUnit.Framework;
 namespace PrexoniteTests.Tests.Configurations
 {
 <# 
+    // [testFile :: (test_file_name, [under_test], [test_deps], [test_case])] 
     foreach(var testFile in _getTestConfiguration()) 
     { 
 #>
@@ -31,18 +32,23 @@ namespace PrexoniteTests.Tests.Configurations
             public void SetupTestFile()
             {
                 SetUpLoader();
-                Runner.SetupTestFile(this, new string[] {
+                // Units under test
+                Runner.SetupUnitsUnderTest(this, new string[] {
 <#                  foreach(var fut in testFile.Item2) { #>
                         @"<#=fut#>",
 <#                  } #>
                 });
+                // Testing framework
                 LoadUnitTestingFramework();
-                Runner.SetupTestFile(this, new string[] {
+                // Test dependencies
+                Runner.SetupDependencies(this, new string[] {
 <#                  foreach(var dep in testFile.Item3) { #>
                         @"<#=dep#>",
 <#                  } #>                                            
                 });
+                // Potentially isolate test code from rest
                 Runner.PrepareTestCompilation(this);
+                // Actual test code
                 RequireFile(@"<#=_toTestFilePath(testFile.Item1)#>");                
                 Runner.PrepareExecution(this);
             }

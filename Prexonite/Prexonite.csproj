@@ -150,7 +150,7 @@
     <Compile Include="Compiler\Build\IBuildEnvironment.cs" />
     <Compile Include="Compiler\Build\IBuildWatcher.cs" />
     <Compile Include="Compiler\Build\Internal\DefaultPlan.cs" />
-    <Compile Include="Compiler\Build\Internal\DelayedDefaultBuildEnvironment.cs" />
+    <Compile Include="Compiler\Build\Internal\DefaultBuildEnvironment.cs" />
     <Compile Include="Compiler\Build\Plan.cs" />
     <Compile Include="Compiler\Build\IResolver.cs" />
     <Compile Include="Compiler\Build\ITargetDescription.cs" />

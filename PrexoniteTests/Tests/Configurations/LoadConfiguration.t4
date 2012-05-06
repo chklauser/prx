@@ -7,7 +7,7 @@
     const char configSectionSep = '>';
     const char configEntrySep = '|';
 
-    // [(test_file_name, [under_test], [test_case])] 
+    // [(test_file_name, [under_test], [test_deps], [test_case])] 
     IEnumerable<Tuple<string,IEnumerable<string>,IEnumerable<string>,IEnumerable<string>>> _getTestConfiguration()
     {
         var path =Path.GetFullPath(Host.ResolvePath(Path.Combine(testPathPrefix, testConfigurationName)));
