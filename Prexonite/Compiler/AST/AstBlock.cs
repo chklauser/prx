@@ -29,6 +29,7 @@ using System.Collections;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.Text;
+using Prexonite.Compiler.Symbolic;
 using NoDebug = System.Diagnostics.DebuggerNonUserCodeAttribute;
 
 namespace Prexonite.Compiler.Ast
@@ -38,46 +39,47 @@ namespace Prexonite.Compiler.Ast
     {
         #region Construction
 
-        [DebuggerStepThrough]
-        public AstBlock(string file, int line, int column)
-            : this(file, line, column, null)
+        //_uid = String.IsNullOrEmpty(uid) ? "\\" + Guid.NewGuid().ToString("N") : uid;
+        //_prefix = (prefix ?? DefaultPrefix) + "\\";
+
+        public AstBlock(string file, int line, int column, SymbolStore symbols, string prefix = null, string uid = null)
+            : this(new SourcePosition(file,line,column),symbols,prefix,uid)
         {
         }
 
-        [DebuggerStepThrough]
-        public AstBlock(string file, int line, int column, string uid)
-            : this(file, line, column, uid, null)
+        public AstBlock(ISourcePosition position, SymbolStore symbols, string prefix = null, string uid = null)
+            : base(position)
+        {
+            if (symbols == null)
+                throw new ArgumentNullException("symbols");
+            _prefix = prefix ?? DefaultPrefix;
+            _uid = uid ?? Guid.NewGuid().ToString("N");
+            _symbols = symbols;
+        }
+
+        protected AstBlock(ISourcePosition position, AstBlock parentBlock, string prefix = null, string uid = null)
+            : this(position, _deriveSymbolStore(parentBlock),prefix,uid)
+        {   
+        }
+
+        protected AstBlock(String file, int line, int column, AstBlock parentBlock, string prefix = null, string uid = null)
+            : this(file,line,column,_deriveSymbolStore(parentBlock),prefix,uid)
         {
         }
 
-        [DebuggerStepThrough]
-        public AstBlock(string file, int line, int column, string uid, string prefix)
-            : base(file, line, column)
+        private static SymbolStore _deriveSymbolStore(AstBlock parentBlock)
         {
-            //See other ctor!
-            _uid = String.IsNullOrEmpty(uid) ? "\\" + Guid.NewGuid().ToString("N") : uid;
-            _prefix = (prefix ?? DefaultPrefix) + "\\";
-        }
-
-        [DebuggerStepThrough]
-        internal AstBlock(Parser p, string uid, string prefix)
-            : this(p.scanner.File, p.t.line, p.t.col, uid, prefix)
-        {
-        }
-
-        [DebuggerStepThrough]
-        internal AstBlock(Parser p)
-            : this(p, null)
-        {
-        }
-
-        [DebuggerStepThrough]
-        internal AstBlock(Parser p, string uid)
-            : this(p, uid, null)
-        {
+            return SymbolStore.Create(parentBlock.Symbols);
         }
 
         #endregion
+
+        private readonly SymbolStore _symbols;
+
+        public SymbolStore Symbols
+        {
+            get { return _symbols; }
+        }
 
         private List<AstNode> _statements = new List<AstNode>();
 
@@ -412,9 +414,10 @@ namespace Prexonite.Compiler.Ast
         private readonly string _beginLabel;
 
         [DebuggerStepThrough]
-        public AstLoopBlock(string file, int line, int column, string uid = null,
-            string prefix = null, AstNode parentNode = null)
-            : base(file, line, column, uid, prefix, parentNode)
+        public AstLoopBlock(string file, int line, int column, AstBlock parentBlock, 
+            string uid = null,
+            string prefix = null)
+            : base(file, line, column, uid, prefix, parentBlock)
         {
             //See other ctor!
             _continueLabel = CreateLabel(ContinueWord);
@@ -424,8 +427,8 @@ namespace Prexonite.Compiler.Ast
 
         [DebuggerStepThrough]
         internal AstLoopBlock(Parser p, string uid = null, string prefix = null,
-            AstNode parentNode = null)
-            : this(p.scanner.File, p.t.line, p.t.col, uid, prefix, parentNode)
+            AstBlock parentNode = null)
+            : this(p.scanner.File, p.t.line, p.t.col, parentNode, uid, prefix)
         {
         }
 
@@ -447,49 +450,52 @@ namespace Prexonite.Compiler.Ast
 
     public class AstSubBlock : AstBlock
     {
-        private readonly AstNode _parentNode;
+        private readonly AstBlock _parentBlock;
 
-        public AstSubBlock(string file, int line, int column, AstNode parentNode)
-            : base(file, line, column)
+        public AstSubBlock(string file, int line, int column, AstBlock parentBlock)
+            : base(file, line, column, parentBlock)
         {
-            _parentNode = parentNode;
+            _parentBlock = parentBlock;
         }
 
-        public AstSubBlock(string file, int line, int column, string uid, AstNode parentNode)
-            : base(file, line, column, uid)
+        public AstSubBlock(string file, int line, int column, string uid, AstBlock parentBlock)
+            : base(file, line, column, parentBlock, uid:uid)
         {
-            _parentNode = parentNode;
+            _parentBlock = parentBlock;
         }
 
         public AstSubBlock(string file, int line, int column, string uid, string prefix,
-            AstNode parentNode) : base(file, line, column, uid, prefix)
+            AstBlock parentBlock)
+            : base(file, line, column, parentBlock, uid, prefix)
         {
-            _parentNode = parentNode;
+            _parentBlock = parentBlock;
         }
 
-        internal AstSubBlock(Parser p, string uid, string prefix, AstNode parentNode)
-            : base(p, uid, prefix)
+        internal AstSubBlock(ISourcePosition p, string uid, string prefix, AstBlock parentBlock)
+            : base(p,parentBlock, uid, prefix)
         {
-            _parentNode = parentNode;
+            _parentBlock = parentBlock;
         }
 
-        internal AstSubBlock(Parser p, AstNode parentNode) : base(p)
+        internal AstSubBlock(ISourcePosition p, AstBlock parentBlock)
+            : base(p, parentBlock)
         {
-            _parentNode = parentNode;
+            _parentBlock = parentBlock;
         }
 
-        internal AstSubBlock(Parser p, string uid, AstNode parentNode) : base(p, uid)
+        internal AstSubBlock(ISourcePosition p, string uid, AstBlock parentBlock)
+            : base(p, parentBlock, uid: uid)
         {
-            _parentNode = parentNode;
+            _parentBlock = parentBlock;
         }
 
         /// <summary>
         ///     The node this block is a part of. Can be null.
         /// </summary>
-        public AstNode ParentNode
+        public AstNode ParentBlock
         {
             [DebuggerStepThrough]
-            get { return _parentNode; }
+            get { return _parentBlock; }
         }
     }
 }

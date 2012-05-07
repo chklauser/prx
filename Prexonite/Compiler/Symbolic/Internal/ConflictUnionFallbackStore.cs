@@ -27,6 +27,7 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Threading;
 
 namespace Prexonite.Compiler.Symbolic.Internal
 {
@@ -297,7 +298,7 @@ namespace Prexonite.Compiler.Symbolic.Internal
         public override void Declare(string id, Symbol symbol)
         {
             if (_local == null)
-                _local = new SymbolTable<Symbol>();
+                Interlocked.CompareExchange(ref _local, new SymbolTable<Symbol>(), null);
             _local.Add(id,symbol);
         }
     }

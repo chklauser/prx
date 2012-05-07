@@ -26,6 +26,8 @@
 
 using System;
 using System.Diagnostics;
+using Prexonite.Compiler.Symbolic;
+using Prexonite.Compiler.Symbolic.Internal;
 using NoDebug = System.Diagnostics.DebuggerNonUserCodeAttribute;
 
 namespace Prexonite.Compiler
@@ -35,10 +37,11 @@ namespace Prexonite.Compiler
     {
         #region Construction
 
-        public LoaderOptions(Engine parentEngine, Application targetApplication)
+        public LoaderOptions(Engine parentEngine, Application targetApplication, SymbolStore symbols = null)
         {
             _parentEngine = parentEngine;
             _targetApplication = targetApplication;
+            _symbols = symbols ?? SymbolStore.Create();
         }
 
         #endregion
@@ -57,6 +60,13 @@ namespace Prexonite.Compiler
         public Application TargetApplication
         {
             get { return _targetApplication; }
+        }
+
+        private readonly SymbolStore _symbols;
+
+        public SymbolStore Symbols
+        {
+            get { return _symbols; }
         }
 
         private bool? _registerCommands;

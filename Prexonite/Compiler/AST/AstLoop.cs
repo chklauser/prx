@@ -33,7 +33,7 @@ namespace Prexonite.Compiler.Ast
         protected AstLoop(string file, int line, int column)
             : base(file, line, column)
         {
-            _block = new AstLoopBlock(file, line, column, parentNode: this);
+            _block = new AstLoopBlock(file, line, column, parentBlock: this);
         }
 
         internal AstLoop(Parser p)

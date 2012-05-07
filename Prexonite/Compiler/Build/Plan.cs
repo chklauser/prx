@@ -32,7 +32,7 @@ namespace Prexonite.Compiler.Build
     {
          public static IPlan CreateDefault()
          {
-             return new DefaultPlan();
+             return new ManualPlan();
          }
     }
 }

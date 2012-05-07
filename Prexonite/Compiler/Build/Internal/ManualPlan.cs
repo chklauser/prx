@@ -35,7 +35,7 @@ using Prexonite.Modular;
 
 namespace Prexonite.Compiler.Build.Internal
 {
-    class DefaultPlan : IPlan
+    class ManualPlan : IPlan
     {
         private readonly HashSet<IBuildWatcher> _buildWatchers = new HashSet<IBuildWatcher>();
         private readonly TargetDescriptionSet _targetDescriptions = TargetDescriptionSet.Create();

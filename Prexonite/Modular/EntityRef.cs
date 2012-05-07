@@ -28,6 +28,7 @@ using System;
 using System.Collections.Generic;
 using Prexonite.Commands;
 using Prexonite.Compiler;
+using Prexonite.Types;
 
 namespace Prexonite.Modular
 {
@@ -72,7 +73,7 @@ namespace Prexonite.Modular
     {
         #region Pattern Matching
 
-        public abstract T Match<T>(IEntityRefMatcher<T> matcher);
+        public abstract TResult Match<TArg, TResult>(IEntityRefMatcher<TArg, TResult> matcher, TArg argument);
 
         public virtual bool TryGetFunction(out Function func)
         {
@@ -161,7 +162,7 @@ namespace Prexonite.Modular
 
         #region Functions
 
-        public class Function : EntityRef, IEquatable<Function>
+        public class Function : EntityRef, IEquatable<Function>, IRunTime
         {
             private readonly string _id;
             private readonly ModuleName _moduleName;
@@ -197,6 +198,21 @@ namespace Prexonite.Modular
                 unchecked
                 {
                     return (_id.GetHashCode()*397) ^ _moduleName.GetHashCode();
+                }
+            }
+
+            public bool TryGetEntity(StackContext sctx, out PValue entity)
+            {
+                PFunction func;
+                if(sctx.ParentApplication.TryGetFunction(Id,ModuleName, out func))
+                {
+                    entity = sctx.CreateNativePValue(func);
+                    return true;
+                }
+                else
+                {
+                    entity = PType.Null;
+                    return false;
                 }
             }
 
@@ -240,9 +256,9 @@ namespace Prexonite.Modular
                 }
             }
 
-            public override T Match<T>(IEntityRefMatcher<T> matcher)
+            public override TResult Match<TArg, TResult>(IEntityRefMatcher<TArg, TResult> matcher, TArg argument)
             {
-                return matcher.OnFunction(this);
+                return matcher.OnFunction(this,argument);
             }
 
             public override SymbolEntry ToSymbolEntry()
@@ -348,9 +364,9 @@ namespace Prexonite.Modular
                 return new Command(id);
             }
 
-            public override T Match<T>(IEntityRefMatcher<T> matcher)
+            public override TResult Match<TArg, TResult>(IEntityRefMatcher<TArg, TResult> matcher, TArg argument)
             {
-                return matcher.OnCommand(this);
+                return matcher.OnCommand(this,argument);
             }
 
             public override bool TryGetCommand(out Command cmd)
@@ -432,9 +448,9 @@ namespace Prexonite.Modular
                     get { return _moduleName; }
                 }
 
-                public override T Match<T>(IEntityRefMatcher<T> matcher)
+                public override TResult Match<TArg, TResult>(IEntityRefMatcher<TArg, TResult> matcher, TArg argument)
                 {
-                    return matcher.OnGlobalVariable(this);
+                    return matcher.OnGlobalVariable(this,argument);
                 }
 
                 public override bool TryGetGlobalVariable(out Global variable)
@@ -539,15 +555,22 @@ namespace Prexonite.Modular
             public sealed class Local : Variable, IEquatable<Local>
             {
                 private readonly string _id;
+                private readonly int? _index;
 
-                private Local(string id)
+                private Local(string id, int? index = null)
                 {
                     _id = id;
+                    _index = index;
                 }
 
                 public string Id
                 {
                     get { return _id; }
+                }
+
+                public int? Index
+                {
+                    get { return _index; }
                 }
 
                 public bool Equals(Local other)
@@ -591,6 +614,11 @@ namespace Prexonite.Modular
                     return new Local(id);
                 }
 
+                public Local WithIndex(int index)
+                {
+                    return new Local(Id, index);
+                }
+
                 public override bool TryGetEntity(StackContext sctx, out PValue entity)
                 {
                     var fctx = sctx as FunctionContext;
@@ -607,9 +635,9 @@ namespace Prexonite.Modular
                     }
                 }
 
-                public override T Match<T>(IEntityRefMatcher<T> matcher)
+                public override TResult Match<TArg, TResult>(IEntityRefMatcher<TArg, TResult> matcher, TArg argument)
                 {
-                    return matcher.OnLocalVariable(this);
+                    return matcher.OnLocalVariable(this,argument);
                 }
 
                 public override bool TryGetLocalVariable(out Local variable)
@@ -692,9 +720,9 @@ namespace Prexonite.Modular
                 return new MacroCommand(id);
             }
 
-            public override T Match<T>(IEntityRefMatcher<T> matcher)
+            public override TResult Match<TArg, TResult>(IEntityRefMatcher<TArg, TResult> matcher, TArg argument)
             {
-                return matcher.OnMacroCommand(this);
+                return matcher.OnMacroCommand(this, argument);
             }
 
             public override bool TryGetMacroCommand(out MacroCommand mcmd)
@@ -807,74 +835,75 @@ namespace Prexonite.Modular
 
     }
 
-    public interface IEntityRefMatcher<out T>
+    public interface IEntityRefMatcher<in TArg, out TResult>
     {
-        T OnFunction(EntityRef.Function function);
+        TResult OnFunction(EntityRef.Function function, TArg argument);
 
-        T OnCommand(EntityRef.Command command);
+        TResult OnCommand(EntityRef.Command command, TArg argument);
 
-        T OnMacroCommand(EntityRef.MacroCommand macroCommand);
+        TResult OnMacroCommand(EntityRef.MacroCommand macroCommand, TArg argument);
 
-        T OnLocalVariable(EntityRef.Variable.Local variable);
-        T OnGlobalVariable(EntityRef.Variable.Global variable);
+        TResult OnLocalVariable(EntityRef.Variable.Local variable, TArg argument);
+
+        TResult OnGlobalVariable(EntityRef.Variable.Global variable, TArg argument);
     }
 
-    public abstract class EntityRefMatcher<T> : IEntityRefMatcher<T>
+    public abstract class EntityRefMatcher<TArg, TResult> : IEntityRefMatcher<TArg, TResult>
     {
         #region IEntityRefMatcher implementation
 
-        T IEntityRefMatcher<T>.OnFunction(EntityRef.Function function)
+        TResult IEntityRefMatcher<TArg, TResult>.OnFunction(EntityRef.Function function, TArg argument)
         {
-            return OnFunction(function);
+            return OnFunction(function, argument);
         }
 
-        T IEntityRefMatcher<T>.OnCommand(EntityRef.Command command)
+        TResult IEntityRefMatcher<TArg, TResult>.OnCommand(EntityRef.Command command, TArg argument)
         {
-            return OnCommand(command);
+            return OnCommand(command, argument);
         }
 
-        T IEntityRefMatcher<T>.OnMacroCommand(EntityRef.MacroCommand macroCommand)
+        TResult IEntityRefMatcher<TArg, TResult>.OnMacroCommand(EntityRef.MacroCommand macroCommand, TArg argument)
         {
-            return OnMacroCommand(macroCommand);
+            return OnMacroCommand(macroCommand, argument);
         }
 
-        T IEntityRefMatcher<T>.OnLocalVariable(EntityRef.Variable.Local variable)
+        TResult IEntityRefMatcher<TArg, TResult>.OnLocalVariable(EntityRef.Variable.Local variable, TArg argument)
         {
-            return OnLocalVariable(variable);
+            return OnLocalVariable(variable, argument);
         }
 
-        T IEntityRefMatcher<T>.OnGlobalVariable(EntityRef.Variable.Global variable)
+        TResult IEntityRefMatcher<TArg, TResult>.OnGlobalVariable(EntityRef.Variable.Global variable, TArg argument)
         {
-            return OnGlobalVariable(variable);
+            return OnGlobalVariable(variable, argument);
         }
 
         #endregion
 
-        protected abstract T OnNotMatched(EntityRef entity);
+        protected abstract TResult OnNotMatched(EntityRef entity, TArg argument);
 
-        public T OnFunction(EntityRef.Function function)
+        public TResult OnFunction(EntityRef.Function function, TArg argument)
         {
-            return OnNotMatched(function);
+            return OnNotMatched(function, argument);
         }
 
-        protected virtual T OnCommand(EntityRef.Command command)
+        protected virtual TResult OnCommand(EntityRef.Command command, TArg argument)
         {
-            return OnNotMatched(command);
+            return OnNotMatched(command, argument);
         }
 
-        protected virtual T OnMacroCommand(EntityRef.MacroCommand macroCommand)
+        protected virtual TResult OnMacroCommand(EntityRef.MacroCommand macroCommand, TArg argument)
         {
-            return OnNotMatched(macroCommand);
+            return OnNotMatched(macroCommand, argument);
         }
 
-        protected virtual T OnLocalVariable(EntityRef.Variable.Local variable)
+        protected virtual TResult OnLocalVariable(EntityRef.Variable.Local variable, TArg argument)
         {
-            return OnNotMatched(variable);
+            return OnNotMatched(variable, argument);
         }
 
-        protected virtual T OnGlobalVariable(EntityRef.Variable.Global variable)
+        protected virtual TResult OnGlobalVariable(EntityRef.Variable.Global variable, TArg argument)
         {
-            return OnNotMatched(variable);
+            return OnNotMatched(variable, argument);
         }
     }
 }

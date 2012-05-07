@@ -30,20 +30,20 @@ namespace Prexonite.Compiler.Ast
 {
     public delegate void AstAction(CompilerTarget target);
 
-    public class AstActionBlock : AstBlock
+    public class AstActionBlock : AstSubBlock
     {
         public AstAction Action;
 
-        public AstActionBlock(string file, int line, int column, AstAction action)
-            : base(file, line, column)
+        public AstActionBlock(string file, int line, int column, AstBlock parent, AstAction action)
+            : base(file, line, column,parent)
         {
             if (action == null)
                 throw new ArgumentNullException("action");
             Action = action;
         }
 
-        public AstActionBlock(AstNode parent, AstAction action)
-            : this(parent.File, parent.Line, parent.Column, action)
+        public AstActionBlock(AstBlock parent, AstAction action)
+            : this(parent.File, parent.Line, parent.Column, parent, action)
         {
         }
 

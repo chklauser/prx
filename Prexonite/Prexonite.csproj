@@ -151,7 +151,7 @@
     <Compile Include="Compiler\Build\IBuildEnvironment.cs" />
     <Compile Include="Compiler\Build\IBuildWatcher.cs" />
     <Compile Include="Compiler\Build\Internal\DefaultModuleTarget.cs" />
-    <Compile Include="Compiler\Build\Internal\DefaultPlan.cs" />
+    <Compile Include="Compiler\Build\Internal\ManualPlan.cs" />
     <Compile Include="Compiler\Build\Internal\DefaultBuildEnvironment.cs" />
     <Compile Include="Compiler\Build\Internal\DefaultTargetDescription.cs" />
     <Compile Include="Compiler\Build\Internal\DependencySet.cs" />

@@ -42,6 +42,8 @@ using Prexonite.Commands.Core;
 using Prexonite.Compiler.Ast;
 using Prexonite.Compiler.Macro;
 using Prexonite.Compiler.Macro.Commands;
+using Prexonite.Compiler.Symbolic;
+using Prexonite.Modular;
 using Prexonite.Types;
 using Debug = System.Diagnostics.Debug;
 
@@ -69,8 +71,6 @@ namespace Prexonite.Compiler
             if (options == null)
                 throw new ArgumentNullException("options");
             _options = options;
-
-            _symbols = new SymbolTable<SymbolEntry>();
 
             _functionTargets = new SymbolTable<CompilerTarget>();
             _functionTargetsIterator = new FunctionTargetsIterator(this);
@@ -104,7 +104,7 @@ namespace Prexonite.Compiler
         public void RegisterExistingCommands()
         {
             foreach (var kvp in ParentEngine.Commands)
-                Symbols.Add(kvp.Key, SymbolEntry.Command(kvp.Key));
+                Symbols.Declare(kvp.Key, new EntitySymbol(EntityRef.Command.Create(kvp.Key), false));
         }
 
         #endregion
@@ -123,12 +123,10 @@ namespace Prexonite.Compiler
 
         #region Global Symbol Table
 
-        private readonly SymbolTable<SymbolEntry> _symbols;
-
-        public SymbolTable<SymbolEntry> Symbols
+        public SymbolStore Symbols
         {
-            /*[DebuggerStepThrough]*/
-            get { return _symbols; }
+            [DebuggerStepThrough]
+            get { return _options.Symbols; }
         }
 
         #endregion
@@ -599,7 +597,9 @@ namespace Prexonite.Compiler
         {
             MacroCommands.Add(macroCommand);
             if (Options.RegisterCommands)
-                Symbols[macroCommand.Id] = SymbolEntry.MacroCommand(macroCommand.Id);
+                Symbols.Declare(macroCommand.Id,
+                                new EntitySymbol(EntityRef.MacroCommand.Create(macroCommand.Id),
+                                                 false));
         }
 
         #endregion
@@ -1184,6 +1184,86 @@ namespace Prexonite.Compiler
                 StoreSymbols(writer);
         }
 
+        private class SymbolKinds
+        {
+            public readonly List<KeyValuePair<string, EntityRef.Function>> Functions =
+                new List<KeyValuePair<string, EntityRef.Function>>();
+            public readonly List<KeyValuePair<string, EntityRef.Command>> Commands =
+                new List<KeyValuePair<string, EntityRef.Command>>();
+            public readonly List<KeyValuePair<string, EntityRef.Variable.Global>> ObjectVariables =
+                new List<KeyValuePair<string, EntityRef.Variable.Global>>();
+            public readonly List<KeyValuePair<string, EntityRef.Variable.Global>> ReferenceVariables =
+                new List<KeyValuePair<string, EntityRef.Variable.Global>>();
+            public readonly List<KeyValuePair<string, EntityRef.MacroCommand>> MacroCommands =
+                new List<KeyValuePair<string, EntityRef.MacroCommand>>();
+
+            public string Key;
+            public bool IsDereference;
+        }
+
+        private static readonly EntitySplitMatcher EntitySplit = new EntitySplitMatcher();
+        private class EntitySplitMatcher : EntityRefMatcher<SymbolKinds,Object>
+        {
+            protected override object OnNotMatched(EntityRef entity, SymbolKinds argument)
+            {
+                throw new NotImplementedException();
+            }
+
+            protected override object OnCommand(EntityRef.Command command, SymbolKinds argument)
+            {
+                argument.Commands.Add(new KeyValuePair<string, EntityRef.Command>(argument.Key,command));
+                return null;
+            }
+
+            protected override object OnMacroCommand(EntityRef.MacroCommand macroCommand, SymbolKinds argument)
+            {
+                argument.MacroCommands.Add(new KeyValuePair<string, EntityRef.MacroCommand>(argument.Key, macroCommand));
+                return null;
+            }
+
+            protected override object OnGlobalVariable(EntityRef.Variable.Global variable, SymbolKinds argument)
+            {
+                if(argument.IsDereference)
+                {
+                    argument.ReferenceVariables.Add(new KeyValuePair<string, EntityRef.Variable.Global>(argument.Key,
+                                                                                                        variable));
+                }
+                else
+                {
+                    argument.ObjectVariables.Add(new KeyValuePair<string, EntityRef.Variable.Global>(argument.Key,
+                                                                                                     variable));
+                }
+                return null;
+            }
+        }
+
+        private static readonly SymbolKindSplitHandler SymbolKindSplit = new SymbolKindSplitHandler();
+        private class SymbolKindSplitHandler : ISymbolHandler<SymbolKinds,Object>
+        {
+            public object HandleEntity(EntitySymbol symbol, SymbolKinds argument)
+            {
+                argument.IsDereference = symbol.IsDereferenced;
+                return symbol.Entity.Match(EntitySplit, argument);
+            }
+
+            public object HandleMessage(MessageSymbol symbol, SymbolKinds argument)
+            {
+                if(symbol.Message.Severity == MessageSeverity.Error)
+                {
+                    return null; //don't emit error symbols
+                }
+                else
+                {
+                    return symbol.Symbol.HandleWith(this, argument);
+                }
+            }
+
+            public object HandleMacroInstance(MacroInstanceSymbol symbol, SymbolKinds argument)
+            {
+                return null;
+            }
+        }
+
         /// <summary>
         ///     Writes only the symbol declarations to the text writer (regardless of the <see cref = "LoaderOptions.StoreSymbols" /> property.)
         /// </summary>
@@ -1191,36 +1271,19 @@ namespace Prexonite.Compiler
         public void StoreSymbols(TextWriter writer)
         {
             writer.WriteLine("\n//--SYMBOLS");
-            var functions =
-                new List<KeyValuePair<string, SymbolEntry>>();
-            var commands =
-                new List<KeyValuePair<string, SymbolEntry>>();
-            var objectVariables =
-                new List<KeyValuePair<string, SymbolEntry>>();
-            var referenceVariables =
-                new List<KeyValuePair<string, SymbolEntry>>();
+            var split = new SymbolKinds();
 
             foreach (var kvp in Symbols)
-                switch (kvp.Value.Interpretation)
-                {
-                    case SymbolInterpretations.Function:
-                        functions.Add(kvp);
-                        break;
-                    case SymbolInterpretations.Command:
-                        commands.Add(kvp);
-                        break;
-                    case SymbolInterpretations.GlobalObjectVariable:
-                        objectVariables.Add(kvp);
-                        break;
-                    case SymbolInterpretations.GlobalReferenceVariable:
-                        referenceVariables.Add(kvp);
-                        break;
-                }
+            {
+                split.Key = kvp.Key;
+                kvp.Value.HandleWith(SymbolKindSplit, split);
+            }
 
-            _writeSymbolKind(writer, "function", functions);
-            _writeSymbolKind(writer, "command", commands);
-            _writeSymbolKind(writer, "var", objectVariables);
-            _writeSymbolKind(writer, "ref", referenceVariables);
+            _writeSymbolKind(writer, "function", split.Functions);
+            _writeSymbolKind(writer, "command", split.Commands);
+            _writeSymbolKind(writer, "var", split.ObjectVariables);
+            _writeSymbolKind(writer, "ref", split.ReferenceVariables);
+            _writeSymbolKind(writer, "macro command", split.MacroCommands);
         }
 
         /// <summary>
@@ -1233,10 +1296,10 @@ namespace Prexonite.Compiler
             ParentApplication.Meta.Store(writer);
         }
 
-        private static void _writeSymbolKind(
+        private static void _writeSymbolKind<T>(
             TextWriter writer,
             string kind,
-            ICollection<KeyValuePair<string, SymbolEntry>> entries)
+            ICollection<KeyValuePair<string, T>> entries) where T : EntityRef
         {
             if (entries.Count <= 0)
                 return;
@@ -1246,7 +1309,7 @@ namespace Prexonite.Compiler
             var idx = 0;
             foreach (var kvp in entries)
             {
-                var sym = kvp.Value;
+                var sym = kvp.Value.ToSymbolEntry();
 
                 writer.Write(StringPType.ToIdLiteral(sym.InternalId));
 
@@ -1255,7 +1318,6 @@ namespace Prexonite.Compiler
                     writer.Write("/{0}/{1}", StringPType.ToIdOrLiteral(sym.Module.Id), 
                         sym.Module.Version);
                 }
-
                 
                 if (!Engine.StringsAreEqual(sym.InternalId, kvp.Key))
                 {

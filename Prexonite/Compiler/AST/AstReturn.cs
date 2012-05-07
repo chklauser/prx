@@ -117,8 +117,8 @@ namespace Prexonite.Compiler.Ast
         {
             return
                 target.ScopeBlocks.OfType<AstSubBlock>().Any(
-                    sb => (sb.ParentNode is AstForeachLoop) ||
-                        (sb.ParentNode is AstTryCatchFinally) || (sb.ParentNode is AstUsing));
+                    sb => (sb.ParentBlock is AstForeachLoop) ||
+                        (sb.ParentBlock is AstTryCatchFinally) || (sb.ParentBlock is AstUsing));
         }
 
         private void emit_tail_call_exit(CompilerTarget target)

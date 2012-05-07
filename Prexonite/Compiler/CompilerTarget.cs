@@ -38,6 +38,7 @@ using System.Diagnostics.CodeAnalysis;
 using System.Linq;
 using Prexonite.Compiler.Ast;
 using Prexonite.Compiler.Macro;
+using Prexonite.Compiler.Symbolic;
 using Prexonite.Internal;
 using Prexonite.Modular;
 using Prexonite.Types;
@@ -84,7 +85,6 @@ namespace Prexonite.Compiler
 
         private readonly PFunction _function;
         private readonly Loader _loader;
-        private readonly SymbolTable<SymbolEntry> _symbols = new SymbolTable<SymbolEntry>();
         private CompilerTarget _parentTarget;
 
         private MacroSession _macroSession;
@@ -134,12 +134,6 @@ namespace Prexonite.Compiler
             get { return _function; }
         }
 
-        public SymbolTable<SymbolEntry> LocalSymbols
-        {
-            [DebuggerStepThrough]
-            get { return _symbols; }
-        }
-
         public CompilerTarget ParentTarget
         {
             [DebuggerStepThrough]
@@ -148,7 +142,10 @@ namespace Prexonite.Compiler
             set
             {
                 _parentTarget = value;
-                _combinedSymbolProxy = new CombinedSymbolProxy(this);
+                var newSym = SymbolStore.Create(_parentTarget != null ? _parentTarget.Symbols : _loader.Symbols);
+                foreach (var s in _symbols)
+                    newSym.Declare(s.Key, s.Value);
+                _symbols = newSym;
             }
         }
 
@@ -173,7 +170,7 @@ namespace Prexonite.Compiler
             _loader = loader;
             _function = function;
 
-            _combinedSymbolProxy = new CombinedSymbolProxy(this);
+            _symbols = SymbolStore.Create(loader.Symbols);
 
             _ast = block;
         }
@@ -198,7 +195,7 @@ namespace Prexonite.Compiler
 
             foreach (var localRefId in MacroAliases.Aliases())
             {
-                DeclareModuleLocal(SymbolInterpretations.LocalReferenceVariable, localRefId);
+                DeclareModuleLocal(SymbolInterpretations.LocalReferenceVariable, localRefId, localRefId);
                 _outerVariables.Add(localRefId);
                 //remember: outer variables are not added as local variables
             }
@@ -319,218 +316,15 @@ namespace Prexonite.Compiler
 
         #region Symbol Lookup / Combined Symbol Proxy
 
-        private CombinedSymbolProxy _combinedSymbolProxy;
+        private SymbolStore _symbols;
 
-        public CombinedSymbolProxy Symbols
+        public SymbolStore Symbols
         {
             [DebuggerStepThrough]
-            get { return _combinedSymbolProxy; }
+            get { return _symbols; }
         }
 
         //[DebuggerStepThrough]
-        public sealed class CombinedSymbolProxy : IDictionary<string, SymbolEntry>
-        {
-            private readonly SymbolTable<SymbolEntry> _loaderSymbols;
-            private readonly SymbolTable<SymbolEntry> _symbols;
-            private readonly CompilerTarget _outer;
-
-            internal CombinedSymbolProxy(CompilerTarget outer)
-            {
-                _symbols = outer._symbols;
-                _outer = outer;
-                _loaderSymbols = outer._loader.Symbols;
-            }
-
-            private CombinedSymbolProxy _parent
-            {
-                get { return _outer._parentTarget != null ? _outer._parentTarget.Symbols : null; }
-            }
-
-            #region IDictionary<string,SymbolEntry> Members
-
-            public SymbolEntry this[string key]
-            {
-                get
-                {
-                    SymbolEntry entry;
-                    if (_symbols.TryGetValue(key, out entry))
-                        return entry;
-                    else if (_parent != null)
-                        return _parent[key];
-                    else
-                        return _loaderSymbols[key];
-                }
-                set { _symbols[key] = value; }
-            }
-
-            public void Add(string key, SymbolEntry value)
-            {
-                _symbols.Add(key, value);
-            }
-
-            public bool ContainsKey(string key)
-            {
-                if (_symbols.ContainsKey(key))
-                    return true;
-                else if (_parent != null)
-                    return _parent.ContainsKey(key);
-                else
-                    return _loaderSymbols.ContainsKey(key);
-            }
-
-            public ICollection<string> Keys
-            {
-                get
-                {
-                    var localKeys = _symbols.Keys;
-                    var keys = new SymbolCollection(localKeys);
-                    if (_parent != null)
-                    {
-                        foreach (var key in _parent.Keys)
-                            if (!localKeys.Contains(key))
-                                keys.Add(key);
-                    }
-                    else
-                    {
-                        foreach (var key in _loaderSymbols.Keys)
-                            if (!localKeys.Contains(key))
-                                keys.Add(key);
-                    }
-                    return keys;
-                }
-            }
-
-            public bool Remove(string key)
-            {
-                return _symbols.Remove(key);
-            }
-
-            public bool TryGetValue(string key, out SymbolEntry value)
-            {
-                if (_symbols.TryGetValue(key, out value))
-                    return true;
-                else if (_parent != null)
-                    return _parent.TryGetValue(key, out value);
-                else
-                    return _loaderSymbols.TryGetValue(key, out value);
-            }
-
-            public ICollection<SymbolEntry> Values
-            {
-                get
-                {
-                    var localValues = _symbols.Values;
-                    var values = new List<SymbolEntry>(localValues);
-                    values.AddRange(
-                        from kvp in
-                            ((IEnumerable<KeyValuePair<string, SymbolEntry>>) _parent ??
-                                _loaderSymbols)
-                        where !localValues.Contains(kvp.Value)
-                        select kvp.Value);
-                    return values;
-                }
-            }
-
-            public void Add(KeyValuePair<string, SymbolEntry> item)
-            {
-                _symbols.Add(item);
-            }
-
-            public void Clear()
-            {
-                _symbols.Clear();
-            }
-
-            public bool Contains(KeyValuePair<string, SymbolEntry> item)
-            {
-                if (_symbols.Contains(item))
-                    return true;
-                else if (_parent != null)
-                    return _parent.Contains(item);
-                else
-                    return _loaderSymbols.Contains(item);
-            }
-
-            public void CopyTo(KeyValuePair<string, SymbolEntry>[] array, int arrayIndex)
-            {
-                var lst =
-                    new List<KeyValuePair<string, SymbolEntry>>(_symbols);
-                lst.AddRange(
-                    ((IEnumerable<KeyValuePair<string, SymbolEntry>>) _parent ?? _loaderSymbols).
-                        Where(
-                            kvp => !_symbols.ContainsKey(kvp.Key)));
-                lst.CopyTo(array, arrayIndex);
-            }
-
-            public int Count
-            {
-                get { return Keys.Count; }
-            }
-
-            public bool IsReadOnly
-            {
-                get { return false; }
-            }
-
-            public bool Remove(KeyValuePair<string, SymbolEntry> item)
-            {
-                return _symbols.Remove(item);
-            }
-
-            IEnumerator<KeyValuePair<string, SymbolEntry>>
-                IEnumerable<KeyValuePair<string, SymbolEntry>>.GetEnumerator()
-            {
-                foreach (var kvp in _symbols)
-                    yield return kvp;
-                if (_parent != null)
-                {
-                    foreach (var kvp in _parent)
-                        if (!_symbols.ContainsKey(kvp.Key))
-                            yield return kvp;
-                }
-                else
-                {
-                    foreach (var kvp in _loaderSymbols)
-                        if (!_symbols.ContainsKey(kvp.Key))
-                            yield return kvp;
-                }
-            }
-
-            IEnumerator IEnumerable.GetEnumerator()
-            {
-                foreach (var kvp in _symbols)
-                    yield return kvp;
-                if (_parent != null)
-                {
-                    foreach (var kvp in _parent)
-                        if (!_symbols.ContainsKey(kvp.Key))
-                            yield return kvp;
-                }
-                else
-                {
-                    foreach (var kvp in _loaderSymbols)
-                        if (!_symbols.ContainsKey(kvp.Key))
-                            yield return kvp;
-                }
-            }
-
-            #endregion
-
-            public bool IsKeyDefinedLocally(string key)
-            {
-                return _symbols.ContainsKey(key);
-            }
-
-            public bool IsKeyDefinedInParent(string key)
-            {
-                if (_parent == null)
-                    return false;
-                else if (_parent._symbols.ContainsKey(key)) //Direct lookup in parent
-                    return true;
-                else //Forward question
-                    return _parent.IsKeyDefinedInParent(key);
-            }
-        }
 
         #endregion
 
@@ -574,26 +368,6 @@ namespace Prexonite.Compiler
         ///     (Re)declares a local symbol.
         /// </summary>
         /// <param name = "kind">The new interpretation for this symbol.</param>
-        /// <param name = "id">The symbols id.</param>
-        [DebuggerStepThrough]
-        public void DeclareModuleLocal(SymbolInterpretations kind, string id)
-        {
-            var module = kind.AssociatedWithModule() ? Loader.ParentApplication.Module.Name : null;
-            if(Symbols.IsKeyDefinedLocally(id))
-            {
-                var entry = Symbols[id];
-                Symbols[id] = entry.WithModule(module, kind);
-            }
-            else
-            {
-                Symbols[id] = new SymbolEntry(kind, id, module);
-            }
-        }
-
-        /// <summary>
-        ///     (Re)declares a local symbol.
-        /// </summary>
-        /// <param name = "kind">The new interpretation for this symbol.</param>
         /// <param name = "id">The id entered into the symbol table.</param>
         /// <param name = "translatedId">The (physical) id used when translating the program. (Use for aliases or set to <paramref
         ///      name = "id" />)</param>
@@ -602,58 +376,6 @@ namespace Prexonite.Compiler
         {
             var module = kind.AssociatedWithModule() ? Loader.ParentApplication.Module.Name : null;
             Symbols[id] = new SymbolEntry(kind, translatedId, module);
-        }
-
-        /// <summary>
-        ///     Creates local variables or declares global variables locally.
-        /// </summary>
-        /// <param name = "kind">The (new) interpretation for the local variable.</param>
-        /// <param name = "id">The id for the local variable.</param>
-        /// <remarks>
-        ///     Local object and reference variables are created in addition to being registered in the symbol table. Global object and reference variables are only declared, not created.
-        /// </remarks>
-        [DebuggerStepThrough]
-        public void DefineModuleLocal(SymbolInterpretations kind, string id)
-        {
-            DefineModuleLocal(kind, id, id);
-        }
-
-        /// <summary>
-        ///     Creates local variables or declares global variables locally.
-        /// </summary>
-        /// <param name = "kind">The (new) interpretation for the local variable.</param>
-        /// <param name = "id">The id for the local variable.</param>
-        /// <param name = "moduleLocalId">The (physical) id used when translating the program. (Use for aliases or set to <paramref
-        ///      name = "id" />). This is the name used for the variable created.</param>
-        /// <remarks>
-        ///     Local object and reference variables are created in addition to being registered in the symbol table. Global object and reference variables are only declared, not created.
-        /// </remarks>
-        [DebuggerStepThrough]
-        public void DefineModuleLocal(SymbolInterpretations kind, string id, string moduleLocalId)
-        {
-            var module = kind.AssociatedWithModule() ? Loader.ParentApplication.Module.Name : null;
-            switch (kind)
-            {
-                    //Declare global variables
-                case SymbolInterpretations.GlobalObjectVariable:
-                case SymbolInterpretations.GlobalReferenceVariable:
-                    if (Symbols.IsKeyDefinedLocally(id))
-                        Symbols[id] = Symbols[id].WithModule(null, kind, moduleLocalId);
-                    else
-                        Symbols[id] = new SymbolEntry(kind, moduleLocalId, module);
-                    break;
-                    //Define local variables
-                case SymbolInterpretations.LocalObjectVariable:
-                case SymbolInterpretations.LocalReferenceVariable:
-                    if (Symbols.IsKeyDefinedLocally(id))
-                        Symbols[id] = Symbols[id].With(kind, moduleLocalId);
-                    else
-                        Symbols[id] = new SymbolEntry(kind, moduleLocalId, null);
-
-                    if (!Function.Variables.Contains(moduleLocalId))
-                        Function.Variables.Add(moduleLocalId);
-                    break;
-            }
         }
 
         #endregion //Symbols
@@ -875,15 +597,15 @@ namespace Prexonite.Compiler
         {
             keepByRef = new HashSet<string>(keepByRef);
             var toPromote =
-                _outerVariables.Where(outer => !keepByRef.Contains(outer)).ToList();
+                _outerVariables.Except(keepByRef).ToList();
 
             //Declare locally, remove from outer variables and add as parameter to the end
             var exprs = new List<Func<Parser, AstExpr>>();
             foreach (var outer in toPromote)
             {
-                SymbolEntry sym;
-                if (Symbols.TryGetValue(outer, out sym))
-                    Symbols.Add(outer, sym);
+                Symbol sym;
+                if(Symbols.TryGet(outer, out sym))
+                    Symbols.Declare(outer, sym);
                 _outerVariables.Remove(outer);
                 Function.Parameters.Add(outer);
                 {
@@ -1183,7 +905,6 @@ namespace Prexonite.Compiler
 
         #region Jumps and Labels
 
-        public const string LabelSymbolPostfix = @"\label\assembler";
         private readonly HashSet<int> _unresolvedInstructions = new HashSet<int>();
 
         public void EmitLeave(ISourcePosition position, int address)
@@ -1295,20 +1016,11 @@ namespace Prexonite.Compiler
             }
         }
 
+        private readonly SymbolTable<int> _labels = new SymbolTable<int>(); 
+
         public bool TryResolveLabel(string label, out int address)
         {
-            address = -1;
-            var labelNs = label + LabelSymbolPostfix;
-            SymbolEntry sym;
-            if (!LocalSymbols.TryGetValue(labelNs, out sym))
-                return false;
-
-            if (sym.Argument == null)
-                throw new PrexoniteException("The label symbol " + labelNs +
-                    " does not provide an adress.");
-
-            address = sym.Argument.Value;
-            return true;
+            return _labels.TryGetValue(label, out address);
         }
 
         [DebuggerStepThrough]
@@ -1333,8 +1045,7 @@ namespace Prexonite.Compiler
         public void EmitLabel(ISourcePosition position, string label, int address)
         {
             //Safety check
-            var labelKey = label + LabelSymbolPostfix;
-            Debug.Assert(!Symbols.ContainsKey(labelKey),
+            Debug.Assert(!_labels.ContainsKey(label),
                 string.Format("Error, label {0} defined multiple times in {1}, {2}", label, Function,
                     position.File));
 
@@ -1358,7 +1069,7 @@ namespace Prexonite.Compiler
             _unresolvedInstructions.ExceptWith(resolved);
 
             //Add the label to the symbol table
-            Symbols[labelKey] = SymbolEntry.JumpLabel(address);
+            _labels[label] = address;
         }
 
         [DebuggerStepThrough]
@@ -1382,7 +1093,7 @@ namespace Prexonite.Compiler
         /// </remarks>
         public void FreeLabel(string label)
         {
-            LocalSymbols.Remove(label + LabelSymbolPostfix);
+            _labels.Remove(label);
         }
 
         #endregion
