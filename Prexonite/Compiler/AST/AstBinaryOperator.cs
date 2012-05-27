@@ -25,6 +25,7 @@
 //  IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 using System;
+using Prexonite.Compiler.Symbolic.Compatibility;
 using Prexonite.Types;
 
 namespace Prexonite.Compiler.Ast
@@ -32,7 +33,7 @@ namespace Prexonite.Compiler.Ast
     /// <summary>
     ///     Represents all binary operators.
     /// </summary>
-    public class AstBinaryOperator : AstExpr,
+    public class AstBinaryOperator : AstScopedExpr,
                                      IAstHasExpressions
     {
         private AstExpr _leftOperand;
@@ -42,12 +43,12 @@ namespace Prexonite.Compiler.Ast
 
         internal static AstBinaryOperator Create(Parser parser, AstExpr leftOperand,
             BinaryOperator op,
-            AstExpr rightOperand)
+            AstExpr rightOperand, AstBlock lexicalScope)
         {
-            var impl = Resolve(parser, OperatorNames.Prexonite.GetName(op));
+            var impl = ResolveOperator(parser, OperatorNames.Prexonite.GetName(op));
             return new AstBinaryOperator(parser.scanner.File, parser.t.line, parser.t.col,
                 leftOperand, op,
-                rightOperand,impl);
+                rightOperand,impl.ToSymbolEntry(), lexicalScope);
         }
 
         /// <summary>
@@ -60,17 +61,11 @@ namespace Prexonite.Compiler.Ast
         /// <param name = "op">The operator.</param>
         /// <param name = "rightOperand">The right operand of the expression.</param>
         /// <param name = "implementation">Describes the Prexonite entity that is used for the implementation (a command or function entry in most cases)</param>
+        /// <param name="lexicalScope"> </param>
         /// <seealso cref = "BinaryOperator" />
         /// <seealso cref = "AstExpr" />
-        public AstBinaryOperator(
-            string file,
-            int line,
-            int column,
-            AstExpr leftOperand,
-            BinaryOperator op,
-            AstExpr rightOperand,
-            SymbolEntry implementation)
-            : base(file, line, column)
+        public AstBinaryOperator(string file, int line, int column, AstExpr leftOperand, BinaryOperator op, AstExpr rightOperand, SymbolEntry implementation, AstBlock lexicalScope)
+            : base(file, line, column,lexicalScope)
         {
             if (implementation == null)
                 throw new ArgumentNullException("implementation");

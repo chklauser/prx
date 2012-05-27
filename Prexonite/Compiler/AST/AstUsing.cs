@@ -25,48 +25,58 @@
 //  IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 using System;
+using JetBrains.Annotations;
 using Prexonite.Types;
 
 namespace Prexonite.Compiler.Ast
 {
-    public class AstUsing : AstNode,
-                            IAstHasBlocks,
-                            IAstHasExpressions
+    public class AstUsing : AstSubBlock,
+                            IAstHasBlocks
     {
         private const string LabelPrefix = "using";
 
-        internal AstUsing(Parser p)
-            : base(p)
+        public AstUsing([NotNull] ISourcePosition p, 
+            [NotNull] AstBlock lexicalScope)
+            : base(p, lexicalScope)
         {
-            _block = new AstSubBlock(File, Line, Column, this);
+            _block = new AstSubBlock(p, this,prefix:LabelPrefix);
         }
 
-        public AstUsing(string file, int line, int column)
-            : base(file, line, column)
-        {
-            _block = new AstSubBlock(File, Line, Column, this);
-        }
-
-        public AstExpr Expression;
+        private AstExpr _resourceExpression;
         private readonly AstSubBlock _block;
 
         #region IAstHasBlocks Members
 
         public AstBlock[] Blocks
         {
-            get { return new[] {_block}; }
+            get { return new AstBlock[] {_block}; }
         }
 
         #region IAstHasExpressions Members
 
-        public AstExpr[] Expressions
+        public override AstExpr[] Expressions
         {
-            get { return new[] {Expression}; }
+            get 
+            { 
+                var b = base.Expressions;
+                var r = new AstExpr[b.Length + 1];
+                b.CopyTo(r,0);
+                r[b.Length] = _resourceExpression;
+                return r;
+            }
         }
 
+        [PublicAPI]
         public AstBlock Block
         {
             get { return _block; }
+        }
+
+        [PublicAPI]
+        public AstExpr ResourceExpression
+        {
+            get { return _resourceExpression; }
+            set { _resourceExpression = value; }
         }
 
         #endregion
@@ -78,10 +88,10 @@ namespace Prexonite.Compiler.Ast
             if(stackSemantics == StackSemantics.Value)
                 throw new NotSupportedException("Using blocks do not produce values and can thus not be used as expressions.");
 
-            if (Expression == null)
+            if (_resourceExpression == null)
                 throw new PrexoniteException("AstUsing requires Expression to be initialized.");
 
-            var tryNode = new AstTryCatchFinally(File, Line, Column);
+            var tryNode = new AstTryCatchFinally(this,this);
             var vContainer = _block.CreateLabel("container");
             target.Function.Variables.Add(vContainer);
             //Try block => Container = {Expression}; {Block};
@@ -92,7 +102,7 @@ namespace Prexonite.Compiler.Ast
                     Column,
                     PCall.Set,
                     new SymbolEntry(SymbolInterpretations.LocalObjectVariable, vContainer, null));
-            setCont.Arguments.Add(Expression);
+            setCont.Arguments.Add(_resourceExpression);
 
             var getCont =
                 new AstGetSetSymbol(

@@ -111,7 +111,7 @@ namespace Prexonite.Compiler.Macro.Commands
             AstCondition checkCont;
             {
                 var contCond = _genCompare(context, retVar(), ReturnVariant.Continue);
-                checkCont = new AstCondition(inv.File, inv.Line, inv.Column, contCond);
+                checkCont = new AstCondition(inv,context.CurrentBlock, contCond);
                 checkCont.IfBlock.Add(contStmt);
             }
 
@@ -119,7 +119,7 @@ namespace Prexonite.Compiler.Macro.Commands
             AstCondition checkBreak;
             {
                 var breakCond = _genCompare(context, retVar(), ReturnVariant.Break);
-                checkBreak = new AstCondition(inv.File, inv.Line, inv.Column, breakCond);
+                checkBreak = new AstCondition(inv.Position, context.CurrentBlock, breakCond);
                 checkBreak.IfBlock.Add(breakStmt);
             }
 
@@ -196,8 +196,9 @@ namespace Prexonite.Compiler.Macro.Commands
                 inv.Line,
                 inv.Column, (int) expected);
             var cmp = new AstBinaryOperator(inv.File, inv.Line,
-                inv.Column, retVar, eq, expectedNode,
-                new SymbolEntry(SymbolInterpretations.Command, Equality.DefaultAlias, null));
+                                            inv.Column, retVar, eq, expectedNode,
+                                            new SymbolEntry(SymbolInterpretations.Command, Equality.DefaultAlias, null),
+                                            context.CurrentBlock);
             return cmp;
         }
     }

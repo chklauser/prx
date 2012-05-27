@@ -34,18 +34,12 @@ namespace Prexonite.Compiler.Ast
     public class AstWhileLoop : AstLoop
     {
         [DebuggerStepThrough]
-        public AstWhileLoop(string file, int line, int column, bool isPrecondition = true,
+        public AstWhileLoop(ISourcePosition position, AstBlock parentBlock, bool isPrecondition = true,
             bool isPositive = true)
-            : base(file, line, column)
+            : base(position,parentBlock)
         {
             IsPrecondition = isPrecondition;
             IsPositive = isPositive;
-        }
-
-        [DebuggerStepThrough]
-        internal AstWhileLoop(Parser p, bool isPrecondition = true, bool isPositive = true)
-            : this(p.scanner.File, p.t.line, p.t.col, isPrecondition, isPositive)
-        {
         }
 
         public AstExpr Condition;

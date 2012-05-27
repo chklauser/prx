@@ -26,11 +26,12 @@
 
 using System;
 using System.Diagnostics;
+using Prexonite.Compiler.Symbolic.Compatibility;
 using Prexonite.Types;
 
 namespace Prexonite.Compiler.Ast
 {
-    public class AstModifyingAssignment : AstExpr, IAstHasExpressions
+    public class AstModifyingAssignment : AstScopedExpr, IAstHasExpressions
     {
         private BinaryOperator _setModifier;
         private AstGetSet _modifyingAssignment;
@@ -46,8 +47,9 @@ namespace Prexonite.Compiler.Ast
         /// <param name="setModifier">The operator used in the modifying assignment.</param>
         /// <param name="complex">The left-hand side of the modifying assignment.</param>
         /// <param name="implementation">The implementation for the operator (only for arithmetic operators)</param>
-        public AstModifyingAssignment(string file, int line, int column, BinaryOperator setModifier, AstGetSet complex, SymbolEntry implementation)
-            : base(file, line, column)
+        /// <param name="lexicalScope"> </param>
+        public AstModifyingAssignment(string file, int line, int column, BinaryOperator setModifier, AstGetSet complex, SymbolEntry implementation, AstBlock lexicalScope)
+            : base(file, line, column,lexicalScope)
         {
             _setModifier = setModifier;
             _modifyingAssignment = complex;
@@ -78,15 +80,20 @@ namespace Prexonite.Compiler.Ast
             Implementation = implementation;
         }
 
-        internal static AstModifyingAssignment Create(Parser p, BinaryOperator setModifier,
+        internal static AstExpr Create(Parser p, BinaryOperator setModifier,
             AstGetSet complex)
         {
             var id = OperatorNames.Prexonite.GetName(setModifier);
-            var impl = id == null
-                ? new SymbolEntry(SymbolInterpretations.Undefined,null)
-                : Resolve(p, id);
-            return new AstModifyingAssignment(p.scanner.File, p.t.line, p.t.col, setModifier,
-                complex, impl);
+            if (id == null)
+            {
+                return new AstIndirectCall(p, new AstNull(p));
+            }
+            else
+            {
+                var impl = ResolveOperator(p, id);
+                return new AstModifyingAssignment(p.scanner.File, p.t.line, p.t.col, setModifier,
+                    complex, impl.ToSymbolEntry(), p.CurrentBlock);   
+            }
         }
 
         #region IAstHasExpressions Members
@@ -149,7 +156,7 @@ namespace Prexonite.Compiler.Ast
                         if (justEffect)
                         {
                             //Create a traditional condition
-                            var cond = new AstCondition(File, Line, Column, check);
+                            var cond = new AstCondition(this, LexicalScope,check);
                             cond.IfBlock.Add(assignment);
                             cond.EmitEffectCode(target);
                         }
@@ -233,7 +240,7 @@ namespace Prexonite.Compiler.Ast
                             _setModifier,
                             _modifyingAssignment.Arguments[
                                 _modifyingAssignment.Arguments.Count - 1],
-                            Implementation);
+                            Implementation, LexicalScope);
 
                         assignment.Arguments[assignment.Arguments.Count - 1] = modification;
                         

@@ -301,5 +301,10 @@ namespace Prexonite.Compiler.Symbolic.Internal
                 Interlocked.CompareExchange(ref _local, new SymbolTable<Symbol>(), null);
             _local.Add(id,symbol);
         }
+
+        public override bool IsDeclaredLocally(string id)
+        {
+            return _local == null || _local.ContainsKey(id);
+        }
     }
 }

@@ -29,6 +29,7 @@ using System.Collections;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.Text;
+using JetBrains.Annotations;
 using Prexonite.Compiler.Symbolic;
 using NoDebug = System.Diagnostics.DebuggerNonUserCodeAttribute;
 
@@ -39,32 +40,19 @@ namespace Prexonite.Compiler.Ast
     {
         #region Construction
 
-        //_uid = String.IsNullOrEmpty(uid) ? "\\" + Guid.NewGuid().ToString("N") : uid;
-        //_prefix = (prefix ?? DefaultPrefix) + "\\";
-
-        public AstBlock(string file, int line, int column, SymbolStore symbols, string prefix = null, string uid = null)
-            : this(new SourcePosition(file,line,column),symbols,prefix,uid)
-        {
-        }
-
-        public AstBlock(ISourcePosition position, SymbolStore symbols, string prefix = null, string uid = null)
+        protected AstBlock(ISourcePosition position, [NotNull] SymbolStore symbols, string prefix = null, string uid = null)
             : base(position)
         {
             if (symbols == null)
                 throw new ArgumentNullException("symbols");
-            _prefix = prefix ?? DefaultPrefix;
-            _uid = uid ?? Guid.NewGuid().ToString("N");
+            _prefix = (prefix ?? DefaultPrefix) + "\\";
+            _uid = String.IsNullOrEmpty(uid) ? "\\" + Guid.NewGuid().ToString("N") : uid; 
             _symbols = symbols;
         }
 
-        protected AstBlock(ISourcePosition position, AstBlock parentBlock, string prefix = null, string uid = null)
-            : this(position, _deriveSymbolStore(parentBlock),prefix,uid)
+        protected AstBlock(ISourcePosition position, AstBlock lexicalScope, string prefix = null, string uid = null)
+            : this(position, _deriveSymbolStore(lexicalScope),prefix,uid)
         {   
-        }
-
-        protected AstBlock(String file, int line, int column, AstBlock parentBlock, string prefix = null, string uid = null)
-            : this(file,line,column,_deriveSymbolStore(parentBlock),prefix,uid)
-        {
         }
 
         private static SymbolStore _deriveSymbolStore(AstBlock parentBlock)
@@ -74,19 +62,28 @@ namespace Prexonite.Compiler.Ast
 
         #endregion
 
+        [NotNull]
         private readonly SymbolStore _symbols;
 
+        [NotNull]
         public SymbolStore Symbols
         {
             get { return _symbols; }
         }
 
+        [NotNull]
         private List<AstNode> _statements = new List<AstNode>();
 
+        [NotNull]
         public List<AstNode> Statements
         {
             get { return _statements; }
-            set { _statements = value; }
+            set
+            {
+                if (value == null)
+                    throw new ArgumentNullException("value");
+                _statements = value;
+            }
         }
 
         protected override void DoEmitCode(CompilerTarget target, StackSemantics stackSemantics)
@@ -378,9 +375,15 @@ namespace Prexonite.Compiler.Ast
             get { return _uid; }
         }
 
-        public AstExpr[] Expressions
+        public virtual AstExpr[] Expressions
         {
-            get { return new[] {Expression}; }
+            get
+            {
+                if(Expression == null)
+                    return new AstExpr[0];
+                else
+                    return new[] {Expression};
+            }
         }
 
         public const string DefaultPrefix = "_";
@@ -402,100 +405,10 @@ namespace Prexonite.Compiler.Ast
             expr = null;
             return false;
         }
-    }
 
-    public class AstLoopBlock : AstSubBlock, ILoopBlock
-    {
-        public const string ContinueWord = "continue";
-        public const string BreakWord = "break";
-        public const string BeginWord = "begin";
-        private readonly string _continueLabel;
-        private readonly string _breakLabel;
-        private readonly string _beginLabel;
-
-        [DebuggerStepThrough]
-        public AstLoopBlock(string file, int line, int column, AstBlock parentBlock, 
-            string uid = null,
-            string prefix = null)
-            : base(file, line, column, uid, prefix, parentBlock)
+        public static AstBlock CreateRootBlock(ISourcePosition position, SymbolStore symbols, string prefix, string uid)
         {
-            //See other ctor!
-            _continueLabel = CreateLabel(ContinueWord);
-            _breakLabel = CreateLabel(BreakWord);
-            _beginLabel = CreateLabel(BeginWord);
-        }
-
-        [DebuggerStepThrough]
-        internal AstLoopBlock(Parser p, string uid = null, string prefix = null,
-            AstBlock parentNode = null)
-            : this(p.scanner.File, p.t.line, p.t.col, parentNode, uid, prefix)
-        {
-        }
-
-        public string ContinueLabel
-        {
-            get { return _continueLabel; }
-        }
-
-        public string BreakLabel
-        {
-            get { return _breakLabel; }
-        }
-
-        public string BeginLabel
-        {
-            get { return _beginLabel; }
-        }
-    }
-
-    public class AstSubBlock : AstBlock
-    {
-        private readonly AstBlock _parentBlock;
-
-        public AstSubBlock(string file, int line, int column, AstBlock parentBlock)
-            : base(file, line, column, parentBlock)
-        {
-            _parentBlock = parentBlock;
-        }
-
-        public AstSubBlock(string file, int line, int column, string uid, AstBlock parentBlock)
-            : base(file, line, column, parentBlock, uid:uid)
-        {
-            _parentBlock = parentBlock;
-        }
-
-        public AstSubBlock(string file, int line, int column, string uid, string prefix,
-            AstBlock parentBlock)
-            : base(file, line, column, parentBlock, uid, prefix)
-        {
-            _parentBlock = parentBlock;
-        }
-
-        internal AstSubBlock(ISourcePosition p, string uid, string prefix, AstBlock parentBlock)
-            : base(p,parentBlock, uid, prefix)
-        {
-            _parentBlock = parentBlock;
-        }
-
-        internal AstSubBlock(ISourcePosition p, AstBlock parentBlock)
-            : base(p, parentBlock)
-        {
-            _parentBlock = parentBlock;
-        }
-
-        internal AstSubBlock(ISourcePosition p, string uid, AstBlock parentBlock)
-            : base(p, parentBlock, uid: uid)
-        {
-            _parentBlock = parentBlock;
-        }
-
-        /// <summary>
-        ///     The node this block is a part of. Can be null.
-        /// </summary>
-        public AstNode ParentBlock
-        {
-            [DebuggerStepThrough]
-            get { return _parentBlock; }
+            return new AstBlock(position,symbols,prefix,uid);
         }
     }
 }

@@ -84,7 +84,7 @@ namespace Prexonite.Compiler.Ast
                 if (and != null)
                 {
                     and.EmitCode(target, trueLabel, nextLabel);
-                    //Resolve pending jumps to Next
+                    //ResolveOperator pending jumps to Next
                     target.EmitLabel(this, nextLabel);
                     target.FreeLabel(nextLabel);
                     //Future references of to nextLabel will be resolved in the next iteration

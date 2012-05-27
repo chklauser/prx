@@ -26,6 +26,7 @@
 
 using System;
 using System.Collections.Generic;
+using JetBrains.Annotations;
 using Prexonite.Commands;
 using Prexonite.Compiler;
 using Prexonite.Types;
@@ -827,7 +828,7 @@ namespace Prexonite.Modular
         /// Searches a <see cref="StackContext"/> for this entity and wraps it in a PValue, if found.
         /// </summary>
         /// <param name="sctx">The stack context to search.</param>
-        /// <param name="entity">Holds the wrapped reference to this entity on succes; undefined on failure.</param>
+        /// <param name="entity">Holds the wrapped reference to this entity on success; undefined on failure.</param>
         /// <returns>True if the entity was found in the context; false otherwise</returns>
         internal abstract bool _TryLookup(StackContext sctx,out PValue  entity);
 
@@ -879,28 +880,33 @@ namespace Prexonite.Modular
 
         #endregion
 
-        protected abstract TResult OnNotMatched(EntityRef entity, TArg argument);
+        protected abstract TResult OnNotMatched(EntityRef entity, [PublicAPI] TArg argument);
 
-        public TResult OnFunction(EntityRef.Function function, TArg argument)
+        [PublicAPI]
+        public virtual TResult OnFunction(EntityRef.Function function, TArg argument)
         {
             return OnNotMatched(function, argument);
         }
 
+        [PublicAPI]
         protected virtual TResult OnCommand(EntityRef.Command command, TArg argument)
         {
             return OnNotMatched(command, argument);
         }
 
+        [PublicAPI]
         protected virtual TResult OnMacroCommand(EntityRef.MacroCommand macroCommand, TArg argument)
         {
             return OnNotMatched(macroCommand, argument);
         }
 
+        [PublicAPI]
         protected virtual TResult OnLocalVariable(EntityRef.Variable.Local variable, TArg argument)
         {
             return OnNotMatched(variable, argument);
         }
 
+        [PublicAPI]
         protected virtual TResult OnGlobalVariable(EntityRef.Variable.Global variable, TArg argument)
         {
             return OnNotMatched(variable, argument);

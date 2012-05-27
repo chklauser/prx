@@ -30,16 +30,10 @@ namespace Prexonite.Compiler.Ast
                                     IAstHasBlocks
 
     {
-        protected AstLoop(string file, int line, int column)
-            : base(file, line, column)
-        {
-            _block = new AstLoopBlock(file, line, column, parentBlock: this);
-        }
-
-        internal AstLoop(Parser p)
+        internal AstLoop(ISourcePosition p, AstBlock parentBlock)
             : base(p)
         {
-            _block = new AstLoopBlock(p, parentNode: this);
+            _block = new AstLoopBlock(p, parentBlock, prefix:"body");
         }
 
         private readonly AstLoopBlock _block;

@@ -31,6 +31,8 @@ using System.Globalization;
 using System.Linq;
 using Prexonite.Commands.Core.Operators;
 using Prexonite.Compiler.Ast;
+using Prexonite.Compiler.Symbolic;
+using Prexonite.Compiler.Symbolic.Compatibility;
 using Prexonite.Modular;
 using Prexonite.Types;
 
@@ -74,7 +76,7 @@ namespace Prexonite.Compiler
             get { return _loader.Options.ParentEngine; }
         }
 
-        public SymbolTable<SymbolEntry> Symbols
+        public SymbolStore Symbols
         {
             [DebuggerStepThrough]
             get { return _loader.Symbols; }
@@ -421,14 +423,12 @@ namespace Prexonite.Compiler
         [DebuggerStepThrough]
         public bool isLikeVariable(string id) //context
         {
-            if (!target.Symbols.ContainsKey(id))
+            Symbol symbol;
+            EntitySymbol entitySymbol;
+            if(!(target.Symbols.TryGet(id,out symbol) && symbol.TryGetEntitySymbol(out entitySymbol)))
                 return false;
-            var kind = target.Symbols[id].Interpretation;
-            return
-                kind == SymbolInterpretations.LocalObjectVariable ||
-                    kind == SymbolInterpretations.GlobalObjectVariable ||
-                        kind == SymbolInterpretations.LocalReferenceVariable ||
-                            kind == SymbolInterpretations.GlobalReferenceVariable;
+            EntityRef.Variable _;
+            return entitySymbol.Entity.TryGetVariable(out _);
         }
 
         public bool isLocalVariable(SymbolInterpretations interpretations)
@@ -442,13 +442,49 @@ namespace Prexonite.Compiler
         public bool isLikeFunction() //Context
         {
             var id = la.val;
+            Symbol symbol;
+            EntitySymbol entitySymbol;
             return
-                la.kind == _id &&
-                    target.Symbols.ContainsKey(id) &&
-                        isLikeFunction(target.Symbols[id].Interpretation);
+                la.kind == _id && // TODO Bug: id's are not just of token type ID
+                target.Symbols.TryGet(id, out symbol) &&
+                symbol.TryGetEntitySymbol(out entitySymbol) &&
+                entitySymbol.Entity.Match(_isLikeFunction, entitySymbol.IsDereferenced);
         }
 
-        //context
+        private class IsLikeFunctionMatcher :  EntityRefMatcher<bool,bool>
+        {
+            #region Overrides of EntityRefMatcher<object,bool>
+
+            protected override bool OnNotMatched(EntityRef entity, bool argument)
+            {
+                return false;
+            }
+
+            protected override bool OnCommand(EntityRef.Command command, bool argument)
+            {
+                return true;
+            }
+
+            public override bool OnFunction(EntityRef.Function function, bool argument)
+            {
+                return true;
+            }
+
+            protected override bool OnLocalVariable(EntityRef.Variable.Local variable, bool isDereferenced)
+            {
+                return isDereferenced;
+            }
+
+            protected override bool OnGlobalVariable(EntityRef.Variable.Global variable, bool isDereferenced)
+            {
+                return isDereferenced;
+            }
+
+            #endregion
+        }
+        private readonly IEntityRefMatcher<bool, bool> _isLikeFunction = new IsLikeFunctionMatcher();
+
+            //context
 
         //interpretation is like function
         [DebuggerStepThrough]
@@ -467,8 +503,8 @@ namespace Prexonite.Compiler
         [DebuggerStepThrough]
         public bool isUnknownId()
         {
-            var id = la.val;
-            return la.kind == _id && !target.Symbols.ContainsKey(id);
+            var id = la.val; // TODO: Bug: id's are not just _id tokens!
+            return la.kind == _id && !target.Symbols.Contains(id);
         }
 
         private bool _tryResolveFunction(SymbolEntry entry, out PFunction func)
@@ -643,6 +679,35 @@ namespace Prexonite.Compiler
             SmartDeclareLocal(id, id, kind, isOverrideDecl);
         }
 
+        private Symbol ToModuleLocalSymbol(string physicalId, SymbolInterpretations kind)
+        {
+            switch (kind)
+            {
+                case SymbolInterpretations.Function:
+                    return new EntitySymbol(EntityRef.Function.Create(physicalId,TargetModule.Name));
+                case SymbolInterpretations.Command:
+                    return new EntitySymbol(EntityRef.Command.Create(physicalId));
+                case SymbolInterpretations.LocalObjectVariable:
+                    return new EntitySymbol(EntityRef.Variable.Local.Create(physicalId));
+                case SymbolInterpretations.LocalReferenceVariable:
+                    return new EntitySymbol(EntityRef.Variable.Local.Create(physicalId), true);
+                case SymbolInterpretations.GlobalObjectVariable:
+                    return new EntitySymbol(EntityRef.Variable.Global.Create(physicalId, TargetModule.Name));
+                case SymbolInterpretations.GlobalReferenceVariable:
+                    return new EntitySymbol(EntityRef.Variable.Global.Create(physicalId, TargetModule.Name), true);
+                case SymbolInterpretations.MacroCommand:
+                    return new EntitySymbol(EntityRef.MacroCommand.Create(physicalId));
+                default:
+                    return
+                        new MessageSymbol(
+                            Message.Error(
+                                string.Format("Invalid symbol interpretation {0}.",
+                                              Enum.GetName(typeof (SymbolInterpretations), kind)), GetPosition(),
+                                MessageClasses.InvalidSymbolInterpretation),
+                            new EntitySymbol(EntityRef.Command.Create(physicalId)));
+            }
+        }
+
         private void SmartDeclareLocal(string logicalId, string physicalId,
             SymbolInterpretations kind, bool isOverrideDecl)
         {
@@ -654,7 +719,16 @@ namespace Prexonite.Compiler
             }
             else
             {
-                target.DefineModuleLocal(kind, logicalId, physicalId);
+                Symbol s;
+                target.Symbols.Declare(logicalId, s = ToModuleLocalSymbol(physicalId,kind));
+                EntitySymbol entitySym;
+                EntityRef.Variable.Local local;
+                if(s.TryGetEntitySymbol(out entitySym) 
+                    && entitySym.Entity.TryGetLocalVariable(out local)
+                    && !target.Function.Variables.Contains(local.Id))
+                {
+                    target.Function.Variables.Add(local.Id);
+                }
             }
         }
 
@@ -1087,11 +1161,53 @@ namespace Prexonite.Compiler
             }
         }
 
+        private static readonly AssembleAstHandler AssembleAst = new AssembleAstHandler();
+        private class AssembleAstHandler : ISymbolHandler<Tuple<Parser, PCall>, AstGetSet>
+        {
+            public AstGetSet HandleEntity(EntitySymbol symbol, Tuple<Parser,PCall> argument)
+            {
+                var access = AstGetSetEntity.Create(argument.Item1.GetPosition(), argument.Item2, symbol.Entity);
+                if(symbol.IsDereferenced)
+                {
+                    return AstIndirectCall.Create(argument.Item1.GetPosition(), access);
+                }
+                else
+                {
+                    return access;
+                }
+            }
+
+            public AstGetSet HandleMessage(MessageSymbol symbol, Tuple<Parser, PCall> argument)
+            {
+                throw new NotImplementedException();
+            }
+
+            public AstGetSet HandleMacroInstance(MacroInstanceSymbol symbol, Tuple<Parser, PCall> argument)
+            {
+                throw new NotImplementedException();
+            }
+        }
+
+        private AstGetSet _assembleInvocation(Symbol sym)
+        {
+            return sym.HandleWith(AssembleAst, Tuple.Create(this, PCall.Get));
+        }
+
+        public void EnsureInScope(Symbol symbol)
+        {
+            EntitySymbol es;
+            EntityRef.Variable.Local local;
+            if (symbol.TryGetEntitySymbol(out es) 
+                && es.Entity.TryGetLocalVariable(out local) 
+                && isOuterVariable(local.Id))
+                target.RequireOuterVariable(local.Id);
+        }
+
         private void _fallbackObjectCreation(Parser parser, AstTypeExpr type, out AstExpr expr,
             out ArgumentsProxy args)
         {
             var typeExpr = type as AstDynamicTypeExpression;
-            SymbolEntry fallbackSymbol;
+            Symbol fallbackSymbol;
             if (
                 //is a type expression we understand (Parser currently only generates dynamic type expressions)
                 //  constant type expressions are recognized during optimization
@@ -1105,12 +1221,12 @@ namespace Prexonite.Compiler
                                 //in case neither the built-in type nor the struct constructor exists, 
                                 //  stay with built-in types for predictibility
                                 &&
-                                target.Symbols.TryGetValue(
+                                target.Symbols.TryGet(
                                     Loader.ObjectCreationFallbackPrefix + typeExpr.TypeId,
                                     out fallbackSymbol))
             {
-                if (isLocalVariable(fallbackSymbol.Interpretation) && isOuterVariable(fallbackSymbol.InternalId))
-                    target.RequireOuterVariable(fallbackSymbol.InternalId);
+                
+                EnsureInScope(fallbackSymbol);
 
                 var call = _assembleInvocation(fallbackSymbol);
                 expr = call;
@@ -1138,6 +1254,110 @@ namespace Prexonite.Compiler
         private AstGetSet _createUnknownGetSet()
         {
             return new AstIndirectCall(this, new AstNull(this));
+        }
+
+        public ISourcePosition GetPosition()
+        {
+            return new SourcePosition(scanner.File,t.line,t.col);
+        }
+
+        public AstBlock CurrentBlock
+        {
+            get { return target == null ? null : target.CurrentBlock; }
+        }
+
+        internal AstExpr _NullNode(ISourcePosition position)
+        {
+            var n = new AstNull(position.File, position.Line, position.Column);
+            return new AstIndirectCall(position, PCall.Get, n);
+        }
+
+        private readonly ISymbolHandler<List<Message>, Symbol> _listMessages = new ListMessagesHandler();
+        private class ListMessagesHandler : ISymbolHandler<List<Message>,Symbol>
+        {
+            #region Implementation of ISymbolHandler<in List<Message>,out Symbol>
+
+            public Symbol HandleEntity(EntitySymbol symbol, List<Message> argument)
+            {
+                return symbol;
+            }
+
+            public Symbol HandleMessage(MessageSymbol symbol, List<Message> argument)
+            {
+                argument.Add(symbol.Message);
+                return symbol.Symbol.HandleWith(this, argument);
+            }
+
+            public Symbol HandleMacroInstance(MacroInstanceSymbol symbol, List<Message> argument)
+            {
+                return symbol;
+            }
+
+            #endregion
+        }
+
+        internal bool _TryUseSymbol(string symbolicId, out Symbol symbol)
+        {
+            SymbolStore ss;
+            if (target != null)
+                ss = CurrentBlock.Symbols;
+            else
+                ss = Symbols;
+            if(ss.TryGet(symbolicId,out symbol))
+            {
+                var msgs = new List<Message>(1);
+                symbol = symbol.HandleWith(_listMessages, msgs);
+                if(msgs.Count > 0)
+                {
+                    var seen = new HashSet<String>();
+                    foreach (var message in msgs)
+                    {
+                        var c = message.MessageClass;
+                        if(c != null)
+                            if(seen.Add(c))
+                                continue;
+                        _loader.ReportMessage(message);
+                        if(message.Severity == MessageSeverity.Error)
+                        {
+                            symbol = null;
+                            return false;
+                        }
+                    }
+                }
+                return true;
+            }
+            else
+            {
+                symbol = null;
+                return false;
+            }
+        }
+
+        internal bool _TryUseSymbolEntry(string symbolId, out SymbolEntry entry)
+        {
+            Symbol symbol;
+            EntitySymbol entitySymbol;
+            if(_TryUseSymbol(symbolId, out symbol))
+            {
+                if (symbol.TryGetEntitySymbol(out entitySymbol))
+                {
+                    entry = entitySymbol.ToSymbolEntry();
+                    return true;
+                }
+                else
+                {
+                    SemErr(
+                        string.Format(
+                            "Legacy part of parser cannot deal with symbol {0}. An entity symbol was expected.", symbol));
+                    entry = null;
+                    return false;
+                }
+            }
+            else
+            {
+                entry = null;
+                return false;
+            }
         }
     }
 }

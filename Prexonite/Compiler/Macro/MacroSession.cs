@@ -28,7 +28,9 @@ using System;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.Linq;
+using JetBrains.Annotations;
 using Prexonite.Compiler.Ast;
+using Prexonite.Compiler.Symbolic;
 using Prexonite.Types;
 
 namespace Prexonite.Compiler.Macro
@@ -40,8 +42,8 @@ namespace Prexonite.Compiler.Macro
     {
         private readonly CompilerTarget _target;
         private LoaderOptions _options;
-        private readonly ReadOnlyDictionaryView<string, SymbolEntry> _globalSymbols;
-        private readonly ReadOnlyDictionaryView<string, SymbolEntry> _localSymbols;
+        private readonly SymbolStore _globalSymbols;
+        private readonly SymbolStore _localSymbols;
         private readonly ReadOnlyCollectionView<string> _outerVariables;
         private readonly SymbolCollection _releaseList = new SymbolCollection();
         private readonly SymbolCollection _allocationList = new SymbolCollection();
@@ -61,8 +63,8 @@ namespace Prexonite.Compiler.Macro
             if (target == null)
                 throw new ArgumentNullException("target");
             _target = target;
-            _localSymbols = new ReadOnlyDictionaryView<string, SymbolEntry>(_target.Symbols);
-            _globalSymbols = new ReadOnlyDictionaryView<string, SymbolEntry>(_target.Loader.Symbols);
+            _localSymbols = SymbolStore.Create(_target.Symbols);
+            _globalSymbols = SymbolStore.Create(_target.Loader.Symbols);
             _outerVariables = new ReadOnlyCollectionView<string>(_target.OuterVariables);
 
             _buildCommandToken = target.Loader.RequestBuildCommands();
@@ -71,7 +73,7 @@ namespace Prexonite.Compiler.Macro
         /// <summary>
         ///     Provides read-only access to the local symbol table.
         /// </summary>
-        public ReadOnlyDictionaryView<string, SymbolEntry> LocalSymbols
+        public SymbolStore LocalSymbols
         {
             get { return _localSymbols; }
         }
@@ -79,7 +81,7 @@ namespace Prexonite.Compiler.Macro
         /// <summary>
         ///     Provides read-only access to the global symbol table.
         /// </summary>
-        public ReadOnlyDictionaryView<string, SymbolEntry> GlobalSymbols
+        public SymbolStore GlobalSymbols
         {
             get { return _globalSymbols; }
         }
@@ -118,6 +120,11 @@ namespace Prexonite.Compiler.Macro
         public ILoopBlock CurrentLoopBlock
         {
             get { return _target.CurrentLoopBlock; }
+        }
+
+        public AstBlock CurrentBlock
+        {
+            get { return _target.CurrentBlock; }
         }
 
         /// <summary>
@@ -247,6 +254,7 @@ namespace Prexonite.Compiler.Macro
 
         private class MacroFunctionExpander : IMacroExpander
         {
+            [PublicAPI]
             public const string PartialMacroKey = @"partial\macro";
 
             public void Initialize(CompilerTarget target, AstMacroInvocation invocation,
@@ -378,7 +386,7 @@ namespace Prexonite.Compiler.Macro
                 {
                     if (fe != null)
                     {
-                        contextBlock.Add((AstNode) ce);
+                        contextBlock.Add(ce);
                     }
                     else
                     {
@@ -524,7 +532,7 @@ namespace Prexonite.Compiler.Macro
 
             var node = AstNode._GetOptimizedNode(Target, ast);
 
-            return (AstNode) node;
+            return node;
         }
 
         private static void _reportException(MacroContext context, IMacroExpander expander,
@@ -598,8 +606,7 @@ namespace Prexonite.Compiler.Macro
             var contextVar =
                 CompilerTarget.CreateReadonlyVariable(sctx.CreateNativePValue(context));
 
-            var env = new SymbolTable<PVariable>(1);
-            env.Add(MacroAliases.ContextAlias, contextVar);
+            var env = new SymbolTable<PVariable>(1) {{MacroAliases.ContextAlias, contextVar}};
 
             var sharedVariables =
                 func.Meta[PFunction.SharedNamesKey].List.Select(entry => env[entry.Text]).

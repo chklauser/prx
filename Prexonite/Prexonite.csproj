@@ -146,6 +146,11 @@
     <Compile Include="Commands\PCommandInfo.cs" />
     <Compile Include="Compiler\Ast\AstExpr.cs" />
     <Compile Include="Compiler\Ast\AstGetSetEntity.cs" />
+    <Compile Include="Compiler\Ast\AstLoopBlock.cs" />
+    <Compile Include="Compiler\Ast\AstScopedExpr.cs" />
+    <Compile Include="Compiler\Ast\AstSubBlock.cs" />
+    <Compile Include="Compiler\Ast\IAstFactory.cs" />
+    <Compile Include="Compiler\Ast\StackSemantics.cs" />
     <Compile Include="Compiler\Build\BuildException.cs" />
     <Compile Include="Compiler\Build\BuildFailureException.cs" />
     <Compile Include="Compiler\Build\IBuildEnvironment.cs" />
@@ -170,6 +175,8 @@
     <Compile Include="Compiler\MessageClasses.cs" />
     <Compile Include="Compiler\MessageEventArgs.cs" />
     <Compile Include="Compiler\MessageSeverity.cs" />
+    <Compile Include="Compiler\ParserAstFactory.cs" />
+    <Compile Include="Compiler\Symbolic\Compatibility\LegacyExtensions.cs" />
     <Compile Include="Compiler\Symbolic\Internal\ConflictUnionFallbackStore.cs" />
     <Compile Include="Compiler\Symbolic\Symbol.cs" />
     <Compile Include="Compiler\Symbolic\SymbolInfo.cs" />
@@ -260,7 +267,6 @@
     <Compile Include="Compiler\Ast\ArgumentsProxy.cs" />
     <Compile Include="Compiler\Ast\AstActionBlock.cs" />
     <Compile Include="Compiler\Ast\AstAsmInstruction.cs" />
-    <Compile Include="Compiler\Ast\AstBlockExpression.cs" />
     <Compile Include="Compiler\Ast\AstCoalescence.cs" />
     <Compile Include="Compiler\Ast\AstCondition.cs" />
     <Compile Include="Compiler\Ast\AstConditionalExpression.cs" />
@@ -358,6 +364,7 @@
     <Compile Include="Helper\INamed.cs" />
     <Compile Include="Internal\MetaTableImpl.cs" />
     <Compile Include="Internal\PFunctionTableImpl.cs" />
+    <Compile Include="Internal\ReSharperAttributes.cs" />
     <Compile Include="Modular\EntityRef.cs" />
     <Compile Include="Modular\FunctionDeclaration.cs" />
     <Compile Include="Modular\IResourceDescriptor.cs" />

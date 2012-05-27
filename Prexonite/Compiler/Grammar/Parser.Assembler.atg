@@ -53,13 +53,13 @@ AsmInstruction<AstBlock block>          (.  int arguments = 0;
                                         
                                         (.  //Store variable
                                             target.Function.Variables.Add(id);
-                                            target.DefineModuleLocal(kind, id);
+                                            SmartDeclareLocal(id, kind);
                                         .)
     {   comma
         AsmId<out id>                                        
                                         (.  //Store variable
                                             target.Function.Variables.Add(id);
-                                            target.DefineModuleLocal(kind, id);
+                                            SmartDeclareLocal(id, kind);
                                         .)
     }
 |   //OP ALIAS INSTRUCTIONS
@@ -84,7 +84,7 @@ AsmInstruction<AstBlock block>          (.  int arguments = 0;
                                         (. addLabel(block, id); .)
 |   //NOP/DATA INSTRUCTION
     IF(isAsmInstruction("nop", null))
-    AsmId<out insbase>                  (.  Instruction ins = new Instruction(OpCode.nop); .)
+    AsmId<out insbase>                  (.  var ins = new Instruction(OpCode.nop); .)
     [  plus AsmId<out id>               (.  ins = ins.With(id: id); .)
     ]
                                         (.  addInstruction(block, ins); .)

@@ -34,17 +34,12 @@ namespace Prexonite.Compiler.Ast
     {
         public AstAction Action;
 
-        public AstActionBlock(string file, int line, int column, AstBlock parent, AstAction action)
-            : base(file, line, column,parent)
+        public AstActionBlock(ISourcePosition position, AstBlock parent, AstAction action)
+            : base(position,parent)
         {
             if (action == null)
                 throw new ArgumentNullException("action");
             Action = action;
-        }
-
-        public AstActionBlock(AstBlock parent, AstAction action)
-            : this(parent.File, parent.Line, parent.Column, parent, action)
-        {
         }
 
         protected override void DoEmitCode(CompilerTarget target, StackSemantics stackSemantics)

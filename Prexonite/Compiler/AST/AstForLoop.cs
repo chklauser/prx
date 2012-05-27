@@ -34,25 +34,63 @@ namespace Prexonite.Compiler.Ast
 {
     public class AstForLoop : AstLoop
     {
-        [DebuggerStepThrough]
-        public AstForLoop(string file, int line, int column)
-            : base(file, line, column)
-        {
-            Initialize = new AstBlock(file, line, column);
-            NextIteration = new AstBlock(file, line, column);
-        }
-
-        [DebuggerStepThrough]
-        internal AstForLoop(Parser p)
-            : this(p.scanner.File, p.t.line, p.t.col)
+        public AstForLoop(ISourcePosition position, AstBlock parentBlock)
+            : this(position, new AstSubBlock(
+                position,
+                new AstSubBlock(
+                    position, 
+                    parentBlock, prefix: "init"),
+                prefix:"next"))
         {
         }
 
-        public AstExpr Condition;
-        public AstBlock Initialize;
-        public AstBlock NextIteration;
-        public bool IsPositive = true;
-        public bool IsPrecondition = true;
+        /// <summary>
+        /// This constructor should only be called from the public constructor.
+        /// It is just here to wire up the loop block to be a sub block of the 
+        /// initialization and next iteration blocks. (So that symbols declared in 
+        /// initialization are available in the loop body)
+        /// </summary>
+        /// <param name="position">The source position for this node and all block nodes.</param>
+        /// <param name="nextBlock">The block reserved for the "next iteration" code. 
+        /// It's parent block must be the initialization block.</param>
+        private AstForLoop(ISourcePosition position, AstSubBlock nextBlock)
+            : base(position, nextBlock)
+        {
+            _initialize = (AstSubBlock)nextBlock.LexicalScope;
+            _nextIteration = nextBlock;
+        }
+
+        public AstExpr Condition { get; set; }
+        private readonly AstSubBlock _initialize;
+        public AstSubBlock Initialize
+        {
+            get { return _initialize; }
+        }
+
+        private readonly AstSubBlock _nextIteration;
+        public AstSubBlock NextIteration
+        {
+            get { return _nextIteration; }
+        }
+
+        private bool _isPositive = true;
+        private bool _isPrecondition = true;
+
+        public bool IsPositive
+        {
+            [DebuggerStepThrough]
+            get { return _isPositive; }
+            [DebuggerStepThrough]
+            set { _isPositive = value; }
+        }
+
+        public bool IsPrecondition
+        {
+            [DebuggerStepThrough]
+            get { return _isPrecondition; }
+            [DebuggerStepThrough]
+            set { _isPrecondition = value; }
+        }
 
         public bool IsInitialized
         {
@@ -69,20 +107,22 @@ namespace Prexonite.Compiler.Ast
                 throw new PrexoniteException("AstForLoop requires Condition to be set.");
 
             //Optimize unary not condition
-            _OptimizeNode(target, ref Condition);
-            var unaryCond = Condition as AstUnaryOperator;
+            var condition = Condition;
+
+            _OptimizeNode(target, ref condition);
+            var unaryCond = condition as AstUnaryOperator;
             while (unaryCond != null && unaryCond.Operator == UnaryOperator.LogicalNot)
             {
                 Condition = unaryCond.Operand;
                 IsPositive = !IsPositive;
-                unaryCond = Condition as AstUnaryOperator;
+                unaryCond = condition as AstUnaryOperator;
             }
 
             //Constant conditions
             var conditionIsConstant = false;
-            if (Condition is AstConstant)
+            var constCond = condition as AstConstant;
+            if (constCond != null)
             {
-                var constCond = (AstConstant) Condition;
                 PValue condValue;
                 if (
                     !constCond.ToPValue(target).TryConvertTo(
@@ -111,14 +151,18 @@ namespace Prexonite.Compiler.Ast
                      *  {next}
                      *  jump -> begin
                      */
-                    target.BeginBlock(Block);
+                    target.BeginBlock(Initialize);
                     Initialize.EmitValueCode(target);
                     if (!IsPrecondition) //start with nextIteration
                         target.EmitJump(this, Block.ContinueLabel);
                     target.EmitLabel(this, Block.BeginLabel);
+                    target.BeginBlock(NextIteration);
+                    target.BeginBlock(Block);
                     Block.EmitEffectCode(target);
+                    target.EndBlock();
                     target.EmitLabel(this, Block.ContinueLabel);
                     NextIteration.EmitValueCode(target);
+                    target.EndBlock();
                     target.EmitJump(this, Block.BeginLabel);
                     target.EndBlock();
                 }
@@ -134,19 +178,23 @@ namespace Prexonite.Compiler.Ast
                      *  {condition}
                      *  jump if true -> begin
                      */
-                    target.BeginBlock(Block);
+                    target.BeginBlock(Initialize);
                     Initialize.EmitValueCode(target);
+                    target.BeginBlock(NextIteration);
                     if (IsPrecondition)
                         target.EmitJump(this, conditionLabel);
                     else
                         target.EmitJump(this, Block.ContinueLabel);
                     target.EmitLabel(this, Block.BeginLabel);
+                    target.BeginBlock(Block);
                     Block.EmitEffectCode(target);
+                    target.EndBlock();
                     target.EmitLabel(this, Block.ContinueLabel);
                     NextIteration.EmitValueCode(target);
+                    target.EndBlock();
                     target.EmitLabel(this, conditionLabel);
                     AstLazyLogical.EmitJumpCondition(
-                        target, Condition, Block.BeginLabel, IsPositive);
+                        target, condition, Block.BeginLabel, IsPositive);
                     target.EndBlock();
                 }
             }
@@ -165,7 +213,7 @@ namespace Prexonite.Compiler.Ast
                 if (!IsPrecondition)
                     target.EmitJump(this, Block.ContinueLabel);
                 target.EmitLabel(this, Block.BeginLabel);
-                AstLazyLogical.EmitJumpCondition(target, Condition, Block.BreakLabel, !IsPositive);
+                AstLazyLogical.EmitJumpCondition(target, condition, Block.BreakLabel, !IsPositive);
                 if (IsPrecondition)
                     target.EmitLabel(this, Block.ContinueLabel);
                 NextIteration.EmitValueCode(target);
@@ -183,7 +231,8 @@ namespace Prexonite.Compiler.Ast
                 var blocks = new List<AstBlock>(base.Blocks)
                     {
                         Initialize,
-                        NextIteration
+                        NextIteration,
+                        Block
                     };
                 return blocks.ToArray();
             }

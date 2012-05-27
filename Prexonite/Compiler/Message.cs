@@ -38,14 +38,29 @@ namespace Prexonite.Compiler
             return new Message(MessageSeverity.Error, message, file, line, column, messageClass);
         }
 
+        public static Message Error(string message, ISourcePosition position, string messageClass = null)
+        {
+            return new Message(MessageSeverity.Error, message, position, messageClass);
+        }
+
         public static Message Warning(string message, string file, int line, int column, string messageClass = null)
         {
             return new Message(MessageSeverity.Warning, message, file, line, column,messageClass);
         }
 
+        public static Message Warning(string message, ISourcePosition position, string messageClass = null)
+        {
+            return new Message(MessageSeverity.Warning, message, position, messageClass);
+        }
+
         public static Message Info(string message, string file, int line, int column, string messageClass = null)
         {
             return new Message(MessageSeverity.Info, message, file, line, column,messageClass);
+        }
+
+        public static Message Info(string message, ISourcePosition position, string messageClass = null)
+        {
+            return new Message(MessageSeverity.Info, message, position, messageClass);
         }
 
         public Message(MessageSeverity severity, string text, ISourcePosition position, string messageClass = null)

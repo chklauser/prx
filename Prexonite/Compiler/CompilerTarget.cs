@@ -39,6 +39,7 @@ using System.Linq;
 using Prexonite.Compiler.Ast;
 using Prexonite.Compiler.Macro;
 using Prexonite.Compiler.Symbolic;
+using Prexonite.Compiler.Symbolic.Compatibility;
 using Prexonite.Internal;
 using Prexonite.Modular;
 using Prexonite.Types;
@@ -85,7 +86,7 @@ namespace Prexonite.Compiler
 
         private readonly PFunction _function;
         private readonly Loader _loader;
-        private CompilerTarget _parentTarget;
+        private readonly CompilerTarget _parentTarget;
 
         private MacroSession _macroSession;
         private int _macroSessionReferenceCounter;
@@ -106,7 +107,9 @@ namespace Prexonite.Compiler
         ///     Releases the macro session acquired via <see cref = "AcquireMacroSession" />. Will dispose of the session, if no other release is pending.
         /// </summary>
         /// <param name = "acquiredSession">A session previously acquired through <see cref = "AcquireMacroSession" />.</param>
+// ReSharper disable UnusedParameter.Global
         public void ReleaseMacroSession(MacroSession acquiredSession)
+// ReSharper restore UnusedParameter.Global
         {
             if (_macroSession != acquiredSession)
                 throw new InvalidOperationException(
@@ -138,15 +141,6 @@ namespace Prexonite.Compiler
         {
             [DebuggerStepThrough]
             get { return _parentTarget; }
-            [DebuggerStepThrough]
-            set
-            {
-                _parentTarget = value;
-                var newSym = SymbolStore.Create(_parentTarget != null ? _parentTarget.Symbols : _loader.Symbols);
-                foreach (var s in _symbols)
-                    newSym.Declare(s.Key, s.Value);
-                _symbols = newSym;
-            }
         }
 
         private int _nestedIdCounter;
@@ -156,7 +150,7 @@ namespace Prexonite.Compiler
         #region Construction
 
         [DebuggerStepThrough]
-        public CompilerTarget(Loader loader, PFunction function, AstBlock block)
+        public CompilerTarget(Loader loader, PFunction function, CompilerTarget parentTarget = null, ISourcePosition position = null)
         {
             if (loader == null)
                 throw new ArgumentNullException("loader");
@@ -169,10 +163,10 @@ namespace Prexonite.Compiler
 
             _loader = loader;
             _function = function;
+            _parentTarget = parentTarget;
 
-            _symbols = SymbolStore.Create(loader.Symbols);
-
-            _ast = block;
+            _ast = AstBlock.CreateRootBlock(position ?? new SourcePosition("",-1,-1), parentTarget == null ? SymbolStore.Create(loader.Symbols) : parentTarget.Symbols,
+                                            AstBlock.RootBlockName, Guid.NewGuid().ToString("N"));
         }
 
         #endregion
@@ -195,7 +189,7 @@ namespace Prexonite.Compiler
 
             foreach (var localRefId in MacroAliases.Aliases())
             {
-                DeclareModuleLocal(SymbolInterpretations.LocalReferenceVariable, localRefId, localRefId);
+                Ast.Symbols.Declare(localRefId, new EntitySymbol(EntityRef.Variable.Local.Create(localRefId), true));
                 _outerVariables.Add(localRefId);
                 //remember: outer variables are not added as local variables
             }
@@ -316,15 +310,25 @@ namespace Prexonite.Compiler
 
         #region Symbol Lookup / Combined Symbol Proxy
 
-        private SymbolStore _symbols;
-
         public SymbolStore Symbols
         {
             [DebuggerStepThrough]
-            get { return _symbols; }
+            get { return CurrentBlock.Symbols; }
         }
 
-        //[DebuggerStepThrough]
+        [Obsolete("Use the SymbolStore API to declare module-local symbols.")]
+        public void DeclareModuleLocal(SymbolInterpretations interpretation, string physicalName)
+        {
+            DeclareModuleLocal(interpretation, physicalName, physicalName);
+        }
+
+        [Obsolete("Use the SymbolStore API to declare module-local symbols.")]
+        public void DeclareModuleLocal(SymbolInterpretations interpretation, string logicalId, string physicalId)
+        {
+            var symbol =
+                new SymbolEntry(interpretation, physicalId, Loader.ParentApplication.Module.Name).ToSymbol();
+            Symbols.Declare(logicalId, symbol);
+        }
 
         #endregion
 
@@ -362,27 +366,9 @@ namespace Prexonite.Compiler
 
         #region Manipulation
 
-        #region Symbols
-
-        /// <summary>
-        ///     (Re)declares a local symbol.
-        /// </summary>
-        /// <param name = "kind">The new interpretation for this symbol.</param>
-        /// <param name = "id">The id entered into the symbol table.</param>
-        /// <param name = "translatedId">The (physical) id used when translating the program. (Use for aliases or set to <paramref
-        ///      name = "id" />)</param>
-        [DebuggerStepThrough]
-        public void DeclareModuleLocal(SymbolInterpretations kind, string id, string translatedId)
-        {
-            var module = kind.AssociatedWithModule() ? Loader.ParentApplication.Module.Name : null;
-            Symbols[id] = new SymbolEntry(kind, translatedId, module);
-        }
-
-        #endregion //Symbols
-
         #region Scope Block Stack
 
-        private readonly Stack<AstBlock> _scopeBlocks = new Stack<AstBlock>();
+        private readonly Stack<AstSubBlock> _scopeBlocks = new Stack<AstSubBlock>();
 
         public IEnumerable<AstBlock> ScopeBlocks
         {
@@ -416,7 +402,7 @@ namespace Prexonite.Compiler
         }
 
         [DebuggerStepThrough]
-        public void BeginBlock(AstBlock bl)
+        public void BeginBlock(AstSubBlock bl)
         {
             if (bl == null)
                 throw new ArgumentNullException("bl");
@@ -424,17 +410,16 @@ namespace Prexonite.Compiler
         }
 
         [DebuggerStepThrough]
-        public AstBlock BeginBlock(string prefix)
+        public AstSubBlock BeginBlock(string prefix)
         {
             var prototype = _scopeBlocks.Count > 0 ? _scopeBlocks.Peek() : _ast;
-            var bl = new AstBlock(prototype.File, prototype.Line, prototype.Column,
-                GenerateLocalId(), prefix);
+            var bl = new AstSubBlock(prototype, CurrentBlock, GenerateLocalId(), prefix);
             _scopeBlocks.Push(bl);
             return bl;
         }
 
         [DebuggerStepThrough]
-        public AstBlock BeginBlock()
+        public AstSubBlock BeginBlock()
         {
             return BeginBlock((string) null);
         }

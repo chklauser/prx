@@ -29,7 +29,7 @@ using Prexonite.Types;
 
 namespace Prexonite.Compiler.Ast
 {
-    public class AstTryCatchFinally : AstNode,
+    public class AstTryCatchFinally : AstSubBlock,
                                       IAstHasBlocks
     {
         public AstBlock TryBlock { get; set; }
@@ -37,16 +37,8 @@ namespace Prexonite.Compiler.Ast
         public AstBlock FinallyBlock { get; set; }
         public AstGetSet ExceptionVar { get; set; }
 
-        public AstTryCatchFinally(string file, int line, int column)
-            : base(file, line, column)
-        {
-            TryBlock = new AstSubBlock(file, line, column, this);
-            CatchBlock = new AstSubBlock(file, line, column, this);
-            FinallyBlock = new AstSubBlock(file, line, column, this);
-        }
-
-        internal AstTryCatchFinally(Parser p)
-            : base(p)
+        public AstTryCatchFinally(ISourcePosition p, AstBlock lexicalScope)
+            : base(p, lexicalScope)
         {
             TryBlock = new AstSubBlock(p, this);
             CatchBlock = new AstSubBlock(p, this);

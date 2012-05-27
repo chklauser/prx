@@ -76,7 +76,7 @@ namespace Prexonite.Compiler
             _functionTargetsIterator = new FunctionTargetsIterator(this);
 
             CreateFunctionTarget(
-                ParentApplication._InitializationFunction, new AstBlock("~NoFile", -1, -1));
+                ParentApplication._InitializationFunction);
 
             if (options.RegisterCommands)
                 RegisterExistingCommands();
@@ -204,12 +204,12 @@ namespace Prexonite.Compiler
         }
 
         //[DebuggerStepThrough]
-        public CompilerTarget CreateFunctionTarget(PFunction func, AstBlock block)
+        public CompilerTarget CreateFunctionTarget(PFunction func, CompilerTarget parentTarget = null, ISourcePosition sourcePosition = null)
         {
             if (func == null)
                 throw new ArgumentNullException("func");
 
-            var target = new CompilerTarget(this, func, block);
+            var target = new CompilerTarget(this, func,parentTarget,sourcePosition);
             if (_functionTargets.ContainsKey(func.Id) &&
                 (!ParentApplication.Meta.GetDefault(Application.AllowOverridingKey, true).Switch))
                 throw new PrexoniteException(
@@ -217,7 +217,6 @@ namespace Prexonite.Compiler
                         ParentApplication.Id,
                         func.Id));
 
-            //The function target is added nontheless in order not to confuse the compiler
             _functionTargets[func.Id] = target;
 
             return target;
@@ -965,7 +964,7 @@ namespace Prexonite.Compiler
         /// <summary>
         ///     The name of the resolver command for build blocks.
         /// </summary>
-        public const string BuildResolveCommand = "Resolve";
+        public const string BuildResolveCommand = "ResolveOperator";
 
         /// <summary>
         ///     The name of the getloader command for build blocks
@@ -1206,7 +1205,7 @@ namespace Prexonite.Compiler
         {
             protected override object OnNotMatched(EntityRef entity, SymbolKinds argument)
             {
-                throw new NotImplementedException();
+                throw new PrexoniteException(string.Format("Cannot split up entity {0} into entity types.", entity));
             }
 
             protected override object OnCommand(EntityRef.Command command, SymbolKinds argument)

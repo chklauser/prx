@@ -34,7 +34,7 @@ namespace Prexonite.Compiler.Ast
     public class AstCreateCoroutine : AstExpr,
                                       IAstHasExpressions
     {
-        public AstExpr Expression;
+        private AstExpr _expression;
 
         private ArgumentsProxy _proxy;
 
@@ -48,6 +48,12 @@ namespace Prexonite.Compiler.Ast
         public AstExpr[] Expressions
         {
             get { return Arguments.ToArray(); }
+        }
+
+        public AstExpr Expression
+        {
+            get { return _expression; }
+            set { _expression = value; }
         }
 
         #endregion
@@ -85,17 +91,16 @@ namespace Prexonite.Compiler.Ast
 
         public override bool TryOptimize(CompilerTarget target, out AstExpr expr)
         {
-            _OptimizeNode(target, ref Expression);
+            Expression = _GetOptimizedNode(target, Expression);
 
             //Optimize arguments
-            AstExpr oArg;
             foreach (var arg in _arguments.ToArray())
             {
                 if (arg == null)
                     throw new PrexoniteException(
                         "Invalid (null) argument in CreateCoroutine node (" + ToString() +
                             ") detected at position " + _arguments.IndexOf(arg) + ".");
-                oArg = _GetOptimizedNode(target, arg);
+                var oArg = _GetOptimizedNode(target, arg);
                 if (!ReferenceEquals(oArg, arg))
                 {
                     var idx = _arguments.IndexOf(arg);

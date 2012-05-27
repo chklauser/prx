@@ -25,6 +25,9 @@
 //  IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 using System;
+using JetBrains.Annotations;
+using Prexonite.Compiler.Symbolic;
+using Prexonite.Compiler.Symbolic.Compatibility;
 using Prexonite.Types;
 
 namespace Prexonite.Compiler.Ast
@@ -33,8 +36,8 @@ namespace Prexonite.Compiler.Ast
                                     IAstHasExpressions,
                                     IAstPartiallyApplicable
     {
-        private AstExpr _operand;
-        private UnaryOperator _operator;
+        private readonly AstExpr _operand;
+        private readonly UnaryOperator _operator;
 
         public SymbolEntry Implementation { get; set; }
 
@@ -53,23 +56,23 @@ namespace Prexonite.Compiler.Ast
 
         internal static AstUnaryOperator _Create(Parser p, UnaryOperator op, AstExpr operand)
         {
-            SymbolEntry impl;
+            Symbol impl;
 
             switch (op)
             {
                 case UnaryOperator.PreIncrement:
                 case UnaryOperator.PostIncrement:
-                    impl = Resolve(p, OperatorNames.Prexonite.Addition);
+                    impl = ResolveOperator(p, OperatorNames.Prexonite.Addition);
                     break;
                 case UnaryOperator.PreDecrement:
                 case UnaryOperator.PostDecrement:
-                    impl = Resolve(p, OperatorNames.Prexonite.Subtraction);
+                    impl = ResolveOperator(p, OperatorNames.Prexonite.Subtraction);
                     break;
                 default:
-                    impl = Resolve(p, OperatorNames.Prexonite.GetName(op));
+                    impl = ResolveOperator(p, OperatorNames.Prexonite.GetName(op));
                     break;
             }
-            return new AstUnaryOperator(p.scanner.File, p.t.line, p.t.col, op, operand, impl);
+            return new AstUnaryOperator(p.scanner.File, p.t.line, p.t.col, op, operand, impl.ToSymbolEntry());
         }
 
         #region IAstHasExpressions Members
@@ -82,13 +85,11 @@ namespace Prexonite.Compiler.Ast
         public UnaryOperator Operator
         {
             get { return _operator; }
-            set { _operator = value; }
         }
 
         public AstExpr Operand
         {
             get { return _operand; }
-            set { _operand = value; }
         }
 
         #endregion
@@ -98,10 +99,11 @@ namespace Prexonite.Compiler.Ast
         public override bool TryOptimize(CompilerTarget target, out AstExpr expr)
         {
             expr = null;
-            _OptimizeNode(target, ref _operand);
-            if (_operand is AstConstant)
+            var operand = _operand;
+            _OptimizeNode(target, ref operand);
+            var constOperand = operand as AstConstant;
+            if (constOperand != null)
             {
-                var constOperand = (AstConstant) _operand;
                 var valueOperand = constOperand.ToPValue(target);
                 PValue result;
                 switch (_operator)
@@ -145,7 +147,7 @@ namespace Prexonite.Compiler.Ast
                 case UnaryOperator.UnaryNegation:
                 case UnaryOperator.LogicalNot:
                 case UnaryOperator.OnesComplement:
-                    var doubleNegation = _operand as AstUnaryOperator;
+                    var doubleNegation = operand as AstUnaryOperator;
                     if (doubleNegation != null && doubleNegation._operator == _operator)
                     {
                         expr = doubleNegation._operand;
@@ -159,7 +161,6 @@ namespace Prexonite.Compiler.Ast
                     //No optimization
                     break;
             }
-            expr = null;
             return false;
         }
 
@@ -218,9 +219,10 @@ namespace Prexonite.Compiler.Ast
                         //The get/set fallback
                         var assignPrototype = complex.GetCopy();
                         var assignment = new AstModifyingAssignment(
-                            assignPrototype.File, assignPrototype.Line, assignPrototype.Column, isIncrement
+                            assignPrototype.File, assignPrototype.Line, assignPrototype.Column,
+                            isIncrement
                                 ? BinaryOperator.Addition
-                                : BinaryOperator.Subtraction, assignPrototype, Implementation);
+                                : BinaryOperator.Subtraction, assignPrototype, Implementation, target.CurrentBlock);
                         if (assignPrototype.Call == PCall.Get)
                             assignPrototype.Arguments.Add(new AstConstant(File, Line, Column, 1));
                         else
@@ -243,11 +245,15 @@ namespace Prexonite.Compiler.Ast
                             "Node of type " + _operand.GetType() +
                                 " does not support increment/decrement operators.");
                     break;
+                // ReSharper disable RedundantCaseLabel
                 case UnaryOperator.UnaryNegation:
                 case UnaryOperator.LogicalNot:
                 case UnaryOperator.OnesComplement:
+                // ReSharper restore RedundantCaseLabel
+                // ReSharper disable RedundantEmptyDefaultSwitchBranch
                 default:
                     break; //No effect
+                // ReSharper restore RedundantEmptyDefaultSwitchBranch
             }
         }
 
@@ -335,6 +341,7 @@ namespace Prexonite.Compiler.Ast
 
     public enum UnaryOperator
     {
+        [PublicAPI]
         None,
         UnaryNegation,
         LogicalNot,

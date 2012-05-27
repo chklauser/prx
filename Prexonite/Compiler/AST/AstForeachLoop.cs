@@ -26,6 +26,7 @@
 
 using System;
 using System.Diagnostics;
+using System.Globalization;
 using Prexonite.Compiler.Cil;
 using Prexonite.Types;
 using NoDebug = System.Diagnostics.DebuggerNonUserCodeAttribute;
@@ -34,15 +35,8 @@ namespace Prexonite.Compiler.Ast
 {
     public class AstForeachLoop : AstLoop
     {
-        [DebuggerStepThrough]
-        public AstForeachLoop(string file, int line, int column)
-            : base(file, line, column)
-        {
-        }
-
-        [DebuggerStepThrough]
-        internal AstForeachLoop(Parser p)
-            : this(p.scanner.File, p.t.line, p.t.col)
+        public AstForeachLoop(ISourcePosition position, AstBlock parentBlock)
+            : base(position, parentBlock)
         {
         }
 
@@ -126,43 +120,43 @@ namespace Prexonite.Compiler.Ast
             else
                 emitHint = true;
 
-            var @try = new AstTryCatchFinally(File, Line, Column)
-                {
-                    TryBlock = new AstActionBlock
-                        (
-                        this,
-                        delegate
-                            {
-                                target.EmitJump(this, Block.ContinueLabel);
+            var @try = new AstTryCatchFinally(this, Block);
 
-                                //Assignment (begin)
-                                target.EmitLabel(this, Block.BeginLabel);
-                                getCurrentAddr = target.Code.Count;
-                                element.EmitEffectCode(target);
+            @try.TryBlock = new AstActionBlock
+                (
+                this, @try,
+                delegate
+                    {
+                        target.EmitJump(this, Block.ContinueLabel);
 
-                                //Code block
-                                Block.EmitEffectCode(target);
+                        //Assignment (begin)
+                        target.EmitLabel(this, Block.BeginLabel);
+                        getCurrentAddr = target.Code.Count;
+                        element.EmitEffectCode(target);
 
-                                //Condition (continue)
-                                target.EmitLabel(this, Block.ContinueLabel);
-                                moveNextAddr = target.Code.Count;
-                                target.EmitLoadLocal(List, enumVar);
-                                target.EmitGetCall(List, 0, "MoveNext");
-                                target.EmitJumpIfTrue(this, Block.BeginLabel);
+                        //Code block
+                        Block.EmitEffectCode(target);
 
-                                //Break
-                                target.EmitLabel(this, Block.BreakLabel);
-                            }),
-                    FinallyBlock = new AstActionBlock
-                        (
-                        this,
-                        delegate
-                            {
-                                disposeAddr = target.Code.Count;
-                                target.EmitLoadLocal(List, enumVar);
-                                target.EmitCommandCall(List, 1, Engine.DisposeAlias, true);
-                            })
-                };
+                        //Condition (continue)
+                        target.EmitLabel(this, Block.ContinueLabel);
+                        moveNextAddr = target.Code.Count;
+                        target.EmitLoadLocal(List, enumVar);
+                        target.EmitGetCall(List, 0, "MoveNext");
+                        target.EmitJumpIfTrue(this, Block.BeginLabel);
+
+                        //Break
+                        target.EmitLabel(this, Block.BreakLabel);
+                    });
+            @try.FinallyBlock = new AstActionBlock
+                (
+                this, @try,
+                delegate
+                    {
+                        disposeAddr = target.Code.Count;
+                        target.EmitLoadLocal(List, enumVar);
+                        target.EmitCommandCall(List, 1, Engine.DisposeAlias, true);
+                    });
+                
 
             @try.EmitEffectCode(target);
 
@@ -190,12 +184,14 @@ namespace Prexonite.Compiler.Ast
                                         {
                                             var entry = hintEntry.List;
                                             if (entry[0] == ForeachHint.Key &&
-                                                entry[index].Text == original.ToString())
+                                                entry[index].Text == original.ToString(CultureInfo.InvariantCulture))
                                             {
-                                                entry[index] = newAddr.ToString();
+                                                entry[index] = newAddr.ToString(CultureInfo.InvariantCulture);
                                                 // AddressChangeHook.ctor can be trusted not to call the closure.
                                                 // ReSharper disable PossibleNullReferenceException
+                                                // ReSharper disable AccessToModifiedClosure
                                                 hook.InstructionIndex = newAddr;
+                                                // ReSharper restore AccessToModifiedClosure
                                                 // ReSharper restore PossibleNullReferenceException
                                                 original = newAddr;
                                             }

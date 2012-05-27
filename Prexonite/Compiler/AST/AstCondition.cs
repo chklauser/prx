@@ -33,31 +33,15 @@ namespace Prexonite.Compiler.Ast
                                 IAstHasBlocks,
                                 IAstHasExpressions
     {
-        public AstCondition(
-            string file, int line, int column, AstExpr condition, bool isNegative)
-            : base(file, line, column)
+        public AstCondition(ISourcePosition p, AstBlock parentBlock, AstExpr condition, bool isNegative = false)
+            : base(p)
         {
-            IfBlock = new AstBlock(file, line, column);
-            ElseBlock = new AstBlock(file, line, column);
+            IfBlock = new AstSubBlock(p,parentBlock,prefix: "if");
+            ElseBlock = new AstSubBlock(p,parentBlock,prefix:"else");
             if (condition == null)
                 throw new ArgumentNullException("condition");
             Condition = condition;
             IsNegative = isNegative;
-        }
-
-        public AstCondition(string file, int line, int column, AstExpr condition)
-            : this(file, line, column, condition, false)
-        {
-        }
-
-        internal AstCondition(Parser p, AstExpr condition, bool isNegative)
-            : this(p.scanner.File, p.t.line, p.t.col, condition, isNegative)
-        {
-        }
-
-        internal AstCondition(Parser p, AstExpr condition)
-            : this(p, condition, false)
-        {
         }
 
         public AstBlock IfBlock;

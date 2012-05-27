@@ -30,6 +30,7 @@ using System.Diagnostics;
 using System.Linq;
 using System.Text;
 using Prexonite.Commands.Core.Operators;
+using Prexonite.Compiler.Symbolic.Compatibility;
 using Prexonite.Types;
 
 namespace Prexonite.Compiler.Ast
@@ -76,8 +77,8 @@ namespace Prexonite.Compiler.Ast
 
         internal AstStringConcatenation Create(Parser p, params AstExpr[] arguments)
         {
-            var interpretation = Resolve(p, OperatorNames.Prexonite.Addition);
-            return new AstStringConcatenation(p.scanner.File, p.t.line, p.t.col, interpretation,
+            var interpretation = ResolveOperator(p, OperatorNames.Prexonite.Addition);
+            return new AstStringConcatenation(p.scanner.File, p.t.line, p.t.col, interpretation.ToSymbolEntry(),
                 arguments);
         }
 
@@ -142,7 +143,7 @@ namespace Prexonite.Compiler.Ast
                     (aggregate, right) =>
                         new AstBinaryOperator(File, Line, Column, aggregate, BinaryOperator.Addition,
                             right,
-                            Implementation));
+                            Implementation, target.CurrentBlock));
                 op.EmitCode(target,stackSemantics);
             }
             else if (Arguments.Count == 1)

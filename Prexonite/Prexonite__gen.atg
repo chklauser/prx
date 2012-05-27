@@ -245,13 +245,13 @@ AsmInstruction<AstBlock block>          (.  int arguments = 0;
                                         
                                         (.  //Store variable
                                             target.Function.Variables.Add(id);
-                                            target.DefineModuleLocal(kind, id);
+                                            SmartDeclareLocal(kind, id);
                                         .)
     {   comma
         AsmId<out id>                                        
                                         (.  //Store variable
                                             target.Function.Variables.Add(id);
-                                            target.DefineModuleLocal(kind, id);
+                                            SmartDeclareLocal(kind, id);
                                         .)
     }
 |   //OP ALIAS INSTRUCTIONS
@@ -709,9 +709,11 @@ Primary<out AstExpr expr>
                                         (.  expr = null;
                                             AstGetSet complex = null; bool declared; .)
 =
-	(.  _pushLexerState(Lexer.Asm); .)	(.	AstBlock blockExpr = new AstBlock(this); .)
+	(.  _pushLexerState(Lexer.Asm); .)	(.	AstBlock blockExpr = target.BeginBlock("asm"); .)
     asm lpar { AsmInstruction<blockExpr> } rpar
-    (.  _popLexerState(); .)			(.	expr = blockExpr; .)
+    (.  _popLexerState(); .)			(.	expr = blockExpr; 
+											target.EndBlock(); 
+										.)
 |   Constant<out expr>
 |   CoroutineCreation<out expr>
 |   ListLiteral<out expr>
@@ -790,13 +792,15 @@ HashLiteral<out AstExpr expr>
 .
 
 LoopExpr<out AstExpr expr>
-										(.	AstBlock dummyBlock = new AstBlock(this);
+										(.	AstBlock dummyBlock = target.BeginBlock("loopExpr");
 										.)
 =
 	(	WhileLoop<dummyBlock>
 	|	ForLoop<dummyBlock>
 	|	ForeachLoop<dummyBlock>
-	)									(.	expr = new AstLoopExpression(this, (AstLoop) dummyBlock.Statements[0]); .)
+	)									(.	expr = new AstLoopExpression(this, (AstLoop) dummyBlock.Statements[0]);
+											target.EndBlock();
+										.)
 .										
 											
 
@@ -824,9 +828,8 @@ LambdaExpression<out AstExpr expr>
                                             PFunction func = TargetApplication.CreateFunction(generateLocalId());                                             
                                             func.Meta[Application.ImportKey] = target.Function.Meta[Application.ImportKey];
                                             func.Meta[PFunction.ParentFunctionKey] = target.Function.Id;
-                                            Loader.CreateFunctionTarget(func, new AstBlock(this));
+                                            Loader.CreateFunctionTarget(func, target, GetPosition());
                                             CompilerTarget ft = FunctionTargets[func];
-                                            ft.ParentTarget = target;
                                         .)
 =
 (   FormalArg<ft>
@@ -873,9 +876,8 @@ LazyExpression<out AstExpr expr>
                                             PFunction func = TargetApplication.CreateFunction(generateLocalId());
                                             func.Meta[Application.ImportKey] = target.Function.Meta[Application.ImportKey];
                                             func.Meta[PFunction.ParentFunctionKey] = target.Function.Id;
-                                            Loader.CreateFunctionTarget(func, new AstBlock(this));
+                                            Loader.CreateFunctionTarget(func, new AstBlock(this), target, GetPosition());
                                             CompilerTarget ft = FunctionTargets[func];
-                                            ft.ParentTarget = target;
                                             
                                             //Switch to nested target
                                             CompilerTarget oldTarget = target;
@@ -1250,7 +1252,8 @@ BuildBlock
 =
 	SYNC build                  (.  PFunction func = TargetApplication.CreateFunction();
                                     CompilerTarget lastTarget = target; 
-                                    CompilerTarget buildBlockTarget = Loader.CreateFunctionTarget(func, new AstBlock(this));
+                                    CompilerTarget buildBlockTarget = 
+										Loader.CreateFunctionTarget(func, new AstBlock(this), sourcePosition: GetPosition());
                                     target = buildBlockTarget;
                                     Loader.DeclareBuildBlockCommands(target);
                                     _pushLexerState(Lexer.Local);                                
@@ -1391,7 +1394,7 @@ FunctionDefinition<out PFunction func>
                                                     mark_as_let(target.Function,localId);
                                             }
                                             
-                                            Loader.CreateFunctionTarget(func, new AstBlock(this));
+                                            Loader.CreateFunctionTarget(func, new AstBlock(this), target, GetPosition());
                                         }
                                         CompilerTarget ft = FunctionTargets[func];
                                         
@@ -1403,7 +1406,7 @@ FunctionDefinition<out PFunction func>
                                             //Create derived body function
                                             derId = ft.GenerateLocalId();
                                             derBody = TargetApplication.CreateFunction(derId);
-                                            Loader.CreateFunctionTarget(derBody, new AstBlock(this));
+                                            Loader.CreateFunctionTarget(derBody, new AstBlock(this), ft, GetPosition());
                                             derBody.Meta[PFunction.LogicalIdKey] = id ?? funcId;
                                             if(isCoroutine)
                                             {
@@ -1417,7 +1420,6 @@ FunctionDefinition<out PFunction func>
                                             // -> Let derived stub have the physical function id
                                             ct = FunctionTargets[derBody];
                                             cst = ft;
-                                            ct.ParentTarget = cst;
                                         }
                                         
                                         if(isNested) //Link to parent in case of a nested function
@@ -2203,7 +2205,7 @@ Condition<AstBlock block>
 .
 
 WhileLoop<AstBlock block>
-                                (.  AstWhileLoop loop = new AstWhileLoop(this); .)
+                                (.  AstWhileLoop loop = new AstWhileLoop(GetPosition(),CurrentBlock); .)
 =
 (   (   while  | until          (.  loop.IsPositive = false; .)    
     )                           
@@ -2225,7 +2227,7 @@ WhileLoop<AstBlock block>
 ForLoop<AstBlock block>         (.  AstForLoop loop;
                                 .)
 =
-    for                         (.  loop = new AstForLoop(this); target.BeginBlock(loop.Block); .)
+    for                         (.  loop = new AstForLoop(GetPosition(), CurrentBlock); target.BeginBlock(loop.Block); .)
     lpar StatementBlock<loop.Initialize>
     (
 		do StatementBlock<loop.NextIteration> 

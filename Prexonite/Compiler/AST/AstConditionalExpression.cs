@@ -61,7 +61,7 @@ namespace Prexonite.Compiler.Ast
         public AstExpr ElseExpression;
         public AstExpr Condition;
         public bool IsNegative;
-        private static int depth;
+        private static int _depth;
 
         #region IAstHasExpressions Members
 
@@ -115,9 +115,9 @@ namespace Prexonite.Compiler.Ast
             _OptimizeNode(target, ref IfExpression);
             _OptimizeNode(target, ref ElseExpression);
 
-            var elseLabel = "elsei\\" + depth + "\\assembler";
-            var endLabel = "endifi\\" + depth + "\\assembler";
-            depth++;
+            var elseLabel = "elsei\\" + _depth + "\\assembler";
+            var endLabel = "endifi\\" + _depth + "\\assembler";
+            _depth++;
 
             //Emit
             //if => block / else => block

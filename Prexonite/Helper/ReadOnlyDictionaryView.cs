@@ -27,6 +27,10 @@
 using System;
 using System.Collections;
 using System.Collections.Generic;
+using System.Linq;
+using JetBrains.Annotations;
+using Prexonite.Compiler;
+using Prexonite.Compiler.Symbolic;
 
 namespace Prexonite
 {
@@ -35,17 +39,8 @@ namespace Prexonite
     /// </summary>
     /// <typeparam name = "TValue">The type of values stored in the table.</typeparam>
     /// <typeparam name="TKey">The type of keys used to access values in the table. </typeparam>
-    public class ReadOnlyDictionaryView<TKey, TValue> : IDictionary<TKey, TValue>
+    public abstract class ReadOnlyDictionaryView<TKey, TValue> : IDictionary<TKey, TValue>
     {
-        private readonly IDictionary<TKey, TValue> _table;
-
-        public ReadOnlyDictionaryView(IDictionary<TKey, TValue> table)
-        {
-            if (table == null)
-                throw new ArgumentNullException("table");
-            _table = table;
-        }
-
         #region Throwing exceptions
 
         IEnumerator IEnumerable.GetEnumerator()
@@ -63,25 +58,9 @@ namespace Prexonite
             return new NotSupportedException("Cannot modify read-only symbol view.");
         }
 
-        public void Clear()
+        void ICollection<KeyValuePair<TKey, TValue>>.Clear()
         {
             throw _notSupportedException();
-        }
-
-        public bool Remove(KeyValuePair<string, TValue> item)
-        {
-            throw _notSupportedException();
-        }
-
-        public bool Remove(string key)
-        {
-            throw _notSupportedException();
-        }
-
-        TValue IDictionary<TKey, TValue>.this[TKey key]
-        {
-            get { return _table[key]; }
-            set { throw _notSupportedException(); }
         }
 
         bool ICollection<KeyValuePair<TKey, TValue>>.Remove(KeyValuePair<TKey, TValue> item)
@@ -99,59 +78,115 @@ namespace Prexonite
             throw _notSupportedException();
         }
 
-        #endregion
-
-        #region Delegated from table
-
-        public IEnumerator<KeyValuePair<TKey, TValue>> GetEnumerator()
-        {
-            return _table.GetEnumerator();
+        TValue IDictionary<TKey, TValue>.this[TKey key] {
+            get { return Get(key); }
+// ReSharper disable ValueParameterNotUsed
+            set { _notSupportedException(); }
+// ReSharper restore ValueParameterNotUsed
         }
 
-        public bool Contains(KeyValuePair<TKey, TValue> item)
+        [PublicAPI]
+        TValue this[TKey key]
         {
-            return _table.Contains(item);
+            get { return Get(key); }
         }
 
-        public void CopyTo(KeyValuePair<TKey, TValue>[] array, int arrayIndex)
-        {
-            _table.CopyTo(array, arrayIndex);
-        }
-
-        public int Count
-        {
-            get { return _table.Count; }
-        }
+        #region Implementation of ICollection<KeyValuePair<TKey,TValue>>
 
         public bool IsReadOnly
         {
-            get { return _table.IsReadOnly; }
+            get { return true; }
         }
 
-        public bool ContainsKey(TKey key)
+        #endregion
+
+        #endregion
+
+        #region Delegated
+
+        public abstract IEnumerator<KeyValuePair<TKey, TValue>> GetEnumerator();
+
+        public abstract bool Contains(KeyValuePair<TKey, TValue> item);
+
+        public abstract void CopyTo(KeyValuePair<TKey, TValue>[] array, int arrayIndex);
+
+        public abstract int Count { get; }
+
+        public abstract bool ContainsKey(TKey key);
+
+        public abstract bool TryGetValue(TKey key, out TValue value);
+
+        protected abstract TValue Get(TKey key);
+
+        public abstract ICollection<TKey> Keys { get; }
+
+        public abstract ICollection<TValue> Values { get; }
+
+        #endregion
+    }
+
+    internal class SymbolStoreView : ReadOnlyDictionaryView<String, Symbol>
+    {
+        private readonly SymbolStore _store;
+
+        public SymbolStoreView(SymbolStore store)
         {
-            return _table.ContainsKey(key);
+            _store = store;
         }
 
-        public bool TryGetValue(TKey key, out TValue value)
+        public override int Count
         {
-            return _table.TryGetValue(key, out value);
+            get { return _store.Count; }
         }
 
-        public TValue this[TKey key]
+        public override ICollection<String> Keys
         {
-            get { return _table[key]; }
-            set { _table[key] = value; }
+            get { return _store.Select(x => x.Key).ToArray(); }
         }
 
-        public ICollection<TKey> Keys
+        public override ICollection<Symbol> Values
         {
-            get { return _table.Keys; }
+            get { return _store.Select(x => x.Value).ToArray(); }
         }
 
-        public ICollection<TValue> Values
+        public override IEnumerator<KeyValuePair<String, Symbol>> GetEnumerator()
         {
-            get { return _table.Values; }
+            return _store.GetEnumerator();
+        }
+
+        public override bool Contains(KeyValuePair<String, Symbol> item)
+        {
+            return _store.Contains(item);
+        }
+
+        public override void CopyTo(KeyValuePair<String, Symbol>[] array, int arrayIndex)
+        {
+            _store.ToArray().CopyTo(array, arrayIndex);
+        }
+
+        public override bool ContainsKey(String key)
+        {
+            return _store.Contains(key);
+        }
+
+        public override bool TryGetValue(String key, out Symbol value)
+        {
+            return _store.TryGet(key, out value);
+        }
+
+        #region Overrides of ReadOnlyDictionaryView<string,Symbol>
+
+        protected override Symbol Get(string key)
+        {
+            Symbol symbol;
+            if(_store.TryGet(key, out symbol))
+            {
+                return symbol;
+            }
+            else
+            {
+                return SymbolStore._CreateSymbolNotFoundError(key, new SourcePosition("", -1, -1));
+            }
         }
 
         #endregion

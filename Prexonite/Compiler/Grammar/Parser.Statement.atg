@@ -440,7 +440,7 @@ Condition<AstBlock block>
 .
 
 WhileLoop<AstBlock block>
-                                (.  AstWhileLoop loop = new AstWhileLoop(this); .)
+                                (.  AstWhileLoop loop = new AstWhileLoop(GetPosition(),CurrentBlock); .)
 =
 (   (   while  | until          (.  loop.IsPositive = false; .)    
     )                           
@@ -462,7 +462,7 @@ WhileLoop<AstBlock block>
 ForLoop<AstBlock block>         (.  AstForLoop loop;
                                 .)
 =
-    for                         (.  loop = new AstForLoop(this); target.BeginBlock(loop.Block); .)
+    for                         (.  loop = new AstForLoop(GetPosition(), CurrentBlock); target.BeginBlock(loop.Block); .)
     lpar StatementBlock<loop.Initialize>
     (
 		do StatementBlock<loop.NextIteration> 

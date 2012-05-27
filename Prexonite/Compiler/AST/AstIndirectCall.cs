@@ -56,6 +56,12 @@ namespace Prexonite.Compiler.Ast
             Subject = subject;
         }
 
+        public AstIndirectCall(ISourcePosition position, PCall call, AstExpr subject)
+            : base(position,call)
+        {
+            Subject = subject;
+        }
+
         internal AstIndirectCall(Parser p, PCall call, AstExpr subject)
             : this(p.scanner.File, p.t.line, p.t.col, call, subject)
         {
@@ -207,5 +213,10 @@ namespace Prexonite.Compiler.Ast
         }
 
         #endregion
+
+        public static AstGetSet Create(ISourcePosition position, AstExpr astExpr, PCall call = PCall.Get)
+        {
+            return new AstIndirectCall(position,call,astExpr);
+        }
     }
 }

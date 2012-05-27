@@ -133,7 +133,7 @@ namespace Prexonite.Compiler.Ast
 
                             if (_useTmpVar)
                             {
-                                var replacement = new AstBlock(ret.File, ret.Line, ret.Column);
+                                var replacement = new AstSubBlock(ret,block,prefix:"yield");
                                 var setTmp =
                                     new AstGetSetSymbol(
                                         ret.File,

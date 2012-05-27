@@ -37,6 +37,21 @@ namespace Prexonite.Compiler.Symbolic
          }
 
         public abstract TResult HandleWith<TArg, TResult>(ISymbolHandler<TArg, TResult> handler, TArg argument);
+        public virtual bool TryGetEntitySymbol(out EntitySymbol entitySymbol)
+        {
+            entitySymbol = null;
+            return false;
+        }
+        public virtual bool TryGetMessageSymbol(out MessageSymbol messageSymbol)
+        {
+            messageSymbol = null;
+            return false;
+        }
+        public virtual bool TryGetMacroInstanceSymbol(out MacroInstanceSymbol macroInstanceSymbol)
+        {
+            macroInstanceSymbol = null;
+            return false;
+        }
     }
 
     public interface ISymbolHandler<in TArg, out TResult>
@@ -51,7 +66,7 @@ namespace Prexonite.Compiler.Symbolic
         private readonly EntityRef _entity;
         private readonly bool _isDereferenced;
 
-        public EntitySymbol(EntityRef entity, bool isDereferenced)
+        public EntitySymbol(EntityRef entity, bool isDereferenced = false)
         {
             _entity = entity;
             _isDereferenced = isDereferenced;
@@ -93,6 +108,12 @@ namespace Prexonite.Compiler.Symbolic
         public override TResult HandleWith<TArg, TResult>(ISymbolHandler<TArg, TResult> handler, TArg argument)
         {
             return handler.HandleEntity(this, argument);
+        }
+
+        public override bool TryGetEntitySymbol(out EntitySymbol entitySymbol)
+        {
+            entitySymbol = this;
+            return true;
         }
     }
 
@@ -144,6 +165,12 @@ namespace Prexonite.Compiler.Symbolic
         {
             return handler.HandleMessage(this, argument);
         }
+
+        public override bool TryGetMessageSymbol(out MessageSymbol messageSymbol)
+        {
+            messageSymbol = this;
+            return true;
+        }
     }
 
     public sealed class MacroInstanceSymbol : Symbol
@@ -175,6 +202,12 @@ namespace Prexonite.Compiler.Symbolic
         public override TResult HandleWith<TArg, TResult>(ISymbolHandler<TArg, TResult> handler, TArg argument)
         {
             return handler.HandleMacroInstance(this, argument);
+        }
+
+        public override bool TryGetMacroInstanceSymbol(out MacroInstanceSymbol macroInstanceSymbol)
+        {
+            macroInstanceSymbol = this;
+            return true;
         }
     }
 }

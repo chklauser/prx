@@ -27,31 +27,13 @@
 using System;
 using System.ComponentModel;
 using System.Diagnostics;
+using Prexonite.Compiler.Symbolic;
+using Prexonite.Modular;
 using Prexonite.Types;
 using NoDebug = System.Diagnostics.DebuggerNonUserCodeAttribute;
 
 namespace Prexonite.Compiler.Ast
 {
-    /// <summary>
-    /// Indicates how an operation behaves with respect to the Prexonite evaluation stack.
-    /// </summary>
-    /// <remarks>WARNING: Do not extend this enumeration. Users assume that 
-    /// <see cref="Value"/> and <see cref="Effect"/> are its only two members.</remarks>
-    public enum StackSemantics
-    {
-
-        /// <summary>
-        /// Indicates that the operation pushes a single value onto the
-        /// evaluation stack.  May also have side effects.
-        /// </summary>
-        Value,
-        /// <summary>
-        /// Indicates that the operation does not modify the 
-        /// evaluation stack, but may have side effects.
-        /// </summary>
-        Effect
-    }
-
     [DebuggerStepThrough]
     public abstract class AstNode : IObject, ISourcePosition
     {
@@ -200,14 +182,22 @@ namespace Prexonite.Compiler.Ast
 
         #endregion
 
-        internal static SymbolEntry Resolve(Parser parser, string symbolicId)
+        /// <summary>
+        /// Resolves the symbol associated with an operator. If no such operator is defined, an error message
+        /// is generated and a default symbol returned. If you need more control, access the 
+        /// <see cref="Symbols"/> store directly.
+        /// </summary>
+        /// <param name="parser">The parser to post the error message to.</param>
+        /// <param name="symbolicId">The symbolic id of the operator (the id used in the source code)</param>
+        /// <returns>The symbol corresponding to the symbolic id, or a default symbol when no such symbol entry exists.</returns>
+        internal static Symbol ResolveOperator(Parser parser, string symbolicId)
         {
-            SymbolEntry symbolEntry;
-            if (!parser.target.Symbols.TryGetValue(symbolicId, out symbolEntry))
+            Symbol symbolEntry;
+            if (!parser.target.Symbols.TryGet(symbolicId, out symbolEntry))
             {
                 parser.SemErr(string.Format("No implementation defined for operator `{0}`",
                     symbolEntry));
-                return new SymbolEntry(SymbolInterpretations.Command, symbolicId, null);
+                return new EntitySymbol(EntityRef.Command.Create(symbolicId),false);
             }
             else
             {

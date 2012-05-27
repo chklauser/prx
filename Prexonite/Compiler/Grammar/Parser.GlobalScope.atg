@@ -273,7 +273,8 @@ BuildBlock
 =
 	SYNC build                  (.  PFunction func = TargetApplication.CreateFunction();
                                     CompilerTarget lastTarget = target; 
-                                    CompilerTarget buildBlockTarget = Loader.CreateFunctionTarget(func, new AstBlock(this));
+                                    CompilerTarget buildBlockTarget = 
+										Loader.CreateFunctionTarget(func, new AstBlock(this), sourcePosition: GetPosition());
                                     target = buildBlockTarget;
                                     Loader.DeclareBuildBlockCommands(target);
                                     _pushLexerState(Lexer.Local);                                
@@ -414,7 +415,7 @@ FunctionDefinition<out PFunction func>
                                                     mark_as_let(target.Function,localId);
                                             }
                                             
-                                            Loader.CreateFunctionTarget(func, new AstBlock(this));
+                                            Loader.CreateFunctionTarget(func, new AstBlock(this), target, GetPosition());
                                         }
                                         CompilerTarget ft = FunctionTargets[func];
                                         
@@ -426,7 +427,7 @@ FunctionDefinition<out PFunction func>
                                             //Create derived body function
                                             derId = ft.GenerateLocalId();
                                             derBody = TargetApplication.CreateFunction(derId);
-                                            Loader.CreateFunctionTarget(derBody, new AstBlock(this));
+                                            Loader.CreateFunctionTarget(derBody, new AstBlock(this), ft, GetPosition());
                                             derBody.Meta[PFunction.LogicalIdKey] = id ?? funcId;
                                             if(isCoroutine)
                                             {
@@ -440,7 +441,6 @@ FunctionDefinition<out PFunction func>
                                             // -> Let derived stub have the physical function id
                                             ct = FunctionTargets[derBody];
                                             cst = ft;
-                                            ct.ParentTarget = cst;
                                         }
                                         
                                         if(isNested) //Link to parent in case of a nested function

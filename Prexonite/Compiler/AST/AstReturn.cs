@@ -117,8 +117,8 @@ namespace Prexonite.Compiler.Ast
         {
             return
                 target.ScopeBlocks.OfType<AstSubBlock>().Any(
-                    sb => (sb.ParentBlock is AstForeachLoop) ||
-                        (sb.ParentBlock is AstTryCatchFinally) || (sb.ParentBlock is AstUsing));
+                    sb => (sb.LexicalScope is AstForeachLoop) ||
+                        (sb.LexicalScope is AstTryCatchFinally) || (sb.LexicalScope is AstUsing));
         }
 
         private void emit_tail_call_exit(CompilerTarget target)
@@ -205,7 +205,7 @@ namespace Prexonite.Compiler.Ast
             //              expr1
             //          else
             //              expr2
-            var retif = new AstCondition(File, Line, Column, cond.Condition, cond.IsNegative);
+            var retif = new AstCondition(this, target.CurrentBlock, cond.Condition, cond.IsNegative);
 
             var ret1 = new AstReturn(File, Line, Column, ReturnVariant)
                 {
