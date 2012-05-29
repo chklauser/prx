@@ -103,6 +103,7 @@ namespace PrexoniteTests.Tests.Configurations
             {
                 if(ModularCompilation)
                 {
+                    // TODO use build system to implement inter-module dependencies
                     Module module;
                     IEnumerable<SymbolInfo> symbols;
                     if(ModuleCache.TryGetModule(fut, out module, out symbols))

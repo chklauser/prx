@@ -292,14 +292,14 @@ namespace Prexonite.Compiler.Symbolic.Internal
 
         public override int Count
         {
-            get { return _externCount + _local.Count; }
+            get { return _local == null ? _externCount : _externCount + _local.Count; }
         }
 
         public override void Declare(string id, Symbol symbol)
         {
             if (_local == null)
                 Interlocked.CompareExchange(ref _local, new SymbolTable<Symbol>(), null);
-            _local.Add(id,symbol);
+            _local[id] = symbol;
         }
 
         public override bool IsDeclaredLocally(string id)

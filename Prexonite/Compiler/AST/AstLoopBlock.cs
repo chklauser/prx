@@ -1,4 +1,5 @@
 using System.Diagnostics;
+using JetBrains.Annotations;
 
 namespace Prexonite.Compiler.Ast
 {
@@ -21,8 +22,8 @@ namespace Prexonite.Compiler.Ast
         }
 
         [DebuggerStepThrough]
-        internal AstLoopBlock(ISourcePosition p, AstBlock parentNode = null, string uid = null, string prefix = null)
-            : base(p, parentNode, uid, prefix)
+        internal AstLoopBlock(ISourcePosition p, [NotNull] AstBlock parentNode = null, string uid = null, string prefix = null)
+            : base(p, parentNode, uid: uid, prefix: prefix)
         {
             //See other ctor!
             _continueLabel = CreateLabel(ContinueWord);

@@ -31,6 +31,7 @@ using System.Linq;
 using NUnit.Framework;
 using Prexonite;
 using Prexonite.Commands.Core;
+using Prexonite.Compiler.Symbolic;
 using Prexonite.Modular;
 
 namespace PrexoniteTests.Tests
@@ -38,6 +39,16 @@ namespace PrexoniteTests.Tests
     [TestFixture]
     public class ApplicationLinking : AssertionHelper
     {
+        [Test]
+        public void NoLocalButCount()
+        {
+            var s1 = SymbolStore.Create();
+            var s = new EntitySymbol(EntityRef.Command.Create("print"));
+            s1.Declare("print",s);
+            var s2 = SymbolStore.Create(s1);
+            Assert.That(s2.Count,Is.EqualTo(1),"Expected s2.Count to be 1.");
+        }
+
        [Test]
        public void SimpleLinkUnlink()
        {

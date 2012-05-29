@@ -3404,6 +3404,13 @@ label   end             nop //this nop ensures compatibility with CIL
         }
 
         [Test]
+        public void ValidFunctionScope()
+        {
+            _compile(@"function main=()=>{};function f2(){}");
+            Assert.That(target.Functions.Contains("f2"),Is.True,"Expected that function f2 exists.");
+        }
+
+        [Test]
         public void Bug26CommentsAtEnd()
         {
             //cannot reproduce as unit test so far

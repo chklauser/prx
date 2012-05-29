@@ -501,6 +501,8 @@ namespace Prexonite.Compiler
         {
             if (!ReferenceEquals(_scopeStack.Peek(), ct))
                 throw new PrexoniteException(string.Format("Tried to pop scope of compiler target {0} but {1} was on top.", ct, _scopeStack.Peek()));
+            _target = ct.ParentTarget;
+            _scopeStack.Pop();
         }
 
         #endregion
@@ -636,15 +638,41 @@ namespace Prexonite.Compiler
                 || interpretations == SymbolInterpretations.LocalReferenceVariable;
         }
 
+        public bool isId(out string id)
+        {
+            // Warning: this code duplicates the Id<out string id> rule from the grammar.
+
+            scanner.ResetPeek();
+            var t1 = la;
+            var t2 = scanner.Peek();
+
+            switch (t1.kind)
+            {
+                case _id:
+                case _add:
+                case _enabled:
+                case _disabled:
+                case _build:
+                    id = t1.val;
+                    return true;
+                case _anyId:
+                    id = cache(t2.val);
+                    return true;
+                default:
+                    id = "\\NoId\\";
+                    return false;
+
+            }
+        }
+
         //id is like a function
-        [DebuggerStepThrough]
         public bool isLikeFunction() //Context
         {
-            var id = la.val;
+            string id;
             Symbol symbol;
             EntitySymbol entitySymbol;
             return
-                la.kind == _id && // TODO Bug: id's are not just of token type ID
+                isId(out id) &&
                 target.Symbols.TryGet(id, out symbol) &&
                 symbol.TryGetEntitySymbol(out entitySymbol) &&
                 entitySymbol.Entity.Match(_isLikeFunction, entitySymbol.IsDereferenced);
@@ -679,6 +707,11 @@ namespace Prexonite.Compiler
                 return isDereferenced;
             }
 
+            protected override bool OnMacroCommand(EntityRef.MacroCommand macroCommand, bool argument)
+            {
+                return true;
+            }
+
             #endregion
         }
         private readonly IEntityRefMatcher<bool, bool> _isLikeFunction = new IsLikeFunctionMatcher();
@@ -702,8 +735,8 @@ namespace Prexonite.Compiler
         [DebuggerStepThrough]
         public bool isUnknownId()
         {
-            var id = la.val; // TODO: Bug: id's are not just _id tokens!
-            return la.kind == _id && !target.Symbols.Contains(id);
+            string id; 
+            return isId(out id) && !target.Symbols.Contains(id);
         }
 
         private bool _tryResolveFunction(SymbolEntry entry, out PFunction func)

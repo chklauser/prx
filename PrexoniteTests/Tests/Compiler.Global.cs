@@ -559,16 +559,16 @@ function func3(param1, param2)
             Assert.AreEqual(0, ldr.ErrorCount);
 
             //func1
-            Assert.IsTrue(target.Functions.Contains("func1"), "Func1 is not in the function table");
+            Assert.IsTrue(target.Functions.Contains("func1"), "func1 is not in the function table");
             Assert.AreEqual(SymbolInterpretations.Function, LookupSymbolEntry(ldr.Symbols, "func1").Interpretation);
             Assert.AreEqual(0, target.Functions["func1"].Parameters.Count);
 
-            Assert.IsTrue(target.Functions.Contains("func2"), "Func2 is not in the function table");
+            Assert.IsTrue(target.Functions.Contains("func2"), "func2 is not in the function table");
             Assert.AreEqual(SymbolInterpretations.Function, LookupSymbolEntry(ldr.Symbols, "func2").Interpretation);
             Assert.AreEqual(3, target.Functions["func2"].Parameters.Count);
             Assert.AreEqual("param2", target.Functions["func2"].Parameters[1]);
 
-            Assert.IsTrue(target.Functions.Contains("func3"), "Func3 is not in the function table");
+            Assert.IsTrue(target.Functions.Contains("func3"), "func3 is not in the function table");
             Assert.AreEqual(SymbolInterpretations.Function, LookupSymbolEntry(ldr.Symbols, "func3").Interpretation);
             Assert.AreEqual(2, target.Functions["func3"].Parameters.Count);
             Assert.AreEqual("param2", target.Functions["func3"].Parameters[1]);

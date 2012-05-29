@@ -40,7 +40,7 @@ namespace Prexonite.Compiler.Ast
     {
         #region Construction
 
-        protected AstBlock(ISourcePosition position, [NotNull] SymbolStore symbols, string prefix = null, string uid = null)
+        protected AstBlock(ISourcePosition position, [NotNull] SymbolStore symbols, string uid = null, string prefix = null)
             : base(position)
         {
             if (symbols == null)
@@ -51,7 +51,7 @@ namespace Prexonite.Compiler.Ast
         }
 
         protected AstBlock(ISourcePosition position, AstBlock lexicalScope, string prefix = null, string uid = null)
-            : this(position, _deriveSymbolStore(lexicalScope),prefix,uid)
+            : this(position, _deriveSymbolStore(lexicalScope),uid, prefix)
         {   
         }
 
@@ -408,7 +408,7 @@ namespace Prexonite.Compiler.Ast
 
         public static AstBlock CreateRootBlock(ISourcePosition position, SymbolStore symbols, string prefix, string uid)
         {
-            return new AstBlock(position,symbols,prefix,uid);
+            return new AstBlock(position,symbols,uid, prefix);
         }
     }
 }

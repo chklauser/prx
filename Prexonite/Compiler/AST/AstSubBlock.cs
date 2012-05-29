@@ -9,7 +9,7 @@ namespace Prexonite.Compiler.Ast
         private readonly AstBlock _lexicalScope;
 
         public AstSubBlock([NotNull] ISourcePosition p, [NotNull] AstBlock lexicalScope, string uid = null, string prefix = null)
-            : base(p,lexicalScope, uid, prefix)
+            : base(p,lexicalScope, uid:uid, prefix:prefix)
         {
             if (lexicalScope == null)
                 throw new System.ArgumentNullException("lexicalScope");
