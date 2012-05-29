@@ -1709,18 +1709,18 @@ internal partial class Parser {
 		}
 	}
 
-	void FormalArg(/*Parser.GlobalScope.atg:664*/CompilerTarget ft) {
-		/*Parser.GlobalScope.atg:664*/string id; SymbolInterpretations kind = SymbolInterpretations.LocalObjectVariable; 
+	void FormalArg(/*Parser.GlobalScope.atg:663*/CompilerTarget ft) {
+		/*Parser.GlobalScope.atg:663*/string id; SymbolInterpretations kind = SymbolInterpretations.LocalObjectVariable; 
 		if (la.kind == _var || la.kind == _ref) {
 			if (la.kind == _var) {
 				Get();
 			} else {
 				Get();
-				/*Parser.GlobalScope.atg:666*/kind = SymbolInterpretations.LocalReferenceVariable; 
+				/*Parser.GlobalScope.atg:665*/kind = SymbolInterpretations.LocalReferenceVariable; 
 			}
 		}
-		Id(/*Parser.GlobalScope.atg:668*/out id);
-		/*Parser.GlobalScope.atg:671*/ft.Function.Parameters.Add(id); 
+		Id(/*Parser.GlobalScope.atg:667*/out id);
+		/*Parser.GlobalScope.atg:670*/ft.Function.Parameters.Add(id); 
 		ft.Symbols.Declare(id, new SymbolEntry(kind, id, null).ToSymbol());
 		
 	}
@@ -2246,7 +2246,7 @@ internal partial class Parser {
 		      (!object.ReferenceEquals(func, TargetApplication._InitializationFunction)) &&
 		      (!isNested))
 		  {
-		          //Add the name to the symboltable
+		          //Add the name to the symbol table
 		             symEntry = 
 		                 new SymbolEntry(SymbolInterpretations.Function, func.Id, TargetModule.Name);
 		          foreach(var alias in funcAliases)	                                                
@@ -2292,7 +2292,7 @@ internal partial class Parser {
 		                                        //Copy stub parameters to body of lazy function
 		                                        if(isLazy && !isNested)
 			                                    {
-			                                        foreach(var kvp in ft.Symbols.LocalDeclarations)
+			                                        foreach(var kvp in cst.Symbols.LocalDeclarations)
 			                                        {
 			                                            var paramId = kvp.Key;
 			                                            var s = kvp.Value.ToSymbolEntry();
@@ -2304,7 +2304,6 @@ internal partial class Parser {
 			                                        }
 			                                    }
 		                                    
-		                                        CompilerTarget lastTarget = target;
 												if(isLazy || isCoroutine)
 												{
 													//Push the stub, because it is the lexical parent of the body
@@ -2319,22 +2318,22 @@ internal partial class Parser {
 			if (la.kind == _does) {
 				Get();
 			}
-			StatementBlock(/*Parser.GlobalScope.atg:527*/target.Ast);
-		} else if (/*Parser.GlobalScope.atg:529*/isFollowedByStatementBlock()) {
+			StatementBlock(/*Parser.GlobalScope.atg:526*/target.Ast);
+		} else if (/*Parser.GlobalScope.atg:528*/isFollowedByStatementBlock()) {
 			Expect(_implementation);
-			StatementBlock(/*Parser.GlobalScope.atg:530*/target.Ast);
+			StatementBlock(/*Parser.GlobalScope.atg:529*/target.Ast);
 		} else if (la.kind == _assign || la.kind == _implementation) {
 			if (la.kind == _assign) {
 				Get();
 			} else {
 				Get();
 			}
-			/*Parser.GlobalScope.atg:531*/AstReturn ret = new AstReturn(this, ReturnVariant.Exit); 
-			Expr(/*Parser.GlobalScope.atg:532*/out ret.Expression);
-			/*Parser.GlobalScope.atg:532*/target.Ast.Add(ret); 
+			/*Parser.GlobalScope.atg:530*/AstReturn ret = new AstReturn(this, ReturnVariant.Exit); 
+			Expr(/*Parser.GlobalScope.atg:531*/out ret.Expression);
+			/*Parser.GlobalScope.atg:531*/target.Ast.Add(ret); 
 			Expect(_semicolon);
 		} else SynErr(147);
-		/*Parser.GlobalScope.atg:534*/_popLexerState();
+		/*Parser.GlobalScope.atg:533*/_popLexerState();
 		_PopScope(FunctionTargets[func]);
 		if(isLazy || isCoroutine)
 		{
@@ -2464,15 +2463,15 @@ internal partial class Parser {
 		                          
 	}
 
-	void GlobalId(/*Parser.GlobalScope.atg:676*/out string id) {
-		/*Parser.GlobalScope.atg:676*/id = "...no freaking id..."; 
+	void GlobalId(/*Parser.GlobalScope.atg:675*/out string id) {
+		/*Parser.GlobalScope.atg:675*/id = "...no freaking id..."; 
 		if (la.kind == _id) {
 			Get();
-			/*Parser.GlobalScope.atg:678*/id = cache(t.val); 
+			/*Parser.GlobalScope.atg:677*/id = cache(t.val); 
 		} else if (la.kind == _anyId) {
 			Get();
-			String(/*Parser.GlobalScope.atg:679*/out id);
-			/*Parser.GlobalScope.atg:679*/id = cache(id); 
+			String(/*Parser.GlobalScope.atg:678*/out id);
+			/*Parser.GlobalScope.atg:678*/id = cache(id); 
 		} else SynErr(148);
 	}
 
@@ -2536,20 +2535,20 @@ internal partial class Parser {
 		}
 	}
 
-	void GlobalQualifiedId(/*Parser.GlobalScope.atg:682*/out string id) {
-		/*Parser.GlobalScope.atg:682*/id = "\\NoId\\"; 
+	void GlobalQualifiedId(/*Parser.GlobalScope.atg:681*/out string id) {
+		/*Parser.GlobalScope.atg:681*/id = "\\NoId\\"; 
 		if (la.kind == _id || la.kind == _anyId) {
-			GlobalId(/*Parser.GlobalScope.atg:684*/out id);
+			GlobalId(/*Parser.GlobalScope.atg:683*/out id);
 		} else if (la.kind == _ns) {
 			Get();
-			/*Parser.GlobalScope.atg:685*/StringBuilder buffer = new StringBuilder(t.val); buffer.Append('.'); 
+			/*Parser.GlobalScope.atg:684*/StringBuilder buffer = new StringBuilder(t.val); buffer.Append('.'); 
 			while (la.kind == _ns) {
 				Get();
-				/*Parser.GlobalScope.atg:686*/buffer.Append(t.val); buffer.Append('.'); 
+				/*Parser.GlobalScope.atg:685*/buffer.Append(t.val); buffer.Append('.'); 
 			}
-			GlobalId(/*Parser.GlobalScope.atg:688*/out id);
-			/*Parser.GlobalScope.atg:688*/buffer.Append(id); 
-			/*Parser.GlobalScope.atg:689*/id = cache(buffer.ToString()); 
+			GlobalId(/*Parser.GlobalScope.atg:687*/out id);
+			/*Parser.GlobalScope.atg:687*/buffer.Append(id); 
+			/*Parser.GlobalScope.atg:688*/id = cache(buffer.ToString()); 
 		} else SynErr(151);
 	}
 

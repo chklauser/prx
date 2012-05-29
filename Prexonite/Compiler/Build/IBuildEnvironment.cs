@@ -31,7 +31,7 @@ namespace Prexonite.Compiler.Build
     public interface IBuildEnvironment
     {
 
-        SymbolStore SymbolStore
+        SymbolStore ExternalSymbols
         {
             get;
         }

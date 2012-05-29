@@ -1440,7 +1440,7 @@ FunctionDefinition<out PFunction func>
 	                                        (!object.ReferenceEquals(func, TargetApplication._InitializationFunction)) &&
 	                                        (!isNested))
 	                                    {
-	                                            //Add the name to the symboltable
+	                                            //Add the name to the symbol table
                                                 symEntry = 
                                                     new SymbolEntry(SymbolInterpretations.Function, func.Id, TargetModule.Name);
 	                                            foreach(var alias in funcAliases)	                                                
@@ -1483,7 +1483,7 @@ FunctionDefinition<out PFunction func>
                                         //Copy stub parameters to body of lazy function
                                         if(isLazy && !isNested)
 	                                    {
-	                                        foreach(var kvp in ft.Symbols.LocalDeclarations)
+	                                        foreach(var kvp in cst.Symbols.LocalDeclarations)
 	                                        {
 	                                            var paramId = kvp.Key;
 	                                            var s = kvp.Value.ToSymbolEntry();
@@ -1495,7 +1495,6 @@ FunctionDefinition<out PFunction func>
 	                                        }
 	                                    }
                                     
-                                        CompilerTarget lastTarget = target;
 										if(isLazy || isCoroutine)
 										{
 											//Push the stub, because it is the lexical parent of the body

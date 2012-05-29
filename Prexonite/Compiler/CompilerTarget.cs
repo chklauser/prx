@@ -165,7 +165,7 @@ namespace Prexonite.Compiler
             _function = function;
             _parentTarget = parentTarget;
 
-            _ast = AstBlock.CreateRootBlock(position ?? new SourcePosition("",-1,-1), parentTarget == null ? SymbolStore.Create(loader.Symbols) : parentTarget.Symbols,
+            _ast = AstBlock.CreateRootBlock(position ?? new SourcePosition("",-1,-1),  SymbolStore.Create(parentTarget == null ? loader.Symbols : parentTarget.Symbols),
                                             AstBlock.RootBlockName, Guid.NewGuid().ToString("N"));
         }
 

@@ -25,6 +25,7 @@
 //  IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 using System.Collections.Generic;
+using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
 using Prexonite.Compiler.Symbolic;
@@ -35,7 +36,11 @@ namespace Prexonite.Compiler.Build.Internal
     class DefaultBuildEnvironment : IBuildEnvironment
     {
         private readonly CancellationToken _token;
-        private readonly Dictionary<ModuleName, ITarget> _dependencies; 
+        private readonly Dictionary<ModuleName, ITarget> _dependencies;
+        private readonly SymbolStore _externalSymbols;
+        private readonly ITargetDescription _description;
+        private readonly Engine _compilationEngine;
+        private readonly Application _compileTimeApplication;
 
         public bool TryGetModule(ModuleName moduleName, out Module module)
         {
@@ -52,22 +57,46 @@ namespace Prexonite.Compiler.Build.Internal
             }
         }
 
-        public DefaultBuildEnvironment(IEnumerable<ITarget> dependencies, CancellationToken token)
+        public DefaultBuildEnvironment(IEnumerable<ITarget> dependencies, CancellationToken token, ITargetDescription description)
         {
             _token = token;
+            _description = description;
             _dependencies = new Dictionary<ModuleName, ITarget>();
+            var externals = new List<SymbolInfo>();
             foreach (var d in dependencies)
+            {
                 _dependencies.Add(d.Name, d);
+                if(d.Symbols != null)
+                {
+                    var origin = new SymbolOrigin.ModuleTopLevel(_description.Name, NoSourcePosition.Instance);
+                    externals.AddRange(from decl in d.Symbols
+                                       select new SymbolInfo(decl.Value, origin, decl.Key));
+                }
+            }
+            _externalSymbols = SymbolStore.Create(conflictUnionSource: externals);
         }
 
-        public SymbolStore SymbolStore
+        public SymbolStore ExternalSymbols
         {
-            get { throw new System.NotImplementedException(); }
+            get { return _externalSymbols; }
         }
 
         public Loader CreateLoader(LoaderOptions defaults)
         {
-            throw new System.NotImplementedException();
+            var lowPrioritySymbols = defaults.Symbols;
+            SymbolStore predef;
+            if(lowPrioritySymbols.Count == 0)
+            {
+                predef = SymbolStore.Create(ExternalSymbols);
+            }
+            else
+            {
+                predef = SymbolStore.Create(lowPrioritySymbols);
+                foreach (var externalSymbol in ExternalSymbols)
+                    predef.Declare(externalSymbol.Key, externalSymbol.Value);
+            }
+            var finalOptions = new LoaderOptions(_compilationEngine, _compileTimeApplication, predef);
+            return new Loader(finalOptions);
         }
     }
 }

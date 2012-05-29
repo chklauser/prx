@@ -92,12 +92,12 @@ namespace PrexoniteTests.Tests.Configurations
         /// <summary>
         /// Loads dependencies into the application. Called just after <see cref="ScriptedUnitTestContainer.Initialize"/> and before <see cref="ScriptedUnitTestContainer.LoadUnitTestingFramework"/>.
         /// </summary>
-        /// <param name="runner">The container under which the test is being executed.</param>
+        /// <param name="container">The container under which the test is being executed.</param>
         /// <param name="dependencies">A list of dependencies for this test.</param>
-        public virtual void SetupUnitsUnderTest(ScriptedUnitTestContainer runner,
+        public virtual void SetupUnitsUnderTest(ScriptedUnitTestContainer container,
             IEnumerable<string> dependencies)
         {
-            var originalApp = runner.Application;
+            var originalApp = container.Application;
 
             foreach (var fut in dependencies)
             {
@@ -108,45 +108,45 @@ namespace PrexoniteTests.Tests.Configurations
                     IEnumerable<SymbolInfo> symbols;
                     if(ModuleCache.TryGetModule(fut, out module, out symbols))
                     {
-                        Application.Link(runner.Loader.ParentApplication, new Application(module));
+                        Application.Link(container.Loader.ParentApplication, new Application(module));
                     }
                     else
                     {
                         //For linking the apps together, we need to preserve them
-                        var prevApp = runner.Application;
+                        var prevApp = container.Application;
 
                         //Create the module, application and loader for this next dependency
                         module = Module.Create( new ModuleName(
-                            runner.ApplicationName + "." + Path.GetFileNameWithoutExtension(fut), 
+                            container.ApplicationName + "." + Path.GetFileNameWithoutExtension(fut), 
                             new Version()));
-                        var app = runner.Application = new Application(module);
+                        var app = container.Application = new Application(module);
 
-                        var ldrStore = SymbolStore.Create(conflictUnionSource: runner.ImportedSymbols.SelectMany(x => x));
-                        var ldrOptions = new LoaderOptions(runner.Engine, app, ldrStore);
-                        var ldr = runner.Loader = new Loader(ldrOptions);
+                        var ldrStore = SymbolStore.Create(conflictUnionSource: container.ImportedSymbols.SelectMany(x => x));
+                        var ldrOptions = new LoaderOptions(container.Engine, app, ldrStore);
+                        var ldr = container.Loader = new Loader(ldrOptions);
 
                         //Link them together, both physically and symbolically
                         Application.Link(app,prevApp);
 
                         //Now, we're ready to load the file into the fresh module
-                        runner.RequireFile(fut);
+                        container.RequireFile(fut);
 
                         //Store the module for future test cases
                         symbols = ModuleCache.Provide(fut, ldr);
                     }
 
-                    runner.ImportedSymbols.Add(symbols);
+                    container.ImportedSymbols.Add(symbols);
                 }
                 else //no modular compilation
                 {
-                    runner.RequireFile(fut);
+                    container.RequireFile(fut);
                 }
             }
 
             if(ModularCompilation)
             {
                 //restore original environment
-                runner.Application = originalApp;
+                container.Application = originalApp;
             }
         }
 

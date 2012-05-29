@@ -26,6 +26,7 @@
 
 using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using Prexonite.Modular;
 using Prexonite.Types;
 
@@ -33,7 +34,7 @@ namespace Prexonite.Compiler.Ast
 {
 #pragma warning disable 628 //ignore warnings about proteced members in sealed classes for now
 
-    public sealed class AstGetSetEntity : AstGetSet, ICanBeReferenced
+    public sealed class AstGetSetEntity : AstGetSet, ICanBeReferenced, IAstPartiallyApplicable
     {
         private readonly EntityRef _entity;
 
@@ -182,9 +183,26 @@ namespace Prexonite.Compiler.Ast
 
         public bool TryToReference(out AstExpr reference)
         {
-            reference = null;
-            return false;
+            reference = AstReferenceToEntity.Create(Position, Entity);
+            return true;
         }
+
+        #region Implementation of IAstPartiallyApplicable
+
+        public void DoEmitPartialApplicationCode(CompilerTarget target)
+        {
+            AstExpr refNode;
+            if (!TryToReference(out refNode))
+                throw new PrexoniteException("Cannot partially apply " + this +
+                                             " because it can't be converted to a reference.");
+
+            var indTemplate = new AstIndirectCall(Position, Call, refNode);
+            indTemplate.Arguments.AddRange(Arguments);
+            Debug.Assert(indTemplate.CheckForPlaceholders());
+            indTemplate.EmitValueCode(target);
+        }
+
+        #endregion
     }
     #pragma warning restore 628
 }

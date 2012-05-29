@@ -86,11 +86,11 @@ namespace Prexonite.Compiler.Build.Internal
             return BuildWithMapAsync(targetDescription, taskMap, token);
         }
 
-        protected Task<IBuildEnvironment> GetBuildEnvironment(Dictionary<ModuleName,Task<ITarget>> dependencies, CancellationToken token)
+        protected Task<IBuildEnvironment> GetBuildEnvironment(Dictionary<ModuleName, Task<ITarget>> dependencies, ITargetDescription description, CancellationToken token)
         {
             return Task.Factory.ContinueWhenAll(dependencies.Values.ToArray(),
                 deps => (IBuildEnvironment)
-                        new DefaultBuildEnvironment(deps.Select(d => d.Result), token));
+                        new DefaultBuildEnvironment(deps.Select(d => d.Result), description, token));
         }
 
         protected Task<ITarget> BuildWithMapAsync(ITargetDescription targetDescription, System.Collections.Concurrent.ConcurrentDictionary<ITargetDescription,Task<ITarget>> taskMap, CancellationToken token)
@@ -112,7 +112,7 @@ namespace Prexonite.Compiler.Build.Internal
 
                     token.ThrowIfCancellationRequested();
 
-                    return GetBuildEnvironment(depMap, token)
+                    return GetBuildEnvironment(depMap,desc, token)
                         .ContinueWith(bet => desc.BuildAsync(bet.Result, depMap, token),token)
                         .Unwrap();
                 });
