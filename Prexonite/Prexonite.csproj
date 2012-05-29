@@ -148,6 +148,7 @@
     <Compile Include="Compiler\Ast\AstFactoryBase.cs" />
     <Compile Include="Compiler\Ast\AstGetSetEntity.cs" />
     <Compile Include="Compiler\Ast\AstLoopBlock.cs" />
+    <Compile Include="Compiler\Ast\AstReferenceToEntity.cs" />
     <Compile Include="Compiler\Ast\AstScopedExpr.cs" />
     <Compile Include="Compiler\Ast\AstSubBlock.cs" />
     <Compile Include="Compiler\Ast\IAstFactory.cs" />

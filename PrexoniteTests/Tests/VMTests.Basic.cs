@@ -1214,6 +1214,7 @@ function main(p)
             return q;
     }
     
+    ref goo;
     if(p mod 10 == 0)
         function goo(x) = 2*x;
     else

@@ -651,23 +651,23 @@ internal partial class Parser {
 		
 	}
 
-	void SignedReal(/*Parser.Helper.atg:71*/out double value) {
-		/*Parser.Helper.atg:71*/value = 0.0; double modifier = 1.0; int ival; 
+	void SignedReal(/*Parser.Helper.atg:74*/out double value) {
+		/*Parser.Helper.atg:74*/value = 0.0; double modifier = 1.0; int ival; 
 		if (la.kind == _minus || la.kind == _plus) {
 			if (la.kind == _plus) {
 				Get();
 			} else {
 				Get();
-				/*Parser.Helper.atg:74*/modifier = -1.0; 
+				/*Parser.Helper.atg:77*/modifier = -1.0; 
 			}
 		}
 		if (la.kind == _real || la.kind == _realLike) {
-			Real(/*Parser.Helper.atg:75*/out value);
+			Real(/*Parser.Helper.atg:78*/out value);
 		} else if (la.kind == _integer) {
-			Integer(/*Parser.Helper.atg:76*/out ival);
-			/*Parser.Helper.atg:76*/value = ival; 
+			Integer(/*Parser.Helper.atg:79*/out ival);
+			/*Parser.Helper.atg:79*/value = ival; 
 		} else SynErr(106);
-		/*Parser.Helper.atg:78*/value = modifier * value; 
+		/*Parser.Helper.atg:81*/value = modifier * value; 
 	}
 
 	void Boolean(/*Parser.Helper.atg:35*/out bool value) {
@@ -699,9 +699,9 @@ internal partial class Parser {
 		AsmId(/*Parser.Assembler.atg:251*/out qualid);
 	}
 
-	void String(/*Parser.Helper.atg:82*/out string value) {
+	void String(/*Parser.Helper.atg:85*/out string value) {
 		Expect(_string);
-		/*Parser.Helper.atg:83*/value = cache(t.val); 
+		/*Parser.Helper.atg:86*/value = cache(t.val); 
 	}
 
 	void Id(/*Parser.Helper.atg:25*/out string id) {
@@ -1709,18 +1709,18 @@ internal partial class Parser {
 		}
 	}
 
-	void FormalArg(/*Parser.GlobalScope.atg:661*/CompilerTarget ft) {
-		/*Parser.GlobalScope.atg:661*/string id; SymbolInterpretations kind = SymbolInterpretations.LocalObjectVariable; 
+	void FormalArg(/*Parser.GlobalScope.atg:664*/CompilerTarget ft) {
+		/*Parser.GlobalScope.atg:664*/string id; SymbolInterpretations kind = SymbolInterpretations.LocalObjectVariable; 
 		if (la.kind == _var || la.kind == _ref) {
 			if (la.kind == _var) {
 				Get();
 			} else {
 				Get();
-				/*Parser.GlobalScope.atg:663*/kind = SymbolInterpretations.LocalReferenceVariable; 
+				/*Parser.GlobalScope.atg:666*/kind = SymbolInterpretations.LocalReferenceVariable; 
 			}
 		}
-		Id(/*Parser.GlobalScope.atg:665*/out id);
-		/*Parser.GlobalScope.atg:668*/ft.Function.Parameters.Add(id); 
+		Id(/*Parser.GlobalScope.atg:668*/out id);
+		/*Parser.GlobalScope.atg:671*/ft.Function.Parameters.Add(id); 
 		ft.Symbols.Declare(id, new SymbolEntry(kind, id, null).ToSymbol());
 		
 	}
@@ -1922,44 +1922,52 @@ internal partial class Parser {
 				} else if (la.kind == _function) {
 					Get();
 					/*Parser.GlobalScope.atg:182*/type = SymbolInterpretations.Function; 
-				} else {
+				} else if (la.kind == _command) {
 					Get();
 					/*Parser.GlobalScope.atg:183*/type = SymbolInterpretations.Command; 
+				} else {
+					Get();
+					Expect(_command);
+					/*Parser.GlobalScope.atg:184*/type = SymbolInterpretations.MacroCommand; 
 				}
 			}
-			DeclarationInstance(/*Parser.GlobalScope.atg:185*/type,module);
+			DeclarationInstance(/*Parser.GlobalScope.atg:186*/type,module);
 			while (la.kind == _comma) {
 				Get();
 				if (StartOf(4)) {
-					DeclarationInstance(/*Parser.GlobalScope.atg:186*/type,module);
+					DeclarationInstance(/*Parser.GlobalScope.atg:187*/type,module);
 				}
 			}
 		} else if (la.kind == _lbrace) {
 			Get();
 			if (la.kind == _uusing) {
 				Get();
-				ModuleName(/*Parser.GlobalScope.atg:188*/ref module);
+				ModuleName(/*Parser.GlobalScope.atg:189*/ref module);
 			}
 			while (StartOf(32)) {
 				if (la.kind == _var) {
 					Get();
-					/*Parser.GlobalScope.atg:190*/type = SymbolInterpretations.GlobalObjectVariable; 
+					/*Parser.GlobalScope.atg:191*/type = SymbolInterpretations.GlobalObjectVariable; 
 				} else if (la.kind == _ref) {
 					Get();
-					/*Parser.GlobalScope.atg:191*/type = SymbolInterpretations.GlobalReferenceVariable; 
+					/*Parser.GlobalScope.atg:192*/type = SymbolInterpretations.GlobalReferenceVariable; 
 				} else if (la.kind == _function) {
 					Get();
-					/*Parser.GlobalScope.atg:192*/type = SymbolInterpretations.Function; 
+					/*Parser.GlobalScope.atg:193*/type = SymbolInterpretations.Function; 
+				} else if (la.kind == _command) {
+					Get();
+					/*Parser.GlobalScope.atg:194*/type = SymbolInterpretations.Command; 
 				} else {
 					Get();
-					/*Parser.GlobalScope.atg:193*/type = SymbolInterpretations.Command; 
+					Expect(_command);
+					/*Parser.GlobalScope.atg:196*/type = SymbolInterpretations.MacroCommand; 
 				}
 				Expect(_colon);
-				DeclarationInstance(/*Parser.GlobalScope.atg:196*/type,module);
+				DeclarationInstance(/*Parser.GlobalScope.atg:199*/type,module,preventOverride:true);
 				while (la.kind == _comma) {
 					Get();
 					if (StartOf(4)) {
-						DeclarationInstance(/*Parser.GlobalScope.atg:197*/type,module);
+						DeclarationInstance(/*Parser.GlobalScope.atg:200*/type,module);
 					}
 				}
 			}
@@ -2020,20 +2028,20 @@ internal partial class Parser {
 	}
 
 	void GlobalCode() {
-		/*Parser.GlobalScope.atg:276*/PFunction func = TargetApplication._InitializationFunction;
+		/*Parser.GlobalScope.atg:279*/PFunction func = TargetApplication._InitializationFunction;
 		CompilerTarget ft = FunctionTargets[func];
 		if(ft == null)
 		    throw new PrexoniteException("Internal compilation error: InitializeFunction got lost.");
 		
-		/*Parser.GlobalScope.atg:283*/_PushScope(ft); 
+		/*Parser.GlobalScope.atg:286*/_PushScope(ft); 
 		                             _pushLexerState(Lexer.Local);
 		                         
 		Expect(_lbrace);
 		while (StartOf(20)) {
-			Statement(/*Parser.GlobalScope.atg:287*/target.Ast);
+			Statement(/*Parser.GlobalScope.atg:290*/target.Ast);
 		}
 		Expect(_rbrace);
-		/*Parser.GlobalScope.atg:290*/try {
+		/*Parser.GlobalScope.atg:293*/try {
 		if(errors.count == 0)
 		{
 		 TargetApplication._RequireInitialization();
@@ -2053,7 +2061,7 @@ internal partial class Parser {
 	void BuildBlock() {
 		while (!(la.kind == _EOF || la.kind == _build)) {SynErr(143); Get();}
 		Expect(_build);
-		/*Parser.GlobalScope.atg:254*/PFunction func = TargetApplication.CreateFunction();
+		/*Parser.GlobalScope.atg:257*/PFunction func = TargetApplication.CreateFunction();
 		  CompilerTarget lastTarget = target; 
 		  CompilerTarget buildBlockTarget = 
 		Loader.CreateFunctionTarget(func, sourcePosition: GetPosition());
@@ -2064,15 +2072,15 @@ internal partial class Parser {
 		if (la.kind == _does) {
 			Get();
 		}
-		StatementBlock(/*Parser.GlobalScope.atg:264*/target.Ast);
-		/*Parser.GlobalScope.atg:267*/_popLexerState();                                    
+		StatementBlock(/*Parser.GlobalScope.atg:267*/target.Ast);
+		/*Parser.GlobalScope.atg:270*/_popLexerState();                                    
 		  _PopScope(buildBlockTarget);
 		  _compileAndExecuteBuildBlock(buildBlockTarget);
 		
 	}
 
-	void FunctionDefinition(/*Parser.GlobalScope.atg:320*/out PFunction func) {
-		/*Parser.GlobalScope.atg:321*/func = null; 
+	void FunctionDefinition(/*Parser.GlobalScope.atg:323*/out PFunction func) {
+		/*Parser.GlobalScope.atg:324*/func = null; 
 		string primaryAlias = null;
 		List<string> funcAliases = new List<string>();
 		string id = null; //The logical id (given in the source code)
@@ -2095,29 +2103,29 @@ internal partial class Parser {
 			if (la.kind == _function) {
 				Get();
 			}
-			/*Parser.GlobalScope.atg:340*/isLazy = true; 
+			/*Parser.GlobalScope.atg:343*/isLazy = true; 
 		} else if (la.kind == _function) {
 			Get();
 		} else if (la.kind == _coroutine) {
 			Get();
-			/*Parser.GlobalScope.atg:342*/isCoroutine = true; 
+			/*Parser.GlobalScope.atg:345*/isCoroutine = true; 
 		} else if (la.kind == _macro) {
 			Get();
 			if (la.kind == _function) {
 				Get();
 			}
-			/*Parser.GlobalScope.atg:343*/isMacro = true; 
+			/*Parser.GlobalScope.atg:346*/isMacro = true; 
 		} else SynErr(144);
 		if (StartOf(4)) {
-			Id(/*Parser.GlobalScope.atg:345*/out id);
-			/*Parser.GlobalScope.atg:345*/primaryAlias = id; 
+			Id(/*Parser.GlobalScope.atg:348*/out id);
+			/*Parser.GlobalScope.atg:348*/primaryAlias = id; 
 			if (la.kind == _as) {
-				FunctionAliasList(/*Parser.GlobalScope.atg:346*/funcAliases);
+				FunctionAliasList(/*Parser.GlobalScope.atg:349*/funcAliases);
 			}
 		} else if (la.kind == _as) {
-			FunctionAliasList(/*Parser.GlobalScope.atg:347*/funcAliases);
+			FunctionAliasList(/*Parser.GlobalScope.atg:350*/funcAliases);
 		} else SynErr(145);
-		/*Parser.GlobalScope.atg:349*/funcId = id ?? Engine.GenerateName("f");
+		/*Parser.GlobalScope.atg:352*/funcId = id ?? Engine.GenerateName("f");
 		  if(Engine.StringsAreEqual(id, @"\init")) //Treat "\init" specially (that's the initialization code)
 		  {
 		      func = TargetApplication._InitializationFunction;
@@ -2204,34 +2212,34 @@ internal partial class Parser {
 			if (la.kind == _lpar) {
 				Get();
 				if (StartOf(19)) {
-					FormalArg(/*Parser.GlobalScope.atg:433*/ft);
+					FormalArg(/*Parser.GlobalScope.atg:436*/ft);
 					while (la.kind == _comma) {
 						Get();
-						/*Parser.GlobalScope.atg:434*/if(missingArg)
+						/*Parser.GlobalScope.atg:437*/if(missingArg)
 						       {
 						           SemErr("Missing formal argument (two consecutive commas).");
 						       } 
 						   
 						if (StartOf(19)) {
-							FormalArg(/*Parser.GlobalScope.atg:439*/ft);
-							/*Parser.GlobalScope.atg:439*/missingArg = false; 
+							FormalArg(/*Parser.GlobalScope.atg:442*/ft);
+							/*Parser.GlobalScope.atg:442*/missingArg = false; 
 						} else if (la.kind == _comma || la.kind == _rpar) {
-							/*Parser.GlobalScope.atg:440*/missingArg = true; 
+							/*Parser.GlobalScope.atg:443*/missingArg = true; 
 						} else SynErr(146);
 					}
 				}
 				Expect(_rpar);
 			} else {
-				FormalArg(/*Parser.GlobalScope.atg:445*/ft);
+				FormalArg(/*Parser.GlobalScope.atg:448*/ft);
 				while (StartOf(35)) {
 					if (la.kind == _comma) {
 						Get();
 					}
-					FormalArg(/*Parser.GlobalScope.atg:447*/ft);
+					FormalArg(/*Parser.GlobalScope.atg:450*/ft);
 				}
 			}
 		}
-		/*Parser.GlobalScope.atg:450*/if(isNested && isLazy)
+		/*Parser.GlobalScope.atg:453*/if(isNested && isLazy)
 		   ft = cst;
 		  
 		  if(target == null && 
@@ -2258,21 +2266,21 @@ internal partial class Parser {
 		         func = derBody;
 		
 		if (la.kind == _lbrack) {
-			/*Parser.GlobalScope.atg:476*/_pushLexerState(Lexer.YYINITIAL); 
+			/*Parser.GlobalScope.atg:479*/_pushLexerState(Lexer.YYINITIAL); 
 			Get();
 			if (StartOf(30)) {
-				MetaAssignment(/*Parser.GlobalScope.atg:478*/func);
+				MetaAssignment(/*Parser.GlobalScope.atg:481*/func);
 				while (la.kind == _semicolon) {
 					Get();
 					if (StartOf(30)) {
-						MetaAssignment(/*Parser.GlobalScope.atg:480*/func);
+						MetaAssignment(/*Parser.GlobalScope.atg:483*/func);
 					}
 				}
 			}
-			/*Parser.GlobalScope.atg:483*/_popLexerState(); 
+			/*Parser.GlobalScope.atg:486*/_popLexerState(); 
 			Expect(_rbrack);
 		}
-		/*Parser.GlobalScope.atg:488*/if(primaryAlias != null && !_suppressPrimarySymbol(func))
+		/*Parser.GlobalScope.atg:491*/if(primaryAlias != null && !_suppressPrimarySymbol(func))
 		   Symbols.Declare(primaryAlias, symEntry.ToSymbol());
 		
 		                                        //Imprint certain meta keys from parent function
@@ -2311,22 +2319,22 @@ internal partial class Parser {
 			if (la.kind == _does) {
 				Get();
 			}
-			StatementBlock(/*Parser.GlobalScope.atg:524*/target.Ast);
-		} else if (/*Parser.GlobalScope.atg:526*/isFollowedByStatementBlock()) {
-			Expect(_implementation);
 			StatementBlock(/*Parser.GlobalScope.atg:527*/target.Ast);
+		} else if (/*Parser.GlobalScope.atg:529*/isFollowedByStatementBlock()) {
+			Expect(_implementation);
+			StatementBlock(/*Parser.GlobalScope.atg:530*/target.Ast);
 		} else if (la.kind == _assign || la.kind == _implementation) {
 			if (la.kind == _assign) {
 				Get();
 			} else {
 				Get();
 			}
-			/*Parser.GlobalScope.atg:528*/AstReturn ret = new AstReturn(this, ReturnVariant.Exit); 
-			Expr(/*Parser.GlobalScope.atg:529*/out ret.Expression);
-			/*Parser.GlobalScope.atg:529*/target.Ast.Add(ret); 
+			/*Parser.GlobalScope.atg:531*/AstReturn ret = new AstReturn(this, ReturnVariant.Exit); 
+			Expr(/*Parser.GlobalScope.atg:532*/out ret.Expression);
+			/*Parser.GlobalScope.atg:532*/target.Ast.Add(ret); 
 			Expect(_semicolon);
 		} else SynErr(147);
-		/*Parser.GlobalScope.atg:531*/_popLexerState();
+		/*Parser.GlobalScope.atg:534*/_popLexerState();
 		_PopScope(FunctionTargets[func]);
 		if(isLazy || isCoroutine)
 		{
@@ -2456,15 +2464,15 @@ internal partial class Parser {
 		                          
 	}
 
-	void GlobalId(/*Parser.GlobalScope.atg:673*/out string id) {
-		/*Parser.GlobalScope.atg:673*/id = "...no freaking id..."; 
+	void GlobalId(/*Parser.GlobalScope.atg:676*/out string id) {
+		/*Parser.GlobalScope.atg:676*/id = "...no freaking id..."; 
 		if (la.kind == _id) {
 			Get();
-			/*Parser.GlobalScope.atg:675*/id = cache(t.val); 
+			/*Parser.GlobalScope.atg:678*/id = cache(t.val); 
 		} else if (la.kind == _anyId) {
 			Get();
-			String(/*Parser.GlobalScope.atg:676*/out id);
-			/*Parser.GlobalScope.atg:676*/id = cache(id); 
+			String(/*Parser.GlobalScope.atg:679*/out id);
+			/*Parser.GlobalScope.atg:679*/id = cache(id); 
 		} else SynErr(148);
 	}
 
@@ -2528,20 +2536,20 @@ internal partial class Parser {
 		}
 	}
 
-	void GlobalQualifiedId(/*Parser.GlobalScope.atg:679*/out string id) {
-		/*Parser.GlobalScope.atg:679*/id = "\\NoId\\"; 
+	void GlobalQualifiedId(/*Parser.GlobalScope.atg:682*/out string id) {
+		/*Parser.GlobalScope.atg:682*/id = "\\NoId\\"; 
 		if (la.kind == _id || la.kind == _anyId) {
-			GlobalId(/*Parser.GlobalScope.atg:681*/out id);
+			GlobalId(/*Parser.GlobalScope.atg:684*/out id);
 		} else if (la.kind == _ns) {
 			Get();
-			/*Parser.GlobalScope.atg:682*/StringBuilder buffer = new StringBuilder(t.val); buffer.Append('.'); 
+			/*Parser.GlobalScope.atg:685*/StringBuilder buffer = new StringBuilder(t.val); buffer.Append('.'); 
 			while (la.kind == _ns) {
 				Get();
-				/*Parser.GlobalScope.atg:683*/buffer.Append(t.val); buffer.Append('.'); 
+				/*Parser.GlobalScope.atg:686*/buffer.Append(t.val); buffer.Append('.'); 
 			}
-			GlobalId(/*Parser.GlobalScope.atg:685*/out id);
-			/*Parser.GlobalScope.atg:685*/buffer.Append(id); 
-			/*Parser.GlobalScope.atg:686*/id = cache(buffer.ToString()); 
+			GlobalId(/*Parser.GlobalScope.atg:688*/out id);
+			/*Parser.GlobalScope.atg:688*/buffer.Append(id); 
+			/*Parser.GlobalScope.atg:689*/id = cache(buffer.ToString()); 
 		} else SynErr(151);
 	}
 
@@ -2559,22 +2567,22 @@ internal partial class Parser {
 		}
 	}
 
-	void DeclarationInstance(/*Parser.GlobalScope.atg:204*/SymbolInterpretations type, ModuleName module, bool preventOverride = false) {
-		/*Parser.GlobalScope.atg:204*/string id; string aId; 
-		Id(/*Parser.GlobalScope.atg:206*/out id);
-		/*Parser.GlobalScope.atg:206*/aId = id; 
+	void DeclarationInstance(/*Parser.GlobalScope.atg:207*/SymbolInterpretations type, ModuleName module, bool preventOverride = false) {
+		/*Parser.GlobalScope.atg:207*/string id; string aId; 
+		Id(/*Parser.GlobalScope.atg:209*/out id);
+		/*Parser.GlobalScope.atg:209*/aId = id; 
 		if (la.kind == _div) {
 			Get();
-			ModuleName(/*Parser.GlobalScope.atg:207*/ref module);
-			/*Parser.GlobalScope.atg:208*/if(preventOverride) 
+			ModuleName(/*Parser.GlobalScope.atg:210*/ref module);
+			/*Parser.GlobalScope.atg:211*/if(preventOverride) 
 			   SemErr("Specification of module name illegal at this point."); 
 			
 		}
 		if (la.kind == _as) {
 			Get();
-			Id(/*Parser.GlobalScope.atg:212*/out aId);
+			Id(/*Parser.GlobalScope.atg:215*/out aId);
 		}
-		/*Parser.GlobalScope.atg:213*/SymbolEntry inferredType;
+		/*Parser.GlobalScope.atg:216*/SymbolEntry inferredType;
 		if(type == SymbolInterpretations.Undefined)
 		    if(_TryUseSymbolEntry(id, out inferredType))
 		       {
@@ -2597,18 +2605,18 @@ internal partial class Parser {
 			                        
 	}
 
-	void ModuleName(/*Parser.GlobalScope.atg:237*/ref ModuleName moduleName) {
-		/*Parser.GlobalScope.atg:237*/_pushLexerState(Lexer.YYINITIAL); //need global scope for Version
+	void ModuleName(/*Parser.GlobalScope.atg:240*/ref ModuleName moduleName) {
+		/*Parser.GlobalScope.atg:240*/_pushLexerState(Lexer.YYINITIAL); //need global scope for Version
 		string id = null; 
-		Version version = default(Version);
+		Version version = null;
 		
-		Id(/*Parser.GlobalScope.atg:242*/out id);
+		Id(/*Parser.GlobalScope.atg:245*/out id);
 		if (la.kind == _div) {
 			Get();
-			Version(/*Parser.GlobalScope.atg:244*/out version);
+			Version(/*Parser.GlobalScope.atg:247*/out version);
 		}
-		/*Parser.GlobalScope.atg:245*/_popLexerState();
-		moduleName = Loader.Cache[new ModuleName(id,version)];
+		/*Parser.GlobalScope.atg:248*/_popLexerState();
+		moduleName = Loader.Cache[new ModuleName(id,version ?? new Version(0,0))];
 		
 	}
 
@@ -2620,24 +2628,27 @@ internal partial class Parser {
 		} else SynErr(152);
 		/*Parser.Helper.atg:65*/var raw = t.val;
 		if(!TryParseVersion(raw, out version))
-		    SemErr(t,"Cannot recognize \"" + raw + "\" as a version literal.");
-		
+		{
+		                               SemErr(t,"Cannot recognize \"" + raw + "\" as a version literal.");
+			version = new Version(0,0);
+		}
+		                       
 	}
 
 	void StatementBlock(/*Parser.Statement.atg:26*/AstBlock block) {
 		Statement(/*Parser.Statement.atg:27*/block);
 	}
 
-	void FunctionAliasList(/*Parser.GlobalScope.atg:310*/IList<string> aliases ) {
-		/*Parser.GlobalScope.atg:310*/String id; 
+	void FunctionAliasList(/*Parser.GlobalScope.atg:313*/IList<string> aliases ) {
+		/*Parser.GlobalScope.atg:313*/String id; 
 		Expect(_as);
-		Id(/*Parser.GlobalScope.atg:312*/out id);
-		/*Parser.GlobalScope.atg:312*/aliases.Add(id); 
+		Id(/*Parser.GlobalScope.atg:315*/out id);
+		/*Parser.GlobalScope.atg:315*/aliases.Add(id); 
 		while (la.kind == _comma) {
 			Get();
 			if (StartOf(4)) {
-				Id(/*Parser.GlobalScope.atg:314*/out id);
-				/*Parser.GlobalScope.atg:314*/aliases.Add(id); 
+				Id(/*Parser.GlobalScope.atg:317*/out id);
+				/*Parser.GlobalScope.atg:317*/aliases.Add(id); 
 			}
 		}
 	}
@@ -3307,8 +3318,8 @@ internal partial class Parser {
 		{x,T,T,x, x,x,x,x, x,x,x,x, x,x,x,x, x,x,x,x, x,x,x,x, x,x,x,x, x,x,x,x, x,x,x,T, x,x,x,x, x,x,x,x, x,T,T,x, x,x,x,T, x,T,x,x, x,x,x,T, x,x,x,x, T,x,x,x, x,x,x,x, x,x,x,x, x,x,x,x, x,x,x,x, x,x,x,x, x,x,x,x, x,x,x,x, x,x,x,x},
 		{x,T,T,x, x,x,x,x, x,x,x,x, x,x,x,x, x,x,x,x, x,x,x,x, x,x,x,x, x,x,x,x, x,x,x,x, x,x,x,x, x,x,x,x, x,T,T,x, x,x,x,T, x,T,x,x, x,x,x,T, x,x,x,x, T,x,x,x, x,x,x,x, x,x,x,x, x,x,x,x, x,x,x,x, x,x,x,x, x,x,x,x, x,x,x,x, x,x,x,x},
 		{x,T,T,x, x,x,x,x, x,x,x,x, x,x,x,x, x,x,x,x, x,x,x,x, x,x,x,x, x,x,x,x, x,x,x,x, x,x,x,x, x,x,x,x, x,x,x,x, x,x,x,T, x,T,x,x, x,x,x,x, x,x,x,x, T,x,x,x, x,x,x,x, x,x,x,x, x,x,x,x, x,x,x,x, x,x,x,x, x,x,x,x, x,x,x,x, x,x,x,x},
-		{x,T,T,x, x,x,x,x, x,x,x,x, x,x,x,x, x,x,x,x, x,x,x,x, x,x,x,x, x,x,x,x, x,x,x,x, x,x,x,x, x,x,x,x, x,T,T,x, x,x,x,x, x,x,T,T, T,T,x,x, T,x,x,x, T,x,x,x, x,x,x,x, x,x,x,x, x,x,x,x, x,x,x,x, x,x,x,x, x,x,x,x, x,x,x,x, x,x,x,x},
-		{x,x,x,x, x,x,x,x, x,x,x,x, x,x,x,x, x,x,x,x, x,x,x,x, x,x,x,x, x,x,x,x, x,x,x,x, x,x,x,x, x,x,x,x, x,T,T,x, x,x,x,x, x,x,x,x, T,T,x,x, x,x,x,x, x,x,x,x, x,x,x,x, x,x,x,x, x,x,x,x, x,x,x,x, x,x,x,x, x,x,x,x, x,x,x,x, x,x,x,x},
+		{x,T,T,x, x,x,x,x, x,x,x,x, x,x,x,x, x,x,x,x, x,x,x,x, x,x,x,x, x,x,x,x, x,x,x,x, x,x,x,x, x,x,x,x, x,T,T,x, x,x,x,x, x,x,T,T, T,T,x,x, T,x,x,x, T,x,x,x, x,x,x,x, x,x,x,x, x,x,x,x, x,x,x,x, x,x,x,x, x,x,x,x, x,T,x,x, x,x,x,x},
+		{x,x,x,x, x,x,x,x, x,x,x,x, x,x,x,x, x,x,x,x, x,x,x,x, x,x,x,x, x,x,x,x, x,x,x,x, x,x,x,x, x,x,x,x, x,T,T,x, x,x,x,x, x,x,x,x, T,T,x,x, x,x,x,x, x,x,x,x, x,x,x,x, x,x,x,x, x,x,x,x, x,x,x,x, x,x,x,x, x,x,x,x, x,T,x,x, x,x,x,x},
 		{x,T,T,x, T,x,T,T, T,T,x,x, x,x,x,x, x,x,x,x, T,x,x,x, x,x,x,x, x,x,x,x, x,x,x,x, x,x,x,x, x,x,x,x, x,x,x,T, T,x,x,x, x,x,x,x, x,x,x,x, x,x,x,x, x,x,x,x, x,x,x,x, x,x,x,x, x,x,x,x, x,x,x,x, x,x,x,x, x,x,x,x, x,x,x,x, x,x,x,x},
 		{x,T,T,x, x,x,x,x, x,x,x,x, x,x,x,x, x,x,x,x, x,x,T,x, x,x,x,x, x,x,x,x, x,x,x,x, x,x,x,x, x,x,x,x, x,T,T,x, x,x,x,x, x,x,T,T, x,x,x,x, T,x,x,x, T,x,x,x, x,x,x,x, x,x,x,x, x,x,x,x, x,x,x,x, x,x,x,x, x,x,x,x, x,x,x,x, x,x,x,x},
 		{x,T,T,x, x,x,x,x, x,x,x,x, T,x,x,x, x,x,x,x, x,x,x,x, x,x,x,x, x,x,x,x, x,x,x,x, x,x,x,x, x,x,x,x, x,T,T,x, x,x,x,x, x,x,T,T, x,x,x,x, T,x,x,x, T,x,x,x, x,x,x,x, x,x,x,x, x,x,x,x, x,x,x,x, x,x,x,x, x,x,x,x, x,x,x,x, x,x,x,x},

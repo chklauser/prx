@@ -209,8 +209,10 @@ function main(xs,y)
         var f = (x) => 
             if(context is null)
                 ""context is null""
+            else if(context.LocalSymbols.TryGet(x, ref r))
+                var r
             else
-                context.LocalSymbols[x];
+                ""cannot resolve $x"";
         println(f.(""x""));
     }
 

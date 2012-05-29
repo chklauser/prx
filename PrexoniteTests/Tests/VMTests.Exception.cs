@@ -454,20 +454,19 @@ function println does foreach(sb.AppendLine in var args);
 
 function main()
 {
-    
+    var xs;
     try
     {
-        var xs = 
+        xs = [];
             foreach(var a in var args) 
-                yield mightFail(a);
-            ;
+                xs[] = mightFail(a);
     }
     finally
     {
-        xs = 
+        xs = [];
             foreach(var a in var args)
-                yield ""NP($a)"";
-            ;
+                xs[] = ""NP($a)"";
+            
     }
     catch(var exc)
     {

@@ -1164,6 +1164,7 @@ SYNC
 	    |   ref             (. type = SymbolInterpretations.GlobalReferenceVariable; .)
 	    |   function        (. type = SymbolInterpretations.Function; .)
 	    |   command         (. type = SymbolInterpretations.Command; .)
+		|	macro command   (. type = SymbolInterpretations.MacroCommand; .)
 	    ]
 	    DeclarationInstance<type,module>
 	    { comma [ DeclarationInstance<type,module> ] }
@@ -1174,9 +1175,11 @@ SYNC
 	        |   ref         (. type = SymbolInterpretations.GlobalReferenceVariable; .)
 	        |   function    (. type = SymbolInterpretations.Function; .)
 	        |   command     (. type = SymbolInterpretations.Command; .)
+			|	macro command 
+							(. type = SymbolInterpretations.MacroCommand; .)
 	        ) 
             colon
-            DeclarationInstance<type,module>
+            DeclarationInstance<type,module,preventOverride:true>
 	        { comma [ DeclarationInstance<type,module> ] }
         }
         rbrace
@@ -1219,14 +1222,14 @@ DeclarationInstance<SymbolInterpretations type, ModuleName module, bool preventO
 ModuleName<ref ModuleName moduleName> 
                                 (.  _pushLexerState(Lexer.YYINITIAL); //need global scope for Version
                                     string id = null; 
-                                    Version version = default(Version);
+                                    Version version = null;
                                 .)
 =
     Id<out id>
     [   div
         Version<out version>    
     ]                           (.  _popLexerState();
-                                    moduleName = Loader.Cache[new ModuleName(id,version)];
+                                    moduleName = Loader.Cache[new ModuleName(id,version ?? new Version(0,0))];
                                 .)
 .
 
@@ -1734,7 +1737,10 @@ Version<out Version version>    // Cannot distinguish between Real and Version â
 =
     (realLike | version)        (.  var raw = t.val;
                                     if(!TryParseVersion(raw, out version))
+									{
                                         SemErr(t,"Cannot recognize \"" + raw + "\" as a version literal.");
+										version = new Version(0,0);
+									}
                                 .)
 .
 

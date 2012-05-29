@@ -575,30 +575,6 @@ function main()
         }
 
         [Test]
-        public void LoopExpressions()
-        {
-            Compile(
-                @"
-function main(s)
-{
-    var words = for(var i = 0; i < s.Length; i += 2)
-                {
-                    if(i == s.Length - 1)
-                        yield s.Substring(i,1);
-                    else
-                        yield s.Substring(i,2);
-                };
-    
-    return foldl    ( (l,r) => l + ""-"" + r, words.Count,  foreach(var word in words) 
-                                                                yield word[0].ToUpper + word[1].ToLower;
-                    );
-}
-");
-
-            Expect("5-Bl-Oo-Dh-Ou-Nd", "BloodHound");
-        }
-
-        [Test]
         public void LeftAppendArgument()
         {
             Compile(
@@ -859,20 +835,24 @@ build does hook(t =>
     if(init.Id != Prexonite::Application.InitializationId)
         return;
 
-    var alreadyPromoted = foreach(var entry in init.Meta[""alreadyPromoted""].List)
-                            yield entry.Text;
-                          ;
+    var alreadyPromoted = [];
+    foreach(var entry in init.Meta[""alreadyPromoted""].List)
+        alreadyPromoted[] = entry.Text;
     
-    var toPromote = foreach(var loc in init.Variables)
-                        unless(alreadyPromoted.Contains(loc))
-                            yield loc;
-                    ;
+    
+    var toPromote = [];
+    foreach(var loc in init.Variables)
+        unless(alreadyPromoted.Contains(loc))
+            toPromote[] = loc;
     
     foreach(var loc in toPromote)
     {
-        loc = t.Symbols[loc];
+        if(not t.Symbols.TryGet(loc~String,->loc))
+            throw ""Cannot find $loc in hook."";
+        loc =  Prexonite::Compiler::Symbolic::Compatibility::LegacyExtensions.ToSymbolEntry(loc);
         var glob = new ::SymbolEntry(SI.make_global(loc.Interpretation), loc.InternalId, asm(ldr.app).Module.Name);
-        t.Loader.Symbols[loc.InternalId] = glob;
+        var ss = Prexonite::Compiler::Symbolic::Compatibility::LegacyExtensions.ToSymbol(glob);
+        t.Loader.Symbols.Declare(loc.InternalId, ss);
         t.Loader.Options.TargetApplication.Variables[loc.InternalId] = new ::PVariable(loc.InternalId);
         var assignment = ast(""GetSetSymbol"", ::PCall.Set, glob);
         assignment.Arguments.Add(ast(""GetSetSymbol"", ::PCall.Get, loc));

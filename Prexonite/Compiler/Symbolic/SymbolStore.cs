@@ -28,6 +28,7 @@ using System.Collections;
 using System.Collections.Generic;
 using JetBrains.Annotations;
 using Prexonite.Compiler.Symbolic.Internal;
+using Prexonite.Types;
 
 namespace Prexonite.Compiler.Symbolic
 {
@@ -36,7 +37,7 @@ namespace Prexonite.Compiler.Symbolic
     /// it could forward queries to one or more "surrounding"/"parent" scopes. It could also
     /// present the intersection or union of multiple scopes.
     /// </summary>
-    public abstract class SymbolStore : ISymbolView<Symbol>
+    public abstract class SymbolStore : ISymbolView<Symbol>, IObject
     {
         IEnumerator IEnumerable.GetEnumerator()
         {
@@ -120,5 +121,39 @@ namespace Prexonite.Compiler.Symbolic
                                     MessageClasses.SymbolNotResolved);
             return new MessageSymbol(msg, null);
         }
+
+        #region Implementation of IObject
+
+        public bool TryDynamicCall(StackContext sctx, PValue[] args, PCall call, string id, out PValue result)
+        {
+            switch (id.ToUpperInvariant())
+            {
+                case "":
+                    throw new PrexoniteException(
+                        "Symbol stores do not have an index property. Use symbolStore.TryGet(symbolicId, ref symbol) instead.");
+                case "TRYGET":
+                    if (args.Length < 2)
+                        throw new PrexoniteException(
+                            "Not enough arguments for SymbolStore.TryGet(symbolicId, resultVar).");
+                    var symbolic = (string)args[0].ConvertTo(sctx, PType.String, useExplicit: false).Value;
+                    Symbol symbol;
+                    if(TryGet(symbolic,out symbol))
+                    {
+                        args[1].IndirectCall(sctx, new[] {sctx.CreateNativePValue(symbol)});
+                        result = true;
+                        return true;
+                    }
+                    else
+                    {
+                        result = PType.Null;
+                        return false;
+                    }
+                default:
+                    result = PType.Null;
+                    return false;
+            }
+        }
+
+        #endregion
     }
 }

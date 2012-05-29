@@ -32,40 +32,6 @@ using Prexonite.Types;
 namespace Prexonite.Compiler.Ast
 {
 #pragma warning disable 628 //ignore warnings about proteced members in sealed classes for now
-    public sealed class AstReferenceToEntity : AstExpr
-    {
-        private readonly EntityRef _entity;
-
-        public EntityRef Entity
-        {
-            get { return _entity; }
-        }
-
-        private AstReferenceToEntity(ISourcePosition position, EntityRef entity) : base(position)
-        {
-            if (entity == null)
-                throw new ArgumentNullException("entity");
-            _entity = entity;
-        }
-
-        #region Overrides of AstNode
-
-        protected override void DoEmitCode(CompilerTarget target, StackSemantics stackSemantics)
-        {
-            throw new NotImplementedException();
-        }
-
-        #endregion
-
-        #region Implementation of AstExpr
-
-        public override bool TryOptimize(CompilerTarget target, out AstExpr expr)
-        {
-            throw new NotImplementedException();
-        }
-
-        #endregion
-    }
 
     public sealed class AstGetSetEntity : AstGetSet, ICanBeReferenced
     {
@@ -76,12 +42,12 @@ namespace Prexonite.Compiler.Ast
             get { return _entity; }
         }
 
-        public static AstGetSetEntity Create(ISourcePosition position, EntityRef entity)
+        public static AstGetSet Create(ISourcePosition position, EntityRef entity)
         {
             return Create(position, PCall.Get, entity);
         }
 
-        public static AstGetSetEntity Create(ISourcePosition position, PCall call, EntityRef entity)
+        public static AstGetSet Create(ISourcePosition position, PCall call, EntityRef entity)
         {
             return new AstGetSetEntity(position,call,entity);
         }
@@ -94,14 +60,114 @@ namespace Prexonite.Compiler.Ast
             _entity = entity;
         }
 
+        private class CodeGenInfo
+        {
+            public CompilerTarget Target { get; set; }
+            public StackSemantics StackSemantics { get; set; }
+            public AstGetSetEntity Node { get; set; }
+
+            public bool JustEffect
+            {
+                get { return StackSemantics == StackSemantics.Effect; }
+            }
+        }
+
+        private class EmitGetCodeHandler : EntityRefMatcher<CodeGenInfo,object>
+        {
+            #region Overrides of EntityRefMatcher<CodeGenInfo,object>
+
+            protected override object OnNotMatched(EntityRef entity, CodeGenInfo argument)
+            {
+                throw new NotSupportedException(string.Format(
+                    "AstGetSetEntity cannot be used to generate code for {0}.", entity));
+            }
+
+            #endregion
+
+            protected override object OnCommand(EntityRef.Command command, CodeGenInfo argument)
+            {
+                argument.Target.EmitCommandCall(argument.Node, argument.Node.Arguments.Count, command.Id,
+                                                argument.JustEffect);
+                return null;
+            }
+
+            public override object OnFunction(EntityRef.Function function, CodeGenInfo argument)
+            {
+                argument.Target.EmitFunctionCall(argument.Node, argument.Node.Arguments.Count, function.Id,
+                                                 function.ModuleName, argument.JustEffect);
+                return null;
+            }
+
+            protected override object OnGlobalVariable(EntityRef.Variable.Global variable, CodeGenInfo argument)
+            {
+                if(!argument.JustEffect)
+                    argument.Target.EmitLoadGlobal(argument.Node,variable.Id,variable.ModuleName);
+                return null;
+            }
+
+            protected override object OnLocalVariable(EntityRef.Variable.Local variable, CodeGenInfo argument)
+            {
+                if(!argument.JustEffect)
+                    argument.Target.EmitLoadLocal(argument.Node,variable.Id);
+                return null;
+            }
+        }
+
+        private class EmitSetCodeHandler : EntityRefMatcher<CodeGenInfo,object>
+        {
+            #region Overrides of EntityRefMatcher<CodeGenInfo,object>
+
+            protected override object OnNotMatched(EntityRef entity, CodeGenInfo argument)
+            {
+                throw new NotSupportedException(string.Format(
+                    "AstGetSetEntity cannot be used to generate code for assigning to {0}.", entity));
+            }
+
+            #endregion
+
+            // set calls are always done just for the effect. The "return" value of a set call is the RHS 
+            //  and that is already handled by AstGetSet.
+            private const bool JustEffect = true;
+
+            protected override object OnCommand(EntityRef.Command command, CodeGenInfo argument)
+            {
+                argument.Target.EmitCommandCall(argument.Node, argument.Node.Arguments.Count, command.Id,
+                                                JustEffect);
+                return null;
+            }
+
+            public override object OnFunction(EntityRef.Function function, CodeGenInfo argument)
+            {
+                argument.Target.EmitFunctionCall(argument.Node, argument.Node.Arguments.Count, function.Id,
+                                                 function.ModuleName, JustEffect);
+                return null;
+            }
+
+            protected override object OnGlobalVariable(EntityRef.Variable.Global variable, CodeGenInfo argument)
+            {
+                argument.Target.EmitStoreGlobal(argument.Node,variable.Id,variable.ModuleName);
+                return null;
+            }
+
+            protected override object OnLocalVariable(EntityRef.Variable.Local variable, CodeGenInfo argument)
+            {
+                if(!argument.JustEffect)
+                    argument.Target.EmitStoreLocal(argument.Node,variable.Id);
+                return null;
+            }
+        }
+
+        private static readonly EmitGetCodeHandler _emitGetCode = new EmitGetCodeHandler();
+        private static readonly EmitSetCodeHandler _emitSetCode = new EmitSetCodeHandler();
+
         protected override void EmitGetCode(CompilerTarget target, StackSemantics stackSemantics)
         {
-            throw new System.NotImplementedException();
+            _entity.Match(_emitGetCode, new CodeGenInfo {Target = target, StackSemantics = stackSemantics, Node = this});
         }
 
         protected override void EmitSetCode(CompilerTarget target)
         {
-            throw new System.NotImplementedException();
+            _entity.Match(_emitSetCode, new CodeGenInfo() {Target = target, Node = this});
         }
 
         public override AstGetSet GetCopy()

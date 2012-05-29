@@ -63,7 +63,10 @@ Version<out Version version>    // Cannot distinguish between Real and Version â
 =
     (realLike | version)        (.  var raw = t.val;
                                     if(!TryParseVersion(raw, out version))
+									{
                                         SemErr(t,"Cannot recognize \"" + raw + "\" as a version literal.");
+										version = new Version(0,0);
+									}
                                 .)
 .
 
