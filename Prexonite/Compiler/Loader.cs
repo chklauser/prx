@@ -1220,6 +1220,12 @@ namespace Prexonite.Compiler
                 return null;
             }
 
+            public override object OnFunction(EntityRef.Function function, SymbolKinds argument)
+            {
+                argument.Functions.Add(new KeyValuePair<string, EntityRef.Function>(argument.Key, function));
+                return null;
+            }
+
             protected override object OnGlobalVariable(EntityRef.Variable.Global variable, SymbolKinds argument)
             {
                 if(argument.IsDereference)
