@@ -18,7 +18,7 @@ namespace PrexoniteTests.Tests.Configurations
             [TestFixtureSetUp]
             public void SetupTestFile()
             {
-                SetUpLoader();
+                Initialize();
                 // Units under test
                 Runner.SetupUnitsUnderTest(this, new string[] {
                         @"psr\ast.pxs",
@@ -112,7 +112,7 @@ namespace PrexoniteTests.Tests.Configurations
             [TestFixtureSetUp]
             public void SetupTestFile()
             {
-                SetUpLoader();
+                Initialize();
                 // Units under test
                 Runner.SetupUnitsUnderTest(this, new string[] {
                         @"psr\pattern.pxs",
@@ -169,7 +169,7 @@ namespace PrexoniteTests.Tests.Configurations
             [TestFixtureSetUp]
             public void SetupTestFile()
             {
-                SetUpLoader();
+                Initialize();
                 // Units under test
                 Runner.SetupUnitsUnderTest(this, new string[] {
                         @"psr\macro.pxs",
@@ -324,7 +324,7 @@ namespace PrexoniteTests.Tests.Configurations
             [TestFixtureSetUp]
             public void SetupTestFile()
             {
-                SetUpLoader();
+                Initialize();
                 // Units under test
                 Runner.SetupUnitsUnderTest(this, new string[] {
                         @"psr\misc.pxs",
@@ -413,7 +413,7 @@ namespace PrexoniteTests.Tests.Configurations
             [TestFixtureSetUp]
             public void SetupTestFile()
             {
-                SetUpLoader();
+                Initialize();
                 // Units under test
                 Runner.SetupUnitsUnderTest(this, new string[] {
                         @"psr\struct.pxs",

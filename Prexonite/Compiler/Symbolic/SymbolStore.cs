@@ -95,6 +95,18 @@ namespace Prexonite.Compiler.Symbolic
         [PublicAPI]
         public abstract bool IsDeclaredLocally(string id);
 
+        /// <summary>
+        /// Removes all local declarations from this symbol store.
+        /// </summary>
+        [PublicAPI] //This operations is required to clear the symbol table of the 
+                    // the initialization function target.
+        public abstract void ClearLocalDeclarations();
+
+        /// <summary>
+        /// Provides access to all local declarations of a symbol store (symbols that were declared via <see cref="Declare"/>).
+        /// </summary>
+        public abstract IEnumerable<KeyValuePair<string, Symbol>> LocalDeclarations { get; }
+
         //TODO Find a good place for the method CreateSymbolNotFoundError
         /// <summary>
         /// Creates a new error symbol indicating that the supplied symbolic id could not be resolved.

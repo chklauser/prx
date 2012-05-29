@@ -174,26 +174,26 @@ function main(x)
             Expect(3*11 + 5 + 7, 11);
 
             {
-                Assert.That(ldr.Symbols.ContainsKey("f"), Is.True,
+                Assert.That(ldr.Symbols.Contains("f"), Is.True,
                     "Symbol table must contain an entry for 'f'.");
-                var entry = ldr.Symbols["f"];
+                var entry = LookupSymbolEntry(ldr.Symbols,"f");
                 Assert.That(entry.Interpretation,
                     Is.EqualTo(SymbolInterpretations.GlobalObjectVariable));
                 Assert.That(entry.InternalId, Is.EqualTo("f"));
             }
 
             {
-                Assert.That(ldr.Symbols.ContainsKey("g"), Is.True,
+                Assert.That(ldr.Symbols.Contains("g"), Is.True,
                     "Symbol table must contain an entry for 'g'.");
-                var entry = ldr.Symbols["g"];
+                var entry = LookupSymbolEntry(ldr.Symbols,"g");
                 Assert.That(entry.Interpretation, Is.EqualTo(SymbolInterpretations.Function));
                 Assert.That(entry.InternalId, Is.EqualTo("g"));
             }
 
             {
-                Assert.That(ldr.Symbols.ContainsKey("p"), Is.True,
+                Assert.That(ldr.Symbols.Contains("p"), Is.True,
                     "Symbol table must contain an entry for 'p'.");
-                var entry = ldr.Symbols["p"];
+                var entry = LookupSymbolEntry(ldr.Symbols,"p");
                 Assert.That(entry.Interpretation, Is.EqualTo(SymbolInterpretations.Function));
                 Assert.That(entry.InternalId, Is.EqualTo("f"));
             }

@@ -67,7 +67,7 @@ namespace Prexonite.Compiler.Ast
         }
 
         [PublicAPI]
-        public AstBlock Block
+        public AstSubBlock Block
         {
             get { return _block; }
         }

@@ -36,6 +36,7 @@ using StringBuilder = System.Text.StringBuilder;
 using Prexonite.Compiler.Ast;
 using Prexonite.Types;
 using Prexonite.Modular;
+using Prexonite.Compiler.Symbolic.Compatibility;
 
 COMPILER Prexonite
 
@@ -245,13 +246,13 @@ AsmInstruction<AstBlock block>          (.  int arguments = 0;
                                         
                                         (.  //Store variable
                                             target.Function.Variables.Add(id);
-                                            SmartDeclareLocal(kind, id);
+                                            SmartDeclareLocal(id, kind);
                                         .)
     {   comma
         AsmId<out id>                                        
                                         (.  //Store variable
                                             target.Function.Variables.Add(id);
-                                            SmartDeclareLocal(kind, id);
+                                            SmartDeclareLocal(id, kind);
                                         .)
     }
 |   //OP ALIAS INSTRUCTIONS
@@ -276,7 +277,7 @@ AsmInstruction<AstBlock block>          (.  int arguments = 0;
                                         (. addLabel(block, id); .)
 |   //NOP/DATA INSTRUCTION
     IF(isAsmInstruction("nop", null))
-    AsmId<out insbase>                  (.  Instruction ins = new Instruction(OpCode.nop); .)
+    AsmId<out insbase>                  (.  var ins = new Instruction(OpCode.nop); .)
     [  plus AsmId<out id>               (.  ins = ins.With(id: id); .)
     ]
                                         (.  addInstruction(block, ins); .)
@@ -541,7 +542,7 @@ BitOrExpr<out AstExpr expr>
                                         (. AstExpr lhs, rhs; .)
 =
     BitXorExpr<out lhs>                 (. expr = lhs; .)
-    { bitOr BitXorExpr<out rhs>         (. expr = AstBinaryOperator.Create(this, expr, BinaryOperator.BitwiseOr, rhs); .)
+    { bitOr BitXorExpr<out rhs>         (. expr =Create.BinaryOperation(GetPosition(), expr, BinaryOperator.BitwiseOr, rhs); .)
     }
 .
 
@@ -550,7 +551,7 @@ BitXorExpr<out AstExpr expr>
 =
     BitAndExpr<out lhs>                 (.  expr = lhs; .)
     {   xor BitAndExpr<out rhs>
-                                        (.  expr = AstBinaryOperator.Create(this, expr, BinaryOperator.ExclusiveOr, rhs); .)
+                                        (.  expr = Create.BinaryOperation(GetPosition(), expr, BinaryOperator.ExclusiveOr, rhs); .)
     }
 .
 
@@ -559,7 +560,7 @@ BitAndExpr<out AstExpr expr>
 =
     NotExpr<out lhs>                    (.  expr = lhs; .)
     {   bitAnd NotExpr<out rhs>
-                                        (.  expr = AstBinaryOperator.Create(this, expr, BinaryOperator.BitwiseAnd, rhs); .)
+                                        (.  expr = Create.BinaryOperation(GetPosition(), expr, BinaryOperator.BitwiseAnd, rhs); .)
     }
 .
 
@@ -568,7 +569,7 @@ NotExpr<out AstExpr expr>
 =
     [   not                             (.  isNot = true; .)
     ]
-    EqlExpr<out lhs>                    (.  expr = isNot ? AstUnaryOperator._Create(this, UnaryOperator.LogicalNot, lhs) : lhs; .)
+    EqlExpr<out lhs>                    (.  expr = isNot ? Create.UnaryOperation(GetPosition(), UnaryOperator.LogicalNot, lhs) : lhs; .)
 .
 
 EqlExpr<out AstExpr expr>
@@ -577,7 +578,7 @@ EqlExpr<out AstExpr expr>
     RelExpr<out lhs>                    (. expr = lhs; .)
     {   (   eq                          (.  op = BinaryOperator.Equality; .)
         |   ne                          (.  op = BinaryOperator.Inequality; .)    
-        ) RelExpr<out rhs>              (.  expr = AstBinaryOperator.Create(this, expr, op, rhs); .)
+        ) RelExpr<out rhs>              (.  expr = Create.BinaryOperation(GetPosition(), expr, op, rhs); .)
     }
 .
 
@@ -589,7 +590,7 @@ RelExpr<out AstExpr expr>
         |   le                          (.  op = BinaryOperator.LessThanOrEqual;       .)
         |   gt                          (.  op = BinaryOperator.GreaterThan;           .)
         |   ge                          (.  op = BinaryOperator.GreaterThanOrEqual;    .)
-        ) CoalExpr<out rhs>             (.  expr = AstBinaryOperator.Create(this, expr, op, rhs); .)
+        ) CoalExpr<out rhs>             (.  expr = Create.BinaryOperation(GetPosition(), expr, op, rhs); .)
     }
 .
 
@@ -609,7 +610,7 @@ AddExpr<out AstExpr expr>
     MulExpr<out lhs>                    (.  expr = lhs; .)
     {   (   plus                        (.  op = BinaryOperator.Addition;      .)
         |   minus                       (.  op = BinaryOperator.Subtraction;   .) 
-        ) MulExpr<out rhs>              (.  expr = AstBinaryOperator.Create(this, expr, op, rhs); .)
+        ) MulExpr<out rhs>              (.  expr = Create.BinaryOperation(GetPosition(), expr, op, rhs); .)
     }
 .
 
@@ -620,7 +621,7 @@ MulExpr<out AstExpr expr>
     {   (   times                       (.  op = BinaryOperator.Multiply;      .)
         |   div                         (.  op = BinaryOperator.Division;        .)
         |   mod                         (.  op = BinaryOperator.Modulus;       .)
-        ) PowExpr<out rhs>              (.  expr = AstBinaryOperator.Create(this, expr, op, rhs); .)
+        ) PowExpr<out rhs>              (.  expr = Create.BinaryOperation(GetPosition(), expr, op, rhs); .)
     }
 .
 
@@ -628,7 +629,7 @@ PowExpr<out AstExpr expr>
                                         (.  AstExpr lhs, rhs; .)
 =
     AssignExpr<out lhs>                  (.  expr = lhs; .)
-    {   pow AssignExpr<out rhs>          (.  expr = AstBinaryOperator.Create(this, expr, BinaryOperator.Power, rhs); .)
+    {   pow AssignExpr<out rhs>          (.  expr = Create.BinaryOperation(GetPosition(), expr, BinaryOperator.Power, rhs); .)
     }
 .
 
@@ -843,7 +844,7 @@ LambdaExpression<out AstExpr expr>
 )
                                         (.
                                             CompilerTarget oldTarget = target;
-                                            target = ft;
+                                            _PushScope(ft);
                                         .)
 implementation                                        
 (   lbrace
@@ -853,7 +854,7 @@ implementation
     Expr<out ret.Expression>            (.  ft.Ast.Add(ret); .)
 )
                                         (.
-                                            target = oldTarget;
+                                            _PopScope(ft);
                                             if(errors.count == 0)
                                             {
                                                 try {
@@ -876,12 +877,12 @@ LazyExpression<out AstExpr expr>
                                             PFunction func = TargetApplication.CreateFunction(generateLocalId());
                                             func.Meta[Application.ImportKey] = target.Function.Meta[Application.ImportKey];
                                             func.Meta[PFunction.ParentFunctionKey] = target.Function.Id;
-                                            Loader.CreateFunctionTarget(func, new AstBlock(this), target, GetPosition());
+                                            Loader.CreateFunctionTarget(func, target, GetPosition());
                                             CompilerTarget ft = FunctionTargets[func];
                                             
                                             //Switch to nested target
                                             CompilerTarget oldTarget = target;
-                                            target = ft;
+                                            _PushScope(ft);
                                         .)
 =
 lazy
@@ -896,14 +897,14 @@ lazy
                                             var cap = ft.ToCaptureByValue(let_bindings(ft));
                                             
                                             //Restore parent target
-                                            target = oldTarget;
+                                            _PopScope(ft);
                                             
                                             //Finish nested function
                                             if(errors.count == 0)
                                             {
                                                 try {
-                                                Ast[func].EmitCode(FunctionTargets[func],true,StackSemantics.Effect);
-                                                FunctionTargets[func].FinishTarget();
+													Ast[func].EmitCode(FunctionTargets[func],true,StackSemantics.Effect);
+													FunctionTargets[func].FinishTarget();
                                                 } catch(Exception e) {
                                                     SemErr("Exception during compilation of lazy expression.\n" + e.ToString());
                                                 }
@@ -1102,7 +1103,7 @@ GlobalVariableDefinition	(.
 	                        (.
                                 entry = new SymbolEntry(type,id, TargetModule.Name);
 	                            foreach(var alias in aliases)
-	                                Symbols[alias] = entry;
+	                                Symbols.Declare(alias, entry.ToSymbol());
                                 DefineGlobalVariable(id,out vari);
 	                        .)
 	[	lbrack  		    //Meta block for variables
@@ -1113,11 +1114,11 @@ GlobalVariableDefinition	(.
         ]
 		rbrack
 	]                       (.  if(primaryAlias != null && !_suppressPrimarySymbol(vari))
-                                    Symbols[primaryAlias] = entry;
+                                    Symbols.Declare(primaryAlias, entry.ToSymbol());
                             .)
 	[	                    (.  _pushLexerState(Lexer.Local); .)
 	    assign              (.  CompilerTarget lastTarget = target;
-                                target=FunctionTargets[Application.InitializationId];
+                                _PushScope(FunctionTargets[Application.InitializationId]);
                                 AstExpr expr;
                             .)
 		Expr<out expr>
@@ -1131,7 +1132,7 @@ GlobalVariableDefinition	(.
                                     TargetApplication._RequireInitialization();
 									Loader._EmitPartialInitializationCode();
 		                        }
-		                        target = lastTarget;
+								_PopScope(FunctionTargets[Application.InitializationId]);
 		                    .)
 	]
 .
@@ -1189,43 +1190,22 @@ DeclarationInstance<SymbolInterpretations type, ModuleName module, bool preventO
     ]
 	[ as Id<out aId> ]
 	                        (.  SymbolEntry inferredType;
-	                            if(target == null) //global symbol
-	                            {
-	                                if(type == SymbolInterpretations.Undefined)
-	                                    if(Symbols.TryGetValue(id, out inferredType))
-                                        {
-	                                        type = inferredType.Interpretation;
-                                            module = inferredType.Module;
-                                        }
-	                                    else if(Symbols.TryGetValue(aId, out inferredType))
-                                        {
-	                                        type = inferredType.Interpretation;
-                                            module = inferredType.Module;
-                                        }
-	                                    else
-                                        {
-	                                        SemErr("Interpretation of symbol " + id + " as " + aId + " cannot be inferred.");
-                                        }
-	                                Symbols[aId] = new SymbolEntry(type, id, module);
-	                            }
-	                            else
-	                            {
-	                                if(type == SymbolInterpretations.Undefined)
-	                                    if(target.Symbols.TryGetValue(id, out inferredType))
-                                        {
-	                                        type = inferredType.Interpretation;
-                                            module = inferredType.Module;
-                                        }
-	                                    else if(target.Symbols.TryGetValue(aId, out inferredType))
-                                        {
-	                                        type = inferredType.Interpretation;
-                                            module = inferredType.Module;
-                                        }
-	                                    else 
-                                        {
-	                                        SemErr("Interpretation of symbol " + id + " as " + aId + " cannot be inferred.");                            }
-	                                target.Symbols[aId] = new SymbolEntry(type, id, module);
-	                            }
+	                            if(type == SymbolInterpretations.Undefined)
+	                                if(_TryUseSymbolEntry(id, out inferredType))
+                                    {
+	                                    type = inferredType.Interpretation;
+                                        module = inferredType.Module;
+                                    }
+	                                else if(_TryUseSymbolEntry(aId, out inferredType))
+                                    {
+	                                    type = inferredType.Interpretation;
+                                        module = inferredType.Module;
+                                    }
+	                                else
+                                    {
+	                                    SemErr("Interpretation of symbol " + id + " as " + aId + " cannot be inferred.");
+                                    }
+	                            Symbols.Declare(aId, new SymbolEntry(type, id, module).ToSymbol());
 
                                 if(_requiresModule(type) && module == null)
                                     SemErr("Module cannot be inferred for declaration " + id + " as + " + aId + ".");
@@ -1253,8 +1233,8 @@ BuildBlock
 	SYNC build                  (.  PFunction func = TargetApplication.CreateFunction();
                                     CompilerTarget lastTarget = target; 
                                     CompilerTarget buildBlockTarget = 
-										Loader.CreateFunctionTarget(func, new AstBlock(this), sourcePosition: GetPosition());
-                                    target = buildBlockTarget;
+										Loader.CreateFunctionTarget(func, sourcePosition: GetPosition());
+                                    _PushScope(buildBlockTarget);
                                     Loader.DeclareBuildBlockCommands(target);
                                     _pushLexerState(Lexer.Local);                                
                                 .)
@@ -1264,7 +1244,7 @@ BuildBlock
 	
                                 (.  
 	                                _popLexerState();                                    
-                                    target = lastTarget;
+                                    _PopScope(buildBlockTarget);
                                     _compileAndExecuteBuildBlock(buildBlockTarget);
 	                            .)
 .
@@ -1279,7 +1259,7 @@ GlobalCode							(.
 									.)
 =
 									(.	
-										target = ft; 
+										_PushScope(ft); 
                                         _pushLexerState(Lexer.Local);
                                     .)
 	lbrace 
@@ -1296,8 +1276,8 @@ GlobalCode							(.
                                             SemErr("Exception during compilation of initialization code.\n" + e.ToString());
                                         } finally {
 										    //Symbols defined in this block are not available to further global code blocks
-										    target.Symbols.Clear();
-										    target = null;
+										    target.Symbols.ClearLocalDeclarations();
+										    _PopScope(ft);
 										    _popLexerState();
                                         }
 									.)
@@ -1394,7 +1374,7 @@ FunctionDefinition<out PFunction func>
                                                     mark_as_let(target.Function,localId);
                                             }
                                             
-                                            Loader.CreateFunctionTarget(func, new AstBlock(this), target, GetPosition());
+                                            Loader.CreateFunctionTarget(func, target, GetPosition());
                                         }
                                         CompilerTarget ft = FunctionTargets[func];
                                         
@@ -1406,7 +1386,7 @@ FunctionDefinition<out PFunction func>
                                             //Create derived body function
                                             derId = ft.GenerateLocalId();
                                             derBody = TargetApplication.CreateFunction(derId);
-                                            Loader.CreateFunctionTarget(derBody, new AstBlock(this), ft, GetPosition());
+                                            Loader.CreateFunctionTarget(derBody, ft, GetPosition());
                                             derBody.Meta[PFunction.LogicalIdKey] = id ?? funcId;
                                             if(isCoroutine)
                                             {
@@ -1423,8 +1403,7 @@ FunctionDefinition<out PFunction func>
                                         }
                                         
                                         if(isNested) //Link to parent in case of a nested function
-                                        {
-                                            ft.ParentTarget = target;	                                           
+                                        {                                           
                                             if(isLazy)
                                                 ft = ct;
                                         }	                                    
@@ -1458,7 +1437,7 @@ FunctionDefinition<out PFunction func>
                                                 symEntry = 
                                                     new SymbolEntry(SymbolInterpretations.Function, func.Id, TargetModule.Name);
 	                                            foreach(var alias in funcAliases)	                                                
-	                                                Symbols[alias] = symEntry;
+	                                                Symbols.Declare(alias, symEntry.ToSymbol());
 	                                            
 	                                            //Store the original (logical id, mentioned in the source code)
 	                                            if((!string.IsNullOrEmpty(id)))
@@ -1486,7 +1465,7 @@ FunctionDefinition<out PFunction func>
                                     (.  
                                     
                                         if(primaryAlias != null && !_suppressPrimarySymbol(func))
-                                            Symbols[primaryAlias] = symEntry;
+                                            Symbols.Declare(primaryAlias, symEntry.ToSymbol());
 
                                         //Imprint certain meta keys from parent function
                                         if(isNested)
@@ -1497,20 +1476,20 @@ FunctionDefinition<out PFunction func>
                                         //Copy stub parameters to body of lazy function
                                         if(isLazy && !isNested)
 	                                    {
-	                                        foreach(var kvp in ft.LocalSymbols)
+	                                        foreach(var kvp in ft.Symbols.LocalDeclarations)
 	                                        {
 	                                            var paramId = kvp.Key;
-	                                            var s = kvp.Value;
+	                                            var s = kvp.Value.ToSymbolEntry();
 	                                            //Lazy functions cannot have ref parameters
 	                                            if(s.Interpretation != SymbolInterpretations.LocalObjectVariable)
 	                                                SemErr("Lazy functions can only have value parameters (ref is not allowed)");
 	                                            ct.Function.Parameters.Add(s.InternalId);
-	                                            ct.Symbols.Add(paramId, s);
+	                                            ct.Symbols.Declare(paramId, kvp.Value);
 	                                        }
 	                                    }
                                     
                                         CompilerTarget lastTarget = target;
-                                        target = FunctionTargets[func]; 
+                                        _PushScope(FunctionTargets[func]);
                                         _pushLexerState(Lexer.Local);
                                         if(isMacro)
                                             target.SetupAsMacro();
@@ -1524,7 +1503,7 @@ FunctionDefinition<out PFunction func>
         Expr<out ret.Expression>    (.  target.Ast.Add(ret); .)
         semicolon
     )                               (.  _popLexerState();
-                                        target = lastTarget; 
+                                        _PopScope(FunctionTargets[func]);
                                         //Compile AST
                                         if(errors.count == 0)
                                         {
@@ -1657,7 +1636,7 @@ FormalArg<CompilerTarget ft>        (.  string id; SymbolInterpretations kind = 
 	                                    //Note: lazy functions need to copy the
 	                                    //  parameters of the stub to the body!
 	                                    ft.Function.Parameters.Add(id); 
-	                                    ft.Symbols.Add(id, new SymbolEntry(kind, id, null));
+	                                    ft.Symbols.Declare(id, new SymbolEntry(kind, id, null).ToSymbol());
 	                                .)
 .
 
@@ -1954,9 +1933,9 @@ GetInitiator<out AstGetSet complex, out bool isDeclaration>
 										.)
     //Reference
 |   IF( isDeDereference() )
-    pointer pointer Id<out id>          (.  SymbolEntry s = target.Symbols[id];
+    pointer pointer Id<out id>          (.  SymbolEntry s;
                                             SymbolInterpretations kind;
-                                            if(s == null)
+                                            if(!_TryUseSymbolEntry(id, out s))
                                             {   
                                                 SemErr("The symbol " + id + " is not defined"); 
                                                 s = SymbolEntry.LocalObjectVariable(id);
@@ -1974,8 +1953,8 @@ GetInitiator<out AstGetSet complex, out bool isDeclaration>
                                             }
                                             complex = new AstGetSetReference(this, s.With(interpretation:kind));
                                         .)
-|   pointer Id<out id>                  (.  SymbolEntry s = target.Symbols[id];
-                                            if(s == null)
+|   pointer Id<out id>                  (.  SymbolEntry s;
+                                            if(!_TryUseSymbolEntry(id, out s))
                                             {   
                                                 SemErr("The symbol " + id + " is not defined"); 
                                                 s = SymbolEntry.LocalObjectVariable(id);
@@ -2022,17 +2001,23 @@ VariableDeclaration<out AstGetSet variable, bool isNewDecl>
                                             }
                                             else
                                             {
-                                                variable = InterpretationIsObjectVariable(kind) ?
-												    new AstGetSetSymbol(this, PCall.Get, target.Symbols[id])
-											    :
-												    new AstGetSetReference(this, PCall.Get, target.Symbols[id].With(interpretation: target.Symbols[id].Interpretation.ToObjectVariable())); 
+												SymbolEntry sym;
+												if(_TryUseSymbolEntry(id, out sym)){
+													variable = InterpretationIsObjectVariable(kind) ?
+														new AstGetSetSymbol(this, PCall.Get, sym)
+													:
+														new AstGetSetReference(this, PCall.Get, sym.With(interpretation: sym.Interpretation.ToObjectVariable())); 
                                                 
-                                                if(isNewDecl)
-                                                    variable = new AstGetSetNewDecl(this)
-                                                    {
-                                                        Expression = variable,
-                                                        Id = target.Symbols[id].InternalId
-                                                    };              
+													if(isNewDecl)
+														variable = new AstGetSetNewDecl(this)
+														{
+															Expression = variable,
+															Id = sym.InternalId
+														};              
+												} else {
+													System.Diagnostics.Debug.Assert(false,"Prexonite cannot find a symbol it just declared.");
+													throw new PrexoniteException("Prexonite cannot find a symbol it just declared.");
+												}
                                             }
                                         .)
 .
@@ -2049,7 +2034,7 @@ Variable<out AstGetSet complex, out bool isDeclared>
     VariableDeclaration<out complex, isNewDecl>    (. isDeclared = true; .)
 |   Id<out id>                          (.  
                                             SymbolEntry varSym;
-                                            if(target.Symbols.TryGetValue(id, out varSym))
+                                            if(_TryUseSymbolEntry(id, out varSym))
                                             {
                                                 if(InterpretationIsLocalVariable(varSym.Interpretation))
                                                 {
@@ -2098,7 +2083,8 @@ VariableDeclarationStatement<AstBlock block>
 Function<out AstGetSet function>
                                 (.  function = null; string id; .)
 =
-    Id<out id>                  (.  if(!target.Symbols.ContainsKey(id))
+    Id<out id>                  (.  SymbolEntry sym;
+									if(!_TryUseSymbolEntry(id, out sym))
                                     {
                                         function = new AstUnresolved(this, id);
                                     }
@@ -2106,7 +2092,6 @@ Function<out AstGetSet function>
                                     {
                                         if(isOuterVariable(id))
                                             target.RequireOuterVariable(id);
-                                        SymbolEntry sym = target.Symbols[id];
                                         function = _assembleInvocation(sym);
                                     }
                                 .)
@@ -2190,7 +2175,7 @@ Condition<AstBlock block>
     
     lpar Expr<out expr> rpar    (.  if(expr == null)
                                         expr = _createUnknownExpr();
-                                    AstCondition cond = new AstCondition(this, expr, isNegative);
+                                    AstCondition cond = Create.Condition(GetPosition(), expr, isNegative);
                                     target.BeginBlock(cond.IfBlock);
                                 .)
     
@@ -2225,6 +2210,7 @@ WhileLoop<AstBlock block>
 .
 
 ForLoop<AstBlock block>         (.  AstForLoop loop;
+									AstExpr condition;
                                 .)
 =
     for                         (.  loop = new AstForLoop(GetPosition(), CurrentBlock); target.BeginBlock(loop.Block); .)
@@ -2235,11 +2221,11 @@ ForLoop<AstBlock block>         (.  AstForLoop loop;
         (   while
         |   until               (.  loop.IsPositive = false; .)
         )
-        Expr<out loop.Condition>
+        Expr<out condition>		(.	loop.Condition = condition; .)
     |   [   while
         |   until               (.  loop.IsPositive = false; .)
         ]       
-        Expr<out loop.Condition> 
+        Expr<out condition>		(.	loop.Condition = condition; .)
         semicolon
         SimpleStatement<loop.NextIteration>
         [ semicolon ]
@@ -2250,7 +2236,7 @@ ForLoop<AstBlock block>         (.  AstForLoop loop;
 
 ForeachLoop<AstBlock block>
 =
-    foreach                      (.  AstForeachLoop loop = new AstForeachLoop(this);
+    foreach                      (.  AstForeachLoop loop = Create.ForeachLoop(GetPosition());
                                      target.BeginBlock(loop.Block);
                                  .)
     lpar
@@ -2383,7 +2369,7 @@ LetBinder<AstBlock block>
 .
 
 TryCatchFinally<AstBlock block>
-                                (.  AstTryCatchFinally a = new AstTryCatchFinally(this);
+                                (.  var a = Create.TryCatchFinally(GetPosition());
                                     AstGetSet excVar = null;
                                 .)
 =
@@ -2443,7 +2429,7 @@ Throw<AstBlock block>
 .                                
 
 Using<AstBlock block>
-                                (.  AstUsing use = new AstUsing(this); .)
+                                (.  AstUsing use = Create.Using(GetPosition()); .)
 =
     uusing lpar Expr<out use.Expression> rpar
                                 (.  target.BeginBlock(use.Block); .)

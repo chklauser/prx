@@ -34,9 +34,12 @@ using NUnit.Framework;
 using Prexonite;
 using Prexonite.Compiler;
 using Prexonite.Compiler.Cil;
+using Prexonite.Compiler.Symbolic;
+using Prexonite.Compiler.Symbolic.Compatibility;
 using Prexonite.Types;
 using Prx.Tests;
 using Compiler = Prexonite.Compiler.Cil.Compiler;
+using Symbol = Prexonite.Compiler.Cil.Symbol;
 
 namespace PrexoniteTests.Tests
 {
@@ -289,6 +292,16 @@ namespace PrexoniteTests.Tests
         protected PValue GetReturnValue(params PValue[] args)
         {
             return GetReturnValueNamedExplicit(target.Meta[Application.EntryKey], args);
+        }
+
+        protected SymbolEntry LookupSymbolEntry(SymbolStore store, string symbolicId)
+        {
+            Prexonite.Compiler.Symbolic.Symbol symbol;
+            Assert.IsTrue(store.TryGet(symbolicId, out symbol),
+                          string.Format("Expected to find symbol {0} but there is no such entry.", symbolicId));
+            EntitySymbol entitySymbol;
+            Assert.IsTrue(symbol.TryGetEntitySymbol(out entitySymbol), string.Format("Expected symbol {0} to be an entity symbol. Actual: {1}.", symbolicId, symbol));
+            return entitySymbol.ToSymbolEntry();
         }
 
         protected void BoolTable4(Func<bool, bool, bool, bool, string> main, PValue pTrue,

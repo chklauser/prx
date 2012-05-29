@@ -97,7 +97,7 @@ BitOrExpr<out AstExpr expr>
                                         (. AstExpr lhs, rhs; .)
 =
     BitXorExpr<out lhs>                 (. expr = lhs; .)
-    { bitOr BitXorExpr<out rhs>         (. expr = AstBinaryOperator.Create(this, expr, BinaryOperator.BitwiseOr, rhs); .)
+    { bitOr BitXorExpr<out rhs>         (. expr =Create.BinaryOperation(GetPosition(), expr, BinaryOperator.BitwiseOr, rhs); .)
     }
 .
 
@@ -106,7 +106,7 @@ BitXorExpr<out AstExpr expr>
 =
     BitAndExpr<out lhs>                 (.  expr = lhs; .)
     {   xor BitAndExpr<out rhs>
-                                        (.  expr = AstBinaryOperator.Create(this, expr, BinaryOperator.ExclusiveOr, rhs); .)
+                                        (.  expr = Create.BinaryOperation(GetPosition(), expr, BinaryOperator.ExclusiveOr, rhs); .)
     }
 .
 
@@ -115,7 +115,7 @@ BitAndExpr<out AstExpr expr>
 =
     NotExpr<out lhs>                    (.  expr = lhs; .)
     {   bitAnd NotExpr<out rhs>
-                                        (.  expr = AstBinaryOperator.Create(this, expr, BinaryOperator.BitwiseAnd, rhs); .)
+                                        (.  expr = Create.BinaryOperation(GetPosition(), expr, BinaryOperator.BitwiseAnd, rhs); .)
     }
 .
 
@@ -124,7 +124,7 @@ NotExpr<out AstExpr expr>
 =
     [   not                             (.  isNot = true; .)
     ]
-    EqlExpr<out lhs>                    (.  expr = isNot ? AstUnaryOperator._Create(this, UnaryOperator.LogicalNot, lhs) : lhs; .)
+    EqlExpr<out lhs>                    (.  expr = isNot ? Create.UnaryOperation(GetPosition(), UnaryOperator.LogicalNot, lhs) : lhs; .)
 .
 
 EqlExpr<out AstExpr expr>
@@ -133,7 +133,7 @@ EqlExpr<out AstExpr expr>
     RelExpr<out lhs>                    (. expr = lhs; .)
     {   (   eq                          (.  op = BinaryOperator.Equality; .)
         |   ne                          (.  op = BinaryOperator.Inequality; .)    
-        ) RelExpr<out rhs>              (.  expr = AstBinaryOperator.Create(this, expr, op, rhs); .)
+        ) RelExpr<out rhs>              (.  expr = Create.BinaryOperation(GetPosition(), expr, op, rhs); .)
     }
 .
 
@@ -145,7 +145,7 @@ RelExpr<out AstExpr expr>
         |   le                          (.  op = BinaryOperator.LessThanOrEqual;       .)
         |   gt                          (.  op = BinaryOperator.GreaterThan;           .)
         |   ge                          (.  op = BinaryOperator.GreaterThanOrEqual;    .)
-        ) CoalExpr<out rhs>             (.  expr = AstBinaryOperator.Create(this, expr, op, rhs); .)
+        ) CoalExpr<out rhs>             (.  expr = Create.BinaryOperation(GetPosition(), expr, op, rhs); .)
     }
 .
 
@@ -165,7 +165,7 @@ AddExpr<out AstExpr expr>
     MulExpr<out lhs>                    (.  expr = lhs; .)
     {   (   plus                        (.  op = BinaryOperator.Addition;      .)
         |   minus                       (.  op = BinaryOperator.Subtraction;   .) 
-        ) MulExpr<out rhs>              (.  expr = AstBinaryOperator.Create(this, expr, op, rhs); .)
+        ) MulExpr<out rhs>              (.  expr = Create.BinaryOperation(GetPosition(), expr, op, rhs); .)
     }
 .
 
@@ -176,7 +176,7 @@ MulExpr<out AstExpr expr>
     {   (   times                       (.  op = BinaryOperator.Multiply;      .)
         |   div                         (.  op = BinaryOperator.Division;        .)
         |   mod                         (.  op = BinaryOperator.Modulus;       .)
-        ) PowExpr<out rhs>              (.  expr = AstBinaryOperator.Create(this, expr, op, rhs); .)
+        ) PowExpr<out rhs>              (.  expr = Create.BinaryOperation(GetPosition(), expr, op, rhs); .)
     }
 .
 
@@ -184,7 +184,7 @@ PowExpr<out AstExpr expr>
                                         (.  AstExpr lhs, rhs; .)
 =
     AssignExpr<out lhs>                  (.  expr = lhs; .)
-    {   pow AssignExpr<out rhs>          (.  expr = AstBinaryOperator.Create(this, expr, BinaryOperator.Power, rhs); .)
+    {   pow AssignExpr<out rhs>          (.  expr = Create.BinaryOperation(GetPosition(), expr, BinaryOperator.Power, rhs); .)
     }
 .
 
@@ -399,7 +399,7 @@ LambdaExpression<out AstExpr expr>
 )
                                         (.
                                             CompilerTarget oldTarget = target;
-                                            target = ft;
+                                            _PushScope(ft);
                                         .)
 implementation                                        
 (   lbrace
@@ -409,7 +409,7 @@ implementation
     Expr<out ret.Expression>            (.  ft.Ast.Add(ret); .)
 )
                                         (.
-                                            target = oldTarget;
+                                            _PopScope(ft);
                                             if(errors.count == 0)
                                             {
                                                 try {
@@ -432,12 +432,12 @@ LazyExpression<out AstExpr expr>
                                             PFunction func = TargetApplication.CreateFunction(generateLocalId());
                                             func.Meta[Application.ImportKey] = target.Function.Meta[Application.ImportKey];
                                             func.Meta[PFunction.ParentFunctionKey] = target.Function.Id;
-                                            Loader.CreateFunctionTarget(func, new AstBlock(this), target, GetPosition());
+                                            Loader.CreateFunctionTarget(func, target, GetPosition());
                                             CompilerTarget ft = FunctionTargets[func];
                                             
                                             //Switch to nested target
                                             CompilerTarget oldTarget = target;
-                                            target = ft;
+                                            _PushScope(ft);
                                         .)
 =
 lazy
@@ -452,14 +452,14 @@ lazy
                                             var cap = ft.ToCaptureByValue(let_bindings(ft));
                                             
                                             //Restore parent target
-                                            target = oldTarget;
+                                            _PopScope(ft);
                                             
                                             //Finish nested function
                                             if(errors.count == 0)
                                             {
                                                 try {
-                                                Ast[func].EmitCode(FunctionTargets[func],true,StackSemantics.Effect);
-                                                FunctionTargets[func].FinishTarget();
+													Ast[func].EmitCode(FunctionTargets[func],true,StackSemantics.Effect);
+													FunctionTargets[func].FinishTarget();
                                                 } catch(Exception e) {
                                                     SemErr("Exception during compilation of lazy expression.\n" + e.ToString());
                                                 }

@@ -33,7 +33,9 @@ using NUnit.Framework;
 using Prexonite;
 using Prexonite.Compiler;
 using Prexonite.Compiler.Cil;
+using Prexonite.Compiler.Symbolic;
 using Prexonite.Modular;
+using Symbol = Prexonite.Compiler.Symbolic.Symbol;
 
 namespace PrexoniteTests.Tests.Configurations
 {
@@ -50,9 +52,9 @@ namespace PrexoniteTests.Tests.Configurations
                 ModularCompilation = false;
             }
 
-            public override void PrepareTestCompilation(ScriptedUnitTestContainer runner)
+            public override void PrepareTestCompilation(ScriptedUnitTestContainer container)
             {
-                base.PrepareTestCompilation(runner);
+                base.PrepareTestCompilation(container);
                 using (var buffer = new MemoryStream(512*1024))
                 {
                     //we don't need to wrap reader/writer in using because 
@@ -60,12 +62,12 @@ namespace PrexoniteTests.Tests.Configurations
                     var writer = new StreamWriter(buffer, Encoding.UTF8);
                     var reader = new StreamReader(buffer, Encoding.UTF8);
 
-                    runner.Loader.Store(writer);
+                    container.Loader.Store(writer);
                     writer.Flush();
-                    runner.SetUpLoader();
+                    container.Initialize();
                     //throws away old engine,loader,application; creates new one
                     buffer.Seek(0, SeekOrigin.Begin);
-                    runner.Loader.LoadFromReader(reader);
+                    container.Loader.LoadFromReader(reader);
                 }
             }
         }
@@ -81,8 +83,6 @@ namespace PrexoniteTests.Tests.Configurations
         public bool CompileToCil { get; set; }
         public bool ModularCompilation { get; set; }
 
-        public static readonly ModuleName BuiltIn = new ModuleName("prx-built-in",Engine.PrexoniteVersion);
-
         public virtual void SetupDependencies(ScriptedUnitTestContainer runner,
             IEnumerable<string> dependencies)
         {
@@ -90,60 +90,51 @@ namespace PrexoniteTests.Tests.Configurations
         }
 
         /// <summary>
-        /// Loads dependencies into the application. Called just after <see cref="ScriptedUnitTestContainer.SetUpLoader"/> and before <see cref="ScriptedUnitTestContainer.LoadUnitTestingFramework"/>.
+        /// Loads dependencies into the application. Called just after <see cref="ScriptedUnitTestContainer.Initialize"/> and before <see cref="ScriptedUnitTestContainer.LoadUnitTestingFramework"/>.
         /// </summary>
-        /// <param name="runner">The runner under which the test is being executed.</param>
+        /// <param name="runner">The container under which the test is being executed.</param>
         /// <param name="dependencies">A list of dependencies for this test.</param>
         public virtual void SetupUnitsUnderTest(ScriptedUnitTestContainer runner,
             IEnumerable<string> dependencies)
         {
             var originalApp = runner.Application;
-            var originalLoader = runner.Loader;
-
-            foreach (var key in originalLoader.Symbols.Keys
-                .Where(k => originalLoader.Symbols[k].Module == null).ToArray())
-                originalLoader.Symbols[key] = originalLoader.Symbols[key].WithModule(BuiltIn);
 
             foreach (var fut in dependencies)
             {
                 if(ModularCompilation)
                 {
                     Module module;
-                    IDictionary<string, SymbolEntry> symbols;
+                    IEnumerable<SymbolInfo> symbols;
                     if(ModuleCache.TryGetModule(fut, out module, out symbols))
                     {
                         Application.Link(runner.Loader.ParentApplication, new Application(module));
-                        runner.Loader.ImportSymbols(symbols);
-                        if(originalLoader != runner.Loader)
-                            originalLoader.ImportSymbols(symbols);
                     }
                     else
                     {
                         //For linking the apps together, we need to preserve them
                         var prevApp = runner.Application;
-                        var prevLdr = runner.Loader;
 
                         //Create the module, application and loader for this next dependency
                         module = Module.Create( new ModuleName(
                             runner.ApplicationName + "." + Path.GetFileNameWithoutExtension(fut), 
                             new Version()));
                         var app = runner.Application = new Application(module);
-                        var ldr = runner.Loader = new Loader(runner.Engine, app);
+
+                        var ldrStore = SymbolStore.Create(conflictUnionSource: runner.ImportedSymbols.SelectMany(x => x));
+                        var ldrOptions = new LoaderOptions(runner.Engine, app, ldrStore);
+                        var ldr = runner.Loader = new Loader(ldrOptions);
 
                         //Link them together, both physically and symbolically
                         Application.Link(app,prevApp);
-                        ldr.ImportSymbols(prevLdr.Symbols); //import all symbols from before
 
                         //Now, we're ready to load the file into the fresh module
                         runner.RequireFile(fut);
 
-                        //Cleanup: mark symbols with correct module name
-                        MarkSymbols(module, ldr);
-
                         //Store the module for future test cases
                         symbols = ModuleCache.Provide(fut, ldr);
-                        originalLoader.ImportSymbols(symbols);
                     }
+
+                    runner.ImportedSymbols.Add(symbols);
                 }
                 else //no modular compilation
                 {
@@ -155,48 +146,22 @@ namespace PrexoniteTests.Tests.Configurations
             {
                 //restore original environment
                 runner.Application = originalApp;
-                runner.Loader = originalLoader;
             }
-        }
-
-        private static void MarkSymbols(Module module, Loader ldr)
-        {
-            var ks =
-                ldr.Symbols
-                    .Where(kvp => kvp.Value.Module == null)
-                    .Select(kvp => kvp.Key)
-                    .ToList();
-            foreach (var k in ks)
-                ldr.Symbols[k] = ldr.Symbols[k].WithModule(module.Name);
         }
 
         /// <summary>
         /// Executed after prerequisites (including testing framework) are compiled, but before
         /// actual test is compiled.
         /// </summary>
-        /// <param name="runner">The runner under which the test is being executed.</param>
-        public virtual void PrepareTestCompilation(ScriptedUnitTestContainer runner)
+        /// <param name="container">The container under which the test is being executed.</param>
+        public virtual void PrepareTestCompilation(ScriptedUnitTestContainer container)
         {
-            if(ModularCompilation)
-            {
-                foreach (var entry in runner.Loader.Symbols)
-                {
-                    var sym = entry.Value;
-                    if(sym.Interpretation == SymbolInterpretations.Function || sym.Interpretation == SymbolInterpretations.GlobalObjectVariable
-                        || sym.Interpretation == SymbolInterpretations.GlobalReferenceVariable)
-                    {
-                        Assert.That(sym.Module, Is.Not.Null,
-                            string.Format(
-                                "The module-specific symbol {0} does not have a module name.", sym));
-                    }
-                }
-            }
         }
 
         /// <summary>
         /// Executed as the last step of loading, immediately before the actual test methods are executed.
         /// </summary>
-        /// <param name="runner">The runner under which the test is being executed.</param>
+        /// <param name="runner">The container under which the test is being executed.</param>
         public virtual void PrepareExecution(ScriptedUnitTestContainer runner)
         {
             if (CompileToCil)

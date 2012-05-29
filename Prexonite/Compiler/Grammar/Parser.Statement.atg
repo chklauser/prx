@@ -189,9 +189,9 @@ GetInitiator<out AstGetSet complex, out bool isDeclaration>
 										.)
     //Reference
 |   IF( isDeDereference() )
-    pointer pointer Id<out id>          (.  SymbolEntry s = target.Symbols[id];
+    pointer pointer Id<out id>          (.  SymbolEntry s;
                                             SymbolInterpretations kind;
-                                            if(s == null)
+                                            if(!_TryUseSymbolEntry(id, out s))
                                             {   
                                                 SemErr("The symbol " + id + " is not defined"); 
                                                 s = SymbolEntry.LocalObjectVariable(id);
@@ -209,8 +209,8 @@ GetInitiator<out AstGetSet complex, out bool isDeclaration>
                                             }
                                             complex = new AstGetSetReference(this, s.With(interpretation:kind));
                                         .)
-|   pointer Id<out id>                  (.  SymbolEntry s = target.Symbols[id];
-                                            if(s == null)
+|   pointer Id<out id>                  (.  SymbolEntry s;
+                                            if(!_TryUseSymbolEntry(id, out s))
                                             {   
                                                 SemErr("The symbol " + id + " is not defined"); 
                                                 s = SymbolEntry.LocalObjectVariable(id);
@@ -257,17 +257,23 @@ VariableDeclaration<out AstGetSet variable, bool isNewDecl>
                                             }
                                             else
                                             {
-                                                variable = InterpretationIsObjectVariable(kind) ?
-												    new AstGetSetSymbol(this, PCall.Get, target.Symbols[id])
-											    :
-												    new AstGetSetReference(this, PCall.Get, target.Symbols[id].With(interpretation: target.Symbols[id].Interpretation.ToObjectVariable())); 
+												SymbolEntry sym;
+												if(_TryUseSymbolEntry(id, out sym)){
+													variable = InterpretationIsObjectVariable(kind) ?
+														new AstGetSetSymbol(this, PCall.Get, sym)
+													:
+														new AstGetSetReference(this, PCall.Get, sym.With(interpretation: sym.Interpretation.ToObjectVariable())); 
                                                 
-                                                if(isNewDecl)
-                                                    variable = new AstGetSetNewDecl(this)
-                                                    {
-                                                        Expression = variable,
-                                                        Id = target.Symbols[id].InternalId
-                                                    };              
+													if(isNewDecl)
+														variable = new AstGetSetNewDecl(this)
+														{
+															Expression = variable,
+															Id = sym.InternalId
+														};              
+												} else {
+													System.Diagnostics.Debug.Assert(false,"Prexonite cannot find a symbol it just declared.");
+													throw new PrexoniteException("Prexonite cannot find a symbol it just declared.");
+												}
                                             }
                                         .)
 .
@@ -284,7 +290,7 @@ Variable<out AstGetSet complex, out bool isDeclared>
     VariableDeclaration<out complex, isNewDecl>    (. isDeclared = true; .)
 |   Id<out id>                          (.  
                                             SymbolEntry varSym;
-                                            if(target.Symbols.TryGetValue(id, out varSym))
+                                            if(_TryUseSymbolEntry(id, out varSym))
                                             {
                                                 if(InterpretationIsLocalVariable(varSym.Interpretation))
                                                 {
@@ -333,7 +339,8 @@ VariableDeclarationStatement<AstBlock block>
 Function<out AstGetSet function>
                                 (.  function = null; string id; .)
 =
-    Id<out id>                  (.  if(!target.Symbols.ContainsKey(id))
+    Id<out id>                  (.  SymbolEntry sym;
+									if(!_TryUseSymbolEntry(id, out sym))
                                     {
                                         function = new AstUnresolved(this, id);
                                     }
@@ -341,7 +348,6 @@ Function<out AstGetSet function>
                                     {
                                         if(isOuterVariable(id))
                                             target.RequireOuterVariable(id);
-                                        SymbolEntry sym = target.Symbols[id];
                                         function = _assembleInvocation(sym);
                                     }
                                 .)
@@ -425,7 +431,7 @@ Condition<AstBlock block>
     
     lpar Expr<out expr> rpar    (.  if(expr == null)
                                         expr = _createUnknownExpr();
-                                    AstCondition cond = new AstCondition(this, expr, isNegative);
+                                    AstCondition cond = Create.Condition(GetPosition(), expr, isNegative);
                                     target.BeginBlock(cond.IfBlock);
                                 .)
     
@@ -460,6 +466,7 @@ WhileLoop<AstBlock block>
 .
 
 ForLoop<AstBlock block>         (.  AstForLoop loop;
+									AstExpr condition;
                                 .)
 =
     for                         (.  loop = new AstForLoop(GetPosition(), CurrentBlock); target.BeginBlock(loop.Block); .)
@@ -470,11 +477,11 @@ ForLoop<AstBlock block>         (.  AstForLoop loop;
         (   while
         |   until               (.  loop.IsPositive = false; .)
         )
-        Expr<out loop.Condition>
+        Expr<out condition>		(.	loop.Condition = condition; .)
     |   [   while
         |   until               (.  loop.IsPositive = false; .)
         ]       
-        Expr<out loop.Condition> 
+        Expr<out condition>		(.	loop.Condition = condition; .)
         semicolon
         SimpleStatement<loop.NextIteration>
         [ semicolon ]
@@ -485,7 +492,7 @@ ForLoop<AstBlock block>         (.  AstForLoop loop;
 
 ForeachLoop<AstBlock block>
 =
-    foreach                      (.  AstForeachLoop loop = new AstForeachLoop(this);
+    foreach                      (.  AstForeachLoop loop = Create.ForeachLoop(GetPosition());
                                      target.BeginBlock(loop.Block);
                                  .)
     lpar
@@ -618,7 +625,7 @@ LetBinder<AstBlock block>
 .
 
 TryCatchFinally<AstBlock block>
-                                (.  AstTryCatchFinally a = new AstTryCatchFinally(this);
+                                (.  var a = Create.TryCatchFinally(GetPosition());
                                     AstGetSet excVar = null;
                                 .)
 =
@@ -678,7 +685,7 @@ Throw<AstBlock block>
 .                                
 
 Using<AstBlock block>
-                                (.  AstUsing use = new AstUsing(this); .)
+                                (.  AstUsing use = Create.Using(GetPosition()); .)
 =
     uusing lpar Expr<out use.Expression> rpar
                                 (.  target.BeginBlock(use.Block); .)

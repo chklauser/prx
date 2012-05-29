@@ -42,6 +42,18 @@ namespace Prexonite.Compiler
 {
     internal partial class Parser
     {
+        [DebuggerStepThrough]
+        internal Parser(IScanner scanner, Loader loader)
+            : this(scanner)
+        {
+            if (loader == null)
+                throw new ArgumentNullException("loader");
+            _loader = loader;
+            _createTableOfInstructions();
+            _astProxy = new AstProxy(this);
+            _astFactory = new ParserAstFactory(this);
+        }
+
         #region Proxy interface
 
         private readonly Loader _loader;
@@ -117,15 +129,28 @@ namespace Prexonite.Compiler
             }
         }
 
-        [DebuggerStepThrough]
-        internal Parser(IScanner scanner, Loader loader)
-            : this(scanner)
+        private CompilerTarget _target;
+
+        public CompilerTarget target
         {
-            if (loader == null)
-                throw new ArgumentNullException("loader");
-            _loader = loader;
-            _createTableOfInstructions();
-            _astProxy = new AstProxy(this);
+            get { return _target; }
+        }
+
+        public ISourcePosition GetPosition()
+        {
+            return new SourcePosition(scanner.File, t.line, t.col);
+        }
+
+        public AstBlock CurrentBlock
+        {
+            get { return target == null ? null : target.CurrentBlock; }
+        }
+
+        private readonly IAstFactory _astFactory;
+
+        protected IAstFactory Create
+        {
+            get { return _astFactory; }
         }
 
         #endregion
@@ -300,11 +325,185 @@ namespace Prexonite.Compiler
             }
         }
 
+        private void _compileAndExecuteBuildBlock(CompilerTarget buildBlockTarget)
+        {
+            if (errors.count > 0)
+            {
+                SemErr("Cannot execute build block. Errors detected");
+                return;
+            }
+
+            //Emit code for top-level build block
+            try
+            {
+                buildBlockTarget.Ast.EmitCode(buildBlockTarget, true, StackSemantics.Effect);
+
+                buildBlockTarget.Function.Meta["File"] = scanner.File;
+                buildBlockTarget.FinishTarget();
+                //Run the build block 
+                var fctx = buildBlockTarget.Function.CreateFunctionContext(ParentEngine,
+                    new PValue[] { },
+                    new PVariable[] { }, true);
+                object token = null;
+                try
+                {
+                    TargetApplication._SuppressInitialization = true;
+                    token = Loader.RequestBuildCommands();
+                    ParentEngine.Process(fctx);
+                }
+                finally
+                {
+                    if (token != null)
+                        Loader.ReleaseBuildCommands(token);
+                    TargetApplication._SuppressInitialization = false;
+                }
+            }
+            catch (Exception e)
+            {
+                SemErr("Exception during compilation and execution of build block.\n" + e);
+            }
+        }
+
+        private bool _suppressPrimarySymbol(IHasMetaTable ihmt)
+        {
+            return ihmt.Meta[Loader.SuppressPrimarySymbol].Switch;
+        }
+
         #endregion //General
 
         #region Prexonite Script
 
-        public CompilerTarget target;
+        #region Symbol management
+        
+        internal AstGetSet _NullNode(ISourcePosition position)
+        {
+            var n = new AstNull(position.File, position.Line, position.Column);
+            return new AstIndirectCall(position, PCall.Get, n);
+        }
+
+        private readonly ISymbolHandler<List<Message>, Symbol> _listMessages = new ListMessagesHandler();
+        private class ListMessagesHandler : ISymbolHandler<List<Message>, Symbol>
+        {
+            #region Implementation of ISymbolHandler<in List<Message>,out Symbol>
+
+            public Symbol HandleEntity(EntitySymbol symbol, List<Message> argument)
+            {
+                return symbol;
+            }
+
+            public Symbol HandleMessage(MessageSymbol symbol, List<Message> argument)
+            {
+                argument.Add(symbol.Message);
+                return symbol.Symbol.HandleWith(this, argument);
+            }
+
+            public Symbol HandleMacroInstance(MacroInstanceSymbol symbol, List<Message> argument)
+            {
+                return symbol;
+            }
+
+            #endregion
+        }
+
+        internal bool _TryUseSymbol(string symbolicId, out Symbol symbol)
+        {
+            SymbolStore ss;
+            if (target != null)
+                ss = CurrentBlock.Symbols;
+            else
+                ss = Symbols;
+            if (ss.TryGet(symbolicId, out symbol))
+            {
+                return _TryUseSymbol(ref symbol);
+            }
+            else
+            {
+                symbol = null;
+                return false;
+            }
+        }
+
+        internal bool _TryUseSymbol(ref Symbol symbol)
+        {
+            var msgs = new List<Message>(1);
+            symbol = symbol.HandleWith(_listMessages, msgs);
+            if (msgs.Count > 0)
+            {
+                var seen = new HashSet<String>();
+                foreach (var message in msgs)
+                {
+                    var c = message.MessageClass;
+                    if (c != null)
+                        if (seen.Add(c))
+                            continue;
+                    _loader.ReportMessage(message);
+                    if (message.Severity == MessageSeverity.Error)
+                    {
+                        symbol = null;
+                        return false;
+                    }
+                }
+            }
+            return true;
+        }
+
+        internal bool _TryUseSymbolEntry(string symbolId, out SymbolEntry entry)
+        {
+            Symbol symbol;
+            EntitySymbol entitySymbol;
+            if (_TryUseSymbol(symbolId, out symbol))
+            {
+                if (symbol.TryGetEntitySymbol(out entitySymbol))
+                {
+                    entry = entitySymbol.ToSymbolEntry();
+                    return true;
+                }
+                else
+                {
+                    SemErr(
+                        string.Format(
+                            "Legacy part of parser cannot deal with symbol {0}. An entity symbol was expected.", symbol));
+                    entry = null;
+                    return false;
+                }
+            }
+            else
+            {
+                entry = null;
+                return false;
+            }
+        }
+
+        private readonly Stack<object> _scopeStack = new Stack<object>();
+
+        internal void _PushScope(AstSubBlock block)
+        {
+            if (!ReferenceEquals(block.LexicalParentBlock, CurrentBlock))
+                throw new PrexoniteException("Cannot push scope of unrelated block.");
+            _scopeStack.Push(block);
+        }
+
+        internal void _PushScope(CompilerTarget ct)
+        {
+            if (!ReferenceEquals(ct.ParentTarget, _target))
+                throw new PrexoniteException("Cannot push scope of unrelated compiler target.");
+            _scopeStack.Push(ct);
+            _target = ct;
+        }
+
+        internal void _PopScope(AstSubBlock block)
+        {
+            if (!ReferenceEquals(_scopeStack.Peek(), block))
+                throw new PrexoniteException(string.Format("Tried to pop scope of block {0} but {1} was on top.", block, _scopeStack.Peek()));
+        }
+
+        internal void _PopScope(CompilerTarget ct)
+        {
+            if (!ReferenceEquals(_scopeStack.Peek(), ct))
+                throw new PrexoniteException(string.Format("Tried to pop scope of compiler target {0} but {1} was on top.", ct, _scopeStack.Peek()));
+        }
+
+        #endregion
 
         private bool _requiresModule(SymbolInterpretations kind)
         {
@@ -766,8 +965,6 @@ namespace Prexonite.Compiler
             return varTok.kind != _var && varTok.kind != _ref;
         }
 
-        #endregion
-
         private static IEnumerable<string> let_bindings(CompilerTarget ft)
         {
             var lets = new HashSet<string>(Engine.DefaultStringComparer);
@@ -780,53 +977,132 @@ namespace Prexonite.Compiler
         {
             f.Meta[PFunction.LetKey] = (MetaEntry)
                 f.Meta[PFunction.LetKey].List
-                    .Union(new[] {(MetaEntry) local})
+                    .Union(new[] { (MetaEntry)local })
                     .ToArray();
         }
 
-        private void _compileAndExecuteBuildBlock(CompilerTarget buildBlockTarget)
+        #region Assemble Invocation of Symbol
+
+        private AstGetSet _assembleInvocation(SymbolEntry sym)
         {
-            if (errors.count > 0)
+            if (isKnownMacroFunction(sym) || sym.Interpretation == SymbolInterpretations.MacroCommand)
             {
-                SemErr("Cannot execute build block. Errors detected");
-                return;
+                return new AstMacroInvocation(this, sym);
             }
-
-            //Emit code for top-level build block
-            try
+            else
             {
-                buildBlockTarget.Ast.EmitCode(buildBlockTarget, true, StackSemantics.Effect);
-
-                buildBlockTarget.Function.Meta["File"] = scanner.File;
-                buildBlockTarget.FinishTarget();
-                //Run the build block 
-                var fctx = buildBlockTarget.Function.CreateFunctionContext(ParentEngine,
-                    new PValue[] {},
-                    new PVariable[] {}, true);
-                object token = null;
-                try
-                {
-                    TargetApplication._SuppressInitialization = true;
-                    token = Loader.RequestBuildCommands();
-                    ParentEngine.Process(fctx);
-                }
-                finally
-                {
-                    if (token != null)
-                        Loader.ReleaseBuildCommands(token);
-                    TargetApplication._SuppressInitialization = false;
-                }
-            }
-            catch (Exception e)
-            {
-                SemErr("Exception during compilation and execution of build block.\n" + e);
+                return new AstGetSetSymbol(this, sym);
             }
         }
 
-        private bool _suppressPrimarySymbol(IHasMetaTable ihmt)
+        private static readonly AssembleAstHandler AssembleAst = new AssembleAstHandler();
+
+        private class AssembleAstHandler : ISymbolHandler<Tuple<Parser, PCall>, AstGetSet>
         {
-            return ihmt.Meta[Loader.SuppressPrimarySymbol].Switch;
+            public AstGetSet HandleEntity(EntitySymbol symbol, Tuple<Parser, PCall> argument)
+            {
+                var access = AstGetSetEntity.Create(argument.Item1.GetPosition(), argument.Item2, symbol.Entity);
+                if (symbol.IsDereferenced)
+                {
+                    return AstIndirectCall.Create(argument.Item1.GetPosition(), access);
+                }
+                else
+                {
+                    return access;
+                }
+            }
+
+            public AstGetSet HandleMessage(MessageSymbol symbol, Tuple<Parser, PCall> argument)
+            {
+                throw new PrexoniteException(string.Format("Unexpected message still attached to symbol {0}.", symbol));
+            }
+
+            public AstGetSet HandleMacroInstance(MacroInstanceSymbol symbol, Tuple<Parser, PCall> argument)
+            {
+                throw new NotImplementedException("Assembly of macro instance invocations");
+            }
         }
+
+        private AstGetSet _assembleInvocation(Symbol sym)
+        {
+            if (_TryUseSymbol(ref sym))
+            {
+                return sym.HandleWith(AssembleAst, Tuple.Create(this, PCall.Get));
+            }
+            else
+            {
+                return _NullNode(GetPosition());
+            }
+        }
+
+        public void EnsureInScope(Symbol symbol)
+        {
+            EntitySymbol es;
+            EntityRef.Variable.Local local;
+            if (symbol.TryGetEntitySymbol(out es)
+                && es.Entity.TryGetLocalVariable(out local)
+                && isOuterVariable(local.Id))
+                target.RequireOuterVariable(local.Id);
+        }
+
+        private void _fallbackObjectCreation(Parser parser, AstTypeExpr type, out AstExpr expr,
+            out ArgumentsProxy args)
+        {
+            var typeExpr = type as AstDynamicTypeExpression;
+            Symbol fallbackSymbol;
+            if (
+                //is a type expression we understand (Parser currently only generates dynamic type expressions)
+                //  constant type expressions are recognized during optimization
+                typeExpr != null
+                //happens in case of parse failure
+                    && typeExpr.TypeId != null
+                //there is no such thing as a parametrized struct
+                        && typeExpr.Arguments.Count == 0
+                //built-in types take precedence
+                            && !ParentEngine.PTypeRegistry.Contains(typeExpr.TypeId)
+                //in case neither the built-in type nor the struct constructor exists, 
+                //  stay with built-in types for predictibility
+                                &&
+                                target.Symbols.TryGet(
+                                    Loader.ObjectCreationFallbackPrefix + typeExpr.TypeId,
+                                    out fallbackSymbol))
+            {
+
+                EnsureInScope(fallbackSymbol);
+
+                var call = _assembleInvocation(fallbackSymbol);
+                expr = call;
+                args = call.Arguments;
+            }
+            else if (type != null)
+            {
+                var creation = new AstObjectCreation(parser, type);
+                expr = creation;
+                args = creation.Arguments;
+            }
+            else
+            {
+                SemErr("Failed to transform object creation expression.");
+                expr = new AstNull(this);
+                args = new ArgumentsProxy(new List<AstExpr>());
+            }
+        }
+
+        private AstExpr _createUnknownExpr()
+        {
+            return _createUnknownGetSet();
+        }
+
+        private AstGetSet _createUnknownGetSet()
+        {
+            return new AstIndirectCall(this, new AstNull(this));
+        }
+
+
+        #endregion
+
+
+        #endregion
 
         #region Assembler
 
@@ -1149,216 +1425,6 @@ namespace Prexonite.Compiler
 
         #endregion
 
-        private AstGetSet _assembleInvocation(SymbolEntry sym)
-        {
-            if (isKnownMacroFunction(sym) || sym.Interpretation == SymbolInterpretations.MacroCommand)
-            {
-                return new AstMacroInvocation(this, sym);
-            }
-            else
-            {
-                return new AstGetSetSymbol(this, sym);
-            }
-        }
-
-        private static readonly AssembleAstHandler AssembleAst = new AssembleAstHandler();
-        private class AssembleAstHandler : ISymbolHandler<Tuple<Parser, PCall>, AstGetSet>
-        {
-            public AstGetSet HandleEntity(EntitySymbol symbol, Tuple<Parser,PCall> argument)
-            {
-                var access = AstGetSetEntity.Create(argument.Item1.GetPosition(), argument.Item2, symbol.Entity);
-                if(symbol.IsDereferenced)
-                {
-                    return AstIndirectCall.Create(argument.Item1.GetPosition(), access);
-                }
-                else
-                {
-                    return access;
-                }
-            }
-
-            public AstGetSet HandleMessage(MessageSymbol symbol, Tuple<Parser, PCall> argument)
-            {
-                throw new NotImplementedException();
-            }
-
-            public AstGetSet HandleMacroInstance(MacroInstanceSymbol symbol, Tuple<Parser, PCall> argument)
-            {
-                throw new NotImplementedException();
-            }
-        }
-
-        private AstGetSet _assembleInvocation(Symbol sym)
-        {
-            return sym.HandleWith(AssembleAst, Tuple.Create(this, PCall.Get));
-        }
-
-        public void EnsureInScope(Symbol symbol)
-        {
-            EntitySymbol es;
-            EntityRef.Variable.Local local;
-            if (symbol.TryGetEntitySymbol(out es) 
-                && es.Entity.TryGetLocalVariable(out local) 
-                && isOuterVariable(local.Id))
-                target.RequireOuterVariable(local.Id);
-        }
-
-        private void _fallbackObjectCreation(Parser parser, AstTypeExpr type, out AstExpr expr,
-            out ArgumentsProxy args)
-        {
-            var typeExpr = type as AstDynamicTypeExpression;
-            Symbol fallbackSymbol;
-            if (
-                //is a type expression we understand (Parser currently only generates dynamic type expressions)
-                //  constant type expressions are recognized during optimization
-                typeExpr != null
-                    //happens in case of parse failure
-                    && typeExpr.TypeId != null
-                        //there is no such thing as a parametrized struct
-                        && typeExpr.Arguments.Count == 0
-                            //built-in types take precedence
-                            && !ParentEngine.PTypeRegistry.Contains(typeExpr.TypeId)
-                                //in case neither the built-in type nor the struct constructor exists, 
-                                //  stay with built-in types for predictibility
-                                &&
-                                target.Symbols.TryGet(
-                                    Loader.ObjectCreationFallbackPrefix + typeExpr.TypeId,
-                                    out fallbackSymbol))
-            {
-                
-                EnsureInScope(fallbackSymbol);
-
-                var call = _assembleInvocation(fallbackSymbol);
-                expr = call;
-                args = call.Arguments;
-            }
-            else if (type != null)
-            {
-                var creation = new AstObjectCreation(parser, type);
-                expr = creation;
-                args = creation.Arguments;
-            }
-            else
-            {
-                SemErr("Failed to transform object creation expression.");
-                expr = new AstNull(this);
-                args = new ArgumentsProxy(new List<AstExpr>());
-            }
-        }
-
-        private AstExpr _createUnknownExpr()
-        {
-            return _createUnknownGetSet();
-        }
-
-        private AstGetSet _createUnknownGetSet()
-        {
-            return new AstIndirectCall(this, new AstNull(this));
-        }
-
-        public ISourcePosition GetPosition()
-        {
-            return new SourcePosition(scanner.File,t.line,t.col);
-        }
-
-        public AstBlock CurrentBlock
-        {
-            get { return target == null ? null : target.CurrentBlock; }
-        }
-
-        internal AstExpr _NullNode(ISourcePosition position)
-        {
-            var n = new AstNull(position.File, position.Line, position.Column);
-            return new AstIndirectCall(position, PCall.Get, n);
-        }
-
-        private readonly ISymbolHandler<List<Message>, Symbol> _listMessages = new ListMessagesHandler();
-        private class ListMessagesHandler : ISymbolHandler<List<Message>,Symbol>
-        {
-            #region Implementation of ISymbolHandler<in List<Message>,out Symbol>
-
-            public Symbol HandleEntity(EntitySymbol symbol, List<Message> argument)
-            {
-                return symbol;
-            }
-
-            public Symbol HandleMessage(MessageSymbol symbol, List<Message> argument)
-            {
-                argument.Add(symbol.Message);
-                return symbol.Symbol.HandleWith(this, argument);
-            }
-
-            public Symbol HandleMacroInstance(MacroInstanceSymbol symbol, List<Message> argument)
-            {
-                return symbol;
-            }
-
-            #endregion
-        }
-
-        internal bool _TryUseSymbol(string symbolicId, out Symbol symbol)
-        {
-            SymbolStore ss;
-            if (target != null)
-                ss = CurrentBlock.Symbols;
-            else
-                ss = Symbols;
-            if(ss.TryGet(symbolicId,out symbol))
-            {
-                var msgs = new List<Message>(1);
-                symbol = symbol.HandleWith(_listMessages, msgs);
-                if(msgs.Count > 0)
-                {
-                    var seen = new HashSet<String>();
-                    foreach (var message in msgs)
-                    {
-                        var c = message.MessageClass;
-                        if(c != null)
-                            if(seen.Add(c))
-                                continue;
-                        _loader.ReportMessage(message);
-                        if(message.Severity == MessageSeverity.Error)
-                        {
-                            symbol = null;
-                            return false;
-                        }
-                    }
-                }
-                return true;
-            }
-            else
-            {
-                symbol = null;
-                return false;
-            }
-        }
-
-        internal bool _TryUseSymbolEntry(string symbolId, out SymbolEntry entry)
-        {
-            Symbol symbol;
-            EntitySymbol entitySymbol;
-            if(_TryUseSymbol(symbolId, out symbol))
-            {
-                if (symbol.TryGetEntitySymbol(out entitySymbol))
-                {
-                    entry = entitySymbol.ToSymbolEntry();
-                    return true;
-                }
-                else
-                {
-                    SemErr(
-                        string.Format(
-                            "Legacy part of parser cannot deal with symbol {0}. An entity symbol was expected.", symbol));
-                    entry = null;
-                    return false;
-                }
-            }
-            else
-            {
-                entry = null;
-                return false;
-            }
-        }
     }
 }
 

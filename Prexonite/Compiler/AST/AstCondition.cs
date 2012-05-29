@@ -44,8 +44,8 @@ namespace Prexonite.Compiler.Ast
             IsNegative = isNegative;
         }
 
-        public AstBlock IfBlock;
-        public AstBlock ElseBlock;
+        public AstSubBlock IfBlock;
+        public AstSubBlock ElseBlock;
         public AstExpr Condition;
         public bool IsNegative;
         private static int _depth;

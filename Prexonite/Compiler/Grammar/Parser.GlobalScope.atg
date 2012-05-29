@@ -123,7 +123,7 @@ GlobalVariableDefinition	(.
 	                        (.
                                 entry = new SymbolEntry(type,id, TargetModule.Name);
 	                            foreach(var alias in aliases)
-	                                Symbols[alias] = entry;
+	                                Symbols.Declare(alias, entry.ToSymbol());
                                 DefineGlobalVariable(id,out vari);
 	                        .)
 	[	lbrack  		    //Meta block for variables
@@ -134,11 +134,11 @@ GlobalVariableDefinition	(.
         ]
 		rbrack
 	]                       (.  if(primaryAlias != null && !_suppressPrimarySymbol(vari))
-                                    Symbols[primaryAlias] = entry;
+                                    Symbols.Declare(primaryAlias, entry.ToSymbol());
                             .)
 	[	                    (.  _pushLexerState(Lexer.Local); .)
 	    assign              (.  CompilerTarget lastTarget = target;
-                                target=FunctionTargets[Application.InitializationId];
+                                _PushScope(FunctionTargets[Application.InitializationId]);
                                 AstExpr expr;
                             .)
 		Expr<out expr>
@@ -152,7 +152,7 @@ GlobalVariableDefinition	(.
                                     TargetApplication._RequireInitialization();
 									Loader._EmitPartialInitializationCode();
 		                        }
-		                        target = lastTarget;
+								_PopScope(FunctionTargets[Application.InitializationId]);
 		                    .)
 	]
 .
@@ -210,43 +210,22 @@ DeclarationInstance<SymbolInterpretations type, ModuleName module, bool preventO
     ]
 	[ as Id<out aId> ]
 	                        (.  SymbolEntry inferredType;
-	                            if(target == null) //global symbol
-	                            {
-	                                if(type == SymbolInterpretations.Undefined)
-	                                    if(Symbols.TryGetValue(id, out inferredType))
-                                        {
-	                                        type = inferredType.Interpretation;
-                                            module = inferredType.Module;
-                                        }
-	                                    else if(Symbols.TryGetValue(aId, out inferredType))
-                                        {
-	                                        type = inferredType.Interpretation;
-                                            module = inferredType.Module;
-                                        }
-	                                    else
-                                        {
-	                                        SemErr("Interpretation of symbol " + id + " as " + aId + " cannot be inferred.");
-                                        }
-	                                Symbols[aId] = new SymbolEntry(type, id, module);
-	                            }
-	                            else
-	                            {
-	                                if(type == SymbolInterpretations.Undefined)
-	                                    if(target.Symbols.TryGetValue(id, out inferredType))
-                                        {
-	                                        type = inferredType.Interpretation;
-                                            module = inferredType.Module;
-                                        }
-	                                    else if(target.Symbols.TryGetValue(aId, out inferredType))
-                                        {
-	                                        type = inferredType.Interpretation;
-                                            module = inferredType.Module;
-                                        }
-	                                    else 
-                                        {
-	                                        SemErr("Interpretation of symbol " + id + " as " + aId + " cannot be inferred.");                            }
-	                                target.Symbols[aId] = new SymbolEntry(type, id, module);
-	                            }
+	                            if(type == SymbolInterpretations.Undefined)
+	                                if(_TryUseSymbolEntry(id, out inferredType))
+                                    {
+	                                    type = inferredType.Interpretation;
+                                        module = inferredType.Module;
+                                    }
+	                                else if(_TryUseSymbolEntry(aId, out inferredType))
+                                    {
+	                                    type = inferredType.Interpretation;
+                                        module = inferredType.Module;
+                                    }
+	                                else
+                                    {
+	                                    SemErr("Interpretation of symbol " + id + " as " + aId + " cannot be inferred.");
+                                    }
+	                            Symbols.Declare(aId, new SymbolEntry(type, id, module).ToSymbol());
 
                                 if(_requiresModule(type) && module == null)
                                     SemErr("Module cannot be inferred for declaration " + id + " as + " + aId + ".");
@@ -274,8 +253,8 @@ BuildBlock
 	SYNC build                  (.  PFunction func = TargetApplication.CreateFunction();
                                     CompilerTarget lastTarget = target; 
                                     CompilerTarget buildBlockTarget = 
-										Loader.CreateFunctionTarget(func, new AstBlock(this), sourcePosition: GetPosition());
-                                    target = buildBlockTarget;
+										Loader.CreateFunctionTarget(func, sourcePosition: GetPosition());
+                                    _PushScope(buildBlockTarget);
                                     Loader.DeclareBuildBlockCommands(target);
                                     _pushLexerState(Lexer.Local);                                
                                 .)
@@ -285,7 +264,7 @@ BuildBlock
 	
                                 (.  
 	                                _popLexerState();                                    
-                                    target = lastTarget;
+                                    _PopScope(buildBlockTarget);
                                     _compileAndExecuteBuildBlock(buildBlockTarget);
 	                            .)
 .
@@ -300,7 +279,7 @@ GlobalCode							(.
 									.)
 =
 									(.	
-										target = ft; 
+										_PushScope(ft); 
                                         _pushLexerState(Lexer.Local);
                                     .)
 	lbrace 
@@ -317,8 +296,8 @@ GlobalCode							(.
                                             SemErr("Exception during compilation of initialization code.\n" + e.ToString());
                                         } finally {
 										    //Symbols defined in this block are not available to further global code blocks
-										    target.Symbols.Clear();
-										    target = null;
+										    target.Symbols.ClearLocalDeclarations();
+										    _PopScope(ft);
 										    _popLexerState();
                                         }
 									.)
@@ -415,7 +394,7 @@ FunctionDefinition<out PFunction func>
                                                     mark_as_let(target.Function,localId);
                                             }
                                             
-                                            Loader.CreateFunctionTarget(func, new AstBlock(this), target, GetPosition());
+                                            Loader.CreateFunctionTarget(func, target, GetPosition());
                                         }
                                         CompilerTarget ft = FunctionTargets[func];
                                         
@@ -427,7 +406,7 @@ FunctionDefinition<out PFunction func>
                                             //Create derived body function
                                             derId = ft.GenerateLocalId();
                                             derBody = TargetApplication.CreateFunction(derId);
-                                            Loader.CreateFunctionTarget(derBody, new AstBlock(this), ft, GetPosition());
+                                            Loader.CreateFunctionTarget(derBody, ft, GetPosition());
                                             derBody.Meta[PFunction.LogicalIdKey] = id ?? funcId;
                                             if(isCoroutine)
                                             {
@@ -444,8 +423,7 @@ FunctionDefinition<out PFunction func>
                                         }
                                         
                                         if(isNested) //Link to parent in case of a nested function
-                                        {
-                                            ft.ParentTarget = target;	                                           
+                                        {                                           
                                             if(isLazy)
                                                 ft = ct;
                                         }	                                    
@@ -479,7 +457,7 @@ FunctionDefinition<out PFunction func>
                                                 symEntry = 
                                                     new SymbolEntry(SymbolInterpretations.Function, func.Id, TargetModule.Name);
 	                                            foreach(var alias in funcAliases)	                                                
-	                                                Symbols[alias] = symEntry;
+	                                                Symbols.Declare(alias, symEntry.ToSymbol());
 	                                            
 	                                            //Store the original (logical id, mentioned in the source code)
 	                                            if((!string.IsNullOrEmpty(id)))
@@ -507,7 +485,7 @@ FunctionDefinition<out PFunction func>
                                     (.  
                                     
                                         if(primaryAlias != null && !_suppressPrimarySymbol(func))
-                                            Symbols[primaryAlias] = symEntry;
+                                            Symbols.Declare(primaryAlias, symEntry.ToSymbol());
 
                                         //Imprint certain meta keys from parent function
                                         if(isNested)
@@ -518,20 +496,20 @@ FunctionDefinition<out PFunction func>
                                         //Copy stub parameters to body of lazy function
                                         if(isLazy && !isNested)
 	                                    {
-	                                        foreach(var kvp in ft.LocalSymbols)
+	                                        foreach(var kvp in ft.Symbols.LocalDeclarations)
 	                                        {
 	                                            var paramId = kvp.Key;
-	                                            var s = kvp.Value;
+	                                            var s = kvp.Value.ToSymbolEntry();
 	                                            //Lazy functions cannot have ref parameters
 	                                            if(s.Interpretation != SymbolInterpretations.LocalObjectVariable)
 	                                                SemErr("Lazy functions can only have value parameters (ref is not allowed)");
 	                                            ct.Function.Parameters.Add(s.InternalId);
-	                                            ct.Symbols.Add(paramId, s);
+	                                            ct.Symbols.Declare(paramId, kvp.Value);
 	                                        }
 	                                    }
                                     
                                         CompilerTarget lastTarget = target;
-                                        target = FunctionTargets[func]; 
+                                        _PushScope(FunctionTargets[func]);
                                         _pushLexerState(Lexer.Local);
                                         if(isMacro)
                                             target.SetupAsMacro();
@@ -545,7 +523,7 @@ FunctionDefinition<out PFunction func>
         Expr<out ret.Expression>    (.  target.Ast.Add(ret); .)
         semicolon
     )                               (.  _popLexerState();
-                                        target = lastTarget; 
+                                        _PopScope(FunctionTargets[func]);
                                         //Compile AST
                                         if(errors.count == 0)
                                         {
@@ -678,7 +656,7 @@ FormalArg<CompilerTarget ft>        (.  string id; SymbolInterpretations kind = 
 	                                    //Note: lazy functions need to copy the
 	                                    //  parameters of the stub to the body!
 	                                    ft.Function.Parameters.Add(id); 
-	                                    ft.Symbols.Add(id, new SymbolEntry(kind, id, null));
+	                                    ft.Symbols.Declare(id, new SymbolEntry(kind, id, null).ToSymbol());
 	                                .)
 .
 

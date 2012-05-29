@@ -31,7 +31,7 @@ namespace PrexoniteTests.Tests.Configurations
             [TestFixtureSetUp]
             public void SetupTestFile()
             {
-                SetUpLoader();
+                Initialize();
                 // Units under test
                 Runner.SetupUnitsUnderTest(this, new string[] {
 <#                  foreach(var fut in testFile.Item2) { #>

@@ -29,6 +29,8 @@ using System.Collections.Generic;
 using NUnit.Framework;
 using Prexonite;
 using Prexonite.Compiler;
+using Prexonite.Compiler.Symbolic;
+using Prexonite.Compiler.Symbolic.Compatibility;
 
 namespace Prx.Tests
 {
@@ -62,7 +64,17 @@ namespace Prx.Tests
 
         #region Helper
 
-        protected internal List<Instruction> getInstructions(string assemblerCode)
+        protected SymbolEntry LookupSymbolEntry(SymbolStore store, string symbolicId)
+        {
+            Symbol symbol;
+            Assert.IsTrue(store.TryGet(symbolicId, out symbol),
+                          string.Format("Expected to find symbol {0} but there is no such entry.", symbolicId));
+            EntitySymbol entitySymbol;
+            Assert.IsTrue(symbol.TryGetEntitySymbol(out entitySymbol),string.Format("Expected symbol {0} to be an entity symbol. Actual: {1}.", symbolicId, symbol));
+            return entitySymbol.ToSymbolEntry();
+        }
+
+        protected  List<Instruction> GetInstructions(string assemblerCode)
         {
             var app = new Application("getInstructions");
             var opt = new LoaderOptions(engine, app);
@@ -124,7 +136,7 @@ namespace Prx.Tests
 
         protected internal void _expect(List<Instruction> actual, string assemblerCode)
         {
-            var expected = getInstructions(assemblerCode);
+            var expected = GetInstructions(assemblerCode);
             int i;
             for (i = 0; i < actual.Count; i++)
             {

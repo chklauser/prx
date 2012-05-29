@@ -1,8 +1,8 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
-using System.Text;
 using Prexonite.Compiler;
+using Prexonite.Compiler.Symbolic;
 using Prexonite.Modular;
 
 namespace PrexoniteTests.Tests.Configurations
@@ -12,16 +12,16 @@ namespace PrexoniteTests.Tests.Configurations
         [ThreadStatic]
         private static DateTime _lastAccess;
         [ThreadStatic]
-        private static Dictionary<string, Tuple<Module,IDictionary<string,SymbolEntry>>> _cache;
+        private static Dictionary<string, Tuple<Module, IEnumerable<SymbolInfo>>> _cache;
 
 // ReSharper disable InconsistentNaming
-        private static Dictionary<string, Tuple<Module, IDictionary<string, SymbolEntry>>> Cache
+        private static Dictionary<string, Tuple<Module, IEnumerable<SymbolInfo>>> Cache
 // ReSharper restore InconsistentNaming
         {
             get
             {
                 _lastAccess = DateTime.Now;
-                return _cache ?? (_cache = new Dictionary<string, Tuple<Module, IDictionary<string, SymbolEntry>>>());
+                return _cache ?? (_cache = new Dictionary<string, Tuple<Module, IEnumerable<SymbolInfo>>>());
             }
         }
 
@@ -56,10 +56,10 @@ namespace PrexoniteTests.Tests.Configurations
                 _cache = null;
         }
 
-        public static bool TryGetModule(string path, out Module module, out IDictionary<string,SymbolEntry> symbols )
+        public static bool TryGetModule(string path, out Module module, out IEnumerable<SymbolInfo> symbols)
         {
             EnsureFresh();
-            Tuple<Module, IDictionary<string, SymbolEntry>> tuple;
+            Tuple<Module, IEnumerable<SymbolInfo>> tuple;
             if (Cache.TryGetValue(path, out tuple))
             {
                 LastAccess = DateTime.Now;
@@ -75,29 +75,22 @@ namespace PrexoniteTests.Tests.Configurations
             }
         }
 
-        public static IDictionary<string, SymbolEntry> Provide(string path, Loader ldr)
+        public static IEnumerable<SymbolInfo> Provide(string path, Loader ldr)
         {
             EnsureFresh();
-            var symbols = 
-                ldr.Symbols
-                .Where(kvp =>
-                {
-                    var e = kvp.Value;
-                    return e.Module == null || e.Module == ldr.ParentApplication.Module.Name;
-                })
-                .ToDictionary(sym => sym.Key, sym => sym.Value);
+            var origin = new SymbolOrigin.ModuleTopLevel(ldr.ParentApplication.Module.Name,
+                                                         new SourcePosition(path, -1, -1));
+            var symbols =
+                ldr.Symbols.LocalDeclarations
+                .Select(decl => new SymbolInfo(decl.Value, origin, decl.Key))
+                .ToArray();
+            
             Cache[path] =
-                Tuple.Create<Module, IDictionary<string, SymbolEntry>>(
+                Tuple.Create<Module, IEnumerable<SymbolInfo>>(
                     ldr.ParentApplication.Module, symbols);
             LastAccess = DateTime.Now;
 
             return symbols;
-        }
-
-        public static void ImportSymbols(this Loader ldr, IEnumerable<KeyValuePair<string, SymbolEntry>> symbols )
-        {
-            foreach (var sym in symbols)
-                ldr.Symbols[sym.Key] = sym.Value;
         }
     }
 }

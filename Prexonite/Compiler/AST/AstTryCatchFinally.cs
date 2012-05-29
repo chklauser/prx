@@ -32,9 +32,9 @@ namespace Prexonite.Compiler.Ast
     public class AstTryCatchFinally : AstSubBlock,
                                       IAstHasBlocks
     {
-        public AstBlock TryBlock { get; set; }
-        public AstBlock CatchBlock { get; set; }
-        public AstBlock FinallyBlock { get; set; }
+        public AstSubBlock TryBlock { get; set; }
+        public AstSubBlock CatchBlock { get; set; }
+        public AstSubBlock FinallyBlock { get; set; }
         public AstGetSet ExceptionVar { get; set; }
 
         public AstTryCatchFinally(ISourcePosition p, AstBlock lexicalScope)

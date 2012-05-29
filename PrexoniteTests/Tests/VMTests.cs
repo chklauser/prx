@@ -1867,7 +1867,7 @@ function main()[is volatile;]
             var incStmt = new AstModifyingAssignment("file", -1, -2,
                 BinaryOperator.Addition,
                 assignStmt,
-                new SymbolEntry(SymbolInterpretations.Command, Addition.DefaultAlias, null), TODO);
+                new SymbolEntry(SymbolInterpretations.Command, Addition.DefaultAlias, null), ct.Ast);
 
             var assignExpr = new AstGetSetSymbol("file", -1, -2, PCall.Set,
                 new SymbolEntry(SymbolInterpretations.GlobalObjectVariable, "s", ldr.ParentApplication.Module.Name));
@@ -1875,7 +1875,7 @@ function main()[is volatile;]
             var incExpr = new AstModifyingAssignment("file", -1, -2,
                 BinaryOperator.Addition,
                 assignExpr,
-                new SymbolEntry(SymbolInterpretations.Command, Addition.DefaultAlias, null), TODO);
+                new SymbolEntry(SymbolInterpretations.Command, Addition.DefaultAlias, null), ct.Ast);
 
             block.Statements.Add(incStmt);
             block.Expression = incExpr;

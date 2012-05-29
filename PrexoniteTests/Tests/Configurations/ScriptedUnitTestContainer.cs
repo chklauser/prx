@@ -25,10 +25,14 @@
 //  IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 using System;
+using System.Collections.Generic;
 using System.IO;
+using System.Linq;
+using JetBrains.Annotations;
 using NUnit.Framework;
 using Prexonite;
 using Prexonite.Compiler;
+using Prexonite.Compiler.Symbolic;
 using Prexonite.Types;
 
 namespace PrexoniteTests.Tests.Configurations
@@ -38,6 +42,12 @@ namespace PrexoniteTests.Tests.Configurations
         public Application Application { get; set; }
         public Engine Engine { get; set; }
         public Loader Loader { get; set; }
+        [NotNull] private readonly List<IEnumerable<SymbolInfo>> _importedSymbols = new List<IEnumerable<SymbolInfo>>();
+        public List<IEnumerable<SymbolInfo>> ImportedSymbols
+        {
+            get { return _importedSymbols; }
+        }
+
         public StackContext Root { get; set; }
 
         public const string ListTestsId = @"test\list_test";
@@ -46,11 +56,11 @@ namespace PrexoniteTests.Tests.Configurations
 
         protected abstract UnitTestConfiguration Runner { get; }
 
-        public void SetUpLoader()
+        public void Initialize()
         {
             Application = new Application(ApplicationName);
             Engine = new Engine();
-            Loader = new Loader(Engine, Application);
+            Loader = null;
             Root = new NullContext(Engine, Application, new string[0]);
 
             var slnPath = Environment.CurrentDirectory;

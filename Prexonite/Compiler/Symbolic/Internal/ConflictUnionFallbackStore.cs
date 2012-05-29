@@ -71,7 +71,7 @@ namespace Prexonite.Compiler.Symbolic.Internal
                 while (e.MoveNext())
                 {
                     var y = e.Current;
-                    var merged = x.HandleWith(Merge, y.Symbol);
+                    var merged = x.HandleWith(_merge, y.Symbol);
                     if (merged == null)
                         return _unifySymbolsDualMode(new SymbolInfo(x, unionInfo.Origin, unionInfo.Name), y, e);
                     else
@@ -91,14 +91,14 @@ namespace Prexonite.Compiler.Symbolic.Internal
             {
                 var y = e.Current;
 
-                var merged = x1.HandleWith(Merge, y.Symbol);
+                var merged = x1.HandleWith(_merge, y.Symbol);
                 if (merged != null)
                 {
                     x1 = merged;
                 }
                 else
                 {
-                    merged = x2.HandleWith(Merge, y.Symbol);
+                    merged = x2.HandleWith(_merge, y.Symbol);
                     if (merged != null)
                     {
                         x2 = merged;
@@ -134,7 +134,7 @@ namespace Prexonite.Compiler.Symbolic.Internal
                 int i;
                 for (i = 0; i < xs.Count; i++)
                 {
-                    var merged = xs[i].HandleWith(Merge, y.Symbol);
+                    var merged = xs[i].HandleWith(_merge, y.Symbol);
                     if (merged != null)
                     {
                         xs[i] = merged;
@@ -157,7 +157,7 @@ namespace Prexonite.Compiler.Symbolic.Internal
                                                                     MessageClasses.SymbolConflict), xs[0]));
         }
 
-        private static readonly ISymbolHandler<Object, bool> ContainsMessage = new ContainsMessageHandler();
+        private static readonly ISymbolHandler<Object, bool> _containsMessage = new ContainsMessageHandler();
         private class ContainsMessageHandler : ISymbolHandler<Object,bool>
         {
             public bool HandleEntity(EntitySymbol symbol, object argument)
@@ -179,7 +179,7 @@ namespace Prexonite.Compiler.Symbolic.Internal
             }
         }
 
-        private static readonly ISymbolHandler<Symbol,Symbol> Merge = new MergeHandler(); 
+        private static readonly ISymbolHandler<Symbol,Symbol> _merge = new MergeHandler(); 
         private class MergeHandler : ISymbolHandler<Symbol, Symbol>
         {
             public Symbol HandleEntity(EntitySymbol thisSymbol, Symbol otherSymbol)
@@ -200,7 +200,7 @@ namespace Prexonite.Compiler.Symbolic.Internal
                 if (innerUnionSymbol == null) // the underlying symbol is not the same
                     return null;
 
-                if (innerUnionSymbol.HandleWith(ContainsMessage, thisSymbol.Message))
+                if (innerUnionSymbol.HandleWith(_containsMessage, thisSymbol.Message))
                     return innerUnionSymbol;
                 else
                     return new MessageSymbol(thisSymbol.Message, innerUnionSymbol);
@@ -305,6 +305,16 @@ namespace Prexonite.Compiler.Symbolic.Internal
         public override bool IsDeclaredLocally(string id)
         {
             return _local == null || _local.ContainsKey(id);
+        }
+
+        public override void ClearLocalDeclarations()
+        {
+            _local = null;
+        }
+
+        public override IEnumerable<KeyValuePair<string, Symbol>> LocalDeclarations
+        {
+            get { return _local; }
         }
     }
 }
