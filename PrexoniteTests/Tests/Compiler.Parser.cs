@@ -2762,86 +2762,6 @@ ret.val
         }
 
         [Test]
-        public void LoopExpressions()
-        {
-            _compile(
-                @"
-
-function main()
-{
-    var a = for(var i = 5; i < 10; i++)
-            {
-                yield 7*i;
-            };
-
-    var j = 7;
-    var b = until( j == 100) 
-            {
-                var y = j/2;
-                j*=4;
-                yield y;
-            };
-    return null;
-}
-");
-
-            List<Instruction> code = target.Functions["main"].Code;
-            Assert.IsTrue(code.Count > 20, "Resulting must be longer than 20 instructions");
-            string lst1Var = code[1].Id ?? "No_ID_at_1";
-            string lst2Var = code[20].Id ?? "No_ID_at_20";
-            _expect(
-                String.Format(
-                    @"
-var a,i,{0},b,j,{1},y
-                    sget.0  ""List::Create""
-                    stloc   {0}
-                    ldc.int 5
-                    stloc   i
-                    jump    condition0
-label begin0        ldloc   {0}
-                    ldc.int 7
-                    ldloc   i
-                    mul
-                    set.1   """"
-label continue0     inc     i
-label condition0    ldloc   i
-                    ldc.int 10
-                    clt
-                    jump.t  begin0
-label end0          ldloc   {0}
-                    stloc   a 
-
-                    ldc.int 7
-                    stloc   j
-                    sget.0  ""List::Create""
-                    stloc   {1}
-                    jump    continue1
-label begin1        ldloc   j
-                    ldc.int 2
-                    div
-                    stloc   y
-                    ldloc   j
-                    ldc.int 4
-                    mul
-                    stloc   j
-                    ldloc   {1}
-                    ldloc   y
-                    set.1   """"
-label continue1     ldloc   j
-                    ldc.int 100
-                    ceq
-                    jump.f  begin1
-label end1          ldloc   {1}
-                    stloc   b
-                    
-                    ldnull
-                    ret.val
-",
-                    lst1Var,
-                    lst2Var));
-        }
-
-        [Test]
         public void AppendLeftArguments()
         {
             _compile(
@@ -3035,9 +2955,9 @@ function main()
     var y = a;
     var z = a;
 
-    x~=String;
-    y ~= Int;
-    z ~ = Real;
+    x~=String; //no whitespace
+    y ~= Int; //normal whitespace
+    z ~ = Real; // ~ and = are two distinct operators. There is no '~=' operator  
 
     return x+y+z;
 }

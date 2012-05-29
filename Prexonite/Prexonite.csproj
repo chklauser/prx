@@ -294,7 +294,6 @@
     <Compile Include="Compiler\Ast\AstLogicalOr.cs" />
     <Compile Include="Compiler\Ast\AstDynamicTypeExpression.cs" />
     <Compile Include="Compiler\Ast\AstLoop.cs" />
-    <Compile Include="Compiler\Ast\AstLoopExpression.cs" />
     <Compile Include="Compiler\Ast\AstMacroInvocation.cs" />
     <Compile Include="Compiler\Ast\AstModifyingAssignment.cs" />
     <Compile Include="Compiler\Ast\AstNull.cs" />

@@ -265,10 +265,12 @@ Primary<out AstExpr expr>
                                         (.  expr = null;
                                             AstGetSet complex = null; bool declared; .)
 =
-	(.  _pushLexerState(Lexer.Asm); .)	(.	AstBlock blockExpr = target.BeginBlock("asm"); .)
+	(.  _pushLexerState(Lexer.Asm); .)	(.	var blockExpr = Create.Block(GetPosition());
+											_PushScope(blockExpr);
+										.)
     asm lpar { AsmInstruction<blockExpr> } rpar
     (.  _popLexerState(); .)			(.	expr = blockExpr; 
-											target.EndBlock(); 
+											_PopScope(blockExpr);
 										.)
 |   Constant<out expr>
 |   CoroutineCreation<out expr>
@@ -348,14 +350,16 @@ HashLiteral<out AstExpr expr>
 .
 
 LoopExpr<out AstExpr expr>
-										(.	AstBlock dummyBlock = target.BeginBlock("loopExpr");
+										(.	var dummyBlock = Create.Block(GetPosition());
+											_PushScope(dummyBlock);
+											expr = _NullNode(GetPosition());
 										.)
 =
 	(	WhileLoop<dummyBlock>
 	|	ForLoop<dummyBlock>
 	|	ForeachLoop<dummyBlock>
-	)									(.	expr = new AstLoopExpression(this, (AstLoop) dummyBlock.Statements[0]);
-											target.EndBlock();
+	)									(.	_PopScope(dummyBlock);
+											SemErr("Loop expressions are no longer supported.");
 										.)
 .										
 											

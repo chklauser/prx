@@ -509,6 +509,11 @@ FunctionDefinition<out PFunction func>
 	                                    }
                                     
                                         CompilerTarget lastTarget = target;
+										if(isLazy || isCoroutine)
+										{
+											//Push the stub, because it is the lexical parent of the body
+											_PushScope(cst);
+										}
                                         _PushScope(FunctionTargets[func]);
                                         _pushLexerState(Lexer.Local);
                                         if(isMacro)
@@ -524,6 +529,10 @@ FunctionDefinition<out PFunction func>
         semicolon
     )                               (.  _popLexerState();
                                         _PopScope(FunctionTargets[func]);
+										if(isLazy || isCoroutine)
+										{
+											_PopScope(cst);
+										}
                                         //Compile AST
                                         if(errors.count == 0)
                                         {

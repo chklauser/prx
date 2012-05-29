@@ -187,7 +187,7 @@ namespace Prexonite.Compiler.Ast
             return new AstPlaceholder(position.File, position.Line, position.Column, index);
         }
 
-        public AstBlock Block(ISourcePosition position)
+        public AstSubBlock Block(ISourcePosition position)
         {
             return new AstSubBlock(position,CurrentBlock);
         }

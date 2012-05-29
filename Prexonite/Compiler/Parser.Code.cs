@@ -91,7 +91,7 @@ namespace Prexonite.Compiler
         public SymbolStore Symbols
         {
             [DebuggerStepThrough]
-            get { return _loader.Symbols; }
+            get { return target != null ? target.CurrentBlock.Symbols : _loader.Symbols; }
         }
 
         public Loader.FunctionTargetsIterator FunctionTargets
@@ -133,6 +133,7 @@ namespace Prexonite.Compiler
 
         public CompilerTarget target
         {
+            [DebuggerStepThrough]
             get { return _target; }
         }
 
@@ -478,9 +479,10 @@ namespace Prexonite.Compiler
 
         internal void _PushScope(AstSubBlock block)
         {
-            if (!ReferenceEquals(block.LexicalParentBlock, CurrentBlock))
+            if (!ReferenceEquals(block.LexicalScope, CurrentBlock))
                 throw new PrexoniteException("Cannot push scope of unrelated block.");
             _scopeStack.Push(block);
+            _target.BeginBlock(block);
         }
 
         internal void _PushScope(CompilerTarget ct)
@@ -495,6 +497,8 @@ namespace Prexonite.Compiler
         {
             if (!ReferenceEquals(_scopeStack.Peek(), block))
                 throw new PrexoniteException(string.Format("Tried to pop scope of block {0} but {1} was on top.", block, _scopeStack.Peek()));
+            _scopeStack.Pop();
+            _target.EndBlock();
         }
 
         internal void _PopScope(CompilerTarget ct)

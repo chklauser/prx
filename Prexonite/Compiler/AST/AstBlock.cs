@@ -358,9 +358,6 @@ namespace Prexonite.Compiler.Ast
 
         #region Block labels
 
-        public bool JumpLabelsEnabled { get; set; }
-        public AstBlock LexicalParentBlock { get; set; }
-
         private readonly string _prefix;
         private readonly string _uid;
         public AstExpr Expression;

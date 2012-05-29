@@ -41,8 +41,8 @@ namespace Prexonite.Compiler.Ast
             : base(p, lexicalScope)
         {
             TryBlock = new AstSubBlock(p, this);
-            CatchBlock = new AstSubBlock(p, this);
-            FinallyBlock = new AstSubBlock(p, this);
+            CatchBlock = new AstSubBlock(p, TryBlock);
+            FinallyBlock = new AstSubBlock(p, TryBlock);
         }
 
         #region IAstHasBlocks Members

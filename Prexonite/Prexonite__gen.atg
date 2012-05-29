@@ -710,10 +710,12 @@ Primary<out AstExpr expr>
                                         (.  expr = null;
                                             AstGetSet complex = null; bool declared; .)
 =
-	(.  _pushLexerState(Lexer.Asm); .)	(.	AstBlock blockExpr = target.BeginBlock("asm"); .)
+	(.  _pushLexerState(Lexer.Asm); .)	(.	var blockExpr = Create.Block(GetPosition());
+											_PushScope(blockExpr);
+										.)
     asm lpar { AsmInstruction<blockExpr> } rpar
     (.  _popLexerState(); .)			(.	expr = blockExpr; 
-											target.EndBlock(); 
+											_PopScope(blockExpr);
 										.)
 |   Constant<out expr>
 |   CoroutineCreation<out expr>
@@ -793,14 +795,16 @@ HashLiteral<out AstExpr expr>
 .
 
 LoopExpr<out AstExpr expr>
-										(.	AstBlock dummyBlock = target.BeginBlock("loopExpr");
+										(.	var dummyBlock = Create.Block(GetPosition());
+											_PushScope(dummyBlock);
+											expr = _NullNode(GetPosition());
 										.)
 =
 	(	WhileLoop<dummyBlock>
 	|	ForLoop<dummyBlock>
 	|	ForeachLoop<dummyBlock>
-	)									(.	expr = new AstLoopExpression(this, (AstLoop) dummyBlock.Statements[0]);
-											target.EndBlock();
+	)									(.	_PopScope(dummyBlock);
+											SemErr("Loop expressions are no longer supported.");
 										.)
 .										
 											
@@ -1489,6 +1493,11 @@ FunctionDefinition<out PFunction func>
 	                                    }
                                     
                                         CompilerTarget lastTarget = target;
+										if(isLazy || isCoroutine)
+										{
+											//Push the stub, because it is the lexical parent of the body
+											_PushScope(cst);
+										}
                                         _PushScope(FunctionTargets[func]);
                                         _pushLexerState(Lexer.Local);
                                         if(isMacro)
@@ -1504,6 +1513,10 @@ FunctionDefinition<out PFunction func>
         semicolon
     )                               (.  _popLexerState();
                                         _PopScope(FunctionTargets[func]);
+										if(isLazy || isCoroutine)
+										{
+											_PopScope(cst);
+										}
                                         //Compile AST
                                         if(errors.count == 0)
                                         {
@@ -2176,16 +2189,16 @@ Condition<AstBlock block>
     lpar Expr<out expr> rpar    (.  if(expr == null)
                                         expr = _createUnknownExpr();
                                     AstCondition cond = Create.Condition(GetPosition(), expr, isNegative);
-                                    target.BeginBlock(cond.IfBlock);
+                                    _PushScope(cond.IfBlock);
                                 .)
     
     StatementBlock<cond.IfBlock> 
-                                (.  target.EndBlock(); .)
+                                (.  _PopScope(cond.IfBlock); .)
 
     
-    [   else                    (.  target.BeginBlock(cond.ElseBlock); .)
+    [   else                    (.  _PushScope(cond.ElseBlock); .)
         StatementBlock<cond.ElseBlock> 
-                                (.  target.EndBlock(); .)
+                                (.  _PopScope(cond.ElseBlock); .)
     ]                           (.  block.Add(cond); .)
 .
 
@@ -2195,49 +2208,59 @@ WhileLoop<AstBlock block>
 (   (   while  | until          (.  loop.IsPositive = false; .)    
     )                           
     lpar Expr<out loop.Condition> rpar
-                                (.  target.BeginBlock(loop.Block); //EndBlock is common for both loops
+                                (.  _PushScope(loop.Block); //EndBlock is common for both loops
                                 .)
     StatementBlock<loop.Block> 
     
-|   do                          (.  target.BeginBlock(loop.Block); 
+|   do                          (.  _PushScope(loop.Block); 
                                     loop.IsPrecondition = false;
                                 .)
     StatementBlock<loop.Block>
     (   while  | until          (.  loop.IsPositive = false; .)    
     )                           
     lpar Expr<out loop.Condition> rpar
-)                               (.  target.EndBlock(); block.Add(loop); .)
+)                               (.  _PopScope(loop.Block); block.Add(loop); .)
 .
 
 ForLoop<AstBlock block>         (.  AstForLoop loop;
 									AstExpr condition;
                                 .)
 =
-    for                         (.  loop = new AstForLoop(GetPosition(), CurrentBlock); target.BeginBlock(loop.Block); .)
+    for                         (.  loop = new AstForLoop(GetPosition(), CurrentBlock); 
+									_PushScope(loop.Initialize);
+								.)
     lpar StatementBlock<loop.Initialize>
-    (
+    (							(.	
+									_PushScope(loop.NextIteration); 
+								.)
 		do StatementBlock<loop.NextIteration> 
                                 (.  loop.IsPrecondition = false; .)
         (   while
         |   until               (.  loop.IsPositive = false; .)
-        )
-        Expr<out condition>		(.	loop.Condition = condition; .)
+        )						(.  _PopScope(loop.NextIteration); .)
+        Expr<out condition>		(.	loop.Condition = condition; 
+									_PushScope(loop.NextIteration);
+								.)
     |   [   while
         |   until               (.  loop.IsPositive = false; .)
         ]       
         Expr<out condition>		(.	loop.Condition = condition; .)
-        semicolon
+        semicolon				(.	_PushScope(loop.NextIteration); .)
         SimpleStatement<loop.NextIteration>
         [ semicolon ]
-    )
-    rpar
-    StatementBlock<loop.Block>  (.  target.EndBlock(); block.Add(loop); .) // */
+    )							
+    rpar						(.  _PushScope(loop.Block); .)
+    StatementBlock<loop.Block>  (.  _PopScope(loop.Block);
+									_PopScope(loop.NextIteration);
+									_PopScope(loop.Initialize);
+									block.Add(loop);
+								.)
 .
 
 ForeachLoop<AstBlock block>
 =
     foreach                      (.  AstForeachLoop loop = Create.ForeachLoop(GetPosition());
-                                     target.BeginBlock(loop.Block);
+                                     _PushScope(loop.Block);
                                  .)
     lpar
     GetCall<out loop.Element> 
@@ -2245,7 +2268,7 @@ ForeachLoop<AstBlock block>
     Expr<out loop.List> 
     rpar
     StatementBlock<loop.Block>
-                                (.  target.EndBlock();
+                                (.  _PopScope(loop.Block);
                                     block.Add(loop); 
                                 .) 
 .
@@ -2373,12 +2396,14 @@ TryCatchFinally<AstBlock block>
                                     AstGetSet excVar = null;
                                 .)
 =
-    try                         (.  target.BeginBlock(a.TryBlock); .)
+    try                         (.  _PushScope(a);
+									_PushScope(a.TryBlock); 
+								.)
     lbrace
     {   Statement<a.TryBlock>
     }
-    rbrace                      (. target.EndBlock(); .)
-    [	catch                   (. target.BeginBlock(a.CatchBlock); .)
+    rbrace                      (. /* Don't pop try-block scope here. */ .)
+    [	catch                   (. _PushScope(a.CatchBlock); .)
 		(   lpar
 			GetCall<out excVar> (. a.ExceptionVar = excVar; .)
 			rpar
@@ -2387,23 +2412,23 @@ TryCatchFinally<AstBlock block>
 		lbrace
 		{   Statement<a.CatchBlock>
 		}
-		rbrace		            (.  target.EndBlock(); .)
+		rbrace		            (. _PopScope(a.CatchBlock);.)
 	    
 		[
-			finally             (.  target.BeginBlock(a.FinallyBlock); .)
+			finally             (.  _PushScope(a.FinallyBlock); .)
 			lbrace
 			{   Statement<a.FinallyBlock>
 			}
-			rbrace              (.  target.EndBlock(); .)
+			rbrace              (.  _PopScope(a.FinallyBlock); .)
 		]
 		
-	|	finally                 (.  target.BeginBlock(a.FinallyBlock); .)
+	|	finally                 (.  _PushScope(a.FinallyBlock); .)
 		lbrace
 		{   Statement<a.FinallyBlock>
 		}
-		rbrace                  (.  target.EndBlock(); .)
+		rbrace                  (.  _PopScope(a.FinallyBlock); .)
 		
-		[	                    (.  target.BeginBlock(a.CatchBlock); .)
+		[	                    (.  _PushScope(a.CatchBlock); .)
 		    catch
 			(   lpar
 				GetCall<out excVar>
@@ -2415,10 +2440,13 @@ TryCatchFinally<AstBlock block>
 			{   Statement<a.CatchBlock>
 			}
 			rbrace
-			                    (.  target.EndBlock(); .)
+			                    (.  _PopScope(a.CatchBlock); .)
 		]
 	]                       
-                                (.  block.Add(a); .)
+                                (.  _PopScope(a.TryBlock);
+									_PopScope(a);
+									block.Add(a); 
+								.)
 .
 
 Throw<AstBlock block>
@@ -2429,12 +2457,18 @@ Throw<AstBlock block>
 .                                
 
 Using<AstBlock block>
-                                (.  AstUsing use = Create.Using(GetPosition()); .)
+                                (.  AstUsing use = Create.Using(GetPosition());
+									AstExpr e;
+								.)
 =
-    uusing lpar Expr<out use.Expression> rpar
-                                (.  target.BeginBlock(use.Block); .)
+								(.  _PushScope(use);
+									_PushScope(use.Block); .)
+    uusing lpar Expr<out e> rpar
+								(.	use.ResourceExpression = e; .)
+                                
     StatementBlock<use.Block>
-                                (.  target.EndBlock();
+                                (.  _PopScope(use.Block);
+									_PopScope(use);
                                     block.Add(use); 
                                 .)
 .

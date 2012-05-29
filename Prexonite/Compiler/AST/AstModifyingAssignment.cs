@@ -26,6 +26,7 @@
 
 using System;
 using System.Diagnostics;
+using Prexonite.Compiler.Symbolic;
 using Prexonite.Compiler.Symbolic.Compatibility;
 using Prexonite.Types;
 
@@ -84,16 +85,11 @@ namespace Prexonite.Compiler.Ast
             AstGetSet complex)
         {
             var id = OperatorNames.Prexonite.GetName(setModifier);
-            if (id == null)
-            {
-                return new AstIndirectCall(p, new AstNull(p));
-            }
-            else
-            {
-                var impl = ResolveOperator(p, id);
-                return new AstModifyingAssignment(p.scanner.File, p.t.line, p.t.col, setModifier,
-                    complex, impl.ToSymbolEntry(), p.CurrentBlock);   
-            }
+
+            var impl = id == null ? null : ResolveOperator(p, id).ToSymbolEntry();
+
+            return new AstModifyingAssignment(p.scanner.File, p.t.line, p.t.col, setModifier,
+                    complex, impl, p.CurrentBlock);   
         }
 
         #region IAstHasExpressions Members

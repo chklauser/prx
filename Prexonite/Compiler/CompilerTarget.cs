@@ -412,8 +412,8 @@ namespace Prexonite.Compiler
         [DebuggerStepThrough]
         public AstSubBlock BeginBlock(string prefix)
         {
-            var prototype = _scopeBlocks.Count > 0 ? _scopeBlocks.Peek() : _ast;
-            var bl = new AstSubBlock(prototype, CurrentBlock, GenerateLocalId(), prefix);
+            var currentBlock = CurrentBlock;
+            var bl = new AstSubBlock(currentBlock, currentBlock, GenerateLocalId(), prefix);
             _scopeBlocks.Push(bl);
             return bl;
         }
