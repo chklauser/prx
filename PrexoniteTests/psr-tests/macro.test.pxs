@@ -1,5 +1,8 @@
 ﻿ 
-under_test {@"psr\macro.pxs"};
+under_test {
+	@"psr\impl\ast.pxs",
+	{@"psr\impl\macro.pxs",		@"psr\impl\ast.pxs"},
+};
 test_dependencies {@"psr\test\meta_macro.pxs"};
 
 function test_file()[test]

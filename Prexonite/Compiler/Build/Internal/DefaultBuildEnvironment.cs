@@ -40,7 +40,7 @@ namespace Prexonite.Compiler.Build.Internal
         private readonly SymbolStore _externalSymbols;
         private readonly ITargetDescription _description;
         private readonly Engine _compilationEngine;
-        private readonly Application _compileTimeApplication;
+        private readonly Module _module;
 
         public bool TryGetModule(ModuleName moduleName, out Module module)
         {
@@ -57,7 +57,7 @@ namespace Prexonite.Compiler.Build.Internal
             }
         }
 
-        public DefaultBuildEnvironment(IEnumerable<ITarget> dependencies, CancellationToken token, ITargetDescription description)
+        public DefaultBuildEnvironment(IEnumerable<ITarget> dependencies, ITargetDescription description, CancellationToken token)
         {
             _token = token;
             _description = description;
@@ -74,6 +74,8 @@ namespace Prexonite.Compiler.Build.Internal
                 }
             }
             _externalSymbols = SymbolStore.Create(conflictUnionSource: externals);
+            _compilationEngine = new Engine();
+            _module = Module.Create(description.Name);
         }
 
         public SymbolStore ExternalSymbols
@@ -91,11 +93,17 @@ namespace Prexonite.Compiler.Build.Internal
             }
             else
             {
+                // First create an intermediate symbol store as a copy
+                //  of ExternalSymbols, inheriting from lowPrioritySymbols
                 predef = SymbolStore.Create(lowPrioritySymbols);
                 foreach (var externalSymbol in ExternalSymbols)
                     predef.Declare(externalSymbol.Key, externalSymbol.Value);
+                // Then create the final SymbolStore inheriting from the intermediate one.
+                //  that way we can later extract the declarations made by this module.
+                predef = SymbolStore.Create(predef); 
             }
-            var finalOptions = new LoaderOptions(_compilationEngine, _compileTimeApplication, predef);
+            var finalOptions = new LoaderOptions(_compilationEngine, new Application(_module), predef)
+                {ReconstructSymbols = false, RegisterCommands = false};
             return new Loader(finalOptions);
         }
     }

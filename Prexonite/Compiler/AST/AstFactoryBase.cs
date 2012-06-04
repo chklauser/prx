@@ -6,7 +6,7 @@ namespace Prexonite.Compiler.Ast
 {
     internal abstract class AstFactoryBase : IAstFactory
     {
-        // TODO: TryUseSymbolEntry and NullNode should not be defined on AstFactoryBase
+        // TODO: (Ticket #106) TryUseSymbolEntry and NullNode should not be defined on AstFactoryBase
         protected abstract AstBlock CurrentBlock { get; }
         protected abstract bool TryUseSymbolEntry(string symbolicId, out SymbolEntry entry);
         protected abstract AstGetSet CreateNullNode(ISourcePosition position);

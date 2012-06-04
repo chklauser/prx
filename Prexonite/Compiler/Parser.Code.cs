@@ -1056,6 +1056,7 @@ namespace Prexonite.Compiler
 
             public AstGetSet HandleMacroInstance(MacroInstanceSymbol symbol, Tuple<Parser, PCall> argument)
             {
+                // TODO (Ticket #109) MacroInstance invocation
                 throw new NotImplementedException("Assembly of macro instance invocations");
             }
         }

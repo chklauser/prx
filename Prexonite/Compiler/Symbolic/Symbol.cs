@@ -176,15 +176,18 @@ namespace Prexonite.Compiler.Symbolic
     public sealed class MacroInstanceSymbol : Symbol
     {
         private readonly EntityRef.IMacro _macroReference;
-        private readonly IList<AstExpr> _arguments; //TODO: switch to named parameters (as "shared variables")
+        private readonly ReadOnlyDictionaryView<string,AstExpr> _arguments;
 
-        internal MacroInstanceSymbol(EntityRef.IMacro macroReference, IList<AstExpr> arguments)
+        internal MacroInstanceSymbol(EntityRef.IMacro macroReference, IEnumerable<KeyValuePair<string,AstExpr>> arguments)
         {
             _macroReference = macroReference;
-            _arguments = arguments;
+            var d = new Dictionary<string, AstExpr>();
+            foreach (var entry in arguments)
+                d[entry.Key] = entry.Value;
+            _arguments = new ReadOnlyDictionaryView<string, AstExpr>(d);
         }
 
-        public static MacroInstanceSymbol Create<T>(T macroEntity, IList<AstExpr> arguments) where T : EntityRef, EntityRef.IMacro
+        public static MacroInstanceSymbol Create<T>(T macroEntity, IEnumerable<KeyValuePair<string, AstExpr>> arguments) where T : EntityRef, EntityRef.IMacro
         {
             return new MacroInstanceSymbol(macroEntity, arguments);
         }
@@ -194,7 +197,7 @@ namespace Prexonite.Compiler.Symbolic
             get { return _macroReference; }
         }
 
-        public IList<AstExpr> Arguments
+        public ReadOnlyDictionaryView<string, AstExpr> Arguments
         {
             get { return _arguments; }
         }

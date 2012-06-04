@@ -94,10 +94,16 @@ namespace Prexonite.Compiler.Macro.Commands
                 switch (interpretation)
                 {
                     case SymbolInterpretations.Function:
-                        if (module != null)
-                            throw new NotImplementedException(
-                                "Cross module macro references are not implemented yet.");
-                        return sctx.CreateNativePValue(sctx.ParentApplication.Functions[id]);
+                        PFunction func;
+                        if(module != null && sctx.ParentApplication.TryGetFunction(id,module, out func))
+                        {
+                            return sctx.CreateNativePValue(func);
+                        }
+                        else
+                        {
+                            throw new PrexoniteException(
+                                string.Format("Cannot create reference to function {0} from module {1}.", id, module));
+                        }
                     case SymbolInterpretations.MacroCommand:
                         return sctx.CreateNativePValue(_loader.MacroCommands[id]);
                     default:

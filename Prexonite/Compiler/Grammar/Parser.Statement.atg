@@ -41,7 +41,6 @@ Statement<AstBlock block>
 SimpleStatement<AstBlock block>
 =
 	ExplicitGoTo<block>
-|   Declaration
 |   IF ( isVariableDeclaration() ) 
         VariableDeclarationStatement<block>
 |   GetSetComplex<block>
@@ -56,6 +55,7 @@ StructureStatement<AstBlock block>
     asm AsmStatementBlock<block>
     (.  _popLexerState(); .)
 |   Condition<block>
+|   Declaration
 |   WhileLoop<block>
 |   ForLoop<block>
 |   ForeachLoop<block>

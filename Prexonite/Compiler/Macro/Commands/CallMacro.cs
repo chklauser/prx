@@ -98,8 +98,8 @@ namespace Prexonite.Compiler.Macro.Commands
                 }
                 else if (func != null && func.IsMacro)
                 {
-                    throw new NotImplementedException("Cannot infer module name from function object " + func);
-                    //return SymbolInterpretations.Function;
+                    moduleName = func.ParentApplication.Module.Name;
+                    return SymbolInterpretations.Function;
                 }
                 else
                     throw new PrexoniteException(string.Format(

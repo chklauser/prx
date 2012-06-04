@@ -25,21 +25,18 @@
 //  IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 using System;
-using System.Collections.Generic;
 using System.IO;
 using System.Text;
 using System.Linq;
 using NUnit.Framework;
 using Prexonite;
 using Prexonite.Compiler;
+using Prexonite.Compiler.Build;
 using Prexonite.Compiler.Cil;
-using Prexonite.Compiler.Symbolic;
-using Prexonite.Modular;
-using Symbol = Prexonite.Compiler.Symbolic.Symbol;
 
 namespace PrexoniteTests.Tests.Configurations
 {
-    public abstract class UnitTestConfiguration
+    internal abstract class UnitTestConfiguration
     {
         public class InMemory : UnitTestConfiguration
         {
@@ -49,12 +46,11 @@ namespace PrexoniteTests.Tests.Configurations
         {
             public FromStored()
             {
-                ModularCompilation = false;
+                throw new NotSupportedException("Store round-tripping is not currently implemented.");
             }
 
-            public override void PrepareTestCompilation(ScriptedUnitTestContainer container)
+            public void PrepareTestCompilation(ScriptedUnitTestContainer container)
             {
-                base.PrepareTestCompilation(container);
                 using (var buffer = new MemoryStream(512*1024))
                 {
                     //we don't need to wrap reader/writer in using because 
@@ -76,88 +72,10 @@ namespace PrexoniteTests.Tests.Configurations
         {
             Linking = FunctionLinking.FullyStatic;
             CompileToCil = false;
-            ModularCompilation = true;
         }
 
         public FunctionLinking Linking { get; set; }
         public bool CompileToCil { get; set; }
-        public bool ModularCompilation { get; set; }
-
-        public virtual void SetupDependencies(ScriptedUnitTestContainer runner,
-            IEnumerable<string> dependencies)
-        {
-            SetupUnitsUnderTest(runner, dependencies);
-        }
-
-        /// <summary>
-        /// Loads dependencies into the application. Called just after <see cref="ScriptedUnitTestContainer.Initialize"/> and before <see cref="ScriptedUnitTestContainer.LoadUnitTestingFramework"/>.
-        /// </summary>
-        /// <param name="container">The container under which the test is being executed.</param>
-        /// <param name="dependencies">A list of dependencies for this test.</param>
-        public virtual void SetupUnitsUnderTest(ScriptedUnitTestContainer container,
-            IEnumerable<string> dependencies)
-        {
-            var originalApp = container.Application;
-
-            foreach (var fut in dependencies)
-            {
-                if(ModularCompilation)
-                {
-                    // TODO use build system to implement inter-module dependencies
-                    Module module;
-                    IEnumerable<SymbolInfo> symbols;
-                    if(ModuleCache.TryGetModule(fut, out module, out symbols))
-                    {
-                        Application.Link(container.Loader.ParentApplication, new Application(module));
-                    }
-                    else
-                    {
-                        //For linking the apps together, we need to preserve them
-                        var prevApp = container.Application;
-
-                        //Create the module, application and loader for this next dependency
-                        module = Module.Create( new ModuleName(
-                            container.ApplicationName + "." + Path.GetFileNameWithoutExtension(fut), 
-                            new Version()));
-                        var app = container.Application = new Application(module);
-
-                        var ldrStore = SymbolStore.Create(conflictUnionSource: container.ImportedSymbols.SelectMany(x => x));
-                        var ldrOptions = new LoaderOptions(container.Engine, app, ldrStore);
-                        var ldr = container.Loader = new Loader(ldrOptions);
-
-                        //Link them together, both physically and symbolically
-                        Application.Link(app,prevApp);
-
-                        //Now, we're ready to load the file into the fresh module
-                        container.RequireFile(fut);
-
-                        //Store the module for future test cases
-                        symbols = ModuleCache.Provide(fut, ldr);
-                    }
-
-                    container.ImportedSymbols.Add(symbols);
-                }
-                else //no modular compilation
-                {
-                    container.RequireFile(fut);
-                }
-            }
-
-            if(ModularCompilation)
-            {
-                //restore original environment
-                container.Application = originalApp;
-            }
-        }
-
-        /// <summary>
-        /// Executed after prerequisites (including testing framework) are compiled, but before
-        /// actual test is compiled.
-        /// </summary>
-        /// <param name="container">The container under which the test is being executed.</param>
-        public virtual void PrepareTestCompilation(ScriptedUnitTestContainer container)
-        {
-        }
 
         /// <summary>
         /// Executed as the last step of loading, immediately before the actual test methods are executed.
@@ -167,6 +85,84 @@ namespace PrexoniteTests.Tests.Configurations
         {
             if (CompileToCil)
                 Compiler.Compile(runner.Application, runner.Engine, Linking);
+        }
+
+        public virtual void LoadUnitTestingFramework(ScriptedUnitTestContainer container)
+        {
+            ModuleCache.Describe(container.Loader,new TestDependency
+                {
+                    ScriptName = ScriptedUnitTestContainer.PrexoniteUnitTestFramework
+                });
+        }
+
+// ReSharper disable InconsistentNaming
+        internal virtual void Configure(TestModel model, ScriptedUnitTestContainer container)
+// ReSharper restore InconsistentNaming
+        {
+            container.Initialize();
+
+            // describe units under test
+            foreach (var unit in model.UnitsUnderTest)
+                ModuleCache.Describe(container.Loader, unit);
+
+            // describe unit testing framework
+            LoadUnitTestingFramework(container);
+
+            // describe unit testing extensions
+            foreach(var extension in model.TestDependencies)
+                ModuleCache.Describe(container.Loader, extension);
+
+            // describe test suite
+            var suiteDependencies =
+                model.UnitsUnderTest
+                    .Append(model.TestDependencies)
+                    .Select(d => d.ScriptName)
+                    .Append(ScriptedUnitTestContainer.PrexoniteUnitTestFramework)
+                    .ToArray();
+            var suiteDescription = new TestDependency
+                {
+                    ScriptName = model.TestSuiteScript, Dependencies = suiteDependencies
+                };
+            ModuleCache.Describe(container.Loader, suiteDescription);
+
+            // Finally instantiate the test suite application(s)
+            try
+            {
+                container.Application = ModuleCache.Load(model.TestSuiteScript);
+            }
+            catch(AggregateException e)
+            {
+                var bfe = e.GetBaseException() as BuildFailureException;
+                if(bfe != null)
+                {
+                    _buildFail(bfe);
+                }
+                else
+                {
+                    throw;
+                }
+            }
+            catch (BuildFailureException e)
+            {
+                _buildFail(e);
+            }
+
+            PrepareExecution(container);
+
+            container.PrintCompound();
+        }
+
+        private static void _buildFail(BuildFailureException e)
+        {
+            Console.WriteLine("The target {0} failed to build.", e.RelatedTarget.Name);
+            Console.WriteLine(e.Message);
+            foreach (var error in e.Messages.Where(m => m.Severity == MessageSeverity.Error))
+                Console.WriteLine("Error: {0}", error);
+            foreach (var warning in e.Messages.Where(m => m.Severity == MessageSeverity.Warning))
+                Console.WriteLine("Warning: {0}", warning);
+            foreach (var info in e.Messages.Where(m => m.Severity == MessageSeverity.Info))
+                Console.WriteLine("Info: {0}", info);
+            Assert.Fail("The target {0} failed to build.", e.RelatedTarget.Name);
         }
     }
 }

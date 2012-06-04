@@ -1,9 +1,11 @@
 ﻿ 
 under_test {
-    @"psr\struct.pxs",
-    @"psr\set.pxs",
-    @"psr\queue.pxs",
-    @"psr\stack.pxs",
+	@"psr\impl\ast.pxs",
+	{@"psr\impl\macro.pxs",		@"psr\impl\ast.pxs"},
+    {@"psr\impl\struct.pxs",	@"psr\impl\ast.pxs",@"psr\impl\macro.pxs"},
+    {@"psr\impl\set.pxs",		@"psr\impl\struct.pxs"}
+	{@"psr\impl\queue.pxs",		@"psr\impl\struct.pxs"}
+	{@"psr\impl\stack.pxs",		@"psr\impl\struct.pxs"}
 };
 
 function extract_symtab(obj)

@@ -28,25 +28,25 @@ using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
+using System.Threading.Tasks;
 using JetBrains.Annotations;
 using NUnit.Framework;
 using Prexonite;
 using Prexonite.Compiler;
+using Prexonite.Compiler.Build;
 using Prexonite.Compiler.Symbolic;
+using Prexonite.Modular;
 using Prexonite.Types;
 
 namespace PrexoniteTests.Tests.Configurations
 {
-    public abstract class ScriptedUnitTestContainer
+    internal abstract class ScriptedUnitTestContainer
     {
         public Application Application { get; set; }
         public Engine Engine { get; set; }
         public Loader Loader { get; set; }
-        [NotNull] private readonly List<IEnumerable<SymbolInfo>> _importedSymbols = new List<IEnumerable<SymbolInfo>>();
-        public List<IEnumerable<SymbolInfo>> ImportedSymbols
-        {
-            get { return _importedSymbols; }
-        }
+
+        public List<string> Dependencies { get; set; }
 
         public StackContext Root { get; set; }
 
@@ -60,7 +60,9 @@ namespace PrexoniteTests.Tests.Configurations
         {
             Application = new Application(ApplicationName);
             Engine = new Engine();
-            Loader = null;
+            Loader = new Loader(Engine, Application);
+
+            Dependencies = new List<string>();
             Root = new NullContext(Engine, Application, new string[0]);
 
             var slnPath = Environment.CurrentDirectory;
@@ -89,40 +91,16 @@ namespace PrexoniteTests.Tests.Configurations
             get { return GetType().Name; }
         }
 
-        protected void LoadUnitTestingFramework()
-        {
-            RequireFile(PrexoniteUnitTestFramework);
-        }
-
-        public void RequireFile(string path)
-        {
-            var fileInfo = Loader.ApplyLoadPaths(path);
-            if (fileInfo == null)
-                throw new FileNotFoundException("Cannot find required script file.", path);
-            if (!Loader.LoadedFiles.Contains(fileInfo.FullName))
-                Loader.LoadFromFile(fileInfo.FullName);
-        }
-
         protected void RunUnitTest(string testCaseId)
         {
-            Console.WriteLine("----  begin of stored representation   ----");
-            Console.WriteLine(Loader.StoreInString());
             Console.WriteLine("---- SNIP end of stored representation ----");
-
-            foreach (var error in Loader.Errors)
-                Console.WriteLine("Error: {0}", error);
-            foreach (var warning in Loader.Warnings)
-                Console.WriteLine("Warning: {0}", warning);
-            foreach (var info in Loader.Infos)
-                Console.WriteLine("Info: {0}", info);
-
-            Assert.That(Loader.ErrorCount, Is.EqualTo(0), "Errors during compilation");
 
             var tc = Application.Functions[testCaseId];
             Assert.That(tc, Is.Not.Null, "Test case " + testCaseId + " not found.");
 
-            var rt = Application.Functions[RunTestId];
-            Assert.That(rt, Is.Not.Null);
+            var rt = _findRunFunction();
+            Assert.That(rt, Is.Not.Null,
+                        "Test case run function (part of testing framework) not found. Was looking for {0}.", RunTestId);
 
             var resP = rt.Run(Engine, new[] {PType.Null, Root.CreateNativePValue(tc)});
             var success = (bool) resP.DynamicCall(Root, new PValue[0], PCall.Get, "Key").Value;
@@ -144,6 +122,38 @@ namespace PrexoniteTests.Tests.Configurations
                 Console.WriteLine(eObj);
                 Assert.Fail("Test failed");
             }
+        }
+
+        public void PrintCompound()
+        {
+            var tasks =
+                Application.Compound.Select(
+                    app =>
+                    new KeyValuePair<ModuleName, Task<ITarget>>(app.Module.Name, ModuleCache.BuildAsync(app.Module.Name)))
+                    .ToDictionary(k => k.Key, k => k.Value);
+            foreach (var entry in tasks)
+            {
+                var name = entry.Key;
+                var target = entry.Value.Result;
+
+                Console.WriteLine();
+                Console.WriteLine("-------------------------------------------------------------------------------------");
+                Console.WriteLine("----------------------------------  begin of stored representation for {0} ----------",name);
+
+                var opt = new LoaderOptions(Engine, new Application(target.Module), target.Symbols)
+                    {ReconstructSymbols = false, RegisterCommands = false, StoreSymbols = true};
+                var ldr = new Loader(opt);
+                ldr.Store(Console.Out);
+            }
+        }
+
+        private PFunction _findRunFunction()
+        {
+            return Application.Compound.Select(app =>
+                {
+                    PFunction func;
+                    return app.Functions.TryGetValue(RunTestId, out func) ? func : null;
+                }).SingleOrDefault(f => f != null);
         }
     }
 }

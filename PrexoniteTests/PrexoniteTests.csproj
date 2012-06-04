@@ -106,6 +106,7 @@
     <Compile Include="Tests\Compiler.Global.cs" />
     <Compile Include="Tests\Compiler.Parser.cs" />
     <Compile Include="Tests\Configurations\ModuleCache.cs" />
+    <Compile Include="Tests\Configurations\TestModel.cs" />
     <Compile Include="Tests\Configurations\UnitTestConfiguration.cs" />
     <Content Include="psr-tests\testconfig.txt" />
     <Compile Include="Tests\Configurations\PsrUnitTests.cs">
@@ -166,6 +167,14 @@
     </BootstrapperPackage>
   </ItemGroup>
   <ItemGroup>
+    <None Include="psr-tests\ast.test.pxs" />
+    <None Include="psr-tests\find-deficiencies.pxs" />
+    <None Include="psr-tests\lang-ext.test.pxs" />
+    <None Include="psr-tests\macro.test.pxs" />
+    <None Include="psr-tests\make_test_configuration.pxs" />
+    <None Include="psr-tests\misc.test.pxs" />
+    <None Include="psr-tests\run_tests.pxs" />
+    <None Include="psr-tests\struct.test.pxs" />
     <None Include="Tests\Configurations\LoadConfiguration.t4">
       <LastGenOutput>LoadConfiguration1.cs</LastGenOutput>
     </None>

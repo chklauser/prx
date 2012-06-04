@@ -28,11 +28,13 @@ namespace Prexonite.Compiler.Build
 
         public BuildFailureException(ITargetDescription target, string messageFormat, IEnumerable<Message> messages) : base(_makeErrorMessage(messages, messageFormat),target)
         {
+            _messages.AddRange(messages);
         }
 
         public BuildFailureException(ITargetDescription target, string messageFormat, IEnumerable<Message> messages, Exception inner)
             : base(_makeErrorMessage(messages, messageFormat), target,inner)
         {
+            _messages.AddRange(messages);
         }
     }
 }

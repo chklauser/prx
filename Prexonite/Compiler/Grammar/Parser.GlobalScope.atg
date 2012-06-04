@@ -25,9 +25,9 @@ Prexonite
                             (.  PFunction func; .)				
 =
     {	[   GlobalVariableDefinition
-        |   Declaration
         |   MetaAssignment<TargetApplication>
         ]   SYNC semicolon
+	|   Declaration
     |	GlobalCode
     |   BuildBlock
     |	FunctionDefinition<out func>
@@ -184,6 +184,7 @@ SYNC
 	    ]
 	    DeclarationInstance<type,module>
 	    { comma [ DeclarationInstance<type,module> ] }
+		semicolon
     |   lbrace
         [   uusing ModuleName<ref module> ]
         {

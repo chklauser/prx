@@ -635,6 +635,27 @@ namespace Prexonite
                 return IsLinked && _compound == application._compound;
         }
 
+        public bool IsLinkedTo(Module module)
+        {
+            if(module == null)
+                return false;
+            else
+            {
+                Application moduleInstance;
+                return IsLinked && _compound.TryGetApplication(module.Name, out moduleInstance) &&
+                       moduleInstance.Module == module;
+            }
+        }
+
+        public bool IsLinkedTo(ModuleName name)
+        {
+            if (name == null)
+                return false;
+            else
+                return IsLinked && _compound.Contains(name);
+        }
+        
+
         private void _linkInto(ApplicationCompound targetCompound)
         {
             var oldCompound = _compound;

@@ -1,6 +1,7 @@
 ﻿using System.Collections.Generic;
 using System.Threading;
 using System.Threading.Tasks;
+using Prexonite.Modular;
 
 namespace Prexonite.Compiler.Build
 {
@@ -19,6 +20,7 @@ namespace Prexonite.Compiler.Build
             get;
         }
 
-        Task<ITarget> BuildAsync(ITargetDescription targetDescription, CancellationToken token);
+        Task<ITarget> BuildAsync(ModuleName name, CancellationToken token);
+        Task<Application> LoadAsync(ModuleName name, CancellationToken token);
     }
 }

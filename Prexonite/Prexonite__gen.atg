@@ -1009,9 +1009,9 @@ Prexonite
                             (.  PFunction func; .)				
 =
     {	[   GlobalVariableDefinition
-        |   Declaration
         |   MetaAssignment<TargetApplication>
         ]   SYNC semicolon
+	|   Declaration
     |	GlobalCode
     |   BuildBlock
     |	FunctionDefinition<out func>
@@ -1168,6 +1168,7 @@ SYNC
 	    ]
 	    DeclarationInstance<type,module>
 	    { comma [ DeclarationInstance<type,module> ] }
+		semicolon
     |   lbrace
         [   uusing ModuleName<ref module> ]
         {
@@ -1803,7 +1804,6 @@ Statement<AstBlock block>
 SimpleStatement<AstBlock block>
 =
 	ExplicitGoTo<block>
-|   Declaration
 |   IF ( isVariableDeclaration() ) 
         VariableDeclarationStatement<block>
 |   GetSetComplex<block>
@@ -1818,6 +1818,7 @@ StructureStatement<AstBlock block>
     asm AsmStatementBlock<block>
     (.  _popLexerState(); .)
 |   Condition<block>
+|   Declaration
 |   WhileLoop<block>
 |   ForLoop<block>
 |   ForeachLoop<block>

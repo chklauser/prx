@@ -1,8 +1,10 @@
  
 under_test {
-    @"psr\pattern.pxs",
-    @"psr\prop.pxs",
-    @"psr\macro.pxs",
+	@"psr\impl\ast.pxs",
+	{@"psr\impl\macro.pxs",		@"psr\impl\ast.pxs"},
+    {@"psr\impl\struct.pxs",	@"psr\impl\ast.pxs",@"psr\impl\macro.pxs"},
+    {@"psr\pattern.pxs",		@"psr\impl\ast.pxs",@"psr\impl\macro.pxs",@"psr\impl\struct.pxs"},
+    {@"psr\prop.pxs",			@"psr\impl\ast.pxs",@"psr\impl.macro.pxs"},
 };
 test_dependencies {@"psr\test\meta_macro.pxs"};
 

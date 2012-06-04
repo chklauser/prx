@@ -154,16 +154,25 @@
     <Compile Include="Compiler\Ast\IAstFactory.cs" />
     <Compile Include="Compiler\Ast\StackSemantics.cs" />
     <Compile Include="Compiler\Build\BuildException.cs" />
+    <Compile Include="Compiler\Build\BuildExtensions.cs" />
     <Compile Include="Compiler\Build\BuildFailureException.cs" />
     <Compile Include="Compiler\Build\IBuildEnvironment.cs" />
     <Compile Include="Compiler\Build\IBuildWatcher.cs" />
+    <Compile Include="Compiler\Build\IncrementalPlan.cs" />
     <Compile Include="Compiler\Build\Internal\DefaultModuleTarget.cs" />
-    <Compile Include="Compiler\Build\Internal\ManualPlan.cs" />
     <Compile Include="Compiler\Build\Internal\DefaultBuildEnvironment.cs" />
-    <Compile Include="Compiler\Build\Internal\DefaultTargetDescription.cs" />
     <Compile Include="Compiler\Build\Internal\DependencySet.cs" />
+    <Compile Include="Compiler\Build\Internal\FileSource.cs" />
+    <Compile Include="Compiler\Build\Internal\ReaderSource.cs" />
+    <Compile Include="Compiler\Build\Internal\StreamSource.cs" />
+    <Compile Include="Compiler\Build\Internal\StringSource.cs" />
+    <Compile Include="Compiler\Build\ISource.cs" />
+    <Compile Include="Compiler\Build\ManualPlan.cs" />
+    <Compile Include="Compiler\Build\ManualTargetDescription.cs" />
     <Compile Include="Compiler\Build\Plan.cs" />
     <Compile Include="Compiler\Build\ITargetDescription.cs" />
+    <Compile Include="Compiler\Build\ProvidedTarget.cs" />
+    <Compile Include="Compiler\Build\Source.cs" />
     <Compile Include="Compiler\Build\TargetDescriptionSet.cs" />
     <Compile Include="Compiler\Build\VersionConflictException.cs" />
     <Compile Include="Compiler\Macro\Commands\PartialCallWrapper.cs" />
@@ -402,6 +411,11 @@
     <Compile Include="Helper\PFunctionTable.cs" />
     <Compile Include="Helper\SymbolCollection.cs" />
     <Compile Include="Compiler\Build\IPlan.cs" />
+    <Compile Include="Properties\Resources.Designer.cs">
+      <AutoGen>True</AutoGen>
+      <DesignTime>True</DesignTime>
+      <DependentUpon>Resources.resx</DependentUpon>
+    </Compile>
     <Compile Include="PTypeLiteralAttribute.cs" />
     <Compile Include="PValueComparer.cs" />
     <Compile Include="Compiler\Build\ITarget.cs" />
@@ -441,6 +455,7 @@
     <None Include="Prexonite.snk" />
     <Content Include="Compiler\Grammar\Grammar.Readme.txt" />
     <Content Include="Prx.ico" />
+    <EmbeddedResource Include="prxlib\sys.pxs" />
   </ItemGroup>
   <ItemGroup>
     <GrammarFragment Include="Compiler\Grammar\Header.atg" />
@@ -484,6 +499,12 @@
   </ItemGroup>
   <ItemGroup>
     <Folder Include="Commands\Debugger\" />
+  </ItemGroup>
+  <ItemGroup>
+    <EmbeddedResource Include="Properties\Resources.resx">
+      <Generator>PublicResXFileCodeGenerator</Generator>
+      <LastGenOutput>Resources.Designer.cs</LastGenOutput>
+    </EmbeddedResource>
   </ItemGroup>
   <!-- CUSTOM TASKS -->
   <PropertyGroup>

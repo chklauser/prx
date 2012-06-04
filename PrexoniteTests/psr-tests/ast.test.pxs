@@ -1,5 +1,5 @@
 ﻿ 
-under_test @"psr\ast.pxs";
+under_test @"psr\impl\ast.pxs";
  
 function compiler_is_loaded[test]
 {
@@ -295,7 +295,9 @@ function test_si_m_is_star[test]
 
 function test_sub_blocks[test]
 {
-    var ifBlock = ast("Condition",ast("Null"));
+	var ss = Prexonite::Compiler::Symbolic::SymbolStore.Create(null,null);
+	var root = Prexonite::Compiler::Ast::AstBlock.CreateRootBlock(new Prexonite::Compiler::SourcePosition("-",-1,-1),ss,null,null);
+    var ifBlock = ast2("Condition",root,ast("Null"),false);
     var acs = subBlocks(ifBlock);
     assert_eq(acs[0], ifBlock.IfBlock);
     assert_eq(acs[1], ifBlock.ElseBlock);

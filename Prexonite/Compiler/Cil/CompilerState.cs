@@ -918,7 +918,7 @@ namespace Prexonite.Compiler.Cil
                 if (justEffect)
                     Il.Emit(OpCodes.Pop);
             }
-            //TODO bind cross-module calls statically
+            //TODO (Ticket #107) bind cross-module calls statically
             else
             {
                 //Cross-Module-Link function dynamically
@@ -958,7 +958,7 @@ namespace Prexonite.Compiler.Cil
                 Il.Emit(OpCodes.Ldstr,internalId);
                 runtimeMethod = Runtime.NewClosureMethodLateBound;
             }
-            //TODO bind cross-module calls statically
+            //TODO (Ticket #107) bind cross-module calls statically
             else
             {
                 Il.Emit(OpCodes.Ldstr,internalId);
@@ -1002,7 +1002,7 @@ namespace Prexonite.Compiler.Cil
                 Il.Emit(OpCodes.Ldsfld, Pass.FunctionFields[internalId]);
                 EmitVirtualCall(Compiler.CreateNativePValue);
             }
-                //TODO Statically linked Cross-Module ldr.func
+            //TODO (Ticket #107) Statically linked Cross-Module ldr.func
             else  if(isInternal)
             {
                 Il.Emit(OpCodes.Ldstr, internalId);

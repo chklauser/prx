@@ -21,11 +21,11 @@ using NUnit.Framework;
 namespace PrexoniteTests.Tests.Configurations
 {
 <# foreach(var testFile in _getTestConfiguration()) {
-    var className = /* "PrexoniteTests.Tests.Configurations." + /* */ _toPsrClassName(testFile.Item1);
-    var baseName = _toIdentifier(testFile.Item1); #>
+    var className = /* "PrexoniteTests.Tests.Configurations." + /* */ _toPsrClassName(testFile.TestFileName);
+    var baseName = _toIdentifier(testFile.TestFileName); #>
 
     [TestFixture]
-    public class <#=baseName#>_Interpreted : <#=className#>
+    internal class <#=baseName#>_Interpreted : <#=className#>
     {
         private readonly UnitTestConfiguration _runner = new UnitTestConfiguration.InMemory();
         protected override UnitTestConfiguration Runner
@@ -38,7 +38,7 @@ namespace PrexoniteTests.Tests.Configurations
     }
 
     [TestFixture]
-    public class <#=baseName#>_CilStatic : <#=className#>
+    internal class <#=baseName#>_CilStatic : <#=className#>
     {
         private readonly UnitTestConfiguration _runner = new UnitTestConfiguration.InMemory{CompileToCil=true};
         protected override UnitTestConfiguration Runner
@@ -51,7 +51,7 @@ namespace PrexoniteTests.Tests.Configurations
     }
 
     [TestFixture]
-    public class <#=baseName#>_CilIsolated : <#=className#>
+    internal class <#=baseName#>_CilIsolated : <#=className#>
     {
         private readonly UnitTestConfiguration _runner = new UnitTestConfiguration.InMemory{
             CompileToCil=true,
@@ -66,8 +66,8 @@ namespace PrexoniteTests.Tests.Configurations
         }
     }
 
-    [TestFixture]
-    public class <#=baseName#>_StoredInterpreted : <#=className#>
+    [TestFixture, Explicit]
+    internal class <#=baseName#>_StoredInterpreted : <#=className#>
     {
         private readonly UnitTestConfiguration _runner = new UnitTestConfiguration.FromStored();
         protected override UnitTestConfiguration Runner
@@ -79,8 +79,8 @@ namespace PrexoniteTests.Tests.Configurations
         }
     }
 
-    [TestFixture]
-    public class <#=baseName#>_StoredCilStatic : <#=className#>
+    [TestFixture, Explicit]
+    internal class <#=baseName#>_StoredCilStatic : <#=className#>
     {
         private readonly UnitTestConfiguration _runner = new UnitTestConfiguration.FromStored{CompileToCil=true};
         protected override UnitTestConfiguration Runner
@@ -93,8 +93,8 @@ namespace PrexoniteTests.Tests.Configurations
     }
 
     
-    [TestFixture]
-    public class <#=baseName#>_StoredCilIsolated : <#=className#>
+    [TestFixture, Explicit]
+    internal class <#=baseName#>_StoredCilIsolated : <#=className#>
     {
         private readonly UnitTestConfiguration _runner = new UnitTestConfiguration.FromStored{
             CompileToCil=true,
@@ -107,14 +107,14 @@ namespace PrexoniteTests.Tests.Configurations
                 return _runner;
             }
         }
-    } 
+    }
 <# } #>
 
 <# foreach(var vmClass in _getVMTestClasses()) { 
     var baseName = vmClass.Substring(vmClass.LastIndexOf('.')+1); #>
 
     [TestFixture]
-    public class <#=baseName#>_Interpreted : <#=vmClass#>
+    internal class <#=baseName#>_Interpreted : <#=vmClass#>
     {
         public <#=baseName#>_Interpreted()
         {
@@ -123,7 +123,7 @@ namespace PrexoniteTests.Tests.Configurations
     }
 
     [TestFixture]
-    public class <#=baseName#>_CilStatic : <#=vmClass#>
+    internal class <#=baseName#>_CilStatic : <#=vmClass#>
     {
         public <#=baseName#>_CilStatic()
         {
@@ -133,7 +133,7 @@ namespace PrexoniteTests.Tests.Configurations
     }
 
     [TestFixture]
-    public class <#=baseName#>_CilIsolated : <#=vmClass#>
+    internal class <#=baseName#>_CilIsolated : <#=vmClass#>
     {
         public <#=baseName#>_CilIsolated()
         {
@@ -173,8 +173,8 @@ private IEnumerable<Tuple<string,string>> _getTestClasses()
 
     foreach(var testFile in _getTestConfiguration())
     {
-        var className = /* "PrexoniteTests.Tests.Configurations." + /* */ _toPsrClassName(testFile.Item1);
-        var baseName = _toIdentifier(testFile.Item1);
+        var className = /* "PrexoniteTests.Tests.Configurations." + /* */ _toPsrClassName(testFile.TestFileName);
+        var baseName = _toIdentifier(testFile.TestFileName);
         yield return Tuple.Create(className, baseName);
     }
 }

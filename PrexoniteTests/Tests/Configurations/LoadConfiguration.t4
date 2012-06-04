@@ -6,9 +6,34 @@
 
     const char configSectionSep = '>';
     const char configEntrySep = '|';
+	const char configDependencySep = '<';
+
+	class Dependency
+	{
+		public string FileName;
+		public IEnumerable<string> Dependencies;
+	}
+
+	class Configuration 
+	{
+		public string TestFileName;
+		public IEnumerable<string> TestCases;
+		public IEnumerable<Dependency> UnitsUnderTest;
+		public IEnumerable<Dependency> TestDependencies;
+	}
+
+	Dependency _getDependencies(string spec)
+	{
+		var ds = spec.Split(configDependencySep);
+		return new Dependency
+		{
+			FileName = ds[0],
+			Dependencies = ds.Skip(1)
+		};
+	}
 
     // [(test_file_name, [under_test], [test_deps], [test_case])] 
-    IEnumerable<Tuple<string,IEnumerable<string>,IEnumerable<string>,IEnumerable<string>>> _getTestConfiguration()
+    IEnumerable<Configuration> _getTestConfiguration()
     {
         var path =Path.GetFullPath(Host.ResolvePath(Path.Combine(testPathPrefix, testConfigurationName)));
         using(var sr = new StreamReader(
@@ -24,10 +49,15 @@
 
                 var tfn = fs[0];
                 var entrySep = new []{configEntrySep};
-                var underTest = fs[1].Split(entrySep).Skip(1);
-                var deps      = fs[2].Split(entrySep).Skip(1);
+                var underTest = fs[1].Split(entrySep).Skip(1).Select(_getDependencies);
+                var deps      = fs[2].Split(entrySep).Skip(1).Select(_getDependencies);
                 var testCases = fs[3].Split(entrySep).Skip(1);
-                yield return Tuple.Create<string,IEnumerable<string>,IEnumerable<string>,IEnumerable<string>>(tfn,underTest,deps,testCases);
+                yield return new Configuration {
+					TestFileName = tfn,
+					TestCases = testCases,
+					UnitsUnderTest = underTest,
+					TestDependencies = deps
+				};
 
                 line = sr.ReadLine();
             }

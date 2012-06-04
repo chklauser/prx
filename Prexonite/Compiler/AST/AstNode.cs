@@ -196,7 +196,7 @@ namespace Prexonite.Compiler.Ast
             if (!parser.target.Symbols.TryGet(symbolicId, out symbolEntry))
             {
                 parser.SemErr(string.Format("No implementation defined for operator `{0}`",
-                    symbolEntry));
+                    symbolicId));
                 return new EntitySymbol(EntityRef.Command.Create(symbolicId),false);
             }
             else

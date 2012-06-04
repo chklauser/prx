@@ -1,5 +1,10 @@
  
-under_test @"psr\misc.pxs";
+under_test {
+	@"psr\impl\ast.pxs",
+	{@"psr\impl\macro.pxs",		@"psr\impl\ast.pxs"},
+    {@"psr\impl\struct.pxs",	@"psr\impl\ast.pxs",@"psr\impl\macro.pxs"},
+	{@"psr\impl\misc.pxs",		@"psr\impl\struct.pxs"}
+};
 
 function test_cmp[test]
 {

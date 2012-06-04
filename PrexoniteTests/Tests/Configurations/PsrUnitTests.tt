@@ -26,34 +26,37 @@ namespace PrexoniteTests.Tests.Configurations
     foreach(var testFile in _getTestConfiguration()) 
     { 
 #>
-        public abstract class <#=_toPsrClassName(testFile.Item1)#> : ScriptedUnitTestContainer
+        internal abstract class <#=_toPsrClassName(testFile.TestFileName)#> : ScriptedUnitTestContainer
         {
             [TestFixtureSetUp]
             public void SetupTestFile()
             {
-                Initialize();
-                // Units under test
-                Runner.SetupUnitsUnderTest(this, new string[] {
-<#                  foreach(var fut in testFile.Item2) { #>
-                        @"<#=fut#>",
-<#                  } #>
-                });
-                // Testing framework
-                LoadUnitTestingFramework();
-                // Test dependencies
-                Runner.SetupDependencies(this, new string[] {
-<#                  foreach(var dep in testFile.Item3) { #>
-                        @"<#=dep#>",
-<#                  } #>                                            
-                });
-                // Potentially isolate test code from rest
-                Runner.PrepareTestCompilation(this);
-                // Actual test code
-                RequireFile(@"<#=_toTestFilePath(testFile.Item1)#>");                
-                Runner.PrepareExecution(this);
+				var model = new TestModel
+				{
+					TestSuiteScript = @"<#=testFile.TestFileName#>",
+					UnitsUnderTest = new TestDependency[]{
+<#						foreach(var dep in testFile.UnitsUnderTest) { #>
+							new TestDependency { ScriptName = @"<#=dep.FileName#>", Dependencies = new string[] {
+<#								foreach(var d in dep.Dependencies) { #>
+									@"<#=d#>",
+<#								} #>
+							}},
+<#						} #>					
+					},
+					TestDependencies = new TestDependency[]{
+<#						foreach(var dep in testFile.TestDependencies) { #>
+							new TestDependency { ScriptName = @"<#=dep.FileName#>", Dependencies = new string[] {
+<#								foreach(var d in dep.Dependencies) { #>
+									@"<#=d#>",
+<#								} #>
+							}},
+<#						} #>					
+					}
+				};
+				Runner.Configure(model, this);
             }
 
-<#      foreach(var testCase in testFile.Item4) { #>
+<#      foreach(var testCase in testFile.TestCases) { #>
             [Test]
             public void <#=testCase.Replace(@"\","_").Replace("$","_").Replace("'","_")#>()
             {

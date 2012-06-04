@@ -416,9 +416,7 @@ namespace Prexonite
             if (index + length > list.Length - 1 || index < 0 || length < 0)
                 throw new ArgumentOutOfRangeException(
                     "index",
-                    "The supplied index and length " + index +
-                        " are out of the range of 0.." + (list.Length - 1) +
-                            ".");
+                    string.Format("The supplied index and length {0} are out of the range of 0..{1}.", index, (list.Length - 1)));
             var newList = new MetaEntry[list.Length - 1];
             //Copy the elements before the ones to remove
             if (index > 0)

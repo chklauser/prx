@@ -231,7 +231,7 @@ namespace Prexonite.Commands.Core.PartialApplication
                 mappingCandidates.AddFirst((int) value.Value);
             }
 
-            //TODO: Improve interpreted runtime by only converting as many arguments as indicated by the mapping
+            //TODO: (Ticket #105) Improve interpreted runtime by only converting as many arguments as indicated by the mapping
             var mappings = ExtractMappings32(mappingCandidates);
 
             //Remove mapping args, so we're only left with closed arguments

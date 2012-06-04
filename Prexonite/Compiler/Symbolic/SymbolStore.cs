@@ -108,7 +108,7 @@ namespace Prexonite.Compiler.Symbolic
         /// </summary>
         public abstract IEnumerable<KeyValuePair<string, Symbol>> LocalDeclarations { get; }
 
-        //TODO Find a good place for the method CreateSymbolNotFoundError
+        //TODO (Ticket #108) Find a good place for the method CreateSymbolNotFoundError
         /// <summary>
         /// Creates a new error symbol indicating that the supplied symbolic id could not be resolved.
         /// </summary>

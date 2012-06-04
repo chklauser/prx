@@ -13,27 +13,24 @@ using NUnit.Framework;
 
 namespace PrexoniteTests.Tests.Configurations
 {
-        public abstract class Unit_ast : ScriptedUnitTestContainer
+        internal abstract class Unit_ast : ScriptedUnitTestContainer
         {
             [TestFixtureSetUp]
             public void SetupTestFile()
             {
-                Initialize();
-                // Units under test
-                Runner.SetupUnitsUnderTest(this, new string[] {
-                        @"psr\ast.pxs",
-                });
-                // Testing framework
-                LoadUnitTestingFramework();
-                // Test dependencies
-                Runner.SetupDependencies(this, new string[] {
-                                            
-                });
-                // Potentially isolate test code from rest
-                Runner.PrepareTestCompilation(this);
-                // Actual test code
-                RequireFile(@".\ast.test.pxs");                
-                Runner.PrepareExecution(this);
+				var model = new TestModel
+				{
+					TestSuiteScript = @".\ast.test.pxs",
+					UnitsUnderTest = new TestDependency[]{
+							new TestDependency { ScriptName = @"psr\impl\ast.pxs", Dependencies = new string[] {
+							}},
+					
+					},
+					TestDependencies = new TestDependency[]{
+					
+					}
+				};
+				Runner.Configure(model, this);
             }
 
             [Test]
@@ -107,30 +104,42 @@ namespace PrexoniteTests.Tests.Configurations
                 RunUnitTest(@"test_sub_blocks");
             } 
         }
-        public abstract class Unit_lang_ext : ScriptedUnitTestContainer
+        internal abstract class Unit_lang_ext : ScriptedUnitTestContainer
         {
             [TestFixtureSetUp]
             public void SetupTestFile()
             {
-                Initialize();
-                // Units under test
-                Runner.SetupUnitsUnderTest(this, new string[] {
-                        @"psr\pattern.pxs",
-                        @"psr\prop.pxs",
-                        @"psr\macro.pxs",
-                });
-                // Testing framework
-                LoadUnitTestingFramework();
-                // Test dependencies
-                Runner.SetupDependencies(this, new string[] {
-                        @"psr\test\meta_macro.pxs",
-                                            
-                });
-                // Potentially isolate test code from rest
-                Runner.PrepareTestCompilation(this);
-                // Actual test code
-                RequireFile(@".\lang-ext.test.pxs");                
-                Runner.PrepareExecution(this);
+				var model = new TestModel
+				{
+					TestSuiteScript = @".\lang-ext.test.pxs",
+					UnitsUnderTest = new TestDependency[]{
+							new TestDependency { ScriptName = @"psr\impl\ast.pxs", Dependencies = new string[] {
+							}},
+							new TestDependency { ScriptName = @"psr\impl\macro.pxs", Dependencies = new string[] {
+									@"psr\impl\ast.pxs",
+							}},
+							new TestDependency { ScriptName = @"psr\impl\struct.pxs", Dependencies = new string[] {
+									@"psr\impl\ast.pxs",
+									@"psr\impl\macro.pxs",
+							}},
+							new TestDependency { ScriptName = @"psr\pattern.pxs", Dependencies = new string[] {
+									@"psr\impl\ast.pxs",
+									@"psr\impl\macro.pxs",
+									@"psr\impl\struct.pxs",
+							}},
+							new TestDependency { ScriptName = @"psr\prop.pxs", Dependencies = new string[] {
+									@"psr\impl\ast.pxs",
+									@"psr\impl.macro.pxs",
+							}},
+					
+					},
+					TestDependencies = new TestDependency[]{
+							new TestDependency { ScriptName = @"psr\test\meta_macro.pxs", Dependencies = new string[] {
+							}},
+					
+					}
+				};
+				Runner.Configure(model, this);
             }
 
             [Test]
@@ -164,28 +173,29 @@ namespace PrexoniteTests.Tests.Configurations
                 RunUnitTest(@"test_prop_simple_glob");
             } 
         }
-        public abstract class Unit_macro : ScriptedUnitTestContainer
+        internal abstract class Unit_macro : ScriptedUnitTestContainer
         {
             [TestFixtureSetUp]
             public void SetupTestFile()
             {
-                Initialize();
-                // Units under test
-                Runner.SetupUnitsUnderTest(this, new string[] {
-                        @"psr\macro.pxs",
-                });
-                // Testing framework
-                LoadUnitTestingFramework();
-                // Test dependencies
-                Runner.SetupDependencies(this, new string[] {
-                        @"psr\test\meta_macro.pxs",
-                                            
-                });
-                // Potentially isolate test code from rest
-                Runner.PrepareTestCompilation(this);
-                // Actual test code
-                RequireFile(@".\macro.test.pxs");                
-                Runner.PrepareExecution(this);
+				var model = new TestModel
+				{
+					TestSuiteScript = @".\macro.test.pxs",
+					UnitsUnderTest = new TestDependency[]{
+							new TestDependency { ScriptName = @"psr\impl\ast.pxs", Dependencies = new string[] {
+							}},
+							new TestDependency { ScriptName = @"psr\impl\macro.pxs", Dependencies = new string[] {
+									@"psr\impl\ast.pxs",
+							}},
+					
+					},
+					TestDependencies = new TestDependency[]{
+							new TestDependency { ScriptName = @"psr\test\meta_macro.pxs", Dependencies = new string[] {
+							}},
+					
+					}
+				};
+				Runner.Configure(model, this);
             }
 
             [Test]
@@ -319,27 +329,34 @@ namespace PrexoniteTests.Tests.Configurations
                 RunUnitTest(@"test_ast\null");
             } 
         }
-        public abstract class Unit_misc : ScriptedUnitTestContainer
+        internal abstract class Unit_misc : ScriptedUnitTestContainer
         {
             [TestFixtureSetUp]
             public void SetupTestFile()
             {
-                Initialize();
-                // Units under test
-                Runner.SetupUnitsUnderTest(this, new string[] {
-                        @"psr\misc.pxs",
-                });
-                // Testing framework
-                LoadUnitTestingFramework();
-                // Test dependencies
-                Runner.SetupDependencies(this, new string[] {
-                                            
-                });
-                // Potentially isolate test code from rest
-                Runner.PrepareTestCompilation(this);
-                // Actual test code
-                RequireFile(@".\misc.test.pxs");                
-                Runner.PrepareExecution(this);
+				var model = new TestModel
+				{
+					TestSuiteScript = @".\misc.test.pxs",
+					UnitsUnderTest = new TestDependency[]{
+							new TestDependency { ScriptName = @"psr\impl\ast.pxs", Dependencies = new string[] {
+							}},
+							new TestDependency { ScriptName = @"psr\impl\macro.pxs", Dependencies = new string[] {
+									@"psr\impl\ast.pxs",
+							}},
+							new TestDependency { ScriptName = @"psr\impl\struct.pxs", Dependencies = new string[] {
+									@"psr\impl\ast.pxs",
+									@"psr\impl\macro.pxs",
+							}},
+							new TestDependency { ScriptName = @"psr\impl\misc.pxs", Dependencies = new string[] {
+									@"psr\impl\struct.pxs",
+							}},
+					
+					},
+					TestDependencies = new TestDependency[]{
+					
+					}
+				};
+				Runner.Configure(model, this);
             }
 
             [Test]
@@ -408,30 +425,34 @@ namespace PrexoniteTests.Tests.Configurations
                 RunUnitTest(@"test_swap");
             } 
         }
-        public abstract class Unit_struct : ScriptedUnitTestContainer
+        internal abstract class Unit_struct : ScriptedUnitTestContainer
         {
             [TestFixtureSetUp]
             public void SetupTestFile()
             {
-                Initialize();
-                // Units under test
-                Runner.SetupUnitsUnderTest(this, new string[] {
-                        @"psr\struct.pxs",
-                        @"psr\set.pxs",
-                        @"psr\queue.pxs",
-                        @"psr\stack.pxs",
-                });
-                // Testing framework
-                LoadUnitTestingFramework();
-                // Test dependencies
-                Runner.SetupDependencies(this, new string[] {
-                                            
-                });
-                // Potentially isolate test code from rest
-                Runner.PrepareTestCompilation(this);
-                // Actual test code
-                RequireFile(@".\struct.test.pxs");                
-                Runner.PrepareExecution(this);
+				var model = new TestModel
+				{
+					TestSuiteScript = @".\struct.test.pxs",
+					UnitsUnderTest = new TestDependency[]{
+							new TestDependency { ScriptName = @"psr\impl\ast.pxs", Dependencies = new string[] {
+							}},
+							new TestDependency { ScriptName = @"psr\impl\macro.pxs", Dependencies = new string[] {
+									@"psr\impl\ast.pxs",
+							}},
+							new TestDependency { ScriptName = @"psr\impl\struct.pxs", Dependencies = new string[] {
+									@"psr\impl\ast.pxs",
+									@"psr\impl\macro.pxs",
+							}},
+							new TestDependency { ScriptName = @"psr\impl\set.pxs", Dependencies = new string[] {
+									@"psr\impl\struct.pxs",
+							}},
+					
+					},
+					TestDependencies = new TestDependency[]{
+					
+					}
+				};
+				Runner.Configure(model, this);
             }
 
             [Test]

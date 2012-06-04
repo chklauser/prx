@@ -1,9 +1,17 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Diagnostics;
+using System.IO;
 using System.Linq;
+using System.Text;
+using System.Threading;
+using System.Threading.Tasks;
+using Prexonite;
 using Prexonite.Compiler;
+using Prexonite.Compiler.Build;
 using Prexonite.Compiler.Symbolic;
 using Prexonite.Modular;
+using Prexonite.Properties;
 
 namespace PrexoniteTests.Tests.Configurations
 {
@@ -11,18 +19,41 @@ namespace PrexoniteTests.Tests.Configurations
     {
         [ThreadStatic]
         private static DateTime _lastAccess;
-        [ThreadStatic]
-        private static Dictionary<string, Tuple<Module, IEnumerable<SymbolInfo>>> _cache;
+
+        [ThreadStatic] 
+        private static IncrementalPlan _plan;
+
+        [ThreadStatic] private static ITargetDescription _sysDescription;
 
 // ReSharper disable InconsistentNaming
-        private static Dictionary<string, Tuple<Module, IEnumerable<SymbolInfo>>> Cache
+        private static ManualPlan Cache
 // ReSharper restore InconsistentNaming
         {
             get
             {
                 _lastAccess = DateTime.Now;
-                return _cache ?? (_cache = new Dictionary<string, Tuple<Module, IEnumerable<SymbolInfo>>>());
+                return _plan ?? (_plan = new IncrementalPlan());
             }
+        }
+
+        // ReSharper disable InconsistentNaming
+        private static ITargetDescription SysDescription
+        // ReSharper restore InconsistentNaming
+        {
+            get { return _sysDescription ?? (_sysDescription = _loadSys()); }
+        }
+
+        private static ITargetDescription _loadSys()
+        {
+            var sysName = new ModuleName("sys", new Version(0, 0));
+            var desc = Cache.CreateDescription(sysName,
+                                               Source.FromString(Resources.sys),
+                                               "sys.pxs",
+                                               Enumerable.Empty<ModuleName>());
+            Cache.TargetDescriptions.Add(desc);
+            Cache.Build(sysName);
+            // Important: lookup the target description in order to get the cached description
+            return Cache.TargetDescriptions[sysName];
         }
 
         public static DateTime LastAccess
@@ -52,45 +83,56 @@ namespace PrexoniteTests.Tests.Configurations
         private static void EnsureFresh()
 // ReSharper restore InconsistentNaming
         {
-            if(IsStale)
-                _cache = null;
-        }
-
-        public static bool TryGetModule(string path, out Module module, out IEnumerable<SymbolInfo> symbols)
-        {
-            EnsureFresh();
-            Tuple<Module, IEnumerable<SymbolInfo>> tuple;
-            if (Cache.TryGetValue(path, out tuple))
+            if (IsStale)
             {
-                LastAccess = DateTime.Now;
-                module =  tuple.Item1;
-                symbols = tuple.Item2;
-                return true;
-            }
-            else
-            {
-                module = null;
-                symbols = null;
-                return false;
+                _plan = null;
             }
         }
 
-        public static IEnumerable<SymbolInfo> Provide(string path, Loader ldr)
+
+
+        public static void Describe(Loader environment, TestDependency script)
         {
             EnsureFresh();
-            var origin = new SymbolOrigin.ModuleTopLevel(ldr.ParentApplication.Module.Name,
-                                                         new SourcePosition(path, -1, -1));
-            var symbols =
-                ldr.Symbols.LocalDeclarations
-                .Select(decl => new SymbolInfo(decl.Value, origin, decl.Key))
-                .ToArray();
+
+            var path = script.ScriptName;
+            var dependencies = script.Dependencies ?? Enumerable.Empty<string>();
+
+            var file = environment.ApplyLoadPaths(path);
+            if (file == null || !file.Exists)
+                throw new PrexoniteException(string.Format("Cannot find script {0}.", path));
+
+            var moduleName = new ModuleName(Path.GetFileNameWithoutExtension(path), new Version(0, 0));
+
+            if (Cache.TargetDescriptions.Contains(moduleName))
+                return;
             
-            Cache[path] =
-                Tuple.Create<Module, IEnumerable<SymbolInfo>>(
-                    ldr.ParentApplication.Module, symbols);
-            LastAccess = DateTime.Now;
+            var dependencyNames =
+                dependencies.Select(dep => 
+                    new ModuleName(Path.GetFileNameWithoutExtension(dep), new Version(0, 0))).ToArray();
 
-            return symbols;
+            var desc = Cache.CreateDescription(moduleName, Source.FromFile(file,Encoding.UTF8), path, dependencyNames.Append(SysDescription.Name));
+            Cache.TargetDescriptions.Add(desc);
+
+        }
+
+        private static IEnumerable<SymbolInfo> _addOriginInfo(ProvidedTarget p)
+        {
+            return p.Symbols.Select(s => new SymbolInfo(s.Value, new SymbolOrigin.ModuleTopLevel(p.Name, NoSourcePosition.Instance), s.Key));
+        }
+
+        public static Application Load(string path)
+        {
+            EnsureFresh();
+
+            var moduleName = new ModuleName(Path.GetFileNameWithoutExtension(path), new Version(0, 0));
+
+            return Cache.Load(moduleName);
+        }
+
+        public static Task<ITarget> BuildAsync(ModuleName name)
+        {
+            return Cache.BuildAsync(name, CancellationToken.None);
         }
     }
 }

@@ -1,0 +1,108 @@
+﻿// Prexonite
+// 
+// Copyright (c) 2011, Christian Klauser
+// All rights reserved.
+// 
+// Redistribution and use in source and binary forms, with or without modification, 
+//  are permitted provided that the following conditions are met:
+// 
+//     Redistributions of source code must retain the above copyright notice, 
+//          this list of conditions and the following disclaimer.
+//     Redistributions in binary form must reproduce the above copyright notice, 
+//          this list of conditions and the following disclaimer in the 
+//          documentation and/or other materials provided with the distribution.
+//     The names of the contributors may be used to endorse or 
+//          promote products derived from this software without specific prior written permission.
+// 
+// THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND 
+//  ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED 
+//  WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED. 
+//  IN NO EVENT SHALL THE COPYRIGHT HOLDER OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT, 
+//  INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES 
+//  (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, 
+//  DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, 
+//  WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING 
+//  IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+
+//What we will need.
+Import
+{
+    System,
+    Prexonite,
+    Prexonite::Types,
+    Prexonite::Compiler,
+    Prexonite::Compiler::Ast
+};
+
+//Adds the hook, defined using a lambda expression.
+build does hook( t =>
+{
+    //The handler must work recursively, therefor we need a separate function.
+    function modify(block)
+    {
+        //We iterate through every ast node in the block.
+        //Do not use foreach if you plan to replace and or insert nodes.
+        for(var i = 0; i < block.Count; i++)
+        {
+            var stmt = block[i];
+            //We need the statement to be a while loop and have 
+            // a call to 'times' as its condition
+            if(stmt is ::AstWhileLoop && isFunctionCall("times",stmt.Condition))
+            {
+                //Extract the number of iterations from the condition
+                var times =
+                    if(stmt.Condition.Arguments.Count > 0)
+                        stmt.Condition.Arguments[0]
+                    else
+                        ast("Constant",1); //or use a default of 1
+                
+                //we will need to define two variables
+                //  note that the hook is invoked after the function has been parsed.
+                //  those variables will not be available to script code directly.
+                var vcount = uniqueId("count");
+                var vmax = uniqueId("max");
+                
+                //Add the variables to the function definition.
+                t.Function.Variables.Add(vcount);
+                t.Function.Variables.Add(vmax);
+                
+                //Create a new assignment statement
+                var setvMax = ast("GetSetSymbol", ::PCall.Set, vmax, SI.lvar);
+                setvMax.Arguments.Add(times);
+                block.Insert(i++,setvMax);
+                
+                //Set count to 0
+                var setvCount = ast("GetSetSymbol", ::PCall.Set, vcount, SI.lvar);
+                setvCount.Arguments.Add(ast("Constant",0));
+                block.Insert(i++,setvCount);
+                
+                //Replace condition with count < max
+                stmt.Condition = ast("BinaryOperator", 
+                    ast("GetSetSymbol", ::PCall.Get, vcount, SI.lvar),
+                    ::BinaryOperator.LessThan,
+                    ast("GetSetSymbol", ::PCall.Get, vmax, SI.lvar)
+                );
+                
+                //Insert count++
+                stmt.Block.Insert(0, 
+                    ast("UnaryOperator", ::UnaryOperator.PostIncrement, 
+                        ast("GetSetSymbol", ::PCall.Get, vcount, SI.lvar)));
+            }
+            
+            //Recursively replace times(x) in nested blocks
+            if(stmt.\implements("Prexonite.Compiler.Ast.IAstHasBlocks"))
+                foreach(var subblock in stmt.Blocks)
+                    modify(subblock);
+        }
+    } 
+    
+    modify(t.Ast);
+});
+
+//Although it would suffice to just declare the function, 
+//  actually defining it will enable you to provide more detailed feedback in case of a failure
+function times(x)
+{
+    println("times($x) has not been replaced!");   
+    return false;
+}

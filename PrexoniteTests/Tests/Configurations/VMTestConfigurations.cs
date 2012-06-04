@@ -15,7 +15,7 @@ namespace PrexoniteTests.Tests.Configurations
 {
 
     [TestFixture]
-    public class ast_Interpreted : Unit_ast
+    internal class ast_Interpreted : Unit_ast
     {
         private readonly UnitTestConfiguration _runner = new UnitTestConfiguration.InMemory();
         protected override UnitTestConfiguration Runner
@@ -28,7 +28,7 @@ namespace PrexoniteTests.Tests.Configurations
     }
 
     [TestFixture]
-    public class ast_CilStatic : Unit_ast
+    internal class ast_CilStatic : Unit_ast
     {
         private readonly UnitTestConfiguration _runner = new UnitTestConfiguration.InMemory{CompileToCil=true};
         protected override UnitTestConfiguration Runner
@@ -41,7 +41,7 @@ namespace PrexoniteTests.Tests.Configurations
     }
 
     [TestFixture]
-    public class ast_CilIsolated : Unit_ast
+    internal class ast_CilIsolated : Unit_ast
     {
         private readonly UnitTestConfiguration _runner = new UnitTestConfiguration.InMemory{
             CompileToCil=true,
@@ -56,8 +56,8 @@ namespace PrexoniteTests.Tests.Configurations
         }
     }
 
-    [TestFixture]
-    public class ast_StoredInterpreted : Unit_ast
+    [TestFixture, Explicit]
+    internal class ast_StoredInterpreted : Unit_ast
     {
         private readonly UnitTestConfiguration _runner = new UnitTestConfiguration.FromStored();
         protected override UnitTestConfiguration Runner
@@ -69,8 +69,8 @@ namespace PrexoniteTests.Tests.Configurations
         }
     }
 
-    [TestFixture]
-    public class ast_StoredCilStatic : Unit_ast
+    [TestFixture, Explicit]
+    internal class ast_StoredCilStatic : Unit_ast
     {
         private readonly UnitTestConfiguration _runner = new UnitTestConfiguration.FromStored{CompileToCil=true};
         protected override UnitTestConfiguration Runner
@@ -83,8 +83,8 @@ namespace PrexoniteTests.Tests.Configurations
     }
 
     
-    [TestFixture]
-    public class ast_StoredCilIsolated : Unit_ast
+    [TestFixture, Explicit]
+    internal class ast_StoredCilIsolated : Unit_ast
     {
         private readonly UnitTestConfiguration _runner = new UnitTestConfiguration.FromStored{
             CompileToCil=true,
@@ -97,10 +97,10 @@ namespace PrexoniteTests.Tests.Configurations
                 return _runner;
             }
         }
-    } 
+    }
 
     [TestFixture]
-    public class lang_ext_Interpreted : Unit_lang_ext
+    internal class lang_ext_Interpreted : Unit_lang_ext
     {
         private readonly UnitTestConfiguration _runner = new UnitTestConfiguration.InMemory();
         protected override UnitTestConfiguration Runner
@@ -113,7 +113,7 @@ namespace PrexoniteTests.Tests.Configurations
     }
 
     [TestFixture]
-    public class lang_ext_CilStatic : Unit_lang_ext
+    internal class lang_ext_CilStatic : Unit_lang_ext
     {
         private readonly UnitTestConfiguration _runner = new UnitTestConfiguration.InMemory{CompileToCil=true};
         protected override UnitTestConfiguration Runner
@@ -126,7 +126,7 @@ namespace PrexoniteTests.Tests.Configurations
     }
 
     [TestFixture]
-    public class lang_ext_CilIsolated : Unit_lang_ext
+    internal class lang_ext_CilIsolated : Unit_lang_ext
     {
         private readonly UnitTestConfiguration _runner = new UnitTestConfiguration.InMemory{
             CompileToCil=true,
@@ -141,8 +141,8 @@ namespace PrexoniteTests.Tests.Configurations
         }
     }
 
-    [TestFixture]
-    public class lang_ext_StoredInterpreted : Unit_lang_ext
+    [TestFixture, Explicit]
+    internal class lang_ext_StoredInterpreted : Unit_lang_ext
     {
         private readonly UnitTestConfiguration _runner = new UnitTestConfiguration.FromStored();
         protected override UnitTestConfiguration Runner
@@ -154,8 +154,8 @@ namespace PrexoniteTests.Tests.Configurations
         }
     }
 
-    [TestFixture]
-    public class lang_ext_StoredCilStatic : Unit_lang_ext
+    [TestFixture, Explicit]
+    internal class lang_ext_StoredCilStatic : Unit_lang_ext
     {
         private readonly UnitTestConfiguration _runner = new UnitTestConfiguration.FromStored{CompileToCil=true};
         protected override UnitTestConfiguration Runner
@@ -168,8 +168,8 @@ namespace PrexoniteTests.Tests.Configurations
     }
 
     
-    [TestFixture]
-    public class lang_ext_StoredCilIsolated : Unit_lang_ext
+    [TestFixture, Explicit]
+    internal class lang_ext_StoredCilIsolated : Unit_lang_ext
     {
         private readonly UnitTestConfiguration _runner = new UnitTestConfiguration.FromStored{
             CompileToCil=true,
@@ -182,10 +182,10 @@ namespace PrexoniteTests.Tests.Configurations
                 return _runner;
             }
         }
-    } 
+    }
 
     [TestFixture]
-    public class macro_Interpreted : Unit_macro
+    internal class macro_Interpreted : Unit_macro
     {
         private readonly UnitTestConfiguration _runner = new UnitTestConfiguration.InMemory();
         protected override UnitTestConfiguration Runner
@@ -198,7 +198,7 @@ namespace PrexoniteTests.Tests.Configurations
     }
 
     [TestFixture]
-    public class macro_CilStatic : Unit_macro
+    internal class macro_CilStatic : Unit_macro
     {
         private readonly UnitTestConfiguration _runner = new UnitTestConfiguration.InMemory{CompileToCil=true};
         protected override UnitTestConfiguration Runner
@@ -211,7 +211,7 @@ namespace PrexoniteTests.Tests.Configurations
     }
 
     [TestFixture]
-    public class macro_CilIsolated : Unit_macro
+    internal class macro_CilIsolated : Unit_macro
     {
         private readonly UnitTestConfiguration _runner = new UnitTestConfiguration.InMemory{
             CompileToCil=true,
@@ -226,8 +226,8 @@ namespace PrexoniteTests.Tests.Configurations
         }
     }
 
-    [TestFixture]
-    public class macro_StoredInterpreted : Unit_macro
+    [TestFixture, Explicit]
+    internal class macro_StoredInterpreted : Unit_macro
     {
         private readonly UnitTestConfiguration _runner = new UnitTestConfiguration.FromStored();
         protected override UnitTestConfiguration Runner
@@ -239,8 +239,8 @@ namespace PrexoniteTests.Tests.Configurations
         }
     }
 
-    [TestFixture]
-    public class macro_StoredCilStatic : Unit_macro
+    [TestFixture, Explicit]
+    internal class macro_StoredCilStatic : Unit_macro
     {
         private readonly UnitTestConfiguration _runner = new UnitTestConfiguration.FromStored{CompileToCil=true};
         protected override UnitTestConfiguration Runner
@@ -253,8 +253,8 @@ namespace PrexoniteTests.Tests.Configurations
     }
 
     
-    [TestFixture]
-    public class macro_StoredCilIsolated : Unit_macro
+    [TestFixture, Explicit]
+    internal class macro_StoredCilIsolated : Unit_macro
     {
         private readonly UnitTestConfiguration _runner = new UnitTestConfiguration.FromStored{
             CompileToCil=true,
@@ -267,10 +267,10 @@ namespace PrexoniteTests.Tests.Configurations
                 return _runner;
             }
         }
-    } 
+    }
 
     [TestFixture]
-    public class misc_Interpreted : Unit_misc
+    internal class misc_Interpreted : Unit_misc
     {
         private readonly UnitTestConfiguration _runner = new UnitTestConfiguration.InMemory();
         protected override UnitTestConfiguration Runner
@@ -283,7 +283,7 @@ namespace PrexoniteTests.Tests.Configurations
     }
 
     [TestFixture]
-    public class misc_CilStatic : Unit_misc
+    internal class misc_CilStatic : Unit_misc
     {
         private readonly UnitTestConfiguration _runner = new UnitTestConfiguration.InMemory{CompileToCil=true};
         protected override UnitTestConfiguration Runner
@@ -296,7 +296,7 @@ namespace PrexoniteTests.Tests.Configurations
     }
 
     [TestFixture]
-    public class misc_CilIsolated : Unit_misc
+    internal class misc_CilIsolated : Unit_misc
     {
         private readonly UnitTestConfiguration _runner = new UnitTestConfiguration.InMemory{
             CompileToCil=true,
@@ -311,8 +311,8 @@ namespace PrexoniteTests.Tests.Configurations
         }
     }
 
-    [TestFixture]
-    public class misc_StoredInterpreted : Unit_misc
+    [TestFixture, Explicit]
+    internal class misc_StoredInterpreted : Unit_misc
     {
         private readonly UnitTestConfiguration _runner = new UnitTestConfiguration.FromStored();
         protected override UnitTestConfiguration Runner
@@ -324,8 +324,8 @@ namespace PrexoniteTests.Tests.Configurations
         }
     }
 
-    [TestFixture]
-    public class misc_StoredCilStatic : Unit_misc
+    [TestFixture, Explicit]
+    internal class misc_StoredCilStatic : Unit_misc
     {
         private readonly UnitTestConfiguration _runner = new UnitTestConfiguration.FromStored{CompileToCil=true};
         protected override UnitTestConfiguration Runner
@@ -338,8 +338,8 @@ namespace PrexoniteTests.Tests.Configurations
     }
 
     
-    [TestFixture]
-    public class misc_StoredCilIsolated : Unit_misc
+    [TestFixture, Explicit]
+    internal class misc_StoredCilIsolated : Unit_misc
     {
         private readonly UnitTestConfiguration _runner = new UnitTestConfiguration.FromStored{
             CompileToCil=true,
@@ -352,10 +352,10 @@ namespace PrexoniteTests.Tests.Configurations
                 return _runner;
             }
         }
-    } 
+    }
 
     [TestFixture]
-    public class struct_Interpreted : Unit_struct
+    internal class struct_Interpreted : Unit_struct
     {
         private readonly UnitTestConfiguration _runner = new UnitTestConfiguration.InMemory();
         protected override UnitTestConfiguration Runner
@@ -368,7 +368,7 @@ namespace PrexoniteTests.Tests.Configurations
     }
 
     [TestFixture]
-    public class struct_CilStatic : Unit_struct
+    internal class struct_CilStatic : Unit_struct
     {
         private readonly UnitTestConfiguration _runner = new UnitTestConfiguration.InMemory{CompileToCil=true};
         protected override UnitTestConfiguration Runner
@@ -381,7 +381,7 @@ namespace PrexoniteTests.Tests.Configurations
     }
 
     [TestFixture]
-    public class struct_CilIsolated : Unit_struct
+    internal class struct_CilIsolated : Unit_struct
     {
         private readonly UnitTestConfiguration _runner = new UnitTestConfiguration.InMemory{
             CompileToCil=true,
@@ -396,8 +396,8 @@ namespace PrexoniteTests.Tests.Configurations
         }
     }
 
-    [TestFixture]
-    public class struct_StoredInterpreted : Unit_struct
+    [TestFixture, Explicit]
+    internal class struct_StoredInterpreted : Unit_struct
     {
         private readonly UnitTestConfiguration _runner = new UnitTestConfiguration.FromStored();
         protected override UnitTestConfiguration Runner
@@ -409,8 +409,8 @@ namespace PrexoniteTests.Tests.Configurations
         }
     }
 
-    [TestFixture]
-    public class struct_StoredCilStatic : Unit_struct
+    [TestFixture, Explicit]
+    internal class struct_StoredCilStatic : Unit_struct
     {
         private readonly UnitTestConfiguration _runner = new UnitTestConfiguration.FromStored{CompileToCil=true};
         protected override UnitTestConfiguration Runner
@@ -423,8 +423,8 @@ namespace PrexoniteTests.Tests.Configurations
     }
 
     
-    [TestFixture]
-    public class struct_StoredCilIsolated : Unit_struct
+    [TestFixture, Explicit]
+    internal class struct_StoredCilIsolated : Unit_struct
     {
         private readonly UnitTestConfiguration _runner = new UnitTestConfiguration.FromStored{
             CompileToCil=true,
@@ -437,11 +437,11 @@ namespace PrexoniteTests.Tests.Configurations
                 return _runner;
             }
         }
-    } 
+    }
 
 
     [TestFixture]
-    public class VMTests_Interpreted : Prx.Tests.VMTests
+    internal class VMTests_Interpreted : Prx.Tests.VMTests
     {
         public VMTests_Interpreted()
         {
@@ -450,7 +450,7 @@ namespace PrexoniteTests.Tests.Configurations
     }
 
     [TestFixture]
-    public class VMTests_CilStatic : Prx.Tests.VMTests
+    internal class VMTests_CilStatic : Prx.Tests.VMTests
     {
         public VMTests_CilStatic()
         {
@@ -460,7 +460,7 @@ namespace PrexoniteTests.Tests.Configurations
     }
 
     [TestFixture]
-    public class VMTests_CilIsolated : Prx.Tests.VMTests
+    internal class VMTests_CilIsolated : Prx.Tests.VMTests
     {
         public VMTests_CilIsolated()
         {
@@ -471,7 +471,7 @@ namespace PrexoniteTests.Tests.Configurations
 
 
     [TestFixture]
-    public class PartialApplication_Interpreted : PrexoniteTests.Tests.PartialApplication
+    internal class PartialApplication_Interpreted : PrexoniteTests.Tests.PartialApplication
     {
         public PartialApplication_Interpreted()
         {
@@ -480,7 +480,7 @@ namespace PrexoniteTests.Tests.Configurations
     }
 
     [TestFixture]
-    public class PartialApplication_CilStatic : PrexoniteTests.Tests.PartialApplication
+    internal class PartialApplication_CilStatic : PrexoniteTests.Tests.PartialApplication
     {
         public PartialApplication_CilStatic()
         {
@@ -490,7 +490,7 @@ namespace PrexoniteTests.Tests.Configurations
     }
 
     [TestFixture]
-    public class PartialApplication_CilIsolated : PrexoniteTests.Tests.PartialApplication
+    internal class PartialApplication_CilIsolated : PrexoniteTests.Tests.PartialApplication
     {
         public PartialApplication_CilIsolated()
         {
@@ -501,7 +501,7 @@ namespace PrexoniteTests.Tests.Configurations
 
 
     [TestFixture]
-    public class Lazy_Interpreted : PrexoniteTests.Tests.Lazy
+    internal class Lazy_Interpreted : PrexoniteTests.Tests.Lazy
     {
         public Lazy_Interpreted()
         {
@@ -510,7 +510,7 @@ namespace PrexoniteTests.Tests.Configurations
     }
 
     [TestFixture]
-    public class Lazy_CilStatic : PrexoniteTests.Tests.Lazy
+    internal class Lazy_CilStatic : PrexoniteTests.Tests.Lazy
     {
         public Lazy_CilStatic()
         {
@@ -520,7 +520,7 @@ namespace PrexoniteTests.Tests.Configurations
     }
 
     [TestFixture]
-    public class Lazy_CilIsolated : PrexoniteTests.Tests.Lazy
+    internal class Lazy_CilIsolated : PrexoniteTests.Tests.Lazy
     {
         public Lazy_CilIsolated()
         {
@@ -531,7 +531,7 @@ namespace PrexoniteTests.Tests.Configurations
 
 
     [TestFixture]
-    public class Translation_Interpreted : PrexoniteTests.Tests.Translation
+    internal class Translation_Interpreted : PrexoniteTests.Tests.Translation
     {
         public Translation_Interpreted()
         {
@@ -540,7 +540,7 @@ namespace PrexoniteTests.Tests.Configurations
     }
 
     [TestFixture]
-    public class Translation_CilStatic : PrexoniteTests.Tests.Translation
+    internal class Translation_CilStatic : PrexoniteTests.Tests.Translation
     {
         public Translation_CilStatic()
         {
@@ -550,7 +550,7 @@ namespace PrexoniteTests.Tests.Configurations
     }
 
     [TestFixture]
-    public class Translation_CilIsolated : PrexoniteTests.Tests.Translation
+    internal class Translation_CilIsolated : PrexoniteTests.Tests.Translation
     {
         public Translation_CilIsolated()
         {
