@@ -35,9 +35,9 @@ namespace Prexonite.Compiler.Ast
     public class AstForLoop : AstLoop
     {
         public AstForLoop(ISourcePosition position, AstBlock parentBlock)
-            : this(position, new AstSubBlock(
+            : this(position, new AstScopedBlock(
                 position,
-                new AstSubBlock(
+                new AstScopedBlock(
                     position, 
                     parentBlock, prefix: "init"),
                 prefix:"next"))
@@ -53,22 +53,22 @@ namespace Prexonite.Compiler.Ast
         /// <param name="position">The source position for this node and all block nodes.</param>
         /// <param name="nextBlock">The block reserved for the "next iteration" code. 
         /// It's parent block must be the initialization block.</param>
-        private AstForLoop(ISourcePosition position, AstSubBlock nextBlock)
+        private AstForLoop(ISourcePosition position, AstScopedBlock nextBlock)
             : base(position, nextBlock)
         {
-            _initialize = (AstSubBlock)nextBlock.LexicalScope;
+            _initialize = (AstScopedBlock)nextBlock.LexicalScope;
             _nextIteration = nextBlock;
         }
 
         public AstExpr Condition { get; set; }
-        private readonly AstSubBlock _initialize;
-        public AstSubBlock Initialize
+        private readonly AstScopedBlock _initialize;
+        public AstScopedBlock Initialize
         {
             get { return _initialize; }
         }
 
-        private readonly AstSubBlock _nextIteration;
-        public AstSubBlock NextIteration
+        private readonly AstScopedBlock _nextIteration;
+        public AstScopedBlock NextIteration
         {
             get { return _nextIteration; }
         }

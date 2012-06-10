@@ -24,29 +24,41 @@
 //  WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING 
 //  IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-using Prexonite.Compiler.Symbolic;
-using Prexonite.Modular;
+using JetBrains.Annotations;
+using Prexonite.Compiler.Ast;
 
-namespace Prexonite.Compiler.Build
+namespace Prexonite.Compiler.Macro
 {
-    public interface IBuildEnvironment
+    public class MacroAstFactory : AstFactoryBase
     {
+        [NotNull]
+        private readonly MacroSession _session;
 
-        SymbolStore ExternalSymbols
+
+        public MacroAstFactory(MacroSession session)
         {
-            get;
+            if (session == null)
+                throw new System.ArgumentNullException("session");
+            _session = session;
         }
 
-        Module Module { get; }
+        #region Overrides of AstFactoryBase
 
-        Application InstantiateForBuild();
+        protected override AstBlock CurrentBlock
+        {
+            get { return _session.CurrentBlock; }
+        }
 
-        /// <summary>
-        /// Creates the loader instance for this target.
-        /// </summary>
-        /// <param name="defaults">The default values for the loader options.</param>
-        /// <param name="compilationTarget">The module instance to be used for compiling the module.</param>
-        /// <returns></returns>
-        Loader CreateLoader(LoaderOptions defaults = null, Application compilationTarget = null);
+        protected override bool TryUseSymbolEntry(string symbolicId, ISourcePosition position, out SymbolEntry entry)
+        {
+            return _session.Target._TryUseSymbolEntry(symbolicId, position, out entry);
+        }
+
+        protected override AstGetSet CreateNullNode(ISourcePosition position)
+        {
+            return IndirectCall(position, Null(position));
+        }
+
+        #endregion
     }
 }

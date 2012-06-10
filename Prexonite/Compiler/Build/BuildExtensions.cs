@@ -12,16 +12,42 @@ namespace Prexonite.Compiler.Build
     {
         public static ITarget Build(this IPlan plan, ModuleName name)
         {
-            var buildTask = plan.BuildAsync(name, CancellationToken.None);
-            Console.WriteLine();
-            Console.WriteLine();
-            return buildTask.Result;
+            return plan.BuildAsync(name).Result;
         }
 
-        public static Application Load(this IPlan plan, ModuleName name)
+        public static Task<ITarget> BuildAsync(this IPlan plan, ModuleName name)
+        {
+            return BuildAsync(plan, name, CancellationToken.None);
+        }
+
+        public static Task<ITarget> BuildAsync(this IPlan plan, ModuleName name, CancellationToken token)
+        {
+            var buildTasks = plan.BuildAsync(name.Singleton(), CancellationToken.None);
+            return buildTasks[name];
+        }
+
+        public static Tuple<Application,ITarget> Load(this IPlan plan, ModuleName name)
         {
             var loadTask = plan.LoadAsync(name, CancellationToken.None);
             return loadTask.Result;
+        }
+
+        public static Application LoadApplication(this IPlan plan, ModuleName name)
+        {
+            var desc = plan.TargetDescriptions[name];
+            var t = plan.LoadAsync(name, CancellationToken.None).Result;
+            t.Item2.ThrowIfFailed(desc);
+            return t.Item1;
+        }
+
+        public static Task<Application> LoadAsync(this IPlan plan, ModuleName name)
+        {
+            return plan.LoadAsync(name, CancellationToken.None).ContinueWith(tt =>
+                {
+                    var result = tt.Result;
+                    result.Item2.ThrowIfFailed(plan.TargetDescriptions[name]);
+                    return result.Item1;
+                });
         }
     }
 }

@@ -3,7 +3,7 @@ using JetBrains.Annotations;
 
 namespace Prexonite.Compiler.Ast
 {
-    public class AstLoopBlock : AstSubBlock, ILoopBlock
+    public class AstLoopBlock : AstScopedBlock, ILoopBlock
     {
         public const string ContinueWord = "continue";
         public const string BreakWord = "break";

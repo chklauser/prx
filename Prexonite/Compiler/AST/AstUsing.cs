@@ -30,7 +30,7 @@ using Prexonite.Types;
 
 namespace Prexonite.Compiler.Ast
 {
-    public class AstUsing : AstSubBlock,
+    public class AstUsing : AstScopedBlock,
                             IAstHasBlocks
     {
         private const string LabelPrefix = "using";
@@ -39,11 +39,11 @@ namespace Prexonite.Compiler.Ast
             [NotNull] AstBlock lexicalScope)
             : base(p, lexicalScope)
         {
-            _block = new AstSubBlock(p, this,prefix:LabelPrefix);
+            _block = new AstScopedBlock(p, this,prefix:LabelPrefix);
         }
 
         private AstExpr _resourceExpression;
-        private readonly AstSubBlock _block;
+        private readonly AstScopedBlock _block;
 
         #region IAstHasBlocks Members
 
@@ -67,7 +67,7 @@ namespace Prexonite.Compiler.Ast
         }
 
         [PublicAPI]
-        public AstSubBlock Block
+        public AstScopedBlock Block
         {
             get { return _block; }
         }

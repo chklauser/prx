@@ -126,43 +126,29 @@ namespace PrexoniteTests.Tests.Configurations
             ModuleCache.Describe(container.Loader, suiteDescription);
 
             // Finally instantiate the test suite application(s)
-            try
+            var result = ModuleCache.Load(model.TestSuiteScript);
+            container.Application = result.Item1;
+            container.PrintCompound();
+
+            ITarget target = result.Item2;
+            if (!target.IsSuccessful)
             {
-                container.Application = ModuleCache.Load(model.TestSuiteScript);
-            }
-            catch(AggregateException e)
-            {
-                var bfe = e.GetBaseException() as BuildFailureException;
-                if(bfe != null)
-                {
-                    _buildFail(bfe);
-                }
-                else
-                {
-                    throw;
-                }
-            }
-            catch (BuildFailureException e)
-            {
-                _buildFail(e);
+                Console.WriteLine("The target {0} failed to build.", target.Name);
+
+                if(target.Exception != null)
+                    Console.WriteLine(target.Exception);
+
+                foreach (var error in target.Messages.Where(m => m.Severity == MessageSeverity.Error))
+                    Console.WriteLine("Error: {0}", error);
+                foreach (var warning in target.Messages.Where(m => m.Severity == MessageSeverity.Warning))
+                    Console.WriteLine("Warning: {0}", warning);
+                foreach (var info in target.Messages.Where(m => m.Severity == MessageSeverity.Info))
+                    Console.WriteLine("Info: {0}", info);
+
+                Assert.Fail("The target {0} failed to build.", target.Name);
             }
 
             PrepareExecution(container);
-
-            container.PrintCompound();
-        }
-
-        private static void _buildFail(BuildFailureException e)
-        {
-            Console.WriteLine("The target {0} failed to build.", e.RelatedTarget.Name);
-            Console.WriteLine(e.Message);
-            foreach (var error in e.Messages.Where(m => m.Severity == MessageSeverity.Error))
-                Console.WriteLine("Error: {0}", error);
-            foreach (var warning in e.Messages.Where(m => m.Severity == MessageSeverity.Warning))
-                Console.WriteLine("Warning: {0}", warning);
-            foreach (var info in e.Messages.Where(m => m.Severity == MessageSeverity.Info))
-                Console.WriteLine("Info: {0}", info);
-            Assert.Fail("The target {0} failed to build.", e.RelatedTarget.Name);
         }
     }
 }

@@ -43,12 +43,29 @@ namespace Prexonite.Compiler.Macro
     {
         #region Representation
 
+        [NotNull]
         private readonly AstMacroInvocation _invocation;
-        private readonly CompilerTarget _target;
+
         private readonly bool _isJustEffect;
+
+        [NotNull]
         private readonly MacroSession _session;
+
+        [NotNull]
         private readonly AstBlock _block;
+
         private readonly bool _isPartialApplication;
+
+        [NotNull]
+        private readonly IAstFactory _astFactory;
+
+
+        /// <summary>
+        /// In order to ensure that the macro doesn't pop too many blocks, 
+        /// need to remember the current block when the context was created.
+        /// That block can not be popped via the context.
+        /// </summary>
+        private readonly AstBlock _sentinelBlock;
 
         #endregion
 
@@ -64,13 +81,14 @@ namespace Prexonite.Compiler.Macro
                 throw new ArgumentNullException("session");
             if (invocation == null)
                 throw new ArgumentNullException("invocation");
-            _target = session.Target;
             _isJustEffect = isJustEffect;
             _invocation = invocation;
             _session = session;
-            _block = new AstSubBlock(invocation.Position, session.CurrentBlock,
+            _block = new AstScopedBlock(invocation.Position, session.CurrentBlock,
                                      prefix: invocation.Implementation.InternalId);
             _isPartialApplication = _invocation.Arguments.Any(AstPartiallyApplicable.IsPlaceholder);
+            _sentinelBlock = session.Target.CurrentBlock;
+            _astFactory = new MacroAstFactory(session);
         }
 
         #region Accessors 
@@ -152,6 +170,24 @@ namespace Prexonite.Compiler.Macro
             get { return _session.CurrentBlock; }
         }
 
+        [PublicAPI]
+        public void PushBlock([NotNull] AstScopedBlock block)
+        {
+            if (block == null)
+                throw new ArgumentNullException("block");
+            if(!ReferenceEquals(block.LexicalScope, CurrentBlock))
+                throw new PrexoniteException("The block pushed by the macro is not a direct lexical child of the currently enclosing scope.");
+            _session.Target.BeginBlock(block);
+        }
+
+        [PublicAPI, NotNull]
+        public AstScopedBlock PopBlock()
+        {
+            if(ReferenceEquals(_session.Target.CurrentBlock,_sentinelBlock))
+                throw new PrexoniteException("A macro cannot pop lexical scopes that it didn't push itself.");
+            return _session.Target.EndBlock();
+        }
+
         /// <summary>
         ///     Provides read-only access to the local symbol table.
         /// </summary>
@@ -159,7 +195,7 @@ namespace Prexonite.Compiler.Macro
         [Obsolete("LocalSymbols is obsolete. Local symbol lookup should happen via the AST Block.")]
         public SymbolStore LocalSymbols
         {
-            get { return _session.LocalSymbols; }
+            get { return CurrentBlock.Symbols; }
         }
 
         /// <summary>
@@ -186,7 +222,7 @@ namespace Prexonite.Compiler.Macro
         [PublicAPI]
         public Application Application
         {
-            get { return _target.Loader.ParentApplication; }
+            get { return _session.Target.Loader.ParentApplication; }
         }
 
         /// <summary>
@@ -195,7 +231,7 @@ namespace Prexonite.Compiler.Macro
         [PublicAPI]
         public PFunction Function
         {
-            get { return _target.Function; }
+            get { return _session.Target.Function; }
         }
 
         /// <summary>
@@ -204,7 +240,7 @@ namespace Prexonite.Compiler.Macro
         [PublicAPI]
         public IEnumerable<PFunction> GetParentFunctions()
         {
-            var target = _target.ParentTarget;
+            var target = _session.Target.ParentTarget;
             while (target != null)
             {
                 yield return target.Function;
@@ -215,6 +251,9 @@ namespace Prexonite.Compiler.Macro
         #endregion
 
         #region Compiler interaction
+        
+        [PublicAPI]
+        public IAstFactory Factory { get { return _astFactory; } }
 
         /// <summary>
         ///     Allocates a temporary variable for this macro expansion session.
@@ -255,7 +294,7 @@ namespace Prexonite.Compiler.Macro
             ISourcePosition position = null)
         {
             position = position ?? _invocation;
-            _target.Loader.ReportMessage(new Message(severity, message, position));
+            _session.Target.Loader.ReportMessage(new Message(severity, message, position));
         }
 
         /// <summary>
@@ -265,7 +304,7 @@ namespace Prexonite.Compiler.Macro
         [PublicAPI]
         public void RequireOuterVariable(string variable)
         {
-            _target.RequireOuterVariable(variable);
+            _session.Target.RequireOuterVariable(variable);
         }
 
         /// <summary>

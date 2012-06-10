@@ -1201,11 +1201,11 @@ namespace Prexonite.Compiler
         }
 
         private static readonly EntitySplitMatcher EntitySplit = new EntitySplitMatcher();
-        private class EntitySplitMatcher : EntityRefMatcher<SymbolKinds,Object>
+        private class EntitySplitMatcher : EntityRefMatcher<SymbolKinds, object>
         {
             protected override object OnNotMatched(EntityRef entity, SymbolKinds argument)
             {
-                throw new PrexoniteException(string.Format("Cannot split up entity {0} into entity types.", entity));
+                throw new PrexoniteException(String.Format("Cannot split up entity {0} into entity types.", entity));
             }
 
             protected override object OnCommand(EntityRef.Command command, SymbolKinds argument)
@@ -1243,7 +1243,7 @@ namespace Prexonite.Compiler
         }
 
         private static readonly SymbolKindSplitHandler SymbolKindSplit = new SymbolKindSplitHandler();
-        private class SymbolKindSplitHandler : ISymbolHandler<SymbolKinds,Object>
+        private class SymbolKindSplitHandler : ISymbolHandler<SymbolKinds, object>
         {
             public object HandleEntity(EntitySymbol symbol, SymbolKinds argument)
             {
@@ -1413,5 +1413,53 @@ namespace Prexonite.Compiler
             MessageId = "Cil")] public const string CilHintsKey = "cilhints";
 
         public const string ObjectCreationFallbackPrefix = "create_";
+        private static readonly ISymbolHandler<List<Message>, Symbol> _listMessages = new ListMessagesHandler();
+
+        private class ListMessagesHandler : ISymbolHandler<List<Message>, Symbol>
+        {
+            #region Implementation of ISymbolHandler<in List<Message>,out Symbol>
+
+            public Symbol HandleEntity(EntitySymbol symbol, List<Message> argument)
+            {
+                return symbol;
+            }
+
+            public Symbol HandleMessage(MessageSymbol symbol, List<Message> argument)
+            {
+                argument.Add(symbol.Message);
+                return symbol.Symbol.HandleWith(this, argument);
+            }
+
+            public Symbol HandleMacroInstance(MacroInstanceSymbol symbol, List<Message> argument)
+            {
+                return symbol;
+            }
+
+            #endregion
+        }
+
+        internal bool _TryUseSymbol(ref Symbol symbol)
+        {
+            var msgs = new List<Message>(1);
+            symbol = symbol.HandleWith(_listMessages, msgs);
+            if (msgs.Count > 0)
+            {
+                var seen = new HashSet<String>();
+                foreach (var message in msgs)
+                {
+                    var c = message.MessageClass;
+                    if (c != null)
+                        if (seen.Add(c))
+                            continue;
+                    ReportMessage(message);
+                    if (message.Severity == MessageSeverity.Error)
+                    {
+                        symbol = null;
+                        return false;
+                    }
+                }
+            }
+            return true;
+        }
     }
 }

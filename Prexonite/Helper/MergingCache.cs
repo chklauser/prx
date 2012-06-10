@@ -88,7 +88,6 @@ namespace Prexonite
                 }
                 var thisSize = EstimateSize();
                 var otherSize = cache.EstimateSize();
-                Trace.TraceInformation(string.Format("Linking caches with sizes {0} and {1}.", thisSize, otherSize));
                 if(thisSize <= otherSize)
                 {
                     return _linkInto(c);
@@ -104,6 +103,9 @@ namespace Prexonite
                 if (ReferenceEquals(targetCache, this))
                     return this;
 
+                Debug.Assert(targetCache != null, "targetCache cannot be null.",
+                             "CentralCache MergingCache._linkInto(targetCache): targetCache cannot be null.");
+
                 //Make sure entity ref caches are the same
                 if (_entityRefCache == null)
                     if (targetCache._entityRefCache == null)
@@ -111,7 +113,10 @@ namespace Prexonite
                     else
                         _entityRefCache = targetCache._entityRefCache;
                 else
-                    targetCache._entityRefCache.LinkWith(_entityRefCache);
+                    if (targetCache._entityRefCache == null)
+                        targetCache._entityRefCache = _entityRefCache;
+                    else
+                        targetCache._entityRefCache.LinkWith(_entityRefCache);
 
                 //Make sure module name caches are the same
                 if (_moduleNameCache == null)
@@ -120,7 +125,10 @@ namespace Prexonite
                     else
                         _moduleNameCache = targetCache._moduleNameCache;
                 else
-                    targetCache._moduleNameCache.LinkWith(_moduleNameCache);
+                    if (targetCache._moduleNameCache == null)
+                        targetCache._moduleNameCache = _moduleNameCache;
+                    else
+                        targetCache._moduleNameCache.LinkWith(_moduleNameCache);
 
                 return targetCache;
             }

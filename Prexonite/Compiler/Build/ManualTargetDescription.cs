@@ -50,19 +50,62 @@ namespace Prexonite.Compiler.Build
             return Task.Factory.StartNew(() =>
                 {
                     var ldr = build.CreateLoader(new LoaderOptions(null, null));
-                    TextReader reader;
-                    if (!_source.TryOpen(out reader))
-                        throw new BuildFailureException(this,
-                                                        string.Format("The source for target {0} could not be opened.",this), 
-                                                        Enumerable.Empty<Message>());
-                    Trace.WriteLine("Building module " + Name);
-                    ldr.LoadFromReader(reader, _fileName);
-                    if (ldr.ErrorCount > 0)
-                        throw new BuildFailureException(this, "There were {0} {1} while translating " + Name + ".",
-                                                        ldr.Errors.Append(ldr.Warnings).Append(ldr.Infos));
-                    dependencies.Select(t => new KeyValuePair<ModuleName, ITarget>(t.Key, t.Value.Result));
-                    return DefaultModuleTarget._FromLoader(ldr);
-                });
+
+                    var aggregateMessages = dependencies.Values
+                        .SelectMany(t => t.Result.Messages);
+                    var aggregateExceptions = dependencies.Values
+                        .Select(t => t.Result.Exception)
+                        .Where(e => e != null);
+                    if (dependencies.Values.All(t => t.Result.IsSuccessful))
+                    {
+                        try
+                        {
+                            TextReader reader;
+                            if (!_source.TryOpen(out reader))
+                                throw new BuildFailureException(this,
+                                                                string.Format("The source for target {0} could not be opened.", this),
+                                                                Enumerable.Empty<Message>());
+                            using (reader)
+                            {
+                                Trace.WriteLine("Building module " + Name);
+                                token.ThrowIfCancellationRequested();
+                                ldr.LoadFromReader(reader, _fileName);
+                            }
+
+                            return _createTargetFromLoader(ldr, aggregateExceptions.ToArray(), aggregateMessages);
+                        }
+                        catch (Exception e)
+                        {
+                            return DefaultModuleTarget._FromLoader(ldr,
+                                                                   _createAggregateException(aggregateExceptions.Append(e).ToArray()),
+                                                                   aggregateMessages);
+                        }
+                    }
+                    else
+                    {
+                        return _createTargetFromLoader(ldr, aggregateExceptions.ToArray(), aggregateMessages);
+                    }
+                },token);
+        }
+
+        private static ITarget _createTargetFromLoader(Loader ldr, Exception[] aggregateExceptions, IEnumerable<Message> aggregateMessages)
+        {
+            return DefaultModuleTarget._FromLoader(
+                ldr, 
+                _createAggregateException(aggregateExceptions),
+                aggregateMessages);
+        }
+
+        private static Exception _createAggregateException(Exception[] aggregateExceptions)
+        {
+            Exception aggregateException;
+            if (aggregateExceptions.Length == 1)
+                aggregateException = aggregateExceptions[0];
+            else if (aggregateExceptions.Length > 0)
+                aggregateException = new AggregateException(aggregateExceptions);
+            else
+                aggregateException = null;
+            return aggregateException;
         }
     }
 }

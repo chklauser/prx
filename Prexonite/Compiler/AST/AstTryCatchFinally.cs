@@ -29,20 +29,20 @@ using Prexonite.Types;
 
 namespace Prexonite.Compiler.Ast
 {
-    public class AstTryCatchFinally : AstSubBlock,
+    public class AstTryCatchFinally : AstScopedBlock,
                                       IAstHasBlocks
     {
-        public AstSubBlock TryBlock { get; set; }
-        public AstSubBlock CatchBlock { get; set; }
-        public AstSubBlock FinallyBlock { get; set; }
+        public AstScopedBlock TryBlock { get; set; }
+        public AstScopedBlock CatchBlock { get; set; }
+        public AstScopedBlock FinallyBlock { get; set; }
         public AstGetSet ExceptionVar { get; set; }
 
         public AstTryCatchFinally(ISourcePosition p, AstBlock lexicalScope)
             : base(p, lexicalScope)
         {
-            TryBlock = new AstSubBlock(p, this);
-            CatchBlock = new AstSubBlock(p, TryBlock);
-            FinallyBlock = new AstSubBlock(p, TryBlock);
+            TryBlock = new AstScopedBlock(p, this);
+            CatchBlock = new AstScopedBlock(p, TryBlock);
+            FinallyBlock = new AstScopedBlock(p, TryBlock);
         }
 
         #region IAstHasBlocks Members

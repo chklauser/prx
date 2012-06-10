@@ -24,7 +24,9 @@
 //  WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING 
 //  IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
+using System.Collections.Concurrent;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
@@ -36,7 +38,8 @@ namespace Prexonite.Compiler.Build.Internal
     class DefaultBuildEnvironment : IBuildEnvironment
     {
         private readonly CancellationToken _token;
-        private readonly Dictionary<ModuleName, ITarget> _dependencies;
+        private readonly ConcurrentDictionary<ModuleName, Task<ITarget>> _taskMap;
+        private readonly IPlan _plan;
         private readonly SymbolStore _externalSymbols;
         private readonly ITargetDescription _description;
         private readonly Engine _compilationEngine;
@@ -44,10 +47,10 @@ namespace Prexonite.Compiler.Build.Internal
 
         public bool TryGetModule(ModuleName moduleName, out Module module)
         {
-            ITarget target;
-            if(_dependencies.TryGetValue(moduleName, out target))
+            Task<ITarget> target;
+            if(_taskMap.TryGetValue(moduleName, out target))
             {
-                module = target.Module;
+                module = target.Result.Module;
                 return true;
             }
             else
@@ -57,21 +60,27 @@ namespace Prexonite.Compiler.Build.Internal
             }
         }
 
-        public DefaultBuildEnvironment(IEnumerable<ITarget> dependencies, ITargetDescription description, CancellationToken token)
+        public DefaultBuildEnvironment(IPlan plan, ITargetDescription description, ConcurrentDictionary<ModuleName, Task<ITarget>> taskMap, CancellationToken token)
         {
+            if (taskMap == null)
+                throw new System.ArgumentNullException("taskMap");
+            if (description == null)
+                throw new System.ArgumentNullException("description");
+            if ((object) plan == null)
+                throw new System.ArgumentNullException("plan");
+
             _token = token;
+            _plan = plan;
+            _taskMap = taskMap;
             _description = description;
-            _dependencies = new Dictionary<ModuleName, ITarget>();
             var externals = new List<SymbolInfo>();
-            foreach (var d in dependencies)
+            foreach (var name in description.Dependencies)
             {
-                _dependencies.Add(d.Name, d);
-                if(d.Symbols != null)
-                {
-                    var origin = new SymbolOrigin.ModuleTopLevel(_description.Name, NoSourcePosition.Instance);
-                    externals.AddRange(from decl in d.Symbols
-                                       select new SymbolInfo(decl.Value, origin, decl.Key));
-                }
+                var d = taskMap[name].Result;
+                if (d.Symbols == null) continue;
+                var origin = new SymbolOrigin.ModuleTopLevel(_description.Name, NoSourcePosition.Instance);
+                externals.AddRange(from decl in d.Symbols
+                                   select new SymbolInfo(decl.Value, origin, decl.Key));
             }
             _externalSymbols = SymbolStore.Create(conflictUnionSource: externals);
             _compilationEngine = new Engine();
@@ -83,8 +92,26 @@ namespace Prexonite.Compiler.Build.Internal
             get { return _externalSymbols; }
         }
 
-        public Loader CreateLoader(LoaderOptions defaults)
+        public Module Module
         {
+            get 
+            {
+                return _module;
+            }
+        }
+
+        public Application InstantiateForBuild()
+        {
+            var instance = new Application(Module);
+            ManualPlan._LinkDependenciesImpl(_plan,_taskMap, instance,_description, _token);
+            return instance;
+        }
+
+        public Loader CreateLoader(LoaderOptions defaults = null, Application compilationTarget = null)
+        {
+            defaults = defaults ?? new LoaderOptions(_compilationEngine, compilationTarget);
+            compilationTarget = compilationTarget ?? InstantiateForBuild();
+            Debug.Assert(compilationTarget.Module.Name == _module.Name);
             var lowPrioritySymbols = defaults.Symbols;
             SymbolStore predef;
             if(lowPrioritySymbols.Count == 0)
@@ -102,7 +129,7 @@ namespace Prexonite.Compiler.Build.Internal
                 //  that way we can later extract the declarations made by this module.
                 predef = SymbolStore.Create(predef); 
             }
-            var finalOptions = new LoaderOptions(_compilationEngine, new Application(_module), predef)
+            var finalOptions = new LoaderOptions(_compilationEngine, compilationTarget, predef)
                 {ReconstructSymbols = false, RegisterCommands = false};
             return new Loader(finalOptions);
         }

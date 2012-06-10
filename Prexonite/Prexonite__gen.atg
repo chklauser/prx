@@ -1188,8 +1188,8 @@ SYNC
 .
 	
 DeclarationInstance<SymbolInterpretations type, ModuleName module, bool preventOverride = false>
-                            (.  string id; string aId; .)
-=			
+                            (.  string id; string aId; ISourcePosition position = null; .)
+=							(.	position = GetPosition(); .)	
 	Id<out id>              (.  aId = id; .)
     [ div ModuleName<ref module> 
                             (.  if(preventOverride) 
@@ -1199,12 +1199,12 @@ DeclarationInstance<SymbolInterpretations type, ModuleName module, bool preventO
 	[ as Id<out aId> ]
 	                        (.  SymbolEntry inferredType;
 	                            if(type == SymbolInterpretations.Undefined)
-	                                if(_TryUseSymbolEntry(id, out inferredType))
+	                                if(_TryUseSymbolEntry(id, position, out inferredType))
                                     {
 	                                    type = inferredType.Interpretation;
                                         module = inferredType.Module;
                                     }
-	                                else if(_TryUseSymbolEntry(aId, out inferredType))
+	                                else if(_TryUseSymbolEntry(aId, position, out inferredType))
                                     {
 	                                    type = inferredType.Interpretation;
                                         module = inferredType.Module;
@@ -1918,6 +1918,7 @@ GetInitiator<out AstGetSet complex, out bool isDeclaration>
                                             isDeclaration = false;                                            
                                             string id;
                                             int placeholderIndex = -1;
+											ISourcePosition position = null;
                                         .)
 =
     //Actual value
@@ -1952,9 +1953,10 @@ GetInitiator<out AstGetSet complex, out bool isDeclaration>
 										.)
     //Reference
 |   IF( isDeDereference() )
-    pointer pointer Id<out id>          (.  SymbolEntry s;
+    pointer pointer						(.	position = GetPosition(); .)
+	Id<out id>							(.  SymbolEntry s;
                                             SymbolInterpretations kind;
-                                            if(!_TryUseSymbolEntry(id, out s))
+                                            if(!target._TryUseSymbolEntry(id, position, out s))
                                             {   
                                                 SemErr("The symbol " + id + " is not defined"); 
                                                 s = SymbolEntry.LocalObjectVariable(id);
@@ -1972,8 +1974,9 @@ GetInitiator<out AstGetSet complex, out bool isDeclaration>
                                             }
                                             complex = new AstGetSetReference(this, s.With(interpretation:kind));
                                         .)
-|   pointer Id<out id>                  (.  SymbolEntry s;
-                                            if(!_TryUseSymbolEntry(id, out s))
+|   pointer								(.	position = GetPosition(); .)
+	Id<out id>							(.  SymbolEntry s;
+                                            if(!target._TryUseSymbolEntry(id, position, out s))
                                             {   
                                                 SemErr("The symbol " + id + " is not defined"); 
                                                 s = SymbolEntry.LocalObjectVariable(id);
@@ -1994,13 +1997,14 @@ VariableDeclaration<out AstGetSet variable, bool isNewDecl>
                                             string staticId = null; 
                                             string id = null;
                                             bool isOverrideDecl = false;
+											ISourcePosition position = null;
                                         .)
 =                                       (.  SymbolInterpretations kind = SymbolInterpretations.Undefined; .)
 (   (  var                              (.  kind = SymbolInterpretations.LocalObjectVariable; .)
     |  ref                              (.  kind = SymbolInterpretations.LocalReferenceVariable; .)
     )
     [   new                             (.  isOverrideDecl = true; .)
-    ]
+    ]									(.	position = GetPosition(); .)
     Id<out id>                          (.  
                                             SmartDeclareLocal(id, kind, isOverrideDecl);
                                             staticId = id; 
@@ -2008,7 +2012,7 @@ VariableDeclaration<out AstGetSet variable, bool isNewDecl>
 |   static                              (.  kind = SymbolInterpretations.GlobalObjectVariable; .)
     [   var
     |   ref                             (.  kind = SymbolInterpretations.GlobalReferenceVariable; .)
-    ]
+    ]									(.	position = GetPosition(); .)
     Id<out id>                          (.  staticId = target.Function.Id + "\\static\\" + id;
                                             target.DeclareModuleLocal(kind, id, staticId);
                                             VariableDeclaration vari;
@@ -2021,7 +2025,7 @@ VariableDeclaration<out AstGetSet variable, bool isNewDecl>
                                             else
                                             {
 												SymbolEntry sym;
-												if(_TryUseSymbolEntry(id, out sym)){
+												if(_TryUseSymbolEntry(id, position, out sym)){
 													variable = InterpretationIsObjectVariable(kind) ?
 														new AstGetSetSymbol(this, PCall.Get, sym)
 													:
@@ -2046,14 +2050,16 @@ Variable<out AstGetSet complex, out bool isDeclared>
                                             isDeclared = false; 
                                             complex = null; 
                                             bool isNewDecl = false;
+											ISourcePosition position = null;
                                         .)
 =
     [   new                             (.  isNewDecl = true; .)
     ]
     VariableDeclaration<out complex, isNewDecl>    (. isDeclared = true; .)
-|   Id<out id>                          (.  
+|										(.	position = GetPosition(); .)
+	Id<out id>                          (.  
                                             SymbolEntry varSym;
-                                            if(_TryUseSymbolEntry(id, out varSym))
+                                            if(_TryUseSymbolEntry(id, position, out varSym))
                                             {
                                                 if(InterpretationIsLocalVariable(varSym.Interpretation))
                                                 {
@@ -2100,10 +2106,10 @@ VariableDeclarationStatement<AstBlock block>
 .
 
 Function<out AstGetSet function>
-                                (.  function = null; string id; .)
-=
+                                (.  function = null; string id; ISourcePosition position = null; .)
+=								(.	position = GetPosition(); .)
     Id<out id>                  (.  SymbolEntry sym;
-									if(!_TryUseSymbolEntry(id, out sym))
+									if(!_TryUseSymbolEntry(id, position, out sym))
                                     {
                                         function = new AstUnresolved(this, id);
                                     }

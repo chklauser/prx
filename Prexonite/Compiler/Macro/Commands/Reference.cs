@@ -79,30 +79,33 @@ namespace Prexonite.Compiler.Macro.Commands
 
                 var id = args[0].CallToString(sctx);
                 var interpretation = (SymbolInterpretations) args[1].Value;
-                var moduleRaw = args[2].Value as string;
-                ModuleName module;
-                if (moduleRaw != null)
+                var module = args[2].Value as ModuleName;
+                if (module == null)
                 {
-                    if (!ModuleName.TryParse(moduleRaw, out module))
-                        throw new PrexoniteException("Invalid module name \"" + moduleRaw + "\".");
-                }
-                else
-                {
-                    module = null;
+                    var moduleRaw = args[2].Value as string;
+                    if (moduleRaw != null)
+                    {
+                        if (!ModuleName.TryParse(moduleRaw, out module))
+                            throw new PrexoniteException("Invalid module name \"" + moduleRaw + "\".");
+                    }
                 }
 
                 switch (interpretation)
                 {
                     case SymbolInterpretations.Function:
                         PFunction func;
-                        if(module != null && sctx.ParentApplication.TryGetFunction(id,module, out func))
+                        if(module == null)
+                        {
+                            throw new PrexoniteException(string.Format("Cannot create reference to function {0}. Module name is missing.", id));
+                        }
+                        else if(sctx.ParentApplication.TryGetFunction(id,module, out func))
                         {
                             return sctx.CreateNativePValue(func);
                         }
                         else
                         {
                             throw new PrexoniteException(
-                                string.Format("Cannot create reference to function {0} from module {1}.", id, module));
+                                string.Format("Cannot create reference to function {0} from module {1}. Function or module is missing from context.", id, module));
                         }
                     case SymbolInterpretations.MacroCommand:
                         return sctx.CreateNativePValue(_loader.MacroCommands[id]);

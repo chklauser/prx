@@ -137,13 +137,14 @@ namespace PrexoniteTests.Tests.Configurations
                 var target = entry.Value.Result;
 
                 Console.WriteLine();
-                Console.WriteLine("-------------------------------------------------------------------------------------");
-                Console.WriteLine("----------------------------------  begin of stored representation for {0} ----------",name);
+                Console.WriteLine("##################################  begin of stored representation for {0} ",name);
 
                 var opt = new LoaderOptions(Engine, new Application(target.Module), target.Symbols)
                     {ReconstructSymbols = false, RegisterCommands = false, StoreSymbols = true};
                 var ldr = new Loader(opt);
                 ldr.Store(Console.Out);
+
+                Console.WriteLine("##################################    end of stored representation for {0} ----------", name);
             }
         }
 

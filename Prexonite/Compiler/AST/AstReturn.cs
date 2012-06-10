@@ -116,7 +116,7 @@ namespace Prexonite.Compiler.Ast
         private static bool _isInProtectedBlock(CompilerTarget target)
         {
             return
-                target.ScopeBlocks.OfType<AstSubBlock>().Any(
+                target.ScopeBlocks.OfType<AstScopedBlock>().Any(
                     sb => (sb.LexicalScope is AstForeachLoop) ||
                         (sb.LexicalScope is AstTryCatchFinally) || (sb.LexicalScope is AstUsing));
         }

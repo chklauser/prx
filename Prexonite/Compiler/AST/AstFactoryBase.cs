@@ -4,11 +4,11 @@ using Prexonite.Types;
 
 namespace Prexonite.Compiler.Ast
 {
-    internal abstract class AstFactoryBase : IAstFactory
+    public abstract class AstFactoryBase : IAstFactory
     {
         // TODO: (Ticket #106) TryUseSymbolEntry and NullNode should not be defined on AstFactoryBase
         protected abstract AstBlock CurrentBlock { get; }
-        protected abstract bool TryUseSymbolEntry(string symbolicId, out SymbolEntry entry);
+        protected abstract bool TryUseSymbolEntry(string symbolicId, ISourcePosition position, out SymbolEntry entry);
         protected abstract AstGetSet CreateNullNode(ISourcePosition position);
 
         public AstTypeExpr ConstantTypeExpression(ISourcePosition position, string typeExpression)
@@ -27,7 +27,7 @@ namespace Prexonite.Compiler.Ast
         {
             var id = OperatorNames.Prexonite.GetName(op);
             SymbolEntry entry;
-            if(TryUseSymbolEntry(id, out entry))
+            if(TryUseSymbolEntry(id, position, out entry))
             {
                 return new AstBinaryOperator(position.File, position.Line, position.Column, left, op, right, entry,
                                              CurrentBlock);
@@ -42,7 +42,7 @@ namespace Prexonite.Compiler.Ast
         {
             var id = OperatorNames.Prexonite.GetName(op);
             SymbolEntry entry;
-            if(TryUseSymbolEntry(id, out entry))
+            if(TryUseSymbolEntry(id, position, out entry))
             {
                 return new AstUnaryOperator(position.File,position.Line, position.Column, op,operand,entry);
             }
@@ -187,9 +187,9 @@ namespace Prexonite.Compiler.Ast
             return new AstPlaceholder(position.File, position.Line, position.Column, index);
         }
 
-        public AstSubBlock Block(ISourcePosition position)
+        public AstScopedBlock Block(ISourcePosition position)
         {
-            return new AstSubBlock(position,CurrentBlock);
+            return new AstScopedBlock(position,CurrentBlock);
         }
 
         public AstCondition Condition(ISourcePosition position, AstExpr condition, bool isNegative = false)

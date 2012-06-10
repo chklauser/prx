@@ -37,9 +37,9 @@ namespace Prexonite.Compiler
             get { return _parser.CurrentBlock; }
         }
 
-        protected override bool TryUseSymbolEntry(string symbolicId, out SymbolEntry entry)
+        protected override bool TryUseSymbolEntry(string symbolicId, ISourcePosition position, out SymbolEntry entry)
         {
-            return _parser._TryUseSymbolEntry(symbolicId, out entry);
+            return _parser.target._TryUseSymbolEntry(symbolicId, position, out entry);
         }
 
         protected override AstGetSet CreateNullNode(ISourcePosition position)

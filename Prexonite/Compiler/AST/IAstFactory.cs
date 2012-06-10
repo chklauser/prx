@@ -63,7 +63,7 @@ namespace Prexonite.Compiler.Ast
         AstGetSet Placeholder(ISourcePosition position, int? index = null);
 
 
-        AstSubBlock Block(ISourcePosition position);
+        AstScopedBlock Block(ISourcePosition position);
         AstCondition Condition(ISourcePosition position, AstExpr condition, bool isNegative = false);
 
         AstLoop WhileLoop(ISourcePosition position, bool isPostcondition = false, bool isNegative = false);

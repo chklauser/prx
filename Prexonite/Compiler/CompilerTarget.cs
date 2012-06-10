@@ -368,7 +368,7 @@ namespace Prexonite.Compiler
 
         #region Scope Block Stack
 
-        private readonly Stack<AstSubBlock> _scopeBlocks = new Stack<AstSubBlock>();
+        private readonly Stack<AstScopedBlock> _scopeBlocks = new Stack<AstScopedBlock>();
 
         public IEnumerable<AstBlock> ScopeBlocks
         {
@@ -402,7 +402,7 @@ namespace Prexonite.Compiler
         }
 
         [DebuggerStepThrough]
-        public void BeginBlock(AstSubBlock bl)
+        public void BeginBlock(AstScopedBlock bl)
         {
             if (bl == null)
                 throw new ArgumentNullException("bl");
@@ -410,22 +410,22 @@ namespace Prexonite.Compiler
         }
 
         [DebuggerStepThrough]
-        public AstSubBlock BeginBlock(string prefix)
+        public AstScopedBlock BeginBlock(string prefix)
         {
             var currentBlock = CurrentBlock;
-            var bl = new AstSubBlock(currentBlock, currentBlock, GenerateLocalId(), prefix);
+            var bl = new AstScopedBlock(currentBlock, currentBlock, GenerateLocalId(), prefix);
             _scopeBlocks.Push(bl);
             return bl;
         }
 
         [DebuggerStepThrough]
-        public AstSubBlock BeginBlock()
+        public AstScopedBlock BeginBlock()
         {
             return BeginBlock((string) null);
         }
 
         [DebuggerStepThrough]
-        public AstBlock EndBlock()
+        public AstScopedBlock EndBlock()
         {
             if (_scopeBlocks.Count > 0)
                 return _scopeBlocks.Pop();
@@ -1031,7 +1031,7 @@ namespace Prexonite.Compiler
         {
             //Safety check
             Debug.Assert(!_labels.ContainsKey(label),
-                string.Format("Error, label {0} defined multiple times in {1}, {2}", label, Function,
+                String.Format("Error, label {0} defined multiple times in {1}, {2}", label, Function,
                     position.File));
 
             //resolve any unresolved jumps);
@@ -1111,7 +1111,7 @@ namespace Prexonite.Compiler
                 else
                     pos = Ast[0];
                 _loader.ReportMessage(new Message(MessageSeverity.Error,
-                    string.Format(
+                    String.Format(
                         "Parameter list of function {0} contains {1} at position {2}. The name {1} is reserved for the local variable holding the argument list.",
                         _function.LogicalId, PFunction.ArgumentListId,
                         _function.Parameters.IndexOf(PFunction.ArgumentListId)), pos));
@@ -1436,7 +1436,7 @@ namespace Prexonite.Compiler
                         replaceInt:
                         if (ins.Id == null)
                             throw new PrexoniteException(
-                                string.Format(
+                                String.Format(
                                     "Invalid instruction ({1}) in function {0}. Id missing.",
                                     Function.Id, ins));
                         if (!map.TryGetValue(ins.Id, out idx))
@@ -1480,5 +1480,54 @@ namespace Prexonite.Compiler
             else
                 return moduleName;
         }
+
+        #region (Legacy) Symbol handling
+
+        internal bool _TryUseSymbol(string symbolicId, out Symbol symbol)
+        {
+            if (Symbols.TryGet(symbolicId, out symbol))
+            {
+                return Loader._TryUseSymbol(ref symbol);
+            }
+            else
+            {
+                symbol = null;
+                return false;
+            }
+        }
+
+        internal bool _TryUseSymbolEntry(string symbolId, ISourcePosition position, out SymbolEntry entry)
+        {
+            Symbol symbol;
+            if (_TryUseSymbol(symbolId, out symbol))
+            {
+                EntitySymbol entitySymbol;
+                if (symbol.TryGetEntitySymbol(out entitySymbol))
+                {
+                    entry = entitySymbol.ToSymbolEntry();
+                    return true;
+                }
+                else
+                {
+                    Loader.Errors.Add(_CreateIncompatibleSymbolError(position, symbol));
+                    entry = null;
+                    return false;
+                }
+            }
+            else
+            {
+                entry = null;
+                return false;
+            }
+        }
+
+        internal static Message _CreateIncompatibleSymbolError(ISourcePosition position, Symbol symbol)
+        {
+            return Message.Error(String.Format(
+                "Legacy part of parser cannot deal with symbol {0}. An entity symbol was expected.", symbol),position,MessageClasses.NoSymbolEntryEquivalentToSymbol);
+        }
+
+        #endregion
+
     }
 }

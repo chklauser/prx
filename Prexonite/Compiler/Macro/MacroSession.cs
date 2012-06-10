@@ -43,7 +43,6 @@ namespace Prexonite.Compiler.Macro
         private readonly CompilerTarget _target;
         private LoaderOptions _options;
         private readonly SymbolStore _globalSymbols;
-        private readonly SymbolStore _localSymbols;
         private readonly ReadOnlyCollectionView<string> _outerVariables;
         private readonly SymbolCollection _releaseList = new SymbolCollection();
         private readonly SymbolCollection _allocationList = new SymbolCollection();
@@ -63,19 +62,10 @@ namespace Prexonite.Compiler.Macro
             if (target == null)
                 throw new ArgumentNullException("target");
             _target = target;
-            _localSymbols = SymbolStore.Create(_target.Symbols);
             _globalSymbols = SymbolStore.Create(_target.Loader.Symbols);
             _outerVariables = new ReadOnlyCollectionView<string>(_target.OuterVariables);
 
             _buildCommandToken = target.Loader.RequestBuildCommands();
-        }
-
-        /// <summary>
-        ///     Provides read-only access to the local symbol table.
-        /// </summary>
-        public SymbolStore LocalSymbols
-        {
-            get { return _localSymbols; }
         }
 
         /// <summary>
@@ -87,7 +77,7 @@ namespace Prexonite.Compiler.Macro
         }
 
         /// <summary>
-        ///     The target the macro expansion session covers.
+        ///     The target that this macro expansion session covers.
         /// </summary>
         public CompilerTarget Target
         {
@@ -513,7 +503,10 @@ namespace Prexonite.Compiler.Macro
                     //Actual macro expansion takes place here
                     try
                     {
+                        var cub = target.CurrentBlock;
                         expander.Expand(target, context);
+                        if(!ReferenceEquals(cub,target.CurrentBlock))
+                            throw new PrexoniteException("Macro must restore previous lexical scope.");
                     }
                     catch (Exception e)
                     {

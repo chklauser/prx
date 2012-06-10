@@ -1839,7 +1839,7 @@ function main()[is volatile;]
 ");
             var ct = ldr.FunctionTargets["main"];
             ct.Function.Code.RemoveAt(ct.Function.Code.Count - 1);
-            var block = new AstSubBlock(new SourcePosition("file", -1, -2),ct.Ast);
+            var block = new AstScopedBlock(new SourcePosition("file", -1, -2),ct.Ast);
 
             var assignStmt = new AstGetSetSymbol("file", -1, -2, PCall.Set,
                 new SymbolEntry(SymbolInterpretations.GlobalObjectVariable, "s",ldr.ParentApplication.Module.Name));

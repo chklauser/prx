@@ -36,16 +36,16 @@ namespace Prexonite.Compiler.Ast
         public AstCondition(ISourcePosition p, AstBlock parentBlock, AstExpr condition, bool isNegative = false)
             : base(p)
         {
-            IfBlock = new AstSubBlock(p,parentBlock,prefix: "if");
-            ElseBlock = new AstSubBlock(p,parentBlock,prefix:"else");
+            IfBlock = new AstScopedBlock(p,parentBlock,prefix: "if");
+            ElseBlock = new AstScopedBlock(p,parentBlock,prefix:"else");
             if (condition == null)
                 throw new ArgumentNullException("condition");
             Condition = condition;
             IsNegative = isNegative;
         }
 
-        public AstSubBlock IfBlock;
-        public AstSubBlock ElseBlock;
+        public AstScopedBlock IfBlock;
+        public AstScopedBlock ElseBlock;
         public AstExpr Condition;
         public bool IsNegative;
         private static int _depth;

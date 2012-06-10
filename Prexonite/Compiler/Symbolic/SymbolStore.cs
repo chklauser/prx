@@ -75,6 +75,7 @@ namespace Prexonite.Compiler.Symbolic
         /// <param name="conflictUnionSource">A sequence of stores that the newly created store should provide a unified view of.</param>
         /// <returns>A new symbol store.</returns>
         [PublicAPI]
+        [NotNull]
         public static SymbolStore Create([CanBeNull] SymbolStore parent = null, [CanBeNull] IEnumerable<SymbolInfo> conflictUnionSource = null)
         {
             return new ConflictUnionFallbackStore(parent,conflictUnionSource);

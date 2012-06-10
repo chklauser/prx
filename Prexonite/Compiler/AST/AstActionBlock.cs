@@ -30,7 +30,7 @@ namespace Prexonite.Compiler.Ast
 {
     public delegate void AstAction(CompilerTarget target);
 
-    public class AstActionBlock : AstSubBlock
+    public class AstActionBlock : AstScopedBlock
     {
         public AstAction Action;
 

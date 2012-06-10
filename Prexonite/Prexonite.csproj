@@ -150,7 +150,7 @@
     <Compile Include="Compiler\Ast\AstLoopBlock.cs" />
     <Compile Include="Compiler\Ast\AstReferenceToEntity.cs" />
     <Compile Include="Compiler\Ast\AstScopedExpr.cs" />
-    <Compile Include="Compiler\Ast\AstSubBlock.cs" />
+    <Compile Include="Compiler\Ast\AstScopedBlock.cs" />
     <Compile Include="Compiler\Ast\IAstFactory.cs" />
     <Compile Include="Compiler\Ast\StackSemantics.cs" />
     <Compile Include="Compiler\Build\BuildException.cs" />
@@ -175,6 +175,7 @@
     <Compile Include="Compiler\Build\Source.cs" />
     <Compile Include="Compiler\Build\TargetDescriptionSet.cs" />
     <Compile Include="Compiler\Build\VersionConflictException.cs" />
+    <Compile Include="Compiler\Macro\MacroAstFactory.cs" />
     <Compile Include="Compiler\Macro\Commands\PartialCallWrapper.cs" />
     <Compile Include="Compiler\Macro\Commands\CallMacro.cs" />
     <Compile Include="Compiler\Macro\Commands\CallStar.cs" />

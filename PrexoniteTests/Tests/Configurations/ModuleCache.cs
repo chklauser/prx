@@ -118,16 +118,32 @@ namespace PrexoniteTests.Tests.Configurations
 
         private static IEnumerable<SymbolInfo> _addOriginInfo(ProvidedTarget p)
         {
-            return p.Symbols.Select(s => new SymbolInfo(s.Value, new SymbolOrigin.ModuleTopLevel(p.Name, NoSourcePosition.Instance), s.Key));
+            if (p.Symbols == null)
+                return Enumerable.Empty<SymbolInfo>();
+            else
+                return p.Symbols.Select(s => 
+                    new SymbolInfo(
+                        s.Value, 
+                        new SymbolOrigin.ModuleTopLevel(p.Name, NoSourcePosition.Instance), s.Key)
+                    );
         }
 
-        public static Application Load(string path)
+        public static Tuple<Application,ITarget> Load(string path)
         {
             EnsureFresh();
 
-            var moduleName = new ModuleName(Path.GetFileNameWithoutExtension(path), new Version(0, 0));
+            return Cache.Load(_toModuleName(path));
+        }
 
-            return Cache.Load(moduleName);
+        private static ModuleName _toModuleName(string path)
+        {
+            return new ModuleName(Path.GetFileNameWithoutExtension(path), new Version(0, 0));
+        }
+
+        public static ITarget Build(string path)
+        {
+            EnsureFresh();
+            return Cache.Build(_toModuleName(path));
         }
 
         public static Task<ITarget> BuildAsync(ModuleName name)

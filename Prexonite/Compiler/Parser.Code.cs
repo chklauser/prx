@@ -382,102 +382,39 @@ namespace Prexonite.Compiler
             return new AstIndirectCall(position, PCall.Get, n);
         }
 
-        private readonly ISymbolHandler<List<Message>, Symbol> _listMessages = new ListMessagesHandler();
-        private class ListMessagesHandler : ISymbolHandler<List<Message>, Symbol>
-        {
-            #region Implementation of ISymbolHandler<in List<Message>,out Symbol>
+        private readonly Stack<object> _scopeStack = new Stack<object>();
 
-            public Symbol HandleEntity(EntitySymbol symbol, List<Message> argument)
-            {
-                return symbol;
-            }
-
-            public Symbol HandleMessage(MessageSymbol symbol, List<Message> argument)
-            {
-                argument.Add(symbol.Message);
-                return symbol.Symbol.HandleWith(this, argument);
-            }
-
-            public Symbol HandleMacroInstance(MacroInstanceSymbol symbol, List<Message> argument)
-            {
-                return symbol;
-            }
-
-            #endregion
-        }
-
-        internal bool _TryUseSymbol(string symbolicId, out Symbol symbol)
+        private bool _TryUseSymbolEntry(string id, ISourcePosition position, out SymbolEntry symbolEntry)
         {
             SymbolStore ss;
-            if (target != null)
-                ss = CurrentBlock.Symbols;
+            if (target == null)
+                ss = Loader.Symbols;
             else
-                ss = Symbols;
-            if (ss.TryGet(symbolicId, out symbol))
-            {
-                return _TryUseSymbol(ref symbol);
-            }
-            else
-            {
-                symbol = null;
-                return false;
-            }
-        }
-
-        internal bool _TryUseSymbol(ref Symbol symbol)
-        {
-            var msgs = new List<Message>(1);
-            symbol = symbol.HandleWith(_listMessages, msgs);
-            if (msgs.Count > 0)
-            {
-                var seen = new HashSet<String>();
-                foreach (var message in msgs)
-                {
-                    var c = message.MessageClass;
-                    if (c != null)
-                        if (seen.Add(c))
-                            continue;
-                    _loader.ReportMessage(message);
-                    if (message.Severity == MessageSeverity.Error)
-                    {
-                        symbol = null;
-                        return false;
-                    }
-                }
-            }
-            return true;
-        }
-
-        internal bool _TryUseSymbolEntry(string symbolId, out SymbolEntry entry)
-        {
+                ss = target.Symbols;
             Symbol symbol;
-            EntitySymbol entitySymbol;
-            if (_TryUseSymbol(symbolId, out symbol))
+            if (ss.TryGet(id, out symbol))
             {
-                if (symbol.TryGetEntitySymbol(out entitySymbol))
+                EntitySymbol entitySymbol;
+                if(symbol.TryGetEntitySymbol(out entitySymbol))
                 {
-                    entry = entitySymbol.ToSymbolEntry();
+                    symbolEntry = entitySymbol.ToSymbolEntry();
                     return true;
                 }
                 else
                 {
-                    SemErr(
-                        string.Format(
-                            "Legacy part of parser cannot deal with symbol {0}. An entity symbol was expected.", symbol));
-                    entry = null;
+                    Loader.Errors.Add(CompilerTarget._CreateIncompatibleSymbolError(position,symbol));
+                    symbolEntry = null;
                     return false;
                 }
             }
             else
             {
-                entry = null;
+                symbolEntry = null;
                 return false;
             }
         }
 
-        private readonly Stack<object> _scopeStack = new Stack<object>();
-
-        internal void _PushScope(AstSubBlock block)
+        internal void _PushScope(AstScopedBlock block)
         {
             if (!ReferenceEquals(block.LexicalScope, CurrentBlock))
                 throw new PrexoniteException("Cannot push scope of unrelated block.");
@@ -493,7 +430,7 @@ namespace Prexonite.Compiler
             _target = ct;
         }
 
-        internal void _PopScope(AstSubBlock block)
+        internal void _PopScope(AstScopedBlock block)
         {
             if (!ReferenceEquals(_scopeStack.Peek(), block))
                 throw new PrexoniteException(string.Format("Tried to pop scope of block {0} but {1} was on top.", block, _scopeStack.Peek()));
@@ -1063,7 +1000,8 @@ namespace Prexonite.Compiler
 
         private AstGetSet _assembleInvocation(Symbol sym)
         {
-            if (_TryUseSymbol(ref sym))
+            CompilerTarget tempQualifier = target;
+            if (tempQualifier.Loader._TryUseSymbol(ref sym))
             {
                 return sym.HandleWith(AssembleAst, Tuple.Create(this, PCall.Get));
             }

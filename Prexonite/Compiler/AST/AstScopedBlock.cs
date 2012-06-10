@@ -3,12 +3,12 @@ using JetBrains.Annotations;
 
 namespace Prexonite.Compiler.Ast
 {
-    public class AstSubBlock : AstBlock
+    public class AstScopedBlock : AstBlock
     {
         [NotNull]
         private readonly AstBlock _lexicalScope;
 
-        public AstSubBlock([NotNull] ISourcePosition p, [NotNull] AstBlock lexicalScope, string uid = null, string prefix = null)
+        public AstScopedBlock([NotNull] ISourcePosition p, [NotNull] AstBlock lexicalScope, string uid = null, string prefix = null)
             : base(p,lexicalScope, uid:uid, prefix:prefix)
         {
             if (lexicalScope == null)
