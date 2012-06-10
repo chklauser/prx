@@ -533,7 +533,7 @@ namespace Prexonite.Compiler.Cil
                 {
                     if (state.Source.Variables.Contains(sharedNames[i]))
                         continue; //Arguments are redeclarations.
-                    var sym = new Symbol(SymbolKind.LocalRef)
+                    var sym = new CilSymbol(SymbolKind.LocalRef)
                         {
                             Local = state.Il.DeclareLocal(typeof (PVariable))
                         };
@@ -555,7 +555,7 @@ namespace Prexonite.Compiler.Cil
             //Add entries for paramters
             foreach (var parameter in state.Source.Parameters)
                 if (!state.Symbols.ContainsKey(parameter))
-                    state.Symbols.Add(parameter, new Symbol(SymbolKind.Local));
+                    state.Symbols.Add(parameter, new CilSymbol(SymbolKind.Local));
 
             //Add entries for enumerator variables
             foreach (var hint in state._ForeachHints)
@@ -563,13 +563,13 @@ namespace Prexonite.Compiler.Cil
                 if (state.Symbols.ContainsKey(hint.EnumVar))
                     throw new PrexoniteException(
                         "Invalid foreach hint. Enumerator variable is shared.");
-                state.Symbols.Add(hint.EnumVar, new Symbol(SymbolKind.LocalEnum));
+                state.Symbols.Add(hint.EnumVar, new CilSymbol(SymbolKind.LocalEnum));
             }
 
             //Add entries for non-shared local variables
             foreach (var variable in state.Source.Variables)
                 if (!state.Symbols.ContainsKey(variable))
-                    state.Symbols.Add(variable, new Symbol(SymbolKind.Local));
+                    state.Symbols.Add(variable, new CilSymbol(SymbolKind.Local));
         }
 
         private static void _analysisAndPreparation(CompilerState state)

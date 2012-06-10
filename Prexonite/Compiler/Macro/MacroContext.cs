@@ -58,8 +58,7 @@ namespace Prexonite.Compiler.Macro
 
         [NotNull]
         private readonly IAstFactory _astFactory;
-
-
+        
         /// <summary>
         /// In order to ensure that the macro doesn't pop too many blocks, 
         /// need to remember the current block when the context was created.

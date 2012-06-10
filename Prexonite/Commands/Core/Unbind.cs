@@ -189,9 +189,9 @@ namespace Prexonite.Commands.Core
                         "CIL implementation of Core.Unbind command only accepts local variable references.",
                         "staticArgv");
 
-                Symbol symbol;
-                if (!state.Symbols.TryGetValue(local.Id, out symbol) ||
-                    symbol.Kind != SymbolKind.LocalRef)
+                CilSymbol cilSymbol;
+                if (!state.Symbols.TryGetValue(local.Id, out cilSymbol) ||
+                    cilSymbol.Kind != SymbolKind.LocalRef)
                     throw new PrexoniteException(
                         string.Format("CIL implementation of {1} cannot find local explicit variable {0}", local.Id, GetType().FullName));
 
@@ -200,11 +200,11 @@ namespace Prexonite.Commands.Core
                 state.Il.Emit(OpCodes.Dup);
 
                 //Copy old value
-                state.EmitLoadPValue(symbol);
+                state.EmitLoadPValue(cilSymbol);
                 state.EmitCall(Compiler.Cil.Compiler.SetValueMethod);
 
                 //Override variable slot
-                state.EmitStoreLocal(symbol.Local);
+                state.EmitStoreLocal(cilSymbol.Local);
             }
 
             if (!ins.JustEffect)

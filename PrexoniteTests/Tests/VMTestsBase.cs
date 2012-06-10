@@ -39,7 +39,6 @@ using Prexonite.Compiler.Symbolic.Compatibility;
 using Prexonite.Types;
 using Prx.Tests;
 using Compiler = Prexonite.Compiler.Cil.Compiler;
-using Symbol = Prexonite.Compiler.Cil.Symbol;
 
 namespace PrexoniteTests.Tests
 {

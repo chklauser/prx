@@ -56,7 +56,7 @@ namespace Prexonite.Compiler.Cil
         private readonly Label[] _instructionLabels;
         private readonly Label _returnLabel;
         private readonly PFunction _source;
-        private readonly SymbolTable<Symbol> _symbols;
+        private readonly SymbolTable<CilSymbol> _symbols;
         private readonly Engine _targetEngine;
         private readonly Stack<CompiledTryCatchFinallyBlock> _tryBlocks;
         private LocalBuilder[] _tempLocals;
@@ -100,7 +100,7 @@ namespace Prexonite.Compiler.Cil
             for (var i = 0; i < InstructionLabels.Length; i++)
                 InstructionLabels[i] = il.DefineLabel();
             _returnLabel = il.DefineLabel();
-            _symbols = new SymbolTable<Symbol>();
+            _symbols = new SymbolTable<CilSymbol>();
             _tryBlocks = new Stack<CompiledTryCatchFinallyBlock>();
 
             MetaEntry cilHints;
@@ -195,9 +195,9 @@ namespace Prexonite.Compiler.Cil
         public LocalBuilder SharedLocal { get; internal set; }
 
         /// <summary>
-        ///     Symbol table for the CIL compiler. See <see cref = "Symbol" /> for details.
+        ///     CilSymbol table for the CIL compiler. See <see cref = "CilSymbol" /> for details.
         /// </summary>
-        public SymbolTable<Symbol> Symbols
+        public SymbolTable<CilSymbol> Symbols
         {
             get { return _symbols; }
         }
@@ -615,7 +615,7 @@ namespace Prexonite.Compiler.Cil
         /// </summary>
         /// <param name = "sym">The local variable to write to.</param>
         /// <param name = "action">The action that produces the value.</param>
-        public void EmitStorePValue(Symbol sym, Action action)
+        public void EmitStorePValue(CilSymbol sym, Action action)
         {
             if (sym.Kind == SymbolKind.Local)
             {
@@ -630,7 +630,7 @@ namespace Prexonite.Compiler.Cil
             }
             else
             {
-                throw new PrexoniteException("Cannot emit code for Symbol");
+                throw new PrexoniteException("Cannot emit code for CilSymbol");
             }
         }
 
@@ -638,7 +638,7 @@ namespace Prexonite.Compiler.Cil
         ///     <para>Load a value from the specified local variable.</para>
         /// </summary>
         /// <param name = "sym">The variable to load.</param>
-        public void EmitLoadPValue(Symbol sym)
+        public void EmitLoadPValue(CilSymbol sym)
         {
             if (sym.Kind == SymbolKind.Local)
             {
@@ -651,7 +651,7 @@ namespace Prexonite.Compiler.Cil
             }
             else
             {
-                throw new PrexoniteException("Cannot emit code for Symbol");
+                throw new PrexoniteException("Cannot emit code for CilSymbol");
             }
         }
 

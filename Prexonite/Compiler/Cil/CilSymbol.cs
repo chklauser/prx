@@ -34,10 +34,10 @@ using cop = System.Reflection.Emit.OpCodes;
 
 namespace Prexonite.Compiler.Cil
 {
-    public class Symbol
+    public class CilSymbol
     {
         [DebuggerStepThrough]
-        public Symbol(SymbolKind kind)
+        public CilSymbol(SymbolKind kind)
         {
             Kind = kind;
         }
