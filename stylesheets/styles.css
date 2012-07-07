@@ -34,7 +34,9 @@ h4, h5, h6 {
 }
 
 #footnotes {
-  border-top: solid black 1px;
+  border-top: solid #393939 1px;
+  margin-top: 5px;
+  margin-bottom: 5px;
 }
 
 #footnotes h3 {
