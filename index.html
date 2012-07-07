@@ -17,7 +17,10 @@ function main() {
 <p>
 {% highlight javascript %}
 function flipperize(xs) = 
-  xs >> where(? is not null) >> map(x => if(x mod 2 == 0) "flip" else "flop");
+  xs 
+    >> where(? is not null) 
+    >> map(x => if(x mod 2 == 0) "flip" 
+                            else "flop");
 {% endhighlight %}
 </p>
 
