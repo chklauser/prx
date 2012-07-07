@@ -107,9 +107,9 @@ namespace Prexonite.Compiler.Build
             return description;
         }
 
-        protected virtual ConcurrentDictionary<ModuleName, Task<ITarget>> CreateTaskMap()
+        protected virtual TaskMap<ModuleName, ITarget> CreateTaskMap()
         {
-            return new ConcurrentDictionary<ModuleName, Task<ITarget>>(5, TargetDescriptions.Count);
+            return new TaskMap<ModuleName, ITarget>(5, TargetDescriptions.Count);
         }
 
         public Task<Tuple<Application,ITarget>> LoadAsync(ModuleName name, CancellationToken token)
@@ -125,12 +125,12 @@ namespace Prexonite.Compiler.Build
                 },token);
         }
 
-        private void _linkDependencies(ConcurrentDictionary<ModuleName, Task<ITarget>> taskMap, Application instance, ITargetDescription instanceDescription, CancellationToken token)
+        private void _linkDependencies(TaskMap<ModuleName, ITarget> taskMap, Application instance, ITargetDescription instanceDescription, CancellationToken token)
         {
             _LinkDependenciesImpl(this, taskMap, instance, instanceDescription, token);
         }
 
-        internal static void _LinkDependenciesImpl(IPlan plan, ConcurrentDictionary<ModuleName, Task<ITarget>> taskMap, Application instance,
+        internal static void _LinkDependenciesImpl(IPlan plan, TaskMap<ModuleName, ITarget> taskMap, Application instance,
                                             ITargetDescription instanceDescription, CancellationToken token)
         {
             foreach (var dependency in instanceDescription.Dependencies)
@@ -139,13 +139,13 @@ namespace Prexonite.Compiler.Build
                     continue;
                 var dependencyDescription = plan.TargetDescriptions[dependency];
                 token.ThrowIfCancellationRequested();
-                var dependencyInstance = new Application(taskMap[dependency].Result.Module);
+                var dependencyInstance = new Application(taskMap[dependency].Value.Result.Module);
                 Application.Link(instance, dependencyInstance);
                 _LinkDependenciesImpl(plan, taskMap, dependencyInstance, dependencyDescription, token);
             }
         }
 
-        protected Task<IBuildEnvironment> GetBuildEnvironmentAsync(ConcurrentDictionary<ModuleName, Task<ITarget>> taskMap, ITargetDescription description, CancellationToken token)
+        protected Task<IBuildEnvironment> GetBuildEnvironmentAsync(TaskMap<ModuleName,ITarget> taskMap, ITargetDescription description, CancellationToken token)
         {
             if (description.Dependencies.Count == 0)
             {
@@ -157,19 +157,20 @@ namespace Prexonite.Compiler.Build
                 // Note how the lambda expression doesn't actually depend on the result (directly)
                 //  the continue all makes sure that we're not wasting a thread that blocks on Task.Result
                 // GetBuildEnvironment can access the results via the taskMap.
-                return Task.Factory.ContinueWhenAll(description.Dependencies.Select(d => taskMap[d]).ToArray(),
+                return Task.Factory.ContinueWhenAll(description.Dependencies.Select(d => taskMap[d].Value).ToArray(),
                 _ => GetBuildEnvironment(taskMap, description, token));
         }
 
-        protected virtual IBuildEnvironment GetBuildEnvironment(ConcurrentDictionary<ModuleName,Task<ITarget>> taskMap, ITargetDescription description, CancellationToken token)
+        protected virtual IBuildEnvironment GetBuildEnvironment(TaskMap<ModuleName,ITarget> taskMap, ITargetDescription description, CancellationToken token)
         {
             var buildEnvironment = new DefaultBuildEnvironment(this, description, taskMap, token);
             return buildEnvironment;
         }
 
-        protected Task<ITarget> BuildWithMapAsync(ITargetDescription targetDescription, ConcurrentDictionary<ModuleName,Task<ITarget>> taskMap, CancellationToken token)
+        protected Task<ITarget> BuildWithMapAsync(ITargetDescription targetDescription, TaskMap<ModuleName,ITarget> taskMap, CancellationToken token)
         {
-            return taskMap.GetOrAdd(targetDescription.Name, name => Task.Factory.StartNew( () => 
+            return taskMap.GetOrAdd(targetDescription.Name, name => 
+                Task.Factory.StartNew( () => 
                 {
                     var desc = TargetDescriptions[name];
                     var deps =

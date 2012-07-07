@@ -28,6 +28,7 @@ using System;
 using System.Collections;
 using System.Collections.Concurrent;
 using System.Collections.Generic;
+using System.Diagnostics;
 using Prexonite.Modular;
 
 namespace Prexonite.Compiler.Build
@@ -65,8 +66,10 @@ namespace Prexonite.Compiler.Build
                         "Cannot replace description for {0} with a description for a different module ({1}).",
                         oldDescription.Name, newDescription.Name));
             if (!_table.TryUpdate(oldDescription.Name, newDescription, oldDescription))
+            {
                 throw new PrexoniteException(
                     "Failed to update target description set. Propably due to concurrent modification.");
+            }
         }
 
         public ITargetDescription this[ModuleName name]

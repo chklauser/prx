@@ -166,6 +166,7 @@
     <Compile Include="Compiler\Build\Internal\ReaderSource.cs" />
     <Compile Include="Compiler\Build\Internal\StreamSource.cs" />
     <Compile Include="Compiler\Build\Internal\StringSource.cs" />
+    <Compile Include="Compiler\Build\Internal\TaskMap.cs" />
     <Compile Include="Compiler\Build\ISource.cs" />
     <Compile Include="Compiler\Build\ManualPlan.cs" />
     <Compile Include="Compiler\Build\ManualTargetDescription.cs" />
@@ -344,7 +345,7 @@
     <Compile Include="Compiler\Cil\Seh\Region.cs" />
     <Compile Include="Compiler\Cil\Runtime.cs" />
     <Compile Include="Compiler\Cil\StructuredExceptionHandling.cs" />
-    <Compile Include="Compiler\Cil\Symbol.cs" />
+    <Compile Include="Compiler\Cil\CilSymbol.cs" />
     <Compile Include="Compiler\CompilerHook.cs" />
     <Compile Include="Compiler\CompilerTarget.cs" />
     <Compile Include="Compiler\CustomResolver.cs" />

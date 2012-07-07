@@ -26,6 +26,7 @@
 
 using System;
 using System.Diagnostics;
+using JetBrains.Annotations;
 using Prexonite.Compiler.Symbolic;
 using Prexonite.Compiler.Symbolic.Internal;
 using NoDebug = System.Diagnostics.DebuggerNonUserCodeAttribute;
@@ -62,8 +63,10 @@ namespace Prexonite.Compiler
             get { return _targetApplication; }
         }
 
+        [NotNull]
         private readonly SymbolStore _symbols;
 
+        [NotNull]
         public SymbolStore Symbols
         {
             get { return _symbols; }

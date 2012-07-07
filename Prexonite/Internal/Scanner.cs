@@ -273,6 +273,7 @@ internal partial class Scanner : IDisposable, IScanner {
 			NextCh();
 		}
 		start = new Dictionary<int, int>(128);
+		for (int i = 36; i <= 36; ++i) start[i] = 1;
 		for (int i = 92; i <= 92; ++i) start[i] = 1;
 		for (int i = 95; i <= 95; ++i) start[i] = 1;
 		for (int i = 97; i <= 122; ++i) start[i] = 1;
@@ -339,7 +340,7 @@ internal partial class Scanner : IDisposable, IScanner {
 			case -1: { t.kind = eofSym; break; } // NextCh already done
 			case 0: { t.kind = noSym; break; }   // NextCh already done
 			case 1:
-				if (ch >= '0' && ch <= '9' || ch == 92 || ch == '_' || ch >= 'a' && ch <= 'z') {AddCh(); goto case 1;}
+				if (ch == '$' || ch >= '0' && ch <= '9' || ch == 92 || ch == '_' || ch >= 'a' && ch <= 'z') {AddCh(); goto case 1;}
 				else {t.kind = 1; t.val = new String(tval, 0, tlen); CheckLiteral(); return t;}
 			case 2:
 				{t.kind = 2; break;}
@@ -464,7 +465,7 @@ internal partial class Scanner : IDisposable, IScanner {
 				else if (ch == 'e') {AddCh(); goto case 15;}
 				else {t.kind = 5; break;}
 			case 37:
-				if (ch == '"' || ch == 39 || ch == '0' || ch == 92 || ch >= 'a' && ch <= 'b' || ch == 'f' || ch == 'n' || ch == 'r' || ch == 't' || ch == 'v') {AddCh(); goto case 18;}
+				if (ch == '"' || ch == '$' || ch == 39 || ch == '0' || ch == 92 || ch >= 'a' && ch <= 'b' || ch == 'f' || ch == 'n' || ch == 'r' || ch == 't' || ch == 'v') {AddCh(); goto case 18;}
 				else if (ch == 'x') {AddCh(); goto case 19;}
 				else if (ch == 'u') {AddCh(); goto case 42;}
 				else {t.kind = noSym; break;}

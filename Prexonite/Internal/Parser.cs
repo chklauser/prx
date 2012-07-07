@@ -151,37 +151,39 @@ internal partial class Parser {
 #line default //END FRAME -->productions
 
 	void PTypeExpression() {
-		Type(/*PTypeExpression.atg:104*/out _lastType);
+		Type(/*PTypeExpression.atg:105*/out _lastType);
 	}
 
-	void Type(/*PTypeExpression.atg:145*/out PType value) {
-		/*PTypeExpression.atg:145*/string id; 
+	void Type(/*PTypeExpression.atg:146*/out PType value) {
+		/*PTypeExpression.atg:146*/string id; 
 		System.Collections.Generic.List<PValue> args = new System.Collections.Generic.List<PValue>();
 		
 		if (la.kind == _tilde) {
 			Get();
 		}
 		Expect(_id);
-		/*PTypeExpression.atg:150*/id = t.val; 
-		if(!_sctx.ParentEngine.PTypeRegistry.Contains(id))
-		{
-		    SemErr("Cannot find PType " + id + " referenced in PTypeExpression.");
-		}                                    
-		
+		/*PTypeExpression.atg:151*/id = t.val; 
+		if(id.Length > 0 && id[0] == '$')
+			id = id.Substring(1);
+		                           if(!_sctx.ParentEngine.PTypeRegistry.Contains(id))
+		                           {
+		                               SemErr("Cannot find PType " + id + " referenced in PTypeExpression.");
+		                           }                                    
+		                       
 		if (la.kind == 8) {
 			Get();
-			/*PTypeExpression.atg:156*/PValue obj; 
+			/*PTypeExpression.atg:159*/PValue obj; 
 			if (StartOf(1)) {
-				Expr(/*PTypeExpression.atg:157*/out obj);
-				/*PTypeExpression.atg:157*/args.Add(obj); 
+				Expr(/*PTypeExpression.atg:160*/out obj);
+				/*PTypeExpression.atg:160*/args.Add(obj); 
 				while (WeakSeparator(9,1,2) ) {
-					Expr(/*PTypeExpression.atg:159*/out obj);
-					/*PTypeExpression.atg:159*/args.Add(obj); 
+					Expr(/*PTypeExpression.atg:162*/out obj);
+					/*PTypeExpression.atg:162*/args.Add(obj); 
 				}
 			}
 			Expect(10);
 		}
-		/*PTypeExpression.atg:164*/if(id == null) //Error recovery.
+		/*PTypeExpression.atg:167*/if(id == null) //Error recovery.
 		{
 		    SemErr("Error in type expression.");
 		    value = PType.Object[typeof(object)];
@@ -191,53 +193,53 @@ internal partial class Parser {
 		
 	}
 
-	void Expr(/*PTypeExpression.atg:107*/out PValue value) {
-		/*PTypeExpression.atg:107*/PType vt; value = null; 
+	void Expr(/*PTypeExpression.atg:108*/out PValue value) {
+		/*PTypeExpression.atg:108*/PType vt; value = null; 
 		if (la.kind == _true || la.kind == _false) {
-			Boolean(/*PTypeExpression.atg:109*/out value);
+			Boolean(/*PTypeExpression.atg:110*/out value);
 		} else if (la.kind == _integer) {
-			Integer(/*PTypeExpression.atg:110*/out value);
+			Integer(/*PTypeExpression.atg:111*/out value);
 		} else if (la.kind == _real) {
-			Real(/*PTypeExpression.atg:111*/out value);
+			Real(/*PTypeExpression.atg:112*/out value);
 		} else if (la.kind == _string) {
-			String(/*PTypeExpression.atg:112*/out value);
+			String(/*PTypeExpression.atg:113*/out value);
 		} else if (la.kind == _id || la.kind == _tilde) {
-			Type(/*PTypeExpression.atg:113*/out vt);
-			/*PTypeExpression.atg:113*/value = PType.Object.CreatePValue(vt); 
+			Type(/*PTypeExpression.atg:114*/out vt);
+			/*PTypeExpression.atg:114*/value = PType.Object.CreatePValue(vt); 
 		} else SynErr(12);
 	}
 
-	void Boolean(/*PTypeExpression.atg:116*/out PValue value) {
-		/*PTypeExpression.atg:116*/value = true;  
+	void Boolean(/*PTypeExpression.atg:117*/out PValue value) {
+		/*PTypeExpression.atg:117*/value = true;  
 		if (la.kind == _true) {
 			Get();
 		} else if (la.kind == _false) {
 			Get();
-			/*PTypeExpression.atg:119*/value = false; 
+			/*PTypeExpression.atg:120*/value = false; 
 		} else SynErr(13);
 	}
 
-	void Integer(/*PTypeExpression.atg:122*/out PValue value) {
-		/*PTypeExpression.atg:122*/int i; 
+	void Integer(/*PTypeExpression.atg:123*/out PValue value) {
+		/*PTypeExpression.atg:123*/int i; 
 		Expect(_integer);
-		/*PTypeExpression.atg:125*/if(!Prexonite.Compiler.Parser.TryParseInteger(t.val, out i))
+		/*PTypeExpression.atg:126*/if(!Prexonite.Compiler.Parser.TryParseInteger(t.val, out i))
 		   SemErr("Cannot recognize integer " + t.val);
 		value = i;
 		
 	}
 
-	void Real(/*PTypeExpression.atg:131*/out PValue value) {
-		/*PTypeExpression.atg:131*/double d; 
+	void Real(/*PTypeExpression.atg:132*/out PValue value) {
+		/*PTypeExpression.atg:132*/double d; 
 		Expect(_real);
-		/*PTypeExpression.atg:133*/if(!Prexonite.Compiler.Parser.TryParseReal(t.val, out d))
+		/*PTypeExpression.atg:134*/if(!Prexonite.Compiler.Parser.TryParseReal(t.val, out d))
 		   SemErr("Cannot recognize real " + t.val);
 		value = d;
 		
 	}
 
-	void String(/*PTypeExpression.atg:140*/out PValue value) {
+	void String(/*PTypeExpression.atg:141*/out PValue value) {
 		Expect(_string);
-		/*PTypeExpression.atg:141*/value = StringPType.Unescape(t.val.Substring(1,t.val.Length-2));
+		/*PTypeExpression.atg:142*/value = StringPType.Unescape(t.val.Substring(1,t.val.Length-2));
 		
 	}
 

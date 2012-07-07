@@ -435,7 +435,7 @@ namespace Prexonite.Types
                                 var innerRt = exc.InnerException as PrexoniteRuntimeException;
 
                                 if (innerRt != null)
-                                    throw innerRt;
+                                    throw innerRt.InnerException;
                                 else
                                     throw;
                             }

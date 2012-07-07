@@ -24,19 +24,19 @@
 //  WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING 
 //  IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Threading;
 using System.Threading.Tasks;
+using Prexonite.Compiler.Build.Internal;
 using Prexonite.Modular;
 
 namespace Prexonite.Compiler.Build
 {
     public class IncrementalPlan : ManualPlan
     {
-        private readonly ConcurrentDictionary<ModuleName,Task<ITarget>> _taskMap = new ConcurrentDictionary<ModuleName, Task<ITarget>>();
+        private readonly TaskMap<ModuleName,ITarget> _taskMap = new TaskMap<ModuleName, ITarget>();
 
-        protected override ConcurrentDictionary<ModuleName, Task<ITarget>> CreateTaskMap()
+        protected override TaskMap<ModuleName, ITarget> CreateTaskMap()
         {
             return _taskMap;
         }

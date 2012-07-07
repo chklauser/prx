@@ -56,7 +56,7 @@ namespace Prexonite.Compiler.Build
                 throw target.Exception;
             else if (target.Messages.Any(m => m.Severity == MessageSeverity.Error))
                 throw new BuildFailureException(description,
-                                                "There were {0} {1} while translating " + description.Name + ".",
+                                                "There {2} {0} {1} while translating " + description.Name + ".",
                                                 target.Messages);
         }
     }

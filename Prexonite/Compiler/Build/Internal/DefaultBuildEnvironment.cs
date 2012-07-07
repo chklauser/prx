@@ -38,7 +38,7 @@ namespace Prexonite.Compiler.Build.Internal
     class DefaultBuildEnvironment : IBuildEnvironment
     {
         private readonly CancellationToken _token;
-        private readonly ConcurrentDictionary<ModuleName, Task<ITarget>> _taskMap;
+        private readonly TaskMap<ModuleName, ITarget> _taskMap;
         private readonly IPlan _plan;
         private readonly SymbolStore _externalSymbols;
         private readonly ITargetDescription _description;
@@ -60,7 +60,7 @@ namespace Prexonite.Compiler.Build.Internal
             }
         }
 
-        public DefaultBuildEnvironment(IPlan plan, ITargetDescription description, ConcurrentDictionary<ModuleName, Task<ITarget>> taskMap, CancellationToken token)
+        public DefaultBuildEnvironment(IPlan plan, ITargetDescription description, TaskMap<ModuleName, ITarget> taskMap, CancellationToken token)
         {
             if (taskMap == null)
                 throw new System.ArgumentNullException("taskMap");
@@ -76,7 +76,7 @@ namespace Prexonite.Compiler.Build.Internal
             var externals = new List<SymbolInfo>();
             foreach (var name in description.Dependencies)
             {
-                var d = taskMap[name].Result;
+                var d = taskMap[name].Value.Result;
                 if (d.Symbols == null) continue;
                 var origin = new SymbolOrigin.ModuleTopLevel(_description.Name, NoSourcePosition.Instance);
                 externals.AddRange(from decl in d.Symbols

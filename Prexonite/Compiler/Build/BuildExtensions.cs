@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.Linq;
 using System.Text;
 using System.Threading;
@@ -22,7 +23,8 @@ namespace Prexonite.Compiler.Build
 
         public static Task<ITarget> BuildAsync(this IPlan plan, ModuleName name, CancellationToken token)
         {
-            var buildTasks = plan.BuildAsync(name.Singleton(), CancellationToken.None);
+            var buildTasks = plan.BuildAsync(name.Singleton(), token);
+            Debug.Assert(buildTasks.Count == 1,"Expected build task dictionary for a single module to only contain a single task.");
             return buildTasks[name];
         }
 

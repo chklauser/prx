@@ -630,7 +630,7 @@ namespace Prexonite.Modular
                         _appendAddress(buffer, ++idx, digits);
 #else
                     buffer.AppendLine();
-                    appendAddress(buffer, ++idx, digits);
+                    _appendAddress(buffer, ++idx, digits);
 
 #endif
                         writer.Write(buffer.ToString());

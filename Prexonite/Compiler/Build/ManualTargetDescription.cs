@@ -10,6 +10,7 @@ using Prexonite.Modular;
 
 namespace Prexonite.Compiler.Build
 {
+    [DebuggerDisplay("ManualTargetDescription({Name} from {_fileName})")]
     internal class ManualTargetDescription : ITargetDescription
     {
         private readonly ModuleName _moduleName;
@@ -63,7 +64,7 @@ namespace Prexonite.Compiler.Build
                             TextReader reader;
                             if (!_source.TryOpen(out reader))
                                 throw new BuildFailureException(this,
-                                                                string.Format("The source for target {0} could not be opened.", this),
+                                                                string.Format("The source for target {0} could not be opened.", Name),
                                                                 Enumerable.Empty<Message>());
                             using (reader)
                             {
@@ -83,6 +84,7 @@ namespace Prexonite.Compiler.Build
                     }
                     else
                     {
+                        Task.WaitAll(dependencies.Values.ToArray<Task>());
                         return _createTargetFromLoader(ldr, aggregateExceptions.ToArray(), aggregateMessages);
                     }
                 },token);

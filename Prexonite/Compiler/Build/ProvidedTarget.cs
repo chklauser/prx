@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
@@ -10,6 +11,7 @@ using Prexonite.Modular;
 
 namespace Prexonite.Compiler.Build
 {
+    [DebuggerDisplay("{_debuggerDisplay}")]
     public class ProvidedTarget : ITargetDescription, ITarget
     {
         [NotNull]
@@ -28,6 +30,11 @@ namespace Prexonite.Compiler.Build
         private readonly Exception _exception;
 
         private readonly bool _isSuccessful;
+
+        private string _debuggerDisplay
+        {
+            get { return String.Format("ProvidedTarget({0}) {1}", Name, IsSuccessful ? "successful" : "errors detected"); }
+        }
 
         public ProvidedTarget(Module module, 
             IEnumerable<ModuleName> dependencies = null, 
@@ -57,7 +64,7 @@ namespace Prexonite.Compiler.Build
         }
 
         public ProvidedTarget(ITargetDescription description, ITarget result)
-            : this(result.Module,description.Dependencies,result.Symbols,result.Resources)
+            : this(result.Module,description.Dependencies,result.Symbols,result.Resources,result.Messages,result.Exception)
         {
         }
 

@@ -314,7 +314,7 @@ namespace Prexonite.Compiler.Symbolic.Internal
 
         public override IEnumerable<KeyValuePair<string, Symbol>> LocalDeclarations
         {
-            get { return _local; }
+            get { return _local ?? Enumerable.Empty<KeyValuePair<string,Symbol>>(); }
         }
     }
 }

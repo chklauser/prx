@@ -107,6 +107,7 @@ namespace Prexonite.Compiler.Symbolic
         /// <summary>
         /// Provides access to all local declarations of a symbol store (symbols that were declared via <see cref="Declare"/>).
         /// </summary>
+        [NotNull]
         public abstract IEnumerable<KeyValuePair<string, Symbol>> LocalDeclarations { get; }
 
         //TODO (Ticket #108) Find a good place for the method CreateSymbolNotFoundError

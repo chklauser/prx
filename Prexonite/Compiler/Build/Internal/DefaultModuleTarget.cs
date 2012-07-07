@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.Linq;
 using JetBrains.Annotations;
 using Prexonite.Compiler.Symbolic;
@@ -7,6 +8,7 @@ using Prexonite.Modular;
 
 namespace Prexonite.Compiler.Build.Internal
 {
+    [DebuggerDisplay("Target({Name}) success={IsSuccessful}")]
     internal class DefaultModuleTarget : ITarget
     {
         [NotNull]
@@ -40,6 +42,9 @@ namespace Prexonite.Compiler.Build.Internal
 
         internal static ITarget _FromLoader(Loader loader, Exception exception = null, IEnumerable<Message> additionalMessages = null)
         {
+            if (loader == null)
+                throw new ArgumentNullException("loader");
+            Debug.Assert(loader.Symbols != null,"Loader.Symbols must not be null.");
             var exported = SymbolStore.Create();
             foreach (var decl in loader.Symbols.LocalDeclarations)
                 exported.Declare(decl.Key, decl.Value);

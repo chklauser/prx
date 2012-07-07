@@ -44,7 +44,7 @@ CHARACTERS
 	tab			        = '\t'.
 	colon               = ':'.
 	ws                  = " " + tab + '\u000b' + '\u000c'. /* Any character with Unicode class Zs */
-	letter		        = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnoprstuvwxyz\\_".
+	letter		        = "$ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnoprstuvwxyz\\_".
 	digit		        = "0123456789".
 	natDigit	        = digit - "0".
 	hexDigit	        = digit + "ABCDEFabcdef".
@@ -85,6 +85,7 @@ TOKENS
     string =
 	    "\""	{ regularStringChar
 				    | "\\\'" | "\\\"" | "\\\\" | "\\0" | "\\a" | "\\b" | "\\f" | "\\n" | "\\r" | "\\t" | "\\v"
+					| "\\$"
 				    | "\\x" hexDigit [hexDigit] [hexDigit] [hexDigit]
 				    | "\\u" hexDigit hexDigit hexDigit hexDigit
 				    | "\\UL" hexDigit hexDigit hexDigit hexDigit hexDigit hexDigit hexDigit hexDigit
@@ -148,6 +149,8 @@ Type<out PType value>           (.  string id;
 =
     [ "~" ]
     id                          (.  id = t.val; 
+									if(id.Length > 0 && id[0] == '$')
+										id = id.Substring(1);
                                     if(!_sctx.ParentEngine.PTypeRegistry.Contains(id))
                                     {
                                         SemErr("Cannot find PType " + id + " referenced in PTypeExpression.");

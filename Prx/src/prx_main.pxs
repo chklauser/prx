@@ -169,7 +169,7 @@ function prx\main(arguments)
             @"prx\interactive\app");
             
 	//Create the loader (the compiler) for this application
-	var options = new ::LoaderOptions(engine, app);
+	var options = new ::LoaderOptions(engine, app, null);
     options.StoreSourceInformation = debugging;
     
 	ldr = new ::Loader(options);

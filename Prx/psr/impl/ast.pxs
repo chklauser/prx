@@ -36,6 +36,17 @@ Import
     Prexonite::Compiler::Ast
 };
 
+function ast3\withPos(factory,type) [compiler]
+{
+	var args;
+	var targs = args >> skip(2);
+	
+	if(factory is null)
+		throw "AST factory cannot be null.";
+		
+	return call\member(factory,type, targs);
+}
+
 function ast\withPos(type, file, line, column) [is compiler;]
 {
     var args;

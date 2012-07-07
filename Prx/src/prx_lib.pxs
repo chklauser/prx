@@ -40,16 +40,17 @@ var supportsColors = (supportsColors ?? true)~Bool;
 //Run 'f' in a context where console output has the color 'color'.
 function runInDifferentColor(ref f, color)
 {
+	var r;
     if(supportsColors)
     {
     	var orig = ::Console.ForegroundColor;
     	::Console.ForegroundColor = color;
-    	var r = f();
+    	r = f();
     	::Console.ForegroundColor = orig;
     }
     else
     {
-        var r = f();   
+        r = f();   
     }
     return r;
 }
@@ -101,6 +102,7 @@ function showPrompt(q) does
 
 function report
 {
+	var r = null;
     foreach(var arg in var args)
     {
         if(arg is not Prexonite::Types::PValueKeyValuePair)
@@ -110,7 +112,7 @@ function report
         var act = arg.Value;
         
         print("$msg...");
-        var r = act.();
+        r = act.();
         println("done.");
     }
     return r;

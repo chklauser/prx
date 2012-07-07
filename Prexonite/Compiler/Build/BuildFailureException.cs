@@ -23,7 +23,7 @@ namespace Prexonite.Compiler.Build
                 if(message.Severity == MessageSeverity.Error)
                     e++;
             }
-            return String.Format(messageFormat, e, e == 1 ? "error" : "errors");
+            return String.Format(messageFormat, e, e == 1 ? "error" : "errors", e == 1 ? "was" : "were");
         }
 
         public BuildFailureException(ITargetDescription target, string messageFormat, IEnumerable<Message> messages) : base(_makeErrorMessage(messages, messageFormat),target)
@@ -35,6 +35,19 @@ namespace Prexonite.Compiler.Build
             : base(_makeErrorMessage(messages, messageFormat), target,inner)
         {
             _messages.AddRange(messages);
+        }
+
+        public override string ToString()
+        {
+            var b = new StringBuilder();
+            b.AppendLine(base.ToString());
+            b.Append(":: Prexonite messages:");
+            foreach (var message in Messages)
+            {
+                b.AppendLine();
+                b.Append(message);
+            }
+            return b.ToString();
         }
     }
 }

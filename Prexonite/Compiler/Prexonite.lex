@@ -104,10 +104,14 @@ Noise               = "/*" ~"*/" | "//" ~{LineBreak} | {WhiteSpace}+
      "var"  { return tok(Parser._var); }
      "ref"  { return tok(Parser._ref); }
      
-     {Identifier} "::" { string ns = yytext();
+     "$"	{Identifier} "::" { string ns = yytext();
+								return tok(Parser._ns, ns.Substring(1,ns.Length-3)); }
+	 
+	 {Identifier} "::" { string ns = yytext();
                          return tok(Parser._ns, ns.Substring(0, ns.Length-2)); }
                          
      //any identifier
+	 
      "$"    {Identifier} { return tok(Parser._id, yytext().Substring(1)); }
      "$\""               { buffer.Length = 0; PushState(String); return tok(Parser._anyId); }
      
