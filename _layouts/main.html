@@ -1,4 +1,4 @@
-<!doctype html>
+<!DOCTYPE html>
 <html>
   <head>
     <meta charset="utf-8">
@@ -39,7 +39,14 @@
       $(document).ready(function(){
         function addBrush(brush){
           return function(){
+            // .parent gets the entire stack of ancestors, 
+            // we're only interested in the immediate parent
             var parent = $(this).parent().get(0);
+            // Skip elements that have already been converted
+            if($(parent).is(".hihandled")){
+              return;
+            }
+            // Extend the pre element's class with "brush: $brush"
             $(parent).attr('class',function(){
               var lastClass = $(this).attr('class');
               if(typeof(lastClass) == 'undefined')
@@ -47,12 +54,15 @@
               else 
                 return lastClass + ' brush: ' + brush;
             });
+            // SyntaxHighlighter does not remove code elements, we have to do that
             $(parent).html($(this).html());
+            $(parent).addClass("hihandled");
           }
         }
-        $("code.pxs").each(addBrush("pxs"));
-        $("code.txt").each(addBrush("plain"));
-        $("code.plain").each(addBrush("plain"));
+        $("pre > code").each(addBrush("pxs"));
+        $("pre > code.pxs").each(addBrush("pxs"));
+        $("pre > code.txt").each(addBrush("plain"));
+        $("pre > code.plain").each(addBrush("plain"));
         
         SyntaxHighlighter.defaults.toolbar = false;
         SyntaxHighlighter.defaults.tabsize = 2;
