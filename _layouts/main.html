@@ -11,6 +11,18 @@
     <!--[if lt IE 9]>
     <script src="//html5shiv.googlecode.com/svn/trunk/html5.js"></script>
     <![endif]-->
+    
+    <script src="https://ajax.googleapis.com/ajax/libs/jquery/1.7.2/jquery.min.js"></script>
+    
+    {% comment %}
+    Include SyntaxHighlighter
+    {% endcomment %}
+    <link rel="stylesheet" href="stylesheets/highlighter/shCore.css" />
+    <link rel="stylesheet" href="stylesheets/highlighter/prexoniteTheme.css" />
+    <script src="javascripts/highlighter/XRegExp.js"></script>
+    <script src="javascripts/highlighter/shCore.js"></script>
+    <script src="javascripts/highlighter/shBrushPlain.js"></script>
+    <script src="javascripts/highlighter/brushPrexoniteScript.js"></script>
   </head>
   <body>
     <div class="wrapper">
@@ -23,7 +35,30 @@
       </footer>
       
     </div>
+    <script type="text/javascript">
+      $(document).ready(function(){
+        function addBrush(brush){
+          return function(){
+            var parent = $(this).parent().get(0);
+            $(parent).attr('class',function(){
+              var lastClass = $(this).attr('class');
+              if(typeof(lastClass) == 'undefined')
+                return 'brush: ' + brush;
+              else 
+                return lastClass + ' brush: ' + brush;
+            });
+            $(parent).html($(this).html());
+          }
+        }
+        $("code.pxs").each(addBrush("pxs"));
+        $("code.txt").each(addBrush("plain"));
+        $("code.plain").each(addBrush("plain"));
+        
+        SyntaxHighlighter.defaults.toolbar = false;
+        SyntaxHighlighter.defaults.tabsize = 2;
+        SyntaxHighlighter.highlight();
+      });
+    </script>
     <script src="javascripts/scale.fix.js"></script>
-    
   </body>
 </html>

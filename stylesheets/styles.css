@@ -1,15 +1,18 @@
-@import url(https://fonts.googleapis.com/css?family=Lato:300italic,700italic,300,700);
+@import url(http://fonts.googleapis.com/css?family=Lato:300italic,700italic,300,700|Inconsolata|Quantico:400,700);
 
 body {
   padding:50px;
   font:14px/1.5 Lato, "Helvetica Neue", Helvetica, Arial, sans-serif;
-  color:#777;
+  color:#000;
   font-weight:300;
 }
 
 h1, h2, h3, h4, h5, h6 {
-  color:#222;
-  margin:0 0 20px;
+  color:#000;
+  margin:0 0 20px;  
+  background-color: #FFE200;
+  font-family: Quantico, Consolas, mono;
+  padding: 0.2em 0.4em 0.2em 0.4em;
 }
 
 p, ul, ol, table, pre, dl {
@@ -21,11 +24,13 @@ h1, h2, h3 {
 }
 
 h1, h2 {
-  font-size:28px;
+  font-size:28px;  
 }
 
+/* FFE200, shades: E5CB00, BFA900, 7F7100, 403800 */
+
 h3 {
-  color:#393939;
+  color:#000;
   font-size:21px;
 }
 
@@ -34,17 +39,19 @@ h4, h5, h6 {
 }
 
 #footnotes {
-  border-top: solid #393939 1px;
+  border-top: solid #FFE200 7px;
   margin-top: 5px;
   margin-bottom: 5px;
 }
 
 #footnotes h3 {
-  font-size: 18px;
+  background: none;
+  font:18px/1.5 Lato, "Helvetica Neue", Helvetica, Arial, sans-serif;
+  margin-bottom:5px;
 }
 
 a {
-  color:#39c;
+  color:#BFA900;
   font-weight:400;
   text-decoration:none;
 }
@@ -69,7 +76,7 @@ blockquote {
 }
 
 code, pre {
-  font-family:Monaco, Bitstream Vera Sans Mono, Lucida Console, Terminal;
+  font-family: Inconsolata, Monaco, Bitstream Vera Sans Mono, Lucida Console, Terminal;
   color:#333;
   font-size:12px;
 }
