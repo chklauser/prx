@@ -77,14 +77,10 @@ function create_mutable_queue(lst)
     
     function GetEnumerator
     {
-        coroutine dq'ing_sequence
-        {
-            var z;
-            while(q.count > 0)
-                yield dequeue;
-        }
-        return dq'ing_sequence.GetEnumerator;
+        return q.GetEnumerator;
     }
+    
+    function snapshot = q;
     
     return struct;
 }
