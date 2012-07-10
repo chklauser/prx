@@ -125,7 +125,8 @@ namespace Prexonite
                 throw new ArgumentNullException("name");
             if (name.Length == 0)
                 throw new ArgumentException("name is expected to contain at least one character.");
-            Meta[Application.NameKey] = name;
+            _meta = new MetaTable();
+            _meta[Application.NameKey] = name;
         }
 
         #region IIndirectCall Members
