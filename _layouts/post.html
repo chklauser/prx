@@ -1,7 +1,8 @@
 ---
 layout: main
+slug: blog
 ---
-<section>
-<h2>{{ page.title }}</h2>
+<div class="low-top">
+  <span class="low-top ">Posted on  {{ page.date | date: "%Y-%m-%d" }} </span>
+</div>
 {{ content }}
-</section>

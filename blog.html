@@ -1,0 +1,28 @@
+---
+layout: page
+slug: blog
+title: Development Blog
+---
+{% assign posts = site.posts %}
+{% include post-listing.html %}
+
+<div class="next-prev-nav low-top push-6">
+  {% if paginator.previous_page %}
+    &laquo;&nbsp;<a href="{%if	paginator.previous_page == 1 %} /blog {% else %} /page{{ paginator.previous_page }} {% endif %}" 
+    rel="next" title="Previous Page">Previous Page</a>
+  {% endif %}
+
+  {% if paginator.previous_page %}
+    |&nbsp;
+  {% endif %}
+  <a href="/archives" title="Archives">Archives</a>
+  {% if paginator.next_page %}
+    &nbsp;|
+  {% endif %}
+  
+  
+  {% if paginator.next_page %}
+    <a href="/page{{ paginator.next_page }}" rel="previous" title="Next Page">Next Page</a>&nbsp;&raquo;
+  {% endif %}
+  <br />
+</div> 

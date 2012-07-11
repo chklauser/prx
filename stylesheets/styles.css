@@ -15,6 +15,12 @@ h1, h2, h3, h4, h5, h6 {
   padding: 0.2em 0.4em 0.2em 0.4em;
 }
 
+h1 a, h2 a, h3 a, h4 a, h5 a, h6 a {
+  font-family: Lato, "Helvetica Neue", Helvetica, Arial, sans-serif;
+  color:#000;
+  font-weight: 700;
+}
+
 p, ul, ol, table, pre, dl {
   margin:0 0 20px;
 }
@@ -29,13 +35,18 @@ h1, h2 {
 
 /* FFE200, shades: E5CB00, BFA900, 7F7100, 403800 */
 
-h3 {
+h3, article h1 {
   color:#000;
   font-size:21px;
 }
 
 h4, h5, h6 {
   color:#494949;
+}
+
+strong {
+  color:#000;
+  font-weight:700;
 }
 
 #footnotes {
@@ -119,16 +130,17 @@ header {
   position:fixed;
 }
 
-header ul {
+header ul, section > nav ul {
   list-style:none;
-  height:40px;
-  
+  height:40px;  
   padding:0;
-  
+}
+
+header ul {  
   width:270px;
 }
 
-header ul a {
+header ul a, section > nav ul a {
   line-height:1;
   font-size:11px;
   color:#222;
@@ -138,16 +150,15 @@ header ul a {
   height:40px;
 }
 
-strong {
-  color:#000;
-  font-weight:700;
+header ul li, section > nav ul li {
+  float:left;
+  height:40px;  
+  margin-right:7px;
+  margin-bottom:7px;
 }
 
-header ul li {
+header ul li{
   width:83px;
-  float:left;
-  height:40px;
-  margin-right:7px;
   background-color:#FFE200;
 }
 
@@ -161,16 +172,41 @@ header ul li + li + li {
   margin-right:0px;
 }
 
-header ul a strong {
+section > nav ul {
+	margin-bottom:10px;
+}
+
+section > nav ul li {
+	width: 94px;
+	background-color: #ccc;
+}
+
+section > nav ul.slug-home li.slug-home,
+section > nav ul.slug-blog li.slug-blog,
+section > nav ul.slug-docs li.slug-docs,
+section > nav ul.slug-releases li.slug-releases,
+section > nav ul.slug-author li.slug-author{
+	background-color: #ffe200;
+}
+
+section > nav ul li +li +li +li +li {
+	width: 94px;
+	margin-right:0px;
+}
+
+header ul a strong, section > nav ul a strong {
   font-size:14px;
   display:block;
   color:#222;
 }
 
-section {
-  width:500px;
-  float:right;
-  padding-bottom:50px;
+ section {
+  width:500px;  
+}
+
+ section {
+	padding-bottom:50px;
+	float:right;
 }
 
 small {
@@ -190,6 +226,11 @@ footer {
   position:fixed;
   bottom:50px;
   text-align:right;
+  display:block;
+}
+
+sup {
+	font-size: 9px;
 }
 
 @media print, screen and (max-width: 960px) {
@@ -199,44 +240,45 @@ footer {
     margin:0;
   }
   
-  header, section, footer {
-    float:none;
+  header, section, footer, section > nav {
     position:static;
     width:auto;
   }
   
-  header {
+  header, section, section > nav {
+    float:none;
+  }
+  
+  body div.wrapper header {
     padding-right:320px;
   }
   
-  section {
-    border:1px solid #e5e5e5;
-    border-width:1px 0;
+  body div.wrapper section {
     padding:20px 0;
     margin:0 0 20px;
   }
   
-  header a small {
+  body div.wrapper header a small {
     display:inline;
   }
   
-  header ul {
+  body div.wrapper header ul {
     position:absolute;
     right:50px;
-    top:52px;
+    top:59px;
   }
 }
 
 @media print, screen and (max-width: 720px) {
-  body {
+  body div.wrapper body {
     word-wrap:break-word;
   }
   
-  header {
+  body div.wrapper header {
     padding:0;
   }
   
-  header ul, header p.view {
+  body div.wrapper header ul, body div.wrapper header p.view {
     position:static;
   }
   
@@ -245,12 +287,24 @@ footer {
   }
 }
 
+@media print, screen and (max-width: 630px) {
+	body div.wrapper section, body div.wrapper header,body div.wrapper footer {
+		/*max-width:480px;*/
+	}
+	body div.wrapper section > nav {
+		height: 97px;
+	}
+}
+
 @media print, screen and (max-width: 480px) {
   body {
     padding:15px;
   }
+  body div.wrapper section,body div.wrapper header,body div.wrapper footer {
+	max-width:353px;
+  }
   
-  header ul {
+  body div.wrapper header ul {
     display:none;
   }
 }

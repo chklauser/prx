@@ -5,8 +5,8 @@
     <meta http-equiv="X-UA-Compatible" content="chrome=1">
     <title>Prexonite Script: {{ page.title }}</title>
 
-    <link rel="stylesheet" href="stylesheets/styles.css">
-    <link rel="stylesheet" href="stylesheets/pygment_trac.css">
+    <link rel="stylesheet" href="/stylesheets/styles.css">
+    <link rel="stylesheet" href="/stylesheets/pygment_trac.css">
     <meta name="viewport" content="width=device-width, initial-scale=1, user-scalable=no">
     <!--[if lt IE 9]>
     <script src="//html5shiv.googlecode.com/svn/trunk/html5.js"></script>
@@ -17,19 +17,23 @@
     {% comment %}
     Include SyntaxHighlighter
     {% endcomment %}
-    <link rel="stylesheet" href="stylesheets/highlighter/shCore.css" />
-    <link rel="stylesheet" href="stylesheets/highlighter/prexoniteTheme.css" />
-    <script src="javascripts/highlighter/XRegExp.js"></script>
-    <script src="javascripts/highlighter/shCore.js"></script>
-    <script src="javascripts/highlighter/shBrushPlain.js"></script>
-    <script src="javascripts/highlighter/brushPrexoniteScript.js"></script>
+    <link rel="stylesheet" href="/stylesheets/highlighter/shCore.css" />
+    <link rel="stylesheet" href="/stylesheets/highlighter/prexoniteTheme.css" />
+    <script src="/javascripts/highlighter/XRegExp.js"></script>
+    <script src="/javascripts/highlighter/shCore.js"></script>
+    <script src="/javascripts/highlighter/shBrushPlain.js"></script>
+    <script src="/javascripts/highlighter/brushPrexoniteScript.js"></script>
   </head>
   <body>
     <div class="wrapper">
       <header>
         {% include header.html %}
       </header>
+      <section>
+        {% include navigation.html %}
+        <h2>{{ page.title }}</h2>
         {{ content }}
+      </section>
       <footer>
         {% include footer.html %}
       </footer>
@@ -69,6 +73,6 @@
         SyntaxHighlighter.highlight();
       });
     </script>
-    <script src="javascripts/scale.fix.js"></script>
+    <script src="/javascripts/scale.fix.js"></script>
   </body>
 </html>
