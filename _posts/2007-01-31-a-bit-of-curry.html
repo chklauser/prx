@@ -1,0 +1,55 @@
+--- 
+meta: {}
+
+title: A bit of curry?
+published: true
+status: publish
+tags: 
+- Prexonite
+type: post
+layout: post
+---
+<p>I'm talking about <a href="http://en.wikipedia.org/wiki/Currying" title="Currying">Currying</a>, <em>&quot;the technique of transforming a <a href="http://en.wikipedia.org/wiki/Function_%28programming%29" title="Function (programming)">function</a> that takes multiple <a href="http://en.wikipedia.org/wiki/Parameter_%28computer_science%29" title="Parameter (computer science)">arguments</a> into a function that takes a single argument&hellip;&quot;</em></p>
+
+<p>With two recent additions to <strong>Prexonite (Script)</strong>, it has become very easy to implement <strong>higher-order functions</strong>, including <em>&quot;curry&quot;</em> and <em>&quot;uncurry&quot;</em>.
+With <em>&quot;additions&quot;</em> I'm referring to <strong>Closures</strong> as a virtual machine feature and <strong>Lambda Expressions</strong> as a Prexonite Script expansion. </p>
+
+<p>Something of the form <code>(a<sub>1</sub>, a<sub>2</sub>, a<sub>3</sub>, ... , a<sub>n</sub>) =&gt; expr </code>is an expression that is compiled into a separate function. 
+Instead of a value, such a construct returns a <strong>closure</strong>, an enhanced reference to that anonymous function, that acts like a normal function reference. </p>
+<p>It get's even better: As this so called <em>lambda expression </em>is defined inside another function, you can use local variables as if they were part of the expression. That's also the reason why this closure-thingy is returned instead of a normal function reference: It carries information about additional local variables available to the lambda expression.</p>
+
+<p>But now, let's get back to </p>
+<h3>Currying</h3>
+
+<pre><code>unction curry(ref f) = a =&gt; b =&gt; f(a,b);
+
+function uncurry(ref f) = (a, b) =&gt;
+{
+    ref bc = f(a);
+    return bc(b);
+};
+
+function map(ref f, lst)
+{
+    var nlst = new List;
+    foreach(var x in lst)
+        nlst.Add( f(x) );
+    return nlst;
+}</code></pre>
+
+<p>I admit that these functions are limited to a total number of two arguments.
+It's more a proof-of-concept, as it's very rare that you actually need something like this in an imperative language like Prexonite Script.</p>
+
+<p>One of my unit tests uses currying to <strong>partially apply</strong> an addition to a list of integers</p>
+<pre><code>map( curry( (x,y) =&gt; x + y ) , ~List.Create( 2, 3, 5 ))</code></pre>
+
+<p>In this case, <em>curry </em>returns a function that takes the one argument (<code>x</code>) and itself returns a function that takes the other argument (<code>y</code>) and returns <code>x + y</code>. 
+So the result of this expression can be written as:</p>
+
+<pre><code>var additions = ~List.Create( y =&gt; 2+y, y =&gt; 3+y, y =&gt; 5+y );</code></pre>
+
+<p>To finally get a list of integers again, you'll have to <strong>supply the missing y</strong>, either using a for (each) loop or by treating the list itself as a reference and passing one argument:</p>
+
+<pre><code>var results = additions(5);</code></pre>
+
+<p>The result is again a list. And no, this is not a case study. It's reality.  (I'm sorry, I'm just a bit like &quot;Closures! In my own programming language! Working!&quot;)</p>

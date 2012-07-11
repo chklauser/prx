@@ -1,0 +1,60 @@
+--- 
+meta: {}
+
+title: Prexonite as a web scripting language
+published: true
+status: publish
+tags: 
+- Prexonite
+type: post
+layout: post
+---
+<p>Like many other developers my age, I had my first programming experiences with PHP and scripting websites. From time to time, I'm drawn back to that world. This time, I built a proof-of-concept-quality infrastructure for using Prexonite Script as a web scripting language.</p>
+
+<h3>The Host</h3>
+<p>I built an HTTP application server (using the <code>HttpListener</code>) in C# that hosts the Prexonite Scripting Engine.  
+An apache webserver is used to forwards all requests to files that end in &quot;.pxs&quot (using mod_rewrite and mod_proxy) to that app server.
+The Prexonite host then compiles the requested file, executes it's main function and returns the output produced by the script to the web server/user.</p>
+
+<p>Capturing the output is done by replacing the standard <code>print</code> and <code>println</code> commands with custom ones that print to the response stream. 
+Additional commands provide access to <code>GET</code>, <code>POST</code> and cookie data.</p>
+
+<p>To make access to those parameters easier, I also created corresponding classes. They all implement the <code>IObject</code> interface to intercept object member calls from the script. This not only bypasses the (usually) slower late binding but also allows me to add some syntactic sugar*.</p>
+
+<h3>The Script</h3>
+
+<p>Prexonite web scripts work exactly like the ones for Prx.exe, except that they have access to a couple of additional commands.
+
+<pre><code>function main does println("Hello World");</code></pre>
+
+<p>I haven't written that many web scripts so far. One of them compiles all other scripts it finds, extracts their meta information and generates some sort of <em>meta data index file</em>.</p>
+
+<p>This file is then used by another script to display a &quot;table of contents&quot; with descriptions, extracted from the individual files.</p>
+
+<h3>Web Scripts </h3>
+
+<p>I was writing about syntactic sugar earlier. Here is what I meant:</p>
+<pre><code>
+//... taken out of a page that displays a form
+and expects the user to enter his/her name,
+so it could welcome him/her.
+if(Post.name != "")
+    //Post.IsDefined("name") is an alternative
+{      
+    print("Hello, " + Post.name +
+        "!<br />\n<a href=\"htmlform.pxs\">Back</a>");
+}
+else
+{
+    //Uses funcitons defined in a different file.
+    declare function form_begin, form_textfield, form_end;
+    //Display form
+    form_begin("Enter your name:", "htmlform.pxs");
+    form_textfield("Name","name");
+    form_end();
+}</code></pre>
+
+<p>The supplied <code>POST</code> variable is accessible through the Post command. Wait... commands that  allow for object member calls? No, the commands return an object that interprets calls to non-existant members as parameter names. This is possible by implementing the <code>IObject</code> interface in a type that is not already handled by a native Prexonite Type.</p>
+
+<img src="/res/prx-web-index1.gif" title="Prexonite Web index.pxs" alt="Prexonite Web index.pxs" border="0" />
+
