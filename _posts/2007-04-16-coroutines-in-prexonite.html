@@ -1,0 +1,135 @@
+--- 
+meta: {}
+
+title: Coroutines in Prexonite
+published: true
+status: publish
+tags: 
+- Prexonite
+type: post
+layout: post
+---
+<p>Like the title reads: The Prexonite Scripting language and the virtual machine now support <a href="http://en.wikipedia.org/wiki/Coroutine">coroutines</a>, routines with multiple entry points. They can be used to implement iterators, generators and infinite lists.</p>
+
+<pre><code>
+coroutine map(ref f, xs)
+{
+    foreach(var x in xs)
+        yield f(x);
+}</code></pre>
+
+<p>As coroutines exist in parallel to other routines, they cannot be called like normal functions. 
+The calling function needs a reference to an instantiation of a coroutine in order to pass on control.
+Calling <code>map</code> therefor just returns a coroutine reference and does not execute any code.  
+</p> 
+
+<pre><code>
+function main()
+{
+    var xs = ~List.Create(1, 2, 3);
+    var twice = map( x =&gt; 2*x, xs);
+    foreach(var t in twice)
+        println(t);
+}
+</code></pre>
+
+<p>The variable <code>twice</code> is not a list with modified elements but a reference to a call to <code>map</code> with the arguments <code>x =&gt; 2*x</code> (the mapping function) and <code>xs</code> (the list to operate on).
+No calculations have been performed so far.</p> 
+
+<p>The foreach loop exploits the fact that coroutines implement the <code>IEnumerable</code> interface.
+When the first element is needed, control gets passed over to the coroutine, which executes like any other function.
+At least until it hits the <code>yield</code> statement.
+At that point, a value is returned to the calling function which assigns this value to the iterator variable.</p> 
+
+<p>The magic starts when the next element is requested.
+Then, control is again passed to the coroutine but instead of starting at the beginning like normal functions, execution continues at the point where the routine has been left before, right after the <code>yield</code> statement.</p>
+
+<p>Instead of using the <code>foreach</code> pattern, you can also request results manually by &quot;calling&quot; the reference indirectly.</p> 
+
+<pre><code>
+function main2()
+{
+    var xs = ~List.Create(1, 2, 3);
+    var twice = map( x =&gt; 2*x, xs);
+    while(twice.IsValid)
+        println(twice.());
+}
+</code></pre>
+
+<p>The results are the same.</p>
+
+<h3>Inner workings</h3>
+<p>What you saw in the first sample is just syntactic sugar for the following:</p>
+
+<pre><code>
+function map(ref f, xs)
+{
+    function cor()
+    {
+        foreach(var x in xs)
+            yield f(x);
+    }
+    return coroutine -> cor;
+}</code></pre>
+
+<p>Here, the <code>coroutine</code> keyword is used to create a new instance of the local function <code>cor</code>.
+You can think of this line as &quot;calling the function but returning a reference to that <em>call</em> instead of executing code&quot;.
+</p>
+
+<p>You can pass anything to the <code>coroutine</code> construct as long as it can generate a <em>stack context</em> (implements <code>IStackAware</code>).
+You could even create coroutines from normal functions but they would not return a single result since they lack the <code>yield</code> statements.
+Values passed to <code>return</code> are not returned by coroutines.</p> 
+
+<p>It is also possible to use coroutines with parameters.
+You would have to pass the arguments when instantiating the coroutine.</p> 
+
+<pre><code>
+function map(ref f, xs)
+{
+    foreach(var x in xs)
+        yield f(x);  
+}
+
+function main()
+{
+    var xs = ~List.Create(1, 2, 3);
+    var twice = coroutine -> map for( x =&gt; 2*x, xs);
+    foreach(var t in twice)
+        println(t);
+}</code></pre>  
+
+<p>The last sample is a translation of the sample found in the <a href="http://en.wikipedia.org/wiki/Coroutine">wikipedia article about coroutines</a>.</p>
+
+<pre><code>
+declare function
+    produce\impl,
+    consume\impl,
+    create,
+    use;
+
+var q = new ~Queue;
+ref produce = coroutine produce\impl
+ref consume = coroutine consume\impl
+
+function produce\impl()
+{
+    while(Not q.IsFull)
+    {
+        var item = create();
+        q.Enqueue(item);
+        consume;
+    }
+}
+
+function consume\impl()
+{
+    while(Not q.IsEmpty)
+    {
+        var item = q.Dequeue();
+        use(item);
+        produce;
+    }
+}
+</code></pre>
+
+<p>But note that this would <strong>not</strong> work since it would a) run infinitely and b) result in a stack overflow in it's current implementation.</p>

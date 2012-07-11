@@ -1,0 +1,74 @@
+--- 
+meta: 
+  _edit_last: "1"
+title: Finally trying hard to catch exceptions
+published: true
+status: publish
+tags: 
+- Prexonite
+type: post
+layout: post
+summary: "Prexonite now comes with exception handling in the form of try-catch-finally blocks. Their implementation is a bit different from the ones in C#. An no, you cannot omit the braces this time. It looks just like C# exception handling except that you have to differentiate between different types of exceptions for yourself.The syntax for throwing exceptions is equally intuitive (from a C# programmers standpoint at least)."
+---
+<p>Prexonite now comes with exception handling in the form of try-catch-finally blocks. Their implementation is a bit different from the ones in C#.</p>
+
+<pre><code>Add System::IO to Imports;
+
+function main
+{
+    try
+    {
+        var sw = new StreamWriter("foo.txt");
+        sw.WriteLine("It worked!");
+    }
+    catch(var exc)
+    {
+        println(exc);
+    }
+    finally
+    {
+        dispose(sw);
+    }
+}</code></pre>
+
+<p>An no, you cannot omit the braces this time.
+It looks just like C# exception handling except that you have to differentiate between different types of exceptions for yourself.
+The syntax for throwing exceptions is equally intuitive (from a C# programmers standpoint at least).
+Just <code>throw</code> whatever you want.
+If it's not an exception, it's <code>ToString</code>-ed form will be used as the message.
+</p>
+
+<pre><code>
+declare function sum;
+function average(xs)
+{
+  if(xs is null or xs.Count == 0)
+    throw "average requires a list with at least one element.";
+  return sum(xs) / xs.Count;
+}
+</code></pre>
+
+<p>As I said in the beginning, my implementation differs from the C# one. For technical reasons, the <code>finally</code> block is executed <em>before</em> any catch blocks. At least currently. This might change with future versions.
+</p>
+<p>Always remember that C#'s implementation of exception handling is much more robust than the one in Prexonite because the CLR has more sophisticated means of protecting and ensuring the execution of the <code>finally</code> block than Prexonite has.
+If one evil command or object member throws away the complete stack, the VM has no chance to get it's hands on the required <code>finally</code> code.
+</p>
+
+<p>The current implementation does not prevent you from jumping out of the try block and therefor skipping the finally block. It is up to you.
+In addition to the <code>try-catch-finally</code> and the <code>throw</code> constructs, the <code>foreach</code> statement has been modified to ensure the disposal of the <code>IEnumerator</code>.
+</p>
+
+<p>Also I implemented the <code>using</code> pattern from C#.
+This one, on the other hand, works like expected.
+For performance reasons, the <code>dispose</code> command has been added to the standard collection.
+It calls <code>IDisposable.Dispose</code> on all arguments that explicitly support the interface.
+You don't even have to check for null.
+</p>
+
+<pre><code>Add System::IO to Imports;
+
+function main
+{
+    using(var sw = new StreamWriter("foo.txt")
+        sw.WriteLine("It worked!");
+}</code></pre>

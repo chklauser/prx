@@ -1,0 +1,58 @@
+--- 
+meta: {}
+
+title: Prexonite October07 Edition
+published: true
+status: publish
+tags: 
+- Prexonite
+type: post
+layout: post
+---
+<p>Yesterday I published a new version of Prexonite.
+It sort-of replaces the fourth beta preview I had planned to ship earlier.</p>
+
+<p>First, though, I have to disappoint you: There is not going to be anything like tab-completion in the near feature. 
+Prexonite fully supports Unicode and I couldn't find a tab-completion library that supports non-ASCII character encoding.  
+Although Prx.exe currently contains an experimental tab-completion solution, I refuse to enable it by default as long as it ignored my umlauts.</p>
+
+<p>Yet another disappointment is, that Prexonie October07 does not yet contain the collection of scripts I plan to include in the <strong>Prexonite Standard Repository</strong>, but I promise you, to release them in the next edition.</p>
+
+<blockquote>"Did you actually change <strong>anything</strong>?"</blockquote>
+
+<p>&hellip; you might be  wondering. In addition to the <a href="{{ post_url  2007-08-05-new-features-in-the-4th-beta-preview}}" title="Features in the 4th beta preview">features announced in the last post</a>, I have added/changed the following:</p>
+
+<h3>Improved local variable access</h3>
+<p>By addressing local variables using an index instead of looking up a name in a dictionary, the time required to access a local variable has measurably decreased.
+Specialized variants for all instructions dealing with local variables have been added.
+This is necessary because global code cannot take advantage of this feature.
+Also note that this optimization happens after the code has been emitted, so even assembler code takes advantage of the new access method.</p>
+
+<h3>Experimental 'data flow' operator</h3>
+<p>When chaining functions that manipulate lists, I often found myself tediously counting brackets as the expressions got more and more sophisticated.
+Brackets don't scale very well, so a different way of chaining functions had to be found.
+While an actual 'chain' operator, like those found in many functional programming languages, might have been the solution, I went a different way.</p>
+
+<p>I wanted pipe the result of one function into another function like it is done in shell scripts.
+Instead of overloading the '|' operator though, I went with '<code>&gt;&gt;</code>' and  '<code>&lt;&lt;</code>'.</p>
+
+<pre><code>
+function main =
+  ::Console.ReadLine~Int>> [1,5,7,1,5].Insert(3)&gt;&gt;
+    map(x => 2*x)&gt;&gt; where(x =&gt; x mod 3 == 0) &gt;&gt;
+      foldl((l,r)=&gt;l+r,"") &gt;&gt; println("[ ") &lt;&lt; "] "</code></pre>
+        
+<p>This sample reads an integer from stdin, inserts it after the third element in the list,  which is then restricted to numbers divisible by three.
+The result is then concatenated and printed.
+Although the compiler allows multiple arguments to be added in the way, functions still can only return one value.</p>
+
+<p>It might look like tuples are used but that's just a facade for plain vanilla arguments.</p>
+
+<h3>Misc.</h3>
+<p>Prexonite already contains some extensions, that were previously part of the Standard Repository.
+Most notably the debug command and a set of benchmarking classes.</p>
+
+<p>Also: Tomorrow I will hand in a paper I have been writing on for the past few months.
+<em>'Creating a programming language'</em> is a short overview over the concepts of the implementation of a programming language, from its design over the compiler to the runtime environment.</p>
+<p>As I cannot just print out the Prexonite source code (about 460 pages), the paper will point to the October07 release available from SealedSun.ch.
+If you think, the new additions are worth an update, look for the <code>October07</code> sources and binaries over on <a href="https://github.com/SealedSun/prx/downloads" />GitHub</a>.

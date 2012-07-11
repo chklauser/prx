@@ -1,0 +1,109 @@
+--- 
+meta: 
+  _edit_last: "1"
+title: New features in the 4th beta preview
+published: true
+status: publish
+tags: 
+- Prexonite
+type: post
+layout: post
+---
+<p>Hey, I have added a number of neat features to Prexonite and especially to Prexonite Script.</p>
+<h3>Conditional expressions </h3>
+
+<pre><code>function max(a,b) =
+    if(a> b)
+        a
+    else
+        b;
+</code></pre>
+
+<p>You can also use the 'traditional' <code>{cond} ? {expr} : {expr}</code> syntax but it won't be as easy to read.</p>
+
+<h3>Loop expressions</h3>
+
+<pre><code>
+function main()
+{
+    var xs = for(i = 0; i &lt; 100; i++)
+                yield i;
+    ;
+    var ys = foreach(var x in xs)
+                if(x mod 2 == 0)
+                    yield 2*x;
+    ;
+}</code></pre>
+
+<p>Loops can be used as expressions.
+Their 'value' is a list of all values 'returned' via the <em>yield </em>keyword.
+Although it may look like a coroutine, in reality a Prexonite list is returned and not a coroutine reference.
+</p>
+
+<h3>Coalescence operator</h3>
+<pre><code>
+function chapter(text ,title)
+{
+    title ??= "Chapter " + (counter++); 
+    println(title);
+    addTOCentry(title);
+    println(text ?? "Lorem Ipsum [...] ");
+}</code></pre>
+
+<p><code>??</code> behaves just like you are used to it: it returns the expression on it's left hand side unless that is null, in which case it returns it's right hand side.</p>
+
+<p>The  assignment operator <code>x ??= y</code>  is syntactic sugar for <code>x = x ?? y</code>, which in turn is translated into <code>x = x is Null ? y : x</code>.</p>
+
+<h3>Compiler hooks</h3>
+<p>Compiler hooks are functions that are called whenever the AST (abstract sytax tree) for a function has been created. 
+They can be used to transform the users code however they want. </p>
+
+<p>In the following sample, calls to the non-existant function 'debug' in if-blocks are replaced by the value of the meta key "debugging". 
+This way, the code generator can figure out, that the code inside the if-block can either always (if 'debugging enabled' is set) or never be reached and therefor remove the check or the whole block respecitively.
+</p>
+
+<pre><code>build does require = @"ast.pxs";       
+
+build does hook (t =>
+{   
+  var debugging = func.ParentApplication.Meta["debugging"]~Bool;
+         
+  function replace_debug(block)
+  {
+    foreach(var stmt in block)
+    {
+      //look for conditions
+      if( stmt is ::AstCondition 
+          &amp;&amp; isFunctionCall("debug", stmt.Condition))
+        stmt.Condition = ast("Constant", debugging);   
+     
+      //Recursively replace 'debug' in nested blocks.
+      if(stmt.\implements("Prexonite.Compiler.Ast.IAstHasBlocks"))
+        foreach(var subBlock in stmt.Blocks)
+          replace_debug(subBlock);
+    }
+  }
+  replace_debug(t.Ast);
+});
+
+declare function debug;
+
+debugging enabled;
+
+function main()
+{
+  if(debug)
+    println("Entering main function");
+  execute_program();
+  if(debug)
+    println("Leaving main function");
+}</code></pre>
+
+<p>In this case, the call to 'debug' would be removed and replaced by 'true'.
+Since that expression is constant, the contents of the if-block are directly inserted into the function.
+While this is a really powerful tool, it requires thorough knowledge of the AST API, which is not documented at all.
+</p>
+
+<p>Unlike the 'runtime' part of the Prexonite library, the lower level of the public compiler interface assumes it's user knows what he or she does.
+You can easily cripple the whole loader, if you are not careful!<strong>Tab completion</strong>The next release of the interactive interpreter features tab completion for globally declared symbols (functions, commands and global variables) as well as user defined strings (such as <code>ToString</code>).
+</p>
