@@ -1,0 +1,89 @@
+--- 
+meta: {}
+
+title: "Prexonite Today #2"
+published: true
+status: publish
+tags: 
+- Prexonite
+type: post
+layout: post
+summary: "In the last month I have not finished anything, but implemented a <strong>lot</strong>. Currently Prexonite is a working, 20'000-lines-of-code calculator library with support for subroutines. The virtual machine correctly interprets all available instructions except for static CLR calls. The application object model represents everything except parameter type constraints and commands. The Prexonite compiler recognizes only GetSet (function calls, variable assignments) and return statements; you can however write your code in Assembler if you need to."
+---
+<p>In the last month I have not finished anything, but implemented a <strong>lot</strong>.
+Currently Prexonite is a working, 20'000-lines-of-code calculator library with support for subroutines.
+The virtual machine correctly interprets all available instructions except for static CLR calls. 
+The application object model represents everything except parameter type constraints and commands. 
+The Prexonite compiler recognizes only GetSet (function calls, variable assignments) and return statements; you can however write your code in Assembler if you need to.
+</p>
+<p>
+My list of priorities looks like this:
+</p>
+<ol>
+  <li>Condition and loop statements</li>
+  <li>CLR static calls</li>
+  <li>Object creation</li>
+  <li>Commands</li>
+  <li>Initialize function (aka "global code")</li>
+  <li>Variable references</li>
+  <li>Function...
+    <ul>
+      <li>references</li>
+      <li>continuations</li>
+    </ul>
+  </li>
+  <li>Build block</li>
+  <li>Embedded functions</li>
+  <li>Inline functions</li>
+  <li>Coroutines<sup><a href="#f1">1</a></li>
+  <li>Futuristic stuff:
+    <ul>
+      <li>Subcoroutines</li>
+      <li>Compiler optimizations</li>
+      <li>Function inlineing</li>
+    </ul>
+  </li>
+</ol>
+<p>
+I'm also a bit stuck with the syntax of static CLR calls and object creation. The full syntax would looks as follows: </p>
+
+<pre><code>var obj = new Object(&quot;System.Text.StringBuilder&quot;);</code></pre>
+
+<p>Now this, of course, is not very intuitive and I would prefer the use of the static member operator &quot;<code>::</code>&quot;</p>
+
+<pre><code>var obj = new System::Text::StringBuilder;</code></pre>
+
+<p>But while this sample is unambiguous, something like </p>
+
+<pre><code>var obj = new String;</code></pre>
+
+<p>is not. 
+The simple solution is using a prefix to determine which environment to use and I would say "<code>::</code>" fits best:
+</p>
+
+<pre><code>var obj = new::String;</code></pre>
+
+<p>You can also put a space between &quot;new&quot; and &quot;::&quot; if you like (Prexonite is a freeform language).
+The syntax for static calls would be similar:</p>
+
+<pre><code>//String = PType.String
+~String.Escape(someValue);
+//String = System.String
+::String.Format(someFormat, someValue);
+System::Text::Encoding::UTF8.GetBytes(&quot;Hello&quot;);</code></pre>
+
+<p>If the call starts with an imported namespace (&quot;System&quot; is imported by default), the call will be targeted at the CLR.
+</p>
+<div id="footnotes">
+  <h3>Footnotes</h3>
+  <ol>
+    <li><p>      
+      <a name="f1">&nbsp;</a><strong>Coroutines:</strong> I'm not sure if you have to explicitly declare a function to behave like a coroutine or not.
+      As the generated code is identical only the instantiation, the stack context, would differ. 
+      Not having to declare coroutines as such would make the syntax and the programmers job a whole lot easier.
+      The architecture would allow me to treat FunctionContexts (the StackContext for functions) like continuations and function references at the same time and therefor act as an implementation of coroutines
+      </p>
+    </li>
+  </ol>
+</div>
+

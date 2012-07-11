@@ -1,0 +1,76 @@
+--- 
+meta: {}
+
+title: The Philosophy behind:"GetSet"
+published: true
+status: publish
+tags: 
+- Prexonite
+type: post
+layout: post
+summary: "This time I am talking about a generalization in the Prexonite Script compiler that handles the usage of symbols in expressions and statements.<em>&quot;There must be a way to unify variable access with function and object member calls&quot;</em>...is what I thought.  As a result the Prexonite Script syntax can treat functions like variables and vice-versa. I decided that there are two fundamental ways of interacting with a symbol: <strong>get</strong>ting a value and <strong>set</strong>ting a value."
+---
+<p>
+<em>This is the first article in the "Philosophy behind"-series, picking up a specialty of one of my projects and explaining how it came to be made.</em>
+</p>
+<p>This time I am talking about a generalization in the Prexonite Script compiler that handles the usage of symbols in expressions and statements.
+</p>
+<blockquote><em>"There must be a way to unify variable access with function and object member calls"</em></blockquote>
+<p>...is what I thought.  As a result the Prexonite Script syntax can treat functions like variables and vice-versa. I decided that there are two fundamental ways of interacting with a symbol: <strong>get</strong>ting a value and <strong>set</strong>ting a value.
+</p>
+
+<p>So when you are assigning to a variable, you are writing a <em>set</em>-call to that variable. 
+When you want to retrieve a value from a variable, you write a <em>get</em>-call to that variable.
+Same for object member fields and properties.
+Functions and object member methods however do not make a difference between <em>get- </em>and <em>set</em>-calls, both are legal.
+The compiler treats <em>get </em>and <em>set</em>-calls to any symbol the exactly same way, except for a small <em>GetOrSet </em>flag.
+It is therefore also perfectly legal to pass an argument to a function by "assigning it to the function".
+This may sound strange but allows for very natural function names:
+</p>
+
+<pre><code>function property(value = null) =&gt;
+{
+	static \property;
+	if(value == null) 
+		return \property;
+	else 
+		\property = value;
+}
+function main
+{
+	property = 5; //instead of &quot;property(5);&quot;
+	print(property);
+}</code></pre>
+
+<p>In other languages, like PHP or Java, you would have to use <em>getProperty </em>and <em>setProperty</em>. Let's have a look at another example:</p>
+
+<pre><code>function createText(author, msg) does
+	return author + &quot;: &quot; + msg;
+function SealedSun does
+	return &quot;SealedSun&quot;;
+var message = &quot;My flat is too small.&quot;;
+var texts = new List(createText(SealedSun, message));
+texts.Add = createText(SealedSun, &quot;I am lying&quot;); </code></pre>
+
+<p>The first four lines are just (nested) function definitions.
+I am going to talk about the following two statements, both variable definitions (declaration and assignment), and the last statement, an object member access.
+In this little snippet we have four symbols:
+</p>
+<ul>
+  <li>function <code>createText</code></li>
+  <li>function <code>SealedSun</code></li>
+  <li>variable <code>message</code></li>
+  <li>variable <code>texts</code></li>
+</ul>
+
+<p>Variable assignments are <em>set</em>-calls (because of the assignment operator "<code>=</code>")
+In the right hand side of the second assignment you find the symbol references <code>SealedSun</code> and <code>message</code>.
+Both are turned into <code>get</code>-calls because there is no assignment operator around.
+And no, Prexonite Script does not require you to add <code>()</code>, the empty argument list, to a function call.</p>
+
+<p>
+The last statement is a object member access.
+Here you can see how the GetSet philosophy can be exploited.
+While the .NET interop layer uses GetSet information to determine the correct method when accessing properties, it ignores that information for conventional methods.
+You are free to choose your preferred syntax construct.
+</p>

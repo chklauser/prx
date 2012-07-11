@@ -1,0 +1,83 @@
+--- 
+meta: {}
+
+title: "\"Reference-To\"Logic"
+published: true
+status: publish
+tags: 
+- Prexonite
+- Programming
+type: post
+layout: post
+summary: "One of the reasons I never liked  C/++ is it's illogical pointer syntax. The star turns the type <em>integer </em>into a <em>pointer-to-integer</em>.The second one is a bit confusing. To the readers (at least mine) eye it looks like the star belongs to the identifier, modifying it somehow. Ok, it's just the result of C/++ being a freeform language so let's go on.The star turns any data type T into a pointer-to-T. So the same must be true for values; turning values into pointers to those values, right? Bad luck. The inventor of C chose to use a different symbol for returning the address of a value. Fine with me, as long as the star has no other appearances in the indirection business."
+---
+<p>
+One of the reasons I never liked  C/++ is it's illogical pointer syntax.
+</p>
+
+<pre><code>int v0=5,v1=6;int* p0;
+int *p1;
+p0 = &amp;v0;
+*p0 = v1;</code></pre>
+
+<p>
+The first pointer declaration is ok: The star turns the type <em>integer </em>into a <em>pointer-to-integer</em>.The second one is a bit confusing. To the readers (at least mine) eye it looks like the star belongs to the identifier, modifying it somehow.
+Ok, it's just the result of C/++ being a freeform language so let's go on.
+The star turns any data type T into a pointer-to-T.
+So the same must be true for values; turning values into pointers to those values, right? Bad luck.
+The inventor of C chose to use a different symbol for returning the address of a value.
+Fine with me, as long as the star has no other appearances in the indirection business.
+</p>
+<p>
+But now it comes, the ultimate anti-logic: The star acts as the dereferencing operator, the exact opposite of it's meaning in declarations.
+The fact that the star usually appears near the identifier and thus looks identical to an indirect access to it's target in expressions does not make learning C/++ easier.
+Why am I telling you this? When defining the Prexonite Script syntax, I had to decide how to represent references. 
+</p>
+<p>
+I figured that a reference is "something that points at something else".If we assume that <em>something </em>and <em>something else</em> are variables, a more general statement might be <code>variable#1</code> that points at <code>variable#2</code>. Now let's replace the "that" with an assignment operator and we end up with the unary prefix operator "points to" and I hope you agree with me that there is no better way to represent "points to" than with an arrow, pointing at the right hand side. So in the end, we have the this syntax 
+</p>
+
+<pre><code>var v0 = 5;
+ref f0 = f(x) =&gt; print(x);
+ref r0 = -&gt;v0;
+print(r0);
+ref r1;
+-&gt;r1 = -&gt;f0;
+r1 = f0; //syntactically correct
+r0 = -&gt;f0;
+//Experimental:
+r1 -&gt; f0;</code></pre>
+
+<p>
+The first two lines are easy: <code>var v0 = 5;</code> declares and initializes a (data) variable and <code>ref f0 = f() =&gt; print(v0);</code> declares and initializes a reference variable (a function reference, actually) with an anonymous function. 
+Following those is the declaration and initialization of a (data) reference variable <code>r0</code> initialized with a reference to v0 as well as a command call <code>print(r0);</code>.
+</p>
+
+<p>
+Now, you may wonder why I am passing the <code>reference to v0</code> to a command call. 
+The reason is that <strong>Prexonite Script automatically dereferences every reference variable</strong>, so you can use it as if it was a normal function. 
+I could have written <code>f0(r0);</code> instead of <code>print(v0);</code>. I'll write a post about the philosophy behind auto-dereferencing.
+</p>
+
+<p>The sixth line <code>(-&gt;r1 = -&gt;f0;)</code> looks a bit more complicated but you already know the reference operator, the unary prefix <code>-&gt;</code>. 
+You have to use the reference operator on the left hand side because you don't want to assign to the target of <code>r1</code> (your reference) but to the reference itself. 
+Similar reason for the operator on the right hand side: You want to assign "the thing behind" <code>f0</code> and not the result of calling <code>f0</code> (or the function behind).
+</p>
+<p>
+Let's look at the seventh statement (<code>r1 = f0;</code>), which is syntactically correct but will not do anything at runtime. 
+The compiler will translate this into a indirect "set"-call to the function referenced by <code>r1</code> with one argument, the result of a "get"-call to the function referenced by <code>f0</code>. 
+Now since we haven't assigned any function to <code>r1</code>, this line will just do nothing (note that <code>f0</code> still get's evaluated).
+</p>
+<p>
+If you want to assign the target of <code>f0</code> to <code>r1</code> and not the result of a call to <code>f0</code>, again you have to use the reference operator on both the left and the right hand side.
+You could read this line as "the thing <code>r0</code> is pointing to is the thing <code>f0</code> is pointing to".
+The next line (<code>r0 = -&gt;f0;</code>) actually uses indirection. 
+Remember that <code>r0</code> points to the variable <code>v0</code>. 
+So every call to <code>r0</code> is being forwarded to <code>v0</code>. 
+What this statement does, is assigning the reference to <code>f0</code> (which is the function behind <code>f0</code>) to <code>v0</code> (the target of <code>r0</code>).
+</p>
+<p>
+The last line, finally, (<code>r1 -&gt; f0;</code>) is an experimental syntactic sugar for <code>-&gt;r1 = -&gt;f0</code>.
+Please note that <code>-&gt;</code> cannot be applied to any expression but only to known symbols, so <code>var x = -&gt;(1 + 1)</code> will not be recognized. 
+We could talk about dynamic dereferencing à la <code>var x = -&gt;(&quot;f0&quot;)</code> but as most of the symbols get thrown away at the end of the build process, this would not make much sense.
+</p>

@@ -1,0 +1,74 @@
+--- 
+meta: {}
+
+title: "The Philosophy behind: Auto-Dereferencing"
+published: true
+status: publish
+tags: 
+- Prexonite
+type: post
+layout: post
+---
+<p>
+<em>This is the second article in the "Philosophy behind"-series, picking up a specialty of one of my projects and explaining how it came to be made. Last time I wrote about the <a href="{{post_url 2006-11-30-the-philosophie-begin-getset}}" title="The Philosophy behind: GetSet">"GetSet"</a> concept in Prexonite Script</em></p>
+
+<p>One major element in the design of Prexonite Script is the use of functions as first-class objects. 
+It should be possible to write snippets like the following:</p>
+
+<pre><code>function Filter(list, ref predicate)
+{
+	var newList = new List;
+	foreach(var elem in list)
+	{
+		if(predicate(elem))
+			newList.Add(elem);
+	} 
+	return newList;
+}</code></pre>
+
+<p>This piece of code defines a <a href="http://en.wikipedia.org/wiki/Higher_order_function" title="Higher-order function">higher-order function</a> <em>Filter </em>that creates a copy of a given input list only containing those elements that cause a given predicate (a function) to return true. 
+Notice the <strong><code>ref</code></strong>keyword in the definition of the formal arguments and the fact that <strong>predicate</strong> is used in the code as if it was an actual function.
+What exactly happens here? It can be explained in two ways: the official one and the real one.</p>
+
+<h3>Official explanation</h3>
+<p>The variable predicate contains a reference to a function object.
+Upon usage of the name, this reference is being dereferenced; the function is being called.
+This only happens if you explicitly declare a variable to contain a function reference since Prexonite Script is still dynamically typed.
+Should the variable contain anything else but a function reference, an exception is thrown.
+If you want to work with the stored function reference itself, you'll have to use the referencing operator.</p>
+
+<h3>Real explanation</h3>
+<p>In the Prexonite Compiler compiler every name has an interpretation.
+Names with the LocalObjectVariable-flag are treated like normal, local variables, ones with the Function-flag like functions.</p>
+<p>
+If you declare a local variable with the function keyword, you change its interpretation-flag to LocalFunctionVariable, the compiler will emit different instructions when encountering that name.
+More specifically: It emits code that loads the stored function and calls it with the given arguments.
+So in practice, such code might throw a NullReferenceException if the variable contains null or a PrexoniteException if the object stored in the variable does not react to a "IndirectCall"-call. </p>
+<p>
+There is no explicit checking whether the variable's content is valid or not which on one hand might lead to run-time errors but on the other hand allows for more flexible use of <a href="http://en.wikipedia.org/wiki/DuckTyping" title="Wikipedia: DuckTyping">DuckTyping</a>*.</p>
+<p>
+To the Prexonite virtual machine there is no difference between a function and  a conventional variable as the concepts of Auto-Dereferencing and identifier interpretations are limited to the compiler.
+This can lead to a problem when writing against a library that has already been compiled and therefore lost all interpretation-flags.
+</p>
+
+<h3>The motivation</h3>
+<p>My idea was that if a programmer knows that a variable will contain a function reference and plans to call this function why should he have to deal with <strong>how </strong>to call a function given by a reference.
+Assuming that names have meaningful names, the programmer does not need to know how functions are implemented but only what they do.
+</p>
+<p>
+This way you can separate implementation from usage without having the programmer to worry about.
+Those names still work just like every other function.
+</p>
+
+<h3>Possible uses of DuckTyping by Prexonite itself</h3>
+<p>Instead of limiting function variables to just PFunction objects, I chose to expand the pattern so it can be applied to other kinds of objects too.
+</p>
+
+<ul>
+  <li>Coroutine instances (a requirement actually)</li>
+  <li>Inline functions</li>
+  <li>CLR delegates?</li>
+</ul>
+
+<p>Actually coroutine instances are closures with additional return value management and IEnumerable-behaviour.</p>
+
