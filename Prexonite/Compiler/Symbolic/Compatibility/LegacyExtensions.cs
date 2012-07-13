@@ -61,12 +61,12 @@ namespace Prexonite.Compiler.Symbolic.Compatibility
                 throw new SymbolConversionException("Cannot convert a macro instance symbol to a legacy SymbolEntry.", symbol);
             }
         }
-        private static readonly SymbolEntryConversion ConvertSymbol = new SymbolEntryConversion();
+        private static readonly SymbolEntryConversion _convertSymbol = new SymbolEntryConversion();
 
 
         public static SymbolEntry ToSymbolEntry(this Symbol symbol)
         {
-            return symbol.HandleWith(ConvertSymbol, null);
+            return symbol.HandleWith(_convertSymbol, null);
         }
 
         public static Symbol ToSymbol(this SymbolEntry entry)

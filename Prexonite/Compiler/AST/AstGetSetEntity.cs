@@ -50,6 +50,7 @@ namespace Prexonite.Compiler.Ast
 
         public static AstGetSet Create(ISourcePosition position, PCall call, EntityRef entity)
         {
+            
             return new AstGetSetEntity(position,call,entity);
         }
 
@@ -173,7 +174,9 @@ namespace Prexonite.Compiler.Ast
 
         public override AstGetSet GetCopy()
         {
-            return Create(Position, Call, Entity);
+            var e = Create(Position, Call, Entity);
+            CopyBaseMembers(e);
+            return e;
         }
 
         ICollection<AstExpr> ICanBeReferenced.Arguments

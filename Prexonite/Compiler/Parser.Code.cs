@@ -975,7 +975,23 @@ namespace Prexonite.Compiler
         {
             public AstGetSet HandleEntity(EntitySymbol symbol, Tuple<Parser, PCall> argument)
             {
-                var access = AstGetSetEntity.Create(argument.Item1.GetPosition(), argument.Item2, symbol.Entity);
+                EntityRef.Function funcRef;
+                PFunction func;
+                AstGetSet access;
+                EntityRef.MacroCommand mcmd;
+                if (symbol.Entity.TryGetFunction(out funcRef)
+                    && argument.Item1.TargetApplication.TryGetFunction(funcRef.Id, funcRef.ModuleName, out func)
+                    && func.IsMacro 
+                    || symbol.Entity.TryGetMacroCommand(out mcmd))
+                {
+                    access = new AstMacroInvocation(argument.Item1,symbol.Entity.ToSymbolEntry());
+                }
+                else
+                {
+                    access = AstGetSetEntity.Create(argument.Item1.GetPosition(), argument.Item2, symbol.Entity);
+                }
+
+                // Wrap in indirect call if necessary
                 if (symbol.IsDereferenced)
                 {
                     return AstIndirectCall.Create(argument.Item1.GetPosition(), access);

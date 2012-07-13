@@ -333,21 +333,21 @@ macro tempfree(getContext, tempId)
 //Create node type check functions (to separate macro implementations from the CLR ast node types).
 function macro\_expand_into_function(ldr, id, body)[compiler]
 {
-    //create function meta data
+    //create function meta data and compiler target
     var node_arg = "node_arg";
     var func = ldr.ParentApplication.CreateFunction(id);
     func.Parameters.Add(node_arg);
-    func.Meta["compiler"] = true;
+    func.Meta["compiler"] = true;    
+    var target = ldr.CreateFunctionTarget(func,null,null);    
     
     //create function body {return <body>(node_arg, <args...>);}
-    var block = new Prexonite::Compiler::Ast::AstBlock("macro.pxs\\derived",-1,-1);
+    var block = target.Ast;
     block.Add(var ret = ast("Return",Prexonite::Compiler::Ast::ReturnVariant.Exit));
     ret.Expression = var bodyMi = ast("MacroInvocation", body);
     bodyMi.Arguments.Add(ast("GetSetSymbol",SI.get,SI.lvar(node_arg)));
     bodyMi.Arguments.AddRange(var args >> skip(3));
     
     //Have the body compiled
-    var target = ldr.CreateFunctionTarget(func,block);
     try {
         target.Ast.EmitCode(target, true, Prexonite::Compiler::Ast::StackSemantics.Effect);
         target.FinishTarget();
