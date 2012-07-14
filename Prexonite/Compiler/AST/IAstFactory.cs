@@ -32,8 +32,8 @@ namespace Prexonite.Compiler.Ast
 {
     public interface IAstFactory
     {
-        AstTypeExpr ConstantTypeExpression(ISourcePosition position, string typeExpression);
-        AstTypeExpr DynamicTypeExpression(ISourcePosition position, string typeId, IEnumerable<AstExpr> arguments);
+        AstTypeExpr ConstantType(ISourcePosition position, string typeExpression);
+        AstTypeExpr DynamicType(ISourcePosition position, string typeId, IEnumerable<AstExpr> arguments);
 
         AstExpr BinaryOperation(ISourcePosition position, AstExpr left, BinaryOperator op, AstExpr right);
         AstExpr UnaryOperation(ISourcePosition position, UnaryOperator op, AstExpr operand);
@@ -49,7 +49,7 @@ namespace Prexonite.Compiler.Ast
         AstExpr LogicalAnd(ISourcePosition position, IEnumerable<AstExpr> clauses);
         AstExpr LogicalOr(ISourcePosition position, IEnumerable<AstExpr> clauses);
         AstExpr Null(ISourcePosition position);
-        AstExpr ObjectCreation(ISourcePosition position, AstTypeExpr type);
+        AstObjectCreation CreateObject(ISourcePosition position, AstTypeExpr type);
         AstExpr Typecheck(ISourcePosition position, AstExpr operand, AstTypeExpr type);
         AstExpr Typecast(ISourcePosition position, AstExpr operand, AstTypeExpr type);
 
@@ -66,14 +66,13 @@ namespace Prexonite.Compiler.Ast
         AstScopedBlock Block(ISourcePosition position);
         AstCondition Condition(ISourcePosition position, AstExpr condition, bool isNegative = false);
 
-        AstLoop WhileLoop(ISourcePosition position, bool isPostcondition = false, bool isNegative = false);
+        AstWhileLoop WhileLoop(ISourcePosition position, bool isPostcondition = false, bool isNegative = false);
 
         AstForLoop ForLoop(ISourcePosition position);
 
         AstForeachLoop ForeachLoop(ISourcePosition position);
 
-        AstNode Return(ISourcePosition position, ReturnVariant returnVariant = ReturnVariant.Exit,
-                       AstExpr expression = null);
+        AstNode Return(ISourcePosition position, AstExpr expression = null, ReturnVariant returnVariant = ReturnVariant.Exit);
 
         AstNode Throw(ISourcePosition position, AstExpr exceptionExpression);
 

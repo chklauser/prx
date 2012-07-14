@@ -85,6 +85,12 @@ namespace Prexonite
                 collection.Add(item);
         }
 
+        /// <summary>
+        /// Constructs a human-readable enumeration of the form "x<sub>1</sub>, x<sub>2</sub>, x<sub>3</sub>, …, x<sub>n-2</sub>, x<sub>n-1</sub>, and x<sub>n</sub>".
+        /// </summary>
+        /// <typeparam name="T">Any type that supports <see cref="Object.ToString"/>.</typeparam>
+        /// <param name="source">The enumeration to convert to a string.</param>
+        /// <returns>A human-readbale string.</returns>
         public static string ToEnumerationString<T>(this IEnumerable<T> source)
         {
             Contract.Requires(source != null, "source must not be null.");
@@ -118,6 +124,31 @@ namespace Prexonite
             {
                 return hold;
             }
+        }
+
+        /// <summary>
+        /// Constructs a machine-readable, comma-separated list. ("x<sub>1</sub>, x<sub>2</sub>, …, x<sub>n</sub>").
+        /// </summary>
+        /// <typeparam name="T">Any type that supports <see cref="Object.ToString"/>.</typeparam>
+        /// <param name="source">The enumeration to convert to a string.</param>
+        /// <returns>A human-readbale string. The empty string iff <paramref name="source"/> was empty.</returns>
+        public static string ToListString<T>(this IEnumerable<T> source)
+        {
+            var s = new StringBuilder();
+            var hasStarted = false;
+            foreach (var x in source)
+            {
+                if(hasStarted)
+                {
+                    s.Append(", ");
+                }
+                else
+                {
+                    hasStarted = true;
+                }
+                s.Append(x);
+            }
+            return s.ToString();
         }
 
         public static void MapInPlace<T>(this List<T> source, Func<T, T> func)

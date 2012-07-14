@@ -146,6 +146,7 @@
     <Compile Include="Commands\PCommandInfo.cs" />
     <Compile Include="Compiler\Ast\AstExpr.cs" />
     <Compile Include="Compiler\Ast\AstFactoryBase.cs" />
+    <Compile Include="Compiler\Ast\AstFactoryBridge.cs" />
     <Compile Include="Compiler\Ast\AstGetSetEntity.cs" />
     <Compile Include="Compiler\Ast\AstLoopBlock.cs" />
     <Compile Include="Compiler\Ast\AstReferenceToEntity.cs" />

@@ -85,3 +85,10 @@ Desktop.ini
 
 # Ignore merge by-products
 *.orig
+
+# Ignore unused scanner/parser output (all files that the project actually uses are under version control)
+Prexonite/Compiler/Scanner.cs
+Prexonite/Parser.cs
+Prexonite/Parser.cs.old
+Prexonite/Scanner.cs
+Prexonite/Scanner.cs.old

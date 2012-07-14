@@ -1,22 +1,28 @@
 using System.Collections.Generic;
+using JetBrains.Annotations;
 using Prexonite.Modular;
 using Prexonite.Types;
 
 namespace Prexonite.Compiler.Ast
 {
-    public abstract class AstFactoryBase : IAstFactory
+    public abstract class AstFactoryBase : IAstFactory, IIndirectCall, IObject
     {
+        protected AstFactoryBase()
+        {
+            _bridge = new AstFactoryBridge(this);
+        }
+
         // TODO: (Ticket #106) TryUseSymbolEntry and NullNode should not be defined on AstFactoryBase
         protected abstract AstBlock CurrentBlock { get; }
         protected abstract bool TryUseSymbolEntry(string symbolicId, ISourcePosition position, out SymbolEntry entry);
         protected abstract AstGetSet CreateNullNode(ISourcePosition position);
 
-        public AstTypeExpr ConstantTypeExpression(ISourcePosition position, string typeExpression)
+        public AstTypeExpr ConstantType(ISourcePosition position, string typeExpression)
         {
             return new AstConstantTypeExpression(position.File, position.Line, position.Column, typeExpression);
         }
 
-        public AstTypeExpr DynamicTypeExpression(ISourcePosition position, string typeId, IEnumerable<AstExpr> arguments)
+        public AstTypeExpr DynamicType(ISourcePosition position, string typeId, IEnumerable<AstExpr> arguments)
         {
             var t = new AstDynamicTypeExpression(position.File, position.Line,position.Column, typeId);
             t.Arguments.AddRange(arguments);
@@ -147,7 +153,7 @@ namespace Prexonite.Compiler.Ast
             return new AstNull(position.File, position.Line, position.Column);
         }
 
-        public AstExpr ObjectCreation(ISourcePosition position, AstTypeExpr type)
+        public AstObjectCreation CreateObject(ISourcePosition position, AstTypeExpr type)
         {
             return new AstObjectCreation(position.File, position.Line, position.Column, type);
         }
@@ -197,9 +203,10 @@ namespace Prexonite.Compiler.Ast
             return new AstCondition(position, CurrentBlock, condition, isNegative);
         }
 
-        public AstLoop WhileLoop(ISourcePosition position, bool isPostcondition = false, bool isNegative = false)
+        public AstWhileLoop WhileLoop(ISourcePosition position, bool isPostcondition = false, bool isNegative = false)
         {
-            return new AstWhileLoop(position,CurrentBlock, isPostcondition,!isNegative);
+            var loop = new AstWhileLoop(position, CurrentBlock, isPostcondition, !isNegative);
+            return loop;
         }
 
         public AstForLoop ForLoop(ISourcePosition position)
@@ -212,7 +219,7 @@ namespace Prexonite.Compiler.Ast
             return new AstForeachLoop(position, CurrentBlock);
         }
 
-        public AstNode Return(ISourcePosition position, ReturnVariant returnVariant = ReturnVariant.Exit, AstExpr expression = null)
+        public AstNode Return(ISourcePosition position, AstExpr expression = null, ReturnVariant returnVariant = ReturnVariant.Exit)
         {
             return new AstReturn(position.File, position.Line, position.Column, returnVariant) {Expression = expression};
         }
@@ -236,5 +243,30 @@ namespace Prexonite.Compiler.Ast
         {
             throw new PrexoniteException(string.Format("Lazy logical operators require at least two operands. {0}", position));
         }
+
+        #region IIndirectCall, IObject
+
+        #region Implementation of IIndirectCall
+
+        [NotNull]
+        private readonly AstFactoryBridge _bridge;
+
+        public PValue IndirectCall(StackContext sctx, PValue[] args)
+        {
+            return _bridge.IndirectCall(sctx, args);
+        }
+
+        #endregion
+
+        #region Implementation of IObject
+
+        public bool TryDynamicCall(StackContext sctx, PValue[] args, PCall call, string id, out PValue result)
+        {
+            return _bridge.TryDynamicCall(sctx, args, call, id, out result);
+        }
+
+        #endregion
+
+        #endregion
     }
 }
