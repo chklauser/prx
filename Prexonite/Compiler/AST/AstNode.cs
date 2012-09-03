@@ -25,12 +25,11 @@
 //  IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 using System;
-using System.ComponentModel;
 using System.Diagnostics;
 using Prexonite.Compiler.Symbolic;
 using Prexonite.Modular;
+using Prexonite.Properties;
 using Prexonite.Types;
-using NoDebug = System.Diagnostics.DebuggerNonUserCodeAttribute;
 
 namespace Prexonite.Compiler.Ast
 {
@@ -130,10 +129,10 @@ namespace Prexonite.Compiler.Ast
         internal static AstExpr _GetOptimizedNode(CompilerTarget target, AstExpr expr)
         {
             if (target == null)
-                throw new ArgumentNullException("target", "Compiler target cannot be null.");
+                throw new ArgumentNullException("target", Resources.AstNode__GetOptimizedNode_CompilerTarget_null);
             if (expr == null)
                 throw new ArgumentNullException(
-                    "expr", "Expression to be optimized can not be null.");
+                    "expr", Resources.AstNode__GetOptimizedNode_Expression_null);
             AstExpr opt;
             return expr.TryOptimize(target, out opt) ? opt : expr;
         }
@@ -141,10 +140,10 @@ namespace Prexonite.Compiler.Ast
         internal static void _OptimizeNode(CompilerTarget target, ref AstExpr expr)
         {
             if (target == null)
-                throw new ArgumentNullException("target", "Compiler target cannot be null.");
+                throw new ArgumentNullException("target", Resources.AstNode__GetOptimizedNode_CompilerTarget_null);
             if (expr == null)
                 throw new ArgumentNullException(
-                    "expr", "Expression to be optimized can not be null.");
+                    "expr", Resources.AstNode__GetOptimizedNode_Expression_null);
             expr = _GetOptimizedNode(target, expr);
         }
 
@@ -185,19 +184,19 @@ namespace Prexonite.Compiler.Ast
         /// <summary>
         /// Resolves the symbol associated with an operator. If no such operator is defined, an error message
         /// is generated and a default symbol returned. If you need more control, access the 
-        /// <see cref="Symbols"/> store directly.
+        /// <see cref="SymbolStore"/> directly.
         /// </summary>
         /// <param name="parser">The parser to post the error message to.</param>
         /// <param name="symbolicId">The symbolic id of the operator (the id used in the source code)</param>
         /// <returns>The symbol corresponding to the symbolic id, or a default symbol when no such symbol entry exists.</returns>
-        internal static Symbol ResolveOperator(Parser parser, string symbolicId)
+        internal static Symbol _ResolveOperator(Parser parser, string symbolicId)
         {
             Symbol symbolEntry;
             if (!parser.target.Symbols.TryGet(symbolicId, out symbolEntry))
             {
                 parser.SemErr(string.Format("No implementation defined for operator `{0}`",
                     symbolicId));
-                return new EntitySymbol(EntityRef.Command.Create(symbolicId),false);
+                return CallSymbol.Create(EntityRef.Command.Create(symbolicId));
             }
             else
             {

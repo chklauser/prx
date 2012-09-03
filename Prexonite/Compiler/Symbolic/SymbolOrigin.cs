@@ -3,6 +3,7 @@ using Prexonite.Modular;
 
 namespace Prexonite.Compiler.Symbolic
 {
+    [DebuggerDisplay("SymbolOrigin({Description},{File},{Line},{Column})")]
     public abstract class SymbolOrigin : ISourcePosition
     {
         public abstract string Description { get; }

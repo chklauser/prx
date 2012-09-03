@@ -7,7 +7,7 @@
 //  are permitted provided that the following conditions are met:
 // 
 //     Redistributions of source code must retain the above copyright notice, 
-//          this list of conditions and the following disclaimer.$
+//          this list of conditions and the following disclaimer.
 //     Redistributions in binary form must reproduce the above copyright notice, 
 //          this list of conditions and the following disclaimer in the 
 //          documentation and/or other materials provided with the distribution.
@@ -24,46 +24,42 @@
 //  WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING 
 //  IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
+using System;
+using System.Runtime.Serialization;
 using JetBrains.Annotations;
 
-namespace Prexonite.Compiler.Symbolic
+namespace Prexonite.Compiler
 {
-    public abstract class Symbol
+    public class ErrorMessageException : PrexoniteException
     {
-        internal Symbol()
+        private readonly Message _compilerMessage;
+
+        public ErrorMessageException([NotNull] Message compilerMessage)
+            : base(compilerMessage.Text)
         {
+            if (compilerMessage == null)
+                throw new ArgumentNullException("compilerMessage");
+            _compilerMessage = compilerMessage;
         }
 
-        public abstract TResult HandleWith<TArg, TResult>([NotNull] ISymbolHandler<TArg, TResult> handler, TArg argument);
-        public virtual bool TryGetCallSymbol(out CallSymbol callSymbol)
+        public ErrorMessageException(string message, [NotNull] Message compilerMessage) : base(message)
         {
-            callSymbol = null;
-            return false;
+            if (compilerMessage == null)
+                throw new ArgumentNullException("compilerMessage");
+            _compilerMessage = compilerMessage;
         }
-        public virtual bool TryGetExpandSymbol(out ExpandSymbol expandSymbol)
+
+        public ErrorMessageException(string message, [NotNull] Message compilerMessage, Exception innerException) : base(message, innerException)
         {
-            expandSymbol = null;
-            return false;
+            if (compilerMessage == null)
+                throw new ArgumentNullException("compilerMessage");
+            _compilerMessage = compilerMessage;
         }
-        public virtual bool TryGetMessageSymbol(out MessageSymbol messageSymbol)
+
+        [NotNull]
+        public Message CompilerMessage
         {
-            messageSymbol = null;
-            return false;
-        }
-        public virtual bool TryGetMacroInstanceSymbol(out MacroInstanceSymbol macroInstanceSymbol)
-        {
-            macroInstanceSymbol = null;
-            return false;
-        }
-        public virtual bool TryGetDereferenceSymbol(out DereferenceSymbol dereferenceSymbol)
-        {
-            dereferenceSymbol = null;
-            return false;
-        }
-        public virtual bool TryGetReferenceToSymbol(out ReferenceToSymbol referenceToSymbol)
-        {
-            referenceToSymbol = null;
-            return false;
+            get { return _compilerMessage; }
         }
     }
 }

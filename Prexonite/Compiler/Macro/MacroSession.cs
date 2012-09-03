@@ -203,9 +203,9 @@ namespace Prexonite.Compiler.Macro
 
                 if (!target.Loader.MacroCommands.TryGetValue(invocation.Implementation.InternalId, out _macroCommand))
                 {
-                    target.Loader.ReportMessage(new Message(MessageSeverity.Error,
-                        String.Format("Cannot find macro command named `{0}`", invocation.Implementation.InternalId),
-                        invocation));
+                    target.Loader.ReportMessage(Message.Create(MessageSeverity.Error,
+                                                       String.Format("Cannot find macro command named `{0}`", invocation.Implementation.InternalId),
+                                                       invocation,MessageClasses.NoSuchMacroCommand));
                     HumanId = "cannot_find_macro_command";
                     return;
                 }
@@ -257,12 +257,11 @@ namespace Prexonite.Compiler.Macro
                 if (!sourceApp.TryGetFunction(invocation.Implementation.InternalId, invocation.Implementation.Module, out macroFunc))
                 {
                     target.Loader.ReportMessage(
-                        new Message(
-                            MessageSeverity.Error,
-                            String.Format(
-                                "The macro function {0} was called from function {1} but is not available at compile time (from module {2}).",
-                                _toFunctionNameString(invocation.Implementation),
-                                target.Function.Id, target.Loader.ParentApplication.Module.Name), invocation));
+                        Message.Create(MessageSeverity.Error,
+                               String.Format(
+                                   "The macro function {0} was called from function {1} but is not available at compile time (from module {2}).",
+                                   _toFunctionNameString(invocation.Implementation),
+                                   target.Function.Id, target.Loader.ParentApplication.Module.Name), invocation,MessageClasses.NoSuchMacroFunction));
                     HumanId = "could_not_resolve_macro_function";
                     return;
                 }
@@ -352,8 +351,10 @@ namespace Prexonite.Compiler.Macro
                 var successRaw = _invokeMacroFunction(target, context);
                 if (successRaw.Type != PType.Bool)
                 {
-                    context.ReportMessage(MessageSeverity.Error,
-                        "Partial macro must return a boolean value, indicating whether it can handle the partial application. Assuming it cannot.");
+                    context.ReportMessage(Message.Create(MessageSeverity.Error,
+                                                         "Partial macro must return a boolean value, indicating whether it can handle the partial application. Assuming it cannot.",
+                                                         context.Invocation,
+                                                         MessageClasses.PartialMacroMustReturnBoolean));
                     _setupDefaultExpression(context);
                     return false;
                 }
@@ -381,11 +382,11 @@ namespace Prexonite.Compiler.Macro
                     else
                     {
                         //Might at a later point become a warning
-                        context.ReportMessage(MessageSeverity.Info,
+                        context.ReportMessage(Message.Create(MessageSeverity.Info,
                             String.Format(
                                 "Macro {0} uses temporary variable to ensure that expression from `context.Block` is evaluated before statements from macro return value.",
                                 HumanId),
-                            context.Invocation);
+                            context.Invocation,MessageClasses.BlockMergingUsesVariable));
 
                         var tmpV = context.AllocateTemporaryVariable();
 
@@ -470,11 +471,11 @@ namespace Prexonite.Compiler.Macro
                 if (_invocations.Contains(invocation))
                 {
                     target.Loader.ReportMessage(
-                        new Message(MessageSeverity.Error,
-                            String.Format(
-                                "AstMacroInvocation.EmitCode is not reentrant. The invocation node for the macro {0} has been expanded already. Use GetCopy() to operate on a copy of this macro invocation.",
-                                expander.HumanId),
-                            invocation));
+                        Message.Create(MessageSeverity.Error,
+                               String.Format(
+                                   "AstMacroInvocation.EmitCode is not reentrant. The invocation node for the macro {0} has been expanded already. Use GetCopy() to operate on a copy of this macro invocation.",
+                                   expander.HumanId),
+                               invocation,MessageClasses.MacroNotReentrant));
                     return CreateNeutralExpression(invocation);
                 }
                 _invocations.Add(invocation);
@@ -487,8 +488,10 @@ namespace Prexonite.Compiler.Macro
                     {
                         if (!expander.TryExpandPartially(target, context))
                         {
-                            target.Loader.ReportSemanticError(invocation.Line, invocation.Column,
-                                "The macro " + expander.HumanId + " cannot be applied partially.");
+                            target.Loader.ReportMessage(Message.Create(MessageSeverity.Error,
+                                                                       "The macro " + expander.HumanId +
+                                                                       " cannot be applied partially.", invocation,
+                                                                       MessageClasses.PartialApplicationNotSupported));
                             return CreateNeutralExpression(invocation);
                         }
                     }
@@ -531,11 +534,11 @@ namespace Prexonite.Compiler.Macro
         private static void _reportException(MacroContext context, IMacroExpander expander,
             Exception e)
         {
-            context.ReportMessage(MessageSeverity.Error,
+            context.ReportMessage(Message.Create(MessageSeverity.Error,
                 String.Format(
                     "Exception during expansion of macro {0} in function {1}: {2}",
                     expander.HumanId, context.Function.LogicalId,
-                    e.Message), context.Invocation);
+                    e.Message), context.Invocation,MessageClasses.ExceptionDuringCompilation));
 #if DEBUG
             Console.WriteLine(e);
 #endif
@@ -572,14 +575,14 @@ namespace Prexonite.Compiler.Macro
                     break;
                 default:
                     target.Loader.ReportMessage(
-                        new Message(MessageSeverity.Error,
-                            String.Format(
-                                "Cannot apply {0} as a macro at compile time.",
-                                Enum.GetName(
-                                    typeof (
-                                        SymbolInterpretations),
-                                    invocation.Implementation.Interpretation)),
-                            invocation));
+                        Message.Create(MessageSeverity.Error,
+                               String.Format(
+                                   "Cannot apply {0} as a macro at compile time.",
+                                   Enum.GetName(
+                                       typeof (
+                                           SymbolInterpretations),
+                                       invocation.Implementation.Interpretation)),
+                               invocation,MessageClasses.NotAMacro));
                     break;
             }
             return expander;

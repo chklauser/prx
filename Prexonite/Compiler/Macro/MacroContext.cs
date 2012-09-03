@@ -288,12 +288,29 @@ namespace Prexonite.Compiler.Macro
         /// <remarks>
         ///     Issuing an error message does not automatically abort execution of the macro.
         /// </remarks>
-        [PublicAPI]
+        [PublicAPI,Obsolete("Use ReportMessage(Message) instead. Always pass message classes, especially with warnings and infos.")]
         public void ReportMessage(MessageSeverity severity, string message,
             ISourcePosition position = null)
         {
             position = position ?? _invocation;
-            _session.Target.Loader.ReportMessage(new Message(severity, message, position));
+            _session.Target.Loader.ReportMessage(Message.Create(severity, message, position,null));
+        }
+
+        /// <summary>
+        /// Reports a compiler message (error, warning, info).
+        /// </summary>
+        /// <param name="message">The message to be reported.</param>
+        /// <remarks>
+        /// <para>Issuing an error message does not automatically abort execution of the macro.</para>
+        /// <para>Messages should always have a message class. Especially warings and infos (that way, the user can filter undesired warnings/infos)</para>
+        /// </remarks>
+        [PublicAPI]
+        public void ReportMessage([NotNull] Message message)
+        {
+            if (message == null)
+                throw new ArgumentNullException("message");
+
+            _session.Target.Loader.ReportMessage(message);
         }
 
         /// <summary>

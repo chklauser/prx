@@ -26,39 +26,76 @@
 
 using System;
 using System.Diagnostics;
-using System.Runtime.Serialization;
 using Prexonite.Modular;
+using Prexonite.Properties;
 
 namespace Prexonite.Compiler.Symbolic.Compatibility
 {
+    // TODO: Mark obsolote and remove
     public static class LegacyExtensions
     {
         private class SymbolEntryConversion : ISymbolHandler<object, SymbolEntry>
         {
-            public SymbolEntry HandleEntity(EntitySymbol symbol, object argument)
+            public SymbolEntry HandleCall(CallSymbol symbol, object argument)
             {
-                var entry = symbol.Entity.ToSymbolEntry();
-                if (symbol.IsDereferenced)
-                    switch (entry.Interpretation)
-                    {
-                        case SymbolInterpretations.LocalObjectVariable:
-                            entry = entry.With(SymbolInterpretations.LocalReferenceVariable);
-                            break;
-                        case SymbolInterpretations.GlobalObjectVariable:
-                            entry = entry.With(SymbolInterpretations.GlobalReferenceVariable);
-                            break;
-                    }
-                return entry;
+                return symbol.Entity.ToSymbolEntry();
+            }
+
+            public SymbolEntry HandleExpand(ExpandSymbol symbol, object argument)
+            {
+                return symbol.Entity.ToSymbolEntry();
             }
 
             public SymbolEntry HandleMessage(MessageSymbol symbol, object argument)
             {
-                throw new SymbolConversionException("Message symbol was not handled before conversion to a legacy SymbolEntry", symbol);
+                throw new SymbolConversionException(Resources.SymbolEntryConversion_MessageSymbol_cannot_be_converted_to_SymbolEntry, symbol);
+            }
+
+            public SymbolEntry HandleDereference(DereferenceSymbol symbol, object argument)
+            {
+                CallSymbol callSymbol;
+                EntityRef.Variable variable;
+                if(symbol.Symbol.TryGetCallSymbol(out callSymbol) && callSymbol.Entity.TryGetVariable(out variable))
+                {
+                    var baseEntry = variable.ToSymbolEntry();
+                    switch (baseEntry.Interpretation)
+                    {
+                        case SymbolInterpretations.GlobalObjectVariable:
+                            return baseEntry.With(SymbolInterpretations.GlobalReferenceVariable);
+                        case SymbolInterpretations.LocalObjectVariable:
+                            return baseEntry.With(SymbolInterpretations.LocalReferenceVariable);
+                    }
+                }
+                throw new SymbolConversionException(
+                    Resources.
+                        SymbolEntryConversion_No_arbirtrary_dereference,
+                    symbol);
+            }
+
+            public SymbolEntry HandleReferenceTo(ReferenceToSymbol symbol, object argument)
+            {
+                CallSymbol callSymbol;
+                EntityRef.Variable variable;
+                if (symbol.Symbol.TryGetCallSymbol(out callSymbol) && callSymbol.Entity.TryGetVariable(out variable))
+                {
+                    var baseEntry = variable.ToSymbolEntry();
+                    switch (baseEntry.Interpretation)
+                    {
+                        case SymbolInterpretations.GlobalReferenceVariable:
+                            return baseEntry.With(SymbolInterpretations.GlobalObjectVariable);
+                        case SymbolInterpretations.LocalReferenceVariable:
+                            return baseEntry.With(SymbolInterpretations.GlobalReferenceVariable);
+                    }
+                }
+                throw new SymbolConversionException(
+                    Resources.
+                        SymbolEntryConversion_No_arbirtrary_dereference,
+                    symbol);
             }
 
             public SymbolEntry HandleMacroInstance(MacroInstanceSymbol symbol, object argument)
             {
-                throw new SymbolConversionException("Cannot convert a macro instance symbol to a legacy SymbolEntry.", symbol);
+                throw new SymbolConversionException(Resources.SymbolEntryConversion_MacroInstance_not_supported, symbol);
             }
         }
         private static readonly SymbolEntryConversion _convertSymbol = new SymbolEntryConversion();
@@ -104,7 +141,11 @@ namespace Prexonite.Compiler.Symbolic.Compatibility
                                                           string.Format("Cannot convert symbol entry {0} to a symbol.",
                                                                         entry));
             }
-            return new EntitySymbol(entity,isDereferenced);
+
+            if (isDereferenced)
+                return DereferenceSymbol.Create(CallSymbol.Create(entity));
+            else
+                return CallSymbol.Create(entity);
         }
     }
 

@@ -62,14 +62,14 @@ namespace Prexonite.Compiler.Ast
             {
                 case UnaryOperator.PreIncrement:
                 case UnaryOperator.PostIncrement:
-                    impl = ResolveOperator(p, OperatorNames.Prexonite.Addition);
+                    impl = _ResolveOperator(p, OperatorNames.Prexonite.Addition);
                     break;
                 case UnaryOperator.PreDecrement:
                 case UnaryOperator.PostDecrement:
-                    impl = ResolveOperator(p, OperatorNames.Prexonite.Subtraction);
+                    impl = _ResolveOperator(p, OperatorNames.Prexonite.Subtraction);
                     break;
                 default:
-                    impl = ResolveOperator(p, OperatorNames.Prexonite.GetName(op));
+                    impl = _ResolveOperator(p, OperatorNames.Prexonite.GetName(op));
                     break;
             }
             return new AstUnaryOperator(p.scanner.File, p.t.line, p.t.col, op, operand, impl.ToSymbolEntry());

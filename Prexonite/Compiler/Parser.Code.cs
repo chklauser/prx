@@ -34,6 +34,7 @@ using Prexonite.Compiler.Ast;
 using Prexonite.Compiler.Symbolic;
 using Prexonite.Compiler.Symbolic.Compatibility;
 using Prexonite.Modular;
+using Prexonite.Properties;
 using Prexonite.Types;
 
 // ReSharper disable InconsistentNaming
@@ -160,7 +161,6 @@ namespace Prexonite.Compiler
 
         [DebuggerStepThrough]
         internal string cache(string toCache)
-
         {
             return _loader.CacheString(toCache);
         }
@@ -203,13 +203,13 @@ namespace Prexonite.Compiler
             get { return NumberStyles.None; }
         }
 
-        [DebuggerStepThrough]
+        [DebuggerStepThrough, Obsolete("Use Loader.ReportMessage instead.")]
         public void SemErr(int line, int col, string message)
         {
             errors.SemErr(line, col, message);
         }
 
-        [DebuggerStepThrough]
+        [DebuggerStepThrough, Obsolete("Use Loader.ReportMessage instead.")]
         public void SemErr(Token tok, string s)
         {
             errors.SemErr(tok.line, tok.col, s);
@@ -375,7 +375,7 @@ namespace Prexonite.Compiler
         #region Prexonite Script
 
         #region Symbol management
-        
+
         internal AstGetSet _NullNode(ISourcePosition position)
         {
             var n = new AstNull(position.File, position.Line, position.Column);
@@ -386,26 +386,21 @@ namespace Prexonite.Compiler
 
         private bool _TryUseSymbolEntry(string id, ISourcePosition position, out SymbolEntry symbolEntry)
         {
-            SymbolStore ss;
-            if (target == null)
-                ss = Loader.Symbols;
-            else
-                ss = target.Symbols;
             Symbol symbol;
-            if (ss.TryGet(id, out symbol))
+            if (Symbols.TryGet(id, out symbol))
             {
-                EntitySymbol entitySymbol;
-                if(symbol.TryGetEntitySymbol(out entitySymbol))
+                try
                 {
-                    symbolEntry = entitySymbol.ToSymbolEntry();
+                    symbolEntry = symbol.ToSymbolEntry();
                     return true;
                 }
-                else
+                catch (SymbolConversionException e)
                 {
-                    Loader.Errors.Add(CompilerTarget._CreateIncompatibleSymbolError(position,symbol));
-                    symbolEntry = null;
-                    return false;
+                    Loader.ReportMessage(CompilerTarget._CreateIncompatibleSymbolError(position, symbol));
+                    Loader.ReportMessage(Message.Create(MessageSeverity.Error, e.ToString(), position, MessageClasses.ExceptionDuringCompilation));
                 }
+                symbolEntry = null;
+                return false;
             }
             else
             {
@@ -452,11 +447,11 @@ namespace Prexonite.Compiler
         {
             switch (kind)
             {
-               case SymbolInterpretations.Function:
-                    case SymbolInterpretations.GlobalObjectVariable:
-                    case SymbolInterpretations.GlobalReferenceVariable:
+                case SymbolInterpretations.Function:
+                case SymbolInterpretations.GlobalObjectVariable:
+                case SymbolInterpretations.GlobalReferenceVariable:
                     return true;
-                    default:
+                default:
                     return false;
             }
         }
@@ -566,11 +561,11 @@ namespace Prexonite.Compiler
         public bool isLikeVariable(string id) //context
         {
             Symbol symbol;
-            EntitySymbol entitySymbol;
-            if(!(target.Symbols.TryGet(id,out symbol) && symbol.TryGetEntitySymbol(out entitySymbol)))
+            CallSymbol callSymbol;
+            if (!(target.Symbols.TryGet(id, out symbol) && symbol.TryGetCallSymbol(out callSymbol)))
                 return false;
             EntityRef.Variable _;
-            return entitySymbol.Entity.TryGetVariable(out _);
+            return callSymbol.Entity.TryGetVariable(out _);
         }
 
         public bool isLocalVariable(SymbolInterpretations interpretations)
@@ -611,15 +606,40 @@ namespace Prexonite.Compiler
         {
             string id;
             Symbol symbol;
-            EntitySymbol entitySymbol;
             return
                 isId(out id) &&
                 target.Symbols.TryGet(id, out symbol) &&
-                symbol.TryGetEntitySymbol(out entitySymbol) &&
-                entitySymbol.Entity.Match(_isLikeFunction, entitySymbol.IsDereferenced);
+                symbol.HandleWith(_isLikeFunction, false);
         }
 
-        private class IsLikeFunctionMatcher :  EntityRefMatcher<bool,bool>
+        private class IsLikeFunctionHandler : SymbolHandler<bool, bool>
+        {
+            protected override bool HandleSymbolDefault(Symbol symbol, bool argument)
+            {
+                return false;
+            }
+
+            public override bool HandleDereference(DereferenceSymbol symbol, bool argument)
+            {
+                return symbol.Symbol.HandleWith(this, true);
+            }
+
+            public override bool HandleCall(CallSymbol symbol, bool argument)
+            {
+                return symbol.Entity.Match(_likeFunction, argument);
+            }
+
+            public override bool HandleExpand(ExpandSymbol symbol, bool argument)
+            {
+                return symbol.Entity.Match(_likeFunction, argument);
+            }
+
+            private static readonly IEntityRefMatcher<bool, bool> _likeFunction = new IsLikeFunctionMatcher();
+        }
+
+        private static readonly SymbolHandler<bool, bool> _isLikeFunction = new IsLikeFunctionHandler();
+
+        private class IsLikeFunctionMatcher : EntityRefMatcher<bool, bool>
         {
             #region Overrides of EntityRefMatcher<object,bool>
 
@@ -655,9 +675,8 @@ namespace Prexonite.Compiler
 
             #endregion
         }
-        private readonly IEntityRefMatcher<bool, bool> _isLikeFunction = new IsLikeFunctionMatcher();
 
-            //context
+        //context
 
         //interpretation is like function
         [DebuggerStepThrough]
@@ -676,17 +695,17 @@ namespace Prexonite.Compiler
         [DebuggerStepThrough]
         public bool isUnknownId()
         {
-            string id; 
+            string id;
             return isId(out id) && !target.Symbols.Contains(id);
         }
 
         private bool _tryResolveFunction(SymbolEntry entry, out PFunction func)
         {
             func = null;
-            if(entry.Interpretation != SymbolInterpretations.Function)
+            if (entry.Interpretation != SymbolInterpretations.Function)
                 return false;
 
-            return TargetApplication.TryGetFunction(entry.InternalId, entry.Module,out func);
+            return TargetApplication.TryGetFunction(entry.InternalId, entry.Module, out func);
         }
 
         [DebuggerStepThrough]
@@ -709,6 +728,15 @@ namespace Prexonite.Compiler
                     typeId.StartsWith(importedNamespace, StringComparison.OrdinalIgnoreCase)))
                 return ObjectPType.Literal + "(\"" + StringPType.Escape(typeId) + "\")";
             return typeId;
+        }
+
+        public bool isSymbolDirective(string pattern)
+        {
+            scanner.ResetPeek();
+            return la.kind == _id
+                && scanner.Peek().kind == _lpar
+                && la.val.ToUpperInvariant() == pattern;
+
         }
 
         private bool isFollowedByStatementBlock()
@@ -842,11 +870,13 @@ namespace Prexonite.Compiler
             return target.GenerateLocalId(prefix);
         }
 
+        [Obsolete("SymbolEntry and all related APIs are deprecated. Use the Symbol API instead.")]
         private void SmartDeclareLocal(string id, SymbolInterpretations kind)
         {
             SmartDeclareLocal(id, id, kind, false);
         }
 
+        [Obsolete("SymbolEntry and all related APIs are deprecated. Use the Symbol API instead.")]
         private void SmartDeclareLocal(string id, SymbolInterpretations kind, bool isOverrideDecl)
         {
             SmartDeclareLocal(id, id, kind, isOverrideDecl);
@@ -857,30 +887,33 @@ namespace Prexonite.Compiler
             switch (kind)
             {
                 case SymbolInterpretations.Function:
-                    return new EntitySymbol(EntityRef.Function.Create(physicalId,TargetModule.Name));
+                    return CallSymbol.Create(EntityRef.Function.Create(physicalId, TargetModule.Name));
                 case SymbolInterpretations.Command:
-                    return new EntitySymbol(EntityRef.Command.Create(physicalId));
+                    return CallSymbol.Create(EntityRef.Command.Create(physicalId));
                 case SymbolInterpretations.LocalObjectVariable:
-                    return new EntitySymbol(EntityRef.Variable.Local.Create(physicalId));
+                    return CallSymbol.Create(EntityRef.Variable.Local.Create(physicalId));
                 case SymbolInterpretations.LocalReferenceVariable:
-                    return new EntitySymbol(EntityRef.Variable.Local.Create(physicalId), true);
+                    return
+                        DereferenceSymbol.Create(CallSymbol.Create(EntityRef.Variable.Local.Create(physicalId)));
                 case SymbolInterpretations.GlobalObjectVariable:
-                    return new EntitySymbol(EntityRef.Variable.Global.Create(physicalId, TargetModule.Name));
+                    return CallSymbol.Create(EntityRef.Variable.Global.Create(physicalId, TargetModule.Name));
                 case SymbolInterpretations.GlobalReferenceVariable:
-                    return new EntitySymbol(EntityRef.Variable.Global.Create(physicalId, TargetModule.Name), true);
+                    return
+                        DereferenceSymbol.Create(
+                            CallSymbol.Create(EntityRef.Variable.Global.Create(physicalId, TargetModule.Name)));
                 case SymbolInterpretations.MacroCommand:
-                    return new EntitySymbol(EntityRef.MacroCommand.Create(physicalId));
+                    return CallSymbol.Create(EntityRef.MacroCommand.Create(physicalId));
                 default:
                     return
-                        new MessageSymbol(
-                            Message.Error(
-                                string.Format("Invalid symbol interpretation {0}.",
-                                              Enum.GetName(typeof (SymbolInterpretations), kind)), GetPosition(),
-                                MessageClasses.InvalidSymbolInterpretation),
-                            new EntitySymbol(EntityRef.Command.Create(physicalId)));
+                        MessageSymbol.Create(Message.Error(
+                            string.Format("Invalid symbol interpretation {0}.",
+                                          Enum.GetName(typeof(SymbolInterpretations), kind)), GetPosition(),
+                            MessageClasses.InvalidSymbolInterpretation),
+                               CallSymbol.Create(EntityRef.Command.Create(physicalId)));
             }
         }
 
+        [Obsolete("SymbolEntry and all related APIs are deprecated. Use the Symbol API instead.")]
         private void SmartDeclareLocal(string logicalId, string physicalId,
             SymbolInterpretations kind, bool isOverrideDecl)
         {
@@ -892,15 +925,12 @@ namespace Prexonite.Compiler
             }
             else
             {
-                Symbol s;
-                target.Symbols.Declare(logicalId, s = ToModuleLocalSymbol(physicalId,kind));
-                EntitySymbol entitySym;
-                EntityRef.Variable.Local local;
-                if(s.TryGetEntitySymbol(out entitySym) 
-                    && entitySym.Entity.TryGetLocalVariable(out local)
-                    && !target.Function.Variables.Contains(local.Id))
+                target.Symbols.Declare(logicalId, ToModuleLocalSymbol(physicalId, kind));
+                if ((kind == SymbolInterpretations.LocalObjectVariable
+                        || kind == SymbolInterpretations.LocalReferenceVariable)
+                    && !target.Function.Variables.Contains(physicalId))
                 {
-                    target.Function.Variables.Add(local.Id);
+                    target.Function.Variables.Add(physicalId);
                 }
             }
         }
@@ -971,50 +1001,60 @@ namespace Prexonite.Compiler
 
         private static readonly AssembleAstHandler AssembleAst = new AssembleAstHandler();
 
-        private class AssembleAstHandler : ISymbolHandler<Tuple<Parser, PCall>, AstGetSet>
+        private class AssembleAstHandler : ISymbolHandler<Tuple<Parser, PCall>, AstExpr>
         {
-            public AstGetSet HandleEntity(EntitySymbol symbol, Tuple<Parser, PCall> argument)
+            public AstExpr HandleCall(CallSymbol symbol, Tuple<Parser, PCall> argument)
             {
-                EntityRef.Function funcRef;
-                PFunction func;
-                AstGetSet access;
-                EntityRef.MacroCommand mcmd;
-                if (symbol.Entity.TryGetFunction(out funcRef)
-                    && argument.Item1.TargetApplication.TryGetFunction(funcRef.Id, funcRef.ModuleName, out func)
-                    && func.IsMacro 
-                    || symbol.Entity.TryGetMacroCommand(out mcmd))
-                {
-                    access = new AstMacroInvocation(argument.Item1,symbol.Entity.ToSymbolEntry());
-                }
-                else
-                {
-                    access = AstGetSetEntity.Create(argument.Item1.GetPosition(), argument.Item2, symbol.Entity);
-                }
+                var access = AstGetSetEntity.Create(argument.Item1.GetPosition(), argument.Item2, symbol.Entity);
 
-                // Wrap in indirect call if necessary
-                if (symbol.IsDereferenced)
-                {
-                    return AstIndirectCall.Create(argument.Item1.GetPosition(), access);
-                }
-                else
-                {
-                    return access;
-                }
+                return access;
             }
 
-            public AstGetSet HandleMessage(MessageSymbol symbol, Tuple<Parser, PCall> argument)
+            public AstExpr HandleExpand(ExpandSymbol symbol, Tuple<Parser, PCall> argument)
+            {
+                var position = argument.Item1.GetPosition();
+                return new AstMacroInvocation(position.File, position.Line, position.Column, symbol.Entity.ToSymbolEntry()) { Call = argument.Item2 };
+            }
+
+            public AstExpr HandleMessage(MessageSymbol symbol, Tuple<Parser, PCall> argument)
             {
                 throw new PrexoniteException(string.Format("Unexpected message still attached to symbol {0}.", symbol));
             }
 
-            public AstGetSet HandleMacroInstance(MacroInstanceSymbol symbol, Tuple<Parser, PCall> argument)
+            public AstExpr HandleDereference(DereferenceSymbol symbol, Tuple<Parser, PCall> argument)
+            {
+                return AstIndirectCall.Create(argument.Item1.GetPosition(), symbol.HandleWith(this, argument),
+                                              argument.Item2);
+            }
+
+            public AstExpr HandleReferenceTo(ReferenceToSymbol symbol, Tuple<Parser, PCall> argument)
+            {
+                CallSymbol callSymbol;
+                if (symbol.TryGetCallSymbol(out callSymbol))
+                {
+                    return AstReferenceToEntity.Create(argument.Item1.GetPosition(), callSymbol.Entity);
+                }
+                else
+                {
+                    var inner = symbol.HandleWith(this, argument) as ICanBeReferenced;
+                    AstExpr reference;
+                    if (inner != null && inner.TryToReference(out reference))
+                        return reference;
+                    else
+                    {
+                        throw new ErrorMessageException(Message.Error(string.Format("Cannot create a reference to {0}", symbol), argument.Item1.GetPosition(), MessageClasses.CannotCreateReference));
+                    }
+                }
+            }
+
+            public AstExpr HandleMacroInstance(MacroInstanceSymbol symbol, Tuple<Parser, PCall> argument)
             {
                 // TODO (Ticket #109) MacroInstance invocation
                 throw new NotImplementedException("Assembly of macro instance invocations");
             }
         }
 
-        private AstGetSet _assembleInvocation(Symbol sym)
+        private AstExpr _assembleInvocation(Symbol sym)
         {
             CompilerTarget tempQualifier = target;
             if (tempQualifier.Loader._TryUseSymbol(ref sym))
@@ -1029,9 +1069,9 @@ namespace Prexonite.Compiler
 
         public void EnsureInScope(Symbol symbol)
         {
-            EntitySymbol es;
+            CallSymbol es;
             EntityRef.Variable.Local local;
-            if (symbol.TryGetEntitySymbol(out es)
+            if (symbol.TryGetCallSymbol(out es)
                 && es.Entity.TryGetLocalVariable(out local)
                 && isOuterVariable(local.Id))
                 target.RequireOuterVariable(local.Id);
@@ -1062,7 +1102,17 @@ namespace Prexonite.Compiler
 
                 EnsureInScope(fallbackSymbol);
 
-                var call = _assembleInvocation(fallbackSymbol);
+                var e = _assembleInvocation(fallbackSymbol);
+                var call = e as AstGetSet;
+                if (call == null)
+                {
+                    var pos = GetPosition();
+                    call = _astFactory.IndirectCall(pos, _astFactory.Null(pos));
+                    Loader.ReportMessage(Message.Create(MessageSeverity.Error,
+                                                string.Format(Resources.Parser__CannotUseExpressionAsAConstructor,
+                                                              e), pos,
+                                                MessageClasses.CannotUseExpressionAsConstructor));
+                }
                 expr = call;
                 args = call.Arguments;
             }
@@ -1141,7 +1191,7 @@ namespace Prexonite.Compiler
             return
                 la1.kind != _string && Engine.StringsAreEqual(la1.val, insBase) &&
                     (detail == null
-                        ? (la2.kind == _dot ? la3.kind == _integer : true)
+                        ? (la2.kind != _dot || la3.kind == _integer)
                         : (la2.kind == _dot && la3.kind != _string &&
                             Engine.StringsAreEqual(la3.val, detail))
                         );
@@ -1217,8 +1267,8 @@ namespace Prexonite.Compiler
         {
             var tab = _instructionNameTable;
             //Add original names
-            foreach (var code in Enum.GetNames(typeof (OpCode)))
-                tab.Add(code.Replace('_', '.'), (OpCode) Enum.Parse(typeof (OpCode), code));
+            foreach (var code in Enum.GetNames(typeof(OpCode)))
+                tab.Add(code.Replace('_', '.'), (OpCode)Enum.Parse(typeof(OpCode), code));
 
             //Add instruction aliases -- NOTE: You'll also have to add them to the respective groups
             tab.Add("new", OpCode.newobj);

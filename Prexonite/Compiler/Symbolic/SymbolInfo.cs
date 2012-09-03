@@ -1,5 +1,8 @@
+using System.Diagnostics;
+
 namespace Prexonite.Compiler.Symbolic
 {
+    [DebuggerDisplay("{Name}: ({Symbol}, {Origin})")]
     public sealed class SymbolInfo
     {
         private readonly Symbol _symbol;

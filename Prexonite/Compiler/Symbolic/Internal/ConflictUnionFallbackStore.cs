@@ -26,8 +26,10 @@
 
 using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.Linq;
 using System.Threading;
+using Prexonite.Properties;
 
 namespace Prexonite.Compiler.Symbolic.Internal
 {
@@ -62,7 +64,7 @@ namespace Prexonite.Compiler.Symbolic.Internal
             {
                 if(!e.MoveNext())
 // ReSharper disable NotResolvedInText
-                    throw new ArgumentOutOfRangeException("conflictUnionSource",source.Key,"Invalid key in source for symbol store.");
+                    throw new ArgumentOutOfRangeException("conflictUnionSource",source.Key,Resources.ConflictUnionFallbackStore__unifySymbols_Invalid_key_in_source_for_symbol_store_);
 // ReSharper restore NotResolvedInText
 
                 var unionInfo = e.Current;
@@ -116,11 +118,10 @@ namespace Prexonite.Compiler.Symbolic.Internal
                                     second.Origin);
 
             return new KeyValuePair<string, Symbol>(first.Name,
-                                                    new MessageSymbol(
-                                                        new Message(MessageSeverity.Error,
-                                                                    msg,
-                                                                    first.Origin,
-                                                                    MessageClasses.SymbolConflict), x1));
+                                                    MessageSymbol.Create(Message.Create(MessageSeverity.Error,
+                                                                                msg,
+                                                                                first.Origin,
+                                                                                MessageClasses.SymbolConflict), x1));
         }
 
         private static KeyValuePair<string, Symbol> _unifySymbolsMultiMode(SymbolInfo first, SymbolInfo second, SymbolInfo third, IEnumerator<SymbolInfo> e)
@@ -152,38 +153,75 @@ namespace Prexonite.Compiler.Symbolic.Internal
             var msg = string.Format("There are {0} incompatible declarations of the symbol {1}. They come from {2}.",
                                     xs.Count, first.Name, symbols.Select(s => s.Origin).ToEnumerationString());
             return new KeyValuePair<string, Symbol>(first.Name,
-                                                    new MessageSymbol(
-                                                        new Message(MessageSeverity.Error, msg, first.Origin,
-                                                                    MessageClasses.SymbolConflict), xs[0]));
+                                                    MessageSymbol.Create(Message.Create(MessageSeverity.Error, msg, first.Origin,
+                                                                                MessageClasses.SymbolConflict), xs[0]));
         }
 
-        private static readonly ISymbolHandler<Object, bool> _containsMessage = new ContainsMessageHandler();
-        private class ContainsMessageHandler : ISymbolHandler<Object,bool>
+        private static readonly ISymbolHandler<Message, bool> _containsMessage = new ContainsMessageHandler();
+        private class ContainsMessageHandler : ISymbolHandler<Message, bool>
         {
-            public bool HandleEntity(EntitySymbol symbol, object argument)
+            public bool HandleCall(CallSymbol symbol, Message argument)
             {
                 return false;
             }
 
-            public bool HandleMessage(MessageSymbol symbol, object argument)
+            public bool HandleExpand(ExpandSymbol symbol, Message argument)
             {
-                if (symbol.Message == argument)
+                return false;
+            }
+
+            public bool HandleMessage(MessageSymbol symbol, Message argument)
+            {
+                if (symbol.Message.Equals(argument))
                     return true;
+                else if(symbol.Symbol == null)
+                    return false;
                 else
                     return symbol.Symbol.HandleWith(this,argument);
             }
 
-            public bool HandleMacroInstance(MacroInstanceSymbol symbol, object argument)
+            public bool HandleDereference(DereferenceSymbol symbol, Message argument)
+            {
+                return symbol.HandleWith(this, argument);
+            }
+
+            public bool HandleReferenceTo(ReferenceToSymbol symbol, Message argument)
+            {
+                return symbol.HandleWith(this, argument);
+            }
+
+            public bool HandleMacroInstance(MacroInstanceSymbol symbol, Message argument)
             {
                 return false;
             }
         }
 
         private static readonly ISymbolHandler<Symbol,Symbol> _merge = new MergeHandler(); 
-        private class MergeHandler : ISymbolHandler<Symbol, Symbol>
+        private sealed class MergeHandler : ISymbolHandler<Symbol, Symbol>
         {
-            public Symbol HandleEntity(EntitySymbol thisSymbol, Symbol otherSymbol)
+            public Symbol HandleCall(CallSymbol thisSymbol, Symbol otherSymbol)
             {
+                return _handleSymbol(thisSymbol, otherSymbol);
+            }
+
+            public Symbol HandleExpand(ExpandSymbol thisSymbol, Symbol otherSymbol)
+            {
+                return _handleSymbol(thisSymbol, otherSymbol);
+            }
+
+            public Symbol HandleDereference(DereferenceSymbol thisSymbol, Symbol otherSymbol)
+            {
+                return _handleSymbol(thisSymbol, otherSymbol);
+            }
+
+            public Symbol HandleReferenceTo(ReferenceToSymbol thisSymbol, Symbol otherSymbol)
+            {
+                return _handleSymbol(thisSymbol, otherSymbol);
+            }
+
+            private Symbol _handleSymbol(Symbol thisSymbol, Symbol otherSymbol)
+            {
+                // In general, non-message symbols must be equal modulo messages.
                 var messageSymbol = otherSymbol as MessageSymbol;
                 if (messageSymbol != null)
                     return HandleMessage(messageSymbol, thisSymbol);
@@ -196,14 +234,35 @@ namespace Prexonite.Compiler.Symbolic.Internal
                 if (ReferenceEquals(thisSymbol, otherSymbol))
                     return thisSymbol;
 
-                var innerUnionSymbol = thisSymbol.Symbol.HandleWith(this, otherSymbol);
-                if (innerUnionSymbol == null) // the underlying symbol is not the same
-                    return null;
+                Symbol innerUnionSymbol;
+                if(thisSymbol.Symbol == null)
+                {
+                    // thisSymbol is a pure error symbol
+                    Debug.Assert(thisSymbol.Message.Severity == MessageSeverity.Error,"Found pure message symbol that is not an error.");
+                    var messageSymbol = otherSymbol as MessageSymbol;
+                    if (messageSymbol != null && messageSymbol.Symbol == null)
+                    {
+                        // both symbols are pure error symbols. Keep both error messages around.
+                        return MessageSymbol.Create(thisSymbol.Message, messageSymbol);
+                    }
+                    else
+                    {
+                        // otherSymbol is not a pure error symbol. This is a conflict
+                        return null;
+                    }
+                }
+                else
+                {
+                    // merge recursively
+                    innerUnionSymbol = thisSymbol.Symbol.HandleWith(this, otherSymbol);
+                    if (innerUnionSymbol == null) // the underlying symbol is not the same
+                        return null;
+                }
 
                 if (innerUnionSymbol.HandleWith(_containsMessage, thisSymbol.Message))
                     return innerUnionSymbol;
                 else
-                    return new MessageSymbol(thisSymbol.Message, innerUnionSymbol);
+                    return MessageSymbol.Create(thisSymbol.Message, innerUnionSymbol);
             }
 
             public Symbol HandleMacroInstance(MacroInstanceSymbol thisSymbol, Symbol otherSymbol)

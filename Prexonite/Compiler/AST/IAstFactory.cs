@@ -62,7 +62,6 @@ namespace Prexonite.Compiler.Ast
         AstGetSet IndirectCall(ISourcePosition position, AstExpr receiver, PCall call = PCall.Get);
         AstGetSet Placeholder(ISourcePosition position, int? index = null);
 
-
         AstScopedBlock Block(ISourcePosition position);
         AstCondition Condition(ISourcePosition position, AstExpr condition, bool isNegative = false);
 

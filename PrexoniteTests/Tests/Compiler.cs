@@ -69,9 +69,7 @@ namespace Prx.Tests
             Symbol symbol;
             Assert.IsTrue(store.TryGet(symbolicId, out symbol),
                           string.Format("Expected to find symbol {0} but there is no such entry.", symbolicId));
-            EntitySymbol entitySymbol;
-            Assert.IsTrue(symbol.TryGetEntitySymbol(out entitySymbol),string.Format("Expected symbol {0} to be an entity symbol. Actual: {1}.", symbolicId, symbol));
-            return entitySymbol.ToSymbolEntry();
+            return symbol.ToSymbolEntry();
         }
 
         protected  List<Instruction> GetInstructions(string assemblerCode)

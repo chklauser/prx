@@ -45,7 +45,7 @@ namespace Prexonite.Compiler.Ast
             BinaryOperator op,
             AstExpr rightOperand, AstBlock lexicalScope)
         {
-            var impl = ResolveOperator(parser, OperatorNames.Prexonite.GetName(op));
+            var impl = _ResolveOperator(parser, OperatorNames.Prexonite.GetName(op));
             return new AstBinaryOperator(parser.scanner.File, parser.t.line, parser.t.col,
                 leftOperand, op,
                 rightOperand,impl.ToSymbolEntry(), lexicalScope);

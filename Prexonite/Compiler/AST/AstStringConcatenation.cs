@@ -77,7 +77,7 @@ namespace Prexonite.Compiler.Ast
 
         internal AstStringConcatenation Create(Parser p, params AstExpr[] arguments)
         {
-            var interpretation = ResolveOperator(p, OperatorNames.Prexonite.Addition);
+            var interpretation = _ResolveOperator(p, OperatorNames.Prexonite.Addition);
             return new AstStringConcatenation(p.scanner.File, p.t.line, p.t.col, interpretation.ToSymbolEntry(),
                 arguments);
         }

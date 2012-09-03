@@ -70,10 +70,10 @@ StructureStatement<AstBlock block>
 .
 
 GetSetComplex<AstBlock block>
-                                        (.  AstGetSet complex = null; 
-                                            AstGetSetSymbol symbol = null;
-                                            bool isDeclaration = false;
-                                            AstNode node = null;
+                                        (.  AstGetSet complex; 
+                                            AstGetSetSymbol symbol;
+                                            bool isDeclaration;
+                                            AstNode node;
                                         .)
 =
 //GetSet Initiator
@@ -147,7 +147,6 @@ GetSetExtension<AstExpr subject, out AstGetSet extension>
 
 GetInitiator<out AstGetSet complex, out bool isDeclaration>
                                         (.  complex = null; 
-                                            AstGetSetSymbol symbol = null;
                                             AstGetSetStatic staticCall = null;
                                             AstGetSet member = null;
                                             AstExpr expr;
@@ -155,7 +154,7 @@ GetInitiator<out AstGetSet complex, out bool isDeclaration>
                                             isDeclaration = false;                                            
                                             string id;
                                             int placeholderIndex = -1;
-											ISourcePosition position = null;
+											                      ISourcePosition position;
                                         .)
 =
     //Actual value
@@ -182,10 +181,9 @@ GetInitiator<out AstGetSet complex, out bool isDeclaration>
 										.)
 		)
     )
-                                        (.  complex = 
-												(AstGetSet)symbol ?? 
-												(AstGetSet)staticCall ?? 
-												(AstGetSet)member ??
+                    (.  complex =  
+												staticCall ?? 
+												member ??
 												complex; 
 										.)
     //Reference
@@ -231,7 +229,6 @@ GetInitiator<out AstGetSet complex, out bool isDeclaration>
 
 VariableDeclaration<out AstGetSet variable, bool isNewDecl>
                                         (.  variable = null; 
-                                            string staticId = null; 
                                             string id = null;
                                             bool isOverrideDecl = false;
 											ISourcePosition position = null;
@@ -243,10 +240,11 @@ VariableDeclaration<out AstGetSet variable, bool isNewDecl>
     [   new                             (.  isOverrideDecl = true; .)
     ]									(.	position = GetPosition(); .)
     Id<out id>                          (.  
-                                            SmartDeclareLocal(id, kind, isOverrideDecl);
-                                            staticId = id; 
+                                            SmartDeclareLocal(id, kind, isOverrideDecl); 
                                         .)
-|   static                              (.  kind = SymbolInterpretations.GlobalObjectVariable; .)
+|   static                              (.  kind = SymbolInterpretations.GlobalObjectVariable;
+                                            string staticId;
+                                        .)
     [   var
     |   ref                             (.  kind = SymbolInterpretations.GlobalReferenceVariable; .)
     ]									(.	position = GetPosition(); .)
@@ -287,14 +285,14 @@ Variable<out AstGetSet complex, out bool isDeclared>
                                             isDeclared = false; 
                                             complex = null; 
                                             bool isNewDecl = false;
-											ISourcePosition position = null;
+											                      ISourcePosition position;
                                         .)
 =
     [   new                             (.  isNewDecl = true; .)
     ]
     VariableDeclaration<out complex, isNewDecl>    (. isDeclared = true; .)
 |										(.	position = GetPosition(); .)
-	Id<out id>                          (.  
+	Id<out id>                            (.  
                                             SymbolEntry varSym;
                                             if(_TryUseSymbolEntry(id, position, out varSym))
                                             {
@@ -343,8 +341,8 @@ VariableDeclarationStatement<AstBlock block>
 .
 
 Function<out AstGetSet function>
-                                (.  function = null; string id; ISourcePosition position = null; .)
-=								(.	position = GetPosition(); .)
+                                (.  string id; ISourcePosition position; .)
+=								                (.	position = GetPosition(); .)
     Id<out id>                  (.  SymbolEntry sym;
 									if(!_TryUseSymbolEntry(id, position, out sym))
                                     {
@@ -363,7 +361,6 @@ Function<out AstGetSet function>
 StaticCall<out AstGetSetStatic staticCall>
                                 (.  AstTypeExpr typeExpr;
                                     string memberId;
-                                    staticCall = null;
                                 .)
 =
     ExplicitTypeExpr<out typeExpr>
@@ -403,7 +400,7 @@ ExplicitGoTo<AstBlock block>    (.  string id; .)
 Assignment<AstGetSet lvalue, out AstNode node>
                                 (.  AstExpr expr = null;
 									BinaryOperator setModifier = BinaryOperator.None;
-									AstTypeExpr T;
+									AstTypeExpr typeExpr;
 									node = lvalue;
 								.)
 =
@@ -415,11 +412,11 @@ Assignment<AstGetSet lvalue, out AstNode node>
 	|   div assign              (.  setModifier = BinaryOperator.Division; .)
 	|   bitAnd assign           (.  setModifier = BinaryOperator.BitwiseAnd; .)
 	|   bitOr assign            (.  setModifier = BinaryOperator.BitwiseOr; .)
-	|	coalescence assign		(.	setModifier = BinaryOperator.Coalescence; .)
+	|	coalescence assign		    (.	setModifier = BinaryOperator.Coalescence; .)
 	)   Expr<out expr>        //(.	expr = expr; .)
 	
-|	(	tilde assign			(.	setModifier = BinaryOperator.Cast; .)
-	)	TypeExpr<out T>			(.	expr = T; .)
+|	(	tilde assign			        (.	setModifier = BinaryOperator.Cast; .)
+	)	TypeExpr<out typeExpr>		(.	expr = typeExpr; .)
 )								
 								(.  lvalue.Arguments.Add(expr);
 									lvalue.Call = PCall.Set; 
@@ -429,9 +426,9 @@ Assignment<AstGetSet lvalue, out AstNode node>
 .
 
 Condition<AstBlock block>
-                                (. AstExpr expr = null; bool isNegative = false; .)
+                                (. AstExpr expr; bool isNegative = false; .)
 =
-    (   if                      (.  isNegative = false; .)
+    (   if                      (.  /* isNegative is already false */ .)
     |   unless                  (.  isNegative = true; .)
     )
     
@@ -547,7 +544,7 @@ GetCall<out AstGetSet complex>
 
 Return<AstBlock block>          (.  AstReturn ret = null; 
                                     AstExplicitGoTo jump = null; 
-                                    AstExpr expr = null; 
+                                    AstExpr expr; 
                                     AstLoopBlock bl = target.CurrentLoopBlock;
                                 .)
 =
@@ -571,7 +568,7 @@ Return<AstBlock block>          (.  AstReturn ret = null;
                                     else
                                         jump = new AstExplicitGoTo(this, bl.ContinueLabel);
                                 .)
-)                               (.  block.Add((AstNode)ret ?? (AstNode)jump); .)
+)                               (.  block.Add((AstNode)ret ?? jump); .)
 .
 
 NestedFunction<AstBlock block>
@@ -588,9 +585,9 @@ NestedFunction<AstBlock block>
                                     if(func.Meta[PFunction.LazyKey].Switch)
                                     {
                                         //Capture environment by value                                        
-                                        var ps = ft.ToCaptureByValue(let_bindings(ft));
+                                        var ps = ft._ToCaptureByValue(let_bindings(ft));
                                         ft._DetermineSharedNames(); //Need to re-determine shared names since
-                                                                    // ToCaptureByValue does not automatically modify shared names
+                                                                    // _ToCaptureByValue does not automatically modify shared names
                                         var clos = new AstCreateClosure(this,  new SymbolEntry
                                                 (SymbolInterpretations.Function, func.Id, 
                                                 func.ParentApplication.Module.Name));
@@ -642,7 +639,7 @@ LetBinder<AstBlock block>
 
 TryCatchFinally<AstBlock block>
                                 (.  var a = Create.TryCatchFinally(GetPosition());
-                                    AstGetSet excVar = null;
+                                    AstGetSet excVar;
                                 .)
 =
     try                         (.  _PushScope(a);

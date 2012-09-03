@@ -60,7 +60,8 @@ namespace Prexonite.Compiler.Symbolic
         /// <param name="value">On success, contains the symbol. Otherwise undefined.</param>
         /// <returns>True on success; false otherwise.</returns>
         [PublicAPI]
-        public abstract bool TryGet(string id, out Symbol value);
+        [ContractAnnotation("=> true,value:notnull; => false,value:canbenull")]
+        public abstract bool TryGet([NotNull] string id, out Symbol value);
 
         /// <summary>
         /// Returns the total number of symbols visible from this scope.
@@ -87,7 +88,7 @@ namespace Prexonite.Compiler.Symbolic
         /// <param name="id">The symbolic id for this entry.</param>
         /// <param name="symbol">The actual symbol entry to be added to the store.</param>
         [PublicAPI]
-        public abstract void Declare(string id, Symbol symbol);
+        public abstract void Declare([NotNull] string id, [NotNull] Symbol symbol);
 
         /// <summary>
         /// Indicates whether a declaration for the supplied symbolic id exists locally (was declared via <see cref="Declare"/>.
@@ -95,7 +96,7 @@ namespace Prexonite.Compiler.Symbolic
         /// <param name="id">The symbolic id to look up.</param>
         /// <returns>True if there is a local definition for <paramref name="id"/>; false if there is no definition for <paramref name="id"/> or if the only definition(s) for <paramref name="id"/> are not local.</returns>
         [PublicAPI]
-        public abstract bool IsDeclaredLocally(string id);
+        public abstract bool IsDeclaredLocally([NotNull] string id);
 
         /// <summary>
         /// Removes all local declarations from this symbol store.
@@ -117,11 +118,11 @@ namespace Prexonite.Compiler.Symbolic
         /// <param name="id">The symbolic id that could not be resolved.</param>
         /// <param name="position">The source position where to report the error.</param>
         /// <returns>An error symbol with a message indicating that the supplied id could not be resolved.</returns>
-        internal static Symbol _CreateSymbolNotFoundError(string id, ISourcePosition position)
+        internal static Symbol _CreateSymbolNotFoundError([NotNull] string id, [NotNull]  ISourcePosition position)
         {
             var msg = Message.Error(string.Format("Cannot resolve symbol {0}.", id), position,
                                     MessageClasses.SymbolNotResolved);
-            return new MessageSymbol(msg, null);
+            return MessageSymbol.Create(msg, null);
         }
 
         #region Implementation of IObject

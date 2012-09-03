@@ -31,7 +31,6 @@
 #region Namespace Imports
 
 using System;
-using System.Collections;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.Diagnostics.CodeAnalysis;
@@ -40,10 +39,9 @@ using Prexonite.Compiler.Ast;
 using Prexonite.Compiler.Macro;
 using Prexonite.Compiler.Symbolic;
 using Prexonite.Compiler.Symbolic.Compatibility;
-using Prexonite.Internal;
 using Prexonite.Modular;
+using Prexonite.Properties;
 using Prexonite.Types;
-using NoDebug = System.Diagnostics.DebuggerNonUserCodeAttribute;
 
 #endregion
 
@@ -158,7 +156,7 @@ namespace Prexonite.Compiler
                 function = loader.ParentApplication.CreateFunction();
             if (!ReferenceEquals(function.ParentApplication, loader.ParentApplication))
                 throw new ArgumentException(
-                    "When creating a compiler target, the supplied function must match the application targetted by the loader.",
+                    Resources.CompilerTarget_Cannot_create_for_foreign_function,
                     "function");
 
             _loader = loader;
@@ -189,7 +187,9 @@ namespace Prexonite.Compiler
 
             foreach (var localRefId in MacroAliases.Aliases())
             {
-                Ast.Symbols.Declare(localRefId, new EntitySymbol(EntityRef.Variable.Local.Create(localRefId), true));
+                Ast.Symbols.Declare(localRefId,
+                                    DereferenceSymbol.Create(
+                                        CallSymbol.Create(EntityRef.Variable.Local.Create(localRefId))));
                 _outerVariables.Add(localRefId);
                 //remember: outer variables are not added as local variables
             }
@@ -543,6 +543,7 @@ namespace Prexonite.Compiler
 
             {
                 var func = T.Function;
+                // ReSharper disable RedundantJumpStatement
                 if (func.Variables.Contains(id) || func.Parameters.Contains(id) ||
                     T.OuterVariables.Contains(id))
                     return; //Parent can supply the variable/parameter. Stop search here.
@@ -557,6 +558,7 @@ namespace Prexonite.Compiler
                                 Function,
                                 id,
                                 func));
+                // ReSharper restore RedundantJumpStatement
             }
         }
 
@@ -568,9 +570,9 @@ namespace Prexonite.Compiler
         ///     Promotes captured variables to function parameters.
         /// </summary>
         /// <returns>A list of expressions (get symbol) that should be added to the arguments list of any call to the lifted function.</returns>
-        internal Func<Parser, IList<AstExpr>> ToCaptureByValue()
+        internal Func<Parser, IList<AstExpr>> _ToCaptureByValue()
         {
-            return ToCaptureByValue(new string[0]);
+            return _ToCaptureByValue(new string[0]);
         }
 
         /// <summary>
@@ -578,7 +580,7 @@ namespace Prexonite.Compiler
         /// </summary>
         /// <param name = "keepByRef">The set of captured variables that should be kept captured by reference (i.e. not promoted to parameters)</param>
         /// <returns>A list of expressions (get symbol) that should be added to the arguments list of any call to the lifted function.</returns>
-        internal Func<Parser, IList<AstExpr>> ToCaptureByValue(IEnumerable<string> keepByRef)
+        internal Func<Parser, IList<AstExpr>> _ToCaptureByValue(IEnumerable<string> keepByRef)
         {
             keepByRef = new HashSet<string>(keepByRef);
             var toPromote =
@@ -1110,11 +1112,11 @@ namespace Prexonite.Compiler
                     pos = new SourcePosition("-unknown-", -1, -1);
                 else
                     pos = Ast[0];
-                _loader.ReportMessage(new Message(MessageSeverity.Error,
-                    String.Format(
-                        "Parameter list of function {0} contains {1} at position {2}. The name {1} is reserved for the local variable holding the argument list.",
-                        _function.LogicalId, PFunction.ArgumentListId,
-                        _function.Parameters.IndexOf(PFunction.ArgumentListId)), pos));
+                _loader.ReportMessage(Message.Create(MessageSeverity.Error,
+                                             String.Format(
+                                                 "Parameter list of function {0} contains {1} at position {2}. The name {1} is reserved for the local variable holding the argument list.",
+                                                 _function.LogicalId, PFunction.ArgumentListId,
+                                                 _function.Parameters.IndexOf(PFunction.ArgumentListId)), pos,MessageClasses.ParameterNameReserved));
             }
 
             _DetermineSharedNames();
@@ -1501,15 +1503,16 @@ namespace Prexonite.Compiler
             Symbol symbol;
             if (_TryUseSymbol(symbolId, out symbol))
             {
-                EntitySymbol entitySymbol;
-                if (symbol.TryGetEntitySymbol(out entitySymbol))
+                try
                 {
-                    entry = entitySymbol.ToSymbolEntry();
+                    entry = symbol.ToSymbolEntry();
                     return true;
                 }
-                else
+                catch(SymbolConversionException e)
                 {
-                    Loader.Errors.Add(_CreateIncompatibleSymbolError(position, symbol));
+                    Loader.ReportMessage(_CreateIncompatibleSymbolError(position, symbol));
+                    Loader.ReportMessage(Message.Create(MessageSeverity.Info, e.ToString(), position,
+                                                        MessageClasses.ExceptionDuringCompilation));
                     entry = null;
                     return false;
                 }

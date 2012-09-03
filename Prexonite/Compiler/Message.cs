@@ -1,12 +1,20 @@
 ﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
 
 namespace Prexonite.Compiler
 {
+    [Serializable]
     public partial class Message : ISourcePosition
     {
+        public static Message Create(MessageSeverity severity, string text, ISourcePosition position, string messageClass)
+        {
+            return new Message(severity, text, position, messageClass);
+        }
+
+        public static Message Create(MessageSeverity severity, string text, string file, int line, int column, string messageClass)
+        {
+            return new Message(severity, text, file, line, column, messageClass);
+        }
+
         private const string MessageFormat = "-- ({3}) line {0} col {1}: {2}"; // 0=line, 1=column, 2=text, 3=file
         private readonly string _text;
         public string Text { get { return _text; } }
@@ -21,7 +29,7 @@ namespace Prexonite.Compiler
         public string MessageClass { get { return _messageClass; } }
         public MessageSeverity Severity { get { return _severity; } }
 
-        public Message(MessageSeverity severity, string text, string file, int line, int column, string messageClass = null)
+        private Message(MessageSeverity severity, string text, string file, int line, int column, string messageClass = null)
         {
             if (text == null)
                 throw new ArgumentNullException();
@@ -35,36 +43,36 @@ namespace Prexonite.Compiler
 
         public static Message Error(string message, string file, int line, int column, string messageClass = null)
         {
-            return new Message(MessageSeverity.Error, message, file, line, column, messageClass);
+            return Create(MessageSeverity.Error, message, file, line, column, messageClass);
         }
 
         public static Message Error(string message, ISourcePosition position, string messageClass = null)
         {
-            return new Message(MessageSeverity.Error, message, position, messageClass);
+            return Create(MessageSeverity.Error, message, position, messageClass);
         }
 
         public static Message Warning(string message, string file, int line, int column, string messageClass = null)
         {
-            return new Message(MessageSeverity.Warning, message, file, line, column,messageClass);
+            return Create(MessageSeverity.Warning, message, file, line, column,messageClass);
         }
 
         public static Message Warning(string message, ISourcePosition position, string messageClass = null)
         {
-            return new Message(MessageSeverity.Warning, message, position, messageClass);
+            return Create(MessageSeverity.Warning, message, position, messageClass);
         }
 
         public static Message Info(string message, string file, int line, int column, string messageClass = null)
         {
-            return new Message(MessageSeverity.Info, message, file, line, column,messageClass);
+            return Create(MessageSeverity.Info, message, file, line, column,messageClass);
         }
 
         public static Message Info(string message, ISourcePosition position, string messageClass = null)
         {
-            return new Message(MessageSeverity.Info, message, position, messageClass);
+            return Create(MessageSeverity.Info, message, position, messageClass);
         }
 
-        public Message(MessageSeverity severity, string text, ISourcePosition position, string messageClass = null)
-            : this(severity, text, position.File, position.Line, position.Column)
+        private Message(MessageSeverity severity, string text, ISourcePosition position, string messageClass = null)
+            : this(severity, text, position.File, position.Line, position.Column,messageClass)
         {
         }
 

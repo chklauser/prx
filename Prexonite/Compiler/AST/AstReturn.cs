@@ -104,11 +104,11 @@ namespace Prexonite.Compiler.Ast
         {
             if (!warned && _isInProtectedBlock(target))
             {
-                target.Loader.ReportMessage(new Message(MessageSeverity.Warning,
-                    "Detected possible return (yield) from within a protected block " +
-                        "(try-catch-finally, using, foreach). " +
-                            "This Prexonite implementation cannot guarantee that cleanup code is executed. ",
-                    this));
+                target.Loader.ReportMessage(Message.Create(MessageSeverity.Warning,
+                                                   "Detected possible return (yield) from within a protected block " +
+                                                   "(try-catch-finally, using, foreach). " +
+                                                   "This Prexonite implementation cannot guarantee that cleanup code is executed. ",
+                                                   this,MessageClasses.YieldFromProtectedBlock));
                 warned = true;
             }
         }

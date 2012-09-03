@@ -1,4 +1,20 @@
-﻿using System;
+﻿/*
+ * Copyright 2007-2012 JetBrains s.r.o.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ * http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
+using System;
 
 // ReSharper disable CheckNamespace
 namespace JetBrains.Annotations
@@ -10,6 +26,15 @@ namespace JetBrains.Annotations
     [AttributeUsage(AttributeTargets.All, AllowMultiple = false, Inherited = true)]
     public sealed class LocalizationRequiredAttribute : Attribute
     {
+        /// <summary>
+        /// Initializes a new instance of the <see cref="LocalizationRequiredAttribute"/> class with
+        /// <see cref="Required"/> set to <see langword="true"/>.
+        /// </summary>
+        public LocalizationRequiredAttribute()
+            : this(true)
+        {
+        }
+
         /// <summary>
         /// Initializes a new instance of the <see cref="LocalizationRequiredAttribute"/> class.
         /// </summary>
@@ -24,7 +49,7 @@ namespace JetBrains.Annotations
         /// <value><c>true</c> if a element should be localized; otherwise, <c>false</c>.</value>
         /// </summary>
         [UsedImplicitly]
-        public bool Required { get; set; }
+        public bool Required { get; private set; }
 
         /// <summary>
         /// Returns whether the value of the given object is equal to the current <see cref="LocalizationRequiredAttribute"/>.
@@ -74,77 +99,27 @@ namespace JetBrains.Annotations
     }
 
     /// <summary>
-    /// Indicates that the function argument should be string literal and match one  of the parameters of the caller function.
+    /// Indicates that the function argument should be string literal and match one of the parameters of the caller function.
     /// For example, <see cref="ArgumentNullException"/> has such parameter.
     /// </summary>
     [AttributeUsage(AttributeTargets.Parameter, AllowMultiple = false, Inherited = true)]
     public sealed class InvokerParameterNameAttribute : Attribute { }
 
     /// <summary>
-    /// Indicates that the marked method is assertion method, i.e. it halts control flow if one of the conditions is satisfied. 
-    /// To set the condition, mark one of the parameters with <see cref="AssertionConditionAttribute"/> attribute
+    /// Indicates that the function is used to notify class type property value is changed.
     /// </summary>
-    /// <seealso cref="AssertionConditionAttribute"/>
     [AttributeUsage(AttributeTargets.Method, AllowMultiple = false, Inherited = true)]
-    public sealed class AssertionMethodAttribute : Attribute { }
-
-    /// <summary>
-    /// Indicates the condition parameter of the assertion method. 
-    /// The method itself should be marked by <see cref="AssertionMethodAttribute"/> attribute.
-    /// The mandatory argument of the attribute is the assertion type.
-    /// </summary>
-    /// <seealso cref="AssertionConditionType"/>
-    [AttributeUsage(AttributeTargets.Parameter, AllowMultiple = false, Inherited = true)]
-    public sealed class AssertionConditionAttribute : Attribute
+    public sealed class NotifyPropertyChangedInvocatorAttribute : Attribute
     {
-        /// <summary>
-        /// Initializes new instance of AssertionConditionAttribute
-        /// </summary>
-        /// <param name="conditionType">Specifies condition type</param>
-        public AssertionConditionAttribute(AssertionConditionType conditionType)
+        public NotifyPropertyChangedInvocatorAttribute() { }
+        public NotifyPropertyChangedInvocatorAttribute(string parameterName)
         {
-            ConditionType = conditionType;
+            ParameterName = parameterName;
         }
 
-        /// <summary>
-        /// Gets condition type
-        /// </summary>
-        public AssertionConditionType ConditionType { get; private set; }
+        [UsedImplicitly]
+        public string ParameterName { get; private set; }
     }
-
-    /// <summary>
-    /// Specifies assertion type. If the assertion method argument satisifes the condition, then the execution continues. 
-    /// Otherwise, execution is assumed to be halted
-    /// </summary>
-    public enum AssertionConditionType
-    {
-        /// <summary>
-        /// Indicates that the marked parameter should be evaluated to true
-        /// </summary>
-        IS_TRUE = 0,
-
-        /// <summary>
-        /// Indicates that the marked parameter should be evaluated to false
-        /// </summary>
-        IS_FALSE = 1,
-
-        /// <summary>
-        /// Indicates that the marked parameter should be evaluated to null value
-        /// </summary>
-        IS_NULL = 2,
-
-        /// <summary>
-        /// Indicates that the marked parameter should be evaluated to not null value
-        /// </summary>
-        IS_NOT_NULL = 3,
-    }
-
-    /// <summary>
-    /// Indicates that the marked method unconditionally terminates control flow execution.
-    /// For example, it could unconditionally throw exception
-    /// </summary>
-    [AttributeUsage(AttributeTargets.Method, AllowMultiple = false, Inherited = true)]
-    public sealed class TerminatesProgramAttribute : Attribute { }
 
     /// <summary>
     /// Indicates that the value of marked element could be <c>null</c> sometimes, so the check for <c>null</c> is necessary before its usage
@@ -157,6 +132,54 @@ namespace JetBrains.Annotations
     /// </summary>
     [AttributeUsage(AttributeTargets.Method | AttributeTargets.Parameter | AttributeTargets.Property | AttributeTargets.Delegate | AttributeTargets.Field, AllowMultiple = false, Inherited = true)]
     public sealed class NotNullAttribute : Attribute { }
+
+    /// <summary>
+    /// Describes dependency between method input and output
+    /// </summary>
+    /// <syntax>
+    /// <p>Function definition table syntax:</p>
+    /// <list>
+    /// <item>FDT      ::= FDTRow [;FDTRow]*</item>
+    /// <item>FDTRow   ::= Input =&gt; Output | Output &lt;= Input</item>
+    /// <item>Input    ::= ParameterName: Value [, Input]*</item>
+    /// <item>Output   ::= [ParameterName: Value]* {halt|stop|void|nothing|Value}</item>
+    /// <item>Value    ::= true | false | null | notnull | canbenull</item>
+    /// </list>
+    /// If method has single input parameter, it's name could be omitted. <br/>
+    /// Using "halt" (or "void"/"nothing", which is the same) for method output means that methos doesn't return normally. <br/>
+    /// "canbenull" annotation is only applicable for output parameters. <br/>
+    /// You can use multiple [ContractAnnotation] for each FDT row, or use single attribute with rows separated by semicolon. <br/>
+    /// </syntax>
+    /// <examples>
+    /// <list>
+    /// <item>[ContractAnnotation("=> halt")] public void TerminationMethod()</item>
+    /// <item>[ContractAnnotation("halt &lt;= condition: false")] public void Assert(bool condition, string text) // Regular Assertion method</item>
+    /// <item>[ContractAnnotation("s:null => true")] public bool IsNullOrEmpty(string s) // String.IsNullOrEmpty</item>
+    /// <item>[ContractAnnotation("null => null; notnull => notnull")] public object Transform(object data) // Method which returns null if parameter is null, and not null if parameter is not null</item>
+    /// <item>[ContractAnnotation("s:null=>false; =>true,result:notnull; =>false, result:null")] public bool TryParse(string s, out Person result)</item>
+    /// </list>
+    /// </examples>
+    [AttributeUsage(AttributeTargets.Method, AllowMultiple = true, Inherited = true)]
+    public sealed class ContractAnnotationAttribute : Attribute
+    {
+        public ContractAnnotationAttribute([NotNull] string fdt)
+            : this(fdt, false)
+        {
+        }
+
+        public ContractAnnotationAttribute([NotNull] string fdt, bool forceFullStates)
+        {
+            FDT = fdt;
+            ForceFullStates = forceFullStates;
+        }
+
+// ReSharper disable InconsistentNaming
+        public string FDT { [UsedImplicitly]
+        get; private set; }
+// ReSharper restore InconsistentNaming
+        public bool ForceFullStates { [UsedImplicitly]
+        get; private set; }
+    }
 
     /// <summary>
     /// Indicates that the value of marked type (or its derivatives) cannot be compared using '==' or '!=' operators.
@@ -196,7 +219,8 @@ namespace JetBrains.Annotations
         /// <summary>
         /// Gets enumerations of specified base types
         /// </summary>
-        public Type[] BaseTypes { get; private set; }
+        public Type[] BaseTypes { [UsedImplicitly]
+        get; private set; }
     }
 
     /// <summary>
@@ -324,13 +348,14 @@ namespace JetBrains.Annotations
     /// This attribute is intended to mark publicly available API which should not be removed and so is treated as used.
     /// </summary>
     [MeansImplicitUse]
+// ReSharper disable InconsistentNaming
     public sealed class PublicAPIAttribute : Attribute
+// ReSharper restore InconsistentNaming
     {
         public PublicAPIAttribute() { }
-
-        // ReSharper disable UnusedParameter.Local
+// ReSharper disable UnusedParameter.Local
         public PublicAPIAttribute(string comment) { }
-        // ReSharper restore UnusedParameter.Local
+// ReSharper restore UnusedParameter.Local
     }
 
     /// <summary>
@@ -421,10 +446,16 @@ namespace JetBrains.Annotations
     public sealed class AspMvcSupressViewErrorAttribute : Attribute { }
 
     [AttributeUsage(AttributeTargets.Parameter)]
-    public sealed class AspMvcTemplateAttribute : Attribute { }
+    public sealed class AspMvcDisplayTemplateAttribute : Attribute { }
+
+    [AttributeUsage(AttributeTargets.Parameter)]
+    public sealed class AspMvcEditorTemplateAttribute : Attribute { }
 
     [AttributeUsage(AttributeTargets.Parameter | AttributeTargets.Method)]
     public sealed class AspMvcViewAttribute : PathReferenceAttribute { }
+
+    [AttributeUsage(AttributeTargets.Parameter | AttributeTargets.Property)]
+    public sealed class AspMvcActionSelectorAttribute : Attribute { }
 
     // Razor attributes
 

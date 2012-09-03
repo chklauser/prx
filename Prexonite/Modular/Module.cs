@@ -13,6 +13,7 @@ namespace Prexonite.Modular
     /// <summary>
     /// A Prexonite module is a named container for  Prexonite functions and variable declarations.
     /// </summary>
+    [DebuggerDisplay("module {ModuleName}")]
     public abstract class Module : IHasMetaTable, IMetaFilter
     {
         public abstract ModuleName Name { get; }

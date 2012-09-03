@@ -128,4 +128,34 @@
   <data name="MetaEntry_NullReferenceInList">
     <value xml:space="preserve">A MetaEntry list must not contain null references.</value>
   </data>
+  <data name="ConflictUnionFallbackStore__unifySymbols_Invalid_key_in_source_for_symbol_store_">
+    <value xml:space="preserve">Invalid key in source for symbol store.</value>
+  </data>
+  <data name="SymbolEntryConversion_MessageSymbol_cannot_be_converted_to_SymbolEntry">
+    <value xml:space="preserve">Message symbol was not handled before conversion to a legacy SymbolEntry</value>
+  </data>
+  <data name="SymbolEntryConversion_No_arbirtrary_dereference">
+    <value xml:space="preserve">Legacy symbol entry cannot express arbitrary dereference symbol modifiers.</value>
+  </data>
+  <data name="SymbolEntryConversion_MacroInstance_not_supported">
+    <value xml:space="preserve">Cannot convert a macro instance symbol to a legacy SymbolEntry.</value>
+  </data>
+  <data name="Loader__begin_compiling">
+    <value xml:space="preserve">{1}begin compiling {0} [Path: {2} ]</value>
+  </data>
+  <data name="Loader__end_compiling">
+    <value xml:space="preserve">{1}end   compiling {0}</value>
+  </data>
+  <data name="CompilerTarget_Cannot_create_for_foreign_function">
+    <value xml:space="preserve">When creating a compiler target, the supplied function must match the application targetted by the loader.</value>
+  </data>
+  <data name="AstNode__GetOptimizedNode_CompilerTarget_null">
+    <value xml:space="preserve">Compiler target cannot be null.</value>
+  </data>
+  <data name="AstNode__GetOptimizedNode_Expression_null">
+    <value xml:space="preserve">Expression to be optimized can not be null.</value>
+  </data>
+  <data name="Parser__CannotUseExpressionAsAConstructor">
+    <value xml:space="preserve">Cannot use {0} like a constructor.</value>
+  </data>
 </root>

@@ -26,6 +26,7 @@
 
 using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using JetBrains.Annotations;
 using Prexonite.Commands;
 using Prexonite.Compiler;
@@ -163,6 +164,7 @@ namespace Prexonite.Modular
 
         #region Functions
 
+        [DebuggerDisplay("function {Id}/{ModuleName}")]
         public class Function : EntityRef, IEquatable<Function>, IRunTime
         {
             private readonly string _id;
@@ -297,6 +299,7 @@ namespace Prexonite.Modular
 
         #region Commands
 
+        [DebuggerDisplay("command {Id}")]
         public sealed class Command : EntityRef, IRunTime, IEquatable<Command>
         {
             public bool Equals(Command other)
@@ -428,6 +431,7 @@ namespace Prexonite.Modular
 
             #region Nested type: Global
 
+            [DebuggerDisplay("global var {Id}/{ModuleName}")]
             public sealed class Global : Variable, IEquatable<Global>
             {
                 private readonly string _id;
@@ -553,6 +557,7 @@ namespace Prexonite.Modular
 
             #region Nested type: Local
 
+            [DebuggerDisplay("local var {Id}")]
             public sealed class Local : Variable, IEquatable<Local>
             {
                 private readonly string _id;
@@ -683,6 +688,7 @@ namespace Prexonite.Modular
 
         #region MacroCommands
 
+        [DebuggerDisplay("macro command {Id}")]
         public class MacroCommand : EntityRef, IMacro, IEquatable<MacroCommand>
         {
             private readonly string _id;

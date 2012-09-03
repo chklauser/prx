@@ -25,6 +25,7 @@
 //  IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 using System;
+using System.Diagnostics;
 using System.Linq;
 using Prexonite.Types;
 
@@ -34,6 +35,7 @@ namespace Prexonite.Modular
     /// Identifies a Prexonite module. Consists of an identifier and 
     /// a version number (major.minor.build.revision).
     /// </summary>
+    [DebuggerDisplay("{Id},{Version}")]
     public sealed class ModuleName : IEquatable<ModuleName>
     {
         private readonly string _id;

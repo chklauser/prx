@@ -216,7 +216,7 @@ namespace Prexonite
         [DebuggerStepThrough]
         public PFunction CreateFunction(string id)
         {
-            var decl = this.Module.CreateFunction(id);
+            var decl = Module.CreateFunction(id);
             var func = new PFunction(this, decl);
             _functionTable.Add(func);
             return func;

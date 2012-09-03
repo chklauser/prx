@@ -43,7 +43,7 @@ namespace PrexoniteTests.Tests
         public void NoLocalButCount()
         {
             var s1 = SymbolStore.Create();
-            var s = new EntitySymbol(EntityRef.Command.Create("print"));
+            var s = CallSymbol.Create(EntityRef.Command.Create("print"));
             s1.Declare("print",s);
             var s2 = SymbolStore.Create(s1);
             Assert.That(s2.Count,Is.EqualTo(1),"Expected s2.Count to be 1.");

@@ -33,9 +33,11 @@ using System.Collections.Generic;
 using System.Diagnostics;
 using System.Diagnostics.CodeAnalysis;
 using System.IO;
+using System.Linq;
 using System.Reflection;
 using System.Security.AccessControl;
 using System.Text;
+using JetBrains.Annotations;
 using Prexonite.Commands;
 using Prexonite.Commands.Concurrency;
 using Prexonite.Commands.Core;
@@ -44,6 +46,7 @@ using Prexonite.Compiler.Macro;
 using Prexonite.Compiler.Macro.Commands;
 using Prexonite.Compiler.Symbolic;
 using Prexonite.Modular;
+using Prexonite.Properties;
 using Prexonite.Types;
 using Debug = System.Diagnostics.Debug;
 
@@ -104,7 +107,7 @@ namespace Prexonite.Compiler
         public void RegisterExistingCommands()
         {
             foreach (var kvp in ParentEngine.Commands)
-                Symbols.Declare(kvp.Key, new EntitySymbol(EntityRef.Command.Create(kvp.Key), false));
+                Symbols.Declare(kvp.Key, CallSymbol.Create(EntityRef.Command.Create(kvp.Key)));
         }
 
         #endregion
@@ -597,8 +600,7 @@ namespace Prexonite.Compiler
             MacroCommands.Add(macroCommand);
             if (Options.RegisterCommands)
                 Symbols.Declare(macroCommand.Id,
-                                new EntitySymbol(EntityRef.MacroCommand.Create(macroCommand.Id),
-                                                 false));
+                                ExpandSymbol.Create(EntityRef.MacroCommand.Create(macroCommand.Id)));
         }
 
         #endregion
@@ -671,7 +673,7 @@ namespace Prexonite.Compiler
         }
 
 #if DEBUG
-        private int _load_indent;
+        private int _loadIndent;
 #endif
 
         [DebuggerStepThrough]
@@ -701,20 +703,21 @@ namespace Prexonite.Compiler
                 FileOptions.SequentialScan))
             {
 #if DEBUG
-                var indent = new StringBuilder(_load_indent);
-                indent.Append(' ', 2*(_load_indent++));
-                Console.WriteLine("{1}begin compiling {0} [Path: {2} ]", file.Name, indent, file.FullName);
+                var indent = new StringBuilder(_loadIndent);
+                indent.Append(' ', 2*(_loadIndent++));
+                Console.WriteLine(Resources.Loader__begin_compiling, file.Name, indent, file.FullName);
 #endif
                 _loadFromStream(str, file.Name);
 #if DEBUG
-                Console.WriteLine("{1}end   compiling {0}", file.Name, indent);
-                _load_indent--;
+                Console.WriteLine(Resources.Loader__end_compiling, file.Name, indent);
+                _loadIndent--;
 #endif
             }
 
             _loadPaths.Pop();
         }
 
+        [PublicAPI]
         public void RequireFromFile(string path)
         {
             var file = ApplyLoadPaths(path);
@@ -752,6 +755,7 @@ namespace Prexonite.Compiler
         /// <param name = "column">The column in which the error occurred.</param>
         /// <param name = "message">The error message.</param>
         /// <exception cref = "InvalidOperationException">when the Loader is not actively parsing.</exception>
+        [Obsolete("Use Loader.ReportMessage instead.")]
         public void ReportSemanticError(int line, int column, string message)
         {
             if (_reportSemError == null)
@@ -766,6 +770,7 @@ namespace Prexonite.Compiler
             ReportMessage(e.Message);
         }
 
+        [PublicAPI]
         public void ReportMessage(Message message)
         {
             switch (message.Severity)
@@ -819,22 +824,26 @@ namespace Prexonite.Compiler
             target.Ast.Clear();
         }
 
+        [PublicAPI]
         public int ErrorCount
         {
             [DebuggerStepThrough]
             get { return _errors.Count; }
         }
 
+        [PublicAPI]
         public List<Message> Errors
         {
             get { return _errors; }
         }
 
+        [PublicAPI]
         public List<Message> Warnings
         {
             get { return _warnings; }
         }
 
+        [PublicAPI]
         public List<Message> Infos
         {
             get { return _infos; }
@@ -929,7 +938,9 @@ namespace Prexonite.Compiler
         ///     Notifies the loader that a caller of <see cref = "RequestBuildCommands" /> no longer requires build commands.
         /// </summary>
         /// <param name = "token">The token returned from the corresponding call to <see cref = "RequestBuildCommands" /></param>
+// ReSharper disable UnusedParameter.Global // token is only used for ensuring correct usage of the API
         public void ReleaseBuildCommands(object token)
+// ReSharper restore UnusedParameter.Global
         {
             if (_buildCommandsRequests.Count <= 0 ||
                 !ReferenceEquals(_buildCommandsRequests.Peek(), token))
@@ -1078,7 +1089,7 @@ namespace Prexonite.Compiler
         public void DeclareBuildBlockCommands(CompilerTarget target)
         {
             foreach (var cmdEntry in _buildCommands)
-                target.DeclareModuleLocal(SymbolInterpretations.Command, cmdEntry.Key);
+                target.Symbols.Declare(cmdEntry.Key,CallSymbol.Create(EntityRef.Command.Create(cmdEntry.Key)));
         }
 
         #endregion
@@ -1185,24 +1196,30 @@ namespace Prexonite.Compiler
 
         private class SymbolKinds
         {
-            public readonly List<KeyValuePair<string, EntityRef.Function>> Functions =
-                new List<KeyValuePair<string, EntityRef.Function>>();
-            public readonly List<KeyValuePair<string, EntityRef.Command>> Commands =
-                new List<KeyValuePair<string, EntityRef.Command>>();
-            public readonly List<KeyValuePair<string, EntityRef.Variable.Global>> ObjectVariables =
-                new List<KeyValuePair<string, EntityRef.Variable.Global>>();
-            public readonly List<KeyValuePair<string, EntityRef.Variable.Global>> ReferenceVariables =
-                new List<KeyValuePair<string, EntityRef.Variable.Global>>();
-            public readonly List<KeyValuePair<string, EntityRef.MacroCommand>> MacroCommands =
-                new List<KeyValuePair<string, EntityRef.MacroCommand>>();
+            public readonly List<Tuple<string, int, EntityRef.Function>> Functions =
+                new List<Tuple<string, int, EntityRef.Function>>();
+            public readonly List<Tuple<string, int, EntityRef.Function>> MacroFunctions =
+                new List<Tuple<string, int, EntityRef.Function>>();
+            public readonly List<Tuple<string,int,EntityRef.Command>> Commands =
+                new List<Tuple<string,int,EntityRef.Command>>();
+            public readonly List<Tuple<string,int,EntityRef.Variable.Global>> Variables =
+                new List<Tuple<string,int,EntityRef.Variable.Global>>();
+            public readonly List<Tuple<string, int, EntityRef.Variable.Global>> MacroVariables =
+                new List<Tuple<string, int, EntityRef.Variable.Global>>();
+            public readonly List<Tuple<string,int,EntityRef.MacroCommand>> MacroCommands =
+                new List<Tuple<string,int,EntityRef.MacroCommand>>();
 
             public string Key;
-            public bool IsDereference;
+            public int CurrentDereferenceCount;
+            public bool MacroMode;
         }
 
+// ReSharper disable InconsistentNaming
         private static readonly EntitySplitMatcher EntitySplit = new EntitySplitMatcher();
+// ReSharper restore InconsistentNaming
         private class EntitySplitMatcher : EntityRefMatcher<SymbolKinds, object>
         {
+            [ContractAnnotation("=> halt")]
             protected override object OnNotMatched(EntityRef entity, SymbolKinds argument)
             {
                 throw new PrexoniteException(String.Format("Cannot split up entity {0} into entity types.", entity));
@@ -1210,50 +1227,70 @@ namespace Prexonite.Compiler
 
             protected override object OnCommand(EntityRef.Command command, SymbolKinds argument)
             {
-                argument.Commands.Add(new KeyValuePair<string, EntityRef.Command>(argument.Key,command));
+                if(argument.MacroMode)
+                    throw new PrexoniteException("Cannot create symbol that represents compile-time expansion of runtime command.");
+                argument.Commands.Add(Tuple.Create(argument.Key,argument.CurrentDereferenceCount,command));
                 return null;
             }
 
             protected override object OnMacroCommand(EntityRef.MacroCommand macroCommand, SymbolKinds argument)
             {
-                argument.MacroCommands.Add(new KeyValuePair<string, EntityRef.MacroCommand>(argument.Key, macroCommand));
+                if (!argument.MacroMode)
+                    throw new PrexoniteException(string.Format("Cannot create symbol that represents runtime call to macro command {0}.", macroCommand.Id));
+                argument.MacroCommands.Add(Tuple.Create(argument.Key,argument.CurrentDereferenceCount,macroCommand));
                 return null;
             }
 
             public override object OnFunction(EntityRef.Function function, SymbolKinds argument)
             {
-                argument.Functions.Add(new KeyValuePair<string, EntityRef.Function>(argument.Key, function));
+                var entry = Tuple.Create(argument.Key, argument.CurrentDereferenceCount, function);
+                if (argument.MacroMode)
+                    argument.MacroFunctions.Add(entry);
+                else
+                    argument.Functions.Add(entry);
                 return null;
             }
 
             protected override object OnGlobalVariable(EntityRef.Variable.Global variable, SymbolKinds argument)
             {
-                if(argument.IsDereference)
-                {
-                    argument.ReferenceVariables.Add(new KeyValuePair<string, EntityRef.Variable.Global>(argument.Key,
-                                                                                                        variable));
-                }
+                var entry = Tuple.Create(argument.Key, argument.CurrentDereferenceCount, variable);
+                if (argument.MacroMode)
+                    argument.MacroVariables.Add(entry);
                 else
-                {
-                    argument.ObjectVariables.Add(new KeyValuePair<string, EntityRef.Variable.Global>(argument.Key,
-                                                                                                     variable));
-                }
+                    argument.Variables.Add(entry);
                 return null;
             }
         }
 
+// ReSharper disable InconsistentNaming
         private static readonly SymbolKindSplitHandler SymbolKindSplit = new SymbolKindSplitHandler();
+// ReSharper restore InconsistentNaming
         private class SymbolKindSplitHandler : ISymbolHandler<SymbolKinds, object>
         {
-            public object HandleEntity(EntitySymbol symbol, SymbolKinds argument)
+            public object HandleCall(CallSymbol symbol, SymbolKinds argument)
             {
-                argument.IsDereference = symbol.IsDereferenced;
                 return symbol.Entity.Match(EntitySplit, argument);
+            }
+
+            public object HandleExpand(ExpandSymbol symbol, SymbolKinds argument)
+            {
+                var oldMode = argument.MacroMode;
+                argument.MacroMode = true;
+                try
+                {
+                    return symbol.Entity.Match(EntitySplit, argument);
+                } 
+                finally
+                {
+                    argument.MacroMode = oldMode;
+                }
             }
 
             public object HandleMessage(MessageSymbol symbol, SymbolKinds argument)
             {
-                if(symbol.Message.Severity == MessageSeverity.Error)
+                // the second condition is included in the first, but helps ReSharper understand
+                //  that the else-branch cannot result in a null reference exception.
+                if(symbol.Message.Severity == MessageSeverity.Error || symbol.Symbol == null)
                 {
                     return null; //don't emit error symbols
                 }
@@ -1261,6 +1298,18 @@ namespace Prexonite.Compiler
                 {
                     return symbol.Symbol.HandleWith(this, argument);
                 }
+            }
+
+            public object HandleDereference(DereferenceSymbol symbol, SymbolKinds argument)
+            {
+                argument.CurrentDereferenceCount++;
+                return symbol.HandleWith(this, argument);
+            }
+
+            public object HandleReferenceTo(ReferenceToSymbol symbol, SymbolKinds argument)
+            {
+                argument.CurrentDereferenceCount--;
+                return symbol.HandleWith(this, argument);
             }
 
             public object HandleMacroInstance(MacroInstanceSymbol symbol, SymbolKinds argument)
@@ -1284,11 +1333,12 @@ namespace Prexonite.Compiler
                 kvp.Value.HandleWith(SymbolKindSplit, split);
             }
 
-            _writeSymbolKind(writer, "function", split.Functions);
             _writeSymbolKind(writer, "command", split.Commands);
-            _writeSymbolKind(writer, "var", split.ObjectVariables);
-            _writeSymbolKind(writer, "ref", split.ReferenceVariables);
+            _writeSymbolKind(writer, "function", split.Functions);
+            _writeSymbolKind(writer, "var", split.Variables);
             _writeSymbolKind(writer, "macro command", split.MacroCommands);
+            _writeSymbolKind(writer, "macro function", split.MacroFunctions);
+            _writeSymbolKind(writer, "macro var", split.MacroVariables);
         }
 
         /// <summary>
@@ -1304,35 +1354,48 @@ namespace Prexonite.Compiler
         private static void _writeSymbolKind<T>(
             TextWriter writer,
             string kind,
-            ICollection<KeyValuePair<string, T>> entries) where T : EntityRef
+            ICollection<Tuple<string, int, T>> entries) where T : EntityRef
         {
             if (entries.Count <= 0)
                 return;
-            writer.Write("declare ");
-            writer.Write(kind);
-            writer.Write(" ");
-            var idx = 0;
-            foreach (var kvp in entries)
+
+            foreach (var entry in entries.GroupBy(x => x.Item2))
             {
-                var sym = kvp.Value.ToSymbolEntry();
+                writer.Write("declare ");
+                var dereferenceCount = entry.Key;
+                // =0 <=> ordinary symbol
+                // <0 <=> referenceTo
+                // >0 <=> dereference
+                if(dereferenceCount < 0)
+                    writer.Write(String.Concat(Enumerable.Repeat("-> ",-dereferenceCount)));
+                else if(dereferenceCount > 0)
+                    writer.Write(String.Concat(Enumerable.Repeat("ref ",dereferenceCount)));
 
-                writer.Write(StringPType.ToIdLiteral(sym.InternalId));
+                writer.Write(kind);
+                var isFirst = true;
+                foreach (var kvp in entry)
+                {
+                    if (!isFirst)
+                        writer.Write(",");
+                    else
+                        isFirst = false;
 
-                if (sym.Module != null)
-                {
-                    writer.Write("/{0}/{1}", StringPType.ToIdOrLiteral(sym.Module.Id), 
-                        sym.Module.Version);
+                    var sym = kvp.Item3.ToSymbolEntry();
+                    writer.Write(StringPType.ToIdLiteral(sym.InternalId));
+
+                    if (sym.Module != null)
+                    {
+                        writer.Write("/{0}/{1}", StringPType.ToIdOrLiteral(sym.Module.Id),
+                            sym.Module.Version);
+                    }
+
+                    if (!Engine.StringsAreEqual(sym.InternalId, kvp.Item1))
+                    {
+                        writer.Write(" as ");
+                        writer.Write(StringPType.ToIdLiteral(kvp.Item1));
+                    }
                 }
-                
-                if (!Engine.StringsAreEqual(sym.InternalId, kvp.Key))
-                {
-                    writer.Write(" as ");
-                    writer.Write(StringPType.ToIdLiteral(kvp.Key));
-                }
-                if (++idx == entries.Count)
-                    writer.WriteLine(";");
-                else
-                    writer.Write(",");
+                writer.WriteLine(";");
             }
         }
 
@@ -1419,15 +1482,38 @@ namespace Prexonite.Compiler
         {
             #region Implementation of ISymbolHandler<in List<Message>,out Symbol>
 
-            public Symbol HandleEntity(EntitySymbol symbol, List<Message> argument)
+            public Symbol HandleCall(CallSymbol symbol, List<Message> argument)
+            {
+                return symbol;
+            }
+
+            public Symbol HandleExpand(ExpandSymbol symbol, List<Message> argument)
             {
                 return symbol;
             }
 
             public Symbol HandleMessage(MessageSymbol symbol, List<Message> argument)
             {
+                // Add the symbol to the list and unwrap contents
                 argument.Add(symbol.Message);
-                return symbol.Symbol.HandleWith(this, argument);
+                if (symbol.Symbol == null)
+                    return null;
+                else
+                    return symbol.Symbol.HandleWith(this, argument);
+            }
+
+            public Symbol HandleDereference(DereferenceSymbol symbol, List<Message> argument)
+            {
+                // add messages in inner symbol but don't unwrap
+                symbol.Symbol.HandleWith(this,argument);
+                return symbol;
+            }
+
+            public Symbol HandleReferenceTo(ReferenceToSymbol symbol, List<Message> argument)
+            {
+                // add messages in inner symbol but don't unwrap
+                symbol.Symbol.HandleWith(this, argument);
+                return symbol;
             }
 
             public Symbol HandleMacroInstance(MacroInstanceSymbol symbol, List<Message> argument)
@@ -1441,6 +1527,7 @@ namespace Prexonite.Compiler
         internal bool _TryUseSymbol(ref Symbol symbol)
         {
             var msgs = new List<Message>(1);
+            // symbol could be null.
             symbol = symbol.HandleWith(_listMessages, msgs);
             if (msgs.Count > 0)
             {

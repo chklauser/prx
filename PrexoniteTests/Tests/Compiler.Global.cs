@@ -200,12 +200,11 @@ Add System::Xml to Imports;
         public void Declare()
         {
             const string input =
-                @"declare function f\1; " +
-                    @"declare var go\1; " +
-                        @"declare ref gf\1, gf\2; " +
-                            @"declare function if\1;";
-            var opt = new LoaderOptions(engine, target);
-            opt.UseIndicesLocally = false;
+                "declare function f\\1; " +
+                "declare var go\\1; " +
+                "declare ref gf\\1, gf\\2; " +
+                "declare function if\\1;";
+            var opt = new LoaderOptions(engine, target) {UseIndicesLocally = false};
             var ldr = new Loader(opt);
             ldr.LoadFromString(input);
             Assert.AreEqual(0, ldr.ErrorCount);

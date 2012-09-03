@@ -94,7 +94,7 @@ Noise               = "/*" ~"*/" | "//" ~{LineBreak} | {WhiteSpace}+
        
      {Integer} "." {Integer}  {Exponent} { return tok(Parser._real, yytext()); } //definite real
      {Integer} "." {Integer}             { return tok(Parser._realLike, yytext()); } //could also be version literal
-     {Integer} "." {Integer} "." {Integer} ("." {Integer}) { return tok(Parser._version, yytext()); }
+     {Integer} "." {Integer} "." {Integer} ("." {Integer})? { return tok(Parser._version, yytext()); }
      
      {Integer}                  |
      0x{HexDigit}+              { return tok(Parser._integer, yytext()); }
@@ -202,7 +202,7 @@ Noise               = "/*" ~"*/" | "//" ~{LineBreak} | {WhiteSpace}+
     "\\"t       { buffer.Append("\t"); }
     "\\"x {HexDigit} {HexDigit}? {HexDigit}? {HexDigit}? |
     "\\"u {HexDigit} {HexDigit}  {HexDigit}  {HexDigit}  |
-    "\\"U {HexDigit} {HexDigit}  {HexDigit}  {HexDigit}  {HexDigit}  {HexDigit}  {HexDigit}  {HexDigit} { buffer.Append(unescape_char(yytext())); }
+    "\\"U {HexDigit} {HexDigit}  {HexDigit}  {HexDigit}  {HexDigit}  {HexDigit}  {HexDigit}  {HexDigit} { buffer.Append(_unescapeChar(yytext())); }
     //No need to escape $, but possible.
     "$" | "\\$"         { buffer.Append("$"); }    
 }
@@ -226,7 +226,7 @@ Noise               = "/*" ~"*/" | "//" ~{LineBreak} | {WhiteSpace}+
     "\\"t       { buffer.Append("\t"); }
     "\\"x {HexDigit} {HexDigit}? {HexDigit}? {HexDigit}? |
     "\\"u {HexDigit} {HexDigit}  {HexDigit}  {HexDigit}  |
-    "\\"U {HexDigit} {HexDigit}  {HexDigit}  {HexDigit}  {HexDigit}  {HexDigit}  {HexDigit}  {HexDigit} { buffer.Append(unescape_char(yytext())); }
+    "\\"U {HexDigit} {HexDigit}  {HexDigit}  {HexDigit}  {HexDigit}  {HexDigit}  {HexDigit}  {HexDigit} { buffer.Append(_unescapeChar(yytext())); }
     "\\$"       { buffer.Append("$"); }
     "$" {Identifier} &? 
                     {   string clipped;

@@ -86,7 +86,7 @@ namespace Prexonite.Compiler.Ast
         {
             var id = OperatorNames.Prexonite.GetName(setModifier);
 
-            var impl = id == null ? null : ResolveOperator(p, id).ToSymbolEntry();
+            var impl = id == null ? null : _ResolveOperator(p, id).ToSymbolEntry();
 
             return new AstModifyingAssignment(p.scanner.File, p.t.line, p.t.col, setModifier,
                     complex, impl, p.CurrentBlock);   
@@ -201,20 +201,20 @@ namespace Prexonite.Compiler.Ast
                     {
                         if (Implementation == null)
                         {
-                            target.Loader.Errors.Add(new Message(MessageSeverity.Error,
-                                string.Format(
-                                    "The assignment modifier {0} is not supported.",
-                                    Enum.GetName(typeof(BinaryOperator),
-                                        SetModifier)),
-                                _modifyingAssignment));
+                            target.Loader.Errors.Add(Message.Create(MessageSeverity.Error,
+                                                            string.Format(
+                                                                "The assignment modifier {0} is not supported.",
+                                                                Enum.GetName(typeof(BinaryOperator),
+                                                                             SetModifier)),
+                                                            _modifyingAssignment,MessageClasses.InvalidModifyingAssignment));
                             target.Emit(_modifyingAssignment, OpCode.nop);
                             return;
                         }
 
                         if (_modifyingAssignment.Arguments.Count < 1)
                         {
-                            target.Loader.Errors.Add(new Message(MessageSeverity.Error,
-                                "Invalid modifying assignment: No RHS.", _modifyingAssignment));
+                            target.Loader.Errors.Add(Message.Create(MessageSeverity.Error,
+                                                            "Invalid modifying assignment: No RHS.", _modifyingAssignment,MessageClasses.InvalidModifyingAssignment));
                             target.Emit(_modifyingAssignment, OpCode.nop);
                             return;
                         }

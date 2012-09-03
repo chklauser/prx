@@ -177,6 +177,7 @@
     <Compile Include="Compiler\Build\Source.cs" />
     <Compile Include="Compiler\Build\TargetDescriptionSet.cs" />
     <Compile Include="Compiler\Build\VersionConflictException.cs" />
+    <Compile Include="Compiler\ErrorMessageException.cs" />
     <Compile Include="Compiler\Macro\MacroAstFactory.cs" />
     <Compile Include="Compiler\Macro\Commands\PartialCallWrapper.cs" />
     <Compile Include="Compiler\Macro\Commands\CallMacro.cs" />
@@ -191,9 +192,19 @@
     <Compile Include="Compiler\MessageSeverity.cs" />
     <Compile Include="Compiler\NoSourcePosition.cs" />
     <Compile Include="Compiler\ParserAstFactory.cs" />
+    <Compile Include="Compiler\Symbolic\CallSymbol.cs" />
     <Compile Include="Compiler\Symbolic\Compatibility\LegacyExtensions.cs" />
+    <Compile Include="Compiler\Symbolic\DereferenceSymbol.cs" />
+    <Compile Include="Compiler\Symbolic\ExpandSymbol.cs" />
     <Compile Include="Compiler\Symbolic\Internal\ConflictUnionFallbackStore.cs" />
+    <Compile Include="Compiler\Symbolic\Internal\SymbolBuilder.cs" />
+    <Compile Include="Compiler\Symbolic\Internal\WrapTransparentlyHandler.cs" />
+    <Compile Include="Compiler\Symbolic\ISymbolHandler.cs" />
+    <Compile Include="Compiler\Symbolic\MacroInstanceSymbol.cs" />
+    <Compile Include="Compiler\Symbolic\MessageSymbol.cs" />
+    <Compile Include="Compiler\Symbolic\ReferenceToSymbol.cs" />
     <Compile Include="Compiler\Symbolic\Symbol.cs" />
+    <Compile Include="Compiler\Symbolic\SymbolHandler.cs" />
     <Compile Include="Compiler\Symbolic\SymbolInfo.cs" />
     <Compile Include="Compiler\Symbolic\SymbolOrigin.cs" />
     <Compile Include="Compiler\Symbolic\SymbolStore.cs" />

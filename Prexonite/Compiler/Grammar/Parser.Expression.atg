@@ -22,7 +22,7 @@
  */
 
 
-Expr<out AstExpr expr>		    (.	AstConditionalExpression cexpr = null; expr = null; .)
+Expr<out AstExpr expr>		    (.	AstConditionalExpression cexpr; expr = null; .)
 =	
 	AtomicExpr<out expr>   
 |										(.	bool isNegated = false; .)
@@ -37,7 +37,7 @@ Expr<out AstExpr expr>		    (.	AstConditionalExpression cexpr = null; expr = nul
 
 
 AtomicExpr<out AstExpr expr>
-                                        (.  AstExpr outerExpr = null; .)
+                                        (.  AstExpr outerExpr; .)
 =
     AppendRightExpr<out expr>
     {
@@ -53,7 +53,7 @@ AtomicExpr<out AstExpr expr>
 
 
 AppendRightExpr<out AstExpr expr>
-										(.	AstGetSet complex = null; .)
+										(.	AstGetSet complex; .)
 =
 	KeyValuePairExpr<out expr>
 	{	
@@ -128,7 +128,7 @@ NotExpr<out AstExpr expr>
 .
 
 EqlExpr<out AstExpr expr>
-                                        (. AstExpr lhs, rhs; BinaryOperator op = BinaryOperator.None; .)
+                                        (. AstExpr lhs, rhs; BinaryOperator op; .)
 =
     RelExpr<out lhs>                    (. expr = lhs; .)
     {   (   eq                          (.  op = BinaryOperator.Equality; .)
@@ -138,7 +138,7 @@ EqlExpr<out AstExpr expr>
 .
 
 RelExpr<out AstExpr expr>
-                                        (.  AstExpr lhs, rhs; BinaryOperator op = BinaryOperator.None;  .)
+                                        (.  AstExpr lhs, rhs; BinaryOperator op;  .)
 =
     CoalExpr<out lhs>                   (.  expr = lhs; .)
     {   (   lt                          (.  op = BinaryOperator.LessThan;              .)
@@ -160,7 +160,7 @@ CoalExpr<out AstExpr expr>
 .										
 
 AddExpr<out AstExpr expr>
-                                        (.  AstExpr lhs,rhs; BinaryOperator op = BinaryOperator.None; .)
+                                        (.  AstExpr lhs,rhs; BinaryOperator op; .)
 =
     MulExpr<out lhs>                    (.  expr = lhs; .)
     {   (   plus                        (.  op = BinaryOperator.Addition;      .)
@@ -170,7 +170,7 @@ AddExpr<out AstExpr expr>
 .
 
 MulExpr<out AstExpr expr>
-                                        (.  AstExpr lhs, rhs; BinaryOperator op = BinaryOperator.None; .)
+                                        (.  AstExpr lhs, rhs; BinaryOperator op; .)
 =
     PowExpr<out lhs>                    (.  expr = lhs; .)
     {   (   times                       (.  op = BinaryOperator.Multiply;      .)
@@ -189,7 +189,7 @@ PowExpr<out AstExpr expr>
 .
 
 AssignExpr<out AstExpr expr>     (.  AstGetSet assignment; BinaryOperator setModifier = BinaryOperator.None;
-                                            AstTypeExpr T;
+                                            AstTypeExpr typeExpr;
                                         .)
 =
     PostfixUnaryExpr<out expr>
@@ -212,11 +212,11 @@ AssignExpr<out AstExpr expr>     (.  AstGetSet assignment; BinaryOperator setMod
 	        |   div assign              (.  setModifier = BinaryOperator.Division; .)
 	        |   bitAnd assign           (.  setModifier = BinaryOperator.BitwiseAnd; .)
 	        |   bitOr assign            (.  setModifier = BinaryOperator.BitwiseOr; .)
-	        |	coalescence assign		(.	setModifier = BinaryOperator.Coalescence; .)
+	        |	coalescence assign		    (.	setModifier = BinaryOperator.Coalescence; .)
 	        )   Expr<out expr>        //(.  expr = expr; .)
 	        
 	    |   (   tilde  assign           (.  setModifier = BinaryOperator.Cast; .)
-	        )TypeExpr<out T>            (.  expr = T; .)
+	        )TypeExpr<out typeExpr>     (.  expr = typeExpr; .)
 	    )                               
 	                                    (.  assignment.Arguments.Add(expr); 
 	                                        if(setModifier == BinaryOperator.None)
@@ -228,7 +228,7 @@ AssignExpr<out AstExpr expr>     (.  AstGetSet assignment; BinaryOperator setMod
 .
 
 PostfixUnaryExpr<out AstExpr expr>
-                                        (.  AstTypeExpr type = null; AstGetSet extension; bool isInverted = false; .)
+                                        (.  AstTypeExpr type; AstGetSet extension; bool isInverted = false; .)
 =
     PrefixUnaryExpr<out expr>   
     {   tilde TypeExpr<out type>        (.  expr = new AstTypecast(this, expr, type); .)
@@ -263,15 +263,15 @@ PrefixUnaryExpr<out AstExpr expr>
 
 Primary<out AstExpr expr>
                                         (.  expr = null;
-                                            AstGetSet complex = null; bool declared; .)
+                                            AstGetSet complex; bool declared; .)
 =
-	(.  _pushLexerState(Lexer.Asm); .)	(.	var blockExpr = Create.Block(GetPosition());
-											_PushScope(blockExpr);
-										.)
+	(.  _pushLexerState(Lexer.Asm); .)	  (.  var blockExpr = Create.Block(GetPosition());
+											                      _PushScope(blockExpr);
+										                    .)
     asm lpar { AsmInstruction<blockExpr> } rpar
-    (.  _popLexerState(); .)			(.	expr = blockExpr; 
-											_PopScope(blockExpr);
-										.)
+    (.  _popLexerState(); .)			      (.	expr = blockExpr; 
+											                      _PopScope(blockExpr);
+										                    .)
 |   Constant<out expr>
 |   CoroutineCreation<out expr>
 |   ListLiteral<out expr>
@@ -306,7 +306,7 @@ Constant<out AstExpr expr>
 .
 
 ListLiteral<out AstExpr expr>
-                                        (.  AstExpr iexpr = null; 
+                                        (.  AstExpr iexpr; 
                                             AstListLiteral lst = new AstListLiteral(this);
                                             expr = lst;
                                             bool missingExpr = false;
@@ -328,7 +328,7 @@ ListLiteral<out AstExpr expr>
 .
 
 HashLiteral<out AstExpr expr>
-										(.	AstExpr iexpr = null; 
+										(.	AstExpr iexpr; 
 											AstHashLiteral hash = new AstHashLiteral(this);
 											expr = hash;
                                             bool missingExpr = false;
@@ -365,8 +365,9 @@ LoopExpr<out AstExpr expr>
 											
 
 ObjectCreation<out AstExpr expr>
-                                        (.  AstTypeExpr type; expr = null;
-                                            ArgumentsProxy args; .)
+                                        (.  AstTypeExpr type; 
+                                            ArgumentsProxy args; 
+                                        .)
 =
     new TypeExpr<out type>              (.  _fallbackObjectCreation(this, type, out expr, out args); .)
     Arguments<args>
@@ -384,8 +385,7 @@ CoroutineCreation<out AstExpr expr>
 .
 
 LambdaExpression<out AstExpr expr>
-                                        (.  expr = null;
-                                            PFunction func = TargetApplication.CreateFunction(generateLocalId());                                             
+                                        (.  PFunction func = TargetApplication.CreateFunction(generateLocalId());                                             
                                             func.Meta[Application.ImportKey] = target.Function.Meta[Application.ImportKey];
                                             func.Meta[PFunction.ParentFunctionKey] = target.Function.Id;
                                             Loader.CreateFunctionTarget(func, target, GetPosition());
@@ -401,10 +401,7 @@ LambdaExpression<out AstExpr expr>
     ]
     rpar
 )
-                                        (.
-                                            CompilerTarget oldTarget = target;
-                                            _PushScope(ft);
-                                        .)
+                                        (.  _PushScope(ft); .)
 implementation                                        
 (   lbrace
     { Statement<ft.Ast> }
@@ -421,7 +418,7 @@ implementation
                                                     Ast[func].EmitCode(FunctionTargets[func],true,StackSemantics.Effect);
                                                     FunctionTargets[func].FinishTarget();
                                                 } catch(Exception e) {
-                                                    SemErr("Exception during compilation of lambda expression.\n" + e.ToString());
+                                                    SemErr("Exception during compilation of lambda expression.\n" + e);
                                                 }
                                             }
                                             
@@ -432,15 +429,13 @@ implementation
 .
 
 LazyExpression<out AstExpr expr>
-                                        (.  expr = null;
-                                            PFunction func = TargetApplication.CreateFunction(generateLocalId());
+                                        (.  PFunction func = TargetApplication.CreateFunction(generateLocalId());
                                             func.Meta[Application.ImportKey] = target.Function.Meta[Application.ImportKey];
                                             func.Meta[PFunction.ParentFunctionKey] = target.Function.Id;
                                             Loader.CreateFunctionTarget(func, target, GetPosition());
                                             CompilerTarget ft = FunctionTargets[func];
                                             
                                             //Switch to nested target
-                                            CompilerTarget oldTarget = target;
                                             _PushScope(ft);
                                         .)
 =
@@ -453,7 +448,7 @@ lazy
 )                                       
                                         (.
                                             //Turn into capture by value
-                                            var cap = ft.ToCaptureByValue(let_bindings(ft));
+                                            var cap = ft._ToCaptureByValue(let_bindings(ft));
                                             
                                             //Restore parent target
                                             _PopScope(ft);
@@ -465,7 +460,7 @@ lazy
 													Ast[func].EmitCode(FunctionTargets[func],true,StackSemantics.Effect);
 													FunctionTargets[func].FinishTarget();
                                                 } catch(Exception e) {
-                                                    SemErr("Exception during compilation of lazy expression.\n" + e.ToString());
+                                                    SemErr("Exception during compilation of lazy expression.\n" + e);
                                                 }
                                             }
                                             
@@ -515,7 +510,7 @@ ClrTypeExpr<out AstTypeExpr type>
 .
 
 PrexoniteTypeExpr<out AstTypeExpr type>
-                                        (.  string id = null; type = null; .)
+                                        (.  string id = null; .)
 =
     ( Id<out id> | null                 (.  id = NullPType.Literal; .)                          
     )

@@ -30,8 +30,10 @@ using System.Globalization;
 using System.Text;
 using Prexonite;
 using Prexonite.Compiler;
-
+// ReSharper disable InconsistentNaming
+// ReSharper disable CheckNamespace
 internal partial class Lexer
+// ReSharper restore CheckNamespace
 {
     private readonly StringBuilder buffer = new StringBuilder();
 
@@ -99,7 +101,9 @@ internal partial class Lexer
 
     private readonly RandomAccessQueue<Token> _tokenBuffer = new RandomAccessQueue<Token>();
     private int _peekIndex = NO_PEEK;
+
     private const int NO_PEEK = -1;
+
 
     internal void _InjectToken(Token c)
     {
@@ -189,6 +193,8 @@ internal partial class Lexer
                     return Parser._coroutine;
                 case "function":
                     return Parser._function;
+                case "method":
+                    return Parser._method;
                 case "declare":
                     return Parser._declare;
                 case "is":
@@ -282,13 +288,15 @@ internal partial class Lexer
                     return Parser._then;
                 case "using": //Coco/R does not accept "using" as a token name.
                     return Parser._uusing;
+                case "this":
+                    return Parser._this;
             }
 
         //Is id
         return Parser._id;
     }
 
-    private string unescape_char(string sequence)
+    private string _unescapeChar(string sequence)
     {
         var kind = sequence.Substring(1, 1);
         sequence = sequence.Substring(2);
@@ -342,3 +350,4 @@ internal partial class Lexer
         _peekIndex = NO_PEEK;
     }
 }
+// ReSharper restore InconsistentNaming

@@ -133,6 +133,8 @@ TOKENS
 	macro
 	lazy
 	let
+  method
+  this
 	ENDKEYWORDS
 	
     //SPECIAL

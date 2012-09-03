@@ -7,20 +7,30 @@ using MessageEventArgs = Prexonite.Compiler.MessageEventArgs;
 using MessageSeverity = Prexonite.Compiler.MessageSeverity;//END SOURCE ARRAY
 
 
-#line 27 "D:\DotNetProjects\Prexonite-Hg\prx-assembla-hg\Tools\Parser.frame" //FRAME
+#line 27 "C:\Users\Christian\Documents\GitHub\prx-modules\Tools\Parser.frame" //FRAME
+
+// ReSharper disable RedundantUsingDirective
+// ReSharper disable InconsistentNaming
+// ReSharper disable RedundantNameQualifier
+// ReSharper disable SuggestUseVarKeywordEvident
+// ReSharper disable TooWideLocalVariableScope
+// ReSharper disable UseObjectOrCollectionInitializer
+// ReSharper disable RedundantArgumentName
+// ReSharper disable JoinDeclarationAndInitializer
+// ReSharper disable RedundantArgumentDefaultValue
 
 using System;
-
+using System.Diagnostics;
+using System.Globalization;
+using JetBrains.Annotations;
 
 #line default //END FRAME -->namespace
 
 namespace Prexonite.Internal {
 
 
-#line 30 "D:\DotNetProjects\Prexonite-Hg\prx-assembla-hg\Tools\Parser.frame" //FRAME
+#line 42 "C:\Users\Christian\Documents\GitHub\prx-modules\Tools\Parser.frame" //FRAME
 
-
-using NoDebug = System.Diagnostics.DebuggerNonUserCodeAttribute;
 
 internal interface IScanner
 {
@@ -56,14 +66,14 @@ internal partial class Parser {
 	}
 	const int maxT = 11;
 
-#line 44 "D:\DotNetProjects\Prexonite-Hg\prx-assembla-hg\Tools\Parser.frame" //FRAME
+#line 54 "C:\Users\Christian\Documents\GitHub\prx-modules\Tools\Parser.frame" //FRAME
 
 	const bool T = true;
 	const bool x = false;
 	const int minErrDist = 2;
 	
-	internal IScanner scanner;
-	internal Errors  errors;
+	internal readonly IScanner scanner;
+	internal readonly Errors  errors;
 
 	internal Token t;    // last recognized token
 	internal Token la;   // lookahead token
@@ -75,29 +85,29 @@ internal partial class Parser {
 //SOURCE ARRAY
 //END SOURCE ARRAY
 
-#line 56 "D:\DotNetProjects\Prexonite-Hg\prx-assembla-hg\Tools\Parser.frame" //FRAME
+#line 66 "C:\Users\Christian\Documents\GitHub\prx-modules\Tools\Parser.frame" //FRAME
 
 
-    [NoDebug()]
+    [DebuggerNonUserCode]
 	private Parser(IScanner scanner) {
 		this.scanner = scanner;
 		errors = new Errors();
 		errors.parentParser = this;
 	}
 
-    [NoDebug()]
+    [DebuggerNonUserCode]
 	void SynErr (int n) {
 		if (errDist >= minErrDist) errors.SynErr(la.line, la.col, n);
 		errDist = 0;
 	}
 
-    [NoDebug()]
+    [DebuggerNonUserCode]
 	internal void SemErr (string msg) {
 		if (errDist >= minErrDist) errors.SemErr(t.line, t.col, msg);
 		errDist = 0;
 	}
 	
-	[NoDebug()]
+	[DebuggerNonUserCode]
 	void Get () {
 		for (;;) {
 			t = la;
@@ -107,23 +117,23 @@ internal partial class Parser {
 #line default //END FRAME -->pragmas
 
 
-#line 83 "D:\DotNetProjects\Prexonite-Hg\prx-assembla-hg\Tools\Parser.frame" //FRAME
+#line 93 "C:\Users\Christian\Documents\GitHub\prx-modules\Tools\Parser.frame" //FRAME
 
 			la = t;
 		}
 	}
 	
-	[NoDebug()]
+	[DebuggerNonUserCode]
 	void Expect (int n) {
 		if (la.kind==n) Get(); else { SynErr(n); }
 	}
 	
-	[NoDebug()]
+	[DebuggerNonUserCode]
 	bool StartOf (int s) {
 		return set[s, la.kind];
 	}
 	
-	[NoDebug()]
+	[DebuggerNonUserCode,PublicAPI]
 	void ExpectWeak (int n, int follow) {
 		if (la.kind == n) Get();
 		else {
@@ -132,7 +142,7 @@ internal partial class Parser {
 		}
 	}
 	
-	[NoDebug()]
+	[DebuggerNonUserCode]
 	bool WeakSeparator (int n, int syFol, int repFol) {
 		bool[] s = new bool[maxT+1];
 		if (la.kind == n) { Get(); return true; }
@@ -244,7 +254,7 @@ internal partial class Parser {
 	}
 
 
-#line 122 "D:\DotNetProjects\Prexonite-Hg\prx-assembla-hg\Tools\Parser.frame" //FRAME
+#line 132 "C:\Users\Christian\Documents\GitHub\prx-modules\Tools\Parser.frame" //FRAME
 
 
 	public void Parse() {
@@ -256,12 +266,12 @@ internal partial class Parser {
 
 		PTypeExpression();
 
-#line 128 "D:\DotNetProjects\Prexonite-Hg\prx-assembla-hg\Tools\Parser.frame" //FRAME
+#line 138 "C:\Users\Christian\Documents\GitHub\prx-modules\Tools\Parser.frame" //FRAME
 
     Expect(0);
 	}
 	
-	bool[,] set = {
+	private readonly bool[,] set = {
 
 #line default //END FRAME -->initialization
 
@@ -269,12 +279,12 @@ internal partial class Parser {
 		{x,T,T,T, T,T,T,T, x,x,x,x, x},
 		{x,x,x,x, x,x,x,x, x,x,T,x, x}
 
-#line 133 "D:\DotNetProjects\Prexonite-Hg\prx-assembla-hg\Tools\Parser.frame" //FRAME
+#line 143 "C:\Users\Christian\Documents\GitHub\prx-modules\Tools\Parser.frame" //FRAME
 
 	};
 } // end Parser
 
-[System.Diagnostics.DebuggerStepThrough()]
+[System.Diagnostics.DebuggerStepThrough]
 internal class Errors : System.Collections.Generic.LinkedList<Message> {
     internal Parser parentParser;
   
@@ -315,7 +325,7 @@ internal class Errors : System.Collections.Generic.LinkedList<Message> {
 			case 12: s = "invalid Expr"; break;
 			case 13: s = "invalid Boolean"; break;
 
-#line 160 "D:\DotNetProjects\Prexonite-Hg\prx-assembla-hg\Tools\Parser.frame" //FRAME
+#line 170 "C:\Users\Christian\Documents\GitHub\prx-modules\Tools\Parser.frame" //FRAME
 
 			default: s = "error " + n; break;
 		}
@@ -327,7 +337,8 @@ internal class Errors : System.Collections.Generic.LinkedList<Message> {
 		AddLast(msg);
         OnMessageReceived(msg);
 	}
-	//TODO: enable message classes for semantic errors
+
+  [Obsolete("Use Loader.ReportMessage instead.")]
 	internal void SemErr (int line, int col, string s) {
         var msg = Message.Error(s, parentParser.scanner.File, line, col);
 		AddLast(msg);
@@ -335,12 +346,14 @@ internal class Errors : System.Collections.Generic.LinkedList<Message> {
 
 	}
 	
+  [Obsolete("Use Loader.ReportMessage instead.")]
 	internal void SemErr (string s) {
         var msg = Message.Error(s, parentParser.scanner.File, parentParser.la.line, parentParser.la.col);
 		AddLast(msg);
         OnMessageReceived(msg);
 	}
 	
+  [Obsolete("Use Loader.ReportMessage instead.")]
 	internal void Warning (int line, int col, string s) {
         var msg = Message.Warning(s, parentParser.scanner.File, line, col);
 		AddLast(msg);
@@ -348,18 +361,21 @@ internal class Errors : System.Collections.Generic.LinkedList<Message> {
 
 	}
 
-    internal void Info (int line, int col, string s) {
+  [Obsolete("Use Loader.ReportMessage instead.")]
+  internal void Info (int line, int col, string s) {
         var msg = Message.Info(s, parentParser.scanner.File, line, col);
 		AddLast(msg);
         OnMessageReceived(msg);
 	}
 	
+  [Obsolete("Use Loader.ReportMessage instead.")]
 	internal void Warning(string s) {
         var msg = Message.Warning(s, parentParser.scanner.File, parentParser.la.line, parentParser.la.col);
 		AddLast(msg);
         OnMessageReceived(msg);
 	}
 
+  [Obsolete("Use Loader.ReportMessage instead.")]
     internal void Info(string s) {
         var msg = Message.Info(s, parentParser.scanner.File, parentParser.la.line, parentParser.la.col);
 		AddLast(msg);
