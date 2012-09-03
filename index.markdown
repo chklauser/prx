@@ -3,7 +3,7 @@ layout: page
 title: Messing around with syntax and semantics&hellip;
 slug: home
 ---
-&hellip;and see what happens. An experiment in language design an implementation.
+&hellip;and see what happens. An experiment in language design and implementation.
 
     function main() {
       println("Hello World");
