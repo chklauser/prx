@@ -36,6 +36,7 @@ using Prexonite.Modular;
 using Prexonite.Compiler.Symbolic;
 using Prexonite.Compiler.Symbolic.Internal;
 using Prexonite.Compiler.Symbolic.Compatibility;
+using Prexonite.Properties;
 
 COMPILER Prexonite
 
@@ -668,7 +669,7 @@ AssignExpr<out AstExpr expr>     (.  AstGetSet assignment; BinaryOperator setMod
 	                                        if(setModifier == BinaryOperator.None)
 	                                            expr = assignment;
 	                                        else
-	                                            expr = AstModifyingAssignment.Create(this,setModifier, assignment);
+	                                            expr = AstModifyingAssignment._Create(this,setModifier, assignment);
                                         .)        
     |)
 .
@@ -815,7 +816,7 @@ ObjectCreation<out AstExpr expr>
                                             ArgumentsProxy args; 
                                         .)
 =
-    new TypeExpr<out type>              (.  _fallbackObjectCreation(this, type, out expr, out args); .)
+    new TypeExpr<out type>              (.  _fallbackObjectCreation(type, out expr, out args); .)
     Arguments<args>
 .
 
@@ -1189,7 +1190,7 @@ SYNC
         EntityFactory<canBeRef, out entityFactory>
         ( colon
         |                   (.  Loader.ReportMessage(Message.Warning(
-                                  "The declaration type should be followed by a colon (e.g., `declare ref var: x;`)",
+                                  Resources.Parser_DeclarationTypeShouldBeFollowedByColon,
                                   GetPosition(),
                                   MessageClasses.MissingColonInDeclaration));
                             .)
@@ -1360,72 +1361,6 @@ DeclarationInstance2<.
                                     Symbols.Declare(rhsId, builder.ToSymbol());
                                   }                                  
                                 }
-                            .)
-.
-
-Declaration
-                            (. SymbolInterpretations type = SymbolInterpretations.Undefined;
-                               ModuleName module = TargetModule.Name;
-                            .)
-=
-SYNC
-  declare
-    (   [   var             (. type = SymbolInterpretations.GlobalObjectVariable; .)
-        |   ref             (. type = SymbolInterpretations.GlobalReferenceVariable; .)
-        |   function        (. type = SymbolInterpretations.Function; .)
-        |   command         (. type = SymbolInterpretations.Command; .)
-        |   macro command   (. type = SymbolInterpretations.MacroCommand; .)
-        ]
-        DeclarationInstance<type,module>
-        { comma [ DeclarationInstance<type,module> ] }
-        semicolon
-    |   lbrace
-        [   uusing ModuleName<out module> ]
-        {
-          (   var           (. type = SymbolInterpretations.GlobalObjectVariable; .)
-          |   ref           (. type = SymbolInterpretations.GlobalReferenceVariable; .)
-          |   function      (. type = SymbolInterpretations.Function; .)
-          |   command       (. type = SymbolInterpretations.Command; .)
-          |	  macro command (. type = SymbolInterpretations.MacroCommand; .)
-          ) 
-          colon
-          DeclarationInstance<type,module,preventOverride:true>
-          { comma [ DeclarationInstance<type,module> ] }
-        }
-        rbrace
-    )
-.
-  
-DeclarationInstance<SymbolInterpretations type, ModuleName module, bool preventOverride = false>
-                            (.  string id; string aId; ISourcePosition position; .)
-=							              (.	position = GetPosition(); .)	
-  Id<out id>                (.  aId = id; .)
-    [ div ModuleName<out module> 
-                            (.  if(preventOverride) 
-                                    SemErr("Specification of module name illegal at this point."); 
-                            .)
-    ]
-  [ as Id<out aId> ]
-                            (.  SymbolEntry inferredType;
-                                if(type == SymbolInterpretations.Undefined)
-                                    if(_TryUseSymbolEntry(id, position, out inferredType))
-                                      {
-                                        type = inferredType.Interpretation;
-                                          module = inferredType.Module;
-                                      }
-                                    else if(_TryUseSymbolEntry(aId, position, out inferredType))
-                                      {
-                                        type = inferredType.Interpretation;
-                                          module = inferredType.Module;
-                                      }
-                                    else
-                                      {
-                                        SemErr("Interpretation of symbol " + id + " as " + aId + " cannot be inferred.");
-                                      }
-                                Symbols.Declare(aId, new SymbolEntry(type, id, module).ToSymbol());
-
-                                  if(_requiresModule(type) && module == null)
-                                      SemErr("Module cannot be inferred for declaration " + id + " as + " + aId + ".");
                             .)
 .
 
@@ -2027,7 +1962,7 @@ StructureStatement<AstBlock block>
     asm AsmStatementBlock<block>
     (.  _popLexerState(); .)
 |   Condition<block>
-|   Declaration
+|   Declaration2
 |   WhileLoop<block>
 |   ForLoop<block>
 |   ForeachLoop<block>
@@ -2393,7 +2328,7 @@ Assignment<AstGetSet lvalue, out AstNode node>
 								(.  lvalue.Arguments.Add(expr);
 									lvalue.Call = PCall.Set; 
 									if(setModifier != BinaryOperator.None)
-									    node = AstModifyingAssignment.Create(this,setModifier,lvalue);
+									    node = AstModifyingAssignment._Create(this,setModifier,lvalue);
 								.)
 .
 

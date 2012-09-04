@@ -61,6 +61,123 @@ namespace Prexonite.Properties {
         }
         
         /// <summary>
+        ///   Looks up a localized string similar to In partial applications of lazy coalescence expressions, only one placeholder at the end of a sequence is allowed. Consider using a lambda expression instead..
+        /// </summary>
+        public static string AstCoalescence__reportInvalidPlaceholders {
+            get {
+                return ResourceManager.GetString("AstCoalescence__reportInvalidPlaceholders", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Optimization of the element expression in the foreach head resulted in a non-GetSet expression. Try to use a simpler expression..
+        /// </summary>
+        public static string AstForeachLoop_DoEmitCode_ElementTooComplicated {
+            get {
+                return ResourceManager.GetString("AstForeachLoop_DoEmitCode_ElementTooComplicated", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Cannot assign to a reference to a {0}..
+        /// </summary>
+        public static string AstGetSetReference_CannotAssignReference {
+            get {
+                return ResourceManager.GetString("AstGetSetReference_CannotAssignReference", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Cannot create a reference to {0} {1}..
+        /// </summary>
+        public static string AstGetSetReference_CannotCreateReference {
+            get {
+                return ResourceManager.GetString("AstGetSetReference_CannotCreateReference", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Reference to macro command {0} detected. Prexonite version {1} treats this as a partial application. This behavior might change in the future. Use partial application syntax explicitly {0}(?) or use the {2} command to obtain a reference to the macro..
+        /// </summary>
+        public static string AstGetSetReference_ReferenceToMacroTreatedAsPartialApplication {
+            get {
+                return ResourceManager.GetString("AstGetSetReference_ReferenceToMacroTreatedAsPartialApplication", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Condition must not be null..
+        /// </summary>
+        public static string AstLazyLogical__Condition_must_not_be_null {
+            get {
+                return ResourceManager.GetString("AstLazyLogical__Condition_must_not_be_null", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to targetLabel must neither be null nor empty..
+        /// </summary>
+        public static string AstLazyLogical__targetLabel_must_neither_be_null_nor_empty {
+            get {
+                return ResourceManager.GetString("AstLazyLogical__targetLabel_must_neither_be_null_nor_empty", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to alternativeLabel may neither be null nor empty..
+        /// </summary>
+        public static string AstLazyLogical_alternativeLabel_may_neither_be_null_nor_empty {
+            get {
+                return ResourceManager.GetString("AstLazyLogical_alternativeLabel_may_neither_be_null_nor_empty", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to The lazy logical expression {0} must implement this method/property to support partial application..
+        /// </summary>
+        public static string AstLazyLogical_CreatePrefixMustBeImplementedForPartialApplication {
+            get {
+                return ResourceManager.GetString("AstLazyLogical_CreatePrefixMustBeImplementedForPartialApplication", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Partial applications of logical statements must be either pure and-chains or pure or-chains..
+        /// </summary>
+        public static string AstLazyLogical_EmitCode_PureChainsExpected {
+            get {
+                return ResourceManager.GetString("AstLazyLogical_EmitCode_PureChainsExpected", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to In partial applications of lazy expressions, only one placeholder at the end of a sequence is allowed. Consider using a lambda expression instead..
+        /// </summary>
+        public static string AstLazyLogical_placeholderOnlyAtTheEnd {
+            get {
+                return ResourceManager.GetString("AstLazyLogical_placeholderOnlyAtTheEnd", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to The assignment modifier {0} is not supported..
+        /// </summary>
+        public static string AstModifyingAssignment_AssignmentModifierNotSupported {
+            get {
+                return ResourceManager.GetString("AstModifyingAssignment_AssignmentModifierNotSupported", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Invalid modifying assignment: No RHS..
+        /// </summary>
+        public static string AstModifyingAssignment_No_RHS {
+            get {
+                return ResourceManager.GetString("AstModifyingAssignment_No_RHS", resourceCulture);
+            }
+        }
+        
+        /// <summary>
         ///   Looks up a localized string similar to Compiler target cannot be null..
         /// </summary>
         public static string AstNode__GetOptimizedNode_CompilerTarget_null {
@@ -79,11 +196,155 @@ namespace Prexonite.Properties {
         }
         
         /// <summary>
+        ///   Looks up a localized string similar to Compiler target must not be null..
+        /// </summary>
+        public static string AstNode_Compiler_target_must_not_be_null {
+            get {
+                return ResourceManager.GetString("AstNode_Compiler_target_must_not_be_null", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to No implementation defined for operator `{0}`.
+        /// </summary>
+        public static string AstNode_NoImplementationForOperator {
+            get {
+                return ResourceManager.GetString("AstNode_NoImplementationForOperator", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Detected possible return (yield) from within a protected block (try-catch-finally, using, foreach). This Prexonite implementation cannot guarantee that cleanup code is executed. .
+        /// </summary>
+        public static string AstReturn_Warn_YieldInProtectedBlock {
+            get {
+                return ResourceManager.GetString("AstReturn_Warn_YieldInProtectedBlock", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to The symbol {0} has not been resolved..
+        /// </summary>
+        public static string AstUnresolved_The_symbol__0__has_not_been_resolved_ {
+            get {
+                return ResourceManager.GetString("AstUnresolved_The_symbol__0__has_not_been_resolved_", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to call\macro must be supplied a macro reference..
+        /// </summary>
+        public static string CallMacro_call_macro_must_be_supplied_a_macro_reference {
+            get {
+                return ResourceManager.GetString("CallMacro_call_macro_must_be_supplied_a_macro_reference", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to call\macro called from {0}. call\macro can only be called from a macro context, i.e., from a macro function or an inner function of a macro..
+        /// </summary>
+        public static string CallMacro_CalledFromNonMacro {
+            get {
+                return ResourceManager.GetString("CallMacro_CalledFromNonMacro", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Used in this way, {0} has the form {0}([],macroRef,[justEffect?,call?],...)..
+        /// </summary>
+        public static string CallMacro_errorUsageFullRef {
+            get {
+                return ResourceManager.GetString("CallMacro_errorUsageFullRef", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Used in this way, {0} has the form {0}([macroPrototype(...),justEffect?,call?],...)..
+        /// </summary>
+        public static string CallMacro_errorUsagePrototype {
+            get {
+                return ResourceManager.GetString("CallMacro_errorUsagePrototype", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to The macro prototype must be known at compile-time, it must not be a placeholder..
+        /// </summary>
+        public static string CallMacro_notOnPlaceholder {
+            get {
+                return ResourceManager.GetString("CallMacro_notOnPlaceholder", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Due to an internal limitation, the index of a placeholder in the macro prototype&apos;s argument list inside {0} cannot be inferred. Specify the placeholders index explicitly (e.g.,  ?0, ?1, etc.)..
+        /// </summary>
+        public static string CallMacro_SpecifyPlaceholderIndexExplicitly {
+            get {
+                return ResourceManager.GetString("CallMacro_SpecifyPlaceholderIndexExplicitly", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to call\star must at least pass through one argument (the call target). It has been instructed to pass through {0} arguments..
+        /// </summary>
+        public static string CallStar__invalid_PassThrough {
+            get {
+                return ResourceManager.GetString("CallStar__invalid_PassThrough", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to {0} requires at least one argument, the call\* command/function to invoke..
+        /// </summary>
+        public static string CallStar_usage {
+            get {
+                return ResourceManager.GetString("CallStar_usage", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Due to an internal limitation, {0} and {1} cannot be used in an expression inside a loop, only as a statement..
+        /// </summary>
+        public static string CallSubInterpret_asExpressionInLoop {
+            get {
+                return ResourceManager.GetString("CallSubInterpret_asExpressionInLoop", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to {0} requires one argument..
+        /// </summary>
+        public static string CallSubInterpret_OneArgument {
+            get {
+                return ResourceManager.GetString("CallSubInterpret_OneArgument", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Legacy part of parser cannot deal with symbol {0}. A call symbol was expected..
+        /// </summary>
+        public static string CompilerTarget__CreateIncompatibleSymbolError_IncompatibleSymbol {
+            get {
+                return ResourceManager.GetString("CompilerTarget__CreateIncompatibleSymbolError_IncompatibleSymbol", resourceCulture);
+            }
+        }
+        
+        /// <summary>
         ///   Looks up a localized string similar to When creating a compiler target, the supplied function must match the application targetted by the loader..
         /// </summary>
         public static string CompilerTarget_Cannot_create_for_foreign_function {
             get {
                 return ResourceManager.GetString("CompilerTarget_Cannot_create_for_foreign_function", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Parameter list of function {0} contains {1} at position {2}. The name {1} is reserved for the local variable holding the argument list..
+        /// </summary>
+        public static string CompilerTarget_ParameterNameReserved {
+            get {
+                return ResourceManager.GetString("CompilerTarget_ParameterNameReserved", resourceCulture);
             }
         }
         
@@ -124,6 +385,87 @@ namespace Prexonite.Properties {
         }
         
         /// <summary>
+        ///   Looks up a localized string similar to Cannot find macro command named `{0}`.
+        /// </summary>
+        public static string MacroCommandExpander_CannotFindMacro {
+            get {
+                return ResourceManager.GetString("MacroCommandExpander_CannotFindMacro", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Cannot establish macro context outside of macro..
+        /// </summary>
+        public static string MacroContextExtensions_EstablishMacroContext_OutsideOfMacro {
+            get {
+                return ResourceManager.GetString("MacroContextExtensions_EstablishMacroContext_OutsideOfMacro", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Macro {0} uses temporary variable to ensure that expression from `context.Block` is evaluated before statements from macro return value..
+        /// </summary>
+        public static string MacroFunctionExpander__UsedTemporaryVariable {
+            get {
+                return ResourceManager.GetString("MacroFunctionExpander__UsedTemporaryVariable", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to The macro function {0} was called from function {1} but is not available at compile time (from module {2})..
+        /// </summary>
+        public static string MacroFunctionExpander_MacroFunctionNotAvailable {
+            get {
+                return ResourceManager.GetString("MacroFunctionExpander_MacroFunctionNotAvailable", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Partial macro must return a boolean value, indicating whether it can handle the partial application. Assuming it cannot..
+        /// </summary>
+        public static string MacroFunctionExpander_PartialMacroMustIndicateSuccessWithBoolean {
+            get {
+                return ResourceManager.GetString("MacroFunctionExpander_PartialMacroMustIndicateSuccessWithBoolean", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Exception during expansion of macro {0} in function {1}: {2}.
+        /// </summary>
+        public static string MacroSession_ExceptionDuringExpansionOfMacro {
+            get {
+                return ResourceManager.GetString("MacroSession_ExceptionDuringExpansionOfMacro", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to The macro {0} cannot be applied partially..
+        /// </summary>
+        public static string MacroSession_MacroCannotBeAppliedPartially {
+            get {
+                return ResourceManager.GetString("MacroSession_MacroCannotBeAppliedPartially", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to AstMacroInvocation.EmitCode is not reentrant. The invocation node for the macro {0} has been expanded already. Use GetCopy() to operate on a copy of this macro invocation..
+        /// </summary>
+        public static string MacroSession_MacroNotReentrant {
+            get {
+                return ResourceManager.GetString("MacroSession_MacroNotReentrant", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Cannot apply {0} as a macro at compile time..
+        /// </summary>
+        public static string MacroSession_NotAMacro {
+            get {
+                return ResourceManager.GetString("MacroSession_NotAMacro", resourceCulture);
+            }
+        }
+        
+        /// <summary>
         ///   Looks up a localized string similar to A MetaEntry list must not contain null references..
         /// </summary>
         public static string MetaEntry_NullReferenceInList {
@@ -133,11 +475,93 @@ namespace Prexonite.Properties {
         }
         
         /// <summary>
+        ///   Looks up a localized string similar to Must supply an object to be transported to {0}..
+        /// </summary>
+        public static string Pack_Usage_obj_missing {
+            get {
+                return ResourceManager.GetString("Pack_Usage_obj_missing", resourceCulture);
+            }
+        }
+        
+        /// <summary>
         ///   Looks up a localized string similar to Cannot use {0} like a constructor..
         /// </summary>
         public static string Parser__CannotUseExpressionAsAConstructor {
             get {
                 return ResourceManager.GetString("Parser__CannotUseExpressionAsAConstructor", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Failed to transform object creation expression..
+        /// </summary>
+        public static string Parser__fallbackObjectCreation_Failed {
+            get {
+                return ResourceManager.GetString("Parser__fallbackObjectCreation_Failed", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Unknown operator alias in assembler code: {0}.{1}.
+        /// </summary>
+        public static string Parser_addOpAlias_Unknown {
+            get {
+                return ResourceManager.GetString("Parser_addOpAlias_Unknown", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to The declaration type should be followed by a colon (e.g., `declare ref var: x;`).
+        /// </summary>
+        public static string Parser_DeclarationTypeShouldBeFollowedByColon {
+            get {
+                return ResourceManager.GetString("Parser_DeclarationTypeShouldBeFollowedByColon", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Cannot execute build block. Errors detected.
+        /// </summary>
+        public static string Parser_ErrorsInBuildBlock {
+            get {
+                return ResourceManager.GetString("Parser_ErrorsInBuildBlock", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Exception during compilation and execution of build block.
+        ///{0}.
+        /// </summary>
+        public static string Parser_exception_in_build_block {
+            get {
+                return ResourceManager.GetString("Parser_exception_in_build_block", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to {0} can only be used in a macro context..
+        /// </summary>
+        public static string Reference_can_only_be_used_in_a_macro_context {
+            get {
+                return ResourceManager.GetString("Reference_can_only_be_used_in_a_macro_context", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to {0} requires argument to be a prototype of a macro invocation..
+        /// </summary>
+        public static string Reference_requires_argument_to_be_a_prototype_of_a_macro_invocation {
+            get {
+                return ResourceManager.GetString("Reference_requires_argument_to_be_a_prototype_of_a_macro_invocation", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to {0} requires at least one argument..
+        /// </summary>
+        public static string Reference_requires_at_least_one_argument {
+            get {
+                return ResourceManager.GetString("Reference_requires_at_least_one_argument", resourceCulture);
             }
         }
         

@@ -7,12 +7,12 @@
 //  are permitted provided that the following conditions are met:
 // 
 //     Redistributions of source code must retain the above copyright notice, 
-//          this list of conditions and the following disclaimer.
+//          self list of conditions and the following disclaimer.
 //     Redistributions in binary form must reproduce the above copyright notice, 
-//          this list of conditions and the following disclaimer in the 
+//          self list of conditions and the following disclaimer in the 
 //          documentation and/or other materials provided with the distribution.
 //     The names of the contributors may be used to endorse or 
-//          promote products derived from this software without specific prior written permission.
+//          promote products derived from self software without specific prior written permission.
 // 
 // THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND 
 //  ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED 
@@ -29,7 +29,7 @@
 #endif
 
 #define UseCil
-//need to change this in VMTestsBase.cs too!
+//need to change self in VMTestsBase.cs too!
 
 using System;
 using System.Collections.Generic;
@@ -79,19 +79,19 @@ function chain(lst, serial)
     var c = new Structure;
     c.\(""IsSerial"") = if(serial != null) serial else true;
     c.\(""Functions"") = if(lst != null) lst else new List();
-    function Invoke(this, prev)
+    function Invoke(self, prev)
     {
         var res = prev;
-        if(this.IsSerial)
+        if(self.IsSerial)
         {
-            foreach(var f in this.Functions)
+            foreach(var f in self.Functions)
                 prev = f.(prev);
             return prev;
         }
         else
         {
             var nlst = new List();
-            foreach(var f in this.Functions)
+            foreach(var f in self.Functions)
                 nlst[] = f.(prev);
             return nlst;
         }
@@ -504,7 +504,7 @@ function main(x)
 {
     var s = new Structure;
     s.\(""value"") = x;
-    s.\\(""ToString"") = this => this.value;
+    s.\\(""ToString"") = self => self.value;
     return s~String;
 }
 ");
@@ -786,43 +786,43 @@ build {
     SI.\(""gref"") = ::SymbolInterpretations.GlobalReferenceVariable;
     SI.\(""func"") = ::SymbolInterpretations.$Function;
     SI.\(""cmd"") = ::SymbolInterpretations.$Command;
-    SI.\\(""eq"") = (this, l, r) => l~Int == r~Int;
-    SI.\\(""is_lvar"") = (this, s) => s~Int == this.$var~Int;
-    SI.\\(""is_lref"") = (this, s) => s~Int == this.$ref~Int;
-    SI.\\(""is_gvar"") = (this, s) => s~Int == this.$gvar~Int;
-    SI.\\(""is_gref"") = (this, s) => s~Int == this.$gref~Int;
-    SI.\\(""is_func"") = (this, s) => s~Int == this.$func~Int;
-    SI.\\(""is_cmd"") = (this, s) => s~Int == this.$cmd~Int;
-    SI.\\(""is_obj"") = (this, s) => this.is_lvar(s) || this.is_gvar(s);
-    SI.\\(""is_ref"") = (this, s) => this.is_lref(s) || this.is_gref(s);
-    SI.\\(""is_global"") = (this, s) => this.is_gvar(s) || this.is_gref(s);
-    SI.\\(""is_local"") = (this, s) => this.is_lvar(s) || this.is_lref(s);
-    SI.\\(""make_global"") = (this, s) => 
-        if(this.is_obj(s))
-            this.gvar
-        else if(this.is_ref(s))
-            this.gref
+    SI.\\(""eq"") = (self, l, r) => l~Int == r~Int;
+    SI.\\(""is_lvar"") = (self, s) => s~Int == self.$var~Int;
+    SI.\\(""is_lref"") = (self, s) => s~Int == self.$ref~Int;
+    SI.\\(""is_gvar"") = (self, s) => s~Int == self.$gvar~Int;
+    SI.\\(""is_gref"") = (self, s) => s~Int == self.$gref~Int;
+    SI.\\(""is_func"") = (self, s) => s~Int == self.$func~Int;
+    SI.\\(""is_cmd"") = (self, s) => s~Int == self.$cmd~Int;
+    SI.\\(""is_obj"") = (self, s) => self.is_lvar(s) || self.is_gvar(s);
+    SI.\\(""is_ref"") = (self, s) => self.is_lref(s) || self.is_gref(s);
+    SI.\\(""is_global"") = (self, s) => self.is_gvar(s) || self.is_gref(s);
+    SI.\\(""is_local"") = (self, s) => self.is_lvar(s) || self.is_lref(s);
+    SI.\\(""make_global"") = (self, s) => 
+        if(self.is_obj(s))
+            self.gvar
+        else if(self.is_ref(s))
+            self.gref
         else
             throw ""$s cannot be made global."";            
-    SI.\\(""make_local"") = (this, s) => 
-        if(this.is_obj(s))
-            this.lvar
-        else if(this.is_ref(s))
-            this.lref
+    SI.\\(""make_local"") = (self, s) => 
+        if(self.is_obj(s))
+            self.lvar
+        else if(self.is_ref(s))
+            self.lref
         else
             throw ""$s cannot be made local."";
-    SI.\\(""make_obj"") = (this, s) =>
-        if(this.is_local(s))
-            this.lvar
-        else if(this.is_global(s))
-            this.gvar
+    SI.\\(""make_obj"") = (self, s) =>
+        if(self.is_local(s))
+            self.lvar
+        else if(self.is_global(s))
+            self.gvar
         else
             throw ""$s cannot be made object."";
-    SI.\\(""make_ref"") = (this, s) =>
-        if(this.is_local(s))
-            this.lref
-        else if(this.is_global(s))
-            this.gref
+    SI.\\(""make_ref"") = (self, s) =>
+        if(self.is_local(s))
+            self.lref
+        else if(self.is_global(s))
+            self.gref
         else
             throw ""$s cannot be made reference."";
 }

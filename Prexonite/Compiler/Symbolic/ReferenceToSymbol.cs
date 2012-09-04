@@ -16,9 +16,9 @@ namespace Prexonite.Compiler.Symbolic
                 return new ReferenceToSymbol(inner);
             }
              
-            public override Symbol HandleDereference(DereferenceSymbol symbol, object argument)
+            public override Symbol HandleDereference(DereferenceSymbol self, object argument)
             {
-                return symbol.Symbol.HandleWith(this,argument);
+                return self.Symbol.HandleWith(this,argument);
                 
             }
 

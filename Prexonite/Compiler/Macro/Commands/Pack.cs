@@ -24,6 +24,7 @@
 //  WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING 
 //  IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
+using Prexonite.Properties;
 using Prexonite.Types;
 
 namespace Prexonite.Compiler.Macro.Commands
@@ -53,8 +54,7 @@ namespace Prexonite.Compiler.Macro.Commands
         {
             if (context.Invocation.Arguments.Count < 1)
             {
-                context.ReportMessage(MessageSeverity.Error,
-                    string.Format("Must supply an object to be transported to {0}.", Alias));
+                context.ReportMessage(Message.Error(string.Format(Resources.Pack_Usage_obj_missing, Alias),context.Invocation,MessageClasses.PackUsage));
                 return;
             }
 

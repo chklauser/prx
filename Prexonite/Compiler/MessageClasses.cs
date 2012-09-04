@@ -17,6 +17,9 @@
         public const string OnlyErrorStandalone = "P.OnlyErrorStandalone";
         public const string MissingColonInDeclaration = "P.MissingColonInDeclaration";
         public const string ExceptionDuringCompilation = "P.ExceptionDuringCompilation";
+        public const string ErrorsInBuildBlock = "P.ErrorsInBuildBlock";
+        public const string ObjectCreationSyntax = "P.ObjectCreationSyntax";
+        public const string UnknownAssemblyOperator = "P.UnknownAssemblyOperator";
 
         #endregion
 
@@ -28,6 +31,8 @@
         public const string ParameterNameReserved = "C.ParameterNameReserved";
         public const string InvalidModifyingAssignment = "C.InvalidModifyingAssignment";
         public const string PartialApplicationNotSupported = "C.PartialApplicationNotSupported";
+        public const string OnlyLastOperandPartialInLazy = "C.OnlyLastOperandPartialInLazy";
+        public const string ForeachElementTooComplicated = "C.ForeachElementTooComplicated";
 
         #endregion
 
@@ -39,8 +44,27 @@
         public const string NotAMacro = "M.NotAMacro";
         public const string BlockMergingUsesVariable = "M.BlockMergingUsesVariable";
         public const string PartialMacroMustReturnBoolean = "M.PartialMacroMustReturnBoolean";
+        public const string MacroReferenceForCallMacroMissing = "M.MacroReferenceForCallMacroMissing";
+        public const string CallMacroCalledFromNonMacro = "M.CallMacroCalledFromNonMacro";
+        public const string SpecifyPlaceholderIndexExplicitly = "M.SpecifyPlaceholderIndexExplicitly";
+        public const string CallMacroUsage = "M.CallMacroUsage";
+        public const string CallMacroNotOnPlaceholder = "M.CallMacroNotOnPlaceholder";
+        public const string CallStarUsage = "M.CallStarUsage";
+        public const string CallStarPassThrough = "M.CallStarPassThrough";
+        public const string MacroContextOutsideOfMacro = "M.MacroContextOutsideOfMacro";
+        public const string PackUsage = "M.PackUsage";
+        public const string UnpackUsage = "M.UnpackUsage";
+        public const string ReferenceUsage = "M.ReferenceUsage";
 
         #endregion
+
+        #region Built-in Commands
+
+        public const string SubUsage = "D.SubUsage";
+        public const string SubAsExpressionInLoop = "D.SubAsExpressionInLoop";
+
+        #endregion
+
 
     }
 }

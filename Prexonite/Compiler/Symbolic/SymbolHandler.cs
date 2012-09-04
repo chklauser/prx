@@ -6,37 +6,37 @@ namespace Prexonite.Compiler.Symbolic
 
         #region Implementation of ISymbolHandler<in TArg,out TResult>
 
-        public virtual TResult HandleCall(CallSymbol symbol, TArg argument)
+        public virtual TResult HandleCall(CallSymbol self, TArg argument)
         {
-            return HandleSymbolDefault(symbol, argument);
+            return HandleSymbolDefault(self, argument);
         }
 
-        public virtual TResult HandleExpand(ExpandSymbol symbol, TArg argument)
+        public virtual TResult HandleExpand(ExpandSymbol self, TArg argument)
         {
-            return HandleSymbolDefault(symbol, argument);
+            return HandleSymbolDefault(self, argument);
         }
 
-        public virtual TResult HandleMessage(MessageSymbol symbol, TArg argument)
+        public virtual TResult HandleMessage(MessageSymbol self, TArg argument)
         {
-            if (symbol.Symbol == null)
-                return HandleSymbolDefault(symbol, argument);
+            if (self.Symbol == null)
+                return HandleSymbolDefault(self, argument);
             else
-                return symbol.Symbol.HandleWith(this, argument);
+                return self.Symbol.HandleWith(this, argument);
         }
 
-        public virtual TResult HandleDereference(DereferenceSymbol symbol, TArg argument)
+        public virtual TResult HandleDereference(DereferenceSymbol self, TArg argument)
         {
-            return symbol.Symbol.HandleWith(this, argument);
+            return self.Symbol.HandleWith(this, argument);
         }
 
-        public virtual TResult HandleReferenceTo(ReferenceToSymbol symbol, TArg argument)
+        public virtual TResult HandleReferenceTo(ReferenceToSymbol self, TArg argument)
         {
-            return symbol.Symbol.HandleWith(this, argument);
+            return self.Symbol.HandleWith(this, argument);
         }
 
-        public virtual TResult HandleMacroInstance(MacroInstanceSymbol symbol, TArg argument)
+        public virtual TResult HandleMacroInstance(MacroInstanceSymbol self, TArg argument)
         {
-            return HandleSymbolDefault(symbol, argument);
+            return HandleSymbolDefault(self, argument);
         }
 
         #endregion

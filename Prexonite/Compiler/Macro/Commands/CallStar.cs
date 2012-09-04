@@ -28,6 +28,7 @@ using System.Collections.Generic;
 using System.Linq;
 using Prexonite.Commands.Core.PartialApplication;
 using Prexonite.Compiler.Ast;
+using Prexonite.Properties;
 
 namespace Prexonite.Compiler.Macro.Commands
 {
@@ -55,8 +56,8 @@ namespace Prexonite.Compiler.Macro.Commands
         {
             if (context.Invocation.Arguments.Count < 1)
             {
-                context.ReportMessage(MessageSeverity.Error,
-                    "{0} requires at least one argument, the call\\* command/function to invoke.");
+                context.ReportMessage(Message.Error(
+                    string.Format(Resources.CallStar_usage, Id),context.Invocation,MessageClasses.CallStarUsage));
                 return true;
             }
 
@@ -154,8 +155,10 @@ namespace Prexonite.Compiler.Macro.Commands
         {
             if (context.Invocation.Arguments.Count < 1)
             {
-                context.ReportMessage(MessageSeverity.Error,
-                    "{0} requires at least one argument, the call\\* command/function to invoke.");
+                context.ReportMessage(
+                    Message.Error(
+                        string.Format(Resources.CallStar_usage, Id), context.Invocation,
+                        MessageClasses.CallStarUsage));
                 return;
             }
 
@@ -193,9 +196,11 @@ namespace Prexonite.Compiler.Macro.Commands
             }
 
             if (passThrough < 1)
-                context.ReportMessage(MessageSeverity.Error,
-                    "call\\star must at least pass through one argument (the call target). It has been instructed to pass through " +
-                        passThrough + " arguments.", passThroughNode);
+                context.ReportMessage(
+                    Message.Error(
+                        string.Format(Resources.CallStar__invalid_PassThrough, passThrough),
+                        (ISourcePosition) passThroughNode ?? context.Invocation,
+                        MessageClasses.CallStarPassThrough));
         }
 
         #endregion

@@ -160,37 +160,37 @@ namespace Prexonite.Compiler.Symbolic.Internal
         private static readonly ISymbolHandler<Message, bool> _containsMessage = new ContainsMessageHandler();
         private class ContainsMessageHandler : ISymbolHandler<Message, bool>
         {
-            public bool HandleCall(CallSymbol symbol, Message argument)
+            public bool HandleCall(CallSymbol self, Message argument)
             {
                 return false;
             }
 
-            public bool HandleExpand(ExpandSymbol symbol, Message argument)
+            public bool HandleExpand(ExpandSymbol self, Message argument)
             {
                 return false;
             }
 
-            public bool HandleMessage(MessageSymbol symbol, Message argument)
+            public bool HandleMessage(MessageSymbol self, Message argument)
             {
-                if (symbol.Message.Equals(argument))
+                if (self.Message.Equals(argument))
                     return true;
-                else if(symbol.Symbol == null)
+                else if(self.Symbol == null)
                     return false;
                 else
-                    return symbol.Symbol.HandleWith(this,argument);
+                    return self.Symbol.HandleWith(this,argument);
             }
 
-            public bool HandleDereference(DereferenceSymbol symbol, Message argument)
+            public bool HandleDereference(DereferenceSymbol self, Message argument)
             {
-                return symbol.HandleWith(this, argument);
+                return self.Symbol.HandleWith(this, argument);
             }
 
-            public bool HandleReferenceTo(ReferenceToSymbol symbol, Message argument)
+            public bool HandleReferenceTo(ReferenceToSymbol self, Message argument)
             {
-                return symbol.HandleWith(this, argument);
+                return self.Symbol.HandleWith(this, argument);
             }
 
-            public bool HandleMacroInstance(MacroInstanceSymbol symbol, Message argument)
+            public bool HandleMacroInstance(MacroInstanceSymbol self, Message argument)
             {
                 return false;
             }

@@ -27,6 +27,11 @@ THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND 
  IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.</s:String>
 	<s:String x:Key="/Default/CodeStyle/Naming/CSharpNaming/PredefinedNamingRules/=PrivateStaticReadonly/@EntryIndexedValue">&lt;Policy Inspect="True" Prefix="_" Suffix="" Style="aaBb" /&gt;</s:String>
 	<s:String x:Key="/Default/CodeStyle/Naming/CSharpNaming/UserRules/=a0ea5b45_002Df3e8_002D489b_002Da1bf_002D6fe14030968c/@EntryIndexedValue">&lt;Policy&gt;&lt;Descriptor Staticness="Static, Instance" AccessRightKinds="Internal" Description="Internal methods and properties"&gt;&lt;ElementKinds&gt;&lt;Kind Name="METHOD" /&gt;&lt;Kind Name="PROPERTY" /&gt;&lt;/ElementKinds&gt;&lt;/Descriptor&gt;&lt;Policy Inspect="True" Prefix="_" Suffix="" Style="AaBb" /&gt;&lt;/Policy&gt;</s:String>
+	<s:Boolean x:Key="/Default/PatternsAndTemplates/StructuralSearch/Pattern/=C143BED2C8935C44BD5CB59BA27B5418/@KeyIndexDefined">True</s:Boolean>
+	<s:String x:Key="/Default/PatternsAndTemplates/StructuralSearch/Pattern/=C143BED2C8935C44BD5CB59BA27B5418/Comment/@EntryValue">Possible infinite recursion in visitor pattern.</s:String>
+	<s:String x:Key="/Default/PatternsAndTemplates/StructuralSearch/Pattern/=C143BED2C8935C44BD5CB59BA27B5418/LanguageName/@EntryValue">CSHARP</s:String>
+	<s:String x:Key="/Default/PatternsAndTemplates/StructuralSearch/Pattern/=C143BED2C8935C44BD5CB59BA27B5418/SearchPattern/@EntryValue">self.HandleWith(this,argument)</s:String>
+	<s:String x:Key="/Default/PatternsAndTemplates/StructuralSearch/Pattern/=C143BED2C8935C44BD5CB59BA27B5418/Severity/@EntryValue">ERROR</s:String>
 	<s:String x:Key="/Default/PatternsAndTemplates/StructuralSearch/Pattern/=CA8B9F5EB17BC243B37A24BAA08EC135/Comment/@EntryValue">Create GlobalReferenceVariable symbol without specifying a module.</s:String>
 	<s:String x:Key="/Default/PatternsAndTemplates/StructuralSearch/Pattern/=CA8B9F5EB17BC243B37A24BAA08EC135/SearchPattern/@EntryValue">new $SymbolEntry$($SymbolInterpretations$.GlobalReferenceVariable, $internalId$,null)</s:String>
 	<s:String x:Key="/Default/PatternsAndTemplates/StructuralSearch/Pattern/=CA8B9F5EB17BC243B37A24BAA08EC135/Severity/@EntryValue">ERROR</s:String>

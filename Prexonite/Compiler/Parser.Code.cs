@@ -29,10 +29,10 @@ using System.Collections.Generic;
 using System.Diagnostics;
 using System.Globalization;
 using System.Linq;
+using JetBrains.Annotations;
 using Prexonite.Commands.Core.Operators;
 using Prexonite.Compiler.Ast;
 using Prexonite.Compiler.Symbolic;
-using Prexonite.Compiler.Symbolic.Compatibility;
 using Prexonite.Modular;
 using Prexonite.Properties;
 using Prexonite.Types;
@@ -136,11 +136,6 @@ namespace Prexonite.Compiler
         {
             [DebuggerStepThrough]
             get { return _target; }
-        }
-
-        public ISourcePosition GetPosition()
-        {
-            return new SourcePosition(scanner.File, t.line, t.col);
         }
 
         public AstBlock CurrentBlock
@@ -330,7 +325,7 @@ namespace Prexonite.Compiler
         {
             if (errors.count > 0)
             {
-                SemErr("Cannot execute build block. Errors detected");
+                Loader.ReportMessage(Message.Error(Resources.Parser_ErrorsInBuildBlock,GetPosition(),MessageClasses.ErrorsInBuildBlock));
                 return;
             }
 
@@ -361,7 +356,7 @@ namespace Prexonite.Compiler
             }
             catch (Exception e)
             {
-                SemErr("Exception during compilation and execution of build block.\n" + e);
+                Loader.ReportMessage(Message.Error(string.Format(Resources.Parser_exception_in_build_block, e),GetPosition(),MessageClasses.ExceptionDuringCompilation));
             }
         }
 
@@ -386,27 +381,8 @@ namespace Prexonite.Compiler
 
         private bool _TryUseSymbolEntry(string id, ISourcePosition position, out SymbolEntry symbolEntry)
         {
-            Symbol symbol;
-            if (Symbols.TryGet(id, out symbol))
-            {
-                try
-                {
-                    symbolEntry = symbol.ToSymbolEntry();
-                    return true;
-                }
-                catch (SymbolConversionException e)
-                {
-                    Loader.ReportMessage(CompilerTarget._CreateIncompatibleSymbolError(position, symbol));
-                    Loader.ReportMessage(Message.Create(MessageSeverity.Error, e.ToString(), position, MessageClasses.ExceptionDuringCompilation));
-                }
-                symbolEntry = null;
-                return false;
-            }
-            else
-            {
-                symbolEntry = null;
-                return false;
-            }
+            Debug.Assert(target != null, "Tried to resolve legacy symbol entry while not in a scope where a compiler target is available.");
+            return target._TryUseSymbolEntry(id, position, out symbolEntry);
         }
 
         internal void _PushScope(AstScopedBlock block)
@@ -442,19 +418,6 @@ namespace Prexonite.Compiler
         }
 
         #endregion
-
-        private bool _requiresModule(SymbolInterpretations kind)
-        {
-            switch (kind)
-            {
-                case SymbolInterpretations.Function:
-                case SymbolInterpretations.GlobalObjectVariable:
-                case SymbolInterpretations.GlobalReferenceVariable:
-                    return true;
-                default:
-                    return false;
-            }
-        }
 
         [DebuggerStepThrough]
         public bool isLabel() //LL(2)
@@ -619,19 +582,19 @@ namespace Prexonite.Compiler
                 return false;
             }
 
-            public override bool HandleDereference(DereferenceSymbol symbol, bool argument)
+            public override bool HandleDereference(DereferenceSymbol self, bool argument)
             {
-                return symbol.Symbol.HandleWith(this, true);
+                return self.Symbol.HandleWith(this, true);
             }
 
-            public override bool HandleCall(CallSymbol symbol, bool argument)
+            public override bool HandleCall(CallSymbol self, bool argument)
             {
-                return symbol.Entity.Match(_likeFunction, argument);
+                return self.Entity.Match(_likeFunction, argument);
             }
 
-            public override bool HandleExpand(ExpandSymbol symbol, bool argument)
+            public override bool HandleExpand(ExpandSymbol self, bool argument)
             {
-                return symbol.Entity.Match(_likeFunction, argument);
+                return self.Entity.Match(_likeFunction, argument);
             }
 
             private static readonly IEntityRefMatcher<bool, bool> _likeFunction = new IsLikeFunctionMatcher();
@@ -674,20 +637,6 @@ namespace Prexonite.Compiler
             }
 
             #endregion
-        }
-
-        //context
-
-        //interpretation is like function
-        [DebuggerStepThrough]
-        private static bool isLikeFunction(SymbolInterpretations interpretation) //Context
-        {
-            return
-                interpretation == SymbolInterpretations.Function ||
-                    interpretation == SymbolInterpretations.Command ||
-                        interpretation == SymbolInterpretations.LocalReferenceVariable ||
-                            interpretation == SymbolInterpretations.GlobalReferenceVariable ||
-                                interpretation == SymbolInterpretations.MacroCommand;
         }
 
         //context
@@ -907,7 +856,7 @@ namespace Prexonite.Compiler
                     return
                         MessageSymbol.Create(Message.Error(
                             string.Format("Invalid symbol interpretation {0}.",
-                                          Enum.GetName(typeof(SymbolInterpretations), kind)), GetPosition(),
+                                Enum.GetName(typeof(SymbolInterpretations), kind)), GetPosition(),
                             MessageClasses.InvalidSymbolInterpretation),
                                CallSymbol.Create(EntityRef.Command.Create(physicalId)));
             }
@@ -1003,61 +952,62 @@ namespace Prexonite.Compiler
 
         private class AssembleAstHandler : ISymbolHandler<Tuple<Parser, PCall>, AstExpr>
         {
-            public AstExpr HandleCall(CallSymbol symbol, Tuple<Parser, PCall> argument)
+            public AstExpr HandleCall(CallSymbol self, Tuple<Parser, PCall> argument)
             {
-                var access = AstGetSetEntity.Create(argument.Item1.GetPosition(), argument.Item2, symbol.Entity);
+                var access = AstGetSetEntity.Create(argument.Item1.GetPosition(), argument.Item2, self.Entity);
 
                 return access;
             }
 
-            public AstExpr HandleExpand(ExpandSymbol symbol, Tuple<Parser, PCall> argument)
+            public AstExpr HandleExpand(ExpandSymbol self, Tuple<Parser, PCall> argument)
             {
                 var position = argument.Item1.GetPosition();
-                return new AstMacroInvocation(position.File, position.Line, position.Column, symbol.Entity.ToSymbolEntry()) { Call = argument.Item2 };
+                return new AstMacroInvocation(position.File, position.Line, position.Column, self.Entity.ToSymbolEntry()) { Call = argument.Item2 };
             }
 
-            public AstExpr HandleMessage(MessageSymbol symbol, Tuple<Parser, PCall> argument)
+            public AstExpr HandleMessage(MessageSymbol self, Tuple<Parser, PCall> argument)
             {
-                throw new PrexoniteException(string.Format("Unexpected message still attached to symbol {0}.", symbol));
+                throw new PrexoniteException(string.Format("Unexpected message still attached to symbol {0}.", self));
             }
 
-            public AstExpr HandleDereference(DereferenceSymbol symbol, Tuple<Parser, PCall> argument)
+            public AstExpr HandleDereference(DereferenceSymbol self, Tuple<Parser, PCall> argument)
             {
-                return AstIndirectCall.Create(argument.Item1.GetPosition(), symbol.HandleWith(this, argument),
+                return AstIndirectCall.Create(argument.Item1.GetPosition(), self.Symbol.HandleWith(this, argument),
                                               argument.Item2);
             }
 
-            public AstExpr HandleReferenceTo(ReferenceToSymbol symbol, Tuple<Parser, PCall> argument)
+            public AstExpr HandleReferenceTo(ReferenceToSymbol self, Tuple<Parser, PCall> argument)
             {
                 CallSymbol callSymbol;
-                if (symbol.TryGetCallSymbol(out callSymbol))
+                if (self.TryGetCallSymbol(out callSymbol))
                 {
                     return AstReferenceToEntity.Create(argument.Item1.GetPosition(), callSymbol.Entity);
                 }
                 else
                 {
-                    var inner = symbol.HandleWith(this, argument) as ICanBeReferenced;
+                    var inner = self.Symbol.HandleWith(this, argument) as ICanBeReferenced;
                     AstExpr reference;
                     if (inner != null && inner.TryToReference(out reference))
                         return reference;
                     else
                     {
-                        throw new ErrorMessageException(Message.Error(string.Format("Cannot create a reference to {0}", symbol), argument.Item1.GetPosition(), MessageClasses.CannotCreateReference));
+                        throw new ErrorMessageException(Message.Error(string.Format("Cannot create a reference to {0}", self), argument.Item1.GetPosition(), MessageClasses.CannotCreateReference));
                     }
                 }
             }
 
-            public AstExpr HandleMacroInstance(MacroInstanceSymbol symbol, Tuple<Parser, PCall> argument)
+            public AstExpr HandleMacroInstance(MacroInstanceSymbol self, Tuple<Parser, PCall> argument)
             {
                 // TODO (Ticket #109) MacroInstance invocation
                 throw new NotImplementedException("Assembly of macro instance invocations");
             }
         }
 
-        private AstExpr _assembleInvocation(Symbol sym)
+        [NotNull]
+        private AstExpr _assembleInvocation([NotNull] Symbol sym, [NotNull] ISourcePosition position)
         {
             CompilerTarget tempQualifier = target;
-            if (tempQualifier.Loader._TryUseSymbol(ref sym))
+            if (tempQualifier.Loader._TryUseSymbol(ref sym, position))
             {
                 return sym.HandleWith(AssembleAst, Tuple.Create(this, PCall.Get));
             }
@@ -1077,7 +1027,7 @@ namespace Prexonite.Compiler
                 target.RequireOuterVariable(local.Id);
         }
 
-        private void _fallbackObjectCreation(Parser parser, AstTypeExpr type, out AstExpr expr,
+        private void _fallbackObjectCreation(AstTypeExpr type, out AstExpr expr,
             out ArgumentsProxy args)
         {
             var typeExpr = type as AstDynamicTypeExpression;
@@ -1102,7 +1052,7 @@ namespace Prexonite.Compiler
 
                 EnsureInScope(fallbackSymbol);
 
-                var e = _assembleInvocation(fallbackSymbol);
+                var e = _assembleInvocation(fallbackSymbol, type);
                 var call = e as AstGetSet;
                 if (call == null)
                 {
@@ -1118,13 +1068,13 @@ namespace Prexonite.Compiler
             }
             else if (type != null)
             {
-                var creation = new AstObjectCreation(parser, type);
+                var creation = new AstObjectCreation(this, type);
                 expr = creation;
                 args = creation.Arguments;
             }
             else
             {
-                SemErr("Failed to transform object creation expression.");
+                Loader.ReportMessage(Message.Error(Resources.Parser__fallbackObjectCreation_Failed,GetPosition(),MessageClasses.ObjectCreationSyntax));
                 expr = new AstNull(this);
                 args = new ArgumentsProxy(new List<AstExpr>());
             }
@@ -1139,7 +1089,6 @@ namespace Prexonite.Compiler
         {
             return new AstIndirectCall(this, new AstNull(this));
         }
-
 
         #endregion
 
@@ -1160,8 +1109,10 @@ namespace Prexonite.Compiler
             var alias = getOpAlias(insBase, detail, out argc);
             if (alias == null)
             {
-                SemErr(string.Format("Unknown operator alias in assembler code: {0}.{1}", insBase,
-                    detail));
+                Loader.ReportMessage(
+                    Message.Error(
+                        string.Format(Resources.Parser_addOpAlias_Unknown, insBase, detail),
+                        GetPosition(), MessageClasses.UnknownAssemblyOperator));
                 block.Add(new AstAsmInstruction(this, new Instruction(OpCode.nop)));
                 return;
             }

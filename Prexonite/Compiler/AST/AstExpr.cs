@@ -24,16 +24,18 @@
 //  WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING 
 //  IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
+using JetBrains.Annotations;
+
 namespace Prexonite.Compiler.Ast
 {
     public abstract class AstExpr : AstNode
     {
-        protected AstExpr(ISourcePosition position)
+        protected AstExpr([NotNull] ISourcePosition position)
             : base(position)
         {
         }
 
-        internal AstExpr(Parser p)
+        internal AstExpr([NotNull] Parser p)
             : base(p)
         {
         }
@@ -45,7 +47,8 @@ namespace Prexonite.Compiler.Ast
 
         #region Implementation of AstExpr
 
-        public abstract bool TryOptimize(CompilerTarget target, out AstExpr expr);
+        [ContractAnnotation("=>true,expr:notnull; =>false,expr:canbenull")]
+        public abstract bool TryOptimize([NotNull] CompilerTarget target, out AstExpr expr);
 
         #endregion
 

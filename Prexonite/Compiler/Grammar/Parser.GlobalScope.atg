@@ -209,7 +209,7 @@ SYNC
         EntityFactory<canBeRef, out entityFactory>
         ( colon
         |                   (.  Loader.ReportMessage(Message.Warning(
-                                  "The declaration type should be followed by a colon (e.g., `declare ref var: x;`)",
+                                  Resources.Parser_DeclarationTypeShouldBeFollowedByColon,
                                   GetPosition(),
                                   MessageClasses.MissingColonInDeclaration));
                             .)
@@ -380,72 +380,6 @@ DeclarationInstance2<.
                                     Symbols.Declare(rhsId, builder.ToSymbol());
                                   }                                  
                                 }
-                            .)
-.
-
-Declaration
-                            (. SymbolInterpretations type = SymbolInterpretations.Undefined;
-                               ModuleName module = TargetModule.Name;
-                            .)
-=
-SYNC
-  declare
-    (   [   var             (. type = SymbolInterpretations.GlobalObjectVariable; .)
-        |   ref             (. type = SymbolInterpretations.GlobalReferenceVariable; .)
-        |   function        (. type = SymbolInterpretations.Function; .)
-        |   command         (. type = SymbolInterpretations.Command; .)
-        |   macro command   (. type = SymbolInterpretations.MacroCommand; .)
-        ]
-        DeclarationInstance<type,module>
-        { comma [ DeclarationInstance<type,module> ] }
-        semicolon
-    |   lbrace
-        [   uusing ModuleName<out module> ]
-        {
-          (   var           (. type = SymbolInterpretations.GlobalObjectVariable; .)
-          |   ref           (. type = SymbolInterpretations.GlobalReferenceVariable; .)
-          |   function      (. type = SymbolInterpretations.Function; .)
-          |   command       (. type = SymbolInterpretations.Command; .)
-          |	  macro command (. type = SymbolInterpretations.MacroCommand; .)
-          ) 
-          colon
-          DeclarationInstance<type,module,preventOverride:true>
-          { comma [ DeclarationInstance<type,module> ] }
-        }
-        rbrace
-    )
-.
-  
-DeclarationInstance<SymbolInterpretations type, ModuleName module, bool preventOverride = false>
-                            (.  string id; string aId; ISourcePosition position; .)
-=							              (.	position = GetPosition(); .)	
-  Id<out id>                (.  aId = id; .)
-    [ div ModuleName<out module> 
-                            (.  if(preventOverride) 
-                                    SemErr("Specification of module name illegal at this point."); 
-                            .)
-    ]
-  [ as Id<out aId> ]
-                            (.  SymbolEntry inferredType;
-                                if(type == SymbolInterpretations.Undefined)
-                                    if(_TryUseSymbolEntry(id, position, out inferredType))
-                                      {
-                                        type = inferredType.Interpretation;
-                                          module = inferredType.Module;
-                                      }
-                                    else if(_TryUseSymbolEntry(aId, position, out inferredType))
-                                      {
-                                        type = inferredType.Interpretation;
-                                          module = inferredType.Module;
-                                      }
-                                    else
-                                      {
-                                        SemErr("Interpretation of symbol " + id + " as " + aId + " cannot be inferred.");
-                                      }
-                                Symbols.Declare(aId, new SymbolEntry(type, id, module).ToSymbol());
-
-                                  if(_requiresModule(type) && module == null)
-                                      SemErr("Module cannot be inferred for declaration " + id + " as + " + aId + ".");
                             .)
 .
 

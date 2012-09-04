@@ -342,18 +342,50 @@ namespace Prx
 
         private static void _reportErrors(Loader ldr)
         {
+            var originalColor = Console.ForegroundColor;
+
             if (ldr.ErrorCount > 0)
             {
-                var originalColor = Console.ForegroundColor;
-                Console.ForegroundColor = ConsoleColor.Red;
-                Console.Error.WriteLine("Errors during compilation detected. Aborting.");
-                foreach (var err in ldr.Errors)
-                    Console.WriteLine(err);
-
-                Console.ForegroundColor = originalColor;
-                Environment.Exit(1);
-                return;
+                try
+                {
+#if DEBUG
+                    _reportWarnings(ldr, originalColor);
+#endif
+                    Console.ForegroundColor = ConsoleColor.Red;
+                    Console.Error.WriteLine("Errors during compilation detected. Aborting.");
+                    foreach (var err in ldr.Errors)
+                        Console.WriteLine(err);
+                }
+                finally
+                {
+                    Console.ForegroundColor = originalColor;
+                    Environment.Exit(1);
+                }
             }
+            else
+            {
+#if DEBUG
+                try
+                {
+                    _reportWarnings(ldr, originalColor);
+                }
+                finally
+                {
+                    Console.ForegroundColor = originalColor;
+                }
+#endif
+            }
+        }
+
+        private static void _reportWarnings(Loader ldr, ConsoleColor originalColor)
+        {
+            Console.ForegroundColor = originalColor;
+            foreach (var message in ldr.Infos)
+                Console.WriteLine(message);
+
+            Console.ForegroundColor = ConsoleColor.Yellow;
+            foreach (var warning in ldr.Warnings)
+                Console.WriteLine(warning);
         }
     }
 }

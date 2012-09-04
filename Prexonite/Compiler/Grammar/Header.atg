@@ -32,6 +32,7 @@ using Prexonite.Modular;
 using Prexonite.Compiler.Symbolic;
 using Prexonite.Compiler.Symbolic.Internal;
 using Prexonite.Compiler.Symbolic.Compatibility;
+using Prexonite.Properties;
 
 COMPILER Prexonite
 

@@ -26,6 +26,7 @@
 
 using System;
 using System.Linq;
+using Prexonite.Properties;
 using Prexonite.Types;
 
 namespace Prexonite.Compiler.Ast
@@ -70,7 +71,7 @@ namespace Prexonite.Compiler.Ast
                 _OptimizeNode(target, ref Expression);
                 if (ReturnVariant == ReturnVariant.Exit)
                 {
-                    emit_tail_call_exit(target);
+                    _emitTailCallExit(target);
                     return;
                 }
             }
@@ -105,9 +106,7 @@ namespace Prexonite.Compiler.Ast
             if (!warned && _isInProtectedBlock(target))
             {
                 target.Loader.ReportMessage(Message.Create(MessageSeverity.Warning,
-                                                   "Detected possible return (yield) from within a protected block " +
-                                                   "(try-catch-finally, using, foreach). " +
-                                                   "This Prexonite implementation cannot guarantee that cleanup code is executed. ",
+                                                   Resources.AstReturn_Warn_YieldInProtectedBlock,
                                                    this,MessageClasses.YieldFromProtectedBlock));
                 warned = true;
             }
@@ -121,9 +120,9 @@ namespace Prexonite.Compiler.Ast
                         (sb.LexicalScope is AstTryCatchFinally) || (sb.LexicalScope is AstUsing));
         }
 
-        private void emit_tail_call_exit(CompilerTarget target)
+        private void _emitTailCallExit(CompilerTarget target)
         {
-            if (optimize_conditional_return_expression(target))
+            if (_optimizeConditionalReturnExpression(target))
                 return;
 
             var getset = Expression as AstGetSet;
@@ -171,7 +170,6 @@ namespace Prexonite.Compiler.Ast
                 {
                     Expression.EmitValueCode(target);
                     target.Emit(this, OpCode.ret_value);
-                    return;
                 }
             }
         }
@@ -195,7 +193,7 @@ namespace Prexonite.Compiler.Ast
             return true;
         }
 
-        private bool optimize_conditional_return_expression(CompilerTarget target)
+        private bool _optimizeConditionalReturnExpression(CompilerTarget target)
         {
             var cond = Expression as AstConditionalExpression;
             if (cond == null)

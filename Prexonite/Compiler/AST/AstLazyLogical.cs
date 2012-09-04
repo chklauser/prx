@@ -27,7 +27,9 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using JetBrains.Annotations;
 using Prexonite.Commands.Core;
+using Prexonite.Properties;
 using Prexonite.Types;
 using Debug = System.Diagnostics.Debug;
 
@@ -97,10 +99,12 @@ namespace Prexonite.Compiler.Ast
         {
             foreach (var condition in Conditions)
             {
-                if (((AstNode) condition).CheckForPlaceholders())
+                if (condition.CheckForPlaceholders())
                 {
-                    target.Loader.ReportSemanticError(condition.Line, condition.Column,
-                        "Partial applications of logical statements must be either pure and-chains or pure or-chains.");
+                    target.Loader.ReportMessage(
+                        Message.Error(
+                            Resources.AstLazyLogical_EmitCode_PureChainsExpected,
+                            this, MessageClasses.OnlyLastOperandPartialInLazy));
                     target.EmitJump(this, trueLabel);
                     return;
                 }
@@ -123,12 +127,12 @@ namespace Prexonite.Compiler.Ast
             CompilerTarget target, AstExpr cond, string targetLabel)
         {
             if (cond == null)
-                throw new ArgumentNullException("cond", "Condition may not be null.");
+                throw new ArgumentNullException("cond", Resources.AstLazyLogical__Condition_must_not_be_null);
             if (target == null)
-                throw new ArgumentNullException("target", "Compiler target may not be null.");
+                throw new ArgumentNullException("target", Resources.AstNode_Compiler_target_must_not_be_null);
             if (String.IsNullOrEmpty(targetLabel))
                 throw new ArgumentException(
-                    "targetLabel may neither be null nor empty.", "targetLabel");
+                    Resources.AstLazyLogical__targetLabel_must_neither_be_null_nor_empty, "targetLabel");
             var logical = cond as AstLazyLogical;
             if (logical != null)
             {
@@ -163,15 +167,15 @@ namespace Prexonite.Compiler.Ast
             bool isPositive)
         {
             if (cond == null)
-                throw new ArgumentNullException("cond", "Condition may not be null.");
+                throw new ArgumentNullException("cond", Resources.AstLazyLogical__Condition_must_not_be_null);
             if (target == null)
-                throw new ArgumentNullException("target", "Compiler target may not be null.");
+                throw new ArgumentNullException("target", Resources.AstNode_Compiler_target_must_not_be_null);
             if (String.IsNullOrEmpty(targetLabel))
                 throw new ArgumentException(
-                    "targetLabel may neither be null nor empty.", "targetLabel");
+                    Resources.AstLazyLogical__targetLabel_must_neither_be_null_nor_empty, "targetLabel");
             if (String.IsNullOrEmpty(alternativeLabel))
                 throw new ArgumentException(
-                    "alternativeLabel may neither be null nor empty.", "alternativeLabel");
+                    Resources.AstLazyLogical_alternativeLabel_may_neither_be_null_nor_empty, "alternativeLabel");
             var logical = cond as AstLazyLogical;
             if (!isPositive)
             {
@@ -205,12 +209,12 @@ namespace Prexonite.Compiler.Ast
             CompilerTarget target, AstExpr cond, string targetLabel)
         {
             if (cond == null)
-                throw new ArgumentNullException("cond", "Condition may not be null.");
+                throw new ArgumentNullException("cond", Resources.AstLazyLogical__Condition_must_not_be_null);
             if (target == null)
-                throw new ArgumentNullException("target", "Compiler target may not be null.");
+                throw new ArgumentNullException("target", Resources.AstNode_Compiler_target_must_not_be_null);
             if (String.IsNullOrEmpty(targetLabel))
                 throw new ArgumentException(
-                    "targetLabel may neither be null nor empty.", "targetLabel");
+                    Resources.AstLazyLogical__targetLabel_must_neither_be_null_nor_empty, "targetLabel");
             var logical = cond as AstLazyLogical;
             if (logical != null)
             {
@@ -235,6 +239,7 @@ namespace Prexonite.Compiler.Ast
 
         #endregion
 
+        [PublicAPI]
         public static AstExpr CreateConjunction(ISourcePosition position,
             IEnumerable<AstExpr> clauses)
         {
@@ -258,6 +263,7 @@ namespace Prexonite.Compiler.Ast
             }
         }
 
+        [PublicAPI]
         public static AstExpr CreateDisjunction(ISourcePosition position,
             IEnumerable<AstExpr> clauses)
         {
@@ -337,8 +343,10 @@ namespace Prexonite.Compiler.Ast
 
         private void _reportInvalidPlaceholders(CompilerTarget target)
         {
-            target.Loader.ReportSemanticError(Line, Column,
-                "In partial applications of lazy expressions, only one placeholder at the end of a sequence is allowed. Consider using a lambda expression instead.");
+            target.Loader.ReportMessage(
+                Message.Error(
+                    Resources.AstLazyLogical_placeholderOnlyAtTheEnd,
+                    this, MessageClasses.OnlyLastOperandPartialInLazy));
         }
 
         /// <summary>
@@ -349,8 +357,7 @@ namespace Prexonite.Compiler.Ast
         protected virtual AstExpr CreatePrefix(ISourcePosition position,
             IEnumerable<AstExpr> clauses)
         {
-            throw new NotSupportedException("The lazy logical expression " + GetType().Name +
-                " must implement this method/property to support partial application.");
+            throw new NotSupportedException(string.Format(Resources.AstLazyLogical_CreatePrefixMustBeImplementedForPartialApplication, GetType().Name));
         }
 
         public override bool TryOptimize(CompilerTarget target, out AstExpr expr)

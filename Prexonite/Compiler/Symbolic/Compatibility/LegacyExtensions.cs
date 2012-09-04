@@ -36,26 +36,26 @@ namespace Prexonite.Compiler.Symbolic.Compatibility
     {
         private class SymbolEntryConversion : ISymbolHandler<object, SymbolEntry>
         {
-            public SymbolEntry HandleCall(CallSymbol symbol, object argument)
+            public SymbolEntry HandleCall(CallSymbol self, object argument)
             {
-                return symbol.Entity.ToSymbolEntry();
+                return self.Entity.ToSymbolEntry();
             }
 
-            public SymbolEntry HandleExpand(ExpandSymbol symbol, object argument)
+            public SymbolEntry HandleExpand(ExpandSymbol self, object argument)
             {
-                return symbol.Entity.ToSymbolEntry();
+                return self.Entity.ToSymbolEntry();
             }
 
-            public SymbolEntry HandleMessage(MessageSymbol symbol, object argument)
+            public SymbolEntry HandleMessage(MessageSymbol self, object argument)
             {
-                throw new SymbolConversionException(Resources.SymbolEntryConversion_MessageSymbol_cannot_be_converted_to_SymbolEntry, symbol);
+                throw new SymbolConversionException(Resources.SymbolEntryConversion_MessageSymbol_cannot_be_converted_to_SymbolEntry, self);
             }
 
-            public SymbolEntry HandleDereference(DereferenceSymbol symbol, object argument)
+            public SymbolEntry HandleDereference(DereferenceSymbol self, object argument)
             {
                 CallSymbol callSymbol;
                 EntityRef.Variable variable;
-                if(symbol.Symbol.TryGetCallSymbol(out callSymbol) && callSymbol.Entity.TryGetVariable(out variable))
+                if(self.Symbol.TryGetCallSymbol(out callSymbol) && callSymbol.Entity.TryGetVariable(out variable))
                 {
                     var baseEntry = variable.ToSymbolEntry();
                     switch (baseEntry.Interpretation)
@@ -69,14 +69,14 @@ namespace Prexonite.Compiler.Symbolic.Compatibility
                 throw new SymbolConversionException(
                     Resources.
                         SymbolEntryConversion_No_arbirtrary_dereference,
-                    symbol);
+                    self);
             }
 
-            public SymbolEntry HandleReferenceTo(ReferenceToSymbol symbol, object argument)
+            public SymbolEntry HandleReferenceTo(ReferenceToSymbol self, object argument)
             {
                 CallSymbol callSymbol;
                 EntityRef.Variable variable;
-                if (symbol.Symbol.TryGetCallSymbol(out callSymbol) && callSymbol.Entity.TryGetVariable(out variable))
+                if (self.Symbol.TryGetCallSymbol(out callSymbol) && callSymbol.Entity.TryGetVariable(out variable))
                 {
                     var baseEntry = variable.ToSymbolEntry();
                     switch (baseEntry.Interpretation)
@@ -90,12 +90,12 @@ namespace Prexonite.Compiler.Symbolic.Compatibility
                 throw new SymbolConversionException(
                     Resources.
                         SymbolEntryConversion_No_arbirtrary_dereference,
-                    symbol);
+                    self);
             }
 
-            public SymbolEntry HandleMacroInstance(MacroInstanceSymbol symbol, object argument)
+            public SymbolEntry HandleMacroInstance(MacroInstanceSymbol self, object argument)
             {
-                throw new SymbolConversionException(Resources.SymbolEntryConversion_MacroInstance_not_supported, symbol);
+                throw new SymbolConversionException(Resources.SymbolEntryConversion_MacroInstance_not_supported, self);
             }
         }
         private static readonly SymbolEntryConversion _convertSymbol = new SymbolEntryConversion();

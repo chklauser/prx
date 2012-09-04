@@ -25,8 +25,10 @@
 //  IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 using System;
+using JetBrains.Annotations;
 using Prexonite.Commands.Core.Operators;
 using Prexonite.Compiler.Ast;
+using Prexonite.Properties;
 using Prexonite.Types;
 
 namespace Prexonite.Compiler.Macro.Commands
@@ -56,16 +58,20 @@ namespace Prexonite.Compiler.Macro.Commands
         {
             if (context.Invocation.Arguments.Count == 0)
             {
-                context.ReportMessage(MessageSeverity.Error, Alias + " requires one argument.");
+                context.ReportMessage(
+                    Message.Error(
+                        string.Format(Resources.CallSubInterpret_OneArgument, Alias), context.Invocation,
+                        MessageClasses.SubUsage));
                 return;
             }
 
             if (context.CurrentLoopBlock != null && !context.IsJustEffect)
             {
-                context.ReportMessage(MessageSeverity.Error,
-                    "Due to an internal compiler limitation, " + CallSub.Alias +
-                        " and " + Alias +
-                            " cannot be used in an expression inside a loop, only as a statement.");
+                context.ReportMessage(
+                    Message.Error(
+                        string.Format(
+                            Resources.CallSubInterpret_asExpressionInLoop, CallSub.Alias, Alias),
+                        context.Invocation, MessageClasses.SubAsExpressionInLoop));
                 return;
             }
 
@@ -77,17 +83,17 @@ namespace Prexonite.Compiler.Macro.Commands
             var retVarV = context.AllocateTemporaryVariable();
             _extractReturnVariant(context, resultV, retVarV);
 
-            Func<AstGetSetSymbol> retVar =
-                () =>
-                    context.CreateGetSetSymbol(SymbolEntry.LocalObjectVariable(retVarV), PCall.Get);
+            Func<AstGetSetSymbol> retVar = () =>
+                context.CreateGetSetSymbol(SymbolEntry.LocalObjectVariable(retVarV), PCall.Get);
 
             //Extract return value into retValueV (which happens to be the same as resultV)
             var retValueV = resultV;
             _extractReturnValue(context, resultV, retValueV);
 
-            Func<AstGetSetSymbol> retValue =
-                () =>
-                    context.CreateGetSetSymbol(SymbolEntry.LocalObjectVariable(retValueV), PCall.Get);
+// ReSharper disable ImplicitlyCapturedClosure // perfectly safe as neither lambda survives the method
+            Func<AstGetSetSymbol> retValue = () =>
+// ReSharper restore ImplicitlyCapturedClosure
+                context.CreateGetSetSymbol(SymbolEntry.LocalObjectVariable(retValueV), PCall.Get);
 
             //Break and Continue behave differently outside loop blocks
             AstNode contStmt, breakStmt;
@@ -102,7 +108,7 @@ namespace Prexonite.Compiler.Macro.Commands
             context.FreeTemporaryVariable(resultV);
         }
 
-        private static void _genChecks(MacroContext context, Func<AstGetSetSymbol> retVar,
+        private static void _genChecks(MacroContext context, [InstantHandle] Func<AstGetSetSymbol> retVar,
             AstNode contStmt, AstNode breakStmt)
         {
             var inv = context.Invocation;
@@ -128,7 +134,7 @@ namespace Prexonite.Compiler.Macro.Commands
             context.Block.Add(checkCont);
         }
 
-        private static void _determineActions(MacroContext context, Func<AstGetSetSymbol> retValue,
+        private static void _determineActions(MacroContext context, [InstantHandle] Func<AstGetSetSymbol> retValue,
             out AstNode contStmt, out AstNode breakStmt)
         {
             var inv = context.Invocation;

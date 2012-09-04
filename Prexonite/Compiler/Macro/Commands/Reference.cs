@@ -29,6 +29,7 @@ using System.Collections.Generic;
 using Prexonite.Commands;
 using Prexonite.Compiler.Ast;
 using Prexonite.Modular;
+using Prexonite.Properties;
 using Prexonite.Types;
 
 namespace Prexonite.Compiler.Macro.Commands
@@ -60,7 +61,9 @@ namespace Prexonite.Compiler.Macro.Commands
 
         private class Impl : PCommand
         {
+// ReSharper disable MemberHidesStaticFromOuterClass // not an issue
             public const string Alias = Reference.Alias + @"\impl";
+// ReSharper restore MemberHidesStaticFromOuterClass
 
             private readonly Loader _loader;
 
@@ -125,23 +128,29 @@ namespace Prexonite.Compiler.Macro.Commands
         {
             if (!context.CallerIsMacro())
             {
-                context.ReportMessage(MessageSeverity.Error,
-                    string.Format("{0} can only be used in a macro context.", Alias));
+                context.ReportMessage(
+                    Message.Error(
+                        string.Format(Resources.Reference_can_only_be_used_in_a_macro_context, Alias),
+                        context.Invocation, MessageClasses.ReferenceUsage));
                 return;
             }
-
+            
             if (context.Invocation.Arguments.Count == 0)
             {
-                context.ReportMessage(MessageSeverity.Error,
-                    "{0} requires at least one argument.");
+                context.ReportMessage(
+                    Message.Error(
+                        string.Format(Resources.Reference_requires_at_least_one_argument, Alias), context.Invocation,
+                        MessageClasses.ReferenceUsage));
                 return;
             }
 
             var prototype = context.Invocation.Arguments[0] as AstMacroInvocation;
             if (prototype == null)
             {
-                context.ReportMessage(MessageSeverity.Error,
-                    "{0} requires argument to be a prototype of a macro invocation.");
+                context.ReportMessage(
+                    Message.Error(
+                        string.Format(Resources.Reference_requires_argument_to_be_a_prototype_of_a_macro_invocation, Alias),
+                        context.Invocation, MessageClasses.ReferenceUsage));
                 return;
             }
 

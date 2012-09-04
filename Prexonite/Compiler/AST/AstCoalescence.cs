@@ -27,6 +27,7 @@
 using System.Collections.Generic;
 using System.Linq;
 using Prexonite.Commands.Core;
+using Prexonite.Properties;
 using Debug = System.Diagnostics.Debug;
 
 namespace Prexonite.Compiler.Ast
@@ -244,8 +245,10 @@ namespace Prexonite.Compiler.Ast
 
         private void _reportInvalidPlaceholders(CompilerTarget target)
         {
-            target.Loader.ReportSemanticError(Line, Column,
-                "In partial applications of lazy coalescence expressions, only one placeholder at the end of a sequence is allowed. Consider using a lambda expression instead.");
+            target.Loader.ReportMessage(
+                Message.Error(
+                    Resources.AstCoalescence__reportInvalidPlaceholders,
+                    this, MessageClasses.OnlyLastOperandPartialInLazy));
         }
     }
 }

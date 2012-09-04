@@ -28,6 +28,7 @@ using System;
 using System.Diagnostics;
 using System.Globalization;
 using Prexonite.Compiler.Cil;
+using Prexonite.Properties;
 using Prexonite.Types;
 using NoDebug = System.Diagnostics.DebuggerNonUserCodeAttribute;
 
@@ -81,12 +82,7 @@ namespace Prexonite.Compiler.Ast
                 element = optElem as AstGetSet;
                 if (element == null)
                 {
-                    target.Loader.ReportSemanticError
-                        (
-                            Element.Line,
-                            Element.Column,
-                            "Optimization of the element expression in the foreach head " +
-                                "resulted in a non-GetSet expression. Try to use a simpler expression.");
+                    target.Loader.ReportMessage(Message.Error(Resources.AstForeachLoop_DoEmitCode_ElementTooComplicated,this,MessageClasses.ForeachElementTooComplicated));
                     return;
                 }
             }

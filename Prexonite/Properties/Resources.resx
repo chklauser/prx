@@ -158,4 +158,146 @@
   <data name="Parser__CannotUseExpressionAsAConstructor">
     <value xml:space="preserve">Cannot use {0} like a constructor.</value>
   </data>
+  <data name="AstLazyLogical__Condition_must_not_be_null">
+    <value xml:space="preserve">Condition must not be null.</value>
+  </data>
+  <data name="AstNode_Compiler_target_must_not_be_null">
+    <value xml:space="preserve">Compiler target must not be null.</value>
+  </data>
+  <data name="AstLazyLogical__targetLabel_must_neither_be_null_nor_empty">
+    <value xml:space="preserve">targetLabel must neither be null nor empty.</value>
+  </data>
+  <data name="AstLazyLogical_alternativeLabel_may_neither_be_null_nor_empty">
+    <value xml:space="preserve">alternativeLabel may neither be null nor empty.</value>
+  </data>
+  <data name="AstLazyLogical_CreatePrefixMustBeImplementedForPartialApplication">
+    <value xml:space="preserve">The lazy logical expression {0} must implement this method/property to support partial application.</value>
+  </data>
+  <data name="CallMacro_call_macro_must_be_supplied_a_macro_reference">
+    <value xml:space="preserve">call\macro must be supplied a macro reference.</value>
+  </data>
+  <data name="CallMacro_CalledFromNonMacro">
+    <value xml:space="preserve">call\macro called from {0}. call\macro can only be called from a macro context, i.e., from a macro function or an inner function of a macro.</value>
+  </data>
+  <data name="CallMacro_SpecifyPlaceholderIndexExplicitly">
+    <value xml:space="preserve">Due to an internal limitation, the index of a placeholder in the macro prototype's argument list inside {0} cannot be inferred. Specify the placeholders index explicitly (e.g.,  ?0, ?1, etc.).</value>
+  </data>
+  <data name="CallMacro_errorUsagePrototype">
+    <value xml:space="preserve">Used in this way, {0} has the form {0}([macroPrototype(...),justEffect?,call?],...).</value>
+  </data>
+  <data name="CallMacro_notOnPlaceholder">
+    <value xml:space="preserve">The macro prototype must be known at compile-time, it must not be a placeholder.</value>
+  </data>
+  <data name="CallMacro_errorUsageFullRef">
+    <value xml:space="preserve">Used in this way, {0} has the form {0}([],macroRef,[justEffect?,call?],...).</value>
+  </data>
+  <data name="CallStar_usage">
+    <value xml:space="preserve">{0} requires at least one argument, the call\* command/function to invoke.</value>
+  </data>
+  <data name="CallStar__invalid_PassThrough">
+    <value xml:space="preserve">call\star must at least pass through one argument (the call target). It has been instructed to pass through {0} arguments.</value>
+  </data>
+  <data name="CallSubInterpret_OneArgument">
+    <value xml:space="preserve">{0} requires one argument.</value>
+  </data>
+  <data name="CallSubInterpret_asExpressionInLoop">
+    <value xml:space="preserve">Due to an internal limitation, {0} and {1} cannot be used in an expression inside a loop, only as a statement.</value>
+  </data>
+  <data name="MacroContextExtensions_EstablishMacroContext_OutsideOfMacro">
+    <value xml:space="preserve">Cannot establish macro context outside of macro.</value>
+  </data>
+  <data name="Pack_Usage_obj_missing">
+    <value xml:space="preserve">Must supply an object to be transported to {0}.</value>
+  </data>
+  <data name="Parser_ErrorsInBuildBlock">
+    <value xml:space="preserve">Cannot execute build block. Errors detected</value>
+  </data>
+  <data name="Parser_exception_in_build_block">
+    <value xml:space="preserve">Exception during compilation and execution of build block.
+{0}</value>
+  </data>
+  <data name="Parser__fallbackObjectCreation_Failed">
+    <value xml:space="preserve">Failed to transform object creation expression.</value>
+  </data>
+  <data name="Parser_addOpAlias_Unknown">
+    <value xml:space="preserve">Unknown operator alias in assembler code: {0}.{1}</value>
+  </data>
+  <data name="Reference_can_only_be_used_in_a_macro_context">
+    <value xml:space="preserve">{0} can only be used in a macro context.</value>
+  </data>
+  <data name="Reference_requires_at_least_one_argument">
+    <value xml:space="preserve">{0} requires at least one argument.</value>
+  </data>
+  <data name="Reference_requires_argument_to_be_a_prototype_of_a_macro_invocation">
+    <value xml:space="preserve">{0} requires argument to be a prototype of a macro invocation.</value>
+  </data>
+  <data name="CompilerTarget__CreateIncompatibleSymbolError_IncompatibleSymbol">
+    <value xml:space="preserve">Legacy part of parser cannot deal with symbol {0}. A call symbol was expected.</value>
+  </data>
+  <data name="AstCoalescence__reportInvalidPlaceholders">
+    <value xml:space="preserve">In partial applications of lazy coalescence expressions, only one placeholder at the end of a sequence is allowed. Consider using a lambda expression instead.</value>
+  </data>
+  <data name="AstForeachLoop_DoEmitCode_ElementTooComplicated">
+    <value xml:space="preserve">Optimization of the element expression in the foreach head resulted in a non-GetSet expression. Try to use a simpler expression.</value>
+  </data>
+  <data name="AstLazyLogical_EmitCode_PureChainsExpected">
+    <value xml:space="preserve">Partial applications of logical statements must be either pure and-chains or pure or-chains.</value>
+  </data>
+  <data name="AstLazyLogical_placeholderOnlyAtTheEnd">
+    <value xml:space="preserve">In partial applications of lazy expressions, only one placeholder at the end of a sequence is allowed. Consider using a lambda expression instead.</value>
+  </data>
+  <data name="AstNode_NoImplementationForOperator">
+    <value xml:space="preserve">No implementation defined for operator `{0}`</value>
+  </data>
+  <data name="AstUnresolved_The_symbol__0__has_not_been_resolved_">
+    <value xml:space="preserve">The symbol {0} has not been resolved.</value>
+  </data>
+  <data name="CompilerTarget_ParameterNameReserved">
+    <value xml:space="preserve">Parameter list of function {0} contains {1} at position {2}. The name {1} is reserved for the local variable holding the argument list.</value>
+  </data>
+  <data name="MacroSession_NotAMacro">
+    <value xml:space="preserve">Cannot apply {0} as a macro at compile time.</value>
+  </data>
+  <data name="MacroSession_ExceptionDuringExpansionOfMacro">
+    <value xml:space="preserve">Exception during expansion of macro {0} in function {1}: {2}</value>
+  </data>
+  <data name="MacroSession_MacroCannotBeAppliedPartially">
+    <value xml:space="preserve">The macro {0} cannot be applied partially.</value>
+  </data>
+  <data name="MacroSession_MacroNotReentrant">
+    <value xml:space="preserve">AstMacroInvocation.EmitCode is not reentrant. The invocation node for the macro {0} has been expanded already. Use GetCopy() to operate on a copy of this macro invocation.</value>
+  </data>
+  <data name="MacroFunctionExpander__UsedTemporaryVariable">
+    <value xml:space="preserve">Macro {0} uses temporary variable to ensure that expression from `context.Block` is evaluated before statements from macro return value.</value>
+  </data>
+  <data name="MacroFunctionExpander_PartialMacroMustIndicateSuccessWithBoolean">
+    <value xml:space="preserve">Partial macro must return a boolean value, indicating whether it can handle the partial application. Assuming it cannot.</value>
+  </data>
+  <data name="MacroFunctionExpander_MacroFunctionNotAvailable">
+    <value xml:space="preserve">The macro function {0} was called from function {1} but is not available at compile time (from module {2}).</value>
+  </data>
+  <data name="MacroCommandExpander_CannotFindMacro">
+    <value xml:space="preserve">Cannot find macro command named `{0}`</value>
+  </data>
+  <data name="AstReturn_Warn_YieldInProtectedBlock">
+    <value xml:space="preserve">Detected possible return (yield) from within a protected block (try-catch-finally, using, foreach). This Prexonite implementation cannot guarantee that cleanup code is executed. </value>
+  </data>
+  <data name="AstModifyingAssignment_No_RHS">
+    <value xml:space="preserve">Invalid modifying assignment: No RHS.</value>
+  </data>
+  <data name="AstModifyingAssignment_AssignmentModifierNotSupported">
+    <value xml:space="preserve">The assignment modifier {0} is not supported.</value>
+  </data>
+  <data name="AstGetSetReference_CannotCreateReference">
+    <value xml:space="preserve">Cannot create a reference to {0} {1}.</value>
+  </data>
+  <data name="AstGetSetReference_ReferenceToMacroTreatedAsPartialApplication">
+    <value xml:space="preserve">Reference to macro command {0} detected. Prexonite version {1} treats this as a partial application. This behavior might change in the future. Use partial application syntax explicitly {0}(?) or use the {2} command to obtain a reference to the macro.</value>
+  </data>
+  <data name="AstGetSetReference_CannotAssignReference">
+    <value xml:space="preserve">Cannot assign to a reference to a {0}.</value>
+  </data>
+  <data name="Parser_DeclarationTypeShouldBeFollowedByColon">
+    <value xml:space="preserve">The declaration type should be followed by a colon (e.g., `declare ref var: x;`)</value>
+  </data>
 </root>

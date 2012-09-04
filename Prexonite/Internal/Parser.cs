@@ -95,6 +95,12 @@ internal partial class Parser {
 		errors.parentParser = this;
 	}
 
+  
+  public Prexonite.Compiler.ISourcePosition GetPosition()
+  {
+      return new Prexonite.Compiler.SourcePosition(scanner.File, t.line, t.col);
+  }
+
     [DebuggerNonUserCode]
 	void SynErr (int n) {
 		if (errDist >= minErrDist) errors.SynErr(la.line, la.col, n);
@@ -102,6 +108,7 @@ internal partial class Parser {
 	}
 
     [DebuggerNonUserCode]
+    [Obsolete("Use Loader.ReportMessage instead.")]
 	internal void SemErr (string msg) {
 		if (errDist >= minErrDist) errors.SemErr(t.line, t.col, msg);
 		errDist = 0;
@@ -117,7 +124,7 @@ internal partial class Parser {
 #line default //END FRAME -->pragmas
 
 
-#line 93 "C:\Users\Christian\Documents\GitHub\prx-modules\Tools\Parser.frame" //FRAME
+#line 100 "C:\Users\Christian\Documents\GitHub\prx-modules\Tools\Parser.frame" //FRAME
 
 			la = t;
 		}
@@ -254,7 +261,7 @@ internal partial class Parser {
 	}
 
 
-#line 132 "C:\Users\Christian\Documents\GitHub\prx-modules\Tools\Parser.frame" //FRAME
+#line 139 "C:\Users\Christian\Documents\GitHub\prx-modules\Tools\Parser.frame" //FRAME
 
 
 	public void Parse() {
@@ -266,7 +273,7 @@ internal partial class Parser {
 
 		PTypeExpression();
 
-#line 138 "C:\Users\Christian\Documents\GitHub\prx-modules\Tools\Parser.frame" //FRAME
+#line 145 "C:\Users\Christian\Documents\GitHub\prx-modules\Tools\Parser.frame" //FRAME
 
     Expect(0);
 	}
@@ -279,7 +286,7 @@ internal partial class Parser {
 		{x,T,T,T, T,T,T,T, x,x,x,x, x},
 		{x,x,x,x, x,x,x,x, x,x,T,x, x}
 
-#line 143 "C:\Users\Christian\Documents\GitHub\prx-modules\Tools\Parser.frame" //FRAME
+#line 150 "C:\Users\Christian\Documents\GitHub\prx-modules\Tools\Parser.frame" //FRAME
 
 	};
 } // end Parser
@@ -325,7 +332,7 @@ internal class Errors : System.Collections.Generic.LinkedList<Message> {
 			case 12: s = "invalid Expr"; break;
 			case 13: s = "invalid Boolean"; break;
 
-#line 170 "C:\Users\Christian\Documents\GitHub\prx-modules\Tools\Parser.frame" //FRAME
+#line 177 "C:\Users\Christian\Documents\GitHub\prx-modules\Tools\Parser.frame" //FRAME
 
 			default: s = "error " + n; break;
 		}
@@ -333,14 +340,14 @@ internal class Errors : System.Collections.Generic.LinkedList<Message> {
             s = "after \"" + parentParser.t.ToString(false) + "\", " + s.Replace("expected","is expected") + " and not \"" + parentParser.la.ToString(false) + "\"";
 		else if(s.StartsWith("this symbol "))
 		    s = "\"" + parentParser.t.val + "\"" + s.Substring(12);
-        var msg = Message.Error(s, parentParser.scanner.File, line, col, "E"+n);
+        var msg = Message.Error(s, parentParser.GetPosition(), "E"+n);
 		AddLast(msg);
         OnMessageReceived(msg);
 	}
 
   [Obsolete("Use Loader.ReportMessage instead.")]
 	internal void SemErr (int line, int col, string s) {
-        var msg = Message.Error(s, parentParser.scanner.File, line, col);
+        var msg = Message.Error(s, parentParser.GetPosition() ,null);
 		AddLast(msg);
         OnMessageReceived(msg);
 
@@ -348,14 +355,14 @@ internal class Errors : System.Collections.Generic.LinkedList<Message> {
 	
   [Obsolete("Use Loader.ReportMessage instead.")]
 	internal void SemErr (string s) {
-        var msg = Message.Error(s, parentParser.scanner.File, parentParser.la.line, parentParser.la.col);
+        var msg = Message.Error(s, parentParser.GetPosition(),null);
 		AddLast(msg);
         OnMessageReceived(msg);
 	}
 	
   [Obsolete("Use Loader.ReportMessage instead.")]
 	internal void Warning (int line, int col, string s) {
-        var msg = Message.Warning(s, parentParser.scanner.File, line, col);
+        var msg = Message.Warning(s, parentParser.GetPosition(),null);
 		AddLast(msg);
         OnMessageReceived(msg);
 
@@ -363,21 +370,21 @@ internal class Errors : System.Collections.Generic.LinkedList<Message> {
 
   [Obsolete("Use Loader.ReportMessage instead.")]
   internal void Info (int line, int col, string s) {
-        var msg = Message.Info(s, parentParser.scanner.File, line, col);
+        var msg = Message.Info(s, parentParser.GetPosition(),null);
 		AddLast(msg);
         OnMessageReceived(msg);
 	}
 	
   [Obsolete("Use Loader.ReportMessage instead.")]
 	internal void Warning(string s) {
-        var msg = Message.Warning(s, parentParser.scanner.File, parentParser.la.line, parentParser.la.col);
+        var msg = Message.Warning(s, parentParser.GetPosition(),null);
 		AddLast(msg);
         OnMessageReceived(msg);
 	}
 
   [Obsolete("Use Loader.ReportMessage instead.")]
     internal void Info(string s) {
-        var msg = Message.Info(s, parentParser.scanner.File, parentParser.la.line, parentParser.la.col);
+        var msg = Message.Info(s, parentParser.GetPosition(),null);
 		AddLast(msg);
         OnMessageReceived(msg);
 	}

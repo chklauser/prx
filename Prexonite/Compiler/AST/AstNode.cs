@@ -26,6 +26,7 @@
 
 using System;
 using System.Diagnostics;
+using JetBrains.Annotations;
 using Prexonite.Compiler.Symbolic;
 using Prexonite.Modular;
 using Prexonite.Properties;
@@ -36,13 +37,14 @@ namespace Prexonite.Compiler.Ast
     [DebuggerStepThrough]
     public abstract class AstNode : IObject, ISourcePosition
     {
-        private readonly ISourcePosition _position;
+        [NotNull] private readonly ISourcePosition _position;
 
-        protected AstNode(string file, int line, int column) : this(new SourcePosition(file, line,column))
+        protected AstNode(string file, int line, int column)
+            : this(new SourcePosition(file, line, column))
         {
         }
 
-        protected AstNode(ISourcePosition position)
+        protected AstNode([NotNull] ISourcePosition position)
         {
             if (position == null)
                 throw new ArgumentNullException("position");
@@ -54,6 +56,7 @@ namespace Prexonite.Compiler.Ast
         {
         }
 
+        [NotNull]
         public ISourcePosition Position
         {
             get { return _position; }
@@ -74,19 +77,19 @@ namespace Prexonite.Compiler.Ast
             get { return _position.Column; }
         }
 
-        protected abstract void DoEmitCode(CompilerTarget target, StackSemantics semantics);
+        protected abstract void DoEmitCode([NotNull] CompilerTarget target, StackSemantics semantics);
 
-        public void EmitValueCode(CompilerTarget target)
+        public void EmitValueCode([NotNull] CompilerTarget target)
         {
             EmitCode(target, StackSemantics.Value);
         }
 
-        public void EmitEffectCode(CompilerTarget target)
+        public void EmitEffectCode([NotNull] CompilerTarget target)
         {
             EmitCode(target, StackSemantics.Effect);
         }
 
-        public void EmitCode(CompilerTarget target, StackSemantics justEffectCode)
+        public void EmitCode([NotNull] CompilerTarget target, StackSemantics justEffectCode)
         {
             var partiallyApplicabale = this as IAstPartiallyApplicable;
             var isPartialApplication = partiallyApplicabale != null &&
@@ -126,10 +129,13 @@ namespace Prexonite.Compiler.Ast
             return false;
         }
 
-        internal static AstExpr _GetOptimizedNode(CompilerTarget target, AstExpr expr)
+        [NotNull]
+        internal static AstExpr _GetOptimizedNode(
+            [NotNull] CompilerTarget target, [NotNull] AstExpr expr)
         {
             if (target == null)
-                throw new ArgumentNullException("target", Resources.AstNode__GetOptimizedNode_CompilerTarget_null);
+                throw new ArgumentNullException(
+                    "target", Resources.AstNode__GetOptimizedNode_CompilerTarget_null);
             if (expr == null)
                 throw new ArgumentNullException(
                     "expr", Resources.AstNode__GetOptimizedNode_Expression_null);
@@ -137,10 +143,11 @@ namespace Prexonite.Compiler.Ast
             return expr.TryOptimize(target, out opt) ? opt : expr;
         }
 
-        internal static void _OptimizeNode(CompilerTarget target, ref AstExpr expr)
+        internal static void _OptimizeNode([NotNull] CompilerTarget target, [NotNull] ref AstExpr expr)
         {
             if (target == null)
-                throw new ArgumentNullException("target", Resources.AstNode__GetOptimizedNode_CompilerTarget_null);
+                throw new ArgumentNullException(
+                    "target", Resources.AstNode__GetOptimizedNode_CompilerTarget_null);
             if (expr == null)
                 throw new ArgumentNullException(
                     "expr", Resources.AstNode__GetOptimizedNode_Expression_null);
@@ -149,7 +156,8 @@ namespace Prexonite.Compiler.Ast
 
         #region Implementation of IObject
 
-        public virtual bool TryDynamicCall(StackContext sctx, PValue[] args, PCall call, string id,
+        public virtual bool TryDynamicCall(
+            StackContext sctx, PValue[] args, PCall call, string id,
             out PValue result)
         {
             result = null;
@@ -189,13 +197,19 @@ namespace Prexonite.Compiler.Ast
         /// <param name="parser">The parser to post the error message to.</param>
         /// <param name="symbolicId">The symbolic id of the operator (the id used in the source code)</param>
         /// <returns>The symbol corresponding to the symbolic id, or a default symbol when no such symbol entry exists.</returns>
+        [NotNull]
         internal static Symbol _ResolveOperator(Parser parser, string symbolicId)
         {
             Symbol symbolEntry;
             if (!parser.target.Symbols.TryGet(symbolicId, out symbolEntry))
             {
-                parser.SemErr(string.Format("No implementation defined for operator `{0}`",
-                    symbolicId));
+                parser.Loader.ReportMessage(
+                    Message.Error(
+                        string.Format(
+                            Resources.AstNode_NoImplementationForOperator,
+                            symbolicId), parser.GetPosition(),
+                        MessageClasses.SymbolNotResolved));
+
                 return CallSymbol.Create(EntityRef.Command.Create(symbolicId));
             }
             else

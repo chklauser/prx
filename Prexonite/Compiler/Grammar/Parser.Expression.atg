@@ -222,7 +222,7 @@ AssignExpr<out AstExpr expr>     (.  AstGetSet assignment; BinaryOperator setMod
 	                                        if(setModifier == BinaryOperator.None)
 	                                            expr = assignment;
 	                                        else
-	                                            expr = AstModifyingAssignment.Create(this,setModifier, assignment);
+	                                            expr = AstModifyingAssignment._Create(this,setModifier, assignment);
                                         .)        
     |)
 .
@@ -369,7 +369,7 @@ ObjectCreation<out AstExpr expr>
                                             ArgumentsProxy args; 
                                         .)
 =
-    new TypeExpr<out type>              (.  _fallbackObjectCreation(this, type, out expr, out args); .)
+    new TypeExpr<out type>              (.  _fallbackObjectCreation(type, out expr, out args); .)
     Arguments<args>
 .
 

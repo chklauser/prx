@@ -25,6 +25,7 @@
 //  IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 using System;
+using Prexonite.Properties;
 using Prexonite.Types;
 
 namespace Prexonite.Compiler.Ast
@@ -51,8 +52,10 @@ namespace Prexonite.Compiler.Ast
 
         private void _reportUnresolved(CompilerTarget target)
         {
-            target.Loader.ReportSemanticError(Line, Column,
-                "The symbol " + Id + " has not been resolved.");
+            target.Loader.ReportMessage(
+                Message.Error(
+                    string.Format(Resources.AstUnresolved_The_symbol__0__has_not_been_resolved_, Id), this,
+                    MessageClasses.SymbolNotResolved));
         }
 
         private string _id;

@@ -27,6 +27,7 @@
 using System;
 using System.Linq;
 using Prexonite.Compiler.Ast;
+using Prexonite.Properties;
 using Prexonite.Types;
 
 namespace Prexonite.Compiler.Macro
@@ -144,8 +145,10 @@ namespace Prexonite.Compiler.Macro
         {
             if (!CallerIsMacro(context))
             {
-                context.ReportMessage(MessageSeverity.Error,
-                    "Cannot establish macro context outside of macro.");
+                context.ReportMessage(
+                    Message.Error(
+                        Resources.MacroContextExtensions_EstablishMacroContext_OutsideOfMacro, context.Invocation,
+                        MessageClasses.MacroContextOutsideOfMacro));
                 return;
             }
 

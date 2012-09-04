@@ -35,6 +35,7 @@ using System.Collections.Generic;
 using System.Diagnostics;
 using System.Diagnostics.CodeAnalysis;
 using System.Linq;
+using JetBrains.Annotations;
 using Prexonite.Compiler.Ast;
 using Prexonite.Compiler.Macro;
 using Prexonite.Compiler.Symbolic;
@@ -1114,7 +1115,7 @@ namespace Prexonite.Compiler
                     pos = Ast[0];
                 _loader.ReportMessage(Message.Create(MessageSeverity.Error,
                                              String.Format(
-                                                 "Parameter list of function {0} contains {1} at position {2}. The name {1} is reserved for the local variable holding the argument list.",
+                                                 Resources.CompilerTarget_ParameterNameReserved,
                                                  _function.LogicalId, PFunction.ArgumentListId,
                                                  _function.Parameters.IndexOf(PFunction.ArgumentListId)), pos,MessageClasses.ParameterNameReserved));
             }
@@ -1485,11 +1486,12 @@ namespace Prexonite.Compiler
 
         #region (Legacy) Symbol handling
 
-        internal bool _TryUseSymbol(string symbolicId, out Symbol symbol)
+        [ContractAnnotation("=>true,symbol:notnull; =>false,symbol:null")]
+        internal bool _TryUseSymbol(string symbolicId, out Symbol symbol, [NotNull] ISourcePosition position)
         {
             if (Symbols.TryGet(symbolicId, out symbol))
             {
-                return Loader._TryUseSymbol(ref symbol);
+                return Loader._TryUseSymbol(ref symbol, position);
             }
             else
             {
@@ -1498,10 +1500,11 @@ namespace Prexonite.Compiler
             }
         }
 
-        internal bool _TryUseSymbolEntry(string symbolId, ISourcePosition position, out SymbolEntry entry)
+        [ContractAnnotation("=>true,entry:notnull; =>false,entry:null")]
+        internal bool _TryUseSymbolEntry([NotNull] string symbolId, [NotNull] ISourcePosition position, out SymbolEntry entry)
         {
             Symbol symbol;
-            if (_TryUseSymbol(symbolId, out symbol))
+            if (_TryUseSymbol(symbolId, out symbol,position))
             {
                 try
                 {
@@ -1527,7 +1530,7 @@ namespace Prexonite.Compiler
         internal static Message _CreateIncompatibleSymbolError(ISourcePosition position, Symbol symbol)
         {
             return Message.Error(String.Format(
-                "Legacy part of parser cannot deal with symbol {0}. An entity symbol was expected.", symbol),position,MessageClasses.NoSymbolEntryEquivalentToSymbol);
+                Resources.CompilerTarget__CreateIncompatibleSymbolError_IncompatibleSymbol, symbol),position,MessageClasses.NoSymbolEntryEquivalentToSymbol);
         }
 
         #endregion

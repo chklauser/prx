@@ -101,7 +101,7 @@ namespace Prexonite.Compiler.Symbolic.Internal
                 DereferenceCount++;
             }
 
-            for (var i = Messages.Count - (usedLastMessage ? 1 : 2); i >= 0; i--)
+            for (var i = Messages.Count - (usedLastMessage ? 2 : 1); i >= 0; i--)
                 symbol = MessageSymbol.Create(Messages[i], symbol);
 
             return symbol;

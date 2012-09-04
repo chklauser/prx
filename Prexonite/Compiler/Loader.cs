@@ -568,7 +568,7 @@ namespace Prexonite.Compiler
             _addMacroCommand(CallSubInterpret.Instance);
             _addMacroCommand(Pack.Instance);
             _addMacroCommand(Unpack.Instance);
-            _addHelperCommands(Unpack.GetHelperCommands(this));
+            _addHelperCommands(Unpack.GetHelperCommands());
             _addMacroCommand(Reference.Instance);
             _addHelperCommands(Reference.GetHelperCommands(this));
             _addMacroCommand(CallStar.Instance);
@@ -801,7 +801,10 @@ namespace Prexonite.Compiler
             var parser = new Parser(lexer, this);
 
             var oldReportSemError = _reportSemError;
+            // TODO: Retire the SemErr API once and for all
+#pragma warning disable 612,618
             _reportSemError = parser.SemErr;
+#pragma warning restore 612,618
             parser.errors.MessageReceived += _getMessageHandler();
             parser.Parse();
 
@@ -1267,18 +1270,18 @@ namespace Prexonite.Compiler
 // ReSharper restore InconsistentNaming
         private class SymbolKindSplitHandler : ISymbolHandler<SymbolKinds, object>
         {
-            public object HandleCall(CallSymbol symbol, SymbolKinds argument)
+            public object HandleCall(CallSymbol self, SymbolKinds argument)
             {
-                return symbol.Entity.Match(EntitySplit, argument);
+                return self.Entity.Match(EntitySplit, argument);
             }
 
-            public object HandleExpand(ExpandSymbol symbol, SymbolKinds argument)
+            public object HandleExpand(ExpandSymbol self, SymbolKinds argument)
             {
                 var oldMode = argument.MacroMode;
                 argument.MacroMode = true;
                 try
                 {
-                    return symbol.Entity.Match(EntitySplit, argument);
+                    return self.Entity.Match(EntitySplit, argument);
                 } 
                 finally
                 {
@@ -1286,33 +1289,33 @@ namespace Prexonite.Compiler
                 }
             }
 
-            public object HandleMessage(MessageSymbol symbol, SymbolKinds argument)
+            public object HandleMessage(MessageSymbol self, SymbolKinds argument)
             {
                 // the second condition is included in the first, but helps ReSharper understand
                 //  that the else-branch cannot result in a null reference exception.
-                if(symbol.Message.Severity == MessageSeverity.Error || symbol.Symbol == null)
+                if(self.Message.Severity == MessageSeverity.Error || self.Symbol == null)
                 {
                     return null; //don't emit error symbols
                 }
                 else
                 {
-                    return symbol.Symbol.HandleWith(this, argument);
+                    return self.Symbol.HandleWith(this, argument);
                 }
             }
 
-            public object HandleDereference(DereferenceSymbol symbol, SymbolKinds argument)
+            public object HandleDereference(DereferenceSymbol self, SymbolKinds argument)
             {
                 argument.CurrentDereferenceCount++;
-                return symbol.HandleWith(this, argument);
+                return self.Symbol.HandleWith(this, argument);
             }
 
-            public object HandleReferenceTo(ReferenceToSymbol symbol, SymbolKinds argument)
+            public object HandleReferenceTo(ReferenceToSymbol self, SymbolKinds argument)
             {
                 argument.CurrentDereferenceCount--;
-                return symbol.HandleWith(this, argument);
+                return self.Symbol.HandleWith(this, argument);
             }
 
-            public object HandleMacroInstance(MacroInstanceSymbol symbol, SymbolKinds argument)
+            public object HandleMacroInstance(MacroInstanceSymbol self, SymbolKinds argument)
             {
                 return null;
             }
@@ -1372,6 +1375,7 @@ namespace Prexonite.Compiler
                     writer.Write(String.Concat(Enumerable.Repeat("ref ",dereferenceCount)));
 
                 writer.Write(kind);
+                writer.Write(' ');
                 var isFirst = true;
                 foreach (var kvp in entry)
                 {
@@ -1482,49 +1486,58 @@ namespace Prexonite.Compiler
         {
             #region Implementation of ISymbolHandler<in List<Message>,out Symbol>
 
-            public Symbol HandleCall(CallSymbol symbol, List<Message> argument)
+            public Symbol HandleCall(CallSymbol self, List<Message> argument)
             {
-                return symbol;
+                return self;
             }
 
-            public Symbol HandleExpand(ExpandSymbol symbol, List<Message> argument)
+            public Symbol HandleExpand(ExpandSymbol self, List<Message> argument)
             {
-                return symbol;
+                return self;
             }
 
-            public Symbol HandleMessage(MessageSymbol symbol, List<Message> argument)
+            public Symbol HandleMessage(MessageSymbol self, List<Message> argument)
             {
                 // Add the symbol to the list and unwrap contents
-                argument.Add(symbol.Message);
-                if (symbol.Symbol == null)
+                argument.Add(self.Message);
+                if (self.Symbol == null)
                     return null;
                 else
-                    return symbol.Symbol.HandleWith(this, argument);
+                    return self.Symbol.HandleWith(this, argument);
             }
 
-            public Symbol HandleDereference(DereferenceSymbol symbol, List<Message> argument)
+            public Symbol HandleDereference(DereferenceSymbol self, List<Message> argument)
             {
-                // add messages in inner symbol but don't unwrap
-                symbol.Symbol.HandleWith(this,argument);
-                return symbol;
+                var s = self.Symbol.HandleWith(this,argument);
+                if (s == null)
+                    return null;
+                else if (ReferenceEquals(s, self.Symbol))
+                    return self;
+                else
+                    return DereferenceSymbol.Create(self);
             }
 
-            public Symbol HandleReferenceTo(ReferenceToSymbol symbol, List<Message> argument)
+            public Symbol HandleReferenceTo(ReferenceToSymbol self, List<Message> argument)
             {
-                // add messages in inner symbol but don't unwrap
-                symbol.Symbol.HandleWith(this, argument);
-                return symbol;
+                var s = self.Symbol.HandleWith(this, argument);
+                if (s == null)
+                    return null;
+                else if (ReferenceEquals(s, self.Symbol))
+                    return self;
+                else
+                    return ReferenceToSymbol.Create(self);
             }
 
-            public Symbol HandleMacroInstance(MacroInstanceSymbol symbol, List<Message> argument)
+            public Symbol HandleMacroInstance(MacroInstanceSymbol self, List<Message> argument)
             {
-                return symbol;
+                return self;
             }
 
             #endregion
         }
 
-        internal bool _TryUseSymbol(ref Symbol symbol)
+        [ContractAnnotation("=>true,symbol:notnull; =>false,symbol:null")]
+        internal bool _TryUseSymbol(ref Symbol symbol, [NotNull] ISourcePosition position)
         {
             var msgs = new List<Message>(1);
             // symbol could be null.
@@ -1536,9 +1549,10 @@ namespace Prexonite.Compiler
                 {
                     var c = message.MessageClass;
                     if (c != null)
-                        if (seen.Add(c))
+                        if (!seen.Add(c))
                             continue;
-                    ReportMessage(message);
+
+                    ReportMessage(message.Repositioned(position));
                     if (message.Severity == MessageSeverity.Error)
                     {
                         symbol = null;

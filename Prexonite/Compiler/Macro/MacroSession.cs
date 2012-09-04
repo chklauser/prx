@@ -31,6 +31,7 @@ using System.Linq;
 using JetBrains.Annotations;
 using Prexonite.Compiler.Ast;
 using Prexonite.Compiler.Symbolic;
+using Prexonite.Properties;
 using Prexonite.Types;
 
 namespace Prexonite.Compiler.Macro
@@ -204,7 +205,7 @@ namespace Prexonite.Compiler.Macro
                 if (!target.Loader.MacroCommands.TryGetValue(invocation.Implementation.InternalId, out _macroCommand))
                 {
                     target.Loader.ReportMessage(Message.Create(MessageSeverity.Error,
-                                                       String.Format("Cannot find macro command named `{0}`", invocation.Implementation.InternalId),
+                                                       String.Format(Resources.MacroCommandExpander_CannotFindMacro, invocation.Implementation.InternalId),
                                                        invocation,MessageClasses.NoSuchMacroCommand));
                     HumanId = "cannot_find_macro_command";
                     return;
@@ -259,7 +260,7 @@ namespace Prexonite.Compiler.Macro
                     target.Loader.ReportMessage(
                         Message.Create(MessageSeverity.Error,
                                String.Format(
-                                   "The macro function {0} was called from function {1} but is not available at compile time (from module {2}).",
+                                   Resources.MacroFunctionExpander_MacroFunctionNotAvailable,
                                    _toFunctionNameString(invocation.Implementation),
                                    target.Function.Id, target.Loader.ParentApplication.Module.Name), invocation,MessageClasses.NoSuchMacroFunction));
                     HumanId = "could_not_resolve_macro_function";
@@ -352,7 +353,7 @@ namespace Prexonite.Compiler.Macro
                 if (successRaw.Type != PType.Bool)
                 {
                     context.ReportMessage(Message.Create(MessageSeverity.Error,
-                                                         "Partial macro must return a boolean value, indicating whether it can handle the partial application. Assuming it cannot.",
+                                                         Resources.MacroFunctionExpander_PartialMacroMustIndicateSuccessWithBoolean,
                                                          context.Invocation,
                                                          MessageClasses.PartialMacroMustReturnBoolean));
                     _setupDefaultExpression(context);
@@ -384,7 +385,7 @@ namespace Prexonite.Compiler.Macro
                         //Might at a later point become a warning
                         context.ReportMessage(Message.Create(MessageSeverity.Info,
                             String.Format(
-                                "Macro {0} uses temporary variable to ensure that expression from `context.Block` is evaluated before statements from macro return value.",
+                                Resources.MacroFunctionExpander__UsedTemporaryVariable,
                                 HumanId),
                             context.Invocation,MessageClasses.BlockMergingUsesVariable));
 
@@ -473,7 +474,7 @@ namespace Prexonite.Compiler.Macro
                     target.Loader.ReportMessage(
                         Message.Create(MessageSeverity.Error,
                                String.Format(
-                                   "AstMacroInvocation.EmitCode is not reentrant. The invocation node for the macro {0} has been expanded already. Use GetCopy() to operate on a copy of this macro invocation.",
+                                   Resources.MacroSession_MacroNotReentrant,
                                    expander.HumanId),
                                invocation,MessageClasses.MacroNotReentrant));
                     return CreateNeutralExpression(invocation);
@@ -488,10 +489,13 @@ namespace Prexonite.Compiler.Macro
                     {
                         if (!expander.TryExpandPartially(target, context))
                         {
-                            target.Loader.ReportMessage(Message.Create(MessageSeverity.Error,
-                                                                       "The macro " + expander.HumanId +
-                                                                       " cannot be applied partially.", invocation,
-                                                                       MessageClasses.PartialApplicationNotSupported));
+                            target.Loader.ReportMessage(
+                                Message.Create(
+                                    MessageSeverity.Error,
+                                    string.Format(
+                                        Resources.MacroSession_MacroCannotBeAppliedPartially,
+                                        expander.HumanId), invocation,
+                                    MessageClasses.PartialApplicationNotSupported));
                             return CreateNeutralExpression(invocation);
                         }
                     }
@@ -536,7 +540,7 @@ namespace Prexonite.Compiler.Macro
         {
             context.ReportMessage(Message.Create(MessageSeverity.Error,
                 String.Format(
-                    "Exception during expansion of macro {0} in function {1}: {2}",
+                    Resources.MacroSession_ExceptionDuringExpansionOfMacro,
                     expander.HumanId, context.Function.LogicalId,
                     e.Message), context.Invocation,MessageClasses.ExceptionDuringCompilation));
 #if DEBUG
@@ -577,7 +581,7 @@ namespace Prexonite.Compiler.Macro
                     target.Loader.ReportMessage(
                         Message.Create(MessageSeverity.Error,
                                String.Format(
-                                   "Cannot apply {0} as a macro at compile time.",
+                                   Resources.MacroSession_NotAMacro,
                                    Enum.GetName(
                                        typeof (
                                            SymbolInterpretations),

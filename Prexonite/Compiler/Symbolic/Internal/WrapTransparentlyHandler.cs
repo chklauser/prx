@@ -6,39 +6,39 @@ namespace Prexonite.Compiler.Symbolic.Internal
 
         protected abstract Symbol Wrap(Symbol inner);
 
-        public virtual Symbol HandleCall(CallSymbol symbol, object argument)
+        public virtual Symbol HandleCall(CallSymbol self, object argument)
         {
-            return Wrap(symbol);
+            return Wrap(self);
         }
 
-        public virtual Symbol HandleExpand(ExpandSymbol symbol, object argument)
+        public virtual Symbol HandleExpand(ExpandSymbol self, object argument)
         {
-            return Wrap(symbol);
+            return Wrap(self);
         }
 
-        public virtual Symbol HandleMessage(MessageSymbol symbol, object argument)
+        public virtual Symbol HandleMessage(MessageSymbol self, object argument)
         {
             // Keep message symbols on the outside, except when it doesn't wrap
             //  an inner symbol (pure error symbols)
-            if (symbol.Symbol == null)
-                return symbol;
+            if (self.Symbol == null)
+                return self;
             else
-                return MessageSymbol.Create(symbol.Message, Wrap(symbol.Symbol));
+                return MessageSymbol.Create(self.Message, Wrap(self.Symbol));
         }
 
-        public virtual Symbol HandleDereference(DereferenceSymbol symbol, object argument)
+        public virtual Symbol HandleDereference(DereferenceSymbol self, object argument)
         {
-            return Wrap(symbol);
+            return Wrap(self);
         }
 
-        public virtual Symbol HandleReferenceTo(ReferenceToSymbol symbol, object argument)
+        public virtual Symbol HandleReferenceTo(ReferenceToSymbol self, object argument)
         {
-            return Wrap(symbol);
+            return Wrap(self);
         }
 
-        public virtual Symbol HandleMacroInstance(MacroInstanceSymbol symbol, object argument)
+        public virtual Symbol HandleMacroInstance(MacroInstanceSymbol self, object argument)
         {
-            return Wrap(symbol);
+            return Wrap(self);
         }
 
         #endregion

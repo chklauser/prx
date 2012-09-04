@@ -27,6 +27,7 @@
 using System;
 using System.Collections.Generic;
 using Prexonite.Compiler.Macro.Commands;
+using Prexonite.Properties;
 using Prexonite.Types;
 
 namespace Prexonite.Compiler.Ast
@@ -101,10 +102,7 @@ namespace Prexonite.Compiler.Ast
                 case SymbolInterpretations.MacroCommand:
                     target.Loader.ReportMessage(Message.Create(MessageSeverity.Warning,
                                                        string.Format(
-                                                           "Reference to macro command {0} detected. Prexonite version {1} treats this " +
-                                                           "as a partial application. This behavior might change in the future. " +
-                                                           "Use partial application syntax explicitly {0}(?) or use the {2} command " +
-                                                           "to obtain a reference to the macro.",
+                                                           Resources.AstGetSetReference_ReferenceToMacroTreatedAsPartialApplication,
                                                            Implementation.InternalId, Engine.PrexoniteVersion, Reference.Alias), this,MessageClasses.ReferenceToMacro));
 
                     _emitAsPartialApplication(target);
@@ -112,7 +110,7 @@ namespace Prexonite.Compiler.Ast
                     break;
                 default:
                     target.Loader.ReportMessage(Message.Create(MessageSeverity.Error,
-                                                       string.Format("Cannot create a reference to {0} {1}.",
+                                                       string.Format(Resources.AstGetSetReference_CannotCreateReference,
                                                                      Enum.GetName(typeof (SymbolInterpretations), Implementation.Interpretation), Implementation.InternalId), this,MessageClasses.InvalidReference));
                     target.EmitNull(this);
                     break;
@@ -121,8 +119,7 @@ namespace Prexonite.Compiler.Ast
 
         private void _emitAsPartialApplication(CompilerTarget target)
         {
-            var pa = new AstMacroInvocation(File, Line, Column, Implementation);
-            pa.Call = Call;
+            var pa = new AstMacroInvocation(File, Line, Column, Implementation) {Call = Call};
             pa.Arguments.Add(new AstPlaceholder(File, Line, Column, 0));
             var ipa = (AstExpr) pa;
             _OptimizeNode(target, ref ipa);
@@ -139,8 +136,9 @@ namespace Prexonite.Compiler.Ast
                 case SymbolInterpretations.JumpLabel:
                 case SymbolInterpretations.KnownType:
                     throw new PrexoniteException(
-                        "Cannot assign to a reference to a " +
-                            Enum.GetName(typeof(SymbolInterpretations), Implementation.Interpretation).ToLower());
+// ReSharper disable PossibleNullReferenceException
+                        string.Format(Resources.AstGetSetReference_CannotAssignReference, (Enum.GetName(typeof(SymbolInterpretations), Implementation.Interpretation) ?? Enum.GetName(typeof(SymbolInterpretations),SymbolInterpretations.Undefined)).ToLower()));
+// ReSharper restore PossibleNullReferenceException
 
                     //Variables are not automatically dereferenced
                 case SymbolInterpretations.GlobalObjectVariable:

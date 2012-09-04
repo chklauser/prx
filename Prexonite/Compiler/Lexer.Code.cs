@@ -207,6 +207,8 @@ internal partial class Lexer
                     return Parser._lazy;
                 case "let":
                     return Parser._let;
+                case "null":
+                    return Parser._null;
             }
 
         //Global only
@@ -252,8 +254,6 @@ internal partial class Lexer
                     return Parser._xor;
                 case "goto":
                     return Parser._goto;
-                case "null":
-                    return Parser._null;
                 case "if":
                     return Parser._if;
                 case "unless":

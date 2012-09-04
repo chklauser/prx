@@ -55,7 +55,7 @@ StructureStatement<AstBlock block>
     asm AsmStatementBlock<block>
     (.  _popLexerState(); .)
 |   Condition<block>
-|   Declaration
+|   Declaration2
 |   WhileLoop<block>
 |   ForLoop<block>
 |   ForeachLoop<block>
@@ -421,7 +421,7 @@ Assignment<AstGetSet lvalue, out AstNode node>
 								(.  lvalue.Arguments.Add(expr);
 									lvalue.Call = PCall.Set; 
 									if(setModifier != BinaryOperator.None)
-									    node = AstModifyingAssignment.Create(this,setModifier,lvalue);
+									    node = AstModifyingAssignment._Create(this,setModifier,lvalue);
 								.)
 .
 

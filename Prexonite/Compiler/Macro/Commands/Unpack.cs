@@ -25,6 +25,7 @@
 //  IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 using System.Collections.Generic;
+using JetBrains.Annotations;
 using Prexonite.Commands;
 using Prexonite.Compiler.Ast;
 using Prexonite.Types;
@@ -48,7 +49,7 @@ namespace Prexonite.Compiler.Macro.Commands
         {
         }
 
-        public static IEnumerable<KeyValuePair<string, PCommand>> GetHelperCommands(Loader ldr)
+        public static IEnumerable<KeyValuePair<string, PCommand>> GetHelperCommands()
         {
             yield return
                 new KeyValuePair<string, PCommand>(Impl.Alias, Impl.Instance);
@@ -62,9 +63,11 @@ namespace Prexonite.Compiler.Macro.Commands
         {
             if (context.Invocation.Arguments.Count < 1)
             {
-                context.ReportMessage(MessageSeverity.Error,
-                    string.Format(
-                        "{0} requires at least one argument, the id of the object to unpack.", Alias));
+                context.ReportMessage(
+                    Message.Error(
+                        string.Format(
+                            "{0} requires at least one argument, the id of the object to unpack.", Alias),
+                        context.Invocation, MessageClasses.UnpackUsage));
                 return;
             }
 
@@ -83,13 +86,18 @@ namespace Prexonite.Compiler.Macro.Commands
 
         private class Impl : PCommand
         {
+// ReSharper disable MemberHidesStaticFromOuterClass // not an issue
             public const string Alias = @"macro\unpack\impl";
+// ReSharper restore MemberHidesStaticFromOuterClass
 
             #region Singleton pattern
 
-            private static readonly Impl _instance = new Impl();
+// ReSharper disable MemberHidesStaticFromOuterClass not an issue (singleton pattern)
+            [NotNull] private static readonly Impl _instance = new Impl();
 
+            [NotNull]
             public static Impl Instance
+// ReSharper restore MemberHidesStaticFromOuterClass
             {
                 get { return _instance; }
             }

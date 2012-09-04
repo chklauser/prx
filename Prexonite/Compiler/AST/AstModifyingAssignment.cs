@@ -26,8 +26,8 @@
 
 using System;
 using System.Diagnostics;
-using Prexonite.Compiler.Symbolic;
 using Prexonite.Compiler.Symbolic.Compatibility;
+using Prexonite.Properties;
 using Prexonite.Types;
 
 namespace Prexonite.Compiler.Ast
@@ -81,7 +81,8 @@ namespace Prexonite.Compiler.Ast
             Implementation = implementation;
         }
 
-        internal static AstExpr Create(Parser p, BinaryOperator setModifier,
+        // Warning: This method is used on the parser, automatic refactoring will fail.
+        internal static AstExpr _Create(Parser p, BinaryOperator setModifier,
             AstGetSet complex)
         {
             var id = OperatorNames.Prexonite.GetName(setModifier);
@@ -203,7 +204,7 @@ namespace Prexonite.Compiler.Ast
                         {
                             target.Loader.Errors.Add(Message.Create(MessageSeverity.Error,
                                                             string.Format(
-                                                                "The assignment modifier {0} is not supported.",
+                                                                Resources.AstModifyingAssignment_AssignmentModifierNotSupported,
                                                                 Enum.GetName(typeof(BinaryOperator),
                                                                              SetModifier)),
                                                             _modifyingAssignment,MessageClasses.InvalidModifyingAssignment));
@@ -214,7 +215,7 @@ namespace Prexonite.Compiler.Ast
                         if (_modifyingAssignment.Arguments.Count < 1)
                         {
                             target.Loader.Errors.Add(Message.Create(MessageSeverity.Error,
-                                                            "Invalid modifying assignment: No RHS.", _modifyingAssignment,MessageClasses.InvalidModifyingAssignment));
+                                                            Resources.AstModifyingAssignment_No_RHS, _modifyingAssignment,MessageClasses.InvalidModifyingAssignment));
                             target.Emit(_modifyingAssignment, OpCode.nop);
                             return;
                         }
