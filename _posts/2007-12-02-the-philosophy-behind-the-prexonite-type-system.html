@@ -1,0 +1,37 @@
+--- 
+meta: 
+  _edit_last: "1"
+title: "The Philosophy Behind: The Prexonite Type System"
+published: true
+status: publish
+tags: 
+- Prexonite
+type: post
+layout: post
+---
+<p>
+  <em>This is the second article in the "Philosophy Behind"-series, picking up a specialty of one of my projects and explaining how it came to be made. Last time I wrote about the <a title="The Philosophy Behind: Auto Dereferencing" href="/github/2006/12/11/the-philosophy-behind-auto-dereferencing.html">"auto dereferencing"</a> concept in Prexonite Script.</em>
+</p>
+<p>
+  In today's article I will explain the reasons behind the design of the Prexonite type system.
+  Prexonite faces the same problem as other implementations of late-bound languages on the .NET platform: How to map the <a title="Wikipedia: Common Type System" href="http://en.wikipedia.org/wiki/Common_Type_System">CTS</a> to the language's type system.
+</p>
+<img style="background-color:#FFF;" src="/res/prexonite-typesystem-thumb1.png" alt="Prexonite_TypeSystem" width="526" height="438" />
+<p>
+  I think the basic types Int32, Double, Boolean and String are more suited for a statically typed environment, so my type system must allow me to provide wrappers around third-party classes/structs.
+  Wrapping and unwrapping objects must be as transparent as possible. 
+  Return values from base class library methods have to be wrapped in their Prexonite equivalent.
+  At the same time, it is not practical to write a custom wrapper for every possible C# or VB.NET library, so there must be some sort of universal wrapper for CLR objects. 
+  With users of Prexonite being able to write their own wrappers, it must be possible to have multiple wrappers for the same CTS type.
+  Also, some wrappers might handle more than one type.
+</p>
+<p>
+  The solution for Prexonite is the abstract class PType and some concrete subclasses, including the universal ObjectPType, which does all the late binding. 
+  Since Prexonite Script performs type checks at runtime, type information has to be associated with every data object, which is just what the class PValue does.
+  What might surprise you, is the fact that Null is considered a type. 
+  Every null reference automatically has type Null. 
+</p>
+<p>
+  Unlike the sturdy null references in C#, instances of Prexonite Null are completely functional objects. They react to operators, can be converted to basic values (Int, String,&hellip;) and even provide a ToString method. 
+  However, Null does have a special position in the Prexonite type system: it is not possible to write and use your own null reference wrapper.
+</p>
