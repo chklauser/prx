@@ -1,7 +1,9 @@
 permalink: /github/:year/:month/:day/:title.html
-
+pygments: true
 paginate: 5
 paginate_files:
   - blog.html 
-  
-exclude ["CNAME"]
+exclude:
+  - gh-prx.sublime-project
+  - gh-prx.sublime-workspace
+

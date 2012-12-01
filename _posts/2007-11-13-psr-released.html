@@ -1,0 +1,152 @@
+--- 
+meta: {}
+
+title: PSR released
+published: true
+status: publish
+tags: 
+- Prexonite
+- prx
+- psr
+- svn
+type: post
+layout: post
+summary: 
+---
+<p>I just <del>commicodeed</del> pushed the collection helper functions I call &#x2588;&#x2588;&#x2588;&#x2588;&#x2588;&#x2588;&#x2588;&#x2588;&#x2588; &#x2588;&#x2588;&#x2588;&#x2588;&#x2588;&#x2588;&#x2588;&#x2588; &#x2588;&#x2588;&#x2588;&#x2588;&#x2588;&#x2588;&#x2588;&#x2588;&#x2588; (psr) to <del>SVN</del> <a title="Prexonite on GitHub" href="hcodeps://github.com/SealedSun/prx">GitHub</a>.</p>
+<p>Following is a short documentation (or rather an overview) of psr:</p>
+
+<section>
+  <p>
+    The psr is a collection of scripts that help in day-to-day hacking with Prexonite Script. This page shortly outlines the contents of each of the currently available files. 
+  </p>
+  <h4>debug.pxs</h4>
+  <dl>
+    <dt>Dependencies </dt>
+    <dd>none </dd></dl>
+  <p>The script enables special treating of the debug command using compiler hooks for increased performance. For each call to the debug command, it checks whether the function requests debugging (through the <code>debugging</code> MetaKey). Unless that is the case, the call will be removed. <code>if</code>-Blocks using debug as their condition will be evaluated at compile time in respect to the <code>debugging</code> key. </p>    
+  <p>It is possible to use the <code>debug</code> command without including this script, in that case, however, your scripts will also contain calls to debug when not being debugged. </p>    
+  <p>The actual functionality of this script has been moved to managed code inside the Prexonite.dll for performance reasons. CompilerHooks have to be used with care. While the loss in compiler performance is barely noticeable with just one user-defined CompilerHook, many of them can really slow the translation down. The managed implementation uses a shared CompilerHook to further save time, should Prexonite.dll ever include additional CompilerHooks.</p>
+</section>
+
+<section>   
+  <h4>ast.pxs</h4>
+  <dl>
+    <dt>Dependencies </dt>
+    <dd>none </dd>
+  </dl>    
+  <p>
+    The script contains numerous functions that will prove invaluable when writing CompilerHooks in Prexonite Script. It's most important function is <code>ast</code>. 
+    It dynamically invokes constructors of AstNodes and supplies common arguments. The signature of the AstConstant node is <code>AstConstant(string file, int line, int column, object constant)</code>, <code>ast</code> reduces that to <code>ast(&quot;Constant&quot;,yourConstant)</code> Other notable functions include </p>    
+    <ul>     
+      <li>isFunctionCall(id, node) </li>      
+      <li>isMemberAccess(id, node) </li>      
+      <li>SI </li>      
+      <li>stmt_hook </li>   
+    </ul>    
+    <p>
+      See the file for detailed information. 
+    </p>
+</section>
+<section>    
+  <h4>loop.pxs</h4>   
+  <dl>
+    <dt>Dependencies </dt>
+    <dd>
+      <ul>         
+        <li>ast.pxs </li>       
+      </ul>    
+      </dd>
+    </dl>    
+    <p>
+      The script demonstrates the use of ast.pxs. It defines the function times(x) which, when used in a while loop, automatically transforms it into a for loop with x iterations. 
+    </p>
+  </section>
+<section>      
+  <h4>lst.pxs</h4>   
+  <dl>
+    <dt>Dependencies </dt>
+    <dd>none </dd>
+  </dl>    
+  <p>
+    The script defines numerous functions useful when handling lists. Most of them are implemented as coroutines. It includes functions like <code>map</code>, <code>where</code> and <code>range</code> but also <code>union</code>, <code>intersect</code> and <code>groupby</code>. 
+    A sample expression that makes use of the right-append operator <code>&gt;&gt;</code> to prevent complex nesting. </p>
+    <pre><code>[1, 6, 8, 12, 15, 20, 99 ]>>
+where( x => x> 10)>>
+orderby( (a,b) =>
+   if(a> b)
+       1
+   else if(a <b)
+       -1
+   else 
+       0
+) >>
+groupby( x => x mod 2)>>
+select  (   g =>
+             (   if(g.Key == 0)
+                   "even"
+                 else
+                   "odd"
+             ): g.Value
+       )>>
+all</pre></code>
+    <p>
+      is an expression that returns <code>[ odd: [99, 15], even: [20,12]]</code>
+    </p>
+    <p>
+      The functions are wricodeen against the IEnumerable interface (late-bound, user objects have to support <code>GetEnumerator</code>) and are therefor not limited to Prexonite lists. 
+    </p>
+  </section>
+<section>    
+  <h4>struct.pxs</h4>   
+  <dl>
+    <dt>Dependencies </dt>
+    <dd>       
+      <ul>         
+        <li>debug.pxs </li>       
+      </ul>     
+    </dd>
+  </dl>    
+  <p>
+    This script defines just one function <code>struct</code> which uses the Prexonite object model to automate the creation of structures for the user. Have a look at the sample from the file: 
+  </p>    
+<pre><code>function CreateLazyValue(factory)
+{
+   var v;
+   function Evaluated = factory is Null;
+   function Value 
+   {
+     if(!Evaluated)
+     {
+       v = factory.();
+       factory = null;
+     }
+     return v;
+   }
+   return struct;
+}
+</code></pre>
+  <p>
+    The structure returned will have to methods <code>Evaluated</code> and <code>Value</code>. 
+    <code>struct</code> automatically searches for nested function definitions and assigns the corresponding closures to the structure. 
+    This way all methods refer to the same <code>v</code> and <code>ref factory</code> as if they were fields. This approach is fine as long as you don't need actual fields or cloning (because the methods cannot be separated from their common environment). 
+  </p>
+</section>
+<section>
+  <h4>stack.pxs</h4>
+  <dl>
+    <dt>Dependencies</dt>
+    <dd>
+      <ul>
+        <li>struct.pxs </li>
+        <li>debug.pxs </li>
+      </ul>
+    </dd>
+  </dl>
+  <p>
+    This script defines the function <code>create_stack</code> which &emdash; what a surprise &emdash; creates a stack. 
+    The returned structure reacts to <code>push(value1, ...)</code> , <code>pop</code>, <code>peek</code>, <code>count</code> as well as <code>clear</code>. 
+    It is not possible to retrieve (and manipulate) the underlying list. 
+    Stack is implemented using <code>struct</code> and therefor does not support cloning. 
+  </p>
+</section>

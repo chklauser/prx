@@ -1,3 +1,6 @@
 .c9revisions/
 _site/
 *.orig
+*.sublime-project
+*.sublime-workspace
+wordpress.xml
