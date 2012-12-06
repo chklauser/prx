@@ -1,0 +1,66 @@
+--- 
+meta: 
+  _edit_last: "1"
+title: CIL compilation hints and their effects
+published: true
+status: publish
+tags: 
+- Benchmark
+- CIL
+- Prexonite
+type: post
+layout: post
+---
+<p>
+  In the last article, I presented the Prexonite CIL compiler and the huge performance improvements it comes with. 
+  Unfortunately, the compiled code has to be dynamically typed as the CIL compiler does not perform any data flow analysis and can therefore not possibly infer the correct types. 
+  It does not even create its own representation of the byte code program.
+  However, to say Prexonite Script (the language) is strictly dynamically typed is actually wrong, as the Prexonite compiler emits code for which the types and even the method overloads are known at compile time. 
+  It's just that the virtual machine does not provide a way to take advantage of this knowledge.
+</p>
+<p>
+  One such example is the <em>foreach</em> loop, a construct that consists of
+</p>
+<ul>
+  <li>An expression (the list)</li>
+  <li>A block of statements</li>
+  <li>A left-hand value (the element)</li>
+</ul> 
+<p>
+  and gets transformed into
+</p>
+<pre><code>var enum = $list$.GetEnumerator~IEnumerator;
+while(enum.MoveNext()) {
+  $element$ = enum.Current;
+  $block$
+}</code></pre>
+<p>
+  This pseudo code represents what is emitted by the Prexonite compiler for <em>foreach</em> AST nodes. 
+  It is clear that <code>enum</code> has to be at least of type <code>IEnumerator</code> in all cases. 
+  This information could enable the CIL compiler to statically type the variable <code>enum</code>, turning two late-bound calls (<code>MoveNext</code> and <code>Current</code>) into virtual calls.
+</p>
+<h3>CIL compilation hints</h3>
+<p>
+  CIL compilation hints are basically a reverse mapping from byte code to AST nodes, reduced to the minimal amount of information required by the CIL compiler to emit optimized code. 
+  It is not that the whole AST is now encoded in the Meta tables of functions. 
+  Only nodes, for which the CIL compiler could generate better code, emit CIL hints.
+  One example is the <em>foreach</em> node, which emits the name of the enumerator variable and the addresses of the late-bound calls to be optimized. 
+  The CIL compiler decodes this information and performs the necessary steps. 
+  The enumerator variable for instance will be of type <code>IEnumerator&lt;PValue&gt;</code> and won't be initialized ahead of time.
+</p>
+<h3>Impact on performance</h3>
+<p>
+  The two main paradigms to interact with sequences in Prexonite are the combination of coroutines (sequence operators like <code>where</code> and <code>map</code>) and the use of <em>foreach</em> loops.
+  While coroutines have the advantage of compose ability and deferred execution, <em>foreach</em> loops are usually faster.
+  Again, I used micro benchmarks to demonstrate the impact on performance. 
+</p>
+<p>
+  For practical reasons the number of iterations depends on the size of the set to iterate over in the inner loop. 
+  N = 200'000 makes the basis. 
+  With sets of 10 and 100 elements, N is reduced to 20'000 and 2'000 respectively.
+</p>
+<img style="border-top-width: 0px; border-left-width: 0px; border-bottom-width: 0px; border-right-width: 0px" src="/res/graph-cil-hints.png" border="0" alt="Iterations over a set (Measurements)" width="485" height="293" />
+<p>
+  What you are seeing here are performance improvements of 950 to 3'400%, but keep in mind that those are very specialized micro benchmarks and that unless your program exclusively consists of mindless <em>foreach</em> loops, you will not likely experience such speed-ups.
+  Nonetheless, iteration over lists is a very important aspect of many of the programs I have written in Prexonite Script.
+</p>
