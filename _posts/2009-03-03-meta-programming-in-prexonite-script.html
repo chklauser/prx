@@ -1,0 +1,134 @@
+--- 
+meta: 
+  _edit_last: "1"
+title: Meta Programming in Prexonite Script?
+published: true
+status: publish
+tags: 
+- C#
+- Prexonite
+type: post
+layout: post
+---
+<p>
+  The idea of implementing a macro system in Prexonite Script was inspired by reading an article on <a href="http://lambda-the-ultimate.org/node/2446">lambda-the-ultimate.org</a> about <a title="Converge programming language" href="http://convergepl.org/">Converge</a>. 
+  I realized that with a powerful API like that of the Prexonite compiler, it might be possible to implement similar features.</p>
+<p>
+  The basic idea would be to have a new kind of function, the <code>macro</code> function, which is executed at compile time whenever it is encountered in code. 
+  Instead of evaluated arguments, it receives the AST nodes of its arguments. 
+  These can then be used to dynamically assembly a resulting AST node that is returned to compiler. That node is then inserted instead of an ordinary call to the <code>macro</code> function.
+</p>
+<p>
+  A further extension of this mechanism would be a feedback interface for the declaration of <code>macro</code> (and possibly other) functions. 
+  It would be possible to declare an argument to be something other than an expression. 
+  The implementation control structures would be one obvious use.
+</p>
+<p>
+  Apart from the invocation of <code>macro</code> functions and later and insertion of the resulting AST node, there are other requirements to a useful macro system: The AST manipulation API. 
+  Working with the AST in Prexonite can be painful at times as it is geared towards statically compiled code. 
+  Not only is it a very complex but also a very irregular API. 
+  It was never meant to be exposed in such a direct fashion. 
+  Moreover, it is not trivial to refactor the API as it is used from in generated code, which means that the usual refactoring tools will only find a small subset of all uses in the system.
+</p>
+<p>
+  The <code>ast</code> and <code>SI</code> features of the <code>psr\ast.pxs</code> library are a start but far from providing a convenient way of creating new AST nodes. Both projects mentioned in <a href="http://lambda-the-ultimate.org/node/2446">the article about meta programming</a> employ quotation and splicing.
+</p>
+<h3>Quotes</h3>
+<p>
+  <strong>An expression that represents the AST of itself.</strong> (Probably the worst definition ever).
+</p>
+<h4>Example for expression quote</h4><pre><code>var node = (. x.member(5) + 6 .);
+//  equivalent to something like
+var node = ast("BinaryOperator", BinaryOperator.Addition, 
+    ast("GetSetMember",ast("GetSetSymbol","x"),"member",
+          [ast("Constant",5)]),
+    ast("Constant",6)); //Simplified</code></pre>
+<h4>Example for statement quote:</h4>
+<pre><code>var node = 
+{. 
+  while(x &lt; 5)
+    println(x++);
+.};
+//   equivalent to something like:
+var node = ast("WhileLoop",
+  ast("BinaryOperator",BinaryOperator.LessThan,
+    ast("GetSetSymbol","x"), ast("Constant", 5)),
+     ast("Block", [
+       ast("GetSetSymbol","println",[
+         ast("UnaryOperator",UnaryOperator.PostIncrement,
+           ast("GetSetSymbol","x"))
+       ]);
+]));</code></pre>
+<p>
+  One easily sees that constructing AST nodes procedurally is no fun.
+  The actual API is even more complicated. 
+  With a whole army of helper and wrapper functions, the most common constructs could be simplified but nothing beats expressing the code fragment you want with that same fragment. 
+  Quotes, however, are practically useless as they are static in nature. 
+  Enter
+</p>
+<h3>Splicing</h3>
+<p>Insertion of dynamically generated AST nodes into static ones.</p>
+<p>
+  Splicing would come in two forms with my approach. 
+  First of all, splicing happens when "calling" a macro function in normal code.
+  The resulting AST node is spliced into the normal code in place of the macro call.
+</p>
+<p>
+  The second form is splicing into quotes. In a way similar to string inter- polation.
+</p>
+<h4>Example:</h4>
+<pre><code>macro my_foreach(iterator, seq, block)
+{
+  var node = 
+  {.
+    foreach(.(iterator). in .(seq).)
+     .{ block }.
+  .};
+  return node;
+}</code></pre>
+<p>
+  The above example happens to uncover the challenge of delaying the effective construction of the <code>foreach</code> loop. 
+  The block passed in via the macros arguments might employ structured gotos (`break` and `continue`) which are normally resolved or at least linked when the AST is constructed. 
+  But since not even the logical target is known until the block is spliced into the quote, the task of linking the control flow of the block and the loop together might be non-trivial.
+</p>
+<p>
+  <strong>Hygiene</strong> is another topic. 
+  The compiler must generate unique names for all symbols used literally inside a quote. 
+  Otherwise the macro might accidentally use unrelated variables inside the calling function. 
+  This, however, has sever implications on either usability or complexity of quotes as the following example demonstrates:
+</p>
+<pre><code>macro for_upto(sym, max, action)
+{
+  var i_var = (. var i; .); //Does not work. Variables are not 
+  //  declared by AST nodes
+  
+  var i = create_variable("i");
+  
+  return 
+  {.
+    for(.(i). = 0; .(i). &lt; .(max). ; .(i).++)
+      .{ action }.
+  .};
+}</code></pre>
+<p>
+  Whereas <code>create_variable</code> would be some sort of helper function that generates a unique (shadow) variable within the target returns a reference to the corresponding node. 
+  One might come up with a slightly friendlier notation for splicing expressions. 
+  Something like <code>$$i</code> maybe.
+</p>
+<p>
+  And then there is the issue of AST node not being designed to be used in multiple places (they are not immutable). 
+  Therefor the splicing implementation would have to insert copies of the nodes inserted. 
+  Not to mention that the AST doesn't implement copying naturally. 
+</p>
+
+<h3>Conclusion</h3>
+<p>
+  Implementing a meta programming system on top of Prexonite script similar to that of <a href="http://convergepl.org/" title="Converge programming language">Converge</a> is not realistic. 
+  One has to design both the language and the compiler with such a goal in mind. 
+  Adapting the existing compiler would most definitely result in a mess.
+</p>
+
+<p>
+  I, however, think that the implementation of <code>macro</code> functions is feasible and useful.
+  Macros won't revolutionise how the language is used, but will complement the existing dynamic features to enable concise solutions, should the programmer decide to invest enough time into the macro system.
+</p> 
