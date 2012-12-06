@@ -1,0 +1,183 @@
+--- 
+meta: 
+  _edit_last: "1"
+title: Operator overloading for Prexonite, more or less
+published: true
+status: publish
+tags: 
+- .NET
+- Prexonite
+- prexonite standard repository
+- psr
+type: post
+layout: post
+---
+<h3>Downloads<sup><a href="#f1">1</a></sup></h3>
+<ul>
+  <li>
+    <a href="https://github.com/downloads/SealedSun/prx/Prexonite_2008_11_04_src.zip">Prexonite Nov 2008 Sources</a>
+  </li>
+  <li>
+    <a href="https://github.com/downloads/SealedSun/prx/Prexonite_2008_11_04_bin.zip">Prexonite Nov 2008 Binaries</a>
+  </li>
+</ul>
+<p>
+  While Prexonite Script does not formally provide any means of object-oriented programming (not just consuming objects but actually defining new ones) there are mechanisms in Prexonite (the runtime) that try to make up for this.
+</p>
+<h3>What Prexonite includes so far</h3>
+<ul>
+  <li>
+    <p>The Structure data type</p>
+    <ul>
+      <li>groups values and functions together</li>
+      <li>provides "natural" access via dot-notation</li>
+    </ul>
+    <pre><code>
+﻿function create_complex(_re, _im)
+{    
+  _re ??= 0.0;
+  _im ??= 0.0;
+  var z = new Structure;
+
+  z.\("re") = _re;
+  z.\("im") = _im;
+
+  z.\\("norm") = (this) => 
+    sqrt(this.re^2 + this.im^2);
+  z.\\("add") = (this,other) => 
+    create_complex(this.re + other.re,this.im + other.im);
+  z.\\("ToString") = (this) => 
+    this.re + " " + this.im + "i";
+
+  return z;
+}
+</code></pre>
+  </li>
+  <li>
+    <p>The ExtendableObject base class</p>
+    <ul>
+      <li>
+        Makes it possible for Prexonite code to "extend" .NET objects, should the developer want to allow this.
+      </li>
+    </ul>
+  </li>
+  <li>
+    <p>The struct function (in <code>psr/struct.pxs</code>)</p>
+    <ul>
+      <li>
+        automates construction of Structure objects via reflection
+      </li>
+    </ul>
+<pre><code>﻿build does require("psr\\struct.pxs");
+
+function create_complex(_re, _im)
+{    
+  _re ??= 0.0;
+  _im ??= 0.0;
+
+  function re(this, new_re)
+  {
+    if(new_re is not Null)
+      _re = new_re;
+    return _re;    
+  }
+
+  function im(this, new_im)
+  {
+    if(new_im is not Null)
+      _im = new_im;
+    return _im;    
+  }
+
+  function norm = sqrt(_re^2 + _im^2);
+
+  function add(this, other) = 
+    create_complex(re + other.re,im + other.im);
+
+  function ToString = 
+    re + " " + im + "i";
+
+  return struct;
+}</code></pre>
+  </li>
+</ul>
+<h3>New in this release</h3>
+<ul>
+  <li>
+    <p>auto-property, proxy-property, property support via <code>psr/prop.pxs</code>.</p>
+<pre><code>﻿build does require("psr\\struct.pxs","psr\\prop.pxs");
+
+function create_car(a_color)
+{     
+  _re ??= 0.0;
+  _im ??= 0.0;
+
+  function re = struct_prop(_re);
+
+  function im = struct_prop(_im);
+
+  function norm = sqrt(re^2 + im^2);
+
+  function add(this, other) = 
+    create_complex(re + other.re,im + other.im);
+
+  function ToString = 
+    re + " " + im + "i";
+
+  return struct;
+}</code></pre>
+  </li>
+  <li>
+    <p>operator overloading via <code>(+)</code>, <code>(==)</code> etc.</p>
+<pre><code>﻿//...
+function (+) this other = 
+  create_complex(re + other.re,im + other.im);
+
+function (-.) =
+  create_complex(-re, -im);
+     
+function (-) this other = this + (-other);
+     
+//...</code></pre>
+  </li>
+</ul>
+
+<p>
+  Let's discuss those two extensions one by one.
+</p>
+<h4>Properties</h4>
+<p>
+  First of all, there still is no language support for structures and properties. 
+  As of right now, they are implemented via compile time transformations. 
+  These two transformations can be enabled via importing the Prexonite Standard Repository scripts <code>psr/struct.pxs</code> and <code>psr/prop.pxs</code>. 
+  While the former has been around for some time now, the latter has only recently been implemented in managed code.
+</p>
+<p>
+  <code>psr/prop.pxs</code> defines the special function <code>prop</code> which is expanded into get and set code depending on the way it is used. 
+  The easiest mode of operation implements a property with an anonymous backing field (defined in the surrounding scope, i.e. as a global variable in a top-level function or a shared variable in the outer function). 
+</p>
+<p>
+  The second mode mimics a simple get-set proxy where the expression passed as an argument is used as the backing field. 
+  This works for arbitrary expressions as long as they can be the target of an assignment (i.e. they are get-set expressions). 
+  The third mode finally is a replication of C# properties taking separate lambda expressions for its get and set implementations.
+</p>
+<p>
+  <code>struct_prop</code> works the same way but ignores the additional <code>this</code> parameter for structure methods.
+</p>
+<h4>Operator overloading</h4>
+<p>
+  When resolving operator calls, generic objects (as well as structures) now also try to call special instance methods after failing to find a corresponding static operator overload. 
+  This makes the implementation of operator overloads for structures and <code>ExtendableObjects</code> (An abstract class that makes an object extendable in the same way a structure can be extended) possible. 
+  In order to avoid strange operator names, I have introduced operator ids, dedicated literals (on the lexical level) that represent operator names. 
+  There is nothing special about these literals, they can be used everywhere an id can be used. 
+  You could for instance define a local variable with the name <code>(+)</code>.
+</p>
+
+<div id="footnotes">
+  <h3>Footnotes</h3>
+  <ol>
+    <li>      
+      <a name="f1">&nbsp;</a> The linked downloads are from November 2008 instead of May. When converting the blog entry, I felt that this was the safer approximation than taking a random commit from around May 2008 (I no longer have that exact download on file).
+    </li>
+  </ol>
+</div>
