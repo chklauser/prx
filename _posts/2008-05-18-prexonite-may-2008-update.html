@@ -1,0 +1,49 @@
+--- 
+meta: 
+  _edit_last: "1"
+title: Prexonite May 2008 Update
+published: true
+status: publish
+tags: 
+- Prexonite
+- Programming
+type: post
+layout: post
+---
+<h3>Downloads<sup><a href="#f1">1</a></sup></h3>
+<ul>
+  <li>
+    <a href="https://github.com/downloads/SealedSun/prx/Prexonite_2008_11_04_src.zip">Prexonite Nov 2008 Sources</a>
+  </li>
+  <li>
+    <a href="https://github.com/downloads/SealedSun/prx/Prexonite_2008_11_04_bin.zip">Prexonite Nov 2008 Binaries</a>
+  </li>
+</ul>
+<h3>Update</h3>
+<p>
+  There have not been any significant changes since the introduction of the CIL compiler into the Prexonite, yet the current version comes with a number of performance optimizations regarding the generated CIL byte code.
+  The majority of the built-in commands and types now use the <strong><code>ICilCompilerAware</code></strong> interface, which is used by the CIL compiler to let commands and types emit highly customized code. 
+</p>
+<p>
+  Calling <code>println</code> with no arguments for instance, results in a static call to <code>void System::Console.WriteLine()</code> directly in the compiled method.
+  Similarly, type expressions in CIL functions are no longer implemented via type expression parsing but by directly referencing the corresponding singleton <code>PType</code> objects.
+  But the most important improvement is the possibility to statically link Prexonite function calls in CIL compiled methods, which makes yet another hashtable lookup redundant at the cost of additional memory: a dynamically generated class has static fields for each and every function used by the compiled application. 
+</p>
+<p>
+  This can be a problem if you plan to re-compile your CIL-implementations, as dynamic type, unlike dynamic functions, cannot be garbage collected by design. 
+  It is, however, possible to disable the generation of such a class by passing <code>false</code> to <strong><code>CompileToCil</code></strong>.
+</p>
+<p>
+  And on a side note: The often used library function <code>struct</code> has been implemented as a compiler hook for improved performance. 
+  By resolving the members at compile time one does not only save run time, but also removes the need for dynamic lookups, which in turn enables the use of CIL compilation for <code>struct</code>-functions.
+  This is especially helpful for immutable <code>struct</code>s.
+</p>
+
+<div id="footnotes">
+  <h3>Footnotes</h3>
+  <ol>
+    <li>      
+      <a name="f1">&nbsp;</a> The linked downloads are from November 2008 instead of May. When converting the blog entry, I felt that this was the safer approximation than taking a random commit from around May 2008 (I no longer have that exact download on file).
+    </li>
+  </ol>
+</div>
