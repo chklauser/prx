@@ -1,0 +1,83 @@
+--- 
+meta: 
+  _edit_last: "1"
+title: Lazy factorial
+published: true
+status: publish
+tags: 
+- Prexonite
+- Programming
+type: post
+layout: post
+---
+<p>
+  As a small experiment on the side, I built a little toy-compiler in Haskell that takes in a program in a very simple lambda-calculus-like language and translates it into Prexonite assembly. 
+  The following program computes the factorial of 9 using only function application.
+  In order to make this work, we cannot simply use Prexonite's built-in function call mechanism, instead
+  function application needs to be non-strict (lazy).
+</p>
+<pre><code>(\bind.
+  bind (\n. n (\x. x + 1) 0) \toInt.
+  bind (\f x. x) \zero.
+  bind (\f x. f x) \one.
+  bind (\f x. f (f (f (f x)))) \four.
+  bind (\n f x. f (n f x)) \succ.
+  bind (\p a b. p a b) \ifthenelse.
+  bind (\x y. x) \true.
+  bind zero \false.
+  bind (\n. n (\x. false) true) \isZero.
+  bind (\n m. m succ n) \plus.
+  bind (\n. n (\g k. isZero (g one) k (plus (g k) one) ) 
+              (\v. zero) 
+              zero
+          ) \pred.
+  bind (\m n f. m (n f)) \mul .
+  bind (\self n. 
+    ifthenelse (isZero n)
+      (one)
+      (mul n (self self (pred n)))
+    ) \facrec.
+  bind (\n. facrec facrec n) \fac.
+
+  toInt (fac (succ (succ (succ (succ (succ four))))))
+)(\var body. body var)</code></pre>
+
+<p>76 seconds and a peak working set of over 650 MiB later, the number <strong>362880</strong> appears on the console. It works indeed.</p>
+
+<p>I spare you the compiled byte code as it consists of 47 functions. Note that Prexonite integer arithmetic is strictly only used in the lambda expression bound to <code>toInt</code>, which is applied <strong>after</strong> the factorial has been computed.</p>
+
+<p>The actual computation is all done in <a title="Church numerals (Wikipedia)" href="http://en.wikipedia.org/wiki/Lambda_calculus#Arithmetic_in_lambda_calculus">church numerals</a>, so yes, the number 362880 is indeed a function <code>c</code> that applies a supplied function <code>f</code> 362880 times. The necessary control structures (<code>ifthenelse</code>) are entirely implemented using functions too.</p>
+
+<p>Recursion was a bit tricky as Parvum does not (yet) have let-bindings. As you can see in the code, I solved this by passing <code>facrec</code> a reference to itself. It does look a bit strange, especially the <code>self self</code> bit, but it works.</p>
+
+<h3>The price paid</h3>
+
+<p>I admit, I cheated (a little): The laziness mechanisms are actually implemented in C# as part of Prexonite. There is a new command called <code>thunk</code> which takes an expression (something callable, a lambda expression for instance) and an arbitrary number of parameters for that expression (optional). The return value is, surprise, a <code>Thunk</code> object. This object really has only one member: <code>force</code></p>
+
+<p><code>force</code>, well, forces the evaluation of the supplied expression until some concrete value is obtained. That value, can of course contain further thunks. A lazy linked list for instance:</p>
+
+<pre><code>function _consT hT tT = [hT,tT];
+function _headT xsT = xsT.force[0];
+function _tailT xsT = xsT.force[1];
+function _refT xT = xT.force.();
+
+function repeatT(x)
+{
+  var xsT = thunk(-&gt;_consT, x, thunk(-&gt;_refT, -&gt;xsT));
+  return xsT;
+}
+
+//Equivalent in Haskell:
+//repeat x = let xs = x:xs in xs</code></pre>
+
+<p>
+  Identifiers ending in <code>T</code> represent thunks (or functions that take and return thunks) whereas a prepended <code>_</code> identifies what I call &quot;primitve expressions&quot;. 
+  They are the building blocks for more complex expressions and most are equivalents of actual assembler instructions: <code>_refT</code> for instance is the primitive for <code>indarg.0</code>, the instruction responsible for dereferencing variable references (among other things).
+</p>
+
+<p>Actually, <code>thunk</code> was more difficult to write in C# than it would have been in Prexonite Script. As I mentioned, the factorial program used over 650 MiB of RAM and even though all Prexonite objects are stored on the Heap, the stack frame overhead is gigantic. I had to add a new mechanism to the FunctionContext (the actual byte code interpreter) to allow the injection of managed code into the Prexonite stack.</p>
+
+<p>That mechanism (the co-operative managed context) is similar to managed coroutines but behaves more like a function. 
+  Also managed code that was initially not intended to be run co-operatively (i.e. invoked as a member or as an indirect call) can “promote” itself onto the Prexonite stack.</p>
+
+<p>Of course the Prexonite stack is not exactly known for its excellent performance, but unlike the managed stack, it is only limited by the amount of memory available.</p>
