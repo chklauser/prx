@@ -6,4 +6,5 @@ paginate_files:
 exclude:
   - gh-prx.sublime-project
   - gh-prx.sublime-workspace
-
+  - start-thin.sh
+  - auto-jekyll.sh
