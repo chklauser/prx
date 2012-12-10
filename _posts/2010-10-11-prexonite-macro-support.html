@@ -1,0 +1,189 @@
+--- 
+meta: 
+  _edit_last: "1"
+  _wp_old_slug: ""
+title: Prexonite Macro Support
+published: true
+status: publish
+tags: 
+- .NET
+- Prexonite
+type: post
+layout: post
+---
+<p>
+  Over a year ago I considered the implementation of <a title="Meta Programming in Prexonite Script?" href="/github/2009/03/03/meta-programming-in-prexonite-script.html">meta programming facilities in Prexonite Script</a>. 
+  In that post, I concluded that advanced meta-programming features like  quotation and splicing were not realistic for a compiler architecture as convoluted as Prexonite.
+</p>  
+<blockquote>
+  I, however, think that the implementation of <code>macro</code> functions is feasible and useful. 
+  Macros won’t revolutionise how the language is used, but will complement the existing dynamic features to enable concise solutions, should the programmer decide to invest enough time into the macro system.
+</blockquote>
+
+<p>
+  And that’s just what I did. 
+  Prexonite now supports a new keyword `<code>macro</code>` that can be used to define macro functions. 
+  Macro functions are invoked at compile time (more precisely just before code generation) with the AST nodes of their arguments passed as parameters. 
+  They’re expected to return a single AST node that is then inserted into the final AST in place of the macro function call.
+</p>
+
+<p>The mechanism is already in use: The implementation of the `<code>struct</code>` mechanism has been ported to the macro system.</p>
+
+<h3>Detour: <code>struct</code></h3>
+<p>
+  Prexonite Script does not provide any mechanism for users to define their own data types (classes, structures, records). 
+  Instead there is a special type of object that you can extend with new fields and methods: The `<code>Structure</code>`. 
+  However, using this object to create custom structures/objects is quite verbose and cumbersome. 
+  Fortunately there is a PSR file `<code>psr\struct.pxs</code>` that contains the handy function of the same name. 
+  `<code>struct</code>` creates an empty structure and adds all nested functions of the calling function to it. 
+  This comes quite close to JavaScript-prototype-definition level of verbosity.
+</p>
+<pre><code>build does require(@"psrstruct.pxs");
+function create_foo(x){
+  function report() {
+    println(x);
+  }
+  function increment(this) {
+    x++;
+    this.report();
+    return x;
+  }
+  return struct;
+}
+
+function main(){
+  var foo1 = new foo(5); 
+  //fancy syntax for `create_foo(5)`
+  var foo2 = create_foo(foo1.increment()); 
+  //prints 6
+  foo2.report; 
+  //prints 6 too
+}</code></pre>
+<p>
+  The function `<code>create_foo</code>` (you can call it a constructor if you like) creates a new `<code>foo</code>` object every time it is invoked. 
+  The resulting object has two methods `<code>report</code>` and `<code>increment</code>`. 
+  The variable `<code>x</code>` is shared by all methods via the nested function/closure mechanism. 
+  It is not formally part of the foo object<sup><a href="#fn1">1</a></sup>.
+</p>
+
+<h3>Macro functions</h3>
+<p>
+  The implementation of the struct function is actually quite simple. 
+  It makes heavy use of helper functions defined in `<code>psr\macro.pxs</code>`. 
+  All of the `<code>ast&lt;something&gt;</code>` functions plus `<code>tempalloc</code>` and `<code>tempfree</code>` are defined in that file.
+</p>
+<pre><code>//part of `<code>macro struct()</code>` 
+//  in `<code>psr\struct.pxs</code>`
+//creates a new block expression node and allocates a local
+//  variable for the structure object.
+var block = ast("BlockExpression");
+
+var structV = tempalloc;
+
+//create the structure object and assign it to
+//  the local variable
+var assignStructure = astlvar(SI.set, structV);
+assignStructure.Arguments.Add(ast\new("Structure"));
+block.Add(assignStructure);
+//don't forget to add the statement to the block
+//assign the "ctorId" (name of the constructor function) 
+//  to the structure
+var assignCtorId = astmember(ast\lvar(SI.get, structV), 
+                               SI.get,@"");
+assignCtorId.Arguments.Add(ast\const(CTORID));
+assignCtorId.Arguments.Add(ast\const(parentId));
+block.Add(assignCtorId);
+//Add all of the methods to the struct
+foreach(var method in methods){
+    var addMethod = ast\member(ast\lvar(SI.get, structV), 
+                                 SI.get, "\\");
+    addMethod.Arguments.Add(ast\const(method.Key));
+    addMethod.Arguments.Add(ast\lvar(SI.get, method.Value));
+    block.Add(addMethod);
+}
+//return the constructed structure 
+objectblock.Expression = astlvar(SI.get, structV);
+//Don't forget to free our temporary variable and
+//  actually return the code 
+blocktempfree(structV);
+return block;
+</code></pre>
+<p>
+  The macro code is not that difficult to understand. 
+  So writing macros in Prexonite Script is easy right? Not exactly, no. 
+  You’re directly operating within the compilers AST, an API that was never designed to be consumed by user code. 
+  That `<code>ast(”BlockExpression”)</code>` creates an object of type `<code>Prexonite.Compiler.Ast.AstBlockExpression</code>` and the `<code>Arguments</code>` member of the `<code>assignCtorId</code>` node is the same member that the compiler uses. 
+  Why is that a bad thing? Well for one it creates a very strong dependency on an implementation detail of the Prexonite Script compiler, and it relies heavily on good IDEs, that means the API is ugly (often many parameters) and irregular (I myself have to constantly lookup the ever changing parameter ordering and exact member names).
+  In other words: You won’t get far without a copy of the compiler source code next to your Prexonite Script code editor.
+</p>
+<h3>Ok, so its a bit tricky to use, anything else I should know?</h3>
+<p>Yes.</p>
+<ul>
+	<li><p>macro functions can only be used after they have been defined. It is not possible to forward-declare a macro function.</p></li>
+	<li><p>macro functions cannot be nested. They have to appear on the global level.</p></li>
+	<li><p>macros used as part of macro functions behave like in any other function. If you want to call another macro (for code reuse), you’ll have to use the `<code>call\macro</code>` function (defined in `<code>psr\macro.pxs</code>`). It behaves just like the `<code>call</code>` command.</li>
+	<li>
+    <p>A macro function has access to a number of implicitly defined variables:</p>
+    <ul>
+    	<li>loader, a reference to the Prexonite.Compiler.Loader instance</li>
+    	<li>callType, the call type of this invocation (get vs. set), see Prexonite.Types.PCall</li>
+    	<li>justEffect, a boolean indicating whether the caller just wants the side effects. (return values can safely be dropped or not computed at all)</li>
+    	<li>locals, access to the collection of local variable definitions (not PVariable objects! We’re at compile-time)</li>
+    	<li>macroInvocation, a reference to the AST node for this macro invocation</li>
+    	<li>
+        target, a reference to the current compiler target, Prexonite.Compiler.CompilerTarget; provides access to the calling function, amongst other things
+      </li>
+    </ul>
+</li>
+	<li>
+    <p>
+      macros are applied from the outside to the inside, that is, the outermost macro is applied first. This means that if your macro appears as an argument to another macro, it might actually disappear from the AST and never be applied.
+    </p>
+  </li>
+	<li>
+    <p>
+      macro functions are not automatically stripped from the application after compilation (simply because Prexonite has no concept of &quot;after&quot; compilation).
+      You can use the function `<code>unload_compiler</code>` defined in `<code>psr\ast.pxs</code>` to remove all macros and functions/variables marked with the `<code>compiler</code>`tag (including any nested functions)
+    </p>
+  </li>
+	<li><p>Global variables are only initialized at runtime, not at compile-time, and they don’t exist until they’re defined (and not just declared)</p></li>
+	<li><p>You don’t have access to local symbols (declarations) in macro functions.</p>
+    <ul>
+      <li>
+        <p>
+          The symbol table provided by `<code>target.Symbols</code>` reflects the state at the end of the end of the calling function. Don’t ask.
+        </p>
+      </li>
+      <li>
+        <p>
+          Any symbols you add to the symbol table won’t be available to the calling function. But if you add them to `<code>loader.Symbols</code>` they will be available to functions defined after the calling function. This might be interesting for initialization code.
+        </p>
+      </li>
+    </ul>
+</li>
+</ul>
+
+<div id="footnotes">
+  <h3>Footnotes</h3>
+  <ol>
+    <li>      
+      <a name="fn1">&nbsp;</a>
+      <p>
+        In 8/10 cases, this is a good thing. 
+        The variable is almost completely inaccessible from the outside, essentially enforcing information hiding.
+        Not even reflection over the member functions of a <code>struct</code> is not 100% reliable: while a shared variable called `<code>x</code>` <em>could</em> refer to the parameter variable `<code>x</code>`, it could just as well refer to a variable captured from a different context.
+      </p>
+      <p>
+        The only scenario where this treatment of &quot;private&quot; variables is not transparent is <em>cloning</em>.
+        If you attempted to clone a <code>struct</code>, you'd get a distinct <code>Structure</code> object, yes, but it would share all its internal state with the original <code>struct</code> object.
+        This is because a shallow copy of the <code>struct</code> would only copy the member functions, which are really closures. 
+        The variables shared by these closures are not duplicated.
+        This is, again, because there is no distinction between &quot;private&quot; variables and other captured variables.
+      </p>
+      <p>
+        So all in all the <code>struct</code> solution is not ideal as automatic cloning can be quite useful, especially for a dynamic language.
+        Therefore should Prexonite ever get a more sophisticated user data structure feature (or, <em>gasp</em> classes), it would probably not follow the <code>struct</code> approach.
+      </p>
+    </li>
+  </ol>
+</div>
