@@ -1,0 +1,143 @@
+--- 
+meta: 
+  _edit_last: "1"
+title: Multithreaded Prexonite
+published: true
+status: publish
+tags: 
+- Prexonite
+- Programming
+- Projects
+type: post
+layout: post
+---
+<p>
+    Yesterday, I watched the Google TechTalk <a title="The Go Programming Language (Google TechTalk @ YouTube)" href="http://www.youtube.com/watch?v=rKnDgT73v8s">presentation of the programming language Go</a> (see <a title="The Go Programming Language (official website)" href="http://golang.org/">golang.org</a>). 
+    Even though I don’t believe Go will become very popular, there was one aspect of the language that &quot;inspired&quot; me. 
+</p>
+<p>
+    One of Go’s major advantages is the fact that concurrency (and coordination thereof) is built deep into the language. 
+    Every function has the potential to become what they call a “goroutine” that works in parallel to all the other code. 
+    Communication and coordination is achieved through an equally simple system of synchronous channels (a buffer of size 0).
+</p>
+<p>
+    The code samples all looked so incredibly simple to me that I thought: I can do that too. 
+    I started by writing a case study (a code sample) and a sketched implementation of the synchronization mechanisms. 
+    It all looked nice on paper (in the Prexonite Script editor) but there was one major problem: None of the Prexonite execution engines is really capable of running on multiple threads. 
+    Even though the CIL compiled functions behave nicely, they don’t cover the whole language. Coroutines and other dynamic features are just too important to be ignored.
+</p> 
+<p>
+    Fortunately the design of the interpreter is centered around one abstract class: the StackContext.
+    StackContexts come in a variety of forms and provide complete access to the current state of the interpeter.
+    For the most part, these objects are passed around in the call hierarchy.
+    And that’s good, because functions/methods that call each other are in the same thread.
+    So stack contexts stay thread local.
+    At least the ones obtained via method arguments.
+    But there is also another way to get your hands onto stack contexts and that’s the interpreters stack itself.
+</p>
+<p>
+    Of course a multithreaded Prexonite will have multiple stacks but just providing those isn’t enough.
+    I had to ensure that direct queries to/manipulation of the stack are only directed at the stack of the currently executing thread.
+    Since stack contexts are sometimes “captured” by other objects (coroutines for instance), they can on occasion slip into other threads and wreak havoc with the stack of their original thread.
+</p>
+<p>
+    The only solution I saw, was to use thread local storage via unnamed data slots.
+    This has disadvantages, of course:
+</p>
+<ul>
+    <li>
+        data slots are rather slow (not Reflection slow, but also not virtual call fast)
+    </li>
+    <li>
+        it is difficult to manipulate a different stack if you want to
+    </li>
+</ul>
+<p>but</p>
+<ul>
+    <li>it works!</li>
+</ul>
+<pre><code>//name~String, source~Channel
+function work(name, source)
+{
+    println(&quot;\tWhat did $name say again?&quot;);
+    var a = source.receive;
+    println(&quot;\t$name said \&quot;$(a)\&quot;&quot;);
+    return name: a;
+}
+
+function main()
+{
+    var source = chan; //Creates a new channel
+    println(&quot;Get to Work!&quot;);
+    //`call\async` invokes `work` in the backgrouund
+    //`resp` is a channel that will receive the return value of `work`
+    var resp = call\async(-&gt;work,[&quot;Chris&quot;,source ]);
+    
+    println(&quot;Oh, I forgot to tell you this: Chris said Hello!&quot;);
+    source .send(&quot;Hello!&quot;); //supply the missing value
+    
+    println(&quot;I'm waiting for you to finish...&quot;);
+    var res = resp.receive;
+    println(&quot;So your answer is $res then...&quot;);
+    
+    return 0;
+}</code></pre>
+
+<p>results (sometimes) in</p>
+
+<pre>Get to Work!
+        What did Chris say again?
+Oh, I forgot to tell you this: Chris said Hello!
+I'm waiting for you to finish...
+        Chris said &quot;Hello!&quot;
+So your answer is Chris: Hello! then...</pre>
+
+<p>
+    Lists, coroutines and all other kinds of sequences appear very often in Prexonite. 
+    It is only logical to combine multithreading with the IEnumerable interface. 
+    The result is the <code>async_seq</code> command that takes an existing sequence and pushes its computation into a background thread.
+</p>
+
+<p>
+    The following example applies the two fantasy-functions <code>sumtorial</code> and <code>divtorial</code> to the numbers 1 through 100. 
+    The ordinary <code>seq</code> version uses can only use one processor core, while <code>async_seq</code> pushes the computation of <code>sumtorial</code> into the background and onto the second core.
+    Even though the management overhead is gigantic, a performance improvement can be measured (a modest factor of ~×1.3).
+</p>
+
+<pre><code>function sumtorial(n) =
+    if(n &lt;= 1) 1
+    else       n+sumtorial(n-1);
+function divtorial(n) =
+    if(n &lt;= 1) 1
+    else       n/divtorial(n-n/38-1);
+
+function main()
+{    
+    var n = 100;
+            
+    var seq = 
+        1.To(n) 
+        &gt;&gt; map(-&gt;sumtorial)
+        &gt;&gt; map(-&gt;divtorial);
+   
+    println(&quot;Sequential&quot;);
+    println(&quot;\t&quot;,seq &gt;&gt; sum);
+
+    
+    var par = 
+        1.To(n) 
+        &gt;&gt; map(-&gt;sumtorial)
+        &gt;&gt; async_seq
+        &gt;&gt; map(-&gt;divtorial);
+   
+    println(&quot;Parallel&quot;);
+    println(&quot;\t&quot;,par &gt;&gt; sum);
+}</code></pre>
+
+<p>
+    Multithreaded Prexonite currently lives in its own SVN branch as I am still experimenting with concrete implementations. 
+    A very nice improvement would be the move away from CLR threads as they don't scale well. 
+    Communicating sequential processes spend a lot of time waiting for messages, something that does not require its own thread. 
+    Go can use 100'000 goroutines and more. 
+    I don't even want to try this with CLR threads…
+</p>
