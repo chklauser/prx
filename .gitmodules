@@ -1,3 +1,3 @@
 [submodule "github/doc/r1-2-3"]
 	path = github/doc/r1-2-3
-	url = git@github.com:SealedSun/prx.git
+	url = git://github.com/SealedSun/prx.git
