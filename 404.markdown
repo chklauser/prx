@@ -19,6 +19,7 @@ Step 3:   Save page as 404.html and commit
 {% endcomment %}
 
 <strong>Oops, no page found at this address, sorry about that.</strong>
-If you believe that this is an error, please consider yelling at us by [opening an issue over on GitHub][new-issue]
+If you believe that this is an error, please consider yelling at us on Twitter [@SealedSun][twitter] or by [opening an issue over on GitHub][new-issue]
 
+[twitter]: https://twitter.com/SealedSun
 [new-issue]: https://github.com/SealedSun/prx/issues/new
