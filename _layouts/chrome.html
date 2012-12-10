@@ -1,0 +1,87 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta charset="utf-8">
+    <meta http-equiv="X-UA-Compatible" content="chrome=1">
+    <title>Prexonite Script: {{ page.title }}</title>
+
+    <link rel="stylesheet" href="/stylesheets/styles.css">
+    <link rel="stylesheet" href="/stylesheets/pygment_trac.css">
+    <meta name="viewport" content="width=device-width, initial-scale=1, user-scalable=no">
+    <!--[if lt IE 9]>
+    <script src="//html5shiv.googlecode.com/svn/trunk/html5.js"></script>
+    <![endif]-->
+    
+    <script src="https://ajax.googleapis.com/ajax/libs/jquery/1.8.3/jquery.min.js"></script>
+
+    {% if page.withdocs %}
+      <script src="/javascripts/jquery-ui-1.8.16.custom.min.js"></script>
+      <script src="./logic.js"></script>
+      <link rel="stylesheet" href="/stylesheets/layout.css">
+      <link rel="stylesheet" href="/stylesheets/prx-theme/jquery-ui-1.8.16.custom.css">
+    {% endif %}
+    
+    {% comment %}
+    Include SyntaxHighlighter
+    {% endcomment %}
+    <link rel="stylesheet" href="/stylesheets/highlighter/shCore.css" />
+    <link rel="stylesheet" href="/stylesheets/highlighter/prexoniteTheme.css" />
+    <script src="/javascripts/highlighter/XRegExp.js"></script>
+    <script src="/javascripts/highlighter/shCore.js"></script>
+    <script src="/javascripts/highlighter/shBrushPlain.js"></script>
+    <script src="/javascripts/highlighter/brushPrexoniteScript.js"></script>
+    <script type="text/javascript">
+      var _gaq = _gaq || [];
+      _gaq.push(['_setAccount', 'UA-8586563-3']);
+      _gaq.push(['_trackPageview']);
+    
+      (function() {
+        var ga = document.createElement('script'); ga.type = 'text/javascript'; ga.async = true;
+        ga.src = ('https:' == document.location.protocol ? 'https://ssl' : 'http://www') + '.google-analytics.com/ga.js';
+        var s = document.getElementsByTagName('script')[0]; s.parentNode.insertBefore(ga, s);
+      })();
+    </script>
+  </head>
+  <body>
+    <div class="wrapper">
+      {{ content }}
+    </div>
+    <script type="text/javascript">
+      $(document).ready(function(){
+        function addBrush(brush){
+          return function(){
+            // .parent gets the entire stack of ancestors, 
+            // we're only interested in the immediate parent
+            var parent = $(this).parent().get(0);
+            // Skip elements that have already been converted
+            if($(parent).is(".hihandled")){
+              return;
+            }
+            // Extend the pre element's class with "brush: $brush"
+            $(parent).attr('class',function(){
+              var lastClass = $(this).attr('class');
+              if(typeof(lastClass) == 'undefined')
+                return 'brush: ' + brush;
+              else if(lastClass.indexOf("usage-syntax") !== -1)
+                return lastClass; // do not touch this element, it is used in the documentation template
+              else
+                return lastClass + ' brush: ' + brush;
+            });
+            // SyntaxHighlighter does not remove code elements, we have to do that
+            $(parent).html($(this).html());
+            $(parent).addClass("hihandled");
+          }
+        }
+        $("pre > code").each(addBrush("pxs"));
+        $("pre > code.pxs").each(addBrush("pxs"));
+        $("pre > code.txt").each(addBrush("plain"));
+        $("pre > code.plain").each(addBrush("plain"));
+        
+        SyntaxHighlighter.defaults.toolbar = false;
+        SyntaxHighlighter.defaults.tabsize = 2;
+        SyntaxHighlighter.highlight();
+      });
+    </script>
+    <script src="/javascripts/scale.fix.js"></script>
+  </body>
+</html>

@@ -8,3 +8,8 @@ exclude:
   - gh-prx.sublime-workspace
   - start-thin.sh
   - auto-jekyll.sh
+include:
+  - github/
+  - github/doc/
+  - github/doc/r1-2-3/
+  - github/doc/r1-2-3/index.html

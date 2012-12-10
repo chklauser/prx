@@ -1,38 +1,8 @@
 ﻿/* CSS layout */
-body
-{
-    margin: 0;
-    padding: 0;
-    font-family: Segoe UI, Arial, sans-serif;
-    font-size: 10pt;
-}
-
-#masthead
-{
-    margin-left: 0.7em;
-}
-
-#top_nav
-{
-}
-
-#container
-{
-    min-width: 600px;
-}
-
-#left_col
-{
-    width: 200px;
-    float: left;
-    margin-left: 0.7em;
-    padding-top: 3.3em;
-}
 
 #left_col > div > ul
 {
-    padding: 0;
-    margin: 0;
+    
 }
 
 #left_col > div > ul > li
@@ -45,16 +15,27 @@ body
     padding: 0 2.2em 1.0em 2.2em;
 }
 
-#page_content, #footer
-{
-    margin-left: 222px;
-    margin-right: 1em;
+header #left_col ul {
+    height: auto;
+    width:  auto;
+    margin: 0;
 }
 
-h1
-{
-    font-variant: small-caps;
-    font-size: 2.3em;
+header #left_col ul li {
+    float: none;
+    height: auto;
+    width:  auto;
+    padding: 0;
+    margin: 0;
+    background: none;
+}
+
+header #left_col ul li a {
+    display: inline;
+    font-size: 1em;
+    height:auto;
+    padding: 0;
+    text-align: left;
 }
 
 #page_content > h3
@@ -79,11 +60,6 @@ h1
     color: #494437;
 }
 
-#footer
-{
-    clear: both;
-}
-
 #command-reference, #command-template
 {
     display: none;
@@ -102,14 +78,6 @@ ul.command-usages > li
     padding-bottom: 0.5em;
     max-width: 800px;
     border: 1px solid #494437;
-}
-
-.usage-syntax
-{
-    font-size: 120%;
-    font-weight: bold;
-    background: #262626 url(prx-theme/images/ui-bg_hexagon_45_262626_12x10.png) 50% 50% repeat;
-    color: #ffffff;
 }
 
 ul.command-usages > li > details, ul.command-usages > li > details > div
@@ -153,14 +121,24 @@ ul.command-usages > li > table.parameters > caption
     font-variant: small-caps;
 }
 
-pre.usage-syntax
+pre.usage-syntax, 
+div.usage-syntax
 {
     margin-top: 0;
     padding: 3px 0.5em 3px 0.5em;
 }
 
-.usage-syntax a
+.usage-syntax a, .usage-syntax code
 {
+    color: #ffffff;
+    font-size: 1.2em;
+}
+
+.usage-syntax
+{
+    font-size: 120%;
+    font-weight: bold;
+    background: #262626 url(prx-theme/images/ui-bg_hexagon_45_262626_12x10.png) 50% 50% repeat;
     color: #ffffff;
 }
 
@@ -169,4 +147,8 @@ pre.usage-syntax
     background-color: red;
     color: black;
     text-decoration: yellow wavy underline;
+}
+
+div.wrapper footer.docs {
+    z-index: -1;
 }

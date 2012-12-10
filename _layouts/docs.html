@@ -1,0 +1,50 @@
+---
+withdocs: true
+layout: chrome
+slug: docs
+---
+<header>
+  {% include heading.html %}
+  <div id="left_col"></div>
+</header>
+<section>
+  {% include navigation.html %}
+  <h2>{{ page.title }}</h2>
+  {{ content }}
+  <div id="page_content">
+    <div id="initial-topic">Select a topic in the navigation.</div>
+  </div>
+  <div id="command-template">
+    <h3>
+      <span class="template-command-name" />
+    </h3>
+    <ul class="command-usages">
+      <li>
+        <div class="usage-syntax"><code><span class="template-usage-syntax" /></code></div>
+        <details>
+          <summary>
+            <span class="template-summary" />
+          </summary>
+          <div>
+            <p class="template-common-notes" />
+            <p class="template-notes" />
+          </div>
+        </details>
+        <table class="template-parameters parameters">
+          <caption>Parameters</caption>
+          <tr>
+            <th>
+              <span class="template-parameter-name" />
+            </th>
+            <td>
+              <span class="template-parameter-description" />
+            </td>
+          </tr>
+        </table>
+      </li>
+    </ul>
+  </div>
+</section>
+<footer class="docs">
+  {% include footer.html %}
+</footer>
