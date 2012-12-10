@@ -1,0 +1,172 @@
+﻿/* CSS layout */
+body
+{
+    margin: 0;
+    padding: 0;
+    font-family: Segoe UI, Arial, sans-serif;
+    font-size: 10pt;
+}
+
+#masthead
+{
+    margin-left: 0.7em;
+}
+
+#top_nav
+{
+}
+
+#container
+{
+    min-width: 600px;
+}
+
+#left_col
+{
+    width: 200px;
+    float: left;
+    margin-left: 0.7em;
+    padding-top: 3.3em;
+}
+
+#left_col > div > ul
+{
+    padding: 0;
+    margin: 0;
+}
+
+#left_col > div > ul > li
+{
+    list-style: none;
+}
+
+#left_col > div.ui-accordion-content
+{
+    padding: 0 2.2em 1.0em 2.2em;
+}
+
+#page_content, #footer
+{
+    margin-left: 222px;
+    margin-right: 1em;
+}
+
+h1
+{
+    font-variant: small-caps;
+    font-size: 2.3em;
+}
+
+#page_content > h3
+{
+    font-variant: small-caps;
+    font-size: 2em;
+    margin-bottom: 0.5em;
+}
+
+#initial-topic
+{
+    background-image: url(prx-theme/images/large-arrow-left.png);
+    background-repeat: no-repeat;
+    padding-left: 60px;
+    padding-top: 4px;
+    position: relative;
+    top: 4em;
+    min-width: 50px;
+    min-height: 50px;
+    font-weight: bold;
+    font-size: 1.7em;
+    color: #494437;
+}
+
+#footer
+{
+    clear: both;
+}
+
+#command-reference, #command-template
+{
+    display: none;
+}
+
+ul.command-usages
+{
+    padding-left: 0;
+    margin-top: 0;
+}
+
+ul.command-usages > li
+{
+    list-style: none;
+    margin-bottom: 1em;
+    padding-bottom: 0.5em;
+    max-width: 800px;
+    border: 1px solid #494437;
+}
+
+.usage-syntax
+{
+    font-size: 120%;
+    font-weight: bold;
+    background: #262626 url(prx-theme/images/ui-bg_hexagon_45_262626_12x10.png) 50% 50% repeat;
+    color: #ffffff;
+}
+
+ul.command-usages > li > details, ul.command-usages > li > details > div
+{
+    padding-left: 0.5em;
+    padding-right: 0.5em;
+}
+
+ul.command-usages > li > details > table, ul.command-usages > li > table
+{
+    margin-left: 0.5em;
+    margin-right: 0.5em;
+    border-top: 1px solid #494437;
+    border-bottom: 1px solid #494437;
+}
+
+ul.command-usages > li > table.parameters
+{
+    width: 100%;
+    max-width: 787px;
+}
+
+ul.command-usages > li > table.parameters > tbody > tr > th
+{
+    text-align: left;
+    font-family: Consolas, 'Courier New' , Courier, monospace;
+    font-weight: bold;
+    padding-right: 1em;
+    vertical-align: text-top;
+}
+
+ul.command-usages > li > table.parameters > tbody > tr > td
+{
+    width: 100%;
+}
+
+ul.command-usages > li > table.parameters > caption
+{
+    text-align: left;
+    font-weight: bold;
+    font-variant: small-caps;
+}
+
+pre.usage-syntax
+{
+    margin-top: 0;
+    padding: 3px 0.5em 3px 0.5em;
+}
+
+.usage-syntax a
+{
+    color: #ffffff;
+}
+
+.template-command-name, .template-usage-syntax, .template-summary, .template-notes, .template-parameter-name, .template-parameter-description, .template-parameters, .template-common-notes
+{
+    background-color: red;
+    color: black;
+    text-decoration: yellow wavy underline;
+}
