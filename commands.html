@@ -1,0 +1,866 @@
+---
+layout: docs
+title: Commands (1.2.3)
+---
+<div id="command-reference">
+    <section title="Core">
+        <article title="boxed">
+            <ul>
+                <li><code>boxed(obj)</code>
+                    <p>
+                        Wraps the supplied object in a <code>Prexonite::PValue</code>.</p>
+                    <table>
+                        <tr>
+                            <th>
+                                obj
+                            </th>
+                            <td>
+                                The object to be wrapped. Can be anything, even null.
+                            </td>
+                        </tr>
+                        <tr>
+                            <th>
+                                returns
+                            </th>
+                            <td>
+                                An instance of <code>Prexonite::PValue</code> that wraps
+                                <var>
+                                    obj</var>.
+                            </td>
+                        </tr>
+                    </table>
+                    <div>
+                        <p>
+                            <code>boxed</code> is commonly used in the following two scenarios:</p>
+                        <ul>
+                            <li>To communicate with the Prexonite VM (it used <code>Prexonite::PValue</code> objects
+                                internally</li>
+                            <li>
+                                <p>
+                                    As an easy way to display type information. The following snippet</p>
+                                <pre class="example"><code>var x = 1+0.5;
+println(&quot;x = &quot;,boxed(x));</code></pre>
+                                <p>
+                                    will print and return
+                                    <samp>
+                                        x = {1.5~Real}</samp>.</p>
+                            </li>
+                        </ul>
+                    </div>
+                </li>
+            </ul>
+        </article>
+        <article title="char">
+            <ul>
+                <li>
+                    <code>char(s~String)</code>
+                    <p>Creates a <code>~Char</code> value from a string.</p>
+                    <table>
+                        <tr>
+                            <th>s</th>
+                            <td>Any non-empty string. Only the first character is relevant.</td>
+                        </tr>
+                        <tr>
+                            <th>returns</th>
+                            <td>The first character in <code>s</code> as a <code>~Char</code>.</td>
+                        </tr>
+                    </table>
+                </li>
+                <li>
+                    <code>char(i)</code>
+                    <p>Creates a <code>~Char</code> value from a Unicode codepoint.</p>
+                    <table>
+                        <tr>
+                            <th>i</th>
+                            <td>A valid Unicode codepoint. Will be converted to <code>~Int</code>.</td>
+                        </tr>
+                        <tr>
+                            <th>returns</th>
+                            <td>A <code>~Char</code> that represents the Unicode codepoint <code>i</code>.</td>
+                        </tr>
+                    </table>
+                </li>
+            </ul>
+            <div>
+                <p>
+                    <code>~Char</code> is one of the built-in data types of Prexonite. <code>~Char</code> literals
+                    are written using a syntax that is identical to calling <code>char</code>.
+                </p>
+                <pre class="example"><code>char(&quot;π&quot;) // a ~Char literal for the greek character π
+char(0x20) // a ~Char literal for the ASCII whitespace.</code></pre>
+            </div>
+        </article>
+        <article title="print">
+            <ul>
+                <li><code>print(obj, &hellip;)</code>
+                    <p>
+                        Converts all arguments to strings and prints them to the standard output (STDOUT).</p>
+                    <table>
+                        <tr>
+                            <th>
+                                obj&hellip;
+                            </th>
+                            <td>
+                                Any value that supports <code>?.ToString()</code>, including <code>null</code>.
+                            </td>
+                        </tr>
+                        <tr>
+                            <th>
+                                returns
+                            </th>
+                            <td>
+                                The string printed to the standard output (STDOUT).
+                            </td>
+                        </tr>
+                    </table>
+                    <div>
+                    </div>
+                </li>
+            </ul>
+        </article>
+        <article title="println">
+            <ul>
+                <li><code>println()</code>
+                    <p>
+                        Prints the system-specific newline character (sequence) to the standard output (STDOUT).</p>
+                    <table>
+                        <tr>
+                            <th>
+                                returns
+                            </th>
+                            <td>
+                                The empty string.
+                            </td>
+                        </tr>
+                    </table>
+                </li>
+                <li><code>println(obj, &hellip;)</code>
+                    <p>
+                        Converts all arguments to strings and prints them followed by the system-specific
+                        newline character (sequence) to the standard output (STDOUT).</p>
+                    <table>
+                        <tr>
+                            <th>
+                                obj&hellip;
+                            </th>
+                            <td>
+                                Any value that supports <code>?.ToString()</code>, including <code>null</code>.
+                            </td>
+                        </tr>
+                        <tr>
+                            <th>
+                                returns
+                            </th>
+                            <td>
+                                The string printed to the standard output (STDOUT) <em>not including</em> the system-specific
+                                newline character (sequence).
+                            </td>
+                        </tr>
+                    </table>
+                </li>
+            </ul>
+        </article>
+        <article title="unbind">
+            <ul>
+                <li>
+                    <code>new var v</code>
+                    <p>Unbinds a variable from other closures using it.</p>
+                    <table>
+                        <tr>
+                            <th>v</th>
+                            <td>Name of a local variable.</td>
+                        </tr>
+                        <tr>
+                            <th>returns</th>
+                            <td><code>null</code></td>
+                        </tr>
+                    </table>
+                    <div>
+                        <p>Prexonite Script, like JavaScript, does not have scoped control-structures. 
+                            That means that closures that refer to loop variables will in most cases not work as expected.</p>
+                        <pre class="example"><code>function main(){
+    var n = 15;
+    function f1()
+    {
+        while(n > 4)
+            println(n--);
+    }
+    f1();
+    println(n); // "4"
+    
+    n = 13;
+    new var v;
+    f1();
+    println(n); // "13"
+}</code></pre>
+                        <p>
+                            After the <code>new var n</code> statement, Prexonite considers <code>n</code> 
+                            to be a fresh variable that has no relationship with any of the scopes that
+                            <code>n</code> was shared with previously (<code>f1</code> in this case).
+                        </p>
+                        <p>The variable <code>n</code> <em>does, however, retain the value</em> of its predecessor.</p>
+                        <pre class="example"><code>function main(){
+    var xs = [1,2,3,4,5,6,7];
+    var fs = [];
+    foreach(var x in xs){
+        fs[] = y => x + y;
+    }
+    println(x); // "7"
+    println(fs[3].(5)); // "12" == 7+5
+    
+    fs = [];
+    foreach(new var x in xs){
+        fs[] = y => x + y;
+    }
+    println(x); // "7"
+    println(fs[3].(5)); // "9" == 4+5
+}</code></pre>
+                        <p>
+                            While it is possible to use <code>y => new var x + y</code> to achieve a similar effect, it is in most 
+                            cases not recommended since that causes the variable to be unbound <em>every single time</em> the closure is invoked. 
+                        </p>
+                        <p>
+                            Note that <code>new var v</code> is different from <code>var new v</code>. 
+                            The latter is used to avoid capturing <code>v</code> in the first place.
+                        </p>
+                    </div>
+                </li>
+            </ul>
+        </article>
+    </section>
+    <section title="Math">
+        <article title="abs">
+            <ul>
+                <li>
+                    <code>abs(x~Int)</code>
+                    <p>Computes the absolute value of an integer number (&quot;strips sign&quot;)</p>
+                    <table>
+                        <tr>
+                            <th>x~Int</th>
+                            <td>Any integer.</td>
+                        </tr>
+                        <tr>
+                            <th>returns</th>
+                            <td><code>x</code> with the sign stripped. <code>if(x < 0) -x else x</code>. Always returns an integer.</td>
+                        </tr>
+                    </table>
+                </li>
+                <li>
+                    <code>abs(x)</code>
+                    <p>Computes the absolute value of a number (&quot;strips sign&quot;)</p>
+                    <table>
+                        <tr>
+                            <th>x</th>
+                            <td>Any number, will be converted to <code>~Real</code> if necessary.</td>
+                        </tr>
+                        <tr>
+                            <th>returns</th>
+                            <td>The real number argument <code>x</code> with the sign stripped. <code>if(x < 0) -x else x</code>. Always returns a real number.</td>
+                        </tr>
+                    </table>
+                </li>
+            </ul>
+        </article>
+        <article title="ceiling">
+            <ul>
+                <li>
+                    <code>ceiling(x)</code>
+                    <p>Returns the smallest integer number that is greater than or equal to <code>x</code>.</p>
+                    <table>
+                        <tr>
+                            <th>x</th>
+                            <td>Any number. Will be converted to <code>~Real</code>.</td>
+                        </tr>
+                        <tr>
+                            <th>returns</th>    
+                            <td>The smallest integer number that is greater than or equal to <code>x</code>. Still a <code>~Real</code>.</td>
+                        </tr>
+                    </table>
+                </li>
+            </ul>
+        </article>
+        <article title="cos">
+            <ul>
+                <li>
+                    <code>cos(x)</code>
+                    <p>Computes the cosine function.</p>
+                    <table>
+                        <tr>
+                            <th>x</th>
+                            <td>The angle in radians. Will be converted to <code>~Real</code>.</td>
+                        </tr>
+                        <tr>
+                            <th>returns</th>
+                            <td>The ratio <em>adjacent/hypotenuse</em> as a <code>~Real</code>.</td>
+                        </tr>
+                    </table>
+                </li>
+            </ul>
+        </article>
+        <article title="exp">
+            <ul>
+                <li>
+                    <code>exp(x)</code>
+                    <p>Raises e (approximately <code>2.718281828</code>) to the chosen power.</p>
+                    <table>
+                        <tr>
+                            <th>x</th>
+                            <td>The exponent. Will be converted to a <code>~Real</code>.</td>
+                        </tr>
+                        <tr>
+                            <th>returns</th>
+                            <td>The result of computing <code>e<sup>x</sup></code>. Always a <code>~Real</code>.</td>
+                        </tr>
+                    </table>
+                    <div>
+                        <p>If you just need Euler's number, use <code>exp(<mark>1</mark>)</code>.</p>
+                    </div>
+                </li>
+            </ul>
+        </article>
+        <article title="floor">
+            <ul>
+                <li>
+                    <code>floor(x)</code>
+                    <p>Returns the largest integer number that is less than or equal to <code>x</code>.</p>
+                    <table>
+                        <tr>
+                            <th>x</th>
+                            <td>Any number. Will be converted to <code>~Real</code>.</td>
+                        </tr>
+                        <tr>
+                            <th>returns</th>    
+                            <td>The largest integer number that is less than or equal to <code>x</code>. Still a <code>~Real</code>.</td>
+                        </tr>
+                    </table>
+                </li>
+            </ul>
+        </article>
+        <article title="log">
+            <ul>
+                <li>
+                    <code>log(x)</code>
+                    <p>Computes the natural logarithm of its argument.</p>
+                    <table>
+                        <tr>
+                            <th>x</th>
+                            <td>The argument. Will be converted to a <code>~Real</code>.</td>
+                        </tr>
+                        <tr>
+                            <th>returns</th>
+                            <td>The natural logarithm of <code>x</code> as a <code>~Real</code>.</td>
+                        </tr>
+                    </table>
+                    <div>
+                        <p>
+                            The natural logarithm is the logarithm with Euler's number as the base.
+                        </p>
+                        <pre class="example"><code>log(x) == log(x,exp(1))</code></pre>
+                    </div>
+                </li>
+                <li>
+                    <code>log(x,b)</code>
+                    <p>Computes an arbitrary logarithm.</p>
+                    <table>
+                        <tr>
+                            <th>x</th>
+                            <td>The argument. Will be converted to a <code>~Real</code>.</td>
+                        </tr>
+                        <tr>
+                            <th>b</th>
+                            <td>The base for the logarithm. Will be converted to a <code>~Real</code>.</td>
+                        </tr>
+                        <tr>
+                            <th>returns</th>
+                            <td>The logarithm of <code>x</code> with respect to base <code>b</code> as a <code>~Real</code>.</td>
+                        </tr>
+                    </table>
+                </li>
+            </ul>
+        </article>
+        <article title="max">
+            <ul>
+                <li>
+                    <code>max(a~Int,b~Int)</code>
+                    <p>Compares two integers and returns the larger of the two.</p>
+                    <table>
+                        <tr>
+                            <th>a</th>
+                            <td>An integer.</td>
+                        </tr>
+                        <tr>
+                            <th>b</th>
+                            <td>Another integer.</td>
+                        </tr>
+                        <tr>
+                            <th>returns</th>
+                            <td>An integer that is at least as large as <code>a</code> and <code>b</code>. Always an <code>~Int</code>.</td>
+                        </tr>
+                    </table>
+                </li>
+                <li>
+                    <code>max(a,b)</code>
+                    <p>Compares two numbers and returns the larger of the two.</p>
+                    <table>
+                        <tr>
+                            <th>a</th>
+                            <td>A number. Will be converted to <code>~Real</code>.</td>
+                        </tr>
+                        <tr>
+                            <th>b</th>
+                            <td>Another number. Will be converted to <code>~Real</code>.</td>
+                        </tr>
+                        <tr>
+                            <th>returns</th>
+                            <td>A number that is at least as large as <code>a</code> and <code>b</code>. Always a <code>~Real</code>.</td>
+                        </tr>
+                    </table>
+                </li>
+            </ul>
+        </article>
+        <article title="min">
+            <ul>
+                <li>
+                    <code>min(a~Int,b~Int)</code>
+                    <p>Compares two integers and returns the smaller of the two.</p>
+                    <table>
+                        <tr>
+                            <th>a</th>
+                            <td>An integer.</td>
+                        </tr>
+                        <tr>
+                            <th>b</th>
+                            <td>Another integer.</td>
+                        </tr>
+                        <tr>
+                            <th>returns</th>
+                            <td>An integer that is less than or equal to <code>a</code> and <code>b</code>. Always an <code>~Int</code>.</td>
+                        </tr>
+                    </table>
+                </li>
+                <li>
+                    <code>max(a,b)</code>
+                    <p>Compares two numbers and returns the smaller of the two.</p>
+                    <table>
+                        <tr>
+                            <th>a</th>
+                            <td>A number. Will be converted to <code>~Real</code>.</td>
+                        </tr>
+                        <tr>
+                            <th>b</th>
+                            <td>Another number. Will be converted to <code>~Real</code>.</td>
+                        </tr>
+                        <tr>
+                            <th>returns</th>
+                            <td>A number that is less than or equal to <code>a</code> and <code>b</code>. Always a <code>~Real</code>.</td>
+                        </tr>
+                    </table>
+                </li>
+            </ul>
+        </article>
+        <article title="pi">
+            <ul>
+                <li>
+                    <code>pi</code>
+                    <p>The constant π (pi).  Roughly <code>3.14159265358979</code>.</p>
+                    <table>
+                        <tr>
+                            <th>returns</th>
+                            <td><code>3.14159265358979~Real</code></td>
+                        </tr>
+                    </table>
+                </li>
+            </ul>
+        </article>
+        <article title="round">
+            <ul>
+                <li>
+                    <code>round(x)</code>
+                    <p>Rounds a number to the nearest integer number.</p>
+                    <table>
+                        <tr>
+                            <th>x</th>
+                            <td>Any number. Will be converted to <code>~Real</code>.</td>
+                        </tr>
+                        <tr>
+                            <th>returns</th>
+                            <td>The nearest integer number to <code>x</code>. Always a <code>~Real</code>.</td>
+                        </tr>
+                    </table>
+                </li>
+                <li>
+                    <code>round(x,d)</code>
+                    <p>Rounds a number to the nearest decimal fraction with a specified number of fractional digits.</p>
+                    <table>
+                        <tr>
+                            <th>x</th>
+                            <td>Any number. Will be converted to <code>~Real</code>.</td>
+                        </tr>
+                        <tr>
+                            <th>d</th>
+                            <td>The number of digits after the decimal point, you want to retain. Will be converted to <code>~Int</code>.</td>
+                        </tr>
+                        <tr>
+                            <th>returns</th>
+                            <td>The nearest number with at most <code>d</code> decimal digits in the fraction. Always a <code>~Real</code>.</td>
+                        </tr>
+                    </table>
+                </li>
+            </ul>
+            <div>
+                <p><code>round</code> always rounds away from zero.</p>
+            </div>
+        </article>
+        <article title="sin">
+            <ul>
+                <li>
+                    <code>sin(x)</code>
+                    <p>Computes the sine function.</p>
+                    <table>
+                        <tr>
+                            <th>x</th>
+                            <td>The angle in radians. Will be converted to <code>~Real</code>.</td>
+                        </tr>
+                        <tr>
+                            <th>returns</th>
+                            <td>The ratio <em>opposite/hypotenuse</em> as a <code>~Real</code>.</td>
+                        </tr>
+                    </table>
+                </li>
+            </ul>
+        </article>
+        <article title="sqrt">
+            <ul>
+                <li><code>sqrt(x)</code>
+                    <p>
+                        Computes the (real) square root of a number.</p>
+                    <table>
+                        <tr>
+                            <th>x</th>
+                            <td>The number to compute the square root for. Will be converted to <code>~Real</code>. Must be positive, otherwise an exception might be thrown.</td>
+                        </tr>
+                        <tr>
+                            <th>returns</th>
+                            <td>The square root of <code>x</code>.</td>
+                        </tr>
+                    </table>
+                    <div>
+                        <pre class="example"><code>sqrt(abs(x))^2 == x
+sqrt(x^2) == abs(x)</code></pre>
+                    </div>
+                </li>
+            </ul>
+        </article>
+        <article title="tan">
+            <ul>
+                <li><code>tan(x)</code>
+                    <p>
+                        The tangent function. Given an angle <code>x</code> in radians, computes the ratio
+                        <em>opposite/adjacent</em>.</p>
+                    <table>
+                        <tr>
+                            <th>
+                                x
+                            </th>
+                            <td>
+                                The angle in radians. Will automatically be converted to <code>~Real</code>.
+                            </td>
+                        </tr>
+                        <tr>
+                            <th>
+                                returns
+                            </th>
+                            <td>
+                                The ratio <em>opposite/adjacent</em>.
+                            </td>
+                        </tr>
+                    </table>
+                </li>
+            </ul>
+        </article>
+    </section>
+    <section title="Text">
+        <article title="setleft">
+            <ul>
+                <li><code>setleft(width, text)</code>
+                    <p>
+                        Creates a new string with length at least <code>width</code> and <code>text</code>
+                        at the beginning (&quot;on the left hand side&quot;)</p>
+                    <table>
+                        <tr>
+                            <th>
+                                width
+                            </th>
+                            <td>
+                                The width minimal width of the resulting string in characters.
+                            </td>
+                        </tr>
+                        <tr>
+                            <th>
+                                text
+                            </th>
+                            <td>
+                                The text to include in the resulting string, left-aligned. May be longer than <code>
+                                    width</code>. <code>?.ToString()</code> will be called on <code>text</code>
+                                if it is not a string.
+                            </td>
+                        </tr>
+                        <tr>
+                            <th>
+                                returns
+                            </th>
+                            <td>
+                                A string that starts with <code>text.ToString()</code> and has at least length <code>
+                                    width</code>. If <code>text.ToString()</code> is too short, the result will
+                                be padded with spaces (<code>U+0020</code>).
+                            </td>
+                        </tr>
+                    </table>
+                    <div>
+                        <p>
+                            The supplied <code>text</code> is <em>not</em> truncated if it is longer than <code>
+                                width</code>.</p>
+                    </div>
+                </li>
+                <li><code>setleft(width, text, filler)</code>
+                    <p>
+                        Creates a new string with length at least <code>width</code> and <code>text</code>
+                        at the beginning (&quot;on the left hand side&quot;). The remaining space is filled
+                        with repetitions of <code>filler</code></p>
+                    <table>
+                        <tr>
+                            <th>
+                                width
+                            </th>
+                            <td>
+                                The width minimal width of the resulting string in characters.
+                            </td>
+                        </tr>
+                        <tr>
+                            <th>
+                                text
+                            </th>
+                            <td>
+                                The text to include in the resulting string, left-aligned. May be longer than <code>
+                                    width</code>. <code>?.ToString()</code> will be called on <code>text</code>
+                                if it is not a string.
+                            </td>
+                        </tr>
+                        <tr>
+                            <th>
+                                filler
+                            </th>
+                            <td>
+                                The string (<code>?.ToString</code> is used) that is used to fill the remaining
+                                space.
+                            </td>
+                        </tr>
+                        <tr>
+                            <th>
+                                returns
+                            </th>
+                            <td>
+                                A string that starts with <code>text.ToString()</code> and has at least length <code>
+                                    width</code>. If <code>text.ToString()</code> is too short, the result will
+                                be padded with repetitions of <code>filler</code>.
+                            </td>
+                        </tr>
+                    </table>
+                    <div>
+                        <p>
+                            The supplied <code>text</code> is <em>not</em> truncated if it is longer than <code>
+                                width</code>. The <code>filler</code> does can consist of multiple characters.
+                            In that case, however, the <code>width</code> must be a multiple of <code>filler.Length</code></p>
+                    </div>
+                </li>
+            </ul>
+        </article>
+        <article title="setright">
+            <ul>
+                <li><code>setright(width, text)</code>
+                    <p>
+                        Creates a new string with length at least <code>width</code> and <code>text</code>
+                        at the end (&quot;on the right hand side&quot;)</p>
+                    <table>
+                        <tr>
+                            <th>
+                                width
+                            </th>
+                            <td>
+                                The width minimal width of the resulting string in characters.
+                            </td>
+                        </tr>
+                        <tr>
+                            <th>
+                                text
+                            </th>
+                            <td>
+                                The text to include in the resulting string, right-aligned. May be longer than <code>
+                                    width</code>. <code>?.ToString()</code> will be called on <code>text</code>
+                                if it is not a string.
+                            </td>
+                        </tr>
+                        <tr>
+                            <th>
+                                returns
+                            </th>
+                            <td>
+                                A string that ends with <code>text.ToString()</code> and has at least length <code>width</code>.
+                                If <code>text.ToString()</code> is too short, the result will be padded with spaces
+                                (<code>U+0020</code>).
+                            </td>
+                        </tr>
+                    </table>
+                    <div>
+                        <p>
+                            The supplied <code>text</code> is <em>not</em> truncated if it is longer than <code>
+                                width</code>.</p>
+                    </div>
+                </li>
+                <li><code>setright(width, text, filler)</code>
+                    <p>
+                        Creates a new string with length at least <code>width</code> and <code>text</code>
+                        at the end (&quot;on the right hand side&quot;). The remaining space is filled with
+                        repetitions of <code>filler</code></p>
+                    <table>
+                        <tr>
+                            <th>
+                                width
+                            </th>
+                            <td>
+                                The width minimal width of the resulting string in characters.
+                            </td>
+                        </tr>
+                        <tr>
+                            <th>
+                                text
+                            </th>
+                            <td>
+                                The text to include in the resulting string, right-aligned. May be longer than <code>
+                                    width</code>. <code>?.ToString()</code> will be called on <code>text</code>
+                                if it is not a string.
+                            </td>
+                        </tr>
+                        <tr>
+                            <th>
+                                filler
+                            </th>
+                            <td>
+                                The string (<code>?.ToString</code> is used) that is used to fill the remaining
+                                space.
+                            </td>
+                        </tr>
+                        <tr>
+                            <th>
+                                returns
+                            </th>
+                            <td>
+                                A string that ends with <code>text.ToString()</code> and has at least length <code>width</code>.
+                                If <code>text.ToString()</code> is too short, the result will be padded with repetitions
+                                of <code>filler</code>.
+                            </td>
+                        </tr>
+                    </table>
+                    <div>
+                        <p>
+                            The supplied <code>text</code> is <em>not</em> truncated if it is longer than <code>
+                                width</code>. The <code>filler</code> does can consist of multiple characters.
+                            In that case, however, the <code>width</code> must be a multiple of <code>filler.Length</code></p>
+                    </div>
+                </li>
+            </ul>
+        </article>
+        <article title="setcenter">
+            <ul>
+                <li><code>setcenter(width, text)</code>
+                    <p>
+                        Creates a new string with length at least <code>width</code> and <code>text</code>
+                        in the middle.</p>
+                    <table>
+                        <tr>
+                            <th>
+                                width
+                            </th>
+                            <td>
+                                The width minimal width of the resulting string in characters.
+                            </td>
+                        </tr>
+                        <tr>
+                            <th>
+                                text
+                            </th>
+                            <td>
+                                The text to include in the resulting string, centered. May be longer than <code>width</code>.
+                                <code>?.ToString()</code> will be called on <code>text</code> if it is not a string.
+                            </td>
+                        </tr>
+                        <tr>
+                            <th>
+                                returns
+                            </th>
+                            <td>
+                                A string that contains with <code>text.ToString()</code> in the middle and has at
+                                least length <code>width</code>. If <code>text.ToString()</code> is too short, the
+                                result will be padded with spaces (<code>U+0020</code>).
+                            </td>
+                        </tr>
+                    </table>
+                    <div>
+                        <p>
+                            The supplied <code>text</code> is <em>not</em> truncated if it is longer than <code>
+                                width</code>.</p>
+                    </div>
+                </li>
+                <li><code>setcenter(width, text, filler)</code>
+                    <p>
+                        Creates a new string with length at least <code>width</code> and <code>text</code>
+                        in the middle. The remaining space is filled with repetitions of <code>filler</code></p>
+                    <table>
+                        <tr>
+                            <th>
+                                width
+                            </th>
+                            <td>
+                                The width minimal width of the resulting string in characters.
+                            </td>
+                        </tr>
+                        <tr>
+                            <th>
+                                text
+                            </th>
+                            <td>
+                                The text to include in the resulting string, centered. May be longer than <code>width</code>.
+                                <code>?.ToString()</code> will be called on <code>text</code> if it is not a string.
+                            </td>
+                        </tr>
+                        <tr>
+                            <th>
+                                filler
+                            </th>
+                            <td>
+                                The string (<code>?.ToString</code> is used) that is used to fill the remaining
+                                space.
+                            </td>
+                        </tr>
+                        <tr>
+                            <th>
+                                returns
+                            </th>
+                            <td>
+                                A string that contains <code>text.ToString()</code> in the middle and has at least
+                                length <code>width</code>. If <code>text.ToString()</code> is too short, the result
+                                will be padded with repetitions of <code>filler</code>.
+                            </td>
+                        </tr>
+                    </table>
+                    <div>
+                        <p>
+                            The supplied <code>text</code> is <em>not</em> truncated if it is longer than <code>
+                                width</code>. The <code>filler</code> does can consist of multiple characters.
+                            In that case, however, the <code>width</code> must be a multiple of <code>filler.Length</code></p>
+                    </div>
+                </li>
+            </ul>
+        </article>
+    </section>
+</div>
