@@ -1,0 +1,183 @@
+--- 
+meta: 
+  _edit_last: "1"
+  _wp_old_slug: ""
+title: "Prexonite 1.2.1 \xE2\x80\x93 Partial Application and Mercurial"
+published: true
+status: publish
+tags: []
+
+type: post
+layout: post
+---
+<h3>Mercurial</h3>
+<p>For 1.2.1 I switched my version control system from Subversion over to Mercurial, still hosted as an open source project at assembla.com. Subversion is great but for me there are some benefits in using Mercurial.</p>
+<h4>Easier than Subversion</h4>
+<p>
+  I personally find Mercurial easier to use than Subversion, even though there are more concepts involved (local repository versus working copy/pull versus update).
+  The main advantage of Mercurial is that you can clone the main repository, experiment around, create branches, create tags, attempt complicated merges and when it doesn't work out, you can just throw away your local repo and make a new clone (or evacuate the successful commits by cloning locally up the last &quot;good&quot; revision).
+  In Subversion, all the action happens on the central server.
+  If you make a mistake it's logged for all eternity.
+</p>
+<h4>Local commits</h4>
+<p>
+  The second big advantage of Mercurial is being able to commit your changes locally. 
+  Sure, every commit should be a working system, but that’s more of an ideal than a realistic scenario. 
+  I want to be able to save my work in a state that is at least semi-working before I attempt a risky rewrite. 
+  I also don't want to work without revision control wen I'm on the road. 
+  Sure there is 3G, but with Mercurial and local commits my laptop battery lasts longer.
+</p>
+<h3>Partial Application</h3>
+<p>One to the big new feature in this and some past releases.
+  Partial application is a new feature of Prexonite Script that allows you to define function values for very simple expressions in a succinct and, hopefully, intuitive way.
+</p>
+<pre><code>f(1, ?) // as a lambda: x =&gt; f(1, x)</code></pre>
+
+<p>
+  You can turn almost any simple expression into a partial application by denoting the open arguments as question marks (<code>?</code>). 
+  The value of such a partially applied expression will be a function-like value. 
+  When the partial application is applied, the questions marks will be substituted with the provided arguments and the expression will be evaluated. 
+  Any operand of the expression, that is not a question mark will only be evaluated once at the point where the partial application is created.
+</p>
+
+<p>Many expressions support partial application:</p>
+
+<pre><code>new List(?), 
+x.Append(?), 
+?.ToString(), 
+System::Console.WriteLine(?),
+? is List, 
+?~Real</code></pre>
+
+<p>Including all unary and binary operators</p>
+
+<pre><code>1 + ?, 
+?*2, 
+x &amp; ?, 
+y and ?</code></pre>
+
+<p>You can also define multiple open parameters</p>
+
+<pre><code>f(?, 1, ?), 
+? == ?</code></pre>
+
+<p>Or map the supplied arguments in arbitrary orders or multiple times</p>
+
+<pre><code>f(?1, 2, ?0, ?0)</code></pre>
+
+<h4>Limited to simple Expressions</h4>
+
+<p>A key concept of partial application, is that the placeholders can only as direct operands to the operation/function to be partially applied. </p>
+
+<pre><code>f(1+?,g(16*3)+2)</code></pre>
+
+<p>
+  Will not produce a partial application of <code>f</code>, but pass the partial application (<code>1 + ?</code>) to f as an argument. 
+  You either have to resort to a full blown lambda expression for this
+</p>
+
+<pre><code>x =&gt; f(1+x,g(16*3)+2)</code></pre>
+
+<p>Or use function composition (also newly introduced)</p>
+
+<pre><code>? + 1 then f(?, g(16*3)+2)</code></pre>
+
+<p>The `<code>then</code>` keyword combines to functions into one:</p>
+
+<pre><code>g then f //means about the same as `x =&gt; f(g(x))`</code></pre>
+
+<p>Note how all non-placeholder operands of partial applications can be arbitrarily complex.</p>
+
+<h4>Differences between lambda expressions and partial applications</h4>
+
+<p>Lambda expressions and partial applications are in most cases not equivalent. 
+  The key difference is, that all non-placeholder arguments, the so-called &quot;closed arguments&quot;, are evaluated when the partial application object is created, not when the resulting object is called — as is the case with lambda expressions. 
+  In the example above, it might therefore be desirable to resort to the more difficult to understand function composition syntax (using <code>`<strong>then</strong>`</code>) in order to avoid re-computing <code>`g(16*3)+2`</code> over and over again.
+</p>
+
+<p>
+  Partial applications are sadly not as fast as lambda expressions. 
+  Invoking a partial application involves the copying the closed arguments and the freshly supplied actual arguments into an effective arguments array, a step that lambdas don't have to perform. 
+  The effect isn't that dramatic, though. Partial application is measurably slower, yes, but within the same range.
+</p>
+
+<p>
+  The creation of partial applications, on the other hand, is a different story. 
+  Whereas for a lambda expression, the runtime just has to capture references to all shared variables, in the case of partial applications, a mapping consisting of entries for both placeholders and the closed arguments has to be computed. 
+  The creation of a partial application is an order of magnitude slower than the creation of a closure (the lambda expression function object). 
+  So if you care deeply about performance, don't create partial applications in tight inner loops.
+</p>
+
+<h3>Other Changes</h3>
+
+<h4>Macro references</h4>
+
+<p>
+  The illusion that macros can be used just like any function is pretty good, but not perfect. 
+  It breaks down miserably, when you try to take the reference of a macro or attempt to create a partial application thereof. 
+  For this release, the compiler will detect and reject any such attempts. Macro writer can make use of the <code>`macro\reference`</code> macro to work around this limitation.
+</p>
+
+<p>
+  For most macros, taking a reference or creating a partial application, doesn't really make sense anyway. 
+  But there are some exceptions. 
+  I hope that the next release will address these scenarios, and allow macro writers to make their macros compatible with partial application and reference-taking.
+</p>
+
+<h4>Single Quotes</h4>
+
+<p>
+  This recent release has also seen the addition of the single quote (<code>'</code>) as valid character for identifiers (except at the beginning) and as a separator for number literals. 
+</p>
+
+<pre><code>function bob(cat)
+{
+  var bob's_cat = cat + &quot;of bob&quot;;
+  return bob's_cat + &quot; weighs &quot; + 100'000 + &quot;kg&quot;;
+}</code></pre>
+
+<p>
+  Single quotes in number literals are accepted, but otherwise ignored. 
+  They're thrown away right after lexical analysis, so not even macros can find out if there ever were single quotes.
+</p>
+
+<p>
+  In identifiers, single quotes have no special meaning, they're just characters and you can use them in any way you like. 
+  As long as the identifier doesn't start with a single quote, you're fine.
+</p>
+
+<h4>Implementation of operators</h4>
+
+<p>
+  Except for the lazy logical ones, all operators in Prexonite are now implemented as commands and no longer part of the various virtual machines. 
+  This doesn't just simplify the latter, it also makes partial application of those operators possible. 
+  As a user of Prexonite Script, you won't notice the change at all, even if you have assembler code, that uses the operator instructions (these are transparently translated into appropriate command calls).
+</p>
+
+<p>
+  If you want, you can redefine the built-in operators. 
+  Whenever you write <code>`1 + 2`</code> it is compiled as <code>`(+)(1,2)`</code>. 
+  If your function <code>`my_plus`</code> is declared with the alias <code>`(+)`</code>, it will be called instead. 
+  You probably don't want to do that, but it's possible. 
+  (And yes, <code>(+)</code> is a proper identifier. You can even use it in meta data sections)
+</p>
+
+<h4>CIL Extensions</h4>
+
+<p>
+  A requirement to implementing partial application efficiently in CIL, but without adding new VM instructions, was the addition of CIL Extensions, a new API that allows commands to gain access to compile-time-constant arguments during CIL code generation. 
+  This essentially enables variable arguments instructions. 
+  So far, partial application is the only feature that makes use of this.
+</p>
+
+<h3>v.Next</h3>
+
+<p>
+  The next planned release is going to be 1.2.2, focusing on generalising the macro system. 
+  The most important feature is making the macro system also available to commands, and thus to managed code.
+</p>
+
+<p>
+  As this will involve a partial rewrite of a substantial portion of the macro system, it could take a while. 
+  Hopefully, it'll also support the partial application of macros and a cleaner, more isolated interface for macros.
+</p>
