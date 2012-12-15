@@ -1,4 +1,5 @@
 using System.Diagnostics;
+using JetBrains.Annotations;
 using Prexonite.Modular;
 
 namespace Prexonite.Compiler.Symbolic
@@ -6,55 +7,38 @@ namespace Prexonite.Compiler.Symbolic
     [DebuggerDisplay("call({Entity})")]
     public sealed class CallSymbol : Symbol
     {
-        public static CallSymbol Create(EntityRef entity)
+
+        [NotNull]
+        private readonly ISourcePosition _position;
+
+        [NotNull]
+        public override ISourcePosition Position
         {
-            return new CallSymbol(entity);
+            get { return _position; }
         }
 
-        private readonly EntityRef _entity;
-
-        private CallSymbol(EntityRef entity)
+        public override bool Equals(Symbol other)
         {
-            _entity = entity;
-        }
-
-        public EntityRef Entity
-        {
-            get { return _entity; }
-        }
-
-        public bool Equals(CallSymbol other)
-        {
-            if (ReferenceEquals(null, other)) return false;
-            if (ReferenceEquals(this, other)) return true;
-            return Equals(other._entity, _entity);
-        }
-
-        public override bool Equals(object obj)
-        {
-            if (ReferenceEquals(null, obj)) return false;
-            if (ReferenceEquals(this, obj)) return true;
-            if (obj.GetType() != typeof (CallSymbol)) return false;
-            return Equals((CallSymbol) obj);
+            throw new System.NotImplementedException();
         }
 
         public override int GetHashCode()
         {
-            unchecked
-            {
-                return (_entity.GetHashCode()*397);
-            }
+            throw new System.NotImplementedException();
         }
+
+        private CallSymbol()
+        {
+           
+        }
+
+        #region Overrides of Symbol
 
         public override TResult HandleWith<TArg, TResult>(ISymbolHandler<TArg, TResult> handler, TArg argument)
         {
-            return handler.HandleCall(this, argument);
+            throw new System.NotImplementedException();
         }
 
-        public override bool TryGetCallSymbol(out CallSymbol callSymbol)
-        {
-            callSymbol = this;
-            return true;
-        }
+        #endregion
     }
 }

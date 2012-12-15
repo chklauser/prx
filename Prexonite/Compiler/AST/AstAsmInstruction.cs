@@ -55,16 +55,16 @@ namespace Prexonite.Compiler.Ast
                 switch (Instruction.OpCode)
                 {
                     case OpCode.jump:
-                        target.EmitJump(this, Instruction.Id);
+                        target.EmitJump(Position, Instruction.Id);
                         break;
                     case OpCode.jump_t:
-                        target.EmitJumpIfTrue(this, Instruction.Id);
+                        target.EmitJumpIfTrue(Position, Instruction.Id);
                         break;
                     case OpCode.jump_f:
-                        target.EmitJumpIfFalse(this, Instruction.Id);
+                        target.EmitJumpIfFalse(Position, Instruction.Id);
                         break;
                     case OpCode.leave:
-                        target.EmitLeave(this, Instruction.Id);
+                        target.EmitLeave(Position, Instruction.Id);
                         break;
                     default:
                         goto emitNormally;
@@ -75,7 +75,7 @@ namespace Prexonite.Compiler.Ast
 
             return;
             emitNormally:
-            target.Emit(this, Instruction);
+            target.Emit(Position, Instruction);
         }
 
         public override string ToString()

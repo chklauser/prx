@@ -301,7 +301,7 @@ namespace Prexonite.Compiler.Macro.Commands
             {
                 context.ReportMessage(
                     Message.Error(
-                        Resources.CallMacro_call_macro_must_be_supplied_a_macro_reference, context.Invocation,
+                        Resources.CallMacro_call_macro_must_be_supplied_a_macro_reference, context.Invocation.Position,
                         MessageClasses.MacroReferenceForCallMacroMissing));
                 return null;
             }
@@ -312,7 +312,7 @@ namespace Prexonite.Compiler.Macro.Commands
                     Message.Error(
                         string.Format(
                             Resources.CallMacro_CalledFromNonMacro,
-                            context.Function.LogicalId), context.Invocation,
+                            context.Function.LogicalId), context.Invocation.Position,
                         MessageClasses.CallMacroCalledFromNonMacro));
                 return null;
             }
@@ -367,7 +367,7 @@ namespace Prexonite.Compiler.Macro.Commands
             var inv = context.Invocation;
             justEffect = new AstConstant(inv.File, inv.Line,
                 inv.Column, false);
-            call = PCall.Get.EnumToExpression(context.Invocation);
+            call = PCall.Get.EnumToExpression(context.Invocation.Position);
 
             var invokeSpec = inv.Arguments[0];
             var listSpec = invokeSpec as AstListLiteral;
@@ -434,7 +434,7 @@ namespace Prexonite.Compiler.Macro.Commands
                     call = listSpec.Elements[2];
                 else
                 {
-                    call = protoCall.EnumToExpression(specProto);
+                    call = protoCall.EnumToExpression(specProto.Position);
                 }
 
                 //args: lift and pass prototype arguments, special care for set
@@ -502,7 +502,7 @@ namespace Prexonite.Compiler.Macro.Commands
                 context.ReportMessage(
                     Message.Error(
                         string.Format(Resources.CallMacro_SpecifyPlaceholderIndexExplicitly, Alias),
-                        setPlaceholder, MessageClasses.SpecifyPlaceholderIndexExplicitly));
+                        setPlaceholder.Position, MessageClasses.SpecifyPlaceholderIndexExplicitly));
                 return false;
             }
             return true;
@@ -544,7 +544,7 @@ namespace Prexonite.Compiler.Macro.Commands
             var macroId = context.CreateConstant(proto.Implementation.InternalId);
 
             //macroInterpretation: as an expression
-            var macroInterpretation = proto.Implementation.Interpretation.EnumToExpression(proto);
+            var macroInterpretation = proto.Implementation.Interpretation.EnumToExpression(proto.Position);
 
             //macroModule: as a constant (string or null)
             var macroModule = context.CreateConstantOrNull(proto.Implementation.Module);
@@ -562,7 +562,7 @@ namespace Prexonite.Compiler.Macro.Commands
         {
             context.ReportMessage(
                 Message.Error(
-                    string.Format(Resources.CallMacro_errorUsagePrototype, Alias), context.Invocation,
+                    string.Format(Resources.CallMacro_errorUsagePrototype, Alias), context.Invocation.Position,
                     MessageClasses.CallMacroUsage));
         }
 
@@ -572,7 +572,7 @@ namespace Prexonite.Compiler.Macro.Commands
             {
                 context.ReportMessage(
                     Message.Error(
-                        Resources.CallMacro_notOnPlaceholder, context.Invocation,
+                        Resources.CallMacro_notOnPlaceholder, context.Invocation.Position,
                         MessageClasses.CallMacroNotOnPlaceholder));
                 return false;
             }
@@ -584,7 +584,7 @@ namespace Prexonite.Compiler.Macro.Commands
         {
             context.ReportMessage(
                 Message.Error(
-                    Resources.CallMacro_errorUsageFullRef, context.Invocation,
+                    Resources.CallMacro_errorUsageFullRef, context.Invocation.Position,
                     MessageClasses.CallMacroUsage));
         }
 

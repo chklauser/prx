@@ -35,13 +35,13 @@ namespace Prexonite.Compiler.Macro
     public static class MacroContextExtensions
     {
         /// <summary>
-        ///     Creates a symbol access node.
+        ///     Creates a self access node.
         /// </summary>
         /// <param name = "context">The context for which to generate the AST node.</param>
         /// <param name="implementation"></param>
         /// <param name = "call">The call type (get or set)</param>
         /// <param name = "args">The arguments to pass as part of teh access (optional)</param>
-        /// <returns>A symbol access node.</returns>
+        /// <returns>A self access node.</returns>
         public static AstGetSetSymbol CreateGetSetSymbol(this MacroContext context, SymbolEntry implementation, PCall call, params AstExpr[] args)
         {
             var sym = new AstGetSetSymbol(context.Invocation.File, context.Invocation.Line,
@@ -147,7 +147,8 @@ namespace Prexonite.Compiler.Macro
             {
                 context.ReportMessage(
                     Message.Error(
-                        Resources.MacroContextExtensions_EstablishMacroContext_OutsideOfMacro, context.Invocation,
+                        Resources.MacroContextExtensions_EstablishMacroContext_OutsideOfMacro,
+                        context.Invocation.Position,
                         MessageClasses.MacroContextOutsideOfMacro));
                 return;
             }
@@ -165,7 +166,7 @@ namespace Prexonite.Compiler.Macro
         /// <param name = "callType">The call type (get or set)</param>
         /// <param name="implementation"></param>
         /// <param name = "args">The arguments to pass as part of teh access (optional)</param>
-        /// <returns>A symbol access node.</returns>
+        /// <returns>A self access node.</returns>
         public static AstMacroInvocation CreateMacroInvocation(this MacroContext context, PCall callType, SymbolEntry implementation, params AstExpr[] args)
         {
             var m = new AstMacroInvocation(context.Invocation.File, context.Invocation.Line,

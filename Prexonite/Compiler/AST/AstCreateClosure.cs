@@ -69,9 +69,9 @@ namespace Prexonite.Compiler.Ast
                 && (!targetFunction.Meta.TryGetValue(PFunction.SharedNamesKey, out sharedNamesEntry)
                     || !sharedNamesEntry.IsList
                         || sharedNamesEntry.List.Length == 0))
-                target.Emit(this, OpCode.ldr_func, Implementation.InternalId, target.ToInternalModule(Implementation.Module));
+                target.Emit(Position,OpCode.ldr_func, Implementation.InternalId, target.ToInternalModule(Implementation.Module));
             else
-                target.Emit(this, OpCode.newclo, Implementation.InternalId, target.ToInternalModule(Implementation.Module));
+                target.Emit(Position,OpCode.newclo, Implementation.InternalId, target.ToInternalModule(Implementation.Module));
         }
 
         #region AstExpr Members

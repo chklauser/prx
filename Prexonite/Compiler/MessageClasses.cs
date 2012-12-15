@@ -20,6 +20,8 @@
         public const string ErrorsInBuildBlock = "P.ErrorsInBuildBlock";
         public const string ObjectCreationSyntax = "P.ObjectCreationSyntax";
         public const string UnknownAssemblyOperator = "P.UnknownAssemblyOperator";
+        public const string UnknownEntityRefType = "P.UnknownEntityRefType";
+        public const string CannotParseMExpr = "P.CannotParseMExpr";
 
         #endregion
 

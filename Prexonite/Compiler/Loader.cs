@@ -107,7 +107,7 @@ namespace Prexonite.Compiler
         public void RegisterExistingCommands()
         {
             foreach (var kvp in ParentEngine.Commands)
-                Symbols.Declare(kvp.Key, CallSymbol.Create(EntityRef.Command.Create(kvp.Key)));
+                Symbols.Declare(kvp.Key, Symbol.CreateCall(EntityRef.Command.Create(kvp.Key),NoSourcePosition.Instance));
         }
 
         #endregion
@@ -599,8 +599,12 @@ namespace Prexonite.Compiler
         {
             MacroCommands.Add(macroCommand);
             if (Options.RegisterCommands)
-                Symbols.Declare(macroCommand.Id,
-                                ExpandSymbol.Create(EntityRef.MacroCommand.Create(macroCommand.Id)));
+            {
+                var commandReference =
+                    Cache.EntityRefs.GetCached(EntityRef.MacroCommand.Create(macroCommand.Id));
+                Symbols.Declare(
+                    macroCommand.Id, Symbol.CreateExpand(Symbol.CreateReference(commandReference, NoSourcePosition.Instance)));
+            }
         }
 
         #endregion
@@ -1092,7 +1096,7 @@ namespace Prexonite.Compiler
         public void DeclareBuildBlockCommands(CompilerTarget target)
         {
             foreach (var cmdEntry in _buildCommands)
-                target.Symbols.Declare(cmdEntry.Key,CallSymbol.Create(EntityRef.Command.Create(cmdEntry.Key)));
+                target.Symbols.Declare(cmdEntry.Key,Symbol.CreateCall(EntityRef.Command.Create(cmdEntry.Key), NoSourcePosition.Instance));
         }
 
         #endregion
@@ -1197,130 +1201,6 @@ namespace Prexonite.Compiler
                 StoreSymbols(writer);
         }
 
-        private class SymbolKinds
-        {
-            public readonly List<Tuple<string, int, EntityRef.Function>> Functions =
-                new List<Tuple<string, int, EntityRef.Function>>();
-            public readonly List<Tuple<string, int, EntityRef.Function>> MacroFunctions =
-                new List<Tuple<string, int, EntityRef.Function>>();
-            public readonly List<Tuple<string,int,EntityRef.Command>> Commands =
-                new List<Tuple<string,int,EntityRef.Command>>();
-            public readonly List<Tuple<string,int,EntityRef.Variable.Global>> Variables =
-                new List<Tuple<string,int,EntityRef.Variable.Global>>();
-            public readonly List<Tuple<string, int, EntityRef.Variable.Global>> MacroVariables =
-                new List<Tuple<string, int, EntityRef.Variable.Global>>();
-            public readonly List<Tuple<string,int,EntityRef.MacroCommand>> MacroCommands =
-                new List<Tuple<string,int,EntityRef.MacroCommand>>();
-
-            public string Key;
-            public int CurrentDereferenceCount;
-            public bool MacroMode;
-        }
-
-// ReSharper disable InconsistentNaming
-        private static readonly EntitySplitMatcher EntitySplit = new EntitySplitMatcher();
-// ReSharper restore InconsistentNaming
-        private class EntitySplitMatcher : EntityRefMatcher<SymbolKinds, object>
-        {
-            [ContractAnnotation("=> halt")]
-            protected override object OnNotMatched(EntityRef entity, SymbolKinds argument)
-            {
-                throw new PrexoniteException(String.Format("Cannot split up entity {0} into entity types.", entity));
-            }
-
-            protected override object OnCommand(EntityRef.Command command, SymbolKinds argument)
-            {
-                if(argument.MacroMode)
-                    throw new PrexoniteException("Cannot create symbol that represents compile-time expansion of runtime command.");
-                argument.Commands.Add(Tuple.Create(argument.Key,argument.CurrentDereferenceCount,command));
-                return null;
-            }
-
-            protected override object OnMacroCommand(EntityRef.MacroCommand macroCommand, SymbolKinds argument)
-            {
-                if (!argument.MacroMode)
-                    throw new PrexoniteException(string.Format("Cannot create symbol that represents runtime call to macro command {0}.", macroCommand.Id));
-                argument.MacroCommands.Add(Tuple.Create(argument.Key,argument.CurrentDereferenceCount,macroCommand));
-                return null;
-            }
-
-            public override object OnFunction(EntityRef.Function function, SymbolKinds argument)
-            {
-                var entry = Tuple.Create(argument.Key, argument.CurrentDereferenceCount, function);
-                if (argument.MacroMode)
-                    argument.MacroFunctions.Add(entry);
-                else
-                    argument.Functions.Add(entry);
-                return null;
-            }
-
-            protected override object OnGlobalVariable(EntityRef.Variable.Global variable, SymbolKinds argument)
-            {
-                var entry = Tuple.Create(argument.Key, argument.CurrentDereferenceCount, variable);
-                if (argument.MacroMode)
-                    argument.MacroVariables.Add(entry);
-                else
-                    argument.Variables.Add(entry);
-                return null;
-            }
-        }
-
-// ReSharper disable InconsistentNaming
-        private static readonly SymbolKindSplitHandler SymbolKindSplit = new SymbolKindSplitHandler();
-// ReSharper restore InconsistentNaming
-        private class SymbolKindSplitHandler : ISymbolHandler<SymbolKinds, object>
-        {
-            public object HandleCall(CallSymbol self, SymbolKinds argument)
-            {
-                return self.Entity.Match(EntitySplit, argument);
-            }
-
-            public object HandleExpand(ExpandSymbol self, SymbolKinds argument)
-            {
-                var oldMode = argument.MacroMode;
-                argument.MacroMode = true;
-                try
-                {
-                    return self.Entity.Match(EntitySplit, argument);
-                } 
-                finally
-                {
-                    argument.MacroMode = oldMode;
-                }
-            }
-
-            public object HandleMessage(MessageSymbol self, SymbolKinds argument)
-            {
-                // the second condition is included in the first, but helps ReSharper understand
-                //  that the else-branch cannot result in a null reference exception.
-                if(self.Message.Severity == MessageSeverity.Error || self.Symbol == null)
-                {
-                    return null; //don't emit error symbols
-                }
-                else
-                {
-                    return self.Symbol.HandleWith(this, argument);
-                }
-            }
-
-            public object HandleDereference(DereferenceSymbol self, SymbolKinds argument)
-            {
-                argument.CurrentDereferenceCount++;
-                return self.Symbol.HandleWith(this, argument);
-            }
-
-            public object HandleReferenceTo(ReferenceToSymbol self, SymbolKinds argument)
-            {
-                argument.CurrentDereferenceCount--;
-                return self.Symbol.HandleWith(this, argument);
-            }
-
-            public object HandleMacroInstance(MacroInstanceSymbol self, SymbolKinds argument)
-            {
-                return null;
-            }
-        }
-
         /// <summary>
         ///     Writes only the symbol declarations to the text writer (regardless of the <see cref = "LoaderOptions.StoreSymbols" /> property.)
         /// </summary>
@@ -1328,20 +1208,8 @@ namespace Prexonite.Compiler
         public void StoreSymbols(TextWriter writer)
         {
             writer.WriteLine("\n//--SYMBOLS");
-            var split = new SymbolKinds();
 
-            foreach (var kvp in Symbols)
-            {
-                split.Key = kvp.Key;
-                kvp.Value.HandleWith(SymbolKindSplit, split);
-            }
-
-            _writeSymbolKind(writer, "command", split.Commands);
-            _writeSymbolKind(writer, "function", split.Functions);
-            _writeSymbolKind(writer, "var", split.Variables);
-            _writeSymbolKind(writer, "macro command", split.MacroCommands);
-            _writeSymbolKind(writer, "macro function", split.MacroFunctions);
-            _writeSymbolKind(writer, "macro var", split.MacroVariables);
+            throw new NotImplementedException("Storing of symbols not implemented yet.");
         }
 
         /// <summary>
@@ -1486,51 +1354,42 @@ namespace Prexonite.Compiler
         {
             #region Implementation of ISymbolHandler<in List<Message>,out Symbol>
 
-            public Symbol HandleCall(CallSymbol self, List<Message> argument)
+            public Symbol HandleReference(ReferenceSymbol self, List<Message> argument)
+            {
+                return self;
+            }
+
+            public Symbol HandleNil(NilSymbol self, List<Message> argument)
             {
                 return self;
             }
 
             public Symbol HandleExpand(ExpandSymbol self, List<Message> argument)
             {
-                return self;
+                return _handleWrapped(self, argument);
             }
 
             public Symbol HandleMessage(MessageSymbol self, List<Message> argument)
             {
                 // Add the symbol to the list and unwrap contents
                 argument.Add(self.Message);
-                if (self.Symbol == null)
-                    return null;
-                else
-                    return self.Symbol.HandleWith(this, argument);
+                return self.InnerSymbol.HandleWith(this, argument);
             }
 
             public Symbol HandleDereference(DereferenceSymbol self, List<Message> argument)
             {
-                var s = self.Symbol.HandleWith(this,argument);
-                if (s == null)
-                    return null;
-                else if (ReferenceEquals(s, self.Symbol))
-                    return self;
-                else
-                    return DereferenceSymbol.Create(self);
+                return _handleWrapped(self, argument);
             }
 
-            public Symbol HandleReferenceTo(ReferenceToSymbol self, List<Message> argument)
+            private Symbol _handleWrapped(WrappingSymbol self, List<Message> argument)
             {
-                var s = self.Symbol.HandleWith(this, argument);
+                var s = self.InnerSymbol.HandleWith(this, argument);
                 if (s == null)
                     return null;
-                else if (ReferenceEquals(s, self.Symbol))
+                else if (ReferenceEquals(s, self.InnerSymbol))
                     return self;
                 else
-                    return ReferenceToSymbol.Create(self);
-            }
-
-            public Symbol HandleMacroInstance(MacroInstanceSymbol self, List<Message> argument)
-            {
-                return self;
+                    return self.With(s);
             }
 
             #endregion

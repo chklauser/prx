@@ -82,7 +82,7 @@ namespace Prexonite.Compiler.Ast
         {
             if (Elements.Count == 0)
             {
-                target.Emit(this, OpCode.newobj, 0, "Hash");
+                target.Emit(Position,OpCode.newobj, 0, "Hash");
             }
             else
             {
@@ -104,7 +104,7 @@ namespace Prexonite.Compiler.Ast
                 if(stackSemantics == StackSemantics.Effect)
                     return;
 
-                target.EmitStaticGetCall(this, Elements.Count, "Hash", "Create", false);
+                target.EmitStaticGetCall(Position, Elements.Count, "Hash", "Create", false);
             }
         }
     }

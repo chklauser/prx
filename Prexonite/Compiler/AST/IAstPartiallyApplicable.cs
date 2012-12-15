@@ -83,7 +83,7 @@ namespace Prexonite.Compiler.Ast
                 arg.EmitValueCode(target);
 
             foreach (var mapping in mappings32)
-                target.EmitConstant(node, mapping);
+                target.EmitConstant(node.Position, mapping);
 
             return closedArguments.Count + mappings32.Length;
         }
@@ -239,12 +239,17 @@ namespace Prexonite.Compiler.Ast
             argv.RemoveRange(redundantIndex, argv.Count - redundantIndex);
         }
 
-        public static AstExpr ConstFunc<T>(this T expr) where T : AstExpr
+        public static AstExpr ConstFunc(this AstExpr expr)
         {
             var constCmd = new AstGetSetSymbol(expr.File, expr.Line, expr.Column, PCall.Get,
                 new SymbolEntry(SymbolInterpretations.Command, Const.Alias, null));
             constCmd.Arguments.Add(expr);
             return constCmd;
+        }
+
+        public static AstExpr ConstFunc(this AstExpr expr, object constantValue)
+        {
+            return expr.Position.ConstFunc(constantValue);
         }
 
         public static AstExpr ConstFunc(this ISourcePosition position, object constantValue)

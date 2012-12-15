@@ -113,12 +113,12 @@ namespace Prexonite.Compiler.Symbolic.Internal
                 }
             }
 
-            var msg = string.Format("There are two incompatible declarations of the symbol {0} in this scope. " +
+            var msg = string.Format("There are two incompatible declarations of the self {0} in this scope. " +
                                     "One comes from {1}, the other one from {2}.", first.Name, first.Origin,
                                     second.Origin);
 
             return new KeyValuePair<string, Symbol>(first.Name,
-                                                    MessageSymbol.Create(Message.Create(MessageSeverity.Error,
+                                                    Symbol.CreateMessage(Message.Create(MessageSeverity.Error,
                                                                                 msg,
                                                                                 first.Origin,
                                                                                 MessageClasses.SymbolConflict), x1));
@@ -150,17 +150,22 @@ namespace Prexonite.Compiler.Symbolic.Internal
                 }
             }
 
-            var msg = string.Format("There are {0} incompatible declarations of the symbol {1}. They come from {2}.",
+            var msg = string.Format("There are {0} incompatible declarations of the self {1}. They come from {2}.",
                                     xs.Count, first.Name, symbols.Select(s => s.Origin).ToEnumerationString());
             return new KeyValuePair<string, Symbol>(first.Name,
-                                                    MessageSymbol.Create(Message.Create(MessageSeverity.Error, msg, first.Origin,
+                                                    Symbol.CreateMessage(Message.Create(MessageSeverity.Error, msg, first.Origin,
                                                                                 MessageClasses.SymbolConflict), xs[0]));
         }
 
         private static readonly ISymbolHandler<Message, bool> _containsMessage = new ContainsMessageHandler();
         private class ContainsMessageHandler : ISymbolHandler<Message, bool>
         {
-            public bool HandleCall(CallSymbol self, Message argument)
+            public bool HandleReference(ReferenceSymbol self, Message argument)
+            {
+                return false;
+            }
+
+            public bool HandleNil(NilSymbol self, Message argument)
             {
                 return false;
             }
@@ -174,32 +179,25 @@ namespace Prexonite.Compiler.Symbolic.Internal
             {
                 if (self.Message.Equals(argument))
                     return true;
-                else if(self.Symbol == null)
-                    return false;
                 else
-                    return self.Symbol.HandleWith(this,argument);
+                    return self.InnerSymbol.HandleWith(this,argument);
             }
 
             public bool HandleDereference(DereferenceSymbol self, Message argument)
             {
-                return self.Symbol.HandleWith(this, argument);
-            }
-
-            public bool HandleReferenceTo(ReferenceToSymbol self, Message argument)
-            {
-                return self.Symbol.HandleWith(this, argument);
-            }
-
-            public bool HandleMacroInstance(MacroInstanceSymbol self, Message argument)
-            {
-                return false;
+                return self.InnerSymbol.HandleWith(this, argument);
             }
         }
 
         private static readonly ISymbolHandler<Symbol,Symbol> _merge = new MergeHandler(); 
         private sealed class MergeHandler : ISymbolHandler<Symbol, Symbol>
         {
-            public Symbol HandleCall(CallSymbol thisSymbol, Symbol otherSymbol)
+            public Symbol HandleReference(ReferenceSymbol thisSymbol, Symbol otherSymbol)
+            {
+                return _handleSymbol(thisSymbol, otherSymbol);
+            }
+
+            public Symbol HandleNil(NilSymbol thisSymbol, Symbol otherSymbol)
             {
                 return _handleSymbol(thisSymbol, otherSymbol);
             }
@@ -210,11 +208,6 @@ namespace Prexonite.Compiler.Symbolic.Internal
             }
 
             public Symbol HandleDereference(DereferenceSymbol thisSymbol, Symbol otherSymbol)
-            {
-                return _handleSymbol(thisSymbol, otherSymbol);
-            }
-
-            public Symbol HandleReferenceTo(ReferenceToSymbol thisSymbol, Symbol otherSymbol)
             {
                 return _handleSymbol(thisSymbol, otherSymbol);
             }
@@ -234,48 +227,15 @@ namespace Prexonite.Compiler.Symbolic.Internal
                 if (ReferenceEquals(thisSymbol, otherSymbol))
                     return thisSymbol;
 
-                Symbol innerUnionSymbol;
-                if(thisSymbol.Symbol == null)
-                {
-                    // thisSymbol is a pure error symbol
-                    Debug.Assert(thisSymbol.Message.Severity == MessageSeverity.Error,"Found pure message symbol that is not an error.");
-                    var messageSymbol = otherSymbol as MessageSymbol;
-                    if (messageSymbol != null && messageSymbol.Symbol == null)
-                    {
-                        // both symbols are pure error symbols. Keep both error messages around.
-                        return MessageSymbol.Create(thisSymbol.Message, messageSymbol);
-                    }
-                    else
-                    {
-                        // otherSymbol is not a pure error symbol. This is a conflict
-                        return null;
-                    }
-                }
-                else
-                {
-                    // merge recursively
-                    innerUnionSymbol = thisSymbol.Symbol.HandleWith(this, otherSymbol);
-                    if (innerUnionSymbol == null) // the underlying symbol is not the same
-                        return null;
-                }
+                // merge recursively
+                var innerUnionSymbol = thisSymbol.InnerSymbol.HandleWith(this, otherSymbol);
+                if (innerUnionSymbol == null) // the underlying self is not the same
+                    return null;
 
                 if (innerUnionSymbol.HandleWith(_containsMessage, thisSymbol.Message))
                     return innerUnionSymbol;
                 else
-                    return MessageSymbol.Create(thisSymbol.Message, innerUnionSymbol);
-            }
-
-            public Symbol HandleMacroInstance(MacroInstanceSymbol thisSymbol, Symbol otherSymbol)
-            {
-                //Macro instances cannot be merged, they must be identical (except for messages)
-                if (ReferenceEquals(thisSymbol, otherSymbol))
-                    return thisSymbol;
-                
-                var messageSymbol = otherSymbol as MessageSymbol;
-                if (messageSymbol != null)
-                    return HandleMessage(messageSymbol, thisSymbol);
-                else 
-                    return null;
+                    return Symbol.CreateMessage(thisSymbol.Message, innerUnionSymbol);
             }
         }
 
@@ -363,7 +323,7 @@ namespace Prexonite.Compiler.Symbolic.Internal
 
         public override bool IsDeclaredLocally(string id)
         {
-            return _local == null || _local.ContainsKey(id);
+            return _local != null && _local.ContainsKey(id);
         }
 
         public override void ClearLocalDeclarations()

@@ -54,7 +54,7 @@ namespace Prexonite.Compiler.Ast
         {
             target.Loader.ReportMessage(
                 Message.Error(
-                    string.Format(Resources.AstUnresolved_The_symbol__0__has_not_been_resolved_, Id), this,
+                    string.Format(Resources.AstUnresolved_The_symbol__0__has_not_been_resolved_, Id), Position,
                     MessageClasses.SymbolNotResolved));
         }
 

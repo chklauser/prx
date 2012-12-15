@@ -52,7 +52,7 @@ namespace Prexonite.Compiler.Cil
 
     [SuppressMessage("Microsoft.Naming", "CA1704:IdentifiersShouldBeSpelledCorrectly",
         MessageId = "Cil")]
-    public static class CilHint
+    public static class CilHintExtensions
     {
         /// <summary>
         ///     Converts the supplied CIL hint to a meta entry (including the CIL hint key).

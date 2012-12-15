@@ -62,7 +62,7 @@ namespace Prexonite.Compiler.Ast
             switch (Implementation.Interpretation)
             {
                 case SymbolInterpretations.Command:
-                    target.Emit(this, OpCode.ldr_cmd, Implementation.InternalId);
+                    target.Emit(Position,OpCode.ldr_cmd, Implementation.InternalId);
                     break;
                 case SymbolInterpretations.Function:
                     PFunction func;
@@ -77,42 +77,47 @@ namespace Prexonite.Compiler.Ast
                                                                        "Use partial application syntax explicitly {0}(?) or use the {2} command " +
                                                                        "to obtain a reference to the macro.",
                                                                        Implementation, Engine.PrexoniteVersion,
-                                                                       Reference.Alias), this,
+                                                                       Reference.Alias), Position,
                                                                    MessageClasses.ReferenceToMacro));
 
                         _emitAsPartialApplication(target);
                     }
                     else
                     {
-                        target.Emit(this, OpCode.ldr_func, Implementation.InternalId, target.ToInternalModule(Implementation.Module));
+                        target.Emit(Position,OpCode.ldr_func, Implementation.InternalId, target.ToInternalModule(Implementation.Module));
                     }
                     break;
                 case SymbolInterpretations.GlobalObjectVariable:
-                    target.Emit(this, OpCode.ldr_glob, Implementation.InternalId, target.ToInternalModule(Implementation.Module));
+                    target.Emit(Position,OpCode.ldr_glob, Implementation.InternalId, target.ToInternalModule(Implementation.Module));
                     break;
                 case SymbolInterpretations.GlobalReferenceVariable:
-                    target.EmitLoadGlobal(this, Implementation.InternalId, Implementation.Module);
+                    target.EmitLoadGlobal(Position, Implementation.InternalId, Implementation.Module);
                     break;
                 case SymbolInterpretations.LocalObjectVariable:
-                    target.Emit(this, OpCode.ldr_loc, Implementation.InternalId);
+                    target.Emit(Position,OpCode.ldr_loc, Implementation.InternalId);
                     break;
                 case SymbolInterpretations.LocalReferenceVariable:
-                    target.Emit(this, OpCode.ldloc, Implementation.InternalId);
+                    target.Emit(Position,OpCode.ldloc, Implementation.InternalId);
                     break;
                 case SymbolInterpretations.MacroCommand:
                     target.Loader.ReportMessage(Message.Create(MessageSeverity.Warning,
                                                        string.Format(
                                                            Resources.AstGetSetReference_ReferenceToMacroTreatedAsPartialApplication,
-                                                           Implementation.InternalId, Engine.PrexoniteVersion, Reference.Alias), this,MessageClasses.ReferenceToMacro));
+                                                           Implementation.InternalId, Engine.PrexoniteVersion, Reference.Alias), Position, MessageClasses.ReferenceToMacro));
 
                     _emitAsPartialApplication(target);
 
                     break;
                 default:
-                    target.Loader.ReportMessage(Message.Create(MessageSeverity.Error,
-                                                       string.Format(Resources.AstGetSetReference_CannotCreateReference,
-                                                                     Enum.GetName(typeof (SymbolInterpretations), Implementation.Interpretation), Implementation.InternalId), this,MessageClasses.InvalidReference));
-                    target.EmitNull(this);
+                    target.Loader.ReportMessage(
+                        Message.Create(
+                            MessageSeverity.Error,
+                            string.Format(
+                                Resources.AstGetSetReference_CannotCreateReference,
+                                Enum.GetName(
+                                    typeof (SymbolInterpretations), Implementation.Interpretation),
+                                Implementation.InternalId), Position, MessageClasses.InvalidReference));
+                    target.EmitNull(Position);
                     break;
             }
         }
@@ -143,11 +148,11 @@ namespace Prexonite.Compiler.Ast
                     //Variables are not automatically dereferenced
                 case SymbolInterpretations.GlobalObjectVariable:
                 case SymbolInterpretations.GlobalReferenceVariable:
-                    target.EmitStoreGlobal(this, Implementation.InternalId, Implementation.Module);
+                    target.EmitStoreGlobal(Position, Implementation.InternalId, Implementation.Module);
                     break;
                 case SymbolInterpretations.LocalObjectVariable:
                 case SymbolInterpretations.LocalReferenceVariable:
-                    target.EmitStoreLocal(this, Implementation.InternalId);
+                    target.EmitStoreLocal(Position, Implementation.InternalId);
                     break;
             }
         }

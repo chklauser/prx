@@ -58,18 +58,18 @@ namespace Prexonite.Compiler.Ast
 
             if (stackSemantics == StackSemantics.Value)
             {
-                target.EmitLabel(this, falseLabel);
-                target.EmitConstant(this, false);
-                target.EmitJump(this, evalLabel);
-                target.EmitLabel(this, trueLabel);
-                target.EmitConstant(this, true);
-                target.EmitLabel(this, evalLabel);
+                target.EmitLabel(Position, falseLabel);
+                target.EmitConstant(Position, false);
+                target.EmitJump(Position, evalLabel);
+                target.EmitLabel(Position, trueLabel);
+                target.EmitConstant(Position, true);
+                target.EmitLabel(Position, evalLabel);
             }
             else
             {
                 Debug.Assert(stackSemantics == StackSemantics.Effect);
-                target.EmitLabel(this, falseLabel);
-                target.EmitLabel(this, trueLabel);
+                target.EmitLabel(Position, falseLabel);
+                target.EmitLabel(Position, trueLabel);
             }
         }
 
@@ -85,17 +85,17 @@ namespace Prexonite.Compiler.Ast
                 {
                     and.EmitCode(target, trueLabel, nextLabel);
                     //ResolveOperator pending jumps to Next
-                    target.EmitLabel(this, nextLabel);
+                    target.EmitLabel(Position, nextLabel);
                     target.FreeLabel(nextLabel);
                     //Future references of to nextLabel will be resolved in the next iteration
                 }
                 else
                 {
                     expr.EmitValueCode(target);
-                    target.EmitJumpIfTrue(this, trueLabel);
+                    target.EmitJumpIfTrue(Position, trueLabel);
                 }
             }
-            target.EmitJump(this, falseLabel);
+            target.EmitJump(Position, falseLabel);
         }
 
         #region Partial application

@@ -70,30 +70,28 @@ namespace Prexonite.Compiler.Ast
             switch (Implementation.Interpretation)
             {
                 case SymbolInterpretations.Command:
-                    target.EmitCommandCall(this, Arguments.Count, Implementation.InternalId, justEffect);
+                    target.EmitCommandCall(Position, Arguments.Count, Implementation.InternalId, justEffect);
                     break;
                 case SymbolInterpretations.Function:
-                    target.EmitFunctionCall(this, Arguments.Count, Implementation.InternalId, Implementation.Module, justEffect);
+                    target.EmitFunctionCall(Position, Arguments.Count, Implementation.InternalId, Implementation.Module, justEffect);
                     break;
                 case SymbolInterpretations.GlobalObjectVariable:
                     if (!justEffect)
-                        target.EmitLoadGlobal(this, Implementation.InternalId, Implementation.Module);
+                        target.EmitLoadGlobal(Position, Implementation.InternalId, Implementation.Module);
                     break;
                 case SymbolInterpretations.LocalObjectVariable:
                     if (!justEffect)
-                        target.EmitLoadLocal(this, Implementation.InternalId);
+                        target.EmitLoadLocal(Position, Implementation.InternalId);
                     break;
                 case SymbolInterpretations.LocalReferenceVariable:
-                    target.Emit(this,
-                        Instruction.CreateLocalIndirectCall(Arguments.Count, Implementation.InternalId, justEffect));
+                    target.Emit(Position,Instruction.CreateLocalIndirectCall(Arguments.Count, Implementation.InternalId, justEffect));
                     break;
                 case SymbolInterpretations.GlobalReferenceVariable:
-                    target.Emit(this,
-                        Instruction.CreateGlobalIndirectCall(Arguments.Count, Implementation.InternalId, target.ToInternalModule(Implementation.Module), justEffect));
+                    target.Emit(Position,Instruction.CreateGlobalIndirectCall(Arguments.Count, Implementation.InternalId, target.ToInternalModule(Implementation.Module), justEffect));
                     break;
                 default:
                     throw new PrexoniteException(
-                        "Invalid symbol " +
+                        "Invalid self " +
                             Enum.GetName(typeof (SymbolInterpretations), Implementation.Interpretation) +
                                 " in AST.");
             }
@@ -106,28 +104,26 @@ namespace Prexonite.Compiler.Ast
             switch (Implementation.Interpretation)
             {
                 case SymbolInterpretations.Command:
-                    target.EmitCommandCall(this, Arguments.Count, Implementation.InternalId, justEffect);
+                    target.EmitCommandCall(Position, Arguments.Count, Implementation.InternalId, justEffect);
                     break;
                 case SymbolInterpretations.Function:
-                    target.EmitFunctionCall(this, Arguments.Count, Implementation.InternalId, Implementation.Module, justEffect);
+                    target.EmitFunctionCall(Position, Arguments.Count, Implementation.InternalId, Implementation.Module, justEffect);
                     break;
                 case SymbolInterpretations.GlobalObjectVariable:
-                    target.EmitStoreGlobal(this, Implementation.InternalId, Implementation.Module);
+                    target.EmitStoreGlobal(Position, Implementation.InternalId, Implementation.Module);
                     break;
                 case SymbolInterpretations.LocalReferenceVariable:
-                    target.Emit(this,
-                        Instruction.CreateLocalIndirectCall(Arguments.Count, Implementation.InternalId, justEffect));
+                    target.Emit(Position,Instruction.CreateLocalIndirectCall(Arguments.Count, Implementation.InternalId, justEffect));
                     break;
                 case SymbolInterpretations.GlobalReferenceVariable:
-                    target.Emit(this,
-                        Instruction.CreateGlobalIndirectCall(Arguments.Count, Implementation.InternalId, target.ToInternalModule(Implementation.Module), justEffect));
+                    target.Emit(Position,Instruction.CreateGlobalIndirectCall(Arguments.Count, Implementation.InternalId, target.ToInternalModule(Implementation.Module), justEffect));
                     break;
                 case SymbolInterpretations.LocalObjectVariable:
-                    target.EmitStoreLocal(this, Implementation.InternalId);
+                    target.EmitStoreLocal(Position, Implementation.InternalId);
                     break;
                 default:
                     throw new PrexoniteException(
-                        string.Format("Invalid symbol {0} in AST.", Implementation));
+                        string.Format("Invalid self {0} in AST.", Implementation));
             }
         }
 

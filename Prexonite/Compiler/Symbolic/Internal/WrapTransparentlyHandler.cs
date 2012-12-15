@@ -6,11 +6,6 @@ namespace Prexonite.Compiler.Symbolic.Internal
 
         protected abstract Symbol Wrap(Symbol inner);
 
-        public virtual Symbol HandleCall(CallSymbol self, object argument)
-        {
-            return Wrap(self);
-        }
-
         public virtual Symbol HandleExpand(ExpandSymbol self, object argument)
         {
             return Wrap(self);
@@ -18,12 +13,7 @@ namespace Prexonite.Compiler.Symbolic.Internal
 
         public virtual Symbol HandleMessage(MessageSymbol self, object argument)
         {
-            // Keep message symbols on the outside, except when it doesn't wrap
-            //  an inner symbol (pure error symbols)
-            if (self.Symbol == null)
-                return self;
-            else
-                return MessageSymbol.Create(self.Message, Wrap(self.Symbol));
+            return self.With(Wrap(self.InnerSymbol));
         }
 
         public virtual Symbol HandleDereference(DereferenceSymbol self, object argument)
@@ -31,12 +21,12 @@ namespace Prexonite.Compiler.Symbolic.Internal
             return Wrap(self);
         }
 
-        public virtual Symbol HandleReferenceTo(ReferenceToSymbol self, object argument)
+        public Symbol HandleReference(ReferenceSymbol self, object argument)
         {
             return Wrap(self);
         }
 
-        public virtual Symbol HandleMacroInstance(MacroInstanceSymbol self, object argument)
+        public Symbol HandleNil(NilSymbol self, object argument)
         {
             return Wrap(self);
         }

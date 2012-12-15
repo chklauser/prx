@@ -57,7 +57,7 @@ namespace Prexonite.Compiler.Macro.Commands
             if (context.Invocation.Arguments.Count < 1)
             {
                 context.ReportMessage(Message.Error(
-                    string.Format(Resources.CallStar_usage, Id),context.Invocation,MessageClasses.CallStarUsage));
+                    string.Format(Resources.CallStar_usage, Id), context.Invocation.Position, MessageClasses.CallStarUsage));
                 return true;
             }
 
@@ -157,7 +157,7 @@ namespace Prexonite.Compiler.Macro.Commands
             {
                 context.ReportMessage(
                     Message.Error(
-                        string.Format(Resources.CallStar_usage, Id), context.Invocation,
+                        string.Format(Resources.CallStar_usage, Id), context.Invocation.Position,
                         MessageClasses.CallStarUsage));
                 return;
             }
@@ -199,7 +199,7 @@ namespace Prexonite.Compiler.Macro.Commands
                 context.ReportMessage(
                     Message.Error(
                         string.Format(Resources.CallStar__invalid_PassThrough, passThrough),
-                        (ISourcePosition) passThroughNode ?? context.Invocation,
+                        (ISourcePosition)passThroughNode ?? context.Invocation.Position,
                         MessageClasses.CallStarPassThrough));
         }
 

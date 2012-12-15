@@ -74,16 +74,14 @@ namespace Prexonite.Compiler.Ast
             if (constType != null)
             {
                 EmitArguments(target);
-                target.EmitStaticGetCall(this,
-                    Arguments.Count, constType.TypeExpression, _memberId, justEffect);
+                target.EmitStaticGetCall(Position, Arguments.Count, constType.TypeExpression, _memberId, justEffect);
             }
             else
             {
                 TypeExpr.EmitValueCode(target);
-                target.EmitConstant(this, _memberId);
+                target.EmitConstant(Position, _memberId);
                 EmitArguments(target);
-                target.EmitGetCall(this, Arguments.Count + 1, PType.StaticCallFromStackId,
-                    justEffect);
+                target.EmitGetCall(Position, Arguments.Count + 1, PType.StaticCallFromStackId, justEffect);
             }
         }
 
@@ -104,16 +102,15 @@ namespace Prexonite.Compiler.Ast
             if (constType != null)
             {
                 EmitArguments(target, !justEffect, 0);
-                target.EmitStaticSetCall(this,
-                    Arguments.Count, constType.TypeExpression + "::" + _memberId);
+                target.EmitStaticSetCall(Position, Arguments.Count, constType.TypeExpression + "::" + _memberId);
             }
             else
             {
                 TypeExpr.EmitValueCode(target);
-                target.EmitConstant(this, _memberId);
+                target.EmitConstant(Position, _memberId);
                 EmitArguments(target, !justEffect, 2);
                 //type.StaticCall\FromStack(memberId, args...)
-                target.EmitSetCall(this, Arguments.Count + 1, PType.StaticCallFromStackId);
+                target.EmitSetCall(Position, Arguments.Count + 1, PType.StaticCallFromStackId);
             }
         }
 
@@ -139,12 +136,12 @@ namespace Prexonite.Compiler.Ast
             var ctorArgc = this.EmitConstructorArguments(target, argv);
             var constTypeExpr = TypeExpr as AstConstantTypeExpression;
             if (constTypeExpr != null)
-                target.EmitConstant(constTypeExpr, constTypeExpr.TypeExpression);
+                target.EmitConstant(constTypeExpr.Position, constTypeExpr.TypeExpression);
             else
                 TypeExpr.EmitValueCode(target);
-            target.EmitConstant(this, (int) Call);
-            target.EmitConstant(this, _memberId);
-            target.EmitCommandCall(this, ctorArgc + 3, Engine.PartialStaticCallAlias);
+            target.EmitConstant(Position, (int) Call);
+            target.EmitConstant(Position, _memberId);
+            target.EmitCommandCall(Position, ctorArgc + 3, Engine.PartialStaticCallAlias);
         }
 
         public override string ToString()

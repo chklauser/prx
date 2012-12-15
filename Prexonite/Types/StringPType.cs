@@ -30,6 +30,7 @@ using System;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.Globalization;
+using System.IO;
 using System.Linq;
 using System.Text;
 using System.Text.RegularExpressions;
@@ -88,7 +89,13 @@ namespace Prexonite.Types
         public static string Escape(string unescaped)
         {
             //The initial capacity is just a random guess
-            var buffer = new StringBuilder(unescaped.Length + 10);
+            var buffer = new StringBuilder(unescaped.Length + 16);
+            Escape(unescaped, new StringWriter(buffer));
+            return buffer.ToString();
+        }
+
+        public static void Escape(string unescaped, TextWriter buffer)
+        {
             for (var i = 0; i < unescaped.Length; i++)
             {
                 var curr = unescaped[i];
@@ -97,8 +104,8 @@ namespace Prexonite.Types
                 {
                     var c = unescaped[i + 1];
                     nextIsHex = '0' <= c && c <= '9'
-                        || 'a' <= c && c <= 'f'
-                            || 'A' <= c && c <= 'F';
+                                || 'a' <= c && c <= 'f'
+                                || 'A' <= c && c <= 'F';
                 }
                 else
                 {
@@ -107,39 +114,39 @@ namespace Prexonite.Types
 
 
                 if (curr == '\\')
-                    buffer.Append(@"\\");
+                    buffer.Write(@"\\");
                 else if (curr == '"')
-                    buffer.Append("\\\"");
+                    buffer.Write("\\\"");
                 else if (curr == '$')
-                    buffer.Append("\\$");
+                    buffer.Write("\\$");
                 else if (curr >= 20 && curr < 127)
-                    buffer.Append(curr);
+                    buffer.Write(curr);
                 else //Non-printable characters
                     switch (curr)
                     {
                         case '\0':
-                            buffer.Append("\\0");
+                            buffer.Write("\\0");
                             break;
                         case '\a':
-                            buffer.Append("\\a");
+                            buffer.Write("\\a");
                             break;
                         case '\b':
-                            buffer.Append("\\b");
+                            buffer.Write("\\b");
                             break;
                         case '\f':
-                            buffer.Append("\\f");
+                            buffer.Write("\\f");
                             break;
                         case '\n':
-                            buffer.Append("\\n");
+                            buffer.Write("\\n");
                             break;
                         case '\r':
-                            buffer.Append("\\r");
+                            buffer.Write("\\r");
                             break;
                         case '\t':
-                            buffer.Append("\\t");
+                            buffer.Write("\\t");
                             break;
                         case '\v':
-                            buffer.Append("\\v");
+                            buffer.Write("\\v");
                             break;
                         default:
                             UInt32 utf32 = curr;
@@ -147,17 +154,16 @@ namespace Prexonite.Types
                             var utf8 = (Byte) curr;
                             if (utf32 > UInt16.MaxValue)
                                 //Use \U notation
-                                buffer.AppendFormat("\\U{0:X8}", utf32);
+                                buffer.Write("\\U{0:X8}", utf32);
                             else if (utf32 > Byte.MaxValue || nextIsHex)
                                 //Use \u notation
-                                buffer.AppendFormat("\\u{0:X4}", utf16);
+                                buffer.Write("\\u{0:X4}", utf16);
                             else
                                 //Use \x notation
-                                buffer.AppendFormat("\\x{0:X2}", utf8);
+                                buffer.Write("\\x{0:X2}", utf8);
                             break;
                     }
             }
-            return buffer.ToString();
         }
 
         public static string Unescape(string escaped)

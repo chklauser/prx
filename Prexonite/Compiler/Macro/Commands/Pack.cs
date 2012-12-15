@@ -54,7 +54,10 @@ namespace Prexonite.Compiler.Macro.Commands
         {
             if (context.Invocation.Arguments.Count < 1)
             {
-                context.ReportMessage(Message.Error(string.Format(Resources.Pack_Usage_obj_missing, Alias),context.Invocation,MessageClasses.PackUsage));
+                context.ReportMessage(
+                    Message.Error(
+                        string.Format(Resources.Pack_Usage_obj_missing, Alias),
+                        context.Invocation.Position, MessageClasses.PackUsage));
                 return;
             }
 

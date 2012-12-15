@@ -292,7 +292,7 @@ namespace Prexonite.Compiler.Macro
         public void ReportMessage(MessageSeverity severity, string message,
             ISourcePosition position = null)
         {
-            position = position ?? _invocation;
+            position = position ?? _invocation.Position;
             _session.Target.Loader.ReportMessage(Message.Create(severity, message, position,null));
         }
 

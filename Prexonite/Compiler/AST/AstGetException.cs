@@ -43,7 +43,7 @@ namespace Prexonite.Compiler.Ast
             if(stackSemantics == StackSemantics.Effect)
                 return;
 
-            target.Emit(this, OpCode.exc);
+            target.Emit(Position,OpCode.exc);
         }
 
         #region AstExpr Members

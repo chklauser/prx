@@ -53,6 +53,7 @@ namespace Prexonite.Compiler.Ast
         AstExpr Typecheck(ISourcePosition position, AstExpr operand, AstTypeExpr type);
         AstExpr Typecast(ISourcePosition position, AstExpr operand, AstTypeExpr type);
 
+        AstExpr Reference(ISourcePosition position, EntityRef entity);
         AstGetSet Entity(ISourcePosition position, EntityRef entity, PCall call = PCall.Get);
         AstGetSet MemberAccess(ISourcePosition position, AstExpr receiver, string memberId, PCall call = PCall.Get);
 

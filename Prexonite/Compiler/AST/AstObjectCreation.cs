@@ -107,9 +107,9 @@ namespace Prexonite.Compiler.Ast
             {
                 foreach (var arg in _arguments)
                     arg.EmitValueCode(target);
-                target.Emit(this, OpCode.newobj, _arguments.Count, constType.TypeExpression);
+                target.Emit(Position,OpCode.newobj, _arguments.Count, constType.TypeExpression);
                 if(stackSemantics == StackSemantics.Effect)
-                    target.Emit(this, Instruction.CreatePop());
+                    target.Emit(Position,Instruction.CreatePop());
             }
             else
             {
@@ -118,7 +118,7 @@ namespace Prexonite.Compiler.Ast
                 foreach (var arg in _arguments)
                     arg.EmitValueCode(target);
                 var justEffect = stackSemantics == StackSemantics.Effect;
-                target.EmitGetCall(this, _arguments.Count, PType.ConstructFromStackId, justEffect);
+                target.EmitGetCall(Position, _arguments.Count, PType.ConstructFromStackId, justEffect);
             }
         }
 
@@ -139,10 +139,10 @@ namespace Prexonite.Compiler.Ast
             var ctorArgc = this.EmitConstructorArguments(target, argv);
             var constType = _typeExpr as AstConstantTypeExpression;
             if (constType != null)
-                target.EmitConstant(this, constType.TypeExpression);
+                target.EmitConstant(Position, constType.TypeExpression);
             else
                 _typeExpr.EmitValueCode(target);
-            target.EmitCommandCall(this, ctorArgc + 1, Engine.PartialConstructionAlias);
+            target.EmitCommandCall(Position, ctorArgc + 1, Engine.PartialConstructionAlias);
         }
 
         #endregion

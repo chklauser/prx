@@ -131,7 +131,7 @@ namespace Prexonite.Compiler.Macro.Commands
                 context.ReportMessage(
                     Message.Error(
                         string.Format(Resources.Reference_can_only_be_used_in_a_macro_context, Alias),
-                        context.Invocation, MessageClasses.ReferenceUsage));
+                        context.Invocation.Position, MessageClasses.ReferenceUsage));
                 return;
             }
             
@@ -139,7 +139,8 @@ namespace Prexonite.Compiler.Macro.Commands
             {
                 context.ReportMessage(
                     Message.Error(
-                        string.Format(Resources.Reference_requires_at_least_one_argument, Alias), context.Invocation,
+                        string.Format(Resources.Reference_requires_at_least_one_argument, Alias),
+                        context.Invocation.Position,
                         MessageClasses.ReferenceUsage));
                 return;
             }
@@ -150,14 +151,14 @@ namespace Prexonite.Compiler.Macro.Commands
                 context.ReportMessage(
                     Message.Error(
                         string.Format(Resources.Reference_requires_argument_to_be_a_prototype_of_a_macro_invocation, Alias),
-                        context.Invocation, MessageClasses.ReferenceUsage));
+                        context.Invocation.Position, MessageClasses.ReferenceUsage));
                 return;
             }
 
             context.Block.Expression = context.CreateGetSetSymbol(SymbolEntry.Command(Impl.Alias), 
                 PCall.Get,
                 context.CreateConstant(prototype.Implementation.InternalId),
-                prototype.Implementation.Interpretation.EnumToExpression(prototype),
+                prototype.Implementation.Interpretation.EnumToExpression(prototype.Position),
                 context.CreateConstantOrNull(prototype.Implementation.Module));
         }
 

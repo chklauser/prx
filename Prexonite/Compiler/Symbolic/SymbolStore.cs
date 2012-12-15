@@ -73,7 +73,7 @@ namespace Prexonite.Compiler.Symbolic
         /// Creates a new <see cref="SymbolStore"/> using a default implementation.
         /// </summary>
         /// <param name="parent">The symbol store where failed queries are forwarded to. Can be null.</param>
-        /// <param name="conflictUnionSource">A sequence of stores that the newly created store should provide a unified view of.</param>
+        /// <param name="conflictUnionSource">A sequence of symbols, possibly from multiple stores, that the newly created store should provide a unified view of.</param>
         /// <returns>A new symbol store.</returns>
         [PublicAPI]
         [NotNull]
@@ -91,7 +91,7 @@ namespace Prexonite.Compiler.Symbolic
         public abstract void Declare([NotNull] string id, [NotNull] Symbol symbol);
 
         /// <summary>
-        /// Indicates whether a declaration for the supplied symbolic id exists locally (was declared via <see cref="Declare"/>.
+        /// Indicates whether a declaration for the supplied symbolic id exists locally (was declared via <see cref="Declare"/>).
         /// </summary>
         /// <param name="id">The symbolic id to look up.</param>
         /// <returns>True if there is a local definition for <paramref name="id"/>; false if there is no definition for <paramref name="id"/> or if the only definition(s) for <paramref name="id"/> are not local.</returns>
@@ -122,7 +122,7 @@ namespace Prexonite.Compiler.Symbolic
         {
             var msg = Message.Error(string.Format("Cannot resolve symbol {0}.", id), position,
                                     MessageClasses.SymbolNotResolved);
-            return MessageSymbol.Create(msg, null);
+            return Symbol.CreateMessage(msg, Symbol.CreateNil(position));
         }
 
         #region Implementation of IObject

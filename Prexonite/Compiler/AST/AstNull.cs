@@ -49,7 +49,7 @@ namespace Prexonite.Compiler.Ast
             if(stackSemantics == StackSemantics.Effect)
                 return;
 
-            target.EmitNull(this);
+            target.EmitNull(Position);
         }
     }
 }

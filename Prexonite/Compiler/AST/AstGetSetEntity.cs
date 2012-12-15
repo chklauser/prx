@@ -34,6 +34,7 @@ namespace Prexonite.Compiler.Ast
 {
 #pragma warning disable 628 //ignore warnings about proteced members in sealed classes for now
 
+    [Obsolete("Will be removed in favor of IndirectCall(Reference(*))")]
     public sealed class AstGetSetEntity : AstGetSet, ICanBeReferenced, IAstPartiallyApplicable
     {
         private readonly EntityRef _entity;
@@ -88,14 +89,14 @@ namespace Prexonite.Compiler.Ast
 
             protected override object OnCommand(EntityRef.Command command, CodeGenInfo argument)
             {
-                argument.Target.EmitCommandCall(argument.Node, argument.Node.Arguments.Count, command.Id,
+                argument.Target.EmitCommandCall(argument.Node.Position, argument.Node.Arguments.Count, command.Id,
                                                 argument.JustEffect);
                 return null;
             }
 
             public override object OnFunction(EntityRef.Function function, CodeGenInfo argument)
             {
-                argument.Target.EmitFunctionCall(argument.Node, argument.Node.Arguments.Count, function.Id,
+                argument.Target.EmitFunctionCall(argument.Node.Position, argument.Node.Arguments.Count, function.Id,
                                                  function.ModuleName, argument.JustEffect);
                 return null;
             }
@@ -103,14 +104,14 @@ namespace Prexonite.Compiler.Ast
             protected override object OnGlobalVariable(EntityRef.Variable.Global variable, CodeGenInfo argument)
             {
                 if(!argument.JustEffect)
-                    argument.Target.EmitLoadGlobal(argument.Node,variable.Id,variable.ModuleName);
+                    argument.Target.EmitLoadGlobal(argument.Node.Position,variable.Id,variable.ModuleName);
                 return null;
             }
 
             protected override object OnLocalVariable(EntityRef.Variable.Local variable, CodeGenInfo argument)
             {
                 if(!argument.JustEffect)
-                    argument.Target.EmitLoadLocal(argument.Node,variable.Id);
+                    argument.Target.EmitLoadLocal(argument.Node.Position,variable.Id);
                 return null;
             }
         }
@@ -133,28 +134,28 @@ namespace Prexonite.Compiler.Ast
 
             protected override object OnCommand(EntityRef.Command command, CodeGenInfo argument)
             {
-                argument.Target.EmitCommandCall(argument.Node, argument.Node.Arguments.Count, command.Id,
+                argument.Target.EmitCommandCall(argument.Node.Position, argument.Node.Arguments.Count, command.Id,
                                                 JustEffect);
                 return null;
             }
 
             public override object OnFunction(EntityRef.Function function, CodeGenInfo argument)
             {
-                argument.Target.EmitFunctionCall(argument.Node, argument.Node.Arguments.Count, function.Id,
+                argument.Target.EmitFunctionCall(argument.Node.Position, argument.Node.Arguments.Count, function.Id,
                                                  function.ModuleName, JustEffect);
                 return null;
             }
 
             protected override object OnGlobalVariable(EntityRef.Variable.Global variable, CodeGenInfo argument)
             {
-                argument.Target.EmitStoreGlobal(argument.Node,variable.Id,variable.ModuleName);
+                argument.Target.EmitStoreGlobal(argument.Node.Position,variable.Id,variable.ModuleName);
                 return null;
             }
 
             protected override object OnLocalVariable(EntityRef.Variable.Local variable, CodeGenInfo argument)
             {
                 if(!argument.JustEffect)
-                    argument.Target.EmitStoreLocal(argument.Node,variable.Id);
+                    argument.Target.EmitStoreLocal(argument.Node.Position,variable.Id);
                 return null;
             }
         }
@@ -169,7 +170,7 @@ namespace Prexonite.Compiler.Ast
 
         protected override void EmitSetCode(CompilerTarget target)
         {
-            _entity.Match(_emitSetCode, new CodeGenInfo() {Target = target, Node = this});
+            _entity.Match(_emitSetCode, new CodeGenInfo {Target = target, Node = this});
         }
 
         public override AstGetSet GetCopy()

@@ -28,6 +28,7 @@ using System;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.Runtime.Serialization;
+using Prexonite.Properties;
 using Prexonite.Types;
 
 namespace Prexonite.Compiler.Ast
@@ -51,7 +52,7 @@ namespace Prexonite.Compiler.Ast
             {
                 if (value.HasValue && value.Value < 0)
                     throw new ArgumentOutOfRangeException("value",
-                        "A placeholder index cannot be negtive");
+                        Resources.AstPlaceholder_PlaceholdeIndexNegative);
                 _index = value;
             }
         }
@@ -117,7 +118,7 @@ namespace Prexonite.Compiler.Ast
                         throw new PrexoniteException(
                             string.Format(
                                 "The placeholder (at {0}) has a custom index value that exceeds the maxmimum mappable index.",
-                                placeholder.GetSourcePositionString()));
+                                placeholder.Position.GetSourcePositionString()));
                     }
 
                     if (assigned.Count <= placeholder.Index)
@@ -155,7 +156,7 @@ namespace Prexonite.Compiler.Ast
                     throw new PrexoniteException(
                         string.Format(
                             "The placeholder (at {0}) would be assigned an index that exceeds the maxmimum mappable index.",
-                            placeholder.GetSourcePositionString()));
+                            placeholder.Position.GetSourcePositionString()));
             }
         }
 

@@ -20,8 +20,9 @@
     <UpgradeBackupLocation>
     </UpgradeBackupLocation>
     <IsWebBootstrapper>false</IsWebBootstrapper>
-    <TargetFrameworkVersion>v4.0</TargetFrameworkVersion>
-    <TargetFrameworkProfile>Client</TargetFrameworkProfile>
+    <TargetFrameworkVersion>v4.5</TargetFrameworkVersion>
+    <TargetFrameworkProfile>
+    </TargetFrameworkProfile>
     <PublishUrl>publish\</PublishUrl>
     <Install>true</Install>
     <InstallFrom>Disk</InstallFrom>
@@ -48,6 +49,7 @@
     <DocumentationFile>
     </DocumentationFile>
     <CodeAnalysisRuleSet>AllRules.ruleset</CodeAnalysisRuleSet>
+    <Prefer32Bit>false</Prefer32Bit>
   </PropertyGroup>
   <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Release|AnyCPU' ">
     <DebugType>pdbonly</DebugType>
@@ -88,6 +90,7 @@
     <CodeContractsRuntimeCheckingLevel>Full</CodeContractsRuntimeCheckingLevel>
     <CodeContractsReferenceAssembly>%28none%29</CodeContractsReferenceAssembly>
     <CodeAnalysisRuleSet>AllRules.ruleset</CodeAnalysisRuleSet>
+    <Prefer32Bit>false</Prefer32Bit>
   </PropertyGroup>
   <ItemGroup>
     <Reference Include="System" />
@@ -149,6 +152,7 @@
     <Compile Include="Compiler\Ast\AstFactoryBridge.cs" />
     <Compile Include="Compiler\Ast\AstGetSetEntity.cs" />
     <Compile Include="Compiler\Ast\AstLoopBlock.cs" />
+    <Compile Include="Compiler\Ast\AstReference.cs" />
     <Compile Include="Compiler\Ast\AstReferenceToEntity.cs" />
     <Compile Include="Compiler\Ast\AstScopedExpr.cs" />
     <Compile Include="Compiler\Ast\AstScopedBlock.cs" />
@@ -178,6 +182,11 @@
     <Compile Include="Compiler\Build\TargetDescriptionSet.cs" />
     <Compile Include="Compiler\Build\VersionConflictException.cs" />
     <Compile Include="Compiler\ErrorMessageException.cs" />
+    <Compile Include="Compiler\Internal\EntityRefMExprParser.cs" />
+    <Compile Include="Compiler\Internal\EntityRefMExprSerializer.cs" />
+    <Compile Include="Compiler\Internal\MExpr.cs" />
+    <Compile Include="Compiler\Internal\SymbolMExprParser.cs" />
+    <Compile Include="Compiler\Internal\SymbolMExprSerializer.cs" />
     <Compile Include="Compiler\Macro\MacroAstFactory.cs" />
     <Compile Include="Compiler\Macro\Commands\PartialCallWrapper.cs" />
     <Compile Include="Compiler\Macro\Commands\CallMacro.cs" />
@@ -191,17 +200,21 @@
     <Compile Include="Compiler\MessageEventArgs.cs" />
     <Compile Include="Compiler\MessageSeverity.cs" />
     <Compile Include="Compiler\NoSourcePosition.cs" />
+    <Compile Include="Compiler\Parser.SymbolBuilder.cs" />
     <Compile Include="Compiler\ParserAstFactory.cs" />
     <Compile Include="Compiler\Symbolic\CallSymbol.cs" />
     <Compile Include="Compiler\Symbolic\Compatibility\LegacyExtensions.cs" />
     <Compile Include="Compiler\Symbolic\DereferenceSymbol.cs" />
     <Compile Include="Compiler\Symbolic\ExpandSymbol.cs" />
     <Compile Include="Compiler\Symbolic\Internal\ConflictUnionFallbackStore.cs" />
+    <Compile Include="Compiler\Symbolic\Internal\ReplaceCoreNilHandler.cs" />
     <Compile Include="Compiler\Symbolic\Internal\SymbolBuilder.cs" />
+    <Compile Include="Compiler\Symbolic\Internal\TransformHandler.cs" />
     <Compile Include="Compiler\Symbolic\Internal\WrapTransparentlyHandler.cs" />
     <Compile Include="Compiler\Symbolic\ISymbolHandler.cs" />
-    <Compile Include="Compiler\Symbolic\MacroInstanceSymbol.cs" />
     <Compile Include="Compiler\Symbolic\MessageSymbol.cs" />
+    <Compile Include="Compiler\Symbolic\NilSymbol.cs" />
+    <Compile Include="Compiler\Symbolic\ReferenceSymbol.cs" />
     <Compile Include="Compiler\Symbolic\ReferenceToSymbol.cs" />
     <Compile Include="Compiler\Symbolic\Symbol.cs" />
     <Compile Include="Compiler\Symbolic\SymbolHandler.cs" />
@@ -540,6 +553,7 @@
     <CodeAnalysisIgnoreBuiltInRuleSets>false</CodeAnalysisIgnoreBuiltInRuleSets>
     <CodeAnalysisRuleDirectories>;C:\Program Files (x86)\Microsoft Visual Studio 10.0\Team Tools\Static Analysis Tools\FxCop\\Rules</CodeAnalysisRuleDirectories>
     <CodeAnalysisIgnoreBuiltInRules>false</CodeAnalysisIgnoreBuiltInRules>
+    <Prefer32Bit>false</Prefer32Bit>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)' == 'Release|x86'">
     <DebugSymbols>true</DebugSymbols>
@@ -557,6 +571,7 @@
     <CodeAnalysisIgnoreBuiltInRuleSets>false</CodeAnalysisIgnoreBuiltInRuleSets>
     <CodeAnalysisRuleDirectories>;C:\Program Files (x86)\Microsoft Visual Studio 10.0\Team Tools\Static Analysis Tools\FxCop\\Rules</CodeAnalysisRuleDirectories>
     <CodeAnalysisIgnoreBuiltInRules>false</CodeAnalysisIgnoreBuiltInRules>
+    <Prefer32Bit>false</Prefer32Bit>
   </PropertyGroup>
   <UsingTask AssemblyFile="$(PxCoco)" TaskName="Merge" />
   <UsingTask AssemblyFile="$(PxCoco)" TaskName="PxCoco" />

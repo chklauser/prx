@@ -1,42 +1,53 @@
+using System;
+using Prexonite.Properties;
+
 namespace Prexonite.Compiler.Symbolic
 {
     public abstract class SymbolHandler<TArg, TResult> : ISymbolHandler<TArg, TResult>
     {
-        protected abstract TResult HandleSymbolDefault(Symbol symbol, TArg argument);
+        protected virtual TResult HandleSymbolDefault(Symbol self, TArg argument)
+        {
+            throw new NotSupportedException(
+                string.Format(
+                    Resources.SymbolHandler_CannotHandleSymbolOfType, GetType().Name,
+                    self.GetType().Name));
+        }
+
+        protected virtual TResult HandleWrappingSymbol(WrappingSymbol self, TArg argument)
+        {
+            return HandleSymbolDefault(self, argument);
+        }
+
+        protected virtual TResult HandleLeafSymbol(Symbol self, TArg argument)
+        {
+            return HandleSymbolDefault(self, argument);
+        }
 
         #region Implementation of ISymbolHandler<in TArg,out TResult>
 
-        public virtual TResult HandleCall(CallSymbol self, TArg argument)
+        public virtual TResult HandleReference(ReferenceSymbol self, TArg argument)
         {
-            return HandleSymbolDefault(self, argument);
+            return HandleLeafSymbol(self, argument);
+        }
+
+        public virtual TResult HandleNil(NilSymbol self, TArg argument)
+        {
+            return HandleLeafSymbol(self, argument);
         }
 
         public virtual TResult HandleExpand(ExpandSymbol self, TArg argument)
         {
-            return HandleSymbolDefault(self, argument);
-        }
-
-        public virtual TResult HandleMessage(MessageSymbol self, TArg argument)
-        {
-            if (self.Symbol == null)
-                return HandleSymbolDefault(self, argument);
-            else
-                return self.Symbol.HandleWith(this, argument);
+            return HandleWrappingSymbol(self, argument);
         }
 
         public virtual TResult HandleDereference(DereferenceSymbol self, TArg argument)
         {
-            return self.Symbol.HandleWith(this, argument);
+            return HandleWrappingSymbol(self, argument);
         }
 
-        public virtual TResult HandleReferenceTo(ReferenceToSymbol self, TArg argument)
+        public virtual TResult HandleMessage(MessageSymbol self, TArg argument)
         {
-            return self.Symbol.HandleWith(this, argument);
-        }
-
-        public virtual TResult HandleMacroInstance(MacroInstanceSymbol self, TArg argument)
-        {
-            return HandleSymbolDefault(self, argument);
+            return HandleWrappingSymbol(self, argument);
         }
 
         #endregion

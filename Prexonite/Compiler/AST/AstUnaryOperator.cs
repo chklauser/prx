@@ -136,7 +136,7 @@ namespace Prexonite.Compiler.Ast
                 goto emitFull;
 
                 emitConstant:
-                return AstConstant.TryCreateConstant(target, this, result, out expr);
+                return AstConstant.TryCreateConstant(target, Position, result, out expr);
                 emitFull:
                 return false;
             }
@@ -190,10 +190,9 @@ namespace Prexonite.Compiler.Ast
                         if(!isPre && value == StackSemantics.Value)
                         {
                             if (isGlobal)
-                                target.EmitLoadGlobal(this, sym.InternalId,
-                                    sym.Module);
+                                target.EmitLoadGlobal(Position, sym.InternalId, sym.Module);
                             else
-                                target.EmitLoadLocal(this, sym.InternalId);
+                                target.EmitLoadLocal(Position, sym.InternalId);
                         }
 
                         OpCode opc;
@@ -203,15 +202,14 @@ namespace Prexonite.Compiler.Ast
                         else
                             opc = isGlobal ? OpCode.decglob : OpCode.decloc;
 
-                        target.Emit(this, opc, symbol.Implementation.InternalId, target.ToInternalModule(symbol.Implementation.Module));
-                        
+                        target.Emit(Position,opc, symbol.Implementation.InternalId, target.ToInternalModule(symbol.Implementation.Module));
+
                         if (isPre && value == StackSemantics.Value)
                         {
                             if (isGlobal)
-                                target.EmitLoadGlobal(this, sym.InternalId,
-                                    sym.Module);
+                                target.EmitLoadGlobal(Position, sym.InternalId, sym.Module);
                             else
-                                target.EmitLoadLocal(this, sym.InternalId);
+                                target.EmitLoadLocal(Position, sym.InternalId);
                         }
                     }
                     else if (isAssignable)

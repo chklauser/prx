@@ -7,6 +7,21 @@ namespace Prexonite.Compiler.Symbolic
     [DebuggerDisplay("->{Symbol}")]
     public sealed class ReferenceToSymbol : Symbol
     {
+
+        [NotNull]
+        private readonly ISourcePosition _position;
+
+        [NotNull]
+        public override ISourcePosition Position
+        {
+            get { return _position; }
+        }
+
+        public override bool Equals(Symbol other)
+        {
+            throw new System.NotImplementedException();
+        }
+
         private class WrapInReferenceToHandler : WrapTransparentlyHandler
         {
             #region Overrides of WrapTransparentlyHandler
@@ -18,7 +33,7 @@ namespace Prexonite.Compiler.Symbolic
              
             public override Symbol HandleDereference(DereferenceSymbol self, object argument)
             {
-                return self.Symbol.HandleWith(this,argument);
+                return self.InnerSymbol.HandleWith(this,argument);
                 
             }
 
@@ -55,13 +70,6 @@ namespace Prexonite.Compiler.Symbolic
             return _symbol.Equals(other._symbol);
         }
 
-        public override bool Equals(object obj)
-        {
-            if (ReferenceEquals(null, obj)) return false;
-            if (ReferenceEquals(this, obj)) return true;
-            return obj is ReferenceToSymbol && _equals((ReferenceToSymbol)obj);
-        }
-
         public override int GetHashCode()
         {
             return 337 ^ _symbol.GetHashCode();
@@ -73,13 +81,7 @@ namespace Prexonite.Compiler.Symbolic
 
         public override TResult HandleWith<TArg, TResult>(ISymbolHandler<TArg, TResult> handler, TArg argument)
         {
-            return handler.HandleReferenceTo(this, argument);
-        }
-
-        public override bool TryGetReferenceToSymbol(out ReferenceToSymbol referenceToSymbol)
-        {
-            referenceToSymbol = this;
-            return true;
+            return default(TResult);
         }
 
         #endregion

@@ -454,7 +454,7 @@ namespace Prexonite.Compiler.Ast
             goto emitFull;
 
             emitConstant:
-            return AstConstant.TryCreateConstant(target, this, result, out expr);
+            return AstConstant.TryCreateConstant(target, Position, result, out expr);
 
             emitFull:
             return false;

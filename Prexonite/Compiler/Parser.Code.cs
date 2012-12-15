@@ -32,6 +32,7 @@ using System.Linq;
 using JetBrains.Annotations;
 using Prexonite.Commands.Core.Operators;
 using Prexonite.Compiler.Ast;
+using Prexonite.Compiler.Internal;
 using Prexonite.Compiler.Symbolic;
 using Prexonite.Modular;
 using Prexonite.Properties;
@@ -381,7 +382,7 @@ namespace Prexonite.Compiler
 
         private bool _TryUseSymbolEntry(string id, ISourcePosition position, out SymbolEntry symbolEntry)
         {
-            Debug.Assert(target != null, "Tried to resolve legacy symbol entry while not in a scope where a compiler target is available.");
+            Debug.Assert(target != null, "Tried to resolve legacy self entry while not in a scope where a compiler target is available.");
             return target._TryUseSymbolEntry(id, position, out symbolEntry);
         }
 
@@ -520,15 +521,17 @@ namespace Prexonite.Compiler
         }
 
         //id is object or reference variable
-        [DebuggerStepThrough]
+        [DebuggerStepThrough,Obsolete("There is no good reason for such a restrictive predicate.")]
         public bool isLikeVariable(string id) //context
         {
             Symbol symbol;
-            CallSymbol callSymbol;
-            if (!(target.Symbols.TryGet(id, out symbol) && symbol.TryGetCallSymbol(out callSymbol)))
-                return false;
+            DereferenceSymbol callSymbol;
+            ReferenceSymbol referenceSymbol;
             EntityRef.Variable _;
-            return callSymbol.Entity.TryGetVariable(out _);
+            return target.Symbols.TryGet(id, out symbol)
+                && symbol.TryGetDereferenceSymbol(out callSymbol)
+                && callSymbol.InnerSymbol.TryGetReferenceSymbol(out referenceSymbol)
+                && referenceSymbol.Entity.TryGetVariable(out _);
         }
 
         public bool isLocalVariable(SymbolInterpretations interpretations)
@@ -575,69 +578,31 @@ namespace Prexonite.Compiler
                 symbol.HandleWith(_isLikeFunction, false);
         }
 
-        private class IsLikeFunctionHandler : SymbolHandler<bool, bool>
+        private class IsLikeFunctionHandler : SymbolHandler<object, bool>
         {
-            protected override bool HandleSymbolDefault(Symbol symbol, bool argument)
+            protected override bool HandleSymbolDefault(Symbol self, object argument)
             {
                 return false;
             }
 
-            public override bool HandleDereference(DereferenceSymbol self, bool argument)
+            public override bool HandleDereference(DereferenceSymbol self, object argument)
             {
-                return self.Symbol.HandleWith(this, true);
+                return true;
             }
 
-            public override bool HandleCall(CallSymbol self, bool argument)
+            public override bool HandleExpand(ExpandSymbol self, object argument)
             {
-                return self.Entity.Match(_likeFunction, argument);
+                return true;
             }
 
-            public override bool HandleExpand(ExpandSymbol self, bool argument)
+            protected override bool HandleWrappingSymbol(WrappingSymbol self, object argument)
             {
-                return self.Entity.Match(_likeFunction, argument);
+                return self.InnerSymbol.HandleWith(this, argument);
             }
-
-            private static readonly IEntityRefMatcher<bool, bool> _likeFunction = new IsLikeFunctionMatcher();
+            
         }
 
-        private static readonly SymbolHandler<bool, bool> _isLikeFunction = new IsLikeFunctionHandler();
-
-        private class IsLikeFunctionMatcher : EntityRefMatcher<bool, bool>
-        {
-            #region Overrides of EntityRefMatcher<object,bool>
-
-            protected override bool OnNotMatched(EntityRef entity, bool argument)
-            {
-                return false;
-            }
-
-            protected override bool OnCommand(EntityRef.Command command, bool argument)
-            {
-                return true;
-            }
-
-            public override bool OnFunction(EntityRef.Function function, bool argument)
-            {
-                return true;
-            }
-
-            protected override bool OnLocalVariable(EntityRef.Variable.Local variable, bool isDereferenced)
-            {
-                return isDereferenced;
-            }
-
-            protected override bool OnGlobalVariable(EntityRef.Variable.Global variable, bool isDereferenced)
-            {
-                return isDereferenced;
-            }
-
-            protected override bool OnMacroCommand(EntityRef.MacroCommand macroCommand, bool argument)
-            {
-                return true;
-            }
-
-            #endregion
-        }
+        private static readonly SymbolHandler<object, bool> _isLikeFunction = new IsLikeFunctionHandler();
 
         //context
 
@@ -836,29 +801,34 @@ namespace Prexonite.Compiler
             switch (kind)
             {
                 case SymbolInterpretations.Function:
-                    return CallSymbol.Create(EntityRef.Function.Create(physicalId, TargetModule.Name));
+                    return Symbol.CreateCall(EntityRef.Function.Create(physicalId, TargetModule.Name),GetPosition());
                 case SymbolInterpretations.Command:
-                    return CallSymbol.Create(EntityRef.Command.Create(physicalId));
+                    return Symbol.CreateCall(EntityRef.Command.Create(physicalId), GetPosition());
                 case SymbolInterpretations.LocalObjectVariable:
-                    return CallSymbol.Create(EntityRef.Variable.Local.Create(physicalId));
+                    return Symbol.CreateCall(EntityRef.Variable.Local.Create(physicalId), GetPosition());
                 case SymbolInterpretations.LocalReferenceVariable:
                     return
-                        DereferenceSymbol.Create(CallSymbol.Create(EntityRef.Variable.Local.Create(physicalId)));
+                        Symbol.CreateDereference(
+                            Symbol.CreateDereference(
+                                Symbol.CreateReference(EntityRef.Variable.Local.Create(physicalId), GetPosition())));
                 case SymbolInterpretations.GlobalObjectVariable:
-                    return CallSymbol.Create(EntityRef.Variable.Global.Create(physicalId, TargetModule.Name));
+                    return Symbol.CreateCall(EntityRef.Variable.Global.Create(physicalId, TargetModule.Name), GetPosition());
                 case SymbolInterpretations.GlobalReferenceVariable:
                     return
-                        DereferenceSymbol.Create(
-                            CallSymbol.Create(EntityRef.Variable.Global.Create(physicalId, TargetModule.Name)));
+                        Symbol.CreateDereference(
+                            Symbol.CreateDereference(
+                                Symbol.CreateReference(
+                                    EntityRef.Variable.Global.Create(physicalId, TargetModule.Name), GetPosition())));
                 case SymbolInterpretations.MacroCommand:
-                    return CallSymbol.Create(EntityRef.MacroCommand.Create(physicalId));
+                    return Symbol.CreateCall(EntityRef.MacroCommand.Create(physicalId), GetPosition());
                 default:
+                    var position = GetPosition();
                     return
-                        MessageSymbol.Create(Message.Error(
-                            string.Format("Invalid symbol interpretation {0}.",
-                                Enum.GetName(typeof(SymbolInterpretations), kind)), GetPosition(),
+                        Symbol.CreateMessage(Message.Error(
+                            string.Format("Invalid self interpretation {0}.",
+                                Enum.GetName(typeof(SymbolInterpretations), kind)), position,
                             MessageClasses.InvalidSymbolInterpretation),
-                               CallSymbol.Create(EntityRef.Command.Create(physicalId)));
+                               Symbol.CreateCall(EntityRef.Command.Create(physicalId), GetPosition()), position);
             }
         }
 
@@ -881,6 +851,19 @@ namespace Prexonite.Compiler
                 {
                     target.Function.Variables.Add(physicalId);
                 }
+            }
+        }
+
+        private Symbol _parseSymbol(MExpr expr)
+        {
+            try
+            {
+                return SymbolMExprParser.Parse(Symbols,expr);
+            }
+            catch (ErrorMessageException e)
+            {
+                Loader.ReportMessage(e.CompilerMessage);
+                return Symbol.CreateNil(e.CompilerMessage.Position);
             }
         }
 
@@ -952,55 +935,78 @@ namespace Prexonite.Compiler
 
         private class AssembleAstHandler : ISymbolHandler<Tuple<Parser, PCall>, AstExpr>
         {
-            public AstExpr HandleCall(CallSymbol self, Tuple<Parser, PCall> argument)
-            {
-                var access = AstGetSetEntity.Create(argument.Item1.GetPosition(), argument.Item2, self.Entity);
-
-                return access;
-            }
-
-            public AstExpr HandleExpand(ExpandSymbol self, Tuple<Parser, PCall> argument)
-            {
-                var position = argument.Item1.GetPosition();
-                return new AstMacroInvocation(position.File, position.Line, position.Column, self.Entity.ToSymbolEntry()) { Call = argument.Item2 };
-            }
-
             public AstExpr HandleMessage(MessageSymbol self, Tuple<Parser, PCall> argument)
             {
-                throw new PrexoniteException(string.Format("Unexpected message still attached to symbol {0}.", self));
+                return self.InnerSymbol.HandleWith(this, argument);
             }
 
             public AstExpr HandleDereference(DereferenceSymbol self, Tuple<Parser, PCall> argument)
             {
-                return AstIndirectCall.Create(argument.Item1.GetPosition(), self.Symbol.HandleWith(this, argument),
+
+                return AstIndirectCall.Create(argument.Item1.GetPosition(), self.InnerSymbol.HandleWith(this, argument),
                                               argument.Item2);
             }
 
-            public AstExpr HandleReferenceTo(ReferenceToSymbol self, Tuple<Parser, PCall> argument)
+            #region Implementation of ISymbolHandler<in Tuple<Parser,PCall>,out AstExpr>
+
+            public AstExpr HandleReference(ReferenceSymbol self, Tuple<Parser, PCall> argument)
             {
-                CallSymbol callSymbol;
-                if (self.TryGetCallSymbol(out callSymbol))
+                return argument.Item1.Create.Entity(argument.Item1.GetPosition(), self.Entity);
+            }
+
+            public AstExpr HandleNil(NilSymbol self, Tuple<Parser, PCall> argument)
+            {
+                // TODO: consider treating Nil as an error (needs to be shadowed by proper error messages)
+                return argument.Item1._NullNode(argument.Item1.GetPosition());
+            }
+
+            public AstExpr HandleExpand(ExpandSymbol self, Tuple<Parser, PCall> argument)
+            {
+                ReferenceSymbol refSym;
+
+                var position = argument.Item1.GetPosition();
+                var inner = self.InnerSymbol;
+                var abort = false;
+
+                MessageSymbol msgSym;
+                while(inner.TryGetMessageSymbol(out msgSym))
                 {
-                    return AstReferenceToEntity.Create(argument.Item1.GetPosition(), callSymbol.Entity);
+                    abort |= msgSym.Message.Severity == MessageSeverity.Error;
+                    argument.Item1.Loader.ReportMessage(msgSym.Message);
+                    inner = msgSym.InnerSymbol;
+                }
+
+                if(self.InnerSymbol.TryGetReferenceSymbol(out refSym))
+                {
+                    EntityRef.MacroCommand mcmd;
+                    EntityRef.Function func;
+                    if(refSym.Entity.TryGetMacroCommand(out mcmd) || refSym.Entity.TryGetFunction(out func))
+                    {
+                        if (abort)
+                            return argument.Item1._NullNode(position);
+                        else
+                            return new AstMacroInvocation(argument.Item1, refSym.Entity.ToSymbolEntry());
+                    }
+                    else
+                    {
+                        argument.Item1.Loader.ReportMessage(
+                        Message.Error(string.Format(Resources.Parser_CannotExpandAtCompileTime, inner),
+                            position, MessageClasses.NotAMacro));
+                        return argument.Item1._NullNode(position);
+                    }
                 }
                 else
                 {
-                    var inner = self.Symbol.HandleWith(this, argument) as ICanBeReferenced;
-                    AstExpr reference;
-                    if (inner != null && inner.TryToReference(out reference))
-                        return reference;
-                    else
-                    {
-                        throw new ErrorMessageException(Message.Error(string.Format("Cannot create a reference to {0}", self), argument.Item1.GetPosition(), MessageClasses.CannotCreateReference));
-                    }
+                    // TODO: Handle general case with dereferences between Expand and Reference.
+                    
+                    argument.Item1.Loader.ReportMessage(
+                        Message.Error(string.Format(Resources.Parser_CannotExpandAtCompileTime, inner),
+                            position, MessageClasses.NotAMacro));
+                    return argument.Item1._NullNode(position);
                 }
             }
 
-            public AstExpr HandleMacroInstance(MacroInstanceSymbol self, Tuple<Parser, PCall> argument)
-            {
-                // TODO (Ticket #109) MacroInstance invocation
-                throw new NotImplementedException("Assembly of macro instance invocations");
-            }
+            #endregion
         }
 
         [NotNull]
@@ -1017,14 +1023,22 @@ namespace Prexonite.Compiler
             }
         }
 
+        private class EnsureInScopeHandler : Symbolic.Internal.TransformHandler<Parser>
+        {
+            public override Symbol HandleReference(ReferenceSymbol self, Parser argument)
+            {
+                EntityRef.Variable.Local local;
+                if(self.Entity.TryGetLocalVariable(out local)
+                    && argument.isOuterVariable(local.Id))
+                    argument.target.RequireOuterVariable(local.Id);
+                return self;
+            }
+        }
+        private static readonly EnsureInScopeHandler _ensureInScope = new EnsureInScopeHandler();
+
         public void EnsureInScope(Symbol symbol)
         {
-            CallSymbol es;
-            EntityRef.Variable.Local local;
-            if (symbol.TryGetCallSymbol(out es)
-                && es.Entity.TryGetLocalVariable(out local)
-                && isOuterVariable(local.Id))
-                target.RequireOuterVariable(local.Id);
+            symbol.HandleWith(_ensureInScope, this);
         }
 
         private void _fallbackObjectCreation(AstTypeExpr type, out AstExpr expr,
@@ -1052,12 +1066,12 @@ namespace Prexonite.Compiler
 
                 EnsureInScope(fallbackSymbol);
 
-                var e = _assembleInvocation(fallbackSymbol, type);
+                var e = _assembleInvocation(fallbackSymbol, type.Position);
                 var call = e as AstGetSet;
                 if (call == null)
                 {
                     var pos = GetPosition();
-                    call = _astFactory.IndirectCall(pos, _astFactory.Null(pos));
+                    call = Create.IndirectCall(pos, Create.Null(pos));
                     Loader.ReportMessage(Message.Create(MessageSeverity.Error,
                                                 string.Format(Resources.Parser__CannotUseExpressionAsAConstructor,
                                                               e), pos,

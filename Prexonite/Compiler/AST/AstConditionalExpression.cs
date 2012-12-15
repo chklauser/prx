@@ -123,10 +123,10 @@ namespace Prexonite.Compiler.Ast
             //if => block / else => block
             AstLazyLogical.EmitJumpCondition(target, Condition, elseLabel, IsNegative);
             IfExpression.EmitCode(target, stackSemantics);
-            target.EmitJump(this, endLabel);
-            target.EmitLabel(this, elseLabel);
+            target.EmitJump(Position, endLabel);
+            target.EmitLabel(Position, elseLabel);
             ElseExpression.EmitCode(target, stackSemantics);
-            target.EmitLabel(this, endLabel);
+            target.EmitLabel(Position, endLabel);
 
             target.FreeLabel(elseLabel);
             target.FreeLabel(endLabel);

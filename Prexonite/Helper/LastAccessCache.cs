@@ -2,6 +2,7 @@ using System;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.Linq;
+using Prexonite.Properties;
 
 namespace Prexonite
 {
@@ -23,7 +24,7 @@ namespace Prexonite
         public LastAccessCache(int capacity)
         {
             if (capacity <= 0)
-                throw new ArgumentException("Capacity must be strictly positive.", "capacity");
+                throw new ArgumentException(Resources.LastAccessCache_CapacityMustBePositive, "capacity");
 
             Capacity = capacity;
         }

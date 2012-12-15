@@ -27,6 +27,7 @@
 using System;
 using System.Collections.Generic;
 using System.Diagnostics;
+using System.IO;
 using JetBrains.Annotations;
 using Prexonite.Commands;
 using Prexonite.Compiler;
@@ -162,12 +163,33 @@ namespace Prexonite.Modular
 
         #endregion
 
+        #region ToString
+
+        /// <summary>
+        /// Writes a human-readable representation of this <see cref="EntityRef"/> to the supplied <see cref="TextWriter"/>.
+        /// </summary>
+        /// <param name="writer">The writer to write to. Must not be null.</param>
+        [PublicAPI]
+        public abstract void ToString([NotNull] TextWriter writer);
+
+        public sealed override string ToString()
+        {
+            var sw = new StringWriter();
+            ToString(sw);
+            return sw.ToString();
+        }
+
+        #endregion
+
         #region Functions
 
         [DebuggerDisplay("function {Id}/{ModuleName}")]
         public class Function : EntityRef, IEquatable<Function>, IRunTime
         {
+            [NotNull]
             private readonly string _id;
+
+            [NotNull]
             private readonly ModuleName _moduleName;
 
             bool IEquatable<Function>.Equals(Function other)
@@ -229,7 +251,7 @@ namespace Prexonite.Modular
                 return !Equals(left, right);
             }
 
-            private Function(string id, ModuleName moduleName)
+            private Function([NotNull] string id, [NotNull] ModuleName moduleName)
             {
                 _id = id;
                 _moduleName = moduleName;
@@ -269,6 +291,14 @@ namespace Prexonite.Modular
                 return new SymbolEntry(SymbolInterpretations.Function, Id, ModuleName);
             }
 
+            public override void ToString(TextWriter writer)
+            {
+                writer.Write("func ");
+                writer.Write(_id);
+                writer.Write("/");
+                writer.Write(_moduleName);
+            }
+
             internal override bool _TryLookup(StackContext sctx, out PValue entity)
             {
                 var app = sctx.ParentApplication;
@@ -289,8 +319,9 @@ namespace Prexonite.Modular
                 return true;
             }
 
-            public static Function Create(string internalId, ModuleName moduleName)
+            public static Function Create([NotNull] string internalId, [NotNull] ModuleName moduleName)
             {
+                Debug.Assert(moduleName != null, string.Format("Module name is null for entity ref to function {0}.", internalId));
                 return new Function(internalId, moduleName);
             }
         }
@@ -384,6 +415,12 @@ namespace Prexonite.Modular
                 return new SymbolEntry(SymbolInterpretations.Command, Id, null);
             }
 
+            public override void ToString(TextWriter writer)
+            {
+                writer.Write("cmd ");
+                writer.Write(_id);
+            }
+
             internal override bool _TryLookup(StackContext sctx, out PValue entity)
             {
                 PCommand command;
@@ -434,20 +471,25 @@ namespace Prexonite.Modular
             [DebuggerDisplay("global var {Id}/{ModuleName}")]
             public sealed class Global : Variable, IEquatable<Global>
             {
+                [NotNull]
                 private readonly string _id;
+
+                [NotNull]
                 private readonly ModuleName _moduleName;
 
-                private Global(string id, ModuleName moduleName)
+                private Global([NotNull] string id, [NotNull] ModuleName moduleName)
                 {
                     _id = id;
                     _moduleName = moduleName;
                 }
 
+                [NotNull]
                 public string Id
                 {
                     get { return _id; }
                 }
 
+                [NotNull]
                 public ModuleName ModuleName
                 {
                     get { return _moduleName; }
@@ -464,8 +506,9 @@ namespace Prexonite.Modular
                     return true;
                 }
 
-                public static Global Create(string id, ModuleName moduleName)
+                public static Global Create([NotNull] string id, [NotNull] ModuleName moduleName)
                 {
+                    Debug.Assert(moduleName != null,string.Format("Module name is null for entity ref to global variable {0}.", id));
                     return new Global(id, moduleName);
                 }
 
@@ -490,6 +533,14 @@ namespace Prexonite.Modular
                 public override SymbolEntry ToSymbolEntry()
                 {
                     return new SymbolEntry(SymbolInterpretations.GlobalObjectVariable, Id,ModuleName);
+                }
+
+                public override void ToString(TextWriter writer)
+                {
+                    writer.Write("gvar ");
+                    writer.Write(_id);
+                    writer.Write("/");
+                    writer.Write(_moduleName);
                 }
 
                 internal override bool _TryLookup(StackContext sctx, out PValue entity)
@@ -538,7 +589,7 @@ namespace Prexonite.Modular
                 {
                     unchecked
                     {
-                        return ((_id != null ? _id.GetHashCode() : 0)*397) ^ (_moduleName != null ? _moduleName.GetHashCode() : 0);
+                        return ((_id.GetHashCode())*397) ^ (_moduleName.GetHashCode());
                     }
                 }
 
@@ -657,6 +708,12 @@ namespace Prexonite.Modular
                     return new SymbolEntry(SymbolInterpretations.LocalObjectVariable, Id, null);
                 }
 
+                public override void ToString(TextWriter writer)
+                {
+                    writer.Write("var ");
+                    writer.Write(_id);
+                }
+
                 internal override bool _TryLookup(StackContext sctx, out PValue entity)
                 {
                     var fctx = sctx as FunctionContext;
@@ -741,6 +798,12 @@ namespace Prexonite.Modular
             public override SymbolEntry ToSymbolEntry()
             {
                 return new SymbolEntry(SymbolInterpretations.MacroCommand, Id, null);
+            }
+
+            public override void ToString(TextWriter writer)
+            {
+                writer.Write("mcmd ");
+                writer.Write(_id);
             }
 
             internal override bool _TryLookup(StackContext sctx, out PValue entity)

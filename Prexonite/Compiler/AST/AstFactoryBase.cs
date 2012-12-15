@@ -168,9 +168,14 @@ namespace Prexonite.Compiler.Ast
             return new AstTypecast(position.File, position.Line, position.Column,operand,type);
         }
 
+        public AstExpr Reference(ISourcePosition position, EntityRef entity)
+        {
+            return new AstReference(position, entity);
+        }
+
         public AstGetSet Entity(ISourcePosition position, EntityRef entity, PCall call = PCall.Get)
         {
-            return AstGetSetEntity.Create(position, call, entity);
+            return IndirectCall(position, Reference(position, entity), call);
         }
 
         public AstGetSet MemberAccess(ISourcePosition position, AstExpr receiver, string memberId, PCall call = PCall.Get)

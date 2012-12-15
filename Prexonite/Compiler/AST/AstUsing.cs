@@ -91,7 +91,7 @@ namespace Prexonite.Compiler.Ast
             if (_resourceExpression == null)
                 throw new PrexoniteException("AstUsing requires Expression to be initialized.");
 
-            var tryNode = new AstTryCatchFinally(this,this);
+            var tryNode = new AstTryCatchFinally(Position, this);
             var vContainer = _block.CreateLabel("container");
             target.Function.Variables.Add(vContainer);
             //Try block => Container = {Expression}; {Block};

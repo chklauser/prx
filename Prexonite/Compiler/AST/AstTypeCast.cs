@@ -69,11 +69,11 @@ namespace Prexonite.Compiler.Ast
             Subject.EmitValueCode(target);
             var constType = Type as AstConstantTypeExpression;
             if (constType != null)
-                target.Emit(this, OpCode.cast_const, constType.TypeExpression);
+                target.Emit(Position,OpCode.cast_const, constType.TypeExpression);
             else
             {
                 Type.EmitValueCode(target);
-                target.Emit(this, OpCode.cast_arg);
+                target.Emit(Position,OpCode.cast_arg);
             }
         }
 
@@ -126,7 +126,7 @@ namespace Prexonite.Compiler.Ast
             }
             PValue result;
             if (constSubject.ToPValue(target).TryConvertTo(target.Loader, type, out result))
-                return AstConstant.TryCreateConstant(target, this, result, out expr);
+                return AstConstant.TryCreateConstant(target, Position, result, out expr);
             else
                 return false;
         }
@@ -143,11 +143,11 @@ namespace Prexonite.Compiler.Ast
             var ctorArgc = this.EmitConstructorArguments(target, argv);
             var constType = Type as AstConstantTypeExpression;
             if (constType != null)
-                target.EmitConstant(this, constType.TypeExpression);
+                target.EmitConstant(Position, constType.TypeExpression);
             else
                 Type.EmitValueCode(target);
 
-            target.EmitCommandCall(this, ctorArgc + 1, Engine.PartialTypeCastAlias);
+            target.EmitCommandCall(Position, ctorArgc + 1, Engine.PartialTypeCastAlias);
         }
     }
 }

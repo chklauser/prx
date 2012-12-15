@@ -4,67 +4,51 @@ using Prexonite.Compiler.Symbolic.Internal;
 
 namespace Prexonite.Compiler.Symbolic
 {
-    [DebuggerDisplay("ref {Symbol}")]
-    public sealed class DereferenceSymbol : Symbol
+    [DebuggerDisplay("{ToString}")]
+    public sealed class DereferenceSymbol : WrappingSymbol
     {
-        private class WrapInDereferenceHandler : WrapTransparentlyHandler
+        public override string ToString()
         {
-            #region Overrides of WrapTransparentlyHandler
+            var rsym = InnerSymbol as ReferenceSymbol;
 
-            protected override Symbol Wrap(Symbol inner)
+            if (rsym != null)
             {
-                return new DereferenceSymbol(inner);
+                return rsym.Entity.ToString();
             }
-
-            public override Symbol HandleReferenceTo(ReferenceToSymbol self, object argument)
+            else
             {
-                return self.Symbol.HandleWith(this, argument);
+                return string.Format("ref {0}", InnerSymbol);
             }
-
-            #endregion
         }
-        private static readonly WrapTransparentlyHandler _wrapInReference = new WrapInDereferenceHandler();
 
         [NotNull]
-        public static Symbol Create([NotNull] Symbol symbol)
+        internal static Symbol _Create([NotNull] Symbol symbol, [CanBeNull] ISourcePosition position)
         {
             if (symbol == null)
                 throw new System.ArgumentNullException("symbol");
-            return symbol.HandleWith(_wrapInReference, null);
+            return new DereferenceSymbol(position ?? symbol.Position, symbol);
         }
 
-        [NotNull]
-        private readonly Symbol _symbol;
-
-        private DereferenceSymbol(Symbol symbol)
+        private DereferenceSymbol([NotNull] ISourcePosition position, Symbol inner)
+            : base(position, inner)
         {
-            _symbol = symbol;
-        }
-
-        [NotNull]
-        public Symbol Symbol
-        {
-            get { return _symbol; }
         }
 
         #region Equality members
 
-        private bool _equals(DereferenceSymbol other)
+        #region Overrides of WrappingSymbol
+
+        protected override int HashCodeXorFactor
         {
-            return _symbol.Equals(other._symbol);
+            get { return 5557; }
         }
 
-        public override bool Equals(object obj)
+        public override WrappingSymbol With(Symbol newInnerSymbol, ISourcePosition newPosition = null)
         {
-            if (ReferenceEquals(null, obj)) return false;
-            if (ReferenceEquals(this, obj)) return true;
-            return obj is DereferenceSymbol && _equals((DereferenceSymbol) obj);
+            return new DereferenceSymbol(newPosition ?? Position, newInnerSymbol);
         }
 
-        public override int GetHashCode()
-        {
-            return 111 ^ _symbol.GetHashCode();
-        }
+        #endregion
 
         #endregion
 
@@ -79,6 +63,13 @@ namespace Prexonite.Compiler.Symbolic
         {
             dereferenceSymbol = this;
             return true;
+        }
+
+        public override bool Equals(Symbol other)
+        {
+            if (ReferenceEquals(null, other)) return false;
+            if (ReferenceEquals(this, other)) return true;
+            return other is DereferenceSymbol && Equals((DereferenceSymbol)other);
         }
 
         #endregion

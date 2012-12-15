@@ -105,17 +105,17 @@ namespace Prexonite.Compiler.Ast
             {
                 if (conditionIsConstant) //Infinite, hopefully user managed, loop ->
                 {
-                    target.EmitLabel(this, Block.ContinueLabel);
-                    target.EmitLabel(this, Block.BeginLabel);
+                    target.EmitLabel(Position, Block.ContinueLabel);
+                    target.EmitLabel(Position, Block.BeginLabel);
                     Block.EmitEffectCode(target);
-                    target.EmitJump(this, Block.ContinueLabel);
+                    target.EmitJump(Position, Block.ContinueLabel);
                 }
                 else
                 {
                     if (IsPrecondition)
-                        target.EmitJump(this, Block.ContinueLabel);
+                        target.EmitJump(Position, Block.ContinueLabel);
 
-                    target.EmitLabel(this, Block.BeginLabel);
+                    target.EmitLabel(Position, Block.BeginLabel);
                     Block.EmitEffectCode(target);
 
                     _emitCondition(target);
@@ -123,17 +123,17 @@ namespace Prexonite.Compiler.Ast
             }
             else //Body does not exist -> Condition loop
             {
-                target.EmitLabel(this, Block.BeginLabel);
+                target.EmitLabel(Position, Block.BeginLabel);
                 _emitCondition(target);
             }
 
-            target.EmitLabel(this, Block.BreakLabel);
+            target.EmitLabel(Position, Block.BreakLabel);
             target.EndBlock();
         }
 
         private void _emitCondition(CompilerTarget target)
         {
-            target.EmitLabel(this, Block.ContinueLabel);
+            target.EmitLabel(Position, Block.ContinueLabel);
             AstLazyLogical.EmitJumpCondition(target, Condition, Block.BeginLabel, IsPositive);
         }
     }

@@ -173,7 +173,7 @@ namespace Prexonite.Compiler
         #region Macro system
 
         /// <summary>
-        ///     Setup function as macro (symbol declarations etc.)
+        ///     Setup function as macro (self declarations etc.)
         /// </summary>
         public void SetupAsMacro()
         {
@@ -189,8 +189,8 @@ namespace Prexonite.Compiler
             foreach (var localRefId in MacroAliases.Aliases())
             {
                 Ast.Symbols.Declare(localRefId,
-                                    DereferenceSymbol.Create(
-                                        CallSymbol.Create(EntityRef.Variable.Local.Create(localRefId))));
+                                    Symbol.CreateDereference(
+                                        Symbol.CreateCall(EntityRef.Variable.Local.Create(localRefId), NoSourcePosition.Instance)));
                 _outerVariables.Add(localRefId);
                 //remember: outer variables are not added as local variables
             }
@@ -414,7 +414,7 @@ namespace Prexonite.Compiler
         public AstScopedBlock BeginBlock(string prefix)
         {
             var currentBlock = CurrentBlock;
-            var bl = new AstScopedBlock(currentBlock, currentBlock, GenerateLocalId(), prefix);
+            var bl = new AstScopedBlock(currentBlock.Position, currentBlock, GenerateLocalId(), prefix);
             _scopeBlocks.Push(bl);
             return bl;
         }
@@ -570,7 +570,7 @@ namespace Prexonite.Compiler
         /// <summary>
         ///     Promotes captured variables to function parameters.
         /// </summary>
-        /// <returns>A list of expressions (get symbol) that should be added to the arguments list of any call to the lifted function.</returns>
+        /// <returns>A list of expressions (get self) that should be added to the arguments list of any call to the lifted function.</returns>
         internal Func<Parser, IList<AstExpr>> _ToCaptureByValue()
         {
             return _ToCaptureByValue(new string[0]);
@@ -580,7 +580,7 @@ namespace Prexonite.Compiler
         ///     Promotes captured variables to function parameters.
         /// </summary>
         /// <param name = "keepByRef">The set of captured variables that should be kept captured by reference (i.e. not promoted to parameters)</param>
-        /// <returns>A list of expressions (get symbol) that should be added to the arguments list of any call to the lifted function.</returns>
+        /// <returns>A list of expressions (get self) that should be added to the arguments list of any call to the lifted function.</returns>
         internal Func<Parser, IList<AstExpr>> _ToCaptureByValue(IEnumerable<string> keepByRef)
         {
             keepByRef = new HashSet<string>(keepByRef);
@@ -1020,7 +1020,7 @@ namespace Prexonite.Compiler
         }
 
         /// <summary>
-        ///     <para>Adds a new label entry to the symbol table and resolves any symbolic jumps to this label.</para>
+        ///     <para>Adds a new label entry to the self table and resolves any symbolic jumps to this label.</para>
         ///     <para>If the destination is an unconditional jump, it's destination address will 
         ///         used instead of the supplied address.</para>
         ///     <para>If the last instruction was a jump (conditional or unconditional) to this label, it 
@@ -1056,7 +1056,7 @@ namespace Prexonite.Compiler
 
             _unresolvedInstructions.ExceptWith(resolved);
 
-            //Add the label to the symbol table
+            //Add the label to the self table
             _labels[label] = address;
         }
 
@@ -1077,7 +1077,7 @@ namespace Prexonite.Compiler
         /// </summary>
         /// <param name = "label">The name of the label to delete.</param>
         /// <remarks>
-        ///     This method just deletes the symbol table entry for the specified label and does not alter code in any way.
+        ///     This method just deletes the self table entry for the specified label and does not alter code in any way.
         /// </remarks>
         public void FreeLabel(string label)
         {
@@ -1112,7 +1112,7 @@ namespace Prexonite.Compiler
                 if (Ast.Count == 0)
                     pos = new SourcePosition("-unknown-", -1, -1);
                 else
-                    pos = Ast[0];
+                    pos = Ast[0].Position;
                 _loader.ReportMessage(Message.Create(MessageSeverity.Error,
                                              String.Format(
                                                  Resources.CompilerTarget_ParameterNameReserved,
@@ -1403,7 +1403,7 @@ namespace Prexonite.Compiler
         private void _byIndex()
         {
             //Exclude the initialization function from this optimization
-            // as its symbol table keeps changing as more code files
+            // as its self table keeps changing as more code files
             // are loaded into the VM.
             if (Engine.StringsAreEqual(Function.Id, Application.InitializationId))
                 return;
@@ -1486,7 +1486,7 @@ namespace Prexonite.Compiler
 
         #region (Legacy) Symbol handling
 
-        [ContractAnnotation("=>true,symbol:notnull; =>false,symbol:null")]
+        [ContractAnnotation("=>true,self:notnull; =>false,self:null")]
         internal bool _TryUseSymbol(string symbolicId, out Symbol symbol, [NotNull] ISourcePosition position)
         {
             if (Symbols.TryGet(symbolicId, out symbol))

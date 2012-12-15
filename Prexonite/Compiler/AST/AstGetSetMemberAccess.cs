@@ -109,12 +109,12 @@ namespace Prexonite.Compiler.Ast
 
         protected override void EmitGetCode(CompilerTarget target, StackSemantics stackSemantics)
         {
-            target.EmitGetCall(this, Arguments.Count, Id, stackSemantics == StackSemantics.Effect);
+            target.EmitGetCall(Position, Arguments.Count, Id, stackSemantics == StackSemantics.Effect);
         }
 
         protected override void EmitSetCode(CompilerTarget target)
         {
-            target.EmitSetCall(this, Arguments.Count, Id);
+            target.EmitSetCall(Position, Arguments.Count, Id);
         }
 
         public override bool TryOptimize(CompilerTarget target, out AstExpr expr)
@@ -148,9 +148,9 @@ namespace Prexonite.Compiler.Ast
                 AstPartiallyApplicable.PreprocessPartialApplicationArguments(
                     Subject.Singleton().Append(Arguments));
             var ctorArgc = this.EmitConstructorArguments(target, argv);
-            target.EmitConstant(this, (int) Call);
-            target.EmitConstant(this, Id);
-            target.EmitCommandCall(this, ctorArgc + 2, Engine.PartialMemberCallAlias);
+            target.EmitConstant(Position, (int) Call);
+            target.EmitConstant(Position, Id);
+            target.EmitCommandCall(Position, ctorArgc + 2, Engine.PartialMemberCallAlias);
         }
 
         public override bool CheckForPlaceholders()

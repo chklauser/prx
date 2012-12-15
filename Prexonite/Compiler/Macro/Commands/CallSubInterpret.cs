@@ -60,7 +60,7 @@ namespace Prexonite.Compiler.Macro.Commands
             {
                 context.ReportMessage(
                     Message.Error(
-                        string.Format(Resources.CallSubInterpret_OneArgument, Alias), context.Invocation,
+                        string.Format(Resources.CallSubInterpret_OneArgument, Alias), context.Invocation.Position,
                         MessageClasses.SubUsage));
                 return;
             }
@@ -71,7 +71,7 @@ namespace Prexonite.Compiler.Macro.Commands
                     Message.Error(
                         string.Format(
                             Resources.CallSubInterpret_asExpressionInLoop, CallSub.Alias, Alias),
-                        context.Invocation, MessageClasses.SubAsExpressionInLoop));
+                        context.Invocation.Position, MessageClasses.SubAsExpressionInLoop));
                 return;
             }
 
@@ -117,7 +117,7 @@ namespace Prexonite.Compiler.Macro.Commands
             AstCondition checkCont;
             {
                 var contCond = _genCompare(context, retVar(), ReturnVariant.Continue);
-                checkCont = new AstCondition(inv,context.CurrentBlock, contCond);
+                checkCont = new AstCondition(inv.Position, context.CurrentBlock, contCond);
                 checkCont.IfBlock.Add(contStmt);
             }
 

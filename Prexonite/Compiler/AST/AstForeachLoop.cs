@@ -82,7 +82,7 @@ namespace Prexonite.Compiler.Ast
                 element = optElem as AstGetSet;
                 if (element == null)
                 {
-                    target.Loader.ReportMessage(Message.Error(Resources.AstForeachLoop_DoEmitCode_ElementTooComplicated,this,MessageClasses.ForeachElementTooComplicated));
+                    target.Loader.ReportMessage(Message.Error(Resources.AstForeachLoop_DoEmitCode_ElementTooComplicated,Position,MessageClasses.ForeachElementTooComplicated));
                     return;
                 }
             }
@@ -103,10 +103,10 @@ namespace Prexonite.Compiler.Ast
             target.BeginBlock(Block);
 
             List.EmitValueCode(target);
-            target.EmitGetCall(List, 0, "GetEnumerator");
+            target.EmitGetCall(List.Position, 0, "GetEnumerator");
             var castAddr = target.Code.Count;
-            target.Emit(List, OpCode.cast_const, "Object(\"System.Collections.IEnumerator\")");
-            target.EmitStoreLocal(List, enumVar);
+            target.Emit(List.Position, OpCode.cast_const, "Object(\"System.Collections.IEnumerator\")");
+            target.EmitStoreLocal(List.Position, enumVar);
 
             //check whether an enhanced CIL implementation is possible
             bool emitHint;
@@ -116,17 +116,17 @@ namespace Prexonite.Compiler.Ast
             else
                 emitHint = true;
 
-            var @try = new AstTryCatchFinally(this, Block);
+            var @try = new AstTryCatchFinally(Position, Block);
 
             @try.TryBlock = new AstActionBlock
                 (
-                this, @try,
+                Position, @try,
                 delegate
                     {
-                        target.EmitJump(this, Block.ContinueLabel);
+                        target.EmitJump(Position, Block.ContinueLabel);
 
                         //Assignment (begin)
-                        target.EmitLabel(this, Block.BeginLabel);
+                        target.EmitLabel(Position, Block.BeginLabel);
                         getCurrentAddr = target.Code.Count;
                         element.EmitEffectCode(target);
 
@@ -134,23 +134,23 @@ namespace Prexonite.Compiler.Ast
                         Block.EmitEffectCode(target);
 
                         //Condition (continue)
-                        target.EmitLabel(this, Block.ContinueLabel);
+                        target.EmitLabel(Position, Block.ContinueLabel);
                         moveNextAddr = target.Code.Count;
-                        target.EmitLoadLocal(List, enumVar);
-                        target.EmitGetCall(List, 0, "MoveNext");
-                        target.EmitJumpIfTrue(this, Block.BeginLabel);
+                        target.EmitLoadLocal(List.Position, enumVar);
+                        target.EmitGetCall(List.Position, 0, "MoveNext");
+                        target.EmitJumpIfTrue(Position, Block.BeginLabel);
 
                         //Break
-                        target.EmitLabel(this, Block.BreakLabel);
+                        target.EmitLabel(Position, Block.BreakLabel);
                     });
             @try.FinallyBlock = new AstActionBlock
                 (
-                this, @try,
+                Position, @try,
                 delegate
                     {
                         disposeAddr = target.Code.Count;
-                        target.EmitLoadLocal(List, enumVar);
-                        target.EmitCommandCall(List, 1, Engine.DisposeAlias, true);
+                        target.EmitLoadLocal(List.Position, enumVar);
+                        target.EmitCommandCall(List.Position, 1, Engine.DisposeAlias, true);
                     });
                 
 

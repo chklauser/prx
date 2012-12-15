@@ -58,7 +58,7 @@ namespace Prexonite.Compiler.Ast
             if(stackSemantics == StackSemantics.Effect)
                 return;
 
-            target.Emit(this, OpCode.ldr_type, TypeExpression);
+            target.Emit(Position,OpCode.ldr_type, TypeExpression);
         }
 
         #endregion

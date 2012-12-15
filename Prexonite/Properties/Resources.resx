@@ -300,4 +300,43 @@
   <data name="Parser_DeclarationTypeShouldBeFollowedByColon">
     <value xml:space="preserve">The declaration type should be followed by a colon (e.g., `declare ref var: x;`)</value>
   </data>
+  <data name="AstPlaceholder_PlaceholdeIndexNegative">
+    <value xml:space="preserve">A placeholder index cannot be negtive</value>
+  </data>
+  <data name="SymbolBuilder_TooManyArrows">
+    <value xml:space="preserve">Cannot take a reference to a reference. Too many arrows ("-&gt;").</value>
+  </data>
+  <data name="SymbolHandler_CannotHandleSymbolOfType">
+    <value xml:space="preserve">The symbol handler {0} cannot handle symbols of type {1}.</value>
+  </data>
+  <data name="LastAccessCache_CapacityMustBePositive">
+    <value xml:space="preserve">Capacity must be strictly positive.</value>
+  </data>
+  <data name="AstReference_MacroCommandReferenceNotPossible">
+    <value xml:space="preserve">Cannot load a reference to a macro command. Partial application might be possible, depending on the macro command in question.</value>
+  </data>
+  <data name="Parser_CannotExpandAtCompileTime">
+    <value xml:space="preserve">Cannot expand {0} at compile time.</value>
+  </data>
+  <data name="SymbolEntryConversion_ExpansionSymbolTooComplex">
+    <value xml:space="preserve">Only expansion symbols wrapping simple references can be converted to a SymbolEntry.</value>
+  </data>
+  <data name="SymbolEntryConversion_BareReference">
+    <value xml:space="preserve">Cannot convert bare reference to symbol entry.</value>
+  </data>
+  <data name="SymbolEntryConversion_Nil">
+    <value xml:space="preserve">Cannot convert nil symbol to symbol entry.</value>
+  </data>
+    <data name="Parser_Could_not_find_previous_declaration" xml:space="preserve">
+    <value>Could not find previous declaration for symbol {0}.</value>
+  </data>
+    <data name="Parser_Cannot_parse_source_position." xml:space="preserve">
+    <value>Cannot parse source position from {0}.</value>
+  </data>
+    <data name="Parser_Cannot_parse_message_symbol" xml:space="preserve">
+    <value>Cannot parse message symbol from {0}.</value>
+  </data>
+    <data name="Parser_Cannot_parse_symbol_from" xml:space="preserve">
+    <value>Cannot parse symbol from {0}.</value>
+  </data>
 </root>

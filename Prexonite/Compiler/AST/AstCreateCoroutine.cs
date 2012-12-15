@@ -84,7 +84,7 @@ namespace Prexonite.Compiler.Ast
             foreach (var argument in _arguments)
                 argument.EmitValueCode(target);
 
-            target.Emit(this, OpCode.newcor, _arguments.Count);
+            target.Emit(Position,OpCode.newcor, _arguments.Count);
         }
 
         #region AstExpr Members

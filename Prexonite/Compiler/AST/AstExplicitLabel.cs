@@ -43,7 +43,7 @@ namespace Prexonite.Compiler.Ast
 
         protected override void DoEmitCode(CompilerTarget target, StackSemantics stackSemantics)
         {
-            target.EmitLabel(this, Label);
+            target.EmitLabel(Position, Label);
         }
 
         public override string ToString()

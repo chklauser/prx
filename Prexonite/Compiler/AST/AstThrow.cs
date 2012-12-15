@@ -72,10 +72,10 @@ namespace Prexonite.Compiler.Ast
                 throw new PrexoniteException("Expression must be assigned.");
 
             Expression.EmitValueCode(target);
-            target.Emit(this, OpCode.@throw);
+            target.Emit(Position,OpCode.@throw);
 
             if (stackSemantics == StackSemantics.Value)
-                target.Emit(this, OpCode.ldc_null);
+                target.Emit(Position,OpCode.ldc_null);
         }
     }
 }

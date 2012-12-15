@@ -104,8 +104,8 @@ namespace Prexonite.Compiler.Ast
                     target.Loader.ReportMessage(
                         Message.Error(
                             Resources.AstLazyLogical_EmitCode_PureChainsExpected,
-                            this, MessageClasses.OnlyLastOperandPartialInLazy));
-                    target.EmitJump(this, trueLabel);
+                            Position, MessageClasses.OnlyLastOperandPartialInLazy));
+                    target.EmitJump(Position, trueLabel);
                     return;
                 }
             }
@@ -138,12 +138,12 @@ namespace Prexonite.Compiler.Ast
             {
                 var continueLabel = "Continue\\Lazy\\" + Guid.NewGuid().ToString("N");
                 logical.EmitCode(target, targetLabel, continueLabel);
-                target.EmitLabel(cond, continueLabel);
+                target.EmitLabel(cond.Position, continueLabel);
             }
             else
             {
                 cond.EmitValueCode(target);
-                target.EmitJumpIfTrue(cond, targetLabel);
+                target.EmitJumpIfTrue(cond.Position, targetLabel);
             }
         }
 
@@ -191,8 +191,8 @@ namespace Prexonite.Compiler.Ast
             else
             {
                 cond.EmitValueCode(target);
-                target.EmitJumpIfTrue(cond, targetLabel);
-                target.EmitJump(cond, alternativeLabel);
+                target.EmitJumpIfTrue(cond.Position, targetLabel);
+                target.EmitJump(cond.Position, alternativeLabel);
             }
         }
 
@@ -220,12 +220,12 @@ namespace Prexonite.Compiler.Ast
             {
                 var continueLabel = "Continue\\Lazy\\" + Guid.NewGuid().ToString("N");
                 logical.EmitCode(target, continueLabel, targetLabel); //inverted
-                target.EmitLabel(cond, continueLabel);
+                target.EmitLabel(cond.Position, continueLabel);
             }
             else
             {
                 cond.EmitValueCode(target);
-                target.EmitJumpIfFalse(cond, targetLabel);
+                target.EmitJumpIfFalse(cond.Position, targetLabel);
             }
         }
 
@@ -306,7 +306,7 @@ namespace Prexonite.Compiler.Ast
                         //there is no placeholder at all, wrap expression in const
                         Debug.Assert(Conditions.All(e => !e.IsPlaceholder()));
                         DoEmitCode(target,StackSemantics.Value);
-                        target.EmitCommandCall(this, 1, Const.Alias);
+                        target.EmitCommandCall(Position, 1, Const.Alias);
                         return;
                     }
                 }
@@ -326,7 +326,7 @@ namespace Prexonite.Compiler.Ast
 
 
             // compile the following code: `if(e1 and e2 and e3) id(?) else const(false)`
-            var constExpr = CreatePrefix(this, Conditions.Take(Conditions.Count - 1));
+            var constExpr = CreatePrefix(Position, Conditions.Take(Conditions.Count - 1));
             //var identityFunc = new AstGetSetSymbol(File, Line, Column, PCall.Get, Commands.Core.Id.Alias, SymbolInterpretations.Command);
             //identityFunc.Arguments.Add(new AstPlaceholder(File, Line, Column, placeholder.Index));
             var identityFunc = new AstTypecast(File, Line, Column,
@@ -346,7 +346,7 @@ namespace Prexonite.Compiler.Ast
             target.Loader.ReportMessage(
                 Message.Error(
                     Resources.AstLazyLogical_placeholderOnlyAtTheEnd,
-                    this, MessageClasses.OnlyLastOperandPartialInLazy));
+                    Position, MessageClasses.OnlyLastOperandPartialInLazy));
         }
 
         /// <summary>

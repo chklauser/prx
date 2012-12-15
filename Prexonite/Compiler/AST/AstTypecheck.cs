@@ -95,14 +95,14 @@ namespace Prexonite.Compiler.Ast
                     //ignore failures here
                 }
                 if ((object) T != null && T == PType.Null)
-                    target.Emit(this, OpCode.check_null);
+                    target.Emit(Position,OpCode.check_null);
                 else
-                    target.Emit(this, OpCode.check_const, constType.TypeExpression);
+                    target.Emit(Position,OpCode.check_const, constType.TypeExpression);
             }
             else
             {
                 _type.EmitValueCode(target);
-                target.Emit(this, OpCode.check_arg);
+                target.Emit(Position,OpCode.check_arg);
             }
         }
 
@@ -144,11 +144,11 @@ namespace Prexonite.Compiler.Ast
             var ctorArgc = this.EmitConstructorArguments(target, argv);
             var constType = _type as AstConstantTypeExpression;
             if (constType != null)
-                target.EmitConstant(this, constType.TypeExpression);
+                target.EmitConstant(Position, constType.TypeExpression);
             else
                 _type.EmitValueCode(target);
 
-            target.EmitCommandCall(this, ctorArgc + 1, Engine.PartialTypeCheckAlias);
+            target.EmitCommandCall(Position, ctorArgc + 1, Engine.PartialTypeCheckAlias);
         }
     }
 }

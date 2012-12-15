@@ -25,6 +25,7 @@
 //  IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 using System;
+using JetBrains.Annotations;
 
 namespace Prexonite
 {
@@ -57,6 +58,7 @@ namespace Prexonite
         ///     </para>
         /// </remarks>
         /// <returns>The result of the call. Should <strong>never</strong> be null.</returns>
-        PValue IndirectCall(StackContext sctx, PValue[] args);
+        [NotNull]
+        PValue IndirectCall([NotNull] StackContext sctx, [NotNull] PValue[] args);
     }
 }

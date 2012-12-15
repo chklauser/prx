@@ -295,12 +295,22 @@ namespace PrexoniteTests.Tests
 
         protected SymbolEntry LookupSymbolEntry(SymbolStore store, string symbolicId)
         {
-            Prexonite.Compiler.Symbolic.Symbol symbol;
+            Symbol symbol;
             Assert.IsTrue(store.TryGet(symbolicId, out symbol),
                           string.Format("Expected to find symbol {0} but there is no such entry.", symbolicId));
-            CallSymbol callSymbol;
-            Assert.IsTrue(symbol.TryGetCallSymbol(out callSymbol), string.Format("Expected symbol {0} to be an entity symbol. Actual: {1}.", symbolicId, symbol));
-            return callSymbol.ToSymbolEntry();
+            SymbolEntry r;
+            try
+            {
+                r = symbol.ToSymbolEntry();
+            }
+            catch (SymbolConversionException ex)
+            {
+                Assert.Fail("Expected symbol {0} to be convertible to a symbol entry. Exception was {1}", symbolicId, ex);
+// ReSharper disable HeuristicUnreachableCode
+                throw;
+// ReSharper restore HeuristicUnreachableCode
+            }
+            return r;
         }
 
         protected void BoolTable4(Func<bool, bool, bool, bool, string> main, PValue pTrue,

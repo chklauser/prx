@@ -155,7 +155,7 @@ namespace Prexonite.Compiler.Ast
                     AstConstant constant;
                     if ((constant = Arguments[0] as AstConstant) != null &&
                         !(constant.Constant is string))
-                        target.EmitGetCall(this, 1, "ToString");
+                        target.EmitGetCall(Position, 1, "ToString");
                 }
                 else
                 {
@@ -165,7 +165,7 @@ namespace Prexonite.Compiler.Ast
             else if (Arguments.Count == 0)
             {
                 if(stackSemantics == StackSemantics.Value)
-                    target.EmitConstant(this, "");
+                    target.EmitConstant(Position, "");
             }
         }
 

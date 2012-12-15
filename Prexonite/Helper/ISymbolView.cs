@@ -25,18 +25,20 @@
 //  IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 using System.Collections.Generic;
+using JetBrains.Annotations;
 
 namespace Prexonite
 {
     public interface ISymbolView<T> : IEnumerable<KeyValuePair<string,T>>
     {
+        [ContractAnnotation("=>true,value:notnull;=>false,value:canbenull")]
         bool TryGet(string id, out T value);
         int Count { get; }
     }
 
     public static class SymbolViewExtensions
     {
-        public static T GetOrDefault<T>(this ISymbolView<T> view, string key, T defaultValue)
+        public static T GetOrDefault<T>([NotNull] this ISymbolView<T> view, [NotNull] string key, T defaultValue)
         {
             T result;
             if (view.TryGet(key, out result))
@@ -45,7 +47,7 @@ namespace Prexonite
                 return defaultValue;
         }
 
-        public static bool Contains<T>(this ISymbolView<T> view, string key)
+        public static bool Contains<T>([NotNull] this ISymbolView<T> view, [NotNull] string key)
         {
             T dummy;
             return view.TryGet(key, out dummy);

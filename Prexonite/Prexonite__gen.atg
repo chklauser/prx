@@ -33,6 +33,7 @@ using StringBuilder = System.Text.StringBuilder;
 using Prexonite.Compiler.Ast;
 using Prexonite.Types;
 using Prexonite.Modular;
+using Prexonite.Compiler.Internal;
 using Prexonite.Compiler.Symbolic;
 using Prexonite.Compiler.Symbolic.Internal;
 using Prexonite.Compiler.Symbolic.Compatibility;
@@ -180,8 +181,8 @@ TOKENS
 	macro
 	lazy
 	let
-  method
-  this
+	method
+	this
 	ENDKEYWORDS
 	
     //SPECIAL
@@ -1009,9 +1010,9 @@ Prexonite
       |   MetaAssignment<TargetApplication>
       ]   SYNC semicolon
     | Declaration2
-    |	GlobalCode
+    | GlobalCode
     | BuildBlock
-    |	FunctionDefinition<out func>
+    | FunctionDefinition<out func>
     }
     EOF
 .
@@ -1208,7 +1209,25 @@ SYNC
           { comma [ DeclarationInstance2<entityFactory,module,builder.Clone(),preventOverride:true> ] }
         }
         rbrace
+	|	lpar
+        [   MExprBasedDeclaration
+            {   comma 
+                MExprBasedDeclaration
+            }
+            [ comma ]
+        ]
+        rpar
     )
+.
+
+MExprBasedDeclaration       (.  string alias;
+                                MExpr expr;
+                            .)
+=
+    Id<out alias> assign MExpr<out expr>
+                            (.  Symbol s = _parseSymbol(expr);
+                                Symbols.Declare(alias,s);
+                            .)
 .
 
 MessageDirective<.
@@ -1236,7 +1255,7 @@ MessageDirective<.
   ]
   comma
   String<out message>
-  comma                     (.  builder.Messages.Add(Message.Create(severity,message,position,messageClass)); .)
+  comma                     (.  builder.AddMessage(Message.Create(severity,message,position,messageClass)); .)
   SymbolDirective<entityFactory,module,builder,out lhsId,preventOverride:preventOverride>
   rpar
 .
@@ -1311,18 +1330,9 @@ DeclarationInstance2<.
                                       // Since there is no name involved, not acting on this
                                       //  statement will not cause further errors
                                     }
-                                    else if(builder.IsTerminatedByError)
-                                    {
-                                      Symbols.Declare(rhsId, builder.WrapSymbol(null));
-                                    }
                                     else
                                     {
-                                      var msg = Message.Error(
-                                        "Symbol name missing for declaration of alias. Warning and information message symbols need to wrap an existing symbol.", 
-                                        GetPosition(), 
-                                        MessageClasses.OnlyErrorStandalone);
-                                      Loader.ReportMessage(msg);
-                                      Symbols.Declare(rhsId, builder.WrapSymbol(MessageSymbol.Create(msg,null)));
+                                      Symbols.Declare(rhsId, builder.WrapSymbol(null));
                                     }
                                   }                             
                                   else if(Symbols.TryGet(lhsId,out existing)) 
@@ -1332,13 +1342,13 @@ DeclarationInstance2<.
                                   } 
                                   else
                                   {
-                                    var msg = Message.Error("Could not find previous declaration for symbol " + lhsId + ".",
-                                                            position,MessageClasses.SymbolNotResolved);
+                                    var msg = Message.Error(string.Format(Resources.Parser_Could_not_find_previous_declaration, lhsId),
+		                                position,MessageClasses.SymbolNotResolved);
                                     // We report the message AND store it as a message symbol.
                                     //  That way, the symbol is at least declared, avoiding a spurious 
                                     //  symbol not found message.
                                     Loader.ReportMessage(msg);
-                                    Symbols.Declare(rhsId, MessageSymbol.Create(msg,null));                                      
+                                    Symbols.Declare(rhsId, Symbol.CreateMessage(msg,Symbol.CreateNil(msg.Position)));                                      
                                   }
                                 }
                                 else
@@ -1353,7 +1363,7 @@ DeclarationInstance2<.
                                     Loader.ReportMessage(msg);
                                     // Also create an error symbol for the alias (if one was declared)
                                     if(rhsId != null)
-                                      Symbols.Declare(rhsId, MessageSymbol.Create(msg,null));
+                                      Symbols.Declare(rhsId, Symbol.CreateMessage(msg,Symbol.CreateNil(msg.Position)));
                                   }
                                   else
                                   {
@@ -1904,6 +1914,96 @@ String<out string value>
 .
 
 Null = null .
+
+MId<out String id>	            (.  id = "an\\invalid\\MId"; .)			
+=
+(	var
+|   ref
+|   true
+|	false
+|   mod
+|	is
+|	as
+|	not
+|	function
+|	command	
+|	asm	
+|	declare
+|	build
+|	return
+|	in
+|	to
+|	continue
+|	break
+|	yield
+|	or
+|	and
+|	xor
+|	label
+|	goto
+|	static	// null is not a valid MExpr id. It is used to represent an MAtom with a null value
+|	if
+|	unless
+|	else
+|	new
+|	coroutine
+|	from
+|	do
+|	does
+|	while
+|	until
+|	for
+|	foreach
+|	try
+|	catch
+|	finally
+|	throw
+|	then
+|	uusing //Coco/R does not accept "using" as a token name.
+|	macro
+|	lazy
+|	let
+|	method
+|	this
+|	bitAnd
+|	pow
+|	times
+|	tilde
+|	question
+|	pointer
+|	at
+|	colon
+|	implementation
+)								(.	id = cache(t.val); .)
+|	Id<out id>
+.
+
+MExpr<out MExpr expr>			(.  expr = new MExpr.MAtom(NoSourcePosition.Instance,null); .)
+=								(.	String id; 
+									var args = new List<MExpr>();
+									MExpr arg;
+								.)
+	MId<out id>
+	(	lpar					
+		[	MExpr<out arg>		(.	args.Add(arg); .)
+			{	comma
+				MExpr<out arg>	(.	args.Add(arg); .)
+			}
+			[	comma	]
+		]
+		rpar
+	|	MExpr<out arg>			(.	args.Add(arg); .)
+	|							(.	/* no M-Expr args */ .)
+	)							(.	expr = new MExpr.MList(GetPosition(), id,args); .)
+|								(.  String value; .)
+	String<out value>			(.	expr = new MExpr.MAtom(GetPosition(), value); .)
+|								(.	int intval; .)
+	SignedInteger<out intval>	(.	expr = new MExpr.MAtom(GetPosition(), intval); .)
+|								(.	bool boolval; .)
+	Boolean<out boolval>		(.	expr = new MExpr.MAtom(GetPosition(), boolval); .)
+|	
+    Null                        (.  expr = new MExpr.MAtom(GetPosition(), null); .)
+.
 #file:C:\Users\Christian\Documents\GitHub\prx-modules\Prexonite\Compiler\Grammar\Parser.Statement.atg#
 /*
  * Prexonite, a scripting engine (Scripting Language -> Bytecode -> Virtual Machine)

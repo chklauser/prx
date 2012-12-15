@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using JetBrains.Annotations;
 using Prexonite.Modular;
+using Prexonite.Properties;
 
 namespace Prexonite.Compiler.Symbolic.Internal
 {
@@ -12,99 +13,81 @@ namespace Prexonite.Compiler.Symbolic.Internal
     /// </summary>
     internal class SymbolBuilder : ICloneable
     {
-        [Flags]
-        public enum SymbolFlags
-        {
-            None = 0,
-            Macro
-        }
-
-        public int DereferenceCount { get; set; }
-        public SymbolFlags Flags { get; set; }
         public EntityRef Entity { get; set; }
 
-        public List<Message> Messages
+        private Symbol _prefix = Symbol.CreateNil(NoSourcePosition.Instance);
+        private int _dereferenceCount = 1;
+        private readonly Queue<Message> _messages = new Queue<Message>();
+
+        public SymbolBuilder Dereference()
         {
-            get { return _messages; }
+            _dereferenceCount += 1;
+            return this;
         }
 
-        public bool IsFlagSet(SymbolFlags flag)
+        public SymbolBuilder ReferenceTo()
         {
-            return (Flags & flag) == flag;
+            _dereferenceCount -= 1;
+            return this;
         }
 
-        public void Dereference()
+        public SymbolBuilder AddMessage([NotNull]Message message)
         {
-            DereferenceCount += 1;
+            if (message == null)
+                throw new ArgumentNullException("message");
+            _messages.Enqueue(message);
+            return this;
         }
 
-        public void ReferenceTo()
+        public SymbolBuilder Expand()
         {
-            DereferenceCount -= 1;
+            _materializePrefix();
+            _prefix = Symbol.CreateExpand(_prefix);
+            return this;
         }
 
-        private readonly List<Message> _messages = new List<Message>();
+        private void _materializePrefix()
+        {
+            while (_dereferenceCount > 0)
+            {
+                _prefix = Symbol.CreateDereference(_prefix);
+                _dereferenceCount--;
+            }
+
+            if(_dereferenceCount < 0)
+            {
+                _prefix =
+                    Symbol.CreateMessage(
+                        Message.Error(
+                            Resources.SymbolBuilder_TooManyArrows, NoSourcePosition.Instance,
+                            MessageClasses.CannotCreateReference), _prefix);
+            }
+
+            while(_messages.Count > 0)
+                _prefix = Symbol.CreateMessage(_messages.Dequeue(), _prefix);
+        }
 
         public Symbol ToSymbol()
         {
             Symbol symbol;
-            if(Entity == null)
-            {
-                if (!(IsTerminatedByError))
-                    throw new PrexoniteException(
-                        "Cannot construct symbol without an entity where the last message is not an error.");
-                symbol = MessageSymbol.Create(Messages[Messages.Count - 1], null);
-                return _wrapSymbol(symbol, usedLastMessage: true);
-            }
+            if (Entity == null)
+                symbol = null;
             else
-            {
-                if (IsFlagSet(SymbolFlags.Macro))
-                    symbol = ExpandSymbol.Create(Entity);
-                else
-                    symbol = CallSymbol.Create(Entity);
-                return _wrapSymbol(symbol, usedLastMessage: false);
-            }
-        }
-
-        public bool IsTerminatedByError
-        {
-            get { return Messages.Count - 1 >= 0 && Messages[Messages.Count - 1].Severity == MessageSeverity.Error; }
+                symbol = Symbol.CreateReference(Entity,NoSourcePosition.Instance);
+            return WrapSymbol(symbol);
         }
 
         public Symbol WrapSymbol([CanBeNull]Symbol symbol)
         {
+            _materializePrefix();
             if (symbol == null)
             {
-                if (!(IsTerminatedByError))
-                    throw new PrexoniteException(
-                        "Cannot construct symbol without an entity where the last message is not an error.");
-                symbol = MessageSymbol.Create(Messages[Messages.Count - 1], null);
-                return _wrapSymbol(symbol, usedLastMessage: true);
+                return _prefix;
             }
             else
             {
-                return _wrapSymbol(symbol, usedLastMessage: false);
+                return _prefix.HandleWith(ReplaceCoreNilHandler.Instance, symbol);
             }  
-        }
-
-        private Symbol _wrapSymbol([NotNull] Symbol symbol, bool usedLastMessage)
-        {
-            while (DereferenceCount > 0)
-            {
-                symbol = DereferenceSymbol.Create(symbol);
-                DereferenceCount--;
-            }
-
-            while (DereferenceCount < 0)
-            {
-                symbol = ReferenceToSymbol.Create(symbol);
-                DereferenceCount++;
-            }
-
-            for (var i = Messages.Count - (usedLastMessage ? 2 : 1); i >= 0; i--)
-                symbol = MessageSymbol.Create(Messages[i], symbol);
-
-            return symbol;
         }
 
         #region Implementation of ICloneable
@@ -117,8 +100,9 @@ namespace Prexonite.Compiler.Symbolic.Internal
         [NotNull,PublicAPI]
         public virtual SymbolBuilder Clone()
         {
-            var c = new SymbolBuilder {DereferenceCount = DereferenceCount, Entity = Entity, Flags = Flags};
-            c.Messages.AddRange(Messages);
+            var c = new SymbolBuilder {_dereferenceCount = _dereferenceCount, Entity = Entity, _prefix = _prefix};
+            foreach (var message in _messages)
+                c._messages.Enqueue(message);
             return c;
         }
 

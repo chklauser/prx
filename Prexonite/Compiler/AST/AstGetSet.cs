@@ -129,7 +129,7 @@ namespace Prexonite.Compiler.Ast
                 Debug.Assert(expr != null,
                     "Argument list of get-set-complex contains null reference");
                 if (ReferenceEquals(lastArg, expr))
-                    target.EmitDuplicate(this);
+                    target.EmitDuplicate(Position);
                 else
                     expr.EmitValueCode(target);
                 lastArg = expr;
@@ -137,9 +137,9 @@ namespace Prexonite.Compiler.Ast
             var argc = Arguments.Count;
             if (duplicateLast && argc > 0)
             {
-                target.EmitDuplicate(this);
+                target.EmitDuplicate(Position);
                 if (argc + additionalArguments > 1)
-                    target.EmitRotate(this, -1, argc + 1 + additionalArguments);
+                    target.EmitRotate(Position, -1, argc + 1 + additionalArguments);
             }
         }
 

@@ -1,27 +1,32 @@
+using System;
 using System.Diagnostics;
 using JetBrains.Annotations;
 
 namespace Prexonite.Compiler.Symbolic
 {
-    [DebuggerDisplay("{Message.Severity}({Message.MessageClass}) {Symbol}")]
-    public sealed class MessageSymbol : Symbol
+    [DebuggerDisplay("{ToString}")]
+    public class MessageSymbol : WrappingSymbol, IEquatable<MessageSymbol>
     {
-        [NotNull]
-        public static MessageSymbol Create([NotNull] Message message, [CanBeNull] Symbol symbol)
+        public override string ToString()
         {
-            return new MessageSymbol(message, symbol);
+            return string.Format(
+                "{0}({1}) {2}", Enum.GetName(typeof (MessageSeverity), Message.Severity),
+                Message.MessageClass, base.InnerSymbol);
+        }
+
+        [NotNull]
+        internal static MessageSymbol _Create([NotNull] Message message, [NotNull] Symbol inner, [CanBeNull] ISourcePosition position)
+        {
+            return new MessageSymbol(position ?? inner.Position, message, inner);
         }
 
         [NotNull]
         private readonly Message _message;
 
-        [CanBeNull]
-        private readonly Symbol _symbol;
-
-        private MessageSymbol([NotNull] Message message, [CanBeNull] Symbol symbol)
+        private MessageSymbol([NotNull] ISourcePosition position, [NotNull] Message message, [NotNull] Symbol symbol)
+            : base(position, symbol)
         {
             _message = message;
-            _symbol = symbol;
         }
 
         [NotNull]
@@ -30,34 +35,39 @@ namespace Prexonite.Compiler.Symbolic
             get { return _message; }
         }
 
-        [CanBeNull]
-        public Symbol Symbol
+        #region Equality members
+
+        public bool Equals(MessageSymbol other)
         {
-            get { return _symbol; }
+            return base.Equals(other) && _message.Equals(other._message);
         }
 
-        public bool Equals([CanBeNull] MessageSymbol other)
+        public override bool Equals(Symbol other)
         {
             if (ReferenceEquals(null, other)) return false;
             if (ReferenceEquals(this, other)) return true;
-            return Equals(other._message, _message) && Equals(other._symbol, _symbol);
-        }
-
-        public override bool Equals(object obj)
-        {
-            if (ReferenceEquals(null, obj)) return false;
-            if (ReferenceEquals(this, obj)) return true;
-            if (obj.GetType() != typeof (MessageSymbol)) return false;
-            return Equals((MessageSymbol) obj);
+            return other is MessageSymbol && Equals((MessageSymbol)other);
         }
 
         public override int GetHashCode()
         {
             unchecked
             {
-                return (_message.GetHashCode()*397) ^ (_symbol != null ? _symbol.GetHashCode() : 0);
+                return (base.GetHashCode()*397) ^ _message.GetHashCode();
             }
         }
+
+        protected override int HashCodeXorFactor
+        {
+            get { return 599; }
+        }
+
+        public override WrappingSymbol With(Symbol newInnerSymbol, ISourcePosition newPosition = null)
+        {
+            return new MessageSymbol(newPosition ?? Position, Message,newInnerSymbol);
+        }
+
+        #endregion
 
         public override TResult HandleWith<TArg, TResult>(ISymbolHandler<TArg, TResult> handler, TArg argument)
         {

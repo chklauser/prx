@@ -102,13 +102,13 @@ namespace Prexonite.Compiler.Ast
         protected override void EmitGetCode(CompilerTarget target, StackSemantics stackSemantics)
         {
             var justEffect = stackSemantics == StackSemantics.Effect;
-            target.EmitIndirectCall(this, Arguments.Count, justEffect);
+            target.EmitIndirectCall(Position, Arguments.Count, justEffect);
         }
 
         protected override void EmitSetCode(CompilerTarget target)
         {
             //Indirect set does not have a return value, therefore justEffect is true
-            target.EmitIndirectCall(this, Arguments.Count, true);
+            target.EmitIndirectCall(Position, Arguments.Count, true);
         }
 
         public override bool TryOptimize(CompilerTarget target, out AstExpr expr)
@@ -154,8 +154,8 @@ namespace Prexonite.Compiler.Ast
             if (argc == 0)
             {
                 //There are no mappings at all, use default constructor
-                target.EmitConstant(this, 0);
-                target.EmitCommandCall(this, 1, Engine.PartialCallAlias);
+                target.EmitConstant(Position, 0);
+                target.EmitCommandCall(Position, 1, Engine.PartialCallAlias);
             }
             else if (argc == 1 && !argv[0].IsPlaceholder())
             {
@@ -182,21 +182,21 @@ namespace Prexonite.Compiler.Ast
                     argv[0].EmitValueCode(target);
                     foreach (var arg in argv.Skip(2))
                         arg.EmitValueCode(target);
-                    target.EmitCommandCall(this, argc - 1, FlippedFunctionalPartialCallCommand.Alias);
+                    target.EmitCommandCall(Position, argc - 1, FlippedFunctionalPartialCallCommand.Alias);
                 }
                 else
                 {
                     //There is no open argument in front. This is implemented by FunctionalPartialCall
                     foreach (var arg in argv)
                         arg.EmitValueCode(target);
-                    target.EmitCommandCall(this, argc, FunctionalPartialCallCommand.Alias);
+                    target.EmitCommandCall(Position, argc, FunctionalPartialCallCommand.Alias);
                 }
             }
             else
             {
                 //Use full-blown partial application mechanism for indirect calls.
                 var ctorArgc = this.EmitConstructorArguments(target, argv);
-                target.EmitCommandCall(this, ctorArgc, Engine.PartialCallAlias);
+                target.EmitCommandCall(Position, ctorArgc, Engine.PartialCallAlias);
             }
         }
 

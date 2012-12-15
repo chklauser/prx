@@ -47,7 +47,7 @@ namespace Prexonite.Compiler.Ast
 
         protected override void DoEmitCode(CompilerTarget target, StackSemantics stackSemantics)
         {
-            target.EmitJump(this, Destination);
+            target.EmitJump(Position, Destination);
         }
 
         public override string ToString()

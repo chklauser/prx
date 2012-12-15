@@ -119,7 +119,7 @@ namespace Prexonite.Compiler.Ast
                 expr.EmitCode(target,stackSemantics);
 
             if(stackSemantics == StackSemantics.Value)
-                target.Emit(this, OpCode.newtype, Arguments.Count, TypeId);
+                target.Emit(Position,OpCode.newtype, Arguments.Count, TypeId);
         }
 
         #endregion

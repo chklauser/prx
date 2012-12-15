@@ -76,26 +76,26 @@ namespace Prexonite.Compiler.Ast
                 return;
 
             if (Constant == null)
-                target.EmitNull(this);
+                target.EmitNull(Position);
             else
                 switch (Type.GetTypeCode(Constant.GetType()))
                 {
                     case TypeCode.Boolean:
-                        target.EmitConstant(this, (bool) Constant);
+                        target.EmitConstant(Position, (bool) Constant);
                         break;
                     case TypeCode.Int16:
                     case TypeCode.Byte:
                     case TypeCode.Int32:
                     case TypeCode.UInt16:
                     case TypeCode.UInt32:
-                        target.EmitConstant(this, (int) Constant);
+                        target.EmitConstant(Position, (int) Constant);
                         break;
                     case TypeCode.Single:
                     case TypeCode.Double:
-                        target.EmitConstant(this, (double) Constant);
+                        target.EmitConstant(Position, (double) Constant);
                         break;
                     case TypeCode.String:
-                        target.EmitConstant(this, (string) Constant);
+                        target.EmitConstant(Position, (string) Constant);
                         break;
                     default:
                         var moduleName = Constant as ModuleName;

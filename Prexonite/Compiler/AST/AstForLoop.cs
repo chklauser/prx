@@ -154,16 +154,16 @@ namespace Prexonite.Compiler.Ast
                     target.BeginBlock(Initialize);
                     Initialize.EmitValueCode(target);
                     if (!IsPrecondition) //start with nextIteration
-                        target.EmitJump(this, Block.ContinueLabel);
-                    target.EmitLabel(this, Block.BeginLabel);
+                        target.EmitJump(Position, Block.ContinueLabel);
+                    target.EmitLabel(Position, Block.BeginLabel);
                     target.BeginBlock(NextIteration);
                     target.BeginBlock(Block);
                     Block.EmitEffectCode(target);
                     target.EndBlock();
-                    target.EmitLabel(this, Block.ContinueLabel);
+                    target.EmitLabel(Position, Block.ContinueLabel);
                     NextIteration.EmitValueCode(target);
                     target.EndBlock();
-                    target.EmitJump(this, Block.BeginLabel);
+                    target.EmitJump(Position, Block.BeginLabel);
                     target.EndBlock();
                 }
                 else //Variable condition and body -> full loop code
@@ -182,17 +182,17 @@ namespace Prexonite.Compiler.Ast
                     Initialize.EmitValueCode(target);
                     target.BeginBlock(NextIteration);
                     if (IsPrecondition)
-                        target.EmitJump(this, conditionLabel);
+                        target.EmitJump(Position, conditionLabel);
                     else
-                        target.EmitJump(this, Block.ContinueLabel);
-                    target.EmitLabel(this, Block.BeginLabel);
+                        target.EmitJump(Position, Block.ContinueLabel);
+                    target.EmitLabel(Position, Block.BeginLabel);
                     target.BeginBlock(Block);
                     Block.EmitEffectCode(target);
                     target.EndBlock();
-                    target.EmitLabel(this, Block.ContinueLabel);
+                    target.EmitLabel(Position, Block.ContinueLabel);
                     NextIteration.EmitValueCode(target);
                     target.EndBlock();
-                    target.EmitLabel(this, conditionLabel);
+                    target.EmitLabel(Position, conditionLabel);
                     AstLazyLogical.EmitJumpCondition(
                         target, condition, Block.BeginLabel, IsPositive);
                     target.EndBlock();
@@ -211,17 +211,17 @@ namespace Prexonite.Compiler.Ast
                 target.BeginBlock(Block);
                 Initialize.EmitValueCode(target);
                 if (!IsPrecondition)
-                    target.EmitJump(this, Block.ContinueLabel);
-                target.EmitLabel(this, Block.BeginLabel);
+                    target.EmitJump(Position, Block.ContinueLabel);
+                target.EmitLabel(Position, Block.BeginLabel);
                 AstLazyLogical.EmitJumpCondition(target, condition, Block.BreakLabel, !IsPositive);
                 if (IsPrecondition)
-                    target.EmitLabel(this, Block.ContinueLabel);
+                    target.EmitLabel(Position, Block.ContinueLabel);
                 NextIteration.EmitValueCode(target);
-                target.EmitJump(this, Block.BeginLabel);
+                target.EmitJump(Position, Block.BeginLabel);
                 target.EndBlock();
             }
 
-            target.EmitLabel(this, Block.BreakLabel);
+            target.EmitLabel(Position, Block.BreakLabel);
         }
 
         public override AstBlock[] Blocks

@@ -31,6 +31,7 @@ using System.Linq;
 using NUnit.Framework;
 using Prexonite;
 using Prexonite.Commands.Core;
+using Prexonite.Compiler;
 using Prexonite.Compiler.Symbolic;
 using Prexonite.Modular;
 
@@ -43,7 +44,7 @@ namespace PrexoniteTests.Tests
         public void NoLocalButCount()
         {
             var s1 = SymbolStore.Create();
-            var s = CallSymbol.Create(EntityRef.Command.Create("print"));
+            var s = Symbol.CreateCall(EntityRef.Command.Create("print"), NoSourcePosition.Instance);
             s1.Declare("print",s);
             var s2 = SymbolStore.Create(s1);
             Assert.That(s2.Count,Is.EqualTo(1),"Expected s2.Count to be 1.");

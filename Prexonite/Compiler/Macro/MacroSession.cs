@@ -206,7 +206,7 @@ namespace Prexonite.Compiler.Macro
                 {
                     target.Loader.ReportMessage(Message.Create(MessageSeverity.Error,
                                                        String.Format(Resources.MacroCommandExpander_CannotFindMacro, invocation.Implementation.InternalId),
-                                                       invocation,MessageClasses.NoSuchMacroCommand));
+                                                       invocation.Position, MessageClasses.NoSuchMacroCommand));
                     HumanId = "cannot_find_macro_command";
                     return;
                 }
@@ -258,11 +258,13 @@ namespace Prexonite.Compiler.Macro
                 if (!sourceApp.TryGetFunction(invocation.Implementation.InternalId, invocation.Implementation.Module, out macroFunc))
                 {
                     target.Loader.ReportMessage(
-                        Message.Create(MessageSeverity.Error,
-                               String.Format(
-                                   Resources.MacroFunctionExpander_MacroFunctionNotAvailable,
-                                   _toFunctionNameString(invocation.Implementation),
-                                   target.Function.Id, target.Loader.ParentApplication.Module.Name), invocation,MessageClasses.NoSuchMacroFunction));
+                        Message.Create(
+                            MessageSeverity.Error,
+                            String.Format(
+                                Resources.MacroFunctionExpander_MacroFunctionNotAvailable,
+                                _toFunctionNameString(invocation.Implementation),
+                                target.Function.Id, target.Loader.ParentApplication.Module.Name),
+                            invocation.Position, MessageClasses.NoSuchMacroFunction));
                     HumanId = "could_not_resolve_macro_function";
                     return;
                 }
@@ -354,7 +356,7 @@ namespace Prexonite.Compiler.Macro
                 {
                     context.ReportMessage(Message.Create(MessageSeverity.Error,
                                                          Resources.MacroFunctionExpander_PartialMacroMustIndicateSuccessWithBoolean,
-                                                         context.Invocation,
+                                                         context.Invocation.Position,
                                                          MessageClasses.PartialMacroMustReturnBoolean));
                     _setupDefaultExpression(context);
                     return false;
@@ -387,7 +389,7 @@ namespace Prexonite.Compiler.Macro
                             String.Format(
                                 Resources.MacroFunctionExpander__UsedTemporaryVariable,
                                 HumanId),
-                            context.Invocation,MessageClasses.BlockMergingUsesVariable));
+                            context.Invocation.Position, MessageClasses.BlockMergingUsesVariable));
 
                         var tmpV = context.AllocateTemporaryVariable();
 
@@ -476,7 +478,7 @@ namespace Prexonite.Compiler.Macro
                                String.Format(
                                    Resources.MacroSession_MacroNotReentrant,
                                    expander.HumanId),
-                               invocation,MessageClasses.MacroNotReentrant));
+                               invocation.Position, MessageClasses.MacroNotReentrant));
                     return CreateNeutralExpression(invocation);
                 }
                 _invocations.Add(invocation);
@@ -494,7 +496,7 @@ namespace Prexonite.Compiler.Macro
                                     MessageSeverity.Error,
                                     string.Format(
                                         Resources.MacroSession_MacroCannotBeAppliedPartially,
-                                        expander.HumanId), invocation,
+                                        expander.HumanId), invocation.Position,
                                     MessageClasses.PartialApplicationNotSupported));
                             return CreateNeutralExpression(invocation);
                         }
@@ -542,7 +544,7 @@ namespace Prexonite.Compiler.Macro
                 String.Format(
                     Resources.MacroSession_ExceptionDuringExpansionOfMacro,
                     expander.HumanId, context.Function.LogicalId,
-                    e.Message), context.Invocation,MessageClasses.ExceptionDuringCompilation));
+                    e.Message), context.Invocation.Position, MessageClasses.ExceptionDuringCompilation));
 #if DEBUG
             Console.WriteLine(e);
 #endif
@@ -586,7 +588,7 @@ namespace Prexonite.Compiler.Macro
                                        typeof (
                                            SymbolInterpretations),
                                        invocation.Implementation.Interpretation)),
-                               invocation,MessageClasses.NotAMacro));
+                               invocation.Position, MessageClasses.NotAMacro));
                     break;
             }
             return expander;

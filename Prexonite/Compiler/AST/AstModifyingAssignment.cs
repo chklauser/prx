@@ -153,7 +153,7 @@ namespace Prexonite.Compiler.Ast
                         if (justEffect)
                         {
                             //Create a traditional condition
-                            var cond = new AstCondition(this, LexicalScope,check);
+                            var cond = new AstCondition(Position, LexicalScope,check);
                             cond.IfBlock.Add(assignment);
                             cond.EmitEffectCode(target);
                         }
@@ -207,16 +207,16 @@ namespace Prexonite.Compiler.Ast
                                                                 Resources.AstModifyingAssignment_AssignmentModifierNotSupported,
                                                                 Enum.GetName(typeof(BinaryOperator),
                                                                              SetModifier)),
-                                                            _modifyingAssignment,MessageClasses.InvalidModifyingAssignment));
-                            target.Emit(_modifyingAssignment, OpCode.nop);
+                                                            _modifyingAssignment.Position,MessageClasses.InvalidModifyingAssignment));
+                            target.Emit(_modifyingAssignment.Position, OpCode.nop);
                             return;
                         }
 
                         if (_modifyingAssignment.Arguments.Count < 1)
                         {
                             target.Loader.Errors.Add(Message.Create(MessageSeverity.Error,
-                                                            Resources.AstModifyingAssignment_No_RHS, _modifyingAssignment,MessageClasses.InvalidModifyingAssignment));
-                            target.Emit(_modifyingAssignment, OpCode.nop);
+                                                            Resources.AstModifyingAssignment_No_RHS, _modifyingAssignment.Position,MessageClasses.InvalidModifyingAssignment));
+                            target.Emit(_modifyingAssignment.Position, OpCode.nop);
                             return;
                         }
 

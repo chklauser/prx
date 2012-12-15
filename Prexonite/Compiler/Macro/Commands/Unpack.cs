@@ -67,7 +67,7 @@ namespace Prexonite.Compiler.Macro.Commands
                     Message.Error(
                         string.Format(
                             "{0} requires at least one argument, the id of the object to unpack.", Alias),
-                        context.Invocation, MessageClasses.UnpackUsage));
+                        context.Invocation.Position, MessageClasses.UnpackUsage));
                 return;
             }
 

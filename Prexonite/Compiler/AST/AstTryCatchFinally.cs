@@ -49,7 +49,7 @@ namespace Prexonite.Compiler.Ast
 
         public AstBlock[] Blocks
         {
-            get { return new[] {TryBlock, CatchBlock, FinallyBlock}; }
+            get { return new AstBlock[] {TryBlock, CatchBlock, FinallyBlock}; }
         }
 
         #endregion
@@ -78,20 +78,20 @@ namespace Prexonite.Compiler.Ast
                 }
 
             //Emit try block
-            target.EmitLabel(this, beginTryLabel);
-            target.Emit(this, OpCode.@try);
+            target.EmitLabel(Position, beginTryLabel);
+            target.Emit(Position,OpCode.@try);
             TryBlock.EmitEffectCode(target);
 
             //Emit finally block
-            target.EmitLabel(FinallyBlock, beginFinallyLabel);
+            target.EmitLabel(FinallyBlock.Position, beginFinallyLabel);
             var beforeEmit = target.Code.Count;
             FinallyBlock.EmitEffectCode(target);
             if (FinallyBlock.Count > 0 && target.Code.Count == beforeEmit)
-                target.Emit(FinallyBlock, OpCode.nop);
-            target.EmitLeave(FinallyBlock, endTry);
+                target.Emit(FinallyBlock.Position, OpCode.nop);
+            target.EmitLeave(FinallyBlock.Position, endTry);
 
             //Emit catch block
-            target.EmitLabel(CatchBlock, beginCatchLabel);
+            target.EmitLabel(CatchBlock.Position, beginCatchLabel);
             var usesException = ExceptionVar != null;
             var justRethrow = CatchBlock.IsEmpty && !usesException;
 
@@ -118,8 +118,8 @@ namespace Prexonite.Compiler.Ast
                 //th.EmitCode(target);
             }
 
-            target.EmitLabel(this, endTry);
-            target.Emit(this, OpCode.nop);
+            target.EmitLabel(Position, endTry);
+            target.Emit(Position,OpCode.nop);
 
             var block =
                 new TryCatchFinallyBlock(

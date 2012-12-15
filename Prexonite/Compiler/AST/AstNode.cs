@@ -35,7 +35,7 @@ using Prexonite.Types;
 namespace Prexonite.Compiler.Ast
 {
     [DebuggerStepThrough]
-    public abstract class AstNode : IObject, ISourcePosition
+    public abstract class AstNode : IObject
     {
         [NotNull] private readonly ISourcePosition _position;
 
@@ -210,7 +210,7 @@ namespace Prexonite.Compiler.Ast
                             symbolicId), parser.GetPosition(),
                         MessageClasses.SymbolNotResolved));
 
-                return CallSymbol.Create(EntityRef.Command.Create(symbolicId));
+                return Symbol.CreateCall(EntityRef.Command.Create(symbolicId), NoSourcePosition.Instance);
             }
             else
             {

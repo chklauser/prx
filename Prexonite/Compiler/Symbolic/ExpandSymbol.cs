@@ -1,49 +1,34 @@
 using System.Diagnostics;
-using Prexonite.Modular;
+using JetBrains.Annotations;
 
 namespace Prexonite.Compiler.Symbolic
 {
-    [DebuggerDisplay("expand {Entity}")]
-    public sealed class ExpandSymbol : Symbol
+    [DebuggerDisplay("{ToString}")]
+    public sealed class ExpandSymbol : WrappingSymbol
     {
-        public static ExpandSymbol Create(EntityRef entity)
+        public override string ToString()
         {
-            return new ExpandSymbol(entity);
+            return string.Format("expand {0}", InnerSymbol);
         }
 
-        private readonly EntityRef _entity;
-
-        private ExpandSymbol(EntityRef entity)
+        [NotNull]
+        internal static ExpandSymbol _Create([NotNull] Symbol inner, [CanBeNull] ISourcePosition position)
         {
-            _entity = entity;
+            return new ExpandSymbol(position ?? inner.Position, inner);
         }
 
-        public EntityRef Entity
+        private ExpandSymbol([NotNull] ISourcePosition position, [NotNull] Symbol inner) : base(position, inner)
         {
-            get { return _entity; }
         }
 
-        public bool Equals(ExpandSymbol other)
+        protected override int HashCodeXorFactor
         {
-            if (ReferenceEquals(null, other)) return false;
-            if (ReferenceEquals(this, other)) return true;
-            return Equals(other._entity, _entity);
+            get { return 588697; }
         }
 
-        public override bool Equals(object obj)
+        public override WrappingSymbol With(Symbol newInnerSymbol, ISourcePosition newPosition = null)
         {
-            if (ReferenceEquals(null, obj)) return false;
-            if (ReferenceEquals(this, obj)) return true;
-            if (obj.GetType() != typeof(ExpandSymbol)) return false;
-            return Equals((ExpandSymbol)obj);
-        }
-
-        public override int GetHashCode()
-        {
-            unchecked
-            {
-                return (_entity.GetHashCode() * 397);
-            }
+            return new ExpandSymbol(newPosition ??  Position,newInnerSymbol);
         }
 
         public override TResult HandleWith<TArg, TResult>(ISymbolHandler<TArg, TResult> handler, TArg argument)
@@ -55,6 +40,13 @@ namespace Prexonite.Compiler.Symbolic
         {
             expandSymbol = this;
             return true;
+        }
+
+        public override bool Equals(Symbol other)
+        {
+            if (ReferenceEquals(null, other)) return false;
+            if (ReferenceEquals(this, other)) return true;
+            return other is ExpandSymbol && Equals((ExpandSymbol)other);
         }
     }
 }

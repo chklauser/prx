@@ -78,25 +78,25 @@ namespace Prexonite.Compiler.Ast
             switch (ReturnVariant)
             {
                 case ReturnVariant.Exit:
-                    target.Emit(this, OpCode.ret_exit);
+                    target.Emit(Position,OpCode.ret_exit);
                     break;
                 case ReturnVariant.Set:
                     if (Expression == null)
                         throw new PrexoniteException("Return assignment requires an expression.");
                     Expression.EmitValueCode(target);
-                    target.Emit(this, OpCode.ret_set);
+                    target.Emit(Position,OpCode.ret_set);
                     break;
                 case ReturnVariant.Continue:
                     if (Expression != null)
                     {
                         Expression.EmitValueCode(target);
-                        target.Emit(this, OpCode.ret_set);
+                        target.Emit(Position,OpCode.ret_set);
                         _warnInCoroutines(target, ref warned);
                     }
-                    target.Emit(this, OpCode.ret_continue);
+                    target.Emit(Position,OpCode.ret_continue);
                     break;
                 case ReturnVariant.Break:
-                    target.Emit(this, OpCode.ret_break);
+                    target.Emit(Position,OpCode.ret_break);
                     break;
             }
         }
@@ -107,7 +107,7 @@ namespace Prexonite.Compiler.Ast
             {
                 target.Loader.ReportMessage(Message.Create(MessageSeverity.Warning,
                                                    Resources.AstReturn_Warn_YieldInProtectedBlock,
-                                                   this,MessageClasses.YieldFromProtectedBlock));
+                                                   Position, MessageClasses.YieldFromProtectedBlock));
                 warned = true;
             }
         }
@@ -138,7 +138,7 @@ namespace Prexonite.Compiler.Ast
             {
                 //Cannot be tail call optimized
                 Expression.EmitValueCode(target);
-                target.Emit(this, OpCode.ret_value);
+                target.Emit(Position,OpCode.ret_value);
             }
             else //Will be tail called
             {
@@ -161,15 +161,15 @@ namespace Prexonite.Compiler.Ast
                     //overwrite parameters
                     for (var i = symbolParams.Count - 1; i >= 0; i--)
                     {
-                        target.EmitStoreLocal(this, symbolParams[i]);
+                        target.EmitStoreLocal(Position, symbolParams[i]);
                     }
 
-                    target.EmitJump(this, 0);
+                    target.EmitJump(Position, 0);
                 }
                 else
                 {
                     Expression.EmitValueCode(target);
-                    target.Emit(this, OpCode.ret_value);
+                    target.Emit(Position,OpCode.ret_value);
                 }
             }
         }
@@ -203,7 +203,7 @@ namespace Prexonite.Compiler.Ast
             //              expr1
             //          else
             //              expr2
-            var retif = new AstCondition(this, target.CurrentBlock, cond.Condition, cond.IsNegative);
+            var retif = new AstCondition(Position, target.CurrentBlock, cond.Condition, cond.IsNegative);
 
             var ret1 = new AstReturn(File, Line, Column, ReturnVariant)
                 {

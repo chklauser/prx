@@ -118,7 +118,7 @@ namespace Prexonite.Compiler.Ast
             //Expressions contains at least two expressions
             var endLabel = _generateEndLabel();
             _emitCode(target, endLabel, stackSemantics);
-            target.EmitLabel(this, endLabel);
+            target.EmitLabel(Position, endLabel);
         }
 
         private void _emitCode(CompilerTarget target, string endLabel, StackSemantics stackSemantics)
@@ -130,7 +130,7 @@ namespace Prexonite.Compiler.Ast
                 // Value semantics: duplicate of previous, rejected value needs to be popped
                 // Effect semantics: no duplicates were created in the first place
                 if (i > 0 && stackSemantics == StackSemantics.Value)
-                    target.EmitPop(this);
+                    target.EmitPop(Position);
 
                 //For value semantics, we always generate a value
                 //For effect semantics, we only need the intermediate expressions to create a value
@@ -148,9 +148,9 @@ namespace Prexonite.Compiler.Ast
                     continue;
 
                 if(stackSemantics == StackSemantics.Value)
-                    target.EmitDuplicate(this);
-                target.Emit(this, OpCode.check_null);
-                target.EmitJumpIfFalse(this, endLabel);
+                    target.EmitDuplicate(Position);
+                target.Emit(Position,OpCode.check_null);
+                target.EmitJumpIfFalse(Position, endLabel);
             }
         }
 
@@ -192,7 +192,7 @@ namespace Prexonite.Compiler.Ast
                         //there is no placeholder at all, wrap expression in const
                         Debug.Assert(Expressions.All(e => !e.IsPlaceholder()));
                         DoEmitCode(target,StackSemantics.Value);
-                        target.EmitCommandCall(this, 1, Const.Alias);
+                        target.EmitCommandCall(Position, 1, Const.Alias);
                         return;
                     }
                 }
@@ -208,7 +208,7 @@ namespace Prexonite.Compiler.Ast
 
             if (count == 0)
             {
-                this.ConstFunc(null).EmitValueCode(target);
+                this.ConstFunc().EmitValueCode(target);
             }
             else if (count == 1)
             {
@@ -229,17 +229,17 @@ namespace Prexonite.Compiler.Ast
                 var constLabel = _generateEndLabel();
                 var endLabel = _generateEndLabel();
                 prefix._emitCode(target, constLabel, StackSemantics.Value);
-                target.EmitDuplicate(this);
-                target.Emit(this, OpCode.check_null);
-                target.EmitJumpIfFalse(this, constLabel);
+                target.EmitDuplicate(Position);
+                target.Emit(Position,OpCode.check_null);
+                target.EmitJumpIfFalse(Position, constLabel);
                 //prefix is null, identity function
-                target.EmitPop(this);
+                target.EmitPop(Position);
                 placeholder.IdFunc().EmitValueCode(target);
-                target.EmitJump(this, endLabel);
+                target.EmitJump(Position, endLabel);
                 //prefix is not null, const function
-                target.EmitLabel(this, constLabel);
-                target.EmitCommandCall(this, 1, Const.Alias);
-                target.EmitLabel(this, endLabel);
+                target.EmitLabel(Position, constLabel);
+                target.EmitCommandCall(Position, 1, Const.Alias);
+                target.EmitLabel(Position, endLabel);
             }
         }
 
@@ -248,7 +248,7 @@ namespace Prexonite.Compiler.Ast
             target.Loader.ReportMessage(
                 Message.Error(
                     Resources.AstCoalescence__reportInvalidPlaceholders,
-                    this, MessageClasses.OnlyLastOperandPartialInLazy));
+                    Position, MessageClasses.OnlyLastOperandPartialInLazy));
         }
     }
 }
