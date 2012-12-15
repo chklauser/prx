@@ -42,6 +42,7 @@ using Prexonite.Commands;
 using Prexonite.Commands.Concurrency;
 using Prexonite.Commands.Core;
 using Prexonite.Compiler.Ast;
+using Prexonite.Compiler.Internal;
 using Prexonite.Compiler.Macro;
 using Prexonite.Compiler.Macro.Commands;
 using Prexonite.Compiler.Symbolic;
@@ -1209,7 +1210,18 @@ namespace Prexonite.Compiler
         {
             writer.WriteLine("\n//--SYMBOLS");
 
-            throw new NotImplementedException("Storing of symbols not implemented yet.");
+            writer.WriteLine("declare(");
+            var previousSymbols = new Dictionary<Symbol, string>(Symbols.Count);
+            foreach (var symbol in Symbols)
+            {
+                writer.Write("  "); 
+                writer.Write(StringPType.ToIdLiteral(symbol.Key));
+                writer.Write(" = ");
+                symbol.Value.HandleWith(SymbolMExprSerializer.Instance, previousSymbols);
+                previousSymbols.Add(symbol.Value,symbol.Key);
+                writer.WriteLine(",");
+            }
+            writer.WriteLine(");");
         }
 
         /// <summary>

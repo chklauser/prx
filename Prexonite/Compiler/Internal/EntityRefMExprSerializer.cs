@@ -27,8 +27,8 @@ namespace Prexonite.Compiler.Internal
 
         public const string FunctionHead = "function";
         public const string CommandHead = "command";
-        public const string LocalVariableHead = "var";
-        public const string GlobalVariableHead = "gvar";
+        public const string LocalVariableHead = "lvar";
+        public const string GlobalVariableHead = "var";
         public const string MacroCommandModifierHead = "macro";
 
         [NotNull]

@@ -234,7 +234,7 @@ SYNC
             }
             [ comma ]
         ]
-        rpar
+        rpar [ semicolon ]
     )
 .
 
