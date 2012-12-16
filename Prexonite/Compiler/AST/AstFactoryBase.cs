@@ -173,11 +173,6 @@ namespace Prexonite.Compiler.Ast
             return new AstReference(position, entity);
         }
 
-        public AstGetSet Entity(ISourcePosition position, EntityRef entity, PCall call = PCall.Get)
-        {
-            return IndirectCall(position, Reference(position, entity), call);
-        }
-
         public AstGetSet MemberAccess(ISourcePosition position, AstExpr receiver, string memberId, PCall call = PCall.Get)
         {
             return new AstGetSetMemberAccess(position.File, position.Line, position.Column, call, receiver, memberId);

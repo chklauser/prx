@@ -11,7 +11,8 @@ namespace Prexonite.Compiler.Symbolic.Internal
     /// It facilitates building a symbol from the outside in, first recording ref and macro modifiers
     /// and only at the end, adding the actual core symbol.
     /// </summary>
-    internal class SymbolBuilder : ICloneable
+    [Obsolete("SymbolBuilder is not capable of building most legal symbols.")]
+    internal sealed class SymbolBuilder : ICloneable
     {
         public EntityRef Entity { get; set; }
 
@@ -98,7 +99,7 @@ namespace Prexonite.Compiler.Symbolic.Internal
         }
 
         [NotNull,PublicAPI]
-        public virtual SymbolBuilder Clone()
+        public SymbolBuilder Clone()
         {
             var c = new SymbolBuilder {_dereferenceCount = _dereferenceCount, Entity = Entity, _prefix = _prefix};
             foreach (var message in _messages)

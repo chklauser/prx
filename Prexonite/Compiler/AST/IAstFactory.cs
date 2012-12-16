@@ -54,7 +54,6 @@ namespace Prexonite.Compiler.Ast
         AstExpr Typecast(ISourcePosition position, AstExpr operand, AstTypeExpr type);
 
         AstExpr Reference(ISourcePosition position, EntityRef entity);
-        AstGetSet Entity(ISourcePosition position, EntityRef entity, PCall call = PCall.Get);
         AstGetSet MemberAccess(ISourcePosition position, AstExpr receiver, string memberId, PCall call = PCall.Get);
 
         AstGetSet StaticMemberAccess(ISourcePosition position, AstTypeExpr typeExpr, string memberId,

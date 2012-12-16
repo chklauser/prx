@@ -26,6 +26,7 @@
 
 using System.Collections.Generic;
 using System.Linq;
+using JetBrains.Annotations;
 using Prexonite.Modular;
 using Prexonite.Types;
 
@@ -51,7 +52,7 @@ namespace Prexonite.Compiler.Ast
             return TryDynamicCall(sctx, args, call, id, out result, out detailedError);
         }
 
-        private static bool _require(StackContext sctx, PValue[] args, ref int index, out PValue rawValue)
+        private static bool _require(PValue[] args, ref int index, out PValue rawValue)
         {
             if (args.Length <= index)
             {
@@ -70,7 +71,7 @@ namespace Prexonite.Compiler.Ast
         private static bool _require(StackContext sctx, PValue[] args, ref int index, out IEnumerable<AstExpr> argSeq)
         {
             PValue raw;
-            if(_require(sctx, args, ref index, out raw))
+            if(_require(args, ref index, out raw))
             {
                 argSeq = Commands.List.Map._ToEnumerable(sctx, raw)
                     .Select(x => x.ConvertTo<AstExpr>(sctx, true));
@@ -113,7 +114,7 @@ namespace Prexonite.Compiler.Ast
             }
         }
 
-        private static bool _takeOptional(StackContext sctx, PValue[] args, ref int index, out PValue rawValue, PValue defaultValue = null)
+        private static bool _takeOptional(PValue[] args, ref int index, out PValue rawValue, PValue defaultValue = null)
         {
             if(args.Length <= index)
             {
@@ -131,7 +132,7 @@ namespace Prexonite.Compiler.Ast
         private static bool _takeOptionalList(StackContext sctx, PValue[] args, ref int  index, out IEnumerable<AstExpr> expressions)
         {
             PValue raw;
-            if(_takeOptional(sctx, args, ref index, out raw))
+            if(_takeOptional(args, ref index, out raw))
             {
                 expressions = Commands.List.Map._ToEnumerable(sctx, raw)
                     .Select(x => x.ConvertTo<AstExpr>(sctx, true));
@@ -144,6 +145,7 @@ namespace Prexonite.Compiler.Ast
             }
         }
 
+        [PublicAPI]
         protected bool TryDynamicCall(StackContext sctx, PValue[] args, PCall call, string id, out PValue result, out string detailedError)
         {
             ISourcePosition position;
@@ -283,7 +285,7 @@ namespace Prexonite.Compiler.Ast
                 case "constant":
                     {
                         PValue raw;
-                        if(!_require(sctx, args, ref i, out raw))
+                        if(!_require(args, ref i, out raw))
                         {
                             detailedError = "Constant(position, const) const is missing.";
                             return false;
@@ -450,19 +452,16 @@ namespace Prexonite.Compiler.Ast
                         node = _base.Typecast(position, operand, typeExpr);
                         break;
                     }
-                case "entity":
+                case "reference":
                     {
                         EntityRef entityRef;
-                        PCall nodeCall;
-                        const string sig = "Entity(position, entityRef~EntityRef, call~PCall, args~List<AstExpr> = [])";
+                        const string sig = "Reference(position, entityRef~EntityRef)";
                         if(!_require(sctx, args, ref i, out entityRef))
                         {
                             detailedError = sig + ", entityRef is missing.";
                             return false;
                         }
-                        _takeOptional(sctx, args, ref i, out nodeCall, PCall.Get);
-                        var complex = _base.Entity(position, entityRef, nodeCall);
-                        node = _takeOptionalArguments(sctx, args, i, complex);
+                        node = _base.Reference(position, entityRef);
                         break;
                     }
                 case "memberaccess":
@@ -481,7 +480,7 @@ namespace Prexonite.Compiler.Ast
                             detailedError = sig + ", memberId is missing.";
                             return false;
                         }
-                        _takeOptional(sctx, args, ref i, out nodeCall, PCall.Get);
+                        _takeOptional(sctx, args, ref i, out nodeCall);
                         var complex = _base.MemberAccess(position, receiver, memberId, nodeCall);
                         node = _takeOptionalArguments(sctx, args, i, complex);
                         break;
@@ -502,7 +501,7 @@ namespace Prexonite.Compiler.Ast
                             detailedError = sig + ", memberId is missing.";
                             return false;
                         }
-                        _takeOptional(sctx, args, ref i, out nodeCall, PCall.Get);
+                        _takeOptional(sctx, args, ref i, out nodeCall);
                         var complex = _base.StaticMemberAccess(position, typeExpr, memberId, nodeCall);
                         node = _takeOptionalArguments(sctx, args, i, complex);
                         break;
@@ -517,7 +516,7 @@ namespace Prexonite.Compiler.Ast
                             detailedError = sig + ", receiver is missing.";
                             return false;
                         }
-                        _takeOptional(sctx, args, ref i, out nodeCall, PCall.Get);
+                        _takeOptional(sctx, args, ref i, out nodeCall);
                         var complex = _base.IndirectCall(position, receiver, nodeCall);
                         node = _takeOptionalArguments(sctx, args, i, complex);
                         break;
@@ -526,7 +525,7 @@ namespace Prexonite.Compiler.Ast
                     {
                         int? index;
                         PValue raw;
-                        _takeOptional(sctx, args, ref i, out raw, PType.Null);
+                        _takeOptional(args, ref i, out raw, PType.Null);
                         if (raw.IsNull)
                             index = null;
                         else
@@ -672,11 +671,11 @@ namespace Prexonite.Compiler.Ast
             else
             {
                 _throwInvalidCall(args, "{0} Original call: AstFactory.({1})", detailedError);
-                return null;
+                return PType.Null;
             }
         }
 
-        private static void _throwInvalidCall(PValue[] args, string errorFormat, string detailedError)
+        private static void _throwInvalidCall(IEnumerable<PValue> args, string errorFormat, string detailedError)
         {
             throw new PrexoniteException(string.Format(errorFormat, detailedError,
                                                        args.Select(x => x.Type.ToString()).ToListString()));

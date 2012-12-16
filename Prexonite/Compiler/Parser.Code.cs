@@ -951,7 +951,7 @@ namespace Prexonite.Compiler
 
             public AstExpr HandleReference(ReferenceSymbol self, Tuple<Parser, PCall> argument)
             {
-                return argument.Item1.Create.Entity(argument.Item1.GetPosition(), self.Entity);
+                return argument.Item1.Create.Reference(argument.Item1.GetPosition(), self.Entity);
             }
 
             public AstExpr HandleNil(NilSymbol self, Tuple<Parser, PCall> argument)
@@ -1063,7 +1063,6 @@ namespace Prexonite.Compiler
                                     Loader.ObjectCreationFallbackPrefix + typeExpr.TypeId,
                                     out fallbackSymbol))
             {
-
                 EnsureInScope(fallbackSymbol);
 
                 var e = _assembleInvocation(fallbackSymbol, type.Position);

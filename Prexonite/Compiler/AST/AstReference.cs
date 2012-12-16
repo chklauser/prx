@@ -30,15 +30,17 @@ namespace Prexonite.Compiler.Ast
 
             public object OnFunction(EntityRef.Function function, Tuple<AstReference, CompilerTarget> argument)
             {
-                argument.Item2.Emit(
-                    argument.Item1.Position, OpCode.ldr_func, function.Id, function.ModuleName);
+                var refNode = argument.Item1;
+                var target = argument.Item2;
+                target.Emit(refNode.Position, OpCode.ldr_func, function.Id, function.ModuleName);
                 return null;
             }
 
             public object OnCommand(EntityRef.Command command, Tuple<AstReference, CompilerTarget> argument)
             {
-                argument.Item2.Emit(
-                    argument.Item1.Position, OpCode.ldr_cmd, command.Id);
+                var target = argument.Item2;
+                var refNode = argument.Item1;
+                target.Emit(refNode.Position, OpCode.ldr_cmd, command.Id);
                 return null;
             }
 
@@ -47,15 +49,15 @@ namespace Prexonite.Compiler.Ast
                 // Currently illegal.
                 //  => Emit ldc.null instead
                 //  => Report error
-                argument.Item2.EmitNull(argument.Item1.Position);
-                argument.Item2.Loader.ReportMessage(_macroCommandErrorMessage(argument.Item1.Position));
+                var refNode = argument.Item1;
+                argument.Item2.EmitNull(refNode.Position);
+                argument.Item2.Loader.ReportMessage(_macroCommandErrorMessage(refNode.Position));
                 return null;
             }
 
             public object OnLocalVariable(EntityRef.Variable.Local variable, Tuple<AstReference, CompilerTarget> argument)
             {
-                argument.Item2.Emit(
-                                    argument.Item1.Position, OpCode.ldr_loc, variable.Id);
+                argument.Item2.Emit(argument.Item1.Position, OpCode.ldr_loc, variable.Id);
                 return null;
             }
 

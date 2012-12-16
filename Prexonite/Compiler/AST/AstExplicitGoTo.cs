@@ -28,16 +28,16 @@ using System;
 
 namespace Prexonite.Compiler.Ast
 {
-    public class AstExplicitGoTo : AstNode
+    public sealed class AstExplicitGoTo : AstNode
     {
-        public string Destination;
+        private readonly string _destination;
 
         public AstExplicitGoTo(string file, int line, int column, string destination)
             : base(file, line, column)
         {
             if (destination == null)
                 throw new ArgumentNullException("destination");
-            Destination = destination;
+            _destination = destination;
         }
 
         internal AstExplicitGoTo(Parser p, string destination)
@@ -45,14 +45,19 @@ namespace Prexonite.Compiler.Ast
         {
         }
 
+        public string Destination
+        {
+            get { return _destination; }
+        }
+
         protected override void DoEmitCode(CompilerTarget target, StackSemantics stackSemantics)
         {
-            target.EmitJump(Position, Destination);
+            target.EmitJump(Position, _destination);
         }
 
         public override string ToString()
         {
-            return "goto " + Destination;
+            return "goto " + _destination;
         }
     }
 }

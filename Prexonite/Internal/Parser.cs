@@ -7,7 +7,7 @@ using MessageEventArgs = Prexonite.Compiler.MessageEventArgs;
 using MessageSeverity = Prexonite.Compiler.MessageSeverity;//END SOURCE ARRAY
 
 
-#line 27 "C:\Users\Christian\Documents\GitHub\prx-modules\Tools\Parser.frame" //FRAME
+#line 27 "C:\Users\Christian\Documents\GitHub\prx\Tools\Parser.frame" //FRAME
 
 // ReSharper disable RedundantUsingDirective
 // ReSharper disable InconsistentNaming
@@ -29,7 +29,7 @@ using JetBrains.Annotations;
 namespace Prexonite.Internal {
 
 
-#line 42 "C:\Users\Christian\Documents\GitHub\prx-modules\Tools\Parser.frame" //FRAME
+#line 42 "C:\Users\Christian\Documents\GitHub\prx\Tools\Parser.frame" //FRAME
 
 
 internal interface IScanner
@@ -66,7 +66,7 @@ internal partial class Parser {
 	}
 	const int maxT = 11;
 
-#line 54 "C:\Users\Christian\Documents\GitHub\prx-modules\Tools\Parser.frame" //FRAME
+#line 54 "C:\Users\Christian\Documents\GitHub\prx\Tools\Parser.frame" //FRAME
 
 	const bool T = true;
 	const bool x = false;
@@ -85,7 +85,7 @@ internal partial class Parser {
 //SOURCE ARRAY
 //END SOURCE ARRAY
 
-#line 66 "C:\Users\Christian\Documents\GitHub\prx-modules\Tools\Parser.frame" //FRAME
+#line 66 "C:\Users\Christian\Documents\GitHub\prx\Tools\Parser.frame" //FRAME
 
 
     [DebuggerNonUserCode]
@@ -124,7 +124,7 @@ internal partial class Parser {
 #line default //END FRAME -->pragmas
 
 
-#line 100 "C:\Users\Christian\Documents\GitHub\prx-modules\Tools\Parser.frame" //FRAME
+#line 100 "C:\Users\Christian\Documents\GitHub\prx\Tools\Parser.frame" //FRAME
 
 			la = t;
 		}
@@ -261,7 +261,7 @@ internal partial class Parser {
 	}
 
 
-#line 139 "C:\Users\Christian\Documents\GitHub\prx-modules\Tools\Parser.frame" //FRAME
+#line 139 "C:\Users\Christian\Documents\GitHub\prx\Tools\Parser.frame" //FRAME
 
 
 	public void Parse() {
@@ -273,7 +273,7 @@ internal partial class Parser {
 
 		PTypeExpression();
 
-#line 145 "C:\Users\Christian\Documents\GitHub\prx-modules\Tools\Parser.frame" //FRAME
+#line 145 "C:\Users\Christian\Documents\GitHub\prx\Tools\Parser.frame" //FRAME
 
     Expect(0);
 	}
@@ -286,7 +286,7 @@ internal partial class Parser {
 		{x,T,T,T, T,T,T,T, x,x,x,x, x},
 		{x,x,x,x, x,x,x,x, x,x,T,x, x}
 
-#line 150 "C:\Users\Christian\Documents\GitHub\prx-modules\Tools\Parser.frame" //FRAME
+#line 150 "C:\Users\Christian\Documents\GitHub\prx\Tools\Parser.frame" //FRAME
 
 	};
 } // end Parser
@@ -332,7 +332,7 @@ internal class Errors : System.Collections.Generic.LinkedList<Message> {
 			case 12: s = "invalid Expr"; break;
 			case 13: s = "invalid Boolean"; break;
 
-#line 177 "C:\Users\Christian\Documents\GitHub\prx-modules\Tools\Parser.frame" //FRAME
+#line 177 "C:\Users\Christian\Documents\GitHub\prx\Tools\Parser.frame" //FRAME
 
 			default: s = "error " + n; break;
 		}

@@ -3581,5 +3581,27 @@ ret
 ");
         }
 
+
+        [Test]
+        public void ObjectCreationFallback()
+        {
+            _compile(@"
+declare function make_foo as create_foo;
+
+function main(x,y)
+{
+    return new foo(x,y);
+}
+
+function make_foo(){}
+");
+            _expect(@"
+ldloc x
+ldloc y
+func.2 make_foo
+ret
+");
+        }
+
     }
 }

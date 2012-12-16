@@ -1217,8 +1217,10 @@ namespace Prexonite.Compiler
                 writer.Write("  "); 
                 writer.Write(StringPType.ToIdLiteral(symbol.Key));
                 writer.Write(" = ");
-                symbol.Value.HandleWith(SymbolMExprSerializer.Instance, previousSymbols);
-                previousSymbols.Add(symbol.Value,symbol.Key);
+                var mexpr = symbol.Value.HandleWith(SymbolMExprSerializer.Instance, previousSymbols);
+                mexpr.ToString(writer);
+                if(!previousSymbols.ContainsKey(symbol.Value))
+                    previousSymbols.Add(symbol.Value,symbol.Key);
                 writer.WriteLine(",");
             }
             writer.WriteLine(");");
@@ -1232,55 +1234,6 @@ namespace Prexonite.Compiler
         {
             writer.WriteLine("\n//--META INFORMATION");
             ParentApplication.Meta.Store(writer);
-        }
-
-        private static void _writeSymbolKind<T>(
-            TextWriter writer,
-            string kind,
-            ICollection<Tuple<string, int, T>> entries) where T : EntityRef
-        {
-            if (entries.Count <= 0)
-                return;
-
-            foreach (var entry in entries.GroupBy(x => x.Item2))
-            {
-                writer.Write("declare ");
-                var dereferenceCount = entry.Key;
-                // =0 <=> ordinary symbol
-                // <0 <=> referenceTo
-                // >0 <=> dereference
-                if(dereferenceCount < 0)
-                    writer.Write(String.Concat(Enumerable.Repeat("-> ",-dereferenceCount)));
-                else if(dereferenceCount > 0)
-                    writer.Write(String.Concat(Enumerable.Repeat("ref ",dereferenceCount)));
-
-                writer.Write(kind);
-                writer.Write(' ');
-                var isFirst = true;
-                foreach (var kvp in entry)
-                {
-                    if (!isFirst)
-                        writer.Write(",");
-                    else
-                        isFirst = false;
-
-                    var sym = kvp.Item3.ToSymbolEntry();
-                    writer.Write(StringPType.ToIdLiteral(sym.InternalId));
-
-                    if (sym.Module != null)
-                    {
-                        writer.Write("/{0}/{1}", StringPType.ToIdOrLiteral(sym.Module.Id),
-                            sym.Module.Version);
-                    }
-
-                    if (!Engine.StringsAreEqual(sym.InternalId, kvp.Item1))
-                    {
-                        writer.Write(" as ");
-                        writer.Write(StringPType.ToIdLiteral(kvp.Item1));
-                    }
-                }
-                writer.WriteLine(";");
-            }
         }
 
         #endregion

@@ -25,8 +25,11 @@
 //  IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 using System;
+using System.Diagnostics;
 using System.Linq;
+using JetBrains.Annotations;
 using Prexonite.Commands.Core.PartialApplication;
+using Prexonite.Modular;
 using Prexonite.Types;
 
 namespace Prexonite.Compiler.Ast
@@ -89,26 +92,165 @@ namespace Prexonite.Compiler.Ast
 
         public override int DefaultAdditionalArguments
         {
-            get { return base.DefaultAdditionalArguments + 1; //include subject
+            get
+            {
+                if (_getDirectCallAction() == null)
+                    return base.DefaultAdditionalArguments + 1; //include subject
+                else
+                    return base.DefaultAdditionalArguments; // is translated as a direct call
+            }
+        }
+
+        private class EntityIndirectCallMatcher : EntityRefMatcher<object,Action<CompilerTarget,AstIndirectCall,PCall,bool>>
+        {
+            public static readonly EntityIndirectCallMatcher Instance = new EntityIndirectCallMatcher();
+
+            protected override Action<CompilerTarget, AstIndirectCall, PCall, bool> OnNotMatched(EntityRef entity, object argument)
+            {
+                return null;
+            }
+
+            protected override Action<CompilerTarget, AstIndirectCall, PCall, bool> OnLocalVariable(EntityRef.Variable.Local variable, object argument)
+            {
+                return
+                    (target, node, call, justEffect) =>
+                    target.Emit(node.Position,Instruction.CreateLocalIndirectCall(node.Arguments.Count, variable.Id, justEffect));
+            }
+
+            protected override Action<CompilerTarget, AstIndirectCall, PCall, bool> OnGlobalVariable(EntityRef.Variable.Global variable, object argument)
+            {
+                return
+                    (target, node, call, justEffect) =>
+                    target.Emit(node.Position, Instruction.CreateGlobalIndirectCall(node.Arguments.Count, variable.Id, variable.ModuleName, justEffect));
+            }
+        }
+
+        private class EntityCallMatcher : EntityRefMatcher<object,Action<CompilerTarget,AstIndirectCall,PCall,bool>>
+        {
+            public static readonly EntityCallMatcher Instance = new EntityCallMatcher();
+
+            protected override Action<CompilerTarget, AstIndirectCall, PCall, bool> OnNotMatched(EntityRef entity, object argument)
+            {
+                return null;
+            }
+
+            public override Action<CompilerTarget, AstIndirectCall, PCall, bool> OnFunction(EntityRef.Function function, object argument)
+            {
+                return
+                    (target, node, _, justEffect) =>
+                    target.EmitFunctionCall(node.Position, node.Arguments.Count, function.Id, function.ModuleName,
+                                            justEffect);
+            }
+
+            protected override Action<CompilerTarget, AstIndirectCall, PCall, bool> OnCommand(EntityRef.Command command, object argument)
+            {
+                return
+                    (target, node, _, justEffect) =>
+                    target.EmitCommandCall(node.Position, node.Arguments.Count, command.Id, justEffect);
+            }
+
+            protected override Action<CompilerTarget, AstIndirectCall, PCall, bool> OnLocalVariable(EntityRef.Variable.Local variable, object argument)
+            {
+                return
+                    (target, node, call, justEffect) =>
+                        {
+                            switch (call)
+                            {
+                                case PCall.Get:
+                                    if(node.Arguments.Count > 0)
+                                        target.EmitPop(node.Position,node.Arguments.Count);
+                                    if(!justEffect)
+                                        target.EmitLoadLocal(node.Position,variable.Id);
+                                    break;
+                                case PCall.Set:
+                                    Debug.Assert(node.Arguments.Count > 0, "Store local missing RHS");
+                                    target.EmitStoreLocal(node.Position,variable.Id);
+                                    if(node.Arguments.Count > 1)
+                                        target.EmitPop(node.Position,node.Arguments.Count - 1);
+                                    break;
+                                default:
+                                    throw new ArgumentOutOfRangeException("call");
+                            }
+                        };
+            }
+
+            protected override Action<CompilerTarget, AstIndirectCall, PCall, bool> OnGlobalVariable(EntityRef.Variable.Global variable, object argument)
+            {
+                return
+                    (target, node, call, justEffect) =>
+                    {
+                        switch (call)
+                        {
+                            case PCall.Get:
+                                if (node.Arguments.Count > 0)
+                                    target.EmitPop(node.Position, node.Arguments.Count);
+                                if (!justEffect)
+                                    target.EmitLoadGlobal(node.Position, variable.Id,variable.ModuleName);
+                                break;
+                            case PCall.Set:
+                                Debug.Assert(node.Arguments.Count > 0, "Store local missing RHS");
+                                target.EmitStoreGlobal(node.Position, variable.Id,variable.ModuleName);
+                                if (node.Arguments.Count > 1)
+                                    target.EmitPop(node.Position, node.Arguments.Count - 1);
+                                break;
+                            default:
+                                throw new ArgumentOutOfRangeException("call");
+                        }
+                    };
+            }
+        }
+
+        [CanBeNull]
+        private Action<CompilerTarget, AstIndirectCall, PCall, bool> _getDirectCallAction()
+        {
+            // This method will be called twice per node. Once to indicate whether a direct call is available
+            //  and then a second time to actually use the direct call implementation.
+
+            var refNode = Subject as AstReference;
+            var indCall = Subject as AstIndirectCall;
+            if (refNode != null)
+            {
+                // Could be variable, function, command
+                //  -> generates func, cmd, ldloc, stloc, ldglob, stglob
+                return refNode.Entity.Match(EntityCallMatcher.Instance,null);
+            }
+            else if (indCall != null && (refNode = indCall.Subject as AstReference) != null)
+            {
+                // Could be indirectly accessed local or global variable 
+                //  -> generates indloc, indglob
+                return refNode.Entity.Match(EntityIndirectCallMatcher.Instance, null);
+            }
+            else
+            {
+                return null;
             }
         }
 
         protected override void DoEmitCode(CompilerTarget target, StackSemantics stackSemantics)
         {
-            Subject.EmitValueCode(target);
+            if(_getDirectCallAction() == null)
+                Subject.EmitValueCode(target);
             base.DoEmitCode(target, stackSemantics);
         }
 
         protected override void EmitGetCode(CompilerTarget target, StackSemantics stackSemantics)
         {
+            var action = _getDirectCallAction();
             var justEffect = stackSemantics == StackSemantics.Effect;
-            target.EmitIndirectCall(Position, Arguments.Count, justEffect);
+            if (action == null)
+                target.EmitIndirectCall(Position, Arguments.Count, justEffect);
+            else
+                action(target, this, PCall.Get, justEffect);
         }
 
         protected override void EmitSetCode(CompilerTarget target)
         {
             //Indirect set does not have a return value, therefore justEffect is true
-            target.EmitIndirectCall(Position, Arguments.Count, true);
+            var action = _getDirectCallAction();
+            if (action == null)
+                target.EmitIndirectCall(Position, Arguments.Count, true);
+            else
+                action(target, this, PCall.Get, true);
         }
 
         public override bool TryOptimize(CompilerTarget target, out AstExpr expr)

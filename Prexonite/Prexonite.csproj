@@ -150,10 +150,8 @@
     <Compile Include="Compiler\Ast\AstExpr.cs" />
     <Compile Include="Compiler\Ast\AstFactoryBase.cs" />
     <Compile Include="Compiler\Ast\AstFactoryBridge.cs" />
-    <Compile Include="Compiler\Ast\AstGetSetEntity.cs" />
     <Compile Include="Compiler\Ast\AstLoopBlock.cs" />
     <Compile Include="Compiler\Ast\AstReference.cs" />
-    <Compile Include="Compiler\Ast\AstReferenceToEntity.cs" />
     <Compile Include="Compiler\Ast\AstScopedExpr.cs" />
     <Compile Include="Compiler\Ast\AstScopedBlock.cs" />
     <Compile Include="Compiler\Ast\IAstFactory.cs" />
@@ -202,7 +200,6 @@
     <Compile Include="Compiler\NoSourcePosition.cs" />
     <Compile Include="Compiler\Parser.SymbolBuilder.cs" />
     <Compile Include="Compiler\ParserAstFactory.cs" />
-    <Compile Include="Compiler\Symbolic\CallSymbol.cs" />
     <Compile Include="Compiler\Symbolic\Compatibility\LegacyExtensions.cs" />
     <Compile Include="Compiler\Symbolic\DereferenceSymbol.cs" />
     <Compile Include="Compiler\Symbolic\ExpandSymbol.cs" />
@@ -215,7 +212,6 @@
     <Compile Include="Compiler\Symbolic\MessageSymbol.cs" />
     <Compile Include="Compiler\Symbolic\NilSymbol.cs" />
     <Compile Include="Compiler\Symbolic\ReferenceSymbol.cs" />
-    <Compile Include="Compiler\Symbolic\ReferenceToSymbol.cs" />
     <Compile Include="Compiler\Symbolic\Symbol.cs" />
     <Compile Include="Compiler\Symbolic\SymbolHandler.cs" />
     <Compile Include="Compiler\Symbolic\SymbolInfo.cs" />
