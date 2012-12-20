@@ -150,7 +150,9 @@ MId<out String id>	            (.  id = "an\\invalid\\MId"; .)
 |	Id<out id>
 .
 
-MExpr<out MExpr expr>			(.  expr = new MExpr.MAtom(NoSourcePosition.Instance,null); .)
+MExpr<out MExpr expr>			(.  expr = new MExpr.MAtom(NoSourcePosition.Instance,null);
+                                    bool lastWasComma = false;
+                                .)
 =								(.	String id; 
 									var args = new List<MExpr>();
 									MExpr arg;
@@ -158,10 +160,18 @@ MExpr<out MExpr expr>			(.  expr = new MExpr.MAtom(NoSourcePosition.Instance,nul
 	MId<out id>
 	(	lpar					
 		[	MExpr<out arg>		(.	args.Add(arg); .)
-			{	comma
-				MExpr<out arg>	(.	args.Add(arg); .)
+			{	comma           (.  if(lastWasComma)
+                                    {
+                                        Loader.ReportMessage(Message.Error("Double comma in MExpr list.",GetPosition(),MessageClasses.DuplicateComma));
+                                    }
+                                    lastWasComma = true; 
+                                .)
+				[   MExpr<out arg>	
+                                (.	args.Add(arg); 
+                                    lastWasComma = false;
+                                .)
+                ]
 			}
-			[	comma	]
 		]
 		rpar
 	|	MExpr<out arg>			(.	args.Add(arg); .)
@@ -173,6 +183,8 @@ MExpr<out MExpr expr>			(.  expr = new MExpr.MAtom(NoSourcePosition.Instance,nul
 	SignedInteger<out intval>	(.	expr = new MExpr.MAtom(GetPosition(), intval); .)
 |								(.	bool boolval; .)
 	Boolean<out boolval>		(.	expr = new MExpr.MAtom(GetPosition(), boolval); .)
+|                               (.  Version v; .)
+    Version<out v>              (.  expr = new MExpr.MAtom(GetPosition(), v); .)
 |	
     Null                        (.  expr = new MExpr.MAtom(GetPosition(), null); .)
 .

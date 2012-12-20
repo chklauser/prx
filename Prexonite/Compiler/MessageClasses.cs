@@ -22,6 +22,7 @@
         public const string UnknownAssemblyOperator = "P.UnknownAssemblyOperator";
         public const string UnknownEntityRefType = "P.UnknownEntityRefType";
         public const string CannotParseMExpr = "P.CannotParseMExpr";
+        public const string DuplicateComma = "P.DuplicateComma";
 
         #endregion
 

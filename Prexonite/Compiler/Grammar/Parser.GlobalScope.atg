@@ -227,12 +227,18 @@ SYNC
           { comma [ DeclarationInstance2<entityFactory,module,builder.Clone(),preventOverride:true> ] }
         }
         rbrace
-	|	lpar
+	|	lpar                (.  bool wasComma = false; .)
         [   MExprBasedDeclaration
-            {   comma 
-                MExprBasedDeclaration
+            {   comma       (.  if(wasComma)
+                                {
+                                    Loader.ReportMessage(Message.Error("Double comma in declaration sequence.",GetPosition(),MessageClasses.DuplicateComma));
+                                }
+                                wasComma = true;
+                            .)
+                [   MExprBasedDeclaration
+                            (.  wasComma = false; .)
+                ]
             }
-            [ comma ]
         ]
         rpar [ semicolon ]
     )
