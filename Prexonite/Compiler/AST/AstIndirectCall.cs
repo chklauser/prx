@@ -203,7 +203,7 @@ namespace Prexonite.Compiler.Ast
         [CanBeNull]
         private Action<CompilerTarget, AstIndirectCall, PCall, bool> _getDirectCallAction()
         {
-            // This method will be called twice per node. Once to indicate whether a direct call is available
+            // This method will be called at least twice per node. Once to indicate whether a direct call is available
             //  and then a second time to actually use the direct call implementation.
 
             var refNode = Subject as AstReference;

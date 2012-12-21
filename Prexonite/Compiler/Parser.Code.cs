@@ -942,7 +942,6 @@ namespace Prexonite.Compiler
 
             public AstExpr HandleDereference(DereferenceSymbol self, Tuple<Parser, PCall> argument)
             {
-
                 return AstIndirectCall.Create(argument.Item1.GetPosition(), self.InnerSymbol.HandleWith(this, argument),
                                               argument.Item2);
             }

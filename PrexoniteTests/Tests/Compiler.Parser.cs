@@ -3603,5 +3603,26 @@ ret
 ");
         }
 
+        [Test]
+        public void LocalAliasDeclaration()
+        {
+            _compile(@"
+var g;
+function main()
+{
+    declare g as f;
+    declare( h = sym ""g"" );
+    return f + h;
+}
+");
+
+            _expect(@"
+ldglob g
+ldglob g
+add
+ret
+");
+        }
+
     }
 }

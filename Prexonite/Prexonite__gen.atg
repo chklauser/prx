@@ -1189,6 +1189,7 @@ SYNC
   declare
     (   { SymbolPrefix<builder, out canBeRef> }
         EntityFactory<canBeRef, out entityFactory>
+                            (.  if(entityFactory == null) builder.ReferenceTo(); .) // For aliases, don't wrap in dereference
         ( colon
         |                   (.  Loader.ReportMessage(Message.Warning(
                                   Resources.Parser_DeclarationTypeShouldBeFollowedByColon,
@@ -1201,12 +1202,13 @@ SYNC
         semicolon
     |   lbrace
         [   uusing ModuleName<out module> ]
-        {
+        {                   (.  SymbolBuilder runBuilder = builder.Clone(); .)
           { SymbolPrefix<builder, out canBeRef> }
           EntityFactory<canBeRef, out entityFactory> 
+                            (.  if(entityFactory == null) runBuilder.ReferenceTo(); .) // For aliases, don't wrap in dereference
           colon
-          DeclarationInstance2<entityFactory,module,builder.Clone(),preventOverride:true>
-          { comma [ DeclarationInstance2<entityFactory,module,builder.Clone(),preventOverride:true> ] }
+          DeclarationInstance2<entityFactory,module,runBuilder.Clone(),preventOverride:true>
+          { comma [ DeclarationInstance2<entityFactory,module,runBuilder.Clone(),preventOverride:true> ] }
         }
         rbrace
 	|	lpar                (.  bool wasComma = false; .)
