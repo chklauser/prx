@@ -263,7 +263,8 @@ PrefixUnaryExpr<out AstExpr expr>
 
 Primary<out AstExpr expr>
                                         (.  expr = null;
-                                            AstGetSet complex; bool declared; .)
+                                            bool declared; 
+                                        .)
 =
 	(.  _pushLexerState(Lexer.Asm); .)	  (.  var blockExpr = Create.Block(GetPosition());
 											                      _PushScope(blockExpr);
@@ -284,8 +285,7 @@ Primary<out AstExpr expr>
 |   LazyExpression<out expr>
 |   lpar Expr<out expr> rpar
 |   IF(_isNotNewDecl()) ObjectCreation<out expr>
-|   GetInitiator<out complex, out declared>
-                                        (.  expr = complex; .)
+|   GetInitiator<out expr, out declared>
 |   LPopExpr lpar Expr<out expr>        (.  //This is a hack that makes string interpolation with expressions possible
                                             //The non-verbal token "LPopExpr" (has no character representation) is 
                                             //returned by the lexer if the parser has to treat an expression in a special

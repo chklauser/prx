@@ -25,9 +25,11 @@
 //  IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 using System.Collections.Generic;
+using Moq;
 using NUnit.Framework;
 using Prexonite;
 using Prexonite.Compiler;
+using Prexonite.Compiler.Ast;
 
 namespace PrexoniteTests.Tests
 {
@@ -219,6 +221,229 @@ function main()
 }
 ");
             Expect(" 1 2 3 4 5 6 7[ 33: 1, 33: 2, 77: 1, 77: 2, 77: 3, 77: 4, 77: 5, 77: 6, 77: 7 ]",1,2,3,4,5,6,7);
+        }
+
+        [Test]
+        public void TestPsrTestRunSingleTest()
+        {
+            Compile(@"function test\run_single_test as run_single_test(testFunc)
+{
+    var t = new Structure;
+    t.\(""test"") = testFunc;
+    try
+    {
+        testFunc.();
+        return true: t;
+    }
+    catch(var e)
+    {
+        t.\(""e"") = e;
+        return false: t;
+    }
+}
+
+function main()
+{
+    var tp = run_single_test(() => 15);
+    return ""$(tp.Key):$(tp.Value.test.Id)"";
+}");
+
+            Expect("True:main\\0");
+        }
+
+        [Test]
+        public void TestPsrAst3WithPos()
+        {
+            Compile(@"
+function ast3\withPos(factory,type) [compiler]
+{
+	var args;
+	var targs = args >> skip(2);
+	
+	if(factory is null)
+		throw ""AST factory cannot be null."";
+		
+	return call\member(factory,type, targs);
+}");
+            var factory = new Mock<IAstFactory>(MockBehavior.Strict);
+            var astPlaceholder = new AstPlaceholder(NoSourcePosition.MissingFileName, NoSourcePosition.Instance.Line, NoSourcePosition.Instance.Column);
+            factory.Setup(f => f.Placeholder(It.IsAny<ISourcePosition>(), 5))
+                   .Returns(astPlaceholder);
+            ExpectNamed("ast3\\withPos", astPlaceholder, sctx.CreateNativePValue(factory.Object), "Placeholder", sctx.CreateNativePValue(NoSourcePosition.Instance), 5);
+        }
+
+        [Test]
+        public void TestSysDeclaresMacroCommand()
+        {
+            Compile(@"//PRX
+
+Name sys;
+
+declare(
+  print = ref command ""print"",
+  println = ref command ""println"",
+  meta = ref command ""meta"",
+  boxed = ref command ""boxed"",
+  concat = ref command ""concat"",
+  map = ref command ""map"",
+  select = ref command ""select"",
+  foldl = ref command ""foldl"",
+  foldr = ref command ""foldr"",
+  dispose = ref command ""dispose"",
+  call = expand macro command ""call"",
+  call\perform = ref command ""call\\perform"",
+  thunk = ref command ""thunk"",
+  asthunk = ref command ""asthunk"",
+  force = ref command ""force"",
+  toseq = ref command ""toseq"",
+  call\member = expand macro command ""call\\member"",
+  call\member\perform = ref command ""call\\member\\perform"",
+  caller = ref command ""caller"",
+  pair = ref command ""pair"",
+  unbind = ref command ""unbind"",
+  sort = ref command ""sort"",
+  orderby = ref command ""orderby"",
+  LoadAssembly = ref command ""LoadAssembly"",
+  debug = ref command ""debug"",
+  setcenter = ref command ""setcenter"",
+  setleft = ref command ""setleft"",
+  setright = ref command ""setright"",
+  all = ref command ""all"",
+  where = ref command ""where"",
+  skip = ref command ""skip"",
+  limit = ref command ""limit"",
+  take = ref command ""take"",
+  abs = ref command ""abs"",
+  ceiling = ref command ""ceiling"",
+  exp = ref command ""exp"",
+  floor = ref command ""floor"",
+  log = ref command ""log"",
+  max = ref command ""max"",
+  min = ref command ""min"",
+  pi = ref command ""pi"",
+  round = ref command ""round"",
+  sin = ref command ""sin"",
+  cos = ref command ""cos"",
+  sqrt = ref command ""sqrt"",
+  tan = ref command ""tan"",
+  char = ref command ""char"",
+  count = ref command ""count"",
+  distinct = ref command ""distinct"",
+  union = ref command ""union"",
+  unique = ref command ""unique"",
+  frequency = ref command ""frequency"",
+  groupby = ref command ""groupby"",
+  intersect = ref command ""intersect"",
+  call\tail = expand macro command ""call\\tail"",
+  call\tail\perform = ref command ""call\\tail\\perform"",
+  list = ref command ""list"",
+  each = ref command ""each"",
+  exists = ref command ""exists"",
+  forall = ref command ""forall"",
+  CompileToCil = ref command ""CompileToCil"",
+  takewhile = ref command ""takewhile"",
+  except = ref command ""except"",
+  range = ref command ""range"",
+  reverse = ref command ""reverse"",
+  headtail = ref command ""headtail"",
+  append = ref command ""append"",
+  sum = ref command ""sum"",
+  contains = ref command ""contains"",
+  chan = ref command ""chan"",
+  call\async = expand macro command ""call\\async"",
+  call\async\perform = ref command ""call\\async\\perform"",
+  async_seq = ref command ""async_seq"",
+  call\sub\perform = ref command ""call\\sub\\perform"",
+  pa\ind = ref command ""pa\\ind"",
+  pa\mem = ref command ""pa\\mem"",
+  pa\ctor = ref command ""pa\\ctor"",
+  pa\check = ref command ""pa\\check"",
+  pa\cast = ref command ""pa\\cast"",
+  pa\smem = ref command ""pa\\smem"",
+  pa\fun\call = ref command ""pa\\fun\\call"",
+  pa\flip\call = ref command ""pa\\flip\\call"",
+  pa\call\star = ref command ""pa\\call\\star"",
+  then = ref command ""then"",
+  id = ref command ""id"",
+  const = ref command ""const"",
+  (+) = ref command ""plus"",
+  (-) = ref command ""minus"",
+  (*) = ref command ""times"",
+  (/) = ref command ""dividedBy"",
+  $mod = ref command ""mod"",
+  (^) = ref command ""raisedTo"",
+  (&) = ref command ""bitwiseAnd"",
+  (|) = ref command ""bitwiseOr"",
+  $xor = ref command ""xor"",
+  (==) = ref command ""isEqualTo"",
+  (!=) = ref command ""isInequalTo"",
+  (>) = ref command ""isGreaterThan"",
+  (>=) = ref command ""isGreaterThanOrEqual"",
+  (<) = ref command ""isLessThan"",
+  (<=) = ref command ""isLessThanOrEqual"",
+  (-.) = ref command ""negation"",
+  $complement = ref command ""complement"",
+  $not = ref command ""not"",
+  create_enumerator = ref command ""create_enumerator"",
+  create_module_name = ref command ""create_module_name"",
+  seqconcat = ref command ""seqconcat"",
+  call\sub = expand macro command ""call\\sub"",
+  call\sub\interpret = expand macro command ""call\\sub\\interpret"",
+  macro\pack = expand macro command ""macro\\pack"",
+  macro\unpack = expand macro command ""macro\\unpack"",
+  macro\reference = expand macro command ""macro\\reference"",
+  call\star = expand macro command ""call\\star"",
+  call\macro = expand macro command ""call\\macro"",
+  call\macro\impl = expand macro command ""call\\macro\\impl"",
+  main = ref function(""main"",""testApplication"",0.0),
+);
+
+function main(x,y)
+{
+    return call\member(x,y);
+}
+");
+
+            var x = new Mock<ISourcePosition>(MockBehavior.Strict);
+            x.SetupGet(s => s.Line).Returns(15);
+            Expect(15,sctx.CreateNativePValue(x.Object),"Line");
+        }
+
+        [Test]
+        public void BlockDeclarationOfMacroCommand()
+        {
+            Compile(@"
+declare macro command call\member;
+
+function main(x,y)
+{
+    return call\member(x,y);
+}
+");
+            var x = new Mock<ISourcePosition>(MockBehavior.Strict);
+            x.SetupGet(s => s.Line).Returns(15);
+            Expect(15, sctx.CreateNativePValue(x.Object), "Line");
+        }
+
+        [Test]
+        public void ReferenceToSymbolWithMessage()
+        {
+            var ldr = Compile(@"
+function t1 = 7;
+ref t2 = ->t1;
+declare(
+    t3 = warn(pos(""Translation.cs.pxs"",434,5),""T.tt"",""Hooder"", sym ""t2"")
+);
+
+function main()
+{
+    return ->t1 == ->t3;
+}
+");
+
+            Expect(true);
+            Assert.That(ldr.Warnings.Count,Is.EqualTo(1));
+            Assert.That(ldr.Warnings[0].MessageClass,Is.EqualTo("T.tt"));
         }
     }
 }

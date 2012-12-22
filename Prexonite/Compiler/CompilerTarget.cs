@@ -1486,7 +1486,7 @@ namespace Prexonite.Compiler
 
         #region (Legacy) Symbol handling
 
-        [ContractAnnotation("=>true,self:notnull; =>false,self:null")]
+        [ContractAnnotation("=>true,symbol:notnull; =>false,symbol:null")]
         internal bool _TryUseSymbol(string symbolicId, out Symbol symbol, [NotNull] ISourcePosition position)
         {
             if (Symbols.TryGet(symbolicId, out symbol))
@@ -1500,7 +1500,7 @@ namespace Prexonite.Compiler
             }
         }
 
-        [ContractAnnotation("=>true,entry:notnull; =>false,entry:null")]
+        [ContractAnnotation("=>true,entry:notnull; =>false,entry:null"),Obsolete("Use the Symbol API instead.")]
         internal bool _TryUseSymbolEntry([NotNull] string symbolId, [NotNull] ISourcePosition position, out SymbolEntry entry)
         {
             Symbol symbol;

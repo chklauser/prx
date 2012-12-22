@@ -54,6 +54,7 @@ namespace Prexonite.Compiler
             _createTableOfInstructions();
             _astProxy = new AstProxy(this);
             _astFactory = new ParserAstFactory(this);
+            _referenceTransformer = new ReferenceTransformer(this);
         }
 
         #region Proxy interface
@@ -380,6 +381,7 @@ namespace Prexonite.Compiler
 
         private readonly Stack<object> _scopeStack = new Stack<object>();
 
+        [Obsolete("Use Symbol API instead.")]
         private bool _TryUseSymbolEntry(string id, ISourcePosition position, out SymbolEntry symbolEntry)
         {
             Debug.Assert(target != null, "Tried to resolve legacy self entry while not in a scope where a compiler target is available.");
@@ -931,11 +933,86 @@ namespace Prexonite.Compiler
             }
         }
 
+        private class ReferenceTransformer : SymbolHandler<int,Symbol>
+        {
+            [NotNull]
+            private readonly Parser _parser;
+
+            public ReferenceTransformer([NotNull] Parser parser)
+            {
+                _parser = parser;
+            }
+
+            protected override Symbol HandleWrappingSymbol(WrappingSymbol self, int argument)
+            {
+                if (argument == 0)
+                    return self;
+                else
+                    return self.With(self.InnerSymbol.HandleWith(this, argument));
+            }
+
+            protected override Symbol HandleLeafSymbol(Symbol self, int argument)
+            {
+                if (argument > 0)
+                {
+                    throw new ErrorMessageException(
+                        Message.Error(Resources.ReferenceTransformer_CannotCreateReferenceToValue_,
+                                      _parser.GetPosition(), MessageClasses.CannotCreateReference));
+                }
+                else
+                {
+                    return self;
+                }
+            }
+
+            public override Symbol HandleDereference(DereferenceSymbol self, int argument)
+            {
+                if (argument > 0)
+                {
+                    return self.InnerSymbol.HandleWith(this, argument - 1);
+                }
+                else
+                {
+                    return base.HandleDereference(self, argument);
+                }
+            }
+        }
+
+        [NotNull]
+        private readonly ReferenceTransformer _referenceTransformer;
+
+        private AstExpr _assembleReference(string id, int ptrCount)
+        {
+            Debug.Assert(id != null);
+            Debug.Assert(ptrCount > 0);
+
+            Symbol symbol;
+            var position = GetPosition();
+            if (!Symbols.TryGet(id, out symbol))
+            {
+                Loader.ReportMessage(Message.Error(string.Format(Resources.Parser__assembleReference_SymbolNotDefined, id),position,MessageClasses.SymbolNotResolved));
+                return Create.Null(position);
+            }
+            else
+            {
+                try
+                {
+                    var transformed = symbol.HandleWith(_referenceTransformer, ptrCount);
+                    return _assembleInvocation(transformed, position);
+                }
+                catch (ErrorMessageException e)
+                {
+                    Loader.ReportMessage(e.CompilerMessage);
+                    return Create.Null(position);
+                }
+            }
+        }
+
         private static readonly AssembleAstHandler AssembleAst = new AssembleAstHandler();
 
         private class AssembleAstHandler : ISymbolHandler<Tuple<Parser, PCall>, AstExpr>
         {
-            public AstExpr HandleMessage(MessageSymbol self, Tuple<Parser, PCall> argument)
+public AstExpr HandleMessage(MessageSymbol self, Tuple<Parser, PCall> argument)
             {
                 return self.InnerSymbol.HandleWith(this, argument);
             }
@@ -950,6 +1027,12 @@ namespace Prexonite.Compiler
 
             public AstExpr HandleReference(ReferenceSymbol self, Tuple<Parser, PCall> argument)
             {
+                EntityRef.Variable.Local local;
+                if (self.Entity.TryGetLocalVariable(out local))
+                {
+                    if(argument.Item1.isOuterVariable(local.Id))
+                        argument.Item1.target.RequireOuterVariable(local.Id);
+                }
                 return argument.Item1.Create.Reference(argument.Item1.GetPosition(), self.Entity);
             }
 

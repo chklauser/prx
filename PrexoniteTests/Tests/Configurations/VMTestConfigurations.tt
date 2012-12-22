@@ -37,7 +37,7 @@ namespace PrexoniteTests.Tests.Configurations
         }
     }
 
-    [TestFixture]
+    [TestFixture,Explicit]
     internal class <#=baseName#>_CilStatic : <#=className#>
     {
         private readonly UnitTestConfiguration _runner = new UnitTestConfiguration.InMemory{CompileToCil=true};
@@ -50,7 +50,7 @@ namespace PrexoniteTests.Tests.Configurations
         }
     }
 
-    [TestFixture]
+    [TestFixture,Explicit]
     internal class <#=baseName#>_CilIsolated : <#=className#>
     {
         private readonly UnitTestConfiguration _runner = new UnitTestConfiguration.InMemory{

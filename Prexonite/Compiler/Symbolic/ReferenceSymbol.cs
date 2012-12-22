@@ -5,7 +5,7 @@ using Prexonite.Modular;
 
 namespace Prexonite.Compiler.Symbolic
 {
-    [DebuggerDisplay("{ToString}")]
+    [DebuggerDisplay("{ToString()}")]
     public sealed class ReferenceSymbol : Symbol, IEquatable<ReferenceSymbol>
     {
         public override string ToString()

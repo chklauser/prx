@@ -511,6 +511,24 @@ namespace Prexonite.Properties {
         }
         
         /// <summary>
+        ///   Looks up a localized string similar to Cannot create a reference to a {0}..
+        /// </summary>
+        public static string Parser__assembleReference_CannotCreateReferenceToSymbol {
+            get {
+                return ResourceManager.GetString("Parser__assembleReference_CannotCreateReferenceToSymbol", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to The symbol {0} is not defined..
+        /// </summary>
+        public static string Parser__assembleReference_SymbolNotDefined {
+            get {
+                return ResourceManager.GetString("Parser__assembleReference_SymbolNotDefined", resourceCulture);
+            }
+        }
+        
+        /// <summary>
         ///   Looks up a localized string similar to Cannot use {0} like a constructor..
         /// </summary>
         public static string Parser__CannotUseExpressionAsAConstructor {
@@ -634,6 +652,15 @@ namespace Prexonite.Properties {
         public static string Reference_requires_at_least_one_argument {
             get {
                 return ResourceManager.GetString("Reference_requires_at_least_one_argument", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Cannot create reference to a value (references are values too).
+        /// </summary>
+        public static string ReferenceTransformer_CannotCreateReferenceToValue_ {
+            get {
+                return ResourceManager.GetString("ReferenceTransformer_CannotCreateReferenceToValue.", resourceCulture);
             }
         }
         

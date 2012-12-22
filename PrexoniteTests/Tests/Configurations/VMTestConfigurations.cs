@@ -27,7 +27,7 @@ namespace PrexoniteTests.Tests.Configurations
         }
     }
 
-    [TestFixture]
+    [TestFixture,Explicit]
     internal class ast_CilStatic : Unit_ast
     {
         private readonly UnitTestConfiguration _runner = new UnitTestConfiguration.InMemory{CompileToCil=true};
@@ -40,7 +40,7 @@ namespace PrexoniteTests.Tests.Configurations
         }
     }
 
-    [TestFixture]
+    [TestFixture,Explicit]
     internal class ast_CilIsolated : Unit_ast
     {
         private readonly UnitTestConfiguration _runner = new UnitTestConfiguration.InMemory{
@@ -112,7 +112,7 @@ namespace PrexoniteTests.Tests.Configurations
         }
     }
 
-    [TestFixture]
+    [TestFixture,Explicit]
     internal class lang_ext_CilStatic : Unit_lang_ext
     {
         private readonly UnitTestConfiguration _runner = new UnitTestConfiguration.InMemory{CompileToCil=true};
@@ -125,7 +125,7 @@ namespace PrexoniteTests.Tests.Configurations
         }
     }
 
-    [TestFixture]
+    [TestFixture,Explicit]
     internal class lang_ext_CilIsolated : Unit_lang_ext
     {
         private readonly UnitTestConfiguration _runner = new UnitTestConfiguration.InMemory{
@@ -197,7 +197,7 @@ namespace PrexoniteTests.Tests.Configurations
         }
     }
 
-    [TestFixture]
+    [TestFixture,Explicit]
     internal class macro_CilStatic : Unit_macro
     {
         private readonly UnitTestConfiguration _runner = new UnitTestConfiguration.InMemory{CompileToCil=true};
@@ -210,7 +210,7 @@ namespace PrexoniteTests.Tests.Configurations
         }
     }
 
-    [TestFixture]
+    [TestFixture,Explicit]
     internal class macro_CilIsolated : Unit_macro
     {
         private readonly UnitTestConfiguration _runner = new UnitTestConfiguration.InMemory{
@@ -282,7 +282,7 @@ namespace PrexoniteTests.Tests.Configurations
         }
     }
 
-    [TestFixture]
+    [TestFixture,Explicit]
     internal class misc_CilStatic : Unit_misc
     {
         private readonly UnitTestConfiguration _runner = new UnitTestConfiguration.InMemory{CompileToCil=true};
@@ -295,7 +295,7 @@ namespace PrexoniteTests.Tests.Configurations
         }
     }
 
-    [TestFixture]
+    [TestFixture,Explicit]
     internal class misc_CilIsolated : Unit_misc
     {
         private readonly UnitTestConfiguration _runner = new UnitTestConfiguration.InMemory{
@@ -367,7 +367,7 @@ namespace PrexoniteTests.Tests.Configurations
         }
     }
 
-    [TestFixture]
+    [TestFixture,Explicit]
     internal class struct_CilStatic : Unit_struct
     {
         private readonly UnitTestConfiguration _runner = new UnitTestConfiguration.InMemory{CompileToCil=true};
@@ -380,7 +380,7 @@ namespace PrexoniteTests.Tests.Configurations
         }
     }
 
-    [TestFixture]
+    [TestFixture,Explicit]
     internal class struct_CilIsolated : Unit_struct
     {
         private readonly UnitTestConfiguration _runner = new UnitTestConfiguration.InMemory{

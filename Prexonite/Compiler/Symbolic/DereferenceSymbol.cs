@@ -4,7 +4,7 @@ using Prexonite.Compiler.Symbolic.Internal;
 
 namespace Prexonite.Compiler.Symbolic
 {
-    [DebuggerDisplay("{ToString}")]
+    [DebuggerDisplay("{ToString()}")]
     public sealed class DereferenceSymbol : WrappingSymbol
     {
         public override string ToString()

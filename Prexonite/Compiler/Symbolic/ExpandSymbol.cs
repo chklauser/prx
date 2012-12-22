@@ -3,7 +3,7 @@ using JetBrains.Annotations;
 
 namespace Prexonite.Compiler.Symbolic
 {
-    [DebuggerDisplay("{ToString}")]
+    [DebuggerDisplay("{ToString()}")]
     public sealed class ExpandSymbol : WrappingSymbol
     {
         public override string ToString()

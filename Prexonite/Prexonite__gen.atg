@@ -711,7 +711,8 @@ PrefixUnaryExpr<out AstExpr expr>
 
 Primary<out AstExpr expr>
                                         (.  expr = null;
-                                            AstGetSet complex; bool declared; .)
+                                            bool declared; 
+                                        .)
 =
 	(.  _pushLexerState(Lexer.Asm); .)	  (.  var blockExpr = Create.Block(GetPosition());
 											                      _PushScope(blockExpr);
@@ -732,8 +733,7 @@ Primary<out AstExpr expr>
 |   LazyExpression<out expr>
 |   lpar Expr<out expr> rpar
 |   IF(_isNotNewDecl()) ObjectCreation<out expr>
-|   GetInitiator<out complex, out declared>
-                                        (.  expr = complex; .)
+|   GetInitiator<out expr, out declared>
 |   LPopExpr lpar Expr<out expr>        (.  //This is a hack that makes string interpolation with expressions possible
                                             //The non-verbal token "LPopExpr" (has no character representation) is 
                                             //returned by the lexer if the parser has to treat an expression in a special
@@ -1189,7 +1189,7 @@ SYNC
   declare
     (   { SymbolPrefix<builder, out canBeRef> }
         EntityFactory<canBeRef, out entityFactory>
-                            (.  if(entityFactory == null) builder.ReferenceTo(); .) // For aliases, don't wrap in dereference
+                            (.  if(entityFactory == null) builder.AutoDereferenceEnabled = false; .) // For aliases, don't wrap in dereference
         ( colon
         |                   (.  Loader.ReportMessage(Message.Warning(
                                   Resources.Parser_DeclarationTypeShouldBeFollowedByColon,
@@ -1205,7 +1205,7 @@ SYNC
         {                   (.  SymbolBuilder runBuilder = builder.Clone(); .)
           { SymbolPrefix<builder, out canBeRef> }
           EntityFactory<canBeRef, out entityFactory> 
-                            (.  if(entityFactory == null) runBuilder.ReferenceTo(); .) // For aliases, don't wrap in dereference
+                            (.  if(entityFactory == null) runBuilder.AutoDereferenceEnabled = false; .) // For aliases, don't wrap in dereference
           colon
           DeclarationInstance2<entityFactory,module,runBuilder.Clone(),preventOverride:true>
           { comma [ DeclarationInstance2<entityFactory,module,runBuilder.Clone(),preventOverride:true> ] }
@@ -2098,22 +2098,32 @@ StructureStatement<AstBlock block>
 
 GetSetComplex<AstBlock block>
                                         (.  AstGetSet complex; 
+                                            AstExpr expr;
                                             AstGetSetSymbol symbol;
                                             bool isDeclaration;
                                             AstNode node;
                                         .)
 =
 //GetSet Initiator
-GetInitiator<out complex, out isDeclaration>
+GetInitiator<out expr, out isDeclaration>
+                                        (.  complex = expr as AstGetSet; .)
 
 //GetSet Extensions
-    {   GetSetExtension<complex, out complex>
+    {   GetSetExtension<expr, out complex>
+                                        (.  expr = complex; .)
     }
 //GetSet Terminator
-(                                       (.  block.Add(complex); .)
-|   inc                                 (.  block.Add(AstUnaryOperator._Create(this, UnaryOperator.PostIncrement, complex)); .)
-|   dec                                 (.  block.Add(AstUnaryOperator._Create(this, UnaryOperator.PostDecrement, complex)); .)
-|   Assignment<complex, out node>       (.  symbol = node as AstGetSetSymbol;
+(                                       (.  block.Add(expr); .)
+|                                       (.  if(complex == null)
+                                            {
+                                                var pos = GetPosition(); 
+                                                Loader.ReportMessage(Message.Error("Expected an LValue (Get/Set-Complex) for ++,-- or assignment statement.",pos,MessageClasses.LValueExpected));
+                                                complex = Create.IndirectCall(pos,Create.Null(pos));
+                                            }                                            
+                                        .)
+    (   inc                             (.  block.Add(AstUnaryOperator._Create(this, UnaryOperator.PostIncrement, complex)); .)
+    |   dec                             (.  block.Add(AstUnaryOperator._Create(this, UnaryOperator.PostDecrement, complex)); .)
+    |   Assignment<complex, out node>   (.  symbol = node as AstGetSetSymbol;
                                             if(symbol != null 
                                                 && InterpretationIsLocalVariable(symbol.Implementation.Interpretation) 
                                                 && isDeclaration)
@@ -2121,12 +2131,25 @@ GetInitiator<out complex, out isDeclaration>
                                                 symbol.Implementation = symbol.Implementation.With(
                                                     interpretation:InterpretAsObjectVariable(symbol.Implementation.Interpretation));
                                             }
-                                            block.Add(node);
+                                            if(complex == null && node == null)
+                                            {
+                                                // An error ocurred during parsing prior to this point.
+                                                // Don't add the null node to the block to avoid a ArgumentNullException
+                                            }
+                                            else if(node == null)
+                                            {
+                                                Loader.ReportMessage(Message.Error("Internal error during translation of assignment. This is likely caused by an error reported previously.",GetPosition(),MessageClasses.ParserInternal));
+                                            }
+                                            else
+                                            {
+                                                block.Add(node);
+                                            }
                                         .)
-|	AppendRightTermination<ref complex>
-	{	AppendRightTermination<ref complex>
-	}
+    |	AppendRightTermination<ref complex>
+	    {	AppendRightTermination<ref complex>
+	    }
 										(.	block.Add(complex);  .)  
+    )
 )
 .
 
@@ -2172,8 +2195,9 @@ GetSetExtension<AstExpr subject, out AstGetSet extension>
     rbrack                                                                      
 .
 
-GetInitiator<out AstGetSet complex, out bool isDeclaration>
+GetInitiator<out AstExpr complex, out bool isDeclaration>
                                         (.  complex = null; 
+                                            AstGetSet actualComplex = null;
                                             AstGetSetStatic staticCall = null;
                                             AstGetSet member = null;
                                             AstExpr expr;
@@ -2186,8 +2210,9 @@ GetInitiator<out AstGetSet complex, out bool isDeclaration>
 =
     //Actual value
     (   IF( isLikeFunction() || isUnknownId() ) 
-        Function<out complex>
-    |   Variable<out complex, out isDeclaration>
+        Function<out actualComplex>     (.  complex = actualComplex; .)    
+    |   Variable<out actualComplex, out isDeclaration>
+                                        (.  complex = actualComplex; .)
     |   StaticCall<out staticCall>
     |	lpar Expr<out expr>				(.	args.Add(expr); .)
 		{	comma Expr<out expr>		(.	args.Add(expr); .) //multiple expressions can only be used as arguments
@@ -2198,13 +2223,14 @@ GetInitiator<out AstGetSet complex, out bool isDeclaration>
 												SemErr("A member access cannot have multiple subjects. (Did you mean '>>'?)");
 										.)
 		|	appendright
-			GetCall<out complex>		(.	complex.Arguments.RightAppend(args);
-											complex.Arguments.ReleaseRightAppend();
+			GetCall<out actualComplex>  (.  complex = actualComplex;
+                                            actualComplex.Arguments.RightAppend(args);
+											actualComplex.Arguments.ReleaseRightAppend();
                                             //WARNING: the following code is duplicated in Parser.Expression.atg/RightAppendExpr
-											if(complex is AstGetSetSymbol 
-                                                    && ((AstGetSetSymbol)complex).IsObjectVariable)
-										        complex.Call = PCall.Set;
-											member = complex;
+											if(actualComplex is AstGetSetSymbol 
+                                                    && ((AstGetSetSymbol)actualComplex).IsObjectVariable)
+										        actualComplex.Call = PCall.Set;
+											member = actualComplex;
 										.)
 		)
     )
@@ -2214,42 +2240,10 @@ GetInitiator<out AstGetSet complex, out bool isDeclaration>
 												complex; 
 										.)
     //Reference
-|   IF( isDeDereference() )
-    pointer pointer						(.	position = GetPosition(); .)
-	Id<out id>							(.  SymbolEntry s;
-                                            SymbolInterpretations kind;
-                                            if(!target._TryUseSymbolEntry(id, position, out s))
-                                            {   
-                                                SemErr("The symbol " + id + " is not defined"); 
-                                                s = SymbolEntry.LocalObjectVariable(id);
-                                                kind = s.Interpretation;
-                                            }
-                                            else
-                                            {
-                                                kind = s.Interpretation;
-                                                if(s.Interpretation == SymbolInterpretations.LocalReferenceVariable)
-                                                    kind = SymbolInterpretations.LocalObjectVariable;
-                                                else if(s.Interpretation == SymbolInterpretations.GlobalReferenceVariable)
-                                                    kind = SymbolInterpretations.GlobalObjectVariable;
-                                                else
-                                                    SemErr("Only reference variables can be dereferenced twice.");
-                                            }
-                                            complex = new AstGetSetReference(this, s.With(interpretation:kind));
-                                        .)
-|   pointer								(.	position = GetPosition(); .)
-	Id<out id>							(.  SymbolEntry s;
-                                            if(!target._TryUseSymbolEntry(id, position, out s))
-                                            {   
-                                                SemErr("The symbol " + id + " is not defined"); 
-                                                s = SymbolEntry.LocalObjectVariable(id);
-                                            }
-                                            else if(InterpretationIsLocalVariable(s.Interpretation))
-                                            {
-                                                if(isOuterVariable(s.InternalId))
-                                                    target.RequireOuterVariable(s.InternalId);
-                                            }
-                                            complex = new AstGetSetReference(this, s);
-                                        .)
+|   pointer                             (.  var ptrCount = 1; .)
+    {   pointer                         (.  ptrCount++; .)
+    }
+    Id<out id>                          (.  complex = _assembleReference(id, ptrCount); .)
 |   question
     [   Integer<out placeholderIndex> ] (.  complex = new AstPlaceholder(this, 0 <= placeholderIndex ? (int?)placeholderIndex : null); .)
 .
@@ -2432,20 +2426,27 @@ Assignment<AstGetSet lvalue, out AstNode node>
 								.)
 =
 (
-	(   ( assign /*| appendleft*/ ) (.  setModifier = BinaryOperator.None; .)
+	(   ( assign )              (.  setModifier = BinaryOperator.None; .)
 	|   plus assign             (.  setModifier = BinaryOperator.Addition; .)
 	|   minus assign            (.  setModifier = BinaryOperator.Subtraction; .)
 	|   times assign            (.  setModifier = BinaryOperator.Multiply; .)
 	|   div assign              (.  setModifier = BinaryOperator.Division; .)
 	|   bitAnd assign           (.  setModifier = BinaryOperator.BitwiseAnd; .)
 	|   bitOr assign            (.  setModifier = BinaryOperator.BitwiseOr; .)
-	|	coalescence assign		    (.	setModifier = BinaryOperator.Coalescence; .)
+	|	coalescence assign      (.	setModifier = BinaryOperator.Coalescence; .)
 	)   Expr<out expr>        //(.	expr = expr; .)
 	
-|	(	tilde assign			        (.	setModifier = BinaryOperator.Cast; .)
-	)	TypeExpr<out typeExpr>		(.	expr = typeExpr; .)
+|	(	tilde assign            (.	setModifier = BinaryOperator.Cast; .)
+	)	TypeExpr<out typeExpr>  (.  expr = typeExpr; .)
 )								
-								(.  lvalue.Arguments.Add(expr);
+								(.  if(expr == null)
+                                    {
+                                        Loader.ReportMessage(Message.Error("Internal error during translation of assignment. This is likely caused by an error reported previously.",GetPosition(),MessageClasses.ParserInternal));
+                                    }
+                                    else
+                                    {
+                                        lvalue.Arguments.Add(expr);
+                                    }
 									lvalue.Call = PCall.Set; 
 									if(setModifier != BinaryOperator.None)
 									    node = AstModifyingAssignment._Create(this,setModifier,lvalue);
@@ -2546,10 +2547,23 @@ ForeachLoop<AstBlock block>
                                 .) 
 .
 
-GetCall<out AstGetSet complex>
-                                (.  AstGetSet getMember = null; bool isDeclaration; .)
+GetCall<out AstGetSet complex>  // This is used in placed where an LValue is expected
+                                // as the name of this production so helpfully suggests ;-)
+                                // Thus checking for LValue-ness is required and expected.
+                                (.  AstGetSet getMember = null; 
+                                    bool isDeclaration; 
+                                    AstExpr expr;
+                                .)
 =
-    GetInitiator<out complex, out isDeclaration>
+    GetInitiator<out expr, out isDeclaration>
+                                (.  complex = expr as AstGetSet;
+                                    if(complex == null)
+                                    {
+                                        var pos = GetPosition();
+                                        Loader.ReportMessage(Message.Error("Expected an LValue (Get/Set-Complex) for ++,-- or assignment statement.",pos,MessageClasses.LValueExpected));
+                                        complex = Create.IndirectCall(pos,Create.Null(pos));
+                                    }  
+                                .)
     { GetSetExtension<complex, out getMember> }
     
                                 (.  if(getMember != null) 

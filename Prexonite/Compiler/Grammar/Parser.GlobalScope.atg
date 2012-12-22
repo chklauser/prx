@@ -207,7 +207,7 @@ SYNC
   declare
     (   { SymbolPrefix<builder, out canBeRef> }
         EntityFactory<canBeRef, out entityFactory>
-                            (.  if(entityFactory == null) builder.ReferenceTo(); .) // For aliases, don't wrap in dereference
+                            (.  if(entityFactory == null) builder.AutoDereferenceEnabled = false; .) // For aliases, don't wrap in dereference
         ( colon
         |                   (.  Loader.ReportMessage(Message.Warning(
                                   Resources.Parser_DeclarationTypeShouldBeFollowedByColon,
@@ -223,7 +223,7 @@ SYNC
         {                   (.  SymbolBuilder runBuilder = builder.Clone(); .)
           { SymbolPrefix<builder, out canBeRef> }
           EntityFactory<canBeRef, out entityFactory> 
-                            (.  if(entityFactory == null) runBuilder.ReferenceTo(); .) // For aliases, don't wrap in dereference
+                            (.  if(entityFactory == null) runBuilder.AutoDereferenceEnabled = false; .) // For aliases, don't wrap in dereference
           colon
           DeclarationInstance2<entityFactory,module,runBuilder.Clone(),preventOverride:true>
           { comma [ DeclarationInstance2<entityFactory,module,runBuilder.Clone(),preventOverride:true> ] }

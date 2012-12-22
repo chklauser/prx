@@ -23,6 +23,8 @@
         public const string UnknownEntityRefType = "P.UnknownEntityRefType";
         public const string CannotParseMExpr = "P.CannotParseMExpr";
         public const string DuplicateComma = "P.DuplicateComma";
+        public const string ParserInternal = "P.ParserInternal";
+        public const string LValueExpected = "P.LValueExpected";
 
         #endregion
 

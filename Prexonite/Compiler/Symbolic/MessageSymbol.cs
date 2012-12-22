@@ -4,7 +4,7 @@ using JetBrains.Annotations;
 
 namespace Prexonite.Compiler.Symbolic
 {
-    [DebuggerDisplay("{ToString}")]
+    [DebuggerDisplay("{ToString()}")]
     public class MessageSymbol : WrappingSymbol, IEquatable<MessageSymbol>
     {
         public override string ToString()

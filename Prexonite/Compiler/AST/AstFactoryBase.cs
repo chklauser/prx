@@ -1,3 +1,4 @@
+using System;
 using System.Collections.Generic;
 using JetBrains.Annotations;
 using Prexonite.Modular;
@@ -14,6 +15,8 @@ namespace Prexonite.Compiler.Ast
 
         // TODO: (Ticket #106) TryUseSymbolEntry and NullNode should not be defined on AstFactoryBase
         protected abstract AstBlock CurrentBlock { get; }
+
+        [Obsolete("Use the Symbol API")]
         protected abstract bool TryUseSymbolEntry(string symbolicId, ISourcePosition position, out SymbolEntry entry);
         protected abstract AstGetSet CreateNullNode(ISourcePosition position);
 

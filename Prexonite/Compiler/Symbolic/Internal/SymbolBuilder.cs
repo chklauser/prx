@@ -16,8 +16,15 @@ namespace Prexonite.Compiler.Symbolic.Internal
     {
         public EntityRef Entity { get; set; }
 
+        public bool AutoDereferenceEnabled
+        {
+            get { return _autoDereferenceEnabled; }
+            set { _autoDereferenceEnabled = value; }
+        }
+
         private Symbol _prefix = Symbol.CreateNil(NoSourcePosition.Instance);
-        private int _dereferenceCount = 1;
+        private bool _autoDereferenceEnabled = true;
+        private int _dereferenceCount;
         private readonly Queue<Message> _messages = new Queue<Message>();
 
         public SymbolBuilder Dereference()
@@ -28,7 +35,10 @@ namespace Prexonite.Compiler.Symbolic.Internal
 
         public SymbolBuilder ReferenceTo()
         {
-            _dereferenceCount -= 1;
+            if (_dereferenceCount == 0 && AutoDereferenceEnabled)
+                _autoDereferenceEnabled = false;
+            else
+                _dereferenceCount -= 1;
             return this;
         }
 
@@ -60,7 +70,7 @@ namespace Prexonite.Compiler.Symbolic.Internal
                 _prefix =
                     Symbol.CreateMessage(
                         Message.Error(
-                            Resources.SymbolBuilder_TooManyArrows, NoSourcePosition.Instance,
+                        Resources.SymbolBuilder_TooManyArrows, _prefix.Position,
                             MessageClasses.CannotCreateReference), _prefix);
             }
 
@@ -74,7 +84,22 @@ namespace Prexonite.Compiler.Symbolic.Internal
             if (Entity == null)
                 symbol = null;
             else
-                symbol = Symbol.CreateReference(Entity,NoSourcePosition.Instance);
+            {
+                Symbol entityRefSym = Symbol.CreateReference(Entity,NoSourcePosition.Instance);
+                if(AutoDereferenceEnabled)
+                {
+               
+                    EntityRef.MacroCommand mcmd;
+                    if (Entity.TryGetMacroCommand(out mcmd))
+                        symbol = Symbol.CreateExpand(entityRefSym);
+                    else
+                        symbol = Symbol.CreateDereference(entityRefSym);
+                }
+                else
+                {
+                    symbol = entityRefSym;
+                }
+            }
             return WrapSymbol(symbol);
         }
 

@@ -1,6 +1,6 @@
 ﻿
-Microsoft Visual Studio Solution File, Format Version 11.00
-# Visual Studio 2010
+Microsoft Visual Studio Solution File, Format Version 12.00
+# Visual Studio 2012
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Prexonite", "Prexonite\Prexonite.csproj", "{2FE722CA-B671-4EE8-9BF1-9F3ACFACD24D}"
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Prx", "Prx\Prx.csproj", "{8C90E0C5-8FD3-407C-ABE8-9EE856F87269}"
@@ -10,6 +10,13 @@ EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Solution Items", "Solution Items", "{1502FFFF-DE75-4E80-BF5D-3DDAA4347D3F}"
 	ProjectSection(SolutionItems) = preProject
 		PA_ArrayCopy_CIL.psess = PA_ArrayCopy_CIL.psess
+	EndProjectSection
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = ".nuget", ".nuget", "{F9249C57-C339-4869-85D2-FCF4C4F7967A}"
+	ProjectSection(SolutionItems) = preProject
+		.nuget\NuGet.Config = .nuget\NuGet.Config
+		.nuget\NuGet.exe = .nuget\NuGet.exe
+		.nuget\NuGet.targets = .nuget\NuGet.targets
 	EndProjectSection
 EndProject
 Global

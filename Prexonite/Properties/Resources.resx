@@ -339,4 +339,13 @@
     <data name="Parser_Cannot_parse_symbol_from" xml:space="preserve">
     <value>Cannot parse symbol from {0}.</value>
   </data>
+    <data name="ReferenceTransformer_CannotCreateReferenceToValue." xml:space="preserve">
+    <value>Cannot create reference to a value (references are values too)</value>
+  </data>
+    <data name="Parser__assembleReference_SymbolNotDefined" xml:space="preserve">
+    <value>The symbol {0} is not defined.</value>
+  </data>
+    <data name="Parser__assembleReference_CannotCreateReferenceToSymbol" xml:space="preserve">
+    <value>Cannot create a reference to a {0}.</value>
+  </data>
 </root>
