@@ -28,6 +28,7 @@
         public const string LegacyMacro = "P.LegacyMacro";
         public const string InnerMacrosIllegal = "P.InnerMacrosIllegal";
         public const string IllegalInitializationFunction = "P.IllegalInitializationFunction";
+        public const string ThisReserved = "P.ThisReserved";
 
         #endregion
 

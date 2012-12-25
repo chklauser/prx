@@ -722,6 +722,7 @@ Primary<out AstExpr expr>
 											                      _PopScope(blockExpr);
 										                    .)
 |   Constant<out expr>
+|   ThisExpression<out expr>
 |   CoroutineCreation<out expr>
 |   ListLiteral<out expr>
 |	HashLiteral<out expr>
@@ -928,6 +929,13 @@ ThrowExpression<out AstThrow th>		(.  th = new AstThrow(this); .)
 =
     throw
     Expr<out th.Expression>
+.
+
+ThisExpression<out AstExpr expr>        (.  var position = GetPosition();
+                                            expr = Create.IndirectCall(position,Create.Null(position));
+                                        .)
+=
+    this                                (.  Loader.ReportMessage(Message.Error("Illegal use of reserved keyword `this`.",position,MessageClasses.ThisReserved)); .)
 .
 
 ExplicitTypeExpr<out AstTypeExpr type>     (.  type = null; .)
