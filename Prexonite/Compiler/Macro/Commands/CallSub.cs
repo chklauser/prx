@@ -25,6 +25,7 @@
 //  IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 using Prexonite.Compiler.Ast;
+using Prexonite.Modular;
 using Prexonite.Types;
 
 namespace Prexonite.Compiler.Macro.Commands
@@ -57,8 +58,9 @@ namespace Prexonite.Compiler.Macro.Commands
                     new SymbolEntry(SymbolInterpretations.Command, Engine.CallSubPerformAlias, null),
                     PCall.Get,
                     context.Invocation.Arguments.ToArray());
-            var interpret = new AstMacroInvocation(context.Invocation.File, context.Invocation.Line,
-                context.Invocation.Column, SymbolEntry.MacroCommand(CallSubInterpret.Alias));
+            var interpret = new AstExpand(context.Invocation.Position,
+                                          EntityRef.MacroCommand.Create(CallSubInterpret.Alias), context.Invocation.Call);
+            
             interpret.Arguments.Add(perform);
 
             context.Block.Expression = interpret;

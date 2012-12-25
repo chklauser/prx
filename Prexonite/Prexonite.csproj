@@ -147,6 +147,7 @@
     <Compile Include="Commands\List\CreateEnumerator.cs" />
     <Compile Include="Commands\List\SeqConcat.cs" />
     <Compile Include="Commands\PCommandInfo.cs" />
+    <Compile Include="Compiler\Ast\AstExpand.cs" />
     <Compile Include="Compiler\Ast\AstExpr.cs" />
     <Compile Include="Compiler\Ast\AstFactoryBase.cs" />
     <Compile Include="Compiler\Ast\AstFactoryBridge.cs" />
@@ -180,6 +181,7 @@
     <Compile Include="Compiler\Build\TargetDescriptionSet.cs" />
     <Compile Include="Compiler\Build\VersionConflictException.cs" />
     <Compile Include="Compiler\ErrorMessageException.cs" />
+    <Compile Include="Compiler\Internal\CompilerExtensions.cs" />
     <Compile Include="Compiler\Internal\EntityRefMExprParser.cs" />
     <Compile Include="Compiler\Internal\EntityRefMExprSerializer.cs" />
     <Compile Include="Compiler\Internal\MExpr.cs" />

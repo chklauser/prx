@@ -97,7 +97,7 @@ namespace Prexonite.Compiler.Ast
                 throw new ArgumentNullException("target", "The compiler target cannot be null");
 
             if (isTopLevel)
-                tail_call_optimize_top_level_block();
+                _tailCallOptimizeTopLevelBlock();
 
             foreach (var node in _statements)
             {
@@ -125,15 +125,15 @@ namespace Prexonite.Compiler.Ast
                 var hasBlocksItself = expression as IAstHasBlocks;
 
                 if (blockItself != null)
-                    blockItself.tail_call_optimize_nested_block();
+                    blockItself._tailCallOptimizeNestedBlock();
                 else if (hasExpressionsItself != null)
                     tail_call_optimize_expressions_of_nested_block(hasExpressionsItself);
                 else if (hasBlocksItself != null)
-                    tail_call_optimize_all_nested_blocks_of(hasBlocksItself);
+                    _tailCallOptimizeAllNestedBlocksOf(hasBlocksItself);
             }
         }
 
-        private void tail_call_optimize_nested_block()
+        private void _tailCallOptimizeNestedBlock()
         {
             int i;
             for (i = 1; i < _statements.Count; i++)
@@ -156,11 +156,11 @@ namespace Prexonite.Compiler.Ast
                 }
                 else if (blockItself != null)
                 {
-                    blockItself.tail_call_optimize_nested_block();
+                    blockItself._tailCallOptimizeNestedBlock();
                 }
                 else if (hasBlocks != null)
                 {
-                    tail_call_optimize_all_nested_blocks_of(hasBlocks);
+                    _tailCallOptimizeAllNestedBlocksOf(hasBlocks);
                 }
                 else if (hasExpressions != null)
                 {
@@ -169,17 +169,17 @@ namespace Prexonite.Compiler.Ast
             }
         }
 
-        private static void tail_call_optimize_all_nested_blocks_of(IAstHasBlocks hasBlocks)
+        private static void _tailCallOptimizeAllNestedBlocksOf(IAstHasBlocks hasBlocks)
         {
             foreach (var block in hasBlocks.Blocks)
-                block.tail_call_optimize_nested_block();
+                block._tailCallOptimizeNestedBlock();
         }
 
-        private void tail_call_optimize_top_level_block()
+        private void _tailCallOptimizeTopLevelBlock()
         {
             // { GetSetComplex; return; } -> { return GetSetComplex; }
 
-            tail_call_optimize_nested_block();
+            _tailCallOptimizeNestedBlock();
             AstGetSet getset;
 
             if (_statements.Count == 0)
@@ -190,8 +190,8 @@ namespace Prexonite.Compiler.Ast
             // { if(cond) block1 else block2 } -> { if(cond) block1' else block2' }
             if ((cond = lastStmt as AstCondition) != null)
             {
-                cond.IfBlock.tail_call_optimize_top_level_block();
-                cond.ElseBlock.tail_call_optimize_top_level_block();
+                cond.IfBlock._tailCallOptimizeTopLevelBlock();
+                cond.ElseBlock._tailCallOptimizeTopLevelBlock();
             }
                 // { ...; GetSet(); } -> { ...; return GetSet(); }
             else if ((getset = lastStmt as AstGetSet) != null)

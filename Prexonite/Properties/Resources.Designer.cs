@@ -70,6 +70,15 @@ namespace Prexonite.Properties {
         }
         
         /// <summary>
+        ///   Looks up a localized string similar to Entity must be a macro to be expanded..
+        /// </summary>
+        public static string AstExpand_EntityMustBeMacro {
+            get {
+                return ResourceManager.GetString("AstExpand_EntityMustBeMacro", resourceCulture);
+            }
+        }
+        
+        /// <summary>
         ///   Looks up a localized string similar to Optimization of the element expression in the foreach head resulted in a non-GetSet expression. Try to use a simpler expression..
         /// </summary>
         public static string AstForeachLoop_DoEmitCode_ElementTooComplicated {
@@ -421,6 +430,15 @@ namespace Prexonite.Properties {
         }
         
         /// <summary>
+        ///   Looks up a localized string similar to MacroCommandExpander expected macro command entity. Got {0} instead..
+        /// </summary>
+        public static string MacroCommandExpander_MacroCommandExpected {
+            get {
+                return ResourceManager.GetString("MacroCommandExpander_MacroCommandExpected", resourceCulture);
+            }
+        }
+        
+        /// <summary>
         ///   Looks up a localized string similar to Cannot establish macro context outside of macro..
         /// </summary>
         public static string MacroContextExtensions_EstablishMacroContext_OutsideOfMacro {
@@ -435,6 +453,15 @@ namespace Prexonite.Properties {
         public static string MacroFunctionExpander__UsedTemporaryVariable {
             get {
                 return ResourceManager.GetString("MacroFunctionExpander__UsedTemporaryVariable", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to MacroFunctionExpander expected reference to function, got {0} instead..
+        /// </summary>
+        public static string MacroFunctionExpander_ExpectedFunctionReference {
+            get {
+                return ResourceManager.GetString("MacroFunctionExpander_ExpectedFunctionReference", resourceCulture);
             }
         }
         
@@ -516,6 +543,15 @@ namespace Prexonite.Properties {
         public static string Parser__assembleReference_CannotCreateReferenceToSymbol {
             get {
                 return ResourceManager.GetString("Parser__assembleReference_CannotCreateReferenceToSymbol", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Macro definition is not an LValue (necessary for it to be converted to a partial application).
+        /// </summary>
+        public static string Parser__assembleReference_MacroDefinitionNotLValue {
+            get {
+                return ResourceManager.GetString("Parser__assembleReference_MacroDefinitionNotLValue", resourceCulture);
             }
         }
         
@@ -661,6 +697,16 @@ namespace Prexonite.Properties {
         public static string ReferenceTransformer_CannotCreateReferenceToValue_ {
             get {
                 return ResourceManager.GetString("ReferenceTransformer_CannotCreateReferenceToValue.", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Cannot create a reference to the definition of a macro or partial application..
+        /// </summary>
+        public static string ReferenceTransformer_HandleExpand_CannotCreateReferenceToDefinitionOfMacroOrPartialApplication {
+            get {
+                return ResourceManager.GetString("ReferenceTransformer_HandleExpand_CannotCreateReferenceToDefinitionOfMacroOrParti" +
+                        "alApplication", resourceCulture);
             }
         }
         

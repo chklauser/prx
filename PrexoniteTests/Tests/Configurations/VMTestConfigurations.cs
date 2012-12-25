@@ -449,7 +449,7 @@ namespace PrexoniteTests.Tests.Configurations
         } 
     }
 
-    [TestFixture]
+    [TestFixture,Explicit]
     internal class VMTests_CilStatic : Prx.Tests.VMTests
     {
         public VMTests_CilStatic()
@@ -459,7 +459,7 @@ namespace PrexoniteTests.Tests.Configurations
         } 
     }
 
-    [TestFixture]
+    [TestFixture,Explicit]
     internal class VMTests_CilIsolated : Prx.Tests.VMTests
     {
         public VMTests_CilIsolated()
@@ -479,7 +479,7 @@ namespace PrexoniteTests.Tests.Configurations
         } 
     }
 
-    [TestFixture]
+    [TestFixture,Explicit]
     internal class PartialApplication_CilStatic : PrexoniteTests.Tests.PartialApplication
     {
         public PartialApplication_CilStatic()
@@ -489,7 +489,7 @@ namespace PrexoniteTests.Tests.Configurations
         } 
     }
 
-    [TestFixture]
+    [TestFixture,Explicit]
     internal class PartialApplication_CilIsolated : PrexoniteTests.Tests.PartialApplication
     {
         public PartialApplication_CilIsolated()
@@ -509,7 +509,7 @@ namespace PrexoniteTests.Tests.Configurations
         } 
     }
 
-    [TestFixture]
+    [TestFixture,Explicit]
     internal class Lazy_CilStatic : PrexoniteTests.Tests.Lazy
     {
         public Lazy_CilStatic()
@@ -519,7 +519,7 @@ namespace PrexoniteTests.Tests.Configurations
         } 
     }
 
-    [TestFixture]
+    [TestFixture,Explicit]
     internal class Lazy_CilIsolated : PrexoniteTests.Tests.Lazy
     {
         public Lazy_CilIsolated()
@@ -539,7 +539,7 @@ namespace PrexoniteTests.Tests.Configurations
         } 
     }
 
-    [TestFixture]
+    [TestFixture,Explicit]
     internal class Translation_CilStatic : PrexoniteTests.Tests.Translation
     {
         public Translation_CilStatic()
@@ -549,7 +549,7 @@ namespace PrexoniteTests.Tests.Configurations
         } 
     }
 
-    [TestFixture]
+    [TestFixture,Explicit]
     internal class Translation_CilIsolated : PrexoniteTests.Tests.Translation
     {
         public Translation_CilIsolated()

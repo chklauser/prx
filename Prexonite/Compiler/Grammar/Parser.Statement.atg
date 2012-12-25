@@ -336,17 +336,21 @@ VariableDeclarationStatement<AstBlock block>
 
 Function<out AstGetSet function>
                                 (.  string id; ISourcePosition position; .)
-=								                (.	position = GetPosition(); .)
-    Id<out id>                  (.  SymbolEntry sym;
-									if(!_TryUseSymbolEntry(id, position, out sym))
+=                               (.  position = GetPosition(); .)
+    Id<out id>                  (.  Symbol sym;
+									if(!target._TryUseSymbol(id, out sym, position))
                                     {
                                         function = new AstUnresolved(this, id);
                                     }
                                     else
                                     {
-                                        if(isOuterVariable(id))
-                                            target.RequireOuterVariable(id);
-                                        function = _assembleInvocation(sym);
+                                        var expr = _assembleInvocation(sym, position);
+                                        function = expr as AstGetSet;
+                                        if(function == null)
+                                        {
+                                            Loader.ReportMessage(Message.Error("Expected function call to be represented as an LValue.",position,MessageClasses.ParserInternal));
+                                            function = Create.IndirectCall(position,Create.Null(position));
+                                        }
                                     }
                                 .)
     Arguments<function.Arguments>    

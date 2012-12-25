@@ -513,6 +513,7 @@ namespace Prexonite.Compiler.Macro.Commands
             out AstExpr macroSpec)
         {
             var proto = specProto as AstMacroInvocation;
+            var proto2 = specProto as AstExpand;
             if (proto != null)
             {
                 macroSpec = _getMacroSpecExpr(context, proto);
@@ -525,6 +526,12 @@ namespace Prexonite.Compiler.Macro.Commands
                 macroSpec = specProto;
                 protoCall = PCall.Get;
                 protoArguments = new List<AstExpr>();
+            }
+            else if (proto2 != null)
+            {
+                macroSpec = _getMacroSpecExpr(context, proto2);
+                protoCall = proto2.Call;
+                protoArguments = proto2.Arguments;
             }
             else
             {
@@ -540,22 +547,35 @@ namespace Prexonite.Compiler.Macro.Commands
         private static AstExpr _getMacroSpecExpr(MacroContext context,
             AstMacroInvocation proto)
         {
-            //macroId: as a constant
-            var macroId = context.CreateConstant(proto.Implementation.InternalId);
+            var symbolEntry = proto.Implementation;
+
+            return _getMacroSpecExpr(context, proto.Position, symbolEntry);
+        }
+
+        private static AstExpr _getMacroSpecExpr(MacroContext context, ISourcePosition position, SymbolEntry symbolEntry)
+        {
+//macroId: as a constant
+            var macroId = context.CreateConstant(symbolEntry.InternalId);
 
             //macroInterpretation: as an expression
-            var macroInterpretation = proto.Implementation.Interpretation.EnumToExpression(proto.Position);
+            var macroInterpretation = symbolEntry.Interpretation.EnumToExpression(position);
 
             //macroModule: as a constant (string or null)
-            var macroModule = context.CreateConstantOrNull(proto.Implementation.Module);
+            var macroModule = context.CreateConstantOrNull(symbolEntry.Module);
 
             var listLit = new AstListLiteral(context.Invocation.File, context.Invocation.Line,
-                context.Invocation.Column);
+                                             context.Invocation.Column);
             listLit.Elements.Add(macroId);
             listLit.Elements.Add(macroInterpretation);
             listLit.Elements.Add(macroModule);
 
             return listLit;
+        }
+
+        private static AstExpr _getMacroSpecExpr(MacroContext context,
+            AstExpand proto)
+        {
+            return _getMacroSpecExpr(context, proto.Position, proto.Entity.ToSymbolEntry());
         }
 
         private static void _errorUsagePrototype(MacroContext context)

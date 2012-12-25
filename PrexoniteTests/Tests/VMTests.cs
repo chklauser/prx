@@ -648,115 +648,6 @@ function main(sep) =
         }
 
         [Test]
-        public void CompilerHook()
-        {
-            Compile(
-                @"
-//In some library
-declare function debug;
-
-Import
-{
-    System,
-    Prexonite,
-    Prexonite::Types,
-    Prexonite::Compiler,
-    Prexonite::Compiler::Ast
-};
-
-function ast(type) [is hidden;]
-{
-    var args;
-    var targs = [];
-    for(var i = 1; i < args.Count; i++)
-        targs[] = args[i];
-
-    return 
-        asm(ldr.eng)
-        .CreatePType(""Object(\""Prexonite.Compiler.Ast.Ast$(type)\"")"")
-        .Construct((["""",-1,-1]+targs)~Object<""Prexonite.PValue[]"">)
-        .self;
-}
-
-build does hook (t => 
-{
-    var body = t.Ast;
-    if(t.Function.Id == ""main"")
-    {
-        //Append a return statement
-        var ret = ast(""Return"", ::ReturnVariant.Exit);
-        ret.Expression = ast(""GetSetMemberAccess"", ::PCall.Get, 
-            ast(""GetSetSymbol"", 
-                ::PCall.Get, 
-                new ::SymbolEntry(::SymbolInterpretations.GlobalObjectVariable, ""sb"", asm(ldr.app).Module.Name)), ""ToString"");
-        t.Ast.Add(ret);
-    }
-
-    function replace_debug(block)
-    {
-        for(var i = 0; i < block.Count; i++)
-        {
-            var stmt = block[i];
-            if( stmt is ::AstGetSetSymbol && 
-                stmt.Implementation.Interpretation~Int == ::SymbolInterpretations.$Function~Int &&
-                stmt.Implementation.InternalId == ""debug"")
-            {
-                //Found a call to debug
-                block[i] = ast(""AsmInstruction"", new ::Instruction(::OpCode.nop));
-                for(var j = 0; j < stmt.Arguments.Count; j++)
-                {
-                    var arg = stmt.Arguments[j];
-                    if(arg is ::AstGetSetSymbol)
-                    {
-                        var printlnCall = ast(""GetSetSymbol"", ::PCall.Get, new ::SymbolEntry(::SymbolInterpretations.$Function,""println"", asm(ldr.app).Module.Name));
-                        var concatCall  = ast(""GetSetSymbol"", ::PCall.Get, ::SymbolEntry.Command(""concat""));
-                        concatCall.Arguments.Add(ast(""Constant"",""DEBUG $(arg.Implementation) = ""));
-                        concatCall.Arguments.Add(arg);
-                        printlnCall.Arguments.Add(concatCall);
-
-                        block.Insert(i,printlnCall);
-                        i += 1;
-                    }//end if                    
-                }//end for
-
-                //Recursively replace 'debug' in nested blocks.
-                try
-                {
-                    foreach(var subBlock in stmt.Blocks)
-                        replace_debug(subBlock);
-                }
-                catch(var exc)
-                {
-                    //ignore
-                }//end catch
-            }//end if
-        }//end for
-    }
-
-    replace_debug(t.Ast);
-});
-
-//Emulation
-var sb = new System::Text::StringBuilder;
-function print(s)   does sb.Append(s);
-function println(s) does sb.AppendLine(s);
-
-//The main program
-function main(a)
-{
-    var x = 3;
-    var y = a;
-    var z = 5*y+x;
-
-    debug(x,y);
-    debug(z);
-}
-");
-
-            Expect("DEBUG LocalObjectVariable:x = 3\r\nDEBUG LocalObjectVariable:y = 4\r\nDEBUG LocalObjectVariable:z = 23\r\n", 4);
-        }
-
-        [Test]
         public void InitializationCodeHook()
         {
             Compile(
@@ -1012,6 +903,18 @@ function main = println;
 ");
 
             Expect("");
+        }
+
+        [Test]
+        public void UseFunctionMacro()
+        {
+            Compile(@"
+macro nothing = null;
+
+function main does return nothing;
+");
+
+            ExpectNull();
         }
 
         [Test]

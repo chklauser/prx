@@ -28,7 +28,9 @@ using System;
 using System.Collections.Generic;
 using Prexonite.Commands.Core;
 using Prexonite.Compiler.Ast;
+using Prexonite.Modular;
 using Prexonite.Types;
+using Prexonite.Compiler.Internal;
 
 namespace Prexonite.Compiler
 {
@@ -50,7 +52,7 @@ namespace Prexonite.Compiler
         {
             var debugging = IsDebuggingEnabled(t.Function);
 
-            replace_debug(t, t.Ast, debugging);
+            _replaceDebug(t, t.Ast, debugging);
         }
 
         private static readonly CompilerHook _hook = new CompilerHook(Hook);
@@ -90,15 +92,16 @@ namespace Prexonite.Compiler
                 return function.ParentApplication.Meta[DebuggingMetaKey].Switch;
         }
 
-        private static void replace_debug(CompilerTarget t, IList<AstNode> block, bool debugging)
+        private static void _replaceDebug(CompilerTarget t, IList<AstNode> block, bool debugging)
         {
             for (var i = 0; i < block.Count; i++)
             {
-                var stmt = block[i] as AstGetSetSymbol;
+                var stmt = block[i] as AstGetSet;
+                var legacySymbol = stmt as AstGetSetSymbol;
                 //look for calls
-                if (stmt != null && stmt.Implementation.Interpretation == SymbolInterpretations.Command &&
-                    Engine.StringsAreEqual(stmt.Implementation.InternalId, Engine.DebugAlias))
+                if (_isLegacyDebugCall(legacySymbol) || _isDebugCall(stmt))
                 {
+                    System.Diagnostics.Debug.Assert(stmt != null);
                     //Found a call to debug
                     block.RemoveAt(i);
                     if (debugging)
@@ -159,8 +162,21 @@ namespace Prexonite.Compiler
                 var complex = block[i] as IAstHasBlocks;
                 if (complex != null)
                     foreach (var subBlock in complex.Blocks)
-                        replace_debug(t, subBlock, debugging);
+                        _replaceDebug(t, subBlock, debugging);
             } //end for statements
+        }
+
+        private static bool _isDebugCall(AstGetSet stmt)
+        {
+            EntityRef entityRef;
+            EntityRef.Command cmdRef;
+            return stmt.TryMatchCall(out entityRef) && entityRef.TryGetCommand(out cmdRef) && Engine.StringsAreEqual(cmdRef.Id,Engine.DebugAlias);
+        }
+
+        private static bool _isLegacyDebugCall(AstGetSetSymbol legacySymbol)
+        {
+            return legacySymbol != null && legacySymbol.Implementation.Interpretation == SymbolInterpretations.Command &&
+                   Engine.StringsAreEqual(legacySymbol.Implementation.InternalId, Engine.DebugAlias);
         }
     }
 }

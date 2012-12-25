@@ -1072,6 +1072,13 @@ namespace Prexonite
         {
             return new Instruction(opCode ?? OpCode, id ?? Id, arguments ?? Arguments, justEffect ?? JustEffect, moduleName ?? ModuleName);
         }
+
+        public Instruction WithModuleName(ModuleName moduleName, OpCode? opCode = null, int? arguments = null,
+                                          string id = null, bool? justEffect = null)
+        {
+            // This variant is necessary to allow the module name to be set to null
+            return new Instruction(opCode ?? OpCode, id ?? Id, arguments ?? Arguments, justEffect ?? JustEffect, moduleName);
+        }
     }
 
     // ReSharper disable InconsistentNaming

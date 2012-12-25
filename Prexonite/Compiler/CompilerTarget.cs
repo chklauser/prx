@@ -1140,8 +1140,40 @@ namespace Prexonite.Compiler
                 _byIndex();
 #endif
 
+            _useInternalIdsWherePossible();
+
             if (Loader.Options.StoreSourceInformation)
                 SourceMapping.Store(Function);
+        }
+
+        private void _useInternalIdsWherePossible()
+        {
+            // This method looks at instructions that refer to entities using a module-qualified name.
+            //  If the module the target entity resides in is the same module as the one that contains
+            //  this function, we have an internal reference. 
+            // Internal references are much easier to handle for both the CIL compiler and the interpreter.
+            // We thus replace module-aware references with internal references.
+
+            var code = Function.Code;
+            for (var i = 0; i < code.Count; i++)
+            {
+                var inst = code[i];
+                switch (inst.OpCode)
+                {
+                    case OpCode.ldr_glob:
+                    case OpCode.ldr_func:
+                    case OpCode.ldglob:
+                    case OpCode.stglob:
+                    case OpCode.newclo:
+                    case OpCode.incglob:
+                    case OpCode.decglob:
+                    case OpCode.func:
+                    case OpCode.indglob:
+                        if (inst.ModuleName != null && inst.ModuleName.Equals(Loader.ParentApplication.Module.Name))
+                            code[i] = inst.WithModuleName(null);
+                        break;
+                }
+            }
         }
 
         internal void _DetermineSharedNames()

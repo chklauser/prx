@@ -250,7 +250,7 @@ namespace Prexonite.Compiler.Ast
             if (action == null)
                 target.EmitIndirectCall(Position, Arguments.Count, true);
             else
-                action(target, this, PCall.Get, true);
+                action(target, this, PCall.Set, true);
         }
 
         public override bool TryOptimize(CompilerTarget target, out AstExpr expr)

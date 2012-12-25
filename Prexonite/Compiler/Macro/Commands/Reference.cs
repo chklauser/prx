@@ -145,21 +145,40 @@ namespace Prexonite.Compiler.Macro.Commands
                 return;
             }
 
-            var prototype = context.Invocation.Arguments[0] as AstMacroInvocation;
-            if (prototype == null)
+            var legacyPrototype = context.Invocation.Arguments[0] as AstMacroInvocation;
+            var prototype = context.Invocation.Arguments[0] as AstExpand;
+            if (legacyPrototype == null && prototype == null)
             {
                 context.ReportMessage(
                     Message.Error(
                         string.Format(Resources.Reference_requires_argument_to_be_a_prototype_of_a_macro_invocation, Alias),
                         context.Invocation.Position, MessageClasses.ReferenceUsage));
-                return;
             }
+            else if (legacyPrototype != null)
+            {
+                context.Block.Expression = _assembleImplCall(context, legacyPrototype.Implementation, legacyPrototype.Position);
+            }
+            else
+            {
+                context.Block.Expression = _assembleImplCall(context, prototype.Entity.ToSymbolEntry(),
+                                                             prototype.Position);
+            }
+        }
 
-            context.Block.Expression = context.CreateGetSetSymbol(SymbolEntry.Command(Impl.Alias), 
-                PCall.Get,
-                context.CreateConstant(prototype.Implementation.InternalId),
-                prototype.Implementation.Interpretation.EnumToExpression(prototype.Position),
-                context.CreateConstantOrNull(prototype.Implementation.Module));
+        private static AstGetSet _assembleImplCall(MacroContext context, SymbolEntry implementationSymbolEntry,
+                                                   ISourcePosition position)
+        {
+            var internalId = context.CreateConstant(implementationSymbolEntry.InternalId);
+            var interpretation = implementationSymbolEntry.Interpretation.EnumToExpression(position);
+            var moduleNameOpt = context.CreateConstantOrNull(implementationSymbolEntry.Module);
+            var implCall = context.Factory.IndirectCall(context.Invocation.Position,
+                                                        context.Factory.Reference(context.Invocation.Position,
+                                                                                  EntityRef.Command.Create(
+                                                                                      Impl.Alias)));
+            implCall.Arguments.Add(internalId);
+            implCall.Arguments.Add(interpretation);
+            implCall.Arguments.Add(moduleNameOpt);
+            return implCall;
         }
 
         #endregion

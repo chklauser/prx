@@ -498,7 +498,7 @@ FunctionDefinition<out PFunction func>
                                         string derId; //The name of the derived stub
                                         CompilerTarget ct = null;   //The compiler target for the function (as mentioned in the source code)
                                         CompilerTarget cst = null;  //The compiler target for a stub (coroutine/lazy)
-                                        SymbolEntry symEntry = null;
+                                        Symbol symEntry = null;
 
                                         bool missingArg = false; //Allow trailing comma, but not (,,) in formal arg list
                                     .)         
@@ -517,13 +517,13 @@ FunctionDefinition<out PFunction func>
                                         {
                                             func = TargetApplication._InitializationFunction;
                                             if(isNested)
-                                                SemErr("Cannot define initialization code inside another function.");
+                                                Loader.ReportMessage(Message.Error("Cannot define initialization code inside another function.",GetPosition(),MessageClasses.IllegalInitializationFunction));
                                             if(isCoroutine)
-                                                SemErr("Cannot define initialization code as a coroutine.");
+                                                Loader.ReportMessage(Message.Error("Cannot define initialization code as a coroutine.",GetPosition(),MessageClasses.IllegalInitializationFunction));
                                             if(isLazy)
-                                                SemErr("Cannot define initialization code as a lazy function.");
+                                                Loader.ReportMessage(Message.Error("Cannot define initialization code as a lazy function.",GetPosition(),MessageClasses.IllegalInitializationFunction));
                                             if(isMacro)
-                                                SemErr("Cannot define initialization code as a macro function.");
+                                                Loader.ReportMessage(Message.Error("Cannot define initialization code as a macro function.",GetPosition(),MessageClasses.IllegalInitializationFunction));
                                         }
                                         else
                                         {
@@ -532,7 +532,7 @@ FunctionDefinition<out PFunction func>
                                             if(isNested)
                                             {
                                                 if(isMacro)
-                                                    SemErr("Inner macros are illegal. Macros must be top-level.");
+                                                    Loader.ReportMessage(Message.Error("Inner macros are illegal. Macros must be top-level.",GetPosition(),MessageClasses.InnerMacrosIllegal));
                                                     
                                                 funcId = generateLocalId(id ?? "inner");
                                                 
@@ -622,10 +622,14 @@ FunctionDefinition<out PFunction func>
                                           (!isNested))
                                       {
                                               //Add the name to the symbol table
-                                                symEntry = 
-                                                    new SymbolEntry(SymbolInterpretations.Function, func.Id, TargetModule.Name);
+                                              symEntry = Symbol.CreateReference(EntityRef.Function.Create(func.Id, TargetModule.Name),GetPosition());
+                                              if(isMacro)
+                                                symEntry = Symbol.CreateExpand(symEntry);
+                                              else
+                                                symEntry = Symbol.CreateDereference(symEntry);
+
                                               foreach(var alias in funcAliases)	                                                
-                                                  Symbols.Declare(alias, symEntry.ToSymbol());
+                                                  Symbols.Declare(alias, symEntry);
                                               
                                               //Store the original (logical id, mentioned in the source code)
                                               func.Meta[PFunction.LogicalIdKey] = id ?? funcId;
@@ -652,7 +656,7 @@ FunctionDefinition<out PFunction func>
                                     (.  
                                     
                                         if(primaryAlias != null && !_suppressPrimarySymbol(func))
-                                            Symbols.Declare(primaryAlias, symEntry.ToSymbol());
+                                            Symbols.Declare(primaryAlias, symEntry);
 
                                         //Imprint certain meta keys from parent function
                                         if(isNested)

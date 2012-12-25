@@ -26,8 +26,8 @@
 
 using System;
 using System.Linq;
+using Prexonite.Modular;
 using Prexonite.Properties;
-using Prexonite.Types;
 
 namespace Prexonite.Compiler.Ast
 {
@@ -125,53 +125,57 @@ namespace Prexonite.Compiler.Ast
             if (_optimizeConditionalReturnExpression(target))
                 return;
 
-            var getset = Expression as AstGetSet;
             var symbol = Expression as AstGetSetSymbol;
-            var icbr = Expression as ICanBeReferenced;
+            var indirectCall = Expression as AstIndirectCall;
 
             AstExpr reference;
-            if ((getset != null && getset.Call == PCall.Set ||
-                //the 'value' of set-expressions is not the return value of the call
-                (symbol != null && symbol.IsObjectVariable)) ||
-                    icbr == null || !icbr.TryToReference(out reference))
-                //tail requires a reference to the continuation
+            if (   symbol != null 
+                && !symbol.IsObjectVariable
+                && symbol.TryToReference(out reference)
+                && _isStacklessRecursionPossible(target, symbol))
+            {
+                // specialized approach
+                // self(arg1, arg2, ..., argn) => { param1 = arg1; param2 = arg2; ... paramn = argn; goto 0; }
+                _emitRecursiveTailCall(target, symbol.Arguments);
+            }
+            else if (indirectCall != null
+                     && _isStacklessRecursionPossible(target, indirectCall))
+            {
+                _emitRecursiveTailCall(target, indirectCall.Arguments);
+            }
+            else
             {
                 //Cannot be tail call optimized
-                Expression.EmitValueCode(target);
-                target.Emit(Position,OpCode.ret_value);
+                _emitOrdinaryValueReturn(target);
             }
-            else //Will be tail called
+        }
+
+        private void _emitRecursiveTailCall(CompilerTarget target, ArgumentsProxy symbolArgs)
+        {
+            var symbolParams = target.Function.Parameters;
+            var nullNode = new AstNull(File, Line, Column);
+
+            //copy parameters to temporary variables
+            for (var i = 0; i < symbolParams.Count; i++)
             {
-                if (symbol != null && _isStacklessRecursionPossible(target, symbol))
-                {
-                    // specialized approach
-                    // self(arg1, arg2, ..., argn) => { param1 = arg1; param2 = arg2; ... paramn = argn; goto 0; }
-                    var symbolParams = target.Function.Parameters;
-                    var symbolArgs = symbol.Arguments;
-                    var nullNode = new AstNull(File, Line, Column);
-
-                    //copy parameters to temporary variables
-                    for (var i = 0; i < symbolParams.Count; i++)
-                    {
-                        if (i < symbolArgs.Count)
-                            symbolArgs[i].EmitValueCode(target);
-                        else
-                            nullNode.EmitValueCode(target);
-                    }
-                    //overwrite parameters
-                    for (var i = symbolParams.Count - 1; i >= 0; i--)
-                    {
-                        target.EmitStoreLocal(Position, symbolParams[i]);
-                    }
-
-                    target.EmitJump(Position, 0);
-                }
+                if (i < symbolArgs.Count)
+                    symbolArgs[i].EmitValueCode(target);
                 else
-                {
-                    Expression.EmitValueCode(target);
-                    target.Emit(Position,OpCode.ret_value);
-                }
+                    nullNode.EmitValueCode(target);
             }
+            //overwrite parameters
+            for (var i = symbolParams.Count - 1; i >= 0; i--)
+            {
+                target.EmitStoreLocal(Position, symbolParams[i]);
+            }
+
+            target.EmitJump(Position, 0);
+        }
+
+        private void _emitOrdinaryValueReturn(CompilerTarget target)
+        {
+            Expression.EmitValueCode(target);
+            target.Emit(Position, OpCode.ret_value);
         }
 
         private static bool _isStacklessRecursionPossible(CompilerTarget target,
@@ -183,6 +187,28 @@ namespace Prexonite.Compiler.Ast
                 return false;
             if (!Engine.StringsAreEqual(target.Function.Id, symbol.Implementation.InternalId))
                 //must be direct recursive iteration
+                return false;
+            if (target.Function.Variables.Contains(PFunction.ArgumentListId))
+                //must not use argument list
+                return false;
+            if (symbol.Arguments.Count > target.Function.Parameters.Count)
+                //must not supply more arguments than mapped
+                return false;
+            return true;
+        }
+
+        private static bool _isStacklessRecursionPossible(CompilerTarget target,
+    AstIndirectCall symbol)
+        {
+            var refNode = symbol.Subject as AstReference;
+            if (refNode == null)
+                return false;
+            EntityRef.Function funcRef;
+            if (!refNode.Entity.TryGetFunction(out funcRef))
+                return false;
+            if (funcRef.Id != target.Function.Id)
+                return false;
+            if (funcRef.ModuleName != target.Function.ParentApplication.Module.Name)
                 return false;
             if (target.Function.Variables.Contains(PFunction.ArgumentListId))
                 //must not use argument list

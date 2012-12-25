@@ -34,6 +34,7 @@ using Prexonite.Commands.Core.Operators;
 using Prexonite.Compiler.Ast;
 using Prexonite.Compiler.Internal;
 using Prexonite.Compiler.Symbolic;
+using Prexonite.Compiler.Symbolic.Compatibility;
 using Prexonite.Modular;
 using Prexonite.Properties;
 using Prexonite.Types;
@@ -925,7 +926,30 @@ namespace Prexonite.Compiler
         {
             if (isKnownMacroFunction(sym) || sym.Interpretation == SymbolInterpretations.MacroCommand)
             {
-                return new AstMacroInvocation(this, sym);
+                EntityRef entityRef;
+                switch (sym.Interpretation)
+                {
+                    case SymbolInterpretations.MacroCommand:
+                        entityRef = EntityRef.MacroCommand.Create(sym.InternalId);
+                        break;
+                    case SymbolInterpretations.Function:
+                        entityRef = EntityRef.Function.Create(sym.InternalId,
+                                                              sym.Module ?? Loader.ParentApplication.Module.Name);
+                        break;
+                    default:
+                        entityRef = null;
+                        break;
+                }
+                if (entityRef != null)
+                {
+                    return new AstExpand(GetPosition(), entityRef, PCall.Get);
+                }
+                else
+                {
+                    Loader.ReportMessage(Message.Warning(string.Format("Using legacy macro expansion mechanism for {0}.", sym),
+                                                         GetPosition(), MessageClasses.LegacyMacro));
+                    return new AstMacroInvocation(this, sym);
+                }
             }
             else
             {
@@ -933,7 +957,7 @@ namespace Prexonite.Compiler
             }
         }
 
-        private class ReferenceTransformer : SymbolHandler<int,Symbol>
+        private class ReferenceTransformer : SymbolHandler<int,Tuple<Symbol,bool>>
         {
             [NotNull]
             private readonly Parser _parser;
@@ -943,15 +967,18 @@ namespace Prexonite.Compiler
                 _parser = parser;
             }
 
-            protected override Symbol HandleWrappingSymbol(WrappingSymbol self, int argument)
+            protected override Tuple<Symbol, bool> HandleWrappingSymbol(WrappingSymbol self, int argument)
             {
                 if (argument == 0)
-                    return self;
+                    return Tuple.Create<Symbol,bool>(self,false);
                 else
-                    return self.With(self.InnerSymbol.HandleWith(this, argument));
+                {
+                    var innerResult = self.InnerSymbol.HandleWith(this, argument);
+                    return Tuple.Create<Symbol,bool>(self.With(innerResult.Item1),innerResult.Item2);
+                }
             }
 
-            protected override Symbol HandleLeafSymbol(Symbol self, int argument)
+            protected override Tuple<Symbol, bool> HandleLeafSymbol(Symbol self, int argument)
             {
                 if (argument > 0)
                 {
@@ -961,11 +988,11 @@ namespace Prexonite.Compiler
                 }
                 else
                 {
-                    return self;
+                    return Tuple.Create(self,false);
                 }
             }
 
-            public override Symbol HandleDereference(DereferenceSymbol self, int argument)
+            public override Tuple<Symbol, bool> HandleDereference(DereferenceSymbol self, int argument)
             {
                 if (argument > 0)
                 {
@@ -974,6 +1001,27 @@ namespace Prexonite.Compiler
                 else
                 {
                     return base.HandleDereference(self, argument);
+                }
+            }
+
+            public override Tuple<Symbol, bool> HandleExpand(ExpandSymbol self, int argument)
+            {
+                if (argument > 1)
+                {
+                    throw new ErrorMessageException(
+                        Message.Error(Resources.ReferenceTransformer_HandleExpand_CannotCreateReferenceToDefinitionOfMacroOrPartialApplication,
+                                      _parser.GetPosition(), MessageClasses.CannotCreateReference));
+                }
+                else if(argument == 1)
+                {
+                    // Here, we don't actually remove the expansion, but rather switch the 
+                    //  flag to true to indicate that the calling procedure should 
+                    //  convert the resulting expansion node into a partial application.
+                    return new Tuple<Symbol, bool>(base.HandleExpand(self,argument-1).Item1,true);
+                }
+                else
+                {
+                    return base.HandleExpand(self, argument);
                 }
             }
         }
@@ -998,7 +1046,25 @@ namespace Prexonite.Compiler
                 try
                 {
                     var transformed = symbol.HandleWith(_referenceTransformer, ptrCount);
-                    return _assembleInvocation(transformed, position);
+                    var invocation = _assembleInvocation(transformed.Item1, position);
+                    if (transformed.Item2)
+                    {
+                        // If the reference transformer indicates that an Expand prefix was eliminated
+                        //  during the transformation, we need to convert the invocation into a partial application
+                        var invocationCall = invocation as AstGetSet;
+                        if (invocationCall == null)
+                        {
+                            Loader.ReportMessage(
+                                Message.Error(Resources.Parser__assembleReference_MacroDefinitionNotLValue, position,
+                                              MessageClasses.ParserInternal));
+                            invocation = Create.Null(position);
+                        }
+                        else
+                        {
+                            invocationCall.Arguments.Add(Create.Placeholder(position));
+                        }
+                    }
+                    return invocation;
                 }
                 catch (ErrorMessageException e)
                 {
@@ -1067,7 +1133,7 @@ public AstExpr HandleMessage(MessageSymbol self, Tuple<Parser, PCall> argument)
                         if (abort)
                             return argument.Item1._NullNode(position);
                         else
-                            return new AstMacroInvocation(argument.Item1, refSym.Entity.ToSymbolEntry());
+                            return new AstExpand(argument.Item1.GetPosition(),refSym.Entity,PCall.Get);
                     }
                     else
                     {

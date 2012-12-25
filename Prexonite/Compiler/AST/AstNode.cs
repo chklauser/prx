@@ -34,7 +34,6 @@ using Prexonite.Types;
 
 namespace Prexonite.Compiler.Ast
 {
-    [DebuggerStepThrough]
     public abstract class AstNode : IObject
     {
         [NotNull] private readonly ISourcePosition _position;

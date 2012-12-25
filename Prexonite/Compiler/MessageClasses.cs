@@ -25,6 +25,9 @@
         public const string DuplicateComma = "P.DuplicateComma";
         public const string ParserInternal = "P.ParserInternal";
         public const string LValueExpected = "P.LValueExpected";
+        public const string LegacyMacro = "P.LegacyMacro";
+        public const string InnerMacrosIllegal = "P.InnerMacrosIllegal";
+        public const string IllegalInitializationFunction = "P.IllegalInitializationFunction";
 
         #endregion
 

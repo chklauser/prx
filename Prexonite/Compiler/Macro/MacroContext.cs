@@ -44,7 +44,7 @@ namespace Prexonite.Compiler.Macro
         #region Representation
 
         [NotNull]
-        private readonly AstMacroInvocation _invocation;
+        private readonly AstGetSet _invocation;
 
         private readonly bool _isJustEffect;
 
@@ -74,7 +74,7 @@ namespace Prexonite.Compiler.Macro
         /// <param name = "session">The macro expansion session.</param>
         /// <param name = "invocation">The node that is being expanded.</param>
         /// <param name = "isJustEffect">Whether the nodes return value will be discarded by the surrounding program.</param>
-        internal MacroContext(MacroSession session, AstMacroInvocation invocation, bool isJustEffect)
+        internal MacroContext(MacroSession session, AstGetSet invocation, bool isJustEffect)
         {
             if (session == null)
                 throw new ArgumentNullException("session");
@@ -83,8 +83,7 @@ namespace Prexonite.Compiler.Macro
             _isJustEffect = isJustEffect;
             _invocation = invocation;
             _session = session;
-            _block = new AstScopedBlock(invocation.Position, session.CurrentBlock,
-                                     prefix: invocation.Implementation.InternalId);
+            _block = new AstScopedBlock(invocation.Position, session.CurrentBlock);
             _isPartialApplication = _invocation.Arguments.Any(AstPartiallyApplicable.IsPlaceholder);
             _sentinelBlock = session.Target.CurrentBlock;
             _astFactory = new MacroAstFactory(session);
@@ -119,7 +118,7 @@ namespace Prexonite.Compiler.Macro
         ///     The node that is being expanded.
         /// </summary>
         [PublicAPI]
-        public AstMacroInvocation Invocation
+        public AstGetSet Invocation
         {
             get { return _invocation; }
         }

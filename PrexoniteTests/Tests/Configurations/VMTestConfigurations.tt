@@ -122,7 +122,7 @@ namespace PrexoniteTests.Tests.Configurations
         } 
     }
 
-    [TestFixture]
+    [TestFixture,Explicit]
     internal class <#=baseName#>_CilStatic : <#=vmClass#>
     {
         public <#=baseName#>_CilStatic()
@@ -132,7 +132,7 @@ namespace PrexoniteTests.Tests.Configurations
         } 
     }
 
-    [TestFixture]
+    [TestFixture,Explicit]
     internal class <#=baseName#>_CilIsolated : <#=vmClass#>
     {
         public <#=baseName#>_CilIsolated()

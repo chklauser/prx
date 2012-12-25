@@ -348,4 +348,19 @@
     <data name="Parser__assembleReference_CannotCreateReferenceToSymbol" xml:space="preserve">
     <value>Cannot create a reference to a {0}.</value>
   </data>
+    <data name="ReferenceTransformer_HandleExpand_CannotCreateReferenceToDefinitionOfMacroOrPartialApplication" xml:space="preserve">
+    <value>Cannot create a reference to the definition of a macro or partial application.</value>
+  </data>
+    <data name="Parser__assembleReference_MacroDefinitionNotLValue" xml:space="preserve">
+    <value>Macro definition is not an LValue (necessary for it to be converted to a partial application)</value>
+  </data>
+    <data name="AstExpand_EntityMustBeMacro" xml:space="preserve">
+    <value>Entity must be a macro to be expanded.</value>
+  </data>
+    <data name="MacroCommandExpander_MacroCommandExpected" xml:space="preserve">
+    <value>MacroCommandExpander expected macro command entity. Got {0} instead.</value>
+  </data>
+    <data name="MacroFunctionExpander_ExpectedFunctionReference" xml:space="preserve">
+    <value>MacroFunctionExpander expected reference to function, got {0} instead.</value>
+  </data>
 </root>

@@ -138,12 +138,9 @@ function instruction {}
 
             //instruction
             i++;
-            Assert.IsInstanceOf(typeof(AstGetSetSymbol), block[i]);
-            Assert.AreEqual(
-                SymbolInterpretations.Function, ((AstGetSetSymbol) block[i]).Implementation.Interpretation);
-            Assert.AreEqual("instruction", ((AstGetSetSymbol)block[i]).Implementation.InternalId);
-            Assert.AreEqual(PCall.Get, ((AstGetSetSymbol) block[i]).Call);
-            Assert.AreEqual(0, ((AstGetSetSymbol) block[i]).Arguments.Count);
+            Assert.IsInstanceOf(typeof(AstIndirectCall), block[i]);
+            Assert.AreEqual(PCall.Get, ((AstGetSet) block[i]).Call);
+            Assert.AreEqual(0, ((AstGetSet) block[i]).Arguments.Count);
 
             //goto fith
             i++;
@@ -157,12 +154,9 @@ function instruction {}
 
             //instruction
             i++;
-            Assert.IsInstanceOf(typeof(AstGetSetSymbol), block[i]);
-            Assert.AreEqual(
-                SymbolInterpretations.Function, ((AstGetSetSymbol) block[i]).Implementation.Interpretation);
-            Assert.AreEqual("instruction", ((AstGetSetSymbol)block[i]).Implementation.InternalId);
-            Assert.AreEqual(PCall.Get, ((AstGetSetSymbol) block[i]).Call);
-            Assert.AreEqual(0, ((AstGetSetSymbol) block[i]).Arguments.Count);
+            Assert.IsInstanceOf(typeof(AstIndirectCall), block[i]);
+            Assert.AreEqual(PCall.Get, ((AstGetSet)block[i]).Call);
+            Assert.AreEqual(0, ((AstGetSet)block[i]).Arguments.Count);
 
             //label fourth
             i++;
@@ -2941,6 +2935,24 @@ ldloc   x
 ldc.int 2   //what you would expect
 pow
 ret
+");
+        }
+
+        [Test]
+        public void SingleModifyingAssign()
+        {
+            _compile(@"
+function main()
+{
+    var a;
+    a += 3;
+}
+");
+            _expect(@"
+ldloc a
+ldc.int 3
+add
+stloc a
 ");
         }
 

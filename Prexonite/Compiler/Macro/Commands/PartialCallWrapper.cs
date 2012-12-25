@@ -30,6 +30,8 @@ using System.Diagnostics;
 using System.Linq;
 using Prexonite.Commands.Core;
 using Prexonite.Compiler.Ast;
+using Prexonite.Modular;
+using Prexonite.Types;
 
 namespace Prexonite.Compiler.Macro.Commands
 {
@@ -116,9 +118,13 @@ namespace Prexonite.Compiler.Macro.Commands
                 return;
             }
 
-            var inv = new AstMacroInvocation(context.Invocation.File, context.Invocation.Line,
-                context.Invocation.Column, SymbolEntry.MacroCommand(CallStar.Instance.Id));
-
+            // Assemble the invocation of call\*(passThrough,call\perform(?),callArguments...)
+            //  Note: this is a get-call in all cases, because we are computing a partial application
+            //  whether the programmer wrote a get or a set call needs to be captured by concrete
+            //  implementations of partial call wrapers (see Call_Member)
+            var inv = new AstExpand(context.Invocation.Position, EntityRef.MacroCommand.Create(CallStar.Instance.Id),
+                                    PCall.Get);
+            
             // Protect the first two arguments
             inv.Arguments.Add(context.CreateConstant(GetPassThroughArguments(context)));
 
