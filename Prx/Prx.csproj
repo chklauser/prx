@@ -223,9 +223,6 @@
     <None Include="psr\impl\macro.pxs">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </None>
-    <None Include="psr\impl\macro_compat.pxs">
-      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
-    </None>
     <None Include="psr\impl\misc.pxs">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </None>
