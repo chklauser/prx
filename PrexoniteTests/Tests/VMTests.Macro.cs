@@ -36,7 +36,10 @@ using System.Collections.Generic;
 using NUnit.Framework;
 using Prexonite;
 using Prexonite.Compiler;
+using Prexonite.Compiler.Ast;
 using Prexonite.Compiler.Macro.Commands;
+using Prexonite.Modular;
+using Prexonite.Types;
 using PrexoniteTests.Tests;
 
 namespace Prx.Tests
@@ -435,6 +438,53 @@ function main(x,y)
                     "a__xXx__je=b",
                     "a__xXx__=b"
                 }, "a", "b");
+        }
+
+        [Test]
+        public void AstIsExpand()
+        {
+            Compile(@"
+var uniq\\node_t6;
+
+function ast_is_Expand(node_arg)
+{asm{
+var tmpp0
+/* 00 */ ldloc node_arg
+/* 01 */ cmd.1 boxed
+/* 02 */ get.0 Type
+/* 03 */ dup 1
+/* 04 */ stloc tmpp0
+/* 05 */ check.const ""Object(\""Prexonite.Types.ObjectPType\"")""
+/* 06 */ jump.t 9
+/* 07 */ ldc.bool false
+/* 08 */ ret.value
+/* 09 */ ldglob uniq\\node_t6
+/* 10 */ check.null
+/* 11 */ jump.f 15
+/* 12 */ ldc.string ""Prexonite.Compiler.Ast.AstExpand""
+/* 13 */ sget.1 ""Object(\""System.Type\"")::GetType""
+/* 14 */ stglob uniq\\node_t6
+/* 15 */ ldglob uniq\\node_t6
+/* 16 */ ldloc tmpp0
+/* 17 */ get.0 ClrType
+/* 18 */ get.1 IsAssignableFrom
+/* 19 */ jump.f 26
+/* 20 */ ldloc node_arg
+/* 21 */ get.0 CheckForPlaceholders
+/* 22 */ cmd.1 $not
+/* 23 */ jump.f 26
+/* 24 */ ldc.bool true
+/* 25 */ jump 27
+/* 26 */ ldc.bool false
+/* 27 */ ret.value
+/* 28 */ }}
+
+function main(n) = ast_is_Expand(n);");
+
+            Expect(true,
+                   sctx.CreateNativePValue(new AstExpand(NoSourcePosition.Instance,
+                                                         EntityRef.MacroCommand.Create("call\\macro"), PCall.Get)));
+
         }
     }
 }

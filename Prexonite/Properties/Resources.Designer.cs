@@ -840,5 +840,14 @@ namespace Prexonite.Properties {
                 return ResourceManager.GetString("sys", resourceCulture);
             }
         }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Variable id must not be empty..
+        /// </summary>
+        public static string VariableDeclaration_Variable_id_must_not_be_empty {
+            get {
+                return ResourceManager.GetString("VariableDeclaration_Variable_id_must_not_be_empty", resourceCulture);
+            }
+        }
     }
 }

@@ -1392,7 +1392,7 @@ namespace Prexonite.Types
                 if (subject.Value == null)
                     return false;
 
-                if (objT.ClrType.IsAssignableFrom(subject.Value.GetType()))
+                if (objT.ClrType.IsInstanceOfType(subject.Value))
                 {
                     result = objT.CreatePValue(subject.Value);
                     return result != null;

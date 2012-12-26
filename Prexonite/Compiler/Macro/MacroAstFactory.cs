@@ -24,6 +24,7 @@
 //  WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING 
 //  IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
+using System;
 using JetBrains.Annotations;
 using Prexonite.Compiler.Ast;
 
@@ -49,6 +50,7 @@ namespace Prexonite.Compiler.Macro
             get { return _session.CurrentBlock; }
         }
 
+        [Obsolete("Use the Symbol API")]
         protected override bool TryUseSymbolEntry(string symbolicId, ISourcePosition position, out SymbolEntry entry)
         {
             return _session.Target._TryUseSymbolEntry(symbolicId, position, out entry);

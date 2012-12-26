@@ -1,8 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.ComponentModel;
-using System.Linq;
-using System.Text;
+using Prexonite.Properties;
 
 namespace Prexonite.Modular
 {
@@ -61,7 +59,7 @@ namespace Prexonite.Modular
                 if (id == null)
                     throw new ArgumentNullException("id");
                 if (id.Length == 0)
-                    throw new ArgumentException("Variable id must not be empty.", "id");
+                    throw new ArgumentException(Resources.VariableDeclaration_Variable_id_must_not_be_empty, "id");
 
                 _metaTable[Application.IdKey] = id;
             }

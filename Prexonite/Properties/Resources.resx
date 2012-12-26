@@ -363,4 +363,7 @@
     <data name="MacroFunctionExpander_ExpectedFunctionReference" xml:space="preserve">
     <value>MacroFunctionExpander expected reference to function, got {0} instead.</value>
   </data>
+    <data name="VariableDeclaration_Variable_id_must_not_be_empty" xml:space="preserve">
+    <value>Variable id must not be empty.</value>
+  </data>
 </root>

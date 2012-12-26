@@ -122,8 +122,7 @@ namespace Prexonite.Compiler.Macro.Commands
             //  Note: this is a get-call in all cases, because we are computing a partial application
             //  whether the programmer wrote a get or a set call needs to be captured by concrete
             //  implementations of partial call wrapers (see Call_Member)
-            var inv = new AstExpand(context.Invocation.Position, EntityRef.MacroCommand.Create(CallStar.Instance.Id),
-                                    PCall.Get);
+            var inv = context.Factory.Expand(context.Invocation.Position, EntityRef.MacroCommand.Create(CallStar.Instance.Id));
             
             // Protect the first two arguments
             inv.Arguments.Add(context.CreateConstant(GetPassThroughArguments(context)));

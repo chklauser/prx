@@ -27,7 +27,6 @@
 using System;
 using Prexonite.Compiler.Macro;
 using Prexonite.Modular;
-using Prexonite.Properties;
 using Prexonite.Types;
 
 namespace Prexonite.Compiler.Ast
@@ -93,6 +92,13 @@ namespace Prexonite.Compiler.Ast
             var copy = new AstExpand(Position, Entity, Call);
             copy.CopyBaseMembers(this);
             return copy;
+        }
+
+        public override string ToString()
+        {
+            return string.Format("expand {0}: {1}({2})",
+                (Enum.GetName(typeof(PCall), Call) ?? "-").ToLowerInvariant(),
+                Entity, ArgumentsToString());
         }
     }
 }

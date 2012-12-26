@@ -191,6 +191,11 @@ namespace Prexonite.Compiler.Ast
             return new AstIndirectCall(position,call,receiver);
         }
 
+        public AstGetSet Expand(ISourcePosition position, EntityRef entity, PCall call = PCall.Get)
+        {
+            return new AstExpand(position, entity, call);
+        }
+
         public AstGetSet Placeholder(ISourcePosition position, int? index = new int?())
         {
             return new AstPlaceholder(position.File, position.Line, position.Column, index);

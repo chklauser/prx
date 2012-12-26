@@ -942,7 +942,7 @@ namespace Prexonite.Compiler
                 }
                 if (entityRef != null)
                 {
-                    return new AstExpand(GetPosition(), entityRef, PCall.Get);
+                    return Create.Expand(GetPosition(), entityRef);
                 }
                 else
                 {
@@ -1133,7 +1133,7 @@ public AstExpr HandleMessage(MessageSymbol self, Tuple<Parser, PCall> argument)
                         if (abort)
                             return argument.Item1._NullNode(position);
                         else
-                            return new AstExpand(argument.Item1.GetPosition(),refSym.Entity,PCall.Get);
+                            return argument.Item1.Create.Expand(argument.Item1.GetPosition(),refSym.Entity);
                     }
                     else
                     {

@@ -24,7 +24,6 @@
 //  WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING 
 //  IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-using Prexonite.Compiler.Ast;
 using Prexonite.Modular;
 using Prexonite.Types;
 
@@ -58,7 +57,7 @@ namespace Prexonite.Compiler.Macro.Commands
                     new SymbolEntry(SymbolInterpretations.Command, Engine.CallSubPerformAlias, null),
                     PCall.Get,
                     context.Invocation.Arguments.ToArray());
-            var interpret = new AstExpand(context.Invocation.Position,
+            var interpret = context.Factory.Expand(context.Invocation.Position,
                                           EntityRef.MacroCommand.Create(CallSubInterpret.Alias), context.Invocation.Call);
             
             interpret.Arguments.Add(perform);

@@ -54,7 +54,7 @@ namespace Prexonite.Compiler.Ast
 
         private static bool _require(PValue[] args, ref int index, out PValue rawValue)
         {
-            if (args.Length <= index)
+            if (index < args.Length)
             {
                 rawValue = args[index];
                 index++;
@@ -86,7 +86,7 @@ namespace Prexonite.Compiler.Ast
 
         private static bool _require<T>(StackContext sctx, PValue[] args, ref int index, out T value)
         {
-            if (args.Length <= index && args[index].TryConvertTo(sctx, false, out value))
+            if (index < args.Length && args[index].TryConvertTo(sctx, false, out value))
             {
                 index++;
                 return true;
@@ -101,7 +101,7 @@ namespace Prexonite.Compiler.Ast
 
         private static bool _takeOptional<T>(StackContext sctx, PValue[]  args, ref int index, out T value, T defaultValue = default(T))
         {
-            if(args.Length <= index && args[index].TryConvertTo(sctx, false,out value))
+            if(index < args.Length && args[index].TryConvertTo(sctx, false,out value))
             {
                 index++;
                 return true;
@@ -116,7 +116,7 @@ namespace Prexonite.Compiler.Ast
 
         private static bool _takeOptional(PValue[] args, ref int index, out PValue rawValue, PValue defaultValue = null)
         {
-            if(args.Length <= index)
+            if(index < args.Length)
             {
                 rawValue = args[index];
                 index++;
@@ -159,7 +159,7 @@ namespace Prexonite.Compiler.Ast
             detailedError = null;
             result = null;
             AstNode node = null;
-            int i = 1; // the argument index
+            var i = 1; // the argument index
             switch (id.ToLowerInvariant())
             {
                 #region Type expressions
@@ -200,7 +200,7 @@ namespace Prexonite.Compiler.Ast
                     }
                 #endregion
 
-                #region Type expressions
+                #region Value expressions
 
                 case "binaryoperation":
                     {
@@ -521,6 +521,21 @@ namespace Prexonite.Compiler.Ast
                         node = _takeOptionalArguments(sctx, args, i, complex);
                         break;
                     }
+                case "expand":
+                    {
+                        PCall nodeCall;
+                        EntityRef entity;
+                        const string sig = "Expand(position, entity~EntityRef, call~PCall)";
+                        if (!_require(sctx, args, ref i, out entity))
+                        {
+                            detailedError = sig + ", entity is missing.";
+                            return false;
+                        }
+                        _takeOptional(sctx, args, ref i, out nodeCall);
+                        var complex = _base.Expand(position, entity, nodeCall);
+                        node = _takeOptionalArguments(sctx, args, i, complex);
+                        break;
+                    }
                 case "placeholder":
                     {
                         int? index;
@@ -542,7 +557,6 @@ namespace Prexonite.Compiler.Ast
                     }
 
                 #endregion
-
 
                 #region Statements/Blocks
 

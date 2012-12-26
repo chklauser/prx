@@ -33,7 +33,7 @@ function is_in_macro\impl as is_in_macro(context) [is compiler;] =
     >> limit(1)
     >> count) > 0;
     
-/* establish_macro_context - Allows a macro, that only works in other macros, to be applied in nested functions of macros as well.*/
+// establish_macro_context - Allows a macro, that only works in other macros, to be applied in nested functions of macros as well.
 function establish_macro_context\impl as establish_macro_context(context) [is compiler;]
 {
     if(context is null)
@@ -49,8 +49,8 @@ function establish_macro_context\impl as establish_macro_context(context) [is co
         context.RequireOuterVariable(contextAlias);
 }
 
-/* ast\macro - Works like ast from psr\ast.pxs but automatically supplies file, line and column information 
-    taken from the macro invocation. */
+// ast\macro - Works like ast from psr\ast.pxs but automatically supplies file, line and column information 
+//    taken from the macro invocation. 
 macro ast\macro(type)[partial\macro]
 {   
     var macroInvocation = context.Invocation;
@@ -106,6 +106,64 @@ macro ast\macro(type)[partial\macro]
     context.Block.Expression = astCall;
     
     if(invkV is not null)
+        context.FreeTemporaryVariable(invkV);
+    
+    return true;
+}
+
+function reify_position(context, position){
+	var pos = context.Invocation.Position;
+	var create = context.Factory;
+	
+	var ctorNode = create.ObjectCreation(pos,create.ConstantTypeExpression("Object(\"Prexonite.Compiler.SourcePosition\")"));
+	ctorNode.Arguments.Add(create.Constant(position.File));
+	ctorNode.Arguments.Add(create.Constant(position.Line));
+	ctorNode.Arguments.Add(create.Constant(position.Column));
+	return ctorNode;
+}
+
+// ast\macro - Works like ast from psr\ast.pxs but automatically supplies file, line and column information 
+//    taken from the macro invocation. 
+macro ast2\macro(type)[partial\macro]
+{   
+    var macroInvocation = context.Invocation;
+    
+    ref ast = ast\withPos(?,macroInvocation.File, macroInvocation.Line,macroInvocation.Column,?);
+    
+    if(SI.eq(context.Call,SI.set))
+    {
+        context.ReportMessage(Prexonite::Compiler::ParseMessageSeverity.Error,
+            "AST node construction has no side-effects. Ignoring the return value doesn't make sense.",
+            context.Invocation);
+        return false;
+    }
+    
+    var astCall = ast("GetSetSymbol", SI.get, SI.func(->ast\withPos));
+    
+    var nodePosition;
+    
+    if(is_in_macro(context))
+    {
+        establish_macro_context(context);
+        
+        var getContext = ast("GetSetSymbol",
+            SI.get,SI.lref(Prexonite::Compiler::MacroAliases.ContextAlias));
+        
+        var getInvComp = ast("GetSetMemberAccess",SI.get,getContext,"Invocation");
+        
+        nodePosition = ast("GetSetMemberAccess", SI.get, getInvComp, "Position");
+    }
+    else 
+    {
+        nodePosition = reify_position(context,macroInvocation.Position);
+    }
+    
+    astCall.Arguments.AddRange([type,nodePosition ]);
+    astCall.Arguments.AddRange(var args >> skip(1));
+    
+    context.Block.Expression = astCall;
+    
+    if(var invkV is not null)
         context.FreeTemporaryVariable(invkV);
     
     return true;
@@ -275,21 +333,21 @@ macro tempfree(getContext, tempId)
 //Create node type check functions (to separate macro implementations from the CLR ast node types).
 function macro\_expand_into_function(ldr, id, body)[compiler]
 {
-    //create function meta data
+    //create function meta data and compiler target
     var node_arg = "node_arg";
     var func = ldr.ParentApplication.CreateFunction(id);
     func.Parameters.Add(node_arg);
-    func.Meta["compiler"] = true;
+    func.Meta["compiler"] = true;    
+    var target = ldr.CreateFunctionTarget(func,null,null);    
     
     //create function body {return <body>(node_arg, <args...>);}
-    var block = new Prexonite::Compiler::Ast::AstBlock("macro.pxs\\derived",-1,-1);
+    var block = target.Ast;
     block.Add(var ret = ast("Return",Prexonite::Compiler::Ast::ReturnVariant.Exit));
     ret.Expression = var bodyMi = ast("MacroInvocation", body);
     bodyMi.Arguments.Add(ast("GetSetSymbol",SI.get,SI.lvar(node_arg)));
     bodyMi.Arguments.AddRange(var args >> skip(3));
     
     //Have the body compiled
-    var target = ldr.CreateFunctionTarget(func,block);
     try {
         target.Ast.EmitCode(target, true, Prexonite::Compiler::Ast::StackSemantics.Effect);
         target.FinishTarget();

@@ -44,7 +44,8 @@ function ast3\withPos(factory,type) [compiler]
 	if(factory is null)
 		throw "AST factory cannot be null.";
 		
-	return call\member(factory,type, targs);
+	//return call\member(factory,type, targs);
+    return call(factory,[type],targs);
 }
 
 function ast\withPos(type, file, line, column) [is compiler;]
@@ -93,12 +94,17 @@ function ast2\withPos(type, file, line, column) [compiler]
 
 function ast\simple as ast(type) [is compiler;]
 {
-    call(->ast\withPos,[type,null,null,null] + (var args >> skip(1) >> all));
+    return call(->ast\withPos,[type,null,null,null] + (var args >> skip(1) >> all));
 }
 
 function ast2\simple as ast2(type) [is compiler;]
 {
-    call(->ast2\withPos,[type,null,null,null] + (var args >> skip(1) >> all));
+    return call(->ast2\withPos,[type,null,null,null] + (var args >> skip(1) >> all));
+}
+
+function ast3\simple as ast3(factory,type) [compiler]
+{
+    return call(->ast3\withPos,[factory,type,Prexonite::Compiler::NoSourcePosition.Instance] + (var args >> skip(2) >> all));
 }
 
 function subBlocks(block) [is compiler;] =
@@ -240,6 +246,8 @@ function create_SI [is compiler;]
             self.gref
         else
             throw "$s cannot be made reference.";
+
+    SI.\("no_location") = Prexonite::Compiler::NoSourcePosition.Instance;
             
     //Macro specific
     //Internal
@@ -273,6 +281,36 @@ function create_SI [is compiler;]
     m.\\("is_cmd") = (self, s) => s~Int == self.cmd~Int;
     m.\("i") = new i(m);
     SI.\("m") = m;
+
+    var e = new Structure;
+    e.\\("func") = (self,arg1,arg2) => 
+        if(arg1 is ::PFunction)
+            ~Object<"Prexonite.Modular.EntityRef+Function">.Create(arg1.Id,arg1.ParentApplication.Module.Name)
+        else
+            ~Object<"Prexonite.Modular.EntityRef+Function">.Create(arg1,arg2);
+    e.\\("is_func") = (self,entity) => entity is Object<"Prexonite.Modular.EntityRef+Function">;
+    e.\\("cmd") = (self,id) => ~Object<"Prexonite.Modular.EntityRef+Command">.Create(id);
+    e.\\("is_cmd") = (self,entity) => entity is Object<"Prexonite.Modular.EntityRef+Command">;
+    e.\\("mcmd") = (self,arg1) => 
+        if(arg1 is Prexonite::Compiler::Macro::MacroCommand)
+            ~Object<"Prexonite.Modular.EntityRef+MacroCommand">.Create(arg1.Id)
+        else
+            ~Object<"Prexonite.Modular.EntityRef+MacroCommand">.Create(arg1);
+    e.\\("is_mcmd") = (self,entity) => entity is Object<"Prexonite.Modular.EntityRef+MacroCommand">;
+    e.\\("lvar") = (self,id) => ~Object<"Prexonite.Modular.EntityRef+Variable+Local">.Create(id);
+    e.\\("is_lvar") = (self,entity) => entity is Object<"Prexonite.Modular.EntityRef+Variable+Local">;
+    e.\\("gvar") = (self,id,mname) => ~Object<"Prexonite.Modular.EntityRef+Variable+Global">.Create(id,mname);
+    e.\\("is_gvar") = (self,entity) => entity is Object<"Prexonite.Modular.EntityRef+Variable+Global">;
+    SI.\("e") = e;
+
+    var s = new Structure;
+    s.\\("entity") = (self,entity,pos) => Prexonite::Compiler::Symbolic::Symbol.CreateReference(entity,pos);
+    s.\\("deref") = var deref = (self,inner,pos) => Prexonite::Compiler::Symbolic::Symbol.CreateDereference(inner,pos);
+    s.\\("dereference") = deref;
+    s.\\("nil") = (self,pos) => Prexonite::Compiler::Symbolic::Symbol.CreateNil(pos);
+    s.\\("expand") = (self,inner,pos) => Prexonite::Compiler::Symbolic::Symbol.CreateExpand(inner,pos);
+    s.\\("message") = (self,message,inner,pos) => Prexonite::Compiler::Symbolic::Symbol.CreateMessage(message,inner,pos);
+    SI.\("s") = s;
     
     return SI;
 }

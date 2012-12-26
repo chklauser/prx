@@ -60,6 +60,7 @@ namespace Prexonite.Compiler.Ast
                                      PCall call = PCall.Get);
 
         AstGetSet IndirectCall(ISourcePosition position, AstExpr receiver, PCall call = PCall.Get);
+        AstGetSet Expand(ISourcePosition position, EntityRef entity, PCall call = PCall.Get);
         AstGetSet Placeholder(ISourcePosition position, int? index = null);
 
         AstScopedBlock Block(ISourcePosition position);
