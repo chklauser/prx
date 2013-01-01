@@ -506,11 +506,7 @@ AppendRightExpr<out AstExpr expr>
 	KeyValuePairExpr<out expr>
 	{	
 		appendright
-		GetCall<out complex>		    (.	complex.Arguments.RightAppend(expr); 
-										    complex.Arguments.ReleaseRightAppend();
-										    if(complex is AstGetSetSymbol 
-                                                    && ((AstGetSetSymbol)complex).IsObjectVariable)
-										        complex.Call = PCall.Set;
+		GetCall<out complex>		    (.	_appendRight(expr,complex);
 										    expr = complex;										    
 									    .)
 	}
@@ -711,7 +707,6 @@ PrefixUnaryExpr<out AstExpr expr>
 
 Primary<out AstExpr expr>
                                         (.  expr = null;
-                                            bool declared; 
                                         .)
 =
 	(.  _pushLexerState(Lexer.Asm); .)	  (.  var blockExpr = Create.Block(GetPosition());
@@ -734,7 +729,7 @@ Primary<out AstExpr expr>
 |   LazyExpression<out expr>
 |   lpar Expr<out expr> rpar
 |   IF(_isNotNewDecl()) ObjectCreation<out expr>
-|   GetInitiator<out expr, out declared>
+|   GetInitiator<out expr>
 |   LPopExpr lpar Expr<out expr>        (.  //This is a hack that makes string interpolation with expressions possible
                                             //The non-verbal token "LPopExpr" (has no character representation) is 
                                             //returned by the lexer if the parser has to treat an expression in a special
@@ -839,8 +834,10 @@ LambdaExpression<out AstExpr expr>
                                             func.Meta[PFunction.ParentFunctionKey] = target.Function.Id;
                                             Loader.CreateFunctionTarget(func, target, GetPosition());
                                             CompilerTarget ft = FunctionTargets[func];
+                                            ISourcePosition position;
                                         .)
 =
+                                        (.  position = GetPosition(); .)
 (   FormalArg<ft>
 |   lpar
     [	FormalArg<ft> 
@@ -871,9 +868,7 @@ implementation
                                                 }
                                             }
                                             
-                                            expr = new AstCreateClosure(this, 
-                                                new SymbolEntry(SymbolInterpretations.Function, func.Id, 
-                                                func.ParentApplication.Module.Name));                                         
+                                            expr = Create.CreateClosure(position,EntityRef.Function.Create(func.Id,func.ParentApplication.Module.Name));
                                         .)
 .
 
@@ -883,12 +878,13 @@ LazyExpression<out AstExpr expr>
                                             func.Meta[PFunction.ParentFunctionKey] = target.Function.Id;
                                             Loader.CreateFunctionTarget(func, target, GetPosition());
                                             CompilerTarget ft = FunctionTargets[func];
+                                            ISourcePosition position;
                                             
                                             //Switch to nested target
                                             _PushScope(ft);
                                         .)
-=
-lazy
+=                                       
+lazy                                    (.  position = GetPosition(); .)
 (   lbrace
     { Statement<ft.Ast> }
     rbrace
@@ -914,11 +910,8 @@ lazy
                                             }
                                             
                                             //Construct expr (appears in the place of lazy expression)
-                                            var clo = new AstCreateClosure(this,  
-                                                new SymbolEntry(SymbolInterpretations.Function, func.Id, 
-                                                func.ParentApplication.Module.Name));
-                                            var thunk = new AstGetSetSymbol(this, 
-                                                SymbolEntry.Command(Engine.ThunkAlias));
+                                            var clo = Create.CreateClosure(position,EntityRef.Function.Create(func.Id,func.ParentApplication.Module.Name));
+                                            var thunk = Create.IndirectCall(position,Create.Reference(position,EntityRef.Command.Create(Engine.ThunkAlias)));
                                             thunk.Arguments.Add(clo);
                                             thunk.Arguments.AddRange(cap(this)); //Add captured values
                                             expr = thunk;
@@ -1727,9 +1720,8 @@ FunctionDefinition<out PFunction func>
                             func = derStub;
                             //Generate code for the stub
                             AstCreateCoroutine crcor = new AstCreateCoroutine(this);                                            
-                            crcor.Expression = new AstCreateClosure(this, 
-                                                        new SymbolEntry(SymbolInterpretations.Function, derBody.Id, 
-                                                        derBody.ParentApplication.Module.Name));
+                            crcor.Expression = Create.CreateClosure(GetPosition(),EntityRef.Function.Create(derBody.Id,derBody.ParentApplication.Module.Name));
+
                             AstReturn retst = new AstReturn(this, ReturnVariant.Exit);
                             retst.Expression = crcor;
                             cst.Ast.Add(retst);
@@ -1756,7 +1748,7 @@ FunctionDefinition<out PFunction func>
                                 //Nested lazy functions need a stub to capture their environment by value (handled by NestedFunction)
                                 
                                 //Generate stub code
-                                retVal = new AstCreateClosure(this,  new SymbolEntry(SymbolInterpretations.Function, ct.Function.Id, 
+                                retVal = Create.CreateClosure(GetPosition(), EntityRef.Function.Create(ct.Function.Id, 
                                                 ct.Function.ParentApplication.Module.Name));
                                 
                                 //Inject asthunk-conversion code into body
@@ -2080,8 +2072,6 @@ Statement<AstBlock block>
 SimpleStatement<AstBlock block>
 =
 	ExplicitGoTo<block>
-|   IF ( isVariableDeclaration() ) 
-        VariableDeclarationStatement<block>
 |   GetSetComplex<block>
 |   Return<block>
 |   Throw<block>
@@ -2111,21 +2101,19 @@ StructureStatement<AstBlock block>
 GetSetComplex<AstBlock block>
                                         (.  AstGetSet complex; 
                                             AstExpr expr;
-                                            AstGetSetSymbol symbol;
-                                            bool isDeclaration;
                                             AstNode node;
                                         .)
 =
 //GetSet Initiator
-GetInitiator<out expr, out isDeclaration>
-                                        (.  complex = expr as AstGetSet; .)
+GetInitiator<out expr>                  (.  complex = expr as AstGetSet; .)
 
 //GetSet Extensions
-    {   GetSetExtension<expr, out complex>
-                                        (.  expr = complex; .)
-    }
+{   GetSetExtension<expr, out complex>  (.  expr = complex; .)
+}
 //GetSet Terminator
-(                                       (.  block.Add(expr); .)
+(                                       (.  if(expr != null) // Happens in case of an error
+                                                block.Add(expr); 
+                                        .)
 |                                       (.  if(complex == null)
                                             {
                                                 var pos = GetPosition(); 
@@ -2135,15 +2123,7 @@ GetInitiator<out expr, out isDeclaration>
                                         .)
     (   inc                             (.  block.Add(AstUnaryOperator._Create(this, UnaryOperator.PostIncrement, complex)); .)
     |   dec                             (.  block.Add(AstUnaryOperator._Create(this, UnaryOperator.PostDecrement, complex)); .)
-    |   Assignment<complex, out node>   (.  symbol = node as AstGetSetSymbol;
-                                            if(symbol != null 
-                                                && InterpretationIsLocalVariable(symbol.Implementation.Interpretation) 
-                                                && isDeclaration)
-                                            {
-                                                symbol.Implementation = symbol.Implementation.With(
-                                                    interpretation:InterpretAsObjectVariable(symbol.Implementation.Interpretation));
-                                            }
-                                            if(complex == null && node == null)
+    |   Assignment<complex, out node>   (.  if(complex == null && node == null)
                                             {
                                                 // An error ocurred during parsing prior to this point.
                                                 // Don't add the null node to the block to avoid a ArgumentNullException
@@ -2166,16 +2146,11 @@ GetInitiator<out expr, out isDeclaration>
 .
 
 AppendRightTermination<ref AstGetSet complex>
-		                                (.	AstGetSet actualComplex; .)
+		                                (.	AstGetSet rhs; .)
 =
 	appendright
-	GetCall<out actualComplex>			(.	actualComplex.Arguments.RightAppend(complex);
-											actualComplex.Arguments.ReleaseRightAppend();
-                                            //WARNING: Code is duplicated in ./GetInitiator and Parser.Expression.atg/RightAppendExpr and 
-											if(actualComplex is AstGetSetSymbol 
-                                                    && ((AstGetSetSymbol)actualComplex).IsObjectVariable)
-										        actualComplex.Call = PCall.Set;
-										    complex = actualComplex;
+	GetCall<out rhs>                    (.	_appendRight(complex,rhs);
+										    complex = rhs;
 										.)
 .
 
@@ -2207,23 +2182,22 @@ GetSetExtension<AstExpr subject, out AstGetSet extension>
     rbrack                                                                      
 .
 
-GetInitiator<out AstExpr complex, out bool isDeclaration>
+GetInitiator<out AstExpr complex>
                                         (.  complex = null; 
                                             AstGetSet actualComplex = null;
                                             AstGetSetStatic staticCall = null;
                                             AstGetSet member = null;
                                             AstExpr expr;
                                             List<AstExpr> args = new List<AstExpr>();
-                                            isDeclaration = false;                                            
                                             string id;
                                             int placeholderIndex = -1;
 											                      ISourcePosition position;
                                         .)
 =
     //Actual value
-    (   IF( isLikeFunction() || isUnknownId() ) 
-        Function<out actualComplex>     (.  complex = actualComplex; .)    
-    |   Variable<out actualComplex, out isDeclaration>
+    (   SymbolicUsage<out actualComplex>
+                                        (.  complex = actualComplex; .)
+    |   VariableDeclaration<out actualComplex>
                                         (.  complex = actualComplex; .)
     |   StaticCall<out staticCall>
     |	lpar Expr<out expr>				(.	args.Add(expr); .)
@@ -2235,18 +2209,12 @@ GetInitiator<out AstExpr complex, out bool isDeclaration>
 												SemErr("A member access cannot have multiple subjects. (Did you mean '>>'?)");
 										.)
 		|	appendright
-			GetCall<out actualComplex>  (.  complex = actualComplex;
-                                            actualComplex.Arguments.RightAppend(args);
-											actualComplex.Arguments.ReleaseRightAppend();
-                                            //WARNING: the following code is duplicated in Parser.Expression.atg/RightAppendExpr
-											if(actualComplex is AstGetSetSymbol 
-                                                    && ((AstGetSetSymbol)actualComplex).IsObjectVariable)
-										        actualComplex.Call = PCall.Set;
-											member = actualComplex;
+			GetCall<out actualComplex>  (.  _appendRight(args,actualComplex);
+                                            complex = actualComplex;
 										.)
 		)
     )
-                    (.  complex =  
+                                        (.  complex =  
 												staticCall ?? 
 												member ??
 												complex; 
@@ -2260,139 +2228,130 @@ GetInitiator<out AstExpr complex, out bool isDeclaration>
     [   Integer<out placeholderIndex> ] (.  complex = new AstPlaceholder(this, 0 <= placeholderIndex ? (int?)placeholderIndex : null); .)
 .
 
-VariableDeclaration<out AstGetSet variable, bool isNewDecl>
-                                        (.  variable = null; 
-                                            string id = null;
-                                            bool isOverrideDecl = false;
-											ISourcePosition position = null;
-                                        .)
-=                                       (.  SymbolInterpretations kind = SymbolInterpretations.Undefined; .)
-(   (  var                              (.  kind = SymbolInterpretations.LocalObjectVariable; .)
-    |  ref                              (.  kind = SymbolInterpretations.LocalReferenceVariable; .)
-    )
-    [   new                             (.  isOverrideDecl = true; .)
-    ]									(.	position = GetPosition(); .)
-    Id<out id>                          (.  
-                                            SmartDeclareLocal(id, kind, isOverrideDecl); 
-                                        .)
-|   static                              (.  kind = SymbolInterpretations.GlobalObjectVariable;
-                                            string staticId;
-                                        .)
-    [   var
-    |   ref                             (.  kind = SymbolInterpretations.GlobalReferenceVariable; .)
-    ]									(.	position = GetPosition(); .)
-    Id<out id>                          (.  staticId = target.Function.Id + "\\static\\" + id;
-                                            target.DeclareModuleLocal(kind, id, staticId);
-                                            VariableDeclaration vari;
-                                            DefineGlobalVariable(staticId, out vari);
-                                        .)
-)                                       (.  if(id == null)
-                                            { // there was an error parsing the variable kind/id; return a dummy node
-                                                variable = _createUnknownGetSet();
-                                            }
-                                            else
-                                            {
-												SymbolEntry sym;
-												if(_TryUseSymbolEntry(id, position, out sym)){
-													variable = InterpretationIsObjectVariable(kind) ?
-														new AstGetSetSymbol(this, PCall.Get, sym)
-													:
-														new AstGetSetReference(this, PCall.Get, sym.With(interpretation: sym.Interpretation.ToObjectVariable())); 
-                                                
-													if(isNewDecl)
-														variable = new AstGetSetNewDecl(this)
-														{
-															Expression = variable,
-															Id = sym.InternalId
-														};              
-												} else {
-													System.Diagnostics.Debug.Assert(false,"Prexonite cannot find a symbol it just declared.");
-													throw new PrexoniteException("Prexonite cannot find a symbol it just declared.");
-												}
-                                            }
-                                        .)
-.
-
-Variable<out AstGetSet complex, out bool isDeclared>
-                                        (.  string id; 
-                                            isDeclared = false; 
-                                            complex = null; 
-                                            bool isNewDecl = false;
-											                      ISourcePosition position;
-                                        .)
+VariableDeclaration<out AstGetSet complex>
+                                (.  string id, physicalId;
+                                    bool isOverrideDecl = false;
+                                    bool seenVar = false;
+                                    int refCount = 1;
+                                    bool isUnbound = false;
+                                    bool isStatic = false;
+                                    Symbol sym, varSym;
+                                .)
 =
-    [   new                             (.  isNewDecl = true; .)
-    ]
-    VariableDeclaration<out complex, isNewDecl>    (. isDeclared = true; .)
-|										(.	position = GetPosition(); .)
-	Id<out id>                            (.  
-                                            SymbolEntry varSym;
-                                            if(_TryUseSymbolEntry(id, position, out varSym))
-                                            {
-                                                if(InterpretationIsLocalVariable(varSym.Interpretation))
-                                                {
-                                                    if(isOuterVariable(id))
-                                                        target.RequireOuterVariable(id);                            
-                                                }
-                                                else if(!InterpretationIsVariable(varSym.Interpretation))
-                                                {
-                                                    SemErr(t.line, t.col, "Variable name expected but was " + 
-                                                        Enum.GetName(typeof(SymbolInterpretations),
-                                                            varSym.Interpretation));
-                                                }
-                                                complex = new AstGetSetSymbol(this, varSym);
-                                            }
-                                            else
-                                            {
-                                                //Unknown symbols are treated as functions. 
-                                                //  See production Function for details.
-                                                SemErr(t.line, t.col, 
-                                                    "Internal compiler error. Did not catch unknown identifier.");
-                                                complex = new AstGetSetSymbol(this, 
-                                                    SymbolEntry.LocalObjectVariable("Not_a_Variable_Id"));
-                                            }
-                                        .)
-.
-
-VariableDeclarationStatement<AstBlock block>
-=                                       (.  AstGetSet variable;
-                                            bool isNewDecl = false;
-                                        .)
-    [ new                               (.  isNewDecl = true; .)
-    ]
-    VariableDeclaration<out variable, isNewDecl>
-                                        (.  if(isNewDecl)
-                                            {
-                                                block.Add(variable);
-                                            }
-                                            else
-                                            {
-                                                //No additional action is required. This is just a platform
-                                                //  for variable declarations without assignment.
-                                            }
-                                        .)
-.
-
-Function<out AstGetSet function>
-                                (.  string id; ISourcePosition position; .)
-=                               (.  position = GetPosition(); .)
-    Id<out id>                  (.  Symbol sym;
-									if(!target._TryUseSymbol(id, out sym, position))
+[   new                         (.  isUnbound = true; .)
+]
+(       static                  (.  isStatic = true; .)
+        {   ref                 (.  refCount++; .)
+        }
+        [   var     ]
+    |   (   var                 (.  seenVar = true; .)
+        |    ref                (.  refCount++; .)
+        )
+        {   (   var             (.  if(seenVar)
                                     {
-                                        function = new AstUnresolved(this, id);
+                                        Loader.ReportMessage(Message.Error("Duplicate ocurrence of `var` in local variable declaration.",GetPosition(),MessageClasses.DuplicateVar));
+                                        // This is just a stylistic rule. There are no consequences to having duplicate `var` keywords in a declaration.
+                                    }
+                                    seenVar = true;
+                                .)
+            |   ref             (.  refCount++; .)
+            )
+        }
+)
+    [   new                     (.  isOverrideDecl = true; .)
+    ]                           (.  ISourcePosition position = GetPosition(); .)
+    Id<out id>                  (.  physicalId = id;
+                                    if(isStatic)
+                                    {
+                                        physicalId = target.Function.Id + "\\static\\" + id;
+                                        VariableDeclaration vari;
+                                        if(isOverrideDecl)
+                                        {
+                                            if(TargetModule.Variables.Contains(physicalId))
+                                                physicalId = target.GenerateLocalId(physicalId);
+                                        }
+
+                                        DefineGlobalVariable(physicalId, out vari);
+                                        varSym = Symbol.CreateReference(EntityRef.Variable.Global.Create(physicalId,TargetModule.Name),position);
+
+                                        if(isUnbound)
+                                        {
+                                            Loader.ReportMessage(Message.Error("Unbinding of global (or static) variables is not currently supported.",position,MessageClasses.GlobalUnbindNotSupported));
+                                            isUnbound = false;
+                                        }
                                     }
                                     else
                                     {
-                                        var expr = _assembleInvocation(sym, position);
-                                        function = expr as AstGetSet;
-                                        if(function == null)
+                                        if(isOverrideDecl)
                                         {
-                                            Loader.ReportMessage(Message.Error("Expected function call to be represented as an LValue.",position,MessageClasses.ParserInternal));
-                                            function = Create.IndirectCall(position,Create.Null(position));
+                                            if(target.Function.Variables.Contains(physicalId))
+                                                physicalId = target.GenerateLocalId(physicalId);
+                                            target.Function.Variables.Add(physicalId);
                                         }
+                                        else if(!isOuterVariable(physicalId))
+                                        {
+                                            target.Function.Variables.Add(physicalId);
+                                        }
+
+                                        varSym = Symbol.CreateReference(EntityRef.Variable.Local.Create(physicalId),position);
+                                        // _assembleInvocation will request outer variables where necessary.
+                                    }
+
+                                    // Apply ref's (one ref is implied, see initialization of refCount)
+                                    //  Note: we retain the original symbol to generate the AST node
+                                    sym = varSym;
+                                    while(refCount-- > 0)
+                                        sym = Symbol.CreateDereference(sym);
+                                    
+                                    // Declare the symbol in the current scope and assemble an AST node
+                                    Symbols.Declare(id,sym);
+                                    complex = _assembleInvocation(Symbol.CreateDereference(varSym), position) as AstGetSet;
+
+                                    if(complex == null)
+                                    {
+                                        Loader.ReportMessage(Message.Error("Expected variable declaration to result in LValue.",position,MessageClasses.LValueExpected));
+                                        complex = Create.IndirectCall(position,Create.Null(position));
+                                    }
+                                    else if(isUnbound)
+                                    {
+                                        // Wrap variable access in NewDecl
+                                        var newDecl = new AstGetSetNewDecl(this)
+													    {
+														    Expression = complex,
+														    Id = physicalId
+													    };
+                                        complex = newDecl;
                                     }
                                 .)
-    Arguments<function.Arguments>    
+.
+
+SymbolicUsage<out AstGetSet complex>
+                                (.  string id; ISourcePosition position; 
+                                .)
+=                               (.  position = GetPosition(); .)
+    Id<out id>                  (.  Symbol sym;
+                                    switch(target._TryUseSymbol(id, out sym, position))
+                                    {
+                                        case SymbolUsageResult.Successful:
+                                            var expr = _assembleInvocation(sym, position);
+                                            complex = expr as AstGetSet;
+                                            if(complex == null)
+                                            {
+                                                Loader.ReportMessage(Message.Error("Expected symbolic usage to be represented as an LValue.",position,MessageClasses.ParserInternal));
+                                                complex = Create.IndirectCall(position,Create.Null(position));
+                                            }
+                                            break;
+                                        case SymbolUsageResult.Unresolved:
+                                            complex = new AstUnresolved(this, id);
+                                            break;
+                                        case SymbolUsageResult.Error:
+                                            complex = Create.IndirectCall(position,Create.Null(position));
+                                            break;
+                                        default:
+                                            throw new ArgumentOutOfRangeException();
+                                    }
+                                .)
+    Arguments<complex.Arguments>    
 .
 
 StaticCall<out AstGetSetStatic staticCall>
@@ -2567,11 +2526,10 @@ GetCall<out AstGetSet complex>  // This is used in placed where an LValue is exp
                                 // as the name of this production so helpfully suggests ;-)
                                 // Thus checking for LValue-ness is required and expected.
                                 (.  AstGetSet getMember = null; 
-                                    bool isDeclaration; 
                                     AstExpr expr;
                                 .)
 =
-    GetInitiator<out expr, out isDeclaration>
+    GetInitiator<out expr>
                                 (.  complex = expr as AstGetSet;
                                     if(complex == null)
                                     {
@@ -2580,23 +2538,9 @@ GetCall<out AstGetSet complex>  // This is used in placed where an LValue is exp
                                         complex = Create.IndirectCall(pos,Create.Null(pos));
                                     }  
                                 .)
-    { GetSetExtension<complex, out getMember> }
-    
-                                (.  if(getMember != null) 
-                                    {
-                                        complex = getMember; 
-                                    }
-                                    else
-                                    {
-                                        AstGetSetSymbol symbol = complex as AstGetSetSymbol;
-                                        if(symbol != null 
-                                            && InterpretationIsVariable(symbol.Implementation.Interpretation) 
-                                            && isDeclaration)
-                                        {
-                                            symbol.Implementation = symbol.Implementation.With(InterpretAsObjectVariable(symbol.Implementation.Interpretation));
-                                            complex = symbol;
-                                        }                                        
-                                    } .)
+    { GetSetExtension<complex, out getMember> 
+                                (.  complex = getMember; .)
+    }
 .
 
 Return<AstBlock block>          (.  AstReturn ret = null; 
@@ -2637,24 +2581,23 @@ NestedFunction<AstBlock block>
                                     func.Meta[PFunction.ParentFunctionKey] = target.Function.Id;
                                     
                                     CompilerTarget ft = FunctionTargets[func];
-                                    AstGetSetSymbol setVar = new AstGetSetSymbol(this, PCall.Set, 
-                                        SymbolEntry.LocalObjectVariable(logicalId));
+                                    var pos = GetPosition();
+                                    var setVar = Create.IndirectCall(pos,Create.Reference(pos,EntityRef.Variable.Local.Create(logicalId)),PCall.Set);
                                     if(func.Meta[PFunction.LazyKey].Switch)
                                     {
                                         //Capture environment by value                                        
                                         var ps = ft._ToCaptureByValue(let_bindings(ft));
                                         ft._DetermineSharedNames(); //Need to re-determine shared names since
                                                                     // _ToCaptureByValue does not automatically modify shared names
-                                        var clos = new AstCreateClosure(this,  new SymbolEntry
-                                                (SymbolInterpretations.Function, func.Id, 
+                                        var clos = Create.CreateClosure(pos,  EntityRef.Function.Create(func.Id, 
                                                 func.ParentApplication.Module.Name));
-                                        var callStub = new AstIndirectCall(this, clos);
+                                        var callStub = Create.IndirectCall(pos, clos);
                                         callStub.Arguments.AddRange(ps(this));
                                         setVar.Arguments.Add(callStub);
                                     }
                                     else if(ft.OuterVariables.Count > 0)
                                     {                                        
-                                        setVar.Arguments.Add( new AstCreateClosure(this,  new SymbolEntry(SymbolInterpretations.Function, func.Id, 
+                                        setVar.Arguments.Add( Create.CreateClosure(GetPosition(),  EntityRef.Function.Create(func.Id, 
                                                 func.ParentApplication.Module.Name)) );                                        
                                     }
                                     else

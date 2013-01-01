@@ -76,8 +76,8 @@ function create_stack as create_mutable_stack()
         i = -1;   
     }
     
-    function ToString this = xs.ToString;
-    function GetEnumerator this = (coroutine () =>
+    function ToString self = xs.ToString;
+    function GetEnumerator self = (coroutine () =>
     {
         while(count > 0)
             yield pop;
@@ -93,13 +93,13 @@ function create_stack_immutable as create_immutable_stack(lst)
     else if(Not lst is List)
         lst = lst >> all;
     
-    function push this x = create_stack_immutable([x] + lst);
+    function push self x = create_stack_immutable([x] + lst);
     
-    function count this = lst.Count;
+    function count self = lst.Count;
     
-    function peek this = if(lst.Count > 0) lst[0] else null;
+    function peek self = if(lst.Count > 0) lst[0] else null;
     
-    function pop (this, ref item)
+    function pop (self, ref item)
     {
         if(lst.Count < 1)
             throw "Stack is empty!";
@@ -107,7 +107,7 @@ function create_stack_immutable as create_immutable_stack(lst)
         return create_stack_immutable(all << skip(1) << lst);
     }
     
-    function ToString this = "stack $lst";
+    function ToString self = "stack $lst";
     
     return struct;
 }

@@ -78,7 +78,7 @@ namespace Prexonite.Compiler.Build.Internal
             {
                 var d = taskMap[name].Value.Result;
                 if (d.Symbols == null) continue;
-                var origin = new SymbolOrigin.ModuleTopLevel(_description.Name, NoSourcePosition.Instance);
+                var origin = new SymbolOrigin.ModuleTopLevel(name, NoSourcePosition.Instance);
                 externals.AddRange(from decl in d.Symbols
                                    select new SymbolInfo(decl.Value, origin, decl.Key));
             }

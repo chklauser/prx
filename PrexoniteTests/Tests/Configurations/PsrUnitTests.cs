@@ -135,6 +135,7 @@ namespace PrexoniteTests.Tests.Configurations
 					},
 					TestDependencies = new TestDependency[]{
 							new TestDependency { ScriptName = @"psr\test\meta_macro.pxs", Dependencies = new string[] {
+                                PrexoniteUnitTestFramework
 							}},
 					
 					}
@@ -151,26 +152,6 @@ namespace PrexoniteTests.Tests.Configurations
             public void test_dcon()
             {
                 RunUnitTest(@"test_dcon");
-            } 
-            [Test]
-            public void test_prop_simple()
-            {
-                RunUnitTest(@"test_prop_simple");
-            } 
-            [Test]
-            public void test_prop_proxy()
-            {
-                RunUnitTest(@"test_prop_proxy");
-            } 
-            [Test]
-            public void test_prop_complex()
-            {
-                RunUnitTest(@"test_prop_complex");
-            } 
-            [Test]
-            public void test_prop_simple_glob()
-            {
-                RunUnitTest(@"test_prop_simple_glob");
             } 
         }
         internal abstract class Unit_macro : ScriptedUnitTestContainer
@@ -191,6 +172,7 @@ namespace PrexoniteTests.Tests.Configurations
 					},
 					TestDependencies = new TestDependency[]{
 							new TestDependency { ScriptName = @"psr\test\meta_macro.pxs", Dependencies = new string[] {
+                                PrexoniteUnitTestFramework
 							}},
 					
 					}
@@ -284,14 +266,14 @@ namespace PrexoniteTests.Tests.Configurations
                 RunUnitTest(@"test_macro_interpretation");
             } 
             [Test]
-            public void test_macro_interpretation_static()
+            public void test_macro_entity_static()
             {
-                RunUnitTest(@"test_macro_interpretation_static");
+                RunUnitTest(@"test_macro_entity_static");
             } 
             [Test]
-            public void test_invoke_macro()
+            public void test_expand_macro()
             {
-                RunUnitTest(@"test_invoke_macro");
+                RunUnitTest(@"test_expand_macro");
             } 
             [Test]
             public void test_ast_symbol()
@@ -419,11 +401,6 @@ namespace PrexoniteTests.Tests.Configurations
             {
                 RunUnitTest(@"test_create_terminator");
             } 
-            [Test]
-            public void test_swap()
-            {
-                RunUnitTest(@"test_swap");
-            } 
         }
         internal abstract class Unit_struct : ScriptedUnitTestContainer
         {
@@ -444,6 +421,12 @@ namespace PrexoniteTests.Tests.Configurations
 									@"psr\impl\macro.pxs",
 							}},
 							new TestDependency { ScriptName = @"psr\impl\set.pxs", Dependencies = new string[] {
+									@"psr\impl\struct.pxs",
+							}},
+							new TestDependency { ScriptName = @"psr\impl\queue.pxs", Dependencies = new string[] {
+									@"psr\impl\struct.pxs",
+							}},
+							new TestDependency { ScriptName = @"psr\impl\stack.pxs", Dependencies = new string[] {
 									@"psr\impl\struct.pxs",
 							}},
 					
@@ -494,11 +477,6 @@ namespace PrexoniteTests.Tests.Configurations
             public void tqm_dequeue()
             {
                 RunUnitTest(@"tqm_dequeue");
-            } 
-            [Test]
-            public void tqm_enumarte_dequeues()
-            {
-                RunUnitTest(@"tqm_enumarte_dequeues");
             } 
             [Test]
             public void tqi_create()

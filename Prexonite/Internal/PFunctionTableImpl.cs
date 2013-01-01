@@ -10,7 +10,6 @@ namespace Prexonite.Internal
     /// <summary>
     ///     Wraps a SymbolicTable&lt;PFunction&gt; to ensure that a function is stored with it's Id as the key.
     /// </summary>
-    [DebuggerStepThrough]
     public class PFunctionTableImpl : PFunctionTable
     {
         #region table

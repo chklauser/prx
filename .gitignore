@@ -95,3 +95,4 @@ Prexonite/Scanner.cs.old
 
 # Ignore NuGet packages folder
 packages/*
+codemap/*

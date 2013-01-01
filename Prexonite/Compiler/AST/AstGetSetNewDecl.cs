@@ -26,6 +26,7 @@
 
 using System;
 using System.Linq;
+using Prexonite.Modular;
 using Prexonite.Types;
 
 namespace Prexonite.Compiler.Ast
@@ -98,10 +99,9 @@ namespace Prexonite.Compiler.Ast
             _ensureValid();
             //create command call
             //  unbind(->variable)
-            var unlinkCall = new AstGetSetSymbol(File, Line, Column,
-                PCall.Get, new SymbolEntry(SymbolInterpretations.Command, Engine.UnbindAlias,null));
-            var targetRef = new AstGetSetReference(File, Line, Column,
-                new SymbolEntry(SymbolInterpretations.LocalObjectVariable, Id, null));
+            var unlinkCall = new AstIndirectCall(Position, PCall.Get,
+                                                 new AstReference(Position, EntityRef.Command.Create(Engine.UnbindAlias)));
+            var targetRef = new AstReference(Position, EntityRef.Variable.Local.Create(Id));
             unlinkCall.Arguments.Add(targetRef);
 
             //Optimize call and emit code

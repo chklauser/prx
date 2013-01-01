@@ -24,38 +24,26 @@
 //  WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING 
 //  IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-using System;
 using System.Diagnostics;
+using JetBrains.Annotations;
+using Prexonite.Modular;
 
 namespace Prexonite.Compiler.Ast
 {
     [DebuggerNonUserCode]
     public class AstCreateClosure : AstExpr
     {
-        public SymbolEntry Implementation;
+        [NotNull] private readonly EntityRef.Function _implementation;
 
-        public AstCreateClosure(string file, int line, int column, SymbolEntry implementation)
-            : base(file, line, column)
+        public AstCreateClosure(ISourcePosition position, EntityRef.Function implementation)
+            : base(position)
         {
-            if (implementation.Interpretation != SymbolInterpretations.Function)
-                throw _createNonFuncException(implementation);
-            Implementation = implementation;
+            _implementation = implementation;
         }
 
-        private static ArgumentException _createNonFuncException(SymbolEntry implementation)
+        public EntityRef.Function Implementation
         {
-            return new ArgumentException(
-                string.Format("Can only create closure for functions, not for a {0}.",
-                    Enum.GetName(typeof (SymbolInterpretations), implementation.Interpretation)),
-                "implementation");
-        }
-
-        internal AstCreateClosure(Parser p, SymbolEntry implementation)
-            : base(p)
-        {
-            if (implementation.Interpretation != SymbolInterpretations.Function)
-                throw _createNonFuncException(implementation);
-            Implementation = implementation;
+            get { return _implementation; }
         }
 
         protected override void DoEmitCode(CompilerTarget target, StackSemantics stackSemantics)
@@ -65,13 +53,13 @@ namespace Prexonite.Compiler.Ast
 
             PFunction targetFunction;
             MetaEntry sharedNamesEntry;
-            if (target.Loader.ParentApplication.TryGetFunction(Implementation.InternalId, Implementation.Module, out targetFunction)
+            if (target.Loader.ParentApplication.TryGetFunction(_implementation.Id, _implementation.ModuleName, out targetFunction)
                 && (!targetFunction.Meta.TryGetValue(PFunction.SharedNamesKey, out sharedNamesEntry)
                     || !sharedNamesEntry.IsList
                         || sharedNamesEntry.List.Length == 0))
-                target.Emit(Position,OpCode.ldr_func, Implementation.InternalId, target.ToInternalModule(Implementation.Module));
+                target.Emit(Position,OpCode.ldr_func, _implementation.Id, target.ToInternalModule(_implementation.ModuleName));
             else
-                target.Emit(Position,OpCode.newclo, Implementation.InternalId, target.ToInternalModule(Implementation.Module));
+                target.Emit(Position,OpCode.newclo, _implementation.Id, target.ToInternalModule(_implementation.ModuleName));
         }
 
         #region AstExpr Members

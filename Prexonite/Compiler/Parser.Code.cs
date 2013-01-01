@@ -1160,14 +1160,16 @@ public AstExpr HandleMessage(MessageSymbol self, Tuple<Parser, PCall> argument)
         [NotNull]
         private AstExpr _assembleInvocation([NotNull] Symbol sym, [NotNull] ISourcePosition position)
         {
-            CompilerTarget tempQualifier = target;
-            if (tempQualifier.Loader._TryUseSymbol(ref sym, position))
+            switch (target.Loader._TryUseSymbol(ref sym, position))
             {
-                return sym.HandleWith(AssembleAst, Tuple.Create(this, PCall.Get));
-            }
-            else
-            {
-                return _NullNode(GetPosition());
+                case SymbolUsageResult.Successful:
+                    Debug.Assert(sym != null);
+                    return sym.HandleWith(AssembleAst, Tuple.Create(this, PCall.Get));
+                case SymbolUsageResult.Unresolved:
+                case SymbolUsageResult.Error:
+                    return _NullNode(GetPosition());
+                default:
+                    throw new ArgumentOutOfRangeException();
             }
         }
 
@@ -1249,6 +1251,27 @@ public AstExpr HandleMessage(MessageSymbol self, Tuple<Parser, PCall> argument)
         private AstGetSet _createUnknownGetSet()
         {
             return new AstIndirectCall(this, new AstNull(this));
+        }
+
+        private void _appendRight(AstExpr lhs, AstGetSet rhs)
+        {
+            _appendRight(lhs.Singleton(), rhs);
+        }
+
+        private void _appendRight(IEnumerable<AstExpr> lhs, AstGetSet rhs)
+        {
+            rhs.Arguments.RightAppend(lhs);
+            rhs.Arguments.ReleaseRightAppend();
+            AstIndirectCall indirectCallNode;
+            AstReference refNode;
+            EntityRef.Variable dummyVariable;
+            if ((rhs is AstGetSetSymbol
+                 && ((AstGetSetSymbol)rhs).IsObjectVariable)
+                || (
+                (indirectCallNode = rhs as AstIndirectCall) != null 
+                && (refNode = indirectCallNode.Subject as AstReference) != null) 
+                && refNode.Entity.TryGetVariable(out dummyVariable))
+                rhs.Call = PCall.Set;
         }
 
         #endregion

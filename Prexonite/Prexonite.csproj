@@ -125,8 +125,10 @@
     <Compile Include="Commands\Core\ConsolePrintLine.cs" />
     <Compile Include="Commands\Core\Const.cs" />
     <Compile Include="Commands\Core\CreateModuleName.cs" />
+    <Compile Include="Commands\Core\CreateSourcePosition.cs" />
     <Compile Include="Commands\Core\Debug.cs" />
     <Compile Include="Commands\Core\Dispose.cs" />
+    <Compile Include="Commands\Core\GetUnscopedAstFactory.cs" />
     <Compile Include="Commands\Core\Id.cs" />
     <Compile Include="Commands\Core\LoadAssembly.cs" />
     <Compile Include="Commands\Core\Meta.cs" />
@@ -219,6 +221,7 @@
     <Compile Include="Compiler\Symbolic\SymbolInfo.cs" />
     <Compile Include="Compiler\Symbolic\SymbolOrigin.cs" />
     <Compile Include="Compiler\Symbolic\SymbolStore.cs" />
+    <Compile Include="Compiler\Symbolic\SymbolUsageResult.cs" />
     <Compile Include="Exceptions.cs" />
     <Compile Include="Helper\CombinedSymbolProxy.cs" />
     <Compile Include="Helper\IHasMetaTable.cs" />

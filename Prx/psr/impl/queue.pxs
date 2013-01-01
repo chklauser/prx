@@ -31,13 +31,13 @@ function create_queue(lst)
     else if(Not lst is List)
         lst = lst >> all;
     
-    function enqueue this x = create_queue(lst + [x]);
+    function enqueue self x = create_queue(lst + [x]);
     
-    function count this = lst.Count;
+    function count self = lst.Count;
     
-    function peek this = if(lst.Count > 0) lst[0] else null;
+    function peek self = if(lst.Count > 0) lst[0] else null;
     
-    function dequeue this, ref item
+    function dequeue self, ref item
     {
         if(lst.Count < 1)
             throw "Queue is empty!";
@@ -45,7 +45,12 @@ function create_queue(lst)
         return create_queue(all << skip(1) << lst);
     }
     
-    function ToString this = "queue $lst";
+    function ToString self = "queue $lst";
+
+    function GetEnumerator
+    {
+        return lst.GetEnumerator;
+    }
     
     return struct;
 }
@@ -54,17 +59,17 @@ function create_mutable_queue(lst)
 {
     var q = create_queue(lst);
     
-    function enqueue this
+    function enqueue self
     {
         foreach(var x in var args >> skip(1))
             q = q.enqueue(x);
     }
     
-    function peek this = q.peek;
+    function peek self = q.peek;
     
-    function count this = q.count;
+    function count self = q.count;
     
-    function dequeue this
+    function dequeue self
     {
         var item;
         q = q.dequeue(->item);
@@ -73,7 +78,7 @@ function create_mutable_queue(lst)
     
     function clear does q = new queue;
     
-    function ToString this = "mutable $q";
+    function ToString self = "mutable $q";
     
     function GetEnumerator
     {

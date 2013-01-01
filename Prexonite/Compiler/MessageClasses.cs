@@ -14,7 +14,6 @@
         public const string UnexpectedModuleName = "P.UnexpectedModuleName";
         public const string SymbolAliasMissing = "P.SymbolAliasMissing";
         public const string EntityNameMissing = "P.EntityNameMissing";
-        public const string OnlyErrorStandalone = "P.OnlyErrorStandalone";
         public const string MissingColonInDeclaration = "P.MissingColonInDeclaration";
         public const string ExceptionDuringCompilation = "P.ExceptionDuringCompilation";
         public const string ErrorsInBuildBlock = "P.ErrorsInBuildBlock";
@@ -29,6 +28,8 @@
         public const string InnerMacrosIllegal = "P.InnerMacrosIllegal";
         public const string IllegalInitializationFunction = "P.IllegalInitializationFunction";
         public const string ThisReserved = "P.ThisReserved";
+        public const string DuplicateVar = "P.DuplicateVar";
+        public const string GlobalUnbindNotSupported = "P.GlobalUnbindNotSupported";
 
         #endregion
 

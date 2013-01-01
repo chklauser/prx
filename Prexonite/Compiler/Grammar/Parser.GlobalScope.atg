@@ -737,9 +737,8 @@ FunctionDefinition<out PFunction func>
                             func = derStub;
                             //Generate code for the stub
                             AstCreateCoroutine crcor = new AstCreateCoroutine(this);                                            
-                            crcor.Expression = new AstCreateClosure(this, 
-                                                        new SymbolEntry(SymbolInterpretations.Function, derBody.Id, 
-                                                        derBody.ParentApplication.Module.Name));
+                            crcor.Expression = Create.CreateClosure(GetPosition(),EntityRef.Function.Create(derBody.Id,derBody.ParentApplication.Module.Name));
+
                             AstReturn retst = new AstReturn(this, ReturnVariant.Exit);
                             retst.Expression = crcor;
                             cst.Ast.Add(retst);
@@ -766,7 +765,7 @@ FunctionDefinition<out PFunction func>
                                 //Nested lazy functions need a stub to capture their environment by value (handled by NestedFunction)
                                 
                                 //Generate stub code
-                                retVal = new AstCreateClosure(this,  new SymbolEntry(SymbolInterpretations.Function, ct.Function.Id, 
+                                retVal = Create.CreateClosure(GetPosition(), EntityRef.Function.Create(ct.Function.Id, 
                                                 ct.Function.ParentApplication.Module.Name));
                                 
                                 //Inject asthunk-conversion code into body

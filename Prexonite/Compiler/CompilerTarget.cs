@@ -353,6 +353,53 @@ namespace Prexonite.Compiler
             get { return _ast; }
         }
 
+        private volatile IAstFactory _factory;
+
+        [NotNull]
+        public IAstFactory Factory
+        {
+            get
+            {
+                if (_factory == null)
+                {
+                    lock (this)
+                    {
+                        if (_factory == null)
+                        {
+                            _factory = new CompilerTargetAstFactory(this);
+                        }
+                    }
+                }
+                return _factory;
+            }
+        }
+
+        private class CompilerTargetAstFactory : AstFactoryBase
+        {
+            [NotNull] private readonly CompilerTarget _target;
+
+            public CompilerTargetAstFactory(CompilerTarget target)
+            {
+                _target = target;
+            }
+
+            protected override AstBlock CurrentBlock
+            {
+                get { return _target.CurrentBlock; }
+            }
+
+            [Obsolete("Use the Symbol API")]
+            protected override bool TryUseSymbolEntry(string symbolicId, ISourcePosition position, out SymbolEntry entry)
+            {
+                return _target._TryUseSymbolEntry(symbolicId,position, out entry);
+            }
+
+            protected override AstGetSet CreateNullNode(ISourcePosition position)
+            {
+                return IndirectCall(position, Null(position));
+            }
+        }
+
         #endregion
 
         #region Compiler Hooks
@@ -1518,8 +1565,7 @@ namespace Prexonite.Compiler
 
         #region (Legacy) Symbol handling
 
-        [ContractAnnotation("=>true,symbol:notnull; =>false,symbol:null")]
-        internal bool _TryUseSymbol(string symbolicId, out Symbol symbol, [NotNull] ISourcePosition position)
+        internal SymbolUsageResult _TryUseSymbol(string symbolicId, out Symbol symbol, [NotNull] ISourcePosition position)
         {
             if (Symbols.TryGet(symbolicId, out symbol))
             {
@@ -1528,7 +1574,7 @@ namespace Prexonite.Compiler
             else
             {
                 symbol = null;
-                return false;
+                return SymbolUsageResult.Unresolved;
             }
         }
 
@@ -1536,26 +1582,28 @@ namespace Prexonite.Compiler
         internal bool _TryUseSymbolEntry([NotNull] string symbolId, [NotNull] ISourcePosition position, out SymbolEntry entry)
         {
             Symbol symbol;
-            if (_TryUseSymbol(symbolId, out symbol,position))
+            switch (_TryUseSymbol(symbolId, out symbol,position))
             {
-                try
-                {
-                    entry = symbol.ToSymbolEntry();
-                    return true;
-                }
-                catch(SymbolConversionException e)
-                {
-                    Loader.ReportMessage(_CreateIncompatibleSymbolError(position, symbol));
-                    Loader.ReportMessage(Message.Create(MessageSeverity.Info, e.ToString(), position,
-                                                        MessageClasses.ExceptionDuringCompilation));
+                case SymbolUsageResult.Successful:
+                    try
+                    {
+                        entry = symbol.ToSymbolEntry();
+                        return true;
+                    }
+                    catch (SymbolConversionException e)
+                    {
+                        Loader.ReportMessage(_CreateIncompatibleSymbolError(position, symbol));
+                        Loader.ReportMessage(Message.Create(MessageSeverity.Info, e.ToString(), position,
+                                                            MessageClasses.ExceptionDuringCompilation));
+                        entry = null;
+                        return false;
+                    }
+                case SymbolUsageResult.Unresolved:
+                case SymbolUsageResult.Error:
                     entry = null;
                     return false;
-                }
-            }
-            else
-            {
-                entry = null;
-                return false;
+                default:
+                    throw new ArgumentOutOfRangeException();
             }
         }
 

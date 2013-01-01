@@ -186,26 +186,32 @@ macro ast3\macro(type)[partial\macro]
     var refNode = ast3("Reference",SI.e.func(->ast3\withPos));
     var astCallNode = ast3("IndirectCall",refNode,SI.get);
 
+    var getFactory;
+    var nodePosition;
+
     if(is_in_macro(context))
     {
-        establish_macro_context(context);        
+        establish_macro_context(context);
+        var contextVarRefNode = ast3("Reference",SI.e.lvar(Prexonite::Compiler::MacroAliases.ContextAlias));
+        var getContextRef = ast3("IndirectCall",contextVarRefNode,SI.get); // context is passed as a read-only reference (lref), so we need to dereference it twice
+        var getContext = ast3("IndirectCall",getContextRef,SI.get);
+        
+        var getInvComp = ast3("MemberAccess",getContext,"Invocation",SI.get);
+        nodePosition = ast3("MemberAccess", getInvComp, "Position", SI.get);
+
+        getFactory = ast3("MemberAccess",getContext,"Factory",SI.get); 
     }
     else
     {
-        context.ReportMessage(Prexonite::Compiler::MessageSeverity.Error,
-            "Cannot construct AST nodes outside of macro.",
-            context.Invocation.Position);
-        return false;
+        // getFactory == get_unscoped_ast_factory
+        getFactory = ast3("IndirectCall",ast3("Reference",SI.e.cmd(Prexonite::Commands::Core::GetUnscopedAstFactory.Alias)));
+
+        // nodePosition == create_source_position(__FILE__,__LINE__,__COLUMN__)
+        nodePosition = ast3("IndirectCall",ast3("Reference",SI.e.cmd(Prexonite::Commands::Core::CreateSourcePosition.Alias)));
+        nodePosition.Arguments.Add(ast3("Constant",context.Invocation.Position.File));
+        nodePosition.Arguments.Add(ast3("Constant",context.Invocation.Position.Line));
+        nodePosition.Arguments.Add(ast3("Constant",context.Invocation.Position.Column));
     }
-
-    var contextVarRefNode = ast3("Reference",SI.e.lvar(Prexonite::Compiler::MacroAliases.ContextAlias));
-    var getContextRef = ast3("IndirectCall",contextVarRefNode,SI.get); // context is passed as a read-only reference (lref), so we need to dereference it twice
-    var getContext = ast3("IndirectCall",getContextRef,SI.get);
-    
-    var getInvComp = ast3("MemberAccess",getContext,"Invocation",SI.get);
-    var nodePosition = ast3("MemberAccess", getInvComp, "Position", SI.get);
-
-    var getFactory = ast3("MemberAccess",getContext,"Factory",SI.get);
 
     astCallNode.Arguments.AddRange([getFactory,type,nodePosition]);
     astCallNode.Arguments.AddRange(var args >> skip(1));
@@ -253,8 +259,8 @@ macro establish_macro_context()
 
 macro macro\get_context()
 {
-    function create_getSI = ast("GetSetSymbol",SI.get,SI.func(->SI));
-    var astCall = ast("MacroInvocation",SI.m.func(macro\reference(ast)));
+    function create_getSI = ast3("IndirectCall",ast3("Reference",SI.e.func(->SI)));
+    var astCall = ast3("Expand",SI.e.func(macro\reference(ast)));
     astCall.Arguments.AddRange([
         ast("Constant","GetSetSymbol"),
         ast("GetSetMemberAccess",SI.get,new getSI,"get"),
@@ -604,16 +610,22 @@ function optimize\ref(context, ref node) [is compiler;]
 
 macro optimize(contextRef, node)
 {
+    var skipCount;
     if(node is Null)
     {
         node = contextRef;
         contextRef = null;
+        skipCount = 0;
+    }
+    else
+    {
+        skipCount = 1;
     }
     
     if(is_in_macro)
     {
         establish_macro_context;
-        contextRef ??= ast("GetSetSymbol",SI.get,SI.lref(Prexonite::Compiler::MacroAliases.ContextAlias));
+        contextRef ??= macro\get_context;
     }
     else if(contextRef is Null)
     {
@@ -627,7 +639,7 @@ macro optimize(contextRef, node)
         return;
     }
     
-    if(ast_is_GetSetSymbol(node))
+    if(ast_is_GetSet(node))
     {
         var setNode = node.GetCopy();
         setNode.Call = SI.set;
@@ -640,9 +652,9 @@ macro optimize(contextRef, node)
     }
     else 
     {
-        var funCall = ast("GetSetSymbol",SI.get, SI.func(->optimize\ref));
+        var funCall = ast3("IndirectCall",ast3("Reference",SI.e.func(->optimize\ref)));
         funCall.Arguments.Add(contextRef);
-        funCall.Arguments.AddRange(var args);
+        funCall.Arguments.AddRange(var args >> skip(skipCount) >> all);
         return funCall;
     }
 }
@@ -958,9 +970,11 @@ macro macro\symbol(prototype)
     }
     else
     {
-        return ast("Null");
+        macro\report_error("Cannot derive symbol entry from AST node $prototype.");
     }
 }
+
+declare macro\symbol as entityof;
 
 macro ast\null
 {
@@ -974,54 +988,9 @@ macro ast\null
 }
 
 //Creates a macro invocation for the supplied macro
-macro ast\invoke_macro(macroId, symbolInterpretation, moduleName)
-{
-    if(context.IsJustEffect)
-        return;
-        
-    if(is_in_macro)
-        establish_macro_context;
-
-    if(macroId is null)
-    {
-        macro\report_error("ast\\invoke_macro requires at least one argument. Usage: ast\\invoke_macro(macroSym) or ast\\invoke_macro(macroId, symbolInterpretation, moduleName)");
-        return null;
-    }
-    
-    var c = ast3("Expand",macro\entity(ast\macro),context.Call);
-    c.Arguments.Add(ast3("Constant","MacroInvocation"));
-    
-    if(symbolInterpretation is null)
-    {
-        //Just forward symbol entry expression
-        c.Arguments.Add(macroId);
-    }
-    else
-    {
-        moduleName ??= ast\null;
-        
-        //Assemble prototype to be analyzed by macro\symbol
-        var symEntry = ast("ObjectCreation", 
-            ast("ConstantTypeExpression", "Object(\"Prexonite.Compiler.SymbolEntry\")"));
-        symEntry.Arguments.Add(symbolInterpretation);
-        symEntry.Arguments.Add(macroId);
-        symEntry.Arguments.Add(moduleName);
-        
-        c.Arguments.Add(symEntry);
-    }
-    
-    //try parse ast\invoke_macro(macro\id($PROTOTYPE))
-    if(symbolInterpretation is null)
-    {   if(ast_is_MacroInvocation(macroId) 
-            and macroId.Implementation == macro\symbol(macro\id)
-            and macroId.Arguments.Count > 0)
-        {
-            macro\report_error("No symbol interpretation provided for construction of ast\\invoke_macro node in function $(context.Function). Use macro\\symbol or provide macroId, macroInterpretation and macroModule individually.");
-        }
-    }    
-        
-    return c;
-}
+declare(
+    ast\invoke_macro = error(pos("macro.pxs",978,0),"PSR.Obsolete",@"ast\invoke_macro is obsolete. Use ast\expand_macro(macro\entity(yourMacro)) instead.",null)
+);
 
 macro ast\expand_macro(entity,callType)
 {
@@ -1097,6 +1066,12 @@ macro ast\cmd(callType,id)
     if(context.IsJustEffect)
         return;
 
+    if(id is null)
+    {
+        id = callType;
+        callType = ast3("MemberAccess",macro\getSI,"get");
+    }
+
     if(callType is null or id is null)
     {
         macro\report_error(@"ast\cmd requires at least two arguments: ast\cmd(callType,commandId)");
@@ -1122,6 +1097,12 @@ macro ast\lvar(callType,id)
 {
     if(context.IsJustEffect)
         return;
+
+    if(id is null)
+    {
+        id = callType;
+        callType = ast3("MemberAccess",macro\getSI,"get");
+    }
 
     if(callType is null or id is null)
     {
@@ -1149,6 +1130,12 @@ macro ast\lref(callType,id)
     if(context.IsJustEffect)
         return;
 
+    if(id is null)
+    {
+        id = callType;
+        callType = ast3("MemberAccess",macro\getSI,"get");
+    }
+
     if(callType is null or id is null)
     {
         macro\report_error(@"ast\lref requires at least two arguments: ast\lref(callType,variableId)");
@@ -1158,7 +1145,7 @@ macro ast\lref(callType,id)
     if(is_in_macro)
         establish_macro_context;
 
-    // `SI.get`
+    // `SI.get` or `SI.set`
     var getCall = ast3("MemberAccess",macro\getSI,"get");
 
     // `SI.e.lvar(id)`
@@ -1174,7 +1161,7 @@ macro ast\lref(callType,id)
     var indirectCallCtor = ast\expand_macro(macro\entity(ast3));
     indirectCallCtor.Arguments.Add(ast3("Constant","IndirectCall"));
     indirectCallCtor.Arguments.Add(callExpansion);
-    indirectCallCtor.Arguments.Add(getCall);
+    indirectCallCtor.Arguments.Add(callType);
 
     context.Block.Expression = indirectCallCtor;
 }
@@ -1183,6 +1170,13 @@ macro ast\func(callType,internalId,moduleName)
 {
     if(context.IsJustEffect)
         return;
+
+    if(moduleName is null)
+    {
+        moduleName = internalId;
+        internalId = callType;
+        callType = ast3("MemberAccess",macro\getSI,"get");
+    }
 
     if(callType is null or internalId is null)
     {
@@ -1213,6 +1207,13 @@ macro ast\gvar(callType,internalId,moduleName)
     if(context.IsJustEffect)
         return;
 
+    if(moduleName is null)
+    {
+        moduleName = internalId;
+        internalId = callType;
+        callType = ast3("MemberAccess",macro\getSI,"get");
+    }
+
     if(callType is null or internalId is null or moduleName is null)
     {
         macro\report_error(@"ast\gvar requires at least three arguments: ast\gvar(callType,internalId,moduleName).");
@@ -1240,6 +1241,13 @@ macro ast\gref(callType,internalId,moduleName)
     if(context.IsJustEffect)
         return;
 
+    if(moduleName is null)
+    {
+        moduleName = internalId;
+        internalId = callType;
+        callType = ast3("MemberAccess",macro\getSI,"get");
+    }
+
     if(callType is null or internalId is null or moduleName is null)
     {
         macro\report_error(@"ast\gref requires at least three arguments: ast\gref(callType,internalId,moduleName).");
@@ -1259,14 +1267,14 @@ macro ast\gref(callType,internalId,moduleName)
     entityExpr.Arguments.Add(moduleName);
 
     var callExpansion = ast\expand_macro(macro\entity(ast\call));
-    callExpansion.Arguments.Add(callType);
+    callExpansion.Arguments.Add(getCall);
     callExpansion.Arguments.Add(entityExpr);
 
     // `ast3("IndirectCall",callExpansion,$callType)`
     var indirectCallCtor = ast\expand_macro(macro\entity(ast3));
     indirectCallCtor.Arguments.Add(ast3("Constant","IndirectCall"));
     indirectCallCtor.Arguments.Add(callExpansion);
-    indirectCallCtor.Arguments.Add(getCall);
+    indirectCallCtor.Arguments.Add(callType);
 
     context.Block.Expression = indirectCallCtor;
 }
@@ -1579,14 +1587,13 @@ macro ast\new\const as ast\new(typename)
     if(is_in_macro)
         establish_macro_context;
     
-    var block = ast3("Block");
     var constructV = tempalloc;
     
     //Create object creation node { $constructV = new ObjectCreation(new ConstantTypeExpression($typename)) }   
-    block.Add(ast\args(ast\lvar(SI.set, constructV),
-        ast\args(ast\invoke_macro(macro\symbol(ast)),
+    context.Block.Add(ast\args(ast\lvar(SI.set, constructV),
+        ast\args(ast\expand_macro(macro\entity(ast)),
             ast\const("ObjectCreation"),
-            ast\args(ast\invoke_macro(macro\symbol(ast)),
+            ast\args(ast\expand_macro(macro\entity(ast)),
                 ast\const("ConstantTypeExpression"),
                 typename
             )
@@ -1602,23 +1609,24 @@ macro ast\new\const as ast\new(typename)
         var getArguments = ast\member(getConstruct, SI.get, "Arguments");
         var assignArgs = ast\lvar(SI.set, argsV);
         assignArgs.Arguments.Add(getArguments);
-        block.add(assignArgs);
+        context.Block.add(assignArgs);
         function getArguments = ast\lvar(SI.get, argsV); 
         
         foreach(var argN in var args >> skip(1))
         {
             var addArgument = ast\member(getArguments, SI.get, "Add");
             addArgument.Arguments.Add(argN);
-            block.Add(addArgument);
+            context.Block.Add(addArgument);
         }
         
         tempfree(argsV);
     }
     
     //return object creation node
-    block.Expression = ast\lvar(SI.get, constructV);
+    context.Block.Expression = ast\lvar(SI.get, constructV);
     tempfree(constructV);
-    return block;
+
+    return;
 }
 
 //Aliases for old macro environment variables that are still compatible with the new system

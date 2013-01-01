@@ -92,12 +92,28 @@ namespace Prx.Tests
 
         protected internal Loader _compile(string input)
         {
-            var opt = new LoaderOptions(engine, target) {UseIndicesLocally = false};
-            var ldr = new Loader(opt);
-            ldr.LoadFromString(input);
+            var ldr = _justCompile(input);
+
+            _writeErrorsWarnings(ldr);
+
+            Assert.AreEqual(0, ldr.ErrorCount, "Test code did not compile without errors.");
+            return ldr;
+        }
+
+        protected Loader CompileWithErrors(string input)
+        {
+            var ldr = _justCompile(input);
+
+            _writeErrorsWarnings(ldr);
+
+            Assert.That(ldr.ErrorCount,Is.GreaterThan(0),"Expected code to contain errors.");
+            return ldr;
+        }
+
+        private void _writeErrorsWarnings(Loader ldr)
+        {
             foreach (var line in ldr.Errors)
                 Console.Error.WriteLine(line);
-            Assert.AreEqual(0, ldr.ErrorCount, "Test code did not compile without errors.");
 
             if (ldr.Warnings.Count > 0)
             {
@@ -109,6 +125,13 @@ namespace Prx.Tests
             }
 
             Console.WriteLine(target.StoreInString());
+        }
+
+        private Loader _justCompile(string input)
+        {
+            var opt = new LoaderOptions(engine, target) {UseIndicesLocally = false};
+            var ldr = new Loader(opt);
+            ldr.LoadFromString(input);
             return ldr;
         }
 

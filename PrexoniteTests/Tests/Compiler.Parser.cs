@@ -35,14 +35,18 @@ function func0
     static sobj1;
 }
 ";
-            LoaderOptions opt = new LoaderOptions(engine, target);
-            opt.UseIndicesLocally = false;
-            Loader ldr = new Loader(opt);
+            var opt = new LoaderOptions(engine, target) {UseIndicesLocally = false};
+            var ldr = new Loader(opt);
             ldr.LoadFromString(input1);
+            foreach (var message in ldr.Errors)
+            {
+                Console.WriteLine(message);
+            }
             Assert.AreEqual(0, ldr.ErrorCount, "Errors during compilation.");
 
-            //No instructions have been emitted
-            Assert.AreEqual(0, ldr.FunctionTargets["func0"].Function.Code.Count);
+            // We allow up to two instructions (`return sobj1`) to accomodate the
+            //  relaxed treatment of variable declarations in Prexonite 2
+            Assert.That(ldr.FunctionTargets["func0"].Code.Count, Is.LessThanOrEqualTo(2));
 
             CompilerTarget tar = ldr.FunctionTargets["func0"];
 
@@ -2552,20 +2556,38 @@ ret.val
         [Test]
         public void ReferenceDeclarationLiteral()
         {
+            // Note: the behaviour of the expression (ref h) has been changed.
+            //  It is no longer equivalent to ->h but instead always means the same as var h 
+            //  (without changing re-declaring h, of course)
+            //  By extension (ref ref h) == (ref h)
             _compile(@"
 function main
 {
     print(ref h);
-    return var h;
+    print(ref ref g);
+    ref ref ref var k = ref h;
+    print(k);
+    return var o;
 }
 ");
 
             _expect(@"
 var h
-ldr.loc h
+ldloc h
 @cmd.1  print
 
+ldloc g
+@cmd.1 print
+
 ldloc h
+stloc k
+
+indloc k
+indarg.0 
+indarg.0
+@cmd.1 print
+
+ldloc o
 ret.val
 ");
         }
@@ -3634,6 +3656,23 @@ ldglob g
 add
 ret
 ");
+        }
+
+        [Test]
+        public void ErrorSymbolOnlyGeneratesOneMessage()
+        {
+            var loader = CompileWithErrors(@"
+declare(
+    invalid = error(pos(""some-file"",1,2),""T.example"",""Zhee-Error-Message"",null)
+);
+
+function main = invalid;
+");
+
+            Assert.That(loader.ErrorCount,Is.EqualTo(1));
+            var message = loader.Errors[0];
+            Assert.That(message.MessageClass,Is.EqualTo("T.example"));
+            Assert.That(message.Text,Is.EqualTo("Zhee-Error-Message"));
         }
 
     }

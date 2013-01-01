@@ -857,6 +857,10 @@ namespace Prexonite
 
             Commands.AddEngineCommand(CreateModuleName.Alias, CreateModuleName.Instance);
 
+            Commands.AddEngineCommand(GetUnscopedAstFactory.Alias, GetUnscopedAstFactory.Instance);
+
+            Commands.AddEngineCommand(CreateSourcePosition.Alias, CreateSourcePosition.Instance);
+
             Commands.AddEngineCommand(SeqConcat.Alias, SeqConcat.Instance);
         }
 

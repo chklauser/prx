@@ -33,15 +33,15 @@ function create_set as create_mutable_set()
         foreach(var x in arg)
             store[x] = tag;
     
-    function add(this) =
+    function add(self) =
         (var new args) >> skip(1) >>
             each(arg => store[arg] = tag);
     
-    function remove(this) = 
+    function remove(self) = 
         (var new args) >> skip(1) >>
             forall(arg => store.Remove(arg));
             
-    function contains(this) =  
+    function contains(self) =  
         (var new args) >> skip(1) >>
             forall(arg => { return store.ContainsKey(arg); });
         
@@ -51,7 +51,7 @@ function create_set as create_mutable_set()
     function GetEnumerator =
         store.Keys.GetEnumerator;   
         
-    function ToString(this)
+    function ToString(self)
     {
         var sb = new System::Text::StringBuilder("{ ");
         var commaRequired = false;
@@ -78,13 +78,13 @@ function create_immutable_set(elements)
 {
     elements = if(elements is Null) [] else (all << distinct << elements); //all makes a copy
     
-    function add(this) = 
+    function add(self) = 
         append(var new args >> skip(1), elements) >> create_immutable_set;
         
-    function remove(this) =
+    function remove(self) =
         elements >> except((var new args) >> skip(1)) >> create_immutable_set;
         
-    function contains(this) =
+    function contains(self) =
         (var new args) >> skip(1) >>
             forall(arg => elements.Contains(arg));
             
@@ -94,7 +94,7 @@ function create_immutable_set(elements)
     function GetEnumerator =
         elements.GetEnumerator;
         
-    function ToString(this) =
+    function ToString(self) =
         elements.ToString;        
         
     return struct;                   

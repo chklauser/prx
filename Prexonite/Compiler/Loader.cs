@@ -1360,11 +1360,12 @@ namespace Prexonite.Compiler
             #endregion
         }
 
-        [ContractAnnotation("=>true,symbol:notnull; =>false,symbol:null")]
-        internal bool _TryUseSymbol(ref Symbol symbol, [NotNull] ISourcePosition position)
+        internal SymbolUsageResult _TryUseSymbol(ref Symbol symbol, [NotNull] ISourcePosition position)
         {
             var msgs = new List<Message>(1);
             // symbol could be null.
+            if (symbol == null)
+                return SymbolUsageResult.Unresolved;
             symbol = symbol.HandleWith(_listMessages, msgs);
             if (msgs.Count > 0)
             {
@@ -1380,11 +1381,11 @@ namespace Prexonite.Compiler
                     if (message.Severity == MessageSeverity.Error)
                     {
                         symbol = null;
-                        return false;
+                        return SymbolUsageResult.Error;
                     }
                 }
             }
-            return true;
+            return SymbolUsageResult.Successful;
         }
     }
 }

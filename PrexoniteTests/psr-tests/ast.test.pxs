@@ -1,6 +1,10 @@
 ﻿ 
 under_test @"psr\impl\ast.pxs";
- 
+
+declare ast\simple as ast;
+declare ast2\simple as ast2;
+declare ast3\simple as ast3;
+
 function compiler_is_loaded[test]
 {
     var found = null;

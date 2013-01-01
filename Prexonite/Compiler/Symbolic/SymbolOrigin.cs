@@ -22,7 +22,7 @@ namespace Prexonite.Compiler.Symbolic
             {
                 _moduleName = moduleName;
                 _position = position;
-                _description = string.Format("Top-level declaration from module {0}.", moduleName);
+                _description = string.Format("top-level declaration in module {0}.", moduleName);
             }
 
             public ModuleName ModuleName
@@ -53,6 +53,28 @@ namespace Prexonite.Compiler.Symbolic
             {
                 [DebuggerStepThrough]
                 get { return _description; }
+            }
+
+            public override string ToString()
+            {
+                return Description;
+            }
+
+            private bool _equals(ModuleTopLevel other)
+            {
+                return Equals(_moduleName, other._moduleName);
+            }
+
+            public override bool Equals(object obj)
+            {
+                if (ReferenceEquals(null, obj)) return false;
+                if (ReferenceEquals(this, obj)) return true;
+                return obj is ModuleTopLevel && _equals((ModuleTopLevel) obj);
+            }
+
+            public override int GetHashCode()
+            {
+                return (_moduleName != null ? _moduleName.GetHashCode() : 0);
             }
         }
     }

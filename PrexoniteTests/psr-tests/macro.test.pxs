@@ -180,15 +180,15 @@ function test_reports[test]
     assert_eq(ldr.Warnings.Count,1,"Exactly one warning expected.");
     assert_eq(ldr.Infos.Count,1,"Exactly one info expected.");
     
-    assert_eq(ldr.Errors[0].Message,"AN_ERRORE");
-    assert_eq(ldr.Warnings[0].Message,"A_WARNINGW");
-    assert_eq(ldr.Infos[0].Message,"INFOI");
+    assert_eq(ldr.Errors[0].Text,"AN_ERRORE");
+    assert_eq(ldr.Warnings[0].Text,"A_WARNINGW");
+    assert_eq(ldr.Infos[0].Text,"INFOI");
 }
 
 function test_ast_is_expression[test]
 {
-    var constN = ast("Constant",3);
-    var condN = ast("Condition", constN);
+    var constN = ast3("Constant",3);
+    var condN = ast3("Condition", constN);
     
     assert_eq(ast_is_expression(constN),true,"Constant node should be expression");
     assert_eq(ast_is_expression(condN),false,"Condition node should not be expression");
@@ -199,7 +199,7 @@ function test_ast_is_expression[test]
 function test_ast_is_effect[test]
 {
     var isEffect = ast("GetSetSymbol", SI.get, SI.func(->test_ast_is_effect));
-    var notEffect = ast("CreateClosure",->test_ast_is_effect.Id);
+    var notEffect = ast3("CreateClosure",macro\entity(test_ast_is_effect));
     
     assert_eq(ast_is_effect(isEffect), true, "$(boxed(isEffect)) is a node.");
     assert_eq(ast_is_effect(notEffect), true, "$(boxed(notEffect)) is a node.");
@@ -210,7 +210,7 @@ function test_ast_is_effect[test]
 function test_ast_is_partially_applicable[test]
 {
     var pa = ast("GetSetSymbol", SI.get,  SI.func(->test_ast_is_partially_applicable));
-    var npa = ast("CreateClosure", ->test_ast_is_partially_applicable.Id);
+    var npa = ast3("CreateClosure", macro\entity(test_ast_is_partially_applicable));
     
     assert_eq(ast_is_partially_applicable(pa), true, "$(boxed(pa)) is partially applicable");
     assert_eq(ast_is_partially_applicable(npa), false, "$(boxed(npa)) is not partially applicable");
@@ -234,7 +234,7 @@ function test_ast_is_partial_application[test]
 
 function test_ast_is_CreateClosure[test]
 {
-    var cc = ast("CreateClosure", ->test_ast_is_CreateClosure.Id);
+    var cc = ast3("CreateClosure", macro\entity(test_ast_is_CreateClosure));
     var ncc = ast("GetSetSymbol", SI.get, Si.func(->test_ast_is_CreateClosure));
     
     assert_eq(ast_is_CreateClosure(cc),true,"$(boxed(cc)) is a CreateClosure node");
@@ -277,10 +277,10 @@ function test_temp[test]
     assert_eq(->test_temp.Variables.Count,54,"Function should have 54 local variables.");
 }
 
-function test_mk_constant_expr(a,b) =
+function test_mk_constant_expr(a,b,scope) =
         ast("BinaryOperator",
             ast("Constant",a), Prexonite::Compiler::Ast::BinaryOperator.Addition,  ast("Constant", b), 
-            SI.cmd(~Object<"Prexonite.OperatorNames+Prexonite">.Addition)
+            SI.cmd(~Object<"Prexonite.OperatorNames+Prexonite">.Addition),scope
         );
 
 macro test_optimize[test]
@@ -288,7 +288,7 @@ macro test_optimize[test]
     var a = 3;
     var b = 5;
     
-    function mk_test = test_mk_constant_expr(a,b);
+    function mk_test = test_mk_constant_expr(a,b,context.CurrentBlock);
         
     var t = mk_test();
     
@@ -321,7 +321,7 @@ macro test_read[test]
     var a = 3;
     var b = 5;
     
-    function mk_test = test_mk_constant_expr(a,b);
+    function mk_test = test_mk_constant_expr(a,b,context.CurrentBlock);
     
     var t1 = mk_test();
     
@@ -418,41 +418,40 @@ macro test_macro_interpretation[test]
     assert_eq(c3.Id,"func","test_macro_id_static is implemented as a function");
 }
 
-function test_macro_interpretation_static[test]
+function test_macro_entity_static[test]
 {
-    var c1 = macro\interpretation(ast);
-    assert(SI.eq(c1,SI.m.func),"ast\\macro is implemented as a function (macro)");
-    
-    var c2 = macro\interpretation(call\macro);
-    assert(SI.eq(c2, SI.m.cmd), "call\\macro is implemented as a macro command");
-    
-    var c3 = macro\interpretation(test_macro_interpretation_static);
-    assert(SI.eq(c3,SI.func), "test_macro_interpretation_static is implemented as a function");
+    var c1 = macro\entity(ast);
+    assert(c1 is Object<"Prexonite.Modular.EntityRef+Function">,"c1=$c1 is expected to be a function reference.");
+    assert(c1.ModuleName is not null, "Expected module name of c1=$c1 to be set.");
+
+    var c2 = macro\entity(call\macro);
+    assert(c2 is Object<"Prexonite.Modular.EntityRef+MacroCommand">,"c2=$c2 is expected to be a macro command reference.");
 }
 
 //ast helper
-macro test_invoke_macro[test]
+macro test_expand_macro[test]
 {
-    var invk = ast\invoke_macro(SI.m.i.func("ast\\macro"));
+    var invk = ast\expand_macro(macro\entity(ast\macro));
     function assert_ast
     {
-        assert(ast_is_MacroInvocation(invk),"$(boxed(invk)) is macro invocation");
-        assert_eq(invk.Implementation,SI.m.i.func("ast\\macro"), "Should be function (macro). Actual $(boxed(invk))");
+        assert(ast_is_Expand(invk),"$(boxed(invk)) is macro expansion");
+        assert_eq(invk.Entity,macro\entity(ast\macro), "Should be function (macro). Actual $(boxed(invk))");
     }
     assert_ast();
     
-    var invk = ast\invoke_macro(SI.m.cmd("call\\macro"));
+    var invk = ast\expand_macro(macro\entity(call\macro));
     function assert_call\macro
     {
-        assert(ast_is_MacroInvocation(invk),"$(boxed(invk)) is macro invocation");
-        assert_eq(invk.Implementation,SI.m.cmd("call\\macro"), "Should be function (macro). Actual $(boxed(invk))");
+        assert(ast_is_Expand(invk),"$(boxed(invk)) is macro expansion");
+        assert_eq(invk.Entity,macro\entity(call\macro), "Should be function (macro). Actual $(boxed(invk))");
     }
+    assert_call\macro();
     
     // infer interpretation from a prototype
-    var invk = ast\invoke_macro(macro\symbol(ast));
+    var invk = ast\expand_macro(macro\entity(ast));
     assert_ast();
     
-    var invk = ast\invoke_macro(macro\symbol(call\macro));
+    var invk = ast\expand_macro(macro\entity(call\macro));
     assert_call\macro();
 }
 
@@ -461,64 +460,60 @@ macro test_ast_symbol[test]
     var file = call\macro([__FILE__]).Expression >> ast\read;
     var line = call\macro([__LINE__]).Expression >> ast\read;
     var col  = call\macro([__COL__ ]).Expression >> ast\read;
+    var mn = new module_name("example.com");
 
     var c = ast\cmd("println");
-    assert(ast_is_GetSetSymbol(c),"$(boxed(c)) is expected to be a GetSetSymbol node");
+    assert(ast_is_IndirectCall(c),"$(boxed(c)) is expected to be an IndirectCall node.");
+    assert(ast_is_Reference(c.Subject),"$(boxed(c)) is expected to wrap a Reference node.");
     assert(SI.eq(c.Call,SI.get), "$(boxed(c)) is expected to be a Get call");
-    assert(SI.eq(c.Implementation.Interpretation,SI.cmd), "$(boxed(c)) is expected to be a command call");
-    assert_eq(c.Implementation.InternalId,"println","Id doesn't match.");
-    assert_eq(c.Implementation, SI.cmd("println"), "Symbol entry doesn't match.");
+    assert_eq(c.Subject.Entity,SI.e.cmd("println"), "$(boxed(c)) is expected to be a command call");
     assert_eq(c.File,file);
     assert_eq(c.Line,line);
     assert_eq(c.Column,col);
     
-    var c = ast\func(SI.set, SI.i.func("someFunc"));
-    assert(ast_is_GetSetSymbol(c),"$(boxed(c)) is expected to be a GetSetSymbol node");
+    var c = ast\func(SI.set, "someFunc", mn);
+    assert(ast_is_IndirectCall(c),"$(boxed(c)) is expected to be an IndirectCall node.");
+    assert(ast_is_Reference(c.Subject),"$(boxed(c)) is expected to wrap a Reference node.");
     assert(SI.eq(c.Call,SI.set), "$(boxed(c)) is expected to be a Set call");
-    assert(SI.eq(c.Implementation.Interpretation,SI.func), "$(boxed(c)) is expected to be a function call");
-    assert_eq(c.Implementation.InternalId,"someFunc","Id doesn't match.");
-    assert_eq(c.Implementation, SI.i.func("someFunc"),"Symbol entry doesn't match.");
+    assert_eq(c.Subject.Entity,SI.e.func("someFunc",mn), "$(boxed(c)) is expected to be a function call");
     assert_eq(c.File,file);
     assert_eq(c.Line,line);
     assert_eq(c.Column,col);
     
     var c = ast\lvar("x");
-    assert(ast_is_GetSetSymbol(c),"$(boxed(c)) is expected to be a GetSetSymbol node");
+    assert(ast_is_IndirectCall(c),"$(boxed(c)) is expected to be an IndirectCall node.");
+    assert(ast_is_Reference(c.Subject),"$(boxed(c)) is expected to wrap a Reference node.");
     assert(SI.eq(c.Call,SI.get), "$(boxed(c)) is expected to be a Get call");
-    assert(SI.eq(c.Implementation.Interpretation,SI.lvar), "$(boxed(c)) is expected to be a local variable access");
-    assert_eq(c.Implementation.InternalId,"x","Id doesn't match.");
-    assert_eq(c.Implementation, SI.lvar("x"), "Symbol entries don't match.");
+    assert(c.Subject.Entity,SI.e.lvar("x"), "$(boxed(c)) is expected to be a local variable");
     assert_eq(c.File,file);
     assert_eq(c.Line,line);
     assert_eq(c.Column,col);
     
     var c = ast\lref(SI.set, "y");
-    assert(ast_is_GetSetSymbol(c),"$(boxed(c)) is expected to be a GetSetSymbol node");
+    assert(ast_is_IndirectCall(c),"$(boxed(c)) is expected to be an IndirectCall node.");
+    assert(ast_is_IndirectCall(c.Subject),"$(boxed(c)) is expected to wrap an IndirectCall node.");
+    assert(ast_is_Reference(c.Subject.Subject),"$(boxed(c)) is expected to wrap a wrapped Reference node.");
     assert(SI.eq(c.Call,SI.set), "$(boxed(c)) is expected to be a Set call");
-    assert(SI.eq(c.Implementation.Interpretation,SI.lref), "$(boxed(c)) is expected to be local reference variable access.");
-    assert_eq(c.Implementation.InternalId,"y","Id doesn't match.");
-    assert_eq(c.Implementation, SI.lref("y"), "Symbol entries don't match.");
+    assert(c.Subject.Subject.Entity,SI.e.lvar("y"), "$(boxed(c)) is expected to be a local variable");
     assert_eq(c.File,file);
     assert_eq(c.Line,line);
     assert_eq(c.Column,col);
     
-    var c = ast\gvar(SI.get, SI.i.gvar("gx"));
-    assert(ast_is_GetSetSymbol(c),"$(boxed(c)) is expected to be a GetSetSymbol node");
+    var c = ast\gvar(SI.get, "gx", mn);
+    assert(ast_is_IndirectCall(c),"$(boxed(c)) is expected to be an IndirectCall node.");
+    assert(ast_is_Reference(c.Subject),"$(boxed(c)) is expected to wrap a Reference node.");
     assert(SI.eq(c.Call,SI.get), "$(boxed(c)) is expected to be a Get call");
-    assert(SI.eq(c.Implementation.Interpretation,SI.gvar), "$(boxed(c)) is expected to be a global variable access");
-    assert_eq(c.Implementation.InternalId,"gx","Id doesn't match.");
-    assert_eq(c.Implementation, SI.i.gvar("gx"), "Symbol entries don't match.");
+    assert(c.Subject.Entity,SI.e.gvar("gx",mn), "$(boxed(c)) is expected to be a global variable");
     assert_eq(c.File,file);
     assert_eq(c.Line,line);
     assert_eq(c.Column,col);
     
-    var c = ast\gref(SI.i.gref("gy"));
-    assert(ast_is_GetSetSymbol(c),"$(boxed(c)) is expected to be a GetSetSymbol node");
+    var c = ast\gref("gy",mn);
+    assert(ast_is_IndirectCall(c),"$(boxed(c)) is expected to be an IndirectCall node.");
+    assert(ast_is_IndirectCall(c.Subject),"$(boxed(c)) is expected to wrap an IndirectCall node.");
+    assert(ast_is_Reference(c.Subject.Subject),"$(boxed(c)) is expected to wrap a wrapped Reference node.");
     assert(SI.eq(c.Call,SI.get), "$(boxed(c)) is expected to be a Get call");
-    assert(SI.eq(c.Implementation.Interpretation,SI.gref), 
-        "$(boxed(c)) is expected to be a global reference variable access.");
-    assert_eq(c.Implementation.InternalId,"gy","Id doesn't match.");
-    assert_eq(c.Implementation, SI.i.gref("gy"), "Symbol entries don't match.");
+    assert(c.Subject.Subject.Entity,SI.e.gvar("gx",mn), "$(boxed(c)) is expected to be a global variable");
     assert_eq(c.File,file);
     assert_eq(c.Line,line);
     assert_eq(c.Column,col);
@@ -529,25 +524,25 @@ macro test_ast_member[test]
     var s = ast\lvar("x");
     var c = ast\member(s);
     assert(ast_is_GetSetMemberAccess(c),"$(boxed(c)) is expected to be a member access node.");
-    assert(ast_is_GetSetSymbol(c.Subject),"$(boxed(c)) has symbol access as subject");
+    assert(ast_is_IndirectCall(c.Subject),"$(boxed(c)) has indirect call as subject");
     assert_eq(c.Id,"","$(boxed(c)) id defaults to empty string.");
     assert(SI.eq(c.Call,SI.get),"$(boxed(c)) call defaults to get"); 
     
     var c = ast\member(s, SI.get, "nope");
     assert(ast_is_GetSetMemberAccess(c),"$(boxed(c)) is expected to be a member access node.");
-    assert(ast_is_GetSetSymbol(c.Subject),"$(boxed(c)) has symbol access as subject");
+    assert(ast_is_IndirectCall(c.Subject),"$(boxed(c)) has indirect call as subject");
     assert_eq(c.Id,"nope","$(boxed(c)) id doesn't match.");
     assert(SI.eq(c.Call,SI.get),"$(boxed(c)) call doesn't match.");
     
     var c = ast\member(s, SI.set, "nope");
     assert(ast_is_GetSetMemberAccess(c),"$(boxed(c)) is expected to be a member access node.");
-    assert(ast_is_GetSetSymbol(c.Subject),"$(boxed(c)) has symbol access as subject");
+    assert(ast_is_IndirectCall(c.Subject),"$(boxed(c)) has indirect call as subject");
     assert_eq(c.Id,"nope","$(boxed(c)) id doesn't match.");
     assert(SI.eq(c.Call,SI.set),"$(boxed(c)) call doesn't match.");
     
     var c = ast\member(s, "nope");
     assert(ast_is_GetSetMemberAccess(c),"$(boxed(c)) is expected to be a member access node.");
-    assert(ast_is_GetSetSymbol(c.Subject),"$(boxed(c)) has symbol access as subject");
+    assert(ast_is_IndirectCall(c.Subject),"$(boxed(c)) has indirect call as subject");
     assert_eq(c.Id,"nope","$(boxed(c)) id doesn't match");
     assert(SI.eq(c.Call,SI.get),"$(boxed(c)) call doesn't match.");
 }
@@ -672,20 +667,31 @@ macro test_ast_ret[test]
 macro test_ast\with_arguments[test]
 {
     var funcId = "someFunc";
+    var mn = new module_name("example.com");
     function mkNode
     {
-        var n = ast\func(SI.i.func(funcId));
+        var n = ast\func(funcId,mn); 
+        assert(n is not null,"ast\\func returned null.");
         n.Arguments.Add(ast\const(3));
         return n;
     }
     
+    println("stage-1");
+
     var n = ast\with_arguments(var a = mkNode);
+    println("stage-15");
+    assert(n is not null,@"ast\with_arguments returned null #1");
+    println("stage-2");
     assert_eq(n,a,"Reference remains the same. #1");
+    println("stage-3");
     assert_eq(n.Arguments.Count,1,"No additional arguments added.");
+    println("stage-4");
     assert(ast_is_Constant(n.Arguments[0]),"First argument should be constant. #1");
+    println("stage-5");
     assert_eq(n.Arguments[0].Constant,3,"First constant doesn't match. #1");
-    
+
     var n = ast\with_arguments(var a = mkNode, ast\const(5));
+    assert(n is not null,@"ast\with_arguments returned null #2");
     assert_eq(n,a,"Reference remains the same. #2");
     assert_eq(n.Arguments.Count,2,"One new argument added");
     assert(ast_is_Constant(n.Arguments[0]),"First argument should be constant. #2");
@@ -693,16 +699,19 @@ macro test_ast\with_arguments[test]
     assert(ast_is_Constant(n.Arguments[1]),"Second argument should be constant. #2");
     assert_eq(n.Arguments[1].Constant,5,"Second constant doesn't match. #2");
     
-    var n = ast\with_arguments(var a = mkNode, ast\const(5), ast\with_arguments(ast\func(SI.set, SI.i.func(funcId)),ast\const(7)));
+    var n = ast\with_arguments(var a = mkNode, ast\const(5), ast\with_arguments(ast\func(SI.set, funcId,mn),ast\const(7)));
+    assert(n is not null,@"ast\with_arguments returned null #3");
     assert_eq(n,a,"Reference remains the same. #3");
     assert_eq(n.Arguments.Count,3,"Two new argument added");
     assert(ast_is_Constant(n.Arguments[0]),"First argument should be constant. #3");
     assert_eq(n.Arguments[0].Constant,3,"First constant doesn't match. #3");
     assert(ast_is_Constant(n.Arguments[1]),"Second argument should be constant. #3");
     assert_eq(n.Arguments[1].Constant,5,"Second constant doesn't match. #3");
+
     var n' = n.Arguments[2];
-    assert(ast_is_GetSetSymbol(n'),"Third argument should be symbol access");
-    assert_eq(n'.Implementation,SI.i.func(funcId),"Interpretation should be get-function $funcId, is $(boxed(n'))");
+    assert(n is not null,@"n' is null");
+    assert(ast_is_IndirectCall(n'),"Third argument should be symbol access");
+    assert_eq(n'.Subject.Entity,SI.e.func(funcId,mn),"Interpretation should be get-function $funcId, is $(boxed(n'))");
     assert_eq(n'.Arguments.Count,1,"Third argument should have one argument of its own.");
     assert(ast_is_Constant(n'.Arguments[0]),"Argument of third argument should be a Constant node.");
     assert_eq(n'.Arguments[0].Constant,7,"Constant in argument of third argument doesn't match.");

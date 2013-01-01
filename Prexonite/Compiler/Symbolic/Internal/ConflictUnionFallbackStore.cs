@@ -113,7 +113,7 @@ namespace Prexonite.Compiler.Symbolic.Internal
                 }
             }
 
-            var msg = string.Format("There are two incompatible declarations of the self {0} in this scope. " +
+            var msg = string.Format("There are two incompatible declarations of the symbol {0} in this scope. " +
                                     "One comes from {1}, the other one from {2}.", first.Name, first.Origin,
                                     second.Origin);
 
@@ -150,7 +150,7 @@ namespace Prexonite.Compiler.Symbolic.Internal
                 }
             }
 
-            var msg = string.Format("There are {0} incompatible declarations of the self {1}. They come from {2}.",
+            var msg = string.Format("There are {0} incompatible declarations of the symbol {1}. They originate from {2}.",
                                     xs.Count, first.Name, symbols.Select(s => s.Origin).ToEnumerationString());
             return new KeyValuePair<string, Symbol>(first.Name,
                                                     Symbol.CreateMessage(Message.Create(MessageSeverity.Error, msg, first.Origin,

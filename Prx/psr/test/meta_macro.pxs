@@ -38,16 +38,15 @@ function test\execute_single_macro as execute_single_macro(ldr, testMacro)
     var eng = ldr.ParentEngine;
     var app = ldr.ParentApplication;
     
-    var hostFuncId = @"test\run_single_macro\hostFuncId";
+    var hostFuncId = @"test\run_single_macro\hostFunc";
     var hostFunc = app.CreateFunction(hostFuncId);
     var funcTar;
     try
     {
         //Setup function hosting the macro invocation
         var fakeFile = @"psr\test\meta_macro.pxs\test\run_single_macro\anonymous";
-        var block = new ::AstBlock(fakeFile,-1,-1);
-        app.Functions.Add(hostFunc);
-        funcTar = ldr.CreateFunctionTarget(hostFunc, block);
+        funcTar = ldr.CreateFunctionTarget(hostFunc,null,null);
+        var block = funcTar.Ast;
         
         //Setup invocation of test macro
         var invocation = new ::AstMacroInvocation(fakeFile,-1,-1,
@@ -62,12 +61,14 @@ function test\execute_single_macro as execute_single_macro(ldr, testMacro)
     }
     finally
     {
-        if(app.Functions.Contains(hostFuncId))
-            app.Functions.Remove(hostFuncId);
         foreach(var ct in ldr.FunctionTargets)
         {
-            if(app.Functions.Contains(ct.Function.Id))
-                app.Functions.Remove(ct.Function);
+            var funcId = ct.Function.Id;
+            if(app.Functions.Contains(funcId))
+                app.Functions.Remove(funcId);
+            if(app.Module.Functions.Contains(funcId))
+                app.Module.Functions.Remove(funcId);
+            println("Removed function $funcId from $(app.Module.Name).");
         }
     }
 }
@@ -88,12 +89,20 @@ function test\run_single_macro as run_single_macro(testMacro)
     if(not testMacro.IsMacro)
         throw "test\\run_single_macro expects a macro function. $testMacro is not a macro.";
         
-    var app = asm(ldr.app);
+    var module = Prexonite::Modular::Module.Create(new module_name("meta_macro_host_module","0.0"));
+    var app = new ::Application(module);
     var eng = asm(ldr.eng);
-    
-    var ldr = new ::Loader(eng, app);
-    
-    execute_single_macro(ldr, testMacro);
+    var testApp = asm(ldr.app);
+
+    var ldr;
+    try {
+        ::Application.Link(testApp,app);    
+        ldr = new ::Loader(eng, app);    
+        execute_single_macro(ldr, testMacro);
+    } finally {
+        if(app.IsLinkedTo(testApp))
+            app.Unlink();
+    }
     
     ldr.Warnings >> each(println(?));
     if(ldr.Errors.Count > 0)

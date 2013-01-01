@@ -113,15 +113,14 @@
     <Compile Include="Tests\Compiler.Global.cs" />
     <Compile Include="Tests\Compiler.Parser.cs" />
     <Compile Include="Tests\Configurations\ModuleCache.cs" />
-    <Compile Include="Tests\Configurations\TestModel.cs" />
-    <Compile Include="Tests\Configurations\UnitTestConfiguration.cs" />
-    <Content Include="psr-tests\testconfig.txt" />
     <Compile Include="Tests\Configurations\PsrUnitTests.cs">
       <AutoGen>True</AutoGen>
       <DesignTime>True</DesignTime>
-      <DependentUpon>psr-tests\testconfig.txt</DependentUpon>
       <DependentUpon>PsrUnitTests.tt</DependentUpon>
     </Compile>
+    <Compile Include="Tests\Configurations\TestModel.cs" />
+    <Compile Include="Tests\Configurations\UnitTestConfiguration.cs" />
+    <Content Include="psr-tests\testconfig.txt" />
     <Compile Include="Tests\Configurations\ScriptedUnitTestContainer.cs" />
     <Compile Include="Tests\Configurations\VMTestConfigurations.cs">
       <AutoGen>True</AutoGen>

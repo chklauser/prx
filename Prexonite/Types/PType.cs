@@ -408,7 +408,7 @@ namespace Prexonite.Types
             else
             {
                 var sb = new StringBuilder();
-                sb.Append("Cannot contruct a ");
+                sb.Append("Cannot construct a ");
                 sb.Append(ToString());
                 sb.Append(" with (");
                 foreach (var arg in args)

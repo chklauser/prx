@@ -60,31 +60,29 @@ macro struct\as_macro as struct()
         })
         >> where(fcf => fcf.Value is not Null and fcf.Key is not Null);
         
-    var block = ast("BlockExpression");
     var structV = tempalloc;
     
     //assign new structure
     var assignStructure = ast\lvar(SI.set, structV);
     assignStructure.Arguments.Add(ast\new("Structure"));
-    block.Add(assignStructure);
+    context.Block.Add(assignStructure);
     
     //assign ctorId
     var assignCtorId = ast\member(ast\lvar(SI.get, structV), SI.get,"\\");
     assignCtorId.Arguments.Add(ast\const(CTORID));
     assignCtorId.Arguments.Add(ast\const(parentId));
-    block.Add(assignCtorId);
+    context.Block.Add(assignCtorId);
     
     //assign methods
-    foreach(var method in methods)
+    foreach(var meth in methods)
     {
         var addMethod = ast\member(ast\lvar(SI.get, structV), SI.get, @"\\");
-        addMethod.Arguments.Add(ast\const(method.Key));
-        addMethod.Arguments.Add(ast\lvar(SI.get, method.Value));
-        block.Add(addMethod);
+        addMethod.Arguments.Add(ast\const(meth.Key));
+        addMethod.Arguments.Add(ast\lvar(SI.get, meth.Value));
+        context.Block.Add(addMethod);
     }
     
     //return struct
-    block.Expression = ast\lvar(SI.get, structV);
+    context.Block.Expression = ast\lvar(SI.get, structV);
     tempfree(structV);
-    return block;
 }

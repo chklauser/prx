@@ -82,7 +82,7 @@ namespace Prexonite.Compiler.Ast
 
         public AstExpr CreateClosure(ISourcePosition position, EntityRef.Function function)
         {
-            return new AstCreateClosure(position.File, position.Line, position.Column,function.ToSymbolEntry());
+            return new AstCreateClosure(position,function);
         }
 
         public AstCreateCoroutine CreateCoroutine(ISourcePosition position, AstExpr function)

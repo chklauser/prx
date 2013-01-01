@@ -50,7 +50,7 @@ namespace Prexonite
     public class  PFunction : IHasMetaTable,
                              IIndirectCall,
                              IStackAware,
-                                IDependent<string>
+                                IDependent<EntityRef.Function>
     {
         /// <summary>
         ///     The meta key under which the function's id is stored.
@@ -237,7 +237,7 @@ namespace Prexonite
 
         #region Storage
 
-        public IEnumerable<string> GetDependencies()
+        public IEnumerable<EntityRef.Function> GetDependencies()
         {
             return _declaration.GetDependencies();
         }
@@ -471,9 +471,9 @@ namespace Prexonite
 
         #endregion
 
-        string INamed<string>.Name
+        EntityRef.Function INamed<EntityRef.Function>.Name
         {
-            get { return ((INamed<string>) _declaration).Name; }
+            get { return ((INamed<EntityRef.Function>) _declaration).Name; }
         }
     }
 }

@@ -49,6 +49,7 @@ namespace PrexoniteTests.Tests.Configurations
 <#								foreach(var d in dep.Dependencies) { #>
 									@"<#=d#>",
 <#								} #>
+                                PrexoniteUnitTestFramework
 							}},
 <#						} #>					
 					}

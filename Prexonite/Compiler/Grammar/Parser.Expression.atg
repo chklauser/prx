@@ -58,11 +58,7 @@ AppendRightExpr<out AstExpr expr>
 	KeyValuePairExpr<out expr>
 	{	
 		appendright
-		GetCall<out complex>		    (.	complex.Arguments.RightAppend(expr); 
-										    complex.Arguments.ReleaseRightAppend();
-										    if(complex is AstGetSetSymbol 
-                                                    && ((AstGetSetSymbol)complex).IsObjectVariable)
-										        complex.Call = PCall.Set;
+		GetCall<out complex>		    (.	_appendRight(expr,complex);
 										    expr = complex;										    
 									    .)
 	}
@@ -263,7 +259,6 @@ PrefixUnaryExpr<out AstExpr expr>
 
 Primary<out AstExpr expr>
                                         (.  expr = null;
-                                            bool declared; 
                                         .)
 =
 	(.  _pushLexerState(Lexer.Asm); .)	  (.  var blockExpr = Create.Block(GetPosition());
@@ -286,7 +281,7 @@ Primary<out AstExpr expr>
 |   LazyExpression<out expr>
 |   lpar Expr<out expr> rpar
 |   IF(_isNotNewDecl()) ObjectCreation<out expr>
-|   GetInitiator<out expr, out declared>
+|   GetInitiator<out expr>
 |   LPopExpr lpar Expr<out expr>        (.  //This is a hack that makes string interpolation with expressions possible
                                             //The non-verbal token "LPopExpr" (has no character representation) is 
                                             //returned by the lexer if the parser has to treat an expression in a special
@@ -391,8 +386,10 @@ LambdaExpression<out AstExpr expr>
                                             func.Meta[PFunction.ParentFunctionKey] = target.Function.Id;
                                             Loader.CreateFunctionTarget(func, target, GetPosition());
                                             CompilerTarget ft = FunctionTargets[func];
+                                            ISourcePosition position;
                                         .)
 =
+                                        (.  position = GetPosition(); .)
 (   FormalArg<ft>
 |   lpar
     [	FormalArg<ft> 
@@ -423,9 +420,7 @@ implementation
                                                 }
                                             }
                                             
-                                            expr = new AstCreateClosure(this, 
-                                                new SymbolEntry(SymbolInterpretations.Function, func.Id, 
-                                                func.ParentApplication.Module.Name));                                         
+                                            expr = Create.CreateClosure(position,EntityRef.Function.Create(func.Id,func.ParentApplication.Module.Name));
                                         .)
 .
 
@@ -435,12 +430,13 @@ LazyExpression<out AstExpr expr>
                                             func.Meta[PFunction.ParentFunctionKey] = target.Function.Id;
                                             Loader.CreateFunctionTarget(func, target, GetPosition());
                                             CompilerTarget ft = FunctionTargets[func];
+                                            ISourcePosition position;
                                             
                                             //Switch to nested target
                                             _PushScope(ft);
                                         .)
-=
-lazy
+=                                       
+lazy                                    (.  position = GetPosition(); .)
 (   lbrace
     { Statement<ft.Ast> }
     rbrace
@@ -466,11 +462,8 @@ lazy
                                             }
                                             
                                             //Construct expr (appears in the place of lazy expression)
-                                            var clo = new AstCreateClosure(this,  
-                                                new SymbolEntry(SymbolInterpretations.Function, func.Id, 
-                                                func.ParentApplication.Module.Name));
-                                            var thunk = new AstGetSetSymbol(this, 
-                                                SymbolEntry.Command(Engine.ThunkAlias));
+                                            var clo = Create.CreateClosure(position,EntityRef.Function.Create(func.Id,func.ParentApplication.Module.Name));
+                                            var thunk = Create.IndirectCall(position,Create.Reference(position,EntityRef.Command.Create(Engine.ThunkAlias)));
                                             thunk.Arguments.Add(clo);
                                             thunk.Arguments.AddRange(cap(this)); //Add captured values
                                             expr = thunk;

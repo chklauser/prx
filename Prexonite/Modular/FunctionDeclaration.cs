@@ -30,7 +30,7 @@ namespace Prexonite.Modular
         }
     }
 
-    public abstract class FunctionDeclaration : IHasMetaTable, IMetaFilter, IDependent<string>
+    public abstract class FunctionDeclaration : IHasMetaTable, IMetaFilter, IDependent<EntityRef.Function>
     {
         protected FunctionDeclaration()
         {
@@ -231,154 +231,33 @@ namespace Prexonite.Modular
 
         #region Implementation of INamed<string>/IDependent<string>
 
-        // TODO: Consider implement cross-module dependency tracking
+        protected abstract ModuleName ContainingModule { get; }
+        protected abstract CentralCache Cache { get; }
 
-        string INamed<string>.Name
+        EntityRef.Function INamed<EntityRef.Function>.Name
         {
-            get { return Id; }
+            get
+            {
+                return (EntityRef.Function) Cache.EntityRefs.GetCached(EntityRef.Function.Create(Id, ContainingModule));
+            }
         }
 
-        public IEnumerable<string> GetDependencies()
+        public IEnumerable<EntityRef.Function> GetDependencies()
         {
             foreach (var ins in Code)
             {
-                var argc = ins.Arguments;
                 var id = ins.Id;
-                var justEffect = ins.JustEffect;
-                var genericArgument = ins.GenericArgument;
                 var opCode = ins.OpCode;
 
                 switch (opCode)
                 {
-                    case OpCode.invalid:
-                        break;
-                    case OpCode.nop:
-                        break;
-                    case OpCode.ldc_int:
-                        break;
-                    case OpCode.ldc_real:
-                        break;
-                    case OpCode.ldc_bool:
-                        break;
-                    case OpCode.ldc_string:
-                        break;
-                    case OpCode.ldc_null:
-                        break;
-                    case OpCode.ldr_loc:
-                        break;
-                    case OpCode.ldr_loci:
-                        break;
-                    case OpCode.ldr_glob:
-                        break;
                     case OpCode.ldr_func:
-                        yield return id;
-                        break;
-                    case OpCode.ldr_cmd:
-                        break;
-                    case OpCode.ldr_app:
-                        break;
-                    case OpCode.ldr_eng:
-                        break;
-                    case OpCode.ldr_type:
-                        break;
-                    case OpCode.ldloc:
-                        break;
-                    case OpCode.stloc:
-                        break;
-                    case OpCode.ldloci:
-                        break;
-                    case OpCode.stloci:
-                        break;
-                    case OpCode.ldglob:
-                        break;
-                    case OpCode.stglob:
-                        break;
-                    case OpCode.newobj:
-                        break;
-                    case OpCode.newtype:
-                        break;
                     case OpCode.newclo:
-                        yield return id;
-                        break;
-                    case OpCode.newcor:
-                        break;
-                    case OpCode.incloc:
-                        break;
-                    case OpCode.incglob:
-                        break;
-                    case OpCode.decloc:
-                        break;
-                    case OpCode.decglob:
-                        break;
-                    case OpCode.incloci:
-                        break;
-                    case OpCode.decloci:
-                        break;
-                    case OpCode.check_const:
-                        break;
-                    case OpCode.check_arg:
-                        break;
-                    case OpCode.check_null:
-                        break;
-                    case OpCode.cast_const:
-                        break;
-                    case OpCode.cast_arg:
-                        break;
-                    case OpCode.get:
-                        break;
-                    case OpCode.set:
-                        break;
-                    case OpCode.sget:
-                        break;
-                    case OpCode.sset:
-                        break;
                     case OpCode.func:
-                        yield return id;
+                        var moduleName = ins.ModuleName ?? ContainingModule;
+                        yield return
+                            (EntityRef.Function) Cache.EntityRefs.GetCached(EntityRef.Function.Create(id, moduleName));
                         break;
-                    case OpCode.cmd:
-                        break;
-                    case OpCode.indarg:
-                        break;
-                    case OpCode.tail:
-                        break;
-                    case OpCode.indloc:
-                        break;
-                    case OpCode.indloci:
-                        break;
-                    case OpCode.indglob:
-                        break;
-                    case OpCode.jump:
-                        break;
-                    case OpCode.jump_t:
-                        break;
-                    case OpCode.jump_f:
-                        break;
-                    case OpCode.ret_exit:
-                        break;
-                    case OpCode.ret_value:
-                        break;
-                    case OpCode.ret_break:
-                        break;
-                    case OpCode.ret_continue:
-                        break;
-                    case OpCode.ret_set:
-                        break;
-                    case OpCode.@throw:
-                        break;
-                    case OpCode.@try:
-                        break;
-                    case OpCode.leave:
-                        break;
-                    case OpCode.exc:
-                        break;
-                    case OpCode.pop:
-                        break;
-                    case OpCode.dup:
-                        break;
-                    case OpCode.rot:
-                        break;
-                    default:
-                        throw new ArgumentOutOfRangeException();
                 }
             }
         }
@@ -391,13 +270,14 @@ namespace Prexonite.Modular
         /// Creates a new function declaration using the default implementation.
         /// </summary>
         /// <param name="id">The physical id of the function.</param>
+        /// <param name="module">The module in which this function is declared.</param>
         /// <returns>A new function declaration.</returns>
         internal static FunctionDeclaration _Create(string id, Module module)
         {
             return new Impl(id,module);
         }
 
-        private class Impl : FunctionDeclaration
+        private sealed class Impl : FunctionDeclaration
         {
             public Impl(string id, Module module)
             {
@@ -407,6 +287,8 @@ namespace Prexonite.Modular
                 meta[PFunction.IdKey] = id;
                 meta[Application.ImportKey] = module.Meta[Application.ImportKey];
                 _meta = meta;
+                _containingModule = module.Name;
+                _centralCache = module.Cache;
 
                 LocalVariableMapping = new SymbolTable<int>();
             }
@@ -421,10 +303,12 @@ namespace Prexonite.Modular
 
             private List<TryCatchFinallyBlock> _tryCatchFinallyBlocks;
             private readonly List<string> _parameters = new List<string>();
+            private readonly ModuleName _containingModule;
+            private readonly CentralCache _centralCache;
 
             public override event EventHandler<FunctionIdChangingEventArgs> IdChanging;
 
-            protected virtual void OnIdChanging(string newId)
+            protected void OnIdChanging(string newId)
             {
                 var idChangingHandler = IdChanging;
                 if (idChangingHandler != null)
@@ -521,6 +405,16 @@ namespace Prexonite.Modular
             public override void InvalidateTryCatchFinallyBlocks()
             {
                 _tryCatchFinallyBlocks = null;
+            }
+
+            protected override ModuleName ContainingModule
+            {
+                get { return _containingModule; }
+            }
+
+            protected override CentralCache Cache
+            {
+                get { return _centralCache; }
             }
 
             /// <summary>

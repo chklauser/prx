@@ -92,17 +92,17 @@ function ast2\withPos(type, file, line, column) [compiler]
         .self;
 }
 
-function ast\simple as ast(type) [is compiler;]
+function ast\simple(type) [is compiler;]
 {
     return call(->ast\withPos,[type,null,null,null] + (var args >> skip(1) >> all));
 }
 
-function ast2\simple as ast2(type) [is compiler;]
+function ast2\simple(type) [is compiler;]
 {
     return call(->ast2\withPos,[type,null,null,null] + (var args >> skip(1) >> all));
 }
 
-function ast3\simple as ast3(factory,type) [compiler]
+function ast3\simple(factory,type) [compiler]
 {
     return call(->ast3\withPos,[factory,type,Prexonite::Compiler::NoSourcePosition.Instance] + (var args >> skip(2) >> all));
 }
