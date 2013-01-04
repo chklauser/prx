@@ -74,7 +74,7 @@ function on (f,selector) => (a,b) => f.(selector.(a),selector.(b));
 //Creates a wrapper around an object that intercepts calls to dispose.
 function create_terminator (obj, termination)
 {
-    function Call(this,id)
+    function Call(self,id)
     {
         var args;
         if(args.Count < 2) //invalid call

@@ -28,6 +28,7 @@ using System.Collections.Generic;
 using JetBrains.Annotations;
 using Prexonite.Commands;
 using Prexonite.Compiler.Ast;
+using Prexonite.Modular;
 using Prexonite.Types;
 
 namespace Prexonite.Compiler.Macro.Commands
@@ -75,11 +76,11 @@ namespace Prexonite.Compiler.Macro.Commands
 
             // [| macro\unpack\impl(context, $arg0) |]
 
-            var getContext = context.CreateGetSetSymbol(
-                SymbolEntry.LocalReferenceVariable(MacroAliases.ContextAlias), PCall.Get);
+            var getContext =
+                context.CreateIndirectCall(context.CreateCall(EntityRef.Variable.Local.Create(MacroAliases.ContextAlias)));
 
-            context.Block.Expression = context.CreateGetSetSymbol(SymbolEntry.Command(Impl.Alias), 
-                PCall.Get, getContext, context.Invocation.Arguments[0]);
+            context.Block.Expression = context.CreateCall(EntityRef.Command.Create(Impl.Alias),
+                                                          PCall.Get, getContext, context.Invocation.Arguments[0]);
         }
 
         #endregion

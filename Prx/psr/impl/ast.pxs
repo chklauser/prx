@@ -286,20 +286,36 @@ function create_SI [is compiler;]
     e.\\("func") = (self,arg1,arg2) => 
         if(arg1 is ::PFunction)
             ~Object<"Prexonite.Modular.EntityRef+Function">.Create(arg1.Id,arg1.ParentApplication.Module.Name)
+        else if(arg1 is not Null and arg2 is not Null)
+            ~Object<"Prexonite.Modular.EntityRef+Function">.Create(arg1,arg2)
         else
-            ~Object<"Prexonite.Modular.EntityRef+Function">.Create(arg1,arg2);
+            throw "SI.e.func(function_reference) or SI.e.func(id,module_name). Null values are not acceptable.";
     e.\\("is_func") = (self,entity) => entity is Object<"Prexonite.Modular.EntityRef+Function">;
-    e.\\("cmd") = (self,id) => ~Object<"Prexonite.Modular.EntityRef+Command">.Create(id);
+    e.\\("cmd") = (self,id) => 
+        if(id is not null)
+            ~Object<"Prexonite.Modular.EntityRef+Command">.Create(id)
+        else
+            throw "SI.e.cmd(id), id must not be null.";
     e.\\("is_cmd") = (self,entity) => entity is Object<"Prexonite.Modular.EntityRef+Command">;
     e.\\("mcmd") = (self,arg1) => 
         if(arg1 is Prexonite::Compiler::Macro::MacroCommand)
             ~Object<"Prexonite.Modular.EntityRef+MacroCommand">.Create(arg1.Id)
+        else if(arg1 is not Null)
+            ~Object<"Prexonite.Modular.EntityRef+MacroCommand">.Create(arg1)
         else
-            ~Object<"Prexonite.Modular.EntityRef+MacroCommand">.Create(arg1);
+            throw "SI.e.mcmd(id), id must not be null.";
     e.\\("is_mcmd") = (self,entity) => entity is Object<"Prexonite.Modular.EntityRef+MacroCommand">;
-    e.\\("lvar") = (self,id) => ~Object<"Prexonite.Modular.EntityRef+Variable+Local">.Create(id);
+    e.\\("lvar") = (self,id) => 
+        if(id is not null)
+            ~Object<"Prexonite.Modular.EntityRef+Variable+Local">.Create(id)
+        else
+            throw "SI.e.lvar(id), id must not be null.";
     e.\\("is_lvar") = (self,entity) => entity is Object<"Prexonite.Modular.EntityRef+Variable+Local">;
-    e.\\("gvar") = (self,id,mname) => ~Object<"Prexonite.Modular.EntityRef+Variable+Global">.Create(id,mname);
+    e.\\("gvar") = (self,id,mname) => 
+        if(id is not null and mname is not null)
+            ~Object<"Prexonite.Modular.EntityRef+Variable+Global">.Create(id,mname)
+        else
+            throw "SI.e.gvar(id,module_name), neither id nor module_name must be null.";
     e.\\("is_gvar") = (self,entity) => entity is Object<"Prexonite.Modular.EntityRef+Variable+Global">;
     SI.\("e") = e;
 

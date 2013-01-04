@@ -31,6 +31,7 @@ using System.Linq;
 using System.Text;
 using Prexonite.Commands.Core.Operators;
 using Prexonite.Compiler.Symbolic.Compatibility;
+using Prexonite.Modular;
 using Prexonite.Types;
 
 namespace Prexonite.Compiler.Ast
@@ -132,8 +133,7 @@ namespace Prexonite.Compiler.Ast
                 && Implementation.Interpretation == SymbolInterpretations.Command
                     && Implementation.InternalId == Addition.DefaultAlias)
             {
-                var call = new AstGetSetSymbol(File, Line, Column, PCall.Get,
-                    Implementation.With(SymbolInterpretations.Command,Engine.ConcatenateAlias));
+                var call = target.Factory.Call(Position, EntityRef.Command.Create(Engine.ConcatenateAlias));
                 call.Arguments.AddRange(Arguments);
                 call.EmitCode(target,stackSemantics);
             }

@@ -33,6 +33,7 @@ using Prexonite.Compiler;
 using Prexonite.Compiler.Ast;
 using Prexonite.Compiler.Macro;
 using Prexonite.Compiler.Macro.Commands;
+using Prexonite.Modular;
 using Prexonite.Types;
 
 namespace Prexonite.Commands.Core
@@ -172,7 +173,7 @@ namespace Prexonite.Commands.Core
         {
             protected PartialMemberCall(string alias, string callImplementationId,
                 SymbolInterpretations callImplementetaionInterpretation)
-                : base(alias, new SymbolEntry(SymbolInterpretations.Command,Alias, null))
+                : base(alias, EntityRef.Command.Create(Alias))
             {
             }
 
@@ -188,12 +189,12 @@ namespace Prexonite.Commands.Core
                     argv.Take(1).Append(_getIsSetExpr(context)).Append(argv.Skip(1));
             }
 
-            private static AstConstant _getIsSetExpr(MacroContext context)
+            private static AstExpr _getIsSetExpr(MacroContext context)
             {
                 return context.CreateConstant(context.Invocation.Call == PCall.Set);
             }
 
-            protected override AstGetSetSymbol GetTrivialPartialApplication(MacroContext context)
+            protected override AstGetSet GetTrivialPartialApplication(MacroContext context)
             {
                 var pa = base.GetTrivialPartialApplication(context);
                 pa.Arguments.Insert(1, _getIsSetExpr(context));

@@ -29,6 +29,7 @@ using System.Diagnostics;
 using System.Diagnostics.CodeAnalysis;
 using System.Globalization;
 using System.Text;
+using JetBrains.Annotations;
 using Prexonite.Commands.Core.Operators;
 using Prexonite.Modular;
 using Prexonite.Types;
@@ -326,8 +327,10 @@ namespace Prexonite
             return new Instruction(OpCode.sset, arguments, callExpr);
         }
 
-        public static Instruction CreateFunctionCall(int arguments, string id, bool justEffect, ModuleName moduleName)
+        public static Instruction CreateFunctionCall(int arguments, [NotNull] string id, bool justEffect, [CanBeNull] ModuleName moduleName)
         {
+            if(id == null)
+                throw new ArgumentNullException("id");
             return new Instruction(OpCode.func, id, arguments, justEffect, moduleName);
         }
 
@@ -1094,7 +1097,7 @@ namespace Prexonite
         invalid = -1,
 
         /// <summary>
-        ///     No operation. Stack: 0->0. Will be removed in optimization pass.
+        ///     No operation. Stack: 0->0.
         /// </summary>
         nop = 0,
 
@@ -1193,7 +1196,7 @@ namespace Prexonite
         set, //set           performs a set call
         sget, //sget          performs a static get call
         sset, //sset          performs a static set call
-        //Calls (3)
+        //Calls (4)
         func, //func          performs a function call
         cmd, //cmd           performs a command call
         indarg, //indarg        performs an indirect call on an operand

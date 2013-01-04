@@ -42,25 +42,43 @@ namespace Prexonite.Compiler.Macro
     /// </summary>
     public class MacroSession : IDisposable
     {
+        [NotNull]
         private readonly CompilerTarget _target;
+
+        [CanBeNull]
         private LoaderOptions _options;
+        [NotNull]
         private readonly SymbolStore _globalSymbols;
+        [NotNull]
         private readonly ReadOnlyCollectionView<string> _outerVariables;
+        [NotNull]
         private readonly SymbolCollection _releaseList = new SymbolCollection();
+        [NotNull]
         private readonly SymbolCollection _allocationList = new SymbolCollection();
 
+        [NotNull]
         private readonly HashSet<AstGetSet> _invocations =
             new HashSet<AstGetSet>();
 
+        [NotNull]
         private readonly object _buildCommandToken;
+
+        [NotNull]
         private readonly List<PValue> _transportStore = new List<PValue>();
+
+        [NotNull]
+        private readonly IAstFactory _astFactory;
 
         /// <summary>
         ///     Creates a new macro expansion session for the specified compiler target.
         /// </summary>
         /// <param name = "target">The target to expand macros in.</param>
-        public MacroSession(CompilerTarget target)
+        public MacroSession([NotNull] CompilerTarget target)
         {
+            if(target == null)
+                throw new ArgumentNullException("target");
+
+            _astFactory = new MacroAstFactory(this);
             if (target == null)
                 throw new ArgumentNullException("target");
             _target = target;
@@ -119,6 +137,11 @@ namespace Prexonite.Compiler.Macro
             get { return _target.CurrentBlock; }
         }
 
+        public IAstFactory Factory
+        {
+            get { return _astFactory; }
+        }
+
         /// <summary>
         ///     Allocates a temporary variable for this macro expansion session.
         /// </summary>
@@ -157,30 +180,25 @@ namespace Prexonite.Compiler.Macro
         public void Dispose()
         {
             //Free all variables that were marked as free during the session.
-            if (_target != null)
+            try
             {
-                try
+                foreach (var temp in _releaseList)
                 {
-                    if (_releaseList != null)
-                        foreach (var temp in _releaseList)
-                        {
-                            _target.FreeTemporaryVariable(temp);
-                            _allocationList.Remove(temp);
-                        }
+                    _target.FreeTemporaryVariable(temp);
+                    _allocationList.Remove(temp);
+                }
 
-                    //Remove those that weren't freed to persistent variables
-                    if (_allocationList != null)
-                        foreach (var temp in _allocationList)
-                        {
-                            _target.PromoteTemporaryVariable(temp);
-                        }
-                }
-                finally
+                //Remove those that weren't freed to persistent variables
+                foreach (var temp in _allocationList)
                 {
-                    var ldr = Target.Loader;
-                    if (_buildCommandToken != null && ldr != null)
-                        ldr.ReleaseBuildCommands(_buildCommandToken);
+                    _target.PromoteTemporaryVariable(temp);
                 }
+            }
+            finally
+            {
+                var ldr = Target.Loader;
+                if (ldr != null)
+                    ldr.ReleaseBuildCommands(_buildCommandToken);
             }
         }
 
@@ -398,28 +416,23 @@ namespace Prexonite.Compiler.Macro
                     else
                     {
                         //Might at a later point become a warning
+                        var invocationPosition = context.Invocation.Position;
                         context.ReportMessage(Message.Create(MessageSeverity.Info,
                                                              String.Format(
                                                                  Resources.MacroFunctionExpander__UsedTemporaryVariable,
                                                                  HumanId),
-                                                             context.Invocation.Position, MessageClasses.BlockMergingUsesVariable));
+                                                             invocationPosition, MessageClasses.BlockMergingUsesVariable));
 
                         var tmpV = context.AllocateTemporaryVariable();
 
                         //Generate assignment to temporary variable
-                        var assignTmpV = new AstGetSetSymbol(context.Invocation.File,
-                                                             context.Invocation.Line,
-                                                             context.Invocation.Column,
-                                                             PCall.Set,
-                                                             SymbolEntry.LocalObjectVariable(tmpV));
+                        var tmpVRef = context.Factory.Reference(invocationPosition, EntityRef.Variable.Local.Create(tmpV));
+                        var assignTmpV = context.Factory.IndirectCall(invocationPosition,tmpVRef,PCall.Set);
                         assignTmpV.Arguments.Add(ce);
                         contextBlock.Add(assignTmpV);
 
                         //Generate lookup of computed value
-                        ce = new AstGetSetSymbol(context.Invocation.File,
-                                                 context.Invocation.Line,
-                                                 context.Invocation.Column, PCall.Get,
-                                                 SymbolEntry.LocalObjectVariable(tmpV));
+                        ce = context.Factory.IndirectCall(invocationPosition,tmpVRef);
                     }
                 }
 

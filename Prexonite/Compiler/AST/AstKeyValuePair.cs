@@ -25,6 +25,7 @@
 //  IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 using System;
+using Prexonite.Modular;
 using Prexonite.Types;
 
 namespace Prexonite.Compiler.Ast
@@ -76,8 +77,7 @@ namespace Prexonite.Compiler.Ast
             if (Value == null)
                 throw new ArgumentNullException("target");
 
-            var call = new AstGetSetSymbol(
-                File, Line, Column, PCall.Get, new SymbolEntry(SymbolInterpretations.Command, Engine.PairAlias,null));
+            var call = target.Factory.Call(Position, EntityRef.Command.Create(Engine.PairAlias));
             call.Arguments.Add(Key);
             call.Arguments.Add(Value);
             call.EmitCode(target, stackSemantics);

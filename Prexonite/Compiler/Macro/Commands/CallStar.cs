@@ -28,6 +28,7 @@ using System.Collections.Generic;
 using System.Linq;
 using Prexonite.Commands.Core.PartialApplication;
 using Prexonite.Compiler.Ast;
+using Prexonite.Modular;
 using Prexonite.Properties;
 
 namespace Prexonite.Compiler.Macro.Commands
@@ -112,10 +113,8 @@ namespace Prexonite.Compiler.Macro.Commands
             _mergeDirectivesIntoMappings(directives, mappings8, argc);
             var mappings32 = PartialApplicationCommandBase.PackMappings32(mappings8);
 
-            var implCall =
-                context.CreateGetSetSymbol(
-                    new SymbolEntry(SymbolInterpretations.Command, PartialCallStarImplCommand.Alias,
-                        null), context.Call);
+            var implCall = context.Factory.Call(context.Invocation.Position,
+                                                EntityRef.Command.Create(PartialCallStarImplCommand.Alias), context.Call);
             implCall.Arguments.AddRange(closedArguments);
 
             implCall.Arguments.AddRange(mappings32.Select(m => context.CreateConstant(m)));

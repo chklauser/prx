@@ -32,6 +32,7 @@ using Prexonite.Compiler;
 using Prexonite.Compiler.Cil;
 using Prexonite.Compiler.Macro.Commands;
 using Prexonite.Concurrency;
+using Prexonite.Modular;
 using Prexonite.Types;
 
 namespace Prexonite.Commands.Concurrency
@@ -129,7 +130,7 @@ namespace Prexonite.Commands.Concurrency
         #region Partial application via call\star
 
         private readonly PartialCallWrapper _partial = new PartialCallWrapper(
-            Engine.Call_AsyncAlias, new SymbolEntry(SymbolInterpretations.Command,Alias, null));
+            Engine.Call_AsyncAlias, EntityRef.Command.Create(Alias));
 
         public PartialCallWrapper Partial
         {

@@ -30,6 +30,7 @@ using System.Diagnostics;
 using Prexonite.Compiler;
 using Prexonite.Compiler.Macro;
 using Prexonite.Compiler.Macro.Commands;
+using Prexonite.Modular;
 using Prexonite.Types;
 
 namespace Prexonite.Commands.Core
@@ -116,7 +117,7 @@ namespace Prexonite.Commands.Core
         {
             protected PartialTailCall(string alias, string callImplementationId,
                 SymbolInterpretations callImplementetaionInterpretation)
-                : base(alias, new SymbolEntry(SymbolInterpretations.Command, Alias, null))
+                : base(alias, EntityRef.Command.Create(Alias))
             {
             }
 

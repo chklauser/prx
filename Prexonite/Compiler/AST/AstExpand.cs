@@ -90,7 +90,7 @@ namespace Prexonite.Compiler.Ast
         public override AstGetSet GetCopy()
         {
             var copy = new AstExpand(Position, Entity, Call);
-            copy.CopyBaseMembers(this);
+            CopyBaseMembers(copy);
             return copy;
         }
 

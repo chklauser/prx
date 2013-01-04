@@ -55,9 +55,6 @@ namespace Prexonite.Compiler.Macro
         private readonly AstBlock _block;
 
         private readonly bool _isPartialApplication;
-
-        [NotNull]
-        private readonly IAstFactory _astFactory;
         
         /// <summary>
         /// In order to ensure that the macro doesn't pop too many blocks, 
@@ -86,7 +83,6 @@ namespace Prexonite.Compiler.Macro
             _block = new AstScopedBlock(invocation.Position, session.CurrentBlock);
             _isPartialApplication = _invocation.Arguments.Any(AstPartiallyApplicable.IsPlaceholder);
             _sentinelBlock = session.Target.CurrentBlock;
-            _astFactory = new MacroAstFactory(session);
         }
 
         #region Accessors 
@@ -251,7 +247,7 @@ namespace Prexonite.Compiler.Macro
         #region Compiler interaction
         
         [PublicAPI]
-        public IAstFactory Factory { get { return _astFactory; } }
+        public IAstFactory Factory { get { return _session.Factory; } }
 
         /// <summary>
         ///     Allocates a temporary variable for this macro expansion session.

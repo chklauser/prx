@@ -28,6 +28,7 @@ using System;
 using JetBrains.Annotations;
 using Prexonite.Commands.Core.Operators;
 using Prexonite.Compiler.Ast;
+using Prexonite.Modular;
 using Prexonite.Properties;
 using Prexonite.Types;
 
@@ -83,17 +84,15 @@ namespace Prexonite.Compiler.Macro.Commands
             var retVarV = context.AllocateTemporaryVariable();
             _extractReturnVariant(context, resultV, retVarV);
 
-            Func<AstGetSetSymbol> retVar = () =>
-                context.CreateGetSetSymbol(SymbolEntry.LocalObjectVariable(retVarV), PCall.Get);
+            Func<AstGetSet> retVar = () => context.CreateCall(EntityRef.Variable.Local.Create(retVarV));
 
             //Extract return value into retValueV (which happens to be the same as resultV)
             var retValueV = resultV;
             _extractReturnValue(context, resultV, retValueV);
 
 // ReSharper disable ImplicitlyCapturedClosure // perfectly safe as neither lambda survives the method
-            Func<AstGetSetSymbol> retValue = () =>
+            Func<AstGetSet> retValue = () => context.CreateCall(EntityRef.Variable.Local.Create(retValueV));
 // ReSharper restore ImplicitlyCapturedClosure
-                context.CreateGetSetSymbol(SymbolEntry.LocalObjectVariable(retValueV), PCall.Get);
 
             //Break and Continue behave differently outside loop blocks
             AstNode contStmt, breakStmt;
@@ -108,7 +107,7 @@ namespace Prexonite.Compiler.Macro.Commands
             context.FreeTemporaryVariable(resultV);
         }
 
-        private static void _genChecks(MacroContext context, [InstantHandle] Func<AstGetSetSymbol> retVar,
+        private static void _genChecks(MacroContext context, [InstantHandle] Func<AstGetSet> retVar,
             AstNode contStmt, AstNode breakStmt)
         {
             var inv = context.Invocation;
@@ -134,7 +133,7 @@ namespace Prexonite.Compiler.Macro.Commands
             context.Block.Add(checkCont);
         }
 
-        private static void _determineActions(MacroContext context, [InstantHandle] Func<AstGetSetSymbol> retValue,
+        private static void _determineActions(MacroContext context, [InstantHandle] Func<AstGetSet> retValue,
             out AstNode contStmt, out AstNode breakStmt)
         {
             var inv = context.Invocation;
@@ -158,11 +157,8 @@ namespace Prexonite.Compiler.Macro.Commands
         {
             var getRetValue =
                 context.CreateGetSetMember(
-                    context.CreateGetSetSymbol(SymbolEntry.LocalObjectVariable(resultV), 
-                        PCall.Get), PCall.Get, "Value");
-            var setRetValue =
-                context.CreateGetSetSymbol(SymbolEntry.LocalObjectVariable(retValueV), 
-                    PCall.Set, getRetValue);
+                    context.CreateCall(EntityRef.Variable.Local.Create(resultV)), PCall.Get, "Value");
+            var setRetValue = context.CreateCall(EntityRef.Variable.Local.Create(retValueV), PCall.Set, getRetValue);
             context.Block.Add(setRetValue);
         }
 
@@ -173,21 +169,17 @@ namespace Prexonite.Compiler.Macro.Commands
             var intT = new AstConstantTypeExpression(inv.File, inv.Line, inv.Column,
                 IntPType.Literal);
             var getRetVar =
-                context.CreateGetSetMember(
-                    context.CreateGetSetSymbol(SymbolEntry.LocalObjectVariable(resultV), 
-                        PCall.Get), PCall.Get, "Key");
+                context.CreateGetSetMember(context.CreateCall(EntityRef.Variable.Local.Create(resultV)), PCall.Get,
+                                           "Key");
             var asInt = new AstTypecast(inv.File, inv.Line, inv.Column, getRetVar, intT);
-            var setRetVar = context.CreateGetSetSymbol(
-                SymbolEntry.LocalObjectVariable(retVarV), PCall.Set, asInt);
+            var setRetVar = context.CreateCall(EntityRef.Variable.Local.Create(retVarV), PCall.Set, asInt);
             context.Block.Add(setRetVar);
         }
 
         private static void _storeResult(MacroContext context, string resultV)
         {
             var computeKvp = context.Invocation.Arguments[0];
-            var setResult = context.CreateGetSetSymbol(
-                SymbolEntry.LocalObjectVariable(resultV), 
-                PCall.Set, computeKvp);
+            var setResult = context.CreateCall(EntityRef.Variable.Local.Create(resultV), PCall.Set, computeKvp);
             context.Block.Add(setResult);
         }
 

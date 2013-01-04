@@ -29,6 +29,7 @@ using System.Collections.Generic;
 using System.Linq;
 using Prexonite.Commands.Core;
 using Prexonite.Commands.Core.PartialApplication;
+using Prexonite.Modular;
 using Prexonite.Types;
 using Debug = System.Diagnostics.Debug;
 
@@ -241,8 +242,7 @@ namespace Prexonite.Compiler.Ast
 
         public static AstExpr ConstFunc(this AstExpr expr)
         {
-            var constCmd = new AstGetSetSymbol(expr.File, expr.Line, expr.Column, PCall.Get,
-                new SymbolEntry(SymbolInterpretations.Command, Const.Alias, null));
+            var constCmd = new AstIndirectCall(expr.Position,PCall.Get, new AstReference(expr.Position,EntityRef.Command.Create(Const.Alias)));
             constCmd.Arguments.Add(expr);
             return constCmd;
         }
@@ -273,8 +273,8 @@ namespace Prexonite.Compiler.Ast
                 throw new ArgumentException("Placeholder must have its index assigned.",
                     "placeholder");
 
-            var call = new AstGetSetSymbol(placeholder.File, placeholder.Line, placeholder.Column,
-                PCall.Get, new SymbolEntry(SymbolInterpretations.Command, Id.Alias, null));
+            var call = new AstIndirectCall(placeholder.Position, PCall.Get,
+                                           new AstReference(placeholder.Position, EntityRef.Command.Create(Id.Alias)));
             call.Arguments.Add(placeholder.GetCopy());
             return call;
         }

@@ -122,14 +122,14 @@ namespace PrexoniteTests.Tests.Configurations
 									@"psr\impl\ast.pxs",
 									@"psr\impl\macro.pxs",
 							}},
-							new TestDependency { ScriptName = @"psr\pattern.pxs", Dependencies = new string[] {
+							new TestDependency { ScriptName = @"psr\impl\pattern.pxs", Dependencies = new string[] {
 									@"psr\impl\ast.pxs",
 									@"psr\impl\macro.pxs",
 									@"psr\impl\struct.pxs",
 							}},
-							new TestDependency { ScriptName = @"psr\prop.pxs", Dependencies = new string[] {
+							new TestDependency { ScriptName = @"psr\impl\prop.pxs", Dependencies = new string[] {
 									@"psr\impl\ast.pxs",
-									@"psr\impl.macro.pxs",
+									@"psr\impl\macro.pxs",
 							}},
 					
 					},
@@ -152,6 +152,26 @@ namespace PrexoniteTests.Tests.Configurations
             public void test_dcon()
             {
                 RunUnitTest(@"test_dcon");
+            } 
+            [Test]
+            public void test_prop_simple()
+            {
+                RunUnitTest(@"test_prop_simple");
+            } 
+            [Test]
+            public void test_prop_proxy()
+            {
+                RunUnitTest(@"test_prop_proxy");
+            } 
+            [Test]
+            public void test_prop_complex()
+            {
+                RunUnitTest(@"test_prop_complex");
+            } 
+            [Test]
+            public void test_prop_simple_glob()
+            {
+                RunUnitTest(@"test_prop_simple_glob");
             } 
         }
         internal abstract class Unit_macro : ScriptedUnitTestContainer
@@ -331,6 +351,8 @@ namespace PrexoniteTests.Tests.Configurations
 							}},
 							new TestDependency { ScriptName = @"psr\impl\misc.pxs", Dependencies = new string[] {
 									@"psr\impl\struct.pxs",
+									@"psr\impl\ast.pxs",
+									@"psr\impl\macro.pxs",
 							}},
 					
 					},
@@ -400,6 +422,11 @@ namespace PrexoniteTests.Tests.Configurations
             public void test_create_terminator()
             {
                 RunUnitTest(@"test_create_terminator");
+            } 
+            [Test]
+            public void test_swap()
+            {
+                RunUnitTest(@"test_swap");
             } 
         }
         internal abstract class Unit_struct : ScriptedUnitTestContainer

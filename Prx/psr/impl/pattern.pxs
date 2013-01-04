@@ -77,7 +77,7 @@ function repeatable(xs)
     
     var tee = tee\cor();
 
-    function GetEnumerator(this) 
+    function GetEnumerator(self) 
     {
         return (append(rep,tee)).GetEnumerator;
     }
@@ -92,7 +92,7 @@ macro pattern\construct(desc)
     desc = macro\unpack(desc);
     
 	var targets = var args >> skip(1) >> map(a => {optimize\ref(context,->a); return a;}) >> all;
-	var dynamicCall = ast\invoke_macro(desc.construct, SI.m.func);
+	var dynamicCall = ast\expand_macro(desc.construct);
 	dynamicCall.Arguments.AddRange(targets); 
     return dynamicCall;
 }
@@ -105,16 +105,19 @@ macro pattern\deconstruct(desc)
 	var targets = var args >> range(1,args.Count-2) >> map(a => {optimize\ref(context,->a); return a;}) >> all;
 	var the_object = args[args.Count - 1];
     
-	var block = ast("BlockExpression");
-	
 	//Temporary variable used to hold RHS, if RHS is not an object variable itself
 	var tempV;
 	var useTemp;
-	if(the_object is Prexonite::Compiler::Ast::AstGetSetSymbol and SI.is_lvar(the_object.Implementation.Interpretation))
+	if(ast_is_GetSetSymbol(the_object) and SI.is_lvar(the_object.Implementation.Interpretation))
     {
         useTemp = false;
         tempV = the_object.Implementation.InternalId;
-    }        
+    }
+    else if(ast_is_Call(the_object) and the_object.Subject.Entity.\implements("Prexonite.Modular.EntityRef+Variable+Local"))
+    {
+        useTemp = false;
+        tempV = the_object.Subject.Entity.Id;
+    }
     else
     {
         useTemp = true;
@@ -122,7 +125,7 @@ macro pattern\deconstruct(desc)
     
         var assignTmp = ast\lvar(SI.set, tempV);
         assignTmp.Arguments.Add(the_object);
-        block.Add(assignTmp);
+        context.Block.Add(assignTmp);
     }
 	
 	foreach(var bpt in zip(desc.bindings,targets))
@@ -135,27 +138,22 @@ macro pattern\deconstruct(desc)
         if(not SI.eq(bindingTarget.Call,SI.get))
             throw "The target $binding_name of $(desc.name) must not be a set-call";	
     
-        //var dynamicMacroCall = code(call\macro(binding.getValue~String,[tempV]));
-        //var tempVListLit = ast("ListLiteral");
-        //tempVListLit.Elements.Add(ast\const(tempV));
-        //var dynamicMacroCall = ast\macro(call\macro(ast\const(binding.getValue~String), tempVListLit));
-        var dynamicMacroCall = ast\invoke_macro(binding.getValue, SI.m.func);
+        var dynamicMacroCall = ast\expand_macro(binding.getValue);
         dynamicMacroCall.Arguments.Add(ast\const(tempV));
             
     	var setTarget = bindingTarget.GetCopy();
     	setTarget.Call = SI.set;
     	setTarget.Arguments.Add(dynamicMacroCall);
-    	block.Add(setTarget);
+        println("Deconstruction step: $setTarget");
+    	context.Block.Add(setTarget);
 	}
 	
 	//Behave like a proper set-call and return the RHS
-	block.Expression = ast\lvar(SI.get, tempV);
+	context.Block.Expression = ast\lvar(SI.get, tempV);
     
 	//Free temporary variable, if necessary
     if(useTemp)
         tempfree(tempV);
-        
-    return block;
 }
 
 function create_binding_desc(kvp) [is compiler;]
@@ -166,9 +164,11 @@ function create_binding_desc(kvp) [is compiler;]
 	var _getValue = kvp.Value;
     
     if(_getValue is Prexonite::PFunction)
-        _getValue = _getValue.Id;
-        
-    _getValue ~= String;
+        _getValue = SI.e.func(_getValue);
+    else if(_getValue is String)
+        _getValue = SI.e.func(_getValue,asm(ldr.app).Module.Name);
+    else if(not _getValue.\implements("Prexonite.Modular.EntityRef"))
+        throw "Binding implementation must be an EntityRef or function reference.";
 	
 	function name = _name;
 	function getValue = _getValue;
@@ -185,13 +185,16 @@ function create_pat_desc(_name, _bindings, _construct) [is compiler;]
 	_bindings = _bindings >> map(->create_binding_desc) >> repeatable;
     
     if(_construct is Prexonite::PFunction)
-        _construct = _construct.Id;        
-    _construct ~= String;
+        _construct = SI.e.func(_construct);
+    else if(_construct is String)
+        _construct = SI.e.func(_construct, asm(ldr.app).Module.Name);
+    else if(not _construct.\implements("Prexonite.Modular.EntityRef"))
+        throw "Pattern constructor must be an EntityRef or function reference.";
     
 	function name = _name;	
 	function bindings = _bindings;
 	function construct = _construct;
-    function ToString(this) = "data $name = $name(" + foldl((a,b) => a + " " + b.ToString,"", this.bindings) + " );";
+    function ToString(self) = "data $name = $name(" + foldl((a,b) => a + " " + b.ToString,"", self.bindings) + " );";
 	
 	return struct;
 }

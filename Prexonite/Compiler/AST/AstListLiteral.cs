@@ -28,6 +28,7 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
+using Prexonite.Modular;
 using Prexonite.Types;
 
 namespace Prexonite.Compiler.Ast
@@ -83,9 +84,7 @@ namespace Prexonite.Compiler.Ast
 
         protected override void DoEmitCode(CompilerTarget target, StackSemantics stackSemantics)
         {
-            var call = new AstGetSetSymbol(
-                File, Line, Column, PCall.Get,
-                new SymbolEntry(SymbolInterpretations.Command, Engine.ListAlias, null));
+            var call = target.Factory.Call(Position, EntityRef.Command.Create(Engine.ListAlias));
             call.Arguments.AddRange(Elements);
             call.EmitCode(target,stackSemantics);
         }

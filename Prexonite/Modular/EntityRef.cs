@@ -253,6 +253,11 @@ namespace Prexonite.Modular
 
             private Function([NotNull] string id, [NotNull] ModuleName moduleName)
             {
+                if(id == null)
+                    throw new ArgumentNullException("id");
+                if(moduleName == null)
+                    throw new ArgumentNullException("moduleName");
+
                 _id = id;
                 _moduleName = moduleName;
             }
@@ -479,6 +484,11 @@ namespace Prexonite.Modular
 
                 private Global([NotNull] string id, [NotNull] ModuleName moduleName)
                 {
+                    if(id == null)
+                        throw new ArgumentNullException("id");
+                    if (moduleName == null)
+                        throw new ArgumentNullException("moduleName");
+
                     _id = id;
                     _moduleName = moduleName;
                 }

@@ -922,41 +922,6 @@ namespace Prexonite.Compiler
 
         #region Assemble Invocation of Symbol
 
-        private AstGetSet _assembleInvocation(SymbolEntry sym)
-        {
-            if (isKnownMacroFunction(sym) || sym.Interpretation == SymbolInterpretations.MacroCommand)
-            {
-                EntityRef entityRef;
-                switch (sym.Interpretation)
-                {
-                    case SymbolInterpretations.MacroCommand:
-                        entityRef = EntityRef.MacroCommand.Create(sym.InternalId);
-                        break;
-                    case SymbolInterpretations.Function:
-                        entityRef = EntityRef.Function.Create(sym.InternalId,
-                                                              sym.Module ?? Loader.ParentApplication.Module.Name);
-                        break;
-                    default:
-                        entityRef = null;
-                        break;
-                }
-                if (entityRef != null)
-                {
-                    return Create.Expand(GetPosition(), entityRef);
-                }
-                else
-                {
-                    Loader.ReportMessage(Message.Warning(string.Format("Using legacy macro expansion mechanism for {0}.", sym),
-                                                         GetPosition(), MessageClasses.LegacyMacro));
-                    return new AstMacroInvocation(this, sym);
-                }
-            }
-            else
-            {
-                return new AstGetSetSymbol(this, sym);
-            }
-        }
-
         private class ReferenceTransformer : SymbolHandler<int,Tuple<Symbol,bool>>
         {
             [NotNull]

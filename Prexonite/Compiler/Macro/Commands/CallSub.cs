@@ -53,10 +53,8 @@ namespace Prexonite.Compiler.Macro.Commands
         protected override void DoExpand(MacroContext context)
         {
             var perform =
-                context.CreateGetSetSymbol(
-                    new SymbolEntry(SymbolInterpretations.Command, Engine.CallSubPerformAlias, null),
-                    PCall.Get,
-                    context.Invocation.Arguments.ToArray());
+                context.Factory.Call(context.Invocation.Position, EntityRef.Command.Create(Engine.CallSubPerformAlias),
+                                     PCall.Get, context.Invocation.Arguments.ToArray());
             var interpret = context.Factory.Expand(context.Invocation.Position,
                                           EntityRef.MacroCommand.Create(CallSubInterpret.Alias), context.Invocation.Call);
             

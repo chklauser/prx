@@ -79,12 +79,13 @@ macro prop\macro\assemble(dummyArgs,prop_get,prop_set)
         context.Function.Variables.Add(varargsId);
     var getArgc = ast\member(getArgs,"Count");
     var cmpEqZero = ast("BinaryOperator",getArgc,::BinaryOperator.Equality,ast\const(0),
-        SI.cmd(~Object<"Prexonite.OperatorNames+Prexonite">.Equality));
+        SI.cmd(~Object<"Prexonite.OperatorNames+Prexonite">.Equality),context.CurrentBlock);
     var conj = ast("LogicalAnd",nullCheck,cmpEqZero);
     var check = ast("ConditionalExpression",conj);
     
     prop_set.Arguments.Add(prop_arg);
     
+    println("prop\\macro\\assemble($dummyArgs,$prop_get,$prop_set)");
     check.IfExpression = prop_get;
     check.ElseExpression = prop_set;
     
@@ -109,16 +110,16 @@ macro prop\macro\simple(dummyArgs)
     else
     {
         //is global function ↔ define global variable
-        //TODO store global variable in target module instead of internal one
-        context.Application.Variables.Add(storeId,new ::PVariable);
-        backingField = ast\gvar(SI.i.gvar(storeId));
+        context.Application.Module.Variables.Add(var storeDecl = Prexonite::Modular::VariableDeclaration.Create(storeId));
+        context.Application.Variables.Add(storeId,new Prexonite::PVariable(storeDecl));
+        backingField = ast\call(SI.e.gvar(storeId,context.Application.Module.Name));
     }
     
     var prop_get = backingField;
     var prop_set = backingField.GetCopy;
     prop_set.Call = SI.set;
     
-    context.Block.Expression = var invk = ast\invoke_macro(macro\symbol(prop\macro\assemble));
+    context.Block.Expression = var invk = ast\expand_macro(macro\entity(prop\macro\assemble));
     invk.Arguments.Add(dummyArgs);
     invk.Arguments.Add(prop_get);
     invk.Arguments.Add(prop_set);
@@ -128,7 +129,7 @@ macro prop\macro\simple(dummyArgs)
 
 macro prop\macro\complex(dummyArgs,getter,setter)
 {
-    context.Block.Expression = var invk = ast\invoke_macro(macro\symbol(prop\macro\assemble));
+    context.Block.Expression = var invk = ast\expand_macro(macro\entity(prop\macro\assemble));
     (var iargs = invk.Arguments).Add(dummyArgs);
     iargs.Add(ast("IndirectCall",SI.get,getter));
     iargs.Add(ast("IndirectCall",SI.set,setter));
@@ -144,10 +145,11 @@ macro prop\macro\proxy(dummyArgs,prop_get)
         return;
     }
     
+    println("prop\\macro\\proxy($dummyArgs,$prop_get)");
     var prop_set = prop_get.GetCopy();
     prop_set.Call = SI.set;
     
-    context.Block.Expression = var invk = ast\invoke_macro(macro\symbol(prop\macro\assemble));
+    context.Block.Expression = var invk = ast\expand_macro(macro\entity(prop\macro\assemble));
     invk.Arguments.Add(dummyArgs);
     invk.Arguments.Add(prop_get);
     invk.Arguments.Add(prop_set);
@@ -204,7 +206,7 @@ macro prop\macro(dummayArgs)[
 
 macro prop
 {
-    context.Block.Expression = var invk = ast\invoke_macro(macro\symbol(prop\macro));
+    context.Block.Expression = var invk = ast\expand_macro(macro\entity(prop\macro));
     invk.Arguments.Add(ast\const(0));
     invk.Arguments.AddRange(var args);
     return null;
@@ -212,7 +214,7 @@ macro prop
 
 macro struct_prop
 {
-    context.Block.Expression = var invk = ast\invoke_macro(macro\symbol(prop\macro));
+    context.Block.Expression = var invk = ast\expand_macro(macro\entity(prop\macro));
     invk.Arguments.Add(ast\const(1));
     invk.Arguments.AddRange(var args);
     return null;

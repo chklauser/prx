@@ -261,7 +261,7 @@ namespace Prexonite.Compiler.Macro.Commands
                 // ReSharper restore MemberHidesStaticFromOuterClass
 
                 public PartialCallMacroPerform()
-                    : base(Alias, SymbolEntry.Command(CallMacroPerform.Alias))
+                    : base(Alias, EntityRef.Command.Create(CallMacroPerform.Alias))
                 {
                 }
 
@@ -335,8 +335,10 @@ namespace Prexonite.Compiler.Macro.Commands
             AstExpr macroSpec, AstExpr call, AstExpr justEffect,
             IEnumerable<AstExpr> args)
         {
-            var getContext = context.CreateGetSetSymbol(
-                SymbolEntry.LocalReferenceVariable(MacroAliases.ContextAlias), PCall.Get);
+            var getContext = context.Factory.IndirectCall(context.Invocation.Position,
+                                                          context.Factory.Call(context.Invocation.Position,
+                                                                               EntityRef.Variable.Local.Create(
+                                                                                   MacroAliases.ContextAlias)));
             var prepareCall = context.CreateMacroInvocation(context.Call,
                 SymbolEntry.MacroCommand(CallMacroPerform.PartialCallMacroPerform.Alias),
                 macroSpec,

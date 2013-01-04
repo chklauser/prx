@@ -1047,6 +1047,18 @@ macro ast\call(callTypeExpr,entityExpr)
     if(is_in_macro)
         establish_macro_context;
 
+    if(entityExpr is null)
+    {
+        entityExpr = callTypeExpr;
+        callTypeExpr = ast3("MemberAccess",macro\getSI,"get");
+    }
+
+    if(entityExpr is null)
+    {
+        macro\report_error(@"ast\call([callTypeExpr,] entityExpr) required at least one argument, the entity expression.");
+        return;
+    }
+
     // ast3("IndirectCall",ast3("Reference",$(entity)),$(callType));
 
     var referenceCtor = ast\expand_macro(macro\entity(ast3));
@@ -1742,6 +1754,11 @@ macro macro\deprecated\macroInvocation as macroInvocation
     
     var getContext = ast\lref(SI.get, Prexonite::Compiler::MacroAliases.ContextAlias);
     return ast\member(getContext, SI.get, "Invocation");
+}
+
+function ast_is_Call as is_ast_Call(node)
+{
+    return ast_is_IndirectCall(node) and ast_is_Reference(node.Subject);
 }
 
 //Position report

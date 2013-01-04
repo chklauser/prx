@@ -26,6 +26,7 @@
 
 using System;
 using JetBrains.Annotations;
+using Prexonite.Modular;
 using Prexonite.Types;
 
 namespace Prexonite.Compiler.Ast
@@ -95,36 +96,17 @@ namespace Prexonite.Compiler.Ast
             var vContainer = _block.CreateLabel("container");
             target.Function.Variables.Add(vContainer);
             //Try block => Container = {Expression}; {Block};
-            var setCont =
-                new AstGetSetSymbol(
-                    File,
-                    Line,
-                    Column,
-                    PCall.Set,
-                    new SymbolEntry(SymbolInterpretations.LocalObjectVariable, vContainer, null));
+            var setCont = target.Factory.Call(Position, EntityRef.Variable.Local.Create(vContainer),PCall.Set);
             setCont.Arguments.Add(_resourceExpression);
 
-            var getCont =
-                new AstGetSetSymbol(
-                    File,
-                    Line,
-                    Column,
-                    PCall.Get,
-                    new SymbolEntry(SymbolInterpretations.LocalObjectVariable, vContainer, null));
+            var getCont = target.Factory.Call(Position, EntityRef.Variable.Local.Create(vContainer));
 
             var tryBlock = tryNode.TryBlock;
             tryBlock.Add(setCont);
             tryBlock.AddRange(_block);
 
             //Finally block => dispose( Container );
-            var dispose =
-                new AstGetSetSymbol(
-                    File,
-                    Line,
-                    Column,
-                    PCall.Get,
-                    new SymbolEntry(SymbolInterpretations.Command, Engine.DisposeAlias, null));
-
+            var dispose = target.Factory.Call(Position, EntityRef.Command.Create(Engine.DisposeAlias));
             dispose.Arguments.Add(getCont);
 
             tryNode.FinallyBlock.Add(dispose);

@@ -32,6 +32,7 @@ using Prexonite.Compiler;
 using Prexonite.Compiler.Cil;
 using Prexonite.Compiler.Macro;
 using Prexonite.Compiler.Macro.Commands;
+using Prexonite.Modular;
 using Prexonite.Types;
 
 namespace Prexonite.Commands.Core
@@ -216,7 +217,7 @@ namespace Prexonite.Commands.Core
         #region Macro for partial application
 
         private readonly PartialCallWrapper _partialCall = new PartialCallWrapper(Engine.CallAlias,
-            new SymbolEntry(SymbolInterpretations.Command, Alias, null));
+            EntityRef.Command.Create(Alias));
 
         public PartialMacroCommand Partial
         {

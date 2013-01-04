@@ -58,9 +58,9 @@ namespace Prexonite.Compiler.Macro.Commands
     /// </remarks>
     public class PartialCallWrapper : PartialMacroCommand
     {
-        private readonly SymbolEntry _callImplementation;
+        private readonly EntityRef _callImplementation;
 
-        public SymbolEntry CallImplementation
+        public EntityRef CallImplementation
         {
             get { return _callImplementation; }
         }
@@ -69,9 +69,7 @@ namespace Prexonite.Compiler.Macro.Commands
         /// Creates a new instance of <see cref="PartialCallWrapper"/> around the specified call implementation.
         /// </summary>
         /// <param name="alias">The name of this macro command.</param>
-        /// <param name="callImplementationId">The physical id of the call implementation.</param>
-        /// <param name="callImplementetaionInterpretation">The interpretation of the call implementation.</param>
-        public PartialCallWrapper(string alias, SymbolEntry callImplementation)
+        public PartialCallWrapper(string alias, EntityRef callImplementation)
             : base(alias)
         {
             if (callImplementation == null)
@@ -112,8 +110,11 @@ namespace Prexonite.Compiler.Macro.Commands
             {
                 // no placeholders, invoke call\perform directly
 
-                var call = context.CreateGetSetSymbol(_callImplementation,
-                    context.Call, GetCallArguments(context).ToArray());
+                var call = context.Factory.IndirectCall(context.Invocation.Position,
+                                                        context.Factory.Reference(context.Invocation.Position,
+                                                                                  _callImplementation),
+                                                        context.Call);
+                call.Arguments.AddRange(GetCallArguments(context));
                 context.Block.Expression = call;
                 return;
             }
@@ -128,10 +129,10 @@ namespace Prexonite.Compiler.Macro.Commands
             inv.Arguments.Add(context.CreateConstant(GetPassThroughArguments(context)));
 
             // Indicate the kind of call by passing `call\perform(?)`, a partial application of call
-            var paCall = context.CreateGetSetSymbol(_callImplementation,
-                context.Invocation.Call,
-                new AstPlaceholder(context.Invocation.File, context.Invocation.Line,
-                    context.Invocation.Column, 0));
+            var paCall = context.Factory.Call(context.Invocation.Position, _callImplementation, context.Call,
+                                              new AstPlaceholder(context.Invocation.File, context.Invocation.Line,
+                                                                 context.Invocation.Column, 0));
+                
             inv.Arguments.Add(paCall);
 
             // Pass all the other arguments through
@@ -145,12 +146,11 @@ namespace Prexonite.Compiler.Macro.Commands
         /// </summary>
         /// <param name="context">The macro context in which to create the AST node.</param>
         /// <returns>A trivial partial application of the call implementation.</returns>
-        protected virtual AstGetSetSymbol GetTrivialPartialApplication(MacroContext context)
+        protected virtual AstGetSet GetTrivialPartialApplication(MacroContext context)
         {
-            var cp = new AstGetSetSymbol(context.Invocation.File, context.Invocation.Line,
-                context.Invocation.Column, context.Invocation.Call, _callImplementation);
-            cp.Arguments.Add(new AstPlaceholder(context.Invocation.File, context.Invocation.Line,
-                context.Invocation.Column, 0));
+            var cp = context.Factory.Call(context.Invocation.Position, _callImplementation, context.Call,
+                                          new AstPlaceholder(context.Invocation.File, context.Invocation.Line,
+                                                             context.Invocation.Column, 0));
             return cp;
         }
 

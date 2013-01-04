@@ -648,7 +648,15 @@ namespace Prexonite.Compiler
                     var byValOuter = outer;
                     exprs.Add(
                         p =>
-                            new AstGetSetSymbol(p, SymbolEntry.LocalObjectVariable(byValOuter)));
+                            {
+                                var pos = p.GetPosition();
+                                return Factory.IndirectCall(pos,
+                                                            Factory.Reference(pos,
+                                                                              Loader.Cache.EntityRefs.GetCached(
+                                                                                  EntityRef.Variable.Local.Create(
+                                                                                      byValOuter))));
+                            }
+                        );
                 }
             }
 
@@ -872,14 +880,11 @@ namespace Prexonite.Compiler
         #region Functions/Commands
 
         [DebuggerStepThrough]
-        public void EmitFunctionCall(ISourcePosition position, int args, string id, ModuleName moduleName)
+        public void EmitFunctionCall(ISourcePosition position, int args,[NotNull] string id, [CanBeNull] ModuleName moduleName, bool justEffect = false)
         {
-            EmitFunctionCall(position, args, id, moduleName, false);
-        }
+            if (id == null)
+                throw new ArgumentNullException("id");
 
-        [DebuggerStepThrough]
-        public void EmitFunctionCall(ISourcePosition position, int args, string id, ModuleName moduleName, bool justEffect)
-        {
             if(moduleName == Loader.ParentApplication.Module.Name)
                 moduleName = null;
             Emit(position, Instruction.CreateFunctionCall(args, id, justEffect, moduleName));

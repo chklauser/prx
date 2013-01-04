@@ -28,6 +28,7 @@ using System;
 using System.Diagnostics;
 using System.Globalization;
 using Prexonite.Compiler.Cil;
+using Prexonite.Modular;
 using Prexonite.Properties;
 using Prexonite.Types;
 using NoDebug = System.Diagnostics.DebuggerNonUserCodeAttribute;
@@ -86,9 +87,7 @@ namespace Prexonite.Compiler.Ast
                     return;
                 }
             }
-            var ldEnumVar =
-                new AstGetSetSymbol(
-                    File, Line, Column, new SymbolEntry(SymbolInterpretations.LocalObjectVariable, enumVar, null));
+            var ldEnumVar = target.Factory.Call(Position, EntityRef.Variable.Local.Create(enumVar));
             var getCurrent =
                 new AstGetSetMemberAccess(File, Line, Column, ldEnumVar, "Current");
             element.Arguments.Add(getCurrent);

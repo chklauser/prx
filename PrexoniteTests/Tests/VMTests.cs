@@ -41,6 +41,7 @@ using Prexonite.Commands.Core.Operators;
 using Prexonite.Compiler;
 using Prexonite.Compiler.Ast;
 using Prexonite.Compiler.Cil;
+using Prexonite.Modular;
 using Prexonite.Types;
 
 namespace Prx.Tests
@@ -1740,20 +1741,20 @@ function main()[is volatile;]
     s = ""BEGIN--"";
 }
 ");
+            var pos = new SourcePosition("file", -1, -2);
+            var mn = ldr.ParentApplication.Module.Name;
             var ct = ldr.FunctionTargets["main"];
             ct.Function.Code.RemoveAt(ct.Function.Code.Count - 1);
             var block = new AstScopedBlock(new SourcePosition("file", -1, -2),ct.Ast);
 
-            var assignStmt = new AstGetSetSymbol("file", -1, -2, PCall.Set,
-                new SymbolEntry(SymbolInterpretations.GlobalObjectVariable, "s",ldr.ParentApplication.Module.Name));
+            var assignStmt = ct.Factory.Call(pos, EntityRef.Variable.Global.Create("s",mn),PCall.Set);
             assignStmt.Arguments.Add(new AstConstant("file", -1, -2, "stmt."));
             var incStmt = new AstModifyingAssignment("file", -1, -2,
                 BinaryOperator.Addition,
                 assignStmt,
                 new SymbolEntry(SymbolInterpretations.Command, Addition.DefaultAlias, null), ct.Ast);
 
-            var assignExpr = new AstGetSetSymbol("file", -1, -2, PCall.Set,
-                new SymbolEntry(SymbolInterpretations.GlobalObjectVariable, "s", ldr.ParentApplication.Module.Name));
+            var assignExpr = ct.Factory.Call(pos, EntityRef.Variable.Global.Create("s", mn), PCall.Set);
             assignExpr.Arguments.Add(new AstConstant("file", -1, -2, "expr."));
             var incExpr = new AstModifyingAssignment("file", -1, -2,
                 BinaryOperator.Addition,

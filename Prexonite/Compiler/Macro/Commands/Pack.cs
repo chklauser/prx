@@ -24,6 +24,7 @@
 //  WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING 
 //  IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
+using Prexonite.Modular;
 using Prexonite.Properties;
 using Prexonite.Types;
 
@@ -65,11 +66,11 @@ namespace Prexonite.Compiler.Macro.Commands
 
             // [| context.StoreForTransport(boxed($arg0)) |]
 
-            var getContext = context.CreateGetSetSymbol(
-                SymbolEntry.LocalReferenceVariable(MacroAliases.ContextAlias), PCall.Get);
-            var boxedArg0 = context.CreateGetSetSymbol(SymbolEntry.Command(Engine.BoxedAlias), PCall.Get, context.Invocation.Arguments[0]);
-            context.Block.Expression = context.CreateGetSetMember(getContext, PCall.Get,
-                "StoreForTransport", boxedArg0);
+            var getContext = context.CreateIndirectCall(context.CreateCall(
+                EntityRef.Variable.Local.Create(MacroAliases.ContextAlias)));
+            var boxedArg0 = context.CreateCall(EntityRef.Command.Create(Engine.BoxedAlias),PCall.Get,
+                                               context.Invocation.Arguments[0]);
+            context.Block.Expression = context.CreateGetSetMember(getContext, PCall.Get, "StoreForTransport", boxedArg0);
         }
 
         #endregion
