@@ -155,6 +155,7 @@
     <Compile Include="Compiler\Ast\AstFactoryBase.cs" />
     <Compile Include="Compiler\Ast\AstFactoryBridge.cs" />
     <Compile Include="Compiler\Ast\AstLoopBlock.cs" />
+    <Compile Include="Compiler\Ast\AstPostExpression.cs" />
     <Compile Include="Compiler\Ast\AstReference.cs" />
     <Compile Include="Compiler\Ast\AstScopedExpr.cs" />
     <Compile Include="Compiler\Ast\AstScopedBlock.cs" />

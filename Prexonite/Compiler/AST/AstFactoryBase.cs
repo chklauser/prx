@@ -492,28 +492,33 @@ namespace Prexonite.Compiler.Ast
                         }
                         else if (isAssignable)
                         {
-                            var assignPrototype = complex.GetCopy();
-                            var assignment = ModifyingAssignment(position, assignPrototype,
-                                                                 isIncrement
-                                                                     ? BinaryOperator.Addition
-                                                                     : BinaryOperator.Subtraction);
-                            if (assignPrototype.Call != PCall.Get)
+                            if (complex.Call != PCall.Get)
                             {
                                 ReportMessage(_lValueExpectedErrorMessage(position));
                             }
 
+                            var assignPrototype = complex.GetCopy();
                             assignPrototype.Arguments.Add(Constant(position, 1));
                             assignPrototype.Call = PCall.Set;
 
+                            var assignment = ModifyingAssignment(position, assignPrototype,
+                                                                 isIncrement
+                                                                     ? BinaryOperator.Addition
+                                                                     : BinaryOperator.Subtraction);
+
                             if (!isPre)
                             {
-                                AstBlock block = Block(position);
-                                block.Add(assignment);
-                                block.Expression = complex;
-                                return block;
+                                // We need to have the expression evaluated *before* 
+                                // the update is performed.
+                                // If we just used a block expression, the assignment would be 
+                                // performed before the 'value' of the expression has been evaluated.
+                                return new AstPostExpression(position, complex, assignment);
                             }
                             else
                             {
+                                // The handling of value semantics of set-calls will 
+                                // cause the updated value to also be used as the value
+                                // of the expression
                                 return assignment;
                             }
                         }

@@ -257,7 +257,9 @@ stloc    y
 ldloc    x
 ldloc    y
 add
+dup      1
 stloc    x
+ret.val
 ");
         }
 
@@ -2974,7 +2976,9 @@ function main()
 ldloc a
 ldc.int 3
 add
+dup 1
 stloc a
+ret.val
 ");
         }
 
