@@ -193,11 +193,7 @@ namespace Prexonite.Compiler.Macro.Commands
             AstExpr expectedNode = new AstConstant(inv.File,
                 inv.Line,
                 inv.Column, (int) expected);
-            var cmp = new AstBinaryOperator(inv.File, inv.Line,
-                                            inv.Column, retVar, eq, expectedNode,
-                                            new SymbolEntry(SymbolInterpretations.Command, Equality.DefaultAlias, null),
-                                            context.CurrentBlock);
-            return cmp;
+            return context.Factory.BinaryOperation(inv.Position, retVar, BinaryOperator.Equality, expectedNode);
         }
     }
 }

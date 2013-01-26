@@ -472,7 +472,7 @@ label   fe  nop+fe
 }
 ");
 
-            _expect(
+            Expect(
                 @"
             var x
 

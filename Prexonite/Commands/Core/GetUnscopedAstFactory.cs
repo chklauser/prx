@@ -32,6 +32,7 @@ using Prexonite.Compiler.Ast;
 using Prexonite.Compiler.Cil;
 using Prexonite.Compiler.Symbolic;
 using Prexonite.Modular;
+using Prexonite.Properties;
 
 namespace Prexonite.Commands.Core
 {
@@ -53,16 +54,28 @@ namespace Prexonite.Commands.Core
                 get { return _root; }
             }
 
-            [Obsolete("Use the Symbol API")]
-            protected override bool TryUseSymbolEntry(string symbolicId, ISourcePosition position, out SymbolEntry entry)
-            {
-                entry = null;
-                return false;
-            }
-
             protected override AstGetSet CreateNullNode(ISourcePosition position)
             {
                 return IndirectCall(position, Null(position));
+            }
+
+            protected override bool IsOuterVariable(string id)
+            {
+                return false;
+            }
+
+            protected override void RequireOuterVariable(string id)
+            {
+            }
+
+            protected override void ReportMessage(Message message)
+            {
+                throw new ErrorMessageException(message);
+            }
+
+            protected override CompilerTarget CompileTimeExecutionContext
+            {
+                get { throw new InvalidOperationException("Unscoped AST factory does not have access to a compiler instance."); }
             }
         }
 

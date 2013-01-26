@@ -54,5 +54,14 @@ namespace Prexonite.Compiler.Internal
                 return false;
             }
         }
+
+        [ContractAnnotation("=>true,indirectCallNode:notnull;=>false,indirectCallNode:canbenull")]
+        public static bool IsCommandCall(this AstNode node, string commandAlias, out AstIndirectCall indirectCallNode)
+        {
+            EntityRef entityRef;
+            EntityRef.Command cmd;
+            return node.TryMatchCall(out indirectCallNode, out entityRef) && entityRef.TryGetCommand(out cmd) &&
+                   Engine.StringsAreEqual(cmd.Id, commandAlias);
+        }
     }
 }

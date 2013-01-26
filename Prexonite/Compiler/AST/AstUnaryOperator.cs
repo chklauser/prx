@@ -27,9 +27,8 @@
 using System;
 using System.Diagnostics;
 using JetBrains.Annotations;
-using Prexonite.Compiler.Symbolic;
-using Prexonite.Compiler.Symbolic.Compatibility;
 using Prexonite.Modular;
+using Prexonite.Properties;
 using Prexonite.Types;
 
 namespace Prexonite.Compiler.Ast
@@ -41,40 +40,14 @@ namespace Prexonite.Compiler.Ast
         private readonly AstExpr _operand;
         private readonly UnaryOperator _operator;
 
-        public SymbolEntry Implementation { get; set; }
-
-        public AstUnaryOperator(string file, int line, int column, UnaryOperator op, AstExpr operand, SymbolEntry implementation)
-            : base(file, line, column)
+        public AstUnaryOperator(ISourcePosition position, UnaryOperator op, AstExpr operand)
+            : base(position)
         {
             if (operand == null)
                 throw new ArgumentNullException("operand");
-            if (implementation == null)
-                throw new ArgumentNullException("implementation");
             
             _operator = op;
             _operand = operand;
-            Implementation = implementation;
-        }
-
-        internal static AstUnaryOperator _Create(Parser p, UnaryOperator op, AstExpr operand)
-        {
-            Symbol impl;
-
-            switch (op)
-            {
-                case UnaryOperator.PreIncrement:
-                case UnaryOperator.PostIncrement:
-                    impl = _ResolveOperator(p, OperatorNames.Prexonite.Addition);
-                    break;
-                case UnaryOperator.PreDecrement:
-                case UnaryOperator.PostDecrement:
-                    impl = _ResolveOperator(p, OperatorNames.Prexonite.Subtraction);
-                    break;
-                default:
-                    impl = _ResolveOperator(p, OperatorNames.Prexonite.GetName(op));
-                    break;
-            }
-            return new AstUnaryOperator(p.scanner.File, p.t.line, p.t.col, op, operand, impl.ToSymbolEntry());
         }
 
         #region IAstHasExpressions Members
@@ -104,7 +77,7 @@ namespace Prexonite.Compiler.Ast
             var operand = _operand;
             _OptimizeNode(target, ref operand);
             var constOperand = operand as AstConstant;
-            if (constOperand != null)
+            if (constOperand != null) 
             {
                 var valueOperand = constOperand.ToPValue(target);
                 PValue result;
@@ -260,32 +233,6 @@ namespace Prexonite.Compiler.Ast
                             loadVar();
                         }
                     }
-                    else if (isAssignable)
-                    {
-                        //The get/set fallback
-                        var assignPrototype = complex.GetCopy();
-                        var assignment = new AstModifyingAssignment(
-                            assignPrototype.File, assignPrototype.Line, assignPrototype.Column,
-                            isIncrement
-                                ? BinaryOperator.Addition
-                                : BinaryOperator.Subtraction, assignPrototype, Implementation, target.CurrentBlock);
-                        if (assignPrototype.Call == PCall.Get)
-                            assignPrototype.Arguments.Add(new AstConstant(File, Line, Column, 1));
-                        else
-                            assignPrototype.Arguments[assignPrototype.Arguments.Count - 1] =
-                                new AstConstant(File, Line, Column, 1);
-                        assignPrototype.Call = PCall.Set;
-
-                        if (!isPre)
-                        {
-                            complex.EmitValueCode(target);
-                            assignment.EmitEffectCode(target);
-                        }
-                        else
-                        {
-                            assignment.EmitValueCode(target);
-                        }
-                    }
                     else
                         throw new PrexoniteException(
                             "Node of type " + _operand.GetType() +
@@ -328,9 +275,10 @@ namespace Prexonite.Compiler.Ast
                 case UnaryOperator.LogicalNot:
                 case UnaryOperator.UnaryNegation:
                 case UnaryOperator.OnesComplement:
-                    var call = new AstGetSetSymbol(File, Line, Column, PCall.Get, Implementation);
-                    call.Arguments.Add(_operand);
-                    call.EmitValueCode(target);
+                    target.Loader.ReportMessage(
+                        Message.Error(
+                            Resources.AstUnaryOperator__NonIncrementDecrement,
+                            Position, MessageClasses.ParserInternal));
                     break;
                 case UnaryOperator.PreDecrement:
                 case UnaryOperator.PreIncrement:
@@ -354,34 +302,9 @@ namespace Prexonite.Compiler.Ast
 
         public void DoEmitPartialApplicationCode(CompilerTarget target)
         {
-            var typecheck = Operand as AstTypecheck;
-            //Special handling of `? is not {TypeExpr}`
-            //  the typecheck.IsInverted flag is only set for the
-            //      `? is not {TypeExpr}`
-            //  syntax, and not for
-            //      `not ? is {TypeExpr}`
-            //  for consistency reasons
-            if (Operator == UnaryOperator.LogicalNot && typecheck != null && typecheck.IsInverted)
-            {
-                //Expression is something like (? is not T)
-                //emit ((? is T) then (not ?))
-                var thenCmd = new AstGetSetSymbol(File, Line, Column, PCall.Get,
-                    new SymbolEntry(SymbolInterpretations.Command, Engine.ThenAlias, null));
-                var notOp = new AstUnaryOperator(File, Line, Column, UnaryOperator.LogicalNot,
-                    new AstPlaceholder(File, Line, Column, 0), Implementation);
-                var partialTypecheck = new AstTypecheck(File, Line, Column, typecheck.Subject,
-                    typecheck.Type);
-                thenCmd.Arguments.Add(partialTypecheck);
-                thenCmd.Arguments.Add(notOp);
-
-                thenCmd.EmitValueCode(target);
-            }
-            else
-            {
-                //Just emit the operator normally, the appropriate mechanism will kick in
-                // further down the AST
-                DoEmitCode(target,StackSemantics.Value);
-            }
+            //Just emit the operator normally, the appropriate mechanism will kick in
+            // further down the AST
+            DoEmitCode(target,StackSemantics.Value);
         }
     }
 

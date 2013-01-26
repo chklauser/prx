@@ -382,13 +382,6 @@ namespace Prexonite.Compiler
 
         private readonly Stack<object> _scopeStack = new Stack<object>();
 
-        [Obsolete("Use Symbol API instead.")]
-        private bool _TryUseSymbolEntry(string id, ISourcePosition position, out SymbolEntry symbolEntry)
-        {
-            Debug.Assert(target != null, "Tried to resolve legacy self entry while not in a scope where a compiler target is available.");
-            return target._TryUseSymbolEntry(id, position, out symbolEntry);
-        }
-
         internal void _PushScope(AstScopedBlock block)
         {
             if (!ReferenceEquals(block.LexicalScope, CurrentBlock))
@@ -764,22 +757,7 @@ namespace Prexonite.Compiler
         [DebuggerStepThrough]
         private bool isOuterVariable(string id) //context
         {
-            //Check local function
-            var func = target.Function;
-            if (func.Variables.Contains(id) || func.Parameters.Contains(id))
-                return false;
-
-            //Check parents
-            for (var parent = target.ParentTarget;
-                 parent != null;
-                 parent = parent.ParentTarget)
-            {
-                func = parent.Function;
-                if (func.Variables.Contains(id) || func.Parameters.Contains(id) ||
-                    parent.OuterVariables.Contains(id))
-                    return true;
-            }
-            return false;
+            return target._IsOuterVariable(id);
         }
 
         private string generateLocalId(string prefix = "")
@@ -1011,7 +989,7 @@ namespace Prexonite.Compiler
                 try
                 {
                     var transformed = symbol.HandleWith(_referenceTransformer, ptrCount);
-                    var invocation = _assembleInvocation(transformed.Item1, position);
+                    var invocation = Create.ExprFor(position, transformed.Item1);
                     if (transformed.Item2)
                     {
                         // If the reference transformer indicates that an Expand prefix was eliminated
@@ -1036,105 +1014,6 @@ namespace Prexonite.Compiler
                     Loader.ReportMessage(e.CompilerMessage);
                     return Create.Null(position);
                 }
-            }
-        }
-
-        private static readonly AssembleAstHandler AssembleAst = new AssembleAstHandler();
-
-        private class AssembleAstHandler : ISymbolHandler<Tuple<Parser, PCall>, AstExpr>
-        {
-public AstExpr HandleMessage(MessageSymbol self, Tuple<Parser, PCall> argument)
-            {
-                return self.InnerSymbol.HandleWith(this, argument);
-            }
-
-            public AstExpr HandleDereference(DereferenceSymbol self, Tuple<Parser, PCall> argument)
-            {
-                return AstIndirectCall.Create(argument.Item1.GetPosition(), self.InnerSymbol.HandleWith(this, argument),
-                                              argument.Item2);
-            }
-
-            #region Implementation of ISymbolHandler<in Tuple<Parser,PCall>,out AstExpr>
-
-            public AstExpr HandleReference(ReferenceSymbol self, Tuple<Parser, PCall> argument)
-            {
-                EntityRef.Variable.Local local;
-                if (self.Entity.TryGetLocalVariable(out local))
-                {
-                    if(argument.Item1.isOuterVariable(local.Id))
-                        argument.Item1.target.RequireOuterVariable(local.Id);
-                }
-                return argument.Item1.Create.Reference(argument.Item1.GetPosition(), self.Entity);
-            }
-
-            public AstExpr HandleNil(NilSymbol self, Tuple<Parser, PCall> argument)
-            {
-                // TODO: consider treating Nil as an error (needs to be shadowed by proper error messages)
-                return argument.Item1._NullNode(argument.Item1.GetPosition());
-            }
-
-            public AstExpr HandleExpand(ExpandSymbol self, Tuple<Parser, PCall> argument)
-            {
-                ReferenceSymbol refSym;
-
-                var position = argument.Item1.GetPosition();
-                var inner = self.InnerSymbol;
-                var abort = false;
-
-                MessageSymbol msgSym;
-                while(inner.TryGetMessageSymbol(out msgSym))
-                {
-                    abort |= msgSym.Message.Severity == MessageSeverity.Error;
-                    argument.Item1.Loader.ReportMessage(msgSym.Message);
-                    inner = msgSym.InnerSymbol;
-                }
-
-                if(self.InnerSymbol.TryGetReferenceSymbol(out refSym))
-                {
-                    EntityRef.MacroCommand mcmd;
-                    EntityRef.Function func;
-                    if(refSym.Entity.TryGetMacroCommand(out mcmd) || refSym.Entity.TryGetFunction(out func))
-                    {
-                        if (abort)
-                            return argument.Item1._NullNode(position);
-                        else
-                            return argument.Item1.Create.Expand(argument.Item1.GetPosition(),refSym.Entity);
-                    }
-                    else
-                    {
-                        argument.Item1.Loader.ReportMessage(
-                        Message.Error(string.Format(Resources.Parser_CannotExpandAtCompileTime, inner),
-                            position, MessageClasses.NotAMacro));
-                        return argument.Item1._NullNode(position);
-                    }
-                }
-                else
-                {
-                    // TODO: Handle general case with dereferences between Expand and Reference.
-                    
-                    argument.Item1.Loader.ReportMessage(
-                        Message.Error(string.Format(Resources.Parser_CannotExpandAtCompileTime, inner),
-                            position, MessageClasses.NotAMacro));
-                    return argument.Item1._NullNode(position);
-                }
-            }
-
-            #endregion
-        }
-
-        [NotNull]
-        private AstExpr _assembleInvocation([NotNull] Symbol sym, [NotNull] ISourcePosition position)
-        {
-            switch (target.Loader._TryUseSymbol(ref sym, position))
-            {
-                case SymbolUsageResult.Successful:
-                    Debug.Assert(sym != null);
-                    return sym.HandleWith(AssembleAst, Tuple.Create(this, PCall.Get));
-                case SymbolUsageResult.Unresolved:
-                case SymbolUsageResult.Error:
-                    return _NullNode(GetPosition());
-                default:
-                    throw new ArgumentOutOfRangeException();
             }
         }
 
@@ -1180,7 +1059,7 @@ public AstExpr HandleMessage(MessageSymbol self, Tuple<Parser, PCall> argument)
             {
                 EnsureInScope(fallbackSymbol);
 
-                var e = _assembleInvocation(fallbackSymbol, type.Position);
+                var e = Create.ExprFor(type.Position,fallbackSymbol);
                 var call = e as AstGetSet;
                 if (call == null)
                 {

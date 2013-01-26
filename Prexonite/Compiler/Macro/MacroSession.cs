@@ -78,10 +78,9 @@ namespace Prexonite.Compiler.Macro
             if(target == null)
                 throw new ArgumentNullException("target");
 
-            _astFactory = new MacroAstFactory(this);
-            if (target == null)
-                throw new ArgumentNullException("target");
             _target = target;
+            _astFactory = _target.Factory;
+            
             _globalSymbols = SymbolStore.Create(_target.Loader.Symbols);
             _outerVariables = new ReadOnlyCollectionView<string>(_target.OuterVariables);
 

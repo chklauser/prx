@@ -31,7 +31,7 @@ using Prexonite.Types;
 
 namespace Prexonite.Compiler.Ast
 {
-    public class AstGetSetSymbol : AstGetSet, ICanBeReferenced, IAstPartiallyApplicable
+    public class AstGetSetSymbol : AstGetSet, IAstPartiallyApplicable
     {
         public SymbolEntry Implementation { get; set; }
 
@@ -168,11 +168,6 @@ namespace Prexonite.Compiler.Ast
         }
 
         #region ICanBeReferenced Members
-
-        ICollection<AstExpr> ICanBeReferenced.Arguments
-        {
-            get { return Arguments; }
-        }
 
         public virtual bool TryToReference(out AstExpr result)
         {

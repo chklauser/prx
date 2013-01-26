@@ -27,6 +27,7 @@
 using System;
 using System.Collections.Generic;
 using System.Diagnostics;
+using Prexonite.Compiler.Internal;
 using Prexonite.Types;
 using NoDebug = System.Diagnostics.DebuggerNonUserCodeAttribute;
 
@@ -110,12 +111,12 @@ namespace Prexonite.Compiler.Ast
             var condition = Condition;
 
             _OptimizeNode(target, ref condition);
-            var unaryCond = condition as AstUnaryOperator;
-            while (unaryCond != null && unaryCond.Operator == UnaryOperator.LogicalNot)
+            // Invert condition when unary logical not
+            AstIndirectCall unaryCond;
+            while (Condition.IsCommandCall(Commands.Core.Operators.LogicalNot.DefaultAlias, out unaryCond))
             {
-                Condition = unaryCond.Operand;
+                Condition = unaryCond.Arguments[0];
                 IsPositive = !IsPositive;
-                unaryCond = condition as AstUnaryOperator;
             }
 
             //Constant conditions

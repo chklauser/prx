@@ -36,6 +36,17 @@ namespace Prexonite.Compiler.Ast
         private AstExpr _subject;
         private AstTypeExpr _type;
 
+        /// <summary>
+        /// Indicates whether this typecheck is inverted (X is not Y).
+        /// Does not, however, change the behaviour of AstTypecheck itself.
+        /// It is used to distinguish between
+        ///     not (X is Y)
+        /// and
+        ///     X is not Y
+        /// 
+        /// Both times, the typecheck is wrapped in a unary not, but the flag
+        /// is only set in the second case.
+        /// </summary>
         public bool IsInverted { get; set; }
 
         public AstTypecheck(

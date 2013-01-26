@@ -210,7 +210,7 @@ function main
 }
 ";
             _compile(input1);
-            _expect(@"
+            Expect(@"
 @func.0 func1
 
 ldc.int 1
@@ -244,7 +244,7 @@ function main
 
             _compile(@input1);
 
-            _expect(
+            Expect(
                 @"
 ldc.int  1
 stloc    x
@@ -278,7 +278,7 @@ function func0
     return null;
 }");
    
-                _expect("func0",
+                Expect("func0",
                     @"
 //x = 1
 ldc.int  1
@@ -386,7 +386,7 @@ function test\static
 }
 ");
 
-            _expect(
+            Expect(
                 @"test\static",
                 @"
  ldc.string  ""Hello World""
@@ -464,7 +464,7 @@ function conditions
 }
 ");
 
-            _expect(
+            Expect(
                 @"
 var x
 var y
@@ -535,7 +535,7 @@ function main
     asm nop+end;
 }
 ");
-            _expect(
+            Expect(
                 @"
 var u var v var w var x var z
 
@@ -593,7 +593,7 @@ Beginning:; asm nop+Beginning;
     do action1; while ( ( u And v ) Or x);
 }
 ");
-            _expect(
+            Expect(
                 @"
 var u
 var v
@@ -689,7 +689,7 @@ function main
     asm nop+END;
 }
 ");
-            _expect(
+            Expect(
                 @"
 var     x
 var     y
@@ -791,7 +791,7 @@ function main(x)
 }
 ");
 
-            _expect(
+            Expect(
                 @"
  ldloc   x
  jump.t  secondLevel
@@ -825,7 +825,7 @@ function main(id)
 }
 ");
 
-            _expect(@"
+            Expect(@"
 ldc.string  ""Hello ""
 ldloc       id
 add
@@ -846,7 +846,7 @@ function main(str, idx)
     return null;
 }
 ");
-            _expect(@"
+            Expect(@"
  ldloc   str
  ldloc   idx
  get.1   """"
@@ -882,7 +882,7 @@ function main
     if(3 == x) asm inc x;
 }
 ");
-            _expect(
+            Expect(
                 @"
 var x
 ldc.int 4
@@ -955,7 +955,7 @@ function main does
 }
 ");
 
-            _expect(
+            Expect(
                 @"
 var i
 var j
@@ -1057,8 +1057,8 @@ label cond      ldloc   i
                 jump.t  begin
 label end       
 ";
-            _expect("main", asmInput);
-            _expect("main_extended", asmInput);
+            Expect("main", asmInput);
+            Expect("main_extended", asmInput);
         }
 
         [Test]
@@ -1086,7 +1086,7 @@ label end
          }
     }
 ");
-            _expect(
+            Expect(
                 @"
 var cnt
 var element
@@ -1153,7 +1153,7 @@ function main
     return null;
 }
 ");
-            _expect(
+            Expect(
                 @"
 ldc.string  ""Hello""
 @cmd.1       print
@@ -1189,7 +1189,7 @@ function main
             string enum1 = code[3].Id ?? "No_ID_at_3";
             string enum2 = code[24].Id ?? "No_ID_at_23";
 
-            _expect(
+            Expect(
                 string.Format(
                     @"
 var lst
@@ -1269,7 +1269,7 @@ function main()
     return null;
 }
 ");
-            _expect(@"
+            Expect(@"
 ldglob  ekoe
 @cmd.1   print
 ldc.null
@@ -1302,7 +1302,7 @@ function main
     return null;
 }
 ");
-            _expect(
+            Expect(
                 @"
 var f'
 //declare var g'
@@ -1345,7 +1345,7 @@ function main(var arg)
     return null;
 }
 ");
-            _expect(
+            Expect(
                 @"
 ldloc       arg
 check.const ""Object(\""System.Text.StringBuilder\"")""
@@ -1387,10 +1387,10 @@ function main()
     var w = x => { var d = x+2; return d * 4; };
 }
 ");
-            _expect(@"main\0", @"ldc.int 5861 ret.value");
-            _expect(@"main\1", @"ldc.int 2 ldloc x mul ret.value");
-            _expect(@"main\2", @"ldloc x ldloc y add indloc.1 z ret.val");
-            _expect(
+            Expect(@"main\0", @"ldc.int 5861 ret.value");
+            Expect(@"main\1", @"ldc.int 2 ldloc x mul ret.value");
+            Expect(@"main\2", @"ldloc x ldloc y add indloc.1 z ret.val");
+            Expect(
                 @"main\3",
                 @"var d ldloc x ldc.int 2 add stloc d ldloc d ldc.int 4 mul ret.val");
         }
@@ -1410,7 +1410,7 @@ function main()
 }
 ");
 
-            _expect(@"main\0", @"
+            Expect(@"main\0", @"
 ldloc   x
 ldloc   a
 add
@@ -1420,7 +1420,7 @@ ret.value
             Assert.AreEqual(1, func.Meta[PFunction.SharedNamesKey].List.Length);
             Assert.AreEqual("a", func.Meta[PFunction.SharedNamesKey].List[0].Text);
 
-            _expect(@"main\1", @"
+            Expect(@"main\1", @"
 @indloc.0  a
 ldnull
 ret.val
@@ -1456,7 +1456,7 @@ function main
             _expectSharedVariables(@"main\N10", "a");
             _expectSharedVariables(@"main\N21");
 
-            _expect(
+            Expect(
                 @"
 var         a
 var         N1
@@ -1501,7 +1501,7 @@ function main()
     return null;
 }
 ");
-            _expect(
+            Expect(
                 @"
 ldr.func main\0 //no need for closure here
 stloc   f
@@ -1545,7 +1545,7 @@ function main()
 }
 ");
 
-            _expect(
+            Expect(
                 @"
 ldr.func    main\0 //no need for a closure here
 stloc       fobj
@@ -1590,7 +1590,7 @@ function main()
 }
 ");
 
-            _expect(
+            Expect(
                 @"
 var x,a,b,c
 ldc.string  ""a""
@@ -1645,7 +1645,7 @@ function main()
     return null;
 }
 ");
-            _expect(
+            Expect(
                 @"
 var x,a,b,c
 
@@ -1676,7 +1676,7 @@ function main()
 }
 ");
 
-            _expect(
+            Expect(
                 @"
 var x,a,b,c
 
@@ -1710,7 +1710,7 @@ function main()
     return null;
 }
 ");
-            _expect(
+            Expect(
                 @"
 ldc.string ""AB""
 cmd.0       a
@@ -1770,8 +1770,8 @@ function mainv(x)
 label else      ldloc   b
 label endif     ret.value
 ";
-            _expect("max", emax);
-            _expect("maxv", emax);
+            Expect("max", emax);
+            Expect("maxv", emax);
 
             const string emain =
                 @"
@@ -1815,8 +1815,8 @@ label endif4    //optimized://  jump            endif3
 label endif3    ret.value
 ";
 
-            _expect("main", emain);
-            _expect("mainv", emain);
+            Expect("main", emain);
+            Expect("mainv", emain);
         }
 
         [Test]
@@ -1850,7 +1850,7 @@ function main
 }
 ");
 
-            _expect(
+            Expect(
                 @"
 var x,y,z
 
@@ -1903,7 +1903,7 @@ function main(x)
     return ""There is $(transform(""no"")) spoon"";
 }   
 ");
-            _expect(
+            Expect(
                 @"
 ldc.string  ""There is ""
 ldc.string  ""no""
@@ -1925,7 +1925,7 @@ function main(a,b,c)
     return null;
 }
 ");
-            _expect(
+            Expect(
                 @"
 newobj.0    ""Structure(\""a\"",\""b\"",\""r\"",\""c\"")""
 stloc       str
@@ -1940,7 +1940,7 @@ ret.val
             _compile(@"
 function main(x) = 1 / x;
 ");
-            _expect(@"
+            Expect(@"
 ldc.int 1
 ldloc   x
 div
@@ -1961,7 +1961,7 @@ function main()
 }
 ");
 
-            _expect(
+            Expect(
                 @"
 var x,y
 cmd.0   list
@@ -2004,7 +2004,7 @@ function main()
     return null;
 }
 ");
-            _expect(
+            Expect(
                 @"
 var lst, oneToFive, even
 ldr.func    subrange
@@ -2020,7 +2020,7 @@ ldnull
 ret.val 
 ");
 
-            _expect(
+            Expect(
                 @"subrange",
                 @"
 var lst, index, count,i
@@ -2065,7 +2065,7 @@ function main()
     return null;
 }
 ");
-            _expect(@"
+            Expect(@"
 ldglob  A
 @cmd.1  println
 ldnull
@@ -2096,7 +2096,7 @@ function main()
 }
 ");
 
-            _expect(
+            Expect(
                 @"
 var skip
 ldr.func  main\skip0  //the nested function does not need to be a closure, so it is not
@@ -2112,12 +2112,12 @@ func.2  where
 ret.val
 ");
 
-            _expect("where", @"
+            Expect("where", @"
 newclo  where\0
 newcor.0
 ret.value
 ");
-            _expect(
+            Expect(
                 @"main\skip0", @"
 newclo  main\skip0\0
 newcor.0
@@ -2155,7 +2155,7 @@ function main()
     }
 }
 ");
-            _expect(
+            Expect(
                 @"
 var 
     handle,
@@ -2216,7 +2216,7 @@ function main()
     }
 }
 ");
-            _expect(
+            Expect(
                 @"
 var 
     handle,
@@ -2274,7 +2274,7 @@ function main()
     }
 }
 ");
-            _expect(
+            Expect(
                 @"
 var 
     handle,
@@ -2306,7 +2306,7 @@ function main()
     return null;
 }
 ");
-            _expect(
+            Expect(
                 @"
 ldc.string  ""There must be a mistake!""
 throw
@@ -2345,7 +2345,7 @@ function main
             Assert.IsTrue(code.Count > 6, "Resulting must be longer than 6 instructions");
             string using1 = code[6].Id ?? "No_ID_at_6";
 
-            _expect(String.Format(
+            Expect(String.Format(
                 @"
 var h,{0}
 label beginTry  try
@@ -2383,7 +2383,7 @@ function main()
 }
 ");
 
-            _expect(
+            Expect(
                 @"
 var x, y, z
 
@@ -2449,7 +2449,7 @@ function main()
 }
 ");
 
-            _expect(
+            Expect(
                 @"
 var hset, people
 
@@ -2528,7 +2528,7 @@ function main()
     return null;
 }
 ");
-            _expect(
+            Expect(
                 @"
 var lst
 
@@ -2571,7 +2571,7 @@ function main
 }
 ");
 
-            _expect(@"
+            Expect(@"
 var h
 ldloc h
 @cmd.1  print
@@ -2623,7 +2623,7 @@ function main does
     return null;
 ");
 
-            _expect(
+            Expect(
                 @"
             ldglob      a
             jump.t      tr
@@ -2657,7 +2657,7 @@ function main
 }
 ");
 
-            _expect(
+            Expect(
                 @"
 var eng, funcs
 
@@ -2691,7 +2691,7 @@ function main()
 }
 ");
 
-            _expect(
+            Expect(
                 @"
 var a,b,c,x,y
 
@@ -2755,7 +2755,7 @@ function main()
 }
 ");
 
-            _expect(
+            Expect(
                 @"
 var a,b,c
 
@@ -2791,7 +2791,7 @@ function main()
 }
 ");
 
-            _expect(
+            Expect(
                 @"
 ldc.int 4
 @cmd.1  print
@@ -2824,7 +2824,7 @@ function main()
 }   
 ");
 
-            _expect(
+            Expect(
                 @"
 ldc.int 4
 @cmd.1  print
@@ -2858,7 +2858,7 @@ function main(x)
 }
 ");
 
-            _expect(
+            Expect(
                 @"
 var r
 ldloc   x
@@ -2890,7 +2890,7 @@ function main(app, f, ref trace){
    app.Compound         >> trace(f)        >> all >> println;
 }");
 
-            _expect(
+            Expect(
                 @"
  ldloc f
  ldloc app
@@ -2951,7 +2951,7 @@ function main()
 }
 ");
 
-            _expect(@"
+            Expect(@"
 var x
 ldloc   x
 ldc.int 2   //what you would expect
@@ -2970,7 +2970,7 @@ function main()
     a += 3;
 }
 ");
-            _expect(@"
+            Expect(@"
 ldloc a
 ldc.int 3
 add
@@ -2997,7 +2997,7 @@ function main()
 }
 ");
 
-            _expect(@"
+            Expect(@"
 var a,x,y,z
 
 ldloc   a
@@ -3047,7 +3047,7 @@ function main()
 }
 ");
 
-            _expect(@"
+            Expect(@"
 var a,b,c,d,e,f,g,s
 
 ldloc   a
@@ -3102,7 +3102,7 @@ function main()
     return null;
 }
 ");
-            _expect(@"
+            Expect(@"
 var a,b,c,d
 
             ldloc   a
@@ -3142,7 +3142,7 @@ function fac n r =
         fac(n-1, n*r);
 ");
 
-            _expect("fac", @"
+            Expect("fac", @"
 ldloc   n
 ldc.int 1
 ceq
@@ -3180,7 +3180,7 @@ function main()
 }
 ");
 
-            _expect(@"
+            Expect(@"
 var a,b
 ldloc   a
 ldloc   a
@@ -3208,7 +3208,7 @@ function main(lst)
 }
 ");
 
-            _expect(@"
+            Expect(@"
 var lst
 
 ldr.func main\1
@@ -3232,7 +3232,7 @@ function main(x)
     return unless(x) 1 else 0;
 }");
 
-            _expect(@"
+            Expect(@"
 ldloc x
 jump.t elseBranch
 ldc.int 1
@@ -3255,7 +3255,7 @@ function main()
 }
 ");
 
-            _expect(@"
+            Expect(@"
 ldc.string work
 func.0 propLike
 func.0 propLike
@@ -3280,7 +3280,7 @@ function main(x)
 }
 ");
 
-            _expect(@"
+            Expect(@"
 var n,i
 
 ldloc x
@@ -3330,7 +3330,7 @@ function main does foreach(var arg in var args)
 }
 ");
 
-            _expect(String.Format(@"
+            Expect(String.Format(@"
 var args,arg,t,{0}
                         ldloc   args
                         get.0   GetEnumerator
@@ -3594,7 +3594,7 @@ function main does
     target(side_effect, side_effect);
 ");
 
-            _expect(@"
+            Expect(@"
 cmd.0 side_effect
 cmd.0 side_effect
 cmd.2 target
@@ -3609,7 +3609,7 @@ ret
 function main = x => x.(16)+5; //more complicated than id or something partially applicable
 ");
 
-            _expect(@"
+            Expect(@"
 ldr.func    main\0
 ret
 ");
@@ -3629,7 +3629,7 @@ function main(x,y)
 
 function make_foo(){}
 ");
-            _expect(@"
+            Expect(@"
 ldloc x
 ldloc y
 func.2 make_foo
@@ -3650,7 +3650,7 @@ function main()
 }
 ");
 
-            _expect(@"
+            Expect(@"
 ldglob g
 ldglob g
 add

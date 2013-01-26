@@ -190,7 +190,6 @@
     <Compile Include="Compiler\Internal\MExpr.cs" />
     <Compile Include="Compiler\Internal\SymbolMExprParser.cs" />
     <Compile Include="Compiler\Internal\SymbolMExprSerializer.cs" />
-    <Compile Include="Compiler\Macro\MacroAstFactory.cs" />
     <Compile Include="Compiler\Macro\Commands\PartialCallWrapper.cs" />
     <Compile Include="Compiler\Macro\Commands\CallMacro.cs" />
     <Compile Include="Compiler\Macro\Commands\CallStar.cs" />
@@ -334,7 +333,6 @@
     <Compile Include="Compiler\Ast\AstDynamicTypeExpression.cs" />
     <Compile Include="Compiler\Ast\AstLoop.cs" />
     <Compile Include="Compiler\Ast\AstMacroInvocation.cs" />
-    <Compile Include="Compiler\Ast\AstModifyingAssignment.cs" />
     <Compile Include="Compiler\Ast\AstNull.cs" />
     <Compile Include="Compiler\Ast\AstObjectCreation.cs" />
     <Compile Include="Compiler\Ast\AstPlaceholder.cs" />
@@ -357,7 +355,6 @@
     <Compile Include="Compiler\Ast\IAstHasExpressions.cs" />
     <Compile Include="Compiler\Ast\IAstPartiallyApplicable.cs" />
     <Compile Include="Compiler\Ast\AstTypeExpr.cs" />
-    <Compile Include="Compiler\Ast\ICanBeReferenced.cs" />
     <Compile Include="Compiler\Cil\BranchHandling.cs" />
     <Compile Include="Compiler\Cil\CilExtensionHint.cs" />
     <Compile Include="Compiler\Cil\CompiledTryCatchFinallyBlock.cs" />

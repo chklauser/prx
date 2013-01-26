@@ -57,10 +57,10 @@ namespace Prexonite.Compiler.Symbolic
         /// for other error conditions (such as symbol name conflicts).
         /// </summary>
         /// <param name="id">The symbolic ID to look up.</param>
-        /// <param name="value">On success, contains the symbol. Otherwise undefined.</param>
+        /// <param name="value">On success, contains the symbol. Otherwise null.</param>
         /// <returns>True on success; false otherwise.</returns>
         [PublicAPI]
-        [ContractAnnotation("=> true,value:notnull; => false,value:canbenull")]
+        [ContractAnnotation("=> true,value:notnull; => false,value:null")]
         public abstract bool TryGet([NotNull] string id, out Symbol value);
 
         /// <summary>

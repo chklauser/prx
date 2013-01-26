@@ -113,7 +113,7 @@ GlobalVariableDefinition	(.
 
   (   var                 
   |   ref                 (.  type = SymbolInterpretations.GlobalReferenceVariable; .)
-  )
+  )                       (.  var position = GetPosition(); .)
   
   (   GlobalId<out id>    (.  primaryAlias = id; .)
       [ GlobalVariableAliasList<aliases> ]
@@ -144,13 +144,12 @@ GlobalVariableDefinition	(.
                           (.  _popLexerState();
                               if(errors.count == 0)
                               {
-                                AstGetSet complex = new AstGetSetSymbol(this, PCall.Set, 
-                                                      new SymbolEntry(InterpretAsObjectVariable(type), id, TargetModule.Name));
+                                var complex = Create.Call(position, EntityRef.Variable.Global.Create(id,TargetModule.Name) );
                                 complex.Arguments.Add(expr);
                                 target.Ast.Add(complex);
-                                                  TargetApplication._RequireInitialization();
+                                TargetApplication._RequireInitialization();
                                 Loader._EmitPartialInitializationCode();
-                                          }
+                              }
                               _PopScope(FunctionTargets[Application.InitializationId]);
                           .)
   ]
@@ -499,7 +498,7 @@ FunctionDefinition<out PFunction func>
                                         CompilerTarget ct = null;   //The compiler target for the function (as mentioned in the source code)
                                         CompilerTarget cst = null;  //The compiler target for a stub (coroutine/lazy)
                                         Symbol symEntry = null;
-
+                                        ISourcePosition position;
                                         bool missingArg = false; //Allow trailing comma, but not (,,) in formal arg list
                                     .)         
 =	
@@ -507,7 +506,7 @@ FunctionDefinition<out PFunction func>
   |   function
   |   coroutine                   (.  isCoroutine = true; .)
   |   macro [function]            (.  isMacro = true; .)
-  )
+  )                               (.  position = GetPosition(); .)
   (   Id<out id>                  (.  primaryAlias = id; .)
       [ FunctionAliasList<funcAliases> ]
   |   FunctionAliasList<funcAliases>
@@ -771,16 +770,10 @@ FunctionDefinition<out PFunction func>
                                 //Inject asthunk-conversion code into body
                                 var inject = derStub.Parameters.Select(par => 
                                 {
-                                    var getParam =
-                                        new AstGetSetSymbol(this, PCall.Get, 
-                                                                SymbolEntry.LocalObjectVariable(par));
-                                    var asThunkCall = 
-                                      new AstGetSetSymbol(this, PCall.Get, 
-                                                                SymbolEntry.Command(Engine.AsThunkAlias));
+                                  var getParam = Create.Call(position, EntityRef.Variable.Local.Create(par));
+                                  var asThunkCall = Create.Call(position, EntityRef.Variable.Command.Create(Engine.AsThunkAlias));
                                   asThunkCall.Arguments.Add(getParam);
-                                  var setParam =
-                                      new AstGetSetSymbol(this, PCall.Set, 
-                                                                SymbolEntry.LocalObjectVariable(par));
+                                  var setParam = Create.Call(position, EntityRef.Variable.Local.Create(par));
                                   setParam.Arguments.Add(asThunkCall);
                                   return (AstNode) setParam;
                                 });
@@ -789,18 +782,15 @@ FunctionDefinition<out PFunction func>
                             else
                             {										            
                                 //Global lazy functions don't technically need a stub. Might be removed later on
-                                var call = new AstGetSetSymbol(this, 
-                                                        new SymbolEntry(SymbolInterpretations.Function, ct.Function.Id, TargetModule.Name));
+                                var call = Create.Call(position,EntityRef.Function.Create(ct.Function.Id, TargetModule.Name));
                                 
                                 //Generate code for arguments (each wrapped in a `asThunk` command call)
                               foreach(var par in derStub.Parameters)
                               {
-                                  var getParam = 
-                                      new AstGetSetSymbol(this, PCall.Get, 
-                                                                SymbolEntry.LocalObjectVariable(par));
-                                  var asThunkCall = 
-                                      new AstGetSetSymbol(this, PCall.Get, 
-                                                                SymbolEntry.Command(Engine.AsThunkAlias));
+                                  var getParam = Create.Call(position, EntityRef.Variable.Local.Create(par));
+                                      
+                                  var asThunkCall = Create.Call(position, EntityRef.Command.Create(Engine.AsThunkAlias));
+                                      
                                   asThunkCall.Arguments.Add(getParam);
                                   call.Arguments.Add(asThunkCall);
                               }

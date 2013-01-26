@@ -25,7 +25,9 @@
 //  IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 using System;
+using Prexonite.Modular;
 using Prexonite.Types;
+using Prexonite.Compiler.Internal;
 
 namespace Prexonite.Compiler.Ast
 {
@@ -72,12 +74,13 @@ namespace Prexonite.Compiler.Ast
         {
             //Optimize condition
             _OptimizeNode(target, ref Condition);
-            var unaryCond = Condition as AstUnaryOperator;
-            while (unaryCond != null && unaryCond.Operator == UnaryOperator.LogicalNot)
+
+            // Invert condition when unary logical not
+            AstIndirectCall unaryCond;
+            while (Condition.IsCommandCall(Commands.Core.Operators.LogicalNot.DefaultAlias, out unaryCond))
             {
-                Condition = unaryCond.Operand;
+                Condition = unaryCond.Arguments[0];
                 IsNegative = !IsNegative;
-                unaryCond = Condition as AstUnaryOperator;
             }
 
             //Constant conditions

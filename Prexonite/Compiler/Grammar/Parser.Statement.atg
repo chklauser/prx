@@ -83,15 +83,15 @@ GetInitiator<out expr>                  (.  complex = expr as AstGetSet; .)
 (                                       (.  if(expr != null) // Happens in case of an error
                                                 block.Add(expr); 
                                         .)
-|                                       (.  if(complex == null)
-                                            {
-                                                var pos = GetPosition(); 
+|                                       (.  var pos = GetPosition(); 
+                                            if(complex == null)
+                                            {                                                
                                                 Loader.ReportMessage(Message.Error("Expected an LValue (Get/Set-Complex) for ++,-- or assignment statement.",pos,MessageClasses.LValueExpected));
                                                 complex = Create.IndirectCall(pos,Create.Null(pos));
                                             }                                            
                                         .)
-    (   inc                             (.  block.Add(AstUnaryOperator._Create(this, UnaryOperator.PostIncrement, complex)); .)
-    |   dec                             (.  block.Add(AstUnaryOperator._Create(this, UnaryOperator.PostDecrement, complex)); .)
+    (   inc                             (.  block.Add(Create.UnaryOperation(pos, UnaryOperator.PostIncrement, complex)); .)
+    |   dec                             (.  block.Add(Create.UnaryOperation(pos, UnaryOperator.PostDecrement, complex)); .)
     |   Assignment<complex, out node>   (.  if(complex == null && node == null)
                                             {
                                                 // An error ocurred during parsing prior to this point.
@@ -263,7 +263,7 @@ VariableDeclaration<out AstGetSet complex>
                                         }
 
                                         varSym = Symbol.CreateReference(EntityRef.Variable.Local.Create(physicalId),position);
-                                        // _assembleInvocation will request outer variables where necessary.
+                                        // Create.ExprFor will request outer variables where necessary.
                                     }
 
                                     // Apply ref's (one ref is implied, see initialization of refCount)
@@ -274,7 +274,7 @@ VariableDeclaration<out AstGetSet complex>
                                     
                                     // Declare the symbol in the current scope and assemble an AST node
                                     Symbols.Declare(id,sym);
-                                    complex = _assembleInvocation(Symbol.CreateDereference(varSym), position) as AstGetSet;
+                                    complex = Create.ExprFor(position, Symbol.CreateDereference(varSym)) as AstGetSet;
 
                                     if(complex == null)
                                     {
@@ -299,25 +299,13 @@ SymbolicUsage<out AstGetSet complex>
                                 .)
 =                               (.  position = GetPosition(); .)
     Id<out id>                  (.  Symbol sym;
-                                    switch(target._TryUseSymbol(id, out sym, position))
+                                    Symbols.TryGet(id, out sym);
+                                    var expr = Create.ExprFor(position,sym);
+                                    complex = expr as AstGetSet;
+                                    if(complex == null)
                                     {
-                                        case SymbolUsageResult.Successful:
-                                            var expr = _assembleInvocation(sym, position);
-                                            complex = expr as AstGetSet;
-                                            if(complex == null)
-                                            {
-                                                Loader.ReportMessage(Message.Error("Expected symbolic usage to be represented as an LValue.",position,MessageClasses.ParserInternal));
-                                                complex = Create.IndirectCall(position,Create.Null(position));
-                                            }
-                                            break;
-                                        case SymbolUsageResult.Unresolved:
-                                            complex = new AstUnresolved(this, id);
-                                            break;
-                                        case SymbolUsageResult.Error:
-                                            complex = Create.IndirectCall(position,Create.Null(position));
-                                            break;
-                                        default:
-                                            throw new ArgumentOutOfRangeException();
+                                        Loader.ReportMessage(Message.Error("Expected symbolic usage to be represented as an LValue.",position,MessageClasses.ParserInternal));
+                                        complex = Create.IndirectCall(position,Create.Null(position));
                                     }
                                 .)
     Arguments<complex.Arguments>    
@@ -367,9 +355,10 @@ Assignment<AstGetSet lvalue, out AstNode node>
 									BinaryOperator setModifier = BinaryOperator.None;
 									AstTypeExpr typeExpr;
 									node = lvalue;
+                                    ISourcePosition position;
 								.)
-=
-(
+=                               (.  position = GetPosition(); .)
+(                               
 	(   ( assign )              (.  setModifier = BinaryOperator.None; .)
 	|   plus assign             (.  setModifier = BinaryOperator.Addition; .)
 	|   minus assign            (.  setModifier = BinaryOperator.Subtraction; .)
@@ -393,7 +382,7 @@ Assignment<AstGetSet lvalue, out AstNode node>
                                     }
 									lvalue.Call = PCall.Set; 
 									if(setModifier != BinaryOperator.None)
-									    node = AstModifyingAssignment._Create(this,setModifier,lvalue);
+									    node = Create.ModifyingAssignment(position,lvalue,setModifier);
 								.)
 .
 
@@ -571,8 +560,7 @@ NestedFunction<AstBlock block>
                                     }
                                     else
                                     {
-                                        setVar.Arguments.Add( new AstGetSetReference(this, 
-                                            new SymbolEntry(SymbolInterpretations.Function, func.Id, func.ParentApplication.Module.Name)) );
+                                        setVar.Arguments.Add( new AstReference(GetPosition(), EntityRef.Function.Create(func.Id,func.ParentApplication.Module.Name)) );
                                     }
                                     block.Add(setVar);
                                 .)
@@ -587,7 +575,7 @@ LetBinder<AstBlock block>
                                 (.  string id = null;
                                     AstExpr thunk;
                                 .)
-=
+=                               (.  var position = GetPosition(); .)
     Id<out id>                  (.  //Declare local "let" variable
                                     SmartDeclareLocal(id, SymbolInterpretations.LocalObjectVariable);
                                     mark_as_let(target.Function, id);
@@ -598,8 +586,7 @@ LetBinder<AstBlock block>
         LazyExpression<out thunk>   
                                 (.  
                                     //Assign thunk to that variable
-                                    var assign = new AstGetSetSymbol(this, PCall.Set, 
-                                        SymbolEntry.LocalObjectVariable(id));
+                                    var assign = Create.Call(position, EntityRef.Variable.Local.Create(id), PCall.Set);
                                     assign.Arguments.Add(thunk);
                                     block.Add(assign);
                                 .)

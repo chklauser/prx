@@ -353,7 +353,7 @@ namespace Prexonite.Compiler
             get { return _ast; }
         }
 
-        private volatile IAstFactory _factory;
+        private volatile CompilerTargetAstFactory _factory;
 
         [NotNull]
         public IAstFactory Factory
@@ -388,15 +388,29 @@ namespace Prexonite.Compiler
                 get { return _target.CurrentBlock; }
             }
 
-            [Obsolete("Use the Symbol API")]
-            protected override bool TryUseSymbolEntry(string symbolicId, ISourcePosition position, out SymbolEntry entry)
-            {
-                return _target._TryUseSymbolEntry(symbolicId,position, out entry);
-            }
-
             protected override AstGetSet CreateNullNode(ISourcePosition position)
             {
                 return IndirectCall(position, Null(position));
+            }
+
+            protected override bool IsOuterVariable(string id)
+            {
+                return _target._IsOuterVariable(id);
+            }
+
+            protected override void RequireOuterVariable(string id)
+            {
+                _target.RequireOuterVariable(id);
+            }
+
+            protected override void ReportMessage(Message message)
+            {
+                _target.Loader.ReportMessage(message);
+            }
+
+            protected override CompilerTarget CompileTimeExecutionContext
+            {
+                get { return _target; }
             }
         }
 
@@ -608,6 +622,26 @@ namespace Prexonite.Compiler
                                 func));
                 // ReSharper restore RedundantJumpStatement
             }
+        }
+
+        internal bool _IsOuterVariable(string id)
+        {
+            //Check local function
+            var func = Function;
+            if (func.Variables.Contains(id) || func.Parameters.Contains(id))
+                return false;
+
+            //Check parents
+            for (var parent = ParentTarget;
+                 parent != null;
+                 parent = parent.ParentTarget)
+            {
+                func = parent.Function;
+                if (func.Variables.Contains(id) || func.Parameters.Contains(id) ||
+                    parent.OuterVariables.Contains(id))
+                    return true;
+            }
+            return false;
         }
 
         #endregion
@@ -1567,58 +1601,6 @@ namespace Prexonite.Compiler
             else
                 return moduleName;
         }
-
-        #region (Legacy) Symbol handling
-
-        internal SymbolUsageResult _TryUseSymbol(string symbolicId, out Symbol symbol, [NotNull] ISourcePosition position)
-        {
-            if (Symbols.TryGet(symbolicId, out symbol))
-            {
-                return Loader._TryUseSymbol(ref symbol, position);
-            }
-            else
-            {
-                symbol = null;
-                return SymbolUsageResult.Unresolved;
-            }
-        }
-
-        [ContractAnnotation("=>true,entry:notnull; =>false,entry:null"),Obsolete("Use the Symbol API instead.")]
-        internal bool _TryUseSymbolEntry([NotNull] string symbolId, [NotNull] ISourcePosition position, out SymbolEntry entry)
-        {
-            Symbol symbol;
-            switch (_TryUseSymbol(symbolId, out symbol,position))
-            {
-                case SymbolUsageResult.Successful:
-                    try
-                    {
-                        entry = symbol.ToSymbolEntry();
-                        return true;
-                    }
-                    catch (SymbolConversionException e)
-                    {
-                        Loader.ReportMessage(_CreateIncompatibleSymbolError(position, symbol));
-                        Loader.ReportMessage(Message.Create(MessageSeverity.Info, e.ToString(), position,
-                                                            MessageClasses.ExceptionDuringCompilation));
-                        entry = null;
-                        return false;
-                    }
-                case SymbolUsageResult.Unresolved:
-                case SymbolUsageResult.Error:
-                    entry = null;
-                    return false;
-                default:
-                    throw new ArgumentOutOfRangeException();
-            }
-        }
-
-        internal static Message _CreateIncompatibleSymbolError(ISourcePosition position, Symbol symbol)
-        {
-            return Message.Error(String.Format(
-                Resources.CompilerTarget__CreateIncompatibleSymbolError_IncompatibleSymbol, symbol),position,MessageClasses.NoSymbolEntryEquivalentToSymbol);
-        }
-
-        #endregion
 
     }
 }

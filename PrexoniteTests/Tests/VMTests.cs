@@ -1749,17 +1749,13 @@ function main()[is volatile;]
 
             var assignStmt = ct.Factory.Call(pos, EntityRef.Variable.Global.Create("s",mn),PCall.Set);
             assignStmt.Arguments.Add(new AstConstant("file", -1, -2, "stmt."));
-            var incStmt = new AstModifyingAssignment("file", -1, -2,
-                BinaryOperator.Addition,
-                assignStmt,
-                new SymbolEntry(SymbolInterpretations.Command, Addition.DefaultAlias, null), ct.Ast);
+            var incStmt = ct.Factory.ModifyingAssignment(NoSourcePosition.Instance,
+                                                         assignStmt,
+                                                         BinaryOperator.Addition);
 
             var assignExpr = ct.Factory.Call(pos, EntityRef.Variable.Global.Create("s", mn), PCall.Set);
             assignExpr.Arguments.Add(new AstConstant("file", -1, -2, "expr."));
-            var incExpr = new AstModifyingAssignment("file", -1, -2,
-                BinaryOperator.Addition,
-                assignExpr,
-                new SymbolEntry(SymbolInterpretations.Command, Addition.DefaultAlias, null), ct.Ast);
+            var incExpr = ct.Factory.ModifyingAssignment(pos, assignExpr, BinaryOperator.Addition);
 
             block.Statements.Add(incStmt);
             block.Expression = incExpr;

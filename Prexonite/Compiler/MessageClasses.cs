@@ -43,6 +43,7 @@
         public const string PartialApplicationNotSupported = "C.PartialApplicationNotSupported";
         public const string OnlyLastOperandPartialInLazy = "C.OnlyLastOperandPartialInLazy";
         public const string ForeachElementTooComplicated = "C.ForeachElementTooComplicated";
+        public const string TypeExpressionExpected = "C.TypeExpressionExpected";
 
         #endregion
 
@@ -65,6 +66,7 @@
         public const string PackUsage = "M.PackUsage";
         public const string UnpackUsage = "M.UnpackUsage";
         public const string ReferenceUsage = "M.ReferenceUsage";
+        public const string ApiMisuse = "M.ApiMisuse";
 
         #endregion
 

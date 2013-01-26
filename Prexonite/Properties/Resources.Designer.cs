@@ -79,6 +79,51 @@ namespace Prexonite.Properties {
         }
         
         /// <summary>
+        ///   Looks up a localized string similar to Expected {0} to be implemented as an LValue..
+        /// </summary>
+        public static string AstFactoryBase__resolveImplementation_LValueExpected {
+            get {
+                return ResourceManager.GetString("AstFactoryBase__resolveImplementation_LValueExpected", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Type expression expected on the right-hand side of a type cast..
+        /// </summary>
+        public static string AstFactoryBase_BinaryOperation_TypeExprExpected {
+            get {
+                return ResourceManager.GetString("AstFactoryBase_BinaryOperation_TypeExprExpected", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Right hand side of a cast operation must be a type expression..
+        /// </summary>
+        public static string AstFactoryBase_ModifyingAssignment_TypeExpressionExpected {
+            get {
+                return ResourceManager.GetString("AstFactoryBase_ModifyingAssignment_TypeExpressionExpected", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to The not operator must produce an LValue to be used in a negative typecheck..
+        /// </summary>
+        public static string AstFactoryBase_UnaryOperation_NotOperatorForTypecheckRequiresLValue {
+            get {
+                return ResourceManager.GetString("AstFactoryBase_UnaryOperation_NotOperatorForTypecheckRequiresLValue", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Target of an increment or decrement operations must be an LValue and a get-call..
+        /// </summary>
+        public static string AstFactoryBase_UnaryOperation_Target_must_be_LValue {
+            get {
+                return ResourceManager.GetString("AstFactoryBase_UnaryOperation_Target_must_be_LValue", resourceCulture);
+            }
+        }
+        
+        /// <summary>
         ///   Looks up a localized string similar to Optimization of the element expression in the foreach head resulted in a non-GetSet expression. Try to use a simpler expression..
         /// </summary>
         public static string AstForeachLoop_DoEmitCode_ElementTooComplicated {
@@ -246,6 +291,15 @@ namespace Prexonite.Properties {
         public static string AstReturn_Warn_YieldInProtectedBlock {
             get {
                 return ResourceManager.GetString("AstReturn_Warn_YieldInProtectedBlock", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Unary operator nodes for non-increment/decrement should not exist. This error indicates an error in the compiler..
+        /// </summary>
+        public static string AstUnaryOperator__NonIncrementDecrement {
+            get {
+                return ResourceManager.GetString("AstUnaryOperator__NonIncrementDecrement", resourceCulture);
             }
         }
         
@@ -665,6 +719,15 @@ namespace Prexonite.Properties {
         }
         
         /// <summary>
+        ///   Looks up a localized string similar to Cannot require outer variable to be included outside of a function. This error indicates an internal compiler error..
+        /// </summary>
+        public static string ParserAstFactory_RequireOuterVariable_Outside_function {
+            get {
+                return ResourceManager.GetString("ParserAstFactory_RequireOuterVariable_Outside_function", resourceCulture);
+            }
+        }
+        
+        /// <summary>
         ///   Looks up a localized string similar to {0} can only be used in a macro context..
         /// </summary>
         public static string Reference_can_only_be_used_in_a_macro_context {
@@ -838,6 +901,15 @@ namespace Prexonite.Properties {
         public static string sys {
             get {
                 return ResourceManager.GetString("sys", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Cannot resolve symbol in unscoped AST factory. This error message indicates a misuse of the Prexonite compile-time API..
+        /// </summary>
+        public static string UnscopedFactory_API_Misuse_symbol_resolve {
+            get {
+                return ResourceManager.GetString("UnscopedFactory_API_Misuse_symbol_resolve", resourceCulture);
             }
         }
         

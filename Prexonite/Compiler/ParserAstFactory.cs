@@ -24,7 +24,10 @@
 //  WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING 
 //  IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
+using System;
 using Prexonite.Compiler.Ast;
+using Prexonite.Compiler.Symbolic;
+using Prexonite.Properties;
 
 namespace Prexonite.Compiler
 {
@@ -37,20 +40,53 @@ namespace Prexonite.Compiler
             get { return _parser.CurrentBlock; }
         }
 
-        protected override bool TryUseSymbolEntry(string symbolicId, ISourcePosition position, out SymbolEntry entry)
-        {
-            return _parser.target._TryUseSymbolEntry(symbolicId, position, out entry);
-        }
-
         protected override AstGetSet CreateNullNode(ISourcePosition position)
         {
             return _parser._NullNode(position);
         }
 
+        protected override bool IsOuterVariable(string id)
+        {
+            if (_parser.target == null)
+                return false;
+            else
+                return _parser.target._IsOuterVariable(id);
+        }
+
+        protected override void RequireOuterVariable(string id)
+        {
+            if (_parser.target == null)
+                ReportMessage(
+                    Message.Error(Resources.ParserAstFactory_RequireOuterVariable_Outside_function,
+                        _parser.GetPosition(), MessageClasses.ParserInternal));
+            _parser.target.RequireOuterVariable(id);
+        }
+
+        protected override void ReportMessage(Message message)
+        {
+            _parser.Loader.ReportMessage(message);
+        }
+
+        protected override CompilerTarget CompileTimeExecutionContext
+        {
+            get
+            {
+                var compilerTarget = _parser.target;
+                if (compilerTarget == null)
+                {
+                    throw new InvalidOperationException("Internal parser error. Cannot access compilation target on top level.");
+                }
+                else
+                {
+                    return compilerTarget;
+                }
+            }
+        }
+
         public ParserAstFactory(Parser parser)
         {
             if (parser == null)
-                throw new System.ArgumentNullException("parser");
+                throw new ArgumentNullException("parser");
             _parser = parser;
         }
     }

@@ -27,12 +27,8 @@
 using System;
 using System.Collections.Generic;
 using System.Diagnostics;
-using System.Linq;
 using System.Text;
-using Prexonite.Commands.Core.Operators;
-using Prexonite.Compiler.Symbolic.Compatibility;
-using Prexonite.Modular;
-using Prexonite.Types;
+using JetBrains.Annotations;
 
 namespace Prexonite.Compiler.Ast
 {
@@ -41,53 +37,59 @@ namespace Prexonite.Compiler.Ast
     /// </summary>
     /// <remarks>
     ///     <para>
-    ///         This node get's created as a replacement for <see cref = "AstBinaryOperator" /> nodes with string operands.
+    ///         This node get's created as a replacement for nodes created by <see cref = "IAstFactory.BinaryOperation" /> with string operands.
     ///     </para>
     /// </remarks>
     public class AstStringConcatenation : AstExpr,
                                           IAstHasExpressions
     {
-        public SymbolEntry Implementation { get; set; }
+        [NotNull]
+        private readonly AstGetSet _simpleConcatPrototype;
+        [NotNull]
+        private readonly AstGetSet _multiConcatPrototype;
 
         /// <summary>
         ///     The list of arguments for the string concatenation.
         /// </summary>
-        public List<AstExpr> Arguments = new List<AstExpr>();
+        [NotNull] private readonly List<AstExpr> _arguments = new List<AstExpr>();
 
         /// <summary>
         ///     Creates a new AstStringConcatenation AST node.
         /// </summary>
-        /// <param name = "file">The file that caused this node to be created.</param>
-        /// <param name = "line">The line that caused this node to be created.</param>
-        /// <param name = "column">The column that caused this node to be created.</param>
-        /// <param name="operatorImplementation"></param>
-        /// <param name = "arguments">A list of expressions to be added to the <see cref = "Arguments" /> list.</param>
+        /// <param name="position">The portion of source code that spawned this AST node.</param>
+        /// <param name="simpleConcatPrototype">A prototype of the call that implements the simple string concatenation (two operands).</param>
+        /// <param name="multiConcatPrototype">A prototype of the call that implements the multi-string concatenation (more than two operands).</param>
+        /// <param name = "arguments">A list of expressions to be added to the <see cref = "_arguments" /> list.</param>
         [DebuggerNonUserCode]
-        public AstStringConcatenation(string file, int line, int column, SymbolEntry operatorImplementation, params AstExpr[] arguments)
-            : base(file, line, column)
+        public AstStringConcatenation(ISourcePosition position, AstGetSet simpleConcatPrototype, AstGetSet multiConcatPrototype, params AstExpr[] arguments)
+            : base(position)
         {
-            if (operatorImplementation == null)
-                throw new ArgumentNullException("operatorImplementation");
+            if (simpleConcatPrototype == null)
+                throw new ArgumentNullException("simpleConcatPrototype");
+            if (multiConcatPrototype == null)
+                throw new ArgumentNullException("multiConcatPrototype");
             
             if (arguments == null)
                 arguments = new AstExpr[] {};
 
-            Arguments.AddRange(arguments);
-            Implementation = operatorImplementation;
-        }
-
-        internal AstStringConcatenation Create(Parser p, params AstExpr[] arguments)
-        {
-            var interpretation = _ResolveOperator(p, OperatorNames.Prexonite.Addition);
-            return new AstStringConcatenation(p.scanner.File, p.t.line, p.t.col, interpretation.ToSymbolEntry(),
-                arguments);
+            _arguments.AddRange(arguments);
+            _simpleConcatPrototype = simpleConcatPrototype;
+            _multiConcatPrototype = multiConcatPrototype;
         }
 
         #region IAstHasExpressions Members
 
         public AstExpr[] Expressions
         {
-            get { return Arguments.ToArray(); }
+            get { return _arguments.ToArray(); }
+        }
+
+        /// <summary>
+        ///     The list of arguments for the string concatenation.
+        /// </summary>
+        public List<AstExpr> Arguments
+        {
+            get { return _arguments; }
         }
 
         #endregion
@@ -128,41 +130,35 @@ namespace Prexonite.Compiler.Ast
         /// </remarks>
         protected override void DoEmitCode(CompilerTarget target, StackSemantics stackSemantics)
         {
-            if (Arguments.Count > 2
-                && Implementation.Module == null
-                && Implementation.Interpretation == SymbolInterpretations.Command
-                    && Implementation.InternalId == Addition.DefaultAlias)
+            if (_arguments.Count > 2)
             {
-                var call = target.Factory.Call(Position, EntityRef.Command.Create(Engine.ConcatenateAlias));
+                var call = _multiConcatPrototype.GetCopy();
                 call.Arguments.AddRange(Arguments);
-                call.EmitCode(target,stackSemantics);
+                call.EmitCode(target, stackSemantics);
             }
-            else if (Arguments.Count >= 2)
+            else if (_arguments.Count >= 2)
             {
-                var op = Arguments.Skip(1).Aggregate(Arguments[0],
-                    (aggregate, right) =>
-                        new AstBinaryOperator(File, Line, Column, aggregate, BinaryOperator.Addition,
-                            right,
-                            Implementation, target.CurrentBlock));
-                op.EmitCode(target,stackSemantics);
+                var call = _simpleConcatPrototype.GetCopy();
+                call.Arguments.AddRange(Arguments);
+                call.EmitCode(target, stackSemantics);
             }
-            else if (Arguments.Count == 1)
+            else if (_arguments.Count == 1)
             {
                 if (stackSemantics == StackSemantics.Value)
                 {
-                    Arguments[0].EmitValueCode(target);
+                    _arguments[0].EmitValueCode(target);
 
                     AstConstant constant;
-                    if ((constant = Arguments[0] as AstConstant) != null &&
+                    if ((constant = _arguments[0] as AstConstant) != null &&
                         !(constant.Constant is string))
                         target.EmitGetCall(Position, 1, "ToString");
                 }
                 else
                 {
-                    Arguments[0].EmitEffectCode(target);
+                    _arguments[0].EmitEffectCode(target);
                 }
             }
-            else if (Arguments.Count == 0)
+            else if (_arguments.Count == 0)
             {
                 if(stackSemantics == StackSemantics.Value)
                     target.EmitConstant(Position, "");
@@ -189,28 +185,45 @@ namespace Prexonite.Compiler.Ast
         /// </remarks>
         public override bool TryOptimize(CompilerTarget target, out AstExpr expr)
         {
-            //Optimize arguments
-            foreach (var arg in Arguments.ToArray())
+            _OptimizeInternal(target);
+
+            AstConstant collapsed;
+            if (Arguments.Count == 1 && (collapsed = Arguments[0] as AstConstant) != null)
+            {
+                expr = collapsed.Constant is string
+                    ? (AstExpr) collapsed
+                    : new AstGetSetMemberAccess(File, Line, Column, collapsed, "ToString");
+            }
+            else
+            {
+                expr = null;
+            }
+
+            return expr != null;
+        }
+
+        internal void _OptimizeInternal(CompilerTarget target)
+        {
+//Optimize arguments
+            foreach (var arg in _arguments.ToArray())
             {
                 if (arg == null)
                     throw new PrexoniteException(
                         "Invalid (null) argument in StringConcat node (" + ToString() +
 // ReSharper disable ConditionIsAlwaysTrueOrFalse
-                            ") detected at position " + Arguments.IndexOf(arg) + ".");
+                            ") detected.");
 // ReSharper restore ConditionIsAlwaysTrueOrFalse
                 var oArg = _GetOptimizedNode(target, arg);
                 if (!ReferenceEquals(oArg, arg))
                 {
-                    var idx = Arguments.IndexOf(arg);
-                    Arguments.Insert(idx, oArg);
-                    Arguments.RemoveAt(idx + 1);
+                    var idx = _arguments.IndexOf(arg);
+                    _arguments.Insert(idx, oArg);
+                    _arguments.RemoveAt(idx + 1);
                 }
             }
 
-            expr = null;
-
             //Expand embedded concats argument list
-            var argumentArray = Arguments.ToArray();
+            var argumentArray = _arguments.ToArray();
             for (var i = 0; i < argumentArray.Length; i++)
             {
                 var argument = argumentArray[i];
@@ -218,8 +231,8 @@ namespace Prexonite.Compiler.Ast
 
                 if (concat != null)
                 {
-                    Arguments.RemoveAt(i); //Remove embedded concat
-                    Arguments.InsertRange(i, concat.Arguments); //insert it's arguments instead
+                    _arguments.RemoveAt(i); //Remove embedded concat
+                    _arguments.InsertRange(i, concat._arguments); //insert it's arguments instead
                 }
             }
 
@@ -227,7 +240,7 @@ namespace Prexonite.Compiler.Ast
             var nlst = new List<AstExpr>();
             string last = null;
             var buffer = new StringBuilder();
-            foreach (var e in Arguments)
+            foreach (var e in _arguments)
             {
                 string current;
                 var currConst = e as AstConstant;
@@ -263,17 +276,8 @@ namespace Prexonite.Compiler.Ast
                 buffer.Length = 0;
             }
 
-            Arguments = nlst;
-
-            AstConstant collapsed;
-            if (nlst.Count == 1 && (collapsed = nlst[0] as AstConstant) != null)
-            {
-                expr = collapsed.Constant is string
-                    ? (AstExpr) collapsed
-                    : new AstGetSetMemberAccess(File, Line, Column, collapsed, "ToString");
-            }
-
-            return expr != null;
+            _arguments.Clear();
+            _arguments.AddRange(nlst);
         }
 
         #endregion

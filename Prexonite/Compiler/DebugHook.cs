@@ -111,22 +111,10 @@ namespace Prexonite.Compiler
                             var arg = stmt.Arguments[j] as AstGetSetSymbol;
                             if (arg != null)
                             {
-                                var printlnCall =
-                                    new AstGetSetSymbol(
-                                        stmt.File,
-                                        stmt.Line,
-                                        stmt.Column,
-                                        PCall.Get,
-                                        new SymbolEntry(SymbolInterpretations.Command,
-                                            Engine.PrintLineAlias, null));
-                                var concatCall =
-                                    new AstGetSetSymbol(
-                                        stmt.File,
-                                        stmt.Line,
-                                        stmt.Column,
-                                        PCall.Get,
-                                        new SymbolEntry(SymbolInterpretations.Command,
-                                            Engine.ConcatenateAlias, null));
+                                var printlnCall = t.Factory.Call(stmt.Position,
+                                                                 EntityRef.Command.Create(Engine.PrintLineAlias));
+                                var concatCall = t.Factory.Call(stmt.Position,
+                                                                EntityRef.Command.Create(Engine.ConcatenateAlias));
                                 var consts =
                                     new AstConstant(
                                         stmt.File,

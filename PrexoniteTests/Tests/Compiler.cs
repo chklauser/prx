@@ -135,27 +135,27 @@ namespace Prx.Tests
             return ldr;
         }
 
-        protected internal void _expect(string assemblerCode)
+        protected internal void Expect(string assemblerCode)
         {
-            _expect(target.Meta[Application.EntryKey], assemblerCode);
+            Expect(target.Meta[Application.EntryKey], assemblerCode);
         }
 
-        protected internal void _expect(string functionId, string assemblerCode)
+        protected internal void Expect(string functionId, string assemblerCode)
         {
             var func = target.Functions[functionId];
             if (func == null)
                 throw new ArgumentException(string.Format("No function with the id {0} exists",
                     functionId));
             var actual = func.Code;
-            _expect(actual, assemblerCode);
+            Expect(actual, assemblerCode, functionId);
         }
 
-        protected internal void _expect(PFunction function, string assemblerCode)
+        protected internal void Expect(PFunction function, string assemblerCode)
         {
-            _expect(function.Code, assemblerCode);
+            Expect(function.Code, assemblerCode, function.Id);
         }
 
-        protected internal void _expect(List<Instruction> actual, string assemblerCode)
+        protected internal void Expect(List<Instruction> actual, string assemblerCode, string functionName)
         {
             var expected = GetInstructions(assemblerCode);
             int i;
@@ -166,15 +166,16 @@ namespace Prx.Tests
                         expected.Count,
                         actual.Count,
                         "Expected and actual instruction count missmatch detected at actual instruction " +
-                            actual[i]);
+                            actual[i] + " in function " + functionName);
                 Assert.AreEqual(
                     expected[i],
                     actual[i],
                     String.Format(
-                        "Instructions at address {0} do not match (e{1},a{2})",
+                        "Instructions at address {0} do not match in function {3}, (instruction count expected {1}, actual {2})",
                         i,
                         expected.Count,
-                        actual.Count));
+                        actual.Count,
+                        functionName));
             }
             Assert.AreEqual(
                 expected.Count,

@@ -366,4 +366,28 @@
     <data name="VariableDeclaration_Variable_id_must_not_be_empty" xml:space="preserve">
     <value>Variable id must not be empty.</value>
   </data>
+    <data name="UnscopedFactory_API_Misuse_symbol_resolve" xml:space="preserve">
+    <value>Cannot resolve symbol in unscoped AST factory. This error message indicates a misuse of the Prexonite compile-time API.</value>
+  </data>
+    <data name="ParserAstFactory_RequireOuterVariable_Outside_function" xml:space="preserve">
+    <value>Cannot require outer variable to be included outside of a function. This error indicates an internal compiler error.</value>
+  </data>
+    <data name="AstFactoryBase_UnaryOperation_Target_must_be_LValue" xml:space="preserve">
+    <value>Target of an increment or decrement operations must be an LValue and a get-call.</value>
+  </data>
+    <data name="AstUnaryOperator__NonIncrementDecrement" xml:space="preserve">
+    <value>Unary operator nodes for non-increment/decrement should not exist. This error indicates an error in the compiler.</value>
+  </data>
+    <data name="AstFactoryBase_UnaryOperation_NotOperatorForTypecheckRequiresLValue" xml:space="preserve">
+    <value>The not operator must produce an LValue to be used in a negative typecheck.</value>
+  </data>
+    <data name="AstFactoryBase_ModifyingAssignment_TypeExpressionExpected" xml:space="preserve">
+    <value>Right hand side of a cast operation must be a type expression.</value>
+  </data>
+    <data name="AstFactoryBase_BinaryOperation_TypeExprExpected" xml:space="preserve">
+    <value>Type expression expected on the right-hand side of a type cast.</value>
+  </data>
+    <data name="AstFactoryBase__resolveImplementation_LValueExpected" xml:space="preserve">
+    <value>Expected {0} to be implemented as an LValue.</value>
+  </data>
 </root>

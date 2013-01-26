@@ -32,7 +32,7 @@ using Prexonite.Types;
 
 namespace Prexonite.Compiler.Ast
 {
-    public class AstGetSetReference : AstGetSetSymbol, ICanBeReferenced
+    public class AstGetSetReference : AstGetSetSymbol
     {
         public AstGetSetReference(string file, int line, int column, PCall call, SymbolEntry implementation)
             : base(file, line, column, call, implementation)
@@ -158,11 +158,6 @@ namespace Prexonite.Compiler.Ast
         }
 
         #region ICanBeReferenced Members
-
-        ICollection<AstExpr> ICanBeReferenced.Arguments
-        {
-            get { return Arguments; }
-        }
 
         public override bool TryToReference(out AstExpr reference)
         {
