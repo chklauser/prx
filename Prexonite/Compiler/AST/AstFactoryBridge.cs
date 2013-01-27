@@ -27,6 +27,7 @@
 using System.Collections.Generic;
 using System.Linq;
 using JetBrains.Annotations;
+using Prexonite.Compiler.Symbolic;
 using Prexonite.Modular;
 using Prexonite.Types;
 
@@ -556,7 +557,37 @@ namespace Prexonite.Compiler.Ast
                         break;
                     }
 
-                #endregion
+                case "exprfor":
+                    {
+                        PValue symbolPV;
+                        const string sig = "ExprFor(position, symbol~Symbol)";
+                        if (_require(args, ref i, out symbolPV))
+                        {
+                            detailedError = sig + ", symbol is missing.";
+                            return false;
+                        }
+
+                        // Parse symbol parameter
+                        Symbol symbol;
+                        if (symbolPV.TryConvertTo(sctx, out symbol))
+                        {
+                            // nothing to do in this case
+                        }
+                        else if (symbolPV.IsNull)
+                        {
+                            symbol = null;
+                        }
+                        else
+                        {
+                            detailedError = sig + ", symbol is expected to be a " + typeof(Symbol).Name + ".";
+                            return false;
+                        }
+
+                        node = _base.ExprFor(position, symbol);
+                        break;
+                    }
+
+                    #endregion
 
                 #region Statements/Blocks
 
@@ -684,6 +715,8 @@ namespace Prexonite.Compiler.Ast
                 return result;
             else
             {
+                if (detailedError == null)
+                    detailedError = "illegal call";
                 _throwInvalidCall(args, "{0} Original call: AstFactory.({1})", detailedError);
                 return PType.Null;
             }

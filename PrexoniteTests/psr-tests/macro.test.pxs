@@ -277,18 +277,16 @@ function test_temp[test]
     assert_eq(->test_temp.Variables.Count,54,"Function should have 54 local variables.");
 }
 
-function test_mk_constant_expr(a,b,scope) =
-        ast("BinaryOperator",
-            ast("Constant",a), Prexonite::Compiler::Ast::BinaryOperator.Addition,  ast("Constant", b), 
-            SI.cmd(~Object<"Prexonite.OperatorNames+Prexonite">.Addition),scope
-        );
+function test_mk_constant_expr(a,b,context) =
+        context.Factory.BinaryOperation(context.Invocation.Position,
+            ast("Constant",a), Prexonite::Compiler::Ast::BinaryOperator.Addition,  ast("Constant", b));
 
 macro test_optimize[test]
 {
     var a = 3;
     var b = 5;
     
-    function mk_test = test_mk_constant_expr(a,b,context.CurrentBlock);
+    function mk_test = test_mk_constant_expr(a,b,context);
         
     var t = mk_test();
     
@@ -321,7 +319,7 @@ macro test_read[test]
     var a = 3;
     var b = 5;
     
-    function mk_test = test_mk_constant_expr(a,b,context.CurrentBlock);
+    function mk_test = test_mk_constant_expr(a,b,context);
     
     var t1 = mk_test();
     

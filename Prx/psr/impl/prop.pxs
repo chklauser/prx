@@ -78,8 +78,7 @@ macro prop\macro\assemble(dummyArgs,prop_get,prop_set)
     if(not context.Function.Variables.Contains(varargsId))
         context.Function.Variables.Add(varargsId);
     var getArgc = ast\member(getArgs,"Count");
-    var cmpEqZero = ast("BinaryOperator",getArgc,::BinaryOperator.Equality,ast\const(0),
-        SI.cmd(~Object<"Prexonite.OperatorNames+Prexonite">.Equality),context.CurrentBlock);
+    var cmpEqZero = ast3("BinaryOperation",getArgc,::BinaryOperator.Equality,ast\const(0));
     var conj = ast("LogicalAnd",nullCheck,cmpEqZero);
     var check = ast("ConditionalExpression",conj);
     

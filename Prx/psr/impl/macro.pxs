@@ -519,7 +519,7 @@ macro macro\_check_is_node_t(node_arg,node_t_name,requirePlaceholder,requireAstN
         
         if(not requirePlaceholder)
         {
-            var has_placeholders = ast("UnaryOperator",Prexonite::Compiler::Ast::UnaryOperator.LogicalNot,
+            var has_placeholders = ast3("UnaryOperation",Prexonite::Compiler::Ast::UnaryOperator.LogicalNot,
                 has_placeholders,SI.cmd(~Object<"Prexonite.OperatorNames+Prexonite">.LogicalNot));
         }
         

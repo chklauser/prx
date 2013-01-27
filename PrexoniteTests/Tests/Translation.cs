@@ -120,9 +120,9 @@ function main(ks,vs)
     var r = """";
     for(var i = 0; i < ks.Count; i++)
         if(h.ContainsKey(ks[i]) and h[ks[i]] == vs[i])
-            r += 1;
+            r += ""1"";
         else
-            r += 0;
+            r += ""0"";
     return r;
 }
 ");
