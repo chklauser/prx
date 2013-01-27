@@ -513,6 +513,17 @@ function main(x)
         }
 
         [Test]
+        public void GlobalVarInitSimple()
+        {
+            Compile(@"
+var x = 5;
+function main = x;
+");
+            Expect(5);
+
+        }
+
+        [Test]
         public void GlobalCode()
         {
             Compile(

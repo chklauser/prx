@@ -1008,13 +1008,13 @@ TypeExprElement<. List<AstExpr> args .>
 Prexonite	
                             (.  PFunction func; .)				
 =
-    {	[   GlobalVariableDefinition
-      |   MetaAssignment<TargetApplication>
-      ]   SYNC semicolon
-    | Declaration2
-    | GlobalCode
-    | BuildBlock
-    | FunctionDefinition<out func>
+    {   [   GlobalVariableDefinition
+        |   MetaAssignment<TargetApplication>
+        ]   SYNC semicolon
+    |   Declaration2
+    |   GlobalCode
+    |   BuildBlock
+    |   FunctionDefinition<out func>
     }
     EOF
 .
@@ -1129,6 +1129,7 @@ GlobalVariableDefinition	(.
                               if(errors.count == 0)
                               {
                                 var complex = Create.Call(position, EntityRef.Variable.Global.Create(id,TargetModule.Name) );
+                                complex.Call = PCall.Set;
                                 complex.Arguments.Add(expr);
                                 target.Ast.Add(complex);
                                 TargetApplication._RequireInitialization();
