@@ -30,6 +30,8 @@ using NUnit.Framework;
 using Prexonite;
 using Prexonite.Compiler;
 using Prexonite.Compiler.Ast;
+using Prexonite.Compiler.Symbolic;
+using Prexonite.Modular;
 
 namespace PrexoniteTests.Tests
 {
@@ -179,25 +181,42 @@ function main(x)
                 Assert.That(ldr.Symbols.Contains("f"), Is.True,
                     "Symbol table must contain an entry for 'f'.");
                 var entry = LookupSymbolEntry(ldr.Symbols,"f");
-                Assert.That(entry.Interpretation,
-                    Is.EqualTo(SymbolInterpretations.GlobalObjectVariable));
-                Assert.That(entry.InternalId, Is.EqualTo("f"));
+                Assert.That(entry,Is.InstanceOf<DereferenceSymbol>());
+                var deref = (DereferenceSymbol) entry;
+                Assert.That(deref.InnerSymbol,Is.InstanceOf<ReferenceSymbol>());
+                var refSym = (ReferenceSymbol) deref.InnerSymbol;
+                Assert.That(refSym.Entity,Is.InstanceOf<EntityRef.Variable.Global>());
+                EntityRef.Variable.Global globVar;
+                refSym.Entity.TryGetGlobalVariable(out globVar);
+                Assert.That(globVar,Is.EqualTo("f"));
             }
 
             {
                 Assert.That(ldr.Symbols.Contains("g"), Is.True,
                     "Symbol table must contain an entry for 'g'.");
-                var entry = LookupSymbolEntry(ldr.Symbols,"g");
-                Assert.That(entry.Interpretation, Is.EqualTo(SymbolInterpretations.Function));
-                Assert.That(entry.InternalId, Is.EqualTo("g"));
+                var entry = LookupSymbolEntry(ldr.Symbols, "g");
+                Assert.That(entry, Is.InstanceOf<DereferenceSymbol>());
+                var deref = (DereferenceSymbol)entry;
+                Assert.That(deref.InnerSymbol, Is.InstanceOf<ReferenceSymbol>());
+                var refSym = (ReferenceSymbol)deref.InnerSymbol;
+                Assert.That(refSym.Entity, Is.InstanceOf<EntityRef.Function>());
+                EntityRef.Function func;
+                refSym.Entity.TryGetFunction(out func);
+                Assert.That(func, Is.EqualTo("g"));
             }
 
             {
                 Assert.That(ldr.Symbols.Contains("p"), Is.True,
                     "Symbol table must contain an entry for 'p'.");
-                var entry = LookupSymbolEntry(ldr.Symbols,"p");
-                Assert.That(entry.Interpretation, Is.EqualTo(SymbolInterpretations.Function));
-                Assert.That(entry.InternalId, Is.EqualTo("f"));
+                var entry = LookupSymbolEntry(ldr.Symbols, "p");
+                Assert.That(entry, Is.InstanceOf<DereferenceSymbol>());
+                var deref = (DereferenceSymbol)entry;
+                Assert.That(deref.InnerSymbol, Is.InstanceOf<ReferenceSymbol>());
+                var refSym = (ReferenceSymbol)deref.InnerSymbol;
+                Assert.That(refSym.Entity, Is.InstanceOf<EntityRef.Function>());
+                EntityRef.Function func;
+                refSym.Entity.TryGetFunction(out func);
+                Assert.That(func, Is.EqualTo("f"));
             }
         }
 

@@ -31,7 +31,7 @@ using Prexonite.Properties;
 
 namespace Prexonite.Compiler.Symbolic.Compatibility
 {
-    // TODO: Mark obsolote and remove
+    [Obsolete("Use EntityRef API instead")]
     public static class LegacyExtensions
     {
         private class SymbolEntryConversion : ISymbolHandler<object, SymbolEntry>

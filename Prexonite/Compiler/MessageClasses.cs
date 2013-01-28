@@ -67,6 +67,7 @@
         public const string UnpackUsage = "M.UnpackUsage";
         public const string ReferenceUsage = "M.ReferenceUsage";
         public const string ApiMisuse = "M.ApiMisuse";
+        public const string EntityRefTo = "M.EntityRefTo";
 
         #endregion
 

@@ -54,15 +54,22 @@ namespace Prexonite.Compiler.Ast
             expr = null;
             if (value.Type is ObjectPType)
                 target.Loader.Options.ParentEngine.CreateNativePValue(value.Value);
-            if (value.Type is IntPType ||
-                value.Type is RealPType ||
-                    value.Type is BoolPType ||
-                        value.Type is StringPType ||
-                            value.Type is NullPType)
+            if (value.Type is IntPType 
+                || value.Type is RealPType 
+                || value.Type is BoolPType 
+                || value.Type is StringPType 
+                || value.Type is NullPType 
+                || _isModuleName(value))
                 expr = new AstConstant(position.File, position.Line, position.Column, value.Value);
             else //Cannot represent value in a constant instruction
                 return false;
-            return expr != null;
+            return true;
+        }
+
+        private static bool _isModuleName(PValue value)
+        {
+            ObjectPType objectType;
+            return (object)(objectType = value.Type as ObjectPType) != null && typeof(ModuleName).IsAssignableFrom(objectType.ClrType);
         }
 
         public PValue ToPValue(CompilerTarget target)

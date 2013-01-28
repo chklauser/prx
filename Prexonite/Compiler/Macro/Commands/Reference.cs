@@ -169,7 +169,7 @@ namespace Prexonite.Compiler.Macro.Commands
                                                    ISourcePosition position)
         {
             var internalId = context.CreateConstant(implementationSymbolEntry.InternalId);
-            var interpretation = implementationSymbolEntry.Interpretation.EnumToExpression(position);
+            var interpretation = implementationSymbolEntry.Interpretation.ToExpr(position);
             var moduleNameOpt = context.CreateConstantOrNull(implementationSymbolEntry.Module);
             var implCall = context.Factory.IndirectCall(context.Invocation.Position,
                                                         context.Factory.Reference(context.Invocation.Position,

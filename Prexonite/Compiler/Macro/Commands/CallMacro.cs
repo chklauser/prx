@@ -24,14 +24,14 @@
 //  WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING 
 //  IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-using System;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.Linq;
 using Prexonite.Commands;
 using Prexonite.Commands.Core;
 using Prexonite.Compiler.Ast;
-using Prexonite.Compiler.Cil;
+using Prexonite.Compiler.Symbolic;
+using Prexonite.Compiler.Symbolic.Compatibility;
 using Prexonite.Modular;
 using Prexonite.Properties;
 using Prexonite.Types;
@@ -80,33 +80,6 @@ namespace Prexonite.Compiler.Macro.Commands
 
             #region Overrides of PCommand
 
-            private static SymbolInterpretations _inferInterpretationAndModule(PValue arg, out ModuleName moduleName)
-            {
-                const string notRecognized = "{0} is not recognizable as a macro.";
-                if (!(arg.Type is ObjectPType))
-                    throw new PrexoniteException(string.Format(
-                        notRecognized, arg));
-
-
-                var raw = arg.Value;
-                var cmd = raw as MacroCommand;
-                var func = raw as PFunction;
-
-                if (cmd != null)
-                {
-                    moduleName = null;
-                    return SymbolInterpretations.MacroCommand;
-                }
-                else if (func != null && func.IsMacro)
-                {
-                    moduleName = func.ParentApplication.Module.Name;
-                    return SymbolInterpretations.Function;
-                }
-                else
-                    throw new PrexoniteException(string.Format(
-                        notRecognized, arg));
-            }
-
             private const int CallingConventionArgumentsCount = 4;
 
             public override PValue Run(StackContext sctx, PValue[] args)
@@ -115,7 +88,7 @@ namespace Prexonite.Compiler.Macro.Commands
                     throw new PrexoniteException(
                         "Id of macro implementation, effect flag, call type and/or context missing.");
 
-                var sym = _getMacro(sctx, args[0]);
+                var entityRef = _getMacroRef(sctx, args[0]);
 
                 //Parse arguments
                 var context = _getContext(args[1]);
@@ -127,10 +100,8 @@ namespace Prexonite.Compiler.Macro.Commands
                 var argList = Call.FlattenArguments(sctx, args, CallingConventionArgumentsCount);
                 _detectRuntimeValues(argList);
 
-                var inv = new AstMacroInvocation(context.Invocation.File, context.Invocation.Line,
-                    context.Invocation.Column, sym);
+                var inv = new AstExpand(context.Invocation.Position, entityRef, call);
                 inv.Arguments.AddRange(argList.Select(p => (AstExpr) p.Value));
-                inv.Call = call;
 
                 //Execute the macro
                 MacroSession macroSession = null;
@@ -185,63 +156,16 @@ namespace Prexonite.Compiler.Macro.Commands
                 return context;
             }
 
-            private static SymbolEntry _getMacro(StackContext sctx, PValue rawMacro)
+            private static EntityRef _getMacroRef(StackContext sctx, PValue rawMacro)
             {
-                var list = rawMacro.Value as List<PValue>;
-                SymbolInterpretations macroInterpretation;
-                ModuleName moduleName;
-                string id;
-                if (rawMacro.Type == PType.List && list != null)
-                {
-                    if (list.Count < 3)
-                        throw new PrexoniteException(
-                            string.Format(
-                                "First argument to {0} is a list, it must contain the macro id, its interpretation and containing module name.",
-                                CallMacro.Alias));
-
-                    id = list[0].Value as string;
-                    if (list[0].Type != PType.String || id == null)
-                        throw new PrexoniteException(
-                            string.Format("First argument must be id in call to {0}.", Alias));
-
-                    if (!(list[1].Type is ObjectPType) || !(list[1].Value is SymbolInterpretations))
-                        throw new PrexoniteException(
-                            string.Format(
-                                "Second argument must be symbol interpretation in call to {0}.",
-                                Alias));
-                    macroInterpretation = (SymbolInterpretations) list[1].Value;
-
-                    //Read module name, first as Object<"Prexonite.Modular.Name"> then as String
-                    string moduleNameRaw;
-                    if((moduleName = list[2].Value as ModuleName) != null 
-                        && list[2].Type == ModuleName.PType)
-                    {
-                        // moduleName already assigned
-                    }
-                    else if ((moduleNameRaw = list[2].Value as string) != null 
-                        && list[2].Type == PType.String 
-                        && ModuleName.TryParse(moduleNameRaw, out moduleName))
-                    {
-                        // moduleName already assigned
-                    }
-                    else
-                    {
-                        moduleName = null;
-                    }
-                }
+                PFunction func;
+                MacroCommand mcmd;
+                if (rawMacro.TryConvertTo(sctx, out func))
+                    return EntityRef.Function.Create(func.Id, func.ParentApplication.Module.Name);
+                else if (rawMacro.TryConvertTo(sctx, out mcmd))
+                    return EntityRef.MacroCommand.Create(mcmd.Id);
                 else
-                {
-                    id = rawMacro.DynamicCall(sctx, Runtime.EmptyPValueArray, PCall.Get,
-                        PFunction.IdKey).ConvertTo<string>(sctx, false);
-                    macroInterpretation = _inferInterpretationAndModule(rawMacro, out moduleName);
-                }
-
-                if (macroInterpretation.AssociatedWithModule() && moduleName == null)
-                    throw new PrexoniteException(
-                        string.Format("Missing module name for {0} macro with internal name {1}.",
-                            Enum.GetName(typeof (SymbolInterpretations), macroInterpretation), id));
-
-                return new SymbolEntry(macroInterpretation, id, moduleName);
+                    return rawMacro.ConvertTo<EntityRef>(sctx);
             }
 
             #endregion
@@ -295,7 +219,7 @@ namespace Prexonite.Compiler.Macro.Commands
         /// </summary>
         /// <param name = "context">The macro context.</param>
         /// <returns>The call to call\macro\perform expression on success; null otherwise.</returns>
-        private static AstMacroInvocation _assembleCallPerform(MacroContext context)
+        private static AstGetSet _assembleCallPerform(MacroContext context)
         {
             if (context.Invocation.Arguments.Count == 0)
             {
@@ -327,11 +251,11 @@ namespace Prexonite.Compiler.Macro.Commands
             if (!_parseArguments(context, out call, out justEffect, out args, out macroSpec))
                 return null;
 
-            // [| call\macro\prepare_macro("$macroId", $macroInterpretation, context, $call, $justEffect, $args...) |]
+            // [| call\macro\prepare_macro($macroEntityRef, context, $call, $justEffect, $args...) |]
             return _prepareMacro(context, macroSpec, call, justEffect, args);
         }
 
-        private static AstMacroInvocation _prepareMacro(MacroContext context,
+        private static AstGetSet _prepareMacro(MacroContext context,
             AstExpr macroSpec, AstExpr call, AstExpr justEffect,
             IEnumerable<AstExpr> args)
         {
@@ -339,11 +263,12 @@ namespace Prexonite.Compiler.Macro.Commands
                                                           context.Factory.Call(context.Invocation.Position,
                                                                                EntityRef.Variable.Local.Create(
                                                                                    MacroAliases.ContextAlias)));
-            var prepareCall = context.CreateMacroInvocation(context.Call,
-                SymbolEntry.MacroCommand(CallMacroPerform.PartialCallMacroPerform.Alias),
-                macroSpec,
-                getContext, call,
-                justEffect);
+            var prepareCall =
+                context.CreateExpand(EntityRef.MacroCommand.Create(CallMacroPerform.PartialCallMacroPerform.Alias));
+            prepareCall.Arguments.Add(macroSpec);
+            prepareCall.Arguments.Add(getContext);
+            prepareCall.Arguments.Add(call);
+            prepareCall.Arguments.Add(justEffect);
             prepareCall.Arguments.AddRange(args);
             return prepareCall;
         }
@@ -369,7 +294,7 @@ namespace Prexonite.Compiler.Macro.Commands
             var inv = context.Invocation;
             justEffect = new AstConstant(inv.File, inv.Line,
                 inv.Column, false);
-            call = PCall.Get.EnumToExpression(context.Invocation.Position);
+            call = PCall.Get.ToExpr(context.Invocation.Position);
 
             var invokeSpec = inv.Arguments[0];
             var listSpec = invokeSpec as AstListLiteral;
@@ -432,12 +357,9 @@ namespace Prexonite.Compiler.Macro.Commands
                     justEffect = listSpec.Elements[1];
 
                 //second option: call type
-                if (listSpec.Elements.Count >= 3)
-                    call = listSpec.Elements[2];
-                else
-                {
-                    call = protoCall.EnumToExpression(specProto.Position);
-                }
+                call = listSpec.Elements.Count >= 3
+                    ? listSpec.Elements[2]
+                    : protoCall.ToExpr(specProto.Position);
 
                 //args: lift and pass prototype arguments, special care for set
 
@@ -557,27 +479,28 @@ namespace Prexonite.Compiler.Macro.Commands
         private static AstExpr _getMacroSpecExpr(MacroContext context, ISourcePosition position, SymbolEntry symbolEntry)
         {
 //macroId: as a constant
-            var macroId = context.CreateConstant(symbolEntry.InternalId);
-
-            //macroInterpretation: as an expression
-            var macroInterpretation = symbolEntry.Interpretation.EnumToExpression(position);
-
-            //macroModule: as a constant (string or null)
-            var macroModule = context.CreateConstantOrNull(symbolEntry.Module);
-
-            var listLit = new AstListLiteral(context.Invocation.File, context.Invocation.Line,
-                                             context.Invocation.Column);
-            listLit.Elements.Add(macroId);
-            listLit.Elements.Add(macroInterpretation);
-            listLit.Elements.Add(macroModule);
-
-            return listLit;
+            var sym = symbolEntry.ToSymbol();
+            DereferenceSymbol ds;
+            ReferenceSymbol rs;
+            ExpandSymbol es;
+            if ((ds = sym as DereferenceSymbol) != null && (rs = ds.InnerSymbol as ReferenceSymbol) != null)
+            {
+                return EntityRefTo.ToExpr(context.Factory, context.Invocation.Position, rs.Entity);
+            }
+            else if ((es = sym as ExpandSymbol) != null && (rs = es.InnerSymbol as ReferenceSymbol) != null)
+            {
+                return EntityRefTo.ToExpr(context.Factory, context.Invocation.Position, rs.Entity);
+            }
+            else
+            {
+                throw new ErrorMessageException(Message.Error("Cannot convert usage of legacy macro invocation in call macro.",position, MessageClasses.CallMacroUsage));
+            }
         }
 
         private static AstExpr _getMacroSpecExpr(MacroContext context,
             AstExpand proto)
         {
-            return _getMacroSpecExpr(context, proto.Position, proto.Entity.ToSymbolEntry());
+            return EntityRefTo.ToExpr(context.Factory, context.Invocation.Position, proto.Entity);
         }
 
         private static void _errorUsagePrototype(MacroContext context)

@@ -293,24 +293,12 @@ namespace PrexoniteTests.Tests
             return GetReturnValueNamedExplicit(target.Meta[Application.EntryKey], args);
         }
 
-        protected SymbolEntry LookupSymbolEntry(SymbolStore store, string symbolicId)
+        protected Symbol LookupSymbolEntry(SymbolStore store, string symbolicId)
         {
             Symbol symbol;
             Assert.IsTrue(store.TryGet(symbolicId, out symbol),
                           string.Format("Expected to find symbol {0} but there is no such entry.", symbolicId));
-            SymbolEntry r;
-            try
-            {
-                r = symbol.ToSymbolEntry();
-            }
-            catch (SymbolConversionException ex)
-            {
-                Assert.Fail("Expected symbol {0} to be convertible to a symbol entry. Exception was {1}", symbolicId, ex);
-// ReSharper disable HeuristicUnreachableCode
-                throw;
-// ReSharper restore HeuristicUnreachableCode
-            }
-            return r;
+            return symbol;
         }
 
         protected void BoolTable4(Func<bool, bool, bool, bool, string> main, PValue pTrue,

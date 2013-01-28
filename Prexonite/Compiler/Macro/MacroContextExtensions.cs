@@ -71,7 +71,7 @@ namespace Prexonite.Compiler.Macro
         /// <param name = "enumerationValue">The enumeration value to load</param>
         /// <param name = "position">The source position to associate with the node</param>
         /// <returns>An AST node that represents the specified enumeration value</returns>
-        public static AstExpr EnumToExpression<T>(this T enumerationValue,
+        public static AstExpr ToExpr<T>(this T enumerationValue,
             ISourcePosition position) where T : struct
         {
             if (position == null)

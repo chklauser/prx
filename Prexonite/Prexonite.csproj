@@ -191,6 +191,7 @@
     <Compile Include="Compiler\Internal\MExpr.cs" />
     <Compile Include="Compiler\Internal\SymbolMExprParser.cs" />
     <Compile Include="Compiler\Internal\SymbolMExprSerializer.cs" />
+    <Compile Include="Compiler\Macro\Commands\EntityRefTo.cs" />
     <Compile Include="Compiler\Macro\Commands\PartialCallWrapper.cs" />
     <Compile Include="Compiler\Macro\Commands\CallMacro.cs" />
     <Compile Include="Compiler\Macro\Commands\CallStar.cs" />

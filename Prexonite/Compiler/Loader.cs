@@ -573,6 +573,7 @@ namespace Prexonite.Compiler
             _addMacroCommand(Reference.Instance);
             _addHelperCommands(Reference.GetHelperCommands(this));
             _addMacroCommand(CallStar.Instance);
+            _addMacroCommand(EntityRefTo.Instance);
 
             // Call/* macros
             _addMacroCommand(Call.Instance.Partial);
