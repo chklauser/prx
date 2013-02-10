@@ -34,6 +34,10 @@ using Prexonite.Compiler;
 using Prexonite.Compiler.Build;
 using Prexonite.Compiler.Cil;
 
+namespace PrexoniteTests.Internal
+{
+}
+
 namespace PrexoniteTests.Tests.Configurations
 {
     internal abstract class UnitTestConfiguration
@@ -47,6 +51,24 @@ namespace PrexoniteTests.Tests.Configurations
             public FromStored()
             {
                 throw new NotSupportedException("Store round-tripping is not currently implemented.");
+            }
+
+            internal override void Configure(TestModel model, ScriptedUnitTestContainer container)
+            {
+                // Rewire the units under test to point to stored representations
+                var originalUnits = model.UnitsUnderTest.ToList();
+                var storedNameMap = originalUnits.Select(
+                    td =>
+                        {
+                            var ext = Path.GetExtension(td.ScriptName);
+                            var extLen = ext == null ? 0 : ext.Length;
+                            var baseName = td.ScriptName.Substring(td.ScriptName.Length - extLen);
+                            return string.Format("{0}~-stored{1}", baseName, ext);
+                        });
+
+
+                // Configure the test as per usual
+                base.Configure(model, container);
             }
 
             public void PrepareTestCompilation(ScriptedUnitTestContainer container)
@@ -99,8 +121,6 @@ namespace PrexoniteTests.Tests.Configurations
         internal virtual void Configure(TestModel model, ScriptedUnitTestContainer container)
 // ReSharper restore InconsistentNaming
         {
-            container.Initialize();
-
             // describe units under test
             foreach (var unit in model.UnitsUnderTest)
                 ModuleCache.Describe(container.Loader, unit);

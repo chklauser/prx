@@ -53,74 +53,54 @@ namespace Prexonite.Compiler.Build
 
         public Task<ITarget> BuildAsync(IBuildEnvironment build, IDictionary<ModuleName, Task<ITarget>> dependencies, CancellationToken token)
         {
-            return Task.Factory.StartNew(() =>
-                {
-                    var ldr = build.CreateLoader(new LoaderOptions(null, null));
-
-                    var aggregateMessages = dependencies.Values
-                        .SelectMany(t => t.Result.Messages);
-                    var aggregateExceptions = dependencies.Values
-                        .Select(t => t.Result.Exception)
-                        .Where(e => e != null);
-                    if (dependencies.Values.All(t => t.Result.IsSuccessful))
+            return Task.Factory.StartNew(
+                () =>
                     {
-                        try
+                        var ldr = build.CreateLoader(new LoaderOptions(null, null));
+
+                        var aggregateMessages = dependencies.Values
+                            .SelectMany(t => t.Result.Messages);
+                        var aggregateExceptions = dependencies.Values
+                            .Select(t => t.Result.Exception)
+                            .Where(e => e != null);
+                        if (dependencies.Values.All(t => t.Result.IsSuccessful))
                         {
-                            TextReader reader;
-                            if (!_source.TryOpen(out reader))
-                                throw new BuildFailureException(this,
-                                                                string.Format("The source for target {0} could not be opened.", Name),
-                                                                Enumerable.Empty<Message>());
-                            using (reader)
+                            try
                             {
-                                token.ThrowIfCancellationRequested();
-                                Plan.Trace.TraceEvent(TraceEventType.Information, 0, "Building {0}.", this);
-                                Trace.CorrelationManager.StartLogicalOperation("Build");
-                                ldr.LoadFromReader(reader, _fileName);
-                                Trace.CorrelationManager.StopLogicalOperation();
-                                Plan.Trace.TraceEvent(TraceEventType.Verbose, 0, "Done with building {0}, wrapping result in target.", this);
+                                TextReader reader;
+                                if (!_source.TryOpen(out reader))
+                                    throw new BuildFailureException(this,
+                                        string.Format("The source for target {0} could not be opened.", Name),
+                                        Enumerable.Empty<Message>());
+                                using (reader)
+                                {
+                                    token.ThrowIfCancellationRequested();
+                                    Plan.Trace.TraceEvent(TraceEventType.Information, 0, "Building {0}.", this);
+                                    Trace.CorrelationManager.StartLogicalOperation("Build");
+                                    ldr.LoadFromReader(reader, _fileName);
+                                    Trace.CorrelationManager.StopLogicalOperation();
+                                    Plan.Trace.TraceEvent(TraceEventType.Verbose, 0, "Done with building {0}, wrapping result in target.", this);
+                                }
+
+                                // ReSharper disable PossibleMultipleEnumeration
+                                return DefaultModuleTarget._FromLoader(ldr, aggregateExceptions.ToArray(), aggregateMessages);
                             }
-
-                            // ReSharper disable PossibleMultipleEnumeration
-                            return _createTargetFromLoader(ldr, aggregateExceptions.ToArray(), aggregateMessages);
-
+                            catch (Exception e)
+                            {
+                                return DefaultModuleTarget._FromLoader(ldr,aggregateExceptions.Append(e).ToArray(),
+                                    aggregateMessages);
+                                // ReSharper restore PossibleMultipleEnumeration
+                            }
                         }
-                        catch (Exception e)
+                        else
                         {
-                            return DefaultModuleTarget._FromLoader(ldr,
-                                                                   _createAggregateException(aggregateExceptions.Append(e).ToArray()),
-                                                                   aggregateMessages);
-                            // ReSharper restore PossibleMultipleEnumeration
+                            Plan.Trace.TraceEvent(TraceEventType.Error, 0,
+                                "Not all dependencies of {0} were built successfully. Waiting for other dependencies to finish and then return a failed target.",
+                                this);
+                            Task.WaitAll(dependencies.Values.ToArray<Task>());
+                            return DefaultModuleTarget._FromLoader(ldr, aggregateExceptions.ToArray(), aggregateMessages);
                         }
-                    }
-                    else
-                    {
-                        Plan.Trace.TraceEvent(TraceEventType.Error, 0, "Not all dependencies of {0} were built successfully. Waiting for other dependencies to finish and then return a failed target.",this);
-                        Task.WaitAll(dependencies.Values.ToArray<Task>());
-                        return _createTargetFromLoader(ldr, aggregateExceptions.ToArray(), aggregateMessages);
-                    }
-                },token);
-        }
-
-        private static ITarget _createTargetFromLoader(Loader ldr, Exception[] aggregateExceptions, IEnumerable<Message> aggregateMessages)
-        {
-            return DefaultModuleTarget._FromLoader(
-                ldr, 
-                _createAggregateException(aggregateExceptions),
-                aggregateMessages);
-        }
-
-        [CanBeNull]
-        private static Exception _createAggregateException(Exception[] aggregateExceptions)
-        {
-            Exception aggregateException;
-            if (aggregateExceptions.Length == 1)
-                aggregateException = aggregateExceptions[0];
-            else if (aggregateExceptions.Length > 0)
-                aggregateException = new AggregateException(aggregateExceptions);
-            else
-                aggregateException = null;
-            return aggregateException;
+                    }, token);
         }
 
         public override string ToString()

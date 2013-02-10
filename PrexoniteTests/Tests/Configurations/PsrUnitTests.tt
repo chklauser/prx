@@ -54,6 +54,7 @@ namespace PrexoniteTests.Tests.Configurations
 <#						} #>					
 					}
 				};
+                Initialize();
 				Runner.Configure(model, this);
             }
 

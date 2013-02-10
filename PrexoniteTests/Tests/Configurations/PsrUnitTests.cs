@@ -30,6 +30,7 @@ namespace PrexoniteTests.Tests.Configurations
 					
 					}
 				};
+                Initialize();
 				Runner.Configure(model, this);
             }
 
@@ -135,6 +136,7 @@ namespace PrexoniteTests.Tests.Configurations
 					
 					}
 				};
+                Initialize();
 				Runner.Configure(model, this);
             }
 
@@ -192,6 +194,7 @@ namespace PrexoniteTests.Tests.Configurations
 					
 					}
 				};
+                Initialize();
 				Runner.Configure(model, this);
             }
 
@@ -350,6 +353,7 @@ namespace PrexoniteTests.Tests.Configurations
 					
 					}
 				};
+                Initialize();
 				Runner.Configure(model, this);
             }
 
@@ -452,6 +456,7 @@ namespace PrexoniteTests.Tests.Configurations
 					
 					}
 				};
+                Initialize();
 				Runner.Configure(model, this);
             }
 

@@ -71,7 +71,8 @@ namespace PrexoniteTests.Tests.Configurations
         }
     }
 
-    [TestFixture, Explicit]
+    [TestFixture]
+    [Explicit]
     [GeneratedCode("VMTestConfiguration.tt","0.0")]
     internal class <#=baseName#>_StoredInterpreted : <#=className#>
     {
@@ -85,7 +86,8 @@ namespace PrexoniteTests.Tests.Configurations
         }
     }
 
-    [TestFixture, Explicit]
+    [TestFixture]
+    [Explicit]
     [GeneratedCode("VMTestConfiguration.tt","0.0")]
     internal class <#=baseName#>_StoredCilStatic : <#=className#>
     {
@@ -100,7 +102,8 @@ namespace PrexoniteTests.Tests.Configurations
     }
 
     
-    [TestFixture, Explicit]
+    [TestFixture]
+    [Explicit]
     [GeneratedCode("VMTestConfiguration.tt","0.0")]
     internal class <#=baseName#>_StoredCilIsolated : <#=className#>
     {

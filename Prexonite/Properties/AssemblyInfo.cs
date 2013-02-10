@@ -26,6 +26,7 @@
 
 using System;
 using System.Reflection;
+using System.Runtime.CompilerServices;
 using System.Runtime.InteropServices;
 
 // General Information about an assembly is controlled through the following 
@@ -61,3 +62,15 @@ using System.Runtime.InteropServices;
 [assembly: AssemblyVersion("1.2.9.0")]
 [assembly: AssemblyFileVersion("1.2.9.0")]
 [assembly: CLSCompliant(true)]
+
+// Makes internal members of Prexonite visible to the unit testing project 
+//  PrexoniteTests.
+// The public key can be obtained by running
+//  $> sn -p Prexonite.snk -t Prexonite.pub
+//  $> sn -tp Prexonite.pub
+// (Both Prexonite and PrexoniteTests are signed with the same key)
+[assembly: InternalsVisibleTo("PrexoniteTests, PublicKey=002400000480000094000000" 
+    + "06020000002400005253413100040000010001005def07f2a41140759af9fb2bbc95134590"
+    + "655b13d80802066631489fe40f030ef270d151f62ff968e715f08e3df0e22f8f8f587b3e90" 
+    + "28903c2ca2bd2b7b779ed0de24679aa3463cde1f484464f0af527a7443941f83ef4272e468" 
+    + "a3e8ae7f05ff7fef7b3d0f99f4f6d42a3811d0d02350d074209283f95dccd26bbb5f7d2ebc")]

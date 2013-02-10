@@ -61,7 +61,8 @@ namespace PrexoniteTests.Tests.Configurations
         }
     }
 
-    [TestFixture, Explicit]
+    [TestFixture]
+    [Explicit]
     [GeneratedCode("VMTestConfiguration.tt","0.0")]
     internal class ast_StoredInterpreted : Unit_ast
     {
@@ -75,7 +76,8 @@ namespace PrexoniteTests.Tests.Configurations
         }
     }
 
-    [TestFixture, Explicit]
+    [TestFixture]
+    [Explicit]
     [GeneratedCode("VMTestConfiguration.tt","0.0")]
     internal class ast_StoredCilStatic : Unit_ast
     {
@@ -90,7 +92,8 @@ namespace PrexoniteTests.Tests.Configurations
     }
 
     
-    [TestFixture, Explicit]
+    [TestFixture]
+    [Explicit]
     [GeneratedCode("VMTestConfiguration.tt","0.0")]
     internal class ast_StoredCilIsolated : Unit_ast
     {
@@ -152,7 +155,8 @@ namespace PrexoniteTests.Tests.Configurations
         }
     }
 
-    [TestFixture, Explicit]
+    [TestFixture]
+    [Explicit]
     [GeneratedCode("VMTestConfiguration.tt","0.0")]
     internal class lang_ext_StoredInterpreted : Unit_lang_ext
     {
@@ -166,7 +170,8 @@ namespace PrexoniteTests.Tests.Configurations
         }
     }
 
-    [TestFixture, Explicit]
+    [TestFixture]
+    [Explicit]
     [GeneratedCode("VMTestConfiguration.tt","0.0")]
     internal class lang_ext_StoredCilStatic : Unit_lang_ext
     {
@@ -181,7 +186,8 @@ namespace PrexoniteTests.Tests.Configurations
     }
 
     
-    [TestFixture, Explicit]
+    [TestFixture]
+    [Explicit]
     [GeneratedCode("VMTestConfiguration.tt","0.0")]
     internal class lang_ext_StoredCilIsolated : Unit_lang_ext
     {
@@ -243,7 +249,8 @@ namespace PrexoniteTests.Tests.Configurations
         }
     }
 
-    [TestFixture, Explicit]
+    [TestFixture]
+    [Explicit]
     [GeneratedCode("VMTestConfiguration.tt","0.0")]
     internal class macro_StoredInterpreted : Unit_macro
     {
@@ -257,7 +264,8 @@ namespace PrexoniteTests.Tests.Configurations
         }
     }
 
-    [TestFixture, Explicit]
+    [TestFixture]
+    [Explicit]
     [GeneratedCode("VMTestConfiguration.tt","0.0")]
     internal class macro_StoredCilStatic : Unit_macro
     {
@@ -272,7 +280,8 @@ namespace PrexoniteTests.Tests.Configurations
     }
 
     
-    [TestFixture, Explicit]
+    [TestFixture]
+    [Explicit]
     [GeneratedCode("VMTestConfiguration.tt","0.0")]
     internal class macro_StoredCilIsolated : Unit_macro
     {
@@ -334,7 +343,8 @@ namespace PrexoniteTests.Tests.Configurations
         }
     }
 
-    [TestFixture, Explicit]
+    [TestFixture]
+    [Explicit]
     [GeneratedCode("VMTestConfiguration.tt","0.0")]
     internal class misc_StoredInterpreted : Unit_misc
     {
@@ -348,7 +358,8 @@ namespace PrexoniteTests.Tests.Configurations
         }
     }
 
-    [TestFixture, Explicit]
+    [TestFixture]
+    [Explicit]
     [GeneratedCode("VMTestConfiguration.tt","0.0")]
     internal class misc_StoredCilStatic : Unit_misc
     {
@@ -363,7 +374,8 @@ namespace PrexoniteTests.Tests.Configurations
     }
 
     
-    [TestFixture, Explicit]
+    [TestFixture]
+    [Explicit]
     [GeneratedCode("VMTestConfiguration.tt","0.0")]
     internal class misc_StoredCilIsolated : Unit_misc
     {
@@ -425,7 +437,8 @@ namespace PrexoniteTests.Tests.Configurations
         }
     }
 
-    [TestFixture, Explicit]
+    [TestFixture]
+    [Explicit]
     [GeneratedCode("VMTestConfiguration.tt","0.0")]
     internal class struct_StoredInterpreted : Unit_struct
     {
@@ -439,7 +452,8 @@ namespace PrexoniteTests.Tests.Configurations
         }
     }
 
-    [TestFixture, Explicit]
+    [TestFixture]
+    [Explicit]
     [GeneratedCode("VMTestConfiguration.tt","0.0")]
     internal class struct_StoredCilStatic : Unit_struct
     {
@@ -454,7 +468,8 @@ namespace PrexoniteTests.Tests.Configurations
     }
 
     
-    [TestFixture, Explicit]
+    [TestFixture]
+    [Explicit]
     [GeneratedCode("VMTestConfiguration.tt","0.0")]
     internal class struct_StoredCilIsolated : Unit_struct
     {

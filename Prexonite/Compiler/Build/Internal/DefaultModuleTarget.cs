@@ -40,6 +40,26 @@ namespace Prexonite.Compiler.Build.Internal
             _isSuccessful = exception == null && (_messages == null || _messages.All(m => m.Severity != MessageSeverity.Error));
         }
 
+        [CanBeNull]
+        private static Exception _createAggregateException(Exception[] aggregateExceptions)
+        {
+            Exception aggregateException;
+            if (aggregateExceptions.Length == 1)
+                aggregateException = aggregateExceptions[0];
+            else if (aggregateExceptions.Length > 0)
+                aggregateException = new AggregateException(aggregateExceptions);
+            else
+                aggregateException = null;
+            return aggregateException;
+        }
+
+        internal static ITarget _FromLoader(Loader loader, Exception[] exceptions = null, IEnumerable<Message> additionalMessages = null)
+        {
+            return _FromLoader(loader, 
+                exceptions == null ? null : _createAggregateException(exceptions),
+                additionalMessages);
+        }
+
         internal static ITarget _FromLoader(Loader loader, Exception exception = null, IEnumerable<Message> additionalMessages = null)
         {
             if (loader == null)

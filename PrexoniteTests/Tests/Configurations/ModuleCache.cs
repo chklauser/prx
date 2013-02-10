@@ -199,8 +199,16 @@ namespace PrexoniteTests.Tests.Configurations
             return result;
         }
 
+        public static Task<ITarget> BuildAsync(string path)
+        {
+            EnsureFresh();
+            var targetModuleName = _toModuleName(path);
+            return Cache.BuildAsync(targetModuleName, CancellationToken.None);
+        }
+
         public static Task<ITarget> BuildAsync(ModuleName name)
         {
+            EnsureFresh();
             _trace.TraceEvent(TraceEventType.Information, 0, "Requested asynchronous build of module {0}.", name);
             return Cache.BuildAsync(name, CancellationToken.None);
         }
