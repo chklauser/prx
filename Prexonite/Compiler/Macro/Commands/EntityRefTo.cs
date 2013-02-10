@@ -45,7 +45,7 @@ namespace Prexonite.Compiler.Macro.Commands
                     context.Invocation.Position, MessageClasses.EntityRefTo));
                 return;
             }
-
+            
             var prototype = context.Invocation.Arguments[0];
             EntityRef entityRef;
             AstExpand expand;

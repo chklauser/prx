@@ -9,6 +9,8 @@ namespace Prexonite.Compiler.Internal
 {
     public static class SymbolMExprParser
     {
+        private const string HerePositionHead = "here";
+
         [NotNull]
         public static Symbol Parse([NotNull] ISymbolView<Symbol> symbols, [NotNull] MExpr expr)
         {
@@ -49,7 +51,7 @@ namespace Prexonite.Compiler.Internal
             {
                 return _parseMessage(MessageSeverity.Info, symbols, expr, elements);
             }
-            else if(expr.TryMatchHead(SymbolMExprSerializer.ExpandHead,out innerSymbolExpr))
+            else if (expr.TryMatchHead(SymbolMExprSerializer.ExpandHead, out innerSymbolExpr))
             {
                 innerSymbol = Parse(symbols, innerSymbolExpr);
                 return Symbol.CreateExpand(innerSymbol, expr.Position);
@@ -61,7 +63,7 @@ namespace Prexonite.Compiler.Internal
             else
             {
                 // must be a reference 
-                return Symbol.CreateReference(EntityRefMExprParser.Parse(expr),expr.Position);
+                return Symbol.CreateReference(EntityRefMExprParser.Parse(expr), expr.Position);
             }
         }
 
@@ -78,11 +80,9 @@ namespace Prexonite.Compiler.Internal
             string messageText;
             if (elements[1].TryMatchAtom(out rawMessageClass) && elements[2].TryMatchStringAtom(out messageText))
             {
-                return
-                    Symbol.CreateMessage(
-                        Message.Create(severity, messageText, position,
-                                       (rawMessageClass == null ? null : rawMessageClass.ToString())),
-                        Parse(symbols, elements[3]), expr.Position);
+                var message = Message.Create(severity, messageText, position,
+                    (rawMessageClass == null ? null : rawMessageClass.ToString()));
+                return Symbol.CreateMessage(message, Parse(symbols, elements[3]), expr.Position);
             }
             else
             {
@@ -101,13 +101,18 @@ namespace Prexonite.Compiler.Internal
             string file;
             int line;
             int column;
+            List<MExpr> hereArgs;
             if (expr.TryMatchHead(SymbolMExprSerializer.SourcePositionHead, out fileExpr, out lineExpr,
                                   out columnExpr)
                 && fileExpr.TryMatchStringAtom(out file)
                 && lineExpr.TryMatchIntAtom(out line)
                 && columnExpr.TryMatchIntAtom(out column))
             {
-                return new SourcePosition(file,line,column);
+                return new SourcePosition(file, line, column);
+            }
+            else if(expr.TryMatchHead(HerePositionHead, out hereArgs))
+            {
+                return expr.Position;
             }
             else
             {

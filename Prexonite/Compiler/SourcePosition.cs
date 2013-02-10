@@ -109,5 +109,12 @@ namespace Prexonite.Compiler
         {
             return (_file ?? String.Empty).GetHashCode() ^ _line ^ (_column + 256);
         }
+
+        public override string ToString()
+        {
+            return File != null
+                ? String.Format("{0} {1}.{2}", File, Line, Column)
+                : String.Format("{0}.{1}", Line, Column);
+        }
     }
 }

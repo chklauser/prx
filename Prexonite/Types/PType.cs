@@ -817,7 +817,6 @@ namespace Prexonite.Types
 
         #endregion //Operators
 
-        [DebuggerStepThrough]
         public virtual PValue DynamicCall(
             StackContext sctx, PValue subject, PValue[] args, PCall call, string id)
         {

@@ -105,6 +105,8 @@ declare {
 		$not,
 		create_enumerator,
 		create_module_name,
+        create_source_position,
+        get_unscoped_ast_factory,
 		seqconcat,
 	macro command:
 		call,
@@ -119,4 +121,5 @@ declare {
 		call\star,
 		call\macro,
 		call\macro\impl,
+        entityref_to
 };

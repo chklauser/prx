@@ -29,7 +29,6 @@ using System.Diagnostics;
 using JetBrains.Annotations;
 using Prexonite.Modular;
 using Prexonite.Properties;
-using Prexonite.Types;
 
 namespace Prexonite.Compiler.Ast
 {
@@ -143,14 +142,10 @@ namespace Prexonite.Compiler.Ast
 
         private void _emitIncrementDecrementCode(CompilerTarget target, StackSemantics value)
         {
-            var legacySymbol = _operand as AstGetSetSymbol;
-            var isLegacyVariable = legacySymbol != null && legacySymbol.IsObjectVariable;
             var symbolCall = _operand as AstIndirectCall;
             var symbol = symbolCall == null ? null : symbolCall.Subject as AstReference;
             EntityRef.Variable variableRef = null;
             var isVariable = symbol != null && symbol.Entity.TryGetVariable(out variableRef);
-            var complex = _operand as AstGetSet;
-            var isAssignable = complex != null;
             var isPre = _operator == UnaryOperator.PreDecrement || _operator == UnaryOperator.PreIncrement;
             switch (_operator)
             {
@@ -161,37 +156,7 @@ namespace Prexonite.Compiler.Ast
                     var isIncrement = 
                         _operator == UnaryOperator.PostIncrement ||
                         _operator == UnaryOperator.PreIncrement;
-                    if (isLegacyVariable) //The easy way
-                    {
-                        var isGlobal = legacySymbol.Implementation.Interpretation == SymbolInterpretations.GlobalObjectVariable;
-                        var sym = legacySymbol.Implementation;
-
-                        if(!isPre && value == StackSemantics.Value)
-                        {
-                            if (isGlobal)
-                                target.EmitLoadGlobal(Position, sym.InternalId, sym.Module);
-                            else
-                                target.EmitLoadLocal(Position, sym.InternalId);
-                        }
-
-                        OpCode opc;
-
-                        if (isIncrement)
-                            opc = isGlobal ? OpCode.incglob : OpCode.incloc;
-                        else
-                            opc = isGlobal ? OpCode.decglob : OpCode.decloc;
-
-                        target.Emit(Position,opc, legacySymbol.Implementation.InternalId, target.ToInternalModule(legacySymbol.Implementation.Module));
-
-                        if (isPre && value == StackSemantics.Value)
-                        {
-                            if (isGlobal)
-                                target.EmitLoadGlobal(Position, sym.InternalId, sym.Module);
-                            else
-                                target.EmitLoadLocal(Position, sym.InternalId);
-                        }
-                    }
-                    else if (isVariable)
+                    if (isVariable)
                     {
                         Debug.Assert(variableRef != null);
                         EntityRef.Variable.Local localRef;

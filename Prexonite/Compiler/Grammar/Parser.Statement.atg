@@ -299,8 +299,9 @@ SymbolicUsage<out AstGetSet complex>
                                 .)
 =                               (.  position = GetPosition(); .)
     Id<out id>                  (.  Symbol sym;
-                                    Symbols.TryGet(id, out sym);
-                                    var expr = Create.ExprFor(position,sym);
+                                    var expr = Symbols.TryGet(id, out sym)
+                                        ? Create.ExprFor(position, sym)
+                                        : new AstUnresolved(position, id);
                                     complex = expr as AstGetSet;
                                     if(complex == null)
                                     {

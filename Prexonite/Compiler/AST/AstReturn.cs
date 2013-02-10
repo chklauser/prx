@@ -124,23 +124,13 @@ namespace Prexonite.Compiler.Ast
         {
             if (_optimizeConditionalReturnExpression(target))
                 return;
-
-            var symbol = Expression as AstGetSetSymbol;
             var indirectCall = Expression as AstIndirectCall;
 
-            AstExpr reference;
-            if (   symbol != null 
-                && !symbol.IsObjectVariable
-                && symbol.TryToReference(out reference)
-                && _isStacklessRecursionPossible(target, symbol))
+            if (indirectCall != null
+                     && _isStacklessRecursionPossible(target, indirectCall))
             {
                 // specialized approach
                 // self(arg1, arg2, ..., argn) => { param1 = arg1; param2 = arg2; ... paramn = argn; goto 0; }
-                _emitRecursiveTailCall(target, symbol.Arguments);
-            }
-            else if (indirectCall != null
-                     && _isStacklessRecursionPossible(target, indirectCall))
-            {
                 _emitRecursiveTailCall(target, indirectCall.Arguments);
             }
             else
@@ -176,25 +166,6 @@ namespace Prexonite.Compiler.Ast
         {
             Expression.EmitValueCode(target);
             target.Emit(Position, OpCode.ret_value);
-        }
-
-        private static bool _isStacklessRecursionPossible(CompilerTarget target,
-            AstGetSetSymbol symbol)
-        {
-            if (symbol.Implementation.Interpretation != SymbolInterpretations.Function) //must be function call
-                return false;
-            if(symbol.Implementation.Module != target.Loader.ParentApplication.Module.Name) //must be direct recursive iteration
-                return false;
-            if (!Engine.StringsAreEqual(target.Function.Id, symbol.Implementation.InternalId))
-                //must be direct recursive iteration
-                return false;
-            if (target.Function.Variables.Contains(PFunction.ArgumentListId))
-                //must not use argument list
-                return false;
-            if (symbol.Arguments.Count > target.Function.Parameters.Count)
-                //must not supply more arguments than mapped
-                return false;
-            return true;
         }
 
         private static bool _isStacklessRecursionPossible(CompilerTarget target,

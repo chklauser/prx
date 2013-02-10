@@ -359,8 +359,9 @@ namespace Prexonite.Compiler.Ast
         private AstExpr _resolveImplementation(ISourcePosition position, Func<AstGetSet, AstExpr> impl, string id)
         {
             Symbol operatorSymbol;
-            CurrentBlock.Symbols.TryGet(id, out operatorSymbol);
-            var expr = ExprFor(position, operatorSymbol);
+            var expr = CurrentBlock.Symbols.TryGet(id, out operatorSymbol)
+                ? ExprFor(position, operatorSymbol)
+                : new AstUnresolved(position, id);
             var call = expr as AstGetSet;
             if(call == null)
                 ReportMessage(Message.Error(string.Format(Resources.AstFactoryBase__resolveImplementation_LValueExpected, id),position, MessageClasses.LValueExpected));
@@ -418,8 +419,9 @@ namespace Prexonite.Compiler.Ast
                             // Create "not ?"
                             var notId = OperatorNames.Prexonite.GetName(UnaryOperator.LogicalNot);
                             Symbol notSymbol;
-                            CurrentBlock.Symbols.TryGet(notId, out notSymbol);
-                            var notOp = ExprFor(position, notSymbol);
+                            var notOp = CurrentBlock.Symbols.TryGet(notId, out notSymbol)
+                                ? ExprFor(position, notSymbol)
+                                : new AstUnresolved(position, notId);
                             var notCall = notOp as AstGetSet;
                             if (notCall == null)
                             {
@@ -452,7 +454,9 @@ namespace Prexonite.Compiler.Ast
                         var id = OperatorNames.Prexonite.GetName(op);
                         Symbol symbol;
                         CurrentBlock.Symbols.TryGet(id, out symbol);
-                        var callExpr = ExprFor(position, symbol);
+                        var callExpr = CurrentBlock.Symbols.TryGet(id, out symbol)
+                            ? ExprFor(position, symbol)
+                            : new AstUnresolved(position, id);
                         var callLValue = callExpr as AstGetSet;
                         if (callLValue == null)
                         {
@@ -470,14 +474,11 @@ namespace Prexonite.Compiler.Ast
                 case UnaryOperator.PostIncrement:
                 case UnaryOperator.PostDecrement:
                     {
-                        var legacySymbol = operand as AstGetSetSymbol;
-                        
                         var symbolCall = operand as AstIndirectCall;
                         var symbol = symbolCall == null ? null : symbolCall.Subject as AstReference;
                         EntityRef.Variable variableRef;
                         var complex = operand as AstGetSet;
 
-                        var isLegacyVariable = legacySymbol != null && legacySymbol.IsObjectVariable;
                         var isVariable = symbol != null && symbol.Entity.TryGetVariable(out variableRef);
                         
                         var isAssignable = complex != null;
@@ -485,8 +486,7 @@ namespace Prexonite.Compiler.Ast
                         var isIncrement =   op == UnaryOperator.PostIncrement ||
                                             op == UnaryOperator.PreIncrement;
 
-
-                        if (isLegacyVariable || isVariable)
+                        if (isVariable)
                         {
                             return new AstUnaryOperator(position, op,operand);
                         }

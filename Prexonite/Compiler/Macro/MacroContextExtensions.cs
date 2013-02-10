@@ -118,22 +118,6 @@ namespace Prexonite.Compiler.Macro
                 context.RequireOuterVariable(MacroAliases.ContextAlias);
         }
 
-        /// <summary>
-        ///     Creates a macro invocation node
-        /// </summary>
-        /// <param name = "context">The context for which to generate the AST node.</param>
-        /// <param name = "callType">The call type (get or set)</param>
-        /// <param name="implementation"></param>
-        /// <param name = "args">The arguments to pass as part of teh access (optional)</param>
-        /// <returns>A self access node.</returns>
-        public static AstMacroInvocation CreateMacroInvocation(this MacroContext context, PCall callType, SymbolEntry implementation, params AstExpr[] args)
-        {
-            var m = new AstMacroInvocation(context.Invocation.File, context.Invocation.Line,
-                context.Invocation.Column, implementation) {Call = callType};
-            m.Arguments.AddRange(args);
-            return m;
-        }
-
         #region IAstFactory forwarded methods
 
         public static AstTypeExpr CreateConstantType(this MacroContext context, string typeExpression)

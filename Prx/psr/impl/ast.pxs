@@ -43,6 +43,9 @@ function ast3\withPos(factory,type) [compiler]
 	
 	if(factory is null)
 		throw "AST factory cannot be null.";
+
+    if(type is null)
+        throw "ast3(type, ...) the parameter `type` cannot be null.";
 		
 	//return call\member(factory,type, targs);
     return call(factory,[type],targs);
@@ -50,6 +53,9 @@ function ast3\withPos(factory,type) [compiler]
 
 function ast\withPos(type, file, line, column) [is compiler;]
 {
+    if(type is null)
+        throw "ast(type, file, line, column, ...) the parameter `type` cannot be null.";
+
     var args;
     var targs = args >> skip(4);
 
@@ -122,10 +128,9 @@ function uniqueIdCounter(x)[compiler]
 }
 function uniqueId(verb) [is compiler;] = "uniq\\" + verb + uniqueIdCounter++;
 
-function isFunctionCall(id, node)[is compiler;] =
-        node is ::AstGetSetSymbol And
-        node.Implementation.Interpretation~Int == ::SymbolInterpretations.Function~Int And
-        Prexonite::Engine.StringsAreEqual(node.Implementation.InternalId, id.ToString);
+declare(
+    isFunctionCall = error(here,"PSR.Obsolete",@"isFunctionCall is deprecated. Use checking functions from the psr\\macro instead.",null)
+);
         
 function isMemberAccess(id, node)[is compiler;] =
         node is ::AstGetSetMemberAccess And

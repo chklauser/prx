@@ -1109,11 +1109,8 @@ namespace Prexonite.Compiler
             AstIndirectCall indirectCallNode;
             AstReference refNode;
             EntityRef.Variable dummyVariable;
-            if ((rhs is AstGetSetSymbol
-                 && ((AstGetSetSymbol)rhs).IsObjectVariable)
-                || (
-                (indirectCallNode = rhs as AstIndirectCall) != null 
-                && (refNode = indirectCallNode.Subject as AstReference) != null) 
+            if ((indirectCallNode = rhs as AstIndirectCall) != null 
+                && (refNode = indirectCallNode.Subject as AstReference) != null 
                 && refNode.Entity.TryGetVariable(out dummyVariable))
                 rhs.Call = PCall.Set;
         }

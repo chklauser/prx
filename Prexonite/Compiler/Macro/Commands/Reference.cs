@@ -145,18 +145,13 @@ namespace Prexonite.Compiler.Macro.Commands
                 return;
             }
 
-            var legacyPrototype = context.Invocation.Arguments[0] as AstMacroInvocation;
             var prototype = context.Invocation.Arguments[0] as AstExpand;
-            if (legacyPrototype == null && prototype == null)
+            if (prototype == null)
             {
                 context.ReportMessage(
                     Message.Error(
                         string.Format(Resources.Reference_requires_argument_to_be_a_prototype_of_a_macro_invocation, Alias),
                         context.Invocation.Position, MessageClasses.ReferenceUsage));
-            }
-            else if (legacyPrototype != null)
-            {
-                context.Block.Expression = _assembleImplCall(context, legacyPrototype.Implementation, legacyPrototype.Position);
             }
             else
             {

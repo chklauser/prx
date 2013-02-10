@@ -49,8 +49,10 @@ function test\execute_single_macro as execute_single_macro(ldr, testMacro)
         var block = funcTar.Ast;
         
         //Setup invocation of test macro
-        var invocation = new ::AstMacroInvocation(fakeFile,-1,-1,
-            new ::SymbolEntry(::SymbolInterpretations.Function,testMacro.Id, testMacro.ParentApplication.Module.Name));
+        var invocation = new ::AstExpand(
+            Prexonite::Compiler::NoSourcePosition.Instance,
+            ~Object<"Prexonite.Modular.EntityRef+Function">.Create(testMacro.Id, testMacro.ParentApplication.Module.Name),
+            Prexonite::Types::PCall.Get);
         block.Add(invocation);
         
         //Compile host function

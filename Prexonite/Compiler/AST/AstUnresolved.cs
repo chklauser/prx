@@ -43,6 +43,14 @@ namespace Prexonite.Compiler.Ast
             _id = id;
         }
 
+        public AstUnresolved(ISourcePosition position, string id) : base(position,PCall.Get)
+        {
+            if (id == null)
+                throw new ArgumentNullException("id");
+            
+            _id = id;
+        }
+
         #region Overrides of AstGetSet
 
         protected override void EmitGetCode(CompilerTarget target, StackSemantics stackSemantics)
@@ -58,17 +66,11 @@ namespace Prexonite.Compiler.Ast
                     MessageClasses.SymbolNotResolved));
         }
 
-        private string _id;
+        private readonly string _id;
 
         public string Id
         {
             get { return _id; }
-            set
-            {
-                if (value == null)
-                    throw new ArgumentNullException("value");
-                _id = value;
-            }
         }
 
         protected override void EmitSetCode(CompilerTarget target)

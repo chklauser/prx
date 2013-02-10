@@ -30,8 +30,6 @@ using System.Linq;
 using Prexonite.Commands;
 using Prexonite.Commands.Core;
 using Prexonite.Compiler.Ast;
-using Prexonite.Compiler.Symbolic;
-using Prexonite.Compiler.Symbolic.Compatibility;
 using Prexonite.Modular;
 using Prexonite.Properties;
 using Prexonite.Types;
@@ -436,15 +434,8 @@ namespace Prexonite.Compiler.Macro.Commands
             AstExpr specProto, out PCall protoCall, out IList<AstExpr> protoArguments,
             out AstExpr macroSpec)
         {
-            var proto = specProto as AstMacroInvocation;
             var proto2 = specProto as AstExpand;
-            if (proto != null)
-            {
-                macroSpec = _getMacroSpecExpr(context, proto);
-                protoCall = proto.Call;
-                protoArguments = proto.Arguments;
-            }
-            else if (specProto.IsPlaceholder())
+            if (specProto.IsPlaceholder())
             {
                 //As an exception, allow a placeholder here
                 macroSpec = specProto;
@@ -466,35 +457,6 @@ namespace Prexonite.Compiler.Macro.Commands
                 return false;
             }
             return true;
-        }
-
-        private static AstExpr _getMacroSpecExpr(MacroContext context,
-            AstMacroInvocation proto)
-        {
-            var symbolEntry = proto.Implementation;
-
-            return _getMacroSpecExpr(context, proto.Position, symbolEntry);
-        }
-
-        private static AstExpr _getMacroSpecExpr(MacroContext context, ISourcePosition position, SymbolEntry symbolEntry)
-        {
-//macroId: as a constant
-            var sym = symbolEntry.ToSymbol();
-            DereferenceSymbol ds;
-            ReferenceSymbol rs;
-            ExpandSymbol es;
-            if ((ds = sym as DereferenceSymbol) != null && (rs = ds.InnerSymbol as ReferenceSymbol) != null)
-            {
-                return EntityRefTo.ToExpr(context.Factory, context.Invocation.Position, rs.Entity);
-            }
-            else if ((es = sym as ExpandSymbol) != null && (rs = es.InnerSymbol as ReferenceSymbol) != null)
-            {
-                return EntityRefTo.ToExpr(context.Factory, context.Invocation.Position, rs.Entity);
-            }
-            else
-            {
-                throw new ErrorMessageException(Message.Error("Cannot convert usage of legacy macro invocation in call macro.",position, MessageClasses.CallMacroUsage));
-            }
         }
 
         private static AstExpr _getMacroSpecExpr(MacroContext context,

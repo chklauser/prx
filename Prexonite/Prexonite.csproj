@@ -324,7 +324,6 @@
     <Compile Include="Compiler\Ast\AstBinaryOperator.cs" />
     <Compile Include="Compiler\Ast\AstGetSetMemberAccess.cs" />
     <Compile Include="Compiler\Ast\AstGetSetNewDecl.cs" />
-    <Compile Include="Compiler\Ast\AstGetSetReference.cs" />
     <Compile Include="Compiler\Ast\AstHashLiteral.cs" />
     <Compile Include="Compiler\Ast\AstIndirectCall.cs" />
     <Compile Include="Compiler\Ast\AstKeyValuePair.cs" />
@@ -334,7 +333,6 @@
     <Compile Include="Compiler\Ast\AstLogicalOr.cs" />
     <Compile Include="Compiler\Ast\AstDynamicTypeExpression.cs" />
     <Compile Include="Compiler\Ast\AstLoop.cs" />
-    <Compile Include="Compiler\Ast\AstMacroInvocation.cs" />
     <Compile Include="Compiler\Ast\AstNull.cs" />
     <Compile Include="Compiler\Ast\AstObjectCreation.cs" />
     <Compile Include="Compiler\Ast\AstPlaceholder.cs" />
@@ -351,7 +349,6 @@
     <Compile Include="Compiler\Ast\AstWhileLoop.cs" />
     <Compile Include="Compiler\Ast\AstForeachLoop.cs" />
     <Compile Include="Compiler\Ast\AstBlock.cs" />
-    <Compile Include="Compiler\Ast\AstGetSetSymbol.cs" />
     <Compile Include="Compiler\Ast\AstNode.cs" />
     <Compile Include="Compiler\Ast\IAstHasBlocks.cs" />
     <Compile Include="Compiler\Ast\IAstHasExpressions.cs" />

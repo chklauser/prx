@@ -64,11 +64,6 @@ namespace PrexoniteTests.Tests.Configurations
                 RunUnitTest(@"test_unique_id_counter");
             } 
             [Test]
-            public void test_is_function_call()
-            {
-                RunUnitTest(@"test_is_function_call");
-            } 
-            [Test]
             public void test_is_member_access()
             {
                 RunUnitTest(@"test_is_member_access");
@@ -279,11 +274,6 @@ namespace PrexoniteTests.Tests.Configurations
             public void test_macro_internal_id()
             {
                 RunUnitTest(@"test_macro_internal_id");
-            } 
-            [Test]
-            public void test_macro_interpretation()
-            {
-                RunUnitTest(@"test_macro_interpretation");
             } 
             [Test]
             public void test_macro_entity_static()

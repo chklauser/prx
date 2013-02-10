@@ -234,28 +234,6 @@ namespace Prexonite.Compiler.Macro
             }
         }
 
-        private class LegacyMacroCommandExpander : MacroCommandExpanderBase
-        {
-            public override void Initialize(CompilerTarget target, AstGetSet macroNode,
-                bool justEffect)
-            {
-                var invocation = (AstMacroInvocation) macroNode;
-                
-                MacroCommand = null;
-
-                if (!target.Loader.MacroCommands.TryGetValue(invocation.Implementation.InternalId, out MacroCommand))
-                {
-                    target.Loader.ReportMessage(Message.Create(MessageSeverity.Error,
-                                                       String.Format(Resources.MacroCommandExpander_CannotFindMacro, invocation.Implementation.InternalId),
-                                                       invocation.Position, MessageClasses.NoSuchMacroCommand));
-                    HumanId = "cannot_find_macro_command";
-                    return;
-                }
-
-                HumanId = MacroCommand.Id;
-            }
-        }
-
         private class MacroCommandExpander : MacroCommandExpanderBase
         {
             public override void Initialize(CompilerTarget target, AstGetSet macroNode, bool justEffect)
@@ -342,7 +320,6 @@ namespace Prexonite.Compiler.Macro
                  *      {fs} = fe
                  */
                 var contextBlock = context.Block;
-                var macroBlockExpr = ast as AstBlock;
                 var macroBlock = ast as AstBlock;
 
                 // ReSharper disable JoinDeclarationAndInitializer
@@ -353,8 +330,8 @@ namespace Prexonite.Compiler.Macro
                 ce = contextBlock.Expression;
 
                 //determine fe
-                if (macroBlockExpr != null)
-                    fe = macroBlockExpr.Expression;
+                if (macroBlock != null)
+                    fe = macroBlock.Expression;
                 else if (expr != null)
                 {
                     fe = expr;
@@ -478,39 +455,6 @@ namespace Prexonite.Compiler.Macro
                     parentApplication._SuppressInitialization = false;
                 }
                 return astRaw;
-            }
-        }
-
-        private class LegacyMacroFunctionExpander : MacroFunctionExpanderBase
-        {
-            public override void Initialize(CompilerTarget target, AstGetSet macroNode,
-                bool justEffect)
-            {
-                var invocation = (AstMacroInvocation) macroNode;
-                MacroFunction = null;
-
-                PFunction macroFunc;
-                var sourceApp = target.Loader.Options.TargetApplication;
-                if (!sourceApp.TryGetFunction(invocation.Implementation.InternalId, invocation.Implementation.Module, out macroFunc))
-                {
-                    target.Loader.ReportMessage(
-                        Message.Create(
-                            MessageSeverity.Error,
-                            String.Format(
-                                Resources.MacroFunctionExpander_MacroFunctionNotAvailable,
-                                _toFunctionNameString(invocation.Implementation),
-                                target.Function.Id, target.Loader.ParentApplication.Module.Name),
-                            invocation.Position, MessageClasses.NoSuchMacroFunction));
-                    HumanId = "could_not_resolve_macro_function";
-                    return;
-                }
-                MacroFunction = macroFunc;
-
-                MetaEntry logicalIdEntry;
-                if (macroFunc.Meta.TryGetValue(PFunction.LogicalIdKey, out logicalIdEntry))
-                    HumanId = logicalIdEntry.Text;
-                else
-                    HumanId = invocation.Implementation.InternalId;
             }
         }
 
@@ -662,42 +606,21 @@ namespace Prexonite.Compiler.Macro
         private IMacroExpander _getExpander(AstGetSet macroNode, CompilerTarget target)
         {
             IMacroExpander expander = null;
-            var invocation = macroNode as AstMacroInvocation;
-            if (invocation != null)
+            AstExpand expansion;
+            EntityRef.MacroCommand mcmd;
+            EntityRef.Function func;
+            if ((expansion = macroNode as AstExpand) != null)
             {
-                switch (invocation.Implementation.Interpretation)
-                {
-                    case SymbolInterpretations.Function:
-                        expander = new LegacyMacroFunctionExpander();
-                        break;
-                    case SymbolInterpretations.MacroCommand:
-                        expander = new LegacyMacroCommandExpander();
-                        break;
-                    default:
-                        _reportMacroNodeNotMacro(target,
-                                                 Enum.GetName(typeof (SymbolInterpretations),
-                                                              invocation.Implementation.Interpretation), invocation);
-                        break;
-                }
+                if (expansion.Entity.TryGetMacroCommand(out mcmd))
+                    expander = new MacroCommandExpander();
+                else if (expansion.Entity.TryGetFunction(out func))
+                    expander = new MacroFunctionExpander();
+                else
+                    _reportMacroNodeNotMacro(target, expansion.Entity.GetType().Name, macroNode);
             }
             else
             {
-                AstExpand expansion;
-                EntityRef.MacroCommand mcmd;
-                EntityRef.Function func;
-                if ((expansion = macroNode as AstExpand) != null)
-                {
-                    if (expansion.Entity.TryGetMacroCommand(out mcmd))
-                        expander = new MacroCommandExpander();
-                    else if (expansion.Entity.TryGetFunction(out func))
-                        expander = new MacroFunctionExpander();
-                    else
-                        _reportMacroNodeNotMacro(target, expansion.Entity.GetType().Name, macroNode);
-                }
-                else
-                {
-                    _reportMacroNodeNotMacro(target,macroNode.GetType().Name,macroNode);
-                }
+                _reportMacroNodeNotMacro(target, macroNode.GetType().Name, macroNode);
             }
             return expander;
         }

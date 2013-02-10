@@ -258,21 +258,6 @@ namespace Prexonite.Compiler.Ast
             base.TryOptimize(target, out expr);
             _OptimizeNode(target, ref Subject);
 
-            //Try to replace { ldloc var ; indarg.x } by { indloc.x var } (same for glob)
-            var symbol = Subject as AstGetSetSymbol;
-            if (symbol != null && symbol.IsObjectVariable)
-            {
-                var kind =
-                    symbol.Implementation.Interpretation == SymbolInterpretations.GlobalObjectVariable
-                        ? SymbolInterpretations.GlobalReferenceVariable
-                        : SymbolInterpretations.LocalReferenceVariable;
-                var refcall =
-                    new AstGetSetSymbol(File, Line, Column, Call, symbol.Implementation.With(kind));
-                refcall.Arguments.AddRange(Arguments);
-                expr = refcall;
-                return true;
-            }
-
             expr = null;
             return false;
         }

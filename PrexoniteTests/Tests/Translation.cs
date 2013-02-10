@@ -24,6 +24,7 @@
 //  WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING 
 //  IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
+using System;
 using System.Collections.Generic;
 using Moq;
 using NUnit.Framework;
@@ -165,6 +166,11 @@ function f as p(x) [\sps]
     return g*x;
 }
 
+// At this point, we should have 
+// g    -> function g
+// f    -> variable f
+// p    -> function f
+
 function main(x)
 {
     var f' = f;
@@ -177,6 +183,8 @@ function main(x)
             Expect(3*2 + 5 + 7, 2);
             Expect(3*11 + 5 + 7, 11);
 
+            var mn = ldr.ParentApplication.Module.Name;
+
             {
                 Assert.That(ldr.Symbols.Contains("f"), Is.True,
                     "Symbol table must contain an entry for 'f'.");
@@ -188,7 +196,7 @@ function main(x)
                 Assert.That(refSym.Entity,Is.InstanceOf<EntityRef.Variable.Global>());
                 EntityRef.Variable.Global globVar;
                 refSym.Entity.TryGetGlobalVariable(out globVar);
-                Assert.That(globVar,Is.EqualTo("f"));
+                Assert.That(globVar,Is.EqualTo(EntityRef.Variable.Global.Create("f",mn)));
             }
 
             {
@@ -202,7 +210,7 @@ function main(x)
                 Assert.That(refSym.Entity, Is.InstanceOf<EntityRef.Function>());
                 EntityRef.Function func;
                 refSym.Entity.TryGetFunction(out func);
-                Assert.That(func, Is.EqualTo("g"));
+                Assert.That(func, Is.EqualTo(EntityRef.Function.Create("g",mn)));
             }
 
             {
@@ -216,7 +224,7 @@ function main(x)
                 Assert.That(refSym.Entity, Is.InstanceOf<EntityRef.Function>());
                 EntityRef.Function func;
                 refSym.Entity.TryGetFunction(out func);
-                Assert.That(func, Is.EqualTo("f"));
+                Assert.That(func, Is.EqualTo(EntityRef.Function.Create("f",mn)));
             }
         }
 
@@ -463,6 +471,49 @@ function main()
             Expect(true);
             Assert.That(ldr.Warnings.Count,Is.EqualTo(1));
             Assert.That(ldr.Warnings[0].MessageClass,Is.EqualTo("T.tt"));
+        }
+
+        [Test]
+        public void EntityRefToCommand()
+        {
+            var ldr = Compile(@"
+function f{}
+var v;
+ref r;
+macro m{}
+
+function main()
+{   
+    var loc;
+    ref rloc;
+    var sep = ""|"";
+    return """" + entityref_to(f) + sep
+        + entityref_to(v) + sep
+        + entityref_to(->r) + sep
+        + entityref_to(m) + sep
+        + entityref_to(loc) + sep
+        + entityref_to(->rloc) + sep
+        + entityref_to(entityref_to) + sep
+        + entityref_to(print);
+}
+");
+            var nm = ldr.ParentApplication.Module.Name;
+
+            Expect(rv =>
+                       {
+                           var r = rv.CallToString(sctx).Split('|');
+                           Console.WriteLine(rv);
+                           Assert.That(r.Length,Is.EqualTo(8),"Expected return value to consist of 8 elements. Returned {0}",rv);
+
+                           Assert.That(r[0],Is.EqualTo(EntityRef.Function.Create("f",nm).ToString()));
+                           Assert.That(r[1], Is.EqualTo(EntityRef.Variable.Global.Create("v", nm).ToString()));
+                           Assert.That(r[2], Is.EqualTo(EntityRef.Variable.Global.Create("r", nm).ToString()));
+                           Assert.That(r[3], Is.EqualTo(EntityRef.Function.Create("m", nm).ToString()));
+                           Assert.That(r[4], Is.EqualTo(EntityRef.Variable.Local.Create("loc").ToString()));
+                           Assert.That(r[5], Is.EqualTo(EntityRef.Variable.Local.Create("rloc").ToString()));
+                           Assert.That(r[6], Is.EqualTo(EntityRef.MacroCommand.Create("entityref_to").ToString()));
+                           Assert.That(r[7], Is.EqualTo(EntityRef.Command.Create("print").ToString()));
+                       });
         }
     }
 }

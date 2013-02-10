@@ -198,7 +198,7 @@ function test_ast_is_expression[test]
 
 function test_ast_is_effect[test]
 {
-    var isEffect = ast("GetSetSymbol", SI.get, SI.func(->test_ast_is_effect));
+    var isEffect = ast\call(entityref_to(test_ast_is_effect));
     var notEffect = ast3("CreateClosure",macro\entity(test_ast_is_effect));
     
     assert_eq(ast_is_effect(isEffect), true, "$(boxed(isEffect)) is a node.");
@@ -209,7 +209,7 @@ function test_ast_is_effect[test]
 
 function test_ast_is_partially_applicable[test]
 {
-    var pa = ast("GetSetSymbol", SI.get,  SI.func(->test_ast_is_partially_applicable));
+    var pa = ast\call(entityref_to(test_ast_is_partially_applicable));
     var npa = ast3("CreateClosure", macro\entity(test_ast_is_partially_applicable));
     
     assert_eq(ast_is_partially_applicable(pa), true, "$(boxed(pa)) is partially applicable");
@@ -220,12 +220,12 @@ function test_ast_is_partially_applicable[test]
 
 function test_ast_is_partial_application[test]
 {
-    var pa = ast("GetSetSymbol", SI.get, SI.func(->test_ast_is_partial_application));
-    pa.Arguments.Add(ast("Null"));
+    var pa = ast\call(entityref_to(test_ast_is_partial_application));
+    pa.Arguments.Add(ast3("Null"));
     
     assert_eq(ast_is_partial_application(pa), false, "$(boxed(pa)) is not a partial application (no placeholders)");
     
-    pa.Arguments.Add(ast("Placeholder"));
+    pa.Arguments.Add(ast3("Placeholder"));
     
     assert_eq(ast_is_partial_application(pa),true, "$(boxed(pa)) is a partial application");
     
@@ -235,7 +235,7 @@ function test_ast_is_partial_application[test]
 function test_ast_is_CreateClosure[test]
 {
     var cc = ast3("CreateClosure", macro\entity(test_ast_is_CreateClosure));
-    var ncc = ast("GetSetSymbol", SI.get, Si.func(->test_ast_is_CreateClosure));
+    var ncc = ast\call(entityref_to(test_ast_is_CreateClosure));
     
     assert_eq(ast_is_CreateClosure(cc),true,"$(boxed(cc)) is a CreateClosure node");
     assert_eq(ast_is_CreateClosure(ncc),false,"$(boxed(ncc)) is not a CreateClosure node");
@@ -244,7 +244,7 @@ function test_ast_is_CreateClosure[test]
 
 function test_ast_is_node[test]
 {
-    var node = ast("Null");
+    var node = ast3("Null");
     var nonNode = new Structure;
     var nonNode2 = new System::Object;
     
@@ -387,33 +387,12 @@ function test_macro_internal_id_static[test]
 
 macro test_macro_internal_id[test]
 {   
-    var invk = ast("MacroInvocation", SI.m.i.func("ast\\macro"));
+    var invk = ast3("Expand", entityref_to(ast\macro));
     
     var c = call\macro([macro\internal_id(invk)]).Expression;
     assert(ast_is_Constant(c),"$(boxed(c)) should be constant");
     
-    assert_eq(ast\read(c),"ast\\macro");
-}
-
-macro test_macro_interpretation[test]
-{
-    var invk1 = ast("MacroInvocation", SI.m.func("ast\\macro"));
-    
-    var c1 = call\macro([macro\interpretation(invk1)]).Expression;
-    assert(ast_is_GetSetMemberAccess(c1),"$(boxed(c1)) should be get set member access");
-    assert_eq(c1.Id,"func","ast\\macro is implemented as a function (macro)");
-    
-    var invk2 = ast("MacroInvocation", SI.m.cmd("call\\macro"));
-    
-    var c2 = call\macro([macro\interpretation(invk2)]).Expression;
-    assert(ast_is_GetSetMemberAccess(c2),"$(boxed(c2)) should be get set member access");
-    assert_eq(c2.Id,"cmd","ast\\macro is implemented as a macro command");
-    
-    var invk3 = ast("GetSetSymbol", SI.get, SI.i.func("test_macro_id_static"));
-    
-    var c3 = call\macro([macro\interpretation(invk3)]).Expression;
-    assert(ast_is_GetSetMemberAccess(c3),"$(boxed(c3)) should be get set member access");
-    assert_eq(c3.Id,"func","test_macro_id_static is implemented as a function");
+    assert_eq(ast\read(c),entityref_to(ast\macro).Id);
 }
 
 function test_macro_entity_static[test]
