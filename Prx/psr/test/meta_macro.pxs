@@ -75,7 +75,9 @@ function test\execute_single_macro as execute_single_macro(ldr, testMacro)
     }
 }
 
-function test\run_single_macro as run_single_macro(testMacro)
+// Runs the specified macro in its own module (linked to the current application compound)
+// Will then unlink the temporary module, but return the loader used to execute the macro for inspection.
+function test\run_single_macro_inspect as run_single_macro_inspect(testMacro)
 [
     Add Prexonite to Imports;
     Add Prexonite::Types to Imports;
@@ -97,6 +99,7 @@ function test\run_single_macro as run_single_macro(testMacro)
     var testApp = asm(ldr.app);
 
     var ldr;
+    var oldCompCount = testApp.Compound.Count;
     try {
         ::Application.Link(testApp,app);    
         ldr = new ::Loader(eng, app);    
@@ -105,6 +108,22 @@ function test\run_single_macro as run_single_macro(testMacro)
         if(app.IsLinkedTo(testApp))
             app.Unlink();
     }
+
+    if(testApp.Compound.Count != oldCompCount)
+        throw "meta_macro did not successfully restore the original application compound.";
+
+    return ldr;
+}
+
+function test\run_single_macro as run_single_macro(testMacro)
+[
+    Add Prexonite to Imports;
+    Add Prexonite::Types to Imports;
+    Add Prexonite::Compiler to Imports;
+    Add Prexonite::Compiler::Ast to Imports;
+]
+{
+    var ldr = run_single_macro_inspect(testMacro);
     
     ldr.Warnings >> each(println(?));
     if(ldr.Errors.Count > 0)

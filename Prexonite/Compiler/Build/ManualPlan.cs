@@ -25,7 +25,6 @@
 //  IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 using System;
-using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.IO;
@@ -71,10 +70,12 @@ namespace Prexonite.Compiler.Build
         {
             if (HasUnresolvedDependencies(description))
             {
-                var missing = description.Dependencies.Where(d => !TargetDescriptions.Contains(d));
+                var missing = description.Dependencies.Where(d => !TargetDescriptions.Contains(d)).ToEnumerationString();
+                Plan.Trace.TraceEvent(TraceEventType.Error, 0,
+                    "Failed to resolve the following dependencies of target {0}: {1}", description, missing);
                 throw new BuildException(
                     string.Format("Not all dependencies of target named {0} have been resolved. The following modules are missing: {1}",
-                                  description.Name, missing.ToEnumerationString()), description);
+                                  description.Name, missing), description);
             }
         }
 
@@ -90,14 +91,14 @@ namespace Prexonite.Compiler.Build
             return BuildWithMapAsync(description, taskMap, token);
         }
 
-        public IDictionary<ModuleName,Task<ITarget>> BuildAsync(IEnumerable<ModuleName> names, CancellationToken token)
+        public IDictionary<ModuleName, Task<ITarget>> BuildAsync(IEnumerable<ModuleName> names, CancellationToken token)
         {
             if (names == null)
                 throw new ArgumentNullException("names");
             var taskMap = CreateTaskMap();
             return
                 names
-                    .ToDictionary(name => name ,  name => BuildWithMapAsync(_prepareBuild(name), taskMap, token));
+                    .ToDictionary(name => name, name => BuildWithMapAsync(_prepareBuild(name), taskMap, token));
         }
 
         private ITargetDescription _prepareBuild(ModuleName name)
@@ -112,7 +113,7 @@ namespace Prexonite.Compiler.Build
             return new TaskMap<ModuleName, ITarget>(5, TargetDescriptions.Count);
         }
 
-        public Task<Tuple<Application,ITarget>> LoadAsync(ModuleName name, CancellationToken token)
+        public Task<Tuple<Application, ITarget>> LoadAsync(ModuleName name, CancellationToken token)
         {
             var taskMap = CreateTaskMap();
             var description = _prepareBuild(name);
@@ -121,8 +122,8 @@ namespace Prexonite.Compiler.Build
                     var target = buildTask.Result;
                     var app = new Application(target.Module);
                     _linkDependencies(taskMap, app, description, token);
-                    return Tuple.Create(app,target);
-                },token);
+                    return Tuple.Create(app, target);
+                }, token);
         }
 
         private void _linkDependencies(TaskMap<ModuleName, ITarget> taskMap, Application instance, ITargetDescription instanceDescription, CancellationToken token)
@@ -145,7 +146,7 @@ namespace Prexonite.Compiler.Build
             }
         }
 
-        protected Task<IBuildEnvironment> GetBuildEnvironmentAsync(TaskMap<ModuleName,ITarget> taskMap, ITargetDescription description, CancellationToken token)
+        protected Task<IBuildEnvironment> GetBuildEnvironmentAsync(TaskMap<ModuleName, ITarget> taskMap, ITargetDescription description, CancellationToken token)
         {
             if (description.Dependencies.Count == 0)
             {
@@ -161,47 +162,71 @@ namespace Prexonite.Compiler.Build
                 _ => GetBuildEnvironment(taskMap, description, token));
         }
 
-        protected virtual IBuildEnvironment GetBuildEnvironment(TaskMap<ModuleName,ITarget> taskMap, ITargetDescription description, CancellationToken token)
+        protected virtual IBuildEnvironment GetBuildEnvironment(TaskMap<ModuleName, ITarget> taskMap, ITargetDescription description, CancellationToken token)
         {
+            Plan.Trace.TraceEvent(TraceEventType.Verbose, 0, "Get build environment for {0}.", description);
             var buildEnvironment = new DefaultBuildEnvironment(this, description, taskMap, token);
             return buildEnvironment;
         }
 
-        protected Task<ITarget> BuildWithMapAsync(ITargetDescription targetDescription, TaskMap<ModuleName,ITarget> taskMap, CancellationToken token)
+        protected Task<ITarget> BuildWithMapAsync(ITargetDescription targetDescription, TaskMap<ModuleName, ITarget> taskMap, CancellationToken token)
         {
-            return taskMap.GetOrAdd(targetDescription.Name, name => 
-                Task.Factory.StartNew( () => 
-                {
-                    var desc = TargetDescriptions[name];
-                    var deps =
-                        desc.Dependencies.Select(
-                            depName => new KeyValuePair<ModuleName, Task<ITarget>>(
-                                           depName,
-                                           BuildWithMapAsync(
-                                               TargetDescriptions[depName],
-                                               taskMap, token)));
+            return taskMap.GetOrAdd(targetDescription.Name,
+                name =>
+                    {
+                        Plan.Trace.TraceEvent(TraceEventType.Verbose, 0, "Request build of {0} and its dependencies.",
+                            targetDescription);
+                        return
+                            Task.Factory.StartNew(() => _buildTaskImpl(targetDescription, taskMap, token, name), token)
+                                .Unwrap();
+                    });
+        }
 
-                    var depMap = new Dictionary<ModuleName, Task<ITarget>>();
-                    depMap.AddRange(deps);
+        private Task<ITarget> _buildTaskImpl(ITargetDescription targetDescription, TaskMap<ModuleName, ITarget> taskMap, CancellationToken token,
+            ModuleName name)
+        {
+            var desc = TargetDescriptions[name];
+            var deps =
+                desc.Dependencies.Select(
+                    depName =>
+                        new KeyValuePair<ModuleName, Task<ITarget>>(
+                            depName,
+                            BuildWithMapAsync(
+                                TargetDescriptions[depName],
+                                taskMap, token)));
 
-                    token.ThrowIfCancellationRequested();
+            var depMap = new Dictionary<ModuleName, Task<ITarget>>();
+            depMap.AddRange(deps);
 
-                    var buildTask = GetBuildEnvironmentAsync(taskMap, desc, token)
-                        .ContinueWith(bet =>
-                            {
-                                var instance = new Application(bet.Result.Module);
-                                _linkDependencies(taskMap,instance, targetDescription, token);
-                                token.ThrowIfCancellationRequested();
-                                return BuildTargetAsync(bet, desc, depMap, token);
-                            }, token);
-                    return buildTask.Unwrap();
-                },token).Unwrap());
+            token.ThrowIfCancellationRequested();
+
+            var buildTask = GetBuildEnvironmentAsync(taskMap, desc,
+                token)
+                .ContinueWith(bet =>
+                                  {
+                                      var instance =
+                                          new Application(
+                                              bet.Result.Module);
+                                      Plan.Trace.TraceEvent(
+                                          TraceEventType.Verbose, 0,
+                                          "Linking compile-time dependencies for module {0}.",
+                                          bet.Result.Module.Name);
+                                      _linkDependencies(taskMap,
+                                          instance, targetDescription,
+                                          token);
+                                      token
+                                          .ThrowIfCancellationRequested
+                                          ();
+                                      return BuildTargetAsync(bet, desc,
+                                          depMap, token);
+                                  }, token);
+            return buildTask.Unwrap();
         }
 
         protected virtual Task<ITarget> BuildTargetAsync(Task<IBuildEnvironment> buildEnvironment, ITargetDescription description, Dictionary<ModuleName, Task<ITarget>> dependencies, CancellationToken token)
         {
             var buildTask = description.BuildAsync(buildEnvironment.Result, dependencies, token);
-            Debug.Assert(buildTask != null, "Task for building target is null.",string.Format("{0}.BuildAsync returned null instead of a Task.", description.GetType().Name));
+            Debug.Assert(buildTask != null, "Task for building target is null.", string.Format("{0}.BuildAsync returned null instead of a Task.", description.GetType().Name));
             return buildTask;
         }
     }

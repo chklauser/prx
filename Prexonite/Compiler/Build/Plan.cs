@@ -24,15 +24,18 @@
 //  WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING 
 //  IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
+using System.Diagnostics;
 using Prexonite.Compiler.Build.Internal;
 
 namespace Prexonite.Compiler.Build
 {
     public static class Plan
     {
-         public static IPlan CreateDefault()
-         {
-             return new ManualPlan();
-         }
+        public static readonly TraceSource Trace = new TraceSource("Prexonite.Compiler.Build");
+
+        public static IPlan CreateDefault()
+        {
+            return new ManualPlan();
+        }
     }
 }

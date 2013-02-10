@@ -174,8 +174,7 @@ macro test_reports\macro
 
 function test_reports[test]
 {
-    var ldr = new Prexonite::Compiler::Loader(asm(ldr.eng),asm(ldr.app));
-    test\execute_single_macro(ldr,asm(ldr.app).Functions["test_reports\\macro"]);
+    var ldr = run_single_macro_inspect(asm(ldr.app).Functions[entityref_to(test_reports\macro).Id]);
     assert_eq(ldr.Errors.Count,1,"Exactly one error expected.");
     assert_eq(ldr.Warnings.Count,1,"Exactly one warning expected.");
     assert_eq(ldr.Infos.Count,1,"Exactly one info expected.");

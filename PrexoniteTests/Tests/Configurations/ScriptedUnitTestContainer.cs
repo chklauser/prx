@@ -53,6 +53,7 @@ namespace PrexoniteTests.Tests.Configurations
         public const string ListTestsId = @"test\list_test";
         public const string RunTestId = @"test\run_test";
         public const string PrexoniteUnitTestFramework = @"psr\test.pxs";
+        public const string DumpRequestFlag = "request_dump";
 
         protected abstract UnitTestConfiguration Runner { get; }
 
@@ -124,10 +125,13 @@ namespace PrexoniteTests.Tests.Configurations
             }
         }
 
+        /// <summary>
+        /// Prints a stored representation of each application in the compound that has its "request_dump" flag set.
+        /// </summary>
         public void PrintCompound()
         {
             var tasks =
-                Application.Compound.Select(
+                Application.Compound.Where(app => app.Meta[DumpRequestFlag].Switch).Select(
                     app =>
                     new KeyValuePair<ModuleName, Task<ITarget>>(app.Module.Name, ModuleCache.BuildAsync(app.Module.Name)))
                     .ToDictionary(k => k.Key, k => k.Value);

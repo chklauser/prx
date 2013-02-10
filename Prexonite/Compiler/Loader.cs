@@ -33,7 +33,6 @@ using System.Collections.Generic;
 using System.Diagnostics;
 using System.Diagnostics.CodeAnalysis;
 using System.IO;
-using System.Linq;
 using System.Reflection;
 using System.Security.AccessControl;
 using System.Text;
@@ -47,7 +46,6 @@ using Prexonite.Compiler.Macro;
 using Prexonite.Compiler.Macro.Commands;
 using Prexonite.Compiler.Symbolic;
 using Prexonite.Modular;
-using Prexonite.Properties;
 using Prexonite.Types;
 using Debug = System.Diagnostics.Debug;
 
@@ -69,7 +67,6 @@ namespace Prexonite.Compiler
         {
         }
 
-        [DebuggerStepThrough]
         public Loader(LoaderOptions options)
         {
             if (options == null)
@@ -79,8 +76,7 @@ namespace Prexonite.Compiler
             _functionTargets = new SymbolTable<CompilerTarget>();
             _functionTargetsIterator = new FunctionTargetsIterator(this);
 
-            CreateFunctionTarget(
-                ParentApplication._InitializationFunction);
+            CreateFunctionTarget(ParentApplication._InitializationFunction);
 
             if (options.RegisterCommands)
                 RegisterExistingCommands();

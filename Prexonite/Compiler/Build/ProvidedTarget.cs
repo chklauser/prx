@@ -104,6 +104,7 @@ namespace Prexonite.Compiler.Build
         {
             var tcs = new TaskCompletionSource<ITarget>();
             tcs.SetResult(this);
+            Plan.Trace.TraceEvent(TraceEventType.Information, 0, "Used provided target {0}.",this);
             return tcs.Task;
         }
 
@@ -127,6 +128,11 @@ namespace Prexonite.Compiler.Build
         }
 
         #endregion
+
+        public override string ToString()
+        {
+            return _debuggerDisplay;
+        }
 
         #endregion
     }

@@ -30,6 +30,7 @@ using System.ComponentModel;
 using System.Diagnostics;
 using System.IO;
 using System.Linq;
+using JetBrains.Annotations;
 using Prexonite.Compiler;
 using Prexonite.Internal;
 using Prexonite.Modular;
@@ -139,6 +140,7 @@ namespace Prexonite
                     "Instantiating module {0} did not result in an instantiated initialization function.",
                     _module.Name));
             _initializationFunction = _functionTable[InitializationId];
+            Debug.Assert(_InitializationFunction != null);
         }
 
         #endregion
@@ -226,6 +228,7 @@ namespace Prexonite
 
         #region Initialization
 
+        [NotNull]
         private readonly PFunction _initializationFunction;
         private int _initializationOffset;
 
@@ -248,6 +251,7 @@ namespace Prexonite
         /// <summary>
         ///     Provides access to the initialization function.
         /// </summary>
+        [NotNull]
         internal PFunction _InitializationFunction
         {
             get { return _initializationFunction; }
