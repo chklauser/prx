@@ -22,21 +22,22 @@
  */
 
 /*---- SCANNER ------*/
-/* Interface version */
 
 IGNORECASE
 	
 TOKENS
 		//Basic token
 		id
-		anyId
+		anyId // $ in some situations, e.g., $"non-Prexonite id"
 		lid
         ns
+        version     // 1.1.1, 1.2.3.4
 		
   /*--------------------------------------------------------------------------------*/
         integer
   /*--------------------------------------------------------------------------------*/
-        real
+        real        // 1e, 1e5, 1.0e, 1.0e-5, 1.0e+03
+        realLike    // 1.0, 2.0, 2.3 //could also be a version
   /*--------------------------------------------------------------------------------*/
         string
         
@@ -132,6 +133,8 @@ TOKENS
 	macro
 	lazy
 	let
+	method
+	this
 	ENDKEYWORDS
 	
     //SPECIAL

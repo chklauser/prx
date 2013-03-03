@@ -1,6 +1,6 @@
 // Prexonite
 // 
-// Copyright (c) 2011, Christian Klauser
+// Copyright (c) 2013, Christian Klauser
 // All rights reserved.
 // 
 // Redistribution and use in source and binary forms, with or without modification, 
@@ -23,18 +23,20 @@
 //  DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, 
 //  WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING 
 //  IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
-
 using System;
 using System.Collections.Generic;
+using JetBrains.Annotations;
 using Prexonite.Commands.Core;
 using Prexonite.Compiler.Ast;
-using Prexonite.Types;
+using Prexonite.Modular;
+using Prexonite.Compiler.Internal;
 
 namespace Prexonite.Compiler
 {
     /// <summary>
     ///     Implementation of a compiler hook that optimizes the using of the <see cref = "Debug" /> command.
     /// </summary>
+    [PublicAPI]
     public static class DebugHook
     {
         /// <summary>
@@ -50,7 +52,7 @@ namespace Prexonite.Compiler
         {
             var debugging = IsDebuggingEnabled(t.Function);
 
-            replace_debug(t, t.Ast, debugging);
+            _replaceDebug(t, t.Ast, debugging);
         }
 
         private static readonly CompilerHook _hook = new CompilerHook(Hook);
@@ -59,6 +61,7 @@ namespace Prexonite.Compiler
         ///     Installs the hook in the supplied <see cref = "Loader" />.
         /// </summary>
         /// <param name = "ldr">The loader.</param>
+        [PublicAPI]
         public static void InstallHook(Loader ldr)
         {
             if (ldr == null)
@@ -70,6 +73,7 @@ namespace Prexonite.Compiler
         ///     Uninstalls the hook in the supplied <see cref = "Loader" />.
         /// </summary>
         /// <param name = "ldr">The loader.</param>
+        [PublicAPI]
         public static void UninstallHook(Loader ldr)
         {
             if (ldr == null)
@@ -90,47 +94,35 @@ namespace Prexonite.Compiler
                 return function.ParentApplication.Meta[DebuggingMetaKey].Switch;
         }
 
-        private static void replace_debug(CompilerTarget t, IList<AstNode> block, bool debugging)
+        private static void _replaceDebug(CompilerTarget t, IList<AstNode> block, bool debugging)
         {
             for (var i = 0; i < block.Count; i++)
             {
-                var stmt = block[i] as AstGetSetSymbol;
+                var stmt = block[i] as AstGetSet;
                 //look for calls
-                if (stmt != null && stmt.Interpretation == SymbolInterpretations.Command &&
-                    Engine.StringsAreEqual(stmt.Id, Engine.DebugAlias))
+                if (_isDebugCall(stmt))
                 {
+                    System.Diagnostics.Debug.Assert(stmt != null);
                     //Found a call to debug
                     block.RemoveAt(i);
                     if (debugging)
                     {
                         for (var j = 0; j < stmt.Arguments.Count; j++)
                         {
-                            var arg = stmt.Arguments[j] as AstGetSetSymbol;
-                            if (arg != null)
+                            var arg = stmt.Arguments[j] as AstIndirectCall;
+                            AstReference refNode;
+                            if (arg != null && (refNode = arg.Subject as AstReference) != null)
                             {
-                                var printlnCall =
-                                    new AstGetSetSymbol(
-                                        stmt.File,
-                                        stmt.Line,
-                                        stmt.Column,
-                                        PCall.Get,
-                                        Engine.PrintLineAlias,
-                                        SymbolInterpretations.Command);
-                                var concatCall =
-                                    new AstGetSetSymbol(
-                                        stmt.File,
-                                        stmt.Line,
-                                        stmt.Column,
-                                        PCall.Get,
-                                        Engine.ConcatenateAlias,
-                                        SymbolInterpretations.Command);
-
+                                var printlnCall = t.Factory.Call(stmt.Position,
+                                                                 EntityRef.Command.Create(Engine.PrintLineAlias));
+                                var concatCall = t.Factory.Call(stmt.Position,
+                                                                EntityRef.Command.Create(Engine.ConcatenateAlias));
                                 var consts =
                                     new AstConstant(
                                         stmt.File,
                                         stmt.Line,
                                         stmt.Column,
-                                        String.Concat("DEBUG ", arg.Id, " = "));
+                                        String.Concat("DEBUG ", refNode.Entity, " = "));
                                 concatCall.Arguments.Add(consts);
                                 concatCall.Arguments.Add(arg);
                                 printlnCall.Arguments.Add(concatCall);
@@ -149,9 +141,13 @@ namespace Prexonite.Compiler
                 //look for conditions
                 if (cond != null)
                 {
-                    var expr = cond.Condition as AstGetSetSymbol;
-                    if (expr != null && expr.Interpretation == SymbolInterpretations.Command &&
-                        Engine.StringsAreEqual(expr.Id, Engine.DebugAlias))
+                    var expr = cond.Condition as AstIndirectCall;
+                    AstReference refNode;
+                    EntityRef.Command cmd;
+                    if (expr != null 
+                        && (refNode = expr.Subject as AstReference) != null 
+                        && refNode.Entity.TryGetCommand(out cmd) 
+                        && Engine.StringsAreEqual(cmd.Id,Engine.DebugAlias) )
                         cond.Condition =
                             new AstConstant(expr.File, expr.Line, expr.Column, debugging);
                 }
@@ -160,8 +156,16 @@ namespace Prexonite.Compiler
                 var complex = block[i] as IAstHasBlocks;
                 if (complex != null)
                     foreach (var subBlock in complex.Blocks)
-                        replace_debug(t, subBlock, debugging);
+                        _replaceDebug(t, subBlock, debugging);
             } //end for statements
+        }
+
+        [ContractAnnotation("=>true,stmt:notnull;=>false,stmt:canbenull")]
+        private static bool _isDebugCall([CanBeNull] AstGetSet stmt)
+        {
+            EntityRef entityRef;
+            EntityRef.Command cmdRef;
+            return stmt.TryMatchCall(out entityRef) && entityRef.TryGetCommand(out cmdRef) && Engine.StringsAreEqual(cmdRef.Id,Engine.DebugAlias);
         }
     }
 }

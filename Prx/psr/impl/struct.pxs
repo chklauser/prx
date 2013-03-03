@@ -1,0 +1,88 @@
+﻿// Prexonite
+// 
+// Copyright (c) 2013, Christian Klauser
+// All rights reserved.
+// 
+// Redistribution and use in source and binary forms, with or without modification, 
+//  are permitted provided that the following conditions are met:
+// 
+//     Redistributions of source code must retain the above copyright notice, 
+//          this list of conditions and the following disclaimer.
+//     Redistributions in binary form must reproduce the above copyright notice, 
+//          this list of conditions and the following disclaimer in the 
+//          documentation and/or other materials provided with the distribution.
+//     The names of the contributors may be used to endorse or 
+//          promote products derived from this software without specific prior written permission.
+// 
+// THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND 
+//  ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED 
+//  WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED. 
+//  IN NO EVENT SHALL THE COPYRIGHT HOLDER OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT, 
+//  INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES 
+//  (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, 
+//  DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, 
+//  WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING 
+//  IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+
+var struct\ordinalIc [is compiler;];
+build does struct\ordinalIc = System::StringComparison.OrdinalIgnoreCase;
+
+macro struct\as_macro as struct()
+{
+    var CTORID = @"\ctorId";
+    var PRIVATEKEY = "Private";
+    var STRUCTID = "SId";
+    var LOGICALIDKEY = Prexonite::PFunction.LogicalIdKey;
+    var PARENTFUNCTIONKEY = Prexonite::PFunction.ParentFunctionKey;
+
+    function getId(g) =
+        if(g.Meta.ContainsKey(STRUCTID))
+            g.Meta[STRUCTID].Text
+        else if(g.Meta.ContainsKey(LOGICALIDKEY))
+            g.Meta[LOGICALIDKEY].Text
+        else
+            null;
+        ;
+        
+    var parentId = context.Function.Id;
+    var methods = context.Application.Functions
+        >> where(f => 
+            f
+                .Meta[PARENTFUNCTIONKEY]
+                .Text
+                .Equals(parentId, struct\ordinalIc)            
+            And Not f.Meta[PRIVATEKEY].Switch)
+        >> map(f => 
+        {
+			if(Not f.Meta.ContainsKey(LOGICALIDKEY))
+				return (null: null);
+			return (getId(f): f.Meta[LOGICALIDKEY].Text);            
+        })
+        >> where(fcf => fcf.Value is not Null and fcf.Key is not Null);
+        
+    var structV = tempalloc;
+    
+    //assign new structure
+    var assignStructure = ast\lvar(SI.set, structV);
+    assignStructure.Arguments.Add(ast\new("Structure"));
+    context.Block.Add(assignStructure);
+    
+    //assign ctorId
+    var assignCtorId = ast\member(ast\lvar(SI.get, structV), SI.get,"\\");
+    assignCtorId.Arguments.Add(ast\const(CTORID));
+    assignCtorId.Arguments.Add(ast\const(parentId));
+    context.Block.Add(assignCtorId);
+    
+    //assign methods
+    foreach(var meth in methods)
+    {
+        var addMethod = ast\member(ast\lvar(SI.get, structV), SI.get, @"\\");
+        addMethod.Arguments.Add(ast\const(meth.Key));
+        addMethod.Arguments.Add(ast\lvar(SI.get, meth.Value));
+        context.Block.Add(addMethod);
+    }
+    
+    //return struct
+    context.Block.Expression = ast\lvar(SI.get, structV);
+    tempfree(structV);
+}

@@ -1,6 +1,6 @@
 // Prexonite
 // 
-// Copyright (c) 2011, Christian Klauser
+// Copyright (c) 2013, Christian Klauser
 // All rights reserved.
 // 
 // Redistribution and use in source and binary forms, with or without modification, 
@@ -23,17 +23,15 @@
 //  DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, 
 //  WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING 
 //  IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
-
 using System;
 using System.Collections.Generic;
 
 namespace Prexonite.Compiler.Ast
 {
-    public class AstHashLiteral : AstNode,
-                                  IAstExpression,
+    public class AstHashLiteral : AstExpr,
                                   IAstHasExpressions
     {
-        public List<IAstExpression> Elements = new List<IAstExpression>();
+        public List<AstExpr> Elements = new List<AstExpr>();
 
         internal AstHashLiteral(Parser p)
             : base(p)
@@ -47,18 +45,18 @@ namespace Prexonite.Compiler.Ast
 
         #region IAstHasExpressions Members
 
-        public IAstExpression[] Expressions
+        public AstExpr[] Expressions
         {
             get { return Elements.ToArray(); }
         }
 
         #endregion
 
-        #region IAstExpression Members
+        #region AstExpr Members
 
-        public bool TryOptimize(CompilerTarget target, out IAstExpression expr)
+        public override bool TryOptimize(CompilerTarget target, out AstExpr expr)
         {
-            IAstExpression oArg;
+            AstExpr oArg;
             foreach (var arg in Elements.ToArray())
             {
                 if (arg == null)
@@ -79,11 +77,11 @@ namespace Prexonite.Compiler.Ast
 
         #endregion
 
-        protected override void DoEmitCode(CompilerTarget target)
+        protected override void DoEmitCode(CompilerTarget target, StackSemantics stackSemantics)
         {
             if (Elements.Count == 0)
             {
-                target.Emit(this, OpCode.newobj, 0, "Hash");
+                target.Emit(Position,OpCode.newobj, 0, "Hash");
             }
             else
             {
@@ -99,9 +97,13 @@ namespace Prexonite.Compiler.Ast
                                 ", Line: ",
                                 Line,
                                 "]"));
-                    element.EmitCode(target);
+                    element.EmitCode(target,stackSemantics);
                 }
-                target.EmitStaticGetCall(this, Elements.Count, "Hash", "Create", false);
+
+                if(stackSemantics == StackSemantics.Effect)
+                    return;
+
+                target.EmitStaticGetCall(Position, Elements.Count, "Hash", "Create", false);
             }
         }
     }

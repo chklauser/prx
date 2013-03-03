@@ -1,6 +1,6 @@
 // Prexonite
 // 
-// Copyright (c) 2011, Christian Klauser
+// Copyright (c) 2013, Christian Klauser
 // All rights reserved.
 // 
 // Redistribution and use in source and binary forms, with or without modification, 
@@ -23,11 +23,9 @@
 //  DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, 
 //  WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING 
 //  IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
-
 namespace Prexonite.Compiler.Ast
 {
-    public class AstNull : AstNode,
-                           IAstExpression
+    public class AstNull : AstExpr
     {
         public AstNull(string file, int line, int column)
             : base(file, line, column)
@@ -39,15 +37,18 @@ namespace Prexonite.Compiler.Ast
         {
         }
 
-        public bool TryOptimize(CompilerTarget target, out IAstExpression expr)
+        public override bool TryOptimize(CompilerTarget target, out AstExpr expr)
         {
             expr = null;
             return false;
         }
 
-        protected override void DoEmitCode(CompilerTarget target)
+        protected override void DoEmitCode(CompilerTarget target, StackSemantics stackSemantics)
         {
-            target.EmitNull(this);
+            if(stackSemantics == StackSemantics.Effect)
+                return;
+
+            target.EmitNull(Position);
         }
     }
 }

@@ -1,6 +1,6 @@
 // Prexonite
 // 
-// Copyright (c) 2011, Christian Klauser
+// Copyright (c) 2013, Christian Klauser
 // All rights reserved.
 // 
 // Redistribution and use in source and binary forms, with or without modification, 
@@ -23,7 +23,6 @@
 //  DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, 
 //  WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING 
 //  IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
-
 using System;
 using NUnit.Framework;
 using Prexonite;
@@ -200,30 +199,29 @@ Add System::Xml to Imports;
         public void Declare()
         {
             const string input =
-                @"declare function f\1; " +
-                    @"declare var go\1; " +
-                        @"declare ref gf\1, gf\2; " +
-                            @"declare function if\1;";
-            var opt = new LoaderOptions(engine, target);
-            opt.UseIndicesLocally = false;
+                "declare function f\\1; " +
+                "declare var go\\1; " +
+                "declare ref gf\\1, gf\\2; " +
+                "declare function if\\1;";
+            var opt = new LoaderOptions(engine, target) {UseIndicesLocally = false};
             var ldr = new Loader(opt);
             ldr.LoadFromString(input);
             Assert.AreEqual(0, ldr.ErrorCount);
             var symbols = ldr.Symbols;
 
             Assert.AreEqual(
-                new SymbolEntry(SymbolInterpretations.Function, "f\\1"), symbols[@"f\1"]);
+                new SymbolEntry(SymbolInterpretations.Function, "f\\1", target.Module.Name), LookupSymbolEntry(symbols, @"f\1"));
             Assert.AreEqual(
-                new SymbolEntry(SymbolInterpretations.GlobalObjectVariable, "go\\1"),
-                symbols[@"go\1"]);
+                new SymbolEntry(SymbolInterpretations.GlobalObjectVariable, "go\\1", target.Module.Name),
+                LookupSymbolEntry(symbols, @"go\1"));
             Assert.AreEqual(
-                new SymbolEntry(SymbolInterpretations.GlobalReferenceVariable, "gf\\1"),
-                symbols[@"gf\1"]);
+                new SymbolEntry(SymbolInterpretations.GlobalReferenceVariable, "gf\\1", target.Module.Name),
+                LookupSymbolEntry(symbols, @"gf\1"));
             Assert.AreEqual(
-                new SymbolEntry(SymbolInterpretations.GlobalReferenceVariable, "gf\\2"),
-                symbols[@"gf\2"]);
+                new SymbolEntry(SymbolInterpretations.GlobalReferenceVariable, "gf\\2", target.Module.Name),
+                LookupSymbolEntry(symbols, @"gf\2"));
             Assert.AreEqual(
-                new SymbolEntry(SymbolInterpretations.Function, "if\\1"), symbols[@"if\1"]);
+                new SymbolEntry(SymbolInterpretations.Function, "if\\1", target.Module.Name), LookupSymbolEntry(symbols, @"if\1"));
         }
 
         [Test]
@@ -242,18 +240,18 @@ Add System::Xml to Imports;
             var symbols = ldr.Symbols;
 
             Assert.AreEqual(
-                new SymbolEntry(SymbolInterpretations.Function, "name1"), symbols["name1"]);
+                new SymbolEntry(SymbolInterpretations.Function, "name1", target.Module.Name), LookupSymbolEntry(symbols, "name1"));
             Assert.AreNotEqual(
-                new SymbolEntry(SymbolInterpretations.GlobalObjectVariable, "name2"),
-                symbols["name2"]);
+                new SymbolEntry(SymbolInterpretations.GlobalObjectVariable, "name2", target.Module.Name),
+                LookupSymbolEntry(symbols, "name2"));
             Assert.AreNotEqual(
-                new SymbolEntry(SymbolInterpretations.GlobalReferenceVariable, "name1"),
-                symbols["name1"]);
+                new SymbolEntry(SymbolInterpretations.GlobalReferenceVariable, "name1", target.Module.Name),
+                LookupSymbolEntry(symbols, "name1"));
             Assert.AreEqual(
-                new SymbolEntry(SymbolInterpretations.GlobalReferenceVariable, "name2"),
-                symbols["name2"]);
+                new SymbolEntry(SymbolInterpretations.GlobalReferenceVariable, "name2", target.Module.Name),
+                LookupSymbolEntry(symbols, "name2"));
             Assert.AreEqual(
-                new SymbolEntry(SymbolInterpretations.Function, "name1"), symbols["name1"]);
+                new SymbolEntry(SymbolInterpretations.Function, "name1", target.Module.Name), LookupSymbolEntry(symbols, "name1"));
 
             const string input2 =
                 "declare function name1; " +
@@ -262,9 +260,9 @@ Add System::Xml to Imports;
             ldr.LoadFromString(input2);
             Assert.AreEqual(0, ldr.ErrorCount);
             Assert.AreEqual(
-                new SymbolEntry(SymbolInterpretations.Function, "name1"), symbols["name1"]);
+                new SymbolEntry(SymbolInterpretations.Function, "name1", target.Module.Name), LookupSymbolEntry(symbols, "name1"));
             Assert.AreEqual(
-                new SymbolEntry(SymbolInterpretations.Function, "name2"), symbols["name2"]);
+                new SymbolEntry(SymbolInterpretations.Function, "name2", target.Module.Name), LookupSymbolEntry(symbols, "name2"));
         }
 
         [Test]
@@ -285,14 +283,14 @@ Add System::Xml to Imports;
             var symbols = ldr.Symbols;
 
             Assert.AreEqual(
-                new SymbolEntry(SymbolInterpretations.GlobalObjectVariable, "name1"),
-                symbols["name1"]);
+                new SymbolEntry(SymbolInterpretations.GlobalObjectVariable, "name1", target.Module.Name),
+                LookupSymbolEntry(symbols, "name1"));
             Assert.AreEqual(
-                new SymbolEntry(SymbolInterpretations.GlobalReferenceVariable, "name2"),
-                symbols["name2"]);
+                new SymbolEntry(SymbolInterpretations.GlobalReferenceVariable, "name2", target.Module.Name),
+                LookupSymbolEntry(symbols, "name2"));
             Assert.AreEqual(
-                new SymbolEntry(SymbolInterpretations.GlobalObjectVariable, "value"),
-                symbols["value"]);
+                new SymbolEntry(SymbolInterpretations.GlobalObjectVariable, "value", target.Module.Name),
+                LookupSymbolEntry(symbols, "value"));
 
             //Then define them
             const string input2 =
@@ -304,17 +302,17 @@ Add System::Xml to Imports;
             Assert.AreEqual(
                 0, ldr.ErrorCount, "The compiler reported errors in the second chunk of code.");
             Assert.AreEqual(
-                new SymbolEntry(SymbolInterpretations.GlobalObjectVariable, "name1"),
-                symbols["name1"]);
+                new SymbolEntry(SymbolInterpretations.GlobalObjectVariable, "name1", target.Module.Name),
+                LookupSymbolEntry(symbols, "name1"));
             Assert.IsNotNull(target.Variables["name1"]);
             Assert.AreEqual(
-                new SymbolEntry(SymbolInterpretations.GlobalReferenceVariable, "name2"),
-                symbols["name2"]);
+                new SymbolEntry(SymbolInterpretations.GlobalReferenceVariable, "name2", target.Module.Name),
+                LookupSymbolEntry(symbols, "name2"));
             Assert.IsNotNull(target.Variables["name2"]);
             Assert.AreEqual("NotUseful", target.Variables["name2"].Meta["description"].Text);
             Assert.AreEqual(
-                new SymbolEntry(SymbolInterpretations.GlobalObjectVariable, "name3"),
-                symbols["name3"]);
+                new SymbolEntry(SymbolInterpretations.GlobalObjectVariable, "name3", target.Module.Name),
+                LookupSymbolEntry(symbols, "name3"));
             Assert.IsNotNull(target.Variables["name3"]);
         }
 
@@ -349,7 +347,7 @@ function megabyte = 1024*1024;
 
             //check "twice"
             var actual = target.Functions["twice"].Code;
-            var expected = getInstructions(@"
+            var expected = GetInstructions(@"
 ldc.int 2
 ldloc x
 mul
@@ -375,7 +373,7 @@ ret.value
 
             //check "megabyte"
             actual = target.Functions["megabyte"].Code;
-            expected = getInstructions(@"
+            expected = GetInstructions(@"
 ldc.int 1048576
 ret.value
 ");
@@ -409,7 +407,7 @@ function main does asm
 {
     var x
 
-//Constant Jump Target Propagation
+//Constant Jump ITarget Propagation
     
             ldloc   x
             jump.t  a
@@ -473,7 +471,7 @@ label   fe  nop+fe
 }
 ");
 
-            _expect(
+            Expect(
                 @"
             var x
 
@@ -559,17 +557,17 @@ function func3(param1, param2)
             Assert.AreEqual(0, ldr.ErrorCount);
 
             //func1
-            Assert.IsTrue(target.Functions.Contains("func1"), "Func1 is not in the function table");
-            Assert.AreEqual(SymbolInterpretations.Function, ldr.Symbols["func1"].Interpretation);
+            Assert.IsTrue(target.Functions.Contains("func1"), "func1 is not in the function table");
+            Assert.AreEqual(SymbolInterpretations.Function, LookupSymbolEntry(ldr.Symbols, "func1").Interpretation);
             Assert.AreEqual(0, target.Functions["func1"].Parameters.Count);
 
-            Assert.IsTrue(target.Functions.Contains("func2"), "Func2 is not in the function table");
-            Assert.AreEqual(SymbolInterpretations.Function, ldr.Symbols["func2"].Interpretation);
+            Assert.IsTrue(target.Functions.Contains("func2"), "func2 is not in the function table");
+            Assert.AreEqual(SymbolInterpretations.Function, LookupSymbolEntry(ldr.Symbols, "func2").Interpretation);
             Assert.AreEqual(3, target.Functions["func2"].Parameters.Count);
             Assert.AreEqual("param2", target.Functions["func2"].Parameters[1]);
 
-            Assert.IsTrue(target.Functions.Contains("func3"), "Func3 is not in the function table");
-            Assert.AreEqual(SymbolInterpretations.Function, ldr.Symbols["func3"].Interpretation);
+            Assert.IsTrue(target.Functions.Contains("func3"), "func3 is not in the function table");
+            Assert.AreEqual(SymbolInterpretations.Function, LookupSymbolEntry(ldr.Symbols, "func3").Interpretation);
             Assert.AreEqual(2, target.Functions["func3"].Parameters.Count);
             Assert.AreEqual("param2", target.Functions["func3"].Parameters[1]);
             Assert.AreEqual(1, target.Functions["func3"].ImportedNamespaces.Count);
@@ -594,12 +592,12 @@ function func1() does asm
             Assert.IsTrue(target.Functions["func1"].Variables.Contains("loc1"));
             Assert.AreEqual(
                 SymbolInterpretations.LocalObjectVariable,
-                ldr.FunctionTargets["func1"].Symbols["loc1"].Interpretation);
+                LookupSymbolEntry(ldr.FunctionTargets["func1"].Symbols, "loc1").Interpretation);
 
             Assert.IsTrue(target.Functions["func1"].Variables.Contains("loc2"));
             Assert.AreEqual(
                 SymbolInterpretations.LocalReferenceVariable,
-                ldr.FunctionTargets["func1"].Symbols["loc2"].Interpretation);
+                LookupSymbolEntry(ldr.FunctionTargets["func1"].Symbols, "loc2").Interpretation);
         }
 
         [Test]
@@ -1043,47 +1041,69 @@ var d as e, f;
             Assert.IsFalse(target.Variables.ContainsKey("f"), "No Variable f must exist.");
 
 
-            Assert.IsTrue(ldr.Symbols.ContainsKey("a"), "Symbol a must exist.");
-            var a = ldr.Symbols["a"];
+            Assert.IsTrue(ldr.Symbols.Contains("a"), "Symbol a must exist.");
+            var a = LookupSymbolEntry(ldr.Symbols, "a");
             Assert.IsTrue(a.Interpretation == SymbolInterpretations.GlobalObjectVariable,
                 "Symbol a must be global object variable.");
 
-            Assert.IsTrue(ldr.Symbols.ContainsKey("b"), "Symbol b must exist.");
-            var b = ldr.Symbols["b"];
+            Assert.IsTrue(ldr.Symbols.Contains("b"), "Symbol b must exist.");
+            var b = LookupSymbolEntry(ldr.Symbols, "b");
             Assert.IsTrue(b.Interpretation == SymbolInterpretations.GlobalObjectVariable,
                 "Symbol b must be global object variable.");
-            Assert.IsTrue(target.Variables.ContainsKey(b.Id),
+            Assert.IsTrue(target.Variables.ContainsKey(b.InternalId),
                 "Symbol b must point to a physical variable.");
 
-            Assert.IsTrue(ldr.Symbols.ContainsKey("c"), "Symbol c must exist.");
-            var c = ldr.Symbols["c"];
+            Assert.IsTrue(ldr.Symbols.Contains("c"), "Symbol c must exist.");
+            var c = LookupSymbolEntry(ldr.Symbols, "c");
             Assert.IsTrue(c.Interpretation == SymbolInterpretations.GlobalObjectVariable,
                 "Symbol c must be global object variable.");
-            Assert.IsTrue(target.Variables.ContainsKey(c.Id),
+            Assert.IsTrue(target.Variables.ContainsKey(c.InternalId),
                 "Symbol c must point to a physical variable.");
-            Assert.IsTrue(b.Id == c.Id, "Symbols b and c must point to the same variable.");
+            Assert.IsTrue(b.InternalId == c.InternalId, "Symbols b and c must point to the same variable.");
 
-            Assert.IsTrue(ldr.Symbols.ContainsKey("d"), "Symbol d must exist.");
-            var d = ldr.Symbols["d"];
+            Assert.IsTrue(ldr.Symbols.Contains("d"), "Symbol d must exist.");
+            var d = LookupSymbolEntry(ldr.Symbols, "d");
             Assert.IsTrue(d.Interpretation == SymbolInterpretations.GlobalObjectVariable,
                 "Symbol d must be global object variable.");
 
-            Assert.IsTrue(ldr.Symbols.ContainsKey("e"), "Symbol e must exist.");
-            var e = ldr.Symbols["e"];
+            Assert.IsTrue(ldr.Symbols.Contains("e"), "Symbol e must exist.");
+            var e = LookupSymbolEntry(ldr.Symbols, "e");
             Assert.IsTrue(e.Interpretation == SymbolInterpretations.GlobalObjectVariable,
                 "Symbol e must be global object variable.");
-            Assert.IsTrue(target.Variables.ContainsKey(e.Id),
+            Assert.IsTrue(target.Variables.ContainsKey(e.InternalId),
                 "Symbol e must point to a physical variable.");
 
-            Assert.IsTrue(ldr.Symbols.ContainsKey("f"), "Symbol f must exist.");
-            var f = ldr.Symbols["f"];
+            Assert.IsTrue(ldr.Symbols.Contains("f"), "Symbol f must exist.");
+            var f = LookupSymbolEntry(ldr.Symbols, "f");
             Assert.IsTrue(f.Interpretation == SymbolInterpretations.GlobalObjectVariable,
                 "Symbol f must be global object variable.");
-            Assert.IsTrue(target.Variables.ContainsKey(f.Id),
+            Assert.IsTrue(target.Variables.ContainsKey(f.InternalId),
                 "Symbol f must point to a physical variable.");
-            Assert.IsTrue(e.Id == f.Id, "Symbols e and f must point to the same variable.");
+            Assert.IsTrue(e.InternalId == f.InternalId, "Symbols e and f must point to the same variable.");
 
-            Assert.IsTrue(e.Id == "d", "Symbols e and f must point to variable d");
+            Assert.IsTrue(e.InternalId == "d", "Symbols e and f must point to variable d");
+        }
+
+        [Test]
+        public void ModuleNameOverride()
+        {
+            var ldr = _compile(@"
+declare function main/the_module/0.1;
+");
+            var mainSym = LookupSymbolEntry(ldr.Symbols, "main");
+            Assert.That(mainSym.InternalId,Is.EqualTo("main"));
+            Assert.That(mainSym.Interpretation,Is.EqualTo(SymbolInterpretations.Function));
+            Assert.That(mainSym.Module, Is.EqualTo(target.Module.Cache["the_module", new Version(0, 1)]));
+        }
+
+        [Test]
+        public void ManyDecls()
+        {
+            var ldr = _compile(@"
+declare function main/testApplication/0.0;
+declare command print,println,meta,boxed,concat,map,select,foldl,foldr,dispose,call\perform,thunk,asthunk,force,toseq,call\member\perform,caller,pair,unbind,sort,orderby,LoadAssembly,debug,setcenter,setleft,setright,all,where,skip,limit,take,abs,ceiling,exp,floor,log,max,min,pi,round,sin,cos,sqrt,tan,char,count,distinct,union,unique,frequency,groupby,intersect,call\tail\perform,list,each,exists,forall,CompileToCil,takewhile,except,range,reverse,headtail,append,sum,contains,chan,call\async\perform,async_seq,call\sub\perform,pa\ind,pa\mem,pa\ctor,pa\check,pa\cast,pa\smem,pa\fun\call,pa\flip\call,pa\call\star,then,id,const,(+),(-),(*),(/),$mod,(^),(&),(|),$xor,(==),(!=),(>),(>=),(<),(<=),(-.),$complement,$not,create_enumerator,create_module_name,seqconcat;
+declare macro command call,call\member,call\tail,call\async,call\sub,call\sub\interpret,macro\pack,macro\unpack,macro\reference,call\star,call\macro,call\macro\impl;
+");
         }
     }
 }

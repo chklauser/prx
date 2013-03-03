@@ -1,6 +1,6 @@
 // Prexonite
 // 
-// Copyright (c) 2011, Christian Klauser
+// Copyright (c) 2013, Christian Klauser
 // All rights reserved.
 // 
 // Redistribution and use in source and binary forms, with or without modification, 
@@ -23,7 +23,6 @@
 //  DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, 
 //  WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING 
 //  IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
-
 #region
 
 using System;
@@ -435,7 +434,7 @@ namespace Prexonite.Types
                                 var innerRt = exc.InnerException as PrexoniteRuntimeException;
 
                                 if (innerRt != null)
-                                    throw innerRt;
+                                    throw innerRt.InnerException;
                                 else
                                     throw;
                             }
@@ -1392,7 +1391,7 @@ namespace Prexonite.Types
                 if (subject.Value == null)
                     return false;
 
-                if (objT.ClrType.IsAssignableFrom(subject.Value.GetType()))
+                if (objT.ClrType.IsInstanceOfType(subject.Value))
                 {
                     result = objT.CreatePValue(subject.Value);
                     return result != null;

@@ -1,6 +1,6 @@
 // Prexonite
 // 
-// Copyright (c) 2011, Christian Klauser
+// Copyright (c) 2013, Christian Klauser
 // All rights reserved.
 // 
 // Redistribution and use in source and binary forms, with or without modification, 
@@ -23,24 +23,33 @@
 //  DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, 
 //  WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING 
 //  IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
-
 using System;
 using Prexonite.Types;
 
 namespace Prexonite.Compiler.Ast
 {
-    public class AstTypecheck : AstNode,
-                                IAstExpression,
+    public class AstTypecheck : AstExpr,
                                 IAstHasExpressions,
                                 IAstPartiallyApplicable
     {
-        private IAstExpression _subject;
-        private IAstType _type;
+        private AstExpr _subject;
+        private AstTypeExpr _type;
 
+        /// <summary>
+        /// Indicates whether this typecheck is inverted (X is not Y).
+        /// Does not, however, change the behaviour of AstTypecheck itself.
+        /// It is used to distinguish between
+        ///     not (X is Y)
+        /// and
+        ///     X is not Y
+        /// 
+        /// Both times, the typecheck is wrapped in a unary not, but the flag
+        /// is only set in the second case.
+        /// </summary>
         public bool IsInverted { get; set; }
 
         public AstTypecheck(
-            string file, int line, int column, IAstExpression subject, IAstType type)
+            string file, int line, int column, AstExpr subject, AstTypeExpr type)
             : base(file, line, column)
         {
             if (subject == null)
@@ -51,25 +60,25 @@ namespace Prexonite.Compiler.Ast
             _type = type;
         }
 
-        internal AstTypecheck(Parser p, IAstExpression subject, IAstType type)
+        internal AstTypecheck(Parser p, AstExpr subject, AstTypeExpr type)
             : this(p.scanner.File, p.t.line, p.t.col, subject, type)
         {
         }
 
         #region IAstHasExpressions Members
 
-        public IAstExpression[] Expressions
+        public AstExpr[] Expressions
         {
             get { return new[] {_subject}; }
         }
 
-        public IAstExpression Subject
+        public AstExpr Subject
         {
             get { return _subject; }
             set { _subject = value; }
         }
 
-        public IAstType Type
+        public AstTypeExpr Type
         {
             get { return _type; }
             set { _type = value; }
@@ -77,9 +86,12 @@ namespace Prexonite.Compiler.Ast
 
         #endregion
 
-        protected override void DoEmitCode(CompilerTarget target)
+        protected override void DoEmitCode(CompilerTarget target, StackSemantics stackSemantics)
         {
-            _subject.EmitCode(target);
+            if (stackSemantics == StackSemantics.Effect)
+                return;
+
+            _subject.EmitValueCode(target);
             var constType = _type as AstConstantTypeExpression;
             if (constType != null)
             {
@@ -93,21 +105,21 @@ namespace Prexonite.Compiler.Ast
                     //ignore failures here
                 }
                 if ((object) T != null && T == PType.Null)
-                    target.Emit(this, OpCode.check_null);
+                    target.Emit(Position,OpCode.check_null);
                 else
-                    target.Emit(this, OpCode.check_const, constType.TypeExpression);
+                    target.Emit(Position,OpCode.check_const, constType.TypeExpression);
             }
             else
             {
-                _type.EmitCode(target);
-                target.Emit(this, OpCode.check_arg);
+                _type.EmitValueCode(target);
+                target.Emit(Position,OpCode.check_arg);
             }
         }
 
-        public bool TryOptimize(CompilerTarget target, out IAstExpression expr)
+        public override bool TryOptimize(CompilerTarget target, out AstExpr expr)
         {
             _OptimizeNode(target, ref _subject);
-            _type = (IAstType) _GetOptimizedNode(target, _type);
+            _type = (AstTypeExpr) _GetOptimizedNode(target, _type);
 
             expr = null;
 
@@ -142,11 +154,11 @@ namespace Prexonite.Compiler.Ast
             var ctorArgc = this.EmitConstructorArguments(target, argv);
             var constType = _type as AstConstantTypeExpression;
             if (constType != null)
-                target.EmitConstant(this, constType.TypeExpression);
+                target.EmitConstant(Position, constType.TypeExpression);
             else
-                _type.EmitCode(target);
+                _type.EmitValueCode(target);
 
-            target.EmitCommandCall(this, ctorArgc + 1, Engine.PartialTypeCheckAlias);
+            target.EmitCommandCall(Position, ctorArgc + 1, Engine.PartialTypeCheckAlias);
         }
     }
 }

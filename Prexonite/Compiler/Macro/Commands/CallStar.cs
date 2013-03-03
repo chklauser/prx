@@ -1,6 +1,6 @@
 ﻿// Prexonite
 // 
-// Copyright (c) 2011, Christian Klauser
+// Copyright (c) 2013, Christian Klauser
 // All rights reserved.
 // 
 // Redistribution and use in source and binary forms, with or without modification, 
@@ -23,11 +23,12 @@
 //  DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, 
 //  WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING 
 //  IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
-
 using System.Collections.Generic;
 using System.Linq;
 using Prexonite.Commands.Core.PartialApplication;
 using Prexonite.Compiler.Ast;
+using Prexonite.Modular;
+using Prexonite.Properties;
 
 namespace Prexonite.Compiler.Macro.Commands
 {
@@ -55,13 +56,13 @@ namespace Prexonite.Compiler.Macro.Commands
         {
             if (context.Invocation.Arguments.Count < 1)
             {
-                context.ReportMessage(ParseMessageSeverity.Error,
-                    "{0} requires at least one argument, the call\\* command/function to invoke.");
+                context.ReportMessage(Message.Error(
+                    string.Format(Resources.CallStar_usage, Id), context.Invocation.Position, MessageClasses.CallStarUsage));
                 return true;
             }
 
             int passThrough;
-            List<IAstExpression> arguments;
+            List<AstExpr> arguments;
             _determinePassThrough(context, out passThrough, out arguments);
 
             _expandPartialApplication(context, passThrough, arguments);
@@ -70,9 +71,9 @@ namespace Prexonite.Compiler.Macro.Commands
         }
 
         private void _expandPartialApplication(MacroContext context, int passThrough,
-            List<IAstExpression> arguments)
+            List<AstExpr> arguments)
         {
-            var flatArgs = new List<IAstExpression>(arguments.Count);
+            var flatArgs = new List<AstExpr>(arguments.Count);
             var directives = new List<int>(arguments.Count);
 
             //The call target is a "non-argument" in partial application terms. Do not include it in the
@@ -105,14 +106,14 @@ namespace Prexonite.Compiler.Macro.Commands
 
             var argc = ppArgv.Count;
             var mappings8 = new int[argc + directives.Count + 1];
-            var closedArguments = new List<IAstExpression>(argc);
+            var closedArguments = new List<AstExpr>(argc);
 
             AstPartiallyApplicable.GetMapping(ppArgv, mappings8, closedArguments);
             _mergeDirectivesIntoMappings(directives, mappings8, argc);
             var mappings32 = PartialApplicationCommandBase.PackMappings32(mappings8);
 
-            var implCall = context.CreateGetSetSymbol(SymbolInterpretations.Command, context.Call,
-                PartialCallStarImplCommand.Alias);
+            var implCall = context.Factory.Call(context.Invocation.Position,
+                                                EntityRef.Command.Create(PartialCallStarImplCommand.Alias), context.Call);
             implCall.Arguments.AddRange(closedArguments);
 
             implCall.Arguments.AddRange(mappings32.Select(m => context.CreateConstant(m)));
@@ -136,13 +137,13 @@ namespace Prexonite.Compiler.Macro.Commands
 
         #region Overrides of MacroCommand
 
-        private static bool _isPartialList(IAstExpression expr)
+        private static bool _isPartialList(AstExpr expr)
         {
             AstListLiteral lit;
             return _isPartialList(expr, out lit);
         }
 
-        private static bool _isPartialList(IAstExpression expr, out AstListLiteral lit)
+        private static bool _isPartialList(AstExpr expr, out AstListLiteral lit)
         {
             lit = expr as AstListLiteral;
             return lit != null && lit.CheckForPlaceholders();
@@ -152,13 +153,15 @@ namespace Prexonite.Compiler.Macro.Commands
         {
             if (context.Invocation.Arguments.Count < 1)
             {
-                context.ReportMessage(ParseMessageSeverity.Error,
-                    "{0} requires at least one argument, the call\\* command/function to invoke.");
+                context.ReportMessage(
+                    Message.Error(
+                        string.Format(Resources.CallStar_usage, Id), context.Invocation.Position,
+                        MessageClasses.CallStarUsage));
                 return;
             }
 
             int passThrough;
-            List<IAstExpression> arguments;
+            List<AstExpr> arguments;
             _determinePassThrough(context, out passThrough, out arguments);
 
             if (arguments.Skip(passThrough).Any(_isPartialList))
@@ -175,25 +178,27 @@ namespace Prexonite.Compiler.Macro.Commands
         }
 
         private static void _determinePassThrough(MacroContext context, out int passThrough,
-            out List<IAstExpression> arguments)
+            out List<AstExpr> arguments)
         {
             var arg0 = context.Invocation.Arguments[0];
             var passThroughNode = arg0 as AstConstant;
             if (passThroughNode != null && passThroughNode.Constant is int)
             {
-                arguments = new List<IAstExpression>(context.Invocation.Arguments.Skip(1));
+                arguments = new List<AstExpr>(context.Invocation.Arguments.Skip(1));
                 passThrough = (int) passThroughNode.Constant;
             }
             else
             {
-                arguments = new List<IAstExpression>(context.Invocation.Arguments);
+                arguments = new List<AstExpr>(context.Invocation.Arguments);
                 passThrough = 1;
             }
 
             if (passThrough < 1)
-                context.ReportMessage(ParseMessageSeverity.Error,
-                    "call\\star must at least pass through one argument (the call target). It has been instructed to pass through " +
-                        passThrough + " arguments.", passThroughNode);
+                context.ReportMessage(
+                    Message.Error(
+                        string.Format(Resources.CallStar__invalid_PassThrough, passThrough),
+                        (ISourcePosition)passThroughNode ?? context.Invocation.Position,
+                        MessageClasses.CallStarPassThrough));
         }
 
         #endregion

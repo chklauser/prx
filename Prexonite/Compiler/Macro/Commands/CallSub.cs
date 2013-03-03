@@ -1,6 +1,6 @@
 ﻿// Prexonite
 // 
-// Copyright (c) 2011, Christian Klauser
+// Copyright (c) 2013, Christian Klauser
 // All rights reserved.
 // 
 // Redistribution and use in source and binary forms, with or without modification, 
@@ -23,8 +23,7 @@
 //  DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, 
 //  WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING 
 //  IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
-
-using Prexonite.Compiler.Ast;
+using Prexonite.Modular;
 using Prexonite.Types;
 
 namespace Prexonite.Compiler.Macro.Commands
@@ -52,12 +51,12 @@ namespace Prexonite.Compiler.Macro.Commands
 
         protected override void DoExpand(MacroContext context)
         {
-            var perform = context.CreateGetSetSymbol(SymbolInterpretations.Command, PCall.Get,
-                Engine.CallSubPerformAlias,
-                context.Invocation.Arguments.ToArray());
-            var interpret = new AstMacroInvocation(context.Invocation.File, context.Invocation.Line,
-                context.Invocation.Column, CallSubInterpret.Alias,
-                SymbolInterpretations.MacroCommand);
+            var perform =
+                context.Factory.Call(context.Invocation.Position, EntityRef.Command.Create(Engine.CallSubPerformAlias),
+                                     PCall.Get, context.Invocation.Arguments.ToArray());
+            var interpret = context.Factory.Expand(context.Invocation.Position,
+                                          EntityRef.MacroCommand.Create(CallSubInterpret.Alias), context.Invocation.Call);
+            
             interpret.Arguments.Add(perform);
 
             context.Block.Expression = interpret;

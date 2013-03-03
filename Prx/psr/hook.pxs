@@ -1,6 +1,6 @@
 ﻿// Prexonite
 // 
-// Copyright (c) 2011, Christian Klauser
+// Copyright (c) 2013, Christian Klauser
 // All rights reserved.
 // 
 // Redistribution and use in source and binary forms, with or without modification, 
@@ -24,100 +24,4 @@
 //  WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING 
 //  IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-build does require(@"psr\ast.pxs");
-
-var _stmt_hooks [is compiler;];
-build does _stmt_hooks = [];
-
-function hook_impl(t) [ is compiler; ]
-{
-    if(_stmt_hooks.Count == 0)
-        return;
-        
-    //Allocate variables for each stmt_hook
-    var stores = {};
-    foreach(var fhook in _stmt_hooks)
-    {
-        var lst = [];        
-        for(var i = 0; i < fhook.Value; i++)
-            lst[] = new Prexonite::PVariable;
-        stores[fhook.Key] = lst;
-    }
-    
-    
-    var hooks = _stmt_hooks >> all;
-            
-    function process(block)
-    {
-        for(var i = 0; i < block.Count; i++)
-        {
-            foreach(var fhook in hooks)
-            {
-                var hook = fhook.Key;
-                if(call(hook, t, block[i], ->i, stores[hook]))
-                    hooks.Remove(hook);
-                if(i >= block.Count Or i < 0)
-                    break;
-            }
-        }
-        
-        //Recursively process statements in sub block
-        foreach(var subBlock in subBlocks(block))
-            process(subBlock);
-    }
-    
-    //Process top-level block
-    process(t.Ast);
-}
-
-//SIGNATURE OF STMT_HOOKS:
-//
-//  (t, stmt, ref i, ref customVariable1, ..., ref customVariableN) => true Or false
-//
-//  t => CompilerTarget
-//  stmt => the current statement
-//  ref i => the index
-//  custom variable objects are passed to the function depending on your setting for the stmt_hook.
-
-var _stmt_hook_active [is compiler;];
-build does _stmt_hook_active = false;
-
-function mk_hook(fhook) [is compiler;] = if(Not fhook is Prexonite::Types::PValueKeyValuePair)
-                              (fhook: 0)
-                          else
-                              fhook;
-                              
-function not_null(arg) [is compiler;] = Not arg is Null;
-
-//Add a statement hook to the shared compiler hook
-//  Usage:
-//      stmt_hook
-//          ( 
-//              (t,stmt,ref i, ref v1, ref v2) => {...} : 2,
-//              (t,stmt,ref i, ref v1, ref v2, ref v3, ref v4) => {...} : 4,
-//              (t,stmt,ref i) => {...} : 0,
-//              (t,stmt) => {...}
-//          )
-//
-//  The value in the key-value pair indictaes the number of per function variables to create
-//  If no key is provided, 0 is assumed.
-function stmt_hook() [ is compiler; ] does
-{
-    (var args)
-    >> where(->not_null)
-    >> map(->mk_hook)    
-    >> where(fhook => Not _stmt_hooks.Contains(fhook))
-    >> each( fhook => _stmt_hooks[] = fhook);
-    if(not _stmt_hook_active)
-    {
-        declare command hook;
-        hook(->hook_impl);
-        _stmt_hook_active = true;
-    }
-}
-     
-function remove_stmt_hook() [ is compiler; ] = 
-    (var args)
-    >> where(->not_null)
-    >> map(->mk_hook)
-    >> each( fhook => _stmt_hooks.Remove(fhook));
+build does require(@"psr\ast.pxs",@"psr\impl\hook.pxs");

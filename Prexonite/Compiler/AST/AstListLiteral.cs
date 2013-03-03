@@ -1,6 +1,6 @@
 // Prexonite
 // 
-// Copyright (c) 2011, Christian Klauser
+// Copyright (c) 2013, Christian Klauser
 // All rights reserved.
 // 
 // Redistribution and use in source and binary forms, with or without modification, 
@@ -23,21 +23,20 @@
 //  DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, 
 //  WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING 
 //  IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
-
 using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
+using Prexonite.Modular;
 using Prexonite.Types;
 
 namespace Prexonite.Compiler.Ast
 {
-    public class AstListLiteral : AstNode,
-                                  IAstExpression,
+    public class AstListLiteral : AstExpr,
                                   IAstHasExpressions,
                                   IAstPartiallyApplicable
     {
-        public List<IAstExpression> Elements = new List<IAstExpression>();
+        public List<AstExpr> Elements = new List<AstExpr>();
 
         internal AstListLiteral(Parser p)
             : base(p)
@@ -51,16 +50,16 @@ namespace Prexonite.Compiler.Ast
 
         #region IAstHasExpressions Members
 
-        public IAstExpression[] Expressions
+        public AstExpr[] Expressions
         {
             get { return Elements.ToArray(); }
         }
 
         #endregion
 
-        #region IAstExpression Members
+        #region AstExpr Members
 
-        public bool TryOptimize(CompilerTarget target, out IAstExpression expr)
+        public override bool TryOptimize(CompilerTarget target, out AstExpr expr)
         {
             foreach (var arg in Elements.ToArray())
             {
@@ -82,19 +81,18 @@ namespace Prexonite.Compiler.Ast
 
         #endregion
 
-        protected override void DoEmitCode(CompilerTarget target)
+        protected override void DoEmitCode(CompilerTarget target, StackSemantics stackSemantics)
         {
-            var call = new AstGetSetSymbol(
-                File, Line, Column, PCall.Get, Engine.ListAlias, SymbolInterpretations.Command);
+            var call = target.Factory.Call(Position, EntityRef.Command.Create(Engine.ListAlias));
             call.Arguments.AddRange(Elements);
-            call.EmitCode(target);
+            call.EmitCode(target,stackSemantics);
         }
 
         #region Implementation of IAstPartiallyApplicable
 
         public void DoEmitPartialApplicationCode(CompilerTarget target)
         {
-            DoEmitCode(target);
+            DoEmitCode(target,StackSemantics.Value);
             //Code is the same. Partial application is handled by AstGetSetSymbol
         }
 

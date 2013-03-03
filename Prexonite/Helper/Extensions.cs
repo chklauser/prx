@@ -1,6 +1,6 @@
 // Prexonite
 // 
-// Copyright (c) 2011, Christian Klauser
+// Copyright (c) 2013, Christian Klauser
 // All rights reserved.
 // 
 // Redistribution and use in source and binary forms, with or without modification, 
@@ -23,7 +23,6 @@
 //  DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, 
 //  WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING 
 //  IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
-
 using System;
 using System.Collections;
 using System.Collections.Generic;
@@ -85,6 +84,12 @@ namespace Prexonite
                 collection.Add(item);
         }
 
+        /// <summary>
+        /// Constructs a human-readable enumeration of the form "x<sub>1</sub>, x<sub>2</sub>, x<sub>3</sub>, …, x<sub>n-2</sub>, x<sub>n-1</sub>, and x<sub>n</sub>".
+        /// </summary>
+        /// <typeparam name="T">Any type that supports <see cref="Object.ToString"/>.</typeparam>
+        /// <param name="source">The enumeration to convert to a string.</param>
+        /// <returns>A human-readbale string.</returns>
         public static string ToEnumerationString<T>(this IEnumerable<T> source)
         {
             Contract.Requires(source != null, "source must not be null.");
@@ -118,6 +123,31 @@ namespace Prexonite
             {
                 return hold;
             }
+        }
+
+        /// <summary>
+        /// Constructs a machine-readable, comma-separated list. ("x<sub>1</sub>, x<sub>2</sub>, …, x<sub>n</sub>").
+        /// </summary>
+        /// <typeparam name="T">Any type that supports <see cref="Object.ToString"/>.</typeparam>
+        /// <param name="source">The enumeration to convert to a string.</param>
+        /// <returns>A human-readbale string. The empty string iff <paramref name="source"/> was empty.</returns>
+        public static string ToListString<T>(this IEnumerable<T> source)
+        {
+            var s = new StringBuilder();
+            var hasStarted = false;
+            foreach (var x in source)
+            {
+                if(hasStarted)
+                {
+                    s.Append(", ");
+                }
+                else
+                {
+                    hasStarted = true;
+                }
+                s.Append(x);
+            }
+            return s.ToString();
         }
 
         public static void MapInPlace<T>(this List<T> source, Func<T, T> func)
@@ -365,6 +395,30 @@ namespace Prexonite
         {
             for (var i = arraySegment.Offset; i < (arraySegment.Offset + arraySegment.Count); i++)
                 yield return arraySegment.Array[i];
+        }
+
+        public static IEnumerable<LinkedListNode<T>> ToNodeSequence<T>(this LinkedList<T> list)
+        {
+            Contract.Requires(list != null);
+            Contract.Ensures(Contract.Result<IEnumerable<LinkedListNode<T>>>() != null);
+
+            if(list.Count == 0)
+                yield break;
+
+            var node = list.First;
+            while(node != null)
+            {
+#if !DEBUG
+                yield return node;
+#else
+                var prev = node.Previous;
+                var next = node.Next;
+                yield return node;
+                Debug.Assert(ReferenceEquals(node.Next,next),"Linked list has changed while enumerating over elements. (next node)");
+                Debug.Assert(ReferenceEquals(node.Previous, prev), "Linked list has changed while enumerating over elements. (prev node)");
+#endif
+                node = node.Next;
+            }
         }
 
         #region Nested type: SingletonEnum

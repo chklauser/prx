@@ -22,14 +22,18 @@
  */
 
 //A comment
-using System.IO;
-using Prexonite;
 using System.Collections.Generic;
 using System.Linq;
 using FatalError = Prexonite.Compiler.FatalCompilerException;
 using StringBuilder = System.Text.StringBuilder;
 using Prexonite.Compiler.Ast;
 using Prexonite.Types;
+using Prexonite.Modular;
+using Prexonite.Compiler.Internal;
+using Prexonite.Compiler.Symbolic;
+using Prexonite.Compiler.Symbolic.Internal;
+using Prexonite.Compiler.Symbolic.Compatibility;
+using Prexonite.Properties;
 
 COMPILER Prexonite
 

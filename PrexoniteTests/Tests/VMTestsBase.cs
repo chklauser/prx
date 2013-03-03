@@ -1,6 +1,6 @@
 // Prexonite
 // 
-// Copyright (c) 2011, Christian Klauser
+// Copyright (c) 2013, Christian Klauser
 // All rights reserved.
 // 
 // Redistribution and use in source and binary forms, with or without modification, 
@@ -23,7 +23,6 @@
 //  DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, 
 //  WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING 
 //  IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
-
 #define UseCil
 
 using System;
@@ -34,6 +33,8 @@ using NUnit.Framework;
 using Prexonite;
 using Prexonite.Compiler;
 using Prexonite.Compiler.Cil;
+using Prexonite.Compiler.Symbolic;
+using Prexonite.Compiler.Symbolic.Compatibility;
 using Prexonite.Types;
 using Prx.Tests;
 using Compiler = Prexonite.Compiler.Cil.Compiler;
@@ -104,12 +105,12 @@ namespace PrexoniteTests.Tests
         protected void CompileInvalid(Loader ldr, string input, params string[] keywords)
         {
             _compile(ldr, input);
-            Assert.AreNotEqual(0, ldr.Errors.Count(m => m.Severity == ParseMessageSeverity.Error),
+            Assert.AreNotEqual(0, ldr.Errors.Count(m => m.Severity == MessageSeverity.Error),
                 "Errors expected, but none were raised.");
             foreach (var keyword in keywords)
             {
                 var word = keyword;
-                Assert.IsTrue(ldr.Errors.Any(m => m.Message.Contains(word)),
+                Assert.IsTrue(ldr.Errors.Any(m => m.Text.Contains(word)),
                     "Expected keyword " + word + " in one of the error messages.");
             }
         }
@@ -183,6 +184,11 @@ namespace PrexoniteTests.Tests
             ExpectReturnValue(target.Meta[Application.EntryKey], expectedReturnValue, args);
         }
 
+        protected void Expect(Action<PValue> assertion, params PValue[] args)
+        {
+            ExpectReturnValue(target.Meta[Application.EntryKey], assertion, args);
+        }
+
         protected void ExpectNamed<T>(string functionId, T expectedReturnValue, params PValue[] args)
         {
             ExpectReturnValue(functionId, expectedReturnValue, args);
@@ -190,15 +196,24 @@ namespace PrexoniteTests.Tests
 
         protected void ExpectReturnValue<T>(string functionId, T expectedReturnValue, PValue[] args)
         {
-            if (!args.All(value => value != null))
+            ExpectReturnValue(functionId, rv =>
+                                                 {
+                                                     var expected = engine.CreateNativePValue(expectedReturnValue);
+                                                     AssertPValuesAreEqual(expected, rv);
+                                                 }, args);
+        }
+
+        protected void ExpectReturnValue(string functionId, Action<PValue> assertion, PValue[] args)
+        {
+            if (assertion == null)
+                throw new ArgumentNullException("assertion");
+           
+            if (args.Any(value => value == null))
                 throw new ArgumentException(
                     "Arguments must not contain naked CLR null references. Use `PType.Null`.");
 
-            var expected = engine.CreateNativePValue(expectedReturnValue);
             if (!target.Functions.Contains(functionId))
                 throw new PrexoniteException("Function " + functionId + " cannot be found.");
-
-            Console.WriteLine("Expecting " + functionId + " to return " + expected);
 
             var func = target.Functions[functionId];
             if (func.Meta[StoreDebugImplementationKey].Switch)
@@ -224,7 +239,7 @@ namespace PrexoniteTests.Tests
                 throw;
             }
 
-            AssertPValuesAreEqual(expected, rv);
+            assertion(rv);
         }
 
         public void AssertPValuesAreEqual(PValue expected, PValue rv)
@@ -264,12 +279,21 @@ namespace PrexoniteTests.Tests
 
         protected void ExpectNull(params PValue[] args)
         {
-            ExpectReturnValue<object>(target.Meta[Application.EntryKey], null, args);
+            var functionId = target.Meta[Application.EntryKey];
+            ExpectReturnValue(functionId, _buildIsNullAssertion(functionId), args);
         }
 
         protected void ExpectNull(string functionId, params PValue[] args)
         {
-            ExpectReturnValue<object>(functionId, null, args);
+            ExpectReturnValue(functionId, _buildIsNullAssertion(functionId), args);
+        }
+
+        private static Action<PValue> _buildIsNullAssertion(string functionId)
+        {
+            return v =>
+                Assert.That(v.IsNull, Is.True,
+                    string.Format("Value returned from {0} is expected to be a null reference, was {1} instead.",
+                        functionId, v));
         }
 
         protected PValue GetReturnValueNamed(string functionId, params PValue[] args)
@@ -289,6 +313,14 @@ namespace PrexoniteTests.Tests
         protected PValue GetReturnValue(params PValue[] args)
         {
             return GetReturnValueNamedExplicit(target.Meta[Application.EntryKey], args);
+        }
+
+        protected Symbol LookupSymbolEntry(SymbolStore store, string symbolicId)
+        {
+            Symbol symbol;
+            Assert.IsTrue(store.TryGet(symbolicId, out symbol),
+                          string.Format("Expected to find symbol {0} but there is no such entry.", symbolicId));
+            return symbol;
         }
 
         protected void BoolTable4(Func<bool, bool, bool, bool, string> main, PValue pTrue,

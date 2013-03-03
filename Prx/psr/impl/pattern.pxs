@@ -1,0 +1,247 @@
+// Prexonite
+// 
+// Copyright (c) 2013, Christian Klauser
+// All rights reserved.
+// 
+// Redistribution and use in source and binary forms, with or without modification, 
+//  are permitted provided that the following conditions are met:
+// 
+//     Redistributions of source code must retain the above copyright notice, 
+//          this list of conditions and the following disclaimer.
+//     Redistributions in binary form must reproduce the above copyright notice, 
+//          this list of conditions and the following disclaimer in the 
+//          documentation and/or other materials provided with the distribution.
+//     The names of the contributors may be used to endorse or 
+//          promote products derived from this software without specific prior written permission.
+// 
+// THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND 
+//  ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED 
+//  WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED. 
+//  IN NO EVENT SHALL THE COPYRIGHT HOLDER OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT, 
+//  INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES 
+//  (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, 
+//  DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, 
+//  WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING 
+//  IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+
+coroutine zip(xs,ys)
+{
+	using(var xsE = xs.GetEnumerator)
+	using(var ysE = ys.GetEnumerator)
+		while(xsE.MoveNext and ysE.MoveNext)
+			yield xsE.Current : ysE.Current;
+}
+
+function repeatable(xs)
+{
+
+    var rep = [];
+
+    // coroutine tee\cor
+    // {
+        // foreach(var x in xs)
+        // {
+            // yield rep[] = x;            
+        // }
+    // }
+    
+    function tee\cor
+    {
+        var e = xs.GetEnumerator;
+        var s = new Structure;
+        s.\\("GetEnumerator") = new enumerator(
+            () => {
+                if(e is null or not e.MoveNext)
+                {
+                    return false;
+                }
+                else
+                {
+                    rep[] = e.Current;
+                    return true;                    
+                }
+            },
+            e.Current(?),
+            () => s.Dispose(),
+        ?);
+        s.\\("Dispose") = () =>
+        {
+            if(e is not null)
+            {
+                dispose(e);
+                e = null;
+            }
+        };
+        return s;
+    }
+    
+    var tee = tee\cor();
+
+    function GetEnumerator(self) 
+    {
+        return (append(rep,tee)).GetEnumerator;
+    }
+    
+    function ToString = "repeatable $xs";
+    
+    return struct;
+}
+
+macro pattern\construct(desc)
+{
+    desc = macro\unpack(desc);
+    
+	var targets = var args >> skip(1) >> map(a => {optimize\ref(context,->a); return a;}) >> all;
+	var dynamicCall = ast\expand_macro(desc.construct);
+	dynamicCall.Arguments.AddRange(targets); 
+    return dynamicCall;
+}
+
+macro pattern\deconstruct(desc)
+{    
+    desc = macro\unpack(desc);
+    
+    var args;
+	var targets = var args >> range(1,args.Count-2) >> map(a => {optimize\ref(context,->a); return a;}) >> all;
+	var the_object = args[args.Count - 1];
+    
+	//Temporary variable used to hold RHS, if RHS is not an object variable itself
+	var tempV;
+	var useTemp;
+	if(ast_is_GetSetSymbol(the_object) and SI.is_lvar(the_object.Implementation.Interpretation))
+    {
+        useTemp = false;
+        tempV = the_object.Implementation.InternalId;
+    }
+    else if(ast_is_Call(the_object) and the_object.Subject.Entity.\implements("Prexonite.Modular.EntityRef+Variable+Local"))
+    {
+        useTemp = false;
+        tempV = the_object.Subject.Entity.Id;
+    }
+    else
+    {
+        useTemp = true;
+        tempV = tempalloc;       
+    
+        var assignTmp = ast\lvar(SI.set, tempV);
+        assignTmp.Arguments.Add(the_object);
+        context.Block.Add(assignTmp);
+    }
+	
+	foreach(var bpt in zip(desc.bindings,targets))
+	{
+		var binding = bpt.Key;
+		var bindingTarget = bpt.Value;
+		var binding_name = binding.Name;
+		if(not ast_is_GetSet(bindingTarget))
+            throw "The target $binding_name of $(desc.name) must be assignable.";
+        if(not SI.eq(bindingTarget.Call,SI.get))
+            throw "The target $binding_name of $(desc.name) must not be a set-call";	
+    
+        var dynamicMacroCall = ast\expand_macro(binding.getValue);
+        dynamicMacroCall.Arguments.Add(ast\const(tempV));
+            
+    	var setTarget = bindingTarget.GetCopy();
+    	setTarget.Call = SI.set;
+    	setTarget.Arguments.Add(dynamicMacroCall);
+        println("Deconstruction step: $setTarget");
+    	context.Block.Add(setTarget);
+	}
+	
+	//Behave like a proper set-call and return the RHS
+	context.Block.Expression = ast\lvar(SI.get, tempV);
+    
+	//Free temporary variable, if necessary
+    if(useTemp)
+        tempfree(tempV);
+}
+
+function create_binding_desc(kvp) [is compiler;]
+{
+	if(kvp is not Prexonite::Types::PValueKeyValuePair)
+		throw "Signature: create_binding(name: obj_var_id => deconstruct)";
+	var _name = kvp.Key;
+	var _getValue = kvp.Value;
+    
+    if(_getValue is Prexonite::PFunction)
+        _getValue = SI.e.func(_getValue);
+    else if(_getValue is String)
+        _getValue = SI.e.func(_getValue,asm(ldr.app).Module.Name);
+    else if(not _getValue.\implements("Prexonite.Modular.EntityRef"))
+        throw "Binding implementation must be an EntityRef or function reference.";
+	
+	function name = _name;
+	function getValue = _getValue;
+    function ToString = "$name(->$getValue)";
+	
+	return struct;
+}
+
+function create_pat_desc(_name, _bindings, _construct) [is compiler;]
+{	
+	if(_name is not String)
+		throw "Pattern needs a name.";
+	
+	_bindings = _bindings >> map(->create_binding_desc) >> repeatable;
+    
+    if(_construct is Prexonite::PFunction)
+        _construct = SI.e.func(_construct);
+    else if(_construct is String)
+        _construct = SI.e.func(_construct, asm(ldr.app).Module.Name);
+    else if(not _construct.\implements("Prexonite.Modular.EntityRef"))
+        throw "Pattern constructor must be an EntityRef or function reference.";
+    
+	function name = _name;	
+	function bindings = _bindings;
+	function construct = _construct;
+    function ToString(self) = "data $name = $name(" + foldl((a,b) => a + " " + b.ToString,"", self.bindings) + " );";
+	
+	return struct;
+}
+
+macro pattern\gen(desc)
+{
+    var result;
+    var args = args >> skip(1);
+    
+    if(SI.eq(context.Call,SI.get))
+    {
+        //construct value
+        result = call\macro([pattern\construct(desc)], args);
+    }
+    else
+    {
+        //deconstruct value
+        result = call\macro([pattern\deconstruct(desc)], args);
+    }
+   
+    return result;
+}
+
+macro kvp\decon\key(tempV)
+{
+    var tempV = ast\read(context, tempV);
+    return ast\member(ast\lvar(SI.get, tempV), SI.get,"Key");
+}
+
+macro kvp\decon\value(tempV)
+{
+    return ast\member(ast\lvar(SI.get, ast\read(context, tempV)), SI.get,"Value");
+}
+
+macro kvp\con(key, value)
+{
+    return ast("KeyValuePair",key,value);
+}
+
+macro kvp
+{    
+    var desc = create_pat_desc("KeyValuePair",
+            [ "key": macro\reference(kvp\decon\key)
+            , "value": macro\reference(kvp\decon\value)
+            ]
+        , macro\reference(kvp\con)
+        );
+    var args;
+    return call\macro([pattern\gen(ast\const(macro\pack(desc))),false,context.Call], var args);
+}

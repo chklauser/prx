@@ -1,6 +1,6 @@
 // Prexonite
 // 
-// Copyright (c) 2011, Christian Klauser
+// Copyright (c) 2013, Christian Klauser
 // All rights reserved.
 // 
 // Redistribution and use in source and binary forms, with or without modification, 
@@ -23,87 +23,59 @@
 //  DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, 
 //  WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING 
 //  IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
-
 using System;
-using System.Collections.Generic;
 using System.Diagnostics;
 using System.Linq;
 using System.Text;
+using JetBrains.Annotations;
 using Prexonite.Types;
 
 namespace Prexonite.Compiler.Ast
 {
-    public abstract class AstGetSet : AstNode,
-                                      IAstEffect,
-                                      IAstHasExpressions
+    public abstract class AstGetSet : AstExpr, IAstHasExpressions
     {
-        private readonly List<IAstExpression> _arguments = new List<IAstExpression>();
-        private readonly ArgumentsProxy _proxy;
-
-        public ArgumentsProxy Arguments
+        protected AstGetSet([NotNull] ISourcePosition position) : base(position)
         {
-            [DebuggerNonUserCode]
-            get { return _proxy; }
         }
 
-        #region IAstHasExpressions Members
-
-        public virtual IAstExpression[] Expressions
-        {
-            get { return Arguments.ToArray(); }
-        }
-
-        private PCall _call;
+        [NotNull]
+        public abstract ArgumentsProxy Arguments { [DebuggerNonUserCode] get; }
 
         /// <summary>
         ///     <para>Indicates whether this node uses get or set syntax</para>
         ///     <para>(set syntax involves an equal sign (=); get syntax does not)</para>
         /// </summary>
-        public virtual PCall Call
+        public abstract PCall Call { get; set; }
+
+        [NotNull]
+        public virtual AstExpr[] Expressions
         {
-            get { return _call; }
-            set { _call = value; }
-        }
-
-        #endregion
-
-        protected AstGetSet(string file, int line, int column, PCall call)
-            : base(file, line, column)
-        {
-            _call = call;
-            _proxy = new ArgumentsProxy(_arguments);
-        }
-
-        internal AstGetSet(Parser p, PCall call)
-            : this(p.scanner.File, p.t.line, p.t.col, call)
-        {
-        }
-
-        #region IAstExpression Members
-
-        public virtual bool TryOptimize(CompilerTarget target, out IAstExpression expr)
-        {
-            expr = null;
-
-            //Optimize arguments
-            for (var i = 0; i < _arguments.Count; i++)
-            {
-                var arg = _arguments[i];
-                if (arg == null)
-                    throw new PrexoniteException(
-                        "Invalid (null) argument in GetSet node (" + ToString() +
-                            ") detected at position " + _arguments.IndexOf(arg) + ".");
-                var oArg = _GetOptimizedNode(target, arg);
-                if (!ReferenceEquals(oArg, arg))
-                    _arguments[i] = oArg;
-            }
-
-            return false;
+            get { return Arguments.ToArray(); }
         }
 
         public virtual int DefaultAdditionalArguments
         {
             get { return 0; }
+        }
+
+        public override bool TryOptimize(CompilerTarget target, out AstExpr expr)
+        {
+            expr = null;
+
+            //Optimize arguments
+            for (var i = 0; i < Arguments.Count; i++)
+            {
+                var arg = Arguments[i];
+                if (arg == null)
+                    throw new PrexoniteException(
+                        "Invalid (null) argument in GetSet node (" + ToString() +
+                            ") detected at position " + Arguments.IndexOf(arg) + ".");
+                var oArg = _GetOptimizedNode(target, arg);
+                if (!ReferenceEquals(oArg, arg))
+                    Arguments[i] = oArg;
+            }
+
+            return false;
         }
 
         protected void EmitArguments(CompilerTarget target)
@@ -120,73 +92,52 @@ namespace Prexonite.Compiler.Ast
             int additionalArguments)
         {
             Object lastArg = null;
-            foreach (IAstExpression expr in Arguments)
+            foreach (AstExpr expr in Arguments)
             {
                 Debug.Assert(expr != null,
                     "Argument list of get-set-complex contains null reference");
                 if (ReferenceEquals(lastArg, expr))
-                    target.EmitDuplicate(this);
+                    target.EmitDuplicate(Position);
                 else
-                    expr.EmitCode(target);
+                    expr.EmitValueCode(target);
                 lastArg = expr;
             }
             var argc = Arguments.Count;
             if (duplicateLast && argc > 0)
             {
-                target.EmitDuplicate(this);
+                target.EmitDuplicate(Position);
                 if (argc + additionalArguments > 1)
-                    target.EmitRotate(this, -1, argc + 1 + additionalArguments);
+                    target.EmitRotate(Position, -1, argc + 1 + additionalArguments);
             }
         }
 
-        void IAstEffect.DoEmitEffectCode(CompilerTarget target)
-        {
-            EmitCode(target, true);
-        }
-
-        protected virtual void EmitCode(CompilerTarget target, bool justEffect)
+        protected override void DoEmitCode(CompilerTarget target, StackSemantics stackSemantics)
         {
             if (Call == PCall.Get)
             {
                 EmitArguments(target);
-                EmitGetCode(target, justEffect);
+                EmitGetCode(target, stackSemantics);
             }
             else
             {
-                EmitArguments(target, !justEffect);
+                EmitArguments(target, stackSemantics == StackSemantics.Value);
                 EmitSetCode(target);
             }
         }
 
-        protected override sealed void DoEmitCode(CompilerTarget target)
-        {
-            EmitCode(target, false);
-        }
+        #region AstExpr Members
 
-        protected abstract void EmitGetCode(CompilerTarget target, bool justEffect);
+        protected abstract void EmitGetCode(CompilerTarget target, StackSemantics stackSemantics);
         protected abstract void EmitSetCode(CompilerTarget target);
 
         #endregion
-
-        public abstract AstGetSet GetCopy();
-
-        public override string ToString()
-        {
-            string typeName;
-            return String.Format(
-                "{0}: {1}",
-                Enum.GetName(typeof (PCall), Call).ToLowerInvariant(),
-                (typeName = GetType().Name).StartsWith("AstGetSet")
-                    ? typeName.Substring(9)
-                    : typeName);
-        }
 
         protected string ArgumentsToString()
         {
             var buffer = new StringBuilder();
             buffer.Append("(");
             var i = 0;
-            foreach (IAstExpression expr in Arguments)
+            foreach (AstExpr expr in Arguments)
             {
                 i++;
 
@@ -207,13 +158,27 @@ namespace Prexonite.Compiler.Ast
         /// <param name = "target">The object that shall reveice the values from this object.</param>
         protected virtual void CopyBaseMembers(AstGetSet target)
         {
-            target._arguments.AddRange(_arguments);
+            target.Arguments.AddRange(Arguments);
         }
 
         public override bool CheckForPlaceholders()
         {
             return this is IAstPartiallyApplicable &&
                 (base.CheckForPlaceholders() || Arguments.Any(AstPartiallyApplicable.IsPlaceholder));
+        }
+
+        public abstract AstGetSet GetCopy();
+
+        public override string ToString()
+        {
+            string typeName;
+            var name = Enum.GetName(typeof (PCall), Call);
+            return String.Format(
+                "{0}: {1}",
+                name == null ? "-" : name.ToLowerInvariant(),
+                (typeName = GetType().Name).StartsWith("AstGetSet")
+                    ? typeName.Substring(9)
+                    : typeName);
         }
     }
 }

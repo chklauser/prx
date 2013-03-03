@@ -1,6 +1,6 @@
 ﻿// Prexonite
 // 
-// Copyright (c) 2011, Christian Klauser
+// Copyright (c) 2013, Christian Klauser
 // All rights reserved.
 // 
 // Redistribution and use in source and binary forms, with or without modification, 
@@ -23,10 +23,12 @@
 //  DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, 
 //  WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING 
 //  IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
-
 using System;
+using JetBrains.Annotations;
 using Prexonite.Commands.Core.Operators;
 using Prexonite.Compiler.Ast;
+using Prexonite.Modular;
+using Prexonite.Properties;
 using Prexonite.Types;
 
 namespace Prexonite.Compiler.Macro.Commands
@@ -56,16 +58,20 @@ namespace Prexonite.Compiler.Macro.Commands
         {
             if (context.Invocation.Arguments.Count == 0)
             {
-                context.ReportMessage(ParseMessageSeverity.Error, Alias + " requires one argument.");
+                context.ReportMessage(
+                    Message.Error(
+                        string.Format(Resources.CallSubInterpret_OneArgument, Alias), context.Invocation.Position,
+                        MessageClasses.SubUsage));
                 return;
             }
 
             if (context.CurrentLoopBlock != null && !context.IsJustEffect)
             {
-                context.ReportMessage(ParseMessageSeverity.Error,
-                    "Due to an internal compiler limitation, " + CallSub.Alias +
-                        " and " + Alias +
-                            " cannot be used in an expression inside a loop, only as a statement.");
+                context.ReportMessage(
+                    Message.Error(
+                        string.Format(
+                            Resources.CallSubInterpret_asExpressionInLoop, CallSub.Alias, Alias),
+                        context.Invocation.Position, MessageClasses.SubAsExpressionInLoop));
                 return;
             }
 
@@ -77,19 +83,15 @@ namespace Prexonite.Compiler.Macro.Commands
             var retVarV = context.AllocateTemporaryVariable();
             _extractReturnVariant(context, resultV, retVarV);
 
-            Func<AstGetSetSymbol> retVar =
-                () =>
-                    context.CreateGetSetSymbol(SymbolInterpretations.LocalObjectVariable, PCall.Get,
-                        retVarV);
+            Func<AstGetSet> retVar = () => context.CreateCall(EntityRef.Variable.Local.Create(retVarV));
 
             //Extract return value into retValueV (which happens to be the same as resultV)
             var retValueV = resultV;
             _extractReturnValue(context, resultV, retValueV);
 
-            Func<AstGetSetSymbol> retValue =
-                () =>
-                    context.CreateGetSetSymbol(SymbolInterpretations.LocalObjectVariable, PCall.Get,
-                        retValueV);
+// ReSharper disable ImplicitlyCapturedClosure // perfectly safe as neither lambda survives the method
+            Func<AstGetSet> retValue = () => context.CreateCall(EntityRef.Variable.Local.Create(retValueV));
+// ReSharper restore ImplicitlyCapturedClosure
 
             //Break and Continue behave differently outside loop blocks
             AstNode contStmt, breakStmt;
@@ -104,7 +106,7 @@ namespace Prexonite.Compiler.Macro.Commands
             context.FreeTemporaryVariable(resultV);
         }
 
-        private static void _genChecks(MacroContext context, Func<AstGetSetSymbol> retVar,
+        private static void _genChecks(MacroContext context, [InstantHandle] Func<AstGetSet> retVar,
             AstNode contStmt, AstNode breakStmt)
         {
             var inv = context.Invocation;
@@ -113,7 +115,7 @@ namespace Prexonite.Compiler.Macro.Commands
             AstCondition checkCont;
             {
                 var contCond = _genCompare(context, retVar(), ReturnVariant.Continue);
-                checkCont = new AstCondition(inv.File, inv.Line, inv.Column, contCond);
+                checkCont = new AstCondition(inv.Position, context.CurrentBlock, contCond);
                 checkCont.IfBlock.Add(contStmt);
             }
 
@@ -121,7 +123,7 @@ namespace Prexonite.Compiler.Macro.Commands
             AstCondition checkBreak;
             {
                 var breakCond = _genCompare(context, retVar(), ReturnVariant.Break);
-                checkBreak = new AstCondition(inv.File, inv.Line, inv.Column, breakCond);
+                checkBreak = new AstCondition(inv.Position, context.CurrentBlock, breakCond);
                 checkBreak.IfBlock.Add(breakStmt);
             }
 
@@ -130,7 +132,7 @@ namespace Prexonite.Compiler.Macro.Commands
             context.Block.Add(checkCont);
         }
 
-        private static void _determineActions(MacroContext context, Func<AstGetSetSymbol> retValue,
+        private static void _determineActions(MacroContext context, [InstantHandle] Func<AstGetSet> retValue,
             out AstNode contStmt, out AstNode breakStmt)
         {
             var inv = context.Invocation;
@@ -154,12 +156,8 @@ namespace Prexonite.Compiler.Macro.Commands
         {
             var getRetValue =
                 context.CreateGetSetMember(
-                    context.CreateGetSetSymbol(SymbolInterpretations.LocalObjectVariable,
-                        PCall.Get,
-                        resultV), PCall.Get, "Value");
-            var setRetValue =
-                context.CreateGetSetSymbol(SymbolInterpretations.LocalObjectVariable,
-                    PCall.Set, retValueV, getRetValue);
+                    context.CreateCall(EntityRef.Variable.Local.Create(resultV)), PCall.Get, "Value");
+            var setRetValue = context.CreateCall(EntityRef.Variable.Local.Create(retValueV), PCall.Set, getRetValue);
             context.Block.Add(setRetValue);
         }
 
@@ -170,39 +168,30 @@ namespace Prexonite.Compiler.Macro.Commands
             var intT = new AstConstantTypeExpression(inv.File, inv.Line, inv.Column,
                 IntPType.Literal);
             var getRetVar =
-                context.CreateGetSetMember(
-                    context.CreateGetSetSymbol(SymbolInterpretations.LocalObjectVariable,
-                        PCall.Get, resultV), PCall.Get, "Key");
+                context.CreateGetSetMember(context.CreateCall(EntityRef.Variable.Local.Create(resultV)), PCall.Get,
+                                           "Key");
             var asInt = new AstTypecast(inv.File, inv.Line, inv.Column, getRetVar, intT);
-            var setRetVar = context.CreateGetSetSymbol(
-                SymbolInterpretations.LocalObjectVariable, PCall.Set, retVarV, asInt);
+            var setRetVar = context.CreateCall(EntityRef.Variable.Local.Create(retVarV), PCall.Set, asInt);
             context.Block.Add(setRetVar);
         }
 
         private static void _storeResult(MacroContext context, string resultV)
         {
             var computeKvp = context.Invocation.Arguments[0];
-            var setResult = context.CreateGetSetSymbol(
-                SymbolInterpretations.LocalObjectVariable,
-                PCall.Set, resultV, computeKvp);
+            var setResult = context.CreateCall(EntityRef.Variable.Local.Create(resultV), PCall.Set, computeKvp);
             context.Block.Add(setResult);
         }
 
         #endregion
 
-        private static IAstExpression _genCompare(MacroContext context, IAstExpression retVar,
+        private static AstExpr _genCompare(MacroContext context, AstExpr retVar,
             ReturnVariant expected)
         {
-            const BinaryOperator eq = BinaryOperator.Equality;
             var inv = context.Invocation;
-            IAstExpression expectedNode = new AstConstant(inv.File,
+            AstExpr expectedNode = new AstConstant(inv.File,
                 inv.Line,
                 inv.Column, (int) expected);
-            var cmp = new AstBinaryOperator(inv.File, inv.Line,
-                inv.Column, retVar, eq, expectedNode,
-                SymbolInterpretations.Command,
-                Equality.DefaultAlias);
-            return cmp;
+            return context.Factory.BinaryOperation(inv.Position, retVar, BinaryOperator.Equality, expectedNode);
         }
     }
 }

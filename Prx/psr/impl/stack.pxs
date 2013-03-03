@@ -1,0 +1,113 @@
+﻿// Prexonite
+// 
+// Copyright (c) 2013, Christian Klauser
+// All rights reserved.
+// 
+// Redistribution and use in source and binary forms, with or without modification, 
+//  are permitted provided that the following conditions are met:
+// 
+//     Redistributions of source code must retain the above copyright notice, 
+//          this list of conditions and the following disclaimer.
+//     Redistributions in binary form must reproduce the above copyright notice, 
+//          this list of conditions and the following disclaimer in the 
+//          documentation and/or other materials provided with the distribution.
+//     The names of the contributors may be used to endorse or 
+//          promote products derived from this software without specific prior written permission.
+// 
+// THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND 
+//  ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED 
+//  WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED. 
+//  IN NO EVENT SHALL THE COPYRIGHT HOLDER OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT, 
+//  INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES 
+//  (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, 
+//  DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, 
+//  WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING 
+//  IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+
+
+//Stack implementation using []
+
+function create_stack as create_mutable_stack() 
+[debugging disabled;]
+{
+    var xs = [];
+    var i = -1;
+    
+    function push does foreach(var arg in var args)
+    {
+        var first;
+        if(first is Null)
+        {
+            first = false;
+            continue;
+        }
+        
+        debug(arg);
+        xs.Add(arg);
+        i++;
+        debug(xs);
+    }
+    
+    function pop
+    {
+        if(i < 0)
+            throw "The stack is empty";
+        var ret = xs[i];
+        xs.RemoveAt(i);
+        i--;
+        return ret;
+    }
+    
+    function peek
+    {
+        if(i < 0)
+            throw "The stack is empty.";
+        return xs[i];
+    }
+    
+    function count
+    {
+        return i+1;
+    }
+    
+    function clear
+    {
+        xs.Clear();
+        i = -1;   
+    }
+    
+    function ToString self = xs.ToString;
+    function GetEnumerator self = (coroutine () =>
+    {
+        while(count > 0)
+            yield pop;
+    }).GetEnumerator;
+    
+    return struct;
+}
+
+function create_stack_immutable as create_immutable_stack(lst)
+{
+    if(lst is Null)
+        lst = [];
+    else if(Not lst is List)
+        lst = lst >> all;
+    
+    function push self x = create_stack_immutable([x] + lst);
+    
+    function count self = lst.Count;
+    
+    function peek self = if(lst.Count > 0) lst[0] else null;
+    
+    function pop (self, ref item)
+    {
+        if(lst.Count < 1)
+            throw "Stack is empty!";
+        item = lst[0];
+        return create_stack_immutable(all << skip(1) << lst);
+    }
+    
+    function ToString self = "stack $lst";
+    
+    return struct;
+}

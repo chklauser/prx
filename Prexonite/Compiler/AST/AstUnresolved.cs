@@ -1,6 +1,6 @@
 // Prexonite
 // 
-// Copyright (c) 2011, Christian Klauser
+// Copyright (c) 2013, Christian Klauser
 // All rights reserved.
 // 
 // Redistribution and use in source and binary forms, with or without modification, 
@@ -23,13 +23,13 @@
 //  DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, 
 //  WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING 
 //  IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
-
 using System;
+using Prexonite.Properties;
 using Prexonite.Types;
 
 namespace Prexonite.Compiler.Ast
 {
-    public class AstUnresolved : AstGetSet
+    public class AstUnresolved : AstGetSetImplBase
     {
         public AstUnresolved(string file, int line, int column, string id)
             : base(file, line, column, PCall.Get)
@@ -42,30 +42,34 @@ namespace Prexonite.Compiler.Ast
             _id = id;
         }
 
+        public AstUnresolved(ISourcePosition position, string id) : base(position,PCall.Get)
+        {
+            if (id == null)
+                throw new ArgumentNullException("id");
+            
+            _id = id;
+        }
+
         #region Overrides of AstGetSet
 
-        protected override void EmitGetCode(CompilerTarget target, bool justEffect)
+        protected override void EmitGetCode(CompilerTarget target, StackSemantics stackSemantics)
         {
             _reportUnresolved(target);
         }
 
         private void _reportUnresolved(CompilerTarget target)
         {
-            target.Loader.ReportSemanticError(Line, Column,
-                "The symbol " + Id + " has not been resolved.");
+            target.Loader.ReportMessage(
+                Message.Error(
+                    string.Format(Resources.AstUnresolved_The_symbol__0__has_not_been_resolved_, Id), Position,
+                    MessageClasses.SymbolNotResolved));
         }
 
-        private string _id;
+        private readonly string _id;
 
         public string Id
         {
             get { return _id; }
-            set
-            {
-                if (value == null)
-                    throw new ArgumentNullException("value");
-                _id = value;
-            }
         }
 
         protected override void EmitSetCode(CompilerTarget target)
@@ -80,13 +84,13 @@ namespace Prexonite.Compiler.Ast
             return copy;
         }
 
-        public override bool TryOptimize(CompilerTarget target, out IAstExpression expr)
+        public override bool TryOptimize(CompilerTarget target, out AstExpr expr)
         {
             if (base.TryOptimize(target, out expr))
                 return true;
             else
             {
-                IAstExpression sol = this;
+                AstExpr sol = this;
                 do
                 {
                     foreach (var resolver in target.Loader.CustomResolvers)

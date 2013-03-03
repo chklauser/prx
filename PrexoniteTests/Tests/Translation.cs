@@ -1,6 +1,6 @@
 ﻿// Prexonite
 // 
-// Copyright (c) 2011, Christian Klauser
+// Copyright (c) 2013, Christian Klauser
 // All rights reserved.
 // 
 // Redistribution and use in source and binary forms, with or without modification, 
@@ -23,15 +23,18 @@
 //  DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, 
 //  WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING 
 //  IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
-
+using System;
 using System.Collections.Generic;
+using Moq;
 using NUnit.Framework;
 using Prexonite;
 using Prexonite.Compiler;
+using Prexonite.Compiler.Ast;
+using Prexonite.Compiler.Symbolic;
+using Prexonite.Modular;
 
 namespace PrexoniteTests.Tests
 {
-    [TestFixture, Explicit]
     public class Translation : VMTestsBase
     {
         [Test]
@@ -118,9 +121,9 @@ function main(ks,vs)
     var r = """";
     for(var i = 0; i < ks.Count; i++)
         if(h.ContainsKey(ks[i]) and h[ks[i]] == vs[i])
-            r += 1;
+            r += ""1"";
         else
-            r += 0;
+            r += ""0"";
     return r;
 }
 ");
@@ -161,6 +164,11 @@ function f as p(x) [\sps]
     return g*x;
 }
 
+// At this point, we should have 
+// g    -> function g
+// f    -> variable f
+// p    -> function f
+
 function main(x)
 {
     var f' = f;
@@ -173,30 +181,337 @@ function main(x)
             Expect(3*2 + 5 + 7, 2);
             Expect(3*11 + 5 + 7, 11);
 
+            var mn = ldr.ParentApplication.Module.Name;
+
             {
-                Assert.That(ldr.Symbols.ContainsKey("f"), Is.True,
+                Assert.That(ldr.Symbols.Contains("f"), Is.True,
                     "Symbol table must contain an entry for 'f'.");
-                var entry = ldr.Symbols["f"];
-                Assert.That(entry.Interpretation,
-                    Is.EqualTo(SymbolInterpretations.GlobalObjectVariable));
-                Assert.That(entry.Id, Is.EqualTo("f"));
+                var entry = LookupSymbolEntry(ldr.Symbols,"f");
+                Assert.That(entry,Is.InstanceOf<DereferenceSymbol>());
+                var deref = (DereferenceSymbol) entry;
+                Assert.That(deref.InnerSymbol,Is.InstanceOf<ReferenceSymbol>());
+                var refSym = (ReferenceSymbol) deref.InnerSymbol;
+                Assert.That(refSym.Entity,Is.InstanceOf<EntityRef.Variable.Global>());
+                EntityRef.Variable.Global globVar;
+                refSym.Entity.TryGetGlobalVariable(out globVar);
+                Assert.That(globVar,Is.EqualTo(EntityRef.Variable.Global.Create("f",mn)));
             }
 
             {
-                Assert.That(ldr.Symbols.ContainsKey("g"), Is.True,
+                Assert.That(ldr.Symbols.Contains("g"), Is.True,
                     "Symbol table must contain an entry for 'g'.");
-                var entry = ldr.Symbols["g"];
-                Assert.That(entry.Interpretation, Is.EqualTo(SymbolInterpretations.Function));
-                Assert.That(entry.Id, Is.EqualTo("g"));
+                var entry = LookupSymbolEntry(ldr.Symbols, "g");
+                Assert.That(entry, Is.InstanceOf<DereferenceSymbol>());
+                var deref = (DereferenceSymbol)entry;
+                Assert.That(deref.InnerSymbol, Is.InstanceOf<ReferenceSymbol>());
+                var refSym = (ReferenceSymbol)deref.InnerSymbol;
+                Assert.That(refSym.Entity, Is.InstanceOf<EntityRef.Function>());
+                EntityRef.Function func;
+                refSym.Entity.TryGetFunction(out func);
+                Assert.That(func, Is.EqualTo(EntityRef.Function.Create("g",mn)));
             }
 
             {
-                Assert.That(ldr.Symbols.ContainsKey("p"), Is.True,
+                Assert.That(ldr.Symbols.Contains("p"), Is.True,
                     "Symbol table must contain an entry for 'p'.");
-                var entry = ldr.Symbols["p"];
-                Assert.That(entry.Interpretation, Is.EqualTo(SymbolInterpretations.Function));
-                Assert.That(entry.Id, Is.EqualTo("f"));
+                var entry = LookupSymbolEntry(ldr.Symbols, "p");
+                Assert.That(entry, Is.InstanceOf<DereferenceSymbol>());
+                var deref = (DereferenceSymbol)entry;
+                Assert.That(deref.InnerSymbol, Is.InstanceOf<ReferenceSymbol>());
+                var refSym = (ReferenceSymbol)deref.InnerSymbol;
+                Assert.That(refSym.Entity, Is.InstanceOf<EntityRef.Function>());
+                EntityRef.Function func;
+                refSym.Entity.TryGetFunction(out func);
+                Assert.That(func, Is.EqualTo(EntityRef.Function.Create("f",mn)));
             }
+        }
+
+        [Test]
+        public void AppendRightLocalFunc()
+        {
+            Compile(@"
+function main()
+{
+    var ys = [];
+    coroutine trace(t,xs)
+    {
+        foreach(var x in xs)
+        {
+            ys[] = t:x;
+            yield x;
+        }
+    } 
+    ([1,2]) >> trace(33) >> all >> println;
+    return (var args >> trace(77) >> map(?~String) >> foldl((l,r) => l + "" "" + r, """")) + ys;
+}
+");
+            Expect(" 1 2 3 4 5 6 7[ 33: 1, 33: 2, 77: 1, 77: 2, 77: 3, 77: 4, 77: 5, 77: 6, 77: 7 ]",1,2,3,4,5,6,7);
+        }
+
+        [Test]
+        public void TestPsrTestRunSingleTest()
+        {
+            Compile(@"function test\run_single_test as run_single_test(testFunc)
+{
+    var t = new Structure;
+    t.\(""test"") = testFunc;
+    try
+    {
+        testFunc.();
+        return true: t;
+    }
+    catch(var e)
+    {
+        t.\(""e"") = e;
+        return false: t;
+    }
+}
+
+function main()
+{
+    var tp = run_single_test(() => 15);
+    return ""$(tp.Key):$(tp.Value.test.Id)"";
+}");
+
+            Expect("True:main\\0");
+        }
+
+        [Test]
+        public void TestPsrAst3WithPos()
+        {
+            Compile(@"
+function ast3\withPos(factory,type) [compiler]
+{
+	var args;
+	var targs = args >> skip(2);
+	
+	if(factory is null)
+		throw ""AST factory cannot be null."";
+		
+	return call\member(factory,type, targs);
+}");
+            var factory = new Mock<IAstFactory>(MockBehavior.Strict);
+            var astPlaceholder = new AstPlaceholder(NoSourcePosition.MissingFileName, NoSourcePosition.Instance.Line, NoSourcePosition.Instance.Column);
+            factory.Setup(f => f.Placeholder(It.IsAny<ISourcePosition>(), 5))
+                   .Returns(astPlaceholder);
+            ExpectNamed("ast3\\withPos", astPlaceholder, sctx.CreateNativePValue(factory.Object), "Placeholder", sctx.CreateNativePValue(NoSourcePosition.Instance), 5);
+        }
+
+        [Test]
+        public void TestSysDeclaresMacroCommand()
+        {
+            Compile(@"//PRX
+
+Name sys;
+
+declare(
+  print = ref command ""print"",
+  println = ref command ""println"",
+  meta = ref command ""meta"",
+  boxed = ref command ""boxed"",
+  concat = ref command ""concat"",
+  map = ref command ""map"",
+  select = ref command ""select"",
+  foldl = ref command ""foldl"",
+  foldr = ref command ""foldr"",
+  dispose = ref command ""dispose"",
+  call = expand macro command ""call"",
+  call\perform = ref command ""call\\perform"",
+  thunk = ref command ""thunk"",
+  asthunk = ref command ""asthunk"",
+  force = ref command ""force"",
+  toseq = ref command ""toseq"",
+  call\member = expand macro command ""call\\member"",
+  call\member\perform = ref command ""call\\member\\perform"",
+  caller = ref command ""caller"",
+  pair = ref command ""pair"",
+  unbind = ref command ""unbind"",
+  sort = ref command ""sort"",
+  orderby = ref command ""orderby"",
+  LoadAssembly = ref command ""LoadAssembly"",
+  debug = ref command ""debug"",
+  setcenter = ref command ""setcenter"",
+  setleft = ref command ""setleft"",
+  setright = ref command ""setright"",
+  all = ref command ""all"",
+  where = ref command ""where"",
+  skip = ref command ""skip"",
+  limit = ref command ""limit"",
+  take = ref command ""take"",
+  abs = ref command ""abs"",
+  ceiling = ref command ""ceiling"",
+  exp = ref command ""exp"",
+  floor = ref command ""floor"",
+  log = ref command ""log"",
+  max = ref command ""max"",
+  min = ref command ""min"",
+  pi = ref command ""pi"",
+  round = ref command ""round"",
+  sin = ref command ""sin"",
+  cos = ref command ""cos"",
+  sqrt = ref command ""sqrt"",
+  tan = ref command ""tan"",
+  char = ref command ""char"",
+  count = ref command ""count"",
+  distinct = ref command ""distinct"",
+  union = ref command ""union"",
+  unique = ref command ""unique"",
+  frequency = ref command ""frequency"",
+  groupby = ref command ""groupby"",
+  intersect = ref command ""intersect"",
+  call\tail = expand macro command ""call\\tail"",
+  call\tail\perform = ref command ""call\\tail\\perform"",
+  list = ref command ""list"",
+  each = ref command ""each"",
+  exists = ref command ""exists"",
+  forall = ref command ""forall"",
+  CompileToCil = ref command ""CompileToCil"",
+  takewhile = ref command ""takewhile"",
+  except = ref command ""except"",
+  range = ref command ""range"",
+  reverse = ref command ""reverse"",
+  headtail = ref command ""headtail"",
+  append = ref command ""append"",
+  sum = ref command ""sum"",
+  contains = ref command ""contains"",
+  chan = ref command ""chan"",
+  call\async = expand macro command ""call\\async"",
+  call\async\perform = ref command ""call\\async\\perform"",
+  async_seq = ref command ""async_seq"",
+  call\sub\perform = ref command ""call\\sub\\perform"",
+  pa\ind = ref command ""pa\\ind"",
+  pa\mem = ref command ""pa\\mem"",
+  pa\ctor = ref command ""pa\\ctor"",
+  pa\check = ref command ""pa\\check"",
+  pa\cast = ref command ""pa\\cast"",
+  pa\smem = ref command ""pa\\smem"",
+  pa\fun\call = ref command ""pa\\fun\\call"",
+  pa\flip\call = ref command ""pa\\flip\\call"",
+  pa\call\star = ref command ""pa\\call\\star"",
+  then = ref command ""then"",
+  id = ref command ""id"",
+  const = ref command ""const"",
+  (+) = ref command ""plus"",
+  (-) = ref command ""minus"",
+  (*) = ref command ""times"",
+  (/) = ref command ""dividedBy"",
+  $mod = ref command ""mod"",
+  (^) = ref command ""raisedTo"",
+  (&) = ref command ""bitwiseAnd"",
+  (|) = ref command ""bitwiseOr"",
+  $xor = ref command ""xor"",
+  (==) = ref command ""isEqualTo"",
+  (!=) = ref command ""isInequalTo"",
+  (>) = ref command ""isGreaterThan"",
+  (>=) = ref command ""isGreaterThanOrEqual"",
+  (<) = ref command ""isLessThan"",
+  (<=) = ref command ""isLessThanOrEqual"",
+  (-.) = ref command ""negation"",
+  $complement = ref command ""complement"",
+  $not = ref command ""not"",
+  create_enumerator = ref command ""create_enumerator"",
+  create_module_name = ref command ""create_module_name"",
+  seqconcat = ref command ""seqconcat"",
+  call\sub = expand macro command ""call\\sub"",
+  call\sub\interpret = expand macro command ""call\\sub\\interpret"",
+  macro\pack = expand macro command ""macro\\pack"",
+  macro\unpack = expand macro command ""macro\\unpack"",
+  macro\reference = expand macro command ""macro\\reference"",
+  call\star = expand macro command ""call\\star"",
+  call\macro = expand macro command ""call\\macro"",
+  call\macro\impl = expand macro command ""call\\macro\\impl"",
+  main = ref function(""main"",""testApplication"",0.0),
+);
+
+function main(x,y)
+{
+    return call\member(x,y);
+}
+");
+
+            var x = new Mock<ISourcePosition>(MockBehavior.Strict);
+            x.SetupGet(s => s.Line).Returns(15);
+            Expect(15,sctx.CreateNativePValue(x.Object),"Line");
+        }
+
+        [Test]
+        public void BlockDeclarationOfMacroCommand()
+        {
+            Compile(@"
+declare macro command call\member;
+
+function main(x,y)
+{
+    return call\member(x,y);
+}
+");
+            var x = new Mock<ISourcePosition>(MockBehavior.Strict);
+            x.SetupGet(s => s.Line).Returns(15);
+            Expect(15, sctx.CreateNativePValue(x.Object), "Line");
+        }
+
+        [Test]
+        public void ReferenceToSymbolWithMessage()
+        {
+            var ldr = Compile(@"
+function t1 = 7;
+ref t2 = ->t1;
+declare(
+    t3 = warn(pos(""Translation.cs.pxs"",434,5),""T.tt"",""Hooder"", sym ""t2"")
+);
+
+function main()
+{
+    return ->t1 == ->t3;
+}
+");
+
+            Expect(true);
+            Assert.That(ldr.Warnings.Count,Is.EqualTo(1));
+            Assert.That(ldr.Warnings[0].MessageClass,Is.EqualTo("T.tt"));
+        }
+
+        [Test]
+        public void EntityRefToCommand()
+        {
+            var ldr = Compile(@"
+function f{}
+var v;
+ref r;
+macro m{}
+
+function main()
+{   
+    var loc;
+    ref rloc;
+    var sep = ""|"";
+    return """" + entityref_to(f) + sep
+        + entityref_to(v) + sep
+        + entityref_to(->r) + sep
+        + entityref_to(m) + sep
+        + entityref_to(loc) + sep
+        + entityref_to(->rloc) + sep
+        + entityref_to(entityref_to) + sep
+        + entityref_to(print);
+}
+");
+            var nm = ldr.ParentApplication.Module.Name;
+
+            Expect(rv =>
+                       {
+                           var r = rv.CallToString(sctx).Split('|');
+                           Console.WriteLine(rv);
+                           Assert.That(r.Length,Is.EqualTo(8),"Expected return value to consist of 8 elements. Returned {0}",rv);
+
+                           Assert.That(r[0],Is.EqualTo(EntityRef.Function.Create("f",nm).ToString()));
+                           Assert.That(r[1], Is.EqualTo(EntityRef.Variable.Global.Create("v", nm).ToString()));
+                           Assert.That(r[2], Is.EqualTo(EntityRef.Variable.Global.Create("r", nm).ToString()));
+                           Assert.That(r[3], Is.EqualTo(EntityRef.Function.Create("m", nm).ToString()));
+                           Assert.That(r[4], Is.EqualTo(EntityRef.Variable.Local.Create("loc").ToString()));
+                           Assert.That(r[5], Is.EqualTo(EntityRef.Variable.Local.Create("rloc").ToString()));
+                           Assert.That(r[6], Is.EqualTo(EntityRef.MacroCommand.Create("entityref_to").ToString()));
+                           Assert.That(r[7], Is.EqualTo(EntityRef.Command.Create("print").ToString()));
+                       });
         }
     }
 }

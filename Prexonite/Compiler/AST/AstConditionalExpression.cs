@@ -1,6 +1,6 @@
 // Prexonite
 // 
-// Copyright (c) 2011, Christian Klauser
+// Copyright (c) 2013, Christian Klauser
 // All rights reserved.
 // 
 // Redistribution and use in source and binary forms, with or without modification, 
@@ -23,18 +23,17 @@
 //  DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, 
 //  WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING 
 //  IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
-
 using System;
+using Prexonite.Compiler.Internal;
 using Prexonite.Types;
 
 namespace Prexonite.Compiler.Ast
 {
-    public class AstConditionalExpression : AstNode,
-                                            IAstExpression,
+    public class AstConditionalExpression : AstExpr,
                                             IAstHasExpressions
     {
         public AstConditionalExpression(
-            string file, int line, int column, IAstExpression condition, bool isNegative)
+            string file, int line, int column, AstExpr condition, bool isNegative)
             : base(file, line, column)
         {
             if (condition == null)
@@ -43,48 +42,48 @@ namespace Prexonite.Compiler.Ast
             IsNegative = isNegative;
         }
 
-        public AstConditionalExpression(string file, int line, int column, IAstExpression condition)
+        public AstConditionalExpression(string file, int line, int column, AstExpr condition)
             : this(file, line, column, condition, false)
         {
         }
 
-        internal AstConditionalExpression(Parser p, IAstExpression condition, bool isNegative)
+        internal AstConditionalExpression(Parser p, AstExpr condition, bool isNegative)
             : this(p.scanner.File, p.t.line, p.t.col, condition, isNegative)
         {
         }
 
-        internal AstConditionalExpression(Parser p, IAstExpression condition)
+        internal AstConditionalExpression(Parser p, AstExpr condition)
             : this(p, condition, false)
         {
         }
 
-        public IAstExpression IfExpression;
-        public IAstExpression ElseExpression;
-        public IAstExpression Condition;
+        public AstExpr IfExpression;
+        public AstExpr ElseExpression;
+        public AstExpr Condition;
         public bool IsNegative;
-        private static int depth;
+        private static int _depth;
 
         #region IAstHasExpressions Members
 
-        public IAstExpression[] Expressions
+        public AstExpr[] Expressions
         {
             get { return new[] {Condition, IfExpression, ElseExpression}; }
         }
 
         #endregion
 
-        #region IAstExpression Members
+        #region AstExpr Members
 
-        public bool TryOptimize(CompilerTarget target, out IAstExpression expr)
+        public override bool TryOptimize(CompilerTarget target, out AstExpr expr)
         {
             //Optimize condition
             _OptimizeNode(target, ref Condition);
-            var unaryCond = Condition as AstUnaryOperator;
-            while (unaryCond != null && unaryCond.Operator == UnaryOperator.LogicalNot)
+            // Invert condition when unary logical not
+            AstIndirectCall unaryCond;
+            while (Condition.IsCommandCall(Commands.Core.Operators.LogicalNot.DefaultAlias, out unaryCond))
             {
-                Condition = unaryCond.Operand;
+                Condition = unaryCond.Arguments[0];
                 IsNegative = !IsNegative;
-                unaryCond = Condition as AstUnaryOperator;
             }
 
             //Constant conditions
@@ -109,25 +108,25 @@ namespace Prexonite.Compiler.Ast
 
         #endregion
 
-        protected override void DoEmitCode(CompilerTarget target)
+        protected override void DoEmitCode(CompilerTarget target, StackSemantics stackSemantics)
         {
             //Optimize condition
             _OptimizeNode(target, ref Condition);
             _OptimizeNode(target, ref IfExpression);
             _OptimizeNode(target, ref ElseExpression);
 
-            var elseLabel = "elsei\\" + depth + "\\assembler";
-            var endLabel = "endifi\\" + depth + "\\assembler";
-            depth++;
+            var elseLabel = "elsei\\" + _depth + "\\assembler";
+            var endLabel = "endifi\\" + _depth + "\\assembler";
+            _depth++;
 
             //Emit
             //if => block / else => block
             AstLazyLogical.EmitJumpCondition(target, Condition, elseLabel, IsNegative);
-            IfExpression.EmitCode(target);
-            target.EmitJump(this, endLabel);
-            target.EmitLabel(this, elseLabel);
-            ElseExpression.EmitCode(target);
-            target.EmitLabel(this, endLabel);
+            IfExpression.EmitCode(target, stackSemantics);
+            target.EmitJump(Position, endLabel);
+            target.EmitLabel(Position, elseLabel);
+            ElseExpression.EmitCode(target, stackSemantics);
+            target.EmitLabel(Position, endLabel);
 
             target.FreeLabel(elseLabel);
             target.FreeLabel(endLabel);

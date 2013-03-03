@@ -1,6 +1,6 @@
 ﻿// Prexonite
 // 
-// Copyright (c) 2011, Christian Klauser
+// Copyright (c) 2013, Christian Klauser
 // All rights reserved.
 // 
 // Redistribution and use in source and binary forms, with or without modification, 
@@ -23,11 +23,11 @@
 //  DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, 
 //  WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING 
 //  IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
-
 using System;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.Runtime.Serialization;
+using Prexonite.Properties;
 using Prexonite.Types;
 
 namespace Prexonite.Compiler.Ast
@@ -35,7 +35,7 @@ namespace Prexonite.Compiler.Ast
     /// <summary>
     ///     AST node that represents a partial application placeholder ('?'). Optionally has an index assigned (e.g., '?5')
     /// </summary>
-    public class AstPlaceholder : AstGetSet
+    public class AstPlaceholder : AstGetSetImplBase
     {
         public const int MaxPlaceholderIndex = 127;
 
@@ -51,7 +51,7 @@ namespace Prexonite.Compiler.Ast
             {
                 if (value.HasValue && value.Value < 0)
                     throw new ArgumentOutOfRangeException("value",
-                        "A placeholder index cannot be negtive");
+                        Resources.AstPlaceholder_PlaceholdeIndexNegative);
                 _index = value;
             }
         }
@@ -73,7 +73,7 @@ namespace Prexonite.Compiler.Ast
 
         #region Overrides of AstNode
 
-        protected override void EmitGetCode(CompilerTarget target, bool justEffect)
+        protected override void EmitGetCode(CompilerTarget target, StackSemantics stackSemantics)
         {
             _throwSyntaxNotSupported();
         }
@@ -117,7 +117,7 @@ namespace Prexonite.Compiler.Ast
                         throw new PrexoniteException(
                             string.Format(
                                 "The placeholder (at {0}) has a custom index value that exceeds the maxmimum mappable index.",
-                                placeholder.GetSourcePositionString()));
+                                placeholder.Position.GetSourcePositionString()));
                     }
 
                     if (assigned.Count <= placeholder.Index)
@@ -155,7 +155,7 @@ namespace Prexonite.Compiler.Ast
                     throw new PrexoniteException(
                         string.Format(
                             "The placeholder (at {0}) would be assigned an index that exceeds the maxmimum mappable index.",
-                            placeholder.GetSourcePositionString()));
+                            placeholder.Position.GetSourcePositionString()));
             }
         }
 

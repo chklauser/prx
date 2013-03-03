@@ -1,6 +1,6 @@
 // Prexonite
 // 
-// Copyright (c) 2011, Christian Klauser
+// Copyright (c) 2013, Christian Klauser
 // All rights reserved.
 // 
 // Redistribution and use in source and binary forms, with or without modification, 
@@ -23,7 +23,6 @@
 //  DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, 
 //  WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING 
 //  IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
-
 using System.Collections.Generic;
 using System.Diagnostics.CodeAnalysis;
 
@@ -31,11 +30,10 @@ namespace Prexonite.Compiler.Ast
 {
     [SuppressMessage("Microsoft.Naming", "CA1704:IdentifiersShouldBeSpelledCorrectly",
         MessageId = "Coroutine")]
-    public class AstCreateCoroutine : AstNode,
-                                      IAstExpression,
+    public class AstCreateCoroutine : AstExpr,
                                       IAstHasExpressions
     {
-        public IAstExpression Expression;
+        private AstExpr _expression;
 
         private ArgumentsProxy _proxy;
 
@@ -46,14 +44,20 @@ namespace Prexonite.Compiler.Ast
 
         #region IAstHasExpressions Members
 
-        public IAstExpression[] Expressions
+        public AstExpr[] Expressions
         {
             get { return Arguments.ToArray(); }
         }
 
+        public AstExpr Expression
+        {
+            get { return _expression; }
+            set { _expression = value; }
+        }
+
         #endregion
 
-        private List<IAstExpression> _arguments = new List<IAstExpression>();
+        private List<AstExpr> _arguments = new List<AstExpr>();
 
         public AstCreateCoroutine(string file, int line, int col)
             : base(file, line, col)
@@ -67,33 +71,35 @@ namespace Prexonite.Compiler.Ast
             _proxy = new ArgumentsProxy(_arguments);
         }
 
-        protected override void DoEmitCode(CompilerTarget target)
+        protected override void DoEmitCode(CompilerTarget target, StackSemantics stackSemantics)
         {
+            if(stackSemantics == StackSemantics.Effect)
+                return;
+
             if (Expression == null)
                 throw new PrexoniteException("CreateCoroutine node requires an Expression.");
 
-            Expression.EmitCode(target);
+            Expression.EmitValueCode(target);
             foreach (var argument in _arguments)
-                argument.EmitCode(target);
+                argument.EmitValueCode(target);
 
-            target.Emit(this, OpCode.newcor, _arguments.Count);
+            target.Emit(Position,OpCode.newcor, _arguments.Count);
         }
 
-        #region IAstExpression Members
+        #region AstExpr Members
 
-        public bool TryOptimize(CompilerTarget target, out IAstExpression expr)
+        public override bool TryOptimize(CompilerTarget target, out AstExpr expr)
         {
-            _OptimizeNode(target, ref Expression);
+            Expression = _GetOptimizedNode(target, Expression);
 
             //Optimize arguments
-            IAstExpression oArg;
             foreach (var arg in _arguments.ToArray())
             {
                 if (arg == null)
                     throw new PrexoniteException(
                         "Invalid (null) argument in CreateCoroutine node (" + ToString() +
                             ") detected at position " + _arguments.IndexOf(arg) + ".");
-                oArg = _GetOptimizedNode(target, arg);
+                var oArg = _GetOptimizedNode(target, arg);
                 if (!ReferenceEquals(oArg, arg))
                 {
                     var idx = _arguments.IndexOf(arg);

@@ -1,6 +1,6 @@
 // Prexonite
 // 
-// Copyright (c) 2011, Christian Klauser
+// Copyright (c) 2013, Christian Klauser
 // All rights reserved.
 // 
 // Redistribution and use in source and binary forms, with or without modification, 
@@ -23,25 +23,24 @@
 //  DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, 
 //  WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING 
 //  IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
-
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using JetBrains.Annotations;
 using Prexonite.Commands.Core;
+using Prexonite.Properties;
 using Prexonite.Types;
 using Debug = System.Diagnostics.Debug;
-using NotSupportedException = Prexonite.Commands.Concurrency.NotSupportedException;
 
 namespace Prexonite.Compiler.Ast
 {
-    public abstract class AstLazyLogical : AstNode,
-                                           IAstExpression,
+    public abstract class AstLazyLogical : AstExpr,
                                            IAstHasExpressions
     {
-        private readonly LinkedList<IAstExpression> _conditions = new LinkedList<IAstExpression>();
+        private readonly LinkedList<AstExpr> _conditions = new LinkedList<AstExpr>();
 
         internal AstLazyLogical(
-            Parser p, IAstExpression leftExpression, IAstExpression rightExpression)
+            Parser p, AstExpr leftExpression, AstExpr rightExpression)
             : this(p.scanner.File, p.t.line, p.t.col, leftExpression, rightExpression)
         {
         }
@@ -50,8 +49,8 @@ namespace Prexonite.Compiler.Ast
             string file,
             int line,
             int column,
-            IAstExpression leftExpression,
-            IAstExpression rightExpression)
+            AstExpr leftExpression,
+            AstExpr rightExpression)
             : base(file, line, column)
         {
             AddExpression(leftExpression);
@@ -60,12 +59,12 @@ namespace Prexonite.Compiler.Ast
 
         #region IAstHasExpressions Members
 
-        public IAstExpression[] Expressions
+        public AstExpr[] Expressions
         {
             get
             {
                 var len = _conditions.Count;
-                var ary = new IAstExpression[len];
+                var ary = new AstExpr[len];
                 var i = 0;
                 foreach (var condition in _conditions)
                     ary[i++] = condition;
@@ -73,14 +72,14 @@ namespace Prexonite.Compiler.Ast
             }
         }
 
-        public LinkedList<IAstExpression> Conditions
+        public LinkedList<AstExpr> Conditions
         {
             get { return _conditions; }
         }
 
         #endregion
 
-        public void AddExpression(IAstExpression expr)
+        public void AddExpression(AstExpr expr)
         {
             //Flatten hierarchy
             var lazy = expr as AstLazyLogical;
@@ -99,11 +98,13 @@ namespace Prexonite.Compiler.Ast
         {
             foreach (var condition in Conditions)
             {
-                if (((AstNode) condition).CheckForPlaceholders())
+                if (condition.CheckForPlaceholders())
                 {
-                    target.Loader.ReportSemanticError(condition.Line, condition.Column,
-                        "Partial applications of logical statements must be either pure and-chains or pure or-chains.");
-                    target.EmitJump(this, trueLabel);
+                    target.Loader.ReportMessage(
+                        Message.Error(
+                            Resources.AstLazyLogical_EmitCode_PureChainsExpected,
+                            Position, MessageClasses.OnlyLastOperandPartialInLazy));
+                    target.EmitJump(Position, trueLabel);
                     return;
                 }
             }
@@ -122,32 +123,32 @@ namespace Prexonite.Compiler.Ast
         /// <param name = "cond">The condition of the jump.</param>
         /// <param name = "targetLabel">The target of the conditional jump.</param>
         public static void EmitJumpIfCondition(
-            CompilerTarget target, IAstExpression cond, string targetLabel)
+            CompilerTarget target, AstExpr cond, string targetLabel)
         {
             if (cond == null)
-                throw new ArgumentNullException("cond", "Condition may not be null.");
+                throw new ArgumentNullException("cond", Resources.AstLazyLogical__Condition_must_not_be_null);
             if (target == null)
-                throw new ArgumentNullException("target", "Compiler target may not be null.");
+                throw new ArgumentNullException("target", Resources.AstNode_Compiler_target_must_not_be_null);
             if (String.IsNullOrEmpty(targetLabel))
                 throw new ArgumentException(
-                    "targetLabel may neither be null nor empty.", "targetLabel");
+                    Resources.AstLazyLogical__targetLabel_must_neither_be_null_nor_empty, "targetLabel");
             var logical = cond as AstLazyLogical;
             if (logical != null)
             {
                 var continueLabel = "Continue\\Lazy\\" + Guid.NewGuid().ToString("N");
                 logical.EmitCode(target, targetLabel, continueLabel);
-                target.EmitLabel(cond, continueLabel);
+                target.EmitLabel(cond.Position, continueLabel);
             }
             else
             {
-                cond.EmitCode(target);
-                target.EmitJumpIfTrue(cond, targetLabel);
+                cond.EmitValueCode(target);
+                target.EmitJumpIfTrue(cond.Position, targetLabel);
             }
         }
 
         public static void EmitJumpCondition(
             CompilerTarget target,
-            IAstExpression cond,
+            AstExpr cond,
             string targetLabel,
             bool isPositive)
         {
@@ -159,21 +160,21 @@ namespace Prexonite.Compiler.Ast
 
         public static void EmitJumpCondition(
             CompilerTarget target,
-            IAstExpression cond,
+            AstExpr cond,
             string targetLabel,
             string alternativeLabel,
             bool isPositive)
         {
             if (cond == null)
-                throw new ArgumentNullException("cond", "Condition may not be null.");
+                throw new ArgumentNullException("cond", Resources.AstLazyLogical__Condition_must_not_be_null);
             if (target == null)
-                throw new ArgumentNullException("target", "Compiler target may not be null.");
+                throw new ArgumentNullException("target", Resources.AstNode_Compiler_target_must_not_be_null);
             if (String.IsNullOrEmpty(targetLabel))
                 throw new ArgumentException(
-                    "targetLabel may neither be null nor empty.", "targetLabel");
+                    Resources.AstLazyLogical__targetLabel_must_neither_be_null_nor_empty, "targetLabel");
             if (String.IsNullOrEmpty(alternativeLabel))
                 throw new ArgumentException(
-                    "alternativeLabel may neither be null nor empty.", "alternativeLabel");
+                    Resources.AstLazyLogical_alternativeLabel_may_neither_be_null_nor_empty, "alternativeLabel");
             var logical = cond as AstLazyLogical;
             if (!isPositive)
             {
@@ -188,15 +189,15 @@ namespace Prexonite.Compiler.Ast
             }
             else
             {
-                cond.EmitCode(target);
-                target.EmitJumpIfTrue(cond, targetLabel);
-                target.EmitJump(cond, alternativeLabel);
+                cond.EmitValueCode(target);
+                target.EmitJumpIfTrue(cond.Position, targetLabel);
+                target.EmitJump(cond.Position, alternativeLabel);
             }
         }
 
         public static void EmitJumpCondition(
             CompilerTarget target,
-            IAstExpression cond,
+            AstExpr cond,
             string targetLabel,
             string alternativeLabel)
         {
@@ -204,26 +205,26 @@ namespace Prexonite.Compiler.Ast
         }
 
         public static void EmitJumpUnlessCondition(
-            CompilerTarget target, IAstExpression cond, string targetLabel)
+            CompilerTarget target, AstExpr cond, string targetLabel)
         {
             if (cond == null)
-                throw new ArgumentNullException("cond", "Condition may not be null.");
+                throw new ArgumentNullException("cond", Resources.AstLazyLogical__Condition_must_not_be_null);
             if (target == null)
-                throw new ArgumentNullException("target", "Compiler target may not be null.");
+                throw new ArgumentNullException("target", Resources.AstNode_Compiler_target_must_not_be_null);
             if (String.IsNullOrEmpty(targetLabel))
                 throw new ArgumentException(
-                    "targetLabel may neither be null nor empty.", "targetLabel");
+                    Resources.AstLazyLogical__targetLabel_must_neither_be_null_nor_empty, "targetLabel");
             var logical = cond as AstLazyLogical;
             if (logical != null)
             {
                 var continueLabel = "Continue\\Lazy\\" + Guid.NewGuid().ToString("N");
                 logical.EmitCode(target, continueLabel, targetLabel); //inverted
-                target.EmitLabel(cond, continueLabel);
+                target.EmitLabel(cond.Position, continueLabel);
             }
             else
             {
-                cond.EmitCode(target);
-                target.EmitJumpIfFalse(cond, targetLabel);
+                cond.EmitValueCode(target);
+                target.EmitJumpIfFalse(cond.Position, targetLabel);
             }
         }
 
@@ -237,8 +238,9 @@ namespace Prexonite.Compiler.Ast
 
         #endregion
 
-        public static IAstExpression CreateConjunction(ISourcePosition position,
-            IEnumerable<IAstExpression> clauses)
+        [PublicAPI]
+        public static AstExpr CreateConjunction(ISourcePosition position,
+            IEnumerable<AstExpr> clauses)
         {
             var cs = clauses.ToList();
 
@@ -260,8 +262,9 @@ namespace Prexonite.Compiler.Ast
             }
         }
 
-        public static IAstExpression CreateDisjunction(ISourcePosition position,
-            IEnumerable<IAstExpression> clauses)
+        [PublicAPI]
+        public static AstExpr CreateDisjunction(ISourcePosition position,
+            IEnumerable<AstExpr> clauses)
         {
             var cs = clauses.ToList();
 
@@ -287,7 +290,7 @@ namespace Prexonite.Compiler.Ast
         {
             if (Conditions.Count == 0)
             {
-                this.ConstFunc(!ShortcircuitValue).EmitCode(target);
+                this.ConstFunc(!ShortcircuitValue).EmitValueCode(target);
                 return;
             }
 
@@ -301,8 +304,8 @@ namespace Prexonite.Compiler.Ast
                     {
                         //there is no placeholder at all, wrap expression in const
                         Debug.Assert(Conditions.All(e => !e.IsPlaceholder()));
-                        DoEmitCode(target);
-                        target.EmitCommandCall(this, 1, Const.Alias);
+                        DoEmitCode(target,StackSemantics.Value);
+                        target.EmitCommandCall(Position, 1, Const.Alias);
                         return;
                     }
                 }
@@ -322,7 +325,7 @@ namespace Prexonite.Compiler.Ast
 
 
             // compile the following code: `if(e1 and e2 and e3) id(?) else const(false)`
-            var constExpr = CreatePrefix(this, Conditions.Take(Conditions.Count - 1));
+            var constExpr = CreatePrefix(Position, Conditions.Take(Conditions.Count - 1));
             //var identityFunc = new AstGetSetSymbol(File, Line, Column, PCall.Get, Commands.Core.Id.Alias, SymbolInterpretations.Command);
             //identityFunc.Arguments.Add(new AstPlaceholder(File, Line, Column, placeholder.Index));
             var identityFunc = new AstTypecast(File, Line, Column,
@@ -334,13 +337,15 @@ namespace Prexonite.Compiler.Ast
                     IfExpression = identityFunc,
                     ElseExpression = this.ConstFunc(ShortcircuitValue)
                 };
-            conditional.EmitCode(target);
+            conditional.EmitValueCode(target);
         }
 
         private void _reportInvalidPlaceholders(CompilerTarget target)
         {
-            target.Loader.ReportSemanticError(Line, Column,
-                "In partial applications of lazy expressions, only one placeholder at the end of a sequence is allowed. Consider using a lambda expression instead.");
+            target.Loader.ReportMessage(
+                Message.Error(
+                    Resources.AstLazyLogical_placeholderOnlyAtTheEnd,
+                    Position, MessageClasses.OnlyLastOperandPartialInLazy));
         }
 
         /// <summary>
@@ -348,14 +353,13 @@ namespace Prexonite.Compiler.Ast
         /// </summary>
         protected abstract bool ShortcircuitValue { get; }
 
-        protected virtual IAstExpression CreatePrefix(ISourcePosition position,
-            IEnumerable<IAstExpression> clauses)
+        protected virtual AstExpr CreatePrefix(ISourcePosition position,
+            IEnumerable<AstExpr> clauses)
         {
-            throw new NotSupportedException("The lazy logical expression " + GetType().Name +
-                " must implement this method/property to support partial application.");
+            throw new NotSupportedException(string.Format(Resources.AstLazyLogical_CreatePrefixMustBeImplementedForPartialApplication, GetType().Name));
         }
 
-        public virtual bool TryOptimize(CompilerTarget target, out IAstExpression expr)
+        public override bool TryOptimize(CompilerTarget target, out AstExpr expr)
         {
             expr = null;
             var placeholders = Conditions.Count(AstPartiallyApplicable.IsPlaceholder);

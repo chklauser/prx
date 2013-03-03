@@ -1,6 +1,6 @@
 // Prexonite
 // 
-// Copyright (c) 2011, Christian Klauser
+// Copyright (c) 2013, Christian Klauser
 // All rights reserved.
 // 
 // Redistribution and use in source and binary forms, with or without modification, 
@@ -23,47 +23,41 @@
 //  DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, 
 //  WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING 
 //  IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
-
 using System;
 using Prexonite.Types;
 
 namespace Prexonite.Compiler.Ast
 {
-    public class AstTryCatchFinally : AstNode,
+    public class AstTryCatchFinally : AstScopedBlock,
                                       IAstHasBlocks
     {
-        public AstBlock TryBlock { get; set; }
-        public AstBlock CatchBlock { get; set; }
-        public AstBlock FinallyBlock { get; set; }
+        public AstScopedBlock TryBlock { get; set; }
+        public AstScopedBlock CatchBlock { get; set; }
+        public AstScopedBlock FinallyBlock { get; set; }
         public AstGetSet ExceptionVar { get; set; }
 
-        public AstTryCatchFinally(string file, int line, int column)
-            : base(file, line, column)
+        public AstTryCatchFinally(ISourcePosition p, AstBlock lexicalScope)
+            : base(p, lexicalScope)
         {
-            TryBlock = new AstSubBlock(file, line, column, this);
-            CatchBlock = new AstSubBlock(file, line, column, this);
-            FinallyBlock = new AstSubBlock(file, line, column, this);
-        }
-
-        internal AstTryCatchFinally(Parser p)
-            : base(p)
-        {
-            TryBlock = new AstSubBlock(p, this);
-            CatchBlock = new AstSubBlock(p, this);
-            FinallyBlock = new AstSubBlock(p, this);
+            TryBlock = new AstScopedBlock(p, this);
+            CatchBlock = new AstScopedBlock(p, TryBlock);
+            FinallyBlock = new AstScopedBlock(p, TryBlock);
         }
 
         #region IAstHasBlocks Members
 
         public AstBlock[] Blocks
         {
-            get { return new[] {TryBlock, CatchBlock, FinallyBlock}; }
+            get { return new AstBlock[] {TryBlock, CatchBlock, FinallyBlock}; }
         }
 
         #endregion
 
-        protected override void DoEmitCode(CompilerTarget target)
+        protected override void DoEmitCode(CompilerTarget target, StackSemantics stackSemantics)
         {
+            if(stackSemantics == StackSemantics.Value)
+                throw new NotSupportedException("Try-catch-finally blocks cannot be used with value stack semantics (They don't produce values)");
+
             var prefix = "try\\" + Guid.NewGuid().ToString("N") + "\\";
             var beginTryLabel = prefix + "beginTry";
             var beginFinallyLabel = prefix + "beginFinally";
@@ -78,25 +72,25 @@ namespace Prexonite.Compiler.Ast
                     //The finally block is not protected
                     //  A trycatchfinally with just a finally block is equivalent to the contents of the finally block
                     //  " try {} finally { $code } " => " $code "
-                    FinallyBlock.EmitCode(target);
+                    FinallyBlock.EmitEffectCode(target);
                     return;
                 }
 
             //Emit try block
-            target.EmitLabel(this, beginTryLabel);
-            target.Emit(this, OpCode.@try);
-            TryBlock.EmitCode(target);
+            target.EmitLabel(Position, beginTryLabel);
+            target.Emit(Position,OpCode.@try);
+            TryBlock.EmitEffectCode(target);
 
             //Emit finally block
-            target.EmitLabel(FinallyBlock, beginFinallyLabel);
+            target.EmitLabel(FinallyBlock.Position, beginFinallyLabel);
             var beforeEmit = target.Code.Count;
-            FinallyBlock.EmitCode(target);
+            FinallyBlock.EmitEffectCode(target);
             if (FinallyBlock.Count > 0 && target.Code.Count == beforeEmit)
-                target.Emit(FinallyBlock, OpCode.nop);
-            target.EmitLeave(FinallyBlock, endTry);
+                target.Emit(FinallyBlock.Position, OpCode.nop);
+            target.EmitLeave(FinallyBlock.Position, endTry);
 
             //Emit catch block
-            target.EmitLabel(CatchBlock, beginCatchLabel);
+            target.EmitLabel(CatchBlock.Position, beginCatchLabel);
             var usesException = ExceptionVar != null;
             var justRethrow = CatchBlock.IsEmpty && !usesException;
 
@@ -112,7 +106,7 @@ namespace Prexonite.Compiler.Ast
             if (!justRethrow)
             {
                 //Exception handled
-                CatchBlock.EmitCode(target);
+                CatchBlock.EmitEffectCode(target);
             }
             else
             {
@@ -123,8 +117,8 @@ namespace Prexonite.Compiler.Ast
                 //th.EmitCode(target);
             }
 
-            target.EmitLabel(this, endTry);
-            target.Emit(this, OpCode.nop);
+            target.EmitLabel(Position, endTry);
+            target.Emit(Position,OpCode.nop);
 
             var block =
                 new TryCatchFinallyBlock(

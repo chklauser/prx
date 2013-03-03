@@ -1,6 +1,6 @@
 ﻿// Prexonite
 // 
-// Copyright (c) 2011, Christian Klauser
+// Copyright (c) 2013, Christian Klauser
 // All rights reserved.
 // 
 // Redistribution and use in source and binary forms, with or without modification, 
@@ -26,52 +26,5 @@
 
 build does require
 (
-    @"psr\file.pxs"
+    @"psr\file.pxs", @"psr\impl\json.pxs"
 );
-
-var _json_var = @"__json_data_var__";
-
-function json_from_application(app)
-{
-    if(Not app.Variables.ContainsKey(_json_var))
-        throw "The supplied application $(app.Id) does not contain a variable named $_json_var.";
-    return app.Variables[_json_var].Value.self;
-}
-
-
-function json_from_string(source)
-{
-    var isCompiled = source.StartsWith("//PXS");
-    if(Not isCompiled)
-        source = "var \$$_json_var = (\n $source \n);";
-    var eng = new Prexonite::Engine();
-    var app = new Prexonite::Application("JSON Loading Application");
-    var ldr = new Prexonite::Compiler::Loader(eng,app);
-    ldr.LoadFromString(source);
-    if(Not app.Variables.ContainsKey(_json_var))
-        throw "The supplied application $(app.Id) does not contain a variable named $_json_var.";
-    var vJSON = app.Variables[_json_var];
-    app.EnsureInitialization(eng, vJSON);
-    return json_from_application(app);
-}
-
-function json_from_reader(reader)
-{
-    return json_from_string(reader.ReadToEnd());
-}
-
-function json_from_stream(stream)
-{
-    using(var sr = new System::IO::StreamReader(stream))
-        return json_from_reader(sr);
-}
-
-function json_from_file(path)
-{
-    using(var fr = file_open_text(path))
-        return json_from_reader(fr);
-}
-
-declare 
-    json_from_application as json_from_app
-;

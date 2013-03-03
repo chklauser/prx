@@ -1,6 +1,6 @@
 // Prexonite
 // 
-// Copyright (c) 2011, Christian Klauser
+// Copyright (c) 2013, Christian Klauser
 // All rights reserved.
 // 
 // Redistribution and use in source and binary forms, with or without modification, 
@@ -23,63 +23,34 @@
 //  DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, 
 //  WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING 
 //  IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
-
 using System;
-using Prexonite.Types;
+using System.Diagnostics;
+using JetBrains.Annotations;
+using Prexonite.Modular;
+using Prexonite.Properties;
 
 namespace Prexonite.Compiler.Ast
 {
-    public class AstUnaryOperator : AstNode,
-                                    IAstEffect,
+    public class AstUnaryOperator : AstExpr,
                                     IAstHasExpressions,
                                     IAstPartiallyApplicable
     {
-        private IAstExpression _operand;
-        private UnaryOperator _operator;
+        private readonly AstExpr _operand;
+        private readonly UnaryOperator _operator;
 
-        public SymbolInterpretations ImplementationInterpretation { get; set; }
-
-        public string ImplementationId { get; set; }
-
-        public AstUnaryOperator(
-            string file, int line, int column, UnaryOperator op, IAstExpression operand,
-            SymbolInterpretations implementationInterpretation, string implementationId)
-            : base(file, line, column)
+        public AstUnaryOperator(ISourcePosition position, UnaryOperator op, AstExpr operand)
+            : base(position)
         {
             if (operand == null)
                 throw new ArgumentNullException("operand");
+            
             _operator = op;
             _operand = operand;
-            ImplementationInterpretation = implementationInterpretation;
-            ImplementationId = implementationId;
-        }
-
-        internal static AstUnaryOperator Create(Parser p, UnaryOperator op, IAstExpression operand)
-        {
-            string id;
-            SymbolInterpretations interpretation;
-
-            switch (op)
-            {
-                case UnaryOperator.PreIncrement:
-                case UnaryOperator.PostIncrement:
-                    interpretation = Resolve(p, OperatorNames.Prexonite.Addition, out id);
-                    break;
-                case UnaryOperator.PreDecrement:
-                case UnaryOperator.PostDecrement:
-                    interpretation = Resolve(p, OperatorNames.Prexonite.Subtraction, out id);
-                    break;
-                default:
-                    interpretation = Resolve(p, OperatorNames.Prexonite.GetName(op), out id);
-                    break;
-            }
-            return new AstUnaryOperator(p.scanner.File, p.t.line, p.t.col, op, operand,
-                interpretation, id);
         }
 
         #region IAstHasExpressions Members
 
-        public IAstExpression[] Expressions
+        public AstExpr[] Expressions
         {
             get { return new[] {_operand}; }
         }
@@ -87,26 +58,25 @@ namespace Prexonite.Compiler.Ast
         public UnaryOperator Operator
         {
             get { return _operator; }
-            set { _operator = value; }
         }
 
-        public IAstExpression Operand
+        public AstExpr Operand
         {
             get { return _operand; }
-            set { _operand = value; }
         }
 
         #endregion
 
-        #region IAstExpression Members
+        #region AstExpr Members
 
-        public bool TryOptimize(CompilerTarget target, out IAstExpression expr)
+        public override bool TryOptimize(CompilerTarget target, out AstExpr expr)
         {
             expr = null;
-            _OptimizeNode(target, ref _operand);
-            if (_operand is AstConstant)
+            var operand = _operand;
+            _OptimizeNode(target, ref operand);
+            var constOperand = operand as AstConstant;
+            if (constOperand != null) 
             {
-                var constOperand = (AstConstant) _operand;
                 var valueOperand = constOperand.ToPValue(target);
                 PValue result;
                 switch (_operator)
@@ -139,7 +109,7 @@ namespace Prexonite.Compiler.Ast
                 goto emitFull;
 
                 emitConstant:
-                return AstConstant.TryCreateConstant(target, this, result, out expr);
+                return AstConstant.TryCreateConstant(target, Position, result, out expr);
                 emitFull:
                 return false;
             }
@@ -150,7 +120,7 @@ namespace Prexonite.Compiler.Ast
                 case UnaryOperator.UnaryNegation:
                 case UnaryOperator.LogicalNot:
                 case UnaryOperator.OnesComplement:
-                    var doubleNegation = _operand as AstUnaryOperator;
+                    var doubleNegation = operand as AstUnaryOperator;
                     if (doubleNegation != null && doubleNegation._operator == _operator)
                     {
                         expr = doubleNegation._operand;
@@ -164,92 +134,123 @@ namespace Prexonite.Compiler.Ast
                     //No optimization
                     break;
             }
-            expr = null;
             return false;
         }
 
         #endregion
 
-        void IAstEffect.DoEmitEffectCode(CompilerTarget target)
+        private void _emitIncrementDecrementCode(CompilerTarget target, StackSemantics value)
         {
-            var symbol = _operand as AstGetSetSymbol;
-            var isVariable = symbol != null && symbol.IsObjectVariable;
-            var complex = _operand as AstGetSet;
-            var isAssignable = complex != null;
+            var symbolCall = _operand as AstIndirectCall;
+            var symbol = symbolCall == null ? null : symbolCall.Subject as AstReference;
+            EntityRef.Variable variableRef = null;
+            var isVariable = symbol != null && symbol.Entity.TryGetVariable(out variableRef);
+            var isPre = _operator == UnaryOperator.PreDecrement || _operator == UnaryOperator.PreIncrement;
             switch (_operator)
             {
                 case UnaryOperator.PreIncrement:
                 case UnaryOperator.PostIncrement:
                 case UnaryOperator.PreDecrement:
                 case UnaryOperator.PostDecrement:
-                    if (isVariable) //The easy way
+                    var isIncrement = 
+                        _operator == UnaryOperator.PostIncrement ||
+                        _operator == UnaryOperator.PreIncrement;
+                    if (isVariable)
                     {
-                        OpCode opc;
-                        if (_operator == UnaryOperator.PostIncrement ||
-                            _operator == UnaryOperator.PreIncrement)
-                            if (symbol.Interpretation == SymbolInterpretations.GlobalObjectVariable)
-                                opc = OpCode.incglob;
-                            else
-                                opc = OpCode.incloc;
-                        else if (symbol.Interpretation == SymbolInterpretations.GlobalObjectVariable)
-                            opc = OpCode.decglob;
+                        Debug.Assert(variableRef != null);
+                        EntityRef.Variable.Local localRef;
+                        Action loadVar;
+                        Action perform;
+                        EntityRef.Variable.Global globalRef;
+
+                        // First setup the two actions
+                        if (variableRef.TryGetLocalVariable(out localRef))
+                        {
+                            loadVar = () => target.EmitLoadLocal(Position, localRef.Id);
+                            perform =
+                                () => target.Emit(Position, isIncrement ? OpCode.incloc : OpCode.decloc, localRef.Id);
+                        }
+                        else if(variableRef.TryGetGlobalVariable(out globalRef))
+                        {
+                            loadVar = () => target.EmitLoadGlobal(Position, globalRef.Id, globalRef.ModuleName);
+
+                            perform =
+                                () =>
+                                target.Emit(Position, isIncrement ? OpCode.incglob : OpCode.decglob, globalRef.Id,
+                                            globalRef.ModuleName);
+                        }
                         else
-                            opc = OpCode.decloc;
-                        target.Emit(this, opc, symbol.Id);
-                    }
-                    else if (isAssignable)
-                    {
-                        //The get/set fallback
-                        complex = complex.GetCopy();
-                        var assignment = new AstModifyingAssignment(
-                            complex.File, complex.Line, complex.Column, _operator ==
-                                UnaryOperator.PostIncrement ||
-                                    _operator == UnaryOperator.PreIncrement
-                                ? BinaryOperator.Addition
-                                : BinaryOperator.Subtraction, complex, ImplementationInterpretation,
-                            ImplementationId);
-                        if (complex.Call == PCall.Get)
-                            complex.Arguments.Add(new AstConstant(File, Line, Column, 1));
-                        else
-                            complex.Arguments[complex.Arguments.Count - 1] =
-                                new AstConstant(File, Line, Column, 1);
-                        complex.Call = PCall.Set;
-                        assignment.EmitCode(target);
+                        {
+                            throw new InvalidOperationException("Found variable entity that is neither a global nor a local variable.");
+                        }
+
+                        // Then decide in what order to apply them.
+                        if (!isPre && value == StackSemantics.Value)
+                        {
+                            loadVar();
+                        }
+
+                        perform();
+
+                        if (isPre && value == StackSemantics.Value)
+                        {
+                            loadVar();
+                        }
                     }
                     else
                         throw new PrexoniteException(
                             "Node of type " + _operand.GetType() +
                                 " does not support increment/decrement operators.");
                     break;
+                // ReSharper disable RedundantCaseLabel
                 case UnaryOperator.UnaryNegation:
                 case UnaryOperator.LogicalNot:
                 case UnaryOperator.OnesComplement:
+                // ReSharper restore RedundantCaseLabel
+                // ReSharper disable RedundantEmptyDefaultSwitchBranch
                 default:
                     break; //No effect
+                // ReSharper restore RedundantEmptyDefaultSwitchBranch
             }
         }
 
-        protected override void DoEmitCode(CompilerTarget target)
+        protected override void DoEmitCode(CompilerTarget target, StackSemantics stackSemantics)
+        {
+            if (target == null)
+                throw new ArgumentNullException("target");
+
+            switch (stackSemantics)
+            {
+                case StackSemantics.Value:
+                    _emitValueCode(target);
+                    break;
+                case StackSemantics.Effect:
+                    _emitIncrementDecrementCode(target, stackSemantics);
+                    break;
+                default:
+                    throw new ArgumentOutOfRangeException("stackSemantics");
+            }
+        }
+
+        private void _emitValueCode(CompilerTarget target)
         {
             switch (_operator)
             {
                 case UnaryOperator.LogicalNot:
                 case UnaryOperator.UnaryNegation:
                 case UnaryOperator.OnesComplement:
-                    var call = new AstGetSetSymbol(File, Line, Column, PCall.Get, ImplementationId,
-                        ImplementationInterpretation);
-                    call.Arguments.Add(_operand);
-                    call.EmitCode(target);
+                    target.Loader.ReportMessage(
+                        Message.Error(
+                            Resources.AstUnaryOperator__NonIncrementDecrement,
+                            Position, MessageClasses.ParserInternal));
                     break;
                 case UnaryOperator.PreDecrement:
                 case UnaryOperator.PreIncrement:
-                    ((IAstEffect) this).DoEmitEffectCode(target);
-                    _operand.EmitCode(target);
+                    _emitIncrementDecrementCode(target, StackSemantics.Value);
                     break;
                 case UnaryOperator.PostDecrement:
                 case UnaryOperator.PostIncrement:
-                    _operand.EmitCode(target);
-                    ((IAstEffect) this).DoEmitEffectCode(target);
+                    _emitIncrementDecrementCode(target, StackSemantics.Value);
                     break;
             }
         }
@@ -265,39 +266,15 @@ namespace Prexonite.Compiler.Ast
 
         public void DoEmitPartialApplicationCode(CompilerTarget target)
         {
-            var typecheck = Operand as AstTypecheck;
-            //Special handling of `? is not {TypeExpr}`
-            //  the typecheck.IsInverted flag is only set for the
-            //      `? is not {TypeExpr}`
-            //  syntax, and not for
-            //      `not ? is {TypeExpr}`
-            //  for consistency reasons
-            if (Operator == UnaryOperator.LogicalNot && typecheck != null && typecheck.IsInverted)
-            {
-                //Expression is something like (? is not T)
-                //emit ((? is T) then (not ?))
-                var thenCmd = new AstGetSetSymbol(File, Line, Column, PCall.Get, Engine.ThenAlias,
-                    SymbolInterpretations.Command);
-                var notOp = new AstUnaryOperator(File, Line, Column, UnaryOperator.LogicalNot,
-                    new AstPlaceholder(File, Line, Column, 0), ImplementationInterpretation,
-                    ImplementationId);
-                var partialTypecheck = new AstTypecheck(File, Line, Column, typecheck.Subject,
-                    typecheck.Type);
-                thenCmd.Arguments.Add(partialTypecheck);
-                thenCmd.Arguments.Add(notOp);
-
-                thenCmd.EmitCode(target);
-            }
-            else
-            {
-                //Just emit the operator normally, the appropriate mechanism will kick in
-                DoEmitCode(target);
-            }
+            //Just emit the operator normally, the appropriate mechanism will kick in
+            // further down the AST
+            DoEmitCode(target,StackSemantics.Value);
         }
     }
 
     public enum UnaryOperator
     {
+        [PublicAPI]
         None,
         UnaryNegation,
         LogicalNot,

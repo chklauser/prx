@@ -20,8 +20,9 @@
     <UpgradeBackupLocation>
     </UpgradeBackupLocation>
     <IsWebBootstrapper>false</IsWebBootstrapper>
-    <TargetFrameworkVersion>v4.0</TargetFrameworkVersion>
-    <TargetFrameworkProfile>Client</TargetFrameworkProfile>
+    <TargetFrameworkVersion>v4.5</TargetFrameworkVersion>
+    <TargetFrameworkProfile>
+    </TargetFrameworkProfile>
     <PublishUrl>publish\</PublishUrl>
     <Install>true</Install>
     <InstallFrom>Disk</InstallFrom>
@@ -48,12 +49,13 @@
     <DocumentationFile>
     </DocumentationFile>
     <CodeAnalysisRuleSet>AllRules.ruleset</CodeAnalysisRuleSet>
+    <Prefer32Bit>false</Prefer32Bit>
   </PropertyGroup>
   <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Release|AnyCPU' ">
     <DebugType>pdbonly</DebugType>
     <Optimize>true</Optimize>
     <OutputPath>bin\</OutputPath>
-    <DefineConstants>TRACE;allowIndex</DefineConstants>
+    <DefineConstants>allowIndex,TRACE</DefineConstants>
     <ErrorReport>prompt</ErrorReport>
     <WarningLevel>4</WarningLevel>
     <PlatformTarget>AnyCPU</PlatformTarget>
@@ -88,6 +90,7 @@
     <CodeContractsRuntimeCheckingLevel>Full</CodeContractsRuntimeCheckingLevel>
     <CodeContractsReferenceAssembly>%28none%29</CodeContractsReferenceAssembly>
     <CodeAnalysisRuleSet>AllRules.ruleset</CodeAnalysisRuleSet>
+    <Prefer32Bit>false</Prefer32Bit>
   </PropertyGroup>
   <ItemGroup>
     <Reference Include="System" />
@@ -96,15 +99,18 @@
     </Reference>
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="ApplicationCompound.cs" />
+    <Compile Include="ApplicationCompoundImpl.cs" />
     <Compile Include="CilClosure.cs" />
     <Compile Include="CilFunctionContext.cs" />
     <Compile Include="Closure.cs" />
     <Compile Include="Commands\CompilationFlags.cs" />
     <Compile Include="Commands\CilTestCommand.cs" />
+    <Compile Include="Commands\CompileTimeInterpretation.cs" />
+    <Compile Include="Commands\CompileTimeValue.cs" />
     <Compile Include="Commands\Concurrency\AsyncSeq.cs" />
     <Compile Include="Commands\Concurrency\CallAsync.cs" />
     <Compile Include="Commands\Concurrency\Chan.cs" />
-    <Compile Include="Commands\Concurrency\NotSupportedException.cs" />
     <Compile Include="Commands\Concurrency\Select.cs" />
     <Compile Include="Commands\Core\Boxed.cs" />
     <Compile Include="Commands\Core\Call.cs" />
@@ -118,8 +124,11 @@
     <Compile Include="Commands\Core\ConsolePrint.cs" />
     <Compile Include="Commands\Core\ConsolePrintLine.cs" />
     <Compile Include="Commands\Core\Const.cs" />
+    <Compile Include="Commands\Core\CreateModuleName.cs" />
+    <Compile Include="Commands\Core\CreateSourcePosition.cs" />
     <Compile Include="Commands\Core\Debug.cs" />
     <Compile Include="Commands\Core\Dispose.cs" />
+    <Compile Include="Commands\Core\GetUnscopedAstFactory.cs" />
     <Compile Include="Commands\Core\Id.cs" />
     <Compile Include="Commands\Core\LoadAssembly.cs" />
     <Compile Include="Commands\Core\Meta.cs" />
@@ -138,7 +147,54 @@
     <Compile Include="Commands\Core\PartialApplication\PartialCallStar.cs" />
     <Compile Include="Commands\Core\PartialApplication\PartialCallStarImplCommand.cs" />
     <Compile Include="Commands\List\CreateEnumerator.cs" />
+    <Compile Include="Commands\List\SeqConcat.cs" />
     <Compile Include="Commands\PCommandInfo.cs" />
+    <Compile Include="Compiler\AstFactoryExtensions.cs" />
+    <Compile Include="Compiler\Ast\AstExpand.cs" />
+    <Compile Include="Compiler\Ast\AstExpr.cs" />
+    <Compile Include="Compiler\Ast\AstFactoryBase.cs" />
+    <Compile Include="Compiler\Ast\AstFactoryBridge.cs" />
+    <Compile Include="Compiler\Ast\AstGetSet.cs" />
+    <Compile Include="Compiler\Ast\AstLoopBlock.cs" />
+    <Compile Include="Compiler\Ast\AstPostExpression.cs" />
+    <Compile Include="Compiler\Ast\AstReference.cs" />
+    <Compile Include="Compiler\Ast\AstScopedExpr.cs" />
+    <Compile Include="Compiler\Ast\AstScopedBlock.cs" />
+    <Compile Include="Compiler\Ast\IAstFactory.cs" />
+    <Compile Include="Compiler\Ast\StackSemantics.cs" />
+    <Compile Include="Compiler\Build\BuildException.cs" />
+    <Compile Include="Compiler\Build\BuildExtensions.cs" />
+    <Compile Include="Compiler\Build\BuildFailureException.cs" />
+    <Compile Include="Compiler\Build\IBuildEnvironment.cs" />
+    <Compile Include="Compiler\Build\IBuildWatcher.cs" />
+    <Compile Include="Compiler\Build\IncrementalPlan.cs" />
+    <Compile Include="Compiler\Build\Internal\DefaultModuleTarget.cs" />
+    <Compile Include="Compiler\Build\Internal\DefaultBuildEnvironment.cs" />
+    <Compile Include="Compiler\Build\Internal\DependencySet.cs" />
+    <Compile Include="Compiler\Build\Internal\FileSource.cs" />
+    <Compile Include="Compiler\Build\Internal\ManualTargetDescription.cs" />
+    <Compile Include="Compiler\Build\Internal\ReaderSource.cs" />
+    <Compile Include="Compiler\Build\Internal\SelfAssemblingPlan.cs" />
+    <Compile Include="Compiler\Build\Internal\StreamSource.cs" />
+    <Compile Include="Compiler\Build\Internal\StringSource.cs" />
+    <Compile Include="Compiler\Build\Internal\TaskMap.cs" />
+    <Compile Include="Compiler\Build\ISelfAssemblingPlan.cs" />
+    <Compile Include="Compiler\Build\ISource.cs" />
+    <Compile Include="Compiler\Build\ManualPlan.cs" />
+    <Compile Include="Compiler\Build\Plan.cs" />
+    <Compile Include="Compiler\Build\ITargetDescription.cs" />
+    <Compile Include="Compiler\Build\ProvidedTarget.cs" />
+    <Compile Include="Compiler\Build\Source.cs" />
+    <Compile Include="Compiler\Build\TargetDescriptionSet.cs" />
+    <Compile Include="Compiler\Build\VersionConflictException.cs" />
+    <Compile Include="Compiler\ErrorMessageException.cs" />
+    <Compile Include="Compiler\Internal\CompilerExtensions.cs" />
+    <Compile Include="Compiler\Internal\EntityRefMExprParser.cs" />
+    <Compile Include="Compiler\Internal\EntityRefMExprSerializer.cs" />
+    <Compile Include="Compiler\Internal\MExpr.cs" />
+    <Compile Include="Compiler\Internal\SymbolMExprParser.cs" />
+    <Compile Include="Compiler\Internal\SymbolMExprSerializer.cs" />
+    <Compile Include="Compiler\Macro\Commands\EntityRefTo.cs" />
     <Compile Include="Compiler\Macro\Commands\PartialCallWrapper.cs" />
     <Compile Include="Compiler\Macro\Commands\CallMacro.cs" />
     <Compile Include="Compiler\Macro\Commands\CallStar.cs" />
@@ -146,6 +202,38 @@
     <Compile Include="Compiler\Macro\Commands\Reference.cs" />
     <Compile Include="Compiler\Macro\Commands\Unpack.cs" />
     <Compile Include="Compiler\Macro\PartialMacroCommand.cs" />
+    <Compile Include="Compiler\Message.cs" />
+    <Compile Include="Compiler\MessageClasses.cs" />
+    <Compile Include="Compiler\MessageEventArgs.cs" />
+    <Compile Include="Compiler\MessageSeverity.cs" />
+    <Compile Include="Compiler\NoSourcePosition.cs" />
+    <Compile Include="Compiler\Parser.SymbolBuilder.cs" />
+    <Compile Include="Compiler\ParserAstFactory.cs" />
+    <Compile Include="Compiler\Symbolic\Compatibility\LegacyExtensions.cs" />
+    <Compile Include="Compiler\Symbolic\DereferenceSymbol.cs" />
+    <Compile Include="Compiler\Symbolic\ExpandSymbol.cs" />
+    <Compile Include="Compiler\Symbolic\Internal\ConflictUnionFallbackStore.cs" />
+    <Compile Include="Compiler\Symbolic\Internal\ReplaceCoreNilHandler.cs" />
+    <Compile Include="Compiler\Symbolic\Internal\SymbolBuilder.cs" />
+    <Compile Include="Compiler\Symbolic\Internal\TransformHandler.cs" />
+    <Compile Include="Compiler\Symbolic\Internal\WrapTransparentlyHandler.cs" />
+    <Compile Include="Compiler\Symbolic\ISymbolHandler.cs" />
+    <Compile Include="Compiler\Symbolic\MessageSymbol.cs" />
+    <Compile Include="Compiler\Symbolic\NilSymbol.cs" />
+    <Compile Include="Compiler\Symbolic\ReferenceSymbol.cs" />
+    <Compile Include="Compiler\Symbolic\Symbol.cs" />
+    <Compile Include="Compiler\Symbolic\SymbolHandler.cs" />
+    <Compile Include="Compiler\Symbolic\SymbolInfo.cs" />
+    <Compile Include="Compiler\Symbolic\SymbolOrigin.cs" />
+    <Compile Include="Compiler\Symbolic\SymbolStore.cs" />
+    <Compile Include="Compiler\Symbolic\SymbolUsageResult.cs" />
+    <Compile Include="Exceptions.cs" />
+    <Compile Include="Helper\CombinedSymbolProxy.cs" />
+    <Compile Include="Helper\IHasMetaTable.cs" />
+    <Compile Include="Helper\IMetaFilter.cs" />
+    <Compile Include="Helper\ISymbolView.cs" />
+    <Compile Include="Helper\LastAccessCache.cs" />
+    <Compile Include="Helper\MergingCache.cs" />
     <Compile Include="IMaybeStackAware.cs" />
     <Compile Include="Commands\Core\PartialApplication\PartialApplicationBase.cs" />
     <Compile Include="Commands\Core\PartialApplication\PartialApplicationCommandBase.cs" />
@@ -224,7 +312,6 @@
     <Compile Include="Compiler\Ast\ArgumentsProxy.cs" />
     <Compile Include="Compiler\Ast\AstActionBlock.cs" />
     <Compile Include="Compiler\Ast\AstAsmInstruction.cs" />
-    <Compile Include="Compiler\Ast\AstBlockExpression.cs" />
     <Compile Include="Compiler\Ast\AstCoalescence.cs" />
     <Compile Include="Compiler\Ast\AstCondition.cs" />
     <Compile Include="Compiler\Ast\AstConditionalExpression.cs" />
@@ -236,11 +323,10 @@
     <Compile Include="Compiler\Ast\AstConstant.cs" />
     <Compile Include="Compiler\Ast\AstForLoop.cs" />
     <Compile Include="Compiler\Ast\AstGetException.cs" />
-    <Compile Include="Compiler\Ast\AstGetSet.cs" />
+    <Compile Include="Compiler\Ast\AstGetSetImplBase.cs" />
     <Compile Include="Compiler\Ast\AstBinaryOperator.cs" />
     <Compile Include="Compiler\Ast\AstGetSetMemberAccess.cs" />
     <Compile Include="Compiler\Ast\AstGetSetNewDecl.cs" />
-    <Compile Include="Compiler\Ast\AstGetSetReference.cs" />
     <Compile Include="Compiler\Ast\AstHashLiteral.cs" />
     <Compile Include="Compiler\Ast\AstIndirectCall.cs" />
     <Compile Include="Compiler\Ast\AstKeyValuePair.cs" />
@@ -250,9 +336,6 @@
     <Compile Include="Compiler\Ast\AstLogicalOr.cs" />
     <Compile Include="Compiler\Ast\AstDynamicTypeExpression.cs" />
     <Compile Include="Compiler\Ast\AstLoop.cs" />
-    <Compile Include="Compiler\Ast\AstLoopExpression.cs" />
-    <Compile Include="Compiler\Ast\AstMacroInvocation.cs" />
-    <Compile Include="Compiler\Ast\AstModifyingAssignment.cs" />
     <Compile Include="Compiler\Ast\AstNull.cs" />
     <Compile Include="Compiler\Ast\AstObjectCreation.cs" />
     <Compile Include="Compiler\Ast\AstPlaceholder.cs" />
@@ -268,16 +351,12 @@
     <Compile Include="Compiler\Ast\AstUsing.cs" />
     <Compile Include="Compiler\Ast\AstWhileLoop.cs" />
     <Compile Include="Compiler\Ast\AstForeachLoop.cs" />
-    <Compile Include="Compiler\Ast\IAstEffect.cs" />
-    <Compile Include="Compiler\Ast\IAstExpression.cs" />
     <Compile Include="Compiler\Ast\AstBlock.cs" />
-    <Compile Include="Compiler\Ast\AstGetSetSymbol.cs" />
     <Compile Include="Compiler\Ast\AstNode.cs" />
     <Compile Include="Compiler\Ast\IAstHasBlocks.cs" />
     <Compile Include="Compiler\Ast\IAstHasExpressions.cs" />
     <Compile Include="Compiler\Ast\IAstPartiallyApplicable.cs" />
-    <Compile Include="Compiler\Ast\IAstType.cs" />
-    <Compile Include="Compiler\Ast\ICanBeReferenced.cs" />
+    <Compile Include="Compiler\Ast\AstTypeExpr.cs" />
     <Compile Include="Compiler\Cil\BranchHandling.cs" />
     <Compile Include="Compiler\Cil\CilExtensionHint.cs" />
     <Compile Include="Compiler\Cil\CompiledTryCatchFinallyBlock.cs" />
@@ -292,7 +371,7 @@
     <Compile Include="Compiler\Cil\Seh\Region.cs" />
     <Compile Include="Compiler\Cil\Runtime.cs" />
     <Compile Include="Compiler\Cil\StructuredExceptionHandling.cs" />
-    <Compile Include="Compiler\Cil\Symbol.cs" />
+    <Compile Include="Compiler\Cil\CilSymbol.cs" />
     <Compile Include="Compiler\CompilerHook.cs" />
     <Compile Include="Compiler\CompilerTarget.cs" />
     <Compile Include="Compiler\CustomResolver.cs" />
@@ -322,14 +401,27 @@
     <Compile Include="Helper\Extensions.cs" />
     <Compile Include="Helper\IDependent.cs" />
     <Compile Include="Helper\INamed.cs" />
+    <Compile Include="Internal\AdHocTaskCache.cs" />
+    <Compile Include="Internal\IScanner.cs" />
+    <Compile Include="Internal\MetaTableImpl.cs" />
+    <Compile Include="Internal\Parser.cs" />
+    <Compile Include="Internal\PFunctionTableImpl.cs" />
+    <Compile Include="Internal\ReSharperAttributes.cs" />
+    <Compile Include="Internal\Scanner.cs" />
+    <Compile Include="Modular\EntityRef.cs" />
+    <Compile Include="Modular\FunctionDeclaration.cs" />
+    <Compile Include="Modular\IResourceDescriptor.cs" />
+    <Compile Include="Modular\Module.cs" />
+    <Compile Include="Modular\ModuleConflictException.cs" />
+    <Compile Include="Modular\ModuleName.cs" />
+    <Compile Include="Modular\VariableDeclaration.cs" />
+    <Compile Include="Modular\VariableTable.cs" />
     <Compile Include="OperatorNames.cs" />
     <Compile Include="Compiler\Parser.cs" />
     <Compile Include="Application.cs" />
     <Compile Include="Compiler\Loader.cs" />
     <Compile Include="Compiler\LoaderOptions.cs" />
     <Compile Include="Compiler\Parser.Code.cs" />
-    <Compile Include="Compiler\PropHook.cs" />
-    <Compile Include="Compiler\StructHook.cs" />
     <Compile Include="Compiler\Token.cs" />
     <Compile Include="Continuation.cs" />
     <Compile Include="Coroutine.cs" />
@@ -343,15 +435,20 @@
     <Compile Include="IndirectCallContext.cs" />
     <Compile Include="Instruction.cs" />
     <Compile Include="Internal\Parser.Code.cs" />
-    <Compile Include="Internal\Parser.cs" />
-    <Compile Include="Internal\Scanner.cs" />
     <Compile Include="IStackAware.cs" />
     <Compile Include="NullContext.cs" />
     <Compile Include="PFunction.cs" />
     <Compile Include="Helper\PFunctionTable.cs" />
     <Compile Include="Helper\SymbolCollection.cs" />
+    <Compile Include="Compiler\Build\IPlan.cs" />
+    <Compile Include="Properties\Resources.Designer.cs">
+      <AutoGen>True</AutoGen>
+      <DesignTime>True</DesignTime>
+      <DependentUpon>Resources.resx</DependentUpon>
+    </Compile>
     <Compile Include="PTypeLiteralAttribute.cs" />
     <Compile Include="PValueComparer.cs" />
+    <Compile Include="Compiler\Build\ITarget.cs" />
     <Compile Include="TryCatchFinallyBlock.cs" />
     <Compile Include="Types\BoolPType.cs" />
     <Compile Include="Types\CharPType.cs" />
@@ -362,8 +459,7 @@
     <Compile Include="Types\ListPType.cs" />
     <Compile Include="Types\ObjectPType.cs" />
     <Compile Include="Engine.cs" />
-    <Compile Include="Helper\Exceptions.cs" />
-    <Compile Include="Helper\Metatable.cs" />
+    <Compile Include="Helper\MetaTable.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
     <Compile Include="PValue.cs" />
     <Compile Include="PVariable.cs" />
@@ -384,10 +480,12 @@
       <Generator>TextTemplatingFileGenerator</Generator>
       <LastGenOutput>Operators.cs</LastGenOutput>
     </None>
+    <None Include="Compiler\Build\Build.cd" />
     <None Include="ObjectModel.cd" />
     <None Include="Prexonite.snk" />
     <Content Include="Compiler\Grammar\Grammar.Readme.txt" />
     <Content Include="Prx.ico" />
+    <EmbeddedResource Include="prxlib\sys.pxs" />
   </ItemGroup>
   <ItemGroup>
     <GrammarFragment Include="Compiler\Grammar\Header.atg" />
@@ -432,6 +530,13 @@
   <ItemGroup>
     <Folder Include="Commands\Debugger\" />
   </ItemGroup>
+  <ItemGroup>
+    <EmbeddedResource Include="Properties\Resources.resx">
+      <Generator>PublicResXFileCodeGenerator</Generator>
+      <LastGenOutput>Resources.Designer.cs</LastGenOutput>
+      <SubType>Designer</SubType>
+    </EmbeddedResource>
+  </ItemGroup>
   <!-- CUSTOM TASKS -->
   <PropertyGroup>
     <PxCoco>$(ProjectDir)..\Tools\PxCoco.exe</PxCoco>
@@ -451,11 +556,12 @@
     <CodeAnalysisIgnoreBuiltInRuleSets>false</CodeAnalysisIgnoreBuiltInRuleSets>
     <CodeAnalysisRuleDirectories>;C:\Program Files (x86)\Microsoft Visual Studio 10.0\Team Tools\Static Analysis Tools\FxCop\\Rules</CodeAnalysisRuleDirectories>
     <CodeAnalysisIgnoreBuiltInRules>false</CodeAnalysisIgnoreBuiltInRules>
+    <Prefer32Bit>false</Prefer32Bit>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)' == 'Release|x86'">
     <DebugSymbols>true</DebugSymbols>
     <OutputPath>bin\x86\Release\</OutputPath>
-    <DefineConstants>TRACE;allowIndex</DefineConstants>
+    <DefineConstants>TRACE;allowIndex,Verbose</DefineConstants>
     <Optimize>true</Optimize>
     <DebugType>pdbonly</DebugType>
     <PlatformTarget>x86</PlatformTarget>
@@ -468,6 +574,7 @@
     <CodeAnalysisIgnoreBuiltInRuleSets>false</CodeAnalysisIgnoreBuiltInRuleSets>
     <CodeAnalysisRuleDirectories>;C:\Program Files (x86)\Microsoft Visual Studio 10.0\Team Tools\Static Analysis Tools\FxCop\\Rules</CodeAnalysisRuleDirectories>
     <CodeAnalysisIgnoreBuiltInRules>false</CodeAnalysisIgnoreBuiltInRules>
+    <Prefer32Bit>false</Prefer32Bit>
   </PropertyGroup>
   <UsingTask AssemblyFile="$(PxCoco)" TaskName="Merge" />
   <UsingTask AssemblyFile="$(PxCoco)" TaskName="PxCoco" />
@@ -476,11 +583,11 @@
   <PropertyGroup>
     <!--<UseHostCompilerIfAvailable>False</UseHostCompilerIfAvailable> -->
     <BuildDependsOn>
-	    ExpressionParser;
-	    PrexoniteScanner;
-	    PrexoniteParser;
-	    $(BuildDependsOn);
-	</BuildDependsOn>
+        ExpressionParser;
+        PrexoniteScanner;
+        PrexoniteParser;
+        $(BuildDependsOn);
+    </BuildDependsOn>
     <ToolsDirectory>$(ProjectDir)..\Tools</ToolsDirectory>
     <FramesDirectory>$(ToolsDirectory)</FramesDirectory>
     <PrexoniteScannerDefinition>Prexonite.lex</PrexoniteScannerDefinition>
@@ -494,6 +601,7 @@
   </PropertyGroup>
   <!-- PType Expression Parser Target -->
   <Target Name="ExpressionParser">
+    <Message Text="Building type expression parser." />
     <PxCoco Grammar="$(PTypeExpressionGrammarDefinition)" Namespace="Prexonite.Internal" FramesDirectory="$(FramesDirectory)" DirectDebug="$(DirectDebug)">
       <Output TaskParameter="OutputFiles" ItemName="PTypeExpressionParserFiles" />
     </PxCoco>
@@ -517,9 +625,5 @@
   </Target>
   <Target Name="PrexoniteScanner">
     <Exec Command="&quot;$(ToolsDirectory)\csflex.exe&quot; --csharp --nested-default-skeleton --nobak $(PrexoniteScannerDefinition)" WorkingDirectory="$(ProjectDir)\Compiler" />
-  </Target>
-  <!-- PxCoco Tool Target -->
-  <Target Name="PxCocoTool" Condition="!Exists('$(PxCoco)')">
-    <MSBuild Projects="$(ProjectDir)..\PxCoco\PxCoco.csproj" Targets="Build" />
   </Target>
 </Project>

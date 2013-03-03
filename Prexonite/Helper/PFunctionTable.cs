@@ -1,6 +1,6 @@
 // Prexonite
 // 
-// Copyright (c) 2011, Christian Klauser
+// Copyright (c) 2013, Christian Klauser
 // All rights reserved.
 // 
 // Redistribution and use in source and binary forms, with or without modification, 
@@ -23,155 +23,122 @@
 //  DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, 
 //  WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING 
 //  IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
-
 using System;
 using System.Collections;
 using System.Collections.Generic;
-using System.Diagnostics;
 using System.IO;
 
 namespace Prexonite
 {
-    /// <summary>
-    ///     Wraps a SymbolicTable&lt;PFunction&gt; to ensure that a function is stored with it's Id as the key.
-    /// </summary>
-    [DebuggerStepThrough]
-    public class PFunctionTable : ICollection<PFunction>
+    public abstract class PFunctionTable : ICollection<PFunction>
     {
-        #region table
+        /// <summary>
+        /// Indicates whether a function with the specified id exists in the table.
+        /// </summary>
+        /// <param name="id">The id to search the table for.</param>
+        /// <returns>True if the table contains a function with the supplied id; false otherwise.</returns>
+        public abstract bool Contains(string id);
 
-        private readonly SymbolTable<PFunction> _table;
+        /// <summary>
+        /// Attempts to retrieve a function with the specified id.
+        /// </summary>
+        /// <param name="id">The id of the function to find.</param>
+        /// <param name="func">The function with a matching id.</param>
+        /// <returns>True if a function was found; false otherwise.</returns>
+        public abstract bool TryGetValue(string id, out PFunction func);
 
-        public PFunctionTable()
-        {
-            _table = new SymbolTable<PFunction>();
-        }
+        /// <summary>
+        /// Looks up indvidual functions in the table.
+        /// </summary>
+        /// <param name="id">The id of the function to look up</param>
+        /// <returns>The function with a matching id, or null if there is no such function in the table.</returns>
+        public abstract PFunction this[string id] { get; }
 
-        public PFunctionTable(int capacity)
-        {
-            _table = new SymbolTable<PFunction>(capacity);
-        }
+        /// <summary>
+        /// Writes a serial representation of this module into the <see cref="TextWriter"/> provided.
+        /// </summary>
+        /// <param name="writer">The text writer to write the representation to.</param>
+        public abstract void Store(TextWriter writer);
 
-        public bool Contains(string id)
-        {
-            return _table.ContainsKey(id);
-        }
+        /// <summary>
+        /// Adds a function to the table. Throws an exception if the slot is occupied.
+        /// </summary>
+        /// <param name="item">The function to add to the table.</param>
+        /// <exception cref="ArgumentException">Function with the same id already exists in the table.</exception>
+        /// <exception cref="ArgumentNullException">item is null.</exception>
+        public abstract void Add(PFunction item);
 
-        public bool TryGetValue(string id, out PFunction func)
-        {
-            return _table.TryGetValue(id, out func);
-        }
+        /// <summary>
+        /// Adds or overrides a function in the table.
+        /// </summary>
+        /// <param name="item">The function to add to the table.</param>
+        /// <exception cref="ArgumentNullException">item is null.</exception>
+        public abstract void AddOverride(PFunction item);
 
-        public PFunction this[string id]
-        {
-            get { return _table.GetDefault(id, null); }
-            set { _table[id] = value; }
-        }
+        /// <summary>
+        /// Removes all functions from the table.
+        /// </summary>
+        public abstract void Clear();
 
-        #endregion
+        /// <summary>
+        /// Determines whether the table contains a specific function.
+        /// </summary>
+        /// <param name="item">The function to search the table for.</param>
+        /// <returns>True if the table contains the supplied function, false otherwise</returns>
+        /// <exception cref="ArgumentNullException">item</exception>
+        public abstract bool Contains(PFunction item);
 
-        #region Storage
+        /// <summary>
+        /// Copies the contents of the function table to the supplied array, starting at the specified index.
+        /// </summary>
+        /// <param name="array">The array to copy the function to.</param>
+        /// <param name="arrayIndex">The index at which to put the first function.</param>
+        /// <remarks>The order in which functions are written to the array is not specified.</remarks>
+        /// <exception cref="ArgumentNullException"><paramref name="array"/> is null</exception>
+        /// <exception cref="ArgumentOutOfRangeException"><paramref name="arrayIndex"/> is negative or not 
+        /// all functions fit into the remaining portion of the array.</exception>
+        public abstract void CopyTo(PFunction[] array, int arrayIndex);
 
-        public void Store(TextWriter writer)
-        {
-            foreach (var kvp in _table)
-                kvp.Value.Store(writer);
-        }
+        /// <summary>
+        /// Determines the number of functions stored in the function table.
+        /// </summary>
+        public abstract int Count { get; }
 
-        #endregion
+        /// <summary>
+        /// Determines whether the function table is read only.
+        /// </summary>
+        public abstract bool IsReadOnly { get; }
 
-        #region ICollection<PFunction> Members
+        /// <summary>
+        /// Removes a specific function from the table. Has no effect if a different function occupies the same slot.
+        /// </summary>
+        /// <param name="item">The function to remove.</param>
+        /// <returns>True if the function was removed; false otherwise</returns>
+        /// <remarks>This function returning false can mean that a) the table contains no function 
+        /// in that slot or b) that the function in that slot is different from the supplied function.</remarks>
+        /// <exception cref="ArgumentNullException">item</exception>
+        public abstract bool Remove(PFunction item);
 
-        public void Add(PFunction item)
-        {
-            if (_table.ContainsKey(item.Id))
-                throw new ArgumentException(
-                    "The function table already contains a function named " + item.Id);
-            _table.Add(item.Id, item);
-        }
+        /// <summary>
+        /// Removes the function in the specified slot.
+        /// </summary>
+        /// <param name="id">The id of the function to remove.</param>
+        /// <returns>True if a function was removed. False otherwise.</returns>
+        /// <exception cref="ArgumentNullException"><paramref name="id"/> is null.</exception>
+        public abstract bool Remove(string id);
 
-        public void AddOverride(PFunction item)
-        {
-            if (_table.ContainsKey(item.Id))
-                _table.Remove(item.Id);
-            _table.Add(item.Id, item);
-        }
-
-        public void Clear()
-        {
-            _table.Clear();
-        }
-
-        public bool Contains(PFunction item)
-        {
-            return _table.ContainsKey(item.Id);
-        }
-
-        public void CopyTo(PFunction[] array, int arrayIndex)
-        {
-            if (_table.Count + arrayIndex > array.Length)
-                throw new ArgumentException("Array to copy functions into is not long enough.");
-
-            var i = arrayIndex;
-            foreach (var kvp in _table)
-            {
-                if (i >= array.Length)
-                    break;
-                array[i++] = kvp.Value;
-            }
-        }
-
-        public int Count
-        {
-            get { return _table.Count; }
-        }
-
-        public bool IsReadOnly
-        {
-            get { return _table.IsReadOnly; }
-        }
-
-        public bool Remove(PFunction item)
-        {
-            if (_table.ContainsKey(item.Id))
-            {
-                _table.Remove(item.Id);
-                return true;
-            }
-            else
-                return false;
-        }
-
-        public bool Remove(string id)
-        {
-            if (_table.ContainsKey(id))
-            {
-                return _table.Remove(id);
-            }
-            else
-                return false;
-        }
-
-        #endregion
-
-        #region IEnumerable<PFunction> Members
-
-        public IEnumerator<PFunction> GetEnumerator()
-        {
-            foreach (var kvp in _table)
-                yield return kvp.Value;
-        }
-
-        #endregion
-
-        #region IEnumerable Members
+        /// <summary>
+        /// Returns an enumerator that iterates through the collection.
+        /// </summary>
+        /// <returns>
+        /// A <see cref="T:System.Collections.Generic.IEnumerator`1"/> that can be used to iterate through the collection.
+        /// </returns>
+        /// <filterpriority>1</filterpriority>
+        public abstract IEnumerator<PFunction> GetEnumerator();
 
         IEnumerator IEnumerable.GetEnumerator()
         {
-            foreach (var kvp in _table)
-                yield return kvp.Value;
+            return GetEnumerator();
         }
-
-        #endregion
     }
 }

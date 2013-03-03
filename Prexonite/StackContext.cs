@@ -1,6 +1,6 @@
 // Prexonite
 // 
-// Copyright (c) 2011, Christian Klauser
+// Copyright (c) 2013, Christian Klauser
 // All rights reserved.
 // 
 // Redistribution and use in source and binary forms, with or without modification, 
@@ -23,9 +23,9 @@
 //  DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, 
 //  WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING 
 //  IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
-
 using System;
 using System.Diagnostics.CodeAnalysis;
+using Prexonite.Modular;
 using Prexonite.Types;
 
 namespace Prexonite
@@ -62,7 +62,7 @@ namespace Prexonite
         /// <returns>True if the exception has been handled, false otherwise.</returns>
         public abstract bool TryHandleException(Exception exc);
 
-        internal bool NextCylce(StackContext lastContext)
+        internal bool _NextCylce(StackContext lastContext)
         {
             return PerformNextCycle(lastContext);
         }
@@ -78,6 +78,8 @@ namespace Prexonite
         ///     Gets or sets the mode of return.
         /// </summary>
         public ReturnMode ReturnMode { get; set; }
+
+        public virtual CentralCache Cache { get { return ParentApplication.Module.Cache; } }
 
         #endregion
 

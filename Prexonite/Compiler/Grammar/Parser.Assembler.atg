@@ -34,15 +34,15 @@ AsmStatementBlock<AstBlock block>
 .
 
 AsmInstruction<AstBlock block>          (.  int arguments = 0;
-                                            string id = null;
-                                            double dblArg = 0.0;
-                                            string insbase = null; string detail = null;
-                                            bool bolArg = false;
+                                            string id;
+                                            double dblArg;
+                                            string insbase; string detail = null;
+                                            bool bolArg;
                                             OpCode code;
                                             bool justEffect = false;
-                                            int values = 0;
-                                            int rotations = 0;
-                                            int index = 0;
+                                            int values;
+                                            int rotations;
+                                            int index;
                                         .)
 =
     //VARIABLE DECLARATION              
@@ -53,13 +53,13 @@ AsmInstruction<AstBlock block>          (.  int arguments = 0;
                                         
                                         (.  //Store variable
                                             target.Function.Variables.Add(id);
-                                            target.Symbols.Add(id, new SymbolEntry(kind, id));
+                                            SmartDeclareLocal(id, kind);
                                         .)
     {   comma
         AsmId<out id>                                        
                                         (.  //Store variable
                                             target.Function.Variables.Add(id);
-                                            target.Symbols.Add(id, new SymbolEntry(kind, id));
+                                            SmartDeclareLocal(id, kind);
                                         .)
     }
 |   //OP ALIAS INSTRUCTIONS
@@ -84,8 +84,8 @@ AsmInstruction<AstBlock block>          (.  int arguments = 0;
                                         (. addLabel(block, id); .)
 |   //NOP/DATA INSTRUCTION
     IF(isAsmInstruction("nop", null))
-    AsmId<out insbase>                  (.  Instruction ins = new Instruction(OpCode.nop); .)
-    [  plus AsmId<out id>               (.  ins.Id = id; .)
+    AsmId<out insbase>                  (.  var ins = new Instruction(OpCode.nop); .)
+    [  plus AsmId<out id>               (.  ins = ins.With(id: id); .)
     ]
                                         (.  addInstruction(block, ins); .)
     
@@ -174,7 +174,7 @@ AsmInstruction<AstBlock block>          (.  int arguments = 0;
     |                                   (.  arguments = 0; .)
     )
     AsmId<out id>
-                                        (.  code = getOpCode(insbase, detail);
+                                        (.  code = getOpCode(insbase, null);
                                             addInstruction(block, new Instruction(code, arguments, id, justEffect));
                                         .)
  
@@ -186,7 +186,7 @@ AsmInstruction<AstBlock block>          (.  int arguments = 0;
     (   dot Integer<out arguments>
     |                                   (.  arguments = 0; .)
     )
-                                        (.  code = getOpCode(insbase, detail);
+                                        (.  code = getOpCode(insbase, null);
                                             addInstruction(block, new Instruction(code, arguments, null, justEffect));
                                         .)   
 
@@ -199,7 +199,7 @@ AsmInstruction<AstBlock block>          (.  int arguments = 0;
     |                                   (.  arguments = 0; .)
     )
     AsmQualid<out id>
-                                        (.  code = getOpCode(insbase, detail);
+                                        (.  code = getOpCode(insbase, null);
                                             addInstruction(block, new Instruction(code, arguments, id, justEffect));
                                         .)
 

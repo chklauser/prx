@@ -1,6 +1,6 @@
 // Prexonite
 // 
-// Copyright (c) 2011, Christian Klauser
+// Copyright (c) 2013, Christian Klauser
 // All rights reserved.
 // 
 // Redistribution and use in source and binary forms, with or without modification, 
@@ -23,8 +23,8 @@
 //  DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, 
 //  WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING 
 //  IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
-
 using System;
+using System.Linq;
 using Prexonite.Types;
 
 namespace Prexonite
@@ -132,73 +132,6 @@ namespace Prexonite
         public override string ToString()
         {
             return "Continuation(" + Function.Id + ")";
-        }
-
-        /// <summary>
-        ///     Determines whether two closures are equal.
-        /// </summary>
-        /// <param name = "a">A closure</param>
-        /// <param name = "b">A closure</param>
-        /// <returns>True, if the two closures use to the same function and the same shared variables; false otherwise.</returns>
-        public static bool operator ==(Continuation a, Continuation b)
-        {
-            if ((object) a == null && (object) b == null)
-                return true;
-            else if ((object) a == null || (object) b == null)
-                return false;
-            else if (ReferenceEquals(a, b))
-                return true;
-            else
-            {
-                if (a._entryOffset != b._entryOffset)
-                    return false;
-                if (!ReferenceEquals(a.Function, b.Function))
-                    return false;
-                if (a.SharedVariables.Length != b.SharedVariables.Length)
-                    return false;
-                for (var i = 0; i < a.SharedVariables.Length; i++)
-                    if (!ReferenceEquals(a.SharedVariables[i], b.SharedVariables[i]))
-                        return false;
-                if (a._state.Count != b._state.Count)
-                    return false;
-                if (!a._state.Equals(b._state))
-                    return false;
-                return true;
-            }
-        }
-
-        /// <summary>
-        ///     Determines whether two closures are not equal.
-        /// </summary>
-        /// <param name = "a">A closure</param>
-        /// <param name = "b">A closure</param>
-        /// <returns>True, if the two closures do not use to the same function and the same shared variables; false otherwise.</returns>
-        public static bool operator !=(Continuation a, Continuation b)
-        {
-            return !(a == b);
-        }
-
-        /// <summary>
-        ///     Determines if the closure is equal to <paramref name = "obj" />.<br />
-        ///     Closures can only be compared to other closures.
-        /// </summary>
-        /// <param name = "obj">Any object.</param>
-        /// <returns>True if <paramref name = "obj" /> is a closure that is equal to the current instance.</returns>
-        public override bool Equals(object obj)
-        {
-            Closure clo = obj as Continuation;
-            if (((object) clo) == null)
-                return false;
-            return this == clo;
-        }
-
-        ///<summary>
-        ///    Returns a hashcode.
-        ///</summary>
-        ///<returns>The function's hashcode.</returns>
-        public override int GetHashCode()
-        {
-            return Function.GetHashCode() ^ _entryOffset;
         }
     }
 }

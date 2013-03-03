@@ -1,6 +1,6 @@
 // Prexonite
 // 
-// Copyright (c) 2011, Christian Klauser
+// Copyright (c) 2013, Christian Klauser
 // All rights reserved.
 // 
 // Redistribution and use in source and binary forms, with or without modification, 
@@ -23,9 +23,11 @@
 //  DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, 
 //  WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING 
 //  IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
-
 using System;
 using System.Diagnostics;
+using JetBrains.Annotations;
+using Prexonite.Compiler.Symbolic;
+using Prexonite.Compiler.Symbolic.Internal;
 using NoDebug = System.Diagnostics.DebuggerNonUserCodeAttribute;
 
 namespace Prexonite.Compiler
@@ -35,21 +37,11 @@ namespace Prexonite.Compiler
     {
         #region Construction
 
-        public LoaderOptions(Engine parentEngine, Application targetApplication)
+        public LoaderOptions(Engine parentEngine, Application targetApplication, SymbolStore symbols = null)
         {
-            if (parentEngine == null)
-                throw new ArgumentNullException("parentEngine");
-            if (targetApplication == null)
-                throw new ArgumentNullException("targetApplication");
-
             _parentEngine = parentEngine;
             _targetApplication = targetApplication;
-            StoreSymbols = true;
-            RegisterCommands = true;
-            ReconstructSymbols = true;
-            Compress = false;
-            UseIndicesLocally = true;
-            StoreSourceInformation = false;
+            _symbols = symbols ?? SymbolStore.Create();
         }
 
         #endregion
@@ -70,17 +62,63 @@ namespace Prexonite.Compiler
             get { return _targetApplication; }
         }
 
-        public bool RegisterCommands { get; set; }
+        [NotNull]
+        private readonly SymbolStore _symbols;
 
-        public bool ReconstructSymbols { get; set; }
+        [NotNull]
+        public SymbolStore Symbols
+        {
+            get { return _symbols; }
+        }
 
-        public bool StoreSymbols { get; set; }
+        private bool? _registerCommands;
+        public bool RegisterCommands
+        {
+            get { return _registerCommands ?? true; }
+            set { _registerCommands = value; }
+        }
 
-        public bool Compress { get; set; }
+        private bool? _reconstructSymbols;
+        public bool ReconstructSymbols
+        {
+            get { return _reconstructSymbols ?? true; }
+            set { _reconstructSymbols = value; }
+        }
 
-        public bool UseIndicesLocally { get; set; }
+        private bool? _storeSymbols;
+        public bool StoreSymbols
+        {
+            get { return _storeSymbols ?? true; }
+            set { _storeSymbols = value; }
+        }
 
-        public bool StoreSourceInformation { get; set; }
+        private bool? _useIndicesLocally;
+        public bool UseIndicesLocally
+        {
+            get { return _useIndicesLocally ?? true; }
+            set { _useIndicesLocally = value; }
+        }
+
+        private bool? _storeSourceInformation;
+        public bool StoreSourceInformation
+        {
+            get { return _storeSourceInformation ?? false; }
+            set { _storeSourceInformation = value; }
+        }
+
+        private bool? _preflightModeEnabled;
+
+        /// <summary>
+        /// Preflight mode causes the parser to abort at the 
+        /// first non-meta construct, giving the user the opportunity 
+        /// to inspect a file's "header" without fully compiling 
+        /// that file.
+        /// </summary>
+        public bool PreflightModeEnabled
+        {
+            get { return _preflightModeEnabled ?? false; }
+            set { _preflightModeEnabled = value; }
+        }
 
         #endregion
 
@@ -89,12 +127,12 @@ namespace Prexonite.Compiler
             if (options == null)
                 throw new ArgumentNullException("options");
 
-            RegisterCommands = options.RegisterCommands;
-            ReconstructSymbols = options.ReconstructSymbols;
-            StoreSymbols = options.StoreSymbols;
-            Compress = options.Compress;
-            UseIndicesLocally = options.UseIndicesLocally;
-            StoreSourceInformation = options.StoreSourceInformation;
+            RegisterCommands = _registerCommands ?? options.RegisterCommands;
+            ReconstructSymbols = _reconstructSymbols ?? options.ReconstructSymbols;
+            StoreSymbols = _storeSymbols ?? options.StoreSymbols;
+            UseIndicesLocally = _useIndicesLocally ?? options.UseIndicesLocally;
+            StoreSourceInformation = _storeSourceInformation ?? options.StoreSourceInformation;
+            PreflightModeEnabled = _preflightModeEnabled ?? options.PreflightModeEnabled;
         }
     }
 }

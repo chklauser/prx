@@ -1,6 +1,6 @@
 // Prexonite
 // 
-// Copyright (c) 2011, Christian Klauser
+// Copyright (c) 2013, Christian Klauser
 // All rights reserved.
 // 
 // Redistribution and use in source and binary forms, with or without modification, 
@@ -23,17 +23,19 @@
 //  DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, 
 //  WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING 
 //  IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
-
 #region Namespace Imports
 
 using System;
 using System.Collections.Generic;
 using System.Diagnostics;
+using System.Globalization;
 using System.Reflection;
 using System.Runtime.Serialization;
 using Prexonite.Commands;
 using Prexonite.Commands.Core;
+using Prexonite.Modular;
 using Prexonite.Types;
+using Debug = System.Diagnostics.Debug;
 using NoDebug = System.Diagnostics.DebuggerNonUserCodeAttribute;
 
 #endregion
@@ -73,7 +75,7 @@ namespace Prexonite
 
             if (
                 !(suppressInitialization || implementation.ParentApplication._SuppressInitialization))
-                implementation.ParentApplication.EnsureInitialization(parentEngine, implementation);
+                implementation.ParentApplication.EnsureInitialization(parentEngine);
 
             _parentEngine = parentEngine;
             _implementation = implementation;
@@ -253,6 +255,9 @@ namespace Prexonite
         [DebuggerStepThrough]
         public void Push(PValue val)
         {
+            if(_stack.Count > 2000)
+                throw new PrexoniteInvalidStackException(message: string.Format("Stack-overflow in Prexonite code: {0}", this));
+
             if (_useVirtualStackInstead)
                 _useVirtualStackInstead = false;
             else
@@ -360,7 +365,7 @@ namespace Prexonite
                 var ins = codeBase[_pointer++];
 
 #if Verbose
-            Console.Write("/* " + (_pointer-1).ToString().PadLeft(4, '0') + " */ " + ins);
+            Console.Write("/* " + (_pointer-1).ToString(CultureInfo.InvariantCulture).PadLeft(4, '0') + " */ " + ins);
             PValue val;
 #endif
 
@@ -368,6 +373,7 @@ namespace Prexonite
                 var justEffect = ins.JustEffect;
                 PValue[] argv;
                 var id = ins.Id;
+                var moduleName = ins.ModuleName;
                 PValue left;
                 PValue right;
                 var t = ins.GenericArgument as PType;
@@ -379,6 +385,8 @@ namespace Prexonite
                 MemberInfo member;
 
                 #region OPCODE HANDLING
+
+                Application targetApplication;
 
                 switch (ins.OpCode)
                 {
@@ -433,7 +441,8 @@ namespace Prexonite
                         Push(CreateNativePValue(_localVariableArray[argc]));
                         break;
                     case OpCode.ldr_glob:
-                        if (ParentApplication.Variables.TryGetValue(id, out pvar))
+                        targetApplication = _getTargetApplication(moduleName);
+                        if (targetApplication.Variables.TryGetValue(id, out pvar))
                             Push(CreateNativePValue(pvar));
                         else
                             throw new PrexoniteException
@@ -442,11 +451,12 @@ namespace Prexonite
                                     (
                                         "Cannot load reference to global variable {0} in application {1}.",
                                         id,
-                                        ParentApplication.Id));
+                                        targetApplication.Module.Name));
                         break;
                     case OpCode.ldr_func:
-                        if (ParentApplication.Functions.Contains(id))
-                            Push(CreateNativePValue(ParentApplication.Functions[id]));
+                        targetApplication = _getTargetApplication(moduleName);
+                        if (targetApplication.Functions.TryGetValue(id, out func))
+                            Push(CreateNativePValue(func));
                         else
                             throw new PrexoniteException
                                 (
@@ -454,7 +464,7 @@ namespace Prexonite
                                     (
                                         "Cannot load reference to function {0} in application {1}.",
                                         id,
-                                        ParentApplication.Id));
+                                        targetApplication.Module.Name));
                         break;
                     case OpCode.ldr_cmd:
                         if (ParentEngine.Commands.Contains(id))
@@ -480,6 +490,11 @@ namespace Prexonite
                             ins.GenericArgument = t;
                         }
                         Push(CreateNativePValue(t));
+                        break;
+
+                    case OpCode.ldr_mod:
+                        Debug.Assert(moduleName != null);
+                        Push(CreateNativePValue(moduleName));
                         break;
 
                         #endregion //LOAD REFERENCE
@@ -531,11 +546,11 @@ namespace Prexonite
 
                         //LOAD GLOBAL VARIABLE
                     case OpCode.ldglob:
-                        var app = ParentApplication;
+                        targetApplication = _getTargetApplication(moduleName);
 
-                        if (!app.Variables.TryGetValue(id, out pvar))
+                        if (!targetApplication.Variables.TryGetValue(id, out pvar))
                             throw _globalVariableDoesNotExistException(id);
-                        app.EnsureInitialization(ParentEngine, pvar);
+                        targetApplication.EnsureInitialization(ParentEngine);
 #if Verbose
                     val = pvar.Value;
                     Console.Write("=" + _toDebug(val));
@@ -545,7 +560,9 @@ namespace Prexonite
 #endif
                         break;
                     case OpCode.stglob:
-                        if (!ParentApplication.Variables.TryGetValue(id, out pvar))
+                        targetApplication = _getTargetApplication(moduleName);
+
+                        if (!targetApplication.Variables.TryGetValue(id, out pvar))
                             throw _globalVariableDoesNotExistException(id);
                         pvar.Value = Pop();
                         break;
@@ -574,7 +591,7 @@ namespace Prexonite
 
                     case OpCode.newclo:
                         var vars = ins.GenericArgument as string[];
-                        func = ParentApplication.Functions[id];
+                        func = _getTargetApplication(moduleName).Functions[id];
                         if (vars == null)
                         {
                             MetaEntry[] entries;
@@ -895,10 +912,10 @@ namespace Prexonite
                         goto doIndloc;
                     case OpCode.indglob:
                         _fillArgs(argc, out argv);
-                        app = ParentApplication;
-                        if (!ParentApplication.Variables.TryGetValue(id, out pvar))
+                        targetApplication = _getTargetApplication(moduleName);
+                        if (!targetApplication.Variables.TryGetValue(id, out pvar))
                             throw _globalVariableDoesNotExistException(id);
-                        app.EnsureInitialization(ParentEngine, pvar);
+                        targetApplication.EnsureInitialization(ParentEngine);
                         left = pvar.Value;
 
 #if Verbose
@@ -937,12 +954,12 @@ namespace Prexonite
                         if (ParentEngine.CacheFunctions)
                         {
                             func = (ins.GenericArgument as PFunction) ??
-                                ParentApplication.Functions[id];
+                                _getTargetApplication(moduleName).Functions[id];
                             ins.GenericArgument = func;
                         }
                         else
                         {
-                            func = ParentApplication.Functions[id];
+                            func = _getTargetApplication(moduleName).Functions[id];
                         }
                         if (func == null)
                             throw PrexoniteRuntimeException.CreateRuntimeException
@@ -977,7 +994,7 @@ namespace Prexonite
 #endif
 
 #if Verbose
-                    Console.Write("\n#PSH: " + id + "(");
+                    Console.Write("\n#PSH: {0}/{1},{2}(", id, ParentApplication.Module.Name.Id, ParentApplication.Module.Name.Version);
                     foreach (PValue arg in argv)
                         Console.Write(_toDebug(arg) + ", ");
                     Console.WriteLine(")");
@@ -1217,6 +1234,29 @@ namespace Prexonite
             } while (!needToReturn);
 
             return _pointer < codeLength;
+        }
+
+        private Application _getTargetApplication(ModuleName moduleName)
+        {
+            Application targetApplication;
+            if (moduleName == null)
+            {
+                targetApplication = ParentApplication;
+            }
+            else if (!ParentApplication.Compound.TryGetApplication(moduleName, out targetApplication))
+            {
+                throw _moduleNotFoundException(moduleName);
+            }
+            return targetApplication;
+        }
+
+        private Exception _moduleNotFoundException(ModuleName moduleName)
+        {
+            return
+                new PrexoniteException(
+                    string.Format(
+                        "Cannot find an instance of the module {0} in compound with module {1}.",
+                        moduleName, ParentApplication.Module.Name));
         }
 
         private PrexoniteException _globalVariableDoesNotExistException(string id)

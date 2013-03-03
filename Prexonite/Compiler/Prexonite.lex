@@ -43,7 +43,7 @@ partial
 %char
 %unicode
 %ignorecase
-%implements IScanner
+%implements Prexonite.Internal.IScanner
 
 %eofval{
     return tok(Parser._EOF);
@@ -92,7 +92,9 @@ Noise               = "/*" ~"*/" | "//" ~{LineBreak} | {WhiteSpace}+
 
      {Noise}    { /* Comment/Whitespace: ignore */ }
        
-     {Integer} ( "." {Integer} {Exponent}? | {Exponent} ) { return tok(Parser._real, yytext()); }
+     {Integer} "." {Integer}  {Exponent} { return tok(Parser._real, yytext()); } //definite real
+     {Integer} "." {Integer}             { return tok(Parser._realLike, yytext()); } //could also be version literal
+     {Integer} "." {Integer} "." {Integer} ("." {Integer})? { return tok(Parser._version, yytext()); }
      
      {Integer}                  |
      0x{HexDigit}+              { return tok(Parser._integer, yytext()); }
@@ -102,11 +104,16 @@ Noise               = "/*" ~"*/" | "//" ~{LineBreak} | {WhiteSpace}+
      "var"  { return tok(Parser._var); }
      "ref"  { return tok(Parser._ref); }
      
-     {Identifier} "::" { string ns = yytext();
+     "$"	{Identifier} "::" { string ns = yytext();
+								return tok(Parser._ns, ns.Substring(1,ns.Length-3)); }
+	 
+	 {Identifier} "::" { string ns = yytext();
                          return tok(Parser._ns, ns.Substring(0, ns.Length-2)); }
                          
      //any identifier
+	 
      "$"    {Identifier} { return tok(Parser._id, yytext().Substring(1)); }
+     "$\""               { buffer.Length = 0; PushState(String); return tok(Parser._anyId); }
      
      {Identifier} { return tok(checkKeyword(yytext()), yytext()); }
      
@@ -195,7 +202,7 @@ Noise               = "/*" ~"*/" | "//" ~{LineBreak} | {WhiteSpace}+
     "\\"t       { buffer.Append("\t"); }
     "\\"x {HexDigit} {HexDigit}? {HexDigit}? {HexDigit}? |
     "\\"u {HexDigit} {HexDigit}  {HexDigit}  {HexDigit}  |
-    "\\"U {HexDigit} {HexDigit}  {HexDigit}  {HexDigit}  {HexDigit}  {HexDigit}  {HexDigit}  {HexDigit} { buffer.Append(unescape_char(yytext())); }
+    "\\"U {HexDigit} {HexDigit}  {HexDigit}  {HexDigit}  {HexDigit}  {HexDigit}  {HexDigit}  {HexDigit} { buffer.Append(_unescapeChar(yytext())); }
     //No need to escape $, but possible.
     "$" | "\\$"         { buffer.Append("$"); }    
 }
@@ -219,7 +226,7 @@ Noise               = "/*" ~"*/" | "//" ~{LineBreak} | {WhiteSpace}+
     "\\"t       { buffer.Append("\t"); }
     "\\"x {HexDigit} {HexDigit}? {HexDigit}? {HexDigit}? |
     "\\"u {HexDigit} {HexDigit}  {HexDigit}  {HexDigit}  |
-    "\\"U {HexDigit} {HexDigit}  {HexDigit}  {HexDigit}  {HexDigit}  {HexDigit}  {HexDigit}  {HexDigit} { buffer.Append(unescape_char(yytext())); }
+    "\\"U {HexDigit} {HexDigit}  {HexDigit}  {HexDigit}  {HexDigit}  {HexDigit}  {HexDigit}  {HexDigit} { buffer.Append(_unescapeChar(yytext())); }
     "\\$"       { buffer.Append("$"); }
     "$" {Identifier} &? 
                     {   string clipped;

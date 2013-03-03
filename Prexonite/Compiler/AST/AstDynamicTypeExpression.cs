@@ -1,6 +1,6 @@
 // Prexonite
 // 
-// Copyright (c) 2011, Christian Klauser
+// Copyright (c) 2013, Christian Klauser
 // All rights reserved.
 // 
 // Redistribution and use in source and binary forms, with or without modification, 
@@ -23,7 +23,6 @@
 //  DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, 
 //  WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING 
 //  IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
-
 using System;
 using System.Collections.Generic;
 using System.Text;
@@ -31,18 +30,17 @@ using Prexonite.Types;
 
 namespace Prexonite.Compiler.Ast
 {
-    public class AstDynamicTypeExpression : AstNode,
-                                            IAstType,
+    public class AstDynamicTypeExpression : AstTypeExpr,
                                             IAstHasExpressions
     {
-        public List<IAstExpression> Arguments = new List<IAstExpression>();
+        public List<AstExpr> Arguments = new List<AstExpr>();
         public string TypeId;
 
         public AstDynamicTypeExpression(string file, int line, int column, string typeId)
             : base(file, line, column)
         {
             if (typeId == null)
-                throw new ArgumentNullException("TypeId cannot be null");
+                throw new ArgumentNullException("typeId");
             TypeId = typeId;
         }
 
@@ -53,16 +51,16 @@ namespace Prexonite.Compiler.Ast
 
         #region IAstHasExpressions Members
 
-        public IAstExpression[] Expressions
+        public AstExpr[] Expressions
         {
             get { return Arguments.ToArray(); }
         }
 
         #endregion
 
-        #region IAstExpression Members
+        #region AstExpr Members
 
-        public bool TryOptimize(CompilerTarget target, out IAstExpression expr)
+        public override bool TryOptimize(CompilerTarget target, out AstExpr expr)
         {
             expr = null;
 
@@ -71,7 +69,7 @@ namespace Prexonite.Compiler.Ast
             buffer.Append("(");
 
             //Optimize arguments
-            IAstExpression oArg;
+            AstExpr oArg;
             foreach (var arg in Arguments.ToArray())
             {
                 oArg = _GetOptimizedNode(target, arg);
@@ -114,11 +112,13 @@ namespace Prexonite.Compiler.Ast
             return true;
         }
 
-        protected override void DoEmitCode(CompilerTarget target)
+        protected override void DoEmitCode(CompilerTarget target, StackSemantics stackSemantics)
         {
             foreach (var expr in Arguments)
-                expr.EmitCode(target);
-            target.Emit(this, OpCode.newtype, Arguments.Count, TypeId);
+                expr.EmitCode(target,stackSemantics);
+
+            if(stackSemantics == StackSemantics.Value)
+                target.Emit(Position,OpCode.newtype, Arguments.Count, TypeId);
         }
 
         #endregion

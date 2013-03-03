@@ -1,6 +1,6 @@
 ﻿// Prexonite
 // 
-// Copyright (c) 2011, Christian Klauser
+// Copyright (c) 2013, Christian Klauser
 // All rights reserved.
 // 
 // Redistribution and use in source and binary forms, with or without modification, 
@@ -24,42 +24,4 @@
 //  WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING 
 //  IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-build does require(@"psr\macro.pxs");
-
-macro select\sub
-{
-    var perform = ast\cmd(SI.get, Prexonite::Engine.SelectAlias);
-    perform.Arguments.Add(ast\const(true));
-    perform.Arguments.AddRange(var args);
-    
-    return call\macro([call\sub\interpret(perform),context.IsJustEffect]);
-}
-
-macro chans
-{
-    var block = ast("BlockExpression");
-    
-    foreach(var arg in var args)
-    {
-        if(not arg.\implements("Prexonite.Compiler.Ast.AstGetSet"))
-            throw "Target of chans must be an lvalue!";
-            
-        var setArg = arg.GetCopy;
-        setArg.Call = SI.set;
-        
-        setArg.Arguments.Add(ast\cmd(SI.get, Prexonite::Engine.ChanAlias));
-        
-        block.Add(setArg);
-    }
-        
-    block.Expression = 
-        if(arg is Null)
-            ast\const(null)
-        else
-            arg;
-    
-    return block;
-}
-
-declare select as select\cmd;
-declare select\sub as select;
+build does require(@"psr\macro.pxs",@"psr\impl\csp.pxs");

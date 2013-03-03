@@ -1,6 +1,6 @@
 // Prexonite
 // 
-// Copyright (c) 2011, Christian Klauser
+// Copyright (c) 2013, Christian Klauser
 // All rights reserved.
 // 
 // Redistribution and use in source and binary forms, with or without modification, 
@@ -23,7 +23,6 @@
 //  DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, 
 //  WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING 
 //  IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
-
 #region Namespace Imports
 
 using System;
@@ -342,18 +341,50 @@ namespace Prx
 
         private static void _reportErrors(Loader ldr)
         {
+            var originalColor = Console.ForegroundColor;
+
             if (ldr.ErrorCount > 0)
             {
-                var originalColor = Console.ForegroundColor;
-                Console.ForegroundColor = ConsoleColor.Red;
-                Console.Error.WriteLine("Errors during compilation detected. Aborting.");
-                foreach (var err in ldr.Errors)
-                    Console.WriteLine(err);
-
-                Console.ForegroundColor = originalColor;
-                Environment.Exit(1);
-                return;
+                try
+                {
+#if DEBUG
+                    _reportWarnings(ldr, originalColor);
+#endif
+                    Console.ForegroundColor = ConsoleColor.Red;
+                    Console.Error.WriteLine("Errors during compilation detected. Aborting.");
+                    foreach (var err in ldr.Errors)
+                        Console.WriteLine(err);
+                }
+                finally
+                {
+                    Console.ForegroundColor = originalColor;
+                    Environment.Exit(1);
+                }
             }
+            else
+            {
+#if DEBUG
+                try
+                {
+                    _reportWarnings(ldr, originalColor);
+                }
+                finally
+                {
+                    Console.ForegroundColor = originalColor;
+                }
+#endif
+            }
+        }
+
+        private static void _reportWarnings(Loader ldr, ConsoleColor originalColor)
+        {
+            Console.ForegroundColor = originalColor;
+            foreach (var message in ldr.Infos)
+                Console.WriteLine(message);
+
+            Console.ForegroundColor = ConsoleColor.Yellow;
+            foreach (var warning in ldr.Warnings)
+                Console.WriteLine(warning);
         }
     }
 }

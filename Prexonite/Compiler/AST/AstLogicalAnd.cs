@@ -1,6 +1,6 @@
 // Prexonite
 // 
-// Copyright (c) 2011, Christian Klauser
+// Copyright (c) 2013, Christian Klauser
 // All rights reserved.
 // 
 // Redistribution and use in source and binary forms, with or without modification, 
@@ -23,9 +23,9 @@
 //  DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, 
 //  WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING 
 //  IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
-
 using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 
 namespace Prexonite.Compiler.Ast
 {
@@ -35,19 +35,19 @@ namespace Prexonite.Compiler.Ast
             string file,
             int line,
             int col,
-            IAstExpression leftCondition,
-            IAstExpression rightCondition)
+            AstExpr leftCondition,
+            AstExpr rightCondition)
             : base(file, line, col, leftCondition, rightCondition)
         {
         }
 
         internal AstLogicalAnd(
-            Parser p, IAstExpression leftCondition, IAstExpression rightCondition)
+            Parser p, AstExpr leftCondition, AstExpr rightCondition)
             : base(p, leftCondition, rightCondition)
         {
         }
 
-        protected override void DoEmitCode(CompilerTarget target)
+        protected override void DoEmitCode(CompilerTarget target, StackSemantics stackSemantics)
         {
             var labelNs = @"And\" + Guid.NewGuid().ToString("N");
             var trueLabel = @"True\" + labelNs;
@@ -56,12 +56,21 @@ namespace Prexonite.Compiler.Ast
 
             EmitCode(target, trueLabel, falseLabel);
 
-            target.EmitLabel(this, trueLabel);
-            target.EmitConstant(this, true);
-            target.EmitJump(this, evalLabel);
-            target.EmitLabel(this, falseLabel);
-            target.EmitConstant(this, false);
-            target.EmitLabel(this, evalLabel);
+            if (stackSemantics == StackSemantics.Value)
+            {
+                target.EmitLabel(Position, trueLabel);
+                target.EmitConstant(Position, true);
+                target.EmitJump(Position, evalLabel);
+                target.EmitLabel(Position, falseLabel);
+                target.EmitConstant(Position, false);
+                target.EmitLabel(Position, evalLabel);
+            }
+            else
+            {
+                Debug.Assert(stackSemantics == StackSemantics.Effect);
+                target.EmitLabel(Position, trueLabel);
+                target.EmitLabel(Position, falseLabel);
+            }
         }
 
         //Called by either AstLogicalAnd or AstLogicalOr
@@ -76,28 +85,28 @@ namespace Prexonite.Compiler.Ast
                 if (or != null)
                 {
                     or.EmitCode(target, nextLabel, falseLabel);
-                    //Resolve pending jumps to Next
-                    target.EmitLabel(this, nextLabel);
+                    //ResolveOperator pending jumps to Next
+                    target.EmitLabel(Position, nextLabel);
                     target.FreeLabel(nextLabel);
                     //Future references of to nextLabel will be resolved in the next iteration
                 }
                 else
                 {
-                    expr.EmitCode(target);
-                    target.EmitJumpIfFalse(this, falseLabel);
+                    expr.EmitValueCode(target);
+                    target.EmitJumpIfFalse(Position, falseLabel);
                 }
             }
-            target.EmitJump(this, trueLabel);
+            target.EmitJump(Position, trueLabel);
         }
 
-        #region IAstExpression Members
+        #region AstExpr Members
 
         #endregion
 
         #region Partial application
 
-        protected override IAstExpression CreatePrefix(ISourcePosition position,
-            IEnumerable<IAstExpression> clauses)
+        protected override AstExpr CreatePrefix(ISourcePosition position,
+            IEnumerable<AstExpr> clauses)
         {
             return CreateConjunction(position, clauses);
         }

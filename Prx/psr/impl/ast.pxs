@@ -1,0 +1,424 @@
+﻿// Prexonite
+// 
+// Copyright (c) 2013, Christian Klauser
+// All rights reserved.
+// 
+// Redistribution and use in source and binary forms, with or without modification, 
+//  are permitted provided that the following conditions are met:
+// 
+//     Redistributions of source code must retain the above copyright notice, 
+//          this list of conditions and the following disclaimer.
+//     Redistributions in binary form must reproduce the above copyright notice, 
+//          this list of conditions and the following disclaimer in the 
+//          documentation and/or other materials provided with the distribution.
+//     The names of the contributors may be used to endorse or 
+//          promote products derived from this software without specific prior written permission.
+// 
+// THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND 
+//  ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED 
+//  WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED. 
+//  IN NO EVENT SHALL THE COPYRIGHT HOLDER OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT, 
+//  INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES 
+//  (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, 
+//  DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, 
+//  WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING 
+//  IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+
+is psr_ast_pxs_open;
+is compiler_loaded;
+
+Import
+{
+    System,
+    Prexonite,
+    Prexonite::Types,
+    Prexonite::Compiler,
+    Prexonite::Compiler::Ast
+};
+
+function ast3\withPos(factory,type) [compiler]
+{
+	var args;
+	var targs = args >> skip(2);
+	
+	if(factory is null)
+		throw "AST factory cannot be null.";
+
+    if(type is null)
+        throw "ast3(type, ...) the parameter `type` cannot be null.";
+		
+	//return call\member(factory,type, targs);
+    return call(factory,[type],targs);
+}
+
+function ast\withPos(type, file, line, column) [is compiler;]
+{
+    if(type is null)
+        throw "ast(type, file, line, column, ...) the parameter `type` cannot be null.";
+
+    var args;
+    var targs = args >> skip(4);
+
+    file ??= "--COMPILER-HOOK--";
+    file ~= String;
+    
+    line ??= -1;
+    line ~= Int;
+    
+    column ??= -1;
+    column~= Int;
+    
+    return 
+        asm(ldr.eng)
+        .CreatePType("Object(\"Prexonite.Compiler.Ast.Ast$(type)\")")
+        .Construct(([file,line,column]+(targs >> all))~Object<"Prexonite.PValue[]">)
+        .self;
+}
+
+function ast2\withPos(type, file, line, column) [compiler]
+{
+	var args;
+    var targs = args >> skip(4);
+
+    file ??= "--COMPILER-HOOK--";
+    file ~= String;
+    
+    line ??= -1;
+    line ~= Int;
+    
+    column ??= -1;
+    column~= Int;
+	
+	var pos = new Prexonite::Compiler::SourcePosition(file,line,column);
+	
+	return
+		asm(ldr.eng)
+		.CreatePType("Object(\"Prexonite.Compiler.Ast.Ast$(type)\")")
+        .Construct(([pos]+(targs >> all))~Object<"Prexonite.PValue[]">)
+        .self;
+}
+
+function ast\simple(type) [is compiler;]
+{
+    return call(->ast\withPos,[type,null,null,null] + (var args >> skip(1) >> all));
+}
+
+function ast2\simple(type) [is compiler;]
+{
+    return call(->ast2\withPos,[type,null,null,null] + (var args >> skip(1) >> all));
+}
+
+function ast3\simple(factory,type) [compiler]
+{
+    return call(->ast3\withPos,[factory,type,Prexonite::Compiler::NoSourcePosition.Instance] + (var args >> skip(2) >> all));
+}
+
+function subBlocks(block) [is compiler;] =
+    if(block.\implements("Prexonite.Compiler.Ast.IAstHasBlocks"))   
+        ~List.CreateFromList(block~::IAstHasBlocks.Blocks)
+    else
+        [];
+
+function uniqueIdCounter(x)[compiler]
+{
+    static var counter ??= 0;
+    if((var args).Count > 0)
+        counter = x;
+    return counter;
+}
+function uniqueId(verb) [is compiler;] = "uniq\\" + verb + uniqueIdCounter++;
+
+declare(
+    isFunctionCall = error(here,"PSR.Obsolete",@"isFunctionCall is deprecated. Use checking functions from the psr\\macro instead.",null)
+);
+        
+function isMemberAccess(id, node)[is compiler;] =
+        node is ::AstGetSetMemberAccess And
+        Prexonite::Engine.StringsAreEqual(node.Id, id.ToString);
+        
+function localMeta(key, context)[is compiler;] =
+    if(context.Meta.ContainsKey(key))
+        context.Meta[key]
+    else
+        context.ParentApplication.Meta[key];
+        
+function create_SI [is compiler;]
+{
+    //Note: don't use struct here, because struct.pxs depends on ast.pxs!
+    var SI = new Structure;
+    var si_lvar = ::SymbolInterpretations.LocalObjectVariable;
+    var si_lref = ::SymbolInterpretations.LocalReferenceVariable;
+    var si_gvar = ::SymbolInterpretations.GlobalObjectVariable;
+    var si_gref = ::SymbolInterpretations.GlobalReferenceVariable;
+    var si_func = ::SymbolInterpretations.Function;
+    var si_cmd = ::SymbolInterpretations.Command;
+    var si_mcmd = ::SymbolInterpretations.MacroCommand;
+    SI.\\("lvar") = (_,id) => if(id is null) 
+            si_lvar
+        else 
+            ::SymbolEntry.LocalObjectVariable(id);
+    SI.\\("lref") = (_,id) => if(id is null) 
+            si_lref
+        else 
+            ::SymbolEntry.LocalReferenceVariable(id);
+    SI.\\("gvar") = (self,id,m) =>
+        if(id is ::SymbolEntry)
+            if(self.is_gvar(id.Interpretation))
+                id
+            else
+                throw "Supplied symbol entry ($id) is not a global object variable, but was used in SI.gvar."
+        else if(var args.Count >= 3 and id is String)
+            new ::SymbolEntry(si_gvar, id, m)
+        else if(var args.Count == 1)
+            si_gvar
+        else
+            throw "Global variable symbol entry requires a module name.";
+    SI.\\("gref") = (self,id,m) => 
+        if(id is ::SymbolEntry)
+            if(self.is_gref(id.Interpretation))
+                id
+            else
+                throw "Supplied symbol entry ($id) is not a global reference variable, but was used in SI.gref."
+        else if(var args.Count >= 3 and id is String)
+            new ::SymbolEntry(si_gref, id, m)
+        else if(var args.Count == 1)
+            si_gref
+        else
+            throw "Global variable symbol entry requires a module name.";;
+    SI.\\("func") = (self,func,m) => 
+        if(func is ::PFunction)
+            new ::SymbolEntry(si_func, func.Id, func.ParentApplication.Module.Name)
+        else if(func is ::SymbolEntry)
+            if(self.is_func(func.Interpretation))
+                func
+            else
+                throw "Supplied symbol entry ($func) is not a function, but was used in SI.func."
+        else if(var args.Count >= 3 and func is String)
+            new ::SymbolEntry(si_func, func, m)
+        else
+            si_func;
+    SI.\\("cmd") =  (_,id) => if(id is null) 
+            si_cmd
+        else 
+            ::SymbolEntry.Command(id);
+    SI.\\("mcmd") = (_,id) => if(id is null) 
+            si_mcmd
+        else 
+            ::SymbolEntry.MacroCommand(id);
+    SI.\("get") = Prexonite::Types::PCall.Get;
+    SI.\("set") = Prexonite::Types::PCall.Set;
+	SI.\("ret\\exit") = Prexonite::Compiler::Ast::ReturnVariant.Exit;
+	SI.\("ret\\set") = Prexonite::Compiler::Ast::ReturnVariant.Set;
+	SI.\("ret\\continue") = Prexonite::Compiler::Ast::ReturnVariant.Continue;
+	SI.\("ret\\break") = Prexonite::Compiler::Ast::ReturnVariant.Break;
+    SI.\\("eq") = (self, l, r) => l~Int == r~Int;
+    SI.\\("is_lvar") = (self, s) => s~Int == self.lvar~Int;
+    SI.\\("is_lref") = (self, s) => s~Int == self.lref~Int;
+    SI.\\("is_gvar") = (self, s) => s~Int == self.gvar~Int;
+    SI.\\("is_gref") = (self, s) => s~Int == self.gref~Int;
+    SI.\\("is_func") = (self, s) => s~Int == self.func~Int;
+    SI.\\("is_cmd") = (self, s) => s~Int == self.cmd~Int;
+    SI.\\("is_mcmd") = (self, s) => s~Int == self.mcmd~Int;
+    SI.\\("is_obj") = (self, s) => self.is_lvar(s) || self.is_gvar(s);
+    SI.\\("is_ref") = (self, s) => self.is_lref(s) || self.is_gref(s);
+    SI.\\("is_global") = (self, s) => self.is_gvar(s) || self.is_gref(s);
+    SI.\\("is_local") = (self, s) => self.is_lvar(s) || self.is_lref(s);
+    SI.\\("make_global") = (self, s) => 
+        if(self.is_obj(s))
+            self.gvar
+        else if(self.is_ref(s))
+            self.gref
+        else
+            throw "$s cannot be made global.";            
+    SI.\\("make_local") = (self, s) => 
+        if(self.is_obj(s))
+            self.lvar
+        else if(self.is_ref(s))
+            self.lref
+        else
+            throw "$s cannot be made local.";
+    SI.\\("make_obj") = (self, s) =>
+        if(self.is_local(s))
+            self.lvar
+        else if(self.is_global(s))
+            self.gvar
+        else
+            throw "$s cannot be made object.";
+    SI.\\("make_ref") = (self, s) =>
+        if(self.is_local(s))
+            self.lref
+        else if(self.is_global(s))
+            self.gref
+        else
+            throw "$s cannot be made reference.";
+
+    SI.\("no_location") = Prexonite::Compiler::NoSourcePosition.Instance;
+            
+    //Macro specific
+    //Internal
+    function create_i(p)
+    {
+        var i = new Structure;
+        i.\("parent") = p;
+        i.\\("gvar") = (self,id) =>
+            if(id is not string)
+                "SI.i.gvar(id) requires an id~String, and not $(boxed(id))"
+            else 
+                self.parent.gvar(id,null);
+        i.\\("gref") = (self,id) =>
+            if(id is not string)
+                "SI.i.gref(id) requires an id~String, and not $(boxed(id))"
+            else 
+                self.parent.gref(id,null);
+        i.\\("func") = (self,id) =>
+            if(id is not string)
+                "SI.i.func(id) requires an id~String, and not $(boxed(id))"
+            else 
+                self.parent.func(id,null);
+        return i;
+    }
+    SI.\("i") = new i(SI); 
+    
+    var m = new Structure;
+    m.\\("func") = SI.func(?1,?2); //skip self argument
+    m.\\("cmd")  = SI.mcmd(?1);
+    m.\\("is_func") = (self, s) => s~Int == self.func~Int;
+    m.\\("is_cmd") = (self, s) => s~Int == self.cmd~Int;
+    m.\("i") = new i(m);
+    SI.\("m") = m;
+
+    var e = new Structure;
+    e.\\("func") = (self,arg1,arg2) => 
+        if(arg1 is ::PFunction)
+            ~Object<"Prexonite.Modular.EntityRef+Function">.Create(arg1.Id,arg1.ParentApplication.Module.Name)
+        else if(arg1 is not Null and arg2 is not Null)
+            ~Object<"Prexonite.Modular.EntityRef+Function">.Create(arg1,arg2)
+        else
+            throw "SI.e.func(function_reference) or SI.e.func(id,module_name). Null values are not acceptable.";
+    e.\\("is_func") = (self,entity) => entity is Object<"Prexonite.Modular.EntityRef+Function">;
+    e.\\("cmd") = (self,id) => 
+        if(id is not null)
+            ~Object<"Prexonite.Modular.EntityRef+Command">.Create(id)
+        else
+            throw "SI.e.cmd(id), id must not be null.";
+    e.\\("is_cmd") = (self,entity) => entity is Object<"Prexonite.Modular.EntityRef+Command">;
+    e.\\("mcmd") = (self,arg1) => 
+        if(arg1 is Prexonite::Compiler::Macro::MacroCommand)
+            ~Object<"Prexonite.Modular.EntityRef+MacroCommand">.Create(arg1.Id)
+        else if(arg1 is not Null)
+            ~Object<"Prexonite.Modular.EntityRef+MacroCommand">.Create(arg1)
+        else
+            throw "SI.e.mcmd(id), id must not be null.";
+    e.\\("is_mcmd") = (self,entity) => entity is Object<"Prexonite.Modular.EntityRef+MacroCommand">;
+    e.\\("lvar") = (self,id) => 
+        if(id is not null)
+            ~Object<"Prexonite.Modular.EntityRef+Variable+Local">.Create(id)
+        else
+            throw "SI.e.lvar(id), id must not be null.";
+    e.\\("is_lvar") = (self,entity) => entity is Object<"Prexonite.Modular.EntityRef+Variable+Local">;
+    e.\\("gvar") = (self,id,mname) => 
+        if(id is not null and mname is not null)
+            ~Object<"Prexonite.Modular.EntityRef+Variable+Global">.Create(id,mname)
+        else
+            throw "SI.e.gvar(id,module_name), neither id nor module_name must be null.";
+    e.\\("is_gvar") = (self,entity) => entity is Object<"Prexonite.Modular.EntityRef+Variable+Global">;
+    SI.\("e") = e;
+
+    var s = new Structure;
+    s.\\("entity") = (self,entity,pos) => Prexonite::Compiler::Symbolic::Symbol.CreateReference(entity,pos);
+    s.\\("deref") = var deref = (self,inner,pos) => Prexonite::Compiler::Symbolic::Symbol.CreateDereference(inner,pos);
+    s.\\("dereference") = deref;
+    s.\\("nil") = (self,pos) => Prexonite::Compiler::Symbolic::Symbol.CreateNil(pos);
+    s.\\("expand") = (self,inner,pos) => Prexonite::Compiler::Symbolic::Symbol.CreateExpand(inner,pos);
+    s.\\("message") = (self,message,inner,pos) => Prexonite::Compiler::Symbolic::Symbol.CreateMessage(message,inner,pos);
+    SI.\("s") = s;
+    
+    return SI;
+}
+
+function SI(x)[compiler]
+{
+    static var field ??= new SI;
+    return field;
+}
+   
+//
+//  Removal of compiler related functions and variables from the final application
+//
+
+function unload_compiler(GetLoader\cmd)
+{
+    //unload_compiler removes itself and is thus not marked [is compiler;]
+    //  Note: to simplify things, TRY NOT TO USE INNER FUNCTIONS HERE.
+    declare command GetLoader;
+    GetLoader\cmd ??= ->GetLoader;
+    ref GetLoader = GetLoader\cmd;
+    var app = GetLoader.ParentApplication;
+    
+    //Variables
+    var comp_vars = [];
+    foreach(var kvp in app.Variables)
+        if(kvp.Value.Meta["compiler"].Switch)
+            comp_vars[] = kvp;
+            
+    //Functions
+    var ordinalIc = System::StringComparison.OrdinalIgnoreCase;
+    var comp_funcs = [];
+    
+    //Build graph
+    var graph = {};
+    foreach(var func in app.Functions)
+        graph[func.Id.ToUpperInvariant] = [];
+    
+    var parentFunctionKey = Prexonite::PFunction.ParentFunctionKey;
+    foreach(var func in app.Functions)
+        if(func.Meta.ContainsKey(parentFunctionKey) and graph.ContainsKey((var parentId = func.Meta[parentFunctionKey].Text.ToUpperInvariant)))
+            graph[parentId][] = func;
+            
+    //Recursively mark all compiler functions and their inner functions
+    function mark_comp_func(func)
+    {
+        var fid = func.Id.ToUpperInvariant;    
+        comp_funcs[] = func;
+                
+        foreach(var inner in graph[fid] ?? [])
+            mark_comp_func(inner);
+    }
+    
+    //Mark and collect    
+    foreach(var func in app.Functions)
+        if(func.Meta["compiler"].Switch)
+        {
+            comp_funcs[] = func;
+            mark_comp_func(func);
+        }
+            
+    //Remove symbols
+    var revSet = {};
+    var revRefSet = {};
+    foreach(var comp_func in comp_funcs)
+        revSet.Add(comp_func.Id: SI.func);
+    foreach(var comp_var in comp_vars)
+    {
+        revSet.Add(comp_var.Key:  SI.gvar);
+        revRefSet.Add(comp_var.Key: SI.gref);
+    }   
+    function get_symbols(reverseSet) =
+        GetLoader.Symbols >> where(kvp => SI.eq(reverseSet[kvp.Value.Id],kvp.Value.Interpretation)) >> map(?.Key);
+    var comp_syms = append(get_symbols(revSet), get_symbols(revRefSet)) >> all;
+    var ldrSyms = GetLoader.Symbols;
+    foreach(var comp_sym in comp_syms)
+        ldrSyms.Remove(comp_sym);
+    ldrSyms.Remove("unload_compiler");
+    
+    //Remove physical functions and variables
+    foreach(var comp_func in comp_funcs)
+        app.Functions.Remove(comp_func);
+    foreach(var comp_var in comp_vars)
+        app.Variables.Remove(comp_var.Key);
+        
+    app.Functions.Remove(->unload_compiler);
+    app.Functions.Remove(->mark_comp_func.Function.Id);
+    app.Functions.Remove(->get_symbols.Function.Id);
+    app.Meta["compiler_loaded"] = false;
+    }

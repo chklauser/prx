@@ -1,6 +1,6 @@
 // Prexonite
 // 
-// Copyright (c) 2011, Christian Klauser
+// Copyright (c) 2013, Christian Klauser
 // All rights reserved.
 // 
 // Redistribution and use in source and binary forms, with or without modification, 
@@ -23,7 +23,6 @@
 //  DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, 
 //  WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING 
 //  IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
-
 using System;
 using System.Diagnostics;
 using Prexonite.Types;
@@ -31,14 +30,14 @@ using NoDebug = System.Diagnostics.DebuggerNonUserCodeAttribute;
 
 namespace Prexonite.Compiler.Ast
 {
-    public class AstGetSetStatic : AstGetSet, IAstPartiallyApplicable
+    public class AstGetSetStatic : AstGetSetImplBase, IAstPartiallyApplicable
     {
-        public IAstType TypeExpr { get; private set; }
+        public AstTypeExpr TypeExpr { get; private set; }
         private readonly string _memberId;
 
         [DebuggerStepThrough]
         public AstGetSetStatic(
-            string file, int line, int col, PCall call, IAstType typeExpr, string memberId)
+            string file, int line, int col, PCall call, AstTypeExpr typeExpr, string memberId)
             : base(file, line, col, call)
         {
             if (typeExpr == null)
@@ -50,7 +49,7 @@ namespace Prexonite.Compiler.Ast
         }
 
         [DebuggerStepThrough]
-        internal AstGetSetStatic(Parser p, PCall call, IAstType typeExpr, string memberId)
+        internal AstGetSetStatic(Parser p, PCall call, AstTypeExpr typeExpr, string memberId)
             : this(p.scanner.File, p.t.line, p.t.col, call, typeExpr, memberId)
         {
         }
@@ -60,69 +59,72 @@ namespace Prexonite.Compiler.Ast
             get { return _memberId; }
         }
 
-        public override bool TryOptimize(CompilerTarget target, out IAstExpression expr)
+        public override bool TryOptimize(CompilerTarget target, out AstExpr expr)
         {
-            TypeExpr = (IAstType) _GetOptimizedNode(target, TypeExpr);
+            TypeExpr = (AstTypeExpr) _GetOptimizedNode(target, TypeExpr);
             return base.TryOptimize(target, out expr);
         }
 
-        protected override void EmitGetCode(CompilerTarget target, bool justEffect)
+        protected override void EmitGetCode(CompilerTarget target, StackSemantics stackSemantics)
         {
             var constType = TypeExpr as AstConstantTypeExpression;
 
+            var justEffect = stackSemantics == StackSemantics.Effect;
             if (constType != null)
             {
                 EmitArguments(target);
-                target.EmitStaticGetCall(this,
-                    Arguments.Count, constType.TypeExpression, _memberId, justEffect);
+                target.EmitStaticGetCall(Position, Arguments.Count, constType.TypeExpression, _memberId, justEffect);
             }
             else
             {
-                TypeExpr.EmitCode(target);
-                target.EmitConstant(this, _memberId);
+                TypeExpr.EmitValueCode(target);
+                target.EmitConstant(Position, _memberId);
                 EmitArguments(target);
-                target.EmitGetCall(this, Arguments.Count + 1, PType.StaticCallFromStackId,
-                    justEffect);
+                target.EmitGetCall(Position, Arguments.Count + 1, PType.StaticCallFromStackId, justEffect);
             }
         }
 
+
+        /// <summary>
+        /// Warning: cannot handle set-expressions, use <see cref="EmitSetCode(Prexonite.Compiler.CompilerTarget,Prexonite.Compiler.Ast.StackSemantics)"/> instead.
+        /// </summary>
+        /// <param name="target"></param>
         protected override void EmitSetCode(CompilerTarget target)
         {
-            EmitSetCode(target, true);
+            EmitSetCode(target, StackSemantics.Effect);
         }
 
-        private void EmitSetCode(CompilerTarget target, bool justEffect)
+        protected virtual void EmitSetCode(CompilerTarget target, StackSemantics stackSemantics)
         {
             var constType = TypeExpr as AstConstantTypeExpression;
-
+            var justEffect = stackSemantics == StackSemantics.Effect;
             if (constType != null)
             {
                 EmitArguments(target, !justEffect, 0);
-                target.EmitStaticSetCall(this,
-                    Arguments.Count, constType.TypeExpression + "::" + _memberId);
+                target.EmitStaticSetCall(Position, Arguments.Count, constType.TypeExpression + "::" + _memberId);
             }
             else
             {
-                TypeExpr.EmitCode(target);
-                target.EmitConstant(this, _memberId);
+                TypeExpr.EmitValueCode(target);
+                target.EmitConstant(Position, _memberId);
                 EmitArguments(target, !justEffect, 2);
                 //type.StaticCall\FromStack(memberId, args...)
-                target.EmitSetCall(this, Arguments.Count + 1, PType.StaticCallFromStackId);
+                target.EmitSetCall(Position, Arguments.Count + 1, PType.StaticCallFromStackId);
             }
         }
 
-        protected override void EmitCode(CompilerTarget target, bool justEffect)
+        protected override void DoEmitCode(CompilerTarget target, StackSemantics stackSemantics)
         {
             //Do not yet emit arguments.
             if (Call == PCall.Get)
-                EmitGetCode(target, justEffect);
+                EmitGetCode(target, stackSemantics);
             else
-                EmitSetCode(target, justEffect);
+                EmitSetCode(target, stackSemantics);
         }
 
         public override AstGetSet GetCopy()
         {
-            AstGetSet copy = new AstGetSetStatic(File, Line, Column, Call, TypeExpr, _memberId);
+            var copy = new AstGetSetStatic(File, Line, Column, Call, TypeExpr, _memberId);
             CopyBaseMembers(copy);
             return copy;
         }
@@ -133,18 +135,19 @@ namespace Prexonite.Compiler.Ast
             var ctorArgc = this.EmitConstructorArguments(target, argv);
             var constTypeExpr = TypeExpr as AstConstantTypeExpression;
             if (constTypeExpr != null)
-                target.EmitConstant(constTypeExpr, constTypeExpr.TypeExpression);
+                target.EmitConstant(constTypeExpr.Position, constTypeExpr.TypeExpression);
             else
-                TypeExpr.EmitCode(target);
-            target.EmitConstant(this, (int) Call);
-            target.EmitConstant(this, _memberId);
-            target.EmitCommandCall(this, ctorArgc + 3, Engine.PartialStaticCallAlias);
+                TypeExpr.EmitValueCode(target);
+            target.EmitConstant(Position, (int) Call);
+            target.EmitConstant(Position, _memberId);
+            target.EmitCommandCall(Position, ctorArgc + 3, Engine.PartialStaticCallAlias);
         }
 
         public override string ToString()
         {
+            string name = Enum.GetName(typeof (PCall), Call);
             return string.Format("{0} {1}::{2}({3})",
-                Enum.GetName(typeof (PCall), Call).ToLowerInvariant(), TypeExpr, MemberId, Arguments);
+                name == null ? "-" : name.ToLowerInvariant(), TypeExpr, MemberId, Arguments);
         }
     }
 }

@@ -1,6 +1,6 @@
 // Prexonite
 // 
-// Copyright (c) 2011, Christian Klauser
+// Copyright (c) 2013, Christian Klauser
 // All rights reserved.
 // 
 // Redistribution and use in source and binary forms, with or without modification, 
@@ -23,12 +23,13 @@
 //  DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, 
 //  WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING 
 //  IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
-
 using System;
 using System.Collections.Generic;
 using NUnit.Framework;
 using Prexonite;
 using Prexonite.Compiler;
+using Prexonite.Compiler.Symbolic;
+using Prexonite.Compiler.Symbolic.Compatibility;
 
 namespace Prx.Tests
 {
@@ -62,7 +63,15 @@ namespace Prx.Tests
 
         #region Helper
 
-        protected internal List<Instruction> getInstructions(string assemblerCode)
+        protected SymbolEntry LookupSymbolEntry(SymbolStore store, string symbolicId)
+        {
+            Symbol symbol;
+            Assert.IsTrue(store.TryGet(symbolicId, out symbol),
+                          string.Format("Expected to find symbol {0} but there is no such entry.", symbolicId));
+            return symbol.ToSymbolEntry();
+        }
+
+        protected  List<Instruction> GetInstructions(string assemblerCode)
         {
             var app = new Application("getInstructions");
             var opt = new LoaderOptions(engine, app);
@@ -82,12 +91,28 @@ namespace Prx.Tests
 
         protected internal Loader _compile(string input)
         {
-            var opt = new LoaderOptions(engine, target) {UseIndicesLocally = false};
-            var ldr = new Loader(opt);
-            ldr.LoadFromString(input);
+            var ldr = _justCompile(input);
+
+            _writeErrorsWarnings(ldr);
+
+            Assert.AreEqual(0, ldr.ErrorCount, "Test code did not compile without errors.");
+            return ldr;
+        }
+
+        protected Loader CompileWithErrors(string input)
+        {
+            var ldr = _justCompile(input);
+
+            _writeErrorsWarnings(ldr);
+
+            Assert.That(ldr.ErrorCount,Is.GreaterThan(0),"Expected code to contain errors.");
+            return ldr;
+        }
+
+        private void _writeErrorsWarnings(Loader ldr)
+        {
             foreach (var line in ldr.Errors)
                 Console.Error.WriteLine(line);
-            Assert.AreEqual(0, ldr.ErrorCount, "Test code did not compile without errors.");
 
             if (ldr.Warnings.Count > 0)
             {
@@ -99,32 +124,39 @@ namespace Prx.Tests
             }
 
             Console.WriteLine(target.StoreInString());
+        }
+
+        private Loader _justCompile(string input)
+        {
+            var opt = new LoaderOptions(engine, target) {UseIndicesLocally = false};
+            var ldr = new Loader(opt);
+            ldr.LoadFromString(input);
             return ldr;
         }
 
-        protected internal void _expect(string assemblerCode)
+        protected internal void Expect(string assemblerCode)
         {
-            _expect(target.Meta[Application.EntryKey], assemblerCode);
+            Expect(target.Meta[Application.EntryKey], assemblerCode);
         }
 
-        protected internal void _expect(string functionId, string assemblerCode)
+        protected internal void Expect(string functionId, string assemblerCode)
         {
             var func = target.Functions[functionId];
             if (func == null)
                 throw new ArgumentException(string.Format("No function with the id {0} exists",
                     functionId));
             var actual = func.Code;
-            _expect(actual, assemblerCode);
+            Expect(actual, assemblerCode, functionId);
         }
 
-        protected internal void _expect(PFunction function, string assemblerCode)
+        protected internal void Expect(PFunction function, string assemblerCode)
         {
-            _expect(function.Code, assemblerCode);
+            Expect(function.Code, assemblerCode, function.Id);
         }
 
-        protected internal void _expect(List<Instruction> actual, string assemblerCode)
+        protected internal void Expect(List<Instruction> actual, string assemblerCode, string functionName)
         {
-            var expected = getInstructions(assemblerCode);
+            var expected = GetInstructions(assemblerCode);
             int i;
             for (i = 0; i < actual.Count; i++)
             {
@@ -133,15 +165,16 @@ namespace Prx.Tests
                         expected.Count,
                         actual.Count,
                         "Expected and actual instruction count missmatch detected at actual instruction " +
-                            actual[i]);
+                            actual[i] + " in function " + functionName);
                 Assert.AreEqual(
                     expected[i],
                     actual[i],
                     String.Format(
-                        "Instructions at address {0} do not match (e{1},a{2})",
+                        "Instructions at address {0} do not match in function {3}, (instruction count expected {1}, actual {2})",
                         i,
                         expected.Count,
-                        actual.Count));
+                        actual.Count,
+                        functionName));
             }
             Assert.AreEqual(
                 expected.Count,

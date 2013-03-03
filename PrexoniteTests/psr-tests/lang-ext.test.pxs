@@ -1,10 +1,12 @@
  
 under_test {
-    @"psr\pattern.pxs",
-    @"psr\prop.pxs",
-    @"psr\test\meta_macro.pxs",
-    @"psr\macro.pxs",
+	@"psr\impl\ast.pxs",
+	{@"psr\impl\macro.pxs",		@"psr\impl\ast.pxs"},
+    {@"psr\impl\struct.pxs",	@"psr\impl\ast.pxs",@"psr\impl\macro.pxs"},
+    {@"psr\impl\pattern.pxs",	@"psr\impl\ast.pxs",@"psr\impl\macro.pxs",@"psr\impl\struct.pxs"},
+    {@"psr\impl\prop.pxs",		@"psr\impl\ast.pxs",@"psr\impl\macro.pxs"},
 };
+test_dependencies {@"psr\test\meta_macro.pxs"};
 
 function test_con[test]
 {
@@ -44,7 +46,7 @@ function test_dcon[test]
     var c = 17;
     var s = new Structure;
     var mem_called = false;
-    s.\\("mem") = (this,z) => {
+    s.\\("mem") = (self,z) => {
         assert_eq(mem_called,false,"s.mem already called");
         mem_called = true;
         assert_eq(z,c,"mem arg doesn't match");
@@ -57,6 +59,7 @@ function test_dcon[test]
     
     assert_eq(x,a,"Key doesn't match #2");
     assert_eq(y,b,"Value doesn't match #2");
+    assert(mem_called,"s.mem has not been called");
     
 }
 
@@ -83,7 +86,7 @@ function test_prop_capset\impl(isset,x)
 
 macro test_prop_capset
 {
-    var fc = ast\func(context.Call, ->test_prop_capset\impl.Id);
+    var fc = ast\call(context.Call, macro\entity(test_prop_capset\impl));
     fc.Arguments.Add(ast\const(SI.eq(context.Call,SI.set)));
     fc.Arguments.AddRange(var args);
     context.Block.Expression = fc;

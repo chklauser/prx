@@ -1,3 +1,28 @@
+// Prexonite
+// 
+// Copyright (c) 2013, Christian Klauser
+// All rights reserved.
+// 
+// Redistribution and use in source and binary forms, with or without modification, 
+//  are permitted provided that the following conditions are met:
+// 
+//     Redistributions of source code must retain the above copyright notice, 
+//          this list of conditions and the following disclaimer.
+//     Redistributions in binary form must reproduce the above copyright notice, 
+//          this list of conditions and the following disclaimer in the 
+//          documentation and/or other materials provided with the distribution.
+//     The names of the contributors may be used to endorse or 
+//          promote products derived from this software without specific prior written permission.
+// 
+// THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND 
+//  ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED 
+//  WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED. 
+//  IN NO EVENT SHALL THE COPYRIGHT HOLDER OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT, 
+//  INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES 
+//  (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, 
+//  DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, 
+//  WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING 
+//  IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 using System;
 using System.Collections.Generic;
 using NUnit.Framework;
@@ -6,6 +31,7 @@ using Prexonite.Compiler;
 using Prexonite.Compiler.Ast;
 using Prexonite.Types;
 using Prx.Tests;
+using System.Linq;
 
 namespace PrexoniteTests.Tests
 {
@@ -34,46 +60,50 @@ function func0
     static sobj1;
 }
 ";
-            LoaderOptions opt = new LoaderOptions(engine, target);
-            opt.UseIndicesLocally = false;
-            Loader ldr = new Loader(opt);
+            var opt = new LoaderOptions(engine, target) {UseIndicesLocally = false};
+            var ldr = new Loader(opt);
             ldr.LoadFromString(input1);
+            foreach (var message in ldr.Errors)
+            {
+                Console.WriteLine(message);
+            }
             Assert.AreEqual(0, ldr.ErrorCount, "Errors during compilation.");
 
-            //No instructions have been emitted
-            Assert.AreEqual(0, ldr.FunctionTargets["func0"].Function.Code.Count);
+            // We allow up to two instructions (`return sobj1`) to accomodate the
+            //  relaxed treatment of variable declarations in Prexonite 2
+            Assert.That(ldr.FunctionTargets["func0"].Code.Count, Is.LessThanOrEqualTo(2));
 
             CompilerTarget tar = ldr.FunctionTargets["func0"];
 
             Assert.AreEqual(
-                new SymbolEntry(SymbolInterpretations.LocalObjectVariable, "obj0"),
-                tar.Symbols["obj0"]);
+                new SymbolEntry(SymbolInterpretations.LocalObjectVariable, "obj0", null),
+                LookupSymbolEntry(tar.Symbols, "obj0"));
             Assert.IsTrue(tar.Function.Variables.Contains("obj0"));
             Assert.AreEqual(
-                new SymbolEntry(SymbolInterpretations.LocalObjectVariable, "obj1"),
-                tar.Symbols["obj1"]);
+                new SymbolEntry(SymbolInterpretations.LocalObjectVariable, "obj1", null),
+                LookupSymbolEntry(tar.Symbols, "obj1"));
             Assert.IsTrue(tar.Function.Variables.Contains("obj1"));
             Assert.AreEqual(
-                new SymbolEntry(SymbolInterpretations.LocalObjectVariable, "obj2"),
-                tar.Symbols["obj2"]);
+                new SymbolEntry(SymbolInterpretations.LocalObjectVariable, "obj2", null),
+                LookupSymbolEntry(tar.Symbols, "obj2"));
             Assert.IsTrue(tar.Function.Variables.Contains("obj2"));
 
             Assert.AreEqual(
-                new SymbolEntry(SymbolInterpretations.LocalReferenceVariable, "func1"),
-                tar.Symbols["func1"]);
+                new SymbolEntry(SymbolInterpretations.LocalReferenceVariable, "func1", null),
+                LookupSymbolEntry(tar.Symbols, "func1"));
             Assert.IsTrue(tar.Function.Variables.Contains("func1"));
             Assert.AreEqual(
-                new SymbolEntry(SymbolInterpretations.LocalReferenceVariable, "ifunc0"),
-                tar.Symbols["ifunc0"]);
+                new SymbolEntry(SymbolInterpretations.LocalReferenceVariable, "ifunc0", null),
+                LookupSymbolEntry(tar.Symbols, "ifunc0"));
             Assert.IsTrue(tar.Function.Variables.Contains("ifunc0"));
             Assert.AreEqual(
-                new SymbolEntry(SymbolInterpretations.LocalReferenceVariable, "cor0"),
-                tar.Symbols["cor0"]);
+                new SymbolEntry(SymbolInterpretations.LocalReferenceVariable, "cor0", null),
+                LookupSymbolEntry(tar.Symbols, "cor0"));
             Assert.IsTrue(tar.Function.Variables.Contains("cor0"));
 
             Assert.AreEqual(
-                new SymbolEntry(SymbolInterpretations.GlobalObjectVariable, "gobj0"),
-                tar.Symbols["gobj0"]);
+                new SymbolEntry(SymbolInterpretations.GlobalObjectVariable, "gobj0", target.Module.Name),
+                LookupSymbolEntry(tar.Symbols, "gobj0"));
             Assert.IsFalse(
                 tar.Function.Variables.Contains("gobj0"),
                 "\"declare var <id>;\" only declares a global variable.");
@@ -81,8 +111,8 @@ function func0
                 ldr.Options.TargetApplication.Variables.ContainsKey("gobj0"),
                 "\"global <id>;\" only declares a global variable.");
             Assert.AreEqual(
-                new SymbolEntry(SymbolInterpretations.GlobalObjectVariable, "gobj1"),
-                tar.Symbols["gobj1"]);
+                new SymbolEntry(SymbolInterpretations.GlobalObjectVariable, "gobj1", target.Module.Name),
+                LookupSymbolEntry(tar.Symbols, "gobj1"));
             Assert.IsFalse(
                 tar.Function.Variables.Contains("gobj1"),
                 "\"declare var <id>;\" only declares a global variable.");
@@ -91,13 +121,13 @@ function func0
                 "\"declare var <id>;\" only declares a global variable.");
 
             Assert.AreEqual(
-                new SymbolEntry(SymbolInterpretations.GlobalObjectVariable, "func0\\static\\sobj0"),
-                tar.Symbols["sobj0"]);
+                new SymbolEntry(SymbolInterpretations.GlobalObjectVariable, "func0\\static\\sobj0", target.Module.Name),
+                LookupSymbolEntry(tar.Symbols, "sobj0"));
             Assert.IsTrue(
                 ldr.Options.TargetApplication.Variables.ContainsKey("func0\\static\\sobj0"));
             Assert.AreEqual(
-                new SymbolEntry(SymbolInterpretations.GlobalObjectVariable, "func0\\static\\sobj1"),
-                tar.Symbols["sobj1"]);
+                new SymbolEntry(SymbolInterpretations.GlobalObjectVariable, "func0\\static\\sobj1", target.Module.Name),
+                LookupSymbolEntry(tar.Symbols, "sobj1"));
             Assert.IsTrue(
                 ldr.Options.TargetApplication.Variables.ContainsKey("func0\\static\\sobj1"));
         }
@@ -137,12 +167,9 @@ function instruction {}
 
             //instruction
             i++;
-            Assert.IsInstanceOf(typeof(AstGetSetSymbol), block[i]);
-            Assert.AreEqual(
-                SymbolInterpretations.Function, ((AstGetSetSymbol) block[i]).Interpretation);
-            Assert.AreEqual("instruction", ((AstGetSetSymbol) block[i]).Id);
-            Assert.AreEqual(PCall.Get, ((AstGetSetSymbol) block[i]).Call);
-            Assert.AreEqual(0, ((AstGetSetSymbol) block[i]).Arguments.Count);
+            Assert.IsInstanceOf(typeof(AstIndirectCall), block[i]);
+            Assert.AreEqual(PCall.Get, ((AstGetSet) block[i]).Call);
+            Assert.AreEqual(0, ((AstGetSet) block[i]).Arguments.Count);
 
             //goto fith
             i++;
@@ -156,12 +183,9 @@ function instruction {}
 
             //instruction
             i++;
-            Assert.IsInstanceOf(typeof(AstGetSetSymbol), block[i]);
-            Assert.AreEqual(
-                SymbolInterpretations.Function, ((AstGetSetSymbol) block[i]).Interpretation);
-            Assert.AreEqual("instruction", ((AstGetSetSymbol) block[i]).Id);
-            Assert.AreEqual(PCall.Get, ((AstGetSetSymbol) block[i]).Call);
-            Assert.AreEqual(0, ((AstGetSetSymbol) block[i]).Arguments.Count);
+            Assert.IsInstanceOf(typeof(AstIndirectCall), block[i]);
+            Assert.AreEqual(PCall.Get, ((AstGetSet)block[i]).Call);
+            Assert.AreEqual(0, ((AstGetSet)block[i]).Arguments.Count);
 
             //label fourth
             i++;
@@ -211,7 +235,7 @@ function main
 }
 ";
             _compile(input1);
-            _expect(@"
+            Expect(@"
 @func.0 func1
 
 ldc.int 1
@@ -245,7 +269,7 @@ function main
 
             _compile(@input1);
 
-            _expect(
+            Expect(
                 @"
 ldc.int  1
 stloc    x
@@ -258,7 +282,9 @@ stloc    y
 ldloc    x
 ldloc    y
 add
+dup      1
 stloc    x
+ret.val
 ");
         }
 
@@ -279,7 +305,7 @@ function func0
     return null;
 }");
    
-                _expect("func0",
+                Expect("func0",
                     @"
 //x = 1
 ldc.int  1
@@ -330,7 +356,7 @@ function func0
 
             List<Instruction> actual = target.Functions["func0"].Code;
             List<Instruction> expected =
-                getInstructions(
+                GetInstructions(
                     @"
 ret.exit
 ldloc   x
@@ -387,7 +413,7 @@ function test\static
 }
 ");
 
-            _expect(
+            Expect(
                 @"test\static",
                 @"
  ldc.string  ""Hello World""
@@ -465,7 +491,7 @@ function conditions
 }
 ");
 
-            _expect(
+            Expect(
                 @"
 var x
 var y
@@ -536,7 +562,7 @@ function main
     asm nop+end;
 }
 ");
-            _expect(
+            Expect(
                 @"
 var u var v var w var x var z
 
@@ -594,7 +620,7 @@ Beginning:; asm nop+Beginning;
     do action1; while ( ( u And v ) Or x);
 }
 ");
-            _expect(
+            Expect(
                 @"
 var u
 var v
@@ -690,7 +716,7 @@ function main
     asm nop+END;
 }
 ");
-            _expect(
+            Expect(
                 @"
 var     x
 var     y
@@ -792,7 +818,7 @@ function main(x)
 }
 ");
 
-            _expect(
+            Expect(
                 @"
  ldloc   x
  jump.t  secondLevel
@@ -826,7 +852,7 @@ function main(id)
 }
 ");
 
-            _expect(@"
+            Expect(@"
 ldc.string  ""Hello ""
 ldloc       id
 add
@@ -847,7 +873,7 @@ function main(str, idx)
     return null;
 }
 ");
-            _expect(@"
+            Expect(@"
  ldloc   str
  ldloc   idx
  get.1   """"
@@ -883,7 +909,7 @@ function main
     if(3 == x) asm inc x;
 }
 ");
-            _expect(
+            Expect(
                 @"
 var x
 ldc.int 4
@@ -956,7 +982,7 @@ function main does
 }
 ");
 
-            _expect(
+            Expect(
                 @"
 var i
 var j
@@ -1058,8 +1084,8 @@ label cond      ldloc   i
                 jump.t  begin
 label end       
 ";
-            _expect("main", asmInput);
-            _expect("main_extended", asmInput);
+            Expect("main", asmInput);
+            Expect("main_extended", asmInput);
         }
 
         [Test]
@@ -1087,7 +1113,7 @@ label end
          }
     }
 ");
-            _expect(
+            Expect(
                 @"
 var cnt
 var element
@@ -1154,7 +1180,7 @@ function main
     return null;
 }
 ");
-            _expect(
+            Expect(
                 @"
 ldc.string  ""Hello""
 @cmd.1       print
@@ -1190,7 +1216,7 @@ function main
             string enum1 = code[3].Id ?? "No_ID_at_3";
             string enum2 = code[24].Id ?? "No_ID_at_23";
 
-            _expect(
+            Expect(
                 string.Format(
                     @"
 var lst
@@ -1270,7 +1296,7 @@ function main()
     return null;
 }
 ");
-            _expect(@"
+            Expect(@"
 ldglob  ekoe
 @cmd.1   print
 ldc.null
@@ -1285,46 +1311,46 @@ ret.val
                 @"
 declare function f, g, h;
 
-ref gprime = ->g;
+ref g' = ->g;
 
 function main
 {
-    var hprime = ->h;
-    ref fprime = ->f;
+    var h' = ->h;
+    ref f' = ->f;
 
-    ref primes = ~List.Create(->f, ->gprime, hprime);    
-    ref hprime;
+    ref primes = ~List.Create(->f, ->g', h');    
+    ref h';
 
-    print = fprime;
-    print = gprime;
-    print = hprime;
+    print = f';
+    print = g';
+    print = h';
     print = primes;
 
     return null;
 }
 ");
-            _expect(
+            Expect(
                 @"
-var fprime
-//declare var gprime
-var hprime
+var f'
+//declare var g'
+var h'
 
 ldr.func    h
-stloc       hprime
+stloc       h'
 ldr.func    f
-stloc       fprime
+stloc       f'
 
 ldr.func    f
-ldglob      gprime
-ldloc       hprime
+ldglob      g'
+ldloc       h'
 sget.3      ""List::Create""
 stloc       primes
 
-indloc.0    fprime
+indloc.0    f'
 @cmd.1      print
-indglob.0   gprime
+indglob.0   g'
 @cmd.1      print
-indloc.0    hprime
+indloc.0    h'
 @cmd.1      print
 indloc.0    primes
 @cmd.1      print
@@ -1346,7 +1372,7 @@ function main(var arg)
     return null;
 }
 ");
-            _expect(
+            Expect(
                 @"
 ldloc       arg
 check.const ""Object(\""System.Text.StringBuilder\"")""
@@ -1388,10 +1414,10 @@ function main()
     var w = x => { var d = x+2; return d * 4; };
 }
 ");
-            _expect(@"main\0", @"ldc.int 5861 ret.value");
-            _expect(@"main\1", @"ldc.int 2 ldloc x mul ret.value");
-            _expect(@"main\2", @"ldloc x ldloc y add indloc.1 z ret.val");
-            _expect(
+            Expect(@"main\0", @"ldc.int 5861 ret.value");
+            Expect(@"main\1", @"ldc.int 2 ldloc x mul ret.value");
+            Expect(@"main\2", @"ldloc x ldloc y add indloc.1 z ret.val");
+            Expect(
                 @"main\3",
                 @"var d ldloc x ldc.int 2 add stloc d ldloc d ldc.int 4 mul ret.val");
         }
@@ -1411,7 +1437,7 @@ function main()
 }
 ");
 
-            _expect(@"main\0", @"
+            Expect(@"main\0", @"
 ldloc   x
 ldloc   a
 add
@@ -1421,7 +1447,7 @@ ret.value
             Assert.AreEqual(1, func.Meta[PFunction.SharedNamesKey].List.Length);
             Assert.AreEqual("a", func.Meta[PFunction.SharedNamesKey].List[0].Text);
 
-            _expect(@"main\1", @"
+            Expect(@"main\1", @"
 @indloc.0  a
 ldnull
 ret.val
@@ -1457,7 +1483,7 @@ function main
             _expectSharedVariables(@"main\N10", "a");
             _expectSharedVariables(@"main\N21");
 
-            _expect(
+            Expect(
                 @"
 var         a
 var         N1
@@ -1502,7 +1528,7 @@ function main()
     return null;
 }
 ");
-            _expect(
+            Expect(
                 @"
 ldr.func main\0 //no need for closure here
 stloc   f
@@ -1546,7 +1572,7 @@ function main()
 }
 ");
 
-            _expect(
+            Expect(
                 @"
 ldr.func    main\0 //no need for a closure here
 stloc       fobj
@@ -1591,7 +1617,7 @@ function main()
 }
 ");
 
-            _expect(
+            Expect(
                 @"
 var x,a,b,c
 ldc.string  ""a""
@@ -1646,7 +1672,7 @@ function main()
     return null;
 }
 ");
-            _expect(
+            Expect(
                 @"
 var x,a,b,c
 
@@ -1677,7 +1703,7 @@ function main()
 }
 ");
 
-            _expect(
+            Expect(
                 @"
 var x,a,b,c
 
@@ -1711,7 +1737,7 @@ function main()
     return null;
 }
 ");
-            _expect(
+            Expect(
                 @"
 ldc.string ""AB""
 cmd.0       a
@@ -1771,8 +1797,8 @@ function mainv(x)
 label else      ldloc   b
 label endif     ret.value
 ";
-            _expect("max", emax);
-            _expect("maxv", emax);
+            Expect("max", emax);
+            Expect("maxv", emax);
 
             const string emain =
                 @"
@@ -1816,8 +1842,8 @@ label endif4    //optimized://  jump            endif3
 label endif3    ret.value
 ";
 
-            _expect("main", emain);
-            _expect("mainv", emain);
+            Expect("main", emain);
+            Expect("mainv", emain);
         }
 
         [Test]
@@ -1851,7 +1877,7 @@ function main
 }
 ");
 
-            _expect(
+            Expect(
                 @"
 var x,y,z
 
@@ -1904,7 +1930,7 @@ function main(x)
     return ""There is $(transform(""no"")) spoon"";
 }   
 ");
-            _expect(
+            Expect(
                 @"
 ldc.string  ""There is ""
 ldc.string  ""no""
@@ -1926,7 +1952,7 @@ function main(a,b,c)
     return null;
 }
 ");
-            _expect(
+            Expect(
                 @"
 newobj.0    ""Structure(\""a\"",\""b\"",\""r\"",\""c\"")""
 stloc       str
@@ -1941,7 +1967,7 @@ ret.val
             _compile(@"
 function main(x) = 1 / x;
 ");
-            _expect(@"
+            Expect(@"
 ldc.int 1
 ldloc   x
 div
@@ -1962,7 +1988,7 @@ function main()
 }
 ");
 
-            _expect(
+            Expect(
                 @"
 var x,y
 cmd.0   list
@@ -2005,7 +2031,7 @@ function main()
     return null;
 }
 ");
-            _expect(
+            Expect(
                 @"
 var lst, oneToFive, even
 ldr.func    subrange
@@ -2021,7 +2047,7 @@ ldnull
 ret.val 
 ");
 
-            _expect(
+            Expect(
                 @"subrange",
                 @"
 var lst, index, count,i
@@ -2066,7 +2092,7 @@ function main()
     return null;
 }
 ");
-            _expect(@"
+            Expect(@"
 ldglob  A
 @cmd.1  println
 ldnull
@@ -2097,7 +2123,7 @@ function main()
 }
 ");
 
-            _expect(
+            Expect(
                 @"
 var skip
 ldr.func  main\skip0  //the nested function does not need to be a closure, so it is not
@@ -2113,12 +2139,12 @@ func.2  where
 ret.val
 ");
 
-            _expect("where", @"
+            Expect("where", @"
 newclo  where\0
 newcor.0
 ret.value
 ");
-            _expect(
+            Expect(
                 @"main\skip0", @"
 newclo  main\skip0\0
 newcor.0
@@ -2156,7 +2182,7 @@ function main()
     }
 }
 ");
-            _expect(
+            Expect(
                 @"
 var 
     handle,
@@ -2217,7 +2243,7 @@ function main()
     }
 }
 ");
-            _expect(
+            Expect(
                 @"
 var 
     handle,
@@ -2275,7 +2301,7 @@ function main()
     }
 }
 ");
-            _expect(
+            Expect(
                 @"
 var 
     handle,
@@ -2307,7 +2333,7 @@ function main()
     return null;
 }
 ");
-            _expect(
+            Expect(
                 @"
 ldc.string  ""There must be a mistake!""
 throw
@@ -2346,7 +2372,7 @@ function main
             Assert.IsTrue(code.Count > 6, "Resulting must be longer than 6 instructions");
             string using1 = code[6].Id ?? "No_ID_at_6";
 
-            _expect(String.Format(
+            Expect(String.Format(
                 @"
 var h,{0}
 label beginTry  try
@@ -2384,7 +2410,7 @@ function main()
 }
 ");
 
-            _expect(
+            Expect(
                 @"
 var x, y, z
 
@@ -2450,7 +2476,7 @@ function main()
 }
 ");
 
-            _expect(
+            Expect(
                 @"
 var hset, people
 
@@ -2529,7 +2555,7 @@ function main()
     return null;
 }
 ");
-            _expect(
+            Expect(
                 @"
 var lst
 
@@ -2557,20 +2583,38 @@ ret.val
         [Test]
         public void ReferenceDeclarationLiteral()
         {
+            // Note: the behaviour of the expression (ref h) has been changed.
+            //  It is no longer equivalent to ->h but instead always means the same as var h 
+            //  (without changing re-declaring h, of course)
+            //  By extension (ref ref h) == (ref h)
             _compile(@"
 function main
 {
-    print = ref h;
-    return null;
+    print(ref h);
+    print(ref ref g);
+    ref ref ref var k = ref h;
+    print(k);
+    return var o;
 }
 ");
 
-            _expect(@"
+            Expect(@"
 var h
-ldr.loc h
+ldloc h
 @cmd.1  print
 
-ldnull
+ldloc g
+@cmd.1 print
+
+ldloc h
+stloc k
+
+indloc k
+indarg.0 
+indarg.0
+@cmd.1 print
+
+ldloc o
 ret.val
 ");
         }
@@ -2606,7 +2650,7 @@ function main does
     return null;
 ");
 
-            _expect(
+            Expect(
                 @"
             ldglob      a
             jump.t      tr
@@ -2640,7 +2684,7 @@ function main
 }
 ");
 
-            _expect(
+            Expect(
                 @"
 var eng, funcs
 
@@ -2674,7 +2718,7 @@ function main()
 }
 ");
 
-            _expect(
+            Expect(
                 @"
 var a,b,c,x,y
 
@@ -2738,7 +2782,7 @@ function main()
 }
 ");
 
-            _expect(
+            Expect(
                 @"
 var a,b,c
 
@@ -2761,86 +2805,6 @@ ret.val
         }
 
         [Test]
-        public void LoopExpressions()
-        {
-            _compile(
-                @"
-
-function main()
-{
-    var a = for(var i = 5; i < 10; i++)
-            {
-                yield 7*i;
-            };
-
-    var j = 7;
-    var b = until( j == 100) 
-            {
-                var y = j/2;
-                j*=4;
-                yield y;
-            };
-    return null;
-}
-");
-
-            List<Instruction> code = target.Functions["main"].Code;
-            Assert.IsTrue(code.Count > 20, "Resulting must be longer than 20 instructions");
-            string lst1Var = code[1].Id ?? "No_ID_at_1";
-            string lst2Var = code[20].Id ?? "No_ID_at_20";
-            _expect(
-                String.Format(
-                    @"
-var a,i,{0},b,j,{1},y
-                    sget.0  ""List::Create""
-                    stloc   {0}
-                    ldc.int 5
-                    stloc   i
-                    jump    condition0
-label begin0        ldloc   {0}
-                    ldc.int 7
-                    ldloc   i
-                    mul
-                    set.1   """"
-label continue0     inc     i
-label condition0    ldloc   i
-                    ldc.int 10
-                    clt
-                    jump.t  begin0
-label end0          ldloc   {0}
-                    stloc   a 
-
-                    ldc.int 7
-                    stloc   j
-                    sget.0  ""List::Create""
-                    stloc   {1}
-                    jump    continue1
-label begin1        ldloc   j
-                    ldc.int 2
-                    div
-                    stloc   y
-                    ldloc   j
-                    ldc.int 4
-                    mul
-                    stloc   j
-                    ldloc   {1}
-                    ldloc   y
-                    set.1   """"
-label continue1     ldloc   j
-                    ldc.int 100
-                    ceq
-                    jump.f  begin1
-label end1          ldloc   {1}
-                    stloc   b
-                    
-                    ldnull
-                    ret.val
-",
-                    lst1Var,
-                    lst2Var));
-        }
-
-        [Test]
         public void AppendLeftArguments()
         {
             _compile(
@@ -2854,7 +2818,7 @@ function main()
 }
 ");
 
-            _expect(
+            Expect(
                 @"
 ldc.int 4
 @cmd.1  print
@@ -2887,7 +2851,7 @@ function main()
 }   
 ");
 
-            _expect(
+            Expect(
                 @"
 ldc.int 4
 @cmd.1  print
@@ -2921,7 +2885,7 @@ function main(x)
 }
 ");
 
-            _expect(
+            Expect(
                 @"
 var r
 ldloc   x
@@ -2943,12 +2907,41 @@ ret.val
 ");
         }
 
+        [Test]
+        public void AppendTraceRight()
+        {
+            _compile(
+                @"
+function main(app, f, ref trace){
+   println(app.Compound >> trace(f) >> all);
+   app.Compound         >> trace(f)        >> all >> println;
+}");
+
+            Expect(
+                @"
+ ldloc f
+ ldloc app
+ get.0 Compound
+ indloc.2 trace
+ cmd.1 all
+ @cmd.1 println
+
+ ldloc f
+ ldloc app
+ get.0 Compound
+ indloc.2 trace
+ cmd.1 all
+ cmd.1 println
+ ret.val
+");
+        }
+
        
-        /*
+        /* not supported at the moment
         [Test]
         public void AppendLeftDirect()
         {
-            Compile(@"
+            _compile(@"
 function main()
 {
     var a;
@@ -2958,7 +2951,7 @@ function main()
 }
 ");
 
-            Expect(@"
+            _expect(@"
 var a
 
 ldc.int 5
@@ -2985,12 +2978,32 @@ function main()
 }
 ");
 
-            _expect(@"
+            Expect(@"
 var x
 ldloc   x
 ldc.int 2   //what you would expect
 pow
 ret
+");
+        }
+
+        [Test]
+        public void SingleModifyingAssign()
+        {
+            _compile(@"
+function main()
+{
+    var a;
+    a += 3;
+}
+");
+            Expect(@"
+ldloc a
+ldc.int 3
+add
+dup 1
+stloc a
+ret.val
 ");
         }
 
@@ -3005,15 +3018,15 @@ function main()
     var y = a;
     var z = a;
 
-    x~=String;
-    y ~= Int;
-    z ~ = Real;
+    x~=String; //no whitespace
+    y ~= Int; //normal whitespace
+    z ~ = Real; // ~ and = are two distinct operators. There is no '~=' operator  
 
     return x+y+z;
 }
 ");
 
-            _expect(@"
+            Expect(@"
 var a,x,y,z
 
 ldloc   a
@@ -3063,7 +3076,7 @@ function main()
 }
 ");
 
-            _expect(@"
+            Expect(@"
 var a,b,c,d,e,f,g,s
 
 ldloc   a
@@ -3118,7 +3131,7 @@ function main()
     return null;
 }
 ");
-            _expect(@"
+            Expect(@"
 var a,b,c,d
 
             ldloc   a
@@ -3158,7 +3171,7 @@ function fac n r =
         fac(n-1, n*r);
 ");
 
-            _expect("fac", @"
+            Expect("fac", @"
 ldloc   n
 ldc.int 1
 ceq
@@ -3196,7 +3209,7 @@ function main()
 }
 ");
 
-            _expect(@"
+            Expect(@"
 var a,b
 ldloc   a
 ldloc   a
@@ -3224,7 +3237,7 @@ function main(lst)
 }
 ");
 
-            _expect(@"
+            Expect(@"
 var lst
 
 ldr.func main\1
@@ -3248,7 +3261,7 @@ function main(x)
     return unless(x) 1 else 0;
 }");
 
-            _expect(@"
+            Expect(@"
 ldloc x
 jump.t elseBranch
 ldc.int 1
@@ -3256,6 +3269,30 @@ ret
 label elseBranch
 ldc.int 0
 ret
+");
+        }
+
+        [Test]
+        public void PostIncrementFunctionEmulation()
+        {
+            _compile(@"
+function propLike = 0;
+
+function main()
+{
+    return ""work"" * propLike++;
+}
+");
+
+            Expect(@"
+ldc.string work
+func.0 propLike
+func.0 propLike
+ldc.int 1
+add
+@func.1 propLike
+mul
+ret.value
 ");
         }
 
@@ -3272,7 +3309,7 @@ function main(x)
 }
 ");
 
-            _expect(@"
+            Expect(@"
 var n,i
 
 ldloc x
@@ -3322,7 +3359,7 @@ function main does foreach(var arg in var args)
 }
 ");
 
-            _expect(String.Format(@"
+            Expect(String.Format(@"
 var args,arg,t,{0}
                         ldloc   args
                         get.0   GetEnumerator
@@ -3347,6 +3384,13 @@ label continueForeach   ldloc   {0}
                         leave   end
 label   end             nop //this nop ensures compatibility with CIL
 ", target.Functions["main"].Code[3].Id));
+        }
+
+        [Test]
+        public void ValidFunctionScope()
+        {
+            _compile(@"function main=()=>{};function f2(){}");
+            Assert.That(target.Functions.Contains("f2"),Is.True,"Expected that function f2 exists.");
         }
 
         [Test]
@@ -3435,38 +3479,38 @@ function f as alias1, alias2(){}
 function as alias3, alias4{}
 ");
             Assert.IsTrue(target.Functions.Contains("f"),"Function f not defined");
-            var entry_f = ldr.Symbols["F"];
-            Assert.IsNotNull(entry_f,"No symbol table entry for `f` exists");
-            Assert.IsTrue(entry_f.Interpretation == SymbolInterpretations.Function,"Symbol f is not declared as a function");
-            Assert.IsTrue(target.Functions.Contains(entry_f.Id));
+            var entryF = LookupSymbolEntry(ldr.Symbols, "F");
+            Assert.IsNotNull(entryF,"No symbol table entry for `f` exists");
+            Assert.IsTrue(entryF.Interpretation == SymbolInterpretations.Function,"Symbol f is not declared as a function");
+            Assert.IsTrue(target.Functions.Contains(entryF.InternalId));
 
-            var alias1 = ldr.Symbols["alias1"];
+            var alias1 = LookupSymbolEntry(ldr.Symbols, "alias1");
             Assert.IsNotNull(alias1, "No symbol table entry for `alias1` exists");
             Assert.IsTrue(alias1.Interpretation == SymbolInterpretations.Function, "Symbol alias1 is not declared as a function");
-            Assert.IsTrue(target.Functions.Contains(alias1.Id));
-            Assert.AreSame(target.Functions[entry_f.Id], target.Functions[alias1.Id]);
+            Assert.IsTrue(target.Functions.Contains(alias1.InternalId));
+            Assert.AreSame(target.Functions[entryF.InternalId], target.Functions[alias1.InternalId]);
             Assert.IsFalse(target.Functions.Contains("alias1"));
 
-            var alias2 = ldr.Symbols["alias2"];
+            var alias2 = LookupSymbolEntry(ldr.Symbols, "alias2");
             Assert.IsNotNull(alias2, "No symbol table entry for `alias2` exists");
             Assert.IsTrue(alias2.Interpretation == SymbolInterpretations.Function, "Symbol alias2 is not declared as a function");
-            Assert.IsTrue(target.Functions.Contains(alias2.Id));
-            Assert.AreSame(target.Functions[entry_f.Id], target.Functions[alias2.Id]);
+            Assert.IsTrue(target.Functions.Contains(alias2.InternalId));
+            Assert.AreSame(target.Functions[entryF.InternalId], target.Functions[alias2.InternalId]);
             Assert.IsFalse(target.Functions.Contains("alias2"));
 
-            var alias3 = ldr.Symbols["alias3"];
+            var alias3 = LookupSymbolEntry(ldr.Symbols, "alias3");
             Assert.IsNotNull(alias3, "No symbol table entry for `alias3` exists");
             Assert.IsTrue(alias3.Interpretation == SymbolInterpretations.Function, "Symbol alias3 is not declared as a function");
-            Assert.IsTrue(target.Functions.Contains(alias3.Id));
+            Assert.IsTrue(target.Functions.Contains(alias3.InternalId));
             Assert.IsFalse(target.Functions.Contains("alias3"));
 
-            var alias4 = ldr.Symbols["alias4"];
+            var alias4 = LookupSymbolEntry(ldr.Symbols, "alias4");
             Assert.IsNotNull(alias4, "No symbol table entry for `alias4` exists");
             Assert.IsTrue(alias4.Interpretation == SymbolInterpretations.Function, "Symbol alias4 is not declared as a function");
-            Assert.IsTrue(target.Functions.Contains(alias4.Id));
+            Assert.IsTrue(target.Functions.Contains(alias4.InternalId));
             Assert.IsFalse(target.Functions.Contains("alias4"));
 
-            Assert.AreSame(target.Functions[alias3.Id],target.Functions[alias4.Id]);
+            Assert.AreSame(target.Functions[alias3.InternalId], target.Functions[alias4.InternalId]);
         }
 
         [Test]
@@ -3489,32 +3533,32 @@ function main()
             Assert.IsFalse(main.Variables.Contains("alias4"), "There must be no variable named alias4");
 
             // `f`
-            Assert.IsTrue(maint.Symbols.ContainsKey("f"));
-            var f = maint.Symbols["f"];
+            Assert.IsTrue(maint.Symbols.Contains("f"));
+            var f = LookupSymbolEntry(maint.Symbols, "f");
             Assert.AreEqual(f.Interpretation, SymbolInterpretations.LocalReferenceVariable);
 
             // `alias1`
-            Assert.IsTrue(maint.Symbols.ContainsKey("alias1"));
-            var alias1 = maint.Symbols["alias1"];
+            Assert.IsTrue(maint.Symbols.Contains("alias1"));
+            var alias1 = LookupSymbolEntry(maint.Symbols, "alias1");
             Assert.AreEqual(alias1.Interpretation, SymbolInterpretations.LocalReferenceVariable);
-            Assert.AreEqual(f.Id, alias1.Id);
+            Assert.AreEqual(f.InternalId, alias1.InternalId);
 
             // `alias2`
-            Assert.IsTrue(maint.Symbols.ContainsKey("alias2"));
-            var alias2 = maint.Symbols["alias2"];
+            Assert.IsTrue(maint.Symbols.Contains("alias2"));
+            var alias2 = LookupSymbolEntry(maint.Symbols, "alias2");
             Assert.AreEqual(alias2.Interpretation, SymbolInterpretations.LocalReferenceVariable);
-            Assert.AreEqual(f.Id, alias2.Id);
+            Assert.AreEqual(f.InternalId, alias2.InternalId);
 
             // `alias3`
-            Assert.IsTrue(maint.Symbols.ContainsKey("alias3"));
-            var alias3 = maint.Symbols["alias3"];
+            Assert.IsTrue(maint.Symbols.Contains("alias3"));
+            var alias3 = LookupSymbolEntry(maint.Symbols, "alias3");
             Assert.AreEqual(alias3.Interpretation, SymbolInterpretations.LocalReferenceVariable);
 
             // `alias4`
-            Assert.IsTrue(maint.Symbols.ContainsKey("alias4"));
-            var alias4 = maint.Symbols["alias4"];
+            Assert.IsTrue(maint.Symbols.Contains("alias4"));
+            var alias4 = LookupSymbolEntry(maint.Symbols, "alias4");
             Assert.AreEqual(alias4.Interpretation, SymbolInterpretations.LocalReferenceVariable);
-            Assert.AreEqual(alias3.Id, alias4.Id);
+            Assert.AreEqual(alias3.InternalId, alias4.InternalId);
         }
 
         [Test]
@@ -3579,7 +3623,7 @@ function main does
     target(side_effect, side_effect);
 ");
 
-            _expect(@"
+            Expect(@"
 cmd.0 side_effect
 cmd.0 side_effect
 cmd.2 target
@@ -3594,10 +3638,70 @@ ret
 function main = x => x.(16)+5; //more complicated than id or something partially applicable
 ");
 
-            _expect(@"
+            Expect(@"
 ldr.func    main\0
 ret
 ");
+        }
+
+
+        [Test]
+        public void ObjectCreationFallback()
+        {
+            _compile(@"
+declare function make_foo as create_foo;
+
+function main(x,y)
+{
+    return new foo(x,y);
+}
+
+function make_foo(){}
+");
+            Expect(@"
+ldloc x
+ldloc y
+func.2 make_foo
+ret
+");
+        }
+
+        [Test]
+        public void LocalAliasDeclaration()
+        {
+            _compile(@"
+var g;
+function main()
+{
+    declare g as f;
+    declare( h = sym ""g"" );
+    return f + h;
+}
+");
+
+            Expect(@"
+ldglob g
+ldglob g
+add
+ret
+");
+        }
+
+        [Test]
+        public void ErrorSymbolOnlyGeneratesOneMessage()
+        {
+            var loader = CompileWithErrors(@"
+declare(
+    invalid = error(pos(""some-file"",1,2),""T.example"",""Zhee-Error-Message"",null)
+);
+
+function main = invalid;
+");
+
+            Assert.That(loader.ErrorCount,Is.EqualTo(1));
+            var message = loader.Errors[0];
+            Assert.That(message.MessageClass,Is.EqualTo("T.example"));
+            Assert.That(message.Text,Is.EqualTo("Zhee-Error-Message"));
         }
 
     }

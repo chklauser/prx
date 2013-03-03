@@ -1,9 +1,11 @@
 ﻿ 
 under_test {
-    @"psr\struct.pxs",
-    @"psr\set.pxs",
-    @"psr\queue.pxs",
-    @"psr\stack.pxs",
+	@"psr\impl\ast.pxs",
+	{@"psr\impl\macro.pxs",		@"psr\impl\ast.pxs"},
+    {@"psr\impl\struct.pxs",	@"psr\impl\ast.pxs",@"psr\impl\macro.pxs"},
+    {@"psr\impl\set.pxs",		@"psr\impl\struct.pxs"},
+	{@"psr\impl\queue.pxs",		@"psr\impl\struct.pxs"},
+	{@"psr\impl\stack.pxs",		@"psr\impl\struct.pxs"},
 };
 
 function extract_symtab(obj)
@@ -15,11 +17,11 @@ function test_struct[test]
 {
     function create_test_obj(x)
     {
-        function m(this,y) = x + y;
-        function m'(this,y) = this.m(y*x);
+        function m(self,y) = x + y;
+        function m'(self,y) = self.m(y*x);
         
         function p(y)[private] = 2*x + 3*y;
-        function m''(this,y) = p(y);
+        function m''(self,y) = p(y);
         
         if(x >= 0)
             function m3 = x;
@@ -259,46 +261,6 @@ function tqm_dequeue[test]
     assert_eq(s.dequeue,b,"dequeue(b)");
     assert_eq(s.count,1,"count: only 1 left (a)");
     assert_eq(s.dequeue,c,"dequeue(c)");
-}
-
-function tqm_enumarte_dequeues[test]
-{
-    var a = 11;
-    var b = 13;
-    var c = 17;
-    var d = 19;
-    
-    var s = new mutable_queue;
-    s.enqueue(a,b,c,d);
-    assert_eq(s.count,4,"count after 4×enqueue");
-    
-    s >> all >> var ss;
-    assert_eq(ss.Count,4,"length of list");
-    assert_eq(s.Count,0,"queue empty after enumerate");
-    assert_eq(ss[3],d,"ss[3]");
-    assert_eq(ss[2],c,"ss[2]");
-    assert_eq(ss[1],b,"ss[1]");
-    assert_eq(ss[0],a,"ss[0]");
-    
-    s.enqueue(a,b);
-    assert_eq(s.Count,2,"count after enqueue(a,b)");
-    s.enqueue(c,d);
-    
-    foreach(var x in s)
-    {
-        if(x > 15)
-        {
-            assert_eq(x,c,"c is first > 15");
-            break;
-        }
-        if(s.count == 3)
-            assert_eq(x,a,"first element");
-        else
-            assert_eq(x,b,"second element");
-    }
-    
-    assert_eq(s.Count,1,"one element left");
-    assert_eq(s.Peek,d,"last element = d");
 }
 
 function tqi_create[test]

@@ -1,6 +1,6 @@
 // Prexonite
 // 
-// Copyright (c) 2011, Christian Klauser
+// Copyright (c) 2013, Christian Klauser
 // All rights reserved.
 // 
 // Redistribution and use in source and binary forms, with or without modification, 
@@ -23,7 +23,6 @@
 //  DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, 
 //  WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING 
 //  IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
-
 #region Namespace Imports
 
 using System;
@@ -35,6 +34,7 @@ using System.Linq;
 using System.Reflection;
 using System.Reflection.Emit;
 using Prexonite.Commands;
+using Prexonite.Modular;
 using Prexonite.Types;
 using CilException = Prexonite.PrexoniteException;
 
@@ -157,7 +157,7 @@ namespace Prexonite.Compiler.Cil
             //Enable by name linking and link meta data to CIL implementations
             foreach (var func in qfuncs)
             {
-                func.CilImplementation = pass.GetDelegate(func.Id);
+                func.Declaration.CilImplementation = pass.GetDelegate(func.Id);
                 pass.LinkMetadata(func);
             }
         }
@@ -178,7 +178,7 @@ namespace Prexonite.Compiler.Cil
 
                 _compile(func, il, targetEngine, pass, linking);
 
-                func.CilImplementation = pass.GetDelegate(m);
+                func.Declaration.CilImplementation = pass.GetDelegate(m);
                 pass.LinkMetadata(func);
 
                 return true;
@@ -371,7 +371,7 @@ namespace Prexonite.Compiler.Cil
                                 insOffset -
                                     (staticArgv =
                                         CompileTimeValue.ParseSequenceReverse(source.Code,
-                                            localVariableMapping, address - 1)).Length + 1,
+                                            localVariableMapping, address - 1, source.ParentApplication.Module.Cache,source.ParentApplication.Module.Name)).Length + 1,
                                 staticArgv.Length, jumpTargets)
                                     &&
                                     extension.ValidateArguments(staticArgv,
@@ -532,7 +532,7 @@ namespace Prexonite.Compiler.Cil
                 {
                     if (state.Source.Variables.Contains(sharedNames[i]))
                         continue; //Arguments are redeclarations.
-                    var sym = new Symbol(SymbolKind.LocalRef)
+                    var sym = new CilSymbol(SymbolKind.LocalRef)
                         {
                             Local = state.Il.DeclareLocal(typeof (PVariable))
                         };
@@ -554,7 +554,7 @@ namespace Prexonite.Compiler.Cil
             //Add entries for paramters
             foreach (var parameter in state.Source.Parameters)
                 if (!state.Symbols.ContainsKey(parameter))
-                    state.Symbols.Add(parameter, new Symbol(SymbolKind.Local));
+                    state.Symbols.Add(parameter, new CilSymbol(SymbolKind.Local));
 
             //Add entries for enumerator variables
             foreach (var hint in state._ForeachHints)
@@ -562,13 +562,13 @@ namespace Prexonite.Compiler.Cil
                 if (state.Symbols.ContainsKey(hint.EnumVar))
                     throw new PrexoniteException(
                         "Invalid foreach hint. Enumerator variable is shared.");
-                state.Symbols.Add(hint.EnumVar, new Symbol(SymbolKind.LocalEnum));
+                state.Symbols.Add(hint.EnumVar, new CilSymbol(SymbolKind.LocalEnum));
             }
 
             //Add entries for non-shared local variables
             foreach (var variable in state.Source.Variables)
                 if (!state.Symbols.ContainsKey(variable))
-                    state.Symbols.Add(variable, new Symbol(SymbolKind.Local));
+                    state.Symbols.Add(variable, new CilSymbol(SymbolKind.Local));
         }
 
         private static void _analysisAndPreparation(CompilerState state)
@@ -1005,7 +1005,7 @@ namespace Prexonite.Compiler.Cil
                     if (cilExtensionMode)
                     {
                         CompileTimeValue compileTimeValue;
-                        if (CompileTimeValue.TryParse(ins, state.IndexMap, out compileTimeValue))
+                        if (CompileTimeValue.TryParse(ins, state.IndexMap, state.Cache, state.Source.ParentApplication.Module.Name, out compileTimeValue))
                         {
                             staticArgv.Add(compileTimeValue);
                         }
@@ -1094,6 +1094,7 @@ namespace Prexonite.Compiler.Cil
                 int idx;
                 string methodId;
                 string typeExpr;
+                var moduleName = ins.ModuleName;
 
                 //Emit code for the instruction
                 switch (ins.OpCode)
@@ -1142,10 +1143,10 @@ namespace Prexonite.Compiler.Cil
                         id = state.IndexMap[argc];
                         goto case OpCode.ldr_loc;
                     case OpCode.ldr_glob:
-                        state.EmitLoadGlobalRefAsPValue(id);
+                        state.EmitLoadGlobalRefAsPValue(id, moduleName);
                         break;
                     case OpCode.ldr_func:
-                        state.EmitLoadFuncRefAsPValue(id);
+                        state.EmitLoadFuncRefAsPValue(id, moduleName);
                         break;
                     case OpCode.ldr_cmd:
                         state.EmitLoadCmdRefAsPValue(id);
@@ -1158,6 +1159,9 @@ namespace Prexonite.Compiler.Cil
                         break;
                     case OpCode.ldr_type:
                         state.EmitPTypeAsPValue(id);
+                        break;
+                    case OpCode.ldr_mod:
+                        state.EmitModuleNameAsPValue(moduleName);
                         break;
 
                         #endregion //LOAD REFERENCE
@@ -1202,16 +1206,12 @@ namespace Prexonite.Compiler.Cil
 
                         //LOAD GLOBAL VARIABLE
                     case OpCode.ldglob:
-                        state.EmitLoadGlobalValue(id);
+                        state.EmitLoadGlobalValue(id, moduleName);
                         break;
                     case OpCode.stglob:
-                        state.EmitStoreLocal(state.PrimaryTempLocal.LocalIndex);
-                        state.EmitLoadLocal(state.SctxLocal.LocalIndex);
-                        state.Il.Emit(OpCodes.Ldstr, id);
-                        state.Il.EmitCall
-                            (
-                                OpCodes.Call, Runtime.LoadGlobalVariableReferenceMethod, null);
-                        state.EmitLoadLocal(state.PrimaryTempLocal.LocalIndex);
+                        state.EmitStoreLocal(state.PrimaryTempLocal);
+                        state.EmitLoadGlobalReference(id,moduleName);
+                        state.EmitLoadLocal(state.PrimaryTempLocal);
                         state.Il.EmitCall(OpCodes.Call, SetValueMethod, null);
                         break;
 
@@ -1261,18 +1261,7 @@ namespace Prexonite.Compiler.Cil
                         else
                             state.Il.Emit(OpCodes.Ldnull);
 
-                        MethodInfo dummyMethodInfo;
-                        if (state.TryGetStaticallyLinkedFunction(id, out dummyMethodInfo))
-                        {
-                            state.Il.Emit(OpCodes.Ldsfld, state.Pass.FunctionFields[id]);
-                            state.Il.EmitCall(OpCodes.Call, Runtime.NewClosureMethodStaticallyBound,
-                                null);
-                        }
-                        else
-                        {
-                            state.Il.Emit(OpCodes.Ldstr, id);
-                            state.Il.EmitCall(OpCodes.Call, Runtime.NewClosureMethodLateBound, null);
-                        }
+                        state.EmitNewClo(id,moduleName);
                         break;
 
                     case OpCode.newcor:
@@ -1314,11 +1303,7 @@ namespace Prexonite.Compiler.Cil
                         goto case OpCode.incloc;
 
                     case OpCode.incglob:
-                        state.EmitLoadLocal(state.SctxLocal);
-                        state.Il.Emit(OpCodes.Ldstr, id);
-                        state.Il.EmitCall
-                            (
-                                OpCodes.Call, Runtime.LoadGlobalVariableReferenceMethod, null);
+                        state.EmitLoadGlobalReference(id,moduleName);
                         state.Il.Emit(OpCodes.Dup);
                         state.Il.EmitCall(OpCodes.Call, GetValueMethod, null);
                         state.EmitLoadLocal(state.SctxLocal);
@@ -1350,11 +1335,7 @@ namespace Prexonite.Compiler.Cil
                         goto case OpCode.decloc;
 
                     case OpCode.decglob:
-                        state.EmitLoadLocal(state.SctxLocal);
-                        state.Il.Emit(OpCodes.Ldstr, id);
-                        state.Il.EmitCall
-                            (
-                                OpCodes.Call, Runtime.LoadGlobalVariableReferenceMethod, null);
+                        state.EmitLoadGlobalReference(id,moduleName);
                         state.Il.Emit(OpCodes.Dup);
                         state.Il.EmitCall(OpCodes.Call, GetValueMethod, null);
                         state.EmitLoadLocal(state.SctxLocal);
@@ -1524,7 +1505,7 @@ namespace Prexonite.Compiler.Cil
 
                     case OpCode.indglob:
                         state.FillArgv(argc);
-                        state.EmitLoadGlobalValue(id);
+                        state.EmitLoadGlobalValue(id,moduleName);
                         state.EmitIndirectCall(argc, justEffect);
                         break;
 
@@ -1545,7 +1526,7 @@ namespace Prexonite.Compiler.Cil
                         #region ENGINE CALLS
 
                     case OpCode.func:
-                        state.EmitFuncCall(argc, id, justEffect);
+                        state.EmitFuncCall(argc, id, moduleName, justEffect);
                         break;
                     case OpCode.cmd:
                         state.EmitCommandCall(ins);

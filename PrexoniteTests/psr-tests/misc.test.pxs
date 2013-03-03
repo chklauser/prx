@@ -1,5 +1,10 @@
  
-under_test @"psr\misc.pxs";
+under_test {
+	@"psr\impl\ast.pxs",
+	{@"psr\impl\macro.pxs",		@"psr\impl\ast.pxs"},
+    {@"psr\impl\struct.pxs",	@"psr\impl\ast.pxs",    @"psr\impl\macro.pxs"},
+	{@"psr\impl\misc.pxs",		@"psr\impl\struct.pxs", @"psr\impl\ast.pxs", @"psr\impl\macro.pxs"}
+};
 
 function test_cmp[test]
 {
@@ -178,7 +183,7 @@ function test_create_terminator[test]
     
     function create_obj
     {
-        function m(this,p)
+        function m(self,p)
         {
             assert_eq(a,p);
             assert(not called,"obj.m already called");

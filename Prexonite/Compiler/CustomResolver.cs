@@ -1,6 +1,6 @@
 // Prexonite
 // 
-// Copyright (c) 2011, Christian Klauser
+// Copyright (c) 2013, Christian Klauser
 // All rights reserved.
 // 
 // Redistribution and use in source and binary forms, with or without modification, 
@@ -23,7 +23,6 @@
 //  DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, 
 //  WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING 
 //  IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
-
 using System;
 using Prexonite.Compiler.Ast;
 using Prexonite.Types;
@@ -36,7 +35,7 @@ namespace Prexonite.Compiler
     /// <param name = "t">The compiler target for which to compile code.</param>
     /// <param name = "unresolved">The unresolved AST node.</param>
     /// <returns>Null if no solution could be found. A compatibe node otherwise.</returns>
-    public delegate IAstExpression ResolveSymbol(CompilerTarget t, AstUnresolved unresolved);
+    public delegate AstExpr ResolveSymbol(CompilerTarget t, AstUnresolved unresolved);
 
     /// <summary>
     ///     Encapsulates a user provided resolver.
@@ -86,7 +85,7 @@ namespace Prexonite.Compiler
         /// <param name = "t">The compiler target for which to resolve the node.</param>
         /// <param name = "unresolved">The unresolved AST node.</param>
         /// <returns>Null if no solution has been found. A compatible AST node otherwise.</returns>
-        public IAstExpression Resolve(CompilerTarget t, AstUnresolved unresolved)
+        public AstExpr Resolve(CompilerTarget t, AstUnresolved unresolved)
         {
             if (IsManaged)
             {
@@ -102,7 +101,7 @@ namespace Prexonite.Compiler
                                 t.Loader.CreateNativePValue(unresolved)
                             });
                 if (presult.Type is ObjectPType)
-                    return (IAstExpression) presult.Value;
+                    return (AstExpr) presult.Value;
                 else
                     return null;
             }

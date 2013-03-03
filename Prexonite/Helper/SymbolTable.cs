@@ -1,6 +1,6 @@
 // Prexonite
 // 
-// Copyright (c) 2011, Christian Klauser
+// Copyright (c) 2013, Christian Klauser
 // All rights reserved.
 // 
 // Redistribution and use in source and binary forms, with or without modification, 
@@ -23,15 +23,21 @@
 //  DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, 
 //  WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING 
 //  IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
-
 using System.Collections;
 using System.Collections.Generic;
 using System.Diagnostics;
 
 namespace Prexonite
 {
+    public interface ISymbolTable<TValue> : IDictionary<string, TValue>
+    {
+        TValue DefaultValue { get; set; }
+        TValue GetDefault(string key, TValue defaultValue);
+        void AddRange(IEnumerable<KeyValuePair<string, TValue>> entries);
+    }
+
     [DebuggerNonUserCode]
-    public class SymbolTable<TValue> : IDictionary<string, TValue>
+    public class SymbolTable<TValue> : ISymbolTable<TValue>
     {
         private readonly Dictionary<string, TValue> _table;
         private TValue _defaultValue;
@@ -56,8 +62,10 @@ namespace Prexonite
 
         public virtual void Add(string key, TValue value)
         {
-            if (_table.ContainsKey(key) && value.Equals(_table[key]))
+            TValue existingValue;
+            if(_table.TryGetValue(key, out existingValue) && Equals(existingValue,value))
                 return;
+
             _table.Add(key, value);
         }
 
@@ -90,6 +98,11 @@ namespace Prexonite
                 return _table[key];
             else
                 return defaultValue;
+        }
+
+        public void AddRange(IEnumerable<KeyValuePair<string, TValue>> entries)
+        {
+            _table.AddRange(entries);
         }
 
         public ICollection<TValue> Values

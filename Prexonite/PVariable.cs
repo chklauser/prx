@@ -1,6 +1,6 @@
 // Prexonite
 // 
-// Copyright (c) 2011, Christian Klauser
+// Copyright (c) 2013, Christian Klauser
 // All rights reserved.
 // 
 // Redistribution and use in source and binary forms, with or without modification, 
@@ -23,16 +23,16 @@
 //  DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, 
 //  WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING 
 //  IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
-
 using System;
 using System.Collections.Generic;
 using System.Diagnostics;
+using Prexonite.Modular;
 using Prexonite.Types;
 
 namespace Prexonite
 {
     /// <summary>
-    ///     Represents an "address" in the Prexonite VM.
+    ///     An instance of a <see cref="VariableDeclaration"/>, represents an "address" in the Prexonite VM.
     /// </summary>
     /// <remarks>
     ///     <para>
@@ -44,14 +44,36 @@ namespace Prexonite
     ///     </para>
     /// </remarks>
     [DebuggerStepThrough]
-    public sealed class PVariable : IMetaFilter,
-                                    IHasMetaTable,
+    public sealed class PVariable : IHasMetaTable,
                                     IIndirectCall
     {
-        private PValue _value;
+        private PValue _value = PType.Null;
         //Variable metatables are only created when requested.
-        private MetaTable _meta;
+        private VariableDeclaration _declaration;
 
+        /// <summary>
+        /// Returns the id of this variable. For local variables, this id might be different from the
+        /// physical name of that variable.
+        /// </summary>
+        public string Id
+        {
+            get { return Meta[Application.IdKey]; }
+        }
+
+        /// <summary>
+        /// The variable declaration this variable instance is based on.
+        /// </summary>
+        public VariableDeclaration Declaration
+        {
+            get
+            {
+                if (_declaration == null)
+                    _declaration = VariableDeclaration.Create(Engine.GenerateName());
+                return _declaration;
+            }
+        }
+
+        //Meta and IHasMetaTable are on PVariable for historic reasons.
         /// <summary>
         ///     Provides readonly access to the variable's <see cref = "MetaTable" />.
         /// </summary>
@@ -62,12 +84,7 @@ namespace Prexonite
         {
             get
             {
-                if (_meta == null)
-                {
-                    _meta = new MetaTable(this);
-                    _meta[Application.NameKey] = Engine.GenerateName();
-                }
-                return _meta;
+                return Declaration.Meta;
             }
         }
 
@@ -77,28 +94,15 @@ namespace Prexonite
         /// <value>The PValue object stored in this variables or a PValue(null) object if the reference is null.</value>
         public PValue Value
         {
-            get { return _value ?? PType.Null.CreatePValue(); }
-            set { _value = value; }
+            get { return _value; }
+            set
+            {
+                Debug.Assert(value != null);
+                _value = value;
+            }
         }
 
-        #region IMetaFilter Members
-
-        string IMetaFilter.GetTransform(string key)
-        {
-            return key;
-        }
-
-        KeyValuePair<string, MetaEntry>? IMetaFilter.SetTransform(
-            KeyValuePair<string, MetaEntry> item)
-        {
-            //The name property may not be reset
-            if (Engine.StringsAreEqual(item.Key, Application.NameKey))
-                return null;
-
-            return item;
-        }
-
-        #endregion
+        #region Construction
 
         /// <summary>
         ///     Creates a new (local) variable.
@@ -125,8 +129,21 @@ namespace Prexonite
                 throw new ArgumentNullException("name");
             if (name.Length == 0)
                 throw new ArgumentException("name is expected to contain at least one character.");
-            Meta[Application.NameKey] = name;
+            _declaration = VariableDeclaration.Create(name);
         }
+
+        /// <summary>
+        /// Creates a new variable instance based on the provided variable declaration.
+        /// </summary>
+        /// <param name="variableDeclaration">The variable declaration this variable is based on.</param>
+        public PVariable(VariableDeclaration variableDeclaration)
+        {
+            if (variableDeclaration == null)
+                throw new ArgumentNullException("variableDeclaration");
+            _declaration = variableDeclaration;
+        }
+
+        #endregion
 
         #region IIndirectCall Members
 
@@ -150,15 +167,5 @@ namespace Prexonite
         }
 
         #endregion
-
-        public override bool Equals(object obj)
-        {
-            return ReferenceEquals(this, obj);
-        }
-
-        public override int GetHashCode()
-        {
-            return _value == null ? -12 : _value.GetHashCode() ^ 6537;
-        }
     }
 }

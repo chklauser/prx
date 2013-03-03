@@ -1,6 +1,6 @@
 // Prexonite
 // 
-// Copyright (c) 2011, Christian Klauser
+// Copyright (c) 2013, Christian Klauser
 // All rights reserved.
 // 
 // Redistribution and use in source and binary forms, with or without modification, 
@@ -23,10 +23,10 @@
 //  DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, 
 //  WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING 
 //  IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
-
 using System;
 using System.Linq;
-using Prexonite.Types;
+using Prexonite.Modular;
+using Prexonite.Properties;
 
 namespace Prexonite.Compiler.Ast
 {
@@ -34,7 +34,7 @@ namespace Prexonite.Compiler.Ast
                              IAstHasExpressions
     {
         public ReturnVariant ReturnVariant;
-        public IAstExpression Expression;
+        public AstExpr Expression;
 
         public AstReturn(string file, int line, int column, ReturnVariant returnVariant)
             : base(file, line, column)
@@ -49,15 +49,18 @@ namespace Prexonite.Compiler.Ast
 
         #region IAstHasExpressions Members
 
-        public IAstExpression[] Expressions
+        public AstExpr[] Expressions
         {
             get { return new[] {Expression}; }
         }
 
         #endregion
 
-        protected override void DoEmitCode(CompilerTarget target)
+        protected override void DoEmitCode(CompilerTarget target, StackSemantics stackSemantics)
         {
+            if(stackSemantics == StackSemantics.Value)
+                throw new NotSupportedException("Return nodes cannot be used with value stack semantics. (They don't produce any values)");
+
             var warned = false;
             if (target.Function.Meta[Coroutine.IsCoroutineKey].Switch)
                 _warnInCoroutines(target, ref warned);
@@ -67,32 +70,32 @@ namespace Prexonite.Compiler.Ast
                 _OptimizeNode(target, ref Expression);
                 if (ReturnVariant == ReturnVariant.Exit)
                 {
-                    emit_tail_call_exit(target);
+                    _emitTailCallExit(target);
                     return;
                 }
             }
             switch (ReturnVariant)
             {
                 case ReturnVariant.Exit:
-                    target.Emit(this, OpCode.ret_exit);
+                    target.Emit(Position,OpCode.ret_exit);
                     break;
                 case ReturnVariant.Set:
                     if (Expression == null)
                         throw new PrexoniteException("Return assignment requires an expression.");
-                    Expression.EmitCode(target);
-                    target.Emit(this, OpCode.ret_set);
+                    Expression.EmitValueCode(target);
+                    target.Emit(Position,OpCode.ret_set);
                     break;
                 case ReturnVariant.Continue:
                     if (Expression != null)
                     {
-                        Expression.EmitCode(target);
-                        target.Emit(this, OpCode.ret_set);
+                        Expression.EmitValueCode(target);
+                        target.Emit(Position,OpCode.ret_set);
                         _warnInCoroutines(target, ref warned);
                     }
-                    target.Emit(this, OpCode.ret_continue);
+                    target.Emit(Position,OpCode.ret_continue);
                     break;
                 case ReturnVariant.Break:
-                    target.Emit(this, OpCode.ret_break);
+                    target.Emit(Position,OpCode.ret_break);
                     break;
             }
         }
@@ -101,11 +104,9 @@ namespace Prexonite.Compiler.Ast
         {
             if (!warned && _isInProtectedBlock(target))
             {
-                target.Loader.ReportMessage(new ParseMessage(ParseMessageSeverity.Warning,
-                    "Detected possible return (yield) from within a protected block " +
-                        "(try-catch-finally, using, foreach). " +
-                            "This Prexonite implementation cannot guarantee that cleanup code is executed. ",
-                    this));
+                target.Loader.ReportMessage(Message.Create(MessageSeverity.Warning,
+                                                   Resources.AstReturn_Warn_YieldInProtectedBlock,
+                                                   Position, MessageClasses.YieldFromProtectedBlock));
                 warned = true;
             }
         }
@@ -113,73 +114,71 @@ namespace Prexonite.Compiler.Ast
         private static bool _isInProtectedBlock(CompilerTarget target)
         {
             return
-                target.ScopeBlocks.OfType<AstSubBlock>().Any(
-                    sb => (sb.ParentNode is AstForeachLoop) ||
-                        (sb.ParentNode is AstTryCatchFinally) || (sb.ParentNode is AstUsing));
+                target.ScopeBlocks.OfType<AstScopedBlock>().Any(
+                    sb => (sb.LexicalScope is AstForeachLoop) ||
+                        (sb.LexicalScope is AstTryCatchFinally) || (sb.LexicalScope is AstUsing));
         }
 
-        private void emit_tail_call_exit(CompilerTarget target)
+        private void _emitTailCallExit(CompilerTarget target)
         {
-            if (optimize_conditional_return_expression(target))
+            if (_optimizeConditionalReturnExpression(target))
                 return;
+            var indirectCall = Expression as AstIndirectCall;
 
-            var getset = Expression as AstGetSet;
-            var symbol = Expression as AstGetSetSymbol;
-            var icbr = Expression as ICanBeReferenced;
-
-            AstGetSet reference;
-            if ((getset != null && getset.Call == PCall.Set ||
-                //the 'value' of set-expressions is not the return value of the call
-                (symbol != null && symbol.IsObjectVariable)) ||
-                    icbr == null || !icbr.TryToReference(out reference))
-                //tail requires a reference to the continuation
+            if (indirectCall != null
+                     && _isStacklessRecursionPossible(target, indirectCall))
+            {
+                // specialized approach
+                // self(arg1, arg2, ..., argn) => { param1 = arg1; param2 = arg2; ... paramn = argn; goto 0; }
+                _emitRecursiveTailCall(target, indirectCall.Arguments);
+            }
+            else
             {
                 //Cannot be tail call optimized
-                Expression.EmitCode(target);
-                target.Emit(this, OpCode.ret_value);
+                _emitOrdinaryValueReturn(target);
             }
-            else //Will be tail called
+        }
+
+        private void _emitRecursiveTailCall(CompilerTarget target, ArgumentsProxy symbolArgs)
+        {
+            var symbolParams = target.Function.Parameters;
+            var nullNode = new AstNull(File, Line, Column);
+
+            //copy parameters to temporary variables
+            for (var i = 0; i < symbolParams.Count; i++)
             {
-                if (symbol != null && _isStacklessRecursionPossible(target, symbol))
-                {
-                    // specialized approach
-                    // self(arg1, arg2, ..., argn) => { param1 = arg1; param2 = arg2; ... paramn = argn; goto 0; }
-                    var symbolParams = target.Function.Parameters;
-                    var symbolArgs = symbol.Arguments;
-                    var nullNode = new AstNull(File, Line, Column);
-
-                    //copy parameters to temporary variables
-                    for (var i = 0; i < symbolParams.Count; i++)
-                    {
-                        if (i < symbolArgs.Count)
-                            symbolArgs[i].EmitCode(target);
-                        else
-                            nullNode.EmitCode(target);
-                    }
-                    //overwrite parameters
-                    for (var i = symbolParams.Count - 1; i >= 0; i--)
-                    {
-                        target.EmitStoreLocal(this, symbolParams[i]);
-                    }
-
-                    target.EmitJump(this, 0);
-                }
+                if (i < symbolArgs.Count)
+                    symbolArgs[i].EmitValueCode(target);
                 else
-                {
-                    Expression.EmitCode(target);
-                    target.Emit(this, OpCode.ret_value);
-                    return;
-                }
+                    nullNode.EmitValueCode(target);
             }
+            //overwrite parameters
+            for (var i = symbolParams.Count - 1; i >= 0; i--)
+            {
+                target.EmitStoreLocal(Position, symbolParams[i]);
+            }
+
+            target.EmitJump(Position, 0);
+        }
+
+        private void _emitOrdinaryValueReturn(CompilerTarget target)
+        {
+            Expression.EmitValueCode(target);
+            target.Emit(Position, OpCode.ret_value);
         }
 
         private static bool _isStacklessRecursionPossible(CompilerTarget target,
-            AstGetSetSymbol symbol)
+    AstIndirectCall symbol)
         {
-            if (symbol.Interpretation != SymbolInterpretations.Function) //must be function call
+            var refNode = symbol.Subject as AstReference;
+            if (refNode == null)
                 return false;
-            if (!Engine.StringsAreEqual(target.Function.Id, symbol.Id))
-                //must be direct recursive iteration
+            EntityRef.Function funcRef;
+            if (!refNode.Entity.TryGetFunction(out funcRef))
+                return false;
+            if (funcRef.Id != target.Function.Id)
+                return false;
+            if (funcRef.ModuleName != target.Function.ParentApplication.Module.Name)
                 return false;
             if (target.Function.Variables.Contains(PFunction.ArgumentListId))
                 //must not use argument list
@@ -190,7 +189,7 @@ namespace Prexonite.Compiler.Ast
             return true;
         }
 
-        private bool optimize_conditional_return_expression(CompilerTarget target)
+        private bool _optimizeConditionalReturnExpression(CompilerTarget target)
         {
             var cond = Expression as AstConditionalExpression;
             if (cond == null)
@@ -200,7 +199,7 @@ namespace Prexonite.Compiler.Ast
             //              expr1
             //          else
             //              expr2
-            var retif = new AstCondition(File, Line, Column, cond.Condition, cond.IsNegative);
+            var retif = new AstCondition(Position, target.CurrentBlock, cond.Condition, cond.IsNegative);
 
             var ret1 = new AstReturn(File, Line, Column, ReturnVariant)
                 {
@@ -214,9 +213,9 @@ namespace Prexonite.Compiler.Ast
                 };
             //not added to the condition
 
-            retif.EmitCode(target); //  if( cond )
+            retif.EmitEffectCode(target); //  if( cond )
             //      return expr1
-            ret2.EmitCode(target); //  return expr2
+            ret2.EmitEffectCode(target); //  return expr2
 
             //ret1 and ret2 will continue optimizing
             return true;

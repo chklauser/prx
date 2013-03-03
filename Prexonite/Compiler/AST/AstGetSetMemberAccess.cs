@@ -1,6 +1,6 @@
 // Prexonite
 // 
-// Copyright (c) 2011, Christian Klauser
+// Copyright (c) 2013, Christian Klauser
 // All rights reserved.
 // 
 // Redistribution and use in source and binary forms, with or without modification, 
@@ -23,24 +23,23 @@
 //  DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, 
 //  WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING 
 //  IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
-
 using System;
 using Prexonite.Types;
 
 namespace Prexonite.Compiler.Ast
 {
-    public class AstGetSetMemberAccess : AstGetSet,
+    public class AstGetSetMemberAccess : AstGetSetImplBase,
                                          IAstPartiallyApplicable
     {
         public string Id { get; set; }
-        public IAstExpression Subject { get; set; }
+        public AstExpr Subject { get; set; }
 
-        public override IAstExpression[] Expressions
+        public override AstExpr[] Expressions
         {
             get
             {
                 var len = Arguments.Count;
-                var ary = new IAstExpression[len + 1];
+                var ary = new AstExpr[len + 1];
                 Array.Copy(Arguments.ToArray(), 0, ary, 1, len);
                 ary[0] = Subject;
                 return ary;
@@ -48,7 +47,7 @@ namespace Prexonite.Compiler.Ast
         }
 
         public AstGetSetMemberAccess(
-            string file, int line, int column, PCall call, IAstExpression subject, string id)
+            string file, int line, int column, PCall call, AstExpr subject, string id)
             : base(file, line, column, call)
         {
             if (subject == null)
@@ -59,7 +58,7 @@ namespace Prexonite.Compiler.Ast
             Id = id;
         }
 
-        internal AstGetSetMemberAccess(Parser p, PCall call, IAstExpression subject, string id)
+        internal AstGetSetMemberAccess(Parser p, PCall call, AstExpr subject, string id)
             : this(p.scanner.File, p.t.line, p.t.col, call, subject, id)
         {
         }
@@ -85,12 +84,12 @@ namespace Prexonite.Compiler.Ast
         }
 
         public AstGetSetMemberAccess(
-            string file, int line, int column, IAstExpression subject, string id)
+            string file, int line, int column, AstExpr subject, string id)
             : this(file, line, column, PCall.Get, subject, id)
         {
         }
 
-        internal AstGetSetMemberAccess(Parser p, IAstExpression subject, string id)
+        internal AstGetSetMemberAccess(Parser p, AstExpr subject, string id)
             : this(p, PCall.Get, subject, id)
         {
         }
@@ -101,23 +100,23 @@ namespace Prexonite.Compiler.Ast
             }
         }
 
-        protected override void EmitCode(CompilerTarget target, bool justEffect)
+        protected override void DoEmitCode(CompilerTarget target, StackSemantics stackSemantics)
         {
-            Subject.EmitCode(target);
-            base.EmitCode(target, justEffect);
+            Subject.EmitValueCode(target);
+            base.DoEmitCode(target, stackSemantics);
         }
 
-        protected override void EmitGetCode(CompilerTarget target, bool justEffect)
+        protected override void EmitGetCode(CompilerTarget target, StackSemantics stackSemantics)
         {
-            target.EmitGetCall(this, Arguments.Count, Id, justEffect);
+            target.EmitGetCall(Position, Arguments.Count, Id, stackSemantics == StackSemantics.Effect);
         }
 
         protected override void EmitSetCode(CompilerTarget target)
         {
-            target.EmitSetCall(this, Arguments.Count, Id);
+            target.EmitSetCall(Position, Arguments.Count, Id);
         }
 
-        public override bool TryOptimize(CompilerTarget target, out IAstExpression expr)
+        public override bool TryOptimize(CompilerTarget target, out AstExpr expr)
         {
             base.TryOptimize(target, out expr);
             var subject = Subject;
@@ -128,15 +127,16 @@ namespace Prexonite.Compiler.Ast
 
         public override AstGetSet GetCopy()
         {
-            AstGetSet copy = new AstGetSetMemberAccess(File, Line, Column, Call, Subject, Id);
+            var copy = new AstGetSetMemberAccess(File, Line, Column, Call, Subject, Id);
             CopyBaseMembers(copy);
             return copy;
         }
 
         public override string ToString()
         {
+            string name = Enum.GetName(typeof (PCall), Call);
             return string.Format("{0}: ({1}).{2}{3}",
-                Enum.GetName(typeof (PCall), Call).ToLowerInvariant(),
+                name == null ? "-" : name.ToLowerInvariant(),
                 Subject, Id, ArgumentsToString());
         }
 
@@ -148,9 +148,9 @@ namespace Prexonite.Compiler.Ast
                 AstPartiallyApplicable.PreprocessPartialApplicationArguments(
                     Subject.Singleton().Append(Arguments));
             var ctorArgc = this.EmitConstructorArguments(target, argv);
-            target.EmitConstant(this, (int) Call);
-            target.EmitConstant(this, Id);
-            target.EmitCommandCall(this, ctorArgc + 2, Engine.PartialMemberCallAlias);
+            target.EmitConstant(Position, (int) Call);
+            target.EmitConstant(Position, Id);
+            target.EmitCommandCall(Position, ctorArgc + 2, Engine.PartialMemberCallAlias);
         }
 
         public override bool CheckForPlaceholders()

@@ -1,0 +1,247 @@
+﻿// Prexonite
+// 
+// Copyright (c) 2013, Christian Klauser
+// All rights reserved.
+// 
+// Redistribution and use in source and binary forms, with or without modification, 
+//  are permitted provided that the following conditions are met:
+// 
+//     Redistributions of source code must retain the above copyright notice, 
+//          this list of conditions and the following disclaimer.
+//     Redistributions in binary form must reproduce the above copyright notice, 
+//          this list of conditions and the following disclaimer in the 
+//          documentation and/or other materials provided with the distribution.
+//     The names of the contributors may be used to endorse or 
+//          promote products derived from this software without specific prior written permission.
+// 
+// THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND 
+//  ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED 
+//  WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED. 
+//  IN NO EVENT SHALL THE COPYRIGHT HOLDER OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT, 
+//  INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES 
+//  (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, 
+//  DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, 
+//  WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING 
+//  IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+
+function imin(a,b) = min(a,b)~Int;
+function imax(a,b) = max(a,b)~Int;
+
+declare
+    imin as min,
+    imax as max;
+
+function create_container
+{   
+    var container = [];
+     
+    function register(this) does foreach(var arg in (var args) >> skip(1))
+    {
+        if(arg is Null Or container.Contains(arg))
+            continue;
+        container.Add(arg);
+    }
+    
+    function remove does foreach(var arg in (var args) >> skip(1))
+    {
+        if(arg is Null)
+            continue;
+        container.Remove(arg);        
+    }
+    
+    function update does container >> each(?.update);
+            
+    function clear does container >> each(?.clear);
+    
+    function registered(this,control) =
+        create_terminator(register(this) = control, 
+                    () => remove  (this) = control);
+                    
+    return struct;
+}
+        
+var shared_container = create_container;
+
+function register_control does foreach(var arg in var args)
+    shared_container.register(arg);
+
+function remove_control does foreach(var arg in var args)
+    shared_container.remove(arg);
+
+function update_controls does shared_container.update;
+        
+function clear_controls does shared_container.clear;
+
+function registered_control control = shared_container.registered(control);
+
+function create_register_function ctor => () => register_control = call(ctor,var args);
+function create_registered_function ctor => () => registered_control = call(ctor,var args);
+        
+function create_field(x,y,length)
+[ import System; ]
+{
+    var content = "";
+    length ??= -1;    
+    var needClear = 0;
+    
+    x~=Int;
+    y~=Int;
+    length~=Int;
+    
+    function text(this,newContent)
+    {
+        if(Not newContent is Null)
+        {
+            newContent = newContent.ToString;
+            needClear = content.Length - newContent.Length; //need to clear if positive
+            content = 
+                if(length < 0)
+                    newContent
+                else
+                    newContent.Substring(0,min(length,newContent.Length));
+        }
+        return content;
+    }
+    
+    function do_update(action)
+    [ is private; ]
+    {
+        action ??= () => 
+        {
+            ::Console.Write(content);
+            if(needClear > 0)
+            {
+                ::Console.Write(" " * needClear);
+                needClear = 0;
+            }
+        };
+            
+        var ot = ::Console.CursorTop;
+        var ol = ::Console.CursorLeft;
+        var ov = ::Console.CursorVisible;
+        
+        try
+        {        
+            ::Console.CursorVisible = false;
+            /*
+            if(y < 0)
+            {
+                y = -y;
+                //Move content up
+                ::Console.MoveBufferArea(
+                    0,::Console.WindowTop+y,
+                    ::Console.BufferWidth,::Console.WindowHeight-y,
+                    0,::Console.WindowTop
+                );
+                y -= 1;
+                ot -= y;                
+            } */
+            ::Console.CursorTop = ot - y;
+            ::Console.CursorLeft = x;
+            action.();
+        }
+        finally
+        {
+            ::Console.CursorTop = ot;
+            ::Console.CursorLeft = ol;
+            ::Console.CursorVisible = ov;
+        }
+    }
+        
+    function update(this, newT)
+    {
+        this.text = newT;
+        do_update;
+    }
+    
+    function clear does do_update = () => 
+    {
+        ::Console.Write((if(length < 0) content.Length else length) * " ");
+        needClear = 0;
+    };
+    
+    function ToString = "Field at ($x,$y), displaying \"$(content.ToString)\"";
+    
+    return struct; 
+}
+
+function create_progressbar(x,y,length)
+{
+    length~=Int;
+    var field = create_field(x,y,length);
+    if(debug)
+        var d = create_field(x+length+2,y);
+    var per = 0.0;
+    var anim = ["/","-","\\","|"];
+    function animlen [is private;] = anim.Count;
+    var idx = 0;
+    var c_pad_full = "=";
+    var c_pad_empty = "_";
+    
+    function animation this newAnim
+    {
+        if(Not newAnim is Null)
+            anim = newAnim~List;
+        return anim;
+    }
+    
+    function PaddingFull this newPadding
+    {
+        if(not newPadding is Null)
+            c_pad_full = newPadding;
+        return c_pad_full;    
+    }
+    
+    function PaddingEmpty this newPadding
+    {
+        if(not newPadding is Null)
+            c_pad_empty = newPadding;
+        return c_pad_empty;    
+    }
+    
+    function percent(this, newPer)
+    {
+        if(Not newPer is Null)
+        {
+            newPer ~=Real;
+            if(newPer < 0.0)
+                newPer = 0.0;
+            else if(newPer > 1.0)
+                newPer = 1.0;
+            per = newPer;   
+        }
+        return per;
+    }
+    
+    function nextAnim [is private;] = anim[(idx = (idx+1) mod animlen)];
+    
+    function update(this, newPer)
+    {
+        this.percent = newPer;
+        var barlen = length - 2;
+        var completed = ::Math.Floor((barlen * per)~System::Double)~Int;
+        if(debug)
+        {
+            d.text = "length $length, percent $(round(per*100))%, completed $completed";
+            d.update; 
+        }
+        var thisAnim = nextAnim;
+        if(per == 1.0)
+            field.update = "[" + (barlen)*c_pad_full + "]";
+        else
+            field.update = 
+                "[" + 
+                setright(completed,thisAnim,c_pad_full) + 
+                max(barlen-max(completed,thisAnim.Length),0)*c_pad_empty + 
+                "]";
+    }
+    
+    function clear does field.clear;
+    
+    return struct;
+}
+
+ref register_field = create_register_function(->create_field);
+ref registered_field = create_registered_function(->create_field);
+ref register_progressbar = create_register_function(->create_progressbar);
+ref registered_progressbar = create_registered_function(->create_progressbar);

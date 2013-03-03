@@ -1,6 +1,6 @@
 // Prexonite
 // 
-// Copyright (c) 2011, Christian Klauser
+// Copyright (c) 2013, Christian Klauser
 // All rights reserved.
 // 
 // Redistribution and use in source and binary forms, with or without modification, 
@@ -23,8 +23,8 @@
 //  DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, 
 //  WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING 
 //  IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
-
 using System;
+using JetBrains.Annotations;
 
 namespace Prexonite
 {
@@ -57,6 +57,7 @@ namespace Prexonite
         ///     </para>
         /// </remarks>
         /// <returns>The result of the call. Should <strong>never</strong> be null.</returns>
-        PValue IndirectCall(StackContext sctx, PValue[] args);
+        [NotNull]
+        PValue IndirectCall([NotNull] StackContext sctx, [NotNull] PValue[] args);
     }
 }

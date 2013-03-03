@@ -1,6 +1,6 @@
 // Prexonite
 // 
-// Copyright (c) 2011, Christian Klauser
+// Copyright (c) 2013, Christian Klauser
 // All rights reserved.
 // 
 // Redistribution and use in source and binary forms, with or without modification, 
@@ -50,6 +50,49 @@ function test\run_single_test as run_single_test(testFunc)
 declare function test\basic_ui;
 declare test\basic_ui as basic_ui;
 
+function test\load_plugins
+{
+    static var loaded ??= false;
+    if(loaded)
+        return;
+    
+    function trace(f,xs)
+    {
+        var cargs = var args;
+        return coroutine () => {
+            //println("TRACE.$(cargs >> count)(",cargs >> map(boxed(?)) >> foldl((l,r) => l + ", " + r,""),")");
+            foreach(var x in xs)
+            {
+                //print("ind [$(boxed(f))] of ($(boxed(x))) = ");
+                println(f.(x));
+                yield x;
+            }
+        };
+    }
+    
+    var plugins_key = @"test\plugins";
+    var app = asm(ldr.app);
+    println("::>>TEST-PLUGINS (",app.Compound >> count,")");
+    //println(all(trace(x => "->$x<-",app.Compound)));
+        
+    app.Compound
+    >> trace(x => "comp: $(x.Module.Name)")
+    >> where(a => a.Meta.ContainsKey(plugins_key)) 
+    >> map(a => a.Meta[plugins_key].List) 
+    >> seqconcat
+    >> trace(x => "raw : $(boxed(x))")
+    >> map(new module_name(?))
+    >> trace(x => "mod : $(boxed(x))")
+    >> where(? is not Null)
+    >> map(m => if(app.Compound.TryGetApplication(m,var a = ?)) [a] else [])
+    >> seqconcat
+    >> trace(x => "init: $(x.Module.Name)")
+    >> each(?.EnsureInitialization(asm(ldr.eng)));
+    println("::<<END TEST-PLUGINS");
+    
+    loaded = true;
+}
+
 var test\test_filters as test_filters = [];
 
 function test\run_test as run_test(ui, testFunc)
@@ -57,7 +100,12 @@ function test\run_test as run_test(ui, testFunc)
     ui ??= basic_ui;
     if(testFunc is null)
         throw "testFunc cannot be null.";
-        
+    
+    test\load_plugins;
+    
+    println("::>>TEST-FILTERS");
+    test_filters >> each(println("\t-> ",?));
+    println("::<<END TEST-FILTERS");
     testFunc = test_filters >> foldl(?1.(?0), testFunc);
     
     ui.begin_running(testFunc);

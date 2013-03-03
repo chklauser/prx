@@ -1,6 +1,6 @@
 ﻿// Prexonite
 // 
-// Copyright (c) 2011, Christian Klauser
+// Copyright (c) 2013, Christian Klauser
 // All rights reserved.
 // 
 // Redistribution and use in source and binary forms, with or without modification, 
@@ -23,7 +23,6 @@
 //  DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, 
 //  WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING 
 //  IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
-
 using System;
 using System.Collections.Generic;
 using System.Diagnostics;
@@ -33,6 +32,7 @@ using Prexonite.Compiler;
 using Prexonite.Compiler.Ast;
 using Prexonite.Compiler.Macro;
 using Prexonite.Compiler.Macro.Commands;
+using Prexonite.Modular;
 using Prexonite.Types;
 
 namespace Prexonite.Commands.Core
@@ -172,7 +172,7 @@ namespace Prexonite.Commands.Core
         {
             protected PartialMemberCall(string alias, string callImplementationId,
                 SymbolInterpretations callImplementetaionInterpretation)
-                : base(alias, callImplementationId, callImplementetaionInterpretation)
+                : base(alias, EntityRef.Command.Create(Alias))
             {
             }
 
@@ -181,19 +181,19 @@ namespace Prexonite.Commands.Core
             {
             }
 
-            protected override IEnumerable<IAstExpression> GetCallArguments(MacroContext context)
+            protected override IEnumerable<AstExpr> GetCallArguments(MacroContext context)
             {
                 var argv = context.Invocation.Arguments;
                 return
                     argv.Take(1).Append(_getIsSetExpr(context)).Append(argv.Skip(1));
             }
 
-            private static AstConstant _getIsSetExpr(MacroContext context)
+            private static AstExpr _getIsSetExpr(MacroContext context)
             {
                 return context.CreateConstant(context.Invocation.Call == PCall.Set);
             }
 
-            protected override AstGetSetSymbol GetTrivialPartialApplication(MacroContext context)
+            protected override AstGetSet GetTrivialPartialApplication(MacroContext context)
             {
                 var pa = base.GetTrivialPartialApplication(context);
                 pa.Arguments.Insert(1, _getIsSetExpr(context));

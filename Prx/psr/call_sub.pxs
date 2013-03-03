@@ -1,6 +1,6 @@
 ﻿// Prexonite
 // 
-// Copyright (c) 2011, Christian Klauser
+// Copyright (c) 2013, Christian Klauser
 // All rights reserved.
 // 
 // Redistribution and use in source and binary forms, with or without modification, 
@@ -24,9 +24,4 @@
 //  WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING 
 //  IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-build does require(@"psr\macro.pxs");
-
-build does GetLoader.ReportMessage(new Prexonite::Compiler::ParseMessage(
-    Prexonite::Compiler::ParseMessageSeverity.Warning, 
-    @"psr\call_sub.pxs is deprecated. Its functionality is now built into the default loader.", 
-    __FILE__, __LINE__, __COLUMN__));
+build does require(@"psr\macro.pxs",@"psr\impl\call_sub.pxs");

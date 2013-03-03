@@ -1,6 +1,6 @@
 // Prexonite
 // 
-// Copyright (c) 2011, Christian Klauser
+// Copyright (c) 2013, Christian Klauser
 // All rights reserved.
 // 
 // Redistribution and use in source and binary forms, with or without modification, 
@@ -23,7 +23,6 @@
 //  DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, 
 //  WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING 
 //  IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
-
 #region Namespace Imports
 
 using System;
@@ -32,7 +31,9 @@ using System.Diagnostics;
 using System.Diagnostics.CodeAnalysis;
 using System.Reflection;
 using System.Reflection.Emit;
+using System.Threading;
 using Prexonite.Commands;
+using Prexonite.Modular;
 using Prexonite.Types;
 
 #endregion
@@ -54,7 +55,7 @@ namespace Prexonite.Compiler.Cil
         private readonly Label[] _instructionLabels;
         private readonly Label _returnLabel;
         private readonly PFunction _source;
-        private readonly SymbolTable<Symbol> _symbols;
+        private readonly SymbolTable<CilSymbol> _symbols;
         private readonly Engine _targetEngine;
         private readonly Stack<CompiledTryCatchFinallyBlock> _tryBlocks;
         private LocalBuilder[] _tempLocals;
@@ -98,7 +99,7 @@ namespace Prexonite.Compiler.Cil
             for (var i = 0; i < InstructionLabels.Length; i++)
                 InstructionLabels[i] = il.DefineLabel();
             _returnLabel = il.DefineLabel();
-            _symbols = new SymbolTable<Symbol>();
+            _symbols = new SymbolTable<CilSymbol>();
             _tryBlocks = new Stack<CompiledTryCatchFinallyBlock>();
 
             MetaEntry cilHints;
@@ -193,9 +194,9 @@ namespace Prexonite.Compiler.Cil
         public LocalBuilder SharedLocal { get; internal set; }
 
         /// <summary>
-        ///     Symbol table for the CIL compiler. See <see cref = "Symbol" /> for details.
+        ///     CilSymbol table for the CIL compiler. See <see cref = "CilSymbol" /> for details.
         /// </summary>
-        public SymbolTable<Symbol> Symbols
+        public SymbolTable<CilSymbol> Symbols
         {
             get { return _symbols; }
         }
@@ -562,12 +563,40 @@ namespace Prexonite.Compiler.Cil
             EmitLoadLocal(_tempLocals[i]);
         }
 
-        public void EmitLoadGlobalValue(string id)
+        /// <summary>
+        /// Loads the value of a global variable from the current or any other module. Internal access is optimized.
+        /// </summary>
+        /// <param name="id">The name of the global variable to be loaded (an internal id)</param>
+        /// <param name="moduleName">The name of the module that defines the global variable. May be null to indicate an internal variable.</param>
+        public void EmitLoadGlobalValue(string id, ModuleName moduleName)
+        {
+            EmitLoadGlobalReference(id,moduleName);
+            Il.EmitCall(OpCodes.Call, Compiler.GetValueMethod, null);
+        }
+
+        public void EmitLoadGlobalRefAsPValue(EntityRef.Variable.Global globalVariable)
+        {
+            EmitLoadGlobalRefAsPValue(globalVariable.Id,globalVariable.ModuleName);
+        }
+
+        /// <summary>
+        /// Loads the <see cref="PVariable"/> object for the specified global variable onto the managed stack.
+        /// </summary>
+        /// <param name="id">The internal id of the global variable.</param>
+        /// <param name="moduleName">The module name containing the global variable definition. May be null to indicate an internal global variable.</param>
+        public void EmitLoadGlobalReference(string id, ModuleName moduleName)
         {
             EmitLoadLocal(SctxLocal.LocalIndex);
             Il.Emit(OpCodes.Ldstr, id);
-            Il.EmitCall(OpCodes.Call, Runtime.LoadGlobalVariableReferenceMethod, null);
-            Il.EmitCall(OpCodes.Call, Compiler.GetValueMethod, null);
+            if (moduleName == null || Equals(moduleName, _source.ParentApplication.Module.Name))
+            {
+                EmitCall(Runtime.LoadGlobalVariableReferenceInternalMethod);
+            }
+            else
+            {
+                EmitModuleName(moduleName);
+                EmitCall(Runtime.LoadGlobalVariableReferenceMethod);
+            }
         }
 
         public void EmitIndirectCall(int argc, bool justEffect)
@@ -585,7 +614,7 @@ namespace Prexonite.Compiler.Cil
         /// </summary>
         /// <param name = "sym">The local variable to write to.</param>
         /// <param name = "action">The action that produces the value.</param>
-        public void EmitStorePValue(Symbol sym, Action action)
+        public void EmitStorePValue(CilSymbol sym, Action action)
         {
             if (sym.Kind == SymbolKind.Local)
             {
@@ -600,7 +629,7 @@ namespace Prexonite.Compiler.Cil
             }
             else
             {
-                throw new PrexoniteException("Cannot emit code for Symbol");
+                throw new PrexoniteException("Cannot emit code for CilSymbol");
             }
         }
 
@@ -608,7 +637,7 @@ namespace Prexonite.Compiler.Cil
         ///     <para>Load a value from the specified local variable.</para>
         /// </summary>
         /// <param name = "sym">The variable to load.</param>
-        public void EmitLoadPValue(Symbol sym)
+        public void EmitLoadPValue(CilSymbol sym)
         {
             if (sym.Kind == SymbolKind.Local)
             {
@@ -621,7 +650,7 @@ namespace Prexonite.Compiler.Cil
             }
             else
             {
-                throw new PrexoniteException("Cannot emit code for Symbol");
+                throw new PrexoniteException("Cannot emit code for CilSymbol");
             }
         }
 
@@ -745,7 +774,6 @@ namespace Prexonite.Compiler.Cil
         /// </summary>
         /// <param name = "target">The type, that declares the RunStatically to call.</param>
         /// <param name = "argc">The number of arguments to pass to the command.</param>
-        /// <param name = "justEffect">Indicates whether or not to ignore the return value.</param>
         public void EmitEarlyBoundCommandCall(Type target, int argc)
         {
             EmitEarlyBoundCommandCall(target, argc, false);
@@ -795,7 +823,6 @@ namespace Prexonite.Compiler.Cil
             for (var i = 0; i < argc; i++)
                 Il.Emit(OpCodes.Pop);
         }
-
 
         public void EmitPTypeAsPValue(string expr)
         {
@@ -856,34 +883,89 @@ namespace Prexonite.Compiler.Cil
             }
         }
 
-        public void EmitFuncCall(int argc, string id, bool justEffect)
+        public void EmitFuncCall(int argc, string internalId, ModuleName moduleName, bool justEffect)
         {
-            MethodInfo targetMethod;
-            if (TryGetStaticallyLinkedFunction(id, out targetMethod))
+            if (internalId == null)
+                throw new ArgumentNullException("internalId");
+
+            MethodInfo staticTargetMethod;
+            var isInternal = moduleName == null ||
+                Equals(moduleName, Source.ParentApplication.Module.Name);
+
+            if (isInternal && TryGetStaticallyLinkedFunction(internalId, out staticTargetMethod))
             {
                 //Link function statically
                 FillArgv(argc);
-                Il.Emit(OpCodes.Ldsfld, Pass.FunctionFields[id]);
+                Il.Emit(OpCodes.Ldsfld, Pass.FunctionFields[internalId]);
                 EmitLoadLocal(SctxLocal);
                 ReadArgv(argc);
                 Il.Emit(OpCodes.Ldnull);
                 Il.Emit(OpCodes.Ldloca_S, TempLocals[0]);
                 EmitLoadArg(ParamReturnModeIndex);
-                EmitCall(targetMethod);
+                EmitCall(staticTargetMethod);
                 if (!justEffect)
                     EmitLoadTemp(0);
             }
-            else
+            else if (isInternal)
             {
                 //Link function dynamically
                 FillArgv(argc);
                 EmitLoadLocal(SctxLocal);
                 ReadArgv(argc);
-                Il.Emit(OpCodes.Ldstr, id);
+                Il.Emit(OpCodes.Ldstr, internalId);
+                Il.EmitCall(OpCodes.Call, Runtime.CallInternalFunctionMethod, null);
+                if (justEffect)
+                    Il.Emit(OpCodes.Pop);
+            }
+            //TODO (Ticket #107) bind cross-module calls statically
+            else
+            {
+                //Cross-Module-Link function dynamically
+                FillArgv(argc);
+                EmitLoadLocal(SctxLocal);
+                ReadArgv(argc);
+                Il.Emit(OpCodes.Ldstr, internalId);
+                EmitModuleName(moduleName);
                 Il.EmitCall(OpCodes.Call, Runtime.CallFunctionMethod, null);
                 if (justEffect)
                     Il.Emit(OpCodes.Pop);
             }
+        }
+
+        /// <summary>
+        /// Creates a new closure of the specified function. Needs to have the StackContext and the array of shared variables on the managed stack.
+        /// </summary>
+        /// <param name="internalId">The internal id of the function to create a closure for.</param>
+        /// <param name="moduleName">If the function comes from another module, the module name is passed here.</param>
+        public void EmitNewClo(string internalId, ModuleName moduleName)
+        {
+            if (internalId == null)
+                throw new ArgumentNullException("internalId");
+            
+            MethodInfo dummyMethodInfo;
+            var isInternal = moduleName == null ||
+                Equals(moduleName, Source.ParentApplication.Module.Name);
+
+            MethodInfo runtimeMethod;
+            if(isInternal && TryGetStaticallyLinkedFunction(internalId, out dummyMethodInfo))
+            {
+                Il.Emit(OpCodes.Ldsfld, Pass.FunctionFields[internalId]);
+                runtimeMethod = Runtime.NewClosureMethodStaticallyBound;
+            }
+            else if(isInternal)
+            {
+                Il.Emit(OpCodes.Ldstr,internalId);
+                runtimeMethod = Runtime.NewClosureMethodLateBound;
+            }
+            //TODO (Ticket #107) bind cross-module calls statically
+            else
+            {
+                Il.Emit(OpCodes.Ldstr,internalId);
+                EmitModuleName(moduleName);
+                runtimeMethod = Runtime.NewClosureMethodCrossModule;
+            }
+
+            EmitCall(runtimeMethod);
         }
 
         public void EmitLoadEngRefAsPValue()
@@ -907,37 +989,57 @@ namespace Prexonite.Compiler.Cil
             Il.EmitCall(OpCodes.Call, Runtime.LoadCommandReferenceMethod, null);
         }
 
-        public void EmitLoadFuncRefAsPValue(string id)
+        public void EmitLoadFuncRefAsPValue(string internalId, ModuleName moduleName)
         {
             MethodInfo dummyMethodInfo;
             EmitLoadLocal(SctxLocal);
-            if (TryGetStaticallyLinkedFunction(id, out dummyMethodInfo))
+            var isInternal = moduleName == null ||
+                Equals(moduleName, Source.ParentApplication.Module.Name);
+
+            if (!isInternal && TryGetStaticallyLinkedFunction(internalId, out dummyMethodInfo))
             {
-                Il.Emit(OpCodes.Ldsfld, Pass.FunctionFields[id]);
+                Il.Emit(OpCodes.Ldsfld, Pass.FunctionFields[internalId]);
                 EmitVirtualCall(Compiler.CreateNativePValue);
+            }
+            //TODO (Ticket #107) Statically linked Cross-Module ldr.func
+            else  if(isInternal)
+            {
+                Il.Emit(OpCodes.Ldstr, internalId);
+                EmitCall(Runtime.LoadFunctionReferenceInternalMethod);
             }
             else
             {
-                Il.Emit(OpCodes.Ldstr, id);
-                Il.EmitCall
-                    (
-                        OpCodes.Call, Runtime.LoadFunctionReferenceMethod, null);
+                //Cross-module reference, dynamically linked
+                Il.Emit(OpCodes.Ldstr,internalId);
+                EmitModuleName(moduleName);
+                EmitCall(Runtime.LoadFunctionReferenceMethod);
             }
         }
 
-        public void EmitLoadGlobalRefAsPValue(string id)
+        public void EmitLoadGlobalRefAsPValue(string id, ModuleName moduleName)
         {
             EmitLoadLocal(SctxLocal);
             Il.Emit(OpCodes.Ldstr, id);
-            Il.EmitCall
-                (
-                    OpCodes.Call, Runtime.LoadGlobalVariableReferenceAsPValueMethod, null);
+            if(moduleName == null || Equals(moduleName,Source.ParentApplication.Module.Name))
+            {
+                EmitCall(Runtime.LoadGlobalReferenceAsPValueInternalMethod);
+            }
+            else
+            {
+                EmitModuleName(moduleName);
+                EmitCall(Runtime.LoadGlobalVariableReferenceAsPValueMethod);
+            }
         }
 
         public void EmitLoadLocalRefAsPValue(string id)
         {
             EmitLoadLocal(Symbols[id].Local);
             Il.EmitCall(OpCodes.Call, Runtime.WrapPVariableMethod, null);
+        }
+
+        public void EmitLoadLocalRefAsPValue(EntityRef.Variable.Local localVariable)
+        {
+            EmitLoadLocalRefAsPValue(localVariable.Id);
         }
 
         public void EmitLoadStringAsPValue(string id)
@@ -982,6 +1084,65 @@ namespace Prexonite.Compiler.Cil
             EmitLoadArg(ParamResultIndex);
             EmitLoadLocal(PrimaryTempLocal);
             Il.Emit(OpCodes.Stind_Ref);
+        }
+
+        private static readonly Lazy<ConstructorInfo[]> _versionCtors = new Lazy<ConstructorInfo[]>(() =>
+            {
+                var cs = new ConstructorInfo[3];
+                cs[0] = 
+                    typeof (Version).GetConstructor(new[] 
+                        {typeof (int), typeof (int)});
+                cs[1] =
+                    typeof (Version).GetConstructor(new[] 
+                        {typeof (int), typeof (int), typeof (int)});
+                cs[2] =
+                    typeof (Version).GetConstructor(new[]
+                        {typeof (int), typeof (int), typeof (int), typeof (int)});
+                return cs;
+            },LazyThreadSafetyMode.None);
+
+        public void EmitVersion(Version version)
+        {
+            EmitLdcI4(version.Major);
+            EmitLdcI4(version.Minor);
+            //major.minor.build.revision
+            var offset =
+                version.Revision >= 0
+                    ? 2
+                    : version.Build >= 0
+                        ? 1
+                        : 0;
+            Il.Emit(OpCodes.Newobj, _versionCtors.Value[offset]);
+        }
+
+        public void EmitModuleNameAsPValue(ModuleName moduleName)
+        {
+            if (moduleName == null)
+                throw new ArgumentNullException("moduleName");
+            EmitLoadLocal(SctxLocal);
+            Il.Emit(OpCodes.Ldstr, moduleName.Id);
+            EmitVersion(moduleName.Version);
+            EmitCall(Runtime.LoadModuleNameAsPValueMethod);
+        }
+
+        public void EmitModuleName(ModuleName moduleName)
+        {
+            if (moduleName == null)
+                throw new ArgumentNullException("moduleName");
+            EmitLoadLocal(SctxLocal);
+            Il.Emit(OpCodes.Ldstr, moduleName.Id);
+            EmitVersion(moduleName.Version);
+            EmitCall(Runtime.LoadModuleNameMethod); 
+        }
+
+        public void EmitLoadFuncRefAsPValue(EntityRef.Function function)
+        {
+            EmitLoadFuncRefAsPValue(function.Id,function.ModuleName);
+        }
+
+        public void EmitLoadCmdRefAsPValue(EntityRef.Command command)
+        {
+            EmitLoadCmdRefAsPValue(command.Id);
         }
     }
 }

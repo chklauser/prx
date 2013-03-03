@@ -1,6 +1,6 @@
 // Prexonite
 // 
-// Copyright (c) 2011, Christian Klauser
+// Copyright (c) 2013, Christian Klauser
 // All rights reserved.
 // 
 // Redistribution and use in source and binary forms, with or without modification, 
@@ -23,14 +23,20 @@
 //  DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, 
 //  WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING 
 //  IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
-
 using System;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.Globalization;
 using System.Linq;
+using JetBrains.Annotations;
 using Prexonite.Commands.Core.Operators;
 using Prexonite.Compiler.Ast;
+using Prexonite.Compiler.Internal;
+using Prexonite.Compiler.Symbolic;
+using Prexonite.Compiler.Symbolic.Compatibility;
+using Prexonite.Internal;
+using Prexonite.Modular;
+using Prexonite.Properties;
 using Prexonite.Types;
 
 // ReSharper disable InconsistentNaming
@@ -39,6 +45,19 @@ namespace Prexonite.Compiler
 {
     internal partial class Parser
     {
+        [DebuggerStepThrough]
+        internal Parser(IScanner scanner, Loader loader)
+            : this(scanner)
+        {
+            if (loader == null)
+                throw new ArgumentNullException("loader");
+            _loader = loader;
+            _createTableOfInstructions();
+            _astProxy = new AstProxy(this);
+            _astFactory = new ParserAstFactory(this);
+            _referenceTransformer = new ReferenceTransformer(this);
+        }
+
         #region Proxy interface
 
         private readonly Loader _loader;
@@ -49,10 +68,27 @@ namespace Prexonite.Compiler
             get { return _loader; }
         }
 
+        /// <summary>
+        /// Preflight mode causes the parser to abort at the 
+        /// first non-meta construct, giving the user the opportunity 
+        /// to inspect a file's "header" without fully compiling 
+        /// that file.
+        /// </summary>
+        public bool PreflightModeEnabled
+        {
+            get { return Loader.Options.PreflightModeEnabled; }
+        }
+
         public Application TargetApplication
         {
             [DebuggerStepThrough]
             get { return _loader.Options.TargetApplication; }
+        }
+
+        public Module TargetModule
+        {
+            [DebuggerStepThrough]
+            get { return TargetApplication.Module; }
         }
 
         public LoaderOptions Options
@@ -67,10 +103,10 @@ namespace Prexonite.Compiler
             get { return _loader.Options.ParentEngine; }
         }
 
-        public SymbolTable<SymbolEntry> Symbols
+        public SymbolStore Symbols
         {
             [DebuggerStepThrough]
-            get { return _loader.Symbols; }
+            get { return target != null ? target.CurrentBlock.Symbols : _loader.Symbols; }
         }
 
         public Loader.FunctionTargetsIterator FunctionTargets
@@ -108,15 +144,24 @@ namespace Prexonite.Compiler
             }
         }
 
-        [DebuggerStepThrough]
-        internal Parser(IScanner scanner, Loader loader)
-            : this(scanner)
+        private CompilerTarget _target;
+
+        public CompilerTarget target
         {
-            if (loader == null)
-                throw new ArgumentNullException("loader");
-            _loader = loader;
-            _createTableOfInstructions();
-            _astProxy = new AstProxy(this);
+            [DebuggerStepThrough]
+            get { return _target; }
+        }
+
+        public AstBlock CurrentBlock
+        {
+            get { return target == null ? null : target.CurrentBlock; }
+        }
+
+        private readonly IAstFactory _astFactory;
+
+        protected IAstFactory Create
+        {
+            get { return _astFactory; }
         }
 
         #endregion
@@ -125,12 +170,16 @@ namespace Prexonite.Compiler
 
         [DebuggerStepThrough]
         internal string cache(string toCache)
-
         {
             return _loader.CacheString(toCache);
         }
 
         #endregion
+
+        public void ViolentlyAbortParse()
+        {
+            scanner.Abort();
+        }
 
         #region Helper
 
@@ -153,6 +202,11 @@ namespace Prexonite.Compiler
                 out d);
         }
 
+        public static bool TryParseVersion(string s, out Version version)
+        {
+            return System.Version.TryParse(s, out version);
+        }
+
         public static NumberStyles RealStyle
         {
             get { return NumberStyles.AllowDecimalPoint | NumberStyles.AllowExponent; }
@@ -163,13 +217,13 @@ namespace Prexonite.Compiler
             get { return NumberStyles.None; }
         }
 
-        [DebuggerStepThrough]
+        [DebuggerStepThrough, Obsolete("Use Loader.ReportMessage instead.")]
         public void SemErr(int line, int col, string message)
         {
             errors.SemErr(line, col, message);
         }
 
-        [DebuggerStepThrough]
+        [DebuggerStepThrough, Obsolete("Use Loader.ReportMessage instead.")]
         public void SemErr(Token tok, string s)
         {
             errors.SemErr(tok.line, tok.col, s);
@@ -267,11 +321,116 @@ namespace Prexonite.Compiler
             _inject(kind, System.String.Empty);
         }
 
+        /// <summary>
+        /// Defines a new global variable (or returns the existing declaration and instance)
+        /// </summary>
+        /// <param name="id">The physical name of the new global variable.</param>
+        /// <param name="vari">The variable declaration for the new variable.</param>
+        protected PVariable DefineGlobalVariable(string id, out VariableDeclaration vari)
+        {
+            if (TargetModule.Variables.TryGetVariable(id, out vari))
+            {
+                return TargetApplication.Variables[vari.Id];
+            }
+            else
+            {
+                vari = global::Prexonite.Modular.VariableDeclaration.Create(id);
+                TargetModule.Variables.Add(vari);
+                return TargetApplication.Variables[id] = new PVariable(vari);
+            }
+        }
+
+        private void _compileAndExecuteBuildBlock(CompilerTarget buildBlockTarget)
+        {
+            if (errors.count > 0)
+            {
+                Loader.ReportMessage(Message.Error(Resources.Parser_ErrorsInBuildBlock,GetPosition(),MessageClasses.ErrorsInBuildBlock));
+                return;
+            }
+
+            //Emit code for top-level build block
+            try
+            {
+                buildBlockTarget.Ast.EmitCode(buildBlockTarget, true, StackSemantics.Effect);
+
+                buildBlockTarget.Function.Meta["File"] = scanner.File;
+                buildBlockTarget.FinishTarget();
+                //Run the build block 
+                var fctx = buildBlockTarget.Function.CreateFunctionContext(ParentEngine,
+                    new PValue[] { },
+                    new PVariable[] { }, true);
+                object token = null;
+                try
+                {
+                    TargetApplication._SuppressInitialization = true;
+                    token = Loader.RequestBuildCommands();
+                    ParentEngine.Process(fctx);
+                }
+                finally
+                {
+                    if (token != null)
+                        Loader.ReleaseBuildCommands(token);
+                    TargetApplication._SuppressInitialization = false;
+                }
+            }
+            catch (Exception e)
+            {
+                Loader.ReportMessage(Message.Error(string.Format(Resources.Parser_exception_in_build_block, e),GetPosition(),MessageClasses.ExceptionDuringCompilation));
+            }
+        }
+
+        private bool _suppressPrimarySymbol(IHasMetaTable ihmt)
+        {
+            return ihmt.Meta[Loader.SuppressPrimarySymbol].Switch;
+        }
+
         #endregion //General
 
         #region Prexonite Script
 
-        public CompilerTarget target;
+        #region Symbol management
+
+        internal AstGetSet _NullNode(ISourcePosition position)
+        {
+            var n = new AstNull(position.File, position.Line, position.Column);
+            return new AstIndirectCall(position, PCall.Get, n);
+        }
+
+        private readonly Stack<object> _scopeStack = new Stack<object>();
+
+        internal void _PushScope(AstScopedBlock block)
+        {
+            if (!ReferenceEquals(block.LexicalScope, CurrentBlock))
+                throw new PrexoniteException("Cannot push scope of unrelated block.");
+            _scopeStack.Push(block);
+            _target.BeginBlock(block);
+        }
+
+        internal void _PushScope(CompilerTarget ct)
+        {
+            if (!ReferenceEquals(ct.ParentTarget, _target))
+                throw new PrexoniteException("Cannot push scope of unrelated compiler target.");
+            _scopeStack.Push(ct);
+            _target = ct;
+        }
+
+        internal void _PopScope(AstScopedBlock block)
+        {
+            if (!ReferenceEquals(_scopeStack.Peek(), block))
+                throw new PrexoniteException(string.Format("Tried to pop scope of block {0} but {1} was on top.", block, _scopeStack.Peek()));
+            _scopeStack.Pop();
+            _target.EndBlock();
+        }
+
+        internal void _PopScope(CompilerTarget ct)
+        {
+            if (!ReferenceEquals(_scopeStack.Peek(), ct))
+                throw new PrexoniteException(string.Format("Tried to pop scope of compiler target {0} but {1} was on top.", ct, _scopeStack.Peek()));
+            _target = ct.ParentTarget;
+            _scopeStack.Pop();
+        }
+
+        #endregion
 
         [DebuggerStepThrough]
         public bool isLabel() //LL(2)
@@ -374,61 +533,112 @@ namespace Prexonite.Compiler
         }
 
         //id is object or reference variable
-        [DebuggerStepThrough]
+        [DebuggerStepThrough,Obsolete("There is no good reason for such a restrictive predicate.")]
         public bool isLikeVariable(string id) //context
         {
-            if (!target.Symbols.ContainsKey(id))
-                return false;
-            var kind = target.Symbols[id].Interpretation;
-            return
-                kind == SymbolInterpretations.LocalObjectVariable ||
-                    kind == SymbolInterpretations.GlobalObjectVariable ||
-                        kind == SymbolInterpretations.LocalReferenceVariable ||
-                            kind == SymbolInterpretations.GlobalReferenceVariable;
+            Symbol symbol;
+            DereferenceSymbol callSymbol;
+            ReferenceSymbol referenceSymbol;
+            EntityRef.Variable _;
+            return target.Symbols.TryGet(id, out symbol)
+                && symbol.TryGetDereferenceSymbol(out callSymbol)
+                && callSymbol.InnerSymbol.TryGetReferenceSymbol(out referenceSymbol)
+                && referenceSymbol.Entity.TryGetVariable(out _);
+        }
+
+        public bool isLocalVariable(SymbolInterpretations interpretations)
+        {
+            return interpretations == SymbolInterpretations.LocalObjectVariable
+                || interpretations == SymbolInterpretations.LocalReferenceVariable;
+        }
+
+        public bool isId(out string id)
+        {
+            // Warning: this code duplicates the Id<out string id> rule from the grammar.
+
+            scanner.ResetPeek();
+            var t1 = la;
+            var t2 = scanner.Peek();
+
+            switch (t1.kind)
+            {
+                case _id:
+                case _add:
+                case _enabled:
+                case _disabled:
+                case _build:
+                    id = t1.val;
+                    return true;
+                case _anyId:
+                    id = cache(t2.val);
+                    return true;
+                default:
+                    id = "\\NoId\\";
+                    return false;
+
+            }
         }
 
         //id is like a function
-        [DebuggerStepThrough]
         public bool isLikeFunction() //Context
         {
-            var id = la.val;
+            string id;
+            Symbol symbol;
             return
-                la.kind == _id &&
-                    target.Symbols.ContainsKey(id) &&
-                        isLikeFunction(target.Symbols[id].Interpretation);
+                isId(out id) &&
+                target.Symbols.TryGet(id, out symbol) &&
+                symbol.HandleWith(_isLikeFunction, false);
         }
 
-        //context
-
-        //interpretation is like function
-        [DebuggerStepThrough]
-        private static bool isLikeFunction(SymbolInterpretations interpretation) //Context
+        private class IsLikeFunctionHandler : SymbolHandler<object, bool>
         {
-            return
-                interpretation == SymbolInterpretations.Function ||
-                    interpretation == SymbolInterpretations.Command ||
-                        interpretation == SymbolInterpretations.LocalReferenceVariable ||
-                            interpretation == SymbolInterpretations.GlobalReferenceVariable ||
-                                interpretation == SymbolInterpretations.MacroCommand;
+            protected override bool HandleSymbolDefault(Symbol self, object argument)
+            {
+                return false;
+            }
+
+            public override bool HandleDereference(DereferenceSymbol self, object argument)
+            {
+                return true;
+            }
+
+            public override bool HandleExpand(ExpandSymbol self, object argument)
+            {
+                return true;
+            }
+
+            protected override bool HandleWrappingSymbol(WrappingSymbol self, object argument)
+            {
+                return self.InnerSymbol.HandleWith(this, argument);
+            }
+            
         }
+
+        private static readonly SymbolHandler<object, bool> _isLikeFunction = new IsLikeFunctionHandler();
 
         //context
 
         [DebuggerStepThrough]
         public bool isUnknownId()
         {
-            var id = la.val;
-            return la.kind == _id && !target.Symbols.ContainsKey(id);
+            string id;
+            return isId(out id) && !target.Symbols.Contains(id);
+        }
+
+        private bool _tryResolveFunction(SymbolEntry entry, out PFunction func)
+        {
+            func = null;
+            if (entry.Interpretation != SymbolInterpretations.Function)
+                return false;
+
+            return TargetApplication.TryGetFunction(entry.InternalId, entry.Module, out func);
         }
 
         [DebuggerStepThrough]
         public bool isKnownMacroFunction(SymbolEntry symbol)
         {
-            if (symbol.Interpretation != SymbolInterpretations.Function)
-                return false;
-
             PFunction func;
-            if (!TargetApplication.Functions.TryGetValue(symbol.Id, out func))
+            if (!_tryResolveFunction(symbol, out func))
                 return false;
 
             return func.Meta[CompilerTarget.MacroMetaKey].Switch;
@@ -444,6 +654,15 @@ namespace Prexonite.Compiler
                     typeId.StartsWith(importedNamespace, StringComparison.OrdinalIgnoreCase)))
                 return ObjectPType.Literal + "(\"" + StringPType.Escape(typeId) + "\")";
             return typeId;
+        }
+
+        public bool isSymbolDirective(string pattern)
+        {
+            scanner.ResetPeek();
+            return la.kind == _id
+                && scanner.Peek().kind == _lpar
+                && la.val.ToUpperInvariant() == pattern;
+
         }
 
         private bool isFollowedByStatementBlock()
@@ -554,22 +773,7 @@ namespace Prexonite.Compiler
         [DebuggerStepThrough]
         private bool isOuterVariable(string id) //context
         {
-            //Check local function
-            var func = target.Function;
-            if (func.Variables.Contains(id) || func.Parameters.Contains(id))
-                return false;
-
-            //Check parents
-            for (var parent = target.ParentTarget;
-                 parent != null;
-                 parent = parent.ParentTarget)
-            {
-                func = parent.Function;
-                if (func.Variables.Contains(id) || func.Parameters.Contains(id) ||
-                    parent.OuterVariables.Contains(id))
-                    return true;
-            }
-            return false;
+            return target._IsOuterVariable(id);
         }
 
         private string generateLocalId(string prefix = "")
@@ -577,16 +781,55 @@ namespace Prexonite.Compiler
             return target.GenerateLocalId(prefix);
         }
 
+        [Obsolete("SymbolEntry and all related APIs are deprecated. Use the Symbol API instead.")]
         private void SmartDeclareLocal(string id, SymbolInterpretations kind)
         {
             SmartDeclareLocal(id, id, kind, false);
         }
 
+        [Obsolete("SymbolEntry and all related APIs are deprecated. Use the Symbol API instead.")]
         private void SmartDeclareLocal(string id, SymbolInterpretations kind, bool isOverrideDecl)
         {
             SmartDeclareLocal(id, id, kind, isOverrideDecl);
         }
 
+        private Symbol ToModuleLocalSymbol(string physicalId, SymbolInterpretations kind)
+        {
+            switch (kind)
+            {
+                case SymbolInterpretations.Function:
+                    return Symbol.CreateCall(EntityRef.Function.Create(physicalId, TargetModule.Name),GetPosition());
+                case SymbolInterpretations.Command:
+                    return Symbol.CreateCall(EntityRef.Command.Create(physicalId), GetPosition());
+                case SymbolInterpretations.LocalObjectVariable:
+                    return Symbol.CreateCall(EntityRef.Variable.Local.Create(physicalId), GetPosition());
+                case SymbolInterpretations.LocalReferenceVariable:
+                    return
+                        Symbol.CreateDereference(
+                            Symbol.CreateDereference(
+                                Symbol.CreateReference(EntityRef.Variable.Local.Create(physicalId), GetPosition())));
+                case SymbolInterpretations.GlobalObjectVariable:
+                    return Symbol.CreateCall(EntityRef.Variable.Global.Create(physicalId, TargetModule.Name), GetPosition());
+                case SymbolInterpretations.GlobalReferenceVariable:
+                    return
+                        Symbol.CreateDereference(
+                            Symbol.CreateDereference(
+                                Symbol.CreateReference(
+                                    EntityRef.Variable.Global.Create(physicalId, TargetModule.Name), GetPosition())));
+                case SymbolInterpretations.MacroCommand:
+                    return Symbol.CreateCall(EntityRef.MacroCommand.Create(physicalId), GetPosition());
+                default:
+                    var position = GetPosition();
+                    return
+                        Symbol.CreateMessage(Message.Error(
+                            string.Format("Invalid self interpretation {0}.",
+                                Enum.GetName(typeof(SymbolInterpretations), kind)), position,
+                            MessageClasses.InvalidSymbolInterpretation),
+                               Symbol.CreateCall(EntityRef.Command.Create(physicalId), GetPosition()), position);
+            }
+        }
+
+        [Obsolete("SymbolEntry and all related APIs are deprecated. Use the Symbol API instead.")]
         private void SmartDeclareLocal(string logicalId, string physicalId,
             SymbolInterpretations kind, bool isOverrideDecl)
         {
@@ -594,11 +837,30 @@ namespace Prexonite.Compiler
                 isOuterVariable(physicalId))
             {
                 target.RequireOuterVariable(physicalId);
-                target.Declare(kind, logicalId, physicalId);
+                target.DeclareModuleLocal(kind, logicalId, physicalId);
             }
             else
             {
-                target.Define(kind, logicalId, physicalId);
+                target.Symbols.Declare(logicalId, ToModuleLocalSymbol(physicalId, kind));
+                if ((kind == SymbolInterpretations.LocalObjectVariable
+                        || kind == SymbolInterpretations.LocalReferenceVariable)
+                    && !target.Function.Variables.Contains(physicalId))
+                {
+                    target.Function.Variables.Add(physicalId);
+                }
+            }
+        }
+
+        private Symbol _parseSymbol(MExpr expr)
+        {
+            try
+            {
+                return SymbolMExprParser.Parse(Symbols,expr);
+            }
+            catch (ErrorMessageException e)
+            {
+                Loader.ReportMessage(e.CompilerMessage);
+                return Symbol.CreateNil(e.CompilerMessage.Position);
             }
         }
 
@@ -636,8 +898,6 @@ namespace Prexonite.Compiler
             return varTok.kind != _var && varTok.kind != _ref;
         }
 
-        #endregion
-
         private static IEnumerable<string> let_bindings(CompilerTarget ft)
         {
             var lets = new HashSet<string>(Engine.DefaultStringComparer);
@@ -650,53 +910,231 @@ namespace Prexonite.Compiler
         {
             f.Meta[PFunction.LetKey] = (MetaEntry)
                 f.Meta[PFunction.LetKey].List
-                    .Union(new[] {(MetaEntry) local})
+                    .Union(new[] { (MetaEntry)local })
                     .ToArray();
         }
 
-        private void _compileAndExecuteBuildBlock(CompilerTarget buildBlockTarget)
+        #region Assemble Invocation of Symbol
+
+        private class ReferenceTransformer : SymbolHandler<int,Tuple<Symbol,bool>>
         {
-            if (errors.count > 0)
+            [NotNull]
+            private readonly Parser _parser;
+
+            public ReferenceTransformer([NotNull] Parser parser)
             {
-                SemErr("Cannot execute build block. Errors detected");
-                return;
+                _parser = parser;
             }
 
-            //Emit code for top-level build block
-            try
+            protected override Tuple<Symbol, bool> HandleWrappingSymbol(WrappingSymbol self, int argument)
             {
-                buildBlockTarget.Ast.EmitCode(buildBlockTarget, true);
+                if (argument == 0)
+                    return Tuple.Create<Symbol,bool>(self,false);
+                else
+                {
+                    var innerResult = self.InnerSymbol.HandleWith(this, argument);
+                    return Tuple.Create<Symbol,bool>(self.With(innerResult.Item1),innerResult.Item2);
+                }
+            }
 
-                buildBlockTarget.Function.Meta["File"] = scanner.File;
-                buildBlockTarget.FinishTarget();
-                //Run the build block 
-                var fctx = buildBlockTarget.Function.CreateFunctionContext(ParentEngine,
-                    new PValue[] {},
-                    new PVariable[] {}, true);
-                object token = null;
+            protected override Tuple<Symbol, bool> HandleLeafSymbol(Symbol self, int argument)
+            {
+                if (argument > 0)
+                {
+                    throw new ErrorMessageException(
+                        Message.Error(Resources.ReferenceTransformer_CannotCreateReferenceToValue_,
+                                      _parser.GetPosition(), MessageClasses.CannotCreateReference));
+                }
+                else
+                {
+                    return Tuple.Create(self,false);
+                }
+            }
+
+            public override Tuple<Symbol, bool> HandleDereference(DereferenceSymbol self, int argument)
+            {
+                if (argument > 0)
+                {
+                    return self.InnerSymbol.HandleWith(this, argument - 1);
+                }
+                else
+                {
+                    return base.HandleDereference(self, argument);
+                }
+            }
+
+            public override Tuple<Symbol, bool> HandleExpand(ExpandSymbol self, int argument)
+            {
+                if (argument > 1)
+                {
+                    throw new ErrorMessageException(
+                        Message.Error(Resources.ReferenceTransformer_HandleExpand_CannotCreateReferenceToDefinitionOfMacroOrPartialApplication,
+                                      _parser.GetPosition(), MessageClasses.CannotCreateReference));
+                }
+                else if(argument == 1)
+                {
+                    // Here, we don't actually remove the expansion, but rather switch the 
+                    //  flag to true to indicate that the calling procedure should 
+                    //  convert the resulting expansion node into a partial application.
+                    return new Tuple<Symbol, bool>(base.HandleExpand(self,argument-1).Item1,true);
+                }
+                else
+                {
+                    return base.HandleExpand(self, argument);
+                }
+            }
+        }
+
+        [NotNull]
+        private readonly ReferenceTransformer _referenceTransformer;
+
+        private AstExpr _assembleReference(string id, int ptrCount)
+        {
+            Debug.Assert(id != null);
+            Debug.Assert(ptrCount > 0);
+
+            Symbol symbol;
+            var position = GetPosition();
+            if (!Symbols.TryGet(id, out symbol))
+            {
+                Loader.ReportMessage(Message.Error(string.Format(Resources.Parser__assembleReference_SymbolNotDefined, id),position,MessageClasses.SymbolNotResolved));
+                return Create.Null(position);
+            }
+            else
+            {
                 try
                 {
-                    TargetApplication._SuppressInitialization = true;
-                    token = Loader.RequestBuildCommands();
-                    ParentEngine.Process(fctx);
+                    var transformed = symbol.HandleWith(_referenceTransformer, ptrCount);
+                    var invocation = Create.ExprFor(position, transformed.Item1);
+                    if (transformed.Item2)
+                    {
+                        // If the reference transformer indicates that an Expand prefix was eliminated
+                        //  during the transformation, we need to convert the invocation into a partial application
+                        var invocationCall = invocation as AstGetSet;
+                        if (invocationCall == null)
+                        {
+                            Loader.ReportMessage(
+                                Message.Error(Resources.Parser__assembleReference_MacroDefinitionNotLValue, position,
+                                              MessageClasses.ParserInternal));
+                            invocation = Create.Null(position);
+                        }
+                        else
+                        {
+                            invocationCall.Arguments.Add(Create.Placeholder(position));
+                        }
+                    }
+                    return invocation;
                 }
-                finally
+                catch (ErrorMessageException e)
                 {
-                    if (token != null)
-                        Loader.ReleaseBuildCommands(token);
-                    TargetApplication._SuppressInitialization = false;
+                    Loader.ReportMessage(e.CompilerMessage);
+                    return Create.Null(position);
                 }
-            }
-            catch (Exception e)
-            {
-                SemErr("Exception during compilation and execution of build block.\n" + e);
             }
         }
 
-        private bool _suppressPrimarySymbol(IHasMetaTable ihmt)
+        private class EnsureInScopeHandler : Symbolic.Internal.TransformHandler<Parser>
         {
-            return ihmt.Meta[Loader.SuppressPrimarySymbol].Switch;
+            public override Symbol HandleReference(ReferenceSymbol self, Parser argument)
+            {
+                EntityRef.Variable.Local local;
+                if(self.Entity.TryGetLocalVariable(out local)
+                    && argument.isOuterVariable(local.Id))
+                    argument.target.RequireOuterVariable(local.Id);
+                return self;
+            }
         }
+        private static readonly EnsureInScopeHandler _ensureInScope = new EnsureInScopeHandler();
+
+        public void EnsureInScope(Symbol symbol)
+        {
+            symbol.HandleWith(_ensureInScope, this);
+        }
+
+        private void _fallbackObjectCreation(AstTypeExpr type, out AstExpr expr,
+            out ArgumentsProxy args)
+        {
+            var typeExpr = type as AstDynamicTypeExpression;
+            Symbol fallbackSymbol;
+            if (
+                //is a type expression we understand (Parser currently only generates dynamic type expressions)
+                //  constant type expressions are recognized during optimization
+                typeExpr != null
+                //happens in case of parse failure
+                    && typeExpr.TypeId != null
+                //there is no such thing as a parametrized struct
+                        && typeExpr.Arguments.Count == 0
+                //built-in types take precedence
+                            && !ParentEngine.PTypeRegistry.Contains(typeExpr.TypeId)
+                //in case neither the built-in type nor the struct constructor exists, 
+                //  stay with built-in types for predictibility
+                                &&
+                                target.Symbols.TryGet(
+                                    Loader.ObjectCreationFallbackPrefix + typeExpr.TypeId,
+                                    out fallbackSymbol))
+            {
+                EnsureInScope(fallbackSymbol);
+
+                var e = Create.ExprFor(type.Position,fallbackSymbol);
+                var call = e as AstGetSet;
+                if (call == null)
+                {
+                    var pos = GetPosition();
+                    call = Create.IndirectCall(pos, Create.Null(pos));
+                    Loader.ReportMessage(Message.Create(MessageSeverity.Error,
+                                                string.Format(Resources.Parser__CannotUseExpressionAsAConstructor,
+                                                              e), pos,
+                                                MessageClasses.CannotUseExpressionAsConstructor));
+                }
+                expr = call;
+                args = call.Arguments;
+            }
+            else if (type != null)
+            {
+                var creation = new AstObjectCreation(this, type);
+                expr = creation;
+                args = creation.Arguments;
+            }
+            else
+            {
+                Loader.ReportMessage(Message.Error(Resources.Parser__fallbackObjectCreation_Failed,GetPosition(),MessageClasses.ObjectCreationSyntax));
+                expr = new AstNull(this);
+                args = new ArgumentsProxy(new List<AstExpr>());
+            }
+        }
+
+        private AstExpr _createUnknownExpr()
+        {
+            return _createUnknownGetSet();
+        }
+
+        private AstGetSet _createUnknownGetSet()
+        {
+            return new AstIndirectCall(this, new AstNull(this));
+        }
+
+        private void _appendRight(AstExpr lhs, AstGetSet rhs)
+        {
+            _appendRight(lhs.Singleton(), rhs);
+        }
+
+        private void _appendRight(IEnumerable<AstExpr> lhs, AstGetSet rhs)
+        {
+            rhs.Arguments.RightAppend(lhs);
+            rhs.Arguments.ReleaseRightAppend();
+            AstIndirectCall indirectCallNode;
+            AstReference refNode;
+            EntityRef.Variable dummyVariable;
+            if ((indirectCallNode = rhs as AstIndirectCall) != null 
+                && (refNode = indirectCallNode.Subject as AstReference) != null 
+                && refNode.Entity.TryGetVariable(out dummyVariable))
+                rhs.Call = PCall.Set;
+        }
+
+        #endregion
+
+
+        #endregion
 
         #region Assembler
 
@@ -712,8 +1150,10 @@ namespace Prexonite.Compiler
             var alias = getOpAlias(insBase, detail, out argc);
             if (alias == null)
             {
-                SemErr(string.Format("Unknown operator alias in assembler code: {0}.{1}", insBase,
-                    detail));
+                Loader.ReportMessage(
+                    Message.Error(
+                        string.Format(Resources.Parser_addOpAlias_Unknown, insBase, detail),
+                        GetPosition(), MessageClasses.UnknownAssemblyOperator));
                 block.Add(new AstAsmInstruction(this, new Instruction(OpCode.nop)));
                 return;
             }
@@ -743,7 +1183,7 @@ namespace Prexonite.Compiler
             return
                 la1.kind != _string && Engine.StringsAreEqual(la1.val, insBase) &&
                     (detail == null
-                        ? (la2.kind == _dot ? la3.kind == _integer : true)
+                        ? (la2.kind != _dot || la3.kind == _integer)
                         : (la2.kind == _dot && la3.kind != _string &&
                             Engine.StringsAreEqual(la3.val, detail))
                         );
@@ -819,8 +1259,8 @@ namespace Prexonite.Compiler
         {
             var tab = _instructionNameTable;
             //Add original names
-            foreach (var code in Enum.GetNames(typeof (OpCode)))
-                tab.Add(code.Replace('_', '.'), (OpCode) Enum.Parse(typeof (OpCode), code));
+            foreach (var code in Enum.GetNames(typeof(OpCode)))
+                tab.Add(code.Replace('_', '.'), (OpCode)Enum.Parse(typeof(OpCode), code));
 
             //Add instruction aliases -- NOTE: You'll also have to add them to the respective groups
             tab.Add("new", OpCode.newobj);
@@ -1019,48 +1459,6 @@ namespace Prexonite.Compiler
 
         #endregion
 
-        private void _fallbackObjectCreation(Parser parser, IAstType type, out IAstExpression expr,
-            out ArgumentsProxy args)
-        {
-            var typeExpr = type as AstDynamicTypeExpression;
-            SymbolEntry fallbackSymbol;
-            if (
-                //is a type expression we understand (Parser currently only generates dynamic type expressions)
-                //  constant type expressions are recognized during optimization
-                typeExpr != null
-                    //happens in case of parse failure
-                    && typeExpr.TypeId != null
-                        //there is no such thing as a parametrized struct
-                        && typeExpr.Arguments.Count == 0
-                            //built-in types take precedence
-                            && !ParentEngine.PTypeRegistry.Contains(typeExpr.TypeId)
-                                //in case neither the built-in type nor the struct constructor exists, 
-                                //  stay with built-in types for predictibility
-                                &&
-                                target.Symbols.TryGetValue(
-                                    Loader.ObjectCreationFallbackPrefix + typeExpr.TypeId,
-                                    out fallbackSymbol))
-            {
-                if (isOuterVariable(fallbackSymbol.Id))
-                    target.RequireOuterVariable(fallbackSymbol.Id);
-                var call = new AstGetSetSymbol(parser, PCall.Get, fallbackSymbol.Id,
-                    fallbackSymbol.Interpretation);
-                expr = call;
-                args = call.Arguments;
-            }
-            else if (type != null)
-            {
-                var creation = new AstObjectCreation(parser, type);
-                expr = creation;
-                args = creation.Arguments;
-            }
-            else
-            {
-                SemErr("Failed to transform object creation expression.");
-                expr = new AstNull(this);
-                args = new ArgumentsProxy(new List<IAstExpression>());
-            }
-        }
     }
 }
 

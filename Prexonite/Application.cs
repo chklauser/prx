@@ -1,6 +1,6 @@
 // Prexonite
 // 
-// Copyright (c) 2011, Christian Klauser
+// Copyright (c) 2013, Christian Klauser
 // All rights reserved.
 // 
 // Redistribution and use in source and binary forms, with or without modification, 
@@ -23,13 +23,16 @@
 //  DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, 
 //  WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING 
 //  IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
-
 using System;
 using System.Collections.Generic;
+using System.ComponentModel;
 using System.Diagnostics;
 using System.IO;
+using System.Linq;
+using JetBrains.Annotations;
 using Prexonite.Compiler;
-using NoDebug = System.Diagnostics.DebuggerNonUserCodeAttribute;
+using Prexonite.Internal;
+using Prexonite.Modular;
 
 namespace Prexonite
 {
@@ -42,7 +45,7 @@ namespace Prexonite
                                IHasMetaTable,
                                IIndirectCall
     {
-        #region Construction
+        #region Meta Keys
 
         /// <summary>
         ///     Key used to store the id of applications, functions and variables.
@@ -72,13 +75,19 @@ namespace Prexonite
         /// <summary>
         ///     Meta table key used for storing initialization generation.
         /// </summary>
+        [Obsolete("Prexonite always completes partial initialization. This key has no effect.")] 
+        [EditorBrowsable(EditorBrowsableState.Never)]
         public const string InitializationGeneration = InitializationId;
 
         /// <summary>
         ///     Meta table key used for stroing the offset in the initialization function where
         ///     execution should continue to complete initialization.
         /// </summary>
+        [Obsolete("Prexonite no longer stores the initialization offset in a meta table.")]
+        [EditorBrowsable(EditorBrowsableState.Never)]
+// ReSharper disable UnusedMember.Global
         public const string InitializationOffset = InitializationId;
+// ReSharper restore UnusedMember.Global
 
         /// <summary>
         ///     Meta table key used as an alias for <see cref = "Application.IdKey" />
@@ -86,6 +95,10 @@ namespace Prexonite
         public const string NameKey = "name";
 
         public const string AllowOverridingKey = "AllowOverriding";
+
+        #endregion
+
+        #region Construction
 
         public static readonly MetaEntry DefaultImport = new MetaEntry(new MetaEntry[] {"System"});
 
@@ -102,31 +115,38 @@ namespace Prexonite
         ///     Creates a new application with a given Id.
         /// </summary>
         /// <param name = "id">An arbitrary id for identifying the application. Prefereably a valid identifier.</param>
-        public Application(string id)
+        public Application(string id) : this(Module.Create(new ModuleName(id,new Version())))
         {
-            _meta = new MetaTable(this);
+        }
 
-            if (id == null)
-                throw new ArgumentNullException("id", "Application id cannot be null.");
-            if (id.Length <= 0)
-                throw new ArgumentException("Application Id cannot be null.");
-            //Please note that application id's do not have to be Command Script identifiers.
-            _meta[IdKey] = id;
-            _meta[EntryKey] = DefaultEntryFunction;
-            _meta[ImportKey] = DefaultImport;
+        public Application(Module module)
+        {
+            if (module == null)
+                throw new ArgumentNullException("module");
 
-            _variables = new SymbolTable<PVariable>();
+            _module = module;
 
-            _functions = new PFunctionTable();
+            //instantiate variables
+            foreach (var decl in _module.Variables)
+                _variableTable.Add(decl.Id, new PVariable(decl));
 
-            _initializationFunction = new PFunction(this, InitializationId);
+            //instantiate functions
+            foreach (var funDecl in _module.Functions)
+                _functionTable.Add(new PFunction(this, funDecl));
+
+            Debug.Assert(_functionTable.Contains(InitializationId),
+                string.Format(
+                    "Instantiating module {0} did not result in an instantiated initialization function.",
+                    _module.Name));
+            _initializationFunction = _functionTable[InitializationId];
+            Debug.Assert(_InitializationFunction != null);
         }
 
         #endregion
 
         #region Variables
 
-        private readonly SymbolTable<PVariable> _variables;
+        private readonly SymbolTable<PVariable> _variableTable = new SymbolTable<PVariable>();
 
         /// <summary>
         ///     Provides access to the table of global variables.
@@ -134,14 +154,29 @@ namespace Prexonite
         public SymbolTable<PVariable> Variables
         {
             [DebuggerStepThrough]
-            get { return _variables; }
+            get { return _variableTable; }
         }
 
         #endregion
 
         #region Functions
 
-        private readonly PFunctionTable _functions;
+        public bool TryGetFunction(string id, ModuleName moduleName, out PFunction func)
+        {
+            var app = this;
+            if (moduleName != null && moduleName != Module.Name)
+            {
+                if (!Compound.TryGetApplication(moduleName, out app))
+                {
+                    func = null;
+                    return false;
+                }
+            }
+
+            return app.Functions.TryGetValue(id, out func);
+        }
+
+        private readonly PFunctionTable _functionTable = new PFunctionTableImpl();
 
         /// <summary>
         ///     Provides access to the table of registered functions.
@@ -149,7 +184,7 @@ namespace Prexonite
         public PFunctionTable Functions
         {
             [DebuggerStepThrough]
-            get { return _functions; }
+            get { return _functionTable; }
         }
 
         /// <summary>
@@ -161,7 +196,7 @@ namespace Prexonite
         public PFunction EntryFunction
         {
             [DebuggerStepThrough]
-            get { return Functions[_meta[EntryKey]]; }
+            get { return Functions[Meta[EntryKey]]; }
         }
 
         /// <summary>
@@ -171,23 +206,30 @@ namespace Prexonite
         [DebuggerStepThrough]
         public PFunction CreateFunction()
         {
-            return new PFunction(this);
+            return CreateFunction(Engine.GenerateName("F"));
         }
 
         /// <summary>
-        ///     Creates a new function for the application with a given <paramref name = "id" />.
+        ///     Creates a new function for the application with a given <paramref name = "id" />. Also creates a corresponding <see cref="FunctionDeclaration"/> in the backing <see cref="Module"/>.
         /// </summary>
         /// <param name = "id">An identifier to name the function.</param>
         /// <returns>An unregistered function with a given Id, bound to the current application instance.</returns>
         [DebuggerStepThrough]
         public PFunction CreateFunction(string id)
         {
-            return new PFunction(this, id);
+            var decl = Module.CreateFunction(id);
+            var func = new PFunction(this, decl);
+            _functionTable.Add(func);
+            return func;
         }
 
         #endregion
 
         #region Initialization
+
+        [NotNull]
+        private readonly PFunction _initializationFunction;
+        private int _initializationOffset;
 
         private ApplicationInitializationState _initializationState =
             ApplicationInitializationState.None;
@@ -196,7 +238,7 @@ namespace Prexonite
         ///     Provides readonly access to the application's <see cref = "ApplicationInitializationState">initialization state</see>.
         ///     <br />
         ///     The <see cref = "InitializationState" /> is only changed by the <see cref = "Loader" /> or by <see
-        ///      cref = "EnsureInitialization" />.
+        ///      cref = "EnsureInitialization(Prexonite.Engine)" />.
         /// </summary>
         /// <value>A <see cref = "ApplicationInitializationState" /> that indicates the initialization state the application is currently in.</value>
         public ApplicationInitializationState InitializationState
@@ -205,40 +247,19 @@ namespace Prexonite
             internal set { _initializationState = value; }
         }
 
-        private readonly PFunction _initializationFunction;
-
         /// <summary>
         ///     Provides access to the initialization function.
         /// </summary>
+        [NotNull]
         internal PFunction _InitializationFunction
         {
             get { return _initializationFunction; }
         }
 
-        private int _initializationGeneration = -1;
-
-        private bool _suppressInitialization;
-
         /// <summary>
         ///     Allows you to suppress initialization of the application.
         /// </summary>
-        internal bool _SuppressInitialization
-        {
-            get { return _suppressInitialization; }
-            set { _suppressInitialization = value; }
-        }
-
-        /// <summary>
-        ///     Notifies the application of a change in it's code (more specifically the initialize function)
-        /// </summary>
-        /// <returns>The initialization generation that is required to trigger initialization.</returns>
-        internal int _RegisterInitializationUpdate()
-        {
-            if (_initializationState == ApplicationInitializationState.Complete)
-                _initializationState = ApplicationInitializationState.Partial;
-
-            return _initializationGeneration + 1;
-        }
+        internal bool _SuppressInitialization { get; set; }
 
         /// <summary>
         ///     Notifies the application that a complete initialization absolutely necessary.
@@ -278,19 +299,50 @@ namespace Prexonite
         ///         </ul>
         ///     </para>
         /// </remarks>
+        [Obsolete("Initialization is no longer dependent on the context.")]
         public void EnsureInitialization(Engine targetEngine, IHasMetaTable context)
         {
-            if (_suppressInitialization)
+            EnsureInitialization(targetEngine);
+        }
+
+        /// <summary>
+        ///     <para>Makes the application ensure that it is initialized.</para>
+        /// </summary>
+        /// <param name = "targetEngine">The engine in which to perform initialization.</param>
+        /// <remarks>
+        ///     <para>
+        ///         <ul>
+        ///             <list type = "table">
+        ///                 <listheader>
+        ///                     <term><see cref = "InitializationState" /></term>
+        ///                     <description>Behaviour</description>
+        ///                 </listheader>
+        ///                 <item>
+        ///                     <term><see cref = "ApplicationInitializationState.None" /></term>
+        ///                     <description>Initialization always required.</description>
+        ///                 </item>
+        ///                 <item>
+        ///                     <term><see cref = "ApplicationInitializationState.Complete" /></term>
+        ///                     <description>No initialization required.</description>
+        ///                 </item>
+        ///             </list>
+        ///         </ul>
+        ///     </para>
+        /// </remarks>
+        public void EnsureInitialization(Engine targetEngine)
+        {
+            if (_SuppressInitialization)
                 return;
-            MetaEntry init;
-            var generation = _initializationGeneration + 1;
             switch (_initializationState)
             {
+#pragma warning disable 612,618
+                case ApplicationInitializationState.Partial:
+#pragma warning restore 612,618
                 case ApplicationInitializationState.None:
                     try
                     {
-                        _suppressInitialization = true;
-                        var fctx =
+                        _SuppressInitialization = true;
+                        FunctionContext fctx =
                             _initializationFunction.CreateFunctionContext
                                 (
                                     targetEngine,
@@ -298,19 +350,11 @@ namespace Prexonite
                                     new PVariable[0], // \init is not a closure
                                     true // don't initialize. That's what WE are trying to do here.
                                 );
-                        int offset;
 
                         //Find offset at which to continue initialization. 
-                        //  Stored in \init key of \init function
-                        //  Default to 0 if anything goes wrong
-                        if (
-                            (!(_initializationFunction.Meta.TryGetValue(InitializationOffset,
-                                out init) &&
-                                    int.TryParse(init.Text, out offset))) || offset < 0)
-                            offset = 0;
-                        fctx.Pointer = offset;
+                        fctx.Pointer = _initializationOffset;
 #if Verbose
-                        Console.WriteLine("#Initialization for generation {0} (offset = {1}) required by {2}.", generation, offset, context);
+                        Console.WriteLine("#Initialization (offset = {0}).", _initializationOffset);
 #endif
 
                         //Execute the part of the initialize function that is missing
@@ -322,28 +366,16 @@ namespace Prexonite
                         finally
                         {
                             //Save the current initialization state (offset)
-                            //  to \init key in \init function
-                            _initializationFunction.Meta[InitializationOffset] =
-                                _initializationFunction.Code.Count.ToString();
-                            _initializationGeneration = generation;
+                            _initializationOffset = _initializationFunction.Code.Count;
                             _initializationState = ApplicationInitializationState.Complete;
                         }
                     }
                     finally
                     {
-                        _suppressInitialization = false;
+                        _SuppressInitialization = false;
                     }
                     break;
                 case ApplicationInitializationState.Complete:
-                    break;
-                case ApplicationInitializationState.Partial:
-                    if (context.Meta.TryGetValue(InitializationGeneration, out init))
-                    {
-                        context.Meta.Remove(InitializationGeneration); //Entry no longer required
-                        if (int.TryParse(init.Text, out generation) &&
-                            generation > _initializationGeneration)
-                            goto case ApplicationInitializationState.None;
-                    }
                     break;
                 default:
                     throw new PrexoniteException(
@@ -371,7 +403,7 @@ namespace Prexonite
                     "Cannot find an entry function named \"" + entryName + "\"");
 
             //Make sure the functions environment is initialized.
-            EnsureInitialization(parentEngine, func);
+            EnsureInitialization(parentEngine);
 
             return func.Run(parentEngine, args);
         }
@@ -466,47 +498,9 @@ namespace Prexonite
 
         #endregion
 
-        #region IMetaFilter Members
-
-        [DebuggerStepThrough]
-        string IMetaFilter.GetTransform(string key)
-        {
-            if (Engine.StringsAreEqual(key, "name"))
-                return IdKey;
-            else if (Engine.StringsAreEqual(key, "imports"))
-                return "import";
-            else
-                return key;
-        }
-
-        [DebuggerStepThrough]
-        KeyValuePair<string, MetaEntry>? IMetaFilter.SetTransform(
-            KeyValuePair<string, MetaEntry> item)
-        {
-            //Unlike the function, the application allows name changes
-            if (Engine.StringsAreEqual(item.Key, "name"))
-                item = new KeyValuePair<string, MetaEntry>(IdKey, item.Value);
-            else if (Engine.StringsAreEqual(item.Key, "imports"))
-                item = new KeyValuePair<string, MetaEntry>("import", item.Value);
-            return item;
-        }
-
-        #endregion
-
         #region IHasMetaTable Members
 
-        private readonly MetaTable _meta;
-
-        /// <summary>
-        ///     The applications metadata structure.
-        /// </summary>
-        public MetaTable Meta
-        {
-            [DebuggerStepThrough]
-            get { return _meta; }
-        }
-
-        #endregion
+        private readonly Module _module;
 
         /// <summary>
         ///     The id of the application. In many cases just a random (using <see cref = "Guid" />) identifier.
@@ -516,6 +510,25 @@ namespace Prexonite
             [DebuggerStepThrough]
             get { return Meta[IdKey].Text; }
         }
+
+        /// <summary>
+        /// A reference to the module that contains the backing code for this module.
+        /// </summary>
+        public Module Module
+        {
+            get { return _module; }
+        }
+
+        /// <summary>
+        ///     The application's metadata structure.
+        /// </summary>
+        public MetaTable Meta
+        {
+            [DebuggerStepThrough]
+            get { return _module.Meta; }
+        }
+
+        #endregion
 
         #region IIndirectCall Members
 
@@ -534,6 +547,254 @@ namespace Prexonite
         }
 
         #endregion
+
+        #region IMetaFilter Members
+
+        [DebuggerStepThrough]
+        string IMetaFilter.GetTransform(string key)
+        {
+            if (Engine.StringsAreEqual(key, NameKey))
+                return IdKey;
+            else if (Engine.StringsAreEqual(key, "imports"))
+                return ImportKey;
+            else
+                return key;
+        }
+
+        [DebuggerStepThrough]
+        KeyValuePair<string, MetaEntry>? IMetaFilter.SetTransform(
+            KeyValuePair<string, MetaEntry> item)
+        {
+            //Unlike the function, the application allows name changes
+            if (Engine.StringsAreEqual(item.Key, NameKey))
+                item = new KeyValuePair<string, MetaEntry>(IdKey, item.Value);
+            else if (Engine.StringsAreEqual(item.Key, "imports"))
+                item = new KeyValuePair<string, MetaEntry>(ImportKey, item.Value);
+            return item;
+        }
+
+        #endregion
+
+        #region Application Compound Linking
+
+        private ApplicationCompound _compound;
+
+        public ApplicationCompound Compound
+        {
+            get { return _compound ?? (_compound = new SingletonCompound(this)); }
+        }
+
+        public bool IsLinked
+        {
+            get { return _compound != null && _compound.Count > 1; }
+        }
+
+        public static void Link(Application application1, Application application2)
+        {
+            if (application1 == null)
+                throw new ArgumentNullException("application1");
+            if (application2 == null)
+                throw new ArgumentNullException("application2");
+            
+            if (application1.IsLinkedTo(application2))
+                return; //nothing to do.
+            
+            if(application1.IsLinked && application2.IsLinked)
+            {
+                if (application1.Compound.Count > application2.Compound.Count)
+                    application2._linkInto(application1.Compound);
+                else
+                    application1._linkInto(application2.Compound);
+            }
+            else if(application1.IsLinked || (application1._compound != null && !(application1._compound is SingletonCompound)))
+            {
+                application2._linkInto(application1.Compound);
+            }
+            else if(application2.IsLinked || (application2._compound != null && !(application2._compound is SingletonCompound)))
+            {
+                application1._linkInto(application2.Compound);
+            }
+            else
+            {
+                Debug.Assert(application1.Compound is SingletonCompound, "Link(a,_): `a` is assumed to be part of a singleton compound.");
+                if(application1._compound != null)
+                    application1._compound._Clear();
+                application1._compound = ApplicationCompound.Create();
+                application1._compound._Link(application1);
+                application2._linkInto(application1._compound);
+            }
+        }
+
+        /// <summary>
+        /// Determines whether this application is linked to the specified application.
+        /// </summary>
+        /// <param name="application">The application to look for.</param>
+        /// <returns>True if the two applications are linked, false otherwise.</returns>
+        public bool IsLinkedTo(Application application)
+        {
+            if (application == null)
+                return false;
+            else
+                return IsLinked && _compound == application._compound;
+        }
+
+        public bool IsLinkedTo(Module module)
+        {
+            if(module == null)
+                return false;
+            else
+            {
+                Application moduleInstance;
+                return IsLinked && _compound.TryGetApplication(module.Name, out moduleInstance) &&
+                       moduleInstance.Module == module;
+            }
+        }
+
+        public bool IsLinkedTo(ModuleName name)
+        {
+            if (name == null)
+                return false;
+            else
+                return IsLinked && _compound.Contains(name);
+        }
+        
+
+        private void _linkInto(ApplicationCompound targetCompound)
+        {
+            var oldCompound = _compound;
+            if(IsLinked)
+            {
+                Debug.Assert(oldCompound != null);
+                var newCache = oldCompound.Cache.LinkInto(targetCompound.Cache);
+                oldCompound.Cache = newCache;
+                targetCompound.Cache = newCache;
+
+                foreach (var linkedApp in oldCompound)
+                {
+                    linkedApp._compound = targetCompound;
+                    targetCompound._Link(linkedApp);
+                }
+                
+                oldCompound._Clear();
+            }
+            else
+            {
+                if (oldCompound != null)
+                {
+                    targetCompound.Cache = oldCompound.Cache.LinkInto(targetCompound.Cache);
+                    oldCompound._Clear();
+                }
+                _compound = targetCompound;
+                targetCompound._Link(this);
+            }
+            Debug.Assert(ReferenceEquals(_compound, targetCompound), "_linkInto didn't catch the receiving Application.");
+        }
+
+        public void Unlink()
+        {
+            if(!IsLinked)
+                return;
+
+            if(_compound != null)
+            {
+                _compound._Unlink(this);
+            }
+            _compound = null;
+        }
+
+        #region SingletonCompound class
+
+        private class SingletonCompound : ApplicationCompound
+        {
+            private Application _application;
+            private CentralCache _cache;
+
+            public override CentralCache Cache
+            {
+                get { return _cache ?? (_cache = CentralCache.Create()); }
+                internal set { _cache = value; }
+            }
+
+            public SingletonCompound(Application application)
+            {
+                if (application == null)
+                    throw new ArgumentNullException("application");
+
+                _application = application;
+            }
+
+            public override IEnumerator<Application> GetEnumerator()
+            {
+                if (_application == null)
+                    return Enumerable.Empty<Application>().GetEnumerator();
+                else
+                    return _application.Singleton().GetEnumerator();
+            }
+
+            internal override void _Unlink(Application application)
+            {
+                if (Equals(application, _application))
+                    _application = null;
+            }
+
+            internal override void _Link(Application application)
+            {
+                if (!Equals(_application, application))
+                    throw new NotSupportedException(
+                        "Cannot link other applications into a singleton compound");
+            }
+
+            internal override void _Clear()
+            {
+                _application = null;
+            }
+
+            public override bool Contains(ModuleName item)
+            {
+                if (_application == null)
+                    return false;
+                else
+                    return _application.Module.Name.Equals(item);
+            }
+
+            public override bool TryGetApplication(ModuleName moduleName,
+                out Application application)
+            {
+                if (_application == null || !_application.Module.Name.Equals(moduleName))
+                {
+                    application = null;
+                    return false;
+                }
+                else
+                {
+                    application = _application;
+                    return true;
+                }
+            }
+
+            public override void CopyTo(Application[] array, int arrayIndex)
+            {
+                if (_application == null)
+                    return;
+
+                if (array == null)
+                    throw new ArgumentNullException("array");
+                if (arrayIndex < 0 || array.Length <= arrayIndex)
+                    throw new ArgumentOutOfRangeException("arrayIndex", arrayIndex,
+                        "Index is outside of the arrays bounds.");
+
+                array[arrayIndex] = _application;
+            }
+
+            public override int Count
+            {
+                get { return _application == null ? 0 : 1; }
+            }
+        }
+
+        #endregion
+
+        #endregion
     }
 
     /// <summary>
@@ -549,7 +810,9 @@ namespace Prexonite
         /// <summary>
         ///     The application is only partially initialized.
         /// </summary>
-        Partial = 1,
+        [Obsolete(
+            "Prexonite no longer distinguishes between partial and no initialization. Use None instead. The behaviour is the same."
+            )] Partial = 1,
 
         /// <summary>
         ///     The application is completely initialized.

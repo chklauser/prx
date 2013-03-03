@@ -1,6 +1,6 @@
 // Prexonite
 // 
-// Copyright (c) 2011, Christian Klauser
+// Copyright (c) 2013, Christian Klauser
 // All rights reserved.
 // 
 // Redistribution and use in source and binary forms, with or without modification, 
@@ -23,43 +23,27 @@
 //  DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, 
 //  WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING 
 //  IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
-
 using System;
 
 namespace Prexonite.Compiler.Ast
 {
     public delegate void AstAction(CompilerTarget target);
 
-    public class AstActionBlock : AstBlock, IAstExpression
+    public class AstActionBlock : AstScopedBlock
     {
         public AstAction Action;
 
-        public AstActionBlock(string file, int line, int column, AstAction action)
-            : base(file, line, column)
+        public AstActionBlock(ISourcePosition position, AstBlock parent, AstAction action)
+            : base(position,parent)
         {
             if (action == null)
                 throw new ArgumentNullException("action");
             Action = action;
         }
 
-        public AstActionBlock(AstNode parent, AstAction action)
-            : this(parent.File, parent.Line, parent.Column, action)
+        protected override void DoEmitCode(CompilerTarget target, StackSemantics stackSemantics)
         {
-        }
-
-        #region IAstExpression Members
-
-        public bool TryOptimize(CompilerTarget target, out IAstExpression expr)
-        {
-            expr = null;
-            return false;
-        }
-
-        #endregion
-
-        protected override void DoEmitCode(CompilerTarget target)
-        {
-            base.DoEmitCode(target);
+            base.DoEmitCode(target,stackSemantics);
             Action(target);
         }
 

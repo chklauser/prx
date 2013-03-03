@@ -1,6 +1,6 @@
 // Prexonite
 // 
-// Copyright (c) 2011, Christian Klauser
+// Copyright (c) 2013, Christian Klauser
 // All rights reserved.
 // 
 // Redistribution and use in source and binary forms, with or without modification, 
@@ -23,9 +23,11 @@
 //  DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, 
 //  WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING 
 //  IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
-
 using System;
+using System.Collections.Generic;
 using System.Linq;
+using JetBrains.Annotations;
+using Prexonite.Modular;
 using Prexonite.Types;
 
 namespace Prexonite.Compiler.Ast
@@ -36,48 +38,32 @@ namespace Prexonite.Compiler.Ast
     ///         <code>var new x</code> (iff <code>x</code> isn't the first reference to the variable in the current scope)</para>
     ///     <para>In addition to the supplied expression, the variables identity is changed (similar to the unbind command)</para>
     /// </summary>
-    public class AstGetSetNewDecl : AstGetSet
+    public sealed class AstGetSetNewDecl : AstGetSet
     {
         private PCall _fallbackCall;
+        [CanBeNull]
+        private readonly ArgumentsProxy _arguments;
 
-        /// <summary>
-        ///     Creates a new New-Declaration node.
-        /// </summary>
-        /// <param name = "file">The file in which the code for this node is located</param>
-        /// <param name = "line">The line in the file where the code for this node is located</param>
-        /// <param name = "column">The column in the line where the code for this node is located</param>
-        /// <param name = "id">The id pf the local variable to be new-declared</param>
-        /// <param name = "expression">The expression to be wrapped by this new-declaration</param>
-        public AstGetSetNewDecl(string file, int line, int column, string id, AstGetSet expression)
-            : base(file, line, column, expression == null ? PCall.Get : expression.Call)
-        {
-            Expression = expression;
-            Id = id;
-        }
+        [CanBeNull]
+        private readonly AstGetSet _expression;
 
-        /// <summary>
-        ///     Creates a new New-Declaration node.
-        /// </summary>
-        /// <param name = "file">The file in which the code for this node is located</param>
-        /// <param name = "line">The line in the file where the code for this node is located</param>
-        /// <param name = "column">The column in the line where the code for this node is located</param>
-        public AstGetSetNewDecl(string file, int line, int column)
-            : base(file, line, column, PCall.Get)
-        {
-        }
+        [NotNull]
+        private string _id;
 
-        /// <summary>
-        ///     Creates a new New-Declaration node.
-        /// </summary>
-        /// <param name = "p">The parser that created this node.</param>
-        internal AstGetSetNewDecl(Parser p)
-            : base(p, PCall.Get)
+        public AstGetSetNewDecl([NotNull] ISourcePosition position, [NotNull] string id, [CanBeNull] AstGetSet expression)
+            : base(position)
         {
+            if (id == null)
+                throw new ArgumentNullException("id");
+            
+            _expression = expression;
+            _id = id;
+            _arguments = _expression == null ? new ArgumentsProxy(new List<AstExpr>()) : null;
         }
 
         #region Overrides of AstGetSet
 
-        public override IAstExpression[] Expressions
+        public override AstExpr[] Expressions
         {
             get
             {
@@ -93,56 +79,69 @@ namespace Prexonite.Compiler.Ast
         ///     Emits code responsible for changing the variables identity.
         /// </summary>
         /// <param name = "target">The target to compile to</param>
-        protected virtual void EmitNewDeclareCode(CompilerTarget target)
+        private void _emitNewDeclareCode(CompilerTarget target)
         {
             _ensureValid();
             //create command call
             //  unbind(->variable)
-            var unlinkCall = new AstGetSetSymbol(File, Line, Column,
-                PCall.Get, Engine.UnbindAlias, SymbolInterpretations.Command);
-            var targetRef = new AstGetSetReference(File, Line, Column,
-                Id, SymbolInterpretations.LocalObjectVariable);
+            var unlinkCall = new AstIndirectCall(Position, PCall.Get,
+                                                 new AstReference(Position, EntityRef.Command.Create(Engine.UnbindAlias)));
+            var targetRef = new AstReference(Position, EntityRef.Variable.Local.Create(Id));
             unlinkCall.Arguments.Add(targetRef);
 
             //Optimize call and emit code
-            var call = (IAstExpression) unlinkCall;
+            var call = (AstExpr) unlinkCall;
             _OptimizeNode(target, ref call);
-            var optCall = call as IAstEffect;
-            if (optCall != null)
-                optCall.EmitEffectCode(target);
-            else
-                call.EmitCode(target);
+            call.EmitEffectCode(target);
         }
 
-        protected override void EmitGetCode(CompilerTarget target, bool justEffect)
+        protected override void DoEmitCode(CompilerTarget target, StackSemantics stackSemantics)
         {
-            _emitCode(target, justEffect);
+            // If we are wrapping an existing expression, then just forward calls directly to that expression
+            // otherwise, pretend to be a GetSet node.
+            if (Expression == null)
+                base.DoEmitCode(target, stackSemantics);
+            else
+                _emitCode(target, stackSemantics);
+        }
+
+        protected override void EmitGetCode(CompilerTarget target, StackSemantics stackSemantics)
+        {
+            _emitCode(target, stackSemantics);
         }
 
         protected override void EmitSetCode(CompilerTarget target)
         {
-            _emitCode(target, false);
+            _emitCode(target, StackSemantics.Effect);
         }
 
-        private void _emitCode(CompilerTarget target, bool justEffect)
+        private void _emitCode(CompilerTarget target, StackSemantics stackSemantics)
         {
-            EmitNewDeclareCode(target);
+            _emitNewDeclareCode(target);
             if (Expression != null)
-                if (justEffect)
-                    Expression.EmitEffectCode(target);
-                else
-                    Expression.EmitCode(target);
+                Expression.EmitCode(target, stackSemantics);
+            else if(_arguments != null)
+            {
+                // Make sure effects of attached expressions are compiled
+                // This branch is unlikely to be ever taken. It is just there
+                // to fulfill the GetSet contract.
+                foreach (AstExpr arg in _arguments)
+                    arg.EmitEffectCode(target);
+            }
         }
 
-        public override bool TryOptimize(CompilerTarget target, out IAstExpression expr)
+        public override bool TryOptimize(CompilerTarget target, out AstExpr expr)
         {
-            var wrappedExpr = (IAstExpression) Expression;
+            var wrappedExpr = (AstExpr) Expression;
             if (wrappedExpr != null)
             {
                 _OptimizeNode(target, ref wrappedExpr);
                 var optExpr = wrappedExpr as AstGetSet;
                 if (optExpr != null)
-                    Expression = optExpr;
+                {
+                    expr = new AstGetSetNewDecl(Position, _id, optExpr);
+                    return true;
+                }
             }
 
             expr = null;
@@ -152,7 +151,7 @@ namespace Prexonite.Compiler.Ast
         public override AstGetSet GetCopy()
         {
             var expr2 = Expression == null ? null : Expression.GetCopy();
-            var newDecl2 = new AstGetSetNewDecl(File, Line, Column, Id, expr2);
+            var newDecl2 = new AstGetSetNewDecl(Position, _id, expr2);
             CopyBaseMembers(newDecl2);
             return newDecl2;
         }
@@ -160,11 +159,27 @@ namespace Prexonite.Compiler.Ast
         #endregion
 
         /// <summary>
-        ///     <para>The expression wrapped by the new decl. Most of the time either <see cref = "AstGetSetSymbol" /> or <see
-        ///      cref = "AstGetSetReference" />.</para>
+        ///     <para>The expression wrapped by the new decl.</para>
         ///     <para>Other expressions are possible as well, though they make little sense wrapped by a new-declaration.</para>
         /// </summary>
-        public AstGetSet Expression { get; set; }
+        [CanBeNull]
+        public AstGetSet Expression
+        {
+            get { return _expression; }
+        }
+
+        public override ArgumentsProxy Arguments
+        {
+            get
+            {
+                if (_expression != null) 
+                    return _expression.Arguments;
+                else if (_arguments != null)
+                    return _arguments;
+                else
+                    throw new InvalidOperationException(string.Format("The new-decl expression for {0} is invalid.", Id));
+            }
+        }
 
         public override PCall Call
         {
@@ -189,7 +204,11 @@ namespace Prexonite.Compiler.Ast
         /// <summary>
         ///     The physical id of the local variable to be new-declared.
         /// </summary>
-        public string Id { get; set; }
+        [NotNull]
+        public string Id
+        {
+            get { return _id; }
+        }
 
         private void _ensureValid()
         {

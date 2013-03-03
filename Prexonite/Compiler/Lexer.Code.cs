@@ -1,6 +1,6 @@
 // Prexonite
 // 
-// Copyright (c) 2011, Christian Klauser
+// Copyright (c) 2013, Christian Klauser
 // All rights reserved.
 // 
 // Redistribution and use in source and binary forms, with or without modification, 
@@ -23,16 +23,19 @@
 //  DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, 
 //  WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING 
 //  IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
-
 using System;
 using System.Collections.Generic;
 using System.Globalization;
 using System.Text;
 using Prexonite;
 using Prexonite.Compiler;
-using Prexonite.Helper;
+using Prexonite.Internal;
+using Parser = Prexonite.Compiler.Parser;
 
+// ReSharper disable InconsistentNaming
+// ReSharper disable CheckNamespace
 internal partial class Lexer
+// ReSharper restore CheckNamespace
 {
     private readonly StringBuilder buffer = new StringBuilder();
 
@@ -77,6 +80,11 @@ internal partial class Lexer
         set { _file = value; }
     }
 
+    public void Abort()
+    {
+        yyclose();
+    }
+
     string IScanner.File
     {
         get { return _file; }
@@ -100,7 +108,9 @@ internal partial class Lexer
 
     private readonly RandomAccessQueue<Token> _tokenBuffer = new RandomAccessQueue<Token>();
     private int _peekIndex = NO_PEEK;
+
     private const int NO_PEEK = -1;
+
 
     internal void _InjectToken(Token c)
     {
@@ -190,6 +200,8 @@ internal partial class Lexer
                     return Parser._coroutine;
                 case "function":
                     return Parser._function;
+                case "method":
+                    return Parser._method;
                 case "declare":
                     return Parser._declare;
                 case "is":
@@ -202,6 +214,8 @@ internal partial class Lexer
                     return Parser._lazy;
                 case "let":
                     return Parser._let;
+                case "null":
+                    return Parser._null;
             }
 
         //Global only
@@ -247,8 +261,6 @@ internal partial class Lexer
                     return Parser._xor;
                 case "goto":
                     return Parser._goto;
-                case "null":
-                    return Parser._null;
                 case "if":
                     return Parser._if;
                 case "unless":
@@ -283,13 +295,15 @@ internal partial class Lexer
                     return Parser._then;
                 case "using": //Coco/R does not accept "using" as a token name.
                     return Parser._uusing;
+                case "this":
+                    return Parser._this;
             }
 
         //Is id
         return Parser._id;
     }
 
-    private string unescape_char(string sequence)
+    private string _unescapeChar(string sequence)
     {
         var kind = sequence.Substring(1, 1);
         sequence = sequence.Substring(2);
@@ -343,3 +357,4 @@ internal partial class Lexer
         _peekIndex = NO_PEEK;
     }
 }
+// ReSharper restore InconsistentNaming

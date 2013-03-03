@@ -1,6 +1,6 @@
 ﻿// Prexonite
 // 
-// Copyright (c) 2011, Christian Klauser
+// Copyright (c) 2013, Christian Klauser
 // All rights reserved.
 // 
 // Redistribution and use in source and binary forms, with or without modification, 
@@ -23,7 +23,8 @@
 //  DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, 
 //  WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING 
 //  IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
-
+using Prexonite.Modular;
+using Prexonite.Properties;
 using Prexonite.Types;
 
 namespace Prexonite.Compiler.Macro.Commands
@@ -53,8 +54,10 @@ namespace Prexonite.Compiler.Macro.Commands
         {
             if (context.Invocation.Arguments.Count < 1)
             {
-                context.ReportMessage(ParseMessageSeverity.Error,
-                    string.Format("Must supply an object to be transported to {0}.", Alias));
+                context.ReportMessage(
+                    Message.Error(
+                        string.Format(Resources.Pack_Usage_obj_missing, Alias),
+                        context.Invocation.Position, MessageClasses.PackUsage));
                 return;
             }
 
@@ -62,12 +65,11 @@ namespace Prexonite.Compiler.Macro.Commands
 
             // [| context.StoreForTransport(boxed($arg0)) |]
 
-            var getContext = context.CreateGetSetSymbol(
-                SymbolInterpretations.LocalReferenceVariable, PCall.Get, MacroAliases.ContextAlias);
-            var boxedArg0 = context.CreateGetSetSymbol(SymbolInterpretations.Command, PCall.Get,
-                Engine.BoxedAlias, context.Invocation.Arguments[0]);
-            context.Block.Expression = context.CreateGetSetMember(getContext, PCall.Get,
-                "StoreForTransport", boxedArg0);
+            var getContext = context.CreateIndirectCall(context.CreateCall(
+                EntityRef.Variable.Local.Create(MacroAliases.ContextAlias)));
+            var boxedArg0 = context.CreateCall(EntityRef.Command.Create(Engine.BoxedAlias),PCall.Get,
+                                               context.Invocation.Arguments[0]);
+            context.Block.Expression = context.CreateGetSetMember(getContext, PCall.Get, "StoreForTransport", boxedArg0);
         }
 
         #endregion

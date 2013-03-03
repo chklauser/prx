@@ -3,8 +3,19 @@ function get_test_file_names(path,pattern)[import System::IO] =
     ::Directory.EnumerateFiles(path ?? ".", pattern ?? "*.test.pxs", ::SearchOption.AllDirectories);
     
 function under_test = "under_test";
+function test_dependencies = "test_dependencies";
 function config_file_separator = "|";
 function config_section_separator = ">";
+function config_dependency_separator = "<";
+    
+function create_config(testUnits, deps, testCases)
+{
+    var s = new Structure;
+    s.\("under_test") = testUnits;	// ~String:[String]
+    s.\("deps") = deps;				// ~String:[String]
+    s.\("test_cases") = testCases;  	// ~[String]  
+    return s;
+}
     
 function read_metadata(file_name)[import {Prexonite, Prexonite::Compiler}]
 {
@@ -18,36 +29,66 @@ function read_metadata(file_name)[import {Prexonite, Prexonite::Compiler}]
     } catch(var e) {
         //ignore
     }
-    print("done. ");
+    println("done. ");
     
-    var deps;
-    if(app.Meta.ContainsKey(under_test))
-        deps = app.Meta[under_test].List >> map(?.Text) >> all;
-    else
-        deps = [];
+    function extract_list(key){
+        if(app.Meta.ContainsKey(key)){
+            return app.Meta[key].List >> map(entry => {
+				if(entry.IsList){
+					entry = entry.List >> all;
+					if(entry.Count == 0)
+						return null;
+					return entry[0].Text:(entry >> skip(1) >> map(?.Text) >> all);
+				} else {
+					return entry.Text:[];
+				}
+			}) >> where(? is not null) >> all;
+		}
+        else
+            return [];
+    }
     
-    var testCases = app.Functions >> where(?.Meta then ?["test"] then ?.Switch) >> map(?.Id) >> all;
+    var deps = extract_list(test_dependencies);
+    var testUnits = extract_list(under_test);
+    
+    var testCases = app.Functions >> where(f => f.Meta["test"].Switch) >> map(?.Id) >> all;
     
     dispose(eng,app,ldr);
     
-    println(deps," ",testCases.Count," test cases");
+    println("\t", testUnits, " using ", deps," ",testCases.Count," test cases");
     
-    return deps:testCases;
+    return new config(testUnits, deps, testCases);
+}
+
+function write_deplist(textWriter, deps /* ~String:[String] */)
+{
+	textWriter.Write(deps.Key);
+	if(deps.Value.Count > 0){
+		foreach(var d in deps.Value)
+			textWriter.Write("$(config_dependency_separator)$(d)");
+	}
 }
 
 //write_config writes the configuration <config> to the supplied <textWriter>.
 //  - textWriter, an object that behaves like a System.IO.TextWriter
-//  - config, [test_file_name:([dependency_name]:[test_case_name])]
+//  - config, [test_file_name:{under_test,deps,test_cases}]
 function write_config(textWriter, config)
 {
     foreach(var kvp in config)
     {
         textWriter.Write(kvp.Key);
         textWriter.Write(config_section_separator);
-        foreach(var d in kvp.Value.Key)
-            textWriter.Write("$(config_file_separator)$(d)");
+        foreach(var d in kvp.Value.under_test){
+            textWriter.Write(config_file_separator);
+			write_deplist(textWriter, d);
+		}
         textWriter.Write(config_section_separator);
-        foreach(var d in kvp.Value.Value)
+        foreach(var d in kvp.Value.deps){
+            textWriter.Write(config_file_separator);
+			write_deplist(textWriter, d);
+		}
+        textWriter.Write(config_section_separator);
+        foreach(var d in kvp.Value.test_cases)
             textWriter.Write("$(config_file_separator)$(d)");
         textWriter.WriteLine;
     }
@@ -80,6 +121,12 @@ function main(path)
     write_config_file("testconfig.txt",get_config(path));
 }
 
+function read_deps(s)
+{
+	var ds = s.Split(config_dependency_separator);
+	return ds[0]:(ds >> skip(1) >> all);
+}
+
 function read_config(textReader)
 {
     var config = [];
@@ -90,10 +137,13 @@ function read_config(textReader)
         if(fs.Count != 3)
             continue;
         
-        config[] = fs[0]:
-            (fs[1].Split(config_file_separator) >> skip(1) >> all):
-            (fs[2].Split(config_file_separator) >> skip(1) >> all);
+        config[] = fs[0]: new config(
+            (fs[1].Split(config_file_separator) >> skip(1) >> map(read_deps(?)) >> all),
+            (fs[2].Split(config_file_separator) >> skip(1) >> map(read_deps(?)) >> all),
+            (fs[3].Split(config_file_separator) >> skip(1) >> all),
+        );
     }
+	return config;
 }
 
 function read_config_file(fileName)[import {System::IO, System::Text}]

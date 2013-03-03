@@ -1,6 +1,6 @@
 ﻿// Prexonite
 // 
-// Copyright (c) 2011, Christian Klauser
+// Copyright (c) 2013, Christian Klauser
 // All rights reserved.
 // 
 // Redistribution and use in source and binary forms, with or without modification, 
@@ -23,13 +23,15 @@
 //  DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, 
 //  WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING 
 //  IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
-
 using System;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.Linq;
+using JetBrains.Annotations;
 using Prexonite.Compiler.Ast;
-using Prexonite.Helper;
+using Prexonite.Compiler.Symbolic;
+using Prexonite.Modular;
+using Prexonite.Properties;
 using Prexonite.Types;
 
 namespace Prexonite.Compiler.Macro
@@ -39,54 +41,61 @@ namespace Prexonite.Compiler.Macro
     /// </summary>
     public class MacroSession : IDisposable
     {
+        [NotNull]
         private readonly CompilerTarget _target;
+
+        [CanBeNull]
         private LoaderOptions _options;
-        private readonly ReadOnlyDictionaryView<string, SymbolEntry> _globalSymbols;
-        private readonly ReadOnlyDictionaryView<string, SymbolEntry> _localSymbols;
+        [NotNull]
+        private readonly SymbolStore _globalSymbols;
+        [NotNull]
         private readonly ReadOnlyCollectionView<string> _outerVariables;
+        [NotNull]
         private readonly SymbolCollection _releaseList = new SymbolCollection();
+        [NotNull]
         private readonly SymbolCollection _allocationList = new SymbolCollection();
 
-        private readonly HashSet<AstMacroInvocation> _invocations =
-            new HashSet<AstMacroInvocation>();
+        [NotNull]
+        private readonly HashSet<AstGetSet> _invocations =
+            new HashSet<AstGetSet>();
 
+        [NotNull]
         private readonly object _buildCommandToken;
+
+        [NotNull]
         private readonly List<PValue> _transportStore = new List<PValue>();
+
+        [NotNull]
+        private readonly IAstFactory _astFactory;
 
         /// <summary>
         ///     Creates a new macro expansion session for the specified compiler target.
         /// </summary>
         /// <param name = "target">The target to expand macros in.</param>
-        public MacroSession(CompilerTarget target)
+        public MacroSession([NotNull] CompilerTarget target)
         {
-            if (target == null)
+            if(target == null)
                 throw new ArgumentNullException("target");
+
             _target = target;
-            _localSymbols = new ReadOnlyDictionaryView<string, SymbolEntry>(_target.Symbols);
-            _globalSymbols = new ReadOnlyDictionaryView<string, SymbolEntry>(_target.Loader.Symbols);
+            _astFactory = _target.Factory;
+            
+            _globalSymbols = SymbolStore.Create(_target.Loader.Symbols);
             _outerVariables = new ReadOnlyCollectionView<string>(_target.OuterVariables);
 
             _buildCommandToken = target.Loader.RequestBuildCommands();
         }
 
         /// <summary>
-        ///     Provides read-only access to the local symbol table.
-        /// </summary>
-        public ReadOnlyDictionaryView<string, SymbolEntry> LocalSymbols
-        {
-            get { return _localSymbols; }
-        }
-
-        /// <summary>
         ///     Provides read-only access to the global symbol table.
         /// </summary>
-        public ReadOnlyDictionaryView<string, SymbolEntry> GlobalSymbols
+        public SymbolStore GlobalSymbols
         {
             get { return _globalSymbols; }
         }
 
         /// <summary>
-        ///     The target the macro expansion session covers.
+        ///     The target that this macro expansion session covers.
         /// </summary>
         public CompilerTarget Target
         {
@@ -119,6 +128,16 @@ namespace Prexonite.Compiler.Macro
         public ILoopBlock CurrentLoopBlock
         {
             get { return _target.CurrentLoopBlock; }
+        }
+
+        public AstBlock CurrentBlock
+        {
+            get { return _target.CurrentBlock; }
+        }
+
+        public IAstFactory Factory
+        {
+            get { return _astFactory; }
         }
 
         /// <summary>
@@ -159,36 +178,31 @@ namespace Prexonite.Compiler.Macro
         public void Dispose()
         {
             //Free all variables that were marked as free during the session.
-            if (_target != null)
+            try
             {
-                try
+                foreach (var temp in _releaseList)
                 {
-                    if (_releaseList != null)
-                        foreach (var temp in _releaseList)
-                        {
-                            _target.FreeTemporaryVariable(temp);
-                            _allocationList.Remove(temp);
-                        }
+                    _target.FreeTemporaryVariable(temp);
+                    _allocationList.Remove(temp);
+                }
 
-                    //Remove those that weren't freed to persistent variables
-                    if (_allocationList != null)
-                        foreach (var temp in _allocationList)
-                        {
-                            _target.PromoteTemporaryVariable(temp);
-                        }
-                }
-                finally
+                //Remove those that weren't freed to persistent variables
+                foreach (var temp in _allocationList)
                 {
-                    var ldr = Target.Loader;
-                    if (_buildCommandToken != null && ldr != null)
-                        ldr.ReleaseBuildCommands(_buildCommandToken);
+                    _target.PromoteTemporaryVariable(temp);
                 }
+            }
+            finally
+            {
+                var ldr = Target.Loader;
+                if (ldr != null)
+                    ldr.ReleaseBuildCommands(_buildCommandToken);
             }
         }
 
         private interface IMacroExpander
         {
-            void Initialize(CompilerTarget target, AstMacroInvocation invocation, bool justEffect);
+            void Initialize(CompilerTarget target, AstGetSet macroNode, bool justEffect);
             string HumanId { get; }
             void Expand(CompilerTarget target, MacroContext context);
             bool TryExpandPartially(CompilerTarget target, MacroContext context);
@@ -196,43 +210,56 @@ namespace Prexonite.Compiler.Macro
 
         #region Command Expander
 
-        private class MacroCommandExpander : IMacroExpander
+        private abstract class MacroCommandExpanderBase : IMacroExpander
         {
-            private MacroCommand _macroCommand;
+            protected MacroCommand MacroCommand;
+            public string HumanId { get; protected set; }
 
-            public void Initialize(CompilerTarget target, AstMacroInvocation invocation,
-                bool justEffect)
-            {
-                _macroCommand = null;
-
-                if (target.Loader.MacroCommands.Contains(invocation.MacroId))
-                    _macroCommand = target.Loader.MacroCommands[invocation.MacroId];
-                else
-                {
-                    target.Loader.ReportMessage(new ParseMessage(ParseMessageSeverity.Error,
-                        String.Format("Cannot find macro command named `{0}`", invocation.MacroId),
-                        invocation));
-                    HumanId = "cannot_find_macro_command";
-                    return;
-                }
-
-                HumanId = _macroCommand.Id;
-            }
-
-            public string HumanId { get; private set; }
+            public abstract void Initialize(CompilerTarget target, AstGetSet macroNode,
+                                            bool justEffect);
 
             public void Expand(CompilerTarget target, MacroContext context)
             {
-                if (_macroCommand == null)
+                if (MacroCommand == null)
                     return;
 
-                _macroCommand.Expand(context);
+                MacroCommand.Expand(context);
             }
 
             public bool TryExpandPartially(CompilerTarget target, MacroContext context)
             {
-                var pac = _macroCommand as PartialMacroCommand;
+                var pac = MacroCommand as PartialMacroCommand;
                 return pac != null && pac.ExpandPartialApplication(context);
+            }
+        }
+
+        private class MacroCommandExpander : MacroCommandExpanderBase
+        {
+            public override void Initialize(CompilerTarget target, AstGetSet macroNode, bool justEffect)
+            {
+                var expansion = (AstExpand) macroNode;
+
+                MacroCommand = null;
+
+                EntityRef.MacroCommand mcmdRef;
+                if(!expansion.Entity.TryGetMacroCommand(out mcmdRef))
+                    throw new InvalidOperationException(string.Format(Resources.MacroCommandExpander_MacroCommandExpected, expansion.Entity));
+                PValue value;
+                MacroCommand mcmd;
+                if (mcmdRef.TryGetEntity(target.Loader, out value) && (mcmd = value.Value as MacroCommand) != null)
+                {
+                    HumanId = mcmdRef.Id;
+                    MacroCommand = mcmd;
+                }
+                else
+                {
+                    target.Loader.ReportMessage(Message.Create(MessageSeverity.Error,
+                                                               String.Format(
+                                                                   Resources.MacroCommandExpander_CannotFindMacro,
+                                                                   mcmdRef.Id),
+                                                               macroNode.Position, MessageClasses.NoSuchMacroCommand));
+                    HumanId = "cannot_find_macro_command";
+                }
             }
         }
 
@@ -240,43 +267,29 @@ namespace Prexonite.Compiler.Macro
 
         #region Function Expander
 
-        private class MacroFunctionExpander : IMacroExpander
+        private static string _toFunctionNameString(SymbolEntry si)
         {
-            public void Initialize(CompilerTarget target, AstMacroInvocation invocation,
-                bool justEffect)
-            {
-                _macroFunction = null;
+            if (si.Module == null)
+                return si.InternalId;
+            else
+                return string.Format("{0}/{1},{2}", si.InternalId, si.Module.Id, si.Module.Version);
+        }
 
-                PFunction macroFunc;
-                if (
-                    !target.Loader.Options.TargetApplication.Functions.TryGetValue(
-                        invocation.MacroId, out macroFunc))
-                {
-                    target.Loader.ReportMessage(
-                        new ParseMessage(
-                            ParseMessageSeverity.Error,
-                            String.Format(
-                                "The macro function {0} was called from function {1} but is not available at compile time.",
-                                invocation.MacroId,
-                                target.Function.Id), invocation));
-                    HumanId = "could_not_resolve_macro_function";
-                    return;
-                }
-                _macroFunction = macroFunc;
+        private abstract class MacroFunctionExpanderBase : IMacroExpander
+        {
+            protected PFunction MacroFunction;
 
-                MetaEntry logicalIdEntry;
-                if (macroFunc.Meta.TryGetValue(PFunction.LogicalIdKey, out logicalIdEntry))
-                    HumanId = logicalIdEntry.Text;
-                else
-                    HumanId = invocation.MacroId;
-            }
+            [PublicAPI]
+            public const string PartialMacroKey = @"partial\macro";
 
-            public string HumanId { get; private set; }
-            private PFunction _macroFunction;
+            public string HumanId { get; protected set; }
+
+            public abstract void Initialize(CompilerTarget target, AstGetSet macroNode,
+                                            bool justEffect);
 
             public void Expand(CompilerTarget target, MacroContext context)
             {
-                if (_macroFunction == null)
+                if (MacroFunction == null)
                     return;
 
                 var astRaw = _invokeMacroFunction(target, context);
@@ -288,7 +301,7 @@ namespace Prexonite.Compiler.Macro
                 else
                     ast = null;
 
-                var expr = ast as IAstExpression;
+                var expr = ast as AstExpr;
 
                 /*Merge with context expression block
                  *  cs = Statements from context
@@ -306,19 +319,18 @@ namespace Prexonite.Compiler.Macro
                  *      {fs} = fe
                  */
                 var contextBlock = context.Block;
-                var macroBlockExpr = ast as AstBlockExpression;
                 var macroBlock = ast as AstBlock;
 
                 // ReSharper disable JoinDeclarationAndInitializer
-                IAstExpression ce, fe;
+                AstExpr ce, fe;
                 IEnumerable<AstNode> fs;
                 // ReSharper restore JoinDeclarationAndInitializer
                 //determine ce
                 ce = contextBlock.Expression;
 
                 //determine fe
-                if (macroBlockExpr != null)
-                    fe = macroBlockExpr.Expression;
+                if (macroBlock != null)
+                    fe = macroBlock.Expression;
                 else if (expr != null)
                 {
                     fe = expr;
@@ -342,14 +354,16 @@ namespace Prexonite.Compiler.Macro
 
             public bool TryExpandPartially(CompilerTarget target, MacroContext context)
             {
-                if (!_macroFunction.Meta[@"partial\macro"].Switch)
+                if (!MacroFunction.Meta[PartialMacroKey].Switch)
                     return false;
 
                 var successRaw = _invokeMacroFunction(target, context);
                 if (successRaw.Type != PType.Bool)
                 {
-                    context.ReportMessage(ParseMessageSeverity.Error,
-                        "Partial macro must return a boolean value, indicating whether it can handle the partial application. Assuming it cannot.");
+                    context.ReportMessage(Message.Create(MessageSeverity.Error,
+                                                         Resources.MacroFunctionExpander_PartialMacroMustIndicateSuccessWithBoolean,
+                                                         context.Invocation.Position,
+                                                         MessageClasses.PartialMacroMustReturnBoolean));
                     _setupDefaultExpression(context);
                     return false;
                 }
@@ -357,8 +371,8 @@ namespace Prexonite.Compiler.Macro
                 return (bool) successRaw.Value;
             }
 
-            private void _implementMergeRules(MacroContext context, IAstExpression ce,
-                IEnumerable<AstNode> fs, IAstExpression fe)
+            private void _implementMergeRules(MacroContext context, AstExpr ce,
+                                              IEnumerable<AstNode> fs, AstExpr fe)
             {
                 var contextBlock = context.Block;
                 //cs  is already stored in contextBlock, 
@@ -372,35 +386,28 @@ namespace Prexonite.Compiler.Macro
                 {
                     if (fe != null)
                     {
-                        contextBlock.Add((AstNode) ce);
+                        contextBlock.Add(ce);
                     }
                     else
                     {
                         //Might at a later point become a warning
-                        context.ReportMessage(ParseMessageSeverity.Info,
-                            String.Format(
-                                "Macro {0} uses temporary variable to ensure that expression from `context.Block` is evaluated before statements from macro return value.",
-                                HumanId),
-                            context.Invocation);
+                        var invocationPosition = context.Invocation.Position;
+                        context.ReportMessage(Message.Create(MessageSeverity.Info,
+                                                             String.Format(
+                                                                 Resources.MacroFunctionExpander__UsedTemporaryVariable,
+                                                                 HumanId),
+                                                             invocationPosition, MessageClasses.BlockMergingUsesVariable));
 
                         var tmpV = context.AllocateTemporaryVariable();
 
                         //Generate assignment to temporary variable
-                        var assignTmpV = new AstGetSetSymbol(context.Invocation.File,
-                            context.Invocation.Line,
-                            context.Invocation.Column,
-                            PCall.Set,
-                            tmpV,
-                            SymbolInterpretations.LocalObjectVariable);
+                        var tmpVRef = context.Factory.Reference(invocationPosition, EntityRef.Variable.Local.Create(tmpV));
+                        var assignTmpV = context.Factory.IndirectCall(invocationPosition,tmpVRef,PCall.Set);
                         assignTmpV.Arguments.Add(ce);
                         contextBlock.Add(assignTmpV);
 
                         //Generate lookup of computed value
-                        ce = new AstGetSetSymbol(context.Invocation.File,
-                            context.Invocation.Line,
-                            context.Invocation.Column, PCall.Get,
-                            tmpV,
-                            SymbolInterpretations.LocalObjectVariable);
+                        ce = context.Factory.IndirectCall(invocationPosition,tmpVRef);
                     }
                 }
 
@@ -429,13 +436,13 @@ namespace Prexonite.Compiler.Macro
 
             private PValue _invokeMacroFunction(CompilerTarget target, MacroContext context)
             {
-                var macro = PrepareMacroImplementation(target.Loader, _macroFunction, context);
+                var macro = PrepareMacroImplementation(target.Loader, MacroFunction, context);
 
                 //Execute macro (argument nodes of the invocation node are passed as arguments to the macro)
                 var macroInvocation = context.Invocation;
                 var arguments =
                     macroInvocation.Arguments.Select(target.Loader.CreateNativePValue).ToArray();
-                var parentApplication = _macroFunction.ParentApplication;
+                var parentApplication = MacroFunction.ParentApplication;
                 PValue astRaw;
                 try
                 {
@@ -450,9 +457,42 @@ namespace Prexonite.Compiler.Macro
             }
         }
 
+        private class MacroFunctionExpander : MacroFunctionExpanderBase
+        {
+            public override void Initialize(CompilerTarget target, AstGetSet macroNode, bool justEffect)
+            {
+                var expansion = (AstExpand)macroNode;
+
+                MacroFunction = null;
+
+                EntityRef.Function functionRef;
+                if (!expansion.Entity.TryGetFunction(out functionRef))
+                    throw new InvalidOperationException(string.Format(Resources.MacroFunctionExpander_ExpectedFunctionReference, expansion.Entity));
+                PValue value;
+                PFunction func;
+                if (functionRef.TryGetEntity(target.Loader, out value) && (func = value.Value as PFunction) != null)
+                {
+                    HumanId = functionRef.Id;
+                    MacroFunction = func;
+                }
+                else
+                {
+                    target.Loader.ReportMessage(
+                        Message.Create(
+                            MessageSeverity.Error,
+                            String.Format(
+                                Resources.MacroFunctionExpander_MacroFunctionNotAvailable,
+                                functionRef,
+                                target.Function.Id, target.Loader.ParentApplication.Module.Name),
+                            macroNode.Position, MessageClasses.NoSuchMacroFunction));
+                    HumanId = "could_not_resolve_macro_function";
+                }
+            }
+        }
+
         #endregion
 
-        public AstNode ExpandMacro(AstMacroInvocation invocation, bool justEffect)
+        public AstNode ExpandMacro(AstGetSet invocation, bool justEffect)
         {
             var target = Target;
             var context = new MacroContext(this, invocation, justEffect);
@@ -468,11 +508,11 @@ namespace Prexonite.Compiler.Macro
                 if (_invocations.Contains(invocation))
                 {
                     target.Loader.ReportMessage(
-                        new ParseMessage(ParseMessageSeverity.Error,
-                            String.Format(
-                                "AstMacroInvocation.EmitCode is not reentrant. The invocation node for the macro {0} has been expanded already. Use GetCopy() to operate on a copy of this macro invocation.",
-                                expander.HumanId),
-                            invocation));
+                        Message.Create(MessageSeverity.Error,
+                               String.Format(
+                                   Resources.MacroSession_MacroNotReentrant,
+                                   expander.HumanId),
+                               invocation.Position, MessageClasses.MacroNotReentrant));
                     return CreateNeutralExpression(invocation);
                 }
                 _invocations.Add(invocation);
@@ -485,8 +525,13 @@ namespace Prexonite.Compiler.Macro
                     {
                         if (!expander.TryExpandPartially(target, context))
                         {
-                            target.Loader.ReportSemanticError(invocation.Line, invocation.Column,
-                                "The macro " + expander.HumanId + " cannot be applied partially.");
+                            target.Loader.ReportMessage(
+                                Message.Create(
+                                    MessageSeverity.Error,
+                                    string.Format(
+                                        Resources.MacroSession_MacroCannotBeAppliedPartially,
+                                        expander.HumanId), invocation.Position,
+                                    MessageClasses.PartialApplicationNotSupported));
                             return CreateNeutralExpression(invocation);
                         }
                     }
@@ -501,7 +546,10 @@ namespace Prexonite.Compiler.Macro
                     //Actual macro expansion takes place here
                     try
                     {
+                        var cub = target.CurrentBlock;
                         expander.Expand(target, context);
+                        if(!ReferenceEquals(cub,target.CurrentBlock))
+                            throw new PrexoniteException("Macro must restore previous lexical scope.");
                     }
                     catch (Exception e)
                     {
@@ -520,17 +568,17 @@ namespace Prexonite.Compiler.Macro
 
             var node = AstNode._GetOptimizedNode(Target, ast);
 
-            return (AstNode) node;
+            return node;
         }
 
         private static void _reportException(MacroContext context, IMacroExpander expander,
             Exception e)
         {
-            context.ReportMessage(ParseMessageSeverity.Error,
+            context.ReportMessage(Message.Create(MessageSeverity.Error,
                 String.Format(
-                    "Exception during expansion of macro {0} in function {1}: {2}",
+                    Resources.MacroSession_ExceptionDuringExpansionOfMacro,
                     expander.HumanId, context.Function.LogicalId,
-                    e.Message), context.Invocation);
+                    e.Message), context.Invocation.Position, MessageClasses.ExceptionDuringCompilation));
 #if DEBUG
             Console.WriteLine(e);
 #endif
@@ -543,7 +591,7 @@ namespace Prexonite.Compiler.Macro
             context.SuppressDefaultExpression = false;
         }
 
-        public static AstGetSet CreateNeutralExpression(AstMacroInvocation invocation)
+        public static AstGetSet CreateNeutralExpression(AstGetSet invocation)
         {
             var nullLiteral = new AstNull(invocation.File, invocation.Line, invocation.Column);
             var call = new AstIndirectCall(invocation.File, invocation.Line, invocation.Column,
@@ -554,30 +602,36 @@ namespace Prexonite.Compiler.Macro
             return call;
         }
 
-        private IMacroExpander _getExpander(AstMacroInvocation invocation, CompilerTarget target)
+        private IMacroExpander _getExpander(AstGetSet macroNode, CompilerTarget target)
         {
             IMacroExpander expander = null;
-            switch (invocation.Interpretation)
+            AstExpand expansion;
+            EntityRef.MacroCommand mcmd;
+            EntityRef.Function func;
+            if ((expansion = macroNode as AstExpand) != null)
             {
-                case SymbolInterpretations.Function:
-                    expander = new MacroFunctionExpander();
-                    break;
-                case SymbolInterpretations.MacroCommand:
+                if (expansion.Entity.TryGetMacroCommand(out mcmd))
                     expander = new MacroCommandExpander();
-                    break;
-                default:
-                    target.Loader.ReportMessage(
-                        new ParseMessage(ParseMessageSeverity.Error,
-                            String.Format(
-                                "Cannot apply {0} as a macro at compile time.",
-                                Enum.GetName(
-                                    typeof (
-                                        SymbolInterpretations),
-                                    invocation.Interpretation)),
-                            invocation));
-                    break;
+                else if (expansion.Entity.TryGetFunction(out func))
+                    expander = new MacroFunctionExpander();
+                else
+                    _reportMacroNodeNotMacro(target, expansion.Entity.GetType().Name, macroNode);
+            }
+            else
+            {
+                _reportMacroNodeNotMacro(target, macroNode.GetType().Name, macroNode);
             }
             return expander;
+        }
+
+        private static void _reportMacroNodeNotMacro(CompilerTarget target, string implName, AstGetSet invocation)
+        {
+            target.Loader.ReportMessage(
+                Message.Create(MessageSeverity.Error,
+                               String.Format(
+                                   Resources.MacroSession_NotAMacro,
+                                   implName),
+                               invocation.Position, MessageClasses.NotAMacro));
         }
 
         /// <summary>
@@ -594,8 +648,7 @@ namespace Prexonite.Compiler.Macro
             var contextVar =
                 CompilerTarget.CreateReadonlyVariable(sctx.CreateNativePValue(context));
 
-            var env = new SymbolTable<PVariable>(1);
-            env.Add(MacroAliases.ContextAlias, contextVar);
+            var env = new SymbolTable<PVariable>(1) {{MacroAliases.ContextAlias, contextVar}};
 
             var sharedVariables =
                 func.Meta[PFunction.SharedNamesKey].List.Select(entry => env[entry.Text]).

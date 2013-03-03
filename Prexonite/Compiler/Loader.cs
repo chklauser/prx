@@ -1,6 +1,6 @@
 // Prexonite
 // 
-// Copyright (c) 2011, Christian Klauser
+// Copyright (c) 2013, Christian Klauser
 // All rights reserved.
 // 
 // Redistribution and use in source and binary forms, with or without modification, 
@@ -23,7 +23,6 @@
 //  DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, 
 //  WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING 
 //  IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
-
 #if Compress
 using System.IO.Compression;
 #endif
@@ -36,12 +35,18 @@ using System.IO;
 using System.Reflection;
 using System.Security.AccessControl;
 using System.Text;
+using JetBrains.Annotations;
 using Prexonite.Commands;
 using Prexonite.Commands.Concurrency;
 using Prexonite.Commands.Core;
 using Prexonite.Compiler.Ast;
+using Prexonite.Compiler.Internal;
 using Prexonite.Compiler.Macro;
 using Prexonite.Compiler.Macro.Commands;
+using Prexonite.Compiler.Symbolic;
+using Prexonite.Internal;
+using Prexonite.Modular;
+using Prexonite.Properties;
 using Prexonite.Types;
 using Debug = System.Diagnostics.Debug;
 
@@ -63,20 +68,16 @@ namespace Prexonite.Compiler
         {
         }
 
-        [DebuggerStepThrough]
         public Loader(LoaderOptions options)
         {
             if (options == null)
                 throw new ArgumentNullException("options");
             _options = options;
 
-            _symbols = new SymbolTable<SymbolEntry>();
-
             _functionTargets = new SymbolTable<CompilerTarget>();
             _functionTargetsIterator = new FunctionTargetsIterator(this);
 
-            CreateFunctionTarget(
-                ParentApplication._InitializationFunction, new AstBlock("~NoFile", -1, -1));
+            CreateFunctionTarget(ParentApplication._InitializationFunction);
 
             if (options.RegisterCommands)
                 RegisterExistingCommands();
@@ -104,7 +105,7 @@ namespace Prexonite.Compiler
         public void RegisterExistingCommands()
         {
             foreach (var kvp in ParentEngine.Commands)
-                Symbols.Add(kvp.Key, new SymbolEntry(SymbolInterpretations.Command, kvp.Key));
+                Symbols.Declare(kvp.Key, Symbol.CreateCall(EntityRef.Command.Create(kvp.Key),NoSourcePosition.Instance));
         }
 
         #endregion
@@ -123,12 +124,10 @@ namespace Prexonite.Compiler
 
         #region Global Symbol Table
 
-        private readonly SymbolTable<SymbolEntry> _symbols;
-
-        public SymbolTable<SymbolEntry> Symbols
+        public SymbolStore Symbols
         {
-            /*[DebuggerStepThrough]*/
-            get { return _symbols; }
+            [DebuggerStepThrough]
+            get { return _options.Symbols; }
         }
 
         #endregion
@@ -206,12 +205,12 @@ namespace Prexonite.Compiler
         }
 
         //[DebuggerStepThrough]
-        public CompilerTarget CreateFunctionTarget(PFunction func, AstBlock block)
+        public CompilerTarget CreateFunctionTarget(PFunction func, CompilerTarget parentTarget = null, ISourcePosition sourcePosition = null)
         {
             if (func == null)
                 throw new ArgumentNullException("func");
 
-            var target = new CompilerTarget(this, func, block);
+            var target = new CompilerTarget(this, func,parentTarget,sourcePosition);
             if (_functionTargets.ContainsKey(func.Id) &&
                 (!ParentApplication.Meta.GetDefault(Application.AllowOverridingKey, true).Switch))
                 throw new PrexoniteException(
@@ -219,7 +218,6 @@ namespace Prexonite.Compiler
                         ParentApplication.Id,
                         func.Id));
 
-            //The function target is added nontheless in order not to confuse the compiler
             _functionTargets[func.Id] = target;
 
             return target;
@@ -568,10 +566,11 @@ namespace Prexonite.Compiler
             _addMacroCommand(CallSubInterpret.Instance);
             _addMacroCommand(Pack.Instance);
             _addMacroCommand(Unpack.Instance);
-            _addHelperCommands(Unpack.GetHelperCommands(this));
+            _addHelperCommands(Unpack.GetHelperCommands());
             _addMacroCommand(Reference.Instance);
             _addHelperCommands(Reference.GetHelperCommands(this));
             _addMacroCommand(CallStar.Instance);
+            _addMacroCommand(EntityRefTo.Instance);
 
             // Call/* macros
             _addMacroCommand(Call.Instance.Partial);
@@ -599,8 +598,12 @@ namespace Prexonite.Compiler
         {
             MacroCommands.Add(macroCommand);
             if (Options.RegisterCommands)
-                Symbols[macroCommand.Id] = new SymbolEntry(SymbolInterpretations.MacroCommand,
-                    macroCommand.Id);
+            {
+                var commandReference =
+                    Cache.EntityRefs.GetCached(EntityRef.MacroCommand.Create(macroCommand.Id));
+                Symbols.Declare(
+                    macroCommand.Id, Symbol.CreateExpand(Symbol.CreateReference(commandReference, NoSourcePosition.Instance)));
+            }
         }
 
         #endregion
@@ -662,13 +665,18 @@ namespace Prexonite.Compiler
 
         public void LoadFromReader(TextReader reader)
         {
+            LoadFromReader(reader, null);
+        }
+
+        public void LoadFromReader(TextReader reader, string fileName)
+        {
             if (reader == null)
                 throw new ArgumentNullException("reader");
-            _loadFromReader(reader, null);
+            _loadFromReader(reader, fileName);
         }
 
 #if DEBUG
-        private int _load_indent;
+        private int _loadIndent;
 #endif
 
         [DebuggerStepThrough]
@@ -698,20 +706,21 @@ namespace Prexonite.Compiler
                 FileOptions.SequentialScan))
             {
 #if DEBUG
-                var indent = new StringBuilder(_load_indent);
-                indent.Append(' ', 2*(_load_indent++));
-                Console.WriteLine("{1}begin compiling {0} [Path: {2} ]", file.Name, indent, file.FullName);
+                var indent = new StringBuilder(_loadIndent);
+                indent.Append(' ', 2*(_loadIndent++));
+                Console.WriteLine(Resources.Loader__begin_compiling, file.Name, indent, file.FullName);
 #endif
                 _loadFromStream(str, file.Name);
 #if DEBUG
-                Console.WriteLine("{1}end   compiling {0}", file.Name, indent);
-                _load_indent--;
+                Console.WriteLine(Resources.Loader__end_compiling, file.Name, indent);
+                _loadIndent--;
 #endif
             }
 
             _loadPaths.Pop();
         }
 
+        [PublicAPI]
         public void RequireFromFile(string path)
         {
             var file = ApplyLoadPaths(path);
@@ -749,6 +758,7 @@ namespace Prexonite.Compiler
         /// <param name = "column">The column in which the error occurred.</param>
         /// <param name = "message">The error message.</param>
         /// <exception cref = "InvalidOperationException">when the Loader is not actively parsing.</exception>
+        [Obsolete("Use Loader.ReportMessage instead.")]
         public void ReportSemanticError(int line, int column, string message)
         {
             if (_reportSemError == null)
@@ -758,22 +768,23 @@ namespace Prexonite.Compiler
             _reportSemError(line, column, message);
         }
 
-        private void _messageHook(Object sender, ParseMessageEventArgs e)
+        private void _messageHook(Object sender, MessageEventArgs e)
         {
             ReportMessage(e.Message);
         }
 
-        public void ReportMessage(ParseMessage message)
+        [PublicAPI]
+        public void ReportMessage(Message message)
         {
             switch (message.Severity)
             {
-                case ParseMessageSeverity.Error:
+                case MessageSeverity.Error:
                     _errors.Add(message);
                     break;
-                case ParseMessageSeverity.Warning:
+                case MessageSeverity.Warning:
                     _warnings.Add(message);
                     break;
-                case ParseMessageSeverity.Info:
+                case MessageSeverity.Info:
                     _infos.Add(message);
                     break;
                 default:
@@ -781,9 +792,9 @@ namespace Prexonite.Compiler
             }
         }
 
-        private EventHandler<ParseMessageEventArgs> _messageHandler;
+        private EventHandler<MessageEventArgs> _messageHandler;
 
-        private EventHandler<ParseMessageEventArgs> _getMessageHandler()
+        private EventHandler<MessageEventArgs> _getMessageHandler()
         {
             return _messageHandler ?? (_messageHandler = _messageHook);
         }
@@ -793,7 +804,10 @@ namespace Prexonite.Compiler
             var parser = new Parser(lexer, this);
 
             var oldReportSemError = _reportSemError;
+            // TODO: Retire the SemErr API once and for all
+#pragma warning disable 612,618
             _reportSemError = parser.SemErr;
+#pragma warning restore 612,618
             parser.errors.MessageReceived += _getMessageHandler();
             parser.Parse();
 
@@ -811,35 +825,39 @@ namespace Prexonite.Compiler
         {
             var target = FunctionTargets[Application.InitializationId];
             target.ExecuteCompilerHooks();
-            target.Ast.EmitCode(target, false);
+            target.Ast.EmitCode(target, false, StackSemantics.Effect);
             //do not treat initialization blocks as top-level ones.
             target.Ast.Clear();
         }
 
+        [PublicAPI]
         public int ErrorCount
         {
             [DebuggerStepThrough]
             get { return _errors.Count; }
         }
 
-        public List<ParseMessage> Errors
+        [PublicAPI]
+        public List<Message> Errors
         {
             get { return _errors; }
         }
 
-        public List<ParseMessage> Warnings
+        [PublicAPI]
+        public List<Message> Warnings
         {
             get { return _warnings; }
         }
 
-        public List<ParseMessage> Infos
+        [PublicAPI]
+        public List<Message> Infos
         {
             get { return _infos; }
         }
 
-        private readonly List<ParseMessage> _errors = new List<ParseMessage>();
-        private readonly List<ParseMessage> _warnings = new List<ParseMessage>();
-        private readonly List<ParseMessage> _infos = new List<ParseMessage>();
+        private readonly List<Message> _errors = new List<Message>();
+        private readonly List<Message> _warnings = new List<Message>();
+        private readonly List<Message> _infos = new List<Message>();
 
         #endregion
 
@@ -926,7 +944,9 @@ namespace Prexonite.Compiler
         ///     Notifies the loader that a caller of <see cref = "RequestBuildCommands" /> no longer requires build commands.
         /// </summary>
         /// <param name = "token">The token returned from the corresponding call to <see cref = "RequestBuildCommands" /></param>
+// ReSharper disable UnusedParameter.Global // token is only used for ensuring correct usage of the API
         public void ReleaseBuildCommands(object token)
+// ReSharper restore UnusedParameter.Global
         {
             if (_buildCommandsRequests.Count <= 0 ||
                 !ReferenceEquals(_buildCommandsRequests.Peek(), token))
@@ -961,7 +981,7 @@ namespace Prexonite.Compiler
         /// <summary>
         ///     The name of the resolver command for build blocks.
         /// </summary>
-        public const string BuildResolveCommand = "Resolve";
+        public const string BuildResolveCommand = "ResolveOperator";
 
         /// <summary>
         ///     The name of the getloader command for build blocks
@@ -1075,7 +1095,7 @@ namespace Prexonite.Compiler
         public void DeclareBuildBlockCommands(CompilerTarget target)
         {
             foreach (var cmdEntry in _buildCommands)
-                target.Declare(SymbolInterpretations.Command, cmdEntry.Key);
+                target.Symbols.Declare(cmdEntry.Key,Symbol.CreateCall(EntityRef.Command.Create(cmdEntry.Key), NoSourcePosition.Instance));
         }
 
         #endregion
@@ -1143,7 +1163,9 @@ namespace Prexonite.Compiler
                 writer.Write(StringPType.ToIdLiteral(kvp.Key));
                 var metaTable = kvp.Value.Meta.Clone();
                 metaTable.Remove(Application.IdKey);
+#pragma warning disable 612,618
                 metaTable.Remove(Application.InitializationGeneration);
+#pragma warning restore 612,618
                 metaTable.Remove(SuppressPrimarySymbol);
 #if DEBUG || Verbose
                     writer.WriteLine();
@@ -1185,36 +1207,21 @@ namespace Prexonite.Compiler
         public void StoreSymbols(TextWriter writer)
         {
             writer.WriteLine("\n//--SYMBOLS");
-            var functions =
-                new List<KeyValuePair<string, SymbolEntry>>();
-            var commands =
-                new List<KeyValuePair<string, SymbolEntry>>();
-            var objectVariables =
-                new List<KeyValuePair<string, SymbolEntry>>();
-            var referenceVariables =
-                new List<KeyValuePair<string, SymbolEntry>>();
 
-            foreach (var kvp in Symbols)
-                switch (kvp.Value.Interpretation)
-                {
-                    case SymbolInterpretations.Function:
-                        functions.Add(kvp);
-                        break;
-                    case SymbolInterpretations.Command:
-                        commands.Add(kvp);
-                        break;
-                    case SymbolInterpretations.GlobalObjectVariable:
-                        objectVariables.Add(kvp);
-                        break;
-                    case SymbolInterpretations.GlobalReferenceVariable:
-                        referenceVariables.Add(kvp);
-                        break;
-                }
-
-            _writeSymbolKind(writer, "function", functions);
-            _writeSymbolKind(writer, "command", commands);
-            _writeSymbolKind(writer, "var", objectVariables);
-            _writeSymbolKind(writer, "ref", referenceVariables);
+            writer.WriteLine("declare(");
+            var previousSymbols = new Dictionary<Symbol, string>(Symbols.Count);
+            foreach (var symbol in Symbols)
+            {
+                writer.Write("  "); 
+                writer.Write(StringPType.ToIdLiteral(symbol.Key));
+                writer.Write(" = ");
+                var mexpr = symbol.Value.HandleWith(SymbolMExprSerializer.Instance, previousSymbols);
+                mexpr.ToString(writer);
+                if(!previousSymbols.ContainsKey(symbol.Value))
+                    previousSymbols.Add(symbol.Value,symbol.Key);
+                writer.WriteLine(",");
+            }
+            writer.WriteLine(");");
         }
 
         /// <summary>
@@ -1225,32 +1232,6 @@ namespace Prexonite.Compiler
         {
             writer.WriteLine("\n//--META INFORMATION");
             ParentApplication.Meta.Store(writer);
-        }
-
-        private static void _writeSymbolKind(
-            TextWriter writer,
-            string kind,
-            ICollection<KeyValuePair<string, SymbolEntry>> entries)
-        {
-            if (entries.Count <= 0)
-                return;
-            writer.Write("declare ");
-            writer.Write(kind);
-            writer.Write(" ");
-            var idx = 0;
-            foreach (var kvp in entries)
-            {
-                writer.Write(StringPType.ToIdLiteral(kvp.Value.Id));
-                if (!Engine.StringsAreEqual(kvp.Value.Id, kvp.Key))
-                {
-                    writer.Write(" as ");
-                    writer.Write(StringPType.ToIdLiteral(kvp.Key));
-                }
-                if (++idx == entries.Count)
-                    writer.WriteLine(";");
-                else
-                    writer.Write(",");
-            }
         }
 
         #endregion
@@ -1330,5 +1311,6 @@ namespace Prexonite.Compiler
             MessageId = "Cil")] public const string CilHintsKey = "cilhints";
 
         public const string ObjectCreationFallbackPrefix = "create_";
+
     }
 }

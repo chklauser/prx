@@ -1,6 +1,6 @@
 // Prexonite
 // 
-// Copyright (c) 2011, Christian Klauser
+// Copyright (c) 2013, Christian Klauser
 // All rights reserved.
 // 
 // Redistribution and use in source and binary forms, with or without modification, 
@@ -23,9 +23,10 @@
 //  DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, 
 //  WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING 
 //  IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
-
 using System;
+using Prexonite.Modular;
 using Prexonite.Types;
+using Prexonite.Compiler.Internal;
 
 namespace Prexonite.Compiler.Ast
 {
@@ -33,36 +34,20 @@ namespace Prexonite.Compiler.Ast
                                 IAstHasBlocks,
                                 IAstHasExpressions
     {
-        public AstCondition(
-            string file, int line, int column, IAstExpression condition, bool isNegative)
-            : base(file, line, column)
+        public AstCondition(ISourcePosition p, AstBlock parentBlock, AstExpr condition, bool isNegative = false)
+            : base(p)
         {
-            IfBlock = new AstBlock(file, line, column);
-            ElseBlock = new AstBlock(file, line, column);
+            IfBlock = new AstScopedBlock(p,parentBlock,prefix: "if");
+            ElseBlock = new AstScopedBlock(p,parentBlock,prefix:"else");
             if (condition == null)
                 throw new ArgumentNullException("condition");
             Condition = condition;
             IsNegative = isNegative;
         }
 
-        public AstCondition(string file, int line, int column, IAstExpression condition)
-            : this(file, line, column, condition, false)
-        {
-        }
-
-        internal AstCondition(Parser p, IAstExpression condition, bool isNegative)
-            : this(p.scanner.File, p.t.line, p.t.col, condition, isNegative)
-        {
-        }
-
-        internal AstCondition(Parser p, IAstExpression condition)
-            : this(p, condition, false)
-        {
-        }
-
-        public AstBlock IfBlock;
-        public AstBlock ElseBlock;
-        public IAstExpression Condition;
+        public AstScopedBlock IfBlock;
+        public AstScopedBlock ElseBlock;
+        public AstExpr Condition;
         public bool IsNegative;
         private static int _depth;
 
@@ -75,7 +60,7 @@ namespace Prexonite.Compiler.Ast
 
         #region IAstHasExpressions Members
 
-        public IAstExpression[] Expressions
+        public AstExpr[] Expressions
         {
             get { return new[] {Condition}; }
         }
@@ -84,16 +69,17 @@ namespace Prexonite.Compiler.Ast
 
         #endregion
 
-        protected override void DoEmitCode(CompilerTarget target)
+        protected override void DoEmitCode(CompilerTarget target, StackSemantics stackSemantics)
         {
             //Optimize condition
             _OptimizeNode(target, ref Condition);
-            var unaryCond = Condition as AstUnaryOperator;
-            while (unaryCond != null && unaryCond.Operator == UnaryOperator.LogicalNot)
+
+            // Invert condition when unary logical not
+            AstIndirectCall unaryCond;
+            while (Condition.IsCommandCall(Commands.Core.Operators.LogicalNot.DefaultAlias, out unaryCond))
             {
-                Condition = unaryCond.Operand;
+                Condition = unaryCond.Arguments[0];
                 IsNegative = !IsNegative;
-                unaryCond = Condition as AstUnaryOperator;
             }
 
             //Constant conditions
@@ -106,22 +92,15 @@ namespace Prexonite.Compiler.Ast
                         target.Loader, PType.Bool, out condValue))
                     goto continueFull;
                 else if (((bool) condValue.Value) ^ IsNegative)
-                    IfBlock.EmitCode(target);
+                    IfBlock.EmitEffectCode(target);
                 else
-                    ElseBlock.EmitCode(target);
+                    ElseBlock.EmitEffectCode(target);
                 return;
             }
             //Conditions with empty blocks
             if (IfBlock.IsEmpty && ElseBlock.IsEmpty)
             {
-                var effect = Condition as IAstEffect;
-                if (effect != null)
-                    effect.EmitEffectCode(target);
-                else
-                {
-                    Condition.EmitCode(target);
-                    target.EmitPop(this);
-                }
+                Condition.EmitEffectCode(target);
                 return;
             }
             continueFull:
@@ -166,24 +145,24 @@ namespace Prexonite.Compiler.Ast
             {
                 //if => jump / else => block
                 AstLazyLogical.EmitJumpCondition(target, Condition, ifGoto.Destination, !IsNegative);
-                ElseBlock.EmitCode(target);
+                ElseBlock.EmitEffectCode(target);
             }
             else if (elseIsGoto)
             {
                 //if => block / else => jump
                 AstLazyLogical.EmitJumpCondition(
                     target, Condition, elseGoto.Destination, IsNegative); //inverted
-                IfBlock.EmitCode(target);
+                IfBlock.EmitEffectCode(target);
             }
             else
             {
                 //if => block / else => block
                 AstLazyLogical.EmitJumpCondition(target, Condition, elseLabel, IsNegative);
-                IfBlock.EmitCode(target);
-                target.EmitJump(this, endLabel);
-                target.EmitLabel(this, elseLabel);
-                ElseBlock.EmitCode(target);
-                target.EmitLabel(this, endLabel);
+                IfBlock.EmitEffectCode(target);
+                target.EmitJump(Position, endLabel);
+                target.EmitLabel(Position, elseLabel);
+                ElseBlock.EmitEffectCode(target);
+                target.EmitLabel(Position, endLabel);
             }
 
             target.FreeLabel(elseLabel);

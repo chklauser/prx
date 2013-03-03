@@ -1,6 +1,6 @@
 // Prexonite
 // 
-// Copyright (c) 2011, Christian Klauser
+// Copyright (c) 2013, Christian Klauser
 // All rights reserved.
 // 
 // Redistribution and use in source and binary forms, with or without modification, 
@@ -23,27 +23,30 @@
 //  DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, 
 //  WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING 
 //  IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
-
 using System;
-using System.ComponentModel;
 using System.Diagnostics;
+using JetBrains.Annotations;
+using Prexonite.Compiler.Symbolic;
+using Prexonite.Modular;
+using Prexonite.Properties;
 using Prexonite.Types;
-using NoDebug = System.Diagnostics.DebuggerNonUserCodeAttribute;
 
 namespace Prexonite.Compiler.Ast
 {
-    [DebuggerStepThrough]
-    public abstract class AstNode : IObject, ISourcePosition
+    public abstract class AstNode : IObject
     {
-        private readonly string _file;
-        private readonly int _line;
-        private readonly int _column;
+        [NotNull] private readonly ISourcePosition _position;
 
         protected AstNode(string file, int line, int column)
+            : this(new SourcePosition(file, line, column))
         {
-            _file = file ?? "unknown~";
-            _line = line;
-            _column = column;
+        }
+
+        protected AstNode([NotNull] ISourcePosition position)
+        {
+            if (position == null)
+                throw new ArgumentNullException("position");
+            _position = position;
         }
 
         internal AstNode(Parser p)
@@ -51,42 +54,46 @@ namespace Prexonite.Compiler.Ast
         {
         }
 
+        [NotNull]
+        public ISourcePosition Position
+        {
+            get { return _position; }
+        }
+
         public string File
         {
-            get { return _file; }
+            get { return _position.File; }
         }
 
         public int Line
         {
-            get { return _line; }
+            get { return _position.Line; }
         }
 
         public int Column
         {
-            get { return _column; }
+            get { return _position.Column; }
         }
 
-        public void EmitCode(CompilerTarget target)
+        protected abstract void DoEmitCode([NotNull] CompilerTarget target, StackSemantics semantics);
+
+        public void EmitValueCode([NotNull] CompilerTarget target)
         {
-            _dispatchDoEmitCode(target, false);
+            EmitCode(target, StackSemantics.Value);
         }
 
-        protected abstract void DoEmitCode(CompilerTarget target);
-
-        [EditorBrowsable(EditorBrowsableState.Never)]
-        internal void _EmitEffectCode(CompilerTarget target)
+        public void EmitEffectCode([NotNull] CompilerTarget target)
         {
-            _dispatchDoEmitCode(target, true);
+            EmitCode(target, StackSemantics.Effect);
         }
 
-        private void _dispatchDoEmitCode(CompilerTarget target, bool justEffectCode)
+        public void EmitCode([NotNull] CompilerTarget target, StackSemantics justEffectCode)
         {
-            var effect = this as IAstEffect;
             var partiallyApplicabale = this as IAstPartiallyApplicable;
             var isPartialApplication = partiallyApplicabale != null &&
                 partiallyApplicabale.CheckForPlaceholders();
 
-            if (justEffectCode && effect != null)
+            if (justEffectCode == StackSemantics.Effect)
             {
                 if (isPartialApplication)
                 {
@@ -94,7 +101,7 @@ namespace Prexonite.Compiler.Ast
                 }
                 else
                 {
-                    effect.DoEmitEffectCode(target);
+                    DoEmitCode(target, StackSemantics.Effect);
                 }
             }
             else
@@ -105,7 +112,7 @@ namespace Prexonite.Compiler.Ast
                 }
                 else
                 {
-                    DoEmitCode(target);
+                    DoEmitCode(target, StackSemantics.Value);
                 }
             }
         }
@@ -120,30 +127,35 @@ namespace Prexonite.Compiler.Ast
             return false;
         }
 
-        internal static IAstExpression _GetOptimizedNode(CompilerTarget target, IAstExpression expr)
+        [NotNull]
+        internal static AstExpr _GetOptimizedNode(
+            [NotNull] CompilerTarget target, [NotNull] AstExpr expr)
         {
             if (target == null)
-                throw new ArgumentNullException("target", "Compiler target cannot be null.");
+                throw new ArgumentNullException(
+                    "target", Resources.AstNode__GetOptimizedNode_CompilerTarget_null);
             if (expr == null)
                 throw new ArgumentNullException(
-                    "expr", "Expression to be optimized can not be null.");
-            IAstExpression opt;
+                    "expr", Resources.AstNode__GetOptimizedNode_Expression_null);
+            AstExpr opt;
             return expr.TryOptimize(target, out opt) ? opt : expr;
         }
 
-        internal static void _OptimizeNode(CompilerTarget target, ref IAstExpression expr)
+        internal static void _OptimizeNode([NotNull] CompilerTarget target, [NotNull] ref AstExpr expr)
         {
             if (target == null)
-                throw new ArgumentNullException("target", "Compiler target cannot be null.");
+                throw new ArgumentNullException(
+                    "target", Resources.AstNode__GetOptimizedNode_CompilerTarget_null);
             if (expr == null)
                 throw new ArgumentNullException(
-                    "expr", "Expression to be optimized can not be null.");
+                    "expr", Resources.AstNode__GetOptimizedNode_Expression_null);
             expr = _GetOptimizedNode(target, expr);
         }
 
         #region Implementation of IObject
 
-        public virtual bool TryDynamicCall(StackContext sctx, PValue[] args, PCall call, string id,
+        public virtual bool TryDynamicCall(
+            StackContext sctx, PValue[] args, PCall call, string id,
             out PValue result)
         {
             result = null;
@@ -155,20 +167,17 @@ namespace Prexonite.Compiler.Ast
                     if (args.Length < 1 || (target = args[0].Value as CompilerTarget) == null)
                         throw new PrexoniteException(
                             "_GetOptimizedNode(CompilerTarget target) requires target.");
-                    var expr = this as IAstExpression;
+                    var expr = this as AstExpr;
                     if (expr == null)
-                        throw new PrexoniteException("The node is not an IAstExpression.");
+                        throw new PrexoniteException("The node is not an AstExpr.");
 
                     result = target.Loader.CreateNativePValue(_GetOptimizedNode(target, expr));
                     break;
                 case "EMITEFFECTCODE":
                     if (args.Length < 1 || (target = args[0].Value as CompilerTarget) == null)
                         throw new PrexoniteException(
-                            "_GetOptimizedNode(CompilerTarget target) requires target.");
-                    var effect = this as IAstEffect;
-                    if (effect == null)
-                        throw new PrexoniteException("The node is not an IAstExpression.");
-                    effect.EmitEffectCode(target);
+                            "EmitEffectCode(CompilerTarget target) requires target.");
+                    EmitEffectCode(target);
                     result = PType.Null;
                     break;
             }
@@ -178,24 +187,33 @@ namespace Prexonite.Compiler.Ast
 
         #endregion
 
-        internal static SymbolInterpretations Resolve(Parser parser, string symbolicId,
-            out string physicalId)
+        /// <summary>
+        /// Resolves the symbol associated with an operator. If no such operator is defined, an error message
+        /// is generated and a default symbol returned. If you need more control, access the 
+        /// <see cref="SymbolStore"/> directly.
+        /// </summary>
+        /// <param name="parser">The parser to post the error message to.</param>
+        /// <param name="symbolicId">The symbolic id of the operator (the id used in the source code)</param>
+        /// <returns>The symbol corresponding to the symbolic id, or a default symbol when no such symbol entry exists.</returns>
+        [NotNull]
+        internal static Symbol _ResolveOperator(Parser parser, string symbolicId)
         {
-            SymbolInterpretations interpretation;
-            SymbolEntry symbolEntry;
-            if (!parser.target.Symbols.TryGetValue(symbolicId, out symbolEntry))
+            Symbol symbolEntry;
+            if (!parser.target.Symbols.TryGet(symbolicId, out symbolEntry))
             {
-                physicalId = symbolicId;
-                interpretation = SymbolInterpretations.Command;
-                parser.SemErr(string.Format("No implementation defined for operator `{0}`",
-                    physicalId));
+                parser.Loader.ReportMessage(
+                    Message.Error(
+                        string.Format(
+                            Resources.AstNode_NoImplementationForOperator,
+                            symbolicId), parser.GetPosition(),
+                        MessageClasses.SymbolNotResolved));
+
+                return Symbol.CreateCall(EntityRef.Command.Create(symbolicId), NoSourcePosition.Instance);
             }
             else
             {
-                interpretation = symbolEntry.Interpretation;
-                physicalId = symbolEntry.Id;
+                return symbolEntry;
             }
-            return interpretation;
         }
     }
 }

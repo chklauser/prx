@@ -1,6 +1,6 @@
 // Prexonite
 // 
-// Copyright (c) 2011, Christian Klauser
+// Copyright (c) 2013, Christian Klauser
 // All rights reserved.
 // 
 // Redistribution and use in source and binary forms, with or without modification, 
@@ -23,95 +23,93 @@
 //  DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, 
 //  WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING 
 //  IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
-
 using System;
 using System.Collections;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.Text;
+using JetBrains.Annotations;
+using Prexonite.Compiler.Symbolic;
 using NoDebug = System.Diagnostics.DebuggerNonUserCodeAttribute;
 
 namespace Prexonite.Compiler.Ast
 {
-    public class AstBlock : AstNode,
-                            IList<AstNode>
+    public class AstBlock : AstExpr,
+                            IList<AstNode>, IAstHasExpressions
     {
         #region Construction
 
-        [DebuggerStepThrough]
-        public AstBlock(string file, int line, int column)
-            : this(file, line, column, null)
+        protected AstBlock(ISourcePosition position, [NotNull] SymbolStore symbols, string uid = null, string prefix = null)
+            : base(position)
         {
-        }
-
-        [DebuggerStepThrough]
-        public AstBlock(string file, int line, int column, string uid)
-            : this(file, line, column, uid, null)
-        {
-        }
-
-        [DebuggerStepThrough]
-        public AstBlock(string file, int line, int column, string uid, string prefix)
-            : base(file, line, column)
-        {
-            //See other ctor!
-            _uid = String.IsNullOrEmpty(uid) ? "\\" + Guid.NewGuid().ToString("N") : uid;
+            if (symbols == null)
+                throw new ArgumentNullException("symbols");
             _prefix = (prefix ?? DefaultPrefix) + "\\";
+            _uid = String.IsNullOrEmpty(uid) ? "\\" + Guid.NewGuid().ToString("N") : uid; 
+            _symbols = symbols;
         }
 
-        [DebuggerStepThrough]
-        internal AstBlock(Parser p, string uid, string prefix)
-            : this(p.scanner.File, p.t.line, p.t.col, uid, prefix)
-        {
+        protected AstBlock(ISourcePosition position, AstBlock lexicalScope, string prefix = null, string uid = null)
+            : this(position, _deriveSymbolStore(lexicalScope),uid, prefix)
+        {   
         }
 
-        [DebuggerStepThrough]
-        internal AstBlock(Parser p)
-            : this(p, null)
+        private static SymbolStore _deriveSymbolStore(AstBlock parentBlock)
         {
-        }
-
-        [DebuggerStepThrough]
-        internal AstBlock(Parser p, string uid)
-            : this(p, uid, null)
-        {
+            return SymbolStore.Create(parentBlock.Symbols);
         }
 
         #endregion
 
+        [NotNull]
+        private readonly SymbolStore _symbols;
+
+        [NotNull]
+        public SymbolStore Symbols
+        {
+            get { return _symbols; }
+        }
+
+        [NotNull]
         private List<AstNode> _statements = new List<AstNode>();
 
+        [NotNull]
         public List<AstNode> Statements
         {
             get { return _statements; }
-            set { _statements = value; }
+            set
+            {
+                if (value == null)
+                    throw new ArgumentNullException("value");
+                _statements = value;
+            }
         }
 
-        protected override void DoEmitCode(CompilerTarget target)
+        protected override void DoEmitCode(CompilerTarget target, StackSemantics stackSemantics)
         {
-            EmitCode(target, false);
+            EmitCode(target, false, stackSemantics);
         }
 
-        public void EmitCode(CompilerTarget target, bool isTopLevel)
+        public void EmitCode(CompilerTarget target, bool isTopLevel, StackSemantics stackSemantics)
         {
             if (target == null)
                 throw new ArgumentNullException("target", "The compiler target cannot be null");
 
             if (isTopLevel)
-                tail_call_optimize_top_level_block();
+                _tailCallOptimizeTopLevelBlock();
 
             foreach (var node in _statements)
             {
                 var stmt = node;
-                var expr = stmt as IAstExpression;
+                var expr = stmt as AstExpr;
                 if (expr != null)
-                    stmt = (AstNode) _GetOptimizedNode(target, expr);
+                    stmt = _GetOptimizedNode(target, expr);
 
-                if (stmt is IAstEffect)
-                    ((IAstEffect) stmt).EmitEffectCode(target);
-                else
-                    stmt.EmitCode(target);
+                stmt.EmitEffectCode(target);
             }
+
+            if(Expression != null)
+                Expression.EmitCode(target, stackSemantics);
         }
 
         #region Tail call optimization
@@ -126,15 +124,15 @@ namespace Prexonite.Compiler.Ast
                 var hasBlocksItself = expression as IAstHasBlocks;
 
                 if (blockItself != null)
-                    blockItself.tail_call_optimize_nested_block();
+                    blockItself._tailCallOptimizeNestedBlock();
                 else if (hasExpressionsItself != null)
                     tail_call_optimize_expressions_of_nested_block(hasExpressionsItself);
                 else if (hasBlocksItself != null)
-                    tail_call_optimize_all_nested_blocks_of(hasBlocksItself);
+                    _tailCallOptimizeAllNestedBlocksOf(hasBlocksItself);
             }
         }
 
-        private void tail_call_optimize_nested_block()
+        private void _tailCallOptimizeNestedBlock()
         {
             int i;
             for (i = 1; i < _statements.Count; i++)
@@ -157,11 +155,11 @@ namespace Prexonite.Compiler.Ast
                 }
                 else if (blockItself != null)
                 {
-                    blockItself.tail_call_optimize_nested_block();
+                    blockItself._tailCallOptimizeNestedBlock();
                 }
                 else if (hasBlocks != null)
                 {
-                    tail_call_optimize_all_nested_blocks_of(hasBlocks);
+                    _tailCallOptimizeAllNestedBlocksOf(hasBlocks);
                 }
                 else if (hasExpressions != null)
                 {
@@ -170,17 +168,17 @@ namespace Prexonite.Compiler.Ast
             }
         }
 
-        private static void tail_call_optimize_all_nested_blocks_of(IAstHasBlocks hasBlocks)
+        private static void _tailCallOptimizeAllNestedBlocksOf(IAstHasBlocks hasBlocks)
         {
             foreach (var block in hasBlocks.Blocks)
-                block.tail_call_optimize_nested_block();
+                block._tailCallOptimizeNestedBlock();
         }
 
-        private void tail_call_optimize_top_level_block()
+        private void _tailCallOptimizeTopLevelBlock()
         {
             // { GetSetComplex; return; } -> { return GetSetComplex; }
 
-            tail_call_optimize_nested_block();
+            _tailCallOptimizeNestedBlock();
             AstGetSet getset;
 
             if (_statements.Count == 0)
@@ -191,8 +189,8 @@ namespace Prexonite.Compiler.Ast
             // { if(cond) block1 else block2 } -> { if(cond) block1' else block2' }
             if ((cond = lastStmt as AstCondition) != null)
             {
-                cond.IfBlock.tail_call_optimize_top_level_block();
-                cond.ElseBlock.tail_call_optimize_top_level_block();
+                cond.IfBlock._tailCallOptimizeTopLevelBlock();
+                cond.ElseBlock._tailCallOptimizeTopLevelBlock();
             }
                 // { ...; GetSet(); } -> { ...; return GetSet(); }
             else if ((getset = lastStmt as AstGetSet) != null)
@@ -352,16 +350,16 @@ namespace Prexonite.Compiler.Ast
             var buffer = new StringBuilder();
             foreach (var node in _statements)
                 buffer.AppendFormat("{0}; ", node);
+            if (Expression != null)
+                buffer.AppendFormat(" (return {0})", Expression);
             return buffer.ToString();
         }
 
         #region Block labels
 
-        public bool JumpLabelsEnabled { get; set; }
-        public AstBlock LexicalParentBlock { get; set; }
-
         private readonly string _prefix;
         private readonly string _uid;
+        public AstExpr Expression;
 
         public string Prefix
         {
@@ -373,6 +371,17 @@ namespace Prexonite.Compiler.Ast
             get { return _uid; }
         }
 
+        public virtual AstExpr[] Expressions
+        {
+            get
+            {
+                if(Expression == null)
+                    return new AstExpr[0];
+                else
+                    return new[] {Expression};
+            }
+        }
+
         public const string DefaultPrefix = "_";
         public const string RootBlockName = "root";
 
@@ -382,96 +391,20 @@ namespace Prexonite.Compiler.Ast
         }
 
         #endregion
-    }
 
-    public class AstLoopBlock : AstSubBlock, ILoopBlock
-    {
-        public const string ContinueWord = "continue";
-        public const string BreakWord = "break";
-        public const string BeginWord = "begin";
-        private readonly string _continueLabel;
-        private readonly string _breakLabel;
-        private readonly string _beginLabel;
-
-        [DebuggerStepThrough]
-        public AstLoopBlock(string file, int line, int column, string uid = null,
-            string prefix = null, AstNode parentNode = null)
-            : base(file, line, column, uid, prefix, parentNode)
+        public override bool TryOptimize(CompilerTarget target, out AstExpr expr)
         {
-            //See other ctor!
-            _continueLabel = CreateLabel(ContinueWord);
-            _breakLabel = CreateLabel(BreakWord);
-            _beginLabel = CreateLabel(BeginWord);
+            //Will be optimized after code generation, hopefully
+            if (Expression != null)
+                _OptimizeNode(target, ref Expression);
+
+            expr = null;
+            return false;
         }
 
-        [DebuggerStepThrough]
-        internal AstLoopBlock(Parser p, string uid = null, string prefix = null,
-            AstNode parentNode = null)
-            : this(p.scanner.File, p.t.line, p.t.col, uid, prefix, parentNode)
+        public static AstBlock CreateRootBlock(ISourcePosition position, SymbolStore symbols, string prefix, string uid)
         {
-        }
-
-        public string ContinueLabel
-        {
-            get { return _continueLabel; }
-        }
-
-        public string BreakLabel
-        {
-            get { return _breakLabel; }
-        }
-
-        public string BeginLabel
-        {
-            get { return _beginLabel; }
-        }
-    }
-
-    public class AstSubBlock : AstBlock
-    {
-        private readonly AstNode _parentNode;
-
-        public AstSubBlock(string file, int line, int column, AstNode parentNode)
-            : base(file, line, column)
-        {
-            _parentNode = parentNode;
-        }
-
-        public AstSubBlock(string file, int line, int column, string uid, AstNode parentNode)
-            : base(file, line, column, uid)
-        {
-            _parentNode = parentNode;
-        }
-
-        public AstSubBlock(string file, int line, int column, string uid, string prefix,
-            AstNode parentNode) : base(file, line, column, uid, prefix)
-        {
-            _parentNode = parentNode;
-        }
-
-        internal AstSubBlock(Parser p, string uid, string prefix, AstNode parentNode)
-            : base(p, uid, prefix)
-        {
-            _parentNode = parentNode;
-        }
-
-        internal AstSubBlock(Parser p, AstNode parentNode) : base(p)
-        {
-            _parentNode = parentNode;
-        }
-
-        internal AstSubBlock(Parser p, string uid, AstNode parentNode) : base(p, uid)
-        {
-            _parentNode = parentNode;
-        }
-
-        /// <summary>
-        ///     The node this block is a part of. Can be null.
-        /// </summary>
-        public AstNode ParentNode
-        {
-            [DebuggerStepThrough]
-            get { return _parentNode; }
+            return new AstBlock(position,symbols,uid, prefix);
         }
     }
 }

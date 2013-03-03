@@ -202,7 +202,7 @@ function prx\interactive()
     function printErrors(otherErrors) does red = () =>
     {
         otherErrors ??= errors;
-        foreach(var err in otherErrors);
+        foreach(var err in otherErrors)
             println(err);
     };
     

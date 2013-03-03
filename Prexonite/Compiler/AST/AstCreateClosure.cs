@@ -1,6 +1,6 @@
 // Prexonite
 // 
-// Copyright (c) 2011, Christian Klauser
+// Copyright (c) 2013, Christian Klauser
 // All rights reserved.
 // 
 // Redistribution and use in source and binary forms, with or without modification, 
@@ -23,45 +23,47 @@
 //  DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, 
 //  WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING 
 //  IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
-
 using System.Diagnostics;
+using JetBrains.Annotations;
+using Prexonite.Modular;
 
 namespace Prexonite.Compiler.Ast
 {
     [DebuggerNonUserCode]
-    public class AstCreateClosure : AstNode,
-                                    IAstExpression
+    public class AstCreateClosure : AstExpr
     {
-        public string FuncId;
+        [NotNull] private readonly EntityRef.Function _implementation;
 
-        public AstCreateClosure(string file, int line, int column, string funcId)
-            : base(file, line, column)
+        public AstCreateClosure(ISourcePosition position, EntityRef.Function implementation)
+            : base(position)
         {
-            FuncId = funcId;
+            _implementation = implementation;
         }
 
-        internal AstCreateClosure(Parser p, string funcId)
-            : base(p)
+        public EntityRef.Function Implementation
         {
-            FuncId = funcId;
+            get { return _implementation; }
         }
 
-        protected override void DoEmitCode(CompilerTarget target)
+        protected override void DoEmitCode(CompilerTarget target, StackSemantics stackSemantics)
         {
+            if (stackSemantics == StackSemantics.Effect)
+                return;
+
             PFunction targetFunction;
             MetaEntry sharedNamesEntry;
-            if (target.Loader.ParentApplication.Functions.TryGetValue(FuncId, out targetFunction)
+            if (target.Loader.ParentApplication.TryGetFunction(_implementation.Id, _implementation.ModuleName, out targetFunction)
                 && (!targetFunction.Meta.TryGetValue(PFunction.SharedNamesKey, out sharedNamesEntry)
                     || !sharedNamesEntry.IsList
                         || sharedNamesEntry.List.Length == 0))
-                target.Emit(this, OpCode.ldr_func, FuncId);
+                target.Emit(Position,OpCode.ldr_func, _implementation.Id, target.ToInternalModule(_implementation.ModuleName));
             else
-                target.Emit(this, OpCode.newclo, FuncId);
+                target.Emit(Position,OpCode.newclo, _implementation.Id, target.ToInternalModule(_implementation.ModuleName));
         }
 
-        #region IAstExpression Members
+        #region AstExpr Members
 
-        public bool TryOptimize(CompilerTarget target, out IAstExpression expr)
+        public override bool TryOptimize(CompilerTarget target, out AstExpr expr)
         {
             expr = null;
             return false;

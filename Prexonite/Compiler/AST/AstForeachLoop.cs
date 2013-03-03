@@ -1,6 +1,6 @@
 // Prexonite
 // 
-// Copyright (c) 2011, Christian Klauser
+// Copyright (c) 2013, Christian Klauser
 // All rights reserved.
 // 
 // Redistribution and use in source and binary forms, with or without modification, 
@@ -23,10 +23,12 @@
 //  DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, 
 //  WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING 
 //  IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
-
 using System;
 using System.Diagnostics;
+using System.Globalization;
 using Prexonite.Compiler.Cil;
+using Prexonite.Modular;
+using Prexonite.Properties;
 using Prexonite.Types;
 using NoDebug = System.Diagnostics.DebuggerNonUserCodeAttribute;
 
@@ -34,19 +36,12 @@ namespace Prexonite.Compiler.Ast
 {
     public class AstForeachLoop : AstLoop
     {
-        [DebuggerStepThrough]
-        public AstForeachLoop(string file, int line, int column)
-            : base(file, line, column)
+        public AstForeachLoop(ISourcePosition position, AstBlock parentBlock)
+            : base(position, parentBlock)
         {
         }
 
-        [DebuggerStepThrough]
-        internal AstForeachLoop(Parser p)
-            : this(p.scanner.File, p.t.line, p.t.col)
-        {
-        }
-
-        public IAstExpression List;
+        public AstExpr List;
         public AstGetSet Element;
 
         public bool IsInitialized
@@ -57,15 +52,18 @@ namespace Prexonite.Compiler.Ast
 
         #region IAstHasExpressions Members
 
-        public override IAstExpression[] Expressions
+        public override AstExpr[] Expressions
         {
             get { return new[] {List}; }
         }
 
         #endregion
 
-        protected override void DoEmitCode(CompilerTarget target)
+        protected override void DoEmitCode(CompilerTarget target, StackSemantics stackSemantics)
         {
+            if(stackSemantics == StackSemantics.Value)
+                throw new NotSupportedException("Foreach loops don't produce values and can thus not be emitted with value semantics.");
+
             if (!IsInitialized)
                 throw new PrexoniteException("AstForeachLoop requires List and Element to be set.");
 
@@ -78,24 +76,17 @@ namespace Prexonite.Compiler.Ast
 
             //Create the element assignment statement
             var element = Element.GetCopy();
-            IAstExpression optElem;
+            AstExpr optElem;
             if (element.TryOptimize(target, out optElem))
             {
                 element = optElem as AstGetSet;
                 if (element == null)
                 {
-                    target.Loader.ReportSemanticError
-                        (
-                            Element.Line,
-                            Element.Column,
-                            "Optimization of the element expression in the foreach head " +
-                                "resulted in a non-GetSet expression. Try to use a simpler expression.");
+                    target.Loader.ReportMessage(Message.Error(Resources.AstForeachLoop_DoEmitCode_ElementTooComplicated,Position,MessageClasses.ForeachElementTooComplicated));
                     return;
                 }
             }
-            var ldEnumVar =
-                new AstGetSetSymbol(
-                    File, Line, Column, enumVar, SymbolInterpretations.LocalObjectVariable);
+            var ldEnumVar = target.Factory.Call(Position, EntityRef.Variable.Local.Create(enumVar));
             var getCurrent =
                 new AstGetSetMemberAccess(File, Line, Column, ldEnumVar, "Current");
             element.Arguments.Add(getCurrent);
@@ -109,11 +100,11 @@ namespace Prexonite.Compiler.Ast
             //Get the enumerator
             target.BeginBlock(Block);
 
-            List.EmitCode(target);
-            target.EmitGetCall(List, 0, "GetEnumerator");
+            List.EmitValueCode(target);
+            target.EmitGetCall(List.Position, 0, "GetEnumerator");
             var castAddr = target.Code.Count;
-            target.Emit(List, OpCode.cast_const, "Object(\"System.Collections.IEnumerator\")");
-            target.EmitStoreLocal(List, enumVar);
+            target.Emit(List.Position, OpCode.cast_const, "Object(\"System.Collections.IEnumerator\")");
+            target.EmitStoreLocal(List.Position, enumVar);
 
             //check whether an enhanced CIL implementation is possible
             bool emitHint;
@@ -123,45 +114,45 @@ namespace Prexonite.Compiler.Ast
             else
                 emitHint = true;
 
-            var @try = new AstTryCatchFinally(File, Line, Column)
-                {
-                    TryBlock = new AstActionBlock
-                        (
-                        this,
-                        delegate
-                            {
-                                target.EmitJump(this, Block.ContinueLabel);
+            var @try = new AstTryCatchFinally(Position, Block);
 
-                                //Assignment (begin)
-                                target.EmitLabel(this, Block.BeginLabel);
-                                getCurrentAddr = target.Code.Count;
-                                element.EmitEffectCode(target);
+            @try.TryBlock = new AstActionBlock
+                (
+                Position, @try,
+                delegate
+                    {
+                        target.EmitJump(Position, Block.ContinueLabel);
 
-                                //Code block
-                                Block.EmitCode(target);
+                        //Assignment (begin)
+                        target.EmitLabel(Position, Block.BeginLabel);
+                        getCurrentAddr = target.Code.Count;
+                        element.EmitEffectCode(target);
 
-                                //Condition (continue)
-                                target.EmitLabel(this, Block.ContinueLabel);
-                                moveNextAddr = target.Code.Count;
-                                target.EmitLoadLocal(List, enumVar);
-                                target.EmitGetCall(List, 0, "MoveNext");
-                                target.EmitJumpIfTrue(this, Block.BeginLabel);
+                        //Code block
+                        Block.EmitEffectCode(target);
 
-                                //Break
-                                target.EmitLabel(this, Block.BreakLabel);
-                            }),
-                    FinallyBlock = new AstActionBlock
-                        (
-                        this,
-                        delegate
-                            {
-                                disposeAddr = target.Code.Count;
-                                target.EmitLoadLocal(List, enumVar);
-                                target.EmitCommandCall(List, 1, Engine.DisposeAlias, true);
-                            })
-                };
+                        //Condition (continue)
+                        target.EmitLabel(Position, Block.ContinueLabel);
+                        moveNextAddr = target.Code.Count;
+                        target.EmitLoadLocal(List.Position, enumVar);
+                        target.EmitGetCall(List.Position, 0, "MoveNext");
+                        target.EmitJumpIfTrue(Position, Block.BeginLabel);
 
-            @try.EmitCode(target);
+                        //Break
+                        target.EmitLabel(Position, Block.BreakLabel);
+                    });
+            @try.FinallyBlock = new AstActionBlock
+                (
+                Position, @try,
+                delegate
+                    {
+                        disposeAddr = target.Code.Count;
+                        target.EmitLoadLocal(List.Position, enumVar);
+                        target.EmitCommandCall(List.Position, 1, Engine.DisposeAlias, true);
+                    });
+                
+
+            @try.EmitEffectCode(target);
 
             target.EndBlock();
 
@@ -187,12 +178,14 @@ namespace Prexonite.Compiler.Ast
                                         {
                                             var entry = hintEntry.List;
                                             if (entry[0] == ForeachHint.Key &&
-                                                entry[index].Text == original.ToString())
+                                                entry[index].Text == original.ToString(CultureInfo.InvariantCulture))
                                             {
-                                                entry[index] = newAddr.ToString();
+                                                entry[index] = newAddr.ToString(CultureInfo.InvariantCulture);
                                                 // AddressChangeHook.ctor can be trusted not to call the closure.
                                                 // ReSharper disable PossibleNullReferenceException
+                                                // ReSharper disable AccessToModifiedClosure
                                                 hook.InstructionIndex = newAddr;
+                                                // ReSharper restore AccessToModifiedClosure
                                                 // ReSharper restore PossibleNullReferenceException
                                                 original = newAddr;
                                             }

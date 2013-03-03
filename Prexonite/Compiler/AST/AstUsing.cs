@@ -1,6 +1,6 @@
 // Prexonite
 // 
-// Copyright (c) 2011, Christian Klauser
+// Copyright (c) 2013, Christian Klauser
 // All rights reserved.
 // 
 // Redistribution and use in source and binary forms, with or without modification, 
@@ -23,103 +23,95 @@
 //  DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, 
 //  WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING 
 //  IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
-
+using System;
+using JetBrains.Annotations;
+using Prexonite.Modular;
 using Prexonite.Types;
 
 namespace Prexonite.Compiler.Ast
 {
-    public class AstUsing : AstNode,
-                            IAstHasBlocks,
-                            IAstHasExpressions
+    public class AstUsing : AstScopedBlock,
+                            IAstHasBlocks
     {
         private const string LabelPrefix = "using";
 
-        internal AstUsing(Parser p)
-            : base(p)
+        public AstUsing([NotNull] ISourcePosition p, 
+            [NotNull] AstBlock lexicalScope)
+            : base(p, lexicalScope)
         {
-            _block = new AstSubBlock(File, Line, Column, this);
+            _block = new AstScopedBlock(p, this,prefix:LabelPrefix);
         }
 
-        public AstUsing(string file, int line, int column)
-            : base(file, line, column)
-        {
-            _block = new AstSubBlock(File, Line, Column, this);
-        }
-
-        public IAstExpression Expression;
-        private readonly AstSubBlock _block;
+        private AstExpr _resourceExpression;
+        private readonly AstScopedBlock _block;
 
         #region IAstHasBlocks Members
 
         public AstBlock[] Blocks
         {
-            get { return new[] {_block}; }
+            get { return new AstBlock[] {_block}; }
         }
 
         #region IAstHasExpressions Members
 
-        public IAstExpression[] Expressions
+        public override AstExpr[] Expressions
         {
-            get { return new[] {Expression}; }
+            get 
+            { 
+                var b = base.Expressions;
+                var r = new AstExpr[b.Length + 1];
+                b.CopyTo(r,0);
+                r[b.Length] = _resourceExpression;
+                return r;
+            }
         }
 
-        public AstBlock Block
+        [PublicAPI]
+        public AstScopedBlock Block
         {
             get { return _block; }
         }
 
-        #endregion
-
-        #endregion
-
-        protected override void DoEmitCode(CompilerTarget target)
+        [PublicAPI]
+        public AstExpr ResourceExpression
         {
-            if (Expression == null)
+            get { return _resourceExpression; }
+            set { _resourceExpression = value; }
+        }
+
+        #endregion
+
+        #endregion
+
+        protected override void DoEmitCode(CompilerTarget target, StackSemantics stackSemantics)
+        {
+            if(stackSemantics == StackSemantics.Value)
+                throw new NotSupportedException("Using blocks do not produce values and can thus not be used as expressions.");
+
+            if (_resourceExpression == null)
                 throw new PrexoniteException("AstUsing requires Expression to be initialized.");
 
-            var tryNode = new AstTryCatchFinally(File, Line, Column);
+            var tryNode = new AstTryCatchFinally(Position, this);
             var vContainer = _block.CreateLabel("container");
             target.Function.Variables.Add(vContainer);
             //Try block => Container = {Expression}; {Block};
-            var setCont =
-                new AstGetSetSymbol(
-                    File,
-                    Line,
-                    Column,
-                    PCall.Set,
-                    vContainer,
-                    SymbolInterpretations.LocalObjectVariable);
-            setCont.Arguments.Add(Expression);
+            var setCont = target.Factory.Call(Position, EntityRef.Variable.Local.Create(vContainer),PCall.Set);
+            setCont.Arguments.Add(_resourceExpression);
 
-            var getCont =
-                new AstGetSetSymbol(
-                    File,
-                    Line,
-                    Column,
-                    PCall.Get,
-                    vContainer,
-                    SymbolInterpretations.LocalObjectVariable);
+            var getCont = target.Factory.Call(Position, EntityRef.Variable.Local.Create(vContainer));
 
             var tryBlock = tryNode.TryBlock;
             tryBlock.Add(setCont);
             tryBlock.AddRange(_block);
 
             //Finally block => dispose( Container );
-            var dispose =
-                new AstGetSetSymbol(
-                    File,
-                    Line,
-                    Column,
-                    PCall.Get,
-                    Engine.DisposeAlias,
-                    SymbolInterpretations.Command);
-
+            var dispose = target.Factory.Call(Position, EntityRef.Command.Create(Engine.DisposeAlias));
             dispose.Arguments.Add(getCont);
 
             tryNode.FinallyBlock.Add(dispose);
 
             //Emit code!
-            tryNode.EmitCode(target);
+            tryNode.EmitEffectCode(target);
         }
     }
 }

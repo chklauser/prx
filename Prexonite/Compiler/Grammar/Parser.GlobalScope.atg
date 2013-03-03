@@ -24,40 +24,53 @@
 Prexonite	
                             (.  PFunction func; .)				
 =
-    {	[   GlobalVariableDefinition
-        |   Declaration
+    {   [                   (.  if(PreflightModeEnabled)
+                                {
+                                    ViolentlyAbortParse();
+                                    return;
+                                } 
+                            .)
+            GlobalVariableDefinition
         |   MetaAssignment<TargetApplication>
         ]   SYNC semicolon
-    |	GlobalCode
-    |   BuildBlock
-    |	FunctionDefinition<out func>
+    |                       (.  if(PreflightModeEnabled)
+                                {
+                                    ViolentlyAbortParse();
+                                    return;
+                                } 
+                            .)
+        (    Declaration2
+        |   GlobalCode
+        |   BuildBlock
+        |   FunctionDefinition<out func>
+        )
     }
     EOF
 .
 
 /*---- Meta information ----*/
 
-MetaAssignment<IHasMetaTable target>	(. string key = null; MetaEntry entry = null; .)
+MetaAssignment<IHasMetaTable metaTable>	(. string key = null; MetaEntry entry = null; .)
 =
 (	is  					(. entry = true; .)
-	[not					(. entry = false; .)
-	]
-	GlobalId<out key>
+  [not					(. entry = false; .)
+  ]
+  GlobalId<out key>
 |   not                     (. entry = false; .)
     GlobalId<out key>
 |
-	GlobalId<out key>
-	( enabled				(. entry = true; .)
-	| disabled  			(. entry = false; .)
-	| MetaExpr<out entry>
+  GlobalId<out key>
+  ( enabled				(. entry = true; .)
+  | disabled  			(. entry = false; .)
+  | MetaExpr<out entry>
     |                       (. entry = true; .)
-	)
+  )
 |   add                     (. MetaEntry subEntry; .)
     MetaExpr<out subEntry>  (. if(!subEntry.IsList) subEntry = (MetaEntry) subEntry.List; .)
     to
-    GlobalId<out key>       (.  if(target.Meta.ContainsKey(key))
+    GlobalId<out key>       (.  if(metaTable.Meta.ContainsKey(key))
                                 {
-                                    entry = target.Meta[key];
+                                    entry = metaTable.Meta[key];
                                     entry = entry.AddToList(subEntry.List);
                                 }
                                 else
@@ -68,18 +81,23 @@ MetaAssignment<IHasMetaTable target>	(. string key = null; MetaEntry entry = nul
 )							(. if(entry == null || key == null) 
                                     SemErr("Meta assignment did not generate an entry.");
                                else 
-                                    target.Meta[key] = entry; 
+                                    metaTable.Meta[key] = entry; 
                             .)	
 .
 
 MetaExpr<out MetaEntry entry>
-							(. bool sw; int i; double r; entry = null; string str; .)
+              (. bool sw; int i; double r; entry = null; string str; Version v; .)
 =							
-	Boolean<out sw>			(. entry = sw; .)
-|	Integer<out i>			(. entry = i.ToString(); .)
-|	Real<out r>				(. entry = r.ToString(); .)
-|   String<out str>         (. entry = str; .)
-|   GlobalQualifiedId<out str>       (. entry = str; .)
+  Boolean<out sw>			(. entry = sw; .)
+|	Integer<out i>			(. entry = i.ToString(CultureInfo.InvariantCulture); .)
+|	Real<out r>				(. entry = r.ToString(CultureInfo.InvariantCulture); .)
+|   (   String<out str>     (. entry = str; .)
+    |   GlobalQualifiedId<out str> 
+                            (. entry = str; .)
+    )
+    [   div
+        Version<out v>      (. entry = new Prexonite.Modular.ModuleName(entry.Text,v); .)
+    ]
 |   lbrace                  (. List<MetaEntry> lst = new List<MetaEntry>(); 
                                MetaEntry subEntry; 
                                bool lastWasEmpty = false;
@@ -105,65 +123,59 @@ GlobalVariableDefinition	(.
                                 string id = null; 
                                 List<string> aliases = new List<string>();
                                 string primaryAlias = null;
-                                PVariable vari; 
+                                VariableDeclaration vari; 
                                 SymbolInterpretations type = SymbolInterpretations.GlobalObjectVariable; 
                                 SymbolEntry entry;
                             .)
 =
 
-	(   var                 
-	|   ref                 (.  type = SymbolInterpretations.GlobalReferenceVariable; .)
-	)
-	
-	(   GlobalId<out id>    (.  primaryAlias = id; .)
-	    [ GlobalVariableAliasList<aliases> ]
-	|   GlobalVariableAliasList<aliases>
-	                        (.  id = Engine.GenerateName("v"); .)
-	)
-	                        (.
-                                entry = new SymbolEntry(type,id);
-	                            foreach(var alias in aliases)
-	                                Symbols[alias] = entry;
-	                            if(TargetApplication.Variables.ContainsKey(id))
-	                                vari = TargetApplication.Variables[id];
-	                            else
-	                            {
-	                                vari = new PVariable(id);
-	                                TargetApplication.Variables[id] = vari;
-	                            }
-	                        .)
-	[	lbrack  		    //Meta block for variables
-		[   MetaAssignment<vari>
+  (   var                 
+  |   ref                 (.  type = SymbolInterpretations.GlobalReferenceVariable; .)
+  )                       (.  var position = GetPosition(); .)
+  
+  (   GlobalId<out id>    (.  primaryAlias = id; .)
+      [ GlobalVariableAliasList<aliases> ]
+  |   GlobalVariableAliasList<aliases>
+                          (.  id = Engine.GenerateName("v"); .)
+  )
+                          (.
+                                entry = new SymbolEntry(type,id, TargetModule.Name);
+                              foreach(var alias in aliases)
+                                  Symbols.Declare(alias, entry.ToSymbol());
+                                DefineGlobalVariable(id,out vari);
+                          .)
+  [	lbrack  		    //Meta block for variables
+    [   MetaAssignment<vari>
             {	semicolon
                 [ MetaAssignment<vari> ]
-		    }
+        }
         ]
-		rbrack
-	]                       (.  if(primaryAlias != null && !_suppressPrimarySymbol(vari))
-                                    Symbols[primaryAlias] = entry;
-                            .)
-	[	                    (.  _pushLexerState(Lexer.Local); .)
-	    assign              (.  CompilerTarget lastTarget = target;
-                                target=FunctionTargets[Application.InitializationId];
-                                IAstExpression expr;
-                            .)
-		Expr<out expr>
-		                    (.  _popLexerState();
-								if(errors.count == 0)
-								{
-									AstGetSet complex = new AstGetSetSymbol(this, PCall.Set, id, InterpretAsObjectVariable(type));
-									complex.Arguments.Add(expr);
-									target.Ast.Add(complex);
-									vari.Meta[Application.InitializationId] = TargetApplication._RegisterInitializationUpdate().ToString();
-									Loader._EmitPartialInitializationCode();
-		                        }
-		                        target = lastTarget;
-		                    .)
-	]
+    rbrack
+  ]                       (.  if(primaryAlias != null && !_suppressPrimarySymbol(vari))
+                                    Symbols.Declare(primaryAlias, entry.ToSymbol());
+                          .)
+  [	                      (.  _pushLexerState(Lexer.Local); .)
+      assign              (.  _PushScope(FunctionTargets[Application.InitializationId]);
+                              AstExpr expr;
+                          .)
+    Expr<out expr>
+                          (.  _popLexerState();
+                              if(errors.count == 0)
+                              {
+                                var complex = Create.Call(position, EntityRef.Variable.Global.Create(id,TargetModule.Name) );
+                                complex.Call = PCall.Set;
+                                complex.Arguments.Add(expr);
+                                target.Ast.Add(complex);
+                                TargetApplication._RequireInitialization();
+                                Loader._EmitPartialInitializationCode();
+                              }
+                              _PopScope(FunctionTargets[Application.InitializationId]);
+                          .)
+  ]
 .
 
 GlobalVariableAliasList<. IList<string> aliases .>
-                            (.  string id = "\\NoId_In_GlobalVariableAliasList_\\"; .)
+                            (.  string id; .)
 =
     as GlobalId<out id>     (.  aliases.Add(id); .)
     {   comma
@@ -174,105 +186,307 @@ GlobalVariableAliasList<. IList<string> aliases .>
 
 /* ---- Global declaration ---- */
 
-Declaration
-                            (. SymbolInterpretations type = SymbolInterpretations.Undefined; .)
+SymbolPrefix<SymbolBuilder symbol, out bool canBeRef> 
+                            (. canBeRef = true; .) // in order to avoid further errors when this production fails
+= 
+  ref                       (.  symbol.Dereference(); .)
+| pointer                   (.  symbol.ReferenceTo(); canBeRef = false; .)
+.
+
+EntityFactory<. bool canBeRef, out Func<string,ModuleName,EntityRef> entityFactory .> 
+                            (.  entityFactory = null; .)
+= var                       (.  entityFactory = EntityRef.Variable.Global.Create; .)
+| function                  (.  entityFactory = EntityRef.Function.Create; .)
+| command                   (.  entityFactory = (id,_) => EntityRef.Command.Create(id); .)
+| macro             
+  ( function                (.  entityFactory = EntityRef.Function.Create; .)
+  | command                 (.  entityFactory = (id,_) => EntityRef.MacroCommand.Create(id); .)
+  | var                     (.  entityFactory = EntityRef.Variable.Global.Create; .)
+  )
+|                           (.  if(canBeRef) 
+                                {
+                                  entityFactory = EntityRef.Variable.Global.Create;
+                                }
+                                else
+                                {
+                                  // entityFactory already set to null
+                                }                                
+                            .)
+.
+
+Declaration2
+                            (. ModuleName module = TargetModule.Name;
+                               SymbolBuilder builder = new SymbolBuilder();
+                               Func<string,ModuleName,EntityRef> entityFactory;
+                               bool canBeRef = false;
+                            .)
 =
 SYNC
-	declare
-	[	var 		        (. type = SymbolInterpretations.GlobalObjectVariable; .)
-	|   ref                 (. type = SymbolInterpretations.GlobalReferenceVariable; .)
-	|	function			(. type = SymbolInterpretations.Function; .)
-	|   command             (. type = SymbolInterpretations.Command; .)
-	]
-	DeclarationInstance<type>
-	{comma [ DeclarationInstance<type> ] }
+  declare
+    (   { SymbolPrefix<builder, out canBeRef> }
+        EntityFactory<canBeRef, out entityFactory>
+                            (.  if(entityFactory == null) builder.AutoDereferenceEnabled = false; .) // For aliases, don't wrap in dereference
+        ( colon
+        |                   (.  Loader.ReportMessage(Message.Warning(
+                                  Resources.Parser_DeclarationTypeShouldBeFollowedByColon,
+                                  GetPosition(),
+                                  MessageClasses.MissingColonInDeclaration));
+                            .)
+        )
+        DeclarationInstance2<entityFactory,module,builder.Clone(),preventOverride:false>
+        { comma [ DeclarationInstance2<entityFactory,module,builder.Clone(),preventOverride:false> ] }
+        semicolon
+    |   lbrace
+        [   uusing ModuleName<out module> ]
+        {                   (.  SymbolBuilder runBuilder = builder.Clone(); .)
+          { SymbolPrefix<builder, out canBeRef> }
+          EntityFactory<canBeRef, out entityFactory> 
+                            (.  if(entityFactory == null) runBuilder.AutoDereferenceEnabled = false; .) // For aliases, don't wrap in dereference
+          colon
+          DeclarationInstance2<entityFactory,module,runBuilder.Clone(),preventOverride:true>
+          { comma [ DeclarationInstance2<entityFactory,module,runBuilder.Clone(),preventOverride:true> ] }
+        }
+        rbrace
+	|	lpar                (.  bool wasComma = false; .)
+        [   MExprBasedDeclaration
+            {   comma       (.  if(wasComma)
+                                {
+                                    Loader.ReportMessage(Message.Error("Double comma in declaration sequence.",GetPosition(),MessageClasses.DuplicateComma));
+                                }
+                                wasComma = true;
+                            .)
+                [   MExprBasedDeclaration
+                            (.  wasComma = false; .)
+                ]
+            }
+        ]
+        rpar [ semicolon ]
+    )
 .
-	
-DeclarationInstance<SymbolInterpretations type>
-                            (.  string id; string aId; .)
-=			
-	Id<out id>              (.  aId = id; .)
-	[ as Id<out aId> ]
-	                        (.  SymbolEntry inferredType;
-	                            if(target == null) //global symbol
-	                            {
-	                                if(type == SymbolInterpretations.Undefined)
-	                                    if(Symbols.TryGetValue(id, out inferredType))
-	                                        type = inferredType.Interpretation;
-	                                    else if(Symbols.TryGetValue(aId, out inferredType))
-	                                        type = inferredType.Interpretation;
-	                                    else
-	                                        SemErr("Interpretation of symbol " + id + " as " + aId + " cannot be inferred.");
-	                                Symbols[aId] = new SymbolEntry(type, id);
-	                            }
-	                            else
-	                            {
-	                                if(type == SymbolInterpretations.Undefined)
-	                                    if(target.Symbols.TryGetValue(id, out inferredType))
-	                                        type = inferredType.Interpretation;
-	                                    else if(target.Symbols.TryGetValue(aId, out inferredType))
-	                                        type = inferredType.Interpretation;
-	                                    else
-	                                        SemErr("Interpretation of symbol " + id + " as " + aId + " cannot be inferred.");
-	                                target.Symbols[aId] = new SymbolEntry(type, id);
-	                            }
-	                        .)
+
+MExprBasedDeclaration       (.  string alias;
+                                MExpr expr;
+                            .)
+=
+    Id<out alias> assign MExpr<out expr>
+                            (.  Symbol s = _parseSymbol(expr);
+                                Symbols.Declare(alias,s);
+                            .)
+.
+
+MessageDirective<.
+  Func<string,ModuleName,EntityRef> entityFactory, 
+  ModuleName module, 
+  SymbolBuilder builder,
+  [CanBeNull] out string lhsId,
+  MessageSeverity severity,
+  bool preventOverride = false .> 
+                            (.  string message;
+                                string messageClass = null;
+                                ISourcePosition position = GetPosition();
+                                string file;
+                                int line;
+                                int column;
+                            .)
+  =
+  lpar
+  (null|String<out messageClass>) 
+  [ colon
+    ( null
+    | String<out file> colon Integer<out line> colon Integer<out column>
+                            (.  position = new SourcePosition(file,line,column); .)
+    )
+  ]
+  comma
+  String<out message>
+  comma                     (.  builder.AddMessage(Message.Create(severity,message,position,messageClass)); .)
+  SymbolDirective<entityFactory,module,builder,out lhsId,preventOverride:preventOverride>
+  rpar
+.
+
+SymbolDirective<. Func<string,ModuleName,EntityRef> entityFactory, 
+  [CanBeNull] ModuleName module, 
+  SymbolBuilder builder,
+  [CanBeNull] out string lhsId,
+  bool preventOverride = false .>
+                            (.  lhsId = null;  .)
+=
+  null                      (.  /* don't do anything */ .)
+| ( ref                     (.  builder.Dereference(); .)
+  | pointer                 (.  builder.ReferenceTo(); .)
+  )
+  SymbolDirective<entityFactory,module,builder,out lhsId,preventOverride:preventOverride>
+|	IF(isSymbolDirective("INFO"))
+  id
+  MessageDirective<entityFactory,module,builder, out lhsId,MessageSeverity.Info,preventOverride:preventOverride>
+|	IF(isSymbolDirective("WARN"))
+  id
+  MessageDirective<entityFactory,module,builder, out lhsId,MessageSeverity.Warning,preventOverride:preventOverride>
+|	IF(isSymbolDirective("ERROR"))
+  id
+  MessageDirective<entityFactory,module,builder, out lhsId,MessageSeverity.Error,preventOverride:preventOverride>
+|                           (. ISourcePosition position = GetPosition(); .)
+  Id<out lhsId>                
+  [ div ModuleName<out module> 
+                            (.  if(preventOverride) 
+                                {
+                                    Loader.ReportMessage(Message.Error(
+                                      "Specification of module name illegal at this point.",
+                                      position  ,
+                                      MessageClasses.UnexpectedModuleName)); 
+                                    // Let control fall through, this is not a fatal error,
+                                    //  just an enforcement of a stylistic rule.
+                                }
+                            .)
+  ]                         (.  if(entityFactory != null)
+                                {
+                                  builder.Entity = entityFactory(lhsId,module);
+                                }
+                            .)
+.
+
+DeclarationInstance2<.
+  Func<string,ModuleName,EntityRef> entityFactory, 
+  ModuleName module, 
+  SymbolBuilder builder,
+  bool preventOverride = false .>
+                            (.  string lhsId;
+                                string rhsId; 
+                                ISourcePosition position = GetPosition(); 
+                            .)
+=		
+  SymbolDirective<entityFactory,module,builder,out lhsId,preventOverride:preventOverride>
+                            (.  rhsId = lhsId; .)
+  [ as Id<out rhsId> ]
+                            (.  
+                                if(entityFactory == null) 
+                                {
+                                  // We are declaring an alias to an existing symbol
+                                  Symbol existing;   
+                                  if(lhsId == null)
+                                  {
+                                    if(rhsId == null)
+                                    {
+                                      Loader.ReportMessage(Message.Error(
+                                        "This symbol declaration requires an alias (e.g., `as theAlias`)", 
+                                        GetPosition(), 
+                                        MessageClasses.SymbolAliasMissing));
+                                      // Since there is no name involved, not acting on this
+                                      //  statement will not cause further errors
+                                    }
+                                    else
+                                    {
+                                      Symbols.Declare(rhsId, builder.WrapSymbol(null));
+                                    }
+                                  }                             
+                                  else if(Symbols.TryGet(lhsId,out existing)) 
+                                  {
+                                    // Declare $rhsId as an alias for the symbol that $lhsId points to
+                                    Symbols.Declare(rhsId, builder.WrapSymbol(existing));
+                                  } 
+                                  else
+                                  {
+                                    var msg = Message.Error(string.Format(Resources.Parser_Could_not_find_previous_declaration, lhsId),
+		                                position,MessageClasses.SymbolNotResolved);
+                                    // We report the message AND store it as a message symbol.
+                                    //  That way, the symbol is at least declared, avoiding a spurious 
+                                    //  symbol not found message.
+                                    Loader.ReportMessage(msg);
+                                    Symbols.Declare(rhsId, Symbol.CreateMessage(msg,Symbol.CreateNil(msg.Position)));                                      
+                                  }
+                                }
+                                else
+                                {
+                                  
+                                  if(lhsId == null)
+                                  {
+                                    // For instance `declare var error(...,null)` can get us here
+                                    var msg = Message.Error("Entity name missing for declaration of a fresh symbol",
+                                      GetPosition(),
+                                      MessageClasses.EntityNameMissing);
+                                    Loader.ReportMessage(msg);
+                                    // Also create an error symbol for the alias (if one was declared)
+                                    if(rhsId != null)
+                                      Symbols.Declare(rhsId, Symbol.CreateMessage(msg,Symbol.CreateNil(msg.Position)));
+                                  }
+                                  else
+                                  {
+                                    // Use the builder to create a new symbol.
+                                    Symbols.Declare(rhsId, builder.ToSymbol());
+                                  }                                  
+                                }
+                            .)
+.
+
+ModuleName<out ModuleName moduleName> 
+                            (.  _pushLexerState(Lexer.YYINITIAL); //need global scope for Version
+                                string id; 
+                                Version version = null;
+                            .)
+=
+    Id<out id>
+    [   div
+        Version<out version>    
+    ]                       (.  _popLexerState();
+                                moduleName = Loader.Cache[new ModuleName(id,version ?? new Version(0,0))];
+                            .)
 .
 
 /* ---- Build Block ---- */
 
 BuildBlock
 =
-	SYNC build                  (.  PFunction func = new PFunction(TargetApplication);
-                                    CompilerTarget lastTarget = target; 
-                                    CompilerTarget buildBlockTarget = Loader.CreateFunctionTarget(func, new AstBlock(this));
-                                    target = buildBlockTarget;
-                                    Loader.DeclareBuildBlockCommands(target);
-                                    _pushLexerState(Lexer.Local);                                
-                                .)
-	
-	[ does ]	
-	StatementBlock<target.Ast>
-	
-                                (.  
-	                                _popLexerState();                                    
-                                    target = lastTarget;
-                                    _compileAndExecuteBuildBlock(buildBlockTarget);
-	                            .)
+  SYNC build                (.  PFunction func = TargetApplication.CreateFunction();
+                                CompilerTarget buildBlockTarget = 
+                                  Loader.CreateFunctionTarget(func, sourcePosition: GetPosition());
+                                _PushScope(buildBlockTarget);
+                                Loader.DeclareBuildBlockCommands(target);
+                                _pushLexerState(Lexer.Local);                                
+                            .)
+  
+  [ does ]	
+  StatementBlock<target.Ast>
+  
+                            (.  _popLexerState();                                    
+                                  _PopScope(buildBlockTarget);
+                                  _compileAndExecuteBuildBlock(buildBlockTarget);
+                            .)
 .
 
 /* ---- Global Code ---- */
 
-GlobalCode							(.
-										PFunction func = TargetApplication._InitializationFunction;
-										CompilerTarget ft = FunctionTargets[func];
-										if(ft == null)
-										    throw new PrexoniteException("Internal compilation error: InitializeFunction got lost.");
-									.)
+GlobalCode				(.  PFunction func = TargetApplication._InitializationFunction;
+                      CompilerTarget ft = FunctionTargets[func];
+                      ISourcePosition position;
+                      if(ft == null)
+                          throw new PrexoniteException("Internal compilation error: InitializeFunction got lost.");
+                  .)
 =
-									(.	
-										target = ft; 
-                                        _pushLexerState(Lexer.Local);
-                                    .)
-	lbrace 
-	{ Statement<target.Ast> } 
-	rbrace
-									(.
-                                        try {
-										    if(errors.count == 0)
-										    {
-											    TargetApplication._RequireInitialization();
-											    Loader._EmitPartialInitializationCode();
-										    }
+                  (.	_PushScope(ft); 
+                      _pushLexerState(Lexer.Local);
+                  .)
+  lbrace          (.  position = GetPosition(); .)
+  { Statement<target.Ast> } 
+  rbrace
+                  (.
+                     try {
+                        if(errors.count == 0)
+                        {
+                          TargetApplication._RequireInitialization();
+                          Loader._EmitPartialInitializationCode();
+                        }
                                         } catch(Exception e) {
-                                            SemErr("Exception during compilation of initialization code.\n" + e.ToString());
+                                            Loader.ReportMessage(Message.Error(
+                                              "Exception during compilation of initialization code.\n" + e,
+                                              position,
+                                              MessageClasses.ExceptionDuringCompilation));
                                         } finally {
-										    //Symbols defined in this block are not available to further global code blocks
-										    target.Symbols.Clear();
-										    target = null;
-										    _popLexerState();
-                                        }
-									.)
+                        //Symbols defined in this block are not available to further global code blocks
+                        target.Symbols.ClearLocalDeclarations();
+                        _PopScope(ft);
+                        _popLexerState();
+                    }
+                  .)
 .
 
 /* ---- Function definition ---- */
@@ -289,7 +503,6 @@ FunctionAliasList<. IList<string> aliases .>
 
 FunctionDefinition<out PFunction func>
                                     (.  
-                                        func = null; 
                                         string primaryAlias = null;
                                         List<string> funcAliases = new List<string>();
                                         string id = null; //The logical id (given in the source code)
@@ -300,35 +513,35 @@ FunctionDefinition<out PFunction func>
                                         bool isLazy = false;
                                         PFunction derBody = null; //The derived (coroutine/lazy) body function (carries a different name)
                                         PFunction derStub = null; //The derived (coroutine/lazy) stub function (carries the name(s) specified)
-                                        string derId = null; //The name of the derived stub
+                                        string derId; //The name of the derived stub
                                         CompilerTarget ct = null;   //The compiler target for the function (as mentioned in the source code)
                                         CompilerTarget cst = null;  //The compiler target for a stub (coroutine/lazy)
-                                        SymbolEntry symEntry = null;
-
+                                        Symbol symEntry = null;
+                                        ISourcePosition position;
                                         bool missingArg = false; //Allow trailing comma, but not (,,) in formal arg list
                                     .)         
 =	
-	(   lazy [function]             (.  isLazy = true; .)
-	|   function
-	|   coroutine                   (.  isCoroutine = true; .)
-	|   macro [function]            (.  isMacro = true; .)
-	)
-	(   Id<out id>                  (.  primaryAlias = id; .)
-	    [ FunctionAliasList<funcAliases> ]
-	|   FunctionAliasList<funcAliases>
-	)                               (.  
-	                                    funcId = id ?? Engine.GenerateName("f");
+  (   lazy [function]             (.  isLazy = true; .)
+  |   function
+  |   coroutine                   (.  isCoroutine = true; .)
+  |   macro [function]            (.  isMacro = true; .)
+  )                               (.  position = GetPosition(); .)
+  (   Id<out id>                  (.  primaryAlias = id; .)
+      [ FunctionAliasList<funcAliases> ]
+  |   FunctionAliasList<funcAliases>
+  )                               (.  
+                                      funcId = id ?? Engine.GenerateName("f");
                                         if(Engine.StringsAreEqual(id, @"\init")) //Treat "\init" specially (that's the initialization code)
                                         {
                                             func = TargetApplication._InitializationFunction;
                                             if(isNested)
-                                                SemErr("Cannot define initialization code inside another function.");
+                                                Loader.ReportMessage(Message.Error("Cannot define initialization code inside another function.",GetPosition(),MessageClasses.IllegalInitializationFunction));
                                             if(isCoroutine)
-                                                SemErr("Cannot define initialization code as a coroutine.");
+                                                Loader.ReportMessage(Message.Error("Cannot define initialization code as a coroutine.",GetPosition(),MessageClasses.IllegalInitializationFunction));
                                             if(isLazy)
-                                                SemErr("Cannot define initialization code as a lazy function.");
+                                                Loader.ReportMessage(Message.Error("Cannot define initialization code as a lazy function.",GetPosition(),MessageClasses.IllegalInitializationFunction));
                                             if(isMacro)
-                                                SemErr("Cannot define initialization code as a macro function.");
+                                                Loader.ReportMessage(Message.Error("Cannot define initialization code as a macro function.",GetPosition(),MessageClasses.IllegalInitializationFunction));
                                         }
                                         else
                                         {
@@ -337,7 +550,7 @@ FunctionDefinition<out PFunction func>
                                             if(isNested)
                                             {
                                                 if(isMacro)
-                                                    SemErr("Inner macros are illegal. Macros must be top-level.");
+                                                    Loader.ReportMessage(Message.Error("Inner macros are illegal. Macros must be top-level.",GetPosition(),MessageClasses.InnerMacrosIllegal));
                                                     
                                                 funcId = generateLocalId(id ?? "inner");
                                                 
@@ -352,7 +565,12 @@ FunctionDefinition<out PFunction func>
                                                 
                                             }
                                             
-                                            func = new PFunction(TargetApplication, funcId);
+                                            //Add function to application
+                                            if(TargetApplication.Functions.Contains(funcId) && !TargetApplication.Meta.GetDefault(Application.AllowOverridingKey,true))
+                        SemErr(t,"Application " + TargetApplication.Id + " does not allow overriding of function " + funcId + ".");
+                                            TargetApplication.Functions.Remove(funcId);
+
+                                            func = TargetApplication.CreateFunction(funcId);
                                             
                                             if(isNested)
                                             {
@@ -361,12 +579,7 @@ FunctionDefinition<out PFunction func>
                                                     mark_as_let(target.Function,localId);
                                             }
                                             
-                                            Loader.CreateFunctionTarget(func, new AstBlock(this));
-                                            
-                                            //Add function to application
-                                            if(TargetApplication.Functions.Contains(func.Id) && !TargetApplication.Meta.GetDefault(Application.AllowOverridingKey,true))
-												SemErr(t,"Application " + TargetApplication.Id + " does not allow overriding of function " + func.Id + ".");
-                                            TargetApplication.Functions.AddOverride(func);
+                                            Loader.CreateFunctionTarget(func, target, GetPosition());
                                         }
                                         CompilerTarget ft = FunctionTargets[func];
                                         
@@ -377,9 +590,8 @@ FunctionDefinition<out PFunction func>
                                             
                                             //Create derived body function
                                             derId = ft.GenerateLocalId();
-                                            derBody = new PFunction(TargetApplication, derId);
-                                            Loader.CreateFunctionTarget(derBody, new AstBlock(this));
-                                            TargetApplication.Functions.Add(derBody);
+                                            derBody = TargetApplication.CreateFunction(derId);
+                                            Loader.CreateFunctionTarget(derBody, ft, GetPosition());
                                             derBody.Meta[PFunction.LogicalIdKey] = id ?? funcId;
                                             if(isCoroutine)
                                             {
@@ -393,59 +605,62 @@ FunctionDefinition<out PFunction func>
                                             // -> Let derived stub have the physical function id
                                             ct = FunctionTargets[derBody];
                                             cst = ft;
-                                            ct.ParentTarget = cst;
                                         }
                                         
                                         if(isNested) //Link to parent in case of a nested function
-                                        {
-                                            ft.ParentTarget = target;	                                           
+                                        {                                           
                                             if(isLazy)
                                                 ft = ct;
                                         }	                                    
-	                                .)
+                                  .)
     [   lpar
-	    [	FormalArg<ft> 
-		    {	comma               (.  if(missingArg)
+      [	FormalArg<ft> 
+        {	comma               (.  if(missingArg)
                                         {
                                             SemErr("Missing formal argument (two consecutive commas).");
                                         } 
                                     .)
-			    (   FormalArg<ft>   (.  missingArg = false; .)
+          (   FormalArg<ft>   (.  missingArg = false; .)
                 |                   (.  missingArg = true; .)
                 )
-		    }
-	    ]
-	    rpar
+        }
+      ]
+      rpar
     |   FormalArg<ft>
         {   [comma]
             FormalArg<ft>
         }
-	]	                            (.  
-		                                if(isNested && isLazy)
-		                                    ft = cst;
-	                                    
-	                                    if(target == null && 
-	                                        (!object.ReferenceEquals(func, TargetApplication._InitializationFunction)) &&
-	                                        (!isNested))
-	                                    {
-	                                            //Add the name to the symboltable
-                                                symEntry = new SymbolEntry(SymbolInterpretations.Function, func.Id);
-	                                            foreach(var alias in funcAliases)	                                                
-	                                                Symbols[alias] = symEntry;
-	                                            
-	                                            //Store the original (logical id, mentioned in the source code)
-	                                            if((!string.IsNullOrEmpty(id)))
-	                                                func.Meta[PFunction.LogicalIdKey] = id ?? funcId;
-	                                    }
+  ]	                            (.  if(isNested && isLazy) // keep this assignment for maintainability
+                                    // ReSharper disable RedundantAssignment
+                                        ft = cst;
+                                    // ReSharper restore RedundantAssignment
+                                      
+                                      if(target == null && 
+                                          (!object.ReferenceEquals(func, TargetApplication._InitializationFunction)) &&
+                                          (!isNested))
+                                      {
+                                              //Add the name to the symbol table
+                                              symEntry = Symbol.CreateReference(EntityRef.Function.Create(func.Id, TargetModule.Name),GetPosition());
+                                              if(isMacro)
+                                                symEntry = Symbol.CreateExpand(symEntry);
+                                              else
+                                                symEntry = Symbol.CreateDereference(symEntry);
+
+                                              foreach(var alias in funcAliases)	                                                
+                                                  Symbols.Declare(alias, symEntry);
+                                              
+                                              //Store the original (logical id, mentioned in the source code)
+                                              func.Meta[PFunction.LogicalIdKey] = id ?? funcId;
+                                      }
                                         else
                                         {
                                             primaryAlias = null;
                                         }
-	                                    
-	                                    //Target the derived (coroutine/lazy) body instead of the stub
+                                      
+                                      //Target the derived (coroutine/lazy) body instead of the stub
                                         if(isCoroutine || isLazy)
                                             func = derBody;
-	                                .)
+                                  .)
     [                               (.  _pushLexerState(Lexer.YYINITIAL); .)
         lbrack
         [   MetaAssignment<func>
@@ -459,7 +674,7 @@ FunctionDefinition<out PFunction func>
                                     (.  
                                     
                                         if(primaryAlias != null && !_suppressPrimarySymbol(func))
-                                            Symbols[primaryAlias] = symEntry;
+                                            Symbols.Declare(primaryAlias, symEntry);
 
                                         //Imprint certain meta keys from parent function
                                         if(isNested)
@@ -469,21 +684,26 @@ FunctionDefinition<out PFunction func>
 
                                         //Copy stub parameters to body of lazy function
                                         if(isLazy && !isNested)
-	                                    {
-	                                        foreach(var kvp in ft.LocalSymbols)
-	                                        {
-	                                            var paramId = kvp.Key;
-	                                            var s = kvp.Value;
-	                                            //Lazy functions cannot have ref parameters
-	                                            if(s.Interpretation != SymbolInterpretations.LocalObjectVariable)
-	                                                SemErr("Lazy functions can only have value parameters (ref is not allowed)");
-	                                            ct.Function.Parameters.Add(s.Id);
-	                                            ct.Symbols.Add(paramId, s);
-	                                        }
-	                                    }
+                                      {
+                                          foreach(var kvp in cst.Symbols.LocalDeclarations)
+                                          {
+                                              var paramId = kvp.Key;
+                                              var s = kvp.Value.ToSymbolEntry();
+                                              //Lazy functions cannot have ref parameters
+                                              if(s.Interpretation != SymbolInterpretations.LocalObjectVariable)
+                                                  SemErr("Lazy functions can only have value parameters (ref is not allowed)");
+                                              ct.Function.Parameters.Add(s.InternalId);
+                                              ct.Symbols.Declare(paramId, kvp.Value);
+                                          }
+                                      }
                                     
-                                        CompilerTarget lastTarget = target;
-                                        target = FunctionTargets[func]; 
+                    if(isLazy || isCoroutine)
+                    {
+                      //Push the stub, because it is the lexical parent of the body
+                      _PushScope(cst);
+                    }
+                                        _PushScope(FunctionTargets[func]);
+                                        Debug.Assert(target != null); // Mostly to tell ReSharper that target is not null.
                                         _pushLexerState(Lexer.Local);
                                         if(isMacro)
                                             target.SetupAsMacro();
@@ -497,7 +717,11 @@ FunctionDefinition<out PFunction func>
         Expr<out ret.Expression>    (.  target.Ast.Add(ret); .)
         semicolon
     )                               (.  _popLexerState();
-                                        target = lastTarget; 
+                                        _PopScope(FunctionTargets[func]);
+                    if(isLazy || isCoroutine)
+                    {
+                      _PopScope(cst);
+                    }
                                         //Compile AST
                                         if(errors.count == 0)
                                         {
@@ -515,128 +739,127 @@ FunctionDefinition<out PFunction func>
                                             {
                                                 try {
                                                 //Apply compiler hooks for all kinds of functions (lazy/coroutine/macro)
-												FunctionTargets[func].ExecuteCompilerHooks();
-												//Emit code for top-level block
-                                                Ast[func].EmitCode(FunctionTargets[func], true);
+                        FunctionTargets[func].ExecuteCompilerHooks();
+                        //Emit code for top-level block
+                                                Ast[func].EmitCode(FunctionTargets[func], true, StackSemantics.Effect);
                                                 FunctionTargets[func].FinishTarget();
                                                 } catch(Exception e) {
                                                     SemErr("Exception during compilation of function body of " + id + ". " + e);
                                                 }
                                             }                                       
                                             
-											if(isCoroutine)
-											{
+                      if(isCoroutine)
+                      {
                                                 try {
-												    //Stub has to be returned into the physical slot mentioned in the source code
-												    func = derStub;
-												    //Generate code for the stub
-												    AstCreateCoroutine crcor = new AstCreateCoroutine(this);                                            
-												    crcor.Expression = new AstCreateClosure(this,derBody.Id);
-												    AstReturn retst = new AstReturn(this, ReturnVariant.Exit);
-												    retst.Expression = crcor;
-												    cst.Ast.Add(retst);
-												    //Emit code for top-level block
-												    cst.Ast.EmitCode(cst,true);
-												    cst.FinishTarget();
+                            //Stub has to be returned into the physical slot mentioned in the source code
+                            func = derStub;
+                            //Generate code for the stub
+                            AstCreateCoroutine crcor = new AstCreateCoroutine(this);                                            
+                            crcor.Expression = Create.CreateClosure(GetPosition(),EntityRef.Function.Create(derBody.Id,derBody.ParentApplication.Module.Name));
+
+                            AstReturn retst = new AstReturn(this, ReturnVariant.Exit);
+                            retst.Expression = crcor;
+                            cst.Ast.Add(retst);
+                            //Emit code for top-level block
+                            cst.Ast.EmitCode(cst,true,StackSemantics.Effect);
+                            cst.FinishTarget();
                                                 } catch(Exception e) {
                                                     SemErr("Exception during compilation of coroutine stub for " + id + ". " + e);
                                                 }
-											}
-											else if(isLazy)
-											{
-											    derStub.Meta[PFunction.LazyKey] = true;
-											    derStub.Meta["strict"] = true;
-											
-											    //Stub has to be returned into the physical slot mentioned in the source code
-											    func = derStub;
-											    
-											    //Generate code for the stub
-											    IAstExpression retVal;										    
-										        
-										        if(isNested)
-										        {
-										            //Nested lazy functions need a stub to capture their environment by value (handled by NestedFunction)
-										            
-										            //Generate stub code
-										            retVal = new AstCreateClosure(this, ct.Function.Id);
-										            
-										            //Inject asthunk-conversion code into body
-										            var inject = derStub.Parameters.Select(par => 
-										            {
-										                var getParam =
-										                    new AstGetSetSymbol(this, PCall.Get, par, SymbolInterpretations.LocalObjectVariable);
-										                var asThunkCall = 
-											                new AstGetSetSymbol(this, PCall.Get, Engine.AsThunkAlias, SymbolInterpretations.Command);
-											            asThunkCall.Arguments.Add(getParam);
-											            var setParam =
-											                new AstGetSetSymbol(this, PCall.Set, par, SymbolInterpretations.LocalObjectVariable);
-											            setParam.Arguments.Add(asThunkCall);
-											            return (AstNode) setParam;
-										            });
-										            ct.Ast.InsertRange(0,inject);
-										        }
-										        else
-										        {										            
-										            //Global lazy functions don't technically need a stub. Might be removed later on
-										            var call = new AstGetSetSymbol(this, ct.Function.Id, SymbolInterpretations.Function);
-										            
-										            //Generate code for arguments (each wrapped in a `asThunk` command call)
-											        foreach(var par in derStub.Parameters)
-											        {
-											            var getParam = 
-											                new AstGetSetSymbol(this, PCall.Get, par, SymbolInterpretations.LocalObjectVariable);
-											            var asThunkCall = 
-											                new AstGetSetSymbol(this, PCall.Get, Engine.AsThunkAlias, SymbolInterpretations.Command);
-											            asThunkCall.Arguments.Add(getParam);
-											            call.Arguments.Add(asThunkCall);
-											        }
-											        
-											        retVal = call;
-										        }								    
-											    
-											    
-											    //Assemble return statement
-											    var ret = new AstReturn(this, ReturnVariant.Exit);
-											    ret.Expression = retVal;
-											    
-											    cst.Ast.Add(ret);
-											    
+                      }
+                      else if(isLazy)
+                      {
+                          derStub.Meta[PFunction.LazyKey] = true;
+                          derStub.Meta["strict"] = true;
+                      
+                          //Stub has to be returned into the physical slot mentioned in the source code
+                          func = derStub;
+                          
+                          //Generate code for the stub
+                          AstExpr retVal;										    
+                            
+                            if(isNested)
+                            {
+                                //Nested lazy functions need a stub to capture their environment by value (handled by NestedFunction)
+                                
+                                //Generate stub code
+                                retVal = Create.CreateClosure(GetPosition(), EntityRef.Function.Create(ct.Function.Id, 
+                                                ct.Function.ParentApplication.Module.Name));
+                                
+                                //Inject asthunk-conversion code into body
+                                var inject = derStub.Parameters.Select(par => 
+                                {
+                                  var getParam = Create.Call(position, EntityRef.Variable.Local.Create(par));
+                                  var asThunkCall = Create.Call(position, EntityRef.Variable.Command.Create(Engine.AsThunkAlias));
+                                  asThunkCall.Arguments.Add(getParam);
+                                  var setParam = Create.Call(position, EntityRef.Variable.Local.Create(par));
+                                  setParam.Arguments.Add(asThunkCall);
+                                  return (AstNode) setParam;
+                                });
+                                ct.Ast.InsertRange(0,inject);
+                            }
+                            else
+                            {										            
+                                //Global lazy functions don't technically need a stub. Might be removed later on
+                                var call = Create.Call(position,EntityRef.Function.Create(ct.Function.Id, TargetModule.Name));
+                                
+                                //Generate code for arguments (each wrapped in a `asThunk` command call)
+                              foreach(var par in derStub.Parameters)
+                              {
+                                  var getParam = Create.Call(position, EntityRef.Variable.Local.Create(par));
+                                      
+                                  var asThunkCall = Create.Call(position, EntityRef.Command.Create(Engine.AsThunkAlias));
+                                      
+                                  asThunkCall.Arguments.Add(getParam);
+                                  call.Arguments.Add(asThunkCall);
+                              }
+                              
+                              retVal = call;
+                            }								    
+                          
+                          
+                          //Assemble return statement
+                          var ret = new AstReturn(this, ReturnVariant.Exit);
+                          ret.Expression = retVal;
+                          
+                          cst.Ast.Add(ret);
+                          
                                                 try {
-											    //Emit code for stub
-											    cst.Ast.EmitCode(cst,true);
-											    cst.FinishTarget();
+                          //Emit code for stub
+                          cst.Ast.EmitCode(cst,true,StackSemantics.Effect);
+                          cst.FinishTarget();
                                                 } catch(Exception e) {
                                                     SemErr("Exception during compilation of lazy function stub for " + id + ". " + e);
                                                 }
-											}                                        
+                      }                                        
                                         }
                                     .)
 .
 
 FormalArg<CompilerTarget ft>        (.  string id; SymbolInterpretations kind = SymbolInterpretations.LocalObjectVariable; .)
 =
-	[ var | ref                     (.  kind = SymbolInterpretations.LocalReferenceVariable; .)
-	]
-	Id<out id>                      (.  
-	                                    //Note: lazy functions need to copy the
-	                                    //  parameters of the stub to the body!
-	                                    ft.Function.Parameters.Add(id); 
-	                                    ft.Symbols.Add(id, new SymbolEntry(kind, id));
-	                                .)
+  [ var | ref                     (.  kind = SymbolInterpretations.LocalReferenceVariable; .)
+  ]
+  Id<out id>                      (.  
+                                      //Note: lazy functions need to copy the
+                                      //  parameters of the stub to the body!
+                                      ft.Function.Parameters.Add(id); 
+                                      ft.Symbols.Declare(id, new SymbolEntry(kind, id, null).ToSymbol());
+                                  .)
 .
 
 GlobalId<out string id>             (.  id = "...no freaking id..."; .)
 =
     id                              (.  id = cache(t.val); .)
-|   anyId                           (.  id = cache(t.val.Substring(1)); .)
+|   anyId  String<out id>           (.  id = cache(id); .)
 .
 
 GlobalQualifiedId<out string id>    (. id = "\\NoId\\"; .)  
 =
     GlobalId<out id>
-|   Ns<out id>                      (.  StringBuilder buffer = new StringBuilder(id); buffer.Append('.'); .)
-    {   Ns<out id>                 (.  buffer.Append(id); buffer.Append('.'); .)
+|   ns                              (.  StringBuilder buffer = new StringBuilder(t.val); buffer.Append('.'); .)
+    {   ns                          (.  buffer.Append(t.val); buffer.Append('.'); .)
     }
     GlobalId<out id>                (.  buffer.Append(id); .)
-                                    (.  id = buffer.ToString(); .)
+                                    (.  id = cache(buffer.ToString()); .)
 .

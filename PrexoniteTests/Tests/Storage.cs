@@ -1,6 +1,6 @@
 // Prexonite
 // 
-// Copyright (c) 2011, Christian Klauser
+// Copyright (c) 2013, Christian Klauser
 // All rights reserved.
 // 
 // Redistribution and use in source and binary forms, with or without modification, 
@@ -23,8 +23,9 @@
 //  DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, 
 //  WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING 
 //  IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
-
 using System;
+using System.Collections;
+using System.Collections.Generic;
 using NUnit.Framework;
 using Prexonite;
 using Prexonite.Compiler;
@@ -35,7 +36,7 @@ namespace PrexoniteTests.Tests
     [TestFixture]
     public class Storage : Compiler
     {
-        private const string StoredShouldBeEqual =
+        private const string _storedShouldBeEqual =
             "Since the in-memory and the restored application are the same, they should" +
                 " result in the same serialized form.";
 
@@ -56,9 +57,9 @@ namespace PrexoniteTests.Tests
             reldr.LoadFromString(stored);
             var restored = reldr.Options.TargetApplication.StoreInString();
 
-            Assert.IsTrue(
-                Engine.StringsAreEqual(stored, restored),
-                StoredShouldBeEqual);
+            Assert.That(stored,
+                Is.EqualTo(stored).Using((IEqualityComparer<string>) Engine.DefaultStringComparer),
+                _storedShouldBeEqual);
         }
 
         [Test]
@@ -91,9 +92,9 @@ Add System::Xml To Imports;
             reldr.LoadFromString(stored);
             var restored = reldr.Options.TargetApplication.StoreInString();
 
-            Assert.IsTrue(
-                Engine.StringsAreEqual(stored, restored),
-                StoredShouldBeEqual);
+            Assert.That(stored,
+                Is.EqualTo(stored).Using((IEqualityComparer<string>)Engine.DefaultStringComparer),
+                _storedShouldBeEqual);
         }
 
         [Test]
@@ -185,8 +186,6 @@ meta_entry " + numberToStore + @";
             var stored = ldr.Options.TargetApplication.StoreInString();
             Console.WriteLine("//== 1st Store");
             Console.WriteLine(stored);
-            Assert.IsFalse(stored.Contains("\""));
-
 
             var reldr = new Loader(engine, new Application());
             reldr.LoadFromString(stored);

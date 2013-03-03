@@ -1,6 +1,6 @@
 // Prexonite
 // 
-// Copyright (c) 2011, Christian Klauser
+// Copyright (c) 2013, Christian Klauser
 // All rights reserved.
 // 
 // Redistribution and use in source and binary forms, with or without modification, 
@@ -23,13 +23,12 @@
 //  DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, 
 //  WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING 
 //  IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
-
 #if ((!(DEBUG || Verbose)) || forceIndex) && allowIndex
 #define useIndex
 #endif
 
 #define UseCil
-//need to change this in VMTestsBase.cs too!
+//need to change self in VMTestsBase.cs too!
 
 using System;
 using System.Collections.Generic;
@@ -40,6 +39,8 @@ using Prexonite;
 using Prexonite.Commands.Core.Operators;
 using Prexonite.Compiler;
 using Prexonite.Compiler.Ast;
+using Prexonite.Compiler.Cil;
+using Prexonite.Modular;
 using Prexonite.Types;
 
 namespace Prx.Tests
@@ -78,19 +79,19 @@ function chain(lst, serial)
     var c = new Structure;
     c.\(""IsSerial"") = if(serial != null) serial else true;
     c.\(""Functions"") = if(lst != null) lst else new List();
-    function Invoke(this, prev)
+    function Invoke(self, prev)
     {
         var res = prev;
-        if(this.IsSerial)
+        if(self.IsSerial)
         {
-            foreach(var f in this.Functions)
+            foreach(var f in self.Functions)
                 prev = f.(prev);
             return prev;
         }
         else
         {
             var nlst = new List();
-            foreach(var f in this.Functions)
+            foreach(var f in self.Functions)
                 nlst[] = f.(prev);
             return nlst;
         }
@@ -503,11 +504,22 @@ function main(x)
 {
     var s = new Structure;
     s.\(""value"") = x;
-    s.\\(""ToString"") = this => this.value;
+    s.\\(""ToString"") = self => self.value;
     return s~String;
 }
 ");
             Expect("xzzxy", "xzzxy");
+        }
+
+        [Test]
+        public void GlobalVarInitSimple()
+        {
+            Compile(@"
+var x = 5;
+function main = x;
+");
+            Expect(5);
+
         }
 
         [Test]
@@ -571,30 +583,6 @@ function main()
 ");
 
             Expect(".6.2.4.4.?.1");
-        }
-
-        [Test]
-        public void LoopExpressions()
-        {
-            Compile(
-                @"
-function main(s)
-{
-    var words = for(var i = 0; i < s.Length; i += 2)
-                {
-                    if(i == s.Length - 1)
-                        yield s.Substring(i,1);
-                    else
-                        yield s.Substring(i,2);
-                };
-    
-    return foldl    ( (l,r) => l + ""-"" + r, words.Count,  foreach(var word in words) 
-                                                                yield word[0].ToUpper + word[1].ToLower;
-                    );
-}
-");
-
-            Expect("5-Bl-Oo-Dh-Ou-Nd", "BloodHound");
         }
 
         [Test]
@@ -668,232 +656,6 @@ function main(sep) =
 ");
 
             Expect("BEGIN 3:abc 5:hello 3:123", ":", "ab", "abc", "hello", "12", "123", "8965");
-        }
-
-        [Test]
-        public void CompilerHook()
-        {
-            Compile(
-                @"
-//In some library
-declare function debug;
-
-Import
-{
-    System,
-    Prexonite,
-    Prexonite::Types,
-    Prexonite::Compiler,
-    Prexonite::Compiler::Ast
-};
-
-function ast(type) [is hidden;]
-{
-    var args;
-    var targs = [];
-    for(var i = 1; i < args.Count; i++)
-        targs[] = args[i];
-
-    return 
-        asm(ldr.eng)
-        .CreatePType(""Object(\""Prexonite.Compiler.Ast.Ast$(type)\"")"")
-        .Construct((["""",-1,-1]+targs)~Object<""Prexonite.PValue[]"">)
-        .self;
-}
-
-build does hook (t => 
-{
-    var body = t.Ast;
-    if(t.Function.Id == ""main"")
-    {
-        //Append a return statement
-        var ret = ast(""Return"", ::ReturnVariant.Exit);
-        ret.Expression = ast(""GetSetMemberAccess"", ::PCall.Get, 
-            ast(""GetSetSymbol"", ::PCall.Get, ""sb"", ::SymbolInterpretations.GlobalObjectVariable), ""ToString"");
-        t.Ast.Add(ret);
-    }
-
-    function replace_debug(block)
-    {
-        for(var i = 0; i < block.Count; i++)
-        {
-            var stmt = block[i];
-            if( stmt is ::AstGetSetSymbol && 
-                stmt.Interpretation~Int == ::SymbolInterpretations.$Function~Int &&
-                stmt.Id == ""debug"")
-            {
-                //Found a call to debug
-                block[i] = ast(""AsmInstruction"", new ::Instruction(::OpCode.nop));
-                for(var j = 0; j < stmt.Arguments.Count; j++)
-                {
-                    var arg = stmt.Arguments[j];
-                    if(arg is ::AstGetSetSymbol)
-                    {
-                        var printlnCall = ast(""GetSetSymbol"", ::PCall.Get, ""println"", ::SymbolInterpretations.$Function);
-                        var concatCall  = ast(""GetSetSymbol"", ::PCall.Get, ""concat"", ::SymbolInterpretations.$Command);
-                        concatCall.Arguments.Add(ast(""Constant"",""DEBUG $(arg.Id) = ""));
-                        concatCall.Arguments.Add(arg);
-                        printlnCall.Arguments.Add(concatCall);
-
-                        block.Insert(i,printlnCall);
-                        i += 1;
-                    }//end if                    
-                }//end for
-
-                //Recursively replace 'debug' in nested blocks.
-                try
-                {
-                    foreach(var subBlock in stmt.Blocks)
-                        replace_debug(subBlock);
-                }
-                catch(var exc)
-                {
-                    //ignore
-                }//end catch
-            }//end if
-        }//end for
-    }
-
-    replace_debug(t.Ast);
-});
-
-//Emulation
-var sb = new System::Text::StringBuilder;
-function print(s)   does sb.Append(s);
-function println(s) does sb.AppendLine(s);
-
-//The main program
-function main(a)
-{
-    var x = 3;
-    var y = a;
-    var z = 5*y+x;
-
-    debug(x,y);
-    debug(z);
-}
-");
-
-            Expect("DEBUG x = 3\r\nDEBUG y = 4\r\nDEBUG z = 23\r\n", 4);
-        }
-
-        [Test]
-        public void InitializationCodeHook()
-        {
-            Compile(
-                @"
-Imports { System, Prexonite, Prexonite::Types, Prexonite::Compiler, Prexonite::Compiler::Ast };
-
-function ast(type) [is compiler;]
-{
-    var args;
-    var targs = [];
-    for(var i = 1; i < args.Count; i++)
-        targs[] = args[i];
-
-    return 
-        asm(ldr.eng)
-        .CreatePType(""Object(\""Prexonite.Compiler.Ast.Ast$(type)\"")"")
-        .Construct((["""",-1,-1]+targs)~Object<""Prexonite.PValue[]"">)
-        .self;
-}
-
-var SI [is compiler;] = null;
-build {
-    SI = new Structure;
-    SI.\(""var"") = ::SymbolInterpretations.LocalObjectVariable;
-    SI.\(""ref"") = ::SymbolInterpretations.LocalReferenceVariable;
-    SI.\(""gvar"") = ::SymbolInterpretations.GlobalObjectVariable;
-    SI.\(""gref"") = ::SymbolInterpretations.GlobalReferenceVariable;
-    SI.\(""func"") = ::SymbolInterpretations.$Function;
-    SI.\(""cmd"") = ::SymbolInterpretations.$Command;
-    SI.\\(""eq"") = (this, l, r) => l~Int == r~Int;
-    SI.\\(""is_lvar"") = (this, s) => s~Int == this.$var~Int;
-    SI.\\(""is_lref"") = (this, s) => s~Int == this.$ref~Int;
-    SI.\\(""is_gvar"") = (this, s) => s~Int == this.$gvar~Int;
-    SI.\\(""is_gref"") = (this, s) => s~Int == this.$gref~Int;
-    SI.\\(""is_func"") = (this, s) => s~Int == this.$func~Int;
-    SI.\\(""is_cmd"") = (this, s) => s~Int == this.$cmd~Int;
-    SI.\\(""is_obj"") = (this, s) => this.is_lvar(s) || this.is_gvar(s);
-    SI.\\(""is_ref"") = (this, s) => this.is_lref(s) || this.is_gref(s);
-    SI.\\(""is_global"") = (this, s) => this.is_gvar(s) || this.is_gref(s);
-    SI.\\(""is_local"") = (this, s) => this.is_lvar(s) || this.is_lref(s);
-    SI.\\(""make_global"") = (this, s) => 
-        if(this.is_obj(s))
-            this.gvar
-        else if(this.is_ref(s))
-            this.gref
-        else
-            throw ""$s cannot be made global."";            
-    SI.\\(""make_local"") = (this, s) => 
-        if(this.is_obj(s))
-            this.lvar
-        else if(this.is_ref(s))
-            this.lref
-        else
-            throw ""$s cannot be made local."";
-    SI.\\(""make_obj"") = (this, s) =>
-        if(this.is_local(s))
-            this.lvar
-        else if(this.is_global(s))
-            this.gvar
-        else
-            throw ""$s cannot be made object."";
-    SI.\\(""make_ref"") = (this, s) =>
-        if(this.is_local(s))
-            this.lref
-        else if(this.is_global(s))
-            this.gref
-        else
-            throw ""$s cannot be made reference."";
-}
-
-build does hook(t => 
-{
-    //Promote local to global variables
-    var init = t.$Function;
-
-    if(init.Id != Prexonite::Application.InitializationId)
-        return;
-
-    var alreadyPromoted = foreach(var entry in init.Meta[""alreadyPromoted""].List)
-                            yield entry.Text;
-                          ;
-    
-    var toPromote = foreach(var loc in init.Variables)
-                        unless(alreadyPromoted.Contains(loc))
-                            yield loc;
-                    ;
-    
-    foreach(var loc in toPromote)
-    {
-        loc = t.Symbols[loc];
-        var glob = new ::SymbolEntry(SI.make_global(loc.Interpretation), loc.Id);
-        t.Loader.Symbols[loc.Id] = glob;
-        t.Loader.Options.TargetApplication.Variables[loc.Id] = new ::PVariable(loc.Id);
-        var assignment = ast(""GetSetSymbol"", ::PCall.Set, glob.Id, glob.Interpretation);
-        assignment.Arguments.Add(ast(""GetSetSymbol"", ::PCall.Get, loc.Id, loc.Interpretation));
-        t.Ast.Add(assignment);        
-        println(""Declared $glob"");
-    }
-
-    init.Meta[""alreadyPromoted""].AddToList(::MetaEntry.CreateArray(toPromote));
-});
-
-{
-    var goo = 600;
-}
-
-{
-    var goo2 = 780;
-}
-
-function main()
-{
-    return ""goo = $goo; goo2 = $goo2;"";
-}
-");
-            Expect("goo = 600; goo2 = 780;");
         }
 
         [Test]
@@ -1029,6 +791,18 @@ function main = println;
 ");
 
             Expect("");
+        }
+
+        [Test]
+        public void UseFunctionMacro()
+        {
+            Compile(@"
+macro nothing = null;
+
+function main does return nothing;
+");
+
+            ExpectNull();
         }
 
         [Test]
@@ -1471,6 +1245,9 @@ function main(x,t)
         [Test]
         public void GlobalRef()
         {
+            Assert.That(Runtime.WrapPVariableMethod, Is.Not.Null);
+            Assert.That(Runtime.LoadGlobalVariableReferenceAsPValueMethod, Is.Not.Null);
+
             Compile(
                 @"
 var result;
@@ -1851,45 +1628,30 @@ function main()[is volatile;]
     s = ""BEGIN--"";
 }
 ");
+            var pos = new SourcePosition("file", -1, -2);
+            var mn = ldr.ParentApplication.Module.Name;
             var ct = ldr.FunctionTargets["main"];
             ct.Function.Code.RemoveAt(ct.Function.Code.Count - 1);
-            var block = new AstBlockExpression("file", -1, -2);
+            var block = new AstScopedBlock(new SourcePosition("file", -1, -2),ct.Ast);
 
-            var assignStmt = new AstGetSetSymbol("file", -1, -2, PCall.Set,
-                "s",
-                SymbolInterpretations.
-                    GlobalObjectVariable);
+            var assignStmt = ct.Factory.Call(pos, EntityRef.Variable.Global.Create("s",mn),PCall.Set);
             assignStmt.Arguments.Add(new AstConstant("file", -1, -2, "stmt."));
-            var incStmt = new AstModifyingAssignment("file", -1, -2,
-                BinaryOperator.Addition,
-                assignStmt,
-                SymbolInterpretations.
-                    Command,
-                Addition.
-                    DefaultAlias);
+            var incStmt = ct.Factory.ModifyingAssignment(NoSourcePosition.Instance,
+                                                         assignStmt,
+                                                         BinaryOperator.Addition);
 
-            var assignExpr = new AstGetSetSymbol("file", -1, -2, PCall.Set,
-                "s",
-                SymbolInterpretations.
-                    GlobalObjectVariable);
+            var assignExpr = ct.Factory.Call(pos, EntityRef.Variable.Global.Create("s", mn), PCall.Set);
             assignExpr.Arguments.Add(new AstConstant("file", -1, -2, "expr."));
-            var incExpr = new AstModifyingAssignment("file", -1, -2,
-                BinaryOperator.Addition,
-                assignExpr,
-                SymbolInterpretations.
-                    Command,
-                Addition.
-                    DefaultAlias);
+            var incExpr = ct.Factory.ModifyingAssignment(pos, assignExpr, BinaryOperator.Addition);
 
             block.Statements.Add(incStmt);
             block.Expression = incExpr;
 
-            var effect = block as IAstEffect;
-            Assert.IsNotNull(effect);
-            effect.EmitEffectCode(ct);
+            Assert.That(block,Is.InstanceOf<AstExpr>(),string.Format("{0} is expected to handle emission of effect code.", block));
+            block.EmitEffectCode(ct);
 
             var sourcePosition = new SourcePosition("file", -1, -2);
-            ct.EmitLoadGlobal(sourcePosition, "s");
+            ct.EmitLoadGlobal(sourcePosition, "s", null);
             ct.Emit(sourcePosition, OpCode.ret_value);
 
             if (CompileToCil)

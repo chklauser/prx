@@ -1,6 +1,6 @@
 ﻿// Prexonite
 // 
-// Copyright (c) 2011, Christian Klauser
+// Copyright (c) 2013, Christian Klauser
 // All rights reserved.
 // 
 // Redistribution and use in source and binary forms, with or without modification, 
@@ -23,7 +23,6 @@
 //  DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, 
 //  WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING 
 //  IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
-
 using System;
 using System.Collections.Generic;
 using System.Diagnostics;
@@ -32,6 +31,7 @@ using Prexonite.Compiler;
 using Prexonite.Compiler.Cil;
 using Prexonite.Compiler.Macro;
 using Prexonite.Compiler.Macro.Commands;
+using Prexonite.Modular;
 using Prexonite.Types;
 
 namespace Prexonite.Commands.Core
@@ -216,8 +216,7 @@ namespace Prexonite.Commands.Core
         #region Macro for partial application
 
         private readonly PartialCallWrapper _partialCall = new PartialCallWrapper(Engine.CallAlias,
-            Alias,
-            SymbolInterpretations.Command);
+            EntityRef.Command.Create(Alias));
 
         public PartialMacroCommand Partial
         {

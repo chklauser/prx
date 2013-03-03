@@ -1,6 +1,6 @@
 ﻿// Prexonite
 // 
-// Copyright (c) 2011, Christian Klauser
+// Copyright (c) 2013, Christian Klauser
 // All rights reserved.
 // 
 // Redistribution and use in source and binary forms, with or without modification, 
@@ -23,11 +23,12 @@
 //  DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, 
 //  WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING 
 //  IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
-
 using System;
 using System.Collections.Generic;
 using Prexonite.Commands;
 using Prexonite.Compiler.Ast;
+using Prexonite.Modular;
+using Prexonite.Properties;
 using Prexonite.Types;
 
 namespace Prexonite.Compiler.Macro.Commands
@@ -59,7 +60,9 @@ namespace Prexonite.Compiler.Macro.Commands
 
         private class Impl : PCommand
         {
+// ReSharper disable MemberHidesStaticFromOuterClass // not an issue
             public const string Alias = Reference.Alias + @"\impl";
+// ReSharper restore MemberHidesStaticFromOuterClass
 
             private readonly Loader _loader;
 
@@ -72,17 +75,40 @@ namespace Prexonite.Compiler.Macro.Commands
 
             public override PValue Run(StackContext sctx, PValue[] args)
             {
-                if (args.Length < 2)
+                if (args.Length < 3)
                     throw new PrexoniteException(string.Format(
-                        "{0} requires at least 2 arguments.", Alias));
+                        "{0} requires at least 3 arguments.", Alias));
 
                 var id = args[0].CallToString(sctx);
                 var interpretation = (SymbolInterpretations) args[1].Value;
+                var module = args[2].Value as ModuleName;
+                if (module == null)
+                {
+                    var moduleRaw = args[2].Value as string;
+                    if (moduleRaw != null)
+                    {
+                        if (!ModuleName.TryParse(moduleRaw, out module))
+                            throw new PrexoniteException("Invalid module name \"" + moduleRaw + "\".");
+                    }
+                }
 
                 switch (interpretation)
                 {
                     case SymbolInterpretations.Function:
-                        return sctx.CreateNativePValue(sctx.ParentApplication.Functions[id]);
+                        PFunction func;
+                        if(module == null)
+                        {
+                            throw new PrexoniteException(string.Format("Cannot create reference to function {0}. Module name is missing.", id));
+                        }
+                        else if(sctx.ParentApplication.TryGetFunction(id,module, out func))
+                        {
+                            return sctx.CreateNativePValue(func);
+                        }
+                        else
+                        {
+                            throw new PrexoniteException(
+                                string.Format("Cannot create reference to function {0} from module {1}. Function or module is missing from context.", id, module));
+                        }
                     case SymbolInterpretations.MacroCommand:
                         return sctx.CreateNativePValue(_loader.MacroCommands[id]);
                     default:
@@ -101,30 +127,52 @@ namespace Prexonite.Compiler.Macro.Commands
         {
             if (!context.CallerIsMacro())
             {
-                context.ReportMessage(ParseMessageSeverity.Error,
-                    string.Format("{0} can only be used in a macro context.", Alias));
+                context.ReportMessage(
+                    Message.Error(
+                        string.Format(Resources.Reference_can_only_be_used_in_a_macro_context, Alias),
+                        context.Invocation.Position, MessageClasses.ReferenceUsage));
                 return;
             }
-
+            
             if (context.Invocation.Arguments.Count == 0)
             {
-                context.ReportMessage(ParseMessageSeverity.Error,
-                    "{0} requires at least one argument.");
+                context.ReportMessage(
+                    Message.Error(
+                        string.Format(Resources.Reference_requires_at_least_one_argument, Alias),
+                        context.Invocation.Position,
+                        MessageClasses.ReferenceUsage));
                 return;
             }
 
-            var prototype = context.Invocation.Arguments[0] as AstMacroInvocation;
+            var prototype = context.Invocation.Arguments[0] as AstExpand;
             if (prototype == null)
             {
-                context.ReportMessage(ParseMessageSeverity.Error,
-                    "{0} requires argument to be a prototype of a macro invocation.");
-                return;
+                context.ReportMessage(
+                    Message.Error(
+                        string.Format(Resources.Reference_requires_argument_to_be_a_prototype_of_a_macro_invocation, Alias),
+                        context.Invocation.Position, MessageClasses.ReferenceUsage));
             }
+            else
+            {
+                context.Block.Expression = _assembleImplCall(context, prototype.Entity.ToSymbolEntry(),
+                                                             prototype.Position);
+            }
+        }
 
-            context.Block.Expression = context.CreateGetSetSymbol(SymbolInterpretations.Command,
-                PCall.Get, Impl.Alias,
-                context.CreateConstant(prototype.MacroId),
-                prototype.Interpretation.EnumToExpression(prototype));
+        private static AstGetSet _assembleImplCall(MacroContext context, SymbolEntry implementationSymbolEntry,
+                                                   ISourcePosition position)
+        {
+            var internalId = context.CreateConstant(implementationSymbolEntry.InternalId);
+            var interpretation = implementationSymbolEntry.Interpretation.ToExpr(position);
+            var moduleNameOpt = context.CreateConstantOrNull(implementationSymbolEntry.Module);
+            var implCall = context.Factory.IndirectCall(context.Invocation.Position,
+                                                        context.Factory.Reference(context.Invocation.Position,
+                                                                                  EntityRef.Command.Create(
+                                                                                      Impl.Alias)));
+            implCall.Arguments.Add(internalId);
+            implCall.Arguments.Add(interpretation);
+            implCall.Arguments.Add(moduleNameOpt);
+            return implCall;
         }
 
         #endregion

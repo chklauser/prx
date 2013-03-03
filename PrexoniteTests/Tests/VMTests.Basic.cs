@@ -1,6 +1,6 @@
 ﻿// Prexonite
 // 
-// Copyright (c) 2011, Christian Klauser
+// Copyright (c) 2013, Christian Klauser
 // All rights reserved.
 // 
 // Redistribution and use in source and binary forms, with or without modification, 
@@ -23,7 +23,6 @@
 //  DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, 
 //  WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING 
 //  IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
-
 #if ((!(DEBUG || Verbose)) || forceIndex) && allowIndex
 #define useIndex
 #endif
@@ -137,7 +136,7 @@ function test1(x)
                 Console.WriteLine(s);
             Assert.AreEqual(1, ldr.ErrorCount, "One error expected.");
             Assert.IsTrue(
-                ldr.Errors[0].Message.Contains("Return value assignment is no longer supported."),
+                ldr.Errors[0].Text.Contains("Return value assignment is no longer supported."),
                 "The compiler did not reject a return value assignment.");
         }
 
@@ -947,6 +946,14 @@ function binary(x) = 2^x;
 
 function dummy(x) {}
 
+function assert(actual, expected, msg)
+{
+    if(actual != expected)
+    {
+        throw msg ?? ""Expected $expected, actual $actual"";
+    }
+}
+
 function main()                           // IO() -> IO()
 {
     //Create [1..10]
@@ -955,7 +962,8 @@ function main()                           // IO() -> IO()
         lst.Add = i;
     
     var bin = map(->binary, lst); // 2, 4, 8, 16, 32, 64, 128, 256, 512, 1024
-    var bin\sum = foldl(->add, 0, bin); // 2024
+    var bin\sum = foldl(->add, 0, bin); // 2046
+    assert(bin\sum, 2046);
 
     chain = ~List.Create( -> twice, -> twice); //*4
     var bin\quad = map(->chained, bin); // 8, 16, 32, 64, 128, 256, 512, 1024, 2048, 4096
@@ -963,14 +971,21 @@ function main()                           // IO() -> IO()
     var twi = map(->twice, lst); // 2, 4, 6, 8, 10, 12, 14, 16, 18, 20
 
     tuple\lst = twi;
-    var tup\bin_twi = map(->tuple, bin); // (2,2), (4,4), (6,8), (8,16), (10,32), (12,64), (14,128), (16,256), (18,512), (20,1024)
+    var tup\bin_twi = map(->tuple, bin) >> all; // (2,2), (4,4), (6,8), (8,16), (10,32), (12,64), (14,128), (16,256), (18,512), (20,1024)
+    println(tup\bin_twi);
 
     ->reduce\f = ->sub;
-    var tup\bin_twi\sub = map(->reduce, tup\bin_twi); // 0, 0, -2, -8, -22, -52, -114, -240, -494, -1004
+    var tup\bin_twi\sub = map(->reduce, tup\bin_twi) >> all; // 0, 0, 2, 8, 22, 52, 114, 240, 494, 1004
+    assert(tup\bin_twi\sub[0],0);
+    assert(tup\bin_twi\sub[1],0);
+    assert(tup\bin_twi\sub[2],2);
+    assert(tup\bin_twi\sub[9],1004);
     
     var tup\bin_twi\sub\sum = foldl(->add, 0 , tup\bin_twi\sub); // 1936
+    assert(tup\bin_twi\sub\sum, 1936);
     
     var bin\quad\sum = foldl(->add, 0, bin\quad); // 8184
+    assert(bin\quad\sum,8184);
 
     return  (bin\quad\sum - tup\bin_twi\sub\sum)~Int; // 6248
 }
@@ -1214,6 +1229,7 @@ function main(p)
             return q;
     }
     
+    ref goo;
     if(p mod 10 == 0)
         function goo(x) = 2*x;
     else

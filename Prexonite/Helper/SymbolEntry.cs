@@ -1,6 +1,6 @@
 // Prexonite
 // 
-// Copyright (c) 2011, Christian Klauser
+// Copyright (c) 2013, Christian Klauser
 // All rights reserved.
 // 
 // Redistribution and use in source and binary forms, with or without modification, 
@@ -23,95 +23,148 @@
 //  DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, 
 //  WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING 
 //  IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
-
 using System;
+using System.Diagnostics;
+using Prexonite.Modular;
 using NoDebug = System.Diagnostics.DebuggerNonUserCodeAttribute;
 
 namespace Prexonite.Compiler
 {
     public class SymbolEntry : IEquatable<SymbolEntry>
     {
+        #region Representation
+
         private readonly SymbolInterpretations _interpretation;
         private readonly string _id;
+        private readonly ModuleName _module;
 
         /// <summary>
         ///     Optional integer parameter for this symbol.
         /// 
         ///     Label - Address of jump target (if known)
         /// </summary>
-        private int? _argument;
+        private readonly int? _argument;
 
-        public SymbolEntry(SymbolInterpretations interpretation)
+        #endregion
+
+        #region Constructor
+
+        public SymbolEntry(SymbolInterpretations interpretation, ModuleName module)
+            : this(interpretation,null,module)
         {
-            _interpretation = interpretation;
-            _id = null;
         }
 
-        public SymbolEntry(SymbolInterpretations interpretation, string id)
-            : this(interpretation)
+        public SymbolEntry(SymbolInterpretations interpretation, string id, ModuleName module)
+            : this(interpretation,id, null,module)
+        {
+        }
+
+        private SymbolEntry(SymbolInterpretations interpretation, string id, int? argument, ModuleName module)
         {
             if (id != null && id.Length <= 0)
                 id = null;
+            _interpretation = interpretation;
+            _module = module;
             _id = id;
+            _argument = argument;
+
+            Debug.Assert(!_interpretation.AssociatedWithModule() || _module != null,
+                string.Format(
+                    "Attempted to create a {0} symbol pointing to {1} without supplying a module name.",
+                    Enum.GetName(typeof (SymbolInterpretations), interpretation), id));
         }
 
-        public SymbolEntry(SymbolInterpretations interpretation, int? argument)
-            : this(interpretation)
-        {
-            _argument = argument;
-        }
+        #endregion
 
-        public SymbolEntry(SymbolInterpretations interpretation, string id, int? argument)
-            : this(interpretation, id)
-        {
-            _argument = argument;
-        }
+        #region Public accessors
 
         public SymbolInterpretations Interpretation
         {
             get { return _interpretation; }
         }
 
-        public string Id
+        public string InternalId
         {
             get { return _id; }
+        }
+
+        public ModuleName Module
+        {
+            get { return _module; }
         }
 
         /// <summary>
         ///     An optional intger parameter for this symbol. Use determined by symbol interpretation.
         /// </summary>
+        /// <remarks>
+        ///     <para>Uses of the <see cref="Argument"/> property:</para>
+        ///     <list type="bullet">
+        ///         <item><description>Store resolved byte code addresses for labels.</description></item>
+        ///     </list>
+        /// </remarks>
         public int? Argument
         {
             get { return _argument; }
         }
 
+        #endregion
+
+        public SymbolEntry WithModule(ModuleName module, SymbolInterpretations? interpretation = null,
+            string translatedId = null, int? argument = null)
+        {
+            return new SymbolEntry(interpretation ?? Interpretation, translatedId ?? InternalId,
+                argument ?? Argument, module);
+        }
+
+        public SymbolEntry With(SymbolInterpretations? interpretation = null, 
+            string translatedId = null, int? argument = null)
+        {
+            return new SymbolEntry(interpretation ?? Interpretation, translatedId ?? InternalId,
+                argument ?? Argument, Module);
+        }
+
         public SymbolEntry With(SymbolInterpretations interpretation, string translatedId)
         {
-            return new SymbolEntry(interpretation, translatedId, Argument);
+            return new SymbolEntry(interpretation, translatedId, Argument, Module);
         }
 
         public SymbolEntry With(SymbolInterpretations interpretation)
         {
-            return new SymbolEntry(interpretation, Id, Argument);
+            return new SymbolEntry(interpretation, InternalId, Argument, Module);
         }
 
         public override string ToString()
         {
             return Enum.GetName(
                 typeof (SymbolInterpretations), Interpretation) +
-                    (Id == null ? "" : "->" + Id) +
-                        (_argument.HasValue ? "#" + _argument.Value : ""
-                            );
+                    (InternalId == null ? "" : ":" + InternalId) + 
+                    (_argument.HasValue ? "#" + _argument.Value : "") +
+                    (Module != null ? ("/" + Module) : "");
         }
 
+        #region Equality
+
+        /// <summary>
+        /// Indicates whether the current object is equal to another object of the same type.
+        /// </summary>
+        /// <returns>
+        /// true if the current object is equal to the <paramref name="other"/> parameter; otherwise, false.
+        /// </returns>
+        /// <param name="other">An object to compare with this object.</param>
         public bool Equals(SymbolEntry other)
         {
             if (ReferenceEquals(null, other)) return false;
             if (ReferenceEquals(this, other)) return true;
-            return Equals(other._interpretation, _interpretation) && Equals(other._id, _id) &&
-                other._argument.Equals(_argument);
+            return Equals(other._interpretation, _interpretation) && Equals(other._id, _id) && Equals(other._module, _module) && other._argument.Equals(_argument);
         }
 
+        /// <summary>
+        /// Determines whether the specified <see cref="T:System.Object"/> is equal to the current <see cref="T:System.Object"/>.
+        /// </summary>
+        /// <returns>
+        /// true if the specified <see cref="T:System.Object"/> is equal to the current <see cref="T:System.Object"/>; otherwise, false.
+        /// </returns>
+        /// <param name="obj">The <see cref="T:System.Object"/> to compare with the current <see cref="T:System.Object"/>. </param><filterpriority>2</filterpriority>
         public override bool Equals(object obj)
         {
             if (ReferenceEquals(null, obj)) return false;
@@ -120,13 +173,20 @@ namespace Prexonite.Compiler
             return Equals((SymbolEntry) obj);
         }
 
+        /// <summary>
+        /// Serves as a hash function for a particular type. 
+        /// </summary>
+        /// <returns>
+        /// A hash code for the current <see cref="T:System.Object"/>.
+        /// </returns>
+        /// <filterpriority>2</filterpriority>
         public override int GetHashCode()
         {
             unchecked
             {
-                var result = _interpretation.GetHashCode();
+                int result = _interpretation.GetHashCode();
                 result = (result*397) ^ (_id != null ? _id.GetHashCode() : 0);
-                result = (result*397) ^ (_argument.HasValue ? _argument.Value : 0);
+                result = (result*397) ^ (_module != null ? _module.GetHashCode() : 0);
                 return result;
             }
         }
@@ -140,6 +200,38 @@ namespace Prexonite.Compiler
         {
             return !Equals(left, right);
         }
+
+        #endregion
+
+#region Factory methods
+
+        public static SymbolEntry LocalObjectVariable(string id)
+        {
+            return new SymbolEntry(SymbolInterpretations.LocalObjectVariable, id,null);
+        }
+
+        public static SymbolEntry LocalReferenceVariable(string id)
+        {
+            return new SymbolEntry(SymbolInterpretations.LocalReferenceVariable, id, null);
+        }
+
+        public static SymbolEntry Command(string id)
+        {
+            return new SymbolEntry(SymbolInterpretations.Command,id,null);
+        }
+
+        public static SymbolEntry MacroCommand(string id)
+        {
+            return new SymbolEntry(SymbolInterpretations.MacroCommand, id, null);
+        }
+
+        public static SymbolEntry JumpLabel(int address)
+        {
+            return new SymbolEntry(SymbolInterpretations.JumpLabel, null, address, null);
+        }
+
+#endregion
+
     }
 
     /// <summary>
@@ -203,5 +295,56 @@ namespace Prexonite.Compiler
         ///     Macro commands need to be applied at compile-time.
         /// </summary>
         MacroCommand
+    }
+
+    public static class SymbolEntryExtensions
+    {
+        public static bool AssociatedWithModule(this SymbolInterpretations symbolInterpretation)
+        {
+            switch (symbolInterpretation)
+            {
+                case SymbolInterpretations.Function:
+                case SymbolInterpretations.GlobalObjectVariable:
+                case SymbolInterpretations.GlobalReferenceVariable:
+                    return true;
+                case SymbolInterpretations.MacroCommand:
+                case SymbolInterpretations.Command:
+                case SymbolInterpretations.KnownType:
+                case SymbolInterpretations.JumpLabel:
+                case SymbolInterpretations.LocalObjectVariable:
+                case SymbolInterpretations.LocalReferenceVariable:
+                case SymbolInterpretations.Undefined:
+                case SymbolInterpretations.None:
+                    return false;
+                default:
+                    throw new ArgumentOutOfRangeException("symbolInterpretation");
+            }
+        }
+
+        public static SymbolInterpretations ToObjectVariable(this SymbolInterpretations symbolInterpretations)
+        {
+            switch (symbolInterpretations)
+            {
+                case SymbolInterpretations.LocalObjectVariable:
+                case SymbolInterpretations.LocalReferenceVariable:
+                    return SymbolInterpretations.LocalObjectVariable;
+
+                case SymbolInterpretations.GlobalObjectVariable:
+                case SymbolInterpretations.GlobalReferenceVariable:
+                    return SymbolInterpretations.GlobalObjectVariable;
+                
+                case SymbolInterpretations.Function:
+                case SymbolInterpretations.Command:
+                case SymbolInterpretations.MacroCommand:
+                    return symbolInterpretations;
+
+                case SymbolInterpretations.KnownType:
+                case SymbolInterpretations.JumpLabel:
+                case SymbolInterpretations.Undefined:
+                case SymbolInterpretations.None:
+                default:
+                    throw new ArgumentOutOfRangeException("symbolInterpretations");
+            }
+        }
     }
 }

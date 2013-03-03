@@ -31,11 +31,6 @@ Id<out string id>               (.  id = "\\NoId\\"; .) //<-- should never surfa
     )                           (.  id = cache(t.val); .)
 .
 
-Ns<out string ns>               (. ns = "\\NoId\\"; .)
-=
-    ns                          (. ns = cache(t.val); .)
-.
-
 Boolean<out bool value>         (.  value = true; .)
 =                   
 	true          
@@ -58,18 +53,21 @@ SignedInteger<out int value>    (. int modifier = 1; .)
 
 Real<out double value>  
 =
-	real            
-	/*
-	[   e                       (.  real += "e"; .)
-	    [   plus     
-	    |   minus               (.  real += "-"; .)
-	    ]
-	    real                    (.   real += t.val; .)
-	] */
-	                            (.  string real = t.val;
+	(real | realLike)           (.  string real = t.val;
 	                                if(!TryParseReal(real, out value))
 	                                    SemErr(t, "Cannot recognize real " + real);
 	                            .)
+.
+
+Version<out Version version>    // Cannot distinguish between Real and Version ↔ must not appear in the same context.
+=
+    (realLike | version)        (.  var raw = t.val;
+                                    if(!TryParseVersion(raw, out version))
+									{
+                                        SemErr(t,"Cannot recognize \"" + raw + "\" as a version literal.");
+										version = new Version(0,0);
+									}
+                                .)
 .
 
 SignedReal<out double value>    (. value = 0.0; double modifier = 1.0; int ival; .)
@@ -88,3 +86,105 @@ String<out string value>
 .
 
 Null = null .
+
+MId<out String id>	            (.  id = "an\\invalid\\MId"; .)			
+=
+(	var
+|   ref
+|   true
+|	false
+|   mod
+|	is
+|	as
+|	not
+|	function
+|	command	
+|	asm	
+|	declare
+|	build
+|	return
+|	in
+|	to
+|	continue
+|	break
+|	yield
+|	or
+|	and
+|	xor
+|	label
+|	goto
+|	static	// null is not a valid MExpr id. It is used to represent an MAtom with a null value
+|	if
+|	unless
+|	else
+|	new
+|	coroutine
+|	from
+|	do
+|	does
+|	while
+|	until
+|	for
+|	foreach
+|	try
+|	catch
+|	finally
+|	throw
+|	then
+|	uusing //Coco/R does not accept "using" as a token name.
+|	macro
+|	lazy
+|	let
+|	method
+|	this
+|	bitAnd
+|	pow
+|	times
+|	tilde
+|	question
+|	pointer
+|	at
+|	colon
+|	implementation
+)								(.	id = cache(t.val); .)
+|	Id<out id>
+.
+
+MExpr<out MExpr expr>			(.  expr = new MExpr.MAtom(NoSourcePosition.Instance,null);
+                                    bool lastWasComma = false;
+                                .)
+=								(.	String id; 
+									var args = new List<MExpr>();
+									MExpr arg;
+								.)
+	MId<out id>
+	(	lpar					
+		[	MExpr<out arg>		(.	args.Add(arg); .)
+			{	comma           (.  if(lastWasComma)
+                                    {
+                                        Loader.ReportMessage(Message.Error("Double comma in MExpr list.",GetPosition(),MessageClasses.DuplicateComma));
+                                    }
+                                    lastWasComma = true; 
+                                .)
+				[   MExpr<out arg>	
+                                (.	args.Add(arg); 
+                                    lastWasComma = false;
+                                .)
+                ]
+			}
+		]
+		rpar
+	|	MExpr<out arg>			(.	args.Add(arg); .)
+	|							(.	/* no M-Expr args */ .)
+	)							(.	expr = new MExpr.MList(GetPosition(), id,args); .)
+|								(.  String value; .)
+	String<out value>			(.	expr = new MExpr.MAtom(GetPosition(), value); .)
+|								(.	int intval; .)
+	SignedInteger<out intval>	(.	expr = new MExpr.MAtom(GetPosition(), intval); .)
+|								(.	bool boolval; .)
+	Boolean<out boolval>		(.	expr = new MExpr.MAtom(GetPosition(), boolval); .)
+|                               (.  Version v; .)
+    Version<out v>              (.  expr = new MExpr.MAtom(GetPosition(), v); .)
+|	
+    Null                        (.  expr = new MExpr.MAtom(GetPosition(), null); .)
+.

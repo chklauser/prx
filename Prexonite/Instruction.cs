@@ -1,6 +1,6 @@
 // Prexonite
 // 
-// Copyright (c) 2011, Christian Klauser
+// Copyright (c) 2013, Christian Klauser
 // All rights reserved.
 // 
 // Redistribution and use in source and binary forms, with or without modification, 
@@ -23,12 +23,14 @@
 //  DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, 
 //  WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING 
 //  IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
-
 using System;
 using System.Diagnostics;
 using System.Diagnostics.CodeAnalysis;
+using System.Globalization;
 using System.Text;
+using JetBrains.Annotations;
 using Prexonite.Commands.Core.Operators;
+using Prexonite.Modular;
 using Prexonite.Types;
 
 namespace Prexonite
@@ -38,12 +40,12 @@ namespace Prexonite
     ///     Represents a single Prexonite VM instruction
     /// </summary>
     //[DebuggerStepThrough]
-    public class Instruction : ICloneable
+    public sealed class Instruction : ICloneable, IEquatable<Instruction>
     {
         /// <summary>
         ///     The instructions opcode. Determines the VMs behaviour at runtime.
         /// </summary>
-        public OpCode OpCode;
+        public readonly OpCode OpCode;
 
         //Common arguments
         /// <summary>
@@ -51,13 +53,19 @@ namespace Prexonite
         ///     the stack. The field is also used to store other integer 
         ///     operands like the target of a jump or the number of values to rotate, pop or duplicate from the stack.
         /// </summary>
-        public int Arguments;
+        public readonly int Arguments;
 
         /// <summary>
         ///     One of the instructions operands. Id is commonly used to store identifiers but also more 
         ///     general call targets or type expressions.
         /// </summary>
-        public string Id;
+        public readonly string Id;
+
+        /// <summary>
+        /// One of the instruction operands. The Name is used for cross-module references 
+        /// to functions and variables.
+        /// </summary>
+        public readonly ModuleName ModuleName;
 
         /// <summary>
         ///     One of the instructions operands. Statically, GenericArgument is only used by ldc.real 
@@ -73,7 +81,7 @@ namespace Prexonite
         /// </summary>
         // ReSharper disable FieldCanBeMadeReadOnly.Global
         // For consistency with the rest of instruction data type
-        public bool JustEffect;
+        public readonly bool JustEffect;
 
         // ReSharper restore FieldCanBeMadeReadOnly.Global
 
@@ -89,8 +97,10 @@ namespace Prexonite
         ///     See the actual <see cref = "OpCode" />s for details on how to construct valid instruction.
         /// </remarks>
         public Instruction(OpCode opCode)
+// ReSharper disable RedundantArgumentDefaultValue // need to keep the defaults for overload resolution
+            : this(opCode, default(string),default(int))
+// ReSharper restore RedundantArgumentDefaultValue
         {
-            OpCode = opCode;
         }
 
         /// <summary>
@@ -102,9 +112,10 @@ namespace Prexonite
         ///     See the actual <see cref = "OpCode" />s for details on how to construct valid instruction.
         /// </remarks>
         public Instruction(OpCode opCode, string id)
-            : this(opCode)
+// ReSharper disable RedundantArgumentDefaultValue // need to keep the default(int) for overload resolution
+            : this(opCode,id,default(int))
+// ReSharper restore RedundantArgumentDefaultValue
         {
-            Id = id;
         }
 
         /// <summary>
@@ -116,9 +127,8 @@ namespace Prexonite
         ///     See the actual <see cref = "OpCode" />s for details on how to construct valid instruction.
         /// </remarks>
         public Instruction(OpCode opCode, int arguments)
-            : this(opCode)
+            : this(opCode, default(string), arguments)
         {
-            Arguments = arguments;
         }
 
         /// <summary>
@@ -131,10 +141,8 @@ namespace Prexonite
         ///     See the actual <see cref = "OpCode" />s for details on how to construct valid instruction.
         /// </remarks>
         public Instruction(OpCode opCode, int arguments, string id)
-            : this(opCode)
+            : this(opCode, id, arguments)
         {
-            Id = id;
-            Arguments = arguments;
         }
 
         /// <summary>
@@ -148,9 +156,64 @@ namespace Prexonite
         ///     See the actual <see cref = "OpCode" />s for details on how to construct valid instruction.
         /// </remarks>
         public Instruction(OpCode opCode, int arguments, string id, bool justEffect)
-            : this(opCode, arguments, id)
+            : this(opCode, id, arguments, justEffect)
         {
+        }
+
+        /// <summary>
+        ///     Creates a new Instruction with a given OpCode and an identifier as its operand.
+        /// </summary>
+        /// <param name = "opCode">The opcode of the instruction.</param>
+        /// <param name = "arguments">The arguments operand.</param>
+        /// <param name = "id">The id operand.</param>
+        /// <param name="moduleName"></param>
+        /// <remarks>
+        ///     See the actual <see cref = "OpCode" />s for details on how to construct valid instruction.
+        /// </remarks>
+        public Instruction(OpCode opCode, int arguments, string id, ModuleName moduleName)
+            : this(opCode, id, arguments, default(bool), moduleName)
+        {
+        }
+
+        /// <summary>
+        ///     Creates a new Instruction with a given OpCode and an identifier as its operand.
+        /// </summary>
+        /// <param name = "opCode">The opcode of the instruction.</param>
+        /// <param name = "id">The id operand.</param>
+        /// <param name = "arguments">The arguments operand.</param>
+        /// <param name = "justEffect">Indicates whether or not the return value is thrown away.</param>
+        /// <param name="moduleName"></param>
+        /// <remarks>
+        ///     See the actual <see cref = "OpCode" />s for details on how to construct valid instruction.
+        /// </remarks>
+        public Instruction(OpCode opCode, string id = default(string), int arguments = default(int), bool justEffect = false, ModuleName moduleName = default(ModuleName))
+        {
+            OpCode = opCode;
+            Arguments = arguments;
+            Id = id;
             JustEffect = justEffect;
+            ModuleName = moduleName;
+        }
+
+        /// <summary>
+        ///     Retrieves actual index and argument count values from the <see cref = "Arguments" /> field of an instruction.
+        /// </summary>
+        /// <param name = "index">The address at which to store the actual index.</param>
+        /// <param name = "argc">The address at which to store the actual arguments count.</param>
+        public void DecodeIndLocIndex(out int index, out int argc)
+        {
+            if (OpCode != OpCode.indloci)
+                throw new ArgumentException("Can only decode indloci instructions.");
+            index = (Arguments & ushort.MaxValue);
+            argc = ((Arguments & (ushort.MaxValue << 16)) >> 16);
+        }
+
+        public PValueKeyValuePair DecodeIndLocIndex()
+        {
+            int index;
+            int argc;
+            DecodeIndLocIndex(out index, out argc);
+            return new PValueKeyValuePair(index, argc);
         }
 
         #endregion
@@ -183,6 +246,11 @@ namespace Prexonite
             return ins;
         }
 
+        public static Instruction CreateConstant(ModuleName moduleName)
+        {
+            return new Instruction(OpCode.ldr_mod, 0, null, moduleName);
+        }
+
         public static Instruction CreateNull()
         {
             return new Instruction(OpCode.ldc_null);
@@ -202,14 +270,14 @@ namespace Prexonite
             return new Instruction(OpCode.stloc, id);
         }
 
-        public static Instruction CreateLoadGlobal(string id)
+        public static Instruction CreateLoadGlobal(string id, ModuleName moduleName)
         {
-            return new Instruction(OpCode.ldglob, id);
+            return new Instruction(OpCode.ldglob, id: id, moduleName: moduleName);
         }
 
-        public static Instruction CreateStoreGlobal(string id)
+        public static Instruction CreateStoreGlobal(string id, ModuleName moduleName)
         {
-            return new Instruction(OpCode.stglob, id);
+            return new Instruction(OpCode.stglob, id: id, moduleName: moduleName);
         }
 
         #endregion
@@ -258,14 +326,16 @@ namespace Prexonite
             return new Instruction(OpCode.sset, arguments, callExpr);
         }
 
-        public static Instruction CreateFunctionCall(int arguments, string id, bool justEffect)
+        public static Instruction CreateFunctionCall(int arguments, [NotNull] string id, bool justEffect, [CanBeNull] ModuleName moduleName)
         {
-            return new Instruction(OpCode.func, arguments, id, justEffect);
+            if(id == null)
+                throw new ArgumentNullException("id");
+            return new Instruction(OpCode.func, id, arguments, justEffect, moduleName);
         }
 
-        public static Instruction CreateFunctionCall(int arguments, string id)
+        public static Instruction CreateFunctionCall(int arguments, string id, ModuleName moduleName)
         {
-            return CreateFunctionCall(arguments, id, false);
+            return CreateFunctionCall(arguments, id, false, moduleName);
         }
 
         public static Instruction CreateCommandCall(int arguments, string id)
@@ -288,15 +358,14 @@ namespace Prexonite
             return CreateLocalIndirectCall(arguments, id, false);
         }
 
-        public static Instruction CreateGlobalIndirectCall(
-            int arguments, string id, bool justEffect)
+        public static Instruction CreateGlobalIndirectCall(int arguments, string id, ModuleName moduleName, bool justEffect)
         {
-            return new Instruction(OpCode.indglob, arguments, id, justEffect);
+            return new Instruction(OpCode.indglob, id, arguments, justEffect, moduleName);
         }
 
-        public static Instruction CreateGlobalIndirectCall(int arguments, string id)
+        public static Instruction CreateGlobalIndirectCall(int arguments, string id, ModuleName moduleName)
         {
-            return CreateGlobalIndirectCall(arguments, id, false);
+            return CreateGlobalIndirectCall(arguments, id, moduleName, false);
         }
 
         public static Instruction CreateIndirectCall(int arguments)
@@ -381,7 +450,7 @@ namespace Prexonite
             return CreatePop(1);
         }
 
-        internal static Instruction CreatePop(int instructions)
+        public static Instruction CreatePop(int instructions)
         {
             return new Instruction(OpCode.pop, instructions);
         }
@@ -496,7 +565,21 @@ namespace Prexonite
                 if (!OperatorCommands.TryGetLiteral(Id, out escId))
                     escId = StringPType.ToIdOrLiteral(Id);
             }
-            else escId = "\"\"";
+            else
+            {
+                escId = "\"\"";
+            }
+
+            string escModuleName;
+            if(ModuleName != null)
+            {
+                escModuleName = StringPType.ToIdOrLiteral(ModuleName.Id) + "," + ModuleName.Version;
+            }
+            else
+            {
+                escModuleName = null;
+            }
+
             switch (OpCode)
             {
                 case OpCode.rot:
@@ -532,6 +615,11 @@ namespace Prexonite
                     buffer.Append("deci ");
                     buffer.Append(Arguments);
                     break;
+                case OpCode.ldr_mod:
+                    buffer.Append("ldr.mod/");
+                    Debug.Assert(escModuleName != null);
+                    buffer.Append(escModuleName);
+                    break;
                 default:
                     if (JustEffect)
                         buffer.Append("@");
@@ -557,7 +645,7 @@ namespace Prexonite
                             //LOAD CONSTANT . REAL
                         case OpCode.ldc_real:
                             buffer.Append(" ");
-                            buffer.Append(((double) GenericArgument).ToString());
+                            buffer.Append(((double) GenericArgument).ToString(CultureInfo.InvariantCulture));
                             return;
                             //LOAD CONSTANT . BOOL
                         case OpCode.ldc_bool:
@@ -573,7 +661,7 @@ namespace Prexonite
                         case OpCode.decloci:
                         case OpCode.ldr_loci:
                             buffer.Append(" ");
-                            buffer.Append(Arguments.ToString());
+                            buffer.Append(Arguments.ToString(CultureInfo.InvariantCulture));
                             return;
                             //JUMP INSTRUCTIONS
                         case OpCode.jump:
@@ -583,7 +671,7 @@ namespace Prexonite
                             if (Arguments > -1)
                             {
                                 buffer.Append(" ");
-                                buffer.Append(Arguments.ToString());
+                                buffer.Append(Arguments.ToString(CultureInfo.InvariantCulture));
 
 #if DEBUG //Save some filespace in the release build.
                                 if (Id != null)
@@ -602,24 +690,33 @@ namespace Prexonite
                             return;
                             //ID INSTRUCTIONS
                         case OpCode.incloc:
-                        case OpCode.incglob:
                         case OpCode.decloc:
-                        case OpCode.decglob:
                         case OpCode.ldc_string:
-                        case OpCode.ldr_func:
                         case OpCode.ldr_cmd:
                         case OpCode.ldr_loc:
-                        case OpCode.ldr_glob:
                         case OpCode.ldr_type:
                         case OpCode.ldloc:
                         case OpCode.stloc:
-                        case OpCode.ldglob:
-                        case OpCode.stglob:
                         case OpCode.check_const:
                         case OpCode.cast_const:
+                            buffer.Append(" ");
+                            buffer.Append(escId);
+                            return;
+                            //ID+MODULE  INSTRUCTIONS
+                        case OpCode.ldr_func:
+                        case OpCode.incglob:
+                        case OpCode.decglob:
+                        case OpCode.ldr_glob:
+                        case OpCode.ldglob:
+                        case OpCode.stglob:
                         case OpCode.newclo:
                             buffer.Append(" ");
                             buffer.Append(escId);
+                            if (ModuleName != null)
+                            {
+                                buffer.Append('/');
+                                buffer.Append(escModuleName);
+                            }
                             return;
                             //ID+ARG INSTRUCTIONS
                         case OpCode.newtype:
@@ -629,20 +726,31 @@ namespace Prexonite
                         case OpCode.cmd:
                         case OpCode.sget:
                         case OpCode.sset:
-                        case OpCode.func:
                         case OpCode.indloc:
-                        case OpCode.indglob:
                             buffer.Append(".");
-                            buffer.Append(Arguments.ToString());
+                            buffer.Append(Arguments.ToString(CultureInfo.InvariantCulture));
                             buffer.Append(" ");
                             buffer.Append(escId);
+                            return;
+                            //ID+ARG+MODULE INSTRUCTIONS
+                        case OpCode.func:
+                        case OpCode.indglob:
+                            buffer.Append(".");
+                            buffer.Append(Arguments.ToString(CultureInfo.InvariantCulture));
+                            buffer.Append(" ");
+                            buffer.Append(escId);
+                            if (ModuleName != null)
+                            {
+                                buffer.Append('/');
+                                buffer.Append(escModuleName);
+                            }
                             return;
                             //ARG INSTRUCTIONS
                         case OpCode.indarg:
                         case OpCode.newcor:
                         case OpCode.tail:
                             buffer.Append(".");
-                            buffer.Append(Arguments.ToString());
+                            buffer.Append(Arguments.ToString(CultureInfo.InvariantCulture));
                             return;
                             //NOP INSTRUCTION
                         case OpCode.nop:
@@ -660,52 +768,28 @@ namespace Prexonite
             }
         }
 
-        /// <summary>
-        ///     Retrieves actual index and argument count values from the <see cref = "Arguments" /> field of an instruction.
-        /// </summary>
-        /// <param name = "index">The address at which to store the actual index.</param>
-        /// <param name = "argc">The address at which to store the actual arguments count.</param>
-        public void DecodeIndLocIndex(out int index, out int argc)
-        {
-            if (OpCode != OpCode.indloci)
-                throw new ArgumentException("Can only decode indloci instructions.");
-            index = (Arguments & ushort.MaxValue);
-            argc = ((Arguments & (ushort.MaxValue << 16)) >> 16);
-        }
-
-        public PValueKeyValuePair DecodeIndLocIndex()
-        {
-            int index;
-            int argc;
-            DecodeIndLocIndex(out index, out argc);
-            return new PValueKeyValuePair(index, argc);
-        }
-
         #endregion
 
         #region Equality
 
         /// <summary>
-        ///     Determines whether the instruction is equal to an object (possibly another instruction).
+        /// Indicates whether the current object is equal to another object of the same type.
         /// </summary>
-        /// <param name = "obj">Any object (possibly an instruction).</param>
-        /// <returns>True if the instruction is equal to the object (possibly another instruction).</returns>
-        [DebuggerStepThrough]
-        public override bool Equals(object obj)
+        /// <returns>
+        /// true if the current object is equal to the <paramref name="other"/> parameter; otherwise, false.
+        /// </returns>
+        /// <param name="other">An object to compare with this object.</param>
+        public bool Equals(Instruction other)
         {
-            if (obj == null)
-                return false;
-            else if (ReferenceEquals(this, obj))
-                return true;
-            if (!(obj is Instruction))
-                return base.Equals(obj);
-            var ins = obj as Instruction;
-            if (ins.OpCode != OpCode)
+            if (ReferenceEquals(null, other)) return false;
+            if (ReferenceEquals(this, other)) return true;
+
+            if (other.OpCode != OpCode)
                 return false;
 
             switch (OpCode)
             {
-                    //NULL INSTRUCTIONS
+                //NULL INSTRUCTIONS
                 case OpCode.nop:
                 case OpCode.ldc_null:
                 case OpCode.check_arg:
@@ -722,12 +806,14 @@ namespace Prexonite
                 case OpCode.exc:
                 case OpCode.@try:
                     return true;
-                    //LOAD CONSTANT . REAL
+                //LOAD CONSTANT . REAL
                 case OpCode.ldc_real:
-                    if (!(ins.GenericArgument is double))
+                    if (!(other.GenericArgument is double))
                         return false;
-                    return ((double) GenericArgument) == ((double) ins.GenericArgument);
-                    //INTEGER INSTRUCTIONS
+// ReSharper disable CompareOfFloatsByEqualityOperator // Instructions either have the same literal or they don't
+                    return (double)GenericArgument == (double)other.GenericArgument;
+// ReSharper restore CompareOfFloatsByEqualityOperator
+                //INTEGER INSTRUCTIONS
                 case OpCode.ldc_bool:
                 case OpCode.ldc_int:
                 case OpCode.ldr_loci:
@@ -737,38 +823,40 @@ namespace Prexonite
                 case OpCode.stloci:
                 case OpCode.incloci:
                 case OpCode.decloci:
-                    return Arguments == ins.Arguments;
+                    return Arguments == other.Arguments;
                 case OpCode.indloci: //two short int values encoded in one int.
-                    return Arguments == ins.Arguments && JustEffect == ins.JustEffect;
-                    //JUMP INSTRUCTIONS
+                    return Arguments == other.Arguments && JustEffect == other.JustEffect;
+                //JUMP INSTRUCTIONS
                 case OpCode.jump:
                 case OpCode.jump_t:
                 case OpCode.jump_f:
                 case OpCode.leave:
-                    if (Arguments > -1 && ins.Arguments > -1)
-                        return Arguments == ins.Arguments;
+                    if (Arguments > -1 && other.Arguments > -1)
+                        return Arguments == other.Arguments;
                     else
-                        return Engine.StringsAreEqual(Id, ins.Id);
-                    //ID INSTRUCTIONS
+                        return Engine.StringsAreEqual(Id, other.Id);
+                //ID INSTRUCTIONS
                 case OpCode.incloc:
-                case OpCode.incglob:
                 case OpCode.decloc:
-                case OpCode.decglob:
                 case OpCode.ldc_string:
-                case OpCode.ldr_func:
                 case OpCode.ldr_cmd:
                 case OpCode.ldr_loc:
-                case OpCode.ldr_glob:
                 case OpCode.ldr_type:
                 case OpCode.ldloc:
                 case OpCode.stloc:
-                case OpCode.ldglob:
-                case OpCode.stglob:
                 case OpCode.check_const:
                 case OpCode.cast_const:
+                    return Engine.StringsAreEqual(Id, other.Id);
+                //ID+MODULE INSTRUCTIONS
+                case OpCode.incglob:
+                case OpCode.decglob:
+                case OpCode.ldr_func:
+                case OpCode.ldr_glob:
+                case OpCode.ldglob:
+                case OpCode.stglob:
                 case OpCode.newclo:
-                    return Engine.StringsAreEqual(Id, ins.Id);
-                    //ID+ARG INSTRUCTIONS
+                    return Engine.StringsAreEqual(Id, other.Id) && Equals(ModuleName, other.ModuleName);
+                //ID+ARG INSTRUCTIONS
                 case OpCode.newtype:
                 case OpCode.newobj:
                 case OpCode.get:
@@ -776,64 +864,71 @@ namespace Prexonite
                 case OpCode.cmd:
                 case OpCode.sget:
                 case OpCode.sset:
-                case OpCode.func:
-                case OpCode.indglob:
                 case OpCode.indloc:
                     return
-                        Arguments == ins.Arguments &&
-                            Engine.StringsAreEqual(Id, ins.Id) &&
-                                JustEffect == ins.JustEffect;
-                    //ARG INSTRUCTIONS
+                        Arguments == other.Arguments &&
+                            Engine.StringsAreEqual(Id, other.Id) &&
+                                JustEffect == other.JustEffect;
+                //ID+ARG+MODULE INSTRUCTIONS
+                case OpCode.func:
+                case OpCode.indglob:
+                    return
+                        Arguments == other.Arguments &&
+                            Engine.StringsAreEqual(Id, other.Id) &&
+                                JustEffect == other.JustEffect &&
+                                    Equals(ModuleName, other.ModuleName);
+                //MODULE INSTRUCTIONS
+                case OpCode.ldr_mod:
+                    return Equals(ModuleName, other.ModuleName);
+                //ARG INSTRUCTIONS
                 case OpCode.indarg:
                 case OpCode.newcor:
                 case OpCode.tail:
                     return
-                        Arguments == ins.Arguments &&
-                            JustEffect == ins.JustEffect;
+                        Arguments == other.Arguments &&
+                            JustEffect == other.JustEffect;
                 case OpCode.rot:
                     return
-                        Arguments == ins.Arguments &&
-                            (int) GenericArgument == (int) ins.GenericArgument;
+                        Arguments == other.Arguments &&
+                            (int)GenericArgument == (int)other.GenericArgument;
                 default:
                     throw new PrexoniteException("Invalid opcode " + OpCode);
             }
         }
 
         /// <summary>
-        ///     Determines whether two instructions are equal.
+        /// Serves as a hash function for a particular type. 
         /// </summary>
-        /// <param name = "left">One instruction</param>
-        /// <param name = "right">Another instruction</param>
-        /// <returns>True if the instructions are equal, false otherwise.</returns>
-        [DebuggerStepThrough]
-        public static bool operator ==(Instruction left, Instruction right)
-        {
-            if ((object) left == null)
-                return (object) right == null;
-            return left.Equals(right);
-        }
-
-        /// <summary>
-        ///     Determines whether two instructions are not equal.
-        /// </summary>
-        /// <param name = "left">One instruction</param>
-        /// <param name = "right">Another instruction</param>
-        /// <returns>True if the instructions are not equal, false otherwise.</returns>
-        [DebuggerStepThrough]
-        public static bool operator !=(Instruction left, Instruction right)
-        {
-            if ((object) left == null)
-                return (object) right != null;
-            return !left.Equals(right);
-        }
-
-        /// <summary>
-        ///     Returns a hash code based on <see cref = "OpCode" />, <see cref = "Arguments" /> and <see cref = "Id" />.
-        /// </summary>
-        /// <returns>A hash code.</returns>
+        /// <returns>
+        /// A hash code for the current <see cref="T:System.Object"/>.
+        /// </returns>
+        /// <filterpriority>2</filterpriority>
         public override int GetHashCode()
         {
-            return (int) OpCode ^ Arguments ^ (Id == null ? 0 : Id.GetHashCode());
+            unchecked
+            {
+                var result = OpCode.GetHashCode();
+                result = (result*397) ^ Arguments;
+                result = (result*397) ^ (Id != null ? Id.GetHashCode() : 0);
+                result = (result*397) ^ (ModuleName != null ? ModuleName.GetHashCode() : 0);
+                result = (result*397) ^ JustEffect.GetHashCode();
+                return result;
+            }
+        }
+
+        /// <summary>
+        ///     Determines whether the instruction is equal to an object (possibly another instruction).
+        /// </summary>
+        /// <param name = "obj">Any object (possibly an instruction).</param>
+        /// <returns>True if the instruction is equal to the object (possibly another instruction).</returns>
+        [DebuggerStepThrough]
+        public override bool Equals(object obj)
+        {
+            if (obj == null)
+                return false;
+            else if (ReferenceEquals(this, obj))
+                return true;
+            return Equals(obj as Instruction);
         }
 
         #endregion
@@ -899,6 +994,7 @@ namespace Prexonite
                     case OpCode.ldr_glob:
                     case OpCode.ldr_func:
                     case OpCode.ldr_cmd:
+                    case OpCode.ldr_mod:
                     case OpCode.ldglob:
                     case OpCode.ldr_app:
                     case OpCode.ldloci:
@@ -973,6 +1069,18 @@ namespace Prexonite
                 }
             }
         }
+
+        public Instruction With(OpCode? opCode = null, int? arguments = null, string id = null, bool? justEffect = null, ModuleName moduleName = null)
+        {
+            return new Instruction(opCode ?? OpCode, id ?? Id, arguments ?? Arguments, justEffect ?? JustEffect, moduleName ?? ModuleName);
+        }
+
+        public Instruction WithModuleName(ModuleName moduleName, OpCode? opCode = null, int? arguments = null,
+                                          string id = null, bool? justEffect = null)
+        {
+            // This variant is necessary to allow the module name to be set to null
+            return new Instruction(opCode ?? OpCode, id ?? Id, arguments ?? Arguments, justEffect ?? JustEffect, moduleName);
+        }
     }
 
     // ReSharper disable InconsistentNaming
@@ -988,7 +1096,7 @@ namespace Prexonite
         invalid = -1,
 
         /// <summary>
-        ///     No operation. Stack: 0->0. Will be removed in optimization pass.
+        ///     No operation. Stack: 0->0.
         /// </summary>
         nop = 0,
 
@@ -1015,7 +1123,7 @@ namespace Prexonite
         ldc_string, //ldc.string    loads a string value
 
         /// <summary>
-        ///     Loads the <see cref = "PType.Null" /> value onto the stack. Stack: 0->
+        ///     Loads the <see cref = "PType.Null" /> value onto the stack. Stack: 0->1.
         /// </summary>
         ldc_null, //ldc.null      loads a null value
 
@@ -1028,6 +1136,7 @@ namespace Prexonite
         ldr_app, //ldr.app       loads a reference to the current application
         ldr_eng, //ldr.eng       loads a reference to the current engine
         ldr_type, //ldr.type      loads a reference to a type (from a type expression)
+        ldr_mod, //ldr.mod      loads a module name 
         // Variables (6)
         //  - local
         ldloc, //ldloc         loads the value of a local variable by name
@@ -1086,7 +1195,7 @@ namespace Prexonite
         set, //set           performs a set call
         sget, //sget          performs a static get call
         sset, //sset          performs a static set call
-        //Calls (3)
+        //Calls (4)
         func, //func          performs a function call
         cmd, //cmd           performs a command call
         indarg, //indarg        performs an indirect call on an operand
@@ -1116,7 +1225,7 @@ namespace Prexonite
         pop, //pop           Pops x values from the stack
         dup, //dup           duplicates the top value x times
 
-        rot //rot           rotates the x top values y times
+        rot, //rot           rotates the x top values y times
     }
 
     // ReSharper restore InconsistentNaming

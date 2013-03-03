@@ -1,6 +1,6 @@
 // Prexonite
 // 
-// Copyright (c) 2011, Christian Klauser
+// Copyright (c) 2013, Christian Klauser
 // All rights reserved.
 // 
 // Redistribution and use in source and binary forms, with or without modification, 
@@ -23,7 +23,6 @@
 //  DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, 
 //  WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING 
 //  IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
-
 #region
 
 using System;
@@ -408,7 +407,7 @@ namespace Prexonite.Types
             else
             {
                 var sb = new StringBuilder();
-                sb.Append("Cannot contruct a ");
+                sb.Append("Cannot construct a ");
                 sb.Append(ToString());
                 sb.Append(" with (");
                 foreach (var arg in args)
@@ -817,7 +816,6 @@ namespace Prexonite.Types
 
         #endregion //Operators
 
-        [DebuggerStepThrough]
         public virtual PValue DynamicCall(
             StackContext sctx, PValue subject, PValue[] args, PCall call, string id)
         {

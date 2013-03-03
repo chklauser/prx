@@ -1,6 +1,6 @@
 ﻿// Prexonite
 // 
-// Copyright (c) 2011, Christian Klauser
+// Copyright (c) 2013, Christian Klauser
 // All rights reserved.
 // 
 // Redistribution and use in source and binary forms, with or without modification, 
@@ -23,7 +23,6 @@
 //  DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, 
 //  WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING 
 //  IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
-
 #if ((!(DEBUG || Verbose)) || forceIndex) && allowIndex
 #define UseIndex
 #endif
@@ -31,15 +30,18 @@
 #region Namespace Imports
 
 using System;
-using System.Collections;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.Diagnostics.CodeAnalysis;
 using System.Linq;
+using JetBrains.Annotations;
 using Prexonite.Compiler.Ast;
 using Prexonite.Compiler.Macro;
+using Prexonite.Compiler.Symbolic;
+using Prexonite.Compiler.Symbolic.Compatibility;
+using Prexonite.Modular;
+using Prexonite.Properties;
 using Prexonite.Types;
-using NoDebug = System.Diagnostics.DebuggerNonUserCodeAttribute;
 
 #endregion
 
@@ -75,17 +77,14 @@ namespace Prexonite.Compiler
         [DebuggerStepThrough]
         public override string ToString()
         {
-            return String.Format("Target({0})", Function);
+            return String.Format("ITarget({0})", Function);
         }
 
         #region Fields
 
         private readonly PFunction _function;
         private readonly Loader _loader;
-        private readonly SymbolTable<SymbolEntry> _symbols = new SymbolTable<SymbolEntry>();
-        private CompilerTarget _parentTarget;
-
-        #region Macro sessions
+        private readonly CompilerTarget _parentTarget;
 
         private MacroSession _macroSession;
         private int _macroSessionReferenceCounter;
@@ -106,7 +105,9 @@ namespace Prexonite.Compiler
         ///     Releases the macro session acquired via <see cref = "AcquireMacroSession" />. Will dispose of the session, if no other release is pending.
         /// </summary>
         /// <param name = "acquiredSession">A session previously acquired through <see cref = "AcquireMacroSession" />.</param>
+// ReSharper disable UnusedParameter.Global
         public void ReleaseMacroSession(MacroSession acquiredSession)
+// ReSharper restore UnusedParameter.Global
         {
             if (_macroSession != acquiredSession)
                 throw new InvalidOperationException(
@@ -122,8 +123,6 @@ namespace Prexonite.Compiler
             Debug.Assert(_macroSessionReferenceCounter == 0 || _macroSession != null);
         }
 
-        #endregion
-
         public Loader Loader
         {
             [DebuggerStepThrough]
@@ -136,22 +135,10 @@ namespace Prexonite.Compiler
             get { return _function; }
         }
 
-        public SymbolTable<SymbolEntry> LocalSymbols
-        {
-            [DebuggerStepThrough]
-            get { return _symbols; }
-        }
-
         public CompilerTarget ParentTarget
         {
             [DebuggerStepThrough]
             get { return _parentTarget; }
-            [DebuggerStepThrough]
-            set
-            {
-                _parentTarget = value;
-                _combinedSymbolProxy = new CombinedSymbolProxy(this);
-            }
         }
 
         private int _nestedIdCounter;
@@ -161,19 +148,23 @@ namespace Prexonite.Compiler
         #region Construction
 
         [DebuggerStepThrough]
-        public CompilerTarget(Loader loader, PFunction function, AstBlock block)
+        public CompilerTarget(Loader loader, PFunction function, CompilerTarget parentTarget = null, ISourcePosition position = null)
         {
             if (loader == null)
                 throw new ArgumentNullException("loader");
             if (function == null)
-                function = new PFunction(loader.Options.TargetApplication);
+                function = loader.ParentApplication.CreateFunction();
+            if (!ReferenceEquals(function.ParentApplication, loader.ParentApplication))
+                throw new ArgumentException(
+                    Resources.CompilerTarget_Cannot_create_for_foreign_function,
+                    "function");
 
             _loader = loader;
             _function = function;
+            _parentTarget = parentTarget;
 
-            _combinedSymbolProxy = new CombinedSymbolProxy(this);
-
-            _ast = block;
+            _ast = AstBlock.CreateRootBlock(position ?? new SourcePosition("",-1,-1),  SymbolStore.Create(parentTarget == null ? loader.Symbols : parentTarget.Symbols),
+                                            AstBlock.RootBlockName, Guid.NewGuid().ToString("N"));
         }
 
         #endregion
@@ -181,7 +172,7 @@ namespace Prexonite.Compiler
         #region Macro system
 
         /// <summary>
-        ///     Setup function as macro (symbol declarations etc.)
+        ///     Setup function as macro (self declarations etc.)
         /// </summary>
         public void SetupAsMacro()
         {
@@ -196,7 +187,9 @@ namespace Prexonite.Compiler
 
             foreach (var localRefId in MacroAliases.Aliases())
             {
-                Declare(SymbolInterpretations.LocalReferenceVariable, localRefId);
+                Ast.Symbols.Declare(localRefId,
+                                    Symbol.CreateDereference(
+                                        Symbol.CreateCall(EntityRef.Variable.Local.Create(localRefId), NoSourcePosition.Instance)));
                 _outerVariables.Add(localRefId);
                 //remember: outer variables are not added as local variables
             }
@@ -317,217 +310,24 @@ namespace Prexonite.Compiler
 
         #region Symbol Lookup / Combined Symbol Proxy
 
-        private CombinedSymbolProxy _combinedSymbolProxy;
-
-        public CombinedSymbolProxy Symbols
+        public SymbolStore Symbols
         {
             [DebuggerStepThrough]
-            get { return _combinedSymbolProxy; }
+            get { return CurrentBlock.Symbols; }
         }
 
-        //[DebuggerStepThrough]
-        public sealed class CombinedSymbolProxy : IDictionary<string, SymbolEntry>
+        [Obsolete("Use the SymbolStore API to declare module-local symbols.")]
+        public void DeclareModuleLocal(SymbolInterpretations interpretation, string physicalName)
         {
-            private readonly SymbolTable<SymbolEntry> _loaderSymbols;
-            private readonly SymbolTable<SymbolEntry> _symbols;
-            private readonly CompilerTarget _outer;
+            DeclareModuleLocal(interpretation, physicalName, physicalName);
+        }
 
-            internal CombinedSymbolProxy(CompilerTarget outer)
-            {
-                _symbols = outer._symbols;
-                _outer = outer;
-                _loaderSymbols = outer._loader.Symbols;
-            }
-
-            private CombinedSymbolProxy _parent
-            {
-                get { return _outer._parentTarget != null ? _outer._parentTarget.Symbols : null; }
-            }
-
-            #region IDictionary<string,SymbolEntry> Members
-
-            public SymbolEntry this[string key]
-            {
-                get
-                {
-                    SymbolEntry entry;
-                    if (_symbols.TryGetValue(key, out entry))
-                        return entry;
-                    else if (_parent != null)
-                        return _parent[key];
-                    else
-                        return _loaderSymbols[key];
-                }
-                set { _symbols[key] = value; }
-            }
-
-            public void Add(string key, SymbolEntry value)
-            {
-                _symbols.Add(key, value);
-            }
-
-            public bool ContainsKey(string key)
-            {
-                if (_symbols.ContainsKey(key))
-                    return true;
-                else if (_parent != null)
-                    return _parent.ContainsKey(key);
-                else
-                    return _loaderSymbols.ContainsKey(key);
-            }
-
-            public ICollection<string> Keys
-            {
-                get
-                {
-                    var localKeys = _symbols.Keys;
-                    var keys = new SymbolCollection(localKeys);
-                    if (_parent != null)
-                    {
-                        foreach (var key in _parent.Keys)
-                            if (!localKeys.Contains(key))
-                                keys.Add(key);
-                    }
-                    else
-                    {
-                        foreach (var key in _loaderSymbols.Keys)
-                            if (!localKeys.Contains(key))
-                                keys.Add(key);
-                    }
-                    return keys;
-                }
-            }
-
-            public bool Remove(string key)
-            {
-                return _symbols.Remove(key);
-            }
-
-            public bool TryGetValue(string key, out SymbolEntry value)
-            {
-                if (_symbols.TryGetValue(key, out value))
-                    return true;
-                else if (_parent != null)
-                    return _parent.TryGetValue(key, out value);
-                else
-                    return _loaderSymbols.TryGetValue(key, out value);
-            }
-
-            public ICollection<SymbolEntry> Values
-            {
-                get
-                {
-                    var localValues = _symbols.Values;
-                    var values = new List<SymbolEntry>(localValues);
-                    values.AddRange(
-                        from kvp in
-                            ((IEnumerable<KeyValuePair<string, SymbolEntry>>) _parent ??
-                                _loaderSymbols)
-                        where !localValues.Contains(kvp.Value)
-                        select kvp.Value);
-                    return values;
-                }
-            }
-
-            public void Add(KeyValuePair<string, SymbolEntry> item)
-            {
-                _symbols.Add(item);
-            }
-
-            public void Clear()
-            {
-                _symbols.Clear();
-            }
-
-            public bool Contains(KeyValuePair<string, SymbolEntry> item)
-            {
-                if (_symbols.Contains(item))
-                    return true;
-                else if (_parent != null)
-                    return _parent.Contains(item);
-                else
-                    return _loaderSymbols.Contains(item);
-            }
-
-            public void CopyTo(KeyValuePair<string, SymbolEntry>[] array, int arrayIndex)
-            {
-                var lst =
-                    new List<KeyValuePair<string, SymbolEntry>>(_symbols);
-                lst.AddRange(
-                    ((IEnumerable<KeyValuePair<string, SymbolEntry>>) _parent ?? _loaderSymbols).
-                        Where(
-                            kvp => !_symbols.ContainsKey(kvp.Key)));
-                lst.CopyTo(array, arrayIndex);
-            }
-
-            public int Count
-            {
-                get { return Keys.Count; }
-            }
-
-            public bool IsReadOnly
-            {
-                get { return false; }
-            }
-
-            public bool Remove(KeyValuePair<string, SymbolEntry> item)
-            {
-                return _symbols.Remove(item);
-            }
-
-            IEnumerator<KeyValuePair<string, SymbolEntry>>
-                IEnumerable<KeyValuePair<string, SymbolEntry>>.GetEnumerator()
-            {
-                foreach (var kvp in _symbols)
-                    yield return kvp;
-                if (_parent != null)
-                {
-                    foreach (var kvp in _parent)
-                        if (!_symbols.ContainsKey(kvp.Key))
-                            yield return kvp;
-                }
-                else
-                {
-                    foreach (var kvp in _loaderSymbols)
-                        if (!_symbols.ContainsKey(kvp.Key))
-                            yield return kvp;
-                }
-            }
-
-            IEnumerator IEnumerable.GetEnumerator()
-            {
-                foreach (var kvp in _symbols)
-                    yield return kvp;
-                if (_parent != null)
-                {
-                    foreach (var kvp in _parent)
-                        if (!_symbols.ContainsKey(kvp.Key))
-                            yield return kvp;
-                }
-                else
-                {
-                    foreach (var kvp in _loaderSymbols)
-                        if (!_symbols.ContainsKey(kvp.Key))
-                            yield return kvp;
-                }
-            }
-
-            #endregion
-
-            public bool IsKeyDefinedLocally(string key)
-            {
-                return _symbols.ContainsKey(key);
-            }
-
-            public bool IsKeyDefinedInParent(string key)
-            {
-                if (_parent == null)
-                    return false;
-                else if (_parent._symbols.ContainsKey(key)) //Direct lookup in parent
-                    return true;
-                else //Forward question
-                    return _parent.IsKeyDefinedInParent(key);
-            }
+        [Obsolete("Use the SymbolStore API to declare module-local symbols.")]
+        public void DeclareModuleLocal(SymbolInterpretations interpretation, string logicalId, string physicalId)
+        {
+            var symbol =
+                new SymbolEntry(interpretation, physicalId, Loader.ParentApplication.Module.Name).ToSymbol();
+            Symbols.Declare(logicalId, symbol);
         }
 
         #endregion
@@ -552,6 +352,67 @@ namespace Prexonite.Compiler
             get { return _ast; }
         }
 
+        private volatile CompilerTargetAstFactory _factory;
+
+        [NotNull]
+        public IAstFactory Factory
+        {
+            get
+            {
+                if (_factory == null)
+                {
+                    lock (this)
+                    {
+                        if (_factory == null)
+                        {
+                            _factory = new CompilerTargetAstFactory(this);
+                        }
+                    }
+                }
+                return _factory;
+            }
+        }
+
+        private class CompilerTargetAstFactory : AstFactoryBase
+        {
+            [NotNull] private readonly CompilerTarget _target;
+
+            public CompilerTargetAstFactory(CompilerTarget target)
+            {
+                _target = target;
+            }
+
+            protected override AstBlock CurrentBlock
+            {
+                get { return _target.CurrentBlock; }
+            }
+
+            protected override AstGetSet CreateNullNode(ISourcePosition position)
+            {
+                return IndirectCall(position, Null(position));
+            }
+
+            protected override bool IsOuterVariable(string id)
+            {
+                return _target._IsOuterVariable(id);
+            }
+
+            protected override void RequireOuterVariable(string id)
+            {
+                _target.RequireOuterVariable(id);
+            }
+
+            protected override void ReportMessage(Message message)
+            {
+                _target.Loader.ReportMessage(message);
+            }
+
+            protected override CompilerTarget CompileTimeExecutionContext
+            {
+                get { return _target; }
+            }
+        }
+
         #endregion
 
         #region Compiler Hooks
@@ -566,96 +427,9 @@ namespace Prexonite.Compiler
 
         #region Manipulation
 
-        #region Symbols
-
-        /// <summary>
-        ///     (Re)declares a local symbol.
-        /// </summary>
-        /// <param name = "kind">The new interpretation for this symbol.</param>
-        /// <param name = "id">The symbols id.</param>
-        [DebuggerStepThrough]
-        public void Declare(SymbolInterpretations kind, string id)
-        {
-            Declare(kind, id, id);
-        }
-
-        /// <summary>
-        ///     (Re)declares a local symbol.
-        /// </summary>
-        /// <param name = "kind">The new interpretation for this symbol.</param>
-        /// <param name = "id">The id entered into the symbol table.</param>
-        /// <param name = "translatedId">The (physical) id used when translating the program. (Use for aliases or set to <paramref
-        ///      name = "id" />)</param>
-        [DebuggerStepThrough]
-        public void Declare(SymbolInterpretations kind, string id, string translatedId)
-        {
-            if (Symbols.IsKeyDefinedLocally(id))
-            {
-                var entry = Symbols[id];
-                Symbols[id] = new SymbolEntry(kind, translatedId, entry.Argument);
-            }
-            else
-            {
-                Symbols[id] = new SymbolEntry(kind, translatedId);
-            }
-        }
-
-        /// <summary>
-        ///     Creates local variables or declares global variables locally.
-        /// </summary>
-        /// <param name = "kind">The (new) interpretation for the local variable.</param>
-        /// <param name = "id">The id for the local variable.</param>
-        /// <remarks>
-        ///     Local object and reference variables are created in addition to being registered in the symbol table. Global object and reference variables are only declared, not created.
-        /// </remarks>
-        [DebuggerStepThrough]
-        public void Define(SymbolInterpretations kind, string id)
-        {
-            Define(kind, id, id);
-        }
-
-        /// <summary>
-        ///     Creates local variables or declares global variables locally.
-        /// </summary>
-        /// <param name = "kind">The (new) interpretation for the local variable.</param>
-        /// <param name = "id">The id for the local variable.</param>
-        /// <param name = "translatedId">The (physical) id used when translating the program. (Use for aliases or set to <paramref
-        ///      name = "id" />). This is the name used for the variable created.</param>
-        /// <remarks>
-        ///     Local object and reference variables are created in addition to being registered in the symbol table. Global object and reference variables are only declared, not created.
-        /// </remarks>
-        [DebuggerStepThrough]
-        public void Define(SymbolInterpretations kind, string id, string translatedId)
-        {
-            switch (kind)
-            {
-                    //Declare global variables
-                case SymbolInterpretations.GlobalObjectVariable:
-                case SymbolInterpretations.GlobalReferenceVariable:
-                    if (Symbols.IsKeyDefinedLocally(id))
-                        Symbols[id] = Symbols[id].With(kind, translatedId);
-                    else
-                        Symbols[id] = new SymbolEntry(kind, translatedId);
-                    break;
-                    //Define local variables
-                case SymbolInterpretations.LocalObjectVariable:
-                case SymbolInterpretations.LocalReferenceVariable:
-                    if (Symbols.IsKeyDefinedLocally(id))
-                        Symbols[id] = Symbols[id].With(kind, translatedId);
-                    else
-                        Symbols[id] = new SymbolEntry(kind, translatedId);
-
-                    if (!Function.Variables.Contains(translatedId))
-                        Function.Variables.Add(translatedId);
-                    break;
-            }
-        }
-
-        #endregion //Symbols
-
         #region Scope Block Stack
 
-        private readonly Stack<AstBlock> _scopeBlocks = new Stack<AstBlock>();
+        private readonly Stack<AstScopedBlock> _scopeBlocks = new Stack<AstScopedBlock>();
 
         public IEnumerable<AstBlock> ScopeBlocks
         {
@@ -689,7 +463,7 @@ namespace Prexonite.Compiler
         }
 
         [DebuggerStepThrough]
-        public void BeginBlock(AstBlock bl)
+        public void BeginBlock(AstScopedBlock bl)
         {
             if (bl == null)
                 throw new ArgumentNullException("bl");
@@ -697,23 +471,22 @@ namespace Prexonite.Compiler
         }
 
         [DebuggerStepThrough]
-        public AstBlock BeginBlock(string prefix)
+        public AstScopedBlock BeginBlock(string prefix)
         {
-            var prototype = _scopeBlocks.Count > 0 ? _scopeBlocks.Peek() : _ast;
-            var bl = new AstBlock(prototype.File, prototype.Line, prototype.Column,
-                GenerateLocalId(), prefix);
+            var currentBlock = CurrentBlock;
+            var bl = new AstScopedBlock(currentBlock.Position, currentBlock, GenerateLocalId(), prefix);
             _scopeBlocks.Push(bl);
             return bl;
         }
 
         [DebuggerStepThrough]
-        public AstBlock BeginBlock()
+        public AstScopedBlock BeginBlock()
         {
             return BeginBlock((string) null);
         }
 
         [DebuggerStepThrough]
-        public AstBlock EndBlock()
+        public AstScopedBlock EndBlock()
         {
             if (_scopeBlocks.Count > 0)
                 return _scopeBlocks.Pop();
@@ -758,17 +531,19 @@ namespace Prexonite.Compiler
             SourceMapping.RemoveRange(index, count);
 
             //Correct jump targets by...);
-            foreach (var ins in code)
+            int i;
+            for (i = 0; i < code.Count; i++)
             {
+                var ins = code[i];
                 if ((ins.IsJump || ins.OpCode == OpCode.leave)
                     && ins.Arguments > index) //decrementing target addresses pointing 
                     //behind the removed instruction
-                    ins.Arguments -= count;
+                    code[i] = ins.With(arguments: ins.Arguments - count);
             }
 
             //Correct try-catch-finally blocks
             var modifiedBlocks = new MetaEntry[_function.TryCatchFinallyBlocks.Count];
-            var i = 0;
+            i = 0;
             foreach (var block in _function.TryCatchFinallyBlocks)
             {
                 if (block.BeginTry > index)
@@ -829,6 +604,7 @@ namespace Prexonite.Compiler
 
             {
                 var func = T.Function;
+                // ReSharper disable RedundantJumpStatement
                 if (func.Variables.Contains(id) || func.Parameters.Contains(id) ||
                     T.OuterVariables.Contains(id))
                     return; //Parent can supply the variable/parameter. Stop search here.
@@ -843,7 +619,28 @@ namespace Prexonite.Compiler
                                 Function,
                                 id,
                                 func));
+                // ReSharper restore RedundantJumpStatement
             }
+        }
+
+        internal bool _IsOuterVariable(string id)
+        {
+            //Check local function
+            var func = Function;
+            if (func.Variables.Contains(id) || func.Parameters.Contains(id))
+                return false;
+
+            //Check parents
+            for (var parent = ParentTarget;
+                 parent != null;
+                 parent = parent.ParentTarget)
+            {
+                func = parent.Function;
+                if (func.Variables.Contains(id) || func.Parameters.Contains(id) ||
+                    parent.OuterVariables.Contains(id))
+                    return true;
+            }
+            return false;
         }
 
         #endregion
@@ -853,30 +650,30 @@ namespace Prexonite.Compiler
         /// <summary>
         ///     Promotes captured variables to function parameters.
         /// </summary>
-        /// <returns>A list of expressions (get symbol) that should be added to the arguments list of any call to the lifted function.</returns>
-        internal Func<Parser, IList<IAstExpression>> ToCaptureByValue()
+        /// <returns>A list of expressions (get self) that should be added to the arguments list of any call to the lifted function.</returns>
+        internal Func<Parser, IList<AstExpr>> _ToCaptureByValue()
         {
-            return ToCaptureByValue(new string[0]);
+            return _ToCaptureByValue(new string[0]);
         }
 
         /// <summary>
         ///     Promotes captured variables to function parameters.
         /// </summary>
         /// <param name = "keepByRef">The set of captured variables that should be kept captured by reference (i.e. not promoted to parameters)</param>
-        /// <returns>A list of expressions (get symbol) that should be added to the arguments list of any call to the lifted function.</returns>
-        internal Func<Parser, IList<IAstExpression>> ToCaptureByValue(IEnumerable<string> keepByRef)
+        /// <returns>A list of expressions (get self) that should be added to the arguments list of any call to the lifted function.</returns>
+        internal Func<Parser, IList<AstExpr>> _ToCaptureByValue(IEnumerable<string> keepByRef)
         {
             keepByRef = new HashSet<string>(keepByRef);
             var toPromote =
-                _outerVariables.Where(outer => !keepByRef.Contains(outer)).ToList();
+                _outerVariables.Except(keepByRef).ToList();
 
             //Declare locally, remove from outer variables and add as parameter to the end
-            var exprs = new List<Func<Parser, IAstExpression>>();
+            var exprs = new List<Func<Parser, AstExpr>>();
             foreach (var outer in toPromote)
             {
-                SymbolEntry sym;
-                if (Symbols.TryGetValue(outer, out sym))
-                    Symbols.Add(outer, sym);
+                Symbol sym;
+                if(Symbols.TryGet(outer, out sym))
+                    Symbols.Declare(outer, sym);
                 _outerVariables.Remove(outer);
                 Function.Parameters.Add(outer);
                 {
@@ -884,8 +681,15 @@ namespace Prexonite.Compiler
                     var byValOuter = outer;
                     exprs.Add(
                         p =>
-                            new AstGetSetSymbol(p, byValOuter,
-                                SymbolInterpretations.LocalObjectVariable));
+                            {
+                                var pos = p.GetPosition();
+                                return Factory.IndirectCall(pos,
+                                                            Factory.Reference(pos,
+                                                                              Loader.Cache.EntityRefs.GetCached(
+                                                                                  EntityRef.Variable.Local.Create(
+                                                                                      byValOuter))));
+                            }
+                        );
                 }
             }
 
@@ -916,7 +720,7 @@ namespace Prexonite.Compiler
         {
             var index = Function.Code.Count;
             if (ins.Id != null)
-                ins.Id = Loader.CacheString(ins.Id);
+                ins = ins.With(id: Loader.CacheString(ins.Id));
 
             Function.Code.Add(ins);
             SourceMapping.Add(index, position);
@@ -946,11 +750,28 @@ namespace Prexonite.Compiler
             Emit(position, new Instruction(code, arguments, id));
         }
 
+        [DebuggerStepThrough]
+        public void Emit(ISourcePosition position, OpCode code, string id, ModuleName modueName)
+        {
+            Emit(position, code, 0, id, modueName);
+        }
+
+        [DebuggerStepThrough]
+        public void Emit(ISourcePosition position, OpCode code, int arguments, string id, ModuleName modueName)
+        {
+            Emit(position, new Instruction(code,arguments,id,modueName));
+        }
+
         #endregion //Low Level
 
         #region High Level
 
         #region Constants
+
+        public void EmitConstant(ISourcePosition position, ModuleName moduleName)
+        {
+            Emit(position, Instruction.CreateConstant(moduleName));
+        }
 
         public void EmitConstant(ISourcePosition position, string value)
         {
@@ -1000,14 +821,18 @@ namespace Prexonite.Compiler
             Emit(position, Instruction.CreateStoreLocal(id));
         }
 
-        public void EmitLoadGlobal(ISourcePosition position, string id)
+        public void EmitLoadGlobal(ISourcePosition position, string id, ModuleName moduleName)
         {
-            Emit(position, Instruction.CreateLoadGlobal(id));
+            if (moduleName == Loader.ParentApplication.Module.Name)
+                moduleName = null;
+            Emit(position, Instruction.CreateLoadGlobal(id, moduleName));
         }
 
-        public void EmitStoreGlobal(ISourcePosition position, string id)
+        public void EmitStoreGlobal(ISourcePosition position, string id, ModuleName moduleName)
         {
-            Emit(position, Instruction.CreateStoreGlobal(id));
+            if (moduleName == Loader.ParentApplication.Module.Name)
+                moduleName = null;
+            Emit(position, Instruction.CreateStoreGlobal(id, moduleName));
         }
 
         #endregion
@@ -1088,15 +913,14 @@ namespace Prexonite.Compiler
         #region Functions/Commands
 
         [DebuggerStepThrough]
-        public void EmitFunctionCall(ISourcePosition position, int args, string id)
+        public void EmitFunctionCall(ISourcePosition position, int args,[NotNull] string id, [CanBeNull] ModuleName moduleName, bool justEffect = false)
         {
-            EmitFunctionCall(position, args, id, false);
-        }
+            if (id == null)
+                throw new ArgumentNullException("id");
 
-        [DebuggerStepThrough]
-        public void EmitFunctionCall(ISourcePosition position, int args, string id, bool justEffect)
-        {
-            Emit(position, Instruction.CreateFunctionCall(args, id, justEffect));
+            if(moduleName == Loader.ParentApplication.Module.Name)
+                moduleName = null;
+            Emit(position, Instruction.CreateFunctionCall(args, id, justEffect, moduleName));
         }
 
         [DebuggerStepThrough]
@@ -1154,8 +978,7 @@ namespace Prexonite.Compiler
 
         #region Jumps and Labels
 
-        public const string LabelSymbolPostfix = @"\label\assembler";
-        private readonly List<Instruction> _unresolvedInstructions = new List<Instruction>();
+        private readonly HashSet<int> _unresolvedInstructions = new HashSet<int>();
 
         public void EmitLeave(ISourcePosition position, int address)
         {
@@ -1211,9 +1034,14 @@ namespace Prexonite.Compiler
             else
             {
                 var ins = new Instruction(OpCode.leave, label);
-                _unresolvedInstructions.Add(ins);
+                _unresolvedInstructions.Add(NextAddress);
                 Emit(position, ins);
             }
+        }
+
+        protected int NextAddress
+        {
+            get { return Function.Code.Count; }
         }
 
         public void EmitJump(ISourcePosition position, string label)
@@ -1226,7 +1054,7 @@ namespace Prexonite.Compiler
             else
             {
                 var ins = Instruction.CreateJump(label);
-                _unresolvedInstructions.Add(ins);
+                _unresolvedInstructions.Add(NextAddress);
                 Emit(position, ins);
             }
         }
@@ -1241,7 +1069,7 @@ namespace Prexonite.Compiler
             else
             {
                 var ins = Instruction.CreateJumpIfTrue(label);
-                _unresolvedInstructions.Add(ins);
+                _unresolvedInstructions.Add(NextAddress);
                 Emit(position, ins);
             }
         }
@@ -1256,30 +1084,16 @@ namespace Prexonite.Compiler
             else
             {
                 var ins = Instruction.CreateJumpIfFalse(label);
-                _unresolvedInstructions.Add(ins);
+                _unresolvedInstructions.Add(NextAddress);
                 Emit(position, ins);
             }
         }
 
-        public void AddUnresolvedInstruction(Instruction jump)
-        {
-            _unresolvedInstructions.Add(jump);
-        }
+        private readonly SymbolTable<int> _labels = new SymbolTable<int>(); 
 
         public bool TryResolveLabel(string label, out int address)
         {
-            address = -1;
-            var labelNs = label + LabelSymbolPostfix;
-            SymbolEntry sym;
-            if (!LocalSymbols.TryGetValue(labelNs, out sym))
-                return false;
-
-            if (sym.Argument == null)
-                throw new PrexoniteException("The label symbol " + labelNs +
-                    " does not provide an adress.");
-
-            address = sym.Argument.Value;
-            return true;
+            return _labels.TryGetValue(label, out address);
         }
 
         [DebuggerStepThrough]
@@ -1291,7 +1105,7 @@ namespace Prexonite.Compiler
         }
 
         /// <summary>
-        ///     <para>Adds a new label entry to the symbol table and resolves any symbolic jumps to this label.</para>
+        ///     <para>Adds a new label entry to the self table and resolves any symbolic jumps to this label.</para>
         ///     <para>If the destination is an unconditional jump, it's destination address will 
         ///         used instead of the supplied address.</para>
         ///     <para>If the last instruction was a jump (conditional or unconditional) to this label, it 
@@ -1304,34 +1118,31 @@ namespace Prexonite.Compiler
         public void EmitLabel(ISourcePosition position, string label, int address)
         {
             //Safety check
-            var labelKey = label + LabelSymbolPostfix;
-            Debug.Assert(!Symbols.ContainsKey(labelKey),
-                string.Format("Error, label {0} defined multiple times in {1}, {2}", label, Function,
+            Debug.Assert(!_labels.ContainsKey(label),
+                String.Format("Error, label {0} defined multiple times in {1}, {2}", label, Function,
                     position.File));
 
             //resolve any unresolved jumps);
-            foreach (var ins in _unresolvedInstructions.ToArray())
+            var resolved = new List<int>();
+            foreach (var idx in _unresolvedInstructions)
             {
+                var ins = Code[idx];
                 if (Engine.StringsAreEqual(ins.Id, label))
                 {
                     //Found a matching unresolved 
 
-                    //if (partialResolve != null)
-                    //{
-                    //    ins.Id = jump.Id;
-                    //    //keep the instruction unresolved
-                    //}
                     //else
                     {
-                        ins.Arguments = address;
-                        _unresolvedInstructions.Remove(ins);
+                        Code[idx] = ins.With(arguments: address);
+                        resolved.Add(idx);
                     }
                 }
             }
 
-            //Add the label to the symbol table
-            Symbols[labelKey] =
-                new SymbolEntry(SymbolInterpretations.JumpLabel, address);
+            _unresolvedInstructions.ExceptWith(resolved);
+
+            //Add the label to the self table
+            _labels[label] = address;
         }
 
         [DebuggerStepThrough]
@@ -1351,11 +1162,11 @@ namespace Prexonite.Compiler
         /// </summary>
         /// <param name = "label">The name of the label to delete.</param>
         /// <remarks>
-        ///     This method just deletes the symbol table entry for the specified label and does not alter code in any way.
+        ///     This method just deletes the self table entry for the specified label and does not alter code in any way.
         /// </remarks>
         public void FreeLabel(string label)
         {
-            LocalSymbols.Remove(label + LabelSymbolPostfix);
+            _labels.Remove(label);
         }
 
         #endregion
@@ -1386,12 +1197,12 @@ namespace Prexonite.Compiler
                 if (Ast.Count == 0)
                     pos = new SourcePosition("-unknown-", -1, -1);
                 else
-                    pos = Ast[0];
-                _loader.ReportMessage(new ParseMessage(ParseMessageSeverity.Error,
-                    string.Format(
-                        "Parameter list of function {0} contains {1} at position {2}. The name {1} is reserved for the local variable holding the argument list.",
-                        _function.LogicalId, PFunction.ArgumentListId,
-                        _function.Parameters.IndexOf(PFunction.ArgumentListId)), pos));
+                    pos = Ast[0].Position;
+                _loader.ReportMessage(Message.Create(MessageSeverity.Error,
+                                             String.Format(
+                                                 Resources.CompilerTarget_ParameterNameReserved,
+                                                 _function.LogicalId, PFunction.ArgumentListId,
+                                                 _function.Parameters.IndexOf(PFunction.ArgumentListId)), pos,MessageClasses.ParameterNameReserved));
             }
 
             _DetermineSharedNames();
@@ -1406,18 +1217,48 @@ namespace Prexonite.Compiler
 
             _removeUnconditionalJumpSequences();
 
-            //nops used by try-catch-finally with degenerate finally clause
-            //#if !(DEBUG || Verbose)
-            //            _removeNop();
-            //#endif
+            //Do not remove nop instructions!
+            //nops used by try-catch-finally with degenerate finally clauses
 
 #if UseIndex
             if (Loader.Options.UseIndicesLocally)
                 _byIndex();
 #endif
 
+            _useInternalIdsWherePossible();
+
             if (Loader.Options.StoreSourceInformation)
                 SourceMapping.Store(Function);
+        }
+
+        private void _useInternalIdsWherePossible()
+        {
+            // This method looks at instructions that refer to entities using a module-qualified name.
+            //  If the module the target entity resides in is the same module as the one that contains
+            //  this function, we have an internal reference. 
+            // Internal references are much easier to handle for both the CIL compiler and the interpreter.
+            // We thus replace module-aware references with internal references.
+
+            var code = Function.Code;
+            for (var i = 0; i < code.Count; i++)
+            {
+                var inst = code[i];
+                switch (inst.OpCode)
+                {
+                    case OpCode.ldr_glob:
+                    case OpCode.ldr_func:
+                    case OpCode.ldglob:
+                    case OpCode.stglob:
+                    case OpCode.newclo:
+                    case OpCode.incglob:
+                    case OpCode.decglob:
+                    case OpCode.func:
+                    case OpCode.indglob:
+                        if (inst.ModuleName != null && inst.ModuleName.Equals(Loader.ParentApplication.Module.Name))
+                            code[i] = inst.WithModuleName(null);
+                        break;
+                }
+            }
         }
 
         internal void _DetermineSharedNames()
@@ -1438,7 +1279,7 @@ namespace Prexonite.Compiler
             if (_unresolvedInstructions.Count > 0)
                 throw new PrexoniteException
                     (
-                    "The instruction [ " + _unresolvedInstructions[0] +
+                    "The instruction [ " + Function.Code[_unresolvedInstructions.First()] +
                         " ] has not been resolved.");
         }
 
@@ -1475,8 +1316,7 @@ namespace Prexonite.Compiler
                             (
                             "Infinite loop in unconditional jump sequence detected.");
                     //Propagate address
-                    current.Arguments = target.Arguments;
-                    current.Id = target.Id;
+                    current = current.With(arguments: target.Arguments, id: target.Id);
 
                     //Prepare next step
                     if (_targetIsInRange(target, count))
@@ -1484,8 +1324,9 @@ namespace Prexonite.Compiler
                     else
                         break;
                 }
+
+                code[i] = current;
             }
-            return;
         }
 
         private static void _reset(bool[] addresses)
@@ -1608,7 +1449,6 @@ namespace Prexonite.Compiler
                     }
                 }
             }
-            return;
         }
 
         #endregion
@@ -1651,9 +1491,7 @@ namespace Prexonite.Compiler
                  */
                 if (condJ.IsConditionalJump)
                 {
-                    condJ.OpCode = Instruction.InvertJumpCondition(condJ.OpCode);
-                    condJ.Arguments = uncondJ.Arguments;
-                    condJ.Id = uncondJ.Id;
+                    code[i] = new Instruction(Instruction.InvertJumpCondition(condJ.OpCode), uncondJ.Arguments, uncondJ.Id);
                     RemoveInstructionAt(i + 1);
                 }
                 else
@@ -1661,26 +1499,14 @@ namespace Prexonite.Compiler
                     RemoveInstructionRange(i, 2);
                 }
             }
-
-            return;
         }
 
         #endregion
 
         #region Removal of nop's (only RELEASE) *not anymore*
 
-#if !(DEBUG || Verbose)
-        private void _removeNop()
-        {
-            var code = Code;
-            for (var i = 0; i < code.Count; i++)
-            {
-                var instruction = code[i];
-                if (instruction.OpCode == OpCode.nop)
-                    RemoveInstructionAt(i--);
-            }
-        }
-#endif
+        //Do not remove nop instructions!
+        //nops used by try-catch-finally with degenerate finally clauses
 
         #endregion
 
@@ -1694,7 +1520,7 @@ namespace Prexonite.Compiler
         private void _byIndex()
         {
             //Exclude the initialization function from this optimization
-            // as its symbol table keeps changing as more code files
+            // as its self table keeps changing as more code files
             // are loaded into the VM.
             if (Engine.StringsAreEqual(Function.Id, Application.InitializationId))
                 return;
@@ -1730,7 +1556,7 @@ namespace Prexonite.Compiler
                         replaceInt:
                         if (ins.Id == null)
                             throw new PrexoniteException(
-                                string.Format(
+                                String.Format(
                                     "Invalid instruction ({1}) in function {0}. Id missing.",
                                     Function.Id, ins));
                         if (!map.TryGetValue(ins.Id, out idx))
@@ -1745,7 +1571,6 @@ namespace Prexonite.Compiler
                         break;
                 }
             }
-            return;
         }
 
 #endif
@@ -1767,5 +1592,14 @@ namespace Prexonite.Compiler
                 Function.Id + "\\" + prefix +
                     (_nestedIdCounter++);
         }
+
+        public ModuleName ToInternalModule(ModuleName moduleName)
+        {
+            if (moduleName == Function.ParentApplication.Module.Name)
+                return null;
+            else
+                return moduleName;
+        }
+
     }
 }

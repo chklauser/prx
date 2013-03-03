@@ -1,0 +1,101 @@
+// Prexonite
+// 
+// Copyright (c) 2013, Christian Klauser
+// All rights reserved.
+// 
+// Redistribution and use in source and binary forms, with or without modification, 
+//  are permitted provided that the following conditions are met:
+// 
+//     Redistributions of source code must retain the above copyright notice, 
+//          this list of conditions and the following disclaimer.
+//     Redistributions in binary form must reproduce the above copyright notice, 
+//          this list of conditions and the following disclaimer in the 
+//          documentation and/or other materials provided with the distribution.
+//     The names of the contributors may be used to endorse or 
+//          promote products derived from this software without specific prior written permission.
+// 
+// THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND 
+//  ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED 
+//  WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED. 
+//  IN NO EVENT SHALL THE COPYRIGHT HOLDER OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT, 
+//  INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES 
+//  (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, 
+//  DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, 
+//  WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING 
+//  IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+
+function create_dependency_analysis(types, entities, ignoreUnknownDependencies)
+{
+    var keyType;
+    var valueType;
+    if(types is Prexonite::Types::PValueKeyValuePair)
+        kvp(keyType,valueType) = types;
+    
+    keyType ??= "System.String";
+    valueType ??= "Prexonite.DependencyEntity`2[$keyType,Prexonite.PValue]";
+    ignoreUnknownDependencies ??= true;
+    
+    return new Object<("Prexonite.DependencyAnalysis`2[$keyType,$valueType]")>(entities, ignoreUnknownDependencies);
+}
+
+function create_dependency_analysis\dynamic(entities, getName, getDependencies, ignoreUnknownDependencies)
+{
+    //debug_break;
+    
+    var ht = headtail(entities) ?? (null : null);
+    var firstEntity = ht[0];
+    var rest = ht[1];
+    
+    if(rest is null)
+        return create_dependency_analysis(null, [], ignoreUnknownDependencies);
+        
+    var firstName = getName.(firstEntity);
+    var keyType = firstName.GetType.FullName;
+
+    function create_entity(name, value) = ~Object<("Prexonite.DependencyEntity`1[$keyType]")>
+                                          .CreateDynamic(name, value.\boxed, getDependencies.\boxed);
+    
+    var valueType = "Prexonite.DependencyEntity`2[$keyType,Prexonite.PValue]";
+    var valuePType = asm(
+            ldloc valueType
+            newtype.1 Object
+        );
+    
+    var depEntities = ([create_entity(firstName, firstEntity)] >> append << (
+        rest >> map(e => create_entity(getName.(e),e))
+    )) ;//>> map(e => e.\boxed.ConvertTo(valuePType).self);
+    
+    return new Object<("Prexonite.DependencyAnalysis`2[$keyType,$valueType]")>(depEntities, ignoreUnknownDependencies ?? true);
+}
+
+function create_function_dependency_analysis(functions, ignoreUnknownDependencies)
+{
+    var newclo = Prexonite::OpCode.newclo~Int;
+    var ldr_func = Prexonite::OpCode.ldr_func~Int;
+    var func = Prexonite::OpCode.func~Int;
+
+    coroutine findDependencies(f)
+    {
+        foreach(var ins in f.Code)
+        {
+            var opCode = ins.OpCode~Int;
+            if(opCode == func or opCode == ldr_func or opCode == newclo)
+                yield ins.Id;
+        }
+    }
+    
+    return create_dependency_analysis\dynamic(functions ?? asm(ldr.app).Functions, f => f.Id, ->findDependencies, ignoreUnknownDependencies);
+}
+
+function node_self(n) = n.Subject.Value.self;
+
+coroutine all_nodes(groups)
+{
+    foreach(var g in groups)
+    {
+        foreach(var n in g)
+        {
+            yield n;
+        }
+    }
+}

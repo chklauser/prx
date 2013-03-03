@@ -1,6 +1,6 @@
 // Prexonite
 // 
-// Copyright (c) 2011, Christian Klauser
+// Copyright (c) 2013, Christian Klauser
 // All rights reserved.
 // 
 // Redistribution and use in source and binary forms, with or without modification, 
@@ -23,7 +23,6 @@
 //  DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, 
 //  WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING 
 //  IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
-
 using System;
 
 namespace Prexonite.Compiler.Ast
@@ -46,7 +45,7 @@ namespace Prexonite.Compiler.Ast
         {
         }
 
-        protected override void DoEmitCode(CompilerTarget target)
+        protected override void DoEmitCode(CompilerTarget target, StackSemantics stackSemantics)
         {
             //Jumps need special treatment for label resolution
 
@@ -55,16 +54,16 @@ namespace Prexonite.Compiler.Ast
                 switch (Instruction.OpCode)
                 {
                     case OpCode.jump:
-                        target.EmitJump(this, Instruction.Id);
+                        target.EmitJump(Position, Instruction.Id);
                         break;
                     case OpCode.jump_t:
-                        target.EmitJumpIfTrue(this, Instruction.Id);
+                        target.EmitJumpIfTrue(Position, Instruction.Id);
                         break;
                     case OpCode.jump_f:
-                        target.EmitJumpIfFalse(this, Instruction.Id);
+                        target.EmitJumpIfFalse(Position, Instruction.Id);
                         break;
                     case OpCode.leave:
-                        target.EmitLeave(this, Instruction.Id);
+                        target.EmitLeave(Position, Instruction.Id);
                         break;
                     default:
                         goto emitNormally;
@@ -75,7 +74,7 @@ namespace Prexonite.Compiler.Ast
 
             return;
             emitNormally:
-            target.Emit(this, Instruction);
+            target.Emit(Position, Instruction);
         }
 
         public override string ToString()

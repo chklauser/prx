@@ -1,6 +1,6 @@
 // Prexonite
 // 
-// Copyright (c) 2011, Christian Klauser
+// Copyright (c) 2013, Christian Klauser
 // All rights reserved.
 // 
 // Redistribution and use in source and binary forms, with or without modification, 
@@ -23,21 +23,20 @@
 //  DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, 
 //  WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING 
 //  IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
-
 using System;
 
 namespace Prexonite.Compiler.Ast
 {
-    public class AstExplicitGoTo : AstNode
+    public sealed class AstExplicitGoTo : AstNode
     {
-        public string Destination;
+        private readonly string _destination;
 
         public AstExplicitGoTo(string file, int line, int column, string destination)
             : base(file, line, column)
         {
             if (destination == null)
                 throw new ArgumentNullException("destination");
-            Destination = destination;
+            _destination = destination;
         }
 
         internal AstExplicitGoTo(Parser p, string destination)
@@ -45,14 +44,19 @@ namespace Prexonite.Compiler.Ast
         {
         }
 
-        protected override void DoEmitCode(CompilerTarget target)
+        public string Destination
         {
-            target.EmitJump(this, Destination);
+            get { return _destination; }
+        }
+
+        protected override void DoEmitCode(CompilerTarget target, StackSemantics stackSemantics)
+        {
+            target.EmitJump(Position, _destination);
         }
 
         public override string ToString()
         {
-            return "goto " + Destination;
+            return "goto " + _destination;
         }
     }
 }

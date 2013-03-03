@@ -1,6 +1,6 @@
 // Prexonite
 // 
-// Copyright (c) 2011, Christian Klauser
+// Copyright (c) 2013, Christian Klauser
 // All rights reserved.
 // 
 // Redistribution and use in source and binary forms, with or without modification, 
@@ -24,8 +24,13 @@
 //  WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING 
 //  IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
+test\plugins {};
 
-build does require(@"..\test.pxs");
+build
+{
+    var app = asm(ldr.app);
+    app.Meta[@"test\plugins"] = app.Meta[@"test\plugins"].AddToList([app.Module.Name.ToMetaEntry()]~Object<"Prexonite.MetaEntry[]">);
+}
 
 function test\execute_single_macro as execute_single_macro(ldr, testMacro)
 [Import {System, Prexonite, Prexonite::Types, Prexonite::Compiler, Prexonite::Compiler::Ast}]
@@ -33,40 +38,46 @@ function test\execute_single_macro as execute_single_macro(ldr, testMacro)
     var eng = ldr.ParentEngine;
     var app = ldr.ParentApplication;
     
-    var hostFuncId = @"test\run_single_macro\hostFuncId";
+    var hostFuncId = @"test\run_single_macro\hostFunc";
     var hostFunc = app.CreateFunction(hostFuncId);
     var funcTar;
     try
     {
         //Setup function hosting the macro invocation
         var fakeFile = @"psr\test\meta_macro.pxs\test\run_single_macro\anonymous";
-        var block = new ::AstBlock(fakeFile,-1,-1);
-        app.Functions.Add(hostFunc);
-        funcTar = ldr.CreateFunctionTarget(hostFunc, block);
+        funcTar = ldr.CreateFunctionTarget(hostFunc,null,null);
+        var block = funcTar.Ast;
         
         //Setup invocation of test macro
-        var invocation = new ::AstMacroInvocation(fakeFile,-1,-1,testMacro.Id,::SymbolInterpretations.Function);
+        var invocation = new ::AstExpand(
+            Prexonite::Compiler::NoSourcePosition.Instance,
+            ~Object<"Prexonite.Modular.EntityRef+Function">.Create(testMacro.Id, testMacro.ParentApplication.Module.Name),
+            Prexonite::Types::PCall.Get);
         block.Add(invocation);
         
         //Compile host function
-        block.EmitCode(funcTar);
+        block.EmitCode(funcTar, true, ::StackSemantics.Effect);
         funcTar.FinishTarget(); 
         //technically, finishing the host function isn't necessary (the test macro has already been executed)
         //  but some error might only be detected during finishing.
     }
     finally
     {
-        if(app.Functions.Contains(hostFuncId))
-            app.Functions.Remove(hostFuncId);
         foreach(var ct in ldr.FunctionTargets)
         {
-            if(app.Functions.Contains(ct.Function.Id))
-                app.Functions.Remove(ct.Function);
+            var funcId = ct.Function.Id;
+            if(app.Functions.Contains(funcId))
+                app.Functions.Remove(funcId);
+            if(app.Module.Functions.Contains(funcId))
+                app.Module.Functions.Remove(funcId);
+            println("Removed function $funcId from $(app.Module.Name).");
         }
     }
 }
 
-function test\run_single_macro as run_single_macro(testMacro)
+// Runs the specified macro in its own module (linked to the current application compound)
+// Will then unlink the temporary module, but return the loader used to execute the macro for inspection.
+function test\run_single_macro_inspect as run_single_macro_inspect(testMacro)
 [
     Add Prexonite to Imports;
     Add Prexonite::Types to Imports;
@@ -82,12 +93,37 @@ function test\run_single_macro as run_single_macro(testMacro)
     if(not testMacro.IsMacro)
         throw "test\\run_single_macro expects a macro function. $testMacro is not a macro.";
         
-    var app = asm(ldr.app);
+    var module = Prexonite::Modular::Module.Create(new module_name("meta_macro_host_module","0.0"));
+    var app = new ::Application(module);
     var eng = asm(ldr.eng);
-    
-    var ldr = new ::Loader(eng, app);
-    
-    execute_single_macro(ldr, testMacro);
+    var testApp = asm(ldr.app);
+
+    var ldr;
+    var oldCompCount = testApp.Compound.Count;
+    try {
+        ::Application.Link(testApp,app);    
+        ldr = new ::Loader(eng, app);    
+        execute_single_macro(ldr, testMacro);
+    } finally {
+        if(app.IsLinkedTo(testApp))
+            app.Unlink();
+    }
+
+    if(testApp.Compound.Count != oldCompCount)
+        throw "meta_macro did not successfully restore the original application compound.";
+
+    return ldr;
+}
+
+function test\run_single_macro as run_single_macro(testMacro)
+[
+    Add Prexonite to Imports;
+    Add Prexonite::Types to Imports;
+    Add Prexonite::Compiler to Imports;
+    Add Prexonite::Compiler::Ast to Imports;
+]
+{
+    var ldr = run_single_macro_inspect(testMacro);
     
     ldr.Warnings >> each(println(?));
     if(ldr.Errors.Count > 0)
@@ -113,5 +149,9 @@ function test\macro_filter as macro_filter(testFunc)
 }
 
 {
+    println(@"::>>INIT psr\test\meta_macro.pxs");
+    debug;
     test_filters[] = macro_filter(?);
+    println("FILTERS ",test_filters);
+    println(@"::<<END INIT psr\test\meta_macro.pxs");
 }

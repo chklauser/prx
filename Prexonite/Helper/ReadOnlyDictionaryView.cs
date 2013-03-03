@@ -1,6 +1,6 @@
 ﻿// Prexonite
 // 
-// Copyright (c) 2011, Christian Klauser
+// Copyright (c) 2013, Christian Klauser
 // All rights reserved.
 // 
 // Redistribution and use in source and binary forms, with or without modification, 
@@ -23,17 +23,17 @@
 //  DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, 
 //  WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING 
 //  IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
-
 using System;
 using System.Collections;
 using System.Collections.Generic;
 
-namespace Prexonite.Helper
+namespace Prexonite
 {
     /// <summary>
     ///     Provides a read-only view onto a symbol table. Does not protect the contents of the symbol table.
     /// </summary>
-    /// <typeparam name = "TValue">The type of values stored in the symbol table.</typeparam>
+    /// <typeparam name = "TValue">The type of values stored in the table.</typeparam>
+    /// <typeparam name="TKey">The type of keys used to access values in the table. </typeparam>
     public class ReadOnlyDictionaryView<TKey, TValue> : IDictionary<TKey, TValue>
     {
         private readonly IDictionary<TKey, TValue> _table;

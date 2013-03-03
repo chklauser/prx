@@ -1,6 +1,6 @@
 // Prexonite
 // 
-// Copyright (c) 2011, Christian Klauser
+// Copyright (c) 2013, Christian Klauser
 // All rights reserved.
 // 
 // Redistribution and use in source and binary forms, with or without modification, 
@@ -23,7 +23,6 @@
 //  DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, 
 //  WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING 
 //  IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
-
 using System;
 using System.Diagnostics;
 using System.Threading;
@@ -32,6 +31,7 @@ using Prexonite.Compiler;
 using Prexonite.Compiler.Cil;
 using Prexonite.Compiler.Macro.Commands;
 using Prexonite.Concurrency;
+using Prexonite.Modular;
 using Prexonite.Types;
 
 namespace Prexonite.Commands.Concurrency
@@ -129,7 +129,7 @@ namespace Prexonite.Commands.Concurrency
         #region Partial application via call\star
 
         private readonly PartialCallWrapper _partial = new PartialCallWrapper(
-            Engine.Call_AsyncAlias, Alias, SymbolInterpretations.Command);
+            Engine.Call_AsyncAlias, EntityRef.Command.Create(Alias));
 
         public PartialCallWrapper Partial
         {
