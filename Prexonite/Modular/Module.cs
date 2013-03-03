@@ -16,6 +16,9 @@ namespace Prexonite.Modular
     [DebuggerDisplay("module {Name}")]
     public abstract class Module : IHasMetaTable, IMetaFilter
     {
+        public const string NameKey = Application.NameKey;
+        public const string ReferencesKey = "references";
+
         public abstract ModuleName Name { get; }
 
         public abstract MetaTable Meta { get; }

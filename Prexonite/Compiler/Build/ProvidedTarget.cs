@@ -16,15 +16,21 @@ namespace Prexonite.Compiler.Build
     {
         [NotNull]
         private readonly DependencySet _dependencies;
+
         [NotNull]
         private readonly Module _module;
+
         [CanBeNull]
         private readonly SymbolStore _symbols;
+
         [CanBeNull]
         private readonly List<IResourceDescriptor> _resources;
 
         [CanBeNull]
-        private readonly ICollection<Message> _messages;
+        private readonly List<Message> _messages;
+
+        [CanBeNull]
+        private readonly IReadOnlyList<Message> _buildMessages;
 
         [CanBeNull]
         private readonly Exception _exception;
@@ -36,41 +42,54 @@ namespace Prexonite.Compiler.Build
             get { return String.Format("ProvidedTarget({0}) {1}", Name, IsSuccessful ? "successful" : "errors detected"); }
         }
 
-        public ProvidedTarget(Module module, 
-            IEnumerable<ModuleName> dependencies = null, 
-            IEnumerable<KeyValuePair<string,Symbol>> symbols = null, 
+        public ProvidedTarget(Module module,
+            IEnumerable<ModuleName> dependencies = null,
+            IEnumerable<KeyValuePair<string, Symbol>> symbols = null,
             IEnumerable<IResourceDescriptor> resources = null,
             IEnumerable<Message> messages = null,
+            IEnumerable<Message> buildMessages = null,
             Exception exception = null)
         {
             _module = module;
             _dependencies = new DependencySet(module.Name);
-            if(dependencies != null)
+            if (dependencies != null)
                 _dependencies.AddRange(dependencies);
             _symbols = SymbolStore.Create();
-            if(symbols != null)
+            if (symbols != null)
                 foreach (var entry in symbols)
                     _symbols.Declare(entry.Key, entry.Value);
             _resources = new List<IResourceDescriptor>();
-            if(resources != null)
+            if (resources != null)
                 _resources.AddRange(resources);
 
             _exception = exception;
 
-            if(messages != null)
+            if (messages != null)
                 _messages = new List<Message>(messages);
+
+            if (buildMessages != null)
+            {
+                _buildMessages = new List<Message>(buildMessages);
+
+                if (_messages == null)
+                    _messages = new List<Message>(_buildMessages);
+                else
+                    _messages.AddRange(_buildMessages);
+                
+            }
+
             _isSuccessful = exception == null &&
                             (_messages == null || _messages.All(m => m.Severity != MessageSeverity.Error));
         }
 
         public ProvidedTarget(ITargetDescription description, ITarget result)
-            : this(result.Module,description.Dependencies,result.Symbols,result.Resources,result.Messages,result.Exception)
+            : this(result.Module, description.Dependencies, result.Symbols, result.Resources, result.Messages, description.BuildMessages, result.Exception)
         {
         }
 
         #region Implementation of ITargetDescription
 
-        public ISet<ModuleName> Dependencies
+        public IReadOnlyCollection<ModuleName> Dependencies
         {
             get { return _dependencies; }
         }
@@ -82,7 +101,7 @@ namespace Prexonite.Compiler.Build
         }
 
         [CanBeNull]
-        public ICollection<IResourceDescriptor> Resources
+        public IReadOnlyCollection<IResourceDescriptor> Resources
         {
             get { return _resources; }
         }
@@ -93,10 +112,14 @@ namespace Prexonite.Compiler.Build
             get { return _symbols; }
         }
 
-        [NotNull]
         public ModuleName Name
         {
             get { return _module.Name; }
+        }
+
+        public IReadOnlyList<Message> BuildMessages
+        {
+            get { return _buildMessages ?? DefaultModuleTarget.NoMessages; }
         }
 
         [NotNull]
@@ -104,16 +127,16 @@ namespace Prexonite.Compiler.Build
         {
             var tcs = new TaskCompletionSource<ITarget>();
             tcs.SetResult(this);
-            Plan.Trace.TraceEvent(TraceEventType.Information, 0, "Used provided target {0}.",this);
+            Plan.Trace.TraceEvent(TraceEventType.Information, 0, "Used provided target {0}.", this);
             return tcs.Task;
         }
 
         #region Implementation of ITarget
 
         [NotNull]
-        public ICollection<Message> Messages
+        public IReadOnlyList<Message> Messages
         {
-            get { return _messages ?? DefaultModuleTarget.NoMessages; }
+            get { return (IReadOnlyList<Message>)_messages ?? DefaultModuleTarget.NoMessages; }
         }
 
         [CanBeNull]

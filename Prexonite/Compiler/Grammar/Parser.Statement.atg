@@ -284,11 +284,7 @@ VariableDeclaration<out AstGetSet complex>
                                     else if(isUnbound)
                                     {
                                         // Wrap variable access in NewDecl
-                                        var newDecl = new AstGetSetNewDecl(this)
-													    {
-														    Expression = complex,
-														    Id = physicalId
-													    };
+                                        var newDecl = new AstGetSetNewDecl(position,physicalId,complex);
                                         complex = newDecl;
                                     }
                                 .)

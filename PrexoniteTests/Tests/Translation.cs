@@ -36,7 +36,6 @@ using Prexonite.Modular;
 
 namespace PrexoniteTests.Tests
 {
-    [TestFixture, Explicit]
     public class Translation : VMTestsBase
     {
         [Test]

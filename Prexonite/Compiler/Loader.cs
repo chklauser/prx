@@ -45,7 +45,9 @@ using Prexonite.Compiler.Internal;
 using Prexonite.Compiler.Macro;
 using Prexonite.Compiler.Macro.Commands;
 using Prexonite.Compiler.Symbolic;
+using Prexonite.Internal;
 using Prexonite.Modular;
+using Prexonite.Properties;
 using Prexonite.Types;
 using Debug = System.Diagnostics.Debug;
 

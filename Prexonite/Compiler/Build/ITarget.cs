@@ -17,7 +17,7 @@ namespace Prexonite.Compiler.Build
         }
 
         [PublicAPI]
-        ICollection<IResourceDescriptor> Resources
+        IReadOnlyCollection<IResourceDescriptor> Resources
         {
             get;
         }
@@ -36,7 +36,7 @@ namespace Prexonite.Compiler.Build
 
         //TODO: replace with IReadOnlyCollection in .NET 4.5
         [PublicAPI]
-        ICollection<Message> Messages { get; }
+        IReadOnlyList<Message> Messages { get; }
 
         [PublicAPI]
         Exception Exception { get; }

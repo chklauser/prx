@@ -1,113 +1,56 @@
-// Prexonite
-// 
-// Copyright (c) 2011, Christian Klauser
-// All rights reserved.
-// 
-// Redistribution and use in source and binary forms, with or without modification, 
-//  are permitted provided that the following conditions are met:
-// 
-//     Redistributions of source code must retain the above copyright notice, 
-//          this list of conditions and the following disclaimer.
-//     Redistributions in binary form must reproduce the above copyright notice, 
-//          this list of conditions and the following disclaimer in the 
-//          documentation and/or other materials provided with the distribution.
-//     The names of the contributors may be used to endorse or 
-//          promote products derived from this software without specific prior written permission.
-// 
-// THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND 
-//  ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED 
-//  WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED. 
-//  IN NO EVENT SHALL THE COPYRIGHT HOLDER OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT, 
-//  INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES 
-//  (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, 
-//  DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, 
-//  WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING 
-//  IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
-
 using System;
-using System.Collections.Generic;
 using System.Diagnostics;
 using System.Linq;
 using System.Text;
+using JetBrains.Annotations;
 using Prexonite.Types;
 
 namespace Prexonite.Compiler.Ast
 {
-    public abstract class AstGetSet : AstExpr,
-                                      IAstHasExpressions
+    public abstract class AstGetSet : AstExpr, IAstHasExpressions
     {
-        private readonly List<AstExpr> _arguments = new List<AstExpr>();
-        private readonly ArgumentsProxy _proxy;
-
-        public ArgumentsProxy Arguments
+        protected AstGetSet([NotNull] ISourcePosition position) : base(position)
         {
-            [DebuggerNonUserCode]
-            get { return _proxy; }
         }
 
-        #region IAstHasExpressions Members
-
-        public virtual AstExpr[] Expressions
-        {
-            get { return Arguments.ToArray(); }
-        }
-
-        private PCall _call;
+        [NotNull]
+        public abstract ArgumentsProxy Arguments { [DebuggerNonUserCode] get; }
 
         /// <summary>
         ///     <para>Indicates whether this node uses get or set syntax</para>
         ///     <para>(set syntax involves an equal sign (=); get syntax does not)</para>
         /// </summary>
-        public virtual PCall Call
+        public abstract PCall Call { get; set; }
+
+        [NotNull]
+        public virtual AstExpr[] Expressions
         {
-            get { return _call; }
-            set { _call = value; }
+            get { return Arguments.ToArray(); }
         }
 
-        #endregion
-
-        protected AstGetSet(string file, int line, int column, PCall call)
-            : this(new SourcePosition(file,line,column), call)
+        public virtual int DefaultAdditionalArguments
         {
+            get { return 0; }
         }
-
-        protected AstGetSet(ISourcePosition position, PCall call)
-            : base(position)
-        {
-            _call = call;
-            _proxy = new ArgumentsProxy(_arguments);
-        }
-
-        internal AstGetSet(Parser p, PCall call)
-            : this(p.scanner.File, p.t.line, p.t.col, call)
-        {
-        }
-
-        #region AstExpr Members
 
         public override bool TryOptimize(CompilerTarget target, out AstExpr expr)
         {
             expr = null;
 
             //Optimize arguments
-            for (var i = 0; i < _arguments.Count; i++)
+            for (var i = 0; i < Arguments.Count; i++)
             {
-                var arg = _arguments[i];
+                var arg = Arguments[i];
                 if (arg == null)
                     throw new PrexoniteException(
                         "Invalid (null) argument in GetSet node (" + ToString() +
-                            ") detected at position " + _arguments.IndexOf(arg) + ".");
+                            ") detected at position " + Arguments.IndexOf(arg) + ".");
                 var oArg = _GetOptimizedNode(target, arg);
                 if (!ReferenceEquals(oArg, arg))
-                    _arguments[i] = oArg;
+                    Arguments[i] = oArg;
             }
 
             return false;
-        }
-
-        public virtual int DefaultAdditionalArguments
-        {
-            get { return 0; }
         }
 
         protected void EmitArguments(CompilerTarget target)
@@ -157,23 +100,12 @@ namespace Prexonite.Compiler.Ast
             }
         }
 
+        #region AstExpr Members
+
         protected abstract void EmitGetCode(CompilerTarget target, StackSemantics stackSemantics);
         protected abstract void EmitSetCode(CompilerTarget target);
 
         #endregion
-
-        public abstract AstGetSet GetCopy();
-
-        public override string ToString()
-        {
-            string typeName;
-            return String.Format(
-                "{0}: {1}",
-                Enum.GetName(typeof (PCall), Call).ToLowerInvariant(),
-                (typeName = GetType().Name).StartsWith("AstGetSet")
-                    ? typeName.Substring(9)
-                    : typeName);
-        }
 
         protected string ArgumentsToString()
         {
@@ -201,13 +133,27 @@ namespace Prexonite.Compiler.Ast
         /// <param name = "target">The object that shall reveice the values from this object.</param>
         protected virtual void CopyBaseMembers(AstGetSet target)
         {
-            target._arguments.AddRange(_arguments);
+            target.Arguments.AddRange(Arguments);
         }
 
         public override bool CheckForPlaceholders()
         {
             return this is IAstPartiallyApplicable &&
                 (base.CheckForPlaceholders() || Arguments.Any(AstPartiallyApplicable.IsPlaceholder));
+        }
+
+        public abstract AstGetSet GetCopy();
+
+        public override string ToString()
+        {
+            string typeName;
+            var name = Enum.GetName(typeof (PCall), Call);
+            return String.Format(
+                "{0}: {1}",
+                name == null ? "-" : name.ToLowerInvariant(),
+                (typeName = GetType().Name).StartsWith("AstGetSet")
+                    ? typeName.Substring(9)
+                    : typeName);
         }
     }
 }

@@ -39,15 +39,9 @@ using System;
 using System.Diagnostics;
 using System.Globalization;
 using JetBrains.Annotations;
+using Prexonite.Internal;
+using Prexonite.Compiler;
 -->namespace
-
-internal interface IScanner
-{
-    Token Scan();
-    Token Peek();
-    void ResetPeek();
-    string File { get; }
-}
 
 [System.Runtime.CompilerServices.CompilerGenerated]
 internal partial class Parser {
@@ -56,7 +50,7 @@ internal partial class Parser {
 	const bool x = false;
 	const int minErrDist = 2;
 	
-	internal readonly IScanner scanner;
+	internal readonly Prexonite.Internal.IScanner scanner;
 	internal readonly Errors  errors;
 
 	internal Token t;    // last recognized token
@@ -66,7 +60,7 @@ internal partial class Parser {
 -->declarations
 
     [DebuggerNonUserCode]
-	private Parser(IScanner scanner) {
+	private Parser(Prexonite.Internal.IScanner scanner) {
 		this.scanner = scanner;
 		errors = new Errors();
 		errors.parentParser = this;

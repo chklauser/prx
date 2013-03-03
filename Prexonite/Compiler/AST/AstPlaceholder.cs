@@ -36,7 +36,7 @@ namespace Prexonite.Compiler.Ast
     /// <summary>
     ///     AST node that represents a partial application placeholder ('?'). Optionally has an index assigned (e.g., '?5')
     /// </summary>
-    public class AstPlaceholder : AstGetSet
+    public class AstPlaceholder : AstGetSetImplBase
     {
         public const int MaxPlaceholderIndex = 127;
 

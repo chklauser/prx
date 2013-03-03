@@ -24,42 +24,61 @@
 //  WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING 
 //  IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
+using System;
 using System.IO;
 using System.Text;
+using System.Threading.Tasks;
+using JetBrains.Annotations;
 using Prexonite.Compiler.Build.Internal;
 
 namespace Prexonite.Compiler.Build
 {
     public static class Source
     {
-         public static ISource FromReader(TextReader reader)
-         {
-             return new ReaderSource(reader);
-         }
+        [NotNull]
+        public static ISource FromReader([NotNull] TextReader reader)
+        {
+            return new ReaderSource(reader);
+        }
 
-        public static ISource FromString(string source)
+        [NotNull]
+        public static ISource FromString([NotNull] string source)
         {
             return new StringSource(source);
         }
 
-        public static ISource FromStream(Stream stream, Encoding encoding)
+        [NotNull]
+        public static ISource FromStream([NotNull] Stream stream, [NotNull] Encoding encoding)
         {
             return FromStream(stream, encoding, true);
         }
 
-        public static ISource FromStream(Stream stream, Encoding encoding, bool forceSingleUse)
+        [NotNull]
+        public static ISource FromStream([NotNull] Stream stream, [NotNull] Encoding encoding, bool forceSingleUse)
         {
             return new StreamSource(stream, encoding, forceSingleUse);
         }
 
-        public static ISource FromFile(FileInfo file, Encoding encoding)
+        [NotNull]
+        public static ISource FromFile([NotNull] FileInfo file, [NotNull] Encoding encoding)
         {
             return new FileSource(file, encoding);
         }
 
-        public static ISource FromFile(string path, Encoding encoding)
+        [NotNull]
+        public static ISource FromFile([NotNull] string path, [NotNull] Encoding encoding)
         {
             return FromFile(new FileInfo(path), encoding);
+        }
+
+        [NotNull]
+        public static async Task<ISource> CacheInMemoryAsync([NotNull] this ISource source)
+        {
+            TextReader reader;
+            if(!source.TryOpen(out reader))
+                throw new InvalidOperationException("Unable to open source " + source + " for reading.");
+            var contents = await reader.ReadToEndAsync();
+            return FromString(contents);
         }
     }
 }

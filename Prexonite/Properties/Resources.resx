@@ -390,4 +390,10 @@
     <data name="AstFactoryBase__resolveImplementation_LValueExpected" xml:space="preserve">
     <value>Expected {0} to be implemented as an LValue.</value>
   </data>
+    <data name="SelfAssemblingPlan_RefSpecMustHaveSource" xml:space="preserve">
+    <value>The Source field of the refSpec parameter must not be null.</value>
+  </data>
+    <data name="SelfAssemblingPlan_RefSepcMustHaveResolvedPathForPreflightOrder" xml:space="preserve">
+    <value>A preflight parse request must come with a resolved path.</value>
+  </data>
 </root>

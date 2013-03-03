@@ -154,6 +154,7 @@
     <Compile Include="Compiler\Ast\AstExpr.cs" />
     <Compile Include="Compiler\Ast\AstFactoryBase.cs" />
     <Compile Include="Compiler\Ast\AstFactoryBridge.cs" />
+    <Compile Include="Compiler\Ast\AstGetSet.cs" />
     <Compile Include="Compiler\Ast\AstLoopBlock.cs" />
     <Compile Include="Compiler\Ast\AstPostExpression.cs" />
     <Compile Include="Compiler\Ast\AstReference.cs" />
@@ -171,13 +172,15 @@
     <Compile Include="Compiler\Build\Internal\DefaultBuildEnvironment.cs" />
     <Compile Include="Compiler\Build\Internal\DependencySet.cs" />
     <Compile Include="Compiler\Build\Internal\FileSource.cs" />
+    <Compile Include="Compiler\Build\Internal\ManualTargetDescription.cs" />
     <Compile Include="Compiler\Build\Internal\ReaderSource.cs" />
+    <Compile Include="Compiler\Build\Internal\SelfAssemblingPlan.cs" />
     <Compile Include="Compiler\Build\Internal\StreamSource.cs" />
     <Compile Include="Compiler\Build\Internal\StringSource.cs" />
     <Compile Include="Compiler\Build\Internal\TaskMap.cs" />
+    <Compile Include="Compiler\Build\ISelfAssemblingPlan.cs" />
     <Compile Include="Compiler\Build\ISource.cs" />
     <Compile Include="Compiler\Build\ManualPlan.cs" />
-    <Compile Include="Compiler\Build\ManualTargetDescription.cs" />
     <Compile Include="Compiler\Build\Plan.cs" />
     <Compile Include="Compiler\Build\ITargetDescription.cs" />
     <Compile Include="Compiler\Build\ProvidedTarget.cs" />
@@ -320,7 +323,7 @@
     <Compile Include="Compiler\Ast\AstConstant.cs" />
     <Compile Include="Compiler\Ast\AstForLoop.cs" />
     <Compile Include="Compiler\Ast\AstGetException.cs" />
-    <Compile Include="Compiler\Ast\AstGetSet.cs" />
+    <Compile Include="Compiler\Ast\AstGetSetImplBase.cs" />
     <Compile Include="Compiler\Ast\AstBinaryOperator.cs" />
     <Compile Include="Compiler\Ast\AstGetSetMemberAccess.cs" />
     <Compile Include="Compiler\Ast\AstGetSetNewDecl.cs" />
@@ -398,9 +401,13 @@
     <Compile Include="Helper\Extensions.cs" />
     <Compile Include="Helper\IDependent.cs" />
     <Compile Include="Helper\INamed.cs" />
+    <Compile Include="Internal\AdHocTaskCache.cs" />
+    <Compile Include="Internal\IScanner.cs" />
     <Compile Include="Internal\MetaTableImpl.cs" />
+    <Compile Include="Internal\Parser.cs" />
     <Compile Include="Internal\PFunctionTableImpl.cs" />
     <Compile Include="Internal\ReSharperAttributes.cs" />
+    <Compile Include="Internal\Scanner.cs" />
     <Compile Include="Modular\EntityRef.cs" />
     <Compile Include="Modular\FunctionDeclaration.cs" />
     <Compile Include="Modular\IResourceDescriptor.cs" />
@@ -428,8 +435,6 @@
     <Compile Include="IndirectCallContext.cs" />
     <Compile Include="Instruction.cs" />
     <Compile Include="Internal\Parser.Code.cs" />
-    <Compile Include="Internal\Parser.cs" />
-    <Compile Include="Internal\Scanner.cs" />
     <Compile Include="IStackAware.cs" />
     <Compile Include="NullContext.cs" />
     <Compile Include="PFunction.cs" />
@@ -578,11 +583,11 @@
   <PropertyGroup>
     <!--<UseHostCompilerIfAvailable>False</UseHostCompilerIfAvailable> -->
     <BuildDependsOn>
-	    ExpressionParser;
-	    PrexoniteScanner;
-	    PrexoniteParser;
-	    $(BuildDependsOn);
-	</BuildDependsOn>
+        ExpressionParser;
+        PrexoniteScanner;
+        PrexoniteParser;
+        $(BuildDependsOn);
+    </BuildDependsOn>
     <ToolsDirectory>$(ProjectDir)..\Tools</ToolsDirectory>
     <FramesDirectory>$(ToolsDirectory)</FramesDirectory>
     <PrexoniteScannerDefinition>Prexonite.lex</PrexoniteScannerDefinition>
@@ -596,6 +601,7 @@
   </PropertyGroup>
   <!-- PType Expression Parser Target -->
   <Target Name="ExpressionParser">
+    <Message Text="Building type expression parser." />
     <PxCoco Grammar="$(PTypeExpressionGrammarDefinition)" Namespace="Prexonite.Internal" FramesDirectory="$(FramesDirectory)" DirectDebug="$(DirectDebug)">
       <Output TaskParameter="OutputFiles" ItemName="PTypeExpressionParserFiles" />
     </PxCoco>
@@ -619,9 +625,5 @@
   </Target>
   <Target Name="PrexoniteScanner">
     <Exec Command="&quot;$(ToolsDirectory)\csflex.exe&quot; --csharp --nested-default-skeleton --nobak $(PrexoniteScannerDefinition)" WorkingDirectory="$(ProjectDir)\Compiler" />
-  </Target>
-  <!-- PxCoco Tool Target -->
-  <Target Name="PxCocoTool" Condition="!Exists('$(PxCoco)')">
-    <MSBuild Projects="$(ProjectDir)..\PxCoco\PxCoco.csproj" Targets="Build" />
   </Target>
 </Project>

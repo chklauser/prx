@@ -36,7 +36,7 @@ namespace Prexonite.Compiler.Build
     public sealed class TargetDescriptionSet 
         : ICollection<ITargetDescription>
     {
-        private readonly System.Collections.Concurrent.ConcurrentDictionary<ModuleName, ITargetDescription> _table = new ConcurrentDictionary<ModuleName, ITargetDescription>();
+        private readonly ConcurrentDictionary<ModuleName, ITargetDescription> _table = new ConcurrentDictionary<ModuleName, ITargetDescription>();
 
         private TargetDescriptionSet()
         {

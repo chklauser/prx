@@ -52,18 +52,19 @@ namespace Prexonite.Compiler.Build
         }
 
         /// <summary>
-        /// Creates an <see cref="ITargetDescription"/> from a <see cref="TextReader"/> with manually specified dependencies.
+        /// Creates an <see cref="ITargetDescription"/> from an <see cref="ISource"/> with manually specified dependencies.
         /// </summary>
         /// <param name="moduleName">The name of module to be compiled.6</param>
         /// <param name="source">The source code of the module.</param>
         /// <param name="fileName">The file name to store in symbols derived from that reader.</param>
         /// <param name="dependencies">The set of modules that need to be linked with this target.</param>
+        /// <param name="buildMessages">Messages associated with this target description. Will automatically be part of the resulting target.</param>
         /// <returns></returns>
         /// <exception cref="ArgumentException">Dependencies must not contain multiple versions of the same module.</exception>
         /// <remarks>You will have to make sure that this plan contains a target description for each dependency before this target description can be built.</remarks>
-        public ITargetDescription CreateDescription(ModuleName moduleName, ISource source, string fileName, IEnumerable<ModuleName> dependencies)
+        public ITargetDescription CreateDescription(ModuleName moduleName, ISource source, string fileName, IEnumerable<ModuleName> dependencies, IEnumerable<Message> buildMessages = null)
         {
-            return new ManualTargetDescription(moduleName, source, fileName, dependencies);
+            return new ManualTargetDescription(moduleName, source, fileName, dependencies, buildMessages);
         }
 
         protected void EnsureIsResolved(ITargetDescription description)

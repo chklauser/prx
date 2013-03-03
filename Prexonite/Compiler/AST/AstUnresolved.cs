@@ -30,7 +30,7 @@ using Prexonite.Types;
 
 namespace Prexonite.Compiler.Ast
 {
-    public class AstUnresolved : AstGetSet
+    public class AstUnresolved : AstGetSetImplBase
     {
         public AstUnresolved(string file, int line, int column, string id)
             : base(file, line, column, PCall.Get)

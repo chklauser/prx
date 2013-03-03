@@ -308,7 +308,7 @@ namespace Prexonite.Modular
 
             public override event EventHandler<FunctionIdChangingEventArgs> IdChanging;
 
-            protected void OnIdChanging(string newId)
+            private void _onIdChanging(string newId)
             {
                 var idChangingHandler = IdChanging;
                 if (idChangingHandler != null)

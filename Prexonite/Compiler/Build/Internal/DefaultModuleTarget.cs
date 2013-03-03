@@ -12,7 +12,7 @@ namespace Prexonite.Compiler.Build.Internal
     internal class DefaultModuleTarget : ITarget
     {
         [NotNull]
-        private static readonly ICollection<IResourceDescriptor> _emptyResourceCollection =
+        private static readonly IReadOnlyCollection<IResourceDescriptor> _emptyResourceCollection =
             new IResourceDescriptor[0];
 
         [NotNull]
@@ -79,7 +79,7 @@ namespace Prexonite.Compiler.Build.Internal
             get { return _module; }
         }
 
-        public ICollection<IResourceDescriptor> Resources
+        public IReadOnlyCollection<IResourceDescriptor> Resources
         {
             get { return _emptyResourceCollection; }
         }
@@ -97,9 +97,9 @@ namespace Prexonite.Compiler.Build.Internal
         internal static readonly Message[] NoMessages = new Message[0];
 
         [NotNull]
-        public ICollection<Message> Messages
+        public IReadOnlyList<Message> Messages
         {
-            get { return (ICollection<Message>)_messages ?? NoMessages;}
+            get { return (IReadOnlyList<Message>)_messages ?? NoMessages;}
         }
 
         public Exception Exception

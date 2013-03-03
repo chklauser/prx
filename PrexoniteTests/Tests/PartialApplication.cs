@@ -976,22 +976,4 @@ function main(a,c,d)
             BoolTable4(main, p1, p0);
         }
     }
-
-    [TestFixture, Explicit]
-    public class PartialApplicationCil : PartialApplication
-    {
-        public PartialApplicationCil()
-        {
-            CompileToCil = true;
-        }
-    }
-
-    [TestFixture, Explicit]
-    public class PartialApplicationInterpreted : PartialApplication
-    {
-        public PartialApplicationInterpreted()
-        {
-            CompileToCil = false;
-        }
-    }
 }

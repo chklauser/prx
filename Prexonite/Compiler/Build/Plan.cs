@@ -35,7 +35,12 @@ namespace Prexonite.Compiler.Build
 
         public static IPlan CreateDefault()
         {
-            return new ManualPlan();
+            return new IncrementalPlan();
+        }
+
+        public static ISelfAssemblingPlan CreateSelfAssembling()
+        {
+            return new SelfAssemblingPlan();
         }
     }
 }

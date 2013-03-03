@@ -31,7 +31,7 @@ using NoDebug = System.Diagnostics.DebuggerNonUserCodeAttribute;
 
 namespace Prexonite.Compiler.Ast
 {
-    public class AstGetSetStatic : AstGetSet, IAstPartiallyApplicable
+    public class AstGetSetStatic : AstGetSetImplBase, IAstPartiallyApplicable
     {
         public AstTypeExpr TypeExpr { get; private set; }
         private readonly string _memberId;
@@ -125,7 +125,7 @@ namespace Prexonite.Compiler.Ast
 
         public override AstGetSet GetCopy()
         {
-            AstGetSet copy = new AstGetSetStatic(File, Line, Column, Call, TypeExpr, _memberId);
+            var copy = new AstGetSetStatic(File, Line, Column, Call, TypeExpr, _memberId);
             CopyBaseMembers(copy);
             return copy;
         }
@@ -146,8 +146,9 @@ namespace Prexonite.Compiler.Ast
 
         public override string ToString()
         {
+            string name = Enum.GetName(typeof (PCall), Call);
             return string.Format("{0} {1}::{2}({3})",
-                Enum.GetName(typeof (PCall), Call).ToLowerInvariant(), TypeExpr, MemberId, Arguments);
+                name == null ? "-" : name.ToLowerInvariant(), TypeExpr, MemberId, Arguments);
         }
     }
 }

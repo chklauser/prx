@@ -31,7 +31,7 @@ using Prexonite.Types;
 
 namespace Prexonite.Compiler.Ast
 {
-    public class AstExpand : AstGetSet
+    public class AstExpand : AstGetSetImplBase
     {
         private readonly EntityRef _entity;
 

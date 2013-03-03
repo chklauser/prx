@@ -43,7 +43,7 @@ partial
 %char
 %unicode
 %ignorecase
-%implements IScanner
+%implements Prexonite.Internal.IScanner
 
 %eofval{
     return tok(Parser._EOF);

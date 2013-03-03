@@ -2,37 +2,17 @@
 using System;
 using System.IO;
 using System.Collections.Generic;
-using NoDebug = System.Diagnostics.DebuggerNonUserCodeAttribute;
+using Prexonite.Internal;
+using Prexonite.Compiler;
 
 //Added for compatibility reasons
 using FatalError = Prexonite.Compiler.FatalCompilerException;
 
 namespace Prexonite.Internal {
 
-internal class Token {
-	public int kind;    // token kind
-	public int pos;     // token position in the source text (starting at 0)
-	public int col;     // token column (starting at 0)
-	public int line;    // token line (starting at 1)
-	public string val;  // token value
-	public Token next;  // ML 2005-03-11 Tokens are kept in linked list
-	
-    public override string ToString()
-    {
-        return ToString(true);
-    }
-
-    public string ToString(bool includePosition)
-    {
-        return String.Format("({0})~{1}" + (includePosition ? "/line:{2}/col:{3}" : ""), val, Enum.GetName(typeof(Parser.Terminals), (Parser.Terminals) kind), line, col);
-    }
-
-}
-
 //-----------------------------------------------------------------------------------
 // Buffer
 //-----------------------------------------------------------------------------------
-[NoDebug()]
 internal class Buffer : IDisposable {
 	public const int EOF = char.MaxValue + 1;
 	const int MAX_BUFFER_LENGTH = 64 * 1024; // 64KB
@@ -43,6 +23,10 @@ internal class Buffer : IDisposable {
 	int pos;            // current position in buffer
 	Stream stream;      // input stream (seekable)
 	bool isUserStream;  // was the stream opened by the user?
+	bool diedViolentDeath = false; // This flag allows the user to manually 
+															 // force the scanner to return EOF. 
+															 // The Abort() method sets the flag, it cannot be unset.
+															 // See Abort for details.
 	
 	internal Buffer (Stream s, bool isUserStream) {
 		stream = s; this.isUserStream = isUserStream;
@@ -64,13 +48,15 @@ internal class Buffer : IDisposable {
 		b.stream = null;
 		isUserStream = b.isUserStream;
 	}
-
 	
 	protected void Close() {
 		Dispose();
 	}
 	
 	internal virtual int Read () {
+		if(diedViolentDeath) {
+			return EOF;
+		}
 		if (pos < bufLen) {
 			return buf[pos++];
 		} else if (Pos < fileLen) {
@@ -105,7 +91,7 @@ internal class Buffer : IDisposable {
 			else if (value > fileLen) value = fileLen;
 			if (value >= bufStart && value < bufStart + bufLen) { // already in buffer
 				pos = value - bufStart;
-			} else if (stream != null) { // must be swapped in
+			} else if (stream != null && !disposed) { // must be swapped in
 				stream.Seek(value, SeekOrigin.Begin);
 				bufLen = stream.Read(buf, 0, buf.Length);
 				bufStart = value; pos = 0;
@@ -116,6 +102,12 @@ internal class Buffer : IDisposable {
 	}
 
         private bool disposed = false;
+
+				public void MurderViolently()
+				{
+					diedViolentDeath = true;
+					Dispose();
+				}
 
         public void Dispose()
         {
@@ -145,7 +137,6 @@ internal class Buffer : IDisposable {
 //-----------------------------------------------------------------------------------
 // UTF8Buffer
 //-----------------------------------------------------------------------------------
-[NoDebug()]
 internal class UTF8Buffer: Buffer {
 	internal UTF8Buffer(Buffer b): base(b) {}
 
@@ -184,7 +175,6 @@ internal class UTF8Buffer: Buffer {
 //-----------------------------------------------------------------------------------
 // Scanner
 //-----------------------------------------------------------------------------------
-[NoDebug()]
 internal partial class Scanner : IDisposable, IScanner {
 	const char EOL = '\n';
 	const int eofSym = 0; /* pdt */
@@ -527,6 +517,12 @@ internal partial class Scanner : IDisposable, IScanner {
 		return pt;
 	}
 	
+	///<summary>This method causes the buffer to enter a degenerate state where it only returns EOF. This can be used to abort a parse early.</summary>
+  public void Abort() { 
+  	buffer.MurderViolently();
+  	Dispose(); 
+	}
+
 	// make sure that peeking starts at the current scan position
 	public void ResetPeek () { pt = tokens; }
 

@@ -23,22 +23,16 @@ using System;
 using System.Diagnostics;
 using System.Globalization;
 using JetBrains.Annotations;
+using Prexonite.Internal;
+using Prexonite.Compiler;
 
 #line default //END FRAME -->namespace
 
 namespace Prexonite.Internal {
 
 
-#line 42 "C:\Users\Christian\Documents\GitHub\prx\Tools\Parser.frame" //FRAME
+#line 44 "C:\Users\Christian\Documents\GitHub\prx\Tools\Parser.frame" //FRAME
 
-
-internal interface IScanner
-{
-    Token Scan();
-    Token Peek();
-    void ResetPeek();
-    string File { get; }
-}
 
 [System.Runtime.CompilerServices.CompilerGenerated]
 internal partial class Parser {
@@ -66,13 +60,13 @@ internal partial class Parser {
 	}
 	const int maxT = 11;
 
-#line 54 "C:\Users\Christian\Documents\GitHub\prx\Tools\Parser.frame" //FRAME
+#line 48 "C:\Users\Christian\Documents\GitHub\prx\Tools\Parser.frame" //FRAME
 
 	const bool T = true;
 	const bool x = false;
 	const int minErrDist = 2;
 	
-	internal readonly IScanner scanner;
+	internal readonly Prexonite.Internal.IScanner scanner;
 	internal readonly Errors  errors;
 
 	internal Token t;    // last recognized token
@@ -85,11 +79,11 @@ internal partial class Parser {
 //SOURCE ARRAY
 //END SOURCE ARRAY
 
-#line 66 "C:\Users\Christian\Documents\GitHub\prx\Tools\Parser.frame" //FRAME
+#line 60 "C:\Users\Christian\Documents\GitHub\prx\Tools\Parser.frame" //FRAME
 
 
     [DebuggerNonUserCode]
-	private Parser(IScanner scanner) {
+	private Parser(Prexonite.Internal.IScanner scanner) {
 		this.scanner = scanner;
 		errors = new Errors();
 		errors.parentParser = this;
@@ -124,7 +118,7 @@ internal partial class Parser {
 #line default //END FRAME -->pragmas
 
 
-#line 100 "C:\Users\Christian\Documents\GitHub\prx\Tools\Parser.frame" //FRAME
+#line 94 "C:\Users\Christian\Documents\GitHub\prx\Tools\Parser.frame" //FRAME
 
 			la = t;
 		}
@@ -261,7 +255,7 @@ internal partial class Parser {
 	}
 
 
-#line 139 "C:\Users\Christian\Documents\GitHub\prx\Tools\Parser.frame" //FRAME
+#line 133 "C:\Users\Christian\Documents\GitHub\prx\Tools\Parser.frame" //FRAME
 
 
 	public void Parse() {
@@ -273,7 +267,7 @@ internal partial class Parser {
 
 		PTypeExpression();
 
-#line 145 "C:\Users\Christian\Documents\GitHub\prx\Tools\Parser.frame" //FRAME
+#line 139 "C:\Users\Christian\Documents\GitHub\prx\Tools\Parser.frame" //FRAME
 
     Expect(0);
 	}
@@ -286,7 +280,7 @@ internal partial class Parser {
 		{x,T,T,T, T,T,T,T, x,x,x,x, x},
 		{x,x,x,x, x,x,x,x, x,x,T,x, x}
 
-#line 150 "C:\Users\Christian\Documents\GitHub\prx\Tools\Parser.frame" //FRAME
+#line 144 "C:\Users\Christian\Documents\GitHub\prx\Tools\Parser.frame" //FRAME
 
 	};
 } // end Parser
@@ -332,7 +326,7 @@ internal class Errors : System.Collections.Generic.LinkedList<Message> {
 			case 12: s = "invalid Expr"; break;
 			case 13: s = "invalid Boolean"; break;
 
-#line 177 "C:\Users\Christian\Documents\GitHub\prx\Tools\Parser.frame" //FRAME
+#line 171 "C:\Users\Christian\Documents\GitHub\prx\Tools\Parser.frame" //FRAME
 
 			default: s = "error " + n; break;
 		}

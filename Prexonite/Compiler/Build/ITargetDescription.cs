@@ -39,7 +39,7 @@ namespace Prexonite.Compiler.Build
     public interface ITargetDescription
     {
         [NotNull]
-        ISet<ModuleName> Dependencies { get; }
+        IReadOnlyCollection<ModuleName> Dependencies { get; }
 
         [NotNull]
         ModuleName Name
@@ -48,6 +48,8 @@ namespace Prexonite.Compiler.Build
         }
 
         [NotNull]
+        IReadOnlyList<Message> BuildMessages { get; }
+
         Task<ITarget> BuildAsync([NotNull] IBuildEnvironment build, [NotNull] IDictionary<ModuleName, Task<ITarget>> dependencies, CancellationToken token);
     }
 }

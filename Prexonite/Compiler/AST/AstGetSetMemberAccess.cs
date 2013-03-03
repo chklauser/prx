@@ -29,7 +29,7 @@ using Prexonite.Types;
 
 namespace Prexonite.Compiler.Ast
 {
-    public class AstGetSetMemberAccess : AstGetSet,
+    public class AstGetSetMemberAccess : AstGetSetImplBase,
                                          IAstPartiallyApplicable
     {
         public string Id { get; set; }
@@ -128,15 +128,16 @@ namespace Prexonite.Compiler.Ast
 
         public override AstGetSet GetCopy()
         {
-            AstGetSet copy = new AstGetSetMemberAccess(File, Line, Column, Call, Subject, Id);
+            var copy = new AstGetSetMemberAccess(File, Line, Column, Call, Subject, Id);
             CopyBaseMembers(copy);
             return copy;
         }
 
         public override string ToString()
         {
+            string name = Enum.GetName(typeof (PCall), Call);
             return string.Format("{0}: ({1}).{2}{3}",
-                Enum.GetName(typeof (PCall), Call).ToLowerInvariant(),
+                name == null ? "-" : name.ToLowerInvariant(),
                 Subject, Id, ArgumentsToString());
         }
 

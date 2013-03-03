@@ -35,6 +35,7 @@ using Prexonite.Compiler.Ast;
 using Prexonite.Compiler.Internal;
 using Prexonite.Compiler.Symbolic;
 using Prexonite.Compiler.Symbolic.Compatibility;
+using Prexonite.Internal;
 using Prexonite.Modular;
 using Prexonite.Properties;
 using Prexonite.Types;
@@ -66,6 +67,17 @@ namespace Prexonite.Compiler
         {
             [DebuggerStepThrough]
             get { return _loader; }
+        }
+
+        /// <summary>
+        /// Preflight mode causes the parser to abort at the 
+        /// first non-meta construct, giving the user the opportunity 
+        /// to inspect a file's "header" without fully compiling 
+        /// that file.
+        /// </summary>
+        public bool PreflightModeEnabled
+        {
+            get { return Loader.Options.PreflightModeEnabled; }
         }
 
         public Application TargetApplication
@@ -164,6 +176,11 @@ namespace Prexonite.Compiler
         }
 
         #endregion
+
+        public void ViolentlyAbortParse()
+        {
+            scanner.Abort();
+        }
 
         #region Helper
 

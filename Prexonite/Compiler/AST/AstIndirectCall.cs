@@ -34,7 +34,7 @@ using Prexonite.Types;
 
 namespace Prexonite.Compiler.Ast
 {
-    public class AstIndirectCall : AstGetSet, IAstPartiallyApplicable
+    public class AstIndirectCall : AstGetSetImplBase, IAstPartiallyApplicable
     {
         public AstExpr Subject;
 
@@ -264,7 +264,7 @@ namespace Prexonite.Compiler.Ast
 
         public override AstGetSet GetCopy()
         {
-            AstGetSet copy = new AstIndirectCall(File, Line, Column, Call, Subject);
+            var copy = new AstIndirectCall(File, Line, Column, Call, Subject);
             CopyBaseMembers(copy);
             return copy;
         }

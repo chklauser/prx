@@ -2,6 +2,7 @@
 {
     public static class MessageClasses
     {
+        public const string SelfAssembly = "SA.Error";
         public const string NoSymbolEntryEquivalentToSymbol = "ES.NoSymbolEntryEquivalentToSymbol";
         public const string InvalidSymbolInterpretation = "ES.InvalidSymbolInterpretation";
         public const string SymbolConflict = "ES.SymbolConflict";

@@ -188,7 +188,6 @@ namespace Prexonite.Compiler.Macro.Commands
         private static AstExpr _genCompare(MacroContext context, AstExpr retVar,
             ReturnVariant expected)
         {
-            const BinaryOperator eq = BinaryOperator.Equality;
             var inv = context.Invocation;
             AstExpr expectedNode = new AstConstant(inv.File,
                 inv.Line,

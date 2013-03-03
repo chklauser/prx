@@ -133,8 +133,10 @@
       <DesignTime>True</DesignTime>
       <DependentUpon>VMTestConfigurations.tt</DependentUpon>
     </Compile>
+    <Compile Include="Tests\Internal\DependingOnConstraint.cs" />
     <Compile Include="Tests\MemberCallable.cs" />
     <Compile Include="Tests\MExprTests.cs" />
+    <Compile Include="Tests\SelfAssemblingPlanTests.cs" />
     <Compile Include="Tests\Translation.cs" />
     <Compile Include="Tests\VMTests.Macro.cs" />
     <Compile Include="Tests\VMTests.Exception.cs" />
@@ -149,8 +151,6 @@
     <Compile Include="Tests\VMTests.Basic.cs" />
     <Compile Include="Tests\VMTests.cs" />
     <Compile Include="Tests\VMTestsBase.cs" />
-    <Compile Include="Tests\VMTestsCILStaticallyLinked.cs" />
-    <Compile Include="Tests\VMTestsInterpreted.cs" />
   </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="..\Prexonite\Prexonite.csproj">

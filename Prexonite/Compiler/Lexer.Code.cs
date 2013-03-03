@@ -30,6 +30,9 @@ using System.Globalization;
 using System.Text;
 using Prexonite;
 using Prexonite.Compiler;
+using Prexonite.Internal;
+using Parser = Prexonite.Compiler.Parser;
+
 // ReSharper disable InconsistentNaming
 // ReSharper disable CheckNamespace
 internal partial class Lexer
@@ -76,6 +79,11 @@ internal partial class Lexer
     {
         get { return _file; }
         set { _file = value; }
+    }
+
+    public void Abort()
+    {
+        yyclose();
     }
 
     string IScanner.File

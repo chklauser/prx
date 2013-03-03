@@ -107,6 +107,20 @@ namespace Prexonite.Compiler
             set { _storeSourceInformation = value; }
         }
 
+        private bool? _preflightModeEnabled;
+
+        /// <summary>
+        /// Preflight mode causes the parser to abort at the 
+        /// first non-meta construct, giving the user the opportunity 
+        /// to inspect a file's "header" without fully compiling 
+        /// that file.
+        /// </summary>
+        public bool PreflightModeEnabled
+        {
+            get { return _preflightModeEnabled ?? false; }
+            set { _preflightModeEnabled = value; }
+        }
+
         #endregion
 
         public void InheritFrom(LoaderOptions options)
@@ -119,6 +133,7 @@ namespace Prexonite.Compiler
             StoreSymbols = _storeSymbols ?? options.StoreSymbols;
             UseIndicesLocally = _useIndicesLocally ?? options.UseIndicesLocally;
             StoreSourceInformation = _storeSourceInformation ?? options.StoreSourceInformation;
+            PreflightModeEnabled = _preflightModeEnabled ?? options.PreflightModeEnabled;
         }
     }
 }
