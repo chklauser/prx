@@ -187,8 +187,8 @@
     <Compile Include="Compiler\Build\Source.cs" />
     <Compile Include="Compiler\Build\TargetDescriptionSet.cs" />
     <Compile Include="Compiler\Build\VersionConflictException.cs" />
+    <Compile Include="Compiler\CompilerExtensions.cs" />
     <Compile Include="Compiler\ErrorMessageException.cs" />
-    <Compile Include="Compiler\Internal\CompilerExtensions.cs" />
     <Compile Include="Compiler\Internal\EntityRefMExprParser.cs" />
     <Compile Include="Compiler\Internal\EntityRefMExprSerializer.cs" />
     <Compile Include="Compiler\Internal\MExpr.cs" />
@@ -219,6 +219,8 @@
     <Compile Include="Compiler\Symbolic\Internal\WrapTransparentlyHandler.cs" />
     <Compile Include="Compiler\Symbolic\ISymbolHandler.cs" />
     <Compile Include="Compiler\Symbolic\MessageSymbol.cs" />
+    <Compile Include="Compiler\Symbolic\Namespace.cs" />
+    <Compile Include="Compiler\Symbolic\NamespaceBuilder.cs" />
     <Compile Include="Compiler\Symbolic\NilSymbol.cs" />
     <Compile Include="Compiler\Symbolic\ReferenceSymbol.cs" />
     <Compile Include="Compiler\Symbolic\Symbol.cs" />
