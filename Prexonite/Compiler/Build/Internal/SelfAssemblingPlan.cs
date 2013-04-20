@@ -89,6 +89,12 @@ namespace Prexonite.Compiler.Build.Internal
             }
         }
 
+        private readonly HashSet<ModuleName> _standardLibrary = new HashSet<ModuleName>(); 
+        public ISet<ModuleName> StandardLibrary
+        {
+            get { return _standardLibrary; }
+        }
+
 
         [NotNull]
         private Task<PreflightResult> _orderPreflight(RefSpec refSpec, CancellationToken token)
@@ -300,7 +306,7 @@ namespace Prexonite.Compiler.Build.Internal
                         return Message.Error(s.ErrorMessage, refPosition, MessageClasses.SelfAssembly);
                         // ReSharper restore PossibleNullReferenceException,AssignNullToNotNullAttribute
                     });
-            var deps = refSpecs.Where(r => r.ModuleName != null).Select(r => r.ModuleName);
+            var deps = refSpecs.Where(r => r.ModuleName != null).Select(r => r.ModuleName).Append(StandardLibrary);
             
             var reportedFileName = result.Path != null ? result.Path.ToString() : null;
                 
@@ -449,6 +455,8 @@ namespace Prexonite.Compiler.Build.Internal
         public volatile string ErrorMessage;
 
         public FileInfo Path;
+
+        public volatile bool SuppressStandardLibrary;
 
         public bool IsValid
         {

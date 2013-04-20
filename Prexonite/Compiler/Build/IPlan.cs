@@ -27,6 +27,7 @@ using System;
 using System.Collections.Generic;
 using System.Threading;
 using System.Threading.Tasks;
+using JetBrains.Annotations;
 using Prexonite.Modular;
 
 namespace Prexonite.Compiler.Build
@@ -48,5 +49,8 @@ namespace Prexonite.Compiler.Build
 
         IDictionary<ModuleName,Task<ITarget>> BuildAsync(IEnumerable<ModuleName> names, CancellationToken token);
         Task<Tuple<Application,ITarget>> LoadAsync(ModuleName name, CancellationToken token);
+
+        [CanBeNull]
+        LoaderOptions Options { get; set; }
     }
 }

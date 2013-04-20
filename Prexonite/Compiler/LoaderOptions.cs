@@ -27,8 +27,6 @@ using System;
 using System.Diagnostics;
 using JetBrains.Annotations;
 using Prexonite.Compiler.Symbolic;
-using Prexonite.Compiler.Symbolic.Internal;
-using NoDebug = System.Diagnostics.DebuggerNonUserCodeAttribute;
 
 namespace Prexonite.Compiler
 {
@@ -37,7 +35,7 @@ namespace Prexonite.Compiler
     {
         #region Construction
 
-        public LoaderOptions(Engine parentEngine, Application targetApplication, SymbolStore symbols = null)
+        public LoaderOptions([CanBeNull] Engine parentEngine, [CanBeNull] Application targetApplication, [CanBeNull] SymbolStore symbols = null)
         {
             _parentEngine = parentEngine;
             _targetApplication = targetApplication;
@@ -48,15 +46,19 @@ namespace Prexonite.Compiler
 
         #region Properties
 
+        [CanBeNull]
         private readonly Engine _parentEngine;
 
+        [CanBeNull]
         public Engine ParentEngine
         {
             get { return _parentEngine; }
         }
 
+        [CanBeNull]
         private readonly Application _targetApplication;
 
+        [CanBeNull]
         public Application TargetApplication
         {
             get { return _targetApplication; }

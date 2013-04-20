@@ -43,6 +43,7 @@ namespace Prexonite.Modular
     {
         public const string NameKey = Application.NameKey;
         public const string ReferencesKey = "references";
+        public const string NoStandardLibraryKey = "nostdlib";
 
         public abstract ModuleName Name { get; }
 

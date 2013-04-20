@@ -108,7 +108,8 @@ namespace Prexonite.Compiler.Build.Internal
 
         public Loader CreateLoader(LoaderOptions defaults = null, Application compilationTarget = null)
         {
-            defaults = defaults ?? new LoaderOptions(_compilationEngine, compilationTarget);
+            defaults = defaults ?? new LoaderOptions(null, null);
+            defaults.InheritFrom(_plan.Options);
             compilationTarget = compilationTarget ?? InstantiateForBuild();
             Debug.Assert(compilationTarget.Module.Name == _module.Name);
             var lowPrioritySymbols = defaults.Symbols;
@@ -130,6 +131,7 @@ namespace Prexonite.Compiler.Build.Internal
             }
             var finalOptions = new LoaderOptions(_compilationEngine, compilationTarget, predef)
                 {ReconstructSymbols = false, RegisterCommands = false};
+            finalOptions.InheritFrom(defaults);
             return new Loader(finalOptions);
         }
     }

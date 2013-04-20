@@ -30,6 +30,7 @@ using System.IO;
 using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
+using JetBrains.Annotations;
 using Prexonite.Compiler.Build.Internal;
 using Prexonite.Modular;
 
@@ -124,6 +125,13 @@ namespace Prexonite.Compiler.Build
                     _linkDependencies(taskMap, app, description, token);
                     return Tuple.Create(app, target);
                 }, token);
+        }
+
+        [CanBeNull] private LoaderOptions _options;
+        public LoaderOptions Options
+        {
+            get { return _options; }
+            set { _options = value; }
         }
 
         private void _linkDependencies(TaskMap<ModuleName, ITarget> taskMap, Application instance, ITargetDescription instanceDescription, CancellationToken token)
