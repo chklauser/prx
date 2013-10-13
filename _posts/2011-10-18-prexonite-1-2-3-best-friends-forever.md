@@ -24,12 +24,14 @@ I don't really want to call it a long-term-support version, because unless there
 ### Breaking changes
 
 This release of Prexonite Script comes with two breaking changes that affect a number of existing programs, both compiled and in script form.
-var args fallback was removed
+
+#### var args fallback was removed
 
 In Prexonite, all local variables are initialized to null, with the notable exception of var args, which holds the list of arguments passed to the function. However, in previous versions of Prexonite, there was a rule that allowed you to have a function parameter called "args" that would not get overwritten with the argument list. Instead the "magic variable" for that particular function would be "\\args". If there was a parameter called "\\args", the magic variable would be called "\\\\args" and so on.
 
 This behavior is unintuitive to say the least. It also makes writing macros that access the argument list hard to write. So starting with this release, the var args fallback mechanism is no longer part of Prexonite. If you have a parameter called args, tough luck. This change affects the Prexonite execution engines, which means that both compiled programs and scripts are affected.
-psr\\ast.pxs SI is now implemented as a function
+
+#### psr\\ast.pxs SI is now implemented as a function
 
 SI from psr\\ast.pxs is a very handy shortcut for Prexonite compiler constants and utility functions. SI stands for "SymbolInterpretation", but has grown to also provide call and return mode constants. In short, it appears very often in macro code. Previously it was implemented as a global variable that was initialized by some code in a build block. While this works perfectly for both the interactive interpreter and just running the script, it doesn't support serialization (storing the in-memory representation of an application in a \*.c.pxs file). While a serialized application can be loaded and executed just fine, it can't be used to continue compilation, because the build-code that initialized the SI variable at compile-time is absent.
 
