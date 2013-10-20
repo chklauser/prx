@@ -108,12 +108,15 @@ namespace Prexonite.Compiler.Build.Internal
 
         public Loader CreateLoader(LoaderOptions defaults = null, Application compilationTarget = null)
         {
-            defaults = defaults ?? new LoaderOptions(_compilationEngine, compilationTarget);
+            defaults = defaults ?? new LoaderOptions(null, null);
+            var planOptions = _plan.Options;
+            if(planOptions != null)
+                defaults.InheritFrom(planOptions);
             compilationTarget = compilationTarget ?? InstantiateForBuild();
             Debug.Assert(compilationTarget.Module.Name == _module.Name);
             var lowPrioritySymbols = defaults.Symbols;
             SymbolStore predef;
-            if(lowPrioritySymbols.Count == 0)
+            if(lowPrioritySymbols.IsEmpty)
             {
                 predef = SymbolStore.Create(ExternalSymbols);
             }
@@ -130,6 +133,7 @@ namespace Prexonite.Compiler.Build.Internal
             }
             var finalOptions = new LoaderOptions(_compilationEngine, compilationTarget, predef)
                 {ReconstructSymbols = false, RegisterCommands = false};
+            finalOptions.InheritFrom(defaults);
             return new Loader(finalOptions);
         }
     }

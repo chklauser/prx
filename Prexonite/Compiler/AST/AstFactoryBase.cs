@@ -104,6 +104,11 @@ namespace Prexonite.Compiler.Ast
                     return self.With(s);
             }
 
+            public Symbol HandleNamespace(NamespaceSymbol self, List<Message> argument)
+            {
+                return self;
+            }
+
             #endregion
         }
 
@@ -927,6 +932,14 @@ namespace Prexonite.Compiler.Ast
                             position, MessageClasses.NotAMacro));
                     return argument.Item1.CreateNullNode(position);
                 }
+            }
+
+            public AstExpr HandleNamespace(NamespaceSymbol self, Tuple<AstFactoryBase, PCall, ISourcePosition> argument)
+            {
+                var position = argument.Item3;
+                argument.Item1.ReportMessage(Message.Error(Resources.Parser_ExpectedEntityFoundNamespace,
+                    position,MessageClasses.ExpectedEntityFoundNamespace));
+                return argument.Item1.CreateNullNode(position);
             }
 
             #endregion

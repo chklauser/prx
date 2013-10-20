@@ -140,7 +140,7 @@ namespace PrexoniteTests.Tests
             Sam.SearchPaths.Add(_basePath);
         }
 
-        private void _tryTearDown(int count)
+        private void _tryTearDown()
         {
             try
             {
@@ -156,7 +156,7 @@ namespace PrexoniteTests.Tests
         [TearDown]
         public void TearDown()
         {
-            _tryTearDown(0);
+            _tryTearDown();
         }
 
         [TestFixtureTearDown]

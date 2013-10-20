@@ -32,7 +32,7 @@ namespace Prexonite
     {
         [ContractAnnotation("=>true,value:notnull;=>false,value:canbenull")]
         bool TryGet(string id, out T value);
-        int Count { get; }
+        bool IsEmpty { get; }
     }
 
     public static class SymbolViewExtensions

@@ -1209,7 +1209,7 @@ namespace Prexonite.Compiler
             writer.WriteLine("\n//--SYMBOLS");
 
             writer.WriteLine("declare(");
-            var previousSymbols = new Dictionary<Symbol, string>(Symbols.Count);
+            var previousSymbols = new Dictionary<Symbol, string>();
             foreach (var symbol in Symbols)
             {
                 writer.Write("  "); 

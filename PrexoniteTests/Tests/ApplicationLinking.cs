@@ -46,7 +46,7 @@ namespace PrexoniteTests.Tests
             var s = Symbol.CreateCall(EntityRef.Command.Create("print"), NoSourcePosition.Instance);
             s1.Declare("print",s);
             var s2 = SymbolStore.Create(s1);
-            Assert.That(s2.Count,Is.EqualTo(1),"Expected s2.Count to be 1.");
+            Assert.That(s2.IsEmpty,Is.False,"Expected s2.IsEmpty to be false.");
         }
 
        [Test]

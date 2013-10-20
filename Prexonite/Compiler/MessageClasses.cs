@@ -70,6 +70,7 @@ namespace Prexonite.Compiler
         public const string OnlyLastOperandPartialInLazy = "C.OnlyLastOperandPartialInLazy";
         public const string ForeachElementTooComplicated = "C.ForeachElementTooComplicated";
         public const string TypeExpressionExpected = "C.TypeExpressionExpected";
+        public const string ExpectedEntityFoundNamespace = "C.NamespaceInEntityPosition";
 
         #endregion
 
@@ -103,7 +104,6 @@ namespace Prexonite.Compiler
         public const string SubAsExpressionInLoop = "D.SubAsExpressionInLoop";
 
         #endregion
-
 
     }
 }

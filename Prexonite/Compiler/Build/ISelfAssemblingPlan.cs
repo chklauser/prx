@@ -27,6 +27,7 @@ using System.Collections.Generic;
 using System.Threading;
 using System.Threading.Tasks;
 using JetBrains.Annotations;
+using Prexonite.Modular;
 
 namespace Prexonite.Compiler.Build
 {
@@ -57,5 +58,11 @@ namespace Prexonite.Compiler.Build
         /// <param name="token">The cancellation token for this asynchronous operation.</param>
         /// <returns>A task that represents the build plan assembly in progress.</returns>
         [NotNull] Task<ITargetDescription> AssembleAsync(ISource source, CancellationToken token);
+
+        /// <summary>
+        /// The set of standard library modules to implicitly link against. Can be suppressed on a per-module basis via the <see cref="Module.NoStandardLibraryKey"/> tag.
+        /// </summary>
+        [NotNull]
+        ISet<ModuleName> StandardLibrary { get; }
     }
 }

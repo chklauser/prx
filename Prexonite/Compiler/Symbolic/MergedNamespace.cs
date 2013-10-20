@@ -24,12 +24,38 @@
 //  WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING 
 //  IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
+using System;
 using System.Collections.Generic;
+using JetBrains.Annotations;
 
 namespace Prexonite.Compiler.Symbolic
 {
-    public class NamespaceBuilder
+    public class MergedNamespace : Namespace
     {
-        
+        [NotNull]
+        private readonly SymbolStore _exportScope;
+
+        internal MergedNamespace([NotNull] SymbolStore scope)
+        {
+            if (scope == null)
+                throw new ArgumentNullException("scope");
+            
+            _exportScope = scope;
+        }
+
+        public override IEnumerator<KeyValuePair<string, Symbol>> GetEnumerator()
+        {
+            return _exportScope.GetEnumerator();
+        }
+
+        public override bool IsEmpty
+        {
+            get { return _exportScope.IsEmpty; }
+        }
+
+        public override bool TryGet(string id, out Symbol value)
+        {
+            return _exportScope.TryGet(id, out value);
+        }
     }
 }

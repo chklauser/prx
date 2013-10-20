@@ -27,6 +27,7 @@ using System;
 using System.Collections.Generic;
 using System.Threading;
 using System.Threading.Tasks;
+using JetBrains.Annotations;
 using Prexonite.Modular;
 
 namespace Prexonite.Compiler.Build
@@ -36,17 +37,25 @@ namespace Prexonite.Compiler.Build
         /// <summary>
         /// Set of build watchers that will get access to events raised during building.
         /// </summary>
+        [NotNull]
         ISet<IBuildWatcher> BuildWatchers
         {
             get;
         }
 
+        [NotNull]
         TargetDescriptionSet TargetDescriptions
         {
             get;
         }
 
-        IDictionary<ModuleName,Task<ITarget>> BuildAsync(IEnumerable<ModuleName> names, CancellationToken token);
-        Task<Tuple<Application,ITarget>> LoadAsync(ModuleName name, CancellationToken token);
+        [NotNull]
+        IDictionary<ModuleName,Task<ITarget>> BuildAsync([NotNull] IEnumerable<ModuleName> names, CancellationToken token);
+
+        [NotNull]
+        Task<Tuple<Application,ITarget>> LoadAsync([NotNull] ModuleName name, CancellationToken token);
+
+        [CanBeNull]
+        LoaderOptions Options { get; set; }
     }
 }

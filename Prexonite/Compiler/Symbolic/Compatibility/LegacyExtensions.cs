@@ -40,6 +40,11 @@ namespace Prexonite.Compiler.Symbolic.Compatibility
                 throw new SymbolConversionException(Resources.SymbolEntryConversion_BareReference,self);
             }
 
+            public SymbolEntry HandleNamespace(NamespaceSymbol self, object argument)
+            {
+                throw new SymbolConversionException(Resources.SymbolEntryConversion_Namespace,self);
+            }
+
             public SymbolEntry HandleNil(NilSymbol self, object argument)
             {
                 throw new SymbolConversionException(Resources.SymbolEntryConversion_Nil,self);

@@ -55,6 +55,10 @@ namespace Prexonite.Compiler.Symbolic.Internal
         {
             return Wrap(self);
         }
+        public Symbol HandleNamespace(NamespaceSymbol self, object argument)
+        {
+            return Wrap(self);
+        }
 
         #endregion
     }

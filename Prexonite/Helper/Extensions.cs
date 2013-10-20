@@ -30,6 +30,7 @@ using System.Diagnostics;
 using System.Diagnostics.Contracts;
 using System.Linq;
 using System.Text;
+using JetBrains.Annotations;
 
 namespace Prexonite
 {
@@ -238,7 +239,7 @@ namespace Prexonite
         }
 
         [DebuggerNonUserCode]
-        public static IEnumerable<TResult> MapMaybe<TSource, TResult>(
+        public static IEnumerable<TResult> SelectMaybe<TSource, TResult>(
             this IEnumerable<TSource> source, Func<TSource, TResult?> func) where TResult : struct
         {
             if (func == null)
@@ -252,6 +253,25 @@ namespace Prexonite
                 var y = func(item);
                 if (y != null)
                     yield return y.Value;
+            }
+            // ReSharper restore LoopCanBeConvertedToQuery
+        }
+
+        [DebuggerNonUserCode]
+        public static IEnumerable<TResult> SelectMaybe<TSource, TResult>(
+            this IEnumerable<TSource> source, Func<TSource, TResult> func) where TResult : class
+        {
+            if (func == null)
+                throw new ArgumentNullException("func");
+            Contract.Requires(source != null);
+            Contract.EndContractBlock();
+
+            // ReSharper disable LoopCanBeConvertedToQuery
+            foreach (var item in source)
+            {
+                var y = func(item);
+                if (y != null)
+                    yield return y;
             }
             // ReSharper restore LoopCanBeConvertedToQuery
         }
@@ -395,6 +415,32 @@ namespace Prexonite
         {
             for (var i = arraySegment.Offset; i < (arraySegment.Offset + arraySegment.Count); i++)
                 yield return arraySegment.Array[i];
+        }
+
+        /// <summary>
+        /// An efficient version of except when the exception set is already implemented as a set.
+        /// </summary>
+        /// <typeparam name="T">Type of the items in the sequence/set. Should support efficient hash-based equality comparison.</typeparam>
+        /// <param name="sequence">The sequence of candidate values to be filtered.</param>
+        /// <param name="exceptionSet">The set of elements to be excluded from the sequence.</param>
+        /// <returns>The original sequence with all elements also in the <paramref name="exceptionSet"/> removed.</returns>
+        /// <remarks><para>This is a streaming operator. The order of elements in the sequence is not changed. Multiple instances of the same element in the input sequence are retained (if they are not filtered out).</para></remarks>
+        public static IEnumerable<T> Except<T>([NotNull] this IEnumerable<T> sequence, [NotNull] ISet<T> exceptionSet)
+        {
+            return sequence.Where(x => !exceptionSet.Contains(x));
+        }
+
+        public static IEnumerable<T> WithActionAfter<T>([NotNull] this IEnumerable<T> sequence, [NotNull] Action action)
+        {
+            if (sequence == null)
+                throw new ArgumentNullException("sequence");
+
+            if (action == null)
+                throw new ArgumentNullException("action");
+            
+            foreach (var item in sequence)
+                yield return item;
+            action();
         }
 
         public static IEnumerable<LinkedListNode<T>> ToNodeSequence<T>(this LinkedList<T> list)

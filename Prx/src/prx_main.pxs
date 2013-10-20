@@ -35,8 +35,8 @@ Version "1.2.9.0";
 Entry prx\main;
 
 declare function 
-	displayHelp,
-	prx\interactive;
+    displayHelp,
+    prx\interactive;
     
 Add Prexonite::Compiler to Import;
     
@@ -44,7 +44,7 @@ var targetPath;
 var sourceFiles;
 
 declare var app, ldr;
-	
+    
 function printHead does println("** PREXONITE v" + asm(ldr.app).Meta["Version"].Text + " ** (Runtime version $(Prexonite::Engine.PrexoniteVersion))");
 
 var originalArgs;
@@ -59,101 +59,104 @@ function prx\main(arguments)
 {
     originalArgs = arguments;
     
-	if(arguments == null or arguments.Length == 0)
-	{
-    	printHead;
-		println("NO ARGUMENTS DETECTED.");
-		displayHelp;	
-		return;
-	}
-	
-	//Define the states of the arguments parser
-	var state\compile = 3;      //Just compiling the application
-	var state\target = 4;       //Next argument defines the target
-	var state\run = 5;          //Running the application after compilation
-	var state\interactive = 6;  //Launching the interactive console after compilation
-	var state\arg = 7;          //Gathering arguments for the application
-	
-	//Define default settings
-	var state = state\run;      //Run the compiled application b default
-	var sourceFiles = [];
-	var verbose = false;
-	var headerOnly = false;
-	var debugging = false;
+    if(arguments == null or arguments.Length == 0)
+    {
+        printHead;
+        println("NO ARGUMENTS DETECTED.");
+        displayHelp;    
+        return;
+    }
+    
+    //Define the states of the arguments parser
+    var state\compile = 3;      //Just compiling the application
+    var state\target = 4;       //Next argument defines the target
+    var state\run = 5;          //Running the application after compilation
+    var state\interactive = 6;  //Launching the interactive console after compilation
+    var state\arg = 7;          //Gathering arguments for the application
+    
+    //Define default settings
+    var state = state\run;      //Run the compiled application b default
+    var sourceFiles = [];
+    var verbose = false;
+    var headerOnly = false;
+    var debugging = false;
     var suppressWarnings = false;
+    var useLegacyLoader = false;
     //supportsTabs is a global variable
-	
-	var scriptArgs = [];
-	
-	//Interpret arguments one by one
-	foreach(var current in arguments)
-	{
-		if(current == null or current.Length == 0)
-			continue;
-		else if(state == state\arg) //ignore options after -a
-			scriptArgs[] = current;
-		else if(current.StartsWith("-"))
-			if(current == "-c")         //  -c Compile
-				state = state\compile;
-			else if(current == "-t")    //  -t Target
-				state = state\target;
-			else if(current == "-i")    //  -i Interactive
-				state = state\interactive;
-			else if(current == "-r")    //  -r  Run
-				state = state\run;
-			else if(current == "-v")    //  -v  Verbose
-			    verbose = true;
-			else if(current == "-h")    //  -h  Header only
-			    headerOnly = true;
-			else if(current == "-a")    //  -a  Arguments
-				state = state\arg;
-		    else if(current == "-b")    //  -b  disable tab completion (for piped input)
-		        supportsTabs = false;
-		    else if(current == "-d")    //  -d  Debugging
-		        debugging = true;
+    
+    var scriptArgs = [];
+    
+    //Interpret arguments one by one
+    foreach(var current in arguments)
+    {
+        if(current == null or current.Length == 0)
+            continue;
+        else if(state == state\arg) //ignore options after -a
+            scriptArgs[] = current;
+        else if(current.StartsWith("-"))
+            if(current == "-c")         //  -c Compile
+                state = state\compile;
+            else if(current == "-t")    //  -t Target
+                state = state\target;
+            else if(current == "-i")    //  -i Interactive
+                state = state\interactive;
+            else if(current == "-r")    //  -r  Run
+                state = state\run;
+            else if(current == "-v")    //  -v  Verbose
+                verbose = true;
+            else if(current == "-h")    //  -h  Header only
+                headerOnly = true;
+            else if(current == "-a")    //  -a  Arguments
+                state = state\arg;
+            else if(current == "-b")    //  -b  disable tab completion (for piped input)
+                supportsTabs = false;
+            else if(current == "-d")    //  -d  Debugging
+                debugging = true;
             else if(current == "-nowarn")
                 suppressWarnings = true;
-			else if(current == "-?")    //  -h  Help
-			{
-				displayHelp;
-				return;
-			}
-			else
-				red = () => println("Unknown option " + current + "."); //see *1*
-		else if(state == state\compile Or state == state\run Or state == state\interactive)
-			sourceFiles.Add = current;
-		else if(state == state\target)
-			targetPath = current;
-	}
-	
-	//*1*: 'red' is a function that takes in another function/lambda expression
-	// and executes it in a context where console output is printed in red.
-	// See it's definition in 'prx_lib.pxs' for more details.
-	
+            else if(current == "--legacy")
+                useLegacyLoader = true;
+            else if(current == "-?")    //  -h  Help
+            {
+                displayHelp;
+                return;
+            }
+            else
+                red = () => println("Unknown option " + current + "."); //see *1*
+        else if(state == state\compile Or state == state\run Or state == state\interactive)
+            sourceFiles.Add = current;
+        else if(state == state\target)
+            targetPath = current;
+    }
+    
+    //*1*: 'red' is a function that takes in another function/lambda expression
+    // and executes it in a context where console output is printed in red.
+    // See it's definition in 'prx_lib.pxs' for more details.
+    
     if(state == state\arg)
         state = state\run;
     
-	//'run' and 'compile' require source files. 'interactive' doesn't.
-	if(sourceFiles.Count == 0)
-	{
-		printHead;
-    	unless(state == state\interactive)
-    	    red(() => println("No source files specified."));
-	}
-	
-	//Assemble a default target path if necessary
-	if(targetPath is null or targetPath.Length == 0)
-		targetPath = 
+    //'run' and 'compile' require source files. 'interactive' doesn't.
+    if(sourceFiles.Count == 0)
+    {
+        printHead;
+        unless(state == state\interactive)
+            red(() => println("No source files specified."));
+    }
+    
+    //Assemble a default target path if necessary
+    if(targetPath is null or targetPath.Length == 0)
+        targetPath = 
             (unless(state == state\interactive || sourceFiles.Count == 0)
                 System::IO::Path.GetFileNameWithoutExtension(sourceFiles[0]) 
              else
                 @"prx_interactive_app"
             )+ ".c.pxs";
-		
-	//Report
-	if(verbose)
-	{
-    	printHead;
+        
+    //Report
+    if(verbose)
+    {
+        printHead;
         unless(state == state\interactive)
             println("Target:\n    " + targetPath + "\nSources:");
     }
@@ -162,36 +165,36 @@ function prx\main(arguments)
         sourceFiles.Insert(0,@"psr\debug\debug.pxs");
     
     //Create a new application. The id extracted from the first source file's name is just decoration
-	app = new ::Application(
+    app = new ::Application(
         unless(state == state\interactive || sourceFiles.Count == 0)
             System::IO::Path.GetFileNameWithoutExtension(sourceFiles[0])
         else
             @"prx\interactive\app");
             
-	//Create the loader (the compiler) for this application
-	var options = new ::LoaderOptions(engine, app, null);
+    //Create the loader (the compiler) for this application
+    var options = new ::LoaderOptions(engine, app, null);
     options.StoreSourceInformation = debugging;
     
-	ldr = new ::Loader(options);
-	var exc = null; //<--- holds exceptions
+    ldr = new ::Loader(options);
+    var exc = null; //<--- holds exceptions
 
-	try
-	{
-		foreach(var sourceFile in sourceFiles)
-		{
-	    	if(verbose) 
-	    	    println("  * " + sourceFile);
-	    	    
-	    	//The next call compiles 'sourceFile' into 'app'
-			ldr.RequireFromFile(sourceFile); //require only loads files that haven't been loaded before.
-		}
-		if(verbose) 
-		    println("Loading of sources done.");
-	}
-	catch(var exc)
-	{
+    try
+    {
+        foreach(var sourceFile in sourceFiles)
+        {
+            if(verbose) 
+                println("  * " + sourceFile);
+                
+            //The next call compiles 'sourceFile' into 'app'
+            ldr.RequireFromFile(sourceFile); //require only loads files that haven't been loaded before.
+        }
+        if(verbose) 
+            println("Loading of sources done.");
+    }
+    catch(var exc)
+    {
         green(() => println(exc));
-	}
+    }
     
     //Display information
     var showInfos = debugging and ldr.Infos.Count > 0;
@@ -215,15 +218,15 @@ function prx\main(arguments)
         );
     }
     
-	//Compilation errors are not thrown as exceptions but held in 'ldr.Errors'
-	if(ldr.Errors.Count != 0 Or exc is not null) 
-	{
-	    red(() =>
-        	{    	
-        		println("Compilation completed, but errors detected. ");
-        		foreach(var err in ldr.Errors)
-        			println(err);
-        	});
+    //Compilation errors are not thrown as exceptions but held in 'ldr.Errors'
+    if(ldr.Errors.Count != 0 Or exc is not null) 
+    {
+        red(() =>
+            {        
+                println("Compilation completed, but errors detected. ");
+                foreach(var err in ldr.Errors)
+                    println(err);
+            });
         println("Compilation summary:");
         if(showInfos)
             println("\t",ldr.Infos.Count," ",plurality("info",ldr.Infos.Count));
@@ -232,30 +235,30 @@ function prx\main(arguments)
         red(println("\t",ldr.Errors.Count," ",plurality("errors",ldr.Errors.Count),?));
         println;
         exc = null; 
-    	if(debugging and state == state\interactive) //in debugging mode, allow the script to be examined
+        if(debugging and state == state\interactive) //in debugging mode, allow the script to be examined
         {
             println("Entering interactive mode for debugging.");
-    	    prx\interactive;
+            prx\interactive;
         }
         else
         {
             println("Aborting (Enable debugging for inspection of partial results in interactive mode)");
         }
         return;
-	}
+    }
     
     //Decide what to do with the just compiled application
-	if(state == state\interactive)
-	{
-    	//'prx\interactive' is defined in 'prx_interactive.pxs'
+    if(state == state\interactive)
+    {
+        //'prx\interactive' is defined in 'prx_interactive.pxs'
 runInteractive:
         prx\interactive;
     }
-	else if(state == state\run) // state\arg is synonymous
-	{
-    	//The application might not run in non-interactive mode
-    	if(app.Meta["interactive"].Switch)
-    	{
+    else if(state == state\run) // state\arg is synonymous
+    {
+        //The application might not run in non-interactive mode
+        if(app.Meta["interactive"].Switch)
+        {
             //The application requires to be run in interactive mode.
             //Extract the id of the interactive entry function from the 
             // applications metadata...
@@ -271,9 +274,9 @@ runInteractive:
             
             //before going into interactive mode.
             goto runInteractive;
-    	}
-    	else
-    	{
+        }
+        else
+        {
             var mainId =
                 if(app.Meta.ContainsKey(Prexonite::Application.EntryKey))
                     app.Meta[Prexonite::Application.EntryKey].Text
@@ -286,20 +289,20 @@ runInteractive:
                 return;
             }
             
-        	//Run the application (run it's entry function).
-        	// the script arguments have to be converted to a Prexonite.PValue[] first.
-	        app.Run(engine, scriptArgs~Object<"Prexonite.PValue[]">);
+            //Run the application (run it's entry function).
+            // the script arguments have to be converted to a Prexonite.PValue[] first.
+            app.Run(engine, scriptArgs~Object<"Prexonite.PValue[]">);
         }
     }
-	else
-	{   //state = state\compile
-    	//Store the compiled application in a file.
-    	using(var writer = new System::IO::StreamWriter(targetPath, false))
-    	{
-        	if(headerOnly)
-        	    ldr.StoreSymbols(writer);
-        	else
-    	        ldr.Store(writer);
+    else
+    {   //state = state\compile
+        //Store the compiled application in a file.
+        using(var writer = new System::IO::StreamWriter(targetPath, false))
+        {
+            if(headerOnly)
+                ldr.StoreSymbols(writer);
+            else
+                ldr.Store(writer);
         }
     }
 }
@@ -307,22 +310,23 @@ runInteractive:
 function reboot does prx\main(originalArgs);
 
 function displayHelp does print(
-	"Usage:\n" + 
-	"\tprx -c {sources...} (-t {target...} [-h] | -r | -i) [-v | -d | -a <arguments...> | -b]\n" +
-	"\tprx -i\n" +
-	"\tprx -?\n" +
-	"\n" + 
-	"List the required source files (*.pxs) after the -c switch.\n" + 
-	"Define the name of the output file using -t.\n"+
-	"\n"+
-	"The default action is storing the compiled application in the target file.\n"+
-	"Run the application instead by using the -r switch.\n"+
-	"Enter interactive mode (with or without a compiled application) using the -i switch.\n"+
-	"-v enables additional output.\n"+
-	"-h extracts declarations (only with -c).\n"+
-	"-b disables tab completion (tab completion only supported on windows).\n"+
-	"-a forwards the rest of the arguments to the executing script.\n" + 
-	"-d enables debugging mode\n" + 
-    "-nowarn disables all warnings");
+    "Usage:\n" + 
+    "\tprx -c {sources...} (-t {target...} [-h] | -r | -i) [-v | -d | -a <arguments...> | -b]\n" +
+    "\tprx -i\n" +
+    "\tprx -?\n" +
+    "\n" + 
+    "List the required source files (*.pxs) after the -c switch.\n" + 
+    "Define the name of the output file using -t.\n"+
+    "\n"+
+    "The default action is storing the compiled application in the target file.\n"+
+    "Run the application instead by using the -r switch.\n"+
+    "Enter interactive mode (with or without a compiled application) using the -i switch.\n"+
+    "-v enables additional output.\n"+
+    "-h extracts declarations (only with -c).\n"+
+    "-b disables tab completion (tab completion only supported on windows).\n"+
+    "-a forwards the rest of the arguments to the executing script.\n" + 
+    "-d enables debugging mode\n" + 
+    "-nowarn disables all warnings\n" +
+    "--legacy uses Prexonite 1 loader");
  
 {  CompileToCil;  } 

@@ -32,6 +32,8 @@ namespace Prexonite.Compiler.Symbolic
 {
     public abstract class Symbol : IEquatable<Symbol>
     {
+        public static readonly TraceSource Trace = new TraceSource("Prexonite.Compiler.Symbolic");
+
         internal Symbol()
         {
         }
@@ -81,20 +83,39 @@ namespace Prexonite.Compiler.Symbolic
             return false;
         }
 
+        [PublicAPI]
+        [ContractAnnotation("=>true,namespaceSymbol: notnull;=>false,namespaceSymbol:canbenull")]
+        public virtual bool TryGetNamespaceSymbol(out NamespaceSymbol namespaceSymbol)
+        {
+            namespaceSymbol = null;
+            return false;
+        }
+
         #region Factory Methods
 
+        [PublicAPI]
         [NotNull]
         public static Symbol CreateReference([NotNull] EntityRef entityRef, [NotNull] ISourcePosition position)
         {
             return ReferenceSymbol._Create(entityRef,position);
         }
 
+        [PublicAPI]
+        [NotNull]
+        public static Symbol CreateNamespace([NotNull] Namespace @namespace, [NotNull] string logicalName,
+            [NotNull] ISourcePosition position)
+        {
+            return NamespaceSymbol._Create(@namespace, logicalName, position);
+        }
+
+        [PublicAPI]
         [NotNull]
         public static Symbol CreateNil([NotNull] ISourcePosition position)
         {
             return NilSymbol._Create(position);
         }
 
+        [PublicAPI]
         [NotNull]
         public static Symbol CreateDereference([NotNull] Symbol inner, [CanBeNull] ISourcePosition position = null)
         {
@@ -103,6 +124,7 @@ namespace Prexonite.Compiler.Symbolic
             return DereferenceSymbol._Create(inner, position);
         }
 
+        [PublicAPI]
         [NotNull]
         public static Symbol CreateMessage([NotNull] Message message, [NotNull] Symbol inner, ISourcePosition position = null)
         {
@@ -113,6 +135,7 @@ namespace Prexonite.Compiler.Symbolic
             return MessageSymbol._Create(message, inner, position);
         }
 
+        [PublicAPI]
         [NotNull]
         public static Symbol CreateExpand([NotNull] Symbol inner, [CanBeNull] ISourcePosition position = null)
         {
@@ -121,6 +144,7 @@ namespace Prexonite.Compiler.Symbolic
 
         #endregion
 
+        [PublicAPI]
         [NotNull]
         public static Symbol CreateCall([NotNull] EntityRef entity, [NotNull] ISourcePosition position)
         {

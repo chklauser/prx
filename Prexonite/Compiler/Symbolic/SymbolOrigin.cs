@@ -23,31 +23,142 @@
 //  DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, 
 //  WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING 
 //  IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+
+using System;
 using System.Diagnostics;
+using System.Linq;
+using JetBrains.Annotations;
 using Prexonite.Modular;
 
 namespace Prexonite.Compiler.Symbolic
 {
     [DebuggerDisplay("SymbolOrigin({Description},{File},{Line},{Column})")]
-    public abstract class SymbolOrigin : ISourcePosition
+    public abstract class SymbolOrigin
     {
         public abstract string Description { get; }
-        public abstract string File { get; }
-        public abstract int Line { get; }
-        public abstract int Column { get; }
+
+        public abstract ISourcePosition Position { get; }
+        public override string ToString()
+        {
+            return String.Format("{0} in {1}", Description, Position);
+        }
+
+        public sealed class MergedScope : SymbolOrigin
+        {
+            public static SymbolOrigin CreateMerged(params SymbolOrigin[] origins)
+            {
+                if (origins == null)
+                    throw new ArgumentNullException("origins");
+                if (origins.Length == 0)
+                {
+                    throw new ArgumentException("Must have at least one symbol origin.");
+                }
+
+                // Flatten merged scopes
+                return new MergedScope(origins.SelectMany(x =>
+                {
+                    var mergedScope = x as MergedScope;
+                    return mergedScope != null ? mergedScope._origins : x.Singleton();
+                }).ToArray());
+            }
+
+            [NotNull]
+            private readonly SymbolOrigin[] _origins;
+
+            private MergedScope([NotNull] SymbolOrigin[] origins)
+            {
+                if (origins == null)
+                    throw new ArgumentNullException("origins");
+                
+                if(origins.Length < 2)
+                    throw new ArgumentException("Merged scope origin must be composed of at least two origins.");
+                _origins = origins;
+            }
+
+            public override string Description
+            {
+                get
+                {
+                    return String.Format("Merged from {0}", _origins.Select(x => x.Description).ToEnumerationString());
+                }
+            }
+
+            public override ISourcePosition Position
+            {
+                get { return _origins[0].Position; }
+            }
+        }
+
+        public sealed class NamepsaceImport : SymbolOrigin
+        {
+            private readonly QualifiedId _namespaceId;
+
+            [NotNull]
+            private readonly ISourcePosition _position;
+
+            public NamepsaceImport(QualifiedId namespaceId, [NotNull] ISourcePosition position)
+            {
+                if (position == null) 
+                    throw new ArgumentNullException("position");
+                _namespaceId = namespaceId;
+                _position = position;
+            }
+
+            public override string Description
+            {
+                get { return String.Format("import from namespace {0}",NamespaceId); }
+            }
+
+            public override ISourcePosition Position
+            {
+                get { return _position; }
+            }
+
+            public QualifiedId NamespaceId
+            {
+                get { return _namespaceId; }
+            }
+
+            private bool _equals(NamepsaceImport other)
+            {
+                return _namespaceId.Equals(other._namespaceId);
+            }
+
+            public override bool Equals(object obj)
+            {
+                if (ReferenceEquals(null, obj)) return false;
+                if (ReferenceEquals(this, obj)) return true;
+                return obj is NamepsaceImport && _equals((NamepsaceImport) obj);
+            }
+
+            public override int GetHashCode()
+            {
+                return _namespaceId.GetHashCode();
+            }
+        }
 
         public sealed class ModuleTopLevel : SymbolOrigin
         {
+            [NotNull]
             private readonly ModuleName _moduleName;
+
+            [NotNull]
             private readonly ISourcePosition _position;
+
+            [NotNull]
             private readonly string _description;
 
             [DebuggerStepThrough]
-            public ModuleTopLevel(ModuleName moduleName, ISourcePosition position)
+            public ModuleTopLevel([NotNull] ModuleName moduleName, [NotNull] ISourcePosition position)
             {
+                if (moduleName == null)
+                    throw new ArgumentNullException("moduleName");
+                if (position == null)
+                    throw new ArgumentNullException("position");
+                
                 _moduleName = moduleName;
                 _position = position;
-                _description = string.Format("top-level declaration in module {0}.", moduleName);
+                _description = string.Format("top-level declaration in module {0}", moduleName);
             }
 
             public ModuleName ModuleName
@@ -56,22 +167,9 @@ namespace Prexonite.Compiler.Symbolic
                 get { return _moduleName; }
             }
 
-            public override string File
+            public override ISourcePosition Position
             {
-                [DebuggerStepThrough]
-                get { return _position.File; }
-            }
-
-            public override int Line
-            {
-                [DebuggerStepThrough]
-                get { return _position.Line; }
-            }
-
-            public override int Column
-            {
-                [DebuggerStepThrough]
-                get { return _position.Column; }
+                get { return _position; }
             }
 
             public override string Description
@@ -99,7 +197,9 @@ namespace Prexonite.Compiler.Symbolic
 
             public override int GetHashCode()
             {
+// ReSharper disable ConditionIsAlwaysTrueOrFalse
                 return (_moduleName != null ? _moduleName.GetHashCode() : 0);
+// ReSharper restore ConditionIsAlwaysTrueOrFalse
             }
         }
     }

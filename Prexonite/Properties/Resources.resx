@@ -396,4 +396,10 @@
     <data name="SelfAssemblingPlan_RefSepcMustHaveResolvedPathForPreflightOrder" xml:space="preserve">
     <value>A preflight parse request must come with a resolved path.</value>
   </data>
+    <data name="SymbolEntryConversion_Namespace" xml:space="preserve">
+    <value>Cannot convert namespace to symbol entry.</value>
+  </data>
+    <data name="Parser_ExpectedEntityFoundNamespace" xml:space="preserve">
+    <value>Found namespace, expected actual entity.</value>
+  </data>
 </root>

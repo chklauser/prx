@@ -34,7 +34,7 @@ namespace Prexonite.Compiler.Symbolic
     /// <summary>
     /// Represents a symbol declaration and lookup scope. A SymbolStore could stand alone or
     /// it could forward queries to one or more "surrounding"/"parent" scopes. It could also
-    /// present the intersection or union of multiple scopes.
+    /// present the union of multiple scopes.
     /// </summary>
     public abstract class SymbolStore : ISymbolView<Symbol>, IObject
     {
@@ -63,10 +63,10 @@ namespace Prexonite.Compiler.Symbolic
         public abstract bool TryGet([NotNull] string id, out Symbol value);
 
         /// <summary>
-        /// Returns the total number of symbols visible from this scope.
+        /// Indicates whether this store has no symbols to offer at all. (Includes parent/unified symbols)
         /// </summary>
         [PublicAPI]
-        public abstract int Count { get; }
+        public abstract bool IsEmpty { get; }
 
         /// <summary>
         /// Creates a new <see cref="SymbolStore"/> using a default implementation.
@@ -76,7 +76,7 @@ namespace Prexonite.Compiler.Symbolic
         /// <returns>A new symbol store.</returns>
         [PublicAPI]
         [NotNull]
-        public static SymbolStore Create([CanBeNull] SymbolStore parent = null, [CanBeNull] IEnumerable<SymbolInfo> conflictUnionSource = null)
+        public static SymbolStore Create([CanBeNull] ISymbolView<Symbol> parent = null, [CanBeNull] IEnumerable<SymbolInfo> conflictUnionSource = null)
         {
             return new ConflictUnionFallbackStore(parent,conflictUnionSource);
         }

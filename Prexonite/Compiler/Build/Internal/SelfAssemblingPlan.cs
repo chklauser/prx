@@ -89,6 +89,12 @@ namespace Prexonite.Compiler.Build.Internal
             }
         }
 
+        private readonly HashSet<ModuleName> _standardLibrary = new HashSet<ModuleName>(); 
+        public ISet<ModuleName> StandardLibrary
+        {
+            get { return _standardLibrary; }
+        }
+
 
         [NotNull]
         private Task<PreflightResult> _orderPreflight(RefSpec refSpec, CancellationToken token)
@@ -157,7 +163,14 @@ namespace Prexonite.Compiler.Build.Internal
             if (!ModuleName.TryParse(app.Meta[Module.NameKey], out theModuleName))
                 theModuleName = app.Module.Name;
 
-            var result = new PreflightResult { ModuleName = theModuleName };
+            MetaEntry noStdLibEntry;
+            var result = new PreflightResult
+            {
+                ModuleName = theModuleName,
+                SuppressStandardLibrary =
+                    app.Meta.TryGetValue(Module.NoStandardLibraryKey, out noStdLibEntry) && noStdLibEntry.Switch
+            };
+
             result.References.AddRange(
                 app.Meta[Module.ReferencesKey].List.Where(entry => !entry.Equals(new MetaEntry("")))
                     .Select(_parseRefSpec));
@@ -300,7 +313,11 @@ namespace Prexonite.Compiler.Build.Internal
                         return Message.Error(s.ErrorMessage, refPosition, MessageClasses.SelfAssembly);
                         // ReSharper restore PossibleNullReferenceException,AssignNullToNotNullAttribute
                     });
+
+            // Assemble dependencies, including standard library (unless suppressed)
             var deps = refSpecs.Where(r => r.ModuleName != null).Select(r => r.ModuleName);
+            if(!result.SuppressStandardLibrary)
+                deps = deps.Append(StandardLibrary);
             
             var reportedFileName = result.Path != null ? result.Path.ToString() : null;
                 
@@ -449,6 +466,8 @@ namespace Prexonite.Compiler.Build.Internal
         public volatile string ErrorMessage;
 
         public FileInfo Path;
+
+        public volatile bool SuppressStandardLibrary;
 
         public bool IsValid
         {
