@@ -137,7 +137,24 @@ GetSetExtension<AstExpr subject, out AstGetSet extension>
     dot                                 (.  extension = new AstIndirectCall(this, PCall.Get, subject); .)
     Arguments<extension.Arguments>
 |   dot
-    Id<out id>                          (.  extension = new AstGetSetMemberAccess(this, PCall.Get, subject, id); .)
+    Id<out id>                          (.  var ns = subject as AstNamespaceUsage;
+                                            if(ns == null)
+                                            {
+                                                // Ordinary member access
+                                                extension = new AstGetSetMemberAccess(this, PCall.Get, subject, id);
+                                            }
+                                            else
+                                            {
+                                                // Namespace lookup
+                                                extension = _useSymbol(ns.Namespace, id, GetPosition());
+                                                // write down qualified path
+                                                AstNamespaceUsage subns = extension as AstNamespaceUsage;
+                                                if(subns != null && subns.ReferencePath == null)
+                                                {
+                                                    subns.ReferencePath = ns.ReferencePath + new QualifiedId(id);
+                                                }
+                                            }
+                                        .)
     Arguments<extension.Arguments> 
 |                                       (.  
                                             AstExpr expr; 
@@ -294,17 +311,7 @@ SymbolicUsage<out AstGetSet complex>
                                 (.  string id; ISourcePosition position; 
                                 .)
 =                               (.  position = GetPosition(); .)
-    Id<out id>                  (.  Symbol sym;
-                                    var expr = Symbols.TryGet(id, out sym)
-                                        ? Create.ExprFor(position, sym)
-                                        : new AstUnresolved(position, id);
-                                    complex = expr as AstGetSet;
-                                    if(complex == null)
-                                    {
-                                        Loader.ReportMessage(Message.Error("Expected symbolic usage to be represented as an LValue.",position,MessageClasses.ParserInternal));
-                                        complex = Create.IndirectCall(position,Create.Null(position));
-                                    }
-                                .)
+    Id<out id>                  (.  complex = _useSymbol(Symbols, id, position); .)
     Arguments<complex.Arguments>    
 .
 
@@ -317,22 +324,6 @@ StaticCall<out AstGetSetStatic staticCall>
     dot Id<out memberId>        (.  staticCall = new AstGetSetStatic(this, PCall.Get, typeExpr, memberId); .)
     Arguments<staticCall.Arguments>
 .
-
-/*
-StaticCall<out AstGetSetStatic staticCall>
-                                (.  string id = "";
-                                    System.Text.StringBuilder idBuilder = new System.Text.StringBuilder();
-                                    bool staticPrefix = false;
-                                .)
-=
-
-    [   doublecolon             (.  staticPrefix = true; .)
-    ]   Ns<out id>              (.  idBuilder.Append(id); .)
-    {   Ns<out id>              (.  idBuilder.Append("."+id); .)
-    }
-    Id<out id>                  (.  staticCall = createStaticCall(idBuilder.ToString(), id, staticPrefix); .)
-    Arguments<staticCall.Arguments> 
-. // */
                                     //Fallback in case of a syntax error to avoid NullReferenceExceptions
 ExplicitLabel<AstBlock block>   (.  string id = "--\\NotAnId\\--"; .)
 =

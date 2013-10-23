@@ -143,6 +143,11 @@ namespace Prexonite.Commands.Math
         /// <param name = "ins">The instruction to compile.</param>
         void ICilCompilerAware.ImplementInCil(CompilerState state, Instruction ins)
         {
+            _CallStaticFunc1(state, ins, RunStaticallyMethod);
+        }
+
+        internal static void _CallStaticFunc1(CompilerState state, Instruction ins, MethodInfo runStaticallyMethod)
+        {
             if (ins == null)
                 throw new ArgumentNullException("ins");
 
@@ -150,7 +155,6 @@ namespace Prexonite.Commands.Math
             {
                 case 1:
                     break;
-                case 0:
                 default:
                     throw new NotSupportedException();
             }
@@ -162,7 +166,7 @@ namespace Prexonite.Commands.Math
             else
             {
                 state.EmitLoadLocal(state.SctxLocal);
-                state.EmitCall(RunStaticallyMethod);
+                state.EmitCall(runStaticallyMethod);
             }
         }
 

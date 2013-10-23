@@ -402,4 +402,19 @@
     <data name="Parser_ExpectedEntityFoundNamespace" xml:space="preserve">
     <value>Found namespace, expected actual entity.</value>
   </data>
+    <data name="Parser_SymbolicUsageAsLValue" xml:space="preserve">
+    <value>Expected symbolic usage to be represented as an LValue.</value>
+  </data>
+    <data name="Parser_relativeNsId_empty" xml:space="preserve">
+    <value>relativeNsId cannot be empty</value>
+  </data>
+    <data name="Parser_NamespaceExpected" xml:space="preserve">
+    <value>Expected {0} to be a namespace. Was {1}.</value>
+  </data>
+    <data name="Parser_CannotExtendMergedNamespace" xml:space="preserve">
+    <value>Namespace {0} cannot be extended because it is a merged view of two originally distinct namespaces.</value>
+  </data>
+    <data name="SymbolMExprParser_EmptySymbolicReference" xml:space="preserve">
+    <value>Symbolic reference must consist of at least one symbol name.</value>
+  </data>
 </root>

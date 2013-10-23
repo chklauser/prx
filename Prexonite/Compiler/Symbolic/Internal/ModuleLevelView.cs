@@ -8,13 +8,13 @@ using JetBrains.Annotations;
 
 namespace Prexonite.Compiler.Symbolic.Internal
 {
-    internal class ModuleLevelView : ISymbolView<Symbol>
+    internal class ModuleLevelView : SymbolStore
     {
         /// <summary>
         /// The scope that this filter wraps.
         /// </summary>
         [NotNull]
-        private readonly ISymbolView<Symbol> _externalScope;
+        private readonly SymbolStore _backingStore;
 
         /// <summary>
         /// Maps namespaces to already constructed proxies.
@@ -25,36 +25,35 @@ namespace Prexonite.Compiler.Symbolic.Internal
         [NotNull]
         private readonly ConcurrentDictionary<Namespace, LocalNamespaceImpl> _localProxies;
 
-        private ModuleLevelView([NotNull] ISymbolView<Symbol> externalScope, [NotNull] ConcurrentDictionary<Namespace, LocalNamespaceImpl> localProxies)
+        private ModuleLevelView([NotNull] SymbolStore backingStore, [NotNull] ConcurrentDictionary<Namespace, LocalNamespaceImpl> localProxies)
         {
-            if (externalScope == null)
-                throw new ArgumentNullException("externalScope");
+            if (backingStore == null)
+                throw new ArgumentNullException("backingStore");
             if (localProxies == null)
                 throw new ArgumentNullException("localProxies");
 
-            _externalScope = externalScope;
+            _backingStore = backingStore;
             _localProxies = localProxies;
         }
 
-        public class LocalNamespaceImpl : LocalNamespace
+        public static ModuleLevelView Create([NotNull] SymbolStore externalScope)
+        {
+            return new ModuleLevelView(externalScope, new ConcurrentDictionary<Namespace, LocalNamespaceImpl>());
+        }
+
+        internal class LocalNamespaceImpl : LocalNamespace
         {
             /// <summary>
             /// Wrapper around the symbols of this namespace coming from external sources.
             /// </summary>
             [NotNull]
-            private readonly ModuleLevelView _externalView;
+            private readonly ModuleLevelView _localView;
 
             /// <summary>
-            /// Holds module-local exports. Uses <see cref="_externalView"/> as its external scope.
-            /// </summary>
-            [CanBeNull]
-            private SymbolStore _exportScope;
-
-            /// <summary>
-            /// This lock is used to guard access to <see cref="_exportScope"/>. 
+            /// Holds module-local exports. Uses <see cref="_localView"/> as its external scope.
             /// </summary>
             [NotNull]
-            private readonly ReaderWriterLockSlim _lock = new ReaderWriterLockSlim();
+            private readonly SymbolStore _exportScope;
 
             /// <summary>
             /// Physical name prefix used for functions, variables etc. defined inside the namespace.
@@ -69,9 +68,10 @@ namespace Prexonite.Compiler.Symbolic.Internal
             [CanBeNull]
             private string _prefix;
 
-            public LocalNamespaceImpl([NotNull] ISymbolView<Symbol> externalScope, [NotNull] ConcurrentDictionary<Namespace, LocalNamespaceImpl> localProxies)
+            internal LocalNamespaceImpl([NotNull] ISymbolView<Symbol> externalScope, [NotNull] ConcurrentDictionary<Namespace, LocalNamespaceImpl> localProxies)
             {
-                _externalView = new ModuleLevelView(externalScope, localProxies);
+                _exportScope = Create(externalScope);
+                _localView = new ModuleLevelView(_exportScope, localProxies);
             }
 
             public override string Prefix
@@ -91,7 +91,7 @@ namespace Prexonite.Compiler.Symbolic.Internal
 
             public bool HasSameRootAs(ModuleLevelView view)
             {
-                return ReferenceEquals(_externalView._localProxies, view._localProxies);
+                return ReferenceEquals(_localView._localProxies, view._localProxies);
             }
 
             /// <summary>
@@ -102,83 +102,35 @@ namespace Prexonite.Compiler.Symbolic.Internal
             {
                 if (exportScope == null)
                     throw new ArgumentNullException("exportScope");
-                _lock.EnterWriteLock();
-                try
-                {
-                    if (_exportScope == null)
-                        _exportScope = SymbolStore.Create(_externalView);
-                    foreach (var newExport in exportScope)
-                        _exportScope.Declare(newExport.Key, newExport.Value);
-                }
-                finally
-                {
-                    _lock.ExitWriteLock();
-                }
+                
+                foreach (var newExport in exportScope)
+                    _exportScope.Declare(newExport.Key, newExport.Value);
             }
 
             public override IEnumerable<KeyValuePair<string, Symbol>> Exports
             {
                 get
                 {
-                    _lock.EnterReadLock();
-                    try
-                    {
-                        if (_exportScope != null)
-                        {
-                            foreach (var localDecl in _exportScope.LocalDeclarations)
-                                yield return localDecl;
-                        }
-                    }
-                    finally
-                    {
-                        _lock.ExitReadLock();
-                    }
+                    return _exportScope.LocalDeclarations;
                 }
             }
 
             public override IEnumerator<KeyValuePair<string, Symbol>> GetEnumerator()
             {
-                _lock.EnterReadLock();
-                try
-                {
-                    foreach (var entry in (ISymbolView<Symbol>)_exportScope ?? _externalView)
-                    {
-                        yield return entry;
-                    }
-                }
-                finally
-                {
-                    _lock.ExitReadLock();
-                }
+                return _localView.GetEnumerator();
             }
 
 
             public override bool TryGet(string id, out Symbol value)
             {
-                _lock.EnterReadLock();
-                try
-                {
-                    return ((ISymbolView<Symbol>)_exportScope ?? _externalView).TryGet(id, out value);
-                }
-                finally
-                {
-                    _lock.ExitReadLock();
-                }
+                return _localView.TryGet(id, out value);
             }
 
             public override bool IsEmpty
             {
                 get
                 {
-                    _lock.EnterReadLock();
-                    try
-                    {
-                        return ((ISymbolView<Symbol>)_exportScope ?? _externalView).IsEmpty;
-                    }
-                    finally
-                    {
-                        _lock.ExitReadLock();
-                    }
+                    return _localView.IsEmpty;
                 }
             }
         }
@@ -211,9 +163,9 @@ namespace Prexonite.Compiler.Symbolic.Internal
                 }
 
                 localNamespace = _localProxies.GetOrAdd(ns,
-                    externalNs => new LocalNamespaceImpl(externalNs, _localProxies));
+                    externalNs => new LocalNamespaceImpl(externalNs,_localProxies));
 
-                return Symbol.CreateNamespace(localNamespace, nsSymbol.LogicalName, nsSymbol.Position);
+                return Symbol.CreateNamespace(localNamespace, nsSymbol.Position);
             }
             else
             {
@@ -221,14 +173,39 @@ namespace Prexonite.Compiler.Symbolic.Internal
             }
         }
 
-        public bool IsEmpty
+        public LocalNamespace CreateLocalNamespace(ISymbolView<Symbol> externalScope)
         {
-            get { return _externalScope.IsEmpty; }
+            return new LocalNamespaceImpl(externalScope, _localProxies);
         }
 
-        public IEnumerator<KeyValuePair<string, Symbol>> GetEnumerator()
+        public override bool IsEmpty
         {
-            foreach (var entry in _externalScope)
+            get { return _backingStore.IsEmpty; }
+        }
+
+        public override void Declare(string id, Symbol symbol)
+        {
+            _backingStore.Declare(id, symbol);
+        }
+
+        public override bool IsDeclaredLocally(string id)
+        {
+            return _backingStore.IsDeclaredLocally(id);
+        }
+
+        public override void ClearLocalDeclarations()
+        {
+            _backingStore.ClearLocalDeclarations();
+        }
+
+        public override IEnumerable<KeyValuePair<string, Symbol>> LocalDeclarations
+        {
+            get { return _backingStore.LocalDeclarations; }
+        }
+
+        public override IEnumerator<KeyValuePair<string, Symbol>> GetEnumerator()
+        {
+            foreach (var entry in _backingStore)
             {
                 var localSym = _filterSymbol(entry.Value);
                 if (!ReferenceEquals(localSym, entry.Value))
@@ -238,9 +215,9 @@ namespace Prexonite.Compiler.Symbolic.Internal
             }
         }
 
-        public bool TryGet(string id, out Symbol value)
+        public override bool TryGet(string id, out Symbol value)
         {
-            if (_externalScope.TryGet(id, out value))
+            if (_backingStore.TryGet(id, out value))
             {
                 value = _filterSymbol(value);
                 return true;
@@ -250,11 +227,6 @@ namespace Prexonite.Compiler.Symbolic.Internal
                 value = null;
                 return false;
             }
-        }
-
-        IEnumerator IEnumerable.GetEnumerator()
-        {
-            return GetEnumerator();
         }
     }
 }

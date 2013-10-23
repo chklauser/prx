@@ -28,13 +28,42 @@ using System;
 using System.Collections;
 using System.Collections.Generic;
 using System.Diagnostics;
+using System.IO;
 using System.Linq;
+using System.Text;
 using JetBrains.Annotations;
 
 namespace Prexonite.Compiler.Symbolic
 {
     public struct QualifiedId : IReadOnlyList<string>, IEquatable<QualifiedId>, IComparable<QualifiedId>
     {
+        public void ToString([NotNull] TextWriter writer)
+        {
+            if(_elements == null)
+                return;
+
+            var isFirst = true;
+            foreach (var element in _elements)
+            {
+                if (isFirst)
+                {
+                    isFirst = false;
+                }
+                else
+                {
+                    writer.Write('.');
+                }
+                writer.Write(element);
+            }
+        }
+
+        public override String ToString()
+        {
+            var sb = new StringWriter();
+            ToString(sb);
+            return sb.ToString();
+        }
+
         [CanBeNull]
         private readonly string[] _elements;
 
@@ -165,6 +194,11 @@ namespace Prexonite.Compiler.Symbolic
         public static bool operator >=(QualifiedId left, QualifiedId right)
         {
             return left.CompareTo(right) <= 0;
+        }
+
+        public static QualifiedId operator +(QualifiedId left, QualifiedId right)
+        {
+            return new QualifiedId(left.Append(right).ToArray());
         }
     }
 }

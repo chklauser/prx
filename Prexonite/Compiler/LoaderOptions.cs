@@ -27,6 +27,7 @@ using System;
 using System.Diagnostics;
 using JetBrains.Annotations;
 using Prexonite.Compiler.Symbolic;
+using Prexonite.Compiler.Symbolic.Internal;
 
 namespace Prexonite.Compiler
 {
@@ -35,11 +36,25 @@ namespace Prexonite.Compiler
     {
         #region Construction
 
-        public LoaderOptions([CanBeNull] Engine parentEngine, [CanBeNull] Application targetApplication, [CanBeNull] SymbolStore symbols = null)
+        public LoaderOptions([CanBeNull] Engine parentEngine, [CanBeNull] Application targetApplication)
         {
             _parentEngine = parentEngine;
             _targetApplication = targetApplication;
-            _symbols = symbols ?? SymbolStore.Create();
+            _symbols = SymbolStore.Create();
+        }
+
+        public LoaderOptions([NotNull] Engine parentEngine, [NotNull] Application targetApplication, [NotNull] ISymbolView<Symbol> externalSymbols)
+        {
+            if (parentEngine == null)
+                throw new ArgumentNullException("parentEngine");
+            if (targetApplication == null)
+                throw new ArgumentNullException("targetApplication");
+            if (externalSymbols == null)
+                throw new ArgumentNullException("externalSymbols");
+            
+            _parentEngine = parentEngine;
+            _targetApplication = targetApplication;
+            _symbols = SymbolStore.Create(externalSymbols);
         }
 
         #endregion

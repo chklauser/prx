@@ -41,7 +41,7 @@ namespace Prexonite.Compiler
 
         protected override AstGetSet CreateNullNode(ISourcePosition position)
         {
-            return _parser._NullNode(position);
+            return Parser._NullNode(position);
         }
 
         protected override bool IsOuterVariable(string id)
@@ -61,7 +61,7 @@ namespace Prexonite.Compiler
             _parser.target.RequireOuterVariable(id);
         }
 
-        protected override void ReportMessage(Message message)
+        public override void ReportMessage(Message message)
         {
             _parser.Loader.ReportMessage(message);
         }

@@ -183,6 +183,8 @@ TOKENS
 	let
 	method
 	this
+    namespace
+    export
 	ENDKEYWORDS
 	
     //SPECIAL
@@ -1008,28 +1010,35 @@ TypeExprElement<. List<AstExpr> args .>
 Prexonite	
                             (.  PFunction func; .)				
 =
-    {   [                   (.  if(PreflightModeEnabled)
-                                {
-                                    ViolentlyAbortParse();
-                                    return;
-                                } 
-                            .)
-            GlobalVariableDefinition
-        |   MetaAssignment<TargetApplication>
-        ]   SYNC semicolon
-    |                       (.  if(PreflightModeEnabled)
-                                {
-                                    ViolentlyAbortParse();
-                                    return;
-                                } 
-                            .)
-        (    Declaration2
-        |   GlobalCode
-        |   BuildBlock
-        |   FunctionDefinition<out func>
-        )
-    }
+    DeclarationLevel
     EOF
+.
+
+DeclarationLevel
+                            (.  PFunction func; .)
+=
+{   [                       (.  if(PreflightModeEnabled)
+                                {
+                                    ViolentlyAbortParse();
+                                    return;
+                                } 
+                            .)
+        GlobalVariableDefinition
+    |   MetaAssignment<TargetApplication>
+    ]   SYNC semicolon
+|                           (.  if(PreflightModeEnabled)
+                                {
+                                    ViolentlyAbortParse();
+                                    return;
+                                } 
+                            .)
+    (    Declaration2
+    |   GlobalCode
+    |   BuildBlock
+    |   FunctionDefinition<out func>
+    |   NamespaceDeclaration
+    )
+}
 .
 
 /*---- Meta information ----*/
@@ -1514,7 +1523,7 @@ FunctionDefinition<out PFunction func>
       [ FunctionAliasList<funcAliases> ]
   |   FunctionAliasList<funcAliases>
   )                               (.  
-                                      funcId = id ?? Engine.GenerateName("f");
+                                      funcId = _assignPhysicalFunctionSlot(id);
                                         if(Engine.StringsAreEqual(id, @"\init")) //Treat "\init" specially (that's the initialization code)
                                         {
                                             func = TargetApplication._InitializationFunction;
@@ -1536,7 +1545,7 @@ FunctionDefinition<out PFunction func>
                                                 if(isMacro)
                                                     Loader.ReportMessage(Message.Error("Inner macros are illegal. Macros must be top-level.",GetPosition(),MessageClasses.InnerMacrosIllegal));
                                                     
-                                                funcId = generateLocalId(id ?? "inner");
+                                                funcId = generateLocalId(funcId ?? "inner");
                                                 
                                                 if(string.IsNullOrEmpty(localId))
                                                 {
@@ -1847,6 +1856,36 @@ GlobalQualifiedId<out string id>    (. id = "\\NoId\\"; .)
     GlobalId<out id>                (.  buffer.Append(id); .)
                                     (.  id = cache(buffer.ToString()); .)
 .
+
+NsQualifiedId<out QualifiedId qualifiedId>
+                                    (.  qualifiedId = default(QualifiedId);
+                                        String part = null;
+                                        var parts = new List<String>();
+                                    .)
+=
+GlobalId<out part>                  (.  parts.Add(part); .)
+[   dot
+    GlobalId<out part>              (.  parts.Add(part); .)
+]                                   (.  qualifiedId = new QualifiedId(parts.ToArray()); .)
+.
+
+NamespaceDeclaration                (.  QualifiedId fullNsId = default(QualifiedId);
+                                        DeclarationScope scope = null;
+                                        ISourcePosition qualIdPos = null;
+                                    .)
+=                                   (. .)
+namespace                           (. qualIdPos = GetPosition(); .)
+NsQualifiedId<out fullNsId>         
+// import spec goes here
+// accept any GlobalId, but complain if it isn't `import`
+lbrace                              (.  _pushDeclScope(fullNsId, qualIdPos); /* will also require import spec*/ .)
+DeclarationLevel
+rbrace                              (.  scope = _popDeclScope(); .)
+(   export
+    // export spec goes here
+|   /* like `export(*)` */
+)                                   (.  _updateNamespace(scope); /* will also require export spec*/ .)
+.
 #file:C:\Users\Christian\Documents\GitHub\prx\Prexonite\Compiler\Grammar\Parser.Helper.atg#
 /*
  * Prexonite, a scripting engine (Scripting Language -> Bytecode -> Virtual Machine)
@@ -1878,6 +1917,7 @@ Id<out string id>               (.  id = "\\NoId\\"; .) //<-- should never surfa
     |   disabled
     |   build
     |   add
+    |   namespace
     )                           (.  id = cache(t.val); .)
 .
 
@@ -2178,7 +2218,24 @@ GetSetExtension<AstExpr subject, out AstGetSet extension>
     dot                                 (.  extension = new AstIndirectCall(this, PCall.Get, subject); .)
     Arguments<extension.Arguments>
 |   dot
-    Id<out id>                          (.  extension = new AstGetSetMemberAccess(this, PCall.Get, subject, id); .)
+    Id<out id>                          (.  var ns = subject as AstNamespaceUsage;
+                                            if(ns == null)
+                                            {
+                                                // Ordinary member access
+                                                extension = new AstGetSetMemberAccess(this, PCall.Get, subject, id);
+                                            }
+                                            else
+                                            {
+                                                // Namespace lookup
+                                                extension = _useSymbol(ns.Namespace, id, GetPosition());
+                                                // write down qualified path
+                                                AstNamespaceUsage subns = extension as AstNamespaceUsage;
+                                                if(subns != null && subns.ReferencePath == null)
+                                                {
+                                                    subns.ReferencePath = ns.ReferencePath + new QualifiedId(id);
+                                                }
+                                            }
+                                        .)
     Arguments<extension.Arguments> 
 |                                       (.  
                                             AstExpr expr; 
@@ -2335,17 +2392,7 @@ SymbolicUsage<out AstGetSet complex>
                                 (.  string id; ISourcePosition position; 
                                 .)
 =                               (.  position = GetPosition(); .)
-    Id<out id>                  (.  Symbol sym;
-                                    var expr = Symbols.TryGet(id, out sym)
-                                        ? Create.ExprFor(position, sym)
-                                        : new AstUnresolved(position, id);
-                                    complex = expr as AstGetSet;
-                                    if(complex == null)
-                                    {
-                                        Loader.ReportMessage(Message.Error("Expected symbolic usage to be represented as an LValue.",position,MessageClasses.ParserInternal));
-                                        complex = Create.IndirectCall(position,Create.Null(position));
-                                    }
-                                .)
+    Id<out id>                  (.  complex = _useSymbol(Symbols, id, position); .)
     Arguments<complex.Arguments>    
 .
 
@@ -2358,22 +2405,6 @@ StaticCall<out AstGetSetStatic staticCall>
     dot Id<out memberId>        (.  staticCall = new AstGetSetStatic(this, PCall.Get, typeExpr, memberId); .)
     Arguments<staticCall.Arguments>
 .
-
-/*
-StaticCall<out AstGetSetStatic staticCall>
-                                (.  string id = "";
-                                    System.Text.StringBuilder idBuilder = new System.Text.StringBuilder();
-                                    bool staticPrefix = false;
-                                .)
-=
-
-    [   doublecolon             (.  staticPrefix = true; .)
-    ]   Ns<out id>              (.  idBuilder.Append(id); .)
-    {   Ns<out id>              (.  idBuilder.Append("."+id); .)
-    }
-    Id<out id>                  (.  staticCall = createStaticCall(idBuilder.ToString(), id, staticPrefix); .)
-    Arguments<staticCall.Arguments> 
-. // */
                                     //Fallback in case of a syntax error to avoid NullReferenceExceptions
 ExplicitLabel<AstBlock block>   (.  string id = "--\\NotAnId\\--"; .)
 =

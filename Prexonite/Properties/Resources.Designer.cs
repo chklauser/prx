@@ -682,6 +682,15 @@ namespace Prexonite.Properties {
         }
         
         /// <summary>
+        ///   Looks up a localized string similar to Namespace {0} cannot be extended because it is a merged view of two originally distinct namespaces..
+        /// </summary>
+        public static string Parser_CannotExtendMergedNamespace {
+            get {
+                return ResourceManager.GetString("Parser_CannotExtendMergedNamespace", resourceCulture);
+            }
+        }
+        
+        /// <summary>
         ///   Looks up a localized string similar to Could not find previous declaration for symbol {0}..
         /// </summary>
         public static string Parser_Could_not_find_previous_declaration {
@@ -724,6 +733,33 @@ namespace Prexonite.Properties {
         public static string Parser_ExpectedEntityFoundNamespace {
             get {
                 return ResourceManager.GetString("Parser_ExpectedEntityFoundNamespace", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Expected {0} to be a namespace. Was {1}..
+        /// </summary>
+        public static string Parser_NamespaceExpected {
+            get {
+                return ResourceManager.GetString("Parser_NamespaceExpected", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to relativeNsId cannot be empty.
+        /// </summary>
+        public static string Parser_relativeNsId_empty {
+            get {
+                return ResourceManager.GetString("Parser_relativeNsId_empty", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Expected symbolic usage to be represented as an LValue..
+        /// </summary>
+        public static string Parser_SymbolicUsageAsLValue {
+            get {
+                return ResourceManager.GetString("Parser_SymbolicUsageAsLValue", resourceCulture);
             }
         }
         
@@ -878,6 +914,15 @@ namespace Prexonite.Properties {
         public static string SymbolHandler_CannotHandleSymbolOfType {
             get {
                 return ResourceManager.GetString("SymbolHandler_CannotHandleSymbolOfType", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Symbolic reference must consist of at least one symbol name..
+        /// </summary>
+        public static string SymbolMExprParser_EmptySymbolicReference {
+            get {
+                return ResourceManager.GetString("SymbolMExprParser_EmptySymbolicReference", resourceCulture);
             }
         }
         

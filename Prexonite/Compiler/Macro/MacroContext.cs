@@ -38,7 +38,7 @@ namespace Prexonite.Compiler.Macro
     ///     Provides macros with access to Prexonite and compiler internals.
     /// </summary>
     [PublicAPI]
-    public class MacroContext
+    public class MacroContext : IMessageSink
     {
         #region Representation
 
@@ -299,7 +299,7 @@ namespace Prexonite.Compiler.Macro
         /// <para>Messages should always have a message class. Especially warings and infos (that way, the user can filter undesired warnings/infos)</para>
         /// </remarks>
         [PublicAPI]
-        public void ReportMessage([NotNull] Message message)
+        public void ReportMessage(Message message)
         {
             if (message == null)
                 throw new ArgumentNullException("message");

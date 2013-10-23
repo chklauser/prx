@@ -43,6 +43,27 @@ namespace PrexoniteTests.Tests
         private ISourcePosition _otherPosition;
         private SymbolStore _symbols;
         private IDictionary<Symbol, String> _existing;
+
+        private class ConsoleSink : IMessageSink
+        {
+            #region Singleton
+
+            private static readonly ConsoleSink _instance = new ConsoleSink();
+
+            public static ConsoleSink Instance
+            {
+                get
+                {
+                    return _instance;
+                }
+            }
+
+            #endregion 
+            public void ReportMessage(Message message)
+            {
+                Console.WriteLine(message);
+            }
+        }
             
         [SetUp]
         public void SetUp()
@@ -59,7 +80,7 @@ namespace PrexoniteTests.Tests
             var nil = Symbol.CreateNil(_position);
 
             var mnil = nil.HandleWith(SymbolMExprSerializer.Instance, _existing);
-            var nil2 = SymbolMExprParser.Parse(_symbols, mnil);
+            var nil2 = SymbolMExprParser.Parse(_symbols, mnil, ConsoleSink.Instance);
 
             Assert.That(nil2,Is.InstanceOf<NilSymbol>());
             Assert.That(nil2.Position,Is.EqualTo(_position));
@@ -72,7 +93,7 @@ namespace PrexoniteTests.Tests
             var s1 = Symbol.CreateDereference(Symbol.CreateNil(_position));
 
             var mnil = s1.HandleWith(SymbolMExprSerializer.Instance, _existing);
-            var s2 = SymbolMExprParser.Parse(_symbols, mnil);
+            var s2 = SymbolMExprParser.Parse(_symbols, mnil, ConsoleSink.Instance);
 
             Assert.That(s2, Is.InstanceOf<DereferenceSymbol>());
             Assert.That(s2.Position, Is.EqualTo(_position));
@@ -85,7 +106,7 @@ namespace PrexoniteTests.Tests
             var s1 = Symbol.CreateExpand(Symbol.CreateNil(_position));
 
             var mnil = s1.HandleWith(SymbolMExprSerializer.Instance, _existing);
-            var s2 = SymbolMExprParser.Parse(_symbols, mnil);
+            var s2 = SymbolMExprParser.Parse(_symbols, mnil, ConsoleSink.Instance);
 
             Assert.That(s2, Is.InstanceOf<ExpandSymbol>());
             Assert.That(s2.Position, Is.EqualTo(_position));
@@ -100,7 +121,7 @@ namespace PrexoniteTests.Tests
             var s1 = Symbol.CreateMessage(m,Symbol.CreateNil(_position));
 
             var mnil = s1.HandleWith(SymbolMExprSerializer.Instance, _existing);
-            dynamic s2 = SymbolMExprParser.Parse(_symbols, mnil);
+            dynamic s2 = SymbolMExprParser.Parse(_symbols, mnil, ConsoleSink.Instance);
 
             Assert.That(s2, Is.InstanceOf<MessageSymbol>());
             Assert.That(s2.Position, Is.EqualTo(_position));
@@ -116,7 +137,7 @@ namespace PrexoniteTests.Tests
             var s1 = Symbol.CreateMessage(m, Symbol.CreateExpand(Symbol.CreateDereference(Symbol.CreateNil(_position))));
 
             var mnil = s1.HandleWith(SymbolMExprSerializer.Instance, _existing);
-            dynamic s2 = SymbolMExprParser.Parse(_symbols, mnil);
+            dynamic s2 = SymbolMExprParser.Parse(_symbols, mnil, ConsoleSink.Instance);
 
             Assert.That(s2, Is.InstanceOf<MessageSymbol>());
             Assert.That(s2.Position, Is.EqualTo(_position));
@@ -132,7 +153,7 @@ namespace PrexoniteTests.Tests
             var s0 = Symbol.CreateNil(_position);
             _symbols.Declare(alias,s0);
 
-            dynamic s2 = SymbolMExprParser.Parse(_symbols, me);
+            dynamic s2 = SymbolMExprParser.Parse(_symbols, me, ConsoleSink.Instance);
 
             Assert.That(s2,Is.InstanceOf<NilSymbol>());
             Assert.That(s2,Is.SameAs(s0));
@@ -147,7 +168,7 @@ namespace PrexoniteTests.Tests
             var s0 = Symbol.CreateNil(_otherPosition);
             _symbols.Declare(alias, s0);
 
-            dynamic s2 = SymbolMExprParser.Parse(_symbols, me);
+            dynamic s2 = SymbolMExprParser.Parse(_symbols, me, ConsoleSink.Instance);
 
             Assert.That(s2, Is.InstanceOf<ExpandSymbol>());
             Assert.That(s2.Position, Is.EqualTo(_position));
@@ -164,7 +185,7 @@ namespace PrexoniteTests.Tests
             _symbols.Declare("x",s0);
 
             var m = s1.HandleWith(SymbolMExprSerializer.Instance, _existing);
-            dynamic s2 = SymbolMExprParser.Parse(_symbols, m);
+            dynamic s2 = SymbolMExprParser.Parse(_symbols, m, ConsoleSink.Instance);
 
             Assert.That(s2,Is.InstanceOf<DereferenceSymbol>());
             Assert.That(s2,Is.EqualTo(s1));
@@ -177,7 +198,7 @@ namespace PrexoniteTests.Tests
             var s1 = Symbol.CreateReference(EntityRef.Command.Create("c"), _position);
 
             var m = s1.HandleWith(SymbolMExprSerializer.Instance, _existing);
-            dynamic s2 = SymbolMExprParser.Parse(_symbols, m);
+            dynamic s2 = SymbolMExprParser.Parse(_symbols, m, ConsoleSink.Instance);
 
             Assert.That(s2,Is.EqualTo(s1));
         }
@@ -188,7 +209,7 @@ namespace PrexoniteTests.Tests
             var s1 = Symbol.CreateReference(EntityRef.MacroCommand.Create("c"), _position);
 
             var m = s1.HandleWith(SymbolMExprSerializer.Instance, _existing);
-            dynamic s2 = SymbolMExprParser.Parse(_symbols, m);
+            dynamic s2 = SymbolMExprParser.Parse(_symbols, m, ConsoleSink.Instance);
 
             Assert.That(s2, Is.EqualTo(s1));
         }
@@ -199,7 +220,7 @@ namespace PrexoniteTests.Tests
             var s1 = Symbol.CreateReference(EntityRef.Variable.Local.Create("c"), _position);
 
             var m = s1.HandleWith(SymbolMExprSerializer.Instance, _existing);
-            dynamic s2 = SymbolMExprParser.Parse(_symbols, m);
+            dynamic s2 = SymbolMExprParser.Parse(_symbols, m, ConsoleSink.Instance);
 
             Assert.That(s2, Is.EqualTo(s1));
         }
@@ -211,7 +232,7 @@ namespace PrexoniteTests.Tests
             var s1 = Symbol.CreateReference(EntityRef.Variable.Global.Create("c",mn), _position);
 
             var m = s1.HandleWith(SymbolMExprSerializer.Instance, _existing);
-            dynamic s2 = SymbolMExprParser.Parse(_symbols, m);
+            dynamic s2 = SymbolMExprParser.Parse(_symbols, m, ConsoleSink.Instance);
 
             Assert.That(s2, Is.EqualTo(s1));
         }
@@ -223,7 +244,7 @@ namespace PrexoniteTests.Tests
             var s1 = Symbol.CreateReference(EntityRef.Function.Create("c",mn), _position);
 
             var m = s1.HandleWith(SymbolMExprSerializer.Instance, _existing);
-            dynamic s2 = SymbolMExprParser.Parse(_symbols, m);
+            dynamic s2 = SymbolMExprParser.Parse(_symbols, m, ConsoleSink.Instance);
 
             Assert.That(s2, Is.EqualTo(s1));
         }
@@ -241,7 +262,7 @@ namespace PrexoniteTests.Tests
             _existing.Add(s0,"f");
 
             var m = s1.HandleWith(SymbolMExprSerializer.Instance, _existing);
-            dynamic s2 = SymbolMExprParser.Parse(_symbols, m);
+            dynamic s2 = SymbolMExprParser.Parse(_symbols, m, ConsoleSink.Instance);
 
             Assert.That(s2,Is.InstanceOf<ExpandSymbol>());
             Assert.That(s2.InnerSymbol,Is.InstanceOf<MessageSymbol>());

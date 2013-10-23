@@ -28,6 +28,7 @@ using System.Collections.Generic;
 using Moq;
 using NUnit.Framework;
 using Prexonite;
+using Prexonite.Commands.Math;
 using Prexonite.Compiler;
 using Prexonite.Compiler.Ast;
 using Prexonite.Compiler.Symbolic;
@@ -184,9 +185,9 @@ function main(x)
             var mn = ldr.ParentApplication.Module.Name;
 
             {
-                Assert.That(ldr.Symbols.Contains("f"), Is.True,
+                Assert.That(ldr.TopLevelSymbols.Contains("f"), Is.True,
                     "Symbol table must contain an entry for 'f'.");
-                var entry = LookupSymbolEntry(ldr.Symbols,"f");
+                var entry = LookupSymbolEntry(ldr.TopLevelSymbols,"f");
                 Assert.That(entry,Is.InstanceOf<DereferenceSymbol>());
                 var deref = (DereferenceSymbol) entry;
                 Assert.That(deref.InnerSymbol,Is.InstanceOf<ReferenceSymbol>());
@@ -198,9 +199,9 @@ function main(x)
             }
 
             {
-                Assert.That(ldr.Symbols.Contains("g"), Is.True,
+                Assert.That(ldr.TopLevelSymbols.Contains("g"), Is.True,
                     "Symbol table must contain an entry for 'g'.");
-                var entry = LookupSymbolEntry(ldr.Symbols, "g");
+                var entry = LookupSymbolEntry(ldr.TopLevelSymbols, "g");
                 Assert.That(entry, Is.InstanceOf<DereferenceSymbol>());
                 var deref = (DereferenceSymbol)entry;
                 Assert.That(deref.InnerSymbol, Is.InstanceOf<ReferenceSymbol>());
@@ -212,9 +213,9 @@ function main(x)
             }
 
             {
-                Assert.That(ldr.Symbols.Contains("p"), Is.True,
+                Assert.That(ldr.TopLevelSymbols.Contains("p"), Is.True,
                     "Symbol table must contain an entry for 'p'.");
-                var entry = LookupSymbolEntry(ldr.Symbols, "p");
+                var entry = LookupSymbolEntry(ldr.TopLevelSymbols, "p");
                 Assert.That(entry, Is.InstanceOf<DereferenceSymbol>());
                 var deref = (DereferenceSymbol)entry;
                 Assert.That(deref.InnerSymbol, Is.InstanceOf<ReferenceSymbol>());
@@ -512,6 +513,314 @@ function main()
                            Assert.That(r[6], Is.EqualTo(EntityRef.MacroCommand.Create("entityref_to").ToString()));
                            Assert.That(r[7], Is.EqualTo(EntityRef.Command.Create("print").ToString()));
                        });
+        }
+
+        [Test]
+        public void NamespaceLookup()
+        {
+            SkipStore = true;
+
+            var ldr = new Loader(options);
+            Compile(ldr, @"
+function f = 17;
+");
+            Symbol f;
+            if(!ldr.TopLevelSymbols.TryGet("f",out f))
+                Assert.Fail("Expected module level symbol f to exist.");
+
+            var scopea = SymbolStore.Create();
+            scopea.Declare("g",f);
+            var nsa = new MergedNamespace(scopea);
+            var a = Symbol.CreateNamespace(nsa, NoSourcePosition.Instance);
+            ldr.TopLevelSymbols.Declare("a",a);
+
+            Compile(ldr, @"
+function main()
+{
+    return a.g;
+}
+");
+
+            Expect(17);
+        }
+
+        [Test]
+        public void NestedNamespaceLookup()
+        {
+            SkipStore = true;
+
+            var ldr = new Loader(options);
+            Compile(ldr, @"
+function f = 17;
+");
+            Symbol f;
+            if (!ldr.TopLevelSymbols.TryGet("f", out f))
+                Assert.Fail("Expected module level symbol f to exist.");
+
+            var scopea = SymbolStore.Create();
+            scopea.Declare("g", f);
+            var nsa = new MergedNamespace(scopea);
+            var a = Symbol.CreateNamespace(nsa, NoSourcePosition.Instance);
+
+            var scopeb = SymbolStore.Create();
+            scopeb.Declare("a",a);
+            var nsb = new MergedNamespace(scopeb);
+            var b = Symbol.CreateNamespace(nsb, NoSourcePosition.Instance);
+
+            ldr.TopLevelSymbols.Declare("b",b);
+
+            Compile(ldr, @"
+function main()
+{
+    return b.a.g;
+}
+");
+
+            Expect(17);
+        }
+
+        [Test]
+        public void AliasedNamespaceLookup()
+        {
+            SkipStore = true;
+
+            var ldr = new Loader(options);
+            Compile(ldr, @"
+function f = 17;
+");
+            Symbol f;
+            if (!ldr.TopLevelSymbols.TryGet("f", out f))
+                Assert.Fail("Expected module level symbol f to exist.");
+
+            var scopea = SymbolStore.Create();
+            scopea.Declare("g", f);
+            var nsa = new MergedNamespace(scopea);
+            var a = Symbol.CreateNamespace(nsa, NoSourcePosition.Instance);
+
+            var scopeb = SymbolStore.Create();
+            scopeb.Declare("a", a);
+            var nsb = new MergedNamespace(scopeb);
+            var b = Symbol.CreateNamespace(nsb, NoSourcePosition.Instance);
+
+            ldr.TopLevelSymbols.Declare("b", b);
+
+            Compile(ldr, @"
+declare(z = sym(""b"",""a""));
+function main()
+{
+    return z.g;
+}
+");
+
+            Expect(17);
+        }
+
+        [Test]
+        public void NamespaceDeclaration()
+        {
+            SkipStore = true;
+            var ldr = Compile(@"
+namespace a 
+{
+    function f = 17;
+}
+
+function main = a.f;
+");
+            Expect(17);
+            Symbol dummy;
+            Assert.That(ldr.TopLevelSymbols.TryGet("f",out dummy),Is.False,"Existence of symbol f in the global scope");
+        }
+
+        [Test]
+        public void SugaredNestedNamespaceDeclaration()
+        {
+            SkipStore = true;
+
+            Compile(@"
+namespace a.b 
+{
+    function f = 17;
+}
+
+function main = a.b.f;
+");
+            Expect(17);
+        }
+
+        [Test]
+        public void NestedNamespaceDeclaration()
+        {
+            SkipStore = true;
+
+            Compile(@"
+namespace a 
+{
+    namespace b 
+    {
+        function f = 17;
+    }
+}
+
+function main = a.b.f;
+");
+            Expect(17);
+        }
+
+        [Test]
+        public void TopLevelAccessFromNamespace()
+        {
+            SkipStore = true;
+
+            Compile(@"
+function f = 17;
+
+namespace a 
+{
+    function g = f;
+}
+
+function main = a.g;
+");
+            Expect(17);
+        }
+
+        [Test]
+        public void SurroundingAccessFromNamespace()
+        {
+            SkipStore = true;
+
+            Compile(@"
+namespace a 
+{
+    function f = 17;
+    namespace b
+    {
+        function g = f;
+    }
+}
+
+function main = a.b.g;
+");
+            Expect(17);
+        }
+
+        [Test]
+        public void Surrounding2AccessFromNamespace()
+        {
+            SkipStore = true;
+
+            Compile(@"
+namespace a 
+{
+    function f = 17;
+    namespace b
+    {
+        namespace c
+        {
+            function g = f;
+        }
+    }
+}
+
+function main = a.b.c.g;
+");
+            Expect(17);
+        }
+
+        [Test]
+        public void SugarComposeNamespaces()
+        {
+            SkipStore = true;
+            Compile(@"
+namespace a.b
+{
+    function f = 17;
+}
+
+namespace a.c
+{
+    function g = 3;
+}
+
+function main = a.b.f + a.c.g;
+");
+            Expect(20);
+        }
+
+        [Test]
+        public void SugarNsOverride()
+        {
+            SkipStore = true;
+            CompileInvalid(@"
+namespace a
+{
+    function b = 13;
+}
+
+namespace a.b
+{
+    function f = 17;
+}
+
+function main = a.b.f;
+","Expected","namespace","func");
+        }
+
+        [Test]
+        public void SugarNsExtend()
+        {
+            SkipStore = true;
+            Compile(@"
+namespace a
+{
+    function b = 13;
+}
+
+namespace a.c
+{
+    function f = 17;
+}
+
+namespace a
+{
+    function d = 10;
+}
+
+namespace a
+{
+    namespace c
+    {
+        function g = 2;
+    }
+}
+
+function main = a.b + a.c.f + a.d + a.c.g;
+");
+
+            Expect(13 + 17 + 10 + 2);
+        }
+
+        [Test]
+        public void NsPhysical()
+        {
+            SkipStore = true;
+
+            Compile(@"
+namespace a 
+{
+    function f = 3;
+}
+
+namespace b
+{
+    function f = 14;
+}
+
+function main = a.f + b.f;
+");
+
+            Expect(17);
         }
     }
 }

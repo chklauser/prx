@@ -293,7 +293,7 @@ namespace Prexonite.Compiler.Symbolic.Internal
                         var exportedFromOther = _exportedFrom(otherNamespaceSymbol, mergeContext.OtherInfo);
                         var merged = new MergedNamespace(Create(conflictUnionSource:
                                         exportedFromThis.Append(exportedFromOther)));
-                        return Symbol.CreateNamespace(merged, self.LogicalName ?? otherNamespaceSymbol.LogicalName,
+                        return Symbol.CreateNamespace(merged,
                             mergeContext.ThisInfo.Origin.Position);
                     }
                 }

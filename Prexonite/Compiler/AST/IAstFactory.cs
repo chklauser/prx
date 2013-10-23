@@ -25,13 +25,14 @@
 //  IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 using System.Collections.Generic;
 using JetBrains.Annotations;
+using Prexonite.Compiler.Macro;
 using Prexonite.Compiler.Symbolic;
 using Prexonite.Modular;
 using Prexonite.Types;
 
 namespace Prexonite.Compiler.Ast
 {
-    public interface IAstFactory
+    public interface IAstFactory : IMessageSink
     {
         [NotNull]
         AstTypeExpr ConstantType([NotNull] ISourcePosition position, string typeExpression);

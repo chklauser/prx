@@ -80,7 +80,7 @@ namespace Prexonite.Compiler.Macro
             _target = target;
             _astFactory = _target.Factory;
             
-            _globalSymbols = SymbolStore.Create(_target.Loader.Symbols);
+            _globalSymbols = SymbolStore.Create(_target.Loader.TopLevelSymbols);
             _outerVariables = new ReadOnlyCollectionView<string>(_target.OuterVariables);
 
             _buildCommandToken = target.Loader.RequestBuildCommands();

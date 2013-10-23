@@ -222,6 +222,7 @@ internal partial class Lexer
         if (isGlobal)
             switch (word)
             {
+                //case "to": //Parsed by the scanner.
                 case "add":
                     return Parser._add;
                 case "build":
@@ -232,7 +233,10 @@ internal partial class Lexer
                     return Parser._does;
                 case "enabled":
                     return Parser._enabled;
-                    //case "to": //Parsed by the scanner.
+                case "namespace":
+                    return Parser._namespace;
+                case "export":
+                    return Parser._export;
             }
 
             //Local only

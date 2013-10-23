@@ -4,12 +4,16 @@ using JetBrains.Annotations;
 
 namespace Prexonite.Compiler.Symbolic.Internal
 {
+    /// <summary>
+    /// A module-local namespace declaration. 
+    /// Inherits symbols from namespaces with the same name exported from referenced modules.
+    /// </summary>
+    /// <remarks>
+    /// To create a new instance, use <see cref="ModuleLevelView.CreateLocalNamespace"/> on any of 
+    /// the module level view associated with the module that the namespace is supposed to be local to.
+    /// </remarks>
     internal abstract class LocalNamespace : Namespace
     {
-        protected LocalNamespace()
-        {
-        }
-
         #region Physical namespace
 
         /// <summary>

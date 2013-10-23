@@ -55,6 +55,7 @@ namespace Prexonite.Compiler.Ast
         protected override void EmitGetCode(CompilerTarget target, StackSemantics stackSemantics)
         {
             _reportUnresolved(target);
+            target.EmitNull(Position);
         }
 
         private void _reportUnresolved(CompilerTarget target)

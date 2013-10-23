@@ -82,39 +82,7 @@ namespace Prexonite.Commands.Core.PartialApplication
         void ICilExtension.Implement(CompilerState state, Instruction ins,
             CompileTimeValue[] staticArgv, int dynamicArgc)
         {
-            //the call subject is not part of argv
-            var argc = staticArgv.Length + dynamicArgc - 1;
-
-            if (argc == 0)
-            {
-                //there is no subject, just load null
-                state.EmitLoadNullAsPValue();
-                return;
-            }
-
-            //We don't actually need static arguments, just emit the corresponding opcodes
-            foreach (var compileTimeValue in staticArgv)
-                compileTimeValue.EmitLoadAsPValue(state);
-
-            //pack arguments (including static ones) into the argv array, but exclude subject (the first argument)
-            state.FillArgv(argc);
-            state.ReadArgv(argc);
-
-            //call constructor of FunctionalPartialCall
-            state.Il.Emit(OpCodes.Newobj, _functionPartialCallCtor);
-
-            //wrap in PValue
-            if (ins.JustEffect)
-            {
-                state.Il.Emit(OpCodes.Pop);
-            }
-            else
-            {
-                state.EmitStoreTemp(0);
-                state.EmitLoadLocal(state.SctxLocal);
-                state.EmitLoadTemp(0);
-                state.EmitVirtualCall(Compiler.Cil.Compiler.CreateNativePValue);
-            }
+            FlippedFunctionalPartialCallCommand._ImplementCtorCall(state, ins, staticArgv, dynamicArgc, _functionPartialCallCtor);
         }
     }
 }

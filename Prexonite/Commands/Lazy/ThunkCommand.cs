@@ -239,8 +239,6 @@ namespace Prexonite.Commands.Lazy
                 if (_blackHole.Trap())
                     continue; //If we have been trapped, check exception again
 
-                Debug.WriteLine("Force " + _expr, "thunk");
-
                 //Tag thunk as being evaluated
                 _blackHole = BlackHole.Active(Thread.CurrentThread.ManagedThreadId);
 

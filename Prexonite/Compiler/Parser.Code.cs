@@ -34,6 +34,7 @@ using Prexonite.Compiler.Ast;
 using Prexonite.Compiler.Internal;
 using Prexonite.Compiler.Symbolic;
 using Prexonite.Compiler.Symbolic.Compatibility;
+using Prexonite.Compiler.Symbolic.Internal;
 using Prexonite.Internal;
 using Prexonite.Modular;
 using Prexonite.Properties;
@@ -107,6 +108,130 @@ namespace Prexonite.Compiler
         {
             [DebuggerStepThrough]
             get { return target != null ? target.CurrentBlock.Symbols : _loader.Symbols; }
+        }
+
+        private void _pushDeclScope(QualifiedId relativeNsId, ISourcePosition idPosition)
+        {
+            if(relativeNsId.Count < 1)
+                throw new ArgumentOutOfRangeException("relativeNsId",Resources.Parser_relativeNsId_empty);
+            var outerScope = Loader.CurrentScope;
+            QualifiedId prefix;
+            SymbolStore declScopeStore;
+            LocalNamespace surroundingNamespace;
+            if (outerScope == null)
+            {
+                prefix = new QualifiedId(null);
+                declScopeStore = Loader.TopLevelSymbols;
+                surroundingNamespace = null;
+            }
+            else
+            {
+                prefix = outerScope.PathPrefix;
+                declScopeStore = outerScope.Store;
+                surroundingNamespace = outerScope._LocalNamespace;
+            }
+
+            var currentLookupScope = (ISymbolView<Symbol>) declScopeStore;
+            var isOutermostNs = true;
+            foreach (var superNsId in relativeNsId)
+            {
+                var localNs = _tryGetLocalNamespace(currentLookupScope, superNsId, idPosition);
+
+                prefix = prefix + new QualifiedId(superNsId);
+
+                // Create namespace if necessary
+                if (localNs == null)
+                {
+                    localNs = _createLocalNamespace(surroundingNamespace, declScopeStore, superNsId, prefix, isOutermostNs, idPosition);
+                }
+
+                surroundingNamespace = localNs;
+                currentLookupScope = localNs;
+                if (isOutermostNs)
+                    isOutermostNs = false;
+            }
+
+            // This should never happen, check is here to convey this fact to null-analysis
+            if(surroundingNamespace == null)
+                throw new PrexoniteException("Failed to create the innermost namespace of " + relativeNsId + ".");
+
+            // Create the local scope of this namespace *declaration* (the scope inside the braces)
+            // Not that this is almost completely independent of the namespace itself
+            // It is just used as one possible source for exports
+            var nsLocalScope = SymbolStore.Create(declScopeStore);
+            // TODO: Add import spec to local scope
+            Loader.PushScope(new DeclarationScope(surroundingNamespace, prefix,nsLocalScope));
+        }
+
+        [CanBeNull]
+        private LocalNamespace _tryGetLocalNamespace([NotNull] ISymbolView<Symbol> currentSurrounding, [NotNull] string superNsId, [NotNull] ISourcePosition idPosition)
+        {
+            Symbol sym;
+            LocalNamespace localNs = null;
+            if (currentSurrounding.TryGet(superNsId, out sym))
+            {
+                var fakeExpr = Create.ExprFor(idPosition, sym);
+                var nsUsage = fakeExpr as AstNamespaceUsage;
+                if (nsUsage == null)
+                    Loader.ReportMessage(Message.Error(
+                        string.Format(Resources.Parser_NamespaceExpected, superNsId, sym),
+                        idPosition, MessageClasses.NamespaceExcepted));
+                else
+                {
+                    // namespace already exists
+                    localNs = nsUsage.Namespace as LocalNamespace;
+                    if (localNs == null)
+                    {
+                        Loader.ReportMessage(Message.Error(
+                            string.Format(Resources.Parser_CannotExtendMergedNamespace, superNsId),
+                            idPosition, MessageClasses.CannotExtendMergedNamespace));
+                    }
+                }
+            }
+            return localNs;
+        }
+
+        [NotNull]
+        private LocalNamespace _createLocalNamespace(LocalNamespace surroundingNamespace, SymbolStore outer, string superNsId, QualifiedId nextPrefix, bool isOutermostNs, ISourcePosition idPosition)
+        {
+            var localNs = ((ModuleLevelView) Loader.TopLevelSymbols).CreateLocalNamespace(new EmptySymbolView<Symbol>());
+            localNs.Prefix = nextPrefix.ToString().Replace('.', '\\');
+            var nsSym = Symbol.CreateNamespace(localNs, idPosition);
+            if (isOutermostNs)
+            {
+                // The outermost namespace (x in x.y.z) is declared as an ordinary symbol in the current scope
+                outer.Declare(superNsId, nsSym);
+            }
+            else if (surroundingNamespace == null)
+                throw new PrexoniteException(
+                    "Failed to create surrounding namespace (syntactic sugar for nested namespace)");
+            else
+            {
+                // Inner namespaces (z,y in x.y.z) are exported from their super-namespaces
+                surroundingNamespace.DeclareExports(
+                    new KeyValuePair<string, Symbol>(superNsId, nsSym).Singleton());
+            }
+            return localNs;
+        }
+
+        private void _updateNamespace(DeclarationScope scope)
+        {
+            // TODO: Actually apply an export spec
+            // For now we just export everything declared inside the namespace declarations local scope
+            scope._LocalNamespace.DeclareExports(scope.Store.LocalDeclarations);
+        }
+
+        private DeclarationScope _popDeclScope()
+        {
+            // The symbol for this namespace should already have been declared by the push operation
+            return Loader.PopScope();
+        }
+
+        private String _assignPhysicalFunctionSlot([CanBeNull] String primaryId)
+        {
+            var id = primaryId ?? Engine.GenerateName("f");
+            var scope = Loader.CurrentScope;
+            return scope == null ? id : scope._LocalNamespace.DerivePhysicalName(id);
         }
 
         public Loader.FunctionTargetsIterator FunctionTargets
@@ -390,7 +515,7 @@ namespace Prexonite.Compiler
 
         #region Symbol management
 
-        internal AstGetSet _NullNode(ISourcePosition position)
+        internal static AstGetSet _NullNode(ISourcePosition position)
         {
             var n = new AstNull(position.File, position.Line, position.Column);
             return new AstIndirectCall(position, PCall.Get, n);
@@ -851,11 +976,37 @@ namespace Prexonite.Compiler
             }
         }
 
+        [NotNull]
+        private AstGetSet _useSymbol([NotNull] ISymbolView<Symbol> scope, [NotNull] String id, [NotNull] ISourcePosition position)
+        {
+            Symbol sym;
+            var expr = scope.TryGet(id, out sym)
+                ? Create.ExprFor(position, sym)
+                : new AstUnresolved(position, id);
+            var complex = expr as AstGetSet;
+            if (complex != null)
+            {
+                // If we have a namespace usage at hand, record the id used to access it
+                // (namespaces are otherwise anonymous, they have no physical name)
+                // Note: similar code is located in the GetSetExtension parser production
+                // for subnamespaces
+                var nsu = complex as AstNamespaceUsage;
+                if (nsu != null && nsu.ReferencePath == null)
+                {
+                    nsu.ReferencePath = new QualifiedId(id);
+                }
+                return complex;
+            }
+            Loader.ReportMessage(Message.Error(Resources.Parser_SymbolicUsageAsLValue, position, MessageClasses.ParserInternal));
+            complex = _NullNode(position);
+            return complex;
+        }
+
         private Symbol _parseSymbol(MExpr expr)
         {
             try
             {
-                return SymbolMExprParser.Parse(Symbols,expr);
+                return SymbolMExprParser.Parse(Symbols,expr,Loader);
             }
             catch (ErrorMessageException e)
             {

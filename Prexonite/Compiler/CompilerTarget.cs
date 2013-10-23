@@ -402,7 +402,7 @@ namespace Prexonite.Compiler
                 _target.RequireOuterVariable(id);
             }
 
-            protected override void ReportMessage(Message message)
+            public override void ReportMessage(Message message)
             {
                 _target.Loader.ReportMessage(message);
             }

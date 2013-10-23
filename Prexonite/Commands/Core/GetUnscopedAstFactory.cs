@@ -31,7 +31,6 @@ using Prexonite.Compiler.Ast;
 using Prexonite.Compiler.Cil;
 using Prexonite.Compiler.Symbolic;
 using Prexonite.Modular;
-using Prexonite.Properties;
 
 namespace Prexonite.Commands.Core
 {
@@ -67,8 +66,10 @@ namespace Prexonite.Commands.Core
             {
             }
 
-            protected override void ReportMessage(Message message)
+            public override void ReportMessage(Message message)
             {
+                // Yes, this also fails for info and warning messages, but we really have no other choice.
+                // Unscoped factories should not be used except when you know exactly what you are doing.
                 throw new ErrorMessageException(message);
             }
 

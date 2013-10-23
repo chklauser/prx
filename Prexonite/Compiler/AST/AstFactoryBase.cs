@@ -28,6 +28,7 @@ using System.Collections.Generic;
 using System.Diagnostics;
 using System.Linq;
 using JetBrains.Annotations;
+using Prexonite.Compiler.Macro;
 using Prexonite.Compiler.Symbolic;
 using Prexonite.Modular;
 using Prexonite.Properties;
@@ -53,7 +54,7 @@ namespace Prexonite.Compiler.Ast
 
         protected abstract void RequireOuterVariable([NotNull] string id);
 
-        protected abstract void ReportMessage([NotNull] Message message);
+        public abstract void ReportMessage(Message message);
 
         // TODO: Move constant folding out of AST factory and into operator macros
         [NotNull]
@@ -936,10 +937,7 @@ namespace Prexonite.Compiler.Ast
 
             public AstExpr HandleNamespace(NamespaceSymbol self, Tuple<AstFactoryBase, PCall, ISourcePosition> argument)
             {
-                var position = argument.Item3;
-                argument.Item1.ReportMessage(Message.Error(Resources.Parser_ExpectedEntityFoundNamespace,
-                    position,MessageClasses.ExpectedEntityFoundNamespace));
-                return argument.Item1.CreateNullNode(position);
+                return new AstNamespaceUsage(argument.Item3, argument.Item2, self.Namespace);
             }
 
             #endregion

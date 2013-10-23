@@ -56,6 +56,8 @@ namespace Prexonite.Compiler
         public const string ThisReserved = "P.ThisReserved";
         public const string DuplicateVar = "P.DuplicateVar";
         public const string GlobalUnbindNotSupported = "P.GlobalUnbindNotSupported";
+        public const string NamespaceExcepted = "P.NamespaceExpected";
+        public const string CannotExtendMergedNamespace = "P.CannotExtendMergedNamespace";
 
         #endregion
 

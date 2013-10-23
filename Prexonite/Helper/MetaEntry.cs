@@ -366,6 +366,15 @@ namespace Prexonite
 
         public MetaEntry AddToList(params MetaEntry[] newEntries)
         {
+            var list = _asList();
+            var newList = new MetaEntry[list.Length + newEntries.Length];
+            Array.Copy(list, newList, list.Length);
+            Array.Copy(newEntries, 0, newList, list.Length, newEntries.Length);
+            return (MetaEntry) newList;
+        }
+
+        private MetaEntry[] _asList()
+        {
             MetaEntry[] list;
             //Change type to list
             switch (_mtype)
@@ -383,10 +392,7 @@ namespace Prexonite
                 default:
                     throw new PrexoniteException("Invalid meta entry.");
             }
-            var newList = new MetaEntry[list.Length + newEntries.Length];
-            Array.Copy(list, newList, list.Length);
-            Array.Copy(newEntries, 0, newList, list.Length, newEntries.Length);
-            return (MetaEntry) newList;
+            return list;
         }
 
         public MetaEntry RemoveFromList(int index)
@@ -396,22 +402,7 @@ namespace Prexonite
 
         public MetaEntry RemoveFromList(int index, int length)
         {
-            MetaEntry[] list;
-            switch (_mtype)
-            {
-                case Type.Switch:
-                    list = new MetaEntry[] {_switch};
-                    break;
-                case Type.Text:
-                    list = new MetaEntry[] {_text};
-                    break;
-                case Type.List:
-                    list = _list;
-                    break;
-                case Type.Invalid:
-                default:
-                    throw new PrexoniteException("Invalid meta entry.");
-            }
+            MetaEntry[] list = _asList();
             if (index + length > list.Length - 1 || index < 0 || length < 0)
                 throw new ArgumentOutOfRangeException(
                     "index",

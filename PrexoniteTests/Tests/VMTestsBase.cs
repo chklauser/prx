@@ -29,6 +29,7 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
+using JetBrains.Annotations;
 using NUnit.Framework;
 using Prexonite;
 using Prexonite.Compiler;
@@ -48,6 +49,12 @@ namespace PrexoniteTests.Tests
         protected TestStackContext sctx;
         protected Application target;
         protected LoaderOptions options;
+
+        /// <summary>
+        /// Indicates whether to skip the <see cref="Loader.Store(System.Text.StringBuilder)"/> call on compilation.
+        /// </summary>
+        public bool SkipStore { get; set; }
+
         public bool CompileToCil { get; set; }
         protected FunctionLinking StaticLinking { get; set; }
 
@@ -68,6 +75,7 @@ namespace PrexoniteTests.Tests
             target = new Application("testApplication");
             sctx = new TestStackContext(engine, target);
             options = new LoaderOptions(engine, target);
+            SkipStore = false;
         }
 
         [TearDown]
@@ -131,7 +139,9 @@ namespace PrexoniteTests.Tests
                     Console.WriteLine("WARNING: " + s);
                 foreach (var s in ldr.Infos)
                     Console.WriteLine("INFO: " + s);
-                Console.WriteLine(ldr.StoreInString());
+
+                if(!SkipStore)
+                    Console.WriteLine(ldr.StoreInString());
             }
         }
 
@@ -315,7 +325,8 @@ namespace PrexoniteTests.Tests
             return GetReturnValueNamedExplicit(target.Meta[Application.EntryKey], args);
         }
 
-        protected Symbol LookupSymbolEntry(SymbolStore store, string symbolicId)
+        [NotNull]
+        protected Symbol LookupSymbolEntry([NotNull] ISymbolView<Symbol> store,[NotNull] string symbolicId)
         {
             Symbol symbol;
             Assert.IsTrue(store.TryGet(symbolicId, out symbol),

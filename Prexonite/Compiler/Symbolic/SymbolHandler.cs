@@ -86,7 +86,7 @@ namespace Prexonite.Compiler.Symbolic
         }
 
         [PublicAPI]
-        public TResult HandleNamespace(NamespaceSymbol self, TArg argument)
+        public virtual TResult HandleNamespace(NamespaceSymbol self, TArg argument)
         {
             return HandleLeafSymbol(self, argument);
         }

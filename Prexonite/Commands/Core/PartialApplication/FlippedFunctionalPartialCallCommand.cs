@@ -82,7 +82,13 @@ namespace Prexonite.Commands.Core.PartialApplication
         void ICilExtension.Implement(CompilerState state, Instruction ins,
             CompileTimeValue[] staticArgv, int dynamicArgc)
         {
-            //the call subject is not part of argv
+            _ImplementCtorCall(state, ins, staticArgv, dynamicArgc, _functionPartialCallCtor);
+        }
+
+        internal static void _ImplementCtorCall(CompilerState state, Instruction ins, CompileTimeValue[] staticArgv,
+            int dynamicArgc, ConstructorInfo partialCallCtor)
+        {
+//the call subject is not part of argv
             var argc = staticArgv.Length + dynamicArgc - 1;
 
             if (argc == 0)
@@ -101,7 +107,8 @@ namespace Prexonite.Commands.Core.PartialApplication
             state.ReadArgv(argc);
 
             //call constructor of FunctionalPartialCall
-            state.Il.Emit(OpCodes.Newobj, _functionPartialCallCtor);
+
+            state.Il.Emit(OpCodes.Newobj, partialCallCtor);
 
             //wrap in PValue
             if (ins.JustEffect)

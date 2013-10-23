@@ -102,10 +102,10 @@ namespace Prexonite.Compiler.Symbolic
 
         [PublicAPI]
         [NotNull]
-        public static Symbol CreateNamespace([NotNull] Namespace @namespace, [NotNull] string logicalName,
+        public static Symbol CreateNamespace([NotNull] Namespace @namespace,
             [NotNull] ISourcePosition position)
         {
-            return NamespaceSymbol._Create(@namespace, logicalName, position);
+            return NamespaceSymbol._Create(@namespace, position);
         }
 
         [PublicAPI]

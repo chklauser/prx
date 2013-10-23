@@ -123,24 +123,7 @@ namespace Prexonite.Commands.Math
         /// <param name = "ins">The instruction to compile.</param>
         void ICilCompilerAware.ImplementInCil(CompilerState state, Instruction ins)
         {
-            switch (ins.Arguments)
-            {
-                case 1:
-                    break;
-                case 0:
-                default:
-                    throw new NotSupportedException();
-            }
-
-            if (ins.JustEffect)
-            {
-                state.Il.Emit(OpCodes.Pop);
-            }
-            else
-            {
-                state.EmitLoadLocal(state.SctxLocal);
-                state.EmitCall(RunStaticallyMethod);
-            }
+            Abs._CallStaticFunc1(state, ins, RunStaticallyMethod);
         }
 
         #endregion

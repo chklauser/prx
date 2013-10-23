@@ -44,6 +44,7 @@ using Prexonite.Compiler.Internal;
 using Prexonite.Compiler.Macro;
 using Prexonite.Compiler.Macro.Commands;
 using Prexonite.Compiler.Symbolic;
+using Prexonite.Compiler.Symbolic.Internal;
 using Prexonite.Internal;
 using Prexonite.Modular;
 using Prexonite.Properties;
@@ -52,7 +53,7 @@ using Debug = System.Diagnostics.Debug;
 
 namespace Prexonite.Compiler
 {
-    public class Loader : StackContext
+    public class Loader : StackContext, IMessageSink
     {
         #region Static
 
@@ -73,6 +74,7 @@ namespace Prexonite.Compiler
             if (options == null)
                 throw new ArgumentNullException("options");
             _options = options;
+            _topLevelView = ModuleLevelView.Create(_options.Symbols);
 
             _functionTargets = new SymbolTable<CompilerTarget>();
             _functionTargetsIterator = new FunctionTargetsIterator(this);
@@ -105,7 +107,7 @@ namespace Prexonite.Compiler
         public void RegisterExistingCommands()
         {
             foreach (var kvp in ParentEngine.Commands)
-                Symbols.Declare(kvp.Key, Symbol.CreateCall(EntityRef.Command.Create(kvp.Key),NoSourcePosition.Instance));
+                TopLevelSymbols.Declare(kvp.Key, Symbol.CreateCall(EntityRef.Command.Create(kvp.Key),NoSourcePosition.Instance));
         }
 
         #endregion
@@ -124,10 +126,47 @@ namespace Prexonite.Compiler
 
         #region Global Symbol Table
 
-        public SymbolStore Symbols
+        private readonly Stack<DeclarationScope> _declarationScopes = new Stack<DeclarationScope>();
+        private readonly ModuleLevelView _topLevelView;
+
+        [CanBeNull]
+        public DeclarationScope CurrentScope
+        {
+            get 
+            {
+                return _declarationScopes.Count > 0 ? _declarationScopes.Peek() : null;
+            }
+        }
+
+        public void PushScope([NotNull] DeclarationScope scope)
+        {
+            if (scope == null)
+                throw new ArgumentNullException("scope");
+            _declarationScopes.Push(scope);
+        }
+
+        [NotNull]
+        public DeclarationScope PopScope()
+        {
+            return _declarationScopes.Pop();
+        }
+
+        public SymbolStore TopLevelSymbols
         {
             [DebuggerStepThrough]
-            get { return _options.Symbols; }
+            get { return _topLevelView; }
+        }
+
+        public SymbolStore Symbols
+        {
+            get
+            {
+                var scope = CurrentScope;
+                if (scope == null)
+                    return TopLevelSymbols;
+                else
+                    return scope.Store;
+            }
         }
 
         #endregion
@@ -601,7 +640,7 @@ namespace Prexonite.Compiler
             {
                 var commandReference =
                     Cache.EntityRefs.GetCached(EntityRef.MacroCommand.Create(macroCommand.Id));
-                Symbols.Declare(
+                TopLevelSymbols.Declare(
                     macroCommand.Id, Symbol.CreateExpand(Symbol.CreateReference(commandReference, NoSourcePosition.Instance)));
             }
         }
@@ -1210,7 +1249,7 @@ namespace Prexonite.Compiler
 
             writer.WriteLine("declare(");
             var previousSymbols = new Dictionary<Symbol, string>();
-            foreach (var symbol in Symbols)
+            foreach (var symbol in TopLevelSymbols)
             {
                 writer.Write("  "); 
                 writer.Write(StringPType.ToIdLiteral(symbol.Key));

@@ -209,8 +209,8 @@ namespace Prexonite.Types
         }
 
         //BINARY
-        public override bool Addition(
-            StackContext sctx, PValue leftOperand, PValue rightOperand, out PValue result)
+
+        private static bool _coalesce(PValue leftOperand, PValue rightOperand, out PValue result)
         {
             result = null;
             var leftIsNull = leftOperand.Value == null;
@@ -224,125 +224,54 @@ namespace Prexonite.Types
                 result = leftOperand;
 
             return result != null;
+        }
+
+        public override bool Addition(
+            StackContext sctx, PValue leftOperand, PValue rightOperand, out PValue result)
+        {
+            return _coalesce(leftOperand, rightOperand, out result);
         }
 
         public override bool Subtraction(
             StackContext sctx, PValue leftOperand, PValue rightOperand, out PValue result)
         {
-            result = null;
-            var leftIsNull = leftOperand.Value == null;
-            var rightIsNull = rightOperand.Value == null;
-
-            if (leftIsNull && rightIsNull)
-                result = Null.CreatePValue();
-            else if (leftIsNull)
-                result = rightOperand;
-            else if (rightIsNull)
-                result = leftOperand;
-
-            return result != null;
+            return _coalesce(leftOperand, rightOperand, out result);
         }
 
         public override bool Multiply(
             StackContext sctx, PValue leftOperand, PValue rightOperand, out PValue result)
         {
-            result = null;
-            var leftIsNull = leftOperand.Value == null;
-            var rightIsNull = rightOperand.Value == null;
-
-            if (leftIsNull && rightIsNull)
-                result = Null.CreatePValue();
-            else if (leftIsNull)
-                result = rightOperand;
-            else if (rightIsNull)
-                result = leftOperand;
-
-            return result != null;
+            return _coalesce(leftOperand, rightOperand, out result);
         }
 
         public override bool Division(
             StackContext sctx, PValue leftOperand, PValue rightOperand, out PValue result)
         {
-            result = null;
-            var leftIsNull = leftOperand.Value == null;
-            var rightIsNull = rightOperand.Value == null;
-
-            if (leftIsNull && rightIsNull)
-                result = Null.CreatePValue();
-            else if (leftIsNull)
-                result = rightOperand;
-            else if (rightIsNull)
-                result = leftOperand;
-
-            return result != null;
+            return _coalesce(leftOperand, rightOperand, out result);
         }
 
         public override bool Modulus(
             StackContext sctx, PValue leftOperand, PValue rightOperand, out PValue result)
         {
-            result = null;
-            var leftIsNull = leftOperand.Value == null;
-            var rightIsNull = rightOperand.Value == null;
-
-            if (leftIsNull && rightIsNull)
-                result = Null.CreatePValue();
-            else if (leftIsNull)
-                result = rightOperand;
-            else if (rightIsNull)
-                result = leftOperand;
-
-            return result != null;
+            return _coalesce(leftOperand, rightOperand, out result);
         }
 
         public override bool BitwiseAnd(
             StackContext sctx, PValue leftOperand, PValue rightOperand, out PValue result)
         {
-            result = null;
-            var leftIsNull = leftOperand.Value == null;
-            var rightIsNull = rightOperand.Value == null;
-
-            if (leftIsNull && rightIsNull)
-                result = Null.CreatePValue();
-            else if (leftIsNull)
-                result = rightOperand;
-            else if (rightIsNull)
-                result = leftOperand;
-
-            return result != null;
+            return _coalesce(leftOperand, rightOperand, out result);
         }
 
         public override bool BitwiseOr(
             StackContext sctx, PValue leftOperand, PValue rightOperand, out PValue result)
         {
-            result = null;
-            var leftIsNull = leftOperand.Value == null;
-            var rightIsNull = rightOperand.Value == null;
-
-            if (leftIsNull && rightIsNull)
-                result = Null.CreatePValue();
-            else if (leftIsNull)
-                result = rightOperand;
-            else if (rightIsNull)
-                result = leftOperand;
-
-            return result != null;
+            return _coalesce(leftOperand, rightOperand, out result);
         }
 
         public override bool ExclusiveOr(
             StackContext sctx, PValue leftOperand, PValue rightOperand, out PValue result)
         {
-            result = null;
-            var leftIsNull = leftOperand.Value == null;
-            var rightIsNull = rightOperand.Value == null;
-
-            if (leftIsNull && rightIsNull)
-                result = Null.CreatePValue();
-            else if (leftIsNull)
-                result = rightOperand;
-            else if (rightIsNull)
-                result = leftOperand;
-
-            return result != null;
+            return _coalesce(leftOperand, rightOperand, out result);
         }
 
         public override bool Equality(
