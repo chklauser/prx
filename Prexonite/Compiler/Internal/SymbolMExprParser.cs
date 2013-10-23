@@ -32,85 +32,118 @@ using Prexonite.Properties;
 
 namespace Prexonite.Compiler.Internal
 {
-    public static class SymbolMExprParser
+    public class SymbolMExprParser
     {
-        private const string HerePositionHead = "here";
+        [NotNull] private readonly ISymbolView<Symbol> _symbols;
+        [NotNull] private readonly ISymbolView<Symbol> _topLevelSymbols;
+        [NotNull] private readonly IMessageSink _messageSink;
+
+        public SymbolMExprParser([NotNull] ISymbolView<Symbol> symbols,[NotNull] IMessageSink messageSink, [NotNull]ISymbolView<Symbol> topLevelSymbols = null)
+        {
+            if (symbols == null)
+                throw new ArgumentNullException("symbols");
+            if (messageSink == null)
+                throw new ArgumentNullException("messageSink");
+            
+            _symbols = symbols;
+            _messageSink = messageSink;
+            _topLevelSymbols = topLevelSymbols ?? symbols;
+        }
+
+        public const string HerePositionHead = "here";
+
+        public const string AbsoluteModifierHead = "absolute";
+
+        private bool _tryParseCrossReference(MExpr expr, [NotNull] ISymbolView<Symbol> symbols, out Symbol symbol)
+        {
+            symbol = null;
+
+            List<MExpr> elements;
+            if (!expr.TryMatchHead(SymbolMExprSerializer.CrossReferenceHead, out elements))
+                return false;
+
+            var currentScope = symbols;
+            for (var i = 0; i < elements.Count; i++)
+            {
+                var element = elements[i];
+                string symbolName;
+                if (!element.TryMatchStringAtom(out symbolName))
+                    throw new ErrorMessageException(Message.Error(
+                        string.Format("Symbolic reference must be consist only of symbol names. Found {0} {1} instead.", (element != null ? element.GetType().ToString() : ""), element),
+                        element.Position, MessageClasses.SymbolNotResolved));
+                if (!currentScope.TryGet(symbolName, out symbol))
+                    throw new ErrorMessageException(
+                       Message.Error(
+                           String.Format("Cannot find symbol {0} referred to by delcaration {1}.", symbolName, expr),
+                           expr.Position, MessageClasses.SymbolNotResolved));
+
+                // If this is not the last element in the sequence, it must refer to a namespace symbol
+                if (i < elements.Count - 1)
+                {
+                    var errors = new List<Message>();
+                    var nsSym = NamespaceSymbol.UnwrapNamespaceSymbol(symbol, element.Position, _messageSink, errors);
+
+                    Message abortMessage = null;
+                    foreach (var error in errors)
+                    {
+                        if (abortMessage == null)
+                            abortMessage = error;
+                        else
+                            _messageSink.ReportMessage(error);
+                    }
+
+                    if (abortMessage != null)
+                        throw new ErrorMessageException(abortMessage);
+
+                    // Impossible. Condition required to convey that fact to null-analysis
+                    if (nsSym == null)
+                        throw new PrexoniteException("Namespace symbol was expected to exist. Internal error (\"impossible condition\").");
+                    currentScope = nsSym.Namespace;
+                }
+            }
+            if (symbol == null)
+                throw new ErrorMessageException(Message.Error(
+                    Resources.SymbolMExprParser_EmptySymbolicReference, expr.Position,
+                    MessageClasses.SymbolNotResolved));
+
+            return true;
+        }
 
         [NotNull]
-        public static Symbol Parse([NotNull] ISymbolView<Symbol> symbols, [NotNull] MExpr expr, [NotNull] IMessageSink messageSink)
+        public Symbol Parse( [NotNull] MExpr expr)
         {
             MExpr innerSymbolExpr;
             Symbol innerSymbol;
-            string symbolName;
             List<MExpr> elements;
             object raw;
             if (expr.TryMatchHead(SymbolMExprSerializer.DereferenceHead, out innerSymbolExpr))
             {
-                innerSymbol = Parse(symbols, innerSymbolExpr, messageSink);
+                innerSymbol = Parse(innerSymbolExpr);
                 return Symbol.CreateDereference(innerSymbol, expr.Position);
             }
-            else if (expr.TryMatchHead(SymbolMExprSerializer.CrossReferenceHead, out elements))
+            else if (_tryParseCrossReference(expr, _symbols, out innerSymbol))
             {
-                var currentScope = symbols;
-                innerSymbol = null;
-                for (var i = 0; i < elements.Count; i++)
-                {
-                    var element = elements[i];
-                    if(!element.TryMatchStringAtom(out symbolName))
-                        throw new ErrorMessageException(Message.Error(
-                            string.Format("Symbolic reference must be consist only of symbol names. Found {0} instead.", element),
-                            element.Position,MessageClasses.SymbolNotResolved));
-                    if(!currentScope.TryGet(symbolName, out innerSymbol))
-                        throw new ErrorMessageException(
-                           Message.Error(
-                               String.Format("Cannot find symbol {0} referred to by delcaration {1}.", symbolName, expr),
-                               expr.Position, MessageClasses.SymbolNotResolved));
-
-                    // If this is not the last element in the sequence, it must refer to a namespace symbol
-                    if (i < elements.Count - 1)
-                    {
-                        var errors = new List<Message>();
-                        var nsSym = NamespaceSymbol.UnwrapNamespaceSymbol(innerSymbol, element.Position, messageSink, errors);
-
-                        Message abortMessage = null; 
-                        foreach (var error in errors)
-                        {
-                            if (abortMessage == null)
-                                abortMessage = error;
-                            else
-                                messageSink.ReportMessage(error);
-                        }
-                            
-                        if(abortMessage != null)
-                            throw new ErrorMessageException(abortMessage);
-
-                        // Impossible. Condition required to convey that fact to null-analysis
-                        if(nsSym == null)
-                            throw new PrexoniteException("Namespace symbol was expected to exist. Internal error (\"impossible condition\").");
-                        currentScope = nsSym.Namespace;
-                    }
-                }
-                if(innerSymbol == null)
-                    throw new ErrorMessageException(Message.Error(
-                        Resources.SymbolMExprParser_EmptySymbolicReference,expr.Position,
-                        MessageClasses.SymbolNotResolved));
+                return innerSymbol;
+            }
+            else if (expr.TryMatchHead(AbsoluteModifierHead, out innerSymbolExpr) && _tryParseCrossReference(innerSymbolExpr,_topLevelSymbols,out innerSymbol))
+            {
                 return innerSymbol;
             }
             else if (expr.TryMatchHead(SymbolMExprSerializer.ErrorHead, out elements) && elements.Count == 4)
             {
-                return _parseMessage(MessageSeverity.Error, symbols, expr, elements,messageSink);
+                return _parseMessage(MessageSeverity.Error, expr, elements);
             }
             else if (expr.TryMatchHead(SymbolMExprSerializer.WarningHead, out elements) && elements.Count == 4)
             {
-                return _parseMessage(MessageSeverity.Warning, symbols, expr, elements,messageSink);
+                return _parseMessage(MessageSeverity.Warning, expr, elements);
             }
             else if (expr.TryMatchHead(SymbolMExprSerializer.InfoHead, out elements) && elements.Count == 4)
             {
-                return _parseMessage(MessageSeverity.Info, symbols, expr, elements,messageSink);
+                return _parseMessage(MessageSeverity.Info, expr, elements);
             }
             else if (expr.TryMatchHead(SymbolMExprSerializer.ExpandHead, out innerSymbolExpr))
             {
-                innerSymbol = Parse(symbols, innerSymbolExpr,messageSink);
+                innerSymbol = Parse(innerSymbolExpr);
                 return Symbol.CreateExpand(innerSymbol, expr.Position);
             }
             else if (expr.TryMatchAtom(out raw) && raw == null)
@@ -125,8 +158,8 @@ namespace Prexonite.Compiler.Internal
         }
 
         [NotNull]
-        private static Symbol _parseMessage(MessageSeverity severity, [NotNull] ISymbolView<Symbol> symbols,
-                                            [NotNull] MExpr expr, [NotNull] List<MExpr> elements, [NotNull] IMessageSink messageSink)
+        private Symbol _parseMessage(MessageSeverity severity,
+                                            [NotNull] MExpr expr, [NotNull] List<MExpr> elements)
         {
             Debug.Assert(elements[0] != null);
             Debug.Assert(elements[1] != null);
@@ -139,7 +172,7 @@ namespace Prexonite.Compiler.Internal
             {
                 var message = Message.Create(severity, messageText, position,
                     (rawMessageClass == null ? null : rawMessageClass.ToString()));
-                return Symbol.CreateMessage(message, Parse(symbols, elements[3],messageSink), expr.Position);
+                return Symbol.CreateMessage(message, Parse(elements[3]), expr.Position);
             }
             else
             {

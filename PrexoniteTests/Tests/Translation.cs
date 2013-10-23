@@ -518,8 +518,6 @@ function main()
         [Test]
         public void NamespaceLookup()
         {
-            SkipStore = true;
-
             var ldr = new Loader(options);
             Compile(ldr, @"
 function f = 17;
@@ -547,7 +545,6 @@ function main()
         [Test]
         public void NestedNamespaceLookup()
         {
-            SkipStore = true;
 
             var ldr = new Loader(options);
             Compile(ldr, @"
@@ -582,7 +579,6 @@ function main()
         [Test]
         public void AliasedNamespaceLookup()
         {
-            SkipStore = true;
 
             var ldr = new Loader(options);
             Compile(ldr, @"
@@ -618,7 +614,6 @@ function main()
         [Test]
         public void NamespaceDeclaration()
         {
-            SkipStore = true;
             var ldr = Compile(@"
 namespace a 
 {
@@ -635,7 +630,6 @@ function main = a.f;
         [Test]
         public void SugaredNestedNamespaceDeclaration()
         {
-            SkipStore = true;
 
             Compile(@"
 namespace a.b 
@@ -651,7 +645,6 @@ function main = a.b.f;
         [Test]
         public void NestedNamespaceDeclaration()
         {
-            SkipStore = true;
 
             Compile(@"
 namespace a 
@@ -670,7 +663,6 @@ function main = a.b.f;
         [Test]
         public void TopLevelAccessFromNamespace()
         {
-            SkipStore = true;
 
             Compile(@"
 function f = 17;
@@ -688,7 +680,6 @@ function main = a.g;
         [Test]
         public void SurroundingAccessFromNamespace()
         {
-            SkipStore = true;
 
             Compile(@"
 namespace a 
@@ -708,7 +699,6 @@ function main = a.b.g;
         [Test]
         public void Surrounding2AccessFromNamespace()
         {
-            SkipStore = true;
 
             Compile(@"
 namespace a 
@@ -731,7 +721,6 @@ function main = a.b.c.g;
         [Test]
         public void SugarComposeNamespaces()
         {
-            SkipStore = true;
             Compile(@"
 namespace a.b
 {
@@ -751,7 +740,6 @@ function main = a.b.f + a.c.g;
         [Test]
         public void SugarNsOverride()
         {
-            SkipStore = true;
             CompileInvalid(@"
 namespace a
 {
@@ -770,7 +758,6 @@ function main = a.b.f;
         [Test]
         public void SugarNsExtend()
         {
-            SkipStore = true;
             Compile(@"
 namespace a
 {

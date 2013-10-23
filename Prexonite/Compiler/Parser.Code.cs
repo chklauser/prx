@@ -158,7 +158,10 @@ namespace Prexonite.Compiler
             // Create the local scope of this namespace *declaration* (the scope inside the braces)
             // Not that this is almost completely independent of the namespace itself
             // It is just used as one possible source for exports
-            var nsLocalScope = SymbolStore.Create(declScopeStore);
+            var builder = SymbolStoreBuilder.Create(declScopeStore);
+            builder.Forward(new SymbolOrigin.NamepsaceImport(relativeNsId,idPosition),surroundingNamespace,
+                SymbolTransferDirective.CreateWildcard(idPosition).Singleton());
+            var nsLocalScope = builder.ToSymbolStore();
             // TODO: Add import spec to local scope
             Loader.PushScope(new DeclarationScope(surroundingNamespace, prefix,nsLocalScope));
         }
@@ -1006,7 +1009,8 @@ namespace Prexonite.Compiler
         {
             try
             {
-                return SymbolMExprParser.Parse(Symbols,expr,Loader);
+                var parser = new SymbolMExprParser(Symbols,Loader,Loader.TopLevelSymbols);
+                return parser.Parse(expr);
             }
             catch (ErrorMessageException e)
             {

@@ -99,6 +99,19 @@ namespace Prexonite.Compiler.Symbolic
             }
         }
 
+        public QualifiedId ExtendedWith(String suffix)
+        {
+            if(_elements == null || _elements.Length == 0)
+                return new QualifiedId(new []{suffix});
+            else
+            {
+                var next = new string[_elements.Length + 1];
+                Array.Copy(_elements,next, _elements.Length);
+                next[next.Length - 1] = suffix;
+                return new QualifiedId(next);
+            }
+        }
+
         public bool Equals(QualifiedId other)
         {
             var thisZero = _elements == null || _elements.Length == 0;

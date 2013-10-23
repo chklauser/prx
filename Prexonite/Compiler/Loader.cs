@@ -32,6 +32,7 @@ using System.Collections.Generic;
 using System.Diagnostics;
 using System.Diagnostics.CodeAnalysis;
 using System.IO;
+using System.Linq;
 using System.Reflection;
 using System.Security.AccessControl;
 using System.Text;
@@ -1239,6 +1240,27 @@ namespace Prexonite.Compiler
                 StoreSymbols(writer);
         }
 
+        private class SymbolSerializationPartitioner : SymbolHandler<string, Object>
+        {
+            private readonly List<KeyValuePair<string, NamespaceSymbol>> _namespaceSymbols = new List<KeyValuePair<string, NamespaceSymbol>>();
+            public IEnumerable<KeyValuePair<string, NamespaceSymbol>> NamespaceSymbols
+            {
+                get { return _namespaceSymbols; }
+            }
+
+            public override object HandleNamespace(NamespaceSymbol self, string argument)
+            {
+                _namespaceSymbols.Add(new KeyValuePair<string,NamespaceSymbol>(argument,self));
+                return null;
+            }
+
+            protected override object HandleSymbolDefault(Symbol self, string argument)
+            {
+                // just ignore others
+                return null;
+            }
+        }
+
         /// <summary>
         ///     Writes only the symbol declarations to the text writer (regardless of the <see cref = "LoaderOptions.StoreSymbols" /> property.)
         /// </summary>
@@ -1247,20 +1269,55 @@ namespace Prexonite.Compiler
         {
             writer.WriteLine("\n//--SYMBOLS");
 
-            writer.WriteLine("declare(");
-            var previousSymbols = new Dictionary<Symbol, string>();
-            foreach (var symbol in TopLevelSymbols)
+            var previousSymbols = new Dictionary<Symbol, QualifiedId>();
+            var currentPrefix = new QualifiedId(null);
+            var scope = TopLevelSymbols;
+
+            _storeScope(writer, scope, previousSymbols, currentPrefix);
+        }
+
+        private static void _storeScope(TextWriter writer, IEnumerable<KeyValuePair<string,Symbol>> scope, IDictionary<Symbol, QualifiedId> previousSymbols,
+            QualifiedId currentPrefix)
+        {
+            var partition = new SymbolSerializationPartitioner();
+            var cachedScope = scope.ToArray();
+            foreach (var symbol in cachedScope)
+                symbol.Value.HandleWith(partition, symbol.Key);
+            foreach (var symbol in partition.NamespaceSymbols)
             {
-                writer.Write("  "); 
+                var localNamespace = symbol.Value.Namespace as LocalNamespace;
+                if (localNamespace == null)
+                {
+                    throw new PrexoniteException("Cannot represent external namespace in symbols.");
+                }
+                writer.Write("namespace ");
+                writer.Write(StringPType.ToIdLiteral(symbol.Key));
+                writer.WriteLine(" {");
+                var nestedPrefix = _recordSymbol(previousSymbols, currentPrefix, symbol.Key,symbol.Value);
+                _storeScope(writer,localNamespace.Exports,previousSymbols, nestedPrefix);
+                writer.WriteLine("};");
+                
+            }
+            writer.WriteLine("declare(");
+            foreach (var symbol in cachedScope)
+            {
+                writer.Write("  ");
                 writer.Write(StringPType.ToIdLiteral(symbol.Key));
                 writer.Write(" = ");
                 var mexpr = symbol.Value.HandleWith(SymbolMExprSerializer.Instance, previousSymbols);
                 mexpr.ToString(writer);
-                if(!previousSymbols.ContainsKey(symbol.Value))
-                    previousSymbols.Add(symbol.Value,symbol.Key);
+                _recordSymbol(previousSymbols, currentPrefix, symbol.Key,symbol.Value);
                 writer.WriteLine(",");
             }
             writer.WriteLine(");");
+        }
+
+        private static QualifiedId _recordSymbol(IDictionary<Symbol, QualifiedId> previousSymbols, QualifiedId currentPrefix, string name, Symbol symbol)
+        {
+            var nestedPrefix = currentPrefix.ExtendedWith(name);
+            if(!previousSymbols.ContainsKey(symbol))
+                previousSymbols.Add(symbol, nestedPrefix);
+            return nestedPrefix;
         }
 
         /// <summary>
@@ -1283,12 +1340,6 @@ namespace Prexonite.Compiler
             get { return _options.ParentEngine; }
         }
 
-        public PFunction Implementation
-        {
-            [DebuggerStepThrough]
-            get { return Options.TargetApplication._InitializationFunction; }
-        }
-
         public override sealed Application ParentApplication
         {
             get { return Options.TargetApplication; }
@@ -1296,7 +1347,9 @@ namespace Prexonite.Compiler
 
         public override sealed SymbolCollection ImportedNamespaces
         {
+           // ReSharper disable PossibleNullReferenceException
             get { return Options.TargetApplication._InitializationFunction.ImportedNamespaces; }
+            // ReSharper enable PossibleNullReferenceException
         }
 
         [DebuggerStepThrough]

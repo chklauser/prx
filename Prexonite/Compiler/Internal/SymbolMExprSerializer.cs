@@ -25,12 +25,13 @@
 //  IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 using System;
 using System.Collections.Generic;
+using System.Linq;
 using JetBrains.Annotations;
 using Prexonite.Compiler.Symbolic;
 
 namespace Prexonite.Compiler.Internal
 {
-    public class SymbolMExprSerializer : SymbolHandler<IDictionary<Symbol, string>,MExpr>
+    public class SymbolMExprSerializer : SymbolHandler<IDictionary<Symbol, QualifiedId>,MExpr>
     {
         #region Singleton
 
@@ -63,12 +64,13 @@ namespace Prexonite.Compiler.Internal
         }
 
         [CanBeNull]
-        private MExpr _lookForExistingSymbol(ISourcePosition position, IDictionary<Symbol, string> existingSymbols, Symbol symbol)
+        private MExpr _lookForExistingSymbol(ISourcePosition position, IDictionary<Symbol, QualifiedId> existingSymbols, Symbol symbol)
         {
-            String symbolName;
+            QualifiedId symbolName;
             if (existingSymbols.TryGetValue(symbol, out symbolName))
             {
-                return new MExpr.MList(position, CrossReferenceHead, symbolName);
+                return new MExpr.MList(position, SymbolMExprParser.AbsoluteModifierHead, new MExpr.MList(position, CrossReferenceHead, 
+                    symbolName.Select(part => new MExpr.MAtom(position,part))));
             }
             else
             {
@@ -76,27 +78,32 @@ namespace Prexonite.Compiler.Internal
             }
         }
 
-        public override MExpr HandleReference(ReferenceSymbol self, IDictionary<Symbol,String> existingSymbols)
+        public override MExpr HandleNamespace(NamespaceSymbol self, IDictionary<Symbol, QualifiedId> argument)
+        {
+            return _lookForExistingSymbol(self.Position, argument, self) ?? base.HandleNamespace(self, argument);
+        }
+
+        public override MExpr HandleReference(ReferenceSymbol self, IDictionary<Symbol, QualifiedId> existingSymbols)
         {
             return _lookForExistingSymbol(self.Position,existingSymbols,self) ?? self.Entity.Match(EntityRefMExprSerializer.Instance, self.Position);
         }
 
-        public override MExpr HandleNil(NilSymbol self, IDictionary<Symbol,String> existingSymbols)
+        public override MExpr HandleNil(NilSymbol self, IDictionary<Symbol, QualifiedId> existingSymbols)
         {
             return _lookForExistingSymbol(self.Position,existingSymbols, self) ?? new MExpr.MAtom(self.Position, null);
         }
 
-        public override MExpr HandleExpand(ExpandSymbol self, IDictionary<Symbol,String> existingSymbols)
+        public override MExpr HandleExpand(ExpandSymbol self, IDictionary<Symbol, QualifiedId> existingSymbols)
         {
             return _lookForExistingSymbol(self.Position, existingSymbols, self) ?? new MExpr.MList(self.Position, ExpandHead, self.InnerSymbol.HandleWith(this, existingSymbols));
         }
 
-        public override MExpr HandleDereference(DereferenceSymbol self, IDictionary<Symbol,String> existingSymbols)
+        public override MExpr HandleDereference(DereferenceSymbol self, IDictionary<Symbol, QualifiedId> existingSymbols)
         {
             return _lookForExistingSymbol(self.Position, existingSymbols, self) ?? new MExpr.MList(self.Position, DereferenceHead, self.InnerSymbol.HandleWith(this, existingSymbols));
         }
 
-        public override MExpr HandleMessage(MessageSymbol self, IDictionary<Symbol,String> existingSymbols)
+        public override MExpr HandleMessage(MessageSymbol self, IDictionary<Symbol, QualifiedId> existingSymbols)
         {
             var existing = _lookForExistingSymbol(self.Position, existingSymbols, self);
             if (existing != null)
