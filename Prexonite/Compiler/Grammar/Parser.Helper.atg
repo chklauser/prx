@@ -28,7 +28,6 @@ Id<out string id>               (.  id = "\\NoId\\"; .) //<-- should never surfa
     |   disabled
     |   build
     |   add
-    |   namespace
     )                           (.  id = cache(t.val); .)
 .
 

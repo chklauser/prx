@@ -30,7 +30,6 @@ using System.Collections.Generic;
 using System.Diagnostics;
 using System.IO;
 using System.Linq;
-using System.Text;
 using JetBrains.Annotations;
 
 namespace Prexonite.Compiler.Symbolic
@@ -69,6 +68,16 @@ namespace Prexonite.Compiler.Symbolic
 
         public QualifiedId(params string[] elements) : this()
         {
+#if DEBUG
+            if (_elements != null)
+            {
+                for (var i = 0; i < elements.Length; i++)
+                {
+                    if (elements[i] == null)
+                        throw new ArgumentException(string.Format("Element of qualified id at index {0} is null.", i));
+                }
+            }
+#endif
             _elements = elements;
         }
 
@@ -110,6 +119,32 @@ namespace Prexonite.Compiler.Symbolic
                 next[next.Length - 1] = suffix;
                 return new QualifiedId(next);
             }
+        }
+
+        public QualifiedId WithSuffixDropped(int count)
+        {
+            var thisCount = Count;
+            if(count > thisCount || count < 0)
+                throw new IndexOutOfRangeException(string.Format("Cannot drop {0} parts from a qualified id consisting of {1} parts.", count, thisCount));
+            if (count == 0 || _elements == null)
+                return this;
+
+            var ps = new string[thisCount - count];
+            Array.Copy(_elements,0,ps,0,ps.Length);
+            return new QualifiedId(ps);
+        }
+
+        public QualifiedId WithPrefixDropped(int count)
+        {
+            var thisCount = Count;
+            if (count > thisCount || count < 0)
+                throw new IndexOutOfRangeException(string.Format("Cannot drop {0} parts from a qualified id consisting of {1} parts.", count, thisCount));
+            if (count == 0 || _elements == null)
+                return this;
+
+            var ps = new string[thisCount - count];
+            Array.Copy(_elements, count, ps, 0, ps.Length);
+            return new QualifiedId(ps);
         }
 
         public bool Equals(QualifiedId other)

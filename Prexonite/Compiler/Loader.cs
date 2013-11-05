@@ -1242,7 +1242,18 @@ namespace Prexonite.Compiler
 
         private class SymbolSerializationPartitioner : SymbolHandler<string, Object>
         {
+            [NotNull]
             private readonly List<KeyValuePair<string, NamespaceSymbol>> _namespaceSymbols = new List<KeyValuePair<string, NamespaceSymbol>>();
+
+            [NotNull]
+            private readonly IDictionary<Symbol,QualifiedId> _previousSymbols;
+
+            public SymbolSerializationPartitioner([NotNull] IDictionary<Symbol, QualifiedId> previousSymbols)
+            {
+                _previousSymbols = previousSymbols;
+            }
+
+            [NotNull]
             public IEnumerable<KeyValuePair<string, NamespaceSymbol>> NamespaceSymbols
             {
                 get { return _namespaceSymbols; }
@@ -1250,8 +1261,17 @@ namespace Prexonite.Compiler
 
             public override object HandleNamespace(NamespaceSymbol self, string argument)
             {
+                if (_previousSymbols.ContainsKey(self))
+                    return null;
                 _namespaceSymbols.Add(new KeyValuePair<string,NamespaceSymbol>(argument,self));
                 return null;
+            }
+
+            protected override object HandleWrappingSymbol(WrappingSymbol self, string argument)
+            {
+                if (_previousSymbols.ContainsKey(self))
+                    return null;
+                return self.InnerSymbol.HandleWith(this, argument);
             }
 
             protected override object HandleSymbolDefault(Symbol self, string argument)
@@ -1279,7 +1299,7 @@ namespace Prexonite.Compiler
         private static void _storeScope(TextWriter writer, IEnumerable<KeyValuePair<string,Symbol>> scope, IDictionary<Symbol, QualifiedId> previousSymbols,
             QualifiedId currentPrefix)
         {
-            var partition = new SymbolSerializationPartitioner();
+            var partition = new SymbolSerializationPartitioner(previousSymbols);
             var cachedScope = scope.ToArray();
             foreach (var symbol in cachedScope)
                 symbol.Value.HandleWith(partition, symbol.Key);

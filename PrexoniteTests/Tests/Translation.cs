@@ -756,6 +756,79 @@ function main = a.b.f;
         }
 
         [Test]
+        public void DontReExportSurrounding()
+        {
+            CompileInvalid(@"
+function f = 13;
+namespace a 
+{
+    function g = 15;
+}
+
+function main = a.f;
+","symbol","resolve","f");
+
+        }
+
+        [Test]
+        public void RestoreExportedOnExtend()
+        {
+            Compile(@"
+namespace a {
+    function f = 13;
+}
+
+namespace a {
+    function g = f+2;
+}
+
+function main = a.g;
+");
+
+            Expect(13+2);
+        }
+
+        [Test]
+        public void SuppressRestoreExportedOnExtend()
+        {
+            CompileInvalid(@"
+namespace a {
+    function zz_f = 13;
+}
+
+namespace a 
+    import()
+{
+    function g = zz_f+2;
+}
+
+function main = a.g;
+","symbol","resolve","zz_f");
+        }
+
+        [Test]
+        public void SimpleNsSugarExtend()
+        {
+            Compile(@"
+namespace a.c
+{
+    function f = 17;
+}
+
+namespace a
+{
+    namespace c
+    {
+        function g = 2;
+    }
+}
+
+function main = a.c.f + a.c.g;
+");
+            Expect(17+2);
+        }
+
+        [Test]
         public void SugarNsExtend()
         {
             Compile(@"
@@ -808,6 +881,180 @@ function main = a.f + b.f;
 ");
 
             Expect(17);
+        }
+
+        [Test]
+        public void ImportBackgroundConflict()
+        {
+            Compile(@"
+namespace a {
+    function f = 13;
+    function g = 12;
+    function x = 3;
+}
+
+namespace b {
+    var g = 19;
+    declare(f = absolute sym(""a"",""f""));
+    function y = 4;
+}
+
+namespace c
+    import a.*, b.*
+{
+    function s = f + x + y;
+}
+
+function main = c.s;
+");
+
+            Expect(4+3+13);
+        }
+
+        [Test]
+        public void ImportConflict()
+        {
+            CompileInvalid(@"
+namespace a 
+{
+    function f = 13;
+}
+
+namespace b
+{
+    var f = 14;
+}
+
+namespace c
+    import a.*, b.*
+{
+    function s = f;
+}
+
+function main = c.s;
+","incompatible","namespace a","namespace b","symbol f");
+        }
+
+        [Test]
+        public void RenameOneAvoidsConflict()
+        {
+            Compile(@"
+namespace a 
+{
+    function f = 13;
+}
+
+namespace b
+{
+    var f = 14;
+}
+
+namespace c
+    import a.*, b(f => z)
+{
+    function s = f + z;
+}
+
+function main = c.s;
+");
+            Expect(13+14);
+        }
+
+        [Test]
+        public void UseMultiplicationAsNamespaceName()
+        {
+            Compile(@"
+namespace a.(*).c {
+    function f = 3;
+}
+
+namespace b 
+    import a.(*).c.f
+{
+    function g = f;
+}
+
+function main = b.g;
+");
+            Expect(3);
+        }
+
+        [Test]
+        public void UseMultiplicationInExplicitTransfer()
+        {
+            Compile(@"
+namespace a {
+    function (*) = 3;
+    var gobb = 4;
+}
+
+namespace z {
+    function gobb = 5;
+}
+
+namespace b 
+    import a((*)), z(*) // should import only (*) from a, everything from z
+{
+    function g = (*) + gobb;
+}
+
+function main = b.g;
+");
+        }
+
+        [Test]
+        public void ExplicitWildcardTransfer()
+        {
+            Compile(@"
+namespace a { function f = 13; }
+namespace b import a(*)
+{ function g = f; }
+function main = b.g;
+");
+
+            Expect(13);
+        }
+
+        [Test]
+        public void DropAvoidsConflict()
+        {
+            Compile(@"
+namespace a 
+{
+    function f = 13;
+}
+
+namespace b
+{
+    var f = 14;
+    function g = 12;
+}
+
+namespace c
+    import 
+        a.*, 
+        b(*, not f)
+{
+    function s = f + g;
+}
+
+function main = c.s;
+");
+            Expect(13 + 12);
+        }
+
+        [Test]
+        public void FunctionScopeImport()
+        {
+            Compile(@"
+namespace a
+{
+    function f = 13;
+}
+
+function main namespace import a.f = f;
+");
+            Expect(13);
         }
     }
 }

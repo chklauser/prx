@@ -86,6 +86,9 @@ namespace Prexonite.Compiler
         private readonly Loader _loader;
         private readonly CompilerTarget _parentTarget;
 
+        [NotNull]
+        private readonly SymbolStore _importScope;
+
         private MacroSession _macroSession;
         private int _macroSessionReferenceCounter;
 
@@ -147,6 +150,7 @@ namespace Prexonite.Compiler
 
         #region Construction
 
+        [PublicAPI]
         [DebuggerStepThrough]
         public CompilerTarget(Loader loader, PFunction function, CompilerTarget parentTarget = null, ISourcePosition position = null)
         {
@@ -162,8 +166,9 @@ namespace Prexonite.Compiler
             _loader = loader;
             _function = function;
             _parentTarget = parentTarget;
-
-            _ast = AstBlock.CreateRootBlock(position ?? new SourcePosition("",-1,-1),  SymbolStore.Create(parentTarget == null ? loader.Symbols : parentTarget.Symbols),
+            _importScope = SymbolStore.Create(parentTarget == null ? loader.Symbols : parentTarget.Symbols);
+            _ast = AstBlock.CreateRootBlock(position ?? new SourcePosition("",-1,-1),  
+                SymbolStore.Create(ImportScope),
                                             AstBlock.RootBlockName, Guid.NewGuid().ToString("N"));
         }
 
@@ -200,6 +205,7 @@ namespace Prexonite.Compiler
         /// </summary>
         public const string MacroMetaKey = @"\macro";
 
+        [PublicAPI]
         public bool IsMacro
         {
             get { return Meta.GetDefault(MacroMetaKey, false).Switch; }
@@ -314,20 +320,6 @@ namespace Prexonite.Compiler
         {
             [DebuggerStepThrough]
             get { return CurrentBlock.Symbols; }
-        }
-
-        [Obsolete("Use the SymbolStore API to declare module-local symbols.")]
-        public void DeclareModuleLocal(SymbolInterpretations interpretation, string physicalName)
-        {
-            DeclareModuleLocal(interpretation, physicalName, physicalName);
-        }
-
-        [Obsolete("Use the SymbolStore API to declare module-local symbols.")]
-        public void DeclareModuleLocal(SymbolInterpretations interpretation, string logicalId, string physicalId)
-        {
-            var symbol =
-                new SymbolEntry(interpretation, physicalId, Loader.ParentApplication.Module.Name).ToSymbol();
-            Symbols.Declare(logicalId, symbol);
         }
 
         #endregion
@@ -462,6 +454,7 @@ namespace Prexonite.Compiler
             }
         }
 
+        [PublicAPI]
         [DebuggerStepThrough]
         public void BeginBlock(AstScopedBlock bl)
         {
@@ -470,6 +463,7 @@ namespace Prexonite.Compiler
             _scopeBlocks.Push(bl);
         }
 
+        [PublicAPI]
         [DebuggerStepThrough]
         public AstScopedBlock BeginBlock(string prefix)
         {
@@ -479,9 +473,11 @@ namespace Prexonite.Compiler
             return bl;
         }
 
+        [PublicAPI]
         [DebuggerStepThrough]
         public AstScopedBlock BeginBlock()
         {
+            // ReSharper disable once IntroduceOptionalParameters.Global
             return BeginBlock((string) null);
         }
 
@@ -646,15 +642,6 @@ namespace Prexonite.Compiler
         #endregion
 
         #region Lambda lifting (capture by value)
-
-        /// <summary>
-        ///     Promotes captured variables to function parameters.
-        /// </summary>
-        /// <returns>A list of expressions (get self) that should be added to the arguments list of any call to the lifted function.</returns>
-        internal Func<Parser, IList<AstExpr>> _ToCaptureByValue()
-        {
-            return _ToCaptureByValue(new string[0]);
-        }
 
         /// <summary>
         ///     Promotes captured variables to function parameters.
@@ -1042,6 +1029,18 @@ namespace Prexonite.Compiler
         protected int NextAddress
         {
             get { return Function.Code.Count; }
+        }
+
+        /// <summary>
+        /// The scope that import directives transfer their symbols into. Lies between the function's local scope and the surrounding scope.
+        /// </summary>
+        /// <remarks>
+        /// This means that imported symbols shadow the surrounding context but 
+        /// any local definitions (even when provided by the compiler) precede imported symbols.
+        /// </remarks>
+        public SymbolStore ImportScope
+        {
+            get { return _importScope; }
         }
 
         public void EmitJump(ISourcePosition position, string label)

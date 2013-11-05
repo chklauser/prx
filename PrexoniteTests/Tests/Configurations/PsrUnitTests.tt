@@ -1,11 +1,6 @@
 ﻿<#@ template debug="true" hostSpecific="true" #>
 <#@ output extension=".cs" #>
-<#@ Assembly Name="System.Core.dll" #>
-<#@ import namespace="System" #>
 <#@ import namespace="System.IO" #>
-<#@ import namespace="System.Diagnostics" #>
-<#@ import namespace="System.Linq" #>
-<#@ import namespace="System.Collections" #>
 <#@ import namespace="System.Collections.Generic" #> 
 // ReSharper disable RedundantUsingDirective
 using System;
@@ -18,6 +13,7 @@ using NUnit.Framework;
 
 // ReSharper disable RedundantExplicitArrayCreation
 // ReSharper disable InconsistentNaming
+// ReSharper disable RedundantCommaInArrayInitializer
 
 namespace PrexoniteTests.Tests.Configurations
 {

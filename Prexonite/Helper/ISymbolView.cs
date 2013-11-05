@@ -52,5 +52,6 @@ namespace Prexonite
             T dummy;
             return view.TryGet(key, out dummy);
         }
+ 
     }
 }

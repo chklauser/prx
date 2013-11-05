@@ -493,6 +493,7 @@
       <LastGenOutput>Operators.cs</LastGenOutput>
     </None>
     <None Include="Compiler\Build\Build.cd" />
+    <None Include="Compiler\Symbolic\Compatibility\LegacyDependencies.local.dgml" />
     <None Include="ObjectModel.cd" />
     <None Include="Prexonite.snk" />
     <Content Include="Compiler\Grammar\Grammar.Readme.txt" />

@@ -61,7 +61,7 @@ RegularStringChar   = [^$\"\\\r\n\u2028\u2029\u000B\u000C\u0085]
 RegularVerbatimStringChar = [^$\"] 
 Noise               = "/*" ~"*/" | "//" ~{LineBreak} | {WhiteSpace}+
 
-%state String, SmartString, VerbatimString, SmartVerbatimString, VerbatimBlock, Local, Asm
+%state String, SmartString, VerbatimString, SmartVerbatimString, VerbatimBlock, Local, Asm, Transfer
 
 %%
 
@@ -75,7 +75,7 @@ Noise               = "/*" ~"*/" | "//" ~{LineBreak} | {WhiteSpace}+
 }
 
 //Not local code
-<YYINITIAL,Asm> {
+<YYINITIAL,Asm, Transfer> {
     "\""          { buffer.Length = 0; PushState(String); }
     "@\""         { buffer.Length = 0; PushState(VerbatimString); }
 }
@@ -87,8 +87,18 @@ Noise               = "/*" ~"*/" | "//" ~{LineBreak} | {WhiteSpace}+
 	
 }
 
+// Everywhere in code except in symbol transfer specifications
+// this is a hack to get around an ambiguity of (*)
+<YYINITIAL,Local,Asm> {
+     "(*)" { return tok(Parser._id,OperatorNames.Prexonite.Multiplication); }
+}
+
+<Transfer> {         
+     "(*)" { return tok(Parser._timessym); }
+}
+
 //Everywhere in code
- <YYINITIAL,Local,Asm> {
+ <YYINITIAL,Local,Asm,Transfer> {
 
      {Noise}    { /* Comment/Whitespace: ignore */ }
        
@@ -122,7 +132,6 @@ Noise               = "/*" ~"*/" | "//" ~{LineBreak} | {WhiteSpace}+
      "["    { return tok(Parser._lbrack); }
      "(+)" { return tok(Parser._id,OperatorNames.Prexonite.Addition); }
      "(-)" { return tok(Parser._id,OperatorNames.Prexonite.Subtraction); }
-     "(*)" { return tok(Parser._id,OperatorNames.Prexonite.Multiplication); }
      "(/)" { return tok(Parser._id,OperatorNames.Prexonite.Division); }
      "(" [mM][oO][dD] ")" { return tok(Parser._id,OperatorNames.Prexonite.Modulus); }
      "(^)" { return tok(Parser._id,OperatorNames.Prexonite.Power); }
@@ -148,7 +157,6 @@ Noise               = "/*" ~"*/" | "//" ~{LineBreak} | {WhiteSpace}+
      "/"    { return tok(Parser._div); }
      "^"    { return tok(Parser._pow); }     
      "="    { return tok(Parser._assign); }
-
     "&&"    { return tok(Parser._and); }
     "||"    { return tok(Parser._or); }
     "|"     { return tok(Parser._bitOr); }

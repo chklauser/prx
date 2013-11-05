@@ -1,5 +1,4 @@
-﻿ 
-// This is the output code from your template
+﻿// This is the output code from your template
 // you only get syntax-highlighting here - not intellisense
 using System;
 using System.Reflection;

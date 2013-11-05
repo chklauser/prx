@@ -33,7 +33,6 @@ using Prexonite.Commands.Core.Operators;
 using Prexonite.Compiler.Ast;
 using Prexonite.Compiler.Internal;
 using Prexonite.Compiler.Symbolic;
-using Prexonite.Compiler.Symbolic.Compatibility;
 using Prexonite.Compiler.Symbolic.Internal;
 using Prexonite.Internal;
 using Prexonite.Modular;
@@ -110,7 +109,7 @@ namespace Prexonite.Compiler
             get { return target != null ? target.CurrentBlock.Symbols : _loader.Symbols; }
         }
 
-        private void _pushDeclScope(QualifiedId relativeNsId, ISourcePosition idPosition)
+        private DeclarationScopeBuilder _prepareDeclScope(QualifiedId relativeNsId, ISourcePosition idPosition)
         {
             if(relativeNsId.Count < 1)
                 throw new ArgumentOutOfRangeException("relativeNsId",Resources.Parser_relativeNsId_empty);
@@ -159,11 +158,55 @@ namespace Prexonite.Compiler
             // Not that this is almost completely independent of the namespace itself
             // It is just used as one possible source for exports
             var builder = SymbolStoreBuilder.Create(declScopeStore);
-            builder.Forward(new SymbolOrigin.NamepsaceImport(relativeNsId,idPosition),surroundingNamespace,
-                SymbolTransferDirective.CreateWildcard(idPosition).Singleton());
-            var nsLocalScope = builder.ToSymbolStore();
-            // TODO: Add import spec to local scope
-            Loader.PushScope(new DeclarationScope(surroundingNamespace, prefix,nsLocalScope));
+            return new DeclarationScopeBuilder(builder, prefix, surroundingNamespace);
+        }
+
+        class DeclarationScopeBuilder
+        {
+            [NotNull]
+            private readonly SymbolStoreBuilder _localScopeBuilder;
+
+            private readonly QualifiedId _prefix;
+            [NotNull]
+            // ReSharper disable once MemberHidesStaticFromOuterClass
+            private readonly LocalNamespace _namespace;
+
+            public DeclarationScopeBuilder([NotNull]SymbolStoreBuilder localScopeBuilder, QualifiedId prefix, [NotNull]LocalNamespace ns)
+            {
+                if (localScopeBuilder == null)
+                    throw new ArgumentNullException("localScopeBuilder");
+                if (ns == null)
+                    throw new ArgumentNullException("ns");
+                if (prefix == null)
+                    throw new ArgumentNullException("prefix");
+                
+                _localScopeBuilder = localScopeBuilder;
+                _prefix = prefix;
+                _namespace = ns;
+            }
+
+            [NotNull]
+            public SymbolStoreBuilder LocalScopeBuilder
+            {
+                get { return _localScopeBuilder; }
+            }
+
+            public QualifiedId Prefix
+            {
+                get { return _prefix; }
+            }
+
+            [NotNull]
+            public LocalNamespace Namespace
+            {
+                get { return _namespace; }
+            }
+
+            [NotNull]
+            public DeclarationScope ToDeclarationScope()
+            {
+                return new DeclarationScope(Namespace, Prefix, LocalScopeBuilder.ToSymbolStore());
+            }
         }
 
         [CanBeNull]
@@ -217,11 +260,39 @@ namespace Prexonite.Compiler
             return localNs;
         }
 
-        private void _updateNamespace(DeclarationScope scope)
+        [CanBeNull]
+        private ISymbolView<Symbol> _resolveNamespace(ISymbolView<Symbol> scope, [NotNull] ISourcePosition qualifiedIdPosition, QualifiedId qualifiedId)
         {
-            // TODO: Actually apply an export spec
-            // For now we just export everything declared inside the namespace declarations local scope
-            scope._LocalNamespace.DeclareExports(scope.Store.LocalDeclarations);
+            while (qualifiedId.Count > 0)
+            {
+                Symbol sym;
+                scope.TryGet(qualifiedId[0], out sym);
+                var expr = Create.ExprFor(qualifiedIdPosition, sym);
+                var nsUsage = expr as AstNamespaceUsage;
+                if (nsUsage == null)
+                {
+                    Create.ReportMessage(
+                        Message.Error(string.Format(Resources.Parser_NamespaceExpected, qualifiedId[0], sym),
+                            qualifiedIdPosition, MessageClasses.NamespaceExcepted));
+                    return null;
+                }
+                else
+                {
+                    scope = nsUsage.Namespace;
+                    qualifiedId = qualifiedId.WithPrefixDropped(1);
+                }
+            }
+            return scope;
+        }
+
+        private void _updateNamespace(DeclarationScope scope, SymbolStoreBuilder builder)
+        {
+            scope._LocalNamespace.DeclareExports(builder.ToSymbolStore());
+        }
+
+        private SymbolOrigin _privateDeclarationOrigin(ISourcePosition position, DeclarationScope scope)
+        {
+            return new SymbolOrigin.NamespaceDeclarationScope(position, scope.PathPrefix);
         }
 
         private DeclarationScope _popDeclScope()
@@ -230,11 +301,35 @@ namespace Prexonite.Compiler
             return Loader.PopScope();
         }
 
+        /// <summary>
+        /// When forwarding exported symbols from the declaration scope, 
+        /// we need to assemble a temporary symbol view that only contains
+        /// the symbols declared locally.
+        /// </summary>
+        /// <param name="declStore">The store to extract the exported symbols from.</param>
+        /// <returns>A static view (shallow copy) of the exported symbols of <paramref name="declStore"/>.</returns>
+        private ISymbolView<Symbol> _indexExportedSymbols(SymbolStore declStore)
+        {
+            var index = SymbolStore.Create();
+            foreach (var symbol in declStore.LocalDeclarations)
+                index.Declare(symbol.Key, symbol.Value);
+            return index;
+        }
+
         private String _assignPhysicalFunctionSlot([CanBeNull] String primaryId)
         {
-            var id = primaryId ?? Engine.GenerateName("f");
+            return _assignPhysicalSlot(primaryId ?? Engine.GenerateName("f"));
+        }
+
+        private string _assignPhysicalSlot(string id)
+        {
             var scope = Loader.CurrentScope;
             return scope == null ? id : scope._LocalNamespace.DerivePhysicalName(id);
+        }
+
+        private String _assignPhysicalGlobalVariableSlot([CanBeNull] string primaryId)
+        {
+            return _assignPhysicalSlot(primaryId ?? Engine.GenerateName("v"));
         }
 
         public Loader.FunctionTargetsIterator FunctionTargets
@@ -262,11 +357,6 @@ namespace Prexonite.Compiler
             }
 
             public AstBlock this[PFunction func]
-            {
-                get { return outer._loader.FunctionTargets[func].Ast; }
-            }
-
-            public AstBlock this[string func]
             {
                 get { return outer._loader.FunctionTargets[func].Ast; }
             }
@@ -355,50 +445,6 @@ namespace Prexonite.Compiler
         public void SemErr(Token tok, string s)
         {
             errors.SemErr(tok.line, tok.col, s);
-        }
-
-        [DebuggerStepThrough]
-        public static bool InterpretationIsVariable(SymbolInterpretations interpretation)
-        {
-            return
-                InterpretationIsGlobalVariable(interpretation) ||
-                    InterpretationIsLocalVariable(interpretation);
-        }
-
-        [DebuggerStepThrough]
-        public static bool InterpretationIsLocalVariable(SymbolInterpretations interpretation)
-        {
-            return
-                interpretation == SymbolInterpretations.LocalReferenceVariable ||
-                    interpretation == SymbolInterpretations.LocalObjectVariable;
-        }
-
-        [DebuggerStepThrough]
-        public static bool InterpretationIsGlobalVariable(SymbolInterpretations interpretation)
-        {
-            return
-                interpretation == SymbolInterpretations.GlobalReferenceVariable ||
-                    interpretation == SymbolInterpretations.GlobalObjectVariable;
-        }
-
-        [DebuggerStepThrough]
-        public static bool InterpretationIsObjectVariable(SymbolInterpretations interpretation)
-        {
-            return
-                interpretation == SymbolInterpretations.LocalObjectVariable ||
-                    interpretation == SymbolInterpretations.GlobalObjectVariable;
-        }
-
-        [DebuggerStepThrough]
-        public static SymbolInterpretations InterpretAsObjectVariable(
-            SymbolInterpretations interpretation)
-        {
-            if (InterpretationIsLocalVariable(interpretation))
-                return SymbolInterpretations.LocalObjectVariable;
-            else if (InterpretationIsGlobalVariable(interpretation))
-                return SymbolInterpretations.GlobalObjectVariable;
-            else
-                return SymbolInterpretations.Undefined;
         }
 
         private void _pushLexerState(int state)
@@ -570,45 +616,6 @@ namespace Prexonite.Compiler
             return c.kind == _lid || (isId(c) && cla.kind == _colon);
         }
 
-        [DebuggerStepThrough]
-        public bool isVariableDeclaration() //LL(4)
-        {
-            /* Applies to:
-             *  var id;
-             *  new var id;
-             *  static id;
-             *  new static id;
-             *  ref id;
-             *  new ref id;
-             *  static ref id;
-             *  new static ref id;
-             */
-
-            scanner.ResetPeek();
-            //current might optionally be `new`
-            var c = la;
-            if (c.kind == _new)
-                c = scanner.Peek();
-
-            //current la = static | var | ref
-            if (c.kind != _var && c.kind != _ref && c.kind != _static)
-                return false;
-            c = scanner.Peek();
-
-            //must not terminate here
-            if (c.kind == _semicolon || c.kind == _comma) //id expected
-                return false;
-
-            var interpretation = c;
-
-            c = scanner.Peek();
-            if (c.kind == _semicolon || c.kind == _comma) //no interpretation
-                return true;
-
-            c = scanner.Peek();
-            return interpretation.kind == _ref && (c.kind == _semicolon || c.kind == _comma);
-        }
-
         public bool isAssignmentOperator() //LL2
         {
             /* Applies to:
@@ -648,140 +655,6 @@ namespace Prexonite.Compiler
                 default:
                     return false;
             }
-        }
-
-        [DebuggerStepThrough]
-        public bool isDeDereference() //LL(2)
-        {
-            scanner.ResetPeek();
-            var c = la;
-            var cla = scanner.Peek();
-
-            return c.kind == _pointer && cla.kind == _pointer;
-        }
-
-        //id is object or reference variable
-        [DebuggerStepThrough,Obsolete("There is no good reason for such a restrictive predicate.")]
-        public bool isLikeVariable(string id) //context
-        {
-            Symbol symbol;
-            DereferenceSymbol callSymbol;
-            ReferenceSymbol referenceSymbol;
-            EntityRef.Variable _;
-            return target.Symbols.TryGet(id, out symbol)
-                && symbol.TryGetDereferenceSymbol(out callSymbol)
-                && callSymbol.InnerSymbol.TryGetReferenceSymbol(out referenceSymbol)
-                && referenceSymbol.Entity.TryGetVariable(out _);
-        }
-
-        public bool isLocalVariable(SymbolInterpretations interpretations)
-        {
-            return interpretations == SymbolInterpretations.LocalObjectVariable
-                || interpretations == SymbolInterpretations.LocalReferenceVariable;
-        }
-
-        public bool isId(out string id)
-        {
-            // Warning: this code duplicates the Id<out string id> rule from the grammar.
-
-            scanner.ResetPeek();
-            var t1 = la;
-            var t2 = scanner.Peek();
-
-            switch (t1.kind)
-            {
-                case _id:
-                case _add:
-                case _enabled:
-                case _disabled:
-                case _build:
-                    id = t1.val;
-                    return true;
-                case _anyId:
-                    id = cache(t2.val);
-                    return true;
-                default:
-                    id = "\\NoId\\";
-                    return false;
-
-            }
-        }
-
-        //id is like a function
-        public bool isLikeFunction() //Context
-        {
-            string id;
-            Symbol symbol;
-            return
-                isId(out id) &&
-                target.Symbols.TryGet(id, out symbol) &&
-                symbol.HandleWith(_isLikeFunction, false);
-        }
-
-        private class IsLikeFunctionHandler : SymbolHandler<object, bool>
-        {
-            protected override bool HandleSymbolDefault(Symbol self, object argument)
-            {
-                return false;
-            }
-
-            public override bool HandleDereference(DereferenceSymbol self, object argument)
-            {
-                return true;
-            }
-
-            public override bool HandleExpand(ExpandSymbol self, object argument)
-            {
-                return true;
-            }
-
-            protected override bool HandleWrappingSymbol(WrappingSymbol self, object argument)
-            {
-                return self.InnerSymbol.HandleWith(this, argument);
-            }
-            
-        }
-
-        private static readonly SymbolHandler<object, bool> _isLikeFunction = new IsLikeFunctionHandler();
-
-        //context
-
-        [DebuggerStepThrough]
-        public bool isUnknownId()
-        {
-            string id;
-            return isId(out id) && !target.Symbols.Contains(id);
-        }
-
-        private bool _tryResolveFunction(SymbolEntry entry, out PFunction func)
-        {
-            func = null;
-            if (entry.Interpretation != SymbolInterpretations.Function)
-                return false;
-
-            return TargetApplication.TryGetFunction(entry.InternalId, entry.Module, out func);
-        }
-
-        [DebuggerStepThrough]
-        public bool isKnownMacroFunction(SymbolEntry symbol)
-        {
-            PFunction func;
-            if (!_tryResolveFunction(symbol, out func))
-                return false;
-
-            return func.Meta[CompilerTarget.MacroMetaKey].Switch;
-        }
-
-        [DebuggerStepThrough]
-        public string getTypeName(string typeId, bool staticPrefix)
-        {
-            if (staticPrefix) //already marked as CLR call
-                return ObjectPType.Literal + "(\"" + StringPType.Escape(typeId) + "\")";
-            else if (target.Function.ImportedNamespaces.Any(
-                importedNamespace =>
-                    typeId.StartsWith(importedNamespace, StringComparison.OrdinalIgnoreCase)))
-                return ObjectPType.Literal + "(\"" + StringPType.Escape(typeId) + "\")";
-            return typeId;
         }
 
         public bool isSymbolDirective(string pattern)
@@ -909,74 +782,26 @@ namespace Prexonite.Compiler
             return target.GenerateLocalId(prefix);
         }
 
-        [Obsolete("SymbolEntry and all related APIs are deprecated. Use the Symbol API instead.")]
-        private void SmartDeclareLocal(string id, SymbolInterpretations kind)
+        private Symbol _ensureDefinedLocal(string localAlias, string physicalId, bool isAutodereferenced, ISourcePosition declPos, bool isOverrideDecl)
         {
-            SmartDeclareLocal(id, id, kind, false);
-        }
+            var refSym =
+                Symbol.CreateDereference(Symbol.CreateReference(EntityRef.Variable.Local.Create(physicalId), declPos),
+                    declPos);
+            var sym = isAutodereferenced
+                ? Symbol.CreateDereference(refSym, declPos)
+                : refSym;
 
-        [Obsolete("SymbolEntry and all related APIs are deprecated. Use the Symbol API instead.")]
-        private void SmartDeclareLocal(string id, SymbolInterpretations kind, bool isOverrideDecl)
-        {
-            SmartDeclareLocal(id, id, kind, isOverrideDecl);
-        }
-
-        private Symbol ToModuleLocalSymbol(string physicalId, SymbolInterpretations kind)
-        {
-            switch (kind)
-            {
-                case SymbolInterpretations.Function:
-                    return Symbol.CreateCall(EntityRef.Function.Create(physicalId, TargetModule.Name),GetPosition());
-                case SymbolInterpretations.Command:
-                    return Symbol.CreateCall(EntityRef.Command.Create(physicalId), GetPosition());
-                case SymbolInterpretations.LocalObjectVariable:
-                    return Symbol.CreateCall(EntityRef.Variable.Local.Create(physicalId), GetPosition());
-                case SymbolInterpretations.LocalReferenceVariable:
-                    return
-                        Symbol.CreateDereference(
-                            Symbol.CreateDereference(
-                                Symbol.CreateReference(EntityRef.Variable.Local.Create(physicalId), GetPosition())));
-                case SymbolInterpretations.GlobalObjectVariable:
-                    return Symbol.CreateCall(EntityRef.Variable.Global.Create(physicalId, TargetModule.Name), GetPosition());
-                case SymbolInterpretations.GlobalReferenceVariable:
-                    return
-                        Symbol.CreateDereference(
-                            Symbol.CreateDereference(
-                                Symbol.CreateReference(
-                                    EntityRef.Variable.Global.Create(physicalId, TargetModule.Name), GetPosition())));
-                case SymbolInterpretations.MacroCommand:
-                    return Symbol.CreateCall(EntityRef.MacroCommand.Create(physicalId), GetPosition());
-                default:
-                    var position = GetPosition();
-                    return
-                        Symbol.CreateMessage(Message.Error(
-                            string.Format("Invalid self interpretation {0}.",
-                                Enum.GetName(typeof(SymbolInterpretations), kind)), position,
-                            MessageClasses.InvalidSymbolInterpretation),
-                               Symbol.CreateCall(EntityRef.Command.Create(physicalId), GetPosition()), position);
-            }
-        }
-
-        [Obsolete("SymbolEntry and all related APIs are deprecated. Use the Symbol API instead.")]
-        private void SmartDeclareLocal(string logicalId, string physicalId,
-            SymbolInterpretations kind, bool isOverrideDecl)
-        {
+            target.Symbols.Declare(localAlias, sym);
             if (!isOverrideDecl && !target.Function.Variables.Contains(physicalId) &&
                 isOuterVariable(physicalId))
             {
                 target.RequireOuterVariable(physicalId);
-                target.DeclareModuleLocal(kind, logicalId, physicalId);
             }
-            else
+            else if(!target.Function.Variables.Contains(physicalId))
             {
-                target.Symbols.Declare(logicalId, ToModuleLocalSymbol(physicalId, kind));
-                if ((kind == SymbolInterpretations.LocalObjectVariable
-                        || kind == SymbolInterpretations.LocalReferenceVariable)
-                    && !target.Function.Variables.Contains(physicalId))
-                {
-                    target.Function.Variables.Add(physicalId);
-                }
+                target.Function.Variables.Add(physicalId);
             }
+            return sym;
         }
 
         [NotNull]
@@ -1188,7 +1013,7 @@ namespace Prexonite.Compiler
             }
         }
 
-        private class EnsureInScopeHandler : Symbolic.Internal.TransformHandler<Parser>
+        private class EnsureInScopeHandler : TransformHandler<Parser>
         {
             public override Symbol HandleReference(ReferenceSymbol self, Parser argument)
             {
@@ -1552,7 +1377,7 @@ namespace Prexonite.Compiler
                 {"cge", null},
                 {"or", null},
                 {"and", null},
-                {"xor", null},
+                {"xor", null}
             };
 
         private readonly string[,] asmIdGroup =

@@ -340,7 +340,7 @@ namespace PrexoniteTests.Tests
                 Assert.Fail("symbol a must be a namespace");
             
             var ssb = SymbolStoreBuilder.Create(mlv);
-            ssb.Forward(new SymbolOrigin.NamepsaceImport(new QualifiedId("a"),NoSourcePosition.Instance),nssyma.Namespace,
+            ssb.Forward(new SymbolOrigin.NamespaceImport(new QualifiedId("a"),NoSourcePosition.Instance),nssyma.Namespace,
                 new []
                 {
                     SymbolTransferDirective.CreateRename(NoSourcePosition.Instance, "b","f"),
@@ -382,7 +382,7 @@ namespace PrexoniteTests.Tests
                 Assert.Fail("symbol a must be a namespace");
 
             var ssb = SymbolStoreBuilder.Create(mlv);
-            ssb.Forward(new SymbolOrigin.NamepsaceImport(new QualifiedId("a"), NoSourcePosition.Instance), nssyma.Namespace,
+            ssb.Forward(new SymbolOrigin.NamespaceImport(new QualifiedId("a"), NoSourcePosition.Instance), nssyma.Namespace,
                 new SymbolTransferDirective[]
                 {
                     SymbolTransferDirective.CreateRename(NoSourcePosition.Instance, "b","f"),
@@ -426,7 +426,7 @@ namespace PrexoniteTests.Tests
                 Assert.Fail("symbol a must be a namespace");
 
             var ssb = SymbolStoreBuilder.Create(mlv);
-            ssb.Forward(new SymbolOrigin.NamepsaceImport(new QualifiedId("a"), NoSourcePosition.Instance), nssyma.Namespace,
+            ssb.Forward(new SymbolOrigin.NamespaceImport(new QualifiedId("a"), NoSourcePosition.Instance), nssyma.Namespace,
                 new SymbolTransferDirective[]
                 {
                     SymbolTransferDirective.CreateRename(NoSourcePosition.Instance, "b","f"),

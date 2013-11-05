@@ -115,6 +115,7 @@ TOKENS
     rpar   // )
     tilde  // ~
     times  // *
+    timessym // (*), but only in symbol transfer regions
     semicolon // ;
 	colon  // :
 	doublecolon // ::
@@ -241,23 +242,22 @@ AsmInstruction<AstBlock block>          (.  int arguments = 0;
                                             int values;
                                             int rotations;
                                             int index;
+                                            ISourcePosition pos;
                                         .)
 =
     //VARIABLE DECLARATION              
-                                        (. SymbolInterpretations kind = SymbolInterpretations.LocalObjectVariable; .)
-    ( var | ref                         (. kind = SymbolInterpretations.LocalReferenceVariable; .)
-    )
+                                        (. var isAutodereference = false; .)
+    ( var | ref                         (. isAutodereference = true; .)
+    )                                   (. pos = GetPosition(); .)
     AsmId<out id>
                                         
                                         (.  //Store variable
-                                            target.Function.Variables.Add(id);
-                                            SmartDeclareLocal(id, kind);
+                                            _ensureDefinedLocal(id,id,isAutodereference,pos,false);
                                         .)
-    {   comma
+    {   comma                           (. pos = GetPosition(); .)
         AsmId<out id>                                        
                                         (.  //Store variable
-                                            target.Function.Variables.Add(id);
-                                            SmartDeclareLocal(id, kind);
+                                            _ensureDefinedLocal(id,id,isAutodereference,pos,false);
                                         .)
     }
 |   //OP ALIAS INSTRUCTIONS
@@ -1007,8 +1007,7 @@ TypeExprElement<. List<AstExpr> args .>
  *  51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
  */
 
-Prexonite	
-                            (.  PFunction func; .)				
+Prexonite
 =
     DeclarationLevel
     EOF
@@ -1117,25 +1116,29 @@ GlobalVariableDefinition	(.
                                 List<string> aliases = new List<string>();
                                 string primaryAlias = null;
                                 VariableDeclaration vari; 
-                                SymbolInterpretations type = SymbolInterpretations.GlobalObjectVariable; 
-                                SymbolEntry entry;
+                                bool isAutodereferenced = false;
+                                Symbol entry;
                             .)
 =
 
   (   var                 
-  |   ref                 (.  type = SymbolInterpretations.GlobalReferenceVariable; .)
+  |   ref                 (.  isAutodereferenced = true; .)
   )                       (.  var position = GetPosition(); .)
   
   (   GlobalId<out id>    (.  primaryAlias = id; .)
       [ GlobalVariableAliasList<aliases> ]
   |   GlobalVariableAliasList<aliases>
-                          (.  id = Engine.GenerateName("v"); .)
-  )
-                          (.
-                                entry = new SymbolEntry(type,id, TargetModule.Name);
+                          (.  id = null; .)
+  )                       (.  id = _assignPhysicalGlobalVariableSlot(id);
+                              entry = Symbol.CreateDereference(Symbol.CreateReference(
+                                EntityRef.Variable.Global.Create(id, TargetModule.Name), position),position);
+                              if(isAutodereferenced)
+                              {
+                                entry = Symbol.CreateDereference(entry, position);
+                              }
                               foreach(var alias in aliases)
-                                  Symbols.Declare(alias, entry.ToSymbol());
-                                DefineGlobalVariable(id,out vari);
+                                  Symbols.Declare(alias, entry);
+                              DefineGlobalVariable(id,out vari);
                           .)
   [	lbrack  		    //Meta block for variables
     [   MetaAssignment<vari>
@@ -1145,7 +1148,7 @@ GlobalVariableDefinition	(.
         ]
     rbrack
   ]                       (.  if(primaryAlias != null && !_suppressPrimarySymbol(vari))
-                                    Symbols.Declare(primaryAlias, entry.ToSymbol());
+                                    Symbols.Declare(primaryAlias, entry);
                           .)
   [	                      (.  _pushLexerState(Lexer.Local); .)
       assign              (.  _PushScope(FunctionTargets[Application.InitializationId]);
@@ -1528,13 +1531,13 @@ FunctionDefinition<out PFunction func>
                                         {
                                             func = TargetApplication._InitializationFunction;
                                             if(isNested)
-                                                Loader.ReportMessage(Message.Error("Cannot define initialization code inside another function.",GetPosition(),MessageClasses.IllegalInitializationFunction));
+                                                Loader.ReportMessage(Message.Error("Cannot define initialization code inside another function.",position,MessageClasses.IllegalInitializationFunction));
                                             if(isCoroutine)
-                                                Loader.ReportMessage(Message.Error("Cannot define initialization code as a coroutine.",GetPosition(),MessageClasses.IllegalInitializationFunction));
+                                                Loader.ReportMessage(Message.Error("Cannot define initialization code as a coroutine.",position,MessageClasses.IllegalInitializationFunction));
                                             if(isLazy)
-                                                Loader.ReportMessage(Message.Error("Cannot define initialization code as a lazy function.",GetPosition(),MessageClasses.IllegalInitializationFunction));
+                                                Loader.ReportMessage(Message.Error("Cannot define initialization code as a lazy function.",position,MessageClasses.IllegalInitializationFunction));
                                             if(isMacro)
-                                                Loader.ReportMessage(Message.Error("Cannot define initialization code as a macro function.",GetPosition(),MessageClasses.IllegalInitializationFunction));
+                                                Loader.ReportMessage(Message.Error("Cannot define initialization code as a macro function.",position,MessageClasses.IllegalInitializationFunction));
                                         }
                                         else
                                         {
@@ -1543,7 +1546,7 @@ FunctionDefinition<out PFunction func>
                                             if(isNested)
                                             {
                                                 if(isMacro)
-                                                    Loader.ReportMessage(Message.Error("Inner macros are illegal. Macros must be top-level.",GetPosition(),MessageClasses.InnerMacrosIllegal));
+                                                    Loader.ReportMessage(Message.Error("Inner macros are illegal. Macros must be top-level.",position,MessageClasses.InnerMacrosIllegal));
                                                     
                                                 funcId = generateLocalId(funcId ?? "inner");
                                                 
@@ -1552,9 +1555,9 @@ FunctionDefinition<out PFunction func>
                                                     //Create shadow name
                                                     localId = generateLocalId(id ?? "inner");
                                                 }
-                                                SmartDeclareLocal(localId, SymbolInterpretations.LocalReferenceVariable);
+                                                var innerSym = _ensureDefinedLocal(localId, localId, true, position,true);
                                                 foreach(var alias in funcAliases)
-                                                        SmartDeclareLocal(alias, localId, SymbolInterpretations.LocalReferenceVariable, false);
+                                                    Symbols.Declare(alias, innerSym);
                                                 
                                             }
                                             
@@ -1572,7 +1575,7 @@ FunctionDefinition<out PFunction func>
                                                     mark_as_let(target.Function,localId);
                                             }
                                             
-                                            Loader.CreateFunctionTarget(func, target, GetPosition());
+                                            Loader.CreateFunctionTarget(func, target, position);
                                         }
                                         CompilerTarget ft = FunctionTargets[func];
                                         
@@ -1584,7 +1587,7 @@ FunctionDefinition<out PFunction func>
                                             //Create derived body function
                                             derId = ft.GenerateLocalId();
                                             derBody = TargetApplication.CreateFunction(derId);
-                                            Loader.CreateFunctionTarget(derBody, ft, GetPosition());
+                                            Loader.CreateFunctionTarget(derBody, ft, position);
                                             derBody.Meta[PFunction.LogicalIdKey] = id ?? funcId;
                                             if(isCoroutine)
                                             {
@@ -1677,32 +1680,54 @@ FunctionDefinition<out PFunction func>
 
                                         //Copy stub parameters to body of lazy function
                                         if(isLazy && !isNested)
-                                      {
-                                          foreach(var kvp in cst.Symbols.LocalDeclarations)
-                                          {
-                                              var paramId = kvp.Key;
-                                              var s = kvp.Value.ToSymbolEntry();
-                                              //Lazy functions cannot have ref parameters
-                                              if(s.Interpretation != SymbolInterpretations.LocalObjectVariable)
-                                                  SemErr("Lazy functions can only have value parameters (ref is not allowed)");
-                                              ct.Function.Parameters.Add(s.InternalId);
-                                              ct.Symbols.Declare(paramId, kvp.Value);
-                                          }
-                                      }
-                                    
-                    if(isLazy || isCoroutine)
-                    {
-                      //Push the stub, because it is the lexical parent of the body
-                      _PushScope(cst);
-                    }
+                                        {
+                                            foreach(var kvp in cst.Symbols.LocalDeclarations)
+                                            {
+                                                var paramId = kvp.Key;
+                                                var s = kvp.Value.ToSymbolEntry();
+                                                //Lazy functions cannot have ref parameters
+                                                if(s.Interpretation != SymbolInterpretations.LocalObjectVariable)
+                                                    SemErr("Lazy functions can only have value parameters (ref is not allowed)");
+                                                ct.Function.Parameters.Add(s.InternalId);
+                                                ct.Symbols.Declare(paramId, kvp.Value);
+                                            }
+                                        }
+                                    .)
+    [                               (.  _pushLexerState(Lexer.Transfer);
+                                        ISourcePosition importKeywordPosition;
+                                        var importBuilder = SymbolStoreBuilder.Create();
+                                    .)
+        namespace
+        ImportContextualKeyword<out importKeywordPosition>
+        NsTransferSpec<importBuilder>
+        {
+            comma
+            NsTransferSpec<importBuilder>
+        }
+                                    (.  {   // Copy imported symbols to import scope
+                                            var it = FunctionTargets[func]; 
+                                            foreach(var entry in importBuilder.ToSymbolStore())
+                                                it.ImportScope.Declare(entry.Key,entry.Value);
+                                        }
+                                        _popLexerState(); 
+                                    .)
+    ]
+                                    (.
+                                        if(isLazy || isCoroutine)
+                                        {
+                                          //Push the stub, because it is the lexical parent of the body
+                                          _PushScope(cst);
+                                        }
                                         _PushScope(FunctionTargets[func]);
                                         Debug.Assert(target != null); // Mostly to tell ReSharper that target is not null.
                                         _pushLexerState(Lexer.Local);
                                         if(isMacro)
                                             target.SetupAsMacro();
                                     .)
-    (   [ does ]
+    (   does
         StatementBlock<target.Ast>
+    |   lbrace {   Statement<target.Ast> }
+        rbrace
     |   IF(isFollowedByStatementBlock())
         implementation
         StatementBlock<target.Ast>
@@ -1748,7 +1773,7 @@ FunctionDefinition<out PFunction func>
                             func = derStub;
                             //Generate code for the stub
                             AstCreateCoroutine crcor = new AstCreateCoroutine(this);                                            
-                            crcor.Expression = Create.CreateClosure(GetPosition(),EntityRef.Function.Create(derBody.Id,derBody.ParentApplication.Module.Name));
+                            crcor.Expression = Create.CreateClosure(position,EntityRef.Function.Create(derBody.Id,derBody.ParentApplication.Module.Name));
 
                             AstReturn retst = new AstReturn(this, ReturnVariant.Exit);
                             retst.Expression = crcor;
@@ -1776,7 +1801,7 @@ FunctionDefinition<out PFunction func>
                                 //Nested lazy functions need a stub to capture their environment by value (handled by NestedFunction)
                                 
                                 //Generate stub code
-                                retVal = Create.CreateClosure(GetPosition(), EntityRef.Function.Create(ct.Function.Id, 
+                                retVal = Create.CreateClosure(position, EntityRef.Function.Create(ct.Function.Id, 
                                                 ct.Function.ParentApplication.Module.Name));
                                 
                                 //Inject asthunk-conversion code into body
@@ -1829,16 +1854,22 @@ FunctionDefinition<out PFunction func>
                                     .)
 .
 
-FormalArg<CompilerTarget ft>        (.  string id; SymbolInterpretations kind = SymbolInterpretations.LocalObjectVariable; .)
+FormalArg<CompilerTarget ft>        (.  string id; 
+                                        bool isAutodereferenced = false; 
+                                        ISourcePosition idPos;
+                                    .)
 =
-  [ var | ref                     (.  kind = SymbolInterpretations.LocalReferenceVariable; .)
-  ]
-  Id<out id>                      (.  
-                                      //Note: lazy functions need to copy the
-                                      //  parameters of the stub to the body!
-                                      ft.Function.Parameters.Add(id); 
-                                      ft.Symbols.Declare(id, new SymbolEntry(kind, id, null).ToSymbol());
-                                  .)
+  [ var | ref                       (.  isAutodereferenced = true; .)
+  ]                                 (.  idPos = GetPosition(); .)
+  Id<out id>                        (.  //Note: lazy functions need to copy the
+                                        //  parameters of the stub to the body!
+                                        ft.Function.Parameters.Add(id); 
+                                        var sym = Symbol.CreateDereference(Symbol.CreateReference(
+                                            EntityRef.Variable.Local.Create(id),idPos),idPos);
+                                        if(isAutodereferenced)
+                                            sym = Symbol.CreateDereference(sym,idPos);
+                                        ft.Symbols.Declare(id, sym);
+                                    .)
 .
 
 GlobalId<out string id>             (.  id = "...no freaking id..."; .)
@@ -1858,33 +1889,208 @@ GlobalQualifiedId<out string id>    (. id = "\\NoId\\"; .)
 .
 
 NsQualifiedId<out QualifiedId qualifiedId>
+                                    (.  bool _; .)
+=
+NsQualifiedIdImpl<false,out qualifiedId, out _>
+.
+
+NsTransferSource<out bool hasWildcard, out QualifiedId qualifiedId>
+                                    (.  hasWildcard = false; .)
+=
+NsQualifiedIdImpl<true, out qualifiedId, out hasWildcard>
+.
+
+NsQualifiedIdImpl<bool allowWildcard, out QualifiedId qualifiedId, out bool hasWildcard>
                                     (.  qualifiedId = default(QualifiedId);
                                         String part = null;
                                         var parts = new List<String>();
+                                        hasWildcard = false;
                                     .)
 =
 GlobalId<out part>                  (.  parts.Add(part); .)
-[   dot
-    GlobalId<out part>              (.  parts.Add(part); .)
-]                                   (.  qualifiedId = new QualifiedId(parts.ToArray()); .)
+{                                   (.  if(hasWildcard)
+                                        {
+                                            Create.ReportMessage(Message.Error(
+                                                "Unexpected qualified id parts after wildcard.",
+                                                GetPosition(),
+                                                MessageClasses.QualifiedIdPartsAfterWildcard
+                                            ));
+                                        } 
+                                    .)
+    dot
+    (   GlobalId<out part>          (.  parts.Add(part); .)
+    |   timessym                    (.  parts.Add(OperatorNames.Prexonite.Multiplication); .)
+    |                               (.  ISourcePosition starPos = GetPosition(); .)
+        times                       (.  hasWildcard = true;
+                                        if(!allowWildcard)
+                                        {
+                                            Create.ReportMessage(Message.Error(
+                                                "Unexpected wildcard in qualified namespace name.",
+                                                starPos,
+                                                MessageClasses.UnexpectedWildcard));
+                                        }
+                                    .)
+    )
+}                                   (.  qualifiedId = new QualifiedId(parts.ToArray()); .)
 .
 
-NamespaceDeclaration                (.  QualifiedId fullNsId = default(QualifiedId);
-                                        DeclarationScope scope = null;
-                                        ISourcePosition qualIdPos = null;
+NsTransferDirective<.ICollection<SymbolTransferDirective> directives.>
+                                    (.  string externalId;
+                                        string internalId = null; .)
+=                                   (.  var pos = GetPosition(); .)
+(   times                           (.  directives.Add(SymbolTransferDirective.CreateWildcard(pos)); .)
+|   GlobalId<out externalId>
+    (   implementation GlobalId<out internalId> 
+    |                               (.  internalId = externalId; .)
+    )                               (.  directives.Add(SymbolTransferDirective.CreateRename(pos, externalId, internalId));  .)
+|   not
+    GlobalId<out externalId>        (.  directives.Add(SymbolTransferDirective.CreateDrop(pos, externalId)); .)
+)
+.
+
+NsTransferDirectiveGroup<.ICollection<SymbolTransferDirective> directives.>
+=
+(                                   (.  _pushLexerState(Lexer.YYINITIAL); .)
+    lpar
+    [   NsTransferDirective<directives>
+        {   comma                           
+            [   NsTransferDirective<directives>
+            ]
+        }
+    ]                               (. _popLexerState(); .)
+    rpar
+|                                   (.  var pos = GetPosition(); .)
+    timessym                        (.  // timessym is a hack that lets `(*)`, which ordinarily appears as an identifier,
+                                        // be treated as `(` `*` `)` in this special case
+                                        directives.Add(SymbolTransferDirective.CreateWildcard(pos));
                                     .)
-=                                   (. .)
-namespace                           (. qualIdPos = GetPosition(); .)
-NsQualifiedId<out fullNsId>         
-// import spec goes here
-// accept any GlobalId, but complain if it isn't `import`
-lbrace                              (.  _pushDeclScope(fullNsId, qualIdPos); /* will also require import spec*/ .)
-DeclarationLevel
-rbrace                              (.  scope = _popDeclScope(); .)
+)
+.
+
+NsTransferSpec<SymbolStoreBuilder builder>
+                                    (.  QualifiedId specRoot;
+                                        ISourcePosition pos;
+                                        ISymbolView<Symbol> sourceScope = null;
+                                        var hasWildcard = false;
+                                    .)
+=
+NsTransferSource<out hasWildcard, out specRoot>              
+                                    (.  var directives = new List<SymbolTransferDirective>();
+                                        pos = GetPosition();
+                                    .)
+(   NsTransferDirectiveGroup<directives> 
+                                    (.  sourceScope = _resolveNamespace(Symbols,pos, specRoot); .)
+|                                   (.  if(hasWildcard)
+                                        {
+                                            sourceScope = _resolveNamespace(Symbols,pos, specRoot);
+                                            directives.Add(SymbolTransferDirective.CreateWildcard(pos));
+                                        }
+                                        else
+                                        {
+                                            var symId = specRoot[specRoot.Count-1];
+                                            specRoot = specRoot.WithSuffixDropped(1);
+                                            sourceScope = _resolveNamespace(Symbols, pos, specRoot);
+                                            directives.Add(SymbolTransferDirective.CreateRename(pos,symId,symId));
+                                        }
+                                    .)
+)                                   (.  if(sourceScope != null)
+                                            builder.Forward(
+                                                new SymbolOrigin.NamespaceImport(specRoot, pos), 
+                                                sourceScope, 
+                                                directives); 
+                                        // if the source scope is null, something has gone wrong and the error should
+                                        // have already been reported
+                                    .)
+.
+
+ImportContextualKeyword<out ISourcePosition importKeywordPosition>
+                                    (.  string importKeyword; .)
+=                                   (.  importKeywordPosition = GetPosition(); .)
+// the `import` keyword, as a contextual keyword
+GlobalId<out importKeyword>         (.  if(!Engine.StringsAreEqual(importKeyword,"import")){
+                                            Loader.ReportMessage(Message.Error(
+                                                System.String.Format("Expected keyword 'import' or '{' instead of \"{0}\".",importKeyword),
+                                                importKeywordPosition, MessageClasses.ImportExpected));
+                                        } 
+                                    .)
+.
+
+NamespaceDeclaration                (.  QualifiedId fullNsId;
+                                        DeclarationScope scope = null;
+                                        ISourcePosition qualIdPos,exportPos;
+                                        List<SymbolTransferDirective> directives;
+                                        SymbolOrigin origin;
+                                        var implicitSelfImport = true;
+                                    .)
+=                                   (.  .)
+namespace                           (.  qualIdPos = GetPosition(); .)
+NsQualifiedId<out fullNsId>         (.  var declBuilder = _prepareDeclScope(fullNsId, qualIdPos); .)
+[                                   (.  ISourcePosition importKeywordPosition;
+                                        _pushLexerState(Lexer.Transfer);
+                                    .)
+    ImportContextualKeyword<out importKeywordPosition>
+    // optional explicit import from current namespace exports
+    (                               (.  var groupPos = GetPosition();
+                                        origin = new SymbolOrigin.NamespaceImport(declBuilder.Prefix,groupPos);
+                                        directives = new List<SymbolTransferDirective>();
+                                    .)
+        NsTransferDirectiveGroup<directives>
+                                    (.  declBuilder.LocalScopeBuilder.Forward(
+                                            origin, 
+                                            declBuilder.Namespace, 
+                                            directives); 
+                                        implicitSelfImport = false;
+                                    .)
+    |   [   NsTransferSpec<declBuilder.LocalScopeBuilder>
+        ]
+    )
+    // optional imports from other namespaces
+    {   comma
+        [   NsTransferSpec<declBuilder.LocalScopeBuilder>
+        ]
+    }                               (.  _popLexerState(); .)
+]
+/* body */                          (.  if(implicitSelfImport)
+                                        {
+                                            origin = new SymbolOrigin.NamespaceImport(
+                                                declBuilder.Prefix,qualIdPos);
+                                            declBuilder.LocalScopeBuilder.Forward(
+                                                origin,
+                                                declBuilder.Namespace,
+                                                SymbolTransferDirective.CreateWildcard(qualIdPos).Singleton()
+                                            );
+                                        }
+                                        Loader.PushScope(declBuilder.ToDeclarationScope()); 
+                                    .)
+lbrace                              
+DeclarationLevel                    (.  exportPos = GetPosition(); // this position is used when there is no export-spec
+                                    .)
+rbrace                              (.  scope = _popDeclScope();
+                                        var exportBuilder = SymbolStoreBuilder.Create(); .)
 (   export
-    // export spec goes here
-|   /* like `export(*)` */
-)                                   (.  _updateNamespace(scope); /* will also require export spec*/ .)
+    (                               (.  exportPos = GetPosition(); // this is a more accurate position
+                                        origin = _privateDeclarationOrigin(exportPos,scope); 
+                                        directives = new List<SymbolTransferDirective>();
+                                    .)
+        NsTransferDirectiveGroup<directives>
+                                    (.  exportBuilder.Forward(origin, 
+                                        _indexExportedSymbols(scope.Store), directives); .)
+        [   comma
+            NsTransferSpec<exportBuilder>
+            semicolon
+        ]
+    |   NsTransferSpec<exportBuilder>
+        semicolon
+    )    
+|                                   (.  // In the absence of an export spec, we export
+                                        // everything declared inside the namespace declaration.
+                                        // This is equivalent to `export(*)`
+                                        exportBuilder.Forward(
+                                            _privateDeclarationOrigin(exportPos,scope), 
+                                            _indexExportedSymbols(scope.Store), 
+                                            SymbolTransferDirective.CreateWildcard(exportPos).Singleton()); 
+                                    .)
+)                                   (.  _updateNamespace(scope, exportBuilder); .)
 .
 #file:C:\Users\Christian\Documents\GitHub\prx\Prexonite\Compiler\Grammar\Parser.Helper.atg#
 /*
@@ -1917,7 +2123,6 @@ Id<out string id>               (.  id = "\\NoId\\"; .) //<-- should never surfa
     |   disabled
     |   build
     |   add
-    |   namespace
     )                           (.  id = cache(t.val); .)
 .
 
@@ -2109,9 +2314,8 @@ StatementBlock<AstBlock block>
 
 Statement<AstBlock block>
 =
-(
-		IF( isLabel() )
-			ExplicitLabel<block>  
+(   IF( isLabel() )
+		ExplicitLabel<block>  
 	|   [ SimpleStatement<block> ] semicolon
 	|   StructureStatement<block>
 )
@@ -2258,7 +2462,6 @@ GetInitiator<out AstExpr complex>
                                             List<AstExpr> args = new List<AstExpr>();
                                             string id;
                                             int placeholderIndex = -1;
-											                      ISourcePosition position;
                                         .)
 =
     //Actual value
@@ -2646,7 +2849,7 @@ LetBinder<AstBlock block>
                                 .)
 =                               (.  var position = GetPosition(); .)
     Id<out id>                  (.  //Declare local "let" variable
-                                    SmartDeclareLocal(id, SymbolInterpretations.LocalObjectVariable);
+                                    _ensureDefinedLocal(id,id,false,position,false);
                                     mark_as_let(target.Function, id);
                                     if(la.kind == _assign)
                                         _inject(_lazy,"lazy"); 

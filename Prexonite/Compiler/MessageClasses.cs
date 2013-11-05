@@ -58,6 +58,9 @@ namespace Prexonite.Compiler
         public const string GlobalUnbindNotSupported = "P.GlobalUnbindNotSupported";
         public const string NamespaceExcepted = "P.NamespaceExpected";
         public const string CannotExtendMergedNamespace = "P.CannotExtendMergedNamespace";
+        public const string ImportExpected = "P.ImportExpected";
+        public const string UnexpectedWildcard = "P.UnexpectedWildcard";
+        public const string QualifiedIdPartsAfterWildcard = "P.QualifiedIdPartsAfterWildcard";
 
         #endregion
 

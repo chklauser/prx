@@ -1,9 +1,14 @@
-﻿<#+ 
+﻿<#@ assembly name="System.Core" #>
+<#@ template debug="true" hostSpecific="true" #>
+<#@ import namespace="System.Collections.Generic" #>
+<#@ import namespace="System.IO" #>
+<#@ import namespace="System.Linq" #>
+<#+ 
     const string ttEscape = @"..\..\";
     const string testPathPrefix = ttEscape + @"psr-tests";
     const string testConfigurationName = "testconfig.txt";
     const string testPattern = @"*.test.pxs";
-
+    
     const char configSectionSep = '>';
     const char configEntrySep = '|';
 	const char configDependencySep = '<';

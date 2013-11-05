@@ -183,8 +183,9 @@ internal partial class Lexer
                 return Parser._true;
         }
 
-        var isGlobal = yystate() == YYINITIAL;
-        var isLocal = yystate() == Local;
+        var current_state = yystate();
+        var isGlobal = current_state == YYINITIAL || current_state == Transfer;
+        var isLocal = current_state == Local;
 
         //Not assembler
         if (isGlobal || isLocal)
@@ -214,6 +215,8 @@ internal partial class Lexer
                     return Parser._lazy;
                 case "let":
                     return Parser._let;
+                case "namespace":
+                    return Parser._namespace;
                 case "null":
                     return Parser._null;
             }
@@ -233,8 +236,6 @@ internal partial class Lexer
                     return Parser._does;
                 case "enabled":
                     return Parser._enabled;
-                case "namespace":
-                    return Parser._namespace;
                 case "export":
                     return Parser._export;
             }

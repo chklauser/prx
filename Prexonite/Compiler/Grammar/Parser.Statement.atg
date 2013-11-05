@@ -28,9 +28,8 @@ StatementBlock<AstBlock block>
 
 Statement<AstBlock block>
 =
-(
-		IF( isLabel() )
-			ExplicitLabel<block>  
+(   IF( isLabel() )
+		ExplicitLabel<block>  
 	|   [ SimpleStatement<block> ] semicolon
 	|   StructureStatement<block>
 )
@@ -177,7 +176,6 @@ GetInitiator<out AstExpr complex>
                                             List<AstExpr> args = new List<AstExpr>();
                                             string id;
                                             int placeholderIndex = -1;
-											                      ISourcePosition position;
                                         .)
 =
     //Actual value
@@ -565,7 +563,7 @@ LetBinder<AstBlock block>
                                 .)
 =                               (.  var position = GetPosition(); .)
     Id<out id>                  (.  //Declare local "let" variable
-                                    SmartDeclareLocal(id, SymbolInterpretations.LocalObjectVariable);
+                                    _ensureDefinedLocal(id,id,false,position,false);
                                     mark_as_let(target.Function, id);
                                     if(la.kind == _assign)
                                         _inject(_lazy,"lazy"); 

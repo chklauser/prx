@@ -79,7 +79,7 @@ namespace Prexonite.Compiler.Symbolic
             {
                 get
                 {
-                    return String.Format("Merged from {0}", _origins.Select(x => x.Description).ToEnumerationString());
+                    return String.Format("merged scope of {0}", _origins.Select(x => x.Description).ToEnumerationString());
                 }
             }
 
@@ -89,14 +89,14 @@ namespace Prexonite.Compiler.Symbolic
             }
         }
 
-        public sealed class NamepsaceImport : SymbolOrigin
+        public sealed class NamespaceImport : SymbolOrigin
         {
             private readonly QualifiedId _namespaceId;
 
             [NotNull]
             private readonly ISourcePosition _position;
 
-            public NamepsaceImport(QualifiedId namespaceId, [NotNull] ISourcePosition position)
+            public NamespaceImport(QualifiedId namespaceId, [NotNull] ISourcePosition position)
             {
                 if (position == null) 
                     throw new ArgumentNullException("position");
@@ -106,7 +106,7 @@ namespace Prexonite.Compiler.Symbolic
 
             public override string Description
             {
-                get { return String.Format("import from namespace {0}",NamespaceId); }
+                get { return String.Format("import out of namespace {0}",NamespaceId); }
             }
 
             public override ISourcePosition Position
@@ -119,7 +119,7 @@ namespace Prexonite.Compiler.Symbolic
                 get { return _namespaceId; }
             }
 
-            private bool _equals(NamepsaceImport other)
+            private bool _equals(NamespaceImport other)
             {
                 return _namespaceId.Equals(other._namespaceId);
             }
@@ -128,7 +128,7 @@ namespace Prexonite.Compiler.Symbolic
             {
                 if (ReferenceEquals(null, obj)) return false;
                 if (ReferenceEquals(this, obj)) return true;
-                return obj is NamepsaceImport && _equals((NamepsaceImport) obj);
+                return obj is NamespaceImport && _equals((NamespaceImport)obj);
             }
 
             public override int GetHashCode()
@@ -200,6 +200,35 @@ namespace Prexonite.Compiler.Symbolic
 // ReSharper disable ConditionIsAlwaysTrueOrFalse
                 return (_moduleName != null ? _moduleName.GetHashCode() : 0);
 // ReSharper restore ConditionIsAlwaysTrueOrFalse
+            }
+        }
+
+        public sealed class NamespaceDeclarationScope : SymbolOrigin
+        {
+            [NotNull]
+            private readonly ISourcePosition _position;
+            private readonly QualifiedId _namespacePath;
+
+            public QualifiedId NamespacePath
+            {
+                get { return _namespacePath; }
+            }
+
+            public NamespaceDeclarationScope([NotNull] ISourcePosition position, QualifiedId namespacePath)
+            {
+                if (position == null) throw new ArgumentNullException("position");
+                _position = position;
+                _namespacePath = namespacePath;
+            }
+
+            public override string Description
+            {
+                get { return string.Format("private declaration in namespace {0}.",_namespacePath); }
+            }
+
+            public override ISourcePosition Position
+            {
+                get { return _position; }
             }
         }
     }

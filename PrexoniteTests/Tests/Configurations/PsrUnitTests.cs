@@ -10,6 +10,7 @@ using NUnit.Framework;
 
 // ReSharper disable RedundantExplicitArrayCreation
 // ReSharper disable InconsistentNaming
+// ReSharper disable RedundantCommaInArrayInitializer
 
 namespace PrexoniteTests.Tests.Configurations
 {

@@ -67,6 +67,7 @@ TOKENS
     rpar   // )
     tilde  // ~
     times  // *
+    timessym // (*), but only in symbol transfer regions
     semicolon // ;
 	colon  // :
 	doublecolon // ::

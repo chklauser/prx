@@ -43,23 +43,22 @@ AsmInstruction<AstBlock block>          (.  int arguments = 0;
                                             int values;
                                             int rotations;
                                             int index;
+                                            ISourcePosition pos;
                                         .)
 =
     //VARIABLE DECLARATION              
-                                        (. SymbolInterpretations kind = SymbolInterpretations.LocalObjectVariable; .)
-    ( var | ref                         (. kind = SymbolInterpretations.LocalReferenceVariable; .)
-    )
+                                        (. var isAutodereference = false; .)
+    ( var | ref                         (. isAutodereference = true; .)
+    )                                   (. pos = GetPosition(); .)
     AsmId<out id>
                                         
                                         (.  //Store variable
-                                            target.Function.Variables.Add(id);
-                                            SmartDeclareLocal(id, kind);
+                                            _ensureDefinedLocal(id,id,isAutodereference,pos,false);
                                         .)
-    {   comma
+    {   comma                           (. pos = GetPosition(); .)
         AsmId<out id>                                        
                                         (.  //Store variable
-                                            target.Function.Variables.Add(id);
-                                            SmartDeclareLocal(id, kind);
+                                            _ensureDefinedLocal(id,id,isAutodereference,pos,false);
                                         .)
     }
 |   //OP ALIAS INSTRUCTIONS
