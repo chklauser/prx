@@ -29,6 +29,7 @@ using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.Threading;
+using JetBrains.Annotations;
 using Prexonite.Modular;
 
 namespace Prexonite.Compiler.Build
@@ -36,6 +37,7 @@ namespace Prexonite.Compiler.Build
     public sealed class TargetDescriptionSet 
         : ICollection<ITargetDescription>
     {
+        [NotNull]
         private readonly ConcurrentDictionary<ModuleName, ITargetDescription> _table = new ConcurrentDictionary<ModuleName, ITargetDescription>();
 
         private TargetDescriptionSet()
@@ -117,6 +119,8 @@ namespace Prexonite.Compiler.Build
 
         public void Add(ITargetDescription item)
         {
+            if(item == null)
+                throw new ArgumentNullException("item");
             if(!_table.TryAdd(item.Name,item))
                 throw new ArgumentException(string.Format("A target description for this module name already exists: {0}", item.Name));
         }

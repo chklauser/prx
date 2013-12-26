@@ -38,9 +38,9 @@ namespace Prexonite.Commands.List
     ///         {
     ///         var lst = [];
     ///         foreach(var e in source)
-    ///         lst[] = e;
+    ///             lst[] = e;
     ///         for(var i = lst.Count-1; i>=0; i--)
-    ///         right = f(lst[i],right);
+    ///             right = f(lst[i],right);
     ///         return right;
     ///         }</code>
     /// </remarks>

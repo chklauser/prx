@@ -190,9 +190,11 @@ namespace prx.cli.repl
         //Function that shortens a string
         var shortenTo = 30;
         function shortened(s) = if(s.Length <= shortenTo) s else (s.Substring(0,shortenTo-3) + "...");
+        var default_import_specs = ["sys.*","sys.seq.*"];
+        var importSpecs = default_import_specs >> to_list;
         
         //Get 'raw' using showPrompt (passing the value of the variable 'prompt' 
-        // from inside 'app') until that 'raw' is ":quit".
+        // from inside 'app') until 'raw' is ":quit".
         //This 'for' syntax might look stupid at first but it manages to separate
         // more complex iteration logic from the loop body.
         // One only needs to look at the header to know under what conditions
@@ -202,7 +204,8 @@ namespace prx.cli.repl
         {        
             var lowRaw = raw.ToLower;
             var funcId = nextFuncId; //<-- get the first unique function id
-            var cmd = "r"; //<-- assume execution of code
+            var cmd = "r"; //<-- assume execution of code            
+            var importSpec = importSpecs >> foldr((l,r) => if(r == "") l else "$l,$r","");
             
             if(lowRaw == ":r" or lowRaw == ":reload") //this directive restarts prx\main with the same arguments. See 'prx_main.pxs' for details.
             {
@@ -218,7 +221,7 @@ namespace prx.cli.repl
             else if(raw.StartsWith("=")) //force compilation as an expression
             {
                 raw = raw.Substring(1);
-                buffer.Append = "function $(funcId) does println(\"$(shortened(raw).Escape) = \") = \n$(raw)\n;";
+                buffer.Append = "function $(funcId)() namespace import $importSpec does println(\"$(shortened(raw).Escape) = \") = \n$(raw)\n;";
                 if(Not tryLoad)
                 {
                     printErrors;
@@ -243,11 +246,20 @@ namespace prx.cli.repl
                 buffer.Append = raw.Substring(7);
                 goto executeGlobal;
             }
+            else if(lowRaw.StartsWith("import "))
+            {
+                var spec = raw.Substring(7).Trim();
+                if(spec == "clear")
+                    importSpecs = default_import_specs >> to_list;
+                else
+                    importSpecs[] = spec;
+            }
             else
             {
     executeStatement:
                 //First, try to compile the code as an expression
-                buffer.AppendFormat(" function {0} does println = \"{1} = \" + ( \n{2}\n ) ; ", funcId, shortened(raw).Escape, raw);
+                buffer.AppendFormat(" function {0}() namespace import {3} does println = \"{1} = \" + ( \n{2}\n ) ; ", 
+                    [funcId, shortened(raw).Escape, raw, importSpec]~Object<"System.String[]">);
                 if(Not tryLoad)
                 {
                     //should that fail, try to compile the code as a statement
@@ -255,7 +267,8 @@ namespace prx.cli.repl
                     var evalCode = lastCode;
 
                     funcId = nextFuncId;
-                    buffer.AppendFormat(" function {0} {{ \n{1}\n ; }} ", funcId, raw);
+                    buffer.AppendFormat(" function {0}() namespace import {2} {{ \n{1}\n ; }} ", 
+                        funcId, raw, importSpec);
 
                     if(Not tryLoad)
                     {

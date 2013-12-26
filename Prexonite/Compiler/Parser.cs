@@ -746,7 +746,7 @@ internal partial class Parser {
 	}
 
 	void Expr(/*Parser.Expression.atg:26*/out AstExpr expr) {
-		/*Parser.Expression.atg:26*/AstConditionalExpression cexpr; expr = null; 
+		/*Parser.Expression.atg:26*/AstConditionalExpression cexpr; expr = _NullNode(GetPosition()); 
 		if (StartOf(7)) {
 			AtomicExpr(/*Parser.Expression.atg:28*/out expr);
 		} else if (la.kind == _if || la.kind == _unless) {

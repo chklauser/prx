@@ -148,7 +148,7 @@ namespace sys
   {
 
   } 
-  export(*),prx.prim(caller,LoadAssembly => load_assembly,debug, CompileToCil => compile_to_cil);
+  export(*),prx.prim(caller,LoadAssembly => load_assembly,debug, CompileToCil => compile_to_cil,boxed);
 
   namespace text
   {

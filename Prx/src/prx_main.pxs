@@ -95,8 +95,12 @@ namespace prx.cli
         var reference = 8;    //Next argument defines an additional moduel to load
     }
 
-    function prx\main(arguments)
+    function prx\main()
     {
+        var arguments = var args;
+        print("args: ");
+        arguments >> each(print(?," "));
+        println;
         originalArgs = arguments;
         
         if(arguments == null or arguments.Length == 0)
@@ -189,8 +193,10 @@ namespace prx.cli
         if(sourceFiles.Count == 0)
         {
             printHead;
-            unless(state == states.interactive)
+            unless(state == states.interactive){
                 red(() => println("No source files specified."));
+                return;
+            }
         }
         
         //Assemble a default target path if necessary
@@ -375,7 +381,9 @@ namespace prx.cli
                         
                 //If that function exists, execute it first
                 if(app.Functions.Contains(intMainId))
+                {
                     var intMain = app.Functions[intMainId].Run(engine, scriptArgs~Object<"Prexonite.PValue[]">);
+                }
                 
                 //before going into interactive mode.
                 goto runInteractive;
@@ -412,6 +420,13 @@ namespace prx.cli
         }
     }
 
+    function assemble_from_file(plan,file)
+    {
+        return plan.AssembleAsync(Prexonite::Compiler::Build::Source.FromFile(
+                file, System::Text::Encoding.UTF8), 
+            System::Threading::CancellationToken.None).Result;
+    }
+
     function execute_plan(options)
     {
         var plan = host\self_assembling_build_plan;
@@ -430,12 +445,24 @@ namespace prx.cli
             print_message_subset(messages, is_error(?), red(?));
         }
         try {
-            var entryDesc =
-                plan.AssembleAsync(Prexonite::Compiler::Build::Source.FromFile(
-                        options.sourceFiles[options.sourceFiles.Count - 1], 
-                        System::Text::Encoding.UTF8), 
-                    System::Threading::CancellationToken.None)
-                .Result;
+            var entryDesc;
+            if(options.sourceFiles.Count > 0)
+            {
+                // Use self-assembly mechanism on each source file. 
+                // The last source file is the one we will run, the others just "seed" the plan
+                foreach(var file in options.sourceFiles)
+                {
+                    entryDesc = assemble_from_file(plan, file);
+                }
+            }
+            else if(options.state == states.interactive)
+            {
+                // Define an empty module
+                entryDesc = plan.AssembleAsync(Prexonite::Compiler::Build::Source.FromString(@"
+                    Name interactive_app;
+                    "),
+                    System::Threading::CancellationToken.None).Result;
+            }
             var result = Prexonite::Compiler::Build::BuildExtensions.Load(plan, entryDesc.Name);
             app = result.Item1; //~Application
             target = result.Item2; // ~ITarget
@@ -524,14 +551,27 @@ namespace prx.cli
                 prx\interactive;
             }            
         } catch(var e) {
-            if(e is Prexonite::Compiler::Build::BuildFailureException)
+            function e_handler(e)
             {
-                print_all_messages(e.Messages);
+                if(e is System::AggregateException)
+                {
+                    foreach(var ie in e.InnerExceptions)
+                        e_handler(ie);
+                }
+                else if(e is Prexonite::PrexoniteRuntimeException and e.InnerException is not null)
+                {
+                    e_handler(e.InnerException);
+                }
+                else if(e is Prexonite::Compiler::Build::BuildFailureException)
+                {
+                    print_all_messages(e.Messages);
+                }
+                else
+                {
+                    green(() => println(e));
+                }
             }
-            else
-            {
-                green(() => println(e));
-            }
+            e_handler(e);
         }
     }
 
@@ -542,6 +582,6 @@ namespace prx.cli
 // This needs to appear at the module level.
 // The `[\sps]` prevents the function from being exported to other modules
 Entry prx\main;
-function prx\main(arguments)[\sps] = prx.cli.prx\main(arguments);
+function prx\main()[\sps] = sys.call(prx.cli.prx\main(?),var args);
  
 {  sys.rt.compile_to_cil; } 

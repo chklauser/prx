@@ -69,17 +69,24 @@ namespace Prexonite.Compiler.Build.Internal
         {
             token.ThrowIfCancellationRequested();
 
-            var primaryPreflight = await _performPreflight(new RefSpec { Source = source }, token);
+            var primaryPreflight = await _performPreflight(new RefSpec { Source = source, ResolvedPath = _getPath(source) }, token);
 
             if (primaryPreflight.ErrorMessage != null)
             {
-                return CreateDescription(primaryPreflight.ModuleName, Source.FromString(""), NoSourcePosition.MissingFileName,
-                    Enumerable.Empty<ModuleName>(),
-                    new[]
-                        {
-                            Message.Error(primaryPreflight.ErrorMessage, NoSourcePosition.Instance,
-                                MessageClasses.SelfAssembly)
-                        });
+                var errorMessage = Message.Error(primaryPreflight.ErrorMessage, NoSourcePosition.Instance,
+    MessageClasses.SelfAssembly);
+
+                if (primaryPreflight.ModuleName != null)
+                {
+                    return CreateDescription(primaryPreflight.ModuleName, Source.FromString(""),
+                        NoSourcePosition.MissingFileName,
+                        Enumerable.Empty<ModuleName>(),
+                        new[]{errorMessage});
+                }
+                else
+                {
+                    throw new BuildFailureException(null, "There {2} {0} {1} while trying to determine dependencies.",new[]{errorMessage});
+                }
             }
             else
             {
@@ -519,6 +526,8 @@ namespace Prexonite.Compiler.Build.Internal
                 sb.AppendFormat("@{0}", ResolvedPath);
             else if (RawPath != null)
                 sb.AppendFormat("~@{0}", RawPath);
+            else
+                sb.Append("(defined programmatically)");
 
             if (Source != null)
                 sb.Append(" with source");

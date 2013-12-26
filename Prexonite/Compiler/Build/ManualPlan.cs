@@ -26,7 +26,6 @@
 using System;
 using System.Collections.Generic;
 using System.Diagnostics;
-using System.IO;
 using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
@@ -62,7 +61,7 @@ namespace Prexonite.Compiler.Build
         /// <returns></returns>
         /// <exception cref="ArgumentException">Dependencies must not contain multiple versions of the same module.</exception>
         /// <remarks>You will have to make sure that this plan contains a target description for each dependency before this target description can be built.</remarks>
-        public ITargetDescription CreateDescription(ModuleName moduleName, ISource source, string fileName, IEnumerable<ModuleName> dependencies, IEnumerable<Message> buildMessages = null)
+        public ITargetDescription CreateDescription([NotNull] ModuleName moduleName, [NotNull] ISource source, [CanBeNull] string fileName, [NotNull] IEnumerable<ModuleName> dependencies, [CanBeNull] IEnumerable<Message> buildMessages = null)
         {
             return new ManualTargetDescription(moduleName, source, fileName, dependencies, buildMessages);
         }

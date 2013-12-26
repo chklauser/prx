@@ -25,6 +25,7 @@
 //  IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 using System;
 using System.Runtime.Serialization;
+using JetBrains.Annotations;
 
 namespace Prexonite.Compiler.Build
 {
@@ -37,6 +38,7 @@ namespace Prexonite.Compiler.Build
         //    http://msdn.microsoft.com/library/default.asp?url=/library/en-us/dncscol/html/csharp07192001.asp
         //
 
+        [CanBeNull]
         private readonly ITargetDescription _relatedTarget;
 
         public BuildException(ITargetDescription relatedTarget)
@@ -44,16 +46,17 @@ namespace Prexonite.Compiler.Build
             _relatedTarget = relatedTarget;
         }
 
-        public BuildException(string message, ITargetDescription relatedTarget) : base(message)
+        public BuildException(string message, [CanBeNull] ITargetDescription relatedTarget) : base(message)
         {
             _relatedTarget = relatedTarget;
         }
 
-        public BuildException(string message, ITargetDescription relatedTarget, Exception inner) : base(message, inner)
+        public BuildException(string message, [CanBeNull] ITargetDescription relatedTarget, Exception inner) : base(message, inner)
         {
             _relatedTarget = relatedTarget;
         }
 
+        [CanBeNull]
         public ITargetDescription RelatedTarget
         {
             get { return _relatedTarget; }

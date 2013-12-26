@@ -1553,5 +1553,22 @@ function main()
             Expect(12, 5);
             Expect(14, 6);
         }
+
+        public void ConvertListToEnumerableOfT()
+        {
+            Compile(@"
+function main()
+{
+    var xs = [1, ""2"", 3, 4.0];
+    var ys = xs~Object<""System.Collections.Generic.IEnumerable`1[System.String0.3]"">;
+    return ys;
+}
+");
+            Expect(rs =>
+            {
+                Assert.That(rs,Is.InstanceOf<IEnumerable<string>>());
+                Assert.That(((IEnumerable<string>)rs.Value).ToList(),Is.EquivalentTo(new[]{"1","2","3","4.0"}));
+            });
+        }
     }
 }

@@ -220,7 +220,7 @@ namespace Prexonite.Compiler
                 var nsUsage = fakeExpr as AstNamespaceUsage;
                 if (nsUsage == null)
                     Loader.ReportMessage(Message.Error(
-                        string.Format(Resources.Parser_NamespaceExpected, superNsId, sym),
+                        string.Format(Resources.Parser_NamespaceExpected, superNsId, sym == null ? "not defined" : sym.ToString()),
                         idPosition, MessageClasses.NamespaceExcepted));
                 else
                 {
@@ -272,7 +272,7 @@ namespace Prexonite.Compiler
                 if (nsUsage == null)
                 {
                     Create.ReportMessage(
-                        Message.Error(string.Format(Resources.Parser_NamespaceExpected, qualifiedId[0], sym),
+                        Message.Error(string.Format(Resources.Parser_NamespaceExpected, qualifiedId[0], sym == null ? "not defined" : sym.ToString()),
                             qualifiedIdPosition, MessageClasses.NamespaceExcepted));
                     return null;
                 }

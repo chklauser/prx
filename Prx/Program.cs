@@ -112,14 +112,9 @@ namespace Prx
         {
         }
 
-        private static void _runApplication(Engine engine, Application app, string[] args)
+        private static void _runApplication(Engine engine, Application app, IEnumerable<string> args)
         {
-            app.Run
-                (engine,
-                    new[]
-                        {
-                            engine.CreateNativePValue(args)
-                        });
+            app.Run(engine, args.Select(engine.CreateNativePValue).ToArray());
         }
 
         [CanBeNull]
@@ -339,9 +334,21 @@ namespace Prx
                     plan.AssembleAsync(Source.FromFile(entryPath, Encoding.UTF8), CancellationToken.None).Result;
                 result = plan.Load(entryDesc.Name);
             }
+            catch (BuildFailureException e)
+            {
+                _reportErrors(e.Messages);
+                Console.WriteLine(e);
+#if DEBUG
+                throw;
+#else
+                result = null;
+#endif
+            }
             catch (BuildException e)
             {
-                _reportErrors(e.RelatedTarget.BuildMessages);
+                if(e.RelatedTarget != null)
+                    _reportErrors(e.RelatedTarget.BuildMessages);
+
                 Console.WriteLine(e);
 #if DEBUG
                 throw;
