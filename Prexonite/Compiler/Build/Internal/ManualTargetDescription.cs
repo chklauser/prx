@@ -111,7 +111,25 @@ namespace Prexonite.Compiler.Build.Internal
                                     token.ThrowIfCancellationRequested();
                                     Plan.Trace.TraceEvent(TraceEventType.Information, 0, "Building {0}.", this);
                                     Trace.CorrelationManager.StartLogicalOperation("Build");
+
+                                    // Hand compilation off to loader. 
+                                    // If the description is backed by a file, allow inclusion of 
+                                    // other files via realtive paths.
+                                    FileInfo fsContext;
+                                    if (_fileName != null)
+                                    {
+                                        fsContext = new FileInfo(_fileName);
+                                        ldr.LoadPaths.Push(fsContext.DirectoryName);
+                                    }
+                                    else
+                                    {
+                                        fsContext = null;
+                                    }
                                     ldr.LoadFromReader(reader, _fileName);
+                                    if (fsContext != null)
+                                    {
+                                        ldr.LoadPaths.Pop();
+                                    }
                                     Trace.CorrelationManager.StopLogicalOperation();
                                     Plan.Trace.TraceEvent(TraceEventType.Verbose, 0, "Done with building {0}, wrapping result in target.", this);
                                 }

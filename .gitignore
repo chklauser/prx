@@ -99,3 +99,4 @@ codemap/*
 
 # Ignore files designated local-only
 *.local.*
+*.local.dgml

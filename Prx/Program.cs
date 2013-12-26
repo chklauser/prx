@@ -26,12 +26,19 @@
 #region Namespace Imports
 
 using System;
+using System.Collections;
+using System.Collections.Generic;
 using System.Diagnostics;
 using System.IO;
+using System.Linq;
 using System.Reflection;
+using System.Text;
+using System.Threading;
+using JetBrains.Annotations;
 using Prexonite;
 using Prexonite.Commands;
 using Prexonite.Compiler;
+using Prexonite.Compiler.Build;
 using Prexonite.Types;
 using Prx.Benchmarking;
 using Prx.Properties;
@@ -67,36 +74,42 @@ namespace Prx
             Console.CancelKeyPress += delegate { Environment.Exit(1); };
             var prexoniteConsole = new PrexoniteConsole(true);
 
-#if !DEBUG
             //Let the exceptions surface so they can more easily be debugged
             try
             {
-#endif
-                //Create an empty application
-                var app = new Application("prx");
-
                 var engine = new Engine();
                 engine.RegisterAssembly(Assembly.GetExecutingAssembly());
 
                 //Load application
-                if (!_loadApplication(engine, prexoniteConsole, app))
-                    return;
+                var app = _loadApplication(engine, prexoniteConsole);
 
                 //Run the applications main function.
-                _runApplication(engine, app, args);
-#if !DEBUG
+                if (app != null) //errors have already been reported
+                    _runApplication(engine, app, args);
             }
+            // ReSharper disable once RedundantCatchClause
             catch (Exception ex)
             {
-                Console.WriteLine(ex);
-            }
+#if DEBUG
+                _dummyUsageOf(ex);
+                throw;
 #else
+                Console.WriteLine(ex);
+#endif
+            }
+            finally
+            {
                 if (Debugger.IsAttached)
                 {
-                    Console.WriteLine("Exiting Prx.Main normally. Press Enter to exit");
+                    Console.WriteLine(Prexonite.Properties.Resources.Program_DebugExit);
                     Console.ReadLine();
                 }
-#endif
+            }
+        }
+
+        // ReSharper disable once UnusedParameter.Local
+        private static void _dummyUsageOf(object any)
+        {
         }
 
         private static void _runApplication(Engine engine, Application app, string[] args)
@@ -109,9 +122,11 @@ namespace Prx
                         });
         }
 
-        private static bool _loadApplication(Engine engine, PrexoniteConsole prexoniteConsole,
-            Application app)
+        [CanBeNull]
+        private static Application _loadApplication(Engine engine, PrexoniteConsole prexoniteConsole)
         {
+            var plan = Plan.CreateSelfAssembling();
+
             #region Stopwatch commands
 
             //prx.exe provides these three additional commands for high speed access to a stopwatch from your script code
@@ -122,10 +137,10 @@ namespace Prx
                     new DelegatePCommand
                         (
                         delegate
-                            {
-                                timer.Start();
-                                return null;
-                            }));
+                        {
+                            timer.Start();
+                            return null;
+                        }));
 
             engine.Commands.AddHostCommand
                 (
@@ -133,10 +148,10 @@ namespace Prx
                     new DelegatePCommand
                         (
                         delegate
-                            {
-                                timer.Stop();
-                                return (double) timer.ElapsedMilliseconds;
-                            }));
+                        {
+                            timer.Stop();
+                            return (double)timer.ElapsedMilliseconds;
+                        }));
 
             engine.Commands.AddHostCommand
                 (
@@ -144,17 +159,17 @@ namespace Prx
                     new DelegatePCommand
                         (
                         delegate
-                            {
-                                timer.Reset();
-                                return null;
-                            }));
+                        {
+                            timer.Reset();
+                            return null;
+                        }));
 
             engine.Commands.AddHostCommand
                 (
                     @"timer\elapsed",
                     new DelegatePCommand
                         (
-                        delegate { return (double) timer.ElapsedMilliseconds; }));
+                        delegate { return (double)timer.ElapsedMilliseconds; }));
 
             #endregion
 
@@ -164,81 +179,81 @@ namespace Prx
                 (
                     @"__replace_call",
                     delegate(StackContext sctx, PValue[] cargs)
+                    {
+                        if (cargs == null)
+                            cargs = new PValue[]
+                            {
+                            };
+                        if (sctx == null)
+                            throw new ArgumentNullException("sctx");
+
+                        var e = sctx.ParentEngine;
+
+                        if (cargs.Length < 1)
+                            throw new PrexoniteException
+                                (
+                                "__replace_call requires the context or function to be replaced.");
+
+                        var carg = cargs[0];
+                        var rargs = new PValue[cargs.Length - 1];
+                        Array.Copy(cargs, 1, rargs, 0, rargs.Length);
+
+                        FunctionContext rctx = null;
+                        PFunction f;
+                        switch (carg.Type.ToBuiltIn())
                         {
-                            if (cargs == null)
-                                cargs = new PValue[]
-                                    {
-                                    };
-                            if (sctx == null)
-                                throw new ArgumentNullException("sctx");
+                            case PType.BuiltIn.String:
+                                if (
+                                    !sctx.ParentApplication.Functions.TryGetValue
+                                        (
+                                            (string)carg.Value, out f))
+                                    throw new PrexoniteException
+                                        (
+                                        "Cannot replace call to " + carg +
+                                        " because no such function exists.");
 
-                            var e = sctx.ParentEngine;
-
-                            if (cargs.Length < 1)
-                                throw new PrexoniteException
-                                    (
-                                    "__replace_call requires the context or function to be replaced.");
-
-                            var carg = cargs[0];
-                            var rargs = new PValue[cargs.Length - 1];
-                            Array.Copy(cargs, 1, rargs, 0, rargs.Length);
-
-                            FunctionContext rctx = null;
-                            PFunction f;
-                            switch (carg.Type.ToBuiltIn())
-                            {
-                                case PType.BuiltIn.String:
-                                    if (
-                                        !sctx.ParentApplication.Functions.TryGetValue
-                                            (
-                                                (string) carg.Value, out f))
-                                        throw new PrexoniteException
-                                            (
-                                            "Cannot replace call to " + carg +
-                                                " because no such function exists.");
-
-                                    rctx = f.CreateFunctionContext(e, rargs);
-                                    break;
-                                case PType.BuiltIn.Object:
-                                    var clrType = ((ObjectPType) carg.Type).ClrType;
-                                    if (clrType == typeof (PFunction))
-                                    {
-                                        f = (PFunction) carg.Value;
-                                        rctx = f.CreateFunctionContext(e, rargs);
-                                    }
-                                    else if (clrType == typeof (Closure) &&
-                                        clrType != typeof (Continuation))
-                                    {
-                                        var c = (Closure) carg.Value;
-                                        rctx = c.CreateFunctionContext(sctx, rargs);
-                                    }
-                                    else if (clrType == typeof (FunctionContext))
-                                    {
-                                        rctx = (FunctionContext) carg.Value;
-                                    }
-                                    break;
-                            }
-                            if (rctx == null)
-                                throw new PrexoniteException("Cannot replace a context based on " +
-                                    carg);
-
-                            var node = e.Stack.Last;
-                            do
-                            {
-                                var ectx = node.Value as FunctionContext;
-
-                                if (ectx != null)
+                                rctx = f.CreateFunctionContext(e, rargs);
+                                break;
+                            case PType.BuiltIn.Object:
+                                var clrType = ((ObjectPType)carg.Type).ClrType;
+                                if (clrType == typeof(PFunction))
                                 {
-                                    if (ReferenceEquals(ectx.Implementation, rctx.Implementation))
-                                    {
-                                        node.Value = rctx;
-                                        break;
-                                    }
+                                    f = (PFunction)carg.Value;
+                                    rctx = f.CreateFunctionContext(e, rargs);
                                 }
-                            } while ((node = node.Previous) != null);
+                                else if (clrType == typeof(Closure) &&
+                                         clrType != typeof(Continuation))
+                                {
+                                    var c = (Closure)carg.Value;
+                                    rctx = c.CreateFunctionContext(sctx, rargs);
+                                }
+                                else if (clrType == typeof(FunctionContext))
+                                {
+                                    rctx = (FunctionContext)carg.Value;
+                                }
+                                break;
+                        }
+                        if (rctx == null)
+                            throw new PrexoniteException("Cannot replace a context based on " +
+                                                         carg);
 
-                            return PType.Null.CreatePValue();
-                        });
+                        var node = e.Stack.Last;
+                        do
+                        {
+                            var ectx = node.Value as FunctionContext;
+
+                            if (ectx != null)
+                            {
+                                if (ReferenceEquals(ectx.Implementation, rctx.Implementation))
+                                {
+                                    node.Value = rctx;
+                                    break;
+                                }
+                            }
+                        } while ((node = node.Previous) != null);
+
+                        return PType.Null.CreatePValue();
+                    });
 
             #endregion
 
@@ -253,49 +268,50 @@ namespace Prx
             engine.Commands.AddHostCommand
                 ("createBenchmark",
                     delegate(StackContext sctx, PValue[] cargs)
+                    {
+                        if (sctx == null)
+                            throw new ArgumentNullException("sctx");
+                        if (cargs == null)
+                            cargs = new PValue[]
+                            {
+                            };
+
+                        Engine teng;
+                        int tit;
+
+                        if (cargs.Length >= 2)
                         {
-                            if (sctx == null)
-                                throw new ArgumentNullException("sctx");
-                            if (cargs == null)
-                                cargs = new PValue[]
-                                    {
-                                    };
+                            teng = cargs[0].ConvertTo<Engine>(sctx);
+                            tit = cargs[1].ConvertTo<int>(sctx);
+                        }
+                        else if (cargs.Length >= 1)
+                        {
+                            teng = sctx.ParentEngine;
+                            tit = cargs[0].ConvertTo<int>(sctx);
+                        }
+                        else
+                        {
+                            return sctx.CreateNativePValue(new Benchmark(sctx.ParentEngine));
+                        }
 
-                            Engine teng;
-                            int tit;
-
-                            if (cargs.Length >= 2)
-                            {
-                                teng = cargs[0].ConvertTo<Engine>(sctx);
-                                tit = cargs[1].ConvertTo<int>(sctx);
-                            }
-                            else if (cargs.Length >= 1)
-                            {
-                                teng = sctx.ParentEngine;
-                                tit = cargs[0].ConvertTo<int>(sctx);
-                            }
-                            else
-                            {
-                                return sctx.CreateNativePValue(new Benchmark(sctx.ParentEngine));
-                            }
-
-                            return sctx.CreateNativePValue(new Benchmark(teng, tit));
-                        });
+                        return sctx.CreateNativePValue(new Benchmark(teng, tit));
+                    });
 
             #endregion
 
-            //Create a loader for that application and...
-            var ldr = new Loader(engine, app);
-            //load the main script file. 
+            #region Self-assembling build plan reference
 
-            //CLI override script in action:
+            engine.Commands.AddHostCommand(@"host\self_assembling_build_plan", (sctx, args) => sctx.CreateNativePValue(plan));
+
+            #endregion
+
             var deleteSrc = false;
-            var entryPath = GetPrxPath() + Path.DirectorySeparatorChar + @"prx.pxs";
+            var entryPath = GetPrxPath() + Path.DirectorySeparatorChar + PrxScriptFileName;
             if (!File.Exists(entryPath))
             {
                 //Load default CLI app
                 entryPath = GetPrxPath() + Path.DirectorySeparatorChar + @"src" +
-                    Path.DirectorySeparatorChar + "prx_main.pxs";
+                            Path.DirectorySeparatorChar + "prx_main.pxs";
 
                 if (!File.Exists(entryPath))
                 {
@@ -303,7 +319,7 @@ namespace Prx
                     {
                         var di =
                             Directory.CreateDirectory(GetPrxPath() + Path.DirectorySeparatorChar +
-                                @"src");
+                                                      @"src");
                         di.Attributes = di.Attributes | FileAttributes.Hidden;
                         deleteSrc = true;
                     }
@@ -315,76 +331,96 @@ namespace Prx
                 }
             }
 
-#if !DEBUG
+            Tuple<Application, ITarget> result;
+
             try
             {
-#endif
-                ldr.LoadFromFile(entryPath);
-#if !DEBUG
+                var entryDesc =
+                    plan.AssembleAsync(Source.FromFile(entryPath, Encoding.UTF8), CancellationToken.None).Result;
+                result = plan.Load(entryDesc.Name);
             }
-            catch (Exception exc)
+            catch (BuildException e)
             {
-                _reportErrors(ldr);
-                Console.WriteLine(exc);
-                return false;
-            }
+                _reportErrors(e.RelatedTarget.BuildMessages);
+                Console.WriteLine(e);
+#if DEBUG
+                throw;
+#else
+                result = null;
 #endif
+            }
+            catch (Exception e)
+            {
+                Console.WriteLine(e);
+#if DEBUG
+                throw;
+#else
+                result = null;
+#endif
+            }
+
 
             if (deleteSrc)
                 Directory.Delete(GetPrxPath() + Path.DirectorySeparatorChar + @"src", true);
 
-            //Report errors
-            _reportErrors(ldr);
-
-            return ldr.ErrorCount == 0;
+            if (result == null)
+            {
+                return null;
+            }
+            else
+            {
+                return !_reportErrors(result.Item2.Messages) ? result.Item1 : null;
+            }
         }
 
-        private static void _reportErrors(Loader ldr)
+        private static bool _reportErrors(IEnumerable<Message> messages)
         {
             var originalColor = Console.ForegroundColor;
-
-            if (ldr.ErrorCount > 0)
+            var msgBySev = messages.ToGroupedDictionary<MessageSeverity, Message, List<Message>>(m => m.Severity);
+            List<Message> errors;
+#if DEBUG
+            _reportWarnings(msgBySev, originalColor);
+#endif
+            if (msgBySev.TryGetValue(MessageSeverity.Error,out errors) && errors.Count > 0)
             {
                 try
                 {
-#if DEBUG
-                    _reportWarnings(ldr, originalColor);
-#endif
                     Console.ForegroundColor = ConsoleColor.Red;
                     Console.Error.WriteLine("Errors during compilation detected. Aborting.");
-                    foreach (var err in ldr.Errors)
+                    foreach (var err in errors)
                         Console.WriteLine(err);
                 }
                 finally
                 {
                     Console.ForegroundColor = originalColor;
-                    Environment.Exit(1);
                 }
+                return true;
             }
             else
             {
-#if DEBUG
-                try
-                {
-                    _reportWarnings(ldr, originalColor);
-                }
-                finally
-                {
-                    Console.ForegroundColor = originalColor;
-                }
-#endif
+                return false;
             }
         }
 
-        private static void _reportWarnings(Loader ldr, ConsoleColor originalColor)
+        private static void _reportWarnings(IDictionary<MessageSeverity, List<Message>> messages, ConsoleColor originalColor)
         {
-            Console.ForegroundColor = originalColor;
-            foreach (var message in ldr.Infos)
-                Console.WriteLine(message);
+            try
+            {
+                Console.ForegroundColor = originalColor;
+                List<Message> messageCategory;
+                if (messages.TryGetValue(MessageSeverity.Info, out messageCategory))
+                    foreach (var message in messageCategory)
+                        Console.WriteLine(message);
 
-            Console.ForegroundColor = ConsoleColor.Yellow;
-            foreach (var warning in ldr.Warnings)
-                Console.WriteLine(warning);
+                Console.ForegroundColor = ConsoleColor.Yellow;
+                if (messages.TryGetValue(MessageSeverity.Warning, out messageCategory))
+                    foreach (var warning in messages[MessageSeverity.Warning])
+                        Console.WriteLine(warning);
+            }
+            finally
+            {
+                Console.ForegroundColor = originalColor;
+            }
         }
     }
 }

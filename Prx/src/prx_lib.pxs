@@ -24,102 +24,114 @@
 //  WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING 
 //  IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-
-Name prx\lib;
-Description "Provides common routines for prx.";
-Author SealedSun;
-	
-declare println as echo;
-
-//Access to an experimental terminal
-declare command __console;
-
-//Not all environments may support colors...
-var supportsColors = (supportsColors ?? true)~Bool;
-
-//Run 'f' in a context where console output has the color 'color'.
-function runInDifferentColor(ref f, color)
+namespace prx.cli
+    import sys.*
 {
-	var r;
-    if(supportsColors)
+    //Access to an experimental terminal
+    declare command __console, host\self_assembling_build_plan;
+
+    //Not all environments may support colors...
+    var supportsColors = (supportsColors ?? true)~Bool;
+
+    //Run 'f' in a context where console output has the color 'color'.
+    function runInDifferentColor(ref f, color)
     {
-    	var orig = ::Console.ForegroundColor;
-    	::Console.ForegroundColor = color;
-    	r = f();
-    	::Console.ForegroundColor = orig;
+    	var r;
+        if(supportsColors)
+        {
+        	var orig = ::Console.ForegroundColor;
+        	::Console.ForegroundColor = color;
+            try {
+        	    r = f();
+            } finally {
+        	    ::Console.ForegroundColor = orig;
+            }
+        }
+        else
+        {
+            r = f();   
+        }
+        return r;
     }
-    else
-    {
-        r = f();   
-    }
-    return r;
-}
 
-//Shortcuts for commonly used colorations
-ref red = 
-    if(supportsColors)
-        f => runInDifferentColor(f, ::ConsoleColor.Red)
-    else
-        f => f.()
-    ;
-ref green = 
-    if(supportsColors)
-        f => runInDifferentColor(f, ::ConsoleColor.Green)
-    else
-        f => f.()
-    ;
-ref yellow =
-    if(supportsColors)
-        f => runInDifferentColor(f, ::ConsoleColor.Yellow)
-    else
-        f => f.()
-    ;
+    //Shortcuts for commonly used colorations
+    ref red = 
+        if(supportsColors)
+            f => runInDifferentColor(f, ::ConsoleColor.Red)
+        else
+            f => f.()
+        ;
+    ref green = 
+        if(supportsColors)
+            runInDifferentColor(?, ::ConsoleColor.Green)
+        else
+            ?.()
+        ;
+    ref yellow =
+        if(supportsColors)
+            runInDifferentColor(?, ::ConsoleColor.Yellow)
+        else
+            ?.()
+        ;
 
-var isWindowsNT = System::Environment.OSVersion.Platform~Int == System::PlatformID.Win32NT~Int; 
-  
-function __consoleAvailable = asm(ldr.eng).Commands.Contains("__console");
-  
-var supportsTabs = (supportsTabs ?? (isWindowsNT && __consoleAvailable))~Bool;
-    
-function readline = 
-    if(supportsTabs)
-        __console.ReadLine
-    else
-        System::Console.ReadLine;
-    
-//Show prompt and read line
-var prompt\color; 
-function showPrompt(q) does
-{
-	declare var prompt\color as color;
-	var originalColor;
-    if(q == null)
-        q = "PRX> ";
-    runInDifferentColor( () => print(q), 
-        if(color != null) color else ::Console.ForegroundColor);
-	return readline;
-}
-
-function report
-{
-	var r = null;
-    foreach(var arg in var args)
-    {
-        if(arg is not Prexonite::Types::PValueKeyValuePair)
-            throw "Arguments must be key value pairs!";
-            
-        var msg = arg.Key;
-        var act = arg.Value;
+    var isWindowsNT = System::Environment.OSVersion.Platform~Int == System::PlatformID.Win32NT~Int; 
+      
+    function __consoleAvailable = asm(ldr.eng).Commands.Contains("__console");
+      
+    var supportsTabs = (supportsTabs ?? (isWindowsNT && __consoleAvailable))~Bool;
         
-        print("$msg...");
-        r = act.();
-        println("done.");
+    function readline = 
+        if(supportsTabs)
+            __console.ReadLine
+        else
+            System::Console.ReadLine;
+        
+    //Show prompt and read line
+    var prompt\color; 
+    function showPrompt(q) does
+    {
+    	declare var prompt\color as color;
+        q ??= "PRX> ";
+        runInDifferentColor( () => print(q), 
+            if(color != null) color else ::Console.ForegroundColor);
+    	return readline;
     }
-    return r;
+
+    /**
+     * Reports progress of a series of tasks.
+     * Usage:
+     *    report(
+     *        "heating water": () => heatWater(),
+     *        "adding vegetables": () => vegies.Add(new carrots()))
+     *    );
+     * Will result in:
+     *    heating water...done.
+     *    adding vegetables...done.
+     * With "done." only printed after the corresponding task
+     * has finished.
+     */
+    function report
+    {
+    	var r = null;
+        foreach(var arg in var args)
+        {
+            if(arg is not Prexonite::Types::PValueKeyValuePair)
+                throw "Arguments must be key value pairs!";
+                
+            var msg = arg.Key;
+            var act = arg.Value;
+            
+            print("$msg...");
+            r = act.();
+            println("done.");
+        }
+        return r;
+    }
+
+    var prompt = null;
+
+    //Functions that provide access to the currently executing engine and application.
+    function thisEngine = asm ( ldr.eng );
+    function thisApplication = asm ( ldr.app );
+
 }
-
-var prompt = null;
-
-//Functions that provide access to the currently executing engine and application.
-function thisEngine = asm ( ldr.eng );
-function thisApplication = asm ( ldr.app );

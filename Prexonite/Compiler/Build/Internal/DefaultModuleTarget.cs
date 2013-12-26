@@ -122,9 +122,9 @@ namespace Prexonite.Compiler.Build.Internal
         internal static readonly Message[] NoMessages = new Message[0];
 
         [NotNull]
-        public IReadOnlyList<Message> Messages
+        public IReadOnlyCollection<Message> Messages
         {
-            get { return (IReadOnlyList<Message>)_messages ?? NoMessages;}
+            get { return (IReadOnlyCollection<Message>)_messages ?? NoMessages; }
         }
 
         public Exception Exception

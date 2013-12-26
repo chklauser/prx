@@ -59,9 +59,8 @@ namespace Prexonite.Compiler.Build
             get;
         }
 
-        //TODO: replace with IReadOnlyCollection in .NET 4.5
         [PublicAPI]
-        IReadOnlyList<Message> Messages { get; }
+        IReadOnlyCollection<Message> Messages { get; }
 
         [PublicAPI]
         Exception Exception { get; }

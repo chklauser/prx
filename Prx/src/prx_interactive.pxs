@@ -27,309 +27,289 @@
 
 build
 {
-	require("prx_lib.pxs");
+    require("prx_lib.pxs");
 }
-
-Name prx\interactive;
-Description "Provides interactive command line for prx";
-Author SealedSun;
 
 Import { System, System::Text, Prexonite, Prexonite::Compiler };
 
-var engine;
-
-declare function reboot;
-
-//The follwing code block is compiled as
-// part of the initialization of the application.
-// Global variable assignments too are part of the '\init' function.
+namespace prx.cli
 {
-	engine = new Prexonite::Engine;
-	//The interactive prompt uses a second, isolated engine for execution.
-	var thisE = thisEngine;
-	
-	//Copy those timing commands from the current engine to the 
-	// interactive engine
-	foreach(var alias in [
-			@"timer\start",
-			@"timer\stop",
-			@"timer\elapsed",
-			@"timer\reset",
-			@"createBenchmark",
-            @"__console"])
-		engine.Commands.AddUserCommand(alias, thisE.Commands[alias]);
-		
-	//Set up the console
-	if(supportsTabs)
-   	{
-    	__console.OutColor = ::ConsoleColor.White;
-    	__console.PromptColor = ::ConsoleColor.Red;
-    	__console.ErrorColor = ::ConsoleColor.Green;
-    	__console.DoBeep = false;
-    }
+    declare var app;
+    declare var engine;
+    declare var ldr;
 }
 
-var app; //<-- the compiled application
-var ldr; //<-- the loader used to compile 'app'
-
-var evalStep = 1; //<-- helps to make identifiers unique
-
-coroutine tabHook(prefix, root)
+namespace prx.cli.repl
+    import 
+        sys.*,
+        sys.seq.*,
+        prx.cli.*
 {
+    declare function reboot;
 
-    //User supplied entries
-    foreach(var e in app.Meta["Tab"].List)
-        if(e.Text.Length > 0)
-            yield e.Text;
+    // If you are only interested in learning how prx_main.pxs works, you can stop reading here ;-)
+    ///////////////////////////////////////////////////////////////////////////////////////////////
+    ///////////////////////////////////////////////////////////////////////////////////////////////
 
-    var hideKeys = [ "hidden", "private" ];
-    function isHidden(func)
+    var evalStep = 1; //<-- helps to make identifiers unique
+
+    coroutine tabHook(prefix, root)
     {
-        if(func is Null)
-            return true;
-            
-        foreach(var hideKey in hideKeys)
-            if(func.Meta[hideKey].Switch)
+        //User supplied entries
+        foreach(var e in app.Meta["Tab"].List)
+            if(e.Text.Length > 0)
+                yield e.Text;
+
+        var hideKeys = [ "hidden", "private" ];
+        function isHidden(func)
+        {
+            if(func is Null)
                 return true;
-        
-        return false;   
-    }
-    
-    //Add hide keys defined by the user
-    foreach(var key in app.Meta["hideKeys"].List)
-        if(key.Text.Length > 0)
-            hideKeys[] = key.Text;
-    
-    //Add symbols (the declarations, not the physical names)
-    foreach(var symbol in ldr.Symbols)
-        if( symbol.Value.Interpretation~Int == ::SymbolInterpretations.Command~Int ||
-            symbol.Value.Interpretation~Int == ::SymbolInterpretations.GlobalObjectVariable~Int ||
-            symbol.Value.Interpretation~Int == ::SymbolInterpretations.GlobalReferenceVariable~Int )
-        {
+                
+            foreach(var hideKey in hideKeys)
+                if(func.Meta[hideKey].Switch)
+                    return true;
             
-            yield symbol.Key;
+            return false;   
         }
-        else if(symbol.Value.Interpretation~Int == ::SymbolInterpretations.Function~Int)
-        {
-            //Functions may be explicitly hidden
-            unless(isHidden(app.Functions[symbol.Value.Id]))
-                yield symbol.Key;   
-        }
-    
-    //A collection of common usages
-    yield "ToString";
-    yield "foreach";
-    yield "function";
-    yield "StringBuilder";
-    yield "System";
-    yield "Text";
-    yield "Prexonite";
-    yield "Null";
-    yield "String";
-    yield "List";
-    yield "Hash";
-    yield "Int";
-    yield "Real";
-    yield "Bool";
-    yield "Structure";
-}
-
-function prx\interactive()
-{
-    if(supportsTabs)
-        __console.Tab = ->tabHook;
-    
-    println("Entering Prexonite INTERACTIVE MODE.\nType :quit to quit.\n\"=<expr>\" evaluates an expression.\n\":<GlobalStatement>\" inserts global code.");
-    
-    //Either create a new application or use the one compiled in 'prx\main'.
-    if(app == null)
-        app = new Prexonite::Application("Interactive_Scripting");
-    else
-        println("Using compiled application ($(app.Id))");
-    
-    //Create a new loader (='compiler') if necessary
-    if(ldr == null)
-        ldr = new ::Loader(engine, app);
-    
-    //Define a default prompt color
-    prompt\color = ::ConsoleColor.Red;
-    
-    var buffer = new ::StringBuilder;
-    //Compile some standard code into the interactive application
-    buffer.AppendLine("var prompt = null;");
-    if(Not app.Functions.Contains("exit"))
-        buffer.AppendLine("function exit(c) does System::Environment.Exit(c ?? 0);");
-    buffer.AppendLine("declare exit as quit;");
-    ldr.LoadFromString(buffer.ToString);
-    buffer.Length = 0;
-    
-    var errors;
-    var lastCode;
-    
-    //This function tries to load code from the buffer
-    function tryLoad()
-    {
-        try 
-        {
-            var exc = null;
-            lastCode = buffer.ToString; //Save the code for error reporting
-            ldr.LoadFromString(lastCode);            
-        } 
-        catch(exc)
-        {
-            //Exceptions are truly exceptional, so they should be printed
-            // out right away.
-            green = () =>
-			{
-    			println(exc);
-    			exc = null;
-				foreach(var err in errors)
-					println(err);
-			};
-			return false;
-        }
-        finally
-        {
-            //Save errors for review and clean up.
-            buffer.Length = 0;
-            errors = ~List.CreateFromList(ldr.Errors);
-            ldr.Errors.Clear;            
-        }
-        return errors.Count == 0;
-    }
-    
-    //Print errors (if 'otherErrors' is null, 'errors' is used)
-    function printErrors(otherErrors) does red = () =>
-    {
-        otherErrors ??= errors;
-        foreach(var err in otherErrors)
-            println(err);
-    };
-    
-    //Generate the next unique function id
-    function nextFuncId = "eval\\" + evalStep++;
-    
-    //Function that shortens a string
-    var shortenTo = 30;
-    function shortened(s) = if(s.Length <= shortenTo) s else (s.Substring(0,shortenTo-3) + "...");
-    
-    //Get 'raw' using showPrompt (passing the value of the variable 'prompt' 
-    // from inside 'app') until that 'raw' is ":quit".
-    //This 'for' syntax might look stupid at first but it manages to separate
-    // more complex iteration logic from the loop body.
-    // One only needs to look at the header to know under what conditions
-    // the loop runs. In addition, the body code can use the traditional
-    // 'continue' statement to skip an iteration.
-    for(var raw; do raw = showPrompt(app.Variables["prompt"].Value.self); until raw.ToLower == ":quit")
-    {        
-        var lowRaw = raw.ToLower;
-        var funcId = nextFuncId; //<-- get the first unique function id
-        var cmd = "r"; //<-- assume execution of code
         
-        if(lowRaw == ":r" or lowRaw == ":reload") //this directive restarts prx\main with the same arguments. See 'prx_main.pxs' for details.
-        {
-            reboot;
-            return;          
-        }
-        else if(lowRaw.StartsWith(":c ") or lowRaw.StartsWith(":compile "))
-        {
-            cmd = "c";
-            raw = raw.Substring(raw.IndexOf(" "));
-            goto executeStatement;
-        }
-        else if(raw.StartsWith("=")) //force compilation as an expression
-        {
-            raw = raw.Substring(1);
-            buffer.Append = "function $(funcId) does println(\"$(shortened(raw).Escape) = \") = \n$(raw)\n;";
-            if(Not tryLoad)
+        //Add hide keys defined by the user
+        foreach(var key in app.Meta["hideKeys"].List)
+            if(key.Text.Length > 0)
+                hideKeys[] = key.Text;
+        
+        //Add symbols (the declarations, not the physical names)
+        foreach(var symbol in ldr.Symbols)
+            if( symbol.Value.Interpretation~Int == ::SymbolInterpretations.Command~Int ||
+                symbol.Value.Interpretation~Int == ::SymbolInterpretations.GlobalObjectVariable~Int ||
+                symbol.Value.Interpretation~Int == ::SymbolInterpretations.GlobalReferenceVariable~Int )
             {
-                printErrors;
-                continue;   
+                
+                yield symbol.Key;
             }
-        }
-        else if(raw.StartsWith("::")) //Must be a static get/set
-            goto executeStatement;
-        else if(raw.StartsWith(":")) //Global code
-        {
-            buffer.Append = raw.Substring(1);
-executeGlobal:
-            if(Not tryLoad)
+            else if(symbol.Value.Interpretation~Int == ::SymbolInterpretations.Function~Int)
             {
-                printErrors;
-                continue;
-            }  
-            cmd = "g"; //do not execute anything          
-        }
-        else if(raw.ToLower.StartsWith("global ")) //Global code too
-        {
-            buffer.Append = raw.Substring(7);
-            goto executeGlobal;
-        }
+                //Functions may be explicitly hidden
+                unless(isHidden(app.Functions[symbol.Value.Id]))
+                    yield symbol.Key;   
+            }
+        
+        //A collection of common usages
+        yield "ToString";
+        yield "foreach";
+        yield "function";
+        yield "StringBuilder";
+        yield "System";
+        yield "Text";
+        yield "Prexonite";
+        yield "Null";
+        yield "String";
+        yield "List";
+        yield "Hash";
+        yield "Int";
+        yield "Real";
+        yield "Bool";
+        yield "Structure";
+    }
+
+    function prx\interactive()
+    {
+        if(supportsTabs)
+            __console.Tab = ->tabHook;
+        
+        println("Entering Prexonite INTERACTIVE MODE.\nType :quit to quit.\n\"=<expr>\" evaluates an expression.\n\":<GlobalStatement>\" inserts global code.");
+        
+        //Either create a new application or use the one compiled in 'prx\main'.
+        if(app == null)
+            app = new Prexonite::Application("Interactive_Scripting");
         else
+            println("Using compiled application ($(app.Id))");
+        
+        //Create a new loader (='compiler') if necessary
+        if(ldr == null)
+            ldr = new ::Loader(engine, app);
+        
+        //Define a default prompt color
+        prompt\color = ::ConsoleColor.Red;
+        
+        var buffer = new ::StringBuilder;
+        //Compile some standard code into the interactive application
+        buffer.AppendLine("var prompt = null;");
+        if(Not app.Functions.Contains("exit"))
+            buffer.AppendLine("function exit(c) does System::Environment.Exit(c ?? 0);");
+        buffer.AppendLine("declare exit as quit;");
+        ldr.LoadFromString(buffer.ToString);
+        buffer.Length = 0;
+        
+        var errors;
+        var lastCode;
+        
+        //This function tries to load code from the buffer
+        function tryLoad()
         {
-executeStatement:
-            //First, try to compile the code as an expression
-            buffer.AppendFormat(" function {0} does println = \"{1} = \" + ( \n{2}\n ) ; ", funcId, shortened(raw).Escape, raw);
-            if(Not tryLoad)
+            try 
             {
-                //should that fail, try to compile the code as a statement
-                var evalErrors = errors;
-                var evalCode = lastCode;
-
-                funcId = nextFuncId;
-                buffer.AppendFormat(" function {0} {{ \n{1}\n ; }} ", funcId, raw);
-
+                var exc = null;
+                lastCode = buffer.ToString; //Save the code for error reporting
+                ldr.LoadFromString(lastCode);            
+            } 
+            catch(exc)
+            {
+                //Exceptions are truly exceptional, so they should be printed
+                // out right away.
+                green = () =>
+                {
+                    println(exc);
+                    exc = null;
+                    foreach(var err in errors)
+                        println(err);
+                };
+                return false;
+            }
+            finally
+            {
+                //Save errors for review and clean up.
+                buffer.Length = 0;
+                errors = ~List.CreateFromList(ldr.Errors);
+                ldr.Errors.Clear;            
+            }
+            return errors.Count == 0;
+        }
+        
+        //Print errors (if 'otherErrors' is null, 'errors' is used)
+        function printErrors(otherErrors) does red = () =>
+        {
+            otherErrors ??= errors;
+            foreach(var err in otherErrors)
+                println(err);
+        };
+        
+        //Generate the next unique function id
+        function nextFuncId = "eval\\" + evalStep++;
+        
+        //Function that shortens a string
+        var shortenTo = 30;
+        function shortened(s) = if(s.Length <= shortenTo) s else (s.Substring(0,shortenTo-3) + "...");
+        
+        //Get 'raw' using showPrompt (passing the value of the variable 'prompt' 
+        // from inside 'app') until that 'raw' is ":quit".
+        //This 'for' syntax might look stupid at first but it manages to separate
+        // more complex iteration logic from the loop body.
+        // One only needs to look at the header to know under what conditions
+        // the loop runs. In addition, the body code can use the traditional
+        // 'continue' statement to skip an iteration.
+        for(var raw; do raw = showPrompt(app.Variables["prompt"].Value.self); until raw.ToLower == ":quit")
+        {        
+            var lowRaw = raw.ToLower;
+            var funcId = nextFuncId; //<-- get the first unique function id
+            var cmd = "r"; //<-- assume execution of code
+            
+            if(lowRaw == ":r" or lowRaw == ":reload") //this directive restarts prx\main with the same arguments. See 'prx_main.pxs' for details.
+            {
+                reboot;
+                return;          
+            }
+            else if(lowRaw.StartsWith(":c ") or lowRaw.StartsWith(":compile "))
+            {
+                cmd = "c";
+                raw = raw.Substring(raw.IndexOf(" "));
+                goto executeStatement;
+            }
+            else if(raw.StartsWith("=")) //force compilation as an expression
+            {
+                raw = raw.Substring(1);
+                buffer.Append = "function $(funcId) does println(\"$(shortened(raw).Escape) = \") = \n$(raw)\n;";
                 if(Not tryLoad)
                 {
-                    //if both fails, the code must be wrong.
-                    // show why it can't be an expression
-                    println("(" + raw + ") is not an expression:");
-                        println(evalCode);
-                    printErrors(evalErrors);
-
-                    // shwo why it can't be a statement
-                    println;
-                    println("{" + shortened(raw) + "; } is also not a statement:");
-                        println(lastCode);
-                    printErrors(errors);
-
-                    continue;
+                    printErrors;
+                    continue;   
                 }
             }
-        }             
-        
-        try
-        {
-            if(cmd == "r")
+            else if(raw.StartsWith("::")) //Must be a static get/set
+                goto executeStatement;
+            else if(raw.StartsWith(":")) //Global code
             {
-                //A function needs to be run
-                unless(app.Functions[funcId] is Null)
-                    app.Functions[funcId].Run(engine);
+                buffer.Append = raw.Substring(1);
+    executeGlobal:
+                if(Not tryLoad)
+                {
+                    printErrors;
+                    continue;
+                }  
+                cmd = "g"; //do not execute anything          
             }
-            else if(cmd == "c")
+            else if(raw.ToLower.StartsWith("global ")) //Global code too
             {
-                var codeSB = new System::Text::StringBuilder;
-                unless(app.Functions[funcId] is null)
-                    app.Functions[funcId].Store(codeSB);
-                println(codeSB);
+                buffer.Append = raw.Substring(7);
+                goto executeGlobal;
             }
-        }
-        catch(var exc)
-        {
-           green = () => println(exc);
-        }
-        finally
-        {
-            function removeEvalFunctions()
+            else
             {
-                var toRemove = app.Functions
-                                >>  where(func => func.Id.StartsWith("eval\\"))
-                                >> all;
-                
-                foreach(var func in toRemove)
-                    app.Functions.Remove(func);
+    executeStatement:
+                //First, try to compile the code as an expression
+                buffer.AppendFormat(" function {0} does println = \"{1} = \" + ( \n{2}\n ) ; ", funcId, shortened(raw).Escape, raw);
+                if(Not tryLoad)
+                {
+                    //should that fail, try to compile the code as a statement
+                    var evalErrors = errors;
+                    var evalCode = lastCode;
+
+                    funcId = nextFuncId;
+                    buffer.AppendFormat(" function {0} {{ \n{1}\n ; }} ", funcId, raw);
+
+                    if(Not tryLoad)
+                    {
+                        //if both fails, the code must be wrong.
+                        // show why it can't be an expression
+                        println("(" + raw + ") is not an expression:");
+                            println(evalCode);
+                        printErrors(evalErrors);
+
+                        // shwo why it can't be a statement
+                        println;
+                        println("{" + shortened(raw) + "; } is also not a statement:");
+                            println(lastCode);
+                        printErrors(errors);
+
+                        continue;
+                    }
+                }
+            }             
+            
+            try
+            {
+                if(cmd == "r")
+                {
+                    //A function needs to be run
+                    unless(app.Functions[funcId] is Null)
+                        app.Functions[funcId].Run(engine);
+                }
+                else if(cmd == "c")
+                {
+                    var codeSB = new System::Text::StringBuilder;
+                    unless(app.Functions[funcId] is null)
+                        app.Functions[funcId].Store(codeSB);
+                    println(codeSB);
+                }
             }
-            removeEvalFunctions();
-        } //end finally
-    } //end for -> next prompt
+            catch(var exc)
+            {
+               green = () => println(exc);
+            }
+            finally
+            {
+                function removeEvalFunctions()
+                {
+                    var toRemove = app.Functions
+                                    >> filter(func => func.Id.StartsWith("eval\\"))
+                                    >> to_list;
+                    
+                    foreach(var func in toRemove)
+                        app.Functions.Remove(func);
+                }
+                removeEvalFunctions();
+            } //end finally
+        } //end for -> next prompt
+    }
+
 }

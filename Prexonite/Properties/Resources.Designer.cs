@@ -443,7 +443,7 @@ namespace Prexonite.Properties {
         /// </summary>
         public static string Exception_StreamSource_CannotUseWriteOnlyStream {
             get {
-                return ResourceManager.GetString("Exception.StreamSource.CannotUseWriteOnlyStream", resourceCulture);
+                return ResourceManager.GetString("Exception_StreamSource_CannotUseWriteOnlyStream", resourceCulture);
             }
         }
         
@@ -453,6 +453,65 @@ namespace Prexonite.Properties {
         public static string LastAccessCache_CapacityMustBePositive {
             get {
                 return ResourceManager.GetString("LastAccessCache_CapacityMustBePositive", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to //PRX
+        ///
+        ///Name sys;
+        ///
+        ///declare {
+        ///	command:
+        ///		print,println,
+        ///		meta,
+        ///		boxed,
+        ///		concat,
+        ///		map,
+        ///		select,
+        ///		foldl,
+        ///		foldr,
+        ///		dispose,
+        ///		call\perform,
+        ///		thunk,
+        ///		asthunk,
+        ///		force,
+        ///		toseq,
+        ///		call\member\perform,
+        ///		caller,
+        ///		pair,
+        ///		unbind,
+        ///		sort,
+        ///		orderby,
+        ///		LoadAssembly,
+        ///		debug,
+        ///		setcenter,
+        ///		setleft,
+        ///		setright,
+        ///		all,
+        ///		where,
+        ///		skip,
+        ///		limit,
+        ///		take,
+        ///		abs,
+        ///		ceiling,
+        ///		exp,
+        ///		floor,
+        ///		log,
+        ///		max,
+        ///		min,
+        ///		pi,
+        ///		round,
+        ///		sin,
+        ///		cos,
+        ///		sqrt,
+        ///		tan,
+        ///		char,
+        ///	 [rest of string was truncated]&quot;;.
+        /// </summary>
+        public static string legacy_symbols {
+            get {
+                return ResourceManager.GetString("legacy_symbols", resourceCulture);
             }
         }
         
@@ -657,9 +716,9 @@ namespace Prexonite.Properties {
         /// <summary>
         ///   Looks up a localized string similar to Cannot parse source position from {0}..
         /// </summary>
-        public static string Parser_Cannot_parse_source_position_ {
+        public static string Parser_Cannot_parse_source_position {
             get {
-                return ResourceManager.GetString("Parser_Cannot_parse_source_position.", resourceCulture);
+                return ResourceManager.GetString("Parser_Cannot_parse_source_position", resourceCulture);
             }
         }
         
@@ -773,6 +832,15 @@ namespace Prexonite.Properties {
         }
         
         /// <summary>
+        ///   Looks up a localized string similar to Exiting Prx.Main normally. Press Enter to exit..
+        /// </summary>
+        public static string Program_DebugExit {
+            get {
+                return ResourceManager.GetString("Program_DebugExit", resourceCulture);
+            }
+        }
+        
+        /// <summary>
         ///   Looks up a localized string similar to {0} can only be used in a macro context..
         /// </summary>
         public static string Reference_can_only_be_used_in_a_macro_context {
@@ -802,9 +870,9 @@ namespace Prexonite.Properties {
         /// <summary>
         ///   Looks up a localized string similar to Cannot create reference to a value (references are values too).
         /// </summary>
-        public static string ReferenceTransformer_CannotCreateReferenceToValue_ {
+        public static string ReferenceTransformer_CannotCreateReferenceToValue {
             get {
-                return ResourceManager.GetString("ReferenceTransformer_CannotCreateReferenceToValue.", resourceCulture);
+                return ResourceManager.GetString("ReferenceTransformer_CannotCreateReferenceToValue", resourceCulture);
             }
         }
         
@@ -929,55 +997,24 @@ namespace Prexonite.Properties {
         /// <summary>
         ///   Looks up a localized string similar to //PRX
         ///
-        ///Name sys;
+        ///Name sys/0.0;
         ///
-        ///declare {
-        ///	command:
-        ///		print,println,
-        ///		meta,
-        ///		boxed,
-        ///		concat,
-        ///		map,
-        ///		select,
-        ///		foldl,
-        ///		foldr,
-        ///		dispose,
-        ///		call\perform,
-        ///		thunk,
-        ///		asthunk,
-        ///		force,
-        ///		toseq,
-        ///		call\member\perform,
-        ///		caller,
-        ///		pair,
-        ///		unbind,
-        ///		sort,
-        ///		orderby,
-        ///		LoadAssembly,
-        ///		debug,
-        ///		setcenter,
-        ///		setleft,
-        ///		setright,
-        ///		all,
-        ///		where,
-        ///		skip,
-        ///		limit,
-        ///		take,
-        ///		abs,
-        ///		ceiling,
-        ///		exp,
-        ///		floor,
-        ///		log,
-        ///		max,
-        ///		min,
-        ///		pi,
-        ///		round,
-        ///		sin,
-        ///		cos,
-        ///		sqrt,
-        ///		tan,
-        ///		char,
-        ///	 [rest of string was truncated]&quot;;.
+        ///namespace prx.prim
+        ///{
+        ///  declare(
+        ///    print = ref command &quot;print&quot;,
+        ///    println = ref command &quot;println&quot;,
+        ///    meta = ref command &quot;meta&quot;,
+        ///    boxed = ref command &quot;boxed&quot;,
+        ///    concat = ref command &quot;concat&quot;,
+        ///    map = ref command &quot;map&quot;,
+        ///    select = ref command &quot;select&quot;,
+        ///    foldl = ref command &quot;foldl&quot;,
+        ///    foldr = ref command &quot;foldr&quot;,
+        ///    dispose = ref command &quot;dispose&quot;,
+        ///    call = expand macro command &quot;call&quot;,
+        ///    call\perform = ref command &quot;call\\perform&quot;,
+        ///    thunk = ref [rest of string was truncated]&quot;;.
         /// </summary>
         public static string sys {
             get {

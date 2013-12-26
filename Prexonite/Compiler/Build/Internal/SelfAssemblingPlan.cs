@@ -24,7 +24,6 @@
 //  WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING 
 //  IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 using System;
-using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.IO;
@@ -42,7 +41,7 @@ namespace Prexonite.Compiler.Build.Internal
 {
     public class SelfAssemblingPlan : IncrementalPlan, ISelfAssemblingPlan
     {
-        private static readonly TraceSource Trace = Plan.Trace;
+        private static readonly TraceSource _trace = Plan.Trace;
 
         private readonly IList<string> _searchPaths = new List<string>();
 
@@ -122,12 +121,13 @@ namespace Prexonite.Compiler.Build.Internal
                 return new PreflightResult { ErrorMessage = refSpec.ErrorMessage };
 
             token.ThrowIfCancellationRequested();
-            Trace.TraceEvent(TraceEventType.Information, 0, "Preflight parsing of {0} requested.", refSpec);
+            _trace.TraceEvent(TraceEventType.Information, 0, "Preflight parsing of {0} requested.", refSpec);
 
             // Make sure refSpec has a re-usable source (will have to support both preflight and actual compilation)
             var source = refSpec.Source;
             if (source == null)
                 throw new ArgumentException(Resources.SelfAssemblingPlan_RefSpecMustHaveSource, "refSpec");
+            var reportedPath = _getPath(source);
             if (source.IsSingleUse)
                 source = await source.CacheInMemoryAsync();
 
@@ -140,7 +140,7 @@ namespace Prexonite.Compiler.Build.Internal
                 new Loader(new LoaderOptions(eng, app)
                                {
                                    // Important: Have preflight flag set
-                                   PreflightModeEnabled = false,
+                                   PreflightModeEnabled = true,
                                    ReconstructSymbols = false,
                                    RegisterCommands = false,
                                    StoreSourceInformation = false,
@@ -168,14 +168,22 @@ namespace Prexonite.Compiler.Build.Internal
             {
                 ModuleName = theModuleName,
                 SuppressStandardLibrary =
-                    app.Meta.TryGetValue(Module.NoStandardLibraryKey, out noStdLibEntry) && noStdLibEntry.Switch
+                    app.Meta.TryGetValue(Module.NoStandardLibraryKey, out noStdLibEntry) && noStdLibEntry.Switch,
+                Path = reportedPath
             };
 
             result.References.AddRange(
                 app.Meta[Module.ReferencesKey].List.Where(entry => !entry.Equals(new MetaEntry("")))
                     .Select(_parseRefSpec));
-            Trace.TraceEvent(TraceEventType.Verbose, 0, "Preflight parsing of {0} finished.", refSpec);
+            _trace.TraceEvent(TraceEventType.Verbose, 0, "Preflight parsing of {0} finished.", refSpec);
             return result;
+        }
+
+        [CanBeNull]
+        private FileInfo _getPath([NotNull] ISource source)
+        {
+            var fileSource = source as FileSource;
+            return fileSource != null ? fileSource.File : null;
         }
 
         [NotNull]
@@ -230,7 +238,7 @@ namespace Prexonite.Compiler.Build.Internal
                             String.Format(
                                 "Failed to find a file that matches the reference specification {0}. {1} path(s) searched.",
                                 refSpec, pathCandidateCount);
-                        Trace.TraceEvent(TraceEventType.Error, 0, msg);
+                        _trace.TraceEvent(TraceEventType.Error, 0, msg);
                         refSpec.ErrorMessage = msg;
                         break;
                     }
@@ -243,27 +251,27 @@ namespace Prexonite.Compiler.Build.Internal
 
                     if (result.ErrorMessage != null)
                     {
-                        Trace.TraceEvent(TraceEventType.Verbose, 0,
+                        _trace.TraceEvent(TraceEventType.Verbose, 0,
                             "Rejected {0} as a candidate for {1} because there were errors during preflight: {2}",
                             candidate, refSpec, result.ErrorMessage);
                     }
                     else if (result.ModuleName == null)
                     {
-                        Trace.TraceEvent(TraceEventType.Information, 0,
+                        _trace.TraceEvent(TraceEventType.Information, 0,
                             "Rejected {0} as a candidate for {1} because its module name could not be inferred.",
                             candidate, refSpec);
                     }
                     else if (expectedModuleName != null 
                         && !Engine.StringsAreEqual(result.ModuleName.Id, expectedModuleName.Id))
                     {
-                        Trace.TraceEvent(TraceEventType.Warning, 0,
+                        _trace.TraceEvent(TraceEventType.Warning, 0,
                             "Rejected {0} as a candidate for {1} because the module name in the file ({2}) doesn't match the module name expected by the reference.",
                             candidate, refSpec, result.ModuleName.Id);
                     }
                     else
                     {
                         refSpec.ModuleName = result.ModuleName;
-                        Trace.TraceEvent(TraceEventType.Information, 0, "Accepted match {0} after preflight, ordering corresponding description.",result.ModuleName);
+                        _trace.TraceEvent(TraceEventType.Information, 0, "Accepted match {0} after preflight, ordering corresponding description.",result.ModuleName);
                         await _orderTargetDescription(result, candidate,token);
                     }
                 }
@@ -320,10 +328,15 @@ namespace Prexonite.Compiler.Build.Internal
                 deps = deps.Append(StandardLibrary);
             
             var reportedFileName = result.Path != null ? result.Path.ToString() : null;
-                
-            var desc = CreateDescription(result.ModuleName, source,reportedFileName, deps,buildMessages);
-            TargetDescriptions.Add(desc);
-            return desc;
+
+            // Typically, duplicate requests are caught much earlier (based on full file paths)
+            // But if the user of this self assembling build plan manually adds descriptions
+            // that can also be found on the file system, that conflict can in some situations
+            // not be detected until full preflight is done.
+            // This GetOrAdd is our last line of defense against that scenario and race conditions
+            // around targets in general (e.g., when symbolic links or duplicate files are involved)
+            return TargetDescriptions.GetOrAdd(result.ModuleName, 
+                mn => CreateDescription(mn, source,reportedFileName, deps,buildMessages));
         }
 
         private IEnumerable<FileInfo> _pathCandidates(RefSpec refSepc, CancellationToken token)
@@ -404,7 +417,7 @@ namespace Prexonite.Compiler.Build.Internal
                     ex is PathTooLongException ||
                     ex is NotSupportedException)
                 {
-                    Trace.TraceEvent(TraceEventType.Error, 0,
+                    _trace.TraceEvent(TraceEventType.Error, 0,
                         "Error while handling file path \"{0}\". Treating file as non-existent instead of reporting exception: ",
                         path, ex);
                 }

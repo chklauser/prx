@@ -1,125 +1,210 @@
 ﻿//PRX
 
-Name sys;
+Name sys/0.0;
 
-declare {
-	command:
-		print,println,
-		meta,
-		boxed,
-		concat,
-		map,
-		select,
-		foldl,
-		foldr,
-		dispose,
-		call\perform,
-		thunk,
-		asthunk,
-		force,
-		toseq,
-		call\member\perform,
-		caller,
-		pair,
-		unbind,
-		sort,
-		orderby,
-		LoadAssembly,
-		debug,
-		setcenter,
-		setleft,
-		setright,
-		all,
-		where,
-		skip,
-		limit,
-		take,
-		abs,
-		ceiling,
-		exp,
-		floor,
-		log,
-		max,
-		min,
-		pi,
-		round,
-		sin,
-		cos,
-		sqrt,
-		tan,
-		char,
-		count,
-		distinct,
-		union,
-		unique,
-		frequency,
-		groupby,
-		intersect,
-		call\tail\perform,
-		list,
-		each,
-		exists,
-		forall,
-		CompileToCil,
-		takewhile,
-		except,
-		range,
-		reverse,
-		headtail,
-		append,
-		sum,
-		contains,
-		chan,
-		call\async\perform,
-		async_seq,
-		call\sub\perform,
-		pa\ind,
-		pa\mem,
-		pa\ctor,
-		pa\check,
-		pa\cast,
-		pa\smem,
-		pa\fun\call,
-		pa\flip\call,
-		pa\call\star,
-		then,
-		id,
-		const,
-		(+),
-		(-),
-		(*),
-		(/),
-		$mod,
-		(^),
-		(&),
-		(|),
-		$xor,
-		(==),
-		(!=),
-		(>),
-		(>=),
-		(<),
-		(<=),
-		(-.),
-		$complement,
-		$not,
-		create_enumerator,
-		create_module_name,
-        create_source_position,
-        get_unscoped_ast_factory,
-		seqconcat,
-	macro command:
-		call,
-		call\member,
-		call\tail,
-		call\async,
-		call\sub,
-		call\sub\interpret,
-		macro\pack,
-		macro\unpack,
-		macro\reference,
-		call\star,
-		call\macro,
-		call\macro\impl,
-        entityref_to
-};
+namespace prx.prim
+{
+  declare(
+    print = ref command "print",
+    println = ref command "println",
+    meta = ref command "meta",
+    boxed = ref command "boxed",
+    string_concat = ref command "string_concat",
+    map = ref command "map",
+    select = ref command "select",
+    foldl = ref command "foldl",
+    foldr = ref command "foldr",
+    dispose = ref command "dispose",
+    call = expand macro command "call",
+    call\perform = ref command "call\\perform",
+    thunk = ref command "thunk",
+    asthunk = ref command "asthunk",
+    force = ref command "force",
+    toseq = ref command "toseq",
+    call\member = expand macro command "call\\member",
+    call\member\perform = ref command "call\\member\\perform",
+    caller = ref command "caller",
+    pair = ref command "pair",
+    unbind = ref command "unbind",
+    sort = ref command "sort",
+    orderby = ref command "orderby",
+    LoadAssembly = ref command "LoadAssembly",
+    debug = ref command "debug",
+    setcenter = ref command "setcenter",
+    setleft = ref command "setleft",
+    setright = ref command "setright",
+    all = ref command "all",
+    where = ref command "where",
+    skip = ref command "skip",
+    limit = ref command "limit",
+    take = ref command "take",
+    abs = ref command "abs",
+    ceiling = ref command "ceiling",
+    exp = ref command "exp",
+    floor = ref command "floor",
+    log = ref command "log",
+    max = ref command "max",
+    min = ref command "min",
+    pi = ref command "pi",
+    round = ref command "round",
+    sin = ref command "sin",
+    cos = ref command "cos",
+    sqrt = ref command "sqrt",
+    tan = ref command "tan",
+    char = ref command "char",
+    count = ref command "count",
+    distinct = ref command "distinct",
+    union = ref command "union",
+    unique = ref command "unique",
+    frequency = ref command "frequency",
+    groupby = ref command "groupby",
+    intersect = ref command "intersect",
+    call\tail = expand macro command "call\\tail",
+    call\tail\perform = ref command "call\\tail\\perform",
+    list = ref command "list",
+    each = ref command "each",
+    exists = ref command "exists",
+    forall = ref command "forall",
+    CompileToCil = ref command "CompileToCil",
+    takewhile = ref command "takewhile",
+    except = ref command "except",
+    range = ref command "range",
+    reverse = ref command "reverse",
+    headtail = ref command "headtail",
+    append = ref command "append",
+    sum = ref command "sum",
+    contains = ref command "contains",
+    chan = ref command "chan",
+    call\async = expand macro command "call\\async",
+    call\async\perform = ref command "call\\async\\perform",
+    async_seq = ref command "async_seq",
+    call\sub\perform = ref command "call\\sub\\perform",
+    pa\ind = ref command "pa\\ind",
+    pa\mem = ref command "pa\\mem",
+    pa\ctor = ref command "pa\\ctor",
+    pa\check = ref command "pa\\check",
+    pa\cast = ref command "pa\\cast",
+    pa\smem = ref command "pa\\smem",
+    pa\fun\call = ref command "pa\\fun\\call",
+    pa\flip\call = ref command "pa\\flip\\call",
+    pa\call\star = ref command "pa\\call\\star",
+    then = ref command "then",
+    id = ref command "id",
+    const = ref command "const",
+    (+) = ref command "plus",
+    (-) = ref command "minus",
+    (*) = ref command "times",
+    (/) = ref command "dividedBy",
+    $mod = ref command "mod",
+    (^) = ref command "raisedTo",
+    (&) = ref command "bitwiseAnd",
+    (|) = ref command "bitwiseOr",
+    $xor = ref command "xor",
+    (==) = ref command "isEqualTo",
+    (!=) = ref command "isInequalTo",
+    (>) = ref command "isGreaterThan",
+    (>=) = ref command "isGreaterThanOrEqual",
+    (<) = ref command "isLessThan",
+    (<=) = ref command "isLessThanOrEqual",
+    (-.) = ref command "negation",
+    $complement = ref command "complement",
+    $not = ref command "not",
+    create_enumerator = ref command "create_enumerator",
+    create_module_name = ref command "create_module_name",
+    get_unscoped_ast_factory = ref command "get_unscoped_ast_factory",
+    create_source_position = ref command "create_source_position",
+    seqconcat = ref command "seqconcat",
+    call\sub = expand macro command "call\\sub",
+    call\sub\interpret = expand macro command "call\\sub\\interpret",
+    macro\pack = expand macro command "macro\\pack",
+    macro\unpack = expand macro command "macro\\unpack",
+    macro\reference = expand macro command "macro\\reference",
+    call\star = expand macro command "call\\star",
+    entityref_to = expand macro command "entityref_to",
+    call\macro = expand macro command "call\\macro",
+    call\macro\impl = expand macro command "call\\macro\\impl"
+  );
+}
+
+namespace sys
+{
+  namespace seq 
+  {
+
+  } 
+  export(*),prx.prim(
+      map,foldl,foldr,sort,all => to_list, where => filter, skip,take,
+      count,distinct,union,unique,frequency,groupby,intersect,each,exists,forall,
+      takewhile,except,range, reverse, headtail, append, sum, contains,
+      create_enumerator,seqconcat);
+
+  namespace nonstrict
+  {
+
+  } 
+  export(*),prx.prim(thunk,asthunk,force,toseq => to_seq);
+
+  namespace rt
+  {
+
+  } 
+  export(*),prx.prim(caller,LoadAssembly => load_assembly,debug, CompileToCil => compile_to_cil);
+
+  namespace text
+  {
+
+  } 
+  export(*),prx.prim(setcenter,setleft,setright);
+
+  namespace math
+  {
+
+  } 
+  export(*),prx.prim(abs,ceiling,exp,floor,log,max,min,pi,round,sin,cos,sqrt,tan);
+
+  namespace ct
+  {
+
+  }
+  export(*),prx.prim(create_source_position, get_unscoped_ast_factory, 
+    macro\pack => pack, macro\unpack => unpack, macro\reference => macro_reference, call\macro,
+    entityref_to);
+} 
+export(*), prx.prim(
+  print,
+  println,
+  dispose,
+  char,  
+  (+),
+  (-),
+  (*),
+  (/),
+  $mod,
+  (^),
+  (&),
+  (|),
+  $xor,
+  (==),
+  (!=),
+  (>),
+  (>=),
+  (<),
+  (<=),
+  (-.),
+  $complement,
+  $not,
+  string_concat,
+  create_module_name,
+  call,
+  call\member,
+  call\sub
+);
+
+namespace prx.experimental
+{
+  namespace cps
+  {
+
+  }
+  export(*), prx.prim(chan,async_seq,call\async);
+}

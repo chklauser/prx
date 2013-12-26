@@ -1644,14 +1644,14 @@ stloc       x
 ldc.string  ""a""
 ldloc       b
 ldc.string  ""c""
-cmd.3       concat
+cmd.3       string_concat
 stloc       x
 
 ldc.string  ""a""
 ldloc       b
 ldloc       c
 ldc.string  ""ad""
-cmd.4       concat
+cmd.4       string_concat
 stloc       x
 
 ldc.null
@@ -1682,7 +1682,7 @@ ldc.string  "", while the second seems like (""
 ldloc       b
 ldc.string  "") ""
 ldloc       c
-cmd.6       concat
+cmd.6       string_concat
 stloc       x
 ldc.null
 ret.val
@@ -1719,7 +1719,7 @@ cast.const  ""String""
 ldc.string  "" (""
 indloc      b
 ldc.string  "")""
-cmd.7       concat
+cmd.7       string_concat
 stloc       x
 ldc.null
 ret.val
@@ -1742,7 +1742,7 @@ function main()
 ldc.string ""AB""
 cmd.0       a
 ldc.string  ""CD""
-cmd.3       concat
+cmd.3       string_concat
 @cmd.1      print
 ldc.null
 ret.val
@@ -1936,7 +1936,7 @@ ldc.string  ""There is ""
 ldc.string  ""no""
 cmd.1       transform
 ldc.string  "" spoon""
-cmd.3       concat
+cmd.3       string_concat
 ret.value
 ");
         }

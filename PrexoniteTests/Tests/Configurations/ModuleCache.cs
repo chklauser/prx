@@ -85,7 +85,7 @@ namespace PrexoniteTests.Tests.Configurations
             {
                 var sysName = new ModuleName("sys", new Version(0, 0));
                 var desc = Cache.CreateDescription(sysName,
-                                                   Source.FromString(Resources.sys),
+                                                   Source.FromString(Resources.legacy_symbols),
                                                    "sys.pxs",
                                                    Enumerable.Empty<ModuleName>());
                 Cache.TargetDescriptions.Add(desc);

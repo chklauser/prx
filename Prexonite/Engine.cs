@@ -691,7 +691,9 @@ namespace Prexonite
 
             Commands.AddEngineCommand(BoxedAlias, Boxed.Instance);
 
+            // The concatenate command has been renamed to `string_concat` for Prexonite 2
             Commands.AddEngineCommand(ConcatenateAlias, Concat.Instance);
+            Commands.AddEngineCommand(OldConcatenateAlias, Concat.Instance);
 
             Commands.AddEngineCommand(MapAlias, cmd = Map.Instance);
             Commands.AddEngineCommand(SelectAlias, cmd);
@@ -864,9 +866,14 @@ namespace Prexonite
         }
 
         /// <summary>
-        ///     Alias used for the <c>concat</c> command.
+        ///     Alias used for the <c>string_concat</c> command.
         /// </summary>
-        public const string ConcatenateAlias = "concat";
+        public const string ConcatenateAlias = "string_concat";
+
+        /// <summary>
+        ///     An old alias used for the <c>string_concat</c> command.
+        /// </summary>
+        public const string OldConcatenateAlias = "concat";
 
         /// <summary>
         ///     Alias used for the <c>meta</c> command.

@@ -584,6 +584,15 @@ namespace Prexonite.Compiler
         {
             if (!ReferenceEquals(ct.ParentTarget, _target))
                 throw new PrexoniteException("Cannot push scope of unrelated compiler target.");
+
+            // SPECIAL CASE: Initialization code gets a separate environment every time 
+            // a block of code is added to it.
+            if (ct.Function.Id == Application.InitializationId)
+            {
+                ct.Ast._ReplaceSymbols(SymbolStore.Create(Symbols));
+            }
+
+            // Record scope
             _scopeStack.Push(ct);
             _target = ct;
         }
@@ -922,7 +931,7 @@ namespace Prexonite.Compiler
                 if (argument > 0)
                 {
                     throw new ErrorMessageException(
-                        Message.Error(Resources.ReferenceTransformer_CannotCreateReferenceToValue_,
+                        Message.Error(Resources.ReferenceTransformer_CannotCreateReferenceToValue,
                                       _parser.GetPosition(), MessageClasses.CannotCreateReference));
                 }
                 else

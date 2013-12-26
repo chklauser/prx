@@ -28,7 +28,6 @@ using System.Collections.Generic;
 using Moq;
 using NUnit.Framework;
 using Prexonite;
-using Prexonite.Commands.Math;
 using Prexonite.Compiler;
 using Prexonite.Compiler.Ast;
 using Prexonite.Compiler.Symbolic;
@@ -1055,6 +1054,96 @@ namespace a
 function main namespace import a.f = f;
 ");
             Expect(13);
+        }
+
+        [Test]
+        public void ForwardDeclarationAncientSyntax()
+        {
+            Compile(@"
+namespace a
+{
+    declare function f;
+    function g(x) = f(x);
+    function f(x) = 2*x;
+}
+
+function main(x) = a.g(x);
+");
+
+            Expect(16,8);
+        }
+
+        [Test]
+        public void ForwardDeclarationOldSyntax()
+        {
+            Compile(@"
+namespace a
+{
+    declare { function: f };
+    function g(x) = f(x);
+    function f(x) = 2*x;
+}
+
+function main(x) = a.g(x);
+");
+
+            Expect(16,8);
+        }
+
+        [Test]
+        public void ForwardDeclarationMachineSyntax()
+        {
+            Compile(@"
+namespace a
+{
+    // This forward declaration is not taken as relative to the namesapce.
+    // It is intended for machine consumption.
+    declare( f = ref function(""f"",""testApplication"",0.0));
+    function g(x) = f(x);
+}
+
+function f(x) = 2*x;
+
+function main(x) = a.g(x);
+");
+
+            Expect(16, 8);
+        }
+
+        [Test]
+        public void ExportInterferenceWithTimesLiteral()
+        {
+            Compile(@"
+namespace a{var g;}
+namespace b{}export(*),a(g);
+");
+        }
+
+        [Test]
+        public void AlternateExportAllSyntax()
+        {
+            Compile(@"
+namespace a{var g;}
+namespace b{}export.*,a(g);
+");
+        }
+
+        [Test]
+        public void SelfReferenceInVarInit()
+        {
+            Compile(@"
+namespace a 
+{
+    var h = 4;
+}
+namespace a{
+    var g = g ?? 15;
+    var h = h ?? 3;
+}
+
+function main = a.g+a.h;
+");
+            Expect(15+4);
         }
     }
 }

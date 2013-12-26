@@ -159,9 +159,9 @@ namespace Prexonite.Compiler.Build
         #region Implementation of ITarget
 
         [NotNull]
-        public IReadOnlyList<Message> Messages
+        public IReadOnlyCollection<Message> Messages
         {
-            get { return (IReadOnlyList<Message>)_messages ?? DefaultModuleTarget.NoMessages; }
+            get { return (IReadOnlyCollection<Message>)_messages ?? DefaultModuleTarget.NoMessages; }
         }
 
         [CanBeNull]

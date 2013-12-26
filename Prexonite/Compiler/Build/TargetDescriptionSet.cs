@@ -28,6 +28,7 @@ using System.Collections;
 using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Diagnostics;
+using System.Threading;
 using Prexonite.Modular;
 
 namespace Prexonite.Compiler.Build
@@ -69,6 +70,12 @@ namespace Prexonite.Compiler.Build
                 throw new PrexoniteException(
                     "Failed to update target description set. Propably due to concurrent modification.");
             }
+        }
+
+        public ITargetDescription GetOrAdd(ModuleName name,
+            Func<ModuleName, ITargetDescription> factory)
+        {
+            return _table.GetOrAdd(name, factory);
         }
 
         public ITargetDescription this[ModuleName name]

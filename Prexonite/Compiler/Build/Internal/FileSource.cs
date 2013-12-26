@@ -36,9 +36,9 @@ namespace Prexonite.Compiler.Build.Internal
 
         public FileSource(FileInfo file, Encoding encoding)
         {
-            if ((object) file == null)
-                throw new System.ArgumentNullException("file");
-            if ((object) encoding == null)
+            if (ReferenceEquals(file,null))
+                throw new ArgumentNullException("file");
+            if (ReferenceEquals(encoding,null))
                 throw new ArgumentNullException("encoding");
             _file = file;
             _encoding = encoding;
@@ -48,7 +48,7 @@ namespace Prexonite.Compiler.Build.Internal
 
         public bool CanOpen
         {
-            get { return _file.Exists; }
+            get { return File.Exists; }
         }
 
         public bool IsSingleUse
@@ -56,9 +56,19 @@ namespace Prexonite.Compiler.Build.Internal
             get { return false; }
         }
 
+        public FileInfo File
+        {
+            get { return _file; }
+        }
+
+        public Encoding Encoding
+        {
+            get { return _encoding; }
+        }
+
         public bool TryOpen(out TextReader reader)
         {
-            if(!_file.Exists)
+            if(!File.Exists)
             {
                 reader = null;
                 return false;
@@ -66,7 +76,7 @@ namespace Prexonite.Compiler.Build.Internal
 
             try
             {
-                reader = new StreamReader(_file.FullName,_encoding);
+                reader = new StreamReader(File.FullName,Encoding);
                 return true;
             }
             catch (FileNotFoundException)

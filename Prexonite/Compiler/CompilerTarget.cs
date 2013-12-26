@@ -38,7 +38,6 @@ using JetBrains.Annotations;
 using Prexonite.Compiler.Ast;
 using Prexonite.Compiler.Macro;
 using Prexonite.Compiler.Symbolic;
-using Prexonite.Compiler.Symbolic.Compatibility;
 using Prexonite.Modular;
 using Prexonite.Properties;
 using Prexonite.Types;
@@ -316,6 +315,7 @@ namespace Prexonite.Compiler
 
         #region Symbol Lookup / Combined Symbol Proxy
 
+        [NotNull]
         public SymbolStore Symbols
         {
             [DebuggerStepThrough]

@@ -24,6 +24,8 @@
 //  WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING 
 //  IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 using System.Diagnostics;
+using System.Text;
+using System.Threading;
 using Prexonite.Compiler.Build.Internal;
 
 namespace Prexonite.Compiler.Build
@@ -39,7 +41,20 @@ namespace Prexonite.Compiler.Build
 
         public static ISelfAssemblingPlan CreateSelfAssembling()
         {
-            return new SelfAssemblingPlan();
+            // ReSharper disable once IntroduceOptionalParameters.Global
+            return CreateSelfAssembling(false);
+        }
+
+        public static ISelfAssemblingPlan CreateSelfAssembling(bool suppressStandardLibrary)
+        {
+            var plan = new SelfAssemblingPlan();
+            if (!suppressStandardLibrary)
+            {
+                var stdlib = plan.AssembleAsync(Source.FromString(Properties.Resources.sys),
+                    CancellationToken.None).Result;
+                plan.StandardLibrary.Add(stdlib.Name); 
+            }
+            return plan;
         }
     }
 }

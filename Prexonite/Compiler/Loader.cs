@@ -737,27 +737,33 @@ namespace Prexonite.Compiler
                 throw new ArgumentNullException("file");
             _loadedFiles.Add(file.FullName);
             _loadPaths.Push(file.DirectoryName);
-            using (Stream str = new FileStream(
-                file.FullName,
-                FileMode.Open,
-                FileSystemRights.ReadData,
-                FileShare.Read,
-                4*1024,
-                FileOptions.SequentialScan))
+            try
             {
+                using (Stream str = new FileStream(
+                    file.FullName,
+                    FileMode.Open,
+                    FileSystemRights.ReadData,
+                    FileShare.Read,
+                    4 * 1024,
+                    FileOptions.SequentialScan))
+                {
 #if DEBUG
-                var indent = new StringBuilder(_loadIndent);
-                indent.Append(' ', 2*(_loadIndent++));
-                Console.WriteLine(Resources.Loader__begin_compiling, file.Name, indent, file.FullName);
+                    var indent = new StringBuilder(_loadIndent);
+                    indent.Append(' ', 2 * (_loadIndent++));
+                    Console.WriteLine(Resources.Loader__begin_compiling, file.Name, indent, file.FullName);
 #endif
-                _loadFromStream(str, file.Name);
+                    _loadFromStream(str, file.Name);
 #if DEBUG
-                Console.WriteLine(Resources.Loader__end_compiling, file.Name, indent);
-                _loadIndent--;
+                    Console.WriteLine(Resources.Loader__end_compiling, file.Name, indent);
+                    _loadIndent--;
 #endif
-            }
+                }
 
-            _loadPaths.Pop();
+            }
+            finally
+            {
+                _loadPaths.Pop();
+            }
         }
 
         [PublicAPI]
@@ -1105,10 +1111,9 @@ namespace Prexonite.Compiler
                     {
                         foreach (var arg in args)
                         {
-                            if (arg.Type == PType.Object[typeof (ResolveSymbol)])
-                                CustomResolvers.Add(new CustomResolver((ResolveSymbol) arg.Value));
-                            else
-                                CustomResolvers.Add(new CustomResolver(arg));
+                            CustomResolvers.Add(arg.Type == PType.Object[typeof (ResolveSymbol)]
+                                ? new CustomResolver((ResolveSymbol) arg.Value)
+                                : new CustomResolver(arg));
                         }
                         return PType.Null.CreatePValue();
                     });

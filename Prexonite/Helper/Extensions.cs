@@ -394,6 +394,22 @@ namespace Prexonite
                 yield return item;
         }
 
+        [DebuggerNonUserCode]
+        [NotNull]
+        public static IDictionary<TK, TC> ToGroupedDictionary<TK, TV, TC>(this IEnumerable<TV> items, Func<TV, TK> keySelector)
+            where TC : ICollection<TV>, new()
+        {
+            var dict = new Dictionary<TK, TC>();
+            foreach (var group in items.GroupBy(keySelector))
+            {
+                var xs = new TC();
+                foreach (var item in group)
+                    xs.Add(item);
+                dict.Add(group.Key, xs);
+            }
+            return dict;
+        }
+
         public static TResult[] MapArray<TSource, TResult>(this TSource[] xs,
             Func<TSource, TResult> func)
         {

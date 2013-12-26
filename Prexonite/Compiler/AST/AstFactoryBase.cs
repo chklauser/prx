@@ -28,12 +28,10 @@ using System.Collections.Generic;
 using System.Diagnostics;
 using System.Linq;
 using JetBrains.Annotations;
-using Prexonite.Compiler.Macro;
 using Prexonite.Compiler.Symbolic;
 using Prexonite.Modular;
 using Prexonite.Properties;
 using Prexonite.Types;
-using Prexonite.Compiler.Internal;
 
 namespace Prexonite.Compiler.Ast
 {
@@ -389,13 +387,15 @@ namespace Prexonite.Compiler.Ast
 
         private AstExpr _resolveImplementation(ISourcePosition position, Func<AstGetSet, AstExpr> impl, string id)
         {
-            Symbol operatorSymbol;
-            var expr = CurrentBlock.Symbols.TryGet(id, out operatorSymbol)
-                ? ExprFor(position, operatorSymbol)
-                : new AstUnresolved(position, id);
+            return _resolveImplementation(position, impl, new QualifiedId(id));
+        }
+
+        private AstExpr _resolveImplementation(ISourcePosition position, Func<AstGetSet, AstExpr> impl, QualifiedId qualid)
+        {
+            var expr = this.ExprFor(position, qualid, CurrentBlock.Symbols);
             var call = expr as AstGetSet;
-            if(call == null)
-                ReportMessage(Message.Error(string.Format(Resources.AstFactoryBase__resolveImplementation_LValueExpected, id),position, MessageClasses.LValueExpected));
+            if (call == null)
+                ReportMessage(Message.Error(string.Format(Resources.AstFactoryBase__resolveImplementation_LValueExpected, qualid), position, MessageClasses.LValueExpected));
             return impl(call);
         }
 
@@ -849,6 +849,9 @@ namespace Prexonite.Compiler.Ast
 
         public AstExpr ExprFor(ISourcePosition position, Symbol symbol)
         {
+            // note that `symbol` could be null (if the symbol was not found in the first place)
+            // That case is already handled by `_useSymbol`. It will immediately return `Unsuccessful`
+
             switch (_useSymbol(ref symbol, position))
             {
                 case SymbolUsageResult.Successful:
@@ -857,7 +860,6 @@ namespace Prexonite.Compiler.Ast
                     return symbol.HandleWith(_assembleAst, Tuple.Create(this, PCall.Get, position));
 // ReSharper restore PossibleNullReferenceException
                 case SymbolUsageResult.Unresolved:
-                    Debug.Assert(symbol != null, "AstFactoryBase.ExprFor(position,symbol) expects symbol to be non-null. TryUseSymbol resulted in Unresolved, indicating that symbol was null.");
                     return CreateNullNode(position);
                 case SymbolUsageResult.Error:
                     // Errors have already been reported by TryUseSymbol

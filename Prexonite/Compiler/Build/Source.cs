@@ -70,6 +70,11 @@ namespace Prexonite.Compiler.Build
             return FromFile(new FileInfo(path), encoding);
         }
 
+        public static ISource FromBytes([NotNull] byte[] data, [NotNull] Encoding encoding)
+        {
+            return FromStream(new MemoryStream(data, false), encoding, false);
+        }
+
         [NotNull]
         public static async Task<ISource> CacheInMemoryAsync([NotNull] this ISource source)
         {

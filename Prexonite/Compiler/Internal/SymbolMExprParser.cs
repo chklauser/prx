@@ -207,7 +207,7 @@ namespace Prexonite.Compiler.Internal
             else
             {
                 throw new ErrorMessageException(
-                    Message.Error(String.Format(Resources.Parser_Cannot_parse_source_position_, expr), expr.Position,
+                    Message.Error(String.Format(Resources.Parser_Cannot_parse_source_position, expr), expr.Position,
                                   MessageClasses.CannotParseMExpr));
             }
         }

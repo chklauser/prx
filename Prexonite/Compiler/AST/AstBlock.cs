@@ -62,12 +62,24 @@ namespace Prexonite.Compiler.Ast
         #endregion
 
         [NotNull]
-        private readonly SymbolStore _symbols;
+        private SymbolStore _symbols;
 
+        /// <summary>
+        /// Symbol table for the scope of this block.
+        /// </summary>
         [NotNull]
         public SymbolStore Symbols
         {
             get { return _symbols; }
+        }
+
+        /// <summary>
+        /// Replaces symbol store backing this scope. Does not affect existing nested scopes!
+        /// </summary>
+        /// <param name="newStore">The new symbol store.</param>
+        internal void _ReplaceSymbols([NotNull] SymbolStore newStore)
+        {
+            _symbols = newStore;
         }
 
         [NotNull]
