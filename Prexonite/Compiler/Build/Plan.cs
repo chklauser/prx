@@ -42,13 +42,13 @@ namespace Prexonite.Compiler.Build
         public static ISelfAssemblingPlan CreateSelfAssembling()
         {
             // ReSharper disable once IntroduceOptionalParameters.Global
-            return CreateSelfAssembling(false);
+            return CreateSelfAssembling(StandardLibraryPreference.Default);
         }
 
-        public static ISelfAssemblingPlan CreateSelfAssembling(bool suppressStandardLibrary)
+        public static ISelfAssemblingPlan CreateSelfAssembling(StandardLibraryPreference stdPreference)
         {
             var plan = new SelfAssemblingPlan();
-            if (!suppressStandardLibrary)
+            if (stdPreference == StandardLibraryPreference.Default)
             {
                 var stdlib = plan.AssembleAsync(Source.FromString(Properties.Resources.sys),
                     CancellationToken.None).Result;
@@ -56,5 +56,11 @@ namespace Prexonite.Compiler.Build
             }
             return plan;
         }
+    }
+
+    public enum StandardLibraryPreference
+    {
+        Default = 0,
+        None
     }
 }

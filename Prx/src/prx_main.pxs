@@ -422,9 +422,11 @@ namespace prx.cli
 
     function assemble_from_file(plan,file)
     {
-        return plan.AssembleAsync(Prexonite::Compiler::Build::Source.FromFile(
+        plan.SearchPaths.Add(System::IO::Path.GetDirectoryName(file));
+        var desc = plan.AssembleAsync(Prexonite::Compiler::Build::Source.FromFile(
                 file, System::Text::Encoding.UTF8), 
-            System::Threading::CancellationToken.None).Result;
+            System::Threading::CancellationToken.None).Result;        
+        return desc;
     }
 
     function execute_plan(options)
@@ -449,7 +451,9 @@ namespace prx.cli
             if(options.sourceFiles.Count > 0)
             {
                 // Use self-assembly mechanism on each source file. 
-                // The last source file is the one we will run, the others just "seed" the plan
+                // The last source file is the one we will run, the others just "seed" the plan.
+                // This is useful if you want to make sure that a particular version of a module is used
+                // (maybe one that wouldn't otherwise be found by the self-assembly mechanism)
                 foreach(var file in options.sourceFiles)
                 {
                     entryDesc = assemble_from_file(plan, file);
@@ -463,11 +467,21 @@ namespace prx.cli
                     "),
                     System::Threading::CancellationToken.None).Result;
             }
+            else
+            {
+                // Nothing to do here
+                return;
+            }
+
             var result = Prexonite::Compiler::Build::BuildExtensions.Load(plan, entryDesc.Name);
             app = result.Item1; //~Application
-            target = result.Item2; // ~ITarget
+            target = result.Item2; // ~ITarget            
 
             print_all_messages(target.Messages);
+            if(target.Exception is not null)
+                throw target.Exception;
+            if(target.Messages >> exists(m => m.Severity~Int == Prexonite::Compiler::MessageSeverity.Error~Int))
+                return;
 
             var app_is_interactive = app.Meta["interactive"].Switch;
 
@@ -513,6 +527,7 @@ namespace prx.cli
                             var depTar = Prexonite::Compiler::Build::BuildExtensions.Build(plan, name);
                             var origin = new Object<"Prexonite.Compiler.Symbolic.SymbolOrigin+ModuleTopLevel">(
                                 depTar.name, Prexonite::Compiler::NoSourcePosition.Instance);
+                            println("fake import of $name.*");
                             return depTar.Symbols >> map(kvp => 
                                 new Prexonite::Compiler::Symbolic::SymbolInfo(kvp.Value, origin, kvp.Key)
                             );
@@ -529,8 +544,13 @@ namespace prx.cli
                 opt.StoreSourceInformation = options.debugging;
                 // Copy exported declarations
                 // Loader acts as if it had declared everything that our target module exports
+                println("target.Symbols=$(target.Symbols)");
+                rt.debug(target);
                 foreach(var kvp in target.Symbols)
+                {
+                    println("fake decl of $(kvp.key)=$(kvp.value)");
                     opt.Symbols.Declare(kvp.Key, kvp.Value);
+                }
                 ldr = new Prexonite::Compiler::Loader(opt);
             }       
 

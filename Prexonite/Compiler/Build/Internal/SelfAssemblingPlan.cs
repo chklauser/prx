@@ -81,11 +81,11 @@ namespace Prexonite.Compiler.Build.Internal
                     return CreateDescription(primaryPreflight.ModuleName, Source.FromString(""),
                         NoSourcePosition.MissingFileName,
                         Enumerable.Empty<ModuleName>(),
-                        new[]{errorMessage});
+                        new[] { errorMessage });
                 }
                 else
                 {
-                    throw new BuildFailureException(null, "There {2} {0} {1} while trying to determine dependencies.",new[]{errorMessage});
+                    throw new BuildFailureException(null, "There {2} {0} {1} while trying to determine dependencies.", new[] { errorMessage });
                 }
             }
             else
@@ -95,7 +95,7 @@ namespace Prexonite.Compiler.Build.Internal
             }
         }
 
-        private readonly HashSet<ModuleName> _standardLibrary = new HashSet<ModuleName>(); 
+        private readonly HashSet<ModuleName> _standardLibrary = new HashSet<ModuleName>();
         public ISet<ModuleName> StandardLibrary
         {
             get { return _standardLibrary; }
@@ -237,7 +237,7 @@ namespace Prexonite.Compiler.Build.Internal
                 while (refSpec.ModuleName == null || !TargetDescriptions.Contains(refSpec.ModuleName))
                 {
                     if (candidateSequence == null)
-                        candidateSequence = _pathCandidates(refSpec,token).GetEnumerator();
+                        candidateSequence = _pathCandidates(refSpec, token).GetEnumerator();
 
                     if (!candidateSequence.MoveNext())
                     {
@@ -268,7 +268,7 @@ namespace Prexonite.Compiler.Build.Internal
                             "Rejected {0} as a candidate for {1} because its module name could not be inferred.",
                             candidate, refSpec);
                     }
-                    else if (expectedModuleName != null 
+                    else if (expectedModuleName != null
                         && !Engine.StringsAreEqual(result.ModuleName.Id, expectedModuleName.Id))
                     {
                         _trace.TraceEvent(TraceEventType.Warning, 0,
@@ -278,8 +278,8 @@ namespace Prexonite.Compiler.Build.Internal
                     else
                     {
                         refSpec.ModuleName = result.ModuleName;
-                        _trace.TraceEvent(TraceEventType.Information, 0, "Accepted match {0} after preflight, ordering corresponding description.",result.ModuleName);
-                        await _orderTargetDescription(result, candidate,token);
+                        _trace.TraceEvent(TraceEventType.Information, 0, "Accepted match {0} after preflight, ordering corresponding description.", result.ModuleName);
+                        await _orderTargetDescription(result, candidate, token);
                     }
                 }
             }
@@ -299,12 +299,12 @@ namespace Prexonite.Compiler.Build.Internal
                 throw new ArgumentNullException("candidate");
             return _targetCreationCache.GetOrAdd(candidate.FullName,
                 async (key, actualToken) =>
-                          {
-                              var src = Source.FromFile(candidate, Encoding);
-                              await Task.Yield();
-                              await _addToSearchPaths(candidate,actualToken);
-                              return await _performCreateTargetDescription(result, src, actualToken);
-                          }, token);
+                {
+                    var src = Source.FromFile(candidate, Encoding);
+                    await Task.Yield();
+                    await _addToSearchPaths(candidate, actualToken);
+                    return await _performCreateTargetDescription(result, src, actualToken);
+                }, token);
         }
 
         private async Task<ITargetDescription> _performCreateTargetDescription(PreflightResult result, ISource source, CancellationToken token)
@@ -321,19 +321,21 @@ namespace Prexonite.Compiler.Build.Internal
             var buildMessages = refSpecs.Where(t => t.ErrorMessage != null).Select(
                     s =>
                     {
-                        Debug.Assert(s.ResolvedPath != null);
                         Debug.Assert(s.ErrorMessage != null);
                         // ReSharper disable PossibleNullReferenceException,AssignNullToNotNullAttribute
-                        var refPosition = new SourcePosition(s.ResolvedPath.ToString(), 0, 0);
+                        var refPosition = new SourcePosition(
+                            s.ResolvedPath != null ? s.ResolvedPath.ToString() 
+                          : result.Path != null    ? result.Path.ToString() 
+                          : NoSourcePosition.MissingFileName, 0, 0);
                         return Message.Error(s.ErrorMessage, refPosition, MessageClasses.SelfAssembly);
                         // ReSharper restore PossibleNullReferenceException,AssignNullToNotNullAttribute
                     });
 
             // Assemble dependencies, including standard library (unless suppressed)
             var deps = refSpecs.Where(r => r.ModuleName != null).Select(r => r.ModuleName);
-            if(!result.SuppressStandardLibrary)
+            if (!result.SuppressStandardLibrary)
                 deps = deps.Append(StandardLibrary);
-            
+
             var reportedFileName = result.Path != null ? result.Path.ToString() : null;
 
             // Typically, duplicate requests are caught much earlier (based on full file paths)
@@ -342,8 +344,8 @@ namespace Prexonite.Compiler.Build.Internal
             // not be detected until full preflight is done.
             // This GetOrAdd is our last line of defense against that scenario and race conditions
             // around targets in general (e.g., when symbolic links or duplicate files are involved)
-            return TargetDescriptions.GetOrAdd(result.ModuleName, 
-                mn => CreateDescription(mn, source,reportedFileName, deps,buildMessages));
+            return TargetDescriptions.GetOrAdd(result.ModuleName,
+                mn => CreateDescription(mn, source, reportedFileName, deps, buildMessages));
         }
 
         private IEnumerable<FileInfo> _pathCandidates(RefSpec refSepc, CancellationToken token)

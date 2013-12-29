@@ -410,7 +410,7 @@ namespace Prexonite.Compiler.Symbolic.Internal
                     _lock.EnterReadLock();
                     try
                     {
-                        localIsEmpty = _local.Count > 0;
+                        localIsEmpty = _local.Count == 0;
                     }
                     finally
                     {
@@ -422,9 +422,9 @@ namespace Prexonite.Compiler.Symbolic.Internal
                     localIsEmpty = true;
                 }
                 return
-                    !((localIsEmpty)
-                        || (_union != null && _union.Count > 0)
-                        || (_parent != null && !_parent.IsEmpty));
+                    localIsEmpty
+                        && (_union == null || _union.Count == 0)
+                        && (_parent == null || _parent.IsEmpty);
             }
         }
 

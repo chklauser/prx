@@ -37,6 +37,7 @@ namespace prx.cli
     declare var app;
     declare var engine;
     declare var ldr;
+    declare function reboot;
 }
 
 namespace prx.cli.repl
@@ -45,8 +46,6 @@ namespace prx.cli.repl
         sys.seq.*,
         prx.cli.*
 {
-    declare function reboot;
-
     // If you are only interested in learning how prx_main.pxs works, you can stop reading here ;-)
     ///////////////////////////////////////////////////////////////////////////////////////////////
     ///////////////////////////////////////////////////////////////////////////////////////////////
@@ -80,19 +79,7 @@ namespace prx.cli.repl
         
         //Add symbols (the declarations, not the physical names)
         foreach(var symbol in ldr.Symbols)
-            if( symbol.Value.Interpretation~Int == ::SymbolInterpretations.Command~Int ||
-                symbol.Value.Interpretation~Int == ::SymbolInterpretations.GlobalObjectVariable~Int ||
-                symbol.Value.Interpretation~Int == ::SymbolInterpretations.GlobalReferenceVariable~Int )
-            {
-                
-                yield symbol.Key;
-            }
-            else if(symbol.Value.Interpretation~Int == ::SymbolInterpretations.Function~Int)
-            {
-                //Functions may be explicitly hidden
-                unless(isHidden(app.Functions[symbol.Value.Id]))
-                    yield symbol.Key;   
-            }
+            yield symbol.key;
         
         //A collection of common usages
         yield "ToString";

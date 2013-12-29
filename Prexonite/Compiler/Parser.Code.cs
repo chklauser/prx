@@ -132,17 +132,20 @@ namespace Prexonite.Compiler
 
             var currentLookupScope = (ISymbolView<Symbol>) declScopeStore;
             var isOutermostNs = true;
-            foreach (var superNsId in relativeNsId)
+            foreach (var nsId in relativeNsId)
             {
-                var localNs = _tryGetLocalNamespace(currentLookupScope, superNsId, idPosition);
+                var localNs = _tryGetLocalNamespace(currentLookupScope, nsId, idPosition);
 
-                prefix = prefix + new QualifiedId(superNsId);
+                prefix = prefix + new QualifiedId(nsId);
 
                 // Create namespace if necessary
                 if (localNs == null)
                 {
-                    localNs = _createLocalNamespace(surroundingNamespace, declScopeStore, superNsId, prefix, isOutermostNs, idPosition);
+                    localNs = ((ModuleLevelView) Loader.TopLevelSymbols).CreateLocalNamespace(new EmptySymbolView<Symbol>());
                 }
+
+                // Make sure the namespace is exported from the current module and not just accessible via external declarations
+                _declareNamespaceAsExported(surroundingNamespace, declScopeStore, nsId, isOutermostNs, idPosition, localNs, prefix);
 
                 surroundingNamespace = localNs;
                 currentLookupScope = localNs;
@@ -220,7 +223,7 @@ namespace Prexonite.Compiler
                 var nsUsage = fakeExpr as AstNamespaceUsage;
                 if (nsUsage == null)
                     Loader.ReportMessage(Message.Error(
-                        string.Format(Resources.Parser_NamespaceExpected, superNsId, sym == null ? "not defined" : sym.ToString()),
+                        string.Format(Resources.Parser_NamespaceExpected, superNsId, sym),
                         idPosition, MessageClasses.NamespaceExcepted));
                 else
                 {
@@ -237,16 +240,30 @@ namespace Prexonite.Compiler
             return localNs;
         }
 
-        [NotNull]
-        private LocalNamespace _createLocalNamespace(LocalNamespace surroundingNamespace, SymbolStore outer, string superNsId, QualifiedId nextPrefix, bool isOutermostNs, ISourcePosition idPosition)
+        /// <summary>
+        /// Ensures the namespace is declared as an exported symbol (and not just available via external declarations)
+        /// </summary>
+        /// <param name="surroundingNamespace">Reference to the surrounding namespace, if any</param>
+        /// <param name="outer">Reference to the top-level symbol store</param>
+        /// <param name="superNsId">Name of the namespace to declare</param>
+        /// <param name="isOutermostNs">True if the symbol should be added to the top-level scope; false if it should be declared in the surrounding namespace</param>
+        /// <param name="idPosition">Position of the name that caused this declaration (position of the namespace name)</param>
+        /// <param name="localNs">The namespace to declare</param>
+        /// <param name="nextPrefix"></param>
+        private static void _declareNamespaceAsExported(LocalNamespace surroundingNamespace, SymbolStore outer, string superNsId, bool isOutermostNs, ISourcePosition idPosition, LocalNamespace localNs, QualifiedId nextPrefix)
         {
-            var localNs = ((ModuleLevelView) Loader.TopLevelSymbols).CreateLocalNamespace(new EmptySymbolView<Symbol>());
-            localNs.Prefix = nextPrefix.ToString().Replace('.', '\\');
             var nsSym = Symbol.CreateNamespace(localNs, idPosition);
+            var needToAssignPrefix = false;
+            Symbol existingSym;
             if (isOutermostNs)
             {
                 // The outermost namespace (x in x.y.z) is declared as an ordinary symbol in the current scope
-                outer.Declare(superNsId, nsSym);
+                if (!outer.IsDeclaredLocally(superNsId) ||
+                    !(outer.TryGet(superNsId, out existingSym) && existingSym.Equals(nsSym)))
+                {
+                    outer.Declare(superNsId, nsSym);
+                    needToAssignPrefix = true;
+                }
             }
             else if (surroundingNamespace == null)
                 throw new PrexoniteException(
@@ -254,10 +271,18 @@ namespace Prexonite.Compiler
             else
             {
                 // Inner namespaces (z,y in x.y.z) are exported from their super-namespaces
-                surroundingNamespace.DeclareExports(
-                    new KeyValuePair<string, Symbol>(superNsId, nsSym).Singleton());
+                if (!surroundingNamespace.TryGetExported(superNsId, out existingSym) || !existingSym.Equals(nsSym))
+                {
+                    surroundingNamespace.DeclareExports(
+                        new KeyValuePair<string, Symbol>(superNsId, nsSym).Singleton());
+                    needToAssignPrefix = true;
+                }
             }
-            return localNs;
+
+            if (needToAssignPrefix)
+            {
+                localNs.Prefix = nextPrefix.ToString().Replace('.', '\\');
+            }
         }
 
         [CanBeNull]

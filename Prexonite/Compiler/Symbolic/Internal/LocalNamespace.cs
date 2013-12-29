@@ -47,8 +47,24 @@ namespace Prexonite.Compiler.Symbolic.Internal
         
         #region Exports (logical namespace)
 
+        /// <summary>
+        /// Set of symbol entries exported by this local namespace declaration (the contributions of the current module)
+        /// </summary>
+        /// <remarks>
+        /// <para>Use the <see cref="Namespace"/> interface to list all symbols included in this namespace, not just the ones defined in this module.</para>
+        /// </remarks>
         [NotNull]
         public abstract IEnumerable<KeyValuePair<string, Symbol>> Exports { get; }
+
+        /// <summary>
+        /// Attempt to retrieve a certain symbol from the set of symbols exported by this module.
+        /// </summary>
+        /// <param name="id">The name of the symbol to retrieve.</param>
+        /// <param name="exported">Will contain the symbol if found (non-null) or null if no symbol with that name is exported by the current module.</param>
+        /// <returns>true if the symbol is found among the symbols exported by this module; false otherwise</returns>
+        /// <remarks><para>This method can fail to return a symbol that is available via <see cref="ISymbolView{T}.TryGet"/>.</para></remarks>
+        [ContractAnnotation("=>true,exported:notnull;=>false,exported:null")]
+        public abstract bool TryGetExported(string id, out Symbol exported);
 
         /// <summary>
         /// Adds a set of declarations to the exports of this namespace. Will replace conflicting symbols instead of merging with them.

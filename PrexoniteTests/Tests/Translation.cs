@@ -25,11 +25,15 @@
 //  IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 using System;
 using System.Collections.Generic;
+using System.Linq;
+using System.Threading;
+using JetBrains.Annotations;
 using Moq;
 using NUnit.Framework;
 using Prexonite;
 using Prexonite.Compiler;
 using Prexonite.Compiler.Ast;
+using Prexonite.Compiler.Build;
 using Prexonite.Compiler.Symbolic;
 using Prexonite.Modular;
 
@@ -1144,6 +1148,49 @@ namespace a{
 function main = a.g+a.h;
 ");
             Expect(15+4);
+        }
+
+        [Test]
+        public void NamespaceExtensionCrossModule()
+        {
+            var plan = Plan.CreateSelfAssembling(StandardLibraryPreference.None);
+
+            plan.Assemble(Source.FromString(@"
+name one;
+namespace a {
+    function b = 15;
+}
+"));
+
+            var moduleTwoDesc = plan.Assemble(Source.FromString(@"
+name two;
+references {one};
+namespace a {
+    function c =7;
+}
+"));
+
+            var moduleTwo = plan.Build(moduleTwoDesc.Name);
+            Assert.That(moduleTwo.Messages.Where(m => m.Severity == MessageSeverity.Error),Is.Empty,"Modules should compile without any error messages.");
+            foreach (var message in moduleTwo.Messages)
+                Console.WriteLine(message);
+            Assert.That(moduleTwo.Exception,Is.Null);
+
+            var symbols = moduleTwo.Symbols;
+            Symbol symbol;
+            Assert.That(symbols.TryGet("a",out symbol),Is.True,"Expect module two to have a symbol called 'a'");
+            Assert.That(symbol,Is.InstanceOf<NamespaceSymbol>());
+            var nsSym = (NamespaceSymbol) symbol;
+            _assumeNotNull(nsSym);
+            Assert.That(nsSym.Namespace.TryGet("b",out symbol),"Expect namespace a to contain a symbol b.");
+            Assert.That(nsSym.Namespace.TryGet("c",out symbol),"Expect namespace a to contain a symbol c.");
+
+        }
+
+        [ContractAnnotation("value:null=>halt")]
+        private void _assumeNotNull(object value)
+        {
+            Assert.That(value,Is.Not.Null);
         }
     }
 }

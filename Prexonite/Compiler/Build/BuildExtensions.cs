@@ -76,5 +76,10 @@ namespace Prexonite.Compiler.Build
                     return result.Item1;
                 });
         }
+
+        public static ITargetDescription Assemble(this ISelfAssemblingPlan plan, ISource source)
+        {
+            return plan.AssembleAsync(source, CancellationToken.None).Result;
+        }
     }
 }

@@ -1,10 +1,9 @@
 ﻿using System;
-using System.Collections;
 using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Diagnostics;
-using System.Threading;
 using JetBrains.Annotations;
+using Prexonite.Commands.Math;
 
 namespace Prexonite.Compiler.Symbolic.Internal
 {
@@ -92,6 +91,12 @@ namespace Prexonite.Compiler.Symbolic.Internal
             public bool HasSameRootAs(ModuleLevelView view)
             {
                 return ReferenceEquals(_localView._localProxies, view._localProxies);
+            }
+
+            public override bool TryGetExported(string id, out Symbol exported)
+            {
+                exported = null;
+                return _exportScope.IsDeclaredLocally(id) && _exportScope.TryGet(id, out exported);
             }
 
             /// <summary>
