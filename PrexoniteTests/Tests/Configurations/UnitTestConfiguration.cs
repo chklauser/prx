@@ -25,17 +25,12 @@
 //  IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 using System;
 using System.IO;
-using System.Text;
 using System.Linq;
 using NUnit.Framework;
 using Prexonite;
 using Prexonite.Compiler;
 using Prexonite.Compiler.Build;
 using Prexonite.Compiler.Cil;
-
-namespace PrexoniteTests.Internal
-{
-}
 
 namespace PrexoniteTests.Tests.Configurations
 {
@@ -56,37 +51,25 @@ namespace PrexoniteTests.Tests.Configurations
             {
                 // Rewire the units under test to point to stored representations
                 var originalUnits = model.UnitsUnderTest.ToList();
-                var storedNameMap = originalUnits.Select(
+                var storedNameMap = originalUnits.ToDictionary(td => td.ScriptName,
                     td =>
-                        {
-                            var ext = Path.GetExtension(td.ScriptName);
-                            var extLen = ext == null ? 0 : ext.Length;
-                            var baseName = td.ScriptName.Substring(td.ScriptName.Length - extLen);
-                            return string.Format("{0}~-stored{1}", baseName, ext);
-                        });
+                    {
+                        var ext = Path.GetExtension(td.ScriptName);
+                        var extLen = ext == null ? 0 : ext.Length;
+                        var baseName = td.ScriptName.Substring(td.ScriptName.Length - extLen);
+                        return string.Format("{0}~-stored{1}", baseName, ext);
+                    });
 
+                model.UnitsUnderTest = model.UnitsUnderTest.Select(td => new TestDependency
+                {
+                    ScriptName = storedNameMap[td.ScriptName],
+                    Dependencies = td.Dependencies.Select(d => storedNameMap[d]).ToArray()
+                }).ToArray();
 
                 // Configure the test as per usual
                 base.Configure(model, container);
             }
 
-            public void PrepareTestCompilation(ScriptedUnitTestContainer container)
-            {
-                using (var buffer = new MemoryStream(512*1024))
-                {
-                    //we don't need to wrap reader/writer in using because 
-                    // we can dispose of the buffer directly
-                    var writer = new StreamWriter(buffer, Encoding.UTF8);
-                    var reader = new StreamReader(buffer, Encoding.UTF8);
-
-                    container.Loader.Store(writer);
-                    writer.Flush();
-                    container.Initialize();
-                    //throws away old engine,loader,application; creates new one
-                    buffer.Seek(0, SeekOrigin.Begin);
-                    container.Loader.LoadFromReader(reader);
-                }
-            }
         }
 
         protected UnitTestConfiguration()
@@ -102,13 +85,13 @@ namespace PrexoniteTests.Tests.Configurations
         /// Executed as the last step of loading, immediately before the actual test methods are executed.
         /// </summary>
         /// <param name="runner">The container under which the test is being executed.</param>
-        public virtual void PrepareExecution(ScriptedUnitTestContainer runner)
+        private void _prepareExecution(ScriptedUnitTestContainer runner)
         {
             if (CompileToCil)
                 Compiler.Compile(runner.Application, runner.Engine, Linking);
         }
 
-        public virtual void LoadUnitTestingFramework(ScriptedUnitTestContainer container)
+        protected static void LoadUnitTestingFramework(ScriptedUnitTestContainer container)
         {
             ModuleCache.Describe(container.Loader,new TestDependency
                 {
@@ -167,7 +150,7 @@ namespace PrexoniteTests.Tests.Configurations
                 Assert.Fail("The target {0} failed to build.", target.Name);
             }
 
-            PrepareExecution(container);
+            _prepareExecution(container);
         }
     }
 }
