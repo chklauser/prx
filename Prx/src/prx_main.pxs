@@ -489,7 +489,7 @@ namespace prx.cli
             print_all_messages(target.Messages);
             if(target.Exception is not null)
                 throw target.Exception;
-            if(target.Messages >> exists(is_error(?))
+            if(target.Messages >> exists(is_error(?)))
                 return;
 
             var app_is_interactive = app.Meta["interactive"].Switch;
