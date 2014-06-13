@@ -40,13 +40,13 @@ function ast3\withPos(factory,type) [compiler]
 {
 	var args;
 	var targs = args >> skip(2);
-	
+
 	if(factory is null)
 		throw "AST factory cannot be null.";
 
     if(type is null)
         throw "ast3(type, ...) the parameter `type` cannot be null.";
-		
+
 	//return call\member(factory,type, targs);
     return call(factory,[type],targs);
 }
@@ -61,13 +61,13 @@ function ast\withPos(type, file, line, column) [is compiler;]
 
     file ??= "--COMPILER-HOOK--";
     file ~= String;
-    
+
     line ??= -1;
     line ~= Int;
-    
+
     column ??= -1;
     column~= Int;
-    
+
     return 
         asm(ldr.eng)
         .CreatePType("Object(\"Prexonite.Compiler.Ast.Ast$(type)\")")
@@ -82,15 +82,15 @@ function ast2\withPos(type, file, line, column) [compiler]
 
     file ??= "--COMPILER-HOOK--";
     file ~= String;
-    
+
     line ??= -1;
     line ~= Int;
-    
+
     column ??= -1;
     column~= Int;
-	
+
 	var pos = new Prexonite::Compiler::SourcePosition(file,line,column);
-	
+
 	return
 		asm(ldr.eng)
 		.CreatePType("Object(\"Prexonite.Compiler.Ast.Ast$(type)\")")
@@ -114,7 +114,7 @@ function ast3\simple(factory,type) [compiler]
 }
 
 function subBlocks(block) [is compiler;] =
-    if(block.\implements("Prexonite.Compiler.Ast.IAstHasBlocks"))   
+    if(block.\implements("Prexonite.Compiler.Ast.IAstHasBlocks"))
         ~List.CreateFromList(block~::IAstHasBlocks.Blocks)
     else
         [];
@@ -131,17 +131,17 @@ function uniqueId(verb) [is compiler;] = "uniq\\" + verb + uniqueIdCounter++;
 declare(
     isFunctionCall = error(here,"PSR.Obsolete",@"isFunctionCall is deprecated. Use checking functions from the psr\\macro instead.",null)
 );
-        
+
 function isMemberAccess(id, node)[is compiler;] =
         node is ::AstGetSetMemberAccess And
         Prexonite::Engine.StringsAreEqual(node.Id, id.ToString);
-        
+
 function localMeta(key, context)[is compiler;] =
     if(context.Meta.ContainsKey(key))
         context.Meta[key]
     else
         context.ParentApplication.Meta[key];
-        
+
 function create_SI [is compiler;]
 {
     //Note: don't use struct here, because struct.pxs depends on ast.pxs!
@@ -155,11 +155,11 @@ function create_SI [is compiler;]
     var si_mcmd = ::SymbolInterpretations.MacroCommand;
     SI.\\("lvar") = (_,id) => if(id is null) 
             si_lvar
-        else 
+        else
             ::SymbolEntry.LocalObjectVariable(id);
     SI.\\("lref") = (_,id) => if(id is null) 
             si_lref
-        else 
+        else
             ::SymbolEntry.LocalReferenceVariable(id);
     SI.\\("gvar") = (self,id,m) =>
         if(id is ::SymbolEntry)
