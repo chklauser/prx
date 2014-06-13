@@ -13,3 +13,4 @@ include:
   - github/doc/
   - github/doc/r1-2-3/
   - github/doc/r1-2-3/index.html
+markdown: kramdown
