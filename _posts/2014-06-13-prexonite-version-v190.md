@@ -1,9 +1,9 @@
 ---
 title: Preview of Prexonite's future: Prexonite 1.90
-type: post
-layout: post
 tags:
 - Prexonite
+type: post
+layout: post
 ---
 
 New Prexonite version: ([Release v1.90 on GitHub (src+bin)][release190])
