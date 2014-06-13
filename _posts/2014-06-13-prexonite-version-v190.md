@@ -6,7 +6,7 @@ tags:
 - Prexonite
 ---
 
-([Release v1.90 on GitHub (src+bin)][release190])
+New Prexonite version: ([Release v1.90 on GitHub (src+bin)][release190])
 
 The first step on the way to Prexonite 2, which is defined by three rather large features:
 
