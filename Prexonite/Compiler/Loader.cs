@@ -695,6 +695,7 @@ namespace Prexonite.Compiler
             _load(lex);
         }
 
+        [PublicAPI]
         [DebuggerStepThrough]
         public void LoadFromStream(Stream str)
         {
@@ -703,11 +704,13 @@ namespace Prexonite.Compiler
             _loadFromStream(str, null);
         }
 
+        [PublicAPI]
         public void LoadFromReader(TextReader reader)
         {
             LoadFromReader(reader, null);
         }
 
+        [PublicAPI]
         public void LoadFromReader(TextReader reader, string fileName)
         {
             if (reader == null)
@@ -719,6 +722,7 @@ namespace Prexonite.Compiler
         private int _loadIndent;
 #endif
 
+        [PublicAPI]
         [DebuggerStepThrough]
         public void LoadFromFile(string path)
         {

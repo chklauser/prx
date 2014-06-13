@@ -25,17 +25,19 @@
 //  IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 using System;
 using System.Collections.Generic;
+using System.IO;
 using System.Linq;
-using System.Threading;
 using JetBrains.Annotations;
 using Moq;
 using NUnit.Framework;
 using Prexonite;
+using Prexonite.Commands;
 using Prexonite.Compiler;
 using Prexonite.Compiler.Ast;
 using Prexonite.Compiler.Build;
 using Prexonite.Compiler.Symbolic;
 using Prexonite.Modular;
+using Prexonite.Types;
 
 namespace PrexoniteTests.Tests
 {
@@ -1187,10 +1189,75 @@ namespace a {
 
         }
 
+        [Test]
+        public void CommentAtEnd()
+        {
+            var ldr = new Loader(options);
+            var add = new InternalLoadCommand(ldr);
+            ldr.ParentEngine.Commands.AddHostCommand("add_internal", add);
+            add.VirtualFiles.Add("f1",@"
+function f1() {
+    println(""f1 called"");
+    // something
+    return 15;
+}
+
+//s");
+            Compile(ldr, @"
+declare command add_internal;
+
+function f0() {
+    println(""f0 called"");
+    /* something else */
+    return 16;
+}
+
+build does add_internal(""f1"");
+
+function main() {
+    return f0 + f1;
+}
+");
+
+            Expect(15+16);
+        }
+
         [ContractAnnotation("value:null=>halt")]
         private static void _assumeNotNull(object value)
         {
             Assert.That(value,Is.Not.Null);
+        }
+
+        /// <summary>
+        /// A command that works in a fashion very similar to the add and requires commands
+        /// that a loader exposes in build blocks.
+        /// Needs to be initialized first.
+        /// </summary>
+        private class InternalLoadCommand : PCommand
+        {
+            [NotNull]
+            private readonly Dictionary<string, string> _virtualFiles = new Dictionary<string, string>();
+            [NotNull]
+            private readonly Loader _loaderReference;
+
+            public InternalLoadCommand([NotNull] Loader loaderReference)
+            {
+                _loaderReference = loaderReference;
+            }
+
+            public Dictionary<string, string> VirtualFiles
+            {
+                get { return _virtualFiles; }
+            }
+
+            public override PValue Run(StackContext sctx, PValue[] args)
+            {
+                var n = args[0].CallToString(sctx);
+                var virtualFile = _virtualFiles[n];
+                using(var cr = new StringReader(virtualFile))
+                    _loaderReference.LoadFromReader(cr,n);
+                return PType.Null;
+            }
         }
     }
 }

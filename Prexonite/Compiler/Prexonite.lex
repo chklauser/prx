@@ -55,11 +55,12 @@ Integer             = {Digit} ("'" | {Digit})*
 Exponent            = e("+"|"-")?{Integer}
 //Identifier          = {Letter} ( {Letter} | {Digit} )*
 Identifier          = ([:jletter:] | [\\]) ([:jletterdigit:] | [\\] | "'")*
-LineBreak           = \r|\n|\r\n|\u2028|\u2029|\u000B|\u000C|\u0085
+LineBreak           = \r\n|\r|\n|\u2028|\u2029|\u000B|\u000C|\u0085
+NotLineBreak        = [^\r\n\u2028\u2029\u000B\u000C\u0085]
 WhiteSpace          = [ \t\r\n\u2028\u2029\u000B\u000C\u0085]
 RegularStringChar   = [^$\"\\\r\n\u2028\u2029\u000B\u000C\u0085]
 RegularVerbatimStringChar = [^$\"] 
-Noise               = "/*" ~"*/" | "//" ~{LineBreak} | {WhiteSpace}+
+Noise               = "/*" ~"*/" | "//" {NotLineBreak}* | {WhiteSpace}+
 
 %state String, SmartString, VerbatimString, SmartVerbatimString, VerbatimBlock, Local, Asm, Transfer
 
