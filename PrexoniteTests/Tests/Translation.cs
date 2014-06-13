@@ -1188,7 +1188,7 @@ namespace a {
         }
 
         [ContractAnnotation("value:null=>halt")]
-        private void _assumeNotNull(object value)
+        private static void _assumeNotNull(object value)
         {
             Assert.That(value,Is.Not.Null);
         }

@@ -249,8 +249,15 @@ namespace Prexonite.Compiler
         /// <param name="isOutermostNs">True if the symbol should be added to the top-level scope; false if it should be declared in the surrounding namespace</param>
         /// <param name="idPosition">Position of the name that caused this declaration (position of the namespace name)</param>
         /// <param name="localNs">The namespace to declare</param>
-        /// <param name="nextPrefix"></param>
-        private static void _declareNamespaceAsExported(LocalNamespace surroundingNamespace, SymbolStore outer, string superNsId, bool isOutermostNs, ISourcePosition idPosition, LocalNamespace localNs, QualifiedId nextPrefix)
+        /// <param name="nextPrefix">Namespaces prefix to use for physical names in declared namespace. Or null if the namespace already has a prefix assigned.</param>
+        private static void _declareNamespaceAsExported(
+            LocalNamespace surroundingNamespace, 
+            SymbolStore outer, 
+            string superNsId, 
+            bool isOutermostNs, 
+            ISourcePosition idPosition, 
+            LocalNamespace localNs, 
+            QualifiedId nextPrefix)
         {
             var nsSym = Symbol.CreateNamespace(localNs, idPosition);
             var needToAssignPrefix = false;
@@ -262,7 +269,6 @@ namespace Prexonite.Compiler
                     !(outer.TryGet(superNsId, out existingSym) && existingSym.Equals(nsSym)))
                 {
                     outer.Declare(superNsId, nsSym);
-                    needToAssignPrefix = true;
                 }
             }
             else if (surroundingNamespace == null)
@@ -270,16 +276,15 @@ namespace Prexonite.Compiler
                     "Failed to create surrounding namespace (syntactic sugar for nested namespace)");
             else
             {
-                // Inner namespaces (z,y in x.y.z) are exported from their super-namespaces
+                // Inner namespaces (z and y in x.y.z) are exported from their respective super-namespaces
                 if (!surroundingNamespace.TryGetExported(superNsId, out existingSym) || !existingSym.Equals(nsSym))
                 {
                     surroundingNamespace.DeclareExports(
                         new KeyValuePair<string, Symbol>(superNsId, nsSym).Singleton());
-                    needToAssignPrefix = true;
                 }
             }
 
-            if (needToAssignPrefix)
+            if (localNs.Prefix == null)
             {
                 localNs.Prefix = nextPrefix.ToString().Replace('.', '\\');
             }

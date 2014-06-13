@@ -25,8 +25,7 @@
 //  IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 using System;
 using System.Collections.Generic;
-using System.Linq;
-using System.Text;
+using JetBrains.Annotations;
 using Prexonite.Compiler.Cil;
 
 namespace Prexonite.Commands.List
@@ -82,6 +81,7 @@ namespace Prexonite.Commands.List
             }
         }
 
+        [PublicAPI]
         public static PValue RunStatically(StackContext sctx, PValue[] args)
         {
             var carrier = new ContextCarrier();

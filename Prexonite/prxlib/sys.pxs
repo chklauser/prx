@@ -2,6 +2,8 @@
 
 Name sys/0.0;
 
+// Primitive operations built into the implementation.
+// Implementation detail. Take dependency at your own risk.
 namespace prx.prim
 {
   declare(
@@ -142,7 +144,7 @@ namespace sys
   {
 
   } 
-  export(*),prx.prim(thunk,asthunk,force,toseq => to_seq);
+  export(*),prx.prim(thunk,asthunk => to_thunk,force,toseq => to_seq);
 
   namespace rt
   {
@@ -202,9 +204,9 @@ export(*), prx.prim(
 
 namespace prx.experimental
 {
-  namespace cps
+  namespace csp
   {
 
   }
-  export(*), prx.prim(chan,async_seq,call\async);
+  export(*), prx.prim(chan,async_seq,call\async,select);
 }

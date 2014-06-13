@@ -1,27 +1,27 @@
 // Prexonite
-// 
+//
 // Copyright (c) 2011, Christian Klauser
 // All rights reserved.
-// 
-// Redistribution and use in source and binary forms, with or without modification, 
+//
+// Redistribution and use in source and binary forms, with or without modification,
 //  are permitted provided that the following conditions are met:
-// 
-//     Redistributions of source code must retain the above copyright notice, 
+//
+//     Redistributions of source code must retain the above copyright notice,
 //          this list of conditions and the following disclaimer.
-//     Redistributions in binary form must reproduce the above copyright notice, 
-//          this list of conditions and the following disclaimer in the 
+//     Redistributions in binary form must reproduce the above copyright notice,
+//          this list of conditions and the following disclaimer in the
 //          documentation and/or other materials provided with the distribution.
-//     The names of the contributors may be used to endorse or 
+//     The names of the contributors may be used to endorse or
 //          promote products derived from this software without specific prior written permission.
-// 
-// THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND 
-//  ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED 
-//  WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED. 
-//  IN NO EVENT SHALL THE COPYRIGHT HOLDER OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT, 
-//  INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES 
-//  (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, 
-//  DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, 
-//  WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING 
+//
+// THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND
+//  ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED
+//  WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED.
+//  IN NO EVENT SHALL THE COPYRIGHT HOLDER OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT,
+//  INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES
+//  (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE,
+//  DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY,
+//  WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING
 //  IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 Name prx::cli;
@@ -36,18 +36,18 @@ namespace prx.cli
            sys.seq.*,
            prx.cli.repl(ldr,prx\interactive)
 {
-    var engine = new Prexonite::Engine; //<-- the engine that we will run in    
+    var engine = new Prexonite::Engine; //<-- the engine that we will run in
     var app; //<-- the compiled application
     var ldr; //<-- the loader used to compile 'app'
 
     //The follwing code block is compiled as
     // part of the initialization of the application.
-    // Global variable assignments too are part of the '\init' function.
+    // Global variable assignments too are part of the this 'init' function.
     {
         //The interactive prompt uses a second, isolated engine for execution.
         var thisE = thisEngine; // (this is the engine that runs the CLI)
-        
-        //Copy those timing commands from the current engine to the 
+
+        //Copy those timing commands from the current engine to the
         // interactive engine
         foreach(var alias in [
                 @"timer\start",
@@ -58,7 +58,7 @@ namespace prx.cli
                 @"__console",
                 @"host\self_assembling_build_plan"])
             engine.Commands.AddUserCommand(alias, thisE.Commands[alias]);
-            
+
         //Set up the console
         if(supportsTabs)
            {
@@ -71,10 +71,10 @@ namespace prx.cli
 
     // The following functions are defined further down (after `prx\main`)
     declare function displayHelp, execute_legacy, execute_plan;
-        
+
     Add Prexonite::Compiler to Import;
 
-    function printHead does println("** PREXONITE v" + asm(ldr.app).Meta["Version"].Text + 
+    function printHead does println("** PREXONITE v" + asm(ldr.app).Meta["Version"].Text +
         " ** (Runtime version $(Prexonite::Engine.PrexoniteVersion))");
 
     var originalArgs;
@@ -170,8 +170,8 @@ namespace prx.cli
             else if(state == states.compile Or state == states.run Or state == states.interactive)
             {
                 sourceFiles.Add = current;
-                // If legacy wasn't specified treat everything after the first positional 
-                // argument (the file to run) as 
+                // If legacy wasn't specified treat everything after the first positional
+                // argument (the file to run) as an argument to the application to run
                 if(not useLegacyLoader)
                 {
                     arg_reverse_state = state;
@@ -207,7 +207,7 @@ namespace prx.cli
                  else
                     @"prx_interactive_app"
                 )+ ".c.pxs";
-            
+
         //Report
         if(verbose)
         {
@@ -215,7 +215,7 @@ namespace prx.cli
             unless(state == states.interactive)
                 println("Target:\n    " + targetPath + "\nSources:");
         }
-        
+
         // Assemble options for our two implementations
         var options = new Structure;
         options.\("debugging") = debugging;
@@ -227,12 +227,12 @@ namespace prx.cli
         options.\("sourceFiles") = sourceFiles;
         options.\("targetPath") = targetPath;
 
-        if(useLegacyLoader)        
+        if(useLegacyLoader)
         {
-            // Old direct interaction with loader. Can only build a single module            
+            // Old direct interaction with loader. Can only build a single module
             execute_legacy(options);
         }
-        else 
+        else
         {
             // Compilation via self-assembling build plan
             execute_plan(options);
@@ -362,7 +362,7 @@ namespace prx.cli
         if(state == states.interactive)
         {
             //'prx\interactive' is defined in 'prx_interactive.pxs'
-    runInteractive:
+        runInteractive:
             prx\interactive;
         }
         else if(state == states.run) // states.arg is synonymous
@@ -420,17 +420,23 @@ namespace prx.cli
         }
     }
 
-    function assemble_from_file(plan,file)
+    function assemble_from_file_async(plan,file)
     {
         plan.SearchPaths.Add(System::IO::Path.GetDirectoryName(file));
         var desc = plan.AssembleAsync(Prexonite::Compiler::Build::Source.FromFile(
-                file, System::Text::Encoding.UTF8), 
-            System::Threading::CancellationToken.None).Result;        
+                file, System::Text::Encoding.UTF8),
+            System::Threading::CancellationToken.None);
         return desc;
     }
 
     function execute_plan(options)
     {
+        // Use the self-assembling build plan also used by the host to assemble
+        // this shell program. This saves us from having to load the standard library
+        // more than once.
+        // Additionally, programs could access prx.cli code at no additional cost,
+        // since it has also been assembled via that plan.
+        // The application would not have access to state of this instance of prx.cli, however.
         var plan = host\self_assembling_build_plan;
         var target;
         function is_info(msg) = msg.Severity~Int == Prexonite::Compiler::MessageSeverity.Info;
@@ -450,18 +456,21 @@ namespace prx.cli
             var entryDesc;
             if(options.sourceFiles.Count > 0)
             {
-                // Use self-assembly mechanism on each source file. 
+                // Use self-assembly mechanism on each source file.
                 // The last source file is the one we will run, the others just "seed" the plan.
                 // This is useful if you want to make sure that a particular version of a module is used
                 // (maybe one that wouldn't otherwise be found by the self-assembly mechanism)
                 foreach(var file in options.sourceFiles)
                 {
-                    entryDesc = assemble_from_file(plan, file);
+                    entryDesc = assemble_from_file_async(plan, file);
                 }
+                entryDesc = entryDesc.Result;
             }
             else if(options.state == states.interactive)
             {
-                // Define an empty module
+                // Define an empty module into which REPL code will be injected.
+                // The easiest, if not the fastest, way to do this, is by compiling the
+                // following snippet of Prexonite Script:
                 entryDesc = plan.AssembleAsync(Prexonite::Compiler::Build::Source.FromString(@"
                     Name interactive_app;
                     "),
@@ -475,12 +484,12 @@ namespace prx.cli
 
             var result = Prexonite::Compiler::Build::BuildExtensions.Load(plan, entryDesc.Name);
             app = result.Item1; //~Application
-            target = result.Item2; // ~ITarget            
+            target = result.Item2; // ~ITarget
 
             print_all_messages(target.Messages);
             if(target.Exception is not null)
                 throw target.Exception;
-            if(target.Messages >> exists(m => m.Severity~Int == Prexonite::Compiler::MessageSeverity.Error~Int))
+            if(target.Messages >> exists(is_error(?))
                 return;
 
             var app_is_interactive = app.Meta["interactive"].Switch;
@@ -509,7 +518,7 @@ namespace prx.cli
                     }
                 }
                 else
-                {                    
+                {
                     //Run the application (run it's entry function).
                     // the script arguments have to be converted to a Prexonite.PValue[] first.
                     app.Functions[mainId].Run(engine, 
@@ -519,7 +528,7 @@ namespace prx.cli
 
             // Prepare a loader targetting the module
             if(options.state == states.interactive or options.state == states.compile)
-            {   
+            {
                 // Reconstruct "external" symbol environemnt (symbols exported by dependencies)
                 var external = Prexonite::Compiler::Symbolic::SymbolStore.Create(null, (
                         entryDesc.Dependencies 
@@ -544,7 +553,6 @@ namespace prx.cli
                 opt.StoreSourceInformation = options.debugging;
                 // Copy exported declarations
                 // Loader acts as if it had declared everything that our target module exports
-                println("target.Symbols=$(target.Symbols)");
                 rt.debug(target);
                 foreach(var kvp in target.Symbols)
                 {
@@ -552,7 +560,7 @@ namespace prx.cli
                     opt.Symbols.Declare(kvp.Key, kvp.Value);
                 }
                 ldr = new Prexonite::Compiler::Loader(opt);
-            }       
+            }
 
             // Store serialized representation of target module (only target module)
             if(options.state == states.compile)
@@ -569,7 +577,7 @@ namespace prx.cli
             if(options.state == states.interactive or app_is_interactive)
             {
                 prx\interactive;
-            }            
+            }
         } catch(var e) {
             function e_handler(e)
             {

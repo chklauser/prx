@@ -3,7 +3,6 @@ using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Diagnostics;
 using JetBrains.Annotations;
-using Prexonite.Commands.Math;
 
 namespace Prexonite.Compiler.Symbolic.Internal
 {
@@ -82,7 +81,7 @@ namespace Prexonite.Compiler.Symbolic.Internal
                         throw new ArgumentNullException("value");
 
                     if (_prefix != null)
-                        throw new InvalidOperationException("The prefix for this namespace is already assigned.");
+                        throw new InvalidOperationException(String.Format("The prefix for this namespace is already assigned. (Existing prefix: '{0}', new prefix: '{1}')",_prefix,value));
 
                     _prefix = value;
                 }
