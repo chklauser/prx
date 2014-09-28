@@ -1,180 +1,190 @@
 // Prexonite
-// 
+//
 // Copyright (c) 2011, Christian Klauser
 // All rights reserved.
-// 
-// Redistribution and use in source and binary forms, with or without modification, 
+//
+// Redistribution and use in source and binary forms, with or without modification,
 //  are permitted provided that the following conditions are met:
-// 
-//     Redistributions of source code must retain the above copyright notice, 
+//
+//     Redistributions of source code must retain the above copyright notice,
 //          this list of conditions and the following disclaimer.
-//     Redistributions in binary form must reproduce the above copyright notice, 
-//          this list of conditions and the following disclaimer in the 
+//     Redistributions in binary form must reproduce the above copyright notice,
+//          this list of conditions and the following disclaimer in the
 //          documentation and/or other materials provided with the distribution.
-//     The names of the contributors may be used to endorse or 
+//     The names of the contributors may be used to endorse or
 //          promote products derived from this software without specific prior written permission.
-// 
-// THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND 
-//  ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED 
-//  WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED. 
-//  IN NO EVENT SHALL THE COPYRIGHT HOLDER OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT, 
-//  INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES 
-//  (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, 
-//  DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, 
-//  WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING 
+//
+// THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND
+//  ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED
+//  WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED.
+//  IN NO EVENT SHALL THE COPYRIGHT HOLDER OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT,
+//  INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES
+//  (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE,
+//  DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY,
+//  WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING
 //  IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 Name TicTacToe;
 Description "A tic tac toe game for two players.";
 Author SealedSun;
 
-Entry main;
-
-//Just some shorthands
-var X = "X";
-var O = "O";
-var _ = " ";
-
-//The Fields
-var fields = [  _, _, _,
-                _, _, _,
-                _, _, _ 
-             ];
-
-//Counts the number of empty fields
-function emptyFields = 
-    fields 
-    >> where(f => f == _) 
-    >> count;
-
-//Translate a string address to an index
-function address(s)
+namespace tictactoe
+    import sys(*),
+           sys.seq(count,filter => where)
 {
-    //Ensure "s" has the right format
-    s = s.Trim.ToUpper;
-    if(s.Length != 2)
-        return -1;
-    //Read row
-    var a = 0;
-    var letter = s.Substring(0,1);
-    if(letter == "B")
-        a += 3;
-    else if(letter == "C")
-        a += 6;
-    
-    //Read column
-    var number = ~Int.Parse(s.Substring(1,1)) - 1;
-    a += if(number < 3) 
-            if(number >= 0)
-                number 
-            else
-                0
-        else 2;
-    return if(a > 8) 
-                8 
-            else 
-                a;
-}
 
-//Create shorthands for fields
-function accessor(index) = v => 
-{
-    if(v != null)
-        fields[index] = v;
-    return fields[index];
-};
+    //Just some shorthands
+    var X = "X";
+    var O = "O";
+    var _ = " ";
 
-//The actual shortcuts
-ref a1 = accessor(0); ref b1 = accessor(3); ref c1 = accessor(6);
-ref a2 = accessor(1); ref b2 = accessor(4); ref c2 = accessor(7);
-ref a3 = accessor(2); ref b3 = accessor(5); ref c3 = accessor(8);
+    //The Fields
+    var fields = [  _, _, _,
+                    _, _, _,
+                    _, _, _
+                 ];
 
-//Draw the fields
-function draw_fields does print =
-    "     1   2   3\n" +
-    "    --- --- --- \n"+
-    " a | $a1 | $a2 | $a3 |\n"+
-    "    --- --- --- \n"+
-    " b | $b1 | $b2 | $b3 |\n"+
-    "    --- --- --- \n"+
-    " c | $c1 | $c2 | $c3 |\n"+
-    "    --- --- --- \n";   
+    //Counts the number of empty fields
+    function emptyFields =
+        fields
+        >> where(f => f == _)
+        >> count;
 
-
-var rnd = new System::Random;
-function randomAddress
-{
-    if(emptyFields == 0)
-        return "b2";    
-    do
+    //Translate a string address to an index
+    function address(s)
     {
-        var r = rnd.Next(0,3);
-        var a = (
-            if(r != 2) 
-                if(r != 1) 
-                    "a" 
-                else 
-                    "b" 
-            else 
-                "c") 
-            + rnd.Next(1,4).ToString;
-    }until(fields[address(a)] == _);
-    return a;
-}
+        //Ensure "s" has the right format
+        s = s.Trim.ToUpper;
+        if(s.Length != 2)
+            return -1;
+        //Read row
+        var a = 0;
+        var letter = s.Substring(0,1);
+        if(letter == "B")
+            a += 3;
+        else if(letter == "C")
+            a += 6;
 
-//Ask the player to enter a field address
-function choose_field
-{
-    var chosen_field;
-    do
-    {
-        print("Please enter a field address (e.g., $randomAddress): ");   
-        chosen_field = address(::Console.ReadLine);        
-    } until(chosen_field > -1)
-    return chosen_field;
-}
+        //Read column
+        var number = ~Int.Parse(s.Substring(1,1)) - 1;
+        a += if(number < 3)
+                if(number >= 0)
+                    number
+                else
+                    0
+            else 2;
+        return if(a > 8)
+                    8
+                else
+                    a;
+    }
 
-function main
-{
-    println("** Tic Tac Toe **");
-    var isPlayer1 = false;
-    var symbol;
-    //Determines if all three fields contain the same symbol
-    function line(f1, f2, f3) = 
-        f1 == symbol && 
-        f2 == symbol && 
-        f3 == symbol;
-    
-    do
+    //Create shorthands for fields
+    function accessor(index) = v =>
     {
-        //Swap players
-        isPlayer1 = Not isPlayer1;
-        draw_fields;
-        //Ask for the next move
-        println("It's your turn, player " + (if(isPlayer1) "1" else "2") + ".");
+        if(v != null)
+            fields[index] = v;
+        return fields[index];
+    };
+
+    //The actual shortcuts
+    ref a1 = accessor(0); ref b1 = accessor(3); ref c1 = accessor(6);
+    ref a2 = accessor(1); ref b2 = accessor(4); ref c2 = accessor(7);
+    ref a3 = accessor(2); ref b3 = accessor(5); ref c3 = accessor(8);
+
+    //Draw the fields
+    function draw_fields does print =
+        "     1   2   3\n" +
+        "    --- --- --- \n"+
+        " a | $a1 | $a2 | $a3 |\n"+
+        "    --- --- --- \n"+
+        " b | $b1 | $b2 | $b3 |\n"+
+        "    --- --- --- \n"+
+        " c | $c1 | $c2 | $c3 |\n"+
+        "    --- --- --- \n";
+
+
+    var rnd = new System::Random;
+    function randomAddress
+    {
+        if(emptyFields == 0)
+            return "b2";
+        var a;
         do
-            var chosen = choose_field;
-        until(fields[chosen] == _)
-        
-        var winner = -1;
-        symbol = if(isPlayer1) X else O;        
-        fields[chosen] = symbol; //"symbol" is used by the function "line"
-         
-        if(//Horizontal      //Vertical        //Diagonal
-           line(a1,a2,a3) || line(a1,b1,c1) || 
-           line(b1,b2,b3) || line(a2,b2,c2) || line(a1,b2,c3) ||
-           line(c1,c2,c3) || line(a3,b3,c3) || line(a3,b2,c1) ) 
-                winner = if(isPlayer1) 1 else 2;
-        
-        //Game is drawn if no player won and there are no fields left.
-        if(winner == -1 && emptyFields == 0)
-            winner = 0;
-    }until(winner >= 0)
-    
-    //Present the results
-    draw_fields;
-    if(winner == 0)
-        println("There is no winner...");
-    else
-        println("Player $winner won the game!");
+        {
+            var r = rnd.Next(0,3);
+            a = (
+                if(r != 2)
+                    if(r != 1)
+                        "a"
+                    else
+                        "b"
+                else
+                    "c")
+                + rnd.Next(1,4).ToString;
+        }until(fields[address(a)] == _);
+        return a;
+    }
+
+    //Ask the player to enter a field address
+    function choose_field
+    {
+        var chosen_field;
+        do
+        {
+            print("Please enter a field address (e.g., $randomAddress): ");
+            chosen_field = address(::Console.ReadLine);
+        } until(chosen_field > -1)
+        return chosen_field;
+    }
+
+    function main
+    {
+        println("** Tic Tac Toe **");
+        var isPlayer1 = false;
+        var symbol;
+        //Determines if all three fields contain the same symbol
+        function line(f1, f2, f3) =
+            f1 == symbol &&
+            f2 == symbol &&
+            f3 == symbol;
+
+        var winner;
+        do
+        {
+            //Swap players
+            isPlayer1 = Not isPlayer1;
+            draw_fields;
+            //Ask for the next move
+            println("It's your turn, player " + (if(isPlayer1) "1" else "2") + ".");
+            var chosen;
+            do
+                chosen = choose_field;
+            until(fields[chosen] == _)
+
+            var winner = -1;
+            symbol = if(isPlayer1) X else O;
+            fields[chosen] = symbol; //"symbol" is used by the function "line"
+
+            if(//Horizontal      //Vertical        //Diagonal
+               line(a1,a2,a3) || line(a1,b1,c1) ||
+               line(b1,b2,b3) || line(a2,b2,c2) || line(a1,b2,c3) ||
+               line(c1,c2,c3) || line(a3,b3,c3) || line(a3,b2,c1) )
+                    winner = if(isPlayer1) 1 else 2;
+
+            //Game is drawn if no player won and there are no fields left.
+            if(winner == -1 && emptyFields == 0)
+                winner = 0;
+        }until(winner >= 0)
+
+        //Present the results
+        draw_fields;
+        if(winner == 0)
+            println("There is no winner...");
+        else
+            println("Player $winner won the game!");
+    }
+
 }
+
+function main = tictactoe.main;

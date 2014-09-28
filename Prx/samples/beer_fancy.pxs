@@ -1,115 +1,125 @@
 // Prexonite
-// 
+//
 // Copyright (c) 2011, Christian Klauser
 // All rights reserved.
-// 
-// Redistribution and use in source and binary forms, with or without modification, 
+//
+// Redistribution and use in source and binary forms, with or without modification,
 //  are permitted provided that the following conditions are met:
-// 
-//     Redistributions of source code must retain the above copyright notice, 
+//
+//     Redistributions of source code must retain the above copyright notice,
 //          this list of conditions and the following disclaimer.
-//     Redistributions in binary form must reproduce the above copyright notice, 
-//          this list of conditions and the following disclaimer in the 
+//     Redistributions in binary form must reproduce the above copyright notice,
+//          this list of conditions and the following disclaimer in the
 //          documentation and/or other materials provided with the distribution.
-//     The names of the contributors may be used to endorse or 
+//     The names of the contributors may be used to endorse or
 //          promote products derived from this software without specific prior written permission.
-// 
-// THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND 
-//  ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED 
-//  WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED. 
-//  IN NO EVENT SHALL THE COPYRIGHT HOLDER OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT, 
-//  INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES 
-//  (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, 
-//  DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, 
-//  WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING 
+//
+// THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND
+//  ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED
+//  WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED.
+//  IN NO EVENT SHALL THE COPYRIGHT HOLDER OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT,
+//  INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES
+//  (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE,
+//  DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY,
+//  WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING
 //  IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 
 Name beer\fancy;
 Description "Prints the lyrics to the 99-n-of-beer-song with written numbers.";
 Author SealedSun;
-Entry song;
 
-declare function noun, number;
-
-function song(n)
+namespace beer
+    import sys(*)
 {
-    if(n == null) n = 99;
-    function cap(s) = s.Substring(0,1).ToUpper + s.Substring(1);
-    while(n > -1)
-    {
-        println( "$(cap(noun(n))) on the wall, $(noun(n)).");
-        if(n-- == 0)
-            println("Go to the store and buy some more, $(noun(99)) on the wall.");
-        else
-            println("Take one down and pass it around, $(noun(n)) of beer on the wall.");
-        println;
-    }
-}
+    declare function noun, number;
 
-function noun(n)
-{
-    if(n == 1) 
-        var r = "one bottle";
-    else if(n == 0)
-        r = "no more bottles";
-    else
+    function song(n)
     {
-        function number
+        if(n == null) n = 99;
+        function cap(s) = s.Substring(0,1).ToUpper + s.Substring(1);
+        while(n > -1)
         {
-            declare var unitsDigit, tensString, tensColumn;
-            var tens = n / 10;
-            var units = n mod 10;
-            if(n < 10)
-                return unitsDigit[n];
-            else if(n < 20)
-                return tensString[n-10];
-            else if(units == 0)
-                return tensColumn[tens];
+            println( "$(cap(noun(n))) on the wall, $(noun(n)).");
+            if(n-- == 0)
+                println("Go to the store and buy some more, $(noun(99)) on the wall.");
             else
-                return tensColumn[tens] + "-" + unitsDigit[units];     
+                println("Take one down and pass it around, $(noun(n)) of beer on the wall.");
+            println;
         }
-        r = number + " bottles";
     }
-    
-    return r + " of beer";
+
+    function noun(n)
+    {
+        var r;
+        if(n == 1)
+            r = "one bottle";
+        else if(n == 0)
+            r = "no more bottles";
+        else
+        {
+            function number
+            {
+                declare var unitsDigit, tensString, tensColumn;
+                var tens = n / 10;
+                var units = n mod 10;
+                if(n < 10)
+                    return unitsDigit[n];
+                else if(n < 20)
+                    return tensString[n-10];
+                else if(units == 0)
+                    return tensColumn[tens];
+                else
+                    return tensColumn[tens] + "-" + unitsDigit[units];
+            }
+            r = number + " bottles";
+        }
+
+        return r + " of beer";
+    }
+
+    var unitsDigit = [
+        "zero",
+        "one",
+        "two",
+        "three",
+        "four",
+        "five",
+        "six",
+        "seven",
+        "eight",
+        "nine"
+    ];
+
+    var tensString = [
+        "ten",
+        "eleven",
+        "twelve",
+        "thirteen",
+        "fourteen",
+        "fifteen",
+        unitsDigit[6] + "teen",
+        unitsDigit[7] + "teen",
+        "eighteen",
+        unitsDigit[9] + "teen"
+    ];
+
+    var tensColumn = [
+        "",
+        "ten",
+        "twenty",
+        "thirty",
+        "fourty",
+        "fifty",
+        "sixty",
+        "seventy",
+        "eighty",
+        "ninety"
+    ];
+
 }
 
-var unitsDigit = [
-    "zero",
-    "one",
-    "two",
-    "three",
-    "four",
-    "five",
-    "six",
-    "seven",
-    "eight",
-    "nine"
-];
-
-var tensString = [
-    "ten",
-    "eleven",
-    "twelve",
-    "thirteen",
-    "fourteen",
-    "fifteen",
-    unitsDigit[6] + "teen",
-    unitsDigit[7] + "teen",
-    "eighteen",
-    unitsDigit[9] + "teen"
-];
-
-var tensColumn = [
-    "",
-    "ten",
-    "twenty",
-    "thirty",
-    "fourty",
-    "fifty",
-    "sixty",
-    "seventy",
-    "eighty",
-    "ninety"
-];
+Entry song_main;
+function song_main() {
+    beer.song();
+}

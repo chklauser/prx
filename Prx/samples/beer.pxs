@@ -27,31 +27,39 @@
 Name beer;
 Description "Prints the lyrics to the 99-bottles-of-beer-song.";
 Author SealedSun;
-Entry song;
 
-declare function noun;
-
-function song
+namespace beer
+    import sys(*)
 {
-    var n = 99;
-    while(n > -1)
+
+    declare function noun;
+
+    function song
     {
-        println("$(noun(n, true)) on the wall, $(noun(n)).");
-        if(n-- == 0)
-            println("Go to the store and buy some more, 99 bottles of beer on the wall.");
-        else
-            println("Take one down and pass it around, $(noun(n)) of beer on the wall.");
-        println;
+        var n = 99;
+        while(n > -1)
+        {
+            println("$(noun(n, true)) on the wall, $(noun(n)).");
+            if(n-- == 0)
+                println("Go to the store and buy some more, 99 bottles of beer on the wall.");
+            else
+                println("Take one down and pass it around, $(noun(n)) of beer on the wall.");
+            println;
+        }
     }
+
+    function noun(n, capitalize) does
+        if(n == 1)
+            return "1 bottle of beer";
+        else if(n == 0)
+            if(capitalize)
+                return "No more bottles of beer";
+            else
+                return "no more bottles of beer";
+        else
+            return "$n bottles of beer";
+
 }
 
-function noun(n, capitalize) does
-    if(n == 1)
-        return "1 bottle of beer";
-    else if(n == 0)
-        if(capitalize)
-            return "No more bottles of beer";
-        else
-            return "no more bottles of beer";
-    else
-        return "$n bottles of beer";
+Entry song_main;
+function song_main = beer.song;

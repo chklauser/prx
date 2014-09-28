@@ -102,15 +102,15 @@ namespace prx.cli
         arguments >> each(print(?," "));
         println;
         originalArgs = arguments;
-        
+
         if(arguments == null or arguments.Length == 0)
         {
             printHead;
             println("NO ARGUMENTS DETECTED.");
-            displayHelp;    
+            displayHelp;
             return;
         }
-        
+
         //Define default settings
         var state = states.run;      //Run the compiled application b default
         var arg_reverse_state = state;
@@ -122,9 +122,9 @@ namespace prx.cli
         var useLegacyLoader = false;
         var targetPath;
         //supportsTabs is a global variable
-        
+
         var scriptArgs = [];
-        
+
         //Interpret arguments one by one
         foreach(var current in arguments)
         {
@@ -181,14 +181,14 @@ namespace prx.cli
             else if(state == states.target)
                 targetPath = current;
         }
-        
+
         //*1*: 'red' is a function that takes in another function/lambda expression
         // and executes it in a context where console output is printed in red.
         // See it's definition in 'prx_lib.pxs' for more details.
-        
+
         if(state == states.arg)
             state = arg_reverse_state;
-        
+
         //'run' and 'compile' require source files. 'interactive' doesn't.
         if(sourceFiles.Count == 0)
         {
@@ -198,12 +198,12 @@ namespace prx.cli
                 return;
             }
         }
-        
+
         //Assemble a default target path if necessary
         if(targetPath is null or targetPath.Length == 0)
-            targetPath = 
+            targetPath =
                 (unless(state == states.interactive || sourceFiles.Count == 0)
-                    System::IO::Path.GetFileNameWithoutExtension(sourceFiles[0]) 
+                    System::IO::Path.GetFileNameWithoutExtension(sourceFiles[0])
                  else
                     @"prx_interactive_app"
                 )+ ".c.pxs";
@@ -242,12 +242,12 @@ namespace prx.cli
     function reboot does prx\main(originalArgs);
 
     function displayHelp does print(
-        "Usage:\n" + 
+        "Usage:\n" +
         "\tprx -c {sources...} (-t {target...} [-h] | -r | -i) [-v | -d | -a <arguments...> | -b]\n" +
         "\tprx -i\n" +
         "\tprx -?\n" +
-        "\n" + 
-        "List the required source files (*.pxs) after the -c switch.\n" + 
+        "\n" +
+        "List the required source files (*.pxs) after the -c switch.\n" +
         "Define the name of the output file using -t.\n"+
         "\n"+
         "The default action is storing the compiled application in the target file.\n"+
@@ -256,8 +256,8 @@ namespace prx.cli
         "-v enables additional output.\n"+
         "-h extracts declarations (only with -c).\n"+
         "-b disables tab completion (tab completion only supported on windows).\n"+
-        "-a forwards the rest of the arguments to the executing script.\n" + 
-        "-d enables debugging mode\n" + 
+        "-a forwards the rest of the arguments to the executing script.\n" +
+        "-d enables debugging mode\n" +
         "-nowarn disables all warnings\n" +
         "--legacy uses Prexonite 1 loader\n");
 
@@ -274,18 +274,18 @@ namespace prx.cli
 
         if(debugging)
             sourceFiles.Insert(0,@"psr\debug\debug.pxs");
-        
+
         //Create a new application. The id extracted from the first source file's name is just decoration
         app = new ::Application(
             unless(state == states.interactive || sourceFiles.Count == 0)
                 System::IO::Path.GetFileNameWithoutExtension(sourceFiles[0])
             else
                 @"prx\interactive\app");
-                
+
         //Create the loader (the compiler) for this application
         var options = new ::LoaderOptions(engine, app);
         options.StoreSourceInformation = debugging;
-        
+
         ldr = new ::Loader(options);
         var exc = null; //<--- holds exceptions
 
@@ -293,20 +293,20 @@ namespace prx.cli
         {
             foreach(var sourceFile in sourceFiles)
             {
-                if(verbose) 
+                if(verbose)
                     println("  * " + sourceFile);
-                    
+
                 //The next call compiles 'sourceFile' into 'app'
                 ldr.RequireFromFile(sourceFile); //require only loads files that haven't been loaded before.
             }
-            if(verbose) 
+            if(verbose)
                 println("Loading of sources done.");
         }
         catch(var exc)
         {
             green(() => println(exc));
         }
-        
+
         //Display information
         var showInfos = debugging and ldr.Infos.Count > 0;
         if(showInfos)
@@ -315,7 +315,7 @@ namespace prx.cli
             foreach(var info in ldr.Infos)
                 println(info);
         }
-        
+
         //Display warnings
         var showWarnings = not suppressWarnings and ldr.Warnings.Count > 0;
         if(showWarnings)
@@ -328,12 +328,12 @@ namespace prx.cli
                 }
             );
         }
-        
+
         //Compilation errors are not thrown as exceptions but held in 'ldr.Errors'
-        if(ldr.Errors.Count != 0 Or exc is not null) 
+        if(ldr.Errors.Count != 0 Or exc is not null)
         {
             red(() =>
-                {        
+                {
                     println("Compilation completed, but errors detected. ");
                     foreach(var err in ldr.Errors)
                         println(err);
@@ -345,7 +345,7 @@ namespace prx.cli
                 yellow(println("\t",ldr.Warnings.Count," ",plurality("warnings",ldr.Warnings.Count),?));
             red(println("\t",ldr.Errors.Count," ",plurality("errors",ldr.Errors.Count),?));
             println;
-            exc = null; 
+            exc = null;
             if(debugging and state == states.interactive) //in debugging mode, allow the script to be examined
             {
                 println("Entering interactive mode for debugging.");
@@ -357,7 +357,7 @@ namespace prx.cli
             }
             return;
         }
-        
+
         //Decide what to do with the just compiled application
         if(state == states.interactive)
         {
@@ -371,20 +371,20 @@ namespace prx.cli
             if(app.Meta["interactive"].Switch)
             {
                 //The application requires to be run in interactive mode.
-                //Extract the id of the interactive entry function from the 
+                //Extract the id of the interactive entry function from the
                 // applications metadata...
-                var intMainId = 
+                var intMainId =
                     if(app.Meta.ContainsKey("entry\\interactive"))
-                        app.Meta["entry\\interactive"].Text 
+                        app.Meta["entry\\interactive"].Text
                     else
                         "main\\interactive"; //... or use a default name.
-                        
+
                 //If that function exists, execute it first
                 if(app.Functions.Contains(intMainId))
                 {
                     var intMain = app.Functions[intMainId].Run(engine, scriptArgs~Object<"Prexonite.PValue[]">);
                 }
-                
+
                 //before going into interactive mode.
                 goto runInteractive;
             }
@@ -395,13 +395,13 @@ namespace prx.cli
                         app.Meta[Prexonite::Application.EntryKey].Text
                     else
                         Prexonite::Application.DefaultEntryFunction;
-                        
+
                 if(not app.Functions.Contains(mainId))
                 {
                     red(() => println("Cannot find entry function named `$mainId`."));
                     return;
                 }
-                
+
                 //Run the application (run it's entry function).
                 // the script arguments have to be converted to a Prexonite.PValue[] first.
                 app.Run(engine, scriptArgs~Object<"Prexonite.PValue[]">);
@@ -495,17 +495,17 @@ namespace prx.cli
             var app_is_interactive = app.Meta["interactive"].Switch;
 
             // Run "main" function
-            //    mandatory for "run" 
-            //    optional for "interactive" 
+            //    mandatory for "run"
+            //    optional for "interactive"
             if(options.state == states.run or options.state == states.interactive)
             {
 
-                var entryKey = if(options.state == states.run and not app_is_interactive) 
+                var entryKey = if(options.state == states.run and not app_is_interactive)
                         Prexonite::Application.EntryKey
                     else
                         @"entry\interactive";
 
-                var entryRequired = app.Meta.ContainsKey(entryKey) 
+                var entryRequired = app.Meta.ContainsKey(entryKey)
                                     or options.state == states.run;
                 var mainId = app.Meta[entryKey];
 
@@ -521,7 +521,7 @@ namespace prx.cli
                 {
                     //Run the application (run it's entry function).
                     // the script arguments have to be converted to a Prexonite.PValue[] first.
-                    app.Functions[mainId].Run(engine, 
+                    app.Functions[mainId].Run(engine,
                         options.scriptArgs~Object<"Prexonite.PValue[]">);
                 }
             }
@@ -531,13 +531,13 @@ namespace prx.cli
             {
                 // Reconstruct "external" symbol environemnt (symbols exported by dependencies)
                 var external = Prexonite::Compiler::Symbolic::SymbolStore.Create(null, (
-                        entryDesc.Dependencies 
+                        entryDesc.Dependencies
                         >> map(name => {
                             var depTar = Prexonite::Compiler::Build::BuildExtensions.Build(plan, name);
                             var origin = new Object<"Prexonite.Compiler.Symbolic.SymbolOrigin+ModuleTopLevel">(
                                 depTar.name, Prexonite::Compiler::NoSourcePosition.Instance);
                             println("fake import of $name.*");
-                            return depTar.Symbols >> map(kvp => 
+                            return depTar.Symbols >> map(kvp =>
                                 new Prexonite::Compiler::Symbolic::SymbolInfo(kvp.Value, origin, kvp.Key)
                             );
                         })
@@ -603,7 +603,7 @@ namespace prx.cli
         }
     }
 
-} export(*, 
+} export(*,
     not states);
 
 // Defines the entry function for this module.
@@ -611,5 +611,5 @@ namespace prx.cli
 // The `[\sps]` prevents the function from being exported to other modules
 Entry prx\main;
 function prx\main()[\sps] = sys.call(prx.cli.prx\main(?),var args);
- 
-{  sys.rt.compile_to_cil; } 
+
+{  sys.rt.compile_to_cil; }
