@@ -100,6 +100,11 @@ namespace Prexonite.Modular
 
         public FunctionDeclaration CreateFunction(string id)
         {
+            if (Functions.Contains(id))
+                throw new PrexoniteException(
+                    string.Format(
+                        "Cannot declare function with physical ID '{0}'. A function with that ID already exists in {1}.",
+                        id, Name));
             var decl = FunctionDeclaration._Create(id,this);
             Functions.Add(decl);
             return decl;

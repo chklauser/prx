@@ -130,10 +130,10 @@ namespace prx.prim
 
 namespace sys
 {
-  namespace seq 
+  namespace seq
   {
 
-  } 
+  }
   export(*),prx.prim(
       map,foldl,foldr,sort,all => to_list, where => filter, skip,take,
       count,distinct,union,unique,frequency,groupby,intersect,each,exists,forall,
@@ -143,40 +143,40 @@ namespace sys
   namespace nonstrict
   {
 
-  } 
+  }
   export(*),prx.prim(thunk,asthunk => to_thunk,force,toseq => to_seq);
 
   namespace rt
   {
 
-  } 
+  }
   export(*),prx.prim(caller,LoadAssembly => load_assembly,debug, CompileToCil => compile_to_cil,boxed);
 
   namespace text
   {
 
-  } 
+  }
   export(*),prx.prim(setcenter,setleft,setright);
 
   namespace math
   {
 
-  } 
+  }
   export(*),prx.prim(abs,ceiling,exp,floor,log,max,min,pi,round,sin,cos,sqrt,tan);
 
   namespace ct
   {
 
   }
-  export(*),prx.prim(create_source_position, get_unscoped_ast_factory, 
+  export(*),prx.prim(create_source_position, get_unscoped_ast_factory,
     macro\pack => pack, macro\unpack => unpack, macro\reference => macro_reference, call\macro,
     entityref_to);
-} 
+}
 export(*), prx.prim(
   print,
   println,
   dispose,
-  char,  
+  char,
   (+),
   (-),
   (*),

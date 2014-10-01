@@ -1,4 +1,4 @@
-﻿ 
+﻿
 under_test @"psr\impl\ast.pxs";
 
 declare ast\simple as ast;
@@ -25,18 +25,19 @@ function compiler_is_loaded[test]
             }
         }
     }
-    
+
     assert(found is not Null, "After loading psr\\ast.pxs, one module in the compound should have 'compiler_loaded' enabled.");
-} 
+}
 
 // Such a function is usually defined by macro.pxs, but we'll provide a simplified version
 //     here to make testing of ast.pxs easier.
-// Do not use this implementation in actual code as it does not use the correct factory and 
+// Do not use this implementation in actual code as it does not use the correct factory and
 //     will not encode the caller's source position.
-function ast\call(entityref)
+function dummy\ast\call(entityref)
 {
     return ast3("IndirectCall",ast3("Reference",entityref));
 }
+declare dummy\ast\call as ast\call;
 
 function test_ast_withpos_null[test]
 {
@@ -51,19 +52,19 @@ function test_ast_withpos_memcall[test]
 {
     var cv = 4;
     var ct1 = ast\withPos("Constant",null,null,null,cv);
-    
+
     assert(ct1 is Prexonite::Compiler::Ast::AstConstant,
         "ast\\withPos(\"Constant\") is not an AstConstant node");
     assert(ct1.Constant == cv, "Constant value should be $cv");
     assert(ct1.File is not null, "File should not be null");
     assert(ct1.Line == -1, "Line should default to -1");
     assert(ct1.Column == -1, "Column should default to -1");
-    
+
     var bf = "bfile.pxs";
     var bl = 5;
     var bc = 7;
     var bt = ast\withPos("GetSetMemberAccess",bf,bl,bc,Prexonite::Types::PCall.set,ct1,"ToString");
-    assert(bt is Prexonite::Compiler::Ast::AstGetSetMemberAccess, 
+    assert(bt is Prexonite::Compiler::Ast::AstGetSetMemberAccess,
         "ast\\withPos(\"GetSetMemberAccess\") is not an AstGetSetMemberAccess node.");
     assert(bt.File == bf, "File should be $bf");
     assert(bt.Line == bl, "Line should be $bl");
@@ -77,18 +78,18 @@ function test_ast_simple_memcall[test]
 {
     var cv = 4;
     var ct1 = ast\simple("Constant",cv);
-    
+
     assert(ct1 is Prexonite::Compiler::Ast::AstConstant,
         "ast\\simple(\"Constant\") is not an AstConstant node");
     assert(ct1.Constant == cv, "Constant value should be $cv");
     assert(ct1.File is not null, "File should not be null");
     assert(ct1.Line == -1, "Line should default to -1");
     assert(ct1.Column == -1, "Column should default to -1");
-    
+
     var bl = -1;
     var bc = -1;
     var bt = ast\simple("GetSetMemberAccess",Prexonite::Types::PCall.set,ct1,"ToString");
-    assert(bt is Prexonite::Compiler::Ast::AstGetSetMemberAccess, 
+    assert(bt is Prexonite::Compiler::Ast::AstGetSetMemberAccess,
         "ast\\simple(\"GetSetMemberAccess\") is not an AstGetSetMemberAccess node.");
     assert(bt.File is not null, "File should not be null");
     assert(bt.Line == bl, "Line should be $bl");
@@ -102,14 +103,14 @@ function test_ast_memcall[test]
 {
     var cv = 4;
     var ct1 = ast("Constant",cv);
-    
+
     assert(ct1 is Prexonite::Compiler::Ast::AstConstant,
         "ast(\"Constant\") is not an AstConstant node");
     assert(ct1.Constant == cv, "Constant value should be $cv");
     assert(ct1.File is not null, "File should not be null");
-    
+
     var bt = ast("GetSetMemberAccess",Prexonite::Types::PCall.set,ct1,"ToString");
-    assert(bt is Prexonite::Compiler::Ast::AstGetSetMemberAccess, 
+    assert(bt is Prexonite::Compiler::Ast::AstGetSetMemberAccess,
         "ast(\"GetSetMemberAccess\") is not an AstGetSetMemberAccess node.");
     assert(bt.File is not null, "File should not be null");
     assert(bt.Subject == ct1, "Subject should be $ct1");
@@ -132,8 +133,8 @@ function test_unique_id_counter[test]
 function test_h_thisModule as thisModule = asm(ldr.app).Module.Name;
 
 function test_is_member_access[
-    is test; 
-    Add Prexonite to Imports; 
+    is test;
+    Add Prexonite to Imports;
     Add Prexonite::Compiler to Imports;
     Add Prexonite::Compiler::Ast to Imports;
     Add Prexonite::Types to Imports;
@@ -144,7 +145,7 @@ function test_is_member_access[
     var memacc = ast("GetSetMemberAccess", nt, mem);
     var wrongmemacc = ast("GetSetMemberAccess", nt, "otherMember");
     var notMemacc = ast\call(entityref_to(test_is_member_access));
-    
+
     assert(isMemberAccess(mem, memacc), "Should recognize $memacc");
     assert(not isMemberAccess(mem, wrongmemacc), "Should reject $wrongmemacc");
     assert(not isMemberAccess(mem, notMemacc), "Should reject $notMemacc");
@@ -161,7 +162,7 @@ function test_local_meta[
     var ctx = ->test_local_meta;
     var actual = localMeta("test_glob", ctx).Text;
     assert(actual == "glob1", "Expected \"glob1\", actual $actual");
-    
+
     actual = localMeta("test_glob2", ctx).Text;
     assert(actual == "glob3", "Expected \"glob3\", actual $actual");
 }
@@ -178,7 +179,7 @@ function test_si_fields[
 ]
 {
     assert(SI is not null, "SI must not be null");
-    
+
     assert_seq(SI.lvar, ::SymbolInterpretations.LocalObjectVariable);
     assert_seq(SI.lref, ::SymbolInterpretations.LocalReferenceVariable);
     assert_seq(SI.gvar, ::SymbolInterpretations.GlobalObjectVariable);
@@ -192,13 +193,13 @@ function test_si_fields[
     assert_seq(SI.ret\set, ::ReturnVariant.Set);
     assert_seq(SI.ret\continue, ::ReturnVariant.Continue);
     assert_seq(SI.ret\break, ::ReturnVariant.Break);
-    
+
     var x = "x";
     assert_eq(SI.lvar(x), new ::SymbolEntry(::SymbolInterpretations.LocalObjectVariable,x,null));
     assert_eq(SI.lref(x), new ::SymbolEntry(::SymbolInterpretations.LocalReferenceVariable,x,null));
     assert_eq(SI.cmd(x), new ::SymbolEntry(::SymbolInterpretations.Command,x,null));
     assert_eq(SI.mcmd(x), new ::SymbolEntry(::SymbolInterpretations.MacroCommand,x,null));
-    
+
     //macro specific
     assert_seq(SI.m.func, ::SymbolInterpretations.Function);
     assert_seq(SI.m.cmd, ::SymbolInterpretations.MacroCommand);
@@ -216,7 +217,7 @@ function test_si_is_star[
     //SI.eq
     assert(SI.eq(SI.lvar, SI.lvar), "SI.lvar must be the same as SI.lvar");
     assert(not SI.eq(SI.lvar, SI.lref),"SI.lvar != SI.lref");
-    
+
     //SI.is_*
     var mms = ["lvar", "lref", "gvar", "gref", "func", "cmd", "mcmd"];
     foreach(var x in mms)
@@ -226,9 +227,9 @@ function test_si_is_star[
         var expected = x == y;
         assert_eq(actual,expected,"Evaluating SI.is_$x(SI.$y)");
     }
-    
+
     var cs = [
-        "obj": ?.EndsWith("var"), 
+        "obj": ?.EndsWith("var"),
         "ref": ?.EndsWith("ref"),
         "global": ?.StartsWith("g"),
         "local": ?.StartsWith("l"),
@@ -254,7 +255,7 @@ function test_si_make_star[
 {
     var mms = ["lvar","lref","gvar","gref"];
     var kind = ["local":"global","global":"local","obj":"ref","ref":"obj"];
-    
+
     foreach(var m in mms)
     foreach(var k in kind)
     {
@@ -264,17 +265,17 @@ function test_si_make_star[
             oldState[k'.Key] = call\member(SI, "is_$(k'.Key)",[x]);
         oldState[k.Key] = true;
         oldState[k.Value] = false;
-        
+
         var y = call\member(SI,"make_$(k.Key)",[x]);
         kind >> each(k' => assert_eq(call\member(SI, "is_$(k'.Key)", [y]), oldState[k'.Key], "SI.is_$(k'.Key)($y) after make_$(k.Key)($x)"));
-    }    
+    }
 }
 
 function test_si_m_is_star[test]
 {
     var mms = ["lvar", "lref", "gvar", "gref", "func", "cmd", "mcmd"];
     var pps = ["func":"func","cmd":"mcmd"];
-    
+
     foreach(var p in pps)
     foreach(var xName in mms)
     {
@@ -293,7 +294,7 @@ function test_sub_blocks[test]
     var acs = subBlocks(ifBlock);
     assert_eq(acs[0], ifBlock.IfBlock);
     assert_eq(acs[1], ifBlock.ElseBlock);
-    
+
     var notIfBlock = ast("Constant", 2);
     assert_eq(subBlocks(notIfBlock).Count, 0);
 }

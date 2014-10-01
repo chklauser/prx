@@ -1,6 +1,6 @@
 ﻿//PRX
 
-Name sys;
+Name prx::v1;
 
 declare {
 	command:

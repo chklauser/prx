@@ -1,33 +1,43 @@
 // Prexonite
-// 
+//
 // Copyright (c) 2014, Christian Klauser
 // All rights reserved.
-// 
-// Redistribution and use in source and binary forms, with or without modification, 
+//
+// Redistribution and use in source and binary forms, with or without modification,
 //  are permitted provided that the following conditions are met:
-// 
-//     Redistributions of source code must retain the above copyright notice, 
+//
+//     Redistributions of source code must retain the above copyright notice,
 //          this list of conditions and the following disclaimer.
-//     Redistributions in binary form must reproduce the above copyright notice, 
-//          this list of conditions and the following disclaimer in the 
+//     Redistributions in binary form must reproduce the above copyright notice,
+//          this list of conditions and the following disclaimer in the
 //          documentation and/or other materials provided with the distribution.
-//     The names of the contributors may be used to endorse or 
+//     The names of the contributors may be used to endorse or
 //          promote products derived from this software without specific prior written permission.
-// 
-// THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND 
-//  ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED 
-//  WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED. 
-//  IN NO EVENT SHALL THE COPYRIGHT HOLDER OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT, 
-//  INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES 
-//  (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, 
-//  DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, 
-//  WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING 
+//
+// THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND
+//  ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED
+//  WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED.
+//  IN NO EVENT SHALL THE COPYRIGHT HOLDER OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT,
+//  INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES
+//  (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE,
+//  DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY,
+//  WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING
 //  IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 test\plugins {};
 
+// This unit test plugin wraps test cases that need to be implemented as macros in infrastructure
+// that executes the macro in an isolated environment.
+
+
 build
 {
+    // If this file is loaded as a module (the preferred way), it needs to register itself in
+    // the list of test plugins. Only that way, the test framework can trigger initialization
+    // and thereby self-registration of test case filters.
+
+    // Plugins need to add their module name to the list of test\plugins. Looks more complicated
+    // than it is (because meta entries and arrays are involved)
     var app = asm(ldr.app);
     app.Meta[@"test\plugins"] = app.Meta[@"test\plugins"].AddToList([app.Module.Name.ToMetaEntry()]~Object<"Prexonite.MetaEntry[]">);
 }
@@ -37,7 +47,7 @@ function test\execute_single_macro as execute_single_macro(ldr, testMacro)
 {
     var eng = ldr.ParentEngine;
     var app = ldr.ParentApplication;
-    
+
     var hostFuncId = @"test\run_single_macro\hostFunc";
     var hostFunc = app.CreateFunction(hostFuncId);
     var funcTar;
@@ -47,19 +57,19 @@ function test\execute_single_macro as execute_single_macro(ldr, testMacro)
         var fakeFile = @"psr\test\meta_macro.pxs\test\run_single_macro\anonymous";
         funcTar = ldr.CreateFunctionTarget(hostFunc,null,null);
         var block = funcTar.Ast;
-        
+
         //Setup invocation of test macro
         var invocation = new ::AstExpand(
             Prexonite::Compiler::NoSourcePosition.Instance,
             ~Object<"Prexonite.Modular.EntityRef+Function">.Create(testMacro.Id, testMacro.ParentApplication.Module.Name),
             Prexonite::Types::PCall.Get);
         block.Add(invocation);
-        
+
         //Compile host function
         block.EmitCode(funcTar, true, ::StackSemantics.Effect);
-        funcTar.FinishTarget(); 
+        funcTar.FinishTarget();
         //technically, finishing the host function isn't necessary (the test macro has already been executed)
-        //  but some error might only be detected during finishing.
+        //  but some errors might only be detected during finishing.
     }
     finally
     {
@@ -87,12 +97,12 @@ function test\run_single_macro_inspect as run_single_macro_inspect(testMacro)
 {
     while(testMacro is Structure)
         testMacro = testMacro.self;
-        
+
     if(testMacro is not Prexonite::PFunction)
         throw "test\\run_single_macro expects a macro function, and not $(boxed(testMacro)).";
     if(not testMacro.IsMacro)
         throw "test\\run_single_macro expects a macro function. $testMacro is not a macro.";
-        
+
     var module = Prexonite::Modular::Module.Create(new module_name("meta_macro_host_module","0.0"));
     var app = new ::Application(module);
     var eng = asm(ldr.eng);
@@ -101,8 +111,8 @@ function test\run_single_macro_inspect as run_single_macro_inspect(testMacro)
     var ldr;
     var oldCompCount = testApp.Compound.Count;
     try {
-        ::Application.Link(testApp,app);    
-        ldr = new ::Loader(eng, app);    
+        ::Application.Link(testApp,app);
+        ldr = new ::Loader(eng, app);
         execute_single_macro(ldr, testMacro);
     } finally {
         if(app.IsLinkedTo(testApp))
@@ -124,7 +134,7 @@ function test\run_single_macro as run_single_macro(testMacro)
 ]
 {
     var ldr = run_single_macro_inspect(testMacro);
-    
+
     ldr.Warnings >> each(println(?));
     if(ldr.Errors.Count > 0)
         throw ldr.Errors[0].ToString;
@@ -136,10 +146,13 @@ function test\create_macro_function_wrapper as create_macro_function_wrapper(tes
     s.\("self") = testMacroFunc;
     s.\\("Call") = (self,id) => call\member(self.self,id,var args >> skip(2));
     s.\\("IndirectCall") = (self) => run_single_macro(self.self);
-    
+
     return s;
 }
 
+// This is the filter function that will be applied to each test.
+// We wrap test cases that are macros in our wrapper and leave
+// all other tests intact.
 function test\macro_filter as macro_filter(testFunc)
 {
     if(testFunc.IsMacro)
@@ -151,7 +164,11 @@ function test\macro_filter as macro_filter(testFunc)
 {
     println(@"::>>INIT psr\test\meta_macro.pxs");
     debug;
+
+    // Register the filter function in the test-framework.
     test_filters[] = macro_filter(?);
+    // Do remember to register this module as a test plugin if it is compiled separately.
+
     println("FILTERS ",test_filters);
     println(@"::<<END INIT psr\test\meta_macro.pxs");
 }

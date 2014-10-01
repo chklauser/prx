@@ -49,7 +49,9 @@ namespace PrexoniteTests.Tests.Configurations
         [ThreadStatic] 
         private static IncrementalPlan _plan;
 
-        [ThreadStatic] private static ITargetDescription _sysDescription;
+        [ThreadStatic] private static ITargetDescription _legacySymbolsDescription;
+
+        [ThreadStatic] private static ITargetDescription _stdlibDescription;
 
         [NotNull] private static readonly TraceSource _trace =
             new TraceSource("PrexoniteTests.Tests.Configurations.ModuleCache");
@@ -71,33 +73,59 @@ namespace PrexoniteTests.Tests.Configurations
         }
 
         // ReSharper disable InconsistentNaming
-        private static ITargetDescription SysDescription
+        /// <summary>
+        /// Description of the module containing legacy symbols.
+        /// </summary>
+        private static ITargetDescription LegacySymbolsDescription
         // ReSharper restore InconsistentNaming
         {
-            get { return _sysDescription ?? (_sysDescription = _loadSys()); }
+            get { return _legacySymbolsDescription ?? (_legacySymbolsDescription = _loadLegacySymbols()); }
         }
 
-        private static ITargetDescription _loadSys()
+        private static ITargetDescription _loadLegacySymbols()
         {
-            Trace.CorrelationManager.StartLogicalOperation("Load runtime system (_loadSys)");
-            ITargetDescription sysTarget;
+            Trace.CorrelationManager.StartLogicalOperation("Load legacy symbols (_loadLegacySymbols)");
             try
             {
-                var sysName = new ModuleName("sys", new Version(0, 0));
-                var desc = Cache.CreateDescription(sysName,
+                var moduleName = new ModuleName("prx.v1", new Version(0, 0));
+                var desc = Cache.CreateDescription(moduleName,
                                                    Source.FromString(Resources.legacy_symbols),
-                                                   "sys.pxs",
+                                                   "prxlib/legacy_symbols.pxs",
                                                    Enumerable.Empty<ModuleName>());
                 Cache.TargetDescriptions.Add(desc);
-                Cache.Build(sysName);
+                Cache.Build(moduleName);
                 // Important: lookup the target description in order to get the cached description
-                sysTarget = Cache.TargetDescriptions[sysName];
+                return Cache.TargetDescriptions[moduleName];
             }
             finally
             {
                 Trace.CorrelationManager.StopLogicalOperation();
             }
-            return sysTarget;
+            
+        }
+
+        private static ITargetDescription StdlibDescription
+        {
+            get { return _stdlibDescription ?? (_stdlibDescription = _loadStdlib());  }
+        }
+
+        private static ITargetDescription _loadStdlib()
+        {
+            Trace.CorrelationManager.StartLogicalOperation("Load stdlib");
+            try
+            {
+                var sysName = new ModuleName("sys", new Version(0, 0));
+                var desc = Cache.CreateDescription(sysName, Source.FromString(Resources.sys), "prxlib/sys.pxs",
+                    Enumerable.Empty<ModuleName>());
+                Cache.TargetDescriptions.Add(desc);
+                Cache.Build(sysName);
+                return Cache.TargetDescriptions[sysName];
+            }
+            finally
+            {
+                Trace.CorrelationManager.StopLogicalOperation();
+                _trace.Flush();
+            }
         }
 
         public static DateTime LastAccess
@@ -134,9 +162,7 @@ namespace PrexoniteTests.Tests.Configurations
                 _plan = null;
             }
         }
-
-
-
+        
         public static void Describe(Loader environment, TestDependency script)
         {
             EnsureFresh();
@@ -162,23 +188,13 @@ namespace PrexoniteTests.Tests.Configurations
                 dependencies.Select(dep => 
                     new ModuleName(Path.GetFileNameWithoutExtension(dep), new Version(0, 0))).ToArray();
 
-            var desc = Cache.CreateDescription(moduleName, Source.FromFile(file,Encoding.UTF8), path, dependencyNames.Append(SysDescription.Name));
+            // Manually add legacy symbol and stdlib dependencies
+            var effectiveDependencies = dependencyNames.Append(LegacySymbolsDescription.Name).Append(StdlibDescription.Name);
+            var desc = Cache.CreateDescription(moduleName, Source.FromFile(file,Encoding.UTF8), path, effectiveDependencies);
             _trace.TraceEvent(TraceEventType.Information, 0,
                 "Adding new target description for cache on thread {0}: {1}.", Thread.CurrentThread.ManagedThreadId,
                 desc);
             Cache.TargetDescriptions.Add(desc);
-        }
-
-        private static IEnumerable<SymbolInfo> _addOriginInfo(ProvidedTarget p)
-        {
-            if (p.Symbols == null)
-                return Enumerable.Empty<SymbolInfo>();
-            else
-                return p.Symbols.Select(s => 
-                    new SymbolInfo(
-                        s.Value, 
-                        new SymbolOrigin.ModuleTopLevel(p.Name, NoSourcePosition.Instance), s.Key)
-                    );
         }
 
         public static Tuple<Application,ITarget> Load(string path)
@@ -204,31 +220,6 @@ namespace PrexoniteTests.Tests.Configurations
         private static ModuleName _toModuleName(string path)
         {
             return new ModuleName(Path.GetFileNameWithoutExtension(path), new Version(0, 0));
-        }
-
-        public static ITarget Build(string path)
-        {
-            EnsureFresh();
-            var targetModuleName = _toModuleName(path);
-            Trace.CorrelationManager.StartLogicalOperation("ModuleCache.Build(" + targetModuleName + ")");
-            ITarget result;
-            try
-            {
-                result = Cache.Build(targetModuleName);
-            }
-            finally
-            {
-                Trace.CorrelationManager.StopLogicalOperation();
-            }
-            
-            return result;
-        }
-
-        public static Task<ITarget> BuildAsync(string path)
-        {
-            EnsureFresh();
-            var targetModuleName = _toModuleName(path);
-            return Cache.BuildAsync(targetModuleName, CancellationToken.None);
         }
 
         public static Task<ITarget> BuildAsync(ModuleName name)

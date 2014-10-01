@@ -1,158 +1,168 @@
- 
-function get_test_file_names(path,pattern)[import System::IO] = 
-    ::Directory.EnumerateFiles(path ?? ".", pattern ?? "*.test.pxs", ::SearchOption.AllDirectories);
-    
-function under_test = "under_test";
-function test_dependencies = "test_dependencies";
-function config_file_separator = "|";
-function config_section_separator = ">";
-function config_dependency_separator = "<";
-    
-function create_config(testUnits, deps, testCases)
-{
-    var s = new Structure;
-    s.\("under_test") = testUnits;	// ~String:[String]
-    s.\("deps") = deps;				// ~String:[String]
-    s.\("test_cases") = testCases;  	// ~[String]  
-    return s;
-}
-    
-function read_metadata(file_name)[import {Prexonite, Prexonite::Compiler}]
-{
-    var eng = new ::Engine;
-    var app = new ::Application("read_metadata");
-    var ldr = new ::Loader(eng,app);
-    
-    print("Reading $file_name ...");
-    try {        
-        ldr.LoadFromFile(file_name);        
-    } catch(var e) {
-        //ignore
-    }
-    println("done. ");
-    
-    function extract_list(key){
-        if(app.Meta.ContainsKey(key)){
-            return app.Meta[key].List >> map(entry => {
-				if(entry.IsList){
-					entry = entry.List >> all;
-					if(entry.Count == 0)
-						return null;
-					return entry[0].Text:(entry >> skip(1) >> map(?.Text) >> all);
-				} else {
-					return entry.Text:[];
-				}
-			}) >> where(? is not null) >> all;
-		}
-        else
-            return [];
-    }
-    
-    var deps = extract_list(test_dependencies);
-    var testUnits = extract_list(under_test);
-    
-    var testCases = app.Functions >> where(f => f.Meta["test"].Switch) >> map(?.Id) >> all;
-    
-    dispose(eng,app,ldr);
-    
-    println("\t", testUnits, " using ", deps," ",testCases.Count," test cases");
-    
-    return new config(testUnits, deps, testCases);
-}
+name make_test_configuration;
 
-function write_deplist(textWriter, deps /* ~String:[String] */)
+namespace prx.test.make_test_configuration
+    import sys.*,
+           sys.seq(to_list => all,skip,map, filter => where)
 {
-	textWriter.Write(deps.Key);
-	if(deps.Value.Count > 0){
-		foreach(var d in deps.Value)
-			textWriter.Write("$(config_dependency_separator)$(d)");
-	}
-}
 
-//write_config writes the configuration <config> to the supplied <textWriter>.
-//  - textWriter, an object that behaves like a System.IO.TextWriter
-//  - config, [test_file_name:{under_test,deps,test_cases}]
-function write_config(textWriter, config)
-{
-    foreach(var kvp in config)
+    function get_test_file_names(path,pattern)[import System::IO] =
+        ::Directory.EnumerateFiles(path ?? ".", pattern ?? "*.test.pxs", ::SearchOption.AllDirectories);
+
+    function under_test = "under_test";
+    function test_dependencies = "test_dependencies";
+    function config_file_separator = "|";
+    function config_section_separator = ">";
+    function config_dependency_separator = "<";
+
+    function create_config(testUnits, deps, testCases)
     {
-        textWriter.Write(kvp.Key);
-        textWriter.Write(config_section_separator);
-        foreach(var d in kvp.Value.under_test){
-            textWriter.Write(config_file_separator);
-			write_deplist(textWriter, d);
-		}
-        textWriter.Write(config_section_separator);
-        foreach(var d in kvp.Value.deps){
-            textWriter.Write(config_file_separator);
-			write_deplist(textWriter, d);
-		}
-        textWriter.Write(config_section_separator);
-        foreach(var d in kvp.Value.test_cases)
-            textWriter.Write("$(config_file_separator)$(d)");
-        textWriter.WriteLine;
+        var s = new Structure;
+        s.\("under_test") = testUnits;	// ~String:[String]
+        s.\("deps") = deps;				// ~String:[String]
+        s.\("test_cases") = testCases;  	// ~[String]
+        return s;
     }
-}
 
-function write_config_file(file_name, config)[import {System::IO, System::Text}]
-{
-    using(var tw = new ::StreamWriter(
-            new ::FileStream(file_name,::FileMode.Create,::FileAccess.Write),
-            ::Encoding.UTF8))
-        write_config(tw, config);
-}
-
-function to_config(config)
-{
-    var s;
-    using(var sw = new ::StringWriter)
+    function read_metadata(file_name)[import {Prexonite, Prexonite::Compiler}]
     {
-        write_config(sw,config);
-        s = sw.ToString;
+        var eng = new ::Engine;
+        var app = new ::Application("read_metadata");
+        var ldr = new ::Loader(eng,app);
+
+        print("Reading $file_name ...");
+        try {
+            ldr.LoadFromFile(file_name);
+        } catch(var e) {
+            //ignore
+        }
+        println("done. ");
+
+        function extract_list(key){
+            if(app.Meta.ContainsKey(key)){
+                return app.Meta[key].List >> map(entry => {
+    				if(entry.IsList){
+    					entry = entry.List >> all;
+    					if(entry.Count == 0)
+    						return null;
+    					return entry[0].Text:(entry >> skip(1) >> map(?.Text) >> all);
+    				} else {
+    					return entry.Text:[];
+    				}
+    			}) >> where(? is not null) >> all;
+    		}
+            else
+                return [];
+        }
+
+        var deps = extract_list(test_dependencies);
+        var testUnits = extract_list(under_test);
+
+        var testCases = app.Functions >> where(f => f.Meta["test"].Switch) >> map(?.Id) >> all;
+
+        dispose(eng,app,ldr);
+
+        println("\t", testUnits, " using ", deps," ",testCases.Count," test cases");
+
+        return new config(testUnits, deps, testCases);
     }
-    return s;
-}
 
-function get_config(path) =
-    get_test_file_names(path) >> map(tfn => tfn: read_metadata(tfn));
-
-function main(path)
-{
-    write_config_file("testconfig.txt",get_config(path));
-}
-
-function read_deps(s)
-{
-	var ds = s.Split(config_dependency_separator);
-	return ds[0]:(ds >> skip(1) >> all);
-}
-
-function read_config(textReader)
-{
-    var config = [];
-    var line;
-    for(; do line = textReader.ReadLine; while line is not null and line.Length > 0)
+    function write_deplist(textWriter, deps /* ~String:[String] */)
     {
-        var fs = line.Split(config_section_separator);
-        if(fs.Count != 3)
-            continue;
-        
-        config[] = fs[0]: new config(
-            (fs[1].Split(config_file_separator) >> skip(1) >> map(read_deps(?)) >> all),
-            (fs[2].Split(config_file_separator) >> skip(1) >> map(read_deps(?)) >> all),
-            (fs[3].Split(config_file_separator) >> skip(1) >> all),
-        );
+    	textWriter.Write(deps.Key);
+    	if(deps.Value.Count > 0){
+    		foreach(var d in deps.Value)
+    			textWriter.Write("$(config_dependency_separator)$(d)");
+    	}
     }
-	return config;
-}
 
-function read_config_file(fileName)[import {System::IO, System::Text}]
-{
-    var c;
-    using(var tr = new ::StreamReader(
-            new ::FileStream(fileName, ::FileMode.Open, ::FileAccess.Read), 
-            ::Encoding.UTF8))
-        c = read_config_file(tr);
-    
-    return c;
-}
+    //write_config writes the configuration <config> to the supplied <textWriter>.
+    //  - textWriter, an object that behaves like a System.IO.TextWriter
+    //  - config, [test_file_name:{under_test,deps,test_cases}]
+    function write_config(textWriter, config)
+    {
+        foreach(var kvp in config)
+        {
+            textWriter.Write(kvp.Key);
+            textWriter.Write(config_section_separator);
+            foreach(var d in kvp.Value.under_test){
+                textWriter.Write(config_file_separator);
+    			write_deplist(textWriter, d);
+    		}
+            textWriter.Write(config_section_separator);
+            foreach(var d in kvp.Value.deps){
+                textWriter.Write(config_file_separator);
+    			write_deplist(textWriter, d);
+    		}
+            textWriter.Write(config_section_separator);
+            foreach(var d in kvp.Value.test_cases)
+                textWriter.Write("$(config_file_separator)$(d)");
+            textWriter.WriteLine;
+        }
+    }
+
+    function write_config_file(file_name, config)[import {System::IO, System::Text}]
+    {
+        using(var tw = new ::StreamWriter(
+                new ::FileStream(file_name,::FileMode.Create,::FileAccess.Write),
+                ::Encoding.UTF8))
+            write_config(tw, config);
+    }
+
+    function to_config(config)
+    {
+        var s;
+        using(var sw = new ::StringWriter)
+        {
+            write_config(sw,config);
+            s = sw.ToString;
+        }
+        return s;
+    }
+
+    function get_config(path) =
+        get_test_file_names(path) >> map(tfn => tfn: read_metadata(tfn));
+
+    function main(path)
+    {
+        write_config_file("testconfig.txt",get_config(path));
+    }
+
+    function read_deps(s)
+    {
+    	var ds = s.Split(config_dependency_separator);
+    	return ds[0]:(ds >> skip(1) >> all);
+    }
+
+    function read_config(textReader)
+    {
+        var config = [];
+        var line;
+        for(; do line = textReader.ReadLine; while line is not null and line.Length > 0)
+        {
+            var fs = line.Split(config_section_separator);
+            if(fs.Count != 3)
+                continue;
+
+            config[] = fs[0]: new config(
+                (fs[1].Split(config_file_separator) >> skip(1) >> map(read_deps(?)) >> all),
+                (fs[2].Split(config_file_separator) >> skip(1) >> map(read_deps(?)) >> all),
+                (fs[3].Split(config_file_separator) >> skip(1) >> all),
+            );
+        }
+    	return config;
+    }
+
+    function read_config_file(fileName)[import {System::IO, System::Text}]
+    {
+        var c;
+        using(var tr = new ::StreamReader(
+                new ::FileStream(fileName, ::FileMode.Open, ::FileAccess.Read),
+                ::Encoding.UTF8))
+            c = read_config(tr);
+
+        return c;
+    }
+
+} export(main, write_config_file, get_config, read_config, read_config_file, to_config, write_config, create_config);
+
+function main = sys.call(prx.test.make_test_configuration.main(?),var args);

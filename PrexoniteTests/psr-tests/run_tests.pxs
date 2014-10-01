@@ -16,31 +16,31 @@ build
     ([  @"psr\ast.pxs",
         @"psr\test.pxs",
         @"ast.test.pxs",
+
         @"psr\macro.pxs",
         @"psr\test\meta_macro.pxs",
         @"macro.test.pxs",
+
         @"psr\struct.pxs",
+        @"psr\stack.pxs",
+        @"psr\queue.pxs",
+        @"psr\set.pxs",
         @"struct.test.pxs",
+
         @"psr\prop.pxs",
-        @"prop.test.pxs",
+        @"psr\pattern.pxs",
+        @"lang-ext.test.pxs",
+
         @"psr\misc.pxs",
         @"misc.test.pxs",
-        @"psr\pattern.pxs",
-        @"pattern-kvp.test.pxs",
-        @"psr\stack.pxs",
-        @"stack.test.pxs",
-        @"psr\queue.pxs",
-        @"queue.test.pxs",
-        @"psr\set.pxs",
-        @"set.test.pxs",
     ]) >> each(req_ex(?));
-    
+
     println("Total compilation time: $(totalCompTime)ms");
-    
+
     (asm(ldr.app)).Functions.Remove(->req_ex);
 }
 
-function main 
+function main
 {
     var cilTime = null;
     if(var args >> exists(?.Contains("cil")))
@@ -58,28 +58,28 @@ function main
     var displayTotal = false;
     var total = 0;
     var fieldWidth = 6;
-    
+
     if(totalCompTime is not null)
     {
         println("\tBuild  : ",setright(fieldWidth,totalCompTime),"ms");
         total += totalCompTime;
         displayTotal = true;
     }
-    
+
     if(cilTime is not null)
     {
         println("\tCil    : ",setright(fieldWidth,cilTime),"ms");
         total += cilTime;
         displayTotal = true;
     }
-    
+
     println("\tTests  : ",setright(fieldWidth,timer\elapsed),"ms");
     total += timer\elapsed;
-    
+
     if(displayTotal)
     {
         println("\tOverall: ",setright(fieldWidth,total),"ms");
     }
-    
+
     timer\reset;
 }
