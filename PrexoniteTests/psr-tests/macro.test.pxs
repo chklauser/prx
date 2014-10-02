@@ -198,7 +198,7 @@ function test_ast_is_expression[test]
 function test_ast_is_effect[test]
 {
     var isEffect = ast\call(entityref_to(test_ast_is_effect));
-    var notEffect = ast3("CreateClosure",macro\entity(test_ast_is_effect));
+    var notEffect = ast3("CreateClosure",entityref_to(test_ast_is_effect));
 
     assert_eq(ast_is_effect(isEffect), true, "$(boxed(isEffect)) is a node.");
     assert_eq(ast_is_effect(notEffect), true, "$(boxed(notEffect)) is a node.");
@@ -209,7 +209,7 @@ function test_ast_is_effect[test]
 function test_ast_is_partially_applicable[test]
 {
     var pa = ast\call(entityref_to(test_ast_is_partially_applicable));
-    var npa = ast3("CreateClosure", macro\entity(test_ast_is_partially_applicable));
+    var npa = ast3("CreateClosure", entityref_to(test_ast_is_partially_applicable));
 
     assert_eq(ast_is_partially_applicable(pa), true, "$(boxed(pa)) is partially applicable");
     assert_eq(ast_is_partially_applicable(npa), false, "$(boxed(npa)) is not partially applicable");
@@ -233,7 +233,7 @@ function test_ast_is_partial_application[test]
 
 function test_ast_is_CreateClosure[test]
 {
-    var cc = ast3("CreateClosure", macro\entity(test_ast_is_CreateClosure));
+    var cc = ast3("CreateClosure", entityref_to(test_ast_is_CreateClosure));
     var ncc = ast\call(entityref_to(test_ast_is_CreateClosure));
 
     assert_eq(ast_is_CreateClosure(cc),true,"$(boxed(cc)) is a CreateClosure node");
@@ -396,38 +396,38 @@ macro test_macro_internal_id[test]
 
 function test_macro_entity_static[test]
 {
-    var c1 = macro\entity(ast);
+    var c1 = entityref_to(ast);
     assert(c1 is Object<"Prexonite.Modular.EntityRef+Function">,"c1=$c1 is expected to be a function reference.");
     assert(c1.ModuleName is not null, "Expected module name of c1=$c1 to be set.");
 
-    var c2 = macro\entity(call\macro);
+    var c2 = entityref_to(call\macro);
     assert(c2 is Object<"Prexonite.Modular.EntityRef+MacroCommand">,"c2=$c2 is expected to be a macro command reference.");
 }
 
 //ast helper
 macro test_expand_macro[test]
 {
-    var invk = ast\expand_macro(macro\entity(ast\macro));
+    var invk = ast\expand_macro(entityref_to(ast\macro));
     function assert_ast
     {
         assert(ast_is_Expand(invk),"$(boxed(invk)) is macro expansion");
-        assert_eq(invk.Entity,macro\entity(ast\macro), "Should be function (macro). Actual $(boxed(invk))");
+        assert_eq(invk.Entity,entityref_to(ast\macro), "Should be function (macro). Actual $(boxed(invk))");
     }
     assert_ast();
 
-    var invk = ast\expand_macro(macro\entity(call\macro));
+    var invk = ast\expand_macro(entityref_to(call\macro));
     function assert_call\macro
     {
         assert(ast_is_Expand(invk),"$(boxed(invk)) is macro expansion");
-        assert_eq(invk.Entity,macro\entity(call\macro), "Should be function (macro). Actual $(boxed(invk))");
+        assert_eq(invk.Entity,entityref_to(call\macro), "Should be function (macro). Actual $(boxed(invk))");
     }
     assert_call\macro();
 
     // infer interpretation from a prototype
-    var invk = ast\expand_macro(macro\entity(ast));
+    var invk = ast\expand_macro(entityref_to(ast));
     assert_ast();
 
-    var invk = ast\expand_macro(macro\entity(call\macro));
+    var invk = ast\expand_macro(entityref_to(call\macro));
     assert_call\macro();
 }
 

@@ -777,57 +777,12 @@ macro macro\internal_id(prototype)
     return ast("Constant",macro\_extract_id(prototype));
 }
 
-macro macro\interpretation(prototype)
-{
-    if(context.IsJustEffect)
-        return;
-
-    declare: macro\getSI as getSI;
-
-    var siMem;
-    if(ast_is_MacroInvocation(prototype))
-    {
-        macro\report_error("MacroInvocation no longer exists.");
-        return;
-    }
-    else if(ast_is_GetSetSymbol(prototype))
-    {
-        var i = prototype.Implementation.Interpretation;
-        if(SI.is_lvar(i))
-            siMem = "lvar";
-        else if(SI.is_lref(i))
-            siMem = "lref";
-        else if(SI.is_gvar(i))
-            siMem = "gvar";
-        else if(SI.is_gref(i))
-            siMem = "gref";
-        else if(SI.is_func(i))
-            siMem = "func";
-        else if(SI.is_cmd(i))
-            siMem = "cmd";
-        else if(SI.is_mcmd(i))
-            siMem = "mcmd";
-        else {
-            macro\report_error("Unkown symbol interpretation $i. Assuming function");
-            siMem = "func";
-        }
-
-        var getSI\i = ast("GetSetMemberAccess",SI.get,getSI,siMem);
-
-        return getSI\i;
-    }
-    else
-    {
-        return ast("Null");
-    }
-}
-
-// Converts `macro\entity(someCall)` into an expression that represents the entity "someCall" (an EntityRef).
 declare(
     macro\entity = warn(here,"PSR.Obsolete",@"macro\entity is a backwards-compatibility alias to entityref_to. Use that instead.",sym "entityref_to"),
     macro\symbol = error(here,"PSR.Obsolete",@"macro\symbol is deprecated. Use entityref_to instead.",null),
     ast\symbol = error(here,"PSR.Obsolete",@"ast\symbol is deprecated. Use EntityRef instead.",null),
-    ast\invoke_macro = error(pos("macro.pxs",978,0),"PSR.Obsolete",@"ast\invoke_macro is obsolete. Use ast\expand_macro(macro\entity(yourMacro)) instead.",null)
+    ast\invoke_macro = error(pos("macro.pxs",978,0),"PSR.Obsolete",@"ast\invoke_macro is obsolete. Use ast\expand_macro(macro\entity(yourMacro)) instead.",null),
+    macro\interpretation = error(here,"PSR.Obsolete", @"macro\interpretation is deprecated. Use entityref_to instead.", null)
 );
 
 macro ast\null
@@ -855,7 +810,7 @@ macro ast\expand_macro(entity,callType)
         return null;
     }
 
-    var c = ast3("Expand",macro\entity(ast3\macro),context.Call);
+    var c = ast3("Expand",entityref_to(ast3\macro),context.Call);
     c.Arguments.Add(ast3("Constant","Expand"));
 
     c.Arguments.Add(entity);
@@ -925,7 +880,7 @@ macro ast\cmd(callType,id)
     var entityExpr = ast3("MemberAccess",entityMode,"cmd");
     entityExpr.Arguments.Add(id);
 
-    var callExpansion = ast\expand_macro(macro\entity(ast\call));
+    var callExpansion = ast\expand_macro(entityref_to(ast\call));
     callExpansion.Arguments.Add(callType);
     callExpansion.Arguments.Add(entityExpr);
 
@@ -958,7 +913,7 @@ macro ast\lvar(callType,id)
     var entityExpr = ast3("MemberAccess",entityMode,"lvar");
     entityExpr.Arguments.Add(id);
 
-    var callExpansion = ast\expand_macro(macro\entity(ast\call));
+    var callExpansion = ast\expand_macro(entityref_to(ast\call));
     callExpansion.Arguments.Add(callType);
     callExpansion.Arguments.Add(entityExpr);
 
@@ -994,12 +949,12 @@ macro ast\lref(callType,id)
     var entityExpr = ast3("MemberAccess",entityMode,"lvar");
     entityExpr.Arguments.Add(id);
 
-    var callExpansion = ast\expand_macro(macro\entity(ast\call));
+    var callExpansion = ast\expand_macro(entityref_to(ast\call));
     callExpansion.Arguments.Add(getCall);
     callExpansion.Arguments.Add(entityExpr);
 
     // `ast3("IndirectCall",callExpansion,$callType)`
-    var indirectCallCtor = ast\expand_macro(macro\entity(ast3));
+    var indirectCallCtor = ast\expand_macro(entityref_to(ast3));
     indirectCallCtor.Arguments.Add(ast3("Constant","IndirectCall"));
     indirectCallCtor.Arguments.Add(callExpansion);
     indirectCallCtor.Arguments.Add(callType);
@@ -1037,7 +992,7 @@ macro ast\func(callType,internalId,moduleName)
                                // In that case, SI.e.func will infer the module name from the function reference.
         entityExpr.Arguments.Add(moduleName);
 
-    var callExpansion = ast\expand_macro(macro\entity(ast\call));
+    var callExpansion = ast\expand_macro(entityref_to(ast\call));
     callExpansion.Arguments.Add(callType);
     callExpansion.Arguments.Add(entityExpr);
 
@@ -1072,7 +1027,7 @@ macro ast\gvar(callType,internalId,moduleName)
     entityExpr.Arguments.Add(internalId);
     entityExpr.Arguments.Add(moduleName);
 
-    var callExpansion = ast\expand_macro(macro\entity(ast\call));
+    var callExpansion = ast\expand_macro(entityref_to(ast\call));
     callExpansion.Arguments.Add(callType);
     callExpansion.Arguments.Add(entityExpr);
 
@@ -1110,12 +1065,12 @@ macro ast\gref(callType,internalId,moduleName)
     entityExpr.Arguments.Add(internalId);
     entityExpr.Arguments.Add(moduleName);
 
-    var callExpansion = ast\expand_macro(macro\entity(ast\call));
+    var callExpansion = ast\expand_macro(entityref_to(ast\call));
     callExpansion.Arguments.Add(getCall);
     callExpansion.Arguments.Add(entityExpr);
 
     // `ast3("IndirectCall",callExpansion,$callType)`
-    var indirectCallCtor = ast\expand_macro(macro\entity(ast3));
+    var indirectCallCtor = ast\expand_macro(entityref_to(ast3));
     indirectCallCtor.Arguments.Add(ast3("Constant","IndirectCall"));
     indirectCallCtor.Arguments.Add(callExpansion);
     indirectCallCtor.Arguments.Add(callType);
@@ -1138,7 +1093,7 @@ macro ast\member(subject, call_type, id)
     id ??= ast("Constant","");
     call_type ??= ast("GetSetMemberAccess",SI.get,macro\getSI,"get");
 
-    var c = ast\expand_macro(macro\entity(ast\macro));
+    var c = ast\expand_macro(entityref_to(ast\macro));
     c.Arguments.Add(ast("Constant","GetSetMemberAccess"));
     c.Arguments.Add(call_type);
     c.Arguments.Add(subject);
@@ -1189,20 +1144,20 @@ macro ast\const(value)
 
     if(ast_is_Null(value) or (ast_is_Constant(value) and value.Constant is null))
     {
-        var c = ast\expand_macro(macro\entity(ast\macro));
+        var c = ast\expand_macro(entityref_to(ast\macro));
         c.Arguments.Add(ast3("Constant","Null"));
         return c;
     }
     else if(ast_is_Constant(value))
     {
-        var c = ast\expand_macro(macro\entity(ast\macro));
+        var c = ast\expand_macro(entityref_to(ast\macro));
         c.Arguments.Add(ast3("Constant","Constant"));
         c.Arguments.Add(value);
         return c;
     }
     else if(ast_is_KeyValuePair(value))
     {
-        var kvp = ast\expand_macro(macro\entity(ast\macro));
+        var kvp = ast\expand_macro(entityref_to(ast\macro));
         kvp.Arguments.Add(ast("Constant","KeyValuePair"));
         kvp.Arguments.Add(call\macro([ast\const(value.Key)]));
         kvp.Arguments.Add(call\macro([ast\const(value.Value)]));
@@ -1210,7 +1165,7 @@ macro ast\const(value)
     }
     else
     {
-        var c = ast\call(SI.get, macro\entity(ast\const\dynamic));
+        var c = ast\call(SI.get, entityref_to(ast\const\dynamic));
         c.Arguments.Add(value);
         return c;
     }
@@ -1222,7 +1177,7 @@ macro ast\ret\generic_proc(expr, kind)
     if(is_in_macro)
         establish_macro_context;
 
-    var mkRetNode = ast\expand_macro(macro\entity(ast\macro));
+    var mkRetNode = ast\expand_macro(entityref_to(ast\macro));
     mkRetNode.Arguments.Add(ast\const("Return"));
     mkRetNode.Arguments.Add(ast\member(macro\getSI, SI.get, "ret\\$kind"));
     if(expr is Null)
@@ -1321,7 +1276,7 @@ macro ast\run(loaderRef, block)
         return;
     }
 
-    var c = ast\call(SI.get, macro\entity(ast\run\impl));
+    var c = ast\call(SI.get, entityref_to(ast\run\impl));
     c.Arguments.Add(loaderRef);
     c.Arguments.Add(block);
 
@@ -1366,7 +1321,7 @@ macro ast\eval(loaderRef, expr)
         return;
     }
 
-    var c = ast\call(SI.get, macro\entity(ast\eval\impl));
+    var c = ast\call(SI.get, entityref_to(ast\eval\impl));
     c.Arguments.Add(loaderRef);
     c.Arguments.Add(expr);
 
@@ -1436,9 +1391,9 @@ macro ast\new\const as ast\new(typename)
 
     //Create object creation node { $constructV = new ObjectCreation(new ConstantTypeExpression($typename)) }
     context.Block.Add(ast\args(ast\lvar(SI.set, constructV),
-        ast\args(ast\expand_macro(macro\entity(ast)),
+        ast\args(ast\expand_macro(entityref_to(ast)),
             ast\const("ObjectCreation"),
-            ast\args(ast\expand_macro(macro\entity(ast)),
+            ast\args(ast\expand_macro(entityref_to(ast)),
                 ast\const("ConstantTypeExpression"),
                 typename
             )

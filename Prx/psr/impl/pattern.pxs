@@ -108,12 +108,7 @@ macro pattern\deconstruct(desc)
 	//Temporary variable used to hold RHS, if RHS is not an object variable itself
 	var tempV;
 	var useTemp;
-	if(ast_is_GetSetSymbol(the_object) and SI.is_lvar(the_object.Implementation.Interpretation))
-    {
-        useTemp = false;
-        tempV = the_object.Implementation.InternalId;
-    }
-    else if(ast_is_Call(the_object) and the_object.Subject.Entity.\implements("Prexonite.Modular.EntityRef+Variable+Local"))
+	if(ast_is_Call(the_object) and the_object.Subject.Entity.\implements("Prexonite.Modular.EntityRef+Variable+Local"))
     {
         useTemp = false;
         tempV = the_object.Subject.Entity.Id;
@@ -144,7 +139,6 @@ macro pattern\deconstruct(desc)
     	var setTarget = bindingTarget.GetCopy();
     	setTarget.Call = SI.set;
     	setTarget.Arguments.Add(dynamicMacroCall);
-        println("Deconstruction step: $setTarget");
     	context.Block.Add(setTarget);
 	}
 

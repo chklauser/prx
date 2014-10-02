@@ -1,27 +1,27 @@
 ﻿// Prexonite
-// 
+//
 // Copyright (c) 2014, Christian Klauser
 // All rights reserved.
-// 
-// Redistribution and use in source and binary forms, with or without modification, 
+//
+// Redistribution and use in source and binary forms, with or without modification,
 //  are permitted provided that the following conditions are met:
-// 
-//     Redistributions of source code must retain the above copyright notice, 
+//
+//     Redistributions of source code must retain the above copyright notice,
 //          this list of conditions and the following disclaimer.
-//     Redistributions in binary form must reproduce the above copyright notice, 
-//          this list of conditions and the following disclaimer in the 
+//     Redistributions in binary form must reproduce the above copyright notice,
+//          this list of conditions and the following disclaimer in the
 //          documentation and/or other materials provided with the distribution.
-//     The names of the contributors may be used to endorse or 
+//     The names of the contributors may be used to endorse or
 //          promote products derived from this software without specific prior written permission.
-// 
-// THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND 
-//  ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED 
-//  WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED. 
-//  IN NO EVENT SHALL THE COPYRIGHT HOLDER OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT, 
-//  INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES 
-//  (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, 
-//  DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, 
-//  WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING 
+//
+// THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND
+//  ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED
+//  WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED.
+//  IN NO EVENT SHALL THE COPYRIGHT HOLDER OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT,
+//  INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES
+//  (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE,
+//  DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY,
+//  WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING
 //  IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 
@@ -34,7 +34,7 @@
 //
 //  Complex:
 //      function Amount = prop(
-//          () => Something.GetAmount, 
+//          () => Something.GetAmount,
 //          newAmount => Something.SetAmount(newAmount)
 //      );
 
@@ -58,7 +58,7 @@ macro prop\macro\assemble(dummyArgs,prop_get,prop_set)
             "auto-properties (psr\\prop.pxs) requires the node prop_set=$(boxed(prop_set)) to be a GetSet complex.");
         return;
     }
-    
+
     if(not ast_is_Expression(prop_get))
     {
         macro\report_error("auto-properties (psr\\prop.pxs) requires the node prop_get=$(boxed(prop_get)) to be an expression node.");
@@ -69,7 +69,7 @@ macro prop\macro\assemble(dummyArgs,prop_get,prop_set)
     var parameters = context.Function.Parameters;
     while(parameters.Count <= dummyArgs)
         parameters.Add(uniqueId("arg"));
-    
+
     var prop_arg = ast\lvar(parameters[dummyArgs]);
 
     var nullCheck = ast("Typecheck",prop_arg,ast("ConstantTypeExpression",::NullPType.Literal));
@@ -81,21 +81,21 @@ macro prop\macro\assemble(dummyArgs,prop_get,prop_set)
     var cmpEqZero = ast3("BinaryOperation",getArgc,::BinaryOperator.Equality,ast\const(0));
     var conj = ast("LogicalAnd",nullCheck,cmpEqZero);
     var check = ast("ConditionalExpression",conj);
-    
+
     prop_set.Arguments.Add(prop_arg);
-    
+
     println("prop\\macro\\assemble($dummyArgs,$prop_get,$prop_set)");
     check.IfExpression = prop_get;
     check.ElseExpression = prop_set;
-    
+
     context.Block.Expression = check;
-    
+
     return null;
 }
 
 macro prop\macro\simple(dummyArgs)
 {
-    
+
     var backingField;
     var storeId = uniqueId("$(context.Function.Id)_prop_store");
     if((context.GetParentFunctions >> limit(1) >> count) > 0)
@@ -104,7 +104,7 @@ macro prop\macro\simple(dummyArgs)
         var parentFunc = (context.GetParentFunctions >> limit(1) >> all)[0];
         parentFunc.Variables.Add(storeId);
         context.RequireOuterVariable(storeId);
-        backingField = ast\lvar(storeId);        
+        backingField = ast\lvar(storeId);
     }
     else
     {
@@ -113,26 +113,26 @@ macro prop\macro\simple(dummyArgs)
         context.Application.Variables.Add(storeId,new Prexonite::PVariable(storeDecl));
         backingField = ast\call(SI.e.gvar(storeId,context.Application.Module.Name));
     }
-    
+
     var prop_get = backingField;
     var prop_set = backingField.GetCopy;
     prop_set.Call = SI.set;
-    
-    context.Block.Expression = var invk = ast\expand_macro(macro\entity(prop\macro\assemble));
+
+    context.Block.Expression = var invk = ast\expand_macro(entityref_to(prop\macro\assemble));
     invk.Arguments.Add(dummyArgs);
     invk.Arguments.Add(prop_get);
     invk.Arguments.Add(prop_set);
-    
+
     return null;
 }
 
 macro prop\macro\complex(dummyArgs,getter,setter)
 {
-    context.Block.Expression = var invk = ast\expand_macro(macro\entity(prop\macro\assemble));
+    context.Block.Expression = var invk = ast\expand_macro(entityref_to(prop\macro\assemble));
     (var iargs = invk.Arguments).Add(dummyArgs);
     iargs.Add(ast("IndirectCall",SI.get,getter));
     iargs.Add(ast("IndirectCall",SI.set,setter));
-    
+
     return null;
 }
 
@@ -143,20 +143,20 @@ macro prop\macro\proxy(dummyArgs,prop_get)
         macro\report_error("The target of a proxy property must be a GetSet node.");
         return;
     }
-    
+
     println("prop\\macro\\proxy($dummyArgs,$prop_get)");
     var prop_set = prop_get.GetCopy();
     prop_set.Call = SI.set;
-    
-    context.Block.Expression = var invk = ast\expand_macro(macro\entity(prop\macro\assemble));
+
+    context.Block.Expression = var invk = ast\expand_macro(entityref_to(prop\macro\assemble));
     invk.Arguments.Add(dummyArgs);
     invk.Arguments.Add(prop_get);
     invk.Arguments.Add(prop_set);
-    
+
     return null;
 }
 
-/// prop\macro(dummyArgs) expands into a property with getter and setter code 
+/// prop\macro(dummyArgs) expands into a property with getter and setter code
 /// (depending on the number of arguments passed to the surrounding function)
 /// @param dummyArgs indicates the number of paramters the property has, e.g.
 ///     for struct properties, dummyArgs=1 because technically you'll have my_prop(this, newValue)
@@ -176,7 +176,7 @@ macro prop\macro(dummayArgs)[
         macro\report_error("auto-property (psr\\prop.pxs) must be used as a RHS. Its value must not be ignored.");
         return;
     }
-    
+
     if(context.Function.Meta[prop\meta_entry].Switch)
     {
         macro\report_error("auto-property (psr\\prop.pxs) can only be used once per function.");
@@ -190,7 +190,7 @@ macro prop\macro(dummayArgs)[
         macro\report_error("$(macro\internal_id(prop\macro))(dummyArgs) requires at least one argument.");
         return;
     }
-    
+
     context.Block.Expression =
         if(argc == 1)
             call\macro([prop\macro\simple,context.IsJustEffect,context.Call],args)
@@ -199,13 +199,13 @@ macro prop\macro(dummayArgs)[
         else
             call\macro([prop\macro\complex,context.IsJustEffect,context.Call],args)
     ;
-    
+
     return null;
 }
 
 macro prop
 {
-    context.Block.Expression = var invk = ast\expand_macro(macro\entity(prop\macro));
+    context.Block.Expression = var invk = ast\expand_macro(entityref_to(prop\macro));
     invk.Arguments.Add(ast\const(0));
     invk.Arguments.AddRange(var args);
     return null;
@@ -213,7 +213,7 @@ macro prop
 
 macro struct_prop
 {
-    context.Block.Expression = var invk = ast\expand_macro(macro\entity(prop\macro));
+    context.Block.Expression = var invk = ast\expand_macro(entityref_to(prop\macro));
     invk.Arguments.Add(ast\const(1));
     invk.Arguments.AddRange(var args);
     return null;

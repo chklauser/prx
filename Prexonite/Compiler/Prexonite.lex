@@ -10,7 +10,7 @@
  *  (at your option) any later version.
  *
  *  Please contact me (sealedsun a.t gmail do.t com) if you need a different license.
- * 
+ *
  *  This program is distributed in the hope that it will be useful,
  *  but WITHOUT ANY WARRANTY; without even the implied warranty of
  *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
@@ -55,11 +55,13 @@ Integer             = {Digit} ("'" | {Digit})*
 Exponent            = e("+"|"-")?{Integer}
 //Identifier          = {Letter} ( {Letter} | {Digit} )*
 Identifier          = ([:jletter:] | [\\]) ([:jletterdigit:] | [\\] | "'")*
-LineBreak           = \r\n|\r|\n|\u2028|\u2029|\u000B|\u000C|\u0085
+//For reference, a line break would be defined like this, but apart
+// from line comments, Prexonite Script does not care about line breaks
+//LineBreak           = \r\n|\r|\n|\u2028|\u2029|\u000B|\u000C|\u0085
 NotLineBreak        = [^\r\n\u2028\u2029\u000B\u000C\u0085]
 WhiteSpace          = [ \t\r\n\u2028\u2029\u000B\u000C\u0085]
 RegularStringChar   = [^$\"\\\r\n\u2028\u2029\u000B\u000C\u0085]
-RegularVerbatimStringChar = [^$\"] 
+RegularVerbatimStringChar = [^$\"]
 Noise               = "/*" ~"*/" | "//" {NotLineBreak}* | {WhiteSpace}+
 
 %state String, SmartString, VerbatimString, SmartVerbatimString, VerbatimBlock, Local, Asm, Transfer
@@ -81,11 +83,11 @@ Noise               = "/*" ~"*/" | "//" {NotLineBreak}* | {WhiteSpace}+
     "@\""         { buffer.Length = 0; PushState(VerbatimString); }
 }
 
-//Only local code 
+//Only local code
 <Local> {
     "\""        { buffer.Length = 0; PushState(SmartString); }
     "@\""       { buffer.Length = 0; PushState(SmartVerbatimString); }
-	
+
 }
 
 // Everywhere in code except in symbol transfer specifications
@@ -94,7 +96,7 @@ Noise               = "/*" ~"*/" | "//" {NotLineBreak}* | {WhiteSpace}+
      "(*)" { return tok(Parser._id,OperatorNames.Prexonite.Multiplication); }
 }
 
-<Transfer> {         
+<Transfer> {
      "(*)" { return tok(Parser._timessym); }
 }
 
@@ -102,33 +104,33 @@ Noise               = "/*" ~"*/" | "//" {NotLineBreak}* | {WhiteSpace}+
  <YYINITIAL,Local,Asm,Transfer> {
 
      {Noise}    { /* Comment/Whitespace: ignore */ }
-       
+
      {Integer} "." {Integer}  {Exponent} { return tok(Parser._real, yytext()); } //definite real
      {Integer} "." {Integer}             { return tok(Parser._realLike, yytext()); } //could also be version literal
      {Integer} "." {Integer} "." {Integer} ("." {Integer})? { return tok(Parser._version, yytext()); }
-     
+
      {Integer}                  |
      0x{HexDigit}+              { return tok(Parser._integer, yytext()); }
-     
+
      "true" { return tok(Parser._true); }
      "false" { return tok(Parser._false); }
      "var"  { return tok(Parser._var); }
      "ref"  { return tok(Parser._ref); }
-     
+
      "$"	{Identifier} "::" { string ns = yytext();
 								return tok(Parser._ns, ns.Substring(1,ns.Length-3)); }
-	 
+
 	 {Identifier} "::" { string ns = yytext();
                          return tok(Parser._ns, ns.Substring(0, ns.Length-2)); }
-                         
+
      //any identifier
-	 
+
      "$"    {Identifier} { return tok(Parser._id, yytext().Substring(1)); }
      "$\""               { buffer.Length = 0; PushState(String); return tok(Parser._anyId); }
-     
+
      {Identifier} { return tok(checkKeyword(yytext()), yytext()); }
-     
-     
+
+
      "{"    { return tok(Parser._lbrace); }
      "["    { return tok(Parser._lbrack); }
      "(+)" { return tok(Parser._id,OperatorNames.Prexonite.Addition); }
@@ -151,12 +153,12 @@ Noise               = "/*" ~"*/" | "//" {NotLineBreak}* | {WhiteSpace}+
      "("    { return tok(Parser._lpar); }
      ")"    { return tok(Parser._rpar); }
      "]"    { return tok(Parser._rbrack); }
-     "}"    { return tok(Parser._rbrace); }     
+     "}"    { return tok(Parser._rbrace); }
      "+"    { return tok(Parser._plus); }
      "-"    { return tok(Parser._minus); }
      "*"    { return tok(Parser._times); }
      "/"    { return tok(Parser._div); }
-     "^"    { return tok(Parser._pow); }     
+     "^"    { return tok(Parser._pow); }
      "="    { return tok(Parser._assign); }
     "&&"    { return tok(Parser._and); }
     "||"    { return tok(Parser._or); }
@@ -167,7 +169,7 @@ Noise               = "/*" ~"*/" | "//" {NotLineBreak}* | {WhiteSpace}+
     ">"     { return tok(Parser._gt); }
     ">="    { return tok(Parser._ge); }
     "<="    { return tok(Parser._le); }
-    "<"     { return tok(Parser._lt); }	
+    "<"     { return tok(Parser._lt); }
     "++"    { return tok(Parser._inc); }
     "--"    { return tok(Parser._dec); }
     "~"     { return tok(Parser._tilde); }
@@ -179,16 +181,16 @@ Noise               = "/*" ~"*/" | "//" {NotLineBreak}* | {WhiteSpace}+
     ":"     { return tok(Parser._colon); }
     ";"     { return tok(Parser._semicolon); }
     ","     { return tok(Parser._comma); }
-    "." ({Identifier})?     { Token dot = tok(Parser._dot); 
-                              string memberId = yytext(); 
+    "." ({Identifier})?     { Token dot = tok(Parser._dot);
+                              string memberId = yytext();
                               if(memberId.Length > 1)
                                 return multiple(dot,tok(Parser._id,memberId.Substring(memberId.StartsWith(".$") ? 2 : 1)));
-                              else 
+                              else
                                 return dot; }
     "@"     { return tok(Parser._at); }
     ">>"	{ return tok(Parser._appendright); }
     "<<"	{ return tok(Parser._appendleft); }
-    
+
     .|\n    { Console.WriteLine("Rogue Character: \"{0}\"", yytext()); }
 }
 
@@ -197,7 +199,7 @@ Noise               = "/*" ~"*/" | "//" {NotLineBreak}* | {WhiteSpace}+
                   ret(tok(Parser._string, buffer.ToString()));
                   buffer.Length = 0;
                 }
-    {RegularStringChar}+ { buffer.Append(yytext()); }                  
+    {RegularStringChar}+ { buffer.Append(yytext()); }
     "\\\\"      { buffer.Append("\\"); }
     "\\\""      { buffer.Append("\""); }
     "\\"&       { /* nothing to do  */ }
@@ -213,7 +215,7 @@ Noise               = "/*" ~"*/" | "//" {NotLineBreak}* | {WhiteSpace}+
     "\\"u {HexDigit} {HexDigit}  {HexDigit}  {HexDigit}  |
     "\\"U {HexDigit} {HexDigit}  {HexDigit}  {HexDigit}  {HexDigit}  {HexDigit}  {HexDigit}  {HexDigit} { buffer.Append(_unescapeChar(yytext())); }
     //No need to escape $, but possible.
-    "$" | "\\$"         { buffer.Append("$"); }    
+    "$" | "\\$"         { buffer.Append("$"); }
 }
 
 <SmartString> {
@@ -221,7 +223,7 @@ Noise               = "/*" ~"*/" | "//" {NotLineBreak}* | {WhiteSpace}+
                   ret(tok(Parser._string, buffer.ToString()));
                   buffer.Length = 0;
                 }
-    {RegularStringChar}+ { buffer.Append(yytext()); }                  
+    {RegularStringChar}+ { buffer.Append(yytext()); }
     "\\\\"      { buffer.Append("\\"); }
     "\\\""      { buffer.Append("\""); }
     "\\"&       { /* nothing to do  */ }
@@ -237,7 +239,7 @@ Noise               = "/*" ~"*/" | "//" {NotLineBreak}* | {WhiteSpace}+
     "\\"u {HexDigit} {HexDigit}  {HexDigit}  {HexDigit}  |
     "\\"U {HexDigit} {HexDigit}  {HexDigit}  {HexDigit}  {HexDigit}  {HexDigit}  {HexDigit}  {HexDigit} { buffer.Append(_unescapeChar(yytext())); }
     "\\$"       { buffer.Append("$"); }
-    "$" {Identifier} &? 
+    "$" {Identifier} &?
                     {   string clipped;
                         string id = _pruneSmartStringIdentifier(yytext(), out clipped);
                         string fragment = buffer.ToString();
@@ -251,7 +253,7 @@ Noise               = "/*" ~"*/" | "//" {NotLineBreak}* | {WhiteSpace}+
                             tok(Parser._plus)
                         );
                      }
-    "$("             {  string fragment = buffer.ToString(); 
+    "$("             {  string fragment = buffer.ToString();
                         buffer.Length = 0;
                         PushState(Local);
                         return multiple(
@@ -273,7 +275,7 @@ Noise               = "/*" ~"*/" | "//" {NotLineBreak}* | {WhiteSpace}+
     {RegularVerbatimStringChar} { buffer.Append(yytext()); }
     "\"\""      { buffer.Append("\""); }
     "$"         { buffer.Append("$"); }
-    
+
 }
 
 <SmartVerbatimString> {
@@ -283,7 +285,7 @@ Noise               = "/*" ~"*/" | "//" {NotLineBreak}* | {WhiteSpace}+
                 }
     {RegularVerbatimStringChar} { buffer.Append(yytext()); }
     "\"\""      { buffer.Append("\""); }
-    "$" {Identifier} &? 
+    "$" {Identifier} &?
                     {   string clipped;
                         string id = _pruneSmartStringIdentifier(yytext(), out clipped);
                         string fragment = buffer.ToString();
@@ -297,7 +299,7 @@ Noise               = "/*" ~"*/" | "//" {NotLineBreak}* | {WhiteSpace}+
                             tok(Parser._plus)
                         );
                      }
-    "$("             {  string fragment = buffer.ToString(); 
+    "$("             {  string fragment = buffer.ToString();
                         buffer.Length = 0;
                         PushState(Local);
                         return multiple(
@@ -308,7 +310,7 @@ Noise               = "/*" ~"*/" | "//" {NotLineBreak}* | {WhiteSpace}+
                             //2nd plus is injected by the parser
                         );
                      }
-    
+
 }
 
 //Error symbol

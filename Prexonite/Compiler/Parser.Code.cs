@@ -260,7 +260,6 @@ namespace Prexonite.Compiler
             QualifiedId nextPrefix)
         {
             var nsSym = Symbol.CreateNamespace(localNs, idPosition);
-            var needToAssignPrefix = false;
             Symbol existingSym;
             if (isOutermostNs)
             {

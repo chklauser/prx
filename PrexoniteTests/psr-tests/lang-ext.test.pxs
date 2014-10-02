@@ -1,4 +1,4 @@
- 
+
 under_test {
 	@"psr\impl\ast.pxs",
 	{@"psr\impl\macro.pxs",		@"psr\impl\ast.pxs"},
@@ -12,12 +12,12 @@ function test_con[test]
 {
     var a = 11;
     var b = 13;
-    
+
     var x = kvp(a,b);
     assert(x is Prexonite::Types::PValueKeyValuePair,"$(boxed(x)) is not a PValueKeyValuePair");
     assert_eq(x.Key,a,"Key of $(boxed(x)) doesn't match");
     assert_eq(x.Value,b,"Value of $(boxed(x)) doesn't match");
-    
+
     //nested
     var c = 17;
     var d = 19;
@@ -37,12 +37,12 @@ function test_dcon[test]
 {
     var a = 11;
     var b = 13;
-    
+
     var p = a:b;
     kvp(var x,var y) = p;
     assert_eq(x,a,"Key doesn't match");
     assert_eq(y,b,"Value doesn't match");
-    
+
     var c = 17;
     var s = new Structure;
     var mem_called = false;
@@ -50,23 +50,23 @@ function test_dcon[test]
         assert_eq(mem_called,false,"s.mem already called");
         mem_called = true;
         assert_eq(z,c,"mem arg doesn't match");
-    };   
-    
+    };
+
     var q = p:c;
-    
+
     var x = y = null;
     kvp(kvp(var x, var y),s.mem) = q;
-    
+
     assert_eq(x,a,"Key doesn't match #2");
     assert_eq(y,b,"Value doesn't match #2");
     assert(mem_called,"s.mem has not been called");
-    
+
 }
 
 function test_prop_simple[test]
 {
     function p = prop;
-    
+
     assert(p is null,"Property p should be initialized to null.");
     var a = 13;
     p(a);
@@ -86,7 +86,7 @@ function test_prop_capset\impl(isset,x)
 
 macro test_prop_capset
 {
-    var fc = ast\call(context.Call, macro\entity(test_prop_capset\impl));
+    var fc = ast\call(context.Call, entityref_to(test_prop_capset\impl));
     fc.Arguments.Add(ast\const(SI.eq(context.Call,SI.set)));
     fc.Arguments.AddRange(var args);
     context.Block.Expression = fc;
@@ -95,7 +95,7 @@ macro test_prop_capset
 function test_prop_proxy[test]
 {
     function p = prop(test_prop_capset);
-    
+
     assert(p is null,"Property p should be initialized to null.");
     var a  = 13;
     p(a);
@@ -110,26 +110,26 @@ function test_prop_complex[test]
 {
     var assert_flag = null;
     var a = 11;
-    function p = prop(() => 
+    function p = prop(() =>
         {
-            if(assert_flag is null) 
+            if(assert_flag is null)
             {
-                return null; 
+                return null;
             }
-            else 
+            else
             {
                 assert(assert_flag,"Unexpected call to getter");
                 assert_flag = false;
                 return a;
             }
         },
-        value => 
+        value =>
         {
             assert(not assert_flag~Bool,"Unexpected call to setter with $(boxed(value))");
             assert_eq(value,a,"Unexpected value");
-            assert_flag = true;                
+            assert_flag = true;
         });
-        
+
     assert(p is null,"Property p should be initialized to null");
     p(a);
     assert_eq(p,a);
@@ -143,7 +143,7 @@ function test_prop_glob = prop;
 function test_prop_simple_glob[test]
 {
     declare test_prop_glob as p;
-    
+
     assert(p is null,"Property p should be initialized to null.");
     var a = 13;
     p(a);
