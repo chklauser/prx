@@ -1995,7 +1995,7 @@ internal partial class Parser {
 
 	void Declaration2() {
 		/*Parser.GlobalScope.atg:239*/ModuleName module = TargetModule.Name;
-		SymbolBuilder builder = new SymbolBuilder();
+		var builder = new SymbolBuilder();
 		Func<string,ModuleName,EntityRef> entityFactory;
 		bool canBeRef = false;
 		
@@ -2025,7 +2025,7 @@ internal partial class Parser {
 				ModuleName(/*Parser.GlobalScope.atg:255*/out module);
 			}
 			while (StartOf(35)) {
-				/*Parser.GlobalScope.atg:256*/SymbolBuilder runBuilder = builder.Clone(); 
+				/*Parser.GlobalScope.atg:256*/var runBuilder = builder.Clone(); 
 				while (la.kind == _pointer || la.kind == _ref) {
 					SymbolPrefix(/*Parser.GlobalScope.atg:257*/builder, out canBeRef);
 				}

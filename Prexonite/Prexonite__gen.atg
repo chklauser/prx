@@ -1031,7 +1031,7 @@ DeclarationLevel
                                     return;
                                 } 
                             .)
-    (    Declaration2
+    (   Declaration2
     |   GlobalCode
     |   BuildBlock
     |   FunctionDefinition<out func>
@@ -1222,7 +1222,7 @@ EntityFactory<. bool canBeRef, out Func<string,ModuleName,EntityRef> entityFacto
 
 Declaration2
                             (. ModuleName module = TargetModule.Name;
-                               SymbolBuilder builder = new SymbolBuilder();
+                               var builder = new SymbolBuilder();
                                Func<string,ModuleName,EntityRef> entityFactory;
                                bool canBeRef = false;
                             .)
@@ -1238,7 +1238,7 @@ SYNC
         semicolon
     |   lbrace
         [   uusing ModuleName<out module> ]
-        {                   (.  SymbolBuilder runBuilder = builder.Clone(); .)
+        {                   (.  var runBuilder = builder.Clone(); .)
           { SymbolPrefix<builder, out canBeRef> }
           EntityFactory<canBeRef, out entityFactory> 
                             (.  if(entityFactory == null) runBuilder.AutoDereferenceEnabled = false; .) // For aliases, don't wrap in dereference

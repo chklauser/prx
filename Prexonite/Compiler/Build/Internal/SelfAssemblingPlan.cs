@@ -65,34 +65,77 @@ namespace Prexonite.Compiler.Build.Internal
 
         public Encoding Encoding { get; set; }
 
-        public async Task<ITargetDescription> AssembleAsync(ISource source, CancellationToken token)
+        /// <summary>
+        /// <para>
+        ///     Assembles a plan around the supplied <paramref name="source"/> text. Automatically resolves and parses any references against modules
+        ///     stored as *.pxs files in the file system using <see cref="SearchPaths"/>. Does not yet trigger compilation, but might take a while
+        ///     if the dependency graph is very deep or if there are a lot of candidates lying around.
+        /// </para>
+        /// <para>
+        ///     All dependencies (including transitive ones) must either already be defined in the plan or located somewhere in the file system.
+        /// </para>
+        /// <para>
+        ///     You should usually prefer this method over <see cref="RegisterModule"/>. Whenever this method succeeds, the build plan has enough information 
+        ///     to attempt building the resulting description. With <see cref="RegisterModule"/>, you might get a target description with unsatisfied dependencies.
+        /// </para>
+        /// </summary>
+        /// <param name="source">The source text to assemble (parts) of a build plan from.</param>
+        /// <param name="token"></param>
+        /// <returns>The build target description of the supplied source text.</returns>
+        public Task<ITargetDescription> AssembleAsync(ISource source, CancellationToken token)
+        {
+            return _assembleAsync(source, token, SelfAssemblyMode.RecurseIntoFileSystem);
+        }
+
+        /// <summary>
+        /// <para>Offers a module in source form to the self-assembling build plan.</para>
+        /// <para>Unlike <see cref="AssembleAsync"/>, this method does <em>not</em> search the file system for dependencies. It simply takes note of 
+        /// them, expecting the user of the build plan to make sure that all dependencies are met in the end.</para>
+        /// </summary>
+        /// <param name="source">The source text to read. Must be a module.</param>
+        /// <param name="token"></param>
+        /// <returns>A description of the supplied module. Its dependencies might not be satisfied at this point.</returns>
+        public Task<ITargetDescription> RegisterModule(ISource source, CancellationToken token)
+        {
+            return _assembleAsync(source, token, SelfAssemblyMode.RegisterOnly);
+        }
+
+        private async Task<ITargetDescription> _assembleAsync(ISource source, CancellationToken token, SelfAssemblyMode mode)
         {
             token.ThrowIfCancellationRequested();
 
-            var primaryPreflight = await _performPreflight(new RefSpec { Source = source, ResolvedPath = _getPath(source) }, token);
+            // Technically _orderPreflight would be better, but that only works with a resolved path as the key
+            var primaryPreflight = await _performPreflight(new RefSpec {Source = source, ResolvedPath = _getPath(source)}, token);
 
             if (primaryPreflight.ErrorMessage != null)
             {
                 var errorMessage = Message.Error(primaryPreflight.ErrorMessage, NoSourcePosition.Instance,
-    MessageClasses.SelfAssembly);
+                    MessageClasses.SelfAssembly);
 
                 if (primaryPreflight.ModuleName != null)
                 {
                     return CreateDescription(primaryPreflight.ModuleName, Source.FromString(""),
                         NoSourcePosition.MissingFileName,
                         Enumerable.Empty<ModuleName>(),
-                        new[] { errorMessage });
+                        new[] {errorMessage});
                 }
                 else
                 {
-                    throw new BuildFailureException(null, "There {2} {0} {1} while trying to determine dependencies.", new[] { errorMessage });
+                    throw new BuildFailureException(null, "There {2} {0} {1} while trying to determine dependencies.",
+                        new[] {errorMessage});
                 }
             }
             else
             {
                 token.ThrowIfCancellationRequested();
-                return await _performCreateTargetDescription(primaryPreflight, source, token);
+                return await _performCreateTargetDescription(primaryPreflight, source, token, mode);
             }
+        }
+
+        private enum SelfAssemblyMode
+        {
+            RecurseIntoFileSystem = 0,
+            RegisterOnly
         }
 
         private readonly HashSet<ModuleName> _standardLibrary = new HashSet<ModuleName>();
@@ -222,7 +265,7 @@ namespace Prexonite.Compiler.Build.Internal
         }
 
         [NotNull]
-        private async Task<RefSpec> _resolveRefSpec([NotNull] RefSpec refSpec, CancellationToken token)
+        private async Task<RefSpec> _resolveRefSpec([NotNull] RefSpec refSpec, CancellationToken token, SelfAssemblyMode mode)
         // requires refSpec.ModuleName != null || refSpec.Source != null || refSpec.rawPath != null || refSpec.ResolvedPath != null
         // ensures result == refSpec && (TargetDescriptions.Contains(result) || refSpec.ErrorMessage != null)
         {
@@ -279,7 +322,7 @@ namespace Prexonite.Compiler.Build.Internal
                     {
                         refSpec.ModuleName = result.ModuleName;
                         _trace.TraceEvent(TraceEventType.Information, 0, "Accepted match {0} after preflight, ordering corresponding description.", result.ModuleName);
-                        await _orderTargetDescription(result, candidate, token);
+                        await _orderTargetDescription(result, candidate, token, mode);
                     }
                 }
             }
@@ -293,7 +336,7 @@ namespace Prexonite.Compiler.Build.Internal
             return refSpec;
         }
 
-        private Task<ITargetDescription> _orderTargetDescription(PreflightResult result, FileInfo candidate, CancellationToken token)
+        private Task<ITargetDescription> _orderTargetDescription(PreflightResult result, FileInfo candidate, CancellationToken token, SelfAssemblyMode mode)
         {
             if (candidate == null)
                 throw new ArgumentNullException("candidate");
@@ -303,21 +346,33 @@ namespace Prexonite.Compiler.Build.Internal
                     var src = Source.FromFile(candidate, Encoding);
                     await Task.Yield();
                     await _addToSearchPaths(candidate, actualToken);
-                    return await _performCreateTargetDescription(result, src, actualToken);
+                    return await _performCreateTargetDescription(result, src, actualToken, mode);
                 }, token);
         }
 
-        private async Task<ITargetDescription> _performCreateTargetDescription(PreflightResult result, ISource source, CancellationToken token)
+        private async Task<ITargetDescription> _performCreateTargetDescription(PreflightResult result, ISource source, CancellationToken token, SelfAssemblyMode mode)
         {
             Debug.Assert(result.ErrorMessage == null, "TargetDescription ordered despite the preflight result containing errors.");
             Debug.Assert(result.References.All(r => r.ErrorMessage == null), "TargetDescription ordered despite the preflight result containing errors.");
 
-            var refSpecResolveTasks =
-                result.References
-                .Select(r => _resolveRefSpec(r, token))
-                .ToArray();
-            await Task.WhenAll(refSpecResolveTasks);
-            var refSpecs = refSpecResolveTasks.Select(t => t.Result).ToArray();
+            RefSpec[] refSpecs;
+            switch (mode)
+            {
+                case SelfAssemblyMode.RecurseIntoFileSystem:
+                    var refSpecResolveTasks =
+                        result.References
+                        .Select(r => _resolveRefSpec(r, token, mode))
+                        .ToArray();
+                    await Task.WhenAll(refSpecResolveTasks);
+                    refSpecs = refSpecResolveTasks.Select(t => t.Result).ToArray();
+                    break;
+                case SelfAssemblyMode.RegisterOnly:
+                    refSpecs = result.References.Select(_forbidFileRefSpec).ToArray();
+                    break;
+                default:
+                    throw new ArgumentOutOfRangeException("mode", mode, Resources.SelfAssemblingPlan_performCreateTargetDescription_mode);
+            }
+            
             var buildMessages = refSpecs.Where(t => t.ErrorMessage != null).Select(
                     s =>
                     {
@@ -336,7 +391,10 @@ namespace Prexonite.Compiler.Build.Internal
             if (!result.SuppressStandardLibrary)
                 deps = deps.Append(StandardLibrary);
 
-            var reportedFileName = result.Path != null ? result.Path.ToString() : null;
+            var reportedFileName = 
+                result.Path != null ? result.Path.ToString() 
+                : result.ModuleName != null ? result.ModuleName.Id + ".pxs" 
+                : null;
 
             // Typically, duplicate requests are caught much earlier (based on full file paths)
             // But if the user of this self assembling build plan manually adds descriptions
@@ -346,6 +404,13 @@ namespace Prexonite.Compiler.Build.Internal
             // around targets in general (e.g., when symbolic links or duplicate files are involved)
             return TargetDescriptions.GetOrAdd(result.ModuleName,
                 mn => CreateDescription(mn, source, reportedFileName, deps, buildMessages));
+        }
+
+        private RefSpec _forbidFileRefSpec(RefSpec refSpec)
+        {
+            if (refSpec.ModuleName == null)
+                refSpec.ErrorMessage = refSpec.ErrorMessage ?? Resources.SelfAssemblingPlan__forbidFileRefSpec_notallowed;
+            return refSpec;
         }
 
         private IEnumerable<FileInfo> _pathCandidates(RefSpec refSepc, CancellationToken token)

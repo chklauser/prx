@@ -499,6 +499,8 @@
     <Content Include="Compiler\Grammar\Grammar.Readme.txt" />
     <Content Include="Prx.ico" />
     <EmbeddedResource Include="prxlib\legacy_symbols.pxs" />
+    <None Include="prxlib\prx.core.pxs" />
+    <None Include="prxlib\prx.prim.pxs" />
     <None Include="prxlib\sys.pxs" />
   </ItemGroup>
   <ItemGroup>

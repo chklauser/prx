@@ -424,4 +424,19 @@
   <data name="Program_DebugExit" xml:space="preserve">
     <value>Exiting Prx.Main normally. Press Enter to exit.</value>
   </data>
+  <data name="SelfAssemblingPlan_performCreateTargetDescription_mode" xml:space="preserve">
+    <value>Must be one of RecurseIntoFileSystem or RegisterOnly.</value>
+  </data>
+  <data name="SelfAssemblingPlan__forbidFileRefSpec_notallowed" xml:space="preserve">
+    <value>File path reference not allowed when just registering a module. Consider using ISelfAssemblingPlan.AssembleAsync instead.</value>
+  </data>
+  <data name="prx_prim" type="System.Resources.ResXFileRef, System.Windows.Forms">
+    <value>..\prxlib\prx.prim.pxs;System.String, mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
+  </data>
+    <data name="ModuleName_Module_id_cannot_be_null_or_empty_" xml:space="preserve">
+    <value>Module id cannot be null or empty.</value>
+  </data>
+    <data name="prx_core" type="System.Resources.ResXFileRef, System.Windows.Forms">
+        <value>..\prxlib\prx.core.pxs;System.String, mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
+    </data>
 </root>

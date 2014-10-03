@@ -24,15 +24,22 @@
 //  WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING 
 //  IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 using System.Diagnostics;
-using System.Text;
+using System.Linq;
 using System.Threading;
+using System.Threading.Tasks;
 using Prexonite.Compiler.Build.Internal;
+using Prexonite.Properties;
 
 namespace Prexonite.Compiler.Build
 {
     public static class Plan
     {
         public static readonly TraceSource Trace = new TraceSource("Prexonite.Compiler.Build");
+        private static readonly string[] _stdLibModules =
+        {
+            Resources.prx_prim,
+            Resources.prx_core
+        };
 
         public static IPlan CreateDefault()
         {
@@ -45,16 +52,25 @@ namespace Prexonite.Compiler.Build
             return CreateSelfAssembling(StandardLibraryPreference.Default);
         }
 
-        public static ISelfAssemblingPlan CreateSelfAssembling(StandardLibraryPreference stdPreference)
+        public static async Task<ISelfAssemblingPlan> CreateSelfAssemblingAsync(StandardLibraryPreference stdPreference,
+            CancellationToken token)
         {
             var plan = new SelfAssemblingPlan();
             if (stdPreference == StandardLibraryPreference.Default)
             {
-                var stdlib = plan.AssembleAsync(Source.FromString(Properties.Resources.sys),
-                    CancellationToken.None).Result;
-                plan.StandardLibrary.Add(stdlib.Name); 
+                // Provide modules that the standard library may be composed of. No dependency checking.
+                await Task.WhenAll(_stdLibModules.Select(s => plan.RegisterModule(Source.FromString(s), token)));
+
+                // Describe standard library. Dependencies must be satisfied
+                var stdlib = await plan.AssembleAsync(Source.FromString(Resources.sys), token);
+                plan.StandardLibrary.Add(stdlib.Name);
             }
             return plan;
+        }
+
+        public static ISelfAssemblingPlan CreateSelfAssembling(StandardLibraryPreference stdPreference)
+        {
+            return CreateSelfAssemblingAsync(stdPreference, CancellationToken.None).Result;
         }
     }
 

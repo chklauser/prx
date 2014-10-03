@@ -26,6 +26,7 @@
 using System;
 using System.Diagnostics;
 using System.Linq;
+using Prexonite.Properties;
 using Prexonite.Types;
 
 namespace Prexonite.Modular
@@ -61,7 +62,7 @@ namespace Prexonite.Modular
         public ModuleName(string id, Version version)
         {
             if (String.IsNullOrEmpty(id))
-                throw new ArgumentException("Module id cannot be null or empty.","id");
+                throw new ArgumentException(Resources.ModuleName_Module_id_cannot_be_null_or_empty_,"id");
 
             if (version == null)
                 throw new ArgumentNullException("version");
