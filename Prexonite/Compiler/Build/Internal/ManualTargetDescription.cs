@@ -127,6 +127,31 @@ namespace Prexonite.Compiler.Build.Internal
                                         fsContext = null;
                                     }
                                     ldr.LoadFromReader(reader, _fileName);
+                                    if (ldr.ErrorCount > 0 || ldr.Warnings.Count > 0)
+                                    {
+                                        Plan.Trace.TraceEvent(TraceEventType.Error, 0, "Build of {0} completed with {1} error(s) and {2} warning(s).", 
+                                            this, ldr.ErrorCount, ldr.Warnings.Count);
+                                    }
+                                    foreach (var msg in ldr.Infos.Append(ldr.Warnings).Append(ldr.Errors).OrderBy(m => m))
+                                    {
+                                        TraceEventType evType;
+                                        switch (msg.Severity)
+                                        {
+                                            case MessageSeverity.Error:
+                                                evType = TraceEventType.Error;
+                                                break;
+                                            case MessageSeverity.Warning:
+                                                evType = TraceEventType.Warning;
+                                                break;
+                                            case MessageSeverity.Info:
+                                                evType = TraceEventType.Information;
+                                                break;
+                                            default:
+                                                throw new ArgumentOutOfRangeException();
+                                        }
+                                        Plan.Trace.TraceEvent(evType, 0, "({0}) {1}", this, msg);
+                                    }
+
                                     if (fsContext != null)
                                     {
                                         ldr.LoadPaths.Pop();
@@ -154,8 +179,8 @@ namespace Prexonite.Compiler.Build.Internal
                     else
                     {
                         Plan.Trace.TraceEvent(TraceEventType.Error, 0,
-                            "Not all dependencies of {0} were built successfully. Waiting for other dependencies to finish and then return a failed target.",
-                            this);
+                            "Not all dependencies of {0} were built successfully. Waiting for other dependencies to finish and then return a failed target. Failed dependencies: {1}",
+                            this, dependencies.Where(d => !d.Value.Result.IsSuccessful).Select(d => d.Key).ToEnumerationString());
                         Task.WaitAll(dependencies.Values.ToArray<Task>());
                         return DefaultModuleTarget._FromLoader(ldr, aggregateExceptions.ToArray(), aggregateMessages);
                     }
