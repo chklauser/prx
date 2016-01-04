@@ -93,8 +93,8 @@ namespace Prexonite.Compiler.Cil
         public BranchHandling AssessJump(int sourceAddr, int targetAddr)
         {
             var decisions =
-                (from st in _involvedRegions(_loci[sourceAddr].Regions, _loci[targetAddr].Regions)
-                 select _assesJumpForTwoRegions(st.Item1, st.Item2, sourceAddr, targetAddr));
+                from st in _involvedRegions(_loci[sourceAddr].Regions, _loci[targetAddr].Regions)
+                select _assesJumpForTwoRegions(st.Item1, st.Item2, sourceAddr, targetAddr);
 
             return decisions.Aggregate(_integrateBranchHandling);
         }
@@ -179,7 +179,7 @@ namespace Prexonite.Compiler.Cil
         private BranchHandling _assesJumpForTwoRegions(Region sourceRegion, Region targetRegion,
             int sourceAddr, int targetAddr)
         {
-            if (sourceRegion == targetRegion)
+            if (Equals(sourceRegion, targetRegion))
                 return BranchHandling.Branch;
 
             if (sourceRegion == null)
@@ -313,7 +313,7 @@ namespace Prexonite.Compiler.Cil
                     break;
                 default:
                     throw new ArgumentException(
-                        "The supplied instruction does not involve branching.", "ins");
+                        "The supplied instruction does not involve branching.", nameof(ins));
             }
 
             var handling = AssessJump(sourceAddr, targetAddr);
@@ -380,9 +380,8 @@ namespace Prexonite.Compiler.Cil
                     _state.EmitSetReturnValue();
                     goto case OpCode.ret_exit;
                 case OpCode.ret_exit:
-                    var max = _state.Source.Code.Count;
                     _clearStack(sourceAddr);
-                    _state.Il.Emit(OpCodes.Br, _state.InstructionLabels[max]);
+                    leave();
                     break;
                 case OpCode.ret_break:
                     _state._EmitAssignReturnMode(ReturnMode.Break);
