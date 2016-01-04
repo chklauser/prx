@@ -1,4 +1,5 @@
-﻿ 
+﻿//< Assembly Name="System.Core.dll" >
+ 
 // ReSharper disable RedundantUsingDirective
 // ReSharper disable RedundantNameQualifier
 using System;
