@@ -29,7 +29,7 @@ using JetBrains.Annotations;
 namespace Prexonite.Compiler
 {
     [Serializable]
-    public class Message : IEquatable<Message>
+    public class Message : IEquatable<Message>, IComparable<Message>
     {
         [NotNull]
         public static Message Create(MessageSeverity severity, [NotNull, LocalizationRequired] string text, [NotNull] ISourcePosition position, string messageClass)
@@ -81,6 +81,36 @@ namespace Prexonite.Compiler
             return Create(MessageSeverity.Info, message, position, messageClass);
         }
 
+        public int CompareTo(Message other)
+        {
+            if (other == null)
+            {
+                return -1;
+            }
+
+            var r = String.Compare(File, other.File, StringComparison.Ordinal);
+            if (r != 0)
+                return r;
+            
+            r = Line.CompareTo(other.Line);
+            if (r != 0)
+                return r;
+
+            r = Column.CompareTo(other.Column);
+            if (r != 0)
+                return r;
+
+            r = Severity.CompareTo(other.Severity);
+            if (r != 0)
+                return r;
+
+            r = String.Compare(MessageClass, other.MessageClass, StringComparison.Ordinal);
+            if (r != 0)
+                return r;
+
+            return r;
+        }
+
         public override string ToString()
         {
             return String.Format(MessageFormat, Line, Column, Text, File);
@@ -120,5 +150,7 @@ namespace Prexonite.Compiler
                 return hashCode;
             }
         }
+
+
     }
 }

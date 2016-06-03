@@ -114,10 +114,21 @@ namespace PrexoniteTests.Tests.Configurations
             Trace.CorrelationManager.StartLogicalOperation("Load stdlib");
             try
             {
+                var primName = new ModuleName("prx.prim", new Version(0, 0));
+                var primDesc = Cache.CreateDescription(primName, Source.FromString(Resources.prx_prim),
+                    "prxlib/prx.prim.pxs", Enumerable.Empty<ModuleName>());
+                Cache.TargetDescriptions.Add(primDesc);
+
+                var coreName = new ModuleName("prx.core", new Version(0, 0));
+                var coreDesc = Cache.CreateDescription(coreName, Source.FromString(Resources.prx_core),
+                    "prxlib/prx.core.pxs", primName.Singleton());
+                Cache.TargetDescriptions.Add(coreDesc);
+
                 var sysName = new ModuleName("sys", new Version(0, 0));
                 var desc = Cache.CreateDescription(sysName, Source.FromString(Resources.sys), "prxlib/sys.pxs",
-                    Enumerable.Empty<ModuleName>());
+                    new[]{ primName, coreName });
                 Cache.TargetDescriptions.Add(desc);
+
                 Cache.Build(sysName);
                 return Cache.TargetDescriptions[sysName];
             }
