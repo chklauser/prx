@@ -37,7 +37,7 @@ namespace Prexonite.Compiler.Ast
         public AstReference(ISourcePosition position, [NotNull] EntityRef entity) : base(position)
         {
             if (entity == null)
-                throw new ArgumentNullException("entity");
+                throw new ArgumentNullException(nameof(entity));
             _entity = entity;
         }
 
@@ -116,7 +116,7 @@ namespace Prexonite.Compiler.Ast
                     }
                     break;
                 default:
-                    throw new ArgumentOutOfRangeException("semantics");
+                    throw new ArgumentOutOfRangeException(nameof(semantics));
             }
         }
 

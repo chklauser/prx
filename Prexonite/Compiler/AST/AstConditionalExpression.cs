@@ -37,7 +37,7 @@ namespace Prexonite.Compiler.Ast
             : base(file, line, column)
         {
             if (condition == null)
-                throw new ArgumentNullException("condition");
+                throw new ArgumentNullException(nameof(condition));
             Condition = condition;
             IsNegative = isNegative;
         }

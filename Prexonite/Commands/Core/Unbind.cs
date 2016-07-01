@@ -94,7 +94,7 @@ namespace Prexonite.Commands.Core
         public override PValue Run(StackContext sctx, PValue[] args)
         {
             if (args == null)
-                throw new ArgumentNullException("args");
+                throw new ArgumentNullException(nameof(args));
             foreach (var arg in args)
                 Run(sctx, arg);
             return PType.Null.CreatePValue();
@@ -115,10 +115,10 @@ namespace Prexonite.Commands.Core
         public static PValue Run(StackContext sctx, PValue arg)
         {
             if (sctx == null)
-                throw new ArgumentNullException("sctx");
+                throw new ArgumentNullException(nameof(sctx));
 
             if (arg == null)
-                throw new ArgumentNullException("arg");
+                throw new ArgumentNullException(nameof(arg));
 
             if (arg.IsNull)
                 throw new PrexoniteException("The unbind command cannot process Null.");
@@ -186,7 +186,7 @@ namespace Prexonite.Commands.Core
                 if (!compileTimeValue.TryGetLocalVariableReference(out local))
                     throw new ArgumentException(
                         "CIL implementation of Core.Unbind command only accepts local variable references.",
-                        "staticArgv");
+                        nameof(staticArgv));
 
                 CilSymbol cilSymbol;
                 if (!state.Symbols.TryGetValue(local.Id, out cilSymbol) ||

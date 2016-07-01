@@ -72,7 +72,7 @@ namespace Prexonite.Compiler.Macro.Commands
             : base(alias)
         {
             if (callImplementation == null)
-                throw new ArgumentNullException("callImplementation");
+                throw new ArgumentNullException(nameof(callImplementation));
 
             _callImplementation = callImplementation;
         }

@@ -88,7 +88,7 @@ namespace Prexonite.Commands.Core
         public override PValue Run(StackContext sctx, PValue[] args)
         {
             if (sctx == null)
-                throw new ArgumentNullException("sctx");
+                throw new ArgumentNullException(nameof(sctx));
             if (args != null && args.Length > 0)
                 throw new PrexoniteException("The meta command no longer accepts arguments.");
 

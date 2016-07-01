@@ -53,7 +53,7 @@ namespace Prexonite.Commands
         public NestedPCommand(ICommand action)
         {
             if (action == null)
-                throw new ArgumentNullException("action");
+                throw new ArgumentNullException(nameof(action));
             _action = action;
         }
 

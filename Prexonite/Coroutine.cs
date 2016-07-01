@@ -54,7 +54,7 @@ namespace Prexonite
         public Coroutine(StackContext corctx)
         {
             if (corctx == null)
-                throw new ArgumentNullException("corctx");
+                throw new ArgumentNullException(nameof(corctx));
             _corctx = corctx;
         }
 

@@ -57,15 +57,15 @@ namespace Prexonite
             PValue[] args)
         {
             if (parentEngine == null)
-                throw new ArgumentNullException("parentEngine");
+                throw new ArgumentNullException(nameof(parentEngine));
             if (parentApplication == null)
-                throw new ArgumentNullException("parentApplication");
+                throw new ArgumentNullException(nameof(parentApplication));
             if (importedNamespaces == null)
-                throw new ArgumentNullException("importedNamespaces");
+                throw new ArgumentNullException(nameof(importedNamespaces));
             if (callable == null)
-                throw new ArgumentNullException("callable");
+                throw new ArgumentNullException(nameof(callable));
             if (args == null)
-                throw new ArgumentNullException("args");
+                throw new ArgumentNullException(nameof(args));
 
             _engine = parentEngine;
             _application = parentApplication;

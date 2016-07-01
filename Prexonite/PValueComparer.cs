@@ -41,7 +41,7 @@ namespace Prexonite
         public PValueComparer(StackContext sctx)
         {
             if (sctx == null)
-                throw new ArgumentNullException("sctx");
+                throw new ArgumentNullException(nameof(sctx));
             this.sctx = sctx;
         }
 

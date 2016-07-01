@@ -26,9 +26,9 @@ namespace Prexonite.Compiler.Symbolic.Internal
         private ModuleLevelView([NotNull] SymbolStore backingStore, [NotNull] ConcurrentDictionary<Namespace, LocalNamespaceImpl> localProxies)
         {
             if (backingStore == null)
-                throw new ArgumentNullException("backingStore");
+                throw new ArgumentNullException(nameof(backingStore));
             if (localProxies == null)
-                throw new ArgumentNullException("localProxies");
+                throw new ArgumentNullException(nameof(localProxies));
 
             _backingStore = backingStore;
             _localProxies = localProxies;
@@ -78,7 +78,7 @@ namespace Prexonite.Compiler.Symbolic.Internal
                 set
                 {
                     if (value == null)
-                        throw new ArgumentNullException("value");
+                        throw new ArgumentNullException(nameof(value));
 
                     if (_prefix != null)
                         throw new InvalidOperationException(String.Format("The prefix for this namespace is already assigned. (Existing prefix: '{0}', new prefix: '{1}')",_prefix,value));
@@ -105,7 +105,7 @@ namespace Prexonite.Compiler.Symbolic.Internal
             public override void DeclareExports(IEnumerable<KeyValuePair<string, Symbol>> exportScope)
             {
                 if (exportScope == null)
-                    throw new ArgumentNullException("exportScope");
+                    throw new ArgumentNullException(nameof(exportScope));
                 
                 foreach (var newExport in exportScope)
                     _exportScope.Declare(newExport.Key, newExport.Value);

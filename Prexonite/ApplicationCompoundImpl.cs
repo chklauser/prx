@@ -43,7 +43,7 @@ namespace Prexonite
             internal set
             {
                 if (value == null)
-                    throw new ArgumentNullException("value");
+                    throw new ArgumentNullException(nameof(value));
 
                 _cache = value;
             }

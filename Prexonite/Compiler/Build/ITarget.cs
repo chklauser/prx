@@ -73,9 +73,9 @@ namespace Prexonite.Compiler.Build
         public static void ThrowIfFailed(this ITarget target, ITargetDescription description)
         {
             if (target == null)
-                throw new ArgumentNullException("target");
+                throw new ArgumentNullException(nameof(target));
             if (description == null)
-                throw new ArgumentNullException("description");
+                throw new ArgumentNullException(nameof(description));
             if (target.Exception != null)
                 throw target.Exception;
             else if (target.Messages.Any(m => m.Severity == MessageSeverity.Error))

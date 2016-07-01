@@ -55,7 +55,7 @@ namespace Prexonite.Compiler.Cil
         public static void Compile(Application app, Engine targetEngine, FunctionLinking linking)
         {
             if (app == null)
-                throw new ArgumentNullException("app");
+                throw new ArgumentNullException(nameof(app));
             Compile(app.Functions, targetEngine, linking);
         }
 
@@ -69,7 +69,7 @@ namespace Prexonite.Compiler.Cil
         public static void Compile(StackContext sctx, Application app, FunctionLinking linking)
         {
             if (sctx == null)
-                throw new ArgumentNullException("sctx");
+                throw new ArgumentNullException(nameof(sctx));
             Compile(app, sctx.ParentEngine, linking);
         }
 
@@ -90,9 +90,9 @@ namespace Prexonite.Compiler.Cil
         public static void Compile(StackContext sctx, List<PValue> lst, FunctionLinking linking)
         {
             if (lst == null)
-                throw new ArgumentNullException("lst");
+                throw new ArgumentNullException(nameof(lst));
             if (sctx == null)
-                throw new ArgumentNullException("sctx");
+                throw new ArgumentNullException(nameof(sctx));
             var functions = new List<PFunction>();
             foreach (var value in lst)
             {
@@ -258,7 +258,7 @@ namespace Prexonite.Compiler.Cil
         private static bool _checkQualification(PFunction source, Engine targetEngine)
         {
             if (source == null)
-                throw new ArgumentNullException("source");
+                throw new ArgumentNullException(nameof(source));
             lock (source)
             {
                 string reason;
@@ -312,9 +312,9 @@ namespace Prexonite.Compiler.Cil
         private static bool _check(PFunction source, Engine targetEngine, out string reason)
         {
             if (source == null)
-                throw new ArgumentNullException("source");
+                throw new ArgumentNullException(nameof(source));
             if (targetEngine == null)
-                throw new ArgumentNullException("targetEngine");
+                throw new ArgumentNullException(nameof(targetEngine));
             //Application does not allow cil compilation
             if ((!source.Meta.ContainsKey(PFunction.VolatileKey)) &&
                 source.ParentApplication.Meta[PFunction.VolatileKey].Switch)

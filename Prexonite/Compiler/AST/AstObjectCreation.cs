@@ -66,7 +66,7 @@ namespace Prexonite.Compiler.Ast
             : base(file, line, col)
         {
             if (type == null)
-                throw new ArgumentNullException("type");
+                throw new ArgumentNullException(nameof(type));
             _typeExpr = type;
             _proxy = new ArgumentsProxy(_arguments);
         }

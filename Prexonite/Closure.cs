@@ -71,9 +71,9 @@ namespace Prexonite
         public Closure(PFunction func, PVariable[] sharedVariables)
         {
             if (func == null)
-                throw new ArgumentNullException("func");
+                throw new ArgumentNullException(nameof(func));
             if (sharedVariables == null)
-                throw new ArgumentNullException("sharedVariables");
+                throw new ArgumentNullException(nameof(sharedVariables));
 
             _function = func;
             _sharedVariables = sharedVariables;

@@ -41,13 +41,19 @@ namespace Prx.Tests
             return; // */
 
             //*
-            var c = new CompilerParser();
+//            var c = new CompilerParser();
+//            c.SetupCompilerEngine();
+//            c.DeDereference();
+//            c.TeardownCompilerEngine();
+//            Console.WriteLine("\t\t**\tFinished");
+//            Console.ReadLine();
+//            return; // */
+
+            var c = new ShellExtensions();
             c.SetupCompilerEngine();
-            c.DeDereference();
+            c.FlagLiteralsEnabledInherit();
             c.TeardownCompilerEngine();
             Console.WriteLine("\t\t**\tFinished");
-            Console.ReadLine();
-            return; // */
         }
     }
 }

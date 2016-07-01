@@ -54,7 +54,7 @@ namespace Prexonite.Compiler.Ast
             : base(position)
         {
             if (id == null)
-                throw new ArgumentNullException("id");
+                throw new ArgumentNullException(nameof(id));
             
             _expression = expression;
             _id = id;

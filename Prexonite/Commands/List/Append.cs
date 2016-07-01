@@ -67,14 +67,14 @@ namespace Prexonite.Commands.List
             if (args == null)
                 yield break;
             if (sctxCarrier == null)
-                throw new ArgumentNullException("sctxCarrier");
+                throw new ArgumentNullException(nameof(sctxCarrier));
 
             var sctx = sctxCarrier.StackContext;
 
             foreach (var arg in args)
             {
                 if (arg == null)
-                    throw new ArgumentException("No element in args must be null.", "args");
+                    throw new ArgumentException("No element in args must be null.", nameof(args));
                 var xs = Map._ToEnumerable(sctx, arg);
                 if (xs == null)
                     continue;

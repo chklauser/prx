@@ -34,7 +34,7 @@ namespace Prexonite.Compiler.Build.Internal
         public StringSource(string source)
         {
             if ((object) source == null)
-                throw new System.ArgumentNullException("source");
+                throw new System.ArgumentNullException(nameof(source));
             _source = source;
         }
 

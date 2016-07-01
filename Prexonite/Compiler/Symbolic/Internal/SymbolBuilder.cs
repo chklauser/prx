@@ -70,7 +70,7 @@ namespace Prexonite.Compiler.Symbolic.Internal
         public SymbolBuilder AddMessage([NotNull]Message message)
         {
             if (message == null)
-                throw new ArgumentNullException("message");
+                throw new ArgumentNullException(nameof(message));
             _messages.Enqueue(message);
             return this;
         }

@@ -170,6 +170,7 @@ private IEnumerable<string> _getVMTestClasses()
         "PrexoniteTests.Tests.PartialApplication",
         "PrexoniteTests.Tests.Lazy",
         "PrexoniteTests.Tests.Translation",
+        "PrexoniteTests.Tests.ShellExtensions"
     };
 }
 

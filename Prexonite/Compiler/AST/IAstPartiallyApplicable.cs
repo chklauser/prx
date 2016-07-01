@@ -270,7 +270,7 @@ namespace Prexonite.Compiler.Ast
         {
             if (!placeholder.Index.HasValue)
                 throw new ArgumentException("Placeholder must have its index assigned.",
-                    "placeholder");
+                    nameof(placeholder));
 
             var call = new AstIndirectCall(placeholder.Position, PCall.Get,
                                            new AstReference(placeholder.Position, EntityRef.Command.Create(Id.Alias)));

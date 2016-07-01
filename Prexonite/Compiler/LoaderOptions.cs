@@ -27,7 +27,6 @@ using System;
 using System.Diagnostics;
 using JetBrains.Annotations;
 using Prexonite.Compiler.Symbolic;
-using Prexonite.Compiler.Symbolic.Internal;
 
 namespace Prexonite.Compiler
 {
@@ -38,23 +37,23 @@ namespace Prexonite.Compiler
 
         public LoaderOptions([CanBeNull] Engine parentEngine, [CanBeNull] Application targetApplication)
         {
-            _parentEngine = parentEngine;
-            _targetApplication = targetApplication;
-            _symbols = SymbolStore.Create();
+            ParentEngine = parentEngine;
+            TargetApplication = targetApplication;
+            Symbols = SymbolStore.Create();
         }
 
         public LoaderOptions([NotNull] Engine parentEngine, [NotNull] Application targetApplication, [NotNull] ISymbolView<Symbol> externalSymbols)
         {
             if (parentEngine == null)
-                throw new ArgumentNullException("parentEngine");
+                throw new ArgumentNullException(nameof(parentEngine));
             if (targetApplication == null)
-                throw new ArgumentNullException("targetApplication");
+                throw new ArgumentNullException(nameof(targetApplication));
             if (externalSymbols == null)
-                throw new ArgumentNullException("externalSymbols");
+                throw new ArgumentNullException(nameof(externalSymbols));
             
-            _parentEngine = parentEngine;
-            _targetApplication = targetApplication;
-            _symbols = SymbolStore.Create(externalSymbols);
+            ParentEngine = parentEngine;
+            TargetApplication = targetApplication;
+            Symbols = SymbolStore.Create(externalSymbols);
         }
 
         #endregion
@@ -62,31 +61,13 @@ namespace Prexonite.Compiler
         #region Properties
 
         [CanBeNull]
-        private readonly Engine _parentEngine;
+        public Engine ParentEngine { get; }
 
         [CanBeNull]
-        public Engine ParentEngine
-        {
-            get { return _parentEngine; }
-        }
-
-        [CanBeNull]
-        private readonly Application _targetApplication;
-
-        [CanBeNull]
-        public Application TargetApplication
-        {
-            get { return _targetApplication; }
-        }
+        public Application TargetApplication { get; }
 
         [NotNull]
-        private readonly SymbolStore _symbols;
-
-        [NotNull]
-        public SymbolStore Symbols
-        {
-            get { return _symbols; }
-        }
+        public SymbolStore Symbols { get; }
 
         private bool? _registerCommands;
         public bool RegisterCommands
@@ -137,19 +118,33 @@ namespace Prexonite.Compiler
             set { _preflightModeEnabled = value; }
         }
 
+        private bool? _flagLiteralsEnabled;
+
+        ///<summary>
+        /// Determines whether flag literals (-f, --query, --option=value) are parsed globally. Not backwards compatible
+        /// because of overlap with unary minus and pre-decrement.
+        ///</summary>
+        [PublicAPI]
+        public bool FlagLiteralsEnabled
+        {
+            get { return _flagLiteralsEnabled ?? false; }
+            set { _flagLiteralsEnabled = value; }
+        }
+
         #endregion
 
         public void InheritFrom([NotNull] LoaderOptions options)
         {
             if (options == null)
-                throw new ArgumentNullException("options");
+                throw new ArgumentNullException(nameof(options));
 
-            RegisterCommands = _registerCommands ?? options.RegisterCommands;
-            ReconstructSymbols = _reconstructSymbols ?? options.ReconstructSymbols;
-            StoreSymbols = _storeSymbols ?? options.StoreSymbols;
-            UseIndicesLocally = _useIndicesLocally ?? options.UseIndicesLocally;
-            StoreSourceInformation = _storeSourceInformation ?? options.StoreSourceInformation;
-            PreflightModeEnabled = _preflightModeEnabled ?? options.PreflightModeEnabled;
+            _registerCommands = _registerCommands ?? options._registerCommands;
+            _reconstructSymbols = _reconstructSymbols ?? options._reconstructSymbols;
+            _storeSymbols = _storeSymbols ?? options._storeSymbols;
+            _useIndicesLocally = _useIndicesLocally ?? options._useIndicesLocally;
+            _storeSourceInformation = _storeSourceInformation ?? options._storeSourceInformation;
+            _preflightModeEnabled = _preflightModeEnabled ?? options._preflightModeEnabled;
+            _flagLiteralsEnabled = _flagLiteralsEnabled ?? options._flagLiteralsEnabled;
         }
     }
 }

@@ -75,7 +75,7 @@ namespace Prexonite.Compiler.Macro
         public MacroSession([NotNull] CompilerTarget target)
         {
             if(target == null)
-                throw new ArgumentNullException("target");
+                throw new ArgumentNullException(nameof(target));
 
             _target = target;
             _astFactory = _target.Factory;
@@ -664,7 +664,7 @@ namespace Prexonite.Compiler.Macro
         public int StoreForTransport(PValue obj)
         {
             if (obj == null)
-                throw new ArgumentNullException("obj");
+                throw new ArgumentNullException(nameof(obj));
             var transportId = _transportStore.Count;
             _transportStore.Add(obj);
             return transportId;

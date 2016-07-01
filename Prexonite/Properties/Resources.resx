@@ -419,7 +419,11 @@
   </data>
   <data name="sys" type="System.Resources.ResXFileRef, System.Windows.Forms">
     <value>..\prxlib\sys.pxs;System.String, mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089;utf-8</value>
-    <comment>The Prexonite 1 standard library interface</comment>
+    <comment>The Prexonite 2 standard library interface</comment>
+  </data>
+  <data name="sh" type="System.Resources.ResXFileRef, System.Windows.Forms">
+    <value>..\prxlib\sh.pxs;System.String, mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089;utf-8</value>
+    <comment>Runtime support for the Prexonite shell scripting extensions</comment>
   </data>
   <data name="Program_DebugExit" xml:space="preserve">
     <value>Exiting Prx.Main normally. Press Enter to exit.</value>

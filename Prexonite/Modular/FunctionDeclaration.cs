@@ -45,7 +45,7 @@ namespace Prexonite.Modular
         public FunctionIdChangingEventArgs(string newId)
         {
             if(string.IsNullOrEmpty(newId))
-                throw new ArgumentException("new id cannot be null or empty.","newId");
+                throw new ArgumentException("new id cannot be null or empty.",nameof(newId));
             _newId = newId;
         }
 
@@ -307,7 +307,7 @@ namespace Prexonite.Modular
             public Impl(string id, Module module)
             {
                 if(String.IsNullOrWhiteSpace(id))
-                    throw new ArgumentException("Function id cannot be null, empty or just whitespace.","id");
+                    throw new ArgumentException("Function id cannot be null, empty or just whitespace.",nameof(id));
                 var meta = MetaTable.Create(this);
                 meta[PFunction.IdKey] = id;
                 meta[Application.ImportKey] = module.Meta[Application.ImportKey];

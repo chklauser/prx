@@ -35,7 +35,7 @@ namespace Prx.Benchmarking
             long overheadMilliseconds)
         {
             if (parentEntry == null)
-                throw new ArgumentNullException("parentEntry");
+                throw new ArgumentNullException(nameof(parentEntry));
             _entry = parentEntry;
             _rawMilliseconds = rawMilliseconds;
             _overheadMilliseconds = overheadMilliseconds;

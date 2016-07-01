@@ -111,7 +111,7 @@ namespace Prexonite.Compiler.Cil
         public MethodInfo DefineImplementationMethod(string id)
         {
             if (id == null)
-                throw new ArgumentNullException("id");
+                throw new ArgumentNullException(nameof(id));
 
             var parameterTypes = new[]
                 {
@@ -199,7 +199,7 @@ namespace Prexonite.Compiler.Cil
         public ILGenerator GetIlGenerator(string id)
         {
             if (id == null)
-                throw new ArgumentNullException("id");
+                throw new ArgumentNullException(nameof(id));
             MethodInfo m;
             if (!_implementationTable.TryGetValue(id, out m))
                 throw new PrexoniteException("No implementation stub for a function named " + id +
@@ -254,7 +254,7 @@ namespace Prexonite.Compiler.Cil
         public CilFunction GetDelegate(string id)
         {
             if (id == null)
-                throw new ArgumentNullException("id");
+                throw new ArgumentNullException(nameof(id));
             MethodInfo m;
             if (!_implementationTable.TryGetValue(id, out m))
                 throw new PrexoniteException("No implementation for a function named " + id +

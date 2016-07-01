@@ -202,7 +202,7 @@ namespace Prexonite.Modular
         public ModuleImpl(ModuleName name)
         {
             if (name == null)
-                throw new ArgumentNullException("name");
+                throw new ArgumentNullException(nameof(name));
             
             _name = name;
             var m = MetaTable.Create(this);
@@ -220,7 +220,7 @@ namespace Prexonite.Modular
             internal set
             {
                 if (value == null)
-                    throw new ArgumentNullException("value");
+                    throw new ArgumentNullException(nameof(value));
                 
                 _cache = value;
             }

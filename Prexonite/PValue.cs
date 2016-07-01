@@ -102,7 +102,7 @@ namespace Prexonite
             if (value == null)
                 type = NullPType.Instance;
             else if ((object) type == null)
-                throw new ArgumentNullException("type");
+                throw new ArgumentNullException(nameof(type));
 
             _value = value;
             _type = type;
@@ -432,7 +432,7 @@ namespace Prexonite
         public bool UnaryNegation(StackContext sctx, out PValue result)
         {
             if (sctx == null)
-                throw new ArgumentNullException("sctx");
+                throw new ArgumentNullException(nameof(sctx));
             return Type.UnaryNegation(sctx, this, out result);
         }
 
@@ -451,7 +451,7 @@ namespace Prexonite
         public bool LogicalNot(StackContext sctx, out PValue result)
         {
             if (sctx == null)
-                throw new ArgumentNullException("sctx");
+                throw new ArgumentNullException(nameof(sctx));
             return Type.LogicalNot(sctx, this, out result);
         }
 
@@ -469,7 +469,7 @@ namespace Prexonite
         public bool OnesComplement(StackContext sctx, out PValue result)
         {
             if (sctx == null)
-                throw new ArgumentNullException("sctx");
+                throw new ArgumentNullException(nameof(sctx));
             return Type.OnesComplement(sctx, this, out result);
         }
 
@@ -487,7 +487,7 @@ namespace Prexonite
         public bool Increment(StackContext sctx, out PValue result)
         {
             if (sctx == null)
-                throw new ArgumentNullException("sctx");
+                throw new ArgumentNullException(nameof(sctx));
             return Type.Increment(sctx, this, out result);
         }
 
@@ -505,7 +505,7 @@ namespace Prexonite
         public bool Decrement(StackContext sctx, out PValue result)
         {
             if (sctx == null)
-                throw new ArgumentNullException("sctx");
+                throw new ArgumentNullException(nameof(sctx));
             return Type.Decrement(sctx, this, out result);
         }
 
@@ -530,7 +530,7 @@ namespace Prexonite
         public bool Addition(StackContext sctx, PValue rightOperand, out PValue result)
         {
             if (sctx == null)
-                throw new ArgumentNullException("sctx");
+                throw new ArgumentNullException(nameof(sctx));
             if (Type.Addition(sctx, this, rightOperand, out result))
                 return true;
             else
@@ -556,7 +556,7 @@ namespace Prexonite
         public bool Subtraction(StackContext sctx, PValue rightOperand, out PValue result)
         {
             if (sctx == null)
-                throw new ArgumentNullException("sctx");
+                throw new ArgumentNullException(nameof(sctx));
             if (Type.Subtraction(sctx, this, rightOperand, out result))
                 return true;
             else
@@ -582,7 +582,7 @@ namespace Prexonite
         public bool Multiply(StackContext sctx, PValue rightOperand, out PValue result)
         {
             if (sctx == null)
-                throw new ArgumentNullException("sctx");
+                throw new ArgumentNullException(nameof(sctx));
             if (Type.Multiply(sctx, this, rightOperand, out result))
                 return true;
             else
@@ -608,7 +608,7 @@ namespace Prexonite
         public bool Division(StackContext sctx, PValue rightOperand, out PValue result)
         {
             if (sctx == null)
-                throw new ArgumentNullException("sctx");
+                throw new ArgumentNullException(nameof(sctx));
             if (Type.Division(sctx, this, rightOperand, out result))
                 return true;
             else
@@ -634,7 +634,7 @@ namespace Prexonite
         public bool Modulus(StackContext sctx, PValue rightOperand, out PValue result)
         {
             if (sctx == null)
-                throw new ArgumentNullException("sctx");
+                throw new ArgumentNullException(nameof(sctx));
             if (Type.Modulus(sctx, this, rightOperand, out result))
                 return true;
             else
@@ -660,7 +660,7 @@ namespace Prexonite
         public bool BitwiseAnd(StackContext sctx, PValue rightOperand, out PValue result)
         {
             if (sctx == null)
-                throw new ArgumentNullException("sctx");
+                throw new ArgumentNullException(nameof(sctx));
             if (Type.BitwiseAnd(sctx, this, rightOperand, out result))
                 return true;
             else
@@ -686,7 +686,7 @@ namespace Prexonite
         public bool BitwiseOr(StackContext sctx, PValue rightOperand, out PValue result)
         {
             if (sctx == null)
-                throw new ArgumentNullException("sctx");
+                throw new ArgumentNullException(nameof(sctx));
             if (Type.BitwiseOr(sctx, this, rightOperand, out result))
                 return true;
             else
@@ -712,7 +712,7 @@ namespace Prexonite
         public bool ExclusiveOr(StackContext sctx, PValue rightOperand, out PValue result)
         {
             if (sctx == null)
-                throw new ArgumentNullException("sctx");
+                throw new ArgumentNullException(nameof(sctx));
             if (Type.ExclusiveOr(sctx, this, rightOperand, out result))
                 return true;
             else
@@ -737,7 +737,7 @@ namespace Prexonite
         public bool Equality(StackContext sctx, PValue rightOperand, out PValue result)
         {
             if (sctx == null)
-                throw new ArgumentNullException("sctx");
+                throw new ArgumentNullException(nameof(sctx));
             if (Type.Equality(sctx, this, rightOperand, out result))
                 return true;
             else
@@ -762,7 +762,7 @@ namespace Prexonite
         public bool Inequality(StackContext sctx, PValue rightOperand, out PValue result)
         {
             if (sctx == null)
-                throw new ArgumentNullException("sctx");
+                throw new ArgumentNullException(nameof(sctx));
             if (Type.Inequality(sctx, this, rightOperand, out result))
                 return true;
             else
@@ -787,7 +787,7 @@ namespace Prexonite
         public bool GreaterThan(StackContext sctx, PValue rightOperand, out PValue result)
         {
             if (sctx == null)
-                throw new ArgumentNullException("sctx");
+                throw new ArgumentNullException(nameof(sctx));
             if (Type.GreaterThan(sctx, this, rightOperand, out result))
                 return true;
             else
@@ -813,7 +813,7 @@ namespace Prexonite
         public bool GreaterThanOrEqual(StackContext sctx, PValue rightOperand, out PValue result)
         {
             if (sctx == null)
-                throw new ArgumentNullException("sctx");
+                throw new ArgumentNullException(nameof(sctx));
             if (Type.GreaterThanOrEqual(sctx, this, rightOperand, out result))
                 return true;
             else
@@ -838,7 +838,7 @@ namespace Prexonite
         public bool LessThan(StackContext sctx, PValue rightOperand, out PValue result)
         {
             if (sctx == null)
-                throw new ArgumentNullException("sctx");
+                throw new ArgumentNullException(nameof(sctx));
             if (Type.LessThan(sctx, this, rightOperand, out result))
                 return true;
             else
@@ -863,7 +863,7 @@ namespace Prexonite
         public bool LessThanOrEqual(StackContext sctx, PValue rightOperand, out PValue result)
         {
             if (sctx == null)
-                throw new ArgumentNullException("sctx");
+                throw new ArgumentNullException(nameof(sctx));
             if (Type.LessThanOrEqual(sctx, this, rightOperand, out result))
                 return true;
             else
@@ -886,7 +886,7 @@ namespace Prexonite
         public PValue UnaryNegation(StackContext sctx)
         {
             if (sctx == null)
-                throw new ArgumentNullException("sctx");
+                throw new ArgumentNullException(nameof(sctx));
             return Type.UnaryNegation(sctx, this);
         }
 
@@ -900,7 +900,7 @@ namespace Prexonite
         public PValue LogicalNot(StackContext sctx)
         {
             if (sctx == null)
-                throw new ArgumentNullException("sctx");
+                throw new ArgumentNullException(nameof(sctx));
             return Type.LogicalNot(sctx, this);
         }
 
@@ -914,7 +914,7 @@ namespace Prexonite
         public PValue OnesComplement(StackContext sctx)
         {
             if (sctx == null)
-                throw new ArgumentNullException("sctx");
+                throw new ArgumentNullException(nameof(sctx));
             return Type.OnesComplement(sctx, this);
         }
 
@@ -928,7 +928,7 @@ namespace Prexonite
         public PValue Increment(StackContext sctx)
         {
             if (sctx == null)
-                throw new ArgumentNullException("sctx");
+                throw new ArgumentNullException(nameof(sctx));
             return Type.Increment(sctx, this);
         }
 
@@ -942,7 +942,7 @@ namespace Prexonite
         public PValue Decrement(StackContext sctx)
         {
             if (sctx == null)
-                throw new ArgumentNullException("sctx");
+                throw new ArgumentNullException(nameof(sctx));
             return Type.Decrement(sctx, this);
         }
 
@@ -964,9 +964,9 @@ namespace Prexonite
         public PValue Addition(StackContext sctx, PValue rightOperand)
         {
             if (sctx == null)
-                throw new ArgumentNullException("sctx");
+                throw new ArgumentNullException(nameof(sctx));
             if (rightOperand == null)
-                throw new ArgumentNullException("rightOperand");
+                throw new ArgumentNullException(nameof(rightOperand));
             PValue result;
             if (Addition(sctx, rightOperand, out result))
                 return result;
@@ -993,9 +993,9 @@ namespace Prexonite
         public PValue Subtraction(StackContext sctx, PValue rightOperand)
         {
             if (sctx == null)
-                throw new ArgumentNullException("sctx");
+                throw new ArgumentNullException(nameof(sctx));
             if (rightOperand == null)
-                throw new ArgumentNullException("rightOperand");
+                throw new ArgumentNullException(nameof(rightOperand));
             PValue result;
             if (Subtraction(sctx, rightOperand, out result))
                 return result;
@@ -1022,9 +1022,9 @@ namespace Prexonite
         public PValue Multiply(StackContext sctx, PValue rightOperand)
         {
             if (sctx == null)
-                throw new ArgumentNullException("sctx");
+                throw new ArgumentNullException(nameof(sctx));
             if (rightOperand == null)
-                throw new ArgumentNullException("rightOperand");
+                throw new ArgumentNullException(nameof(rightOperand));
             PValue result;
             if (Multiply(sctx, rightOperand, out result))
                 return result;
@@ -1051,9 +1051,9 @@ namespace Prexonite
         public PValue Division(StackContext sctx, PValue rightOperand)
         {
             if (sctx == null)
-                throw new ArgumentNullException("sctx");
+                throw new ArgumentNullException(nameof(sctx));
             if (rightOperand == null)
-                throw new ArgumentNullException("rightOperand");
+                throw new ArgumentNullException(nameof(rightOperand));
             PValue result;
             if (Division(sctx, rightOperand, out result))
                 return result;
@@ -1080,9 +1080,9 @@ namespace Prexonite
         public PValue Modulus(StackContext sctx, PValue rightOperand)
         {
             if (sctx == null)
-                throw new ArgumentNullException("sctx");
+                throw new ArgumentNullException(nameof(sctx));
             if (rightOperand == null)
-                throw new ArgumentNullException("rightOperand");
+                throw new ArgumentNullException(nameof(rightOperand));
             PValue result;
             if (Modulus(sctx, rightOperand, out result))
                 return result;
@@ -1109,9 +1109,9 @@ namespace Prexonite
         public PValue BitwiseAnd(StackContext sctx, PValue rightOperand)
         {
             if (sctx == null)
-                throw new ArgumentNullException("sctx");
+                throw new ArgumentNullException(nameof(sctx));
             if (rightOperand == null)
-                throw new ArgumentNullException("rightOperand");
+                throw new ArgumentNullException(nameof(rightOperand));
             PValue result;
             if (BitwiseAnd(sctx, rightOperand, out result))
                 return result;
@@ -1138,9 +1138,9 @@ namespace Prexonite
         public PValue BitwiseOr(StackContext sctx, PValue rightOperand)
         {
             if (sctx == null)
-                throw new ArgumentNullException("sctx");
+                throw new ArgumentNullException(nameof(sctx));
             if (rightOperand == null)
-                throw new ArgumentNullException("rightOperand");
+                throw new ArgumentNullException(nameof(rightOperand));
             PValue result;
             if (BitwiseOr(sctx, rightOperand, out result))
                 return result;
@@ -1167,9 +1167,9 @@ namespace Prexonite
         public PValue ExclusiveOr(StackContext sctx, PValue rightOperand)
         {
             if (sctx == null)
-                throw new ArgumentNullException("sctx");
+                throw new ArgumentNullException(nameof(sctx));
             if (rightOperand == null)
-                throw new ArgumentNullException("rightOperand");
+                throw new ArgumentNullException(nameof(rightOperand));
             PValue result;
             if (ExclusiveOr(sctx, rightOperand, out result))
                 return result;
@@ -1196,9 +1196,9 @@ namespace Prexonite
         public PValue Equality(StackContext sctx, PValue rightOperand)
         {
             if (sctx == null)
-                throw new ArgumentNullException("sctx");
+                throw new ArgumentNullException(nameof(sctx));
             if (rightOperand == null)
-                throw new ArgumentNullException("rightOperand");
+                throw new ArgumentNullException(nameof(rightOperand));
             PValue result;
             if (Equality(sctx, rightOperand, out result))
                 return result;
@@ -1225,9 +1225,9 @@ namespace Prexonite
         public PValue Inequality(StackContext sctx, PValue rightOperand)
         {
             if (sctx == null)
-                throw new ArgumentNullException("sctx");
+                throw new ArgumentNullException(nameof(sctx));
             if (rightOperand == null)
-                throw new ArgumentNullException("rightOperand");
+                throw new ArgumentNullException(nameof(rightOperand));
             PValue result;
             if (Inequality(sctx, rightOperand, out result))
                 return result;
@@ -1254,9 +1254,9 @@ namespace Prexonite
         public PValue GreaterThan(StackContext sctx, PValue rightOperand)
         {
             if (sctx == null)
-                throw new ArgumentNullException("sctx");
+                throw new ArgumentNullException(nameof(sctx));
             if (rightOperand == null)
-                throw new ArgumentNullException("rightOperand");
+                throw new ArgumentNullException(nameof(rightOperand));
             PValue result;
             if (GreaterThan(sctx, rightOperand, out result))
                 return result;
@@ -1283,9 +1283,9 @@ namespace Prexonite
         public PValue GreaterThanOrEqual(StackContext sctx, PValue rightOperand)
         {
             if (sctx == null)
-                throw new ArgumentNullException("sctx");
+                throw new ArgumentNullException(nameof(sctx));
             if (rightOperand == null)
-                throw new ArgumentNullException("rightOperand");
+                throw new ArgumentNullException(nameof(rightOperand));
             PValue result;
             if (GreaterThanOrEqual(sctx, rightOperand, out result))
                 return result;
@@ -1312,9 +1312,9 @@ namespace Prexonite
         public PValue LessThan(StackContext sctx, PValue rightOperand)
         {
             if (sctx == null)
-                throw new ArgumentNullException("sctx");
+                throw new ArgumentNullException(nameof(sctx));
             if (rightOperand == null)
-                throw new ArgumentNullException("rightOperand");
+                throw new ArgumentNullException(nameof(rightOperand));
             PValue result;
             if (LessThan(sctx, rightOperand, out result))
                 return result;
@@ -1341,9 +1341,9 @@ namespace Prexonite
         public PValue LessThanOrEqual(StackContext sctx, PValue rightOperand)
         {
             if (sctx == null)
-                throw new ArgumentNullException("sctx");
+                throw new ArgumentNullException(nameof(sctx));
             if (rightOperand == null)
-                throw new ArgumentNullException("rightOperand");
+                throw new ArgumentNullException(nameof(rightOperand));
             PValue result;
             if (LessThanOrEqual(sctx, rightOperand, out result))
                 return result;

@@ -343,6 +343,9 @@ namespace Prexonite.Compiler.Ast
                     break;
                 case BinaryOperator.LessThanOrEqual:
                     break;
+                case BinaryOperator.DeltaLeft:
+                case BinaryOperator.DeltaRight:
+                    break;
                 case BinaryOperator.Coalescence:
                     return Coalescence(position, new[] {left, right});
                 case BinaryOperator.Cast:
@@ -358,7 +361,7 @@ namespace Prexonite.Compiler.Ast
                         return Typecast(position, left, T);
                     }
                 default:
-                    throw new ArgumentOutOfRangeException("op");
+                    throw new ArgumentOutOfRangeException(nameof(op));
             }
 
             // If control flow ended up here, the operator is going to be implemented
@@ -433,7 +436,7 @@ namespace Prexonite.Compiler.Ast
         public AstExpr UnaryOperation(ISourcePosition position, UnaryOperator op, AstExpr operand)
         {
             if (operand == null)
-                throw new ArgumentNullException("operand");
+                throw new ArgumentNullException(nameof(operand));
 
             switch (op)
             {
@@ -481,6 +484,10 @@ namespace Prexonite.Compiler.Ast
                     }
                 case UnaryOperator.UnaryNegation:
                 case UnaryOperator.OnesComplement:
+                case UnaryOperator.PostDeltaLeft:
+                case UnaryOperator.PostDeltaRight:
+                case UnaryOperator.PreDeltaLeft:
+                case UnaryOperator.PreDeltaRight:
                     {
                         var id = OperatorNames.Prexonite.GetName(op);
                         Symbol symbol;
@@ -564,7 +571,7 @@ namespace Prexonite.Compiler.Ast
                 case UnaryOperator.None:
 // ReSharper restore RedundantCaseLabel
                 default:
-                    throw new ArgumentOutOfRangeException("op");
+                    throw new ArgumentOutOfRangeException(nameof(op));
             }
         }
 
@@ -656,7 +663,7 @@ namespace Prexonite.Compiler.Ast
                         return assignment;
                     }
                 default:
-                    throw new ArgumentOutOfRangeException("binaryOperator");
+                    throw new ArgumentOutOfRangeException(nameof(binaryOperator));
             }
             
         }

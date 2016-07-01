@@ -44,9 +44,9 @@ namespace Prexonite
             Func<Action<PValue>, IEnumerable<bool>> methodCtor)
         {
             if (sctx == null)
-                throw new ArgumentNullException("sctx");
+                throw new ArgumentNullException(nameof(sctx));
             if (methodCtor == null)
-                throw new ArgumentNullException("methodCtor");
+                throw new ArgumentNullException(nameof(methodCtor));
 
             _methodCtor = methodCtor;
             _parentEngine = sctx.ParentEngine;

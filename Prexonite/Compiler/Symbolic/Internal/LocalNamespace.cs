@@ -35,7 +35,7 @@ namespace Prexonite.Compiler.Symbolic.Internal
         public string DerivePhysicalName([NotNull] String logicalName)
         {
             if (logicalName == null)
-                throw new ArgumentNullException("logicalName");
+                throw new ArgumentNullException(nameof(logicalName));
             if (Prefix == null)
                 throw new InvalidOperationException(
                     "Cannot derive physical name before a perfix has been assigned to the namespace.");

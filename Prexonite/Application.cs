@@ -122,7 +122,7 @@ namespace Prexonite
         public Application(Module module)
         {
             if (module == null)
-                throw new ArgumentNullException("module");
+                throw new ArgumentNullException(nameof(module));
 
             _module = module;
 
@@ -592,9 +592,9 @@ namespace Prexonite
         public static void Link(Application application1, Application application2)
         {
             if (application1 == null)
-                throw new ArgumentNullException("application1");
+                throw new ArgumentNullException(nameof(application1));
             if (application2 == null)
-                throw new ArgumentNullException("application2");
+                throw new ArgumentNullException(nameof(application2));
             
             if (application1.IsLinkedTo(application2))
                 return; //nothing to do.
@@ -718,7 +718,7 @@ namespace Prexonite
             public SingletonCompound(Application application)
             {
                 if (application == null)
-                    throw new ArgumentNullException("application");
+                    throw new ArgumentNullException(nameof(application));
 
                 _application = application;
             }
@@ -778,9 +778,9 @@ namespace Prexonite
                     return;
 
                 if (array == null)
-                    throw new ArgumentNullException("array");
+                    throw new ArgumentNullException(nameof(array));
                 if (arrayIndex < 0 || array.Length <= arrayIndex)
-                    throw new ArgumentOutOfRangeException("arrayIndex", arrayIndex,
+                    throw new ArgumentOutOfRangeException(nameof(arrayIndex), arrayIndex,
                         "Index is outside of the arrays bounds.");
 
                 array[arrayIndex] = _application;

@@ -126,7 +126,7 @@ namespace Prexonite.Modular
         public static explicit operator SymbolEntry(EntityRef entityRef)
         {
             if (entityRef == null)
-                throw new ArgumentNullException("entityRef");
+                throw new ArgumentNullException(nameof(entityRef));
             return entityRef.ToSymbolEntry();
         }
 
@@ -253,9 +253,9 @@ namespace Prexonite.Modular
             private Function([NotNull] string id, [NotNull] ModuleName moduleName)
             {
                 if(id == null)
-                    throw new ArgumentNullException("id");
+                    throw new ArgumentNullException(nameof(id));
                 if(moduleName == null)
-                    throw new ArgumentNullException("moduleName");
+                    throw new ArgumentNullException(nameof(moduleName));
 
                 _id = id;
                 _moduleName = moduleName;
@@ -484,9 +484,9 @@ namespace Prexonite.Modular
                 private Global([NotNull] string id, [NotNull] ModuleName moduleName)
                 {
                     if(id == null)
-                        throw new ArgumentNullException("id");
+                        throw new ArgumentNullException(nameof(id));
                     if (moduleName == null)
-                        throw new ArgumentNullException("moduleName");
+                        throw new ArgumentNullException(nameof(moduleName));
 
                     _id = id;
                     _moduleName = moduleName;

@@ -110,7 +110,7 @@ namespace Prexonite.Types
             out PValue result)
         {
             if (sctx == null)
-                throw new ArgumentNullException("sctx");
+                throw new ArgumentNullException(nameof(sctx));
 
             result = null;
 

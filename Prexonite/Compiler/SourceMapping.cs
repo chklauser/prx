@@ -390,7 +390,7 @@ namespace Prexonite.Compiler
         public static SourceMapping Load(MetaTable table)
         {
             if (table == null)
-                throw new ArgumentNullException("table");
+                throw new ArgumentNullException(nameof(table));
 
             MetaEntry rootEntry;
 
@@ -443,7 +443,7 @@ namespace Prexonite.Compiler
         public void Store(MetaTable table)
         {
             if (table == null)
-                throw new ArgumentNullException("table");
+                throw new ArgumentNullException(nameof(table));
 
             if (Count == 0)
                 return;

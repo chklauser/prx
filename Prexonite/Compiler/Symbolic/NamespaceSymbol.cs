@@ -122,11 +122,11 @@ namespace Prexonite.Compiler.Symbolic
             [NotNull]IMessageSink messageSink, [CanBeNull] IList<Message> errors = null)
         {
             if (symbol == null)
-                throw new ArgumentNullException("symbol");
+                throw new ArgumentNullException(nameof(symbol));
             if (messageSink == null)
-                throw new ArgumentNullException("messageSink");
+                throw new ArgumentNullException(nameof(messageSink));
             if (symbolPosition == null)
-                throw new ArgumentNullException("symbolPosition");
+                throw new ArgumentNullException(nameof(symbolPosition));
 
             return symbol.HandleWith(_unwrapHandler, Tuple.Create(messageSink, symbolPosition, errors));
         }

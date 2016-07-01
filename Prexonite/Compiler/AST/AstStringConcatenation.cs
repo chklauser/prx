@@ -64,9 +64,9 @@ namespace Prexonite.Compiler.Ast
             : base(position)
         {
             if (simpleConcatPrototype == null)
-                throw new ArgumentNullException("simpleConcatPrototype");
+                throw new ArgumentNullException(nameof(simpleConcatPrototype));
             if (multiConcatPrototype == null)
-                throw new ArgumentNullException("multiConcatPrototype");
+                throw new ArgumentNullException(nameof(multiConcatPrototype));
             
             if (arguments == null)
                 arguments = new AstExpr[] {};

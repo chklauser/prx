@@ -212,6 +212,7 @@
     <Compile Include="Compiler\NoSourcePosition.cs" />
     <Compile Include="Compiler\Parser.SymbolBuilder.cs" />
     <Compile Include="Compiler\ParserAstFactory.cs" />
+    <Compile Include="Compiler\Shell.cs" />
     <Compile Include="Compiler\Symbolic\Compatibility\LegacyExtensions.cs" />
     <Compile Include="Compiler\Symbolic\DereferenceSymbol.cs" />
     <Compile Include="Compiler\Symbolic\ExpandSymbol.cs" />
@@ -488,6 +489,7 @@
     <Compile Include="Types\StructurePType.cs" />
     <Compile Include="VM.cs" />
     <Content Include="Compiler\Prexonite.lex" />
+    <None Include="prxlib\sh.pxs" />
     <None Include="Commands\Core\Operators\Operators.tt">
       <Generator>TextTemplatingFileGenerator</Generator>
       <LastGenOutput>Operators.cs</LastGenOutput>

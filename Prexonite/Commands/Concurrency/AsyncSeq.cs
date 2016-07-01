@@ -75,9 +75,9 @@ namespace Prexonite.Commands.Concurrency
             PValue[] args)
         {
             if (sctxCarrier == null)
-                throw new ArgumentNullException("sctxCarrier");
+                throw new ArgumentNullException(nameof(sctxCarrier));
             if (args == null)
-                throw new ArgumentNullException("args");
+                throw new ArgumentNullException(nameof(args));
 
             if (args.Length < 1)
                 throw new PrexoniteException(

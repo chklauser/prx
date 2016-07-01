@@ -57,9 +57,9 @@ namespace PrexoniteTests
             public ExactEqualityConstraint(string key, MetaEntry expectedEntry)
             {
                 if (key == null)
-                    throw new ArgumentNullException("key");
+                    throw new ArgumentNullException(nameof(key));
                 if (expectedEntry == null)
-                    throw new ArgumentNullException("expectedEntry");
+                    throw new ArgumentNullException(nameof(expectedEntry));
 
                 _key = key;
                 _expectedEntry = expectedEntry;
@@ -120,7 +120,7 @@ namespace PrexoniteTests
             public ContainsKeyConstraint(string key)
             {
                 if (key == null)
-                    throw new ArgumentNullException("key");
+                    throw new ArgumentNullException(nameof(key));
                 _key = key;
             }
 

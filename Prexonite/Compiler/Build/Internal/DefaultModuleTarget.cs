@@ -54,9 +54,9 @@ namespace Prexonite.Compiler.Build.Internal
         public DefaultModuleTarget(Module module, SymbolStore symbols, IEnumerable<Message> messages = null, Exception exception = null)
         {
             if (module == null)
-                throw new ArgumentNullException("module");
+                throw new ArgumentNullException(nameof(module));
             if (symbols == null)
-                throw new ArgumentNullException("symbols");
+                throw new ArgumentNullException(nameof(symbols));
             _module = module;
             _symbols = symbols;
             _exception = exception;
@@ -88,7 +88,7 @@ namespace Prexonite.Compiler.Build.Internal
         internal static ITarget _FromLoader(Loader loader, Exception exception = null, IEnumerable<Message> additionalMessages = null)
         {
             if (loader == null)
-                throw new ArgumentNullException("loader");
+                throw new ArgumentNullException(nameof(loader));
             Debug.Assert(loader.TopLevelSymbols!= null,"Loader.TopLevelSymbols must not be null.");
             var exported = SymbolStore.Create();
             foreach (var decl in loader.TopLevelSymbols.LocalDeclarations)

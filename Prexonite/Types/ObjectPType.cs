@@ -47,14 +47,14 @@ namespace Prexonite.Types
         public ObjectPType(Type clrType)
         {
             if (clrType == null)
-                throw new ArgumentNullException("clrType");
+                throw new ArgumentNullException(nameof(clrType));
             _clrType = clrType;
         }
 
         public ObjectPType(StackContext sctx, PValue[] args)
         {
             if (args == null)
-                throw new ArgumentNullException("args");
+                throw new ArgumentNullException(nameof(args));
             if (args.Length < 1)
                 throw new PrexoniteException(
                     "The Object type requires exactly one parameter: the type or name of the type to represent.");
@@ -91,7 +91,7 @@ namespace Prexonite.Types
         public static bool TryGetType(StackContext sctx, string clrTypeName, out Type result)
         {
             if (clrTypeName == null)
-                throw new ArgumentNullException("clrTypeName");
+                throw new ArgumentNullException(nameof(clrTypeName));
             var assemblies = sctx.ParentEngine.GetRegisteredAssemblies();
 
             result = _getType_forNamesapce(clrTypeName, assemblies);
@@ -560,7 +560,7 @@ namespace Prexonite.Types
             public call_conditions(StackContext sctx, PValue[] args, PCall call, string id)
             {
                 if (sctx == null)
-                    throw new ArgumentNullException("sctx");
+                    throw new ArgumentNullException(nameof(sctx));
                 Sctx = sctx;
                 Args = args ?? new PValue[] {};
                 Call = call;

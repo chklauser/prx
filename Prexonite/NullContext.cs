@@ -40,11 +40,11 @@ namespace Prexonite
         public NullContext(Engine parentEngine, Application parentApplication, IEnumerable<string> importedNamespaces)
         {
             if (parentEngine == null)
-                throw new ArgumentNullException("parentEngine");
+                throw new ArgumentNullException(nameof(parentEngine));
             if (parentApplication == null)
-                throw new ArgumentNullException("parentApplication");
+                throw new ArgumentNullException(nameof(parentApplication));
             if (importedNamespaces == null)
-                throw new ArgumentNullException("importedNamespaces");
+                throw new ArgumentNullException(nameof(importedNamespaces));
 
             this.parentEngine = parentEngine;
             this.parentApplication = parentApplication;

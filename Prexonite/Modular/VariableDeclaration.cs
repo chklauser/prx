@@ -82,9 +82,9 @@ namespace Prexonite.Modular
             public Impl(string id)
             {
                 if (id == null)
-                    throw new ArgumentNullException("id");
+                    throw new ArgumentNullException(nameof(id));
                 if (id.Length == 0)
-                    throw new ArgumentException(Resources.VariableDeclaration_Variable_id_must_not_be_empty, "id");
+                    throw new ArgumentException(Resources.VariableDeclaration_Variable_id_must_not_be_empty, nameof(id));
 
                 _metaTable[Application.IdKey] = id;
             }

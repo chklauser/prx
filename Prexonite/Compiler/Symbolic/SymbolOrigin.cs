@@ -48,7 +48,7 @@ namespace Prexonite.Compiler.Symbolic
             public static SymbolOrigin CreateMerged(params SymbolOrigin[] origins)
             {
                 if (origins == null)
-                    throw new ArgumentNullException("origins");
+                    throw new ArgumentNullException(nameof(origins));
                 if (origins.Length == 0)
                 {
                     throw new ArgumentException("Must have at least one symbol origin.");
@@ -68,7 +68,7 @@ namespace Prexonite.Compiler.Symbolic
             private MergedScope([NotNull] SymbolOrigin[] origins)
             {
                 if (origins == null)
-                    throw new ArgumentNullException("origins");
+                    throw new ArgumentNullException(nameof(origins));
                 
                 if(origins.Length < 2)
                     throw new ArgumentException("Merged scope origin must be composed of at least two origins.");
@@ -99,7 +99,7 @@ namespace Prexonite.Compiler.Symbolic
             public NamespaceImport(QualifiedId namespaceId, [NotNull] ISourcePosition position)
             {
                 if (position == null) 
-                    throw new ArgumentNullException("position");
+                    throw new ArgumentNullException(nameof(position));
                 _namespaceId = namespaceId;
                 _position = position;
             }
@@ -152,9 +152,9 @@ namespace Prexonite.Compiler.Symbolic
             public ModuleTopLevel([NotNull] ModuleName moduleName, [NotNull] ISourcePosition position)
             {
                 if (moduleName == null)
-                    throw new ArgumentNullException("moduleName");
+                    throw new ArgumentNullException(nameof(moduleName));
                 if (position == null)
-                    throw new ArgumentNullException("position");
+                    throw new ArgumentNullException(nameof(position));
                 
                 _moduleName = moduleName;
                 _position = position;
@@ -216,7 +216,7 @@ namespace Prexonite.Compiler.Symbolic
 
             public NamespaceDeclarationScope([NotNull] ISourcePosition position, QualifiedId namespacePath)
             {
-                if (position == null) throw new ArgumentNullException("position");
+                if (position == null) throw new ArgumentNullException(nameof(position));
                 _position = position;
                 _namespacePath = namespacePath;
             }

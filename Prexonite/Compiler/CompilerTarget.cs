@@ -154,13 +154,13 @@ namespace Prexonite.Compiler
         public CompilerTarget(Loader loader, PFunction function, CompilerTarget parentTarget = null, ISourcePosition position = null)
         {
             if (loader == null)
-                throw new ArgumentNullException("loader");
+                throw new ArgumentNullException(nameof(loader));
             if (function == null)
                 function = loader.ParentApplication.CreateFunction();
             if (!ReferenceEquals(function.ParentApplication, loader.ParentApplication))
                 throw new ArgumentException(
                     Resources.CompilerTarget_Cannot_create_for_foreign_function,
-                    "function");
+                    nameof(function));
 
             _loader = loader;
             _function = function;
@@ -459,7 +459,7 @@ namespace Prexonite.Compiler
         public void BeginBlock(AstScopedBlock bl)
         {
             if (bl == null)
-                throw new ArgumentNullException("bl");
+                throw new ArgumentNullException(nameof(bl));
             _scopeBlocks.Push(bl);
         }
 
@@ -514,9 +514,9 @@ namespace Prexonite.Compiler
         {
             var code = Code;
             if (index < 0 || index >= code.Count)
-                throw new ArgumentOutOfRangeException("index");
+                throw new ArgumentOutOfRangeException(nameof(index));
             if (count < 0 || index + count > code.Count)
-                throw new ArgumentOutOfRangeException("count");
+                throw new ArgumentOutOfRangeException(nameof(count));
             if (count == 0)
                 return;
 
@@ -903,7 +903,7 @@ namespace Prexonite.Compiler
         public void EmitFunctionCall(ISourcePosition position, int args,[NotNull] string id, [CanBeNull] ModuleName moduleName, bool justEffect = false)
         {
             if (id == null)
-                throw new ArgumentNullException("id");
+                throw new ArgumentNullException(nameof(id));
 
             if(moduleName == Loader.ParentApplication.Module.Name)
                 moduleName = null;

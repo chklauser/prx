@@ -41,9 +41,9 @@ namespace Prexonite.Compiler.Ast
             : base(file, line, col, call)
         {
             if (typeExpr == null)
-                throw new ArgumentNullException("typeExpr");
+                throw new ArgumentNullException(nameof(typeExpr));
             if (memberId == null)
-                throw new ArgumentNullException("memberId");
+                throw new ArgumentNullException(nameof(memberId));
             TypeExpr = typeExpr;
             _memberId = memberId;
         }

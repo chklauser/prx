@@ -59,9 +59,9 @@ namespace Prx.Benchmarking
         internal BenchmarkEntry(Benchmark parent, PFunction function)
         {
             if (function == null)
-                throw new ArgumentNullException("function");
+                throw new ArgumentNullException(nameof(function));
             if (parent == null)
-                throw new ArgumentNullException("parent");
+                throw new ArgumentNullException(nameof(parent));
             Parent = parent;
             Function = function;
             var m = function.Meta;

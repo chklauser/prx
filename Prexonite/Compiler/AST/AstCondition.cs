@@ -40,7 +40,7 @@ namespace Prexonite.Compiler.Ast
             IfBlock = new AstScopedBlock(p,parentBlock,prefix: "if");
             ElseBlock = new AstScopedBlock(p,parentBlock,prefix:"else");
             if (condition == null)
-                throw new ArgumentNullException("condition");
+                throw new ArgumentNullException(nameof(condition));
             Condition = condition;
             IsNegative = isNegative;
         }

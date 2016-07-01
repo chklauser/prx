@@ -82,9 +82,9 @@ namespace Prexonite.Types
             result = null;
 
             if (sctx == null)
-                throw new ArgumentNullException("sctx");
+                throw new ArgumentNullException(nameof(sctx));
             if (args == null)
-                throw new ArgumentNullException("args");
+                throw new ArgumentNullException(nameof(args));
 
             PValue v;
 
@@ -118,11 +118,11 @@ namespace Prexonite.Types
             out PValue result)
         {
             if (sctx == null)
-                throw new ArgumentNullException("sctx");
+                throw new ArgumentNullException(nameof(sctx));
             if (subject == null)
-                throw new ArgumentNullException("subject");
+                throw new ArgumentNullException(nameof(subject));
             if (args == null)
-                throw new ArgumentNullException("args");
+                throw new ArgumentNullException(nameof(args));
             if (id == null)
                 id = "";
             var c = (char) subject.Value;
@@ -222,11 +222,11 @@ namespace Prexonite.Types
             StackContext sctx, PValue subject, PType target, bool useExplicit, out PValue result)
         {
             if (sctx == null)
-                throw new ArgumentNullException("sctx");
+                throw new ArgumentNullException(nameof(sctx));
             if (subject == null || subject.IsNull)
-                throw new ArgumentNullException("subject");
+                throw new ArgumentNullException(nameof(subject));
             if ((object) target == null)
-                throw new ArgumentNullException("target");
+                throw new ArgumentNullException(nameof(target));
 
             result = null;
             var c = (char) subject.Value;
@@ -280,9 +280,9 @@ namespace Prexonite.Types
             StackContext sctx, PValue subject, bool useExplicit, out PValue result)
         {
             if (sctx == null)
-                throw new ArgumentNullException("sctx");
+                throw new ArgumentNullException(nameof(sctx));
             if (subject == null || subject.IsNull)
-                throw new ArgumentNullException("subject");
+                throw new ArgumentNullException(nameof(subject));
 
             var source = subject.Type;
             var bi = source.ToBuiltIn();

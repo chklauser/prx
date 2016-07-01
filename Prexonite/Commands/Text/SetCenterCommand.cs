@@ -57,7 +57,7 @@ namespace Prexonite.Commands.Text
         {
             // function setright(w,s,f)
             if (sctx == null)
-                throw new ArgumentNullException("sctx");
+                throw new ArgumentNullException(nameof(sctx));
             if (args == null)
                 args = new PValue[] {};
 

@@ -129,6 +129,16 @@ namespace Prexonite.Compiler.Ast
         /// <remarks>
         ///     Will result in a AstTypecast node when optimized.
         /// </remarks>
-        Cast
+        Cast,
+
+        ///<summary>
+        ///     The binary |&gt; operator. No fixed semantics.
+        /// </summary>
+        DeltaRight,
+
+        ///<summary>
+        ///    The binary &lt;| operator. No fixed semantics
+        ///</summary>
+        DeltaLeft
     }
 }

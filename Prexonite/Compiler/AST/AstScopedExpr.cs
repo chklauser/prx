@@ -37,7 +37,7 @@ namespace Prexonite.Compiler.Ast
             : base(position)
         {
             if (lexicalScope == null)
-                throw new System.ArgumentNullException("lexicalScope");
+                throw new System.ArgumentNullException(nameof(lexicalScope));
             _lexicalScope = lexicalScope;
         }
 
@@ -45,7 +45,7 @@ namespace Prexonite.Compiler.Ast
             : base(p)
         {
             if (lexicalScope == null)
-                throw new System.ArgumentNullException("lexicalScope");
+                throw new System.ArgumentNullException(nameof(lexicalScope));
             _lexicalScope = lexicalScope;
         }
 
@@ -53,7 +53,7 @@ namespace Prexonite.Compiler.Ast
             : base(file, line, column)
         {
             if (lexicalScope == null)
-                throw new System.ArgumentNullException("lexicalScope");
+                throw new System.ArgumentNullException(nameof(lexicalScope));
             _lexicalScope = lexicalScope;
         }
 

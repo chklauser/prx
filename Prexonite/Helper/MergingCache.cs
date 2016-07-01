@@ -109,7 +109,7 @@ namespace Prexonite
                 if(c == null)
                 {
                     throw new ArgumentException(
-                        "Can only link with proper implementations of CentralCache.", "cache");
+                        "Can only link with proper implementations of CentralCache.", nameof(cache));
                 }
                 var thisSize = EstimateSize();
                 var otherSize = cache.EstimateSize();
@@ -209,7 +209,7 @@ namespace Prexonite
             public override void LinkWith(MergingCache<T> cache)
             {
                 if (cache == null)
-                    throw new ArgumentNullException("cache");
+                    throw new ArgumentNullException(nameof(cache));
                 
                 Merge(this, (Impl) cache);
             }

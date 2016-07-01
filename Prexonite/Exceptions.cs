@@ -195,7 +195,7 @@ namespace Prexonite
             StackContext esctx, string message, Exception innerException)
         {
             if (esctx == null)
-                throw new ArgumentNullException("esctx");
+                throw new ArgumentNullException(nameof(esctx));
             if (message == null)
                 message = "An error occured at runtime.";
 
@@ -292,7 +292,7 @@ namespace Prexonite
         public static PrexoniteRuntimeException UnpackException(PrexoniteRuntimeException pExc)
         {
             if (pExc == null)
-                throw new ArgumentNullException("pExc");
+                throw new ArgumentNullException(nameof(pExc));
 
             //Exception exc = pExc;
             //Exception lastExc = null;

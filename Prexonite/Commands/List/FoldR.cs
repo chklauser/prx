@@ -65,9 +65,9 @@ namespace Prexonite.Commands.List
             StackContext sctx, IIndirectCall f, PValue right, IEnumerable<PValue> source)
         {
             if (sctx == null)
-                throw new ArgumentNullException("sctx");
+                throw new ArgumentNullException(nameof(sctx));
             if (f == null)
-                throw new ArgumentNullException("f");
+                throw new ArgumentNullException(nameof(f));
             if (right == null)
                 right = PType.Null.CreatePValue();
             if (source == null)
@@ -90,9 +90,9 @@ namespace Prexonite.Commands.List
         public static PValue RunStatically(StackContext sctx, PValue[] args)
         {
             if (sctx == null)
-                throw new ArgumentNullException("sctx");
+                throw new ArgumentNullException(nameof(sctx));
             if (args == null)
-                throw new ArgumentNullException("args");
+                throw new ArgumentNullException(nameof(args));
 
             //Get f
             IIndirectCall f;

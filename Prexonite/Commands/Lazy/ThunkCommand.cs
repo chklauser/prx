@@ -67,7 +67,7 @@ namespace Prexonite.Commands.Lazy
 
         {
             if (sctx == null)
-                throw new ArgumentNullException("sctx");
+                throw new ArgumentNullException(nameof(sctx));
             if (args == null || args.Length == 0 || args[0] == null)
                 throw new PrexoniteException("The thunk command requires an expression.");
 
@@ -162,9 +162,9 @@ namespace Prexonite.Commands.Lazy
         private Thunk(PValue expr, PValue[] parameters)
         {
             if (expr == null)
-                throw new ArgumentNullException("expr");
+                throw new ArgumentNullException(nameof(expr));
             if (parameters == null)
-                throw new ArgumentNullException("parameters");
+                throw new ArgumentNullException(nameof(parameters));
             _expr = expr;
             _parameters = parameters;
         }
@@ -172,7 +172,7 @@ namespace Prexonite.Commands.Lazy
         private Thunk(PValue value)
         {
             if (value == null)
-                throw new ArgumentNullException("value");
+                throw new ArgumentNullException(nameof(value));
             _value = value;
         }
 
@@ -223,7 +223,7 @@ namespace Prexonite.Commands.Lazy
         private IEnumerable<bool> _cooperativeForce(StackContext sctx, Action<PValue> setReturnValue)
         {
             if (sctx == null)
-                throw new ArgumentNullException("sctx");
+                throw new ArgumentNullException(nameof(sctx));
 
             while (true)
             {

@@ -63,9 +63,9 @@ namespace Prexonite.Commands.List
             PValue[] args)
         {
             if (sctxCarrier == null)
-                throw new ArgumentNullException("sctxCarrier");
+                throw new ArgumentNullException(nameof(sctxCarrier));
             if (args == null)
-                throw new ArgumentNullException("args");
+                throw new ArgumentNullException(nameof(args));
             if (args.Length < 2)
                 throw new PrexoniteException("TakeWhile requires at least two arguments.");
 

@@ -81,9 +81,9 @@ namespace Prexonite.Commands.Math
         public static PValue RunStatically(StackContext sctx, PValue[] args)
         {
             if (sctx == null)
-                throw new ArgumentNullException("sctx");
+                throw new ArgumentNullException(nameof(sctx));
             if (args == null)
-                throw new ArgumentNullException("args");
+                throw new ArgumentNullException(nameof(args));
 
             if (args.Length < 1)
                 throw new PrexoniteException("Abs requires at least one argument.");
@@ -94,9 +94,9 @@ namespace Prexonite.Commands.Math
         public static PValue RunStatically(PValue arg, StackContext sctx)
         {
             if (sctx == null)
-                throw new ArgumentNullException("sctx");
+                throw new ArgumentNullException(nameof(sctx));
             if (arg == null)
-                throw new ArgumentNullException("arg");
+                throw new ArgumentNullException(nameof(arg));
 
             if (arg.Type == PType.Int)
             {
@@ -122,7 +122,7 @@ namespace Prexonite.Commands.Math
         CompilationFlags ICilCompilerAware.CheckQualification(Instruction ins)
         {
             if (ins == null)
-                throw new ArgumentNullException("ins");
+                throw new ArgumentNullException(nameof(ins));
             switch (ins.Arguments)
             {
                 case 1:
@@ -149,7 +149,7 @@ namespace Prexonite.Commands.Math
         internal static void _CallStaticFunc1(CompilerState state, Instruction ins, MethodInfo runStaticallyMethod)
         {
             if (ins == null)
-                throw new ArgumentNullException("ins");
+                throw new ArgumentNullException(nameof(ins));
 
             switch (ins.Arguments)
             {

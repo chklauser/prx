@@ -83,16 +83,29 @@ OrExpr<out AstExpr expr>
 AndExpr<out AstExpr expr>
                                         (. AstExpr lhs, rhs; .)
 =
-    BitOrExpr<out lhs>                  (.  expr = lhs; .)
+    DeltaExpr<out lhs>                  (.  expr = lhs; .)
     [   and AndExpr<out rhs>            (.  expr = new AstLogicalAnd(this, lhs, rhs); .)
     ]
+.
+
+DeltaExpr<out AstExpr expr>
+                                        (.  AstExpr lhs, rhs; BinaryOperator bop; UnaryOperator uop; .)
+=
+    BitOrExpr<out lhs>                  (.  expr = lhs; .)
+    {   (   deltaleft                   (.  bop = BinaryOperator.DeltaLeft; uop = UnaryOperator.PostDeltaLeft; .)
+        |   deltaright                  (.  bop = BinaryOperator.DeltaRight; uop = UnaryOperator.PostDeltaRight; .)
+        )
+        (   BitOrExpr<out rhs>          (.  expr = Create.BinaryOperation(GetPosition(), expr, bop, rhs); .)
+        |                               (.  expr = Create.UnaryOperation(GetPosition(), uop, expr); .)
+        )
+    }
 .
 
 BitOrExpr<out AstExpr expr>
                                         (. AstExpr lhs, rhs; .)
 =
     BitXorExpr<out lhs>                 (. expr = lhs; .)
-    { bitOr BitXorExpr<out rhs>         (. expr =Create.BinaryOperation(GetPosition(), expr, BinaryOperator.BitwiseOr, rhs); .)
+    {   bitOr BitXorExpr<out rhs>       (. expr = Create.BinaryOperation(GetPosition(), expr, BinaryOperator.BitwiseOr, rhs); .)
     }
 .
 
@@ -207,7 +220,9 @@ AssignExpr<out AstExpr expr>     (.  AstGetSet assignment; BinaryOperator setMod
 	        |   div assign              (.  setModifier = BinaryOperator.Division; .)
 	        |   bitAnd assign           (.  setModifier = BinaryOperator.BitwiseAnd; .)
 	        |   bitOr assign            (.  setModifier = BinaryOperator.BitwiseOr; .)
-	        |	coalescence assign		    (.	setModifier = BinaryOperator.Coalescence; .)
+	        |   coalescence assign      (.  setModifier = BinaryOperator.Coalescence; .)
+	        |   deltaleft assign        (.  setModifier = BinaryOperator.DeltaLeft; .)
+	        |   deltaright assign       (.  setModifier = BinaryOperator.DeltaRight; .)
 	        )   Expr<out expr>        //(.  expr = expr; .)
 	        
 	    |   (   tilde  assign           (.  setModifier = BinaryOperator.Cast; .)
@@ -251,6 +266,8 @@ PrefixUnaryExpr<out AstExpr expr>
     |   minus                           (.  prefixes.Push(UnaryOperator.UnaryNegation); .)
     |   inc                             (.  prefixes.Push(UnaryOperator.PreIncrement); .)
     |   dec                             (.  prefixes.Push(UnaryOperator.PreDecrement); .)
+    |   deltaleft                       (.  prefixes.Push(UnaryOperator.PreDeltaLeft); .)
+    |   deltaright                      (.  prefixes.Push(UnaryOperator.PreDeltaRight); .)
     }    
     Primary<out expr>                   
                                         (.  while(prefixes.Count > 0)

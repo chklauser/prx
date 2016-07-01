@@ -94,7 +94,7 @@ namespace Prexonite.Compiler.Build
         public IDictionary<ModuleName, Task<ITarget>> BuildAsync(IEnumerable<ModuleName> names, CancellationToken token)
         {
             if (names == null)
-                throw new ArgumentNullException("names");
+                throw new ArgumentNullException(nameof(names));
             var taskMap = CreateTaskMap();
             return
                 names

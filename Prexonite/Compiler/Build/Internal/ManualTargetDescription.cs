@@ -56,11 +56,11 @@ namespace Prexonite.Compiler.Build.Internal
         internal ManualTargetDescription([NotNull] ModuleName moduleName, [NotNull] ISource source, [CanBeNull] string fileName, [NotNull] IEnumerable<ModuleName> dependencies, [CanBeNull] IEnumerable<Message> buildMessages = null)
         {
             if (moduleName == null)
-                throw new ArgumentNullException("moduleName");
+                throw new ArgumentNullException(nameof(moduleName));
             if (source == null)
-                throw new ArgumentNullException("source");
+                throw new ArgumentNullException(nameof(source));
             if (dependencies == null)
-                throw new ArgumentNullException("dependencies");
+                throw new ArgumentNullException(nameof(dependencies));
             _moduleName = moduleName;
             _source = source;
             _fileName = fileName;

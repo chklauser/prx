@@ -181,7 +181,7 @@ namespace Prexonite
                             _outer._pTypeMap[clrType] = value;
                     }
                     else if ((object) value == null)
-                        throw new ArgumentNullException("value");
+                        throw new ArgumentNullException(nameof(value));
                     else
                         _outer._pTypeMap.Add(clrType, value);
                 }
@@ -196,9 +196,9 @@ namespace Prexonite
             public void Add(Type clrType, PType type)
             {
                 if (clrType == null)
-                    throw new ArgumentNullException("clrType");
+                    throw new ArgumentNullException(nameof(clrType));
                 if ((object) type == null)
-                    throw new ArgumentNullException("type");
+                    throw new ArgumentNullException(nameof(type));
                 if (_outer._pTypeMap.ContainsKey(clrType))
                     throw new InvalidOperationException(
                         "A mapping for the CLR Type " + clrType.FullName +
@@ -213,7 +213,7 @@ namespace Prexonite
             public void Remove(Type clrType)
             {
                 if (clrType == null)
-                    throw new ArgumentNullException("clrType");
+                    throw new ArgumentNullException(nameof(clrType));
                 if (_outer._pTypeMap.ContainsKey(clrType))
                     _outer._pTypeMap.Remove(clrType);
             }
@@ -307,7 +307,7 @@ namespace Prexonite
                             _outer._pTypeRegistry[name] = value;
                     }
                     else if (value == null)
-                        throw new ArgumentNullException("value");
+                        throw new ArgumentNullException(nameof(value));
                     else
                         _outer._pTypeRegistry.Add(name, value);
                 }
@@ -325,7 +325,7 @@ namespace Prexonite
             public void Add(Type type)
             {
                 if (type == null)
-                    throw new ArgumentNullException("type");
+                    throw new ArgumentNullException(nameof(type));
                 var literals =
                     (PTypeLiteralAttribute[])
                         type.GetCustomAttributes(typeof (PTypeLiteralAttribute), false);
@@ -350,9 +350,9 @@ namespace Prexonite
             public void Add(string name, Type type)
             {
                 if (name == null)
-                    throw new ArgumentNullException("name");
+                    throw new ArgumentNullException(nameof(name));
                 if (type == null)
-                    throw new ArgumentNullException("type");
+                    throw new ArgumentNullException(nameof(type));
                 else if (!PType.IsPType(type))
                     throw new ArgumentException("ClrType " + type + " is not a PType.");
                 if (_outer._pTypeRegistry.ContainsKey(name))
@@ -369,7 +369,7 @@ namespace Prexonite
             public void Remove(string name)
             {
                 if (name == null)
-                    throw new ArgumentNullException("name");
+                    throw new ArgumentNullException(nameof(name));
                 if (_outer._pTypeRegistry.ContainsKey(name))
                     _outer._pTypeRegistry.Remove(name);
             }
@@ -559,7 +559,7 @@ namespace Prexonite
         public void RegisterAssembly(Assembly ass)
         {
             if (ass == null)
-                throw new ArgumentNullException("ass");
+                throw new ArgumentNullException(nameof(ass));
             if (!_registeredAssemblies.Contains(ass))
                 _registeredAssemblies.Add(ass);
         }
@@ -573,7 +573,7 @@ namespace Prexonite
         public void RemoveAssembly(Assembly ass)
         {
             if (ass == null)
-                throw new ArgumentNullException("ass");
+                throw new ArgumentNullException(nameof(ass));
             if (_registeredAssemblies.Contains(ass))
                 _registeredAssemblies.Remove(ass);
         }

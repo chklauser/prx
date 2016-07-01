@@ -38,7 +38,7 @@ namespace Prexonite
         public static CilFunctionContext New(StackContext caller, PFunction originalImplementation)
         {
             if (originalImplementation == null)
-                throw new ArgumentNullException("originalImplementation");
+                throw new ArgumentNullException(nameof(originalImplementation));
             return New(caller, originalImplementation.ImportedNamespaces);
         }
 
@@ -46,7 +46,7 @@ namespace Prexonite
             SymbolCollection importedNamespaces)
         {
             if (caller == null)
-                throw new ArgumentNullException("caller");
+                throw new ArgumentNullException(nameof(caller));
 
             if (importedNamespaces == null)
                 importedNamespaces = new SymbolCollection();
@@ -73,13 +73,13 @@ namespace Prexonite
             SymbolCollection importedNamespaces)
         {
             if (parentEngine == null)
-                throw new ArgumentNullException("parentEngine");
+                throw new ArgumentNullException(nameof(parentEngine));
             this.parentEngine = parentEngine;
             if (parentApplication == null)
-                throw new ArgumentNullException("parentApplication");
+                throw new ArgumentNullException(nameof(parentApplication));
             this.parentApplication = parentApplication;
             if (importedNamespaces == null)
-                throw new ArgumentNullException("importedNamespaces");
+                throw new ArgumentNullException(nameof(importedNamespaces));
             this.importedNamespaces = importedNamespaces;
         }
 

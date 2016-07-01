@@ -108,7 +108,7 @@ namespace Prexonite.Types
             StackContext sctx, PValue[] args, PCall call, string id, out PValue result)
         {
             if (sctx == null)
-                throw new ArgumentNullException("sctx");
+                throw new ArgumentNullException(nameof(sctx));
             if (args == null)
                 args = new PValue[] {};
             if (id == null)

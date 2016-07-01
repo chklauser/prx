@@ -66,9 +66,9 @@ namespace Prexonite
         public void ProvideFallbackInfo(string id, ICommandInfo commandInfo)
         {
             if (id == null)
-                throw new ArgumentNullException("id");
+                throw new ArgumentNullException(nameof(id));
             if (commandInfo == null)
-                throw new ArgumentNullException("commandInfo");
+                throw new ArgumentNullException(nameof(commandInfo));
 
             _fallbackCommandInfos[id] = commandInfo;
         }
@@ -81,7 +81,7 @@ namespace Prexonite
         public bool RemoveFallbackInfo(string id)
         {
             if (id == null)
-                throw new ArgumentNullException("id");
+                throw new ArgumentNullException(nameof(id));
             return _fallbackCommandInfos.Remove(id);
         }
 
@@ -98,7 +98,7 @@ namespace Prexonite
         public override void Add(string key, PCommand value)
         {
             if (value == null)
-                throw new ArgumentNullException("value");
+                throw new ArgumentNullException(nameof(value));
             base.Add(key, value);
         }
 
@@ -129,7 +129,7 @@ namespace Prexonite
                         base[key] = value;
                 }
                 else if (value == null)
-                    throw new ArgumentNullException("value");
+                    throw new ArgumentNullException(nameof(value));
                 else
                     Add(key, value);
             }
@@ -145,9 +145,9 @@ namespace Prexonite
         public void AddUserCommand(string alias, PCommand command)
         {
             if (alias == null)
-                throw new ArgumentNullException("alias");
+                throw new ArgumentNullException(nameof(alias));
             if (command == null)
-                throw new ArgumentNullException("command");
+                throw new ArgumentNullException(nameof(command));
             command.AddToGroup(PCommandGroups.User);
             this[alias] = command;
         }
@@ -162,9 +162,9 @@ namespace Prexonite
         public void AddUserCommand(string alias, PCommandAction action)
         {
             if (alias == null)
-                throw new ArgumentNullException("alias");
+                throw new ArgumentNullException(nameof(alias));
             if (action == null)
-                throw new ArgumentNullException("action");
+                throw new ArgumentNullException(nameof(action));
             AddUserCommand(alias, new DelegatePCommand(action));
         }
 
@@ -178,18 +178,18 @@ namespace Prexonite
         public void AddUserCommand(string alias, ICommand action)
         {
             if (alias == null)
-                throw new ArgumentNullException("alias");
+                throw new ArgumentNullException(nameof(alias));
             if (action == null)
-                throw new ArgumentNullException("action");
+                throw new ArgumentNullException(nameof(action));
             AddUserCommand(alias, new NestedPCommand(action));
         }
 
         internal void AddEngineCommand(string alias, PCommand command)
         {
             if (alias == null)
-                throw new ArgumentNullException("alias");
+                throw new ArgumentNullException(nameof(alias));
             if (command == null)
-                throw new ArgumentNullException("command");
+                throw new ArgumentNullException(nameof(command));
             command.AddToGroup(PCommandGroups.Engine);
             this[alias] = command;
         }
@@ -197,27 +197,27 @@ namespace Prexonite
         internal void AddEngineCommand(string alias, PCommandAction action)
         {
             if (alias == null)
-                throw new ArgumentNullException("alias");
+                throw new ArgumentNullException(nameof(alias));
             if (action == null)
-                throw new ArgumentNullException("action");
+                throw new ArgumentNullException(nameof(action));
             AddEngineCommand(alias, new DelegatePCommand(action));
         }
 
         internal void AddEngineCommand(string alias, ICommand action)
         {
             if (alias == null)
-                throw new ArgumentNullException("alias");
+                throw new ArgumentNullException(nameof(alias));
             if (action == null)
-                throw new ArgumentNullException("action");
+                throw new ArgumentNullException(nameof(action));
             AddEngineCommand(alias, new NestedPCommand(action));
         }
 
         internal void AddCompilerCommand(string alias, PCommand command)
         {
             if (alias == null)
-                throw new ArgumentNullException("alias");
+                throw new ArgumentNullException(nameof(alias));
             if (command == null)
-                throw new ArgumentNullException("command");
+                throw new ArgumentNullException(nameof(command));
             command.AddToGroup(PCommandGroups.Compiler);
             this[alias] = command;
         }
@@ -225,18 +225,18 @@ namespace Prexonite
         internal void AddCompilerCommand(string alias, PCommandAction action)
         {
             if (alias == null)
-                throw new ArgumentNullException("alias");
+                throw new ArgumentNullException(nameof(alias));
             if (action == null)
-                throw new ArgumentNullException("action");
+                throw new ArgumentNullException(nameof(action));
             AddCompilerCommand(alias, new DelegatePCommand(action));
         }
 
         internal void AddCompilerCommand(string alias, ICommand action)
         {
             if (alias == null)
-                throw new ArgumentNullException("alias");
+                throw new ArgumentNullException(nameof(alias));
             if (action == null)
-                throw new ArgumentNullException("action");
+                throw new ArgumentNullException(nameof(action));
             AddCompilerCommand(alias, new NestedPCommand(action));
         }
 
@@ -250,9 +250,9 @@ namespace Prexonite
         public void AddHostCommand(string alias, PCommand command)
         {
             if (alias == null)
-                throw new ArgumentNullException("alias");
+                throw new ArgumentNullException(nameof(alias));
             if (command == null)
-                throw new ArgumentNullException("command");
+                throw new ArgumentNullException(nameof(command));
             command.AddToGroup(PCommandGroups.Host);
             this[alias] = command;
         }
@@ -267,9 +267,9 @@ namespace Prexonite
         public void AddHostCommand(string alias, PCommandAction action)
         {
             if (alias == null)
-                throw new ArgumentNullException("alias");
+                throw new ArgumentNullException(nameof(alias));
             if (action == null)
-                throw new ArgumentNullException("action");
+                throw new ArgumentNullException(nameof(action));
             AddHostCommand(alias, new DelegatePCommand(action));
         }
 
@@ -283,9 +283,9 @@ namespace Prexonite
         public void AddHostCommand(string alias, ICommand action)
         {
             if (alias == null)
-                throw new ArgumentNullException("alias");
+                throw new ArgumentNullException(nameof(alias));
             if (action == null)
-                throw new ArgumentNullException("action");
+                throw new ArgumentNullException(nameof(action));
             AddHostCommand(alias, new NestedPCommand(action));
         }
 

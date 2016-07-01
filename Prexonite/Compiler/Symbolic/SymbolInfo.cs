@@ -37,11 +37,11 @@ namespace Prexonite.Compiler.Symbolic
         public SymbolInfo(Symbol symbol, SymbolOrigin origin, string name)
         {
             if (symbol == null)
-                throw new System.ArgumentNullException("symbol");
+                throw new System.ArgumentNullException(nameof(symbol));
             if (origin == null)
-                throw new System.ArgumentNullException("origin");
+                throw new System.ArgumentNullException(nameof(origin));
             if (symbol == null)
-                throw new System.ArgumentNullException("symbol");
+                throw new System.ArgumentNullException(nameof(symbol));
             _symbol = symbol;
             _origin = origin;
             _name = name;

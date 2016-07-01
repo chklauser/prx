@@ -164,7 +164,7 @@ GlobalVariableDefinition	(.
   ]                       (.  if(primaryAlias != null && !_suppressPrimarySymbol(vari))
                                     Symbols.Declare(primaryAlias, entry);
                           .)
-  [	                      (.  _pushLexerState(Lexer.Local); .)
+  [	                      (.  _pushLexerState(LocalState); .)
       assign              (.  _PushScope(FunctionTargets[Application.InitializationId]);
                               AstExpr expr;
                           .)
@@ -455,7 +455,7 @@ BuildBlock
                                   Loader.CreateFunctionTarget(func, sourcePosition: GetPosition());
                                 _PushScope(buildBlockTarget);
                                 Loader.DeclareBuildBlockCommands(target);
-                                _pushLexerState(Lexer.Local);                                
+                                _pushLexerState(LocalState);
                             .)
   
   [ does ]	
@@ -477,7 +477,7 @@ GlobalCode				(.  PFunction func = TargetApplication._InitializationFunction;
                   .)
 =
                   (.  _PushScope(ft); 
-                      _pushLexerState(Lexer.Local);
+                      _pushLexerState(LocalState);
                   .)
   lbrace          (.  position = GetPosition(); .)
   { Statement<target.Ast> } 
@@ -738,7 +738,7 @@ FunctionDefinition<out PFunction func>
                                         }
                                         _PushScope(FunctionTargets[func]);
                                         Debug.Assert(target != null); // Mostly to tell ReSharper that target is not null.
-                                        _pushLexerState(Lexer.Local);
+                                        _pushLexerState(LocalState);
                                         if(isMacro)
                                             target.SetupAsMacro();
                                     .)

@@ -48,10 +48,10 @@ namespace Prexonite.Compiler.Ast
         public AstPostExpression([NotNull] ISourcePosition position, [NotNull] AstExpr expression, [NotNull] AstNode action) : base(position)
         {
             if (expression == null)
-                throw new ArgumentNullException("expression");
+                throw new ArgumentNullException(nameof(expression));
 
             if (action == null)
-                throw new ArgumentNullException("action");
+                throw new ArgumentNullException(nameof(action));
             
             _expression = expression;
             _action = action;

@@ -12,7 +12,7 @@ namespace Prexonite.Compiler.Symbolic
         private SymbolTransferDirective([NotNull] ISourcePosition position)
         {
             if (position == null)
-                throw new ArgumentNullException("position");
+                throw new ArgumentNullException(nameof(position));
             
             _position = position;
         }
@@ -122,9 +122,9 @@ namespace Prexonite.Compiler.Symbolic
             public Rename([NotNull] ISourcePosition position, [NotNull] string originalName, [NotNull] string newName) : base(position)
             {
                 if (newName == null)
-                    throw new ArgumentNullException("newName");
+                    throw new ArgumentNullException(nameof(newName));
                 if (originalName == null)
-                    throw new ArgumentNullException("originalName");
+                    throw new ArgumentNullException(nameof(originalName));
                 
                 _originalName = originalName;
                 _newName = newName;
@@ -173,7 +173,7 @@ namespace Prexonite.Compiler.Symbolic
             public Drop([NotNull] ISourcePosition position, [NotNull] string name) : base(position)
             {
                 if (name == null)
-                    throw new ArgumentNullException("name");
+                    throw new ArgumentNullException(nameof(name));
                 
                 _name = name;
             }

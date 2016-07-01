@@ -169,7 +169,7 @@ namespace Prexonite
         public PValue Process(StackContext sctx)
         {
             if (sctx == null)
-                throw new ArgumentNullException("sctx");
+                throw new ArgumentNullException(nameof(sctx));
             Stack.AddLast(sctx);
 #if Verbose
                     Console.WriteLine("\n#PSH: " + sctx + "(?)");

@@ -50,7 +50,7 @@ namespace Prexonite.Compiler.Symbolic
         internal static Symbol _Create([NotNull] Symbol symbol, [CanBeNull] ISourcePosition position)
         {
             if (symbol == null)
-                throw new System.ArgumentNullException("symbol");
+                throw new System.ArgumentNullException(nameof(symbol));
             return new DereferenceSymbol(position ?? symbol.Position, symbol);
         }
 

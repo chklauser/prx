@@ -126,7 +126,7 @@ namespace Prexonite
         public PVariable(string name)
         {
             if (name == null)
-                throw new ArgumentNullException("name");
+                throw new ArgumentNullException(nameof(name));
             if (name.Length == 0)
                 throw new ArgumentException("name is expected to contain at least one character.");
             _declaration = VariableDeclaration.Create(name);
@@ -139,7 +139,7 @@ namespace Prexonite
         public PVariable(VariableDeclaration variableDeclaration)
         {
             if (variableDeclaration == null)
-                throw new ArgumentNullException("variableDeclaration");
+                throw new ArgumentNullException(nameof(variableDeclaration));
             _declaration = variableDeclaration;
         }
 

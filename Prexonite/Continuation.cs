@@ -95,9 +95,9 @@ namespace Prexonite
         public override PValue IndirectCall(StackContext sctx, PValue[] args)
         {
             if (sctx == null)
-                throw new ArgumentNullException("sctx");
+                throw new ArgumentNullException(nameof(sctx));
             if (args == null)
-                throw new ArgumentNullException("args");
+                throw new ArgumentNullException(nameof(args));
 
             var fctx = CreateFunctionContext(sctx, args);
 

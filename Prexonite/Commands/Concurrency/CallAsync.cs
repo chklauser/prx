@@ -71,7 +71,7 @@ namespace Prexonite.Commands.Concurrency
         public static PValue RunStatically(StackContext sctx, PValue[] args)
         {
             if (sctx == null)
-                throw new ArgumentNullException("sctx");
+                throw new ArgumentNullException(nameof(sctx));
             if (args == null || args.Length == 0 || args[0] == null)
                 return PType.Null.CreatePValue();
 

@@ -62,10 +62,10 @@ namespace Prexonite.Modular
         public ModuleName(string id, Version version)
         {
             if (String.IsNullOrEmpty(id))
-                throw new ArgumentException(Resources.ModuleName_Module_id_cannot_be_null_or_empty_,"id");
+                throw new ArgumentException(Resources.ModuleName_Module_id_cannot_be_null_or_empty_,nameof(id));
 
             if (version == null)
-                throw new ArgumentNullException("version");
+                throw new ArgumentNullException(nameof(version));
 
 #if !DEBUG
 // ReSharper disable PossibleNullReferenceException

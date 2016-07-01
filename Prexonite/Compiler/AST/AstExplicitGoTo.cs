@@ -35,7 +35,7 @@ namespace Prexonite.Compiler.Ast
             : base(file, line, column)
         {
             if (destination == null)
-                throw new ArgumentNullException("destination");
+                throw new ArgumentNullException(nameof(destination));
             _destination = destination;
         }
 

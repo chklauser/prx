@@ -67,7 +67,7 @@ namespace Prexonite.Commands.Core
         public static StackContext GetCaller(StackContext sctx)
         {
             if (sctx == null)
-                throw new ArgumentNullException("sctx");
+                throw new ArgumentNullException(nameof(sctx));
             var stack = sctx.ParentEngine.Stack;
             if (!stack.Contains(sctx))
                 return null;

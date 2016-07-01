@@ -104,9 +104,9 @@ namespace Prexonite.Commands.Core.PartialApplication
         public CallComposition(PValue innerExpression, PValue outerExpression)
         {
             if (innerExpression == null)
-                throw new ArgumentNullException("innerExpression");
+                throw new ArgumentNullException(nameof(innerExpression));
             if (outerExpression == null)
-                throw new ArgumentNullException("outerExpression");
+                throw new ArgumentNullException(nameof(outerExpression));
             _innerExpression = innerExpression;
             _outerExpression = outerExpression;
         }

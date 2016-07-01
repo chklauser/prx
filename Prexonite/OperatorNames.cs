@@ -61,6 +61,14 @@ namespace Prexonite
             public const string Increment = "increment";
             public const string Decrement = "decrement";
 
+            // Shell scripting extension (the operators itself are generic, they are just necessary to express sh.pxs)
+            public const string BinaryDeltaRight = "binaryDeltaRight__";
+            public const string UnaryDeltaRightPre = "unaryDeltaRightPre__";
+            public const string UnaryDeltaRightPost = "unaryDeltaRightPost__";
+            public const string BinaryDeltaLeft = "binaryDeltaLeft__";
+            public const string UnaryDeltaLeftPre = "unaryDeltaLeftPre__";
+            public const string UnaryDeltaLeftPost = "unaryDeltaLeftPost__";
+
             public static string GetName(BinaryOperator op)
             {
                 switch (op)
@@ -95,6 +103,10 @@ namespace Prexonite
                         return LessThan;
                     case BinaryOperator.LessThanOrEqual:
                         return LessThanOrEqual;
+                    case BinaryOperator.DeltaRight:
+                        return BinaryDeltaRight;
+                    case BinaryOperator.DeltaLeft:
+                        return BinaryDeltaLeft;
                     default:
                         return null;
                 }
@@ -116,8 +128,16 @@ namespace Prexonite
                         return Decrement;
                     case UnaryOperator.LogicalNot:
                         return LogicalNot;
+                    case UnaryOperator.PreDeltaRight:
+                        return UnaryDeltaRightPre;
+                    case UnaryOperator.PostDeltaRight:
+                        return UnaryDeltaRightPost;
+                    case UnaryOperator.PreDeltaLeft:
+                        return UnaryDeltaLeftPre;
+                    case UnaryOperator.PostDeltaLeft:
+                        return UnaryDeltaLeftPost;
                     default:
-                        throw new ArgumentOutOfRangeException("op");
+                        throw new ArgumentOutOfRangeException(nameof(op));
                 }
             }
         }

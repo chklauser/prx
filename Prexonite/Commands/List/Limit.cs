@@ -60,9 +60,9 @@ namespace Prexonite.Commands.List
             PValue[] args)
         {
             if (ctxCarrier == null)
-                throw new ArgumentNullException("ctxCarrier");
+                throw new ArgumentNullException(nameof(ctxCarrier));
             if (args == null)
-                throw new ArgumentNullException("args");
+                throw new ArgumentNullException(nameof(args));
 
             if (args.Length < 1)
                 throw new PrexoniteException("Limit requires at least one argument.");

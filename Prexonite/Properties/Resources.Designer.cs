@@ -1086,7 +1086,7 @@ namespace Prexonite.Properties {
         }
         
         /// <summary>
-        ///   Looks up a localized string similar to //PRX
+        /// //PRX
         ///
         ///Name sys/0.0;
         ///References {
@@ -1109,6 +1109,12 @@ namespace Prexonite.Properties {
             get {
                 return ResourceManager.GetString("sys", resourceCulture);
             }
+        }
+
+        /// <summary>Source for the runtime components of the Prexonite shell scripting extensions.</summary>
+        public static string sh
+        {
+            get { return ResourceManager.GetString("sh", resourceCulture); }
         }
         
         /// <summary>

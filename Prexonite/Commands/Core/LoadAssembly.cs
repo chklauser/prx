@@ -62,7 +62,7 @@ namespace Prexonite.Commands.Core
         public static PValue RunStatically(StackContext sctx, PValue[] args)
         {
             if (sctx == null)
-                throw new ArgumentNullException("sctx");
+                throw new ArgumentNullException(nameof(sctx));
             if (args == null)
                 args = new PValue[] {};
 

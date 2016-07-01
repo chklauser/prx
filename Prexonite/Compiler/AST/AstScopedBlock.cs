@@ -37,7 +37,7 @@ namespace Prexonite.Compiler.Ast
             : base(p,lexicalScope, uid:uid, prefix:prefix)
         {
             if (lexicalScope == null)
-                throw new System.ArgumentNullException("lexicalScope");
+                throw new System.ArgumentNullException(nameof(lexicalScope));
             _lexicalScope = lexicalScope;
         }
 

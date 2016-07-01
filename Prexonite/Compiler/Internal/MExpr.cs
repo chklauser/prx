@@ -287,16 +287,16 @@ namespace Prexonite.Compiler.Internal
 
             public MList([NotNull] ISourcePosition position, [NotNull] string head, [NotNull] IEnumerable<MExpr> args) : base(position)
             {
-                if (head == null) throw new ArgumentNullException("head");
-                if (args == null) throw new ArgumentNullException("args");
+                if (head == null) throw new ArgumentNullException(nameof(head));
+                if (args == null) throw new ArgumentNullException(nameof(args));
                 _head = head;
                 _args = new List<MExpr>(args);
             }
 
             public MList([NotNull] ISourcePosition position, [NotNull] String head, MExpr arg) : base(position)
             {
-                if (head == null) throw new ArgumentNullException("head");
-                if (arg == null) throw new ArgumentNullException("arg");
+                if (head == null) throw new ArgumentNullException(nameof(head));
+                if (arg == null) throw new ArgumentNullException(nameof(arg));
                 _head = head;
                 _args = new List<MExpr>(1) {arg};
             }
@@ -304,15 +304,15 @@ namespace Prexonite.Compiler.Internal
             public MList([NotNull] ISourcePosition position, [NotNull] String head)
                 : base(position)
             {
-                if (head == null) throw new ArgumentNullException("head");
+                if (head == null) throw new ArgumentNullException(nameof(head));
                 _head = head;
                 _args = new List<MExpr>();
             }
 
             public MList([NotNull] ISourcePosition position, [NotNull] String head, Object arg) : base(position)
             {
-                if (head == null) throw new ArgumentNullException("head");
-                if (arg == null) throw new ArgumentNullException("arg");
+                if (head == null) throw new ArgumentNullException(nameof(head));
+                if (arg == null) throw new ArgumentNullException(nameof(arg));
                 _head = head;
                 _args = new List<MExpr>(1) { new MAtom(position, arg) };
             }

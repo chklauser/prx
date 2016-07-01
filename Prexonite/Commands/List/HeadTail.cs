@@ -61,9 +61,9 @@ namespace Prexonite.Commands.List
         public static PValue RunStatically(StackContext sctx, PValue[] args)
         {
             if (sctx == null)
-                throw new ArgumentNullException("sctx");
+                throw new ArgumentNullException(nameof(sctx));
             if (args == null)
-                throw new ArgumentNullException("args");
+                throw new ArgumentNullException(nameof(args));
 
             PValue head;
             var nextArg = ((IEnumerable<PValue>) args).GetEnumerator();

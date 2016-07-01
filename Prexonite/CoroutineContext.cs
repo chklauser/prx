@@ -45,9 +45,9 @@ namespace Prexonite
         public CoroutineContext(StackContext sctx, IEnumerator<PValue> coroutine)
         {
             if (sctx == null)
-                throw new ArgumentNullException("sctx");
+                throw new ArgumentNullException(nameof(sctx));
             if (coroutine == null)
-                throw new ArgumentNullException("coroutine");
+                throw new ArgumentNullException(nameof(coroutine));
 
             _coroutine = coroutine;
 

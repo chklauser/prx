@@ -62,7 +62,7 @@ namespace Prexonite
         ///      name = "ignoreUnknownDependencies" /> is false.</exception>
         public DependencyAnalysis(IEnumerable<TValue> query, bool ignoreUnknownDependencies)
         {
-            if (query == null) throw new ArgumentNullException("query");
+            if (query == null) throw new ArgumentNullException(nameof(query));
 
             //Add all items
             foreach (var item in query)
@@ -140,7 +140,7 @@ namespace Prexonite
 
             public Group(LinkedList<Node> list)
             {
-                if (list == null) throw new ArgumentNullException("list");
+                if (list == null) throw new ArgumentNullException(nameof(list));
                 _list = list;
             }
 
@@ -250,7 +250,7 @@ namespace Prexonite
 
             public Node(TValue subject)
             {
-                if (subject == null) throw new ArgumentNullException("subject");
+                if (subject == null) throw new ArgumentNullException(nameof(subject));
                 _subject = subject;
             }
 

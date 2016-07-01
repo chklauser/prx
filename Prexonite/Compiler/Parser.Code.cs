@@ -28,6 +28,7 @@ using System.Collections.Generic;
 using System.Diagnostics;
 using System.Globalization;
 using System.Linq;
+using System.Runtime.InteropServices;
 using JetBrains.Annotations;
 using Prexonite.Commands.Core.Operators;
 using Prexonite.Compiler.Ast;
@@ -50,10 +51,10 @@ namespace Prexonite.Compiler
             : this(scanner)
         {
             if (loader == null)
-                throw new ArgumentNullException("loader");
+                throw new ArgumentNullException(nameof(loader));
             _loader = loader;
             _createTableOfInstructions();
-            _astProxy = new AstProxy(this);
+            Ast = new AstProxy(this);
             _astFactory = new ParserAstFactory(this);
             _referenceTransformer = new ReferenceTransformer(this);
         }
@@ -106,13 +107,13 @@ namespace Prexonite.Compiler
         public SymbolStore Symbols
         {
             [DebuggerStepThrough]
-            get { return target != null ? target.CurrentBlock.Symbols : _loader.Symbols; }
+            get { return target?.CurrentBlock.Symbols ?? _loader.Symbols; }
         }
 
         private DeclarationScopeBuilder _prepareDeclScope(QualifiedId relativeNsId, ISourcePosition idPosition)
         {
             if(relativeNsId.Count < 1)
-                throw new ArgumentOutOfRangeException("relativeNsId",Resources.Parser_relativeNsId_empty);
+                throw new ArgumentOutOfRangeException(nameof(relativeNsId),Resources.Parser_relativeNsId_empty);
             var outerScope = Loader.CurrentScope;
             QualifiedId prefix;
             SymbolStore declScopeStore;
@@ -177,11 +178,11 @@ namespace Prexonite.Compiler
             public DeclarationScopeBuilder([NotNull]SymbolStoreBuilder localScopeBuilder, QualifiedId prefix, [NotNull]LocalNamespace ns)
             {
                 if (localScopeBuilder == null)
-                    throw new ArgumentNullException("localScopeBuilder");
+                    throw new ArgumentNullException(nameof(localScopeBuilder));
                 if (ns == null)
-                    throw new ArgumentNullException("ns");
+                    throw new ArgumentNullException(nameof(ns));
                 if (prefix == null)
-                    throw new ArgumentNullException("prefix");
+                    throw new ArgumentNullException(nameof(prefix));
                 
                 _localScopeBuilder = localScopeBuilder;
                 _prefix = prefix;
@@ -367,13 +368,7 @@ namespace Prexonite.Compiler
             get { return _loader.FunctionTargets; }
         }
 
-        private readonly AstProxy _astProxy;
-
-        public AstProxy Ast
-        {
-            [DebuggerStepThrough]
-            get { return _astProxy; }
-        }
+        public AstProxy Ast { get; }
 
         [DebuggerStepThrough]
         public class AstProxy
@@ -385,10 +380,7 @@ namespace Prexonite.Compiler
                 this.outer = outer;
             }
 
-            public AstBlock this[PFunction func]
-            {
-                get { return outer._loader.FunctionTargets[func].Ast; }
-            }
+            public AstBlock this[PFunction func] => outer._loader.FunctionTargets[func].Ast;
         }
 
         private CompilerTarget _target;
@@ -399,17 +391,34 @@ namespace Prexonite.Compiler
             get { return _target; }
         }
 
-        public AstBlock CurrentBlock
+        protected int LocalState
         {
-            get { return target == null ? null : target.CurrentBlock; }
+            get
+            {
+                MetaEntry flagSwitch;
+                bool flagLiteralsEnabled;
+                if (target != null && target.Meta.TryGetValue(Shell.FlagLiteralsKey, out flagSwitch))
+                {
+                    flagLiteralsEnabled = flagSwitch.Switch;
+                }
+                else if (TargetApplication.Meta.TryGetValue(Shell.FlagLiteralsKey, out flagSwitch))
+                {
+                    flagLiteralsEnabled = flagSwitch.Switch;
+                }
+                else
+                {
+                    flagLiteralsEnabled = _loader.Options.FlagLiteralsEnabled;
+                }
+
+                return flagLiteralsEnabled ? Lexer.LocalShell : Lexer.Local;
+            }
         }
+
+        public AstBlock CurrentBlock => target?.CurrentBlock;
 
         private readonly IAstFactory _astFactory;
 
-        protected IAstFactory Create
-        {
-            get { return _astFactory; }
-        }
+        protected IAstFactory Create => _astFactory;
 
         #endregion
 
@@ -502,7 +511,7 @@ namespace Prexonite.Compiler
                 throw new PrexoniteException("The prexonite grammar requires a *Lex-scanner.");
 
             if (c == null)
-                throw new ArgumentNullException("c");
+                throw new ArgumentNullException(nameof(c));
 
             lex._InjectToken(c);
         }
@@ -510,7 +519,7 @@ namespace Prexonite.Compiler
         private void _inject(int kind, string val)
         {
             if (val == null)
-                throw new ArgumentNullException("val");
+                throw new ArgumentNullException(nameof(val));
             var c = new Token
                 {
                     kind = kind,
@@ -667,6 +676,8 @@ namespace Prexonite.Compiler
              *  &=
              *  ??=
              *  ~=
+             *  <|=
+             *  |>=
              */
             scanner.ResetPeek();
 
@@ -685,6 +696,8 @@ namespace Prexonite.Compiler
                 case _bitAnd:
                 case _coalescence:
                 case _tilde:
+                case _deltaleft:
+                case _deltaright:
                     var c = scanner.Peek();
                     if (c.kind == _assign)
                         return true;
@@ -710,7 +723,6 @@ namespace Prexonite.Compiler
             return scanner.Peek().kind == _lbrace;
         }
 
-        //[DebuggerStepThrough]
         private bool isLambdaExpression() //LL(*)
         {
             scanner.ResetPeek();

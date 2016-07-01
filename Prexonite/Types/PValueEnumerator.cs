@@ -91,7 +91,7 @@ namespace Prexonite.Types
         {
             result = null;
             if (args == null)
-                throw new ArgumentNullException("args");
+                throw new ArgumentNullException(nameof(args));
             if (args.Length != 0)
                 return false;
 

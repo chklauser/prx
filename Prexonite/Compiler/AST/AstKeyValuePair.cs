@@ -74,7 +74,7 @@ namespace Prexonite.Compiler.Ast
             if (Key == null)
                 throw new PrexoniteException("AstKeyValuePair.Key must be initialized.");
             if (Value == null)
-                throw new ArgumentNullException("target");
+                throw new ArgumentNullException(nameof(target));
 
             var call = target.Factory.Call(Position, EntityRef.Command.Create(Engine.PairAlias));
             call.Arguments.Add(Key);
@@ -89,7 +89,7 @@ namespace Prexonite.Compiler.Ast
             if (Key == null)
                 throw new PrexoniteException("AstKeyValuePair.Key must be initialized.");
             if (Value == null)
-                throw new ArgumentNullException("target");
+                throw new ArgumentNullException(nameof(target));
 
             _OptimizeNode(target, ref Key);
             _OptimizeNode(target, ref Value);

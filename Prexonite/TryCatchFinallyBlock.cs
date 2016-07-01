@@ -80,7 +80,7 @@ namespace Prexonite
                         (HasCatch ? value >= _beginCatch : false))
                     throw new ArgumentOutOfRangeException
                         (
-                        "value",
+                        nameof(value),
                         "BeginTry(" + value +
                             ") has to be less than BeginFinally,BeginCatch and EndTry.");
                 _beginTry = value;
@@ -106,7 +106,7 @@ namespace Prexonite
                             (HasCatch ? value >= _beginCatch : false)))
                     throw new ArgumentOutOfRangeException
                         (
-                        "value",
+                        nameof(value),
                         "BeginFinally(" + value +
                             ") has to be within the whole try-catch-finally structure but before a catch-clause.");
                 _beginFinally = value;
@@ -132,7 +132,7 @@ namespace Prexonite
                             (HasFinally ? value <= _beginFinally : false)))
                     throw new ArgumentOutOfRangeException
                         (
-                        "value",
+                        nameof(value),
                         "BeginCatch(" + value +
                             ") has to be within whole try-catch-finally structure but after a finally-clause.");
                 _beginCatch = value;
@@ -157,7 +157,7 @@ namespace Prexonite
                         (HasFinally ? value <= _beginFinally : false))
                     throw new ArgumentOutOfRangeException
                         (
-                        "value",
+                        nameof(value),
                         "EndTry(" + value +
                             ") has to be greater than BeginTry, BeginFinally and BeginCatch.");
                 _endTry = value;
@@ -264,9 +264,9 @@ namespace Prexonite
             int address, IEnumerable<TryCatchFinallyBlock> blocks)
         {
             if (blocks == null)
-                throw new ArgumentNullException("blocks");
+                throw new ArgumentNullException(nameof(blocks));
             if (address < 0)
-                throw new ArgumentOutOfRangeException("address", "address must be positive.");
+                throw new ArgumentOutOfRangeException(nameof(address), "address must be positive.");
 
             return blocks
                 .Where(block => block.Handles(address))
@@ -302,7 +302,7 @@ namespace Prexonite
             int address, TryCatchFinallyBlock a, TryCatchFinallyBlock b)
         {
             if (address < 0)
-                throw new ArgumentOutOfRangeException("address", "address must be positive.");
+                throw new ArgumentOutOfRangeException(nameof(address), "address must be positive.");
 
             if (b == null)
                 return a;

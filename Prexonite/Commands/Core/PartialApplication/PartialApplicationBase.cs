@@ -91,7 +91,7 @@ namespace Prexonite.Commands.Core.PartialApplication
         {
             if (nonArgumentPrefix < 0)
                 throw new ArgumentOutOfRangeException(
-                    "nonArgumentPrefix", "non-argument prefix cannot be negative");
+                    nameof(nonArgumentPrefix), "non-argument prefix cannot be negative");
 
             _closedArguments = closedArguments;
 

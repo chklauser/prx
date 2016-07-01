@@ -83,7 +83,7 @@ namespace Prexonite.Commands
         public DelegatePCommand(PCommandAction action, bool isPure)
         {
             if (action == null)
-                throw new ArgumentNullException("action");
+                throw new ArgumentNullException(nameof(action));
             _action = action;
         }
 

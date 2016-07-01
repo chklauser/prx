@@ -541,9 +541,9 @@ namespace Prexonite.Types
             StackContext sctx, PValue leftOperand, PValue rightOperand, out PValue result)
         {
             if (leftOperand == null)
-                throw new ArgumentNullException("leftOperand");
+                throw new ArgumentNullException(nameof(leftOperand));
             if (rightOperand == null)
-                throw new ArgumentNullException("rightOperand");
+                throw new ArgumentNullException(nameof(rightOperand));
 
             var nlst = new List<PValue>();
             var npv = List.CreatePValue(nlst);

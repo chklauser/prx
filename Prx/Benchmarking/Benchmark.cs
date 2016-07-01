@@ -55,10 +55,10 @@ namespace Prx.Benchmarking
         public Benchmark(Engine eng, int iterations)
         {
             if (eng == null)
-                throw new ArgumentNullException("eng");
+                throw new ArgumentNullException(nameof(eng));
             if (iterations < 0)
                 throw new ArgumentOutOfRangeException(
-                    "iterations", iterations, "iterations must be a positive integer.");
+                    nameof(iterations), iterations, "iterations must be a positive integer.");
             _iterations = iterations;
             Machine = eng;
         }
@@ -102,7 +102,7 @@ namespace Prx.Benchmarking
         public void IncludeAll(Application application)
         {
             if (application == null)
-                throw new ArgumentNullException("application");
+                throw new ArgumentNullException(nameof(application));
             foreach (var function in application.Functions)
                 if (function.Meta[BenchmarkKey])
                     Include(function);
@@ -111,7 +111,7 @@ namespace Prx.Benchmarking
         public void IncludeRange(params PFunction[] functions)
         {
             if (functions == null)
-                throw new ArgumentNullException("functions");
+                throw new ArgumentNullException(nameof(functions));
             foreach (var function in functions)
                 Include(function);
         }
@@ -119,7 +119,7 @@ namespace Prx.Benchmarking
         public void Include(PFunction function)
         {
             if (function == null)
-                throw new ArgumentNullException("function");
+                throw new ArgumentNullException(nameof(function));
             _entries.Add(new BenchmarkEntry(this, function));
         }
 
@@ -145,7 +145,7 @@ namespace Prx.Benchmarking
             StackContext sctx, PValue[] args, PCall call, string id, out PValue result)
         {
             if (sctx == null)
-                throw new ArgumentNullException("sctx");
+                throw new ArgumentNullException(nameof(sctx));
             if (args == null)
                 args = new PValue[0];
             if (id == null)

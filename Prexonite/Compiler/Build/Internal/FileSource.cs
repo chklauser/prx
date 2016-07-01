@@ -37,9 +37,9 @@ namespace Prexonite.Compiler.Build.Internal
         public FileSource(FileInfo file, Encoding encoding)
         {
             if (ReferenceEquals(file,null))
-                throw new ArgumentNullException("file");
+                throw new ArgumentNullException(nameof(file));
             if (ReferenceEquals(encoding,null))
-                throw new ArgumentNullException("encoding");
+                throw new ArgumentNullException(nameof(encoding));
             _file = file;
             _encoding = encoding;
         }

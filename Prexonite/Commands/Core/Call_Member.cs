@@ -83,7 +83,7 @@ namespace Prexonite.Commands.Core
         public override PValue Run(StackContext sctx, PValue[] args)
         {
             if (sctx == null)
-                throw new ArgumentNullException("sctx");
+                throw new ArgumentNullException(nameof(sctx));
             if (args == null || args.Length < 2 || args[0] == null)
                 throw new ArgumentException(
                     "The command callmember has the signature(obj, [isSet,] id [, arg1, arg2,...,argn]).");
@@ -140,7 +140,7 @@ namespace Prexonite.Commands.Core
             if (obj == null)
                 return PType.Null.CreatePValue();
             if (sctx == null)
-                throw new ArgumentNullException("sctx");
+                throw new ArgumentNullException(nameof(sctx));
             if (args == null)
                 args = new PValue[] {};
 

@@ -72,9 +72,9 @@ namespace Prexonite.Types
             StackContext sctx, PValue subject, PValue[] args, out PValue result)
         {
             if (sctx == null)
-                throw new ArgumentNullException("sctx");
+                throw new ArgumentNullException(nameof(sctx));
             if (subject == null)
-                throw new ArgumentNullException("subject");
+                throw new ArgumentNullException(nameof(subject));
             if (args == null)
                 args = new PValue[] {};
 
@@ -111,9 +111,9 @@ namespace Prexonite.Types
             out PValue result)
         {
             if (sctx == null)
-                throw new ArgumentNullException("sctx");
+                throw new ArgumentNullException(nameof(sctx));
             if (subject == null)
-                throw new ArgumentNullException("subject");
+                throw new ArgumentNullException(nameof(subject));
             if (args == null)
                 args = new PValue[] {};
             if (id == null)
@@ -308,7 +308,7 @@ namespace Prexonite.Types
             StackContext sctx, PValue[] args, PCall call, string id, out PValue result)
         {
             if (sctx == null)
-                throw new ArgumentNullException("sctx");
+                throw new ArgumentNullException(nameof(sctx));
             if (args == null)
                 args = new PValue[] {};
             if (id == null)
@@ -358,7 +358,7 @@ namespace Prexonite.Types
         public override bool TryConstruct(StackContext sctx, PValue[] args, out PValue result)
         {
             if (sctx == null)
-                throw new ArgumentNullException("sctx");
+                throw new ArgumentNullException(nameof(sctx));
             if (args == null)
                 args = new PValue[] {};
 
@@ -405,11 +405,11 @@ namespace Prexonite.Types
             StackContext sctx, PValue subject, PType target, bool useExplicit, out PValue result)
         {
             if (sctx == null)
-                throw new ArgumentNullException("sctx");
+                throw new ArgumentNullException(nameof(sctx));
             if (subject == null)
-                throw new ArgumentNullException("subject");
+                throw new ArgumentNullException(nameof(subject));
             if ((object) target == null)
-                throw new ArgumentNullException("target");
+                throw new ArgumentNullException(nameof(target));
 
             var pvht = subject.Value as PValueHashtable;
 
@@ -455,9 +455,9 @@ namespace Prexonite.Types
             StackContext sctx, PValue subject, bool useExplicit, out PValue result)
         {
             if (sctx == null)
-                throw new ArgumentNullException("sctx");
+                throw new ArgumentNullException(nameof(sctx));
             if (subject == null)
-                throw new ArgumentNullException("subject");
+                throw new ArgumentNullException(nameof(subject));
 
             result = null;
             PValueHashtable pvht = null;

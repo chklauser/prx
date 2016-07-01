@@ -139,7 +139,7 @@ namespace Prexonite.Compiler.Symbolic.Compatibility
                     break;
                 default:
                     var interpretation = Enum.GetName(typeof (SymbolInterpretations), entry.Interpretation);
-                    throw new ArgumentOutOfRangeException("entry", interpretation,
+                    throw new ArgumentOutOfRangeException(nameof(entry), interpretation,
                                                           string.Format("Cannot convert symbol entry {0} to a symbol.",
                                                                         entry));
             }

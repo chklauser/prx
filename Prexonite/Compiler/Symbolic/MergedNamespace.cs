@@ -38,7 +38,7 @@ namespace Prexonite.Compiler.Symbolic
         internal MergedNamespace([NotNull] SymbolStore scope)
         {
             if (scope == null)
-                throw new ArgumentNullException("scope");
+                throw new ArgumentNullException(nameof(scope));
             
             _exportScope = scope;
         }

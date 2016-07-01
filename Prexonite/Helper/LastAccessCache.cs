@@ -49,7 +49,7 @@ namespace Prexonite
         public LastAccessCache(int capacity)
         {
             if (capacity <= 0)
-                throw new ArgumentException(Resources.LastAccessCache_CapacityMustBePositive, "capacity");
+                throw new ArgumentException(Resources.LastAccessCache_CapacityMustBePositive, nameof(capacity));
 
             Capacity = capacity;
         }

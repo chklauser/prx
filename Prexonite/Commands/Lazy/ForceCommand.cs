@@ -63,9 +63,9 @@ namespace Prexonite.Commands.Lazy
         public static PValue RunStatically(StackContext sctx, PValue[] args)
         {
             if (sctx == null)
-                throw new ArgumentNullException("sctx");
+                throw new ArgumentNullException(nameof(sctx));
             if (args == null)
-                throw new ArgumentNullException("args");
+                throw new ArgumentNullException(nameof(args));
             if (args.Length < 1)
                 throw new PrexoniteException("force requires an argument.");
 

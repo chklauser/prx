@@ -55,7 +55,7 @@ namespace Prexonite.Compiler.Ast
         public AstNamespaceUsage(ISourcePosition position, PCall call, [NotNull] Namespace @namespace) : base(position, call)
         {
             if (@namespace == null)
-                throw new ArgumentNullException("namespace");
+                throw new ArgumentNullException(nameof(@namespace));
             _namespace = @namespace;
         }
 

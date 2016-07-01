@@ -73,9 +73,9 @@ namespace Prexonite.Compiler.Macro
         internal MacroContext(MacroSession session, AstGetSet invocation, bool isJustEffect)
         {
             if (session == null)
-                throw new ArgumentNullException("session");
+                throw new ArgumentNullException(nameof(session));
             if (invocation == null)
-                throw new ArgumentNullException("invocation");
+                throw new ArgumentNullException(nameof(invocation));
             _isJustEffect = isJustEffect;
             _invocation = invocation;
             _session = session;
@@ -167,7 +167,7 @@ namespace Prexonite.Compiler.Macro
         public void PushBlock([NotNull] AstScopedBlock block)
         {
             if (block == null)
-                throw new ArgumentNullException("block");
+                throw new ArgumentNullException(nameof(block));
             if(!ReferenceEquals(block.LexicalScope, CurrentBlock))
                 throw new PrexoniteException("The block pushed by the macro is not a direct lexical child of the currently enclosing scope.");
             _session.Target.BeginBlock(block);
@@ -302,7 +302,7 @@ namespace Prexonite.Compiler.Macro
         public void ReportMessage(Message message)
         {
             if (message == null)
-                throw new ArgumentNullException("message");
+                throw new ArgumentNullException(nameof(message));
 
             _session.Target.Loader.ReportMessage(message);
         }
@@ -326,7 +326,7 @@ namespace Prexonite.Compiler.Macro
         public AstNode GetOptimizedNode(AstNode node)
         {
             if (node == null)
-                throw new ArgumentNullException("node");
+                throw new ArgumentNullException(nameof(node));
             var expr = node as AstExpr;
             if (expr == null || !expr.TryOptimize(_session.Target, out expr))
                 return node;

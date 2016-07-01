@@ -62,7 +62,7 @@ namespace Prexonite.Commands
         public static ICommandInfo ToCommandInfo(this PCommand command)
         {
             if (command == null)
-                throw new ArgumentNullException("command");
+                throw new ArgumentNullException(nameof(command));
 
             return _toCommandInfo(command);
         }

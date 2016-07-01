@@ -67,7 +67,7 @@ namespace Prexonite.Compiler.Cil
         public ForeachHint(MetaEntry[] hint)
         {
             if (hint == null)
-                throw new ArgumentNullException("hint");
+                throw new ArgumentNullException(nameof(hint));
             if (hint.Length < EntryLength)
                 throw new ArgumentException(string.Format("Hint must have at least {0} entries.",
                     EntryLength));

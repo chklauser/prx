@@ -180,7 +180,7 @@ namespace Prx
                             {
                             };
                         if (sctx == null)
-                            throw new ArgumentNullException("sctx");
+                            throw new ArgumentNullException(nameof(sctx));
 
                         var e = sctx.ParentEngine;
 
@@ -265,7 +265,7 @@ namespace Prx
                     delegate(StackContext sctx, PValue[] cargs)
                     {
                         if (sctx == null)
-                            throw new ArgumentNullException("sctx");
+                            throw new ArgumentNullException(nameof(sctx));
                         if (cargs == null)
                             cargs = new PValue[]
                             {

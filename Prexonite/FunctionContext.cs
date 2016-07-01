@@ -65,9 +65,9 @@ namespace Prexonite
             bool suppressInitialization)
         {
             if (parentEngine == null)
-                throw new ArgumentNullException("parentEngine");
+                throw new ArgumentNullException(nameof(parentEngine));
             if (implementation == null)
-                throw new ArgumentNullException("implementation");
+                throw new ArgumentNullException(nameof(implementation));
             if (sharedVariables == null)
                 sharedVariables = new PVariable[] {};
             if (args == null)
@@ -98,7 +98,7 @@ namespace Prexonite
                     if (sharedVariables[i] == null)
                         throw new ArgumentNullException
                             (
-                            "sharedVariables",
+                            nameof(sharedVariables),
                             String.Format(
                                 "The element at index {0} passed in sharedVariables is null for function {1}.",
                                 i, implementation));
@@ -227,9 +227,9 @@ namespace Prexonite
         public void ReplaceLocalVariable(string name, PVariable newVariable)
         {
             if (String.IsNullOrEmpty(name))
-                throw new ArgumentNullException("name");
+                throw new ArgumentNullException(nameof(name));
             if (newVariable == null)
-                throw new ArgumentNullException("newVariable");
+                throw new ArgumentNullException(nameof(newVariable));
 
             if (_implementation.LocalVariableMapping.ContainsKey(name))
                 _localVariableArray[_implementation.LocalVariableMapping[name]] = newVariable;

@@ -61,7 +61,7 @@ namespace Prexonite.Compiler.Cil
         public CilExtensionHint(IList<int> offsets)
         {
             if (offsets == null)
-                throw new ArgumentNullException("offsets");
+                throw new ArgumentNullException(nameof(offsets));
             _offsets = offsets;
         }
 

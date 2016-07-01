@@ -43,9 +43,9 @@ namespace Prexonite.Compiler
 
         internal DeclarationScope([NotNull] LocalNamespace ns, QualifiedId pathPrefix, [NotNull] SymbolStore store)
         {
-            if (ns == null) throw new ArgumentNullException("ns");
+            if (ns == null) throw new ArgumentNullException(nameof(ns));
             if (store == null)
-                throw new ArgumentNullException("store");
+                throw new ArgumentNullException(nameof(store));
                 
             _namespace = ns;
             _pathPrefix = pathPrefix;

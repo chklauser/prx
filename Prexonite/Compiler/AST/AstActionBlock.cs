@@ -37,7 +37,7 @@ namespace Prexonite.Compiler.Ast
             : base(position,parent)
         {
             if (action == null)
-                throw new ArgumentNullException("action");
+                throw new ArgumentNullException(nameof(action));
             Action = action;
         }
 

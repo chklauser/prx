@@ -45,7 +45,7 @@ namespace Prexonite.Compiler.Ast
         protected AstNode([NotNull] ISourcePosition position)
         {
             if (position == null)
-                throw new ArgumentNullException("position");
+                throw new ArgumentNullException(nameof(position));
             _position = position;
         }
 
@@ -133,10 +133,10 @@ namespace Prexonite.Compiler.Ast
         {
             if (target == null)
                 throw new ArgumentNullException(
-                    "target", Resources.AstNode__GetOptimizedNode_CompilerTarget_null);
+                    nameof(target), Resources.AstNode__GetOptimizedNode_CompilerTarget_null);
             if (expr == null)
                 throw new ArgumentNullException(
-                    "expr", Resources.AstNode__GetOptimizedNode_Expression_null);
+                    nameof(expr), Resources.AstNode__GetOptimizedNode_Expression_null);
             AstExpr opt;
             return expr.TryOptimize(target, out opt) ? opt : expr;
         }
@@ -145,10 +145,10 @@ namespace Prexonite.Compiler.Ast
         {
             if (target == null)
                 throw new ArgumentNullException(
-                    "target", Resources.AstNode__GetOptimizedNode_CompilerTarget_null);
+                    nameof(target), Resources.AstNode__GetOptimizedNode_CompilerTarget_null);
             if (expr == null)
                 throw new ArgumentNullException(
-                    "expr", Resources.AstNode__GetOptimizedNode_Expression_null);
+                    nameof(expr), Resources.AstNode__GetOptimizedNode_Expression_null);
             expr = _GetOptimizedNode(target, expr);
         }
 

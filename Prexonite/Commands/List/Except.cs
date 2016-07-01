@@ -54,9 +54,9 @@ namespace Prexonite.Commands.List
         public static PValue RunStatically(StackContext sctx, PValue[] args)
         {
             if (args == null)
-                throw new ArgumentNullException("args");
+                throw new ArgumentNullException(nameof(args));
             if (sctx == null)
-                throw new ArgumentNullException("sctx");
+                throw new ArgumentNullException(nameof(sctx));
 
             var xss = new List<IEnumerable<PValue>>();
             foreach (var arg in args)

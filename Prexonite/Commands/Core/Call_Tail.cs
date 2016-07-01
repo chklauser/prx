@@ -63,7 +63,7 @@ namespace Prexonite.Commands.Core
         public override PValue Run(StackContext sctx, PValue[] args)
         {
             if (sctx == null)
-                throw new ArgumentNullException("sctx");
+                throw new ArgumentNullException(nameof(sctx));
 
             if (args == null || args.Length < 1 || args[0] == null || args[0].IsNull)
                 return PType.Null;
@@ -76,7 +76,7 @@ namespace Prexonite.Commands.Core
         public override StackContext CreateStackContext(StackContext sctx, PValue[] args)
         {
             if (sctx == null)
-                throw new ArgumentNullException("sctx");
+                throw new ArgumentNullException(nameof(sctx));
 
             if (args == null || args.Length < 1 || args[0] == null || args[0].IsNull)
                 return new NullContext(sctx);

@@ -138,7 +138,7 @@ namespace Prexonite.Compiler.Macro.Commands
         public static AstExpr ToExpr([NotNull] IAstFactory factory, [NotNull] ISourcePosition position, [NotNull] EntityRef entityRef)
         {
             if (entityRef == null)
-                throw new ArgumentNullException("entityRef");
+                throw new ArgumentNullException(nameof(entityRef));
 
             return entityRef.Match(_lifter, Tuple.Create(factory, position));
         }

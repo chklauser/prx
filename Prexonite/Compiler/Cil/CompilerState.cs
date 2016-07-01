@@ -83,11 +83,11 @@ namespace Prexonite.Compiler.Cil
                 FunctionLinking linking)
         {
             if (source == null)
-                throw new ArgumentNullException("source");
+                throw new ArgumentNullException(nameof(source));
             if (targetEngine == null)
-                throw new ArgumentNullException("targetEngine");
+                throw new ArgumentNullException(nameof(targetEngine));
             if (il == null)
-                throw new ArgumentNullException("il");
+                throw new ArgumentNullException(nameof(il));
 
             _source = source;
             _linking = linking;
@@ -548,7 +548,7 @@ namespace Prexonite.Compiler.Cil
             if (i >= _tempLocals.Length)
                 throw new ArgumentOutOfRangeException
                     (
-                    "i", i,
+                    nameof(i), i,
                     "This particular cil implementation does not use that many temporary variables.");
             EmitStoreLocal(_tempLocals[i]);
         }
@@ -558,7 +558,7 @@ namespace Prexonite.Compiler.Cil
             if (i >= _tempLocals.Length)
                 throw new ArgumentOutOfRangeException
                     (
-                    "i", i,
+                    nameof(i), i,
                     "This particular cil implementation does not use that many temporary variables.");
             EmitLoadLocal(_tempLocals[i]);
         }
@@ -886,7 +886,7 @@ namespace Prexonite.Compiler.Cil
         public void EmitFuncCall(int argc, string internalId, ModuleName moduleName, bool justEffect)
         {
             if (internalId == null)
-                throw new ArgumentNullException("internalId");
+                throw new ArgumentNullException(nameof(internalId));
 
             MethodInfo staticTargetMethod;
             var isInternal = moduleName == null ||
@@ -940,7 +940,7 @@ namespace Prexonite.Compiler.Cil
         public void EmitNewClo(string internalId, ModuleName moduleName)
         {
             if (internalId == null)
-                throw new ArgumentNullException("internalId");
+                throw new ArgumentNullException(nameof(internalId));
             
             MethodInfo dummyMethodInfo;
             var isInternal = moduleName == null ||
@@ -1118,7 +1118,7 @@ namespace Prexonite.Compiler.Cil
         public void EmitModuleNameAsPValue(ModuleName moduleName)
         {
             if (moduleName == null)
-                throw new ArgumentNullException("moduleName");
+                throw new ArgumentNullException(nameof(moduleName));
             EmitLoadLocal(SctxLocal);
             Il.Emit(OpCodes.Ldstr, moduleName.Id);
             EmitVersion(moduleName.Version);
@@ -1128,7 +1128,7 @@ namespace Prexonite.Compiler.Cil
         public void EmitModuleName(ModuleName moduleName)
         {
             if (moduleName == null)
-                throw new ArgumentNullException("moduleName");
+                throw new ArgumentNullException(nameof(moduleName));
             EmitLoadLocal(SctxLocal);
             Il.Emit(OpCodes.Ldstr, moduleName.Id);
             EmitVersion(moduleName.Version);

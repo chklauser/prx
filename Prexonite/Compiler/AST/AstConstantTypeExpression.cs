@@ -37,7 +37,7 @@ namespace Prexonite.Compiler.Ast
             : base(file, line, column)
         {
             if (typeExpression == null)
-                throw new ArgumentNullException("typeExpression");
+                throw new ArgumentNullException(nameof(typeExpression));
             TypeExpression = typeExpression;
         }
 

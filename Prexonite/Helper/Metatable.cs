@@ -247,7 +247,7 @@ namespace Prexonite
         public virtual void Store(TextWriter writer)
         {
             if (writer == null)
-                throw new ArgumentNullException("writer");
+                throw new ArgumentNullException(nameof(writer));
             foreach (var kvp in this)
             {
                 var entry = kvp.Value;

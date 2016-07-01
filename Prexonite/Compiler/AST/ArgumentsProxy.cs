@@ -43,14 +43,14 @@ namespace Prexonite.Compiler.Ast
         internal ArgumentsProxy(List<AstExpr> arguments)
         {
             if (arguments == null)
-                throw new ArgumentNullException("arguments");
+                throw new ArgumentNullException(nameof(arguments));
             _arguments = arguments;
         }
 
         internal void ResetProxy(List<AstExpr> arguments)
         {
             if (arguments == null)
-                throw new ArgumentNullException("arguments");
+                throw new ArgumentNullException(nameof(arguments));
             _arguments = arguments;
         }
 
@@ -62,7 +62,7 @@ namespace Prexonite.Compiler.Ast
         public void RightAppend(AstExpr item)
         {
             if (item == null)
-                throw new ArgumentNullException("item");
+                throw new ArgumentNullException(nameof(item));
             
             _rightAppends.Add(item);
         }
@@ -70,7 +70,7 @@ namespace Prexonite.Compiler.Ast
         public void RightAppend(IEnumerable<AstExpr> item)
         {
             if (item == null)
-                throw new ArgumentNullException("item");
+                throw new ArgumentNullException(nameof(item));
             
             _rightAppends.AddRange(item);
         }
@@ -103,7 +103,7 @@ namespace Prexonite.Compiler.Ast
         public int IndexOf(AstExpr item)
         {
             if (item == null)
-                throw new ArgumentNullException("item");
+                throw new ArgumentNullException(nameof(item));
             
             return _arguments.IndexOf(item);
         }
@@ -119,7 +119,7 @@ namespace Prexonite.Compiler.Ast
         public void Insert(int index, AstExpr item)
         {
             if (item == null)
-                throw new ArgumentNullException("item");
+                throw new ArgumentNullException(nameof(item));
             
             _arguments.Insert(index, item);
         }
@@ -159,7 +159,7 @@ namespace Prexonite.Compiler.Ast
             set
             {
                 if (value == null)
-                    throw new ArgumentNullException("value");
+                    throw new ArgumentNullException(nameof(value));
                 
                 _arguments[index] = value;
             }
@@ -177,7 +177,7 @@ namespace Prexonite.Compiler.Ast
         public void Add(AstExpr item)
         {
             if (item == null)
-                throw new ArgumentNullException("item");
+                throw new ArgumentNullException(nameof(item));
             
             _arguments.Add(item);
         }
@@ -189,7 +189,7 @@ namespace Prexonite.Compiler.Ast
         public void AddRange(IEnumerable<AstExpr> items)
         {
             if (items == null)
-                throw new ArgumentNullException("items");
+                throw new ArgumentNullException(nameof(items));
             
             _arguments.AddRange(items);
         }
@@ -213,7 +213,7 @@ namespace Prexonite.Compiler.Ast
         public bool Contains(AstExpr item)
         {
             if (item == null)
-                throw new ArgumentNullException("item");
+                throw new ArgumentNullException(nameof(item));
             
             return _arguments.Contains(item);
         }
@@ -246,7 +246,7 @@ namespace Prexonite.Compiler.Ast
         public bool Remove(AstExpr item)
         {
             if (item == null)
-                throw new ArgumentNullException("item");
+                throw new ArgumentNullException(nameof(item));
             
             return _arguments.Remove(item);
         }

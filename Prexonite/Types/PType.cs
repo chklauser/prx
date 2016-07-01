@@ -921,7 +921,7 @@ namespace Prexonite.Types
         public PValue ConvertTo(StackContext sctx, PValue subject, Type clrTarget, bool useExplicit)
         {
             if (clrTarget == null)
-                throw new ArgumentNullException("clrTarget");
+                throw new ArgumentNullException(nameof(clrTarget));
             return ConvertTo(sctx, subject, Object[clrTarget], useExplicit);
         }
 
@@ -1026,7 +1026,7 @@ namespace Prexonite.Types
             StackContext sctx, PValue subject, Type clrTarget, bool useExplicit, out PValue result)
         {
             if (clrTarget == null)
-                throw new ArgumentNullException("clrTarget");
+                throw new ArgumentNullException(nameof(clrTarget));
             return TryConvertTo(sctx, subject, Object[clrTarget], useExplicit, out result);
         }
 
@@ -1103,7 +1103,7 @@ namespace Prexonite.Types
         public bool IsEqual(PType otherType)
         {
             if ((object) otherType == null)
-                throw new ArgumentNullException("otherType");
+                throw new ArgumentNullException(nameof(otherType));
             if (ReferenceEquals(this, otherType))
                 return true;
             if (GetHashCode() != otherType.GetHashCode())
@@ -1265,7 +1265,7 @@ namespace Prexonite.Types
         public static bool IsPType(PValue clrType)
         {
             if (clrType == null)
-                throw new ArgumentNullException("clrType");
+                throw new ArgumentNullException(nameof(clrType));
             if (clrType.IsNull)
                 return false;
             else
@@ -1280,7 +1280,7 @@ namespace Prexonite.Types
         public static bool IsPType(ObjectPType clrType)
         {
             if ((object) clrType == null)
-                throw new ArgumentNullException("clrType");
+                throw new ArgumentNullException(nameof(clrType));
             return IsPType(clrType.ClrType);
         }
 

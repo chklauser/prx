@@ -71,9 +71,9 @@ namespace Prexonite
         public CilClosure(PFunction func, PVariable[] sharedVariables)
         {
             if (func == null)
-                throw new ArgumentNullException("func");
+                throw new ArgumentNullException(nameof(func));
             if (sharedVariables == null)
-                throw new ArgumentNullException("sharedVariables");
+                throw new ArgumentNullException(nameof(sharedVariables));
 
             if (!func.HasCilImplementation)
                 throw new ArgumentException(func + " does not have a cil implemenetation");

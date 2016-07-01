@@ -138,6 +138,7 @@
     <Compile Include="Tests\MExprTests.cs" />
     <Compile Include="Tests\NamespaceInfrastructureTests.cs" />
     <Compile Include="Tests\SelfAssemblingPlanTests.cs" />
+    <Compile Include="Tests\ShellExtensions.cs" />
     <Compile Include="Tests\Translation.cs" />
     <Compile Include="Tests\VMTests.Macro.cs" />
     <Compile Include="Tests\VMTests.Exception.cs" />

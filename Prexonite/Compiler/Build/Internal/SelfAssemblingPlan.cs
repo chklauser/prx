@@ -150,7 +150,7 @@ namespace Prexonite.Compiler.Build.Internal
         {
             if (refSpec.ResolvedPath == null)
                 throw new ArgumentException(Resources.SelfAssemblingPlan_RefSepcMustHaveResolvedPathForPreflightOrder,
-                    "refSpec");
+                    nameof(refSpec));
 
             return _preflightCache.GetOrAdd(refSpec.ResolvedPath.FullName,
                 async (path, actualToken) =>
@@ -176,7 +176,7 @@ namespace Prexonite.Compiler.Build.Internal
             // Make sure refSpec has a re-usable source (will have to support both preflight and actual compilation)
             var source = refSpec.Source;
             if (source == null)
-                throw new ArgumentException(Resources.SelfAssemblingPlan_RefSpecMustHaveSource, "refSpec");
+                throw new ArgumentException(Resources.SelfAssemblingPlan_RefSpecMustHaveSource, nameof(refSpec));
             var reportedPath = _getPath(source);
             if (source.IsSingleUse)
                 source = await source.CacheInMemoryAsync();
@@ -339,7 +339,7 @@ namespace Prexonite.Compiler.Build.Internal
         private Task<ITargetDescription> _orderTargetDescription(PreflightResult result, FileInfo candidate, CancellationToken token, SelfAssemblyMode mode)
         {
             if (candidate == null)
-                throw new ArgumentNullException("candidate");
+                throw new ArgumentNullException(nameof(candidate));
             return _targetCreationCache.GetOrAdd(candidate.FullName,
                 async (key, actualToken) =>
                 {
@@ -370,7 +370,7 @@ namespace Prexonite.Compiler.Build.Internal
                     refSpecs = result.References.Select(_forbidFileRefSpec).ToArray();
                     break;
                 default:
-                    throw new ArgumentOutOfRangeException("mode", mode, Resources.SelfAssemblingPlan_performCreateTargetDescription_mode);
+                    throw new ArgumentOutOfRangeException(nameof(mode), mode, Resources.SelfAssemblingPlan_performCreateTargetDescription_mode);
             }
             
             var buildMessages = refSpecs.Where(t => t.ErrorMessage != null).Select(

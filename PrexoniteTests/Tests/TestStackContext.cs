@@ -37,9 +37,9 @@ namespace Prx.Tests
         public TestStackContext(Engine engine, Application app)
         {
             if (engine == null)
-                throw new ArgumentNullException("engine");
+                throw new ArgumentNullException(nameof(engine));
             if (app == null)
-                throw new ArgumentNullException("app");
+                throw new ArgumentNullException(nameof(app));
             _engine = engine;
             _implementation = app.CreateFunction();
         }

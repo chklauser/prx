@@ -64,7 +64,7 @@ namespace Prexonite.Commands.Lazy
 
         public static PValue RunStatically(StackContext sctx, PValue[] args)
         {
-            if (sctx == null) throw new ArgumentNullException("sctx");
+            if (sctx == null) throw new ArgumentNullException(nameof(sctx));
             if (args == null || args.Length == 0 || args[0] == null)
                 throw new PrexoniteException("The asThunk command requires a value.");
 

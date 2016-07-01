@@ -69,7 +69,7 @@ namespace PrexoniteTests.Tests
         }
 
         [SetUp]
-        public void SetupCompilerEngine()
+        public virtual void SetupCompilerEngine()
         {
             engine = new Engine();
             target = new Application("testApplication");
@@ -216,7 +216,7 @@ namespace PrexoniteTests.Tests
         protected void ExpectReturnValue(string functionId, Action<PValue> assertion, PValue[] args)
         {
             if (assertion == null)
-                throw new ArgumentNullException("assertion");
+                throw new ArgumentNullException(nameof(assertion));
            
             if (args.Any(value => value == null))
                 throw new ArgumentException(

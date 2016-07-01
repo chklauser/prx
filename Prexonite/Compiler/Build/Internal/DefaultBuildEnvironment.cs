@@ -62,11 +62,11 @@ namespace Prexonite.Compiler.Build.Internal
         public DefaultBuildEnvironment(IPlan plan, ITargetDescription description, TaskMap<ModuleName, ITarget> taskMap, CancellationToken token)
         {
             if (taskMap == null)
-                throw new System.ArgumentNullException("taskMap");
+                throw new System.ArgumentNullException(nameof(taskMap));
             if (description == null)
-                throw new System.ArgumentNullException("description");
+                throw new System.ArgumentNullException(nameof(description));
             if ((object) plan == null)
-                throw new System.ArgumentNullException("plan");
+                throw new System.ArgumentNullException(nameof(plan));
 
             _token = token;
             _plan = plan;

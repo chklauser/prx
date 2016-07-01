@@ -175,7 +175,7 @@ namespace Prexonite.Types
             out PValue result)
         {
             if (sctx == null)
-                throw new ArgumentNullException("sctx");
+                throw new ArgumentNullException(nameof(sctx));
             if (args == null)
                 args = new PValue[] {};
             if (id == null)
@@ -203,18 +203,18 @@ namespace Prexonite.Types
         protected void AddRefMember(string id, PValue value)
         {
             if (id == null)
-                throw new ArgumentNullException("id");
+                throw new ArgumentNullException(nameof(id));
             if (value == null)
-                throw new ArgumentNullException("value");
+                throw new ArgumentNullException(nameof(value));
             _et.Add(new ExtensionMember(id, true, value));
         }
 
         protected void AddMember(string id, PValue value)
         {
             if (id == null)
-                throw new ArgumentNullException("id");
+                throw new ArgumentNullException(nameof(id));
             if (value == null)
-                throw new ArgumentNullException("value");
+                throw new ArgumentNullException(nameof(value));
             _et.Add(new ExtensionMember(id, value));
         }
 
@@ -321,7 +321,7 @@ namespace Prexonite.Types
         public PValue IndirectCall(StackContext sctx, PValue subject, PValue[] args)
         {
             if (sctx == null)
-                throw new ArgumentNullException("sctx");
+                throw new ArgumentNullException(nameof(sctx));
             if (args == null)
                 args = new PValue[] {};
 
@@ -360,7 +360,7 @@ namespace Prexonite.Types
         internal ExtensionMember(string id, bool indirect, PValue value)
         {
             if (id == null)
-                throw new ArgumentNullException("id");
+                throw new ArgumentNullException(nameof(id));
             if (value == null)
                 value = PType.Null.CreatePValue();
 
@@ -392,9 +392,9 @@ namespace Prexonite.Types
             else // direct
             {
                 if (args == null)
-                    throw new ArgumentNullException("args");
+                    throw new ArgumentNullException(nameof(args));
                 if (sctx == null)
-                    throw new ArgumentNullException("sctx");
+                    throw new ArgumentNullException(nameof(sctx));
 
                 result = Value;
 
@@ -433,7 +433,7 @@ namespace Prexonite.Types
         protected override string GetKeyForItem(ExtensionMember item)
         {
             if (item == null)
-                throw new ArgumentNullException("item");
+                throw new ArgumentNullException(nameof(item));
 
             return item.Id;
         }

@@ -53,9 +53,9 @@ namespace Prexonite.Compiler.Ast
             : base(file, line, column)
         {
             if (subject == null)
-                throw new ArgumentNullException("subject");
+                throw new ArgumentNullException(nameof(subject));
             if (type == null)
-                throw new ArgumentNullException("type");
+                throw new ArgumentNullException(nameof(type));
             _subject = subject;
             _type = type;
         }

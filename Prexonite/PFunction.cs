@@ -114,9 +114,9 @@ namespace Prexonite
         internal PFunction(Application parentApplication, FunctionDeclaration declaration)
         {
             if (parentApplication == null)
-                throw new ArgumentNullException("parentApplication");
+                throw new ArgumentNullException(nameof(parentApplication));
             if (declaration == null)
-                throw new ArgumentNullException("declaration");
+                throw new ArgumentNullException(nameof(declaration));
 
             if (!parentApplication.Module.Functions.Contains(declaration))
                 throw new ArgumentException(

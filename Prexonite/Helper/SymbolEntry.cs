@@ -317,7 +317,7 @@ namespace Prexonite.Compiler
                 case SymbolInterpretations.None:
                     return false;
                 default:
-                    throw new ArgumentOutOfRangeException("symbolInterpretation");
+                    throw new ArgumentOutOfRangeException(nameof(symbolInterpretation));
             }
         }
 
@@ -343,7 +343,7 @@ namespace Prexonite.Compiler
                 case SymbolInterpretations.Undefined:
                 case SymbolInterpretations.None:
                 default:
-                    throw new ArgumentOutOfRangeException("symbolInterpretations");
+                    throw new ArgumentOutOfRangeException(nameof(symbolInterpretations));
             }
         }
     }

@@ -149,7 +149,7 @@ namespace Prexonite
         public MetaEntry(string text)
         {
             if (text == null)
-                throw new ArgumentNullException("text");
+                throw new ArgumentNullException(nameof(text));
             _mtype = Type.Text;
             _list = null;
             _switch = false;
@@ -161,12 +161,12 @@ namespace Prexonite
         {
             //Check sanity
             if (list == null)
-                throw new ArgumentNullException("list");
+                throw new ArgumentNullException(nameof(list));
             foreach (var entry in list)
             {
                 if (entry == null)
                     throw new ArgumentException(
-                        "A MetaEntry list must not contain null references.", "list");
+                        "A MetaEntry list must not contain null references.", nameof(list));
             }
             _mtype = Type.List;
             _text = null;
@@ -219,7 +219,7 @@ namespace Prexonite
         public static implicit operator string(MetaEntry item)
         {
             if (item == null)
-                throw new ArgumentNullException("item",
+                throw new ArgumentNullException(nameof(item),
                     "A null reference cannot be implicitly converted to a meta entry.");
             return item.Text;
         }
@@ -228,7 +228,7 @@ namespace Prexonite
         public static implicit operator bool(MetaEntry item)
         {
             if (item == null)
-                throw new ArgumentNullException("item",
+                throw new ArgumentNullException(nameof(item),
                     "A null reference cannot be implicitly converted to a meta entry.");
             return item.Switch;
         }
@@ -237,7 +237,7 @@ namespace Prexonite
         public static explicit operator MetaEntry[](MetaEntry item)
         {
             if (item == null)
-                throw new ArgumentNullException("item",
+                throw new ArgumentNullException(nameof(item),
                     "A null reference cannot be explicitly converted to a meta entry.");
             return item.List;
         }
@@ -252,7 +252,7 @@ namespace Prexonite
         public static implicit operator MetaEntry(string item)
         {
             if (item == null)
-                throw new ArgumentNullException("item",
+                throw new ArgumentNullException(nameof(item),
                     "A null reference cannot be implicitly converted to a meta entry.");
             return new MetaEntry(item);
         }
@@ -261,7 +261,7 @@ namespace Prexonite
         public static explicit operator MetaEntry(MetaEntry[] item)
         {
             if (item == null)
-                throw new ArgumentNullException("item",
+                throw new ArgumentNullException(nameof(item),
                     "A null reference cannot be explicitly converted to a meta entry.");
             return new MetaEntry(item);
         }
@@ -269,7 +269,7 @@ namespace Prexonite
         public static implicit operator PValue(MetaEntry item)
         {
             if (item == null)
-                throw new ArgumentNullException("item",
+                throw new ArgumentNullException(nameof(item),
                     "A null reference cannot be implicitly converted to a meta entry.");
             switch (item._mtype)
             {
@@ -405,7 +405,7 @@ namespace Prexonite
             MetaEntry[] list = _asList();
             if (index + length > list.Length - 1 || index < 0 || length < 0)
                 throw new ArgumentOutOfRangeException(
-                    "index",
+                    nameof(index),
                     string.Format("The supplied index and length {0} are out of the range of 0..{1}.", index, (list.Length - 1)));
             var newList = new MetaEntry[list.Length - 1];
             //Copy the elements before the ones to remove
@@ -447,7 +447,7 @@ namespace Prexonite
         public void ToString(StringBuilder buffer)
         {
             if (buffer == null)
-                throw new ArgumentNullException("buffer");
+                throw new ArgumentNullException(nameof(buffer));
             switch (_mtype)
             {
                 case Type.List:

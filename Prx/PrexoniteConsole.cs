@@ -63,7 +63,7 @@ namespace Prx
             StackContext sctx)
         {
             if (sctx == null)
-                throw new ArgumentNullException("sctx",
+                throw new ArgumentNullException(nameof(sctx),
                     "OnTab must either be called from via the ReadLine method or with a valid stack context.");
             if (_onTab != null && !_onTab.IsNull)
             {

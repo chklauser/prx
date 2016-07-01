@@ -64,7 +64,16 @@ RegularStringChar   = [^$\"\\\r\n\u2028\u2029\u000B\u000C\u0085]
 RegularVerbatimStringChar = [^$\"]
 Noise               = "/*" ~"*/" | "//" {NotLineBreak}* | {WhiteSpace}+
 
-%state String, SmartString, VerbatimString, SmartVerbatimString, VerbatimBlock, Local, Asm, Transfer
+// String: a constant string with C-style escape sequences
+// SmartString: a string with C-style escape sequences and $-interpolation (needs support from Parser)
+// VerbatimString: a constant string where only "" escapes to ".
+// SmartVerbatimString: a string with $-interpolation where only "" escapes to " (needs support from Parser)
+// Local: code body (function body, RHS of global variable, etc.)
+// LocalShell: like code body, but accepts flag literals (-q, --long, --option=EXPR)
+// Asm: assembler code (resembles global scope)
+// Transfer: Body of a symbol transfer expression (namespace declaration), mostly like global scope
+// YYINITIAL: the global scope
+%state String, SmartString, VerbatimString, SmartVerbatimString, VerbatimBlock, Local, LocalShell, Asm, Transfer
 
 %%
 
@@ -73,7 +82,7 @@ Noise               = "/*" ~"*/" | "//" {NotLineBreak}* | {WhiteSpace}+
     "to"        { return tok(Parser._to); }
 }
 
-<YYINITIAL,Local> {
+<YYINITIAL,Local,LocalShell> {
      "does" { return tok(Parser._does); }
 }
 
@@ -84,7 +93,7 @@ Noise               = "/*" ~"*/" | "//" {NotLineBreak}* | {WhiteSpace}+
 }
 
 //Only local code
-<Local> {
+<Local,LocalShell> {
     "\""        { buffer.Length = 0; PushState(SmartString); }
     "@\""       { buffer.Length = 0; PushState(SmartVerbatimString); }
 
@@ -92,7 +101,7 @@ Noise               = "/*" ~"*/" | "//" {NotLineBreak}* | {WhiteSpace}+
 
 // Everywhere in code except in symbol transfer specifications
 // this is a hack to get around an ambiguity of (*)
-<YYINITIAL,Local,Asm> {
+<YYINITIAL,Local,LocalShell,Asm> {
      "(*)" { return tok(Parser._id,OperatorNames.Prexonite.Multiplication); }
 }
 
@@ -100,8 +109,25 @@ Noise               = "/*" ~"*/" | "//" {NotLineBreak}* | {WhiteSpace}+
      "(*)" { return tok(Parser._timessym); }
 }
 
+// When flag literals are enabled, GNU-style flags (-f, -vf, --long, --opt=EXPR) are recognized.
+// This mode is of course not compatible with Prexonite code unaware of shell extensions
+<LocalShell> {
+    "-" "-"? [:jletterdigit:] ([:jletterdigit:]|"-")* "="? {
+                                                                String flag = yytext();
+                                                                if(flag.EndsWith("=")) {
+                                                                    return multiple(
+                                                                        tok(Parser._string, flag),
+                                                                        tok(Parser._plus, "+")
+                                                                    );
+                                                                }
+                                                                else {
+                                                                    return tok(Parser._string, flag);
+                                                                }
+                                                            }
+}
+
 //Everywhere in code
- <YYINITIAL,Local,Asm,Transfer> {
+ <YYINITIAL,Local,LocalShell,Asm,Transfer> {
 
      {Noise}    { /* Comment/Whitespace: ignore */ }
 
@@ -150,6 +176,12 @@ Noise               = "/*" ~"*/" | "//" {NotLineBreak}* | {WhiteSpace}+
      "(-.)" { return tok(Parser._id,OperatorNames.Prexonite.UnaryNegation); }
      "(++)" { return tok(Parser._id,OperatorNames.Prexonite.Increment); }
      "(--)" { return tok(Parser._id,OperatorNames.Prexonite.Decrement); }
+     "(<|.)" { return tok(Parser._id,OperatorNames.Prexonite.UnaryDeltaLeftPre); }
+     "(.<|)" { return tok(Parser._id,OperatorNames.Prexonite.UnaryDeltaLeftPost); }
+     "(|>.)" { return tok(Parser._id,OperatorNames.Prexonite.UnaryDeltaRightPre); }
+     "(.|>)" { return tok(Parser._id,OperatorNames.Prexonite.UnaryDeltaRightPost); }
+     "(<|)" { return tok(Parser._id,OperatorNames.Prexonite.BinaryDeltaLeft); }
+     "(|>)" { return tok(Parser._id,OperatorNames.Prexonite.BinaryDeltaRight); }
      "("    { return tok(Parser._lpar); }
      ")"    { return tok(Parser._rpar); }
      "]"    { return tok(Parser._rbrack); }
@@ -160,6 +192,8 @@ Noise               = "/*" ~"*/" | "//" {NotLineBreak}* | {WhiteSpace}+
      "/"    { return tok(Parser._div); }
      "^"    { return tok(Parser._pow); }
      "="    { return tok(Parser._assign); }
+     "<|"   { return tok(Parser._deltaleft); }
+     "|>"   { return tok(Parser._deltaright); }
     "&&"    { return tok(Parser._and); }
     "||"    { return tok(Parser._or); }
     "|"     { return tok(Parser._bitOr); }
@@ -255,7 +289,7 @@ Noise               = "/*" ~"*/" | "//" {NotLineBreak}* | {WhiteSpace}+
                      }
     "$("             {  string fragment = buffer.ToString();
                         buffer.Length = 0;
-                        PushState(Local);
+                        PushState(_surroundingLocalState);
                         return multiple(
                             tok(Parser._string, fragment),
                             tok(Parser._plus),
@@ -301,7 +335,7 @@ Noise               = "/*" ~"*/" | "//" {NotLineBreak}* | {WhiteSpace}+
                      }
     "$("             {  string fragment = buffer.ToString();
                         buffer.Length = 0;
-                        PushState(Local);
+                        PushState(_surroundingLocalState);
                         return multiple(
                             tok(Parser._string, fragment),
                             tok(Parser._plus),

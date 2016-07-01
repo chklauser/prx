@@ -66,6 +66,22 @@ internal partial class Lexer
         yybegin(state);
     }
 
+    private int _surroundingLocalState
+    {
+        get
+        {
+            foreach (var state in yystates)
+            {
+                if (state == Local || state == LocalShell)
+                {
+                    return state;
+                }
+            }
+            // Conservatively assume Local (instead of LocalShell)
+            return Local;
+        }
+    }
+
     public void PopState()
     {
         var state = yystates.Count > 0 ? yystates.Pop() : YYINITIAL;
@@ -85,10 +101,7 @@ internal partial class Lexer
         yyclose();
     }
 
-    string IScanner.File
-    {
-        get { return _file; }
-    }
+    string IScanner.File => _file;
 
     #region fake reference to Lexer.zzAtBOL (too lazy to hack into scanner generator)
 
@@ -123,7 +136,7 @@ internal partial class Lexer
     private Token multiple(params Token[] tokens)
     {
         if (tokens == null)
-            throw new ArgumentNullException("tokens");
+            throw new ArgumentNullException(nameof(tokens));
         if (tokens.Length == 0)
             throw new ArgumentException("Must at least return one token.");
 
@@ -185,7 +198,7 @@ internal partial class Lexer
 
         var current_state = yystate();
         var isGlobal = current_state == YYINITIAL || current_state == Transfer;
-        var isLocal = current_state == Local;
+        var isLocal = current_state == Local || current_state == LocalShell;
 
         //Not assembler
         if (isGlobal || isLocal)

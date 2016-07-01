@@ -74,7 +74,7 @@ namespace Prexonite.Compiler.Macro
             ISourcePosition position) where T : struct
         {
             if (position == null)
-                throw new ArgumentNullException("position");
+                throw new ArgumentNullException(nameof(position));
 
             var member = Enum.GetName(typeof (T), enumerationValue);
             var pcallT = new AstConstantTypeExpression(position.File,

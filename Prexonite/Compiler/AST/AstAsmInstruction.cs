@@ -36,7 +36,7 @@ namespace Prexonite.Compiler.Ast
             : base(file, line, column)
         {
             if (instruction == null)
-                throw new ArgumentNullException("instruction");
+                throw new ArgumentNullException(nameof(instruction));
             Instruction = instruction;
         }
 

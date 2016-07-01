@@ -58,7 +58,7 @@ namespace Prexonite.Types
         public PValueEnumeratorWrapper(IEnumerator<PValue> baseEnumerator)
         {
             if (baseEnumerator == null)
-                throw new ArgumentNullException("baseEnumerator");
+                throw new ArgumentNullException(nameof(baseEnumerator));
             _baseEnumerator = baseEnumerator;
         }
 

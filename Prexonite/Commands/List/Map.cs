@@ -145,9 +145,9 @@ namespace Prexonite.Commands.List
             PValue[] args)
         {
             if (sctxCarrier == null)
-                throw new ArgumentNullException("sctxCarrier");
+                throw new ArgumentNullException(nameof(sctxCarrier));
             if (args == null)
-                throw new ArgumentNullException("args");
+                throw new ArgumentNullException(nameof(args));
 
             var sctx = sctxCarrier.StackContext;
 

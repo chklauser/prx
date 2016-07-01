@@ -37,21 +37,21 @@ namespace Prexonite.Compiler
             : base(compilerMessage.Text)
         {
             if (compilerMessage == null)
-                throw new ArgumentNullException("compilerMessage");
+                throw new ArgumentNullException(nameof(compilerMessage));
             _compilerMessage = compilerMessage;
         }
 
         public ErrorMessageException(string message, [NotNull] Message compilerMessage) : base(message)
         {
             if (compilerMessage == null)
-                throw new ArgumentNullException("compilerMessage");
+                throw new ArgumentNullException(nameof(compilerMessage));
             _compilerMessage = compilerMessage;
         }
 
         public ErrorMessageException(string message, [NotNull] Message compilerMessage, Exception innerException) : base(message, innerException)
         {
             if (compilerMessage == null)
-                throw new ArgumentNullException("compilerMessage");
+                throw new ArgumentNullException(nameof(compilerMessage));
             _compilerMessage = compilerMessage;
         }
 

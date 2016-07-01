@@ -85,7 +85,7 @@ namespace Prexonite.Compiler
         public ParserAstFactory(Parser parser)
         {
             if (parser == null)
-                throw new ArgumentNullException("parser");
+                throw new ArgumentNullException(nameof(parser));
             _parser = parser;
         }
     }

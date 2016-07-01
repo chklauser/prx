@@ -60,7 +60,7 @@ namespace Prexonite
         public RandomAccessQueue(IEnumerable<T> collection)
         {
             if (collection == null)
-                throw new ArgumentNullException("collection");
+                throw new ArgumentNullException(nameof(collection));
             _store = new List<T>(collection);
         }
 

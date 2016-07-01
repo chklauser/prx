@@ -41,7 +41,7 @@ namespace Prexonite
         public ReadOnlyDictionaryView(IDictionary<TKey, TValue> table)
         {
             if (table == null)
-                throw new ArgumentNullException("table");
+                throw new ArgumentNullException(nameof(table));
             _table = table;
         }
 

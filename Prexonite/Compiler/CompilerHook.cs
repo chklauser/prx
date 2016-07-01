@@ -51,7 +51,7 @@ namespace Prexonite.Compiler
         public CompilerHook(AstTransformation transformation)
         {
             if (transformation == null)
-                throw new ArgumentNullException("transformation");
+                throw new ArgumentNullException(nameof(transformation));
             _managed = transformation;
         }
 
@@ -62,7 +62,7 @@ namespace Prexonite.Compiler
         public CompilerHook(PValue transformation)
         {
             if (transformation == null)
-                throw new ArgumentNullException("transformation");
+                throw new ArgumentNullException(nameof(transformation));
             _interpreted = transformation;
         }
 

@@ -41,9 +41,9 @@ namespace Prexonite.Compiler.Internal
         public SymbolMExprParser([NotNull] ISymbolView<Symbol> symbols,[NotNull] IMessageSink messageSink, [NotNull]ISymbolView<Symbol> topLevelSymbols = null)
         {
             if (symbols == null)
-                throw new ArgumentNullException("symbols");
+                throw new ArgumentNullException(nameof(symbols));
             if (messageSink == null)
-                throw new ArgumentNullException("messageSink");
+                throw new ArgumentNullException(nameof(messageSink));
             
             _symbols = symbols;
             _messageSink = messageSink;

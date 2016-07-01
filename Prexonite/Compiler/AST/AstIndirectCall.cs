@@ -54,7 +54,7 @@ namespace Prexonite.Compiler.Ast
             : base(file, line, column, call)
         {
             if (subject == null)
-                throw new ArgumentNullException("subject");
+                throw new ArgumentNullException(nameof(subject));
             Subject = subject;
         }
 
@@ -168,7 +168,7 @@ namespace Prexonite.Compiler.Ast
                                         target.EmitPop(node.Position,node.Arguments.Count - 1);
                                     break;
                                 default:
-                                    throw new ArgumentOutOfRangeException("call");
+                                    throw new ArgumentOutOfRangeException(nameof(call));
                             }
                         };
             }
@@ -193,7 +193,7 @@ namespace Prexonite.Compiler.Ast
                                     target.EmitPop(node.Position, node.Arguments.Count - 1);
                                 break;
                             default:
-                                throw new ArgumentOutOfRangeException("call");
+                                throw new ArgumentOutOfRangeException(nameof(call));
                         }
                     };
             }

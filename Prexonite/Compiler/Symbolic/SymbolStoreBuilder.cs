@@ -70,8 +70,8 @@ namespace Prexonite.Compiler.Symbolic
 
             public ImportStatement([NotNull] ISymbolView<Symbol> source, [NotNull] SymbolOrigin origin)
             {
-                if (source == null) throw new ArgumentNullException("source");
-                if (origin == null) throw new ArgumentNullException("origin");
+                if (source == null) throw new ArgumentNullException(nameof(source));
+                if (origin == null) throw new ArgumentNullException(nameof(origin));
                 _source = source;
                 _origin = origin;
             }

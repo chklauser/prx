@@ -82,7 +82,7 @@ namespace Prexonite.Commands.Core
         public static PValue RunStatically(StackContext sctx, PValue[] args)
         {
             if (args == null)
-                throw new ArgumentNullException("args");
+                throw new ArgumentNullException(nameof(args));
             foreach (var arg in args)
                 if (arg != null)
                 {

@@ -40,11 +40,11 @@ namespace Prexonite.Compiler.Build.Internal
         public StreamSource([NotNull] Stream stream, [NotNull] Encoding encoding, bool forceSingleUse)
         {
             if ((object) stream == null)
-                throw new ArgumentNullException("stream");
+                throw new ArgumentNullException(nameof(stream));
             if(!stream.CanRead)
-                throw new ArgumentException(Resources.Exception_StreamSource_CannotUseWriteOnlyStream, "stream");
+                throw new ArgumentException(Resources.Exception_StreamSource_CannotUseWriteOnlyStream, nameof(stream));
             if ((object) encoding == null)
-                throw new ArgumentNullException("encoding");
+                throw new ArgumentNullException(nameof(encoding));
 
             _stream = stream;
             _encoding = encoding;

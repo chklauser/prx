@@ -329,7 +329,7 @@ namespace Prexonite
         public static Instruction CreateFunctionCall(int arguments, [NotNull] string id, bool justEffect, [CanBeNull] ModuleName moduleName)
         {
             if(id == null)
-                throw new ArgumentNullException("id");
+                throw new ArgumentNullException(nameof(id));
             return new Instruction(OpCode.func, id, arguments, justEffect, moduleName);
         }
 
@@ -382,10 +382,10 @@ namespace Prexonite
         {
             if (index > ushort.MaxValue)
                 throw new ArgumentOutOfRangeException(
-                    "index", index, "index must fit into an unsigned short integer.");
+                    nameof(index), index, "index must fit into an unsigned short integer.");
             if (arguments > ushort.MaxValue)
                 throw new ArgumentOutOfRangeException(
-                    "arguments", arguments, "arguments must fit into an unsigned short integer.");
+                    nameof(arguments), arguments, "arguments must fit into an unsigned short integer.");
             var idx = (ushort) index;
             var argc = (ushort) arguments;
 
@@ -522,7 +522,7 @@ namespace Prexonite
             else if (jump == OpCode.jump_f)
                 return OpCode.jump_t;
             else
-                throw new ArgumentException("The passed opcode must be a conditional jump.", "jump");
+                throw new ArgumentException("The passed opcode must be a conditional jump.", nameof(jump));
         }
 
         public bool IsFunctionExit

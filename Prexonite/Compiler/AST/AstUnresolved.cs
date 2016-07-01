@@ -45,7 +45,7 @@ namespace Prexonite.Compiler.Ast
         public AstUnresolved(ISourcePosition position, string id) : base(position,PCall.Get)
         {
             if (id == null)
-                throw new ArgumentNullException("id");
+                throw new ArgumentNullException(nameof(id));
             
             _id = id;
         }

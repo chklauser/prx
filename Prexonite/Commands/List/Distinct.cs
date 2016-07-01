@@ -34,9 +34,9 @@ namespace Prexonite.Commands.List
             PValue[] args)
         {
             if (args == null)
-                throw new ArgumentNullException("args");
+                throw new ArgumentNullException(nameof(args));
             if (sctxCarrier == null)
-                throw new ArgumentNullException("sctxCarrier");
+                throw new ArgumentNullException(nameof(sctxCarrier));
 
             var t = new Dictionary<PValue, object>();
 

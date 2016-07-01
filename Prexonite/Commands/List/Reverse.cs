@@ -56,9 +56,9 @@ namespace Prexonite.Commands.List
             IEnumerable<PValue> args)
         {
             if (args == null)
-                throw new ArgumentNullException("args");
+                throw new ArgumentNullException(nameof(args));
             if (sctxCarrier == null)
-                throw new ArgumentNullException("sctxCarrier");
+                throw new ArgumentNullException(nameof(sctxCarrier));
 
             var sctx = sctxCarrier.StackContext;
 

@@ -57,16 +57,16 @@ namespace Prexonite.Commands.List
         protected static IEnumerable<PValue> CoroutineRunStatically(ContextCarrier sctxCarrier, PValue[] args)
         {
             if (sctxCarrier == null)
-                throw new ArgumentNullException("sctxCarrier");
+                throw new ArgumentNullException(nameof(sctxCarrier));
             if (args == null)
-                throw new ArgumentNullException("args");
+                throw new ArgumentNullException(nameof(args));
 
             var sctx = sctxCarrier.StackContext;
 
             foreach (var arg in args)
             {
                 if (arg == null)
-                    throw new ArgumentException("No element in seqconcat(args...) must be null.", "args");
+                    throw new ArgumentException("No element in seqconcat(args...) must be null.", nameof(args));
                 var xss = Map._ToEnumerable(sctx, arg);
                 if (xss == null)
                     continue;

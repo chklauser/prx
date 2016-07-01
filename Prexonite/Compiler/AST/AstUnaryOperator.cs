@@ -42,7 +42,7 @@ namespace Prexonite.Compiler.Ast
             : base(position)
         {
             if (operand == null)
-                throw new ArgumentNullException("operand");
+                throw new ArgumentNullException(nameof(operand));
             
             _operator = op;
             _operand = operand;
@@ -217,7 +217,7 @@ namespace Prexonite.Compiler.Ast
         protected override void DoEmitCode(CompilerTarget target, StackSemantics stackSemantics)
         {
             if (target == null)
-                throw new ArgumentNullException("target");
+                throw new ArgumentNullException(nameof(target));
 
             switch (stackSemantics)
             {
@@ -228,7 +228,7 @@ namespace Prexonite.Compiler.Ast
                     _emitIncrementDecrementCode(target, stackSemantics);
                     break;
                 default:
-                    throw new ArgumentOutOfRangeException("stackSemantics");
+                    throw new ArgumentOutOfRangeException(nameof(stackSemantics));
             }
         }
 
@@ -282,6 +282,10 @@ namespace Prexonite.Compiler.Ast
         PreIncrement,
         PreDecrement,
         PostIncrement,
-        PostDecrement
+        PostDecrement,
+        PreDeltaLeft,
+        PostDeltaLeft,
+        PreDeltaRight,
+        PostDeltaRight
     }
 }

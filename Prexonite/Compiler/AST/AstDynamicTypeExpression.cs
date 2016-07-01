@@ -40,7 +40,7 @@ namespace Prexonite.Compiler.Ast
             : base(file, line, column)
         {
             if (typeId == null)
-                throw new ArgumentNullException("typeId");
+                throw new ArgumentNullException(nameof(typeId));
             TypeId = typeId;
         }
 

@@ -65,7 +65,7 @@ namespace Prexonite.Compiler
         public static void InstallHook(Loader ldr)
         {
             if (ldr == null)
-                throw new ArgumentNullException("ldr");
+                throw new ArgumentNullException(nameof(ldr));
             ldr.CompilerHooks.Add(_hook);
         }
 
@@ -77,7 +77,7 @@ namespace Prexonite.Compiler
         public static void UninstallHook(Loader ldr)
         {
             if (ldr == null)
-                throw new ArgumentNullException("ldr");
+                throw new ArgumentNullException(nameof(ldr));
             ldr.CompilerHooks.Remove(_hook);
         }
 

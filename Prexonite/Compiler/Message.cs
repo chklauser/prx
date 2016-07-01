@@ -120,7 +120,7 @@ namespace Prexonite.Compiler
         public Message Repositioned([NotNull] ISourcePosition position)
         {
             if (position == null)
-                throw new ArgumentNullException("position");
+                throw new ArgumentNullException(nameof(position));
             return new Message(Severity,Text,position,MessageClass);
         }
 

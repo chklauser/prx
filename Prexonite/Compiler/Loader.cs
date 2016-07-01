@@ -73,7 +73,7 @@ namespace Prexonite.Compiler
         public Loader(LoaderOptions options)
         {
             if (options == null)
-                throw new ArgumentNullException("options");
+                throw new ArgumentNullException(nameof(options));
             _options = options;
             _topLevelView = ModuleLevelView.Create(_options.Symbols);
 
@@ -142,7 +142,7 @@ namespace Prexonite.Compiler
         public void PushScope([NotNull] DeclarationScope scope)
         {
             if (scope == null)
-                throw new ArgumentNullException("scope");
+                throw new ArgumentNullException(nameof(scope));
             _declarationScopes.Push(scope);
         }
 
@@ -248,7 +248,7 @@ namespace Prexonite.Compiler
         public CompilerTarget CreateFunctionTarget(PFunction func, CompilerTarget parentTarget = null, ISourcePosition sourcePosition = null)
         {
             if (func == null)
-                throw new ArgumentNullException("func");
+                throw new ArgumentNullException(nameof(func));
 
             var target = new CompilerTarget(this, func,parentTarget,sourcePosition);
             if (_functionTargets.ContainsKey(func.Id) &&
@@ -297,7 +297,7 @@ namespace Prexonite.Compiler
             public void Add(CompilerHook item)
             {
                 if (item == null)
-                    throw new ArgumentNullException("item");
+                    throw new ArgumentNullException(nameof(item));
                 _lst.Add(item);
             }
 
@@ -360,7 +360,7 @@ namespace Prexonite.Compiler
             public void CopyTo(CompilerHook[] array, int arrayIndex)
             {
                 if (array == null)
-                    throw new ArgumentNullException("array");
+                    throw new ArgumentNullException(nameof(array));
                 _lst.CopyTo(array, arrayIndex);
             }
 
@@ -500,7 +500,7 @@ namespace Prexonite.Compiler
             public void Add(CustomResolver item)
             {
                 if (item == null)
-                    throw new ArgumentNullException("item");
+                    throw new ArgumentNullException(nameof(item));
                 _resolvers.Add(item);
             }
 
@@ -700,7 +700,7 @@ namespace Prexonite.Compiler
         public void LoadFromStream(Stream str)
         {
             if (str == null)
-                throw new ArgumentNullException("str");
+                throw new ArgumentNullException(nameof(str));
             _loadFromStream(str, null);
         }
 
@@ -714,7 +714,7 @@ namespace Prexonite.Compiler
         public void LoadFromReader(TextReader reader, string fileName)
         {
             if (reader == null)
-                throw new ArgumentNullException("reader");
+                throw new ArgumentNullException(nameof(reader));
             _loadFromReader(reader, fileName);
         }
 
@@ -738,7 +738,7 @@ namespace Prexonite.Compiler
         private void _loadFromFile(FileInfo file)
         {
             if (file == null)
-                throw new ArgumentNullException("file");
+                throw new ArgumentNullException(nameof(file));
             _loadedFiles.Add(file.FullName);
             _loadPaths.Push(file.DirectoryName);
             try
@@ -926,7 +926,7 @@ namespace Prexonite.Compiler
         public FileInfo ApplyLoadPaths(string pathPostfix)
         {
             if (pathPostfix == null)
-                throw new ArgumentNullException("pathPostfix");
+                throw new ArgumentNullException(nameof(pathPostfix));
             var path = pathPostfix;
 
             //Try to find in process environment

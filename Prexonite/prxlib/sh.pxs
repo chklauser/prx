@@ -1,0 +1,12 @@
+// Runtime component of the Prexonite shell scripting extensions
+Name sh/0.0;
+References {
+  sys/0.0
+};
+
+namespace sh {
+
+    function stdout = "sh.stdout";
+    function stdin  = "sh.stdin";
+    function stderr = "sh.stderr";
+} export(stdout, stdin, stderr, (|>), (<|.), (|>.), stream, lines, which, create_command, call\sh);

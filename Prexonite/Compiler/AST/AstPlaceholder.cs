@@ -50,7 +50,7 @@ namespace Prexonite.Compiler.Ast
             set
             {
                 if (value.HasValue && value.Value < 0)
-                    throw new ArgumentOutOfRangeException("value",
+                    throw new ArgumentOutOfRangeException(nameof(value),
                         Resources.AstPlaceholder_PlaceholdeIndexNegative);
                 _index = value;
             }

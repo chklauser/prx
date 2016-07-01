@@ -34,7 +34,7 @@ namespace Prexonite.Compiler
         public MessageEventArgs(Message message)
         {
             if (message == null)
-                throw new ArgumentNullException("message");
+                throw new ArgumentNullException(nameof(message));
             _message = message;
         }
     }

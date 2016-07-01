@@ -120,7 +120,7 @@ namespace Prexonite.Compiler.Symbolic
         public static Symbol CreateDereference([NotNull] Symbol inner, [CanBeNull] ISourcePosition position = null)
         {
             if (inner == null)
-                throw new ArgumentNullException("inner");
+                throw new ArgumentNullException(nameof(inner));
             return DereferenceSymbol._Create(inner, position);
         }
 
@@ -129,9 +129,9 @@ namespace Prexonite.Compiler.Symbolic
         public static Symbol CreateMessage([NotNull] Message message, [NotNull] Symbol inner, ISourcePosition position = null)
         {
             if (message == null)
-                throw new ArgumentNullException("message");
+                throw new ArgumentNullException(nameof(message));
             if (inner == null)
-                throw new ArgumentNullException("inner");
+                throw new ArgumentNullException(nameof(inner));
             return MessageSymbol._Create(message, inner, position);
         }
 

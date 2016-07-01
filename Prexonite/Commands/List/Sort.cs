@@ -63,7 +63,7 @@ namespace Prexonite.Commands.List
         public override PValue Run(StackContext sctx, PValue[] args)
         {
             if (sctx == null)
-                throw new ArgumentNullException("sctx");
+                throw new ArgumentNullException(nameof(sctx));
             if (args == null)
                 args = new PValue[] {};
             var lst = new List<PValue>();

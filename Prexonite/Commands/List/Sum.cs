@@ -62,9 +62,9 @@ namespace Prexonite.Commands.List
         public static PValue RunStatically(StackContext sctx, PValue[] args)
         {
             if (args == null)
-                throw new ArgumentNullException("args");
+                throw new ArgumentNullException(nameof(args));
             if (sctx == null)
-                throw new ArgumentNullException("sctx");
+                throw new ArgumentNullException(nameof(sctx));
 
             //let sum xs acc = Seq.foldl (fun a b -> a + b) acc xs
 

@@ -36,7 +36,7 @@ namespace Prexonite.Commands.Core
         public override PValue Run(StackContext sctx, PValue[] args)
         {
             if (sctx == null)
-                throw new ArgumentNullException("sctx");
+                throw new ArgumentNullException(nameof(sctx));
             if (args == null)
                 args = new PValue[] {};
             var fctx = sctx as FunctionContext;

@@ -72,9 +72,9 @@ namespace Prexonite.Commands.Lazy
             PValue[] args)
         {
             if (args == null)
-                throw new ArgumentNullException("args");
+                throw new ArgumentNullException(nameof(args));
             if (getSctx == null)
-                throw new ArgumentNullException("getSctx");
+                throw new ArgumentNullException(nameof(getSctx));
 
             if (args.Length < 1)
                 throw new PrexoniteException("toseq requires one argument.");

@@ -43,7 +43,7 @@ namespace Prexonite.Compiler.Ast
             : base(position)
         {
             if (symbols == null)
-                throw new ArgumentNullException("symbols");
+                throw new ArgumentNullException(nameof(symbols));
             _prefix = (prefix ?? DefaultPrefix) + "\\";
             _uid = String.IsNullOrEmpty(uid) ? "\\" + Guid.NewGuid().ToString("N") : uid; 
             _symbols = symbols;
@@ -92,7 +92,7 @@ namespace Prexonite.Compiler.Ast
             set
             {
                 if (value == null)
-                    throw new ArgumentNullException("value");
+                    throw new ArgumentNullException(nameof(value));
                 _statements = value;
             }
         }
@@ -105,7 +105,7 @@ namespace Prexonite.Compiler.Ast
         public void EmitCode(CompilerTarget target, bool isTopLevel, StackSemantics stackSemantics)
         {
             if (target == null)
-                throw new ArgumentNullException("target", "The compiler target cannot be null");
+                throw new ArgumentNullException(nameof(target), "The compiler target cannot be null");
 
             if (isTopLevel)
                 _tailCallOptimizeTopLevelBlock();
@@ -239,14 +239,14 @@ namespace Prexonite.Compiler.Ast
         public void Insert(int index, AstNode item)
         {
             if (item == null)
-                throw new ArgumentNullException("item");
+                throw new ArgumentNullException(nameof(item));
             _statements.Insert(index, item);
         }
 
         public void InsertRange(int index, IEnumerable<AstNode> items)
         {
             if (items == null)
-                throw new ArgumentNullException("items");
+                throw new ArgumentNullException(nameof(items));
             _statements.InsertRange(index, items);
         }
 
@@ -264,7 +264,7 @@ namespace Prexonite.Compiler.Ast
             set
             {
                 if (value == null)
-                    throw new ArgumentNullException("value");
+                    throw new ArgumentNullException(nameof(value));
                 _statements[index] = value;
             }
         }
@@ -277,7 +277,7 @@ namespace Prexonite.Compiler.Ast
         public void Add(AstNode item)
         {
             if (item == null)
-                throw new ArgumentNullException("item");
+                throw new ArgumentNullException(nameof(item));
             _statements.Add(item);
         }
 
@@ -285,12 +285,12 @@ namespace Prexonite.Compiler.Ast
         public void AddRange(IEnumerable<AstNode> collection)
         {
             if (collection == null)
-                throw new ArgumentNullException("collection");
+                throw new ArgumentNullException(nameof(collection));
             foreach (var node in collection)
             {
                 if (node == null)
                     throw new ArgumentException(
-                        "AstNode collection may not contain null.", "collection");
+                        "AstNode collection may not contain null.", nameof(collection));
             }
             _statements.AddRange(collection);
         }
@@ -305,7 +305,7 @@ namespace Prexonite.Compiler.Ast
         public bool Contains(AstNode item)
         {
             if (item == null)
-                throw new ArgumentNullException("item");
+                throw new ArgumentNullException(nameof(item));
             return _statements.Contains(item);
         }
 
@@ -331,7 +331,7 @@ namespace Prexonite.Compiler.Ast
         public bool Remove(AstNode item)
         {
             if (item == null)
-                throw new ArgumentNullException("item");
+                throw new ArgumentNullException(nameof(item));
             return _statements.Remove(item);
         }
 

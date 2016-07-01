@@ -638,7 +638,7 @@ namespace Prexonite.Compiler.Cil
         public static IEnumerator<PValue> ExtractEnumerator(PValue value, StackContext sctx)
         {
             if (sctx == null)
-                throw new ArgumentNullException("sctx");
+                throw new ArgumentNullException(nameof(sctx));
 
             IEnumerator genEn;
 

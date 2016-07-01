@@ -52,16 +52,16 @@ namespace Prexonite.Compiler.Build
         public bool TryGetValue(ModuleName name, out ITargetDescription description)
         {
             if ((object) name == null)
-                throw new ArgumentNullException("name");
+                throw new ArgumentNullException(nameof(name));
             return _table.TryGetValue(name, out description);
         }
 
         public void Replace(ITargetDescription oldDescription, ITargetDescription newDescription)
         {
             if (oldDescription == null)
-                throw new ArgumentNullException("oldDescription");
+                throw new ArgumentNullException(nameof(oldDescription));
             if (newDescription == null)
-                throw new ArgumentNullException("newDescription");
+                throw new ArgumentNullException(nameof(newDescription));
             if(oldDescription.Name != newDescription.Name)
                 throw new ArgumentException(
                     string.Format(
@@ -120,7 +120,7 @@ namespace Prexonite.Compiler.Build
         public void Add(ITargetDescription item)
         {
             if(item == null)
-                throw new ArgumentNullException("item");
+                throw new ArgumentNullException(nameof(item));
             if(!_table.TryAdd(item.Name,item))
                 throw new ArgumentException(string.Format("A target description for this module name already exists: {0}", item.Name));
         }
@@ -133,7 +133,7 @@ namespace Prexonite.Compiler.Build
         public bool Contains(ITargetDescription item)
         {
             if (item == null)
-                throw new System.ArgumentNullException("item");
+                throw new System.ArgumentNullException(nameof(item));
             ITargetDescription value;
             return _table.TryGetValue(item.Name, out value) && item.Equals(value);
         }
@@ -146,7 +146,7 @@ namespace Prexonite.Compiler.Build
         public bool Remove(ITargetDescription item)
         {
             if (item == null)
-                throw new System.ArgumentNullException("item");
+                throw new System.ArgumentNullException(nameof(item));
             ITargetDescription value;
             return _table.TryRemove(item.Name, out value);
         }

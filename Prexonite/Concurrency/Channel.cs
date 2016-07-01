@@ -96,7 +96,7 @@ namespace Prexonite.Concurrency
         public void Send(PValue obj)
         {
             if (obj == null)
-                throw new ArgumentNullException("obj");
+                throw new ArgumentNullException(nameof(obj));
 
             lock (_syncRoot)
             {
