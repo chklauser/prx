@@ -1,0 +1,12 @@
+
+* binary
+
+*.xml text eol=lf
+*.cs text eol=lf
+*.sln text eol=lf
+*.csproj text eol=lf
+*.pxs text eol=lf
+*.md text eol=lf
+*.atg text eol=lf
+*.lex text eol=lf
+*.frame text eol=lf
