@@ -90,12 +90,11 @@ namespace Prexonite.Compiler.Ast
         public void EmitCode([NotNull] CompilerTarget target, StackSemantics justEffectCode)
         {
             var partiallyApplicabale = this as IAstPartiallyApplicable;
-            var isPartialApplication = partiallyApplicabale != null &&
-                partiallyApplicabale.CheckForPlaceholders();
+            var applicationState = partiallyApplicabale?.CheckNodeApplicationState() ?? default(NodeApplicationState);
 
             if (justEffectCode == StackSemantics.Effect)
             {
-                if (isPartialApplication)
+                if (applicationState.HasPlaceholders)
                 {
                     //A partial application does not have an effect.
                 }
@@ -106,8 +105,9 @@ namespace Prexonite.Compiler.Ast
             }
             else
             {
-                if (isPartialApplication)
+                if (applicationState.HasPlaceholders)
                 {
+                    Debug.Assert(partiallyApplicabale != null, "partiallyApplicabale != null");
                     partiallyApplicabale.DoEmitPartialApplicationCode(target);
                 }
                 else
@@ -124,7 +124,8 @@ namespace Prexonite.Compiler.Ast
         /// <returns>True if this node has placeholders; false otherwise</returns>
         public virtual bool CheckForPlaceholders()
         {
-            return false;
+            var partiallyApplicable = this as IAstPartiallyApplicable;
+            return partiallyApplicable?.CheckNodeApplicationState().HasPlaceholders ?? false;
         }
 
         [NotNull]

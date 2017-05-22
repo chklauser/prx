@@ -64,6 +64,18 @@ namespace Prexonite.Compiler.Ast
         {
             if(stackSemantics == StackSemantics.Effect)
                 return;
+            
+            
+            if (Subject.IsArgumentSplice())
+            {
+                AstArgumentSplice.ReportNotSupported(Subject, target, stackSemantics);
+                return;
+            }
+            if (Type.IsArgumentSplice())
+            {
+                AstArgumentSplice.ReportNotSupported(Type, target, stackSemantics);
+                return;
+            }
 
             Subject.EmitValueCode(target);
             var constType = Type as AstConstantTypeExpression;
@@ -129,14 +141,26 @@ namespace Prexonite.Compiler.Ast
             else
                 return false;
         }
-
-        public override bool CheckForPlaceholders()
+        
+        public NodeApplicationState CheckNodeApplicationState()
         {
-            return base.CheckForPlaceholders() || Subject.IsPlaceholder();
+            return new NodeApplicationState(Subject.IsPlaceholder() || Type.IsPlaceholder(), 
+                Subject.IsArgumentSplice() || Type.IsArgumentSplice());
         }
 
         public void DoEmitPartialApplicationCode(CompilerTarget target)
         {
+            if (Subject.IsArgumentSplice())
+            {
+                AstArgumentSplice.ReportNotSupported(Subject, target, StackSemantics.Value);
+                return;
+            }
+            if (Type.IsArgumentSplice())
+            {
+                AstArgumentSplice.ReportNotSupported(Type, target, StackSemantics.Value);
+                return;
+            }
+            
             var argv =
                 AstPartiallyApplicable.PreprocessPartialApplicationArguments(Subject.Singleton());
             var ctorArgc = this.EmitConstructorArguments(target, argv);

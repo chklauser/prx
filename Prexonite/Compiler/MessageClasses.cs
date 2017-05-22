@@ -76,6 +76,7 @@ namespace Prexonite.Compiler
         public const string ForeachElementTooComplicated = "C.ForeachElementTooComplicated";
         public const string TypeExpressionExpected = "C.TypeExpressionExpected";
         public const string ExpectedEntityFoundNamespace = "C.NamespaceInEntityPosition";
+        public const string ArgumentSpliceNotSupported = "C.ArgumentSpliceNotSupported";
 
         #endregion
 

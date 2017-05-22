@@ -23,6 +23,7 @@
 //  DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, 
 //  WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING 
 //  IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+
 using System.Collections.Generic;
 using System.Linq;
 using Prexonite.Commands.Core;
@@ -45,19 +46,11 @@ namespace Prexonite.Compiler.Ast
         {
         }
 
-        private readonly List<AstExpr> _expressions = new List<AstExpr>(2);
-
         #region IAstHasExpressions Members
 
-        AstExpr[] IAstHasExpressions.Expressions
-        {
-            get { return _expressions.ToArray(); }
-        }
+        AstExpr[] IAstHasExpressions.Expressions => Expressions.ToArray();
 
-        public List<AstExpr> Expressions
-        {
-            get { return _expressions; }
-        }
+        public List<AstExpr> Expressions { get; } = new List<AstExpr>(2);
 
         #endregion
 
@@ -68,29 +61,30 @@ namespace Prexonite.Compiler.Ast
             expr = null;
 
             //Optimize arguments
-            for (var i = 0; i < _expressions.Count; i++)
+            for (var i = 0; i < Expressions.Count; i++)
             {
-                var arg = _expressions[i];
+                var arg = Expressions[i];
                 if (arg == null)
                     throw new PrexoniteException(
                         "Invalid (null) argument in GetSet node (" + ToString() +
-                            ") detected at position " + _expressions.IndexOf(arg) + ".");
+                            ") detected at position " + Expressions.IndexOf(arg) + ".");
                 var oArg = _GetOptimizedNode(target, arg);
                 if (!ReferenceEquals(oArg, arg))
-                    _expressions[i] = oArg;
+                    Expressions[i] = oArg;
             }
 
-            var nonNullExpressions = _expressions.Where(_exprIsNotNull).ToArray();
-            _expressions.Clear();
-            _expressions.AddRange(nonNullExpressions);
+            var nonNullExpressions = Expressions.Where(_exprIsNotNull).ToArray();
+            Expressions.Clear();
+            Expressions.AddRange(nonNullExpressions);
 
-            if (_expressions.Count == 1)
+            if (Expressions.Count == 1)
             {
-                var pExpr = _expressions[0];
-                expr = pExpr is AstPlaceholder ? ((AstPlaceholder) pExpr).IdFunc() : pExpr;
+                var pExpr = Expressions[0];
+                var placeholder = pExpr as AstPlaceholder;
+                expr = placeholder != null ? placeholder.IdFunc() : pExpr;
                 return true;
             }
-            else if (_expressions.Count == 0)
+            else if (Expressions.Count == 0)
             {
                 expr = new AstNull(File, Line, Column);
                 return true;
@@ -122,9 +116,14 @@ namespace Prexonite.Compiler.Ast
 
         private void _emitCode(CompilerTarget target, string endLabel, StackSemantics stackSemantics)
         {
-            for (var i = 0; i < _expressions.Count; i++)
+            for (var i = 0; i < Expressions.Count; i++)
             {
-                var expr = _expressions[i];
+                var expr = Expressions[i];
+                if (expr.IsArgumentSplice())
+                {
+                    AstArgumentSplice.ReportNotSupported(expr, target, stackSemantics);
+                    return;
+                }
 
                 // Value semantics: duplicate of previous, rejected value needs to be popped
                 // Effect semantics: no duplicates were created in the first place
@@ -134,7 +133,7 @@ namespace Prexonite.Compiler.Ast
                 //For value semantics, we always generate a value
                 //For effect semantics, we only need the intermediate expressions to create a value
                 StackSemantics needValue;
-                if (stackSemantics == StackSemantics.Value || i < _expressions.Count - 1)
+                if (stackSemantics == StackSemantics.Value || i < Expressions.Count - 1)
                     needValue = StackSemantics.Value;
                 else 
                     needValue = StackSemantics.Effect;
@@ -143,7 +142,7 @@ namespace Prexonite.Compiler.Ast
 
                 //The last element doesn't need special handling, control just 
                 //  falls into the surrounding code with the correct value on top of the stack
-                if (i + 1 >= _expressions.Count)
+                if (i + 1 >= Expressions.Count)
                     continue;
 
                 if(stackSemantics == StackSemantics.Value)
@@ -166,6 +165,13 @@ namespace Prexonite.Compiler.Ast
         {
             return base.CheckForPlaceholders() ||
                 Expressions.Any(AstPartiallyApplicable.IsPlaceholder);
+        }
+
+        public NodeApplicationState CheckNodeApplicationState()
+        {
+            var hasSplices = Expressions.Any(x => x is AstArgumentSplice);
+            var hasPlaceholders = Expressions.Any(x => x.IsPlaceholder());
+            return new NodeApplicationState(hasPlaceholders, hasSplices);
         }
 
         public void DoEmitPartialApplicationCode(CompilerTarget target)
@@ -203,6 +209,10 @@ namespace Prexonite.Compiler.Ast
                         return;
                     }
                 }
+
+                if (!value.IsArgumentSplice()) continue;
+                AstArgumentSplice.ReportNotSupported(value, target, StackSemantics.Value);
+                return;
             }
 
             if (count == 0)

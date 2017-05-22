@@ -328,7 +328,7 @@ namespace Prexonite.Compiler.Ast
 
         public override bool CheckForPlaceholders()
         {
-            return base.CheckForPlaceholders() || Subject is AstPlaceholder;
+            return base.CheckForPlaceholders() || Subject.IsPlaceholder();
         }
 
         public override string ToString()

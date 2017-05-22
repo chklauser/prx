@@ -35,35 +35,20 @@ namespace Prexonite.Compiler.Ast
                                     IAstHasExpressions,
                                     IAstPartiallyApplicable
     {
-        private readonly AstExpr _operand;
-        private readonly UnaryOperator _operator;
-
         public AstUnaryOperator(ISourcePosition position, UnaryOperator op, AstExpr operand)
             : base(position)
         {
-            if (operand == null)
-                throw new ArgumentNullException(nameof(operand));
-            
-            _operator = op;
-            _operand = operand;
+            Operator = op;
+            Operand = operand ?? throw new ArgumentNullException(nameof(operand));
         }
 
         #region IAstHasExpressions Members
 
-        public AstExpr[] Expressions
-        {
-            get { return new[] {_operand}; }
-        }
+        public AstExpr[] Expressions => new[] {Operand};
 
-        public UnaryOperator Operator
-        {
-            get { return _operator; }
-        }
+        public UnaryOperator Operator { get; }
 
-        public AstExpr Operand
-        {
-            get { return _operand; }
-        }
+        public AstExpr Operand { get; }
 
         #endregion
 
@@ -72,14 +57,14 @@ namespace Prexonite.Compiler.Ast
         public override bool TryOptimize(CompilerTarget target, out AstExpr expr)
         {
             expr = null;
-            var operand = _operand;
+            var operand = Operand;
             _OptimizeNode(target, ref operand);
             var constOperand = operand as AstConstant;
             if (constOperand != null) 
             {
                 var valueOperand = constOperand.ToPValue(target);
                 PValue result;
-                switch (_operator)
+                switch (Operator)
                 {
                     case UnaryOperator.UnaryNegation:
                         if (valueOperand.UnaryNegation(target.Loader, out result))
@@ -103,8 +88,15 @@ namespace Prexonite.Compiler.Ast
                         break;
                     case UnaryOperator.PostIncrement:
                     case UnaryOperator.PostDecrement:
+                    case UnaryOperator.None:
+                    case UnaryOperator.PreDeltaLeft:
+                    case UnaryOperator.PostDeltaLeft:
+                    case UnaryOperator.PreDeltaRight:
+                    case UnaryOperator.PostDeltaRight:
                         //No optimization allowed/needed here
                         break;
+                    default:
+                        throw new ArgumentOutOfRangeException(nameof(Operator), Operator, "Unknown unary operator.");
                 }
                 goto emitFull;
 
@@ -115,15 +107,15 @@ namespace Prexonite.Compiler.Ast
             }
 
             //Try other optimizations
-            switch (_operator)
+            switch (Operator)
             {
                 case UnaryOperator.UnaryNegation:
                 case UnaryOperator.LogicalNot:
                 case UnaryOperator.OnesComplement:
                     var doubleNegation = operand as AstUnaryOperator;
-                    if (doubleNegation != null && doubleNegation._operator == _operator)
+                    if (doubleNegation != null && doubleNegation.Operator == Operator)
                     {
-                        expr = doubleNegation._operand;
+                        expr = doubleNegation.Operand;
                         return true;
                     }
                     break;
@@ -131,8 +123,15 @@ namespace Prexonite.Compiler.Ast
                 case UnaryOperator.PreDecrement:
                 case UnaryOperator.PostIncrement:
                 case UnaryOperator.PostDecrement:
+                case UnaryOperator.None:
+                case UnaryOperator.PreDeltaLeft:
+                case UnaryOperator.PostDeltaLeft:
+                case UnaryOperator.PreDeltaRight:
+                case UnaryOperator.PostDeltaRight:
                     //No optimization
                     break;
+                default:
+                    throw new ArgumentOutOfRangeException(nameof(Operator), Operator, "Unknown unary operator.");
             }
             return false;
         }
@@ -141,20 +140,26 @@ namespace Prexonite.Compiler.Ast
 
         private void _emitIncrementDecrementCode(CompilerTarget target, StackSemantics value)
         {
-            var symbolCall = _operand as AstIndirectCall;
-            var symbol = symbolCall == null ? null : symbolCall.Subject as AstReference;
+            if (Operand.IsArgumentSplice())
+            {
+                AstArgumentSplice.ReportNotSupported(Operand, target, value);
+                return;
+            }
+            
+            var symbolCall = Operand as AstIndirectCall;
+            var symbol = symbolCall?.Subject as AstReference;
             EntityRef.Variable variableRef = null;
             var isVariable = symbol != null && symbol.Entity.TryGetVariable(out variableRef);
-            var isPre = _operator == UnaryOperator.PreDecrement || _operator == UnaryOperator.PreIncrement;
-            switch (_operator)
+            var isPre = Operator == UnaryOperator.PreDecrement || Operator == UnaryOperator.PreIncrement;
+            switch (Operator)
             {
                 case UnaryOperator.PreIncrement:
                 case UnaryOperator.PostIncrement:
                 case UnaryOperator.PreDecrement:
                 case UnaryOperator.PostDecrement:
                     var isIncrement = 
-                        _operator == UnaryOperator.PostIncrement ||
-                        _operator == UnaryOperator.PreIncrement;
+                        Operator == UnaryOperator.PostIncrement ||
+                        Operator == UnaryOperator.PreIncrement;
                     if (isVariable)
                     {
                         Debug.Assert(variableRef != null);
@@ -167,15 +172,14 @@ namespace Prexonite.Compiler.Ast
                         if (variableRef.TryGetLocalVariable(out localRef))
                         {
                             loadVar = () => target.EmitLoadLocal(Position, localRef.Id);
-                            perform =
-                                () => target.Emit(Position, isIncrement ? OpCode.incloc : OpCode.decloc, localRef.Id);
+                            perform = () => 
+                                target.Emit(Position, isIncrement ? OpCode.incloc : OpCode.decloc, localRef.Id);
                         }
                         else if(variableRef.TryGetGlobalVariable(out globalRef))
                         {
                             loadVar = () => target.EmitLoadGlobal(Position, globalRef.Id, globalRef.ModuleName);
 
-                            perform =
-                                () =>
+                            perform = () =>
                                 target.Emit(Position, isIncrement ? OpCode.incglob : OpCode.decglob, globalRef.Id,
                                             globalRef.ModuleName);
                         }
@@ -199,7 +203,7 @@ namespace Prexonite.Compiler.Ast
                     }
                     else
                         throw new PrexoniteException(
-                            "Node of type " + _operand.GetType() +
+                            "Node of type " + Operand.GetType() +
                                 " does not support increment/decrement operators.");
                     break;
                 // ReSharper disable RedundantCaseLabel
@@ -234,7 +238,7 @@ namespace Prexonite.Compiler.Ast
 
         private void _emitValueCode(CompilerTarget target)
         {
-            switch (_operator)
+            switch (Operator)
             {
                 case UnaryOperator.LogicalNot:
                 case UnaryOperator.UnaryNegation:
@@ -255,13 +259,14 @@ namespace Prexonite.Compiler.Ast
             }
         }
 
-        public override bool CheckForPlaceholders()
+        public NodeApplicationState CheckNodeApplicationState()
         {
-            AstTypecheck typecheck;
-            return base.CheckForPlaceholders() || Operand.IsPlaceholder() ||
-                (Operator == UnaryOperator.LogicalNot
-                    && (typecheck = Operand as AstTypecheck) != null &&
-                        typecheck.CheckForPlaceholders());
+            return new NodeApplicationState(
+                Operand.IsPlaceholder()
+                || (Operator == UnaryOperator.LogicalNot
+                    && (Operand is AstTypecheck typecheck)
+                    && typecheck.CheckForPlaceholders()),
+                Operand.IsArgumentSplice());
         }
 
         public void DoEmitPartialApplicationCode(CompilerTarget target)

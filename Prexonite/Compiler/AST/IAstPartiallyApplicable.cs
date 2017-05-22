@@ -42,17 +42,74 @@ namespace Prexonite.Compiler.Ast
         /// <summary>
         ///     Checks the nodes immediate child nodes for instances of <see cref = "AstPlaceholder" />. Implement this member publicly for interoperation with Prexonite compile-time macros.
         /// </summary>
+        /// <para>For implementers: The <see cref="AstNode"/> class provides a default implementation that delegates
+        /// to <see cref="CheckNodeApplicationState"/> (if this interface is implemented).
+        /// This method mainly exists for backwards compatibility with script code.</para>
         /// <returns>True if this node has placeholders; false otherwise</returns>
+        [Obsolete("Use CheckNodeApplicationState instead")]
         bool CheckForPlaceholders();
 
         /// <summary>
+        ///     Checks the node's immediate child nodes for <see cref="AstPlaceholder"/>s and 
+        ///     <see cref="AstArgumentSplice"/>s.
+        /// </summary>
+        NodeApplicationState CheckNodeApplicationState();
+
+        /// <summary>
         ///     <para>Emits code that performs the partial application.</para>
-        ///     <para>Important: The code generator is free to call this method independent of the result of <see
-        ///      cref = "CheckForPlaceholders" />.</para>
+        ///     <para>Important: The code generator is free to call this method independently of the result of <see
+        ///      cref = "CheckNodeApplicationState" />.</para>
         ///     <para>For internal use only. Implement this member explicitly.</para>
         /// </summary>
         /// <param name = "target">The compiler target to emit code to.</param>
         void DoEmitPartialApplicationCode(CompilerTarget target);
+    }
+
+    public struct NodeApplicationState : IEquatable<NodeApplicationState>
+    {
+        public bool HasPlaceholders { get; }
+        public bool HasArgumentSplices { get; }
+        public static NodeApplicationState Closed = new NodeApplicationState(false, false);
+
+        public NodeApplicationState WithPlaceholders(bool newHasPlaceholders) => 
+            new NodeApplicationState(newHasPlaceholders, HasArgumentSplices);
+        public NodeApplicationState WithArgumentSpliced(bool newHasArgumentSplices) => 
+            new NodeApplicationState(HasPlaceholders, newHasArgumentSplices);
+
+        public NodeApplicationState(bool hasPlaceholders, bool hasArgumentSplices)
+        {
+            HasPlaceholders = hasPlaceholders;
+            HasArgumentSplices = hasArgumentSplices;
+        }
+
+        public bool Equals(NodeApplicationState other)
+        {
+            return HasPlaceholders == other.HasPlaceholders && HasArgumentSplices == other.HasArgumentSplices;
+        }
+
+        public override bool Equals(object obj)
+        {
+            if (ReferenceEquals(null, obj)) return false;
+            return obj is NodeApplicationState && Equals((NodeApplicationState) obj);
+        }
+
+        public override int GetHashCode()
+        {
+            unchecked
+            {
+                return (HasPlaceholders.GetHashCode() * 397) ^ HasArgumentSplices.GetHashCode();
+            }
+        }
+
+        public static bool operator ==(NodeApplicationState left, NodeApplicationState right)
+        {
+            return left.Equals(right);
+        }
+
+        public static bool operator !=(NodeApplicationState left, NodeApplicationState right)
+        {
+            return !left.Equals(right);
+        }
     }
 
     /// <summary>
@@ -134,9 +191,9 @@ namespace Prexonite.Compiler.Ast
         public static List<AstExpr> PreprocessPartialApplicationArguments(
             IEnumerable<AstExpr> arguments)
         {
-            var placeholders = arguments.MapMaybe(n => n as AstPlaceholder).ToList();
-            AstPlaceholder.DeterminePlaceholderIndices(placeholders);
             var processedArgv = arguments.ToList();
+            var placeholders = processedArgv.MapMaybe(n => n as AstPlaceholder).ToList();
+            AstPlaceholder.DeterminePlaceholderIndices(placeholders);
             _removeRedundantPlaceholders(processedArgv, placeholders);
             return processedArgv;
         }
@@ -173,7 +230,7 @@ namespace Prexonite.Compiler.Ast
             //  When you remove the ?3 at the end, you can reduce the mapping to
             //  println(?3), since all other open arguments are in their "natural" position
 
-            var maxIndex = placeholders.Max(p => p.Index.HasValue ? (int) p.Index : 0);
+            var maxIndex = placeholders.Max(p => p.Index ?? 0);
             var numUsages = new int[maxIndex + 1];
             foreach (var placeholder in placeholders)
             {
@@ -278,9 +335,9 @@ namespace Prexonite.Compiler.Ast
             return call;
         }
 
-        public static bool IsPlaceholder(this AstExpr expression)
-        {
-            return expression is AstPlaceholder;
-        }
+        public static bool IsPlaceholder(this AstExpr expression) => 
+            expression is AstPlaceholder || expression is AstArgumentSplice splice && splice.IsPlaceholderSplice;
+
+        public static bool IsArgumentSplice(this AstExpr expression) => expression is AstArgumentSplice;
     }
 }

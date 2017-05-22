@@ -37,8 +37,6 @@ namespace Prexonite.Compiler.Ast
     public abstract class AstLazyLogical : AstExpr,
                                            IAstHasExpressions
     {
-        private readonly LinkedList<AstExpr> _conditions = new LinkedList<AstExpr>();
-
         internal AstLazyLogical(
             Parser p, AstExpr leftExpression, AstExpr rightExpression)
             : this(p.scanner.File, p.t.line, p.t.col, leftExpression, rightExpression)
@@ -63,19 +61,16 @@ namespace Prexonite.Compiler.Ast
         {
             get
             {
-                var len = _conditions.Count;
+                var len = Conditions.Count;
                 var ary = new AstExpr[len];
                 var i = 0;
-                foreach (var condition in _conditions)
+                foreach (var condition in Conditions)
                     ary[i++] = condition;
                 return ary;
             }
         }
 
-        public LinkedList<AstExpr> Conditions
-        {
-            get { return _conditions; }
-        }
+        public LinkedList<AstExpr> Conditions { get; } = new LinkedList<AstExpr>();
 
         #endregion
 
@@ -85,12 +80,12 @@ namespace Prexonite.Compiler.Ast
             var lazy = expr as AstLazyLogical;
             if (lazy != null && lazy.GetType() == GetType())
             {
-                foreach (var cond in lazy._conditions)
+                foreach (var cond in lazy.Conditions)
                     AddExpression(cond);
             }
             else
             {
-                _conditions.AddLast(expr);
+                Conditions.AddLast(expr);
             }
         }
 
@@ -106,6 +101,11 @@ namespace Prexonite.Compiler.Ast
                             Position, MessageClasses.OnlyLastOperandPartialInLazy));
                     target.EmitJump(Position, trueLabel);
                     return;
+                }
+                if (condition.IsArgumentSplice())
+                {
+                    AstArgumentSplice.ReportNotSupported(condition, target, StackSemantics.Effect);
+                    target.EmitJump(Position, trueLabel);
                 }
             }
 
@@ -126,12 +126,12 @@ namespace Prexonite.Compiler.Ast
             CompilerTarget target, AstExpr cond, string targetLabel)
         {
             if (cond == null)
-                throw new ArgumentNullException("cond", Resources.AstLazyLogical__Condition_must_not_be_null);
+                throw new ArgumentNullException(nameof(cond), Resources.AstLazyLogical__Condition_must_not_be_null);
             if (target == null)
-                throw new ArgumentNullException("target", Resources.AstNode_Compiler_target_must_not_be_null);
+                throw new ArgumentNullException(nameof(target), Resources.AstNode_Compiler_target_must_not_be_null);
             if (String.IsNullOrEmpty(targetLabel))
                 throw new ArgumentException(
-                    Resources.AstLazyLogical__targetLabel_must_neither_be_null_nor_empty, "targetLabel");
+                    Resources.AstLazyLogical__targetLabel_must_neither_be_null_nor_empty, nameof(targetLabel));
             var logical = cond as AstLazyLogical;
             if (logical != null)
             {
@@ -166,15 +166,15 @@ namespace Prexonite.Compiler.Ast
             bool isPositive)
         {
             if (cond == null)
-                throw new ArgumentNullException("cond", Resources.AstLazyLogical__Condition_must_not_be_null);
+                throw new ArgumentNullException(nameof(cond), Resources.AstLazyLogical__Condition_must_not_be_null);
             if (target == null)
-                throw new ArgumentNullException("target", Resources.AstNode_Compiler_target_must_not_be_null);
+                throw new ArgumentNullException(nameof(target), Resources.AstNode_Compiler_target_must_not_be_null);
             if (String.IsNullOrEmpty(targetLabel))
                 throw new ArgumentException(
-                    Resources.AstLazyLogical__targetLabel_must_neither_be_null_nor_empty, "targetLabel");
+                    Resources.AstLazyLogical__targetLabel_must_neither_be_null_nor_empty, nameof(targetLabel));
             if (String.IsNullOrEmpty(alternativeLabel))
                 throw new ArgumentException(
-                    Resources.AstLazyLogical_alternativeLabel_may_neither_be_null_nor_empty, "alternativeLabel");
+                    Resources.AstLazyLogical_alternativeLabel_may_neither_be_null_nor_empty, nameof(alternativeLabel));
             var logical = cond as AstLazyLogical;
             if (!isPositive)
             {
@@ -208,12 +208,12 @@ namespace Prexonite.Compiler.Ast
             CompilerTarget target, AstExpr cond, string targetLabel)
         {
             if (cond == null)
-                throw new ArgumentNullException("cond", Resources.AstLazyLogical__Condition_must_not_be_null);
+                throw new ArgumentNullException(nameof(cond), Resources.AstLazyLogical__Condition_must_not_be_null);
             if (target == null)
-                throw new ArgumentNullException("target", Resources.AstNode_Compiler_target_must_not_be_null);
+                throw new ArgumentNullException(nameof(target), Resources.AstNode_Compiler_target_must_not_be_null);
             if (String.IsNullOrEmpty(targetLabel))
                 throw new ArgumentException(
-                    Resources.AstLazyLogical__targetLabel_must_neither_be_null_nor_empty, "targetLabel");
+                    Resources.AstLazyLogical__targetLabel_must_neither_be_null_nor_empty, nameof(targetLabel));
             var logical = cond as AstLazyLogical;
             if (logical != null)
             {
@@ -230,10 +230,10 @@ namespace Prexonite.Compiler.Ast
 
         #region Partial application
 
-        public override bool CheckForPlaceholders()
+        public NodeApplicationState CheckNodeApplicationState()
         {
-            return this is IAstPartiallyApplicable &&
-                (base.CheckForPlaceholders() || Conditions.Any(AstPartiallyApplicable.IsPlaceholder));
+            return new NodeApplicationState(
+                Conditions.Any(x => x.IsPlaceholder()), Conditions.Any(x => x.IsArgumentSplice()));
         }
 
         #endregion
@@ -297,6 +297,12 @@ namespace Prexonite.Compiler.Ast
             //only the very last condition may be a placeholder
             for (var node = Conditions.First; node != null; node = node.Next)
             {
+                if (node.Value.IsArgumentSplice())
+                {
+                    AstArgumentSplice.ReportNotSupported(node.Value, target, StackSemantics.Value);
+                    return;
+                }
+                
                 var isPlaceholder = node.Value.IsPlaceholder();
                 if (node.Next == null)
                 {
@@ -395,11 +401,11 @@ namespace Prexonite.Compiler.Ast
                     }
                     else
                     {
-                        // Expr1 OP ¬shortcircuit OP Expr2 = Expr1 OP Expr2
+                        // Expr1 OP Â¬shortcircuit OP Expr2 = Expr1 OP Expr2
                         Conditions.Remove(node);
                     }
                 }
-                else if (condition is AstPlaceholder)
+                else if (condition.IsPlaceholder())
                 {
                     placeholders++;
                 }

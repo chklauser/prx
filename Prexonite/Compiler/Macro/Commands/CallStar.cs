@@ -182,7 +182,7 @@ namespace Prexonite.Compiler.Macro.Commands
         {
             var arg0 = context.Invocation.Arguments[0];
             var passThroughNode = arg0 as AstConstant;
-            if (passThroughNode != null && passThroughNode.Constant is int)
+            if (passThroughNode?.Constant is int)
             {
                 arguments = new List<AstExpr>(context.Invocation.Arguments.Skip(1));
                 passThrough = (int) passThroughNode.Constant;
@@ -197,7 +197,7 @@ namespace Prexonite.Compiler.Macro.Commands
                 context.ReportMessage(
                     Message.Error(
                         string.Format(Resources.CallStar__invalid_PassThrough, passThrough),
-                        (ISourcePosition)passThroughNode ?? context.Invocation.Position,
+                        passThroughNode?.Position ?? context.Invocation.Position,
                         MessageClasses.CallStarPassThrough));
         }
 

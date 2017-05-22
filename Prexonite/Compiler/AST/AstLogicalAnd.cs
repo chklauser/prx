@@ -49,13 +49,15 @@ namespace Prexonite.Compiler.Ast
 
         protected override void DoEmitCode(CompilerTarget target, StackSemantics stackSemantics)
         {
-            var labelNs = @"And\" + Guid.NewGuid().ToString("N");
-            var trueLabel = @"True\" + labelNs;
-            var falseLabel = @"False\" + labelNs;
-            var evalLabel = @"Eval\" + labelNs;
+            var labelNs = $@"And\{Guid.NewGuid():N}";
+            var trueLabel = $@"True\{labelNs}";
+            var falseLabel = $@"False\{labelNs}";
+            var evalLabel = $@"Eval\{labelNs}";
 
             EmitCode(target, trueLabel, falseLabel);
 
+            // When the AND node gets used as a value (as opposed to a part of control flow),
+            // we have to convert the control flow into true/false values.
             if (stackSemantics == StackSemantics.Value)
             {
                 target.EmitLabel(Position, trueLabel);

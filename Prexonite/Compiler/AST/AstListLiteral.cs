@@ -66,7 +66,7 @@ namespace Prexonite.Compiler.Ast
                 if (arg == null)
                     throw new PrexoniteException(
                         "Invalid (null) argument in ListLiteral node (" + ToString() +
-                            ") detected at position " + Elements.IndexOf(arg) + ".");
+                            ") detected at position " + Elements.IndexOf(null) + ".");
                 var oArg = _GetOptimizedNode(target, arg);
                 if (!ReferenceEquals(oArg, arg))
                 {
@@ -96,9 +96,11 @@ namespace Prexonite.Compiler.Ast
             //Code is the same. Partial application is handled by AstGetSetSymbol
         }
 
-        public override bool CheckForPlaceholders()
+        public NodeApplicationState CheckNodeApplicationState()
         {
-            return base.CheckForPlaceholders() || Elements.Any(AstPartiallyApplicable.IsPlaceholder);
+            return new NodeApplicationState(
+                Elements.Any(x => x.IsPlaceholder()), 
+                Elements.Any(x => x.IsArgumentSplice()));
         }
 
         #endregion
@@ -118,7 +120,7 @@ namespace Prexonite.Compiler.Ast
 
             if (i < Elements.Count)
             {
-                sb.AppendFormat(", ... «{0}» ..., {1} ]", Elements.Count - limit,
+                sb.AppendFormat(", ... Â«{0}Â» ..., {1} ]", Elements.Count - limit,
                     Elements[Elements.Count - 1]);
             }
             else

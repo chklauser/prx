@@ -37,6 +37,7 @@
     <ApplicationVersion>1.0.0.%2a</ApplicationVersion>
     <UseApplicationTrust>false</UseApplicationTrust>
     <BootstrapperEnabled>true</BootstrapperEnabled>
+    <LangVersion>7</LangVersion>
   </PropertyGroup>
   <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Debug|AnyCPU' ">
     <DebugSymbols>true</DebugSymbols>
@@ -161,6 +162,7 @@
     <Compile Include="Compiler\Ast\AstReference.cs" />
     <Compile Include="Compiler\Ast\AstScopedExpr.cs" />
     <Compile Include="Compiler\Ast\AstScopedBlock.cs" />
+    <Compile Include="Compiler\Ast\AstArgumentSplice.cs" />
     <Compile Include="Compiler\Ast\IAstFactory.cs" />
     <Compile Include="Compiler\Ast\StackSemantics.cs" />
     <Compile Include="Compiler\Build\BuildException.cs" />

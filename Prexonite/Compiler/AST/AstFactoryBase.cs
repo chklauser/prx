@@ -442,8 +442,7 @@ namespace Prexonite.Compiler.Ast
             {
                 case UnaryOperator.LogicalNot:
                     {
-                        var typecheck = operand as AstTypecheck;
-                        if (typecheck != null && typecheck.CheckForPlaceholders() && typecheck.IsInverted)
+                        if (operand is AstTypecheck typecheck && typecheck.CheckForPlaceholders() && typecheck.IsInverted)
                         {
                             // Special handling of "? is not Y", where typecheck.IsInverted is set to true.
                             // Note that "not (? is Y)" is not the same thing.

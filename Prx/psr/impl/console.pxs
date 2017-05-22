@@ -134,7 +134,7 @@ function create_field(x,y,length)
                     0,::Console.WindowTop
                 );
                 y -= 1;
-                ot -= y;                
+                ot -= y;
             } */
             ::Console.CursorTop = ot - y;
             ::Console.CursorLeft = x;

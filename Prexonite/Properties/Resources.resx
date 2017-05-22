@@ -237,6 +237,9 @@
   <data name="AstCoalescence__reportInvalidPlaceholders" xml:space="preserve">
     <value>In partial applications of lazy coalescence expressions, only one placeholder at the end of a sequence is allowed. Consider using a lambda expression instead.</value>
   </data>
+  <data name="AstNode__argumentSpliceNotSupportedInThisPosition" xml:space="preserve">
+    <value>Argument splice not supported in this position.</value>
+  </data>
   <data name="AstForeachLoop_DoEmitCode_ElementTooComplicated" xml:space="preserve">
     <value>Optimization of the element expression in the foreach head resulted in a non-GetSet expression. Try to use a simpler expression.</value>
   </data>
