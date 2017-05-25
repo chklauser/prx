@@ -39,8 +39,7 @@ namespace Prexonite.Compiler.Ast
         public AstArgumentSplice(ISourcePosition position, [NotNull] AstExpr argumentList)
                 : base(position)
         {
-            if (argumentList == null) throw new ArgumentNullException(nameof(argumentList));
-            ArgumentList = argumentList;
+            ArgumentList = argumentList ?? throw new ArgumentNullException(nameof(argumentList));
         }
 
 

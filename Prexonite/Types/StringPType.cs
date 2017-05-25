@@ -112,56 +112,61 @@ namespace Prexonite.Types
                 }
 
 
-                if (curr == '\\')
-                    buffer.Write(@"\\");
-                else if (curr == '"')
-                    buffer.Write("\\\"");
-                else if (curr == '$')
-                    buffer.Write("\\$");
-                else if (curr >= 20 && curr < 127)
-                    buffer.Write(curr);
-                else //Non-printable characters
-                    switch (curr)
-                    {
-                        case '\0':
-                            buffer.Write("\\0");
-                            break;
-                        case '\a':
-                            buffer.Write("\\a");
-                            break;
-                        case '\b':
-                            buffer.Write("\\b");
-                            break;
-                        case '\f':
-                            buffer.Write("\\f");
-                            break;
-                        case '\n':
-                            buffer.Write("\\n");
-                            break;
-                        case '\r':
-                            buffer.Write("\\r");
-                            break;
-                        case '\t':
-                            buffer.Write("\\t");
-                            break;
-                        case '\v':
-                            buffer.Write("\\v");
-                            break;
-                        default:
-                            UInt32 utf32 = curr;
-                            UInt16 utf16 = curr;
-                            var utf8 = (Byte) curr;
-                            if (utf32 > UInt16.MaxValue)
+                switch (curr)
+                {
+                    case '\\':
+                        buffer.Write(@"\\");
+                        break;
+                    case '"':
+                        buffer.Write("\\\"");
+                        break;
+                    case '$':
+                        buffer.Write("\\$");
+                        break;
+                    case '\0':
+                        buffer.Write("\\0");
+                        break;
+                    case '\a':
+                        buffer.Write("\\a");
+                        break;
+                    case '\b':
+                        buffer.Write("\\b");
+                        break;
+                    case '\f':
+                        buffer.Write("\\f");
+                        break;
+                    case '\n':
+                        buffer.Write("\\n");
+                        break;
+                    case '\r':
+                        buffer.Write("\\r");
+                        break;
+                    case '\t':
+                        buffer.Write("\\t");
+                        break;
+                    case '\v':
+                        buffer.Write("\\v");
+                        break;
+                    default:
+                        if (curr >= 20 && curr < 127)
+                            buffer.Write(curr);
+                        else //Non-printable characters
+                        {
+                            uint utf32 = curr;
+                            ushort utf16 = curr;
+                            var utf8 = (byte) curr;
+                            if (utf32 > ushort.MaxValue)
                                 //Use \U notation
                                 buffer.Write("\\U{0:X8}", utf32);
-                            else if (utf32 > Byte.MaxValue || nextIsHex)
+                            else if (utf32 > byte.MaxValue || nextIsHex)
                                 //Use \u notation
                                 buffer.Write("\\u{0:X4}", utf16);
                             else
                                 //Use \x notation
                                 buffer.Write("\\x{0:X2}", utf8);
-                            break;
-                    }
+                        }
+                        break;
+                }
             }
         }
 
@@ -434,7 +439,7 @@ namespace Prexonite.Types
         {
             result = null;
             var str = (string) subject.Value;
-            switch ((id == null) ? "" : id.ToLowerInvariant())
+            switch (id?.ToLowerInvariant() ?? "")
             {
                 case "":
                     if (args.Length < 1)
@@ -452,7 +457,7 @@ namespace Prexonite.Types
                     var objs = new object[args.Length];
                     for (var i = 0; i < args.Length; i++)
                         objs[i] = args[i].Value;
-                    result = System.String.Format(str, objs);
+                    result = string.Format(str, objs);
                     break;
                 case "escape":
                     result = Escape(str);
@@ -701,7 +706,7 @@ namespace Prexonite.Types
         {
             var left = leftOperand.CallToString(sctx);
             var right = rightOperand.CallToString(sctx);
-            result = System.String.Concat(left, right);
+            result = string.Concat(left, right);
             return true;
         }
 

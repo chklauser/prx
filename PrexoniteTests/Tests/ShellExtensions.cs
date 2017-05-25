@@ -1,4 +1,5 @@
-﻿// Prexonite
+﻿
+// Prexonite
 //
 // Copyright (c) 2016, Christian Klauser
 // All rights reserved.
@@ -25,6 +26,8 @@
 //  IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 using System;
+using System.Collections.Generic;
+using System.Linq;
 using System.Net;
 using NUnit.Framework;
 using Prexonite;
@@ -329,5 +332,57 @@ function main(){
 ");
             Expect("-x--x");
         }
+
+        [Test]
+        public void SpliceFunctionCall()
+        {
+            Compile(@"
+function f() {
+    return call(string_concat(?), ["":""], var args >> map(x => ""<$x>"")); 
+}
+
+macro splice(xs){
+    context.Block.Expression = context.Factory.ArgumentSplice(context.Invocation.Position, xs);
+}
+
+function main(a, xs, b, ys, c){
+    return ->f.(a, splice(xs), b, splice(ys), c);
+}
+
+function main2(xs) {
+    return f(splice(xs));
+}
+
+function main3(xs, ys){
+    return f(splice(xs), splice(ys));
+}
+");
+            
+            Expect(":<a><x1><x2><x3><b><y1><y2><y3><c>", 
+                "a", _list("x1", "x2", "x3"), "b", _list("y1", "y2", "y3"), "c");
+            Expect(":<a><x1><x2><x3><b><c>", 
+                "a", _list("x1", "x2", "x3"), "b", _list(), "c");
+            Expect(":<a><x1><b><c>", 
+                "a", _list("x1"), "b", _list(), "c");
+            
+            ExpectNamed("main2", ":<x1><x2><x3>", _list("x1", "x2", "x3"));
+            ExpectNamed("main2", ":<x1>", _list("x1"));
+            ExpectNamed("main2", ":", _list());
+            
+            ExpectNamed("main3", ":<x1><x2><x3><y1><y2><y3>", 
+                _list("x1", "x2", "x3"), _list("y1", "y2", "y3"));
+            ExpectNamed("main3", ":<x1><x2><x3>", 
+                _list("x1", "x2", "x3"), _list());
+            ExpectNamed("main3", ":<x1>", 
+                _list("x1"), _list());
+        }
+
+        private PValue _list(params object[] elements)
+        {
+            var lst = new List<PValue>(elements.Length);
+            lst.AddRange(elements.Select(element => engine.CreateNativePValue(element)));
+            return engine.CreateNativePValue(lst);
+        }
     }
+    
 }

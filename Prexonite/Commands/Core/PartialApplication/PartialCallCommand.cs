@@ -30,7 +30,7 @@ namespace Prexonite.Commands.Core.PartialApplication
     /// <summary>
     ///     <para>Used to implement partial application for indirect calls (the default call interface in Prexonite)</para>
     /// </summary>
-    public class PartialCallCommand : PartialApplicationCommandBase<Object>
+    public class PartialCallCommand : PartialApplicationCommandBase<object>
     {
         #region Overrides of PartialApplicationCommandBase<object>
 

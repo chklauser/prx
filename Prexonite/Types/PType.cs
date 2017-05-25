@@ -1291,9 +1291,7 @@ namespace Prexonite.Types
         /// <returns>True if the value is a runtime type reference. False otherwise.</returns>
         public static bool IsPType(Type clrType)
         {
-            if (clrType == null)
-                return false;
-            return typeof (PType).IsAssignableFrom(clrType);
+            return clrType != null && typeof (PType).IsAssignableFrom(clrType);
         }
 
         /// <summary>

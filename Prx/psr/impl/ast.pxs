@@ -421,4 +421,4 @@ function unload_compiler(GetLoader\cmd)
     app.Functions.Remove(->mark_comp_func.Function.Id);
     app.Functions.Remove(->get_symbols.Function.Id);
     app.Meta["compiler_loaded"] = false;
-    }
+}

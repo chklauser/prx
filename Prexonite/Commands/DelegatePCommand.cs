@@ -34,15 +34,10 @@ namespace Prexonite.Commands
     /// <seealso cref = "PCommandAction" />
     public sealed class DelegatePCommand : PCommand
     {
-        private PCommandAction _action;
-
         /// <summary>
         ///     Provides readonly access to the delegate used to implement the current instance of <see cref = "DelegatePCommand" />.
         /// </summary>
-        public PCommandAction Action
-        {
-            get { return _action; }
-        }
+        public PCommandAction Action { get; }
 
         /// <summary>
         ///     Returns a string that describes the current instance of <see cref = "DelegatePCommand" />.
@@ -50,7 +45,7 @@ namespace Prexonite.Commands
         /// <returns>A string that describes the current instance of <see cref = "DelegatePCommand" /></returns>
         public override string ToString()
         {
-            return "Delegate(" + _action + ")";
+            return "Delegate(" + Action + ")";
         }
 
         /// <summary>
@@ -61,7 +56,7 @@ namespace Prexonite.Commands
         /// <returns></returns>
         public override PValue Run(StackContext sctx, PValue[] args)
         {
-            return _action(sctx, args);
+            return Action(sctx, args);
         }
 
         /// <summary>
@@ -82,9 +77,7 @@ namespace Prexonite.Commands
         /// <exception cref = "ArgumentNullException"><paramref name = "action" /> is null.</exception>
         public DelegatePCommand(PCommandAction action, bool isPure)
         {
-            if (action == null)
-                throw new ArgumentNullException(nameof(action));
-            _action = action;
+            Action = action ?? throw new ArgumentNullException(nameof(action));
         }
 
         /// <summary>

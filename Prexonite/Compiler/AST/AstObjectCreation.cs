@@ -36,26 +36,13 @@ namespace Prexonite.Compiler.Ast
                                      IAstHasExpressions,
                                      IAstPartiallyApplicable
     {
-        private AstTypeExpr _typeExpr;
-        private readonly ArgumentsProxy _proxy;
-
-        public ArgumentsProxy Arguments
-        {
-            get { return _proxy; }
-        }
+        public ArgumentsProxy Arguments { get; }
 
         #region IAstHasExpressions Members
 
-        public AstExpr[] Expressions
-        {
-            get { return Arguments.ToArray(); }
-        }
+        public AstExpr[] Expressions => Arguments.ToArray();
 
-        public AstTypeExpr TypeExpr
-        {
-            get { return _typeExpr; }
-            set { _typeExpr = value; }
-        }
+        public AstTypeExpr TypeExpr { get; set; }
 
         #endregion
 
@@ -65,10 +52,8 @@ namespace Prexonite.Compiler.Ast
         public AstObjectCreation(string file, int line, int col, AstTypeExpr type)
             : base(file, line, col)
         {
-            if (type == null)
-                throw new ArgumentNullException(nameof(type));
-            _typeExpr = type;
-            _proxy = new ArgumentsProxy(_arguments);
+            TypeExpr = type ?? throw new ArgumentNullException(nameof(type));
+            Arguments = new ArgumentsProxy(_arguments);
         }
 
         [DebuggerStepThrough]
@@ -83,7 +68,7 @@ namespace Prexonite.Compiler.Ast
         {
             expr = null;
 
-            _typeExpr = (AstTypeExpr) _GetOptimizedNode(target, _typeExpr);
+            TypeExpr = (AstTypeExpr) _GetOptimizedNode(target, TypeExpr);
 
             //Optimize arguments
             for (var i = 0; i < _arguments.Count; i++)
@@ -100,7 +85,7 @@ namespace Prexonite.Compiler.Ast
 
         protected override void DoEmitCode(CompilerTarget target, StackSemantics stackSemantics)
         {
-            var constType = _typeExpr as AstConstantTypeExpression;
+            var constType = TypeExpr as AstConstantTypeExpression;
 
             if (constType != null)
             {
@@ -113,7 +98,7 @@ namespace Prexonite.Compiler.Ast
             else
             {
                 //Load type and call construct on it
-                _typeExpr.EmitValueCode(target);
+                TypeExpr.EmitValueCode(target);
                 foreach (var arg in _arguments)
                     arg.EmitValueCode(target);
                 var justEffect = stackSemantics == StackSemantics.Effect;
@@ -131,16 +116,22 @@ namespace Prexonite.Compiler.Ast
                 Arguments.Any(AstPartiallyApplicable.IsPlaceholder);
         }
 
+        public NodeApplicationState CheckNodeApplicationState()
+        {
+            return new NodeApplicationState(TypeExpr.IsPlaceholder() || Arguments.Any(x => x.IsPlaceholder()),
+                TypeExpr.IsArgumentSplice() || Arguments.Any(x => x.IsArgumentSplice()));
+        }
+
         public void DoEmitPartialApplicationCode(CompilerTarget target)
         {
             var argv =
                 AstPartiallyApplicable.PreprocessPartialApplicationArguments(Arguments.ToList());
             var ctorArgc = this.EmitConstructorArguments(target, argv);
-            var constType = _typeExpr as AstConstantTypeExpression;
+            var constType = TypeExpr as AstConstantTypeExpression;
             if (constType != null)
                 target.EmitConstant(Position, constType.TypeExpression);
             else
-                _typeExpr.EmitValueCode(target);
+                TypeExpr.EmitValueCode(target);
             target.EmitCommandCall(Position, ctorArgc + 1, Engine.PartialConstructionAlias);
         }
 

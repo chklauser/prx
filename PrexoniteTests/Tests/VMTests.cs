@@ -1529,13 +1529,13 @@ function main(s)
 }
 ");
 
-            //‰ = U+00E4
+            //√§ = U+00E4
 
             //Simple
-            _expectRoundtrip("X‰x", "X\\xE4x");
+            _expectRoundtrip("X√§x", "X\\xE4x");
 
             //Collision
-            _expectRoundtrip("A‰E0", "A\\u00E4E0");
+            _expectRoundtrip("A√§E0", "A\\u00E4E0");
         }
 
         private void _expectRoundtrip(string text, string escaped)

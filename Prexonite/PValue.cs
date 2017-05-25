@@ -1429,7 +1429,7 @@ namespace Prexonite
         public override string ToString()
         {
             return
-                String.Concat(
+                string.Concat(
                     "{", (_value == null ? "-NULL-" : String.Concat(_value, "~", _type)), "}");
         }
 

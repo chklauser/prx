@@ -94,11 +94,7 @@ namespace Prexonite.Compiler.Ast
         {
         }
 
-        public override int DefaultAdditionalArguments
-        {
-            get { return base.DefaultAdditionalArguments + 1; //include subject
-            }
-        }
+        public override int DefaultAdditionalArguments => base.DefaultAdditionalArguments + 1;
 
         protected override void DoEmitCode(CompilerTarget target, StackSemantics stackSemantics)
         {
@@ -134,10 +130,8 @@ namespace Prexonite.Compiler.Ast
 
         public override string ToString()
         {
-            string name = Enum.GetName(typeof (PCall), Call);
-            return string.Format("{0}: ({1}).{2}{3}",
-                name == null ? "-" : name.ToLowerInvariant(),
-                Subject, Id, ArgumentsToString());
+            var name = Enum.GetName(typeof (PCall), Call);
+            return $"{name?.ToLowerInvariant() ?? "-"}: ({Subject}).{Id}{ArgumentsToString()}";
         }
 
         #region Implementation of IAstPartiallyApplicable
@@ -145,17 +139,17 @@ namespace Prexonite.Compiler.Ast
         public void DoEmitPartialApplicationCode(CompilerTarget target)
         {
             var argv =
-                AstPartiallyApplicable.PreprocessPartialApplicationArguments(
-                    Subject.Singleton().Append(Arguments));
+                AstPartiallyApplicable.PreprocessPartialApplicationArguments(Subject.Singleton().Append(Arguments));
             var ctorArgc = this.EmitConstructorArguments(target, argv);
             target.EmitConstant(Position, (int) Call);
             target.EmitConstant(Position, Id);
             target.EmitCommandCall(Position, ctorArgc + 2, Engine.PartialMemberCallAlias);
         }
 
-        public override bool CheckForPlaceholders()
+        public override NodeApplicationState CheckNodeApplicationState()
         {
-            return base.CheckForPlaceholders() || Subject.IsPlaceholder();
+            var state = base.CheckNodeApplicationState();
+            return state.WithPlaceholders(state.HasPlaceholders || Subject.IsPlaceholder());
         }
 
         #endregion

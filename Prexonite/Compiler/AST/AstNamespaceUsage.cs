@@ -49,14 +49,9 @@ namespace Prexonite.Compiler.Ast
         [CanBeNull]
         private QualifiedId? _referencePath;
 
-        [NotNull]
-        private readonly Namespace _namespace;
-
         public AstNamespaceUsage(ISourcePosition position, PCall call, [NotNull] Namespace @namespace) : base(position, call)
         {
-            if (@namespace == null)
-                throw new ArgumentNullException(nameof(@namespace));
-            _namespace = @namespace;
+            Namespace = @namespace ?? throw new ArgumentNullException(nameof(@namespace));
         }
 
         /// <summary>
@@ -65,8 +60,7 @@ namespace Prexonite.Compiler.Ast
         /// <remarks>
         /// <para>
         /// This property optionally assigned by the parser when a namespace is accessed via a qualified path.
-        /// It only encompasses a qualified id as it appears at the usage site. 
-        /// 
+        /// It only consists of the qualified id as it appears at the usage site.
         /// </para>
         /// <para>
         /// The reference path does not include prefixes imported into the current scope. 
@@ -77,7 +71,7 @@ namespace Prexonite.Compiler.Ast
         [CanBeNull]
         public QualifiedId? ReferencePath
         {
-            get { return _referencePath; }
+            get => _referencePath;
             set
             {
                 if(!ReferenceEquals(_referencePath,null))
@@ -86,10 +80,8 @@ namespace Prexonite.Compiler.Ast
             }
         }
 
-        public Namespace Namespace
-        {
-            get { return _namespace; }
-        }
+        [NotNull]
+        public Namespace Namespace { get; }
 
         protected override void EmitGetCode(CompilerTarget target, StackSemantics stackSemantics)
         {

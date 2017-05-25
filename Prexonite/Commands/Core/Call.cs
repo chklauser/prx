@@ -56,15 +56,10 @@ namespace Prexonite.Commands.Core
 
         public const string Alias = @"call\perform";
 
-        private static readonly Call _instance = new Call();
-
-        public static Call Instance
-        {
-            get { return _instance; }
-        }
+        public static Call Instance { get; } = new Call();
 
         /// <summary>
-        ///     Implementation of (ref f, arg1, arg2, arg3, ..., argn) => f(arg1, arg2, arg3, ..., argn);
+        ///     Implementation of (ref f, [arg1, arg2, arg3, ..., argn]) => f(arg1, arg2, arg3, ..., argn);
         /// </summary>
         /// <remarks>
         ///     <para>

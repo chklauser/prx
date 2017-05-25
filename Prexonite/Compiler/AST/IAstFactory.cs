@@ -79,6 +79,9 @@ namespace Prexonite.Compiler.Ast
         AstGetSet MemberAccess([NotNull] ISourcePosition position, AstExpr receiver, string memberId, PCall call = PCall.Get);
 
         [NotNull]
+        AstExpr ArgumentSplice(ISourcePosition position, AstExpr argumentList);
+        
+        [NotNull]
         AstGetSet StaticMemberAccess([NotNull] ISourcePosition position, AstTypeExpr typeExpr, string memberId,
                                      PCall call = PCall.Get);
 

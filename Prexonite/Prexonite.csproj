@@ -106,7 +106,6 @@
     <Compile Include="CilFunctionContext.cs" />
     <Compile Include="Closure.cs" />
     <Compile Include="Commands\CompilationFlags.cs" />
-    <Compile Include="Commands\CilTestCommand.cs" />
     <Compile Include="Commands\CompileTimeInterpretation.cs" />
     <Compile Include="Commands\CompileTimeValue.cs" />
     <Compile Include="Commands\Concurrency\AsyncSeq.cs" />

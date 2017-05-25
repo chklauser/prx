@@ -23,7 +23,7 @@
 //  DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, 
 //  WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING 
 //  IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
-using System;
+
 using System.Collections.Generic;
 using System.Diagnostics;
 using Prexonite.Types;
@@ -32,27 +32,19 @@ namespace Prexonite.Compiler.Ast
 {
     public abstract class AstGetSetImplBase : AstGetSet
     {
-        private readonly ArgumentsProxy _proxy;
-
         public override ArgumentsProxy Arguments
         {
             [DebuggerNonUserCode]
-            get { return _proxy; }
+            get;
         }
 
         #region IAstHasExpressions Members
-
-        private PCall _call;
 
         /// <summary>
         ///     <para>Indicates whether this node uses get or set syntax</para>
         ///     <para>(set syntax involves an equal sign (=); get syntax does not)</para>
         /// </summary>
-        public override PCall Call
-        {
-            get { return _call; }
-            set { _call = value; }
-        }
+        public sealed override PCall Call { get; set; }
 
         #endregion
 
@@ -64,8 +56,8 @@ namespace Prexonite.Compiler.Ast
         protected AstGetSetImplBase(ISourcePosition position, PCall call)
             : base(position)
         {
-            _call = call;
-            _proxy = new ArgumentsProxy(new List<AstExpr>());
+            Call = call;
+            Arguments = new ArgumentsProxy(new List<AstExpr>());
         }
 
         internal AstGetSetImplBase(Parser p, PCall call)

@@ -26,6 +26,7 @@
 #region
 
 using System;
+using System.Globalization;
 using Prexonite.Compiler.Cil;
 
 #endregion
@@ -89,6 +90,10 @@ namespace Prexonite.Types
             string id,
             out PValue result)
         {
+            if (Engine.StringsAreEqual(id, "ToString") && args.Length == 0)
+            {
+                args = new[] { sctx.CreateNativePValue(CultureInfo.InvariantCulture) };
+            }
             Object[typeof (double)].TryDynamicCall(sctx, subject, args, call, id, out result);
 
             return result != null;
@@ -152,20 +157,20 @@ namespace Prexonite.Types
             if (result == null)
             {
                 if (target is StringPType)
-                    result = String.CreatePValue(subject.Value.ToString());
+                    result = String.CreatePValue(((double)subject.Value).ToString(CultureInfo.InvariantCulture));
                 else if (target is RealPType)
                     result = Real.CreatePValue((double) subject.Value);
                 else if (target is BoolPType)
-                    result = Bool.CreatePValue(((double) subject.Value) != 0.0);
+                    result = Bool.CreatePValue(Math.Abs(((double) subject.Value)) < double.Epsilon);
                 else if (target is ObjectPType)
                 {
                     switch (Type.GetTypeCode(((ObjectPType) target).ClrType))
                     {
                         case TypeCode.Double:
-                            result = CreateObject((Double) subject.Value);
+                            result = CreateObject((double) subject.Value);
                             break;
                         case TypeCode.Decimal:
-                            result = CreateObject((Decimal) subject.Value);
+                            result = CreateObject((decimal) subject.Value);
                             break;
                     }
                 }

@@ -1231,10 +1231,7 @@ namespace Prexonite
 
         #region Version
 
-        public static Version PrexoniteVersion
-        {
-            get { return typeof (Engine).Assembly.GetName().Version; }
-        }
+        public static Version PrexoniteVersion => typeof (Engine).Assembly.GetName().Version;
 
         #endregion
     }

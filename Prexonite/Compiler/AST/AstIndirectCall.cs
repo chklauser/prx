@@ -24,6 +24,7 @@
 //  WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING 
 //  IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 using System;
+using System.Collections.Generic;
 using System.Diagnostics;
 using System.Linq;
 using JetBrains.Annotations;
@@ -53,9 +54,7 @@ namespace Prexonite.Compiler.Ast
             string file, int line, int column, PCall call, AstExpr subject)
             : base(file, line, column, call)
         {
-            if (subject == null)
-                throw new ArgumentNullException(nameof(subject));
-            Subject = subject;
+            Subject = subject ?? throw new ArgumentNullException(nameof(subject));
         }
 
         public AstIndirectCall(ISourcePosition position, PCall call, AstExpr subject)
@@ -204,20 +203,17 @@ namespace Prexonite.Compiler.Ast
         {
             // This method will be called at least twice per node. Once to indicate whether a direct call is available
             //  and then a second time to actually use the direct call implementation.
-
-            var refNode = Subject as AstReference;
-            var indCall = Subject as AstIndirectCall;
-            if (refNode != null)
+            if (Subject is AstReference refNode)
             {
                 // Could be variable, function, command
                 //  -> generates func, cmd, ldloc, stloc, ldglob, stglob
                 return refNode.Entity.Match(EntityCallMatcher.Instance,null);
             }
-            else if (indCall != null && (refNode = indCall.Subject as AstReference) != null)
+            else if (Subject is AstIndirectCall indCall && indCall.Subject is AstReference indRefNode)
             {
                 // Could be indirectly accessed local or global variable 
                 //  -> generates indloc, indglob
-                return refNode.Entity.Match(EntityIndirectCallMatcher.Instance, null);
+                return indRefNode.Entity.Match(EntityIndirectCallMatcher.Instance, null);
             }
             else
             {
@@ -227,9 +223,51 @@ namespace Prexonite.Compiler.Ast
 
         protected override void DoEmitCode(CompilerTarget target, StackSemantics stackSemantics)
         {
-            if(_getDirectCallAction() == null)
-                Subject.EmitValueCode(target);
-            base.DoEmitCode(target, stackSemantics);
+            if (CheckNodeApplicationState().HasArgumentSplices)
+            {
+                _toSliceForm(target).EmitCode(target, stackSemantics);
+            }
+            else
+            {
+                if (_getDirectCallAction() == null)
+                    Subject.EmitValueCode(target);
+                base.DoEmitCode(target, stackSemantics);
+            }
+        }
+
+        private AstGetSet _toSliceForm(CompilerTarget target)
+        {
+            // Convert R.(A_1, A_2, *S_3, A_4, *S_5) into
+            //   call(R, [A_1, A_2], S_3, [A_4], S_5)
+            var callNode = target.Factory.Expand(Position, EntityRef.MacroCommand.Create(Engine.CallAlias), Call);
+            List<AstExpr> currentBatch = null;
+
+            void flushCurrentBatch()
+            {
+                if (currentBatch != null)
+                {
+                    callNode.Arguments.Add(target.Factory.ListLiteral(currentBatch[0].Position, currentBatch));
+                }
+                currentBatch = null;
+            }
+
+            callNode.Arguments.Add(Subject);
+            foreach (AstExpr argument in Arguments)
+            {
+                if (argument is AstArgumentSplice splice && splice.IsSplicedPlaceholder)
+                {
+                    flushCurrentBatch();
+                    callNode.Arguments.Add(splice.ArgumentList);
+                }
+                else
+                {
+                    if (currentBatch == null)
+                        currentBatch = new List<AstExpr>();
+                    currentBatch.Add(argument);
+                }
+            }
+            flushCurrentBatch();
+            return callNode;
         }
 
         protected override void EmitGetCode(CompilerTarget target, StackSemantics stackSemantics)
@@ -272,6 +310,18 @@ namespace Prexonite.Compiler.Ast
 
         void IAstPartiallyApplicable.DoEmitPartialApplicationCode(CompilerTarget target)
         {
+            if (CheckNodeApplicationState().HasArgumentSplices)
+            {
+                ((IAstPartiallyApplicable) _toSliceForm(target)).DoEmitPartialApplicationCode(target);
+            }
+            else
+            {
+                _emitNonSplicedPartialApplication(target);
+            }
+        }
+
+        private void _emitNonSplicedPartialApplication(CompilerTarget target)
+        {
             var argv =
                 AstPartiallyApplicable.PreprocessPartialApplicationArguments(
                     Subject.Singleton().Append(Arguments));
@@ -289,10 +339,10 @@ namespace Prexonite.Compiler.Ast
                 Subject.EmitValueCode(target);
             }
             else if (
-                argc >= 2
+                    argc >= 2
                     && !argv[0].IsPlaceholder()
-                        && argv.Skip(2).All(expr => !expr.IsPlaceholder())
-                            && ((p = argv[1] as AstPlaceholder) == null || p.Index == 0))
+                    && argv.Skip(2).All(expr => !expr.IsPlaceholder())
+                    && ((p = argv[1] as AstPlaceholder) == null || p.Index == 0))
                 //Matches the patterns 
                 //  subj.(c_1, c_2,...,c_n, ?0,?1,?2,...,?m) 
                 //and 
@@ -326,16 +376,16 @@ namespace Prexonite.Compiler.Ast
             }
         }
 
-        public override bool CheckForPlaceholders()
+        public override NodeApplicationState CheckNodeApplicationState()
         {
-            return base.CheckForPlaceholders() || Subject.IsPlaceholder();
+            var state = base.CheckNodeApplicationState();
+            return state.WithPlaceholders(state.HasPlaceholders || Subject.IsPlaceholder())
+                .WithArgumentSpliced(state.HasArgumentSplices || Subject.IsArgumentSplice());
         }
 
         public override string ToString()
         {
-            return string.Format("{0}: ({1}).{2}",
-                (Enum.GetName(typeof (PCall), Call) ?? "-").ToLowerInvariant(),
-                Subject, ArgumentsToString());
+            return $"{(Enum.GetName(typeof(PCall), Call) ?? "-").ToLowerInvariant()}: ({Subject}).{ArgumentsToString()}";
         }
 
         #endregion

@@ -708,6 +708,11 @@ namespace Prexonite.Compiler.Ast
             return l;
         }
 
+        public AstExpr ArgumentSplice(ISourcePosition position, AstExpr argumentList)
+        {
+            return new AstArgumentSplice(position, argumentList);
+        }
+
         public AstExpr HashLiteral(ISourcePosition position, IEnumerable<AstExpr> elements)
         {
             var l = new AstHashLiteral(position.File, position.Line, position.Column);

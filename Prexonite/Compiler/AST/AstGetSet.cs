@@ -48,15 +48,9 @@ namespace Prexonite.Compiler.Ast
         public abstract PCall Call { get; set; }
 
         [NotNull]
-        public virtual AstExpr[] Expressions
-        {
-            get { return Arguments.ToArray(); }
-        }
+        public virtual AstExpr[] Expressions => Arguments.ToArray();
 
-        public virtual int DefaultAdditionalArguments
-        {
-            get { return 0; }
-        }
+        public virtual int DefaultAdditionalArguments => 0;
 
         public override bool TryOptimize(CompilerTarget target, out AstExpr expr)
         {
@@ -149,7 +143,8 @@ namespace Prexonite.Compiler.Ast
                 if (i != Arguments.Count)
                     buffer.Append(", ");
             }
-            return buffer + ")";
+            buffer.Append(")");
+            return buffer.ToString();
         }
 
         /// <summary>
@@ -166,6 +161,13 @@ namespace Prexonite.Compiler.Ast
             return this is IAstPartiallyApplicable &&
                 (base.CheckForPlaceholders() || Arguments.Any(AstPartiallyApplicable.IsPlaceholder));
         }
+        
+        public virtual NodeApplicationState CheckNodeApplicationState()
+        {
+            return new NodeApplicationState(
+                Arguments.Any(AstPartiallyApplicable.IsPlaceholder), 
+                Arguments.Any(AstPartiallyApplicable.IsArgumentSplice));
+        }
 
         public abstract AstGetSet GetCopy();
 
@@ -173,12 +175,8 @@ namespace Prexonite.Compiler.Ast
         {
             string typeName;
             var name = Enum.GetName(typeof (PCall), Call);
-            return String.Format(
-                "{0}: {1}",
-                name == null ? "-" : name.ToLowerInvariant(),
-                (typeName = GetType().Name).StartsWith("AstGetSet")
-                    ? typeName.Substring(9)
-                    : typeName);
+            return
+                $"{name?.ToLowerInvariant() ?? "-"}: {((typeName = GetType().Name).StartsWith("AstGetSet") ? typeName.Substring(9) : typeName)}";
         }
     }
 }
