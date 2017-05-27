@@ -108,7 +108,7 @@ namespace Prexonite.Commands.List
             else
             {
                 var lstsource = new List<PValue>();
-                for (var i = 1; i < args.Length; i++)
+                for (var i = 2; i < args.Length; i++)
                 {
                     var multiple = Map._ToEnumerable(sctx, args[i]);
                     if (multiple != null)

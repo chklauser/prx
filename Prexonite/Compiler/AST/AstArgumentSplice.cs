@@ -79,5 +79,10 @@ namespace Prexonite.Compiler.Ast
                 target.Factory.Null(splice.Position).EmitValueCode(target);
             }
         }
+
+        public override string ToString()
+        {
+            return $"*({ArgumentList})";
+        }
     }
 }

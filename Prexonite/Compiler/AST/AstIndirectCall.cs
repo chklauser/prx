@@ -254,7 +254,7 @@ namespace Prexonite.Compiler.Ast
             callNode.Arguments.Add(Subject);
             foreach (AstExpr argument in Arguments)
             {
-                if (argument is AstArgumentSplice splice && splice.IsSplicedPlaceholder)
+                if (argument is AstArgumentSplice splice)
                 {
                     flushCurrentBatch();
                     callNode.Arguments.Add(splice.ArgumentList);

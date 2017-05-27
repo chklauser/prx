@@ -28,6 +28,7 @@
 #region
 
 using System.Diagnostics;
+using System.Linq;
 using Prexonite.Compiler.Cil;
 
 #endregion
@@ -116,6 +117,8 @@ namespace Prexonite.Types
                 result = String.CreatePValue("");
             else if (Engine.StringsAreEqual(id, @"\boxed"))
                 result = sctx.CreateNativePValue(CreatePValue());
+            else if (Engine.StringsAreEqual(id, "GetEnumerator"))
+                result = sctx.CreateNativePValue(Enumerable.Empty<PValue>().GetEnumerator());
             return result != null;
         }
 

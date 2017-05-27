@@ -153,6 +153,8 @@ Noise               = "/*" ~"*/" | "//" {NotLineBreak}* | {WhiteSpace}+
 
      "$"    {Identifier} { return tok(Parser._id, yytext().Substring(1)); }
      "$\""               { buffer.Length = 0; PushState(String); return tok(Parser._anyId); }
+     // Support $@ to mean "var args". Emulated $@ from bash.
+     "$@"                { return multiple(tok(Parser._var), tok(Parser._id, PFunction.ArgumentListId)); }
 
      {Identifier} { return tok(checkKeyword(yytext()), yytext()); }
 

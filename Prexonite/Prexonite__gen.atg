@@ -712,18 +712,24 @@ PostfixUnaryExpr<out AstExpr expr>
 .
 
 PrefixUnaryExpr<out AstExpr expr>
-                                        (.  var prefixes = new Stack<UnaryOperator>(); .)
+                                        (.  var prefixes = new Stack<(bool IsSplice, UnaryOperator Op)>(); .)
 =                                       (.  var position = GetPosition(); .)
-    {   plus
-    |   minus                           (.  prefixes.Push(UnaryOperator.UnaryNegation); .)
-    |   inc                             (.  prefixes.Push(UnaryOperator.PreIncrement); .)
-    |   dec                             (.  prefixes.Push(UnaryOperator.PreDecrement); .)
-    |   deltaleft                       (.  prefixes.Push(UnaryOperator.PreDeltaLeft); .)
-    |   deltaright                      (.  prefixes.Push(UnaryOperator.PreDeltaRight); .)
+    {   plus                            // don't need to do anything for '+expr'
+    |   minus                           (.  prefixes.Push((false, UnaryOperator.UnaryNegation)); .)
+    |   times                           (.  prefixes.Push((true, UnaryOperator.None)); .)
+    |   inc                             (.  prefixes.Push((false, UnaryOperator.PreIncrement)); .)
+    |   dec                             (.  prefixes.Push((false, UnaryOperator.PreDecrement)); .)
+    |   deltaleft                       (.  prefixes.Push((false, UnaryOperator.PreDeltaLeft)); .)
+    |   deltaright                      (.  prefixes.Push((false, UnaryOperator.PreDeltaRight)); .)
     }    
     Primary<out expr>                   
-                                        (.  while(prefixes.Count > 0)
-                                                expr = Create.UnaryOperation(position, prefixes.Pop(), expr);
+                                        (.  while(prefixes.Count > 0) {
+                                                var prefix = prefixes.Pop();
+                                                if(prefix.IsSplice) 
+                                                    expr = Create.ArgumentSplice(position, expr);
+                                                else
+                                                    expr = Create.UnaryOperation(position, prefix.Op, expr);
+                                            }
                                         .)
 .
 

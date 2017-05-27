@@ -31,6 +31,8 @@ using System.Linq;
 using System.Net;
 using NUnit.Framework;
 using Prexonite;
+using Prexonite.Commands.Math;
+using Prexonite.Types;
 
 namespace PrexoniteTests.Tests
 {
@@ -334,6 +336,21 @@ function main(){
         }
 
         [Test]
+        public void NullSupportsForeach()
+        {
+            Compile(@"
+function main(a){
+    var z = a;
+    foreach(var x in null){
+        z += x;
+    }
+    return z;
+}
+");
+            Expect(16, 16);
+        }
+
+        [Test]
         public void SpliceFunctionCall()
         {
             Compile(@"
@@ -341,20 +358,24 @@ function f() {
     return call(string_concat(?), ["":""], var args >> map(x => ""<$x>"")); 
 }
 
-macro splice(xs){
-    context.Block.Expression = context.Factory.ArgumentSplice(context.Invocation.Position, xs);
-}
-
 function main(a, xs, b, ys, c){
-    return ->f.(a, splice(xs), b, splice(ys), c);
+    return ->f.(a, *xs, b, *ys, c);
 }
 
 function main2(xs) {
-    return f(splice(xs));
+    return f(*xs);
 }
 
 function main3(xs, ys){
-    return f(splice(xs), splice(ys));
+    return f(*xs, *ys);
+}
+
+function main4(a, b, c, xs) {
+    return f(a, b, c, *xs);
+}
+
+function main5(xs, a, b, c) {
+    return f(*xs, a, b, c);
 }
 ");
             
@@ -375,6 +396,56 @@ function main3(xs, ys){
                 _list("x1", "x2", "x3"), _list());
             ExpectNamed("main3", ":<x1>", 
                 _list("x1"), _list());
+            
+            ExpectNamed("main4", ":<a><b><c><x1><x2><x3>", "a", "b", "c", _list("x1", "x2", "x3"));
+            ExpectNamed("main4", ":<a><b><c><x1>", "a", "b", "c", _list("x1"));
+            ExpectNamed("main4", ":<a><b><c>", "a", "b", "c", _list());
+            ExpectNamed("main5", ":<x1><x2><x3><a><b><c>", _list("x1", "x2", "x3"), "a", "b", "c");
+            ExpectNamed("main5", ":<x1><a><b><c>", _list("x1"), "a", "b", "c");
+            ExpectNamed("main5", ":<a><b><c>", _list(), "a", "b", "c");
+            ExpectNamed("main4", ":<a><b><c>", "a", "b", "c", PType.Null);
+            ExpectNamed("main5", ":<a><b><c>", PType.Null, "a", "b", "c");
+            ExpectNamed("main3", ":<x1>", 
+                _list("x1"), PType.Null);
+            ExpectNamed("main2", ":", PType.Null);
+        }
+
+        /// <summary>
+        /// Verify that <code>$@</code> is equivalent to 'var args'
+        /// </summary>
+        [Test]
+        public void VarArgsSigil()
+        {
+            Compile(@"
+function main(){
+    return call(string_concat(?), ["":""], $@ >> map(x => ""<$x>"")); 
+}
+");
+            Expect(":<a><b><c>", "a", "b", "c");
+            Expect(":");
+        }
+
+        [Test]
+        public void VarArgsSigilSplice()
+        {
+            Compile(@"
+function main(){
+    return string_concat("":"", *$@);
+}
+");
+            Expect(":abc", "a", "b", "c");
+        }
+
+        [Test]
+        public void FlowSplice()
+        {
+            Compile(@"
+function main(){
+    var xs = var args;
+    return *xs >> foldl(->(+), "":"");
+}
+");
+            Expect(":abc", "a", "b", "c");
         }
 
         private PValue _list(params object[] elements)
