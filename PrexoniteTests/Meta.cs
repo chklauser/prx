@@ -51,63 +51,35 @@ namespace PrexoniteTests
         {
             private readonly string _key;
             private readonly MetaEntry _expectedEntry;
-            private MetaEntry _actualEntry;
-            private bool _typeMismatch;
 
-            public ExactEqualityConstraint(string key, MetaEntry expectedEntry)
+            public ExactEqualityConstraint(string key, MetaEntry expectedEntry) : base(key, expectedEntry)
             {
-                if (key == null)
-                    throw new ArgumentNullException(nameof(key));
                 if (expectedEntry == null)
                     throw new ArgumentNullException(nameof(expectedEntry));
 
-                _key = key;
+                _key = key ?? throw new ArgumentNullException(nameof(key));
                 _expectedEntry = expectedEntry;
             }
 
             #region Overrides of Constraint
 
-            public override bool Matches(object actual)
+            public override ConstraintResult ApplyTo<TActual>(TActual actual)
             {
-                this.actual = actual;
+                object actualObj = actual;
+                return new ConstraintResult(this, actualObj, _matches(actualObj));
+            }
 
+            private bool _matches(object actual)
+            {
                 var ihmt = actual as IHasMetaTable;
                 if (ihmt == null)
                 {
-                    this.actual = null;
                     return false;
                 }
 
-                _actualEntry = ihmt.Meta[_key];
+                var actualEntry = ihmt.Meta[_key];
 
-                if (_actualEntry.EntryType != _expectedEntry.EntryType)
-                {
-                    _typeMismatch = true;
-                    return false;
-                }
-
-                _typeMismatch = false;
-                return _actualEntry.Equals(_expectedEntry);
-            }
-
-            public override void WriteDescriptionTo(MessageWriter writer)
-            {
-                if (actual == null)
-                {
-                    writer.WriteMessageLine("Actual value does not have a meta table.");
-                }
-                else if (_typeMismatch)
-                {
-                    writer.WriteMessageLine("Meta entry type doesn't match.");
-                    writer.WriteExpectedValue(_expectedEntry.EntryType);
-                    writer.WriteActualValue(_actualEntry.EntryType);
-                }
-                else
-                {
-                    writer.WriteMessageLine(
-                        "actual meta entry {0} should match expected entry {1}", _actualEntry,
-                        _expectedEntry);
-                }
+                return actualEntry.EntryType == _expectedEntry.EntryType && actualEntry.Equals(_expectedEntry);
             }
 
             #endregion
@@ -117,7 +89,7 @@ namespace PrexoniteTests
         {
             private readonly string _key;
 
-            public ContainsKeyConstraint(string key)
+            public ContainsKeyConstraint(string key) : base(key)
             {
                 if (key == null)
                     throw new ArgumentNullException(nameof(key));
@@ -126,10 +98,14 @@ namespace PrexoniteTests
 
             #region Overrides of Constraint
 
-            public override bool Matches(object actual)
+            public override ConstraintResult ApplyTo<TActual>(TActual actual)
             {
-                this.actual = actual;
+                var actualValue = actual;
+                return new ConstraintResult(this, actualValue, _matches(actualValue));
+            }
 
+            private bool _matches(object actual)
+            {
                 IHasMetaTable ihmt;
                 MetaTable mt;
                 if ((ihmt = actual as IHasMetaTable) != null)
@@ -138,13 +114,6 @@ namespace PrexoniteTests
                     return false;
 
                 return mt.ContainsKey(_key);
-            }
-
-            public
-                override void WriteDescriptionTo(MessageWriter writer)
-            {
-                writer.WriteMessageLine(
-                    "meta table of object {0} should contain an entry for key \"{1}\"", actual, _key);
             }
 
             #endregion

@@ -253,7 +253,7 @@ function main(x) {
     return x + y - z;
 }
 ");
-            var x = 15;
+            const int x = 15;
             Expect(x + (-x) - (-x), x);
         }
 

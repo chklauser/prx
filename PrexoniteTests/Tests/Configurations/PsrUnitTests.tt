@@ -24,7 +24,7 @@ namespace PrexoniteTests.Tests.Configurations
 #>
         internal abstract class <#=_toPsrClassName(testFile.TestFileName)#> : ScriptedUnitTestContainer
         {
-            [TestFixtureSetUp]
+            [OneTimeSetUp]
             public void SetupTestFile()
             {
 				var model = new TestModel

@@ -24,8 +24,6 @@
 //  WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING 
 //  IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 using System;
-using System.Collections;
-using System.Diagnostics;
 using System.Linq;
 using NUnit.Framework;
 using Prexonite;
@@ -37,7 +35,7 @@ using Prexonite.Modular;
 namespace PrexoniteTests.Tests
 {
     [TestFixture]
-    public class ApplicationLinking : AssertionHelper
+    public class ApplicationLinking
     {
         [Test]
         public void NoLocalButCount()
@@ -169,8 +167,8 @@ namespace PrexoniteTests.Tests
             foreach (var a in bps.Skip(1))
                 Application.Link(a, bps[0]);
 
-            Assert.That(aps[0].Compound, Not.Member(bps));
-            Assert.That(bps[0].Compound, Not.Member(aps));
+            Assert.That(aps[0].Compound, !Contains.Item(bps));
+            Assert.That(bps[0].Compound, !Contains.Item(aps));
 
             Application.Link(aps[0],bps[1]);
 
@@ -253,8 +251,8 @@ namespace PrexoniteTests.Tests
 
             Application.Link(a1, a2);
             var r = a1.Run(eng);
-            Expect(r.Value,Is.InstanceOf<string>());
-            Expect(r.Value,Is.EqualTo(helloModules));
+            Assert.That(r.Value,Is.InstanceOf<string>());
+            Assert.That(r.Value,Is.EqualTo(helloModules));
         }
 
         [Test]

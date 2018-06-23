@@ -38,14 +38,14 @@ namespace PrexoniteTests.Tests
         private Engine engine;
         private StackContext sctx;
 
-        [TestFixtureSetUp]
+        [OneTimeSetUp]
         public void SetupTypeSystemEngine()
         {
             engine = new Engine();
             sctx = new TestStackContext(engine, new Application());
         }
 
-        [TestFixtureTearDown]
+        [OneTimeTearDown]
         public void TeardownTypeSystemEngine()
         {
             engine = null;

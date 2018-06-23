@@ -232,11 +232,13 @@ function main()
                 functionId + " must not be volatile.");
         }
 
-        [Test, ExpectedException(typeof (PrexoniteRuntimeException))]
+        [Test]
         public void TryFinallyCondCompiles()
         {
-            Compile(
-                @"
+            Assert.Throws<PrexoniteRuntimeException>(() =>
+            {
+                Compile(
+                    @"
 var t = """";
 function trace(x) = t+=x;
 
@@ -253,8 +255,9 @@ function main(x)
     return t;
 }
 ");
-            _expectCil();
-            Expect("tf", true);
+                _expectCil();
+                Expect("tf", true);
+            });
         }
 
         [Test]
@@ -473,15 +476,13 @@ function main(x) //[store_debug_implementation enabled;]
             Expect("tfce", true);
         }
 
-        [Test,
-         ExpectedException(typeof (PrexoniteRuntimeException),
-             ExpectedMessage =
-                 @"Unexpected leave instruction. This happens when jumping to an instruction in a try block from the outside."
-             )]
+        [Test]
         public void LabelOnFirstNeLabelOnTry()
         {
-            Compile(
-                @"
+            Assert.Throws<PrexoniteRuntimeException>(() =>
+            {
+                Compile(
+                    @"
 var t = """";
 function trace(x) = t+=x;
 
@@ -509,8 +510,9 @@ L1:         trace(""b"");
     return t;
 }
 ");
-            _expectSehDeficiency();
-            Expect("undefined", true);
+                _expectSehDeficiency();
+                Expect("undefined", true);
+            }, @"Unexpected leave instruction. This happens when jumping to an instruction in a try block from the outside.");
         }
 
         [Test]

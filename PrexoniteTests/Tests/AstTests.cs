@@ -89,10 +89,12 @@ namespace PrexoniteTests.Tests
             AstPlaceholder.DeterminePlaceholderIndices(Enumerable.Empty<AstPlaceholder>());
         }
 
-        [Test, ExpectedException(typeof (NullReferenceException))]
+        [Test]
         public void DeterminePlaceholderIndicesRejectNullTets()
         {
-            AstPlaceholder.DeterminePlaceholderIndices(Extensions.Singleton<AstPlaceholder>(null));
+            Assert.Throws<NullReferenceException>(() =>
+                AstPlaceholder.DeterminePlaceholderIndices(Extensions.Singleton<AstPlaceholder>(null))
+            );
         }
 
         [Test]

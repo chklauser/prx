@@ -35,12 +35,12 @@ namespace PrexoniteTests.Tests.Internal
     {
         private readonly ModuleName _dependency;
 
-        public DependingOnConstraint(ModuleName dependency)
+        public DependingOnConstraint(ModuleName dependency) : base(dependency)
         {
             _dependency = dependency;
         }
 
-        public DependingOnConstraint(string name)
+        public DependingOnConstraint(string name) : base(name)
         {
             ModuleName moduleName;
             if (ModuleName.TryParse(name, out moduleName))
@@ -49,18 +49,15 @@ namespace PrexoniteTests.Tests.Internal
                 throw new ArgumentException(string.Format("The string {0} is not a valid module name.", name));
         }
 
-        public override bool Matches(object actualValue)
+        public override ConstraintResult ApplyTo<TActual>(TActual actual)
         {
-            actual = actualValue;
-            var desc = actualValue as ITargetDescription;
-
-            return desc != null && desc.Dependencies.Any(n => n.Equals(_dependency));
+            var actualValue = actual;
+            return new  ConstraintResult(this, actualValue, _matches(actualValue));
         }
 
-        public override void WriteDescriptionTo(MessageWriter writer)
+        private bool _matches(object actualValue)
         {
-            writer.WritePredicate("build target description depending on ");
-            writer.WriteExpectedValue(_dependency);
+            return actualValue is ITargetDescription desc && desc.Dependencies.Any(n => n.Equals(_dependency));
         }
     }
 }

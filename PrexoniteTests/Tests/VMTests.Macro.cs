@@ -345,7 +345,7 @@ function main(x,y)
         }
 
 
-        [Test,Ignore]
+        [Test,Ignore("TODO: figure out why this is ignored")]
         public void PartialCallMacroOnFunction()
         {
             Compile(

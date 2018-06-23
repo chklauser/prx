@@ -9,4 +9,12 @@ namespace sh {
     function stdout = "sh.stdout";
     function stdin  = "sh.stdin";
     function stderr = "sh.stderr";
-} export(stdout, stdin, stderr, (|>), (<|.), (|>.), stream, lines, which, create_command, call\sh);
+} export(stdout, stdin, stderr, stream, lines, words, which, create_command, call\sh, (|>), (<|.), (|>.));
+
+{
+    var time = new command(which("time"));
+    var grep = new command(which("grep"));
+    var tr = new command(which("tr"));
+    var cut = new command(which("cut"));
+}
+

@@ -212,8 +212,7 @@ function main(x)
                 Assert.That(deref.InnerSymbol, Is.InstanceOf<ReferenceSymbol>());
                 var refSym = (ReferenceSymbol)deref.InnerSymbol;
                 Assert.That(refSym.Entity, Is.InstanceOf<EntityRef.Function>());
-                EntityRef.Function func;
-                refSym.Entity.TryGetFunction(out func);
+                refSym.Entity.TryGetFunction(out var func);
                 Assert.That(func, Is.EqualTo(EntityRef.Function.Create("g",mn)));
             }
 
@@ -226,8 +225,7 @@ function main(x)
                 Assert.That(deref.InnerSymbol, Is.InstanceOf<ReferenceSymbol>());
                 var refSym = (ReferenceSymbol)deref.InnerSymbol;
                 Assert.That(refSym.Entity, Is.InstanceOf<EntityRef.Function>());
-                EntityRef.Function func;
-                refSym.Entity.TryGetFunction(out func);
+                refSym.Entity.TryGetFunction(out var func);
                 Assert.That(func, Is.EqualTo(EntityRef.Function.Create("f",mn)));
             }
         }
@@ -507,9 +505,9 @@ function main()
                        {
                            var r = rv.CallToString(sctx).Split('|');
                            Console.WriteLine(rv);
-                           Assert.That(r.Length,Is.EqualTo(8),"Expected return value to consist of 8 elements. Returned {0}",rv);
+                           Assert.That((object) r.Length,Is.EqualTo(8),"Expected return value to consist of 8 elements. Returned {0}",rv);
 
-                           Assert.That(r[0],Is.EqualTo(EntityRef.Function.Create("f",nm).ToString()));
+                           Assert.That(r[0], Is.EqualTo(EntityRef.Function.Create("f",nm).ToString()));
                            Assert.That(r[1], Is.EqualTo(EntityRef.Variable.Global.Create("v", nm).ToString()));
                            Assert.That(r[2], Is.EqualTo(EntityRef.Variable.Global.Create("r", nm).ToString()));
                            Assert.That(r[3], Is.EqualTo(EntityRef.Function.Create("m", nm).ToString()));
@@ -1179,8 +1177,7 @@ namespace a {
             Assert.That(moduleTwo.Exception,Is.Null);
 
             var symbols = moduleTwo.Symbols;
-            Symbol symbol;
-            Assert.That(symbols.TryGet("a",out symbol),Is.True,"Expect module two to have a symbol called 'a'");
+            Assert.That(symbols.TryGet("a",out var symbol),Is.True,"Expect module two to have a symbol called 'a'");
             Assert.That(symbol,Is.InstanceOf<NamespaceSymbol>());
             var nsSym = (NamespaceSymbol) symbol;
             _assumeNotNull(nsSym);
@@ -1245,10 +1242,7 @@ function main() {
                 _loaderReference = loaderReference;
             }
 
-            public Dictionary<string, string> VirtualFiles
-            {
-                get { return _virtualFiles; }
-            }
+            public Dictionary<string, string> VirtualFiles => _virtualFiles;
 
             public override PValue Run(StackContext sctx, PValue[] args)
             {

@@ -16,7 +16,7 @@ namespace PrexoniteTests.Tests.Configurations
 {
         internal abstract class Unit_ast : ScriptedUnitTestContainer
         {
-            [TestFixtureSetUp]
+            [OneTimeSetUp]
             public void SetupTestFile()
             {
 				var model = new TestModel
@@ -103,7 +103,7 @@ namespace PrexoniteTests.Tests.Configurations
         }
         internal abstract class Unit_lang_ext : ScriptedUnitTestContainer
         {
-            [TestFixtureSetUp]
+            [OneTimeSetUp]
             public void SetupTestFile()
             {
 				var model = new TestModel
@@ -174,7 +174,7 @@ namespace PrexoniteTests.Tests.Configurations
         }
         internal abstract class Unit_macro : ScriptedUnitTestContainer
         {
-            [TestFixtureSetUp]
+            [OneTimeSetUp]
             public void SetupTestFile()
             {
 				var model = new TestModel
@@ -327,7 +327,7 @@ namespace PrexoniteTests.Tests.Configurations
         }
         internal abstract class Unit_misc : ScriptedUnitTestContainer
         {
-            [TestFixtureSetUp]
+            [OneTimeSetUp]
             public void SetupTestFile()
             {
 				var model = new TestModel
@@ -426,7 +426,7 @@ namespace PrexoniteTests.Tests.Configurations
         }
         internal abstract class Unit_struct : ScriptedUnitTestContainer
         {
-            [TestFixtureSetUp]
+            [OneTimeSetUp]
             public void SetupTestFile()
             {
 				var model = new TestModel

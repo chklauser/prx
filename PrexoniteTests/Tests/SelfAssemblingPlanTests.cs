@@ -121,7 +121,7 @@ namespace PrexoniteTests.Tests
 
         private String _prototypePath;
 
-        [TestFixtureSetUp]
+        [OneTimeSetUp]
         public void Init()
         {
             _prototypePath = Path.Combine(Path.GetTempPath(), "PrexoniteTests.SelfAssemblingPlanTests");
@@ -159,7 +159,7 @@ namespace PrexoniteTests.Tests
             _tryTearDown();
         }
 
-        [TestFixtureTearDown]
+        [OneTimeTearDown]
         public void LastDitchEffort()
         {
             try

@@ -27,6 +27,7 @@ using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
+using System.Reflection;
 using System.Threading.Tasks;
 using JetBrains.Annotations;
 using NUnit.Framework;
@@ -65,7 +66,7 @@ namespace PrexoniteTests.Tests.Configurations
             Dependencies = new List<string>();
             Root = new NullContext(Engine, Application, new string[0]);
 
-            var slnPath = Environment.CurrentDirectory;
+            var slnPath = Path.GetDirectoryName(Assembly.GetExecutingAssembly().Location);
             while (Directory.Exists(slnPath) && !File.Exists(Path.Combine(slnPath, "Prexonite.sln")))
                 slnPath = Path.Combine(slnPath, @".." + Path.DirectorySeparatorChar);
 
