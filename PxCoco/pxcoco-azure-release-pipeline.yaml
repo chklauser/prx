@@ -16,8 +16,7 @@ variables:
   Version: '$(Build.BuildNumber)'
 
 steps:
-- displayName: "Install .NET Core"
-  task: DotNetCoreInstaller@0
+- task: DotNetCoreInstaller@0
   inputs:
     version: '2.2.300'
 
@@ -27,14 +26,12 @@ steps:
   displayName: 'Update version to Tag'
   condition: and(succeeded(), startsWith(variables['Build.SourceBranch'], 'refs/tags/'))
 
-- displayName: "Restore NuGet packages"
-  task: DotNetCoreCLI@2
+- task: DotNetCoreCLI@2
   inputs:
     command: restore
     projects: 'PxCoco/PxCoco.sln'
 
-- displayName: "Build"
-  task: DotNetCoreCLI@2
+- task: DotNetCoreCLI@2
   inputs:
     command: build
     projects: 'PxCoco/PxCoco.sln'
@@ -42,8 +39,7 @@ steps:
 
 # There are no automated tests for PxCoco.
 
-- displayName: "Package"
-  task: DotNetCoreCLI@2
+- task: DotNetCoreCLI@2
   inputs:
     command: pack
     projects: 'PxCoco/PxCoco.csproj'
