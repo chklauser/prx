@@ -9,14 +9,14 @@ trigger:
     include: 
     - '*'
   paths:
-    exclude:
+    include:
     - PxCoco/*
 
 pool:
   vmImage: 'windows-latest'
 
 variables:
-  solution: 'Prexonite.sln'
+  solution: 'PxCoco/PxCoco.sln'
   buildPlatform: 'Any CPU'
   buildConfiguration: 'Release'
 
@@ -33,9 +33,4 @@ steps:
     platform: '$(buildPlatform)'
     configuration: '$(buildConfiguration)'
 
-- task: VSTest@2
-  inputs:
-    platform: '$(buildPlatform)'
-    configuration: '$(buildConfiguration)'
-    testAssemblyVer2: '**\PrexoniteTests.exe'
-    codeCoverageEnabled: True
+# There are no automated tests for PxCoco.

@@ -746,7 +746,7 @@ namespace Prexonite.Compiler
                 using (Stream str = new FileStream(
                     file.FullName,
                     FileMode.Open,
-                    FileSystemRights.ReadData,
+                    FileAccess.Read,
                     FileShare.Read,
                     4 * 1024,
                     FileOptions.SequentialScan))

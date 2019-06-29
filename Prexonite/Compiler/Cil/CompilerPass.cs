@@ -97,13 +97,10 @@ namespace Prexonite.Compiler.Cil
             _makeAvailableForLinking = makeAvailableForLinking;
             if (MakeAvailableForLinking)
             {
-                var sequenceName = _createNextTypeName(app != null ? app.Id : null);
+                var sequenceName = _createNextTypeName(app?.Id);
                 var asmName = new AssemblyName(sequenceName);
-                _assemblyBuilder =
-                    AppDomain.CurrentDomain.DefineDynamicAssembly(asmName,
-                        AssemblyBuilderAccess.RunAndSave);
-                _moduleBuilder = _assemblyBuilder.DefineDynamicModule(asmName.Name,
-                    asmName.Name + ".dll");
+                _assemblyBuilder = AssemblyBuilder.DefineDynamicAssembly(asmName, AssemblyBuilderAccess.RunAndCollect);
+                _moduleBuilder = _assemblyBuilder.DefineDynamicModule(asmName.Name);
                 _typeBuilder = _moduleBuilder.DefineType(sequenceName);
             }
         }
@@ -122,7 +119,13 @@ namespace Prexonite.Compiler.Cil
                     typeof (PValue).MakeByRefType(),
                     typeof (ReturnMode).MakeByRefType(),
                 };
-            if (MakeAvailableForLinking)
+
+            
+            // TODO: Once .NET Core 3.x has support for DynamicMethod.DefineParameter, emit dynamic methods again
+            // var makeAvailableForLinking = MakeAvailableForLinking;
+            var makeAvailableForLinking = true;
+            // ReSharper disable once ConditionIsAlwaysTrueOrFalse
+            if (makeAvailableForLinking)
             {
                 //Create method stub
 
@@ -150,23 +153,25 @@ namespace Prexonite.Compiler.Cil
 
                 return dm;
             }
-            var cilm =
-                new DynamicMethod
-                    (
-                    id,
-                    typeof (void),
-                    parameterTypes,
-                    typeof (Runtime));
+            //var cilm =
+            //    new DynamicMethod
+            //        (
+            //        id,
+            //        typeof (void),
+            //        parameterTypes,
+            //        typeof (Runtime));
 
-            cilm.DefineParameter(1, ParameterAttributes.In, "source");
-            cilm.DefineParameter(2, ParameterAttributes.In, "sctx");
-            cilm.DefineParameter(3, ParameterAttributes.In, "args");
-            cilm.DefineParameter(4, ParameterAttributes.In, "sharedVariables");
-            cilm.DefineParameter(5, ParameterAttributes.Out, "result");
+            //cilm.DefineParameter(1, ParameterAttributes.In, "source");
+            //cilm.DefineParameter(2, ParameterAttributes.In, "sctx");
+            //cilm.DefineParameter(3, ParameterAttributes.In, "args");
+            //cilm.DefineParameter(4, ParameterAttributes.In, "sharedVariables");
+            //cilm.DefineParameter(5, ParameterAttributes.Out, "result");
 
-            Implementations.Add(id, cilm);
+            //Implementations.Add(id, cilm);
 
-            return cilm;
+            //return cilm;
+
+            throw new NotSupportedException("Cannot emit dynamic methods. Make functions available for linking instead.");
         }
 
         private static string _mkFieldName(string id)

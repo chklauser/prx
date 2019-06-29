@@ -1,76 +1,46 @@
-﻿<?xml version="1.0" encoding="utf-8"?>
-<Project DefaultTargets="Build" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+<Project Sdk="Microsoft.NET.Sdk">
+
   <PropertyGroup>
-    <Configuration Condition=" '$(Configuration)' == '' ">Debug</Configuration>
-    <Platform Condition=" '$(Platform)' == '' ">AnyCPU</Platform>
-    <ProductVersion>8.0.50727</ProductVersion>
-    <SchemaVersion>2.0</SchemaVersion>
-    <ProjectGuid>{0E03FE08-AC1A-4E75-A823-4C674AFA13C3}</ProjectGuid>
     <OutputType>Exe</OutputType>
-    <AppDesignerFolder>Properties</AppDesignerFolder>
-    <RootNamespace>PxCoco</RootNamespace>
-    <AssemblyName>PxCoco</AssemblyName>
-    <StartupObject>
-    </StartupObject>
+    <TargetFramework>netcoreapp2.2</TargetFramework>
+    <LangVersion>7.3</LangVersion>
   </PropertyGroup>
-  <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Debug|AnyCPU' ">
-    <DebugSymbols>true</DebugSymbols>
-    <DebugType>full</DebugType>
-    <Optimize>false</Optimize>
-    <OutputPath>bin\</OutputPath>
-    <DefineConstants>DEBUG;TRACE</DefineConstants>
-    <ErrorReport>prompt</ErrorReport>
-    <WarningLevel>4</WarningLevel>
-  </PropertyGroup>
-  <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Release|AnyCPU' ">
-    <DebugType>none</DebugType>
-    <Optimize>true</Optimize>
-    <OutputPath>bin\</OutputPath>
-    <DefineConstants>TRACE</DefineConstants>
-    <ErrorReport>prompt</ErrorReport>
-    <WarningLevel>4</WarningLevel>
-  </PropertyGroup>
-  <Import Project="$(MSBuildBinPath)\Microsoft.CSharp.targets" />
-  <!-- To modify your build process, add your task inside one of the targets below and uncomment it. 
-       Other similar extension points exist, see Microsoft.Common.targets.
-  <Target Name="BeforeBuild">
-  </Target>-->
-  <Target Name="AfterBuild">
-    <Copy SourceFiles="$(TargetPath)" DestinationFolder="$(ProjectDir)..\Tools" />
-  </Target>
-  <ItemGroup>
-    <Compile Include="Coco.cs" />
-    <None Include="OrigParserGen.cs" />
-    <Compile Include="DFA.cs" />
-    <Compile Include="Merge.cs" />
-    <Compile Include="Msbuild\MergeTask.cs" />
-    <Compile Include="Msbuild\PxCocoTask.cs" />
-    <Compile Include="Parser.Code.cs" />
-    <Compile Include="Parser.cs" />
-    <Compile Include="ParserGen.cs" />
-    <Compile Include="Scanner.cs" />
-    <Compile Include="Tab.cs" />
-  </ItemGroup>
-  <ItemGroup>
-    <None Include="Coco.atg">
-      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
-    </None>
-    <None Include="Parser.frame">
-      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
-    </None>
-    <None Include="Scanner.frame">
-      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
-    </None>
-  </ItemGroup>
+
   <PropertyGroup>
-    <PostBuildEvent>
-    </PostBuildEvent>
+    <IsPackable>true</IsPackable>
+    <IsTool>true</IsTool>
+    <Version>1.91</Version>
+    <Title>Prexonite Coco/R</Title>
+    <PackageDescription>Coco/R is a compiler generator, which takes an attributed grammar of a source language and generates a scanner and a parser for this language. The scanner works as a deterministic finite automaton. The parser uses recursive descent. LL(1) conflicts can be resolved by a multi-symbol lookahead or by semantic checks. Thus the class of accepted grammars is LL(k) for an arbitrary k. The 'Prexonite' version is slightly modified and extended with MSBuild tasks.</PackageDescription>
+    <Description>$(PackageDescription)</Description>
+    <Copyright>Copyright (c) 1990, 2005 Hanspeter Moessenboeck, University of Linz
+extended by M. Loeberbauer &amp; A. Woess, Univ. of Linz
+with improvements by Pat Terry, Rhodes University. Prexonite extensions by Christian Klauser</Copyright>
+    <IncludeSymbols>true</IncludeSymbols>
+    <IncludeSource>true</IncludeSource>
+    <SymbolPackageFormat>snupkg</SymbolPackageFormat>
+    <RepositoryUrl>https://github.com/chklauser/prx.git</RepositoryUrl>
+    <RepositoryType>git</RepositoryType>
+
+    <Product>Prexonite</Product>
+    <Company>$(Product)</Company>
+    <NeutralLanguage>en-US</NeutralLanguage>
   </PropertyGroup>
+
+ <PropertyGroup>
+    <PackageLicenseFile>LICENSE.txt</PackageLicenseFile>
+</PropertyGroup>
+
+<ItemGroup>
+    <None Include="licenses\LICENSE.txt" Pack="true" PackagePath="" />
+    <Content Include="build\PxCoco.props" PackagePath="build\" />
+</ItemGroup>
+
   <ItemGroup>
-    <Reference Include="Microsoft.Build.Framework" />
-    <Reference Include="Microsoft.Build.Utilities" />
-    <Reference Include="System" />
-    <Reference Include="System.Data" />
-    <Reference Include="System.Xml" />
+    <PackageReference Include="Microsoft.Build.Framework" Version="16.0.461" />
+    <PackageReference Include="Microsoft.Build.Utilities.Core" Version="16.0.461" />
+    <!-- marks all packages as 'local only' so they don't end up in the nuspec -->
+    <PackageReference Update="@(PackageReference)" PrivateAssets="All" />
   </ItemGroup>
+
 </Project>

@@ -1,0 +1,17 @@
+<Project TreatAsLocalProperty="TaskAssembly">
+
+  <!-- This property file gets loaded into projects that install this NuGet package. -->
+
+  <PropertyGroup>
+  	<!-- For cross-platform compatibiliy, .NET Core 'executable' are packaged as a 'dll'.
+  		Shipping the naked assembly is portable, shipping a Windows PE-file with 
+  		Windows-specific framework initialization code would not be portable.
+
+  		This tool can be run via `dotnet PxCoco.dll` (on all platforms)
+  	-->
+    <TaskAssembly>$(MSBuildThisFileDirectory)..\tools\PxCoco.dll</TaskAssembly>
+  </PropertyGroup>
+
+  <UsingTask TaskName="Merge" AssemblyFile="$(TaskAssembly)" />
+  <UsingTask TaskName="PxCoco" AssemblyFile="$(TaskAssembly)" />
+</Project>
