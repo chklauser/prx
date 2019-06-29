@@ -1,4 +1,4 @@
-<Project Sdk="Microsoft.NET.Sdk">
+﻿<Project Sdk="Microsoft.NET.Sdk">
 
   <PropertyGroup>
     <TargetFramework>netcoreapp2.2</TargetFramework>
@@ -27,11 +27,6 @@
 
   <!-- CUSTOM TASKS -->
   <PropertyGroup>
-    <PxCoco>$(ProjectDir)..\Tools\PxCoco.exe</PxCoco>
-  </PropertyGroup>
-  <UsingTask AssemblyFile="$(PxCoco)" TaskName="Merge" />
-  <UsingTask AssemblyFile="$(PxCoco)" TaskName="PxCoco" />
-  <PropertyGroup>
     <!--<UseHostCompilerIfAvailable>False</UseHostCompilerIfAvailable> -->
     <BuildDependsOn>
       ExpressionParser;
@@ -54,11 +49,14 @@
     <GrammarFragment Include="Compiler\Grammar\Header.atg" />
     <GrammarFragment Include="Compiler\Grammar\Scanner.atg" />
     <GrammarFragment Include="Compiler\Grammar\Parser*.atg" />
+    <Compile Remove="Parser.cs" />
+    <Compile Remove="Scanner.cs" />
     <GrammarFragment Include="Compiler\Grammar\Footer.atg" />
   </ItemGroup>
   <ItemGroup>
     <Grammar Include="PTypeExpression.atg" />
   </ItemGroup>
+
   <!-- PType Expression Parser Target -->
   <Target Name="ExpressionParser" BeforeTargets="BeforeBuild">
     <Message Text="Building type expression parser." />
@@ -68,14 +66,17 @@
     <Copy SourceFiles="$(ProjectDir)Parser.cs;$(ProjectDir)Scanner.cs" DestinationFolder="$(ProjectDir)Internal" />
     <Delete Files="$(PTypeExpressionParserFiles)" DeletedFiles="$(ProjectDir)Parser.cs;$(ProjectDir)Scanner.cs" />
   </Target>
+
   <!-- Prexonite Parser Target -->
   <Target Name="PrexoniteParser" DependsOnTargets="PrexoniteGrammar" BeforeTargets="BeforeBuild">
     <PxCoco Grammar="$(PrexoniteGrammarDefinition)" Namespace="Prexonite.Compiler" FramesDirectory="$(FramesDirectory)" DirectDebug="$(DirectDebug)">
       <Output TaskParameter="OutputFiles" ItemName="PrexoniteParserFiles" />
     </PxCoco>
-    <Copy SourceFiles="$(ProjectDir)/Parser.cs;$(ProjectDir)/Scanner.cs" DestinationFolder="$(ProjectDir)/Compiler" />
-    <Delete Files="$(PrexoniteParserFiles)" DeletedFiles="$(ProjectDir)/Parser.cs;$(ProjectDir)/Scanner.cs" />
+    <!-- We use the CSFlex-generated scanner instead. -->
+    <Copy SourceFiles="$(ProjectDir)/Parser.cs" DestinationFolder="$(ProjectDir)/Compiler" />
+    <Delete Files="$(PrexoniteParserFiles)" DeletedFiles="$(ProjectDir)/Parser.cs" />
   </Target>
+
   <!-- Prexonite Grammar Merging Target -->
   <Target Name="PrexoniteGrammar" Outputs="$(ProjectDir)Prexonite__gen.atg" Inputs="@(GrammarFragment->'%(FullPath)')">
     <Merge InputFiles="@(GrammarFragment->'%(FullPath)')" OutputFile="$(ProjectDir)Prexonite__gen.atg">
@@ -86,9 +87,17 @@
     <Exec Command="&quot;$(ToolsDirectory)/csflex.exe&quot; --csharp --nested-default-skeleton --nobak $(PrexoniteScannerDefinition)" WorkingDirectory="$(ProjectDir)/Compiler" />
   </Target>
 
+  <ItemGroup>
+    <!-- This is a temporary artifact. The file gets copied into Compiler/Parser or Compiler/Internal and *should* be deleted afterwards.
+         Sometimes, the deletion does not happen. In that case, the file must not be submitted to the compiler or we get duplicate definitions. -->
+    <None Include="Parser.cs" />
+    <None Include="Scanner.cs" />
+  </ItemGroup>
+
   <!-- NUGET References -->
   <ItemGroup>
     <PackageReference Include="Lokad.ILPack" Version="0.1.1" />
+    <PackageReference Include="PxCoco" Version="0.0.7" />
     <PackageReference Include="System.Reflection.Emit" Version="4.3.0" />
   </ItemGroup>
 </Project>

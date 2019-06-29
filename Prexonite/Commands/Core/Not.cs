@@ -18,6 +18,7 @@ namespace Prexonite.Commands.Core
         {
         }
 
+        [Obsolete("IsPure mechanism was abandoned in v1.2. Use ICilExtension to perform constant folding instead.")]
         public override bool IsPure
         {
             get { return true; }
