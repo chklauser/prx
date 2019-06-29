@@ -27,11 +27,13 @@ steps:
   inputs:
     command: restore
     projects: 'PxCoco/PxCoco.sln'
+    buildProperties: Configuration=$(BuildConfiguration)
 
 - task: DotNetCoreCLI@2
   inputs:
     command: build
     projects: 'PxCoco/PxCoco.sln'
+    buildProperties: Configuration=$(BuildConfiguration)
 
 # There are no automated tests for PxCoco.
 
@@ -39,5 +41,6 @@ steps:
   inputs:
     command: pack
     projects: 'PxCoco/PxCoco.csproj'
+    nobuild: true
     packagesToPack: 'PxCoco/PxCoco.csproj'
-    configurationToPack: $(BuildConfiguration)
+    configurationToPack: '$(BuildConfiguration)'
