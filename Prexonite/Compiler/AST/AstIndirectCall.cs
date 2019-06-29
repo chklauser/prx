@@ -30,6 +30,7 @@ using System.Linq;
 using JetBrains.Annotations;
 using Prexonite.Commands.Core.PartialApplication;
 using Prexonite.Modular;
+using Prexonite.Properties;
 using Prexonite.Types;
 
 namespace Prexonite.Compiler.Ast
@@ -312,7 +313,19 @@ namespace Prexonite.Compiler.Ast
         {
             if (CheckNodeApplicationState().HasArgumentSplices)
             {
-                ((IAstPartiallyApplicable) _toSliceForm(target)).DoEmitPartialApplicationCode(target);
+                var sliceForm = _toSliceForm(target);
+                if (sliceForm is IAstPartiallyApplicable partialSliceForm)
+                {
+                    partialSliceForm.DoEmitPartialApplicationCode(target);
+                }
+                else if(sliceForm is AstExpand macroSliceForm)
+                {
+                    macroSliceForm.EmitCode(target, StackSemantics.Value);
+                }
+                else
+                {
+                    target.Loader.ReportMessage(Message.Error(Resources.AstIndirectCall_DoEmitPartialApplicationCode_Cannot_translate_slice, this.Position, MessageClasses.ArgumentSpliceNotSupported));
+                }
             }
             else
             {

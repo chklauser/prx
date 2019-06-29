@@ -267,14 +267,6 @@ namespace Prexonite.Compiler.Macro
 
         #region Function Expander
 
-        private static string _toFunctionNameString(SymbolEntry si)
-        {
-            if (si.Module == null)
-                return si.InternalId;
-            else
-                return string.Format("{0}/{1},{2}", si.InternalId, si.Module.Id, si.Module.Version);
-        }
-
         private abstract class MacroFunctionExpanderBase : IMacroExpander
         {
             protected PFunction MacroFunction;
@@ -497,7 +489,7 @@ namespace Prexonite.Compiler.Macro
             var target = Target;
             var context = new MacroContext(this, invocation, justEffect);
 
-            //Delegate actual expansion to approriate expander
+            //Delegate actual expansion to appropriate expander
             var expander = _getExpander(invocation, target);
 
             if (expander != null)
@@ -517,13 +509,30 @@ namespace Prexonite.Compiler.Macro
                 }
                 _invocations.Add(invocation);
 
-                //check if this macro is a partial application (illegal)
-                if (invocation.Arguments.Any(AstPartiallyApplicable.IsPlaceholder))
+                T lockDownLexicalScope<T>(Func<T> action)
+                {
+                    var cub = target.CurrentBlock;
+                    var r = action();
+                    if(!ReferenceEquals(cub,target.CurrentBlock))
+                        throw new PrexoniteException("Macro must restore previous lexical scope.");
+                    return r;
+                }
+                void lockDownLexicalScopeA(Action action)
+                {
+                    lockDownLexicalScope<object>(() =>
+                    {
+                        action();
+                        return null;
+                    });
+                }
+
+                //check if this macro is a partial application
+                if (invocation.CheckNodeApplicationState().HasPlaceholders)
                 {
                     //Attempt to expand partial macro
                     try
                     {
-                        if (!expander.TryExpandPartially(target, context))
+                        if (!lockDownLexicalScope(() => expander.TryExpandPartially(target, context)))
                         {
                             target.Loader.ReportMessage(
                                 Message.Create(
@@ -546,10 +555,7 @@ namespace Prexonite.Compiler.Macro
                     //Actual macro expansion takes place here
                     try
                     {
-                        var cub = target.CurrentBlock;
-                        expander.Expand(target, context);
-                        if(!ReferenceEquals(cub,target.CurrentBlock))
-                            throw new PrexoniteException("Macro must restore previous lexical scope.");
+                        lockDownLexicalScopeA(() => expander.Expand(target, context));
                     }
                     catch (Exception e)
                     {
@@ -605,14 +611,11 @@ namespace Prexonite.Compiler.Macro
         private IMacroExpander _getExpander(AstGetSet macroNode, CompilerTarget target)
         {
             IMacroExpander expander = null;
-            AstExpand expansion;
-            EntityRef.MacroCommand mcmd;
-            EntityRef.Function func;
-            if ((expansion = macroNode as AstExpand) != null)
+            if (macroNode is AstExpand expansion)
             {
-                if (expansion.Entity.TryGetMacroCommand(out mcmd))
+                if (expansion.Entity.TryGetMacroCommand(out _))
                     expander = new MacroCommandExpander();
-                else if (expansion.Entity.TryGetFunction(out func))
+                else if (expansion.Entity.TryGetFunction(out _))
                     expander = new MacroFunctionExpander();
                 else
                     _reportMacroNodeNotMacro(target, expansion.Entity.GetType().Name, macroNode);
@@ -674,7 +677,7 @@ namespace Prexonite.Compiler.Macro
         ///     Returns an object previously stored via <see cref = "StoreForTransport" />.
         /// </summary>
         /// <param name = "id">The id as returned by <see cref = "StoreForTransport" /></param>
-        /// <returns>The obejct stored before.</returns>
+        /// <returns>The object stored before.</returns>
         public PValue RetrieveFromTransport(int id)
         {
             if (0 <= id && id < _transportStore.Count)

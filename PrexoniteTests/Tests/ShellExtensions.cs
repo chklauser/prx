@@ -454,6 +454,22 @@ function main(){
             lst.AddRange(elements.Select(element => engine.CreateNativePValue(element)));
             return engine.CreateNativePValue(lst);
         }
+
+        [Test]
+        public void PartialFunctionAtomSplice()
+        {
+            Compile(@"
+function f = var args >> map(x => ""<$x>"") >> foldl(->(+), "":"");
+
+function main(){
+    var xs = var args;
+    var f1 = f(?, *xs, ?, 0, ?);
+    return f1.(10,20,30);
+}
+");
+
+            Expect(":<10><1><2><3><20><0><30>",1,2,3);
+        }
     }
     
 }

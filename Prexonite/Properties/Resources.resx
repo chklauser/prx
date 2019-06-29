@@ -446,4 +446,7 @@
     <data name="prx_core" type="System.Resources.ResXFileRef, System.Windows.Forms">
         <value>..\prxlib\prx.core.pxs;System.String, mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
     </data>
+  <data name="AstIndirectCall_DoEmitPartialApplicationCode_Cannot_translate_slice" xml:space="preserve">
+    <value>Cannot translate slice.</value>
+  </data>
 </root>

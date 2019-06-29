@@ -19,7 +19,7 @@ namespace Prexonite.Properties {
     // class via a tool like ResGen or Visual Studio.
     // To add or remove a member, edit your .ResX file then rerun ResGen
     // with the /str option, or rebuild your VS project.
-    [global::System.CodeDom.Compiler.GeneratedCodeAttribute("System.Resources.Tools.StronglyTypedResourceBuilder", "4.0.0.0")]
+    [global::System.CodeDom.Compiler.GeneratedCodeAttribute("System.Resources.Tools.StronglyTypedResourceBuilder", "16.0.0.0")]
     [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
     [global::System.Runtime.CompilerServices.CompilerGeneratedAttribute()]
     public class Resources {
@@ -160,6 +160,15 @@ namespace Prexonite.Properties {
         }
         
         /// <summary>
+        ///   Looks up a localized string similar to Cannot translate slice..
+        /// </summary>
+        public static string AstIndirectCall_DoEmitPartialApplicationCode_Cannot_translate_slice {
+            get {
+                return ResourceManager.GetString("AstIndirectCall_DoEmitPartialApplicationCode_Cannot_translate_slice", resourceCulture);
+            }
+        }
+        
+        /// <summary>
         ///   Looks up a localized string similar to Condition must not be null..
         /// </summary>
         public static string AstLazyLogical__Condition_must_not_be_null {
@@ -228,6 +237,15 @@ namespace Prexonite.Properties {
         public static string AstModifyingAssignment_No_RHS {
             get {
                 return ResourceManager.GetString("AstModifyingAssignment_No_RHS", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Argument splice not supported in this position..
+        /// </summary>
+        public static string AstNode__argumentSpliceNotSupportedInThisPosition {
+            get {
+                return ResourceManager.GetString("AstNode__argumentSpliceNotSupportedInThisPosition", resourceCulture);
             }
         }
         
@@ -996,6 +1014,32 @@ namespace Prexonite.Properties {
         }
         
         /// <summary>
+        ///   Looks up a localized string similar to // Runtime component of the Prexonite shell scripting extensions
+        ///Name sh/0.0;
+        ///References {
+        ///  sys/0.0
+        ///};
+        ///
+        ///namespace sh {
+        ///
+        ///    function stdout = &quot;sh.stdout&quot;;
+        ///    function stdin  = &quot;sh.stdin&quot;;
+        ///    function stderr = &quot;sh.stderr&quot;;
+        ///} export(stdout, stdin, stderr, stream, lines, words, which, create_command, call\sh, (|&gt;), (&lt;|.), (|&gt;.));
+        ///
+        ///{
+        ///    var time = new command(which(&quot;time&quot;));
+        ///    var grep = new command(which(&quot;grep&quot;));
+        ///    var tr = new command(which(&quot;tr&quot;));
+        ///    var cut = new command(which(&quot;cu [rest of string was truncated]&quot;;.
+        /// </summary>
+        public static string sh {
+            get {
+                return ResourceManager.GetString("sh", resourceCulture);
+            }
+        }
+        
+        /// <summary>
         ///   Looks up a localized string similar to Cannot take a reference to a reference. Too many arrows (&quot;-&gt;&quot;)..
         /// </summary>
         public static string SymbolBuilder_TooManyArrows {
@@ -1086,7 +1130,7 @@ namespace Prexonite.Properties {
         }
         
         /// <summary>
-        /// //PRX
+        ///   Looks up a localized string similar to //PRX
         ///
         ///Name sys/0.0;
         ///References {
@@ -1109,12 +1153,6 @@ namespace Prexonite.Properties {
             get {
                 return ResourceManager.GetString("sys", resourceCulture);
             }
-        }
-
-        /// <summary>Source for the runtime components of the Prexonite shell scripting extensions.</summary>
-        public static string sh
-        {
-            get { return ResourceManager.GetString("sh", resourceCulture); }
         }
         
         /// <summary>
