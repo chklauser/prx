@@ -4,13 +4,15 @@
 # https://docs.microsoft.com/azure/devops/pipelines/apps/windows/dot-net
 
 trigger:
-- master
+  branches:
+    include: 
+    - '*'
 
 pool:
   vmImage: 'windows-latest'
 
 variables:
-  solution: '**/*.sln'
+  solution: 'Prexonite.sln'
   buildPlatform: 'Any CPU'
   buildConfiguration: 'Release'
 
@@ -31,3 +33,5 @@ steps:
   inputs:
     platform: '$(buildPlatform)'
     configuration: '$(buildConfiguration)'
+    testAssemblyVer2: '**\PrexoniteTests.exe'
+    codeCoverageEnabled: True
