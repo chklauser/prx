@@ -18,8 +18,6 @@ pool:
 variables:
   buildConfiguration: 'Release'
 
-stages:
-  - stage: 
 steps:
 - task: DotNetCoreInstaller@0
   inputs:
