@@ -39,4 +39,5 @@ steps:
   inputs:
     command: pack
     projects: 'PxCoco/PxCoco.csproj'
+    packagesToPack: 'PxCoco/PxCoco.csproj'
     configurationToPack: $(BuildConfiguration)

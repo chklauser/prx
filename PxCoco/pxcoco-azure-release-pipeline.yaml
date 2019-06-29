@@ -43,6 +43,7 @@ steps:
   inputs:
     command: pack
     projects: 'PxCoco/PxCoco.csproj'
+    packagesToPack: 'PxCoco/PxCoco.csproj'
     nobuild: true
     configurationToPack: $(BuildConfiguration)
     buildProperties: Version=$(Version)
