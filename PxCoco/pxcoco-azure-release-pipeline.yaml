@@ -54,8 +54,7 @@ steps:
     artifactName: 'binaries'
     targetPath: '$(Build.ArtifactStagingDirectory)'
 
-- task: NuGetCommand@2
+- task: DotNetCoreCLI@2
   inputs:
     command: push
     publishVstsFeed: 'edge'
-    allowPackageConflicts: false

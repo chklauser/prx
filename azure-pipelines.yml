@@ -13,29 +13,46 @@ trigger:
     - PxCoco/*
 
 pool:
-  vmImage: 'windows-latest'
+  vmImage: 'windows-2019'
 
 variables:
-  solution: 'Prexonite.sln'
+  solution: 'prx.sln'
   buildPlatform: 'Any CPU'
   buildConfiguration: 'Release'
 
 steps:
-- task: NuGetToolInstaller@0
-
-- task: NuGetCommand@2
+- task: DotNetCoreInstaller@0
   inputs:
-    restoreSolution: '$(solution)'
+    version: '2.2.300'
 
-- task: VSBuild@1
+- task: DotNetCoreCLI@2
   inputs:
-    solution: '$(solution)'
-    platform: '$(buildPlatform)'
-    configuration: '$(buildConfiguration)'
+    command: restore
+    projects: '$(solution)'
 
-- task: VSTest@2
+- task: DotNetCoreCLI@2
   inputs:
-    platform: '$(buildPlatform)'
-    configuration: '$(buildConfiguration)'
-    testAssemblyVer2: '**\PrexoniteTests.exe'
-    codeCoverageEnabled: True
+    command: build
+    projects: '$(solution)'
+    arguments: /p:Platform=$(BuildPlatform);Configuration=$(BuildConfiguration)
+
+- task: DotNetCoreCLI@2
+  inputs:
+    command: test    
+    projects: '$(solution)'
+    nobuild: true
+    arguments: /p:Platform=$(BuildPlatform);Configuration=$(BuildConfiguration)
+
+- task: DotNetCoreCLI@2
+  inputs:
+    command: pack
+    projects: '$(solution)'
+    packagesToPack: 'Prexonite/Prexonite.csproj,Prx/Prx.csproj'
+    nobuild: true
+    configurationToPack: $(BuildConfiguration)
+    buildProperties: Platform=$(BuildPlatform)
+
+- task: PublishPipelineArtifact@0
+  inputs:
+    artifactName: 'binaries'
+    targetPath: '$(Build.ArtifactStagingDirectory)'
