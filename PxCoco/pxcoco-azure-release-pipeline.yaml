@@ -47,7 +47,7 @@ steps:
     packagesToPack: 'PxCoco/PxCoco.csproj'
     nobuild: true
     configurationToPack: $(BuildConfiguration)
-    arguments: /p:Version=$(Version)
+    buildProperties: Version=$(Version)
 
 - task: PublishPipelineArtifact@0
   inputs:
