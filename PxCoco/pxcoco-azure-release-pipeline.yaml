@@ -21,7 +21,8 @@ steps:
     version: '2.2.300'
 
 - powershell: |
-    $ver = $env:BUILD_SOURCEBRANCH.remove(0, 9)
+    # Remove /refs/tags (10 chars) and pxcoco/v. (9 chars) from checkout string
+    $ver = $env:BUILD_SOURCEBRANCH.remove(0, 19)
     Write-Host "##vso[task.setvariable variable=Version]$ver"
   displayName: 'Update version to Tag'
   condition: and(succeeded(), startsWith(variables['Build.SourceBranch'], 'refs/tags/'))
