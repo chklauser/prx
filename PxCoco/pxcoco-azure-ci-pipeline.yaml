@@ -13,24 +13,34 @@ trigger:
     - PxCoco/*
 
 pool:
-  vmImage: 'windows-latest'
+  vmImage: 'windows-2019'
 
 variables:
-  solution: 'PxCoco/PxCoco.sln'
-  buildPlatform: 'Any CPU'
   buildConfiguration: 'Release'
 
 steps:
-- task: NuGetToolInstaller@0
-
-- task: NuGetCommand@2
+- displayName: "Install .NET Core"
+  task: DotNetCoreInstaller@0
   inputs:
-    restoreSolution: '$(solution)'
+    version: '2.2.300'
 
-- task: VSBuild@1
+- displayName: "Restore NuGet packages"
+  task: DotNetCoreCLI@2
   inputs:
-    solution: '$(solution)'
-    platform: '$(buildPlatform)'
-    configuration: '$(buildConfiguration)'
+    command: restore
+    projects: 'PxCoco/PxCoco.sln'
+
+- displayName: "Build"
+  task: DotNetCoreCLI@2
+  inputs:
+    command: build
+    projects: 'PxCoco/PxCoco.sln'
 
 # There are no automated tests for PxCoco.
+
+- displayName: "Package"
+  task: DotNetCoreCLI@2
+  inputs:
+    command: pack
+    projects: 'PxCoco/PxCoco.csproj'
+    configurationToPack: $(BuildConfiguration)
