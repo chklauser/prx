@@ -33,6 +33,8 @@ using System.Diagnostics.CodeAnalysis;
 using System.Linq;
 using System.Reflection;
 using System.Reflection.Emit;
+using System.Threading;
+using Lokad.ILPack;
 using Prexonite.Commands;
 using Prexonite.Modular;
 using Prexonite.Types;
@@ -200,6 +202,9 @@ namespace Prexonite.Compiler.Cil
             StoreDebugImplementation(app, sctx.ParentEngine);
         }
 
+        private static readonly Lazy<AssemblyGenerator> AssemblyGenerator =
+            new Lazy<AssemblyGenerator>(() => new AssemblyGenerator(), LazyThreadSafetyMode.ExecutionAndPublication);
+
         public static void StoreDebugImplementation(Application app, Engine targetEngine)
         {
             _checkQualification(app.Functions, targetEngine);
@@ -224,7 +229,8 @@ namespace Prexonite.Compiler.Cil
 
             pass.TargetType.CreateType();
 
-            pass.Assembly.Save(pass.Assembly.GetName().Name + ".dll");
+            // .NET Core no longer offers AssemblyBuilder.Save. We use Lokad.ILPack instead.
+            AssemblyGenerator.Value.GenerateAssembly(pass.Assembly, pass.Assembly.GetName().Name + ".dll");
         }
 
         public static void StoreDebugImplementation(PFunction func, Engine targetEngine)
@@ -243,7 +249,7 @@ namespace Prexonite.Compiler.Cil
             //var sm = tb.DefineMethod("whoop", MethodAttributes.Static | MethodAttributes.Public);
 
             //ab.SetEntryPoint(sm);
-            pass.Assembly.Save(pass.Assembly.GetName().Name + ".dll");
+            AssemblyGenerator.Value.GenerateAssembly(pass.Assembly, pass.Assembly.GetName().Name + ".dll");
         }
 
         public static void StoreDebugImplementation(StackContext sctx, PFunction func)
