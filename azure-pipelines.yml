@@ -29,19 +29,21 @@ steps:
   inputs:
     command: restore
     projects: '$(solution)'
+    selectOrConfig: 'config'
+    nugetConfigPath: NuGet.Config
 
 - task: DotNetCoreCLI@2
   inputs:
     command: build
     projects: '$(solution)'
-    arguments: /p:Platform=$(BuildPlatform);Configuration=$(BuildConfiguration)
+    arguments: /p:Platform=$(BuildPlatform);Configuration=$(BuildConfiguration) --no-restore
 
 - task: DotNetCoreCLI@2
   inputs:
     command: test    
     projects: '$(solution)'
     nobuild: true
-    arguments: /p:Platform=$(BuildPlatform);Configuration=$(BuildConfiguration)
+    arguments: /p:Platform=$(BuildPlatform);Configuration=$(BuildConfiguration) --no-restore
 
 - task: DotNetCoreCLI@2
   inputs:
