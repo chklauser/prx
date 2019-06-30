@@ -1,15 +1,17 @@
-<Project TreatAsLocalProperty="TaskAssembly">
+<Project TreatAsLocalProperty="TaskDir;TaskAssembly">
 
   <!-- This property file gets loaded into projects that install this NuGet package. -->
 
   <PropertyGroup>
+    <TaskDir Condition=" '$(MSBuildRuntimeType)' == 'Core' ">netcoreapp2.2</TaskDir>
+    <TaskDir Condition=" '$(MSBuildRuntimeType)' != 'Core' ">net48</TaskDir>
   	<!-- For cross-platform compatibiliy, .NET Core 'executable' are packaged as a 'dll'.
   		Shipping the naked assembly is portable, shipping a Windows PE-file with 
   		Windows-specific framework initialization code would not be portable.
 
   		This tool can be run via `dotnet PxCoco.dll` (on all platforms)
   	-->
-    <TaskAssembly>$(MSBuildThisFileDirectory)..\tools\PxCoco.dll</TaskAssembly>
+    <TaskAssembly>$(MSBuildThisFileDirectory)..\tools\$(TaskDir)\PxCoco.dll</TaskAssembly>
   </PropertyGroup>
 
   <UsingTask TaskName="Merge" AssemblyFile="$(TaskAssembly)" />

@@ -171,7 +171,7 @@ namespace Prexonite.Compiler.Build.Internal
                         catch (Exception e)
                         {
                             Plan.Trace.TraceEvent(TraceEventType.Error, 0, "Exception while building {0}, constructing failure result. Exception: {1}", this, e);
-                            return DefaultModuleTarget._FromLoader(ldr, aggregateExceptions.Append(e).ToArray(),
+                            return DefaultModuleTarget._FromLoader(ldr, Extensions.Append(aggregateExceptions, e).ToArray(),
                                 aggregateMessages);
                             // ReSharper restore PossibleMultipleEnumeration
                         }

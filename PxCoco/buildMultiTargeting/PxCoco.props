@@ -1,0 +1,4 @@
+<Project>
+  <!-- The ordinary build\PxCoco.props is already multi-targeting-aware. -->
+  <Import Project="..\build\PxCoco.props" />
+</Project>

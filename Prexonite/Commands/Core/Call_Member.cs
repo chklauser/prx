@@ -185,7 +185,7 @@ namespace Prexonite.Commands.Core
             {
                 var argv = context.Invocation.Arguments;
                 return
-                    argv.Take(1).Append(_getIsSetExpr(context)).Append(argv.Skip(1));
+                    Extensions.Append(argv.Take(1), _getIsSetExpr(context)).Append(argv.Skip(1));
             }
 
             private static AstExpr _getIsSetExpr(MacroContext context)
