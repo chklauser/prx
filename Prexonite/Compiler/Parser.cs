@@ -1,5 +1,5 @@
 //SOURCE ARRAY
-/*Header.atg:29*/using System.Collections.Generic;
+/*Header.atg:30*/using System.Collections.Generic;
 using System.Linq;
 using FatalError = Prexonite.Compiler.FatalCompilerException;
 using StringBuilder = System.Text.StringBuilder;
@@ -13,7 +13,7 @@ using Prexonite.Compiler.Symbolic.Compatibility;
 using Prexonite.Properties;//END SOURCE ARRAY
 
 
-#line 26 "C:\Users\chris\Documents\GitHub\prx\Tools\Parser.frame" //FRAME
+#line 27 "..\Tools\Parser.frame" //FRAME
 
 // ReSharper disable RedundantUsingDirective
 // ReSharper disable InconsistentNaming
@@ -37,7 +37,7 @@ using Prexonite.Compiler;
 namespace Prexonite.Compiler {
 
 
-#line 42 "C:\Users\chris\Documents\GitHub\prx\Tools\Parser.frame" //FRAME
+#line 44 "..\Tools\Parser.frame" //FRAME
 
 
 [System.Runtime.CompilerServices.CompilerGenerated]
@@ -260,7 +260,7 @@ internal partial class Parser {
 	}
 	const int maxT = 105;
 
-#line 45 "C:\Users\chris\Documents\GitHub\prx\Tools\Parser.frame" //FRAME
+#line 48 "..\Tools\Parser.frame" //FRAME
 
 	const bool T = true;
 	const bool x = false;
@@ -279,7 +279,7 @@ internal partial class Parser {
 //SOURCE ARRAY
 //END SOURCE ARRAY
 
-#line 56 "C:\Users\chris\Documents\GitHub\prx\Tools\Parser.frame" //FRAME
+#line 60 "..\Tools\Parser.frame" //FRAME
 
 
     [DebuggerNonUserCode]
@@ -318,7 +318,7 @@ internal partial class Parser {
 #line default //END FRAME -->pragmas
 
 
-#line 89 "C:\Users\chris\Documents\GitHub\prx\Tools\Parser.frame" //FRAME
+#line 94 "..\Tools\Parser.frame" //FRAME
 
 			la = t;
 		}
@@ -4125,7 +4125,7 @@ bool preventOverride = false ) {
 	}
 
 
-#line 127 "C:\Users\chris\Documents\GitHub\prx\Tools\Parser.frame" //FRAME
+#line 133 "..\Tools\Parser.frame" //FRAME
 
 
 	public void Parse() {
@@ -4137,7 +4137,7 @@ bool preventOverride = false ) {
 
 		Prexonite();
 
-#line 132 "C:\Users\chris\Documents\GitHub\prx\Tools\Parser.frame" //FRAME
+#line 139 "..\Tools\Parser.frame" //FRAME
 
     Expect(0);
 	}
@@ -4199,7 +4199,7 @@ bool preventOverride = false ) {
 		{x,T,T,x, T,x,T,T, T,T,x,T, x,T,x,x, x,x,x,T, T,T,T,x, x,T,x,x, T,x,x,x, x,T,T,x, x,x,T,x, T,T,x,x, x,x,T,T, T,T,T,T, x,x,x,x, T,T,T,x, x,T,x,T, x,x,x,T, x,x,x,x, x,x,x,x, T,T,T,T, x,T,T,x, T,x,T,T, T,T,x,x, x,T,x,x, x,T,x,x, T,x,x,x, T,x,x},
 		{x,x,x,x, x,x,x,x, x,x,T,T, x,x,T,x, x,x,x,x, x,x,x,x, x,T,x,T, T,x,x,x, x,x,T,x, x,x,x,T, x,x,x,x, x,x,x,x, x,x,x,x, x,x,x,x, x,x,x,x, x,x,x,x, x,x,x,x, x,x,x,x, x,x,x,x, x,x,x,x, x,x,x,x, x,x,x,x, x,x,x,x, x,x,x,x, x,x,x,x, x,x,x,x, x,x,x}
 
-#line 136 "C:\Users\chris\Documents\GitHub\prx\Tools\Parser.frame" //FRAME
+#line 144 "..\Tools\Parser.frame" //FRAME
 
 	};
 } // end Parser
@@ -4420,7 +4420,7 @@ internal class Errors : System.Collections.Generic.LinkedList<Message> {
 			case 187: s = "invalid Assignment"; break;
 			case 188: s = "invalid VariableDeclaration"; break;
 
-#line 162 "C:\Users\chris\Documents\GitHub\prx\Tools\Parser.frame" //FRAME
+#line 171 "..\Tools\Parser.frame" //FRAME
 
 			default: s = "error " + n; break;
 		}

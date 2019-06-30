@@ -25,6 +25,11 @@
     <NeutralLanguage>en-US</NeutralLanguage>
   </PropertyGroup>
 
+  <PropertyGroup>
+    <SignAssembly>true</SignAssembly>
+    <AssemblyOriginatorKeyFile>..\PrexoniteTests\Prexonite.snk</AssemblyOriginatorKeyFile>
+  </PropertyGroup>
+
   <!-- CUSTOM TASKS -->
   <PropertyGroup>
     <!--<UseHostCompilerIfAvailable>False</UseHostCompilerIfAvailable> -->
@@ -57,10 +62,19 @@
     <Grammar Include="PTypeExpression.atg" />
   </ItemGroup>
 
+  <!-- These defitions are not used in a normal build. They can be useful for debugging PxCoco in the context of Prexonite. -->
+  <!-- <PropertyGroup>
+    <PxCocoDebugTaskExt Condition=" '$(MSBuildRuntimeType)' == 'Core' ">netcoreapp2.2\PxCoco.dll</PxCocoDebugTaskExt>
+    <PxCocoDebugTaskExt Condition=" '$(MSBuildRuntimeType)' != 'Core' ">net48\PxCoco.exe</PxCocoDebugTaskExt>
+    <PxCocoTaskAssembly>$(MSBuildThisFileDirectory)..\PxCoco\bin\Debug\$(PxCocoDebugTaskExt)</PxCocoTaskAssembly>
+  </PropertyGroup>
+  <UsingTask TaskName="PxCoco" AssemblyFile="$(PxCocoTaskAssembly)" />
+  <UsingTask TaskName="Merge" AssemblyFile="$(PxCocoTaskAssembly)" /> -->
+
   <!-- PType Expression Parser Target -->
   <Target Name="ExpressionParser" BeforeTargets="BeforeBuild">
     <Message Text="Building type expression parser." />
-    <PxCoco Grammar="$(PTypeExpressionGrammarDefinition)" Namespace="Prexonite.Internal" FramesDirectory="$(FramesDirectory)" DirectDebug="$(DirectDebug)">
+    <PxCoco Grammar="$(PTypeExpressionGrammarDefinition)" Namespace="Prexonite.Internal" FramesDirectory="$(FramesDirectory)" DirectDebug="$(DirectDebug)" RelativePathRoot="$(ProjectDir)">
       <Output TaskParameter="OutputFiles" ItemName="PTypeExpressionParserFiles" />
     </PxCoco>
     <Copy SourceFiles="$(ProjectDir)Parser.cs;$(ProjectDir)Scanner.cs" DestinationFolder="$(ProjectDir)Internal" />
@@ -69,7 +83,7 @@
 
   <!-- Prexonite Parser Target -->
   <Target Name="PrexoniteParser" DependsOnTargets="PrexoniteGrammar" BeforeTargets="BeforeBuild">
-    <PxCoco Grammar="$(PrexoniteGrammarDefinition)" Namespace="Prexonite.Compiler" FramesDirectory="$(FramesDirectory)" DirectDebug="$(DirectDebug)">
+    <PxCoco Grammar="$(PrexoniteGrammarDefinition)" Namespace="Prexonite.Compiler" FramesDirectory="$(FramesDirectory)" DirectDebug="$(DirectDebug)" RelativePathRoot="$(ProjectDir)">
       <Output TaskParameter="OutputFiles" ItemName="PrexoniteParserFiles" />
     </PxCoco>
     <!-- We use the CSFlex-generated scanner instead. -->
@@ -79,7 +93,7 @@
 
   <!-- Prexonite Grammar Merging Target -->
   <Target Name="PrexoniteGrammar" Outputs="$(ProjectDir)Prexonite__gen.atg" Inputs="@(GrammarFragment->'%(FullPath)')">
-    <Merge InputFiles="@(GrammarFragment->'%(FullPath)')" OutputFile="$(ProjectDir)Prexonite__gen.atg">
+    <Merge InputFiles="@(GrammarFragment->'%(FullPath)')" OutputFile="$(ProjectDir)Prexonite__gen.atg" RelativePathRoot="$(ProjectDir)">
     </Merge>
     <Message Text="$(PrexoniteGrammarDefinition) is now ready." />
   </Target>
@@ -97,7 +111,7 @@
   <!-- NUGET References -->
   <ItemGroup>
     <PackageReference Include="Lokad.ILPack" Version="0.1.1" />
-    <PackageReference Include="PxCoco" Version="0.0.7" />
+    <PackageReference Include="PxCoco" Version="0.0.10" />
     <PackageReference Include="System.Reflection.Emit" Version="4.3.0" />
   </ItemGroup>
 </Project>
