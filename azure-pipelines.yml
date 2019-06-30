@@ -36,14 +36,14 @@ steps:
   inputs:
     command: build
     projects: '$(solution)'
-    arguments: /p:Platform=$(BuildPlatform);Configuration=$(BuildConfiguration) --no-restore
+    arguments: '"/p:Platform=$(BuildPlatform);Configuration=$(BuildConfiguration)" --no-restore'
 
 - task: DotNetCoreCLI@2
   inputs:
     command: test    
     projects: '$(solution)'
     nobuild: true
-    arguments: /p:Platform=$(BuildPlatform);Configuration=$(BuildConfiguration) --no-restore
+    arguments: '"/p:Platform=$(BuildPlatform);Configuration=$(BuildConfiguration)" --no-restore'
 
 - task: DotNetCoreCLI@2
   inputs:
