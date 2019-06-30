@@ -25,6 +25,11 @@ with improvements by Pat Terry, Rhodes University. Prexonite extensions by Chris
     <Product>Prexonite</Product>
     <Company>$(Product)</Company>
     <NeutralLanguage>en-US</NeutralLanguage>
+
+     <!-- Suppresses the warnings about the package not having assemblies in lib/*/.dll.-->
+    <NoPackageAnalysis>true</NoPackageAnalysis>
+    <!-- Change the default location where NuGet will put the build output -->
+    <BuildOutputTargetFolder>tasks</BuildOutputTargetFolder>
   </PropertyGroup>
 
  <PropertyGroup>
