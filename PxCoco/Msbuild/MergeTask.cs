@@ -25,6 +25,7 @@ namespace PxCoco.Msbuild
             get { return _inputFiles; }
             set { _inputFiles = value; }
         }
+        public string RelativePathRoot { get; set; }
 
         public override bool Execute()
         {
@@ -49,9 +50,8 @@ namespace PxCoco.Msbuild
                 at.jku.ssw.Coco.Coco.Merge(
                     _outputFile.ItemSpec, 
                     inputPaths,
-                    delegate(string text) 
-                        { Log.LogMessageFromText(text, MessageImportance.Normal); }
-                    );
+                    text => Log.LogMessageFromText(text, MessageImportance.Normal), 
+                    RelativePathRoot);
             }
             catch (Exception ex)
             {

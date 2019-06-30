@@ -1,94 +1,77 @@
 using System;
-using System.Collections.Generic;
-using System.Text;
+using System.Diagnostics.CodeAnalysis;
+using at.jku.ssw.Coco;
 using Microsoft.Build.Framework;
 using Microsoft.Build.Utilities;
 
 namespace PxCoco.Msbuild
 {
-    public class PxCoco : Microsoft.Build.Utilities.Task
+    [SuppressMessage("ReSharper", "AutoPropertyCanBeMadeGetOnly.Global")]
+    [SuppressMessage("ReSharper", "UnusedMember.Global")]
+    [SuppressMessage("ReSharper", "UnusedAutoPropertyAccessor.Global")]
+    [SuppressMessage("ReSharper", "MemberCanBePrivate.Global")]
+    public class PxCoco : Task
     {
-
-        private ITaskItem _grammar;
         [Required]
-        public ITaskItem Grammar
-        {
-            set { _grammar = value; }
-        }
+        public ITaskItem Grammar { get; set; }
 
-        private ITaskItem[] _outputFiles;
         [Output]
-        public ITaskItem[] OutputFiles
-        {
-            get { return _outputFiles; }
-        }
+        public ITaskItem[] OutputFiles { get; private set; }
 
-        private string _namespace = null;
-        public string Namespace
-        {
-            get { return _namespace; }
-            set { _namespace = value; }
-        }
+        public string Namespace { get; set; } = null;
 
-        private string _framesDirectory = null;
-        public string FramesDirectory
-        {
-            get { return _framesDirectory; }
-            set { _framesDirectory = value; }
-        }
+        public string FramesDirectory { get; set; } = null;
 
-        private bool _directDebug = false;
+        public bool DirectDebug { get; set; } = false;
 
-        public bool DirectDebug
-        {
-            get { return _directDebug; }
-            set { _directDebug = value; }
-        }
+        public string RelativePathRoot { get; set; }
 
         public override bool Execute()
         {
-            if (_grammar == null)
+            if (Grammar == null)
             {
                 Log.LogError("PxCoco requires a grammar file.");
                 return false;
             }
 
-            if (!System.IO.File.Exists(_grammar.ItemSpec))
+            if (!System.IO.File.Exists(Grammar.ItemSpec))
             {
-                Log.LogError("The grammar file {0} does not exist", _grammar.ItemSpec);
+                Log.LogError("The grammar file {0} does not exist", Grammar.ItemSpec);
                 return false;
             }
 
-            _outputFiles = new ITaskItem[2];
-            _outputFiles[0] = new TaskItem("Parser.cs");
-            _outputFiles[1] = new TaskItem("Scanner.cs");
+            OutputFiles = new ITaskItem[2];
+            OutputFiles[0] = new TaskItem("Parser.cs");
+            OutputFiles[1] = new TaskItem("Scanner.cs");
 
-            return at.jku.ssw.Coco.Coco.Generate(
-                _grammar.ItemSpec,
-                null,
-                _framesDirectory,
-                _namespace,
-                _directDebug,
-                delegate(string text) { Log.LogMessageFromText(text, MessageImportance.High); },
-                //Continue here: extract line number and column to forward them to the IDE
-                delegate(string ex)
+            return Coco.Generate(//Continue here: extract line number and column to forward them to the IDE
+                new GeneratorOptions(text => Log.LogMessageFromText(text, MessageImportance.High), _msBuildError)
                 {
-                    int line, column, idxComma = -1, idxClosing = -1, idxEndFile;
-                    string errorFile;
-                    string errorMessage;
-                    if (ex.StartsWith("(") && (idxComma = ex.IndexOf(',')) > 0 && (idxClosing = ex.IndexOf(')')) > 0 && idxClosing > idxComma)
-                    {
-                        line = Int32.Parse(ex.Substring(1, idxComma-1));
-                        column = Int32.Parse(ex.Substring(idxComma + 1, idxClosing - idxComma - 1));
-                        idxEndFile = ex.IndexOf("::");
-                        errorFile = ex.Substring(idxClosing+1, idxEndFile - idxClosing - 2);
-                        errorMessage = ex.Substring(idxEndFile + 2); // + 1 because the separator is "::" and + 1 to start from the nect char
-                        Log.LogMessageFromText(String.Format("line={0}\ncolumn={1}\nerrorFile={2}\nerrorMessage={3}",line, column, errorFile, errorMessage), MessageImportance.High);
-                        Log.LogError("grammar", "", "Coco/R", errorFile, line, column, line, column, errorMessage);
-                    }
-                    else
-                        Log.LogError(ex);
+                    SrcName = Grammar.ItemSpec,
+                    DirectDebugTrace = null, 
+                    DirectDebug = DirectDebug, 
+                    FrameDirectoryPath = FramesDirectory, 
+                    Namespace = Namespace,
+                    RelativePathRoot = RelativePathRoot
                 });
+        }
+
+        private void _msBuildError(string ex)
+        {
+            int idxComma, idxClosing;
+            if (ex.StartsWith("(") && (idxComma = ex.IndexOf(',')) > 0 && (idxClosing = ex.IndexOf(')')) > 0 && idxClosing > idxComma)
+            {
+                var line = int.Parse(ex.Substring(1, idxComma - 1));
+                var column = int.Parse(ex.Substring(idxComma + 1, idxClosing - idxComma - 1));
+                var idxEndFile = ex.IndexOf("::", StringComparison.InvariantCulture);
+                var errorFile = ex.Substring(idxClosing + 1, idxEndFile - idxClosing - 2);
+                var errorMessage = ex.Substring(idxEndFile + 2);
+                Log.LogMessageFromText(
+                    $"line={line}\ncolumn={column}\nerrorFile={errorFile}\nerrorMessage={errorMessage}", MessageImportance.High);
+                Log.LogError("grammar", "", "Coco/R", errorFile, line, column, line, column, errorMessage);
+            }
+            else
+                Log.LogError(ex);
         }
     }
 }
