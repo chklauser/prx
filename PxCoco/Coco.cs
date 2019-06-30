@@ -53,79 +53,66 @@ Coco/R itself) does not fall under the GNU General Public License.
 using System;
 using System.IO;
 
+// ReSharper disable CheckNamespace
 namespace at.jku.ssw.Coco {
+    public static partial class Coco {
 
-public partial class Coco {
-
-    public static bool Generate(
-        string srcName, 
-        string ddtString, 
-        string frameDir, 
-        string nsName, 
-        bool directDebug,
-        Action<string> writeMessage, 
-        Action<string> writeError)
+    public static bool Generate(GeneratorOptions generatorOptions)
     {
-        string traceFileName = null;
         try
         {
-            int pos = srcName.LastIndexOf('/');
-            if (pos < 0) pos = srcName.LastIndexOf('\\');
-            string file = srcName;
-            string srcDir = srcName.Substring(0, pos + 1);
+            var pos = generatorOptions.SrcName.LastIndexOf('/');
+            if (pos < 0) pos = generatorOptions.SrcName.LastIndexOf('\\');
+            var file = generatorOptions.SrcName;
+            var srcDir = generatorOptions.SrcName.Substring(0, pos + 1);
 
-            Scanner scanner = new Scanner(file);
-            Parser parser = new Parser(scanner);
+            var scanner = new Scanner(file);
+            var parser = new Parser(scanner);
 
-            traceFileName = srcDir + "trace.txt";
+            var traceFileName = srcDir + "trace.txt";
             parser.trace = new StreamWriter(new FileStream(traceFileName, FileMode.Create));
             parser.tab = new Tab(parser);
             parser.dfa = new DFA(parser);
-            parser.pgen = new ParserGen(parser);
-            parser.pgen.DirectDebug = directDebug;
+            parser.pgen = new ParserGen(parser)
+            {
+                DirectDebug = generatorOptions.DirectDebug, 
+                RelativePathRoot = generatorOptions.RelativePathRoot
+            };
 
-            parser.tab.srcName = srcName;
+            parser.tab.srcName = generatorOptions.SrcName;
             parser.tab.srcDir = srcDir;
-            parser.tab.nsName = nsName;
-            parser.tab.frameDir = frameDir;
-            if (ddtString != null) parser.tab.SetDDT(ddtString);
+            parser.tab.nsName = generatorOptions.Namespace;
+            parser.tab.frameDir = generatorOptions.FrameDirectoryPath;
+            if (generatorOptions.DirectDebugTrace != null) parser.tab.SetDDT(generatorOptions.DirectDebugTrace);
 
-            parser.errors.WriteMessage = writeMessage;
-            parser.errors.WriteError = writeError;
+            parser.errors.WriteMessage = generatorOptions.WriteMessage;
+            parser.errors.WriteError = generatorOptions.WriteError;
 
-            parser.errors.realFile = srcName;
+            parser.errors.realFile = generatorOptions.SrcName;
 
             parser.Parse();
 
             parser.trace.Close();
-            FileInfo f = new FileInfo(traceFileName);
+            var f = new FileInfo(traceFileName);
             if (f.Length == 0) f.Delete();
-            else writeMessage("trace output is in " + traceFileName);
-            writeMessage(String.Format("{0} errors detected", parser.errors.count));
+            else generatorOptions.WriteMessage("trace output is in " + traceFileName);
+            generatorOptions.WriteMessage($"{parser.errors.count} errors detected");
             return parser.errors.count <= 0;
         }
         catch (IOException ex)
         {
-            writeError(ex.Message);
+            generatorOptions.WriteError(ex.Message);
             return false;
         }
         catch (FatalError ex)
         {
-            writeError(ex.Message);
+            generatorOptions.WriteError(ex.Message);
             return false;
         }
     }
 
 	public static void Main (string[] arg) {      
-        Console.WriteLine("PxCoco/R (Oct 25, 2006), based on Coco/R (Sep 19, 2006)");
-
-        string
-            srcName = null,
-            nsName = null,
-            frameDir = null,
-            ddtString = null;
-
-        bool directDebug = false;
+        Console.WriteLine("PxCoco/R (Jun 30, 2019), based on Coco/R (Sep 19, 2006)");
 
         if (arg.Length > 0 && arg[0] == "-merge")
         {
@@ -133,29 +120,42 @@ public partial class Coco {
             return;
         }
 
-		for (int i = 0; i < arg.Length; i++) {
-            if (arg[i] == "-namespace" && i < arg.Length - 1)
-                nsName = arg[++i];
-            else if (arg[i] == "-frames" && i < arg.Length - 1)
-                frameDir = arg[++i];
-            else if (arg[i] == "-trace" && i < arg.Length - 1)
-                ddtString = arg[++i];
-            else if (arg[i++] == "-d")
-                directDebug = true;
-            else
-                srcName = arg[i];
-		}
-		if (arg.Length > 0 && srcName != null) {
-            Generate(srcName, ddtString, frameDir, nsName, directDebug,
-                delegate(string text) { Console.WriteLine(text); },
-                delegate(string ex) { Console.WriteLine("-- " + ex); });
+        var opts = new GeneratorOptions(Console.WriteLine, ex => Console.WriteLine("-- " + ex));
+
+		for (var i = 0; i < arg.Length; i++)
+        {
+            switch (arg[i])
+            {
+                case "-namespace" when i < arg.Length - 1:
+                    opts.Namespace = arg[++i];
+                    break;
+                case "-frames" when i < arg.Length - 1:
+                    opts.FrameDirectoryPath = arg[++i];
+                    break;
+                case "-trace" when i < arg.Length - 1:
+                    opts.DirectDebugTrace = arg[++i];
+                    break;
+                case "-relative" when i < arg.Length - 1:
+                    opts.RelativePathRoot = arg[++i];
+                    break;
+                case "-d":
+                    opts.DirectDebug = true;
+                    break;
+                default:
+                    opts.SrcName = arg[i];
+                    break;
+            }
+        }
+		if (arg.Length > 0 && opts.SrcName != null) {
+            Generate(opts);
 		} else {
             //No arguments supplied -> display help message
 			Console.WriteLine("Usage: {0}\t- PxCoco Grammar.ATG {{Option}}{0}\t- PxCoco -merge {{grammar.atg}} output.atg{0}" +
 			                  "Options:{0}" +
 			                  "  -namespace <namespaceName>{0}" +
 			                  "  -frames    <frameFilesDirectory>{0}" +
-			                  "  -trace   <traceString>{0}" +
+			                  "  -trace     <traceString>{0}" +
+                              "  -relative  <pathRoot>{0}" +
 			                  "Valid characters in the trace string:{0}" +
 			                  "  A  trace automaton{0}" +
 			                  "  F  list first/follow sets{0}" +

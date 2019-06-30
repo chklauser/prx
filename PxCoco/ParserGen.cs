@@ -40,6 +40,8 @@ using System.IO;
 using System.Collections;
 using System.Text;
 using System.Collections.Generic;
+using System.Runtime.InteropServices;
+using PxCoco.Msbuild;
 
 namespace at.jku.ssw.Coco {
 
@@ -58,7 +60,13 @@ public class ParserGen {
 
     public bool DirectDebug;
 
-	int errorNr;      // highest parser error number
+    public string RelativePathRoot
+    {
+        get => _relativePathRoot;
+        set => _relativePathRoot = value != null ? Path.GetFullPath(value) : value;
+    }
+
+    int errorNr;      // highest parser error number
 	Symbol curSy;     // symbol whose production is currently generated
 	FileStream fram;  // parser frame file
     int frameLineNumber = 1;
@@ -70,8 +78,9 @@ public class ParserGen {
 	TextWriter trace;
 	Errors errors;
 	Buffer buffer;
-	
-	void Indent (int n) {
+    private string _relativePathRoot;
+
+    void Indent (int n) {
 		for (int i = 1; i <= n; i++) gen.Write('\t');
 	}
 	
@@ -104,13 +113,24 @@ public class ParserGen {
 		}
 		return nAlts > 5;
 	}
+
+    private string _pathForLineDirective(string path)
+    {
+        if (RelativePathRoot == null)
+        {
+            return path;
+        }
+
+        return Platform.GetRelativePath(RelativePathRoot, path);
+    }
+
 	
 	void CopyFramePart (string stop) {
 		char startCh = stop[0];
 		int endOfStopString = stop.Length-1;
 		int ch = fram.ReadByte();
         if ((!DirectDebug) && ch != EOF)
-            gen.WriteLine("\n#line {0} \"{1}\" //FRAME", frameLineNumber, fram.Name);
+            gen.WriteLine("\n#line {0} \"{1}\" //FRAME", frameLineNumber, _pathForLineDirective(fram.Name));
 		while (ch != EOF)
 			if (ch == startCh) {
 				int i = 0;
@@ -121,6 +141,7 @@ public class ParserGen {
                         if(!DirectDebug)
                             gen.WriteLine("\n#line default //END FRAME {0}", stop);
                         gen.WriteLine();
+                        frameLineNumber++;
                         return; // stop[0..i] found
                     }
 					ch = fram.ReadByte(); i++;
@@ -155,7 +176,8 @@ public class ParserGen {
                 buffer.Pos = pos.beg; nChars = pos.len - 1;
                 if (nChars >= 0)
                 {
-                    gen.WriteLine("\n#line {0} \"{1}\" //SOURCE beg={2},len={3},col={4}", pos.virtualLine, pos.virtualFile == null ? "~grammar file~" : pos.virtualFile, pos.beg, pos.len, pos.col);
+                    var pathForDirective = pos.virtualFile == null ? "~grammar file~" : _pathForLineDirective(pos.virtualFile);
+                    gen.WriteLine("\n#line {0} \"{1}\" //SOURCE beg={2},len={3},col={4}", pos.virtualLine, pathForDirective, pos.beg, pos.len, pos.col);
                     indent = pos.col;
                     Indent(indent);
                     //just copy
