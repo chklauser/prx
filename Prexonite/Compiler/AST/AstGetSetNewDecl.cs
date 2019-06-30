@@ -68,7 +68,7 @@ namespace Prexonite.Compiler.Ast
             get
             {
                 var expr = Expression;
-                return expr == null ? base.Expressions : base.Expressions.Append(expr).ToArray();
+                return expr == null ? base.Expressions : Extensions.Append(base.Expressions, expr).ToArray();
             }
         }
 

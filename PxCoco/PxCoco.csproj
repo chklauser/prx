@@ -2,7 +2,7 @@
 
   <PropertyGroup>
     <OutputType>Exe</OutputType>
-    <TargetFramework>netcoreapp2.2</TargetFramework>
+    <TargetFrameworks>netcoreapp2.2;net48</TargetFrameworks>
     <LangVersion>7.3</LangVersion>
   </PropertyGroup>
 
@@ -34,6 +34,7 @@ with improvements by Pat Terry, Rhodes University. Prexonite extensions by Chris
 <ItemGroup>
     <None Include="licenses\LICENSE.txt" Pack="true" PackagePath="" />
     <Content Include="build\PxCoco.props" PackagePath="build\" />
+    <Content Include="buildMultiTargeting\PxCoco.props" PackagePath="buildMultiTargeting\" />
 </ItemGroup>
 
   <ItemGroup>

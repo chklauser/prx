@@ -92,6 +92,7 @@ Prexonite/Parser.cs
 Prexonite/Parser.cs.old
 Prexonite/Scanner.cs
 Prexonite/Scanner.cs.old
+PrexoniteTests/OldPrexoniteTests.csproj.xml
 
 # Ignore NuGet packages folder
 packages/*

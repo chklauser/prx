@@ -378,7 +378,7 @@ namespace Prexonite
         }
 
         [DebuggerNonUserCode]
-        public static IEnumerable<T> Append<T>(this IEnumerable<T> left, T right)
+        public static IEnumerable<T> Append<T>(IEnumerable<T> left, T right)
         {
             Contract.Requires(left != null);
             foreach (var item in left)
@@ -386,8 +386,8 @@ namespace Prexonite
             yield return right;
         }
 
-        [DebuggerNonUserCode]
-        public static IEnumerable<T> Append<T>(this T left, IEnumerable<T> right)
+        [DebuggerNonUserCode, Obsolete("Functionality now included in framework.")]
+        public static IEnumerable<T> Append<T>(T left, IEnumerable<T> right)
         {
             yield return left;
             foreach (var item in right)
