@@ -8,8 +8,6 @@
 
   <PropertyGroup>
     <SignAssembly>true</SignAssembly>
-  </PropertyGroup>
-  <PropertyGroup>
     <AssemblyOriginatorKeyFile>Prexonite.snk</AssemblyOriginatorKeyFile>
   </PropertyGroup>
 
