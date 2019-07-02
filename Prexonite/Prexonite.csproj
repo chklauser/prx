@@ -111,7 +111,7 @@
   <!-- NUGET References -->
   <ItemGroup>
     <PackageReference Include="Lokad.ILPack" Version="0.1.1" />
-    <PackageReference Include="PxCoco" Version="0.0.10" />
+    <PackageReference Include="PxCoco" Version="1.91.1" />
     <PackageReference Include="System.Reflection.Emit" Version="4.3.0" />
   </ItemGroup>
 </Project>

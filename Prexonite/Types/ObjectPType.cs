@@ -27,9 +27,13 @@
 
 using System;
 using System.Collections.Generic;
+using System.Collections.Immutable;
 using System.Diagnostics;
+using System.Diagnostics.CodeAnalysis;
+using System.Linq;
 using System.Reflection;
 using System.Text;
+using JetBrains.Annotations;
 using Prexonite.Compiler.Cil;
 using NoDebug = System.Diagnostics.DebuggerNonUserCodeAttribute;
 
@@ -94,25 +98,38 @@ namespace Prexonite.Types
                 throw new ArgumentNullException(nameof(clrTypeName));
             var assemblies = sctx.ParentEngine.GetRegisteredAssemblies();
 
-            result = _getType_forNamesapce(clrTypeName, assemblies);
+            result = _getTypeForNamespace(clrTypeName, assemblies);
             if (result != null)
                 return true;
 
             foreach (var ns in sctx.ImportedNamespaces)
             {
                 var nsName = ns + '.' + clrTypeName;
-                result = _getType_forNamesapce(nsName, assemblies);
+                result = _getTypeForNamespace(nsName, assemblies);
                 if (result != null)
                     return true;
             }
             return false;
         }
 
-        private static Type _getType_forNamesapce(string clrTypeName,
+        private static readonly Assembly _prexoniteAssembly = Assembly.GetAssembly(typeof(PValue));
+
+        private static Type _getTypeForNamespace(string clrTypeName,
             IEnumerable<Assembly> assemblies)
         {
-            //Try Prexonite and mscorlib
-            var result = Type.GetType(clrTypeName, false, true);
+            // TODO: drop 'mscorlib' special-casing https://github.com/dotnet/corefx/issues/25968
+            // There is a 'hole' in the reflection facade of .NET Core where we can accidentally get our hands on internal 
+            // types of the .NET runtime. One example is System.Threading.Thread (public type is in System.Threading.Thread.dll, 
+            // but Type.GetType returns an internal class from System.Private.CoreLib.dll).
+            // The workaround is to search in 'mscorlib' (which doesn't exist, but gets mapped onto the new .NET Core libraries)
+            
+            //Try Prexonite
+            var result = _prexoniteAssembly.GetType(clrTypeName, false, true);
+            if (result != null)
+                return result;
+
+            //Try 'mscorlib'
+            result = Type.GetType(clrTypeName + ",mscorlib", false, true);
             if (result != null)
                 return result;
 
@@ -252,19 +269,18 @@ namespace Prexonite.Types
                 }
             }
 
-            //Get public member candidates, a stack is used so that newly discovered members 
-            // can be examined with priority
-            var candidates = new Stack<MemberInfo>(
-                _clrType.FindMembers(
+            //Get public member candidates
+            var candidates = 
+                _overloadResolution(_clrType.FindMembers(
                     mtypes,
                     //Member types
                     BindingFlags.Instance | BindingFlags.Public,
                     //Search domain
                     filter,
-                    cond)); //Filter
+                    cond), cond).ToImmutableArray();
 
-            if (candidates.Count == 1)
-                resolvedMember = candidates.Peek();
+            if (candidates.Length == 1)
+                resolvedMember = candidates[0];
 
             var ret = _try_execute(candidates, cond, subject, out result);
             if (!ret) //Call did not succeed -> member invalid
@@ -318,17 +334,18 @@ namespace Prexonite.Types
             }
 
             //Get member candidates            
-            var candidates = new Stack<MemberInfo>(
+            var candidates = _overloadResolution(
                 _clrType.FindMembers(
                     mtypes,
                     //Member types
                     BindingFlags.Static | BindingFlags.Public,
                     //Search domain
                     filter,
-                    cond)); //Filter
+                    cond), cond)
+                .ToImmutableArray(); //Filter
 
-            if (candidates.Count == 1)
-                resolvedMember = candidates.Peek();
+            if (candidates.Length == 1)
+                resolvedMember = candidates[0];
 
             var ret = _try_execute(candidates, cond, null, out result);
             if (!ret) //Call did not succeed -> member invalid
@@ -355,162 +372,331 @@ namespace Prexonite.Types
                 };
 
             //Get member candidates            
-            var candidates = new Stack<MemberInfo>(
+            var candidates = _overloadResolution(
                 _clrType.FindMembers(
                     MemberTypes.Method,
                     //Member types
                     BindingFlags.Static | BindingFlags.Public,
                     //Search domain
                     _member_filter,
-                    cond)); //Filter
+                    cond), cond).ToImmutableArray(); //Filter
 
             return _try_execute(candidates, cond, null, out result);
         }
 
+        [SuppressMessage("ReSharper", "MemberCanBePrivate.Global")]
+        internal readonly struct Score : IComparable<Score>, IComparable
+        {
+            public int NumUpcasts { get; }
+            public int NumConversions { get; }
+
+            public bool UsesSctxHack { get; }
+
+            public bool Rejected { get; }
+
+            public Score(int numUpcasts = default, int numConversions = default, bool usesSctxHack = default, bool rejected = default)
+            {
+                this.NumUpcasts = numUpcasts;
+                this.NumConversions = numConversions;
+                this.UsesSctxHack = usesSctxHack;
+                this.Rejected = rejected;
+            }
+
+            public int CompareTo(Score other)
+            {
+                var rejectedComparison = Rejected.CompareTo(other.Rejected);
+                if (rejectedComparison != 0)
+                    return rejectedComparison;
+                var sctxHackComparison = UsesSctxHack.CompareTo(other.UsesSctxHack);
+                if (sctxHackComparison != 0)
+                    return sctxHackComparison;
+                var numConversionsComparison = NumConversions.CompareTo(other.NumConversions);
+                if (numConversionsComparison != 0) 
+                    return numConversionsComparison;
+                return NumUpcasts.CompareTo(other.NumUpcasts);
+            }
+
+            public int CompareTo(object obj)
+            {
+                if (ReferenceEquals(null, obj)) return 1;
+                return obj is Score other ? CompareTo(other) : throw new ArgumentException($"Object must be of type {nameof(Score)}");
+            }
+
+            public static bool operator <(Score left, Score right)
+            {
+                return left.CompareTo(right) < 0;
+            }
+
+            public static bool operator >(Score left, Score right)
+            {
+                return left.CompareTo(right) > 0;
+            }
+
+            public static bool operator <=(Score left, Score right)
+            {
+                return left.CompareTo(right) <= 0;
+            }
+
+            public static bool operator >=(Score left, Score right)
+            {
+                return left.CompareTo(right) >= 0;
+            }
+        }
+
+        /// <summary>
+        /// De-sugars higher level members like Properties and Events into lower-level primitives (methods, constructors, fields)
+        /// </summary>
+        /// <param name="candidate">The member candidate.</param>
+        /// <param name="cond">The details of the call.</param>
+        /// <returns>The actual member to consider or <c>null</c> if this kind of member is not applicable after all.</returns>
+        [ContractAnnotation("candidate:null => null ; candidate:notnull => canbenull")]
+        private static MemberInfo _discover(MemberInfo candidate, [NotNull] call_conditions cond)
+        {
+            if (candidate == null)
+            {
+                return null;
+            }
+
+            switch (candidate.MemberType)
+            {
+                case MemberTypes.Constructor:
+                case MemberTypes.Method:
+                case MemberTypes.Field:
+                    return candidate;
+                case MemberTypes.Property:
+                    var property = (PropertyInfo) candidate;
+                    return cond.Call == PCall.Get ? property.GetGetMethod() : property.GetSetMethod();
+                case MemberTypes.Event:
+                    var info = (EventInfo) candidate;
+                    if (cond.Directive == "" ||
+                        Engine.DefaultStringComparer.Compare(cond.Directive, "Raise") == 0)
+                    {
+                        return info.GetRaiseMethod();
+                    }
+                    else if (Engine.DefaultStringComparer.Compare(cond.Directive, "Add") == 0)
+                    {
+                        return info.GetAddMethod();
+                    }
+                    else if (Engine.DefaultStringComparer.Compare(cond.Directive, "Remove") == 0)
+                    {
+                        return info.GetRemoveMethod();
+                    }
+                    else
+                    {
+                        return null;
+                    }
+                default:
+                    return null;
+            }
+        }
+
+        /// <summary>
+        /// Assigns each candidate a score based on how well the candidate matches. Lower scores have higher priority.
+        /// The runtime will try to invoke members one after another in ascending score order. The order in which invocation
+        /// of members with an equals score is attempted, remains undefined.
+        /// </summary>
+        /// <param name="candidate">The member candidate to rate.</param>
+        /// <param name="cond">The circumstances of the call.</param>
+        /// <returns>The score for this member. (Lower indicates better match)</returns>
+        private static Score _rate(MemberInfo candidate, call_conditions cond)
+        {
+            switch (candidate.MemberType)
+            {
+                case MemberTypes.Field:
+                    // It doesn't get much better than a field (there should not be any conflicting overloads).
+                    // It *is* possible to still have a conflict if the type is defined in a case-sensitive language.
+                    // We are not going to worry about that corner case. CLS-best-practices are pretty clear abou
+                    return new Score();
+                case MemberTypes.Constructor:
+                case MemberTypes.Method:
+                    var method = (MethodBase) candidate;
+                    var parameters = method.GetParameters();
+                    var cargs = new object[parameters.Length];
+                    //The Sctx hack needs to modify the supplied arguments, so we need a copy of the original reference
+                    var sargs = cond.Args;
+                    var numUpcasts = 0;
+                    var numConversions = 0;
+
+                    var sctxHackOffset = _sctx_hack(parameters, cond) ? 1 : 0;
+                    for (var i = 0; i < cargs.Length && i  + sctxHackOffset < parameters.Length; i++)
+                    {
+                        var arg = sargs[i];
+                        if (arg.IsNull)
+                        {
+                            // null matches anything without penalty
+                            continue;
+                        }
+                        var param = parameters[i + sctxHackOffset];
+                        var paramTy = param.ParameterType;
+                        var argTy = arg.ClrType;
+                        if (paramTy == argTy)
+                        {
+                            // exact match (no penalty)
+                            continue;
+                        }
+
+                        if (paramTy.IsAssignableFrom(argTy))
+                        {
+                            // Matches, but requires an upcast (there may be a more specialized overload)
+                            numUpcasts += 1;
+                            continue;
+                        }
+
+                        // Potentially requires a conversion (we don't really know)
+                        numConversions += 1;
+                    }
+
+                    return new Score(numUpcasts, numConversions, sctxHackOffset != 0);
+                default:
+                    // Not really sure what we got ourselves here. 
+                    // Note that some higher-level members (events, properties) should have been de-sugared by _discover
+                    return new Score(rejected: true);
+            }
+        }
+
+        private static bool _try_execute_single(MemberInfo candidate, call_conditions cond, PValue subject,
+            out PValue ret)
+        {
+            object result;
+            switch (candidate.MemberType)
+            {
+                case MemberTypes.Method:
+                case MemberTypes.Constructor:
+                    //Try to execute the method
+                    var method = (MethodBase)candidate;
+                    var parameters = method.GetParameters();
+                    var cargs = new object[parameters.Length];
+                    //The Sctx hack needs to modify the supplied arguments, so we need a copy of the original reference
+                    var sargs = cond.Args;
+
+                    if (_sctx_hack(parameters, cond))
+                    {
+                        //Add cond.Sctx to the array of arguments
+                        sargs = new PValue[sargs.Length + 1];
+                        Array.Copy(cond.Args, 0, sargs, 1, cond.Args.Length);
+                        sargs[0] = Object.CreatePValue(cond.Sctx);
+                    }
+
+                    for (var i = 0; i < cargs.Length; i++)
+                    {
+                        var arg = sargs[i];
+                        if (!(arg.IsTypeLocked || arg.IsNull)) //Neither Type-locked nor null
+                        {
+                            var P = parameters[i].ParameterType;
+                            var A = arg.ClrType;
+                            if (!(P == A || P.IsAssignableFrom(A))) //Is conversion needed?
+                            {
+                                if (!arg.TryConvertTo(cond.Sctx, P, false, out arg))
+                                {
+                                    //Try to convert
+                                    ret = null;
+                                    return false;
+                                }
+                            }
+                        }
+                        cargs[i] = arg.Value;
+                    }
+
+                    //All conversions were successful, ready to call the method
+                    if (method is ConstructorInfo constructorInfo)
+                    {
+                        result = constructorInfo.Invoke(cargs);
+                    }
+                    else
+                    {
+                        try
+                        {
+                            result = method.Invoke(subject?.Value, cargs);
+                        }
+                        catch (TargetInvocationException exc)
+                        {
+                            if (exc.InnerException is PrexoniteRuntimeException innerRt)
+                                throw innerRt.InnerException;
+                            else
+                                throw;
+                        }
+                        catch (Exception e)
+                        {
+                            throw;
+                        }
+                    }
+                    break;
+                case MemberTypes.Field:
+                    //Do field access
+                    var field = (FieldInfo)candidate;
+                    if (cond.Call == PCall.Get)
+                        result = field.GetValue(subject?.Value);
+                    else
+                    {
+                        var arg = cond.Args[0];
+                        if (!(arg.IsTypeLocked || arg.IsNull)) //Neither Type-locked nor null
+                        {
+                            var paramTy = field.FieldType;
+                            var argTy = arg.ClrType;
+                            if (!(paramTy == argTy || paramTy.IsAssignableFrom(argTy))) //Is conversion needed?
+                            {
+                                if (!arg.TryConvertTo(cond.Sctx, paramTy, false, out arg))
+                                {
+                                    // failed to convert
+                                    ret = null;
+                                    return false;
+                                }
+                            }
+                        }
+                        field.SetValue(subject?.Value, arg.Value);
+                        result = null;
+                    }
+                    break;
+                default:
+                    ret = null;
+                    return false;
+            }
+
+            if (cond.Call == PCall.Get)
+            {
+                //We'll let the executing engine decide which ptype suits best:
+                ret = cond.Sctx.CreateNativePValue(result);
+            }
+            else
+            {
+                ret = null;
+            }
+            return true;
+        }
+
         private static bool _try_execute(
-            Stack<MemberInfo> candidates,
+            IEnumerable<MemberInfo> candidates,
             call_conditions cond,
             PValue subject,
             out PValue ret)
         {
             ret = null;
             object result;
-            while (candidates.Count > 0)
+            foreach(var candidate in candidates)
             {
-                var candidate = candidates.Pop();
-                switch (candidate.MemberType)
-                {
-                    case MemberTypes.Method:
-                    case MemberTypes.Constructor:
-                        //Try to execute the method
-                        var method = (MethodBase) candidate;
-                        var parameters = method.GetParameters();
-                        var cargs = new object[parameters.Length];
-                        //The Sctx hack needs to modify the supplied arguments, so we need a copy of the original reference
-                        var sargs = cond.Args;
-
-                        if (_sctx_hack(parameters, cond))
-                        {
-                            //Add cond.Sctx to the array of arguments
-                            sargs = new PValue[sargs.Length + 1];
-                            Array.Copy(cond.Args, 0, sargs, 1, cond.Args.Length);
-                            sargs[0] = Object.CreatePValue(cond.Sctx);
-                        }
-
-                        for (var i = 0; i < cargs.Length; i++)
-                        {
-                            var arg = sargs[i];
-                            if (!(arg.IsTypeLocked || arg.IsNull)) //Neither Type-locked nor null
-                            {
-                                var P = parameters[i].ParameterType;
-                                var A = arg.ClrType;
-                                if (!(P.Equals(A) || P.IsAssignableFrom(A))) //Is conversion needed?
-                                {
-                                    if (!arg.TryConvertTo(cond.Sctx, P, false, out arg))
-                                        //Try to convert
-                                        goto failed;
-                                    //can't use break; because of the surrounding for-loop
-                                }
-                            }
-                            cargs[i] = arg.Value;
-                        }
-
-                        //All conversions were succesful, ready to call the method
-                        if (method is ConstructorInfo)
-                        {
-                            result = ((ConstructorInfo) method).Invoke(cargs);
-                        }
-                        else
-                        {
-                            try
-                            {
-                                if (subject == null)
-                                    result = method.Invoke(null, cargs);
-                                else
-                                    result = method.Invoke(subject.Value, cargs);
-                            }
-                            catch (TargetInvocationException exc)
-                            {
-                                var innerRt = exc.InnerException as PrexoniteRuntimeException;
-
-                                if (innerRt != null)
-                                    throw innerRt.InnerException;
-                                else
-                                    throw;
-                            }
-                        }
-                        goto success;
-
-                        failed: //The method cannot be called. Go on to the next candidate
-                        break;
-                    case MemberTypes.Field:
-                        //Do field access
-                        var field = (FieldInfo) candidate;
-                        if (cond.Call == PCall.Get)
-                            if (subject == null)
-                                result = field.GetValue(null);
-                            else
-                                result = field.GetValue(subject.Value);
-                        else
-                        {
-                            var arg = cond.Args[0];
-                            if (!(arg.IsTypeLocked || arg.IsNull)) //Neither Type-locked nor null
-                            {
-                                var P = field.FieldType;
-                                var A = arg.ClrType;
-                                if (!(P.Equals(A) || P.IsAssignableFrom(A))) //Is conversion needed?
-                                {
-                                    if (!arg.TryConvertTo(cond.Sctx, P, false, out arg))
-                                        //Try to convert
-                                        break;
-                                }
-                            }
-                            if (subject == null)
-                                field.SetValue(null, arg.Value);
-                            else
-                                field.SetValue(subject.Value, arg.Value);
-                            result = null;
-                        }
-                        goto success;
-                    case MemberTypes.Property:
-                        //Push accessor method
-                        var property = (PropertyInfo) candidate;
-                        if (cond.Call == PCall.Get)
-                            candidates.Push(property.GetGetMethod());
-                        else
-                            candidates.Push(property.GetSetMethod());
-                        break;
-                    case MemberTypes.Event:
-                        //Push requested method
-                        var info = (EventInfo) candidate;
-                        if (cond.Directive == "" ||
-                            Engine.DefaultStringComparer.Compare(cond.Directive, "Raise") == 0)
-                        {
-                            candidates.Push(info.GetRaiseMethod());
-                        }
-                        else if (Engine.DefaultStringComparer.Compare(cond.Directive, "Add") == 0)
-                        {
-                            candidates.Push(info.GetAddMethod());
-                        }
-                        else if (Engine.DefaultStringComparer.Compare(cond.Directive, "Remove") == 0)
-                        {
-                            candidates.Push(info.GetRemoveMethod());
-                        }
-                        break;
-                }
+                if (_try_execute_single(candidate, cond, subject, out ret))
+                    return true;
             }
 
             return false;
-
-            success:
-            if (cond.Call == PCall.Get)
-            {
-                //We'll let the executing engin decide which ptype suits best:
-                ret = cond.Sctx.CreateNativePValue(result);
-            }
-            return true;
         }
 
+        /// <summary>
+        /// <para>
+        /// This method is an optimization for overload resolution. In unambiguous situations, the
+        /// resolved member is cached in association with the instruction that triggers the call.
+        /// </para>
+        /// <para>
+        /// The VM will submit the resolved member to us. We don't need to validate/re-resolve it.
+        /// </para>
+        /// </summary>
+        /// <param name="sctx">The context of the call.</param>
+        /// <param name="candidate">The unambiguous resolution from a previous invocation.</param>
+        /// <param name="args">The arguments to this invocation.</param>
+        /// <param name="call">call type (get/set)</param>
+        /// <param name="id">The name used to make the call.</param>
+        /// <param name="subject">The <c>this</c> pointer.</param>
+        /// <returns></returns>
         internal static PValue _execute(
             StackContext sctx,
             MemberInfo candidate,
@@ -519,30 +705,26 @@ namespace Prexonite.Types
             string id,
             PValue subject)
         {
-            var candidates = new Stack<MemberInfo>();
-            candidates.Push(candidate);
-            PValue ret;
-            if (
-                !_try_execute(
-                    candidates, new call_conditions(sctx, args, call, id), subject, out ret))
+            if (_try_execute(candidate.Singleton(),
+                new call_conditions(sctx, args, call, id), subject, out var ret)) 
+                return ret;
+
+            // Something went wrong, report as a runtime error.
+            var sb = new StringBuilder();
+            sb.Append("Cannot call '");
+            sb.Append(candidate);
+            sb.Append("' on object of Type ");
+            sb.Append((subject.IsNull ? "null" : subject.ClrType.FullName));
+            sb.Append(" with (");
+            foreach (var arg in args)
             {
-                var sb = new StringBuilder();
-                sb.Append("Cannot call '");
-                sb.Append(candidate);
-                sb.Append("' on object of Type ");
-                sb.Append((subject.IsNull ? "null" : subject.ClrType.FullName));
-                sb.Append(" with (");
-                foreach (var arg in args)
-                {
-                    sb.Append(arg);
-                    sb.Append(", ");
-                }
-                if (args.Length > 0)
-                    sb.Length -= 2;
-                sb.Append(").");
-                throw new InvalidCallException(sb.ToString());
+                sb.Append(arg);
+                sb.Append(", ");
             }
-            return ret;
+            if (args.Length > 0)
+                sb.Length -= 2;
+            sb.Append(").");
+            throw new InvalidCallException(sb.ToString());
         }
 
         [DebuggerStepThrough]
@@ -869,16 +1051,14 @@ namespace Prexonite.Types
                 };
 
             //Get member candidates            
-            var candidates = new Stack<MemberInfo>();
-            foreach (var ctor in _clrType.GetConstructors())
-            {
-                if (_method_filter(ctor, cond))
-                    candidates.Push(ctor);
-            }
+            var candidates = _overloadResolution(
+                _clrType.GetConstructors()
+                    .Where(c => _method_filter(c, cond)), cond)
+                .ToImmutableArray();
 
             resolvedMember = null;
-            if (candidates.Count == 1)
-                resolvedMember = candidates.Peek();
+            if (candidates.Length == 1)
+                resolvedMember = candidates[0];
 
             var ret = _try_execute(candidates, cond, null, out result);
             if (!ret)
@@ -886,6 +1066,29 @@ namespace Prexonite.Types
 
             return ret;
         }
+
+        private static IEnumerable<MemberInfo> _overloadResolution(IEnumerable<MemberInfo> candidates, call_conditions cond) => 
+            candidates
+                .Select(c =>
+                {
+                    var effectiveCandidate = _discover(c, cond);
+                    if (effectiveCandidate == null)
+                    {
+                        return (null, default);
+                    }
+
+                    var score = _rate(effectiveCandidate, cond);
+                    if (score.Rejected)
+                    {
+                        return (null, default);
+                    }
+
+                    return (effectiveCandidate, score);
+                })
+                .Where(pair => pair.effectiveCandidate != null)
+                .OrderBy(pair => pair.score)
+                .Select(pair => pair.effectiveCandidate);
+     
 
         #endregion
 

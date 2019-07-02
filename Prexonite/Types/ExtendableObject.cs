@@ -437,19 +437,5 @@ namespace Prexonite.Types
 
             return item.Id;
         }
-
-        public bool TryGetValue(string key, out ExtensionMember value)
-        {
-            if (Contains(key))
-            {
-                value = this[key];
-                return true;
-            }
-            else
-            {
-                value = null;
-                return false;
-            }
-        }
     }
 }
