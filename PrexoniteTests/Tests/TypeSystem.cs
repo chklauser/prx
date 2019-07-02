@@ -147,7 +147,7 @@ namespace PrexoniteTests.Tests
         public void TestTypeResolving()
         {
             var res = new ObjectPType(sctx, "System.Threading.Thread");
-            Assert.AreEqual(PType.Object[typeof (Thread)], res);
+            Assert.AreEqual(PType.Object[typeof(Thread)], res);
         }
 
         [Test(Description = "PType creation from type simple expression")]

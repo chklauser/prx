@@ -779,7 +779,7 @@ namespace Prexonite
 
                     case OpCode.sget:
                         _fillArgs(argc, out argv);
-                        idx = id.LastIndexOf("::");
+                        idx = id.LastIndexOf("::", StringComparison.InvariantCulture);
                         if (idx < 0)
                             throw new PrexoniteException
                                 (
@@ -797,10 +797,9 @@ namespace Prexonite
                             var typeExpr = id.Substring(0, idx);
                             t = ConstructPType(typeExpr);
                             ins.GenericArgument = t;
-                            if (t is ObjectPType)
+                            if (t is ObjectPType objT)
                             {
                                 //Try to get a member info
-                                var objT = (ObjectPType) t;
                                 right = objT.StaticCall(this, argv, PCall.Get, methodId, out member);
                                 if (!justEffect)
                                     Push(right);
@@ -825,7 +824,7 @@ namespace Prexonite
 
                     case OpCode.sset:
                         _fillArgs(argc, out argv);
-                        idx = id.LastIndexOf("::");
+                        idx = id.LastIndexOf("::", StringComparison.InvariantCulture);
                         if (idx < 0)
                             throw new PrexoniteException
                                 (

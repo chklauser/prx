@@ -48,8 +48,6 @@ namespace Prexonite.Compiler.Cil
             return applicationId + "_" + _numberOfPasses++ + "";
         }
 
-        private readonly bool _makeAvailableForLinking;
-
         private readonly AssemblyBuilder _assemblyBuilder;
 
         public AssemblyBuilder Assembly
@@ -92,9 +90,11 @@ namespace Prexonite.Compiler.Cil
             }
         }
 
+        // ReSharper disable once UnusedParameter.Local
         public CompilerPass(Application app, bool makeAvailableForLinking)
         {
-            _makeAvailableForLinking = makeAvailableForLinking;
+            // TODO: respect 'makeAvailableForLinking' again https://github.com/chklauser/prx/issues/115
+            MakeAvailableForLinking = true;
             if (MakeAvailableForLinking)
             {
                 var sequenceName = _createNextTypeName(app?.Id);
@@ -122,8 +122,7 @@ namespace Prexonite.Compiler.Cil
 
             
             // TODO: Once .NET Core 3.x has support for DynamicMethod.DefineParameter, emit dynamic methods again
-            // var makeAvailableForLinking = MakeAvailableForLinking;
-            var makeAvailableForLinking = true;
+            var makeAvailableForLinking = MakeAvailableForLinking;
             // ReSharper disable once ConditionIsAlwaysTrueOrFalse
             if (makeAvailableForLinking)
             {
@@ -228,10 +227,7 @@ namespace Prexonite.Compiler.Cil
                         m.GetType());
         }
 
-        public bool MakeAvailableForLinking
-        {
-            get { return _makeAvailableForLinking; }
-        }
+        public bool MakeAvailableForLinking { get; }
 
         public CompilerPass(FunctionLinking linking)
             : this(null, linking)
