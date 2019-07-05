@@ -27,7 +27,6 @@
 Name prx::cli;
 Description "prx command line interface (compiler and REPL)";
 Author "Christian Klauser";
-Version "1.90";
 
 build does require("prx_interactive.pxs", "prx_lib.pxs");
 
@@ -526,17 +525,16 @@ namespace prx.cli
                 }
             }
 
-            // Prepare a loader targetting the module
+            // Prepare a loader targeting the module
             if(options.state == states.interactive or options.state == states.compile)
             {
-                // Reconstruct "external" symbol environemnt (symbols exported by dependencies)
+                // Reconstruct "external" symbol environment (symbols exported by dependencies)
                 var external = Prexonite::Compiler::Symbolic::SymbolStore.Create(null, (
                         entryDesc.Dependencies
                         >> map(name => {
                             var depTar = Prexonite::Compiler::Build::BuildExtensions.Build(plan, name);
                             var origin = new Object<"Prexonite.Compiler.Symbolic.SymbolOrigin+ModuleTopLevel">(
                                 depTar.name, Prexonite::Compiler::NoSourcePosition.Instance);
-                            println("fake import of $name.*");
                             return depTar.Symbols >> map(kvp =>
                                 new Prexonite::Compiler::Symbolic::SymbolInfo(kvp.Value, origin, kvp.Key)
                             );
@@ -545,7 +543,7 @@ namespace prx.cli
                         >> to_list
                     )~Object<"Prexonite.Compiler.Symbolic.SymbolInfo[]">);
 
-                // Configure loader (mimicks environment present during build)
+                // Configure loader (mimics environment present during build)
                 var opt = new Prexonite::Compiler::LoaderOptions(engine, app, external);
                 opt.RegisterCommands = false;
                 opt.ReconstructSymbols = false;
@@ -556,7 +554,6 @@ namespace prx.cli
                 rt.debug(target);
                 foreach(var kvp in target.Symbols)
                 {
-                    println("fake decl of $(kvp.key)=$(kvp.value)");
                     opt.Symbols.Declare(kvp.Key, kvp.Value);
                 }
                 ldr = new Prexonite::Compiler::Loader(opt);

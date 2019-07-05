@@ -268,6 +268,10 @@ namespace Prexonite.Types
                             case TypeCode.Int32:
                                 result = new PValue((Int32) c, target);
                                 break;
+                            case TypeCode.Object:
+                                // explicit boxing
+                                result = new PValue(c, Object[typeof(object)]);
+                                break;
                         }
                         break;
                 }

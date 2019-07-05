@@ -122,16 +122,20 @@ namespace Prexonite.Types
 
             result = null;
 
-            if (target is IntPType && useExplicit)
-                result = ((bool) subject.Value) ? 1 : 0;
-            else if (target is RealPType && useExplicit)
-                result = (bool) subject.Value ? 1.0 : 0.0;
-            else if (target is StringPType && useExplicit)
-                result = (bool) subject.Value ? bool.TrueString : bool.FalseString;
-            else if (target is ObjectPType && ((ObjectPType) target).ClrType == typeof (bool))
-                result = Object[typeof (bool)].CreatePValue(subject.Value);
-            else
-                return false;
+            switch (target)
+            {
+                case IntPType _ when useExplicit:
+                    result = (bool) subject.Value ? 1 : 0;
+                    break;
+                case RealPType _ when useExplicit:
+                    result = (bool) subject.Value ? 1.0 : 0.0;
+                    break;
+                case StringPType _ when useExplicit:
+                    result = (bool) subject.Value ? bool.TrueString : bool.FalseString;
+                    break;
+                default:
+                    return false;
+            }
 
             return true;
         }

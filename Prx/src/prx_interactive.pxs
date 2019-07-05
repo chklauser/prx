@@ -246,7 +246,7 @@ namespace prx.cli.repl
     executeStatement:
                 //First, try to compile the code as an expression
                 buffer.AppendFormat(" function {0}() namespace import {3} does println = \"{1} = \" + ( \n{2}\n ) ; ", 
-                    [funcId, shortened(raw).Escape, raw, importSpec]~Object<"System.String[]">);
+                    [funcId, shortened(raw).Escape, raw, importSpec]~Object<"System.Object[]">);
                 if(Not tryLoad)
                 {
                     //should that fail, try to compile the code as a statement
@@ -255,7 +255,7 @@ namespace prx.cli.repl
 
                     funcId = nextFuncId;
                     buffer.AppendFormat(" function {0}() namespace import {2} {{ \n{1}\n ; }} ", 
-                        funcId, raw, importSpec);
+                        [funcId, raw, importSpec]~Object<"System.Object[]">);
 
                     if(Not tryLoad)
                     {
@@ -265,7 +265,7 @@ namespace prx.cli.repl
                             println(evalCode);
                         printErrors(evalErrors);
 
-                        // shwo why it can't be a statement
+                        // show why it can't be a statement
                         println;
                         println("{" + shortened(raw) + "; } is also not a statement:");
                             println(lastCode);

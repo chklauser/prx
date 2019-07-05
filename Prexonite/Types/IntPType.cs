@@ -28,6 +28,7 @@
 using System;
 using System.Collections.Generic;
 using System.Diagnostics;
+using System.Diagnostics.CodeAnalysis;
 using Prexonite.Compiler.Cil;
 using NoDebug = System.Diagnostics.DebuggerNonUserCodeAttribute;
 
@@ -36,6 +37,7 @@ using NoDebug = System.Diagnostics.DebuggerNonUserCodeAttribute;
 namespace Prexonite.Types
 {
     [PTypeLiteral("Int")]
+    [SuppressMessage("ReSharper", "BuiltInTypeReferenceStyle")]
     public sealed class IntPType : PType, ICilCompilerAware
     {
         #region Singleton Pattern
@@ -191,9 +193,9 @@ namespace Prexonite.Types
                     result = Real.CreatePValue((int) subject.Value);
                 else if (target is BoolPType)
                     result = Bool.CreatePValue(((int) subject.Value) != 0);
-                else if (target is ObjectPType)
+                else if (target is ObjectPType objectType)
                 {
-                    var clrType = ((ObjectPType) target).ClrType;
+                    var clrType = objectType.ClrType;
                     if (clrType == typeof (Int32))
                         result = CreateObject((Int32) subject.Value);
                     else if (clrType == typeof (Double))
@@ -208,6 +210,8 @@ namespace Prexonite.Types
                         result = CreateObject((UInt32) (Int32) subject.Value);
                     else if (clrType == typeof (UInt64))
                         result = CreateObject((UInt64) (Int32) subject.Value);
+                    else if (clrType == typeof(object))
+                        result = new PValue(subject.Value, Object[typeof(object)]);
                 }
             }
 
@@ -224,8 +228,7 @@ namespace Prexonite.Types
             var subjectType = subject.Type;
             if (subjectType is StringPType)
             {
-                int value;
-                if (int.TryParse(subject.Value as string, out value))
+                if (int.TryParse(subject.Value as string, out var value))
                     result = value;
                 else if (useExplicit)
                     return false; //Conversion required, provoke error
@@ -236,10 +239,10 @@ namespace Prexonite.Types
             {
                 result = Convert.ToInt32(subject.Value);
             }
-            else if (subjectType is ObjectPType)
+            else if (subjectType is ObjectPType objectType)
             {
                 if (useExplicit)
-                    switch (Type.GetTypeCode((subjectType as ObjectPType).ClrType))
+                    switch (Type.GetTypeCode(objectType.ClrType))
                     {
                         case TypeCode.Decimal:
                         case TypeCode.Char:
@@ -250,14 +253,14 @@ namespace Prexonite.Types
                             result = (int) subject.Value;
                             break;
                         case TypeCode.Boolean:
-                            result = ((bool) subject.Value) ? 1 : 0;
+                            result = (bool) subject.Value ? 1 : 0;
                             break;
                     }
 
                 if (result != null)
                 {
                     //(!useExplicit || useExplicit)
-                    switch (Type.GetTypeCode((subjectType as ObjectPType).ClrType))
+                    switch (Type.GetTypeCode(objectType.ClrType))
                     {
                         case TypeCode.Byte:
                         case TypeCode.SByte:

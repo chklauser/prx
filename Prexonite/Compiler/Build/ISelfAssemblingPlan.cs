@@ -62,7 +62,7 @@ namespace Prexonite.Compiler.Build
         /// <param name="token">The cancellation token for this asynchronous operation.</param>
         /// <returns>A task that represents the build plan assembly in progress.</returns>
         [NotNull, PublicAPI]
-        Task<ITargetDescription> AssembleAsync(ISource source, CancellationToken token);
+        Task<ITargetDescription> AssembleAsync(ISource source, CancellationToken token = default);
 
         /// <summary>
         /// The set of standard library modules to implicitly link against. Can be suppressed on a per-module basis via the <see cref="Module.NoStandardLibraryKey"/> tag.
@@ -79,6 +79,6 @@ namespace Prexonite.Compiler.Build
         /// <param name="token"></param>
         /// <returns>A description of the supplied module. Its dependencies might not be satisfied at this point.</returns>
         [NotNull]
-        Task<ITargetDescription> RegisterModule(ISource source, CancellationToken token);
+        Task<ITargetDescription> RegisterModule(ISource source, CancellationToken token = default);
     }
 }
