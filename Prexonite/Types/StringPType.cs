@@ -851,6 +851,8 @@ namespace Prexonite.Types
                                         clrType == typeof (ICollection<char>) ||
                                             clrType == typeof (IList<char>))
                                     result = new PValue(s.ToCharArray(), target);
+                                else if(clrType.IsInstanceOfType(s)) 
+                                    result = new PValue(s, Object[clrType]);
                                 break;
                         }
                         break;

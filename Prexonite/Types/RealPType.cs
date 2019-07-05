@@ -162,15 +162,18 @@ namespace Prexonite.Types
                     result = Real.CreatePValue((double) subject.Value);
                 else if (target is BoolPType)
                     result = Bool.CreatePValue(Math.Abs(((double) subject.Value)) < double.Epsilon);
-                else if (target is ObjectPType)
+                else if (target is ObjectPType objectType)
                 {
-                    switch (Type.GetTypeCode(((ObjectPType) target).ClrType))
+                    switch (Type.GetTypeCode(objectType.ClrType))
                     {
                         case TypeCode.Double:
                             result = CreateObject((double) subject.Value);
                             break;
                         case TypeCode.Decimal:
                             result = CreateObject((decimal) subject.Value);
+                            break;
+                        case TypeCode.Object:
+                            result = new PValue(subject.Value, Object[typeof(object)]);
                             break;
                     }
                 }

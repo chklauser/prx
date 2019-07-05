@@ -34,6 +34,7 @@ using System.Linq;
 using System.Reflection;
 using System.Text;
 using System.Threading;
+using System.Threading.Tasks;
 using JetBrains.Annotations;
 using Prexonite;
 using Prexonite.Commands;
@@ -54,19 +55,6 @@ namespace Prx
         public static string GetPrxPath()
         {
             return Path.GetDirectoryName(Assembly.GetExecutingAssembly().Location);
-        }
-
-        private static void writeFile(byte[] buffer, string path)
-        {
-            using (
-                var fsmain =
-                    new FileStream
-                        (
-                        GetPrxPath() + Path.DirectorySeparatorChar + "src" +
-                            Path.DirectorySeparatorChar + path,
-                        FileMode.Create,
-                        FileAccess.Write))
-                fsmain.Write(buffer, 0, buffer.Length);
         }
 
         public static void Main(string[] args)
@@ -300,38 +288,14 @@ namespace Prx
 
             #endregion
 
-            var deleteSrc = false;
-            var entryPath = GetPrxPath() + Path.DirectorySeparatorChar + PrxScriptFileName;
-            if (!File.Exists(entryPath))
-            {
-                //Load default CLI app
-                entryPath = GetPrxPath() + Path.DirectorySeparatorChar + @"src" +
-                            Path.DirectorySeparatorChar + "prx_main.pxs";
-
-                if (!File.Exists(entryPath))
-                {
-                    if (!Directory.Exists("src"))
-                    {
-                        var di =
-                            Directory.CreateDirectory(GetPrxPath() + Path.DirectorySeparatorChar +
-                                                      @"src");
-                        di.Attributes = di.Attributes | FileAttributes.Hidden;
-                        deleteSrc = true;
-                    }
-
-                    //Unpack source
-                    writeFile(Resources.prx_main, "prx_main.pxs");
-                    writeFile(Resources.prx_lib, "prx_lib.pxs");
-                    writeFile(Resources.prx_interactive, "prx_interactive.pxs");
-                }
-            }
+            var prxPath = GetPrxPath();
+            var bootstrapPath = Path.Combine(prxPath, PrxScriptFileName);
+            var (entryPath, deleteSrc) = _ensureSourceAvailable(bootstrapPath, prxPath);
 
             Tuple<Application, ITarget> result;
-
             try
             {
-                var entryDesc =
-                    plan.AssembleAsync(Source.FromFile(entryPath, Encoding.UTF8), CancellationToken.None).Result;
+                var entryDesc = plan.AssembleAsync(Source.FromFile(entryPath, Encoding.UTF8)).Result;
                 result = plan.Load(entryDesc.Name);
             }
             catch (BuildFailureException e)
@@ -368,27 +332,88 @@ namespace Prx
 
 
             if (deleteSrc)
-                Directory.Delete(GetPrxPath() + Path.DirectorySeparatorChar + @"src", true);
+                Directory.Delete(Path.Combine(prxPath ,"src"), true);
 
             if (result == null)
             {
                 return null;
             }
+
+            if (_reportErrors(result.Item2.Messages)) 
+                return null;
+            
+            var app = result.Item1;
+            app.Meta["Version"] = Assembly.GetExecutingAssembly().GetName().Version.ToString();
+            return app;
+
+        }
+
+        private static (string entryPath, bool deleteSrc) _ensureSourceAvailable(string entryPath, string prxPath)
+        {
+            if (File.Exists(entryPath)) 
+                return (entryPath, false);
+
+            var srcDirPath = Path.Combine(prxPath, "src");
+            //Load default CLI app
+            entryPath = Path.Combine(srcDirPath, "prx_main.pxs");
+
+            if (File.Exists(entryPath)) 
+                return (entryPath, false);
+
+            bool deleteSrc;
+            if (!Directory.Exists(srcDirPath))
+            {
+                var di =
+                    Directory.CreateDirectory(srcDirPath);
+                di.Attributes |= FileAttributes.Hidden;
+                deleteSrc = true;
+            }
             else
             {
-                return !_reportErrors(result.Item2.Messages) ? result.Item1 : null;
+                deleteSrc = false;
             }
+
+            //Unpack source
+            var prx = Assembly.GetExecutingAssembly();
+
+            async Task extractFile(string name)
+            {
+                var resourceName = $"Prx.src.{name}";
+                var stream = prx.GetManifestResourceStream(resourceName);
+                if (stream == null)
+                {
+                    throw new ArgumentException($"Embedded resource '{resourceName}' is missing.",
+                        nameof(name));
+                }
+
+                using (stream)
+                {
+                    var filePath = Path.Combine(srcDirPath, name);
+
+                    // We need the await here so that the state machine can close the streams afterwards
+                    using (var dest = new FileStream(filePath, FileMode.Create, FileAccess.Write))
+                        await stream.CopyToAsync(dest, (CancellationToken) default);
+                }
+            }
+
+
+            Task.WaitAll(
+                extractFile("prx_main.pxs"),
+                extractFile("prx_lib.pxs"),
+                extractFile("prx_interactive.pxs")
+            );
+
+            return (entryPath, deleteSrc);
         }
 
         private static bool _reportErrors(IEnumerable<Message> messages)
         {
             var originalColor = Console.ForegroundColor;
             var msgBySev = messages.ToGroupedDictionary<MessageSeverity, Message, List<Message>>(m => m.Severity);
-            List<Message> errors;
 #if DEBUG
             _reportWarnings(msgBySev, originalColor);
 #endif
-            if (msgBySev.TryGetValue(MessageSeverity.Error,out errors) && errors.Count > 0)
+            if (msgBySev.TryGetValue(MessageSeverity.Error, out var errors) && errors.Count > 0)
             {
                 try
                 {
@@ -414,8 +439,7 @@ namespace Prx
             try
             {
                 Console.ForegroundColor = originalColor;
-                List<Message> messageCategory;
-                if (messages.TryGetValue(MessageSeverity.Info, out messageCategory))
+                if (messages.TryGetValue(MessageSeverity.Info, out var messageCategory))
                     foreach (var message in messageCategory)
                         Console.WriteLine(message);
 

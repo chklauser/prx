@@ -45,12 +45,7 @@ namespace Prexonite.Types
         {
         }
 
-        private static readonly ListPType _instance = new ListPType();
-
-        public static ListPType Instance
-        {
-            get { return _instance; }
-        }
+        public static ListPType Instance { get; } = new ListPType();
 
         public override PValue CreatePValue(object value)
         {
@@ -62,22 +57,20 @@ namespace Prexonite.Types
                 return new PValue(listOfPValue, this);
             if (enumerableOfPValue != null)
                 return new PValue(new List<PValue>(enumerableOfPValue), this);
-            if (enumerable != null)
+            if (enumerable == null)
+                throw new PrexoniteException(
+                    "Cannot create a PValue from the supplied " + value + ".");
+            
+            var lst = new List<PValue>();
+            foreach (var v in enumerable)
             {
-                var lst = new List<PValue>();
-                foreach (var v in enumerable)
-                {
-                    var pv = v as PValue;
-                    if (pv != null)
-                        lst.Add(pv);
-                    else
-                        throw new PrexoniteException(
-                            "Cannot create List from IEnumerable that contains elements of any type other than PValue. Use List.CreateFromList for this purpose.");
-                }
-                return new PValue(lst, this);
+                if (v is PValue pv)
+                    lst.Add(pv);
+                else
+                    throw new PrexoniteException(
+                        "Cannot create List from IEnumerable that contains elements of any type other than PValue. Use List.CreateFromList for this purpose.");
             }
-            throw new PrexoniteException(
-                "Cannot create a PValue from the supplied " + value + ".");
+            return new PValue(lst, this);
         }
 
         public override bool TryDynamicCall(
@@ -90,8 +83,7 @@ namespace Prexonite.Types
         {
             result = null;
 
-            var lst = subject.Value as List<PValue>;
-            if (lst == null)
+            if (!(subject.Value is List<PValue> lst))
                 throw new PrexoniteException(subject + " is not a List.");
 
             if (id.Length == 0)
