@@ -48,8 +48,7 @@ steps:
 - task: DotNetCoreCLI@2
   inputs:
     command: pack
-    projects: '$(solution)'
-    packagesToPack: 'Prexonite/Prexonite.csproj,Prx/Prx.csproj'
+    searchPatternPack: 'Prexonite/Prexonite.csproj;Prx/Prx.csproj'
     nobuild: true
     configurationToPack: $(BuildConfiguration)
     buildProperties: Platform=$(BuildPlatform)
