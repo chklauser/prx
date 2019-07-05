@@ -117,11 +117,6 @@
   <resheader name="writer">
     <value>System.Resources.ResXResourceWriter, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
   </resheader>
-  <assembly alias="System.Windows.Forms" name="System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089" />
-  <data name="legacy_symbols" type="System.Resources.ResXFileRef, System.Windows.Forms">
-    <value>..\prxlib\legacy_symbols.pxs;System.String, mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089;utf-8</value>
-    <comment>Symbolic environment for Prexonite 1</comment>
-  </data>
   <data name="Exception_StreamSource_CannotUseWriteOnlyStream" xml:space="preserve">
     <value>A stream that is not readable cannot be used as a source.</value>
   </data>
@@ -420,14 +415,6 @@
   <data name="SymbolMExprParser_EmptySymbolicReference" xml:space="preserve">
     <value>Symbolic reference must consist of at least one symbol name.</value>
   </data>
-  <data name="sys" type="System.Resources.ResXFileRef, System.Windows.Forms">
-    <value>..\prxlib\sys.pxs;System.String, mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089;utf-8</value>
-    <comment>The Prexonite 2 standard library interface</comment>
-  </data>
-  <data name="sh" type="System.Resources.ResXFileRef, System.Windows.Forms">
-    <value>..\prxlib\sh.pxs;System.String, mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089;utf-8</value>
-    <comment>Runtime support for the Prexonite shell scripting extensions</comment>
-  </data>
   <data name="Program_DebugExit" xml:space="preserve">
     <value>Exiting Prx.Main normally. Press Enter to exit.</value>
   </data>
@@ -437,15 +424,9 @@
   <data name="SelfAssemblingPlan__forbidFileRefSpec_notallowed" xml:space="preserve">
     <value>File path reference not allowed when just registering a module. Consider using ISelfAssemblingPlan.AssembleAsync instead.</value>
   </data>
-  <data name="prx_prim" type="System.Resources.ResXFileRef, System.Windows.Forms">
-    <value>..\prxlib\prx.prim.pxs;System.String, mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
-  </data>
-    <data name="ModuleName_Module_id_cannot_be_null_or_empty_" xml:space="preserve">
+  <data name="ModuleName_Module_id_cannot_be_null_or_empty_" xml:space="preserve">
     <value>Module id cannot be null or empty.</value>
   </data>
-    <data name="prx_core" type="System.Resources.ResXFileRef, System.Windows.Forms">
-        <value>..\prxlib\prx.core.pxs;System.String, mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
-    </data>
   <data name="AstIndirectCall_DoEmitPartialApplicationCode_Cannot_translate_slice" xml:space="preserve">
     <value>Cannot translate slice.</value>
   </data>

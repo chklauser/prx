@@ -25,6 +25,7 @@
 //  IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 using System;
 using System.IO;
+using System.Reflection;
 using System.Text;
 using System.Threading.Tasks;
 using JetBrains.Annotations;
@@ -75,11 +76,16 @@ namespace Prexonite.Compiler.Build
             return FromStream(new MemoryStream(data, false), encoding, false);
         }
 
+        public static ISource FromEmbeddedResource([NotNull] string name)
+        {
+            if (name == null) throw new ArgumentNullException(nameof(name));
+            return new EmbeddedResourceSource(Assembly.GetExecutingAssembly(), "Prexonite." + name);
+        }
+
         [NotNull]
         public static async Task<ISource> CacheInMemoryAsync([NotNull] this ISource source)
         {
-            TextReader reader;
-            if(!source.TryOpen(out reader))
+            if(!source.TryOpen(out var reader))
                 throw new InvalidOperationException("Unable to open source " + source + " for reading.");
             var contents = await reader.ReadToEndAsync();
             return FromString(contents);

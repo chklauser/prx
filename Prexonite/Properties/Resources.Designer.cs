@@ -19,7 +19,7 @@ namespace Prexonite.Properties {
     // class via a tool like ResGen or Visual Studio.
     // To add or remove a member, edit your .ResX file then rerun ResGen
     // with the /str option, or rebuild your VS project.
-    [global::System.CodeDom.Compiler.GeneratedCodeAttribute("System.Resources.Tools.StronglyTypedResourceBuilder", "16.0.0.0")]
+    [global::System.CodeDom.Compiler.GeneratedCodeAttribute("System.Resources.Tools.StronglyTypedResourceBuilder", "4.0.0.0")]
     [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
     [global::System.Runtime.CompilerServices.CompilerGeneratedAttribute()]
     public class Resources {
@@ -475,68 +475,6 @@ namespace Prexonite.Properties {
         }
         
         /// <summary>
-        ///   Looks up a localized string similar to //PRX
-        ///
-        ///Name prx::v1;
-        ///
-        ///declare {
-        ///	command:
-        ///		print,println,
-        ///		meta,
-        ///		boxed,
-        ///        string_concat,
-        ///		concat,
-        ///		map,
-        ///		select,
-        ///		foldl,
-        ///		foldr,
-        ///		dispose,
-        ///		call\perform,
-        ///		thunk,
-        ///		asthunk,
-        ///		force,
-        ///		toseq,
-        ///		call\member\perform,
-        ///		caller,
-        ///		pair,
-        ///		unbind,
-        ///		sort,
-        ///		orderby,
-        ///		LoadAssembly,
-        ///		debug,
-        ///		setcenter,
-        ///		setleft,
-        ///		setright,
-        ///		all,
-        ///		where,
-        ///		skip,
-        ///		limit,
-        ///		take,
-        ///		abs,
-        ///		ceiling,
-        ///		exp,
-        ///		floor,
-        ///		log,
-        ///		max,
-        ///		min,
-        ///		pi,
-        ///		round,
-        ///		sin,
-        ///		cos,
-        ///		sqrt,
-        ///		tan,
-        ///		char,
-        ///		count,
-        ///		distinct,
-        ///		u [rest of string was truncated]&quot;;.
-        /// </summary>
-        public static string legacy_symbols {
-            get {
-                return ResourceManager.GetString("legacy_symbols", resourceCulture);
-            }
-        }
-        
-        /// <summary>
         ///   Looks up a localized string similar to {1}begin compiling {0} [Path: {2} ].
         /// </summary>
         public static string Loader__begin_compiling {
@@ -871,67 +809,6 @@ namespace Prexonite.Properties {
         }
         
         /// <summary>
-        ///   Looks up a localized string similar to //PRX
-        ///
-        ///Name prx::core/0.0;
-        ///References {
-        ///  prx::prim/0.0
-        ///};
-        ///
-        ///namespace prx.core
-        ///{
-        ///  namespace seq
-        ///  {
-        ///
-        ///  }
-        ///  export(*),prx.prim(
-        ///      map,foldl,foldr,sort,all =&gt; to_list, where =&gt; filter, skip,take,
-        ///      count,distinct,union,unique,frequency,groupby,intersect,each,exists,forall,
-        ///      takewhile,except,range, reverse, headtail, append, sum, contains,
-        ///      create_enumerator,seqconcat);
-        ///
-        ///  namespace nonstrict
-        ///  {
-        ///
-        ///  }
-        ///  export(*),prx.prim(thunk,asthunk =&gt; to_thunk,force,toseq =&gt; to_seq);
-        ///
-        ///  namespace rt
-        ///  {
-        /// [rest of string was truncated]&quot;;.
-        /// </summary>
-        public static string prx_core {
-            get {
-                return ResourceManager.GetString("prx_core", resourceCulture);
-            }
-        }
-        
-        /// <summary>
-        ///   Looks up a localized string similar to // Primitive operations built into the implementation.
-        ///// Implementation detail. Take dependency at your own risk.
-        ///Name prx::prim;
-        ///
-        ///namespace prx.prim
-        ///{
-        ///  declare(
-        ///    print = ref command &quot;print&quot;,
-        ///    println = ref command &quot;println&quot;,
-        ///    meta = ref command &quot;meta&quot;,
-        ///    boxed = ref command &quot;boxed&quot;,
-        ///    string_concat = ref command &quot;string_concat&quot;,
-        ///    map = ref command &quot;map&quot;,
-        ///    select = ref command &quot;select&quot;,
-        ///    foldl = ref command &quot;foldl&quot;,
-        ///    foldr = ref command &quot;foldr&quot;,
-        ///    dispose = ref command &quot;dispose&quot; [rest of string was truncated]&quot;;.
-        /// </summary>
-        public static string prx_prim {
-            get {
-                return ResourceManager.GetString("prx_prim", resourceCulture);
-            }
-        }
-        
-        /// <summary>
         ///   Looks up a localized string similar to {0} can only be used in a macro context..
         /// </summary>
         public static string Reference_can_only_be_used_in_a_macro_context {
@@ -1010,32 +887,6 @@ namespace Prexonite.Properties {
         public static string SelfAssemblingPlan_RefSpecMustHaveSource {
             get {
                 return ResourceManager.GetString("SelfAssemblingPlan_RefSpecMustHaveSource", resourceCulture);
-            }
-        }
-        
-        /// <summary>
-        ///   Looks up a localized string similar to // Runtime component of the Prexonite shell scripting extensions
-        ///Name sh/0.0;
-        ///References {
-        ///  sys/0.0
-        ///};
-        ///
-        ///namespace sh {
-        ///
-        ///    function stdout = &quot;sh.stdout&quot;;
-        ///    function stdin  = &quot;sh.stdin&quot;;
-        ///    function stderr = &quot;sh.stderr&quot;;
-        ///} export(stdout, stdin, stderr, stream, lines, words, which, create_command, call\sh, (|&gt;), (&lt;|.), (|&gt;.));
-        ///
-        ///{
-        ///    var time = new command(which(&quot;time&quot;));
-        ///    var grep = new command(which(&quot;grep&quot;));
-        ///    var tr = new command(which(&quot;tr&quot;));
-        ///    var cut = new command(which(&quot;cu [rest of string was truncated]&quot;;.
-        /// </summary>
-        public static string sh {
-            get {
-                return ResourceManager.GetString("sh", resourceCulture);
             }
         }
         
@@ -1126,32 +977,6 @@ namespace Prexonite.Properties {
         public static string SymbolMExprParser_EmptySymbolicReference {
             get {
                 return ResourceManager.GetString("SymbolMExprParser_EmptySymbolicReference", resourceCulture);
-            }
-        }
-        
-        /// <summary>
-        ///   Looks up a localized string similar to //PRX
-        ///
-        ///Name sys/0.0;
-        ///References {
-        ///  prx::prim/0.0,
-        ///  prx::core/0.0
-        ///};
-        ///
-        ///// Re-export prx.prim from sys. We want to keep the existence of the prx.prim module
-        ///// a secret.
-        ///namespace prx.prim {}
-        ///export prx.prim.*;
-        ///
-        ///// prx.core is the part of the standard library that even other parts of the standard
-        ///// library depend on.
-        ///// For the moment, prx.core gets dumped directly into sys.
-        ///// In case of backwards-incompatible changes in the future, sys would maintain the old.
-        ///// behavior while prx.core wo [rest of string was truncated]&quot;;.
-        /// </summary>
-        public static string sys {
-            get {
-                return ResourceManager.GetString("sys", resourceCulture);
             }
         }
         

@@ -56,6 +56,16 @@
     <GrammarFragment Include="Compiler\Grammar\Parser*.atg" />
     <Compile Remove="Parser.cs" />
     <Compile Remove="Scanner.cs" />
+    <None Remove="prxlib\legacy_symbols.pxs" />
+    <None Remove="prxlib\prx.core.pxs" />
+    <None Remove="prxlib\prx.prim.pxs" />
+    <None Remove="prxlib\sh.pxs" />
+    <None Remove="prxlib\sys.pxs" />
+    <EmbeddedResource Include="prxlib\legacy_symbols.pxs" />
+    <EmbeddedResource Include="prxlib\prx.core.pxs" />
+    <EmbeddedResource Include="prxlib\prx.prim.pxs" />
+    <EmbeddedResource Include="prxlib\sh.pxs" />
+    <EmbeddedResource Include="prxlib\sys.pxs" />
     <GrammarFragment Include="Compiler\Grammar\Footer.atg" />
   </ItemGroup>
   <ItemGroup>
