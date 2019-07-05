@@ -39,7 +39,6 @@ steps:
 - task: DotNetCoreCLI@2
   inputs:
     command: pack
-    projects: 'PxCoco/PxCoco.csproj'
+    searchPatternPack: 'PxCoco/PxCoco.csproj'
     nobuild: true
-    packagesToPack: 'PxCoco/PxCoco.csproj'
     configurationToPack: '$(BuildConfiguration)'
