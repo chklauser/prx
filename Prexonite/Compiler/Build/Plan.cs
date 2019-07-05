@@ -23,12 +23,12 @@
 //  DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, 
 //  WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING 
 //  IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+
 using System.Diagnostics;
 using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
 using Prexonite.Compiler.Build.Internal;
-using Prexonite.Properties;
 
 namespace Prexonite.Compiler.Build
 {
@@ -37,11 +37,11 @@ namespace Prexonite.Compiler.Build
         public static readonly TraceSource Trace = new TraceSource("Prexonite.Compiler.Build");
 
         /// <summary>List of modules included in the Prexonite assembly. Does not include 'sys' itself.</summary>
-        private static readonly string[] _stdLibModules =
+        private static readonly ISource[] _stdLibModules =
         {
-            Resources.prx_prim,
-            Resources.prx_core,
-            Resources.sh
+            Source.FromEmbeddedResource("prxlib.prx.prim.pxs"),
+            Source.FromEmbeddedResource("prxlib.prx.core.pxs"),
+            Source.FromEmbeddedResource("prxlib.sh.pxs")
         };
 
         public static IPlan CreateDefault()
@@ -62,10 +62,10 @@ namespace Prexonite.Compiler.Build
             if (stdPreference == StandardLibraryPreference.Default)
             {
                 // Provide modules that the standard library may be composed of. No dependency checking.
-                await Task.WhenAll(_stdLibModules.Select(s => plan.RegisterModule(Source.FromString(s), token)));
+                await Task.WhenAll(_stdLibModules.Select(s => plan.RegisterModule(s, token)));
 
                 // Describe standard library. Dependencies must be satisfied
-                var stdlib = await plan.AssembleAsync(Source.FromString(Resources.sys), token);
+                var stdlib = await plan.AssembleAsync(Source.FromEmbeddedResource("prxlib.sys.pxs"), token);
                 plan.StandardLibrary.Add(stdlib.Name);
             }
             return plan;

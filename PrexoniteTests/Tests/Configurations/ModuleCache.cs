@@ -43,9 +43,6 @@ namespace PrexoniteTests.Tests.Configurations
 {
     public static class ModuleCache
     {
-        [ThreadStatic]
-        private static DateTime _lastAccess;
-
         [ThreadStatic] 
         private static IncrementalPlan _plan;
 
@@ -62,7 +59,7 @@ namespace PrexoniteTests.Tests.Configurations
         {
             get
             {
-                _lastAccess = DateTime.Now;
+                LastAccess = DateTime.Now;
                 if (_plan != null) return _plan;
                 else
                 {
@@ -89,7 +86,7 @@ namespace PrexoniteTests.Tests.Configurations
             {
                 var moduleName = new ModuleName("prx.v1", new Version(0, 0));
                 var desc = Cache.CreateDescription(moduleName,
-                                                   Source.FromString(Resources.legacy_symbols),
+                                                   Source.FromEmbeddedResource("prxlib.legacy_symbols.pxs"),
                                                    "prxlib/legacy_symbols.pxs",
                                                    Enumerable.Empty<ModuleName>());
                 Cache.TargetDescriptions.Add(desc);
@@ -115,17 +112,17 @@ namespace PrexoniteTests.Tests.Configurations
             try
             {
                 var primName = new ModuleName("prx.prim", new Version(0, 0));
-                var primDesc = Cache.CreateDescription(primName, Source.FromString(Resources.prx_prim),
+                var primDesc = Cache.CreateDescription(primName, Source.FromEmbeddedResource("prxlib.prx.prim.pxs"),
                     "prxlib/prx.prim.pxs", Enumerable.Empty<ModuleName>());
                 Cache.TargetDescriptions.Add(primDesc);
 
                 var coreName = new ModuleName("prx.core", new Version(0, 0));
-                var coreDesc = Cache.CreateDescription(coreName, Source.FromString(Resources.prx_core),
+                var coreDesc = Cache.CreateDescription(coreName, Source.FromEmbeddedResource("prxlib.prx.core.pxs"),
                     "prxlib/prx.core.pxs", primName.Singleton());
                 Cache.TargetDescriptions.Add(coreDesc);
 
                 var sysName = new ModuleName("sys", new Version(0, 0));
-                var desc = Cache.CreateDescription(sysName, Source.FromString(Resources.sys), "prxlib/sys.pxs",
+                var desc = Cache.CreateDescription(sysName, Source.FromEmbeddedResource("prxlib.sys.pxs"), "prxlib/sys.pxs",
                     new[]{ primName, coreName });
                 Cache.TargetDescriptions.Add(desc);
 
@@ -139,14 +136,8 @@ namespace PrexoniteTests.Tests.Configurations
             }
         }
 
-        public static DateTime LastAccess
-        {
-            get
-            {
-                return _lastAccess;
-            }
-            set { _lastAccess = value; }
-        }
+        [field: ThreadStatic]
+        public static DateTime LastAccess { get; set; }
 
         public static TimeSpan StaleTimeout
         {

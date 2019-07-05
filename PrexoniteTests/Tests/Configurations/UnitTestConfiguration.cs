@@ -24,6 +24,7 @@
 //  WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING 
 //  IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 using System;
+using System.Diagnostics;
 using System.IO;
 using System.Linq;
 using NUnit.Framework;
@@ -128,26 +129,24 @@ namespace PrexoniteTests.Tests.Configurations
             ModuleCache.Describe(container.Loader, suiteDescription);
 
             // Finally instantiate the test suite application(s)
-            var result = ModuleCache.Load(model.TestSuiteScript);
-            container.Application = result.Item1;
+            var (application, target) = ModuleCache.Load(model.TestSuiteScript);
+            container.Application = application;
             container.PrintCompound();
 
-            ITarget target = result.Item2;
             if (!target.IsSuccessful)
             {
-                Console.WriteLine("The target {0} failed to build.", target.Name);
+                TestContext.Error.WriteLine("The target {0} failed to build. Working directory: {1}", target.Name, Environment.CurrentDirectory);
 
                 if(target.Exception != null)
-                    Console.WriteLine(target.Exception);
+                    TestContext.Error.WriteLine(target.Exception);
 
                 foreach (var error in target.Messages.Where(m => m.Severity == MessageSeverity.Error))
-                    Console.WriteLine("Error: {0}", error);
+                    TestContext.Error.WriteLine("Error: {0}", error);
                 foreach (var warning in target.Messages.Where(m => m.Severity == MessageSeverity.Warning))
-                    Console.WriteLine("Warning: {0}", warning);
+                    TestContext.WriteLine("Warning: {0}", warning);
                 foreach (var info in target.Messages.Where(m => m.Severity == MessageSeverity.Info))
-                    Console.WriteLine("Info: {0}", info);
-
-                Assert.Fail("The target {0} failed to build.", target.Name);
+                    TestContext.WriteLine("Info: {0}", info);
+                Assert.Fail("The target {0} failed to build. Working directory: {1}", target.Name, Environment.CurrentDirectory);
             }
 
             _prepareExecution(container);
