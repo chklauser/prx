@@ -52,7 +52,7 @@ namespace PrexoniteTests.Tests.Configurations
 
         public const string ListTestsId = @"test\list_test";
         public const string RunTestId = @"test\run_test";
-        public const string PrexoniteUnitTestFramework = @"psr\test.pxs";
+        public static readonly string PrexoniteUnitTestFramework = Path.Combine("psr", "test.pxs");
         public const string DumpRequestFlag = "request_dump";
 
         protected abstract UnitTestConfiguration Runner { get; }
@@ -73,7 +73,7 @@ namespace PrexoniteTests.Tests.Configurations
             if (Directory.Exists(slnPath))
             {
                 var psrTestsPath =
-                    Path.GetFullPath(Path.Combine(slnPath, @"PrexoniteTests\psr-tests"));
+                    Path.GetFullPath(Path.Combine(slnPath, "PrexoniteTests", "psr-tests"));
                 Console.WriteLine("inferred psr-tests path: " + psrTestsPath, "Engine.Path");
                 Engine.Paths.Add(psrTestsPath);
 
@@ -112,8 +112,7 @@ namespace PrexoniteTests.Tests.Configurations
                 .DynamicCall(Root, new PValue[0], PCall.Get, "Value")
                 .DynamicCall(Root, new PValue[0], PCall.Get, "e")
                 .Value;
-            var e = eObj as Exception;
-            if (e != null)
+            if (eObj is Exception e)
             {
                 throw e;
             }
