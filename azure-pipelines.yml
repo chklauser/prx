@@ -26,6 +26,7 @@ steps:
     version: '2.2.300'
 
 - task: DotNetCoreCLI@2
+  displayName: Restore (Win)
   inputs:
     command: restore
     projects: '$(solution)'
@@ -33,12 +34,14 @@ steps:
     nugetConfigPath: NuGet.Config
 
 - task: DotNetCoreCLI@2
+  displayName: Build (Win)
   inputs:
     command: build
     projects: '$(solution)'
     arguments: '"/p:Platform=$(BuildPlatform);Configuration=$(BuildConfiguration)" --no-restore'
 
 - task: DotNetCoreCLI@2
+  displayName: Unit Test (Win)
   inputs:
     command: test    
     projects: '**/*Tests.csproj'
@@ -46,14 +49,16 @@ steps:
     arguments: '"/p:Platform=$(BuildPlatform);Configuration=$(BuildConfiguration)" --no-restore'
 
 - task: DotNetCoreCLI@2
+  displayName: Pack (Win)
   inputs:
     command: pack
-    searchPatternPack: 'Prexonite/Prexonite.csproj;Prx/Prx.csproj'
+    searchPatternPack: 'Prexonite/Prexonite.csproj'
     nobuild: true
     configurationToPack: $(BuildConfiguration)
     buildProperties: Platform=$(BuildPlatform)
 
 - task: PublishPipelineArtifact@0
+  displayName: Publish to pipeline (Win)
   inputs:
     artifactName: 'binaries'
     targetPath: '$(Build.ArtifactStagingDirectory)'
