@@ -70,14 +70,6 @@ namespace PrexoniteTests.Tests.Configurations
         }
 
         // ReSharper disable InconsistentNaming
-        /// <summary>
-        /// Description of the module containing legacy symbols.
-        /// </summary>
-        private static ITargetDescription LegacySymbolsDescription
-        // ReSharper restore InconsistentNaming
-        {
-            get { return _legacySymbolsDescription ?? (_legacySymbolsDescription = _loadLegacySymbols()); }
-        }
 
         private static ITargetDescription _loadLegacySymbols()
         {
@@ -100,6 +92,13 @@ namespace PrexoniteTests.Tests.Configurations
             }
             
         }
+
+        /// <summary>
+        /// Description of the module containing legacy symbols.
+        /// </summary>
+        private static ITargetDescription LegacySymbolsDescription =>
+                _legacySymbolsDescription ?? (_legacySymbolsDescription = _loadLegacySymbols());
+        // ReSharper restore InconsistentNaming
 
         private static ITargetDescription StdlibDescription
         {
@@ -139,19 +138,7 @@ namespace PrexoniteTests.Tests.Configurations
         [field: ThreadStatic]
         public static DateTime LastAccess { get; set; }
 
-        public static TimeSpan StaleTimeout
-        {
-            get
-            {
-                return new TimeSpan(0,0,0,20);
-            }
-        }
-
-        public static bool IsStale
-        {
-            //get { return (DateTime.Now - LastAccess) > StaleTimeout; }
-            get { return false; }
-        }
+        public static bool IsStale => false;
 
 // ReSharper disable InconsistentNaming
         private static void EnsureFresh()
@@ -174,7 +161,7 @@ namespace PrexoniteTests.Tests.Configurations
 
             var file = environment.ApplyLoadPaths(path);
             if (file == null || !file.Exists)
-                throw new PrexoniteException(string.Format("Cannot find script {0}.", path));
+                throw new PrexoniteException($"Cannot find script {path}.");
 
             var moduleName = new ModuleName(Path.GetFileNameWithoutExtension(path), new Version(0, 0));
 

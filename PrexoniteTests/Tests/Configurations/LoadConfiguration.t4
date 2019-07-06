@@ -4,7 +4,7 @@
 <#@ import namespace="System.IO" #>
 <#@ import namespace="System.Linq" #>
 <#+ 
-    const string ttEscape = @"..\..\";
+    readonly string ttEscape = Path.Combine("..", "..");
     const string testPathPrefix = ttEscape + @"psr-tests";
     const string testConfigurationName = "testconfig.txt";
     const string testPattern = @"*.test.pxs";
@@ -40,7 +40,7 @@
     // [(test_file_name, [under_test], [test_deps], [test_case])] 
     IEnumerable<Configuration> _getTestConfiguration()
     {
-        var path =Path.GetFullPath(Host.ResolvePath(Path.Combine(testPathPrefix, testConfigurationName)));
+        var path = Path.GetFullPath(Host.ResolvePath(Path.Combine(testPathPrefix, testConfigurationName)));
         using(var sr = new StreamReader(
                 new FileStream(path, FileMode.Open, FileAccess.Read), 
                 System.Text.Encoding.UTF8))
@@ -48,6 +48,10 @@
             string line = sr.ReadLine();
             while(line != null && line.Length > 2)
             {
+                // Normalize directory separator for cross-platform testing 
+                line = line.Replace(@"/", System.IO.Path.DirectorySeparatorChar);
+                line = line.Replace(@"\", System.IO.Path.DirectorySeparatorChar);
+                
                 var fs = line.Split(new [] {configSectionSep},4);
                 if(fs.Length < 4)
                     continue;

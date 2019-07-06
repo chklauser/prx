@@ -320,12 +320,12 @@ Add System::Xml to Imports;
         public void Unicode()
         {
             _compile(@"
-Name Überreden;
-Description ""Künste des Überredens von Krähen."";
+Name Ãœberreden;
+Description ""KÃ¼nste des Ãœberredens von KrÃ¤hen."";
 ");
 
-            Assert.AreEqual("Überreden", target.Meta["Name"].Text);
-            Assert.AreEqual("Künste des Überredens von Krähen.", target.Meta["Description"].Text);
+            Assert.AreEqual("Ãœberreden", target.Meta["Name"].Text);
+            Assert.AreEqual("KÃ¼nste des Ãœberredens von KrÃ¤hen.", target.Meta["Description"].Text);
         }
 
         #endregion

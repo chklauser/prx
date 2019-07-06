@@ -19,10 +19,10 @@ stages:
       - job: build_test
         strategy:
           matrix:
-            windows:
+            Windows:
               vmImage: 'windows-2019'
               jobSuffix: win
-            linux:
+            Linux:
               vmImage: 'ubuntu-16.04'
               jobSuffix: linux
         displayName: Build/Test
