@@ -31,13 +31,13 @@
     <!-- Need to temporarily remove C# files from the 'Compile' group -->
     <ItemGroup>
       <Compile Remove="Tests\Configurations\PsrUnitTests.cs"/>
-      <Compile Remove="Tests\Configurations\VmTestConfigurations.cs"/>
+      <Compile Remove="Tests\Configurations\VMTestConfigurations.cs"/>
     </ItemGroup>
     <Exec WorkingDirectory="$(ProjectDir)" Command="dotnet tt %(TextTemplate.Identity)"/>
     <!-- Re-add C# files to the Compile group -->
     <ItemGroup>
       <Compile Include="Tests\Configurations\PsrUnitTests.cs"/>
-      <Compile Include="Tests\Configurations\VmTestConfigurations.cs"/>
+      <Compile Include="Tests\Configurations\VMTestConfigurations.cs"/>
     </ItemGroup>
   </Target>
   
