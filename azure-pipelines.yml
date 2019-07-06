@@ -53,10 +53,12 @@ stages:
         - task: Bash@3
           displayName: DEBUG PsrUnitTests.cs
           condition: always()
-          inputs: |
-            pwd
-            stat PrexoniteTests/Tests/Configurations/PsrUnitTests.cs 
-            cat PrexoniteTests/Tests/Configurations/PsrUnitTests.cs || true
+          inputs:
+            targetType: inline
+            script: |
+              pwd
+              stat PrexoniteTests/Tests/Configurations/PsrUnitTests.cs 
+              cat PrexoniteTests/Tests/Configurations/PsrUnitTests.cs || true
         
         - task: DotNetCoreCLI@2
           displayName: Unit Test
