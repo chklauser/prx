@@ -56,7 +56,7 @@ namespace PrexoniteTests.Tests.Configurations
 
 <#      foreach(var testCase in testFile.TestCases) { #>
             [Test]
-            public void <#=testCase.Replace(@"\","_").Replace("$","_").Replace("'","_")#>()
+            public void <#=testCase.Replace(System.IO.Path.DirectorySeparatorChar,'_').Replace('$','_').Replace('\'','_')#>()
             {
                 RunUnitTest(@"<#=testCase#>");
             } 
