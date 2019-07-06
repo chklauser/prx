@@ -28,13 +28,7 @@ namespace PrexoniteTests.Tests.Configurations
     internal class <#=baseName#>_Interpreted : <#=className#>
     {
         private readonly UnitTestConfiguration _runner = new UnitTestConfiguration.InMemory();
-        protected override UnitTestConfiguration Runner
-        {
-            get 
-            {
-                return _runner;
-            }
-        }
+        protected override UnitTestConfiguration Runner => _runner;
     }
 
     [TestFixture]
@@ -42,13 +36,7 @@ namespace PrexoniteTests.Tests.Configurations
     internal class <#=baseName#>_CilStatic : <#=className#>
     {
         private readonly UnitTestConfiguration _runner = new UnitTestConfiguration.InMemory{CompileToCil=true};
-        protected override UnitTestConfiguration Runner
-        {
-            get 
-            {
-                return _runner;
-            }
-        }
+        protected override UnitTestConfiguration Runner => _runner;
     }
 
     [TestFixture]
@@ -59,13 +47,7 @@ namespace PrexoniteTests.Tests.Configurations
             CompileToCil=true,
             Linking = FunctionLinking.FullyIsolated
         };
-        protected override UnitTestConfiguration Runner
-        {
-            get 
-            {
-                return _runner;
-            }
-        }
+        protected override UnitTestConfiguration Runner => _runner;
     }
 
     [TestFixture]
@@ -74,13 +56,7 @@ namespace PrexoniteTests.Tests.Configurations
     internal class <#=baseName#>_StoredInterpreted : <#=className#>
     {
         private readonly UnitTestConfiguration _runner = new UnitTestConfiguration.FromStored();
-        protected override UnitTestConfiguration Runner
-        {
-            get 
-            {
-                return _runner;
-            }
-        }
+        protected override UnitTestConfiguration Runner => _runner;
     }
 
     [TestFixture]
@@ -89,13 +65,7 @@ namespace PrexoniteTests.Tests.Configurations
     internal class <#=baseName#>_StoredCilStatic : <#=className#>
     {
         private readonly UnitTestConfiguration _runner = new UnitTestConfiguration.FromStored{CompileToCil=true};
-        protected override UnitTestConfiguration Runner
-        {
-            get 
-            {
-                return _runner;
-            }
-        }
+        protected override UnitTestConfiguration Runner => _runner;
     }
 
     
@@ -108,13 +78,7 @@ namespace PrexoniteTests.Tests.Configurations
             CompileToCil=true,
             Linking = FunctionLinking.JustAvailableForLinking
         };
-        protected override UnitTestConfiguration Runner
-        {
-            get 
-            {
-                return _runner;
-            }
-        }
+        protected override UnitTestConfiguration Runner => _runner;
     }
 <# } #>
 

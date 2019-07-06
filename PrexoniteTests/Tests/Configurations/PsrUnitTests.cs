@@ -1,4 +1,4 @@
-﻿ 
+ 
 // ReSharper disable RedundantUsingDirective
 using System;
 using System.Reflection;

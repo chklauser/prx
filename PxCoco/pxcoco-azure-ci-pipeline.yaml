@@ -18,6 +18,9 @@ pool:
 variables:
   buildConfiguration: 'Release'
 
+timeoutInMinutes: 5
+cancelTimeoutInMinutes: 1
+
 steps:
 - task: DotNetCoreInstaller@0
   inputs:

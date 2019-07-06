@@ -13,14 +13,33 @@
   </PropertyGroup>
 
   <ItemGroup>
+    <ProjectReference Include="..\Prexonite\Prexonite.csproj" />
     <PackageReference Include="Microsoft.NET.Test.Sdk" Version="16.2.0" />
     <PackageReference Include="Moq" Version="4.12.0" />
     <PackageReference Include="NUnit" Version="3.12.0" />
     <PackageReference Include="NUnit3TestAdapter" Version="3.13.0" />
+    <DotNetCliToolReference Include="T5.TextTransform.Tool" Version="1.1.0" />
   </ItemGroup>
 
   <ItemGroup>
-    <ProjectReference Include="..\Prexonite\Prexonite.csproj" />
+    <TextTemplate Include="**\*.tt" />
   </ItemGroup>
+  
+  <!-- Text Template -->
+  <Target Name="TextTemplateTransform" BeforeTargets="BeforeBuild">
+    <!-- https://notquitepure.info/2018/12/12/T4-Templates-at-Build-Time-With-Dotnet-Core/ -->
+    <!-- Need to temporarily remove C# files from the 'Compile' group -->
+    <ItemGroup>
+      <Compile Remove="Tests\Configurations\PsrUnitTests.cs"/>
+      <Compile Remove="Tests\Configurations\VmTestConfigurations.cs"/>
+    </ItemGroup>
+    <Exec WorkingDirectory="$(ProjectDir)" Command="dotnet tt %(TextTemplate.Identity)"/>
+    <!-- Re-add C# files to the Compile group -->
+    <ItemGroup>
+      <Compile Include="Tests\Configurations\PsrUnitTests.cs"/>
+      <Compile Include="Tests\Configurations\VmTestConfigurations.cs"/>
+    </ItemGroup>
+  </Target>
+  
 
 </Project>
