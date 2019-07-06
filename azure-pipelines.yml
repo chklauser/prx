@@ -1,7 +1,3 @@
-# .NET Desktop
-# Build and run tests for .NET Desktop or Windows classic desktop solutions.
-# Add steps that publish symbols, save build artifacts, and more:
-# https://docs.microsoft.com/azure/devops/pipelines/apps/windows/dot-net
 
 trigger:
   batch: true
@@ -12,53 +8,68 @@ trigger:
     exclude:
     - PxCoco/*
 
-pool:
-  vmImage: 'windows-2019'
-
-variables:
-  solution: 'prx.sln'
-  buildPlatform: 'Any CPU'
-  buildConfiguration: 'Release'
-
-steps:
-- task: DotNetCoreInstaller@0
-  inputs:
-    version: '2.2.300'
-
-- task: DotNetCoreCLI@2
-  displayName: Restore (Win)
-  inputs:
-    command: restore
-    projects: '$(solution)'
-    selectOrConfig: 'config'
-    nugetConfigPath: NuGet.Config
-
-- task: DotNetCoreCLI@2
-  displayName: Build (Win)
-  inputs:
-    command: build
-    projects: '$(solution)'
-    arguments: '"/p:Platform=$(BuildPlatform);Configuration=$(BuildConfiguration)" --no-restore'
-
-- task: DotNetCoreCLI@2
-  displayName: Unit Test (Win)
-  inputs:
-    command: test    
-    projects: '**/*Tests.csproj'
-    nobuild: true
-    arguments: '"/p:Platform=$(BuildPlatform);Configuration=$(BuildConfiguration)" --no-restore'
-
-- task: DotNetCoreCLI@2
-  displayName: Pack (Win)
-  inputs:
-    command: pack
-    searchPatternPack: 'Prexonite/Prexonite.csproj'
-    nobuild: true
-    configurationToPack: $(BuildConfiguration)
-    buildProperties: Platform=$(BuildPlatform)
-
-- task: PublishPipelineArtifact@0
-  displayName: Publish to pipeline (Win)
-  inputs:
-    artifactName: 'binaries'
-    targetPath: '$(Build.ArtifactStagingDirectory)'
+stages:
+  - stage: build_test
+    displayName: Build/Test
+    variables:
+      solution: 'prx.sln'
+      buildPlatform: 'Any CPU'
+      buildConfiguration: 'Release'
+    jobs:
+      - job: build_test
+        strategy:
+          matrix:
+            windows:
+              vmImage: 'windows-2019'
+              displaySuffix: 'Win'
+              platform: win
+            linux:
+              vmImage: 'ubuntu-16.04'
+              displaySuffix: 'Linux'
+              platform: linux
+        displayName: Build/Test $(displaySuffix)
+        pool:
+          vmImage: '$(vmImage)'
+        steps:
+        - task: DotNetCoreInstaller@0
+          inputs:
+            version: '2.2.300'
+        
+        - task: DotNetCoreCLI@2
+          displayName: Restore ($(displaySuffix))
+          inputs:
+            command: restore
+            projects: '$(solution)'
+            selectOrConfig: 'config'
+            nugetConfigPath: NuGet.Config
+        
+        - task: DotNetCoreCLI@2
+          displayName: Build ($(displaySuffix))
+          inputs:
+            command: build
+            projects: '$(solution)'
+            arguments: '"/p:Platform=$(BuildPlatform);Configuration=$(BuildConfiguration)" --no-restore'
+        
+        - task: DotNetCoreCLI@2
+          displayName: Unit Test ($(displaySuffix))
+          inputs:
+            command: test    
+            projects: '**/*Tests.csproj'
+            nobuild: true
+            arguments: '"/p:Platform=$(BuildPlatform);Configuration=$(BuildConfiguration)" --no-restore'
+        
+        - task: DotNetCoreCLI@2
+          displayName: Pack ($(displaySuffix))
+          inputs:
+            command: pack
+            searchPatternPack: 'Prexonite/Prexonite.csproj'
+            nobuild: true
+            configurationToPack: $(BuildConfiguration)
+            buildProperties: Platform=$(BuildPlatform)
+        
+        - task: PublishPipelineArtifact@0
+          displayName: Publish to pipeline ($(displaySuffix))
+          condition: and(succeeded(), eq(variables['platform'], 'win'))
+          inputs:
+            artifactName: 'binaries'
+            targetPath: '$(Build.ArtifactStagingDirectory)'
