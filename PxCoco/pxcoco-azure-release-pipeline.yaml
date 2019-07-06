@@ -15,9 +15,6 @@ variables:
   buildConfiguration: 'Release'
   Version: '$(Build.BuildNumber)'
 
-timeoutInMinutes: 10
-cancelTimeoutInMinutes: 2
-
 steps:
 - task: DotNetCoreInstaller@0
   inputs:
