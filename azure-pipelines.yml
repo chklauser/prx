@@ -21,13 +21,11 @@ stages:
           matrix:
             windows:
               vmImage: 'windows-2019'
-              displaySuffix: 'Win'
-              platform: win
+              jobSuffix: win
             linux:
               vmImage: 'ubuntu-16.04'
-              displaySuffix: 'Linux'
-              platform: linux
-        displayName: Build/Test $(displaySuffix)
+              jobSuffix: linux
+        displayName: Build/Test
         pool:
           vmImage: '$(vmImage)'
         steps:
@@ -36,7 +34,7 @@ stages:
             version: '2.2.300'
         
         - task: DotNetCoreCLI@2
-          displayName: Restore ($(displaySuffix))
+          displayName: Restore
           inputs:
             command: restore
             projects: '$(solution)'
@@ -44,14 +42,14 @@ stages:
             nugetConfigPath: NuGet.Config
         
         - task: DotNetCoreCLI@2
-          displayName: Build ($(displaySuffix))
+          displayName: Build
           inputs:
             command: build
             projects: '$(solution)'
             arguments: '"/p:Platform=$(BuildPlatform);Configuration=$(BuildConfiguration)" --no-restore'
         
         - task: DotNetCoreCLI@2
-          displayName: Unit Test ($(displaySuffix))
+          displayName: Unit Test
           inputs:
             command: test    
             projects: '**/*Tests.csproj'
@@ -59,7 +57,7 @@ stages:
             arguments: '"/p:Platform=$(BuildPlatform);Configuration=$(BuildConfiguration)" --no-restore'
         
         - task: DotNetCoreCLI@2
-          displayName: Pack ($(displaySuffix))
+          displayName: Pack
           inputs:
             command: pack
             searchPatternPack: 'Prexonite/Prexonite.csproj'
@@ -68,8 +66,8 @@ stages:
             buildProperties: Platform=$(BuildPlatform)
         
         - task: PublishPipelineArtifact@0
-          displayName: Publish to pipeline ($(displaySuffix))
-          condition: and(succeeded(), eq(variables['platform'], 'win'))
+          displayName: Publish to pipeline
+          condition: and(succeeded(), eq(variables['jobSuffix'], 'win'))
           inputs:
             artifactName: 'binaries'
             targetPath: '$(Build.ArtifactStagingDirectory)'
