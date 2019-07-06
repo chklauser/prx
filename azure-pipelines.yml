@@ -49,6 +49,14 @@ stages:
             command: build
             projects: '$(solution)'
             arguments: '"/p:Platform=$(BuildPlatform);Configuration=$(BuildConfiguration)" --no-restore'
+            
+        - task: Bash@3
+          displayName: DEBUG PsrUnitTests.cs
+          condition: always()
+          inputs: |
+            pwd
+            stat PrexoniteTests/Tests/Configurations/PsrUnitTests.cs 
+            cat PrexoniteTests/Tests/Configurations/PsrUnitTests.cs || true
         
         - task: DotNetCoreCLI@2
           displayName: Unit Test
