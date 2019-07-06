@@ -24,11 +24,13 @@ steps:
     version: '2.2.300'
 
 - task: DotNetCoreCLI@2
+  displayName: Restore (Win)
   inputs:
     command: restore
     projects: 'PxCoco/PxCoco.sln'
 
 - task: DotNetCoreCLI@2
+  displayName: Build (Win)
   inputs:
     command: build
     projects: 'PxCoco/PxCoco.sln'
@@ -37,6 +39,7 @@ steps:
 # There are no automated tests for PxCoco.
 
 - task: DotNetCoreCLI@2
+  displayName: Pack (Win)
   inputs:
     command: pack
     searchPatternPack: 'PxCoco/PxCoco.csproj'

@@ -28,11 +28,13 @@ steps:
   condition: and(succeeded(), startsWith(variables['Build.SourceBranch'], 'refs/tags/'))
 
 - task: DotNetCoreCLI@2
+  displayName: Restore (Win)
   inputs:
     command: restore
     projects: 'PxCoco/PxCoco.sln'
 
 - task: DotNetCoreCLI@2
+  displayName: Build (Win)
   inputs:
     command: build
     projects: 'PxCoco/PxCoco.sln'
@@ -41,6 +43,7 @@ steps:
 # There are no automated tests for PxCoco.
 
 - task: DotNetCoreCLI@2
+  displayName: Pack (Win)
   inputs:
     command: pack
     searchPatternPack: 'PxCoco/PxCoco.csproj'
@@ -49,11 +52,13 @@ steps:
     buildProperties: Version=$(Version)
 
 - task: PublishPipelineArtifact@0
+  displayName: Publish (pipeline, Win)
   inputs:
     artifactName: 'binaries'
     targetPath: '$(Build.ArtifactStagingDirectory)'
 
 - task: DotNetCoreCLI@2
+  displayName: Publish (NuGet, Win)
   inputs:
     command: push
     publishVstsFeed: 'edge'
